@@ -68,25 +68,26 @@
  *
  * Implements the NFS PROC LOOKUP function (for V2 and V3).
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in] parg     NFS arguments union
+ * @param[in] pexport  NFS export list
+ * @param[in] pcontext Credentials to be used for this request
+ * @param[in] pworker  Worker thread data
+ * @param[in] preq     SVC request related to this call
+ * @param[out] pres    Structure to contain the result of the call
  *
- * @return always NFS_REQ_OK (this routine does nothing)
+ * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Lookup(nfs_arg_t * parg,
-               exportlist_t * pexport,
-               fsal_op_context_t * pcontext,
-               cache_inode_client_t * pclient,
-               struct svc_req *preq, nfs_res_t * pres)
+int nfs_Lookup(nfs_arg_t *parg,
+               exportlist_t *pexport,
+               fsal_op_context_t *pcontext,
+               nfs_worker_data_t *pworker,
+               struct svc_req *preq,
+               nfs_res_t * pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Lookup";
-
   cache_entry_t *pentry_dir = NULL;
   cache_entry_t *pentry_file = NULL;
   cache_inode_status_t cache_status;
@@ -137,7 +138,7 @@ int nfs_Lookup(nfs_arg_t * parg,
                                       &(pres->res_dirop2.status),
                                       &(pres->res_lookup3.status),
                                       NULL,
-                                      &attrdir, pcontext, pclient, &rc)) == NULL)
+                                      &attrdir, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -167,7 +168,7 @@ int nfs_Lookup(nfs_arg_t * parg,
 
   if((preq->rq_vers == NFS_V3) &&
      (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir)))) {
-      rc = nfs3_Lookup_Xattr(parg, pexport, pcontext, pclient, preq, pres);
+      rc = nfs3_Lookup_Xattr(parg, pexport, pcontext, preq, pres);
       goto out;
   }
 
@@ -181,7 +182,6 @@ int nfs_Lookup(nfs_arg_t * parg,
           = cache_inode_lookup(pentry_dir,
                                &name,
                                &attr,
-                               pclient,
                                pcontext,
                                &cache_status)) != NULL)
         {
@@ -285,10 +285,10 @@ int nfs_Lookup(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry_dir)
-      cache_inode_put(pentry_dir, pclient);
+      cache_inode_put(pentry_dir);
 
   if (pentry_file)
-      cache_inode_put(pentry_file, pclient);
+      cache_inode_put(pentry_file);
 
   return (rc);
 

@@ -194,7 +194,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   plock_owner,
                   pstate_found,
                   &lock_desc,
-                  data->pclient,
                   &state_status) != STATE_SUCCESS)
     {
       res_LOCKU4.status = nfs4_Errno_state(state_status);

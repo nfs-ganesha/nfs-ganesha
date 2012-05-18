@@ -10,16 +10,17 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
@@ -319,44 +320,47 @@ typedef struct nfs_client_cred__
   } auth_union;
 } nfs_client_cred_t;
 
-/*
- * NFS v4 Compound Data 
+typedef struct nfs_worker_data__ nfs_worker_data_t;
+
+/**
+ * @brief NFS v4 Compound Data
+ *
+ * This structure contains the necessary stuff for keeping the state
+ * of a V4 compound request.
  */
-/* this structure contains the necessary stuff for keeping the state of a V4 compound request */
 typedef struct compoud_data
 {
-  nfs_fh4 currentFH;                                  /**< Current filehandle                                            */
-  nfs_fh4 rootFH;                                     /**< Root filehandle                                               */
-  nfs_fh4 savedFH;                                    /**< Saved filehandle                                              */
-  nfs_fh4 publicFH;                                   /**< Public filehandle                                             */
-  nfs_fh4 mounted_on_FH;                              /**< File handle to "mounted on" File System                       */
-  stateid4 current_stateid;                           /**< Current stateid                                               */
-  bool_t   current_stateid_valid;                     /**< Current stateid is valid                                      */
-  unsigned int minorversion;                          /**< NFSv4 minor version                                           */
-  cache_entry_t *current_entry;                       /**< cache entry related to current filehandle                     */
-  cache_entry_t *saved_entry;                         /**< cache entry related to saved filehandle                       */
-  cache_inode_file_type_t current_filetype;           /**< File type associated with the current filehandle and inode    */
-  cache_inode_file_type_t saved_filetype;             /**< File type associated with the saved filehandle and inode      */
-  fsal_op_context_t *pcontext;                        /**< Credentials related to this filesets                          */
-                                                      /**< (to handle different uid mapping)                             */
-  exportlist_t *pexport;                              /**< Export entry related to the request                           */
-  exportlist_t *pfullexportlist;                      /**< Pointer to the whole exportlist                               */
-  pseudofs_t *pseudofs;                               /**< Pointer to the pseudo filesystem tree                         */
-  char MntPath[MAXPATHLEN];                           /**< Path (in pseudofs) of the current mounted entry               */
-  struct svc_req *reqp;                               /**< Raw RPC credentials                                           */
-  hash_table_t *ht;                                   /**< hashtable for cache_inode                                     */
-  cache_inode_client_t *pclient;                      /**< client ressource for the request                              */
-  nfs_client_cred_t credential;                       /**< RPC Request related to the compound                           */
+  nfs_fh4 currentFH; /*< Current filehandle */
+  nfs_fh4 rootFH; /*< Root filehandle */
+  nfs_fh4 savedFH; /*< Saved filehandle */
+  nfs_fh4 publicFH; /*< Public filehandle */
+  nfs_fh4 mounted_on_FH; /*< File handle to "mounted on" File System */
+  stateid4 current_stateid; /*< Current stateid */
+  bool_t   current_stateid_valid; /*< Current stateid is valid */
+  unsigned int minorversion; /*< NFSv4 minor version */
+  cache_entry_t *current_entry; /*< Cache entry for current filehandle */
+  cache_entry_t *saved_entry; /*< Cache entry for saved filehandle */
+  cache_inode_file_type_t current_filetype; /*< Type of current filehandle */
+  cache_inode_file_type_t saved_filetype; /*< Type of saved filehandle */
+  fsal_op_context_t *pcontext; /*< Credentials for this operation */
+  nfs_worker_data_t *pworker;
+  exportlist_t *pexport; /*< Export entry for the request */
+  exportlist_t *pfullexportlist; /*< The whole exportlist */
+  pseudofs_t *pseudofs; /*< The pseudo filesystem tree */
+  char MntPath[MAXPATHLEN]; /*< Path (in pseudofs) the current mounted */
+  struct svc_req *reqp; /*< Raw RPC credentials */
+  nfs_client_cred_t credential; /*< RPC Request related to the compound */
 #ifdef _USE_NFS4_1
-  caddr_t pcached_res;                                /**< NFv41: pointer to cached RPC res in a session's slot          */
-  bool_t use_drc;                                     /**< Set to TRUE if session DRC is to be used                      */
-  uint32_t oppos;                                     /**< Position of the operation within the request processed        */
-  nfs41_session_t *psession;                          /**< Related session (found by OP_SEQUENCE)                        */
-#endif                          /* USE_NFS4_1 */
+  caddr_t pcached_res; /*< NFv41: Cached RPC res in a session's slot */
+  bool_t use_drc; /*< Set to TRUE if session DRC is to be used */
+  uint32_t oppos; /*< Position of the operation within the request processed */
+  nfs41_session_t *psession; /*< Related session (found by OP_SEQUENCE) */
+#endif /* USE_NFS4_1 */
 } compound_data_t;
 
 /* Export list related functions */
-exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid);
+exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot,
+                                   unsigned short exportid);
 int nfs_check_anon(exportlist_client_entry_t * pexport_client,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials);

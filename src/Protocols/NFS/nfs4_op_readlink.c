@@ -105,7 +105,6 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
   /* Using cache_inode_readlink */
   if(cache_inode_readlink(data->current_entry,
                           &symlink_path,
-                          data->pclient,
                           data->pcontext, &cache_status)
      == CACHE_INODE_SUCCESS)
     {

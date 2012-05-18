@@ -61,25 +61,25 @@
 #include "nfs_proto_tools.h"
 
 /**
- * mnt_Mnt: The Mount proc mount function, for all versions.
- * 
+ * @brief The Mount proc mount function, for all versions.
+ *
  * The MOUNT proc proc function, for all versions.
- * 
- *  @param parg        [IN]    The export path to be mounted.
- *  @param pexportlist [IN]    The export list.
- *  @param pcontextp   [IN]    ignored
- *  @param pclient     [INOUT] ignored
- *  @param preq        [IN]    ignored 
- *  @param pres        [OUT]   Pointer to the result structure.
+ *
+ * @param[in]  parg     The export path to be mounted
+ * @param[in]  pexport  The export list
+ * @param[in]  pcontext ignored
+ * @param[in]  pworker  ignored
+ * @param[in]  preq     ignored
+ * @param[out] pres     Result structure.
  *
  */
 
-int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
-            exportlist_t * pexport /* IN      */ ,
-            fsal_op_context_t * pcontext /* IN      */ ,
-            cache_inode_client_t * pclient /* IN/OUT  */ ,
-            struct svc_req *preq /* IN      */ ,
-            nfs_res_t * pres /* OUT     */ )
+int mnt_Mnt(nfs_arg_t *parg,
+            exportlist_t *pexport,
+            fsal_op_context_t *pcontext,
+            nfs_worker_data_t *pworker,
+            struct svc_req *preq,
+            nfs_res_t *pres)
 {
 
   char exportPath[MNTPATHLEN + 1];

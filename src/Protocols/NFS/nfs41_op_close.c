@@ -148,7 +148,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                                           state_data.lock.state_sharelist);
 
       if(state_del(plock_state,
-                   data->pclient,
                    &state_status) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
@@ -159,7 +158,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
   /* File is closed, release the corresponding state */
   if(state_del(pstate_found,
-               data->pclient,
                &state_status) != STATE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
@@ -231,7 +229,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
   /* Close the file in FSAL through the cache inode */
   if(cache_inode_close(data->current_entry,
-                       data->pclient,
                        0,
                        &cache_status) != CACHE_INODE_SUCCESS)
     {

@@ -43,7 +43,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -64,22 +63,17 @@
  * This function sets the attributes of a file, both in the cache and
  * in the underlying filesystem.
  *
- * @param entry [in] Entry whose attributes are to be set
- * @param attr [in,out] Attributes to set/result of set
- * @param client [in,out] Structure for per-thread resource
- *                         management
- * @param context [in] FSAL credentials
- * @param status [out] returned status
+ * @param[in]     entry   Entry whose attributes are to be set
+ * @param[in,out] attr    Attributes to set/result of set
+ * @param[in]     context FSAL credentials
+ * @param[out]    status  Returned status
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
- * @retval CACHE_INODE_LRU_ERROR if allocation error occured when
- *         validating the entry
  */
 
 cache_inode_status_t
 cache_inode_setattr(cache_entry_t *entry,
                     fsal_attrib_list_t *attr,
-                    cache_inode_client_t *client,
                     fsal_op_context_t *context,
                     cache_inode_status_t *status)
 {
@@ -114,7 +108,7 @@ cache_inode_setattr(cache_entry_t *entry,
           if (FSAL_IS_ERROR(fsal_status)) {
                *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry, client);
+                    cache_inode_kill_entry(entry);
                }
                goto unlock;
           }
@@ -128,7 +122,7 @@ cache_inode_setattr(cache_entry_t *entry,
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
-               cache_inode_kill_entry(entry, client);
+               cache_inode_kill_entry(entry);
           }
           goto unlock;
      } else {

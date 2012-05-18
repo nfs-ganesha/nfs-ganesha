@@ -54,6 +54,10 @@
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
 
+pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
+pool_t *state_nfs4_owner_name_pool; /*< Pool for NFSv4 files's open_owner */
+pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
+
 const char *state_err_str(state_status_t err)
 {
   switch(err)
@@ -851,8 +855,7 @@ void inc_state_owner_ref(state_owner_t *powner)
   inc_state_owner_ref_locked(powner);
 }
 
-void dec_state_owner_ref_locked(state_owner_t        * powner,
-                                cache_inode_client_t * pclient)
+void dec_state_owner_ref_locked(state_owner_t        * powner)
 {
   bool_t remove = FALSE;
   char   str[HASHTABLE_DISPLAY_STRLEN];
@@ -884,14 +887,14 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
         {
 #ifdef _USE_NLM
           case STATE_LOCK_OWNER_NLM:
-            remove_nlm_owner(pclient, powner, str);
+            remove_nlm_owner(powner, str);
             break;
 #endif
 
           case STATE_OPEN_OWNER_NFSV4:
           case STATE_LOCK_OWNER_NFSV4:
           case STATE_CLIENTID_OWNER_NFSV4:
-            remove_nfs4_owner(pclient, powner, str);
+            remove_nfs4_owner(powner, str);
             break;
 
           case STATE_LOCK_OWNER_UNKNOWN:
@@ -903,16 +906,14 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
     }
 }
 
-void dec_state_owner_ref(state_owner_t        * powner,
-                         cache_inode_client_t * pclient)
+void dec_state_owner_ref(state_owner_t        * powner)
 {
   P(powner->so_mutex);
 
-  dec_state_owner_ref_locked(powner, pclient);
+  dec_state_owner_ref_locked(powner);
 }
 
-void state_wipe_file(cache_entry_t        * pentry,
-                     cache_inode_client_t * pclient)
+void state_wipe_file(cache_entry_t        * pentry)
 {
   bool_t had_lock = FALSE;
 
@@ -934,8 +935,8 @@ void state_wipe_file(cache_entry_t        * pentry,
       pthread_rwlock_unlock(&pentry->state_lock);
     }
   pthread_rwlock_wrlock(&pentry->state_lock);
-  state_lock_wipe(pentry, pclient);
-  state_nfs4_state_wipe(pentry, pclient);
+  state_lock_wipe(pentry);
+  state_nfs4_state_wipe(pentry);
   if (!had_lock)
     {
       pthread_rwlock_unlock(&pentry->state_lock);

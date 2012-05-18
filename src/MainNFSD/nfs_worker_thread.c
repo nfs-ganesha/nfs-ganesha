@@ -84,94 +84,114 @@ const nfs_function_desc_t invalid_funcdesc =
 
 /* Static array : all the function pointer per nfs v2 functions */
 const nfs_function_desc_t nfs2_func_desc[] = {
-  {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs_Null",
-   NOTHING_SPECIAL},
-  {nfs_Getattr, nfs_Getattr_Free, (xdrproc_t) xdr_fhandle2, (xdrproc_t) xdr_ATTR2res,
-   "nfs_Getattr", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Setattr, nfs_Setattr_Free, (xdrproc_t) xdr_SETATTR2args, (xdrproc_t) xdr_ATTR2res,
-   "nfs_Setattr", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs2_Root, nfs2_Root_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs2_Root",
-   NOTHING_SPECIAL},
-  {nfs_Lookup, nfs2_Lookup_Free, (xdrproc_t) xdr_diropargs2, (xdrproc_t) xdr_DIROP2res,
-   "nfs_Lookup", NEEDS_CRED | SUPPORTS_GSS},
+  {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t)
+   xdr_void, "nfs_Null", NOTHING_SPECIAL},
+  {nfs_Getattr, nfs_Getattr_Free, (xdrproc_t) xdr_fhandle2,
+   (xdrproc_t) xdr_ATTR2res, "nfs_Getattr", NEEDS_CRED | SUPPORTS_GSS},
+  {nfs_Setattr, nfs_Setattr_Free, (xdrproc_t) xdr_SETATTR2args,
+   (xdrproc_t) xdr_ATTR2res, "nfs_Setattr",
+   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+  {nfs2_Root, nfs2_Root_Free, (xdrproc_t) xdr_void, (xdrproc_t)
+   xdr_void, "nfs2_Root", NOTHING_SPECIAL},
+  {nfs_Lookup, nfs2_Lookup_Free, (xdrproc_t) xdr_diropargs2,
+   (xdrproc_t) xdr_DIROP2res, "nfs_Lookup", NEEDS_CRED | SUPPORTS_GSS},
   {nfs_Readlink, nfs2_Readlink_Free, (xdrproc_t) xdr_fhandle2,
    (xdrproc_t) xdr_READLINK2res, "nfs_Readlink", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Read, nfs2_Read_Free, (xdrproc_t) xdr_READ2args, (xdrproc_t) xdr_READ2res,
-   "nfs_Read", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs2_Writecache, nfs2_Writecache_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-   "nfs_Writecache", NOTHING_SPECIAL},
-  {nfs_Write, nfs_Write_Free, (xdrproc_t) xdr_WRITE2args, (xdrproc_t) xdr_ATTR2res,
-   "nfs_Write", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Create, nfs_Create_Free, (xdrproc_t) xdr_CREATE2args, (xdrproc_t) xdr_DIROP2res,
-   "nfs_Create", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Remove, nfs_Remove_Free, (xdrproc_t) xdr_diropargs2, (xdrproc_t) xdr_nfsstat2,
-   "nfs_Remove", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Rename, nfs_Rename_Free, (xdrproc_t) xdr_RENAME2args, (xdrproc_t) xdr_nfsstat2,
-   "nfs_Rename", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Link, nfs_Link_Free, (xdrproc_t) xdr_LINK2args, (xdrproc_t) xdr_nfsstat2,
-   "nfs_Link", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Symlink, nfs_Symlink_Free, (xdrproc_t) xdr_SYMLINK2args, (xdrproc_t) xdr_nfsstat2,
-   "nfs_Symlink", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Mkdir, nfs_Mkdir_Free, (xdrproc_t) xdr_CREATE2args, (xdrproc_t) xdr_DIROP2res,
-   "nfs_Mkdir", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Rmdir, nfs_Rmdir_Free, (xdrproc_t) xdr_diropargs2, (xdrproc_t) xdr_nfsstat2,
-   "nfs_Rmdir", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+  {nfs_Read, nfs2_Read_Free, (xdrproc_t) xdr_READ2args, (xdrproc_t)
+   xdr_READ2res, "nfs_Read", NEEDS_CRED | SUPPORTS_GSS},
+  {nfs2_Writecache, nfs2_Writecache_Free, (xdrproc_t) xdr_void,
+   (xdrproc_t) xdr_void, "nfs_Writecache", NOTHING_SPECIAL},
+  {nfs_Write, nfs_Write_Free, (xdrproc_t) xdr_WRITE2args, (xdrproc_t)
+   xdr_ATTR2res, "nfs_Write", (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP |
+                               SUPPORTS_GSS)},
+  {nfs_Create, nfs_Create_Free, (xdrproc_t) xdr_CREATE2args,
+   (xdrproc_t) xdr_DIROP2res, "nfs_Create", (MAKES_WRITE | NEEDS_CRED
+                                             | CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Remove, nfs_Remove_Free, (xdrproc_t) xdr_diropargs2,
+   (xdrproc_t) xdr_nfsstat2, "nfs_Remove", (MAKES_WRITE | NEEDS_CRED |
+                                            CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Rename, nfs_Rename_Free, (xdrproc_t) xdr_RENAME2args,
+   (xdrproc_t) xdr_nfsstat2, "nfs_Rename", (MAKES_WRITE | NEEDS_CRED |
+                                            CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Link, nfs_Link_Free, (xdrproc_t) xdr_LINK2args, (xdrproc_t)
+   xdr_nfsstat2, "nfs_Link", (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP |
+                              SUPPORTS_GSS)},
+  {nfs_Symlink, nfs_Symlink_Free, (xdrproc_t) xdr_SYMLINK2args,
+   (xdrproc_t) xdr_nfsstat2, "nfs_Symlink", (MAKES_WRITE | NEEDS_CRED
+                                             | CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Mkdir, nfs_Mkdir_Free, (xdrproc_t) xdr_CREATE2args,
+   (xdrproc_t) xdr_DIROP2res, "nfs_Mkdir", (MAKES_WRITE | NEEDS_CRED |
+                                            CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Rmdir, nfs_Rmdir_Free, (xdrproc_t) xdr_diropargs2,
+   (xdrproc_t) xdr_nfsstat2, "nfs_Rmdir", (MAKES_WRITE | NEEDS_CRED |
+                                           CAN_BE_DUP | SUPPORTS_GSS)},
   {nfs_Readdir, nfs2_Readdir_Free, (xdrproc_t) xdr_READDIR2args,
    (xdrproc_t) xdr_READDIR2res, "nfs_Readdir", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Fsstat, nfs_Fsstat_Free, (xdrproc_t) xdr_fhandle2, (xdrproc_t) xdr_STATFS2res,
-   "nfs_Fsstat", NEEDS_CRED | SUPPORTS_GSS}
+  {nfs_Fsstat, nfs_Fsstat_Free, (xdrproc_t) xdr_fhandle2,
+   (xdrproc_t) xdr_STATFS2res, "nfs_Fsstat", NEEDS_CRED | SUPPORTS_GSS}
 };
 
 const nfs_function_desc_t nfs3_func_desc[] = {
-  {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs_Null",
-   NOTHING_SPECIAL},
+  {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t)
+  xdr_void, "nfs_Null", NOTHING_SPECIAL},
   {nfs_Getattr, nfs_Getattr_Free, (xdrproc_t) xdr_GETATTR3args,
    (xdrproc_t) xdr_GETATTR3res, "nfs_Getattr", NEEDS_CRED | SUPPORTS_GSS},
   {nfs_Setattr, nfs_Setattr_Free, (xdrproc_t) xdr_SETATTR3args,
    (xdrproc_t) xdr_SETATTR3res, "nfs_Setattr",
    MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Lookup, nfs3_Lookup_Free, (xdrproc_t) xdr_LOOKUP3args, (xdrproc_t) xdr_LOOKUP3res,
-   "nfs_Lookup", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs3_Access, nfs3_Access_Free, (xdrproc_t) xdr_ACCESS3args, (xdrproc_t) xdr_ACCESS3res,
-   "nfs3_Access", NEEDS_CRED | SUPPORTS_GSS},
+  {nfs_Lookup, nfs3_Lookup_Free, (xdrproc_t) xdr_LOOKUP3args,
+   (xdrproc_t) xdr_LOOKUP3res, "nfs_Lookup", NEEDS_CRED | SUPPORTS_GSS},
+  {nfs3_Access, nfs3_Access_Free, (xdrproc_t) xdr_ACCESS3args,
+   (xdrproc_t) xdr_ACCESS3res, "nfs3_Access", NEEDS_CRED | SUPPORTS_GSS},
   {nfs_Readlink, nfs3_Readlink_Free, (xdrproc_t) xdr_READLINK3args,
    (xdrproc_t) xdr_READLINK3res, "nfs_Readlink", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Read, nfs3_Read_Free, (xdrproc_t) xdr_READ3args, (xdrproc_t) xdr_READ3res,
-   "nfs_Read", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Write, nfs_Write_Free, (xdrproc_t) xdr_WRITE3args, (xdrproc_t) xdr_WRITE3res,
-   "nfs_Write", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Create, nfs_Create_Free, (xdrproc_t) xdr_CREATE3args, (xdrproc_t) xdr_CREATE3res,
-   "nfs_Create", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Mkdir, nfs_Mkdir_Free, (xdrproc_t) xdr_MKDIR3args, (xdrproc_t) xdr_MKDIR3res,
-   "nfs_Mkdir", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+  {nfs_Read, nfs3_Read_Free, (xdrproc_t) xdr_READ3args,
+   (xdrproc_t) xdr_READ3res, "nfs_Read", NEEDS_CRED | SUPPORTS_GSS},
+  {nfs_Write, nfs_Write_Free, (xdrproc_t) xdr_WRITE3args,
+   (xdrproc_t) xdr_WRITE3res, "nfs_Write", (MAKES_WRITE | NEEDS_CRED |
+                                            CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Create, nfs_Create_Free, (xdrproc_t) xdr_CREATE3args,
+   (xdrproc_t) xdr_CREATE3res, "nfs_Create", (MAKES_WRITE | NEEDS_CRED
+                                              | CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Mkdir, nfs_Mkdir_Free, (xdrproc_t) xdr_MKDIR3args,
+   (xdrproc_t) xdr_MKDIR3res, "nfs_Mkdir", (MAKES_WRITE | NEEDS_CRED |
+                                            CAN_BE_DUP | SUPPORTS_GSS)},
   {nfs_Symlink, nfs_Symlink_Free, (xdrproc_t) xdr_SYMLINK3args,
    (xdrproc_t) xdr_SYMLINK3res, "nfs_Symlink",
    MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs3_Mknod, nfs3_Mknod_Free, (xdrproc_t) xdr_MKNOD3args, (xdrproc_t) xdr_MKNOD3res,
-   "nfs3_Mknod", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Remove, nfs_Remove_Free, (xdrproc_t) xdr_REMOVE3args, (xdrproc_t) xdr_REMOVE3res,
-   "nfs_Remove", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Rmdir, nfs_Rmdir_Free, (xdrproc_t) xdr_RMDIR3args, (xdrproc_t) xdr_RMDIR3res,
-   "nfs_Rmdir", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Rename, nfs_Rename_Free, (xdrproc_t) xdr_RENAME3args, (xdrproc_t) xdr_RENAME3res,
-   "nfs_Rename", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Link, nfs_Link_Free, (xdrproc_t) xdr_LINK3args, (xdrproc_t) xdr_LINK3res,
-   "nfs_Link", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+  {nfs3_Mknod, nfs3_Mknod_Free, (xdrproc_t) xdr_MKNOD3args,
+   (xdrproc_t) xdr_MKNOD3res, "nfs3_Mknod", (MAKES_WRITE | NEEDS_CRED
+                                             | CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Remove, nfs_Remove_Free, (xdrproc_t) xdr_REMOVE3args,
+   (xdrproc_t) xdr_REMOVE3res, "nfs_Remove", (MAKES_WRITE | NEEDS_CRED
+                                              | CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Rmdir, nfs_Rmdir_Free, (xdrproc_t) xdr_RMDIR3args,
+   (xdrproc_t) xdr_RMDIR3res, "nfs_Rmdir", (MAKES_WRITE | NEEDS_CRED |
+                                            CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Rename, nfs_Rename_Free, (xdrproc_t) xdr_RENAME3args,
+   (xdrproc_t) xdr_RENAME3res, "nfs_Rename", (MAKES_WRITE | NEEDS_CRED
+                                              | CAN_BE_DUP | SUPPORTS_GSS)},
+  {nfs_Link, nfs_Link_Free, (xdrproc_t) xdr_LINK3args,
+   (xdrproc_t) xdr_LINK3res, "nfs_Link", (MAKES_WRITE | NEEDS_CRED |
+                                          CAN_BE_DUP | SUPPORTS_GSS)},
   {nfs_Readdir, nfs3_Readdir_Free, (xdrproc_t) xdr_READDIR3args,
    (xdrproc_t) xdr_READDIR3res, "nfs_Readdir", NEEDS_CRED | SUPPORTS_GSS},
   {nfs3_Readdirplus, nfs3_Readdirplus_Free, (xdrproc_t) xdr_READDIRPLUS3args,
-   (xdrproc_t) xdr_READDIRPLUS3res, "nfs3_Readdirplus", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Fsstat, nfs_Fsstat_Free, (xdrproc_t) xdr_FSSTAT3args, (xdrproc_t) xdr_FSSTAT3res,
-   "nfs_Fsstat", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs3_Fsinfo, nfs3_Fsinfo_Free, (xdrproc_t) xdr_FSINFO3args, (xdrproc_t) xdr_FSINFO3res,
-   "nfs3_Fsinfo", NEEDS_CRED},
+   (xdrproc_t) xdr_READDIRPLUS3res, "nfs3_Readdirplus", (NEEDS_CRED |
+                                                         SUPPORTS_GSS)},
+  {nfs_Fsstat, nfs_Fsstat_Free, (xdrproc_t) xdr_FSSTAT3args,
+   (xdrproc_t) xdr_FSSTAT3res, "nfs_Fsstat", NEEDS_CRED | SUPPORTS_GSS},
+  {nfs3_Fsinfo, nfs3_Fsinfo_Free, (xdrproc_t) xdr_FSINFO3args,
+   (xdrproc_t) xdr_FSINFO3res, "nfs3_Fsinfo", NEEDS_CRED},
   {nfs3_Pathconf, nfs3_Pathconf_Free, (xdrproc_t) xdr_PATHCONF3args,
    (xdrproc_t) xdr_PATHCONF3res, "nfs3_Pathconf", NEEDS_CRED | SUPPORTS_GSS},
-  {nfs3_Commit, nfs3_Commit_Free, (xdrproc_t) xdr_COMMIT3args, (xdrproc_t) xdr_COMMIT3res,
-   "nfs3_Commit", MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS}
+  {nfs3_Commit, nfs3_Commit_Free, (xdrproc_t) xdr_COMMIT3args,
+   (xdrproc_t) xdr_COMMIT3res, "nfs3_Commit", (MAKES_WRITE |
+                                               NEEDS_CRED | SUPPORTS_GSS)}
 };
 
-/* Remeber that NFSv4 manages authentication though junction crossing, and so does it for RO FS management (for each operation) */
+/* Remeber that NFSv4 manages authentication though junction crossing,
+   and so does it for RO FS management (for each operation) */
 const nfs_function_desc_t nfs4_func_desc[] = {
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs_Null",
    NOTHING_SPECIAL},
@@ -181,14 +201,14 @@ const nfs_function_desc_t nfs4_func_desc[] = {
 };
 
 const nfs_function_desc_t mnt1_func_desc[] = {
-  {mnt_Null, mnt_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "mnt_Null",
-   NOTHING_SPECIAL},
-  {mnt_Mnt, mnt1_Mnt_Free, (xdrproc_t) xdr_dirpath, (xdrproc_t) xdr_fhstatus2, "mnt_Mnt",
-   NEEDS_CRED},
-  {mnt_Dump, mnt_Dump_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_mountlist, "mnt_Dump",
-   NOTHING_SPECIAL},
-  {mnt_Umnt, mnt_Umnt_Free, (xdrproc_t) xdr_dirpath, (xdrproc_t) xdr_void, "mnt_Umnt",
-   NOTHING_SPECIAL},
+  {mnt_Null, mnt_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
+   "mnt_Null", NOTHING_SPECIAL},
+  {mnt_Mnt, mnt1_Mnt_Free, (xdrproc_t) xdr_dirpath, (xdrproc_t) xdr_fhstatus2,
+   "mnt_Mnt", NEEDS_CRED},
+  {mnt_Dump, mnt_Dump_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_mountlist,
+   "mnt_Dump", NOTHING_SPECIAL},
+  {mnt_Umnt, mnt_Umnt_Free, (xdrproc_t) xdr_dirpath, (xdrproc_t) xdr_void,
+   "mnt_Umnt", NOTHING_SPECIAL},
   {mnt_UmntAll, mnt_UmntAll_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
    "mnt_UmntAll", NOTHING_SPECIAL},
   {mnt_Export, mnt_Export_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_exports,
@@ -196,14 +216,14 @@ const nfs_function_desc_t mnt1_func_desc[] = {
 };
 
 const nfs_function_desc_t mnt3_func_desc[] = {
-  {mnt_Null, mnt_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "mnt_Null",
-   NOTHING_SPECIAL},
-  {mnt_Mnt, mnt3_Mnt_Free, (xdrproc_t) xdr_dirpath, (xdrproc_t) xdr_mountres3, "mnt_Mnt",
-   NEEDS_CRED},
-  {mnt_Dump, mnt_Dump_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_mountlist, "mnt_Dump",
-   NOTHING_SPECIAL},
-  {mnt_Umnt, mnt_Umnt_Free, (xdrproc_t) xdr_dirpath, (xdrproc_t) xdr_void, "mnt_Umnt",
-   NOTHING_SPECIAL},
+  {mnt_Null, mnt_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
+   "mnt_Null", NOTHING_SPECIAL},
+  {mnt_Mnt, mnt3_Mnt_Free, (xdrproc_t) xdr_dirpath, (xdrproc_t) xdr_mountres3,
+   "mnt_Mnt", NEEDS_CRED},
+  {mnt_Dump, mnt_Dump_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_mountlist,
+   "mnt_Dump", NOTHING_SPECIAL},
+  {mnt_Umnt, mnt_Umnt_Free, (xdrproc_t) xdr_dirpath, (xdrproc_t) xdr_void,
+   "mnt_Umnt", NOTHING_SPECIAL},
   {mnt_UmntAll, mnt_UmntAll_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
    "mnt_UmntAll", NOTHING_SPECIAL},
   {mnt_Export, mnt_Export_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_exports,
@@ -216,22 +236,22 @@ const nfs_function_desc_t mnt3_func_desc[] = {
 #ifdef _USE_NLM
 const nfs_function_desc_t nlm4_func_desc[] = {
   [NLMPROC4_NULL] = {
-                     nlm_Null, nlm_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-                     "nlm_Null", NOTHING_SPECIAL},
+                     nlm_Null, nlm_Null_Free, (xdrproc_t) xdr_void,
+                     (xdrproc_t) xdr_void, "nlm_Null", NOTHING_SPECIAL},
   [NLMPROC4_TEST] = {
                      nlm4_Test, nlm4_Test_Free, (xdrproc_t) xdr_nlm4_testargs,
                      (xdrproc_t) xdr_nlm4_testres, "nlm4_Test", NEEDS_CRED},
   [NLMPROC4_LOCK] = {
                      nlm4_Lock, nlm4_Lock_Free, (xdrproc_t) xdr_nlm4_lockargs,
                      (xdrproc_t) xdr_nlm4_res, "nlm4_Lock", NEEDS_CRED},
-  [NLMPROC4_CANCEL] = {
-                       nlm4_Cancel, nlm4_Cancel_Free, (xdrproc_t) xdr_nlm4_cancargs,
-                       (xdrproc_t) xdr_nlm4_res, "nlm4_Cancel", NEEDS_CRED},
-  [NLMPROC4_UNLOCK] = {
-                       nlm4_Unlock, nlm4_Unlock_Free, (xdrproc_t) xdr_nlm4_unlockargs,
+  [NLMPROC4_CANCEL] = {nlm4_Cancel, nlm4_Cancel_Free,
+                       (xdrproc_t) xdr_nlm4_cancargs, (xdrproc_t) xdr_nlm4_res,
+                       "nlm4_Cancel", NEEDS_CRED},
+  [NLMPROC4_UNLOCK] = {nlm4_Unlock, nlm4_Unlock_Free,
+                       (xdrproc_t) xdr_nlm4_unlockargs,
                        (xdrproc_t) xdr_nlm4_res, "nlm4_Unlock", NEEDS_CRED},
-  [NLMPROC4_GRANTED] = {
-                        nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
+  [NLMPROC4_GRANTED] = {nlm4_Unsupported, nlm4_Unsupported_Free,
+                        (xdrproc_t) xdr_void,
                         (xdrproc_t) xdr_void, "nlm4_Granted", NOTHING_SPECIAL},
   [NLMPROC4_TEST_MSG] = {
                          nlm4_Test_Message, nlm4_Test_Free,
@@ -287,16 +307,13 @@ const nfs_function_desc_t nlm4_func_desc[] = {
                     nlm4_Unsupported, nlm4_Unsupported_Free,
                     (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
                     "nlm4_Share", NEEDS_CRED},
-  [NLMPROC4_UNSHARE] = {
-                        nlm4_Unsupported, nlm4_Unsupported_Free,
+  [NLMPROC4_UNSHARE] = {nlm4_Unsupported, nlm4_Unsupported_Free,
                         (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
                         "nlm4_Unshare", NEEDS_CRED},
-  [NLMPROC4_NM_LOCK] = {
-                        nlm4_Unsupported, nlm4_Unsupported_Free,
+  [NLMPROC4_NM_LOCK] = {nlm4_Unsupported, nlm4_Unsupported_Free,
                         (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
                         "nlm4_Nm_lock", NEEDS_CRED},
-  [NLMPROC4_FREE_ALL] = {
-                         nlm4_Unsupported, nlm4_Unsupported_Free,
+  [NLMPROC4_FREE_ALL] = {nlm4_Unsupported, nlm4_Unsupported_Free,
                          (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
                          "nlm4_Free_all", NOTHING_SPECIAL},
 };
@@ -304,28 +321,26 @@ const nfs_function_desc_t nlm4_func_desc[] = {
 
 #ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
-  [0] = {
-         rquota_Null, rquota_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-         "rquota_Null", NOTHING_SPECIAL},
-  [RQUOTAPROC_GETQUOTA] = {
-                           rquota_getquota, rquota_getquota_Free,
+  [0] = {rquota_Null, rquota_Null_Free, (xdrproc_t) xdr_void,
+         (xdrproc_t) xdr_void, "rquota_Null", NOTHING_SPECIAL},
+  [RQUOTAPROC_GETQUOTA] = {rquota_getquota, rquota_getquota_Free,
                            (xdrproc_t) xdr_getquota_args,
-                           (xdrproc_t) xdr_getquota_rslt, "rquota_Getquota", NEEDS_CRED},
-  [RQUOTAPROC_GETACTIVEQUOTA] = {
-                                 rquota_getactivequota, rquota_getactivequota_Free,
+                           (xdrproc_t) xdr_getquota_rslt,
+                           "rquota_Getquota", NEEDS_CRED},
+  [RQUOTAPROC_GETACTIVEQUOTA] = {rquota_getactivequota,
+                                 rquota_getactivequota_Free,
                                  (xdrproc_t) xdr_getquota_args,
-                                 (xdrproc_t) xdr_getquota_rslt, "rquota_Getactivequota",
-                                 NEEDS_CRED},
-  [RQUOTAPROC_SETQUOTA] = {
-                           rquota_setquota, rquota_setquota_Free,
+                                 (xdrproc_t) xdr_getquota_rslt,
+                                 "rquota_Getactivequota", NEEDS_CRED},
+  [RQUOTAPROC_SETQUOTA] = {rquota_setquota, rquota_setquota_Free,
                            (xdrproc_t) xdr_setquota_args,
-                           (xdrproc_t) xdr_setquota_rslt, "rquota_Setactivequota",
-                           NEEDS_CRED},
-  [RQUOTAPROC_SETACTIVEQUOTA] = {
-                                 rquota_setactivequota, rquota_setactivequota_Free,
+                           (xdrproc_t) xdr_setquota_rslt,
+                           "rquota_Setactivequota", NEEDS_CRED},
+  [RQUOTAPROC_SETACTIVEQUOTA] = {rquota_setactivequota,
+                                 rquota_setactivequota_Free,
                                  (xdrproc_t) xdr_setquota_args,
-                                 (xdrproc_t) xdr_setquota_rslt, "rquota_Getactivequota",
-                                 NEEDS_CRED}
+                                 (xdrproc_t) xdr_setquota_rslt,
+                                 "rquota_Getactivequota", NEEDS_CRED}
 };
 
 const nfs_function_desc_t rquota2_func_desc[] = {
@@ -361,8 +376,9 @@ extern const char *pause_state_str[];
 /**
  * nfs_Init_gc_counter: Init the worker's gc counters.
  *
- * This functions is used to init a mutex and a counter associated with it, to keep track of the number of worker currently
- * performing the garbagge collection.
+ * This functions is used to init a mutex and a counter associated
+ * with it, to keep track of the number of worker currently performing
+ * the garbage collection.
  *
  * @param void No parameters
  *
@@ -1417,12 +1433,12 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
       pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
 
-      rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
-						     pexport, 
-						     pfsal_op_ctx,
-                                                     &(pworker_data->cache_inode_client), 
-                                                     ptr_req, 
-                                                     &res_nfs); 
+      rc = pworker_data->pfuncdesc->service_function(parg_nfs,
+                                                     pexport,
+                                                     pfsal_op_ctx,
+                                                     pworker_data,
+                                                     ptr_req,
+                                                     &res_nfs);
 
     }
 
@@ -2021,19 +2037,6 @@ void *worker_thread(void *IndexArg)
       LogFatal(COMPONENT_DISPATCH,
                "Error initializing thread's credential");
     }
-
-  /* Init the Cache inode client for this worker */
-  if(cache_inode_client_init(
-         &pmydata->cache_inode_client,
-         &nfs_param.cache_layers_param.cache_inode_client_param,
-         worker_index, pmydata))
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_DISPATCH,
-               "Cache Inode client could not be initialized");
-    }
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Cache Inode client successfully initialized");
 
   LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
 

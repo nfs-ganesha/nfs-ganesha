@@ -170,8 +170,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       if((state_status
           = state_del_locked(plock_state,
-                             data->current_entry,
-                             data->pclient)) != STATE_SUCCESS)
+                             data->current_entry)) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
                    "CLOSE failed to release lock stateid error %s",
@@ -186,7 +185,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                             data->pcontext,
                             popen_owner,
                             pstate_found,
-                            data->pclient,
                             &state_status) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
@@ -198,8 +196,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* File is closed, release the corresponding state */
   if((state_status
       = state_del_locked(pstate_found,
-                         data->current_entry,
-                         data->pclient)) != STATE_SUCCESS)
+                         data->current_entry)) != STATE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
                "CLOSE failed to release stateid error %s",
@@ -208,7 +205,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Close the file in FSAL through the cache inode */
   if(cache_inode_close(data->current_entry,
-                       data->pclient,
                        0,
                        &cache_status) != CACHE_INODE_SUCCESS)
     {

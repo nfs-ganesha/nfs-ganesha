@@ -82,7 +82,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   nfsstat4 * pstatus4,
                                   fsal_attrib_list_t * pattr,
                                   fsal_op_context_t * pcontext,
-                                  cache_inode_client_t * pclient,
                                   int *prc);
 
 void nfs_SetWccData(exportlist_t * pexport,
@@ -131,7 +130,6 @@ void nfs4_Fattr_Free(fattr4 *fattr);
 
 #ifdef _PNFS_MDS
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
-                               cache_inode_client_t* pclient,
                                fsal_op_context_t* context,
                                fsal_boolean_t synthetic,
                                fsal_boolean_t reclaim,

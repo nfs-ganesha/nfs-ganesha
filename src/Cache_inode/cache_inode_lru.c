@@ -211,14 +211,6 @@ static struct lru_thread_state
      uint32_t flags;
 } lru_thread_state;
 
-extern cache_inode_gc_policy_t cache_inode_gc_policy;
-
-/* Client for the LRU thread.  Also used in the case of a NULL client
-   passed to lru_unref.  This is a gross hack and should be
-   eliminated as soon as can be reasonably done. */
-cache_inode_client_t lru_client;
-
-
 /**
  * @brief Initialize a single base queue.
  *
@@ -244,7 +236,7 @@ lru_init_queue(struct lru_q_base *q)
  * @param[in] lane   An integer, must be less than the total number of
  *                   lanes.
  *
- * @returns The queue containing entries with the given lane and state.
+ * @return The queue containing entries with the given lane and state.
  */
 
 static inline struct lru_q_base *
@@ -274,7 +266,7 @@ lru_select_queue(uint32_t flags, uint32_t lane)
  *
  * @param[in] entry  A pointer to a cache entry
  *
- * @returns The LRU lane in which that entry should be stored.
+ * @return The LRU lane in which that entry should be stored.
  */
 
 static inline uint32_t
@@ -297,7 +289,7 @@ lru_lane_of_entry(cache_entry_t *entry)
  * @param[in] flags The flags indicating which subqueue into which it
  *                  is to be inserted.  The same flag combinations are
  *                  valid as for lru_select_queue
- * @param[on] lane  The lane into which this entry should be inserted
+ * @param[in] lane  The lane into which this entry should be inserted
  */
 
 static inline void
@@ -330,7 +322,7 @@ lru_insert_entry(cache_inode_lru_t *lru, uint32_t flags, uint32_t lane)
  * The caller MUST have a lock on the entry and MUST NOT hold a lock
  * on the queue.
  *
- * @params[in] lru The entry to remove from its queue.
+ * @param[in] lru The entry to remove from its queue.
  */
 
 static inline void
@@ -429,12 +421,10 @@ lru_move_entry(cache_inode_lru_t *lru,
  * This function cleans an entry up before it's recycled or freed.
  *
  * @param[in] entry  The entry to clean
- * @param[in] client The per-thread resource management structure
  */
 
 static inline void
-cache_inode_lru_clean(cache_entry_t *entry,
-                      cache_inode_client_t *client)
+cache_inode_lru_clean(cache_entry_t *entry)
 {
      fsal_status_t fsal_status = {0, 0};
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -444,7 +434,7 @@ cache_inode_lru_clean(cache_entry_t *entry,
             (entry->lru.refcount == (LRU_SENTINEL_REFCOUNT - 1)));
 
      if (cache_inode_fd(entry)) {
-          cache_inode_close(entry, client, CACHE_INODE_FLAG_REALLYCLOSE,
+          cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE,
                             &cache_status);
           if (cache_status != CACHE_INODE_SUCCESS) {
                LogCrit(COMPONENT_CACHE_INODE_LRU,
@@ -461,7 +451,7 @@ cache_inode_lru_clean(cache_entry_t *entry,
                   "fsal_status.major=%u", fsal_status.major);
      }
 
-     cache_inode_clean_internal(entry, client);
+     cache_inode_clean_internal(entry);
      entry->lru.refcount = 0;
      cache_inode_clean_entry(entry);
 }
@@ -550,7 +540,7 @@ static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
  * This function should only be called from the LRU thread.  It sleeps
  * for the specified time or until woken by lru_wake_thread.
  *
- * @param ms [in] The time to sleep, in milliseconds.
+ * @param[in] ms The time to sleep, in milliseconds.
  *
  * @retval FALSE if the thread wakes by timeout.
  * @retval TRUE if the thread wakes by signal.
@@ -619,7 +609,7 @@ lru_thread_delay_ms(unsigned long ms)
  * This function uses the lock discipline for functions accessing LRU
  * entries through a queue fragment.
  *
- * @param arg [in] A void pointer, currently ignored.
+ * @param[in] arg A void pointer, currently ignored.
  *
  * @return A void pointer, currently NULL.
  */
@@ -637,19 +627,6 @@ lru_thread(void *arg __attribute__((unused)))
      bool_t woke = FALSE;
 
      SetNameFunction("lru_thread");
-
-     /* Initialize the cache_inode_client_t so we can call into
-        cache_inode and not reimplement close. */
-     if (cache_inode_client_init(&lru_client,
-                                 &(nfs_param.cache_layers_param
-                                   .cache_inode_client_param),
-                                 0, NULL)) {
-          /* Failed init */
-          LogFatal(COMPONENT_CACHE_INODE_LRU,
-                   "Cache Inode client could not be initialized");
-     }
-     LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                  "Cache Inode client successfully initialized");
 
      while (1) {
           if (lru_thread_state.flags & LRU_SHUTDOWN)
@@ -822,7 +799,6 @@ lru_thread(void *arg __attribute__((unused)))
                               if (cache_inode_fd(entry)) {
                                    cache_inode_close(
                                         entry,
-                                        &lru_client,
                                         CACHE_INODE_FLAG_REALLYCLOSE,
                                         &cache_status);
                                    if (cache_status != CACHE_INODE_SUCCESS) {
@@ -1068,7 +1044,6 @@ cache_inode_lru_pkgshutdown(void)
  * On success, this function always returns an entry with two
  * references (one for the sentinel, one to allow the caller's use.)
  *
- * @param[in] client  Structure for per-thread resource management
  * @param[in] status  Returned status
  * @param[in] flags   Flags governing call
  *
@@ -1076,8 +1051,7 @@ cache_inode_lru_pkgshutdown(void)
  */
 
 cache_entry_t *
-cache_inode_lru_get(cache_inode_client_t *client,
-                    cache_inode_status_t *status,
+cache_inode_lru_get(cache_inode_status_t *status,
                     uint32_t flags)
 {
      /* The lane from which we harvest (or into which we store) the
@@ -1119,14 +1093,14 @@ cache_inode_lru_get(cache_inode_client_t *client,
                                  "Recycling entry at %p.",
                                  entry);
                }
-               cache_inode_lru_clean(entry, client);
+               cache_inode_lru_clean(entry);
           }
      } else {
           pthread_mutex_unlock(&lru_mtx);
      }
 
      if (!lru) {
-          entry = pool_alloc(client->pool_entry, NULL);
+          entry = pool_alloc(cache_inode_entry_pool, NULL);
           if(entry == NULL) {
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "can't allocate a new entry from cache pool");
@@ -1134,7 +1108,7 @@ cache_inode_lru_get(cache_inode_client_t *client,
                goto out;
           }
           if (pthread_mutex_init(&entry->lru.mtx, NULL) != 0) {
-               pool_free(client->pool_entry, entry);
+               pool_free(cache_inode_entry_pool, entry);
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "pthread_mutex_init of lru.mtx returned %d (%s)",
                        errno,
@@ -1261,7 +1235,6 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
  * function and don't check its return value.
  *
  * @param[in] entry  The entry on which to get a reference
- * @param[in] client Structure for per-thread resource management
  * @param[in] flags  Flags indicating the type of reference sought
  *
  * @retval CACHE_INODE_SUCCESS if the reference was acquired
@@ -1270,7 +1243,6 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
 
 cache_inode_status_t
 cache_inode_lru_ref(cache_entry_t *entry,
-                    cache_inode_client_t *client,
                     uint32_t flags)
 {
      pthread_mutex_lock(&entry->lru.mtx);
@@ -1328,11 +1300,9 @@ cache_inode_lru_ref(cache_entry_t *entry,
  * underflow.
  *
  * @param[in]     entry  The entry to decrement.
- * @param[in,out] client Structure for shared resource management
  */
 
-void cache_inode_lru_kill(cache_entry_t *entry,
-                          cache_inode_client_t *client)
+void cache_inode_lru_kill(cache_entry_t *entry)
 {
      pthread_mutex_lock(&entry->lru.mtx);
      if (entry->lru.flags & LRU_ENTRY_KILLED) {
@@ -1341,7 +1311,7 @@ void cache_inode_lru_kill(cache_entry_t *entry,
           entry->lru.flags |= LRU_ENTRY_KILLED;
           /* cache_inode_lru_unref always either unlocks or destroys
              the entry. */
-          cache_inode_lru_unref(entry, client, LRU_FLAG_LOCKED);
+          cache_inode_lru_unref(entry, LRU_FLAG_LOCKED);
      }
 }
 
@@ -1356,7 +1326,6 @@ void cache_inode_lru_kill(cache_entry_t *entry,
  * time this function returns.
  *
  * @param[in] entry  The entry on which to release a reference
- * @param[in] client Structure for per-thread resource management
  * @param[in] flags  Currently significant are and LRU_FLAG_LOCKED
  *                   (indicating that the caller holds the LRU mutex
  *                   lock for this entry.)
@@ -1364,15 +1333,12 @@ void cache_inode_lru_kill(cache_entry_t *entry,
 
 void
 cache_inode_lru_unref(cache_entry_t *entry,
-                      cache_inode_client_t *client,
                       uint32_t flags)
 {
-     if (!client) {
-          client = &lru_client;
-     }
      if (!(flags & LRU_FLAG_LOCKED)) {
           pthread_mutex_lock(&entry->lru.mtx);
      }
+
      assert(entry->lru.refcount >= 1);
 
      if (entry->lru.refcount == 1) {
@@ -1399,10 +1365,10 @@ cache_inode_lru_unref(cache_entry_t *entry,
                   CACHE_INDOE_DEAD_ENTRY in the attempt to gain a
                   reference, or we will have removed the hash table
                   entry. */
-               cache_inode_lru_clean(entry, client);
+               cache_inode_lru_clean(entry);
 
                pthread_mutex_destroy(&entry->lru.mtx);
-               pool_free(client->pool_entry, entry);
+               pool_free(cache_inode_entry_pool, entry);
                return;
           } else {
                pthread_mutex_unlock(&q->mtx);
@@ -1423,7 +1389,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
  * This function wakes the LRU reaper thread to free FDs and should be
  * called when we are over the high water mark.
  *
- * @param flags [in] Flags to affect the wake (currently none)
+ * @param[in] flags Flags to affect the wake (currently none)
  */
 
 void lru_wake_thread(uint32_t flags)

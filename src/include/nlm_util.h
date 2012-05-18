@@ -60,7 +60,6 @@ int nlm_process_parameters(struct svc_req        * preq,
                            fsal_lock_param_t     * plock,
                            cache_entry_t        ** ppentry,
                            fsal_op_context_t     * pcontext,
-                           cache_inode_client_t  * pclient,
                            care_t                  care,
                            state_nsm_client_t   ** ppnsm_client,
                            state_nlm_client_t   ** ppnlm_client,
@@ -69,14 +68,12 @@ int nlm_process_parameters(struct svc_req        * preq,
 
 void nlm_process_conflict(nlm4_holder          * nlm_holder,
                           state_owner_t        * holder,
-                          fsal_lock_param_t    * conflict,
-                          cache_inode_client_t * pclient);
+                          fsal_lock_param_t    * conflict);
 
 nlm4_stats nlm_convert_state_error(state_status_t status);
 
 state_status_t nlm_granted_callback(cache_entry_t        * pentry,
                                     state_lock_entry_t   * lock_entry,
-                                    cache_inode_client_t * pclient,
                                     state_status_t       * pstatus);
 
 #endif                          /* _NLM_UTIL_H */

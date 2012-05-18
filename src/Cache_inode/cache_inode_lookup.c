@@ -31,7 +31,7 @@
  * \version $Revision: 1.33 $
  * \brief   Perform lookup through the cache.
  *
- * cache_inode_lookup.c : Perform lookup through the cache.
+ * @brief Perform lookup through the cache.
  *
  *
  */
@@ -43,7 +43,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -73,29 +72,24 @@
  *
  * If a cache entry is returned, its refcount is incremented by 1.
  *
- * @param pentry_parent [IN] Entry for the parent directory to be managed.
- * @param name [IN] Name of the entry that we are looking for in the cache.
- * @param pclient [INOUT] Ressource allocated by the client for the
- *                        NFS management.
- * @param pcontext [IN] FSAL credentials
- * @param pstatus [OUT] Returned status.
+ * @param[in]  parent  The directory to search
+ * @param[in]  name    The name to be looked up
+ * @param[in]  context FSAL credentials
+ * @param[out] status  Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when
- *                               validating the entry
+ * @return The cache entry corresponding to name or NULL on error.
  *
  */
 
 cache_entry_t *
-cache_inode_lookup_impl(cache_entry_t *pentry_parent,
-                        fsal_name_t *pname,
-                        cache_inode_client_t *pclient,
-                        fsal_op_context_t *pcontext,
-                        cache_inode_status_t *pstatus)
+cache_inode_lookup_impl(cache_entry_t *parent,
+                        fsal_name_t *name,
+                        fsal_op_context_t *context,
+                        cache_inode_status_t *status)
 {
      cache_inode_dir_entry_t dirent_key;
      cache_inode_dir_entry_t *dirent = NULL;
-     cache_entry_t *pentry = NULL;
+     cache_entry_t *entry = NULL;
      fsal_status_t fsal_status = {0, 0};
      fsal_handle_t object_handle;
      fsal_attrib_list_t object_attributes;
@@ -113,70 +107,67 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
      memset(&object_attributes, 0, sizeof(object_attributes));
 
      /* Set the return default to CACHE_INODE_SUCCESS */
-     *pstatus = CACHE_INODE_SUCCESS;
+     *status = CACHE_INODE_SUCCESS;
 
-     if(pentry_parent->type != DIRECTORY) {
-          *pstatus = CACHE_INODE_NOT_A_DIRECTORY;
+     if(parent->type != DIRECTORY) {
+          *status = CACHE_INODE_NOT_A_DIRECTORY;
           /* stats */
           return NULL;
      }
 
      /* if name is ".", use the input value */
-     if (!FSAL_namecmp(pname, (fsal_name_t *) & FSAL_DOT)) {
-          pentry = pentry_parent;
+     if (!FSAL_namecmp(name, (fsal_name_t *) &FSAL_DOT)) {
+          entry = parent;
           /* Increment the refcount so the caller's decrementing it
              doesn't take us below the sentinel count. */
-          if (cache_inode_lru_ref(pentry, pclient, 0) !=
+          if (cache_inode_lru_ref(entry, 0) !=
               CACHE_INODE_SUCCESS) {
                /* This cannot actually happen */
                LogFatal(COMPONENT_CACHE_INODE,
                         "There has been a grave failure in consistency: "
                         "Unable to increment reference count on an entry that "
-                        "on which we should have a referenced.");
+                        "we should have referenced.");
           }
           goto out;
-     } else if (!FSAL_namecmp(pname, (fsal_name_t *) & FSAL_DOT_DOT)) {
+     } else if (!FSAL_namecmp(name, (fsal_name_t *) &FSAL_DOT_DOT)) {
           /* Directory do only have exactly one parent. This a limitation
            * in all FS, which implies that hard link are forbidden on
            * directories (so that they exists only in one dir).  Because
            * of this, the parent list is always limited to one element for
            * a dir.  Clients SHOULD never 'lookup( .. )' in something that
            * is no dir. */
-          pentry =
-               cache_inode_lookupp_impl(pentry_parent, pclient, pcontext,
-                                        pstatus);
+          entry = cache_inode_lookupp_impl(parent, context, status);
           goto out;
      } else {
           int write_locked = 0;
           /* We first try avltree_lookup by name.  If that fails, we
            * dispatch to the FSAL. */
-          FSAL_namecpy(&dirent_key.name, pname);
+          FSAL_namecpy(&dirent_key.name, name);
           for (write_locked = 0; write_locked < 2; ++write_locked) {
                /* If the dirent cache is untrustworthy, don't even ask it */
-               if (pentry_parent->flags & CACHE_INODE_TRUST_CONTENT) {
-                    dirent = cache_inode_avl_qp_lookup_s(pentry_parent,
+               if (parent->flags & CACHE_INODE_TRUST_CONTENT) {
+                    dirent = cache_inode_avl_qp_lookup_s(parent,
                                                          &dirent_key, 1);
                     if (dirent) {
                          /* Getting a weakref itself increases the refcount. */
-                         pentry = cache_inode_weakref_get(&dirent->entry,
-                                                          pclient,
-                                                          LRU_REQ_SCAN);
-                         if (pentry == NULL) {
+                         entry = cache_inode_weakref_get(&dirent->entry,
+                                                         LRU_REQ_SCAN);
+                         if (entry == NULL) {
                               broken_dirent = dirent;
                               break;
                          } else {
                               /* We have our entry and a valid reference.
                                  Declare victory. */
-                              *pstatus = CACHE_INODE_SUCCESS;
+                              *status = CACHE_INODE_SUCCESS;
                               goto out;
                          }
                     }
                     /* If the dirent cache is both fully populated and
                        valid, it can serve negative lookups. */
                     if (!dirent &&
-                        (pentry_parent->flags & CACHE_INODE_DIR_POPULATED)) {
-                         pentry = NULL;
-                         *pstatus = CACHE_INODE_NOT_FOUND;
+                        (parent->flags & CACHE_INODE_DIR_POPULATED)) {
+                         entry = NULL;
+                         *status = CACHE_INODE_NOT_FOUND;
                          goto out;
                     }
                } else if (write_locked) {
@@ -184,32 +175,31 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
                        still invalid.  Empty it out and mark it valid
                        in preparation for caching the result of this
                        lookup. */
-                    cache_inode_release_dirents(pentry_parent,
-                                                pclient,
+                    cache_inode_release_dirents(parent,
                                                 CACHE_INODE_AVL_BOTH);
-                    atomic_set_int_bits(&pentry_parent->flags,
+                    atomic_set_int_bits(&parent->flags,
                                         CACHE_INODE_TRUST_CONTENT);
                } else {
                     /* Get a write ock and do it again. */
-                    pthread_rwlock_unlock(&pentry_parent->content_lock);
-                    pthread_rwlock_wrlock(&pentry_parent->content_lock);
+                    pthread_rwlock_unlock(&parent->content_lock);
+                    pthread_rwlock_wrlock(&parent->content_lock);
                }
           }
-          assert(pentry == NULL);
+          assert(entry == NULL);
           LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
      }
 
      memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));
-     object_attributes.asked_attributes = pclient->attrmask;
+     object_attributes.asked_attributes = cache_inode_params.attrmask;
      fsal_status =
-          FSAL_lookup(&pentry_parent->handle,
-                      pname, pcontext, &object_handle,
+          FSAL_lookup(&parent->handle,
+                      name, context, &object_handle,
                       &object_attributes);
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
-               cache_inode_kill_entry(pentry_parent, pclient);
+               cache_inode_kill_entry(parent);
           }
-          *pstatus = cache_inode_error_convert(fsal_status);
+          *status = cache_inode_error_convert(fsal_status);
           return NULL;
      }
 
@@ -219,12 +209,12 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
      if(type == SYMBOLIC_LINK) {
           fsal_status =
                FSAL_readlink(&object_handle,
-                             pcontext,
+                             context,
                              &create_arg.link_content,
                              &object_attributes);
 
           if(FSAL_IS_ERROR(fsal_status)) {
-               *pstatus = cache_inode_error_convert(fsal_status);
+               *status = cache_inode_error_convert(fsal_status);
                return NULL;
           }
      }
@@ -232,36 +222,31 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
      /* Allocation of a new entry in the cache */
      new_entry_fsdata.fh_desc.start = (caddr_t) &object_handle;
      new_entry_fsdata.fh_desc.len = 0;
-     FSAL_ExpandHandle(pcontext->export_context,
+     FSAL_ExpandHandle(context->export_context,
                        FSAL_DIGEST_SIZEOF,
                        &new_entry_fsdata.fh_desc);
 
-     if((pentry = cache_inode_new_entry(&new_entry_fsdata,
-                                        &object_attributes,
-                                        type,
-                                        &create_arg,
-                                        pclient,
-                                        pcontext,
-                                        CACHE_INODE_FLAG_NONE,
-                                        pstatus)) == NULL) {
+     if((entry = cache_inode_new_entry(&new_entry_fsdata,
+                                       &object_attributes,
+                                       type,
+                                       &create_arg,
+                                       status)) == NULL) {
           return NULL;
      }
 
      if (broken_dirent) {
           /* Directory entry existed, but the weak reference
              was broken.  Just update with the new one. */
-          broken_dirent->entry = pentry->weakref;
+          broken_dirent->entry = entry->weakref;
           cache_status = CACHE_INODE_SUCCESS;
      } else {
           /* Entry was found in the FSAL, add this entry to the
              parent directory */
-          cache_status = cache_inode_add_cached_dirent(pentry_parent,
-                                                       pname,
-                                                       pentry,
+          cache_status = cache_inode_add_cached_dirent(parent,
+                                                       name,
+                                                       entry,
                                                        NULL,
-                                                       pclient,
-                                                       pcontext,
-                                                       pstatus);
+                                                       status);
           if(cache_status != CACHE_INODE_SUCCESS &&
              cache_status != CACHE_INODE_ENTRY_EXISTS) {
                return NULL;
@@ -270,7 +255,7 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
 
 out:
 
-     return pentry;
+     return entry;
 } /* cache_inode_lookup_impl */
 
 /**
@@ -282,55 +267,48 @@ out:
  *
  * If a cache entry is returned, the refcount on entry is +1.
  *
- * @param pentry_parent [IN] Entry for the parent directory to be managed.
- * @param name [IN] Name of the entry that we are looking up.
- * @param pattr [OUT] Attributes for the entry that we have found.
- * @param pclient [INOUT] Ressource allocated by the client for NFS management.
- * @param pcontext [IN] FSAL credentials.
- * @param pstatus [OUT] Returned status.
+ * @param[in]  parent  Entry for the parent directory to be managed.
+ * @param[in]  name    Name of the entry that we are looking up.
+ * @param[out] attr    Attributes of the found entry.
+ * @param[in]  context FSAL credentials
+ * @param[out] pstatus Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when
- *                               validating the entry
+ * @return The found entry or NUL.
  */
 
 cache_entry_t *
-cache_inode_lookup(cache_entry_t *pentry_parent,
-                   fsal_name_t *pname,
-                   fsal_attrib_list_t *pattr,
-                   cache_inode_client_t *pclient,
-                   fsal_op_context_t *pcontext,
-                   cache_inode_status_t *pstatus)
+cache_inode_lookup(cache_entry_t *parent,
+                   fsal_name_t *name,
+                   fsal_attrib_list_t *attr,
+                   fsal_op_context_t *context,
+                   cache_inode_status_t *status)
 {
      cache_entry_t *entry = NULL;
      fsal_accessflags_t access_mask
           = (FSAL_MODE_MASK_SET(FSAL_X_OK) |
              FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
 
-     if (cache_inode_access(pentry_parent,
+     if (cache_inode_access(parent,
                             access_mask,
-                            pclient,
-                            pcontext,
-                            pstatus) !=
+                            context,
+                            status) !=
          CACHE_INODE_SUCCESS) {
           return NULL;
      }
 
-     pthread_rwlock_rdlock(&pentry_parent->content_lock);
-     entry = cache_inode_lookup_impl(pentry_parent,
-                                     pname,
-                                     pclient,
-                                     pcontext,
-                                     pstatus);
-     pthread_rwlock_unlock(&pentry_parent->content_lock);
+     pthread_rwlock_rdlock(&parent->content_lock);
+     entry = cache_inode_lookup_impl(parent,
+                                     name,
+                                     context,
+                                     status);
+     pthread_rwlock_unlock(&parent->content_lock);
 
      if (entry) {
-          *pstatus = cache_inode_lock_trust_attrs(entry,
-                                                  pcontext,
-                                                  pclient);
-          if(*pstatus == CACHE_INODE_SUCCESS)
+          *status = cache_inode_lock_trust_attrs(entry,
+                                                 context);
+          if(*status == CACHE_INODE_SUCCESS)
             {
-              *pattr = entry->attributes;
+              *attr = entry->attributes;
               pthread_rwlock_unlock(&entry->attr_lock);
             }
      }

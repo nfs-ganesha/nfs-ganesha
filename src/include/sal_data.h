@@ -269,7 +269,6 @@ struct state_owner_t
   int                     so_refcount;
   int                     so_owner_len;
   char                    so_owner_val[NFS4_OPAQUE_LIMIT]; /* big enough for all owners */
-  cache_inode_client_t  * so_pclient;
   union
   {
     state_nfs4_owner_t    so_nfs4_owner;
@@ -352,7 +351,6 @@ typedef enum state_blocking_t
  */
 typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              state_lock_entry_t   * lock_entry,
-                                             cache_inode_client_t * pclient,
                                              state_status_t       * pstatus);
 
 typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
@@ -466,8 +464,6 @@ struct state_cookie_entry_t
  * Structures for state async processing
  *
  */
-extern cache_inode_client_t state_async_cache_inode_client;
-
 typedef void (state_async_func_t) (state_async_queue_t * arg);
 
 #ifdef _USE_NLM
@@ -508,5 +504,11 @@ typedef struct nfs_grace_start
   ushort	nodeid;
   void		*ipaddr;
 } nfs_grace_start_t;
+
+/* Memory pools */
+
+extern pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
+extern pool_t *state_nfs4_owner_name_pool; /*< Pool for NFSv4 files's open_owner */
+extern pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
 
 #endif /*  _SAL_DATA_H */

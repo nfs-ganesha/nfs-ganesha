@@ -149,7 +149,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   }
 
   if (data->current_entry) {
-      cache_inode_put(data->current_entry, data->pclient);
+      cache_inode_put(data->current_entry);
       data->current_entry = NULL;
   }
 
@@ -162,7 +162,6 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
 
   if (data->current_entry) {
        if (cache_inode_lru_ref(data->current_entry,
-                               data->pclient,
                                LRU_FLAG_NONE) != CACHE_INODE_SUCCESS) {
             resp->nfs_resop4_u.opgetfh.status = NFS4ERR_STALE;
             return resp->nfs_resop4_u.opgetfh.status;

@@ -1651,7 +1651,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                         &fsdata.fh_desc);
 
       if((pentry = cache_inode_make_root(&fsdata,
-                                         data->pclient,
                                          data->pcontext,
                                          &cache_status)) == NULL)
         {
@@ -1665,7 +1664,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
-                             ((cache_inode_client_t *) data->pclient),
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1676,7 +1674,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 
       /* Keep the pentry within the compound data */
       if (data->current_entry) {
-          cache_inode_put(data->current_entry, data->pclient);
+          cache_inode_put(data->current_entry);
       }
       data->current_entry = pentry;
       data->current_filetype = cache_inode_fsal_type_convert(attr.type);
@@ -1741,7 +1739,7 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
 
   /* Keep the vnode pointer within the data compound */
   if (data->current_entry) {
-      cache_inode_put(data->current_entry, data->pclient);
+      cache_inode_put(data->current_entry);
   }
   data->current_entry = NULL;
   data->current_filetype = UNASSIGNED;
@@ -1922,7 +1920,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                         &fsdata.fh_desc);
 
       if((pentry = cache_inode_make_root(&fsdata,
-                                         data->pclient,
                                          data->pcontext,
                                          &cache_status)) == NULL)
         {
@@ -1936,7 +1933,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
-                             ((cache_inode_client_t *) data->pclient),
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1947,7 +1943,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
       /* Keep the pentry within the compound data */
       if (data->current_entry) {
-          cache_inode_put(data->current_entry, data->pclient);
+          cache_inode_put(data->current_entry);
       }
       data->current_entry = pentry;
       data->current_filetype = cache_inode_fsal_type_convert(attr.type);
@@ -2111,7 +2107,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                             FSAL_DIGEST_SIZEOF,
                             &fsdata.fh_desc);
           if((pentry = cache_inode_make_root(&fsdata,
-                                             data->pclient,
                                              data->pcontext,
                                              &cache_status)) == NULL)
             {
@@ -2124,7 +2119,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           /* Finally, get the attributes */
           if(cache_inode_getattr(pentry,
                              &attr,
-                             ((cache_inode_client_t *) data->pclient),
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,

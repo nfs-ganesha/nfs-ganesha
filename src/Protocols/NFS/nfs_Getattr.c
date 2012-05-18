@@ -65,31 +65,30 @@
 
 /**
  *
- * nfs_Getattr: get attributes for a file
+ * @brief Get attributes for a file
  *
- * Get attributes for a file. Implements  NFS PROC2 GETATTR and NFS PROC3 GETATTR.
+ * Get attributes for a file. Implements NFS PROC2 GETATTR and NFS
+ * PROC3 GETATTR.
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     Pointer to nfs arguments union
+ * @param[in]  pexport  Pointer to nfs export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Data belonging to the worker thread
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
- *
+ * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs_Getattr(nfs_arg_t * parg,
-                exportlist_t * pexport,
-                fsal_op_context_t * pcontext,
-                cache_inode_client_t * pclient,
-                struct svc_req *preq, nfs_res_t * pres)
+int nfs_Getattr(nfs_arg_t *parg,
+                exportlist_t *pexport,
+                fsal_op_context_t *pcontext,
+                nfs_worker_data_t *pworker,
+                struct svc_req *preq,
+                nfs_res_t *pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Getattr";
-
   fsal_attrib_list_t attr;
   cache_entry_t *pentry = NULL;
   cache_inode_status_t cache_status;
@@ -113,7 +112,7 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_attr2.status),
                                   &(pres->res_getattr3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       LogFullDebug(COMPONENT_NFSPROTO,
@@ -123,7 +122,7 @@ int nfs_Getattr(nfs_arg_t * parg,
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
     {
-      rc = nfs3_Getattr_Xattr(parg, pexport, pcontext, pclient, preq, pres);
+      rc = nfs3_Getattr_Xattr(parg, pexport, pcontext, preq, pres);
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs_Getattr returning %d from nfs3_Getattr_Xattr", rc);
       goto out;
@@ -131,15 +130,15 @@ int nfs_Getattr(nfs_arg_t * parg,
 
   /*
    * Get attributes.  Use NULL for the file name since we have the
-   * vnode to define the file. 
+   * vnode to define the file.
    */
   if(cache_inode_getattr(pentry,
                          &attr,
-                         pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                         pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       /*
        * Client API should be keeping us from crossing junctions,
-       * but double check to be sure. 
+       * but double check to be sure.
        */
 
       switch (preq->rq_vers)
@@ -211,7 +210,7 @@ int nfs_Getattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 

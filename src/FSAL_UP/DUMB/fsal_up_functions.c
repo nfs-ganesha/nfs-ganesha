@@ -104,7 +104,6 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
            "FSAL_UP_DUMB: calling cache_inode_get()");
   pentry = cache_inode_get(&pevdata->event_context.fsal_data,
                            &attr, NULL, NULL,
-                           NULL,
                            &cache_status);
   if(pentry == NULL)
     {
@@ -121,12 +120,11 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
 
   grant_blocked_lock_upcall(pentry,
                             pevdata->type.lock_grant.lock_owner,
-                            &pevdata->type.lock_grant.lock_param,
-                            NULL);
+                            &pevdata->type.lock_grant.lock_param);
 
 
   if(pentry)
-    cache_inode_put(pentry, NULL);
+    cache_inode_put(pentry);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 #else
@@ -144,8 +142,7 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
   LogDebug(COMPONENT_FSAL_UP,
            "FSAL_UP_DUMB: calling cache_inode_get()");
   pentry = cache_inode_get(&pevdata->event_context.fsal_data,
-                           &attr, NULL, NULL, NULL,
-                           &cache_status);
+                           &attr, NULL, NULL, &cache_status);
   if(pentry == NULL)
     {
       LogDebug(COMPONENT_FSAL_UP,
@@ -161,11 +158,10 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
 
   available_blocked_lock_upcall(pentry,
                                 pevdata->type.lock_grant.lock_owner,
-                                &pevdata->type.lock_grant.lock_param,
-                                NULL);
+                                &pevdata->type.lock_grant.lock_param);
 
   if(pentry)
-    cache_inode_put(pentry, NULL);
+    cache_inode_put(pentry);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 #else

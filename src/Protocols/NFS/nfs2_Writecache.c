@@ -60,30 +60,31 @@
 #include "nfs_tools.h"
 
 /**
- * nfs2_Writecache: Implements NFSPROC2_WRITECACHE.
+ * @brief Implements NFSPROC2_WRITECACHE.
  *
  * Implements NFSPROC2_WRITECACHE
- * 
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
- * @return always NFS_REQ_OK (this routine does nothing)
+ * @param[in]  parg     NFS argument union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Client resource to be used
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
+ * @retval NFS_REQ_OK (this routine does nothing)
  */
 
-int nfs2_Writecache(nfs_arg_t * parg,
-                    exportlist_t * pexport,
-                    fsal_op_context_t * pcontext,
-                    cache_inode_client_t * pclient,
-                    struct svc_req *preq, nfs_res_t * pres)
+int nfs2_Writecache(nfs_arg_t *parg,
+                    exportlist_t *pexport,
+                    fsal_op_context_t *pcontext,
+                    nfs_worker_data_t *pworker,
+                    struct svc_req *preq,
+                    nfs_res_t * pres)
 {
   /* This is an unsupported function, it is never used */
   LogCrit(COMPONENT_NFSPROTO,
-          "NFS2_WRITECACHE: Received unexpected call to deprecated function NFS2PROC_WRITECACHE");
+          "NFS2_WRITECACHE: Received unexpected call to deprecated function "
+          "NFS2PROC_WRITECACHE");
   return NFS_REQ_OK;
 }
 

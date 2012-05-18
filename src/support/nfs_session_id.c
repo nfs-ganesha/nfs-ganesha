@@ -66,6 +66,8 @@
 
 size_t strnlen(const char *s, size_t maxlen);
 
+pool_t *nfs41_session_pool;
+
 hash_table_t *ht_session_id;
 uint32_t global_sequence = 0;
 pthread_mutex_t mutex_sequence = PTHREAD_MUTEX_INITIALIZER;

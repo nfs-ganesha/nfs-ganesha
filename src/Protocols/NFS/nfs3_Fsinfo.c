@@ -60,29 +60,30 @@
 #include "nfs_tools.h"
 
 /**
- * nfs3_Fsinfo: Implements NFSPROC3_FSINFO
+ * @brief Implements NFSPROC3_FSINFO
  *
- * Implements NFSPROC3_COMMIT. Unused for now, but may be supported later. 
- * 
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * Implements NFSPROC3_FSINFO.
  *
- * @return always NFS_REQ_OK (this routine does nothing)
+ * @param[in]  parg     NFS arguments union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
+ *
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs3_Fsinfo(nfs_arg_t * parg,
-                exportlist_t * pexport,
-                fsal_op_context_t * pcontext,
-                cache_inode_client_t * pclient,
-                struct svc_req *preq, nfs_res_t * pres)
+int nfs3_Fsinfo(nfs_arg_t *parg,
+                exportlist_t *pexport,
+                fsal_op_context_t *pcontext,
+                nfs_worker_data_t *pworker,
+                struct svc_req *preq,
+                nfs_res_t * pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs3_Fsinfo";
-
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
   cache_inode_fsal_data_t fsal_data;
@@ -110,7 +111,6 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
   /* Get the entry in the cache_inode */
   if((pentry = cache_inode_get(&fsal_data,
                                &attr,
-                               pclient,
                                pcontext,
                                NULL,
                                &cache_status)) == NULL)
@@ -176,7 +176,7 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
 
   if (pentry)
     {
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
     }
 
   return rc;

@@ -152,8 +152,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
     {
       /* This lock owner is not known yet, allocated and set up a new one */
-      plock_owner = create_nfs4_owner(data->pclient,
-                                      &owner_name,
+      plock_owner = create_nfs4_owner(&owner_name,
                                       STATE_OPEN_OWNER_NFSV4,
                                       NULL,
                                       0);
@@ -194,18 +193,16 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                 &lock_desc,
                 &conflict_owner,
                 &conflict_desc,
-                data->pclient,
                 &state_status) == STATE_LOCK_CONFLICT)
     {
       /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
       Process_nfs4_conflict(&res_LOCKT4.LOCKT4res_u.denied,
                             conflict_owner,
-                            &conflict_desc,
-                            data->pclient);
+                            &conflict_desc);
     }
 
   /* Release NFS4 Open Owner reference */
-  dec_state_owner_ref(plock_owner, data->pclient);
+  dec_state_owner_ref(plock_owner);
 
   /* Return result */
   res_LOCKT4.status = nfs4_Errno_state(state_status);

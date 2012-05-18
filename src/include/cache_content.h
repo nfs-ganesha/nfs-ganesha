@@ -331,7 +331,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                    unsigned int index,
                                                    unsigned int mod,
                                                    cache_content_client_t * pclient_data,
-                                                   cache_inode_client_t * pclient_inode,
                                                    fsal_op_context_t * pcontext,
                                                    cache_content_status_t * pstatus);
 

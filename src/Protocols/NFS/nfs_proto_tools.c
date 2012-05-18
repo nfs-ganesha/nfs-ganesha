@@ -200,7 +200,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   nfsstat4 * pstatus4,
                                   fsal_attrib_list_t * pattr,
                                   fsal_op_context_t * pcontext,
-                                  cache_inode_client_t * pclient,
                                   int *prc)
 {
   cache_inode_fsal_data_t fsal_data;
@@ -275,7 +274,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       return NULL;
     }
 
-  if((pentry = cache_inode_get(&fsal_data, &attr, pclient, pcontext,
+  if((pentry = cache_inode_get(&fsal_data, &attr, pcontext,
                                NULL, &cache_status)) == NULL)
     {
       switch (rq_vers)
@@ -4258,10 +4257,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
 int nfs4_MakeCred(compound_data_t * data)
 {
   exportlist_client_entry_t related_client;
-  nfs_worker_data_t *pworker = NULL;
   struct user_cred user_credentials;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
   if (get_req_uid_gid(data->reqp,
                       data->pexport,
@@ -4270,13 +4266,13 @@ int nfs4_MakeCred(compound_data_t * data)
 
   LogFullDebug(COMPONENT_DISPATCH,
                "nfs4_MakeCred about to call nfs_export_check_access");
-  if(nfs_export_check_access(&pworker->hostaddr,
+  if(nfs_export_check_access(&data->pworker->hostaddr,
                              data->reqp,
                              data->pexport,
                              nfs_param.core_param.program[P_NFS],
                              nfs_param.core_param.program[P_MNT],
-                             pworker->ht_ip_stats,
-                             pworker->ip_stats_pool,
+                             data->pworker->ht_ip_stats,
+                             data->pworker->ip_stats_pool,
                              &related_client,
                              &user_credentials,
                              FALSE) /* So check_access() doesn't deny based on whether this is a RO export. */

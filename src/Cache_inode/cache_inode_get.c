@@ -73,7 +73,6 @@
  *
  * @param[in]     fsdata     File system data
  * @param[out]    attr       The attributes of the got entry
- * @param[in,out] client     Resource management structure
  * @param[in]     context    FSAL credentials
  * @param[in]     associated Entry that may be equal to the got entry
  * @param[out]    status     Returned status
@@ -84,7 +83,6 @@
 cache_entry_t *
 cache_inode_get(cache_inode_fsal_data_t *fsdata,
                 fsal_attrib_list_t *attr,
-                cache_inode_client_t *client,
                 fsal_op_context_t *context,
                 cache_entry_t *associated,
                 cache_inode_status_t *status)
@@ -128,7 +126,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
           /* Entry exists in the cache and was found */
           entry = value.pdata;
           /* take an extra reference within the critical section */
-          if (cache_inode_lru_ref(entry, client, LRU_REQ_INITIAL) !=
+          if (cache_inode_lru_ref(entry, LRU_REQ_INITIAL) !=
               CACHE_INODE_SUCCESS) {
                /* Dead entry.  Treat like a lookup failure. */
                entry = NULL;
@@ -143,7 +141,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      }
      HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
-     if (!client && !context) {
+     if (!context) {
           /* Upcalls have no access to a cache_inode_client_t,
              so just return the entry without revalidating it or
              creating a new one. */
@@ -157,7 +155,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
           /* Cache miss, allocate a new entry */
           file_handle = (fsal_handle_t *) fsdata->fh_desc.start;
           /* First, call FSAL to know what the object is */
-          fsal_attributes.asked_attributes = client->attrmask;
+          fsal_attributes.asked_attributes = cache_inode_params.attrmask;
           fsal_status
                = FSAL_getattrs(file_handle, context, &fsal_attributes);
           if (FSAL_IS_ERROR(fsal_status)) {
@@ -180,7 +178,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
           /* Get the cache_inode file type */
           type = cache_inode_fsal_type_convert(fsal_attributes.type);
           if (type == SYMBOLIC_LINK) {
-               fsal_attributes.asked_attributes = client->attrmask;
+               fsal_attributes.asked_attributes = cache_inode_params.attrmask;
                fsal_status =
                     FSAL_readlink(file_handle, context,
                                   &create_arg.link_content,
@@ -196,9 +194,6 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                                        &fsal_attributes,
                                        type,
                                        &create_arg,
-                                       client,
-                                       context,
-                                       CACHE_INODE_FLAG_NONE,
                                        status)) == NULL) {
                return NULL;
           }
@@ -228,14 +223,13 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
         for example.) */
 
      if ((*status = cache_inode_check_trust(entry,
-                                            context,
-                                            client))
+                                            context))
          != CACHE_INODE_SUCCESS) {
        goto out_put;
      }
 
      /* Set the returned attributes */
-     *status = cache_inode_lock_trust_attrs(entry, context, client);
+     *status = cache_inode_lock_trust_attrs(entry, context);
 
      /* cache_inode_lock_trust_attrs may fail, in that case, the
         attributes are wrong and pthread_rwlock_unlock can't be called
@@ -250,7 +244,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      return entry;
 
  out_put:
-     cache_inode_put(entry, client);
+     cache_inode_put(entry);
      entry = NULL;
      return entry;
 } /* cache_inode_get */
@@ -267,14 +261,12 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
  * reference).  Caller MUST NOT make further accesses to the memory pointed
  * to by entry.
  *
- * @param entry [IN] cache entry being returned
- * @param pclient [INOUT] ressource allocated by the client for the nfs management.
+ * @param[in] entry Cache entry being returned
  *
- * @return status.
+ * @return CACHE_INDOE_STATUS or error codes
  *
  */
-void cache_inode_put(cache_entry_t *entry,
-                     cache_inode_client_t *pclient)
+void cache_inode_put(cache_entry_t *entry)
 {
-  cache_inode_lru_unref(entry, pclient, LRU_FLAG_NONE);
+  cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 }

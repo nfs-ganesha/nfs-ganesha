@@ -282,7 +282,6 @@ int nfs_SetPostOpXAttrFile(fsal_op_context_t * pcontext,
 int nfs3_Access_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
-                      cache_inode_client_t * pclient,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   fsal_attrib_list_t attr;
@@ -301,7 +300,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
                                   NULL,
                                   NULL,
                                   &(pres->res_access3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -354,7 +353,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
       if(parg->arg_access3.access & ACCESS3_LOOKUP)
         access_mode |= FSAL_X_OK;
 
-      xattrs.asked_attributes = pclient->attrmask;
+      xattrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -411,7 +410,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 }                               /* nfs3_Access_Xattr */
@@ -435,7 +434,6 @@ out:
 int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
-                      cache_inode_client_t * pclient,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   cache_inode_status_t cache_status;
@@ -455,7 +453,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                                       NULL,
                                       NULL,
                                       &(pres->res_lookup3.status),
-                                      NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                      NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
         goto out;
@@ -501,7 +499,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                                             data));
 
       /* Retrieve xattr attributes */
-      xattr_attrs.asked_attributes = pclient->attrmask;
+      xattr_attrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &xattr_attrs);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -537,7 +535,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry_dir)
-      cache_inode_put(pentry_dir, pclient);
+      cache_inode_put(pentry_dir);
 
   return (rc);
 }                               /* nfs3_Lookup_Xattr */
@@ -561,7 +559,6 @@ out:
 int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
                        fsal_op_context_t * pcontext,
-                       cache_inode_client_t * pclient,
                        struct svc_req *preq, nfs_res_t * pres)
 {
   typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
@@ -608,7 +605,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                                       NULL,
                                       &(pres->res_readdir3.status),
                                       NULL,
-                                      &dir_attr, pcontext, pclient, &rc)) == NULL)
+                                      &dir_attr, pcontext, &rc)) == NULL)
     {
       /* return NFS_REQ_DROP ; */
       goto out;
@@ -869,7 +866,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (dir_pentry)
-      cache_inode_put(dir_pentry, pclient);
+      cache_inode_put(dir_pentry);
 
   return (rc);
 
@@ -893,7 +890,6 @@ out:
 int nfs3_Create_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
-                      cache_inode_client_t * pclient,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *parent_pentry = NULL;
@@ -917,7 +913,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
                                          &(pres->res_dirop2.status),
                                          NULL,
                                          NULL,
-                                         &pre_attr, pcontext, pclient, &rc)) == NULL)
+                                         &pre_attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -950,7 +946,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
       goto out;
     }
 
-  attr_attrs.asked_attributes = pclient->attrmask;
+  attr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, attr_id, &attr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -1009,7 +1005,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   return (rc);
 
@@ -1020,7 +1016,6 @@ extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
 int nfs3_Write_Xattr(nfs_arg_t * parg,
                      exportlist_t * pexport,
                      fsal_op_context_t * pcontext,
-                     cache_inode_client_t * pclient,
                      struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *pentry;
@@ -1042,7 +1037,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
                                   NULL,
                                   NULL,
                                   &(pres->res_write3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -1092,7 +1087,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
 
   /* @TODO deal with error cases */
 
-  attr_attrs.asked_attributes = pclient->attrmask;
+  attr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &attr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -1117,7 +1112,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 }                               /* nfs3_Write_Xattr */
@@ -1140,7 +1135,6 @@ out:
 int nfs3_Read_Xattr(nfs_arg_t * parg,
                     exportlist_t * pexport,
                     fsal_op_context_t * pcontext,
-                    cache_inode_client_t * pclient,
                     struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *pentry;
@@ -1161,7 +1155,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
                                   NULL,
                                   NULL,
                                   &(pres->res_read3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -1221,7 +1215,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   pres->res_read3.READ3res_u.resok.eof = TRUE;
 
   /* Retrieve xattr attributes */
-  xattr_attrs.asked_attributes = pclient->attrmask;
+  xattr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &xattr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -1250,7 +1244,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 
@@ -1278,7 +1272,6 @@ out:
 int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            exportlist_t * pexport,
                            fsal_op_context_t * pcontext,
-                           cache_inode_client_t * pclient,
                            struct svc_req *preq, nfs_res_t * pres)
 {
   typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
@@ -1326,7 +1319,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                                       NULL,
                                       &(pres->res_readdirplus3.status),
                                       NULL,
-                                      &dir_attr, pcontext, pclient, &rc)) == NULL)
+                                      &dir_attr, pcontext, &rc)) == NULL)
     {
       /* return NFS_REQ_DROP ; */
       goto out;
@@ -1669,7 +1662,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (dir_pentry)
-      cache_inode_put(dir_pentry, pclient);
+      cache_inode_put(dir_pentry);
 
   return (rc);
 
@@ -1693,7 +1686,6 @@ out:
 int nfs3_Getattr_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
                        fsal_op_context_t * pcontext,
-                       cache_inode_client_t * pclient,
                        struct svc_req *preq, nfs_res_t * pres)
 {
   fsal_attrib_list_t attr;
@@ -1709,7 +1701,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
                                   NULL,
                                   NULL,
                                   &(pres->res_getattr3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -1742,7 +1734,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
       fsal_status_t fsal_status;
       fsal_attrib_list_t xattrs;
 
-      xattrs.asked_attributes = pclient->attrmask;
+      xattrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -1763,7 +1755,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 
@@ -1772,7 +1764,6 @@ out:
 int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
                       exportlist_t * pexport /* IN  */ ,
                       fsal_op_context_t * pcontext /* IN  */ ,
-                      cache_inode_client_t * pclient /* IN  */ ,
                       struct svc_req *preq /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
@@ -1789,7 +1780,7 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
                                   NULL,
                                   NULL,
                                   &(pres->res_remove3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -1819,7 +1810,7 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 

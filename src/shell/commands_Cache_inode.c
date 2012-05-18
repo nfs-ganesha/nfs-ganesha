@@ -110,7 +110,6 @@ typedef struct cmdCacheInode_thr_info__
   char current_path[FSAL_MAX_PATH_LEN]; /* current path */
 
   /** Thread specific variable : the client for the cache */
-  cache_inode_client_t client;
   cache_content_client_t dc_client;
 
 } cmdCacheInode_thr_info_t;

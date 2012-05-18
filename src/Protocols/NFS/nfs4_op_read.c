@@ -270,7 +270,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     {
       if(cache_inode_access(pentry,
                             FSAL_READ_ACCESS,
-                            data->pclient,
                             data->pcontext,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
@@ -356,13 +355,12 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       &read_size,
                       bufferdata,
                       &eof_met,
-                      data->pclient,
                       data->pcontext,
                       CACHE_INODE_SAFE_WRITE_TO_FS,
                       &cache_status) != CACHE_INODE_SUCCESS) ||
-     ((cache_inode_getattr(pentry, &attr, data->pclient, data->pcontext,
-                              &cache_status)) != CACHE_INODE_SUCCESS))
- 
+     ((cache_inode_getattr(pentry, &attr, data->pcontext,
+                           &cache_status)) != CACHE_INODE_SUCCESS))
+
     {
       res_READ4.status = nfs4_Errno(cache_status);
       if (anonymous)

@@ -231,7 +231,6 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
   if(state_find_grant(nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_bytes,
                       nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_len,
                       &cookie_entry,
-                      &state_async_cache_inode_client,
                       &state_status) != STATE_SUCCESS)
     {
       /* This must be an old NLM_GRANTED_RES */
@@ -259,7 +258,6 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
   if(state_release_grant(pcontext,
                          cookie_entry,
-                         &state_async_cache_inode_client,
                          &state_status) != STATE_SUCCESS)
     {
       /* Huh? */
@@ -275,7 +273,6 @@ int nlm_process_parameters(struct svc_req        * preq,
                            fsal_lock_param_t     * plock,
                            cache_entry_t        ** ppentry,
                            fsal_op_context_t     * pcontext,
-                           cache_inode_client_t  * pclient,
                            care_t                  care,
                            state_nsm_client_t   ** ppnsm_client,
                            state_nlm_client_t   ** ppnlm_client,
@@ -302,7 +299,6 @@ int nlm_process_parameters(struct svc_req        * preq,
   /* Now get the cached inode attributes */
   *ppentry = cache_inode_get(&fsal_data,
                              &attr,
-                             pclient,
                              pcontext,
                              NULL,
                              &cache_status);
@@ -412,8 +408,7 @@ int nlm_process_parameters(struct svc_req        * preq,
 
 void nlm_process_conflict(nlm4_holder          * nlm_holder,
                           state_owner_t        * holder,
-                          fsal_lock_param_t    * conflict,
-                          cache_inode_client_t * pclient)
+                          fsal_lock_param_t    * conflict)
 {
   if(conflict != NULL)
     {
@@ -453,7 +448,7 @@ void nlm_process_conflict(nlm4_holder          * nlm_holder,
 
   /* Release any lock owner reference passed back from SAL */
   if(holder != NULL)
-    dec_state_owner_ref(holder, pclient);
+    dec_state_owner_ref(holder);
 }
 
 nlm4_stats nlm_convert_state_error(state_status_t status)
@@ -545,7 +540,6 @@ bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
 
 state_status_t nlm_granted_callback(cache_entry_t        * pentry,
                                     state_lock_entry_t   * lock_entry,
-                                    cache_inode_client_t * pclient,
                                     state_status_t       * pstatus)
 {
   fsal_op_context_t        fsal_context, *pcontext = &fsal_context;
@@ -591,7 +585,6 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
                             sizeof(nlm_grant_cookie),
                             lock_entry,
                             &cookie_entry,
-                            pclient,
                             pstatus) != STATE_SUCCESS)
     {
       free_grant_arg(arg);
@@ -662,7 +655,6 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   /* Cancel the pending grant to release the cookie */
   if(state_cancel_grant(pcontext,
                         cookie_entry,
-                        pclient,
                         &dummy_status) != STATE_SUCCESS)
     {
       /* Not much we can do other than log that something bad happened. */

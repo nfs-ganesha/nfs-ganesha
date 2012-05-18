@@ -65,31 +65,30 @@
 
 /**
  *
- * nfs_Link: The NFS PROC2 and PROC3 LINK
+ * @brief The NFS PROC2 and PROC3 LINK
  *
- * The NFS PROC2 and PROC3 LINK. 
+ * The NFS PROC2 and PROC3 LINK.
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS argument union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Link(nfs_arg_t * parg,
-             exportlist_t * pexport,
-             fsal_op_context_t * pcontext,
-             cache_inode_client_t * pclient,
-             struct svc_req *preq, nfs_res_t * pres)
+int nfs_Link(nfs_arg_t *parg,
+             exportlist_t *pexport,
+             fsal_op_context_t *pcontext,
+             nfs_worker_data_t *pworker,
+             struct svc_req *preq,
+             nfs_res_t * pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Link";
-
   char *str_link_name = NULL;
   fsal_name_t link_name;
   cache_entry_t *target_pentry = NULL;
@@ -154,7 +153,7 @@ int nfs_Link(nfs_arg_t * parg,
                                          &(pres->res_link3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -169,7 +168,7 @@ int nfs_Link(nfs_arg_t * parg,
                                          &(pres->res_link3.status),
                                          NULL,
                                          &target_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;;
@@ -247,12 +246,10 @@ int nfs_Link(nfs_arg_t * parg,
                                   parent_pentry,
                                   &link_name,
                                   &attr,
-                                  pclient,
                                   pcontext, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   if(cache_inode_getattr(parent_pentry,
                                          &attr_parent_after,
-                                         pclient,
                                          pcontext, &cache_status) == CACHE_INODE_SUCCESS)
                     {
                       switch (preq->rq_vers)
@@ -318,10 +315,10 @@ int nfs_Link(nfs_arg_t * parg,
 out:
   /* return references */
   if (target_pentry)
-      cache_inode_put(target_pentry, pclient);
+      cache_inode_put(target_pentry);
 
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   return (rc);
 

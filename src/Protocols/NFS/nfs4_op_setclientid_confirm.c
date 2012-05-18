@@ -81,8 +81,6 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
   clientid4 clientid = 0;
   nfs_worker_data_t *pworker __attribute__((unused)) = NULL;
 
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
-
 #define arg_SETCLIENTID_CONFIRM4 op->nfs_argop4_u.opsetclientid_confirm
 #define res_SETCLIENTID_CONFIRM4 resp->nfs_resop4_u.opsetclientid_confirm
 
@@ -140,15 +138,6 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
           /* check if the client can perform reclaims */
           nfs4_chk_clid(nfs_clientid);
 
-#if 0
-          /* Set the new value */
-          if(nfs_client_id_set(clientid, nfs_clientid, &pworker->clientid_pool) !=
-             CLIENT_ID_SUCCESS)
-            {
-              res_SETCLIENTID_CONFIRM4.status = NFS4ERR_SERVERFAULT;
-              return res_SETCLIENTID_CONFIRM4.status;
-            }
-#endif
         }
       V(nfs_clientid->clientid_mutex);
     }

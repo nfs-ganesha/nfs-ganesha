@@ -212,13 +212,6 @@ typedef struct nfs_rpc_dupreq_param__
   hash_parameter_t hash_param;
 } nfs_rpc_dupreq_parameter_t;
 
-typedef struct nfs_cache_layer_parameter__
-{
-  cache_inode_parameter_t cache_param;
-  cache_inode_client_parameter_t cache_inode_client_param;
-  cache_inode_gc_policy_t gcpol;
-} nfs_cache_layers_parameter_t;
-
 typedef enum protos
 {
   P_NFS,
@@ -345,7 +338,6 @@ typedef struct nfs_param__
   hash_parameter_t nlm_client_hash_param;
   hash_parameter_t nlm_owner_hash_param;
 #endif
-  nfs_cache_layers_parameter_t cache_layers_param;
   fsal_parameter_t fsal_param;
   external_tools_parameter_t extern_param;
 
@@ -538,7 +530,6 @@ struct nfs_client_id__
   struct glist_head clientid_openowners;
   struct glist_head clientid_lockowners;
   pthread_mutex_t clientid_mutex;
-  pool_t *clientid_pool;
   struct {
       char client_r_addr[SOCK_NAME_MAX]; /* supplied univ. address */
       gsh_addr_t addr;
@@ -575,7 +566,7 @@ typedef enum pause_state
   STATE_PAUSED,
   STATE_EXIT
 } pause_state_t;
-  
+
 typedef struct nfs_thread_control_block__
 {
   pthread_cond_t tcb_condvar;
@@ -595,8 +586,6 @@ typedef struct nfs_worker_data__
   pool_t *request_pool;
   pool_t *dupreq_pool;
   pool_t *ip_stats_pool;
-  pool_t *clientid_pool;
-  cache_inode_client_t cache_inode_client;
   hash_table_t *ht_ip_stats;
   pthread_mutex_t request_pool_mutex;
   nfs_tcb_t wcb; /* Worker control block */
@@ -698,7 +687,13 @@ typedef enum worker_available_rc
   WORKER_EXIT
 } worker_available_rc;
 
-/* 
+/*
+ * Object pools
+ */
+
+extern pool_t *nfs_clientid_pool;
+
+/*
  *functions prototypes
  */
 enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
@@ -819,7 +814,7 @@ void auth_stat2str(enum auth_stat, char *str);
 int nfs_Init_client_id(nfs_client_id_parameter_t param);
 int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param);
 
-int nfs_client_id_remove(clientid4 clientid, pool_t *clientid_pool);
+int nfs_client_id_remove(clientid4 clientid);
 
 int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res);
 
@@ -828,12 +823,10 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res);
 int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id_res);
 
 int nfs_client_id_add(clientid4 clientid,
-                      nfs_client_id_t client_record,
-                      cache_inode_client_t *pclient);
+                      nfs_client_id_t client_record);
 
 int nfs_client_id_set(clientid4 clientid,
-                      nfs_client_id_t client_record,
-                      pool_t *clientid_pool);
+                      nfs_client_id_t client_record);
 
 void nfs_client_id_expire(nfs_client_id_t *client_record);
 

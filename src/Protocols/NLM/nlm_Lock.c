@@ -40,23 +40,23 @@
 #include "nlm_async.h"
 
 /**
- * nlm4_Lock: Set a range lock
+ * @brief Set a range lock
  *
- *  @param parg        [IN]
- *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
- *  @param pclient     [INOUT]
- *  @param preq        [IN]
- *  @param pres        [OUT]
+ * @param[in]  parg
+ * @param[in]  pexport
+ * @param[in]  pcontext
+ * @param[in]  pworker
+ * @param[in]  preq
+ * @param[out] pres
  *
  */
 
-int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
-              exportlist_t         * pexport  /* IN     */ ,
-              fsal_op_context_t    * pcontext /* IN     */ ,
-              cache_inode_client_t * pclient  /* INOUT  */ ,
-              struct svc_req       * preq     /* IN     */ ,
-              nfs_res_t            * pres     /* OUT    */ )
+int nlm4_Lock(nfs_arg_t            * parg,
+              exportlist_t         * pexport,
+              fsal_op_context_t    * pcontext,
+              nfs_worker_data_t    * pworker,
+              struct svc_req       * preq,
+              nfs_res_t            * pres)
 {
   nlm4_lockargs      * arg = &parg->arg_nlm4_lock;
   cache_entry_t      * pentry;
@@ -108,7 +108,6 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
                               &lock,
                               &pentry,
                               pcontext,
-                              pclient,
                               CARE_MONITOR,
                               &nsm_client,
                               &nlm_client,
@@ -138,7 +137,6 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
                 &lock,
                 &holder,
                 &conflict,
-                pclient,
                 &state_status) != STATE_SUCCESS)
     {
       pres->res_nlm4test.test_stat.stat = nlm_convert_state_error(state_status);
@@ -147,8 +145,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
         {
           nlm_process_conflict(&pres->res_nlm4test.test_stat.nlm4_testrply_u.holder,
                                holder,
-                               &conflict,
-                               pclient);
+                               &conflict);
         }
 
       /* If we didn't block, release the block data */
@@ -163,7 +160,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
   /* Release the NLM Client and NLM Owner references we have */
   dec_nsm_client_ref(nsm_client);
   dec_nlm_client_ref(nlm_client);
-  dec_state_owner_ref(nlm_owner, pclient);
+  dec_state_owner_ref(nlm_owner);
 
   LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
            lock_result_str(pres->res_nlm4.stat.stat));
@@ -195,20 +192,20 @@ static void nlm4_lock_message_resp(state_async_queue_t *arg)
 /**
  * nlm4_Lock_Message: Lock Message
  *
- *  @param parg        [IN]
- *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
- *  @param pclient     [INOUT]
- *  @param preq        [IN]
- *  @param pres        [OUT]
+ * @param[in]  parg
+ * @param[in]  pexport
+ * @param[in]  pcontext
+ * @param[in]  pworker
+ * @param[in]  preq
+ * @param[out] pres
  *
  */
-int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
-                      exportlist_t * pexport /* IN     */ ,
-                      fsal_op_context_t * pcontext /* IN     */ ,
-                      cache_inode_client_t * pclient /* INOUT  */ ,
-                      struct svc_req *preq /* IN     */ ,
-                      nfs_res_t * pres /* OUT    */ )
+int nlm4_Lock_Message(nfs_arg_t *parg,
+                      exportlist_t *pexport,
+                      fsal_op_context_t *pcontext,
+                      nfs_worker_data_t *pworker,
+                      struct svc_req *preq,
+                      nfs_res_t *pres)
 {
   state_nlm_client_t * nlm_client = NULL;
   state_nsm_client_t * nsm_client;
@@ -225,7 +222,7 @@ int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-    rc = nlm4_Lock(parg, pexport, pcontext, pclient, preq, pres);
+    rc = nlm4_Lock(parg, pexport, pcontext, pworker, preq, pres);
 
   if(rc == NFS_REQ_OK)
     rc = nlm_send_async_res_nlm4(nlm_client, nlm4_lock_message_resp, pres);

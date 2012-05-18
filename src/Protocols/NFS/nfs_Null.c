@@ -62,24 +62,24 @@
 
 /**
  * nfs_Null: The NFS proc null function, for all versions.
- * 
+ *
  * The NFS proc null function, for all versions.
- * 
- *  @param parg        [IN]    ignored
- *  @param pexportlist [IN]    ignored
- *	@param pcontextp      [IN]    ignored
- *  @param pclient     [INOUT] ignored
- *  @param preq        [IN]    ignored 
- *	@param pres        [OUT]   ignored
+ *
+ * @param[in]  parg        ignored
+ * @param[in]  pexportlist ignored
+ * @param[in]  pcontext    ignored
+ * @param[in]  pworker     ignored
+ * @param[in]  preq        ignored
+ * @param[out] pres        ignored
  *
  */
 
-int nfs_Null(nfs_arg_t * parg /* IN     */ ,
-             exportlist_t * pexport /* IN     */ ,
-             fsal_op_context_t * pcontext /* IN     */ ,
-             cache_inode_client_t * pclient /* INOUT  */ ,
-             struct svc_req *preq /* IN     */ ,
-             nfs_res_t * pres /* OUT    */ )
+int nfs_Null(nfs_arg_t *parg,
+             exportlist_t *pexport,
+             fsal_op_context_t *pcontext,
+             nfs_worker_data_t *pworker,
+             struct svc_req *preq,
+             nfs_res_t *pres)
 {
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_Null");
   return NFS_OK;

@@ -562,69 +562,57 @@ void nfs_set_param_default()
 #endif
 
   /* Cache inode parameters : hash table */
-  nfs_param.cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE;
-  nfs_param.cache_layers_param.cache_param.hparam.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
-  nfs_param.cache_layers_param.cache_param.hparam.flags = HT_FLAG_CACHE;
-  nfs_param.cache_layers_param.cache_param.hparam.hash_func_key = NULL ;
-  nfs_param.cache_layers_param.cache_param.hparam.hash_func_rbt = NULL ;
-  nfs_param.cache_layers_param.cache_param.hparam.hash_func_both =
-      cache_inode_fsal_rbt_both;
-  nfs_param.cache_layers_param.cache_param.hparam.compare_key =
-      cache_inode_compare_key_fsal;
-  nfs_param.cache_layers_param.cache_param.hparam.key_to_str = display_cache;
-  nfs_param.cache_layers_param.cache_param.hparam.val_to_str = display_cache;
-  nfs_param.cache_layers_param.cache_param.hparam.name = "Cache Inode";
-  nfs_param.cache_layers_param.cache_param.hparam.flags = HT_FLAG_CACHE;
+  cache_inode_params.hparam.index_size = PRIME_CACHE_INODE;
+  cache_inode_params.hparam.alphabet_length = 10;
+  cache_inode_params.hparam.hash_func_key = NULL;
+  cache_inode_params.hparam.hash_func_rbt = NULL;
+  cache_inode_params.hparam.hash_func_both = cache_inode_fsal_rbt_both;
+  cache_inode_params.hparam.compare_key = cache_inode_compare_key_fsal;
+  cache_inode_params.hparam.key_to_str = display_cache;
+  cache_inode_params.hparam.val_to_str = display_cache;
+  cache_inode_params.hparam.name = "Cache Inode";
+  cache_inode_params.hparam.flags = HT_FLAG_CACHE;
 
 #ifdef _USE_NLM
   /* Cache inode parameters : cookie hash table */
-  nfs_param.cache_layers_param.cache_param.cookie_param.index_size
-       = PRIME_STATE_ID;
-  /* Buffer seen as a decimal polynom */
-  nfs_param.cache_layers_param.cache_param.cookie_param.alphabet_length = 10;
-  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_key
-       = lock_cookie_value_hash_func ;
-  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_rbt
-       = lock_cookie_rbt_hash_func ;
-  nfs_param.cache_layers_param.cache_param.cookie_param.compare_key
-       = compare_lock_cookie_key;
-  nfs_param.cache_layers_param.cache_param.cookie_param.key_to_str
-       = display_lock_cookie_key;
-  nfs_param.cache_layers_param.cache_param.cookie_param.val_to_str
-       = display_lock_cookie_val;
-  nfs_param.cache_layers_param.cache_param.cookie_param.name = "Lock Cookie";
-  nfs_param.cache_layers_param.cache_param.cookie_param.flags = HT_FLAG_NONE;
+  cache_inode_params.cookie_param.index_size = PRIME_STATE_ID;
+  cache_inode_params.cookie_param.alphabet_length = 10;
+  cache_inode_params.cookie_param.hash_func_key = lock_cookie_value_hash_func;
+  cache_inode_params.cookie_param.hash_func_rbt = lock_cookie_rbt_hash_func ;
+  cache_inode_params.cookie_param.compare_key = compare_lock_cookie_key;
+  cache_inode_params.cookie_param.key_to_str = display_lock_cookie_key;
+  cache_inode_params.cookie_param.val_to_str = display_lock_cookie_val;
+  cache_inode_params.cookie_param.name = "Lock Cookie";
+  cache_inode_params.cookie_param.flags = HT_FLAG_NONE;
 #endif
 
-  /* Cache inode parameters : Garbage collection policy */
-  nfs_param.cache_layers_param.gcpol.entries_hwmark = 100000;
-  nfs_param.cache_layers_param.gcpol.entries_lwmark = 50000;
-  nfs_param.cache_layers_param.gcpol.use_fd_cache = TRUE;
-  nfs_param.cache_layers_param.gcpol.lru_run_interval = 600;
-  nfs_param.cache_layers_param.gcpol.fd_limit_percent = 99;
-  nfs_param.cache_layers_param.gcpol.fd_hwmark_percent = 90;
-  nfs_param.cache_layers_param.gcpol.fd_lwmark_percent = 50;
-  nfs_param.cache_layers_param.gcpol.reaper_work = 1000;
-  nfs_param.cache_layers_param.gcpol.biggest_window = 40;
-  nfs_param.cache_layers_param.gcpol.required_progress = 5;
-  nfs_param.cache_layers_param.gcpol.futility_count = 8;
+  /* Cache inode parameters: Garbage collection policy */
+  cache_inode_gc_policy.entries_hwmark = 100000;
+  cache_inode_gc_policy.entries_lwmark = 50000;
+  cache_inode_gc_policy.use_fd_cache = TRUE;
+  cache_inode_gc_policy.lru_run_interval = 600;
+  cache_inode_gc_policy.fd_limit_percent = 99;
+  cache_inode_gc_policy.fd_hwmark_percent = 90;
+  cache_inode_gc_policy.fd_lwmark_percent = 50;
+  cache_inode_gc_policy.reaper_work = 1000;
+  cache_inode_gc_policy.biggest_window = 40;
+  cache_inode_gc_policy.required_progress = 5;
+  cache_inode_gc_policy.futility_count = 8;
 
-  nfs_param.cache_layers_param.cache_inode_client_param.nb_prealloc_entry = 1024;
-  nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_state_v4 = 512;
-  nfs_param.cache_layers_param.cache_inode_client_param.grace_period_attr   = 0;
-  nfs_param.cache_layers_param.cache_inode_client_param.grace_period_link   = 0;
-  nfs_param.cache_layers_param.cache_inode_client_param.grace_period_dirent = 0;
-  nfs_param.cache_layers_param.cache_inode_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
-  nfs_param.cache_layers_param.cache_inode_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
-  nfs_param.cache_layers_param.cache_inode_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
-  nfs_param.cache_layers_param.cache_inode_client_param.use_test_access = 1;
-  nfs_param.cache_layers_param.cache_inode_client_param.getattr_dir_invalidation = 0;
+  cache_inode_params.grace_period_attr   = 0;
+  cache_inode_params.grace_period_link   = 0;
+  cache_inode_params.grace_period_dirent = 0;
+  cache_inode_params.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
+  cache_inode_params.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
+  cache_inode_params.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
+  cache_inode_params.use_test_access = 1;
+  cache_inode_params.getattr_dir_invalidation = 0;
 #ifdef _USE_NFS4_ACL
-  nfs_param.cache_layers_param.cache_inode_client_param.attrmask = FSAL_ATTR_MASK_V4;
+  cache_inode_params.attrmask = FSAL_ATTR_MASK_V4;
 #else
-  nfs_param.cache_layers_param.cache_inode_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
+  cache_inode_params.attrmask = FSAL_ATTR_MASK_V2_V3;
 #endif
-  nfs_param.cache_layers_param.cache_inode_client_param.use_fsal_hash = 1;
+  cache_inode_params.use_fsal_hash = 1;
 
   /* FSAL parameters */
   nfs_param.fsal_param.fsal_info.max_fs_calls = 30;  /* No semaphore to access the FSAL */
@@ -955,8 +943,8 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   /* Cache inode parameters : hash table */
   if((cache_inode_status =
       cache_inode_read_conf_hash_parameter(config_struct,
-                                           &nfs_param.cache_layers_param.
-                                           cache_param)) != CACHE_INODE_SUCCESS)
+                                           &cache_inode_params))
+     != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
         LogDebug(COMPONENT_INIT,
@@ -975,7 +963,7 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   /* Cache inode parameters : Garbage collection policy */
   if((cache_inode_status =
       cache_inode_read_conf_gc_policy(config_struct,
-                                      &nfs_param.cache_layers_param.gcpol)) !=
+                                      &cache_inode_gc_policy)) !=
      CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
@@ -993,10 +981,9 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
              "Cache Inode Garbage Collection Policy configuration read from config file");
 
   /* Cache inode client parameters */
-  if((cache_inode_status = cache_inode_read_conf_client_parameter(config_struct,
-                                                                  &nfs_param.
-                                                                  cache_layers_param.
-                                                                  cache_inode_client_param))
+  if((cache_inode_status
+      = cache_inode_read_conf_parameter(config_struct,
+                                        &cache_inode_params))
      != CACHE_INODE_SUCCESS)
     {
       if(cache_inode_status == CACHE_INODE_NOT_FOUND)
@@ -1157,9 +1144,9 @@ int nfs_check_param_consistency()
       !is_prime(nfs_param.nsm_client_hash_param.index_size) ||
       !is_prime(nfs_param.nlm_client_hash_param.index_size) ||
       !is_prime(nfs_param.nlm_owner_hash_param.index_size) ||
-      !is_prime(nfs_param.cache_layers_param.cache_param.cookie_param.index_size) ||
+      !is_prime(cache_inode_params.cookie_param.index_size) ||
 #endif
-      !is_prime(nfs_param.cache_layers_param.cache_param.hparam.index_size))
+      !is_prime(cache_inode_params.hparam.index_size))
   {
       LogCrit(COMPONENT_INIT, "BAD PARAMETER(s) : expected primes");
   }
@@ -1449,7 +1436,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Cache Inode Initialisation */
   if((fh_to_cache_entry_ht =
-      cache_inode_init(nfs_param.cache_layers_param.cache_param, &cache_status)) == NULL)
+      cache_inode_init(cache_inode_params, &cache_status)) == NULL)
     {
       LogFatal(COMPONENT_INIT,
                "Cache Inode Layer could not be initialized, status=%s",
@@ -1461,11 +1448,12 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
 #ifdef _USE_BLOCKING_LOCKS
   if(state_lock_init(&state_status,
-                     nfs_param.cache_layers_param.cache_param.cookie_param)
+                     cache_inode_params.cookie_param)
+     != STATE_SUCCESS)
 #else
   if(state_lock_init(&state_status)
-#endif
      != STATE_SUCCESS)
+#endif
     {
       LogFatal(COMPONENT_INIT,
                "Cache Inode Layer could not be initialized, status=%s",
@@ -1473,13 +1461,21 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
 
-  /* Set the cache inode GC policy */
-  cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);
-
   /* Cache Inode LRU (call this here, rather than as part of
      cache_inode_init() so the GC policy has been set */
   cache_inode_lru_pkginit();
 
+  nfs_clientid_pool = pool_init("Client ID record pool",
+                                sizeof(nfs_client_id_t),
+                                NULL,
+                                NULL);
+
+#ifdef _USE_NFS4_1
+  nfs41_session_pool = pool_init("NFSv4.1 session pool",
+                                 sizeof(nfs41_session_t),
+                                 NULL,
+                                 NULL);
+#endif /* _USE_NFS4_1 */
 
 #ifdef _USE_ASYNC_CACHE_INODE
   /* Start the TAD and synclets for writeback cache inode */
@@ -1629,10 +1625,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           Fatal();
         }
 
-      /* Initialize, but do not pre-alloc client-id pool */
-      workers_data[i].clientid_pool
-           = pool_init("Client ID Pool", sizeof(nfs_client_id_t),
-                       NULL, NULL);
       LogDebug(COMPONENT_INIT, "worker data #%d successfully initialized", i);
     }                           /* for i */
 

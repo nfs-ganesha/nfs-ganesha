@@ -40,7 +40,6 @@
 
 #include "fsal.h"
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -63,10 +62,10 @@
  * This function returns the file descriptor stored in a cache entry,
  * if the cached file is open.
  *
- * @param entry [in] Entry for the file on which to operate
+ * @param[in] entry Entry for the file on which to operate
  *
  * @return A pointer to a file descriptor or NULL if the entry is
- * closed.
+ *         closed.
  */
 
 fsal_file_t *
@@ -93,7 +92,7 @@ cache_inode_fd(cache_entry_t *entry)
  * This function checks whether the given file is currently open in a
  * mode supporting write operations.
  *
- * @param entry [in] Entry for the file to check
+ * @param[in] entry Entry for the file to check
  *
  * @return TRUE if the file is open for writes
  */
@@ -114,7 +113,7 @@ is_open_for_write(cache_entry_t *entry)
  * This function checks whether the given file is currently open in a
  * mode supporting read operations.
  *
- * @param entry [in] Entry for the file to check
+ * @param[in] entry Entry for the file to check
  *
  * @return TRUE if the file is opened for reads
  */
@@ -135,19 +134,17 @@ is_open_for_read(cache_entry_t *entry)
  *
  * This function opens a file descriptor on a given cache entry.
  *
- * @param entry [in] Cache entry representing the file to open
- * @param client [in,out] Per-thread resource management data
- * @param openflags [in] The tyep of access for which to open
- * @param context [in] FSAL operation context
- * @param flags [in] Flags indicating lock status
- * @param status [out] Operation status
+ * @param[in]  entry     Cache entry representing the file to open
+ * @param[in]  openflags The type of access for which to open
+ * @param[in]  context   FSAL operation context
+ * @param[in]  flags     Flags indicating lock status
+ * @param[out] status    Operation status
  *
  * @return CACHE_INODE_SUCCESS if successful, errors otherwise
  */
 
 cache_inode_status_t
 cache_inode_open(cache_entry_t *entry,
-                 cache_inode_client_t *client,
                  fsal_openflags_t openflags,
                  fsal_op_context_t *context,
                  uint32_t flags,
@@ -156,8 +153,8 @@ cache_inode_open(cache_entry_t *entry,
      /* Error return from FSAL */
      fsal_status_t fsal_status = {0, 0};
 
-     if ((entry == NULL) || (client == NULL) ||
-         (context == NULL) || (status == NULL)) {
+     if ((entry == NULL) || (context == NULL) ||
+         (status == NULL)) {
           *status = CACHE_INODE_INVALID_ARGUMENT;
           goto out;
      }
@@ -187,7 +184,7 @@ cache_inode_open(cache_entry_t *entry,
               (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
                *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry, client);
+                    cache_inode_kill_entry(entry);
                }
 
                LogDebug(COMPONENT_CACHE_INODE,
@@ -216,7 +213,7 @@ cache_inode_open(cache_entry_t *entry,
                         "cache_inode_open: returning %d(%s) from FSAL_open",
                         *status, cache_inode_err_str(*status));
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry, client);
+                    cache_inode_kill_entry(entry);
                }
                goto unlock;
           }
@@ -252,24 +249,22 @@ out:
  *
  * This function calls down to the FSAL to close the file.
  *
- * @param entry [in] Cache entry to close
- * @param client [in] Per-client resource management structure
- * @param flags [in] Flags for lock management
- * @param status [out] Operation status
+ * @param[in]  entry  Cache entry to close
+ * @param[in]  flags  Flags for lock management
+ * @param[out] status Operation status
  *
  * @return CACHE_INODE_SUCCESS or errors on failure
  */
 
 cache_inode_status_t
 cache_inode_close(cache_entry_t *entry,
-                  cache_inode_client_t *client,
                   uint32_t flags,
                   cache_inode_status_t *status)
 {
      /* Error return from the FSAL */
      fsal_status_t fsal_status;
 
-     if ((entry == NULL) || (client == NULL) || (status == NULL)) {
+     if ((entry == NULL) || (status == NULL)) {
           *status = CACHE_INODE_INVALID_ARGUMENT;
           goto out;
      }
@@ -312,7 +307,7 @@ cache_inode_close(cache_entry_t *entry,
               (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
                *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry, client);
+                    cache_inode_kill_entry(entry);
                }
                LogCrit(COMPONENT_CACHE_INODE,
                        "cache_inode_close: returning %d(%s) from FSAL_close",

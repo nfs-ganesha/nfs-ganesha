@@ -161,17 +161,13 @@ extern void cache_inode_lru_pkgshutdown(void);
 
 extern uint32_t open_fd_count;
 
-extern struct cache_entry_t *cache_inode_lru_get(cache_inode_client_t *pclient,
-                                                 cache_inode_status_t *pstatus,
+extern struct cache_entry_t *cache_inode_lru_get(cache_inode_status_t *status,
                                                  uint32_t flags);
 extern cache_inode_status_t cache_inode_lru_ref(
      cache_entry_t *entry,
-     cache_inode_client_t *pclient,
      uint32_t flags) __attribute__((warn_unused_result));
-extern void cache_inode_lru_kill(cache_entry_t *entry,
-                                 cache_inode_client_t *client);
+extern void cache_inode_lru_kill(cache_entry_t *entry);
 extern void cache_inode_lru_unref(cache_entry_t *entry,
-                                  cache_inode_client_t *pclient,
                                   uint32_t flags);
 extern void lru_wake_thread(uint32_t flags);
 extern cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);

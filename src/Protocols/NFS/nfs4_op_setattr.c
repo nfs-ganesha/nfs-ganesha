@@ -10,12 +10,12 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -202,7 +202,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
            * Special stateid, no open state, check to see if any share conflicts
            * The stateid is all-0 or all-1
            */
-          res_SETATTR4.status = nfs4_check_special_stateid(pentry,"SETATTR(size)",
+          res_SETATTR4.status = nfs4_check_special_stateid(pentry,
+                                                           "SETATTR(size)",
                                                            FATTR4_ATTR_WRITE);
           if(res_SETATTR4.status != NFS4_OK)
             return res_SETATTR4.status;
@@ -211,7 +212,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       if((cache_status = cache_inode_truncate(data->current_entry,
                                               sattr.filesize,
                                               &parent_attr,
-                                              data->pclient,
                                               data->pcontext,
                                               &cache_status)) != CACHE_INODE_SUCCESS)
         {
@@ -287,7 +287,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
       if(cache_inode_setattr(data->current_entry,
                              &sattr,
-                             data->pclient,
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_SETATTR4.status = nfs4_Errno(cache_status);

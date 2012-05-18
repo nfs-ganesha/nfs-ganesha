@@ -69,11 +69,6 @@
 #include <string.h>
 #include <ctype.h>
 
-/* Structures to manage a client to cache inode located in the 'main' thread
- * this cache_inode_client will be used to handle the root of each entry (created when reading export file) */
-cache_inode_client_t small_client;
-cache_inode_client_parameter_t small_client_param;
-
 #define STRCMP strcasecmp
 
 #define CONF_LABEL_EXPORT "EXPORT"
@@ -2839,35 +2834,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
 
       fsal_op_context_t context;
 
-      /* setting the 'small_client' structure */
-      small_client_param.nb_prealloc_entry = 10;
-      small_client_param.nb_pre_state_v4 = 10;
-      small_client_param.grace_period_link = 0;
-      small_client_param.grace_period_attr = 0;
-      small_client_param.grace_period_dirent = 0;
-      small_client_param.grace_period_attr   = 0;
-      small_client_param.grace_period_link   = 0;
-      small_client_param.grace_period_dirent = 0;
-      small_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
-      small_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
-      small_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
-      small_client_param.use_test_access = 1;
-#ifdef _USE_NFS4_ACL
-      small_client_param.attrmask = FSAL_ATTR_MASK_V4;
-#else
-      small_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
-#endif
-
-      /* creating the 'small_client' */
-      if(cache_inode_client_init(&small_client, &small_client_param, SMALL_CLIENT_INDEX, NULL))
-        {
-          LogFatal(COMPONENT_INIT,
-                   "small cache inode client could not be allocated");
-        }
-      else
-        LogInfo(COMPONENT_INIT,
-                "small cache inode client successfully initialized");
-
       /* Get the context for FSAL super user */
       fsal_status = FSAL_InitClientContext(&context);
       if(FSAL_IS_ERROR(fsal_status))
@@ -2956,7 +2922,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
              entry MUST put the extra reference. */
 
           if((pentry = cache_inode_make_root(&fsdata,
-                                             &small_client,
                                              &context,
                                              &cache_status)) == NULL)
             {

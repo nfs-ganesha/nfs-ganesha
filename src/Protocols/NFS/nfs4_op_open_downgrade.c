@@ -259,7 +259,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
 
   if(state_share_downgrade(pentry_file, data->pcontext, &candidate_data,
                            powner, *statep,
-                           data->pclient, &state_status) != STATE_SUCCESS)
+                           &state_status) != STATE_SUCCESS)
     {
       *cause = " (state_share_downgrade failed)";
       pthread_rwlock_unlock(&data->current_entry->state_lock);

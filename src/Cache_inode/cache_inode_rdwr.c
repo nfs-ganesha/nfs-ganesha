@@ -67,18 +67,17 @@
  * disk cache or through the FSAL directly.  The caller MUST NOT hold
  * either the content or attribute locks when calling this function.
  *
- * @param entry [in] Cache entry indicating file to be read or written
- * @param io_direction [in] Whether this is a read or a write
- * @param offset [in] Absolute file position for I/O
- * @param io_size [in] Amount of data to be read or written
- * @param bytes_moved [ouT] The length of data successfuly read or written
- * @param buffer [in,out] Where in memory to read or write data
- * @param eof [out] Whether a READ encountered the end of file.  May
- *                  be NULL for writes.
- * @param client [in] Structure for managing per-client resources
- * @param context [in] FSAL credentials
- * @param stable [in] The stability of the write to perform
- * @param status [out] Status of operation
+ * @param[in]     entry        File to be read or written
+ * @param[in]     io_direction Whether this is a read or a write
+ * @param[in]     offset       Absolute file position for I/O
+ * @param[in]     io_size      Amount of data to be read or written
+ * @param[out]    bytes_moved  The length of data successfuly read or written
+ * @param[in,out] buffer       Where in memory to read or write data
+ * @param[out]    eof          Whether a READ encountered the end of file.  May
+ *                             be NULL for writes.
+ * @param[in]     context      FSAL credentials
+ * @param[in]     stable       The stability of the write to perform
+ * @param[out]    status       Status of operation
  *
  * @return CACHE_INODE_SUCCESS or various errors
  */
@@ -91,7 +90,6 @@ cache_inode_rdwr(cache_entry_t *entry,
                  size_t *bytes_moved,
                  void *buffer,
                  bool_t *eof,
-                 cache_inode_client_t *client,
                  fsal_op_context_t *context,
                  cache_inode_stability_t stable,
                  cache_inode_status_t *status)
@@ -194,7 +192,6 @@ cache_inode_rdwr(cache_entry_t *entry,
                    (loflags && loflags != FSAL_O_RDWR &&
                     loflags != openflags)) {
                     if (cache_inode_open(entry,
-                                         client,
                                          openflags,
                                          context,
                                          CACHE_INODE_FLAG_CONTENT_HAVE |
@@ -254,7 +251,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                *status = cache_inode_error_convert(fsal_status);
 
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry, client);
+                    cache_inode_kill_entry(entry);
                     goto out;
                }
 
@@ -268,7 +265,6 @@ cache_inode_rdwr(cache_entry_t *entry,
                     pthread_rwlock_unlock(&entry->content_lock);
                     pthread_rwlock_wrlock(&entry->content_lock);
                     cache_inode_close(entry,
-                                      client,
                                       (CACHE_INODE_FLAG_REALLYCLOSE |
                                        CACHE_INODE_FLAG_CONTENT_HAVE |
                                        CACHE_INODE_FLAG_CONTENT_HOLD),
@@ -290,7 +286,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                        io_size, *bytes_moved, offset);
 
           if (opened) {
-               if (cache_inode_close(entry, client,
+               if (cache_inode_close(entry,
                                      CACHE_INODE_FLAG_CONTENT_HAVE |
                                      CACHE_INODE_FLAG_CONTENT_HOLD,
                                      status) != CACHE_INODE_SUCCESS) {
@@ -311,8 +307,7 @@ cache_inode_rdwr(cache_entry_t *entry,
      attributes_locked = TRUE;
      if (io_direction == CACHE_INODE_WRITE) {
           if ((*status = cache_inode_refresh_attrs(entry,
-                                                   context,
-                                                   client))
+                                                   context))
               != CACHE_INODE_SUCCESS) {
                goto out;
           }

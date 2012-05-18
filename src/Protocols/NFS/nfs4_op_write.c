@@ -253,7 +253,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       if(cache_inode_access(pentry,
                             FSAL_WRITE_ACCESS,
-                            data->pclient,
                             data->pcontext,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
@@ -347,7 +346,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       &written_size,
                       bufferdata,
                       &eof_met,
-                      data->pclient,
                       data->pcontext,
                       stability,
                       &cache_status) != CACHE_INODE_SUCCESS)

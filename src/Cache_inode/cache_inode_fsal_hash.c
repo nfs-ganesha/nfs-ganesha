@@ -238,7 +238,7 @@ int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
                                hash_buffer_t    * buffclef,
                                uint32_t * phashval, uint64_t * prbtval )
 {
-  if( nfs_param.cache_layers_param.cache_inode_client_param.use_fsal_hash == FALSE )
+  if(cache_inode_params.use_fsal_hash == FALSE )
     return cache_inode_fsal_rbt_both_locally( p_hparam, buffclef, phashval, prbtval ) ;
   else
     return cache_inode_fsal_rbt_both_on_fsal( p_hparam, buffclef, phashval, prbtval ) ;

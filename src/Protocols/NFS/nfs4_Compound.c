@@ -207,24 +207,24 @@ nfs4_op_desc_t *optabvers[] = { (nfs4_op_desc_t *) optab4v0 };
  * Operation and functions necessary to process them are defined in array optab4 .
  *
  *
- *  @param parg        [IN]  generic nfs arguments
- *  @param pexportlist [IN]  the full export list
- *  @param pcontex     [IN]  context for the FSAL (unused but kept for nfs functions prototype homogeneity)
- *  @param pclient     [INOUT] client resource for request management
- *  @param preq        [IN]  RPC svc request
- *  @param pres        [OUT] generic nfs reply
+ *  @param[in]  parg        Generic nfs arguments
+ *  @param[in]  pexportlist The full export list
+ *  @param[in]  pcontex     Context for the FSAL
+ *  @param[in]  pworker     Worker thread data
+ *  @param[in]  preq        NFSv4 request structure
+ *  @param[out] pres        NFSv4 reply structure
  *
- *  @see   nfs4_op_<*> functions
- *  @see   nfs4_GetPseudoFs
+ *  @see nfs4_op_<*> functions
+ *  @see nfs4_GetPseudoFs
  *
  */
 
-int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
-                  exportlist_t * pexport /* IN     */ ,
-                  fsal_op_context_t * pcontext /* IN     */ ,
-                  cache_inode_client_t * pclient /* INOUT  */ ,
-                  struct svc_req *preq /* IN     */ ,
-                  nfs_res_t * pres /* OUT    */ )
+int nfs4_Compound(nfs_arg_t *parg,
+                  exportlist_t *pexport,
+                  fsal_op_context_t *pcontext,
+                  nfs_worker_data_t *pworker,
+                  struct svc_req *preq,
+                  nfs_res_t * pres)
 {
   unsigned int i = 0;
   int status = NFS4_OK;
@@ -294,11 +294,13 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   data.minorversion = COMPOUND4_MINOR;
   /** @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here */
 
-  data.pfullexportlist = pexport;       /* Full export list is provided in input */
-  data.pcontext = pcontext;     /* Get the fsal credentials from the worker thread */
+  data.pfullexportlist = pexport;       /* Full export list is
+                                           provided in input */
+  data.pcontext = pcontext; /* Get the fsal credentials from the
+                               worker thread */
+  data.pworker = pworker;
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = preq;
-  data.pclient = pclient;
 
   strcpy(data.MntPath, "/");
 
@@ -752,10 +754,10 @@ void compound_data_Free(compound_data_t * data)
 
   /* Release refcounted cache entries */
   if (data->current_entry)
-      cache_inode_put(data->current_entry, data->pclient);
+      cache_inode_put(data->current_entry);
 
   if (data->saved_entry)
-      cache_inode_put(data->saved_entry, data->pclient);
+      cache_inode_put(data->saved_entry);
 
   if(data->currentFH.nfs_fh4_val != NULL)
     gsh_free(data->currentFH.nfs_fh4_val);

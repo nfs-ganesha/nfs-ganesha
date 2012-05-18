@@ -1338,8 +1338,7 @@ int nlm_owner_Set(state_owner_t * pkey,
   return 1;
 }                               /* nlm_owner_Set */
 
-void remove_nlm_owner(cache_inode_client_t * pclient,
-                      state_owner_t        * powner,
+void remove_nlm_owner(state_owner_t        * powner,
                       const char           * str)
 {
   hash_buffer_t buffkey, old_key, old_value;

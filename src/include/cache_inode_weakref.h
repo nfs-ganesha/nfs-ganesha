@@ -57,7 +57,6 @@
 void cache_inode_weakref_init(void);
 gweakref_t cache_inode_weakref_insert(struct cache_entry_t *entry);
 cache_entry_t *cache_inode_weakref_get(gweakref_t *ref,
-                                       cache_inode_client_t *client,
                                        uint32_t flags);
 void cache_inode_weakref_delete(gweakref_t *ref);
 void cache_inode_weakref_shutdown();

@@ -62,26 +62,28 @@
 #include "nfs_tools.h"
 
 /**
- * nfs3_Mknod: Implements NFSPROC3_MKNOD
+ * @brief Implements NFSPROC3_MKNOD
  *
- * Implements NFSPROC3_COMMIT. Unused for now, but may be supported later. 
- * 
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * Implements NFSPROC3_MKNOD.
  *
- * @return always NFS_REQ_OK (this routine does nothing)
+ * @param[in]  parg     NFS arguments union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_Mknod(nfs_arg_t * parg,
-               exportlist_t * pexport,
-               fsal_op_context_t * pcontext,
-               cache_inode_client_t * pclient,
-               struct svc_req *preq, nfs_res_t * pres)
+int nfs3_Mknod(nfs_arg_t *parg,
+               exportlist_t *pexport,
+               fsal_op_context_t *pcontext,
+               nfs_worker_data_t *pworker,
+               struct svc_req *preq,
+               nfs_res_t * pres)
 {
   cache_entry_t *parent_pentry = NULL;
   fsal_attrib_list_t parent_attr;
@@ -130,7 +132,7 @@ int nfs3_Mknod(nfs_arg_t * parg,
                                          &(pres->res_mknod3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -250,7 +252,6 @@ int nfs3_Mknod(nfs_arg_t * parg,
       node_pentry = cache_inode_lookup(parent_pentry,
                                        &file_name,
                                        &attr,
-                                       pclient,
                                        pcontext,
                                        &cache_status_lookup);
 
@@ -265,7 +266,6 @@ int nfs3_Mknod(nfs_arg_t * parg,
                                                mode,
                                                &create_arg,
                                                &attr,
-                                               pclient,
                                                pcontext,
                                                &cache_status)) != NULL)
             {
@@ -430,10 +430,10 @@ int nfs3_Mknod(nfs_arg_t * parg,
 out:
   /* return references */
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   if (node_pentry)
-      cache_inode_put(node_pentry, pclient);
+      cache_inode_put(node_pentry);
 
   return (rc);
 

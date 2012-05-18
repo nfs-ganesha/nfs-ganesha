@@ -64,29 +64,31 @@
 
 /**
  *
- * nfs_Readlink: The NFS PROC2 and PROC3 READLINK.
+ * @brief The NFS PROC2 and PROC3 READLINK.
  *
- *  Implements the NFS PROC2-3 READLINK function. 
+ * This function implements the NFS PROC2-3 READLINK function.
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS argument union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Client resource to be used
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
  * @see cache_inode_readlink
  *
- *----------------------------------------------------------------------------*/
+ * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
+ */
 
-int nfs_Readlink(nfs_arg_t * parg,
-                 exportlist_t * pexport,
-                 fsal_op_context_t * pcontext,
-                 cache_inode_client_t * pclient,
-                 struct svc_req *preq, nfs_res_t * pres)
+int nfs_Readlink(nfs_arg_t *parg,
+                 exportlist_t *pexport,
+                 fsal_op_context_t *pcontext,
+                 nfs_worker_data_t *pworker,
+                 struct svc_req *preq,
+                 nfs_res_t * pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Readlink";
-
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
   cache_inode_file_type_t filetype;
@@ -120,7 +122,7 @@ int nfs_Readlink(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_readlink2.status),
                                   &(pres->res_readlink3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -149,7 +151,7 @@ int nfs_Readlink(nfs_arg_t * parg,
   /* Perform readlink on the pentry */
   if(cache_inode_readlink(pentry,
                           &symlink_data,
-                          pclient, pcontext, &cache_status)
+                          pcontext, &cache_status)
      == CACHE_INODE_SUCCESS)
     {
       if((ptr = gsh_malloc(symlink_data.len+1)) == NULL)
@@ -211,7 +213,7 @@ int nfs_Readlink(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 }                               /* nfs_Readlink */

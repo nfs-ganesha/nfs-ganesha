@@ -137,7 +137,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
       = cache_inode_lookup(dir_pentry,
                            &name,
                            &attrlookup,
-                           data->pclient,
                            data->pcontext, &cache_status)) != NULL)
     {
       /* Extract the fsal attributes from the cache inode pentry */
@@ -160,7 +159,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
          operations or nfs4_Compound to clean up current_entry. */
 
       if (dir_pentry)
-        cache_inode_put(dir_pentry, data->pclient);
+        cache_inode_put(dir_pentry);
 
       /* Keep the pointer within the compound data */
       data->current_entry = file_pentry;

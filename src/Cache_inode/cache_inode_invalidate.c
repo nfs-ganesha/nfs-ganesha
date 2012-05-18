@@ -36,7 +36,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -53,16 +52,14 @@
 
 /**
  *
- * cache_inode_invalidate: invalidates an entry in the cache
+ * @brief invalidates an entry in the cache
  *
  * This function invalidates the related cache entry correponding to a
- * FSAL handle. It is designed to be called as a FSAL upcall is
+ * FSAL handle. It is designed to be called when an FSAL upcall is
  * triggered.
  *
- * @todo ACE: Decide what to do for regular files.
- *
- * @param handle [IN] FSAL handle for the entry to be invalidated
- * @param status [OUT] returned status.
+ * @param[in]  handle FSAL handle for the entry to be invalidated
+ * @param[out] status Returned status
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  * @retval CACHE_INODE_INVALID_ARGUMENT bad parameter(s) as input
@@ -113,7 +110,7 @@ cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
      }
 
      entry = value.pdata;
-     if (cache_inode_lru_ref(entry, NULL, 0) != CACHE_INODE_SUCCESS) {
+     if (cache_inode_lru_ref(entry, 0) != CACHE_INODE_SUCCESS) {
           HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
           *status = CACHE_INODE_NOT_FOUND;
           return *status;
@@ -141,15 +138,12 @@ cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
 
      /* The main reason for holding the lock at this point is so we
         don't clear the trust bits while someone is populating the
-        directory or refreshing attributes.  But it would be nice, if
-        we can figure out how to get a cache_inode_client_t in here
-        so we can do things like free the directory entries we just
-        marked untrustworthy. */
+        directory or refreshing attributes. */
 
      pthread_rwlock_unlock(&entry->attr_lock);
      pthread_rwlock_unlock(&entry->content_lock);
 
-     cache_inode_lru_unref(entry, NULL, 0);
+     cache_inode_lru_unref(entry, 0);
 
 out:
 

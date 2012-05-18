@@ -130,7 +130,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
     return res_PUTROOTFH4.status;
 
   if (data->current_entry) {
-      cache_inode_put(data->current_entry, data->pclient);
+      cache_inode_put(data->current_entry);
   }
   data->current_entry = NULL;   /* No cache inode entry for the directory within pseudo fs */
   data->current_filetype = DIRECTORY;      /* Only directory in the pseudo fs */

@@ -59,23 +59,23 @@
 #include "nfs_proto_functions.h"
 
 /**
- * mnt_Umnt: The Mount proc umount function, for all versions.
- *  
- *  @param parg        [IN]
- *  @param pexportlist [IN]
- *	@param pcontextp      [IN]
- *  @param pclient     [INOUT]
- *  @param preq        [IN] 
- *	@param pres        [OUT]
+ * @brief The Mount proc umount function, for all versions.
+ *
+ * @param[in]  parg
+ * @param[in]  pexport
+ * @param[in]  pcontextp
+ * @param[in]  pworker
+ * @param[in]  preq
+ * @param[out] pres
  *
  */
 
-int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
-             exportlist_t * pexport /* IN     */ ,
-             fsal_op_context_t * pcontext /* IN     */ ,
-             cache_inode_client_t * pclient /* INOUT  */ ,
-             struct svc_req *preq /* IN     */ ,
-             nfs_res_t * pres /* OUT    */ )
+int mnt_Umnt(nfs_arg_t *parg,
+             exportlist_t *pexport,
+             fsal_op_context_t *pcontext,
+             nfs_worker_data_t *pworker,
+             struct svc_req *preq,
+             nfs_res_t *pres)
 {
   char *hostname;
 

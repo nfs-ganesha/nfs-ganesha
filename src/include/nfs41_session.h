@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -46,7 +46,6 @@
 
 
 #include "RW_Lock.h"
-#include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -61,6 +60,9 @@
 #define NFS41_SESSION_PER_CLIENT 3
 #define NFS41_NB_SLOTS           3
 #define NFS41_DRC_SIZE          32768
+
+extern pool_t *nfs41_session_pool; /*< Pool for NFSv4.1 sessions */
+
 
 typedef struct nfs41_session_slot__
 {

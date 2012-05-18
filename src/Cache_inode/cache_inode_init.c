@@ -42,7 +42,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -60,144 +59,65 @@
 
 /**
  *
- * cache_inode_init: Init the ressource necessary for the cache inode management.
+ * @brief Initialize the caching layer
  *
- * Init the ressource necessary for the cache inode management.
+ * This function initializes the memory pools, hash table, and weakref
+ * table used for cache management.
  *
- * @param param [IN] the parameter for this cache.
- * @param pstatus [OUT] pointer to buffer used to store the status for the operation.
+ * @param[in]  param  The parameters for this cache
+ * @param[out] status Operation status
  *
  * @return NULL if operation failed, other value is a pointer to the hash table used for the cache.
  *
  */
 hash_table_t *cache_inode_init(cache_inode_parameter_t param,
-                               cache_inode_status_t * pstatus)
+                               cache_inode_status_t *status)
 {
   hash_table_t *ht = NULL;
+
+  cache_inode_entry_pool = pool_init("Entry Pool",
+                                     sizeof(cache_entry_t),
+                                     NULL, NULL);
+  if(!(cache_inode_entry_pool))
+    {
+      LogCrit(COMPONENT_CACHE_INODE,
+              "Can't init Entry Pool");
+      *status = CACHE_INODE_INVALID_ARGUMENT;
+      return NULL;
+    }
+  cache_inode_symlink_pool = pool_init("Symlink Pool",
+                                       sizeof(cache_inode_symlink_t),
+                                       NULL, NULL);
+  if(!(cache_inode_symlink_pool))
+    {
+      LogCrit(COMPONENT_CACHE_INODE,
+              "Can't init Symlink Pool");
+      *status = CACHE_INODE_INVALID_ARGUMENT;
+      return NULL;
+    }
+
+  cache_inode_dir_entry_pool = pool_init("Directory entry pool",
+                                         sizeof(cache_inode_dir_entry_t),
+                                         NULL, NULL);
+  if(!(cache_inode_dir_entry_pool))
+    {
+      LogCrit(COMPONENT_CACHE_INODE,
+              "Can't init Dir Entry Pool");
+      *status = CACHE_INODE_INVALID_ARGUMENT;
+      return NULL;
+    }
+
+
 
   ht = HashTable_Init(&param.hparam);
 
   if(ht != NULL)
-    *pstatus = CACHE_INODE_SUCCESS;
+    *status = CACHE_INODE_SUCCESS;
   else
-    *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+    *status = CACHE_INODE_INVALID_ARGUMENT;
+  LogInfo(COMPONENT_CACHE_INODE, "Hash Table initiated");
 
   cache_inode_weakref_init();
 
-  LogInfo(COMPONENT_CACHE_INODE, "Hash Table initiated");
-
   return ht;
 }                               /* cache_inode_init */
-
-/**
- *
- * cache_inode_client_init: Init the ressource necessary for the cache inode management on the client handside.
- *
- * Init the ressource necessary for the cache inode management on the client handside.
- *
- * @param client      [OUT] the pointer to the client to be initiated.
- * @param paramp        [IN]  the parameter for this cache client.
- * @param thread_index [IN]  an integer related to the 'position' of the thread, from 0 to Nb_Workers -1
- *
- * @return 0 if successful, 1 if failed.
- *
- */
-int cache_inode_client_init(cache_inode_client_t *client,
-                            cache_inode_client_parameter_t *param,
-                            int thread_index,
-                            struct nfs_worker_data__ *pworker_data)
-{
-  char name[256];
-
-  if(thread_index < SMALL_CLIENT_INDEX)
-    sprintf(name, "Cache Inode Worker #%d", thread_index);
-  else if(thread_index == SMALL_CLIENT_INDEX)
-    sprintf(name, "Cache Inode Small Client");
-  else
-    sprintf(name, "Cache Inode NLM Async #%d", thread_index - NLM_THREAD_INDEX);
-
-  client->attrmask = param->attrmask;
-  client->expire_type_attr = param->expire_type_attr;
-  client->expire_type_link = param->expire_type_link;
-  client->expire_type_dirent = param->expire_type_dirent;
-  client->grace_period_attr = param->grace_period_attr;
-  client->grace_period_link = param->grace_period_link;
-  client->grace_period_dirent = param->grace_period_dirent;
-  client->use_test_access = param->use_test_access;
-  client->getattr_dir_invalidation = param->getattr_dir_invalidation;
-  client->pworker = pworker_data;
-
-  client->pool_entry
-       = pool_init("Entry Pool", sizeof(cache_entry_t), NULL, NULL);
-  if(!(client->pool_entry))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Entry Pool", name);
-      return 1;
-    }
-
-  client->pool_entry_symlink
-       = pool_init(NULL, sizeof(cache_inode_symlink_t), NULL, NULL);
-  if(!(client->pool_entry_symlink))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Entry Symlink Pool", name);
-      return 1;
-    }
-
-  client->pool_dir_entry
-       = pool_init(NULL, sizeof(cache_inode_dir_entry_t), NULL, NULL);
-  if(!(client->pool_dir_entry))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Dir Entry Pool", name);
-      return 1;
-    }
-
-  client->pool_state_v4 = pool_init(NULL, sizeof(state_t), NULL, NULL);
-  if(!(client->pool_state_v4))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s State V4 Pool", name);
-      return 1;
-    }
-
-  /**
-   * @TODO: warning - entries in this pool are never released!
-   */
-  client->pool_state_owner
-       = pool_init("Open Owner Pool", sizeof(state_owner_t), NULL, NULL);
-  if(!(client->pool_state_owner))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Open Owner Pool", name);
-      return 1;
-    }
-
-  /**
-   * @TODO: warning - entries in this pool are never released!
-   */
-  client->pool_nfs4_owner_name
-       = pool_init("Open Owner Name Pool",
-                   sizeof(state_nfs4_owner_name_t), NULL, NULL);
-  if(!(client->pool_nfs4_owner_name))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Open Owner Name Pool", name);
-      return 1;
-    }
-#ifdef _USE_NFS4_1
-  /* TODO: warning - entries in this pool are never released! */
-  client->pool_session
-       = pool_init("Session Pool", sizeof(nfs41_session_t), NULL, NULL);
-  if(!(client->pool_session))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Session Pool", name);
-      return 1;
-    }
-#endif                          /* _USE_NFS4_1 */
-
-  /* Everything was ok, return 0 */
-  return 0;
-}                               /* cache_inode_client_init */

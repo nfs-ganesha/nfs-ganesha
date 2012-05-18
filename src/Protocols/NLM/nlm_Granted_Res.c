@@ -43,20 +43,20 @@
 /**
  * nlm4_Granted_Res: Lock Granted Result Handler
  *
- *  @param parg        [IN]
- *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
- *  @param pclient     [INOUT]
- *  @param preq        [IN]
- *  @param pres        [OUT]
+ * @param[in]  parg
+ * @param[in]  pexport
+ * @param[in]  dummy_pcontext
+ * @param[in]  pworker
+ * @param[in]  preq
+ * @param[out] pres
  *
  */
-int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
-                     exportlist_t * dummy_pexport /* IN     */ ,
-                     fsal_op_context_t * dummy_pcontext /* IN     */ ,
-                     cache_inode_client_t * pclient /* INOUT  */ ,
-                     struct svc_req *preq /* IN     */ ,
-                     nfs_res_t * pres /* OUT    */ )
+int nlm4_Granted_Res(nfs_arg_t *parg,
+                     exportlist_t *pexport,
+                     fsal_op_context_t *dummy_pcontext,
+                     nfs_worker_data_t *pworker,
+                     struct svc_req *preq,
+                     nfs_res_t *pres)
 {
   nlm4_res             * arg = &parg->arg_nlm4_res;
   char                   buffer[1024];
@@ -72,7 +72,6 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
   if(state_find_grant(arg->cookie.n_bytes,
                       arg->cookie.n_len,
                       &cookie_entry,
-                      pclient,
                       &state_status) != STATE_SUCCESS)
     {
       /* This must be an old NLM_GRANTED_RES */
@@ -105,7 +104,6 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
                "Granted call failed due to client error, releasing lock");
       if(state_release_grant(pcontext,
                              cookie_entry,
-                             pclient,
                              &state_status) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_NLM,
@@ -114,7 +112,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
     }
   else
     {
-      state_complete_grant(pcontext, cookie_entry, pclient);
+      state_complete_grant(pcontext, cookie_entry);
       nlm_signal_async_resp(cookie_entry);
     }
 

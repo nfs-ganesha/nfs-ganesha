@@ -51,6 +51,8 @@
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
 
+pool_t *nfs_clientid_pool;
+
 #ifdef _APPLE
 #define strnlen( s, l ) strlen( s )
 #else
@@ -270,8 +272,7 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_client_id_add(clientid4 clientid,
-                      nfs_client_id_t client_record,
-                      cache_inode_client_t *pclient)
+                      nfs_client_id_t client_record)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -281,13 +282,11 @@ int nfs_client_id_add(clientid4 clientid,
   clientid4 *pclientid = NULL;
   state_nfs4_owner_name_t owner_name;
   state_owner_t *client_owner = NULL;
-  pool_t *clientid_pool =
-    pclient->pworker->clientid_pool;
 
   convert_nfs4_clientid_owner(clientid, &owner_name);
 
   /* Entry to be cached */
-  nfs_client_id = pool_alloc(clientid_pool, NULL);
+  nfs_client_id = pool_alloc(nfs_clientid_pool, NULL);
 
   if(nfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
@@ -308,7 +307,6 @@ int nfs_client_id_add(clientid4 clientid,
   /*  need to init the list_head */
   init_glist(&nfs_client_id->clientid_openowners);
   init_glist(&nfs_client_id->clientid_lockowners);
-  nfs_client_id->clientid_pool = clientid_pool;
 
   /* init call channel mtx */
   pthread_mutex_init(&nfs_client_id->cb.cb_u.v40.chan.mtx, NULL);
@@ -343,7 +341,7 @@ int nfs_client_id_add(clientid4 clientid,
     }
 
   if ((client_owner =
-       create_nfs4_owner(pclient, &owner_name,
+       create_nfs4_owner(&owner_name,
                          STATE_CLIENTID_OWNER_NFSV4, NULL, 0))
       == NULL)
     {
@@ -364,7 +362,6 @@ int nfs_client_id_add(clientid4 clientid,
  *
  * @param clientid           [IN]    the client id used as key
  * @param client_record      [IN]    the candidate record for the client
- * @param clientid_pool      [INOUT] values pool for hash table
  *
  * @return CLIENT_ID_SUCCESS if successfull\n.
  * @return CLIENT_ID_INSERT_MALLOC_ERROR if an error occured during the insertion process \n
@@ -373,8 +370,7 @@ int nfs_client_id_add(clientid4 clientid,
  */
 
 int nfs_client_id_set(clientid4 clientid,
-                      nfs_client_id_t client_record,
-                      pool_t *clientid_pool)
+                      nfs_client_id_t client_record)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -384,7 +380,7 @@ int nfs_client_id_set(clientid4 clientid,
   clientid4 *pclientid = NULL;
 
   /* Entry to be cached */
-  nfs_client_id = pool_alloc(clientid_pool, NULL);
+  nfs_client_id = pool_alloc(nfs_clientid_pool, NULL);
 
   if(nfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
@@ -437,20 +433,18 @@ static void release_lockstate(state_owner_t *plock_owner)
   glist_for_each_safe(glist, glistn, &plock_owner->so_owner.so_nfs4_owner.so_state_list)
     {
       state_t * pstate_found = glist_entry(glist,
-					  state_t,
-					  state_owner_list);  
+                                           state_t,
+                                           state_owner_list);
 
       /* Make sure we hold an lru ref to the cache inode while calling state_del */
       if(cache_inode_lru_ref(pstate_found->state_pentry,
-                             plock_owner->so_pclient,
                              0) != CACHE_INODE_SUCCESS)
         LogCrit(COMPONENT_STATE,
                 "Ugliness - cache_inode_lru_ref has returned non-success");
 
       if(state_del(pstate_found,
-               plock_owner->so_pclient,
-               &state_status) != STATE_SUCCESS)
-      { 
+                   &state_status) != STATE_SUCCESS)
+      {
         LogDebug(COMPONENT_STATE,
                "release_lockstate failed to release stateid error %s",
                 state_err_str(state_status));
@@ -458,14 +452,13 @@ static void release_lockstate(state_owner_t *plock_owner)
 
       /* Release the lru ref to the cache inode we held while calling state_del */
       cache_inode_lru_unref(pstate_found->state_pentry,
-                            plock_owner->so_pclient,
                             0);
     }
 }
 
 /**
  * release_openstate: traverse the state list of the open owner
- *   
+ *
  */
 static void release_openstate(state_owner_t *popen_owner)
 {
@@ -478,19 +471,18 @@ static void release_openstate(state_owner_t *popen_owner)
       fsal_status_t            fsal_status;
 
       state_t * pstate_found = glist_entry(glist,
-					   state_t,
-					   state_owner_list);  
-				     
+                                           state_t,
+                                           state_owner_list);
+
       cache_entry_t        * pentry = pstate_found->state_pentry;
       cache_inode_status_t   cache_status;
 
       /* Make sure we hold an lru ref to the cache inode while calling state_del */
       if(cache_inode_lru_ref(pentry,
-                             popen_owner->so_pclient,
                              0) != CACHE_INODE_SUCCESS)
         LogCrit(COMPONENT_STATE,
                 "Ugliness - cache_inode_lru_ref has returned non-success");
-      
+
       pthread_rwlock_wrlock(&pentry->state_lock);
       /* Construct the fsal context based on the export and root credential */
       fsal_status = FSAL_GetClientContext(&fsal_context,
@@ -506,6 +498,10 @@ static void release_openstate(state_owner_t *popen_owner)
           /* log error here , and continue? */
           LogEvent(COMPONENT_STATE,
                    "FSAL_GetClientConext failed");
+          pthread_rwlock_unlock(&pentry->state_lock);
+          cache_inode_lru_unref(pstate_found->state_pentry,
+                                0);
+          continue;
         }
       else if(pstate_found->state_type == STATE_TYPE_SHARE)
         {
@@ -513,7 +509,6 @@ static void release_openstate(state_owner_t *popen_owner)
                                 &fsal_context,
                                 popen_owner,
                                 pstate_found,
-                                popen_owner->so_pclient,
                                 &state_status) != STATE_SUCCESS)
             {
               LogEvent(COMPONENT_STATE,
@@ -524,22 +519,19 @@ static void release_openstate(state_owner_t *popen_owner)
 
       if((state_status
           = state_del_locked(pstate_found,
-                             pentry,
-                             popen_owner->so_pclient)) != STATE_SUCCESS)
-        { 
+                             pentry)) != STATE_SUCCESS)
+        {
           LogDebug(COMPONENT_STATE,
                    "EXPIRY failed to release stateid error %s",
                    state_err_str(state_status));
         }
       /* Close the file in FSAL through the cache inode */
       cache_inode_close(pentry,
-                        popen_owner->so_pclient,
                         0,
                         &cache_status);
       pthread_rwlock_unlock(&pentry->state_lock);
       /* Release the lru ref to the cache inode we held while calling state_del */
       cache_inode_lru_unref(pstate_found->state_pentry,
-                            popen_owner->so_pclient,
                             0);
     }
 }
@@ -602,35 +594,34 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
           state_owner_unlock_all(&fsal_context,
                                  plock_owner,
                                  plock_state,
-                                 plock_owner->so_pclient,
                                  &pstatus);
         }
     }
-  
+
   /* traverse the client's lock owners, and release all locks states and owners */
   glist_for_each_safe(glist, glistn, &client_record->clientid_lockowners)
     {
       state_owner_t * plock_owner = glist_entry(glist,
                                           state_owner_t,
-					  so_owner.so_nfs4_owner.so_perclient);
+                                                so_owner.so_nfs4_owner.so_perclient);
       inc_state_owner_ref(plock_owner);
       release_lockstate(plock_owner);
-      dec_state_owner_ref(plock_owner, plock_owner->so_pclient);
-      
+      dec_state_owner_ref(plock_owner);
     }
 
   /* release the corresponding open states , close files*/
   glist_for_each_safe(glist, glistn, &client_record->clientid_openowners)
     {
-      state_owner_t * popen_owner = glist_entry(glist,
-                                          state_owner_t,
-					  so_owner.so_nfs4_owner.so_perclient);
+      state_owner_t * popen_owner
+           = glist_entry(glist,
+                         state_owner_t,
+                         so_owner.so_nfs4_owner.so_perclient);
       inc_state_owner_ref(popen_owner);
       release_openstate(popen_owner);
-      dec_state_owner_ref(popen_owner, popen_owner->so_pclient);
+      dec_state_owner_ref(popen_owner);
     }
 
-  dec_state_owner_ref(client_record->clientid_owner, client_record->clientid_owner->so_pclient);
+  dec_state_owner_ref(client_record->clientid_owner);
 
   if (client_record->recov_dir != NULL)
     {
@@ -642,7 +633,7 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
   V(client_record->clientid_mutex);
 
   /* need to free client record */
-  rc = nfs_client_id_remove(client_record->clientid, client_record->clientid_pool);
+  rc = nfs_client_id_remove(client_record->clientid);
   if (rc == CLIENT_ID_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
@@ -771,17 +762,16 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
 
 /**
  *
- * nfs_client_id_remove: Tries to remove an entry for client_id cache
+ * @brief Tries to remove an entry for client_id cache
  *
  * Tries to remove an entry for client_id cache.
- * 
- * @param clientid           [IN]    the clientid to be used as key
- * @param clientid_pool      [INOUT] values pool for hash table
+ *
+ * @param[in] clientid The clientid to be used as key
  *
  * @return the result previously set if *pstatus == CLIENT_ID_SUCCESS
  *
  */
-int nfs_client_id_remove(clientid4 clientid, pool_t *clientid_pool)
+int nfs_client_id_remove(clientid4 clientid)
 {
   hash_buffer_t buffkey, old_key, old_key_reverse, old_value;
   nfs_client_id_t *nfs_client_id = NULL;
@@ -813,7 +803,7 @@ int nfs_client_id_remove(clientid4 clientid, pool_t *clientid_pool)
         chan = NULL;
       }
 
-      pool_free(clientid_pool, nfs_client_id);
+      pool_free(nfs_clientid_pool, nfs_client_id);
       gsh_free(old_key.pdata);
       return CLIENT_ID_NOT_FOUND;
     }
@@ -824,7 +814,7 @@ int nfs_client_id_remove(clientid4 clientid, pool_t *clientid_pool)
     chan = NULL;
   }
 
-  pool_free(clientid_pool, nfs_client_id);
+  pool_free(nfs_clientid_pool, nfs_client_id);
   gsh_free(old_key_reverse.pdata);
   gsh_free(old_key.pdata);
   return CLIENT_ID_SUCCESS;

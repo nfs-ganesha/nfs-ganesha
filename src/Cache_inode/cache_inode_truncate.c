@@ -43,7 +43,6 @@
 #endif                          /* _SOLARIS */
 
 #include "fsal.h"
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -57,98 +56,92 @@
 #include <assert.h>
 
 /**
- * @brief truncates a regular file specified by its cache entry.
+ * @brief truncates a regular file
  *
- * Truncates a regular file specified by its cache entry.
+ * This function truncates a regular file to the length specified.
  *
- * @param pentry [INOUT] Entry pointer for the fs object to be truncated.
- * @param length [IN] Wanted length for the file.
- * @param pattr [OUT] Attrtibutes for the file after the operation.
- * @param pclient [INOUT] Structure for per-thread resource management
- * @param pcontext [IN] FSAL credentials
- * @param pstatus [OUT] Returned status.
+ * @param[in]  entry   The file to be truncated
+ * @param[in]  length  New length for the file
+ * @param[out] attr    Attrtibutes for the file after the operation.
+ * @param[in]  context FSAL credentials
+ * @param[out] status  Returned status
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when
- *         validating the entry
  */
 
 cache_inode_status_t
-cache_inode_truncate_impl(cache_entry_t *pentry,
+cache_inode_truncate_impl(cache_entry_t *entry,
                           fsal_size_t length,
-                          fsal_attrib_list_t *pattr,
-                          cache_inode_client_t *pclient,
-                          fsal_op_context_t *pcontext,
-                          cache_inode_status_t *pstatus)
+                          fsal_attrib_list_t *attr,
+                          fsal_op_context_t *context,
+                          cache_inode_status_t *status)
 {
   fsal_status_t fsal_status;
   fsal_file_t *fd;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS;
+  *status = CACHE_INODE_SUCCESS;
 
   /* Only regular files can be truncated */
-  if(pentry->type != REGULAR_FILE)
+  if(entry->type != REGULAR_FILE)
     {
-      *pstatus = CACHE_INODE_BAD_TYPE;
-      return *pstatus;
+      *status = CACHE_INODE_BAD_TYPE;
+      return *status;
     }
 
   /* Call FSAL to actually truncate */
-  pentry->attributes.asked_attributes = pclient->attrmask;
-  if (pentry->object.file.open_fd.openflags == FSAL_O_CLOSED)
+  entry->attributes.asked_attributes = cache_inode_params.attrmask;
+  if (entry->object.file.open_fd.openflags == FSAL_O_CLOSED)
     fd = NULL;
   else
-    fd = &(pentry->object.file.open_fd.fd);
-  fsal_status = FSAL_truncate(&pentry->handle, pcontext, length,
+    fd = &(entry->object.file.open_fd.fd);
+  fsal_status = FSAL_truncate(&entry->handle, context, length,
                               fd, /* used by FSAL_GPFS */
-                              &pentry->attributes);
+                              &entry->attributes);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      *pstatus = cache_inode_error_convert(fsal_status);
+      *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
-        cache_inode_kill_entry(pentry, pclient);
+        cache_inode_kill_entry(entry);
       }
-      return *pstatus;
+      return *status;
     }
 
   /* Returns the attributes */
-  *pattr = pentry->attributes;
+  *attr = entry->attributes;
 
-  return *pstatus;
+  return *status;
 }                               /* cache_inode_truncate_sw */
 
 /**
  *
- * cache_inode_truncate: truncates a regular file specified by its cache entry.
+ * @brief Truncates a regular file specified by its cache entry.
  *
  * Truncates a regular file specified by its cache entry.
  *
- * @param pentry    [INOUT] entry pointer for the fs object to be truncated.
- * @param length    [IN]    wanted length for the file.
- * @param pattr     [OUT]   attrtibutes for the file after the operation.
- * @param pclient   [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext     [IN]    FSAL credentials
- * @param pstatus   [OUT]   returned status.
+ * @param[in]  entry   The file to be truncated
+ * @param[in]  length  New length for the file
+ * @param[out] attr    Attrtibutes for the file after the operation
+ * @param[in]  context FSAL credentials
+ * @param[out] status  Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success \n
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
+ * @return CACHE_INODE_SUCCESS if operation is a success
  *
  */
-cache_inode_status_t cache_inode_truncate(cache_entry_t * pentry,
-                                          fsal_size_t length,
-                                          fsal_attrib_list_t * pattr,
-                                          cache_inode_client_t * pclient,
-                                          fsal_op_context_t * pcontext,
-                                          cache_inode_status_t * pstatus)
+cache_inode_status_t
+cache_inode_truncate(cache_entry_t *entry,
+                     fsal_size_t length,
+                     fsal_attrib_list_t *attr,
+                     fsal_op_context_t *context,
+                     cache_inode_status_t *status)
 {
   cache_inode_status_t ret;
-  pthread_rwlock_wrlock(&pentry->attr_lock);
-  pthread_rwlock_wrlock(&pentry->content_lock);
-  ret = cache_inode_truncate_impl(pentry,
-                                   length, pattr, pclient, pcontext, pstatus);
-  pthread_rwlock_unlock(&pentry->attr_lock);
-  pthread_rwlock_unlock(&pentry->content_lock);
+  pthread_rwlock_wrlock(&entry->attr_lock);
+  pthread_rwlock_wrlock(&entry->content_lock);
+  ret = cache_inode_truncate_impl(entry,
+                                  length, attr, context, status);
+  pthread_rwlock_unlock(&entry->attr_lock);
+  pthread_rwlock_unlock(&entry->content_lock);
   return ret;
 } /* cache_inode_truncate */

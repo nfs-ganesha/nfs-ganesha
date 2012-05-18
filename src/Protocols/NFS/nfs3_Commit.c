@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -61,31 +61,32 @@
 #include "nfs_tools.h"
 
 /**
- * nfs3_Commit: Implements NFSPROC3_COMMIT
+ * @brief Implements NFSPROC3_COMMIT
  *
- * Implements NFSPROC3_COMMIT. Unused for now, all the storage is GUARDED (see write/read for details).
- * 
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * Implements NFSPROC3_COMMIT.
  *
- * @return always NFS_REQ_OK (this routine does nothing)
+ * @param[in]  parg     NFS arguments union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
+ *
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
 extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
 
-int nfs3_Commit(nfs_arg_t * parg,
-                exportlist_t * pexport,
-                fsal_op_context_t * pcontext,
-                cache_inode_client_t * pclient,
-                struct svc_req *preq, nfs_res_t * pres)
+int nfs3_Commit(nfs_arg_t *parg,
+                exportlist_t *pexport,
+                fsal_op_context_t *pcontext,
+                nfs_worker_data_t *pworker,
+                struct svc_req *preq,
+                nfs_res_t * pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs3_Access";
-
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
   cache_inode_fsal_data_t fsal_data;
@@ -117,7 +118,6 @@ int nfs3_Commit(nfs_arg_t * parg,
   /* Get the entry in the cache_inode */
   if((pentry = cache_inode_get(&fsal_data,
                                &pre_attr,
-                               pclient,
                                pcontext,
                                NULL,
                                &cache_status)) == NULL)
@@ -146,7 +146,6 @@ int nfs3_Commit(nfs_arg_t * parg,
                         parg->arg_commit3.offset,
                         parg->arg_commit3.count,
                         typeofcommit,
-                        pclient,
                         pcontext,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
@@ -175,7 +174,7 @@ int nfs3_Commit(nfs_arg_t * parg,
 
   if (pentry)
     {
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
     }
 
   return rc;

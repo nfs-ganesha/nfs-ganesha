@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -86,8 +86,6 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
   nfs_client_id_t * nfs_clientid;
   nfs_client_id_t   new_nfs_clientid;
   nfs_worker_data_t *pworker __attribute__((unused)) = NULL;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
   strlcpy(str_verifier, arg_SETCLIENTID4.client.verifier, MAXNAMLEN);
   memcpy(str_client, arg_SETCLIENTID4.client.id.id_val, 
@@ -283,7 +281,7 @@ retry:
         return res_SETCLIENTID4.status;
       }
 
-      if(nfs_client_id_add(clientid, *nfs_clientid, data->pclient) !=
+      if(nfs_client_id_add(clientid, *nfs_clientid) !=
          CLIENT_ID_SUCCESS)
         {
           res_SETCLIENTID4.status = NFS4ERR_SERVERFAULT;

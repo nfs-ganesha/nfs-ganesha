@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -29,8 +29,8 @@
  * \date    $Date: 2009/08/19 17:02:52 $
  * \brief   Routines used for managing the NFS4_OP_CREATE_SESSION operation.
  *
- * nfs4_op_create_session.c :  Routines used for managing the NFS4_OP_CREATE_SESSION operation.
- * 
+ * Routines used for managing the NFS4_OP_CREATE_SESSION operation.
+ *
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -137,7 +137,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   /** @todo: BUGAZOMEU Gerer les parametres de secu */
 
   /* Record session related information at the right place */
-  nfs41_session = pool_alloc(data->pclient->pool_session, NULL);
+  nfs41_session = pool_alloc(nfs41_session_pool, NULL);
 
   if(nfs41_session == NULL)
     {

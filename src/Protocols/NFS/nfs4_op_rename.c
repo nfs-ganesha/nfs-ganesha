@@ -244,7 +244,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* For the change_info4, get the 'change' attributes for both directories */
   if((cache_status = cache_inode_getattr(src_entry,
                                          &attr_src,
-                                         data->pclient,
                                          data->pcontext,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
@@ -265,7 +264,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if((tst_entry_src = cache_inode_lookup(src_entry,
                                          &oldname,
                                          &attr_tst_src,
-                                         data->pclient,
                                          data->pcontext,
                                          &cache_status)) == NULL)
     {
@@ -278,7 +276,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   tst_entry_dst = cache_inode_lookup(dst_entry,
                                      &newname,
                                      &attr_tst_dst,
-                                     data->pclient,
                                      data->pcontext,
                                      &cache_status);
   if((cache_status != CACHE_INODE_SUCCESS) &&
@@ -376,7 +373,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                     &newname,
                                     &attr_src,
                                     &attr_dst,
-                                    data->pclient,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
                {
 
@@ -400,7 +396,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                             &newname,
                             &attr_src,
                             &attr_dst,
-                            data->pclient,
                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_RENAME4.status = nfs4_Errno(cache_status);
@@ -421,9 +416,9 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 release:
   if (tst_entry_src)
-      (void) cache_inode_put(tst_entry_src, data->pclient);
+      (void) cache_inode_put(tst_entry_src);
   if (tst_entry_dst)
-      (void) cache_inode_put(tst_entry_dst, data->pclient);
+      (void) cache_inode_put(tst_entry_dst);
 
   return (res_RENAME4.status);
 }                               /* nfs4_op_rename */

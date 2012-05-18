@@ -156,7 +156,6 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
           res_LAYOUTRETURN4.lorr_status =
                nfs4_return_one_state(
                     data->current_entry,
-                    data->pclient,
                     data->pcontext,
                     FALSE,
                     arg_LAYOUTRETURN4.lora_reclaim,
@@ -206,8 +205,6 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
           cache_status
                = cache_inode_getattr(data->current_entry,
                                      &attrs,
-                                     data->ht,
-                                     data->pclient,
                                      data->pcontext,
                                      &cache_status);
           if (cache_status != CACHE_INODE_SUCCESS) {
@@ -252,8 +249,6 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
                     attrs.asked_attributes |= FSAL_ATTR_FSID;
                     cache_inode_getattr(layout_state->state_pentry,
                                         &attrs,
-                                        data->ht,
-                                        data->pclient,
                                         data->pcontext,
                                         &cache_status);
                     if (cache_status != CACHE_INODE_SUCCESS) {
@@ -271,7 +266,6 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
 
                res_LAYOUTRETURN4.lorr_status =
                     nfs4_return_one_state(layout_state->state_pentry,
-                                          data->pclient,
                                           data->pcontext,
                                           TRUE,
                                           arg_LAYOUTRETURN4.lora_reclaim,
@@ -328,7 +322,6 @@ void nfs41_op_layoutreturn_Free(LOCK4res * resp)
  * it deletes the state.
  *
  * @param handle       [IN]     Handle for the file whose layouts we return
- * @param pclient      [IN,OUT] Client pointer for memory pools
  * @param context      [IN,OUT] Operation context for FSAL calls
  * @param synthetic    [IN]     True if this is a bulk or synthesized
  *                              (e.g. last close or lease expiry) return
@@ -346,7 +339,6 @@ void nfs41_op_layoutreturn_Free(LOCK4res * resp)
  */
 
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
-                               cache_inode_client_t* pclient,
                                fsal_op_context_t* context,
                                fsal_boolean_t synthetic,
                                fsal_boolean_t reclaim,
@@ -463,7 +455,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                xdr_setpos(&lrf_body, beginning);
           }
           if (glist_empty(&layout_state->state_data.layout.state_segments)) {
-               state_del(layout_state, pclient, &state_status);
+               state_del(layout_state, &state_status);
                *deleted = TRUE;
           } else {
                *deleted = FALSE;

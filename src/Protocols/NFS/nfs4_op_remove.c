@@ -158,7 +158,6 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if((cache_status = cache_inode_remove(parent_entry,
                                         &name,
                                         &attr_parent,
-                                        data->pclient,
                                         data->pcontext,
                                         &cache_status)) != CACHE_INODE_SUCCESS)
     {

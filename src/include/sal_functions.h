@@ -67,16 +67,13 @@ int Hash_dec_state_owner_ref(hash_buffer_t *buffval);
 void inc_state_owner_ref_locked(state_owner_t *powner);
 void inc_state_owner_ref(state_owner_t *powner);
 
-void dec_state_owner_ref_locked(state_owner_t        * powner,
-                                cache_inode_client_t * pclient);
+void dec_state_owner_ref_locked(state_owner_t        * powner);
 
-void dec_state_owner_ref(state_owner_t        * powner,
-                         cache_inode_client_t * pclient);
+void dec_state_owner_ref(state_owner_t        * powner);
 state_status_t get_clientid_owner(clientid4 clientid,
                                   state_owner_t **clientid_owner);
 
-void state_wipe_file(cache_entry_t        * pentry,
-                     cache_inode_client_t * pclient);
+void state_wipe_file(cache_entry_t        * pentry);
 
 /******************************************************************************
  *
@@ -134,8 +131,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
                                    const char         * caller_name);
 void nlm_client_PrintAll(void);
 
-void remove_nlm_owner(cache_inode_client_t * pclient,
-                      state_owner_t        * powner,
+void remove_nlm_owner(state_owner_t        * powner,
                       const char           * str);
 
 int display_nlm_owner(state_owner_t * pkey, char * str);
@@ -222,8 +218,7 @@ void nfs4_update_lease(nfs_client_id_t * clientp);
  *
  ******************************************************************************/
 
-void remove_nfs4_owner(cache_inode_client_t * pclient,
-                       state_owner_t        * powner,
+void remove_nfs4_owner(state_owner_t        * powner,
                        const char           * str);
 
 int display_nfs4_owner(state_owner_t *powner, char *str);
@@ -257,8 +252,7 @@ void nfs4_owner_PrintAll(void);
 int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
                            state_owner_t           ** powner);
 
-state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
-                                 state_nfs4_owner_name_t * pname,
+state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
                                  state_owner_type_t        type,
                                  state_owner_t           * related_owner,
                                  unsigned int              init_seqid);
@@ -267,8 +261,7 @@ int Init_nfs4_owner(nfs4_owner_parameter_t param);
 
 void Process_nfs4_conflict(LOCK4denied          * denied,    /* NFS v4 LOck4denied structure to fill in */
                            state_owner_t        * holder,    /* owner that holds conflicting lock */
-                           fsal_lock_param_t    * conflict,  /* description of conflicting lock */
-                           cache_inode_client_t * pclient);
+                           fsal_lock_param_t    * conflict); /* description of conflicting lock */
 
 void Release_nfs4_denied(LOCK4denied * denied);
 void Copy_nfs4_denied(LOCK4denied * denied_dst, LOCK4denied * denied_src);
@@ -332,18 +325,15 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                                       int                     cookie_size,
                                       state_lock_entry_t    * lock_entry,
                                       state_cookie_entry_t ** ppcookie_entry,
-                                      cache_inode_client_t  * pclient,
                                       state_status_t        * pstatus);
 
 state_status_t state_find_grant(void                  * pcookie,
                                 int                     cookie_size,
                                 state_cookie_entry_t ** ppcookie_entry,
-                                cache_inode_client_t  * pclient,
                                 state_status_t        * pstatus);
 
 void state_complete_grant(fsal_op_context_t    * pcontext,
-                          state_cookie_entry_t * cookie_entry,
-                          cache_inode_client_t * pclient);
+                          state_cookie_entry_t * cookie_entry);
 
 /**
  *
@@ -353,12 +343,10 @@ void state_complete_grant(fsal_op_context_t    * pcontext,
  */
 state_status_t state_cancel_grant(fsal_op_context_t    * pcontext,
                                   state_cookie_entry_t * cookie_entry,
-                                  cache_inode_client_t * pclient,
                                   state_status_t       * pstatus);
 
 state_status_t state_release_grant(fsal_op_context_t    * pcontext,
                                    state_cookie_entry_t * cookie_entry,
-                                   cache_inode_client_t * pclient,
                                    state_status_t       * pstatus);
 #endif
 
@@ -369,7 +357,6 @@ state_status_t state_test(cache_entry_t        * pentry,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t    * conflict, /* description of conflicting lock */
-                          cache_inode_client_t * pclient,
                           state_status_t       * pstatus);
 
 state_status_t state_lock(cache_entry_t         * pentry,
@@ -382,7 +369,6 @@ state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_lock_param_t     * plock,
                           state_owner_t        ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t     * conflict, /* description of conflicting lock */
-                          cache_inode_client_t  * pclient,
                           state_status_t        * pstatus);
 
 state_status_t state_unlock(cache_entry_t        * pentry,
@@ -391,7 +377,6 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                             state_owner_t        * powner,
                             state_t              * pstate,
                             fsal_lock_param_t    * plock,
-                            cache_inode_client_t * pclient,
                             state_status_t       * pstatus);
 
 #ifdef _USE_BLOCKING_LOCKS
@@ -400,25 +385,21 @@ state_status_t state_cancel(cache_entry_t        * pentry,
                             exportlist_t         * pexport,
                             state_owner_t        * powner,
                             fsal_lock_param_t    * plock,
-                            cache_inode_client_t * pclient,
                             state_status_t       * pstatus);
 #endif
 
 #ifdef _USE_NLM
 state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
-                                cache_inode_client_t * pclient,
                                 state_status_t       * pstatus);
 #endif
 
 state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
                                       state_owner_t        * powner,
                                       state_t              * pstate,
-                                      cache_inode_client_t * pclient,
                                       state_status_t       * pstatus);
 
-void state_lock_wipe(cache_entry_t        * pentry,
-                     cache_inode_client_t * pclient);
+void state_lock_wipe(cache_entry_t        * pentry);
 
 /******************************************************************************
  *
@@ -434,7 +415,6 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                               state_type_t            state_type,
                               state_data_t          * pstate_data,
                               state_owner_t         * powner_input,
-                              cache_inode_client_t  * pclient,
                               fsal_op_context_t     * pcontext,
                               state_t              ** ppstate,
                               state_status_t        * pstatus);
@@ -443,35 +423,29 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_type_t            state_type,
                          state_data_t          * pstate_data,
                          state_owner_t         * powner_input,
-                         cache_inode_client_t  * pclient,
                          fsal_op_context_t     * pcontext,
                          state_t              ** ppstate,
                          state_status_t        * pstatus);
 
 state_status_t state_set(state_t              * pstate,
-                         cache_inode_client_t * pclient,
                          state_status_t       * pstatus);
 
 state_status_t state_del_locked(state_t              * pstate,
-                                cache_entry_t        * pentry,
-                                cache_inode_client_t * pclient);
+                                cache_entry_t        * pentry);
 
 state_status_t state_del(state_t              * pstate,
-                         cache_inode_client_t * pclient,
                          state_status_t       * pstatus);
 
 state_status_t state_share_add(cache_entry_t         * pentry,
                                fsal_op_context_t     * pcontext,
                                state_owner_t         * powner,
                                state_t               * pstate,  /* state that holds share bits to be added */
-                               cache_inode_client_t  * pclient,
                                state_status_t        * pstatus);
 
 state_status_t state_share_remove(cache_entry_t         * pentry,
                                   fsal_op_context_t     * pcontext,
                                   state_owner_t         * powner,
                                   state_t               * pstate,  /* state that holds share bits to be removed */
-                                  cache_inode_client_t  * pclient,
                                   state_status_t        * pstatus);
 
 state_status_t state_share_upgrade(cache_entry_t         * pentry,
@@ -479,7 +453,6 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
                                    state_data_t          * pstate_data, /* new share bits */
                                    state_owner_t         * powner,
                                    state_t               * pstate,      /* state that holds current share bits */
-                                   cache_inode_client_t  * pclient,
                                    state_status_t        * pstatus);
 
 state_status_t state_share_downgrade(cache_entry_t         * pentry,
@@ -487,7 +460,6 @@ state_status_t state_share_downgrade(cache_entry_t         * pentry,
                                      state_data_t          * pstate_data, /* new share bits */
                                      state_owner_t         * powner,
                                      state_t               * pstate,      /* state that holds current share bits */
-                                     cache_inode_client_t  * pclient,
                                      state_status_t        * pstatus);
 
 state_status_t state_share_set_prev(state_t      * pstate,
@@ -499,8 +471,7 @@ state_status_t state_share_check_prev(state_t      * pstate,
 state_status_t state_share_check_conflict(cache_entry_t  * pentry,
                                           state_data_t   * pstate_data,
                                           state_status_t * pstatus);
-void state_nfs4_state_wipe(cache_entry_t        * pentry,
-                           cache_inode_client_t * pclient);
+void state_nfs4_state_wipe(cache_entry_t        * pentry);
 
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
@@ -541,16 +512,13 @@ void state_async_thread_start();
 
 void grant_blocked_lock_upcall(cache_entry_t        * pentry,
                                void                 * powner,
-                               fsal_lock_param_t    * plock,
-                               cache_inode_client_t * pclient);
+                               fsal_lock_param_t    * plock);
 
 void available_blocked_lock_upcall(cache_entry_t        * pentry,
                                    void                 * powner,
-                                   fsal_lock_param_t    * plock,
-                                   cache_inode_client_t * pclient);
+                                   fsal_lock_param_t    * plock);
 
-void process_blocked_lock_upcall(state_block_data_t   * block_data,
-                                 cache_inode_client_t * pclient);
+void process_blocked_lock_upcall(state_block_data_t   * block_data);
 #endif
 /*
  *

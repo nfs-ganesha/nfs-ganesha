@@ -236,7 +236,6 @@ typedef struct cmdnfs_thr_info__
   struct authunix_parms authunix_struct;
 
   /** Thread specific variable : the client for the cache */
-  cache_inode_client_t client;
   cache_content_client_t dc_client;
 
   /* info for advanced commands (pwd, ls, cd, ...) */
@@ -374,15 +373,9 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   p_thr_info->authunix_struct.aup_gid = getgid();
   p_thr_info->authunix_struct.aup_len = 0; /** @todo No secondary groups support. */
 
-  /* Init the cache_inode client */
-  if(cache_inode_client_init(&p_thr_info->client, &cache_client_param, 0, NULL) != 0)
-    return 1;
-
   /* Init the cache content client */
   if(cache_content_client_init(&p_thr_info->dc_client, datacache_client_param, "") != 0)
     return 1;
-
-  p_thr_info->client.pcontent_client = (caddr_t) & p_thr_info->dc_client;
 
   p_thr_info->is_thread_init = TRUE;
 

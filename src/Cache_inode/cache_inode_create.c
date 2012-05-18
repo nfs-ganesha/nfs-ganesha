@@ -64,16 +64,14 @@
  * filesystem.  If an entry is returned, its refcount charged to the
  * call path is +1.
  *
- * @param parent [IN] Parent directory
- * @param name [IN] Name of the object to create
- * @param type [IN] Type of the object to create
- * @param policy [IN] Caching policy for this entry
- * @param mode [IN] Mode to be used at file creation
- * @param create_arg [IN] Additional argument for object creation
- * @param attr [OUT] Attributes of the new object
- * @param client [INOUT] Per-thread resource management structure
- * @param context [IN] FSAL credentials
- * @param status [OUT] Returned status
+ * @param[in]  parent     Parent directory
+ * @param[in]  name       Name of the object to create
+ * @param[in]  type       Type of the object to create
+ * @param[in]  mode       Mode to be used at file creation
+ * @param[in]  create_arg Additional argument for object creation
+ * @param[out] attr       Attributes of the new object
+ * @param[in]  context    FSAL credentials
+ * @param[out] status     Returned status
  *
  * @return Cache entry for the file created
  */
@@ -85,7 +83,6 @@ cache_inode_create(cache_entry_t *parent,
                    fsal_accessmode_t mode,
                    cache_inode_create_arg_t *create_arg,
                    fsal_attrib_list_t *attr,
-                   cache_inode_client_t *client,
                    fsal_op_context_t *context,
                    cache_inode_status_t *status)
 {
@@ -121,15 +118,13 @@ cache_inode_create(cache_entry_t *parent,
      entry = cache_inode_lookup(parent,
                                 name,
                                 attr,
-                                client,
                                 context,
                                 status);
      if (entry != NULL) {
           *status = CACHE_INODE_ENTRY_EXISTS;
           if (entry->type != type) {
                /* Incompatible types, returns NULL */
-               cache_inode_lru_unref(entry, client,
-                                     LRU_FLAG_NONE);
+               cache_inode_lru_unref(entry, LRU_FLAG_NONE);
                entry = NULL;
                goto out;
           } else {
@@ -139,7 +134,7 @@ cache_inode_create(cache_entry_t *parent,
 
      /* The entry doesn't exist, so we can create it. */
 
-     object_attributes.asked_attributes = client->attrmask;
+     object_attributes.asked_attributes = cache_inode_params.attrmask;
      switch (type) {
      case REGULAR_FILE:
           fsal_status = FSAL_create(&parent->handle,
@@ -200,7 +195,7 @@ cache_inode_create(cache_entry_t *parent,
      /* Check for the result */
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
-               cache_inode_kill_entry(parent, client);
+               cache_inode_kill_entry(parent);
           }
           *status = cache_inode_error_convert(fsal_status);
           entry = NULL;
@@ -216,9 +211,6 @@ cache_inode_create(cache_entry_t *parent,
                                    &object_attributes,
                                    type,
                                    create_arg,
-                                   client,
-                                   context,
-                                   CACHE_INODE_FLAG_CREATE,
                                    status);
      if (entry == NULL) {
           *status = CACHE_INODE_INSERT_ERROR;
@@ -231,13 +223,10 @@ cache_inode_create(cache_entry_t *parent,
      cache_inode_add_cached_dirent(parent,
                                    name, entry,
                                    NULL,
-                                   client,
-                                   context,
                                    status);
      pthread_rwlock_unlock(&parent->content_lock);
      if (*status != CACHE_INODE_SUCCESS) {
-          cache_inode_lru_unref(entry, client,
-                                LRU_FLAG_NONE);
+          cache_inode_lru_unref(entry, LRU_FLAG_NONE);
           entry = NULL;
           goto out;
      }
