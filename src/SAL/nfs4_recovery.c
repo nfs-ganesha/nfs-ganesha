@@ -93,10 +93,6 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
 
         P(grace.g_mutex);
 
-        /* if not failover and no clients able to recover, skip grace period */
-        if ((gsp == NULL) && glist_empty(&grace.g_clid_list))
-                duration = 0;
-
         /*
          * if called from failover code and given a nodeid, then this node
          * is doing a take over.  read in the client ids from the failing node
