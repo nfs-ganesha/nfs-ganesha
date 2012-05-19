@@ -112,11 +112,13 @@ const char *str_gc_proc(rpc_gss_proc_t gc_proc);
 #define XPRT_PRIVATE_FLAG_LOCKED     0x0002
 #define XPRT_PRIVATE_FLAG_REF        0x0004
 
+struct drc;
 typedef struct gsh_xprt_private
 {
     uint32_t flags;
     uint32_t refcnt;
     uint32_t multi_cnt; /* multi-dispatch counter */
+    struct drc *drc; /* TCP DRC */
 } gsh_xprt_private_t;
 
 static inline gsh_xprt_private_t *
@@ -126,6 +128,7 @@ alloc_gsh_xprt_private(uint32_t flags)
 
     xu->flags = 0;
     xu->multi_cnt = 0;
+    xu->drc = NULL;
 
     if (flags & XPRT_PRIVATE_FLAG_REF)
         xu->refcnt = 1;
@@ -135,9 +138,14 @@ alloc_gsh_xprt_private(uint32_t flags)
     return (xu);
 }
 
+void nfs_dupreq_put_drc(SVCXPRT *xprt, struct drc *drc, uint32_t flags);
+
 static inline void
-free_gsh_xprt_private(gsh_xprt_private_t *xu)
+free_gsh_xprt_private(SVCXPRT *xprt)
 {
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    if (xu->drc)
+        nfs_dupreq_put_drc(xprt, xu->drc, 0 /* DRC_FLAG_NONE */);
     gsh_free(xu);
 }
 

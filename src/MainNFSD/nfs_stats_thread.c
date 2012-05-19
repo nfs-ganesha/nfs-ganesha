@@ -377,9 +377,6 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
         }
     }
 
-    /* Printing the cache inode hash stat */
-    nfs_dupreq_get_stats(&ganesha_stats->drc_udp, &ganesha_stats->drc_tcp);
-
     /* Printing the UIDMAP_TYPE hash table stats */
     idmap_get_stats(UIDMAP_TYPE, &ganesha_stats->uid_map, &ganesha_stats->uid_reverse);
     /* Printing the GIDMAP_TYPE hash table stats */

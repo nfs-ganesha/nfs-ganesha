@@ -87,7 +87,17 @@ nfs_parameter_t nfs_param =
   .core_param.nb_worker = NB_WORKER_THREAD_DEFAULT,
   .core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG,
   .core_param.nb_max_concurrent_gc = NB_MAX_CONCURRENT_GC,
-  .core_param.expiration_dupreq = DUPREQ_EXPIRATION,
+  .core_param.drc.tcp.npart = DRC_TCP_NPART,
+  .core_param.drc.tcp.size = DRC_TCP_SIZE,
+  .core_param.drc.tcp.cachesz = DRC_TCP_CACHESZ,
+  .core_param.drc.tcp.hiwat = DRC_TCP_HIWAT,
+  .core_param.drc.tcp.recycle_npart = DRC_TCP_RECYCLE_NPART,
+  .core_param.drc.tcp.checksum = DRC_TCP_CHECKSUM,
+  .core_param.drc.udp.npart = DRC_UDP_NPART,
+  .core_param.drc.udp.size = DRC_UDP_SIZE,
+  .core_param.drc.udp.cachesz = DRC_UDP_CACHESZ,
+  .core_param.drc.udp.hiwat = DRC_UDP_HIWAT,
+  .core_param.drc.udp.checksum = DRC_UDP_CHECKSUM,
   .core_param.port[P_NFS] = NFS_PORT,
   .core_param.bind_addr.sin_family = AF_INET,       /* IPv4 only right now */
   .core_param.program[P_NFS] = NFS_PROGRAM,
@@ -518,9 +528,26 @@ void nfs_print_param_config()
   printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tNb_Worker = %u ; \n", nfs_param.core_param.nb_worker);
-  printf("\tb_Call_Before_Queue_Avg = %u ; \n", nfs_param.core_param.nb_call_before_queue_avg);
-  printf("\tNb_MaxConcurrentGC = %u ; \n", nfs_param.core_param.nb_max_concurrent_gc);
-  printf("\tDupReq_Expiration = %lu ; \n", nfs_param.core_param.expiration_dupreq);
+  printf("\tb_Call_Before_Queue_Avg = %u ; \n",
+         nfs_param.core_param.nb_call_before_queue_avg);
+  printf("\tNb_MaxConcurrentGC = %u ; \n",
+         nfs_param.core_param.nb_max_concurrent_gc);
+  printf("\tDRC_TCP_Npart = %u ; \n", nfs_param.core_param.drc.tcp.npart);
+  printf("\tDRC_TCP_Size = %u ; \n", nfs_param.core_param.drc.tcp.size);
+  printf("\tDRC_TCP_Cachesz = %u ; \n", nfs_param.core_param.drc.tcp.cachesz);
+  printf("\tDRC_TCP_Hiwat = %u ; \n", nfs_param.core_param.drc.tcp.hiwat);
+  printf("\tDRC_TCP_Recycle_Npart = %u ; \n",
+         nfs_param.core_param.drc.tcp.recycle_npart);
+  printf("\tDRC_TCP_Recycle_Expire_S = %u ; \n",
+         nfs_param.core_param.drc.tcp.recycle_expire_s);
+  printf("\tDRC_TCP_Checksum = %u ; \n",
+         nfs_param.core_param.drc.tcp.checksum);
+  printf("\tDRC_UDP_Npart = %u ; \n", nfs_param.core_param.drc.udp.npart);
+  printf("\tDRC_UDP_Size = %u ; \n", nfs_param.core_param.drc.udp.size);
+  printf("\tDRC_UDP_Cachesz = %u ; \n", nfs_param.core_param.drc.udp.cachesz);
+  printf("\tDRC_UDP_Hiwat = %u ; \n", nfs_param.core_param.drc.udp.hiwat);
+  printf("\tDRC_UDP_Checksum = %u ; \n",
+         nfs_param.core_param.drc.udp.checksum);
   printf("\tCore_Dump_Size = %ld ; \n", nfs_param.core_param.core_dump_size);
   printf("\tNb_Max_Fd = %d ; \n", nfs_param.core_param.nb_max_fd);
   printf("\tStats_File_Path = %s ; \n", nfs_param.core_param.stats_file_path);
@@ -1362,7 +1389,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                             sizeof(nfs_ip_stats_t),
                             pool_basic_substrate,
                             NULL, NULL, NULL);
-
   if(!(ip_stats_pool))
     {
       LogCrit(COMPONENT_INIT,
@@ -1453,14 +1479,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       Fatal();
     }
-  if(nfs_Init_gc_counter() != 0)
-    {
-      LogFatal(COMPONENT_INIT, "Error while initializing worker gc counter");
-    }
-  LogDebug(COMPONENT_INIT, "worker gc counter successfully initialized");
 
   LogDebug(COMPONENT_INIT, "Initializing workers data structure");
-
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
       char name[256];
@@ -1501,13 +1521,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           "NFSv4 pseudo file system successfully initialized");
 
   /* Init duplicate request cache */
-  LogDebug(COMPONENT_INIT, "Now building duplicate request hash table cache");
-  if((rc = nfs_Init_dupreq(nfs_param.dupreq_param)) != DUPREQ_SUCCESS)
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error %d while initializing duplicate request hash table cache",
-               rc);
-    }
+  dupreq2_pkginit();
   LogInfo(COMPONENT_INIT,
           "duplicate request hash table cache successfully initialized");
 

@@ -103,63 +103,63 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
         }
       else if(!STRCMP(key_name, "Export_cache_stats"))
         {
-          int bool = StrToBoolean(key_value);
-          if(bool == -1)
+          int val = StrToBoolean(key_value);
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
-          out_parameter->snmp_adm.export_cache_stats = bool;
+          out_parameter->snmp_adm.export_cache_stats = val;
         }
       else if(!STRCMP(key_name, "Export_requests_stats"))
         {
-          int bool = StrToBoolean(key_value);
-          if(bool == -1)
+          int val = StrToBoolean(key_value);
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
-          out_parameter->snmp_adm.export_requests_stats = bool;
+          out_parameter->snmp_adm.export_requests_stats = val;
         }
       else if(!STRCMP(key_name, "Export_maps_stats"))
         {
-          int bool = StrToBoolean(key_value);
-          if(bool == -1)
+          int val = StrToBoolean(key_value);
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
-          out_parameter->snmp_adm.export_maps_stats = bool;
+          out_parameter->snmp_adm.export_maps_stats = val;
         }
       else if(!STRCMP(key_name, "Export_nfs_calls_detail"))
         {
-          int bool = StrToBoolean(key_value);
-          if(bool == -1)
+          int val = StrToBoolean(key_value);
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
-          out_parameter->snmp_adm.export_nfs_calls_detail = bool;
+          out_parameter->snmp_adm.export_nfs_calls_detail = val;
         }
       else if(!STRCMP(key_name, "Export_FSAL_calls_detail"))
         {
-          int bool = StrToBoolean(key_value);
-          if(bool == -1)
+          int val = StrToBoolean(key_value);
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
               return EINVAL;
             }
-          out_parameter->snmp_adm.export_fsal_calls_detail = bool;
+          out_parameter->snmp_adm.export_fsal_calls_detail = val;
         }
       else
         {

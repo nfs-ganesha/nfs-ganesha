@@ -247,9 +247,53 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->nb_max_concurrent_gc = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "DupReq_Expiration"))
+      else if(!strcasecmp(key_name, "DRC_TCP_Npart"))
         {
-          pparam->expiration_dupreq = atoi(key_value);
+          pparam->drc.tcp.npart = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_TCP_Size"))
+        {
+          pparam->drc.tcp.size = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_TCP_Cachesz"))
+        {
+          pparam->drc.tcp.cachesz = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_TCP_Hiwat"))
+        {
+          pparam->drc.tcp.hiwat = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_TCP_Recycle_Npart"))
+        {
+          pparam->drc.tcp.recycle_npart = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_TCP_Recycle_Expire_S"))
+        {
+          pparam->drc.tcp.recycle_expire_s = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_TCP_Checksum"))
+        {
+          pparam->drc.tcp.checksum = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_UDP_Npart"))
+        {
+          pparam->drc.udp.npart = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_UDP_Size"))
+        {
+          pparam->drc.udp.size = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_UDP_Cachesz"))
+        {
+          pparam->drc.udp.cachesz = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_UDP_Hiwat"))
+        {
+          pparam->drc.udp.hiwat = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "DRC_UDP_Checksum"))
+        {
+          pparam->drc.udp.checksum = StrToBoolean(key_value);
         }
       else if(!strcasecmp(key_name, "Dispatch_Multi_Xprt_Max"))
         {

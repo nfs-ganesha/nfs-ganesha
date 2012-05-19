@@ -62,7 +62,6 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
 #include "SemN.h"

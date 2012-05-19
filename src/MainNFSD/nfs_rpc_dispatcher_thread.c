@@ -495,6 +495,16 @@ void nfs_Init_svc()
   if (!tirpc_control(TIRPC_SET_WARNX, (warnx_t) rpc_warnx))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC __warnx");
 
+  /* Set TIRPC debug flags */
+  uint32_t tirpc_debug_flags;
+  if (!tirpc_control(TIRPC_GET_DEBUG_FLAGS, &tirpc_debug_flags))
+      LogCrit(COMPONENT_INIT, "Failed getting TI-RPC debug flags");
+
+  tirpc_debug_flags |= TIRPC_DEBUG_FLAG_LOCK;
+
+  if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &tirpc_debug_flags))
+      LogCrit(COMPONENT_INIT, "Failed setting TI-RPC debug flags");
+
 #define TIRPC_SET_ALLOCATORS 0
 #if TIRPC_SET_ALLOCATORS
   if (!tirpc_control(TIRPC_SET_MALLOC, (mem_alloc_t) gsh_malloc))
@@ -722,6 +732,7 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 {
     static uint32_t next_chan = TCP_EVCHAN_0;
     pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+    gsh_xprt_private_t *xu;
     uint32_t tchan;
 
     pthread_mutex_lock(&mtx);
@@ -732,7 +743,10 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
         next_chan = TCP_EVCHAN_0;
 
     /* setup private data (freed when xprt is destroyed) */
-    newxprt->xp_u1 = alloc_gsh_xprt_private(XPRT_PRIVATE_FLAG_REF);
+    newxprt->xp_u1 = xu = alloc_gsh_xprt_private(XPRT_PRIVATE_FLAG_REF);
+
+    /* NB: xu->drc is allocated on first request--we need shared
+     * TCP DRC for v3, but per-connection for v4 */
 
     pthread_mutex_unlock(&mtx);
 
@@ -772,12 +786,6 @@ worker_available(unsigned long worker_index, unsigned int avg_number_pending)
             LogFullDebug(COMPONENT_THREAD,
                          "worker thread #%lu is not ready", worker_index);
             rc = WORKER_PAUSED;
-          }
-        else if(workers_data[worker_index].gc_in_progress == TRUE)
-          {
-            LogFullDebug(COMPONENT_THREAD,
-                         "worker thread #%lu is doing garbage collection", worker_index);
-            rc = WORKER_GC;
           }
         else if(workers_data[worker_index].pending_request_len >= avg_number_pending)
           {

@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -167,15 +168,15 @@ void nfs_FhandleToStr(u_long     rq_vers,
 /**
  *
  * nfs_FhandleToCache: Gets a cache entry using a file handle (v2/3/4) as input.
- * 
+ *
  * Gets a cache entry using a file handle (v2/3/4) as input.
  *
  * If a cache entry is returned, its refcount is +1.
  *
- * @param rq_vers  [IN]    version of the NFS protocol to be used 
- * @param pfh2     [IN]    NFSv2 file handle or NULL 
- * @param pfh3     [IN]    NFSv3 file handle or NULL 
- * @param pfh4     [IN]    NFSv4 file handle or NULL 
+ * @param rq_vers  [IN]    version of the NFS protocol to be used
+ * @param pfh2     [IN]    NFSv2 file handle or NULL
+ * @param pfh3     [IN]    NFSv3 file handle or NULL
+ * @param pfh4     [IN]    NFSv4 file handle or NULL
  * @param pstatus2 [OUT]   pointer to NFSv2 status or NULL
  * @param pstatus3 [OUT]   pointer to NFSv3 status or NULL
  * @param pstatus4 [OUT]   pointer to NFSv4 status or NULL
@@ -329,7 +330,7 @@ void nfs_SetPostOpAttr(exportlist_t *pexport,
  * nfs_SetPreOpAttr: Converts FSAL Attributes to NFSv3 PreOp Attributes structure.
  *
  * Converts FSAL Attributes to NFSv3 PreOp Attributes structure.
- * 
+ *
  * @param pfsal_attr [IN]  FSAL attributes.
  * @param pattr      [OUT] NFSv3 PreOp structure attributes.
  *
@@ -350,14 +351,14 @@ void nfs_SetPreOpAttr(const struct attrlist *pfsal_attr,
       pattr->pre_op_attr_u.attributes.mtime.nseconds = 0 ;
 
       pattr->pre_op_attr_u.attributes.ctime.seconds = pfsal_attr->ctime.seconds;
-      pattr->pre_op_attr_u.attributes.ctime.nseconds = 0; 
+      pattr->pre_op_attr_u.attributes.ctime.nseconds = 0;
 
       pattr->attributes_follow = TRUE;
     }
 }                               /* nfs_SetPreOpAttr */
 
 /**
- * 
+ *
  * nfs_SetWccData: Sets NFSv3 Weak Cache Coherency structure.
  *
  * Sets NFSv3 Weak Cache Coherency structure.
@@ -366,7 +367,7 @@ void nfs_SetPreOpAttr(const struct attrlist *pfsal_attr,
  * @param pentry       [IN]  related pentry
  * @param pbefore_attr [IN]  the attributes before the operation.
  * @param pafter_attr  [IN]  the attributes after the operation
- * @param pwcc_data    [OUT] the Weak Cache Coherency structure 
+ * @param pwcc_data    [OUT] the Weak Cache Coherency structure
  *
  * @return nothing (void function).
  *
@@ -393,7 +394,7 @@ void nfs_SetWccData(exportlist_t *pexport,
  *
  * @return TRUE if retryable, FALSE otherwise.
  *
- * @todo: Not implemented for NOW BUGAZEOMEU 
+ * @todo: Not implemented for NOW BUGAZEOMEU
  *
  */
 int nfs_RetryableError(cache_inode_status_t cache_status)
@@ -2314,7 +2315,7 @@ seqid4 nfs4_NextSeqId(seqid4 seqid)
  *
  *     Two uint32_t will be necessary there:
  *            #1 = 2**5 + 2**6 = 32 + 64 = 96
- #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18 
+ #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18
  *   +---+----+----+
  *   | 2 | 98 | 18 |
  *   +---+----+----+
@@ -2353,9 +2354,9 @@ exit:
 }                               /* nfs4_bitmap4_to_list */
 
 /**
- * 
+ *
  * nfs4_list_to_bitmap4: convert a list of attributes to an attributes's bitmap.
- * 
+ *
  * Convert a list of attributes to an attributes's bitmap.
  *
  * @param b [OUT] computed bitmap
@@ -2373,7 +2374,7 @@ exit:
  *
  *                  0         1
  *    +-------+---------+----------+-
- *    | count | 31 .. 0 | 63 .. 32 | 
+ *    | count | 31 .. 0 | 63 .. 32 |
  *    +-------+---------+----------+-
  *
  * One bit is set for every possible attributes. The bits are packed together in a uint32_T (XDR alignment reason probably)
@@ -2397,7 +2398,7 @@ exit:
  *
  *     Two uint32_t will be necessary there:
  *            #1 = 2**5 + 2**6 = 32 + 64 = 96
- #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18 
+ #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18
  *   +---+----+----+
  *   | 2 | 98 | 18 |
  *   +---+----+----+
@@ -3421,9 +3422,9 @@ static int settime4_to_fsal_time(gsh_time_t *ts,
 }
 
 /**
- * 
+ *
  * Fattr4_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
- * 
+ *
  * Converts NFSv4 attributes buffer to a FSAL attributes structure.
  *
  * NB! If the pointer for the handle is provided the memory is not allocated,
@@ -3431,9 +3432,9 @@ static int settime4_to_fsal_time(gsh_time_t *ts,
  *     as long as fattr4 is valid.
  *
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
- * @param Fattr      [IN] pointer to NFSv4 attributes. 
+ * @param Fattr      [IN] pointer to NFSv4 attributes.
  * @param hdl4       [OUT] optional pointer to return NFSv4 file handle
- * 
+ *
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
@@ -3785,14 +3786,14 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
 }                               /* Fattr4_To_FSAL_attr */
 
 /**
- * 
+ *
  * nfs4_Fattr_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
- * 
+ *
  * Converts NFSv4 attributes buffer to a FSAL attributes structure.
  *
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
  * @param Fattr      [IN] pointer to NFSv4 attributes.
- * 
+ *
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
@@ -3803,13 +3804,13 @@ int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr, fattr4 *Fattr)
 
 /* Error conversion routines */
 /**
- * 
+ *
  * nfs4_Errno: Converts a cache_inode status to a nfsv4 status.
- * 
+ *
  *  Converts a cache_inode status to a nfsv4 status.
  *
  * @param error  [IN] Input cache inode ewrror.
- * 
+ *
  * @return the converted NFSv4 status.
  *
  */
@@ -3944,13 +3945,13 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
 }                               /* nfs4_Errno */
 
 /**
- * 
+ *
  * nfs3_Errno: Converts a cache_inode status to a nfsv3 status.
- * 
+ *
  *  Converts a cache_inode status to a nfsv3 status.
  *
  * @param error  [IN] Input cache inode ewrror.
- * 
+ *
  * @return the converted NFSv3 status.
  *
  */
@@ -4087,13 +4088,13 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
 }                               /* nfs3_Errno */
 
 /**
- * 
+ *
  * nfs2_Errno: Converts a cache_inode status to a nfsv2 status.
- * 
+ *
  *  Converts a cache_inode status to a nfsv2 status.
  *
  * @param error  [IN] Input cache inode ewrror.
- * 
+ *
  * @return the converted NFSv2 status.
  *
  */
@@ -4210,13 +4211,13 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
 }                               /* nfs2_Errno */
 
 /**
- * 
+ *
  * nfs3_AllocateFH: Allocates a buffer to be used for storing a NFSv4 filehandle.
- * 
+ *
  * Allocates a buffer to be used for storing a NFSv3 filehandle.
  *
  * @param fh [INOUT] the filehandle to manage.
- * 
+ *
  * @return NFS3_OK if successful, NFS3ERR_SERVERFAULT, NFS3ERR_RESOURCE or NFS3ERR_STALE  otherwise.
  *
  */
