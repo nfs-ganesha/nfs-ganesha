@@ -75,6 +75,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
 
   fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
+  fsal_attrib_list_t     parent_attr;
 
   struct timeval t;
 
@@ -86,8 +87,8 @@ int _9p_setattr( _9p_request_data_t * preq9p,
 
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
+  _9p_getptr( cursor, fid,    u32 ) ; 
 
-  _9p_getptr( cursor, fid,        u32 ) ; 
   _9p_getptr( cursor, valid,      u32 ) ;
   _9p_getptr( cursor, mode,       u32 ) ;
   _9p_getptr( cursor, uid,        u32 ) ;
@@ -127,6 +128,8 @@ int _9p_setattr( _9p_request_data_t * preq9p,
 
   /* Let's do the job */
   memset( (char *)&fsalattr, 0, sizeof( fsalattr ) ) ;
+  memset(&parent_attr, 0, sizeof(parent_attr));
+
   if( *valid & _9P_SETATTR_MODE )
    {
       fsalattr.asked_attributes |= FSAL_ATTR_MODE ;
@@ -185,6 +188,22 @@ int _9p_setattr( _9p_request_data_t * preq9p,
       fsalattr.mtime.seconds  = *mtime_sec ;
       fsalattr.mtime.nseconds = *mtime_nsec ;
    }
+
+  /* Set size if needed */
+  if( *valid & _9P_SETATTR_SIZE )
+    {
+      if((cache_status = cache_inode_truncate( pfid->pentry,
+                                               *size,
+                                               &parent_attr,
+                                               &pwkrdata->cache_inode_client,
+                                               &pfid->fsal_op_context,
+                                               &cache_status)) != CACHE_INODE_SUCCESS)
+       {
+         err = _9p_tools_errno( cache_status ) ; ;
+         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+         return rc ;
+       }
+    }
 
   /* Now set the attr */ 
   if( cache_inode_setattr( pfid->pentry,
