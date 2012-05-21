@@ -22,12 +22,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* Dirty work-around to be used for managing NFS related link semantics */
-static int linkat2(int srcfd, int dirdestfd, char *destname)
-{
-   return linkat( srcfd, "", dirdestfd, destname, AT_EMPTY_PATH ) ;
-}
-
 /**
  * FSAL_create:
  * Create a regular file.
@@ -450,7 +444,7 @@ fsal_status_t VFSFSAL_link(fsal_handle_t * p_target_handle,  /* IN */
   /* Create the link on the filesystem */
 
   TakeTokenFSCall();
-  rc = linkat2(srcfd, dstfd, p_link_name->name);
+  rc = linkat(srcfd, "", dstfd, p_link_name->name, AT_EMPTY_PATH);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
