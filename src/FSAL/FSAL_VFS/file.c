@@ -265,7 +265,7 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 	LogFullDebug(COMPONENT_FSAL,
-		     "Locking: op:%d type:%d start:%llu length:%llu ",
+		     "Locking: op:%d type:%d start:%lu length:%lu ",
 		     lock_op,
 		     request_lock.lock_type,
 		     request_lock.lock_start,
