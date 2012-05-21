@@ -196,7 +196,9 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info,
     return HANDLEMAP_SYSTEM_ERROR;
 
   p_thr_info->dbop_pool =
-       pool_init(NULL, sizeof(db_op_item_t), NULL, NULL);
+       pool_init(NULL, sizeof(db_op_item_t),
+                 pool_basic_substrate,
+                 NULL, NULL, NULL);
 
   return HANDLEMAP_SUCCESS;
 }

@@ -441,10 +441,13 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
 
   pcontext->pool_async_op = pool_init(NULL,
                                       sizeof(mfsl_async_op_desc_t),
-                                      NULL, NULL);
+                                      pool_basic_substrate,
+                                      NULL, NULL, NULL);
 
   pcontext->pool_spec_data =
-    pool_init(NULL, sizeof(mfsl_object_specific_data_t), NULL, NULL);
+    pool_init(NULL, sizeof(mfsl_object_specific_data_t),
+              pool_basic_substrate,
+              NULL, NULL, NULL);
 
   /* Preallocate files and dirs for this thread */
   P(pcontext->lock);
@@ -504,6 +507,8 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
     {
       pcontext->pool_dirs = pool_init(NULL,
                                       sizeof(mfsl_precreated_object_t),
+                                      pool_basic_substrate,
+                                      NULL,
                                       constructor_preacreated_entries, NULL);
 
       status = mfsl_async_init_precreated_directories(pfsal_context, &pcontext->pool_dirs);
@@ -541,6 +546,7 @@ fsal_status_t MFSL_ASYNC_RefreshContextFiles(mfsl_context_t * pcontext,
       pcontext->pool_files
         = pool_init(NULL
                     sizeof(mfsl_precreated_object_t),
+                    pool_basic_substrate, NULL
                     constructor_preacreated_entries, NULL);
 
       status = mfsl_async_init_precreated_files(pfsal_context, &pcontext->pool_files);

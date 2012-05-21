@@ -570,8 +570,12 @@ int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen)
   /* Initialize pools.
    */
 
-  peer_pool = pool_init(NULL, sizeof(lookup_peer_t), NULL, NULL);
-  node_pool = pool_init(NULL, sizeof(fsnode_t), NULL, NULL);
+  peer_pool = pool_init(NULL, sizeof(lookup_peer_t),
+                        pool_basic_substrate,
+                        NULL, NULL, NULL);
+  node_pool = pool_init(NULL, sizeof(fsnode_t),
+                        pool_basic_substrate,
+                        NULL, NULL, NULL);
 
   /* initialize namespace lock */
   if(rw_lock_init(&ns_lock))

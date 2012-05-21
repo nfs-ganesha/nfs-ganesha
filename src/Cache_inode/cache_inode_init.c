@@ -77,7 +77,8 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
 
   cache_inode_entry_pool = pool_init("Entry Pool",
                                      sizeof(cache_entry_t),
-                                     NULL, NULL);
+                                     pool_basic_substrate,
+                                     NULL, NULL, NULL);
   if(!(cache_inode_entry_pool))
     {
       LogCrit(COMPONENT_CACHE_INODE,
@@ -87,7 +88,8 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
     }
   cache_inode_symlink_pool = pool_init("Symlink Pool",
                                        sizeof(cache_inode_symlink_t),
-                                       NULL, NULL);
+                                       pool_basic_substrate,
+                                       NULL, NULL, NULL);
   if(!(cache_inode_symlink_pool))
     {
       LogCrit(COMPONENT_CACHE_INODE,
@@ -98,7 +100,8 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
 
   cache_inode_dir_entry_pool = pool_init("Directory entry pool",
                                          sizeof(cache_inode_dir_entry_t),
-                                         NULL, NULL);
+                                         pool_basic_substrate,
+                                         NULL, NULL, NULL);
   if(!(cache_inode_dir_entry_pool))
     {
       LogCrit(COMPONENT_CACHE_INODE,

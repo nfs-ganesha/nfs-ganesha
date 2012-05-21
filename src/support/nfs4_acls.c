@@ -485,10 +485,14 @@ int nfs4_acls_init()
            sizeof(fsal_ace_t), sizeof(fsal_acl_t));
 
   /* Initialize memory pool of ACLs. */
-  fsal_acl_pool = pool_init(NULL, sizeof(fsal_acl_t), NULL, NULL);
+  fsal_acl_pool = pool_init(NULL, sizeof(fsal_acl_t),
+                            pool_basic_substrate,
+                            NULL, NULL, NULL);
 
   /* Initialize memory pool of ACL keys. */
-  fsal_acl_key_pool = pool_init(NULL, fsal_acl_key_t, NULL, NULL);
+  fsal_acl_key_pool = pool_init(NULL, fsal_acl_key_t,
+                                pool_basic_substrate,
+                                NULL, NULL, NULL);
 
   /* Create hash table. */
   fsal_acl_hash = HashTable_Init(&fsal_acl_hash_config);

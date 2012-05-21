@@ -154,11 +154,11 @@ typedef struct gss_union_ctx_id_t {
 int
 serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)
 {
-	krb5_gss_ctx_id_t kctx = ((gss_union_ctx_id_t)ctx)->internal_ctx_id;
+        krb5_gss_ctx_id_t kctx = (krb5_gss_ctx_id_t) ((gss_union_ctx_id_t)ctx)->internal_ctx_id;
 	char *p, *end;
 	static int constant_zero = 0;
 	static int constant_one = 1;
-	static int constant_two = 2;
+        static int constant_two __attribute__((unused)) = 2;
 	uint32_t word_seq_send;
 	u_int64_t seq_send_64bit;
 	uint32_t v2_flags = 0;

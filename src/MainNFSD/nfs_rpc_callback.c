@@ -102,6 +102,8 @@ void nfs_rpc_cb_pkginit(void)
     /* Create a pool of rpc_call_t */
     rpc_call_pool = pool_init("RPC Call Pool",
                               sizeof(rpc_call_t),
+                              pool_basic_substrate,
+                              NULL,
                               nfs_rpc_init_call,
                               NULL);
     if(!(rpc_call_pool)) {

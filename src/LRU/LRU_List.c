@@ -155,7 +155,10 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
   plru->parameter = lru_param;
 
   /* Pre allocate entries */
-  plru->lru_entry_pool = pool_init("LRU Entry Pool", sizeof(LRU_entry_t), NULL, NULL);
+  plru->lru_entry_pool = pool_init("LRU Entry Pool",
+                                   sizeof(LRU_entry_t),
+                                   pool_basic_substrate,
+                                   NULL, NULL, NULL);
   if(!(plru->lru_entry_pool))
     {
       *pstatus = LRU_LIST_MALLOC_ERROR;

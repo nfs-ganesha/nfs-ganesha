@@ -92,7 +92,9 @@ void init()
     stats[0] = ipstats;
 
     ip_stats_pool =
-         pool_init("IP Stats Cache Pool", sizeof(nfs_ip_stats_t), NULL, NULL);
+         pool_init("IP Stats Cache Pool", sizeof(nfs_ip_stats_t),
+                   pool_basic_substrate,
+                   NULL, NULL, NULL);
 
     create_ipv4("10.10.5.1", 2048, (struct sockaddr_in * ) &ipv4a);
     //    create_ipv4("10.10.5.1", 2049, (struct sockaddr_in * ) &ipv4b);

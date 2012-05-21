@@ -358,12 +358,14 @@ HashTable_Init(struct hash_param *hparam)
      }
 
      ht->node_pool = pool_init(NULL, sizeof(rbt_node_t),
-                               NULL, NULL);
+                               pool_basic_substrate,
+                               NULL, NULL, NULL);
      if (!(ht->node_pool)) {
           goto deconstruct;
      }
      ht->data_pool = pool_init(NULL, sizeof(hash_data_t),
-                               NULL, NULL);
+                               pool_basic_substrate,
+                               NULL, NULL, NULL);
      if (!(ht->data_pool))
           goto deconstruct;
 

@@ -42,6 +42,19 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+
+/**
+ * @page GeneralAllocator General Allocator Shim
+ *
+ * These functions provide an interface akin to the standard libc
+ * allocation functions.  Currently they call the functions malloc,
+ * free, and so forth, with changes in functionality being provided by
+ * linking in alternate allocator libraries (tcmalloc and jemalloc, at
+ * present.)  So long as the interface remains the same, these
+ * functions can be switched out using ifdef for versions that do more
+ * memory tracking or that call allocators with other names.
+ */
 
 /**
  * @brief Allocate memory
@@ -139,7 +152,7 @@ gsh_strdup(const char *s)
  * This function frees a block of memory allocated with gsh_malloc,
  * gsh_malloc_aligned, gsh_calloc, gsh_realloc, or gsh_strdup.
  *
- * @param[in] p  Block of memory to free.
+ * @param[in] p Block of memory to free.
  */
 static inline void
 gsh_free(void *p)
@@ -162,6 +175,98 @@ gsh_free_size(void *p, size_t n __attribute__((unused)))
 {
      free(p);
 }
+
+/**
+ * @page PoolAllocator Pool allocator shim
+ *
+ * These functions provide an abstract interface to memory pools.
+ * Since multiple implementations of pooling may be useful within a
+ * single running image, the underlying substrate can be changed using
+ * by passing a constant (specifying an allocator) and parameters to
+ * pool_init.
+ *
+ * By design, things are separated out so one can add a new pool
+ * substrate without editing this file.  One can create, for example,
+ * static_pool.h, define a function vector and a parameter structure,
+ * and any functions wishing to use the static_pool could include it.
+ */
+
+typedef struct pool pool_t;
+
+/**
+ * @brief Abstract type of pool initializer
+ *
+ * This type represents that of a function to perform the
+ * initialization of the underlying pool.  It should allocate the
+ * pool_t and other memory it needs in a contiguous block, initialize
+ * its own substrate-specific data, and return the pointer to the
+ * pool_t (without filling out any of the fields in the pool_t
+ * proper.)
+ *
+ * @param[in] size  Size of the objects to be allocated
+ * @param[in] param Substrate specific parameters
+ *
+ * @return the pointer to the pool_t or NULL on failure
+ */
+
+typedef pool_t*(*pool_initializer_t)(size_t size,
+                                     void* param);
+
+/**
+ * @brief Abstract type of pool destroyer
+ *
+ * This type represents that of a function to perform the destruction
+ * of an underlying pool.  It should do any substrate specific cleanup
+ * and then deallocate the memory pointed to by the pool argment.
+ *
+ * @param[in] pool The pool to destroy
+ */
+
+typedef void (*pool_destroyer_t)(pool_t *pool);
+
+/**
+ * @brief Abstract type of pool allocator
+ *
+ * This type represents that of a function to perform the allocation
+ * of an object in the underlying pool implementation.  It must not
+ * call the constructor function, leaving that to the wrapper.
+ *
+ * @param[in] pool The pool from which to allocate.
+ *
+ * @return the allocated object or NULL.
+ */
+
+typedef void *(*pool_allocator_t)(pool_t *pool);
+
+/**
+ * @brief Abstract type of pool freer
+ *
+ * This type represents that of a function to free an object in the
+ * underlying pool implementation.  It must not call the destructor
+ * function, leaving that to the wrapper.
+ *
+ * @param[in] pool   The pool to which to return the object
+ * @param[in] object The object to free
+ *
+ */
+
+typedef void (*pool_freer_t)(pool_t *pool,
+                             void* object);
+
+
+/**
+ * @brief A function vector defining a pool substrate
+ *
+ * This structure provides the set of functions that defines the
+ * underlying pool substrate.
+ */
+
+struct pool_substrate_vector {
+     pool_initializer_t initializer; /*< Create an underlying pool */
+     pool_destroyer_t destroyer; /*< Destroy an underlying pool */
+     pool_allocator_t allocator; /*< Allocate an object */
+     pool_freer_t freer; /*< Free an object */
+};
 
 /**
  * @brief Object constructor
@@ -187,6 +292,7 @@ typedef void(*pool_constructor_t)(void *object,
 
 typedef void(*pool_destructor_t)(void *object);
 
+
 /**
  * @brief Type representing a pool
  *
@@ -197,11 +303,15 @@ typedef void(*pool_destructor_t)(void *object);
  * should be made.
  */
 
-typedef struct pool {
-     size_t object_size;
-     pool_constructor_t constructor;
-     pool_destructor_t destructor;
-} pool_t;
+struct pool {
+     char *name; /*< The name of the pool */
+     size_t object_size; /*< The size of the objects created */
+     pool_constructor_t constructor; /*< The object constructor */
+     pool_destructor_t destructor; /*< The object destructor */
+     struct pool_substrate_vector *substrate_vector; /*< Pool operations */
+     char substrate_data[]; /*< The beginning of any substrate-specific
+                                data */
+};
 
 /**
  * @brief Create an object pool
@@ -213,11 +323,16 @@ typedef struct pool {
  * implementations that do tracking or keep counts of allocated or
  * de-allocated objects will likely wish to use it in log messages.
  *
- * @param[in] name        The name of this pool
- * @param[in] object_size The size of objects to allocate
- * @param[in] constructor Function to be called on each new object
- * @param[in] destructor  Function to be called on each object before
- *                        destruction
+ * @param[in] name             The name of this pool
+ * @param[in] object_size      The size of objects to allocate
+ * @param[in] substrate        The function vector specifying the
+ *                             substrate to use for this pool
+ * @param[in] substrate_params The substrate-specific parameters for
+ *                             this pool
+ * @param[in] constructor      Function to be called on each new
+ *                             object
+ * @param[in] destructor       Function to be called on each object
+ *                             before destruction
  *
  * @return A pointer to the pool object.  This pointer must not be
  *         dereferenced.  It may be stored or supplied as an argument
@@ -227,16 +342,25 @@ typedef struct pool {
  */
 
 static inline pool_t*
-pool_init(const char* name __attribute__((unused)),
+pool_init(const char* name,
           size_t object_size,
+          const struct pool_substrate_vector *substrate,
+          void *substrate_params,
           pool_constructor_t constructor,
           pool_destructor_t destructor)
 {
-     pool_t *pool = gsh_calloc(1, sizeof(pool_t));
+     pool_t *pool = substrate->initializer(object_size,
+                                           substrate_params);
      if (pool) {
+          pool->substrate_vector = (struct pool_substrate_vector *)substrate;
           pool->object_size = object_size;
           pool->constructor = constructor;
           pool->destructor = destructor;
+          if (name) {
+               pool->name = gsh_strdup(name);
+          } else {
+               pool->name = NULL;
+          }
      }
      return pool;
 }
@@ -253,7 +377,7 @@ pool_init(const char* name __attribute__((unused)),
 static inline void
 pool_destroy(pool_t *pool)
 {
-     gsh_free(pool);
+     pool->substrate_vector->destroyer(pool);
 }
 
 /**
@@ -279,7 +403,7 @@ pool_destroy(pool_t *pool)
 static inline void*
 pool_alloc(pool_t *pool, void *parameters)
 {
-     void *object = gsh_calloc(1, pool->object_size);
+     void *object = pool->substrate_vector->allocator(pool);
      if (object && (pool->constructor)) {
           (pool->constructor)(object, parameters);
      }
@@ -308,7 +432,92 @@ pool_free(pool_t *pool, void* object)
      if (pool->destructor) {
           (pool->destructor)(object);
      }
+     pool->substrate_vector->freer(pool, object);
+}
+
+/**
+ * @page BasicPoolSubstrate The Basic Pool Substrate
+ *
+ * These functions provide a non-preallocated, general-purpose pool
+ * abstraction to Ganesha.  Currently it is only a wrapper around
+ * gsh_malloc and gsh_free, but there are plans to, at a later date,
+ * rewrite it in terms of an exposed pool interface in the underlying
+ * allocator.
+ */
+
+/**
+ * @brief Initialize a basic pool
+ *
+ * This function simply allocates space for the pool_t structure and
+ * returns it.
+ *
+ * @param[in] size  Size of the object (unused)
+ * @param[in] param Parameters (there are no parameters, must be
+ *                  NULL.)
+ *
+ * @return the allocated pool_t structure.
+ */
+
+static inline pool_t*
+pool_basic_initializer(size_t size __attribute__((unused)),
+                       void* param __attribute__((unused)))
+{
+     assert(param == NULL); /* We take no parameters */
+     return gsh_malloc(sizeof(pool_t));
+}
+
+/**
+ * @brief Destroy a basic pool
+ *
+ * This function just frees the space of the pool_t structure.
+ *
+ * @param[in] pool The pool to destroy
+ */
+
+static inline void
+pool_basic_destroy(pool_t *pool)
+{
+     gsh_free(pool);
+}
+
+/**
+ * @brief Allocate an object from a basic pool
+ *
+ * This function just calls gsh_malloc to get an object of the
+ * appropriate size.
+ *
+ * @param[in] pool The pool from which to allocate.
+ *
+ * @return the allocated object or NULL.
+ */
+
+static inline void*
+pool_basic_alloc(pool_t *pool)
+{
+     return gsh_malloc(pool->object_size);
+}
+
+/**
+ * @brief Free an object in a basic pool
+ *
+ * This function just calls gsh_free on the supplied object.
+ *
+ * @param[in] pool   The pool to which to return the object (unused)
+ * @param[in] object The object to free
+ */
+
+static inline void
+pool_basic_free(pool_t *pool,
+                void* object)
+{
      gsh_free(object);
 }
+
+static const struct pool_substrate_vector pool_basic_substrate[]= {
+     {.initializer = pool_basic_initializer,
+      .destroyer = pool_basic_destroy,
+      .allocator = pool_basic_alloc,
+      .freer = pool_basic_free}
+};
 
 #endif /* _ABSTRACT_MEM_H */

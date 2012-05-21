@@ -137,16 +137,16 @@ state_status_t state_lock_init(state_status_t * pstatus)
 
   state_owner_pool = pool_init("NFSv4 state owners",
                                sizeof(state_owner_t),
-                               NULL,
-                               NULL);
+                               pool_basic_substrate,
+                               NULL, NULL, NULL);
   state_nfs4_owner_name_pool = pool_init("Owner names",
                                          sizeof(state_nfs4_owner_name_t),
-                                         NULL,
-                                         NULL);
+                                         pool_basic_substrate,
+                                         NULL, NULL, NULL);
   state_v4_pool = pool_init("NFSv4 files states",
                             sizeof(state_t),
-                            NULL,
-                            NULL);
+                            pool_basic_substrate,
+                            NULL, NULL, NULL);
   return *pstatus;
 }
 

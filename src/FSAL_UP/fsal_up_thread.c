@@ -135,6 +135,7 @@ void nfs_Init_FSAL_UP()
   /* Allocation of the FSAL UP pool */
   nfs_param.fsal_up_param.event_pool
        = pool_init("FSAL UP Data Pool", sizeof(fsal_up_event_t),
+                   pool_basic_substrate, NULL,
                    constructor_fsal_up_event_t, NULL);
   if(!(nfs_param.fsal_up_param.event_pool))
     {
