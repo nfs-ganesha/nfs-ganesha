@@ -22,12 +22,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* Dirty work-around to be used for managing NFS related link semantics */
-static int linkat2(int srcfd, int dirdestfd, char *destname)
-{
-   return linkat( srcfd, "", dirdestfd, destname, AT_EMPTY_PATH ) ;
-}
-
 /**
  * FSAL_create:
  * Create a regular file.
