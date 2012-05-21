@@ -159,10 +159,10 @@ cache_inode_commit(cache_entry_t *entry,
                                      CACHE_INODE_FLAG_CONTENT_HOLD,
                                      status) !=
                    CACHE_INODE_SUCCESS) {
+                  LogEvent(COMPONENT_CACHE_INODE,
+                          "cache_inode_commit: cache_inode_close = %d",
+                          *status);
                }
-               LogEvent(COMPONENT_CACHE_INODE,
-                        "cache_inode_commit: cache_inode_close = %d",
-                        *status);
           }
      } else {
           /* Ok, it looks like we're using the Ganesha write
