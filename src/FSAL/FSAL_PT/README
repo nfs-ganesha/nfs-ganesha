@@ -1,0 +1,16 @@
+= FSAL_GPFS =
+
+The following is an experimental FSAL for use with IBM's GPFS
+filesystem.  Eventually we hope to use the open-by-handle mechanism
+that's being developed for upstream Linux.  There is currently nothing
+GPFS specific in the code base, though we expect that as more advanced
+nfsv4 permissions are supported there will be some calls directly into
+GPFS due to the handling of RichACLs in the Linux kernel.
+
+In the short term we're using a kernel module that provides a
+character driver to the same effect to prove out this approach.  This
+kernel is in the "kernel" subdirectory, though has only been tested on
+a 2.6.18 kernel.  Use with other versions is not recommended, and will
+probably not work.
+
+

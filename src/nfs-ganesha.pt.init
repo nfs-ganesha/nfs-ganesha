@@ -1,0 +1,300 @@
+#!/bin/bash
+# init file for ganesha
+#
+# chkconfig: - 50 50
+# description: GANESHA NFS Daemon
+#
+# processname: /usr/bin/pt.ganesha.nfsd
+# config: /etc/ganesha/pt.ganesha.nfsd.conf
+# pidfile: /var/run/pt.ganesha.nfsd.pid
+#
+### BEGIN INIT INFO
+# Provides: nfs-ganesha.pt
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs $network
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop nfs-ganesha/ProtecTIER daemon
+# Description: NFS-GANESHA
+### END INIT INFO
+
+
+# source function library
+. /etc/init.d/functions
+
+# Source networking configuration.
+[ -f /etc/sysconfig/network ] &&  . /etc/sysconfig/network
+
+# Check for and source configuration file otherwise set defaults
+[ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
+
+PATHPROG=/usr/bin/pt.ganesha.nfsd
+PROG=pt.ganesha.nfsd
+LOGFILE=/var/log/nfs-ganesha.log
+#LOGFILE=SYSLOG
+#LOGFILE=STDERR
+#LOGFILE=STDOUT
+
+CONFFILE=/etc/ganesha/pt.ganesha.nfsd.conf
+
+# Remote quota server
+[ -z "$RQUOTAD" ] && RQUOTAD=`type -path rpc.rquotad`
+
+#DEBUGLEVEL=NIV_NULL
+#DEBUGLEVEL=NIV_MAJOR
+#DEBUGLEVEL=NIV_CRIT
+DEBUGLEVEL=NIV_EVENT
+#DEBUGLEVEL=NIV_DEBUG
+#DEBUGLEVEL=NIV_FULL_DEBUG
+
+OPTIONS="-d -f $CONFFILE -N $DEBUGLEVEL -L $LOGFILE"
+RETVAL=0
+prog="pt.ganesha.nfsd"
+
+which sm-notify &> /dev/null
+HAVE_SMNOTIFY=`echo $?`
+
+start() {
+	# Check if the user is root
+        if [ $UID -ne 0 ]; then
+	        echo "ProtecTIER Ganesha must be started by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+	if [ ! -x /sbin/rpc.statd ]; then
+		echo "statd is not available"
+		RETVAL=1
+		failure
+		echo
+		return $RETVAL
+	fi
+
+	# Make sure the rpc.statd is not already running.
+	if status rpc.statd > /dev/null ; then
+		echo "statd already running. Kill it."
+		RETVAL=1
+		failure
+		echo
+		return $RETVAL
+	fi
+
+	# Make sure the rpc.rquotad is not already running.
+	if status rpc.rquotad > /dev/null ; then
+		echo "rquotad already running. Kill it."
+		RETVAL=1
+		failure
+		echo
+		return $RETVAL
+	fi
+
+	# Check if a Ganesha configuration file is available
+	if [ ! -f "$CONFFILE" ]; then
+	        echo "The following configuration file is required but does not exist: $CONFFILE"
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL
+	fi
+
+	# Check if Ganesha is already running
+	result=`pidof "$PATHPROG"`
+	if [ $result ]; then
+	        echo "ProtecTIER Ganesha is already running."
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL
+	fi
+
+	# start the statd daemon
+	rm -f /var/lock/subsys/rpc.statd
+
+	# Make sure locks are recovered
+	if [ $HAVE_SMNOTIFY -eq 0 ]; then
+		rm -f /var/run/sm-notify.pid
+	fi
+
+	# Start daemons.
+	# See if the kernel lockd should start up 
+	# listening on a particular port
+	#
+	if [ -n "$LOCKD_TCPPORT" -o -n "$LOCKD_UDPPORT" ]; then 
+		[ -x /sbin/modprobe ] && /sbin/modprobe lockd $LOCKDARG
+		[ -n "$LOCKD_TCPPORT" ] && \
+			/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
+		[ -n "$LOCKD_UDPPORT" ] && \
+			/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
+	fi
+
+	echo -n $"Starting NFS statd: "
+	# Set statd's local hostname if defined
+	[ -n "${STATD_HOSTNAME}" ] && STATDARG="$STATDARG -n ${STATD_HOSTNAME}"
+
+	# See if a statd's ports has been defined
+	[ -n "$STATD_PORT" ] && STATDARG="$STATDARG -p $STATD_PORT"
+	[ -n "$STATD_OUTGOING_PORT" ] \
+		&& STATDARG="$STATDARG -o $STATD_OUTGOING_PORT"
+
+	# See if we have an HA-callout program specified
+	[ -n "$STATD_HA_CALLOUT" ] \
+		&& STATDARG="$STATDARG -H $STATD_HA_CALLOUT"
+	daemon rpc.statd "$STATDARG"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rpc.statd
+	if [ $RETVAL -ne 0 ]; then
+		failure
+		return $RETVAL
+	fi
+
+	# start the rquotad daemon
+	if [ -n "$RQUOTAD" ] ; then
+		echo -n $"Starting rquotad: "
+		[ -n "$RQUOTAD_PORT" ] \
+			&& RPCRQUOTADOPTS="$RPCRQUOTADOPTS -p $RQUOTAD_PORT"
+		daemon rpc.rquotad $RPCRQUOTADOPTS
+		RETVAL=$?
+		echo
+		if [ $RETVAL -ne 0 ]; then
+			failure
+			return $RETVAL
+		fi
+	fi
+
+	# Start the Ganesha daemon
+        echo  -n $"Starting $prog: "
+	daemon $PATHPROG $OPTIONS
+	RETVAL=$?
+	if [ $HAVE_SMNOTIFY -eq 0 ]; then
+		sm-notify -f
+	fi
+
+        # Sleeping here gives Ganesha an adequate amount of time to
+        # initialize the server and fail if anything goes wrong.
+        # Without this sleep and the server will be in the midst of
+        # initializing. It may fail immediately after this script runs.
+	sleep 2
+
+	# Check if Ganesha is still running
+	result=`pidof "$PATHPROG"`
+	if [ ! $result ]; then
+	    failure
+	    echo
+	    return $RETVAL
+	fi
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/pt.ganesha.nfsd
+
+        echo
+        return $RETVAL
+}
+
+stop() {
+	# Check if user is root
+        if [ $UID -ne 0 ]; then
+	        echo "ProtecTIER Ganesha must be stopped by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+	echo -n $"Stopping rquotad: "
+	killproc rpc.rquotad
+	RETVAL=$?
+	echo
+
+	echo -n $"Stopping statd: "
+	killproc rpc.statd
+	RETVAL=$?
+	rm -f /var/lock/subsys/rpc.statd
+	if [ $HAVE_SMNOTIFY -eq 0 ]; then
+		rm -f /var/run/sm-notify.pid
+	fi
+	echo
+
+	# Kill the Ganesha process
+	echo -n $"Stopping $prog: "
+	killproc -d 30 $PATHPROG
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/pt.ganesha.nfsd
+
+	# Give Ganesha time to quit
+	result=`pidof "$PATHPROG"`
+	while true; do
+	         if [ $result ]; then
+		         sleep .1
+			 result=`pidof "$PATHPROG"`
+	         else
+		         break
+		 fi
+	done
+
+        echo
+        return $RETVAL
+}
+
+restart(){
+	stop
+	start
+        return $RETVAL
+}
+
+condrestart(){
+    [ -e /var/lock/subsys/pt.ganesha.nfsd ] && restart
+    return 0
+}
+
+reload() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "Reloading Ganesha Exports"
+	    kill -HUP $result;
+    fi
+}
+
+ganesha_status() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "ProtecTIER Ganesha is running."
+	    RETVAL=0
+    else
+	    echo "ProtecTIER Ganesha is not running."
+	    RETVAL=1
+    fi
+    status rpc.statd
+    if [ -n "$RQUOTAD" ] ; then
+    	status rpc.rquotad
+    fi
+    return $RETVAL
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  reload)
+	reload
+        ;;
+  condrestart)
+	condrestart
+	;;
+  status)
+        ganesha_status
+        ;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+	RETVAL=1
+esac
+
+exit $RETVAL
