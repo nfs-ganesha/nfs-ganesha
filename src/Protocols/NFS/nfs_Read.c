@@ -129,7 +129,7 @@ int nfs_Read(nfs_arg_t * parg,
   fsal_attrib_list_t pre_attr;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   size_t size = 0;
-  size_t read_size;
+  size_t read_size = 0;
   fsal_off_t offset = 0;
   void *data = NULL;
   cache_inode_file_type_t filetype;
@@ -165,6 +165,19 @@ int nfs_Read(nfs_arg_t * parg,
     {
       /* to avoid setting it on each error case */
       pres->res_read3.READ3res_u.resfail.file_attributes.attributes_follow = FALSE;
+      /* initialize for read of size 0 */
+      pres->res_read3.READ3res_u.resok.eof = FALSE;
+      pres->res_read3.READ3res_u.resok.count = 0;
+      pres->res_read3.READ3res_u.resok.data.data_val = NULL;
+      pres->res_read3.READ3res_u.resok.data.data_len = 0;
+      pres->res_read3.status = NFS3_OK;
+    }
+  else if(preq->rq_vers == NFS_V2)
+    {
+      /* initialize for read of size 0 */
+      pres->res_read2.READ2res_u.readok.data.nfsdata2_val = NULL;
+      pres->res_read2.READ2res_u.readok.data.nfsdata2_len = 0;
+      pres->res_attr2.status = NFS_OK;
     }
 
   /* Convert file handle into a cache entry */
