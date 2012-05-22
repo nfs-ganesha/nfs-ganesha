@@ -192,9 +192,6 @@ int _9p_attach( _9p_request_data_t * preq9p,
   pfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
   pfid->qid.path = fsalattr.fileid ;
 
-  /* Cache the attr */
-  _9p_tools_fsal_attr2stat( &fsalattr, &pfid->attr ) ;
-
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RATTACH ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;

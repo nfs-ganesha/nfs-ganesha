@@ -59,11 +59,10 @@ int _9p_statfs( _9p_request_data_t * preq9p,
                 char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  //nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
-  u64 * request_mask = NULL ;
 
   _9p_fid_t * pfid = NULL ;
 
@@ -118,7 +117,7 @@ int _9p_statfs( _9p_request_data_t * preq9p,
   bavail  = (u64 *)&dynamicinfo.avail_bytes ;
   files   = (u64 *)&dynamicinfo.total_files ;
   ffree   = (u64 *)&dynamicinfo.free_files ;
-  fsid    = (u64 )pfid->attr.st_dev ;
+  fsid    = (u64 )pfid->pentry->attributes.rawdev.major ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RSTATFS ) ;

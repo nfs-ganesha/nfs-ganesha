@@ -72,25 +72,24 @@ int _9p_getattr( _9p_request_data_t * preq9p,
 
 
   u64 * valid        = NULL ;
-  u32 * mode         = NULL ;
+  u32   mode         = 0    ; /* Not a pointer */
   u32 * uid          = NULL ;
   u32 * gid          = NULL ;
   u64 * nlink        = NULL ;
   u64 * rdev         = NULL ;
   u64 * size         = NULL ;
-  u64 *blksize       = NULL ; 
-  u64 * blocks       = NULL ; 
+  u64   blksize      = 0LL  ; /* Be careful, this one is no pointer */
+  u64   blocks       = 0LL  ; /* And so does this one...            */
   u64 * atime_sec    = NULL ;
   u64 * atime_nsec   = NULL ;
   u64 * mtime_sec    = NULL ;
   u64 * mtime_nsec   = NULL ;
   u64 * ctime_sec    = NULL ;
   u64 * ctime_nsec   = NULL ;
-  u64 * btime_sec    = NULL;
-  u64 * btime_nsec   = NULL;
-  u64 * gen          = NULL;
-  u64 * data_version = NULL;
-
+  u64 * btime_sec    = NULL ;
+  u64 * btime_nsec   = NULL ;
+  u64 * gen          = NULL ;
+  u64 * data_version = NULL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -115,19 +114,32 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   
   valid = request_mask ; /* FSAL covers all 9P attributes */
 
-  mode       = (*request_mask & _9P_GETATTR_RDEV)?(u32 *)&pfid->attr.st_mode:&zero32 ;
-  uid        = (*request_mask & _9P_GETATTR_UID)?(u32 *)&pfid->attr.st_uid:&zero32 ;
-  gid        = (*request_mask & _9P_GETATTR_GID)?(u32 *)&pfid->attr.st_gid:&zero32 ;
-  nlink      = (*request_mask & _9P_GETATTR_NLINK)?(u64 *)&pfid->attr.st_nlink:&zero64 ;  
-  rdev       = (*request_mask & _9P_GETATTR_RDEV)?(u64 *)&pfid->attr.st_rdev:&zero64 ; 
-  size       = (*request_mask & _9P_GETATTR_SIZE)?(u64 *)&pfid->attr.st_size:&zero64 ; 
-  blksize    = (*request_mask & _9P_GETATTR_BLOCKS)?(u64 *)&pfid->attr.st_blksize:&zero64 ; 
-  blocks     = (*request_mask & _9P_GETATTR_BLOCKS)?(u64 *)&pfid->attr.st_blocks:&zero64 ; 
-  atime_sec  = (*request_mask & _9P_GETATTR_ATIME )?(u64 *)&pfid->attr.st_atime:&zero64 ;
+  if( *request_mask & _9P_GETATTR_RDEV )
+   {  
+     mode   = (u32)pfid->pentry->attributes.mode ;
+     if( pfid->pentry->attributes.type == FSAL_TYPE_DIR )  mode |= __S_IFDIR  ;
+     if( pfid->pentry->attributes.type == FSAL_TYPE_FILE ) mode |= __S_IFREG  ;
+     if( pfid->pentry->attributes.type == FSAL_TYPE_LNK )  mode |= __S_IFLNK  ;
+     if( pfid->pentry->attributes.type == FSAL_TYPE_SOCK ) mode |= __S_IFSOCK ;
+     if( pfid->pentry->attributes.type == FSAL_TYPE_BLK )  mode |= __S_IFBLK  ;
+     if( pfid->pentry->attributes.type == FSAL_TYPE_CHR )  mode |= __S_IFCHR  ;
+     if( pfid->pentry->attributes.type == FSAL_TYPE_FIFO ) mode |= __S_IFIFO  ;
+   }
+ else
+   mode = 0 ;
+
+  uid        = (*request_mask & _9P_GETATTR_UID)    ? (u32 *)&pfid->pentry->attributes.owner:&zero32 ;
+  gid        = (*request_mask & _9P_GETATTR_GID)    ? (u32 *)&pfid->pentry->attributes.group:&zero32 ;
+  nlink      = (*request_mask & _9P_GETATTR_NLINK)  ? (u64 *)&pfid->pentry->attributes.numlinks:&zero64 ;  
+  rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pentry->attributes.rawdev.major:&zero64 ; 
+  size       = (*request_mask & _9P_GETATTR_SIZE)   ? (u64 *)&pfid->pentry->attributes.filesize:&zero64 ; 
+  blksize    = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)_9p_BLK_SIZE:0LL ; 
+  blocks     = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)(pfid->pentry->attributes.filesize/_9p_BLK_SIZE):0LL ; 
+  atime_sec  = (*request_mask & _9P_GETATTR_ATIME ) ? (u64 *)&pfid->pentry->attributes.atime.seconds:&zero64 ;
   atime_nsec = &zero64 ;
-  mtime_sec  = (*request_mask & _9P_GETATTR_MTIME )?(u64 *)&pfid->attr.st_mtime:&zero64 ;
+  mtime_sec  = (*request_mask & _9P_GETATTR_MTIME ) ? (u64 *)&pfid->pentry->attributes.mtime.seconds:&zero64 ;
   mtime_nsec = &zero64 ;
-  ctime_sec  = (*request_mask & _9P_GETATTR_CTIME )?(u64 *)&pfid->attr.st_ctime:&zero64 ;
+  ctime_sec  = (*request_mask & _9P_GETATTR_CTIME ) ? (u64 *)&pfid->pentry->attributes.ctime.seconds:&zero64 ;
   ctime_nsec = &zero64 ;
 
   /* Not yet supported attributes */
@@ -142,14 +154,14 @@ int _9p_getattr( _9p_request_data_t * preq9p,
 
   _9p_setptr( cursor, valid,               u64 ) ;
   _9p_setqid( cursor, pfid->qid ) ;
-  _9p_setptr( cursor, mode,                u32 ) ;
+  _9p_setvalue( cursor, mode,              u32 ) ;
   _9p_setptr( cursor, uid,                 u32 ) ;
   _9p_setptr( cursor, gid,                 u32 ) ;
   _9p_setptr( cursor, nlink,               u64 ) ;
   _9p_setptr( cursor, rdev,                u64 ) ;
   _9p_setptr( cursor, size,                u64 ) ;
-  _9p_setptr( cursor, blksize,             u64 ) ;
-  _9p_setptr( cursor, blocks,              u64 ) ;
+  _9p_setvalue( cursor, blksize,           u64 ) ;
+  _9p_setvalue( cursor, blocks,            u64 ) ;
   _9p_setptr( cursor, atime_sec,           u64 ) ;
   _9p_setptr( cursor, atime_nsec,          u64 ) ;
   _9p_setptr( cursor, mtime_sec,           u64 ) ;
@@ -169,8 +181,8 @@ int _9p_getattr( _9p_request_data_t * preq9p,
             " rdev=%llu size=%llu blksize=%llu blocks=%llu atime=(%llu,%llu) mtime=(%llu,%llu) ctime=(%llu,%llu)"
             " btime=(%llu,%llu) gen=%llu, data_version=%llu", 
             *msgtag, (unsigned long long)*valid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path,
-            *mode, *uid, *gid, (unsigned long long)*nlink, (unsigned long long)*rdev, (unsigned long long)*size,
-            (unsigned long long)*blksize, (unsigned long long)*blocks,
+            mode, *uid, *gid, (unsigned long long)*nlink, (unsigned long long)*rdev, (unsigned long long)*size,
+            (unsigned long long)blksize, (unsigned long long)blocks,
             (unsigned long long)*atime_sec, (unsigned long long)*atime_nsec,
             (unsigned long long)*mtime_sec, (unsigned long long)*mtime_nsec, 
             (unsigned long long)*ctime_sec, (unsigned long long)*ctime_nsec,    

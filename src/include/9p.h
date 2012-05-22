@@ -56,6 +56,7 @@ typedef uint64_t u64;
 #define _9P_HDR_SIZE  4
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
+#define _9p_BLK_SIZE 4096
 
 /**
  * enum _9p_msg_t - 9P message types
@@ -277,7 +278,6 @@ typedef struct _9p_fid__
   u32                  fid ;
   fsal_op_context_t    fsal_op_context ;
   exportlist_t       * pexport ;
-  struct stat          attr ; 
   cache_entry_t      * pentry ;
   _9p_qid_t            qid ;
   union 
