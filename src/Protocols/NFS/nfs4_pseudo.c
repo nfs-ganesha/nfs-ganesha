@@ -1658,7 +1658,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 /*       fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc); */
 
       if((pentry = cache_inode_make_root(fsal_handle,
-                                         data->pclient),
+                                         data->pclient,
                                          &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1918,7 +1918,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
 
       if((pentry = cache_inode_make_root(fsal_handle,
-                                         data->pclient),
+                                         data->pclient,
                                          &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -2100,7 +2100,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           /* Add the entry to the cache as a root. There has to be a better way. */
 	  fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
           if((pentry = cache_inode_make_root(fsal_handle,
-					     data->pclient),
+					     data->pclient,
 					     &cache_status)) == NULL)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,

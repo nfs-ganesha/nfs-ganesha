@@ -206,16 +206,10 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(isFullDebug(COMPONENT_NFS_V4))
         {
           LogFullDebug(COMPONENT_NFS_V4,
-                       "----> nfs4_op_lookup: name=%s  dir_pentry=%p  looked up pentry=%p",
-                       strname, dir_pentry, file_pentry);
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "----> FSAL handle parent and children in nfs4_op_lookup");
-          print_buff(COMPONENT_NFS_V4,
-                     (char *)&file_pentry->handle,
-                     sizeof(fsal_handle_t));
-          print_buff(COMPONENT_NFS_V4,
-                     (char *)&dir_pentry->handle,
-                     sizeof(fsal_handle_t));
+                       "name=%s  dir_pentry=%p, obj_handle=%p, "
+		       "looked up file_pentry=%p, obj_handle=%p",
+                       strname, dir_pentry, file_pentry,
+		       dir_pentry->obj_handle, file_pentry->obj_handle);
         }
       LogHandleNFS4("NFS4 LOOKUP CURRENT FH: ", &data->currentFH);
 

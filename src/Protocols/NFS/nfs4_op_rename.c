@@ -90,9 +90,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   fsal_attrib_list_t     attr_tst_dst;
   fsal_attrib_list_t     attr_tst_src;
   cache_inode_status_t   cache_status;
-  fsal_status_t          fsal_status;
-  struct fsal_obj_handle *handlenew;
-  struct fsal_obj_handle *handleold;
   fsal_name_t            oldname;
   fsal_name_t            newname;
 
@@ -346,10 +343,13 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       /* New entry already exists, its attributes are in attr_tst_*,
          check for old entry to see if types are compatible */
-      handlenew = &tst_entry_dst->handle;
-      handleold = &tst_entry_src->handle;
+/** @TODO do we think we are comparing for compatible types here or
+ *  what is actually happening which is a bit compare of the file handle
+ *  itself.  equality here means same inode.
+ */
 
-      if( !handlenew->ops->compare(handlenew, handleold))
+      if( !tst_entry_dst->obj_handle->ops->compare(tst_entry_dst->obj_handle,
+						   tst_entry_src->obj_handle))
         {
           /* For the change_info4, get the 'change' attributes for both directories */
           res_RENAME4.RENAME4res_u.resok4.source_cinfo.before

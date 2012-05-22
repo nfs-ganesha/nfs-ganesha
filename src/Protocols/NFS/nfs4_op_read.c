@@ -274,12 +274,9 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                             &data->user_credentials,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
-          if (anonymous)
-             {
-               pthread_rwlock_unlock(&pentry->state_lock);
-             }
+
           res_READ4.status = nfs4_Errno(cache_status);
-          return res_READ4.status;
+	  goto done;
         }
     }
   /* Get the size and offset of the read operation */
@@ -295,11 +292,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     if((fsal_off_t) (offset + size) > data->pexport->MaxOffsetRead)
       {
         res_READ4.status = NFS4ERR_DQUOT;
-        if (anonymous)
-          {
-            pthread_rwlock_unlock(&pentry->state_lock);
-          }
-        return res_READ4.status;
+	goto done;
       }
 
   /* Do not read more than FATTR4_MAXREAD */
@@ -330,26 +323,18 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       res_READ4.READ4res_u.resok4.data.data_val = NULL;
 
       res_READ4.status = NFS4_OK;
-      if (anonymous)
-        {
-          pthread_rwlock_unlock(&pentry->state_lock);
-        }
-      return res_READ4.status;
+      goto done;
     }
 
   /* Some work is to be done */
   if((bufferdata = Mem_Alloc_Page_Aligned(size)) == NULL)
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
-      if (anonymous)
-        {
-          pthread_rwlock_unlock(&pentry->state_lock);
-        }
-      return res_READ4.status;
+      goto done;
     }
   memset(bufferdata, 0, size);
 
-  if((cache_inode_rdwr(pentry,
+  if(cache_inode_rdwr(pentry,
                       CACHE_INODE_READ,
                       offset,
                       size,
@@ -359,19 +344,17 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       data->pclient,
                       &data->user_credentials,
                       CACHE_INODE_SAFE_WRITE_TO_FS,
-                      &cache_status) != CACHE_INODE_SUCCESS) ||
-     ((cache_inode_getattr(pentry, &attr, data->pclient, data->pcontext,
-                              &cache_status)) != CACHE_INODE_SUCCESS))
- 
-    {
-      res_READ4.status = nfs4_Errno(cache_status);
-      if (anonymous)
-        {
-          pthread_rwlock_unlock(&pentry->state_lock);
-        }
-      return res_READ4.status;
-    }
-
+                      &cache_status) != CACHE_INODE_SUCCESS) {
+	  res_READ4.status = nfs4_Errno(cache_status);
+	  goto done;
+  }
+  if(cache_inode_getattr(pentry,
+			 &attr,
+			 data->pclient,
+			 &cache_status) != CACHE_INODE_SUCCESS) {
+	  res_READ4.status = nfs4_Errno(cache_status);
+	  goto done;
+  }
   res_READ4.READ4res_u.resok4.data.data_len = read_size;
   res_READ4.READ4res_u.resok4.data.data_val = bufferdata;
 
@@ -388,6 +371,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   /* Say it is ok */
   res_READ4.status = NFS4_OK;
+
+done:
   if (anonymous)
     {
       pthread_rwlock_unlock(&pentry->state_lock);

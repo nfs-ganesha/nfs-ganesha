@@ -418,7 +418,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }                           /* switch( arg_CREATE4.objtype.type ) */
 
   /* Now produce the filehandle to this file */
-  pnewfsal_handle = &pentry_new->handle;
+  pnewfsal_handle = pentry_new->obj_handle;
 
   /* Allocation of a new file handle */
   if(nfs4_AllocateFH(&newfh4) != NFS4_OK)

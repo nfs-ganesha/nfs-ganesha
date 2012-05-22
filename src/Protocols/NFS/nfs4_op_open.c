@@ -691,7 +691,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                    NULL,
                                    &attr_newfile,
                                    data->pclient,
-                                   data->user_credentials,
+                                   &data->user_credentials,
                                    &cache_status)) == NULL)
             {
               /* If the file already exists, this is not an error if
@@ -721,7 +721,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   = cache_inode_setattr(pentry_newfile,
                                         &sattr,
                                         data->pclient,
-                                        data->user_credentials,
+                                        &data->user_credentials,
                                         &cache_status)) !=
                  CACHE_INODE_SUCCESS)
                 {
@@ -764,7 +764,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                    &filename,
                                    &attr_newfile,
                                    data->pclient,
-                                   data->user_credentials,
+                                   &data->user_credentials,
                                    &cache_status)) == NULL)
             {
                res_OPEN4.status = nfs4_Errno(cache_status);

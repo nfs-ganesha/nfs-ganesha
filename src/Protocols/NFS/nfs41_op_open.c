@@ -540,7 +540,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
 
                   /* Now produce the filehandle to this file */
-                  pnewfsal_handle = &pentry_lookup->handle;
+                  pnewfsal_handle = pentry_lookup->obj_handle;
 
                   /* Building a new fh */
                   if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
@@ -606,7 +606,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                   OPEN4_RESULT_LOCKTYPE_POSIX;
 
                               /* Now produce the filehandle to this file */
-                              pnewfsal_handle = &pentry_lookup->handle;
+                              pnewfsal_handle = pentry_lookup->obj_handle;
 
                               /* Building a new fh */
                               if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
@@ -1006,7 +1006,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }                           /*  switch(  arg_OPEN4.claim.claim ) */
 
   /* Now produce the filehandle to this file */
-  pnewfsal_handle = &pentry_newfile->handle;
+  pnewfsal_handle = pentry_newfile->obj_handle;
 
   /* Building a new fh */
   if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
