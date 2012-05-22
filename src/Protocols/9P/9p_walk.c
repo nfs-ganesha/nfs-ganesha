@@ -156,8 +156,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
            pentry =  pnewfid->pentry ;
         }
 
-     _9p_tools_fsal_attr2stat( &fsalattr, &pnewfid->attr ) ;
-
      /* Build the qid */
      pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
      pnewfid->qid.path = (u64)pnewfid->pentry->attributes.fileid ;

@@ -131,7 +131,6 @@ int _9p_create( _9p_request_data_t * preq9p,
 
    /* The fid will represent the new file now */
    pfid->pentry = pentry_newfile ;
-   _9p_tools_fsal_attr2stat( &fsalattr, &pfid->attr ) ;
    pfid->qid = qid_newfile ;
 
    /* Build the reply */
