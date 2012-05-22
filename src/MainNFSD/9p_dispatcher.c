@@ -127,6 +127,7 @@ void * _9p_socket_thread( void * Arg )
   _9p_conn_t _9p_conn ;
 
   int readlen = 0  ;
+  int total_readlen = 0  ;
 
   printf( "Je gère la socket %ld\n", tcp_sock );
 
@@ -234,12 +235,8 @@ void * _9p_socket_thread( void * Arg )
                           "Received message of size %u from client %s on socket %lu",
 			   *p_9pmsglen, strcaller, tcp_sock ) ;
 
-	     if( ( *p_9pmsglen < _9P_HDR_SIZE ) ||
-		 ( readlen = recv( fds[0].fd,
-				   (char *)(_9pmsg + _9P_HDR_SIZE),  
-                                   *p_9pmsglen - _9P_HDR_SIZE, 0 ) ) !=  ( *p_9pmsglen - _9P_HDR_SIZE ) )
-                 
-             {
+            if( *p_9pmsglen < _9P_HDR_SIZE ) 
+              {
 		LogEvent( COMPONENT_9P, 
 			  "Badly formed 9P message: Header is too small for client %s on socket %lu: readlen=%u expected=%u", 
                           strcaller, tcp_sock, readlen, *p_9pmsglen - _9P_HDR_SIZE ) ;
@@ -247,16 +244,43 @@ void * _9p_socket_thread( void * Arg )
                 /* Release the entry */
                 P(workers_data[worker_index].request_pool_mutex);
                 ReleaseToPool(preq, &workers_data[worker_index].request_pool);
-  		workers_data[worker_index].passcounter += 1;
+  	    	workers_data[worker_index].passcounter += 1;
                 V(workers_data[worker_index].request_pool_mutex);
 
-                continue ;
-             }
-	    else
+                continue ; /* Maybe, use something smarter here */
+              }
+
+            total_readlen = 0 ;
+            while( total_readlen < (*p_9pmsglen - _9P_HDR_SIZE) )
              {
-		/* Message os OK push it the request to the right worker */
-                DispatchWork9P(preq, worker_index);
-             }
+		 readlen = recv( fds[0].fd,
+				 (char *)(_9pmsg + _9P_HDR_SIZE + total_readlen),  
+                                 *p_9pmsglen - _9P_HDR_SIZE - total_readlen, 0 ) ;
+               
+                 /* Signal management */
+                 if( readlen < 0 && errno == EINTR )
+                    continue ;
+
+                 /* Error management */
+                 if( readlen < 0 )  
+                  {
+	            LogEvent( COMPONENT_9P, "Badly formed 9P header for client %s on socket %lu", strcaller, tcp_sock ) ;
+
+                    /* Release the entry */
+                    P(workers_data[worker_index].request_pool_mutex);
+                    ReleaseToPool(preq, &workers_data[worker_index].request_pool);
+  	    	    workers_data[worker_index].passcounter += 1;
+                    V(workers_data[worker_index].request_pool_mutex);
+
+                    continue ;
+                  }
+                 
+                 /* After this point, read() is supposed to be OK */
+                 total_readlen += readlen ;
+             } /* while */
+             
+	     /* Message was OK push it the request to the right worker */
+             DispatchWork9P(preq, worker_index);
          }
         else if( readlen == 0 )
          {
@@ -264,12 +288,7 @@ void * _9p_socket_thread( void * Arg )
            close( tcp_sock );
            return NULL ;
          }
-        else
-         {
-	   LogEvent( COMPONENT_9P, "Badly formed 9P header for client %s on socket %lu", strcaller, tcp_sock ) ;
-           continue ;
-         }
-      }
+      } /* if( fds[0].revents & (POLLIN|POLLRDNORM) ) */
    } /* for( ;; ) */
  
   return NULL ;
