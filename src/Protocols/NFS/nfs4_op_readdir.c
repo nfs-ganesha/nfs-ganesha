@@ -53,8 +53,7 @@
 
 static bool_t nfs4_readdir_callback(void* opaque,
                                     char *name,
-                                    fsal_handle_t *handle,
-                                    fsal_attrib_list_t *attrs,
+                                    struct fsal_obj_handle *obj_hdl,
                                     uint64_t cookie);
 static void free_entries(entry4 *entries);
 
@@ -286,16 +285,14 @@ void nfs4_op_readdir_Free(READDIR4res *resp)
  *                    gives the location of the array and other
  *                    bookeeping information
  * @param name [in] The filename for the current entry
- * @param handle [in] The current entry's filehandle
- * @param attrs [in] The current entry's attributes
+ * @param obj_hdl [in] The current entry's object handle
  * @param cookie [in] The readdir cookie for the current entry
  */
 
 static bool_t
 nfs4_readdir_callback(void* opaque,
                       char *name,
-                      fsal_handle_t *handle,
-                      fsal_attrib_list_t *attrs,
+                      struct fsal_obj_handle *obj_hdl,
                       uint64_t cookie)
 {
      struct nfs4_readdir_cb_data *tracker =
@@ -303,7 +300,7 @@ nfs4_readdir_callback(void* opaque,
      size_t namelen = 0;
      char val_fh[NFS4_FHSIZE];
      nfs_fh4 entryFH = {
-          .nfs_fh4_len = 0,
+          .nfs_fh4_len = NFS4_FHSIZE,
           .nfs_fh4_val = val_fh
      };
 
@@ -342,7 +339,7 @@ nfs4_readdir_callback(void* opaque,
 
      if ((tracker->req_attr.bitmap4_val != NULL) &&
          (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {
-          if (!nfs4_FSALToFhandle(&entryFH, handle, tracker->data)) {
+          if (!nfs4_FSALToFhandle(&entryFH, obj_hdl, tracker->data)) {
                tracker->error = NFS4ERR_SERVERFAULT;
                Mem_Free(tracker->entries[tracker->count].name.utf8string_val);
                return FALSE;
@@ -350,7 +347,7 @@ nfs4_readdir_callback(void* opaque,
      }
 
      if (nfs4_FSALattr_To_Fattr(tracker->data->pexport,
-                                attrs,
+                                &obj_hdl->attributes,
                                 &tracker->entries[tracker->count].attrs,
                                 tracker->data,
                                 &entryFH,
