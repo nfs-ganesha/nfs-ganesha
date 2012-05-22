@@ -276,7 +276,6 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_data_t          * pstate_data,
                          state_owner_t         * powner_input,
                          cache_inode_client_t  * pclient,
-                         fsal_op_context_t     * pcontext,
                          state_t              ** ppstate,
                          state_status_t        * pstatus)
 {
@@ -296,7 +295,7 @@ state_status_t state_add(cache_entry_t         * pentry,
 
   pthread_rwlock_wrlock(&pentry->state_lock);
   state_add_impl(pentry, state_type, pstate_data, powner_input,
-                 pclient, pcontext, ppstate, pstatus);
+                 pclient, ppstate, pstatus);
   pthread_rwlock_unlock(&pentry->state_lock);
 
   return *pstatus;
