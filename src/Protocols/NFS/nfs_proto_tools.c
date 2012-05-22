@@ -3817,11 +3817,8 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_BAD_TYPE:
-      nfserror = NFS4ERR_INVAL;
-      break;
-
     case CACHE_INODE_INVALID_ARGUMENT:
-      nfserror = NFS4ERR_PERM;
+      nfserror = NFS4ERR_INVAL;
       break;
 
     case CACHE_INODE_NOT_A_DIRECTORY:
