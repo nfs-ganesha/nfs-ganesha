@@ -414,17 +414,3 @@ fsal_status_t PTFSAL_commit( fsal_file_t * p_file_descriptor,
 
 fsal_status_t PTFSAL_GetExportEntry(char * path,                 /* IN */ 
                                     exportlist_t ** p_exportlist) /* OUT */ ;
-
-
-#ifdef _USE_FSAL_UP
-fsal_status_t PTFSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */
-				fsal_up_event_bus_context_t * pupebcontext     /* OUT */);
-fsal_status_t PTFSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* IN */
-				     fsal_up_event_bus_context_t * pupebcontext /* INOUT */ );
-fsal_status_t PTFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                  /* OUT */
-				     fsal_count_t * event_nb,                     /* IN */
-				     fsal_time_t timeout,                         /* IN */
-				     fsal_count_t * peventfound,                  /* OUT */
-				     fsal_up_event_bus_context_t * pupebcontext   /* IN */ );
-
-#endif /* _USE_FSAL_UP */

@@ -91,11 +91,6 @@ fsal_functions_t fsal_ptfs_functions = {
   .fsal_removexattrbyname = PTFSAL_RemoveXAttrByName,
   .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = PTFSAL_GetFileno,
-#ifdef _USE_FSAL_UP
-  .fsal_up_init = PTFSAL_UP_Init,
-  .fsal_up_addfilter = PTFSAL_UP_AddFilter,
-  .fsal_up_getevents = PTFSAL_UP_GetEvents
-#endif /* _USE_FSAL_UP */
 };
 
 fsal_const_t fsal_ptfs_consts = {
