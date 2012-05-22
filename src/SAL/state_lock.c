@@ -262,7 +262,8 @@ static void LogEntry(const char         *reason,
       LogFullDebug(COMPONENT_STATE,
                    "%s Entry: %p pentry=%p, fileid=%"PRIu64", export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, owner={%s}",
                    reason, ple,
-                   ple->sle_pentry, (uint64_t)ple->sle_pentry->attributes.fileid,
+                   ple->sle_pentry,
+		   (uint64_t)ple->sle_pentry->obj_handle->attributes.fileid,
                    (unsigned int) ple->sle_pexport->id,
                    str_lockt(ple->sle_lock.lock_type),
                    (unsigned long long) ple->sle_lock.lock_start,
@@ -367,7 +368,8 @@ void LogLock(log_components_t     component,
 
       LogAtLevel(component, debug,
                  "%s Lock: pentry=%p, fileid=%"PRIu64", type=%s, start=0x%llx, end=0x%llx, owner={%s}",
-                 reason, pentry, (uint64_t)pentry->attributes.fileid,
+                 reason, pentry,
+		 (uint64_t)pentry->obj_handle->attributes.fileid,
                  str_lockt(plock->lock_type),
                  (unsigned long long) plock->lock_start,
                  (unsigned long long) lock_end(plock),
@@ -981,7 +983,7 @@ int display_lock_cookie_entry(state_cookie_entry_t * he, char * str)
   tmp += DisplayOpaqueValue(he->sce_pcookie, he->sce_cookie_size, tmp);
   tmp += sprintf(tmp, " entry {%p fileid=%"PRIu64"} lock {",
                  he->sce_pentry,
-                 (uint64_t)he->sce_pentry->attributes.fileid);
+                 (uint64_t)he->sce_pentry->obj_handle->attributes.fileid);
   if(he->sce_lock_entry != NULL)
     {
       tmp += sprintf(tmp, "%p owner {", he->sce_lock_entry);

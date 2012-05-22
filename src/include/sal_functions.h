@@ -551,7 +551,6 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                               state_type_t            state_type,
                               state_data_t          * pstate_data,
                               state_owner_t         * powner_input,
-                              fsal_op_context_t     * pcontext,
                               state_t              ** ppstate,
                               state_status_t        * pstatus);
 
