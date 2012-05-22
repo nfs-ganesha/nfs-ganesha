@@ -252,6 +252,9 @@ cache_inode_rdwr(cache_entry_t *entry,
                              fsal_status.major);
                }
 
+               *bytes_moved = 0;
+               *status = cache_inode_error_convert(fsal_status);
+
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry, client);
                     goto out;
@@ -278,7 +281,6 @@ cache_inode_rdwr(cache_entry_t *entry,
                                 "Error closing file in cache_inode_rdwr: %d.",
                                 cstatus); 
                     }
-                    *status = cache_inode_error_convert(fsal_status);
                }
 
                goto out;
