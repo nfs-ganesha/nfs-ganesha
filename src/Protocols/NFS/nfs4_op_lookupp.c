@@ -137,7 +137,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
       = cache_inode_lookup(dir_pentry,
                            &name,
                            &attrlookup,
-                           data->user_credential, &cache_status)) != NULL)
+                           &data->user_credentials, &cache_status)) != NULL)
     {
       /* Extract the fsal attributes from the cache inode pentry */
       obj_hdl = file_pentry->obj_handle;
