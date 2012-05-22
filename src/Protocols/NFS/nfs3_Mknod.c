@@ -269,7 +269,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
               /*
                * Get the FSAL handle for this entry
                */
-              pfsal_handle = &node_pentry->handle;
+              pfsal_handle = node_pentry->obj_handle;
 
               /* Build file handle */
               pres->res_mknod3.status =
@@ -293,7 +293,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
               nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
 
               /* Get the attributes of the parent after the operation */
-              attr_parent_after = parent_pentry->attributes;
+              attr_parent_after = parent_pentry->obj_handle->attributes;
 
               /* Build Weak Cache Coherency data */
               nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
