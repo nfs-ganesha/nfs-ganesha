@@ -273,7 +273,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
                   /*
                    * Get the FSAL handle for this entry
                    */
-                  pfsal_handle = &dir_pentry->handle;
+                  pfsal_handle = dir_pentry->obj_handle;
 
                   if(preq->rq_vers == NFS_V2)
                     {
@@ -325,8 +325,8 @@ int nfs_Mkdir(nfs_arg_t *parg,
                        */
                       nfs_SetPostOpAttr(pexport, &attr, &d3ok->obj_attributes);
 
-                      /* Get the attributes of the parent after the operation */
-                      attr_parent_after = parent_pentry->attributes;
+		      /* Get the attributes of the parent after the operation */
+		      attr_parent_after = parent_pentry->obj_handle->attributes;
 
                       /*
                        * Build Weak Cache Coherency data 
