@@ -270,7 +270,7 @@ int nfs3_Mknod(nfs_arg_t * parg,
               /*
                * Get the FSAL handle for this entry
                */
-              pfsal_handle = &node_pentry->handle;
+              pfsal_handle = node_pentry->obj_handle;
 
               /* Build file handle */
               if ((pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.
@@ -352,7 +352,7 @@ int nfs3_Mknod(nfs_arg_t * parg,
                                       obj_attributes));
 
                   /* Get the attributes of the parent after the operation */
-                  attr_parent_after = parent_pentry->attributes;
+                  attr_parent_after = parent_pentry->obj_handle->attributes;
 
                   /*
                    * Build Weak Cache
