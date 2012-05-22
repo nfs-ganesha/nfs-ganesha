@@ -2932,20 +2932,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
         LogInfo(COMPONENT_INIT,
                 "small cache inode client successfully initialized");
 
-      /* creating the datacache client for recovering data cache */
-      if(cache_content_client_init
-         (&recover_datacache_client,
-          nfs_param.cache_layers_param.cache_content_client_param,
-          "recovering"))
-        {
-          LogFatal(COMPONENT_INIT,
-                   "cache content client (for datacache recovery) could not be allocated");
-        }
-
-
-      /* Link together the small client and the recover_datacache_client */
-      small_client.pcontent_client = (void *)&recover_datacache_client;
-
       /* loop the export list */
 
       for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
@@ -2974,8 +2960,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
              entry MUST put the extra reference. */
 
           if((pentry = cache_inode_make_root(pcurrent->proot_handle,
-                                             pcurrent->cache_inode_policy,
-                                             ht,
                                              &small_client,
                                              &cache_status)) == NULL)
             {
