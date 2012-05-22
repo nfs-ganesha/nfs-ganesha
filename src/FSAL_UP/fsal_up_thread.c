@@ -205,6 +205,10 @@ fsal_status_t process_event(fsal_up_event_t *event, fsal_up_event_functions_t *e
       LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process SETATTR event");
       status = event_func->fsal_up_setattr(&event->event_data);
       break;
+    case FSAL_UP_EVENT_UPDATE:
+      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process UPDATE event");
+      status = event_func->fsal_up_update(&event->event_data);
+      break;
     case FSAL_UP_EVENT_INVALIDATE:
       LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process INVALIDATE event");
       status = event_func->fsal_up_invalidate(&event->event_data);

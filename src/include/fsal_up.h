@@ -44,7 +44,20 @@
 #define FSAL_UP_EVENT_OPEN       9
 #define FSAL_UP_EVENT_CLOSE      10
 #define FSAL_UP_EVENT_SETATTR    11
-#define FSAL_UP_EVENT_INVALIDATE 12
+#define FSAL_UP_EVENT_UPDATE     12
+#define FSAL_UP_EVENT_INVALIDATE 13
+
+/* Defines for the flags in callback_arg, keep up to date with CXIUP_xxx */
+#define FSAL_UP_NLINK        0x00000001   /* update nlink */
+#define FSAL_UP_MODE         0x00000002   /* update mode and ctime */
+#define FSAL_UP_OWN          0x00000004   /* update mode,uid,gid and ctime */
+#define FSAL_UP_SIZE         0x00000008   /* update fsize */
+#define FSAL_UP_SIZE_BIG     0x00000010   /* update fsize if bigger */
+#define FSAL_UP_TIMES        0x00000020   /* update all times */
+#define FSAL_UP_ATIME        0x00000040   /* update atime only */
+#define FSAL_UP_PERM         0x00000080   /* update fields needed for permission checking*/
+#define FSAL_UP_RENAME       0x00000100   /* this is a rename op */
+
 
 typedef struct fsal_up_filter_list_t_
 {
@@ -123,6 +136,12 @@ typedef struct fsal_up_event_data_invalidate_
 {
 } fsal_up_event_data_invalidate_t;
 
+typedef struct fsal_up_event_data_update_
+{
+  struct stat64 upu_stat_buf;
+  int upu_flags;
+} fsal_up_event_data_update_t;
+
 typedef struct fsal_up_event_data__
 {
   union {
@@ -136,6 +155,7 @@ typedef struct fsal_up_event_data__
     fsal_up_event_data_open_t open;
     fsal_up_event_data_close_t close;
     fsal_up_event_data_setattr_t setattr;
+    fsal_up_event_data_update_t update;
     fsal_up_event_data_invalidate_t invalidate;
   } type;
   /* Common data most functions will need. */
@@ -162,6 +182,7 @@ typedef struct fsal_up_event_functions__
   fsal_status_t (*fsal_up_open) (fsal_up_event_data_t * pevdata );
   fsal_status_t (*fsal_up_close) (fsal_up_event_data_t * pevdata );
   fsal_status_t (*fsal_up_setattr) (fsal_up_event_data_t * pevdata );
+  fsal_status_t (*fsal_up_update) (fsal_up_event_data_t * pevdata );
   fsal_status_t (*fsal_up_invalidate) (fsal_up_event_data_t * pevdata );
 } fsal_up_event_functions_t;
 
