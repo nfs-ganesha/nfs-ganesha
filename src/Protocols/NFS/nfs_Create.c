@@ -105,7 +105,6 @@ int nfs_Create(nfs_arg_t * parg,
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
   int rc = NFS_REQ_OK;
-  struct fsal_obj_handle *pfsal_handle;
 #ifdef _USE_QUOTA
   fsal_status_t fsal_status ;
 #endif
@@ -410,7 +409,7 @@ int nfs_Create(nfs_arg_t * parg,
                       /* Build file handle */
                       if(nfs2_FSALToFhandle(
                               &(pres->res_dirop2.DIROP2res_u.diropok.file),
-                              &file_pentry->handle,
+                              file_pentry->obj_handle,
                               pexport) == 0)
                         pres->res_dirop2.status = NFSERR_IO;
                       else
@@ -440,7 +439,7 @@ int nfs_Create(nfs_arg_t * parg,
                       if(nfs3_FSALToFhandle(
                               &(pres->res_create3.CREATE3res_u.resok
                                 .obj.post_op_fh3_u.handle),
-                              pfsal_handle, pexport) == 0)
+                              file_pentry->obj_handle, pexport) == 0)
                         {
                           Mem_Free(pres->res_create3.CREATE3res_u.resok.obj.
                                    post_op_fh3_u.handle.data.data_val);
@@ -456,7 +455,7 @@ int nfs_Create(nfs_arg_t * parg,
 
                       /* Get the attributes of the parent after the
                          operation */
-                      attr_parent_after = parent_pentry->attributes;
+                      attr_parent_after = parent_pentry->obj_handle->attributes;
 
                       /* Build entry attributes */
                       nfs_SetPostOpAttr(pexport,

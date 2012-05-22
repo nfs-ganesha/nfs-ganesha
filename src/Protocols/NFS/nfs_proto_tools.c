@@ -210,7 +210,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
-  exportlist_t *pexport = NULL;
   short exportid = 0;
 
   /* Default behaviour */

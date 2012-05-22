@@ -277,7 +277,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
                   /*
                    * Get the FSAL handle for this entry 
                    */
-                  pfsal_handle = &dir_pentry->handle;
+                  pfsal_handle = dir_pentry->obj_handle;
 
                   switch (preq->rq_vers)
                     {
@@ -396,7 +396,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
                                               .obj_attributes));
 
                           /* Get the attributes of the parent after the operation */
-                          attr_parent_after = parent_pentry->attributes;
+                          attr_parent_after = parent_pentry->obj_handle->attributes;
 
                           /*
                            * Build Weak Cache

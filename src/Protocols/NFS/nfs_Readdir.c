@@ -70,13 +70,11 @@
 
 static bool_t nfs2_readdir_callback(void* opaque,
                                     char *name,
-                                    fsal_handle_t *handle,
-                                    fsal_attrib_list_t *attrs,
+                                    struct fsal_obj_handle *obj_hdl,
                                     uint64_t cookie);
 static bool_t nfs3_readdir_callback(void* opaque,
                                     char *name,
-                                    fsal_handle_t *handle,
-                                    fsal_attrib_list_t *attrs,
+                                    struct fsal_obj_handle *obj_hdl,
                                     uint64_t cookie);
 static void free_entry2s(entry2 *entry2s);
 static void free_entry3s(entry3 *entry3s);
@@ -97,7 +95,6 @@ struct nfs2_readdir_cb_data
                        buffer */
      size_t total_entries; /*< The total number of entries in the
                               array */
-     fsal_op_context_t *context; /*< FSAL operation context */
      nfsstat2 error; /*< Set to a value other than NFS_OK if the
                          callback function finds a fatal error. */
 };
@@ -118,7 +115,6 @@ struct nfs3_readdir_cb_data
                        buffer */
      size_t total_entries; /*< The total number of entries in the
                               array */
-     fsal_op_context_t *context; /*< FSAL operation context */
      nfsstat3 error; /*< Set to a value other than NFS_OK if the
                          callback function finds a fatal error. */
 };
@@ -205,6 +201,7 @@ nfs_Readdir(nfs_arg_t *arg,
                                &(res->res_readdir3.status),
                                NULL,
                                &dir_attr,
+			       export,
                                client,
                                &rc)) == NULL) {
           /* Stale NFS FH? */
@@ -213,12 +210,12 @@ nfs_Readdir(nfs_arg_t *arg,
 
      if ((req->rq_vers == NFS_V3) &&
          (nfs3_Is_Fh_Xattr(&(arg->arg_readdir3.dir)))) {
-          rc = nfs3_Readdir_Xattr(arg, export, context, client, req, res);
+	     rc = nfs3_Readdir_Xattr(arg, export, creds, client, req, res);
           goto out;
      }
 
      /* Extract the filetype */
-     dir_filetype = cache_inode_fsal_type_convert(dir_attr.type);
+     dir_filetype = dir_attr.type;
      /* Sanity checks -- must be a directory */
      if (dir_filetype != DIRECTORY) {
           if (req->rq_vers == NFS_V2) {
@@ -259,7 +256,6 @@ nfs_Readdir(nfs_arg_t *arg,
           cb2.total_entries = estimated_num_entries;
           cb2.mem_left = count - sizeof(READDIR2resok);
           cb2.count = 0;
-          cb2.context = context;
           cb2.error = NFS_OK;
           cbfunc = nfs2_readdir_callback;
           cbdata = &cb2;
@@ -314,7 +310,6 @@ nfs_Readdir(nfs_arg_t *arg,
           cb3.total_entries = estimated_num_entries;
           cb3.mem_left = count - sizeof(READDIR3resok);
           cb3.count = 0;
-          cb3.context = context;
           cb3.error = NFS_OK;
           cbfunc = nfs3_readdir_callback;
           cbdata = &cb3;
@@ -329,7 +324,7 @@ nfs_Readdir(nfs_arg_t *arg,
 
      /* Fills "."  */
      if (cookie == 0) {
-          if (!cbfunc(cbdata, ".", &dir_entry->handle, &dir_attr, 1))
+          if (!cbfunc(cbdata, ".", dir_entry->obj_handle, 1))
                 goto outerr;
      }
 
@@ -339,7 +334,7 @@ nfs_Readdir(nfs_arg_t *arg,
           /* Get parent pentry */
           parent_dir_entry = cache_inode_lookupp(dir_entry,
                                                  client,
-                                                 context,
+                                                 creds,
                                                  &cache_status_gethandle);
           if (parent_dir_entry == NULL) {
                if (req->rq_vers == NFS_V2) {
@@ -355,7 +350,6 @@ nfs_Readdir(nfs_arg_t *arg,
           if ((cache_inode_getattr(parent_dir_entry,
                                    &parent_dir_attr,
                                    client,
-                                   context,
                                    &cache_status_gethandle))
               != CACHE_INODE_SUCCESS) {
                if (req->rq_vers == NFS_V2) {
@@ -368,8 +362,7 @@ nfs_Readdir(nfs_arg_t *arg,
                rc = NFS_REQ_OK;
                goto out;
           }
-          if (!cbfunc(cbdata, "..", &parent_dir_entry->handle,
-                      &parent_dir_attr, 2))
+          if (!cbfunc(cbdata, "..", parent_dir_entry->obj_handle, 2))
                 goto outerr;
           cache_inode_put(parent_dir_entry, client);
           parent_dir_entry = NULL;
@@ -396,7 +389,7 @@ nfs_Readdir(nfs_arg_t *arg,
                goto out;
           }
 
-          nfs_SetFailedStatus(context, export,
+          nfs_SetFailedStatus(export,
                               req->rq_vers,
                               cache_status,
                               &res->res_readdir2.status,
@@ -524,8 +517,7 @@ void nfs3_Readdir_Free(nfs_res_t * resp)
 static bool_t
 nfs2_readdir_callback(void* opaque,
                       char *name,
-                      fsal_handle_t *handle,
-                      fsal_attrib_list_t *attrs,
+		      struct fsal_obj_handle *obj_hdl,
                       uint64_t cookie)
 {
      /* Not-so-opaque pointer to callback data`*/
@@ -551,10 +543,9 @@ nfs2_readdir_callback(void* opaque,
           }
           return FALSE;
      }
-     FSAL_DigestHandle(FSAL_GET_EXP_CTX(tracker->context),
-                       FSAL_DIGEST_FILEID2,
-                       handle,
-                       &id_descriptor);
+     (void)obj_hdl->ops->handle_digest(obj_hdl,
+				       FSAL_DIGEST_FILEID2,
+				       &id_descriptor);
      e2->name = Mem_Alloc(namelen + 1);
      if (e2->name == NULL) {
           tracker->error = NFSERR_IO;
@@ -589,8 +580,7 @@ nfs2_readdir_callback(void* opaque,
 static bool_t
 nfs3_readdir_callback(void* opaque,
                       char *name,
-                      fsal_handle_t *handle,
-                      fsal_attrib_list_t *attrs,
+		      struct fsal_obj_handle *obj_hdl,
                       uint64_t cookie)
 {
      /* Not-so-opaque pointer to callback data`*/
@@ -613,10 +603,9 @@ nfs3_readdir_callback(void* opaque,
           }
           return FALSE;
      }
-     FSAL_DigestHandle(FSAL_GET_EXP_CTX(tracker->context),
-                       FSAL_DIGEST_FILEID3,
-                       handle,
-                       &id_descriptor);
+     (void)obj_hdl->ops->handle_digest(obj_hdl,
+				       FSAL_DIGEST_FILEID3,
+				       &id_descriptor);
 
      e3->name = Mem_Alloc(namelen + 1);
      if (e3->name == NULL) {

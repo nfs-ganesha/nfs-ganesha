@@ -451,7 +451,7 @@ int nfs_Write(nfs_arg_t * parg,
                            creds,
                            stability,
                            &cache_status) == CACHE_INODE_SUCCESS) &&
-         (cache_inode_getattr(pentry, &attr, pclient, pcontext,
+         (cache_inode_getattr(pentry, &attr, pclient,
                               &cache_status) == CACHE_INODE_SUCCESS)) {
 
           switch (preq->rq_vers)

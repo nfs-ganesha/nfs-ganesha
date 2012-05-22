@@ -119,7 +119,7 @@ int nfs_Fsstat(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_statfs2.status),
                                   &(pres->res_fsstat3.status),
-    {
+				  NULL, NULL, pexport, pclient, &rc)) == NULL)    {
       /* Stale NFS FH ? */
       /* return NFS_REQ_DROP ; */
       goto out;

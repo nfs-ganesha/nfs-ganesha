@@ -255,7 +255,7 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
 
             case NFS_V3:
               /* Build file handle */
-              pfsal_handle = &symlink_pentry->handle;
+              pfsal_handle = symlink_pentry->obj_handle;
 
               /* Some clients (like the Spec NFS benchmark) set attributes with the NFSPROC3_SYMLINK request */
               if(nfs3_Sattr_To_FSALattr(&attributes_symlink,

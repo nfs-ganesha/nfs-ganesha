@@ -187,7 +187,7 @@ int nfs_Lookup(nfs_arg_t * parg,
                                &cache_status)) != NULL)
         {
           /* Do not forget cross junction management */
-          pfsal_handle = &pentry_file->handle;
+          pfsal_handle = pentry_file->obj_handle;
           if(cache_status == CACHE_INODE_SUCCESS)
             {
               switch (preq->rq_vers)

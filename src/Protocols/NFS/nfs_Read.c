@@ -372,7 +372,7 @@ int nfs_Read(nfs_arg_t * parg,
                            creds,
                            CACHE_INODE_SAFE_WRITE_TO_FS,
                            &cache_status) == CACHE_INODE_SUCCESS) &&
-         (cache_inode_getattr(pentry, &attr, pclient, pcontext,
+         (cache_inode_getattr(pentry, &attr, pclient,
                               &cache_status)) == CACHE_INODE_SUCCESS)
 
         {
