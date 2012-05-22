@@ -68,8 +68,7 @@
 
 static bool_t nfs3_readdirplus_callback(void* opaque,
                                         char *name,
-                                        fsal_handle_t *handle,
-                                        fsal_attrib_list_t *attrs,
+                                        struct fsal_obj_handle *obj_hdl,
                                         uint64_t cookie);
 static void free_entryplus3s(entryplus3 *entryplus3s);
 
@@ -91,7 +90,6 @@ struct nfs3_readdirplus_cb_data
                                the array. */
      exportlist_t *export; /*< Pointer to the entry for the supplied
                                handle's export */
-     fsal_op_context_t *context; /*< FSAL operation context */
      nfsstat3 error; /*< Set to a value other than NFS_OK if the
                          callback function finds a fatal error. */
 };
@@ -136,7 +134,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                                                   .mem_left = 0,
                                                   .count = 0,
                                                   .export = export,
-                                                  .context = context,
                                                   .error = NFS3_OK};
 
      if (isDebug(COMPONENT_NFSPROTO) ||
@@ -181,7 +178,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
      /* Is this a xattr FH ? */
      if (nfs3_Is_Fh_Xattr(&(arg->arg_readdirplus3.dir))) {
-          rc = nfs3_Readdirplus_Xattr(arg, export, context,
+	  rc = nfs3_Readdirplus_Xattr(arg, export, creds,
                                       req, res);
           goto out;
      }
@@ -195,13 +192,13 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                                NULL,
                                &(res->res_readdirplus3.status),
                                NULL,
-                               &dir_attr, pexport, &rc)) == NULL) {
+                               &dir_attr, export, &rc)) == NULL) {
           rc = NFS_REQ_DROP;
           goto out;
      }
 
      /* Extract the filetype */
-     dir_filetype = cache_inode_fsal_type_convert(dir_attr.type);
+     dir_filetype = dir_attr.type;
 
      /* Sanity checks -- must be a directory */
 
@@ -259,8 +256,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           /* Fill in "." */
           if (!(nfs3_readdirplus_callback(&cb_opaque,
                                           ".",
-                                          &dir_entry->handle,
-                                          &dir_attr,
+                                          dir_entry->obj_handle,
                                           1))) {
                res->res_readdirplus3.status = cb_opaque.error;
                rc = NFS_REQ_OK;
@@ -273,7 +269,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           fsal_attrib_list_t parent_dir_attr;
           cache_entry_t *parent_dir_entry
                = cache_inode_lookupp(dir_entry,
-                                     context,
+                                     creds,
                                      &cache_status_gethandle);
           if (parent_dir_entry == NULL) {
                res->res_readdirplus3.status
@@ -284,7 +280,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
           if ((cache_inode_getattr(parent_dir_entry,
                                    &parent_dir_attr,
-                                   context,
                                    &cache_status_gethandle))
               != CACHE_INODE_SUCCESS) {
                res->res_readdirplus3.status
@@ -295,8 +290,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           }
           if (!(nfs3_readdirplus_callback(&cb_opaque,
                                           "..",
-                                          &parent_dir_entry->handle,
-                                          &parent_dir_attr,
+                                          parent_dir_entry->obj_handle,
                                           2))) {
                res->res_readdirplus3.status = cb_opaque.error;
                cache_inode_lru_unref(parent_dir_entry, 0);
@@ -311,7 +305,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                              cache_inode_cookie,
                              &num_entries,
                              &eod_met,
-                             context,
+                             creds,
                              nfs3_readdirplus_callback,
                              &cb_opaque,
                              &cache_status) != CACHE_INODE_SUCCESS) {
@@ -322,8 +316,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           }
 
           /* Set failed status */
-          nfs_SetFailedStatus(context,
-                              export,
+          nfs_SetFailedStatus(export,
                               NFS_V3,
                               cache_status,
                               NULL,
@@ -423,8 +416,7 @@ void nfs3_Readdirplus_Free(nfs_res_t *resp)
 static bool_t
 nfs3_readdirplus_callback(void* opaque,
                           char *name,
-                          fsal_handle_t *handle,
-                          fsal_attrib_list_t *attrs,
+                          struct fsal_obj_handle *obj_hdl,
                           uint64_t cookie)
 {
      /* Not-so-opaque pointer to callback data`*/
@@ -451,10 +443,9 @@ nfs3_readdirplus_callback(void* opaque,
           return FALSE;
      }
 
-     FSAL_DigestHandle(FSAL_GET_EXP_CTX(tracker->context),
-                       FSAL_DIGEST_FILEID3,
-                       handle,
-                       &id_descriptor);
+     (void)obj_hdl->ops->handle_digest(obj_hdl,
+				       FSAL_DIGEST_FILEID3,
+				       &id_descriptor);
 
      ep3->name = gsh_malloc(namelen + 1);
      if (ep3->name == NULL) {
@@ -477,7 +468,7 @@ nfs3_readdirplus_callback(void* opaque,
      }
 
      if (nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
-                            handle,
+                            obj_hdl,
                             tracker->export) == 0) {
           tracker->error = NFS3ERR_BADHANDLE;
           gsh_free(ep3->name);
@@ -493,7 +484,7 @@ nfs3_readdirplus_callback(void* opaque,
      ep3->name_attributes.attributes_follow = FALSE;
 
      nfs_SetPostOpAttr(tracker->export,
-                       attrs,
+                       &obj_hdl->attributes,
                        &ep3->name_attributes);
      if (ep3->name_attributes.attributes_follow) {
 	  tracker->mem_left -= sizeof(ep3->name_attributes);
