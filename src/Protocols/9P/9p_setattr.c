@@ -203,7 +203,13 @@ int _9p_setattr( _9p_request_data_t * preq9p,
          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
          return rc ;
        }
+     printf( "=====> Set Size=%llu|%llu\n", *size, pfid->attr.st_size ) ;
     }
+
+  /* Cache the attr */
+  _9p_tools_fsal_attr2stat( &pfid->pentry->attributes, &pfid->attr ) ;
+
+  printf( "=====> Size=%llu\n", pfid->attr.st_size ) ;
 
   /* Now set the attr */ 
   if( cache_inode_setattr( pfid->pentry,
