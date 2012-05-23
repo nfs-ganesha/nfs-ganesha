@@ -435,6 +435,12 @@ else                                                  \
 #define _9P_SETATTR_ATIME_SET	0x00000080UL
 #define _9P_SETATTR_MTIME_SET	0x00000100UL
 
+/* Bit values for lock type.
+ */
+#define _9P_LOCK_TYPE_RDLCK 0
+#define _9P_LOCK_TYPE_WRLCK 1
+#define _9P_LOCK_TYPE_UNLCK 2
+
 /* Bit values for lock status.
  */
 #define _9P_LOCK_SUCCESS 0
@@ -495,7 +501,17 @@ int _9p_getattr( _9p_request_data_t * preq9p,
                  u32 * plenout, 
                  char * preply) ;
 
+int _9p_getlock( _9p_request_data_t * preq9p, 
+                 void * pworker_data,
+                 u32 * plenout, 
+                 char * preply) ;
+
 int _9p_link( _9p_request_data_t * preq9p, 
+              void * pworker_data,
+              u32 * plenout, 
+              char * preply) ;
+
+int _9p_lock( _9p_request_data_t * preq9p, 
               void * pworker_data,
               u32 * plenout, 
               char * preply) ;

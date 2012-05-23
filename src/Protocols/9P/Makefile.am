@@ -12,8 +12,10 @@ lib9p_la_SOURCES = 9p_interpretor.c  \
                    9p_create.c       \
                    9p_flush.c        \
                    9p_getattr.c      \
+                   9p_getlock.c      \
                    9p_lopen.c        \
                    9p_link.c         \
+                   9p_lock.c         \
                    9p_mkdir.c        \
                    9p_mknod.c        \
                    9p_read.c         \
