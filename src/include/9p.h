@@ -45,8 +45,8 @@ typedef uint64_t u64;
 #define PRIME_9P 17 
 
 #define _9P_PORT 564
-#define _9P_SEND_BUFFER_SIZE 65560
-#define _9P_RECV_BUFFER_SIZE 65560
+#define _9P_SEND_BUFFER_SIZE 131072
+#define _9P_RECV_BUFFER_SIZE 131072
 #define _9p_READ_BUFFER_SIZE _9P_SEND_BUFFER_SIZE
 #define _9P_MAXDIRCOUNT 2000 /* Must be bigger than _9P_SEND_BUFFER_SIZE / 40 */
 

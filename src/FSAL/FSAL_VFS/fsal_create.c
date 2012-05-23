@@ -22,23 +22,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* Dirty work-around to be used for managing NFS related link semantics */
-static int linkat2(int srcfd, int dirdestfd, char *destname)
-{
-  char procpath[MAXPATHLEN];
-  char pathproccontent[MAXPATHLEN];
-
-  memset(procpath, 0, MAXPATHLEN);
-  memset(pathproccontent, 0, MAXPATHLEN);
-
-  snprintf(procpath, MAXPATHLEN, "/proc/%u/fd/%u", getpid(), srcfd);
-
-  if(readlink(procpath, pathproccontent, MAXPATHLEN) == -1)
-    return -1;
-
-  return linkat(0, pathproccontent, dirdestfd, destname, 0);
-}                               /* linkat2 */
-
 /**
  * FSAL_create:
  * Create a regular file.
@@ -461,7 +444,7 @@ fsal_status_t VFSFSAL_link(fsal_handle_t * p_target_handle,  /* IN */
   /* Create the link on the filesystem */
 
   TakeTokenFSCall();
-  rc = linkat2(srcfd, dstfd, p_link_name->name);
+  rc = linkat(srcfd, "", dstfd, p_link_name->name, AT_EMPTY_PATH);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
