@@ -63,6 +63,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
   fsal_handle_t *tmp_handlep = NULL;
   gpfsfsal_handle_t *phandle;
   int reason = 0;
+  int flags = 0;
   unsigned int *fhP;
   cache_inode_fsal_data_t *event_fsal_data;
 
@@ -94,6 +95,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
   callback.mountdirfd = p_export_context->mount_root_fd;
   callback.handle = (struct gpfs_file_handle *) &phandle->data.handle;
   callback.reason = &reason;
+  callback.flags = &flags;
   callback.buf = &buf;
   callback.fl = &fl;
 
