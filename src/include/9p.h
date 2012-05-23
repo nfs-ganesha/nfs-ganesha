@@ -471,6 +471,11 @@ int _9p_dummy( _9p_request_data_t * preq9p,
                u32 * plenout, 
                char * preply) ;
 
+int _9p_not_2000L( _9p_request_data_t * preq9p, 
+                   void * pworker_data,
+                   u32 * plenout, 
+                   char * preply) ;
+
 int _9p_clunk( _9p_request_data_t * preq9p, 
                void * pworker_data,
                u32 * plenout,
