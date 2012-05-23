@@ -108,15 +108,15 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_attach, "_9P_TATTACH" },
         { _9p_flush, "_9P_TFLUSH" },
         { _9p_walk, "_9P_TWALK" },
-        { _9p_dummy, "_9P_TOPEN" },
-        { _9p_dummy, "_9P_TCREATE" },
+        { _9p_not_2000L, "_9P_TOPEN" },
+        { _9p_not_2000L, "_9P_TCREATE" },
         { _9p_read, "_9P_TREAD" },
         { _9p_write, "_9P_TWRITE" },
         { _9p_clunk, "_9P_TCLUNK" },
         { _9p_remove, "_9P_TREMOVE" },
-        { _9p_dummy, "_9P_TSTAT" },
-        { _9p_dummy, "_9P_TWSTAT" },
-        { _9p_dummy, "no function" }
+        { _9p_not_2000L, "_9P_TSTAT" },
+        { _9p_not_2000L, "_9P_TWSTAT" },
+        { _9p_not_2000L, "no function" }
 } ;
 
 /* Will disappear when all work will have been done */
@@ -139,6 +139,26 @@ int _9p_dummy( _9p_request_data_t * preq9p,
   return -1 ;
 } /* _9p_dummy */
 
+/* Will disappear when all work will have been done */
+int _9p_not_2000L( _9p_request_data_t * preq9p, 
+                   void * pworker_data,
+                   u32 * plenout, 
+                   char * preply)
+{
+  char * msgdata = preq9p->_9pmsg + _9P_HDR_SIZE ;
+  u8 * pmsgtype = NULL ;
+  u16 msgtag = 0 ;
+  int err = ENOTSUP ;
+
+  /* Get message's type */
+  pmsgtype = (u8 *)msgdata ;
+  LogEvent( COMPONENT_9P,  "(%u|%s) is not a 9P2000.L message, returning ENOTSUP", 
+            *pmsgtype,  _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname  ) ;
+
+  _9p_rerror( preq9p, &msgtag, &err, plenout, preply ) ;
+
+  return -1 ;
+} /* _9p_not_2000L */
 
 void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data)
 {
