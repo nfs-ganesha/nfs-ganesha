@@ -139,15 +139,6 @@ int cache_inode_client_init(cache_inode_client_t *client,
       return 1;
     }
 
-  MakePool(&client->pool_entry_symlink, client->nb_prealloc, cache_inode_symlink_t, NULL, NULL);
-  NamePool(&client->pool_entry_symlink, "%s Entry Symlink Pool", name);
-  if(!IsPoolPreallocated(&client->pool_entry_symlink))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Entry Symlink Pool", name);
-      return 1;
-    }
-
   MakePool(&client->pool_dir_entry, client->nb_prealloc, cache_inode_dir_entry_t, NULL, NULL);
   NamePool(&client->pool_dir_entry, "%s Dir Entry Pool", name);
   if(!IsPoolPreallocated(&client->pool_dir_entry))
