@@ -123,7 +123,6 @@ cache_inode_access_sw(cache_entry_t *pentry,
                if(use_mutex) {
                     if ((*pstatus
                          = cache_inode_lock_trust_attrs(pentry,
-                                                        pcontext,
                                                         pclient))
                         != CACHE_INODE_SUCCESS) {
                          goto out;
@@ -179,7 +178,7 @@ cache_inode_access_no_mutex(cache_entry_t * pentry,
                             cache_inode_status_t * pstatus)
 {
     return cache_inode_access_sw(pentry, access_type,
-                                 pclient, pcontext, pstatus, FALSE);
+                                 pclient, creds, pstatus, FALSE);
 }
 
 /**
@@ -206,5 +205,5 @@ cache_inode_access(cache_entry_t * pentry,
                    cache_inode_status_t * pstatus)
 {
     return cache_inode_access_sw(pentry, access_type,
-                                 pclient, pcontext, pstatus, TRUE);
+                                 pclient, creds, pstatus, TRUE);
 }

@@ -101,10 +101,6 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
      struct fsal_obj_handle *object_handle;
      struct fsal_obj_handle *dir_handle;
      fsal_attrib_list_t object_attributes;
-     cache_inode_create_arg_t create_arg = {
-          .newly_created_dir = FALSE
-     };
-     cache_inode_file_type_t type = UNASSIGNED;
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
      cache_inode_fsal_data_t new_entry_fsdata;
      cache_inode_dir_entry_t *broken_dirent = NULL;
@@ -145,7 +141,7 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
            * a dir.  Clients SHOULD never 'lookup( .. )' in something that
            * is no dir. */
           pentry =
-               cache_inode_lookupp_impl(pentry_parent, pclient, pcontext,
+               cache_inode_lookupp_impl(pentry_parent, pclient, creds,
                                         pstatus);
           goto out;
      } else {
@@ -217,11 +213,7 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
 
      /* Allocation of a new entry in the cache */
      if((pentry = cache_inode_new_entry(object_handle,
-                                        &object_attributes,
-                                        type,
-                                        &create_arg,
                                         pclient,
-                                        pcontext,
                                         CACHE_INODE_FLAG_NONE,
                                         pstatus)) == NULL) {
           return NULL;
@@ -240,7 +232,6 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
                                                        pentry,
                                                        NULL,
                                                        pclient,
-                                                       pcontext,
                                                        pstatus);
           if(cache_status != CACHE_INODE_SUCCESS &&
              cache_status != CACHE_INODE_ENTRY_EXISTS) {
@@ -279,7 +270,7 @@ cache_inode_lookup(cache_entry_t *pentry_parent,
                    fsal_name_t *pname,
                    fsal_attrib_list_t *pattr,
                    cache_inode_client_t *pclient,
-                   fsal_op_context_t *pcontext,
+                   struct user_cred *creds,
                    cache_inode_status_t *pstatus)
 {
      cache_entry_t *entry = NULL;
@@ -290,7 +281,7 @@ cache_inode_lookup(cache_entry_t *pentry_parent,
      if (cache_inode_access(pentry_parent,
                             access_mask,
                             pclient,
-                            pcontext,
+                            creds,
                             pstatus) !=
          CACHE_INODE_SUCCESS) {
           return NULL;
@@ -300,17 +291,16 @@ cache_inode_lookup(cache_entry_t *pentry_parent,
      entry = cache_inode_lookup_impl(pentry_parent,
                                      pname,
                                      pclient,
-                                     pcontext,
+                                     creds,
                                      pstatus);
      pthread_rwlock_unlock(&pentry_parent->content_lock);
 
      if (entry) {
           *pstatus = cache_inode_lock_trust_attrs(entry,
-                                                  pcontext,
                                                   pclient);
           if(*pstatus == CACHE_INODE_SUCCESS)
             {
-              *pattr = entry->attributes;
+              *pattr = entry->obj_handle->attributes;
               pthread_rwlock_unlock(&entry->attr_lock);
             }
      }

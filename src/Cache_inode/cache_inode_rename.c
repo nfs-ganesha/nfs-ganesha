@@ -223,7 +223,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       = cache_inode_lookup_impl(pentry_dirsrc,
                                 poldname,
                                 pclient,
-                                pcontext,
+                                creds,
                                 pstatus)) == NULL) {
     /* If FSAL FH is staled, then this was managed in cache_inode_lookup */
     if(*pstatus != CACHE_INODE_FSAL_ESTALE)
@@ -255,7 +255,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
   pentry_lookup_dest = cache_inode_lookup_impl(pentry_dirdest,
 					       pnewname,
 					       pclient,
-					       pcontext,
+					       creds,
 					       pstatus);
   if( !sticky_dir_allows(phandle_dirdest,
 			 (pentry_lookup_dest != NULL) ?
@@ -330,7 +330,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       status = cache_inode_remove_impl(pentry_dirdest,
                                        pnewname,
                                        pclient,
-                                       pcontext,
+                                       creds,
                                        pstatus,
                                        CACHE_INODE_FLAG_CONTENT_HAVE|CACHE_INODE_FLAG_CONTENT_HOLD);
       if (status != CACHE_INODE_SUCCESS)
@@ -467,7 +467,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
                                              pnewname,
                                              pentry_lookup_src,
                                              NULL,
-                                             pclient, pcontext, pstatus);
+                                             pclient, pstatus);
       if(status != CACHE_INODE_SUCCESS)
         {
           *pstatus = status;

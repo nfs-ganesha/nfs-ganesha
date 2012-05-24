@@ -64,26 +64,22 @@
 
 
 cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
-                                        fsal_dynamicfsinfo_t * pdynamicinfo)
+                                        fsal_dynamicfsinfo_t * dynamicinfo)
 {
-  struct fsal_obj_handle *pfsal_handle;
   fsal_status_t fsal_status;
   struct fsal_export *export;
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if(!pentry || !pdynamicinfo)
+  if(!pentry || !dynamicinfo)
     {
       status = CACHE_INODE_INVALID_ARGUMENT;
       return status;
     }
 
-  /* Get the handle for this entry */
-  pfsal_handle = pentry->obj_handle;
-
-  export = pfsal_handle->export;
+  export = pentry->obj_handle->export;
   /* Get FSAL to get dynamic info */
-  fsal_status = export->ops->get_fs_dynamic_info(export, pdynamicinfo);
+  fsal_status = export->ops->get_fs_dynamic_info(export, dynamicinfo);
   if(FSAL_IS_ERROR(fsal_status))
     {
 /**

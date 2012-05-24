@@ -76,7 +76,7 @@
  */
 
 cache_inode_status_t
-cache_inode_invalidate(struct fsal_obj_handle * pfsal_handle,
+cache_inode_invalidate(struct fsal_obj_handle * obj_hdl,
                        cache_inode_status_t *status)
 {
      hash_buffer_t key, value;
@@ -85,17 +85,17 @@ cache_inode_invalidate(struct fsal_obj_handle * pfsal_handle,
      cache_entry_t *entry;
      struct hash_latch latch;
 
-     if (status == NULL || fsal_data == NULL) {
+     if (status == NULL || obj_hdl == NULL) {
           *status = CACHE_INODE_INVALID_ARGUMENT;
           goto out;
      }
 
      /* Locate the entry in the cache */
-     pfsal_handle->ops->handle_to_key(pfsal_handle, &fh_desc);
+     obj_hdl->ops->handle_to_key(obj_hdl, &fh_desc);
 
      /* Turn the input to a hash key */
-     key.pdata = fsal_data->fh_desc.start;
-     key.len = fsal_data->fh_desc.len;
+     key.pdata = fh_desc.start;
+     key.len = fh_desc.len;
 
      if ((rc = HashTable_GetLatch(fh_to_cache_entry_ht,
                                   &key,

@@ -97,7 +97,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
                                       struct user_cred *creds,
                                       cache_inode_status_t * pstatus)
 {
-<<<<<<< HEAD
      fsal_status_t fsal_status = {0, 0};
      bool_t srcattrlock = FALSE;
      bool_t destattrlock = FALSE;
@@ -137,7 +136,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
      if ((*pstatus = cache_inode_access_sw(pentry_dir_dest,
                                            access_mask,
                                            pclient,
-                                           pcontext,
+                                           creds,
                                            pstatus,
                                            FALSE))
          != CACHE_INODE_SUCCESS) {
@@ -202,13 +201,13 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
      }
 
      cache_inode_fixup_md(pentry_src);
-     *pattr = pentry_src->attributes;
+     *pattr = pentry_src->obj_handle->attributes;
      pthread_rwlock_unlock(&pentry_src->attr_lock);
      srcattrlock = FALSE;
 
      /* Reload the destination directory's attributes so the caller
         will have an updated changeid. */
-     cache_inode_refresh_attrs(pentry_dir_dest, pcontext, pclient);
+     cache_inode_refresh_attrs(pentry_dir_dest, pclient);
      pthread_rwlock_unlock(&pentry_dir_dest->attr_lock);
      destattrlock = FALSE;
 
@@ -218,7 +217,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
                                        pentry_src,
                                        NULL,
                                        pclient,
-                                       pcontext,
                                        pstatus) != CACHE_INODE_SUCCESS) {
           goto out;
      }

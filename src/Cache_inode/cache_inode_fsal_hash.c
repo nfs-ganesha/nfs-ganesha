@@ -127,6 +127,8 @@ static unsigned int Handle_to_HashIndex(hash_buffer_t *buffclef,
  *
  * \return The hash value
  */
+/** @TODO this is suspicious.  returns uint32_t but called for uint64_t
+ */
 
 static unsigned int Handle_to_RBTIndex(hash_buffer_t *buffclef, unsigned int cookie)
 {
@@ -293,8 +295,10 @@ static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
           snprintmem(printbuf, 512,
 		     buffclef->pdata, buffclef->len);
           LogFullDebug(COMPONENT_HASHTABLE,
-                       "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
-                       printbuf, 0UL, FSALindex, FSALrbt);
+                       "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), "
+		       "hashvalue=%u rbtvalue=%"PRIu64"",
+                       printbuf, 0UL,
+		       *phashval, *prbtval);
       }
 
    /* Success */

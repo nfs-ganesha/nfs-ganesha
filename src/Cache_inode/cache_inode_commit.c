@@ -69,7 +69,7 @@
  * @param count [in] Number of bytes to commit
  * @param typeofcommit [in] What type of commit operation this is
  * @param client [in/out] Per-thread resource management structure
- * @param context [IN] FSAL credentials
+ * @param creds [IN] FSAL credentials
  * @param status [OUT] Operation status
  *
  * @return CACHE_INODE_SUCCESS or various errors
@@ -81,7 +81,7 @@ cache_inode_commit(cache_entry_t *entry,
                    size_t count,
                    cache_inode_stability_t stability,
                    cache_inode_client_t *client,
-                   fsal_op_context_t *context,
+                   struct user_cred *creds,
                    cache_inode_status_t *status)
 {
      /* Number of bytes actually written */
@@ -116,7 +116,7 @@ cache_inode_commit(cache_entry_t *entry,
                     if (cache_inode_open(entry,
                                          client,
                                          FSAL_O_WRONLY,
-                                         context,
+                                         creds,
                                          CACHE_INODE_FLAG_CONTENT_HAVE |
                                          CACHE_INODE_FLAG_CONTENT_HOLD,
                                          status) != CACHE_INODE_SUCCESS) {
@@ -186,7 +186,7 @@ cache_inode_commit(cache_entry_t *entry,
                                          udata->buffer,
                                          NULL,
                                          client,
-                                         context,
+                                         creds,
                                          CACHE_INODE_SAFE_WRITE_TO_FS,
                                          status);
                if (status != CACHE_INODE_SUCCESS) {
@@ -209,7 +209,7 @@ cache_inode_commit(cache_entry_t *entry,
                                  offset - udata->offset),
                                 NULL,
                                 client,
-                                context,
+                                creds,
                                 CACHE_INODE_SAFE_WRITE_TO_FS,
                                 status);
           }

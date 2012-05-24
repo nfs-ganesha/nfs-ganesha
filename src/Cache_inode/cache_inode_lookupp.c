@@ -72,6 +72,13 @@
  * If result was not cached, the function will drop the read lock and
  * acquire a write lock so it can add the result to the cache.
  *
+ * NOTE: this can behave differently than a local Linux user of the
+ * filesystem if the path to get here is a symlink.  In the local case,
+ * the path is consistent because the kernel's CWD gets the expected
+ * "..".  We don't have that so the ".." is the directory in which
+ * the name resides even though the symlink allowed us to skip around
+ * the real (non symlink resolved) path.
+ *
  * @param entry [IN] Entry whose parent is to be obtained
  * @param client [INOUT] Per-thread resource control structure
  * @param context [IN] FSAL operation context
@@ -85,7 +92,7 @@
 cache_entry_t *
 cache_inode_lookupp_impl(cache_entry_t *entry,
                          cache_inode_client_t *client,
-                         fsal_op_context_t *context,
+                         struct user_cred *creds,
                          cache_inode_status_t *status)
 {
      cache_entry_t *parent = NULL;
@@ -114,9 +121,9 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      }
 
      /* we have to be able to read or scan the dir to do this lookup */
-     fsal_status = pentry->obj_handle->ops->test_access(pentry->obj_handle,
-							creds,
-							FSAL_R_OK|FSAL_X_OK);
+     fsal_status = entry->obj_handle->ops->test_access(entry->obj_handle,
+						       creds,
+						       FSAL_R_OK|FSAL_X_OK);
      if(FSAL_IS_ERROR(fsal_status)) {
 	 *status = CACHE_INODE_FSAL_EACCESS;
 	 return NULL;
@@ -140,8 +147,8 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      if (!parent) {
 	  struct fsal_obj_handle *parent_handle;
 
-	  fsal_status = pentry->obj_handle->ops->lookup(pentry->obj_handle, "..",
-							&parent_handle);
+	  fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle, "..",
+						       &parent_handle);
           if(FSAL_IS_ERROR(fsal_status)) {
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry, client);
@@ -158,7 +165,6 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           if((parent = cache_inode_get(&fsdata,
                                        &object_attributes,
                                        client,
-                                       context,
                                        entry,
                                        status)) == NULL) {
                return NULL;
@@ -194,12 +200,12 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
  */
 cache_entry_t *cache_inode_lookupp(cache_entry_t *pentry,
                                    cache_inode_client_t *pclient,
-                                   fsal_op_context_t *pcontext,
+                                   struct user_cred *creds,
                                    cache_inode_status_t *pstatus)
 {
      cache_entry_t *parent_entry = NULL;
      pthread_rwlock_rdlock(&pentry->content_lock);
-     parent_entry = cache_inode_lookupp_impl(pentry, pclient, pcontext, pstatus);
+     parent_entry = cache_inode_lookupp_impl(pentry, pclient, creds, pstatus);
      pthread_rwlock_unlock(&pentry->content_lock);
      return parent_entry;
 } /* cache_inode_lookupp */

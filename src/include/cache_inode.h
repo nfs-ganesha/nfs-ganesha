@@ -218,15 +218,6 @@ static const uint32_t CACHE_INODE_DIR_POPULATED
                   are meaningful) */
 
 /**
- * Structure storing cached symlink content.
- */
-
-struct cache_inode_symlink__
-{
-  fsal_path_t content; /*< Content of the link */
-};
-
-/**
  * Bookkeeping information for unstably written data held in Ganesha's
  * write buffer.
  */
@@ -317,11 +308,16 @@ typedef struct cache_inode_dir_entry__
  * change_info4.
  *
  * The lru field as its own mutex to protect it.
+ *
+ * The attributes and symlink contents are stored in the handle for
+ * api simplicity but these locks apply around their access methods.
  */
 
 /* NOTES for cleanup:
  * handle gets moved out of the union
  * attributes gets moved to the fsal_obj_handle - simplifies apis
+ * although (1) locking applies everywhere except handle object
+ * creation time (nobody knows about it yet).
  * deprecate internal_md.type for fsal_obj_handle has type.
  * object.symlink->content moves to attributes to union with rawdev
  * cache_entry and fsal_obj_handle are two parts of the same thing,
@@ -331,6 +327,7 @@ typedef struct cache_inode_dir_entry__
 
 struct cache_entry_t
 {
+  pthread_rwlock_t attr_lock; /*< Reader-writer lock for attributes */
   struct fsal_obj_handle *obj_handle; /**< The FSAL Handle     */
   gweakref_t weakref; /*< A weakref for this entry (pointer and generation
                           number.)  The generation number is the only
@@ -345,8 +342,6 @@ struct cache_entry_t
                           etc.) */
   time_t attr_time; /*< Time at which we last refreshed attributes. */
   cache_inode_lru_t lru; /*< New style LRU link */
-  pthread_rwlock_t attr_lock; /*< Reader-writer lock for attributes */
-  fsal_attrib_list_t attributes; /*< The FSAL Attributes */
   pthread_rwlock_t state_lock; /*< This is separated out from the
                                    content lock, since there are
                                    state oerations that don't affect
@@ -392,7 +387,6 @@ struct cache_entry_t
 };
 
 typedef struct cache_inode_file__ cache_inode_file_t;
-typedef struct cache_inode_symlink__ cache_inode_symlink_t;
 typedef union cache_inode_fsobj__ cache_inode_fsobj_t;
 
 /**
@@ -618,8 +612,7 @@ typedef enum cache_inode_status_t
 typedef bool_t(*cache_inode_readdir_cb_t)(
      void *opaque,
      char *name,
-     fsal_handle_t *handle,
-     fsal_attrib_list_t *attrs,
+     struct fsal_obj_handle *obj_handle,
      uint64_t cookie);
 
 const char *cache_inode_err_str(cache_inode_status_t err);
@@ -640,7 +633,6 @@ int cache_inode_client_init(cache_inode_client_t *client,
 cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * fsdata,
                                fsal_attrib_list_t * attr,
                                cache_inode_client_t *client,
-                               fsal_op_context_t *context,
                                cache_entry_t *associated,
                                cache_inode_status_t *status);
 void cache_inode_put(cache_entry_t *entry,
@@ -661,7 +653,7 @@ cache_inode_status_t cache_inode_access_no_mutex(
 cache_inode_status_t cache_inode_access(cache_entry_t *pentry,
                                         fsal_accessflags_t access_type,
                                         cache_inode_client_t *pclient,
-					fsal_op_context_t *pcontext,
+					struct user_cred *creds,
                                         cache_inode_status_t *pstatus);
 
 fsal_file_t *cache_inode_fd(cache_entry_t *pentry);
@@ -687,41 +679,40 @@ cache_entry_t *cache_inode_create(cache_entry_t *pentry_parent,
                                   cache_inode_create_arg_t *pcreate_arg,
                                   fsal_attrib_list_t *pattr,
                                   cache_inode_client_t *pclient,
-                                  fsal_op_context_t *pcontext,
+                                  struct user_cred *creds,
                                   cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_getattr(cache_entry_t *pentry,
                                          fsal_attrib_list_t *pattr,
                                          cache_inode_client_t *pclient,
-                                         fsal_op_context_t *pcontext,
                                          cache_inode_status_t *pstatus);
 
 cache_entry_t *cache_inode_lookup_impl(cache_entry_t *pentry_parent,
                                        fsal_name_t *pname,
                                        cache_inode_client_t *pclient,
-                                       fsal_op_context_t *pcontext,
+                                       struct user_cred *creds,
                                        cache_inode_status_t *pstatus);
 cache_entry_t *cache_inode_lookup(cache_entry_t *pentry_parent,
                                   fsal_name_t *pname,
                                   fsal_attrib_list_t *pattr,
                                   cache_inode_client_t *pclient,
-                                  fsal_op_context_t *pcontext,
+                                  struct user_cred *creds,
                                   cache_inode_status_t *pstatus);
 
 cache_entry_t *cache_inode_lookupp_impl(cache_entry_t *entry,
                                         cache_inode_client_t *client,
-                                        fsal_op_context_t *context,
+                                        struct user_cred *creds,
                                         cache_inode_status_t *status);
 cache_entry_t *cache_inode_lookupp(cache_entry_t *pentry,
                                    cache_inode_client_t *pclient,
-                                   fsal_op_context_t *pcontext,
+                                   struct user_cred *creds,
                                    cache_inode_status_t *pstatus);
 
 
 cache_inode_status_t cache_inode_readlink(cache_entry_t *pentry,
                                           fsal_path_t *plink_content,
                                           cache_inode_client_t *pclient,
-                                          fsal_op_context_t *pcontext,
+                                          struct user_cred *creds,
                                           cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_link(cache_entry_t *pentry_src,
@@ -729,19 +720,19 @@ cache_inode_status_t cache_inode_link(cache_entry_t *pentry_src,
                                       fsal_name_t *plink_name,
                                       fsal_attrib_list_t *pattr,
                                       cache_inode_client_t *pclient,
-                                      fsal_op_context_t *pcontext,
+                                      struct user_cred *creds,
                                       cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_remove(cache_entry_t *pentry,
                                         fsal_name_t *pnode_name,
                                         fsal_attrib_list_t *pattr,
                                         cache_inode_client_t *pclient,
-                                        fsal_op_context_t *pcontext,
+					struct user_cred *creds,
                                         cache_inode_status_t *pstatus);
 cache_inode_status_t cache_inode_remove_impl(cache_entry_t *entry,
                                              fsal_name_t *name,
                                              cache_inode_client_t *client,
-                                             fsal_op_context_t *context,
+                                             struct user_cred *creds,
                                              cache_inode_status_t *status,
                                              uint32_t flags);
 
@@ -775,13 +766,13 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *pentry,
                                         fsal_attrib_list_t *pattr_src,
                                         fsal_attrib_list_t *pattr_dst,
                                         cache_inode_client_t *pclient,
-                                        fsal_op_context_t *pcontext,
+                                        struct user_cred *creds,
                                         cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_setattr(cache_entry_t *pentry,
                                          fsal_attrib_list_t *pattr,
                                          cache_inode_client_t *pclient,
-                                         fsal_op_context_t *pcontext,
+                                         struct user_cred *creds,
                                          cache_inode_status_t *pstatus);
 
 cache_inode_status_t
@@ -789,35 +780,31 @@ cache_inode_truncate_impl(cache_entry_t *pentry,
                           fsal_size_t length,
                           fsal_attrib_list_t *pattr,
                           cache_inode_client_t *pclient,
-                          fsal_op_context_t *pcontext,
+                          struct user_cred *creds,
                           cache_inode_status_t *pstatus);
 cache_inode_status_t cache_inode_truncate(
      cache_entry_t *pentry,
      fsal_size_t length,
      fsal_attrib_list_t *pattr,
      cache_inode_client_t *pclient,
-     fsal_op_context_t *pcontext,
+     struct user_cred *creds,
      cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
 
-cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
-                                     fsal_attrib_list_t *attr,
-                                     cache_inode_file_type_t type,
-                                     cache_inode_create_arg_t *create_arg,
+cache_entry_t *cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                                      cache_inode_client_t *client,
-                                     fsal_op_context_t *context,
                                      uint32_t flags,
                                      cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_add_data_cache(cache_entry_t *pentry,
                                                 cache_inode_client_t *pclient,
-                                                fsal_op_context_t *pcontext,
+                                                struct user_cred *creds,
                                                 cache_inode_status_t *pstatus);
 cache_inode_status_t cache_inode_release_data_cache(
      cache_entry_t *pentry,
      cache_inode_client_t *pclient,
-     fsal_op_context_t *pcontext,
+     struct user_cred *creds,
      cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
@@ -828,7 +815,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
                                       void *buffer,
                                       bool_t *eof,
                                       cache_inode_client_t *client,
-                                      fsal_op_context_t *context,
+                                      struct user_cred *creds,
                                       cache_inode_stability_t stable,
                                       cache_inode_status_t *status);
 
@@ -840,12 +827,12 @@ cache_inode_read(cache_entry_t *entry,
                  void *buffer,
                  bool_t *eof,
                  cache_inode_client_t *client,
-                 fsal_op_context_t *context,
+                 struct user_cred *creds,
                  cache_inode_stability_t stable,
                  cache_inode_status_t *status)
 {
   return cache_inode_rdwr(entry, CACHE_INODE_READ, offset, io_size,
-                          bytes_moved, buffer, eof, client, context,
+                          bytes_moved, buffer, eof, client, creds,
                           stable, status);
 }
 
@@ -857,12 +844,12 @@ cache_inode_write(cache_entry_t *entry,
                   void *buffer,
                   bool_t *eof,
                   cache_inode_client_t *client,
-                  fsal_op_context_t *context,
+                  struct user_cred *creds,
                   cache_inode_stability_t stable,
                   cache_inode_status_t *status)
 {
   return cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, io_size,
-                          bytes_moved, buffer, eof, client, context,
+                          bytes_moved, buffer, eof, client, creds,
                           stable, status);
 }
 
@@ -871,20 +858,15 @@ cache_inode_status_t cache_inode_commit(cache_entry_t *entry,
                                         size_t count,
                                         cache_inode_stability_t stability,
                                         cache_inode_client_t *client,
-                                        fsal_op_context_t *context,
+                                        struct user_cred *creds,
                                         cache_inode_status_t *status);
-
-cache_inode_status_t cache_inode_readdir_populate( cache_entry_t *pentry_dir,
-                                                  cache_inode_client_t *pclient,
-                                                  fsal_op_context_t *pcontext,
-                                                  cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_readdir( cache_entry_t * dir_entry,
                                           uint64_t cookie,
                                           unsigned int *nbfound,
                                           bool_t *eod_met,
                                           cache_inode_client_t *client,
-                                          fsal_op_context_t *context,
+                                          struct user_cred *creds,
                                           cache_inode_readdir_cb_t cb,
                                           void *cb_opaque,
                                           cache_inode_status_t *status);
@@ -895,19 +877,14 @@ cache_inode_status_t cache_inode_add_cached_dirent(
      cache_entry_t *pentry_added,
      cache_inode_dir_entry_t **pnew_dir_entry,
      cache_inode_client_t *pclient,
-     fsal_op_context_t *pcontext,
      cache_inode_status_t *pstatus);
 
-cache_entry_t *cache_inode_make_root( cache_inode_fsal_data_t *pfsdata,
-                                      cache_inode_client_t *pclient,
-                                      fsal_op_context_t *pcontext,
-                                      cache_inode_status_t *pstatus);
+cache_entry_t *cache_inode_make_root( struct fsal_obj_handle *root_hdl,
+				      cache_inode_client_t *pclient,
+				      cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_check_trust( cache_entry_t *entry,
-                                              fsal_op_context_t *context,
                                               cache_inode_client_t *client);
-
-cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type);
 
 int cache_inode_type_are_rename_compatible( cache_entry_t *pentry_src,
                                             cache_entry_t *pentry2);
@@ -915,9 +892,7 @@ int cache_inode_type_are_rename_compatible( cache_entry_t *pentry_src,
 void cache_inode_print_dir(cache_entry_t *cache_entry_root);
 
 cache_inode_status_t cache_inode_statfs( cache_entry_t *pentry,
-                                         fsal_dynamicfsinfo_t *dynamicinfo,
-                                         fsal_op_context_t *pcontext,
-                                         cache_inode_status_t *pstatus);
+                                         fsal_dynamicfsinfo_t *dynamicinfo);
 
 cache_inode_status_t cache_inode_is_dir_empty( cache_entry_t *pentry );
 cache_inode_status_t cache_inode_is_dir_empty_WithLock( cache_entry_t *pentry );
@@ -938,7 +913,7 @@ void cache_inode_kill_entry(cache_entry_t *entry,
                             cache_inode_client_t *client);
 
 cache_inode_status_t cache_inode_invalidate(
-     cache_inode_fsal_data_t *fsal_data,
+     struct fsal_obj_handle * pfsal_handle,
      cache_inode_status_t *status);
 
 cache_inode_gc_policy_t cache_inode_get_gc_policy(void);
@@ -999,9 +974,9 @@ cache_inode_fixup_md(cache_entry_t *entry)
      entry->attr_time = time(NULL);
      /* TODO: This should really be changed to use sub-second time
         resolution when it's available. */
-     entry->change_time = entry->attributes.chgtime.seconds;
+     entry->change_time = entry->obj_handle->attributes.chgtime.seconds;
      /* Almost certainly not necessary */
-     entry->type = cache_inode_fsal_type_convert(entry->attributes.type);
+     entry->type = entry->obj_handle->attributes.type;
      /* We have just loaded the attributes from the FSAL. */
      entry->flags |= CACHE_INODE_TRUST_ATTRS;
 }
@@ -1021,7 +996,6 @@ cache_inode_fixup_md(cache_entry_t *entry)
  */
 static inline cache_inode_status_t
 cache_inode_refresh_attrs(cache_entry_t *entry,
-                          fsal_op_context_t *context,
                           cache_inode_client_t *client)
 {
      fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
@@ -1045,8 +1019,6 @@ cache_inode_refresh_attrs(cache_entry_t *entry,
      memset(&attributes, 0, sizeof(fsal_attrib_list_t));
      attributes.asked_attributes = client->attrmask;
 
-     /* I assume this function will go away in the Lieb
-        Rearchitecture. */
      fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
 						    &attributes);
      if (FSAL_IS_ERROR(fsal_status)) {
@@ -1101,7 +1073,6 @@ cache_inode_get_changeid4(cache_entry_t *entry)
 
 static inline cache_inode_status_t
 cache_inode_lock_trust_attrs(cache_entry_t *entry,
-                             fsal_op_context_t *context,
                              cache_inode_client_t *client)
 {
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -1110,7 +1081,7 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
      pthread_rwlock_rdlock(&entry->attr_lock);
      /* Do we need to refresh? */
      if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
-         FSAL_TEST_MASK(entry->attributes.asked_attributes,
+         FSAL_TEST_MASK(entry->obj_handle->attributes.asked_attributes,
                         FSAL_ATTR_RDATTR_ERR)) {
           pthread_rwlock_unlock(&entry->attr_lock);
           pthread_rwlock_wrlock(&entry->attr_lock);
@@ -1121,7 +1092,6 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
                /* Release the lock on error */
                if ((cache_status =
                     cache_inode_refresh_attrs(entry,
-                                              context,
                                               client))
                    != CACHE_INODE_SUCCESS) {
                     pthread_rwlock_unlock(&entry->attr_lock);
