@@ -64,7 +64,6 @@
  *
  * @param pfsdata [IN] FSAL data for the root.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials. Unused here.
  * @param pstatus [OUT] returned status.
  */
 
@@ -73,7 +72,6 @@ cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
                                      cache_inode_status_t * pstatus)
 {
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t attr;
   /* sanity check */
   if(pstatus == NULL)
     return NULL;
@@ -81,19 +79,22 @@ cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
-  if((pentry = cache_inode_get(root_hdl,
-                               &attr,
-                               pclient,
-                               pcontext,
-                               NULL,
-                               pstatus)) != NULL)
+/** this used to be get but we get passed a handle so now new_entry */
+  if((pentry = cache_inode_new_entry(root_hdl,
+				     pclient,
+				     CACHE_INODE_FLAG_NONE,
+				     pstatus)) != NULL)
     {
       /* The root directory is its own parent.  (Even though this is a
          weakref, it shouldn't be broken in practice.) */
       pthread_rwlock_wrlock(&pentry->content_lock);
       pentry->object.dir.parent = pentry->weakref;
-      pthread_rwlock_unlock(&pentry->content_lock);
       pentry->object.dir.root = TRUE;
+      pthread_rwlock_unlock(&pentry->content_lock);
+    } else {
+      LogCrit(COMPONENT_CACHE_INODE,
+	      "Unable to add root entry to cache, status = %s",
+	      cache_inode_err_str(*pstatus));
     }
 
   return pentry;

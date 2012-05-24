@@ -182,13 +182,8 @@ int cache_inode_set_time_current(fsal_time_t *ptime)
  * This funcion adds a new entry to the cache.  It will allocate
  * entries of any kind.
  *
- * @param fsdata [IN] FSAL data for the entry to be created
- * @param attr [IN] Attributes to be stored in the cache entry
- *                  (must not be NULL)
- * @param type [IN] Type of entry to create
- * @param create_arg [IN] Type specific creation data
+ * @param new_obj [IN] object handle to be added to the cache
  * @param client [IN,OUT] Structure for per-thread resource management
- * @param context [IN] FSAL credentials
  * @param flags [IN] Vary the function's operation (newly created
  *                   object, extra ref, etc.)
  * @param status [OUT] Returned status.
@@ -198,10 +193,7 @@ int cache_inode_set_time_current(fsal_time_t *ptime)
  */
 cache_entry_t *
 cache_inode_new_entry(struct fsal_obj_handle *new_obj,
-                      fsal_attrib_list_t *attr,
-                      cache_inode_create_arg_t *create_arg,
                       cache_inode_client_t *client,
-                      fsal_op_context_t *context,
                       uint32_t flags,
                       cache_inode_status_t *status)
 {
@@ -212,13 +204,11 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      bool_t lrurefed = FALSE;
      bool_t weakrefed = FALSE;
      bool_t locksinited = FALSE;
-     bool_t typespec = FALSE;
      bool_t latched = FALSE;
      struct hash_latch latch;
      hash_error_t hrc = 0;
      struct fsal_handle_desc fh_desc;
-
-     assert(attr);
+     fsal_status_t fsal_status;
 
      new_obj->ops->handle_to_key(new_obj, &fh_desc);
      key.pdata = fh_desc.start;
@@ -289,7 +279,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
                    "entry. Found entry %p type: %d, New type: %d",
-                   entry, entry->type, type);
+                   entry, entry->obj_handle->type, new_obj->type);
           if (cache_inode_lru_ref(entry, client, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
                /* Release the subtree hash table mutex acquired in
@@ -306,9 +296,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      /* This should be the sentinel, plus one to use the entry we
         just returned. */
      lrurefed = TRUE;
-
-     entry->obj_handle = new_obj;
-     new_obj = NULL; /* mark it as having a home */
 
      /* Enroll the object in the weakref table */
 
@@ -336,7 +323,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
      /* Initialize common fields */
 
-     entry->type = entry->obj_handle->type;
+     entry->type = new_obj->type;
      entry->flags = 0;
      init_glist(&entry->state_list);
 
@@ -362,8 +349,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
           /* If the directory is newly created, it is empty.  Because
              we know its content, we consider it read. */
-          if ((create_arg != NULL) &&
-              (create_arg->newly_created_dir)) {
+          if (flags & CACHE_INODE_FLAG_CREATE) {
                atomic_set_int_bits(&entry->flags,
                                    CACHE_INODE_TRUST_CONTENT |
                                    CACHE_INODE_DIR_POPULATED);
@@ -389,7 +375,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      case CHARACTER_FILE:
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Adding a special file of type %d "
-                   "entry=%p", type, entry);
+                   "entry=%p", entry->type, entry);
           break;
 
      case FS_JUNCTION:
@@ -402,13 +388,12 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           *status = CACHE_INODE_INCONSISTENT_ENTRY;
           LogMajor(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: unknown type %u provided",
-                   type);
+                   entry->type);
           goto out;
      }
-     typespec = TRUE;
 
-     /* Use the supplied attributes and fix up metadata */
-     entry->attributes = *attr;
+     entry->obj_handle = new_obj;
+     new_obj = NULL; /* mark it as having a home */
      cache_inode_fixup_md(entry);
 
      /* Adding the entry in the hash table using the key we started with */
@@ -425,6 +410,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: entry could not be added to hash, "
                   "rc=%d", rc);
+	  new_obj = entry->obj_handle;
+	  entry->obj_handle = NULL;  /* give it back and poison the entry */
           *status = CACHE_INODE_HASH_SET_ERROR;
           goto out;
      }
@@ -436,14 +423,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 out:
      if (*status != CACHE_INODE_SUCCESS) {
           /* Deconstruct the object */
-	  if(entry->obj_handle != NULL) {
-	      fsal_status = entry->obj_handle->ops->release(entry->obj_handle);
-	      if(FSAL_IS_ERROR(fsal_status)) {
-		  *status = cache_inode_error_convert(fsal_status);
-		  LogDebug(COMPONENT_CACHE_INODE,
-			   "failed to release obj_handle %p", new_obj);
-	      }
-	  }
           if (locksinited) {
                pthread_rwlock_destroy(&entry->attr_lock);
                pthread_rwlock_destroy(&entry->content_lock);
@@ -468,10 +447,11 @@ out:
 	  fsal_status = new_obj->ops->release(new_obj);
 	  if( FSAL_IS_ERROR( fsal_status ) )
 	    {
-	      *pstatus = cache_inode_error_convert(fsal_status);
+	      *status = cache_inode_error_convert(fsal_status);
 	      LogDebug(COMPONENT_CACHE_INODE,
 		       "failed to release unused new_obj %p", new_obj);
 	      /* further recovery ?? */
+	    }
      }
 
      return entry;
@@ -821,13 +801,11 @@ void cache_inode_set_gc_policy(cache_inode_gc_policy_t policy)
 
 cache_inode_status_t
 cache_inode_check_trust(cache_entry_t *entry,
-                        fsal_op_context_t *context,
                         cache_inode_client_t *client)
 {
      time_t current_time = 0;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      time_t oldmtime = 0;
-     fsal_status_t fsal_status = {0, 0};
 
      if ((entry->type == FS_JUNCTION) ||
          (entry->type == UNASSIGNED) ||
@@ -843,7 +821,7 @@ cache_inode_check_trust(cache_entry_t *entry,
      pthread_rwlock_rdlock(&entry->attr_lock);
      current_time = time(NULL);
 
-     oldmtime = entry->attributes.mtime.seconds;
+     oldmtime = entry->obj_handle->attributes.mtime.seconds;
 
      /* Do we need a refresh? */
      if (((client->expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
@@ -867,34 +845,13 @@ cache_inode_check_trust(cache_entry_t *entry,
           goto unlock;
      }
 
-     if ((status = cache_inode_refresh_attrs(entry, context, client))
+     if ((status = cache_inode_refresh_attrs(entry, client))
          != CACHE_INODE_SUCCESS) {
           goto unlock;
      }
 
-     if (entry->type == SYMBOLIC_LINK &&
-         ((client->expire_type_link != CACHE_INODE_EXPIRE_NEVER &&
-          ((current_time - entry->change_time >=
-            client->grace_period_link))) ||
-          !(entry->flags & CACHE_INODE_TRUST_CONTENT))) {
-          pthread_rwlock_wrlock(&entry->content_lock);
-          pthread_rwlock_unlock(&entry->attr_lock);
-
-          fsal_status = entry->obj_handle->ops->readlink(&entry->obj_handle,
-                                      context,
-                                      &entry->object.symlink->content,
-                                      NULL);
-
-          if (FSAL_IS_ERROR(fsal_status)) {
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry, client);
-               }
-               status = cache_inode_error_convert(fsal_status);
-          }
-          pthread_rwlock_unlock(&entry->content_lock);
-          goto out;
-     } else if ((entry->type == DIRECTORY) &&
-                (oldmtime < entry->attributes.mtime.seconds)) {
+     if ((entry->type == DIRECTORY) &&
+                (oldmtime < entry->obj_handle->attributes.mtime.seconds)) {
           pthread_rwlock_wrlock(&entry->content_lock);
           pthread_rwlock_unlock(&entry->attr_lock);
 

@@ -104,6 +104,7 @@ cache_inode_clean_internal(cache_entry_t *entry,
 {
      hash_buffer_t key, val;
      struct fsal_handle_desc fh_desc;
+     fsal_status_t fsal_status = {0, 0};
      hash_error_t rc = 0;
 
      entry->obj_handle->ops->handle_to_key(entry->obj_handle,
@@ -131,7 +132,14 @@ cache_inode_clean_internal(cache_entry_t *entry,
 
 /* release the handle object too
  */
-     entry->obj_handle->ops->release(entry->obj_handle);
+     fsal_status = entry->obj_handle->ops->release(entry->obj_handle);
+     if (FSAL_IS_ERROR(fsal_status)) {
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_lru_clean: Couldn't free FSAL ressources "
+                  "fsal_status.major=%u", fsal_status.major);
+     }
+
+     entry->obj_handle = NULL;;
 
      /* Delete from the weakref table */
      cache_inode_weakref_delete(&entry->weakref);
@@ -162,7 +170,7 @@ cache_inode_status_t cache_inode_remove(cache_entry_t *pentry,
                                         fsal_name_t *pnode_name,
                                         fsal_attrib_list_t *pattr,
                                         cache_inode_client_t *pclient,
-                                        fsal_op_context_t *pcontext,
+                                        struct user_cred *creds,
                                         cache_inode_status_t *pstatus)
 {
      cache_inode_status_t status;
@@ -179,7 +187,7 @@ cache_inode_status_t cache_inode_remove(cache_entry_t *pentry,
          = cache_inode_access_sw(pentry,
                                  access_mask,
                                  pclient,
-                                 pcontext,
+                                 creds,
                                  &status,
                                  FALSE))
         != CACHE_INODE_SUCCESS) {
@@ -193,7 +201,7 @@ cache_inode_status_t cache_inode_remove(cache_entry_t *pentry,
      cache_inode_remove_impl(pentry,
                              pnode_name,
                              pclient,
-                             pcontext,
+                             creds,
                              pstatus,
                              /* Keep the attribute lock so we can copy
                                 attributes back to the caller.  I plan
@@ -202,7 +210,7 @@ cache_inode_status_t cache_inode_remove(cache_entry_t *pentry,
                              CACHE_INODE_FLAG_ATTR_HOLD |
                              CACHE_INODE_FLAG_CONTENT_HAVE);
 
-     *pattr = pentry->attributes;
+     *pattr = pentry->obj_handle->attributes;
 
 unlock_attr:
 
@@ -236,7 +244,7 @@ cache_inode_status_t
 cache_inode_remove_impl(cache_entry_t *entry,
                         fsal_name_t *name,
                         cache_inode_client_t *client,
-                        fsal_op_context_t *context,
+			struct user_cred *creds,
                         cache_inode_status_t *status,
                         uint32_t flags)
 {
@@ -266,12 +274,12 @@ cache_inode_remove_impl(cache_entry_t *entry,
           = cache_inode_lookup_impl(entry,
                                     name,
                                     client,
-                                    context,
+                                    creds,
                                     status)) == NULL) {
           goto out;
      }
 
-     if( !sticky_dir_allows(pentry->obj_handle,
+     if( !sticky_dir_allows(entry->obj_handle,
 			    to_remove_entry->obj_handle,
 			    creds)) {
 	 *status = CACHE_INODE_FSAL_EPERM;
@@ -290,7 +298,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
      fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, name);
      if( !FSAL_IS_ERROR(fsal_status))
 	  fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
-							 &entry->attributes);
+							 &entry->obj_handle->attributes);
 
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
@@ -325,9 +333,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
      /* Update the attributes for the removed entry */
 
      if ((to_remove_entry->type != DIRECTORY) &&
-         (to_remove_entry->attributes.numlinks > 1)) {
+         (to_remove_entry->obj_handle->attributes.numlinks > 1)) {
           if ((*status = cache_inode_refresh_attrs(to_remove_entry,
-                                                   context,
                                                    client))
               != CACHE_INODE_SUCCESS) {
                goto unlock;
@@ -335,12 +342,12 @@ cache_inode_remove_impl(cache_entry_t *entry,
      } else {
           /* Otherwise our count is zero, or it was an empty
              directory. */
-          to_remove_entry->attributes.numlinks = 0;
+          to_remove_entry->obj_handle->attributes.numlinks = 0;
      }
 
      /* Now, delete "to_remove_entry" from the cache inode and free
         its associated resources, but only if numlinks == 0 */
-     if (to_remove_entry->attributes.numlinks == 0) {
+     if (to_remove_entry->obj_handle->attributes.numlinks == 0) {
           /* Destroy the entry when everyone's references to it have
              been relinquished.  Most likely now. */
           pthread_rwlock_unlock(&to_remove_entry->attr_lock);

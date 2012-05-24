@@ -75,7 +75,6 @@
  * @param[in]     fsdata     File system data
  * @param[out]    attr       The attributes of the got entry
  * @param[in,out] client     Resource management structure
- * @param[in]     context    FSAL credentials
  * @param[in]     associated Entry that may be equal to the got entry
  * @param[out]    status     Returned status
  *
@@ -86,19 +85,13 @@ cache_entry_t *
 cache_inode_get(cache_inode_fsal_data_t *fsdata,
                 fsal_attrib_list_t *attr,
                 cache_inode_client_t *client,
-                fsal_op_context_t *context,
                 cache_entry_t *associated,
                 cache_inode_status_t *status)
 {
      hash_buffer_t key, value;
      cache_entry_t *entry = NULL;
      fsal_status_t fsal_status = {0, 0};
-     cache_inode_create_arg_t create_arg = {
-          .newly_created_dir = FALSE
-     };
-     cache_inode_file_type_t type = UNASSIGNED;
      hash_error_t hrc = 0;
-     fsal_attrib_list_t fsal_attributes;
      struct fsal_export *exp_hdl = NULL;
      struct fsal_obj_handle *new_hdl;
      struct hash_latch latch;
@@ -139,13 +132,16 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                     /* Take a quick exit so we don't invert lock
                        ordering. */
                     HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
+/** @TODO bad code, bad code. for now, NULL kills this. later, zip from args */
+		    if(attr != NULL)
+			*attr = entry->obj_handle->attributes;
                     return entry;
                }
           }
      }
      HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
-     if (!client && !context) {
+     if (!client) {
           /* Upcalls have no access to a cache_inode_client_t,
              so just return the entry without revalidating it or
              creating a new one. */
@@ -157,10 +153,12 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
      if (!entry) {
           /* Cache miss, allocate a new entry */
-	  exp_hdl = pfsdata->export;
-	  fsal_status = exp_hdl->ops->create_handle(exp_hdl, &pfsdata->fh_desc, &new_hdl);
+	  exp_hdl = fsdata->export;
+	  fsal_status = exp_hdl->ops->create_handle(exp_hdl,
+						    &fsdata->fh_desc,
+						    &new_hdl);
 	  if( FSAL_IS_ERROR( fsal_status )) {
-		  *pstatus = cache_inode_error_convert(fsal_status);
+		  *status = cache_inode_error_convert(fsal_status);
 		  LogDebug(COMPONENT_CACHE_INODE,
 			   "could not get create_handle object");
 		  return NULL;
@@ -168,11 +166,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
           if ((entry
                = cache_inode_new_entry(new_hdl,
-                                       &fsal_attributes,
-                                       type,
-                                       &create_arg,
                                        client,
-                                       context,
                                        CACHE_INODE_FLAG_NONE,
                                        status)) == NULL) {
                return NULL;
@@ -203,14 +197,13 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
         for example.) */
 
      if ((*status = cache_inode_check_trust(entry,
-                                            context,
                                             client))
          != CACHE_INODE_SUCCESS) {
        goto out_put;
      }
 
      /* Set the returned attributes */
-     *status = cache_inode_lock_trust_attrs(entry, context, client);
+     *status = cache_inode_lock_trust_attrs(entry, client);
 
      /* cache_inode_lock_trust_attrs may fail, in that case, the
         attributes are wrong and pthread_rwlock_unlock can't be called
@@ -221,7 +214,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
        }
 /** @TODO bad code, bad code. for now, NULL kills this. later, zip from args */
       if(attr != NULL)
-	      *attr = pentry->obj_handle->attributes;
+	      *attr = entry->obj_handle->attributes;
 
      pthread_rwlock_unlock(&entry->attr_lock);
 
