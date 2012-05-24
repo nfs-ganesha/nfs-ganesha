@@ -63,7 +63,6 @@ unsigned int done = 0;
 static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
 {
   int rc;
-  fsal_status_t fsal_status;
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
 
@@ -128,7 +127,7 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
 
       V(fsal_clientid_mutex_renew);
 
-      Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
+      Return(ERR_FSAL_IO, rc, INDEX_FSAL_InitClientContext);
     }
 
   ReleaseTokenFSCall();
@@ -157,6 +156,7 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
   argnfs4.argarray.argarray_len = 1;
 
   /* Call the NFSv4 function */
+  TakeTokenFSCall();
   rc = COMPOUNDV4_EXECUTE_SIMPLE(p_context, argnfs4, resnfs4);
   if(rc != RPC_SUCCESS)
     {
@@ -164,14 +164,17 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
 
       V(fsal_clientid_mutex_renew);
 
-      Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
+      Return(ERR_FSAL_IO, rc, INDEX_FSAL_InitClientContext);
     }
 
   ReleaseTokenFSCall();
 
   if(resnfs4.status != NFS4_OK)
-    return fsal_internal_proxy_error_convert(resnfs4.status,
-                                             INDEX_FSAL_InitClientContext);
+    {
+      V(fsal_clientid_mutex_renew);
+      return fsal_internal_proxy_error_convert(resnfs4.status,
+                                               INDEX_FSAL_InitClientContext);
+    }
 
   /* Keep the confirmed client id */
   fsal_clientid =
@@ -183,10 +186,7 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
   p_context->clientid = fsal_clientid;
   p_context->last_lease_renewal = 0;    /* Needs to be renewed */
 
-  fsal_status.major = ERR_FSAL_NO_ERROR;
-  fsal_status.minor = 0;
-
-  return fsal_status;
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
 }                               /* FSAL_proxy_setclientid_force */
 
 /**
