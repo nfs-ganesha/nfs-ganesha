@@ -111,42 +111,44 @@ cache_inode_setattr(cache_entry_t *entry,
 
      /* Is it allowed to change times ? */
      if( !obj_handle->export->ops->fs_supports(obj_handle->export, cansettime) &&
-	 (pattr->asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION |
+	 (attr->asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION |
 				     FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))) {
-	     *status = cache_inode_error_convert(ERR_FSAL_INVAL);
+	     *status = CACHE_INODE_INVALID_ARGUMENT;
 	     goto out;
      }
+
+     pthread_rwlock_wrlock(&entry->attr_lock);
 
      /* Only superuser and the owner get a free pass.
       * Everybody else gets a full body scan
       * we do this here because this is an exception/extension to the usual access check.
       */
      if(creds->caller_uid != 0 &&
-	creds->caller_uid != p_object_attributes->owner) {
-	     if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_MODE)) {
+	creds->caller_uid != obj_handle->attributes.owner) {
+	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_MODE)) {
 		     LogFullDebug(COMPONENT_FSAL,
 				  "Permission denied for CHMOD operation: "
 				  "current owner=%d, credential=%d",
-				  p_object_attributes->owner, creds->caller_uid);
-		     *status = cache_inode_error_convert(ERR_FSAL_EACCESS);
-		     goto out;
+				  obj_handle->attributes.owner, creds->caller_uid);
+		     *status = CACHE_INODE_FSAL_EACCESS;
+		     goto unlock;
 	     }
-	     if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_OWNER)) {
+	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_OWNER)) {
 		     LogFullDebug(COMPONENT_FSAL,
 				  "Permission denied for CHOWN operation: "
 				  "current owner=%d, credential=%d",
-				  p_object_attributes->owner, creds->caller_uid);
-		     *status = cache_inode_error_convert(ERR_FSAL_EACCESS);
-		     goto out;
+				  obj_handle->attributes.owner, creds->caller_uid);
+		     *status = CACHE_INODE_FSAL_EACCESS;
+		     goto unlock;
 	     }
-	     if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_GROUP)) {
+	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_GROUP)) {
 		     int in_group = 0, i;
 
-		     if(creds->caller_gid == p_object_attributes->group) {
+		     if(creds->caller_gid == obj_handle->attributes.group) {
 			     in_group = 1;
 		     } else { 
 			     for(i = 0; i < creds->caller_glen; i++) {
-				     if(creds->caller_garray[i] == p_object_attributes->group) {
+				     if(creds->caller_garray[i] == obj_handle->attributes.group) {
 					     in_group = 1;
 					     break;
 				     }
@@ -156,30 +158,36 @@ cache_inode_setattr(cache_entry_t *entry,
 			     LogFullDebug(COMPONENT_FSAL,
 					  "Permission denied for CHOWN operation: "
 					  "current group=%d, credential=%d, new group=%d",
-					  p_object_attributes->group, creds->caller_gid, pattr->group);
-			     *status = cache_inode_error_convert(ERR_FSAL_EACCESS);
-			     goto out;
+					  obj_handle->attributes.group,
+					  creds->caller_gid, attr->group);
+			     *status = CACHE_INODE_FSAL_EACCESS;
+			     goto unlock;
 		     }
 	     }
-	     if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_ATIME) &&
-		FSAL_IS_ERROR(obj_handle->ops->test_access(obj_handle, creds, FSAL_R_OK))) {
-		     *status = cache_inode_error_convert(ERR_FSAL_EACCESS);
-		     goto errout;
+	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_ATIME)) {
+		fsal_status = obj_handle->ops->test_access(obj_handle, creds, FSAL_R_OK);
+		if(FSAL_IS_ERROR(fsal_status)) {
+		     *status = cache_inode_error_convert(fsal_status);
+		     goto unlock;
+		}
 	     }
-	     if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_MTIME) &&
-		FSAL_IS_ERROR(obj_handle->ops->test_access(obj_handle, creds, FSAL_W_OK))) {
-		     *status = cache_inode_error_convert(ERR_FSAL_EACCESS);
-		     goto errout;
+	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_MTIME)) {
+		fsal_status = obj_handle->ops->test_access(obj_handle, creds, FSAL_W_OK);
+		if(FSAL_IS_ERROR(fsal_status)) {
+		     *status = cache_inode_error_convert(fsal_status);
+		     goto unlock;
+		}
 	     }
-	     if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_SIZE) &&
-		FSAL_IS_ERROR(obj_handle->ops->test_access(obj_handle, creds, FSAL_W_OK))) {
-		     *status = cache_inode_error_convert(ERR_FSAL_EACCESS);
-		     goto errout;
+	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_SIZE)) {
+		fsal_status = obj_handle->ops->test_access(obj_handle, creds, FSAL_W_OK);
+		if(FSAL_IS_ERROR(fsal_status)) {
+		     *status = cache_inode_error_convert(fsal_status);
+		     goto unlock;
+		}
 	     }
      }
-     pthread_rwlock_wrlock(&entry->attr_lock);
      if (attr->asked_attributes & FSAL_ATTR_SIZE) {
-	  fsal_status = obj_handle->ops->truncate(obj_handle, pattr->filesize);
+	  fsal_status = obj_handle->ops->truncate(obj_handle, attr->filesize);
           if (FSAL_IS_ERROR(fsal_status)) {
                *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
@@ -199,7 +207,8 @@ cache_inode_setattr(cache_entry_t *entry,
                cache_inode_kill_entry(entry, client);
           }
           goto unlock;
-     fsal_status = obj_handle->ops->getattrs(obj_handle, &result_attributes);
+     }
+     fsal_status = obj_handle->ops->getattrs(obj_handle, attr);
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
@@ -221,7 +230,7 @@ cache_inode_setattr(cache_entry_t *entry,
 
      /* Copy the complete set of new attributes out. */
 
-     *attr = entry->attributes;
+     *attr = entry->obj_handle->attributes;
 
      *status = CACHE_INODE_SUCCESS;
 
