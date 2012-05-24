@@ -48,6 +48,7 @@
 #include "stuff_alloc.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "sal_functions.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -57,7 +58,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
               char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  //nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
  
   u16  * msgtag        = NULL ;
   u32  * fid           = NULL ;
@@ -72,7 +73,12 @@ int _9p_lock( _9p_request_data_t * preq9p,
   int rc = 0 ; 
   int err = 0 ;
 
-  u8 status ;
+  u8 status = 0  ;
+  state_status_t state_status = STATE_SUCCESS;
+  state_owner_t      * holder ;
+  state_owner_t        owner ;
+  state_t              state ;
+  fsal_lock_param_t    lock, conflict;
 
   _9p_fid_t * pfid = NULL ;
 
@@ -100,9 +106,70 @@ int _9p_lock( _9p_request_data_t * preq9p,
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
     }
-   pfid = &preq9p->pconn->fids[*fid] ;
+  pfid = &preq9p->pconn->fids[*fid] ;
 
-   /* Build the reply */
+  /* Do the job */
+  switch( *type )
+   {
+      case _9P_LOCK_TYPE_RDLCK:
+      case _9P_LOCK_TYPE_WRLCK:
+        /* Fill in plock */
+        lock.lock_type   = (*type == _9P_LOCK_TYPE_WRLCK) ? FSAL_LOCK_W : FSAL_LOCK_R;
+        lock.lock_start  = *start ;
+        lock.lock_length = *length ;
+
+        if(nfs_in_grace())
+         {
+             status = _9P_LOCK_GRACE ;
+             break ;
+         }
+
+        if( state_lock( pfid->pentry,
+                        &pfid->fsal_op_context,
+                        pfid->pexport,
+                        &owner,
+                        &state,
+                        STATE_NON_BLOCKING,
+                        NULL,
+                        &lock,
+                        &holder,
+                        &conflict,
+                        &pwkrdata->cache_inode_client,
+                        &state_status) != STATE_SUCCESS)
+           {
+              if( state_status == STATE_LOCK_BLOCKED ) 
+                status = _9P_LOCK_BLOCKED ;
+              else
+                status = _9P_LOCK_ERROR ;
+           }
+        else
+          status = _9P_LOCK_SUCCESS ;
+
+        break ;
+
+      case _9P_LOCK_TYPE_UNLCK:
+         if(state_unlock( pfid->pentry,
+                          &pfid->pcontext,
+                          pfid->pexport,
+                          &owner,
+                          NULL,
+                          &lock,
+                          &&pwkrdtata->cache_inode_client,
+                          &state_status) != STATE_SUCCESS)
+             status = _9P_LOCK_ERROR ;
+         else
+             status = _9P_LOCK_SUCCESS ;
+
+        break ;
+
+      default:
+        err = EINVAL ;
+        rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+        return rc ;
+        break ;
+   } /* switch( *type ) */ 
+
+  /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RLOCK ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
