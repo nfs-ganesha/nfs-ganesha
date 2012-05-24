@@ -1132,7 +1132,9 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
           pthread_rwlock_unlock(&entry->attr_lock);
           pthread_rwlock_wrlock(&entry->attr_lock);
           /* Has someone else done it for us? */
-          if (!(entry->flags & CACHE_INODE_TRUST_ATTRS)) {
+          if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
+              FSAL_TEST_MASK(entry->attributes.asked_attributes,
+                             FSAL_ATTR_RDATTR_ERR)) {
                /* Release the lock on error */
                if ((cache_status =
                     cache_inode_refresh_attrs(entry,
