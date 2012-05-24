@@ -77,26 +77,15 @@ extern void ccl_log(int debugLevel, char *debugString);
 
 // Our own trace macro that adds standard prefix to statements that includes
 // the level and function name
-#define FSI_TRACE2( level, format, ... )                                    \
+#define FSI_TRACE1( level, format, ... )                                    \
 {                                                                          \
-  char logString[256];                                                    \
+  char logString[1000];                                                    \
   compile_time_check_func( format, ## __VA_ARGS__ );                       \
   if (level <= FSI_DEBUG) {                                                \
     snprintf(logString ,1000, "[" #level "]: "   "%s: "  format "\n",      \
              __func__,  ## __VA_ARGS__ );                                  \
     printf("%s",logString);                                                \
     fflush(NULL);                                                              \
-    ccl_log(level,logString);                                              \
-  }                                                                        \
-}
-
-#define FSI_TRACE1( level, format, ... )                                    \
-{                                                                          \
-  char logString[256];                                                    \
-  compile_time_check_func( format, ## __VA_ARGS__ );                       \
-  if (level <= FSI_DEBUG) {                                                \
-    snprintf(logString ,256, "[" #level "]: "   "%s: "  format ,      \
-             __func__,  ## __VA_ARGS__ );                                  \
     ccl_log(level,logString);                                              \
   }                                                                        \
 }
@@ -124,11 +113,10 @@ extern void ccl_log(int debugLevel, char *debugString);
 
 #define FSI_TRACE_HANDLE( handle)                                          \
 {                                                                          \
-  FSI_TRACE(FSI_NOTICE, "TODO implement trace handle here ");              \
+  uint64_t * handlePtr = (uint64_t *) handle;                              \
+  FSI_TRACE(FSI_INFO, "persistent handle: 0x%lx %lx %lx %lx",              \
+            handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);       \
 }
-
-#define NONIO_MSG_TYPE                                                     \
-  ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid )
 
 #define WAIT_SHMEM_ATTACH()                                                \
 {                                                                          \
@@ -374,15 +362,23 @@ struct acl_handles_struct_t {
 };
 
 // ----------------------------------------------------------------------------
-// Structures for Ganesha use
+// Structures for CCL abstraction
 // ----------------------------------------------------------------------------
+#define uint32 uint32_t
+
+#define NONIO_MSG_TYPE                                                     \
+  ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid )
+#define MULTITHREADED 1
+#define NON_MULTITHREADED 0
 
 // The context every call to CCL is made in
+// THIS IS ALSO OFTEN REFERRED TO AS THE "CONTEXT"
 typedef struct {
   uint64_t  export_id;    // export id
   uint64_t  uid;          // user id of the connecting user
   uint64_t  gid;          // group id of the connecting user
   char  client_address[256]; // address of client
+  char    * export_path;  // export path name
 
   //TODO check on if the next fiels are used by fsal or ccl
   // next 2 fields left over from prototype -
@@ -394,7 +390,48 @@ typedef struct {
 
 } fsi_handle_struct;
 
-#define uint32 uint32_t
+// Callback functions are functions ccl needs to use that must be defined 
+// differently for the different environments (in shim layer)
+// If set to NULL by Shim layer, CCL should NOOP the call
+struct ccl_cb_fn_pointers {
+  int (*ccl_cb_mutex_init) (void *);       // Ganesha: pthread_mutex_init 
+  int (*ccl_cb_mutex_lock) (void *);       // Ganesha: pthread_mutex_lock
+  int (*ccl_cb_mutex_unlock) (void *);     // Ganesha: pthread_mutex_unlock
+  int (*ccl_cb_mutex_trylock) (void *);    // Ganesha: pthread_mutex_trylock
+
+  // FSI_TRACE is handled by directly linking with the shim layers as
+  //   it has variable parms and can't use this mechanism
+
+  // get_export_id not needed so far as the value is passed to CCL in context
+};
+
+extern struct ccl_cb_fn_pointers g_ccl_callbacks;
+
+// All use of call back functions should be wrapped with a Macro
+#define MUTEX_INIT(pmutex)                                                  \
+(g_ccl_callbacks.ccl_cb_mutex_init ?                                        \
+  g_ccl_callbacks.ccl_cb_mutex_init(pmutex) :                               \
+  no_op() )
+
+#define MUTEX_LOCK(pmutex)                                                  \
+(g_ccl_callbacks.ccl_cb_mutex_lock ?                                        \
+  g_ccl_callbacks.ccl_cb_mutex_lock(pmutex) :                               \
+  no_op() )
+
+#define MUTEX_UNLOCK(pmutex)                                                \
+(g_ccl_callbacks.ccl_cb_mutex_unlock ?                                      \
+  g_ccl_callbacks.ccl_cb_mutex_unlock(pmutex) :                             \
+  no_op() )
+
+#define MUTEX_TRYLOCK(pmutex)                                               \
+(g_ccl_callbacks.ccl_cb_mutex_trylock ?                                     \
+  g_ccl_callbacks.ccl_cb_mutex_trylock(pmutex) :                            \
+  no_op() )
+
+
+// ----------------------------------------------------------------------------
+// End of defines new for CCL abstraction
+// ----------------------------------------------------------------------------
 
 // FSI IPC Statistics definitions
 // ----------------------------------------------------------------------------
@@ -430,6 +467,8 @@ struct ipc_client_stats_t {
     0 )
 
 // ----------------------------------------------------------------------------
+// Defines for CCL Internal Statistics
+//
 // Defines for IO Idle time statistic collection,  this is time we are 
 // idle waiting for user to send a read or write or doing other operations
 // ----------------------------------------------------------------------------
@@ -505,14 +544,68 @@ struct ipc_client_stats_t {
   }                                                                           \
 }
 
-int skel_open(fsi_handle_struct   * handle,
-              char                  * path,
-              int                   flags,
-              mode_t                mode);
+// ---------------------------------------------------------------------------
+// End of CCL Internal Statistics defines
+// ---------------------------------------------------------------------------
 
-int skel_close(fsi_handle_struct * handle,
-               int handle_index);
+// ---------------------------------------------------------------------------
+// Definitions for ACL structures for interface to ACL functions
+//  - these are not used by NFS
+//  - these are patterened after Sambe versions, Samba Shim layer should be
+//    sure to translate these to Samba versions... for now they match Samba
+//    but if Samba changes we need to detect
+// ---------------------------------------------------------------------------
+typedef int                     CCL_ACL_TYPE_T;
+typedef mode_t                  *CCL_ACL_PERMSET_T;
+typedef mode_t                  CCL_ACL_PERM_T;
+#define CCL_ACL_READ                            4
+#define CCL_ACL_WRITE                           2
+#define CCL_ACL_EXECUTE                         1
 
+/* Types of ACLs. */
+enum ccl_acl_tag_t {
+        CCL_ACL_TAG_INVALID=0,
+        CCL_ACL_USER=1,
+        CCL_ACL_USER_OBJ,
+        CCL_ACL_GROUP,
+        CCL_ACL_GROUP_OBJ,
+        CCL_ACL_OTHER,
+        CCL_ACL_MASK
+};
+
+typedef enum ccl_acl_tag_t CCL_ACL_TAG_T;
+
+struct ccl_acl_entry {
+        enum ccl_acl_tag_t a_type;
+        CCL_ACL_PERM_T a_perm;
+        uid_t uid;
+        gid_t gid;
+};
+
+typedef struct ccl_acl_t {
+        int     size;
+        int     count;
+        int     next;
+        struct ccl_acl_entry acl[1];
+} *CCL_ACL_T;
+
+
+typedef struct ccl_acl_entry    *CCL_ACL_ENTRY_T;
+
+#define CCL_ACL_FIRST_ENTRY                     0
+#define CCL_ACL_NEXT_ENTRY                      1
+
+#define CCL_ACL_TYPE_ACCESS                     0
+#define CCL_ACL_TYPE_DEFAULT                    1
+
+// ---------------------------------------------------------------------------
+// End of ACL definitions
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Function Prototypes
+// ---------------------------------------------------------------------------
+int ccl_init(int multi_threaded);
 int add_acl_handle(uint64_t fs_acl_handle);
 int add_dir_handle(uint64_t fs_dir_handle);
 int add_fsi_handle(struct file_handle_t * p_new_handle);
@@ -584,6 +677,9 @@ int ccl_closedir(fsi_handle_struct * handle,
 int ccl_readdir(fsi_handle_struct * handle,
                  struct fsi_struct_dir_t * dirp,
                  fsi_stat_struct   * sbuf);
+void ccl_seekdir(fsi_handle_struct * handle,
+                 struct fsi_struct_dir_t * dirp,
+                 long                offset);
 int ccl_fsync(fsi_handle_struct * handle,
                int handle_index);
 int ccl_ftruncate(fsi_handle_struct * handle,
@@ -652,6 +748,53 @@ void ccl_ipc_stats_on_io_start(uint64_t delay);
 void ccl_ipc_stats_on_read(uint64_t bytes);
 void ccl_ipc_stats_on_write(uint64_t bytes);
 uint64_t update_stats(struct ipc_client_stats_t * stat, uint64_t value);
+
+// ACL function prototypes 
+int ccl_sys_acl_get_entry(fsi_handle_struct * handle,
+                           CCL_ACL_T           theacl,
+                           int                 entry_id,
+                           CCL_ACL_ENTRY_T   * entry_p);
+int ccl_sys_acl_get_tag_type(fsi_handle_struct * handle,
+                              CCL_ACL_ENTRY_T     entry_d,
+                              CCL_ACL_TAG_T     * tag_type_p);
+int ccl_sys_acl_get_permset(fsi_handle_struct * handle,
+                             CCL_ACL_ENTRY_T     entry_d,
+                             CCL_ACL_PERMSET_T * permset_p);
+void * ccl_sys_acl_get_qualifier(fsi_handle_struct * handle,
+                                  CCL_ACL_ENTRY_T     entry_d);
+CCL_ACL_T ccl_sys_acl_get_file(fsi_handle_struct * handle,
+                                const char        * path_p,
+                                CCL_ACL_TYPE_T      type);
+int ccl_sys_acl_clear_perms(fsi_handle_struct * handle,
+                             CCL_ACL_PERMSET_T   permset);
+int ccl_sys_acl_add_perm(fsi_handle_struct * handle,
+                          CCL_ACL_PERMSET_T   permset,
+                          CCL_ACL_PERM_T      perm);
+CCL_ACL_T ccl_sys_acl_init(fsi_handle_struct * handle,
+                            int                 count);
+int ccl_sys_acl_create_entry(fsi_handle_struct * handle,
+                              CCL_ACL_T         * pacl,
+                              CCL_ACL_ENTRY_T   * pentry);
+int ccl_sys_acl_set_tag_type(fsi_handle_struct * handle,
+                              CCL_ACL_ENTRY_T     entry,
+                              CCL_ACL_TAG_T       tagtype);
+int ccl_sys_acl_set_qualifier(fsi_handle_struct * handle,
+                               CCL_ACL_ENTRY_T     entry,
+                               void              * qual);
+int ccl_sys_acl_set_permset(fsi_handle_struct * handle,
+                             CCL_ACL_ENTRY_T     entry,
+                             CCL_ACL_PERMSET_T   permset);
+int ccl_sys_acl_set_file(fsi_handle_struct * handle,
+                          const char        * name,
+                          CCL_ACL_TYPE_T      acltype,
+                          CCL_ACL_T           theacl);
+int ccl_sys_acl_delete_def_file(fsi_handle_struct * handle,
+                                 const char        * path);
+int ccl_sys_acl_get_perm(fsi_handle_struct * handle,
+                          CCL_ACL_PERMSET_T   permset,
+                          CCL_ACL_PERM_T      perm);
+int ccl_sys_acl_free_acl(fsi_handle_struct * handle,
+                          CCL_ACL_T           posix_acl);
 
 // Prototypes - new for Ganesha 
 int ccl_name_to_handle(fsi_handle_struct *pvfs_handle,
