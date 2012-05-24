@@ -237,7 +237,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   if((lookup_src
       = cache_inode_lookup_impl(dir_src,
                                 oldname,
-                                context,
+                                creds,
                                 status)) == NULL) {
     /* If FSAL FH is stale, then this was managed in cache_inode_lookup */
     if(*status != CACHE_INODE_FSAL_ESTALE)

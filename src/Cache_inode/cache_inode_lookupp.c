@@ -73,13 +73,19 @@
  * @param[in]  entry   Entry whose parent is to be obtained
  * @param[in]  context FSAL operation context
  * @param[out] status  Returned status
+ * NOTE: this can behave differently than a local Linux user of the
+ * filesystem if the path to get here is a symlink.  In the local case,
+ * the path is consistent because the kernel's CWD gets the expected
+ * "..".  We don't have that so the ".." is the directory in which
+ * the name resides even though the symlink allowed us to skip around
+ * the real (non symlink resolved) path.
  *
  * @return the found entry or NULL on error.
  */
 
 cache_entry_t *
 cache_inode_lookupp_impl(cache_entry_t *entry,
-			 struct user_credential *creds,
+                         struct user_cred *creds,
                          cache_inode_status_t *status)
 {
      cache_entry_t *parent = NULL;
@@ -108,9 +114,9 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      }
 
      /* we have to be able to read or scan the dir to do this lookup */
-     fsal_status = pentry->obj_handle->ops->test_access(pentry->obj_handle,
-							creds,
-							FSAL_R_OK|FSAL_X_OK);
+     fsal_status = entry->obj_handle->ops->test_access(entry->obj_handle,
+						       creds,
+						       FSAL_R_OK|FSAL_X_OK);
      if(FSAL_IS_ERROR(fsal_status)) {
 	 *status = CACHE_INODE_FSAL_EACCESS;
 	 return NULL;
@@ -132,8 +138,8 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      if (!parent) {
 	  struct fsal_obj_handle *parent_handle;
 
-	  fsal_status = pentry->obj_handle->ops->lookup(pentry->obj_handle, "..",
-							&parent_handle);
+	  fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle, "..",
+						       &parent_handle);
           if(FSAL_IS_ERROR(fsal_status)) {
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);

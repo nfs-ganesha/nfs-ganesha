@@ -119,8 +119,7 @@ cache_inode_access_sw(cache_entry_t *entry,
                   acquire it.  */
                if(use_mutex) {
                     if ((*status
-                         = cache_inode_lock_trust_attrs(entry,
-                                                        context))
+                         = cache_inode_lock_trust_attrs(entry))
                         != CACHE_INODE_SUCCESS) {
                          goto out;
                     }

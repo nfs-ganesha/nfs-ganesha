@@ -79,17 +79,14 @@ cache_inode_getattr(cache_entry_t *entry,
                                                 * stuff on the stack. */
                     cache_inode_status_t *status)
 {
-    cache_inode_status_t status;
-    struct fsal_obj_handle *obj_handle = NULL;
-    fsal_status_t fsal_status;
 
      /* sanity check */
-     if(entry == NULL || attr == NULL || context == NULL) {
+     if(entry == NULL || attr == NULL) {
           *status = CACHE_INODE_INVALID_ARGUMENT;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_getattr: returning "
                    "CACHE_INODE_INVALID_ARGUMENT because of bad arg");
-          return *status;
+          goto out;
      }
 
      /* Set the return default to CACHE_INODE_SUCCESS */
@@ -99,16 +96,10 @@ cache_inode_getattr(cache_entry_t *entry,
    unlock. */
 
      if ((*status
-          = cache_inode_lock_trust_attrs(entry,
-                                         context))
+          = cache_inode_lock_trust_attrs(entry))
          != CACHE_INODE_SUCCESS) {
           goto out;
      }
-/** @TODO  attributes are a bit murky here with the 'trusted' stuff.
- *  investigate. maybe we go fetch'm ?
- */
-/* 	    fsal_status = obj_handle->ops->getattrs(obj_handle, pattr); */
-
      *pattr = pentry->obj_handle->attributes;
 
      pthread_rwlock_unlock(&entry->attr_lock);

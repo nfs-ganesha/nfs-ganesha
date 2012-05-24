@@ -95,10 +95,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      struct fsal_obj_handle *object_handle;
      struct fsal_obj_handle *dir_handle;
      fsal_attrib_list_t object_attributes;
-     cache_inode_create_arg_t create_arg = {
-          .newly_created_dir = FALSE
-     };
-     cache_inode_file_type_t type = UNASSIGNED;
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
      cache_inode_fsal_data_t new_entry_fsdata;
      cache_inode_dir_entry_t *broken_dirent = NULL;
@@ -138,7 +134,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
            * of this, the parent list is always limited to one element for
            * a dir.  Clients SHOULD never 'lookup( .. )' in something that
            * is no dir. */
-          entry = cache_inode_lookupp_impl(parent, context, status);
+          entry = cache_inode_lookupp_impl(parent, creds, status);
           goto out;
      } else {
           int write_locked = 0;
@@ -207,8 +203,6 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 
      /* Allocation of a new entry in the cache */
      if((pentry = cache_inode_new_entry(object_handle,
-                                        &object_attributes,
-                                        &create_arg,
                                         CACHE_INODE_FLAG_NONE,
                                         pstatus)) == NULL) {
           return NULL;

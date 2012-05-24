@@ -186,13 +186,13 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      }
 
      cache_inode_fixup_md(entry);
-     *attr = entry->attributes;
+     *attr = entry->obj_handle->attributes;
      pthread_rwlock_unlock(&entry->attr_lock);
      srcattrlock = FALSE;
 
      /* Reload the destination directory's attributes so the caller
         will have an updated changeid. */
-     cache_inode_refresh_attrs(dest_dir, context);
+     cache_inode_refresh_attrs(dest_dir);
      pthread_rwlock_unlock(&dest_dir->attr_lock);
      destattrlock = FALSE;
 
