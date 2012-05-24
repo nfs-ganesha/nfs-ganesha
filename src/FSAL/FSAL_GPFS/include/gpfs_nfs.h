@@ -1,7 +1,7 @@
 /* IBM_PROLOG_BEGIN_TAG                                                   */
 /* This is an automatically generated prolog.                             */
 /*                                                                        */
-/* avs_rhrz src/avs/fs/mmfs/ts/util/gpfs_nfs.h 1.23                       */
+/* avs_rhrz src/avs/fs/mmfs/ts/util/gpfs_nfs.h 1.26.1.5                   */
 /*                                                                        */
 /* Licensed Materials - Property of IBM                                   */
 /*                                                                        */
@@ -44,7 +44,7 @@
 /* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF       */
 /* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                   */
 /*                                                                              */
-/* @(#)83       1.23  src/avs/fs/mmfs/ts/util/gpfs_nfs.h, mmfs, avs_rhrz 1/19/12 12:19:24 */
+/* @(#)83       1.26.1.5  src/avs/fs/mmfs/ts/util/gpfs_nfs.h, mmfs, avs_rhrz 5/21/12 17:40:05 */
 /*
  *  Library calls for GPFS interfaces
  */
@@ -87,6 +87,11 @@ struct flock
 #define OPENHANDLE_DS_WRITE       121
 #define OPENHANDLE_GET_VERIFIER   122
 #define OPENHANDLE_FSYNC          123
+#define OPENHANDLE_SHARE_RESERVE  124
+#define OPENHANDLE_GET_NODEID     125
+#define OPENHANDLE_SET_DELEGATION 126
+#define OPENHANDLE_CLOSE_FILE     127
+#define OPENHANDLE_LINK_BY_FH     128
 
 int gpfs_ganesha(int op, void *oarg);
 
@@ -134,6 +139,15 @@ struct open_arg
   struct gpfs_file_handle *handle;
 };
 
+struct link_fh_arg
+{
+  int mountdirfd;
+  int len;
+  char *name;
+  struct gpfs_file_handle *dir_fh;
+  struct gpfs_file_handle *dst_fh;
+};
+
 struct glock
 {
   int cmd;
@@ -157,6 +171,22 @@ struct open_share_arg
   struct gpfs_file_handle *handle;
   int share_access;
   int share_deny;
+};
+
+struct share_reserve_arg
+{
+  int mountdirfd;
+  int openfd;
+  int share_access;
+  int share_deny;
+};
+
+struct close_file_arg
+{
+  int mountdirfd;
+  int close_fd;
+  int close_flags;
+  void *close_owner;
 };
 
 struct link_arg
@@ -197,25 +227,25 @@ enum x_nfsd_fsid {
 
 //#if !defined(NFS4_DEVICEID4_SIZE)
 #ifdef P_NFS4
-enum pnfs_layouttype {
-	LAYOUT_NFSV4_1_FILES  = 1,
-	LAYOUT_OSD2_OBJECTS = 2,
-	LAYOUT_BLOCK_VOLUME = 3,
+enum x_pnfs_layouttype {
+	x_LAYOUT_NFSV4_1_FILES  = 1,
+	x_LAYOUT_OSD2_OBJECTS = 2,
+	x_LAYOUT_BLOCK_VOLUME = 3,
 
-	NFS4_PNFS_PRIVATE_LAYOUT = 0x80000000
+	x_NFS4_PNFS_PRIVATE_LAYOUT = 0x80000000
 };
 
 /* used for both layout return and recall */
-enum pnfs_layoutreturn_type {
-	RETURN_FILE = 1,
-	RETURN_FSID = 2,
-	RETURN_ALL  = 3
+enum x_pnfs_layoutreturn_type {
+	x_RETURN_FILE = 1,
+	x_RETURN_FSID = 2,
+	x_RETURN_ALL  = 3
 };
 
-enum pnfs_iomode {
-	IOMODE_READ = 1,
-	IOMODE_RW = 2,
-	IOMODE_ANY = 3,
+enum x_pnfs_iomode {
+	x_IOMODE_READ = 1,
+	x_IOMODE_RW = 2,
+	x_IOMODE_ANY = 3,
 };
 #endif
 
@@ -414,19 +444,38 @@ struct callback_arg
     int *reason;
     struct gpfs_file_handle *handle;
     struct glock *fl;
+    int *flags;
 #if BITS_PER_LONG != 64
     struct stat64 *buf;
 #else
     struct stat *buf;
 #endif
 };
-/* reason list */
-#define INODE_INVALIDATE 1
-#define INODE_UPDATE     2
-#define INODE_LOCK_GRANTED 3
-#define INODE_LOCK_AGAIN   4
-#define THREAD_STOP        5
-#define THREAD_PAUSE       6
+
+/* Defines for the flags in callback_arg, keep up to date with CXIUP_xxx */
+#define UP_NLINK        0x00000001   /* update nlink */
+#define UP_MODE         0x00000002   /* update mode and ctime */
+#define UP_OWN          0x00000004   /* update mode,uid,gid and ctime */
+#define UP_SIZE         0x00000008   /* update fsize */
+#define UP_SIZE_BIG     0x00000010   /* update fsize if bigger */
+#define UP_TIMES        0x00000020   /* update all times */
+#define UP_ATIME        0x00000040   /* update atime only */
+#define UP_PERM         0x00000080   /* update fields needed for permission checking*/
+#define UP_RENAME       0x00000100   /* this is a rename op */
+#define UP_DESTROY_FLAG 0x00000200   /* clear destroyIfDelInode flag */
+#define UP_GANESHA      0x00000400   /* this is a ganesha op */
+
+/* reason list for reason in callback_arg */
+#define INODE_INVALIDATE        1
+#define INODE_UPDATE            2
+#define INODE_LOCK_GRANTED      3
+#define INODE_LOCK_AGAIN        4
+#define THREAD_STOP             5
+#define THREAD_PAUSE            6
+#define BREAK_DELEGATION        7
+#define LAYOUT_FILE_RECALL      8
+#define LAYOUT_RECALL_ANY       9
+#define LAYOUT_NOTIFY_DEVICEID 10
 
 /* define flags for attr_valid */
 #define XATTR_STAT      (1 << 0)
