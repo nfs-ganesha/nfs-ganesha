@@ -333,6 +333,7 @@ typedef enum state_status_t
   STATE_CACHE_INODE_ERR       = 43,
   STATE_SIGNAL_ERROR          = 44,
   STATE_KILLED                = 45,
+  STATE_FILE_OPEN             = 46,
 } state_status_t;
 
 typedef enum state_blocking_t

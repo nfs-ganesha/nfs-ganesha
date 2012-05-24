@@ -80,7 +80,8 @@ typedef enum fsal_errors_t
   ERR_FSAL_OVERFLOW      = 20012,
   ERR_FSAL_INTERRUPT     = 20013,
   ERR_FSAL_BLOCKED       = 20014,
-  ERR_FSAL_TIMEOUT       = 20015
+  ERR_FSAL_TIMEOUT       = 20015,
+  ERR_FSAL_FILE_OPEN     = 10046
 } fsal_errors_t;
 
 extern family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[];

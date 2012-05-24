@@ -496,6 +496,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_STATE_ERROR:
     case CACHE_INODE_BAD_COOKIE:
     case CACHE_INODE_FILE_BIG:
+    case CACHE_INODE_FILE_OPEN:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
@@ -3899,6 +3900,10 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_FBIG;
       break;
 
+    case CACHE_INODE_FILE_OPEN:
+      nfserror = NFS4ERR_FILE_OPEN;
+      break;
+
     case CACHE_INODE_STATE_ERROR:
       nfserror = NFS4ERR_BAD_STATEID;
       break;
@@ -3950,6 +3955,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
+    case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
               "Error %u converted to NFS3ERR_IO but was set non-retryable",
               error);
@@ -4094,6 +4100,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
     case CACHE_INODE_INVALID_ARGUMENT:
+    case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
               "Error %u converted to NFSERR_IO but was set non-retryable",
               error);

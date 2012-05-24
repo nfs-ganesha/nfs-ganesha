@@ -104,6 +104,7 @@ const char *cache_inode_err_str(cache_inode_status_t err)
       case CACHE_INODE_BAD_COOKIE:            return "CACHE_INODE_BAD_COOKIE";
       case CACHE_INODE_FILE_BIG:              return "CACHE_INODE_FILE_BIG";
       case CACHE_INODE_KILLED:                return "CACHE_INODE_KILLED";
+      case CACHE_INODE_FILE_OPEN:             return "CACHE_INODE_FILE_OPEN";
     }
   return "unknown";
 }
@@ -587,6 +588,9 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
 
     case ERR_FSAL_BADCOOKIE:
       return CACHE_INODE_BAD_COOKIE;
+
+    case ERR_FSAL_FILE_OPEN:
+      return CACHE_INODE_FILE_OPEN;
 
     case ERR_FSAL_NOT_OPENED:
       LogDebug(COMPONENT_CACHE_INODE,

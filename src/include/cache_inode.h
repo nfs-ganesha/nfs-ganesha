@@ -612,6 +612,7 @@ typedef enum cache_inode_status_t
   CACHE_INODE_BAD_COOKIE            = 40,
   CACHE_INODE_FILE_BIG              = 41,
   CACHE_INODE_KILLED                = 42,
+  CACHE_INODE_FILE_OPEN             = 43,
 } cache_inode_status_t;
 
 /**
