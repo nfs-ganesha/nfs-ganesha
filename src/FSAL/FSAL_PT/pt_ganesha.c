@@ -984,3 +984,61 @@ void ptfsal_print_handle(char * handle)
 }
 
 
+
+// -----------------------------------------------------------------------------
+int
+fsi_update_cache_stat(const char * p_filename,
+                      uint64_t     newMode)
+{
+  int index;
+  int rc;
+
+  pthread_mutex_lock(&g_non_io_mutex);
+  index = ccl_find_handle_by_name(p_filename);
+  if (index != -1) {
+    g_fsi_handles.m_handle[index].m_stat.st_mode = newMode;
+    rc = 0;
+  } else {
+    FSI_TRACE(FSI_DEBUG, "ERROR: Update cache stat");
+    rc = -1;
+  }
+  pthread_mutex_unlock(&g_non_io_mutex);
+
+  return rc;
+}
+
+// This function will convert Ganesha FSAL type to the upper
+// bits for unix stat structure
+mode_t fsal_type2unix(int fsal_type)
+{
+  mode_t outMode = 0;
+  FSI_TRACE(FSI_DEBUG, "fsal_type: %d",fsal_type);
+  switch (fsal_type)
+  {
+    case FSAL_TYPE_FIFO:
+      outMode = S_IFIFO;
+      break;
+    case FSAL_TYPE_CHR:
+      outMode = S_IFCHR;
+      break;
+    case FSAL_TYPE_DIR:
+      outMode = S_IFDIR;
+      break;
+    case FSAL_TYPE_BLK:
+      outMode = S_IFBLK;
+      break;
+    case FSAL_TYPE_FILE:
+      outMode = S_IFREG;
+      break;
+    case FSAL_TYPE_LNK:
+      outMode = S_IFLNK;
+      break;
+    case FSAL_TYPE_SOCK:
+      outMode = FSAL_TYPE_SOCK;
+      break;
+    default:
+      LogWarn(COMPONENT_FSAL, "Unknown fsal type: %d", fsal_type);
+    }
+
+    return outMode;
+}

@@ -58,7 +58,8 @@ int  fsi_get_name_from_handle(fsal_op_context_t * p_context,
                               char              * name);
 int  fsi_update_cache_name(char * oldname,
                            char * newname);
-
+int  fsi_update_cache_stat(const char * p_filename,
+                           uint64_t     newMode);
 void fsi_remove_cache_by_fullpath(char * path);
 
 void fsi_remove_cache_by_handle(char * handle);
@@ -202,4 +203,5 @@ uint64_t ptfsal_write(fsal_file_t * p_file_descriptor,
 
 void ptfsal_print_handle(char * handle);
 
+mode_t fsal_type2unix(int fsal_type);
 #endif // ifndef __PT_GANESHA_H__

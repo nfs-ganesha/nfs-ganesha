@@ -99,7 +99,7 @@ PTFSAL_getattrs(fsal_handle_t      * p_filehandle,        /* IN */
   /* convert attributes */
 
   st = posix2fsal_attributes(&buffstat, p_object_attributes);
-  FSI_TRACE(FSI_DEBUG, "Handle type=%d", p_object_attributes->type);
+  FSI_TRACE(FSI_DEBUG, "Handle type=%d st_mode=%o (octal)", p_object_attributes->type,buffstat.st_mode);
 
   p_object_attributes->mounted_on_fileid = fsi_export_context->ganesha_export_id;
 
@@ -204,7 +204,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t wanted_attrs, current_attrs;
-
+  mode_t             st_mode_in_cache = 0;
   char              fsi_name[PATH_MAX];
 
   FSI_TRACE(FSI_DEBUG, "Begin-----------------------------------------\n");
@@ -309,7 +309,9 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
             }
             else
             {
-              FSI_TRACE(FSI_INFO, "Chmod SUCCEED");
+              st_mode_in_cache = (buffxstat.buffstat.st_mode | fsal_type2unix(current_attrs.type));
+              fsi_update_cache_stat(fsi_name, st_mode_in_cache);
+              FSI_TRACE(FSI_INFO, "Chmod SUCCEED with st_mode in cache being %o",st_mode_in_cache);
             }
 
         }
