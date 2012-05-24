@@ -218,11 +218,12 @@ struct fsal_obj_ops {
 				 fsal_path_t *link_path,
 				 fsal_attrib_list_t *attrib,
 				 struct fsal_obj_handle **new_obj);
-
-	/* file object operations */
 	fsal_status_t (*readlink)(struct fsal_obj_handle *obj_hdl,
 				  char *link_content,
-				  uint32_t max_len);
+				  uint32_t *link_len,
+				  fsal_boolean_t refresh);
+
+	/* file object operations */
 	fsal_status_t (*test_access)(struct fsal_obj_handle *obj_hdl,
 				     struct user_cred *creds,
 				     fsal_accessflags_t access_type);
