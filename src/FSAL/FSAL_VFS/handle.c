@@ -96,12 +96,15 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 			sizeof(struct file_handle) +
 			fh->handle_bytes));
 	if(link_content != NULL) {
-		hdl->link_content = malloc(strlen(link_content) + 1);
+		size_t len = strlen(link_content) + 1;
+
+		hdl->link_content = malloc(len);
 		if(hdl->link_content == NULL) {
 			free(hdl);
 			return NULL;
 		}
-		strcpy(hdl->link_content, link_content);
+		memcpy(hdl->link_content, link_content, len);
+		hdl->link_size = len;
 	}
 	hdl->handle = (struct file_handle *)&hdl[1];
 	memcpy(hdl->handle, fh,
@@ -398,6 +401,10 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 	fd = openat(dir_fd, name->name, O_RDONLY | O_DIRECTORY);
+/** @TODO. my fd leak caused this to fail, leaving the dir around.
+ * do an unlinkat on failed dirs.  same for other f/s object is we don't
+ * get through the full dance to a real and safe object
+ */
 	if(fd < 0) {
 		goto direrr;
 	}
@@ -584,6 +591,12 @@ errout:
 	ReturnCode(fsal_error, retval);	
 }
 
+/** makesymlink
+ *  Note that we do not set mode bits on symlinks for Linux/POSIX
+ *  They are not really settable in the kernel and are not checked
+ *  anyway (default is 0777) because open uses that target's mode
+ */
+
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 fsal_name_t *name,
 				 fsal_path_t *link_path,
@@ -594,7 +607,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	int mnt_id = 0;
 	int fd, mount_fd, dir_fd;
 	struct stat stat;
-	mode_t unix_mode;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	uid_t user;
@@ -615,8 +627,6 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	mount_fd = vfs_get_root_fd(dir_hdl->export);
 	user = attrib->owner;
 	group = attrib->group;
-	unix_mode = fsal2unix_mode(attrib->mode)
-		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 	dir_fd = open_by_handle_at(mount_fd, myself->handle, O_PATH|O_NOACCESS);
 	if(dir_fd < 0) {
 		retval = errno;
@@ -638,26 +648,23 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	if(retval < 0) {
 		goto direrr;
 	}
-	retval = fchownat(dir_fd, name->name, user, group, AT_SYMLINK_NOFOLLOW);
+	retval = name_to_handle_at(dir_fd, name->name, fh, &mnt_id, 0);
 	if(retval < 0) {
 		goto direrr;
 	}
-	fd = openat(dir_fd, name->name, O_RDONLY);
+	fd = open_by_handle_at(mount_fd, fh, (O_PATH|O_RDWR));
 	if(fd < 0) {
 		goto direrr;
 	}
 	close(dir_fd); /* done with parent */
 
-	/* now that it is owned properly, set accessible mode */
-	retval = fchmod(fd, unix_mode);
+	retval = fchownat(fd, "", user, group, (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
 	if(retval < 0) {
 		goto fileerr;
 	}
-	retval = name_to_handle_at(fd, "", fh, &mnt_id, AT_EMPTY_PATH);
-	if(retval < 0) {
-		goto fileerr;
-	}
-	retval = fstatat(fd, "", &stat, AT_EMPTY_PATH);
+
+	/* now get attributes info, being careful to get the link, not the target */
+	retval = fstatat(fd, "", &stat, (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -688,7 +695,8 @@ errout:
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 				 char *link_content,
-				 uint32_t max_len)
+				 uint32_t *link_len,
+				 fsal_boolean_t refresh)
 {
 	struct vfs_fsal_obj_handle *myself;
 	int fd, mntfd;
@@ -700,10 +708,15 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->link_content == NULL) { /* lazy load or LRU'd storage */
+	if(refresh) { /* lazy load or LRU'd storage */
 		ssize_t retlink;
 		char link_buff[FSAL_MAX_PATH_LEN];
 
+		if(myself->link_content != NULL) {
+			free(myself->link_content);
+			myself->link_content = NULL;
+			myself->link_size = 0;
+		}
 		mntfd = vfs_get_root_fd(obj_hdl->export);
 		fd = open_by_handle_at(mntfd, myself->handle, (O_PATH|O_NOACCESS));
 		if(fd < 0) {
@@ -727,16 +740,18 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		}
 		memcpy(myself->link_content, link_buff, retlink);
 		myself->link_content[retlink] = '\0';
+		myself->link_size = retlink + 1;
 	}
-	if(max_len <= strlen(myself->link_content)) {
+	if(myself->link_content == NULL || *link_len <= myself->link_size) {
 		fsal_error = ERR_FSAL_FAULT; /* probably a better error?? */
 		goto out;
 	}
 	memcpy(link_content,
 	       myself->link_content,
-	       strlen(myself->link_content) + 1);  
+	       myself->link_size);
 
 out:
+	*link_len = myself->link_size;
 	ReturnCode(fsal_error, retval);	
 }
 
@@ -748,8 +763,6 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	int srcfd, destdirfd, mntfd;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	char procpath[FSAL_MAX_PATH_LEN];
-	char linkpath[FSAL_MAX_PATH_LEN];
 
 	if( !obj_hdl->export->ops->fs_supports(obj_hdl->export, link_support)) {
 		fsal_error = ERR_FSAL_NOTSUPP;
@@ -771,25 +784,12 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 		close(srcfd);
 		goto out;
 	}
-	snprintf(procpath, FSAL_MAX_PATH_LEN, "/proc/%u/fd/%u", getpid(), srcfd);
-	retval = readlink(procpath, linkpath, FSAL_MAX_PATH_LEN);
-	if(retval == -1) {
-		retval = errno;
-		if(retval == FSAL_MAX_PATH_LEN) { /* unlikely overflow */
-			fsal_error = posix2fsal_error(EOVERFLOW);
-			retval = EOVERFLOW;
-		} else {
-			fsal_error = posix2fsal_error(retval);
-		}
-		goto cleanup;
-	}
-	retval = linkat(0, linkpath, destdirfd, name->name, 0);
+	retval = linkat(srcfd, "", destdirfd, name->name, AT_EMPTY_PATH);
 	if(retval == -1) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
 
-cleanup:
 	close(srcfd);
 	close(destdirfd);
 out:
@@ -987,7 +987,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
-	retval = fstatat(fd, "", &stat, AT_EMPTY_PATH);
+	retval = fstatat(fd, "", &stat, (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
 	if(retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);

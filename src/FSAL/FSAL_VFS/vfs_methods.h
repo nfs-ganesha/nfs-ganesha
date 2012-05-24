@@ -24,6 +24,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
  *  b) we cannot depend on it *always* being last or being the only
  *     variable sized struct here...  a pointer is safer.
  * wrt locks, should this be a lock counter??
+ * @TODO union the fd, openflags, lock_status and link_content
  */
 
 struct vfs_fsal_obj_handle {
@@ -31,7 +32,8 @@ struct vfs_fsal_obj_handle {
 	struct file_handle *handle;
 	int fd;
 	fsal_openflags_t openflags;
-	caddr_t link_content;
+	unsigned char *link_content;
+	int link_size;
 	uint32_t lock_status; /* != 0, leave alone! locks in play */
 };
 
