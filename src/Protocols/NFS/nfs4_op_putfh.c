@@ -175,7 +175,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                                        data->pclient,
                                                        &rc)) == NULL)
             {
-              res_PUTFH4.status = NFS4ERR_BADHANDLE;
               return res_PUTFH4.status;
             }
           /* Extract the filetype */
