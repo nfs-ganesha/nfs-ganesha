@@ -84,6 +84,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
   state_t    * pstate_found = NULL;
+  state_owner_t  * popen_owner;
   int          rc;
   const char * tag = "OPEN_DOWNGRADE";
 
@@ -120,6 +121,20 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                "OPEN_DOWNGRADE failed nfs4_Check_Stateid");
       return res_OPEN_DOWNGRADE4.status;
     }
+
+  popen_owner = pstate_found->state_powner;
+
+  P(popen_owner->so_mutex);
+
+  /* Check seqid */
+  if(!Check_nfs4_seqid(popen_owner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp, tag))
+    {
+      /* Response is all setup for us and LogDebug told what was wrong */
+      V(popen_owner->so_mutex);
+      return res_OPEN_DOWNGRADE4.status;
+    }
+  V(popen_owner->so_mutex);
+
 
   /* What kind of open is it ? */
   LogFullDebug(COMPONENT_STATE,
