@@ -62,7 +62,7 @@
  * This ensures that the directory specified by fsdata is in the cache
  * and marks it as an export root.
  *
- * @param[in]  fsdata  Handle for the root
+ * @param[in]  root_hdl  Handle for the root
  * @param[in]  context FSAL credentials. Unused here
  * @param[out] status  Returned status
  *
@@ -73,7 +73,6 @@ cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
                                      cache_inode_status_t *status)
 {
   cache_entry_t *entry = NULL;
-  fsal_attrib_list_t attr;
   /* sanity check */
   if(status == NULL)
     return NULL;
@@ -81,10 +80,10 @@ cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
   /* Set the return default to CACHE_INODE_SUCCESS */
   *status = CACHE_INODE_SUCCESS;
 
-  if((pentry = cache_inode_get(root_hdl,
-                               &attr,
-                               NULL,
-                               status)) != NULL)
+/** this used to be get but we get passed a handle so now new_entry */
+  if((entry = cache_inode_new_entry(root_hdl,
+				    CACHE_INODE_FLAG_NONE,
+				    status)) != NULL)
     {
       /* The root directory is its own parent.  (Even though this is a
          weakref, it shouldn't be broken in practice.) */
@@ -92,6 +91,10 @@ cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
       entry->object.dir.parent = entry->weakref;
       entry->object.dir.root = TRUE;
       pthread_rwlock_unlock(&entry->content_lock);
+    } else {
+      LogCrit(COMPONENT_CACHE_INODE,
+	      "Unable to add root entry to cache, status = %s",
+	      cache_inode_err_str(*pstatus));
     }
 
   return entry;

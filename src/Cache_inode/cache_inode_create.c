@@ -119,16 +119,11 @@ cache_inode_create(cache_entry_t *parent,
     access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
                   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
                                      FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-    status = cache_inode_access(parent,
+    *status = cache_inode_access(parent,
                                 access_mask,
                                 creds, &status);
-    if (status != CACHE_INODE_SUCCESS)
+    if (*status != CACHE_INODE_SUCCESS)
         {
-            *pstatus = status;
-
-            /* stats */
-            inc_func_err_unrecover(pclient, CACHE_INODE_CREATE);
-
           entry = NULL;
           goto out;
         }
@@ -153,7 +148,7 @@ cache_inode_create(cache_entry_t *parent,
 
      /* The entry doesn't exist, so we can create it. */
 
-    dir_handle = pentry_parent->obj_handle;
+    dir_handle = parent->obj_handle;
 /* we pass in attributes to the create.  We will get them back below */
     object_attributes.asked_attributes = client->attrmask;
     object_attributes.owner = creds->caller_uid;
@@ -163,22 +158,22 @@ cache_inode_create(cache_entry_t *parent,
     switch (type) {
     case REGULAR_FILE:
             fsal_status = dir_handle->ops->create(dir_handle,
-						  pname,
+						  name,
 						  &object_attributes,
 						  &object_handle);
             break;
 
     case DIRECTORY:
             fsal_status = dir_handle->ops->mkdir(dir_handle,
-						 pname,
+						 name,
 						 &object_attributes,
 						 &object_handle);
             break;
 
     case SYMBOLIC_LINK:
             fsal_status = dir_handle->ops->symlink(dir_handle,
-						   pname,
-						   &pcreate_arg->link_content,
+						   name,
+						   &create_arg->link_content,
 						   &object_attributes,
 						   &object_handle);
             break;
@@ -186,7 +181,7 @@ cache_inode_create(cache_entry_t *parent,
         case SOCKET_FILE:
         case FIFO_FILE:
             fsal_status = dir_handle->ops->mknode(dir_handle,
-						  pname,
+						  name,
 						  type,
 						  NULL, /* no dev_t needed */
 						  &object_attributes,
@@ -196,9 +191,9 @@ cache_inode_create(cache_entry_t *parent,
         case BLOCK_FILE:
         case CHARACTER_FILE:
             fsal_status = dir_handle->ops->mknode(dir_handle,
-						  pname,
+						  name,
 						  type,
-						  &pcreate_arg->dev_spec,
+						  &create_arg->dev_spec,
 						  &object_attributes,
 						  &object_handle);
             break;
@@ -244,12 +239,12 @@ cache_inode_create(cache_entry_t *parent,
 
      pthread_rwlock_wrlock(&parent->attr_lock);
      /* Update the parent cached attributes */
-     cache_inode_set_time_current(&parent->object_hdl->attributes.mtime);
-     parent->attributes.ctime = parent->object_hdl->attributes.mtime;
+     cache_inode_set_time_current(&parent->obj_handle->attributes.mtime);
+     parent->obj_handle->attributes.ctime = parent->obj_handle->attributes.mtime;
      /* if the created object is a directory, it contains a link
         to its parent : '..'. Thus the numlink attr must be increased. */
      if (type == DIRECTORY) {
-          ++(parent->attributes.numlinks);
+          ++(parent->obj_handle->attributes.numlinks);
      }
      pthread_rwlock_unlock(&parent->attr_lock);
 
@@ -262,5 +257,3 @@ out:
 
      return entry;
 }
-
-#endif
