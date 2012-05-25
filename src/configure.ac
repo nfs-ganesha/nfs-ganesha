@@ -290,12 +290,10 @@ AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
 # TI-RPC
 AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
 TIRPCDIR=`pwd`/../contrib/libtirpc
-if test ! -f "${TIRPCDIR}/configure"; then
-   cd ${TIRPCDIR}
-   sh autogen.sh
-   ./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix="${prefix}"
-   cd ../../src
-fi
+cd ${TIRPCDIR}
+sh autogen.sh
+./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix="${prefix}"
+cd ../../src
 
 # My auto-foo doesn't extend to this
 #AC_CONFIG_SUBDIRS([../contrib/libtirpc])
