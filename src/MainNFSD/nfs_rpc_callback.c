@@ -36,6 +36,7 @@
 
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
