@@ -64,10 +64,6 @@
  * This module implements APIs for submission, and dispatch of NFSv4.0
  * and (soon) NFSv4.1 format callbacks.
  *
- * Planned strategy is to deal with all backchannels from a small number of
- * service threads, initially 1, using non-blocking socket operations.  This
- * may change, as NFSv4.1 bi-directional support is integrated.
- *
  */
 
 static struct prealloc_pool rpc_call_pool;
@@ -124,7 +120,7 @@ void nfs_rpc_cb_pkginit(void)
     else
         strlcpy(host_name, localmachine, MAXHOSTNAMELEN);
 
-    /* XXX ccache */
+    /* ccache */
     nfs_rpc_cb_init_ccache(nfs_param.krb5_param.ccache_dir);
 
     /* sanity check GSSAPI */
@@ -463,7 +459,7 @@ nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
 {
     nfs_client_cred_t *credential = NULL;
     bool_t code = TRUE;
-    AUTH *auth;
+    AUTH *auth = NULL;
 
     switch (chan->type) {
     case RPC_CHAN_V40:
@@ -484,7 +480,7 @@ nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
         auth = authunix_create_default();
         /* XXX see above */
         if (auth)
-            chan->clnt->cl_auth = authunix_create_default();
+            chan->clnt->cl_auth = auth;
         break;
     case AUTH_NONE:
         break;
