@@ -164,9 +164,9 @@ typedef struct fsal_up_event_data__
 
 typedef struct fsal_up_event_t_
 {
+  struct glist_head event_list;
   unsigned int event_type;
   fsal_up_event_data_t event_data;
-  struct fsal_up_event_t_ *next_event;
 } fsal_up_event_t;
 
 typedef struct fsal_up_event_functions__

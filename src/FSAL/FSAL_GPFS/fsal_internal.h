@@ -454,7 +454,7 @@ fsal_status_t GPFSFSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /
 				fsal_up_event_bus_context_t * pupebcontext     /* OUT */);
 fsal_status_t GPFSFSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* IN */
 				     fsal_up_event_bus_context_t * pupebcontext /* INOUT */ );
-fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                  /* OUT */
+fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,
 				     fsal_count_t * event_nb,                     /* IN */
 				     fsal_time_t timeout,                         /* IN */
 				     fsal_count_t * peventfound,                  /* OUT */

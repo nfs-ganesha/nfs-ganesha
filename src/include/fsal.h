@@ -751,7 +751,7 @@ fsal_status_t FSAL_UP_Init(struct fsal_up_event_bus_parameter_t_ * pebparam,    
 fsal_status_t FSAL_UP_AddFilter(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /* IN */
                                 struct fsal_up_event_bus_context_t_ * pupebcontext /* INOUT */
                                    );
-fsal_status_t FSAL_UP_GetEvents(struct fsal_up_event_t_ ** pevents,                /* OUT */
+fsal_status_t FSAL_UP_GetEvents(struct glist_head * pevent_head,           /* OUT */
                                 fsal_count_t * event_nb,                   /* IN */
                                 fsal_time_t timeout,                       /* IN */
                                 fsal_count_t * peventfound,                /* OUT */
@@ -1457,7 +1457,7 @@ typedef struct fsal_functions__
                                 struct fsal_up_event_bus_context_t_ * pupebcontext     /* OUT */ );
   fsal_status_t(*fsal_up_addfilter)(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /* IN */
                                   struct fsal_up_event_bus_context_t_ * pupebcontext /* INOUT */ );
-  fsal_status_t(*fsal_up_getevents)(struct fsal_up_event_t_ ** pevents,                /* OUT */
+  fsal_status_t(*fsal_up_getevents)(struct glist_head * pevent_head,         /* OUT */
                                   fsal_count_t * event_nb,                   /* IN */
                                   fsal_time_t timeout,                       /* IN */
                                     fsal_count_t * peventfound,                 /* OUT */

@@ -288,7 +288,8 @@ void *fsal_up_thread(void *Arg)
   fsal_up_event_bus_parameter_t fsal_up_bus_param;
   fsal_up_event_bus_filter_t * pupebfilter = NULL;
   fsal_up_filter_list_t *filter = NULL;
-  fsal_up_event_t *pevent_head, *event, *tmpevent;
+  fsal_up_event_t *event, *tmpevent;
+  static struct glist_head pevent_head;
   fsal_up_event_functions_t *event_func;
   fsal_count_t nb_events_found, event_nb;
   fsal_time_t timeout;
@@ -365,10 +366,10 @@ void *fsal_up_thread(void *Arg)
     {
       /* pevent is passed in as a single empty node, it's expected the
        * FSAL will use the event_pool in the bus_context to populate
-       * this array by adding to the pevent_head->next attribute. */
+       * this array by adding to the pevent_head. */
       event_nb = 0;
       nb_events_found = 0;
-      pevent_head = NULL;
+      init_glist(&pevent_head);
       LogDebug(COMPONENT_FSAL_UP, "Requesting event from FSAL Callback interface.");
       status = FSAL_UP_GetEvents(&pevent_head,     /* out */
                                  &event_nb,        /* in/out */
@@ -410,8 +411,10 @@ void *fsal_up_thread(void *Arg)
                fsal_up_args->export_entry->id);
 
       /* process the list of events */
-      for(event = pevent_head; event != NULL;)
+      while(!glist_empty(&pevent_head))
         {
+          event = glist_first_entry(&pevent_head, fsal_up_event_t, event_list);
+          glist_del(&event->event_list);
           status = process_event(event, event_func);
           if (FSAL_IS_ERROR(status))
             {
@@ -422,7 +425,6 @@ void *fsal_up_thread(void *Arg)
                        fsal_up_args->export_entry->id);
             }
           tmpevent = event;
-          event = event->next_event;
           gsh_free(tmpevent->event_data.event_context.fsal_data.fh_desc.start);
           pthread_mutex_lock(fsal_up_context.event_pool_lock);
           pool_free(nfs_param.fsal_up_param.event_pool, tmpevent);

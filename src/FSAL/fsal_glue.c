@@ -762,7 +762,7 @@ fsal_status_t FSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* I
     return fsal_functions.fsal_up_addfilter(pupebfilter, pupebcontext);
 }
 
-fsal_status_t FSAL_UP_GetEvents( fsal_up_event_t ** pevents,            /* OUT */
+fsal_status_t FSAL_UP_GetEvents( struct glist_head * pevent_head,            /* OUT */
                                  fsal_count_t * event_nb,          /* IN */
                                  fsal_time_t timeout,                       /* IN */
                                  fsal_count_t * peventfound,                /* OUT */
@@ -771,7 +771,7 @@ fsal_status_t FSAL_UP_GetEvents( fsal_up_event_t ** pevents,            /* OUT *
   if (fsal_functions.fsal_up_getevents == NULL)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_UP_getevents);
   else
-    return fsal_functions.fsal_up_getevents(pevents, event_nb, timeout,
+    return fsal_functions.fsal_up_getevents(pevent_head, event_nb, timeout,
                                             peventfound, pupebcontext);
 }
 #endif /* _USE_FSAL_UP */

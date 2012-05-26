@@ -49,7 +49,7 @@ fsal_status_t GPFSFSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_UP_addfilter);
 }
 
-fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                  /* OUT */
+fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,             /* OUT */
                                      fsal_count_t * event_nb,                     /* IN */
                                      fsal_time_t timeout,                         /* IN */
                                      fsal_count_t * peventfound,                  /* OUT */
@@ -66,6 +66,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
   int flags = 0;
   unsigned int *fhP;
   cache_inode_fsal_data_t *event_fsal_data;
+  fsal_up_event_t *pevent;
 
   tmp_handlep = Mem_Alloc(sizeof(fsal_handle_t));
   if (tmp_handlep == NULL)
@@ -135,8 +136,8 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
     *pevents = pool_alloc(pupebcontext->event_pool, NULL);
   pthread_mutex_unlock(pupebcontext->event_pool_lock);
 
-  memset(*pevents, 0, sizeof(fsal_up_event_t));
-  event_fsal_data = &(*pevents)->event_data.event_context.fsal_data;
+  memset(pevent, 0, sizeof(fsal_up_event_t));
+  event_fsal_data = &pevent->event_data.event_context.fsal_data;
   event_fsal_data->fh_desc.start = (caddr_t)tmp_handlep;
   event_fsal_data->fh_desc.len = sizeof(*tmp_handlep);
   GPFSFSAL_ExpandHandle(NULL, FSAL_DIGEST_SIZEOF, &(event_fsal_data->fh_desc));
@@ -146,11 +147,11 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
                "inode lock granted: owner %p pid %d type %d start %lld len %lld",
                fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
                (long long) fl.flock.l_start, (long long) fl.flock.l_len);
-      (*pevents)->event_data.type.lock_grant.lock_owner = fl.lock_owner;
-      (*pevents)->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
-      (*pevents)->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
-      (*pevents)->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
-      (*pevents)->event_type = FSAL_UP_EVENT_LOCK_GRANT;
+      pevent->event_data.type.lock_grant.lock_owner = fl.lock_owner;
+      pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
+      pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
+      pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
+      pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
     }
   else if (reason == INODE_LOCK_AGAIN) /* Lock Event */
     {
@@ -158,28 +159,29 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
                "inode lock again: owner %p pid %d type %d start %lld len %lld",
                fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
                (long long) fl.flock.l_start, (long long) fl.flock.l_len);
-      (*pevents)->event_data.type.lock_grant.lock_owner = fl.lock_owner;
-      (*pevents)->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
-      (*pevents)->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
-      (*pevents)->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
-      (*pevents)->event_type = FSAL_UP_EVENT_LOCK_GRANT;
+      pevent->event_data.type.lock_grant.lock_owner = fl.lock_owner;
+      pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
+      pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
+      pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
+      pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
     }
   else if (reason == INODE_UPDATE) /* Lock Event */
     {
       LogDebug(COMPONENT_FSAL,
                "inode update: flags:%x update ino %ld n_link:%d",
                flags, callback.buf->st_ino, (int)callback.buf->st_nlink);
-      (*pevents)->event_data.type.update.upu_flags = 0;
-      (*pevents)->event_data.type.update.upu_stat_buf = buf;
+      pevent->event_data.type.update.upu_flags = 0;
+      pevent->event_data.type.update.upu_stat_buf = buf;
       if (flags & UP_NLINK)
-        (*pevents)->event_data.type.update.upu_flags |= FSAL_UP_NLINK;
-      (*pevents)->event_type = FSAL_UP_EVENT_UPDATE;
+        pevent->event_data.type.update.upu_flags |= FSAL_UP_NLINK;
+      pevent->event_type = FSAL_UP_EVENT_UPDATE;
     }
   else /* Invalidate Event - Default */
     {
-      (*pevents)->event_type = FSAL_UP_EVENT_INVALIDATE;
+      pevent->event_type = FSAL_UP_EVENT_INVALIDATE;
     }
 
+  glist_add_tail(pevent_head, &pevent->event_list);
   /* Increment the numebr of events we are returning.*/
   (*event_nb)++;
 
