@@ -419,7 +419,6 @@ void *fsal_up_thread(void *Arg)
             }
           tmpevent = event;
           event = event->next_event;
-
           gsh_free(tmpevent->event_data.event_context.fsal_data.fh_desc.start);
           pthread_mutex_lock(fsal_up_context.event_pool_lock);
           pool_free(nfs_param.fsal_up_param.event_pool, tmpevent);

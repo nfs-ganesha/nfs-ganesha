@@ -67,7 +67,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
   unsigned int *fhP;
   cache_inode_fsal_data_t *event_fsal_data;
 
-  tmp_handlep = malloc(sizeof(fsal_handle_t));
+  tmp_handlep = Mem_Alloc(sizeof(fsal_handle_t));
   if (tmp_handlep == NULL)
     {
       LogCrit(COMPONENT_FSAL, "Error: Could not malloc ... ENOMEM");
@@ -102,7 +102,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
     {
       LogCrit(COMPONENT_FSAL,
         "Error: OPENHANDLE_INODE_UPDATE failed. rc %d, errno %d", rc, errno);
-      free(tmp_handlep);
+      Mem_Free(tmp_handlep);
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_UP_getevents);
     }
 
