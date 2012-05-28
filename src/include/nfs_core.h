@@ -957,8 +957,11 @@ extern const nfs_function_desc_t *INVALID_FUNCDESC;
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);
 int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pfuncdesc);
 
+#ifdef _USE_FSAL_UP
+void *fsal_up_process_thread( void * UnUsedArg );
 void create_fsal_up_threads();
 void nfs_Init_FSAL_UP();
+#endif /* _USE_FSAL_UP */
 
 void stats_collect (ganesha_stats_t                 *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);

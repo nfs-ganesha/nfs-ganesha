@@ -141,46 +141,43 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
   event_fsal_data->fh_desc.start = (caddr_t)tmp_handlep;
   event_fsal_data->fh_desc.len = sizeof(*tmp_handlep);
   GPFSFSAL_ExpandHandle(NULL, FSAL_DIGEST_SIZEOF, &(event_fsal_data->fh_desc));
-  if (reason == INODE_LOCK_GRANTED) /* Lock Event */
+  switch (reason)
     {
-      LogDebug(COMPONENT_FSAL,
-               "inode lock granted: owner %p pid %d type %d start %lld len %lld",
-               fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
-               (long long) fl.flock.l_start, (long long) fl.flock.l_len);
-      pevent->event_data.type.lock_grant.lock_owner = fl.lock_owner;
-      pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
-      pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
-      pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
-      pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
+      case INODE_LOCK_GRANTED: /* Lock Event */
+        LogDebug(COMPONENT_FSAL,
+                 "inode lock granted: owner %p pid %d type %d start %lld len %lld",
+                 fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
+                 (long long) fl.flock.l_start, (long long) fl.flock.l_len);
+        pevent->event_data.type.lock_grant.lock_owner = fl.lock_owner;
+        pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
+        pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
+        pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
+        pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
+        break;
+      case INODE_LOCK_AGAIN: /* Lock Event */
+        LogDebug(COMPONENT_FSAL,
+                 "inode lock again: owner %p pid %d type %d start %lld len %lld",
+                 fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
+                 (long long) fl.flock.l_start, (long long) fl.flock.l_len);
+        pevent->event_data.type.lock_grant.lock_owner = fl.lock_owner;
+        pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
+        pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
+        pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
+        pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
+        break;
+      case INODE_UPDATE: /* Update Event */
+        LogDebug(COMPONENT_FSAL,
+                 "inode update: flags:%x update ino %ld n_link:%d",
+                 flags, callback.buf->st_ino, (int)callback.buf->st_nlink);
+        pevent->event_data.type.update.upu_flags = 0;
+        pevent->event_data.type.update.upu_stat_buf = buf;
+        if (flags & UP_NLINK)
+          pevent->event_data.type.update.upu_flags |= FSAL_UP_NLINK;
+        pevent->event_type = FSAL_UP_EVENT_UPDATE;
+        break;
+      default: /* Invalidate Event - Default */
+        pevent->event_type = FSAL_UP_EVENT_INVALIDATE;
     }
-  else if (reason == INODE_LOCK_AGAIN) /* Lock Event */
-    {
-      LogDebug(COMPONENT_FSAL,
-               "inode lock again: owner %p pid %d type %d start %lld len %lld",
-               fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
-               (long long) fl.flock.l_start, (long long) fl.flock.l_len);
-      pevent->event_data.type.lock_grant.lock_owner = fl.lock_owner;
-      pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
-      pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
-      pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
-      pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
-    }
-  else if (reason == INODE_UPDATE) /* Lock Event */
-    {
-      LogDebug(COMPONENT_FSAL,
-               "inode update: flags:%x update ino %ld n_link:%d",
-               flags, callback.buf->st_ino, (int)callback.buf->st_nlink);
-      pevent->event_data.type.update.upu_flags = 0;
-      pevent->event_data.type.update.upu_stat_buf = buf;
-      if (flags & UP_NLINK)
-        pevent->event_data.type.update.upu_flags |= FSAL_UP_NLINK;
-      pevent->event_type = FSAL_UP_EVENT_UPDATE;
-    }
-  else /* Invalidate Event - Default */
-    {
-      pevent->event_type = FSAL_UP_EVENT_INVALIDATE;
-    }
-
   glist_add_tail(pevent_head, &pevent->event_list);
   /* Increment the numebr of events we are returning.*/
   (*event_nb)++;

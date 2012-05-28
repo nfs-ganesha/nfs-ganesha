@@ -162,9 +162,12 @@ typedef struct fsal_up_event_data__
   fsal_up_event_data_context_t event_context;
 } fsal_up_event_data_t;
 
+typedef fsal_status_t (fsal_up_event_process_func_t) (fsal_up_event_data_t * arg);
+
 typedef struct fsal_up_event_t_
 {
   struct glist_head event_list;
+  fsal_up_event_process_func_t   * event_process_func;
   unsigned int event_type;
   fsal_up_event_data_t event_data;
 } fsal_up_event_t;

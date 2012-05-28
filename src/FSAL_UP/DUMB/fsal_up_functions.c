@@ -86,11 +86,8 @@ fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
                "FSAL_UP_DUMB: nlink has become zero; close fds\n");
       cache_inode_close(pentry, NULL, CACHE_INODE_FLAG_REALLYCLOSE, &cache_status);
     }
-  else
-    {
-      cache_inode_invalidate(&pevdata->event_context.fsal_data,
-                             &cache_status);
-    }
+
+  cache_inode_invalidate(&pevdata->event_context.fsal_data, &cache_status);
 
   if(pentry)
     cache_inode_put(pentry, NULL);
