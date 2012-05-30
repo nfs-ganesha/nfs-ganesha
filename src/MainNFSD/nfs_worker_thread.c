@@ -200,8 +200,7 @@ const nfs_function_desc_t nfs4_func_desc[] = {
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs_Null",
    NOTHING_SPECIAL},
   {nfs4_Compound, nfs4_Compound_Free, (xdrproc_t) xdr_COMPOUND4args,
-   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED }
-   /* SUPPORTS_GSS is missing from this list because while NFS v4 does indeed support GSS, we won't check it yet */
+   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED | SUPPORTS_GSS}
 };
 
 const nfs_function_desc_t mnt1_func_desc[] = {
