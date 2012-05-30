@@ -34,7 +34,7 @@ libsal_la_SOURCES = state_async.c                    \
                     ../include/nlm4.h                \
                     ../include/nlm_util.h            \
                     ../include/nsm.h                 \
-                    ../include/rpc.h                 \
+                    ../include/ganesha_rpc.h         \
                     ../include/sal_data.h            \
                     ../include/sal_functions.h       \
                     ../include/stuff_alloc.h
