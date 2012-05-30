@@ -1034,8 +1034,8 @@ cache_inode_refresh_attrs(cache_entry_t *entry,
                           fsal_op_context_t *context,
                           cache_inode_client_t *client)
 {
-     fsal_status_t fsal_status = {0, 0};
-     cache_inode_status_t cache_status = 0;
+     fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
+     cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
 #ifdef _USE_NFS4_ACL
      if (entry->attributes.acl) {
@@ -1121,7 +1121,7 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
                              fsal_op_context_t *context,
                              cache_inode_client_t *client)
 {
-     cache_inode_status_t cache_status = 0;
+     cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
 
      pthread_rwlock_rdlock(&entry->attr_lock);

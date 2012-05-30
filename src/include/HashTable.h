@@ -268,7 +268,7 @@ HashTable_Set(struct hash_table *ht,
      /* structure to hold retained state */
      struct hash_latch latch;
      /* Stored return code */
-     hash_error_t rc = 0;
+     hash_error_t rc = HASHTABLE_SUCCESS;
 
      rc = HashTable_GetLatch(ht, key, NULL,
                              TRUE,
@@ -316,7 +316,7 @@ HashTable_Del(struct hash_table *ht,
      /* Structure to hold retained state */
      struct hash_latch latch;
      /* Stored return code */
-     hash_error_t rc = 0;
+     hash_error_t rc = HASHTABLE_SUCCESS;
 
      rc = HashTable_GetLatch(ht, key, NULL,
                              TRUE, &latch);

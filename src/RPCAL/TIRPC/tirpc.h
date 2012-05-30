@@ -22,25 +22,6 @@ extern int Svc_maxfd;
 #define	su_data_set(xprt)	(xprt->xp_p2)
 #define	rpc_buffer(xprt) ((xprt)->xp_p1)
 
-struct cf_rendezvous
-{                               /* kept in xprt->xp_p1 for rendezvouser */
-  u_int sendsize;
-  u_int recvsize;
-  int maxrec;
-};
-
-struct cf_conn
-{                               /* kept in xprt->xp_p1 for actual connection */
-  enum xprt_stat strm_stat;
-  u_int32_t x_id;
-  XDR xdrs;
-  char verf_body[MAX_AUTH_BYTES];
-  u_int sendsize;
-  u_int recvsize;
-  int maxrec;
-  bool_t nonblock;
-  struct timeval last_recv_time;
-};
 
 #define	SPARSENESS 4            /* 75% sparse */
 

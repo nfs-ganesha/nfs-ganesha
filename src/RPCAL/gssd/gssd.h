@@ -40,7 +40,7 @@
 #ifndef GSSD_PIPEFS_DIR
 #define GSSD_PIPEFS_DIR		"/var/lib/nfs/rpc_pipefs"
 #endif
-#define INFO			"info"
+/* #define INFO			"info" */
 #define KRB5			"krb5"
 #define DNOTIFY_SIGNAL		(SIGRTMIN + 3)
 
