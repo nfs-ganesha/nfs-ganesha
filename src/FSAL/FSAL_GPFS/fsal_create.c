@@ -169,15 +169,17 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
   if(p_context->credential.user != geteuid())
     {
       TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown(newfd, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
-      errsv = errno;
+      /* if the setgid_bit was set on the parent directory, do not change the group of
+          the created file, because it's already the parentdir's group */
+      status = fsal_set_own_by_handle(p_context, p_object_handle,
+                                      p_context->credential.user,
+                                      setgid_bit ? -1 :
+                                      (int)p_context->credential.group);
       ReleaseTokenFSCall();
-      if(rc)
+      if(FSAL_IS_ERROR(status))
         {
           close(newfd);
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
+          ReturnStatus(status, INDEX_FSAL_create);
         }
     }
 
@@ -244,11 +246,10 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
     )
 {
 
-  int rc, errsv;
+  int rc, fd, errsv;
   int setgid_bit = 0;
   mode_t unix_mode;
   fsal_status_t status;
-  int fd, newfd;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
 
@@ -324,18 +325,8 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
 
   /* get the new handle */
   TakeTokenFSCall();
-  status = fsal_internal_get_handle_at(fd, p_dirname, p_object_handle);
-  ReleaseTokenFSCall();
-
-  if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_mkdir);
-    }
-
-  TakeTokenFSCall();
-  status =
-      fsal_internal_handle2fd_at(fd, p_object_handle, &newfd, O_RDONLY | O_DIRECTORY);
+  status = fsal_internal_get_fh(p_context, p_parent_directory_handle,
+                                p_dirname, p_object_handle);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -351,20 +342,19 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown(newfd, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
-      errsv = errno;
+      status = fsal_set_own_by_handle(p_context, p_object_handle,
+                                      p_context->credential.user,
+                                      setgid_bit ? -1 :
+                                      (int)p_context->credential.group);
       ReleaseTokenFSCall();
-      if(rc)
+      if(FSAL_IS_ERROR(status))
         {
           close(fd);
-          close(newfd);
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
+          ReturnStatus(status, INDEX_FSAL_mkdir);
         }
     }
 
   close(fd);
-  close(newfd);
 
   /* retrieve file attributes */
   if(p_object_attributes)
@@ -422,7 +412,6 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
     )
 {
   fsal_status_t status;
-  int srcfd, dstfd;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
 
@@ -438,31 +427,11 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 
-  /* get the target handle access by fid */
-  TakeTokenFSCall();
-  status = fsal_internal_handle2fd(p_context, p_target_handle, &srcfd, O_RDWR);
-  ReleaseTokenFSCall();
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_link);
-
-  /* build the destination path and check permissions on the directory */
-  TakeTokenFSCall();
-  status =
-      fsal_internal_handle2fd(p_context, p_dir_handle, &dstfd, O_RDONLY | O_DIRECTORY);
-  ReleaseTokenFSCall();
-  if(FSAL_IS_ERROR(status))
-    {
-      close(srcfd);
-      ReturnStatus(status, INDEX_FSAL_link);
-    }
-
   /* retrieve target directory metadata */
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_dir_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
       goto out_status_fsal_err;
-    }
 
   /* check permission on target directory */
 
@@ -476,20 +445,17 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
     status = fsal_internal_access(p_context, p_dir_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
       goto out_status_fsal_err;
-    }
 
   /* Create the link on the filesystem */
 
   TakeTokenFSCall();
-  status = fsal_internal_link_at(srcfd, dstfd, p_link_name->name);
+  status = fsal_internal_link_fh(p_context, p_target_handle, p_dir_handle,
+                                 p_link_name);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
-    {
       goto out_status_fsal_err;
-    }
 
   /* optionnaly get attributes */
 
@@ -505,15 +471,11 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
         }
     }
 
-  close(srcfd);
-  close(dstfd);
-
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link);
 
  out_status_fsal_err:
-  close(srcfd);
-  close(dstfd);
+
   ReturnStatus(status, INDEX_FSAL_link);
 }
 
@@ -537,7 +499,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   int rc, errsv;
   int setgid_bit = 0;
   fsal_status_t status;
-  int fd, newfd;
+  int fd;
   int flags=(O_RDONLY|O_NOFOLLOW);
   int saved_uid=-1;
   int saved_gid=-1;
@@ -665,8 +627,8 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
    * is an unlikely race condition, but hopefully can be fixed someday.
    */
 
-  if(FSAL_IS_ERROR(status = fsal_internal_get_handle_at(fd, p_node_name,
-                                                        p_object_handle)))
+  if(FSAL_IS_ERROR(status = fsal_internal_get_fh(p_context, parentdir_handle,
+                                                 p_node_name, p_object_handle)))
     {
       close(fd);
       ReturnStatus(status, INDEX_FSAL_mknode);
@@ -679,30 +641,20 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       (nodetype != FSAL_TYPE_BLK)  &&
       (p_context->credential.user != geteuid()))
   {
-    if(FSAL_IS_ERROR(status = fsal_internal_handle2fd_at(fd,
-                                                         p_object_handle, &newfd,
-                                                         flags)))
-      {
-        close(fd);
-        ReturnStatus(status, INDEX_FSAL_mknode);
-      }
-
     /* the node has been created */
     /* chown the file to the current user/group */
 
     /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-    rc = fchown(newfd, p_context->credential.user,
-                setgid_bit ? -1 : (int)p_context->credential.group);
-    errsv = errno;
+    status = fsal_set_own_by_handle(p_context, p_object_handle,
+                                    p_context->credential.user,
+                                    setgid_bit ? -1 :
+                                    (int)p_context->credential.group);
 
-    if(rc)
+    if(FSAL_IS_ERROR(status))
       {
         close(fd);
-        close(newfd);
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
+        ReturnStatus(status, INDEX_FSAL_mknode);
       }
-
-    close(newfd);
   }
 
   close(fd);

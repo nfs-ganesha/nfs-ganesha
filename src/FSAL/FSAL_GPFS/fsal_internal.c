@@ -600,6 +600,58 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
 }
 
 /**
+ * fsal_internal_get_handle:
+ * Create a handle from a directory handle and filename
+ *
+ * \param pcontext (input):
+ *        A context pointer for the root of the current export
+ * \param p_dir_handle (input):
+ *        The handle for the parent directory
+ * \param p_fsalname (input):
+ *        Name of the file
+ * \param p_handle (output):
+ *        The handle that is found and returned
+ *
+ * \return status of operation
+ */
+ fsal_status_t fsal_internal_get_fh(fsal_op_context_t * p_context, /* IN  */
+                                    fsal_handle_t * p_dir_fh,      /* IN  */
+                                    fsal_name_t * p_fsalname,      /* IN  */
+                                    fsal_handle_t * p_out_fh)      /* OUT */
+{
+  int dirfd, rc;
+  struct get_handle_arg harg;
+  gpfsfsal_handle_t *p_gpfs_dir_fh = (gpfsfsal_handle_t *)p_dir_fh;
+  gpfsfsal_handle_t *p_gpfs_out_fh = (gpfsfsal_handle_t *)p_out_fh;
+
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+
+  if(!p_out_fh || !p_dir_fh || !p_fsalname)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  harg.mountdirfd = dirfd;
+  harg.dir_fh = (struct gpfs_file_handle *) &p_gpfs_dir_fh->data.handle;
+  memset(p_gpfs_out_fh, 0, sizeof(*p_gpfs_out_fh));
+  harg.out_fh = (struct gpfs_file_handle *) &p_gpfs_out_fh->data.handle;
+  harg.out_fh->handle_size = OPENHANDLE_HANDLE_LEN;
+  harg.out_fh->handle_version = OPENHANDLE_VERSION;
+  harg.out_fh->handle_key_size = OPENHANDLE_KEY_LEN;
+  harg.len = p_fsalname->len;
+  harg.name = p_fsalname->name;
+
+  LogFullDebug(COMPONENT_FSAL,
+               "Lookup handle for %s",
+               p_fsalname->name);
+
+  rc = gpfs_ganesha(OPENHANDLE_GET_HANDLE, &harg);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
  * fsal_internal_fd2handle:
  * convert an fd to a handle
  *
@@ -676,6 +728,144 @@ fsal_status_t fsal_internal_link_at(int srcfd, int dirfd, char *name)
 }
 
 /**
+ * fsal_internal_link_fh:
+ * Create a link based on a file fh, dir fh, and new name
+ *
+ * \param p_context (input):
+ *        Pointer to current context.  Used to get export root fd.
+ * \param p_target_handle (input):
+ *          file handle of target file
+ * \param p_dir_handle (input):
+ *          file handle of source directory
+ * \param name (input):
+ *          name for the new file
+ *
+ * \return status of operation
+ */
+fsal_status_t fsal_internal_link_fh(fsal_op_context_t * p_context,
+                                    fsal_handle_t * p_target_handle,
+                                    fsal_handle_t * p_dir_handle,
+                                    fsal_name_t * p_link_name)
+{
+  int rc;
+  int dirfd = 0;
+  struct link_fh_arg linkarg;
+
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+
+  if(!p_link_name->name)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  linkarg.mountdirfd = dirfd;
+  linkarg.len = p_link_name->len;
+  linkarg.name = p_link_name->name;
+  linkarg.dir_fh = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_dir_handle)->data.handle;
+  linkarg.dst_fh = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_target_handle)->data.handle;
+
+  rc = gpfs_ganesha(OPENHANDLE_LINK_BY_FH, &linkarg);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+}
+
+/**
+ * fsal_internal_stat_name:
+ * Stat a file by name
+ *
+ * \param p_context (input):
+ *        Pointer to current context.  Used to get export root fd.
+ * \param p_dir_handle (input):
+ *          file handle of directory
+ * \param name (input):
+ *          name to stat
+ *
+ * \return status of operation
+ */
+fsal_status_t fsal_internal_stat_name(fsal_op_context_t * p_context,
+                                    fsal_handle_t * p_dir_handle,
+                                    fsal_name_t * p_stat_name,
+                                    struct stat *buf)
+{
+  int rc;
+  int dirfd = 0;
+  struct stat_name_arg statarg;
+
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+
+  if(!p_stat_name->name)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  statarg.mountdirfd = dirfd;
+  statarg.len = p_stat_name->len;
+  statarg.name = p_stat_name->name;
+  statarg.handle = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_dir_handle)->data.handle;
+  statarg.buf = buf;
+
+  rc = gpfs_ganesha(OPENHANDLE_STAT_BY_NAME, &statarg);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+}
+
+/**
+ * fsal_internal_rename_fh:
+ * Rename old file name to new name
+ *
+ * \param p_context (input):
+ *        Pointer to current context.  Used to get export root fd.
+ * \param p_old_handle (input):
+ *          file handle of old file
+ * \param p_new_handle (input):
+ *          file handle of new directory
+ * \param name (input):
+ *          name for the old file
+ * \param name (input):
+ *          name for the new file
+ *
+ * \return status of operation
+ */
+fsal_status_t fsal_internal_rename_fh(fsal_op_context_t * p_context,
+                                    fsal_handle_t * p_old_handle,
+                                    fsal_handle_t * p_new_handle,
+                                    fsal_name_t * p_old_name,
+                                    fsal_name_t * p_new_name)
+{
+  int rc;
+  int dirfd = 0;
+  struct rename_fh_arg renamearg;
+
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+
+  if(!p_old_name->name)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  if(!p_new_name->name)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  renamearg.mountdirfd = dirfd;
+  renamearg.old_len = p_old_name->len;
+  renamearg.old_name = p_old_name->name;
+  renamearg.new_len = p_new_name->len;
+  renamearg.new_name = p_new_name->name;
+  renamearg.old_fh = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_old_handle)->data.handle;
+  renamearg.new_fh = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_new_handle)->data.handle;
+
+  rc = gpfs_ganesha(OPENHANDLE_RENAME_BY_FH, &renamearg);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+}
+
+/**
  * fsal_readlink_by_handle:
  * Reads the contents of the link
  *
@@ -686,24 +876,20 @@ fsal_status_t fsal_internal_link_at(int srcfd, int dirfd, char *name)
 fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
                                       fsal_handle_t * p_handle, char *__buf, int maxlen)
 {
-  int fd;
   int rc;
-  fsal_status_t status;
-  struct readlink_arg readlinkarg;
+  int dirfd = 0;
+  struct readlink_fh_arg readlinkarg;
+  gpfsfsal_handle_t *p_gpfs_fh = (gpfsfsal_handle_t *)p_handle;
 
-  status = fsal_internal_handle2fd(p_context, p_handle, &fd, O_RDONLY);
-
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_open);
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
 
   memset(__buf, 0, maxlen);
-  readlinkarg.fd = fd;
+  readlinkarg.mountdirfd = dirfd;
+  readlinkarg.handle = (struct gpfs_file_handle *) &p_gpfs_fh->data.handle;
   readlinkarg.buffer = __buf;
   readlinkarg.size = maxlen;
 
-  rc = gpfs_ganesha(OPENHANDLE_READLINK_BY_FD, &readlinkarg);
-
-  close(fd);
+  rc = gpfs_ganesha(OPENHANDLE_READLINK_BY_FH, &readlinkarg);
 
   if(rc < 0)
       Return(rc, 0, INDEX_FSAL_readlink);
@@ -934,6 +1120,51 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
     ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/* fchown by handle */
+fsal_status_t fsal_set_own_by_handle(fsal_op_context_t * p_context,
+                                     fsal_handle_t * p_handle,
+                                     uid_t user, u_int32_t group)
+{
+  int attr_valid;
+  int attr_changed;
+  gpfsfsal_xstat_t buffxstat;
+
+  if(!p_handle || !p_context || !p_context->export_context)
+      ReturnCode(ERR_FSAL_FAULT, 0);
+
+  attr_valid = XATTR_STAT;
+  attr_changed = XATTR_UID;
+  buffxstat.buffstat.st_uid = user;
+  if (group != -1)
+    {
+      attr_changed |= XATTR_GID;
+      buffxstat.buffstat.st_gid = group;
+    }
+
+  return fsal_set_xstat_by_handle(p_context, p_handle, attr_valid,
+                                 attr_changed, &buffxstat);
+}
+
+/* trucate by handle */
+fsal_status_t fsal_trucate_by_handle(fsal_op_context_t * p_context,
+                                     fsal_handle_t * p_handle,
+                                     u_int64_t size)
+{
+  int attr_valid;
+  int attr_changed;
+  gpfsfsal_xstat_t buffxstat;
+
+  if(!p_handle || !p_context || !p_context->export_context)
+      ReturnCode(ERR_FSAL_FAULT, 0);
+
+  attr_valid = XATTR_STAT;
+  attr_changed = XATTR_SIZE;
+  buffxstat.buffstat.st_size = size;
+
+  return fsal_set_xstat_by_handle(p_context, p_handle, attr_valid,
+                                 attr_changed, &buffxstat);
 }
 
 /* Access check function that accepts stat64. */

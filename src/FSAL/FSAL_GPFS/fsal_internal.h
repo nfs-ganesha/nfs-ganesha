@@ -94,6 +94,14 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
 
 fsal_status_t fsal_internal_get_handle_at(int dfd, fsal_name_t * p_fsalname,    /* IN */
                                           fsal_handle_t * p_handle /* OUT */ );
+
+/**
+ * Gets a file handle from a parent handle and name
+ */
+fsal_status_t fsal_internal_get_fh(fsal_op_context_t * p_context,  /* IN */
+                                   fsal_handle_t * p_dir_handle,   /* IN */
+                                   fsal_name_t * p_fsalname,       /* IN */
+                                   fsal_handle_t * p_handle);      /* OUT */
 /**
  * Access a link by a file handle.
  */
@@ -115,6 +123,22 @@ fsal_status_t fsal_internal_fd2handle(int fd,   /* IN */
     );
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
+
+fsal_status_t fsal_internal_link_fh(fsal_op_context_t * p_context,
+                                    fsal_handle_t * p_target_handle,
+                                    fsal_handle_t * p_dir_handle,
+                                    fsal_name_t * p_link_name);
+
+fsal_status_t fsal_internal_stat_name(fsal_op_context_t * p_context,
+                                    fsal_handle_t * p_dir_handle,
+                                    fsal_name_t * p_stat_name,
+                                    struct stat *buf);
+
+fsal_status_t fsal_internal_rename_fh(fsal_op_context_t * p_context,
+                                    fsal_handle_t * p_old_handle,
+                                    fsal_handle_t * p_new_handle,
+                                    fsal_name_t * p_old_name,
+                                    fsal_name_t * p_new_name);
 
 /**
  *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
@@ -145,6 +169,13 @@ fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN *
                                         fsal_accessflags_t access_type,  /* IN */
                                         struct stat64 *p_buffstat /* IN */);
 
+fsal_status_t fsal_set_own_by_handle(fsal_op_context_t * p_context,
+                                     fsal_handle_t * p_handle,
+                                     uid_t user, u_int32_t group);
+
+fsal_status_t fsal_trucate_by_handle(fsal_op_context_t * p_context,
+                                     fsal_handle_t * p_handle,
+                                     u_int64_t size);
 
 /* All the call to FSAL to be wrapped */
 fsal_status_t GPFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */

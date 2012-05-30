@@ -85,6 +85,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_setattr";
 
+  struct timeval          t;
   fsal_attrib_list_t     sattr;
   fsal_attrib_list_t     parent_attr;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
@@ -252,18 +253,28 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
               return res_SETATTR4.status;
             }
         }
-#ifdef _TOTO
-      /* get the current time */
-      gettimeofday(&t, NULL);
 
+#define S_NSECS 1000000000UL  /* nsecs in 1s */
       /* Set the atime and mtime (ctime is not setable) */
+
+      /* get the current time */
+       gettimeofday(&t, NULL);
+
       /** @todo : check correctness of this block... looks suspicious */
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) == SET_TO_SERVER_TIME4)
         {
           sattr.atime.seconds = t.tv_sec;
           sattr.atime.nseconds = t.tv_usec;
         }
-
+      else
+        {
+          /* a carry into seconds considered invalid */
+          if (sattr.atime.nseconds >= S_NSECS)
+          {
+            res_SETATTR4.status = NFS4ERR_INVAL;
+            return res_SETATTR4.status;
+          }
+        }
       /* Should we use the time from the client handside or from the server handside ? */
       /** @todo : check correctness of this block... looks suspicious */
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
@@ -271,19 +282,14 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           sattr.mtime.seconds = t.tv_sec;
           sattr.mtime.nseconds = t.tv_usec;
         }
-#endif
-
-//warning fix for real (still hunting for root cause)
-#define S_NSECS 1000000000UL	/* nsecs in 1s */
-      /* a carry into seconds appears clearly ruled out */
-      if (sattr.atime.nseconds > S_NSECS)
-          sattr.atime.nseconds = 0;
-
-      if (sattr.mtime.nseconds > S_NSECS)
-          sattr.mtime.nseconds = 0;
-
-      if (sattr.ctime.nseconds > S_NSECS)
-          sattr.ctime.nseconds = 0;
+      else
+        {
+          if (sattr.mtime.nseconds >= S_NSECS)
+          {
+            res_SETATTR4.status = NFS4ERR_INVAL;
+            return res_SETATTR4.status;
+          }
+        }
 
       if(cache_inode_setattr(data->current_entry,
                              &sattr,

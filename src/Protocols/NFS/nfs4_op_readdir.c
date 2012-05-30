@@ -169,8 +169,9 @@ nfs4_op_readdir(struct nfs_argop4 *op,
           goto out;
      }
 
-     /* If maxcount is too short, return NFS4ERR_TOOSMALL */
-     if (maxcount < sizeof(entry4) || estimated_num_entries == 0) {
+     /* If maxcount is too short (14 should be enough for an empty directory)
+          return NFS4ERR_TOOSMALL */
+     if (maxcount < 14 || estimated_num_entries == 0) {
           res_READDIR4.status = NFS4ERR_TOOSMALL;
           goto out;
      }
