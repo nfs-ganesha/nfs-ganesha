@@ -781,7 +781,7 @@ case $RPCAL in
                    AC_MSG_ERROR( [krb5 libs not found, is krb5-config available...?] )
                 else
                    AC_DEFINE(_HAVE_GSSAPI,1,[enable gss in tirpc])
-                   LIBS="$KRBLIBS $LIBS"
+                   LIBS="$KRBLIBS $LIBS -lgssglue"
                 fi
 		;;
 	*)

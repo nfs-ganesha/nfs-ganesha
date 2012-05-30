@@ -17,7 +17,7 @@ endif
 GSSD_LIB = ../RPCAL/gssd/libgssd.la
 
 if HAVE_GSSAPI
-SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssglue -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
+SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 endif
 
 if USE_NFSIDMAP
