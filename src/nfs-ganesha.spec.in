@@ -74,6 +74,14 @@ It comes with various back-end modules to support different file systems and
 name-spaces. This package provides the documentation for NFS-GANESHA and its
 back-ends.
 
+%package libntirpc
+Summary: TI-RPC variant packaged with Ganesha.
+Group: Applications/System
+
+%description libntirpc
+A variant of TI-RPC with enhanced mt-safety, bi-directional operation, and
+other enhancements (in progress).
+
 %package vim
 Summary: Vim configuration files for NFS-GANESHA
 Group: Applications/System
@@ -377,6 +385,89 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
 %doc Docs/ganesha_snmp_adm.pdf
+
+# extra macro
+%define _usrlibdir /usr/lib
+
+%files libntirpc
+%defattr(-,root,root,-)
+# pending further disambiguation, don't install any actual
+# files
+%ghost %{_includedir}/clnt_internal.h
+%ghost %{_includedir}/rpc_com.h
+%ghost %{_includedir}/rpc_ctx.h
+%ghost %{_includedir}/svc_internal.h
+%ghost %{_includedir}/svc_xprt.h
+%ghost %{_includedir}/tirpc/getpeereid.h
+%ghost %{_includedir}/tirpc/misc/event.h
+%ghost %{_includedir}/tirpc/misc/opr_queue.h
+%ghost %{_includedir}/tirpc/misc/queue.h
+%ghost %{_includedir}/tirpc/misc/rbtree.h
+%ghost %{_includedir}/tirpc/misc/rbtree_x.h
+%ghost %{_includedir}/tirpc/namespace.h
+%ghost %{_includedir}/tirpc/netconfig.h
+%ghost %{_includedir}/tirpc/reentrant.h
+%ghost %{_includedir}/tirpc/rpc/auth.h
+%ghost %{_includedir}/tirpc/rpc/auth_des.h
+%ghost %{_includedir}/tirpc/rpc/auth_gss.h
+%ghost %{_includedir}/tirpc/rpc/auth_inline.h
+%ghost %{_includedir}/tirpc/rpc/auth_kerb.h
+%ghost %{_includedir}/tirpc/rpc/auth_unix.h
+%ghost %{_includedir}/tirpc/rpc/clnt.h
+%ghost %{_includedir}/tirpc/rpc/clnt_soc.h
+%ghost %{_includedir}/tirpc/rpc/clnt_stat.h
+%ghost %{_includedir}/tirpc/rpc/des.h
+%ghost %{_includedir}/tirpc/rpc/des_crypt.h
+%ghost %{_includedir}/tirpc/rpc/nettype.h
+%ghost %{_includedir}/tirpc/rpc/pmap_clnt.h
+%ghost %{_includedir}/tirpc/rpc/pmap_prot.h
+%ghost %{_includedir}/tirpc/rpc/pmap_rmt.h
+%ghost %{_includedir}/tirpc/rpc/raw.h
+%ghost %{_includedir}/tirpc/rpc/rpc.h
+%ghost %{_includedir}/tirpc/rpc/rpc_com.h
+%ghost %{_includedir}/tirpc/rpc/rpc_msg.h
+%ghost %{_includedir}/tirpc/rpc/rpcb_clnt.h
+%ghost %{_includedir}/tirpc/rpc/rpcb_prot.h
+%ghost %{_includedir}/tirpc/rpc/rpcb_prot.x
+%ghost %{_includedir}/tirpc/rpc/rpcent.h
+%ghost %{_includedir}/tirpc/rpc/svc.h
+%ghost %{_includedir}/tirpc/rpc/svc_auth.h
+%ghost %{_includedir}/tirpc/rpc/svc_dg.h
+%ghost %{_includedir}/tirpc/rpc/svc_dplx.h
+%ghost %{_includedir}/tirpc/rpc/svc_rqst.h
+%ghost %{_includedir}/tirpc/rpc/svc_soc.h
+%ghost %{_includedir}/tirpc/rpc/types.h
+%ghost %{_includedir}/tirpc/rpc/xdr.h
+%ghost %{_includedir}/tirpc/rpc/xdr_inline.h
+%ghost %{_includedir}/tirpc/rpcsvc/crypt.h
+%ghost %{_includedir}/tirpc/rpcsvc/crypt.x
+%ghost %{_includedir}/tirpc/un-namespace.h
+%ghost %{_includedir}/vc_lock.h
+%ghost %{_usrlibdir}/libntirpc.a
+%ghost %{_usrlibdir}/libntirpc.la
+%ghost %{_usrlibdir}/libntirpc.so
+%ghost %{_usrlibdir}/libntirpc.so.1
+%ghost %{_usrlibdir}/libntirpc.so.1.0.10
+%ghost %{_usrlibdir}/pkgconfig/libntirpc.pc
+%ghost %{_datadir}/man/man3/bindresvport.3t.gz
+%ghost %{_datadir}/man/man3/des_crypt.3t.gz
+%ghost %{_datadir}/man/man3/getnetconfig.3t.gz
+%ghost %{_datadir}/man/man3/getnetpath.3t.gz
+%ghost %{_datadir}/man/man3/getrpcent.3t.gz
+%ghost %{_datadir}/man/man3/getrpcport.3t.gz
+%ghost %{_datadir}/man/man3/rpc.3t.gz
+%ghost %{_datadir}/man/man3/rpc_clnt_auth.3t.gz
+%ghost %{_datadir}/man/man3/rpc_clnt_calls.3t.gz
+%ghost %{_datadir}/man/man3/rpc_clnt_create.3t.gz
+%ghost %{_datadir}/man/man3/rpc_secure.3t.gz
+%ghost %{_datadir}/man/man3/rpc_soc.3t.gz
+%ghost %{_datadir}/man/man3/rpc_svc_calls.3t.gz
+%ghost %{_datadir}/man/man3/rpc_svc_create.3t.gz
+%ghost %{_datadir}/man/man3/rpc_svc_err.3t.gz
+%ghost %{_datadir}/man/man3/rpc_svc_reg.3t.gz
+%ghost %{_datadir}/man/man3/rpc_xdr.3t.gz
+%ghost %{_datadir}/man/man3/rtime.3t.gz
+%ghost %{_datadir}/man/man5/netconfig.5.gz
 
 %files vim
 %defattr(-,root,root,-)
