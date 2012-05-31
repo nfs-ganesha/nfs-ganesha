@@ -461,17 +461,17 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
 {
   switch(status)
     {
-      case STATE_SUCCESS:       return NLM4_GRANTED;
-      case STATE_LOCK_CONFLICT: return NLM4_DENIED;
-      case STATE_MALLOC_ERROR:  return NLM4_DENIED_NOLOCKS;
-      case STATE_LOCK_BLOCKED:  return NLM4_BLOCKED;
-      case STATE_GRACE_PERIOD:  return NLM4_DENIED_GRACE_PERIOD;
-      case STATE_LOCK_DEADLOCK: return NLM4_DEADLCK;
-      case STATE_READ_ONLY_FS:  return NLM4_ROFS;
-      case STATE_NOT_FOUND:     return NLM4_STALE_FH;
-      case STATE_FSAL_ESTALE:   return NLM4_STALE_FH;
-      case STATE_FILE_BIG:      return NLM4_FBIG;
-      default:                  return NLM4_FAILED;
+      case STATE_SUCCESS:        return NLM4_GRANTED;
+      case STATE_LOCK_CONFLICT:  return NLM4_DENIED;
+      case STATE_MALLOC_ERROR:   return NLM4_DENIED_NOLOCKS;
+      case STATE_LOCK_BLOCKED:   return NLM4_BLOCKED;
+      case STATE_GRACE_PERIOD:   return NLM4_DENIED_GRACE_PERIOD;
+      case STATE_LOCK_DEADLOCK:  return NLM4_DEADLCK;
+      case STATE_READ_ONLY_FS:   return NLM4_ROFS;
+      case STATE_NOT_FOUND:      return NLM4_STALE_FH;
+      case STATE_FSAL_ESTALE:    return NLM4_STALE_FH;
+      case STATE_FILE_BIG:       return NLM4_FBIG;
+      default:                   return NLM4_FAILED;
     }
 }
 

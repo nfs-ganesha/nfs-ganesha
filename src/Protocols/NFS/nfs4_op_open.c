@@ -1173,13 +1173,13 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         int new_state = 0;
 
-                /* Set the state for the related file */
-                /* Prepare state management structure */
-                candidate_type                    = STATE_TYPE_SHARE;
-                candidate_data.share.share_deny   = args->share_deny;
-                candidate_data.share.share_access = args->share_access;
+        /* Set the state for the related file */
+        /* Prepare state management structure */
+        candidate_type                         = STATE_TYPE_SHARE;
+        candidate_data.share.share_access      = args->share_access;
+        candidate_data.share.share_deny        = args->share_deny;
         candidate_data.share.share_access_prev = 0;
-        candidate_data.share.share_deny_prev = 0;
+        candidate_data.share.share_deny_prev   = 0;
 
         /* Quick exit if there is any share conflict */
         if(state_share_check_conflict(pentry_newfile, &candidate_data,

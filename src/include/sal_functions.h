@@ -39,7 +39,6 @@
 #define _SAL_FUNCTIONS_H
 
 #include "sal_data.h"
-#include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_core.h"
 
@@ -551,6 +550,41 @@ state_status_t state_del_locked(state_t              * pstate,
 state_status_t state_del(state_t              * pstate,
                          state_status_t       * pstatus);
 
+int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
+int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
+int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
+                                          hash_buffer_t * buffclef);
+uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t * buffclef);
+
+#ifdef _PNFS_MDS
+state_status_t state_add_segment(state_t             * pstate,
+                                 struct pnfs_segment * segment,
+                                 void                * fsal_data,
+                                 bool_t                return_on_close);
+
+state_status_t state_delete_segment(state_layout_segment_t *segment);
+state_status_t state_lookup_layout_state(cache_entry_t * pentry,
+                                         state_owner_t * powner,
+                                         layouttype4     type,
+                                         state_t      ** pstate);
+#endif /*  _PNFS_MDS */
+
+void state_nfs4_state_wipe(cache_entry_t        * pentry,
+                           cache_inode_client_t * pclient);
+
+void release_lockstate(state_owner_t * plock_owner);
+void release_openstate(state_owner_t * popen_owner);
+
+/******************************************************************************
+ *
+ * Share functions
+ *
+ ******************************************************************************/
+
+#define OPEN4_SHARE_ACCESS_NONE 0
+
 state_status_t state_share_add(cache_entry_t         * pentry,
                                fsal_op_context_t     * pcontext,
                                state_owner_t         * powner,
@@ -586,23 +620,7 @@ state_status_t state_share_check_prev(state_t      * pstate,
 state_status_t state_share_check_conflict(cache_entry_t  * pentry,
                                           state_data_t   * pstate_data,
                                           state_status_t * pstatus);
-void state_nfs4_state_wipe(cache_entry_t        * pentry);
 
-void release_lockstate(state_owner_t * plock_owner);
-void release_openstate(state_owner_t * popen_owner);
-
-#ifdef _PNFS_MDS
-state_status_t state_add_segment(state_t             * pstate,
-                                 struct pnfs_segment * segment,
-                                 void                * fsal_data,
-                                 bool_t                return_on_close);
-
-state_status_t state_delete_segment(state_layout_segment_t *segment);
-state_status_t state_lookup_layout_state(cache_entry_t * pentry,
-                                         state_owner_t * powner,
-                                         layouttype4     type,
-                                         state_t      ** pstate);
-#endif /* _PNFS_MDS */
 
 /******************************************************************************
  *
