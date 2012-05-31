@@ -48,6 +48,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  nfs_file_handle.h               \
                  nfs_proto_functions.h           \
                  nfs_proto_tools.h               \
+                 nfs_rpc_callback.h              \
                  nfs_stat.h                      \
                  nfs_tools.h                     \
                  posixdb_consistency.h           \
