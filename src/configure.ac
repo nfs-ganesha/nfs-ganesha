@@ -292,7 +292,7 @@ AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
 GA_PROG_TIRPC
 _SRCDIR="`pwd`"
 TIRPCDIR="${_SRCDIR}/libtirpc"
-echo "TIRPCDIR: ${TIRPCDIR}"
+dnl echo "TIRPCDIR: ${TIRPCDIR}"
 if test -d ${TIRPCDIR}; then
 	cd ${TIRPCDIR}
 	sh autogen.sh
