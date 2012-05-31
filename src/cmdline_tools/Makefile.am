@@ -2,8 +2,8 @@ DLOPEN_FLAGS = -rdynamic
 
 EXTRA_DIST = ganesha_log_level
 
-TIRPC_LIB = ../../contrib/libtirpc/src/libntirpc.la
-TIRPC_STATIC_LIB = ../../contrib/libtirpc/src/.libs/libntirpc.a
+TIRPC_LIB = @TIRPCPATH@/src/libntirpc.la
+TIRPC_STATIC_LIB = @TIRPCPATH@/src/.libs/libntirpc.a
 
 AM_CFLAGS    = $(DLOPEN_FLAGS) -Wimplicit -I$(srcdir)/../MainNFSD $(FSAL_CFLAGS) $(SEC_CFLAGS)
 

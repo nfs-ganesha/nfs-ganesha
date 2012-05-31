@@ -20,7 +20,7 @@ else
 NFS4_ACL_LIB_FLAGS = 
 endif
 
-TIRPC_LIB = ../../contrib/libtirpc/src/libntirpc.la
+TIRPC_LIB = @TIRPCPATH@/src/libntirpc.la
 
 SEC_LIB_FLAGS =
 

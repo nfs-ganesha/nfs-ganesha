@@ -76,8 +76,8 @@ else
 RQUOTA_LIB = 
 endif
 
-TIRPC_LIB = ../../contrib/libtirpc/src/libntirpc.la
-TIRPC_STATIC_LIB = ../../contrib/libtirpc/src/.libs/libntirpc.a
+TIRPC_LIB = @TIRPCPATH@/src/libntirpc.la
+TIRPC_STATIC_LIB = @TIRPCPATH@/src/.libs/libntirpc.a
 
 if USE_9P
 DISPATCH_9P_FILES = 9p_dispatcher.c 

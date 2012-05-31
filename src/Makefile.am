@@ -6,7 +6,7 @@ else
 BUDDYDIR =
 endif
 
-TIRPCDIR = ../contrib/libtirpc
+TIRPCDIR = libtirpc
 
 SUBDIRS = include             \
           Log 		      \
