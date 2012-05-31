@@ -387,6 +387,9 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
 
           /* No locks, yet. */
           init_glist(&entry->object.file.lock_list);
+#ifdef _USE_NLM
+          init_glist(&entry->object.file.nlm_share_list);   /* No associated NLM shares yet */
+#endif
 
           entry->object.file.open_fd.openflags = FSAL_O_CLOSED;
           memset(&(entry->object.file.open_fd.fd), 0, sizeof(fsal_file_t));

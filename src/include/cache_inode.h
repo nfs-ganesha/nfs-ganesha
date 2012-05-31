@@ -245,12 +245,23 @@ typedef struct cache_inode_unstable_data__
  * The reference counted share reservation state.
  */
 
+/* The ref counted share reservation state.
+ *
+ * Each field represents the count of instances of that flag being present
+ * in a v3 or v4 share reservation.
+ *
+ * There is a separate count of v4 deny write flags so that they can be
+ * enforced against v3 writes (v3 deny writes can not be enforced against
+ * v3 writes because there is no connection between the share reservation
+ * and the write operation). v3 reads will always be allowed.
+ */
 typedef struct cache_inode_share__
 {
   unsigned int share_access_read;
   unsigned int share_access_write;
   unsigned int share_deny_read;
   unsigned int share_deny_write;
+  unsigned int share_deny_write_v4; /**< Count of v4 share deny write */
 } cache_inode_share_t;
 
 /**
@@ -363,6 +374,9 @@ struct cache_entry_t
       cache_inode_opened_file_t open_fd;/*< Cached fsal_file_t for
                                             optimized access */
       struct glist_head lock_list; /*< Pointers for lock list */
+#ifdef _USE_NLM
+      struct glist_head nlm_share_list; /**< Pointers for NLM share list */
+#endif
       cache_inode_unstable_data_t
         unstable_data; /*< Unstable data, for use with WRITE/COMMIT */
       cache_inode_share_t share_state; /*< Share reservation state for

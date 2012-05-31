@@ -47,7 +47,6 @@
 #include "cache_inode.h"
 #include "abstract_mem.h"
 #include "RW_Lock.h"
-#include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -86,7 +85,8 @@ typedef struct state_async_queue_t  state_async_queue_t;
 typedef struct nfs_client_record_t  nfs_client_record_t;
 #ifdef _USE_NLM
 typedef struct state_nlm_client_t   state_nlm_client_t;
-#endif /* _USE_NLM */
+typedef struct state_nlm_share_t    state_nlm_share_t;
+#endif /*  _USE_NLM */
 #ifdef _USE_BLOCKING_LOCKS
 typedef struct state_cookie_entry_t state_cookie_entry_t;
 typedef struct state_block_data_t   state_block_data_t;
@@ -238,6 +238,7 @@ typedef struct state_nsm_client_t
 {
   pthread_mutex_t         ssc_mutex;
   struct glist_head       ssc_lock_list;
+  struct glist_head       ssc_share_list;
   sockaddr_t              ssc_client_addr;
   int                     ssc_refcount;
   bool_t                  ssc_monitored;
@@ -260,6 +261,7 @@ typedef struct state_nlm_owner_t
 {
   state_nlm_client_t * so_client;
   int32_t              so_nlm_svid;
+  struct glist_head    so_nlm_shares;
 } state_nlm_owner_t;
 #endif /* _USE_NLM */
 
@@ -618,9 +620,9 @@ struct state_async_queue_t
 
 typedef struct nfs_grace_start
 {
-  int		event;
-  ushort	nodeid;
-  void		*ipaddr;
+  int      event;
+  ushort   nodeid;
+  void   * ipaddr;
 } nfs_grace_start_t;
 
 /* Memory pools */
@@ -628,5 +630,17 @@ typedef struct nfs_grace_start
 extern pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
 extern pool_t *state_nfs4_owner_name_pool; /*< Pool for NFSv4 files's open_owner */
 extern pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
+
+struct state_nlm_share_t
+{
+  struct glist_head   sns_share_per_file;
+  struct glist_head   sns_share_per_owner;
+  struct glist_head   sns_share_per_client;
+  state_owner_t     * sns_powner;
+  cache_entry_t     * sns_pentry;
+  exportlist_t      * sns_pexport;
+  int                 sns_access;
+  int                 sns_deny;
+};
 
 #endif /*  _SAL_DATA_H */
