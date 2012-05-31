@@ -292,9 +292,12 @@ int mnt_Mnt(nfs_arg_t *parg,
 #ifdef _HAVE_GSSAPI
       if(nfs_param.krb5_param.active_krb5 == TRUE)
         {
-          auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
-          auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
-          auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
+	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_NONE)
+	    auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
+	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_INTG)
+	    auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
+	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+	    auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
         }
 #endif
 
