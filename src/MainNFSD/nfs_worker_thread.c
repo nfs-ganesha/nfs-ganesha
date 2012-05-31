@@ -1548,7 +1548,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                    xprt->xp_fd);
 
       /* encoding the result on xdr output */
-      CheckXprt(xprt);
       if(svc_sendreply(xprt, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
         {
           LogDebug(COMPONENT_DISPATCH,
