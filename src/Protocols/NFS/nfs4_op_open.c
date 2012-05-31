@@ -1186,7 +1186,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                                       &state_status) != STATE_SUCCESS)
           {
             *cause2 = " (share conflict)";
-            return NFS4ERR_SHARE_DENIED;
+            return nfs4_Errno_state(state_status);
           }
 
         if(*statep == NULL) {
@@ -1204,7 +1204,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                     powner, data->pcontext, statep,
                     &state_status) != STATE_SUCCESS) {
                         *cause2 = STATE_ADD;
-                        return NFS4ERR_SHARE_DENIED;
+                        return nfs4_Errno_state(state_status);
                 }
 
                 init_glist(&((*statep)->state_data.share.share_lockstates));
@@ -1260,7 +1260,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                              cache_status);
                   }
                 *cause2 = STATE_SHARE_ADD;
-                return NFS4ERR_SHARE_DENIED;
+                return nfs4_Errno_state(state_status);
               }
           }
         else
@@ -1284,7 +1284,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                     LogEvent(COMPONENT_STATE, "Failed to update existing "
                                  "share state");
                     *cause2 = STATE_SHARE_UP;
-                    return NFS4ERR_SHARE_DENIED;
+                    return nfs4_Errno_state(state_status);
                   }
               }
           }

@@ -474,7 +474,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                &pfile_state,
                                &state_status) != STATE_SUCCESS)
                     {
-                      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                      res_OPEN4.status = nfs4_Errno_state(state_status);
                       cause2 = " (state_add failed)";
                       goto out;
                     }
@@ -695,7 +695,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                        data->pcontext,
                        &pfile_state, &state_status) != STATE_SUCCESS)
             {
-              res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+              res_OPEN4.status = nfs4_Errno_state(state_status);
               cause2 = " state_add failed";
               goto out;
             }
@@ -915,7 +915,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                 &pfile_state,
                                 &state_status) != STATE_SUCCESS)
                 {
-                  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                  res_OPEN4.status = nfs4_Errno_state(state_status);
                   cause2 = " (state_add failed)";
                   pthread_rwlock_unlock(&pentry_newfile->state_lock);
                   goto out;

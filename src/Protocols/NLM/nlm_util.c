@@ -275,6 +275,7 @@ int nlm_process_parameters(struct svc_req        * preq,
   fsal_attrib_list_t      attr;
   cache_inode_status_t    cache_status;
   SVCXPRT                *ptr_svc = preq->rq_xprt;
+  int                     rc;
 
   *ppnsm_client = NULL;
   *ppnlm_client = NULL;
@@ -309,9 +310,11 @@ int nlm_process_parameters(struct svc_req        * preq,
        * any locks).
        */
       if(care != CARE_NOT)
-        return NLM4_DENIED_NOLOCKS;
+        rc = NLM4_DENIED_NOLOCKS;
       else
-        return NLM4_GRANTED;
+        rc = NLM4_GRANTED;
+
+      goto out_put;
     }
 
   *ppnlm_client = get_nlm_client(care, ptr_svc, *ppnsm_client, alock->caller_name);
@@ -325,9 +328,11 @@ int nlm_process_parameters(struct svc_req        * preq,
       dec_nsm_client_ref(*ppnsm_client);
 
       if(care != CARE_NOT)
-        return NLM4_DENIED_NOLOCKS;
+        rc = NLM4_DENIED_NOLOCKS;
       else
-        return NLM4_GRANTED;
+        rc = NLM4_GRANTED;
+
+      goto out_put;
     }
 
   *ppowner = get_nlm_owner(care, *ppnlm_client, &alock->oh, alock->svid);
@@ -344,10 +349,12 @@ int nlm_process_parameters(struct svc_req        * preq,
        * just return GRANTED (the unlock must succeed, there can't be
        * any locks).
        */
-      if(care)
-        return NLM4_DENIED_NOLOCKS;
+      if(care != CARE_NOT)
+        rc = NLM4_DENIED_NOLOCKS;
       else
-        return NLM4_GRANTED;
+        rc = NLM4_GRANTED;
+
+      goto out_put;
     }
 
   if(ppblock_data != NULL)
@@ -366,7 +373,8 @@ int nlm_process_parameters(struct svc_req        * preq,
                            (int)preq->rq_prog, (int)preq->rq_vers, (int)preq->rq_proc);
               gsh_free(*ppblock_data);
               *ppblock_data = NULL;
-              return NLM4_FAILED;
+              rc = NLM4_FAILED;
+              goto out_put;
             }
           (*ppblock_data)->sbd_granted_callback = nlm_granted_callback;
           (*ppblock_data)->sbd_block_data_to_fsal_context = nlm_block_data_to_fsal_context;
@@ -396,6 +404,12 @@ int nlm_process_parameters(struct svc_req        * preq,
                "Parameters Processed");
 
   return -1;
+
+ out_put:
+
+  cache_inode_put(*ppentry, pclient);
+  *ppentry = NULL;
+  return rc;
 }
 
 void nlm_process_conflict(nlm4_holder          * nlm_holder,

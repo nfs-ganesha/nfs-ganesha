@@ -382,7 +382,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       break;
 
     case STATE_STATE_CONFLICT:
-      nfserror = NFS4ERR_PERM;
+      nfserror = NFS4ERR_SHARE_DENIED;
       break;
 
     case STATE_QUOTA_EXCEEDED:
