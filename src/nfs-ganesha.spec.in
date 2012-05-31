@@ -389,7 +389,8 @@ rm -rf $RPM_BUILD_ROOT
 %files proxy
 %defattr(-,root,root,-)
 %{_bindir}/proxy.ganesha.*
-%{_bindir}/proxy.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/proxy.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-proxy
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/proxy.ganesha*
@@ -399,7 +400,8 @@ rm -rf $RPM_BUILD_ROOT
 %files xfs
 %defattr(-,root,root,-)
 %{_bindir}/xfs.ganesha.*
-%{_bindir}/xfs.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/xfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-xfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/xfs.ganesha*
@@ -418,7 +420,8 @@ rm -rf $RPM_BUILD_ROOT
 %files vfs
 %defattr(-,root,root,-)
 %{_bindir}/vfs.ganesha.*
-%{_bindir}/vfs.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/vfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-vfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.ganesha*
@@ -428,7 +431,8 @@ rm -rf $RPM_BUILD_ROOT
 %files ceph
 %defattr(-,root,root,-)
 %{_bindir}/ceph.ganesha.*
-%{_bindir}/ceph.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/ceph.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-ceph
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.ganesha*
@@ -438,7 +442,8 @@ rm -rf $RPM_BUILD_ROOT
 %files lustre
 %defattr(-,root,root,-)
 %{_bindir}/lustre.ganesha.*
-%{_bindir}/lustre.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/lustre.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-lustre
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/lustre.ganesha*
@@ -448,7 +453,8 @@ rm -rf $RPM_BUILD_ROOT
 %files shook
 %defattr(-,root,root,-)
 %{_bindir}/shook.ganesha.*
-%{_bindir}/shook.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/shook.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-shook
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/shook.ganesha*
@@ -458,7 +464,8 @@ rm -rf $RPM_BUILD_ROOT
 %files dynfsal
 %defattr(-,root,root,-)
 %{_bindir}/dynfsal.ganesha.*
-%{_bindir}/dynfsal.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/dynfsal.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-dynfsal
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/dynfsal.ganesha*
@@ -468,7 +475,8 @@ rm -rf $RPM_BUILD_ROOT
 %files posix
 %defattr(-,root,root,-)
 %{_bindir}/posix.ganesha.*
-%{_bindir}/posix.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/posix.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-posix
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql
@@ -482,7 +490,8 @@ rm -rf $RPM_BUILD_ROOT
 %files snmp
 %defattr(-,root,root,-)
 %{_bindir}/snmp.ganesha.*
-%{_bindir}/snmp.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/snmp.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-snmp
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/snmp.ganesha*
@@ -510,7 +519,8 @@ rm -rf $RPM_BUILD_ROOT
 %files hpss
 %defattr(-,root,root,-)
 %{_bindir}/hpss.ganesha.*
-%{_bindir}/hpss.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/hpss.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-hpss
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
@@ -520,7 +530,8 @@ rm -rf $RPM_BUILD_ROOT
 %files zfs
 %defattr(-,root,root,-)
 %{_bindir}/zfs.ganesha.*
-%{_bindir}/zfs.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/zfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-zfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/zfs.ganesha*
