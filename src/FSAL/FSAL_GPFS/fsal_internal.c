@@ -88,8 +88,8 @@ static fsal_staticfsinfo_t default_gpfs_info = {
   TRUE,                         /* can change times */
   TRUE,                         /* homogenous */
   GPFS_SUPPORTED_ATTRIBUTES,    /* supported attributes */
-  32768,                        /* maxread size DONT USE 0 */
-  32768,                        /* maxwrite size DONT USE 0 */
+  1048576,                      /* maxread size DONT USE 0 */
+  1048576,                      /* maxwrite size DONT USE 0 */
   0,                            /* default umask */
   0,                            /* cross junctions */
   0400,                         /* default access rights for xattrs: root=RW, owner=R */
