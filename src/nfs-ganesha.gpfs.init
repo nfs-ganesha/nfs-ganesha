@@ -193,7 +193,7 @@ start() {
 
 	# Start the Ganesha daemon
         echo  -n $"Starting $prog: "
-	daemon $PATHPROG $OPTIONS
+	daemon numactl -i all $PATHPROG $OPTIONS
 	RETVAL=$?
 	if [ $HAVE_SMNOTIFY -eq 0 ]; then
 		sm-notify -f
