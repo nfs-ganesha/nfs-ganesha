@@ -828,6 +828,10 @@ fsal_status_t fsal_internal_testAccess(posixfsal_op_context_t * p_context,      
         ReturnCode(ERR_FSAL_ACCESS, 0);
     }
 
+  /* FSAL_OWNER_OK allows overriding checks if the file is owned by the
+   * requester.  It shouldn't take part in any further tests */
+  missing_access &= ~FSAL_OWNER_OK;
+
   /* Test if the file belongs to user's group. */
 
   is_grp = (p_context->credential.group == gid);
