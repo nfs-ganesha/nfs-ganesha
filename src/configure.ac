@@ -296,7 +296,7 @@ dnl echo "TIRPCDIR: ${TIRPCDIR}"
 if test -d ${TIRPCDIR}; then
 	cd ${TIRPCDIR}
 	sh autogen.sh
-	./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix="${prefix}"
+	./configure CFLAGS="${CFLAGS}" --enable-gss --prefix="${prefix}"
 	cd ${_SRCDIR}
 else
 	AC_MSG_ERROR([${TIRPCDIR} not present (cf. README.TIRPC).])
