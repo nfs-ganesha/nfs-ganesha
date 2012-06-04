@@ -547,7 +547,7 @@ void nfs_Init_svc()
    * comparative profiling.
    */
 #define TIRPC_SET_ALLOCATORS 0
-#if !defined(_NO_BUDDY_SYSTEM) && defined(TIRPC_SET_ALLOCATORS)
+#if !defined(_NO_BUDDY_SYSTEM) && TIRPC_SET_ALLOCATORS
   if (!tirpc_control(TIRPC_SET_MALLOC, (mem_alloc_t) BuddyMallocZ))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC alloc");
 
