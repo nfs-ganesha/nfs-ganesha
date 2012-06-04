@@ -74,7 +74,7 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
 {
   LogDebug(COMPONENT_DISPATCH,
            "Awaking Worker Thread #%u for 9P request %p, tcpsock=%lu",
-           worker_index, preq, preq->rcontent._9p.pconn->sockfd);
+           worker_index, preq, preq->r_u._9p.pconn->sockfd);
 
   P(workers_data[worker_index].wcb.tcb_mutex);
   P(workers_data[worker_index].request_pool_mutex);
@@ -223,8 +223,8 @@ void * _9p_socket_thread( void * Arg )
 
         /* Prepare to read the message */
         preq->rtype = _9P_REQUEST ;
-        _9pmsg = preq->rcontent._9p._9pmsg ;
-        preq->rcontent._9p.pconn = &_9p_conn ;
+        _9pmsg = preq->r_u._9p._9pmsg ;
+        preq->r_u._9p.pconn = &_9p_conn ;
 
         /* An incoming 9P request: the msg has a 4 bytes header showing the size of the msg including the header */
         if( (readlen = recv( fds[0].fd, _9pmsg ,_9P_HDR_SIZE, 0) == _9P_HDR_SIZE ) )
