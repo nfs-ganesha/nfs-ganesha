@@ -109,10 +109,10 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
                                    DBUS_TYPE_UINT64_AS_STRING, &sub_iter);
   /* For each bucket of the hashtable */
   for(i = 0; i < ht->parameter.index_size; i++) {
-    head_rbt = &(ht->array_rbt[i]);
+    head_rbt = &(ht->partitions[i].rbt);
     
     /* acquire mutex */
-    P_w(&(ht->array_lock[i]));
+    pthread_rwlock_wrlock(&(ht->partitions[i].lock));
     
     /* go through all entries in the red-black-tree*/
     RBT_LOOP(head_rbt, pn) {
@@ -123,7 +123,7 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
       dbus_message_iter_append_basic(&sub_iter, DBUS_TYPE_UINT64, &clientid);
       RBT_INCREMENT(pn);      
     }
-    V_w(&(ht->array_lock[i]));
+    pthread_rwlock_unlock(&(ht->partitions[i].lock));
   }
   dbus_message_iter_close_container(&iter, &sub_iter);
   /* send the reply && flush the connection */
