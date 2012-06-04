@@ -58,7 +58,7 @@ int _9p_getlock( _9p_request_data_t * preq9p,
                  char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  //nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
  
   u16  * msgtag        = NULL ;
   u32  * fid           = NULL ;
@@ -68,18 +68,6 @@ int _9p_getlock( _9p_request_data_t * preq9p,
   u32  * proc_id       = NULL ;
   u16  * client_id_len = NULL ;
   char * client_id_str = NULL ;
-
-  state_status_t state_status = STATE_SUCCESS;
-
-  state_owner_t      * powner ;
-  state_owner_t      * holder ;
-
-  char name[MAXNAMLEN] ;
-  struct hostent *hp ;
-  uint32_t clientip = 0 ; 
-
-  fsal_lock_param_t    lock ;
-  fsal_lock_param_t    conflict ; 
 
   int rc = 0 ; 
   int err = 0 ;
@@ -111,39 +99,7 @@ int _9p_getlock( _9p_request_data_t * preq9p,
     }
    pfid = &preq9p->pconn->fids[*fid] ;
 
-  /* get the client's ip addr */
-  snprintf( name, MAXNAMLEN, "%.*s",*client_id_len, client_id_str ) ;
-
-  if( ( hp = gethostbyname( name ) ) == NULL )
-   {
-      err = EINVAL ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
-  memcpy( (char *)&clientip, hp->h_addr, sizeof( clientip ) ) ;
-
-  if( ( powner = get_9p_owner( clientip, *proc_id ) ) == NULL )
-   {
-      err = ENOLCK ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
-#if 0
-  if(state_test( pfid->pentry,
-                 &pfid->fsal_op_context, 
-                 pfid->pexport,
-                 powner,
-                 &lock,
-                 &holder,
-                 &conflict,
-                 &pwkrdata->cache_inode_client,
-                 &state_status) != STATE_SUCCESS)
-    {
-       err = ENOLCK ;
-       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-       return rc ;
-    }
-#endif
+   /** @todo This function does nothing for the moment. Make it compliant with fcntl( F_GETLCK, ... */
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RGETLOCK ) ;
