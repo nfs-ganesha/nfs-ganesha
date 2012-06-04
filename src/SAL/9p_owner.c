@@ -46,8 +46,6 @@
 #include "HashTable.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
-#include "nsm.h"
-#include "rpc.h"
 
 //TODO FSF: check if can optimize by using same reference as key and value
 
