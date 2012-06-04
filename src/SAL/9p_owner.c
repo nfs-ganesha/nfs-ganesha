@@ -193,7 +193,7 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * p_hparam,
 
 /**
  *
- * Init_9p_hash: Init the hashtable for NLM Owner cache.
+ * Init_9p_hash: Init the hashtable for 9P Owner cache.
  *
  * Perform all the required initialization for hashtable State Id cache
  * 
@@ -207,7 +207,7 @@ int Init_9p_hash(void)
   if((ht_9p_owner = HashTable_Init(&nfs_param._9p_owner_hash_param)) == NULL)
     {
       LogCrit(COMPONENT_STATE,
-              "Cannot init NLM Owner cache");
+              "Cannot init 9P Owner cache");
       return -1;
     }
 
@@ -218,7 +218,7 @@ int Init_9p_hash(void)
  * _9p_owner_Set
  * 
  *
- * This routine sets a NLM owner into the related hashtable
+ * This routine sets a 9P owner into the related hashtable
  *
  * @return 1 if ok, 0 otherwise.
  *
@@ -299,7 +299,7 @@ void remove_9p_owner( cache_inode_client_t * pclient,
  *
  * _9p_owner_Get_Pointer
  *
- * This routine gets a pointer to an NLM owner from the 9p_owner's hashtable.
+ * This routine gets a pointer to an 9P owner from the 9p_owner's hashtable.
  *
  * @param pstate       [IN] pointer to the stateid to be checked.
  * @param ppstate_data [OUT] pointer's state found 
@@ -348,7 +348,7 @@ static int _9p_owner_Get_Pointer(state_owner_t  * pkey,
  * 
  *  _9p_owner_PrintAll
  *  
- * This routine displays the content of the hashtable used to store the NLM owners. 
+ * This routine displays the content of the hashtable used to store the 9P owners. 
  * 
  * @return nothing (void function)
  */
@@ -368,7 +368,7 @@ state_owner_t *get_9p_owner( uint32_t    clientip,
     return NULL;
 
   memset(pkey, 0, sizeof(*pkey));
-  pkey->so_type                             = STATE_LOCK_OWNER_NLM;
+  pkey->so_type                             = STATE_LOCK_OWNER_9P;
   pkey->so_refcount                         = 1;
   pkey->so_owner.so_9p_owner.proc_id        = proc_id;
   pkey->so_owner.so_9p_owner.clientip       = clientip;
