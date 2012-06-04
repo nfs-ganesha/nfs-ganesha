@@ -60,6 +60,9 @@
 #ifdef _USE_NLM
 #include "nlm4.h"
 #endif /* _USE_NLM */
+#ifdef _USE_9P
+#include "9p.h"
+#endif /* _USE_9P*/
 #include "nlm_list.h"
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
@@ -190,6 +193,9 @@ typedef enum state_owner_type_t
 #ifdef _USE_NLM
   STATE_LOCK_OWNER_NLM,
 #endif /* _USE_NLM */
+#ifdef _USE_9P
+  STATE_LOCK_OWNER_9P,
+#endif /* _USE_9P */
   STATE_OPEN_OWNER_NFSV4,
   STATE_LOCK_OWNER_NFSV4,
   STATE_CLIENTID_OWNER_NFSV4
@@ -231,6 +237,14 @@ typedef struct state_nlm_owner_t
   int32_t              so_nlm_svid;
 } state_nlm_owner_t;
 #endif /* _USE_NLM */
+
+#ifdef _USE_9P
+typedef struct state_9p_owner_t
+{
+  u32      proc_id ;
+  uint32_t clientip ;
+} state_9p_owner_t ;
+#endif /* _USE_9P */
 
 struct nfs_argop4_state
 {
@@ -277,6 +291,9 @@ struct state_owner_t
 #ifdef _USE_NLM
     state_nlm_owner_t     so_nlm_owner;
 #endif /* _USE_NLM */
+#ifdef _USE_9P
+    state_9p_owner_t     so_9p_owner;
+#endif
   } so_owner;
 };
 

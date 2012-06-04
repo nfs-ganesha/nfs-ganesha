@@ -75,7 +75,6 @@ int _9p_write( _9p_request_data_t * preq9p,
   fsal_seek_t seek_descriptor;
   fsal_size_t size;
   fsal_size_t written_size = 0;
-  fsal_attrib_list_t attr;
   fsal_boolean_t eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;

@@ -361,6 +361,9 @@ typedef struct nfs_param__
   hash_parameter_t nlm_client_hash_param;
   hash_parameter_t nlm_owner_hash_param;
 #endif
+#ifdef _USE_9P
+  hash_parameter_t _9p_owner_hash_param;
+#endif 
   nfs_cache_layers_parameter_t cache_layers_param;
   fsal_parameter_t fsal_param;
   external_tools_parameter_t extern_param;

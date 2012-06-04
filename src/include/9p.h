@@ -49,7 +49,7 @@ typedef uint64_t u64;
 #define _9P_RECV_BUFFER_SIZE 131072
 #define _9p_READ_BUFFER_SIZE _9P_SEND_BUFFER_SIZE
 #define _9P_MAXDIRCOUNT 2000 /* Must be bigger than _9P_SEND_BUFFER_SIZE / 40 */
-
+#define _9P_LOCK_CLIENT_LEN 64
 #define CONF_LABEL_9P "_9P"
 
 #define _9P_MSG_SIZE 70000 
