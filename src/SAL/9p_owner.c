@@ -379,13 +379,13 @@ state_owner_t *get_9p_owner( uint32_t    clientip,
       display_9p_owner(pkey, str);
 
       LogFullDebug(COMPONENT_STATE,
-                   "Find NLM Owner KEY {%s}", str);
+                   "Find 9P Owner KEY {%s}", str);
     }
 
   /* If we found it, return it, if we don't care, return NULL */
   if(_9p_owner_Get_Pointer(pkey, &powner) == 1 )
     {
-      /* Discard the key we created and return the found NLM Owner */
+      /* Discard the key we created and return the found 9P Owner */
       Mem_Free(pkey);
 
       if(isFullDebug(COMPONENT_STATE))
@@ -438,7 +438,7 @@ state_owner_t *get_9p_owner( uint32_t    clientip,
 
           display_9p_owner(powner, str);
           LogFullDebug(COMPONENT_STATE,
-                       "Set NLM Owner {%s}",
+                       "Set 9P Owner {%s}",
                        str);
         }
 
