@@ -61,26 +61,8 @@ int display_9p_owner(state_owner_t *pkey, char *str)
 
   strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", pkey);
 
-  strtmp += sprintf(strtmp, " oh=(%u:", pkey->so_owner_len);
-
-  for(i = 0; i < pkey->so_owner_len; i++)
-    if(!isprint(pkey->so_owner_val[i]))
-      break;
-
-  if(i == pkey->so_owner_len)
-    {
-      memcpy(strtmp, pkey->so_owner_val, pkey->so_owner_len);
-      strtmp[pkey->so_owner_len] = '\0';
-      strtmp += pkey->so_owner_len;
-    }
-  else for(i = 0; i < pkey->so_owner_len; i++)
-    {
-      sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner_val[i]);
-      strtmp += 2;
-    }
-
-  strtmp += sprintf(strtmp, ") clientip=0x%x", pkey->so_owner.so_9p_owner.clientip);
-  strtmp += sprintf(strtmp, ") proc_id=%u", pkey->so_owner.so_9p_owner.proc_id);
+  strtmp += sprintf(strtmp, " clientip=0x%x", pkey->so_owner.so_9p_owner.clientip);
+  strtmp += sprintf(strtmp, " proc_id=%u", pkey->so_owner.so_9p_owner.proc_id);
  
   strtmp += sprintf(strtmp, " refcount=%d", pkey->so_refcount);
 
