@@ -584,6 +584,10 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
     case RPC_CHAN_V40:
         /* channel has a dedicated RPC client */
         if (chan->clnt) {
+            /* clean up auth, if any */
+            if (chan->clnt->cl_auth)
+                AUTH_DESTROY(chan->clnt->cl_auth);
+            /* destroy it */
             clnt_destroy(chan->clnt);
             chan->clnt = NULL;
         }
