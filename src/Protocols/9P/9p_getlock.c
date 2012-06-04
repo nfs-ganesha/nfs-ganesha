@@ -128,7 +128,7 @@ int _9p_getlock( _9p_request_data_t * preq9p,
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
    }
-
+#if 0
   if(state_test( pfid->pentry,
                  &pfid->fsal_op_context, 
                  pfid->pexport,
@@ -143,6 +143,7 @@ int _9p_getlock( _9p_request_data_t * preq9p,
        rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
        return rc ;
     }
+#endif
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RGETLOCK ) ;
