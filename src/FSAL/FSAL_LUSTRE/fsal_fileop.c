@@ -213,6 +213,21 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
                                        &((lustrefsal_handle_t *)p_filehandle)->data.fid, 2);
                 if (rc)
                     Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+                else {
+                    /* check that file is online, else operation is still
+                     * in progress: return err jukebox */
+                    rc = shook_get_status(fsalpath.path, &state, FALSE);
+                    if (rc)
+                    {
+                        LogEvent(COMPONENT_FSAL, "Error retrieving shook status of %s: %s",
+                                 fsalpath.path, strerror(-rc));
+                        if (rc)
+                            Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+                    }
+                    else if (state != SS_ONLINE)
+                        Return(ERR_FSAL_DELAY, -rc, INDEX_FSAL_open);
+                    /* else: OK */
+                }
             }
             else
             {
@@ -230,6 +245,22 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
                                    &((lustrefsal_handle_t *)p_filehandle)->data.fid, 1);
             if (rc)
                 Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+            else {
+                /* check that file is online, else operation is still
+                 * in progress: return err jukebox */
+                rc = shook_get_status(fsalpath.path, &state, FALSE);
+                if (rc)
+                {
+                    LogEvent(COMPONENT_FSAL, "Error retrieving shook status of %s: %s",
+                             fsalpath.path, strerror(-rc));
+                    if (rc)
+                        Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+                }
+                else if (state != SS_ONLINE)
+                    Return(ERR_FSAL_DELAY, -rc, INDEX_FSAL_open);
+                /* else: OK */
+            }
+
             /* if rc = 0, file can be opened */
         }
     }
