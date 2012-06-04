@@ -80,7 +80,7 @@ void state_wipe_file(cache_entry_t        * pentry,
 
 /******************************************************************************
  *
- * NLM State functions
+ * 9P State functions
  *
  ******************************************************************************/
 
@@ -108,6 +108,12 @@ state_owner_t *get_9p_owner( uint32_t    clientip,
 
 int Init_9p_hash(void) ;
 #endif
+
+/******************************************************************************
+ *
+ * NLM State functions
+ *
+ ******************************************************************************/
 
 #ifdef _USE_NLM
 void inc_nsm_client_ref_locked(state_nsm_client_t * pclient);
