@@ -30,8 +30,8 @@
  * \version $Revision: 1.96 $
  * \brief   The file that contain the 'rpc_dispatcher_thread' routine for the nfsd.
  *
- * nfs_rpc_dispatcher.c : The file that contain the 'rpc_dispatcher_thread' routine for the nfsd (and all
- * the related stuff).
+ * nfs_rpc_dispatcher.c : The file that contain the 'rpc_dispatcher_thread' routine
+ * for the nfsd (and all the related stuff).
  *
  */
 #ifdef HAVE_CONFIG_H
