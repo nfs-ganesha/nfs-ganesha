@@ -599,6 +599,18 @@ void nfs_set_param_default()
   nfs_param.nlm_owner_hash_param.name = "NLM Owner";
   nfs_param.nlm_owner_hash_param.flags = HT_FLAG_NONE;
 #endif
+#ifdef _USE_9P
+  /* 9P Lock Owner hash */
+  nfs_param._9p_owner_hash_param.index_size = PRIME_STATE_ID;
+  nfs_param._9p_owner_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param._9p_owner_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param._9p_owner_hash_param.hash_func_key = _9p_owner_value_hash_func;
+  nfs_param._9p_owner_hash_param.hash_func_rbt = _9p_owner_rbt_hash_func;
+  nfs_param._9p_owner_hash_param.compare_key = compare_9p_owner_key;
+  nfs_param._9p_owner_hash_param.key_to_str = display_9p_owner_key;
+  nfs_param._9p_owner_hash_param.val_to_str = display_9p_owner_val;
+  nfs_param._9p_owner_hash_param.name = "NLM Owner";
+#endif 
 
   /* Cache inode parameters : hash table */
   nfs_param.cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE;
@@ -1870,6 +1882,18 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           "NLM Owner cache successfully initialized");
   nlm_init();
 #endif
+
+#ifdef _USE_9P
+  /* Init the 9P lock owner cache */
+  LogDebug(COMPONENT_INIT, "Now building 9P Owner cache");
+  if(Init_9p_hash() != 0)
+    {
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing 9P Owner cache");
+    }
+  LogInfo(COMPONENT_INIT,
+          "9P Owner cache successfully initialized");
+#endif 
 
 #ifdef _USE_NFS4_1
   LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");

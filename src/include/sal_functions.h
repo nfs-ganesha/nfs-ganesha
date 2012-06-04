@@ -84,6 +84,31 @@ void state_wipe_file(cache_entry_t        * pentry,
  *
  ******************************************************************************/
 
+#ifdef _USE_9P
+int compare_9p_owner(state_owner_t * powner1,
+                     state_owner_t * powner2);
+int compare_9p_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2) ;
+
+int display_9p_owner(state_owner_t * pkey, char * str);
+int display_9p_owner_key(hash_buffer_t * pbuff, char *str) ;
+int display_9p_owner_val(hash_buffer_t * pbuff, char *str) ;
+
+void remove_9p_owner(cache_inode_client_t * pclient,
+                     state_owner_t        * powner,
+                     const char           * str);
+
+uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t * buffclef) ;
+uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+                                 hash_buffer_t * buffclef) ;
+void _9p_owner_PrintAll(void) ;
+
+state_owner_t *get_9p_owner( uint32_t    clientip,
+                             uint32_t    proc_id) ;
+
+int Init_9p_hash(void) ;
+#endif
+
 #ifdef _USE_NLM
 void inc_nsm_client_ref_locked(state_nsm_client_t * pclient);
 void inc_nsm_client_ref(state_nsm_client_t * pclient);

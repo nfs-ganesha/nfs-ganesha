@@ -44,6 +44,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <sys/stat.h>
+#include <netdb.h>
 #include "nfs_core.h"
 #include "stuff_alloc.h"
 #include "log.h"
@@ -51,6 +52,8 @@
 #include "sal_functions.h"
 #include "fsal.h"
 #include "9p.h"
+
+extern int h_errno;
 
 int _9p_lock( _9p_request_data_t * preq9p, 
               void  * pworker_data,
@@ -76,9 +79,15 @@ int _9p_lock( _9p_request_data_t * preq9p,
   u8 status = 0  ;
   state_status_t state_status = STATE_SUCCESS;
   state_owner_t      * holder ;
-  state_owner_t        owner ;
+  state_owner_t      * powner ;
   state_t              state ;
-  fsal_lock_param_t    lock, conflict;
+  fsal_lock_param_t    lock ;
+  fsal_lock_param_t    conflict;
+
+  char name[MAXNAMLEN] ;
+
+  struct hostent *hp ;
+  uint32_t clientip = 0 ; 
 
   _9p_fid_t * pfid = NULL ;
 
@@ -108,6 +117,24 @@ int _9p_lock( _9p_request_data_t * preq9p,
     }
   pfid = &preq9p->pconn->fids[*fid] ;
 
+  /* get the client's ip addr */
+  snprintf( name, MAXNAMLEN, "%.*s",*client_id_len, client_id_str ) ;
+
+  if( ( hp = gethostbyname( name ) ) == NULL )
+   {
+      err = EINVAL ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+   }
+  memcpy( (char *)&clientip, hp->h_addr, sizeof( clientip ) ) ;
+
+  if( ( powner = get_9p_owner( clientip, *proc_id ) ) == NULL )
+   {
+      err = EINVAL ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+   }
+
   /* Do the job */
   switch( *type )
    {
@@ -127,7 +154,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
         if( state_lock( pfid->pentry,
                         &pfid->fsal_op_context,
                         pfid->pexport,
-                        &owner,
+                        powner,
                         &state,
                         STATE_NON_BLOCKING,
                         NULL,
@@ -149,12 +176,12 @@ int _9p_lock( _9p_request_data_t * preq9p,
 
       case _9P_LOCK_TYPE_UNLCK:
          if(state_unlock( pfid->pentry,
-                          &pfid->pcontext,
+                          &pfid->fsal_op_context,
                           pfid->pexport,
-                          &owner,
+                          powner,
                           NULL,
                           &lock,
-                          &&pwkrdtata->cache_inode_client,
+                          &pwkrdata->cache_inode_client,
                           &state_status) != STATE_SUCCESS)
              status = _9P_LOCK_ERROR ;
          else

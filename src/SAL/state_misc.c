@@ -716,6 +716,9 @@ const char * state_owner_type_to_str(state_owner_type_t type)
 #ifdef _USE_NLM
       case STATE_LOCK_OWNER_NLM:         return "STATE_LOCK_OWNER_NLM";
 #endif
+#ifdef _USE_9P
+      case STATE_LOCK_OWNER_9P:          return "STALE_LOCK_OWNER_9P";
+#endif
       case STATE_OPEN_OWNER_NFSV4:       return "STATE_OPEN_OWNER_NFSV4";
       case STATE_LOCK_OWNER_NFSV4:       return "STATE_LOCK_OWNER_NFSV4";
       case STATE_CLIENTID_OWNER_NFSV4:   return "STATE_CLIENTID_OWNER_NFSV4";
@@ -743,6 +746,12 @@ int different_owners(state_owner_t *powner1, state_owner_t *powner2)
            return 1;
         return compare_nlm_owner(powner1, powner2);
 #endif
+#ifdef _USE_9P
+      case STATE_LOCK_OWNER_9P:
+        if(powner2->so_type != STATE_LOCK_OWNER_9P)
+           return 1;
+        return compare_9p_owner(powner1, powner2);
+#endif
       case STATE_OPEN_OWNER_NFSV4:
       case STATE_LOCK_OWNER_NFSV4:
       case STATE_CLIENTID_OWNER_NFSV4:
@@ -765,6 +774,10 @@ int DisplayOwner(state_owner_t *powner, char *buf)
 #ifdef _USE_NLM
         case STATE_LOCK_OWNER_NLM:
           return display_nlm_owner(powner, buf);
+#endif
+#ifdef _USE_9P
+        case STATE_LOCK_OWNER_9P:
+          return display_9p_owner(powner, buf);
 #endif
 
         case STATE_OPEN_OWNER_NFSV4:
@@ -887,7 +900,10 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
             remove_nlm_owner(pclient, powner, str);
             break;
 #endif
-
+#ifdef _USE_9P
+          case STATE_LOCK_OWNER_9P:
+            remove_9p_owner(pclient, powner, str);
+#endif
           case STATE_OPEN_OWNER_NFSV4:
           case STATE_LOCK_OWNER_NFSV4:
           case STATE_CLIENTID_OWNER_NFSV4:
