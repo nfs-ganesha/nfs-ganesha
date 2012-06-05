@@ -19,6 +19,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "log.h"
 
 // Linux includes
 #include <stdio.h>
@@ -204,4 +205,6 @@ uint64_t ptfsal_write(fsal_file_t * p_file_descriptor,
 void ptfsal_print_handle(char * handle);
 
 mode_t fsal_type2unix(int fsal_type);
+
+void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context, fsi_handle_struct * handler);
 #endif // ifndef __PT_GANESHA_H__

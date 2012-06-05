@@ -86,24 +86,22 @@ fsal_status_t PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
                                 fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */)
 {
 
-  int rc, errsv;
-  int fd;
+  int rc=0, errsv;
+  int fd = -1;
   fsal_status_t st;
-
+  FSI_TRACE(FSI_DEBUG,"Truncate called, length=%d",length);
   /* sanity checks.
    * note : object_attributes is optional.
    */
   if(!p_filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-
-  FSI_TRACE(FSI_DEBUG, "truncate entered handle %d\n", fd);
-
-
+  ptfsal_print_handle(p_filehandle);
   /* Check to see if we already have fd */
   if (file_descriptor && file_descriptor->fd != 0)
     {
       fd = file_descriptor->fd;
+      FSI_TRACE(FSI_DEBUG, "Truncating with fd=%d, truncate length=%d",fd,length );
       TakeTokenFSCall();
       rc = ptfsal_ftruncate(p_context, fd, length);
       errsv = errno;
@@ -122,7 +120,7 @@ fsal_status_t PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
         ReturnStatus(st, INDEX_FSAL_truncate);
 
       /* Executes the POSIX truncate operation */
-
+      FSI_TRACE(FSI_DEBUG, "Truncating with POSIX truncate fd=%d, truncate length=%d",fd,length );
       TakeTokenFSCall();
       rc = ptfsal_ftruncate(p_context, fd, length);
       errsv = errno;

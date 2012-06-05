@@ -60,6 +60,11 @@ pthread_mutex_t g_parseio_mutex; // only one thread can parse an io at a time
 pthread_mutex_t g_transid_mutex; // only one thread can change global transid at a time
 pthread_mutex_t g_non_io_mutex;
 
+/* Following are for FSI_TRACE control and mapping to Ganesha Trace Facility */
+int g_ptfsal_debug_level;    
+int g_ptfsal_comp_num;
+int g_ptfsal_comp_level;
+
 /**
  * FSAL_Init : Initializes the FileSystem Abstraction Layer.
  *
@@ -90,20 +95,21 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
+  /* These are initial values until we get our own Ganesha component */
+  g_ptfsal_debug_level = FSI_DEBUG;   // TODO get our own mechanism to set
+                                      //  or have these settable by Ganesha
+                                      //  debug control
+  g_ptfsal_comp_num = (int) COMPONENT_FSAL;  // till we get our own comp
+  g_ptfsal_comp_level = (int) NIV_INFO;      // only has meaning if syslog
+                                             // used, using g_ptfsal_debug_level
+                                             // to control instead, 
+
   /* proceeds FSAL internal initialization */
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info),
                                      &(init_info->fs_specific_info));
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
-
-  // FSI INIT
-  int rc;
-
-  // Get my pid
-  g_client_pid = getpid();
-
-  FSI_TRACE(FSI_NOTICE, "entry, pid = %lx", g_client_pid);
 
   // init mutexes
   pthread_mutex_init(&g_dir_mutex,NULL);
@@ -112,134 +118,50 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   pthread_mutex_init(&g_non_io_mutex,NULL);
   pthread_mutex_init(&g_parseio_mutex,NULL);
   pthread_mutex_init(&g_transid_mutex,NULL);
+
   g_fsi_name_handle_cache.m_count = 0;
-  g_client_address[0] = '\0';
 
-
-  // Attach to existing FSI Shared Memory
-  g_shm_id = shmget(FSI_IPC_SHMEM_KEY, 0, 0);
-  if (g_shm_id < 0) {
-    FSI_TRACE(FSI_FATAL, "error getting shm id %d (errno = %d)",
-              FSI_IPC_SHMEM_KEY, errno);
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-  } else {
-    g_shm_at = shmat(g_shm_id, NULL, 0);
-    if ((void *) -1 == g_shm_at) {
-      FSI_TRACE(FSI_FATAL, "error shm attach g_shm_id = %d (errno = %d)",
-                g_shm_id, errno);
-      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-    } else {
-      FSI_TRACE(FSI_NOTICE, "shm attach ok");
-
-      // Get the PID of Server process
-      struct shmid_ds t_shmid_ds;
-      int rtn;
-      if ((rtn = shmctl(g_shm_id, IPC_STAT, &t_shmid_ds)) == -1) {
-        FSI_TRACE(FSI_FATAL, "shmctl failed, errno = %d", errno);
-        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-      }
-      g_server_pid = t_shmid_ds.shm_cpid;
-      FSI_TRACE(FSI_NOTICE, "Server pid = %lx", g_server_pid);
-    }
-  }
-
-  // Get IO and non-IO request, response message queue IDs
-  g_io_req_msgq = msgget(FSI_IPC_IO_REQ_Q_KEY, 0);
-  if (g_io_req_msgq < 0) {
-    FSI_TRACE(FSI_FATAL, "error getting IO Req Msg Q id %d (errno = %d)",
-              FSI_IPC_IO_REQ_Q_KEY, errno);
-    // cleanup the attach made earlier, nothing to clean up for the queues
-    if ((rc = shmdt(g_shm_at)) == -1) {
-      FSI_TRACE(FSI_FATAL, "shmdt returned rc = %d errno = %d", rc, errno);
-    }
+  /* FSI CCL Layer INIT */
+  int rc = ccl_init(MULTITHREADED);
+  if (rc == -1) {
+    FSI_TRACE(FSI_ERR, "ccl_init returned rc = -1, errno = %d", errno);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
-
-  g_io_rsp_msgq = msgget(FSI_IPC_IO_RSP_Q_KEY, 0);
-  if (g_io_rsp_msgq < 0) {
-    FSI_TRACE(FSI_FATAL, "error getting IO Rsp Msg Q id %d (errno = %d)",
-              FSI_IPC_IO_RSP_Q_KEY, errno);
-    // cleanup the attach made earlier, nothing to clean up for the queues
-    if ((rc = shmdt(g_shm_at)) == -1) {
-      FSI_TRACE(FSI_FATAL, "shmdt returned rc = %d errno = %d", rc, errno);
-    }
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-  }
-
-  g_non_io_req_msgq = msgget(FSI_IPC_NON_IO_REQ_Q_KEY, 0);
-  if (g_non_io_req_msgq < 0) {
-    FSI_TRACE(FSI_FATAL, "error getting non IO Req Msg Q id %d (errno = %d)",
-              FSI_IPC_NON_IO_REQ_Q_KEY, errno);
-    // cleanup the attach made earlier, nothing to clean up for the queues
-    if ((rc = shmdt(g_shm_at)) == -1) {
-      FSI_TRACE(FSI_FATAL, "shmdt returned rc = %d errno = %d", rc, errno);
-    }
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-  }
-
-  g_non_io_rsp_msgq = msgget(FSI_IPC_NON_IO_RSP_Q_KEY, 0);
-  if (g_non_io_rsp_msgq < 0) {
-    FSI_TRACE(FSI_FATAL, "error getting non IO Rsp Msg Q id %d (errno = %d)",
-              FSI_IPC_NON_IO_RSP_Q_KEY, errno);
-    // cleanup the attach made earlier, nothing to clean up for the queues
-    if ((rc = shmdt(g_shm_at)) == -1) {
-      FSI_TRACE(FSI_FATAL, "shmdt returned rc = %d errno = %d", rc, errno);
-    }
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-  }
-
-  // Get shmem request, response message queue IDs
-  g_shmem_req_msgq = msgget(FSI_IPC_SHMEM_REQ_Q_KEY, 0);
-  if (g_shmem_req_msgq < 0) {
-    FSI_TRACE(FSI_FATAL, "error getting shmem Req Msg Q id %d (errno = %d)",
-              FSI_IPC_SHMEM_REQ_Q_KEY, errno);
-    // cleanup the attach made earlier, nothing to clean up for the queues
-    if ((rc = shmdt(g_shm_at)) == -1) {
-      FSI_TRACE(FSI_FATAL, "shmdt returned rc = %d errno = %d", rc, errno);
-    }
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-  }
-
-  g_shmem_rsp_msgq = msgget(FSI_IPC_SHMEM_RSP_Q_KEY, 0);
-  if (g_shmem_rsp_msgq < 0) {
-    FSI_TRACE(FSI_FATAL, "error getting shmem Rsp Msg Q id %d (errno = %d)",
-              FSI_IPC_SHMEM_RSP_Q_KEY, errno);
-    // cleanup the attach made earlier, nothing to clean up for the queues
-    if ((rc = shmdt(g_shm_at)) == -1) {
-      FSI_TRACE(FSI_FATAL, "shmdt returned rc = %d errno = %d", rc, errno);
-    }
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-  }
-
-  // Summarize init
-  FSI_TRACE(FSI_NOTICE, "shmem at  %p", g_shm_at);
-  FSI_TRACE(FSI_NOTICE, "g_io_req_msgq %d", g_io_req_msgq);
-  FSI_TRACE(FSI_NOTICE, "g_io_rsp_msgq %d", g_io_rsp_msgq);
-  FSI_TRACE(FSI_NOTICE, "g_non_io_req_msgq %d", g_non_io_req_msgq);
-  FSI_TRACE(FSI_NOTICE, "g_non_io_rsp_msgq %d", g_non_io_rsp_msgq);
-  FSI_TRACE(FSI_NOTICE, "g_shmem_req_msgq %d", g_shmem_req_msgq);
-  FSI_TRACE(FSI_NOTICE, "g_shmem_rsp_msgq %d", g_shmem_rsp_msgq);
-
-  // clear our handles
-  memset(&g_fsi_handles, 0, sizeof(g_fsi_handles));
-
-  // skip stdXXX file handles
-  g_fsi_handles.m_count = 4;
-
-  // clear our dirHandles
-  memset(&g_fsi_dir_handles, 0, sizeof(g_fsi_dir_handles));
-
-  // clear our ACL Handles
-  memset(&g_fsi_acl_handles, 0, sizeof(g_fsi_acl_handles));
-
-  // set initial global path this should match the export fsname
-  // Ignore snprintf rc, we have enough space for 2
-  snprintf(g_chdir_dirpath, 2, "%s", "/");
-
-  ccl_ipc_stats_init();
-
 
   /* Regular exit */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
+}
 
+// -----------------------------------------------------------------------------
+//   CCL Up Call defintions
+// -----------------------------------------------------------------------------
+
+int ccl_up_mutex_lock( pthread_mutex_t * pmutex)
+{
+  FSI_TRACE(FSI_DEBUG, "requesting lock on 0x%lx", (unsigned int) pmutex);
+  int rc = pthread_mutex_lock( pmutex);
+  if (rc) {
+    FSI_TRACE(FSI_ERR, "error code from pthread_mutex_lock = %d", rc);
+  } else {
+    FSI_TRACE(FSI_DEBUG, "lock 0x%lx acuired", (unsigned int) pmutex);
+  }
+}
+
+int ccl_up_mutex_unlock( pthread_mutex_t * pmutex)
+{
+  FSI_TRACE(FSI_DEBUG, "unlocking 0x%lx", (unsigned int) pmutex);
+  int rc = pthread_mutex_unlock( pmutex);
+  if (rc) {
+    FSI_TRACE(FSI_ERR, "error code from pthread_mutex_unlock = %d "
+              "probably did not own lock", rc);
+  } else {
+    FSI_TRACE(FSI_DEBUG, "successfully unlocked 0x%lx ", (unsigned int) pmutex);
+  }
+}
+
+unsigned long ccl_up_self()
+{
+   unsigned long my_tid = pthread_self();
+   FSI_TRACE(FSI_DEBUG, "tid = %ld ", my_tid);
+   return my_tid;
 }

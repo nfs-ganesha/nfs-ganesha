@@ -175,7 +175,6 @@ fsal_status_t PTFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN 
   int setgid_bit = FALSE;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
-  fsi_handle_struct handler;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -188,15 +187,6 @@ fsal_status_t PTFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN 
 
   if(!global_fs_info.symlink_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
-
-  // TakeTokenFSCall();
-  // status =
-  //    fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd,
-  //                            O_RDONLY | O_DIRECTORY);
-  // ReleaseTokenFSCall();
-
-  // if(FSAL_IS_ERROR(status))
-  //  ReturnStatus(status, INDEX_FSAL_symlink);
 
   /* retrieve directory metadata, for checking access */
   parent_dir_attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
@@ -243,7 +233,7 @@ fsal_status_t PTFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN 
 
   /* chown the symlink to the current user/group */
   TakeTokenFSCall();
-  rc = ptfsal_chown(&handler, p_linkname->name,
+  rc = ptfsal_chown(p_context, p_linkname->name,
                     p_context->credential.user,
                     setgid_bit ? -1 : (int)p_context->credential.group);
   errsv = errno;

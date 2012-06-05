@@ -12,6 +12,7 @@
 #define __FSI_IPC_COMMON_H__
 
 #include <stdint.h>
+#include <string.h> // for memcpy
 
 // *****************************************************************************
 // * DEFINED CONSTANTS                                                         *
@@ -148,9 +149,7 @@ enum {
   ClientOpLchown,               // ?
   ClientOpChdir,                // No
   ClientOpGetwd,                // No
-  ClientOpNtimes,               // SPECIAL!
-  ClientOpSymLink,              // Required - No solution!
-  ClientOpVfsReadlink,          // Required - No solution!
+  ClientOpNtimes,               // node times operation
   ClientOpLink,                 // Required - No solution!
   ClientOpMknod,                // Do not expect calls to this - verify w/apps
   ClientOpRealpath,             // Do not expect calls to this - verify w/apps
@@ -195,6 +194,7 @@ enum {
   ClientOpIsOffline,            // TBD
   ClientOpSetOffline,           // TBD
   ClientOpHandleToName,
+  ClientOpSymLink,              // symlink operations
   ClientOpReadLink,
   ClientOpDynamicFsInfo,
   FsiIpcOpReqShmem,             // request shared mem from server
@@ -490,7 +490,7 @@ struct ClientOpCloseDirRspMtext {
   struct ClientOpCloseDirRspMsg data;  // custom message data
 };
 
-// persisten handle structure
+// persistent handle structure
 struct PersistentHandle {
   char handle[FSI_PERSISTENT_HANDLE_N_BYTES];
 };
@@ -1005,14 +1005,13 @@ struct ClientOpDynamicFsInfoReqMtext {
 
 // ClientOpDynamicFsInfo Server Response Message
 struct ClientOpDynamicFsInfoRspMsg {
-  uint64_t totalBytes;
-  uint64_t freeBytes;
-  uint64_t availableBytes;
-  uint64_t totalFiles;
-  uint64_t freeFiles;
-  uint64_t availableFiles;
-  uint64_t seconds;
-  uint64_t nanoseconds;
+  uint64_t        totalBytes;
+  uint64_t        freeBytes;
+  uint64_t        availableBytes;
+  uint64_t        totalFiles;
+  uint64_t        freeFiles;
+  uint64_t        availableFiles;
+  struct timespec time;
 };
 
 struct ClientOpDynamicFsInfoRspMtext {

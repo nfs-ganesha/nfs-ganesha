@@ -414,3 +414,5 @@ fsal_status_t PTFSAL_commit( fsal_file_t * p_file_descriptor,
 
 fsal_status_t PTFSAL_GetExportEntry(char * path,                 /* IN */ 
                                     exportlist_t ** p_exportlist) /* OUT */ ;
+
+fsal_status_t PTFSAL_GetMountRootFD(fsal_op_context_t * p_context);

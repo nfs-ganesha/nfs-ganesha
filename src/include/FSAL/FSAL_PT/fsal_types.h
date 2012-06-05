@@ -214,10 +214,11 @@ typedef struct
 typedef struct
 {
   int fd;
-  int ro;                       /* read only file ? */
-  uint64_t  export_id;    // export id
-  uint64_t  uid;          // user id of the connecting user
-  uint64_t  gid;          // group id of the connecting user 
+  int ro;                   /* read only file ? */
+  uint64_t  export_id;      // export id
+  uint64_t  uid;            // user id of the connecting user
+  uint64_t  gid;            // group id of the connecting user 
+  // char    * client_address; // The ip address of client 
 } ptfsal_file_t;
 
 /* Define the buffer size for GPFS NFS4 ACL. */

@@ -209,6 +209,11 @@ fsal_status_t PTFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   p_file_descriptor->export_id = handler.export_id;
   p_file_descriptor->uid = handler.uid;
   p_file_descriptor->gid = handler.gid;
+  /*
+   * TODO: add ip address to p_file_descriptor->client_address
+   * when the IP address is available
+   */
+ 
   errsv = errno;
   ReleaseTokenFSCall();
 

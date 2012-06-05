@@ -130,7 +130,7 @@ PTFSAL_create(fsal_handle_t      * p_parent_directory_handle, /* IN */
   if (open_rc < 0) {
      errsv = errno;
      ReleaseTokenFSCall();
-     Return(posix2fsal_error(open_rc), errsv, INDEX_FSAL_create);
+     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
   }
   ReleaseTokenFSCall();
 
