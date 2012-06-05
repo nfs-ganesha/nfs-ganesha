@@ -498,6 +498,7 @@ int
 ptfsal_close(fsal_file_t * p_file_descriptor)
 {
   int handle_index;
+  int rc;
 
   ptfsal_file_t   * p_descriptor = (ptfsal_file_t *)p_file_descriptor;
   fsi_handle_struct handler;
@@ -509,11 +510,15 @@ ptfsal_close(fsal_file_t * p_file_descriptor)
   // strncpy(handler.client_address, p_descriptor->client_address, 256);
 
   handle_index = ((ptfsal_file_t *)p_file_descriptor)->fd;
+  FSI_TRACE(FSI_DEBUG, "Handle index = %d\n", handle_index);
   if (fsi_check_handle_index (handle_index) < 0) {
     return -1;
   }
 
-  return ccl_close(&handler, handle_index);
+  rc = ccl_close(&handler, handle_index);
+
+  FSI_TRACE(FSI_DEBUG, "Close rc = %d\n", rc);
+  return rc;
 }
 // -----------------------------------------------------------------------------
 int

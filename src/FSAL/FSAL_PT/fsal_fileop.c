@@ -522,7 +522,7 @@ fsal_status_t PTFSAL_write(fsal_file_t * file_desc,       /* IN */
 
   *p_write_amount = (fsal_size_t) nb_written;
 
-  FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL write--------------------------\n");
+  FSI_TRACE(FSI_DEBUG, "FSI - END PTFSAL write--------------------------\n");
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_write);
 
 }
@@ -589,6 +589,8 @@ fsal_status_t PTFSAL_commit(fsal_file_t * p_file_descriptor,
 {
   int rc, errsv;
 
+  FSI_TRACE(FSI_DEBUG, "FSI - Begin PTFSAL commit-----------------\n");
+
   /* sanity checks. */
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_commit);
@@ -600,5 +602,7 @@ fsal_status_t PTFSAL_commit(fsal_file_t * p_file_descriptor,
       errsv = errno;
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_commit);
     }
+  
+  FSI_TRACE(FSI_DEBUG, "FSI - End PTFSAL commit-----------------\n");
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit);
 }

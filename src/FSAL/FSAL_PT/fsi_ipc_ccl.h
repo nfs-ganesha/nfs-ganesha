@@ -3,13 +3,13 @@
 // All Rights Reserved
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
-// Filename:    fsi_ipc_client.h
+// Filename:    fsi_ipc_ccl.h
 // Description: Samba VFS library - client definitions
 // Author:      FSI IPC Team
 // ----------------------------------------------------------------------------
 
-#ifndef __FSI_IPC_CLIENT_H__
-#define __FSI_IPC_CLIENT_H__
+#ifndef __FSI_IPC_CCL_H__
+#define __FSI_IPC_CCL_H__
 
 // Linux includes
 #include <stdio.h>
@@ -30,6 +30,16 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
+// In Ganesa build environment this is located in different directory so for 
+// bring up  using .. till can come back to it and get better version to work
+//#include "fsi/ipc/client/fsi_ipc_common.h"
+#include "../fsi_ipc_common.h"
+
+// In Ganesa build environment this is located in different directory so for 
+// bring up  using .. till can come back to it and get better version to work
+//#include "fsi/ipc/client/fsi_ipc_common.h"
+#include "../fsi_ipc_common.h"
+
 // FSI IPC defines
 #define FSI_CIFS_RESERVED_STREAMS   4   // CIFS does not allow handles 0-2
 
@@ -46,7 +56,7 @@
 
 // FSI Trace Level defines for Samba DEBUG level parm
 // Samba default runtime level is 2, all trace <= level are logged
-// Note: Though these defines map to Samba debug levels we are 
+// Note: Though these defines map to Samba debug levels we are
 // using the level settings differently than Samba proper
 #define FSI_FATAL    1  // TRC_FATAL - A fatal condition that prevents
                         //   the system continuing normal ops
@@ -56,7 +66,7 @@
                         //   class but but use this for stats only
 #define FSI_INFO     3  // TRC_INFO Detailed tracing of normal flow, yet not
                         //   as intensive as TRC_DEBUG
-#define FSI_DEBUG    5  // TRC_DBUG - Very high frequency, can affect 
+#define FSI_DEBUG    5  // TRC_DBUG - Very high frequency, can affect
                         //   performance, user for debugging a component
 
 
@@ -72,27 +82,63 @@ extern void
 compile_time_check_func(const char * fmt, ...)
 __attribute__((format(printf, 1, 2)));  // 1=format 2=params
 
+// --------  Begin conditional compile for Ganesha/Samba -----------------
 
-extern void ccl_log(int debugLevel, char *debugString);
+// GANESHA_ENV is defined when using this file in Ganesha build environment
+// GANESHA_CCL is defined when building ganesha version of CCL in syren
+//    environment and also when using this header file in build of ptfsal
+//    code in ganesha build environment
+
+// GANESHA_ENV is only macro set in ganesha environment so 
+#ifdef GANESHA_ENV
+#define GANESHA_CCL
+#endif
+
+#ifdef GANESHA_CCL
+
+extern int g_ptfsal_debug_level;    // ptfsal sets to control 
+extern int g_ptfsal_comp_num;       // ptfsal sets to COMPONENT_FSAL (5)
+extern int g_ptfsal_comp_level;     // ptfsal sets to NIV_INFO or NIV_DEBUG
+
+// When being used in ptfsal build in ganesha environemnt, 
+// the ganesha code includes define this as it's a ganesha function
+// In Syren CCL build proper we provide a version using int instead of
+// the enums used by ganesha so we don't have to include the ganesha files
+#ifndef GANESHA_ENV
+extern int DisplayLogComponentLevel(int comp, char * func, int ganesha_level,
+                             char * fmt, ... );
+#endif
+
+// To have ganesha race also go to console add the following
+//  printf( format "\n", func, ## __VA_ARGS__ );                            
+#define CCL_DEBUG( level, format, func,  ... )                             \
+{                                                                          \
+  if (level <= g_ptfsal_debug_level) {                                     \
+    DisplayLogComponentLevel( g_ptfsal_comp_num, "FSAL_PT",                \
+                              g_ptfsal_comp_level, format,                 \
+                              func, ## __VA_ARGS__ );                      \
+  }                                                                        \
+}
+ 
+#else    // not GANESHA_CCL so Samba
+
+#define CCL_DEBUG( x, y, z, ... )  DEBUG( x, (y "\n", z, ## __VA_ARGS__  )) 
+
+#endif
+// ----------- End of conditional compile for Ganesha/Samba ----------------
 
 // Our own trace macro that adds standard prefix to statements that includes
 // the level and function name
-#define FSI_TRACE1( level, format, ... )                                    \
+#define FSI_TRACE( level, format, ... )                                    \
 {                                                                          \
-  char logString[1000];                                                    \
   compile_time_check_func( format, ## __VA_ARGS__ );                       \
-  if (level <= FSI_DEBUG) {                                                \
-    snprintf(logString ,1000, "[" #level "]: "   "%s: "  format "\n",      \
-             __func__,  ## __VA_ARGS__ );                                  \
-    printf("%s",logString);                                                \
-    fflush(NULL);                                                              \
-    ccl_log(level,logString);                                              \
-  }                                                                        \
+  CCL_DEBUG( (level), "[" #level "]: "   "%s: "  format , __func__,        \
+                   ## __VA_ARGS__ );                                       \
 }
 
 //Our own trace macro that adds standard prefix to statements that includes
 // the level and function name
-#define FSI_TRACE( level, format, ... )                                    \
+#define FSI_TRACE_GANESHA_TEMP( level, format, ... )                       \
 {                                                                          \
   compile_time_check_func( format, ## __VA_ARGS__ );                       \
   if (level <= FSI_DEBUG) {                                                \
@@ -117,7 +163,8 @@ extern void ccl_log(int debugLevel, char *debugString);
   FSI_TRACE(FSI_INFO, "persistent handle: 0x%lx %lx %lx %lx",              \
             handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);       \
 }
-
+#define NONIO_MSG_TYPE                                                     \
+  ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid )
 #define WAIT_SHMEM_ATTACH()                                                \
 {                                                                          \
   while (g_shm_at == 0) {                                                  \
@@ -126,12 +173,7 @@ extern void ccl_log(int debugLevel, char *debugString);
   }                                                                        \
 }
 
-// FSI IPC includes
-// #include "fsi_ipc_common.h"
-// when compiled in syren look in the /.../ipc/client directory for this file
 // in temporary ganesha environment this may have to be changed to look for it 
-// in same directory as where fsi_ipc_ccl.h is placed
-#include "../fsi_ipc_common.h"
 
 #define FSAL_MAX_PATH_LEN PATH_MAX
 
@@ -167,7 +209,7 @@ extern struct ipc_client_stats_t g_client_io_idle_time;  // usecs
 extern uint64_t                  g_num_reads_in_progress;
 extern uint64_t                  g_num_writes_in_progress;
 extern uint64_t                  g_stat_log_interval;
-extern char                      g_client_address[256]; // PTFSAL HACK
+extern char                      g_client_address[];//[256]; // PTFSAL HACK
 
 // BRUTAL HACK - must be fixed later - global non-io mutex
 extern pthread_mutex_t g_non_io_mutex;
@@ -180,7 +222,7 @@ extern pthread_mutex_t g_transid_mutex; // only one thread can change global tra
 
 #define SAMBA_FSI_IPC_PARAM_NAME   "fsiparam"  // To designate as our parms
 #define SAMBA_EXPORT_ID_PARAM_NAME "exportid"  // For ExportID
-#define SAMBA_STATDELTA_PARAM_NAME "statdelta" // For Statistics Output 
+#define SAMBA_STATDELTA_PARAM_NAME "statdelta" // For Statistics Output
 #define MAX_FSI_PERF_COUNT         1000        // for m_perf_xxx counters
 
 // enum for client buffer return code state
@@ -269,6 +311,7 @@ struct file_handle_t {
                                               // write is complete
   int                    m_first_read_done;   // set if we completed first read
   int                    m_close_rsp_rcvd;    // IPC close file response received
+  int                    m_fsync_rsp_rcvd;    // IPC fsync file response received
   int                    m_read_at_eof;       // set if at EOF - only for read
   uint64_t               m_file_loc;          // used for writes and fstat
                                               // this is the location assuming
@@ -291,6 +334,8 @@ struct file_handle_t {
                                               // if m_dir_not_file_flag is
                                               // set
   uint64_t               m_resourceHandle;    // handle for resource management
+  pthread_mutex_t        m_io_mutex;          // used to manage multithread
+                                              // NFS io operations
   struct timeval         m_perf_pwrite_start[MAX_FSI_PERF_COUNT];
   struct timeval         m_perf_pwrite_end[MAX_FSI_PERF_COUNT];
   struct timeval         m_perf_aio_start[MAX_FSI_PERF_COUNT];
@@ -348,7 +393,7 @@ struct dir_handles_struct_t {
 // ----------------------------------------------------------------------------
 struct acl_handle_t {
   int        m_acl_handle_in_use; // used to flag available entries
-  uint64_t   m_acl_handle;        // acl handle             
+  uint64_t   m_acl_handle;        // acl handle
   uint64_t   m_resourceHandle;    // server resource handle
 };
 
@@ -389,44 +434,6 @@ typedef struct {
                           // global g_fsi_handles.m_handle[] array
 
 } fsi_handle_struct;
-
-// Callback functions are functions ccl needs to use that must be defined 
-// differently for the different environments (in shim layer)
-// If set to NULL by Shim layer, CCL should NOOP the call
-struct ccl_cb_fn_pointers {
-  int (*ccl_cb_mutex_init) (void *);       // Ganesha: pthread_mutex_init 
-  int (*ccl_cb_mutex_lock) (void *);       // Ganesha: pthread_mutex_lock
-  int (*ccl_cb_mutex_unlock) (void *);     // Ganesha: pthread_mutex_unlock
-  int (*ccl_cb_mutex_trylock) (void *);    // Ganesha: pthread_mutex_trylock
-
-  // FSI_TRACE is handled by directly linking with the shim layers as
-  //   it has variable parms and can't use this mechanism
-
-  // get_export_id not needed so far as the value is passed to CCL in context
-};
-
-extern struct ccl_cb_fn_pointers g_ccl_callbacks;
-
-// All use of call back functions should be wrapped with a Macro
-#define MUTEX_INIT(pmutex)                                                  \
-(g_ccl_callbacks.ccl_cb_mutex_init ?                                        \
-  g_ccl_callbacks.ccl_cb_mutex_init(pmutex) :                               \
-  no_op() )
-
-#define MUTEX_LOCK(pmutex)                                                  \
-(g_ccl_callbacks.ccl_cb_mutex_lock ?                                        \
-  g_ccl_callbacks.ccl_cb_mutex_lock(pmutex) :                               \
-  no_op() )
-
-#define MUTEX_UNLOCK(pmutex)                                                \
-(g_ccl_callbacks.ccl_cb_mutex_unlock ?                                      \
-  g_ccl_callbacks.ccl_cb_mutex_unlock(pmutex) :                             \
-  no_op() )
-
-#define MUTEX_TRYLOCK(pmutex)                                               \
-(g_ccl_callbacks.ccl_cb_mutex_trylock ?                                     \
-  g_ccl_callbacks.ccl_cb_mutex_trylock(pmutex) :                            \
-  no_op() )
 
 
 // ----------------------------------------------------------------------------
@@ -469,7 +476,7 @@ struct ipc_client_stats_t {
 // ----------------------------------------------------------------------------
 // Defines for CCL Internal Statistics
 //
-// Defines for IO Idle time statistic collection,  this is time we are 
+// Defines for IO Idle time statistic collection,  this is time we are
 // idle waiting for user to send a read or write or doing other operations
 // ----------------------------------------------------------------------------
 
@@ -624,6 +631,9 @@ int ccl_get_name_from_handle(char *handle, char *name);
 int ccl_stat(fsi_handle_struct * handle,
              const char        * filename,
              fsi_stat_struct       * sbuf);
+int ccl_fstat(fsi_handle_struct * handle,
+              int                 handle_index,  // PTFSAL change
+              fsi_stat_struct   * sbuf);
 uint64_t get_acl_resource_handle(uint64_t aclHandle);
 uint64_t get_export_id();
 int have_pending_io_response(int handle_index);
@@ -663,6 +673,25 @@ int send_msg(int          msg_id,
 int ccl_chmod(fsi_handle_struct * handle,
                const char        * path,
                mode_t              mode);
+int ccl_chown(fsi_handle_struct * handle,
+              const char        * path,
+              uid_t               uid,
+              gid_t               gid);
+int ccl_ntimes(fsi_handle_struct * handle,
+               const char        * filename,
+               uint64_t            atime,
+               uint64_t            mtime);
+int ccl_mkdir(fsi_handle_struct  * handle,
+               const char        * path,
+               mode_t              mode);
+int ccl_rmdir(fsi_handle_struct  * handle,
+               const char        * path);
+uint64_t ccl_disk_free(fsi_handle_struct * handle,
+                       const char        * path,
+                       int                 small_query,
+                       uint64_t          * bsize,
+                       uint64_t          * dfree,
+                       uint64_t          * dsize);
 int ccl_unlink(fsi_handle_struct  * handle,
                 char               * path);
 int ccl_rename(fsi_handle_struct * handle,
@@ -680,6 +709,8 @@ int ccl_readdir(fsi_handle_struct * handle,
 void ccl_seekdir(fsi_handle_struct * handle,
                  struct fsi_struct_dir_t * dirp,
                  long                offset);
+long ccl_telldir(fsi_handle_struct * handle, 
+                 struct fsi_struct_dir_t * dirp);
 int ccl_fsync(fsi_handle_struct * handle,
                int handle_index);
 int ccl_ftruncate(fsi_handle_struct * handle,
@@ -716,6 +747,8 @@ void issue_read_ahead(struct file_handle_t * p_pread_hndl,
                       struct ClientOpPreadReqMsg  * p_pread_req);
 void load_deferred_io_rc(int handle_index,
                          int cur_error);
+int merge_errno_rc(int rc_a,
+                   int rc_b);
 int parse_io_response(int     handle_index,
                       struct msg_t * p_msg);
 int read_existing_data(struct file_handle_t * p_pread_hndl,
@@ -796,9 +829,9 @@ int ccl_sys_acl_get_perm(fsi_handle_struct * handle,
 int ccl_sys_acl_free_acl(fsi_handle_struct * handle,
                           CCL_ACL_T           posix_acl);
 
-// Prototypes - new for Ganesha 
+// Prototypes - new for Ganesha
 int ccl_name_to_handle(fsi_handle_struct *pvfs_handle,
-                       char *path, 
+                       char *path,
                        struct PersistentHandle *phandle);
 int ccl_handle_to_name(fsi_handle_struct *pvfs_handle,
                        struct PersistentHandle *phandle,
@@ -806,11 +839,28 @@ int ccl_handle_to_name(fsi_handle_struct *pvfs_handle,
 int ccl_dynamic_fsinfo(fsi_handle_struct *pvfs_handle,
                        char *path,
                        struct ClientOpDynamicFsInfoRspMsg *pfs_info);
-int ccl_readlink(fsi_handle_struct *pvfs_handle,
-                 char *path,
-                 char *link_content);
-int ccl_symlink(fsi_handle_struct *pvfs_handle,
-                char *path,
-                char *link_content);
+int ccl_readlink(fsi_handle_struct * pvfs_handle,
+                 const char        * path,
+                 char              * link_content);
+int ccl_symlink(fsi_handle_struct * pvfs_handle,
+                const char        * path,
+                const char        * link_content);
 
-#endif // ifndef __FSI_IPC_CLIENT_H__
+// ---------------------------------------------------------------------------
+// CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
+//     Layer provide a copy of these functions and CCL call them (up calls)
+//     for the functions.  
+// ---------------------------------------------------------------------------
+extern int ccl_up_mutex_lock(pthread_mutex_t *mutex);
+extern int ccl_up_mutex_unlock(pthread_mutex_t *mutex);
+extern unsigned long ccl_up_self();
+
+// externs to globals the Samba VFS or Ganesha must provide
+extern pthread_mutex_t g_dir_mutex; // dir handle mutex
+extern pthread_mutex_t g_acl_mutex; // acl handle mutex
+extern pthread_mutex_t g_handle_mutex; // file handle processing mutex
+extern pthread_mutex_t g_parseio_mutex; // only one thread can parse an io at a time
+extern pthread_mutex_t g_transid_mutex; // only one thread can change global transid at a time
+extern pthread_mutex_t g_non_io_mutex;
+
+#endif // ifndef __FSI_IPC_CCL_H__

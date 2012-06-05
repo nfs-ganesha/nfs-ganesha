@@ -158,6 +158,8 @@ PTFSAL_getattrs_descriptor(fsal_file_t        * p_file_descriptor,  /* IN */
 			     fsal_op_context_t  * p_context,          /* IN */
 			     fsal_attrib_list_t * p_object_attributes /* IN/OUT */)
 {
+  ptfsal_file_t * p_file_desc = (ptfsal_file_t *)p_file_descriptor;
+  FSI_TRACE(FSI_DEBUG, "FSI---File descriptor=%d\n", p_file_desc->fd);
   return PTFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 }
 

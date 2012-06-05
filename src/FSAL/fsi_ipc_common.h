@@ -211,7 +211,8 @@ enum {
   IoOpOther = 0,                // file is neither being read or written
   IoOpWrite,                    // file is being written
   IoOpRead,                     // file is neither being read or written
-  IoOpClose                     // file is being closed
+  IoOpClose,                    // file is being closed
+  IoOpFsync                     // file is being synced
 };
 
 // FSI Operation return codes
@@ -422,7 +423,7 @@ struct ClientOpFtruncReqMtext {
 // Client Shared Memory Buffer response
 // response to FsiIpcOpReqShmem request
 struct FsiIpcOpShmemRspMsg {
-  uint64_t shmBufferHandles[MAX_FSI_IPC_SHMEM_BUF_PER_STREAM]; 
+  uint64_t shmBufferHandles[MAX_FSI_IPC_SHMEM_BUF_PER_STREAM];
   int      numWriteBuf;         // number of write buffers allocated
   uint64_t offsetShmemWrite[MAX_FSI_IPC_SHMEM_BUF_PER_STREAM *
                             FSI_IPC_SHMEM_WRITEBUF_PER_BUF]; // write buf ptrs
