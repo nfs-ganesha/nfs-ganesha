@@ -53,9 +53,9 @@
 
 
 int _9p_xattrwalk( _9p_request_data_t * preq9p, 
-                  void  * pworker_data,
-                  u32 * plenout, 
-                  char * preply)
+                   void  * pworker_data,
+                   u32 * plenout, 
+                   char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   // nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
