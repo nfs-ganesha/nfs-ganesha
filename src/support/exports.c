@@ -2917,6 +2917,11 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
                else
                   pcurrent->MaxWrite = LASTDEFAULT;
              }
+          LogFullDebug(COMPONENT_INIT,
+                      "Set MaxRead MaxWrite for Path=%s Options = 0x%x MaxRead = 0x%llX MaxWrite = 0x%llX",
+                      pcurrent->fullpath, pcurrent->options,
+                      (long long) pcurrent->MaxRead,
+                      (long long) pcurrent->MaxWrite);
              
           /* Add this entry to the Cache Inode as a "root" entry */
           fsdata.fh_desc.start = (caddr_t) &fsal_handle;
