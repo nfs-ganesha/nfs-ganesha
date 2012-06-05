@@ -53,7 +53,6 @@ hash_table_t *ht_9p_owner;
 
 int display_9p_owner(state_owner_t *pkey, char *str)
 {
-  unsigned int i = 0;
   char *strtmp = str;
 
   if(pkey == NULL)
