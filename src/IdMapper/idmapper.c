@@ -41,7 +41,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"

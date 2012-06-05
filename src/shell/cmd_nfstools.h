@@ -84,7 +84,7 @@
 #include "config.h"
 #endif
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "nfs_proto_functions.h"
 #include "nfs_remote_functions.h"
 

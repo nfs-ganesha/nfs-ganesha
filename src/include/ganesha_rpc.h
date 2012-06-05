@@ -5,26 +5,19 @@
 #define GANESHA_RPC_H
 
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else                          /* _USE_GSSRPC */
+#include <rpc/xdr_inline.h>
 #include <rpc/rpc.h>
-#include <rpc/types.h>
 #include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
-#ifdef _USE_TIRPC
 #include <rpc/svc_dg.h>
+#include <rpc/clnt.h>
+
 #ifdef _HAVE_GSSAPI
 #include <rpc/auth_gss.h>
 #include <rpc/svc_auth.h>
 #endif
-#endif
+
+#include <rpc/svc_rqst.h>
+#include  <rpc/svc_dplx.h>
 
 #include "HashTable.h"
 
@@ -50,8 +43,6 @@ typedef struct sockaddr_in sockaddr_t;
 #define AUTH_SYS 1
 #endif
 
-extern void InitRPC(int num_sock);
-
 #ifdef _USE_TIRPC
 extern void Svc_dg_soft_destroy(SVCXPRT * xport);
 extern struct netconfig *getnetconfigent(const char *netid);
@@ -76,33 +67,8 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
 
 #endif                          /* _USE_TIRPC */
 
-#ifndef _HAVE_GSSAPI  // This enum is already defined in auth_gss.h
-  enum rpc_gss_svc_t
-  {
-    RPC_GSS_SVC_NONE = 1,
-    RPC_GSS_SVC_INTEGRITY = 2,
-    RPC_GSS_SVC_PRIVACY = 3,
-  };
-  typedef enum rpc_gss_svc_t rpc_gss_svc_t;
-#endif 
-
 #ifdef _SOLARIS
 #define _authenticate __authenticate
-#endif
-
-#ifdef _USE_TIRPC
-/* These functions were renamed between rpc and tirpc, make our code work either way */
-#define xdr_uint64_t xdr_u_int64_t
-#define xdr_uint32_t  xdr_u_int32_t
-#endif
-
-#ifdef _USE_GSSRPC
-/* These prototypes are missing in gssrpc/xdr.h */
-#define xdr_uint32_t  xdr_u_int32
-bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
-bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
-bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
-bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
 #endif
 
 #ifdef _HAVE_GSSAPI
@@ -122,8 +88,15 @@ struct svc_rpc_gss_data
 
 typedef struct nfs_krb5_param__
 {
-  char principal[MAXPATHLEN];
   char keytab[MAXPATHLEN];
+  char ccache_dir[MAXPATHLEN];
+    /* XXX representation of GSSAPI service, independent of
+     * GSSRPC or TI-RPC global variables.  Initially, use it just
+     * for callbacks. */
+  struct {
+      char principal[MAXPATHLEN];
+      gss_name_t gss_name;
+  } svc;
   bool_t active_krb5;
   hash_parameter_t hash_param;
 } nfs_krb5_parameter_t;
@@ -139,13 +112,6 @@ enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst,
                                        struct rpc_msg *msg,
                                        bool_t * no_dispatch);
 #endif
-
-extern fd_set Svc_fdset;
-
-/* Declare the various RPC transport dynamic arrays */
-extern SVCXPRT         **Xports;
-extern pthread_mutex_t  *mutex_cond_xprt;
-extern pthread_cond_t   *condvar_xprt;
 
 #ifdef _HAVE_GSSAPI
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
@@ -169,15 +135,6 @@ extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 extern SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
 extern SVCXPRT *Svcxprt_copycreate();
 
-typedef enum xprt_type_t
-{
-  XPRT_UNKNOWN,
-  XPRT_UDP,
-  XPRT_TCP,
-  XPRT_RENDEZVOUS,
-} xprt_type_t;
-
-extern xprt_type_t get_xprt_type(SVCXPRT *xprt);
 extern const char *xprt_type_to_str(xprt_type_t type);
 
 typedef enum _ignore_port

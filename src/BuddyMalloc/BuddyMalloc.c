@@ -1636,6 +1636,15 @@ BUDDY_ADDR_T BuddyMallocExit(size_t Size)
   return __BuddyMalloc(Size, TRUE);
 }
 
+/* The signature of malloc, zero inits, cf. kzalloc */
+BUDDY_ADDR_T BuddyMallocZ(size_t Size)
+{
+  BUDDY_ADDR_T ptr = __BuddyMalloc(Size, FALSE);
+  if (ptr)
+      memset(ptr, 0, Size);
+  return (ptr);
+}
+
 /**
  * BuddyStr_Dup : string duplicator based on buddy system.
  *
@@ -1884,6 +1893,14 @@ void BuddyFree(BUDDY_ADDR_T ptr)
   return;
 
 }                               /* BuddyFree */
+
+/**
+ *  Free allocated memory (user call)
+ */
+void BuddyFreeSize(BUDDY_ADDR_T ptr, size_t __attribute__ ((unused)) size)
+{
+    BuddyFree(ptr);
+}                               /* BuddyFreeSize */
 
 /**
  * BuddyRealloc :

@@ -47,8 +47,8 @@
 #include <pthread.h>
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -84,32 +84,20 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
   state_t    * pstate_found = NULL;
+  state_owner_t  * popen_owner;
   int          rc;
   const char * tag = "OPEN_DOWNGRADE";
 
   resp->resop = NFS4_OP_OPEN_DOWNGRADE;
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_NOFILEHANDLE;
-      return res_OPEN_DOWNGRADE4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_BADHANDLE;
-      return res_OPEN_DOWNGRADE4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_FHEXPIRED;
-      return res_OPEN_DOWNGRADE4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * Commit is done only on a file
+   */
+  res_OPEN_DOWNGRADE4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_OPEN_DOWNGRADE4.status != NFS4_OK)
+    return res_OPEN_DOWNGRADE4.status;
 
   /* Commit is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
@@ -117,6 +105,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
       res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
       return res_OPEN_DOWNGRADE4.status;
     }
+
 
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_OPEN_DOWNGRADE4.open_stateid,
@@ -132,6 +121,20 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                "OPEN_DOWNGRADE failed nfs4_Check_Stateid");
       return res_OPEN_DOWNGRADE4.status;
     }
+
+  popen_owner = pstate_found->state_powner;
+
+  P(popen_owner->so_mutex);
+
+  /* Check seqid */
+  if(!Check_nfs4_seqid(popen_owner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp, tag))
+    {
+      /* Response is all setup for us and LogDebug told what was wrong */
+      V(popen_owner->so_mutex);
+      return res_OPEN_DOWNGRADE4.status;
+    }
+  V(popen_owner->so_mutex);
+
 
   /* What kind of open is it ? */
   LogFullDebug(COMPONENT_STATE,

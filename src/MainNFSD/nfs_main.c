@@ -70,7 +70,7 @@ char ganesha_exec_path[MAXPATHLEN];
 
 /* command line syntax */
 
-char options[] = "h@RTdS:F:S:P:f:L:N:p:";
+char options[] = "h@RTdS:F:S:P:f:L:N:E:p:";
 char usage[] =
     "Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
     "\t[-h]                display this help\n"
@@ -81,6 +81,7 @@ char usage[] =
     "\t[-d]                the daemon starts in background, in a new process group\n"
     "\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
     "\t[-T]                dump the default configuration on stdout\n"
+    "\t[-E] <epoch<]       overrides ServerBootTime for ServerEpoch\n"
     "----------------- Signals ----------------\n"
     "SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
     "SIGTERM    : Cleanly terminate the program\n"
@@ -111,6 +112,10 @@ int main(int argc, char *argv[])
   pid_t son_pid;
 #endif
   sigset_t signals_to_block;
+
+  /* Set the server's boot time and epoch */
+  ServerBootTime = time(NULL);
+  ServerEpoch    = ServerBootTime;
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
@@ -196,6 +201,10 @@ int main(int argc, char *argv[])
         case 'T':
           /* Dump the default configuration on stdout */
           my_nfs_start_info.dump_default_config = TRUE;
+          break;
+
+        case 'E':
+          ServerEpoch = (time_t) atoll(optarg);
           break;
 
         case '?':

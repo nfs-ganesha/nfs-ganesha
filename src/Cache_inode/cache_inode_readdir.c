@@ -475,7 +475,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
       if(FSAL_IS_ERROR(fsal_status))
         {
           *status = cache_inode_error_convert(fsal_status);
-          return *status;
+          goto bail;
         }
 
       for(iter = 0; iter < found; iter++)
@@ -514,7 +514,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                      if (fsal_status.major == ERR_FSAL_STALE) {
                           cache_inode_kill_entry(directory, client);
                      }
-                     return *status;
+                     goto bail;
                 }
             }
           else
@@ -540,8 +540,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                                       context,
                                       CACHE_INODE_FLAG_NONE,
                                       status)) == NULL)
-            return *status;
-
+            goto bail;
           cache_status
             = cache_inode_add_cached_dirent(directory,
                                             &(array_dirent[iter].name),
@@ -557,7 +556,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
 
           if(cache_status != CACHE_INODE_SUCCESS
              && cache_status != CACHE_INODE_ENTRY_EXISTS)
-            return *status;
+            goto bail;
 
           /*
            * Remember the FSAL readdir cookie associated with this
@@ -597,6 +596,12 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                        CACHE_INODE_TRUST_CONTENT));
   *status = CACHE_INODE_SUCCESS;
   return *status;
+
+bail:
+  /* Close the directory */
+  FSAL_closedir(&dir_handle);
+  return *status;
+
 }                               /* cache_inode_readdir_populate */
 
 /**
@@ -659,10 +664,16 @@ cache_inode_readdir(cache_entry_t * dir_entry,
      /* readdir can be done only with a directory */
      if (dir_entry->type != DIRECTORY) {
           *status = CACHE_INODE_BAD_TYPE;
-          goto unlock_attrs;
+          /* no lock acquired so far, just return status */
+          return *status;
      }
 
-     cache_inode_lock_trust_attrs(dir_entry, context, client);
+     /* cache_inode_lock_trust_attrs can return an error, and no lock will be
+        acquired */
+     *status = cache_inode_lock_trust_attrs(dir_entry, context, client);
+     if (*status != CACHE_INODE_SUCCESS)
+       return *status;
+
      /* Check if user (as specified by the credentials) is authorized to read
       * the directory or not */
      if (cache_inode_access_no_mutex(dir_entry,
@@ -780,7 +791,13 @@ cache_inode_readdir(cache_entry_t * dir_entry,
                        dirent, dirent->name.name,
                        dirent->hk.k, dirent->hk.p);
 
-          cache_inode_lock_trust_attrs(entry, context, client);
+          *status = cache_inode_lock_trust_attrs(entry, context, client);
+          if (*status != CACHE_INODE_SUCCESS)
+            {
+              cache_inode_lru_unref(entry, client, 0);
+              goto unlock_dir;
+            }
+
           in_result = cb(cb_opaque,
                          dirent->name.name,
                          &entry->handle,

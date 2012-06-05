@@ -49,8 +49,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -80,7 +80,7 @@
 int nfs4_op_release_lockowner(struct nfs_argop4 *op,
                               compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lock";
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_release_lockowner";
 
   /* Lock are not supported, but return NFS4_OK and do noting */
   resp->resop = NFS4_OP_RELEASE_LOCKOWNER;

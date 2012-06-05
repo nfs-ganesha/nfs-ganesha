@@ -78,7 +78,6 @@ void
 avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
 {
     struct avltree *t = &entry->object.dir.avl.t;
-    struct avltree *c = &entry->object.dir.avl.c;
     struct avltree_node *node;
 
     assert(! (v->flags & DIR_ENTRY_FLAG_DELETED));
@@ -87,8 +86,10 @@ avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
     assert(node);
     avltree_remove(&v->node_hk, &entry->object.dir.avl.t);
 
+#if EXTRA_CHECK_DELETED_WORKED
     node = avltree_inline_lookup(&v->node_hk, c);
     assert(! node);
+#endif
 
     v->flags |= DIR_ENTRY_FLAG_DELETED;
     v->name.len = 0;
@@ -150,12 +151,6 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         node = avltree_insert(&v->node_hk, t);
         if (! node)
             code = 0;
-        else {
-            v_exist =
-                avltree_container_of(node, cache_inode_dir_entry_t,
-                                     node_hk);
-            assert(! v_exist);
-        }
     }
 
     switch (code) {

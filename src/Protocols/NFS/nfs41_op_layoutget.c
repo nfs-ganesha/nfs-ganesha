@@ -40,8 +40,8 @@
 #include <stdint.h>
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"

@@ -114,6 +114,7 @@ typedef enum log_components
   COMPONENT_CACHE_INODE_GC,
   COMPONENT_CACHE_INODE_LRU,
   COMPONENT_HASHTABLE,
+  COMPONENT_HASHTABLE_CACHE,
   COMPONENT_LRU,
   COMPONENT_DUPREQ,
   COMPONENT_RPCSEC_GSS,
@@ -134,12 +135,14 @@ typedef enum log_components
   COMPONENT_RW_LOCK,
   COMPONENT_NLM,
   COMPONENT_RPC,
+  COMPONENT_NFS_CB,
   COMPONENT_THREAD,
   COMPONENT_NFS_V4_ACL,
   COMPONENT_STATE,
   COMPONENT_9P,
   COMPONENT_9P_DISPATCH,
   COMPONENT_FSAL_UP,
+  COMPONENT_DBUS,
   LOG_MESSAGE_VERBOSITY,
   COMPONENT_COUNT
 } log_components_t;
@@ -564,5 +567,10 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define isFullDebug(component) \
     (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG))
+
+/*
+ *  Re-export component logging to TI-RPC internal logging
+ */
+void rpc_warnx(/* const */ char *fmt, ...);
 
 #endif

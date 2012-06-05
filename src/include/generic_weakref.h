@@ -52,7 +52,7 @@ typedef struct gweakref_
 
 typedef struct gweakref_table_ gweakref_table_t;
 
-gweakref_table_t *gweakref_init(uint32_t npart);
+gweakref_table_t *gweakref_init(uint32_t npart, uint32_t cache_sz);
 gweakref_t gweakref_insert(gweakref_table_t *wt, void *obj);
 void *gweakref_lookup(gweakref_table_t *wt, gweakref_t *ref);
 void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,

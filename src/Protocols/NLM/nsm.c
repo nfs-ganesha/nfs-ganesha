@@ -24,7 +24,7 @@
 
 #include "config.h"
 #include <sys/utsname.h>
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "nsm.h"
 #include "nlm4.h"
 #include "log.h"

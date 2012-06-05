@@ -18,7 +18,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -103,16 +102,22 @@ cache_inode_status_t
 cache_inode_clean_internal(cache_entry_t *entry,
                            cache_inode_client_t *client)
 {
-     hash_buffer_t key, old_key, old_value;
+     hash_buffer_t key, val;
      hash_error_t rc = 0;
+
+     if (entry->fh_desc.start == 0)
+         return CACHE_INODE_SUCCESS;
 
      key.pdata = entry->fh_desc.start;
      key.len = entry->fh_desc.len;
 
-     rc = HashTable_Del(fh_to_cache_entry_ht,
-                        &key,
-                        &old_key,
-                        &old_value);
+
+     val.pdata = entry;
+     val.len = sizeof(cache_entry_t);
+
+     rc = HashTable_DelSafe(fh_to_cache_entry_ht,
+                            &key,
+                            &val);
 
      /* Nonexistence is as good as success. */
      if ((rc != HASHTABLE_SUCCESS) &&
@@ -122,11 +127,6 @@ cache_inode_clean_internal(cache_entry_t *entry,
           LogCrit(COMPONENT_CACHE_INODE,
                   "HashTable_Del error %d in cache_inode_clean_internal", rc);
           return CACHE_INODE_INCONSISTENT_ENTRY;
-     }
-
-     /* Release the key that was stored in hash table */
-     if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
-          assert(old_value.pdata == entry);
      }
 
      /* Delete from the weakref table */
@@ -253,7 +253,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
      }
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          pthread_rwlock_rdlock(&entry->content_lock);
+          flags |= CACHE_INODE_FLAG_CONTENT_HAVE;
      }
 
      /* Factor this somewhat.  In the case where the directory hasn't
@@ -337,13 +338,9 @@ cache_inode_remove_impl(cache_entry_t *entry,
           /* Destroy the entry when everyone's references to it have
              been relinquished.  Most likely now. */
           pthread_rwlock_unlock(&to_remove_entry->attr_lock);
-          /* This unref is for the sentinel */
-          if ((*status =
-               cache_inode_lru_unref(to_remove_entry,
-                                     client,
-                                     0)) != CACHE_INODE_SUCCESS) {
-               goto out;
-          }
+          /* Kill off the sentinel reference (and mark the entry so
+             it doesn't get recycled while a reference exists.) */
+          cache_inode_lru_kill(to_remove_entry, client);
      } else {
      unlock:
 

@@ -41,7 +41,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #ifdef _HAVE_GSSAPI
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>

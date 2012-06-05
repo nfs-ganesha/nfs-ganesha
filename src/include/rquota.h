@@ -7,7 +7,7 @@
 #define _RQUOTA_H_RPCGEN
 
 #ifndef _USE_SWIG
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #endif                          /* SWIG */
 
 #ifdef _SOLARIS

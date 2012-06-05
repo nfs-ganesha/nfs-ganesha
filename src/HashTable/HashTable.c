@@ -57,6 +57,14 @@
 #define FALSE 0
 #endif
 
+#define CACHE_PAGE_SIZE(ht) ((ht)->parameter.cache_entry_count * sizeof(struct rbt_node*))
+
+static inline
+int cache_offsetof(struct hash_table *ht, uint64_t rbthash)
+{
+    return (rbthash % ht->parameter.cache_entry_count);
+}
+
 /**
  * @defgroup HTInternals Internal implementation details of the hash table
  *@{
@@ -112,17 +120,38 @@ Key_Locate(struct hash_table *ht,
            uint64_t rbthash,
            struct rbt_node **node)
 {
+     /* The current partition */
+     struct hash_partition *partition = &(ht->partitions[index]);
+
      /* The root of the red black tree matching this index */
      struct rbt_head *root = NULL;
+
      /* A pair of buffer descriptors locating key and value for this
         entry*/
      struct hash_data *data = NULL;
+
      /* The node in the red-black tree currently being traversed */
      struct rbt_node *cursor = NULL;
+
      /* TRUE if we have located the key */
      int found = FALSE;
 
      *node = NULL;
+
+     if (partition->cache) {
+          cursor = partition->cache[cache_offsetof(ht, rbthash)];
+          LogFullDebug(COMPONENT_HASHTABLE_CACHE,
+                       "hash %s index %"PRIu32" slot %d\n",
+                       (cursor) ? "hit" : "miss",
+                       index, cache_offsetof(ht, rbthash));
+          if (cursor) {
+              data = RBT_OPAQ(cursor);
+              if (ht->parameter.compare_key(key,
+                                            &(data->buffkey)) == 0) {
+                  goto out;
+              }
+          }
+     }
 
      root = &(ht->partitions[index].rbt);
 
@@ -141,6 +170,9 @@ Key_Locate(struct hash_table *ht,
           data = RBT_OPAQ(cursor);
           if (ht->parameter.compare_key(key,
                                         &(data->buffkey)) == 0) {
+               if (partition->cache) {
+                   partition->cache[cache_offsetof(ht, rbthash)] = cursor;
+               }
                found = TRUE;
                break;
           }
@@ -153,6 +185,7 @@ Key_Locate(struct hash_table *ht,
           return HASHTABLE_ERROR_NO_SUCH_KEY;
      }
 
+out:
      *node = cursor;
 
      return HASHTABLE_SUCCESS;
@@ -228,6 +261,8 @@ HashTable_Init(struct hash_param *hparam)
      /* Read-Write Lock attributes, to prevent write starvation under
         GLIBC */
      pthread_rwlockattr_t rwlockattr;
+     /* Hash partition */
+     struct hash_partition *partition = NULL;
      /* The number of fully initialized partitions */
      uint32_t completed = 0;
 
@@ -258,22 +293,29 @@ HashTable_Init(struct hash_param *hparam)
             sizeof(struct hash_table) +
             sizeof(struct hash_partition) * hparam->index_size);
 
+     /* Fixup entry size */
+     if (hparam->flags & HT_FLAG_CACHE) {
+         if (! hparam->cache_entry_count)
+             hparam->cache_entry_count = 32767; /* works fine with a good hash algo */
+     }
+
      /* We need to save copy of the parameters in the table. */
      ht->parameter = *hparam;
 
      for (index = 0; index < hparam->index_size; ++index) {
 
-          MakePool(&ht->partitions[index].node_pool,
-                                   hparam->nb_node_prealloc,
-                                   rbt_node_t, NULL, NULL);
-          if (!IsPoolPreallocated(&ht->partitions[index].node_pool)) {
+          partition = (&ht->partitions[index]);
+
+          MakePool(&partition->node_pool, hparam->nb_node_prealloc,
+                   rbt_node_t, NULL, NULL);
+          if (!IsPoolPreallocated(&partition->node_pool)) {
                goto deconstruct;
           }
-          MakePool(&ht->partitions[index].data_pool,
+          MakePool(&partition->data_pool,
                    hparam->nb_node_prealloc, hash_data_t, NULL, NULL);
-          if (!IsPoolPreallocated(&ht->partitions[index].data_pool))
+          if (!IsPoolPreallocated(&partition->data_pool))
                goto deconstruct;
-          RBT_HEAD_INIT(&(ht->partitions[index].rbt));
+          RBT_HEAD_INIT(&(partition->rbt));
 
           /**
            * @todo: ACE: When a function to destroy a memory pool is
@@ -281,12 +323,18 @@ HashTable_Init(struct hash_param *hparam)
            * ITERATION should be freed before jumping to deconstruct.
            */
 
-          if (pthread_rwlock_init(&(ht->partitions[index].lock),
-                                  &rwlockattr) != 0) {
+          if (pthread_rwlock_init(&partition->lock, &rwlockattr) != 0) {
                LogCrit(COMPONENT_HASHTABLE,
                        "Unable to initialize lock in hash table.");
                goto deconstruct;
           }
+
+          /* Allocate a cache if requested */
+          if (hparam->flags & HT_FLAG_CACHE) {
+              partition->cache = Mem_Alloc(CACHE_PAGE_SIZE(ht));
+              memset(partition->cache, 0, CACHE_PAGE_SIZE(ht));
+          }
+
           completed++;
      }
 
@@ -303,6 +351,9 @@ deconstruct:
            * could see to destroy a memory pool.  Such a function
            * should be added and called here.
            */
+          if (hparam->flags & HT_FLAG_CACHE)
+              Mem_Free(ht->partitions[completed - 1].cache);
+
           pthread_rwlock_destroy(
                &(ht->partitions[completed - 1].lock));
           completed--;
@@ -482,7 +533,8 @@ HashTable_SetLatched(struct hash_table *ht,
      if (descriptors == NULL) {
           ReleaseToPool(mutator,
                         &ht->partitions[latch->index].node_pool);
-          return HASHTABLE_INSERT_MALLOC_ERROR;
+          rc = HASHTABLE_INSERT_MALLOC_ERROR;
+          goto out;
      }
 
      RBT_OPAQ(mutator) = descriptors;
@@ -537,10 +589,11 @@ HashTable_DeleteLatched(struct hash_table *ht,
      /* The pair of buffer descriptors comprising the stored entry */
      struct hash_data *data = NULL;
 
-     if (!latch->locator) {
-          HashTable_ReleaseLatched(ht,
-                                   latch);
-     }
+     /* Its partition */
+     struct hash_partition *partition = &ht->partitions[latch->index];
+
+     if (!latch->locator)
+         return( HashTable_ReleaseLatched(ht, latch) );
 
      data = RBT_OPAQ(latch->locator);
      if (stored_key) {
@@ -551,10 +604,33 @@ HashTable_DeleteLatched(struct hash_table *ht,
           *stored_val = data->buffval;
      }
 
+     /* Clear cache */
+     if(partition->cache) {
+         uint32_t offset = cache_offsetof(ht, latch->rbt_hash);
+         struct rbt_node *cnode = partition->cache[offset];
+         if (cnode) {
+#if COMPARE_BEFORE_CLEAR_CACHE
+             struct hash_data *data1 = RBT_OPAQ(cnode);
+             struct hash_data *data2 = RBT_OPAQ(latch->locator);
+             if (ht->parameter.compare_key(&(data1->buffkey),
+                                           &(data2->buffkey)) == 0) {
+                 LogFullDebug(COMPONENT_HASHTABLE_CACHE,
+                              "hash clear index %d slot %"PRIu64"\n",
+                              latch->index, offset);
+                 partition->cache[offset] = NULL;
+             }
+#else
+             LogFullDebug(COMPONENT_HASHTABLE_CACHE,
+                          "hash clear slot %d\n", offset);
+             partition->cache[offset] = NULL;
+#endif
+         }
+     }
+
      /* Now remove the entry */
-     RBT_UNLINK(&ht->partitions[latch->index].rbt, latch->locator);
-     ReleaseToPool(data, &ht->partitions[latch->index].data_pool);
-     ReleaseToPool(latch->locator, &ht->partitions[latch->index].node_pool);
+     RBT_UNLINK(&partition->rbt, latch->locator);
+     ReleaseToPool(data, &partition->data_pool);
+     ReleaseToPool(latch->locator, &partition->node_pool);
 
      HashTable_ReleaseLatched(ht, latch);
      return HASHTABLE_SUCCESS;
@@ -985,13 +1061,75 @@ HashTable_DelRef(hash_table_t *ht,
                if (put_ref(&temp_val) != 0) {
                     HashTable_ReleaseLatched(ht, &latch);
                     rc = HASHTABLE_NOT_DELETED;
+                    goto out;
                }
           }
-          HashTable_DeleteLatched(ht,
-                                  key,
-                                  &latch,
-                                  stored_key,
-                                  stored_val);
+          rc = HashTable_DeleteLatched(ht,
+                                       key,
+                                       &latch,
+                                       stored_key,
+                                       stored_val);
+          break;
+
+     default:
+          break;
+     }
+
+out:
+
+     return rc;
+} /* HashTable_DelRef */
+
+/**
+ *
+ * @brief Remove an entry if key and value both match
+ *
+ * This function looks up an entry and removes it if both the key and
+ * the supplied pointer matches the stored value pointer.
+ *
+ * @param ht [in] The hashtable to be modified
+ * @param key [in] The key corresponding to the entry to delete
+ * @param val [in] A pointer, which should match the stored entry's
+ *                 value pointer.
+ *
+ * @retval HASHTABLE_SUCCESS on deletion
+ * @retval HASHTABLE_NO_SUCH_KEY if the key was not found or the
+ *         values did not match.
+ */
+
+hash_error_t
+HashTable_DelSafe(hash_table_t *ht,
+                  hash_buffer_t *key,
+                  hash_buffer_t *val)
+{
+     /* structure to hold retained state */
+     struct hash_latch latch;
+     /* Stored return code */
+     hash_error_t rc = 0;
+     /* Temporary buffer descriptor.  We need the value to call the
+        decrement function, even if the caller didn't request the
+        value. */
+     struct hash_buff found_val;
+
+     rc = HashTable_GetLatch(ht, key, &found_val,
+                             TRUE, &latch);
+
+     switch (rc) {
+     case HASHTABLE_ERROR_NO_SUCH_KEY:
+          HashTable_ReleaseLatched(ht, &latch);
+          break;
+
+     case HASHTABLE_SUCCESS:
+          if (found_val.pdata == val->pdata) {
+               rc = HashTable_DeleteLatched(ht,
+                                            key,
+                                            &latch,
+                                            NULL,
+                                            NULL);
+          } else {
+               rc = HASHTABLE_ERROR_NO_SUCH_KEY;
+               HashTable_ReleaseLatched(ht, &latch);
+          }
           break;
 
      default:
@@ -999,7 +1137,7 @@ HashTable_DelRef(hash_table_t *ht,
      }
 
      return rc;
-} /* HashTable_DelRef */
+} /* HashTable_DelSafe */
 
 /* @} */
 

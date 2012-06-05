@@ -136,7 +136,7 @@ fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
     )
 {
 
-  int rc, errsv;
+  int rc;
   fsal_status_t status;
 
   int fd;
@@ -161,10 +161,14 @@ fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
 
   TakeTokenFSCall();
   status = fsal_internal_handle2fd(p_context, p_filehandle, &fd, posix_flags);
+  p_file_descriptor->fd = fd;
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_open);
+    {
+      p_file_descriptor->fd = 0;
+      ReturnStatus(status, INDEX_FSAL_open);
+    }
 
   /* output attributes */
   if(p_file_attributes)
@@ -173,13 +177,12 @@ fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
       p_file_attributes->asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
       status = GPFSFSAL_getattrs(p_filehandle, p_context, p_file_attributes);
       if(FSAL_IS_ERROR(status))
-        ReturnStatus(status, INDEX_FSAL_open);
+        {
+          p_file_descriptor->fd = 0;
+          close(fd);
+          ReturnStatus(status, INDEX_FSAL_open);
+        }
     }
-
-  TakeTokenFSCall();
-  p_file_descriptor->fd = fd;
-  errsv = errno;
-  ReleaseTokenFSCall();
 
   /* set the read-only flag of the file descriptor */
   p_file_descriptor->ro = openflags & FSAL_O_RDONLY;

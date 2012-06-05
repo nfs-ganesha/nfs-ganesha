@@ -61,7 +61,7 @@
 #include <sys/param.h>
 #include "config_parsing.h"
 #include "err_fsal.h"
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "nfs4.h"
 
 #define CONF_LABEL_FS_SPECIFIC   "NFSv4_Proxy"

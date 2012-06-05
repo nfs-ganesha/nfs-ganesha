@@ -263,9 +263,9 @@ static void LogEntry(const char         *reason,
       DisplayOwner(ple->sle_owner, owner);
 
       LogFullDebug(COMPONENT_STATE,
-                   "%s Entry: %p pentry=%p, fileid=%llu, export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, owner={%s}",
+                   "%s Entry: %p pentry=%p, fileid=%"PRIu64", export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, owner={%s}",
                    reason, ple,
-                   ple->sle_pentry, ple->sle_fileid,
+                   ple->sle_pentry, (uint64_t)ple->sle_pentry->attributes.fileid,
                    (unsigned int) ple->sle_pexport->id,
                    str_lockt(ple->sle_lock.lock_type),
                    (unsigned long long) ple->sle_lock.lock_start,
@@ -363,24 +363,16 @@ void LogLock(log_components_t     component,
   if(isLevel(component, debug))
     {
       char owner[HASHTABLE_DISPLAY_STRLEN];
-      uint64_t fileid_digest = 0;
-      struct fsal_handle_desc fh_desc;
 
       if(powner != NULL)
         DisplayOwner(powner, owner);
       else
         sprintf(owner, "NONE");
 
-      fh_desc.start = (caddr_t) &fileid_digest;
-      fh_desc.len = sizeof(fileid_digest);
-      FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
-                        FSAL_DIGEST_FILEID3,
-                        &(pentry->handle),
-                        &fh_desc);
-
       LogAtLevel(component, debug,
-                 "%s Lock: fileid=%llu, type=%s, start=0x%llx, end=0x%llx, owner={%s}",
-                 reason, (unsigned long long) fileid_digest, str_lockt(plock->lock_type),
+                 "%s Lock: pentry=%p, fileid=%"PRIu64", type=%s, start=0x%llx, end=0x%llx, owner={%s}",
+                 reason, pentry, (uint64_t)pentry->attributes.fileid,
+                 str_lockt(plock->lock_type),
                  (unsigned long long) plock->lock_start,
                  (unsigned long long) lock_end(plock),
                  owner);
@@ -441,8 +433,6 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                                                    fsal_lock_param_t  * plock)
 {
   state_lock_entry_t *new_entry;
-  uint64_t            fileid;
-  struct fsal_handle_desc fh_desc;
 
   new_entry = (state_lock_entry_t *) Mem_Alloc_Label(sizeof(*new_entry),
                                                      "state_lock_entry_t");
@@ -468,15 +458,6 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   new_entry->sle_block_data = NULL;   /* will be filled in later if necessary */
   new_entry->sle_lock       = *plock;
   new_entry->sle_pexport    = pexport;
-
-  fh_desc.start = (caddr_t)&fileid;
-  fh_desc.len = sizeof(&fileid);
-  FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
-                    FSAL_DIGEST_FILEID3,
-                    &(pentry->handle),
-                    &fh_desc);
-
-  new_entry->sle_fileid = (unsigned long long) fileid;
 
 #ifdef _USE_NLM
   if(powner->so_type == STATE_LOCK_OWNER_NLM)
@@ -1024,9 +1005,9 @@ int display_lock_cookie_entry(state_cookie_entry_t * he, char * str)
 
   tmp += sprintf(tmp, "%p: cookie {", he);
   tmp += display_lock_cookie(he->sce_pcookie, he->sce_cookie_size, tmp);
-  tmp += sprintf(tmp, "} entry {%p fileid=%llu} lock {",
+  tmp += sprintf(tmp, "} entry {%p fileid=%"PRIu64"} lock {",
                  he->sce_pentry,
-                 he->sce_lock_entry->sle_fileid);
+                 (uint64_t)he->sce_pentry->attributes.fileid);
   if(he->sce_lock_entry != NULL)
     {
       tmp += sprintf(tmp, "%p owner {", he->sce_lock_entry);

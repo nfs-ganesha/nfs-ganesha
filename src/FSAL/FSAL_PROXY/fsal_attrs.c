@@ -35,6 +35,7 @@
 #include "fsal_common.h"
 
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "fsal_nfsv4_macros.h"
 
 extern fsal_staticfsinfo_t default_proxy_info;

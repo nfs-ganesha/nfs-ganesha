@@ -52,8 +52,8 @@
 #include <stdint.h>
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -99,6 +99,39 @@ static struct {
   },
 };
 #endif                          /* _USE_NFS4_ACL */
+
+/*
+ * String representations of NFS protocol operations.
+ */
+char *nfsv2_function_names[] = {
+  "NFSv2_null", "NFSv2_getattr", "NFSv2_setattr", "NFSv2_root",
+  "NFSv2_lookup", "NFSv2_readlink", "NFSv2_read", "NFSv2_writecache",
+  "NFSv2_write", "NFSv2_create", "NFSv2_remove", "NFSv2_rename",
+  "NFSv2_link", "NFSv2_symlink", "NFSv2_mkdir", "NFSv2_rmdir",
+  "NFSv2_readdir", "NFSv2_statfs"
+};
+
+char *nfsv3_function_names[] = {
+  "NFSv3_null", "NFSv3_getattr", "NFSv3_setattr", "NFSv3_lookup",
+  "NFSv3_access", "NFSv3_readlink", "NFSv3_read", "NFSv3_write",
+  "NFSv3_create", "NFSv3_mkdir", "NFSv3_symlink", "NFSv3_mknod",
+  "NFSv3_remove", "NFSv3_rmdir", "NFSv3_rename", "NFSv3_link",
+  "NFSv3_readdir", "NFSv3_readdirplus", "NFSv3_fsstat",
+  "NFSv3_fsinfo", "NFSv3_pathconf", "NFSv3_commit"
+};
+
+char *nfsv4_function_names[] = {
+  "NFSv4_null", "NFSv4_compound"
+};
+
+char *mnt_function_names[] = {
+  "MNT_null", "MNT_mount", "MNT_dump", "MNT_umount", "MNT_umountall", "MNT_export"
+};
+
+char *rquota_functions_names[] = {
+  "rquota_Null", "rquota_getquota", "rquota_getquotaspecific", "rquota_setquota",
+  "rquota_setquotaspecific"
+};
 
 /**
  *
@@ -463,6 +496,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_STATE_ERROR:
     case CACHE_INODE_BAD_COOKIE:
     case CACHE_INODE_FILE_BIG:
+    case CACHE_INODE_FILE_OPEN:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
@@ -2500,17 +2534,17 @@ nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t * FSAL_attr,
   if(FSAL_attr->asked_attributes & FSAL_ATTR_ATIME)
     {
       Fattr->atime.seconds = FSAL_attr->atime.seconds;
-      Fattr->atime.nseconds = 0;
+      Fattr->atime.nseconds = FSAL_attr->atime.nseconds;
     }
   if(FSAL_attr->asked_attributes & FSAL_ATTR_MTIME)
     {
       Fattr->mtime.seconds = FSAL_attr->mtime.seconds;
-      Fattr->mtime.nseconds = 0;
+      Fattr->mtime.nseconds = FSAL_attr->mtime.nseconds;
     }
   if(FSAL_attr->asked_attributes & FSAL_ATTR_CTIME)
     {
       Fattr->ctime.seconds = FSAL_attr->ctime.seconds;
-      Fattr->ctime.nseconds = 0;
+      Fattr->ctime.nseconds = FSAL_attr->ctime.nseconds;
     }
 
   return 1;
@@ -3784,11 +3818,8 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_BAD_TYPE:
-      nfserror = NFS4ERR_INVAL;
-      break;
-
     case CACHE_INODE_INVALID_ARGUMENT:
-      nfserror = NFS4ERR_PERM;
+      nfserror = NFS4ERR_INVAL;
       break;
 
     case CACHE_INODE_NOT_A_DIRECTORY:
@@ -3869,6 +3900,10 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_FBIG;
       break;
 
+    case CACHE_INODE_FILE_OPEN:
+      nfserror = NFS4ERR_FILE_OPEN;
+      break;
+
     case CACHE_INODE_STATE_ERROR:
       nfserror = NFS4ERR_BAD_STATEID;
       break;
@@ -3920,6 +3955,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
+    case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
               "Error %u converted to NFS3ERR_IO but was set non-retryable",
               error);
@@ -4064,6 +4100,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
     case CACHE_INODE_INVALID_ARGUMENT:
+    case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
               "Error %u converted to NFSERR_IO but was set non-retryable",
               error);
@@ -4384,27 +4421,39 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "nfs4_Is_Fh_Empty failed");
       return NFS4ERR_NOFILEHANDLE;
     }
 
   /* If the filehandle is invalid */
   if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "nfs4_Is_Fh_Invalid failed");
       return NFS4ERR_BADHANDLE;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
   if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "nfs4_Is_Fh_Expired failed");
       return NFS4ERR_FHEXPIRED;
     }
 
+  /* Check for the correct file type */
   if (required_type)
     {
       if(data->current_filetype != required_type)
         {
-          if (required_type == DIRECTORY)
+          LogDebug(COMPONENT_NFSPROTO,
+                   "Wrong file type");
+
+          if(required_type == DIRECTORY)
             return NFS4ERR_NOTDIR;
+          if(required_type == SYMBOLIC_LINK)
+            return NFS4ERR_INVAL;
 
           switch (data->current_filetype)
             {

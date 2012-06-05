@@ -10,7 +10,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "nfs23.h"
 
 bool_t xdr_nfspath2(xdrs, objp)

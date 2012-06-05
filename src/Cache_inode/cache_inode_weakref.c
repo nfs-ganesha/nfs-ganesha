@@ -74,7 +74,7 @@ static gweakref_table_t *cache_inode_wt = NULL;
  */
 void cache_inode_weakref_init()
 {
-    cache_inode_wt = gweakref_init(17);
+    cache_inode_wt = gweakref_init(17, 32767 /* unlike in ht, desire prime */);
 }
 
 /**
@@ -122,6 +122,7 @@ cache_entry_t *cache_inode_weakref_get(gweakref_t *ref,
     if (entry) {
         if (cache_inode_lru_ref(entry, client, flags)
             != CACHE_INODE_SUCCESS) {
+            pthread_rwlock_unlock(lock);
             return NULL;
         }
         pthread_rwlock_unlock(lock);

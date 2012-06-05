@@ -124,6 +124,9 @@ int posix2fsal_error(int posix_errorcode)
     case EFBIG:
       return ERR_FSAL_FBIG;
 
+    case ETXTBSY:
+      return ERR_FSAL_FILE_OPEN;
+
     case ENOSPC:
       return ERR_FSAL_NOSPC;
 

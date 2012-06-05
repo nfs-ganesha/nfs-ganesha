@@ -48,6 +48,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  nfs_file_handle.h               \
                  nfs_proto_functions.h           \
                  nfs_proto_tools.h               \
+                 nfs_rpc_callback.h              \
                  nfs_stat.h                      \
                  nfs_tools.h                     \
                  posixdb_consistency.h           \
@@ -56,7 +57,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  stuff_alloc.h                   \
                  nfs_ip_stats.h                  \
                  Connectathon_config_parsing.h   \
-		 rpc.h 	\
+		 ganesha_rpc.h 	\
                  Rpc_com_tirpc.h                 \
                  solaris_port.h \
 		 rpc/svc_auth.h

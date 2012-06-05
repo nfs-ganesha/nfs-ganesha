@@ -134,6 +134,7 @@ cache_inode_commit(cache_entry_t *entry,
                         "cache_inode_rdwr: fsal_commit() failed: "
                         "fsal_status.major = %d", fsal_status.major);
 
+               *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry, client);
                     goto out;
@@ -148,7 +149,6 @@ cache_inode_commit(cache_entry_t *entry,
                                       status);
                     opened = FALSE;
                }
-               *status = CACHE_INODE_FSAL_ERROR;
                goto out;
           }
           /* Close the FD if we opened it. */
@@ -159,10 +159,10 @@ cache_inode_commit(cache_entry_t *entry,
                                      CACHE_INODE_FLAG_CONTENT_HOLD,
                                      status) !=
                    CACHE_INODE_SUCCESS) {
+                  LogEvent(COMPONENT_CACHE_INODE,
+                          "cache_inode_commit: cache_inode_close = %d",
+                          *status);
                }
-               LogEvent(COMPONENT_CACHE_INODE,
-                        "cache_inode_commit: cache_inode_close = %d",
-                        *status);
           }
      } else {
           /* Ok, it looks like we're using the Ganesha write

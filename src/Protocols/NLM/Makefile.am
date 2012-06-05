@@ -38,7 +38,7 @@ libnlm_la_SOURCES = nlm_Cancel.c                        \
 #include "nlm_async.h"
 #include "nlm_util.h"
 #include "nsm.h"
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "solaris_port.h"
 #include "stuff_alloc.h"
 

@@ -37,6 +37,8 @@
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
@@ -90,10 +92,6 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
         duration = MIN(45, nfs_param.nfsv4_param.lease_lifetime);
 
         P(grace.g_mutex);
-
-        /* if not failover and no clients able to recover, skip grace period */
-        if ((gsp == NULL) && glist_empty(&grace.g_clid_list))
-                duration = 0;
 
         /*
          * if called from failover code and given a nodeid, then this node

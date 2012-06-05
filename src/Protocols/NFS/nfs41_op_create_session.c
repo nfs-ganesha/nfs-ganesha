@@ -48,8 +48,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -132,7 +132,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
     }
 
   pnfs_clientid->confirmed = CONFIRMED_CLIENT_ID;
-  pnfs_clientid->cb_program = arg_CREATE_SESSION4.csa_cb_program;
+  pnfs_clientid->cb.program = arg_CREATE_SESSION4.csa_cb_program;
 
   pnfs_clientid->create_session_sequence += 1;
   /** @todo: BUGAZOMEU Gerer les parametres de secu */

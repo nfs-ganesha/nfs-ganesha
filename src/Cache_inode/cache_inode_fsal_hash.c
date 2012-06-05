@@ -158,9 +158,10 @@ unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
  *
  */
 
-int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
-                                      hash_buffer_t    * buffclef,
-                                      uint32_t * phashval, uint64_t * prbtval)
+static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
+                                             hash_buffer_t    * buffclef,
+                                             uint32_t * phashval,
+                                             uint64_t * prbtval)
 {
     char printbuf[512];
     unsigned int rc = 0 ;
@@ -203,9 +204,10 @@ int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
    return 1 ;
 } /*  cache_inode_fsal_rbt_both */
 
-int cache_inode_fsal_rbt_both_locally(hash_parameter_t * p_hparam,
-                                      hash_buffer_t    * buffclef,
-                                      uint32_t * phashval, uint64_t * prbtval)
+static int cache_inode_fsal_rbt_both_locally(hash_parameter_t * p_hparam,
+                                             hash_buffer_t    * buffclef,
+                                             uint32_t * phashval,
+                                             uint64_t * prbtval)
 {
     char printbuf[512];
     uint32_t h1 = 0 ;

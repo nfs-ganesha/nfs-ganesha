@@ -142,7 +142,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "commands.h"

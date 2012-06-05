@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  *
  * nfs_state_id.c : The management of the state id cache.
@@ -52,8 +52,8 @@
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -71,16 +71,22 @@ hash_table_t *ht_state_id;
 
 char all_zero[OTHERSIZE];
 char all_one[OTHERSIZE];
+#define seqid_all_one 0xFFFFFFFF
+
+pthread_mutex_t StateIdMutex = PTHREAD_MUTEX_INITIALIZER;
+uint64_t state_id_counter;
+
+int display_stateid_other(char * other, char * str)
+{
+  uint32_t epoch = *((uint32_t *)other);
+  uint64_t count = *((uint64_t *)(other + sizeof(uint32_t)));
+  return sprintf(str, "epoch=0x%08x counter=0x%016llx",
+                 (unsigned int) epoch, (unsigned long long) count);
+}
 
 int display_state_id_key(hash_buffer_t * pbuff, char *str)
 {
-  unsigned int i = 0;
-  unsigned int len = 0;
-  unsigned char *s = pbuff->pdata;
-
-  for(i = 0; i < OTHERSIZE; i++)
-    len += sprintf(&(str[i * 2]), "%02x", s[i]);
-  return len;
+  return display_stateid_other(pbuff->pdata, str);
 }                               /* display_state_id_val */
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str)
@@ -99,91 +105,54 @@ int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   if(isFullDebug(COMPONENT_STATE))
     {
-      char str1[OTHERSIZE * 2 + 1], str2[OTHERSIZE * 2 + 1];
+      char str1[OTHERSIZE * 2 + 32], str2[OTHERSIZE * 2 + 32];
 
-      sprint_mem(str1, buff1->pdata, OTHERSIZE);
-      sprint_mem(str2, buff2->pdata, OTHERSIZE);
+      display_stateid_other(buff1->pdata, str1);
+      display_stateid_other(buff2->pdata, str2);
 
       if(isDebug(COMPONENT_HASHTABLE))
         LogFullDebug(COMPONENT_STATE,
-                     "%s vs %s",
+                     "{%s} vs {%s}",
                      str1, str2);
     }
 
   return memcmp(buff1->pdata, buff2->pdata, OTHERSIZE);
 }                               /* compare_state_id */
 
-uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef)
+inline uint32_t compute_stateid_hash_value(uint32_t * pstate)
 {
-  unsigned int sum = 0;
-  unsigned int i = 0;
-  unsigned char c;
+  return pstate[1] ^ pstate[2];
+}
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < OTHERSIZE; i++)
-    {
-      c = ((char *)buffclef->pdata)[i];
-      sum += c;
-    }
+uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef)
+{
+  uint32_t val = compute_stateid_hash_value((uint32_t *) buffclef->pdata) %
+                      p_hparam->index_size;
 
   if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE, "value = %lu",
-                 (unsigned long)(sum % p_hparam->index_size));
+    LogFullDebug(COMPONENT_STATE, "val = %"PRIu32, val);
 
-  return (unsigned long)(sum % p_hparam->index_size);
-}                               /*  client_id_reverse_value_hash_func */
+  return val;
+}
 
 uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                hash_buffer_t * buffclef)
+                                hash_buffer_t    * buffclef)
 {
-
-  u_int32_t i1 = 0;
-  u_int32_t i2 = 0;
-  u_int32_t i3 = 0;
-
-  memcpy(&i1, buffclef->pdata, sizeof(u_int32_t));
-  memcpy(&i2, buffclef->pdata + 4, sizeof(u_int32_t));
-  memcpy(&i3, buffclef->pdata + 8, sizeof(u_int32_t));
+  uint64_t val = compute_stateid_hash_value((uint32_t *) buffclef->pdata);
 
   if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE,
-                 "rbt = %lu",
-                 (unsigned long)(i1 ^ i2 ^ i3));
+    LogFullDebug(COMPONENT_STATE, "rbt = %"PRIu64, val);
 
-  return (unsigned long)(i1 ^ i2 ^ i3);
-}                               /* state_id_rbt_hash_func */
-
-int state_id_hash_both(hash_parameter_t * p_hparam,
-                       hash_buffer_t    * buffclef,
-                       uint32_t * phashval, uint64_t * prbtval )
-{
-   uint32_t h1 = 0 ;
-   uint32_t h2 = 0 ;
-
-   Lookup3_hash_buff_dual((buffclef->pdata), OTHERSIZE, &h1, &h2);
-
-   h1 = h1 % p_hparam->index_size ;
-
-   *phashval = h1;
-   *prbtval = h2;
-
-   if(isDebug(COMPONENT_HASHTABLE))
-        LogFullDebug(COMPONENT_STATE,
-                     "value = %"PRIu32" rbt = %"PRIu32,
-                     h1, h2);
-
-   /* Success */
-   return 1 ;
-} /* state_id_hash_both */
-
+  return val;
+}
 
 /**
  *
  * nfs4_Init_state_id: Init the hashtable for Client Id cache.
  *
  * Perform all the required initialization for hashtable State Id cache
- * 
+ *
  * @param param [IN] parameter used to init the duplicate request cache
  *
  * @return 0 if successful, -1 otherwise
@@ -208,57 +177,22 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
  *
  * nfs4_BuildStateId_Other
  *
- * This routine fills in the pcontext field in the compound data.
- * pentry is supposed to be locked when this function is called.
- *
- * @param pentry      [INOUT] related pentry (should be a REGULAR FILE)
- * @param pcontext    [IN]    FSAL's operation context
- * @param popen_owner [IN]    the NFSV4.x open_owner for whom this stateid is built
+ * This routine builds the 12 byte "other" portion of a stateid from
+ * the ServerEpoch and a 64 bit global counter.
  * @param other       [OUT]   the stateid.other object (a char[OTHERSIZE] string)
  *
- * @return 1 if ok, 0 otherwise.
- *
  */
-
-int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
-                            fsal_op_context_t * pcontext,
-                            state_owner_t     * popen_owner,
-                            char              * other)
+void nfs4_BuildStateId_Other(char * other)
 {
-  uint64_t fileid_digest = 0;
-  u_int16_t srvboot_digest = 0;
-  uint32_t open_owner_digest = 0;
-  struct fsal_handle_desc fh_desc;
+  /* Use only 32 bits of server epoch */
+  uint32_t epoch = (uint32_t) ServerEpoch;
+  memcpy(other, &epoch, sizeof(uint32_t));
 
-  LogFullDebug(COMPONENT_STATE,
-               "pentry=%p popen_owner=%u|%s",
-               pentry,
-               popen_owner->so_owner_len,
-               popen_owner->so_owner_val);
-
-  /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
-  fh_desc.start = (caddr_t)&fileid_digest;
-  fh_desc.len = sizeof(uint64_t);
-  if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
-                                     FSAL_DIGEST_FILEID3,
-                                     &(pentry->handle),
-                                     &fh_desc)))
-    return 0;
-
-  srvboot_digest = (u_int16_t) (ServerBootTime & 0x0000FFFF);;
-  open_owner_digest = popen_owner->so_owner.so_nfs4_owner.so_counter;
-
-  LogFullDebug(COMPONENT_STATE,
-               "pentry=%p fileid=%"PRIu64" open_owner_digest=%u",
-               pentry, fileid_digest, open_owner_digest);
-
-  /* Now, let's do the time's warp again.... Well, in fact we'll just build the stateid.other field */
-  memcpy((char *)other, &srvboot_digest, 2);
-  memcpy((char *)(other + 2), &fileid_digest, 8);
-  memcpy((char *)(other + 10), &open_owner_digest, 2);
-
-  return 1;
-}                               /* nfs4_BuildStateId_Other */
+  P(StateIdMutex);
+  memcpy(other + sizeof(uint32_t), &state_id_counter, sizeof(uint64_t));
+  state_id_counter++;
+  V(StateIdMutex);
+}
 
 /**
  *
@@ -310,7 +244,7 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
  * This routine gets a pointer to a state from the states's hashtable.
  *
  * @param pstate       [IN] pointer to the stateid to be checked.
- * @param ppstate_data [OUT] pointer's state found 
+ * @param ppstate_data [OUT] pointer's state found
  *
  * @return 1 if ok, 0 otherwise.
  *
@@ -389,7 +323,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
                        char              flags,
                        const char      * tag)
 {
-  u_int16_t         time_digest = 0;
+  uint32_t          epoch = 0;
   state_t         * pstate2;
   nfs_client_id_t * nfs_clientid;
   char              str[OTHERSIZE * 2 + 1 + 6];
@@ -445,7 +379,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
   if(memcmp(pstate->other, all_one, OTHERSIZE) == 0)
     {
       /* Test for special all ones stateid */
-      if(pstate->seqid == 0xFFFFFFFF && (flags & STATEID_SPECIAL_ALL_1) != 0)
+      if(pstate->seqid == seqid_all_one && (flags & STATEID_SPECIAL_ALL_1) != 0)
         {
           /* All 1 stateid */
           LogDebug(COMPONENT_STATE,
@@ -463,9 +397,9 @@ int nfs4_Check_Stateid(stateid4        * pstate,
     }
 
   /* Check if stateid was made from this server instance */
-  memcpy((char *)&time_digest, pstate->other, 2);
+  memcpy(&epoch, pstate->other, sizeof(uint32_t));
 
-  if((u_int16_t) (ServerBootTime & 0x0000FFFF) != time_digest)
+  if(epoch != ServerEpoch)
     {
       LogDebug(COMPONENT_STATE,
                "Check %s stateid found stale stateid %s", tag, str);
@@ -485,7 +419,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
     }
 
   /* Get the related clientid */
-  /* If call from NFSv4.1 request, the clientid is provided through the session's structure, 
+  /* If call from NFSv4.1 request, the clientid is provided through the session's structure,
    * with NFSv4.0, the clientid is related to the stateid itself */
   if(clientid == 0LL)
     {
@@ -521,6 +455,9 @@ int nfs4_Check_Stateid(stateid4        * pstate,
      (pstate->seqid != 0))
     {
       /* Check seqid in stateid */
+      /** @todo fsf: maybe change to simple comparison pstate->seqid < pstate2->state_seqid
+       *             as good enough and maybe makes pynfs happy.
+       */
       diff = pstate->seqid - pstate2->state_seqid;
       if(diff < 0)
         {
@@ -554,11 +491,11 @@ int nfs4_Check_Stateid(stateid4        * pstate,
 }                               /* nfs4_Check_Stateid */
 
 /**
- * 
+ *
  *  nfs4_State_PrintAll
- *  
- * This routine displays the content of the hashtable used to store the states. 
- * 
+ *
+ * This routine displays the content of the hashtable used to store the states.
+ *
  * @return nothing (void function)
  */
 
@@ -612,7 +549,7 @@ int nfs4_check_special_stateid(cache_entry_t *pentry,
                                const char    *tag,
                                int access)
 {
-  
+
   struct glist_head * glist;
   state_t           * pstate_iterate;
   int                 rc = NFS4_OK;

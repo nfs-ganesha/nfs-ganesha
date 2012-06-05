@@ -5,6 +5,8 @@
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
+ * Portions Copyright (C) 2012, The Linux Box Corporation
+ * Contributor : Matt Benjamin <matt@linuxbox.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,9 +32,8 @@
  * \version $Revision: 1.24 $
  * \brief   Routines used for managing the NFS4/CB COMPOUND functions.
  *
- * nfs4_cb_Compound.c : Routines used for managing the NFS4/CB COMPOUND functions.
- * 
- * 
+ * nfs4_cb_Compound.c : Routines used for managing the NFS4/CB COMPOUND
+ * functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -49,10 +50,10 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
+#include "nfs23.h" /* XXX */
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
@@ -60,54 +61,63 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_rpc_callback.h"
 
-typedef struct nfs4_cb_desc__
-{
-  char *name;
-  unsigned int val;
-  int (*funct) (struct nfs_cb_argop4 *, compound_data_t *, struct nfs_cb_resop4 *);
-} nfs4_cb_desc_t;
-
-/* This array maps the operation number to the related position in array optab4 */
-const int cbtab4index[] = { 0, 0, 0, 0, 1, 2 };
-
-static const nfs4_cb_desc_t cbtab4[] = {
-  {"OP_CB_GETATTR", NFS4_OP_CB_GETATTR, nfs4_cb_getattr},
-  {"OP_CB_RECALL", NFS4_OP_CB_RECALL, nfs4_cb_recall},
-  {"OP_CB_ILLEGAL", NFS4_OP_CB_ILLEGAL, nfs4_cb_illegal},
+static const nfs4_cb_tag_t cbtagtab4[] = {
+    {NFS4_CB_TAG_DEFAULT, "Ganesha CB Compound", 19},
 };
 
-/**
- * nfs4_cb_COMPOUND: The NFSCB PROC4 COMPOUND
- * 
- * Implements the NFSCB PROC4 COMPOUND.
- *
- * 
- *  @param parg        [IN]  generic nfs arguments
- *  @param pexportlist [IN]  the full export list 
- *  @param pcontex     [IN]  context for the FSAL (unused but kept for nfs functions prototype homogeneity)
- *  @param pclient     [INOUT] client resource for request management
- *  @param ht          [INOUT] cache inode hash table
- *  @param preq        [IN]  RPC svc request
- *  @param pres        [OUT] generic nfs reply
- *
- *  @see   nfs4_op_<*> functions
- *  @see   nfs4_GetPseudoFs
- * 
- */
+/* Some CITI-inspired compound helper ideas */
 
-int nfs4_cb_Compound(nfs_arg_t * parg /* IN     */ ,
-                     exportlist_t * pexport /* IN     */ ,
-                     fsal_op_context_t * pcontext /* IN     */ ,
-                     cache_inode_client_t * pclient /* INOUT  */ ,
-                     hash_table_t * ht /* INOUT */ ,
-                     struct svc_req *preq /* IN     */ ,
-                     nfs_res_t * pres /* OUT    */ )
+void
+cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops, uint32_t ident,
+                    char *tag, uint32_t tag_len)
 {
-  return 0;
-}                               /* nfs4_cb_Compound */
+    /* args */
+    memset(cbt, 0, sizeof(nfs4_compound_t)); /* XDRS */
 
-void nfs4_cb_Compound_Free(nfs_res_t * pres)
+    cbt->v_u.v4.args.minorversion = 0;
+    cbt->v_u.v4.args.callback_ident = ident;
+    cbt->v_u.v4.args.argarray.argarray_val = alloc_cb_argop(n_ops);
+    cbt->v_u.v4.args.argarray.argarray_len = 0; /* not n_ops, see below */
+
+    if (tag) {
+        /* sender must ensure tag is safe to queue */
+        cbt->v_u.v4.args.tag.utf8string_val = tag;
+        cbt->v_u.v4.args.tag.utf8string_len = tag_len;
+    } else {
+        cbt->v_u.v4.args.tag.utf8string_val =
+            cbtagtab4[NFS4_CB_TAG_DEFAULT].val;
+        cbt->v_u.v4.args.tag.utf8string_len =
+            cbtagtab4[NFS4_CB_TAG_DEFAULT].len;
+    }
+
+    cbt->v_u.v4.res.resarray.resarray_val = alloc_cb_resop(n_ops);
+    cbt->v_u.v4.res.resarray.resarray_len = 0;
+
+} /* cb_compound_init */
+
+void
+cb_compound_add_op(nfs4_compound_t *cbt, nfs_cb_argop4 *src)
 {
-  return;
-}                               /* nfs4_cb_Compound_Free */
+    uint32_t ix = /* old value */
+        (cbt->v_u.v4.args.argarray.argarray_len)++;
+    nfs_cb_argop4 *dst =
+        cbt->v_u.v4.args.argarray.argarray_val + ix;
+    *dst = *src;
+    /* nothing to do for (zero) val region */
+    cbt->v_u.v4.res.resarray.resarray_len++;
+}
+
+void
+cb_compound_free(nfs4_compound_t *cbt)
+{
+    switch (cbt->v_u.v4.args.minorversion) {
+    case 0:
+        free_cb_argop(cbt->v_u.v4.args.argarray.argarray_val);
+        free_cb_resop(cbt->v_u.v4.res.resarray.resarray_val);
+        break;
+    default:
+        break;
+    }
+}

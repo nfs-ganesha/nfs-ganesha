@@ -54,3 +54,14 @@ AC_DEFUN([GA_PROG_LIBTREE],
 	LDFLAGS="-L${LIBTREEDIR} -ltree $LDFLAGS"
 	AC_SUBST(LIBTREEDIR)
 ])
+
+#
+# This macro establishes TIRPCDIR, and does AC substitution
+# for it.
+#
+AC_DEFUN([GA_PROG_TIRPC],
+[
+	TOPDIR="`pwd`"
+	TIRPCPATH=${TOPDIR}/libtirpc
+	AC_SUBST(TIRPCPATH)
+])

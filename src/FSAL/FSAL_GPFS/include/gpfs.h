@@ -28,7 +28,7 @@
 /* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF       */
 /* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                   */
 /*                                                                              */
-/* @(#)42       1.1.2.122  src/avs/fs/mmfs/ts/util/gpfs.h, mmfs, avs_rhrz 1/23/12 00:54:07 */
+/* @(#)42       1.1.9.1  src/avs/fs/mmfs/ts/util/gpfs.h, mmfs, avs_rhrz 4/26/12 10:33:43 */
 /*
  *  Library calls for GPFS interfaces
  */
@@ -413,8 +413,13 @@ typedef struct gpfs_winattr
  * Returns:      0      Success
  *              -1      Failure
  *
- * Errno:       Specific error indication
- *              EINVAL
+ * Errno:       ENOENT  file not found
+ *              EBADF   Bad file handle, not a GPFS file
+ *              ENOMEM  Memory allocation failed
+ *              EACCESS Permission denied
+ *              EFAULT  Bad address provided
+ *              EINVAL  Not a regular file
+ *              ENOSYS  function not available
  */
 int GPFS_API
 gpfs_get_winattrs(gpfs_file_t fileDesc, gpfs_winattr_t *attrP);
@@ -432,8 +437,13 @@ gpfs_get_winattrs_path(const char *pathname, gpfs_winattr_t *attrP);
  * Returns:      0      Success
  *              -1      Failure
  *
- * Errno:       Specific error indication
- *              EINVAL
+ * Errno:       ENOENT  file not found
+ *              EBADF   Bad file handle, not a GPFS file
+ *              ENOMEM  Memory allocation failed
+ *              EACCESS Permission denied
+ *              EFAULT  Bad address provided
+ *              EINVAL  Not a regular file
+ *              ENOSYS  function not available
  */
 int GPFS_API
 gpfs_set_winattrs(gpfs_file_t fileDesc, int flags, gpfs_winattr_t *attrP);
@@ -487,7 +497,7 @@ gpfs_set_times_path(char *pathname, int flags, gpfs_times_vector_t times);
 
 /* NAME:        gpfs_set_share()
  *
- * FUNCTION:    Acquire shares for Samba
+ * FUNCTION:    Acquire shares
  *
  * Input:       fileDesc : file descriptor
  *              allow    : share type being requested
@@ -497,11 +507,15 @@ gpfs_set_times_path(char *pathname, int flags, gpfs_times_vector_t times);
  *                         GPFS_DENY_NONE, GPFS_DENY_READ,
  *                         GPFS_DENY_WRITE, GPFS_DENY_BOTH
  *
- * Returns:     0       Successful
+ * Returns:      0      Success
  *              -1      Failure
  *
- * Errno:       Specific error indication
+ * Errno:       EBADF   Bad file handle
+ *              EINVAL  Bad argument given
+ *              EFAULT  Bad address provided
+ *              ENOMEM  Memory allocation failed
  *              EACCES  share mode not available
+ *              ENOSYS  function not available
  */
 
 /* allow/deny specifications */
@@ -532,11 +546,18 @@ gpfs_set_share(gpfs_file_t fileDesc,
  *                          GPFS_LEASE_NONE GPFS_LEASE_READ,
  *                          GPFS_LEASE_WRITE
  *
- * Returns:     0       Successful
+ * Returns:      0      Success
  *              -1      Failure
  *
- * Errno:       Specific error indication
- *              EACCES  lease not available
+ * Errno:       EBADF   Bad file handle
+ *              EINVAL  Bad argument given
+ *              EFAULT  Bad address provided
+ *              ENOMEM  Memory allocation failed
+ *              EAGAIN  lease not available
+ *              EACCES  permission denied
+ *              EOPNOTSUPP unsupported leaseType
+ *              ESTALE  unmounted filesystem
+ *              ENOSYS  function not available
  */
 
 /* leaseType specifications */
@@ -556,10 +577,11 @@ gpfs_set_lease(gpfs_file_t fileDesc,
  * Returns:     GPFS_LEASE_READ
  *              GPFS_LEASE_WRITE
  *              GPFS_LEASE_NONE
- *              -1      Failure
  *
- * Errno:       Specific error indication
- *              EINVAL
+ * Returns:     0       Success
+ *             -1       Failure   
+ *
+ * Errno:       EINVAL
  */
 int GPFS_API
 gpfs_get_lease(gpfs_file_t fileDesc);
@@ -571,18 +593,19 @@ gpfs_get_lease(gpfs_file_t fileDesc);
   *
   * INPUT:       File descriptor, pathname, buffer, bufferlength
   * OUTPUT:      Real file name stored in filesystem
-  * Returns:     0       Successful
-  *              -1      Failure
   *
-  * Errno:       ENOSYS  function not available
-  *              EBADF   Bad file handle
-  *              EBADF   Not a GPFS file
+  * Returns:     0       Success
+  *             -1       Failure   
+  *
+  * Errno:       EBADF   Bad file handle
   *              EINVAL  Not a regular file
+  *              EFAULT  Bad address provided
   *              ENOSPC  buffer too small to return the real file name.
   *                      Needed size is returned in buflen parameter.
   *              ENOENT  File does not exist
   *              ENOMEM  Memory allocation failed
   *              EACCESS Permission denied
+  *              ENOSYS  function not available
   */
 int GPFS_API
 gpfs_get_realfilename(gpfs_file_t fileDesc,
@@ -625,6 +648,7 @@ typedef struct cifsThreadData_t
   unsigned int secInfoFlags; /* Future use.  Must be zero */
   gpfs_uid_t   sdUID;      /* Owning user */
   gpfs_uid_t   sdGID;      /* Owning group */
+  int          shareLocked_fd; /* file descriptor with share locks */
   unsigned int aclLength ; /* Length of the following ACL */
   gpfs_acl_t   acl;        /* The initial ACL for create/mkdir */
 } cifsThreadData_t;
@@ -2698,6 +2722,9 @@ gpfs_getpoolname(const char *pathname,
 #endif
 #define Q_SETUSE        0x0500  /* set usage */
 #define Q_SYNC          0x0600  /* sync disk copy of a filesystems quotas */
+#define Q_SETGRACETIME  0x0700  /* set grace time */
+#define Q_SETGRACETIME_ENHANCE  0x0800  /* set grace time and update all
+                                         * quota entries */
 
 /* gpfs quota types */
 #define GPFS_USRQUOTA     0

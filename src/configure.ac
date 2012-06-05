@@ -6,6 +6,8 @@ AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr
 
 AC_SUBST(RELEASE, [1])
 
+AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
+
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -227,6 +229,17 @@ if test "$enable_rquota" == "yes"; then
 fi
 AM_CONDITIONAL(USE_RQUOTA, test "$enable_rquota" = "yes")
 
+# DBUS
+GA_ENABLE_AM_CONDITION([dbus],[enable DBUS protocol support],[USE_DBUS])
+
+if test "$enable_dbus" == "yes"; then
+        AC_DEFINE(USE_DBUS,1,[enable DBUS protocol support])
+	AC_CHECK_LIB([dbus-1], [main], [AC_DEFINE( HAVE_DBUS,1,[enable DBUS support] ) ], [AC_MSG_ERROR( [libdbus-1.x could not be found...] ) ] )
+	CFLAGS="$CFLAGS `pkg-config dbus-1 --cflags`"
+	LDFLAGS="$LDFLAGS -ldbus-1"
+fi
+AM_CONDITIONAL(USE_DBUS, test "$enable_dbus" = "yes")
+
 # Invalidation simulator (to be removed when FSAL_UP will be completed)
 GA_ENABLE_AM_CONDITION([upcall-simulator],[enable FSAL upcalls simulator thread],[USE_UPCALL_SIMULATOR])
 
@@ -234,6 +247,14 @@ if test "$enable_upcall_simulator" == "yes"; then
         AC_DEFINE(_USE_UPCALL_SIMULATOR,1,[enable Upcall simulator thread])
 fi
 AM_CONDITIONAL(USE_UPCALL_SIMULATOR, test "$enable_upcall_simulator" = "yes")
+
+# Callback simulator                                                                                         
+GA_ENABLE_AM_CONDITION([cb-simulator],[enable callback simulator thread],[USE_CB_SIMULATOR])
+
+if test "$enable_cb_simulator" == "yes"; then
+        AC_DEFINE(_USE_CB_SIMULATOR,1,[enable callback simulator thread])
+fi
+AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 
 # FSAL switch argument (default is PROXY)
 AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
@@ -267,12 +288,25 @@ fi
 AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
 
 # TI-RPC
-GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
-
-if test "$enable_tirpc" == "yes"; then
-	AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-	AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
+AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+GA_PROG_TIRPC
+_SRCDIR="`pwd`"
+TIRPCDIR="${_SRCDIR}/libtirpc"
+dnl echo "TIRPCDIR: ${TIRPCDIR}"
+if test -d ${TIRPCDIR}; then
+	cd ${TIRPCDIR}
+	sh autogen.sh
+	./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix="${prefix}"
+	cd ${_SRCDIR}
+else
+	AC_MSG_ERROR([${TIRPCDIR} not present (cf. README.TIRPC).])
 fi
+
+# My auto-foo doesn't extend to this
+#AC_CONFIG_SUBDIRS([../contrib/libtirpc])
+CFLAGS="-I${TIRPCDIR}/tirpc/ $CFLAGS"
+TIRPC_LIB="${TIRPCDIR}/src/libntirpc.la"
+TIRPC_LIBS="$TIRPC_LIB"
 
 # IPv6
 GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
@@ -292,6 +326,19 @@ if test "$enable_nfsidmap" == "yes"; then
 	AC_DEFINE(_USE_NFSIDMAP, 1, [enable Id Mapping through libnfsidmap])
 fi
 AM_CONDITIONAL(USE_NFSIDMAP, test "$enable_nfsidmap" == "yes" )
+
+dnl check for the keyutils libraries and headers
+AC_KEYUTILS
+
+dnl Check for Kerberos V5
+AC_KERBEROS_V5
+
+dnl Invoked after AC_KERBEROS_V5; AC_LIBRPCSECGSS needs to have KRBLIBS set
+dnl AC_LIBRPCSECGSS
+
+dnl Need krb5_util.h and friends.  This will be out-of-tree Very Soon,
+dnl so don't put pieces into src/include
+CFLAGS="$CFLAGS -I\$(top_builddir)/RPCAL/gssd"
 
 # Exports stats via SNMP
 
@@ -404,12 +451,10 @@ AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
-# RPCAL switch argument (default is ONCRPC)
-AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
-              RPCAL="$withval", RPCAL="TIRPC")
-AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
-AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
-AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
+# RPCAL now fixed as TIRPC
+RPCAL="TIRPC"
+AM_CONDITIONAL(USE_TIRPC,  true )
+AM_CONDITIONAL(HAVE_GSSAPI, true )
 
 # Enable 9P Support
 GA_ENABLE_AM_CONDITION([9p],[enable 9P support], [USE_9P])
@@ -737,27 +782,13 @@ case $FSAL in
 esac
 
 case $RPCAL in
-	"ONCRPC")
-		;;
 	"TIRPC")
-                PKG_CHECK_MODULES(TIRPC, libtirpc,
-                  [
-                        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-                        AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support])
-                        CFLAGS="$CFLAGS $TIRPC_CFLAGS"
-                        LIBS="$TIRPC_LIBS $LIBS"
-                  ],
-                  [
-                        AC_MSG_ERROR( [TI-RPC could not be found...] )
-                  ]
-                )
-
                 KRBLIBS=`krb5-config --libs gssapi`
                 if test "$KRBLIBS" == ""; then
                    AC_MSG_ERROR( [krb5 libs not found, is krb5-config available...?] )
                 else
                    AC_DEFINE(_HAVE_GSSAPI,1,[enable gss in tirpc])
-                   LIBS="$KRBLIBS $LIBS"
+                   LIBS="$KRBLIBS $LIBS -lgssglue"
                 fi
 		;;
 	*)
@@ -838,10 +869,9 @@ AC_CONFIG_FILES([include/Makefile
                  SAL/Makefile
 		 FSAL_UP/Makefile
 		 FSAL_UP/DUMB/Makefile
-                 File_Content/Makefile
-                 File_Content_Policy/Makefile
 		 Protocols/Makefile
                  Protocols/9P/Makefile
+		 Protocols/DBUS/Makefile
 		 Protocols/NFS/Makefile
 		 Protocols/NLM/Makefile
 		 Protocols/RQUOTA/Makefile
@@ -864,12 +894,10 @@ AC_CONFIG_FILES([include/Makefile
                  FSAL/FSAL_VFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
                  RPCAL/Makefile
-                 RPCAL/ONCRPC/Makefile
-                 RPCAL/TIRPC/Makefile
+                 RPCAL/gssd/Makefile
                  MainNFSD/Makefile
                  test/Makefile
                  cmdline_tools/Makefile
-                 shell/Makefile
                  snmp_adm/Makefile
                  example-fuse/Makefile
                  Docs/Makefile

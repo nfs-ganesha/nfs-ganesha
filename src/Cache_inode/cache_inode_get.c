@@ -137,13 +137,14 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                if (entry == associated) {
                     /* Take a quick exit so we don't invert lock
                        ordering. */
+                    HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
                     return entry;
                }
           }
      }
      HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
-     if (!client && !entry) {
+     if (!client && !context) {
           /* Upcalls have no access to a cache_inode_client_t,
              so just return the entry without revalidating it or
              creating a new one. */
@@ -231,15 +232,27 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                                             context,
                                             client))
          != CACHE_INODE_SUCCESS) {
-          cache_inode_put(entry, client);
-          entry = NULL;
+       goto out_put;
      }
 
      /* Set the returned attributes */
-     cache_inode_lock_trust_attrs(entry, context, client);
+     *status = cache_inode_lock_trust_attrs(entry, context, client);
+
+     /* cache_inode_lock_trust_attrs may fail, in that case, the
+        attributes are wrong and pthread_rwlock_unlock can't be called
+        again */
+     if(*status != CACHE_INODE_SUCCESS)
+       {
+         goto out_put;
+       }
      *attr = entry->attributes;
      pthread_rwlock_unlock(&entry->attr_lock);
 
+     return entry;
+
+ out_put:
+     cache_inode_put(entry, client);
+     entry = NULL;
      return entry;
 } /* cache_inode_get */
 
@@ -261,8 +274,8 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
  * @return status.
  *
  */
-cache_inode_status_t cache_inode_put(cache_entry_t *entry,
-                                     cache_inode_client_t *pclient)
+void cache_inode_put(cache_entry_t *entry,
+                     cache_inode_client_t *pclient)
 {
-  return (cache_inode_lru_unref(entry, pclient, LRU_FLAG_NONE));
+  cache_inode_lru_unref(entry, pclient, LRU_FLAG_NONE);
 }

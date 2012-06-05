@@ -74,6 +74,14 @@ It comes with various back-end modules to support different file systems and
 name-spaces. This package provides the documentation for NFS-GANESHA and its
 back-ends.
 
+%package libntirpc
+Summary: TI-RPC variant packaged with Ganesha.
+Group: Applications/System
+
+%description libntirpc
+A variant of TI-RPC with enhanced mt-safety, bi-directional operation, and
+other enhancements (in progress).
+
 %package vim
 Summary: Vim configuration files for NFS-GANESHA
 Group: Applications/System
@@ -378,6 +386,89 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
 %doc Docs/ganesha_snmp_adm.pdf
 
+# extra macro
+%define _usrlibdir /usr/lib
+
+%files libntirpc
+%defattr(-,root,root,-)
+# pending further disambiguation, don't install any actual
+# files
+%ghost %{_includedir}/clnt_internal.h
+%ghost %{_includedir}/rpc_com.h
+%ghost %{_includedir}/rpc_ctx.h
+%ghost %{_includedir}/svc_internal.h
+%ghost %{_includedir}/svc_xprt.h
+%ghost %{_includedir}/tirpc/getpeereid.h
+%ghost %{_includedir}/tirpc/misc/event.h
+%ghost %{_includedir}/tirpc/misc/opr_queue.h
+%ghost %{_includedir}/tirpc/misc/queue.h
+%ghost %{_includedir}/tirpc/misc/rbtree.h
+%ghost %{_includedir}/tirpc/misc/rbtree_x.h
+%ghost %{_includedir}/tirpc/namespace.h
+%ghost %{_includedir}/tirpc/netconfig.h
+%ghost %{_includedir}/tirpc/reentrant.h
+%ghost %{_includedir}/tirpc/rpc/auth.h
+%ghost %{_includedir}/tirpc/rpc/auth_des.h
+%ghost %{_includedir}/tirpc/rpc/auth_gss.h
+%ghost %{_includedir}/tirpc/rpc/auth_inline.h
+%ghost %{_includedir}/tirpc/rpc/auth_kerb.h
+%ghost %{_includedir}/tirpc/rpc/auth_unix.h
+%ghost %{_includedir}/tirpc/rpc/clnt.h
+%ghost %{_includedir}/tirpc/rpc/clnt_soc.h
+%ghost %{_includedir}/tirpc/rpc/clnt_stat.h
+%ghost %{_includedir}/tirpc/rpc/des.h
+%ghost %{_includedir}/tirpc/rpc/des_crypt.h
+%ghost %{_includedir}/tirpc/rpc/nettype.h
+%ghost %{_includedir}/tirpc/rpc/pmap_clnt.h
+%ghost %{_includedir}/tirpc/rpc/pmap_prot.h
+%ghost %{_includedir}/tirpc/rpc/pmap_rmt.h
+%ghost %{_includedir}/tirpc/rpc/raw.h
+%ghost %{_includedir}/tirpc/rpc/rpc.h
+%ghost %{_includedir}/tirpc/rpc/rpc_com.h
+%ghost %{_includedir}/tirpc/rpc/rpc_msg.h
+%ghost %{_includedir}/tirpc/rpc/rpcb_clnt.h
+%ghost %{_includedir}/tirpc/rpc/rpcb_prot.h
+%ghost %{_includedir}/tirpc/rpc/rpcb_prot.x
+%ghost %{_includedir}/tirpc/rpc/rpcent.h
+%ghost %{_includedir}/tirpc/rpc/svc.h
+%ghost %{_includedir}/tirpc/rpc/svc_auth.h
+%ghost %{_includedir}/tirpc/rpc/svc_dg.h
+%ghost %{_includedir}/tirpc/rpc/svc_dplx.h
+%ghost %{_includedir}/tirpc/rpc/svc_rqst.h
+%ghost %{_includedir}/tirpc/rpc/svc_soc.h
+%ghost %{_includedir}/tirpc/rpc/types.h
+%ghost %{_includedir}/tirpc/rpc/xdr.h
+%ghost %{_includedir}/tirpc/rpc/xdr_inline.h
+%ghost %{_includedir}/tirpc/rpcsvc/crypt.h
+%ghost %{_includedir}/tirpc/rpcsvc/crypt.x
+%ghost %{_includedir}/tirpc/un-namespace.h
+%ghost %{_includedir}/vc_lock.h
+%ghost %{_usrlibdir}/libntirpc.a
+%ghost %{_usrlibdir}/libntirpc.la
+%ghost %{_usrlibdir}/libntirpc.so
+%ghost %{_usrlibdir}/libntirpc.so.1
+%ghost %{_usrlibdir}/libntirpc.so.1.0.10
+%ghost %{_usrlibdir}/pkgconfig/libntirpc.pc
+%ghost %{_datadir}/man/man3/bindresvport.3t.gz
+%ghost %{_datadir}/man/man3/des_crypt.3t.gz
+%ghost %{_datadir}/man/man3/getnetconfig.3t.gz
+%ghost %{_datadir}/man/man3/getnetpath.3t.gz
+%ghost %{_datadir}/man/man3/getrpcent.3t.gz
+%ghost %{_datadir}/man/man3/getrpcport.3t.gz
+%ghost %{_datadir}/man/man3/rpc.3t.gz
+%ghost %{_datadir}/man/man3/rpc_clnt_auth.3t.gz
+%ghost %{_datadir}/man/man3/rpc_clnt_calls.3t.gz
+%ghost %{_datadir}/man/man3/rpc_clnt_create.3t.gz
+%ghost %{_datadir}/man/man3/rpc_secure.3t.gz
+%ghost %{_datadir}/man/man3/rpc_soc.3t.gz
+%ghost %{_datadir}/man/man3/rpc_svc_calls.3t.gz
+%ghost %{_datadir}/man/man3/rpc_svc_create.3t.gz
+%ghost %{_datadir}/man/man3/rpc_svc_err.3t.gz
+%ghost %{_datadir}/man/man3/rpc_svc_reg.3t.gz
+%ghost %{_datadir}/man/man3/rpc_xdr.3t.gz
+%ghost %{_datadir}/man/man3/rtime.3t.gz
+%ghost %{_datadir}/man/man5/netconfig.5.gz
+
 %files vim
 %defattr(-,root,root,-)
 %{_datadir}/%{name}/ganesha.vim
@@ -389,7 +480,8 @@ rm -rf $RPM_BUILD_ROOT
 %files proxy
 %defattr(-,root,root,-)
 %{_bindir}/proxy.ganesha.*
-%{_bindir}/proxy.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/proxy.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-proxy
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/proxy.ganesha*
@@ -399,7 +491,8 @@ rm -rf $RPM_BUILD_ROOT
 %files xfs
 %defattr(-,root,root,-)
 %{_bindir}/xfs.ganesha.*
-%{_bindir}/xfs.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/xfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-xfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/xfs.ganesha*
@@ -409,7 +502,6 @@ rm -rf $RPM_BUILD_ROOT
 %files gpfs
 %defattr(-,root,root,-)
 %{_bindir}/gpfs.ganesha.*
-%{_bindir}/gpfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-gpfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha*
@@ -419,7 +511,8 @@ rm -rf $RPM_BUILD_ROOT
 %files vfs
 %defattr(-,root,root,-)
 %{_bindir}/vfs.ganesha.*
-%{_bindir}/vfs.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/vfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-vfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.ganesha*
@@ -429,7 +522,8 @@ rm -rf $RPM_BUILD_ROOT
 %files ceph
 %defattr(-,root,root,-)
 %{_bindir}/ceph.ganesha.*
-%{_bindir}/ceph.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/ceph.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-ceph
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.ganesha*
@@ -439,7 +533,8 @@ rm -rf $RPM_BUILD_ROOT
 %files lustre
 %defattr(-,root,root,-)
 %{_bindir}/lustre.ganesha.*
-%{_bindir}/lustre.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/lustre.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-lustre
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/lustre.ganesha*
@@ -449,7 +544,8 @@ rm -rf $RPM_BUILD_ROOT
 %files shook
 %defattr(-,root,root,-)
 %{_bindir}/shook.ganesha.*
-%{_bindir}/shook.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/shook.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-shook
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/shook.ganesha*
@@ -459,7 +555,8 @@ rm -rf $RPM_BUILD_ROOT
 %files dynfsal
 %defattr(-,root,root,-)
 %{_bindir}/dynfsal.ganesha.*
-%{_bindir}/dynfsal.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/dynfsal.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-dynfsal
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/dynfsal.ganesha*
@@ -469,7 +566,8 @@ rm -rf $RPM_BUILD_ROOT
 %files posix
 %defattr(-,root,root,-)
 %{_bindir}/posix.ganesha.*
-%{_bindir}/posix.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/posix.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-posix
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql
@@ -483,7 +581,8 @@ rm -rf $RPM_BUILD_ROOT
 %files snmp
 %defattr(-,root,root,-)
 %{_bindir}/snmp.ganesha.*
-%{_bindir}/snmp.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/snmp.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-snmp
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/snmp.ganesha*
@@ -511,7 +610,8 @@ rm -rf $RPM_BUILD_ROOT
 %files hpss
 %defattr(-,root,root,-)
 %{_bindir}/hpss.ganesha.*
-%{_bindir}/hpss.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/hpss.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-hpss
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
@@ -521,7 +621,8 @@ rm -rf $RPM_BUILD_ROOT
 %files zfs
 %defattr(-,root,root,-)
 %{_bindir}/zfs.ganesha.*
-%{_bindir}/zfs.ganeshell
+#ganeshell temporarily blocked
+#%{_bindir}/zfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-zfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/zfs.ganesha*

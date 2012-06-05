@@ -135,6 +135,7 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
                         "Unable to increment reference count on an entry that "
                         "on which we should have a referenced.");
           }
+          goto out;
      } else if (!FSAL_namecmp(pname, (fsal_name_t *) & FSAL_DOT_DOT)) {
           /* Directory do only have exactly one parent. This a limitation
            * in all FS, which implies that hard link are forbidden on
@@ -145,6 +146,7 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
           pentry =
                cache_inode_lookupp_impl(pentry_parent, pclient, pcontext,
                                         pstatus);
+          goto out;
      } else {
           int write_locked = 0;
           /* We first try avltree_lookup by name.  If that fails, we
@@ -327,8 +329,11 @@ cache_inode_lookup(cache_entry_t *pentry_parent,
           *pstatus = cache_inode_lock_trust_attrs(entry,
                                                   pcontext,
                                                   pclient);
-          *pattr = entry->attributes;
-          pthread_rwlock_unlock(&entry->attr_lock);
+          if(*pstatus == CACHE_INODE_SUCCESS)
+            {
+              *pattr = entry->attributes;
+              pthread_rwlock_unlock(&entry->attr_lock);
+            }
      }
      return entry;
 } /* cache_inode_lookup */

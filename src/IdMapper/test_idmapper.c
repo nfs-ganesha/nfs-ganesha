@@ -16,8 +16,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include <sys/resource.h>       /* for having setrlimit */
 #include <signal.h>             /* for sigaction */
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
 #include "nfs23.h"

@@ -296,6 +296,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
               != CACHE_INODE_SUCCESS) {
                res->res_readdirplus3.status
                     = nfs3_Errno(cache_status_gethandle);
+               cache_inode_lru_unref(parent_dir_entry, client, 0);
                rc = NFS_REQ_OK;
                goto out;
           }
@@ -305,6 +306,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                                           &parent_dir_attr,
                                           2))) {
                res->res_readdirplus3.status = cb_opaque.error;
+               cache_inode_lru_unref(parent_dir_entry, client, 0);
                rc = NFS_REQ_OK;
                goto out;
           }

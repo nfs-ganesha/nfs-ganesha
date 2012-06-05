@@ -62,7 +62,7 @@
 #include "nodelist.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
-#include "rpc.h"
+#include "ganesha_rpc.h"
 
 #define DEFAULT_PORT "10401"
 

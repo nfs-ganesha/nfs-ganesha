@@ -350,6 +350,7 @@ typedef enum state_status_t
   STATE_CACHE_INODE_ERR       = 43,
   STATE_SIGNAL_ERROR          = 44,
   STATE_KILLED                = 45,
+  STATE_FILE_OPEN             = 46,
 } state_status_t;
 
 typedef enum state_blocking_t
@@ -434,7 +435,6 @@ struct state_lock_entry_t
   state_block_data_t   * sle_block_data;
   state_owner_t        * sle_owner;
   state_t              * sle_state;
-  unsigned long long     sle_fileid;
   state_blocking_t       sle_blocked;
   int                    sle_ref_count;
   fsal_lock_param_t      sle_lock;

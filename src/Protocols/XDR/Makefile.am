@@ -24,8 +24,7 @@ libnfs_mnt_xdr_la_SOURCES += xdr_nlm4.c           \
 endif
 
 if USE_NFS4_1
-libnfs_mnt_xdr_la_SOURCES +=  xdr_nfsv41.c            \
-                              ../../include/nfsv41.h     
+libnfs_mnt_xdr_la_SOURCES +=  ../../include/nfsv41.h     
 endif
  
 if USE_NFS4_0

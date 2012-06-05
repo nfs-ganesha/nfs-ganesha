@@ -1,0 +1,28 @@
+Draft TI-RPC Instructions
+
+Run src/tirpc.sh to check out the appropriate external libtirpc branch into
+<ganesha-checkout>/contrib.
+
+After fetching the Ganesha source, you would do the following from the Ganesha
+src directory:
+
+1. ./tirpc.sh (should fetch a libtirpc tree in to contrib/libtirpc,
+and run autogen.sh
+
+2. run configure with TI-RPC options, such as:
+
+   ./configure --prefix=/opt/ganesha --with-nfs4-minorversion=1 \
+        --enable-nlm --enable-nfs4-locks --with-fsal=VFS --enable-tirpc \
+      	--with-rpcal=TIRPC CFLAGS='-g3 -O0'
+
+3. make 
+
+4. make install
+
+5. make contrib-install
+
+The contrib-install target runs "make install" in contrib/libtirpc.  (I had
+trouble getting automake to do this in the install target.)
+
+6. Ensure that <ganesha-prefix>/lib/ is in your library path, for runtime load
+by the Ganesha nfsd.

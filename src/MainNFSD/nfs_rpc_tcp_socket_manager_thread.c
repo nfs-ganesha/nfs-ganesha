@@ -50,8 +50,8 @@
 #include <sys/select.h>
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -66,115 +66,8 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
-/**
- * rpc_tcp_socket_manager_thread: manages a TCP socket connected to a client.
- *
- * this thread will manage a connection related to a specific TCP client.
- *
- * @param IndexArg contains the socket number to be managed by this thread
- *
- * @return Pointer to the result (but this function will mostly loop forever).
- *
+#if 0
+/* XXX This routine was used only in prior revision of the rendezvous_request
+ * which spawned a dedicated thread for each client connection.
  */
-void *rpc_tcp_socket_manager_thread(void *Arg)
-{
-#ifndef _NO_BUDDY_SYSTEM
-  int rc = 0;
 #endif
-  long int tcp_sock = (long int)Arg;
-  static char my_name[MAXNAMLEN];
-  fridge_entry_t * pfe = NULL;
-  process_status_t status;
-
-  snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
-  SetNameFunction(my_name);
-
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      #ifdef _DEBUG_MEMLEAKS
-      {
-        FILE *output = fopen("/tmp/buddymem", "w");
-        if (output != NULL)
-          BuddyDumpAll(output);
-      }
-      #endif
-      LogFatal(COMPONENT_DISPATCH, "Memory manager could not be initialized");
-    }
-#endif
-
-  /* Calling dispatcher main loop */
-  LogDebug(COMPONENT_DISPATCH,
-           "Starting with pthread id #%p",
-           (caddr_t) pthread_self());
-
-  for(;;)
-    {
-      if(Xports[tcp_sock] == NULL)
-        {
-          /* But do we control sock? */
-          LogMajor(COMPONENT_DISPATCH,
-                   "Incoherency found in Xports array! Exiting...");
-          Fatal();
-        }
-
-      /*
-       * UDP RPCs are quite simple: everything comes to the same socket, so several SVCXPRT
-       * can be defined, one per tbuf to handle the stuff
-       * TCP RPCs are more complex:
-       *   - a unique SVCXPRT exists that deals with initial tcp rendez vous. It does the accept
-       *     with the client, but recv no message from the client. But SVC_RECV on it creates
-       *     a new SVCXPRT dedicated to the client. This specific SVXPRT is bound on TCPSocket
-       *
-       * while receiving something on the Svc_fdset, I must know if this is a UDP request,
-       * an initial TCP request or a TCP socket from an already connected client.
-       * This is how to distinguish the cases:
-       * UDP connections are bound to socket NFS_UDPSocket
-       * TCP initial connections are bound to socket NFS_TCPSocket
-       * all the other cases are requests from already connected TCP Clients
-       */
-
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "A NFS TCP request from an already connected client");
-      
-      status = process_rpc_request(Xports[tcp_sock]);
-
-      if(status == PROCESS_LOST_CONN)
-        {
-          /* We lost our connection */
-         LogDebug(COMPONENT_DISPATCH,
-                  "Freezing thread %p",
-                  (caddr_t)pthread_self());
-
-          if( ( pfe = fridgethr_freeze( ) ) == NULL )
-            {
-
-                  break;
-            }
-
-          tcp_sock = (long int )pfe->arg;
-          LogDebug(COMPONENT_DISPATCH,
-                   "Now working on sock=%d after going out of the fridge",
-                   (int)tcp_sock);
-          snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
-          SetNameFunction(my_name);
-
-          continue;
-        }
-    }
-
-  /* Fridge expiration, the thread and exit */
-  LogDebug(COMPONENT_DISPATCH,
-           "TCP connection manager has expired in the fridge, stopping");
-
-#ifndef _NO_BUDDY_SYSTEM
-  /* Free stuff allocated by BuddyMalloc before thread exists */
-  if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
-    LogCrit(COMPONENT_DISPATCH,
-            "Error %d from BuddyDestroy",
-            (int)rc);
-#endif                          /*  _NO_BUDDY_SYSTEM */
-
-  return NULL;
-}                               /* rpc_tcp_socket_manager_thread */

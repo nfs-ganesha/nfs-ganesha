@@ -49,8 +49,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -152,7 +152,7 @@ int nfs_Readlink(nfs_arg_t * parg,
                           &symlink_data,
                           pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
-      if((ptr = Mem_Alloc(FSAL_MAX_NAME_LEN)) == NULL)
+      if((ptr = Mem_Alloc(symlink_data.len+1)) == NULL)
         {
           switch (preq->rq_vers)
             {

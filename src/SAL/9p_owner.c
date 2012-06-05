@@ -46,8 +46,6 @@
 #include "HashTable.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
-#include "nsm.h"
-#include "rpc.h"
 
 //TODO FSF: check if can optimize by using same reference as key and value
 
@@ -55,7 +53,6 @@ hash_table_t *ht_9p_owner;
 
 int display_9p_owner(state_owner_t *pkey, char *str)
 {
-  unsigned int i = 0;
   char *strtmp = str;
 
   if(pkey == NULL)
@@ -63,26 +60,8 @@ int display_9p_owner(state_owner_t *pkey, char *str)
 
   strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", pkey);
 
-  strtmp += sprintf(strtmp, " oh=(%u:", pkey->so_owner_len);
-
-  for(i = 0; i < pkey->so_owner_len; i++)
-    if(!isprint(pkey->so_owner_val[i]))
-      break;
-
-  if(i == pkey->so_owner_len)
-    {
-      memcpy(strtmp, pkey->so_owner_val, pkey->so_owner_len);
-      strtmp[pkey->so_owner_len] = '\0';
-      strtmp += pkey->so_owner_len;
-    }
-  else for(i = 0; i < pkey->so_owner_len; i++)
-    {
-      sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner_val[i]);
-      strtmp += 2;
-    }
-
-  strtmp += sprintf(strtmp, ") clientip=0x%x", pkey->so_owner.so_9p_owner.clientip);
-  strtmp += sprintf(strtmp, ") proc_id=%u", pkey->so_owner.so_9p_owner.proc_id);
+  strtmp += sprintf(strtmp, " clientip=0x%x", pkey->so_owner.so_9p_owner.clientip);
+  strtmp += sprintf(strtmp, " proc_id=%u", pkey->so_owner.so_9p_owner.proc_id);
  
   strtmp += sprintf(strtmp, " refcount=%d", pkey->so_refcount);
 
@@ -381,13 +360,13 @@ state_owner_t *get_9p_owner( uint32_t    clientip,
       display_9p_owner(pkey, str);
 
       LogFullDebug(COMPONENT_STATE,
-                   "Find NLM Owner KEY {%s}", str);
+                   "Find 9P Owner KEY {%s}", str);
     }
 
   /* If we found it, return it, if we don't care, return NULL */
   if(_9p_owner_Get_Pointer(pkey, &powner) == 1 )
     {
-      /* Discard the key we created and return the found NLM Owner */
+      /* Discard the key we created and return the found 9P Owner */
       Mem_Free(pkey);
 
       if(isFullDebug(COMPONENT_STATE))
@@ -440,7 +419,7 @@ state_owner_t *get_9p_owner( uint32_t    clientip,
 
           display_9p_owner(powner, str);
           LogFullDebug(COMPONENT_STATE,
-                       "Set NLM Owner {%s}",
+                       "Set 9P Owner {%s}",
                        str);
         }
 

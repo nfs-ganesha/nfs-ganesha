@@ -199,7 +199,7 @@ cache_inode_open(cache_entry_t *entry,
           }
 
           if (!FSAL_IS_ERROR(fsal_status))
-              atomic_dec_int(&open_fd_count);
+              atomic_dec_uint(&open_fd_count);
 
           /* Force re-openning */
           entry->object.file.open_fd.openflags = FSAL_O_CLOSED;
@@ -226,7 +226,7 @@ cache_inode_open(cache_entry_t *entry,
           /* This is temporary code, until Jim Lieb makes FSALs cache
              their own file descriptors.  Under that regime, the LRU
              thread will interrogate FSALs for their FD use. */
-          atomic_inc_int(&open_fd_count);
+          atomic_inc_uint(&open_fd_count);
 
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_open: pentry %p: openflags = %d, "
@@ -280,14 +280,17 @@ cache_inode_close(cache_entry_t *entry,
           goto out;
      }
 
-     /* If nothing is opened, do nothing */
-     if (entry->object.file.open_fd.openflags == FSAL_O_CLOSED) {
-          *status = CACHE_INODE_SUCCESS;
-          return *status;
-     }
-
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
           pthread_rwlock_wrlock(&entry->content_lock);
+     }
+
+     /* If nothing is opened, do nothing */
+     if (entry->object.file.open_fd.openflags == FSAL_O_CLOSED) {
+          if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
+               pthread_rwlock_unlock(&entry->content_lock);
+          }
+          *status = CACHE_INODE_SUCCESS;
+          return *status;
      }
 
      /* If state is held in the file, do not close it.  This should
@@ -317,7 +320,8 @@ cache_inode_close(cache_entry_t *entry,
                        *status, cache_inode_err_str(*status));
                goto unlock;
           }
-          atomic_dec_int(&open_fd_count);
+          if (!FSAL_IS_ERROR(fsal_status))
+              atomic_dec_uint(&open_fd_count);
      }
 
      *status = CACHE_INODE_SUCCESS;

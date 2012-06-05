@@ -95,7 +95,8 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          ../../include/nfs_creds.h           \
                          ../../include/nfs_tools.h           \
                          ../../include/err_inject.h          \
-                         ../../include/nfs_file_handle.h
+                         ../../include/nfs_file_handle.h     \
+                         ../../include/cache_content_policy.h
 
 if USE_NFS4_1
 libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \

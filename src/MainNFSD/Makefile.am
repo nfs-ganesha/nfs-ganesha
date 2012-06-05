@@ -14,6 +14,8 @@ else
 FSAL_UP_LIB_FLAGS =
 endif
 
+GSSD_LIB = ../RPCAL/gssd/libgssd.la
+
 if HAVE_GSSAPI
 SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 endif
@@ -44,10 +46,22 @@ else
 STAT_EXPORTER_FILE =
 endif
 
+if USE_DBUS
+DBUS_SERVER = ../Protocols/DBUS/dbus_server.c
+else
+DBUS_SERVER =
+endif
+
 if USE_UPCALL_SIMULATOR
 UPCALL_SIMULATOR_FILE = fsal_upcall_simulator_thread.c
 else
 UPCALL_SIMULATOR_FILE =
+endif
+
+if USE_CB_SIMULATOR
+CB_SIMULATOR_FILE = nfs_rpc_callback_simulator.c
+else
+CB_SIMULATOR_FILE =
 endif
 
 if USE_NLM
@@ -62,6 +76,8 @@ else
 RQUOTA_LIB = 
 endif
 
+TIRPC_LIB = @TIRPCPATH@/src/libntirpc.la
+TIRPC_STATIC_LIB = @TIRPCPATH@/src/.libs/libntirpc.a
 
 if USE_9P
 DISPATCH_9P_FILES = 9p_dispatcher.c 
@@ -85,7 +101,7 @@ lib_LTLIBRARIES              = libganeshaNFS.la
 #   5. If any interfaces have been added since the last public release, then increment age.
 #   6. If any interfaces have been removed since the last public release, then set age to 0.
 
-libganeshaNFS_la_LDFLAGS = -version-info 1:0:1
+libganeshaNFS_la_LDFLAGS = -version-info 1:0:1 -all-static
 
 else
 
@@ -95,8 +111,11 @@ endif
 
 libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_stats_thread.c                   \
+			     nfs_rpc_callback.c 		  \
+			     $(DBUS_SERVER)                       \
                              $(STAT_EXPORTER_FILE)                \
                              $(UPCALL_SIMULATOR_FILE)             \
+                             $(CB_SIMULATOR_FILE)             	  \
                              nfs_worker_thread.c                  \
                              nfs_tcb.c                  \
                              nfs_rpc_dispatcher_thread.c          \
@@ -136,6 +155,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/SemN.h                    \
                              ../include/external_tools.h          \
                              ../include/err_inject.h              \
+                             ../include/err_cache_content.h       \
                              $(STAT_SNMP_FILES)
 
 libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \
@@ -161,8 +181,10 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \
                                       ../RPCAL/librpcal.la                              \
+                                      $(GSSD_LIB)                                       \
                                       $(_9P_LIB)                                        \
                                       ../Protocols/XDR/libnfs_mnt_xdr.la                \
+                                      $(TIRPC_STATIC_LIB)                               \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \
                                       $(FSAL_UP_LIB_FLAGS)                              \
@@ -179,8 +201,9 @@ if USE_FSAL_FUSE
 libganeshaNFS_la_SOURCES = fuse_binding.c $(libMainServices_la_SOURCES)
 
 libganeshaNFS_la_LIBADD = $(libMainServices_la_LIBADD) \
-                          $(FSAL_LDFLAGS)              \
-                           $(EXT_LDADD) $(SEC_LIB_FLAGS)
+                          $(FSAL_LDFLAGS) \
+                          $(EXT_LDADD) \
+                          $(SEC_LIB_FLAGS)
 
 libganeshaNFS_la_DEPENDENCIES = fuse_binding.c $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
 
@@ -190,9 +213,15 @@ bin_PROGRAMS               = $(FS_NAME).ganesha.nfsd
 
 __FS_NAME__ganesha_nfsd_SOURCES    = nfs_main.c  \
                                      nfs_init.h
+
 __FS_NAME__ganesha_nfsd_LDADD      =  ./libMainServices.la \
-                                      $(FSAL_LDFLAGS) $(EXT_LDADD)  \
-                                      $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@
+                                       \
+                                      $(FSAL_LDFLAGS) \
+                                      $(TIRPC_STATIC_LIB) \
+				      $(EXT_LDADD)  \
+                                      $(SEC_LIB_FLAGS) \
+                                      @EFENCE@ \
+	                              @EXTRA_LIB@
 
 endif
 

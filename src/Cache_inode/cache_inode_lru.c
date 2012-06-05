@@ -214,21 +214,6 @@ static struct lru_thread_state
 
 extern cache_inode_gc_policy_t cache_inode_gc_policy;
 
-/**
- * Private flags and constants.
- */
-
-/* Set on pinned (state-bearing) entries. Do we need both of these? */
-#define LRU_ENTRY_PINNED      0x0001
-/* Set on LRU entries in the L2 (scanned and colder) queue. */
-#define LRU_ENTRY_L2          0x0002
-/* Set on LRU entries that are being deleted */
-#define LRU_ENTRY_CONDEMNED   0x0004
-/* Set if no more state may be granted.  Different from CONDEMNED in
-   that outstanding references may exist on the object, but it is no
-   longer reachable from the hash or weakref tables. */
-#define LRU_ENTRY_UNPINNABLE  0x0008
-
 /* Client for the LRU thread.  Also used in the case of a NULL client
    passed to lru_unref.  This is a gross hack and should be
    eliminated as soon as can be reasonably done. */
@@ -365,7 +350,6 @@ lru_remove_entry(cache_inode_lru_t *lru)
      pthread_mutex_unlock(&s->mtx);
      lru->flags &= ~(LRU_ENTRY_L2 | LRU_ENTRY_PINNED);
      /* Anyone interested in this entry should back off immediately. */
-     lru->flags |= LRU_ENTRY_CONDEMNED;
      lru->lane = LRU_NO_LANE;
 }
 
@@ -510,11 +494,12 @@ lru_try_reap_entry(struct lru_q_base *q)
           return NULL;
      }
 
-     ++(lru->refcount);
+     atomic_inc_quad(&lru->refcount);
      pthread_mutex_unlock(&q->mtx);
      pthread_mutex_lock(&lru->mtx);
-     if (lru->flags & LRU_ENTRY_CONDEMNED) {
-          --(lru->refcount);
+     if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
+         (lru->flags & LRU_ENTRY_KILLED)) {
+          atomic_dec_quad(&lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -523,7 +508,7 @@ lru_try_reap_entry(struct lru_q_base *q)
           /* Any more than the sentinel and our reference count
              and someone else has a reference.  Plus someone may
              have moved it to the pin queue while we were waiting. */
-          --(lru->refcount);
+          atomic_dec_quad(&lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -536,6 +521,7 @@ lru_try_reap_entry(struct lru_q_base *q)
      if (lru->refcount > LRU_SENTINEL_REFCOUNT + 1) {
           /* Someone took a reference while we were waiting for the
              queue.  */
+          atomic_dec_quad(&lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           pthread_mutex_unlock(&q->mtx);
           return NULL;
@@ -584,8 +570,7 @@ lru_thread_delay_ms(unsigned long ms)
 
      pthread_mutex_lock(&lru_mtx);
      lru_thread_state.flags |= LRU_SLEEPING;
-     woke = (pthread_cond_timedwait(&lru_cv, &lru_mtx, &then)
-             == ETIMEDOUT);
+     woke = (pthread_cond_timedwait(&lru_cv, &lru_mtx, &then) != ETIMEDOUT);
      lru_thread_state.flags &= ~LRU_SLEEPING;
      pthread_mutex_unlock(&lru_mtx);
      return woke;
@@ -779,7 +764,7 @@ lru_thread(void *arg __attribute__((unused)))
                         "Starting to reap.");
 
                if (extremis) {
-                    LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+                    LogDebug(COMPONENT_CACHE_INODE_LRU,
                                  "Open FDs over high water mark, "
                                  "reapring aggressively.");
                }
@@ -818,7 +803,7 @@ lru_thread(void *arg __attribute__((unused)))
                                  count of the entry and drop the
                                  queue fragment mutex. */
 
-                              ++(lru->refcount);
+                              atomic_inc_quad(&lru->refcount);
                               pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
 
                               /* Acquire the entry mutex.  If the entry
@@ -828,10 +813,11 @@ lru_thread(void *arg __attribute__((unused)))
                                  incremented it.) */
 
                               pthread_mutex_lock(&lru->mtx);
-                              --(lru->refcount);
+                              atomic_dec_quad(&lru->refcount);
                               if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
                                   (lru->flags & LRU_ENTRY_PINNED) ||
                                   (lru->flags & LRU_ENTRY_L2) ||
+                                  (lru->flags & LRU_ENTRY_KILLED) ||
                                   (lru->lane == LRU_NO_LANE)) {
                                    /* Drop the entry lock, thenr
                                       eacquire the queue lock so we
@@ -901,7 +887,11 @@ lru_thread(void *arg __attribute__((unused)))
                }
           }
 
-          lru_thread_delay_ms(lru_state.threadwait);
+          LogDebug(COMPONENT_CACHE_INODE_LRU,
+                  "open_fd_count: %"PRIu32"  t_count:%"PRIu64"\n",
+                  open_fd_count, t_count);
+
+          woke = lru_thread_delay_ms(lru_state.threadwait);
      }
 
      LogEvent(COMPONENT_CACHE_INODE_LRU,
@@ -1155,13 +1145,13 @@ cache_inode_lru_get(cache_inode_client_t *client,
                *status = CACHE_INODE_MALLOC_ERROR;
                goto out;
           }
-          entry->lru.flags = 0;
           if (pthread_mutex_init(&entry->lru.mtx, NULL) != 0) {
                ReleaseToPool(entry, &client->pool_entry);
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "pthread_mutex_init of lru.mtx returned %d (%s)",
                        errno,
                        strerror(errno));
+               entry = NULL;
                *status = CACHE_INODE_INIT_ENTRY_FAILED;
                goto out;
           }
@@ -1172,6 +1162,7 @@ cache_inode_lru_get(cache_inode_client_t *client,
         nobody can bump the refcount yet. */
      entry->lru.refcount = 2;
      entry->lru.pin_refcnt = 0;
+     entry->lru.flags = 0;
      pthread_mutex_lock(&entry->lru.mtx);
      lru_insert_entry(&entry->lru, 0,
                       lru_lane_of_entry(entry));
@@ -1215,7 +1206,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
      entry->lru.pin_refcnt++;
 
      /* Also take an LRU reference */
-     entry->lru.refcount++;
+     atomic_inc_quad(&entry->lru.refcount);
 
      pthread_mutex_unlock(&entry->lru.mtx);
 
@@ -1267,7 +1258,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
      }
 
      /* Also release an LRU reference */
-     entry->lru.refcount--;
+     atomic_dec_quad(&entry->lru.refcount);
 
      pthread_mutex_unlock(&entry->lru.mtx);
 
@@ -1312,7 +1303,7 @@ cache_inode_lru_ref(cache_entry_t *entry,
      assert(!((flags & LRU_REQ_INITIAL) &&
               (flags & LRU_REQ_SCAN)));
 
-     ++(entry->lru.refcount);
+     atomic_inc_quad(&entry->lru.refcount);
 
      /* Move an entry forward if this is an initial reference. */
 
@@ -1340,20 +1331,50 @@ cache_inode_lru_ref(cache_entry_t *entry,
 }
 
 /**
+ * @brief Destroy the sentinel refcount safely
+ *
+ * This function decrements the refcount by one unless the
+ * LRU_FLAG_KILLED bit is set in the flags word.  This is intended to
+ * allow a function that needs to remove an extra refcount (the
+ * sentinel) to be called multiple times without causing an
+ * underflow.
+ *
+ * @param[in]     entry  The entry to decrement.
+ * @param[in,out] client Structure for shared resource management
+ */
+
+void cache_inode_lru_kill(cache_entry_t *entry,
+                          cache_inode_client_t *client)
+{
+     pthread_mutex_lock(&entry->lru.mtx);
+     if (entry->lru.flags & LRU_ENTRY_KILLED) {
+          pthread_mutex_unlock(&entry->lru.mtx);
+     } else {
+          entry->lru.flags |= LRU_ENTRY_KILLED;
+          /* cache_inode_lru_unref always either unlocks or destroys
+             the entry. */
+          cache_inode_lru_unref(entry, client, LRU_FLAG_LOCKED);
+     }
+}
+
+/**
  * @brief Relinquish a reference
  *
  * This function relinquishes a reference on the given cache entry.
  * It follows the disposal/recycling lock discipline given at the
  * beginning of the file.
  *
+ * The supplied entry is always either unlocked or destroyed by the
+ * time this function returns.
+ *
  * @param[in] entry  The entry on which to release a reference
  * @param[in] client Structure for per-thread resource management
- * @param[in] flags  Flags indicating the type of reference sought
- *
- * @retval CACHE_INODE_SUCCESS if the reference was acquired
+ * @param[in] flags  Currently significant are and LRU_FLAG_LOCKED
+ *                   (indicating that the caller holds the LRU mutex
+ *                   lock for this entry.)
  */
 
-cache_inode_status_t
+void
 cache_inode_lru_unref(cache_entry_t *entry,
                       cache_inode_client_t *client,
                       uint32_t flags)
@@ -1361,7 +1382,9 @@ cache_inode_lru_unref(cache_entry_t *entry,
      if (!client) {
           client = &lru_client;
      }
-     pthread_mutex_lock(&entry->lru.mtx);
+     if (!(flags & LRU_FLAG_LOCKED)) {
+          pthread_mutex_lock(&entry->lru.mtx);
+     }
      assert(entry->lru.refcount >= 1);
 
      if (entry->lru.refcount == 1) {
@@ -1369,7 +1392,8 @@ cache_inode_lru_unref(cache_entry_t *entry,
                = lru_select_queue(entry->lru.flags,
                                   entry->lru.lane);
           pthread_mutex_lock(&q->mtx);
-          if (--(entry->lru.refcount) == 0) {
+          atomic_dec_quad(&entry->lru.refcount);
+          if (entry->lru.refcount == 0) {
                /* Refcount has fallen to zero.  Remove the entry from
                   the queue and mark it as dead. */
                entry->lru.flags = LRU_ENTRY_CONDEMNED;
@@ -1391,19 +1415,17 @@ cache_inode_lru_unref(cache_entry_t *entry,
 
                pthread_mutex_destroy(&entry->lru.mtx);
                ReleaseToPool(entry, &client->pool_entry);
-               return (CACHE_INODE_SUCCESS);
+               return;
           } else {
                pthread_mutex_unlock(&q->mtx);
           }
      } else {
           /* We may decrement the reference count without the queue
              lock, since it cannot go to 0. */
-          --(entry->lru.refcount);
+          atomic_dec_quad(&entry->lru.refcount);
      }
 
      pthread_mutex_unlock(&entry->lru.mtx);
-
-     return (CACHE_INODE_SUCCESS);
 }
 
 /**

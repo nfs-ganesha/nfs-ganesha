@@ -98,6 +98,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
   rc = statfs(p_export_path->path, &stat_buf);
   if(rc)
     {
+      close(fd);
       LogMajor(COMPONENT_FSAL,
                "statfs call failed on file %s: %d", p_export_path->path, rc);
       ReturnCode(ERR_FSAL_INVAL, 0);

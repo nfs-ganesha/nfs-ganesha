@@ -562,7 +562,8 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
              texte);
 }                               /* DisplayLogString_valist */
 
-static int DisplayLogSyslog_valist(log_components_t component, char * function, int level, char * format, va_list arguments)
+static int DisplayLogSyslog_valist(log_components_t component, char * function,
+                                   int level, char * format, va_list arguments)
 {
   char texte[STR_LEN_TXT];
   const char *threadname = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
@@ -584,7 +585,9 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function, 
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogFlux_valist(FILE * flux, char * function, log_components_t component, char *format, va_list arguments)
+static int DisplayLogFlux_valist(FILE * flux, char * function,
+                                 log_components_t component, char *format,
+                                 va_list arguments)
 {
   char tampon[STR_LEN_TXT];
 
@@ -594,7 +597,8 @@ static int DisplayLogFlux_valist(FILE * flux, char * function, log_components_t 
   return fflush(flux);
 }                               /* DisplayLogFlux_valist */
 
-static int DisplayTest_valist(log_components_t component, char *format, va_list arguments)
+static int DisplayTest_valist(log_components_t component, char *format,
+                              va_list arguments)
 {
   char text[STR_LEN_TXT];
 
@@ -604,12 +608,15 @@ static int DisplayTest_valist(log_components_t component, char *format, va_list 
   return fflush(stdout);
 }
 
-static int DisplayBuffer_valist(char *buffer, log_components_t component, char *format, va_list arguments)
+static int DisplayBuffer_valist(char *buffer, log_components_t component,
+                                char *format, va_list arguments)
 {
   return log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
-static int DisplayLogPath_valist(char *path, char * function, log_components_t component, char *format, va_list arguments)
+static int DisplayLogPath_valist(char *path, char * function,
+                                 log_components_t component, char *format,
+                                 va_list arguments)
 {
   char tampon[STR_LEN_TXT];
   int fd, my_status;
@@ -959,6 +966,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_HASHTABLE_CACHE,   "COMPONENT_HASHTABLE_CACHE", "HASH TABLE CACHE",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
   { COMPONENT_LRU,               "COMPONENT_LRU", "LRU",
     NIV_EVENT,
     SYSLOG,
@@ -1060,6 +1072,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_NFS_CB,            "COMPONENT_NFS_CB", "NFS CB",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
   { COMPONENT_THREAD,            "COMPONENT_THREAD", "THREAD",
     NIV_EVENT,
     SYSLOG,
@@ -1090,7 +1107,13 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY", "LOG MESSAGE VERBOSITY",
+  { COMPONENT_DBUS,                "COMPONENT_DBUS", "DBUS",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
+  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY",
+                                  "LOG MESSAGE VERBOSITY",
     NIV_NULL,
     SYSLOG,
     "SYSLOG"
@@ -1284,6 +1307,50 @@ void SetComponentLogBuffer(log_components_t component, char *buffer)
   LogComponents[component].comp_log_type = BUFFLOG;
   LogComponents[component].comp_buffer   = buffer;
 }
+
+/*
+ *  Re-export component logging to TI-RPC internal logging
+ */
+void
+rpc_warnx(/* const */ char *fmt, ...)
+{
+    va_list ap;
+    log_components_t comp = COMPONENT_RPC;
+    int level;
+
+    level = LogComponents[comp].comp_log_level;
+    if (level < NIV_DEBUG)
+        goto out;
+
+    va_start(ap, fmt);
+
+    switch(LogComponents[comp].comp_log_type) {
+    case SYSLOG:
+      DisplayLogSyslog_valist(comp, "rpc", level, fmt, ap);
+      break;
+    case FILELOG:
+      DisplayLogPath_valist(LogComponents[comp].comp_log_file, "rpc",
+                            comp, fmt, ap);
+      break;
+    case STDERRLOG:
+        DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
+      break;
+    case STDOUTLOG:
+      DisplayLogFlux_valist(stdout, "rpc", comp, fmt, ap);
+      break;
+    case TESTLOG:
+      DisplayTest_valist(comp, fmt, ap);
+      break;
+    case BUFFLOG:
+      DisplayBuffer_valist(LogComponents[comp].comp_buffer, comp, fmt, ap);
+    } /* switch */
+
+    va_end(ap);
+
+out:
+    return;
+
+} /* rpc_warnx */
 
 /*
  * Pour info : Les tags de printf dont on peut se servir:

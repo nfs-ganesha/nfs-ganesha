@@ -41,43 +41,11 @@
 
 extern time_t ServerBootTime;
 
-#ifndef _NO_BUDDY_SYSTEM
-extern buddy_parameter_t default_buddy_parameter;
-#endif
-
 clientid4 fsal_clientid;
 time_t     clientid_renewed ;
 pthread_mutex_t fsal_clientid_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t fsal_clientid_mutex_renew = PTHREAD_MUTEX_INITIALIZER;
 unsigned int done = 0;
-
-/**
- * FSAL_proxy_setclientid_renego:
- *
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
- *
- * \return Major error codes :
- *        - ERR_FSAL_NO_ERROR     (no error)
- *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
- *        - Other error codes can be returned :
- *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
- */
-fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context)
-{
-  time_t now = time( NULL ) ;
-
-  /* The first to come is the only one to do the clientid renegociation */ 
-  if( ( p_context->clientid_renewed <  now ) && (p_context->clientid == fsal_clientid ) )
-    return FSAL_proxy_setclientid_force( p_context ) ;
-  else
-   {
-	p_context->clientid = fsal_clientid ;
-	p_context->clientid_renewed = clientid_renewed ;
-        
-	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-   }
-} /* FSAL_proxy_setclientid_renego */
 
 /**
  * FSAL_proxy_setclientid_force:
@@ -92,10 +60,9 @@ fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
+static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
 {
   int rc;
-  fsal_status_t fsal_status;
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
 
@@ -110,7 +77,7 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
   char cbnetid[MAXNAMLEN];
   struct timeval timeout = TIMEOUTRPC;
 
-  LogEvent( COMPONENT_FSAL, "Negociating a new ClientId with the remote server" ) ;
+  LogEvent( COMPONENT_FSAL, "Negotiating a new ClientId with the remote server" ) ;
 
   /* sanity checks.
    */
@@ -160,7 +127,7 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
 
       V(fsal_clientid_mutex_renew);
 
-      Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
+      Return(ERR_FSAL_IO, rc, INDEX_FSAL_InitClientContext);
     }
 
   ReleaseTokenFSCall();
@@ -189,6 +156,7 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
   argnfs4.argarray.argarray_len = 1;
 
   /* Call the NFSv4 function */
+  TakeTokenFSCall();
   rc = COMPOUNDV4_EXECUTE_SIMPLE(p_context, argnfs4, resnfs4);
   if(rc != RPC_SUCCESS)
     {
@@ -196,14 +164,17 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
 
       V(fsal_clientid_mutex_renew);
 
-      Return(ERR_FSAL_IO, rc, INDEX_FSAL_unlink);
+      Return(ERR_FSAL_IO, rc, INDEX_FSAL_InitClientContext);
     }
 
   ReleaseTokenFSCall();
 
   if(resnfs4.status != NFS4_OK)
-    return fsal_internal_proxy_error_convert(resnfs4.status,
-                                             INDEX_FSAL_InitClientContext);
+    {
+      V(fsal_clientid_mutex_renew);
+      return fsal_internal_proxy_error_convert(resnfs4.status,
+                                               INDEX_FSAL_InitClientContext);
+    }
 
   /* Keep the confirmed client id */
   fsal_clientid =
@@ -215,11 +186,42 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
   p_context->clientid = fsal_clientid;
   p_context->last_lease_renewal = 0;    /* Needs to be renewed */
 
-  fsal_status.major = ERR_FSAL_NO_ERROR;
-  fsal_status.minor = 0;
-
-  return fsal_status;
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
 }                               /* FSAL_proxy_setclientid_force */
+
+/**
+ * FSAL_proxy_setclientid_renego:
+ *
+ * \param p_context (input):
+ *        Authentication context for the operation (user,...).
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
+ *        - Other error codes can be returned :
+ *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+ */
+fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context)
+{
+  time_t now = time( NULL ) ;
+
+#if 0
+LogEvent(COMPONENT_FSAL, "Mine %lx, global %lx, time %ld vs %ld",
+p_context->clientid, fsal_clientid ,
+  p_context->clientid_renewed , now );
+#endif
+
+  /* The first to come is the only one to do the clientid renegociation */ 
+  if( ( p_context->clientid_renewed <  now ) && (p_context->clientid == fsal_clientid ) )
+    return FSAL_proxy_setclientid_force( p_context ) ;
+  else
+   {
+	p_context->clientid = fsal_clientid ;
+	p_context->clientid_renewed = clientid_renewed ;
+        
+	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
+   }
+} /* FSAL_proxy_setclientid_renego */
 
 /**
  * FSAL_proxy_setclientid:
@@ -286,16 +288,13 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 #define FSAL_RENEW_LEASE_NB_OP_ALLOC 1
   nfs_argop4 argoparray[FSAL_RENEW_LEASE_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_RENEW_LEASE_NB_OP_ALLOC];
-#ifndef _NO_BUDDY_SYSTEM
-  buddy_parameter_t buddy_param = default_buddy_parameter;
-#endif
 
   LogEvent(COMPONENT_FSAL, "FSAL_proxy_clientid_refresher_thread: starting...");
 
   sleep(6);    /** @todo: use getattr to have an actual value of server's lease duration */
 
 #ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(&buddy_param)) != BUDDY_SUCCESS)
+  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       LogCrit(COMPONENT_FSAL,
@@ -324,7 +323,6 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
   argnfs4.argarray.argarray_len = 0;
 
   argnfs4.argarray.argarray_val[0].argop = NFS4_OP_RENEW;
-  argnfs4.argarray.argarray_val[0].nfs_argop4_u.oprenew.clientid = fsal_clientid;
   argnfs4.argarray.argarray_len = 1;
 
   while(1)
@@ -334,6 +332,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
       /* Call the NFSv4 function */
       TakeTokenFSCall();
 
+      argoparray[0].nfs_argop4_u.oprenew.clientid = fsal_clientid;
       COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
       if(rc != RPC_SUCCESS)
         {
@@ -347,8 +346,8 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 
       if(resnfs4.status != NFS4_OK)
         LogCrit(COMPONENT_FSAL,
-                "FSAL_PROXY: /!\\ NFSv4 error %u occured when trying to new clienitf %llu",
-                resnfs4.status, (long long unsigned int)fsal_clientid);
+                "FSAL_PROXY: /!\\ NFSv4 error %u occured when trying to renew client id %16llx",
+                resnfs4.status, (long long)argoparray[0].nfs_argop4_u.oprenew.clientid);
 
     }                           /* while( 1 ) */
 }                               /* FSAL_proxy_clientid_renewer_thread */

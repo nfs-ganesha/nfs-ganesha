@@ -48,8 +48,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
 #include "sal_functions.h"
@@ -79,11 +79,13 @@
 int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_renew";
+
   nfs_client_id_t *nfs_clientid;
 
   /* Lock are not supported */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_RENEW;
+  res_RENEW4.status = NFS4_OK;
 
   /* Tell the admin what I am doing... */
   LogFullDebug(COMPONENT_NFS_V4, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);

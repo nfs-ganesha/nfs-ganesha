@@ -24,7 +24,7 @@
  */
 
 /**
- * \file    nfs41_op_sequence.c
+ * \file    nfs41_op_set_ssv.c
  * \author  $Author: deniel $
  * \brief   Routines used for managing the NFS4_OP_SEQUENCE operation.
  *
@@ -47,8 +47,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -77,11 +77,13 @@
  * @see nfs4_Compound
  *
  */
+#define arg_SET_SSV4  op->nfs_argop4_u.opset_ssv
+#define res_SET_SSV4  resp->nfs_resop4_u.opset_ssv
+
 int nfs41_op_set_ssv(struct nfs_argop4 *op,
                      compound_data_t * data, struct nfs_resop4 *resp)
 {
-#define arg_SET_SSV4  op->nfs_argop4_u.opset_ssv
-#define res_SET_SSV4  resp->nfs_resop4_u.opset_ssv
+  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_set_ssv";
 
   resp->resop = NFS4_OP_SET_SSV;
   res_SET_SSV4.ssr_status = NFS4_OK;

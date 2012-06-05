@@ -85,8 +85,8 @@ cache_inode_kill_entry(cache_entry_t *entry,
                        cache_inode_client_t *client)
 {
      cache_inode_fsal_data_t fsaldata;
-     hash_buffer_t key, old_key;
-     hash_buffer_t old_value;
+     hash_buffer_t key;
+     hash_buffer_t val;
      int rc = 0;
 
      memset(&fsaldata, 0, sizeof(fsaldata));
@@ -106,21 +106,12 @@ cache_inode_kill_entry(cache_entry_t *entry,
      key.pdata = fsaldata.fh_desc.start;
      key.len = fsaldata.fh_desc.len;
 
-     /* Sanity check: old_value.pdata is expected to be equal to pentry,
-      * and is released later in this function */
-     if ((cache_entry_t *) old_value.pdata != entry ||
-         ((fsal_handle_t *) ((cache_entry_t *)old_value.pdata)->fh_desc.start)
-         != &entry->handle) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_kill_entry: unexpected pdata %p from "
-                  "hash table (entry=%p)", old_value.pdata, entry);
-     }
+     val.pdata = entry;
+     val.len = sizeof(cache_entry_t);
 
-
-     if ((rc = HashTable_Del(fh_to_cache_entry_ht,
-                             &key,
-                             &old_key,
-                             &old_value)) != HASHTABLE_SUCCESS) {
+     if ((rc = HashTable_DelSafe(fh_to_cache_entry_ht,
+                                 &key,
+                                 &val)) != HASHTABLE_SUCCESS) {
           if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
                LogCrit(COMPONENT_CACHE_INODE,
                        "cache_inode_kill_entry: entry could not be deleted, "
@@ -128,8 +119,11 @@ cache_inode_kill_entry(cache_entry_t *entry,
                        rc);
           }
      }
+
      cache_inode_weakref_delete(&entry->weakref);
 
-     /* return HashTable (sentinel) reference */
-     cache_inode_lru_unref(entry, client, LRU_FLAG_NONE);
-}                               /* cache_inode_kill_entry */
+     /* Idempotently return the sentry reference.  (This function
+        will only decrement the refcount once, no matter how many
+        times it's called. */
+     cache_inode_lru_kill(entry, client);
+} /* cache_inode_kill_entry */

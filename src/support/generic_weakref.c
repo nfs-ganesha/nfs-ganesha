@@ -79,6 +79,7 @@ typedef struct gweakref_partition_
     pthread_rwlock_t lock;
     struct avltree t;
     uint64_t genctr;
+    struct avltree_node **cache;
     CACHE_PAD(0);
 } gweakref_partition_t;
 
@@ -94,6 +95,7 @@ struct gweakref_table_
     gweakref_partition_t *partition;
     CACHE_PAD(1);
     uint32_t npart;
+    uint32_t cache_sz;
 };
 
 /**
@@ -157,6 +159,23 @@ static inline int wk_cmpf(const struct avltree_node *lhs,
 }
 
 /**
+ * @brief Compute cache slot for an entry
+ *
+ * This function computes a hash slot, taking an address modulo the
+ * number of cache slotes (which should be prime).
+ *
+ * @param wt [in] The table
+ * @param ptr [in] Entry address
+ *
+ * @return The computed offset.
+ */
+static inline int
+cache_offsetof(gweakref_table_t *wt, void *ptr)
+{
+    return ((uintptr_t) ptr % wt->cache_sz);
+}
+
+/**
  * @brief Create a weak reference table
  *
  * This function creates a new, empty weak reference table possessing
@@ -168,7 +187,7 @@ static inline int wk_cmpf(const struct avltree_node *lhs,
  * @return The address of the newly created table, NULL on failure.
  */
 
-gweakref_table_t *gweakref_init(uint32_t npart)
+gweakref_table_t *gweakref_init(uint32_t npart, uint32_t cache_sz)
 {
     int ix = 0;
     pthread_rwlockattr_t rwlock_attr;
@@ -196,6 +215,11 @@ gweakref_table_t *gweakref_init(uint32_t npart)
         wp = &wt->partition[ix];
         pthread_rwlock_init(&wp->lock, &rwlock_attr);
         avltree_init(&wp->t, wk_cmpf, 0 /* must be 0 */);
+        if (cache_sz > 0) {
+            wt->cache_sz = cache_sz;
+            wp->cache = Mem_Alloc(cache_sz * sizeof(struct avltree_node *));
+            memset(wp->cache, 0, (cache_sz * sizeof(struct avltree_node *)));            
+        }
         wp->genctr = 0;
     }
 
@@ -269,7 +293,7 @@ gweakref_t gweakref_insert(gweakref_table_t *wt, void *obj)
 void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,
                         pthread_rwlock_t **lock)
 {
-    struct avltree_node *node;
+    struct avltree_node *node = NULL;
     gweakref_priv_t refk, *tref;
     gweakref_partition_t *wp;
     void *ret = NULL;
@@ -280,12 +304,22 @@ void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,
     refk.k = *ref;
     wp = gwt_partition_of_addr_k(wt, refk.k.ptr);
     pthread_rwlock_rdlock(&wp->lock);
-    node = avltree_lookup(&refk.node_k, &wp->t);
+
+    /* check cache */
+    if (wp->cache)
+        node = wp->cache[cache_offsetof(wt, refk.k.ptr)];
+
+    if (! node)
+        node = avltree_lookup(&refk.node_k, &wp->t);
+
     if (node) {
         /* found it, maybe */
         tref = avltree_container_of(node, gweakref_priv_t, node_k);
-        if (tref->k.gen == ref->gen)
+        if (tref->k.gen == ref->gen) {
             ret = ref->ptr;
+            if (wp->cache)
+                wp->cache[cache_offsetof(wt, refk.k.ptr)] = node;
+        }
     }
 
     if (ret) {
@@ -358,10 +392,14 @@ static inline void gweakref_delete_impl(gweakref_table_t *wt, gweakref_t *ref,
     if (node) {
         /* found it, maybe */
         tref = avltree_container_of(node, gweakref_priv_t, node_k);
-        if (tref->k.gen == ref->gen)
+        /* XXX generation mismatch would be in error, we think */
+        if (tref->k.gen == ref->gen) {
             /* unhook it */
             avltree_remove(node, &wp->t);
             Mem_Free(tref);
+            if (wp->cache)
+                wp->cache[cache_offsetof(wt, refk.k.ptr)] = NULL;
+        }
     }
     if (!(flags & GWR_FLAG_WLOCKED))
         pthread_rwlock_unlock(&wp->lock);
@@ -415,6 +453,8 @@ void gweakref_destroy(gweakref_table_t *wt)
             Mem_Free(tref);
         }
         avltree_init(&wp->t, wk_cmpf, 0 /* must be 0 */);
+        if (wp->cache)
+            Mem_Free(wp->cache);
     }
     Mem_Free(wt->partition);
     Mem_Free(wt);

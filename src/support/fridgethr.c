@@ -52,6 +52,17 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
+typedef struct fridge_entry__
+{
+  pthread_t thrid ;
+  pthread_mutex_t condmutex ;
+  pthread_cond_t condvar ;
+  unsigned int frozen ;
+  void * arg ;
+  struct fridge_entry__ * pprev ;
+  struct fridge_entry__ * pnext ;
+} fridge_entry_t  ;
+
 static pthread_mutex_t fridge_mutex ;
 static fridge_entry_t * fridge_content = NULL ;
 static pthread_attr_t attr_thr ;
@@ -110,13 +121,13 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg )
   return 0 ;
 } /* fridgethr_get */
 
-fridge_entry_t * fridgethr_freeze( )
+void * fridgethr_freeze( )
 {
   fridge_entry_t * pfe = NULL ;
   struct timespec timeout ;
   struct timeval    tp;
   int rc = 0 ;
-
+  void *arg = NULL;
 
   if( ( rc = gettimeofday( &tp, NULL ) ) != 0 )
     return NULL ;
@@ -157,12 +168,11 @@ fridge_entry_t * fridgethr_freeze( )
     else
        rc = pthread_cond_wait( &pfe->condvar, &pfe->condmutex ) ;
 
-  if( rc == ETIMEDOUT )
-    fridgethr_remove( pfe );  
-  else
-    V( pfe->condmutex ) ;
+  if( rc != ETIMEDOUT )
+    arg = pfe->arg;
 
-  return (rc == 0 )?pfe:NULL ; 
+  fridgethr_remove( pfe );  
+  return arg;
 } /* fridgethr_freeze */
 
 int fridgethr_init( )

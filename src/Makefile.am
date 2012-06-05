@@ -6,6 +6,8 @@ else
 BUDDYDIR =
 endif
 
+TIRPCDIR = libtirpc
+
 SUBDIRS = include             \
           Log 		      \
           $(LIBTREEDIR)       \
@@ -22,6 +24,7 @@ SUBDIRS = include             \
 	  NodeList	      \
           Cache_inode         \
           SAL                 \
+          $(TIRPCDIR)         \
           RPCAL               \
           Protocols           \
           RPCAL               \
@@ -56,6 +59,9 @@ endif
 
 testrunner: 
 	for i in $(TESTRUNNER_DIRS) ; do cd $$i ; make testrunner ; cd .. ; done
+
+contrib-install:
+	for i in $(TIRPCDIR) ; do cd $$i ; make install ; cd .. ; done
 
 new: clean all
 

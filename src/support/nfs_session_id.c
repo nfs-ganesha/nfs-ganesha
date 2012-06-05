@@ -52,8 +52,8 @@
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"

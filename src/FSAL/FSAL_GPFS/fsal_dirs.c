@@ -72,8 +72,10 @@ fsal_status_t GPFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
   /* get directory metadata */
   dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_dir_handle, p_context, &dir_attrs);
-  if(FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status)) {
+    close(p_dir_descriptor->fd);
     ReturnStatus(status, INDEX_FSAL_opendir);
+  }
 
   /* Test access rights for this directory */
 
@@ -86,8 +88,10 @@ fsal_status_t GPFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
   else
     status = fsal_internal_access(p_context, p_dir_handle, access_mask,
                                   &dir_attrs);
-  if(FSAL_IS_ERROR(status))
+  if(FSAL_IS_ERROR(status)) {
+    close(p_dir_descriptor->fd);
     ReturnStatus(status, INDEX_FSAL_opendir);
+  }
 
   /* if everything is OK, fills the dir_desc structure : */
 

@@ -34,8 +34,8 @@
 #include <strings.h>
 #include <string.h>
 #include <malloc.h>
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "nlm_list.h"
 #include "nlm_util.h"
 #include "nlm_async.h"

@@ -257,9 +257,13 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
   p_path->len = strlen(PQgetvalue(p_res, 0, 0));
 
   if(p_path->len >= FSAL_MAX_PATH_LEN)
-    ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+    {
+      PQclear(p_res);
+      ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+    }
 
   strcpy(p_path->path, PQgetvalue(p_res, 0, 0));
+  PQclear(p_res);
 
   /* set result in cache */
   fsal_posixdb_CachePath(p_handle, p_path);
@@ -274,7 +278,11 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
       CheckResult(p_res);
 
       if(PQntuples(p_res) == 0)
-        ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);        /* not found */
+        {
+          PQclear(p_res);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_NOENT, 0);        /* not found */
+        }
+
       if(PQntuples(p_res) > 1)
         {
           LogCrit(COMPONENT_FSAL, "Too many paths found for object %s.%s: found=%d, expected=1",
@@ -285,14 +293,20 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
       if(!strncmp(handleid_str, PQgetvalue(p_res, 0, 1), MAX_HANDLEIDSTR_SIZE)
          && !strncmp(handlets_str, PQgetvalue(p_res, 0, 2), MAX_HANDLETSSTR_SIZE))
-        break;                  /* handle is equal to its parent handle (root reached) */
+        {
+          PQclear(p_res);
+          break;                  /* handle is equal to its parent handle (root reached) */
+        }
       strncpy(handleid_str, PQgetvalue(p_res, 0, 1), MAX_HANDLEIDSTR_SIZE);
       strncpy(handlets_str, PQgetvalue(p_res, 0, 2), MAX_HANDLETSSTR_SIZE);
 
       /* insertion of the name at the beginning of the path */
       shift = strlen(PQgetvalue(p_res, 0, 0));
       if(p_path->len + shift >= FSAL_MAX_PATH_LEN)
-        ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+        {
+          PQclear(p_res);
+          ReturnCodeDB(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+        }
       new_pos = p_path->path + shift;
       memmove(new_pos, p_path->path, p_path->len);
       memcpy(p_path->path, PQgetvalue(p_res, 0, 0), shift);

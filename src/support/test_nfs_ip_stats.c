@@ -1,5 +1,5 @@
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "config_parsing.h"
 #include "nfs_stat.h"
 #include "nfs_ip_stats.h"
@@ -80,6 +80,7 @@ void nfs_set_ip_stats_param_default()
     nfs_param.ip_stats_param.hash_param.key_to_str = display_ip_stats_key;
     nfs_param.ip_stats_param.hash_param.val_to_str = display_ip_stats_val;
     nfs_param.ip_stats_param.hash_param.name = "IP Stats";
+    nfs_param.ip_stats_param.hash_param.flags = HASH_FLAG_NONE;
     nfs_param.core_param.dump_stats_per_client = 1;
 
 }

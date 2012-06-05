@@ -44,7 +44,7 @@ typedef unsigned long u_long;
 #endif
 #endif                          /* _SOLARIS */
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"

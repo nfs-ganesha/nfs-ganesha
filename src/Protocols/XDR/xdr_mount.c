@@ -11,7 +11,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "mount.h"
 #include "nfs23.h"
 
@@ -27,7 +27,7 @@ mountstat3 *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_enum(xdrs, (enum_t *) objp))
+  if(!inline_xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
 }
@@ -43,7 +43,7 @@ fhandle3 *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_bytes
+  if(!inline_xdr_bytes
      (xdrs, (char **)&objp->fhandle3_val, (u_int *) & objp->fhandle3_len, NFS3_FHSIZE))
     return (FALSE);
   return (TRUE);
@@ -60,7 +60,7 @@ dirpath *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_string(xdrs, objp, MNTPATHLEN))
+  if(!inline_xdr_string(xdrs, objp, MNTPATHLEN))
     return (FALSE);
   return (TRUE);
 }
@@ -76,7 +76,7 @@ name *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_string(xdrs, objp, MNTNAMLEN))
+  if(!inline_xdr_string(xdrs, objp, MNTNAMLEN))
     return (FALSE);
   return (TRUE);
 }

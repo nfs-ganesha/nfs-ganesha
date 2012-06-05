@@ -48,8 +48,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -61,6 +61,41 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
+
+static void
+nfs_read_ok(exportlist_t * pexport,
+            struct svc_req *preq, 
+            nfs_res_t * pres,
+            char *data,
+            fsal_size_t read_size,
+            fsal_attrib_list_t *attr,
+            int eof)
+{
+    switch (preq->rq_vers) {
+    case NFS_V2:
+        pres->res_read2.READ2res_u.readok.data.nfsdata2_val = data;
+        pres->res_read2.READ2res_u.readok.data.nfsdata2_len = read_size;
+
+        nfs2_FSALattr_To_Fattr(pexport, attr,
+                               &(pres->res_read2.READ2res_u.readok.attributes));
+
+        pres->res_attr2.status = NFS_OK;
+        break;
+
+    case NFS_V3:
+        /* Build Post Op Attributes */
+        nfs_SetPostOpAttr(pexport, attr,
+                          &(pres->res_read3.READ3res_u.resok.file_attributes));
+
+        pres->res_read3.READ3res_u.resok.eof = eof;
+        pres->res_read3.READ3res_u.resok.count = read_size;
+        pres->res_read3.READ3res_u.resok.data.data_val = data;
+        pres->res_read3.READ3res_u.resok.data.data_len = read_size;
+
+        pres->res_read3.status = NFS3_OK;
+        break;
+    }                   /* switch */
+}
 
 /**
  *
@@ -94,7 +129,7 @@ int nfs_Read(nfs_arg_t * parg,
   fsal_attrib_list_t pre_attr;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   size_t size = 0;
-  size_t read_size;
+  size_t read_size = 0;
   fsal_off_t offset = 0;
   void *data = NULL;
   cache_inode_file_type_t filetype;
@@ -130,6 +165,19 @@ int nfs_Read(nfs_arg_t * parg,
     {
       /* to avoid setting it on each error case */
       pres->res_read3.READ3res_u.resfail.file_attributes.attributes_follow = FALSE;
+      /* initialize for read of size 0 */
+      pres->res_read3.READ3res_u.resok.eof = FALSE;
+      pres->res_read3.READ3res_u.resok.count = 0;
+      pres->res_read3.READ3res_u.resok.data.data_val = NULL;
+      pres->res_read3.READ3res_u.resok.data.data_len = 0;
+      pres->res_read3.status = NFS3_OK;
+    }
+  else if(preq->rq_vers == NFS_V2)
+    {
+      /* initialize for read of size 0 */
+      pres->res_read2.READ2res_u.readok.data.nfsdata2_val = NULL;
+      pres->res_read2.READ2res_u.readok.data.nfsdata2_len = 0;
+      pres->res_attr2.status = NFS_OK;
     }
 
   /* Convert file handle into a cache entry */
@@ -303,9 +351,9 @@ int nfs_Read(nfs_arg_t * parg,
 
   if(size == 0)
     {
-      cache_status = CACHE_INODE_SUCCESS;
-      read_size = 0;
-      data = NULL;
+      nfs_read_ok(pexport, preq, pres, NULL, 0, &pre_attr, 0);
+      rc = NFS_REQ_OK;
+      goto out;
     }
   else
     {
@@ -332,42 +380,8 @@ int nfs_Read(nfs_arg_t * parg,
                               &cache_status)) == CACHE_INODE_SUCCESS)
 
         {
-          switch (preq->rq_vers)
-            {
-            case NFS_V2:
-              pres->res_read2.READ2res_u.readok.data.nfsdata2_val = data;
-              pres->res_read2.READ2res_u.readok.data.nfsdata2_len = read_size;
-
-              nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                     &(pres->res_read2.READ2res_u.readok.attributes));
-
-              pres->res_attr2.status = NFS_OK;
-              break;
-
-            case NFS_V3:
-
-              pres->res_read3.READ3res_u.resok.eof = FALSE;
-
-              /* Did we reach eof ? */
-              /* BUGAZOMEU use eof */
-              if((offset + read_size) >= attr.filesize)
-                pres->res_read3.READ3res_u.resok.eof = TRUE;
-
-              /* Build Post Op Attributes */
-              nfs_SetPostOpAttr(pexport,
-                                &attr,
-                                &(pres->res_read3.READ3res_u.resok.file_attributes));
-
-              pres->res_read3.READ3res_u.resok.file_attributes.attributes_follow = TRUE;
-
-              pres->res_read3.READ3res_u.resok.count = read_size;
-              pres->res_read3.READ3res_u.resok.data.data_val = data;
-              pres->res_read3.READ3res_u.resok.data.data_len = read_size;
-
-              pres->res_read3.status = NFS3_OK;
-              break;
-            }                   /* switch */
-
+          nfs_read_ok(pexport, preq, pres, data, read_size, &attr, 
+                      ((offset + read_size) >= attr.filesize));
           rc = NFS_REQ_OK;
           goto out;
         }

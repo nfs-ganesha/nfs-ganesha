@@ -46,7 +46,7 @@
 #endif
 
 #include <string.h>
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
 #include "mount.h"
