@@ -59,8 +59,10 @@ int display_9p_owner(state_owner_t *pkey, char *str)
     return sprintf(str, "<NULL>");
 
   strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", pkey);
+  strtmp += sprint_sockaddr( (sockaddr_t *)&(pkey->so_owner.so_9p_owner.client_addr),
+                             strtmp, 
+                             sizeof( pkey->so_owner.so_9p_owner.client_addr ) ) ;
 
-  strtmp += sprintf(strtmp, " clientip=0x%x", pkey->so_owner.so_9p_owner.clientip);
   strtmp += sprintf(strtmp, " proc_id=%u", pkey->so_owner.so_9p_owner.proc_id);
  
   strtmp += sprintf(strtmp, " refcount=%d", pkey->so_refcount);
@@ -101,10 +103,12 @@ int compare_9p_owner(state_owner_t *powner1,
   if(powner1->so_owner.so_9p_owner.proc_id !=
      powner2->so_owner.so_9p_owner.proc_id)
     return 1;
-
-  if(powner1->so_owner.so_9p_owner.clientip !=
-     powner2->so_owner.so_9p_owner.clientip)
+#if 0
+  if( memcmp( (char *)&powner1->so_owner.so_9p_owner.client_addr, 
+              (char *)&powner2->so_owner.so_9p_owner.client_addr,
+              sizeof( struct sockaddr_storage ) ) )
     return 1;
+#endif 
 
   if(powner1->so_owner_len !=
      powner2->so_owner_len)
@@ -130,12 +134,14 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
   unsigned long res;
   state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
 
+  struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr ;
+
   /* Compute the sum of all the characters */
   for(i = 0; i < pkey->so_owner_len; i++)
     sum += (unsigned char)pkey->so_owner_val[i];
 
   res = (unsigned long) (pkey->so_owner.so_9p_owner.proc_id)  +
-        (unsigned long) (pkey->so_owner.so_9p_owner.clientip) +
+        (unsigned long) paddr->sin_addr.s_addr +
         (unsigned long) sum +
         (unsigned long) pkey->so_owner_len;
 
@@ -155,12 +161,14 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned long res;
   state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
 
+  struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr ;
+
   /* Compute the sum of all the characters */
   for(i = 0; i < pkey->so_owner_len; i++)
     sum += (unsigned char)pkey->so_owner_val[i];
 
   res = (unsigned long) (pkey->so_owner.so_9p_owner.proc_id)  +
-        (unsigned long) (pkey->so_owner.so_9p_owner.clientip) +
+        (unsigned long) paddr->sin_addr.s_addr +
         (unsigned long) sum +
         (unsigned long) pkey->so_owner_len;
 
@@ -337,7 +345,7 @@ void _9p_owner_PrintAll(void)
   HashTable_Log(COMPONENT_STATE, ht_9p_owner);
 }                               /* _9p_owner_PrintAll */
 
-state_owner_t *get_9p_owner( uint32_t    clientip,
+state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
                              uint32_t    proc_id)
 {
   state_owner_t * pkey, *powner;
@@ -350,7 +358,7 @@ state_owner_t *get_9p_owner( uint32_t    clientip,
   pkey->so_type                             = STATE_LOCK_OWNER_9P;
   pkey->so_refcount                         = 1;
   pkey->so_owner.so_9p_owner.proc_id        = proc_id;
-  pkey->so_owner.so_9p_owner.clientip       = clientip;
+  memcpy( (char *)&pkey->so_owner.so_9p_owner.client_addr, (char *)pclient_addr, sizeof( struct sockaddr_storage ) ) ; 
   pkey->so_owner_len                        = 0 ;
   memset( pkey->so_owner_val, 0, NFS4_OPAQUE_LIMIT) ;
   if(isFullDebug(COMPONENT_STATE))

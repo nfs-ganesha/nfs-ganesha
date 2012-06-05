@@ -87,7 +87,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
   char name[MAXNAMLEN] ;
 
   struct hostent *hp ;
-  uint32_t clientip = 0 ; 
+  struct sockaddr_storage client_addr ; 
 
   _9p_fid_t * pfid = NULL ;
 
@@ -126,9 +126,9 @@ int _9p_lock( _9p_request_data_t * preq9p,
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
    }
-  memcpy( (char *)&clientip, hp->h_addr, sizeof( clientip ) ) ;
+  memcpy( (char *)&client_addr, hp->h_addr, hp->h_length ) ;
 
-  if( ( powner = get_9p_owner( clientip, *proc_id ) ) == NULL )
+  if( ( powner = get_9p_owner( &client_addr, *proc_id ) ) == NULL )
    {
       err = EINVAL ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;

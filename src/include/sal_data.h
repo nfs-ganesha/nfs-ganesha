@@ -241,8 +241,8 @@ typedef struct state_nlm_owner_t
 #ifdef _USE_9P
 typedef struct state_9p_owner_t
 {
-  u32      proc_id ;
-  uint32_t clientip ;
+  u32                     proc_id ;
+  struct sockaddr_storage client_addr ;
 } state_9p_owner_t ;
 #endif /* _USE_9P */
 
