@@ -346,7 +346,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
       return res_READ4.status;
     }
-  memset(bufferdata, 0, size);
+  if(data->pexport->options & EXPORT_OPTION_USE_DATACACHE)
+    memset(bufferdata, 0, size);
 
   if((cache_inode_rdwr(pentry,
                       CACHE_INODE_READ,
