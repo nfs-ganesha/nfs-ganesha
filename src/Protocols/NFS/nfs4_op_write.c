@@ -86,7 +86,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_write";
 
   fsal_size_t              size;
-  fsal_size_t              check_size;
   fsal_size_t              written_size;
   fsal_off_t               offset;
   fsal_boolean_t           eof_met;
@@ -97,7 +96,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_t                * pstate_open;
   cache_inode_status_t     cache_status;
   cache_entry_t          * pentry = NULL;
-  fsal_staticfsinfo_t    * pstaticinfo = NULL ;
 #ifdef _USE_QUOTA
   fsal_status_t            fsal_status ;
 #endif
@@ -143,7 +141,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 #endif /* _PNFS_DS */
 
-  pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
   /* Manage access type */
   switch( data->pexport->access_type )
    {
@@ -285,14 +282,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked
    * by the client at mount time, but we check this by security */
 
-  /* We should check against the value we returned in getattr. This was not
-   * the case before the following check_size code was added.
-   */
-  if( ((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)) 
-    check_size = data->pexport->MaxWrite;
-  else
-    check_size = pstaticinfo->maxwrite;
-  if( size > check_size )
+  if( size > data->pexport->MaxWrite )
     {
       /*
        * The client asked for too much data, we
@@ -301,9 +291,9 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       LogFullDebug(COMPONENT_NFS_V4,
                "NFS4_OP_WRITE: write requested size = %"PRIu64" write allowed size = %"PRIu64,
-               size, check_size);
+               size, data->pexport->MaxWrite);
 
-      size = check_size;
+      size = data->pexport->MaxWrite;
     }
 
   /* Where are the data ? */

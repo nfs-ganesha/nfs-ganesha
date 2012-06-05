@@ -1742,8 +1742,10 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
       cache_inode_put(data->current_entry);
   }
   data->current_entry = NULL;
-  data->current_filetype = UNASSIGNED;
-
+/* pseudo file system is always a directory and we need to keep
+ * nfs4_sanity_check_FH  happy.
+ */
+  data->current_filetype = DIRECTORY;
   res_LOOKUPP4.status = NFS4_OK;
   return NFS4_OK;
 }                               /* nfs4_op_lookupp_pseudo */

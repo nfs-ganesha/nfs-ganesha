@@ -89,7 +89,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   size_t                   size = 0;
   size_t                   read_size = 0;
-  size_t                   check_size = 0;
   fsal_off_t               offset = 0;
   fsal_boolean_t           eof_met = FALSE;
   caddr_t                  bufferdata = NULL;
@@ -103,7 +102,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
      not need to be held during a non-anonymous read, since the open
      state itself prevents a conflict. */
   bool_t                   anonymous = FALSE;
-  fsal_staticfsinfo_t * pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
 
   /* Say we are managing NFS4_OP_READ */
   resp->resop = NFS4_OP_READ;
@@ -302,14 +300,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       }
 
   /* Do not read more than FATTR4_MAXREAD */
-  /* We should check against the value we returned in getattr. This was not
-   * the case before the following check_size code was added.
-   */
-  if( ((data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD))
-    check_size = data->pexport->MaxRead;
-  else
-    check_size = pstaticinfo->maxread;
-  if( size > check_size )
+  if( size > data->pexport->MaxRead )
     {
       /* the client asked for too much data,
        * this should normally not happen because
@@ -317,8 +308,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       
       LogFullDebug(COMPONENT_NFS_V4,
                "NFS4_OP_READ: read requested size = %zu  read allowed size = %zu",
-               size, check_size);
-      size = check_size;
+               size, data->pexport->MaxRead);
+      size = data->pexport->MaxRead;
     }
 
   /* If size == 0 , no I/O is to be made and everything is alright */

@@ -45,8 +45,8 @@
 #endif
 
 #include "cidr.h"
-#include "log.h"
 #include "ganesha_rpc.h"
+#include "log.h"
 #include "fsal.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -2833,6 +2833,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
       cache_entry_t *pentry = NULL;
 
       fsal_op_context_t context;
+      fsal_staticfsinfo_t *pstaticinfo = NULL;
+      fsal_export_context_t *export_context = NULL;
 
       /* Get the context for FSAL super user */
       fsal_status = FSAL_InitClientContext(&context);
@@ -2899,7 +2901,26 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
             }
 
           *pcurrent->proot_handle = fsal_handle;
-
+          export_context = &pcurrent->FS_export_context;
+          pstaticinfo = export_context->fe_static_fs_info;
+          if( ((pcurrent->options & EXPORT_OPTION_MAXREAD) != EXPORT_OPTION_MAXREAD )) 
+             {
+               if ( pstaticinfo && pstaticinfo->maxread )
+                  pcurrent->MaxRead = pstaticinfo->maxread;
+               else
+                  pcurrent->MaxRead = LASTDEFAULT;
+             }
+          if( ((pcurrent->options & EXPORT_OPTION_MAXWRITE) != EXPORT_OPTION_MAXWRITE )) 
+             {
+               if ( pstaticinfo && pstaticinfo->maxwrite )
+                  pcurrent->MaxWrite = pstaticinfo->maxwrite;
+               else
+                  pcurrent->MaxWrite = LASTDEFAULT;
+             }
+          LogFullDebug(COMPONENT_INIT,
+                      "Set MaxRead MaxWrite for Path=%s Options = 0x%x MaxRead = 0x%x MaxWrite = 0x%x",
+                      pcurrent->fullpath, pcurrent->options, pcurrent->MaxRead, pcurrent->MaxWrite);
+             
           /* Add this entry to the Cache Inode as a "root" entry */
           fsdata.fh_desc.start = (caddr_t) &fsal_handle;
           fsdata.fh_desc.len = 0;
