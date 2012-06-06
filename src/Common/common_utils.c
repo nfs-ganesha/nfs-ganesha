@@ -154,7 +154,7 @@ int s_read_size(char *str, size_t * p_size)
  * string to boolean convertion.
  * \return 1 for TRUE, 0 for FALSE, -1 on error
  */
-int StrToBoolean(char *str)
+int StrToBoolean(const char *str)
 {
   if(str == NULL)
     return -1;

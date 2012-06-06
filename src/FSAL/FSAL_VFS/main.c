@@ -115,48 +115,21 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 		= container_of(fsal_hdl, struct vfs_fsal_module, fsal);
 	fsal_status_t fsal_status;
 
-	fsal_status = load_FSAL_parameters_from_conf(config_struct,
-						     fsal_hdl->ops->get_name(fsal_hdl),
-						     &vfs_me->fsal_info);
-	if(FSAL_IS_ERROR(fsal_status))
-		return fsal_status;
-	fsal_status = load_FS_common_parameters_from_conf(config_struct,
-							  &vfs_me->common_info);
+	vfs_me->fs_info = default_posix_info; /* get a copy of the defaults */
+
+        fsal_status = fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl),
+                                       config_struct,
+                                       &vfs_me->fsal_info,
+                                       &vfs_me->fs_info,
+                                       &vfs_me->common_info,
+                                       NULL);
+
 	if(FSAL_IS_ERROR(fsal_status))
 		return fsal_status;
 	/* if we have fsal specific params, do them here
 	 * fsal_hdl->name is used to find the block containing the
 	 * params.
 	 */
-
-	/* Analyzing fs_common_info struct */
-
-	if((vfs_me->common_info.behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
-	   (vfs_me->common_info.behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
-		ReturnCode(ERR_FSAL_NOTSUPP, 0);
-
-	vfs_me->fs_info = default_posix_info; /* get a copy of the defaults */
-
-	SET_BOOLEAN_PARAM(vfs_me->fs_info, &vfs_me->common_info, symlink_support);
-	SET_BOOLEAN_PARAM(vfs_me->fs_info, &vfs_me->common_info, link_support);
-	SET_BOOLEAN_PARAM(vfs_me->fs_info, &vfs_me->common_info, lock_support);
-	SET_BOOLEAN_PARAM(vfs_me->fs_info, &vfs_me->common_info, lock_support_owner);
-	SET_BOOLEAN_PARAM(vfs_me->fs_info, &vfs_me->common_info, lock_support_async_block);
-	SET_BOOLEAN_PARAM(vfs_me->fs_info, &vfs_me->common_info, cansettime);
-	SET_INTEGER_PARAM(vfs_me->fs_info, &vfs_me->common_info, maxread);
-	SET_INTEGER_PARAM(vfs_me->fs_info, &vfs_me->common_info, maxwrite);
-	SET_BITMAP_PARAM(vfs_me->fs_info, &vfs_me->common_info, umask);
-	SET_BOOLEAN_PARAM(vfs_me->fs_info, &vfs_me->common_info, auth_exportpath_xdev);
-	SET_BITMAP_PARAM(vfs_me->fs_info, &vfs_me->common_info, xattr_access_rights);
 
 	display_fsinfo(&vfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,

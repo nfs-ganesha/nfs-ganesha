@@ -21,6 +21,9 @@ void fsal_detach_handle(struct fsal_export *exp_hdl,
 /* fsal_export common methods
  */
 
+struct exportlist__;
+void fsal_export_init(struct fsal_export *, struct export_ops *,
+                      struct exportlist__ *);
 void fsal_export_get(struct fsal_export *exp_hdl);
 int fsal_export_put(struct fsal_export *exp_hdl);
 

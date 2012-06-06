@@ -160,3 +160,18 @@ int fsal_handle_put(struct fsal_obj_handle *obj_hdl)
 	return retval;
 }
 
+void fsal_export_init(struct fsal_export *exp, struct export_ops *exp_ops,
+                      struct exportlist__ *exp_entry)
+{
+	pthread_mutexattr_t attrs;
+
+	init_glist(&exp->handles);
+	init_glist(&exp->exports);
+	pthread_mutexattr_init(&attrs);
+	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
+	pthread_mutex_init(&exp->lock, &attrs);
+
+	exp->ops = exp_ops;
+	exp->refs = 1;  /* we exit with a reference held */
+	exp->exp_entry = exp_entry;
+}

@@ -41,6 +41,7 @@
 #include <pthread.h>
 #include "log.h"
 #include "fsal.h"
+#include "FSAL/fsal_init.h"
 
 #define STRCMP   strcasecmp
 
@@ -118,9 +119,11 @@ void init_fsal_parameters(fsal_init_info_t *init_info,
   SET_INIT_DEFAULT(common_info, xattr_access_rights);
 }
 
-fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
-					     const char *fsal_name,
-                                             fsal_init_info_t *init_info)
+static fsal_status_t
+load_FSAL_parameters_from_conf(config_file_t in_config,
+			       const char *fsal_name,
+                               fsal_init_info_t *init_info,
+                               fsal_extra_arg_parser_f extra)
 {
   int err;
   int var_max, var_index;
@@ -225,7 +228,7 @@ fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
         {
 	  continue; /* scanned at load time */
         }
-      else
+      else if((extra == NULL) || ((*extra)(key_name, key_value, init_info, fsal_name)))
         {
           LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
@@ -247,8 +250,9 @@ fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
 
 }
 
-fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
-                                                  fs_common_initinfo_t *common_info)
+static fsal_status_t
+load_FS_common_parameters_from_conf(config_file_t in_config,
+                                    fs_common_initinfo_t *common_info)
 {
   int err;
   int var_max, var_index;
@@ -578,3 +582,50 @@ fsal_size_t fsal_layout_blksize(struct fsal_staticinfo_t *info)
 	return info->layout_blksize;
 }
 #endif
+
+fsal_status_t
+fsal_load_config(const char *name,
+                 config_file_t config_struct,
+                 fsal_init_info_t * fsal_init,
+                 fsal_staticfsinfo_t * fs_info,
+                 fs_common_initinfo_t * common_info,
+                 fsal_extra_arg_parser_f extra)
+{
+	fsal_status_t st;
+
+        st = load_FSAL_parameters_from_conf(config_struct, name,
+                                            fsal_init, extra);
+        if(FSAL_IS_ERROR(st))
+                return st;
+
+	st = load_FS_common_parameters_from_conf(config_struct, common_info);
+	if(FSAL_IS_ERROR(st))
+		return st;
+
+	if((common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
+	   (common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
+		ReturnCode(ERR_FSAL_NOTSUPP, 0);
+
+	SET_BOOLEAN_PARAM(fs_info, common_info, symlink_support);
+	SET_BOOLEAN_PARAM(fs_info, common_info, link_support);
+	SET_BOOLEAN_PARAM(fs_info, common_info, lock_support);
+	SET_BOOLEAN_PARAM(fs_info, common_info, lock_support_owner);
+	SET_BOOLEAN_PARAM(fs_info, common_info, lock_support_async_block);
+	SET_BOOLEAN_PARAM(fs_info, common_info, cansettime);
+	SET_INTEGER_PARAM(fs_info, common_info, maxread);
+	SET_INTEGER_PARAM(fs_info, common_info, maxwrite);
+	SET_BITMAP_PARAM(fs_info, common_info, umask);
+	SET_BOOLEAN_PARAM(fs_info, common_info, auth_exportpath_xdev);
+	SET_BITMAP_PARAM(fs_info, common_info, xattr_access_rights);
+
+	ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
