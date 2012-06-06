@@ -372,6 +372,7 @@ struct fsal_module *lookup_fsal(const char *name)
 			pthread_mutex_unlock(&fsal_lock);
 			return fsal;
 		}
+		pthread_mutex_unlock(&fsal->lock);
 	}
 	pthread_mutex_unlock(&fsal_lock);
 	return NULL;
