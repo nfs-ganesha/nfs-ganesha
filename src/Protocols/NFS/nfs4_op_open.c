@@ -66,7 +66,6 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                              cache_entry_t      * pentry_parent,
                              state_owner_t      * powner,
                              state_t           ** statep,
-                             fsal_name_t        * filename,
                              fsal_openflags_t     openflags,
                              char              ** cause2);
 
@@ -506,7 +505,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                     }
 
                   status4 = nfs4_do_open(op, data, pentry_lookup, pentry_parent,
-                      powner, &pfile_state, &filename, openflags, &text);
+                      powner, &pfile_state, openflags, &text);
                   pthread_rwlock_unlock(&pentry_lookup->state_lock);
                   if (status4 != NFS4_OK)
                     {
@@ -743,7 +742,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
           pthread_rwlock_wrlock(&pentry_newfile->state_lock);
           status4 = nfs4_do_open(op, data, pentry_newfile, pentry_parent,
-              powner, &pfile_state, &filename, openflags, &text);
+              powner, &pfile_state, openflags, &text);
           pthread_rwlock_unlock(&pentry_newfile->state_lock);
           if (status4 != NFS4_OK)
             {
@@ -875,7 +874,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
             }
 
           status4 = nfs4_do_open(op, data, pentry_newfile, pentry_parent,
-              powner, &pfile_state, &filename, openflags, &text);
+              powner, &pfile_state, openflags, &text);
           pthread_rwlock_unlock(&pentry_newfile->state_lock);
           if (status4 != NFS4_OK)
             {
@@ -900,7 +899,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       pentry_newfile = pentry_parent;
       pthread_rwlock_wrlock(&pentry_newfile->state_lock);
       status4 = nfs4_do_open(op, data, pentry_newfile, NULL, powner,
-          &pfile_state, NULL, openflags, &text);
+          &pfile_state, openflags, &text);
       pthread_rwlock_unlock(&pentry_newfile->state_lock);
       if (status4 != NFS4_OK)
         {
@@ -1172,7 +1171,6 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                              cache_entry_t      * pentry_parent,
                              state_owner_t      * powner,
                              state_t           ** statep,
-                             fsal_name_t        * filename,
                              fsal_openflags_t     openflags,
                              char              ** cause2)
 {
