@@ -290,9 +290,6 @@ int main(int argc, char *argv[])
     LogFatal(COMPONENT_MAIN,
              "Could not start nfs daemon, pthread_sigmask failed");
 
-  /* Set the parameter to 0 before doing anything */
-  memset((char *)&nfs_param, 0, sizeof(nfs_parameter_t));
-
   /* Parse the configuration file so we all know what is going on. */
 
   if(config_path == NULL) {
