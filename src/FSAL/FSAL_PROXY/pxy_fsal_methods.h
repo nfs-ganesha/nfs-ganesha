@@ -85,3 +85,11 @@ fsal_status_t
 pxy_create_handle(struct fsal_export *exp_hdl,
                   struct fsal_handle_desc *hdl_desc,
                   struct fsal_obj_handle **handle);
+
+fsal_status_t
+pxy_create_export(struct fsal_module *fsal_hdl,
+                  const char *export_path,
+                  const char *fs_options,
+                  struct exportlist__ *exp_entry,
+                  struct fsal_module *next_fsal,
+                  struct fsal_export **export);
