@@ -81,7 +81,7 @@ int start_fsals(config_file_t config)
 	config_item_t fsal_block, block;
 	config_item_t item;
 	char *key, *value;
-	int i, fb, fsal_cnt, item_cnt;
+	int fb, fsal_cnt, item_cnt;
 
 	fsal_block = config_FindItemByName(config, CONF_LABEL_FSAL);
 	if(fsal_block == NULL) {
@@ -103,6 +103,7 @@ int start_fsals(config_file_t config)
 		block = config_GetItemByIndex(fsal_block, fb);
 		if(config_ItemType(block) == CONFIG_ITEM_BLOCK) {
 			char *fsal_name;
+                        int i;
 
 			fsal_name = config_GetBlockName(block);
 			item_cnt = config_GetNbItems(block);
@@ -136,7 +137,7 @@ int start_fsals(config_file_t config)
 				LogFatal(COMPONENT_INIT,
 					 "Error fetching [%d]"
 					 " from config section \"%s\"",
-					 i, CONF_LABEL_NFS_CORE);
+					 fb, CONF_LABEL_NFS_CORE);
 				return 1;
 			}
 			if(strcasecmp(key, "LogLevel") == 0) {
@@ -229,7 +230,7 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 		void (*module_init)(void);
 		char *sym_error;
 
-		*(void **)(&module_init) = dlsym(dl, "fsal_init");
+		module_init = dlsym(dl, "fsal_init");
 		sym_error = dlerror();
 		if(sym_error != NULL) {
 			dl_error = strdup(sym_error);

@@ -126,7 +126,7 @@ fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
   int var_max, var_index;
   char *key_name;
   char *key_value;
-  config_item_t fsal_block, block;
+  config_item_t fsal_block, block = NULL;
   int i, fsal_cnt;
   int DebugLevel = -1;
   char *LogFile = NULL;
