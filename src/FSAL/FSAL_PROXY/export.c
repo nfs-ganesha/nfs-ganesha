@@ -243,6 +243,12 @@ pxy_create_export(struct fsal_module *fsal_hdl,
                   struct fsal_module *next_fsal,
                   struct fsal_export **export)
 {
-        ReturnCode(ERR_FSAL_FAULT, 0);
+        struct fsal_export *exp = calloc(1, sizeof(*exp));
+
+        if (!exp)
+                ReturnCode(ERR_FSAL_NOMEM, ENOMEM); 
+        fsal_export_init(exp, &pxy_exp_ops, exp_entry);
+        *export = exp;
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 

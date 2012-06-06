@@ -181,7 +181,6 @@ typedef struct
   unsigned short srv_port;
   unsigned int use_privileged_client_port ;
   char srv_proto[MAXNAMLEN];
-  char local_principal[MAXNAMLEN];
   char remote_principal[MAXNAMLEN];
   char keytab[MAXPATHLEN];
   unsigned int cred_lifetime;
