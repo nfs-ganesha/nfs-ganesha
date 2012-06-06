@@ -1594,7 +1594,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       else
        {
 	 pathfsal[0] = '/';
-         strncat(&pathfsal[1], name, MAXPATHLEN - 1);
+         strncat(&pathfsal[1], name, MAXPATHLEN - 2);
        }
 
       /* Lookup the FSAL to build the fsal handle */
