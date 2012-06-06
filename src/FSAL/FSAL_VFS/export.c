@@ -515,7 +515,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				struct fsal_module *next_fsal,
 				struct fsal_export **export)
 {
-	pthread_mutexattr_t attrs;
 	struct vfs_fsal_export *myself;
 	FILE *fp;
 	struct mntent *p_mnt;
@@ -548,11 +547,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	}
 	memset(myself, 0, sizeof(struct vfs_fsal_export));
 	myself->root_fd = -1;
-	init_glist(&myself->export.handles);
-	init_glist(&myself->export.exports);
-	pthread_mutexattr_init(&attrs);
-	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
-	pthread_mutex_init(&myself->export.lock, &attrs);
+
+        fsal_export_init(&myself->export, &exp_ops, exp_entry);
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
@@ -666,9 +662,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	myself->fstype = strdup(type);
 	myself->fs_spec = strdup(fs_spec);
 	myself->mntdir = strdup(mntdir);
-	myself->export.refs = 1;  /* we exit with a reference held */
-	myself->export.exp_entry = exp_entry;
-	myself->export.ops = &exp_ops;
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
 	ReturnCode(ERR_FSAL_NO_ERROR, 0);
