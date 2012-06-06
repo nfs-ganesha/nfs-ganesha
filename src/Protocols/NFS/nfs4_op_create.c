@@ -88,7 +88,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   fsal_attrib_list_t     attr_parent;
   fsal_attrib_list_t     attr_new;
   fsal_attrib_list_t     sattr;
-  struct fsal_export    *exp_hdl = data->current_entry->obj_handle->export;
   struct fsal_obj_handle *pnewfsal_handle = NULL;
   nfs_fh4                newfh4;
   cache_inode_status_t   cache_status;
@@ -96,6 +95,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   fsal_accessmode_t      mode = 0777;
   fsal_name_t            name;
 #ifdef _USE_QUOTA
+  struct fsal_export    *exp_hdl = data->current_entry->obj_handle->export;
   fsal_status_t          fsal_status ;
 #endif
   cache_inode_create_arg_t create_arg;
