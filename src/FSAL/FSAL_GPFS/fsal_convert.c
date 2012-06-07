@@ -335,9 +335,27 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
     {
-      p_fsalattr_out->chgtime
-        = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
-      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
+      if(p_buffstat->st_mtime == p_buffstat->st_ctime)
+        {
+          if(p_buffstat->st_mtim.tv_nsec > p_buffstat->st_ctim.tv_nsec)
+            p_fsalattr_out->chgtime
+              = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
+          else
+            p_fsalattr_out->chgtime
+              = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
+        }
+      else if(p_buffstat->st_mtime > p_buffstat->st_ctime)
+        {
+          p_fsalattr_out->chgtime
+            = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
+        }
+      else
+        {
+          p_fsalattr_out->chgtime
+            = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
+        }
+      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds +
+                               (uint64_t) p_fsalattr_out->chgtime.nseconds;
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
@@ -447,9 +465,27 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
         {
-            p_fsalattr_out->chgtime
-              = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
-            p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
+          if(p_buffstat->st_mtime == p_buffstat->st_ctime)
+            {
+              if(p_buffstat->st_mtim.tv_nsec > p_buffstat->st_ctim.tv_nsec)
+                p_fsalattr_out->chgtime
+                  = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
+              else
+                p_fsalattr_out->chgtime
+                  = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
+            }
+          else if(p_buffstat->st_mtime > p_buffstat->st_ctime)
+            {
+              p_fsalattr_out->chgtime
+                = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
+            }
+          else
+            {
+              p_fsalattr_out->chgtime
+                = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
+            }
+          p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds +
+                                   (uint64_t) p_fsalattr_out->chgtime.nseconds;
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
@@ -591,10 +627,29 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
         {
-            p_fsalattr_out->chgtime
-              = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
-            p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
-            LogFullDebug(COMPONENT_FSAL, "chgtime = %u", p_fsalattr_out->chgtime.seconds);
+          if(p_buffstat->st_mtime == p_buffstat->st_ctime)
+            {
+              if(p_buffstat->st_mtim.tv_nsec > p_buffstat->st_ctim.tv_nsec)
+                p_fsalattr_out->chgtime
+                  = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
+              else
+                p_fsalattr_out->chgtime
+                  = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
+            }
+          else if(p_buffstat->st_mtime > p_buffstat->st_ctime)
+            {
+              p_fsalattr_out->chgtime
+                = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
+            }
+          else
+            {
+              p_fsalattr_out->chgtime
+                = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
+            }
+          p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds +
+                                   (uint64_t) p_fsalattr_out->chgtime.nseconds;
+          LogFullDebug(COMPONENT_FSAL, "chgtime = %u", p_fsalattr_out->chgtime.seconds);
+
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
