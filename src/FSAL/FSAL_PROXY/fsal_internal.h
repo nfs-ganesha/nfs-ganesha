@@ -27,54 +27,6 @@ extern fsal_staticfsinfo_t global_fs_info;
 
 #endif
 
-typedef struct fsal_proxy_internal_fattr__
-{
-  fattr4_type type;
-  fattr4_change change_time;
-  fattr4_size size;
-  fattr4_fsid fsid;
-  fattr4_filehandle filehandle;
-  fattr4_fileid fileid;
-  fattr4_mode mode;
-  fattr4_numlinks numlinks;
-  fattr4_owner owner;           /* Needs to points to a string */
-  fattr4_owner_group owner_group;       /* Needs to points to a string */
-  fattr4_space_used space_used;
-  fattr4_time_access time_access;
-  fattr4_time_metadata time_metadata;
-  fattr4_time_modify time_modify;
-  fattr4_rawdev rawdev;
-  char padowner[MAXNAMLEN];
-  char padgroup[MAXNAMLEN];
-  char padfh[NFS4_FHSIZE];
-} fsal_proxy_internal_fattr_t;
-
-typedef struct fsal_proxy_internal_fattr_readdir__
-{
-  fattr4_type type;
-  fattr4_change change_time;
-  fattr4_size size;
-  fattr4_fsid fsid;
-  fattr4_filehandle filehandle;
-  fattr4_fileid fileid;
-  fattr4_mode mode;
-  fattr4_numlinks numlinks;
-  fattr4_owner owner;           /* Needs to points to a string */
-  fattr4_owner_group owner_group;       /* Needs to points to a string */
-  fattr4_space_used space_used;
-  fattr4_time_access time_access;
-  fattr4_time_metadata time_metadata;
-  fattr4_time_modify time_modify;
-  fattr4_rawdev rawdev;
-  char padowner[MAXNAMLEN];
-  char padgroup[MAXNAMLEN];
-  char padfh[NFS4_FHSIZE];
-} fsal_proxy_internal_fattr_readdir_t;
-
-void fsal_internal_proxy_setup_fattr(fsal_proxy_internal_fattr_t * pfattr);
-void fsal_internal_proxy_setup_readdir_fattr(fsal_proxy_internal_fattr_readdir_t *
-                                             pfattr);
-
 /**
  *  This function initializes shared variables of the FSAL.
  */
@@ -106,8 +58,6 @@ void ReleaseTokenFSCall();
  */
 fsal_boolean_t fsal_do_log(fsal_status_t status);
 
-void fsal_internal_proxy_create_fattr_bitmap(bitmap4 * pbitmap);
-void fsal_internal_proxy_create_fattr_readdir_bitmap(bitmap4 * pbitmap);
 void fsal_internal_proxy_create_fattr_fsinfo_bitmap(bitmap4 * pbitmap);
 void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
                                           bitmap4 * pbitmap);
