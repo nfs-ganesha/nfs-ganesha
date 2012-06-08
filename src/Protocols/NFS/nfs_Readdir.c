@@ -318,7 +318,7 @@ nfs_Readdir(nfs_arg_t *arg,
      }
 
      /* Adjust the cookie we supply to cache_inode */
-     if (cookie > 1)  /* it is not the cookie for "." nor ".." */ {
+     if (cookie > 2)  /* it is not the cookie for "." nor ".." */ {
           cache_inode_cookie = cookie;
      } else {
           cache_inode_cookie = 0;
