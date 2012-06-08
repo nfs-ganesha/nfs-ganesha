@@ -41,8 +41,24 @@
 #include "FSAL/fsal_init.h"
 #include "pxy_fsal_methods.h"
 
-static struct fsal_module PROXY;
-static struct fsal_ops pxy_ops;
+static proxyfs_specific_initinfo_t default_pxy_params = {
+        .retry_sleeptime = 10, /* Time to sleep when retrying */
+        .srv_prognum = 100003, /* Default NFS prognum         */
+        .srv_timeout = 2,      /* RPC Client timeout          */
+        .srv_proto = "tcp",    /* Protocol to use */
+        .srv_sendsize = 32768, /* Default Buffer Send Size    */
+        .srv_recvsize = 32768, /* Default Buffer Send Size    */
+        .keytab = "etc/krb5.keytab", /* Path to krb5 keytab file */
+        .cred_lifetime = 86400,      /* 24h is a good default    */
+        #ifdef _HANDLE_MAPPING
+        .hdlmap_dbdir = "/var/ganesha/handlemap",
+        .hdlmap_tmpdir = "/var/ganesha/tmp",
+        .hdlmap_dbcount = 8,
+        .hdlmap_hashsize = 103j
+        .hdlmap_nb_entry_prealloc = 16384,
+        .hdlmap_nb_db_op_prealloc = 1024,
+        #endif
+};
 
 /* defined the set of attributes supported with POSIX */
 #define SUPPORTED_ATTRIBUTES (                                       \
@@ -77,36 +93,13 @@ static fsal_staticfsinfo_t proxy_info = {
 	.dirs_have_sticky_bit = TRUE
 };
 
-fs_common_initinfo_t pxy_common_info;
-struct {
-        fsal_init_info_t common;
-        proxyfs_specific_initinfo_t mine;
-} pxy_params = {
-  .mine.retry_sleeptime = 10, /* Time to sleep when retrying */
-  .mine.srv_prognum = 100003, /* Default NFS prognum         */
-  .mine.srv_timeout = 2,      /* RPC Client timeout          */
-  .mine.srv_proto = "tcp",    /* Protocol to use */
-  .mine.srv_sendsize = 32768, /* Default Buffer Send Size    */
-  .mine.srv_recvsize = 32768, /* Default Buffer Send Size    */
-  .mine.keytab = "etc/krb5.keytab", /* Path to krb5 keytab file */
-  .mine.cred_lifetime = 86400,      /* 24h is a good default    */
-#ifdef _HANDLE_MAPPING
-  .mine.hdlmap_dbdir = "/var/ganesha/handlemap",
-  .mine.hdlmap_tmpdir = "/var/ganesha/tmp",
-  .mine.hdlmap_dbcount = 8,
-  .mine.hdlmap_hashsize = 103j
-  .mine.hdlmap_nb_entry_prealloc = 16384,
-  .mine.hdlmap_nb_db_op_prealloc = 1024,
-#endif
-};
-
 static int
 pxy_key_to_param(const char *key, const char *val,
                  fsal_init_info_t *info, const char *name)
 {
-        /* I pass pointer to pxy_param to fsal_load_config */
-        proxyfs_specific_initinfo_t *init_info = 
-                (proxyfs_specific_initinfo_t *)(info + 1);
+        struct pxy_fsal_module *pxy =
+                container_of(info, struct pxy_fsal_module, init);
+        proxyfs_specific_initinfo_t *init_info = &pxy->special;
 
         if(!strcasecmp(key, "Srv_Addr")) {
                 if(isdigit(val[0])) {
@@ -193,7 +186,8 @@ pxy_key_to_param(const char *key, const char *val,
 }
 
 static int
-load_pxy_config(const char *name, config_file_t config)
+load_pxy_config(const char *name, config_file_t config,
+                struct pxy_fsal_module *pxy)
 {
         int err;
         int cnt, i;
@@ -233,7 +227,7 @@ load_pxy_config(const char *name, config_file_t config)
                 }
 
                 errcnt += pxy_key_to_param(key_name, key_value,
-                                           &pxy_params.common, name);
+                                           &pxy->init, name);
         }
 
         return errcnt;
@@ -244,16 +238,20 @@ pxy_init_config(struct fsal_module *fsal_hdl,
                 config_file_t config_struct)
 {
         fsal_status_t st;
+        struct pxy_fsal_module *pxy =
+                container_of(fsal_hdl, struct pxy_fsal_module, module);
 
-        pxy_params.mine.srv_addr = htonl(0x7F000001);
-        pxy_params.mine.srv_port = htons(2049);
+        default_pxy_params.srv_addr = htonl(0x7F000001);
+        default_pxy_params.srv_port = htons(2049);
 
-        st = fsal_load_config("PROXY", config_struct, &pxy_params.common,
-                              &proxy_info, &pxy_common_info, pxy_key_to_param);
+        pxy->special = default_pxy_params;
+
+        st = fsal_load_config("PROXY", config_struct, &pxy->init,
+                              &proxy_info, &pxy->common, pxy_key_to_param);
         if (FSAL_IS_ERROR(st))
                 return st;
 
-        if (load_pxy_config("NFSv4_Proxy", config_struct))
+        if (load_pxy_config("NFSv4_Proxy", config_struct, pxy))
                 ReturnCode(ERR_FSAL_INVAL, EINVAL);
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -262,20 +260,22 @@ static void pxy_dump_config(struct fsal_module *fsal_hdl, int log_fd)
 {
 }
 
+static struct pxy_fsal_module PROXY = {
+	.pxy_ops.init_config = pxy_init_config,
+	.pxy_ops.dump_config = pxy_dump_config,
+	.pxy_ops.create_export = pxy_create_export,
+};
+
 MODULE_INIT void 
 pxy_init(void)
 {
-	pxy_ops.init_config = pxy_init_config;
-	pxy_ops.dump_config = pxy_dump_config;
-	pxy_ops.create_export = pxy_create_export;
+        PROXY.module.ops = &PROXY.pxy_ops;
 
-        PROXY.ops = &pxy_ops;
-
-	register_fsal(&PROXY, "PROXY");
+	register_fsal(&PROXY.module, "PROXY");
 }
 
 MODULE_FINI void 
 pxy_unload(void)
 {
-	unregister_fsal(&PROXY);
+	unregister_fsal(&PROXY.module);
 }

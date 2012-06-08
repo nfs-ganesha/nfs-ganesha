@@ -201,7 +201,7 @@ pxy_lookup_junction(struct fsal_export *exp_hdl,
 	ReturnCode(ERR_FSAL_NO_ERROR, 0);	
 }
 
- struct export_ops pxy_exp_ops = {
+static struct export_ops pxy_exp_ops = {
 	.get = fsal_export_get,
 	.put = fsal_export_put,
 	.release = pxy_release,
@@ -232,6 +232,7 @@ pxy_lookup_junction(struct fsal_export *exp_hdl,
 	.set_quota = pxy_set_quota
 };
 
+
 /* Here and not static because proxy.c needs this function
  * but we also need access to pxy_exp_ops - I'd rather
  * keep the later static then the former */
@@ -243,12 +244,15 @@ pxy_create_export(struct fsal_module *fsal_hdl,
                   struct fsal_module *next_fsal,
                   struct fsal_export **export)
 {
-        struct fsal_export *exp = calloc(1, sizeof(*exp));
+        struct pxy_export *exp = calloc(1, sizeof(*exp));
+        struct pxy_fsal_module *pxy =
+                container_of(fsal_hdl, struct pxy_fsal_module, module);
 
         if (!exp)
                 ReturnCode(ERR_FSAL_NOMEM, ENOMEM); 
-        fsal_export_init(exp, &pxy_exp_ops, exp_entry);
-        *export = exp;
+        fsal_export_init(&exp->exp, &pxy_exp_ops, exp_entry);
+        exp->info = &pxy->special;
+        *export = &exp->exp;
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 

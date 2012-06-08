@@ -1,3 +1,19 @@
+#ifndef _PXY_FSAL_METHODS_H
+#define _PXY_FSAL_METHODS_H
+
+struct pxy_fsal_module {
+      struct fsal_module module;
+      fsal_init_info_t init;
+      fs_common_initinfo_t common;
+      proxyfs_specific_initinfo_t special;
+      struct fsal_ops pxy_ops;
+};
+
+struct pxy_export {
+        struct fsal_export exp;
+        const proxyfs_specific_initinfo_t *info;
+};
+
 fsal_status_t
 pxy_open(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags);
 
@@ -93,3 +109,5 @@ pxy_create_export(struct fsal_module *fsal_hdl,
                   struct exportlist__ *exp_entry,
                   struct fsal_module *next_fsal,
                   struct fsal_export **export);
+
+#endif

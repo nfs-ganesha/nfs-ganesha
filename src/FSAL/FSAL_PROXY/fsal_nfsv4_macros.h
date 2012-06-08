@@ -26,9 +26,15 @@
 #include "nfs4.h"
 
 #include "fsal.h"
+#if 0
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
+#endif
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+#endif
 
 #define TIMEOUTRPC {2, 0} 
 
@@ -47,10 +53,10 @@
 do { Mem_Free( argcompound.argarray_val ) ;} while( 0 )
 
 /* OP specific macros */
-#define COMPOUNDV4_ARG_ADD_OP_PUTROOTFH( argcompound )                                             \
-do {                                                                                               \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_PUTROOTFH ; \
-  argcompound.argarray.argarray_len += 1 ;                                                         \
+#define COMPOUNDV4_ARG_ADD_OP_PUTROOTFH(opcnt, argarray )  \
+do {                                                       \
+  argarray[opcnt].argop = NFS4_OP_PUTROOTFH ;              \
+  opcnt ++;                                                \
 } while( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_OPEN_CONFIRM( argcompound, __openseqid, __other, __seqid )                                                       \
@@ -86,11 +92,12 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                                       \
 } while( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_GETATTR( argcompound, bitmap )                                                          \
-do {                                                                                                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_GETATTR ;                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opgetattr.attr_request = bitmap ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                            \
+#define COMPOUNDV4_ARG_ADD_OP_GETATTR( opcnt, argarray, bitmap )             \
+do {                                                                         \
+  nfs_argop4 *op = argarray + opcnt; opcnt++;                                \
+  op->argop = NFS4_OP_GETATTR ;                                              \
+  op->nfs_argop4_u.opgetattr.attr_request.bitmap4_val = bitmap ;             \
+  op->nfs_argop4_u.opgetattr.attr_request.bitmap4_len = ARRAY_SIZE(bitmap) ; \
 } while( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_SETATTR( argcompound, inattr )                                                                       \
@@ -101,30 +108,31 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                         \
 } while( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_GETFH( argcompound )                                                            \
-do {                                                                                                          \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_GETFH ;                \
-  argcompound.argarray.argarray_len += 1 ;                                                                    \
+#define COMPOUNDV4_ARG_ADD_OP_GETFH( opcnt, argarray )               \
+do {                                                                 \
+  argarray[opcnt].argop = NFS4_OP_GETFH ;                            \
+  opcnt ++ ;                                                         \
 } while( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_PUTFH( argcompound, nfs4fh )                                                    \
-do {                                                                                                          \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_PUTFH ;                \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opputfh.object = nfs4fh ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                    \
+#define COMPOUNDV4_ARG_ADD_OP_PUTFH( opcnt, argarray, nfs4fh )       \
+do {                                                                 \
+  nfs_argop4 *op = argarray + opcnt; opcnt++;                        \
+  op->argop = NFS4_OP_PUTFH ;                                        \
+  op->nfs_argop4_u.opputfh.object = nfs4fh ;                         \
 } while( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_LOOKUP( argcompound, name )                                                     \
-do {                                                                                                          \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_LOOKUP ;               \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.oplookup.objname = name ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                    \
+#define COMPOUNDV4_ARG_ADD_OP_LOOKUP( opcnt, argarray, name )        \
+do {                                                                 \
+  nfs_argop4 *op = argarray + opcnt; opcnt++;                        \
+  op->argop = NFS4_OP_LOOKUP ;                                       \
+  op->nfs_argop4_u.oplookup.objname.utf8string_val = (char *)name ;  \
+  op->nfs_argop4_u.oplookup.objname.utf8string_len = strlen(name) ;  \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_LOOKUPP( argcompound )                                             \
-do {                                                                                             \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_LOOKUPP ; \
-  argcompound.argarray.argarray_len += 1 ;                                                       \
+#define COMPOUNDV4_ARG_ADD_OP_LOOKUPP(opcnt, argarray )              \
+do {                                                                 \
+  argarray[opcnt].argop = NFS4_OP_LOOKUPP ;                          \
+  opcnt++;                                                           \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_SETCLIENTID( argcompound, inclient, incallback )                                            \
@@ -151,17 +159,16 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                           \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_READDIR( argcompound, incookie, innbentry, inverifier, inbitmap  )                                                     \
-do {                                                                                                                                                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_READDIR ;                                                     \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.cookie       = incookie ;                              \
-  memcpy( argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.cookieverf, inverifier, NFS4_VERIFIER_SIZE ) ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.dircount     = innbentry*sizeof( entry4 ) ;            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.dircount     = 2048 ;                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.maxcount     = innbentry*sizeof( entry4 ) ;            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.maxcount     = 4096 ;                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.attr_request = inbitmap ;                              \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                           \
+#define COMPOUNDV4_ARG_ADD_OP_READDIR(opcnt, args, c4, inbitmap)              \
+do {                                                                          \
+  nfs_argop4 *op = args + opcnt; opcnt++;                                     \
+  op->argop = NFS4_OP_READDIR ;                                               \
+  op->nfs_argop4_u.opreaddir.cookie = c4;                                     \
+  memset(&op->nfs_argop4_u.opreaddir.cookieverf, 0, NFS4_VERIFIER_SIZE);      \
+  op->nfs_argop4_u.opreaddir.dircount = 2048 ;                                \
+  op->nfs_argop4_u.opreaddir.maxcount = 4096 ;                                \
+  op->nfs_argop4_u.opreaddir.attr_request.bitmap4_val = inbitmap ;            \
+  op->nfs_argop4_u.opreaddir.attr_request.bitmap4_len = ARRAY_SIZE(inbitmap); \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE( argcompound, inname, inattrs, inclientid, __owner_val, __owner_len )                                         \
@@ -259,32 +266,6 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opwrite.data.data_len = indatabufflen ;                     \
   argcompound.argarray.argarray_len += 1 ;                                                                                                      \
 } while ( 0 )
-
-#define COMPOUNDV4_EXECUTE( pcontext, argcompound, rescompound, rc )                      \
-do {                                                                                      \
-  int __renew_rc = 0 ;                                                                    \
-  rc = -1 ;                                                                               \
-  do {                                                                                    \
-  if( __renew_rc == 0 )                                                                   \
-      {                                                                                   \
-        if( FSAL_proxy_change_user( pcontext ) == NULL ) break  ;                         \
-        if( ( rc = clnt_call( pcontext->rpc_client, NFSPROC4_COMPOUND,                    \
-                              (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,        \
-                              (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,        \
-                              timeout ) ) == RPC_SUCCESS )                                \
-              break ;                                                                     \
-       }                                                                                  \
-  LogEvent(COMPONENT_FSAL, "Reconnecting to the remote server.." ) ;                      \
-  pthread_mutex_lock( &pcontext->lock ) ;                                                 \
-  __renew_rc = fsal_internal_ClientReconnect( pcontext ) ;                                \
-  pthread_mutex_unlock( &pcontext->lock ) ;                                               \
-  if (__renew_rc) {                                                                       \
-     LogEvent(COMPONENT_FSAL, "Cannot reconnect, will sleep for %d seconds",              \
-              pcontext->retry_sleeptime ) ;                                               \
-   sleep( pcontext->retry_sleeptime ) ;                                                   \
-  }                                                                                       \
-  } while( 1  ) ;                                                                         \
-}  while( 0 )
 
 #define COMPOUNDV4_EXECUTE_SIMPLE( pcontext, argcompound, rescompound )   \
    clnt_call( pcontext->rpc_client, NFSPROC4_COMPOUND,                    \
