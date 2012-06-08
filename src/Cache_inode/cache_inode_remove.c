@@ -329,6 +329,32 @@ cache_inode_remove_impl(cache_entry_t *entry,
                   "cache_inode_remove_cached_dirent: status=%d", *status);
 
      /* Update the attributes for the removed entry */
+     fsal_status
+	     = to_remove_entry->obj_handle->ops->getattrs(to_remove_entry->obj_handle,
+							      &to_remove_entry->obj_handle->attributes);
+     if(FSAL_IS_ERROR(fsal_status)) {
+	     if(fsal_status.major == ERR_FSAL_STALE)
+		     to_remove_entry->obj_handle->attributes.numlinks = 0;
+     }
+
+     /** @TODO this logic is a bit bogus in the new api.
+      * First, we have the attributes already in hdl->attributes but
+      * we copy them somewhere else just for giggles.  There are times when
+      * we should get a copy but we should do to that up here under the attribute
+      * lock and leave the poor fsal alone.  The logic of being a DIR and
+      * its link count always being > 0 does make sense but the getattrs
+      * method above will return ERR_FSAL_STALE if it is gone so hacking
+      * numlinks to 0 is a hack.  We should just take the word of getattrs
+      * and when it says the object is stale, it is stale as in dead, buried
+      * and it's 401k eaten up by the relatives.  For now, until the whole
+      * thing actually passes things like pynfs, leave this and fake the
+      * numlinks.  Eventually, get rid of the whole attributes pointer
+      * stuff, particularly the "do we support this attribute?" stuff
+      * entirely and replace it with a static "this attr is valid and
+      * no VFAT isn's suddenly going to sprout wings and fly". bits
+      * for those cases where someone is really interested.  It's like
+      * walking up to Grant's Tomb every day and asking who's inside...
+      */
 
      if ((to_remove_entry->type != DIRECTORY) &&
          (to_remove_entry->obj_handle->attributes.numlinks > 1)) {

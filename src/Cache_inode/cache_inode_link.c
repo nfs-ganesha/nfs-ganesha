@@ -89,6 +89,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      bool_t destattrlock = FALSE;
      bool_t destdirlock = FALSE;
      fsal_accessflags_t access_mask = 0;
+     fsal_attrib_list_t attrs;
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
@@ -154,11 +155,12 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      fsal_status = entry->obj_handle->ops->link(entry->obj_handle,
 						dest_dir->obj_handle,
 						name);
+     if( !FSAL_IS_ERROR(fsal_status))
+	  fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
+							 &attrs);
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
-               fsal_attrib_list_t attrs;
-
                attrs.asked_attributes = cache_inode_params.attrmask;
 	       fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
 							      &attrs);
