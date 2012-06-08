@@ -226,7 +226,10 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
             }
           return NFS_REQ_OK;
         }
-
+    }
+  else
+    {
+      pfsal_handle = p_current_item->proot_handle;
     }
   /* convert the fsal_handle to a file handle */
   switch (preq->rq_vers)
