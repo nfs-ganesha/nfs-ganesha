@@ -810,6 +810,48 @@ fsal_status_t fsal_internal_stat_name(fsal_op_context_t * p_context,
 }
 
 /**
+ * fsal_internal_unlink:
+ * Unlink a file/directory by name
+ *
+ * \param p_context (input):
+ *        Pointer to current context.  Used to get export root fd.
+ * \param p_dir_handle (input):
+ *          file handle of directory
+ * \param name (input):
+ *          name to unlink
+ *
+ * \return status of operation
+ */
+fsal_status_t fsal_internal_unlink(fsal_op_context_t * p_context,
+                                   fsal_handle_t * p_dir_handle,
+                                   fsal_name_t * p_stat_name,
+                                   struct stat *buf)
+{
+  int rc;
+  int dirfd = 0;
+  struct stat_name_arg statarg;
+
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+
+  if(!p_stat_name->name)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  statarg.mountdirfd = dirfd;
+  statarg.len = p_stat_name->len;
+  statarg.name = p_stat_name->name;
+  statarg.handle = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_dir_handle)->data.handle;
+  statarg.buf = buf;
+
+  rc = gpfs_ganesha(OPENHANDLE_UNLINK_BY_NAME, &statarg);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+}
+
+/**
  * fsal_internal_rename_fh:
  * Rename old file name to new name
  *

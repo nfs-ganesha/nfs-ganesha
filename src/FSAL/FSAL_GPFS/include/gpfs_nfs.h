@@ -96,6 +96,7 @@ struct flock
 #define OPENHANDLE_STAT_BY_NAME   130
 #define OPENHANDLE_GET_HANDLE     131
 #define OPENHANDLE_READLINK_BY_FH 132
+#define OPENHANDLE_UNLINK_BY_NAME 133
 
 int gpfs_ganesha(int op, void *oarg);
 

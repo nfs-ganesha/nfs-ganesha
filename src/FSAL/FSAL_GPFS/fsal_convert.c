@@ -422,10 +422,6 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 
     p_buffstat = &p_buffxstat->buffstat;
 
-    /* Initialize ACL regardless of whether ACL was asked or not.
-     * This is needed to make sure ACL attribute is initialized. */
-    p_fsalattr_out->acl = NULL;
-
     /* Fills the output struct */
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
         {
@@ -453,12 +449,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 #ifndef _USE_NFS4_ACL
             p_fsalattr_out->acl = NULL;
 #else
-            if((p_buffxstat->attr_valid & XATTR_ACL) == 0)
-              {
-                /* ACL is invalid. */
-                p_fsalattr_out->acl = NULL;
-              }
-            else
+            if(p_buffxstat->attr_valid & XATTR_ACL)
               {
                 /* ACL is valid, so try to convert fsal acl. */
                 if(gpfs_acl_2_fsal_acl(p_fsalattr_out,
