@@ -407,7 +407,115 @@ int nlm_process_parameters(struct svc_req        * preq,
 
  out_put:
 
-  cache_inode_put(*ppentry, pclient);
+  cache_inode_put(*ppentry);
+  *ppentry = NULL;
+  return rc;
+}
+
+int nlm_process_share_parms(struct svc_req        * preq,
+                            nlm4_share            * share,
+                            cache_entry_t        ** ppentry,
+                            fsal_op_context_t     * pcontext,
+                            care_t                  care,
+                            state_nsm_client_t   ** ppnsm_client,
+                            state_nlm_client_t   ** ppnlm_client,
+                            state_owner_t        ** ppowner)
+{
+  cache_inode_fsal_data_t fsal_data;
+  fsal_attrib_list_t      attr;
+  cache_inode_status_t    cache_status;
+  SVCXPRT                *ptr_svc = preq->rq_xprt;
+  int                     rc;
+
+  *ppnsm_client = NULL;
+  *ppnlm_client = NULL;
+  *ppowner      = NULL;
+
+  /* Convert file handle into a cache entry */
+  if(share->fh.n_len > MAX_NETOBJ_SZ ||
+     !nfs3_FhandleToFSAL((nfs_fh3 *) &share->fh, &fsal_data.fh_desc, pcontext))
+    {
+      /* handle is not valid */
+      return NLM4_STALE_FH;
+    }
+
+  /* Now get the cached inode attributes */
+  *ppentry = cache_inode_get(&fsal_data,
+                             &attr,
+                             pcontext,
+                             NULL,
+                             &cache_status);
+
+  if(*ppentry == NULL)
+    {
+      /* handle is not valid */
+      return NLM4_STALE_FH;
+    }
+
+  *ppnsm_client = get_nsm_client(care, ptr_svc, share->caller_name);
+
+  if(*ppnsm_client == NULL)
+    {
+      /* If NSM Client is not found, and we don't care (for unshare),
+       * just return GRANTED (the unshare must succeed, there can't be
+       * any shares).
+       */
+      if(care != CARE_NOT)
+        rc = NLM4_DENIED_NOLOCKS;
+      else
+        rc = NLM4_GRANTED;
+
+      goto out_put;
+    }
+
+  *ppnlm_client = get_nlm_client(care, ptr_svc, *ppnsm_client, share->caller_name);
+
+  if(*ppnlm_client == NULL)
+    {
+      /* If NLM Client is not found, and we don't care (such as unlock),
+       * just return GRANTED (the unlock must succeed, there can't be
+       * any locks).
+       */
+      dec_nsm_client_ref(*ppnsm_client);
+
+      if(care != CARE_NOT)
+        rc = NLM4_DENIED_NOLOCKS;
+      else
+        rc = NLM4_GRANTED;
+
+      goto out_put;
+    }
+
+  *ppowner = get_nlm_owner(care, *ppnlm_client, &share->oh, 0);
+
+  if(*ppowner == NULL)
+    {
+      LogDebug(COMPONENT_NLM,
+               "Could not get NLM Owner");
+      dec_nsm_client_ref(*ppnsm_client);
+      dec_nlm_client_ref(*ppnlm_client);
+      *ppnlm_client = NULL;
+
+      /* If owner is not found, and we don't care (such as unlock),
+       * just return GRANTED (the unlock must succeed, there can't be
+       * any locks).
+       */
+      if(care != CARE_NOT)
+        rc = NLM4_DENIED_NOLOCKS;
+      else
+        rc = NLM4_GRANTED;
+
+      goto out_put;
+    }
+
+  LogFullDebug(COMPONENT_NLM,
+               "Parameters Processed");
+
+  return -1;
+
+ out_put:
+
+  cache_inode_put(*ppentry);
   *ppentry = NULL;
   return rc;
 }
@@ -463,6 +571,7 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
     {
       case STATE_SUCCESS:        return NLM4_GRANTED;
       case STATE_LOCK_CONFLICT:  return NLM4_DENIED;
+      case STATE_STATE_CONFLICT: return NLM4_DENIED;
       case STATE_MALLOC_ERROR:   return NLM4_DENIED_NOLOCKS;
       case STATE_LOCK_BLOCKED:   return NLM4_BLOCKED;
       case STATE_GRACE_PERIOD:   return NLM4_DENIED_GRACE_PERIOD;

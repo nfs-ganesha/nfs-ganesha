@@ -355,26 +355,26 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
                      struct svc_req *preq,
                      nfs_res_t *pres);
 
-int nlm4_Share(nfs_arg_t            * parg     /* IN     */ ,
-               exportlist_t         * pexport  /* IN     */ ,
-               fsal_op_context_t    * pcontext /* IN     */ ,
-               cache_inode_client_t * pclient  /* INOUT  */ ,
-               struct svc_req       * preq     /* IN     */ ,
-               nfs_res_t            * pres     /* OUT    */ );
+int nlm4_Share(nfs_arg_t            * parg,
+               exportlist_t         * pexport,
+               fsal_op_context_t    * pcontext,
+               nfs_worker_data_t    * pworker,
+               struct svc_req       * preq,
+               nfs_res_t            * pres);
 
-int nlm4_Unshare(nfs_arg_t            * parg     /* IN     */ ,
-                 exportlist_t         * pexport  /* IN     */ ,
-                 fsal_op_context_t    * pcontext /* IN     */ ,
-                 cache_inode_client_t * pclient  /* INOUT  */ ,
-                 struct svc_req       * preq     /* IN     */ ,
-                 nfs_res_t            * pres     /* OUT    */ );
+int nlm4_Unshare(nfs_arg_t            * parg,
+                 exportlist_t         * pexport,
+                 fsal_op_context_t    * pcontext,
+                 nfs_worker_data_t    * pworker,
+                 struct svc_req       * preq,
+                 nfs_res_t            * pres);
 
-int nlm4_Free_All(nfs_arg_t * parg /* IN     */ ,
-                  exportlist_t * pexport /* IN     */ ,
-                  fsal_op_context_t * pcontext /* IN     */ ,
-                  cache_inode_client_t * pclient /* INOUT  */ ,
-                  struct svc_req *preq /* IN     */ ,
-                  nfs_res_t * pres /* OUT    */ );
+int nlm4_Free_All(nfs_arg_t *parg,
+                  exportlist_t *pexport,
+                  fsal_op_context_t *pcontext,
+                  nfs_worker_data_t *pworker,
+                  struct svc_req *preq,
+                  nfs_res_t *pres);
 
 /* @}
  * -- End of NLM protocol functions. --

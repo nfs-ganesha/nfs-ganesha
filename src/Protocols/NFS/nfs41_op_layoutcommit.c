@@ -221,11 +221,7 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
      if (arg_LAYOUTCOMMIT4.loca_time_modify.nt_timechanged ||
          arg_LAYOUTCOMMIT4.loca_last_write_offset.no_newoffset ||
          res.size_supplied) {
-          if (cache_inode_kill_entry(data->current_entry,
-                                     WT_LOCK,
-                                     data->ht,
-                                     data->pclient,
-                                     &cache_status)
+          if (cache_inode_kill_entry(data->current_entry))
               != CACHE_INODE_SUCCESS) {
                nfs_status = nfs4_Errno(cache_status);
                goto out;

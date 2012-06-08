@@ -7,28 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs41_op_sequence.c
- * \author  $Author: deniel $
  * \brief   Routines used for managing the NFS4_OP_SEQUENCE operation.
  *
- * nfs41_op_sequence.c : Routines used for managing the NFS4_OP_SEQUENCE operation.
+ * Routines used for managing the NFS4_OP_SEQUENCE operation.
  *
  *
  */
@@ -44,13 +44,14 @@
 
 /**
  *
- * nfs41_op_sequence: the NFS4_OP_SEQUENCE operation
+ * @brief the NFS4_OP_SEQUENCE operation
  *
- * This functions handles the NFS4_OP_SEQUENCE operation in NFSv4. This function can be called only from nfs4_Compound.
+ * This functions handles the NFS4_OP_SEQUENCE operation in
+ * NFSv4. This function can be called only from nfs4_Compound.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op   nfs4_op arguments
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp nfs4_op results
  *
  * @return NFS4_OK if successfull, other values show an error.
  *

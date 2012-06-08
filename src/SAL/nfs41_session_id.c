@@ -1,4 +1,4 @@
-/**
+/*
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
@@ -21,13 +21,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
- *
- * nfs41_session_id.c : The management of the session id cache.
- *
- * $Header$
- *
- * $Log$
- *
+ */
+
+/**
+ * @brief The management of the session id cache.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -39,15 +36,15 @@
 
 #include "sal_functions.h"
 
-size_t strnlen(const char *s, size_t maxlen);
+pool_t *nfs41_session_pool = NULL;
 
-pool_t *nfs41_session_pool;
+size_t strnlen(const char *s, size_t maxlen);
 
 hash_table_t *ht_session_id;
 uint64_t global_sequence = 0;
 pthread_mutex_t mutex_sequence = PTHREAD_MUTEX_INITIALIZER;
 
-int display_session_id(char * session_id, char * str)
+int display_session_id(char *session_id, char * str)
 {
   return DisplayOpaqueValue(session_id,
                             NFS4_SESSIONID_SIZE,
@@ -275,7 +272,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE], struct prealloc_pool * pool_session)
+int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 {
   hash_buffer_t buffkey, old_key, old_value;
   char          str[HASHTABLE_DISPLAY_STRLEN];
@@ -301,7 +298,7 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE], struct prealloc_pool 
       dec_client_id_ref(psession->pclientid_record);
 
       /* Free the memory for the session */
-      ReleaseToPool(psession, pool_session);
+      pool_free(nfs41_session_pool, psession);
 
       return 1;
     }

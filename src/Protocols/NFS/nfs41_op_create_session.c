@@ -43,7 +43,6 @@
 
 #include <pthread.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
@@ -52,15 +51,15 @@
 
 /**
  *
- * nfs4_op_create_session:  The NFS4_OP_CREATE_SESSION operation.
+ * @brief The NFS4_OP_CREATE_SESSION operation.
  *
  * The NFS4_OP_CREATE_SESSION operation.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op    nfs4_op arguments
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  nfs4_op results
  *
- * @return NFS4_OK if successfull, other values show an error. 
+ * @return NFS4_OK if successfull, other values show an error.
  *
  * @see nfs4_Compound
  *
@@ -73,9 +72,8 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   nfs_client_id_t     * punconf = NULL;
   nfs_client_id_t     * pfound  = NULL;
   nfs_client_record_t * pclient_record;
-  nfs41_session_t     * pnfs41_session = NULL;
+  nfs41_session_t     * nfs41_session = NULL;
   clientid4             clientid = 0;
-  nfs_worker_data_t   * pworker = NULL;
   sockaddr_t            client_addr;
   char                  str_client_addr[SOCK_NAME_MAX];
   char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
@@ -84,8 +82,6 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   if(isDebug(COMPONENT_SESSIONS))
     component = COMPONENT_SESSIONS;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
 #define arg_CREATE_SESSION4 op->nfs_argop4_u.opcreate_session
 #define res_CREATE_SESSION4 resp->nfs_resop4_u.opcreate_session
@@ -283,9 +279,9 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
     }
 
   /* Record session related information at the right place */
-  GetFromPool(pnfs41_session, &data->pclient->pool_session, nfs41_session_t);
+  nfs41_session = pool_alloc(nfs41_session_pool, NULL);
 
-  if(pnfs41_session == NULL)
+  if(nfs41_session == NULL)
     {
       LogDebug(component,
                "Could not allocate memory for a session");
@@ -297,33 +293,34 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       goto out;
     }
 
-  memset((char *)pnfs41_session, 0, sizeof(nfs41_session_t));
-
-  pnfs41_session->clientid           = clientid;
-  pnfs41_session->pclientid_record   = pfound;
-  pnfs41_session->sequence           = arg_CREATE_SESSION4.csa_sequence;
-  pnfs41_session->session_flags      = CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
-  pnfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs;
-  pnfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs;
+  nfs41_session->clientid           = clientid;
+  nfs41_session->pclientid_record   = pfound;
+  nfs41_session->sequence           = arg_CREATE_SESSION4.csa_sequence;
+  nfs41_session->session_flags      = CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
+  nfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs;
+  nfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs;
 
   /* Take reference to clientid record */
   inc_client_id_ref(pfound);
 
   /* Set ca_maxrequests */
-  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
-  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+  nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+  nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
 
-  nfs41_Build_sessionid(&clientid, pnfs41_session->session_id);
+  nfs41_Build_sessionid(&clientid, nfs41_session->session_id);
 
-  res_CREATE_SESSION4ok.csr_sequence = pnfs41_session->sequence;
+  res_CREATE_SESSION4ok.csr_sequence = nfs41_session->sequence;
   res_CREATE_SESSION4ok.csr_flags    = CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
 
-  /* return the input for wanting of something better (will change in later versions) */
-  res_CREATE_SESSION4ok.csr_fore_chan_attrs = pnfs41_session->fore_channel_attrs;
-  res_CREATE_SESSION4ok.csr_back_chan_attrs = pnfs41_session->back_channel_attrs;
+  /* return the input for wanting of something better (will change in
+     later versions) */
+  res_CREATE_SESSION4ok.csr_fore_chan_attrs
+       = nfs41_session->fore_channel_attrs;
+  res_CREATE_SESSION4ok.csr_back_chan_attrs
+       = nfs41_session->back_channel_attrs;
 
   memcpy(res_CREATE_SESSION4ok.csr_sessionid,
-         pnfs41_session->session_id,
+         nfs41_session->session_id,
          NFS4_SESSIONID_SIZE);
 
   /* Create Session replay cache */
@@ -332,7 +329,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   LogDebug(component, "CREATE_SESSION replay=%p", data->pcached_res);
 
-  if(!nfs41_Session_Set(pnfs41_session->session_id, pnfs41_session))
+  if(!nfs41_Session_Set(nfs41_session->session_id, nfs41_session))
     {
       LogDebug(component,
                "Could not insert session into table");
@@ -342,7 +339,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       dec_client_id_ref(pfound);
 
       /* Free the memory for the session */
-      ReleaseToPool(pnfs41_session, &data->pclient->pool_session);
+      pool_free(nfs41_session_pool, nfs41_session);
 
       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;     /* Maybe a more precise status would be better */
 
@@ -445,8 +442,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
             res_CREATE_SESSION4.csr_status = NFS4ERR_RESOURCE;
 
           /* Need to destroy the session */
-          if(!nfs41_Session_Del(pnfs41_session->session_id,
-                                &data->pclient->pool_session))
+          if(!nfs41_Session_Del(nfs41_session->session_id))
             LogDebug(component,
                      "Oops nfs41_Session_Del failed");
 

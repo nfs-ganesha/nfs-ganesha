@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    state_lock.c
- * \author  $Author: deniel $
- * \date    $Date$
- * \version $Revision$
  * \brief   This file contains functions used in lock management.
  *
- * state_lock.c : This file contains functions used in lock management.
+ * This file contains functions used in lock management.
  *
  *
  */
@@ -76,7 +74,12 @@
  * release on the data structure ensure that it is freed.
  */
 
-// state_lock.c:81
+/* The following constant defines the number of errors we will accept
+ * before giving up in state recovery routines. These routines need to
+ * terminate at some point.
+ */
+#define STATE_ERR_MAX 100
+
 #ifdef _DEBUG_MEMLEAKS
 static struct glist_head state_all_locks;
 pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -133,6 +136,10 @@ state_status_t state_lock_init(state_status_t * pstatus)
     }
 #endif
 
+#ifdef _DEBUG_MEMLEAKS
+  init_glist(&state_all_locks);
+#endif
+ 
 #ifdef _USE_BLOCKING_LOCKS
   init_glist(&state_blocked_locks);
   init_glist(&state_notified_locks);
@@ -2684,6 +2691,8 @@ state_status_t state_cancel(cache_entry_t        * pentry,
  *
  * state_nlm_notify: Handle an SM_NOTIFY from NLM
  *
+ * Also used to handle NLM_FREE_ALL
+ *
  */
 state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
@@ -2698,6 +2707,7 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
   struct glist_head    newlocks;
   fsal_op_context_t    fsal_context;
   fsal_status_t        fsal_status;
+  state_nlm_share_t  * found_share;
 
   if(isFullDebug(COMPONENT_STATE))
     {
@@ -2711,7 +2721,10 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
 
   init_glist(&newlocks);
 
-  while(errcnt < 100)
+  /* First remove byte range locks.
+   * Only accept so many errors before giving up.
+   */
+  while(errcnt < STATE_ERR_MAX)
     {
       P(pnsmclient->ssc_mutex);
 
@@ -2809,6 +2822,81 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
       cache_inode_lru_unref(pentry, 0);
     }
 
+  /* Now remove NLM_SHARE reservations.
+   * Only accept so many errors before giving up.
+   */
+  while(errcnt < STATE_ERR_MAX)
+    {
+      P(pnsmclient->ssc_mutex);
+
+      /* We just need to find any file this client has locks on.
+       * We pick the first lock the client holds, and use it's file.
+       */
+      found_share = glist_first_entry(&pnsmclient->ssc_share_list,
+                                      state_nlm_share_t,
+                                      sns_share_per_client);
+
+      /* If we don't find any entries, then we are done. */
+      if(found_share == NULL)
+        {
+          V(pnsmclient->ssc_mutex);
+          break;
+        }
+
+      /* Extract the cache inode entry from the share */
+      pentry  = found_share->sns_pentry;
+      powner  = found_share->sns_powner;
+      pexport = found_share->sns_pexport;
+
+      /* get a reference to the owner */
+      /** @todo FSF: actually do this when we convert to atomic and don't need lock here */
+#ifdef FSF
+      inc_state_owner_ref_locked(powner);
+#endif
+
+      V(pnsmclient->ssc_mutex);
+
+      /* construct the fsal context based on the export and root credential */
+      fsal_status = FSAL_GetClientContext(&fsal_context,
+                                          &pexport->FS_export_context,
+                                          0,
+                                          0,
+                                          NULL,
+                                          0);
+      if(FSAL_IS_ERROR(fsal_status))
+        {
+#ifdef FSF
+          dec_state_owner_ref_locked(powner);
+#endif
+
+          /* log error here , and continue? */
+          LogDebug(COMPONENT_STATE,
+                   "FSAL_GetClientConext failed");
+          continue;
+        }
+
+      /* Remove all shares held by this NSM Client and Owner on the file */
+      if(state_nlm_unshare(pentry,
+                           &fsal_context,
+                           OPEN4_SHARE_ACCESS_NONE,
+                           OPEN4_SHARE_DENY_NONE,
+                           powner,
+                           pstatus) != STATE_SUCCESS)
+        {
+          /* Increment the error count and try the next share, with any luck
+           * the memory pressure which is causing the problem will resolve itself.
+           */
+          LogFullDebug(COMPONENT_STATE,
+                       "state_nlm_unshare returned %s",
+                       state_err_str(*pstatus));
+          errcnt++;
+        }
+
+#ifdef FSF
+      dec_state_owner_ref_locked(powner);
+#endif
+    }
+
   /* Put locks from current client incarnation onto end of list */
   P(pnsmclient->ssc_mutex);
   glist_add_list_tail(&pnsmclient->ssc_lock_list, &newlocks);
@@ -2835,7 +2923,8 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
   cache_entry_t      * pentry;
   int                  errcnt = 0;
 
-  while(errcnt < 100)
+  /* Only accept so many errors before giving up. */
+  while(errcnt < STATE_ERR_MAX)
     {
       P(powner->so_mutex);
 

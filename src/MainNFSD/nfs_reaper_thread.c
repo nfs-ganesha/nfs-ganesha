@@ -129,17 +129,6 @@ void *reaper_thread(void *UnusedArg)
 
   SetNameFunction("reaper_thr");
 
-#ifndef _NO_BUDDY_SYSTEM
-  if(BuddyInit(&nfs_param.buddy_param_admin) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_CLIENTID,
-               "Memory manager could not be initialized for reaper thread");
-    }
-  LogInfo(COMPONENT_CLIENTID,
-          "Memory manager successfully initialized for reaper thread");
-#endif
-
   if(nfs_param.nfsv4_param.lease_lifetime < (2 * REAPER_DELAY))
     reaper_delay = nfs_param.nfsv4_param.lease_lifetime / 2;
 

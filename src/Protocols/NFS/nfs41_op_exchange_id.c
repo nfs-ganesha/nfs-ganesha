@@ -7,30 +7,29 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs41_op_exchange_id.c
- * \author  $Author: deniel $
- * \date    $Date: 2009/08/19 16:02:52 $
  * \brief   Routines used for managing the NFS4_OP_EXCHANGE_ID operation.
  *
- * nfs4_op_exchange_id.c :  Routines used for managing the EXCHANGE_ID operation.
- * 
+ * Routines used for managing the EXCHANGE_ID operation.
+ *
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -43,7 +42,6 @@
 
 #include <pthread.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
@@ -357,8 +355,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   punconf = create_client_id(0,
                              pclient_record,
                              &client_addr,
-                             &data->credential,
-                             data->pclient);
+                             &data->credential);
 
   if(punconf == NULL)
     {
@@ -428,7 +425,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4_ok.eir_state_protect.spr_how = SP4_NONE;
 
   len  = strlen(punconf->cid_server_owner);
-  temp = Mem_Alloc(len);
+  temp = gsh_malloc(len);
   if(temp == NULL)
     {
       LogDebug(component,
@@ -444,7 +441,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4_ok.eir_server_owner.so_minor_id = 0;
 
   len  = strlen(punconf->cid_server_scope);
-  temp = Mem_Alloc(len);
+  temp = gsh_malloc(len);
   if(temp == NULL)
     {
       LogDebug(component,
@@ -502,12 +499,12 @@ void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp)
 {
   if(resp->eir_status == NFS4_OK)
     {
-        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope
-                 .eir_server_scope_val);
-        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id
-                 .so_major_id_val);
-        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id
-                 .eir_server_impl_id_val);
+      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val != NULL)
+        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val);
+      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.so_major_id_val != NULL)
+        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.so_major_id_val);
+      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.eir_server_impl_id_val != NULL)
+        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.eir_server_impl_id_val);
     }
   return;
 }                               /* nfs41_op_exchange_id_Free */

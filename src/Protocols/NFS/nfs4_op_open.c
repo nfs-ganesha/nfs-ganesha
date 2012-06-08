@@ -1182,7 +1182,9 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
         candidate_data.share.share_deny_prev   = 0;
 
         /* Quick exit if there is any share conflict */
-        if(state_share_check_conflict(pentry_newfile, &candidate_data,
+        if(state_share_check_conflict(pentry_newfile,
+                                      candidate_data.share.share_access,
+                                      candidate_data.share.share_deny,
                                       &state_status) != STATE_SUCCESS)
           {
             *cause2 = " (share conflict)";

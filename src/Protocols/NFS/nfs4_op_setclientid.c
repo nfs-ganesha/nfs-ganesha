@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs4_op_setclientid.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:52 $
- * \version $Revision: 1.9 $
  * \brief   Routines used for managing the NFS4_OP_SETCLIENTID operation.
  *
- * nfs4_op_setclientid.c :  Routines used for managing the NFS4_OP_SETCLIENTID operation.
+ * Routines used for managing the NFS4_OP_SETCLIENTID operation.
  *
  *
  */
@@ -44,7 +42,6 @@
 
 #include <pthread.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
@@ -52,13 +49,13 @@
 
 /**
  *
- * nfs4_op_setclientid:  The NFS4_OP_SETCLIENTID operation.
+ * @brief The NFS4_OP_SETCLIENTID operation.
  *
  * Gets the currentFH for the current compound requests.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op   nfs4_op arguments
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp nfs4_op results
  *
  * @return NFS4_OK if successfull, other values show an error.
  *
@@ -172,8 +169,10 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
             }
 
           res_SETCLIENTID4.status = NFS4ERR_CLID_INUSE;
-          res_SETCLIENTID4_INUSE.r_netid = (char *) netid_nc_table[pconf->cid_cb.cid_addr.nc].netid;
-          res_SETCLIENTID4_INUSE.r_addr  = Str_Dup(pconf->cid_cb.cid_client_r_addr);
+          res_SETCLIENTID4_INUSE.r_netid
+               = (char *) netid_nc_table[pconf->cid_cb.cid_addr.nc].netid;
+          res_SETCLIENTID4_INUSE.r_addr
+               = gsh_strdup(pconf->cid_cb.cid_client_r_addr);
 
           /* Release our reference to the confirmed clientid. */
           dec_client_id_ref(pconf);
@@ -287,8 +286,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
   punconf = create_client_id(clientid,
                              pclient_record,
                              &client_addr,
-                             &data->credential,
-                             data->pclient);
+                             &data->credential);
 
   if(punconf == NULL)
     {
@@ -374,7 +372,7 @@ void nfs4_op_setclientid_Free(SETCLIENTID4res * resp)
   if(resp->status == NFS4ERR_CLID_INUSE)
     {
       if(resp->SETCLIENTID4res_u.client_using.r_addr != NULL)
-        Mem_Free(resp->SETCLIENTID4res_u.client_using.r_addr);
+        gsh_free(resp->SETCLIENTID4res_u.client_using.r_addr);
     }
   return;
 }                               /* nfs4_op_setclientid_Free */

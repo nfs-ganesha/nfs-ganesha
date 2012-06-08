@@ -203,7 +203,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
               pstate->state_data.layout.state_return_on_close)
             {
               nfs4_return_one_state(data->current_entry,
-                                    data->pclient,
                                     data->pcontext,
                                     TRUE,
                                     FALSE,

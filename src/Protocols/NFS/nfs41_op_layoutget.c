@@ -261,7 +261,6 @@ out:
 
           if ((layout_state) && (layout_state->state_seqid == 0)) {
                state_del(layout_state,
-                         data->pclient,
                          &state_status);
                layout_state = NULL;
           }
@@ -390,7 +389,6 @@ acquire_layout_state(compound_data_t *data,
                };
                if ((nfs_status
                     = nfs4_return_one_state(data->current_entry,
-                                            data->pclient,
                                             data->pcontext,
                                             TRUE,
                                             FALSE,
@@ -419,7 +417,6 @@ acquire_layout_state(compound_data_t *data,
                         STATE_TYPE_LAYOUT,
                         &layout_data,
                         clientid_owner,
-                        data->pclient,
                         data->pcontext,
                         layout_state,
                         &state_status) != STATE_SUCCESS) {

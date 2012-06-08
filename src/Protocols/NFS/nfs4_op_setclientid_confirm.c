@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs4_op_setclientid_confirm.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:52 $
- * \version $Revision: 1.8 $
- * \brief   Routines used for managing the NFS4_OP_SETCLIENTID_CONFIRM operation.
+ * \file  nfs4_op_setclientid_confirm.c
+ * \brief Routines used for managing the NFS4_OP_SETCLIENTID_CONFIRM operation.
  *
- * nfs4_op_setclientid_confirm.c :  Routines used for managing the NFS4_OP_SETCLIENTID_CONFIRM operation.
+ * Routines used for managing the NFS4_OP_SETCLIENTID_CONFIRM operation.
  *
  *
  */
@@ -44,7 +42,6 @@
 
 #include <pthread.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -52,13 +49,13 @@
 
 /**
  *
- * nfs4_op_setclientid_confirm:  The NFS4_OP_SETCLIENTID_CONFIRM operation.
+ * @brief The NFS4_OP_SETCLIENTID_CONFIRM operation.
  *
  * The NFS4_OP_SETCLIENTID_CONFIRM operation.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op    nfs4_op arguments
+ * @param[in,out] data  The compound request's data
+ * @param[out]    resp  nfs4_op results
  *
  * @return NFS4_OK if successfull, other values show an error.
  *
@@ -74,14 +71,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
   nfs_client_id_t     * punconf = NULL;
   nfs_client_record_t * pclient_record;
   clientid4             clientid = 0;
-  nfs_worker_data_t   * pworker = NULL;
   sockaddr_t            client_addr;
   char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
   char                  str_client_addr[SOCK_NAME_MAX];
   char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
   int                   rc;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
 #define arg_SETCLIENTID_CONFIRM4 op->nfs_argop4_u.opsetclientid_confirm
 #define res_SETCLIENTID_CONFIRM4 resp->nfs_resop4_u.opsetclientid_confirm

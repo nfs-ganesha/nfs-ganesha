@@ -146,7 +146,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 #ifdef _PNFS_DS
       /* As usual, protect existing refcounts */
       if (data->current_entry) {
-          cache_inode_put(data->current_entry, data->pclient);
+          cache_inode_put(data->current_entry);
           data->current_entry = NULL;
           data->current_filetype = UNASSIGNED;
       }
@@ -175,6 +175,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             {
               return res_PUTFH4.status;
             }
+          /* Extract the filetype */
           data->current_filetype = cache_inode_fsal_type_convert(attr.type);
         }
     }

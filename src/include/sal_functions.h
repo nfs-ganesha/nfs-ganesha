@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    sal_functions.h
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/24 11:43:15 $
- * \version $Revision: 1.95 $
  * \brief   Management of the state abstraction layer.
  *
- * sal_functions.h : Management of the state abstraction layer
+ * Management of the state abstraction layer
  *
  *
  */
@@ -41,6 +39,8 @@
 #include "sal_data.h"
 #include "nfs_exports.h"
 #include "nfs_core.h"
+
+extern pool_t *nfs41_session_pool;
 
 /******************************************************************************
  *
@@ -66,12 +66,13 @@ int Hash_dec_state_owner_ref(hash_buffer_t *buffval);
 void inc_state_owner_ref_locked(state_owner_t *powner);
 void inc_state_owner_ref(state_owner_t *powner);
 
-void dec_state_owner_ref_locked(state_owner_t *powner);
-void dec_state_owner_ref(state_owner_t *powner);
+void dec_state_owner_ref_locked(state_owner_t        * powner);
 
-void state_wipe_file(cache_entry_t *pentry);
-int DisplayOpaqueValue(char *value, int len, char *str);
+void dec_state_owner_ref(state_owner_t        * powner);
 
+int DisplayOpaqueValue(char * value, int len, char * str);
+
+void state_wipe_file(cache_entry_t        * pentry);
 
 /******************************************************************************
  *
@@ -176,8 +177,7 @@ int nfs_client_id_get_confirmed(clientid4          clientid,
 nfs_client_id_t * create_client_id(clientid4              clientid,
                                    nfs_client_record_t  * pclient_record,
                                    sockaddr_t           * pclient_addr,
-                                   nfs_client_cred_t    * pcredential,
-                                   cache_inode_client_t * pclient);
+                                   nfs_client_cred_t    * pcredential);
 
 int nfs_client_id_insert(nfs_client_id_t * pclientid);
 
@@ -253,7 +253,7 @@ int nfs41_Session_Set(char              sessionid[NFS4_SESSIONID_SIZE],
 int nfs41_Session_Get_Pointer(char               sessionid[NFS4_SESSIONID_SIZE],
                               nfs41_session_t ** psession_data);
 
-int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE], struct prealloc_pool * pool_session);
+int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE]);
 void nfs41_Build_sessionid(clientid4 * pclientid, char * sessionid);
 void nfs41_Session_PrintAll(void);
 int display_session(nfs41_session_t * psession, char * str);
@@ -571,8 +571,7 @@ state_status_t state_lookup_layout_state(cache_entry_t * pentry,
                                          state_t      ** pstate);
 #endif /*  _PNFS_MDS */
 
-void state_nfs4_state_wipe(cache_entry_t        * pentry,
-                           cache_inode_client_t * pclient);
+void state_nfs4_state_wipe(cache_entry_t        * pentry);
 
 void release_lockstate(state_owner_t * plock_owner);
 void release_openstate(state_owner_t * popen_owner);
@@ -618,9 +617,31 @@ state_status_t state_share_check_prev(state_t      * pstate,
                                     state_data_t * pstate_data);
 
 state_status_t state_share_check_conflict(cache_entry_t  * pentry,
-                                          state_data_t   * pstate_data,
+                                          int              share_acccess,
+                                          int              share_deny,
                                           state_status_t * pstatus);
 
+state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
+                                              int              share_access,
+                                              state_status_t * pstatus);
+
+void state_share_anonymous_io_done(cache_entry_t  * pentry,
+                                   int              share_access);
+
+state_status_t state_nlm_share(cache_entry_t        * pentry,
+                               fsal_op_context_t    * pcontext,
+                               exportlist_t         * pexport,
+                               int                    share_access,
+                               int                    share_deny,
+                               state_owner_t        * powner,
+                               state_status_t       * pstatus);
+
+state_status_t state_nlm_unshare(cache_entry_t        * pentry,
+                                 fsal_op_context_t    * pcontext,
+                                 int                    share_access,
+                                 int                    share_deny,
+                                 state_owner_t        * powner,
+                                 state_status_t       * pstatus);
 
 /******************************************************************************
  *

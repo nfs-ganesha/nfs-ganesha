@@ -66,6 +66,15 @@ int nlm_process_parameters(struct svc_req        * preq,
                            state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data);
 
+int nlm_process_share_parms(struct svc_req        * preq,
+                            nlm4_share            * share,
+                            cache_entry_t        ** ppentry,
+                            fsal_op_context_t     * pcontext,
+                            care_t                  care,
+                            state_nsm_client_t   ** ppnsm_client,
+                            state_nlm_client_t   ** ppnlm_client,
+                            state_owner_t        ** ppowner);
+
 void nlm_process_conflict(nlm4_holder          * nlm_holder,
                           state_owner_t        * holder,
                           fsal_lock_param_t    * conflict);
