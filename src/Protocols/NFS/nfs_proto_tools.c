@@ -836,12 +836,12 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   fattr4_unique_handles unique_handles;
   fattr4_archive archive;
   fattr4_cansettime cansettime;
-  fattr4_case_insensitive case_insensitive;
-  fattr4_case_preserving case_preserving;
-  fattr4_chown_restricted chown_restricted;
+  fattr4_case_insensitive ci;
+  fattr4_case_preserving cp;
+  fattr4_chown_restricted rchown;
   fattr4_hidden hidden;
   fattr4_mode file_mode;
-  fattr4_no_trunc no_trunc;
+  fattr4_no_trunc ntr;
   fattr4_numlinks file_numlinks;
   fattr4_rawdev rawdev;
   fattr4_system system;
@@ -1224,16 +1224,16 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_CASE_INSENSITIVE:
-	  case_insensitive = htonl(export->ops->fs_supports(export, case_insensitive));
-          memcpy((char *)(attrvalsBuffer + LastOffset), &case_insensitive,
+	  ci = htonl(export->ops->fs_supports(export, case_insensitive));
+          memcpy((char *)(attrvalsBuffer + LastOffset), &ci,
                  sizeof(fattr4_case_insensitive));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
 
         case FATTR4_CASE_PRESERVING:
-          case_preserving = htonl(export->ops->fs_supports(export, case_preserving));
-          memcpy((char *)(attrvalsBuffer + LastOffset), &case_preserving,
+          cp = htonl(export->ops->fs_supports(export, case_preserving));
+          memcpy((char *)(attrvalsBuffer + LastOffset), &cp,
                  sizeof(fattr4_case_preserving));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
@@ -1241,8 +1241,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
         case FATTR4_CHOWN_RESTRICTED:
           /* chown is restricted to root */
-	  chown_restricted = htonl(export->ops->fs_supports(export, chown_restricted));
-          memcpy((char *)(attrvalsBuffer + LastOffset), &chown_restricted,
+	  rchown = htonl(export->ops->fs_supports(export, chown_restricted));
+          memcpy((char *)(attrvalsBuffer + LastOffset), &rchown,
                  sizeof(fattr4_chown_restricted));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
@@ -1451,8 +1451,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
         case FATTR4_NO_TRUNC:
           /* File's names are not truncated, an error is returned is name is too long */
-	  no_trunc = htonl(export->ops->fs_supports(export, no_trunc));
-          memcpy((char *)(attrvalsBuffer + LastOffset), &no_trunc,
+	  ntr = htonl(export->ops->fs_supports(export, no_trunc));
+          memcpy((char *)(attrvalsBuffer + LastOffset), &ntr,
                  sizeof(fattr4_no_trunc));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
