@@ -523,7 +523,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	char fs_spec[MAXPATHLEN];
 	char type[MAXNAMLEN];
 	int retval = 0;
-	fsal_errors_t fsal_error;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
 	*export = NULL; /* poison it first */
 	if(export_path == NULL

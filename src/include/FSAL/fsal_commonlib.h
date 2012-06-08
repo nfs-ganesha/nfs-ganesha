@@ -32,3 +32,5 @@ int fsal_export_put(struct fsal_export *exp_hdl);
 
 void fsal_handle_get(struct fsal_obj_handle *obj_hdl);
 int fsal_handle_put(struct fsal_obj_handle *obj_hdl);
+int fsal_obj_handle_init(struct fsal_obj_handle *, struct fsal_obj_ops *,
+                         struct fsal_export *, object_file_type_t);
