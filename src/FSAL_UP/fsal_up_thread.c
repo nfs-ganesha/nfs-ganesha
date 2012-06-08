@@ -207,7 +207,7 @@ fsal_status_t process_event(fsal_up_event_t *event, fsal_up_event_functions_t *e
       break;
     case FSAL_UP_EVENT_INVALIDATE:
       LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process INVALIDATE event");
-      status = event_func->fsal_up_create(&event->event_data);
+      status = event_func->fsal_up_invalidate(&event->event_data);
       break;
     default:
       LogDebug(COMPONENT_FSAL_UP, "Unknown FSAL UP event type found: %d",
