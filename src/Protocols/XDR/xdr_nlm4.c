@@ -195,11 +195,11 @@ bool_t xdr_nlm4_shareres(XDR * xdrs, nlm4_shareres * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_notify(XDR * xdrs, nlm4_notify * objp)
+bool_t xdr_nlm4_free_allargs(XDR * xdrs, nlm4_free_allargs * objp)
 {
   if(!xdr_string(xdrs, &objp->name, LM_MAXNAMELEN))
     return FALSE;
-  if(!xdr_int64_t(xdrs, &objp->state))
+  if(!xdr_uint32_t(xdrs, &objp->state))
     return FALSE;
   return TRUE;
 }

@@ -110,8 +110,10 @@ typedef union nfs_arg__
   nlm4_testargs arg_nlm4_test;
   nlm4_lockargs arg_nlm4_lock;
   nlm4_cancargs arg_nlm4_cancel;
+  nlm4_shareargs arg_nlm4_share;
   nlm4_unlockargs arg_nlm4_unlock;
   nlm4_sm_notifyargs arg_nlm4_sm_notify;
+  nlm4_free_allargs arg_nlm4_free_allargs;
   nlm4_res arg_nlm4_res;
 
   /* Rquota arguments */
@@ -173,8 +175,9 @@ typedef union nfs_res__
   mountlist res_dump;
 
   /* nlm4 returned values */
-  nlm4_testres res_nlm4test;
-  nlm4_res res_nlm4;
+  nlm4_testres  res_nlm4test;
+  nlm4_res      res_nlm4;
+  nlm4_shareres res_nlm4share;
 
   /* Ext Rquota arguments */
   getquota_rslt res_rquota_getquota;
@@ -351,6 +354,27 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
                      nfs_worker_data_t *pworker,
                      struct svc_req *preq,
                      nfs_res_t *pres);
+
+int nlm4_Share(nfs_arg_t            * parg     /* IN     */ ,
+               exportlist_t         * pexport  /* IN     */ ,
+               fsal_op_context_t    * pcontext /* IN     */ ,
+               cache_inode_client_t * pclient  /* INOUT  */ ,
+               struct svc_req       * preq     /* IN     */ ,
+               nfs_res_t            * pres     /* OUT    */ );
+
+int nlm4_Unshare(nfs_arg_t            * parg     /* IN     */ ,
+                 exportlist_t         * pexport  /* IN     */ ,
+                 fsal_op_context_t    * pcontext /* IN     */ ,
+                 cache_inode_client_t * pclient  /* INOUT  */ ,
+                 struct svc_req       * preq     /* IN     */ ,
+                 nfs_res_t            * pres     /* OUT    */ );
+
+int nlm4_Free_All(nfs_arg_t * parg /* IN     */ ,
+                  exportlist_t * pexport /* IN     */ ,
+                  fsal_op_context_t * pcontext /* IN     */ ,
+                  cache_inode_client_t * pclient /* INOUT  */ ,
+                  struct svc_req *preq /* IN     */ ,
+                  nfs_res_t * pres /* OUT    */ );
 
 /* @}
  * -- End of NLM protocol functions. --
@@ -1210,10 +1234,14 @@ void mnt_UmntAll_Free(nfs_res_t * pres);
 void nlm_Null_Free(nfs_res_t * pres);
 void nlm4_Test_Free(nfs_res_t * pres);
 void nlm4_Lock_Free(nfs_res_t * pres);
+void nlm4_NM_Lock_Free(nfs_res_t * pres);
+void nlm4_Share_Free(nfs_res_t * pres);
+void nlm4_Unshare_Free(nfs_res_t * pres);
 void nlm4_Cancel_Free(nfs_res_t * pres);
 void nlm4_Unlock_Free(nfs_res_t * pres);
 void nlm4_Sm_Notify_Free(nfs_res_t * pres);
 void nlm4_Granted_Res_Free(nfs_res_t * pres);
+void nlm4_Free_All_Free(nfs_res_t * pres);
 
 void rquota_Null_Free(nfs_res_t * pres);
 void rquota_getquota_Free(nfs_res_t * pres);

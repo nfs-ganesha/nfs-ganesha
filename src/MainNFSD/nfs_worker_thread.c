@@ -307,18 +307,27 @@ const nfs_function_desc_t nlm4_func_desc[] = {
           (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
           "nlm4_Granted_res", NOTHING_SPECIAL},
   [NLMPROC4_SHARE] {
-                    nlm4_Unsupported, nlm4_Unsupported_Free,
-                    (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
+                    nlm4_Share, nlm4_Share_Free,
+                    (xdrproc_t) xdr_nlm4_shareargs, (xdrproc_t) xdr_nlm4_shareres,
                     "nlm4_Share", NEEDS_CRED},
-  [NLMPROC4_UNSHARE] = {nlm4_Unsupported, nlm4_Unsupported_Free,
-                        (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-                        "nlm4_Unshare", NEEDS_CRED},
-  [NLMPROC4_NM_LOCK] = {nlm4_Unsupported, nlm4_Unsupported_Free,
-                        (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-                        "nlm4_Nm_lock", NEEDS_CRED},
-  [NLMPROC4_FREE_ALL] = {nlm4_Unsupported, nlm4_Unsupported_Free,
-                         (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-                         "nlm4_Free_all", NOTHING_SPECIAL},
+  [NLMPROC4_UNSHARE] = {
+                        nlm4_Unshare, nlm4_Unshare_Free,
+                        (xdrproc_t) xdr_nlm4_shareargs, (xdrproc_t) xdr_nlm4_shareres,
+                        "nlm4_Unshare",
+                        NEEDS_CRED},
+  [NLMPROC4_NM_LOCK] = {
+                        /* NLM_NM_LOCK uses the same handling as NLM_LOCK except for
+                         * monitoring, nlm4_Lock will make that determination.
+                         */
+                        nlm4_Lock, nlm4_Lock_Free,
+                        (xdrproc_t) xdr_nlm4_lockargs, (xdrproc_t) xdr_nlm4_res,
+                        "nlm4_Nm_lock",
+                        NEEDS_CRED},
+  [NLMPROC4_FREE_ALL] = {
+                         nlm4_Free_All, nlm4_Free_All_Free,
+                         (xdrproc_t) xdr_nlm4_free_allargs, (xdrproc_t) xdr_void,
+                         "nlm4_Free_all",
+                         NOTHING_SPECIAL},
 };
 #endif                          /* _USE_NLM */
 
@@ -1017,7 +1026,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
           case NLMPROC4_SHARE:
           case NLMPROC4_UNSHARE:
-            /* Not supported... */
+            pfh3 = &parg_nfs->arg_nlm4_share.share.fh;
             break;
         }
       if(pfh3 != NULL)
