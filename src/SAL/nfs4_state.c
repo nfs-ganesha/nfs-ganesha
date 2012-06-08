@@ -381,36 +381,17 @@ state_status_t state_del(state_t              * pstate,
 
 void state_nfs4_state_wipe(cache_entry_t        * pentry)
 {
-  struct glist_head * glist;
+  struct glist_head * glist, *glistn;
   state_t           * pstate = NULL;
 
   if(glist_empty(&pentry->state_list))
     return;
 
-  /* Iterate through file's state to wipe out all stateids */
-  glist_for_each(glist, &pentry->state_list)
+  glist_for_each_safe(glist, glistn, &pentry->state_list)
     {
       pstate = glist_entry(glist, state_t, state_list);
-
-      switch(pstate->state_type)
-        {
-          case STATE_TYPE_SHARE:
-            break;
-
-          case STATE_TYPE_LOCK:
-            break;
-
-          case STATE_TYPE_DELEG:
-            break;
-
-          case STATE_TYPE_LAYOUT:
-            break;
-
-          case STATE_TYPE_NONE:
-            break;
-        }
       state_del_locked(pstate, pentry);
     }
 
-  cache_inode_dec_pin_ref(pstate->state_pentry);
+  return;
 }
