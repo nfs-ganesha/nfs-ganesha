@@ -102,6 +102,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
      bool_t destattrlock = FALSE;
      bool_t destdirlock = FALSE;
      fsal_accessflags_t access_mask = 0;
+     fsal_attrib_list_t attrs;
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
@@ -168,10 +169,12 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
      fsal_status = pentry_src->obj_handle->ops->link(pentry_src->obj_handle,
 						     pentry_dir_dest->obj_handle,
 						     plink_name);
+     if( !FSAL_IS_ERROR(fsal_status))
+	  fsal_status = pentry_src->obj_handle->ops->getattrs(pentry_src->obj_handle,
+							      &attrs);
      if (FSAL_IS_ERROR(fsal_status)) {
           *pstatus = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
-               fsal_attrib_list_t attrs;
                attrs.asked_attributes = pclient->attrmask;
 	       fsal_status = pentry_src->obj_handle->ops->getattrs(pentry_src->obj_handle,
 								   &attrs);
@@ -200,6 +203,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 #endif /* _USE_NFS4_ACL */
      }
 
+     cache_inode_refresh_attrs(pentry_src, pclient);
      cache_inode_fixup_md(pentry_src);
      *pattr = pentry_src->obj_handle->attributes;
      pthread_rwlock_unlock(&pentry_src->attr_lock);
