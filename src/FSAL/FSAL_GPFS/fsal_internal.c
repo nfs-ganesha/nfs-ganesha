@@ -531,7 +531,6 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
   harg.handle = (struct gpfs_file_handle *) &p_gpfs_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
@@ -578,7 +577,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
   harg.handle = (struct gpfs_file_handle *) &p_gpfs_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_version = OPENHANDLE_VERSION;
@@ -631,7 +629,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
 
   harg.mountdirfd = dirfd;
   harg.dir_fh = (struct gpfs_file_handle *) &p_gpfs_dir_fh->data.handle;
-  memset(p_gpfs_out_fh, 0, sizeof(*p_gpfs_out_fh));
   harg.out_fh = (struct gpfs_file_handle *) &p_gpfs_out_fh->data.handle;
   harg.out_fh->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.out_fh->handle_version = OPENHANDLE_VERSION;
@@ -672,8 +669,6 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   harg.handle = (struct gpfs_file_handle *) &p_handle->data.handle;
-  memset(&p_handle->data.handle, 0, sizeof(struct gpfs_file_handle));
-
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
   harg.handle->handle_version = OPENHANDLE_VERSION;
@@ -883,7 +878,6 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
 
   dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
 
-  memset(__buf, 0, maxlen);
   readlinkarg.mountdirfd = dirfd;
   readlinkarg.handle = (struct gpfs_file_handle *) &p_gpfs_fh->data.handle;
   readlinkarg.buffer = __buf;
@@ -1031,8 +1025,6 @@ fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
 
   if(!p_handle || !p_context || !p_context->export_context || !p_buffxstat)
       ReturnCode(ERR_FSAL_FAULT, 0);
-
-  memset(p_buffxstat, 0, sizeof(gpfsfsal_xstat_t));
 
   dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
 

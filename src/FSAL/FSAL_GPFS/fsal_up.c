@@ -73,9 +73,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
       LogCrit(COMPONENT_FSAL, "Error: Could not malloc ... ENOMEM");
       Return(ERR_FSAL_NOMEM, Mem_Errno, INDEX_FSAL_UP_getevents);
     }
-  memset((char *)tmp_handlep, 0, sizeof(fsal_handle_t)) ;
 
-  memset((char *)&pfsal_data, 0, sizeof(pfsal_data));
   pfsal_data.fh_desc.start = (caddr_t)tmp_handlep;
   pfsal_data.fh_desc.len = sizeof(*tmp_handlep);
   phandle = (gpfsfsal_handle_t *) pfsal_data.fh_desc.start;

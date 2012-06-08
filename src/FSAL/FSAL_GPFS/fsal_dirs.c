@@ -172,7 +172,6 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
 
   int rc = 0;
 
-  memset(buff, 0, BUF_SIZE);
   memset(&entry_name, 0, sizeof(fsal_name_t));
 
   /*****************/
