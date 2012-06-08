@@ -24,18 +24,16 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
  *  b) we cannot depend on it *always* being last or being the only
  *     variable sized struct here...  a pointer is safer.
  * wrt locks, should this be a lock counter??
- * @TODO union the fd, openflags, lock_status and link_content
  * AF_UNIX sockets are strange ducks.  I personally cannot see why they
  * are here except for the ability of a client to see such an animal with
  * an 'ls' or get rid of one with an 'rm'.  You can't open them in the
  * usual file way so open_by_handle_at leads to a deadend.  To work around
- * this, we save the args that were used to mknod the socket.
+ * this, we save the args that were used to mknod or lookup the socket.
  */
 
 struct vfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
 	struct file_handle *handle;
-	/* everything here down is a candidate for a space saving union */
 	union {
 		struct {
 			int fd;

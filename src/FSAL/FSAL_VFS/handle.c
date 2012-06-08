@@ -604,7 +604,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* allocate an obj_handle and fill it up */
-		hdl = alloc_handle(fh, &stat, NULL, dir_fh, sock_name, dir_hdl->export);
+	hdl = alloc_handle(fh, &stat, NULL, dir_fh, sock_name, dir_hdl->export);
 	if(hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 		goto errout;
