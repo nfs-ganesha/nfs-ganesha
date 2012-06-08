@@ -175,3 +175,30 @@ void fsal_export_init(struct fsal_export *exp, struct export_ops *exp_ops,
 	exp->refs = 1;  /* we exit with a reference held */
 	exp->exp_entry = exp_entry;
 }
+
+int fsal_obj_handle_init(struct fsal_obj_handle *obj,
+                         struct fsal_obj_ops *ops,
+                         struct fsal_export *exp,
+                         object_file_type_t type)
+{
+        int retval;
+	pthread_mutexattr_t attrs;
+
+	obj->refs = 1;  /* we start out with a reference */
+	obj->ops = ops;
+	obj->export = exp;
+        obj->type = type;
+	init_glist(&obj->handles);
+	pthread_mutexattr_init(&attrs);
+	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
+	pthread_mutex_init(&obj->lock, &attrs);
+
+	/* lock myself before attaching to the export.
+	 * keep myself locked until done with creating myself.
+	 */
+
+	pthread_mutex_lock(&obj->lock);
+	retval = fsal_attach_handle(exp, &obj->handles);
+	pthread_mutex_unlock(&obj->lock);
+        return retval;
+}
