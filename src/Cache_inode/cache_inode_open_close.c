@@ -226,8 +226,7 @@ cache_inode_open(cache_entry_t *entry,
      }
 
      if ((current_flags == FSAL_O_CLOSED)) {
-	  fsal_status = obj_hdl->ops->open(obj_hdl,
-						     openflags);
+	  fsal_status = obj_hdl->ops->open(obj_hdl, openflags);
           if (FSAL_IS_ERROR(fsal_status)) {
                *status = cache_inode_error_convert(fsal_status);
                LogDebug(COMPONENT_CACHE_INODE,
@@ -248,7 +247,7 @@ cache_inode_open(cache_entry_t *entry,
                    "cache_inode_open: pentry %p: openflags = %d, "
                    "open_fd_count = %d", entry, openflags,
                    open_fd_count);
-     }
+/*      } */
 
      *status = CACHE_INODE_SUCCESS;
 
