@@ -494,7 +494,11 @@ pool_basic_destroy(pool_t *pool)
 static inline void*
 pool_basic_alloc(pool_t *pool)
 {
-     return gsh_malloc(pool->object_size);
+     if (pool->constructor) {
+          return gsh_malloc(pool->object_size);
+     } else {
+          return gsh_calloc(1, pool->object_size);
+     }
 }
 
 /**
