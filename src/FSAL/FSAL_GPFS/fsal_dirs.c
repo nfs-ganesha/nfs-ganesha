@@ -195,7 +195,7 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
     }
   else
     {
-      //seekdir(p_dir_descriptor->p_dir, start_position.cookie);
+      lseek(p_dir_descriptor->fd, start_position.data.cookie, SEEK_SET);
       rc = errno;
     }
 
