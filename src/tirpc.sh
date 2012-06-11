@@ -4,7 +4,7 @@ OPWD=`pwd`
 
 TIRPC_REPO='git://github.com/mattbenjamin/libtirpc-lbx.git'
 TIRPC_BRANCH='duplex-7'
-TIRPC_COMMIT='9c1b29ba7bb7562a42b930c7ecc3ec41d83c589a'
+TIRPC_COMMIT='16d84ae09c64a453ec4f01fb49733ae15eee77a0'
 
 # remove libtirpc if present;  try to avoid making
 # a mess
