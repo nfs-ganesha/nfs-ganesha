@@ -76,11 +76,15 @@ int posix2fsal_error(int posix_errorcode)
     case EPIPE:
 
       /* all shown as IO errors */
+      LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_IO",
+                        __FUNCTION__, posix_errorcode);
       return ERR_FSAL_IO;
 
       /* no such device */
     case ENODEV:
     case ENXIO:
+      LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_NXIO",
+                        __FUNCTION__, posix_errorcode);
       return ERR_FSAL_NXIO;
 
       /* invalid file descriptor : */
