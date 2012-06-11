@@ -406,6 +406,9 @@ struct state_lock_entry_t
   struct glist_head      sle_list;
   struct glist_head      sle_owner_locks;
   struct glist_head      sle_locks;
+#ifdef _DEBUG_MEMLEAKS
+  struct glist_head      sle_all_locks;
+#endif /* _DEBUG_MEMLEAKS */
   struct glist_head      sle_export_locks;
   exportlist_t         * sle_pexport;
   cache_entry_t        * sle_pentry;

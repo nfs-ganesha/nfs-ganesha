@@ -77,6 +77,12 @@
  * release on the data structure ensure that it is freed.
  */
 
+// state_lock.c:81
+#ifdef _DEBUG_MEMLEAKS
+static struct glist_head state_all_locks;
+pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 #ifdef _USE_BLOCKING_LOCKS
 
 /* List of all locks blocked in FSAL */
@@ -400,7 +406,25 @@ void LogLockDesc(log_components_t     component,
 
 void dump_all_locks(const char * label)
 {
+#ifdef _DEBUG_MEMLEAKS
+  struct glist_head *glist;
+
+  P(all_locks_mutex);
+
+  if(glist_empty(&state_all_locks))
+    {
+      LogFullDebug(COMPONENT_STATE, "All Locks are freed");
+      V(all_locks_mutex);
+      return;
+    }
+
+  glist_for_each(glist, &state_all_locks)
+    LogEntry(label, glist_entry(glist, state_lock_entry_t, sle_all_locks));
+
+  V(all_locks_mutex);
+#else
   return;
+#endif
 }
 
 /******************************************************************************
@@ -473,6 +497,14 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
 
   inc_state_owner_ref_locked(powner);
 
+#ifdef _DEBUG_MEMLEAKS
+  P(all_locks_mutex);
+
+  glist_add_tail(&state_all_locks, &new_entry->sle_all_locks);
+
+  V(all_locks_mutex);
+#endif
+
   return new_entry;
 }
 
@@ -528,6 +560,11 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
           memset(lock_entry->sle_block_data, 0, sizeof(*(lock_entry->sle_block_data)));
           gsh_free(lock_entry->sle_block_data);
         }
+#endif
+#ifdef _DEBUG_MEMLEAKS
+      P(all_locks_mutex);
+      glist_del(&lock_entry->sle_all_locks);
+      V(all_locks_mutex);
 #endif
 
       memset(lock_entry, 0, sizeof(*lock_entry));
