@@ -72,6 +72,8 @@ int _9p_read( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
 
+  fsal_status_t fsal_status ; 
+
   size_t size;
   size_t read_size = 0;
   bool_t eof_met;
@@ -98,26 +100,44 @@ int _9p_read( _9p_request_data_t * preq9p,
 
   /* Do the job */
   size = *count ;
-   
-  if(cache_inode_rdwr( pfid->pentry,
-                       CACHE_INODE_READ,
-                       *offset,
-                       *count,
-                       &read_size,
-                       databuffer,
-                       &eof_met,
-                       &pwkrdata->cache_inode_client,
-                       &pfid->fsal_op_context,
-                       stable_flag,
-                       &cache_status ) != CACHE_INODE_SUCCESS )
+  if( pfid->specdata.xattr.xattr_content != NULL )
     {
-      err = _9p_tools_errno( cache_status ) ; ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
+      fsal_status = FSAL_GetXAttrValueById( &pfid->pentry->handle,
+                                            pfid->specdata.xattr.xattr_id,
+                                            &pfid->fsal_op_context,
+                                            databuffer, 
+                                            XATTR_BUFFERSIZE, 
+                                            &read_size);
+
+     if(FSAL_IS_ERROR(fsal_status))
+       {
+         err = _9p_tools_errno( cache_inode_error_convert(fsal_status) ) ;
+         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+         return rc ;
+       }
+      outcount = (u32)read_size ;
     }
+  else
+    {
+       if(cache_inode_rdwr( pfid->pentry,
+                            CACHE_INODE_READ,
+                            *offset,
+                            *count,
+                            &read_size,
+                            databuffer,
+                            &eof_met,
+                            &pwkrdata->cache_inode_client,
+                            &pfid->fsal_op_context,
+                            stable_flag,
+                            &cache_status ) != CACHE_INODE_SUCCESS )
+        {
+          err = _9p_tools_errno( cache_status ) ; ;
+          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+          return rc ;
+        }
 
-  outcount = (u32)read_size ;
-
+       outcount = (u32)read_size ;
+   }
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RREAD ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
