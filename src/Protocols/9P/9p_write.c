@@ -109,8 +109,9 @@ int _9p_write( _9p_request_data_t * preq9p,
 
   size = *count ;
 
-  if( pfid->specdata.xattr.xattr_content != NULL )
+  if( pfid->specdata.xattr.xattr_id != 0 )
    { 
+     printf( "xattr detected !!!!!!!!!!\n" ) ; 
      fsal_status = FSAL_SetXAttrValueById( &pfid->pentry->handle,
                                            pfid->specdata.xattr.xattr_id,
                                            &pfid->fsal_op_context,
