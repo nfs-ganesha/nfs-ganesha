@@ -45,6 +45,48 @@
 
 #define STRCMP   strcasecmp
 
+/** Behavior for init values */
+typedef enum fsal_initflag__
+{
+  FSAL_INIT_FS_DEFAULT = 0,     /**< keep FS default value */
+  FSAL_INIT_FORCE_VALUE,        /**< force a value */
+  FSAL_INIT_MAX_LIMIT,          /**< force a value if default is greater */
+  FSAL_INIT_MIN_LIMIT           /**< force a value if default is smaller */
+      /* Note : for booleans, we considerate that TRUE > FALSE */
+} fsal_initflag_t;
+
+struct fsal_settable_bool {
+        fsal_initflag_t how;
+        fsal_boolean_t val;
+};
+
+struct fsal_settable_int32 {
+        fsal_initflag_t how;
+        int32_t val;
+};
+
+struct fsal_settable_uint64 {
+        fsal_initflag_t how;
+        uint64_t val;
+};
+
+/*
+ * Parameters which can be changed by parsing 'Filesystem' block
+ */
+struct fsal_fs_params {
+        struct fsal_settable_bool symlink_support;
+        struct fsal_settable_bool link_support;
+        struct fsal_settable_bool lock_support;
+        struct fsal_settable_bool lock_support_owner;
+        struct fsal_settable_bool lock_support_async_block;
+        struct fsal_settable_bool cansettime;
+        struct fsal_settable_bool auth_exportpath_xdev;
+        struct fsal_settable_uint64 maxread;
+        struct fsal_settable_uint64 maxwrite;
+        struct fsal_settable_int32 umask;
+        struct fsal_settable_int32 xattr_access_rights;
+};
+
 /******************************************************
  *              Initialization tools.
  ******************************************************/
@@ -66,57 +108,77 @@
 #define SET_INIT_INFO( _common_info_p_ , _field_name_ ,   \
                                     _field_behavior_ , _value_ ) do \
            {                                                        \
-             _common_info_p_->behaviors._field_name_ = _field_behavior_ ;\
+             _common_info_p_->_field_name_.how = _field_behavior_ ; \
              if ( _field_behavior_ != FSAL_INIT_FS_DEFAULT )        \
-               _common_info_p_->values._field_name_ = _value_ ; \
+               _common_info_p_->_field_name_.val = _value_ ; \
            } while (0)
 
-/** This macro initializes the behavior for one parameter
- *  to default filesystem value.
- *  Examples :
- *  SET_INIT_DEFAULT( parameter.fs_common_info , case_insensitive );
- */
-#define SET_INIT_DEFAULT( _common_info_p_ , _field_name_ ) \
-        do {                                                         \
-             _common_info_p_->behaviors._field_name_             \
-                = FSAL_INIT_FS_DEFAULT ;                             \
-           } while (0)
+#define SET_INTEGER_PARAM( cfg, init_info, _field )          \
+    switch( init_info._field.how ){                          \
+    case FSAL_INIT_FORCE_VALUE :                             \
+      /* force the value in any case */                      \
+      cfg->_field = init_info._field.val;                    \
+      break;                                                 \
+    case FSAL_INIT_MAX_LIMIT :                               \
+      /* check the higher limit */                           \
+      if ( cfg->_field > init_info._field.val )              \
+        cfg->_field = init_info._field.val ;                 \
+      break;                                                 \
+    case FSAL_INIT_MIN_LIMIT :                               \
+      /* check the lower limit */                            \
+      if ( cfg->_field < init_info._field.val )              \
+        cfg->_field = init_info._field.val ;                 \
+      break;                                                 \
+    case FSAL_INIT_FS_DEFAULT:                               \
+    default:                                                 \
+    /* In the other cases, we keep the default value. */     \
+        break;                                               \
+    }
 
+#define SET_BITMAP_PARAM( cfg, init_info, _field )           \
+    switch( init_info._field.how ){                          \
+    case FSAL_INIT_FORCE_VALUE :                             \
+        /* force the value in any case */                    \
+        cfg->_field = init_info._field.val;                  \
+        break;                                               \
+    case FSAL_INIT_MAX_LIMIT :                               \
+      /* proceed a bit AND */                                \
+      cfg->_field &= init_info._field.val ;                  \
+      break;                                                 \
+    case FSAL_INIT_MIN_LIMIT :                               \
+      /* proceed a bit OR */                                 \
+      cfg->_field |= init_info._field.val ;                  \
+      break;                                                 \
+    case FSAL_INIT_FS_DEFAULT:                               \
+    default:                                                 \
+    /* In the other cases, we keep the default value. */     \
+        break;                                               \
+    }
 
+#define SET_BOOLEAN_PARAM( cfg, init_info, _field )          \
+    switch( init_info._field.how ){                          \
+    case FSAL_INIT_FORCE_VALUE :                             \
+        /* force the value in any case */                    \
+        cfg->_field = init_info._field.val;                  \
+        break;                                               \
+    case FSAL_INIT_MAX_LIMIT :                               \
+      /* proceed a boolean AND */                            \
+      cfg->_field = cfg->_field && init_info._field.val ;    \
+      break;                                                 \
+    case FSAL_INIT_MIN_LIMIT :                               \
+      /* proceed a boolean OR */                             \
+      cfg->_field = cfg->_field && init_info._field.val ;    \
+      break;                                                 \
+    case FSAL_INIT_FS_DEFAULT:                               \
+    default:                                                 \
+    /* In the other cases, we keep the default value. */     \
+        break;                                               \
+    }
 
-void init_fsal_parameters(fsal_init_info_t *init_info,
-                              fs_common_initinfo_t *common_info)
+void init_fsal_parameters(fsal_init_info_t *init_info)
 {
   /* init max FS calls = unlimited */
   init_info->max_fs_calls = 0;
-  /* set default values for all parameters of fs_common_info */
-
-  SET_INIT_DEFAULT(common_info, maxfilesize);
-  SET_INIT_DEFAULT(common_info, maxlink);
-  SET_INIT_DEFAULT(common_info, maxnamelen);
-  SET_INIT_DEFAULT(common_info, maxpathlen);
-  SET_INIT_DEFAULT(common_info, no_trunc);
-  SET_INIT_DEFAULT(common_info, chown_restricted);
-  SET_INIT_DEFAULT(common_info, case_insensitive);
-  SET_INIT_DEFAULT(common_info, case_preserving);
-  SET_INIT_DEFAULT(common_info, fh_expire_type);
-  SET_INIT_DEFAULT(common_info, link_support);
-  SET_INIT_DEFAULT(common_info, symlink_support);
-  SET_INIT_DEFAULT(common_info, lock_support);
-  SET_INIT_DEFAULT(common_info, lock_support_owner);
-  SET_INIT_DEFAULT(common_info, lock_support_async_block);
-  SET_INIT_DEFAULT(common_info, named_attr);
-  SET_INIT_DEFAULT(common_info, unique_handles);
-  SET_INIT_DEFAULT(common_info, lease_time);
-  SET_INIT_DEFAULT(common_info, acl_support);
-  SET_INIT_DEFAULT(common_info, cansettime);
-  SET_INIT_DEFAULT(common_info, homogenous);
-  SET_INIT_DEFAULT(common_info, supported_attrs);
-  SET_INIT_DEFAULT(common_info, maxread);
-  SET_INIT_DEFAULT(common_info, maxwrite);
-  SET_INIT_DEFAULT(common_info, umask);
-  SET_INIT_DEFAULT(common_info, auth_exportpath_xdev);
-  SET_INIT_DEFAULT(common_info, xattr_access_rights);
 }
 
 static fsal_status_t
@@ -252,7 +314,7 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
 
 static fsal_status_t
 load_FS_common_parameters_from_conf(config_file_t in_config,
-                                    fs_common_initinfo_t *common_info)
+                                    struct fsal_fs_params *common_info)
 {
   int err;
   int var_max, var_index;
@@ -277,19 +339,6 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
               CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
-
-  /*
-     configurable common info for filesystem are:
-     link_support      # hardlink support
-     symlink_support   # symlinks support
-     cansettime        # Is it possible to change file times
-     maxread           # Max read size from FS
-     maxwrite          # Max write size to FS
-     umask
-     auth_exportpath_xdev
-     xattr_access_rights
-
-   */
 
   var_max = config_GetNbItems(block);
 
@@ -588,32 +637,21 @@ fsal_load_config(const char *name,
                  config_file_t config_struct,
                  fsal_init_info_t * fsal_init,
                  fsal_staticfsinfo_t * fs_info,
-                 fs_common_initinfo_t * common_info,
                  fsal_extra_arg_parser_f extra)
 {
 	fsal_status_t st;
+        struct fsal_fs_params common_info;
 
         st = load_FSAL_parameters_from_conf(config_struct, name,
                                             fsal_init, extra);
         if(FSAL_IS_ERROR(st))
                 return st;
 
-	st = load_FS_common_parameters_from_conf(config_struct, common_info);
+        /* Note - memset uses the fact that FSAL_FS_INIT_DEFAULT is 0 */
+        memset(&common_info, 0, sizeof(common_info));
+	st = load_FS_common_parameters_from_conf(config_struct, &common_info);
 	if(FSAL_IS_ERROR(st))
 		return st;
-
-	if((common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
-	   (common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
-		ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
 	SET_BOOLEAN_PARAM(fs_info, common_info, symlink_support);
 	SET_BOOLEAN_PARAM(fs_info, common_info, link_support);

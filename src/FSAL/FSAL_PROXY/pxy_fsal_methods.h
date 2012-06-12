@@ -3,8 +3,8 @@
 
 struct pxy_fsal_module {
       struct fsal_module module;
+      fsal_staticfsinfo_t fsinfo;
       fsal_init_info_t init;
-      fs_common_initinfo_t common;
       proxyfs_specific_initinfo_t special;
       struct fsal_ops pxy_ops;
 };

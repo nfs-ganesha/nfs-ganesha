@@ -49,7 +49,6 @@ struct vfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
 	fsal_init_info_t fsal_info;
-	fs_common_initinfo_t common_info;
 	 /* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
@@ -121,7 +120,6 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
                                        config_struct,
                                        &vfs_me->fsal_info,
                                        &vfs_me->fs_info,
-                                       &vfs_me->common_info,
                                        NULL);
 
 	if(FSAL_IS_ERROR(fsal_status))
@@ -186,7 +184,7 @@ MODULE_INIT void vfs_init(void) {
 	myself->ops->init_config = init_config;
 	myself->ops->dump_config = dump_config;
 	myself->ops->create_export = vfs_create_export;
-	init_fsal_parameters(&vfs_me->fsal_info, &vfs_me->common_info);
+	init_fsal_parameters(&vfs_me->fsal_info);
 }
 
 MODULE_FINI void vfs_unload(void) {

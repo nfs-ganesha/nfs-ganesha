@@ -247,7 +247,7 @@ pxy_init_config(struct fsal_module *fsal_hdl,
         pxy->special = default_pxy_params;
 
         st = fsal_load_config("PROXY", config_struct, &pxy->init,
-                              &proxy_info, &pxy->common, pxy_key_to_param);
+                              &proxy_info, pxy_key_to_param);
         if (FSAL_IS_ERROR(st))
                 return st;
 
