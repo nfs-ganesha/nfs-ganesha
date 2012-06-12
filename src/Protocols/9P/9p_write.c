@@ -114,7 +114,7 @@ int _9p_write( _9p_request_data_t * preq9p,
      fsal_status = FSAL_SetXAttrValueById( &pfid->pentry->handle,
                                            pfid->specdata.xattr.xattr_id,
                                            &pfid->fsal_op_context,
-                                           pfid->specdata.xattr.xattr_content, 
+                                           databuffer,
                                            size ) ;
      if(FSAL_IS_ERROR(fsal_status))
        {
@@ -122,6 +122,9 @@ int _9p_write( _9p_request_data_t * preq9p,
          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
          return rc ;
        }
+
+      /* Cache the value */
+      memcpy( pfid->specdata.xattr.xattr_id, databuffer, size ) ;
 
       outcount = *count ;
    }
