@@ -888,6 +888,9 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
   if(rc < 0)
       Return(rc, 0, INDEX_FSAL_readlink);
 
+  if(rc < maxlen)
+    __buf[rc] = '\0';
+
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
