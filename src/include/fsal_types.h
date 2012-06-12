@@ -172,16 +172,6 @@ typedef struct fsal_time__
   fsal_uint_t nseconds;
 } fsal_time_t;       /**< time */
 
-/** Behavior for init values */
-typedef enum fsal_initflag__
-{
-  FSAL_INIT_FS_DEFAULT = 0,     /**< keep FS default value */
-  FSAL_INIT_FORCE_VALUE,        /**< force a value */
-  FSAL_INIT_MAX_LIMIT,          /**< force a value if default is greater */
-  FSAL_INIT_MIN_LIMIT           /**< force a value if default is smaller */
-      /* Note : for booleans, we considerate that TRUE > FALSE */
-} fsal_initflag_t;
-
 /* Object file type within the system */
 typedef enum
 { UNASSIGNED = 1,  /** @TODO funny duck. might not be relevant anymore... */
@@ -804,72 +794,9 @@ typedef fsal_ushort_t fsal_fhexptype_t;
 
 /** File system static info. */
 
-#define SET_INTEGER_PARAM( cfg, p_init_info, _field )             \
-    switch( (p_init_info)->behaviors._field ){                    \
-    case FSAL_INIT_FORCE_VALUE :                                  \
-      /* force the value in any case */                           \
-      cfg->_field = (p_init_info)->values._field;                  \
-      break;                                                      \
-    case FSAL_INIT_MAX_LIMIT :                                    \
-      /* check the higher limit */                                \
-      if ( cfg->_field > (p_init_info)->values._field )            \
-        cfg->_field = (p_init_info)->values._field ;               \
-      break;                                                      \
-    case FSAL_INIT_MIN_LIMIT :                                    \
-      /* check the lower limit */                                 \
-      if ( cfg->_field < (p_init_info)->values._field )            \
-        cfg->_field = (p_init_info)->values._field ;               \
-      break;                                                      \
-    case FSAL_INIT_FS_DEFAULT:                                    \
-    default:                                                      \
-    /* In the other cases, we keep the default value. */          \
-        break;                                                    \
-    }
-
-#define SET_BITMAP_PARAM( cfg, p_init_info, _field )              \
-    switch( (p_init_info)->behaviors._field ){                    \
-    case FSAL_INIT_FORCE_VALUE :                                  \
-        /* force the value in any case */                         \
-        cfg->_field = (p_init_info)->values._field;                \
-        break;                                                    \
-    case FSAL_INIT_MAX_LIMIT :                                    \
-      /* proceed a bit AND */                                     \
-      cfg->_field &= (p_init_info)->values._field ;                \
-      break;                                                      \
-    case FSAL_INIT_MIN_LIMIT :                                    \
-      /* proceed a bit OR */                                      \
-      cfg->_field |= (p_init_info)->values._field ;                \
-      break;                                                      \
-    case FSAL_INIT_FS_DEFAULT:                                    \
-    default:                                                      \
-    /* In the other cases, we keep the default value. */          \
-        break;                                                    \
-    }
-
-#define SET_BOOLEAN_PARAM( cfg, p_init_info, _field )             \
-    switch( (p_init_info)->behaviors._field ){                    \
-    case FSAL_INIT_FORCE_VALUE :                                  \
-        /* force the value in any case */                         \
-        cfg->_field = (p_init_info)->values._field;               \
-        break;                                                    \
-    case FSAL_INIT_MAX_LIMIT :                                    \
-      /* proceed a boolean AND */                                 \
-      cfg->_field = cfg->_field && (p_init_info)->values._field ; \
-      break;                                                      \
-    case FSAL_INIT_MIN_LIMIT :                                    \
-      /* proceed a boolean OR */                                  \
-      cfg->_field = cfg->_field && (p_init_info)->values._field ; \
-      break;                                                      \
-    case FSAL_INIT_FS_DEFAULT:                                    \
-    default:                                                      \
-    /* In the other cases, we keep the default value. */          \
-        break;                                                    \
-    }
-
 /* enums for accessing
  * boolean fields of staticfsinfo
  */
-
 typedef enum {
 	no_trunc,
 	chown_restricted,
@@ -995,43 +922,6 @@ typedef fsal_ushort_t fsal_rcpflag_t;
 /* error if the target local file already exists */
 #define  FSAL_RCP_LOCAL_EXCL 0x0020
 
-/** Configuration info for every type of filesystem. */
-
-typedef struct fs_common_initinfo__
-{
-
-  /* specifies the behavior for each init value. */
-  struct _behavior_
-  {
-#ifdef _PNFS_MDS
-    fsal_initflag_t
-        maxfilesize, maxlink, maxnamelen, maxpathlen,
-        no_trunc, chown_restricted, case_insensitive,
-        case_preserving, fh_expire_type, link_support, symlink_support, lock_support,
-        lock_support_owner, lock_support_async_block,
-        named_attr, unique_handles, lease_time, acl_support, cansettime,
-        homogenous, supported_attrs, maxread, maxwrite, umask,
-        auth_exportpath_xdev, xattr_access_rights, accesscheck_support,
-        share_support, share_support_owner, pnfs_supported,
-      fs_layout_types, layout_blksize;
-#else /* !_PNFS_MDS */
-    fsal_initflag_t
-        maxfilesize, maxlink, maxnamelen, maxpathlen,
-        no_trunc, chown_restricted, case_insensitive,
-        case_preserving, fh_expire_type, link_support, symlink_support, lock_support,
-        lock_support_owner, lock_support_async_block,
-        named_attr, unique_handles, lease_time, acl_support, cansettime,
-        homogenous, supported_attrs, maxread, maxwrite, umask,
-        auth_exportpath_xdev, xattr_access_rights, accesscheck_support,
-        share_support, share_support_owner;
-#endif /* !_PNFS_MDS */
-  } behaviors;
-
-  /* specifies the values to be set if behavior <> FSAL_INIT_FS_DEFAULT */
-  fsal_staticfsinfo_t values;
-
-} fs_common_initinfo_t;
-
 /** Configuration info for the fsal */
 
 typedef struct fsal_init_info__
@@ -1045,7 +935,7 @@ typedef struct fsal_parameter__
 {
 
   fsal_init_info_t fsal_info;               /**< fsal configuration info  */
-  fs_common_initinfo_t fs_common_info;      /**< filesystem common info   */
+  struct fsal_staticfsinfo_t fs_info;       /**< filesystem common info   */
   fs_specific_initinfo_t fs_specific_info;  /**< filesystem dependant info*/
 
 } fsal_parameter_t;
