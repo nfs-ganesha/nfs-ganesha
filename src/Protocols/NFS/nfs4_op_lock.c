@@ -89,7 +89,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_owner_t           * conflict_owner = NULL;
   state_owner_t           * presp_owner;    /* Owner to store response in */
   seqid4                    seqid;
-  nfs_client_id_t         * nfs_client_id;
+  nfs_client_id_t         * pclientid;
   state_nfs4_owner_name_t   owner_name;
   fsal_lock_param_t         lock_desc, conflict_desc;
   state_blocking_t          blocking = STATE_NON_BLOCKING;
@@ -175,7 +175,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       /* Check is the clientid is known or not */
       if(nfs_client_id_get_confirmed(arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid,
-                                     &nfs_client_id) == CLIENT_ID_NOT_FOUND)
+                                     &pclientid) == CLIENT_ID_NOT_FOUND)
         {
           res_LOCK4.status = NFS4ERR_STALE_CLIENTID;
           LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -184,13 +184,13 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       if(isDebug(COMPONENT_CLIENTID) &&
-         nfs_client_id != popen_owner->so_owner.so_nfs4_owner.so_pclientid)
+         pclientid != popen_owner->so_owner.so_nfs4_owner.so_pclientid)
         {
           char str_open[HASHTABLE_DISPLAY_STRLEN];
           char str_lock[HASHTABLE_DISPLAY_STRLEN];
 
           display_client_id_rec(popen_owner->so_owner.so_nfs4_owner.so_pclientid, str_open);
-          display_client_id_rec(nfs_client_id, str_lock);
+          display_client_id_rec(pclientid, str_lock);
 
           LogDebug(COMPONENT_CLIENTID,
                    "Unexpected, new lock owner clientid {%s} doesn't match open owner clientid {%s}",
@@ -301,9 +301,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 #endif
 
       /* get the client for this open owner */
-      nfs_client_id = popen_owner->so_owner.so_nfs4_owner.so_pclientid;
+      pclientid = popen_owner->so_owner.so_nfs4_owner.so_pclientid;
 
-      inc_client_id_ref(nfs_client_id);
+      inc_client_id_ref(pclientid);
 
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
@@ -373,7 +373,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     }
 
   if (nfs_in_grace() && arg_LOCK4.reclaim &&
-      !nfs_client_id->cid_allow_reclaim)
+      !pclientid->cid_allow_reclaim)
     {
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
               "LOCK failed, invalid reclaim while in grace",
@@ -446,7 +446,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         {
           /* This lock owner is not known yet, allocated and set up a new one */
           plock_owner = create_nfs4_owner(&owner_name,
-                                          nfs_client_id,
+                                          pclientid,
                                           STATE_LOCK_OWNER_NFSV4,
                                           popen_owner,
                                           0);
@@ -591,7 +591,7 @@ out:
 
 out2:
 
-  dec_client_id_ref(nfs_client_id);
+  dec_client_id_ref(pclientid);
 
   return res_LOCK4.status;
 }                               /* nfs4_op_lock */

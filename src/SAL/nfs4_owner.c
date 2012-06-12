@@ -1,4 +1,4 @@
-/**
+/*
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
@@ -7,28 +7,25 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * ---------------------------------------
- *
- * nfs_owner.c : The management of the NFS4 Owner cache.
- *
- * $Header$
- *
- * $Log$
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  */
+
+/**
+ * @brief The management of the NFS4 Owner cache.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -278,7 +275,9 @@ void remove_nfs4_owner(state_owner_t        * powner,
         nfs4_Compound_FreeOne(&powner->so_owner.so_nfs4_owner.so_resp);
 
         P(powner->so_owner.so_nfs4_owner.so_pclientid->cid_mutex);
+
         glist_del(&powner->so_owner.so_nfs4_owner.so_perclient);
+
         V(powner->so_owner.so_nfs4_owner.so_pclientid->cid_mutex);
 
         dec_client_id_ref(powner->so_owner.so_nfs4_owner.so_pclientid);
@@ -795,19 +794,19 @@ state_status_t get_clientid_owner(clientid4 clientid,
 {
   /* Pointer to client record, retrieved by ID and in which the
      client state owner is stored */
-  nfs_client_id_t *client_record = NULL;
+  nfs_client_id_t *pclientid = NULL;
   /* Return code for error checking */
   int rc = 0;
 
-  if ((rc = nfs_client_id_get_confirmed(clientid, &client_record))
+  if ((rc = nfs_client_id_get_confirmed(clientid, &pclientid))
       != CLIENT_ID_SUCCESS)
     {
       return STATE_NOT_FOUND;
     }
   else
     {
-      *clientid_owner = &client_record->cid_owner;
-      dec_client_id_ref(client_record);
+      *clientid_owner = &pclientid->cid_owner;
+      dec_client_id_ref(pclientid);
       return STATE_SUCCESS;
     }
 }

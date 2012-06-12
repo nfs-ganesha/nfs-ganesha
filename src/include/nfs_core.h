@@ -376,7 +376,7 @@ typedef struct rpc_call_channel
     uint32_t states;
     union {
         struct {
-            nfs_client_id_t *nfs_client;
+            nfs_client_id_t *pclientid;
         } v40;
     } nvu;
     time_t last_called;
@@ -483,7 +483,7 @@ static const struct __netid_nc_table
 };
 
 nc_type nfs_netid_to_nc(const char *netid);
-void nfs_set_client_location(nfs_client_id_t *clid, const clientaddr4 *addr4);
+void nfs_set_client_location(nfs_client_id_t *pclientid, const clientaddr4 *addr4);
 
 /* end TI-RPC */
 

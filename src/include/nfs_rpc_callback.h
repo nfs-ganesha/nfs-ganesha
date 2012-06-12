@@ -112,7 +112,7 @@ static inline void free_cb_resop(nfs_cb_resop4 *ptr)
     gsh_free(ptr);
 }
 
-rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *client,
+rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
                                      uint32_t flags);
 
 enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
@@ -130,7 +130,7 @@ void nfs_rpc_cb_pkgshutdown(void);
 
 /* Create a channel for a new clientid (v4) or session, optionally
  * connecting it */
-int nfs_rpc_create_chan_v40(nfs_client_id_t *client,
+int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
                             uint32_t flags);
 
 #if defined (USE_NFS4_1)

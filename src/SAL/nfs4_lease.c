@@ -50,20 +50,20 @@
 #include "nfs4.h"
 #include "sal_functions.h"
 
-static unsigned int _valid_lease(nfs_client_id_t * pnfs_client_id)
+static unsigned int _valid_lease(nfs_client_id_t * pclientid)
 {
   time_t t;
 
-  if(pnfs_client_id->cid_confirmed == EXPIRED_CLIENT_ID)
+  if(pclientid->cid_confirmed == EXPIRED_CLIENT_ID)
     return 0;
 
-  if(pnfs_client_id->cid_lease_reservations != 0)
+  if(pclientid->cid_lease_reservations != 0)
     return nfs_param.nfsv4_param.lease_lifetime;
 
   t = time(NULL);
 
-  if(pnfs_client_id->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime > t)
-    return (pnfs_client_id->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime) - t;
+  if(pclientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime > t)
+    return (pclientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime) - t;
 
   return 0;
 }
@@ -74,22 +74,22 @@ static unsigned int _valid_lease(nfs_client_id_t * pnfs_client_id)
  *
  * Check if lease is valid, caller holds cid_mutex.
  *
- * @param pnfs_client_id [IN] clientid record to check lease for.
+ * @param pclientid [IN] clientid record to check lease for.
  *
  * @return 1 if lease is valid, 0 if not.
  *
  */
-int valid_lease(nfs_client_id_t * pnfs_client_id)
+int valid_lease(nfs_client_id_t * pclientid)
 {
   unsigned int valid;
 
-  valid = _valid_lease(pnfs_client_id);
+  valid = _valid_lease(pclientid);
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(pnfs_client_id, str);
+      display_client_id_rec(pclientid, str);
       LogFullDebug(COMPONENT_CLIENTID,
                    "Check Lease %s (Valid=%s %u seconds left)",
                    str, valid ? "YES" : "NO", valid);
@@ -107,25 +107,25 @@ int valid_lease(nfs_client_id_t * pnfs_client_id)
  * Lease reservation prevents any other thread from expiring the lease. Caller
  * must call update lease to release the reservation.
  *
- * @param pnfs_client_id [IN] clientid record to check lease for.
+ * @param pclientid [IN] clientid record to check lease for.
  *
  * @return 1 if lease is valid, 0 if not.
  *
  */
-int reserve_lease(nfs_client_id_t * pnfs_client_id)
+int reserve_lease(nfs_client_id_t * pclientid)
 {
   unsigned int valid;
 
-  valid = _valid_lease(pnfs_client_id);
+  valid = _valid_lease(pclientid);
 
   if(valid != 0)
-    pnfs_client_id->cid_lease_reservations++;
+    pclientid->cid_lease_reservations++;
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(pnfs_client_id, str);
+      display_client_id_rec(pclientid, str);
       LogFullDebug(COMPONENT_CLIENTID,
                    "Reserve Lease %s (Valid=%s %u seconds left)",
                    str, valid ? "YES" : "NO", valid);
@@ -144,24 +144,24 @@ int reserve_lease(nfs_client_id_t * pnfs_client_id)
  * function releases the lease reservation. Before releasing the last
  * reservation, cid_last_renew will be updated.
  *
- * @param pnfs_client_id [IN] clientid record to check lease for.
+ * @param pclientid [IN] clientid record to check lease for.
  *
  * @return 1 if lease is valid, 0 if not.
  *
  */
-void update_lease(nfs_client_id_t * pnfs_client_id)
+void update_lease(nfs_client_id_t * pclientid)
 {
-  pnfs_client_id->cid_lease_reservations--;
+  pclientid->cid_lease_reservations--;
 
   /* Renew lease when last reservation is released */
-  if(pnfs_client_id->cid_lease_reservations == 0)
-    pnfs_client_id->cid_last_renew = time(NULL);
+  if(pclientid->cid_lease_reservations == 0)
+    pclientid->cid_last_renew = time(NULL);
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_id_rec(pnfs_client_id, str);
+      display_client_id_rec(pclientid, str);
       LogFullDebug(COMPONENT_CLIENTID,
                    "Update Lease %s",
                    str);

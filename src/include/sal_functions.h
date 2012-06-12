@@ -169,10 +169,10 @@ state_status_t get_clientid_owner(clientid4        clientid,
 int nfs_Init_client_id(nfs_client_id_parameter_t * param);
 
 int nfs_client_id_get_unconfirmed(clientid4          clientid,
-                                  nfs_client_id_t ** ppclient_id_res);
+                                  nfs_client_id_t ** p_pclientid);
 
 int nfs_client_id_get_confirmed(clientid4          clientid,
-                                nfs_client_id_t ** ppclient_id_res);
+                                nfs_client_id_t ** p_pclientid);
 
 nfs_client_id_t * create_client_id(clientid4              clientid,
                                    nfs_client_record_t  * pclient_record,
@@ -180,14 +180,14 @@ nfs_client_id_t * create_client_id(clientid4              clientid,
                                    nfs_client_cred_t    * pcredential,
                                    cache_inode_client_t * pclient);
 
-int nfs_client_id_insert(nfs_client_id_t * pnfs_client_id);
+int nfs_client_id_insert(nfs_client_id_t * pclientid);
 
-int remove_unconfirmed_client_id(nfs_client_id_t * pnfs_client_id);
+int remove_unconfirmed_client_id(nfs_client_id_t * pclientid);
 
-int nfs_client_id_confirm(nfs_client_id_t * pnfs_client_id,
+int nfs_client_id_confirm(nfs_client_id_t * pclientid,
                           log_components_t  component);
 
-int nfs_client_id_expire(nfs_client_id_t * pnfs_client_id);
+int nfs_client_id_expire(nfs_client_id_t * pclientid);
 
 clientid4 new_clientid(void);
 void new_clientifd_verifier(char * pverf);
@@ -203,8 +203,8 @@ uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
 uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t    * buffclef);
 
-int display_client_id_rec(nfs_client_id_t * precord, char *str);
-int display_clientid_name(nfs_client_id_t * precord, char * str);
+int display_client_id_rec(nfs_client_id_t * pclientid, char *str);
+int display_clientid_name(nfs_client_id_t * pclientid, char * str);
 
 void free_client_id(nfs_client_id_t *pclientid);
 
@@ -313,9 +313,9 @@ uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
  *
  ******************************************************************************/
 
-int  reserve_lease(nfs_client_id_t * pnfs_client_id);
-void update_lease(nfs_client_id_t * pnfs_client_id);
-int  valid_lease(nfs_client_id_t * pnfs_client_id);
+int  reserve_lease(nfs_client_id_t * pclientid);
+void update_lease(nfs_client_id_t * pclientid);
+int  valid_lease(nfs_client_id_t * pclientid);
 
 /******************************************************************************
  *

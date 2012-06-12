@@ -6,30 +6,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs4_state.c
- * \author  $Author: deniel $
- * \date    $Date$
- * \version $Revision$
  * \brief   This file contains functions used in state management.
  *
- * nfs4_state.c : This file contains functions used in state management.
+ * This file contains functions used in state management.
  *
  *
  */
@@ -118,7 +116,6 @@ int state_conflict(state_t      * pstate,
  * @param state_type    [IN]    state to be defined
  * @param pstate_data   [IN]    data related to this state
  * @param powner_input  [IN]    related open_owner
- * @param pclient       [INOUT] cache inode client to be used
  * @param pcontext      [IN]    FSAL credentials
  * @param ppstate       [OUT]   pointer to a pointer to the new state
  * @param pstatus       [OUT]   returned status
@@ -263,7 +260,6 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
  * @param state_type    [IN]    state to be defined
  * @param pstate_data   [IN]    data related to this state
  * @param powner_input  [IN]    related open_owner
- * @param pclient       [INOUT] cache inode client to be used
  * @param pcontext      [IN]    FSAL credentials
  * @param ppstate       [OUT]   pointer to a pointer to the new state
  * @param pstatus       [OUT]   returned status
@@ -359,7 +355,6 @@ state_status_t state_del_locked(state_t              * pstate,
  * Deletes a state from the hash's state
  *
  * @param pstate   [OUT]   pointer to the new state
- * @param pclient  [INOUT] related cache inode client
  * @param pstatus  [OUT]   returned status
  *
  * @return the same as *pstatus
@@ -412,8 +407,8 @@ void release_lockstate(state_owner_t * plock_owner)
   glist_for_each_safe(glist, glistn, &plock_owner->so_owner.so_nfs4_owner.so_state_list)
     {
       state_t * pstate_found = glist_entry(glist,
-					   state_t,
-					   state_owner_list);
+                                           state_t,
+                                           state_owner_list);
 
       /* Make sure we hold an lru ref to the cache inode while calling state_del */
       if(cache_inode_lru_ref(pstate_found->state_pentry,
@@ -457,8 +452,8 @@ void release_openstate(state_owner_t * popen_owner)
       fsal_status_t            fsal_status;
 
       state_t * pstate_found = glist_entry(glist,
-					   state_t,
-					   state_owner_list);
+                                           state_t,
+                                           state_owner_list);
 
       cache_entry_t        * pentry = pstate_found->state_pentry;
       cache_inode_status_t   cache_status;
@@ -515,7 +510,8 @@ void release_openstate(state_owner_t * popen_owner)
       pthread_rwlock_unlock(&pentry->state_lock);
 
       /* Release the lru ref to the cache inode we held while calling state_del */
-      cache_inode_lru_unref(pentry, 0);
+      cache_inode_lru_unref(pentry,
+                            0);
     }
 
   /* Release the reference to the open owner that keeps it in the hash table */

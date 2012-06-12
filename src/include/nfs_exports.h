@@ -328,7 +328,6 @@ typedef struct nfs_worker_data__ nfs_worker_data_t;
  * This structure contains the necessary stuff for keeping the state
  * of a V4 compound request.
  */
-
 /* Forward references to SAL types */
 typedef struct nfs41_session__ nfs41_session_t;
 typedef struct nfs_client_id_t nfs_client_id_t;

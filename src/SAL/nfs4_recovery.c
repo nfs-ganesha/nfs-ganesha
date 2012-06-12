@@ -130,7 +130,7 @@ nfs_in_grace()
  * will be allowed to do reclaims during grace period.
  */
 void
-nfs4_create_clid_name(nfs_client_id_t *nfs_clientid, struct svc_req *svcp)
+nfs4_create_clid_name(nfs_client_id_t *pclientid, struct svc_req *svcp)
 {
         sockaddr_t sa;
         char buf[SOCK_NAME_MAX];
@@ -141,16 +141,16 @@ nfs4_create_clid_name(nfs_client_id_t *nfs_clientid, struct svc_req *svcp)
         else
                 strncpy(buf, "Unknown", SOCK_NAME_MAX);
 
-        nfs_clientid->cid_recov_dir = gsh_malloc(256);
-        if (nfs_clientid->cid_recov_dir == NULL) {
-                LogEvent(COMPONENT_CLIENTID, "allocation FAILED");
+        pclientid->cid_recov_dir = gsh_malloc(256);
+        if (pclientid->cid_recov_dir == NULL) {
+                LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
                 return;
         }
-        (void) snprintf(nfs_clientid->cid_recov_dir, 256, "%s-%llx", buf,
-            (longlong_t)nfs_clientid->cid_clientid);
+        (void) snprintf(pclientid->cid_recov_dir, 256, "%s-%llx", buf,
+            (longlong_t)pclientid->cid_clientid);
 
         LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
-            nfs_clientid->cid_recov_dir);
+            pclientid->cid_recov_dir);
 }
 
 /*
@@ -158,19 +158,19 @@ nfs4_create_clid_name(nfs_client_id_t *nfs_clientid, struct svc_req *svcp)
  * will be able to reclaim state after a server reboot/restart.
  */
 void
-nfs4_add_clid(nfs_client_id_t *nfs_clientid)
+nfs4_add_clid(nfs_client_id_t *pclientid)
 {
         int err;
         char path[PATH_MAX];
 
-        if (nfs_clientid->cid_recov_dir == NULL) {
+        if (pclientid->cid_recov_dir == NULL) {
                 LogDebug(COMPONENT_CLIENTID,
                     "Failed to create client in recovery dir, no name");
                 return;
         }
 
         snprintf(path, PATH_MAX, "%s/%s", v4_recov_dir,
-            nfs_clientid->cid_recov_dir);
+            pclientid->cid_recov_dir);
 
         err = mkdir(path, 0700);
         if (err == -1 && errno != EEXIST) {
@@ -210,7 +210,7 @@ nfs4_rm_clid(char *recov_dir)
  * if the server is not in grace period, then no reclaim can happen.
  */
 void
-nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
+nfs4_chk_clid(nfs_client_id_t *pclientid)
 {
         struct glist_head *node;
         clid_entry_t *clid_ent;
@@ -235,19 +235,19 @@ nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
         glist_for_each(node, &grace.g_clid_list) {
                 clid_ent = glist_entry(node, clid_entry_t, cl_list);
                 LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
-                    clid_ent->cl_name, nfs_clientid->cid_recov_dir);
-                if (!strncmp(clid_ent->cl_name, nfs_clientid->cid_recov_dir,
+                    clid_ent->cl_name, pclientid->cid_recov_dir);
+                if (!strncmp(clid_ent->cl_name, pclientid->cid_recov_dir,
                     256)) {
                         if (isDebug(COMPONENT_CLIENTID)) {
                             char str[HASHTABLE_DISPLAY_STRLEN];
 
-                            display_client_id_rec(nfs_clientid, str);
+                            display_client_id_rec(pclientid, str);
 
                             LogFullDebug(COMPONENT_CLIENTID,
                                          "Allowed to reclaim ClientId %s",
                                          str);
                         }
-                        nfs_clientid->cid_allow_reclaim = 1;
+                        pclientid->cid_allow_reclaim = 1;
                         V(grace.g_mutex);
                         return;
                 }
@@ -279,7 +279,8 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
                 if (dentp->d_name[0] != '.') {
                         new_ent = gsh_malloc(sizeof(clid_entry_t));
                         if (new_ent == NULL) {
-                                LogEvent(COMPONENT_CLIENTID, "allocation FAILED");
+                                LogEvent(COMPONENT_CLIENTID,
+                                         "Unable to allocate memory.");
                                 return -1;
                         }
                         strncpy(new_ent->cl_name, dentp->d_name, 256);

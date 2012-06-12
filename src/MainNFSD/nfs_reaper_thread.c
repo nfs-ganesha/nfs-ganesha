@@ -50,7 +50,7 @@ static void reap_hash_table(hash_table_t * ht_reap)
   uint32_t              i;
   int                   v4, rc;
   struct rbt_node     * pn;
-  nfs_client_id_t     * pnfs_client_id;
+  nfs_client_id_t     * pclientid;
   nfs_client_record_t * precord;
 
   /* For each bucket of the requested hashtable */
@@ -67,24 +67,24 @@ static void reap_hash_table(hash_table_t * ht_reap)
         {
           pdata = RBT_OPAQ(pn);
 
-          pnfs_client_id = (nfs_client_id_t *)pdata->buffval.pdata;
+          pclientid = (nfs_client_id_t *)pdata->buffval.pdata;
           /*
            * little hack: only want to reap v4 clients
            * 4.1 initializess this field to '1'
            */
-          v4 = (pnfs_client_id->cid_create_session_sequence == 0);
+          v4 = (pclientid->cid_create_session_sequence == 0);
 
-          P(pnfs_client_id->cid_mutex);
+          P(pclientid->cid_mutex);
 
-          if(!valid_lease(pnfs_client_id) && v4)
+          if(!valid_lease(pclientid) && v4)
             {
-              inc_client_id_ref(pnfs_client_id);
+              inc_client_id_ref(pclientid);
 
               /* Take a reference to the client record */
-              precord = pnfs_client_id->cid_client_record;
+              precord = pclientid->cid_client_record;
               inc_client_record_ref(precord);
 
-              V(pnfs_client_id->cid_mutex);
+              V(pclientid->cid_mutex);
 
               pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
 
@@ -92,7 +92,7 @@ static void reap_hash_table(hash_table_t * ht_reap)
                 {
                   char str[HASHTABLE_DISPLAY_STRLEN];
 
-                  display_client_id_rec(pnfs_client_id, str);
+                  display_client_id_rec(pclientid, str);
 
                   LogFullDebug(COMPONENT_CLIENTID,
                                "Expire index %d %s",
@@ -102,18 +102,18 @@ static void reap_hash_table(hash_table_t * ht_reap)
               /* Take cr_mutex and expire clientid */
               P(precord->cr_mutex);
 
-              rc = nfs_client_id_expire(pnfs_client_id);
+              rc = nfs_client_id_expire(pclientid);
 
               V(precord->cr_mutex);
 
-              dec_client_id_ref(pnfs_client_id);
+              dec_client_id_ref(pclientid);
               dec_client_record_ref(precord);
               if(rc)
                 goto restart;
             }
           else
             {
-              V(pnfs_client_id->cid_mutex);
+              V(pclientid->cid_mutex);
             }
 
           RBT_INCREMENT(pn);

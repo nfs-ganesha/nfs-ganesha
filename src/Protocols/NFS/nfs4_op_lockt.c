@@ -78,7 +78,7 @@
 int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   state_status_t            state_status;
-  nfs_client_id_t         * nfs_client_id;
+  nfs_client_id_t         * pclientid;
   state_nfs4_owner_name_t   owner_name;
   state_owner_t           * plock_owner;
   state_owner_t           * conflict_owner = NULL;
@@ -145,26 +145,26 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Check clientid */
   if(nfs_client_id_get_confirmed(arg_LOCKT4.owner.clientid,
-                                 &nfs_client_id) != CLIENT_ID_SUCCESS)
+                                 &pclientid) != CLIENT_ID_SUCCESS)
     {
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;
     }
 
   /* The protocol doesn't allow for EXPIRED, so return STALE_CLIENTID */
-  P(nfs_client_id->cid_mutex);
+  P(pclientid->cid_mutex);
 
-  if(!reserve_lease(nfs_client_id))
+  if(!reserve_lease(pclientid))
     {
-      V(nfs_client_id->cid_mutex);
+      V(pclientid->cid_mutex);
 
-      dec_client_id_ref(nfs_client_id);
+      dec_client_id_ref(pclientid);
 
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;
     }
 
-  V(nfs_client_id->cid_mutex);
+  V(pclientid->cid_mutex);
 
   /* Is this lock_owner known ? */
   convert_nfs4_lock_owner(&arg_LOCKT4.owner, &owner_name, 0LL);
@@ -173,7 +173,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       /* This lock owner is not known yet, allocated and set up a new one */
       plock_owner = create_nfs4_owner(&owner_name,
-                                      nfs_client_id,
+                                      pclientid,
                                       STATE_LOCK_OWNER_NFSV4,
                                       NULL,
                                       0);
@@ -231,13 +231,13 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
  out:
  
   /* Update the lease before exit */
-  P(nfs_client_id->cid_mutex);
+  P(pclientid->cid_mutex);
 
-  update_lease(nfs_client_id);
+  update_lease(pclientid);
 
-  V(nfs_client_id->cid_mutex);
+  V(pclientid->cid_mutex);
 
-  dec_client_id_ref(nfs_client_id);
+  dec_client_id_ref(pclientid);
 
   return res_LOCKT4.status;
 

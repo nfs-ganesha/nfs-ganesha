@@ -97,7 +97,7 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
   struct rbt_head *head_rbt;
   hash_data_t *pdata = NULL;
   struct rbt_node *pn;
-  nfs_client_id_t *clientp;
+  nfs_client_id_t *pclientid;
   uint64_t clientid;
   DBusMessageIter iter, sub_iter;
 
@@ -117,9 +117,9 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
     /* go through all entries in the red-black-tree*/
     RBT_LOOP(head_rbt, pn) {
       pdata = RBT_OPAQ(pn);
-      clientp =
+      pclientid =
 	(nfs_client_id_t *)pdata->buffval.pdata;
-      clientid = clientp->clientid;
+      clientid = pclientid->clientid;
       dbus_message_iter_append_basic(&sub_iter, DBUS_TYPE_UINT64, &clientid);
       RBT_INCREMENT(pn);      
     }
@@ -140,12 +140,12 @@ static int32_t
 cbsim_test_bchan(clientid4 clientid)
 {
     int32_t tries, code = 0;
-    nfs_client_id_t *clid = NULL;
+    nfs_client_id_t *pclientid = NULL;
     struct timeval CB_TIMEOUT = {15, 0};
     rpc_call_channel_t *chan;
     enum clnt_stat stat;
 
-    code  = nfs_client_id_Get_Pointer(clientid, &clid);
+    code  = nfs_client_id_Get_Pointer(clientid, &pclientid);
     if (code != CLIENT_ID_SUCCESS) {
         LogCrit(COMPONENT_NFS_CB,
                 "No clid record for %"PRIx64" (%d) code %d", clientid,
@@ -154,12 +154,12 @@ cbsim_test_bchan(clientid4 clientid)
         goto out;
     }
 
-    assert(clid);
+    assert(pclientid);
 
     /* create (fix?) channel */
     for (tries = 0; tries < 2; ++tries) {
 
-        chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
+        chan = nfs_rpc_get_chan(pclientid, NFS_RPC_FLAG_NONE);
         if (! chan) {
             LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
             goto out;
@@ -238,7 +238,7 @@ static int32_t
 cbsim_fake_cbrecall(clientid4 clientid)
 {
     int32_t code = 0;
-    nfs_client_id_t *clid = NULL;
+    nfs_client_id_t *pclientid = NULL;
     rpc_call_channel_t *chan = NULL;
     nfs_cb_argop4 argop[1];
     rpc_call_t *call;
@@ -246,7 +246,7 @@ cbsim_fake_cbrecall(clientid4 clientid)
     LogDebug(COMPONENT_NFS_CB,
              "called with clientid %"PRIx64, clientid);
 
-    code  = nfs_client_id_Get_Pointer(clientid, &clid);
+    code  = nfs_client_id_Get_Pointer(clientid, &pclientid);
     if (code != CLIENT_ID_SUCCESS) {
         LogCrit(COMPONENT_NFS_CB,
                 "No clid record for %"PRIx64" (%d) code %d", clientid,
@@ -255,9 +255,9 @@ cbsim_fake_cbrecall(clientid4 clientid)
         goto out;
     }
 
-    assert(clid);
+    assert(pclientid);
 
-    chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
+    chan = nfs_rpc_get_chan(pclientid, NFS_RPC_FLAG_NONE);
     if (! chan) {
         LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
         goto out;
@@ -273,7 +273,7 @@ cbsim_fake_cbrecall(clientid4 clientid)
     call->chan = chan;
 
     /* setup a compound */
-    cb_compound_init_v4(&call->cbt, 6, clid->cb.cb_u.v40.callback_ident,
+    cb_compound_init_v4(&call->cbt, 6, pclientid->cb.cb_u.v40.callback_ident,
                         "brrring!!!", 10);
 
     /* TODO: api-ify */
