@@ -3,8 +3,8 @@
 OPWD=`pwd`
 
 TIRPC_REPO='git://github.com/mattbenjamin/libtirpc-lbx.git'
-TIRPC_BRANCH='duplex-7'
-TIRPC_COMMIT='16d84ae09c64a453ec4f01fb49733ae15eee77a0'
+TIRPC_BRANCH_NAME='duplex-7-helgrind'
+TIRPC_COMMIT='d1d73da9eff3616efc74659f9e9708114d861830'
 
 # remove libtirpc if present;  try to avoid making
 # a mess
@@ -16,8 +16,7 @@ fi
 
 git clone ${TIRPC_REPO} libtirpc
 cd libtirpc
-git checkout -b origin/${TIRPC_BRANCH}
-git checkout ${TIRPC_COMMIT}
+git checkout -b $TIRPC_BRANCH_NAME ${TIRPC_COMMIT}
 cd ${OPWD}
 
 ./autogen.sh
