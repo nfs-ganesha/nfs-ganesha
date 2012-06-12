@@ -801,6 +801,23 @@ void nfs4_Fattr_Free(fattr4 *fattr)
     }
 }
 
+static int fsal_time_to_settime4(const fsal_time_t *ts, char *attrval)
+{
+  time_how4 how = htonl(SET_TO_CLIENT_TIME4);
+  int64_t sec = nfs_htonl64((int64_t)ts->seconds);
+  uint32_t nsec = htonl(ts->nseconds);
+  int LastOffset = 0;
+
+  memcpy(attrval + LastOffset, &how, sizeof(how));
+  LastOffset += sizeof(how);
+  memcpy(attrval + LastOffset, &sec, sizeof(sec));
+  LastOffset += sizeof(sec);
+  memcpy(attrval + LastOffset, &nsec, sizeof(nsec));
+  LastOffset += sizeof(uint32_t);
+
+  return LastOffset;
+}
+
 /**
  *
  * nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -863,7 +880,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   fattr4_files_free files_free;
   fattr4_files_total files_total;
   fattr4_lease_time lease_time;
-  fattr4_time_backup time_backup;
   fattr4_time_create time_create;
   fattr4_maxfilesize max_filesize;
   fattr4_supported_attrs supported_attrs;
@@ -880,8 +896,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
-  fattr4_time_modify_set __attribute__ ((__unused__)) time_modify_set;
-  fattr4_time_access_set __attribute__ ((__unused__)) time_access_set;
 #ifdef _PNFS_MDS
   fattr4_layout_blksize layout_blksize;
 #endif /* _PNFS_MDS */
@@ -897,7 +911,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   u_int LastOffset;
   u_int len = 0, off = 0;       /* Use for XDR alignment */
   int op_attr_success = 0;
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_FSALattr_To_Fattr";
 
 #ifdef _USE_NFS4_1
   unsigned int attrvalslist_supported[FATTR4_FS_CHARSET_CAP];
@@ -919,7 +932,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   cache_inode_status_t cache_status;
 
   int statfscalled = 0;
-  struct fsal_export *export = pexport->export_hdl;
+  struct fsal_export *export = pexport ? pexport->export_hdl : NULL;
   fsal_dynamicfsinfo_t dynamicinfo;
 
 #ifdef _USE_NFS4_ACL
@@ -1613,35 +1626,13 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_TIME_ACCESS_SET:
-          time_access_set.set_it = htonl(SET_TO_CLIENT_TIME4);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_access_set.set_it, sizeof(time_how4));
-          LastOffset += sizeof(time_how4);
-
-          time_access_set.settime4_u.time.seconds =
-              nfs_htonl64((int64_t) pattr->mtime.seconds);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_access_set.settime4_u.time.seconds, sizeof(int64_t));
-          LastOffset += sizeof(int64_t);
-
-          time_access_set.settime4_u.time.nseconds = htonl(pattr->mtime.nseconds);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_access_set.settime4_u.time.nseconds, sizeof(uint32_t));
-          LastOffset += sizeof(uint32_t);
-
-          op_attr_success = 0;
+          LastOffset += fsal_time_to_settime4(&pattr->atime,
+                                              attrvalsBuffer + LastOffset);
+          op_attr_success = 1;
           break;
 
         case FATTR4_TIME_BACKUP:
           /* No time backup, return unix's beginning of time */
-          time_backup.seconds = nfs_htonl64(0LL);
-          time_backup.nseconds = htonl(0);
-          memcpy((char *)(attrvalsBuffer + LastOffset), &time_backup,
-                 fattr4tab[attribute_to_set].size_fattr4);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 0;
-          break;
-
         case FATTR4_TIME_CREATE:
           /* No time create, return unix's beginning of time */
           time_create.seconds = nfs_htonl64(0LL);
@@ -1649,7 +1640,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           memcpy((char *)(attrvalsBuffer + LastOffset), &time_create,
                  fattr4tab[attribute_to_set].size_fattr4);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 0;
+          op_attr_success = 1;
           break;
 
         case FATTR4_TIME_DELTA:
@@ -1686,23 +1677,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-          time_modify_set.set_it = htonl(SET_TO_CLIENT_TIME4);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_modify_set.set_it, sizeof(time_how4));
-          LastOffset += sizeof(time_how4);
-
-          time_modify_set.settime4_u.time.seconds =
-              nfs_htonl64((int64_t) pattr->mtime.seconds);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_modify_set.settime4_u.time.seconds, sizeof(int64_t));
-          LastOffset += sizeof(int64_t);
-
-          time_modify_set.settime4_u.time.nseconds = htonl(pattr->mtime.nseconds);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_modify_set.settime4_u.time.nseconds, sizeof(uint32_t));
-          LastOffset += sizeof(uint32_t);
-
-          op_attr_success = 0;
+          LastOffset += fsal_time_to_settime4(&pattr->mtime,
+                                              attrvalsBuffer + LastOffset);
+          op_attr_success = 1;
           break;
 
         case FATTR4_MOUNTED_ON_FILEID:
