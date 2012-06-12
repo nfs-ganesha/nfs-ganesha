@@ -169,10 +169,6 @@ fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN *
                                         fsal_accessflags_t access_type,  /* IN */
                                         struct stat64 *p_buffstat /* IN */);
 
-fsal_status_t fsal_set_own_by_handle(fsal_op_context_t * p_context,
-                                     fsal_handle_t * p_handle,
-                                     uid_t user, u_int32_t group);
-
 fsal_status_t fsal_trucate_by_handle(fsal_op_context_t * p_context,
                                      fsal_handle_t * p_handle,
                                      u_int64_t size);

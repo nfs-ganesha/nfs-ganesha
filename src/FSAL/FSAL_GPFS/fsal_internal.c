@@ -1117,31 +1117,6 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* fchown by handle */
-fsal_status_t fsal_set_own_by_handle(fsal_op_context_t * p_context,
-                                     fsal_handle_t * p_handle,
-                                     uid_t user, u_int32_t group)
-{
-  int attr_valid;
-  int attr_changed;
-  gpfsfsal_xstat_t buffxstat;
-
-  if(!p_handle || !p_context || !p_context->export_context)
-      ReturnCode(ERR_FSAL_FAULT, 0);
-
-  attr_valid = XATTR_STAT;
-  attr_changed = XATTR_UID;
-  buffxstat.buffstat.st_uid = user;
-  if (group != -1)
-    {
-      attr_changed |= XATTR_GID;
-      buffxstat.buffstat.st_gid = group;
-    }
-
-  return fsal_set_xstat_by_handle(p_context, p_handle, attr_valid,
-                                 attr_changed, &buffxstat);
-}
-
 /* trucate by handle */
 fsal_status_t fsal_trucate_by_handle(fsal_op_context_t * p_context,
                                      fsal_handle_t * p_handle,

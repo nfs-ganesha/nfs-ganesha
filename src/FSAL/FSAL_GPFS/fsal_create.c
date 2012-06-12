@@ -237,6 +237,7 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
   fsal_status_t status;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
+  int fsuid, fsgid;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -291,8 +292,14 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
   /* creates the directory and get its handle */
 
   TakeTokenFSCall();
+  fsuid = setfsuid(p_context->credential.user);
+  fsgid = setfsgid(p_context->credential.group);
+
   rc = mkdirat(fd, p_dirname->name, unix_mode);
   errsv = errno;
+  setfsuid(fsuid);
+  setfsgid(fsgid);
+
   if(rc)
     {
       close(fd);
@@ -314,32 +321,12 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
                                 p_dirname, p_object_handle);
   ReleaseTokenFSCall();
 
+  close(fd);
+
   if(FSAL_IS_ERROR(status))
     {
-      close(fd);
       ReturnStatus(status, INDEX_FSAL_mkdir);
     }
-
-  /* the directory has been created */
-  /* chown the dir to the current user/group */
-
-  if(p_context->credential.user != geteuid())
-    {
-      TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      status = fsal_set_own_by_handle(p_context, p_object_handle,
-                                      p_context->credential.user,
-                                      setgid_bit ? -1 :
-                                      (int)p_context->credential.group);
-      ReleaseTokenFSCall();
-      if(FSAL_IS_ERROR(status))
-        {
-          close(fd);
-          ReturnStatus(status, INDEX_FSAL_mkdir);
-        }
-    }
-
-  close(fd);
 
   /* retrieve file attributes */
   if(p_object_attributes)
