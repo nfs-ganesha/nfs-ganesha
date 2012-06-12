@@ -97,15 +97,15 @@ do {                                                                         \
   nfs_argop4 *op = argarray + opcnt; opcnt++;                                \
   op->argop = NFS4_OP_GETATTR ;                                              \
   op->nfs_argop4_u.opgetattr.attr_request.bitmap4_val = bitmap ;             \
-  op->nfs_argop4_u.opgetattr.attr_request.bitmap4_len = ARRAY_SIZE(bitmap) ; \
+  op->nfs_argop4_u.opgetattr.attr_request.bitmap4_len = ARRAY_SIZE(bitmap);  \
 } while( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_SETATTR( argcompound, inattr )                                                                       \
-do {                                                                                                                               \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_SETATTR ;                                   \
-  memset(&argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.stateid,0,sizeof(stateid4)); \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.obj_attributes = inattr ;            \
-  argcompound.argarray.argarray_len += 1 ;                                                                                         \
+#define COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argarray, inattr )              \
+do {                                                                         \
+  nfs_argop4 *op = argarray + opcnt; opcnt++;                                \
+  op->argop = NFS4_OP_SETATTR ;                                              \
+  memset(&op->nfs_argop4_u.opsetattr.stateid,0,sizeof(stateid4));            \
+  op->nfs_argop4_u.opsetattr.obj_attributes = inattr;                        \
 } while( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_GETFH( opcnt, argarray )               \
