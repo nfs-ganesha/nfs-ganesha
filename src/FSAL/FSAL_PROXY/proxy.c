@@ -245,9 +245,10 @@ pxy_init_config(struct fsal_module *fsal_hdl,
         default_pxy_params.srv_port = htons(2049);
 
         pxy->special = default_pxy_params;
+        pxy->fsinfo = proxy_info;
 
         st = fsal_load_config("PROXY", config_struct, &pxy->init,
-                              &proxy_info, pxy_key_to_param);
+                              &pxy->fsinfo, pxy_key_to_param);
         if (FSAL_IS_ERROR(st))
                 return st;
 

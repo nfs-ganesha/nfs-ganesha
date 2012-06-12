@@ -39,6 +39,7 @@
 #include "pxy_fsal_methods.h"
 #include "fsal_nfsv4_macros.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 
 struct pxy_fattr_storage {
         fattr4_type type;
@@ -72,8 +73,10 @@ pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
 
 static void pxy_setup_fattr(struct pxy_fattr_storage * pfattr)
 {
+        memset(pfattr, 0, sizeof(*pfattr));
         /* Just do the correct connection */
         pfattr->owner.utf8string_val = pfattr->padowner;
+        pfattr->owner.utf8string_len = sizeof(pfattr->padowner);
         pfattr->owner_group.utf8string_val = pfattr->padgroup;
         pfattr->filehandle.nfs_fh4_val = pfattr->padfh;
 }
@@ -200,7 +203,7 @@ static void pxy_create_getattr_bitmap(uint32_t *pbitmap)
                 FATTR4_TIME_MODIFY,
                 FATTR4_RAWDEV
         };
-        uint32_t attrlen = sizeof(tmpattrlist)/sizeof(tmpattrlist[0]);
+        uint32_t attrlen = ARRAY_SIZE(tmpattrlist);
 
         memset(pbitmap, 0, sizeof(uint32_t) * bm.bitmap4_len);
 
@@ -215,12 +218,46 @@ static void pxy_create_readdir_bitmap(uint32_t *pbitmap)
         uint32_t tmpattrlist[] = {
                 FATTR4_TYPE,
         };
-        uint32_t attrlen = sizeof(tmpattrlist)/sizeof(tmpattrlist[0]);
+        uint32_t attrlen = ARRAY_SIZE(tmpattrlist);
 
         memset(pbitmap, 0, sizeof(uint32_t) * bm.bitmap4_len);
 
         nfs4_list_to_bitmap4(&bm, &attrlen, tmpattrlist);
 }
+
+static struct
+{
+        fsal_attrib_mask_t mask;
+        int fattr_bit;
+} fsal_mask2bit[] =
+{
+        {FSAL_ATTR_SIZE, FATTR4_SIZE},
+        {FSAL_ATTR_MODE, FATTR4_MODE},
+        {FSAL_ATTR_OWNER, FATTR4_OWNER},
+        {FSAL_ATTR_GROUP, FATTR4_OWNER_GROUP},
+        {FSAL_ATTR_ATIME, FATTR4_TIME_ACCESS_SET},
+        {FSAL_ATTR_MTIME, FATTR4_TIME_MODIFY_SET},
+        {FSAL_ATTR_CTIME, FATTR4_TIME_METADATA}
+};
+
+/*
+ * Create bitmap which list attributes which are both specified by
+ * the attrs and considered as 'settable'.
+ */
+static void
+pxy_create_settable_bitmap(const fsal_attrib_list_t * attrs, bitmap4 *bm)
+{
+        uint32_t tmpattrlist[ARRAY_SIZE(fsal_mask2bit)];
+        uint32_t attrlen = 0;
+        int i;
+
+        for(i=0; i < ARRAY_SIZE(fsal_mask2bit); i++) {
+                if(FSAL_TEST_MASK(attrs->asked_attributes, fsal_mask2bit[i].mask))
+                        tmpattrlist[attrlen++] = fsal_mask2bit[i].fattr_bit;
+        }
+        nfs4_list_to_bitmap4(bm, &attrlen, tmpattrlist);
+}                               /* fsal_interval_proxy_fsalattr2bitmap4 */
+
 static CLIENT *rpc_client;
 
 static int
@@ -675,19 +712,91 @@ pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 	     fsal_attrib_list_t *obj_attr)
 {
         struct pxy_obj_handle *ph;
+        fsal_status_t st;
 
         if(!obj_hdl || !obj_attr)
-                ReturnCode(ERR_FSAL_FAULT, 0);
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
 
         ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-        return pxy_getattrs_impl(obj_hdl->export, &ph->fh4, obj_attr);
+        st = pxy_getattrs_impl(obj_hdl->export, &ph->fh4, obj_attr);
+        if(!FSAL_IS_ERROR(st)) {
+                obj_hdl->attributes = *obj_attr;
+        }
+        return st;
 }
 
+/*
+ * Couple of things to note:
+ * 1. We assume that checks for things like cansettime are done
+ *    by the caller.
+ * 2. attrs can be modified in this function but caller cannot
+ *    assume that the attributes are up-to-date
+ */
 static fsal_status_t
 pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 	     fsal_attrib_list_t *attrs)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        int rc;
+        fattr4 input_attr;
+        uint32_t bm_val[2];
+        bitmap4 bmap = {.bitmap4_val = bm_val, .bitmap4_len = 2};
+        uint32_t bitmap_res[2];
+        uint32_t opcnt = 0;
+        struct pxy_obj_handle *ph;
+        struct pxy_fattr_storage fattr_internal;
+        GETATTR4resok *atok;
+        fsal_attrib_list_t attrs_after;
+
+#define FSAL_SETATTR_NB_OP_ALLOC 3
+        nfs_argop4 argoparray[FSAL_SETATTR_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_SETATTR_NB_OP_ALLOC];
+
+        if(!obj_hdl || !attrs)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_MODE))
+                attrs->mode &= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
+
+        ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+
+        pxy_create_settable_bitmap(attrs, &bmap);
+
+        if(nfs4_FSALattr_To_Fattr(NULL, attrs, &input_attr, NULL,
+                                  NULL, &bmap) == -1)
+                ReturnCode(ERR_FSAL_INVAL, EINVAL);
+
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+        resoparray[opcnt].nfs_resop4_u.opsetattr.attrsset.bitmap4_val = bitmap_res;
+        resoparray[opcnt].nfs_resop4_u.opsetattr.attrsset.bitmap4_len = 2;
+        COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argoparray, input_attr);
+
+        pxy_create_getattr_bitmap(bm_val);
+        pxy_setup_fattr(&fattr_internal);
+
+        atok = &resoparray[opcnt].nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
+        atok->obj_attributes.attrmask.bitmap4_val = bm_val;
+        atok->obj_attributes.attrmask.bitmap4_len = 2;
+        atok->obj_attributes.attr_vals.attrlist4_val = (char *)&fattr_internal;
+        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_internal);
+
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bm_val);
+
+        rc = pxy_nfsv4_call(obj_hdl->export, opcnt, argoparray, resoparray);
+        nfs4_Fattr_Free(&input_attr);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        rc = nfs4_Fattr_To_FSAL_attr(&attrs_after, &atok->obj_attributes);
+        if(rc != NFS4_OK) {
+                LogWarn(COMPONENT_FSAL, 
+                        "Attribute conversion fails with %d, "
+                        "ignoring attibutes after making changes", rc);
+        } else {
+                obj_hdl->attributes = attrs_after;
+        }
+
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 static fsal_boolean_t 

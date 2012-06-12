@@ -51,15 +51,17 @@ static fsal_boolean_t
 pxy_get_supports(struct fsal_export *exp_hdl,
                 fsal_fsinfo_options_t option)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_supports(info, option);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_supports(&pm->fsinfo, option);
 }
 
 static fsal_size_t
 pxy_get_maxfilesize(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_maxfilesize(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_maxfilesize(&pm->fsinfo);
 }
 
 static fsal_size_t
@@ -128,8 +130,9 @@ pxy_get_supported_attrs(struct fsal_export *exp_hdl)
 static fsal_accessmode_t
 pxy_get_umask(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_umask(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_umask(&pm->fsinfo);
 }
 
 static fsal_accessmode_t
@@ -252,6 +255,7 @@ pxy_create_export(struct fsal_module *fsal_hdl,
                 ReturnCode(ERR_FSAL_NOMEM, ENOMEM); 
         fsal_export_init(&exp->exp, &pxy_exp_ops, exp_entry);
         exp->info = &pxy->special;
+        exp->exp.fsal = fsal_hdl;
         *export = &exp->exp;
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
