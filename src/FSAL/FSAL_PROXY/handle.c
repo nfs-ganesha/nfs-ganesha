@@ -41,6 +41,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
+/* Use this to estimate storage requirements for fattr4 blob */
 struct pxy_fattr_storage {
         fattr4_type type;
         fattr4_change change_time;
@@ -62,6 +63,8 @@ struct pxy_fattr_storage {
         char padfh[NFS4_FHSIZE];
 };
 
+#define FATTR_BLOB_SZ sizeof(struct pxy_fattr_storage)
+
 struct pxy_obj_handle {
         struct fsal_obj_handle obj;
         nfs_fh4 fh4;
@@ -70,16 +73,6 @@ struct pxy_obj_handle {
 static struct pxy_obj_handle *
 pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
                  const fsal_attrib_list_t *attr);
-
-static void pxy_setup_fattr(struct pxy_fattr_storage * pfattr)
-{
-        memset(pfattr, 0, sizeof(*pfattr));
-        /* Just do the correct connection */
-        pfattr->owner.utf8string_val = pfattr->padowner;
-        pfattr->owner.utf8string_len = sizeof(pfattr->padowner);
-        pfattr->owner_group.utf8string_val = pfattr->padgroup;
-        pfattr->filehandle.nfs_fh4_val = pfattr->padfh;
-}
 
 static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
 {
@@ -413,7 +406,7 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
         nfs_argop4 argoparray[FSAL_LOOKUP_NB_OP_ALLOC];
         nfs_resop4 resoparray[FSAL_LOOKUP_NB_OP_ALLOC];
         uint32_t bitmap_res[2];
-        struct pxy_fattr_storage fattr_internal;
+        char fattr_blob[FATTR_BLOB_SZ];
         char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
         struct pxy_obj_handle *pxy_hdl;
 
@@ -452,7 +445,6 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
                 }
         }
 
-        pxy_setup_fattr(&fattr_internal);
         pxy_create_getattr_bitmap(bitmap_val);
 
         fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
@@ -463,8 +455,8 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
 
         atok->obj_attributes.attrmask.bitmap4_val = bitmap_res;
         atok->obj_attributes.attrmask.bitmap4_len = 2;
-        atok->obj_attributes.attr_vals.attrlist4_val = (char *)&fattr_internal;
-        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_internal);
+        atok->obj_attributes.attr_vals.attrlist4_val = fattr_blob;
+        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_blob);
 
         fhok->object.nfs_fh4_val = (char *)padfilehandle;
         fhok->object.nfs_fh4_len = sizeof(padfilehandle);
@@ -681,9 +673,8 @@ pxy_getattrs_impl(struct fsal_export *exp,
         nfs_argop4 argoparray[FSAL_GETATTR_NB_OP_ALLOC];
         nfs_resop4 resoparray[FSAL_GETATTR_NB_OP_ALLOC];
         GETATTR4resok *atok;
-        struct pxy_fattr_storage fattr_internal;
+        char fattr_blob[FATTR_BLOB_SZ]; 
 
-        pxy_setup_fattr(&fattr_internal);
         pxy_create_getattr_bitmap(bitmap_val);
 
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, *filehandle);
@@ -691,8 +682,8 @@ pxy_getattrs_impl(struct fsal_export *exp,
         atok = &resoparray[opcnt].nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
         atok->obj_attributes.attrmask.bitmap4_val = bitmap_res;
         atok->obj_attributes.attrmask.bitmap4_len = 2;
-        atok->obj_attributes.attr_vals.attrlist4_val = (char *)&fattr_internal;
-        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_internal);
+        atok->obj_attributes.attr_vals.attrlist4_val = fattr_blob;
+        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_blob);
 
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
 
@@ -743,7 +734,7 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
         uint32_t bitmap_res[2];
         uint32_t opcnt = 0;
         struct pxy_obj_handle *ph;
-        struct pxy_fattr_storage fattr_internal;
+        char fattr_blob[FATTR_BLOB_SZ];
         GETATTR4resok *atok;
         fsal_attrib_list_t attrs_after;
 
@@ -772,13 +763,12 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
         COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argoparray, input_attr);
 
         pxy_create_getattr_bitmap(bm_val);
-        pxy_setup_fattr(&fattr_internal);
 
         atok = &resoparray[opcnt].nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
         atok->obj_attributes.attrmask.bitmap4_val = bm_val;
         atok->obj_attributes.attrmask.bitmap4_len = 2;
-        atok->obj_attributes.attr_vals.attrlist4_val = (char *)&fattr_internal;
-        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_internal);
+        atok->obj_attributes.attr_vals.attrlist4_val = fattr_blob;
+        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_blob);
 
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bm_val);
 
