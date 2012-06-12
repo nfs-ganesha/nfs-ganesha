@@ -282,7 +282,8 @@ typedef struct _9p_fid__
   _9p_qid_t            qid ;
   union 
     { 
-       u32 iounit ;
+       u32      iounit ;
+       caddr_t  xattr_content ;
     } specdata ;
 } _9p_fid_t ;
 
