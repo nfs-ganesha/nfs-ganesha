@@ -86,9 +86,6 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   pfid =  &preq9p->pconn->fids[*fid] ;
 
   /* If the fid is related to a xattr, free the related memory */
-  if( pfid->specdata.xattr.xattr_name != NULL )
-    Mem_Free( pfid->specdata.xattr.xattr_name ) ;
-
   if( pfid->specdata.xattr.xattr_content != NULL )
     Mem_Free( pfid->specdata.xattr.xattr_content ) ;
 

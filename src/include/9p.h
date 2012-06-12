@@ -285,8 +285,8 @@ typedef struct _9p_fid__
        u32      iounit ;
        struct _9p_xattr_desc 
         {  
-          char *   xattr_name ;
-          caddr_t  xattr_content ;
+          unsigned int xattr_id ;
+          caddr_t      xattr_content ;
         } xattr ;
     } specdata ;
 } _9p_fid_t ;

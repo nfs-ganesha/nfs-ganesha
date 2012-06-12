@@ -160,8 +160,9 @@ int _9p_walk( _9p_request_data_t * preq9p,
      pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
      pnewfid->qid.path = (u64)pnewfid->pentry->attributes.fileid ;
 
-     pnewfid->specdata.xattr.xattr_name = NULL ;
+     pnewfid->specdata.xattr.xattr_id = 0 ;
      pnewfid->specdata.xattr.xattr_content = NULL ;
+
      switch( pfid->pentry->type )
       {
         case REGULAR_FILE:

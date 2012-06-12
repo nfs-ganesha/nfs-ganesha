@@ -132,7 +132,7 @@ int _9p_create( _9p_request_data_t * preq9p,
    /* The fid will represent the new file now */
    pfid->pentry = pentry_newfile ;
    pfid->qid = qid_newfile ;
-   pfid->specdata.xattr.xattr_name = NULL ;
+   pfid->specdata.xattr.xattr_id = 0 ;
    pfid->specdata.xattr.xattr_content = NULL ;
 
 
