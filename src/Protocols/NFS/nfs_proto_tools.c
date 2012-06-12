@@ -900,6 +900,7 @@ int nfs4_Fattr_Fill(fattr4 *Fattr, int cnt, uint32_t *attrvalslist,
     }
   return 0;
 }
+
 /**
  *
  * nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -1007,7 +1008,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   cache_inode_status_t cache_status;
 
   int statfscalled = 0;
-  struct fsal_export *export = pexport->export_hdl;
+  struct fsal_export *export = pexport ? pexport->export_hdl : NULL;
   fsal_dynamicfsinfo_t dynamicinfo;
 
 #ifdef _USE_NFS4_ACL
