@@ -188,8 +188,8 @@ int print_entry_dupreq(LRU_data_t data, char *str)
   return 0;
 }
 
-static int _remove_dupreq(hash_table_t * ht_dupreq, hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
-                          pool_t *dupreq_pool, int nfs_req_status)
+static int _remove_dupreq(hash_table_t *ht_dupreq, hash_buffer_t *buffkey,
+                          dupreq_entry_t *pdupreq, int nfs_req_status)
 {
   int rc;
   nfs_function_desc_t funcdesc = nfs2_func_desc[0];
@@ -294,8 +294,7 @@ static int _remove_dupreq(hash_table_t * ht_dupreq, hash_buffer_t *buffkey, dupr
   return DUPREQ_SUCCESS;
 }
 
-int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
-                      pool_t *dupreq_pool)
+int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt)
 {
   int status;
 
@@ -335,7 +334,7 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
 
   LogDupReq("REMOVING", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
-  status = _remove_dupreq( ht_dupreq, &buffkey, pdupreq, dupreq_pool, ! NFS_REQ_OK);
+  status = _remove_dupreq( ht_dupreq, &buffkey, pdupreq, !NFS_REQ_OK);
   return status;
 }
 
@@ -351,14 +350,13 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
  * @return 0 if ok, other values mean an error.
  *
  */
-int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
+int clean_entry_dupreq(LRU_entry_t *pentry, void *addparam)
 {
   hash_buffer_t buffkey;
-  pool_t *dupreq_pool = (pool_t*) addparam;
   dupreq_entry_t *pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
   dupreq_key_t dupkey;
   hash_table_t * ht_dupreq = NULL ;
-  
+
   /* Get the socket address for the key */
   memcpy((char *)&dupkey.addr, (char *)&pdupreq->addr, sizeof(dupkey.addr));
   dupkey.xid = pdupreq->xid;
@@ -377,7 +375,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 
   LogDupReq("Garbage collection on", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
-  return _remove_dupreq(ht_dupreq, &buffkey, pdupreq, dupreq_pool, NFS_REQ_OK);
+  return _remove_dupreq(ht_dupreq, &buffkey, pdupreq, NFS_REQ_OK);
 }                               /* clean_entry_dupreq */
 
 /**
@@ -557,7 +555,6 @@ int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
 int nfs_dupreq_add_not_finished(long xid,
                                 struct svc_req *ptr_req,
                                 SVCXPRT *xprt,
-                                pool_t *dupreq_pool,
                                 nfs_res_t *res_nfs)
 {
   hash_buffer_t buffkey;

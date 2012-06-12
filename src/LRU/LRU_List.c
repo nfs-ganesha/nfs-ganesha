@@ -294,13 +294,13 @@ int LRU_pop_entry (LRU_list_t * plru, LRU_entry_t  *out_entry)
 }
 
 /**
- * 
+ *
  * LRU_gc_invalid : garbagge collection for invalid entries.
  *
  * Read the whole LRU list and put the invalid entries back to the pool.
  *
  * @param plru Pointer to the list to be managed.
- * @return An integer to contain the status for the operation. 
+ * @return An integer to contain the status for the operation.
  *
  * @see LRU_invalidate
  */
@@ -342,7 +342,7 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
               rc = LRU_LIST_BAD_RELEASE_ENTRY;
             }
 
-	  _LRU_remove_entry(plru, pentry);
+          _LRU_remove_entry(plru, pentry);
           plru->nb_invalid --;
         }
     }
