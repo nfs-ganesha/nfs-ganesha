@@ -456,7 +456,7 @@ fsal_status_t XFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
         }
 
       LogFullDebug(COMPONENT_FSAL,
-                        "Write operation (whence=%s, offset=%"PRId64", size=%llu)",
+                        "Write operation (whence=%s, offset=%"PRId64", size=%zu)",
                         (p_seek_descriptor->whence ==
                          FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
                                                        FSAL_SEEK_SET ? "SEEK_SET"
