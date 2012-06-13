@@ -58,7 +58,6 @@ void ReleaseTokenFSCall();
  */
 fsal_boolean_t fsal_do_log(fsal_status_t status);
 
-void fsal_internal_proxy_create_fattr_fsinfo_bitmap(bitmap4 * pbitmap);
 void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
                                           bitmap4 * pbitmap);
 
@@ -77,8 +76,6 @@ int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8s
 int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8str);
 int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
                              proxyfsal_handle_t * phandle, fattr4 * Fattr);
-int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
-                                       fattr4 * Fattr);
 
 fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context);
 fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context);

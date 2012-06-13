@@ -67,9 +67,21 @@ struct pxy_fattr_storage {
 
 #define FATTR_BLOB_SZ sizeof(struct pxy_fattr_storage)
 
+/*
+ * This is what becomes an opaque FSAL handle for the upper layers 
+ *
+ * The type is a placeholder for future expansion.
+ */
+struct pxy_handle_blob {
+        uint8_t len;
+        uint8_t type;
+        uint8_t bytes[0];
+};
+
 struct pxy_obj_handle {
         struct fsal_obj_handle obj;
         nfs_fh4 fh4;
+        struct pxy_handle_blob blob;
 };
 
 static struct pxy_obj_handle *
@@ -850,8 +862,8 @@ pxy_handle_digest(struct fsal_obj_handle *obj_hdl,
 	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
-                fhs = ph->fh4.nfs_fh4_len;
-                data = ph->fh4.nfs_fh4_val;
+                fhs = ph->blob.len;
+                data = &ph->blob;
 		break;
 	case FSAL_DIGEST_FILEID2:
                 fhs = FSAL_DIGEST_SIZE_FILEID2;
@@ -883,8 +895,8 @@ pxy_handle_to_key(struct fsal_obj_handle *obj_hdl,
 {
         struct pxy_obj_handle *ph =
                 container_of(obj_hdl, struct pxy_obj_handle, obj);
-	fh_desc->start = (caddr_t)ph->fh4.nfs_fh4_val;
-	fh_desc->len =  ph->fh4.nfs_fh4_len;;
+	fh_desc->start = (caddr_t)&ph->blob;
+	fh_desc->len =  ph->blob.len;
 }
 
 static fsal_status_t
@@ -958,9 +970,11 @@ pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
 
         if (n) {
                 n->fh4 = *fh;
-                n->fh4.nfs_fh4_val = (char *)(n+1);
+                n->fh4.nfs_fh4_val = n->blob.bytes;
                 memcpy(n->fh4.nfs_fh4_val, fh->nfs_fh4_val, fh->nfs_fh4_len);
                 n->obj.attributes = *attr;
+                n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
+                n->blob.type = attr->type;
                 if(fsal_obj_handle_init(&n->obj, &pxy_obj_ops, exp,
                                         attr->type)) {
                         free(n);
@@ -1038,3 +1052,168 @@ pxy_create_handle(struct fsal_export *exp_hdl,
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
+static void
+pxy_create_fsinfo_bitmap(uint32_t *pbitmap)
+{
+        bitmap4 bm = {.bitmap4_val = pbitmap, .bitmap4_len = 2};
+        uint32_t tmpattrlist[] = {
+                FATTR4_FILES_AVAIL,
+                FATTR4_FILES_FREE,
+                FATTR4_FILES_TOTAL,
+                FATTR4_SPACE_AVAIL,
+                FATTR4_SPACE_FREE,
+                FATTR4_SPACE_TOTAL
+        };
+        uint32_t attrlen = ARRAY_SIZE(tmpattrlist);
+
+        memset(pbitmap, 0, sizeof(uint32_t) * bm.bitmap4_len);
+
+        nfs4_list_to_bitmap4(&bm, &attrlen, tmpattrlist);
+}
+
+static int
+pxy_fattr_to_dynamicfsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
+                           const fattr4 * Fattr)
+{
+        int i;
+        /* For NFSv4.0 list cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+        uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];
+        uint32_t attrmasklen = 0;
+        const char *attrval = Fattr->attr_vals.attrlist4_val;
+
+        nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
+
+        memset((char *)pdynamicinfo, 0, sizeof(fsal_dynamicfsinfo_t));
+
+        for(i = 0; i < attrmasklen; i++) {
+                uint32_t atidx = attrmasklist[i];
+                uint64_t val;
+
+                switch (atidx) {
+                case FATTR4_FILES_AVAIL:
+                        memcpy((char *)&val, attrval, sizeof(val));
+                        attrval += sizeof(val);
+
+                        pdynamicinfo->avail_files = nfs_ntohl64(val);
+                        break;
+
+                case FATTR4_FILES_FREE:
+                        memcpy((char *)&val, attrval, sizeof(val));
+                        attrval += sizeof(val);
+
+                        pdynamicinfo->free_files = nfs_ntohl64(val);
+                        break;
+
+                case FATTR4_FILES_TOTAL:
+                        memcpy((char *)&val, attrval, sizeof(val));
+                        attrval += sizeof(val);
+
+                        pdynamicinfo->total_files = nfs_ntohl64(val);
+                        break;
+
+               case FATTR4_SPACE_AVAIL:
+                        memcpy((char *)&val, attrval, sizeof(val));
+                        attrval += sizeof(val);
+
+                        pdynamicinfo->avail_bytes = nfs_ntohl64(val);
+                        break;
+
+               case FATTR4_SPACE_FREE:
+                        memcpy((char *)&val, attrval, sizeof(val));
+                        attrval += sizeof(val);
+
+                        pdynamicinfo->free_bytes = nfs_ntohl64(val);
+                        break;
+
+               case FATTR4_SPACE_TOTAL:
+                        memcpy((char *)&val, attrval, sizeof(val));
+                        attrval += sizeof(val);
+
+                        pdynamicinfo->total_bytes = nfs_ntohl64(val);
+                        break;
+
+               default:
+                        LogWarn(COMPONENT_FSAL, 
+                                "Unexpected attribute %s(%d)",
+                                fattr4tab[atidx].name, atidx);
+                        return 0;
+               }
+        }
+
+        return 1;
+}
+
+fsal_status_t
+pxy_get_dynamic_info(struct fsal_export *exp_hdl,
+                     fsal_dynamicfsinfo_t *infop)
+{
+        int rc;
+        int opcnt = 0;
+        uint32_t bitmap_val[2];
+        uint32_t bitmap_res[2];
+
+#define FSAL_FSINFO_NB_OP_ALLOC 2
+        nfs_argop4 argoparray[FSAL_FSINFO_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_FSINFO_NB_OP_ALLOC];
+        GETATTR4resok *atok;
+        char fattr_blob[48]; /* 6 values, 8 bytes each */
+        struct fsal_obj_handle *obj;
+        struct pxy_obj_handle *ph;
+
+        if(!exp_hdl || !infop)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        pxy_create_fsinfo_bitmap(bitmap_val);
+        obj = exp_hdl->exp_entry->proot_handle;
+        ph = container_of(obj, struct pxy_obj_handle, obj);
+
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+        atok = &resoparray[opcnt].nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
+
+        atok->obj_attributes.attrmask.bitmap4_val = bitmap_res;
+        atok->obj_attributes.attrmask.bitmap4_len = 2;
+
+        atok->obj_attributes.attr_vals.attrlist4_val = fattr_blob;
+        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_blob);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+
+        rc = pxy_nfsv4_call(exp_hdl, opcnt, argoparray, resoparray);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        /* Use NFSv4 service function to build the FSAL_attr */
+        if(pxy_fattr_to_dynamicfsinfo(infop, &atok->obj_attributes) != 1)
+                ReturnCode(ERR_FSAL_INVAL, 0);
+
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+fsal_status_t
+pxy_extract_handle(struct fsal_export *exp_hdl,
+		   fsal_digesttype_t in_type,
+		   struct fsal_handle_desc *fh_desc)
+{
+        struct pxy_handle_blob *pxyblob;
+        size_t fh_size;
+
+        if( !fh_desc || !fh_desc->start)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        pxyblob = (struct pxy_handle_blob *)fh_desc->start;
+        fh_size = pxyblob->len;
+        if(in_type == FSAL_DIGEST_NFSV2) {
+                if(fh_desc->len < fh_size) {
+                        LogMajor(COMPONENT_FSAL,
+                                 "V2 size too small for handle.  should be %zd, got %zd",
+                                 fh_size, fh_desc->len);
+                        ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+                }
+        } else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+                LogMajor(COMPONENT_FSAL,
+                         "Size mismatch for handle.  should be %zd, got %zd",
+                         fh_size, fh_desc->len);
+                ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+        }
+        fh_desc->len = fh_size;
+	ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
