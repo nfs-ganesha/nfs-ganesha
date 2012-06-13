@@ -77,6 +77,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats);
 void TakeTokenFSCall();
 void ReleaseTokenFSCall();
 
+#if 0
 /**
  * Gets a fd from a handle 
  */
@@ -112,3 +113,4 @@ fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
 fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
                                   fsal_handle_t * p_handle, struct stat64 *buf);
 
+#endif

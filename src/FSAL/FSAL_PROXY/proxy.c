@@ -50,14 +50,14 @@ static proxyfs_specific_initinfo_t default_pxy_params = {
         .srv_recvsize = 32768, /* Default Buffer Send Size    */
         .keytab = "etc/krb5.keytab", /* Path to krb5 keytab file */
         .cred_lifetime = 86400,      /* 24h is a good default    */
-        #ifdef _HANDLE_MAPPING
+#ifdef _HANDLE_MAPPING
         .hdlmap_dbdir = "/var/ganesha/handlemap",
         .hdlmap_tmpdir = "/var/ganesha/tmp",
         .hdlmap_dbcount = 8,
         .hdlmap_hashsize = 103j
         .hdlmap_nb_entry_prealloc = 16384,
         .hdlmap_nb_db_op_prealloc = 1024,
-        #endif
+#endif
 };
 
 /* defined the set of attributes supported with POSIX */
@@ -165,6 +165,7 @@ pxy_key_to_param(const char *key, const char *val,
                                 val, key);
                         return 1;
                 }
+#ifdef _HANDLE_MAPPING
         } else if(!strcasecmp(key, "HandleMap_DB_Dir")) {
                 strncpy(init_info->hdlmap_dbdir, val, MAXPATHLEN);
         } else if(!strcasecmp(key, "HandleMap_Tmp_Dir")) {
@@ -177,6 +178,7 @@ pxy_key_to_param(const char *key, const char *val,
                 init_info->hdlmap_nb_entry_prealloc = (unsigned int)atoi(val);
         } else if(!strcasecmp(key, "HandleMap_Nb_DB_Operations_Prealloc")) {
                 init_info->hdlmap_nb_db_op_prealloc = (unsigned int)atoi(val);
+#endif
         } else {
                 LogCrit(COMPONENT_CONFIG,
                         "Unknown key: %s in %s", key, name);

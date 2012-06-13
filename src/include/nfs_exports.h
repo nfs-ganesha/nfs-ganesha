@@ -164,7 +164,6 @@ typedef struct exportlist__
 
   char FS_specific[MAXPATHLEN]; /* filesystem specific option string */
   char FS_tag[MAXPATHLEN];      /* filesystem "tag" string */
-  fsal_export_context_t FS_export_context;      /* the export context associated with this export entry */
 
   exportlist_access_type_t access_type; /* allowed operations for this export. Used by the older Access
                                          * list Access_Type export permissions scheme as well as the newer

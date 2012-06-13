@@ -34,10 +34,12 @@
 #endif
 
 #include "fsal.h"
+#include <FSAL/FSAL_VFS/fsal_handle_syscalls.h>
 #include <libgen.h>             /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/syscall.h>
 #include <mntent.h>
 #include "nlm_list.h"
 #include "fsal_internal.h"
@@ -477,7 +479,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int mnt_id = 0;
-	int mount_fd, dir_fd;
+	int mount_fd, dir_fd = -1;
 	struct stat stat;
 	mode_t unix_mode, create_mode = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;

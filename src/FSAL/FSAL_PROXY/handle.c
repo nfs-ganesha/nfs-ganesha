@@ -41,6 +41,8 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
+#define FSAL_PROXY_NFS_V4 4
+
 /* Use this to estimate storage requirements for fattr4 blob */
 struct pxy_fattr_storage {
         fattr4_type type;
@@ -407,7 +409,7 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
         nfs_resop4 resoparray[FSAL_LOOKUP_NB_OP_ALLOC];
         uint32_t bitmap_res[2];
         char fattr_blob[FATTR_BLOB_SZ];
-        char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
+        char padfilehandle[NFS4_FHSIZE];
         struct pxy_obj_handle *pxy_hdl;
 
         if(!handle)

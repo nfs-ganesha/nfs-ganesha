@@ -751,11 +751,6 @@ lru_thread(void *arg __attribute__((unused)))
                                 (lru = glist_first_entry(&LRU_1[lane].lru.q,
                                                          cache_inode_lru_t,
                                                          q))) {
-                              cache_inode_status_t cache_status
-                                   = CACHE_INODE_SUCCESS;
-                              cache_entry_t *entry
-                                   = container_of(lru, cache_entry_t, lru);
-
                               /* We currently hold the lane queue
                                  fragment mutex.  Due to lock
                                  ordering, we are forbidden from

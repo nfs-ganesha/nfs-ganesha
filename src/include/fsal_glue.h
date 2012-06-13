@@ -33,6 +33,8 @@
 #ifndef _FSAL_GLUE_H
 #define _FSAL_GLUE_H
 
+#error "This file is no longer in use and will be removed soon"
+
 #include "fsal_types.h"
 #include "fsal_glue_const.h"
 

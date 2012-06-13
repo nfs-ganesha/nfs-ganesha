@@ -1,6 +1,36 @@
 #ifndef _PXY_FSAL_METHODS_H
 #define _PXY_FSAL_METHODS_H
 
+typedef struct
+{
+  unsigned int retry_sleeptime;
+  unsigned int srv_addr;
+  unsigned int srv_prognum;
+  unsigned int srv_sendsize;
+  unsigned int srv_recvsize;
+  unsigned int srv_timeout;
+  unsigned short srv_port;
+  unsigned int use_privileged_client_port ;
+  char srv_proto[MAXNAMLEN];
+  char remote_principal[MAXNAMLEN];
+  char keytab[MAXPATHLEN];
+  unsigned int cred_lifetime;
+  unsigned int sec_type;
+  bool_t active_krb5;
+
+  /* initialization info for handle mapping */
+  int enable_handle_mapping;
+
+#ifdef _HANDLE_MAPPING
+  char hdlmap_dbdir[MAXPATHLEN];
+  char hdlmap_tmpdir[MAXPATHLEN];
+  unsigned int hdlmap_dbcount;
+  unsigned int hdlmap_hashsize;
+  unsigned int hdlmap_nb_entry_prealloc;
+  unsigned int hdlmap_nb_db_op_prealloc;
+#endif
+} proxyfs_specific_initinfo_t;
+
 struct pxy_fsal_module {
       struct fsal_module module;
       fsal_staticfsinfo_t fsinfo;

@@ -32,13 +32,11 @@ struct fsal_alloc_ops {
 	struct fsal_export *(*alloc_export)();
 	void (*free_export)(struct fsal_export *exp_hdl);
 	struct fsal_obj_handle *(*alloc_obj_handle)();
-	fsal_handle_t *(*obj_to_fsal_handle)(struct fsal_obj_handle *obj_hdl);
 	void (*free_obj_handle)(struct fsal_obj_handle *obj_hdl);
 	struct fsal_dirobj *(*alloc_dirobj)();
 /* dir obj to dir something TBD */
 	void (*free_dirobj)(struct fsal_dirobj *dir_hdl);
 	struct fsal_fileobj *(*alloc_fileobj)();
-	fsal_file_t *(*fileobj_to_file)(struct fsal_fileobj *file_hdl);
 	void (*free_fileobj)(struct fsal_fileobj * file_hdl);
 };
 
