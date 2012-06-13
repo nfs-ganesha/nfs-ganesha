@@ -63,11 +63,18 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
   u32 * attrfid = NULL ;
-  u16 * wnames_len ;
-  char * wnames_str ;
+  u16 * name_len ;
+  char * name_str ;
+  u64 attrsize = 0LL ;
 
   int rc = 0 ;
   u32 err = 0 ;
+
+  fsal_status_t fsal_status ; 
+  fsal_name_t name;
+
+  _9p_fid_t * pfid = NULL ;
+  _9p_fid_t * pxattrfid = NULL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -80,9 +87,9 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TXATTRWALK: tag=%u fid=%u attrfid=%u" ,
             (u32)*msgtag, *fid, *attrfid ) ;
 
-  _9p_getstr( cursor, wnames_len, wnames_str ) ;
+  _9p_getstr( cursor, name_len, name_str ) ;
   LogDebug( COMPONENT_9P, "TXATTRWALK (component): tag=%u fid=%u attrfid=%u nwnames=%.*s",
-            (u32)*msgtag, *fid, *attrfid, *wnames_len, wnames_str ) ;
+            (u32)*msgtag, *fid, *attrfid, *name_len, name_str ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
     {
@@ -97,19 +104,62 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
      return rc ;
    }
+ 
+  pfid = &preq9p->pconn->fids[*fid] ;
+  pxattrfid = &preq9p->pconn->fids[*attrfid] ;
 
+  /* Initiate xattr's fid by copying file's fid in it */
+  memcpy( (char *)pxattrfid, (char *)pfid, sizeof( _9p_fid_t ) ) ;
+
+  snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+  fsal_status = FSAL_GetXAttrIdByName( &pxattrfid->pentry->handle,
+                                       &name, 
+                                       &pxattrfid->fsal_op_context,
+                                       &pxattrfid->specdata.xattr.xattr_id);
+
+  if(FSAL_IS_ERROR(fsal_status))
+   {
+      err = _9p_tools_errno( cache_inode_error_convert(fsal_status) ) ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+   }
+
+  if( ( pxattrfid->specdata.xattr.xattr_content = Mem_Alloc( MAXNAMLEN ) ) == NULL ) 
+    {
+      err = ENOMEM ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+    }
+
+  fsal_status = FSAL_GetXAttrValueByName( &pxattrfid->pentry->handle,
+                                          &name, 
+                                          &pxattrfid->fsal_op_context,
+                                          pxattrfid->specdata.xattr.xattr_content, 
+                                          MAXNAMLEN, 
+                                          &attrsize );
+
+  if(FSAL_IS_ERROR(fsal_status))
+   {
+      err = _9p_tools_errno( cache_inode_error_convert(fsal_status) ) ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+   }
+
+  printf( "---> name=%s id=%u size=%llu val=#%s#\n", 
+          name.name, pxattrfid->specdata.xattr.xattr_id,
+          attrsize, pxattrfid->specdata.xattr.xattr_content ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RXATTRWALK ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  _9p_setvalue( cursor, 0LL, u64 ) ; /* No xattr for now */
+  _9p_setvalue( cursor, attrsize, u64 ) ; /* No xattr for now */
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RXATTRWALK: tag=%u fid=%u attrfid=%u nwnames=%.*s",
-            (u32)*msgtag, *fid, *attrfid,  *wnames_len, wnames_str ) ;
+  LogDebug( COMPONENT_9P, "RXATTRWALK: tag=%u fid=%u attrfid=%u name=%.*s size=%llu",
+            (u32)*msgtag, *fid, *attrfid,  *name_len, name_str, attrsize ) ;
 
   return 1 ;
 } /* _9p_xattrwalk */

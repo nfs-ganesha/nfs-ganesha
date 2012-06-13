@@ -113,7 +113,6 @@ int _9p_write( _9p_request_data_t * preq9p,
   if( pfid->specdata.xattr.xattr_content != NULL )
    { 
      snprintf( xattrval, MAXNAMLEN, "%.*s", *count, databuffer ) ;
-     printf( "-----> val = #%s#\n", xattrval ) ; 
 
      fsal_status = FSAL_SetXAttrValueById( &pfid->pentry->handle,
                                            pfid->specdata.xattr.xattr_id,
