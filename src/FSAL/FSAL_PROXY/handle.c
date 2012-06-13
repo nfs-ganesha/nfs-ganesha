@@ -398,6 +398,20 @@ pxy_nfsv4_call(struct fsal_export *exp, uint32_t cnt, nfs_argop4 *argoparray, nf
         return rc;
 }
 
+static GETATTR4resok *
+pxy_fill_getattr_reply(nfs_resop4 *resop, uint32_t *bitmap,
+                       char *blob, size_t blob_sz)
+{
+        GETATTR4resok *a = &resop->nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
+
+        a->obj_attributes.attrmask.bitmap4_val = bitmap;
+        a->obj_attributes.attrmask.bitmap4_len = 2;
+        a->obj_attributes.attr_vals.attrlist4_val = blob;
+        a->obj_attributes.attr_vals.attrlist4_len = blob_sz;
+
+        return a;
+}
+
 /*
  * NULL parent pointer is only used by lookup_path when it starts 
  * from the root handle and has its own export pointer, everybody
@@ -464,13 +478,10 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
         fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
         COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-        atok = &resoparray[opcnt].nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+        atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
 
-        atok->obj_attributes.attrmask.bitmap4_val = bitmap_res;
-        atok->obj_attributes.attrmask.bitmap4_len = 2;
-        atok->obj_attributes.attr_vals.attrlist4_val = fattr_blob;
-        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_blob);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
 
         fhok->object.nfs_fh4_val = (char *)padfilehandle;
         fhok->object.nfs_fh4_len = sizeof(padfilehandle);
@@ -693,12 +704,8 @@ pxy_getattrs_impl(struct fsal_export *exp,
 
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, *filehandle);
 
-        atok = &resoparray[opcnt].nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
-        atok->obj_attributes.attrmask.bitmap4_val = bitmap_res;
-        atok->obj_attributes.attrmask.bitmap4_len = 2;
-        atok->obj_attributes.attr_vals.attrlist4_val = fattr_blob;
-        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_blob);
-
+        atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
 
         rc = pxy_nfsv4_call(exp, opcnt, argoparray, resoparray);
@@ -778,12 +785,8 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 
         pxy_create_getattr_bitmap(bm_val);
 
-        atok = &resoparray[opcnt].nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
-        atok->obj_attributes.attrmask.bitmap4_val = bm_val;
-        atok->obj_attributes.attrmask.bitmap4_len = 2;
-        atok->obj_attributes.attr_vals.attrlist4_val = fattr_blob;
-        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_blob);
-
+        atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bm_val);
 
         rc = pxy_nfsv4_call(obj_hdl->export, opcnt, argoparray, resoparray);
@@ -840,7 +843,39 @@ static fsal_status_t
 pxy_unlink(struct fsal_obj_handle *dir_hdl,
 	   fsal_name_t *name)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        int opcnt = 0;
+        int rc;
+        uint32_t bitmap[2];
+        struct pxy_obj_handle *ph;
+#define FSAL_UNLINK_NB_OP_ALLOC 3
+        nfs_argop4 argoparray[FSAL_UNLINK_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_UNLINK_NB_OP_ALLOC];
+        uint32_t bitmap_res[2];
+        GETATTR4resok *atok;
+        char fattr_blob[FATTR_BLOB_SZ];
+        fsal_attrib_list_t dirattr;
+
+        if(!dir_hdl|| !name || !name->len)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        pxy_create_getattr_bitmap(bitmap);
+
+        ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+        COMPOUNDV4_ARG_ADD_OP_REMOVE(opcnt, argoparray, name);
+        
+        atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap);
+
+        rc = pxy_nfsv4_call(dir_hdl->export, opcnt, argoparray, resoparray);
+        if(rc != NFS4_OK)
+          return nfsstat4_to_fsal(rc);
+
+        if(nfs4_Fattr_To_FSAL_attr(&dirattr, &atok->obj_attributes) == NFS4_OK)
+                dir_hdl->attributes = dirattr;
+
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 static fsal_status_t 
@@ -1168,13 +1203,8 @@ pxy_get_dynamic_info(struct fsal_export *exp_hdl,
         ph = container_of(obj, struct pxy_obj_handle, obj);
 
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
-        atok = &resoparray[opcnt].nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
-
-        atok->obj_attributes.attrmask.bitmap4_val = bitmap_res;
-        atok->obj_attributes.attrmask.bitmap4_len = 2;
-
-        atok->obj_attributes.attr_vals.attrlist4_val = fattr_blob;
-        atok->obj_attributes.attr_vals.attrlist4_len = sizeof(fattr_blob);
+        atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
 
         rc = pxy_nfsv4_call(exp_hdl, opcnt, argoparray, resoparray);

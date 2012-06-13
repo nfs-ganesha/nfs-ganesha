@@ -214,11 +214,12 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                    \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_REMOVE( argcompound, inname )                                                    \
-do {                                                                                                           \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_REMOVE ;                \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opremove.target = inname ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                     \
+#define COMPOUNDV4_ARG_ADD_OP_REMOVE(opcnt, argarray, inname )               \
+do {                                                                         \
+  nfs_argop4 *op = argarray+opcnt; opcnt++;                                  \
+  op->argop = NFS4_OP_REMOVE ;                                               \
+  op->nfs_argop4_u.opremove.target.utf8string_val = inname->name ;           \
+  op->nfs_argop4_u.opremove.target.utf8string_len = inname->len ;            \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_RENAME( argcompound, inoldname, innewname )                                          \
