@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * ------------- 
  */
 
 /* Export-related methods */
@@ -37,13 +35,19 @@
 static fsal_status_t
 pxy_release(struct fsal_export *exp_hdl)
 {
-        ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
+        struct pxy_export *pxy_exp =
+                container_of(exp_hdl, struct pxy_export, exp);
 
-static fsal_status_t
-pxy_get_dynamic_info(struct fsal_export *exp_hdl,
-                     fsal_dynamicfsinfo_t *infop)
-{
+        pthread_mutex_lock(&exp_hdl->lock);
+        if(exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
+                pthread_mutex_unlock(&exp_hdl->lock);
+                ReturnCode(ERR_FSAL_INVAL, EBUSY);
+        }
+        fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
+        pthread_mutex_unlock(&exp_hdl->lock);
+
+        pthread_mutex_destroy(&exp_hdl->lock);
+        free(pxy_exp);
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -67,64 +71,73 @@ pxy_get_maxfilesize(struct fsal_export *exp_hdl)
 static fsal_size_t
 pxy_get_maxread(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_maxread(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_maxread(&pm->fsinfo);
 }
 
 static fsal_size_t
 pxy_get_maxwrite(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_maxwrite(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_maxwrite(&pm->fsinfo);
 }
 
 static fsal_count_t
 pxy_get_maxlink(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_maxlink(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_maxlink(&pm->fsinfo);
 }
 
 static fsal_mdsize_t
 pxy_get_maxnamelen(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_maxnamelen(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_maxnamelen(&pm->fsinfo);
 }
 
 static fsal_mdsize_t 
 pxy_get_maxpathlen(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_maxpathlen(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_maxpathlen(&pm->fsinfo);
 }
 
 static fsal_fhexptype_t
 pxy_fh_expire_type(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_fh_expire_type(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_fh_expire_type(&pm->fsinfo);
 }
 
 static fsal_time_t
 pxy_get_lease_time(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_lease_time(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_lease_time(&pm->fsinfo);
 }
 
 static fsal_aclsupp_t
 pxy_get_acl_support(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_acl_support(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_acl_support(&pm->fsinfo);
 }
 
 static fsal_attrib_mask_t
 pxy_get_supported_attrs(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_supported_attrs(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_supported_attrs(&pm->fsinfo);
 }
 
 static fsal_accessmode_t
@@ -138,23 +151,26 @@ pxy_get_umask(struct fsal_export *exp_hdl)
 static fsal_accessmode_t
 pxy_get_xattr_access_rights(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_xattr_access_rights(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_xattr_access_rights(&pm->fsinfo);
 }
 
 #ifdef _USE_FSALMDS
 static fattr4_fs_layout_types 
 pxy_get_layout_types(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_fs_layout_types(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_fs_layout_types(&pm->fsinfo);
 }
 
 static fsal_size_t 
 pxy_layout_blksize(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info = NULL;
-	return fsal_layout_blksize(info);
+        struct pxy_fsal_module *pm =
+                container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
+	return fsal_layout_blksize(&pm->fsinfo);
 }
 #endif
 
@@ -186,14 +202,6 @@ pxy_set_quota(struct fsal_export *exp_hdl,
 	      fsal_quota_t * presquota)
 {
 	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
-}
-
-static fsal_status_t
-pxy_extract_handle(struct fsal_export *exp_hdl,
-		   fsal_digesttype_t in_type,
-		   struct fsal_handle_desc *fh_desc)
-{
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t 
