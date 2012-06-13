@@ -82,7 +82,7 @@ int _9p_write( _9p_request_data_t * preq9p,
   caddr_t databuffer = NULL ;
 
   fsal_status_t fsal_status ; 
-  char xattrval[MAXNAMLEN] ;
+  char xattrval[XATTR_BUFFERSIZE] ;
 
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
@@ -112,7 +112,7 @@ int _9p_write( _9p_request_data_t * preq9p,
 
   if( pfid->specdata.xattr.xattr_content != NULL )
    { 
-     snprintf( xattrval, MAXNAMLEN, "%.*s", *count, databuffer ) ;
+     snprintf( xattrval, XATTR_BUFFERSIZE, "%.*s", *count, databuffer ) ;
 
      fsal_status = FSAL_SetXAttrValueById( &pfid->pentry->handle,
                                            pfid->specdata.xattr.xattr_id,

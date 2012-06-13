@@ -124,7 +124,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
       return rc ;
    }
 
-  if( ( pxattrfid->specdata.xattr.xattr_content = Mem_Alloc( MAXNAMLEN ) ) == NULL ) 
+  if( ( pxattrfid->specdata.xattr.xattr_content = Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL ) 
     {
       err = ENOMEM ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
@@ -135,7 +135,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
                                           &name, 
                                           &pxattrfid->fsal_op_context,
                                           pxattrfid->specdata.xattr.xattr_content, 
-                                          MAXNAMLEN, 
+                                          XATTR_BUFFERSIZE, 
                                           &attrsize );
 
   if(FSAL_IS_ERROR(fsal_status))

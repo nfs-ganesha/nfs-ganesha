@@ -102,20 +102,11 @@ int _9p_read( _9p_request_data_t * preq9p,
   size = *count ;
   if( pfid->specdata.xattr.xattr_content != NULL )
     {
-      fsal_status = FSAL_GetXAttrValueById( &pfid->pentry->handle,
-                                            pfid->specdata.xattr.xattr_id,
-                                            &pfid->fsal_op_context,
-                                            databuffer, 
-                                            XATTR_BUFFERSIZE, 
-                                            &read_size);
+      /* Copy the value cached during xattrwalk */
+      memcpy( databuffer, pfid->specdata.xattr.xattr_content, *count ) ;
+      printf( "#%s# #%s#\n", databuffer,  pfid->specdata.xattr.xattr_content ) ;
 
-     if(FSAL_IS_ERROR(fsal_status))
-       {
-         err = _9p_tools_errno( cache_inode_error_convert(fsal_status) ) ;
-         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-         return rc ;
-       }
-      outcount = (u32)read_size ;
+      outcount = (u32)*count ;
     }
   else
     {

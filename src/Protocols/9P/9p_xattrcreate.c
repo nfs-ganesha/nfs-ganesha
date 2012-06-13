@@ -99,11 +99,15 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
 
   /* Create the xattr at the FSAL level and cache result */
 <<<<<<< HEAD
+<<<<<<< HEAD
   if(  ( ( pfid->specdata.xattr.xattr_name = Mem_Alloc( MAXNAMLEN ) ) == NULL ) || 
        ( ( pfid->specdata.xattr.xattr_name = Mem_Alloc( MAXNAMLEN ) ) == NULL ) )
 =======
   if( ( pfid->specdata.xattr.xattr_content = Mem_Alloc( MAXNAMLEN ) ) == NULL ) 
 >>>>>>> 05243ac... 9P: fix bug when writing xattr value (badly formed buffer)
+=======
+  if( ( pfid->specdata.xattr.xattr_content = Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL ) 
+>>>>>>> d75627a... 9P: stuff added in TREAD to deal with xattr
     {
       err = ENOMEM ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
