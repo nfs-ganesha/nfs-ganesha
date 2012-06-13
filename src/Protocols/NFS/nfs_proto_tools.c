@@ -2273,7 +2273,7 @@ seqid4 nfs4_NextSeqId(seqid4 seqid)
  *
  */
 
-void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval)
+void nfs4_bitmap4_to_list(const bitmap4 * b, uint_t * plen, uint32_t * pval)
 {
   uint_t i = 0;
   uint_t val = 0;
