@@ -34,6 +34,8 @@
  *
  */
 
+#error "This file is no longer in use, it will be removed soon"
+
 #ifndef _FSAL_TYPES__SPECIFIC_H
 #define _FSAL_TYPES__SPECIFIC_H
 

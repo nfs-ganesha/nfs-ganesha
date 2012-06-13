@@ -46,6 +46,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
+#include <FSAL/FSAL_VFS/fsal_handle_syscalls.h>
 #include "vfs_methods.h"
 
 /*

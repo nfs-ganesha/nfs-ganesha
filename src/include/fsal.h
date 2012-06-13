@@ -99,43 +99,6 @@ extern int __build_bug_on_failed;
 #define FSAL_CLEAR_MASK( _attrib_mask_ ) \
                     ( (_attrib_mask_) = 0LL )
 
-/******************************************************
- *              Initialization tools.
- ******************************************************/
-
-/** This macro initializes init info behaviors and values.
- *  Examples :
- *  FSAL_SET_INIT_INFO( parameter.fs_common_info ,
- *                      maxfilesize              ,
- *                      FSAL_INIT_MAX_LIMIT      ,
- *                      0x00000000FFFFFFFFLL    );
- *
- *  FSAL_SET_INIT_INFO( parameter.fs_common_info ,
- *                      linksupport              ,
- *                      FSAL_INIT_FORCEVALUE     ,
- *                      FALSE                   );
- *
- */
-
-#define FSAL_SET_INIT_INFO( _common_info_struct_ , _field_name_ ,   \
-                                    _field_behavior_ , _value_ ) do \
-           {                                                        \
-             _common_info_struct_.behaviors._field_name_ = _field_behavior_ ;\
-             if ( _field_behavior_ != FSAL_INIT_FS_DEFAULT )        \
-               _common_info_struct_.values._field_name_ = _value_ ; \
-           } while (0)
-
-/** This macro initializes the behavior for one parameter
- *  to default filesystem value.
- *  Examples :
- *  FSAL_SET_INIT_DEFAULT( parameter.fs_common_info , case_insensitive );
- */
-#define FSAL_SET_INIT_DEFAULT( _common_info_struct_ , _field_name_ ) \
-        do {                                                         \
-             _common_info_struct_.behaviors._field_name_             \
-                = FSAL_INIT_FS_DEFAULT ;                             \
-           } while (0)
-
 /** This macro sets the cookie to its initial value
  */
 #define FSAL_SET_COOKIE_BEGINNING( cookie ) memset( (char *)&cookie, 0, sizeof( fsal_cookie_t ) )
@@ -150,54 +113,6 @@ extern int __build_bug_on_failed;
     memcpy( (char *)__poffset, (char *)&(__cookie.data), sizeof( uint64_t ) ) 
 
 #define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(popctx->export_context)
-
-/**
- * Those routines set the default parameters
- * for FSAL init structure.
- * \return ERR_FSAL_NO_ERROR (no error) ,
- *         ERR_FSAL_FAULT (null pointer given as parameter),
- *         ERR_FSAL_SERVERFAULT (unexpected error)
- */
-fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter);
-
-fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter);
-
-fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter);
-
-/**
- * FSAL_load_FSAL_parameter_from_conf,
- * FSAL_load_FS_common_parameter_from_conf,
- * FSAL_load_FS_specific_parameter_from_conf:
- *
- * Those functions initialize the FSAL init parameter
- * structure from a configuration structure.
- *
- * \param in_config (input):
- *        Structure that represents the parsed configuration file.
- * \param out_parameter (ouput)
- *        FSAL initialization structure filled according
- *        to the configuration file given as parameter.
- *
- * \return ERR_FSAL_NO_ERROR (no error) ,
- *         ERR_FSAL_NOENT (missing a mandatory stanza in config file),
- *         ERR_FSAL_INVAL (invalid parameter),
- *         ERR_FSAL_SERVERFAULT (unexpected error)
- *         ERR_FSAL_FAULT (null pointer given as parameter),
- */
-fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                 fsal_parameter_t * out_parameter);
-
-fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter);
-fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter);
-
-/**
- *  FSAL_Init:
- *  Initializes Filesystem abstraction layer.
- */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
-    );
 
 /******************************************************
  *              FSAL Returns macros
@@ -324,25 +239,12 @@ fsal_status_t FSAL_name2buffdesc(fsal_name_t * in_name, fsal_buffdesc_t * out_bu
 #define snprintAttrs(target, tgt_size, p_attrs) \
   snprintmem(target,tgt_size,(caddr_t)p_attrs,sizeof(fsal_attrib_list_t))
 
-#define sscanHandle(p_handle,str_source) \
-  sscanmem( (caddr_t)p_handle,sizeof(fsal_handle_t),str_source )
-
-#define sscanCookie(p_cookie,str_source) \
-  sscanmem( (caddr_t)p_cookie,sizeof(fsal_cookie_t),str_source )
-
 #define sscanAttrs(p_attrs,str_source) \
   sscanmem( (caddr_t)p_attrs,sizeof(fsal_attrib_list_t),str_source )
 
 /******************************************************
  *              FSAL handles management.
  ******************************************************/
-
-/** Compare 2 handles.
- *  \return - 0 if handle are the same
- *          - A non null value else.
- */
-int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
-                   fsal_status_t * status);
 
 /** @TODO new fsal call to be added to new api
  */

@@ -360,7 +360,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                                                      unsigned int *p_nb_too_young,
                                                      unsigned int *p_nb_errors,
                                                      unsigned int *p_nb_orphans,
-                                                     fsal_op_context_t * pcontext,
+                                                     void * pcontext,
                                                      cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_check_threshold(char *datacache_path,

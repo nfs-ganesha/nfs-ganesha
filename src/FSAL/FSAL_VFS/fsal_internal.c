@@ -277,6 +277,7 @@ void ReleaseTokenFSCall()
 
 }
 
+#if 0
 fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
                                       fsal_handle_t * p_handle, int *pfd, int oflags)
 {
@@ -415,4 +416,4 @@ fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,   /* 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_setattrs_symlink */
 
-
+#endif

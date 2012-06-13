@@ -324,8 +324,6 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3,
   file_handle_v3_t *file_handle;
   struct fsal_handle_desc fh_desc;
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
-
   /* reset the buffer to be used as handle */
   pfh3->data.data_len = sizeof(struct alloc_file_handle_v3);
   memset(pfh3->data.data_val, 0, pfh3->data.data_len);
@@ -339,6 +337,8 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3,
 						&fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;
+
+  print_buff(COMPONENT_FILEHANDLE, fh_desc.start, fh_desc.len);
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   file_handle->fs_len = fh_desc.len;   /* set the actual size */
@@ -374,8 +374,6 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2,
   file_handle_v2_t *file_handle;
   struct fsal_handle_desc fh_desc;
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
-
   /* zero-ification of the buffer to be used as handle */
   memset(pfh2, 0, sizeof(struct alloc_file_handle_v2));
   file_handle = (file_handle_v2_t *)pfh2;
@@ -395,6 +393,8 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2,
                fsal_status.major, fsal_status.minor, __func__ ) ;
     return 0;
    }
+
+  print_buff(COMPONENT_FILEHANDLE, fh_desc.start, fh_desc.len);
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   /* keep track of the export id */

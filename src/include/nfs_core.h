@@ -364,7 +364,6 @@ typedef struct nfs_param__
   hash_parameter_t nlm_owner_hash_param;
 #endif
   nfs_cache_layers_parameter_t cache_layers_param;
-  fsal_parameter_t fsal_param;
   external_tools_parameter_t extern_param;
 
   /* list of exports declared in config file */

@@ -284,39 +284,6 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #define FSAL_NAME_INITIALIZER {"",0}
 #define FSAL_PATH_INITIALIZER {"",0}
 
-#ifdef _USE_GHOSTFS
-#include "FSAL/FSAL_GHOST_FS/fsal_types.h"
-#elif defined(_USE_HPSS)
-#include "FSAL/FSAL_HPSS/fsal_types.h"
-#elif defined ( _USE_PROXY )
-#include "FSAL/FSAL_PROXY/fsal_types.h"
-#elif defined ( _USE_POSIX )
-#include "FSAL/FSAL_POSIX/fsal_types.h"
-#include "FSAL/FSAL_POSIX/posixdb.h"
-#elif defined ( _USE_SNMP )
-#include "FSAL/FSAL_SNMP/fsal_types.h"
-#elif defined ( _USE_FUSE )
-#include "FSAL/FSAL_FUSELIKE/fsal_types.h"
-#elif defined ( _USE_LUSTRE )
-#include "FSAL/FSAL_LUSTRE/fsal_types.h"
-#elif defined ( _USE_XFS )
-#include "FSAL/FSAL_XFS/fsal_types.h"
-#elif defined ( _USE_GPFS )
-#include "FSAL/FSAL_GPFS/fsal_types.h"
-#elif defined ( _USE_VFS )
-#include "FSAL/FSAL_VFS/fsal_types.h"
-#elif defined ( _USE_ZFS )
-#include "FSAL/FSAL_ZFS/fsal_types.h"
-#elif defined ( _USE_CEPH )
-#include "FSAL/FSAL_CEPH/fsal_types.h"
-#elif defined ( _USE_TEMPLATE ) /* <- place here your own define */
-#include "FSAL/FSAL_TEMPLATE/fsal_types.h"
-#else                           /* no _USE_<filesystem> flag ! */
-#error "No filesystem compilation flag set for the FSAL."
-#endif /* _USE_GHOSTFS */
-
-#include "fsal_glue.h"
-
 /*---------  end of FS dependant definitions ---------*/
 
 /** filesystem identifier */
@@ -700,20 +667,6 @@ typedef fsal_uint_t fsal_accessflags_t;
 
 typedef unsigned int lru_actions_t;
 
-/** directory entry */
-
-typedef struct fsal_dirent__
-{
-
-  struct fsal_obj_handle *handle;   /**< directory entry handle. */
-  fsal_name_t name;                 /**< directory entry name.   */
-  fsal_cookie_t cookie;             /**< cookie for reading dir
-                                         from this entry         */
-  fsal_attrib_list_t attributes;    /**< entry attributes        */
-  struct fsal_dirent__ *nextentry;  /**< pointer to the next entry*/
-
-} fsal_dirent_t;
-
 /** FSAL_open behavior. */
 
 typedef fsal_ushort_t fsal_openflags_t;
@@ -928,17 +881,6 @@ typedef struct fsal_init_info__
 {
   unsigned int max_fs_calls;  /**< max number of FS calls. 0 = infinite */
 } fsal_init_info_t;
-
-/** FSAL_Init parameter. */
-
-typedef struct fsal_parameter__
-{
-
-  fsal_init_info_t fsal_info;               /**< fsal configuration info  */
-  struct fsal_staticfsinfo_t fs_info;       /**< filesystem common info   */
-  fs_specific_initinfo_t fs_specific_info;  /**< filesystem dependant info*/
-
-} fsal_parameter_t;
 
 /** Statistics about the use of the Filesystem abstraction layer. */
 
