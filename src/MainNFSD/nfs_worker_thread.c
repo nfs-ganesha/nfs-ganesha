@@ -751,10 +751,7 @@ int nfs_rpc_get_args(nfs_request_data_t *preqnfs, const nfs_function_desc_t *pfu
  *
  * This is the regular RPC dispatcher that every RPC server should include.
  *
- * @param preq [INOUT] pointer to NFS request
- * @param pworker_data [INOUT] worker data
- *
- * @return nothing (void function)
+ * @param[in,out] preq NFS request
  *
  */
 static void nfs_rpc_execute(request_data_t *preq,
@@ -1961,15 +1958,14 @@ process_status_t
 nfs_worker_process_rpc_requests(nfs_worker_data_t *pmydata,
                                 request_data_t *nfsreq)
 {
-  enum xprt_stat stat;
+  enum xprt_stat stat = XPRT_IDLE;
   struct rpc_msg *pmsg;
   struct svc_req *preq;
   const nfs_function_desc_t *pfuncdesc;
   bool_t no_dispatch = TRUE, recv_status;
   process_status_t rc = PROCESS_DONE;
   SVCXPRT *xprt;
-  bool locked;
-
+  bool locked = FALSE;
 again:
   /*
    * Receive from socket.
@@ -2073,7 +2069,7 @@ again:
 
       /* Validate the rpc request as being a valid program, version,
        * and proc. If not, report the error. Otherwise, execute the
-       * function. */
+       * funtion. */
       if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
           stat = cond_multi_dispatch(pmydata, nfsreq, &locked);
 
@@ -2345,7 +2341,7 @@ void *worker_thread(void *IndexArg)
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");
       if (nfsreq->r_u.nfs)
-          pool_free(request_data_pool, nfsreq->r_u.nfs);
+        pool_free(request_data_pool, nfsreq->r_u.nfs);
       pool_free(request_pool, nfsreq);
 
       if(pmydata->passcounter > nfs_param.worker_param.nb_before_gc)
