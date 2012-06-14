@@ -68,11 +68,11 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
   cache_inode_fsal_data_t *event_fsal_data;
   fsal_up_event_t *pevent;
 
-  tmp_handlep = Mem_Alloc(sizeof(fsal_handle_t));
+  tmp_handlep = gsh_malloc(sizeof(fsal_handle_t));
   if (tmp_handlep == NULL)
     {
       LogCrit(COMPONENT_FSAL, "Error: Could not malloc ... ENOMEM");
-      Return(ERR_FSAL_NOMEM, Mem_Errno, INDEX_FSAL_UP_getevents);
+      Return(ERR_FSAL_NOMEM, ENOMEM, INDEX_FSAL_UP_getevents);
     }
 
   pfsal_data.fh_desc.start = (caddr_t)tmp_handlep;
@@ -103,7 +103,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
     {
       LogCrit(COMPONENT_FSAL,
         "Error: OPENHANDLE_INODE_UPDATE failed. rc %d, errno %d", rc, errno);
-      Mem_Free(tmp_handlep);
+      gsh_free(tmp_handlep);
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_UP_getevents);
     }
 
@@ -132,11 +132,9 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
   /* Here is where we decide what type of event this is
    * ... open,close,read,...,invalidate? */
   pthread_mutex_lock(pupebcontext->event_pool_lock);
-  if (*pevents == NULL)
-    *pevents = pool_alloc(pupebcontext->event_pool, NULL);
+  pevent = pool_alloc(pupebcontext->event_pool, NULL);
   pthread_mutex_unlock(pupebcontext->event_pool_lock);
 
-  memset(pevent, 0, sizeof(fsal_up_event_t));
   event_fsal_data = &pevent->event_data.event_context.fsal_data;
   event_fsal_data->fh_desc.start = (caddr_t)tmp_handlep;
   event_fsal_data->fh_desc.len = sizeof(*tmp_handlep);
