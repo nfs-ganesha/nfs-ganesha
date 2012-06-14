@@ -494,6 +494,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                       pthread_rwlock_unlock(&pentry_lookup->state_lock);
                       cause2 = " cache_inode_access";
                       res_OPEN4.status = status4;
+                      cache_inode_put(pentry_lookup, data->pclient);
                       goto out;
                     }
 
@@ -504,6 +505,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                     {
                       cause2 = (const char *)text;
                       res_OPEN4.status = status4;
+                      cache_inode_put(pentry_lookup, data->pclient);
                       goto out;
                     }
 
@@ -515,6 +517,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                       res_OPEN4.status = NFS4ERR_RESOURCE;
                       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
                       cause2 = " (allocation of bitmap failed)";
+                      cache_inode_put(pentry_lookup, data->pclient);
                       goto out;
                     }
 
@@ -661,6 +664,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 res_OPEN4.status = NFS4ERR_EXIST; /* File already exists */
 
               cause2 = "GUARDED4";
+              cache_inode_put(pentry_lookup, data->pclient);
               goto out;
             }
 
@@ -690,13 +694,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 }
               else
                 {
-                  /* If this point is reached, then the file already
-                     exists, cache_status == CACHE_INODE_ENTRY_EXISTS
-                     and pentry_newfile == NULL This probably means
-                     EXCLUSIVE4 mode is used and verifier
-                     matches. pentry_newfile is then set to
-                     pentry_lookup */
-                  pentry_newfile = pentry_lookup;
+                  /* If this point is reached, then something has
+                     gone wrong.  The only way cache_inode_create()
+                     returns NULL with CACHE_INODE_ENTRY_EXISTS
+                     is if the entry->type != REGULAR_FILE. */
+                  res_OPEN4.status = NFS4ERR_EXIST;
+                  cause2 = " not a REGULAR file";
+                  goto out;
                 }
             }
           cache_status = CACHE_INODE_SUCCESS;
@@ -712,19 +716,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 {
                   res_OPEN4.status = nfs4_Errno(cache_status);
                   cause2 = " cache_inode_setattr";
+                  cache_inode_put(pentry_newfile, data->pclient);
                   goto out;
                 }
             }
-
-          /* Set the openflags variable */
-          if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
-            openflags |= FSAL_O_RDONLY;
-          if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_READ)
-            openflags |= FSAL_O_WRONLY;
-          if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
-            openflags = FSAL_O_RDWR;
-          if(arg_OPEN4.share_access != 0)
-            openflags = FSAL_O_RDWR;    /** @todo : FSF - I don't think we can just ignore this : Something better later */
 
           pthread_rwlock_wrlock(&pentry_newfile->state_lock);
           status4 = nfs4_do_open(op, data, pentry_newfile, pentry_parent,
@@ -734,6 +729,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
             {
               cause2 = text;
               res_OPEN4.status = status4;
+              cache_inode_put(pentry_newfile, data->pclient);
               goto out;
             }
 
@@ -759,6 +755,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           /* OPEN4 is to be done on a file */
           if(pentry_newfile->type != REGULAR_FILE)
             {
+              cache_inode_put(pentry_newfile, data->pclient);
               if(pentry_newfile->type == DIRECTORY)
                 {
                   res_OPEN4.status = NFS4ERR_ISDIR;
@@ -777,6 +774,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
             {
               cause2 = " cache_inode_access";
               res_OPEN4.status = status4;
+              cache_inode_put(pentry_newfile, data->pclient);
               goto out;
             }
 
@@ -825,6 +823,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       cause2 = " (OPEN4_SHARE_DENY_WRITE)";
                       pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                      cache_inode_put(pentry_newfile, data->pclient);
                       goto out;
                     }
                 }
@@ -843,6 +842,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   cause2 = " (OPEN4_SHARE_ACCESS_READ)";
                   pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                  cache_inode_put(pentry_newfile, data->pclient);
                   goto out;
                 }
 
@@ -854,6 +854,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   cause2 = " (OPEN4_SHARE_ACCESS_WRITE)";
                   pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                  cache_inode_put(pentry_newfile, data->pclient);
                   goto out;
                 }
             }
@@ -865,6 +866,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
             {
               cause2 = text;
               res_OPEN4.status = status4;
+              cache_inode_put(pentry_newfile, data->pclient);
               goto out;
             }
           break;
@@ -1310,6 +1312,7 @@ nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
         /* Building a new fh */
         if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data)) {
                 *cause2 = " (nfs4_FSALToFhandle failed)";
+                cache_inode_put(pentry, data->pclient);
                 return NFS4ERR_SERVERFAULT;
         }
 
