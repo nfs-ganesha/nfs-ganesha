@@ -412,6 +412,23 @@ pxy_fill_getattr_reply(nfs_resop4 *resop, uint32_t *bitmap,
         return a;
 }
 
+static fsal_status_t
+pxy_make_object(struct fsal_export *export, fattr4 *obj_attributes,
+                const nfs_fh4 *fh, struct fsal_obj_handle **handle)
+{
+        fsal_attrib_list_t attributes;
+        struct pxy_obj_handle *pxy_hdl;
+
+        if(nfs4_Fattr_To_FSAL_attr(&attributes, obj_attributes) != NFS4_OK)
+                ReturnCode(ERR_FSAL_INVAL, 0);
+
+        pxy_hdl = pxy_alloc_handle(export, fh, &attributes);
+        if (pxy_hdl == NULL)
+                ReturnCode(ERR_FSAL_FAULT, 0);
+        *handle = &pxy_hdl->obj;
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
 /*
  * NULL parent pointer is only used by lookup_path when it starts 
  * from the root handle and has its own export pointer, everybody
@@ -427,7 +444,6 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
         int rc;
         uint32_t opcnt = 0;
         uint32_t bitmap_val[2];
-        fsal_attrib_list_t attributes;
         GETATTR4resok *atok;
         GETFH4resok *fhok;
 #define FSAL_LOOKUP_NB_OP_ALLOC 4
@@ -436,7 +452,6 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
         uint32_t bitmap_res[2];
         char fattr_blob[FATTR_BLOB_SZ];
         char padfilehandle[NFS4_FHSIZE];
-        struct pxy_obj_handle *pxy_hdl;
 
         if(!handle)
                 ReturnCode(ERR_FSAL_INVAL, 0);
@@ -490,15 +505,8 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
         if(rc != NFS4_OK)
                 return nfsstat4_to_fsal(rc);
 
-        if(nfs4_Fattr_To_FSAL_attr(&attributes,
-                                   &atok->obj_attributes) != NFS4_OK)
-                ReturnCode(ERR_FSAL_INVAL, 0);
-
-        pxy_hdl = pxy_alloc_handle(export, &fhok->object, &attributes);
-        if (pxy_hdl == NULL)
-                ReturnCode(ERR_FSAL_FAULT, 0);
-        *handle = &pxy_hdl->obj;
-        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        return pxy_make_object(export, &atok->obj_attributes, 
+                               &fhok->object, handle);
 }
 
 static fsal_status_t
@@ -526,7 +534,65 @@ pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 	  fsal_attrib_list_t *attrib,
 	  struct fsal_obj_handle **handle)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        int rc;
+        int opcnt = 0;
+        uint32_t bitmap_res[2];
+        uint32_t bitmap_mkdir[2];
+        uint32_t bitmap_val[2];
+        fattr4 input_attr;
+        bitmap4 bmap = {.bitmap4_val = bitmap_val, .bitmap4_len = 2};
+        char padfilehandle[NFS4_FHSIZE];
+        struct pxy_obj_handle *ph;
+        char fattr_blob[FATTR_BLOB_SZ];
+        GETATTR4resok *atok;
+        GETFH4resok *fhok;
+        fsal_status_t st;
+
+#define FSAL_MKDIR_NB_OP_ALLOC 4
+        nfs_argop4 argoparray[FSAL_MKDIR_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_MKDIR_NB_OP_ALLOC];
+
+        if(!dir_hdl || !name || !name->len || !handle || !attrib)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL); 
+
+        /*
+         * The caller gives us partial attributes which include mode and owner
+         * and expects the full attributes back at the end of the call.
+         */
+        attrib->asked_attributes &= FSAL_ATTR_MODE|FSAL_ATTR_OWNER|FSAL_ATTR_GROUP;
+        pxy_create_settable_bitmap(attrib, &bmap);
+
+        if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
+                                  NULL, &bmap) == -1)
+                ReturnCode(ERR_FSAL_INVAL, -1);
+
+        ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+        resoparray[opcnt].nfs_resop4_u.opcreate.CREATE4res_u.resok4.attrset.bitmap4_val = bitmap_mkdir;
+        resoparray[opcnt].nfs_resop4_u.opcreate.CREATE4res_u.resok4.attrset.bitmap4_len = 2;
+        COMPOUNDV4_ARG_ADD_OP_MKDIR(opcnt, argoparray, name, input_attr);
+
+        fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
+        fhok->object.nfs_fh4_val = padfilehandle;
+        fhok->object.nfs_fh4_len = sizeof(padfilehandle);
+        COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
+
+        pxy_create_getattr_bitmap(bitmap_val);
+        atok = pxy_fill_getattr_reply(resoparray + opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+
+        rc = pxy_nfsv4_call(dir_hdl->export, opcnt, argoparray, resoparray);
+        nfs4_Fattr_Free(&input_attr);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        st = pxy_make_object(dir_hdl->export, &atok->obj_attributes,
+                             &fhok->object, handle);
+        if(!FSAL_IS_ERROR(st))
+                *attrib = (*handle)->attributes;
+        return st;
 }
 
 static fsal_status_t

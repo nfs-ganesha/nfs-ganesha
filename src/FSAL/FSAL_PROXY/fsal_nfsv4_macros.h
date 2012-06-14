@@ -188,13 +188,14 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                                              \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_MKDIR( argcompound, inname, inattrs )                                                  \
-do {                                                                                                                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_CREATE ;                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objtype.type = NF4DIR ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objname = inname ;      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.createattrs = inattrs ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                           \
+#define COMPOUNDV4_ARG_ADD_OP_MKDIR(opcnt, argarray, inname, inattrs )      \
+do {                                                                        \
+  nfs_argop4 *op = argarray + opcnt; opcnt++;                               \
+  op->argop = NFS4_OP_CREATE ;                                              \
+  op->nfs_argop4_u.opcreate.objtype.type = NF4DIR ;                         \
+  op->nfs_argop4_u.opcreate.objname.utf8string_val = inname->name ;         \
+  op->nfs_argop4_u.opcreate.objname.utf8string_len = inname->len ;          \
+  op->nfs_argop4_u.opcreate.createattrs = inattrs ;                         \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_SYMLINK( argcompound, inname, incontent, inattrs )                                                          \
