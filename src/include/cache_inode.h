@@ -151,18 +151,6 @@ typedef struct cache_inode_parameter__
 
 extern cache_inode_parameter_t cache_inode_params;
 /**
- * Representation of an open file associated with a cache_entry.
- */
-
-typedef struct cache_inode_opened_file__
-{
-  fsal_file_t fd; /*< FSAL specific object representing a given file
-                      open. */
-  fsal_openflags_t openflags; /*< Flags showing whether the file is
-                                  open for reading, writing, or both. */
-} cache_inode_opened_file_t;
-
-/**
  * Indicate whether this is a read or write operation, for
  * cache_inode_rdwr.
  */
@@ -611,8 +599,7 @@ cache_inode_status_t cache_inode_access(cache_entry_t *entry,
 					struct user_cred *creds,
                                         cache_inode_status_t *status);
 
-fsal_file_t *cache_inode_fd(cache_entry_t *entry);
-
+bool_t is_open(cache_entry_t *pentry);
 bool_t is_open_for_read(cache_entry_t *entry);
 bool_t is_open_for_write(cache_entry_t *entry);
 
