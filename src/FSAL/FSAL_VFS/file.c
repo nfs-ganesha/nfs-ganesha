@@ -33,6 +33,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "FSAL/access_check.h"
@@ -42,6 +43,9 @@
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
 
+/** vfs_open
+ * called with appropriate locks taken at the cache inode level
+ */
 
 fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		       fsal_openflags_t openflags)
@@ -52,18 +56,10 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	pthread_mutex_lock(&obj_hdl->lock);
-	if(myself->fd >= 0 && !myself->lock_status) {
-		if(openflags != myself->openflags) { /* make smarter */
-			retval = close(myself->fd);
-			myself->fd = -1;
-			if(retval) {
-				retval = errno;
-				fsal_error = posix2fsal_error(errno);
-				goto out;
-			}
-		}
-	}
+
+	assert(myself->u.file.fd == -1
+	       && myself->u.file.openflags == FSAL_O_CLOSED);
+
 	mntfd = vfs_get_root_fd(obj_hdl->export);
 	fd = open_by_handle_at(mntfd, myself->handle, (O_RDWR));
 	if(fd < 0) {
@@ -71,19 +67,28 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		retval = errno;
 		goto out;
 	}
-	myself->fd = fd;
-	myself->openflags = openflags;
-	myself->lock_status = 0; /* no locks on new files */
+	myself->u.file.fd = fd;
+	myself->u.file.openflags = openflags;
+	myself->u.file.lock_status = 0; /* no locks on new files */
 
 out:
-	pthread_mutex_unlock(&obj_hdl->lock);
 	ReturnCode(fsal_error, retval);	
 }
 
+/* vfs_status
+ * Let the caller peek into the file's open/close state.
+ */
+
+fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl)
+{
+	struct vfs_fsal_obj_handle *myself;
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	return myself->u.file.openflags;
+}
+
 /* vfs_read
- * NOTE: there are potential races here because we are sharing fd state
- * with other threads.  This is not only for concurrent access but for
- * interleaved access with FSAK_SEEK_CUR.
+ * concurrency (locks) is managed in cache_inode_*
  */
 
 fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
@@ -100,35 +105,25 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-/** @TODO this is racy as is write and commit.  need to get/put the fd across
- *  these calls.  Same will apply to things like getattrs if they share the fd
- *  at some point.  lower priority for now...
- */
-	if(myself->fd < 0 ||
-	   !(myself->openflags&(FSAL_O_RDONLY|FSAL_O_RDWR))) {
-		fsal_status_t open_status;
 
-		open_status = vfs_open(obj_hdl, FSAL_O_RDONLY);
-		if(FSAL_IS_ERROR(open_status)) {
-			return open_status;
-		}
-	}
+	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
+
 	if(seek_descriptor == NULL) {
-		nb_read = read(myself->fd, buffer, buffer_size);
+		nb_read = read(myself->u.file.fd, buffer, buffer_size);
 	} else {
 		if(seek_descriptor->whence == FSAL_SEEK_SET) {
-			nb_read = pread(myself->fd,
+			nb_read = pread(myself->u.file.fd,
 					buffer,
 					buffer_size,
 					seek_descriptor->offset);
 		} else {
 			int whence = seek_descriptor->whence ? SEEK_CUR : SEEK_END;
 
-			offset = lseek(myself->fd,
+			offset = lseek(myself->u.file.fd,
 				       seek_descriptor->offset,
 				       whence);
 			if(offset != -1) {
-				nb_read = read(myself->fd, buffer, buffer_size);
+				nb_read = read(myself->u.file.fd, buffer, buffer_size);
 			}
 		}
 	}
@@ -144,13 +139,7 @@ out:
 }
 
 /* vfs_write
- * NOTE: same concurrency issues apply here
- * In addition, switching uids here with setfsuid could cause problems
- * if the open is done with one uid and the write is done with another
- * in a later transaction.  In order to deal with that scenario, an open
- * followed by the I/O followed by a close would be required.  This is
- * both a performance issue because we are no longer safely cacheing fds
- * but it can break POSIX locks.
+ * concurrency (locks) is managed in cache_inode_*
  */
 
 fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
@@ -166,31 +155,25 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->fd < 0 ||
-	   !(myself->openflags&FSAL_O_RDWR)) {
-		fsal_status_t open_status;
 
-		open_status = vfs_open(obj_hdl, FSAL_O_RDWR);
-		if(FSAL_IS_ERROR(open_status)) {
-			return open_status;
-		}
-	}
+	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
+
 	if(seek_descriptor == NULL) {
-		nb_written = write(myself->fd, buffer, buffer_size);
+		nb_written = write(myself->u.file.fd, buffer, buffer_size);
 	} else {
 		if(seek_descriptor->whence == FSAL_SEEK_SET) {
-			nb_written = pwrite(myself->fd,
+			nb_written = pwrite(myself->u.file.fd,
 					buffer,
 					buffer_size,
 					seek_descriptor->offset);
 		} else {
 			int whence = seek_descriptor->whence ? SEEK_CUR : SEEK_END;
 
-			offset = lseek(myself->fd,
+			offset = lseek(myself->u.file.fd,
 				       seek_descriptor->offset,
 				       whence);
 			if(offset != -1) {
-				nb_written = write(myself->fd, buffer, buffer_size);
+				nb_written = write(myself->u.file.fd, buffer, buffer_size);
 			}
 		}
 	}
@@ -218,9 +201,10 @@ fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->fd >= 0) {
-		retval = fsync(myself->fd);
-	}
+
+	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
+
+	retval = fsync(myself->u.file.fd);
 	if(retval == -1) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
@@ -247,7 +231,7 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->fd < 0) {
+	if(myself->u.file.fd < 0 || myself->u.file.openflags == FSAL_O_CLOSED) {
 		LogDebug(COMPONENT_FSAL,
 			 "Attempting to lock with no file descriptor open");
 		fsal_error = ERR_FSAL_FAULT;
@@ -300,12 +284,12 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	lock_args.l_whence = SEEK_SET;
 
 	errno = 0;
-	retval = fcntl(myself->fd, fcntl_comm, &lock_args);
+	retval = fcntl(myself->u.file.fd, fcntl_comm, &lock_args);
 	if(retval && lock_op == FSAL_OP_LOCK) {
 		retval = errno;
 		if(conflicting_lock != NULL) {
 			fcntl_comm = F_GETLK;
-			retval = fcntl(myself->fd,
+			retval = fcntl(myself->u.file.fd,
 				       fcntl_comm,
 				       &lock_args);
 			if(retval) {
@@ -338,7 +322,7 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			conflicting_lock->lock_type = FSAL_NO_LOCK;
 		}
 	}
-	myself->lock_status = 1;  /* what is status on failure path? */
+	myself->u.file.lock_status = 1;  /* what is status on failure path? */
 out:
 	ReturnCode(fsal_error, retval);	
 }
@@ -371,18 +355,19 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	pthread_mutex_lock(&obj_hdl->lock);
-	if(myself->fd >= 0 && !myself->lock_status) {
-		retval = close(myself->fd);
-		if(retval < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-		}
-		myself->fd = -1;
-		myself->lock_status = 0;
-		myself->openflags = 0;
+
+	assert(myself->u.file.fd >= 0
+	       && myself->u.file.openflags != FSAL_O_CLOSED
+	       && !myself->u.file.lock_status);
+
+	retval = close(myself->u.file.fd);
+	if(retval < 0) {
+		retval = errno;
+		fsal_error = posix2fsal_error(retval);
 	}
-	pthread_mutex_unlock(&obj_hdl->lock);
+	myself->u.file.fd = -1;
+	myself->u.file.lock_status = 0;
+	myself->u.file.openflags = FSAL_O_CLOSED;
 	ReturnCode(fsal_error, retval);	
 }
 
@@ -400,11 +385,11 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->fd >= 0 && !(myself->lock_status)) {
-		retval = close(myself->fd);
-		myself->fd = -1;
-		myself->lock_status = 0;
-		myself->openflags = 0;
+	if(myself->u.file.fd >= 0 && !(myself->u.file.lock_status)) {
+		retval = close(myself->u.file.fd);
+		myself->u.file.fd = -1;
+		myself->u.file.lock_status = 0;
+		myself->u.file.openflags = FSAL_O_CLOSED;
 	}
 	if(retval == -1) {
 		retval = errno;

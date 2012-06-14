@@ -36,19 +36,28 @@ struct vfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
 	struct file_handle *handle;
 	/* everything here down is a candidate for a space saving union */
-	int fd;
-	fsal_openflags_t openflags;
-	unsigned char *link_content;
-	int link_size;
-	uint32_t lock_status; /* != 0, leave alone! locks in play */
-	struct file_handle *sock_dir;
-	char *sock_name;
+	union {
+		struct {
+			int fd;
+			fsal_openflags_t openflags;
+			uint32_t lock_status; /* != 0, locks in play */
+		} file;
+		struct {
+			unsigned char *link_content;
+			int link_size;
+		} symlink;
+		struct {
+			struct file_handle *sock_dir;
+			char *sock_name;
+		} sock;
+	} u;
 };
 
 
 	/* I/O management */
 fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		       fsal_openflags_t openflags);
+fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 		       fsal_seek_t * seek_descriptor,
 		       size_t buffer_size,

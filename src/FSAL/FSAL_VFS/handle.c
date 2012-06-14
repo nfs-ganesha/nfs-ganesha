@@ -101,31 +101,34 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	memcpy(hdl->handle, fh,
 	       sizeof(struct file_handle) + fh->handle_bytes);
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
-	hdl->fd = -1;  /* no open on this yet */
-	if(hdl->obj_handle.type == SYMBOLIC_LINK
+	if(hdl->obj_handle.type == REGULAR_FILE) {
+		hdl->u.file.fd = -1;  /* no open on this yet */
+		hdl->u.file.openflags = FSAL_O_CLOSED;
+		hdl->u.file.lock_status = 0;
+	} else if(hdl->obj_handle.type == SYMBOLIC_LINK
 	   && link_content != NULL) {
 		size_t len = strlen(link_content) + 1;
 
-		hdl->link_content = malloc(len);
-		if(hdl->link_content == NULL) {
+		hdl->u.symlink.link_content = malloc(len);
+		if(hdl->u.symlink.link_content == NULL) {
 			goto spcerr;
 		}
-		memcpy(hdl->link_content, link_content, len);
-		hdl->link_size = len;
+		memcpy(hdl->u.symlink.link_content, link_content, len);
+		hdl->u.symlink.link_size = len;
 	} else if(hdl->obj_handle.type == SOCKET_FILE
 		  && dir_fh != NULL
 		  && sock_name != NULL) {
-		hdl->sock_dir = malloc(sizeof(struct file_handle)
+		hdl->u.sock.sock_dir = malloc(sizeof(struct file_handle)
 				       + dir_fh->handle_bytes);
-		if(hdl->sock_dir == NULL)
+		if(hdl->u.sock.sock_dir == NULL)
 			goto spcerr;
-		memcpy(hdl->sock_dir,
+		memcpy(hdl->u.sock.sock_dir,
 		       dir_fh,
 		       sizeof(struct file_handle) + dir_fh->handle_bytes);
-		hdl->sock_name = malloc(strlen(sock_name) + 1);
-		if(hdl->sock_name == NULL)
+		hdl->u.sock.sock_name = malloc(strlen(sock_name) + 1);
+		if(hdl->u.sock.sock_name == NULL)
 			goto spcerr;
-		strcpy(hdl->sock_name, sock_name);
+		strcpy(hdl->u.sock.sock_name, sock_name);
 	}
 	hdl->obj_handle.export = exp_hdl;
 	hdl->obj_handle.attributes.asked_attributes
@@ -133,12 +136,8 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	hdl->obj_handle.attributes.supported_attributes
 		= hdl->obj_handle.attributes.asked_attributes;
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
-	if(FSAL_IS_ERROR(st)) {
-		if(hdl->link_content != NULL)
-			free(hdl->link_content);
-		free(hdl);  /* elvis has left the building */
-		return NULL;
-	}		
+	if(FSAL_IS_ERROR(st))
+		goto spcerr;
 	hdl->obj_handle.refs = 1;  /* we start out with a reference */
 	hdl->obj_handle.ops = &obj_ops;
 	init_glist(&hdl->obj_handle.handles);
@@ -161,12 +160,15 @@ errout:
 	pthread_mutex_unlock(&hdl->obj_handle.lock);
 	pthread_mutex_destroy(&hdl->obj_handle.lock);
 spcerr:
-	if(hdl->link_content != NULL)
-		free(hdl->link_content);
-	if(hdl->sock_name != NULL)
-		free(hdl->sock_name);
-	if(hdl->sock_dir != NULL)
-		free(hdl->sock_dir);
+	if(hdl->obj_handle.type == SYMBOLIC_LINK) {
+		if(hdl->u.symlink.link_content != NULL)
+			free(hdl->u.symlink.link_content);
+	} else if(hdl->obj_handle.type == SOCKET_FILE) {
+		if(hdl->u.sock.sock_name != NULL)
+			free(hdl->u.sock.sock_name);
+		if(hdl->u.sock.sock_dir != NULL)
+			free(hdl->u.sock.sock_dir);
+	}
 	free(hdl);  /* elvis has left the building */
 	return NULL;
 }
@@ -733,10 +735,10 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		ssize_t retlink;
 		char link_buff[FSAL_MAX_PATH_LEN];
 
-		if(myself->link_content != NULL) {
-			free(myself->link_content);
-			myself->link_content = NULL;
-			myself->link_size = 0;
+		if(myself->u.symlink.link_content != NULL) {
+			free(myself->u.symlink.link_content);
+			myself->u.symlink.link_content = NULL;
+			myself->u.symlink.link_size = 0;
 		}
 		mntfd = vfs_get_root_fd(obj_hdl->export);
 		fd = open_by_handle_at(mntfd, myself->handle, (O_PATH|O_NOACCESS));
@@ -754,25 +756,26 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		}
 		close(fd);
 
-		myself->link_content = malloc(retlink + 1);
-		if(myself->link_content == NULL) {
+		myself->u.symlink.link_content = malloc(retlink + 1);
+		if(myself->u.symlink.link_content == NULL) {
 			fsal_error = ERR_FSAL_NOMEM;
 			goto out;
 		}
-		memcpy(myself->link_content, link_buff, retlink);
-		myself->link_content[retlink] = '\0';
-		myself->link_size = retlink + 1;
+		memcpy(myself->u.symlink.link_content, link_buff, retlink);
+		myself->u.symlink.link_content[retlink] = '\0';
+		myself->u.symlink.link_size = retlink + 1;
 	}
-	if(myself->link_content == NULL || *link_len <= myself->link_size) {
+	if(myself->u.symlink.link_content == NULL
+	   || *link_len <= myself->u.symlink.link_size) {
 		fsal_error = ERR_FSAL_FAULT; /* probably a better error?? */
 		goto out;
 	}
 	memcpy(link_content,
-	       myself->link_content,
-	       myself->link_size);
+	       myself->u.symlink.link_content,
+	       myself->u.symlink.link_size);
 
 out:
-	*link_len = myself->link_size;
+	*link_len = myself->u.symlink.link_size;
 	ReturnCode(fsal_error, retval);	
 }
 
@@ -1004,13 +1007,13 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	mntfd = vfs_get_root_fd(obj_hdl->export);
 	if(obj_hdl->type == SOCKET_FILE) {
 		fd = open_by_handle_at(mntfd,
-				       myself->sock_dir,
+				       myself->u.sock.sock_dir,
 				       (O_PATH|O_NOACCESS));
 		if(fd < 0) {
 			goto errout;
 		}
 		retval = fstatat(fd,
-				 myself->sock_name,
+				 myself->u.sock.sock_name,
 				 &stat,
 				 AT_SYMLINK_NOFOLLOW);
 		if(retval < 0) {
@@ -1098,7 +1101,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 	if(obj_hdl->type == SOCKET_FILE) {
 		fd = open_by_handle_at(mntfd,
-				       myself->sock_dir,
+				       myself->u.sock.sock_dir,
 				       (O_PATH|O_NOACCESS));
 		if(fd < 0) {
 			retval = errno;
@@ -1109,7 +1112,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			goto out;
 		}
 		retval = fstatat(fd,
-				 myself->sock_name,
+				 myself->u.sock.sock_name,
 				 &stat,
 				 AT_SYMLINK_NOFOLLOW);
 	} else {
@@ -1139,7 +1142,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		if(!S_ISLNK(stat.st_mode)) {
 			if(obj_hdl->type == SOCKET_FILE)
 				retval = fchmodat(fd,
-						  myself->sock_name,
+						  myself->u.sock.sock_name,
 						  fsal2unix_mode(attrs->mode), 0);
 			else
 				retval = fchmod(fd, fsal2unix_mode(attrs->mode));
@@ -1160,7 +1163,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 
 		if(obj_hdl->type == SOCKET_FILE)
 			retval = fchownat(fd,
-					  myself->sock_name,
+					  myself->u.sock.sock_name,
 					  user,
 					  group,
 					  AT_SYMLINK_NOFOLLOW);
@@ -1190,7 +1193,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		timebuf[1].tv_usec = 0;
 		if(obj_hdl->type == SOCKET_FILE)
 			retval = futimesat(fd,
-					   myself->sock_name,
+					   myself->u.sock.sock_name,
 					   timebuf);
 		else
 			retval = futimes(fd, timebuf);
@@ -1254,6 +1257,10 @@ static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
 	int fd, mount_fd;
 	int retval = 0;
 
+	if(obj_hdl->type != REGULAR_FILE) {
+		fsal_error = ERR_FSAL_INVAL;
+		goto errout;
+	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mount_fd = vfs_get_root_fd(obj_hdl->export);
 	fd = open_by_handle_at(mount_fd, myself->handle, O_PATH|O_RDWR);
@@ -1425,32 +1432,31 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	pthread_mutex_lock(&obj_hdl->lock);
 	obj_hdl->refs--;  /* subtract the reference when we were created */
-	if(obj_hdl->refs != 0 || myself->lock_status) {
+	if(obj_hdl->refs != 0 || (obj_hdl->type == REGULAR_FILE
+				  && (myself->u.file.lock_status != 0
+				      || myself->u.file.fd >=0
+				      || myself->u.file.openflags != FSAL_O_CLOSED))) {
 		pthread_mutex_unlock(&obj_hdl->lock);
 		retval = obj_hdl->refs > 0 ? EBUSY : EINVAL;
 		LogCrit(COMPONENT_FSAL,
-			"Tried to release busy handle, hdl = 0x%p->refs = %d, lock = %d",
-			obj_hdl, obj_hdl->refs, myself->lock_status);
+			"Tried to release busy handle, "
+			"hdl = 0x%p->refs = %d, fd = %d, openflags = 0x%x, lock = %d",
+			obj_hdl, obj_hdl->refs,
+			myself->u.file.fd, myself->u.file.openflags,
+			myself->u.file.lock_status);
 		ReturnCode(posix2fsal_error(retval), retval);
-	}
-	if(myself->fd >= 0) {
-		retval = close(myself->fd);
-		if(retval < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-		}
 	}
 	fsal_detach_handle(exp, &obj_hdl->handles);
 	pthread_mutex_unlock(&obj_hdl->lock);
 	pthread_mutex_destroy(&obj_hdl->lock);
 	myself->obj_handle.ops = NULL; /*poison myself */
 	myself->obj_handle.export = NULL;
-	if(myself->link_content != NULL)
-		free(myself->link_content);
-	if(myself->sock_name != NULL)
-		free(myself->sock_name);
-	if(myself->sock_dir != NULL)
-		free(myself->sock_dir);
+	if(myself->u.symlink.link_content != NULL)
+		free(myself->u.symlink.link_content);
+	if(myself->u.sock.sock_name != NULL)
+		free(myself->u.sock.sock_name);
+	if(myself->u.sock.sock_dir != NULL)
+		free(myself->u.sock.sock_dir);
 	free(myself);
 	ReturnCode(fsal_error, 0);
 }
@@ -1474,6 +1480,7 @@ static struct fsal_obj_ops obj_ops = {
 	.unlink = file_unlink,
 	.truncate = file_truncate,
 	.open = vfs_open,
+	.status = vfs_status,
 	.read = vfs_read,
 	.write = vfs_write,
 	.commit = vfs_commit,

@@ -246,6 +246,7 @@ struct fsal_obj_ops {
 	/* I/O management */
 	fsal_status_t (*open)(struct fsal_obj_handle *obj_hdl,
 			      fsal_openflags_t openflags);
+	fsal_openflags_t (*status)(struct fsal_obj_handle *obj_hdl);
 	fsal_status_t (*read)(struct fsal_obj_handle *obj_hdl,
 			      fsal_seek_t * seek_descriptor,
 			      size_t buffer_size,
