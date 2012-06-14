@@ -875,6 +875,9 @@ fsal_status_t VFSFSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,  /* IN */
     ReturnStatus(st, INDEX_FSAL_SetXAttrValue);
 
   len = strnlen((char *)buffer_addr, buffer_size);
+
+  printf( "VFSFSAL_SetXAttrValue size=%llu len=%llu\n", buffer_size, len ) ;
+
   TakeTokenFSCall();
   if(len == 0)
     rc = fsetxattr(fd, xattr_name->name, "", 1, create ? XATTR_CREATE : XATTR_REPLACE);
