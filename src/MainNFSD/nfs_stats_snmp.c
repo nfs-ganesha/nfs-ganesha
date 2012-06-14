@@ -41,6 +41,9 @@ static int config_ok = 0;
 buddy_stats_t global_buddy_stat;
 #endif
 
+/** @TODO this needs to be re-thought to properly handle new api and multiple dynamic
+ *  loaded fsal modules
+ */
 int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_parameter)
 {
   int err;
@@ -84,7 +87,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
         {
           LogCrit(COMPONENT_CONFIG,
                   "SNMP_ADM: ERROR reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_FS_SPECIFIC);
+                  var_index, /* CONF_LABEL_FS_SPECIFIC */ "loaded FSAL");
           return err;
         }
 
@@ -178,7 +181,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
         {
           LogCrit(COMPONENT_CONFIG,
                   "SNMP_ADM LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-                  key_name, CONF_LABEL_FS_SPECIFIC);
+                  key_name, /* CONF_LABEL_FS_SPECIFIC */ "loaded FSAL");
           return EINVAL;
         }
     }
