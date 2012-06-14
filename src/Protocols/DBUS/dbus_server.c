@@ -205,7 +205,6 @@ void gsh_dbus_pkgshutdown(void)
 {
     struct avltree_node *node, *onode;
     ganesha_dbus_handler_t *handler;
-    int code = 0;
 
     LogDebug(COMPONENT_DBUS, "shutdown");
 
@@ -216,7 +215,7 @@ void gsh_dbus_pkgshutdown(void)
         if (onode) {
             handler = avltree_container_of(onode, ganesha_dbus_handler_t,
                                            node_k);
-            code = dbus_bus_release_name(thread_state.dbus_conn, handler->name,
+            dbus_bus_release_name(thread_state.dbus_conn, handler->name,
                                          &thread_state.dbus_err);
             if (dbus_error_is_set(&thread_state.dbus_err)) { 
                 LogCrit(COMPONENT_DBUS, "err releasing name (%s, %s)",
@@ -230,7 +229,7 @@ void gsh_dbus_pkgshutdown(void)
     if (onode) {
         handler = avltree_container_of(onode, ganesha_dbus_handler_t,
                                        node_k);
-        code = dbus_bus_release_name(thread_state.dbus_conn, handler->name,
+        dbus_bus_release_name(thread_state.dbus_conn, handler->name,
                                      &thread_state.dbus_err);
         if (dbus_error_is_set(&thread_state.dbus_err)) { 
             LogCrit(COMPONENT_DBUS, "err releasing name (%s, %s)",
@@ -254,17 +253,6 @@ void *gsh_dbus_thread(void *arg)
     DBusMessage* msg;
 
     SetNameFunction("gsh_dbus_thread");
- 
-     /* Initialize BuddyMalloc */
-#ifndef _NO_BUDDY_SYSTEM
-    if ((BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS) {
-        /* Failed init */
-        LogFatal(COMPONENT_DBUS,
-                 "Memory manager could not be initialized");
-    }
-    LogFullDebug(COMPONENT_DBUS,
-                 "Memory manager successfully initialized");
-#endif
 
     if (! thread_state.dbus_conn) {
         LogCrit(COMPONENT_DBUS, "DBUS not initialized, service thread "
