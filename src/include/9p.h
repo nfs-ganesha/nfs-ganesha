@@ -283,7 +283,11 @@ typedef struct _9p_fid__
   union 
     { 
        u32      iounit ;
-       caddr_t  xattr_content ;
+       struct _9p_xattr_desc 
+        {  
+          char *   xattr_name ;
+          caddr_t  xattr_content ;
+        } xattr ;
     } specdata ;
 } _9p_fid_t ;
 
