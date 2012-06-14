@@ -226,12 +226,14 @@ do {                                                                         \
   op->nfs_argop4_u.opremove.target.utf8string_len = inname->len ;            \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_RENAME( argcompound, inoldname, innewname )                                          \
-do {                                                                                                               \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_RENAME ;                    \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.oprename.oldname = inoldname ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.oprename.newname = innewname ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                         \
+#define COMPOUNDV4_ARG_ADD_OP_RENAME(opcnt, argarray, inoldname, innewname)  \
+do {                                                                         \
+  nfs_argop4 *op = argarray+opcnt; opcnt++;                                  \
+  op->argop = NFS4_OP_RENAME ;                                               \
+  op->nfs_argop4_u.oprename.oldname.utf8string_val = inoldname->name ;       \
+  op->nfs_argop4_u.oprename.oldname.utf8string_len = inoldname->len ;        \
+  op->nfs_argop4_u.oprename.newname.utf8string_val = innewname->name ;       \
+  op->nfs_argop4_u.oprename.newname.utf8string_len = innewname->len ;        \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_READLINK(opcnt, argarray )                     \

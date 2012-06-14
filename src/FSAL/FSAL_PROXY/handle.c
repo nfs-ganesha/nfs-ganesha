@@ -855,7 +855,27 @@ pxy_rename(struct fsal_obj_handle *olddir_hdl,
 	   struct fsal_obj_handle *newdir_hdl,
 	   fsal_name_t *new_name)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        int rc;
+        int opcnt = 0;
+#define FSAL_RENAME_NB_OP_ALLOC 4
+        nfs_argop4 argoparray[FSAL_RENAME_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_RENAME_NB_OP_ALLOC];
+        struct pxy_obj_handle *src;
+        struct pxy_obj_handle *tgt;
+
+        if(!olddir_hdl || !newdir_hdl || !old_name || !old_name->len ||
+           !new_name || !new_name->len)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        src = container_of(olddir_hdl, struct pxy_obj_handle, obj);
+        tgt = container_of(newdir_hdl, struct pxy_obj_handle, obj);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, src->fh4);
+        COMPOUNDV4_ARG_ADD_OP_SAVEFH(opcnt, argoparray);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, tgt->fh4);
+        COMPOUNDV4_ARG_ADD_OP_RENAME(opcnt, argoparray, old_name, new_name);
+
+        rc = pxy_nfsv4_call(olddir_hdl->export, opcnt, argoparray, resoparray);
+        return nfsstat4_to_fsal(rc);
 }
 
 static fsal_status_t
