@@ -1029,7 +1029,18 @@ static fsal_status_t
 pxy_truncate(struct fsal_obj_handle *obj_hdl,
 	     fsal_size_t length)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        fsal_attrib_list_t size;
+
+        if(!obj_hdl)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        if(obj_hdl->type != REGULAR_FILE)
+                ReturnCode(ERR_FSAL_INVAL, EINVAL);
+
+        size.asked_attributes = FSAL_ATTR_SIZE;
+        size.filesize = length;
+        
+        return pxy_setattrs(obj_hdl, &size);
 }
 
 static fsal_status_t
