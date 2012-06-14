@@ -198,14 +198,16 @@ do {                                                                        \
   op->nfs_argop4_u.opcreate.createattrs = inattrs ;                         \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_SYMLINK( argcompound, inname, incontent, inattrs )                                                          \
-do {                                                                                                                                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_CREATE ;                                           \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objtype.type = NF4LNK ;                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objtype.createtype4_u.linkdata = incontent ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objname = inname ;                           \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.createattrs = inattrs ;                      \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                \
+#define COMPOUNDV4_ARG_ADD_OP_SYMLINK(opcnt, args, inname, incontent, inattrs)\
+do {                                                                          \
+  nfs_argop4 *op = args + opcnt; opcnt++;                                 \
+  op->argop = NFS4_OP_CREATE ;                                                \
+  op->nfs_argop4_u.opcreate.objtype.type = NF4LNK ;                           \
+  op->nfs_argop4_u.opcreate.objtype.createtype4_u.linkdata.utf8string_val = incontent->path ;      \
+  op->nfs_argop4_u.opcreate.objtype.createtype4_u.linkdata.utf8string_len = incontent->len ;      \
+  op->nfs_argop4_u.opcreate.objname.utf8string_val = inname->name;            \
+  op->nfs_argop4_u.opcreate.objname.utf8string_len = inname->len;             \
+  op->nfs_argop4_u.opcreate.createattrs = inattrs ;                           \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_LINK(opcnt, argarray, inname )                 \
@@ -232,10 +234,10 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                         \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_READLINK( argcompound )                                             \
-do {                                                                                              \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_READLINK ; \
-  argcompound.argarray.argarray_len += 1 ;                                                        \
+#define COMPOUNDV4_ARG_ADD_OP_READLINK(opcnt, argarray )                     \
+do {                                                                         \
+  argarray[opcnt].argop = NFS4_OP_READLINK ;                                 \
+  opcnt++;                                                                   \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_SAVEFH(opcnt, argarray )                       \

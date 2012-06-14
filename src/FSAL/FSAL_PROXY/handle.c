@@ -613,7 +613,64 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
 	    fsal_attrib_list_t *attrib,
 	    struct fsal_obj_handle **handle)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        int rc;
+        int opcnt = 0;
+        uint32_t bitmap_res[2];
+        uint32_t bitmap_val[2];
+        uint32_t bitmap_create[2];
+        fattr4 input_attr;
+        bitmap4 bmap = { .bitmap4_val = bitmap_val, .bitmap4_len = 2 };
+        char padfilehandle[NFS4_FHSIZE];
+        char fattr_blob[FATTR_BLOB_SZ];
+#define FSAL_SYMLINK_NB_OP_ALLOC 4
+        nfs_argop4 argoparray[FSAL_SYMLINK_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_SYMLINK_NB_OP_ALLOC];
+        GETATTR4resok *atok;
+        GETFH4resok *fhok;
+        fsal_status_t st;
+        struct pxy_obj_handle *ph;
+
+        if(!dir_hdl || !name || !name->len || !link_path || !link_path->len ||
+           !attrib || !handle || !(attrib->asked_attributes & FSAL_ATTR_MODE))
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        /* Tests if symlinking is allowed by configuration. */
+        if( !dir_hdl->export->ops->fs_supports(dir_hdl->export,
+                                               symlink_support))
+                ReturnCode(ERR_FSAL_NOTSUPP, ENOTSUP);
+
+        attrib->asked_attributes = FSAL_ATTR_MODE;
+        pxy_create_settable_bitmap(attrib, &bmap);
+        if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
+                                  NULL, &bmap) == -1)
+                ReturnCode(ERR_FSAL_INVAL, -1);
+
+        ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+        resoparray[opcnt].nfs_resop4_u.opcreate.CREATE4res_u.resok4.attrset.bitmap4_val = bitmap_create;
+        resoparray[opcnt].nfs_resop4_u.opcreate.CREATE4res_u.resok4.attrset.bitmap4_len = 2;
+        COMPOUNDV4_ARG_ADD_OP_SYMLINK(opcnt, argoparray, name, link_path, input_attr);
+
+        fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
+        fhok->object.nfs_fh4_val = padfilehandle;
+        fhok->object.nfs_fh4_len = sizeof(padfilehandle);
+        COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
+
+        pxy_create_getattr_bitmap(bitmap_val);
+        atok = pxy_fill_getattr_reply(resoparray + opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+
+        rc = pxy_nfsv4_call(dir_hdl->export, opcnt, argoparray, resoparray);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        st = pxy_make_object(dir_hdl->export, &atok->obj_attributes,
+                             &fhok->object, handle);
+        if(!FSAL_IS_ERROR(st))
+                *attrib = (*handle)->attributes;
+        return st;
 }
 
 static fsal_status_t
@@ -622,7 +679,32 @@ pxy_readlink(struct fsal_obj_handle *obj_hdl,
 	     uint32_t *link_len,
 	     fsal_boolean_t refresh)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        int rc;
+        int opcnt = 0;
+        struct pxy_obj_handle *ph;
+#define FSAL_READLINK_NB_OP_ALLOC 2
+        nfs_argop4 argoparray[FSAL_READLINK_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_READLINK_NB_OP_ALLOC];
+        READLINK4resok *rlok;
+
+        if(!obj_hdl || !link_content || !link_len)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+        rlok = &resoparray[opcnt].nfs_resop4_u.opreadlink.READLINK4res_u.resok4;
+        rlok->link.utf8string_val = link_content;
+        rlok->link.utf8string_len = *link_len;
+        COMPOUNDV4_ARG_ADD_OP_READLINK(opcnt, argoparray);
+
+        rc = pxy_nfsv4_call(obj_hdl->export, opcnt, argoparray, resoparray);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+        
+        rlok->link.utf8string_val[rlok->link.utf8string_len] = '\0';
+        *link_len = rlok->link.utf8string_len;
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 static fsal_status_t

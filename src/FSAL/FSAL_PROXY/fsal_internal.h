@@ -250,20 +250,6 @@ fsal_status_t PROXYFSAL_rename(fsal_handle_t * p_old_parentdir_handle,     /* IN
 void PROXYFSAL_get_stats(fsal_statistics_t * stats,     /* OUT */
                          fsal_boolean_t reset /* IN */ );
 
-fsal_status_t PROXYFSAL_readlink(fsal_handle_t * p_linkhandle,     /* IN */
-                                 fsal_op_context_t * p_context,    /* IN */
-                                 fsal_path_t * p_link_content,  /* OUT */
-                                 fsal_attrib_list_t *
-                                 p_link_attributes /* [ IN/OUT ] */ );
-
-fsal_status_t PROXYFSAL_symlink(fsal_handle_t * p_parent_directory_handle, /* IN */
-                                fsal_name_t * p_linkname,       /* IN */
-                                fsal_path_t * p_linkcontent,    /* IN */
-                                fsal_op_context_t * p_context,     /* IN */
-                                fsal_accessmode_t accessmode,   /* IN (ignored) */
-                                fsal_handle_t * p_link_handle,     /* OUT */
-                                fsal_attrib_list_t * p_link_attributes /* [ IN/OUT ] */ );
-
 int PROXYFSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
                         fsal_status_t * status);
 
