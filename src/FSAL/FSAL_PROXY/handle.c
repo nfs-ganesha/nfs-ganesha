@@ -630,7 +630,32 @@ pxy_link(struct fsal_obj_handle *obj_hdl,
 	 struct fsal_obj_handle *destdir_hdl,
 	 fsal_name_t *name)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        int rc;
+        struct pxy_obj_handle *tgt;
+        struct pxy_obj_handle *dst;
+#define FSAL_LINK_NB_OP_ALLOC 4
+        nfs_argop4 argoparray[FSAL_LINK_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_LINK_NB_OP_ALLOC];
+        int opcnt = 0;
+
+        if(!obj_hdl || !destdir_hdl || !name || !name->len)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        /* Tests if hardlinking is allowed by configuration. */
+        if( !destdir_hdl->export->ops->fs_supports(destdir_hdl->export,
+                                                   link_support))
+                ReturnCode(ERR_FSAL_NOTSUPP, ENOTSUP);
+
+        tgt = container_of(obj_hdl, struct pxy_obj_handle, obj);
+        dst = container_of(destdir_hdl, struct pxy_obj_handle, obj);
+
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, tgt->fh4);
+        COMPOUNDV4_ARG_ADD_OP_SAVEFH(opcnt, argoparray);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt,argoparray, dst->fh4);
+        COMPOUNDV4_ARG_ADD_OP_LINK(opcnt, argoparray, name);
+
+        rc = pxy_nfsv4_call(obj_hdl->export, opcnt, argoparray, resoparray);
+        return nfsstat4_to_fsal(rc);
 }
 
 typedef fsal_status_t (*fsal_readdir_cb)(const char *name,

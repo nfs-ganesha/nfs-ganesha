@@ -208,11 +208,12 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                                \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_LINK( argcompound, inname )                                                     \
-do {                                                                                                          \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_LINK ;                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.oplink.newname = inname ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                    \
+#define COMPOUNDV4_ARG_ADD_OP_LINK(opcnt, argarray, inname )                 \
+do {                                                                         \
+  nfs_argop4 *op = argarray+opcnt; opcnt++;                                  \
+  op->argop = NFS4_OP_LINK ;                                                 \
+  op->nfs_argop4_u.oplink.newname.utf8string_val = inname->name;             \
+  op->nfs_argop4_u.oplink.newname.utf8string_len = inname->len;              \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_REMOVE(opcnt, argarray, inname )               \
@@ -237,10 +238,10 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                        \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_SAVEFH( argcompound )                                             \
-do {                                                                                            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_SAVEFH ; \
-  argcompound.argarray.argarray_len += 1 ;                                                      \
+#define COMPOUNDV4_ARG_ADD_OP_SAVEFH(opcnt, argarray )                       \
+do {                                                                         \
+  argarray[opcnt].argop = NFS4_OP_SAVEFH;                                    \
+  opcnt++;                                                                   \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_RESTOREFH( argcompound )                                             \
