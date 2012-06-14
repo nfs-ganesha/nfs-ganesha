@@ -243,7 +243,7 @@ cache_inode_open(cache_entry_t *entry,
                    "cache_inode_open: pentry %p: openflags = %d, "
                    "open_fd_count = %zd", entry, openflags,
                    open_fd_count);
-/*      } */
+     }
 
      *status = CACHE_INODE_SUCCESS;
 
