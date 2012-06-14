@@ -249,6 +249,9 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
   return rc;
 }
 
+/** @TODO this has to be re-thought. it is too embedded with the notion of a single fsal
+ *  not much use in a new api world.
+ */
 
 int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter)
 {
@@ -293,7 +296,7 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
         {
           LogCrit(COMPONENT_CONFIG,
                   "STAT_EXPORTER: ERROR reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_FS_SPECIFIC);
+                  var_index, /* CONF_LABEL_FS_SPECIFIC */ "for loaded FSAL");
           return err;
         }
 
@@ -310,7 +313,7 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
         {
           LogCrit(COMPONENT_CONFIG,
                   "STAT_EXPORTER LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-                  key_name, CONF_LABEL_FS_SPECIFIC);
+                  key_name, /* CONF_LABEL_FS_SPECIFIC */ "loaded FSAL");
           return EINVAL;
         }
     }
