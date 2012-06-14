@@ -58,8 +58,6 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "gpfs.h"
-
 #ifdef _USE_NFS4_ACL
 #define ACL_DEBUG_BUF_SIZE 256
 #endif                          /* _USE_NFS4_ACL */
@@ -407,9 +405,6 @@ fsal_internal_init_global(fsal_init_info_t       * fsal_info,
 
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);

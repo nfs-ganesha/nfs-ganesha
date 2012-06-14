@@ -198,12 +198,6 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
   ptfsal_xstat_t buffxstat;
 
-  /* Indicate if stat or acl or both should be changed. */
-  int attr_valid = 0;
-
-  /* Indiate which attribute in stat should be changed. */
-  int attr_changed = 0;
-
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t wanted_attrs, current_attrs;
   mode_t             st_mode_in_cache = 0;
@@ -284,9 +278,6 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
           if(FSAL_IS_ERROR(status))
             ReturnStatus(status, INDEX_FSAL_setattrs);
 #endif
-
-            attr_valid |= XATTR_STAT;
-            attr_changed |= XATTR_MODE;
 
             /* Fill wanted mode. */
             buffxstat.buffstat.st_mode = fsal2unix_mode(wanted_attrs.mode);
@@ -405,9 +396,6 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
-      attr_valid |= XATTR_STAT;
-      attr_changed |= FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER) ?
-                      XATTR_UID : XATTR_GID;
 
       /* Fill wanted owner. */
       if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER))
@@ -488,12 +476,10 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
     {
-      attr_valid |= XATTR_STAT;
 
       /* Fill wanted atime. */
       if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME))
         {
-          attr_changed |= XATTR_ATIME;
           buffxstat.buffstat.st_atime = (time_t) wanted_attrs.atime.seconds;
           LogDebug(COMPONENT_FSAL,
                    "current atime = %lu, new atime = %lu",
@@ -503,7 +489,6 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
       /* Fill wanted mtime. */
       if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME))
         {
-          attr_changed |= XATTR_CTIME;
           buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
           LogDebug(COMPONENT_FSAL,
                    "current mtime = %lu, new mtime = %lu",
@@ -552,7 +537,6 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
       if(wanted_attrs.acl)
         {
-          attr_valid |= XATTR_ACL;
           LogDebug(COMPONENT_FSAL, "setattr acl = %p", wanted_attrs.acl);
 
           /* Convert FSAL ACL to PTFS NFS4 ACL and fill the buffer. */

@@ -75,7 +75,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <gpfs_nfs.h>
 
 #include "fsal_glue_const.h"
 
