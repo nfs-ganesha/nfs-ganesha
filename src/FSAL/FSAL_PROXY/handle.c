@@ -348,11 +348,9 @@ pxy_create_rpc_clnt(const proxyfs_specific_initinfo_t *ctx)
 static pthread_mutex_t rpc_call_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static int
-pxy_nfsv4_call(struct fsal_export *exp, uint32_t cnt, nfs_argop4 *argoparray, nfs_resop4 *resoparray)
+pxy_nfsv4_simple_call(uint32_t cnt, nfs_argop4 *argoparray,
+                      nfs_resop4 *resoparray)
 {
-        struct pxy_export *pxyexp =
-                container_of(exp, struct pxy_export, exp);
-        int renewed = 0;
         int rc;
         struct timeval timeout = TIMEOUTRPC;
         COMPOUND4args arg = {
@@ -364,6 +362,24 @@ pxy_nfsv4_call(struct fsal_export *exp, uint32_t cnt, nfs_argop4 *argoparray, nf
                 .resarray.resarray_len = cnt
         };
 
+        rc = clnt_call(rpc_client, NFSPROC4_COMPOUND, 
+                       (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&arg, 
+                       (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&res,
+                       timeout);
+
+        if(rc == RPC_SUCCESS ) {
+                return res.status;
+        }
+        return rc;
+}
+
+static int
+pxy_nfsv4_call(struct fsal_export *exp, uint32_t cnt, nfs_argop4 *argoparray, nfs_resop4 *resoparray)
+{
+        struct pxy_export *pxyexp =
+                container_of(exp, struct pxy_export, exp);
+        int renewed = 0;
+        int rc;
         pthread_mutex_lock(&rpc_call_lock);
         if(rpc_client == NULL)
                 pxy_create_rpc_clnt(pxyexp->info);
@@ -373,14 +389,9 @@ pxy_nfsv4_call(struct fsal_export *exp, uint32_t cnt, nfs_argop4 *argoparray, nf
                         return -1;
 #endif
 
-                rc = clnt_call(rpc_client, NFSPROC4_COMPOUND, 
-                               (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&arg, 
-                               (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&res,
-                               timeout);
-                if(rc == RPC_SUCCESS ) {
-                        rc = res.status;
+                rc = pxy_nfsv4_simple_call(cnt, argoparray, resoparray);
+                if(rc >= 0)
                         break;
-                }
 
                 LogEvent(COMPONENT_FSAL, "Call failed, reconnecting to the remote server");
                 do {
@@ -396,6 +407,62 @@ pxy_nfsv4_call(struct fsal_export *exp, uint32_t cnt, nfs_argop4 *argoparray, nf
 
         pthread_mutex_unlock(&rpc_call_lock);
         return rc;
+}
+
+clientid4 pxy_cid;
+
+static fsal_status_t
+pxy_get_clientid(struct fsal_export *exp)
+{
+        int rc;
+        nfs_argop4 arg;
+        nfs_resop4 res;
+        nfs_client_id4 nfsclientid;
+        cb_client4 cbproxy;
+        char clientid_name[MAXNAMLEN];
+        SETCLIENTID4resok *sok;
+        extern time_t ServerBootTime;
+
+        if(pxy_cid)
+                ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+        snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u", getpid());
+        nfsclientid.id.id_len = strlen(clientid_name);
+        nfsclientid.id.id_val = clientid_name;
+        snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
+
+        cbproxy.cb_program = 0;
+#ifdef _USE_NFS4_1
+        cbproxy.cb_location.na_r_netid = "tcp";
+        cbproxy.cb_location.na_r_addr = "127.0.0.1";
+#else
+        cbproxy.cb_location.r_netid = "tcp";
+        cbproxy.cb_location.r_addr = "127.0.0.1";
+#endif
+
+        sok = &res.nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.resok4;
+        arg.argop = NFS4_OP_SETCLIENTID;
+        arg.nfs_argop4_u.opsetclientid.client = nfsclientid;
+        arg.nfs_argop4_u.opsetclientid.callback = cbproxy;
+        arg.nfs_argop4_u.opsetclientid.callback_ident = 0;
+
+        rc = pxy_nfsv4_call(exp, 1, &arg, &res);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        arg.argop = NFS4_OP_SETCLIENTID_CONFIRM;
+        arg.nfs_argop4_u.opsetclientid_confirm.clientid = sok->clientid;
+        memcpy(arg.nfs_argop4_u.opsetclientid_confirm.setclientid_confirm,
+               sok->setclientid_confirm, NFS4_VERIFIER_SIZE);
+
+        rc = pxy_nfsv4_call(exp, 1, &arg, &res);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        /* Keep the confirmed client id */
+        pxy_cid = arg.nfs_argop4_u.opsetclientid_confirm.clientid;
+
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 static GETATTR4resok *
@@ -520,12 +587,152 @@ pxy_lookup(struct fsal_obj_handle *parent,
 }
 
 static fsal_status_t
+pxy_do_close(const nfs_fh4 *fh4, stateid4 *sid, struct fsal_export *exp)
+{
+        int rc;
+        int opcnt;
+#define FSAL_CLOSE_NB_OP_ALLOC 2
+        nfs_argop4 argoparray[FSAL_CLOSE_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_CLOSE_NB_OP_ALLOC];
+        char All_Zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0"; /* 12 times \0 */
+
+        /* Check if this was a "stateless" open, then nothing is to be done at close */
+        if(!memcmp(sid->other, All_Zero, 12))
+                ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, *fh4);
+        COMPOUNDV4_ARG_ADD_OP_CLOSE(opcnt, argoparray, sid);
+
+        rc = pxy_nfsv4_call(exp, opcnt, argoparray, resoparray);
+        if (rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+        sid->seqid++;
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t
+pxy_open_confirm(const nfs_fh4 *fh4, stateid4 *stateid,
+                 struct fsal_export *export)
+{
+        int rc;
+        int opcnt = 0;
+#define FSAL_PROXY_OPEN_CONFIRM_NB_OP_ALLOC 2
+        nfs_argop4 argoparray[FSAL_PROXY_OPEN_CONFIRM_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_PROXY_OPEN_CONFIRM_NB_OP_ALLOC];
+        nfs_argop4 *op;
+        OPEN_CONFIRM4resok *conok;
+
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, *fh4);
+
+        conok = &resoparray[opcnt].nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4;
+
+        op = argoparray + opcnt++;
+        op->argop = NFS4_OP_OPEN_CONFIRM;
+        op->nfs_argop4_u.opopen_confirm.open_stateid.seqid = stateid->seqid;
+        memcpy(op->nfs_argop4_u.opopen_confirm.open_stateid.other,
+               stateid->other, 12);
+        op->nfs_argop4_u.opopen_confirm.seqid = stateid->seqid + 1;
+
+        rc = pxy_nfsv4_call(export, opcnt, argoparray, resoparray);
+        if (rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        stateid->seqid = conok->open_stateid.seqid;
+        memcpy(stateid->other, conok->open_stateid.other, 12);
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/* TODO: make this per-export */
+static uint64_t fcnt;
+
+static fsal_status_t
 pxy_create(struct fsal_obj_handle *dir_hdl,
 	   fsal_name_t *name,
 	   fsal_attrib_list_t *attrib,
 	   struct fsal_obj_handle **handle)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        int rc;
+        int opcnt = 0;
+        uint32_t bitmap_res[2];
+        uint32_t bitmap_val[2];
+        bitmap4 bmap = {.bitmap4_val = bitmap_val, .bitmap4_len = 2};
+        uint32_t bitmap_create[2];
+        fattr4 input_attr;
+        char padfilehandle[NFS4_FHSIZE];
+        char fattr_blob[FATTR_BLOB_SZ];
+#define FSAL_CREATE_NB_OP_ALLOC 4
+        nfs_argop4 argoparray[FSAL_CREATE_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_CREATE_NB_OP_ALLOC];
+        char owner_val[128];
+        unsigned int owner_len = 0;
+        GETFH4resok *fhok;
+        GETATTR4resok *atok;
+        OPEN4resok *opok;
+        struct pxy_obj_handle *ph;
+        fsal_status_t st;
+
+        if(!dir_hdl || !name || !name->len || !attrib || !handle)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        st = pxy_get_clientid(dir_hdl->export);
+        if(FSAL_IS_ERROR(st)) {
+                LogEvent(COMPONENT_FSAL, "Got %d.%d for clientid", st.major, st.minor);
+                return st;
+        }
+
+        /* Create the owner */
+        snprintf(owner_val, sizeof(owner_val), "GANESHA/PROXY: pid=%u %ld",
+                 getpid(), __sync_add_and_fetch(&fcnt, 1));
+        owner_len = strnlen(owner_val, sizeof(owner_val));
+
+        attrib->asked_attributes &= FSAL_ATTR_MODE|FSAL_ATTR_OWNER|FSAL_ATTR_GROUP;
+        pxy_create_settable_bitmap(attrib, &bmap);
+        if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
+                                  NULL, &bmap) == -1)
+                ReturnCode(ERR_FSAL_INVAL, -1);
+
+        ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+        opok = &resoparray[opcnt].nfs_resop4_u.opopen.OPEN4res_u.resok4;
+        opok->attrset.bitmap4_val = bitmap_create;
+        opok->attrset.bitmap4_len = 2;
+        COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE(opcnt, argoparray, name, input_attr,
+                                          pxy_cid, owner_val, owner_len);
+
+        fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
+        fhok->object.nfs_fh4_val = padfilehandle;
+        fhok->object.nfs_fh4_len = sizeof(padfilehandle);
+        COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
+
+        pxy_create_getattr_bitmap(bitmap_val);
+        atok = pxy_fill_getattr_reply(resoparray + opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+
+        rc = pxy_nfsv4_call(dir_hdl->export, opcnt, argoparray, resoparray);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        /* See if a OPEN_CONFIRM is required */
+        if(opok->rflags & OPEN4_RESULT_CONFIRM) {
+                st = pxy_open_confirm(&fhok->object, &opok->stateid,
+                                      dir_hdl->export);
+                if(FSAL_IS_ERROR(st))
+                        return st;
+        }
+
+        /* The created file is still opened, to preserve the correct 
+         * seqid for later use, we close it */
+        st = pxy_do_close(&fhok->object, &opok->stateid, dir_hdl->export);
+        if(FSAL_IS_ERROR(st))
+                return st;
+        st = pxy_make_object(dir_hdl->export, &atok->obj_attributes, 
+                             &fhok->object, handle);
+        if(FSAL_IS_ERROR(st))
+                return st;
+        *attrib = (*handle)->attributes;
+        return st;
 }
 
 static fsal_status_t 

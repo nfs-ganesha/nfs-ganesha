@@ -83,13 +83,13 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                              \
 } while( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_CLOSE( argcompound, __stateid )                                                                                    \
-do {                                                                                                                                             \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_CLOSE ;                                                   \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opclose.seqid = __stateid.seqid +1 ;                         \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opclose.open_stateid.seqid = __stateid.seqid ;               \
-  memcpy( argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opclose.open_stateid.other, __stateid.other, 12 ) ;  \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                       \
+#define COMPOUNDV4_ARG_ADD_OP_CLOSE(opcnt, argarray, __stateid )             \
+do {                                                                         \
+  nfs_argop4 *op = argarray + opcnt; opcnt++;                                \
+  op->argop = NFS4_OP_CLOSE ;                                                \
+  op->nfs_argop4_u.opclose.seqid = __stateid->seqid +1 ;                     \
+  op->nfs_argop4_u.opclose.open_stateid.seqid = __stateid->seqid ;           \
+  memcpy(op->nfs_argop4_u.opclose.open_stateid.other, __stateid->other, 12); \
 } while( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_GETATTR( opcnt, argarray, bitmap )             \
@@ -171,21 +171,22 @@ do {                                                                          \
   op->nfs_argop4_u.opreaddir.attr_request.bitmap4_len = ARRAY_SIZE(inbitmap); \
 } while ( 0 )
 
-#define COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE( argcompound, inname, inattrs, inclientid, __owner_val, __owner_len )                                         \
-do {                                                                                                                                                    \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_OPEN ;                                                           \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.seqid = 0 ;                                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.share_access = OPEN4_SHARE_ACCESS_BOTH ;                     \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.share_deny = OPEN4_SHARE_DENY_NONE ;                         \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.clientid = inclientid ;                                \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.owner.owner_len =  __owner_len ;                       \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.owner.owner_val =  __owner_val ;                       \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.openhow.opentype = OPEN4_CREATE ;                            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.openhow.openflag4_u.how.mode = GUARDED4 ;                    \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.openhow.openflag4_u.how.createhow4_u.createattrs = inattrs ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.claim.claim = CLAIM_NULL ;                                   \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.claim.open_claim4_u.file = inname ;                          \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                              \
+#define COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE(opcnt, args, inname, inattrs, inclientid, __owner_val, __owner_len) \
+do {                                                                          \
+  nfs_argop4 *op = args + opcnt; opcnt++;                                     \
+  op->argop = NFS4_OP_OPEN ;                                                  \
+  op->nfs_argop4_u.opopen.seqid = 0 ;                                         \
+  op->nfs_argop4_u.opopen.share_access = OPEN4_SHARE_ACCESS_BOTH ;            \
+  op->nfs_argop4_u.opopen.share_deny = OPEN4_SHARE_DENY_NONE ;                \
+  op->nfs_argop4_u.opopen.owner.clientid = inclientid ;                       \
+  op->nfs_argop4_u.opopen.owner.owner.owner_len =  __owner_len ;              \
+  op->nfs_argop4_u.opopen.owner.owner.owner_val =  __owner_val ;              \
+  op->nfs_argop4_u.opopen.openhow.opentype = OPEN4_CREATE ;                   \
+  op->nfs_argop4_u.opopen.openhow.openflag4_u.how.mode = GUARDED4 ;           \
+  op->nfs_argop4_u.opopen.openhow.openflag4_u.how.createhow4_u.createattrs = inattrs ; \
+  op->nfs_argop4_u.opopen.claim.claim = CLAIM_NULL ;                          \
+  op->nfs_argop4_u.opopen.claim.open_claim4_u.file.utf8string_val = inname->name; \
+  op->nfs_argop4_u.opopen.claim.open_claim4_u.file.utf8string_len = inname->len;  \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_MKDIR(opcnt, argarray, inname, inattrs )      \
