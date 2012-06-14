@@ -41,11 +41,13 @@
 #include <pthread.h>
 #include <assert.h>
 #include "nlm_list.h"
+#include "abstract_mem.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "log.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_rpc_callback_simulator.h"
+#include "sal_functions.h"
 #include "ganesha_dbus.h"
 
 /**
@@ -86,13 +88,15 @@ static const char* introspection_xml =
 "</node>\n"
 ;
 
+extern hash_table_t *ht_confirmed_client_id;
+
 static DBusHandlerResult
 nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
                       void *user_data)
 {
   DBusMessage* reply;
   static uint32_t i, serial = 1;
-  hash_table_t *ht = ht_client_id;
+  hash_table_t *ht = ht_confirmed_client_id;
   struct rbt_head *head_rbt;
   hash_data_t *pdata = NULL;
   struct rbt_node *pn;
@@ -118,7 +122,7 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
       pdata = RBT_OPAQ(pn);
       pclientid =
 	(nfs_client_id_t *)pdata->buffval.pdata;
-      clientid = pclientid->clientid;
+      clientid = pclientid->cid_clientid;
       dbus_message_iter_append_basic(&sub_iter, DBUS_TYPE_UINT64, &clientid);
       RBT_INCREMENT(pn);      
     }
@@ -144,7 +148,7 @@ cbsim_test_bchan(clientid4 clientid)
     rpc_call_channel_t *chan;
     enum clnt_stat stat;
 
-    code  = nfs_client_id_Get_Pointer(clientid, &pclientid);
+    code = nfs_client_id_get_confirmed(clientid, &pclientid);
     if (code != CLIENT_ID_SUCCESS) {
         LogCrit(COMPONENT_NFS_CB,
                 "No clid record for %"PRIx64" (%d) code %d", clientid,
@@ -245,7 +249,7 @@ cbsim_fake_cbrecall(clientid4 clientid)
     LogDebug(COMPONENT_NFS_CB,
              "called with clientid %"PRIx64, clientid);
 
-    code  = nfs_client_id_Get_Pointer(clientid, &pclientid);
+    code  = nfs_client_id_get_confirmed(clientid, &pclientid);
     if (code != CLIENT_ID_SUCCESS) {
         LogCrit(COMPONENT_NFS_CB,
                 "No clid record for %"PRIx64" (%d) code %d", clientid,
@@ -272,7 +276,8 @@ cbsim_fake_cbrecall(clientid4 clientid)
     call->chan = chan;
 
     /* setup a compound */
-    cb_compound_init_v4(&call->cbt, 6, pclientid->cb.cb_u.v40.callback_ident,
+    cb_compound_init_v4(&call->cbt, 6,
+			pclientid->cid_cb.cb_u.v40.cb_callback_ident,
                         "brrring!!!", 10);
 
     /* TODO: api-ify */
@@ -284,7 +289,7 @@ cbsim_fake_cbrecall(clientid4 clientid)
     argop->nfs_cb_argop4_u.opcbrecall.truncate = TRUE;
     argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 11;
     /* leaks, sorry */
-    argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = Str_Dup("0xabadcafe");
+    argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = gsh_strdup("0xabadcafe");
 
     /* add ops, till finished (dont exceed count) */
     cb_compound_add_op(&call->cbt, argop);
