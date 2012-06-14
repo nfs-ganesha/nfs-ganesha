@@ -437,14 +437,14 @@ static inline void
 cache_inode_lru_clean(cache_entry_t *entry,
                       cache_inode_client_t *client)
 {
-     fsal_status_t fsal_status = {0, 0};
-     cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
      /* Clean an LRU entry re-use.  */
      assert((entry->lru.refcount == LRU_SENTINEL_REFCOUNT) ||
             (entry->lru.refcount == (LRU_SENTINEL_REFCOUNT - 1)));
 
-     if (cache_inode_fd(entry)) {
+     if (is_open(entry)) {
+          cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+
           cache_inode_close(entry, client, CACHE_INODE_FLAG_REALLYCLOSE,
                             &cache_status);
           if (cache_status != CACHE_INODE_SUCCESS) {
@@ -455,12 +455,6 @@ cache_inode_lru_clean(cache_entry_t *entry,
      }
 
      /* Clean up the associated ressources in the FSAL */
-     if (FSAL_IS_ERROR(fsal_status
-                       = FSAL_CleanObjectResources(&entry->handle))) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_lru_clean: Couldn't free FSAL ressources "
-                  "fsal_status.major=%u", fsal_status.major);
-     }
 
      cache_inode_clean_internal(entry, client);
      entry->lru.refcount = 0;
@@ -831,7 +825,7 @@ lru_thread(void *arg __attribute__((unused)))
                                    continue;
                               }
 
-                              if (cache_inode_fd(entry)) {
+                              if (is_open(entry)) {
                                    cache_inode_close(
                                         entry,
                                         &lru_client,

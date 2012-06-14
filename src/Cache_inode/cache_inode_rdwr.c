@@ -99,6 +99,7 @@ cache_inode_rdwr(cache_entry_t *entry,
 {
      /* Error return from FSAL calls */
      fsal_status_t fsal_status = {0, 0};
+     struct fsal_obj_handle *obj_hdl = entry->obj_handle;
      /* Required open mode to successfully read or write */
      fsal_openflags_t openflags = FSAL_O_CLOSED;
      fsal_openflags_t loflags;
@@ -151,7 +152,7 @@ cache_inode_rdwr(cache_entry_t *entry,
 
                pthread_rwlock_wrlock(&entry->attr_lock);
                attributes_locked = TRUE;
-               cache_inode_set_time_current(&entry->attributes.mtime);
+               cache_inode_set_time_current(&obj_hdl->attributes.mtime);
                *bytes_moved = io_size;
           } else {
                if ((entry->object.file.unstable_data.offset < offset) &&
@@ -163,7 +164,7 @@ cache_inode_rdwr(cache_entry_t *entry,
 
                     pthread_rwlock_wrlock(&entry->attr_lock);
                     attributes_locked = TRUE;
-                    cache_inode_set_time_current(&entry->attributes.mtime);
+                    cache_inode_set_time_current(&obj_hdl->attributes.mtime);
                     *bytes_moved = io_size;
                } else {
                     /* Go back to stable writes */
@@ -186,21 +187,21 @@ cache_inode_rdwr(cache_entry_t *entry,
              if we need to open or close a file descriptor. */
           pthread_rwlock_rdlock(&entry->content_lock);
           content_locked = TRUE;
-          loflags = entry->object.file.open_fd.openflags;
-          if ((!cache_inode_fd(entry)) ||
+          loflags = obj_hdl->ops->status(obj_hdl);
+          if (( !is_open(entry)) ||
               (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
                pthread_rwlock_unlock(&entry->content_lock);
                pthread_rwlock_wrlock(&entry->content_lock);
-               loflags = entry->object.file.open_fd.openflags;
-               if ((!cache_inode_fd(entry)) ||
+	       loflags = obj_hdl->ops->status(obj_hdl);
+               if (( !is_open(entry)) ||
                    (loflags && loflags != FSAL_O_RDWR &&
                     loflags != openflags)) {
                     if (cache_inode_open(entry,
                                          client,
                                          openflags,
-                                         context,
-                                         CACHE_INODE_FLAG_CONTENT_HAVE |
-                                         CACHE_INODE_FLAG_CONTENT_HOLD,
+                                         creds,
+                                         (CACHE_INODE_FLAG_CONTENT_HAVE |
+					  CACHE_INODE_FLAG_CONTENT_HOLD),
                                          status) != CACHE_INODE_SUCCESS) {
                          goto out;
                     }
@@ -210,27 +211,27 @@ cache_inode_rdwr(cache_entry_t *entry,
 
           /* Call FSAL_read or FSAL_write */
           if (io_direction == CACHE_INODE_READ) {
-	       fsal_status = entry->obj_handle->ops->read(entry->obj_handle,
-							  &seek_descriptor,
-							  io_size,
-							  buffer,
-							  bytes_moved,
-							  eof);
+	       fsal_status = obj_hdl->ops->read(obj_hdl,
+						&seek_descriptor,
+						io_size,
+						buffer,
+						bytes_moved,
+						eof);
           } else {
-	       fsal_status = entry->obj_handle->ops->write(entry->obj_handle,
-							   &seek_descriptor,
-							   io_size,
-							   buffer,
-							   bytes_moved);
+	       fsal_status = obj_hdl->ops->write(obj_hdl,
+						 &seek_descriptor,
+						 io_size,
+						 buffer,
+						 bytes_moved);
 
                /* Alright, the unstable write is complete. Now if it was
                   supposed to be a stable write we can sync to the hard
                   drive. */
 
                if (stable == CACHE_INODE_SAFE_WRITE_TO_FS) {
-                    fsal_status
-                         = FSAL_commit(&(entry->object.file.open_fd.fd),
-                                  offset, io_size);
+                    fsal_status = obj_hdl->ops->commit(obj_hdl,
+						       offset,
+						       io_size);
                }
           }
 
@@ -259,14 +260,15 @@ cache_inode_rdwr(cache_entry_t *entry,
                }
 
                if ((fsal_status.major != ERR_FSAL_NOT_OPENED)
-                   && (entry->object.file.open_fd.openflags
-                       != FSAL_O_CLOSED)) {
+                   && (obj_hdl->ops->status(obj_hdl) != FSAL_O_CLOSED)) {
                     cache_inode_status_t cstatus;
+
                     LogFullDebug(COMPONENT_CACHE_INODE,
                                  "cache_inode_rdwr: CLOSING entry %p",
                                  entry);
                     pthread_rwlock_unlock(&entry->content_lock);
                     pthread_rwlock_wrlock(&entry->content_lock);
+
                     cache_inode_close(entry,
                                       client,
                                       (CACHE_INODE_FLAG_REALLYCLOSE |
@@ -311,13 +313,12 @@ cache_inode_rdwr(cache_entry_t *entry,
      attributes_locked = TRUE;
      if (io_direction == CACHE_INODE_WRITE) {
           if ((*status = cache_inode_refresh_attrs(entry,
-                                                   context,
                                                    client))
               != CACHE_INODE_SUCCESS) {
                goto out;
           }
      } else {
-          cache_inode_set_time_current(&entry->attributes.atime);
+          cache_inode_set_time_current(&obj_hdl->attributes.atime);
      }
      pthread_rwlock_unlock(&entry->attr_lock);
      attributes_locked = FALSE;
