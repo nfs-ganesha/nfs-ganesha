@@ -1,4 +1,5 @@
-noinst_HEADERS = abstract_mem.h                  \
+noinst_HEADERS = abstract_atomic.h               \
+                 abstract_mem.h                  \
                  fsal.h                          \
                  fsal_pnfs.h                     \
                  pnfs_common.h                   \
