@@ -301,10 +301,23 @@ int nfs3_Mknod(nfs_arg_t *parg,
 
               pres->res_mknod3.status = NFS3_OK;
 
+              /* Set Post Op Fh3 structure */
+              rok->obj.handle_follows = TRUE;
+
+              /* Build entry attributes */
+              nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
+
+              /* Get the attributes of the parent after the operation */
+              attr_parent_after = parent_pentry->obj_handle->attributes;
+
+              /* Build Weak Cache Coherency data */
+              nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
+                             &rok->dir_wcc);
+
+              pres->res_mknod3.status = NFS3_OK;
               rc = NFS_REQ_OK;
               goto out;
             }
-          /* mknod sucess */
         }                       /* not found */
       else
         {

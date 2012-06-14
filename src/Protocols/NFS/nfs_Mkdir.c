@@ -285,8 +285,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
                       else
                         {
                           /*
-                           * Build entry
-                           * attributes
+                           * Build entry attributes
                            */
                           if(nfs2_FSALattr_To_Fattr(pexport, &attr,
                                                     &d2ok->attributes) == 0)
