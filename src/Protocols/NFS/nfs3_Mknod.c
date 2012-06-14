@@ -266,111 +266,43 @@ int nfs3_Mknod(nfs_arg_t * parg,
                                                creds,
                                                &cache_status)) != NULL)
             {
+              MKNOD3resok *rok = &pres->res_mknod3.MKNOD3res_u.resok;
 
-              /*
-               * Get the FSAL handle for this entry
-               */
+              /* Get the FSAL handle for this entry */
               pfsal_handle = node_pentry->obj_handle;
 
               /* Build file handle */
-              if ((pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.
-                   data_val = Mem_Alloc_Label(NFS3_FHSIZE, "Filehandle V3 in nfs3_mknod")) == NULL)
+              pres->res_mknod3.status =
+                nfs3_AllocateFH(&rok->obj.post_op_fh3_u.handle);
+              if(pres->res_mknod3.status !=  NFS3_OK)
+                return NFS_REQ_OK;
+
+              if(nfs3_FSALToFhandle(&rok->obj.post_op_fh3_u.handle,
+                                    pfsal_handle, pexport) == 0)
                 {
-                  /* Build file handle */
-                  pres->res_mknod3.status =
-                    nfs3_AllocateFH(&pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle);
-                  if(pres->res_mknod3.status !=  NFS3_OK)
-                    return NFS_REQ_OK;
-
-                  if(nfs3_FSALToFhandle
-                     (&pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle,
-                      pfsal_handle, pexport) == 0)
-                    {
-                      Mem_Free((char *)pres->res_mknod3.MKNOD3res_u.resok.obj.
-                               post_op_fh3_u.handle.data.data_val);
-                      pres->res_mknod3.status = NFS3ERR_INVAL;
-                      rc = NFS_REQ_OK;
-                      goto out;
-                    }
-                  else
-                    {
-                      /* Set Post Op Fh3 structure */
-                      pres->res_mknod3.MKNOD3res_u.resok.obj.handle_follows = TRUE;
-
-                      /*
-                       * Build entry
-                       * attributes 
-                       */
-                      nfs_SetPostOpAttr(pexport,
-                                        &attr,
-                                        &(pres->res_mknod3.MKNOD3res_u.resok.
-                                          obj_attributes));
-
-                      /* Get the attributes of the parent after the operation */
-		      attr_parent_after = parent_pentry->obj_handle->attributes;
-
-                      /*
-                       * Build Weak Cache
-                       * Coherency data 
-                       */
-                      nfs_SetWccData(pexport,
-                                     ppre_attr,
-                                     &attr_parent_after,
-                                     &(pres->res_mknod3.MKNOD3res_u.resok.dir_wcc));
-
-                      pres->res_mknod3.status = NFS3_OK;
-                    }
-
-                  rc = NFS_REQ_OK;
-                  goto out;
-                }
-
-              if (nfs3_FSALToFhandle
-                  (&pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle,
-                   pfsal_handle, pexport) == 0)
-                {
-                  Mem_Free((char *)pres->res_mknod3.MKNOD3res_u.resok.obj.
-                           post_op_fh3_u.handle.data.data_val);
+                  Mem_Free((char *)rok->obj.post_op_fh3_u.handle.data.data_val);
                   pres->res_mknod3.status = NFS3ERR_INVAL;
                   rc = NFS_REQ_OK;
                   goto out;
                 }
-              else
-                {
-                  /* Set Post Op Fh3 structure */
-                  pres->res_mknod3.MKNOD3res_u.resok.obj.handle_follows = TRUE;
-                  pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.
-                    data_len = sizeof(file_handle_v3_t);
 
-                  /*
-                   * Build entry
-                   * attributes
-                   */
-                  nfs_SetPostOpAttr(pexport,
-                                    &attr,
-                                    &(pres->res_mknod3.MKNOD3res_u.resok.
-                                      obj_attributes));
+              /* Set Post Op Fh3 structure */
+              rok->obj.handle_follows = TRUE;
 
-                  /* Get the attributes of the parent after the operation */
-                  attr_parent_after = parent_pentry->obj_handle->attributes;
+              /* Build entry attributes */
+              nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
 
-                  /*
-                   * Build Weak Cache
-                   * Coherency data
-                   */
-                  nfs_SetWccData(pexport,
-                                 ppre_attr,
-                                 &attr_parent_after,
-                                 &(pres->res_mknod3.MKNOD3res_u.resok.dir_wcc));
+              /* Get the attributes of the parent after the operation */
+              attr_parent_after = parent_pentry->obj_handle->attributes;
 
-                  pres->res_mknod3.status = NFS3_OK;
-                }
+              /* Build Weak Cache Coherency data */
+              nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
+                             &rok->dir_wcc);
 
+              pres->res_mknod3.status = NFS3_OK;
               rc = NFS_REQ_OK;
               goto out;
-
             }
-          /* mknod sucess */
         }                       /* not found */
       else
         {

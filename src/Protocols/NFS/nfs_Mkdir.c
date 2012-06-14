@@ -279,139 +279,69 @@ int nfs_Mkdir(nfs_arg_t * parg,
                    */
                   pfsal_handle = dir_pentry->obj_handle;
 
-                  switch (preq->rq_vers)
+                  if(preq->rq_vers == NFS_V2)
                     {
-                    case NFS_V2:
+                      DIROP2resok *d2ok = &pres->res_dirop2.DIROP2res_u.diropok;
+
                       /* Build file handle */
-                      if(!nfs2_FSALToFhandle
-                         (&(pres->res_dirop2.DIROP2res_u.diropok.file), pfsal_handle,
-                          pexport))
+                      if(!nfs2_FSALToFhandle(&d2ok->file, pfsal_handle, pexport))
                         pres->res_dirop2.status = NFSERR_IO;
                       else
                         {
                           /*
-                           * Build entry
-                           * attributes
+                           * Build entry attributes
                            */
                           if(nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                                    &(pres->res_dirop2.DIROP2res_u.
-                                                      diropok.attributes)) == 0)
+                                                    &d2ok->attributes) == 0)
                             pres->res_dirop2.status = NFSERR_IO;
                           else
-                            {
-                              /*
-                               * Build entry
-                               * attributes 
-                               */
-                              if(nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                                        &(pres->res_dirop2.DIROP2res_u.
-                                                          diropok.attributes)) == 0)
-                                pres->res_dirop2.status = NFSERR_IO;
-                              else
-                                pres->res_dirop2.status = NFS_OK;
-                            }
-                          break;
+                            pres->res_dirop2.status = NFS_OK;
+                        }
+                    }
+                  else
+                    {
+                      MKDIR3resok *d3ok = &pres->res_mkdir3.MKDIR3res_u.resok;
 
-                        case NFS_V3:
-                          /* Build file handle */
-                          pres->res_mkdir3.status =
-                            nfs3_AllocateFH(&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                                            handle);
-                          if(pres->res_mkdir3.status !=  NFS3_OK)
-                            {
-                              rc = NFS_REQ_OK;
-                              goto out;
-                            }
-
-                          if(nfs3_FSALToFhandle
-                             (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                              handle, pfsal_handle, pexport) == 0)
-                            {
-                              Mem_Free((char *)pres->res_mkdir3.MKDIR3res_u.resok.obj.
-                                       post_op_fh3_u.handle.data.data_val);
-                              pres->res_mkdir3.status = NFS3ERR_INVAL;
-                              rc = NFS_REQ_OK;
-                              goto out;
-                            }
-                          else
-                            {
-                              /* Set Post Op Fh3 structure */
-                              pres->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows =
-                                  TRUE;
-
-                              /*
-                               * Build entry
-                               * attributes 
-                               */
-                              nfs_SetPostOpAttr(pexport,
-                                                &attr,
-                                                &(pres->res_mkdir3.MKDIR3res_u.resok.
-                                                  obj_attributes));
-
-                              /* Get the attributes of the parent after the operation */
-			      attr_parent_after = parent_pentry->obj_handle->attributes;
-
-                              /*
-                               * Build Weak Cache
-                               * Coherency data 
-                               */
-                              nfs_SetWccData(pexport,
-                                             ppre_attr,
-                                             &attr_parent_after,
-                                             &(pres->res_mkdir3.MKDIR3res_u.resok.
-                                               dir_wcc));
-
-                              pres->res_mkdir3.status = NFS3_OK;
-                            }
-
-                          break;
+                      /* Build file handle */
+                      pres->res_mkdir3.status =
+                          nfs3_AllocateFH(&d3ok->obj.post_op_fh3_u.handle);
+                      if(pres->res_mkdir3.status !=  NFS3_OK)
+                        {
+                          rc = NFS_REQ_OK;
+                          goto out;
                         }
 
-                      if(nfs3_FSALToFhandle
-                         (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                          handle, pfsal_handle, pexport) == 0)
+                      if(nfs3_FSALToFhandle(&d3ok->obj.post_op_fh3_u.handle, 
+                                            pfsal_handle, pexport) == 0)
                         {
-                          Mem_Free((char *)pres->res_mkdir3.MKDIR3res_u.resok.obj.
-                                   post_op_fh3_u.handle.data.data_val);
+                          Mem_Free((char *)d3ok->obj.post_op_fh3_u.handle.data.data_val);
                           pres->res_mkdir3.status = NFS3ERR_INVAL;
                           rc = NFS_REQ_OK;
                           goto out;
                         }
-                      else
-                        {
-                          /* Set Post Op Fh3 structure */
-                          pres->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows =
-                            TRUE;
-                          pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.handle.
-                            data.data_len = sizeof(file_handle_v3_t);
 
-                          /*
-                           * Build entry
-                           * attributes
-                           */
-                          nfs_SetPostOpAttr(pexport,
-                                            &attr,
-                                            &(pres->res_mkdir3
-                                              .MKDIR3res_u.resok
-                                              .obj_attributes));
+                      /* Set Post Op Fh3 structure */
+                      d3ok->obj.handle_follows = TRUE;
 
-                          /* Get the attributes of the parent after the operation */
-                          attr_parent_after = parent_pentry->obj_handle->attributes;
+                      /*
+                       * Build entry attributes 
+                       */
+                      nfs_SetPostOpAttr(pexport, &attr,
+                                        &d3ok->obj_attributes);
 
-                          /*
-                           * Build Weak Cache
-                           * Coherency data
-                           */
-                          nfs_SetWccData(pexport,
-                                         ppre_attr,
-                                         &attr_parent_after,
-                                         &(pres->res_mkdir3.MKDIR3res_u.resok.
-                                           dir_wcc));
+                      /* Get the attributes of the parent after the operation */
+                      attr_parent_after = parent_pentry->obj_handle->attributes;
 
-                          pres->res_mkdir3.status = NFS3_OK;
-                        }
+                      /*
+                       * Build Weak Cache
+                       * Coherency data 
+                       */
+                      nfs_SetWccData(pexport,
+                                     ppre_attr,
+                                     &attr_parent_after,
+                                     &d3ok->dir_wcc);
 
-                      break;
+                      pres->res_mkdir3.status = NFS3_OK;
                     }
                   rc = NFS_REQ_OK;
                   goto out;
