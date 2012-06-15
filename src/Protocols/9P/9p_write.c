@@ -59,10 +59,6 @@ int _9p_write( _9p_request_data_t * preq9p,
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
-  int rc = 0 ;
-  u32 err = 0 ;
-
-
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
   u64 * offset = NULL ;
@@ -96,13 +92,9 @@ int _9p_write( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, (unsigned long long)*offset, *count  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
-   pfid = &preq9p->pconn->fids[*fid] ;
+  pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Do the job */
   seek_descriptor.whence = FSAL_SEEK_SET ;
@@ -120,11 +112,7 @@ int _9p_write( _9p_request_data_t * preq9p,
                                            xattrval,
                                            size+1 ) ;
      if(FSAL_IS_ERROR(fsal_status))
-       {
-         err = _9p_tools_errno( cache_inode_error_convert(fsal_status) ) ;
-         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-         return rc ;
-       }
+       return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
       /* Cache the value */
       memcpy( pfid->specdata.xattr.xattr_content, databuffer, size ) ;
@@ -144,11 +132,8 @@ int _9p_write( _9p_request_data_t * preq9p,
                           &pfid->fsal_op_context,
                           stable_flag,
                           &cache_status ) != CACHE_INODE_SUCCESS )
-        {
-          err = _9p_tools_errno( cache_status ) ; ;
-          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-          return rc ;
-        }
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
+
       outcount = (u32)written_size ;
     }
 

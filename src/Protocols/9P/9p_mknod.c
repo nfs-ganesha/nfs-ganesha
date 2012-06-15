@@ -78,9 +78,6 @@ int _9p_mknod( _9p_request_data_t * preq9p,
   cache_inode_file_type_t nodetype;
   cache_inode_create_arg_t create_arg;
 
-  int rc = 0 ; 
-  int err = 0 ;
-
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
@@ -100,23 +97,15 @@ int _9p_mknod( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *name_len, name_str, *mode, *major, *minor, *gid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
-
-   pfid = &preq9p->pconn->fids[*fid] ;
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+ 
+  pfid = &preq9p->pconn->fids[*fid] ;
 
   snprintf( obj_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
 
   /* Check for bad type */
   if( !( *mode & (S_IFCHR|S_IFBLK|S_IFIFO|S_IFSOCK) ) )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
 
   /* Set the nodetype */
   if( *mode &  S_IFCHR  ) nodetype = CHARACTER_FILE ;
@@ -138,11 +127,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
                                              &pwkrdata->cache_inode_client,
                                              &pfid->fsal_op_context,
                                              &cache_status)) == NULL)
-     {
-        err = _9p_tools_errno( cache_status ) ; ;
-        rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-        return rc ;
-     }
+    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* Build the qid */
    qid_newobj.type    = _9P_QTTMP ; /** @todo BUGAZOMEU For wanting of something better */

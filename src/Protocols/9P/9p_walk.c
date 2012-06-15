@@ -70,8 +70,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
   u16 * nwqid ;
 
   unsigned int i = 0 ;
-  int rc = 0 ;
-  u32 err = 0 ;
 
   fsal_name_t name ; 
   fsal_attrib_list_t fsalattr ;
@@ -101,19 +99,10 @@ int _9p_walk( _9p_request_data_t * preq9p,
    }
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
- 
-  if( *newfid >= _9P_FID_PER_CONN )
-   {
-     err = ERANGE ;
-     rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-     return rc ;
-   }
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
+  if( *newfid >= _9P_FID_PER_CONN )
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
   pnewfid = &preq9p->pconn->fids[*newfid] ;
@@ -148,11 +137,8 @@ int _9p_walk( _9p_request_data_t * preq9p,
                                                        &pwkrdata->cache_inode_client,
                                                        &pfid->fsal_op_context,
                                                        &cache_status ) ) == NULL )
-            {
-              err = _9p_tools_errno( cache_status ) ; ;
-              rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-             return rc ;
-            }
+              return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+
            pentry =  pnewfid->pentry ;
         }
 
@@ -186,9 +172,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
         case RECYCLED:
         default:
           LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
-          err = EINVAL ;
-          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-          return rc ;
+          return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
           break ;
       }
 

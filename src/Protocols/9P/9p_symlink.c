@@ -77,9 +77,6 @@ int _9p_symlink( _9p_request_data_t * preq9p,
   fsal_accessmode_t mode = 0777;
   cache_inode_create_arg_t create_arg;
 
-  int rc = 0 ; 
-  int err = 0 ;
-
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
@@ -97,11 +94,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *name_len, name_str, *linkcontent_len, linkcontent_str, *gid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
    pfid = &preq9p->pconn->fids[*fid] ;
  
@@ -119,11 +112,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
                                               &pwkrdata->cache_inode_client,
                                               &pfid->fsal_op_context,
                                               &cache_status)) == NULL)
-   {
-      err = _9p_tools_errno( cache_status ) ; ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
+     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* Build the qid */
    qid_symlink.type    = _9P_QTSYMLINK ;

@@ -61,9 +61,6 @@ int _9p_read( _9p_request_data_t * preq9p,
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
-  int rc = 0 ;
-  u32 err = 0 ;
-
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
   u64 * offset = NULL ;
@@ -71,8 +68,6 @@ int _9p_read( _9p_request_data_t * preq9p,
   u32 outcount = 0 ;
 
   _9p_fid_t * pfid = NULL ;
-
-  fsal_status_t fsal_status ; 
 
   size_t size;
   size_t read_size = 0;
@@ -90,11 +85,7 @@ int _9p_read( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, (unsigned long long)*offset, *count  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -121,11 +112,7 @@ int _9p_read( _9p_request_data_t * preq9p,
                             &pfid->fsal_op_context,
                             stable_flag,
                             &cache_status ) != CACHE_INODE_SUCCESS )
-        {
-          err = _9p_tools_errno( cache_status ) ; ;
-          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-          return rc ;
-        }
+         return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
        outcount = (u32)read_size ;
    }

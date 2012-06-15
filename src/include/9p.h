@@ -618,9 +618,8 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
 int _9p_rerror( _9p_request_data_t * preq9p,
                 u16 * msgtag,
-                u32 * err, 
+                u32   err, 
 	        u32 * plenout, 
                 char * preply) ;
-
 
 #endif /* _9P_H */

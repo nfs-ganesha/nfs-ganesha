@@ -76,9 +76,6 @@ int _9p_create( _9p_request_data_t * preq9p,
   fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
 
-  int rc = 0 ; 
-  int err = 0 ;
-
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
   /* Get data */
@@ -94,11 +91,7 @@ int _9p_create( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *name_len, name_str, *flags, *mode, *gid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -116,11 +109,7 @@ int _9p_create( _9p_request_data_t * preq9p,
                                               &pwkrdata->cache_inode_client, 
                                               &pfid->fsal_op_context, 
      			 		      &cache_status)) == NULL)
-   {
-      err = _9p_tools_errno( cache_status ) ; ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
+     return  _9p_rerror( preq9p, msgtag,  _9p_tools_errno( cache_status ) , plenout, preply ) ;
    
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;

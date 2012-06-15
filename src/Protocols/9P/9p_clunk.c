@@ -62,9 +62,6 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
 
-  int rc = 0 ;
-  u32 err = 0 ;
-
   _9p_fid_t * pfid = NULL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -77,11 +74,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
   pfid =  &preq9p->pconn->fids[*fid] ;
 

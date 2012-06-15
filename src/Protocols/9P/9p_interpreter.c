@@ -128,13 +128,12 @@ int _9p_dummy( _9p_request_data_t * preq9p,
   char * msgdata = preq9p->_9pmsg + _9P_HDR_SIZE ;
   u8 * pmsgtype = NULL ;
   u16 msgtag = 0 ;
-  int err = ENOTSUP ;
 
   /* Get message's type */
   pmsgtype = (u8 *)msgdata ;
   LogEvent( COMPONENT_9P,  "(%u|%s) not implemented yet, returning ENOTSUP", *pmsgtype,  _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname  ) ;
 
-  _9p_rerror( preq9p, &msgtag, &err, plenout, preply ) ;
+  _9p_rerror( preq9p, &msgtag, ENOTSUP, plenout, preply ) ;
 
   return -1 ;
 } /* _9p_dummy */
@@ -148,14 +147,13 @@ int _9p_not_2000L( _9p_request_data_t * preq9p,
   char * msgdata = preq9p->_9pmsg + _9P_HDR_SIZE ;
   u8 * pmsgtype = NULL ;
   u16 msgtag = 0 ;
-  int err = ENOTSUP ;
 
   /* Get message's type */
   pmsgtype = (u8 *)msgdata ;
   LogEvent( COMPONENT_9P,  "(%u|%s) is not a 9P2000.L message, returning ENOTSUP", 
             *pmsgtype,  _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname  ) ;
 
-  _9p_rerror( preq9p, &msgtag, &err, plenout, preply ) ;
+  _9p_rerror( preq9p, &msgtag, ENOTSUP, plenout, preply ) ;
 
   return -1 ;
 } /* _9p_not_2000L */

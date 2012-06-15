@@ -51,7 +51,7 @@
 
 int _9p_rerror( _9p_request_data_t * preq9p,
                 u16 * msgtag,
-                u32 * err, 
+                u32   err, 
 	        u32 * plenout, 
                 char * preply)
 {
@@ -64,13 +64,14 @@ int _9p_rerror( _9p_request_data_t * preq9p,
   _9p_setinitptr( cursor, preply, _9P_RERROR ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  _9p_setptr( cursor, err, u32 ) ;
+  _9p_setvalue( cursor, err, u32 ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RERROR: err=(%u|%s)", *err, strerror( *err ) ) ;
+  LogDebug( COMPONENT_9P, "RERROR: err=(%u|%s)", err, strerror( err ) ) ;
  
   return 1 ;
 }
+
 

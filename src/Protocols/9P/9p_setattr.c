@@ -79,9 +79,6 @@ int _9p_setattr( _9p_request_data_t * preq9p,
 
   struct timeval t;
 
-  int rc = 0 ; 
-  int err = 0 ;
-
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
@@ -104,11 +101,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
             (unsigned long long)*mtime_sec, (unsigned long long)*mtime_nsec  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -119,10 +112,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
        {
          LogMajor( COMPONENT_9P, "TSETATTR: tag=%u fid=%u ERROR !! gettimeofday returned -1 with errno=%u",
                    (u32)*msgtag, *fid, errno ) ;
-
-         err = errno ;
-         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-         return rc ;
+         return _9p_rerror( preq9p, msgtag, errno, plenout, preply ) ;
        }
    }
 
@@ -198,11 +188,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
                                                &pwkrdata->cache_inode_client,
                                                &pfid->fsal_op_context,
                                                &cache_status)) != CACHE_INODE_SUCCESS)
-       {
-         err = _9p_tools_errno( cache_status ) ; ;
-         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-         return rc ;
-       }
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
 
   /* Now set the attr */ 
@@ -211,11 +197,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
                            &pwkrdata->cache_inode_client,
                            &pfid->fsal_op_context,
                            &cache_status ) != CACHE_INODE_SUCCESS )
-    {
-      err = _9p_tools_errno( cache_status ) ; ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RSETATTR ) ;

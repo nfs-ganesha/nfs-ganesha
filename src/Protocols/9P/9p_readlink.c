@@ -64,9 +64,6 @@ int _9p_readlink( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
 
-  int rc = 0 ; 
-  int err = 0 ;
-
   fsal_path_t symlink_data;
   cache_inode_status_t cache_status ;
 
@@ -79,11 +76,7 @@ int _9p_readlink( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TREADLINK: tag=%u fid=%u",(u32)*msgtag, *fid ) ;
              
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -93,11 +86,7 @@ int _9p_readlink( _9p_request_data_t * preq9p,
                             &pwkrdata->cache_inode_client,
                             &pfid->fsal_op_context,
                             &cache_status ) != CACHE_INODE_SUCCESS )
-    {
-      err = _9p_tools_errno( cache_status ) ; ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RREADLINK ) ;

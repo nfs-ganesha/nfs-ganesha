@@ -77,9 +77,6 @@ int _9p_statfs( _9p_request_data_t * preq9p,
 
   u32 namelen = MAXNAMLEN ;
 
-  int rc = 0 ; 
-  int err = 0 ;
-
   fsal_dynamicfsinfo_t dynamicinfo;
   cache_inode_status_t cache_status;
 
@@ -93,11 +90,7 @@ int _9p_statfs( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid ) ;
  
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -106,11 +99,7 @@ int _9p_statfs( _9p_request_data_t * preq9p,
                           &dynamicinfo,
                           &pfid->fsal_op_context, 
                           &cache_status ) != CACHE_INODE_SUCCESS )
-    {
-       err = _9p_tools_errno( cache_status ) ; ;
-       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-       return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
   blocks  = (u64 *)&dynamicinfo.total_bytes ;
   bfree   = (u64 *)&dynamicinfo.free_bytes ;

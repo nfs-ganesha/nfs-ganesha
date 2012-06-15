@@ -128,9 +128,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
   _9p_cb_data_t cb_data ;
 
-  int rc = 0 ;
-  u32 err = 0 ;
-
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
   u64 * offset = NULL ;
@@ -172,11 +169,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, (unsigned long long)*offset, *count  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -194,11 +187,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   estimated_num_entries = (unsigned int)( *count / 40 ) ;  
 
   if( ( cb_data.entries = (_9p_cb_entry_t * ) Mem_Alloc(  estimated_num_entries * sizeof( _9p_cb_entry_t ) ) ) == NULL )
-      {
-        err = EIO ;
-        rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-        return rc ;
-      }
+    return _9p_rerror( preq9p, msgtag, EIO, plenout, preply ) ;
 
    /* Is this the first request ? */
   if( *offset == 0 )
@@ -208,11 +197,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                                                   &pwkrdata->cache_inode_client,
                                                   &pfid->fsal_op_context,
                                                   &cache_status ) ) == NULL )
-        {
-           err = _9p_tools_errno( cache_status ) ; ;
-           rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-           return rc ;
-        }
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
       /* Deal with "." and ".." */
       cb_data.entries[0].qid_path =  pfid->pentry->attributes.fileid ;
@@ -254,11 +239,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                              _9p_readdir_callback,
                              &cb_data,
                              &cache_status) != CACHE_INODE_SUCCESS)
-      {
-         err = _9p_tools_errno( cache_status ) ; ;
-         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-         return rc ;
-      }
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
    }
   /* Never go behind _9P_MAXDIRCOUNT */
   if( num_entries > _9P_MAXDIRCOUNT ) num_entries = _9P_MAXDIRCOUNT ;

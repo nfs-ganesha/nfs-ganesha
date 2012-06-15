@@ -70,7 +70,6 @@ int _9p_attach( _9p_request_data_t * preq9p,
 
   fsal_attrib_list_t fsalattr ;
 
-  int rc = 0 ;
   u32 err = 0 ;
  
   _9p_fid_t * pfid = NULL ;
@@ -121,18 +120,10 @@ int _9p_attach( _9p_request_data_t * preq9p,
 
   /* Did we find something ? */
   if( found == FALSE )
-    {
-      err = ENOENT ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ENOENT, plenout, preply ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
  
   /* Set pexport and fid id in fid */
   pfid= &preq9p->pconn->fids[*fid] ;
@@ -144,22 +135,13 @@ int _9p_attach( _9p_request_data_t * preq9p,
    {
      /* Build the fid creds */
     if( ( err = _9p_tools_get_fsal_op_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
-     {
-       err = -err ; /* The returned value from 9p service functions is always negative is case of errors */
-       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-       return rc ;
-     }
+      return _9p_rerror( preq9p, msgtag, -err, plenout, preply ) ;
    }
   else
    {
     /* Build the fid creds */
     if( ( err = _9p_tools_get_fsal_op_context_by_uid( *n_aname, pfid ) ) !=  0 )
-     {
-       err = -err ; /* The returned value from 9p service functions is always negative is case of errors */
-       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-       return rc ;
-     }
-
+      return _9p_rerror( preq9p, msgtag, -err, plenout, preply ) ;
    }
 
   /* Get the related pentry */
@@ -180,12 +162,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
                                   &cache_status ) ;
 
   if( pfid->pentry == NULL )
-   {
-     err = _9p_tools_errno( cache_status ) ; ;
-     rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-     return rc ;
-   }
-
+     return _9p_rerror( preq9p, msgtag, err, plenout, preply ) ;
 
   /* Compute the qid */
   pfid->qid.type = _9P_QTDIR ;

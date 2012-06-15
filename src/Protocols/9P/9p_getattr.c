@@ -67,10 +67,6 @@ int _9p_getattr( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
 
-  int rc = 0 ; 
-  int err = 0 ;
-
-
   u64 * valid        = NULL ;
   u32   mode         = 0    ; /* Not a pointer */
   u32 * uid          = NULL ;
@@ -102,11 +98,7 @@ int _9p_getattr( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, (unsigned long long)*request_mask ) ;
  
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 

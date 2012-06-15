@@ -58,8 +58,6 @@ int _9p_lopen( _9p_request_data_t * preq9p,
                   char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  int rc = 0 ;
-  u32 err = 0 ;
   nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
@@ -83,11 +81,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *mode  ) ;
 
    if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+     return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
  
    pfid =  &preq9p->pconn->fids[*fid] ;
 
@@ -99,11 +93,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
                          &pwkrdata->cache_inode_client,
                          &pfid->fsal_op_context, 
                          &cache_status ) != CACHE_INODE_SUCCESS )
-   {
-     err = EPERM ;
-     rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-     return rc ;
-   }
+     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* iounit = 0 by default */
    pfid->specdata.iounit = 0 ;

@@ -67,9 +67,6 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   char * name_str ;
   u64 attrsize = 0LL ;
 
-  int rc = 0 ;
-  u32 err = 0 ;
-
   fsal_status_t fsal_status ; 
   fsal_name_t name;
 
@@ -92,18 +89,10 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *attrfid, *name_len, name_str ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
- 
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+
   if( *attrfid >= _9P_FID_PER_CONN )
-   {
-     err = ERANGE ;
-     rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-     return rc ;
-   }
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
  
   pfid = &preq9p->pconn->fids[*fid] ;
   pxattrfid = &preq9p->pconn->fids[*attrfid] ;
@@ -118,18 +107,10 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
                                        &pxattrfid->specdata.xattr.xattr_id);
 
   if(FSAL_IS_ERROR(fsal_status))
-   {
-      err = _9p_tools_errno( cache_inode_error_convert(fsal_status) ) ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
+    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
   if( ( pxattrfid->specdata.xattr.xattr_content = Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL ) 
-    {
-      err = ENOMEM ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ENOMEM, plenout, preply ) ;
 
   fsal_status = FSAL_GetXAttrValueByName( &pxattrfid->pentry->handle,
                                           &name, 
@@ -139,15 +120,11 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
                                           &attrsize );
 
   if(FSAL_IS_ERROR(fsal_status))
-   {
-      err = _9p_tools_errno( cache_inode_error_convert(fsal_status) ) ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
+    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
   printf( "---> name=%s id=%u size=%llu val=#%s#\n", 
           name.name, pxattrfid->specdata.xattr.xattr_id,
-          attrsize, pxattrfid->specdata.xattr.xattr_content ) ;
+          (unsigned long long)attrsize, pxattrfid->specdata.xattr.xattr_content ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RXATTRWALK ) ;
@@ -159,7 +136,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   _9p_checkbound( cursor, preply, plenout ) ;
 
   LogDebug( COMPONENT_9P, "RXATTRWALK: tag=%u fid=%u attrfid=%u name=%.*s size=%llu",
-            (u32)*msgtag, *fid, *attrfid,  *name_len, name_str, attrsize ) ;
+            (u32)*msgtag, *fid, *attrfid,  *name_len, name_str, (unsigned long long)attrsize ) ;
 
   return 1 ;
 } /* _9p_xattrwalk */

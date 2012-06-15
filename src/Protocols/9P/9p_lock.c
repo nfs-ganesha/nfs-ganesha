@@ -73,9 +73,6 @@ int _9p_lock( _9p_request_data_t * preq9p,
   u16  * client_id_len = NULL ;
   char * client_id_str = NULL ;
 
-  int rc = 0 ; 
-  int err = 0 ;
-
   u8 status = 0  ;
   state_status_t state_status = STATE_SUCCESS;
   state_owner_t      * holder ;
@@ -110,30 +107,20 @@ int _9p_lock( _9p_request_data_t * preq9p,
             *proc_id, *client_id_len, client_id_str ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+
   pfid = &preq9p->pconn->fids[*fid] ;
 
   /* get the client's ip addr */
   snprintf( name, MAXNAMLEN, "%.*s",*client_id_len, client_id_str ) ;
 
   if( ( hp = gethostbyname( name ) ) == NULL )
-   {
-      err = EINVAL ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
+    return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
+
   memcpy( (char *)&client_addr, hp->h_addr, hp->h_length ) ;
 
   if( ( powner = get_9p_owner( &client_addr, *proc_id ) ) == NULL )
-   {
-      err = EINVAL ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
+    return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
 
   /* Do the job */
   switch( *type )
@@ -190,9 +177,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
         break ;
 
       default:
-        err = EINVAL ;
-        rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-        return rc ;
+        return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
         break ;
    } /* switch( *type ) */ 
 

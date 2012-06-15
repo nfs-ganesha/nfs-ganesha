@@ -64,9 +64,6 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   char * name_str = NULL ;
   u32  * flags    = NULL ;
 
-  int rc = 0 ;
-  u32 err = 0 ;
-
   _9p_fid_t * pdfid = NULL ;
 
   fsal_attrib_list_t    fsalattr ;
@@ -87,11 +84,8 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
             (u32)*msgtag, *dfid, *name_len, name_str ) ;
 
   if( *dfid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+
   pdfid = &preq9p->pconn->fids[*dfid] ;
 
   /* Let's do the job */
@@ -103,13 +97,7 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
                           &pwkrdata->cache_inode_client,
                           &pdfid->fsal_op_context,
                           &cache_status) != CACHE_INODE_SUCCESS )
-    {
-      err = _9p_tools_errno( cache_status ) ; ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
-
-
+    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RUNLINKAT ) ;

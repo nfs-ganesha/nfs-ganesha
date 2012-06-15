@@ -65,9 +65,6 @@ int _9p_rename( _9p_request_data_t * preq9p,
   u16  * name_len = NULL ;
   char * name_str = NULL ;
 
-  int rc = 0 ;
-  u32 err = 0 ;
-
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
@@ -80,16 +77,8 @@ int _9p_rename( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TRENAME: tag=%u fid=%u dfid=%u", (u32)*msgtag, *fid, *dfid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
-  err = ENOTSUP ;
-  rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-  return rc ;
-
-  return 1 ;
+  return _9p_rerror( preq9p, msgtag, ENOTSUP, plenout, preply ) ;
 }
 

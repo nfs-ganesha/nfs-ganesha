@@ -72,8 +72,6 @@ int _9p_link( _9p_request_data_t * preq9p,
   cache_inode_status_t  cache_status ;
   fsal_name_t           link_name ;
 
-  int rc = 0 ;
-  int err = 0 ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -89,19 +87,13 @@ int _9p_link( _9p_request_data_t * preq9p,
             (u32)*msgtag, *dfid, *targetfid, *name_len, name_str ) ;
 
   if( *dfid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return  _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+
    pdfid = &preq9p->pconn->fids[*dfid] ;
 
   if( *targetfid >= _9P_FID_PER_CONN )
-    {
-      err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+   return  _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+
    ptargetfid = &preq9p->pconn->fids[*targetfid] ;
 
    /* Let's do the job */
@@ -114,11 +106,7 @@ int _9p_link( _9p_request_data_t * preq9p,
                          &pwkrdata->cache_inode_client,
                          &pdfid->fsal_op_context,
                          &cache_status) != CACHE_INODE_SUCCESS )
-    {
-      err = _9p_tools_errno( cache_status ) ; ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-    }
+     return  _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
  
    /* Build the reply */
