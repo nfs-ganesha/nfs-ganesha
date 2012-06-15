@@ -494,7 +494,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                       pthread_rwlock_unlock(&pentry_lookup->state_lock);
                       cause2 = " cache_inode_access";
                       res_OPEN4.status = status4;
-                      cache_inode_put(pentry_lookup, data->pclient);
+                      cache_inode_put(pentry_lookup);
                       goto out;
                     }
 
@@ -505,7 +505,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                     {
                       cause2 = (const char *)text;
                       res_OPEN4.status = status4;
-                      cache_inode_put(pentry_lookup, data->pclient);
+                      cache_inode_put(pentry_lookup);
                       goto out;
                     }
 
@@ -517,7 +517,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                       res_OPEN4.status = NFS4ERR_RESOURCE;
                       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
                       cause2 = " (allocation of bitmap failed)";
-                      cache_inode_put(pentry_lookup, data->pclient);
+                      cache_inode_put(pentry_lookup);
                       goto out;
                     }
 
@@ -664,7 +664,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 res_OPEN4.status = NFS4ERR_EXIST; /* File already exists */
 
               cause2 = "GUARDED4";
-              cache_inode_put(pentry_lookup, data->pclient);
+              cache_inode_put(pentry_lookup);
               goto out;
             }
 
@@ -716,7 +716,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 {
                   res_OPEN4.status = nfs4_Errno(cache_status);
                   cause2 = " cache_inode_setattr";
-                  cache_inode_put(pentry_newfile, data->pclient);
+                  cache_inode_put(pentry_newfile);
                   goto out;
                 }
             }
@@ -729,7 +729,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
             {
               cause2 = text;
               res_OPEN4.status = status4;
-              cache_inode_put(pentry_newfile, data->pclient);
+              cache_inode_put(pentry_newfile);
               goto out;
             }
 
@@ -755,7 +755,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           /* OPEN4 is to be done on a file */
           if(pentry_newfile->type != REGULAR_FILE)
             {
-              cache_inode_put(pentry_newfile, data->pclient);
+              cache_inode_put(pentry_newfile);
               if(pentry_newfile->type == DIRECTORY)
                 {
                   res_OPEN4.status = NFS4ERR_ISDIR;
@@ -774,7 +774,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
             {
               cause2 = " cache_inode_access";
               res_OPEN4.status = status4;
-              cache_inode_put(pentry_newfile, data->pclient);
+              cache_inode_put(pentry_newfile);
               goto out;
             }
 
@@ -823,7 +823,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       cause2 = " (OPEN4_SHARE_DENY_WRITE)";
                       pthread_rwlock_unlock(&pentry_newfile->state_lock);
-                      cache_inode_put(pentry_newfile, data->pclient);
+                      cache_inode_put(pentry_newfile);
                       goto out;
                     }
                 }
@@ -842,7 +842,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   cause2 = " (OPEN4_SHARE_ACCESS_READ)";
                   pthread_rwlock_unlock(&pentry_newfile->state_lock);
-                  cache_inode_put(pentry_newfile, data->pclient);
+                  cache_inode_put(pentry_newfile);
                   goto out;
                 }
 
@@ -854,7 +854,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   cause2 = " (OPEN4_SHARE_ACCESS_WRITE)";
                   pthread_rwlock_unlock(&pentry_newfile->state_lock);
-                  cache_inode_put(pentry_newfile, data->pclient);
+                  cache_inode_put(pentry_newfile);
                   goto out;
                 }
             }
@@ -866,7 +866,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
             {
               cause2 = text;
               res_OPEN4.status = status4;
-              cache_inode_put(pentry_newfile, data->pclient);
+              cache_inode_put(pentry_newfile);
               goto out;
             }
           break;
@@ -1312,7 +1312,7 @@ nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
         /* Building a new fh */
         if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data)) {
                 *cause2 = " (nfs4_FSALToFhandle failed)";
-                cache_inode_put(pentry, data->pclient);
+                cache_inode_put(pentry);
                 return NFS4ERR_SERVERFAULT;
         }
 

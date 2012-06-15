@@ -1669,6 +1669,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+          cache_inode_put(pentry);
           return res_LOOKUP4.status;
         }
 
@@ -1940,6 +1941,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
+          cache_inode_put(pentry);
           return res_READDIR4.status;
         }
 

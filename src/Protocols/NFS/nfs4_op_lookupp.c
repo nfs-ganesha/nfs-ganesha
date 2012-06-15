@@ -146,7 +146,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
       if(!nfs4_FSALToFhandle(&data->currentFH, pfsal_handle, data))
         {
           res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(file_pentry, data->pclient);
+          cache_inode_put(file_pentry);
           return res_LOOKUPP4.status;
         }
 

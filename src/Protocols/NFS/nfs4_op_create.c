@@ -271,7 +271,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(cache_status == CACHE_INODE_ENTRY_EXISTS)
         {
           res_CREATE4.status = NFS4ERR_EXIST;
-          cache_inode_put(pentry_new, data->pclient);
+          cache_inode_put(pentry_new);
           return res_CREATE4.status;
         }
 
@@ -299,7 +299,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(cache_status == CACHE_INODE_ENTRY_EXISTS)
         {
           res_CREATE4.status = NFS4ERR_EXIST;
-          cache_inode_put(pentry_new, data->pclient);
+          cache_inode_put(pentry_new);
           return res_CREATE4.status;
         }
       break;
@@ -323,7 +323,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(cache_status == CACHE_INODE_ENTRY_EXISTS)
         {
           res_CREATE4.status = NFS4ERR_EXIST;
-          cache_inode_put(pentry_new, data->pclient);
+          cache_inode_put(pentry_new);
           return res_CREATE4.status;
         }
       break;
@@ -347,7 +347,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(cache_status == CACHE_INODE_ENTRY_EXISTS)
         {
           res_CREATE4.status = NFS4ERR_EXIST;
-          cache_inode_put(pentry_new, data->pclient);
+          cache_inode_put(pentry_new);
           return res_CREATE4.status;
         }
       break;
@@ -374,7 +374,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(cache_status == CACHE_INODE_ENTRY_EXISTS)
         {
           res_CREATE4.status = NFS4ERR_EXIST;
-          cache_inode_put(pentry_new, data->pclient);
+          cache_inode_put(pentry_new);
           return res_CREATE4.status;
         }
       break;
@@ -401,7 +401,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(cache_status == CACHE_INODE_ENTRY_EXISTS)
         {
           res_CREATE4.status = NFS4ERR_EXIST;
-          cache_inode_put(pentry_new, data->pclient);
+          cache_inode_put(pentry_new);
           return res_CREATE4.status;
         }
       break;
@@ -420,6 +420,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(nfs4_AllocateFH(&newfh4) != NFS4_OK)
     {
       res_CREATE4.status = NFS4ERR_SERVERFAULT;
+      cache_inode_put(pentry_new);
       return res_CREATE4.status;
     }
 
@@ -427,6 +428,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
     {
       res_CREATE4.status = NFS4ERR_SERVERFAULT;
+      cache_inode_put(pentry_new);
       return res_CREATE4.status;
     }
 
@@ -451,6 +453,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
+          cache_inode_put(pentry_new);
           return res_CREATE4.status;
         }
 
@@ -462,6 +465,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val == NULL)
         {
           res_CREATE4.status = NFS4ERR_SERVERFAULT;
+          cache_inode_put(pentry_new);
           return res_CREATE4.status;
         }
       memcpy(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val,
@@ -477,6 +481,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_CREATE4.status = nfs4_Errno(cache_status);
+      cache_inode_put(pentry_new);
       return res_CREATE4.status;
     }
   memset(&(res_CREATE4.CREATE4res_u.resok4.cinfo.after), 0, sizeof(changeid4));
