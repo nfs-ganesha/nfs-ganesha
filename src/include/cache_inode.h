@@ -523,6 +523,11 @@ static const uint32_t CACHE_INODE_FLAG_REALLYCLOSE = 0x80; /*< Close a file
                                                         even with
                                                         caching
                                                         enabled */
+/*
+ * Flags to cache_inode_invalidate
+ */
+static const uint32_t CACHE_INODE_INVALIDATE_CLEARBITS = 0x01;
+static const uint32_t CACHE_INODE_INVALIDATE_CLOSE = 0x02;
 
 /*
  * Prototypes for the functions
@@ -860,7 +865,8 @@ void cache_inode_kill_entry(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_invalidate(
      cache_inode_fsal_data_t *fsal_data,
-     cache_inode_status_t *status);
+     cache_inode_status_t *status,
+     uint32_t flags);
 
 /* Parsing functions */
 cache_inode_status_t cache_inode_read_conf_hash_parameter(

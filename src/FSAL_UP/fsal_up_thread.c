@@ -37,6 +37,8 @@
 #include "err_fsal.h"
 #include "nfs_tcb.h"
 
+extern fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t *);
+
 static int fsal_up_thread_exists(exportlist_t *entry);
 static struct glist_head       fsal_up_process_queue;
 nfs_tcb_t                      fsal_up_process_tcb;
@@ -45,6 +47,30 @@ fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
 {
   int rc;
   fsal_status_t ret = {0, 0};
+
+  /* Events which needs quick response, and locking events wich
+     has its own queue gets processed here, rest will be queued. */
+  if (arg->event_type == FSAL_UP_EVENT_LOCK_GRANT ||
+      arg->event_type == FSAL_UP_EVENT_LOCK_AVAIL)
+    {
+      arg->event_process_func(&arg->event_data);
+
+      gsh_free(arg->event_data.event_context.fsal_data.fh_desc.start);
+      pthread_mutex_lock(&nfs_param.fsal_up_param.event_pool_lock);
+      pool_free(nfs_param.fsal_up_param.event_pool, arg);
+      pthread_mutex_unlock(&nfs_param.fsal_up_param.event_pool_lock);
+      return ret;
+    }
+
+  if(arg->event_type == FSAL_UP_EVENT_INVALIDATE)
+    {
+      arg->event_process_func(&arg->event_data);
+      /* Step2 where we perform close; which could be expensive operation
+         so deffer it to the separate thread. */
+      arg->event_process_func = dumb_fsal_up_invalidate_step2;
+    }
+
+  /* Now queue them for further process. */
   LogFullDebug(COMPONENT_FSAL_UP, "Schedule %p", arg);
 
   P(fsal_up_process_tcb.tcb_mutex);
