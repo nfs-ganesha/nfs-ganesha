@@ -8,7 +8,7 @@ AC_SUBST(RELEASE, [1])
 
 AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
 
-AC_CONFIG_AUX_DIR([build-aux])
+dnl AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS/CEPH .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
@@ -329,6 +329,13 @@ if test -d ${TIRPCDIR}; then
 	cd ${_SRCDIR}
 else
 	AC_MSG_ERROR([${TIRPCDIR} not present (cf. README.TIRPC).])
+fi
+
+# TI-RPC Packaging
+libtool_15="`libtool --version|grep 1.5`"
+if test "x$libtool_15" != "x" ; then
+   LIBTOOL_15="_libtool_15"
+   AC_SUBST(_LIBTOOL_15)
 fi
 
 # My auto-foo doesn't extend to this

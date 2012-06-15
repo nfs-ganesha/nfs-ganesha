@@ -386,13 +386,21 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
 %doc Docs/ganesha_snmp_adm.pdf
 
-# extra macro
+# extra macros
 %define _usrlibdir /usr/lib
+%define _usrmandir /usr/man
 
 %files libntirpc
 %defattr(-,root,root,-)
 # pending further disambiguation, don't install any actual
 # files
+
+%define _have_@LIBTOOL_15@ 1
+%if %{?_have_libtool_15:1}%{!?_have_libtool_15:0}
+%else
+%ghost %{_includedir}/m4/.dummy
+%endif
+%ghost %{_includedir}/autogen.sh
 %ghost %{_includedir}/clnt_internal.h
 %ghost %{_includedir}/rpc_com.h
 %ghost %{_includedir}/rpc_ctx.h
@@ -449,25 +457,6 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %{_usrlibdir}/libntirpc.so.1
 %ghost %{_usrlibdir}/libntirpc.so.1.0.10
 %ghost %{_usrlibdir}/pkgconfig/libntirpc.pc
-%ghost %{_datadir}/man/man3/bindresvport.3t.gz
-%ghost %{_datadir}/man/man3/des_crypt.3t.gz
-%ghost %{_datadir}/man/man3/getnetconfig.3t.gz
-%ghost %{_datadir}/man/man3/getnetpath.3t.gz
-%ghost %{_datadir}/man/man3/getrpcent.3t.gz
-%ghost %{_datadir}/man/man3/getrpcport.3t.gz
-%ghost %{_datadir}/man/man3/rpc.3t.gz
-%ghost %{_datadir}/man/man3/rpc_clnt_auth.3t.gz
-%ghost %{_datadir}/man/man3/rpc_clnt_calls.3t.gz
-%ghost %{_datadir}/man/man3/rpc_clnt_create.3t.gz
-%ghost %{_datadir}/man/man3/rpc_secure.3t.gz
-%ghost %{_datadir}/man/man3/rpc_soc.3t.gz
-%ghost %{_datadir}/man/man3/rpc_svc_calls.3t.gz
-%ghost %{_datadir}/man/man3/rpc_svc_create.3t.gz
-%ghost %{_datadir}/man/man3/rpc_svc_err.3t.gz
-%ghost %{_datadir}/man/man3/rpc_svc_reg.3t.gz
-%ghost %{_datadir}/man/man3/rpc_xdr.3t.gz
-%ghost %{_datadir}/man/man3/rtime.3t.gz
-%ghost %{_datadir}/man/man5/netconfig.5.gz
 
 %files vim
 %defattr(-,root,root,-)
