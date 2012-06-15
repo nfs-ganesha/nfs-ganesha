@@ -106,6 +106,8 @@ int _9p_write( _9p_request_data_t * preq9p,
    { 
      snprintf( xattrval, XATTR_BUFFERSIZE, "%.*s", *count, databuffer ) ;
 
+     _9p_chomp_attr_value( xattrval, strlen( xattrval ) ) ;
+
      fsal_status = FSAL_SetXAttrValueById( &pfid->pentry->handle,
                                            pfid->specdata.xattr.xattr_id,
                                            &pfid->fsal_op_context,
@@ -115,7 +117,7 @@ int _9p_write( _9p_request_data_t * preq9p,
        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
       /* Cache the value */
-      memcpy( pfid->specdata.xattr.xattr_content, databuffer, size ) ;
+      memcpy( pfid->specdata.xattr.xattr_content, xattrval, size ) ;
 
       outcount = *count ;
    }

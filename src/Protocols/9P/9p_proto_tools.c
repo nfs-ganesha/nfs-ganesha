@@ -239,3 +239,20 @@ void _9p_tools_acess2fsal( u32 * paccessin, fsal_accessflags_t * pfsalaccess )
   if( *paccessin & O_RDONLY ) *pfsalaccess |= FSAL_R_OK ;
   if( *paccessin & O_RDWR )   *pfsalaccess |= FSAL_R_OK|FSAL_W_OK ; 
 } /* _9p_tools_acess2fsal */
+
+void _9p_chomp_attr_value(char *str, size_t size)
+{
+  int len;
+
+  if(str == NULL)
+    return;
+
+  /* security: set last char to '\0' */
+  str[size - 1] = '\0';
+
+  len = strnlen(str, size);
+  if((len > 0) && (str[len - 1] == '\n'))
+    str[len - 1] = '\0';
+}
+
+

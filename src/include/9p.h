@@ -469,6 +469,7 @@ int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_
 int _9p_tools_errno( cache_inode_status_t cache_status ) ;
 void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pstat ) ;
 void _9p_tools_acess2fsal( u32 * paccessin, fsal_accessflags_t * pfsalaccess ) ;
+void _9p_chomp_attr_value(char *str, size_t size) ;
 
 /* Protocol functions */
 int _9p_dummy( _9p_request_data_t * preq9p, 

@@ -122,9 +122,9 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   if(FSAL_IS_ERROR(fsal_status))
     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
-  printf( "---> name=%s id=%u size=%llu val=#%s#\n", 
-          name.name, pxattrfid->specdata.xattr.xattr_id,
-          (unsigned long long)attrsize, pxattrfid->specdata.xattr.xattr_content ) ;
+   _9p_chomp_attr_value( pxattrfid->specdata.xattr.xattr_content, strlen(  pxattrfid->specdata.xattr.xattr_content) ) ;
+
+  attrsize = strlen( pxattrfid->specdata.xattr.xattr_content ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RXATTRWALK ) ;
