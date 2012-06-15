@@ -31,6 +31,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "pxy_fsal_methods.h"
+#include <nfs_exports.h>
 
 static fsal_status_t
 pxy_release(struct fsal_export *exp_hdl)
@@ -71,17 +72,25 @@ pxy_get_maxfilesize(struct fsal_export *exp_hdl)
 static fsal_size_t
 pxy_get_maxread(struct fsal_export *exp_hdl)
 {
+        fsal_size_t sz;
         struct pxy_fsal_module *pm =
                 container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_maxread(&pm->fsinfo);
+	sz = fsal_maxread(&pm->fsinfo);
+        if (sz)
+                return MIN(sz, exp_hdl->exp_entry->MaxRead);
+        return exp_hdl->exp_entry->MaxRead;
 }
 
 static fsal_size_t
 pxy_get_maxwrite(struct fsal_export *exp_hdl)
 {
+        fsal_size_t sz;
         struct pxy_fsal_module *pm =
                 container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_maxwrite(&pm->fsinfo);
+	sz = fsal_maxwrite(&pm->fsinfo);
+        if (sz)
+                return MIN(sz, exp_hdl->exp_entry->MaxWrite);
+        return exp_hdl->exp_entry->MaxWrite;
 }
 
 static fsal_count_t

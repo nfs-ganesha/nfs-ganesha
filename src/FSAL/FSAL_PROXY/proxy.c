@@ -22,8 +22,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * ------------- 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -243,7 +241,7 @@ pxy_init_config(struct fsal_module *fsal_hdl,
         struct pxy_fsal_module *pxy =
                 container_of(fsal_hdl, struct pxy_fsal_module, module);
 
-        default_pxy_params.srv_addr = htonl(0x7F000001);
+        default_pxy_params.srv_addr = INADDR_LOOPBACK;
         default_pxy_params.srv_port = htons(2049);
 
         pxy->special = default_pxy_params;
