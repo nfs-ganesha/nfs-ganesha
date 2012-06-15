@@ -20,8 +20,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * ------------- 
  */
 
 /* Proxy handle methods */
@@ -81,6 +79,7 @@ struct pxy_handle_blob {
 struct pxy_obj_handle {
         struct fsal_obj_handle obj;
         nfs_fh4 fh4;
+        fsal_openflags_t openflags;
         struct pxy_handle_blob blob;
 };
 
@@ -263,7 +262,7 @@ pxy_create_settable_bitmap(const fsal_attrib_list_t * attrs, bitmap4 *bm)
                         tmpattrlist[attrlen++] = fsal_mask2bit[i].fattr_bit;
         }
         nfs4_list_to_bitmap4(bm, &attrlen, tmpattrlist);
-}                               /* fsal_interval_proxy_fsalattr2bitmap4 */
+}
 
 static CLIENT *rpc_client;
 
@@ -396,7 +395,7 @@ pxy_nfsv4_call(struct fsal_export *exp, uint32_t cnt, nfs_argop4 *argoparray, nf
                 LogEvent(COMPONENT_FSAL, "Call failed, reconnecting to the remote server");
                 do {
                         renewed = pxy_create_rpc_clnt(pxyexp->info);
-                        if (renewed) {
+                        if (!renewed) {
                                 LogEvent(COMPONENT_FSAL,
                                          "Cannot reconnect, will sleep for %d seconds",
                                          pxyexp->info->retry_sleeptime);
@@ -675,10 +674,8 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
                 ReturnCode(ERR_FSAL_FAULT, EINVAL);
 
         st = pxy_get_clientid(dir_hdl->export);
-        if(FSAL_IS_ERROR(st)) {
-                LogEvent(COMPONENT_FSAL, "Got %d.%d for clientid", st.major, st.minor);
+        if(FSAL_IS_ERROR(st))
                 return st;
-        }
 
         /* Create the owner */
         snprintf(owner_val, sizeof(owner_val), "GANESHA/PROXY: pid=%u %ld",
@@ -1366,11 +1363,26 @@ pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
 }
 
 
+/*
+ * Without name the 'open' for NFSv4 makes no sense - we could
+ * send a getattr to the backend server but it's not going to
+ * do anything useful anyway, so just save the openflags to record
+ * the fact that file has been 'opened' and be done.
+ */
 static fsal_status_t
 pxy_open(struct fsal_obj_handle *obj_hdl,
          fsal_openflags_t openflags)
 {
-        ReturnCode(ERR_FSAL_PERM, EPERM);
+        struct pxy_obj_handle *ph; 
+
+        if (!obj_hdl)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+        if((ph->openflags != FSAL_O_CLOSED) && (ph->openflags != openflags))
+                ReturnCode(ERR_FSAL_FILE_OPEN, EBADF);
+        ph->openflags = openflags;
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 static fsal_status_t
@@ -1381,25 +1393,102 @@ pxy_read(struct fsal_obj_handle *obj_hdl,
 	 ssize_t *read_amount,
 	 fsal_boolean_t * end_of_file)
 {
-        ReturnCode(ERR_FSAL_IO, EIO);
+        int rc;
+        int opcnt = 0;
+        struct pxy_obj_handle *ph; 
+#define FSAL_READ_NB_OP_ALLOC 2
+        nfs_argop4 argoparray[FSAL_READ_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_READ_NB_OP_ALLOC];
+        READ4resok *rok;
+
+        if (!obj_hdl || !seek_descriptor || !read_amount || !end_of_file ||
+            (seek_descriptor->whence != FSAL_SEEK_SET))
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        if(!buffer_size) {
+                *read_amount = 0;
+                *end_of_file = FALSE;
+                ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        }
+
+        ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+#if 0
+        if((ph->openflags & (FSAL_O_RDONLY|FSAL_O_RDWR)) == 0)
+                ReturnCode(ERR_FSAL_FILE_OPEN, EBADF);
+#endif
+
+        if(buffer_size > obj_hdl->export->ops->fs_maxread(obj_hdl->export))
+                buffer_size = obj_hdl->export->ops->fs_maxread(obj_hdl->export);
+
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+        rok = &resoparray[opcnt].nfs_resop4_u.opread.READ4res_u.resok4;
+        rok->data.data_val = buffer;
+        rok->data.data_len = buffer_size;
+        COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argoparray, seek_descriptor->offset,
+                                   buffer_size);
+
+        rc = pxy_nfsv4_call(obj_hdl->export, opcnt, argoparray, resoparray);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        *end_of_file = rok->eof;
+        *read_amount = rok->data.data_len;
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 static fsal_status_t
 pxy_write(struct fsal_obj_handle *obj_hdl,
 	  fsal_seek_t *seek_descriptor,
-	  size_t buffer_size,
+	  size_t size,
 	  caddr_t buffer,
 	  ssize_t *write_amount)
 {
-        ReturnCode(ERR_FSAL_IO, EIO);
+        int rc;
+        int opcnt = 0;
+#define FSAL_WRITE_NB_OP_ALLOC 2
+        nfs_argop4 argoparray[FSAL_WRITE_NB_OP_ALLOC];
+        nfs_resop4 resoparray[FSAL_WRITE_NB_OP_ALLOC];
+        WRITE4resok *wok;
+        struct pxy_obj_handle *ph;
+
+        if (!obj_hdl || !seek_descriptor || !write_amount ||
+            (seek_descriptor->whence != FSAL_SEEK_SET))
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        if(!size) {
+                *write_amount = 0;
+                ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        }
+
+        ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+#if 0
+        if((ph->openflags & (FSAL_O_WRONLY|FSAL_O_RDWR|FSAL_O_APPEND)) == 0) {
+                ReturnCode(ERR_FSAL_FILE_OPEN, EBADF);
+        }
+#endif
+
+        if(size > obj_hdl->export->ops->fs_maxwrite(obj_hdl->export))
+                size = obj_hdl->export->ops->fs_maxwrite(obj_hdl->export);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+        wok = &resoparray[opcnt].nfs_resop4_u.opwrite.WRITE4res_u.resok4;
+        COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, seek_descriptor->offset,
+                                    buffer, size);
+
+        rc = pxy_nfsv4_call(obj_hdl->export, opcnt, argoparray, resoparray);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        *write_amount = wok->count;
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
+/* We send all out writes as DATA_SYNC, commit becomes a NO-OP */
 static fsal_status_t
 pxy_commit(struct fsal_obj_handle *obj_hdl,
 	   off_t offset,
 	   size_t len)
 {
-        ReturnCode(ERR_FSAL_IO, EIO);
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 static fsal_status_t 
@@ -1423,7 +1512,16 @@ pxy_share_op(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t
 pxy_close(struct fsal_obj_handle *obj_hdl)
 {
-	ReturnCode(ERR_FSAL_PERM, EPERM);
+        struct pxy_obj_handle *ph; 
+
+        if (!obj_hdl)
+                ReturnCode(ERR_FSAL_FAULT, EINVAL);
+
+        ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
+        if(ph->openflags == FSAL_O_CLOSED)
+                ReturnCode(ERR_FSAL_NOT_OPENED, EBADF);
+        ph->openflags = FSAL_O_CLOSED;
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 static fsal_status_t
