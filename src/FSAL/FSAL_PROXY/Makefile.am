@@ -6,7 +6,7 @@ endif
 
 lib_LTLIBRARIES          = libfsalproxy.la
 
-libfsalproxy_la_SOURCES = file.c handle.c proxy.c export.c xattrs.c
+libfsalproxy_la_SOURCES = handle.c proxy.c export.c xattrs.c
 
 new: clean all
 
