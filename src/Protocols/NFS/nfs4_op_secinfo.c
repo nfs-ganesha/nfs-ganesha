@@ -151,6 +151,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
       gsh_calloc(num_entry, sizeof(secinfo4))) == NULL)
     {
       res_SECINFO4.status = NFS4ERR_SERVERFAULT;
+      cache_inode_put(entry_src, data->pclient);
       return res_SECINFO4.status;
     }
 
@@ -183,6 +184,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
     }
   res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = idx;
+
+  cache_inode_put(entry_src, data->pclient);
 
   return res_SECINFO4.status;
 }                               /* nfs4_op_secinfo */
