@@ -1434,12 +1434,15 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	pthread_mutex_destroy(&obj_hdl->lock);
 	myself->obj_handle.ops = NULL; /*poison myself */
 	myself->obj_handle.export = NULL;
-	if(myself->u.symlink.link_content != NULL)
-		free(myself->u.symlink.link_content);
-	if(myself->u.sock.sock_name != NULL)
-		free(myself->u.sock.sock_name);
-	if(myself->u.sock.sock_dir != NULL)
-		free(myself->u.sock.sock_dir);
+	if(obj_hdl->type == SYMBOLIC_LINK) {
+		if(myself->u.symlink.link_content != NULL)
+			free(myself->u.symlink.link_content);
+	} else if(obj_hdl->type == SOCKET_FILE) {
+		if(myself->u.sock.sock_name != NULL)
+			free(myself->u.sock.sock_name);
+		if(myself->u.sock.sock_dir != NULL)
+			free(myself->u.sock.sock_dir);
+	}
 	free(myself);
 	ReturnCode(fsal_error, 0);
 }
