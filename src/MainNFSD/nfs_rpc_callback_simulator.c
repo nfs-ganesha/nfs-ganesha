@@ -40,7 +40,6 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
-#include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -200,11 +199,11 @@ static void cbsim_free_compound(nfs4_compound_t *cbt)
         if (argop) {
             switch (argop->argop) {
             case  NFS4_OP_CB_RECALL:
-                Mem_Free(argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val);
+                gsh_free(argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val);
                 break;
             default:
                 /* TODO:  ahem */
-                break;                
+                break;
             }
         }
     }
