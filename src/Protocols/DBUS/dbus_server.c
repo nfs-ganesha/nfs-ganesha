@@ -43,7 +43,6 @@
 #if defined(USE_DBUS)
 #include <dbus/dbus.h>
 #endif /* USE_DBUS */
-#include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -168,8 +167,8 @@ int32_t gsh_dbus_register_path(const char *name,
     snprintf(path, 512, "/org/ganesha/nfsd/%s", name);
 
     handler = (ganesha_dbus_handler_t *)
-        Mem_Alloc(sizeof(ganesha_dbus_handler_t));
-    handler->name = Str_Dup(path);
+        gsh_malloc(sizeof(ganesha_dbus_handler_t));
+    handler->name = gsh_strdup(path);
     handler->vtable.unregister_function = path_unregistered_func;
     handler->vtable.message_function =  method;
 
@@ -186,7 +185,7 @@ int32_t gsh_dbus_register_path(const char *name,
     if (! code) {
         LogFatal(COMPONENT_DBUS, "dbus_connection_register_object_path "
                  "failed");
-        Mem_Free(handler);
+        gsh_free(handler);
         goto out;
     }
 
@@ -224,8 +223,8 @@ void gsh_dbus_pkgshutdown(void)
                         handler->name, thread_state.dbus_err.message);
                 dbus_error_free(&thread_state.dbus_err);
             }
-            Mem_Free(handler->name);
-            Mem_Free(handler);
+            gsh_free(handler->name);
+            gsh_free(handler);
         }
     } while ((onode = node) && (node = avltree_next(node)));
     if (onode) {
@@ -238,8 +237,8 @@ void gsh_dbus_pkgshutdown(void)
                     handler->name, thread_state.dbus_err.message);
             dbus_error_free(&thread_state.dbus_err);
         }
-        Mem_Free(handler->name);
-        Mem_Free(handler);
+        gsh_free(handler->name);
+        gsh_free(handler);
     }
     avltree_init(&thread_state.callouts, dbus_callout_cmpf, 0);
 

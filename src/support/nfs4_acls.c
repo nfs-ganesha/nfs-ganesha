@@ -33,7 +33,6 @@ static int display_fsal_acl_val(hash_buffer_t * p_val, char *outbuff);
 static hash_parameter_t fsal_acl_hash_config = {
   .index_size = 67,
   .alphabet_length = 10,
-  .nb_node_prealloc = 1024,
   .hash_func_key = NULL,
   .hash_func_rbt = NULL,
   .hash_func_both = fsal_acl_hash_both,
@@ -493,7 +492,7 @@ int nfs4_acls_init()
                             NULL, NULL, NULL);
 
   /* Initialize memory pool of ACL keys. */
-  fsal_acl_key_pool = pool_init(NULL, fsal_acl_key_t,
+  fsal_acl_key_pool = pool_init(NULL, sizeof(fsal_acl_key_t),
                                 pool_basic_substrate,
                                 NULL, NULL, NULL);
 

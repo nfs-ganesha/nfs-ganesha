@@ -677,7 +677,7 @@ nfs_rpc_submit_call(rpc_call_t *call, uint32_t flags)
         int32_t thrd_ix;
         nfs_worker_data_t *worker;
 
-        thrd_ix = nfs_core_select_worker_queue();
+        thrd_ix = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
         worker = &workers_data[thrd_ix];
 
         LogFullDebug(COMPONENT_NFS_CB,

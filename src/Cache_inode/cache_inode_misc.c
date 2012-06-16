@@ -148,6 +148,8 @@ const char *cache_inode_err_str(cache_inode_status_t err)
         return "CACHE_INODE_FILE_BIG";
       case CACHE_INODE_KILLED:
         return "CACHE_INODE_KILLED";
+      case CACHE_INODE_FILE_OPEN:
+        return "CACHE_INODE_FILE_OPEN";
     }
   return "unknown";
 }

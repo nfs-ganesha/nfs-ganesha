@@ -719,6 +719,9 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
     if (++next_chan >= N_EVENT_CHAN)
         next_chan = TCP_EVCHAN_0;
 
+    /* this is ours */
+    newxprt->xp_u1 = (void *) 0;
+
     pthread_mutex_unlock(&mtx);
 
     (void) svc_rqst_evchan_reg(rpc_evchan[tchan].chan_id, newxprt,
@@ -735,7 +738,52 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 /* PhD: Please note that I renamed this function, added 
  * it prototype to include/nfs_core.h and removed its "static" tag.
  * This is done to share this code with the 9P implementation */
-unsigned int nfs_core_select_worker_queue()
+
+static inline worker_available_rc
+worker_available(unsigned long worker_index, unsigned int avg_number_pending)
+{
+  worker_available_rc rc = WORKER_AVAILABLE;
+  P(workers_data[worker_index].wcb.tcb_mutex);
+  switch(workers_data[worker_index].wcb.tcb_state)
+    {
+      case STATE_AWAKE:
+      case STATE_AWAKEN:
+        /* Choose only fully initialized workers and that does not gc. */
+        if(workers_data[worker_index].wcb.tcb_ready == FALSE)
+          {
+            LogFullDebug(COMPONENT_THREAD,
+                         "worker thread #%lu is not ready", worker_index);
+            rc = WORKER_PAUSED;
+          }
+        else if(workers_data[worker_index].gc_in_progress == TRUE)
+          {
+            LogFullDebug(COMPONENT_THREAD,
+                         "worker thread #%lu is doing garbage collection", worker_index);
+            rc = WORKER_GC;
+          }
+        else if(workers_data[worker_index].pending_request_len >= avg_number_pending)
+          {
+            rc = WORKER_BUSY;
+          }
+        break;
+
+      case STATE_STARTUP:
+      case STATE_PAUSE:
+      case STATE_PAUSED:
+        rc = WORKER_ALL_PAUSED;
+        break;
+
+      case STATE_EXIT:
+        rc = WORKER_EXIT;
+        break;
+    }
+  V(workers_data[worker_index].wcb.tcb_mutex);
+
+  return rc;
+}
+
+unsigned int
+nfs_core_select_worker_queue(unsigned int avoid_index)
 {
   #define NO_VALUE_CHOOSEN  1000000
   unsigned int worker_index = NO_VALUE_CHOOSEN;
@@ -764,26 +812,32 @@ unsigned int nfs_core_select_worker_queue()
     }
 
   /* Choose the queue whose length is smaller than average. */
-      for(i = (last + 1) % nfs_param.core_param.nb_worker, cpt = 0;
-          cpt < nfs_param.core_param.nb_worker;
-          cpt++, i = (i + 1) % nfs_param.core_param.nb_worker)
-        {
-          /* Choose only fully initialized workers and that does not gc. */
-          rc_worker = worker_available(i, avg_number_pending);
-          if(rc_worker == WORKER_AVAILABLE)
-            {
-              worker_index = i;
-              break;
-            }
-          else if(rc_worker == WORKER_ALL_PAUSED)
-            {
-              /* Wait for the threads to awaken */
-              wait_for_threads_to_awaken();
-            }
-          else if(rc_worker == WORKER_EXIT)
-            {
-            }
-        }
+  for(i = (last + 1) % nfs_param.core_param.nb_worker, cpt = 0;
+      cpt < nfs_param.core_param.nb_worker;
+      cpt++, i = (i + 1) % nfs_param.core_param.nb_worker)
+    {
+      /* Avoid worker at avoid_index (provided to permit a worker thread to avoid
+       * dispatching work to itself). */
+      if (i == avoid_index)
+          continue;
+
+      /* Choose only fully initialized workers and that does not gc. */
+      rc_worker = worker_available(i, avg_number_pending);
+      if(rc_worker == WORKER_AVAILABLE)
+      {
+        worker_index = i;
+        break;
+      }
+      else if(rc_worker == WORKER_ALL_PAUSED)
+      {
+        /* Wait for the threads to awaken */
+        wait_for_threads_to_awaken();
+      }
+      else if(rc_worker == WORKER_EXIT)
+      {
+        /* do nothing */
+      }
+    } /* for */
 
   if(worker_index == NO_VALUE_CHOOSEN)
     worker_index = (last + 1) % nfs_param.core_param.nb_worker;
@@ -807,6 +861,81 @@ nfs_rpc_get_nfsreq(nfs_worker_data_t *worker, uint32_t flags)
     pnfsreq = pool_alloc(request_pool, NULL);
 
     return (pnfsreq);
+}
+
+process_status_t
+dispatch_rpc_subrequest(nfs_worker_data_t *pmydata,
+                        request_data_t *onfsreq)
+{
+  char *cred_area;
+  struct rpc_msg *msg;
+  struct svc_req *req;
+  request_data_t *pnfsreq = NULL;
+  unsigned int worker_index;
+  process_status_t rc = PROCESS_DONE;
+
+  /* choose a worker who is not us */
+  worker_index = nfs_core_select_worker_queue( pmydata->worker_index );
+
+  LogFullDebug(COMPONENT_DISPATCH,
+               "Use request from Worker Thread #%u's pool, xprt->xp_fd=%d, "
+               "thread has %d pending requests",
+               worker_index, onfsreq->r_u.nfs->xprt->xp_fd,
+               workers_data[worker_index].pending_request_len);
+
+  /* Get a pnfsreq from the worker's pool */
+  P(workers_data[worker_index].request_pool_mutex);
+
+  GetFromPool(pnfsreq, &workers_data[worker_index].request_pool,
+              request_data_t);
+
+  V(workers_data[worker_index].request_pool_mutex);
+
+  if(pnfsreq == NULL)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+               "Empty request pool for the chosen worker ! Exiting...");
+      Fatal();
+    }
+
+  /* Set the request as NFS already-read */
+  pnfsreq->rtype = NFS_REQUEST;
+
+  /* tranfer onfsreq */
+  pnfsreq->r_u.nfs = onfsreq->r_u.nfs;
+
+  /* And fixup onfsreq */
+  P(pmydata->request_pool_mutex);
+
+  GetFromPool(onfsreq->r_u.nfs, &pmydata->request_data_pool,
+              nfs_request_data_t);
+
+  V(pmydata->request_pool_mutex);
+
+  if(pnfsreq->r_u.nfs == NULL)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+               "Empty request pool for the chosen worker ! Exiting...");
+      Fatal();
+    }
+
+  /* Set up cred area */
+  cred_area = onfsreq->r_u.nfs->cred_area;
+  req = &(onfsreq->r_u.nfs->req);
+  msg = &(onfsreq->r_u.nfs->msg);
+
+  msg->rm_call.cb_cred.oa_base = cred_area;
+  msg->rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
+  req->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
+
+  /* Set up xprt */
+  onfsreq->r_u.nfs->xprt = pnfsreq->r_u.nfs->xprt;
+  req->rq_xprt = onfsreq->r_u.nfs->xprt;
+
+  /* Hand it off */
+  DispatchWorkNFS(pnfsreq, worker_index);
+
+  return (rc);
 }
 
 /**
@@ -836,7 +965,7 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
 #endif
     {
        /* choose a worker depending on its queue length */
-       worker_index = nfs_core_select_worker_queue();
+       worker_index = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
     }
 
   LogFullDebug(COMPONENT_DISPATCH,
@@ -855,20 +984,28 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
       Fatal();
     }
 
-  /* Set the request as a NFS related one */
-  nfsreq->rtype = NFS_REQUEST ;
+  nfsreq->r_u.nfs = pool_alloc(request_data_pool, NULL);
+  if(nfsreq->r_u.nfs == NULL)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+               "Empty request pool for the chosen worker ! Exiting...");
+      Fatal();
+    }
+
+  /* Set the request as NFS with xprt hand-off */
+  nfsreq->rtype = NFS_REQUEST_LEADER ;
 
   /* Set up cred area */
-  cred_area = nfsreq->r_u.nfs.cred_area;
-  preq = &(nfsreq->r_u.nfs.req);
-  pmsg = &(nfsreq->r_u.nfs.msg);
+  cred_area = nfsreq->r_u.nfs->cred_area;
+  preq = &(nfsreq->r_u.nfs->req);
+  pmsg = &(nfsreq->r_u.nfs->msg);
 
   pmsg->rm_call.cb_cred.oa_base = cred_area;
   pmsg->rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
   preq->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
 
   /* Set up xprt */
-  nfsreq->r_u.nfs.xprt = xprt;
+  nfsreq->r_u.nfs->xprt = xprt;
   preq->rq_xprt = xprt;
 
   /* Hand it off */
@@ -1038,9 +1175,8 @@ void *rpc_dispatcher_thread(void *arg)
 
 void constructor_nfs_request_data_t(void *ptr, void *parameters)
 {
- nfs_request_data_t * pdata = (nfs_request_data_t *) ptr;
-
-  memset(pdata, 0, sizeof(*pdata));
+  nfs_request_data_t * pdata = (nfs_request_data_t *) ptr;
+  memset(pdata, 0, sizeof(nfs_request_data_t));
 }
 
 /**
@@ -1054,10 +1190,8 @@ void constructor_nfs_request_data_t(void *ptr, void *parameters)
  * @return nothing (void function) will exit the program if failed.
  *
  */
-
 void constructor_request_data_t(void *ptr, void *parameters)
 {
-  request_data_t *pdata = (request_data_t *)ptr;
-
-  constructor_nfs_request_data_t(&(pdata->r_u.nfs), parameters);
+  request_data_t * pdata = (request_data_t *) ptr;
+  memset(pdata, 0, sizeof(request_data_t));
 }

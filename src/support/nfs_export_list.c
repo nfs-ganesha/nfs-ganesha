@@ -151,7 +151,7 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
  *
  * 
  *
- * @param ptr_req [IN]  incoming request.
+ * @param req [IN]  incoming request.
  * @param pexport_client [IN] related export client
  * @param pexport [IN]  related export entry
  * @param user_credentials [OUT] Filled in structure with uid and gids
@@ -159,12 +159,11 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
  * @return TRUE if successful, FALSE otherwise 
  *
  */
-int get_req_uid_gid(struct svc_req *ptr_req,
+int get_req_uid_gid(struct svc_req *req,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
-  unsigned int rpcxid = 0;
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
   char principal[MAXNAMLEN];
@@ -173,23 +172,21 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   if (user_credentials == NULL)
     return FALSE;
 
-  rpcxid = get_rpc_xid(ptr_req);
-
-  switch (ptr_req->rq_cred.oa_flavor)
+  switch (req->rq_cred.oa_flavor)
     {
     case AUTH_NONE:
       /* Nothing to be done here... */
       LogFullDebug(COMPONENT_DISPATCH,
                    "Request xid=%u has authentication AUTH_NONE",
-                   rpcxid);
+                   req->rq_xid);
       break;
 
     case AUTH_UNIX:
       LogFullDebug(COMPONENT_DISPATCH,
                    "Request xid=%u has authentication AUTH_UNIX",
-                   rpcxid);
+                   req->rq_xid);
       /* We map the rq_cred to Authunix_parms */
-      punix_creds = (struct authunix_parms *)ptr_req->rq_clntcred;
+      punix_creds = (struct authunix_parms *) req->rq_clntcred;
 
       /* Get the uid/gid couple */
       user_credentials->caller_uid = punix_creds->aup_uid;
@@ -198,7 +195,8 @@ int get_req_uid_gid(struct svc_req *ptr_req,
       user_credentials->caller_garray = punix_creds->aup_gids;
 
       LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
-                   (unsigned int)user_credentials->caller_uid, (unsigned int)user_credentials->caller_gid);
+                   (unsigned int)user_credentials->caller_uid,
+                   (unsigned int)user_credentials->caller_gid);
 
       break;
 
@@ -206,10 +204,9 @@ int get_req_uid_gid(struct svc_req *ptr_req,
     case RPCSEC_GSS:
       LogFullDebug(COMPONENT_DISPATCH,
                    "Request xid=%u has authentication RPCSEC_GSS",
-                   rpcxid);
+                   req->rq_xid);
       /* Get the gss data to process them */
-      gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
-
+      gd = SVCAUTH_PRIVATE(req->rq_xprt->xp_auth);
 
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
@@ -220,17 +217,22 @@ int get_req_uid_gid(struct svc_req *ptr_req,
           gss_buffer_desc oidbuff;
 
           LogFullDebug(COMPONENT_RPCSEC_GSS,
-                       "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
-                       gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
+                       "----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u "
+                       "RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u",
+                       gd->sec.svc, RPCSEC_GSS_SVC_NONE,
+                       RPCSEC_GSS_SVC_INTEGRITY,
                        RPCSEC_GSS_SVC_PRIVACY);
 
           memcpy(&ptr, (void *)gd->ctx + 4, 4);
           LogFullDebug(COMPONENT_RPCSEC_GSS,
-                       "----> Client=%s length=%lu  Qop=%u established=%u gss_ctx_id=%p|%p",
-                       (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
+                       "----> Client=%s length=%lu  Qop=%u established=%u "
+                       "gss_ctx_id=%p|%p",
+                       (char *)gd->cname.value, gd->cname.length,
+                       gd->established, gd->sec.qop,
                        gd->ctx, ptr);
 
-          if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
+          if((maj_stat = gss_oid_to_str(
+                  &min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
             {
               LogFullDebug(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u",
                            maj_stat, min_stat);
@@ -240,7 +242,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
               LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%lu",
                            (char *)oidbuff.value, oidbuff.length);
 
-              // Release the string
+              /* Release the string */
               (void)gss_release_buffer(&min_stat, &oidbuff); 
             }
        }
@@ -270,7 +272,8 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 	  return TRUE;
 	}
 
-      if(uidgidmap_get(user_credentials->caller_uid, &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
+      if(uidgidmap_get(user_credentials->caller_uid,
+                       &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
         {
           LogMajor(COMPONENT_DISPATCH,
                    "FAILURE: Could not resolve uidgid map for %u",
@@ -278,7 +281,8 @@ int get_req_uid_gid(struct svc_req *ptr_req,
           user_credentials->caller_gid = -1;
         }
       LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
-                   (unsigned int)user_credentials->caller_uid, (unsigned int)user_credentials->caller_gid);
+                   (unsigned int)user_credentials->caller_uid,
+                   (unsigned int)user_credentials->caller_gid);
       user_credentials->caller_glen = 0;
       user_credentials->caller_garray = 0;
 
@@ -288,12 +292,12 @@ int get_req_uid_gid(struct svc_req *ptr_req,
     default:
       LogFullDebug(COMPONENT_DISPATCH,
                    "FAILURE: Request xid=%u, has unsupported authentication %d",
-                   rpcxid, ptr_req->rq_cred.oa_flavor);
+                   req->rq_xid, req->rq_cred.oa_flavor);
       /* Reject the request for weak authentication and return to worker */
       return FALSE;
 
       break;
-    }                           /* switch( ptr_req->rq_cred.oa_flavor ) */
+    }                           /* switch( req->rq_cred.oa_flavor ) */
   return TRUE;
 }
 
@@ -323,11 +327,12 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
 
 /**
  *
- * nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
+ * nfs_build_fsal_context: Builds the FSAL context according to the request
+ * and the export entry.
  *
  * Builds the FSAL credentials according to the request and the export entry.
  *
- * @param ptr_req [IN]  incoming request.
+ * @param req [IN]  incoming request.
  * @param pexport_client [IN] related export client
  * @param pexport [IN]  related export entry
  * @param pcred   [IN/OUT] initialized credential of caller thread.
@@ -336,7 +341,7 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
  * @return TRUE if successful, FALSE otherwise 
  *
  */
-int nfs_build_fsal_context(struct svc_req *ptr_req,
+int nfs_build_fsal_context(struct svc_req *req,
                            exportlist_t * pexport,
                            fsal_op_context_t * pcontext,
                            struct user_cred *user_credentials)
@@ -349,8 +354,10 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(pcontext,
                                       &pexport->FS_export_context,
-                                      user_credentials->caller_uid, user_credentials->caller_gid,
-                                      user_credentials->caller_garray, user_credentials->caller_glen);
+                                      user_credentials->caller_uid,
+                                      user_credentials->caller_gid,
+                                      user_credentials->caller_garray,
+                                      user_credentials->caller_glen);
 
   /*
    * TODO: Fix this hack
@@ -366,12 +373,13 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
    * The plan is to correct this hack when we roll over to the new
    * API where this struct has been made common
    */
-  copy_xprt_addr(&pcontext->credential.caller_addr, ptr_req->rq_xprt);
+  copy_xprt_addr(&pcontext->credential.caller_addr, req->rq_xprt);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
       LogEvent(COMPONENT_DISPATCH,
-               "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
+               "NFS DISPATCHER: FAILURE: Could not get credentials for "
+               "(uid=%d,gid=%d), fsal error=(%d,%d)",
                user_credentials->caller_uid, user_credentials->caller_gid,
                fsal_status.major, fsal_status.minor);
       return FALSE;
@@ -394,7 +402,8 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
  * @return TRUE if same, FALSE otherwise
  *
  */
-int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2)
+int nfs_compare_clientcred(nfs_client_cred_t * pcred1,
+                           nfs_client_cred_t *pcred2)
 {
   if(pcred1 == NULL)
     return FALSE;
@@ -410,11 +419,14 @@ int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred
   switch (pcred1->flavor)
     {
     case AUTH_UNIX:
-      if(pcred1->auth_union.auth_unix.aup_uid != pcred2->auth_union.auth_unix.aup_uid)
+      if(pcred1->auth_union.auth_unix.aup_uid !=
+         pcred2->auth_union.auth_unix.aup_uid)
         return FALSE;
-      if(pcred1->auth_union.auth_unix.aup_gid != pcred2->auth_union.auth_unix.aup_gid)
+      if(pcred1->auth_union.auth_unix.aup_gid !=
+         pcred2->auth_union.auth_unix.aup_gid)
         return FALSE;
-      if(pcred1->auth_union.auth_unix.aup_time != pcred2->auth_union.auth_unix.aup_time)
+      if(pcred1->auth_union.auth_unix.aup_time !=
+         pcred2->auth_union.auth_unix.aup_time)
         return FALSE;
       break;
 
@@ -470,9 +482,13 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
       pcred->auth_union.auth_gss.svc = (unsigned int)(gd->sec.svc);
       pcred->auth_union.auth_gss.qop = (unsigned int)(gd->sec.qop);
       pcred->auth_union.auth_gss.gss_context_id = gd->ctx;
-      strncpy(pcred->auth_union.auth_gss.cname, gd->cname.value, NFS_CLIENT_NAME_LEN);
 
-      if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
+      /* XXX */
+      strncpy(pcred->auth_union.auth_gss.cname, gd->cname.value,
+              NFS_CLIENT_NAME_LEN);
+
+      if((maj_stat = gss_oid_to_str(
+              &min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
         {
           char errbuff[1024];
           log_sperror_gss(errbuff, maj_stat, min_stat);
@@ -481,7 +497,10 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
                   maj_stat, min_stat, errbuff);
           return -1;
         }
-      strncpy(pcred->auth_union.auth_gss.stroid, oidbuff.value, NFS_CLIENT_NAME_LEN);
+
+      /* XXX */
+      strncpy(pcred->auth_union.auth_gss.stroid, oidbuff.value,
+              NFS_CLIENT_NAME_LEN);
 
       /* Je fais le menage derriere moi */
       (void)gss_release_buffer(&min_stat, &oidbuff);
@@ -497,8 +516,8 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
   return 1;
 }                               /* nfs_rpc_req2client_cred */
 
-int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen, char *path,
-                        int pathlen)
+int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen,
+                        char *path, int pathlen)
 {
   if(!tag || !path)
     return -1;

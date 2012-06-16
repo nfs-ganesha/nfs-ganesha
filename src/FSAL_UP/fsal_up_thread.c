@@ -72,21 +72,6 @@ void *fsal_up_process_thread(void *UnUsedArg)
 
   SetNameFunction("fsal_up_process_thread");
 
-#ifndef _NO_BUDDY_SYSTEM
-  {
-    int rc;
-
-    if((rc = BuddyInit(&nfs_param.buddy_param_fsal_up_process)) != BUDDY_SUCCESS)
-      {
-        /* Failed init */
-        LogFatal(COMPONENT_FSAL_UP,
-                 "fsal_up_process_thread: MemoryManager couldn't be initialized");
-      }
-    LogInfo(COMPONENT_FSAL_UP,
-            "fsal_up_process_thread: MemoryManager successfully initialized");
-  }
-#endif
-
   init_glist(&fsal_up_process_queue);
   tcb_new(&fsal_up_process_tcb, "FSAL_UP Process Thread");
 
@@ -158,9 +143,9 @@ void *fsal_up_process_thread(void *UnUsedArg)
             /* Release the mutex */
             V(fsal_up_process_tcb.tcb_mutex);
             fupevent->event_process_func(&fupevent->event_data);
-            Mem_Free(fupevent->event_data.event_context.fsal_data.fh_desc.start);
+            gsh_free(fupevent->event_data.event_context.fsal_data.fh_desc.start);
             pthread_mutex_lock(&nfs_param.fsal_up_param.event_pool_lock);
-            ReleaseToPool(fupevent, &nfs_param.fsal_up_param.event_pool);
+            pool_free(nfs_param.fsal_up_param.event_pool, fupevent);
             pthread_mutex_unlock(&nfs_param.fsal_up_param.event_pool_lock);
 
             continue;
@@ -346,10 +331,10 @@ fsal_status_t process_event(fsal_up_event_t *myevent, fsal_up_event_functions_t 
     default:
       LogDebug(COMPONENT_FSAL_UP, "Unknown FSAL UP event type found: %d",
               myevent->event_type);
-      Mem_Free(myevent->event_data.event_context.fsal_data.fh_desc.start);
+      gsh_free(myevent->event_data.event_context.fsal_data.fh_desc.start);
 
       pthread_mutex_lock(&nfs_param.fsal_up_param.event_pool_lock);
-      ReleaseToPool(myevent, &nfs_param.fsal_up_param.event_pool);
+      pool_free(nfs_param.fsal_up_param.event_pool, myevent);
       pthread_mutex_unlock(&nfs_param.fsal_up_param.event_pool_lock);
 
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -557,12 +542,6 @@ void *fsal_up_thread(void *Arg)
                        fsal_up_args->export_entry->filesystem_id.minor,
                        fsal_up_args->export_entry->id);
             }
-          tmpevent = event;
-          gsh_free(tmpevent->event_data.event_context.fsal_data.fh_desc.start);
-          pthread_mutex_lock(fsal_up_context.event_pool_lock);
-          pool_free(nfs_param.fsal_up_param.event_pool, tmpevent);
-          pthread_mutex_unlock(fsal_up_context.event_pool_lock);
-          event_nb--;
         }
 
       LogDebug(COMPONENT_FSAL_UP, "%lu events not found for filesystem"

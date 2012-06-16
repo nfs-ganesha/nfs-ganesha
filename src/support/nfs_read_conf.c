@@ -251,6 +251,14 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->expiration_dupreq = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "Dispatch_Multi_Xprt_Max"))
+        {
+          pparam->dispatch_multi_xprt_max = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Dispatch_Multi_Worker_Hiwat"))
+        {
+          pparam->dispatch_multi_worker_hiwat = atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "Drop_IO_Errors"))
         {
           pparam->drop_io_errors = StrToBoolean(key_value);

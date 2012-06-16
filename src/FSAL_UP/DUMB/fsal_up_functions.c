@@ -72,7 +72,7 @@ fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
     {
       pentry = cache_inode_get(&pevdata->event_context.fsal_data,
                                &attr, NULL, NULL,
-                               NULL, &cache_status);
+                               &cache_status);
       if(pentry == NULL)
         {
           LogDebug(COMPONENT_FSAL_UP,
@@ -84,13 +84,13 @@ fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
 
       LogFullDebug(COMPONENT_FSAL_UP,
                "FSAL_UP_DUMB: nlink has become zero; close fds\n");
-      cache_inode_close(pentry, NULL, CACHE_INODE_FLAG_REALLYCLOSE, &cache_status);
+      cache_inode_close(pentry, CACHE_INODE_FLAG_REALLYCLOSE, &cache_status);
     }
 
   cache_inode_invalidate(&pevdata->event_context.fsal_data, &cache_status);
 
   if(pentry)
-    cache_inode_put(pentry, NULL);
+    cache_inode_put(pentry);
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 

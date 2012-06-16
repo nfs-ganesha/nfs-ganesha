@@ -214,6 +214,8 @@ typedef struct nfs_core_param__
   unsigned int drop_delay_errors;
   unsigned int use_nfs_commit;
   time_t expiration_dupreq;
+  unsigned int dispatch_multi_xprt_max;
+  unsigned int dispatch_multi_worker_hiwat;
   unsigned int stats_update_delay;
   unsigned int long_processing_threshold;
   unsigned int dump_stats_per_client;
@@ -424,23 +426,23 @@ typedef enum request_type__
 {
   NFS_CALL,
   NFS_REQUEST,
+  NFS_REQUEST_LEADER,
   _9P_REQUEST
 } request_type_t ;
 
 typedef struct request_data__
 {
     struct glist_head pending_req_queue;  // chaining of pending requests
-  request_type_t rtype ;
-  pthread_cond_t   req_done_condvar;
-  pthread_mutex_t  req_done_mutex;
-  union request_content__
-   {
-      rpc_call_t *call ;
-      nfs_request_data_t nfs ;
+    request_type_t rtype ;
+    pthread_cond_t   req_done_condvar;
+    pthread_mutex_t  req_done_mutex;
+    union request_content__ {
+        rpc_call_t *call ;
+        nfs_request_data_t *nfs ;
 #ifdef _USE_9P
-      _9p_request_data_t _9p ;
+        _9p_request_data_t _9p ;
 #endif
-   } r_u ;
+    } r_u ;
 } request_data_t ;
 
 /* XXXX this is automatically redundant, but in fact upstream TI-RPC is
@@ -520,6 +522,7 @@ typedef struct nfs_thread_control_block__
 } nfs_tcb_t;
 
 extern pool_t *request_pool;
+extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool;
 extern pool_t *ip_stats_pool;
 
@@ -644,7 +647,6 @@ extern pool_t *nfs_clientid_pool;
  */
 enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
                                    bool_t *dispatch);
-worker_available_rc worker_available(unsigned long index, unsigned int avg_number_pending);
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();
@@ -652,6 +654,9 @@ void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 request_data_t *nfs_rpc_get_nfsreq(nfs_worker_data_t *worker, uint32_t flags);
 process_status_t process_rpc_request(SVCXPRT *xprt);
+
+process_status_t dispatch_rpc_subrequest(nfs_worker_data_t *mydata,
+                                         request_data_t *onfsreq);
 int stats_snmp(void);
 /*
  * Thread entry functions
@@ -822,7 +827,8 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) 
 void * fridgethr_freeze( ) ;
 int fridgethr_init() ;
 
-unsigned int nfs_core_select_worker_queue() ;
+#define WORKER_INDEX_ANY INT_MAX
+unsigned int nfs_core_select_worker_queue(unsigned int avoid_index) ;
 
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);

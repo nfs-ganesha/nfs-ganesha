@@ -471,7 +471,6 @@ void nfs_set_param_default()
   /*  Worker parameters : NFSv4 Unconfirmed Client id table */
   nfs_param.client_id_param.cid_unconfirmed_hash_param.index_size = PRIME_CLIENT_ID;
   nfs_param.client_id_param.cid_unconfirmed_hash_param.alphabet_length = 10; /* ipaddr is a numerical decimal value */
-  nfs_param.client_id_param.cid_unconfirmed_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID;
   nfs_param.client_id_param.cid_unconfirmed_hash_param.hash_func_key = client_id_value_hash_func;
   nfs_param.client_id_param.cid_unconfirmed_hash_param.hash_func_rbt = client_id_rbt_hash_func;
   nfs_param.client_id_param.cid_unconfirmed_hash_param.hash_func_both = NULL ;
@@ -485,7 +484,6 @@ void nfs_set_param_default()
   /*  Worker parameters : NFSv4 Confirmed Client id table */
   nfs_param.client_id_param.cid_confirmed_hash_param.index_size = PRIME_CLIENT_ID;
   nfs_param.client_id_param.cid_confirmed_hash_param.alphabet_length = 10; /* ipaddr is a numerical decimal value */
-  nfs_param.client_id_param.cid_confirmed_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID;
   nfs_param.client_id_param.cid_confirmed_hash_param.hash_func_key = client_id_value_hash_func;
   nfs_param.client_id_param.cid_confirmed_hash_param.hash_func_rbt = client_id_rbt_hash_func;
   nfs_param.client_id_param.cid_confirmed_hash_param.hash_func_both = NULL ;
@@ -499,7 +497,6 @@ void nfs_set_param_default()
   /*  Worker parameters : NFSv4 Client Record table */
   nfs_param.client_id_param.cr_hash_param.index_size = PRIME_CLIENT_ID;
   nfs_param.client_id_param.cr_hash_param.alphabet_length = 10; /* ipaddr is a numerical decimal value */
-  nfs_param.client_id_param.cr_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID;
   nfs_param.client_id_param.cr_hash_param.hash_func_key = client_record_value_hash_func;
   nfs_param.client_id_param.cr_hash_param.hash_func_rbt = client_record_rbt_hash_func;
   nfs_param.client_id_param.cr_hash_param.hash_func_both = NULL ;
@@ -601,9 +598,9 @@ void nfs_set_param_default()
   cache_inode_params.hparam.compare_key = cache_inode_compare_key_fsal;
   cache_inode_params.hparam.key_to_str = display_cache;
   cache_inode_params.hparam.val_to_str = display_cache;
-  cache_inode_params.hparam.name = "Cache Inode";
+  cache_inode_params.hparam.ht_name = "Cache Inode";
   cache_inode_params.hparam.flags = HT_FLAG_CACHE;
-  cache_inode_params.hparam.hparam.ht_log_component = COMPONENT_CACHE_INODE;
+  cache_inode_params.hparam.ht_log_component = COMPONENT_CACHE_INODE;
 
 #ifdef _USE_NLM
   /* Cache inode parameters : cookie hash table */
@@ -614,7 +611,7 @@ void nfs_set_param_default()
   cache_inode_params.cookie_param.compare_key = compare_lock_cookie_key;
   cache_inode_params.cookie_param.key_to_str = display_lock_cookie_key;
   cache_inode_params.cookie_param.val_to_str = display_lock_cookie_val;
-  cache_inode_params.cookie_param.name = "Lock Cookie";
+  cache_inode_params.cookie_param.ht_name = "Lock Cookie";
   cache_inode_params.cookie_param.flags = HT_FLAG_NONE;
   cache_inode_params.cookie_param.ht_log_component = COMPONENT_STATE;
 #endif
@@ -1520,10 +1517,24 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                            NULL,
                            constructor_request_data_t,
                            NULL);
-  if(!(request_pool))
+  if(!request_pool)
     {
       LogCrit(COMPONENT_INIT,
               "Error while allocating request pool");
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+      Fatal();
+    }
+
+  request_data_pool = pool_init("Request Data Pool",
+                                sizeof(nfs_request_data_t),
+                                pool_basic_substrate,
+                                NULL,
+                                constructor_nfs_request_data_t,
+                                NULL);
+  if(!request_data_pool)
+    {
+      LogCrit(COMPONENT_INIT,
+              "Error while allocating request data pool");
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       Fatal();
     }
@@ -1656,7 +1667,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                  "Error while initializing worker data #%d", i);
 
       sprintf(name, "IP Stats for worker %d", i);
-      nfs_param.ip_stats_param.hash_param.name = gsh_strdup(name);
+      nfs_param.ip_stats_param.hash_param.ht_name = gsh_strdup(name);
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
 
       if(ht_ip_stats[i] == NULL)
@@ -1845,7 +1856,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #ifdef _USE_NFS4_ACL
   if (nfs_param.pexportlist)
     {
-      nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support = !nfs_param.cache_layers_param.cache_inode_client_param.use_test_access;
+      nfs_param.pexportlist->FS_export_context
+           .fe_static_fs_info->accesscheck_support
+           = !cache_inode_params.use_test_access;
       LogDebug(COMPONENT_INIT, "accesscheck_support is set to %d",
            nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support);
     }

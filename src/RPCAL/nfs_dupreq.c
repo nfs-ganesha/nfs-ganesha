@@ -6,30 +6,28 @@
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs_tools.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/20 07:39:22 $
- * \version $Revision: 1.14 $
  * \brief   Some tools very usefull in the nfs protocol implementation.
  *
- * nfs_tools.c : Some tools very usefull in the nfs protocol implementation
+ * Some tools very usefull in the nfs protocol implementation
  *
  *
  */
@@ -96,62 +94,6 @@ void LogDupReq(const char *label, sockaddr_t *addr, long xid, u_long rq_prog)
                "%s addr=%s xid=%ld rq_prog=%ld",
                label, namebuf, xid, rq_prog);
 }
-
-/**
- *
- * get_rpc_xid: extract the transfer Id from a RPC request.
- *
- * RPC Xid is used for RPC Reply cache. With UDP connection, the xid is in an opaque structure
- * stored in xprt->xp_p2, but with TCP connection, the xid is in another opaque structure stored
- * in xprt->xp_p1. xp_p2 and xp_p1 are mutually exclusive. The opaque structure are well defined in
- * ONC RPC protocol definitions, and used internally by the ONC layers. Since I need to know the xid
- * the structures are defined here.
- *
- *  @param reqp A pointer to the request to be examined.
- *
- *  @return the found xid.
- *
- */
-
-unsigned int get_rpc_xid(struct svc_req *reqp)
-{
-  /* RPC Xid is used for RPC Reply cache. With UDP connection, the xid is in an opaque structure
-   * stored in xprt->xp_p2, but with TCP connection, the xid is in another opaque structure stored
-   * in xprt->xp_p1. xp_p2 and xp_p1 are mutually exclusive. The opaque structure are well defined in
-   * ONC RPC protocol definitions, and used internally by the ONC layers. Since I need to know the xid
-   * the structures are defined here */
-
-#ifdef _USE_TIRPC
-  return svc_shim_get_xid(reqp->rq_xprt);
-#else 
-  unsigned int Xid = 0;
-  struct udp_private2__
-  {                             /* kept in xprt->xp_p2 */
-    int up_unused;
-    u_long up_xid;
-  };
-
-  struct tcp_conn2__
-  {                             /* kept in xprt->xp_p1 */
-    enum xprt_stat strm_stat;
-    u_long x_id;
-    XDR xdrs;
-    char verf_body[MAX_AUTH_BYTES];
-  };
-
-  /* Map the xp1 and xp2 field to the udp and tcp private structures */
-  struct tcp_conn2__ *ptcpxp = (struct tcp_conn2__ *)(reqp->rq_xprt->xp_p1);
-  struct udp_private2__ *pudpxp = (struct udp_private2__ *)(reqp->rq_xprt->xp_p2);
-
-  /* The request is either UDP or TCP. If UDP Xid is null, then look for TCP xid */
-  if(reqp->rq_xprt->xp_p2 != NULL)
-    Xid = pudpxp->up_xid;       /* UDP XID */
-  else if (reqp->rq_xprt->xp_p1 != NULL)
-    Xid = ptcpxp->x_id;         /* TCP XID */
-
-  return Xid;
-#endif
-}                               /* get_rpc_xid */
 
 static unsigned int get_ipproto_by_xprt( SVCXPRT * xprt )
 {
@@ -294,7 +236,7 @@ static int _remove_dupreq(hash_table_t *ht_dupreq, hash_buffer_t *buffkey,
   return DUPREQ_SUCCESS;
 }
 
-int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt)
+int nfs_dupreq_delete(struct svc_req *req)
 {
   int status;
 
@@ -302,16 +244,16 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt)
   hash_buffer_t buffval;
   dupreq_key_t dupkey;
   dupreq_entry_t *pdupreq;
-  hash_table_t * ht_dupreq = NULL ;
+  hash_table_t * ht_dupreq = NULL;
 
   /* Get correct HT depending on proto used */
-  ht_dupreq = get_ht_by_xprt( xprt ) ;
- 
+  ht_dupreq = get_ht_by_xprt(req->rq_xprt) ;
+
   /* Get the socket address for the key */
-  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+  if(copy_xprt_addr(&dupkey.addr, req->rq_xprt) == 0)
     return DUPREQ_NOT_FOUND;
 
-  dupkey.xid = xid;
+  dupkey.xid = req->rq_xid;
   dupkey.checksum = 0;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
@@ -380,9 +322,11 @@ int clean_entry_dupreq(LRU_entry_t *pentry, void *addparam)
 
 /**
  *
- *  dupreq_rbt_hash_func: computes the hash value for the entry in dupreq cache.
+ * dupreq_rbt_hash_func: computes the hash value for the entry in dupreq cache.
  *
- * Computes the hash value for the entry in dupreq cache. In fact, it just use the Xid modulo the hash array size.
+ * Computes the hash value for the entry in dupreq cache.  In fact, it just uses the xid
+ * modulo the hash array size.
+ *
  * This function is called internal in the HasTable_* function
  *
  * @param hparam [IN] hash table parameter.
@@ -495,7 +439,7 @@ int display_req_key(hash_buffer_t * pbuff, char *str)
  * @return number of character written.
  *
  */
-int display_req_val(hash_buffer_t * pbuff, char *str)
+int display_req_val(hash_buffer_t *pbuff, char *str)
 {
   dupreq_entry_t *pdupreq = (dupreq_entry_t *)(pbuff->pdata);
   char namebuf[SOCK_NAME_MAX];
@@ -552,9 +496,7 @@ int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
  *
  */
 
-int nfs_dupreq_add_not_finished(long xid,
-                                struct svc_req *ptr_req,
-                                SVCXPRT *xprt,
+int nfs_dupreq_add_not_finished(struct svc_req *req,
                                 nfs_res_t *res_nfs)
 {
   hash_buffer_t buffkey;
@@ -566,14 +508,12 @@ int nfs_dupreq_add_not_finished(long xid,
   hash_table_t * ht_dupreq = NULL ;
 
   /* Get correct HT depending on proto used */
-  ht_dupreq = get_ht_by_xprt( xprt ) ;
-
+  ht_dupreq = get_ht_by_xprt(req->rq_xprt);
   /* Entry to be cached */
   pdupreq = pool_alloc(dupreq_pool, NULL);
   if(pdupreq == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;
 
-  memset(pdupreq, 0, sizeof(*pdupreq));
   if(pthread_mutex_init(&pdupreq->dupreq_mutex, NULL) == -1)
     {
       pool_free(dupreq_pool, pdupreq);
@@ -587,16 +527,16 @@ int nfs_dupreq_add_not_finished(long xid,
     }
 
   /* Get the socket address for the key and the request */
-  if(copy_xprt_addr(&pdupkey->addr, xprt) == 0 ||
-     copy_xprt_addr(&pdupreq->addr, xprt) == 0)
+  if(copy_xprt_addr(&pdupkey->addr, req->rq_xprt) == 0 ||
+     copy_xprt_addr(&pdupreq->addr, req->rq_xprt) == 0)
     {
       gsh_free(pdupkey);
       pool_free(dupreq_pool, pdupreq);
       return DUPREQ_INSERT_MALLOC_ERROR;
     }
 
-  pdupkey->xid = xid;
-  pdupreq->xid = xid;
+  pdupkey->xid = req->rq_xid;
+  pdupreq->xid = req->rq_xid;
 
   /* Checksum the request */
   pdupkey->checksum = 0;
@@ -608,12 +548,12 @@ int nfs_dupreq_add_not_finished(long xid,
   buffkey.len = sizeof(dupreq_key_t);
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
-  pdupreq->rq_prog = ptr_req->rq_prog;
-  pdupreq->rq_vers = ptr_req->rq_vers;
-  pdupreq->rq_proc = ptr_req->rq_proc;
+  pdupreq->rq_prog = req->rq_prog;
+  pdupreq->rq_vers = req->rq_vers;
+  pdupreq->rq_proc = req->rq_proc;
   pdupreq->timestamp = time(NULL);
   pdupreq->processing = 1;
-  pdupreq->ipproto = get_ipproto_by_xprt( xprt ) ;
+  pdupreq->ipproto = get_ipproto_by_xprt(req->rq_xprt) ;
   buffdata.pdata = (caddr_t) pdupreq;
   buffdata.len = sizeof(dupreq_entry_t);
 
@@ -669,11 +609,8 @@ int nfs_dupreq_add_not_finished(long xid,
  *
  */
 
-int nfs_dupreq_finish(long xid,
-                      struct svc_req *ptr_req,
-                      SVCXPRT *xprt,
-                      nfs_res_t * p_res_nfs,
-                      LRU_list_t * lru_dupreq)
+int nfs_dupreq_finish(struct svc_req *req, nfs_res_t *p_res_nfs,
+                      LRU_list_t *lru_dupreq)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -681,17 +618,17 @@ int nfs_dupreq_finish(long xid,
   LRU_status_t lru_status;
   dupreq_key_t dupkey;
   dupreq_entry_t *pdupreq;
-  hash_table_t * ht_dupreq = NULL ;
+  hash_table_t *ht_dupreq = NULL ;
 
   /* Get correct HT depending on proto used */
-  ht_dupreq = get_ht_by_xprt( xprt ) ;
+  ht_dupreq = get_ht_by_xprt(req->rq_xprt) ;
  
 
   /* Get the socket address for the key */
-  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+  if(copy_xprt_addr(&dupkey.addr, req->rq_xprt) == 0)
     return DUPREQ_NOT_FOUND;
 
-  dupkey.xid = xid;
+  dupkey.xid = req->rq_xid;
   dupkey.checksum = 0;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
@@ -728,13 +665,14 @@ int nfs_dupreq_finish(long xid,
  *
  * Tries to get a duplicated requests for dupreq cache.
  *
- * @param xid [IN] the transfer id we are looking for
+ * @param req [IN] svc_req whose xid we are looking for
+ * @param xprt [IN] xprt the related xprt (but we could use req->rq_xprt) XXX
  * @param pstatus [OUT] the pointer to the status for the operation
  *
  * @return the result previously set if *pstatus == DUPREQ_SUCCESS
  *
  */
-nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *pstatus)
+nfs_res_t nfs_dupreq_get(struct svc_req *req, int *pstatus)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -743,19 +681,19 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
   hash_table_t * ht_dupreq = NULL ;
 
   /* Get correct HT depending on proto used */
-  ht_dupreq = get_ht_by_xprt( xprt ) ;
+  ht_dupreq = get_ht_by_xprt(req->rq_xprt) ;
  
 
   memset(&res_nfs, 0, sizeof(res_nfs));
 
   /* Get the socket address for the key */
-  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+  if(copy_xprt_addr(&dupkey.addr, req->rq_xprt) == 0)
     {
       *pstatus = DUPREQ_NOT_FOUND;
       return res_nfs;
     }
 
-  dupkey.xid = xid;
+  dupkey.xid = req->rq_xid;
   dupkey.checksum = 0;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
@@ -775,7 +713,7 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
     }
   else
     {
-      LogDupReq("Failed to get dupreq entry", &dupkey.addr, dupkey.xid, ptr_req->rq_prog);
+      LogDupReq("Failed to get dupreq entry", &dupkey.addr, dupkey.xid, req->rq_prog);
       *pstatus = DUPREQ_NOT_FOUND;
     }
   return res_nfs;

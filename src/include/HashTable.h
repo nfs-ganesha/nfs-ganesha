@@ -81,8 +81,8 @@ typedef int (*val_display_function_t)(struct hash_buff*,
  * given hash table.
  */
 
-static const uint32_t HT_FLAG_NONE = 0x0000;
-static const uint32_t HT_FLAG_CACHE = 0x0001;
+#define HT_FLAG_NONE 0x0000
+#define HT_FLAG_CACHE 0x0001
 
 struct hash_param
 {
