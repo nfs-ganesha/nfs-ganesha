@@ -129,8 +129,6 @@ void * _9p_socket_thread( void * Arg )
   int readlen = 0  ;
   int total_readlen = 0  ;
 
-  printf( "Je gère la socket %ld\n", tcp_sock );
-
   snprintf(my_name, MAXNAMLEN, "9p_sock_mgr#fd=%ld", tcp_sock);
   SetNameFunction(my_name);
 
