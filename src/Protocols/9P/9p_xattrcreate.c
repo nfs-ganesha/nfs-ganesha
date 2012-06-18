@@ -89,29 +89,48 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
     return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
-
-  /* Create the xattr at the FSAL level and cache result */
-  if( ( pfid->specdata.xattr.xattr_content = Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL ) 
-    return _9p_rerror( preq9p, msgtag, ENOMEM, plenout, preply ) ;
-
+  
   snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
 
-  fsal_status = FSAL_SetXAttrValue( &pfid->pentry->handle,
-                                    &name,
-                                    &pfid->fsal_op_context,
-                                    pfid->specdata.xattr.xattr_content, 
-                                    *size, 
-                                    TRUE);
 
-  if(FSAL_IS_ERROR(fsal_status))
-    return  _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
+  if( *size == 0LL ) 
+   {
+     /* Size == 0 : this is in fact a call to removexattr */
+      LogDebug( COMPONENT_9P, "TXATTRCREATE: tag=%u fid=%u : will remove xattr %s",
+                 (u32)*msgtag, *fid,  name.name ) ;
+    
+     fsal_status = FSAL_RemoveXAttrByName( &pfid->pentry->handle,
+                                           &pfid->fsal_op_context,
+                                           &name ) ;
 
-  fsal_status = FSAL_GetXAttrIdByName( &pfid->pentry->handle,
-                                       &name, 
+     if(FSAL_IS_ERROR(fsal_status))
+       return  _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
+   }
+  else
+   {
+     /* Size != 0 , this is a creation/replacement of xattr */
+
+     /* Create the xattr at the FSAL level and cache result */
+     if( ( pfid->specdata.xattr.xattr_content = Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL ) 
+       return _9p_rerror( preq9p, msgtag, ENOMEM, plenout, preply ) ;
+
+     fsal_status = FSAL_SetXAttrValue( &pfid->pentry->handle,
+                                       &name,
                                        &pfid->fsal_op_context,
-                                       &pfid->specdata.xattr.xattr_id);
-   if(FSAL_IS_ERROR(fsal_status))
-    return  _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
+                                       pfid->specdata.xattr.xattr_content, 
+                                       *size, 
+                                       TRUE);
+
+     if(FSAL_IS_ERROR(fsal_status))
+       return  _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
+
+     fsal_status = FSAL_GetXAttrIdByName( &pfid->pentry->handle,
+                                          &name, 
+                                          &pfid->fsal_op_context,
+                                          &pfid->specdata.xattr.xattr_id);
+      if(FSAL_IS_ERROR(fsal_status))
+       return  _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
+   }
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RXATTRCREATE ) ;
