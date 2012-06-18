@@ -160,10 +160,10 @@ fsal_status_t PTFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
 
   FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL Open********************************\n");
-  fsi_handle_struct handler;
-  handler.export_id = fsi_export_context->pt_export_id;
-  handler.uid = fsi_op_context->credential.user;
-  handler.gid = fsi_op_context->credential.group;
+  ccl_context_t ccl_context;
+  ccl_context.export_id = fsi_export_context->pt_export_id;
+  ccl_context.uid = fsi_op_context->credential.user;
+  ccl_context.gid = fsi_op_context->credential.group;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -206,9 +206,9 @@ fsal_status_t PTFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
 
   TakeTokenFSCall();
   p_file_descriptor->fd = fd;
-  p_file_descriptor->export_id = handler.export_id;
-  p_file_descriptor->uid = handler.uid;
-  p_file_descriptor->gid = handler.gid;
+  p_file_descriptor->export_id = ccl_context.export_id;
+  p_file_descriptor->uid = ccl_context.uid;
+  p_file_descriptor->gid = ccl_context.gid;
   /*
    * TODO: add ip address to p_file_descriptor->client_address
    * when the IP address is available

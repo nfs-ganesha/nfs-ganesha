@@ -1,10 +1,10 @@
 // ----------------------------------------------------------------------------
-// Copyright IBM Corp. 2010, 2011
+// Copyright IBM Corp. 2010, 2012
 // All Rights Reserved
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // Filename:    fsi_ipc_ccl.h
-// Description: Samba VFS library - client definitions
+// Description: Common code layer common function definitions
 // Author:      FSI IPC Team
 // ----------------------------------------------------------------------------
 
@@ -29,15 +29,8 @@
 #include <sys/msg.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/acl.h>
 
-// In Ganesa build environment this is located in different directory so for 
-// bring up  using .. till can come back to it and get better version to work
-//#include "fsi/ipc/client/fsi_ipc_common.h"
-#include "../fsi_ipc_common.h"
-
-// In Ganesa build environment this is located in different directory so for 
-// bring up  using .. till can come back to it and get better version to work
-//#include "fsi/ipc/client/fsi_ipc_common.h"
 #include "../fsi_ipc_common.h"
 
 // FSI IPC defines
@@ -47,27 +40,36 @@
 (((x) % (blocksize)) ? (((x) / (blocksize)) * (blocksize)) : (x))
 
 // FSI IPC getlock constants
-#define FSI_IPC_GETLOCK_PTYPE 2
-#define FSI_IPC_GETLOCK_PPID  0
+#define FSI_IPC_GETLOCK_PTYPE                  2
+#define FSI_IPC_GETLOCK_PPID                   0
 
-#define PTFSAL_FILESYSTEM_NUMBER 77
-#define FUSE_EXPORT_ID 281474976710656
-#define FSI_IPC_FUSE_MSGID_BASE 5000000
+#define PTFSAL_FILESYSTEM_NUMBER              77
+#define FUSE_EXPORT_ID           281474976710656
+#define FSI_IPC_FUSE_MSGID_BASE          5000000
 
 // FSI Trace Level defines for Samba DEBUG level parm
 // Samba default runtime level is 2, all trace <= level are logged
 // Note: Though these defines map to Samba debug levels we are
 // using the level settings differently than Samba proper
-#define FSI_FATAL    1  // TRC_FATAL - A fatal condition that prevents
-                        //   the system continuing normal ops
-#define FSI_ERR      2  // TRC_ERR - Warnings and error conditions
-#define FSI_NOTICE   2  // TRC_NOTICE - meaningful events in system
-#define FSI_STAT     2  // TRC_STAT - Can't really match separate trace
-                        //   class but but use this for stats only
-#define FSI_INFO     3  // TRC_INFO Detailed tracing of normal flow, yet not
-                        //   as intensive as TRC_DEBUG
-#define FSI_DEBUG    5  // TRC_DBUG - Very high frequency, can affect
-                        //   performance, user for debugging a component
+#define FSI_FATAL                              1  // TRC_FATAL - A fatal 
+                                                  // condition that prevents
+                                                  // the system continuing
+                                                  // normal ops
+#define FSI_ERR                                2  // TRC_ERR - Warnings and
+                                                  // error conditions
+#define FSI_NOTICE                             2  // TRC_NOTICE - meaningful
+                                                  // events in system
+#define FSI_STAT                               2  // TRC_STAT - Can't really
+                                                  // match separate trace
+                                                  // class but but use this for
+                                                  // stats only
+#define FSI_INFO                               3  // TRC_INFO Detailed tracing
+                                                  // of normal flow, yet not
+                                                  // as intensive as TRC_DEBUG
+#define FSI_DEBUG                              5  // TRC_DBUG - Very high
+                                                  // frequency, can affect
+                                                  // performance, user for
+                                                  // debugging a component
 
 
 #ifndef   __GNUC__
@@ -83,46 +85,24 @@ compile_time_check_func(const char * fmt, ...)
 __attribute__((format(printf, 1, 2)));  // 1=format 2=params
 
 // --------  Begin conditional compile for Ganesha/Samba -----------------
-
-// GANESHA_ENV is defined when using this file in Ganesha build environment
-// GANESHA_CCL is defined when building ganesha version of CCL in syren
-//    environment and also when using this header file in build of ptfsal
-//    code in ganesha build environment
-
-// GANESHA_ENV is only macro set in ganesha environment so 
-#ifdef GANESHA_ENV
-#define GANESHA_CCL
-#endif
-
 #ifdef GANESHA_CCL
 
 extern int g_ptfsal_debug_level;    // ptfsal sets to control 
 extern int g_ptfsal_comp_num;       // ptfsal sets to COMPONENT_FSAL (5)
 extern int g_ptfsal_comp_level;     // ptfsal sets to NIV_INFO or NIV_DEBUG
 
-// When being used in ptfsal build in ganesha environemnt, 
-// the ganesha code includes define this as it's a ganesha function
-// In Syren CCL build proper we provide a version using int instead of
-// the enums used by ganesha so we don't have to include the ganesha files
-#ifndef GANESHA_ENV
-extern int DisplayLogComponentLevel(int comp, char * func, int ganesha_level,
-                             char * fmt, ... );
-#endif
-
-// To have ganesha race also go to console add the following
-//  printf( format "\n", func, ## __VA_ARGS__ );                            
-#define CCL_DEBUG( level, format, func,  ... )                             \
+#define CCL_DEBUG( level, format, func, ... )                                     \
 {                                                                          \
   if (level <= g_ptfsal_debug_level) {                                     \
     DisplayLogComponentLevel( g_ptfsal_comp_num, "FSAL_PT",                \
-                              g_ptfsal_comp_level, format,                 \
-                              func, ## __VA_ARGS__ );                      \
+                         g_ptfsal_comp_level, format,                      \
+                         func, ## __VA_ARGS__ );                           \
   }                                                                        \
 }
  
 #else    // not GANESHA_CCL so Samba
 
-#define CCL_DEBUG( x, y, z, ... )  DEBUG( x, (y "\n", z, ## __VA_ARGS__  )) 
+#define CCL_DEBUG( x, y, z, ... )  DEBUG( x, (y "\n", z, ## __VA_ARGS__  ))
 
 #endif
 // ----------- End of conditional compile for Ganesha/Samba ----------------
@@ -132,11 +112,11 @@ extern int DisplayLogComponentLevel(int comp, char * func, int ganesha_level,
 #define FSI_TRACE( level, format, ... )                                    \
 {                                                                          \
   compile_time_check_func( format, ## __VA_ARGS__ );                       \
-  CCL_DEBUG( (level), "[" #level "]: "   "%s: "  format , __func__,        \
-                   ## __VA_ARGS__ );                                       \
+  CCL_DEBUG( (level), "[" #level "]: "   "%s: "  format, __func__,         \
+                   ## __VA_ARGS__);                                        \
 }
 
-//Our own trace macro that adds standard prefix to statements that includes
+// Our own trace macro that adds standard prefix to statements that includes
 // the level and function name
 #define FSI_TRACE_GANESHA_TEMP( level, format, ... )                       \
 {                                                                          \
@@ -163,8 +143,10 @@ extern int DisplayLogComponentLevel(int comp, char * func, int ganesha_level,
   FSI_TRACE(FSI_INFO, "persistent handle: 0x%lx %lx %lx %lx",              \
             handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);       \
 }
+
 #define NONIO_MSG_TYPE                                                     \
   ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid )
+
 #define WAIT_SHMEM_ATTACH()                                                \
 {                                                                          \
   while (g_shm_at == 0) {                                                  \
@@ -173,7 +155,6 @@ extern int DisplayLogComponentLevel(int comp, char * func, int ganesha_level,
   }                                                                        \
 }
 
-// in temporary ganesha environment this may have to be changed to look for it 
 
 #define FSAL_MAX_PATH_LEN PATH_MAX
 
@@ -209,7 +190,7 @@ extern struct ipc_client_stats_t g_client_io_idle_time;  // usecs
 extern uint64_t                  g_num_reads_in_progress;
 extern uint64_t                  g_num_writes_in_progress;
 extern uint64_t                  g_stat_log_interval;
-extern char                      g_client_address[];//[256]; // PTFSAL HACK
+extern char                      g_client_address[];
 
 // BRUTAL HACK - must be fixed later - global non-io mutex
 extern pthread_mutex_t g_non_io_mutex;
@@ -275,10 +256,10 @@ typedef struct fsi_stat_struct__ {
   uint64_t                st_gid;          // Group ID of the file's group
   uint64_t                st_rdev;         // Device number, if device
   uint64_t                st_size;         // Size of file, in bytes
-  uint64_t                st_atime_sec;        // Time of last access  sec only
-  uint64_t                st_mtime_sec;        // Time of last modification  sec
-  uint64_t                st_ctime_sec;        // Time of last change  sec
-  //struct timespec         st_btime;        // Birthtime  not used
+  uint64_t                st_atime_sec;    // Time of last access  sec only
+  uint64_t                st_mtime_sec;    // Time of last modification  sec
+  uint64_t                st_ctime_sec;    // Time of last change  sec
+  //struct timespec         st_btime;      // Birthtime  not used
   uint64_t                st_blksize;      // Optimal block size for I/O
   uint64_t                st_blocks;       // Number of 512-byte blocks allocated
   struct PersistentHandle st_persistentHandle;
@@ -296,12 +277,12 @@ struct file_handle_t {
   int                    m_prev_io_op;        // enumerated I/O operation
                                               // (read/write/other I/O)
   struct io_buf_status_t m_writebuf_state[MAX_FSI_IPC_SHMEM_BUF_PER_STREAM *
-                                          FSI_IPC_SHMEM_WRITEBUF_PER_BUF * 2];  // ganesha
+                                          FSI_IPC_SHMEM_WRITEBUF_PER_BUF * 2];
                                               // one entry per write data buffer
   int                    m_writebuf_cnt;      // how many write buffers this
                                               // handle actually uses
   struct io_buf_status_t m_readbuf_state [MAX_FSI_IPC_SHMEM_BUF_PER_STREAM *
-                                          FSI_IPC_SHMEM_READBUF_PER_BUF * 2]; // ganesha
+                                          FSI_IPC_SHMEM_READBUF_PER_BUF * 2];
                                               // one entry per read data buffer
   int                    m_readbuf_cnt;       // how many read buffers this
                                               // handle actually uses
@@ -312,6 +293,7 @@ struct file_handle_t {
   int                    m_first_read_done;   // set if we completed first read
   int                    m_close_rsp_rcvd;    // IPC close file response received
   int                    m_fsync_rsp_rcvd;    // IPC fsync file response received
+
   int                    m_read_at_eof;       // set if at EOF - only for read
   uint64_t               m_file_loc;          // used for writes and fstat
                                               // this is the location assuming
@@ -329,8 +311,7 @@ struct file_handle_t {
                                               // (open must issue opendir
                                               // if the entity being opened
                                               // is a directory)
-// FIX FIX FIX  SMB_STRUCT_DIR       * m_dirp;              // directory struct pointer (removed in ganesha) need to fix
-  struct fsi_struct_dir_t * m_dirp; // PTFSAL VERSION
+  struct fsi_struct_dir_t * m_dirp;           // dir pointer
                                               // if m_dir_not_file_flag is
                                               // set
   uint64_t               m_resourceHandle;    // handle for resource management
@@ -364,6 +345,7 @@ struct fsi_struct_dir_t {
   uint64_t m_dir_handle_index;
   uint64_t m_last_ino;  // last inode we responded with
   char     dname[PATH_MAX];
+  struct dirent64 dbuf;        // generic DIRENT buffer
 };
 
 // ----------------------------------------------------------------------------
@@ -432,8 +414,7 @@ typedef struct {
   int   handle_index;     // Samba's File descriptor fsp->fh->fd
                           //  or essentially or index into our
                           // global g_fsi_handles.m_handle[] array
-
-} fsi_handle_struct;
+} ccl_context_t;
 
 
 // ----------------------------------------------------------------------------
@@ -476,7 +457,7 @@ struct ipc_client_stats_t {
 // ----------------------------------------------------------------------------
 // Defines for CCL Internal Statistics
 //
-// Defines for IO Idle time statistic collection,  this is time we are
+// Defines for IO Idle time statistic collection,  this is time we are 
 // idle waiting for user to send a read or write or doing other operations
 // ----------------------------------------------------------------------------
 
@@ -543,7 +524,7 @@ struct ipc_client_stats_t {
 #define IDLE_STAT_WRITE_END()                                                 \
 {                                                                             \
   if (g_num_writes_in_progress == 0) {                                        \
-    FSI_TRACE(FSI_DEBUG, "IO Idle write count off, distrust IDLE stat ");       \
+    FSI_TRACE(FSI_DEBUG, "IO Idle write count off, distrust IDLE stat ");     \
   }                                                                           \
   g_num_writes_in_progress--;                                                 \
   if ((g_num_reads_in_progress + g_num_writes_in_progress) == 0) {            \
@@ -562,43 +543,6 @@ struct ipc_client_stats_t {
 //    sure to translate these to Samba versions... for now they match Samba
 //    but if Samba changes we need to detect
 // ---------------------------------------------------------------------------
-typedef int                     CCL_ACL_TYPE_T;
-typedef mode_t                  *CCL_ACL_PERMSET_T;
-typedef mode_t                  CCL_ACL_PERM_T;
-#define CCL_ACL_READ                            4
-#define CCL_ACL_WRITE                           2
-#define CCL_ACL_EXECUTE                         1
-
-/* Types of ACLs. */
-enum ccl_acl_tag_t {
-        CCL_ACL_TAG_INVALID=0,
-        CCL_ACL_USER=1,
-        CCL_ACL_USER_OBJ,
-        CCL_ACL_GROUP,
-        CCL_ACL_GROUP_OBJ,
-        CCL_ACL_OTHER,
-        CCL_ACL_MASK
-};
-
-typedef enum ccl_acl_tag_t CCL_ACL_TAG_T;
-
-struct ccl_acl_entry {
-        enum ccl_acl_tag_t a_type;
-        CCL_ACL_PERM_T a_perm;
-        uid_t uid;
-        gid_t gid;
-};
-
-typedef struct ccl_acl_t {
-        int     size;
-        int     count;
-        int     next;
-        struct ccl_acl_entry acl[1];
-} *CCL_ACL_T;
-
-
-typedef struct ccl_acl_entry    *CCL_ACL_ENTRY_T;
-
 #define CCL_ACL_FIRST_ENTRY                     0
 #define CCL_ACL_NEXT_ENTRY                      1
 
@@ -616,7 +560,7 @@ int ccl_init(int multi_threaded);
 int add_acl_handle(uint64_t fs_acl_handle);
 int add_dir_handle(uint64_t fs_dir_handle);
 int add_fsi_handle(struct file_handle_t * p_new_handle);
-void convert_fsi_name(fsi_handle_struct   * handle,
+void convert_fsi_name(ccl_context_t   * handle,
                       const char          * filename,
                       char                * sv_filename,
                       enum e_fsi_name_enum  fsi_name_type);
@@ -628,14 +572,13 @@ int ccl_check_handle_index (int handle_index);
 int ccl_find_handle_by_name(const char * filename);
 int ccl_find_dir_handle_by_name(const char * filename);
 int ccl_get_name_from_handle(char *handle, char *name);
-int ccl_stat(fsi_handle_struct * handle,
+int ccl_stat(ccl_context_t * handle,
              const char        * filename,
              fsi_stat_struct       * sbuf);
-int ccl_fstat(fsi_handle_struct * handle,
+int ccl_fstat(ccl_context_t * handle,
               int                 handle_index,  // PTFSAL change
               fsi_stat_struct   * sbuf);
 uint64_t get_acl_resource_handle(uint64_t aclHandle);
-uint64_t get_export_id();
 int have_pending_io_response(int handle_index);
 int io_msgid_from_index (int index);
 void ld_common_msghdr(struct CommonMsgHdr * p_msg_hdr,
@@ -648,7 +591,7 @@ void ld_common_msghdr(struct CommonMsgHdr * p_msg_hdr,
                       int            is_IO_q);
 void ld_uid_gid(uint64_t                * uid,
                 uint64_t                * gid,
-                fsi_handle_struct   * handle);
+                ccl_context_t   * handle);
 void load_shmem_hdr(struct CommonShmemDataHdr * p_shmem_hdr,
                     uint64_t             transaction_type,
                     uint64_t             data_length,
@@ -670,66 +613,66 @@ int send_msg(int          msg_id,
              const void * p_msg_buf,
              size_t       msg_size,
              int        * p_msg_error_code);
-int ccl_chmod(fsi_handle_struct * handle,
+int ccl_chmod(ccl_context_t * handle,
                const char        * path,
                mode_t              mode);
-int ccl_chown(fsi_handle_struct * handle,
+int ccl_chown(ccl_context_t * handle,
               const char        * path,
               uid_t               uid,
               gid_t               gid);
-int ccl_ntimes(fsi_handle_struct * handle,
+int ccl_ntimes(ccl_context_t * handle,
                const char        * filename,
                uint64_t            atime,
                uint64_t            mtime);
-int ccl_mkdir(fsi_handle_struct  * handle,
+int ccl_mkdir(ccl_context_t  * handle,
                const char        * path,
                mode_t              mode);
-int ccl_rmdir(fsi_handle_struct  * handle,
+int ccl_rmdir(ccl_context_t  * handle,
                const char        * path);
-uint64_t ccl_disk_free(fsi_handle_struct * handle,
+uint64_t ccl_disk_free(ccl_context_t * handle,
                        const char        * path,
                        int                 small_query,
                        uint64_t          * bsize,
                        uint64_t          * dfree,
                        uint64_t          * dsize);
-int ccl_unlink(fsi_handle_struct  * handle,
+int ccl_unlink(ccl_context_t  * handle,
                 char               * path);
-int ccl_rename(fsi_handle_struct * handle,
+int ccl_rename(ccl_context_t * handle,
                const char        * old_name,
                const char        * new_name);
-int ccl_opendir(fsi_handle_struct * handle,
+int ccl_opendir(ccl_context_t * handle,
                  const char        * filename,
                  const char        * mask,
                  uint32              attr);
-int ccl_closedir(fsi_handle_struct * handle,
+int ccl_closedir(ccl_context_t * handle,
                   struct fsi_struct_dir_t * dirp);
-int ccl_readdir(fsi_handle_struct * handle,
+int ccl_readdir(ccl_context_t * handle,
                  struct fsi_struct_dir_t * dirp,
                  fsi_stat_struct   * sbuf);
-void ccl_seekdir(fsi_handle_struct * handle,
+void ccl_seekdir(ccl_context_t * handle,
                  struct fsi_struct_dir_t * dirp,
                  long                offset);
-long ccl_telldir(fsi_handle_struct * handle, 
+long ccl_telldir(ccl_context_t * handle, 
                  struct fsi_struct_dir_t * dirp);
-int ccl_fsync(fsi_handle_struct * handle,
+int ccl_fsync(ccl_context_t * handle,
                int handle_index);
-int ccl_ftruncate(fsi_handle_struct * handle,
+int ccl_ftruncate(ccl_context_t * handle,
                    int handle_index,
                    uint64_t           offset);
-ssize_t ccl_pread(fsi_handle_struct * handle,
+ssize_t ccl_pread(ccl_context_t * handle,
                    void              * data,
                    size_t              n,
                    uint64_t            offset);
-ssize_t ccl_pwrite(fsi_handle_struct * handle,
+ssize_t ccl_pwrite(ccl_context_t * handle,
                     int handle_index,
                     const void        * data,
                     size_t              n,
                     uint64_t           offset);
-int ccl_open(fsi_handle_struct   * handle,
+int ccl_open(ccl_context_t   * handle,
               char                  * path,
               int                   flags,
               mode_t                mode);
-int ccl_close(fsi_handle_struct * handle,
+int ccl_close(ccl_context_t * handle,
                int handle_index);
 int merge_errno_rc(int rc_a,
                    int rc_b);
@@ -783,68 +726,68 @@ void ccl_ipc_stats_on_write(uint64_t bytes);
 uint64_t update_stats(struct ipc_client_stats_t * stat, uint64_t value);
 
 // ACL function prototypes 
-int ccl_sys_acl_get_entry(fsi_handle_struct * handle,
-                           CCL_ACL_T           theacl,
-                           int                 entry_id,
-                           CCL_ACL_ENTRY_T   * entry_p);
-int ccl_sys_acl_get_tag_type(fsi_handle_struct * handle,
-                              CCL_ACL_ENTRY_T     entry_d,
-                              CCL_ACL_TAG_T     * tag_type_p);
-int ccl_sys_acl_get_permset(fsi_handle_struct * handle,
-                             CCL_ACL_ENTRY_T     entry_d,
-                             CCL_ACL_PERMSET_T * permset_p);
-void * ccl_sys_acl_get_qualifier(fsi_handle_struct * handle,
-                                  CCL_ACL_ENTRY_T     entry_d);
-CCL_ACL_T ccl_sys_acl_get_file(fsi_handle_struct * handle,
-                                const char        * path_p,
-                                CCL_ACL_TYPE_T      type);
-int ccl_sys_acl_clear_perms(fsi_handle_struct * handle,
-                             CCL_ACL_PERMSET_T   permset);
-int ccl_sys_acl_add_perm(fsi_handle_struct * handle,
-                          CCL_ACL_PERMSET_T   permset,
-                          CCL_ACL_PERM_T      perm);
-CCL_ACL_T ccl_sys_acl_init(fsi_handle_struct * handle,
-                            int                 count);
-int ccl_sys_acl_create_entry(fsi_handle_struct * handle,
-                              CCL_ACL_T         * pacl,
-                              CCL_ACL_ENTRY_T   * pentry);
-int ccl_sys_acl_set_tag_type(fsi_handle_struct * handle,
-                              CCL_ACL_ENTRY_T     entry,
-                              CCL_ACL_TAG_T       tagtype);
-int ccl_sys_acl_set_qualifier(fsi_handle_struct * handle,
-                               CCL_ACL_ENTRY_T     entry,
-                               void              * qual);
-int ccl_sys_acl_set_permset(fsi_handle_struct * handle,
-                             CCL_ACL_ENTRY_T     entry,
-                             CCL_ACL_PERMSET_T   permset);
-int ccl_sys_acl_set_file(fsi_handle_struct * handle,
-                          const char        * name,
-                          CCL_ACL_TYPE_T      acltype,
-                          CCL_ACL_T           theacl);
-int ccl_sys_acl_delete_def_file(fsi_handle_struct * handle,
-                                 const char        * path);
-int ccl_sys_acl_get_perm(fsi_handle_struct * handle,
-                          CCL_ACL_PERMSET_T   permset,
-                          CCL_ACL_PERM_T      perm);
-int ccl_sys_acl_free_acl(fsi_handle_struct * handle,
-                          CCL_ACL_T           posix_acl);
+int ccl_sys_acl_get_entry(ccl_context_t * handle,
+                          acl_t           theacl,
+                          int             entry_id,
+                          acl_entry_t   * entry_p);
+int ccl_sys_acl_get_tag_type(ccl_context_t * handle,
+                             acl_entry_t     entry_d,
+                             acl_tag_t     * tag_type_p);
+int ccl_sys_acl_get_permset(ccl_context_t * handle,
+                            acl_entry_t     entry_d,
+                            acl_permset_t * permset_p);
+void * ccl_sys_acl_get_qualifier(ccl_context_t * handle,
+                                 acl_entry_t     entry_d);
+acl_t ccl_sys_acl_get_file(ccl_context_t * handle,
+                           const char    * path_p,
+                           acl_type_t      type);
+int ccl_sys_acl_clear_perms(ccl_context_t * handle,
+                            acl_permset_t   permset);
+int ccl_sys_acl_add_perm(ccl_context_t * handle,
+                         acl_permset_t   permset,
+                         acl_perm_t      perm);
+acl_t ccl_sys_acl_init(ccl_context_t * handle,
+                       int             count);
+int ccl_sys_acl_create_entry(ccl_context_t * handle,
+                             acl_t         * pacl,
+                             acl_entry_t   * pentry);
+int ccl_sys_acl_set_tag_type(ccl_context_t * handle,
+                             acl_entry_t     entry,
+                             acl_tag_t       tagtype);
+int ccl_sys_acl_set_qualifier(ccl_context_t * handle,
+                              acl_entry_t     entry,
+                              void              * qual);
+int ccl_sys_acl_set_permset(ccl_context_t * handle,
+                            acl_entry_t     entry,
+                            acl_permset_t   permset);
+int ccl_sys_acl_set_file(ccl_context_t * handle,
+                         const char    * name,
+                         acl_type_t      acltype,
+                         acl_t           theacl);
+int ccl_sys_acl_delete_def_file(ccl_context_t * handle,
+                                const char    * path);
+int ccl_sys_acl_get_perm(ccl_context_t * handle,
+                         acl_permset_t   permset,
+                         acl_perm_t      perm);
+int ccl_sys_acl_free_acl(ccl_context_t * handle,
+                         acl_t           posix_acl);
 
-// Prototypes - new for Ganesha
-int ccl_name_to_handle(fsi_handle_struct *pvfs_handle,
-                       char *path,
-                       struct PersistentHandle *phandle);
-int ccl_handle_to_name(fsi_handle_struct *pvfs_handle,
-                       struct PersistentHandle *phandle,
-                       char *path);
-int ccl_dynamic_fsinfo(fsi_handle_struct *pvfs_handle,
-                       char *path,
-                       struct ClientOpDynamicFsInfoRspMsg *pfs_info);
-int ccl_readlink(fsi_handle_struct * pvfs_handle,
-                 const char        * path,
-                 char              * link_content);
-int ccl_symlink(fsi_handle_struct * pvfs_handle,
-                const char        * path,
-                const char        * link_content);
+// Prototypes - new for Ganesha 
+int ccl_name_to_handle(ccl_context_t           * pvfs_handle,
+                       char                    * path, 
+                       struct PersistentHandle * phandle);
+int ccl_handle_to_name(ccl_context_t           * pvfs_handle,
+                       struct PersistentHandle * phandle,
+                       char                    * path);
+int ccl_dynamic_fsinfo(ccl_context_t                      * pvfs_handle,
+                       char                               * path,
+                       struct ClientOpDynamicFsInfoRspMsg * pfs_info);
+int ccl_readlink(ccl_context_t * pvfs_handle,
+                 const char    * path,
+                 char          * link_content);
+int ccl_symlink(ccl_context_t * pvfs_handle,
+                const char    * path,
+                const char    * link_content);
 
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL

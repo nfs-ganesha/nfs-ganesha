@@ -55,7 +55,7 @@ GA_PROG_DOXYGEN
 # define everything necessary for accessing large files (64bits offset)
 AC_SYS_LARGEFILE
 
-CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign -DGANESHA_ENV"
+CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign -DGANESHA_CCL"
 
 # Version number for shared object
 LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`

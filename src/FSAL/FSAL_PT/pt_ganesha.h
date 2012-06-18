@@ -93,7 +93,7 @@ int ptfsal_stat_by_parent_name(fsal_op_context_t * p_context,
                                char              * p_filename,
                                fsi_stat_struct   * p_stat);
 
-void ptfsal_convert_fsi_name(fsi_handle_struct   * handler,
+void ptfsal_convert_fsi_name(ccl_context_t       * context,
                              const char          * filename,
                              char                * sv_filename,
                              enum e_fsi_name_enum  fsi_name_type);
@@ -206,5 +206,5 @@ void ptfsal_print_handle(char * handle);
 
 mode_t fsal_type2unix(int fsal_type);
 
-void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context, fsi_handle_struct * handler);
+void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context, ccl_context_t * context);
 #endif // ifndef __PT_GANESHA_H__
