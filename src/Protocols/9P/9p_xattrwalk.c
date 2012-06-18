@@ -69,6 +69,12 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
   fsal_status_t fsal_status ; 
   fsal_name_t name;
+  fsal_xattrent_t xattrs_tab[255];
+  int eod_met = FALSE;
+  unsigned int nb_xattrs_read = 0;
+  unsigned int i = 0 ; 
+  char * xattr_cursor = NULL ;
+  unsigned int tmplen = 0 ;
 
   _9p_fid_t * pfid = NULL ;
   _9p_fid_t * pxattrfid = NULL ;
@@ -85,7 +91,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *attrfid ) ;
 
   _9p_getstr( cursor, name_len, name_str ) ;
-  LogDebug( COMPONENT_9P, "TXATTRWALK (component): tag=%u fid=%u attrfid=%u nwnames=%.*s",
+  LogDebug( COMPONENT_9P, "TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=%.*s",
             (u32)*msgtag, *fid, *attrfid, *name_len, name_str ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
@@ -101,30 +107,67 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   memcpy( (char *)pxattrfid, (char *)pfid, sizeof( _9p_fid_t ) ) ;
 
   snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-  fsal_status = FSAL_GetXAttrIdByName( &pxattrfid->pentry->handle,
-                                       &name, 
-                                       &pxattrfid->fsal_op_context,
-                                       &pxattrfid->specdata.xattr.xattr_id);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
   if( ( pxattrfid->specdata.xattr.xattr_content = Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL ) 
     return _9p_rerror( preq9p, msgtag, ENOMEM, plenout, preply ) ;
 
-  fsal_status = FSAL_GetXAttrValueByName( &pxattrfid->pentry->handle,
-                                          &name, 
-                                          &pxattrfid->fsal_op_context,
-                                          pxattrfid->specdata.xattr.xattr_content, 
-                                          XATTR_BUFFERSIZE, 
-                                          &attrsize );
+  if( *name_len == 0 ) 
+   {
+      /* xattrwalk is used with an empty name, this is a listxattr request */
+      fsal_status = FSAL_ListXAttrs( &pxattrfid->pentry->handle,
+                                     1, /* XATTR_COUNT Show only the attributes set by the user */
+                                     &pxattrfid->fsal_op_context,
+                                     xattrs_tab,
+                                     100, /* for wanting of something smarter */  
+                                     &nb_xattrs_read, 
+                                     &eod_met);
 
-  if(FSAL_IS_ERROR(fsal_status))
-    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+      if(FSAL_IS_ERROR(fsal_status))
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
-   _9p_chomp_attr_value( pxattrfid->specdata.xattr.xattr_content, strlen(  pxattrfid->specdata.xattr.xattr_content) ) ;
+      /* if all xattrent are not read, returns ERANGE as listxattr does */
+      if( eod_met != TRUE )
+        return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+     
+      xattr_cursor = pxattrfid->specdata.xattr.xattr_content ; 
+      attrsize = 0LL ; 
+      for( i = 0 ; i < nb_xattrs_read ; i++ )
+       {
+         tmplen = snprintf( xattr_cursor, MAXNAMLEN, "%s", xattrs_tab[i].xattr_name.name ) ; 
+         xattr_cursor[tmplen] = '\0' ; /* Just to be sure */
+         xattr_cursor += tmplen+1 ; /* Do not forget to take in account the '\0' at the end */
+         attrsize += tmplen+1 ;
 
-  attrsize = strlen( pxattrfid->specdata.xattr.xattr_content ) ;
+         /* Make sure not to go beyond the buffer */
+         if( attrsize > XATTR_BUFFERSIZE ) 
+           return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+       }
+   }
+  else
+   {
+      /* xattrwalk has a non-empty name, use regular setxattr */
+      fsal_status = FSAL_GetXAttrIdByName( &pxattrfid->pentry->handle,
+                                           &name, 
+                                           &pxattrfid->fsal_op_context,
+                                           &pxattrfid->specdata.xattr.xattr_id);
+
+      if(FSAL_IS_ERROR(fsal_status))
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+  
+      fsal_status = FSAL_GetXAttrValueByName( &pxattrfid->pentry->handle,
+                                              &name, 
+                                              &pxattrfid->fsal_op_context,
+                                              pxattrfid->specdata.xattr.xattr_content, 
+                                              XATTR_BUFFERSIZE, 
+                                              &attrsize );
+
+      if(FSAL_IS_ERROR(fsal_status))
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+
+      _9p_chomp_attr_value( pxattrfid->specdata.xattr.xattr_content, strlen(  pxattrfid->specdata.xattr.xattr_content) ) ;
+
+      attrsize = strlen( pxattrfid->specdata.xattr.xattr_content ) ;
+   }
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RXATTRWALK ) ;
