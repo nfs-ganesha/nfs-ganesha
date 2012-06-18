@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs4_op_lookup.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/16 16:25:44 $
- * \version $Revision: 1.18 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_lookup.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_lookup.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  *
  */
@@ -46,14 +44,11 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -63,35 +58,35 @@
 #include "nfs_proto_tools.h"
 
 /**
- * nfs4_op_lookup: looks up into theFSAL.
+ * @brief NFS4_OP_LOOKUP
  *
- * looks up into the FSAL. If a junction is crossed, does what is necessary.
+ * This function implments the NFS4_OP_LOOKUP operation, which looks
+ * a filename up in the FSAL.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
  *
- * @return NFS4_OK if successfull, other values show an error.  
+ * @return per RFC5661, pp. 368-9
  *
  */
 #define arg_LOOKUP4 op->nfs_argop4_u.oplookup
 #define res_LOOKUP4 resp->nfs_resop4_u.oplookup
 
-int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_lookup(struct nfs_argop4 *op,
+                   compound_data_t *data,
+                   struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup";
-
   char strname[MAXNAMLEN];
 #ifndef _NO_XATTRD
   char objname[MAXNAMLEN];
 #endif
   fsal_name_t            name;
   unsigned int           xattr_found = FALSE;
-  cache_entry_t        * dir_pentry = NULL;
-  cache_entry_t        * file_pentry = NULL;
+  cache_entry_t        * dir_entry = NULL;
+  cache_entry_t        * file_entry = NULL;
   fsal_attrib_list_t     attrlookup;
   cache_inode_status_t   cache_status;
-  struct fsal_obj_handle *obj_hdl = NULL;
 
   resp->resop = NFS4_OP_LOOKUP;
   res_LOOKUP4.status = NFS4_OK;
@@ -163,14 +158,14 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Do the lookup in the HPSS Namespace */
-  file_pentry = NULL;
-  dir_pentry = data->current_entry;
+  file_entry = NULL;
+  dir_entry = data->current_entry;
 
-  /* Sanity check: dir_pentry should be ACTUALLY a directory */
-  if(dir_pentry->type != DIRECTORY)
+  /* Sanity check: dir_entry should be ACTUALLY a directory */
+  if(dir_entry->type != DIRECTORY)
     {
       /* This is not a directory */
-      if(dir_pentry->type == SYMBOLIC_LINK)
+      if(dir_entry->type == SYMBOLIC_LINK)
         res_LOOKUP4.status = NFS4ERR_SYMLINK;
       else
         res_LOOKUP4.status = NFS4ERR_NOTDIR;
@@ -180,53 +175,50 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* BUGAZOMEU: Faire la gestion des cross junction traverse */
-  if((file_pentry = cache_inode_lookup(dir_pentry,
-                                       &name,
-                                       &attrlookup,
-                                       &data->user_credentials, &cache_status)) != NULL)
+  if((file_entry = cache_inode_lookup(dir_entry,
+                                      &name,
+                                      &attrlookup,
+                                      &data->user_credentials,
+                                      &cache_status)) != NULL)
     {
-      /* Extract the fsal attributes from the cache inode pentry */
-      obj_hdl = file_pentry->obj_handle;
-
       /* Convert it to a file handle */
-      if(!nfs4_FSALToFhandle(&data->currentFH, obj_hdl, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle, data))
         {
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(file_pentry);
+          cache_inode_put(file_entry);
           return res_LOOKUP4.status;
         }
 
       /* Copy this to the mounted on FH (if no junction is traversed */
-      memcpy((char *)(data->mounted_on_FH.nfs_fh4_val),
-             (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
+      memcpy(data->mounted_on_FH.nfs_fh4_val,
+             data->currentFH.nfs_fh4_val,
+             data->currentFH.nfs_fh4_len);
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
 #if 0
-      print_buff((char *)cache_inode_get_fsal_handle(file_pentry, &cache_status),
-                 sizeof(fsal_handle_t));
-      print_buff((char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),
-                 sizeof(fsal_handle_t));
+      print_buff((char *)&file_entry->handle, sizeof(fsal_handle_t));
+      print_buff((char *)&dir_entry->handle, sizeof(fsal_handle_t));
 #endif
       if(isFullDebug(COMPONENT_NFS_V4))
         {
           LogFullDebug(COMPONENT_NFS_V4,
                        "name=%s  dir_pentry=%p, obj_handle=%p, "
-		       "looked up file_pentry=%p, obj_handle=%p",
-                       strname, dir_pentry, file_pentry,
-		       dir_pentry->obj_handle, file_pentry->obj_handle);
+                       "looked up file_pentry=%p, obj_handle=%p",
+                       strname, dir_entry, file_entry,
+                       dir_entry->obj_handle, file_entry->obj_handle);
         }
       LogHandleNFS4("NFS4 LOOKUP CURRENT FH: ", &data->currentFH);
 
-      /* Release dir_pentry, as it is not reachable from anywhere in
+      /* Release dir_entry, as it is not reachable from anywhere in
          compound after this function returns.  Count on later
          operations or nfs4_Compound to clean up current_entry. */
 
-      if (dir_pentry)
-        cache_inode_put(dir_pentry);
+      if (dir_entry)
+        cache_inode_put(dir_entry);
 
       /* Keep the pointer within the compound data */
-      data->current_entry = file_pentry;
-      data->current_filetype = file_pentry->type;
+      data->current_entry = file_entry;
+      data->current_filetype = file_entry->type;
 
       /* Return successfully */
       res_LOOKUP4.status = NFS4_OK;
@@ -243,6 +235,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           if(!nfs4_Set_Fh_Referral(&(data->currentFH)))
             {
               res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+              cache_inode_put(file_entry);
               return res_LOOKUP4.status;
             }
         }
@@ -260,17 +253,15 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 }                               /* nfs4_op_lookup */
 
 /**
- * nfs4_op_lookup_Free: frees what was allocared to handle nfs4_op_lookup.
- * 
- * Frees what was allocared to handle nfs4_op_lookup.
+ * @brief Free memory allocated for LOOKUP result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_LOOKUP operation.
  *
- * @return nothing (void function )
- * 
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lookup_Free(LOOKUP4res * resp)
+void nfs4_op_lookup_Free(LOOKUP4res *resp)
 {
   /* Nothing to be done */
   return;
-}                               /* nfs4_op_lookup_Free */
+} /* nfs4_op_lookup_Free */

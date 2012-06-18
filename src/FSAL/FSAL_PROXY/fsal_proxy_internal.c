@@ -4,11 +4,8 @@
 
 /**
  *
- * \file    fsal_internal.c
- * \author  $Author: leibovic $
- * \date    $Date: 2006/02/08 12:46:59 $
- * \version $Revision: 1.25 $
- * \brief   Defines the datas that are to be
+ * @file    fsal_internal.c
+ * @brief   Defines the datas that are to be
  *          accessed as extern by the fsal modules
  */
 #ifdef HAVE_CONFIG_H
@@ -604,7 +601,135 @@ int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8s
 
 /**
  *
- * proxy_Fattr_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
+ * @Brief Converts NFSv4 attributes buffer to a FSAL dynamic fsinfo structure.
+ *
+ * Converts NFSv4 attributes buffer to a FSAL dynamic fsinfo structure.
+ *
+ * @param pdynamicinfo [OUT]  pointer to FSAL attributes.
+ * @param Fattr        [IN] pointer to NFSv4 attributes.
+ *
+ * @return 1 if successful, 0 if not supported, -1 if argument is badly formed
+ *
+ */
+int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
+                                       fattr4 * Fattr)
+{
+  u_int LastOffset = 0;
+  unsigned int i = 0;
+  uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+  uint32_t attrmasklen = 0;
+  uint32_t attribute_to_set = 0;
+  uint64_t tmp_uint64 = 0LL;
+
+  if(pdynamicinfo == NULL || Fattr == NULL)
+    return -1;
+
+  /* Check attributes data */
+  if(Fattr->attr_vals.attrlist4_val == NULL)
+    return -1;
+
+  /* Convert the attribute bitmap to an attribute list */
+  nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
+
+  LogFullDebug(COMPONENT_NFS_V4, "   nfs4_bitmap4_to_list ====> attrmasklen = %d\n", attrmasklen);
+
+  /* Init */
+  memset((char *)pdynamicinfo, 0, sizeof(fsal_dynamicfsinfo_t));
+
+  for(i = 0; i < attrmasklen; i++)
+    {
+      attribute_to_set = attrmasklist[i];
+
+      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+        {
+          /* Erroneous value... skip */
+          continue;
+        }
+      LogFullDebug(COMPONENT_NFS_V4, "=================> nfs4_Fattr_To_FSAL_attr: i=%u attr=%u\n", i,
+             attrmasklist[i]);
+      LogFullDebug(COMPONENT_NFS_V4, "Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d\n",
+             attrmasklist[i], fattr4tab[attribute_to_set].val,
+             fattr4tab[attribute_to_set].name, fattr4tab[attribute_to_set].size_fattr4);
+
+      switch (attribute_to_set)
+        {
+        case FATTR4_FILES_AVAIL:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_files_avail));
+          pdynamicinfo->avail_files = nfs_ntohl64(tmp_uint64);
+
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_FILES_FREE:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_files_free));
+          pdynamicinfo->free_files = nfs_ntohl64(tmp_uint64);
+
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_FILES_TOTAL:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_files_total));
+          pdynamicinfo->total_files = nfs_ntohl64(tmp_uint64);
+
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_SPACE_AVAIL:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_space_avail));
+          pdynamicinfo->avail_bytes = nfs_ntohl64(tmp_uint64);
+
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_SPACE_FREE:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_space_free));
+          pdynamicinfo->free_bytes = nfs_ntohl64(tmp_uint64);
+
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_SPACE_TOTAL:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_space_total));
+          pdynamicinfo->total_bytes = nfs_ntohl64(tmp_uint64);
+
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        default:
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: Attribut no supporte %d name=%s\n", attribute_to_set,
+                 fattr4tab[attribute_to_set].name);
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          break;
+
+        }                       /*   switch( attribute_to_set ) */
+
+    }
+
+  return 1;
+
+}                               /* proxy_Fattr_To_FSAL_dynamic_fsinfo */
+
+/**
+ *
+ * @brief Converts NFSv4 attributes buffer to a FSAL attributes structure.
  *
  * Converts NFSv4 attributes buffer to a FSAL attributes structure.
  *

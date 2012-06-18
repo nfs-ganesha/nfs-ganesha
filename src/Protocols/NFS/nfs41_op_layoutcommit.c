@@ -7,31 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs41_op_layoutcommit.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:50 $
- * \version $Revision: 1.8 $
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs41_op_lock.c : Routines used for managing the NFS4 COMPOUND functions.
- *
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -71,17 +68,16 @@
 
 /**
  *
- * \brief The NFS4_OP_LAYOUTCOMMIT operation.
+ * @brief The NFS4_OP_LAYOUTCOMMIT operation
  *
  * This function implements the NFS4_OP_LAYOUTCOMMIT operation.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
  *
- * @return NFS4_OK if successfull, other values show an error.
+ * @return per RFC5661 p. 366
  *
- * @see all the pnfs_<*> function
  * @see nfs4_Compound
  *
  */
@@ -92,7 +88,6 @@
 int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
-     char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutcommit";
 #ifdef _PNFS_MDS
      /* Return from cache_inode calls */
      cache_inode_status_t cache_status = 0;
@@ -251,16 +246,15 @@ out:
 } /* nfs41_op_layoutcommit */
 
 /**
- * nfs41_op_layoutcommit_Free: frees what was allocared to handle nfs41_op_layoutcommit.
+ * @brief free memory allocated for response of LAYOUTCOMMIT
  *
- * Frees what was allocared to handle nfs41_op_layoutcommit.
+ * This function frees the memory allocated for response of
+ * the NFS4_OP_LAYOUTCOMMIT operation.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
+ * @param[in,out] resp  Results for nfs4_op
  *
  */
-void nfs41_op_layoutcommit_Free(LOCK4res * resp)
+void nfs41_op_layoutcommit_Free(LAYOUTCOMMIT4res *resp)
 {
      return;
-}                               /* nfs41_op_layoutcommit_Free */
+} /* nfs41_op_layoutcommit_Free */

@@ -7,32 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs4_op_access.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:50 $
- * \version $Revision: 1.12 $
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_access.c : Routines used for managing the NFS4 COMPOUND functions.
- *
- *
+ * Routines used for managing the NFS4 COMPOUND functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -51,9 +47,7 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -64,24 +58,25 @@
 #include "nfs_proto_tools.h"
 
 /**
- * nfs4_op_access: NFS4_OP_ACCESS, checks for file's accessibility. 
- * 
- * NFS4_OP_ACCESS, checks for file's accessibility. 
+ * @brief NFS4_OP_ACCESS, checks for file's accessibility.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * This function impelments the NFS4_OP_ACCESS operation, which checks
+ * for file's accessibility.
  *
- * @return NFS4_OK if successfull, other values show an error.  
- * 
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
+ *
+ * @return per RFC5661, p. 362
+ *
  */
 #define arg_ACCESS4 op->nfs_argop4_u.opaccess
 #define res_ACCESS4 resp->nfs_resop4_u.opaccess
 
-int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_access(struct nfs_argop4 *op,
+                   compound_data_t *data,
+                   struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_access";
-
   fsal_attrib_list_t   attr;
   fsal_accessflags_t   access_mask = 0;
   cache_inode_status_t cache_status;
@@ -234,17 +229,15 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 }                               /* nfs4_op_access */
 
 /**
- * nfs4_op_access_Free: frees what was allocared to handle nfs4_op_access.
- * 
- * Frees what was allocared to handle nfs4_op_access.
+ * @brief Free memory allocated for ACCESS result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_ACCESS operatino.
  *
- * @return nothing (void function )
- * 
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_access_Free(ACCESS4res * resp)
+void nfs4_op_access_Free(ACCESS4res *resp)
 {
   /* Nothing to be done */
   return;
-}                               /* nfs4_op_access_Free */
+} /* nfs4_op_access_Free */

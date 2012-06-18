@@ -3262,7 +3262,6 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
 {
   unsigned int offset = 0;
   unsigned int i = 0;
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_FattrToSattr";
 
   for(offset = 0; offset < attrmap.bitmap4_len; offset++)
     {
@@ -4173,8 +4172,6 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
  */
 int nfs3_AllocateFH(nfs_fh3 *fh)
 {
-  char __attribute__ ((__unused__)) funcname[] = "AllocateFH3";
-
   if(fh == NULL)
     return NFS3ERR_SERVERFAULT;
 
@@ -4192,20 +4189,18 @@ int nfs3_AllocateFH(nfs_fh3 *fh)
 }                               /* nfs4_AllocateFH */
 
 /**
- * 
+ *
  * nfs4_AllocateFH: Allocates a buffer to be used for storing a NFSv4 filehandle.
- * 
+ *
  * Allocates a buffer to be used for storing a NFSv4 filehandle.
  *
  * @param fh [INOUT] the filehandle to manage.
- * 
+ *
  * @return NFS4_OK if successful, NFS3ERR_SERVERFAULT, NFS4ERR_RESOURCE or NFS4ERR_STALE  otherwise.
  *
  */
 int nfs4_AllocateFH(nfs_fh4 * fh)
 {
-  char __attribute__ ((__unused__)) funcname[] = "AllocateFH4";
-
   if(fh == NULL)
     return NFS4ERR_SERVERFAULT;
 

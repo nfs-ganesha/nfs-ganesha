@@ -25,13 +25,9 @@
 
 /**
  * \file    nfs4_pseudo.c
- * \author  $Author: leibovic $
- * \date    $Date: 2006/02/08 12:49:32 $
- * \version $Revision: 1.24 $
  * \brief   Routines used for managing the NFS4 pseudo file system.
  *
  * nfs4_pseudo.c: Routines used for managing the NFS4 pseudo file system.
- * 
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -378,16 +374,14 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 #endif
   char attrvalsBuffer[ATTRVALS_BUFFLEN];
 
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_PseudoToFattr";
-
   /* memset to make sure the arrays are initiated to 0 */
   memset(attrvalsBuffer, 0, NFS4_ATTRVALS_BUFFLEN);
 #ifdef _USE_NFS4_1
-  memset((uint32_t *) attrmasklist, 0, FATTR4_FS_CHARSET_CAP * sizeof(uint32_t));
-  memset((uint32_t *) attrvalslist, 0, FATTR4_FS_CHARSET_CAP * sizeof(uint32_t));
+  memset(attrmasklist, 0, FATTR4_FS_CHARSET_CAP * sizeof(uint32_t));
+  memset(attrvalslist, 0, FATTR4_FS_CHARSET_CAP * sizeof(uint32_t));
 #else
-  memset((uint32_t *) attrmasklist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
-  memset((uint32_t *) attrvalslist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
+  memset(attrmasklist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
+  memset(attrvalslist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
 #endif
 
   /* Convert the attribute bitmap to an attribute list */
@@ -1331,8 +1325,6 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
   pseudofs_entry_t psfsentry;
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getattr";
-
   resp->resop = NFS4_OP_GETATTR;
 
   /* Get the pseudo entry related to this fhandle */
@@ -1379,8 +1371,6 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
 int nfs4_op_access_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_access_pseudo";
-
   resp->resop = NFS4_OP_ACCESS;
 
   /* All access types are supported */
@@ -1414,7 +1404,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
   char name[MAXNAMLEN];
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup_pseudo";
   pseudofs_entry_t psfsentry;
   pseudofs_entry_t *iter = NULL;
   int found = FALSE;
@@ -1625,7 +1614,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup_pseudo";
   pseudofs_entry_t psfsentry;
 
   resp->resop = NFS4_OP_LOOKUPP;
@@ -1710,8 +1698,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   size_t namelen = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_entry_t *pentry = NULL;
-
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_readdir_pseudo";
 
   bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
   attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */

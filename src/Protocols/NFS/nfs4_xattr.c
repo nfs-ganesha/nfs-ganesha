@@ -127,8 +127,6 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   unsigned int attrvalslist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   char attrvalsBuffer[ATTRVALS_BUFFLEN];
 
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_XattrToFattr";
-
   pfile_handle = (file_handle_v4_t *) (objFH->nfs_fh4_val);
 
   /* memset to make sure the arrays are initiated to 0 */
@@ -1018,8 +1016,6 @@ nfsstat4 nfs4_xattrfh_to_fh(nfs_fh4 * pfhin, nfs_fh4 * pfhout)
 int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getattr";
-
   resp->resop = NFS4_OP_GETATTR;
 
   res_GETATTR4.status = NFS4_OK;
@@ -1053,8 +1049,6 @@ int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
 int nfs4_op_access_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_access_xattr";
-
   resp->resop = NFS4_OP_ACCESS;
 
   /* All access types are supported */
@@ -1095,8 +1089,6 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   struct fsal_obj_handle *obj_hdl = NULL;
   unsigned int xattr_id = 0;
   file_handle_v4_t *pfile_handle = NULL;
-
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup_xattr";
 
   /* The xattr directory contains no subdirectory, lookup always returns ENOENT */
   res_LOOKUP4.status = NFS4_OK;
@@ -1156,8 +1148,6 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
 int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup_xattr";
-
   resp->resop = NFS4_OP_LOOKUPP;
 
   res_LOOKUPP4.status = nfs4_xattrfh_to_fh(&(data->currentFH), &(data->currentFH));
@@ -1203,8 +1193,6 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   file_handle_v4_t *file_handle;
   nfs_fh4 nfsfh;
   struct alloc_file_handle_v4 temp_handle;
-
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_readdir_xattr";
 
   bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
   attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */

@@ -7,28 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs41_op_set_ssv.c
- * \author  $Author: deniel $
- * \brief   Routines used for managing the NFS4_OP_SEQUENCE operation.
+ * @file    nfs41_op_set_ssv.c
+ * @brief   Routines for the NFS4_OP_SET_SSV operation
  *
- * nfs41_op_sequence.c : Routines used for managing the NFS4_OP_SEQUENCE operation.
+ * Routines for the NFS4_OP_SEQUENCE operation.
  *
  *
  */
@@ -49,9 +49,7 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -62,17 +60,17 @@
 
 /**
  *
- * nfs41_op_set_ssv: the NFS4_OP_SET_SSV operation
+ * @brief The NFS4_OP_SET_SSV operation
  *
- * This functions handles the NFS4_OP_SET_SSV operation in NFSv4. This function can be called only from nfs4_Compound.
+ * This functions handles the NFS4_OP_SET_SSV operation in NFSv4. This
+ * function can be called only from nfs4_Compound.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
  *
- * @see all the nfs4_op_<*> function
+ * @return per RFC5661, pp. 374-5
+ *
  * @see nfs4_Compound
  *
  */
@@ -82,8 +80,6 @@
 int nfs41_op_set_ssv(struct nfs_argop4 *op,
                      compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_set_ssv";
-
   resp->resop = NFS4_OP_SET_SSV;
   res_SET_SSV4.ssr_status = NFS4_OK;
 
@@ -91,17 +87,15 @@ int nfs41_op_set_ssv(struct nfs_argop4 *op,
 }                               /* nfs41_op_set_ssv */
 
 /**
- * nfs41_op_set_ssv_Free: frees what was allocared to handle nfs41_op_set_ssv.
- * 
- * Frees what was allocared to handle nfs41_op_set_ssv.
+ * @brief Free memory allocated for SET_SSV result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_SET_SSV operation.
  *
- * @return nothing (void function )
- * 
+ * @param[in,out] resp nfs4_op results
  */
 void nfs41_op_set_ssv_Free(SET_SSV4res * resp)
 {
   /* Nothing to be done */
   return;
-}                               /* nfs4_op_set_ssv_Free */
+} /* nfs4_op_set_ssv_Free */

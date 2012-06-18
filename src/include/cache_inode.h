@@ -312,7 +312,7 @@ typedef struct cache_inode_dir_entry__
 struct cache_entry_t
 {
   pthread_rwlock_t attr_lock; /*< Reader-writer lock for attributes */
-  struct fsal_obj_handle *obj_handle; /**< The FSAL Handle     */
+  struct fsal_obj_handle *obj_handle; /*< The FSAL Handle     */
   gweakref_t weakref; /*< A weakref for this entry (pointer and generation
                           number.)  The generation number is the only
                           interesting part, but this way the weakref

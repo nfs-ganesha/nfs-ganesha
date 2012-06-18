@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs4_op_setattr.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:52 $
- * \version $Revision: 1.15 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file nfs4_op_setattr.c
+ * @brief Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_setattr.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  *
  */
@@ -42,55 +40,43 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
-#include "nfs_file_handle.h"
 #include "sal_functions.h"
 
 /**
- * nfs4_op_setattr: The NFS4_OP_SETATTR operation.
- * 
- * This functions handles the NFS4_OP_SETATTR operation in NFSv4. This function can be called only from nfs4_Compound
+ * @brief The NFS4_OP_SETATTR operation.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * This functions handles the NFS4_OP_SETATTR operation in NFSv4. This
+ * function can be called only from nfs4_Compound
  *
- * @return NFS4_OK if successfull, other values show an error.  
- * 
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
+ *
+ * @return per RFC5661, p. 373-4
  */
 
 #define arg_SETATTR4 op->nfs_argop4_u.opsetattr
 #define res_SETATTR4 resp->nfs_resop4_u.opsetattr
 
 int nfs4_op_setattr(struct nfs_argop4 *op,
-                    compound_data_t * data, struct nfs_resop4 *resp)
+                    compound_data_t *data,
+                    struct nfs_resop4 *resp)
 {
   struct timeval         t;
   fsal_attrib_list_t     sattr;
   fsal_attrib_list_t     parent_attr;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
   const char           * tag = "SETATTR";
-  state_t              * pstate_found = NULL;
-  state_t              * pstate_open  = NULL;
-  cache_entry_t        * pentry       = NULL;
+  state_t              * state_found = NULL;
+  state_t              * state_open  = NULL;
+  cache_entry_t        * entry       = NULL;
 
   memset(&sattr, 0, sizeof(sattr));
   memset(&parent_attr, 0, sizeof(parent_attr));
@@ -130,7 +116,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
   /*
    * trunc may change Xtime so we have to start with trunc and finish
-   * by the mtime and atime 
+   * by the mtime and atime
    */
   if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_SIZE))
     {
@@ -148,33 +134,34 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
         }
 
       /* vnode to manage is the current one */
-      pentry = data->current_entry;
+      entry = data->current_entry;
 
       /* Check stateid correctness and get pointer to state */
       res_SETATTR4.status = nfs4_Check_Stateid(&arg_SETATTR4.stateid,
                                                data->current_entry,
-                                               &pstate_found,
+                                               &state_found,
                                                data,
                                                STATEID_SPECIAL_ANY,
                                                tag);
       if(res_SETATTR4.status != NFS4_OK)
         return res_SETATTR4.status;
 
-      /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
-      if(pstate_found != NULL)
+      /* NB: After this points, if state_found == NULL, then the
+         stateid is all-0 or all-1 */
+      if(state_found != NULL)
         {
-          switch(pstate_found->state_type)
+          switch(state_found->state_type)
             {
               case STATE_TYPE_SHARE:
-                pstate_open = pstate_found;
+                state_open = state_found;
                 break;
 
               case STATE_TYPE_LOCK:
-                pstate_open = pstate_found->state_data.lock.popenstate;
+                state_open = state_found->state_data.lock.popenstate;
                 break;
 
               case STATE_TYPE_DELEG:
-                pstate_open = NULL;
+                state_open = NULL;
                 break;
 
               default:
@@ -183,8 +170,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
             }
 
           /* This is a size operation, this means that the file MUST have been opened for writing */
-          if(pstate_open != NULL &&
-             (pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE) == 0)
+          if(state_open != NULL &&
+             (state_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE) == 0)
             {
               /* Bad open mode, return NFS4ERR_OPENMODE */
               res_SETATTR4.status = NFS4ERR_OPENMODE;
@@ -193,14 +180,15 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
         }
       else
         {
-          /* Special stateid, no open state, check to see if any share conflicts */
-          pstate_open = NULL;
+          /* Special stateid, no open state, check to see if any share
+             conflicts */
+          state_open = NULL;
 
           /*
-           * Special stateid, no open state, check to see if any share conflicts
-           * The stateid is all-0 or all-1
+           * Special stateid, no open state, check to see if any share
+           * conflicts The stateid is all-0 or all-1
            */
-          res_SETATTR4.status = nfs4_check_special_stateid(pentry,
+          res_SETATTR4.status = nfs4_check_special_stateid(entry,
                                                            "SETATTR(size)",
                                                            FATTR4_ATTR_WRITE);
           if(res_SETATTR4.status != NFS4_OK)
@@ -243,7 +231,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
                      EXPORT_OPTION_NOSGID)))
             {
               LogInfo(COMPONENT_NFS_V4,
-                      "Setattr denied because setuid or setgid bit is disabled in configuration file. setuid=%d, setgid=%d",
+                      "Setattr denied because setuid or setgid bit is "
+                      "disabled in configuration file. setuid=%d, setgid=%d",
                       sattr.mode & FSAL_MODE_SUID ? 1 : 0,
                       sattr.mode & FSAL_MODE_SGID ? 1 : 0);
               res_SETATTR4.status = NFS4ERR_PERM;
@@ -316,21 +305,19 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   res_SETATTR4.status = NFS4_OK;
 
   return res_SETATTR4.status;
-}                               /* nfs4_op_setattr */
+} /* nfs4_op_setattr */
 
 /**
- * nfs4_op_setattr_Free: frees what was allocated to handle nfs4_op_setattr.
+ * @brief Free memory allocated for SETATTR result
  *
- * Frees what was allocared to handle nfs4_op_setattr.
+ * This function fres any memory allocated for the result of the
+ * NFS4_OP_SETATTR operation.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
- *
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_setattr_Free(SETATTR4res * resp)
+void nfs4_op_setattr_Free(SETATTR4res *resp)
 {
   if(resp->status == NFS4_OK)
     gsh_free(resp->attrsset.bitmap4_val);
   return;
-}                               /* nfs4_op_setattr_Free */
+} /* nfs4_op_setattr_Free */

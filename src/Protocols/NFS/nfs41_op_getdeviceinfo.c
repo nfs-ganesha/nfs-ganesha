@@ -7,31 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs41_op_getdeviceinfo.c
- * \author  $Author: deniel $
- * \date    $Date: 2009/08/19 16:02:52 $
  * \brief   Routines used for managing the NFS4_OP_GETDEVICEINFO operation.
  *
- * nfs41_op_getdeviceinfo.c :  Routines used for managing the GETDEVICEINFO operation.
- *
- *
+ * Routines used for managing the GETDEVICEINFO operation.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -68,17 +65,17 @@
 
 /**
  *
- * \brief The NFS4_OP_GETDEVICEINFO operation.
+ * @brief The NFS4_OP_GETDEVICEINFO operation.
  *
- * Gets the list of pNFS devices
+ * This function returns information on a pNFS device.
  *
- * \param op    [IN]    pointer to nfs4_op arguments
- * \param data  [INOUT] Pointer to the compound request's data
- * \param resp  [IN]    Pointer to nfs4_op results
+ * \param[in]     op    Arguments for nfs4_op
+ * \param[in,out] data  Compound request's data
+ * \param[out]    resp  Results for nfs4_op
  *
- * \return NFS4_OK if successfull, other values show an error.
+ * @return per RFC5661 p. 365-6
  *
- * \see nfs4_Compound
+ * @see nfs4_Compound
  *
  */
 
@@ -89,7 +86,6 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
                            compound_data_t *data,
                            struct nfs_resop4 *resp)
 {
-     char __attribute__ ((__unused__)) funcname[] = "nfs41_op_getdeviceinfo";
 #ifdef _PNFS_MDS
      /* The separated deviceid passed to the FSAL */
      struct pnfs_deviceid deviceid = {0, 0};
@@ -234,16 +230,15 @@ out:
 } /* nfs41_op_getdeviceinfo */
 
 /**
- * \brief Frees what was allocared to handle nfs4_op_getdeviceinfo.
+ * @brief Free memory allocated for GETDEVICEINFO result
  *
- * Frees what was allocared to handle nfs4_op_getdeviceinfo.
+ * This function frees memory allocated for the result of an
+ * NFS4_OP_GETDEVICEINFO response.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
+ * @param[in,out] resp  Results for nfs4_op
  *
  */
-void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
+void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res *resp)
 {
 #ifdef _PNFS_MDS
      if (resp->gdir_status == NFS4_OK) {

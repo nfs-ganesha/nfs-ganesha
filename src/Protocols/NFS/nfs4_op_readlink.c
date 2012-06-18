@@ -7,32 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs4_op_readlink.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:51 $
- * \version $Revision: 1.15 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file nfs4_op_readlink.c
+ * @brief Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_readlink.c : Routines used for managing the NFS4 COMPOUND functions.
- *
- *
+ * Routines used for managing the NFS4 COMPOUND functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -42,40 +38,26 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
 /**
- * 
- * nfs4_op_readlink: The NFS4_OP_READLINK operation. 
+ * @brief The NFS4_OP_READLINK operation.
  *
  * This function implements the NFS4_OP_READLINK operation.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
  *
- * @see all the nfs4_op_<*> function
+ * @return per RFC5661, p. 372
+ *
  * @see nfs4_Compound
  *
  */
@@ -84,10 +66,9 @@
 #define res_READLINK4 resp->nfs_resop4_u.opreadlink
 
 int nfs4_op_readlink(struct nfs_argop4 *op,
-                     compound_data_t * data, struct nfs_resop4 *resp)
+                     compound_data_t *data,
+                     struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_readlink";
-
   cache_inode_status_t cache_status;
   fsal_path_t          symlink_path;
 
@@ -95,8 +76,8 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
   res_READLINK4.status = NFS4_OK;
 
   /*
-   * Do basic checks on a filehandle
-   * You can readlink only on a link ...
+   * Do basic checks on a filehandle You can readlink only on a link
+   * ...
    */
   res_READLINK4.status = nfs4_sanity_check_FH(data, SYMBOLIC_LINK);
   if(res_READLINK4.status != NFS4_OK)
@@ -131,23 +112,20 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
 
   res_READLINK4.status = nfs4_Errno(cache_status);
   return res_READLINK4.status;
-}                               /* nfs4_op_readlink */
+} /* nfs4_op_readlink */
 
 /**
- * nfs4_op_readlink_Free: frees what was allocared to handle nfs4_op_readlink.
- * 
- * Frees what was allocared to handle nfs4_op_readlink.
+ * @brief Free memory allocated for READLINK result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees the memory allocated for the resutl of the
+ * NFS4_OP_READLINK operation.
  *
- * @return nothing (void function )
- *
- */
+ * @param[in,out] resp nfs4_op results
+*/
 void nfs4_op_readlink_Free(READLINK4res * resp)
 {
   if(resp->status == NFS4_OK && resp->READLINK4res_u.resok4.link
      .utf8string_len > 0)
     gsh_free(resp->READLINK4res_u.resok4.link.utf8string_val);
-
   return;
-}                               /* nfs4_op_readlink_Free */
+} /* nfs4_op_readlink_Free */

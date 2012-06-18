@@ -7,18 +7,19 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * --------------------------------------- */
 #ifdef HAVE_CONFIG_H
@@ -27,18 +28,9 @@
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -49,12 +41,6 @@
 
 #define arg_READDIR4 op->nfs_argop4_u.opreaddir
 #define res_READDIR4 resp->nfs_resop4_u.opreaddir
-
-static bool_t nfs4_readdir_callback(void* opaque,
-                                    char *name,
-                                    struct fsal_obj_handle *obj_hdl,
-                                    uint64_t cookie);
-static void free_entries(entry4 *entries);
 
 static const bitmap4 RdAttrErrorBitmap = {1, (uint32_t *) "\0\0\0\b"};
 static const attrlist4 RdAttrErrorVals = {0, NULL};
@@ -83,26 +69,172 @@ struct nfs4_readdir_cb_data
 };
 
 /**
+ * @brief Populate entry4s when called from cache_inode_readdir
+ *
+ * This function is a callback passed to cache_inode_readdir.  It
+ * fills in a pre-allocated array of entry4 structures and allocates
+ * space for the name and attributes.  This space must be freed.
+ *
+ * @param[in,out] opaque A struct nfs4_readdir_cb_data that stores the
+ *                       location of the array and other bookeeping
+ *                       information
+ * @param[in]     name   The filename for the current entry
+ * @param[in]     handle The current entry's filehandle
+ * @param[in]     attrs  The current entry's attributes
+ * @param[in]     cookie The readdir cookie for the current entry
+ */
+
+static bool_t
+nfs4_readdir_callback(void* opaque,
+                      char *name,
+                      struct fsal_obj_handle *handle,
+                      uint64_t cookie)
+{
+     struct nfs4_readdir_cb_data *tracker =
+          (struct nfs4_readdir_cb_data *) opaque;
+     size_t namelen = 0;
+     char val_fh[NFS4_FHSIZE];
+     nfs_fh4 entryFH = {
+          .nfs_fh4_len = 0,
+          .nfs_fh4_val = val_fh
+     };
+
+     if (tracker->total_entries == tracker->count) {
+          return FALSE;
+     }
+     memset(val_fh, 0, NFS4_FHSIZE);
+     /* Bits that don't require allocation */
+     if (tracker->mem_left < sizeof(entry4)) {
+          if (tracker->count == 0) {
+               tracker->error = NFS4ERR_TOOSMALL;
+          }
+          return FALSE;
+     }
+     tracker->mem_left -= sizeof(entry4);
+     tracker->entries[tracker->count].cookie = cookie;
+     tracker->entries[tracker->count].nextentry = NULL;
+
+     /* The filename.  We don't use str2utf8 because that has an
+        additional copy into a buffer before copying into the
+        destination. */
+
+     namelen = strlen(name);
+     if (tracker->mem_left < (namelen + 1)) {
+          if (tracker->count == 0) {
+               tracker->error = NFS4ERR_TOOSMALL;
+          }
+          return FALSE;
+     }
+     tracker->mem_left -= (namelen + 1);
+     tracker->entries[tracker->count].name.utf8string_len = namelen;
+     tracker->entries[tracker->count].name.utf8string_val
+          = gsh_malloc(namelen + 1);
+     strcpy(tracker->entries[tracker->count].name.utf8string_val,
+            name);
+
+     if ((tracker->req_attr.bitmap4_val != NULL) &&
+         (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {
+          if (!nfs4_FSALToFhandle(&entryFH, handle, tracker->data)) {
+               tracker->error = NFS4ERR_SERVERFAULT;
+               gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+               return FALSE;
+          }
+     }
+
+     if (nfs4_FSALattr_To_Fattr(tracker->data->pexport,
+                                &handle->attributes,
+                                &tracker->entries[tracker->count].attrs,
+                                tracker->data,
+                                &entryFH,
+                                &tracker->req_attr) != 0) {
+          /* Return the fattr4_rdattr_error, see RFC 3530, p. 192/RFC
+             5661 p. 112. */
+          tracker->entries[tracker->count]
+               .attrs.attrmask = RdAttrErrorBitmap;
+          tracker->entries[tracker->count]
+               .attrs.attr_vals = RdAttrErrorVals;
+     }
+
+     if (tracker->mem_left <
+         ((tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
+           sizeof(uint32_t)) +
+          (tracker->entries[tracker->count]
+           .attrs.attr_vals.attrlist4_len))) {
+          gsh_free(tracker->entries[tracker->count]
+                   .attrs.attrmask.bitmap4_val);
+          gsh_free(tracker->entries[tracker->count]
+                   .attrs.attr_vals.attrlist4_val);
+          gsh_free(tracker->entries[tracker->count].name.utf8string_val);
+          if (tracker->count == 0) {
+               tracker->error = NFS4ERR_TOOSMALL;
+          }
+          return FALSE;
+     }
+     tracker->mem_left -=
+          (tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
+           sizeof(uint32_t));
+     tracker->mem_left -=
+          (tracker->entries[tracker->count].attrs.attr_vals.attrlist4_len);
+
+     if (tracker->count != 0) {
+          tracker->entries[tracker->count - 1].nextentry =
+               &tracker->entries[tracker->count];
+     }
+
+     ++(tracker->count);
+     return TRUE;
+}
+
+/**
+ * @brief Free a list of entry4s
+ *
+ * This function frees a list of entry4s and all dependent strctures.
+ *
+ * @param[in,out] entries The entries to be freed
+ */
+
+static void
+free_entries(entry4 *entries)
+{
+     entry4 *entry = NULL;
+
+     for (entry = entries;
+          entry != NULL;
+          entry = entry->nextentry) {
+          if (entry->attrs.attrmask.bitmap4_val !=
+              RdAttrErrorBitmap.bitmap4_val) {
+               gsh_free(entry->attrs.attrmask.bitmap4_val);
+          }
+          if (entry->attrs.attr_vals.attrlist4_val !=
+              RdAttrErrorVals.attrlist4_val) {
+               gsh_free(entry->attrs.attr_vals.attrlist4_val);
+          }
+          gsh_free(entry->name.utf8string_val);
+     }
+     gsh_free(entries);
+
+     return;
+} /* free_entries */
+/**
  * @brief NFS4_OP_READDIR
  *
  * Implements the NFS4_OP_READDIR opeartion. If fh is a pseudo FH,
  * then call is routed to routine nfs4_op_readdir_pseudo
  *
- * @param op [IN] pointer to nfs4_op arguments
- * @param data [INOUT] Pointer to the compound request's data
- * @param resp [IN] Pointer to nfs4_op results
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
  *
- * @return NFS4_OK if ok, any other value show an error.
+ * @return per RFC5661, pp. 371-2
  *
  */
 int
 nfs4_op_readdir(struct nfs_argop4 *op,
-                compound_data_t * data,
+                compound_data_t *data,
                 struct nfs_resop4 *resp)
 {
      cache_entry_t *dir_entry = NULL;
      bool_t eod_met = FALSE;
-     char __attribute__ ((__unused__)) funcname[] = "nfs4_op_readdir";
      unsigned long dircount = 0;
      unsigned long maxcount = 0;
      entry4 *entries = NULL;
@@ -257,155 +389,14 @@ out:
 }                               /* nfs4_op_readdir */
 
 /**
- * nfs4_op_readdir_Free: frees what was allocared to handle nfs4_op_readdir.
+ * @brief Free memory allocated for READDIR result
  *
- * Frees what was allocared to handle nfs4_op_readdir.
+ * This function frees any memory allocated for the results of the
+ * NFS4_OP_READDIR operation.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
- *
+ * @param[in,out] resp nfs4_op results
  */
 void nfs4_op_readdir_Free(READDIR4res *resp)
 {
      free_entries(resp->READDIR4res_u.resok4.reply.entries);
 } /* nfs4_op_readdir_Free */
-
-/**
- * @brief Populate entry4s when called from cache_inode_readdir
- *
- * This function is a callback passed to cache_inode_readdir.  It
- * fills in a pre-allocated array of entry4 structures and allocates
- * space for the name and attributes.  This space must be freed.
- *
- * @param opaque [in] Pointer to a struct nfs4_readdir_cb_data that is
- *                    gives the location of the array and other
- *                    bookeeping information
- * @param name [in] The filename for the current entry
- * @param obj_hdl [in] The current entry's object handle
- * @param cookie [in] The readdir cookie for the current entry
- */
-
-static bool_t
-nfs4_readdir_callback(void* opaque,
-                      char *name,
-                      struct fsal_obj_handle *obj_hdl,
-                      uint64_t cookie)
-{
-     struct nfs4_readdir_cb_data *tracker =
-          (struct nfs4_readdir_cb_data *) opaque;
-     size_t namelen = 0;
-     char val_fh[NFS4_FHSIZE];
-     nfs_fh4 entryFH = {
-          .nfs_fh4_len = NFS4_FHSIZE,
-          .nfs_fh4_val = val_fh
-     };
-
-     if (tracker->total_entries == tracker->count) {
-          return FALSE;
-     }
-     memset(val_fh, 0, NFS4_FHSIZE);
-     /* Bits that don't require allocation */
-     if (tracker->mem_left < sizeof(entry4)) {
-          if (tracker->count == 0) {
-               tracker->error = NFS4ERR_TOOSMALL;
-          }
-          return FALSE;
-     }
-     tracker->mem_left -= sizeof(entry4);
-     tracker->entries[tracker->count].cookie = cookie;
-     tracker->entries[tracker->count].nextentry = NULL;
-
-     /* The filename.  We don't use str2utf8 because that has an
-        additional copy into a buffer before copying into the
-        destination. */
-
-     namelen = strlen(name);
-     if (tracker->mem_left < (namelen + 1)) {
-          if (tracker->count == 0) {
-               tracker->error = NFS4ERR_TOOSMALL;
-          }
-          return FALSE;
-     }
-     tracker->mem_left -= (namelen + 1);
-     tracker->entries[tracker->count].name.utf8string_len = namelen;
-     tracker->entries[tracker->count].name.utf8string_val
-          = gsh_malloc(namelen + 1);
-     strcpy(tracker->entries[tracker->count].name.utf8string_val,
-            name);
-
-     if ((tracker->req_attr.bitmap4_val != NULL) &&
-         (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {
-          if (!nfs4_FSALToFhandle(&entryFH, obj_hdl, tracker->data)) {
-               tracker->error = NFS4ERR_SERVERFAULT;
-               gsh_free(tracker->entries[tracker->count].name.utf8string_val);
-               return FALSE;
-          }
-     }
-
-     if (nfs4_FSALattr_To_Fattr(tracker->data->pexport,
-                                &obj_hdl->attributes,
-                                &tracker->entries[tracker->count].attrs,
-                                tracker->data,
-                                &entryFH,
-                                &tracker->req_attr) != 0) {
-          /* Return the fattr4_rdattr_error, see RFC 3530, p. 192/RFC
-             5661 p. 112. */
-          tracker->entries[tracker->count]
-               .attrs.attrmask = RdAttrErrorBitmap;
-          tracker->entries[tracker->count]
-               .attrs.attr_vals = RdAttrErrorVals;
-     }
-
-     if (tracker->mem_left <
-         ((tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
-           sizeof(uint32_t)) +
-          (tracker->entries[tracker->count]
-           .attrs.attr_vals.attrlist4_len))) {
-          gsh_free(tracker->entries[tracker->count]
-                   .attrs.attrmask.bitmap4_val);
-          gsh_free(tracker->entries[tracker->count]
-                   .attrs.attr_vals.attrlist4_val);
-          gsh_free(tracker->entries[tracker->count].name.utf8string_val);
-          if (tracker->count == 0) {
-               tracker->error = NFS4ERR_TOOSMALL;
-          }
-          return FALSE;
-     }
-     tracker->mem_left -=
-          (tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
-           sizeof(uint32_t));
-     tracker->mem_left -=
-          (tracker->entries[tracker->count].attrs.attr_vals.attrlist4_len);
-
-     if (tracker->count != 0) {
-          tracker->entries[tracker->count - 1].nextentry =
-               &tracker->entries[tracker->count];
-     }
-
-     ++(tracker->count);
-     return TRUE;
-}
-
-static void
-free_entries(entry4 *entries)
-{
-     entry4 *entry = NULL;
-
-     for (entry = entries;
-          entry != NULL;
-          entry = entry->nextentry) {
-          if (entry->attrs.attrmask.bitmap4_val !=
-              RdAttrErrorBitmap.bitmap4_val) {
-               gsh_free(entry->attrs.attrmask.bitmap4_val);
-          }
-          if (entry->attrs.attr_vals.attrlist4_val !=
-              RdAttrErrorVals.attrlist4_val) {
-               gsh_free(entry->attrs.attr_vals.attrlist4_val);
-          }
-          gsh_free(entry->name.utf8string_val);
-     }
-     gsh_free(entries);
-
-     return;
-} /* free_entries */

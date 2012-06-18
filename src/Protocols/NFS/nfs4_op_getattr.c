@@ -7,30 +7,26 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * --------------------------------------- */
 /**
  * \file    nfs4_op_getattr.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/05 15:14:52 $
- * \version $Revision: 1.17 $
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_getattr.c : Routines used for managing the NFS4 COMPOUND functions.
- *
- *
+ * Routines used for managing the NFS4 COMPOUND functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -43,15 +39,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -65,23 +58,22 @@
 #define res_GETATTR4 resp->nfs_resop4_u.opgetattr
 
 /**
+ * @brief Gets attributes for an entry in the FSAL.
  *
- * nfs4_op_getattr: Gets attributes for an entry in the FSAL.
+ * Impelments the NFS4_OP_GETATTR operation, which gets attributes for
+ * an entry in the FSAL.
  *
- * Gets attributes for an entry in the FSAL.
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
- *
- * @return NFS4_OK
+ * @return per RFC5661, p. 365
  *
  */
 int nfs4_op_getattr(struct nfs_argop4 *op,
-                    compound_data_t * data, struct nfs_resop4 *resp)
+                    compound_data_t *data,
+                    struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getattr";
-
   fsal_attrib_list_t   attr;
   cache_inode_status_t cache_status;
 
@@ -104,7 +96,8 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
       return res_GETATTR4.status;
     }
 
-  /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
+  /* If Filehandle points to a xattr object, manage it via the xattrs
+     specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_getattr_xattr(op, data, resp);
 
@@ -124,13 +117,14 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
     }
 
   /* Get only attributes that are allowed to be read */
-  if(!nfs4_Fattr_Check_Access_Bitmap(&arg_GETATTR4.attr_request, FATTR4_ATTR_READ))
+  if(!nfs4_Fattr_Check_Access_Bitmap(&arg_GETATTR4.attr_request,
+                                     FATTR4_ATTR_READ))
     {
       res_GETATTR4.status = NFS4ERR_INVAL;
       return res_GETATTR4.status;
     }
 
-  if( !nfs4_bitmap4_Remove_Unsupported( &arg_GETATTR4.attr_request ) )
+  if(!nfs4_bitmap4_Remove_Unsupported( &arg_GETATTR4.attr_request))
     {
       res_GETATTR4.status = NFS4ERR_SERVERFAULT ;
       return res_GETATTR4.status;
@@ -146,9 +140,11 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
     {
       if(nfs4_FSALattr_To_Fattr(data->pexport,
                                 &attr,
-                                &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
+                                &(res_GETATTR4.GETATTR4res_u.resok4
+                                  .obj_attributes),
                                 data,
-                                &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
+                                &(data->currentFH), &(arg_GETATTR4
+                                                      .attr_request)) != 0)
         res_GETATTR4.status = NFS4ERR_SERVERFAULT;
       else
         res_GETATTR4.status = NFS4_OK;
@@ -158,21 +154,19 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
   res_GETATTR4.status = nfs4_Errno(cache_status);
 
   return res_GETATTR4.status;
-}                               /* nfs4_op_getattr */
+} /* nfs4_op_getattr */
 
 /**
- * nfs4_op_getattr_Free: frees what was allocared to handle nfs4_op_getattr.
- * 
- * Frees what was allocared to handle nfs4_op_getattr.
+ * @brief Free memory allocated for GETATTR result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_GETATTR operation.
  *
- * @return nothing (void function )
- * 
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_getattr_Free(GETATTR4res * resp)
+void nfs4_op_getattr_Free(GETATTR4res *resp)
 {
   if(resp->status == NFS4_OK)
     nfs4_Fattr_Free(&resp->GETATTR4res_u.resok4.obj_attributes);
   return;
-}                               /* nfs4_op_getattr_Free */
+} /* nfs4_op_getattr_Free */

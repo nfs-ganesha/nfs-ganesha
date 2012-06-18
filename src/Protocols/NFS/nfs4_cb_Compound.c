@@ -9,31 +9,28 @@
  * Contributor : Matt Benjamin <matt@linuxbox.com>
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs4_cb_Compound.c
- * \author  $Author: deniel $
- * \date    $Date: 2008/03/11 13:25:44 $
- * \version $Revision: 1.24 $
  * \brief   Routines used for managing the NFS4/CB COMPOUND functions.
  *
- * nfs4_cb_Compound.c : Routines used for managing the NFS4/CB COMPOUND
- * functions.
+ * Routines used for managing the NFS4/CB COMPOUND functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -52,9 +49,7 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"

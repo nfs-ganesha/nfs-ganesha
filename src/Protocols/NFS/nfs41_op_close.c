@@ -18,17 +18,17 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs41_op_close.c
- * \author  $Author: deniel $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs41_op_close.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs41_op_close.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -49,26 +49,25 @@
 
 /**
  *
- * nfs41_op_close: Implemtation of NFS4_OP_CLOSE
+ * @brief Implemt NFS4_OP_CLOSE
  *
- * Implemtation of NFS4_OP_CLOSE.
+ * This function implemtation of NFS4_OP_CLOSE for NFSv4.1.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  The compound request's data
+ * @param[out]    resp  Results for nfs4_op
  *
- * @return NFS4_OK
- *
+ * @return Codes per RFC5661, p. 362
  */
 
 #define arg_CLOSE4 op->nfs_argop4_u.opclose
 #define res_CLOSE4 resp->nfs_resop4_u.opclose
 
-int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
+int nfs41_op_close(struct nfs_argop4 *op, compound_data_t *data,
                    struct nfs_resop4 *resp)
 {
   int                    rc = 0;
-  state_t              * pstate_found = NULL;
+  state_t              * state_found = NULL;
   cache_inode_status_t   cache_status;
   state_status_t         state_status;
   const char           * tag = "CLOSE";
@@ -101,7 +100,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
                               data->current_entry,
-                              &pstate_found,
+                              &state_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
                               tag)) != NFS4_OK)
@@ -113,7 +112,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
     }
 
   /* Check is held locks remain */
-  glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)
+  glist_for_each(glist, &state_found->state_data.share.share_lockstates)
     {
       state_t * plock_state = glist_entry(glist,
                                           state_t,
@@ -132,13 +131,13 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
 
   /* Handle stateid/seqid for success */
-  update_stateid(pstate_found,
+  update_stateid(state_found,
                  &res_CLOSE4.CLOSE4res_u.open_stateid,
                  data,
                  tag);
 
   /* File is closed, release the corresponding lock states */
-  glist_for_each_safe(glist, glistn, &pstate_found->state_data.share.share_lockstates)
+  glist_for_each_safe(glist, glistn, &state_found->state_data.share.share_lockstates)
     {
       state_t * plock_state = glist_entry(glist,
                                           state_t,
@@ -154,7 +153,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
     }
 
   /* File is closed, release the corresponding state */
-  if(state_del(pstate_found,
+  if(state_del(state_found,
                &state_status) != STATE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
@@ -170,11 +169,11 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
   glist_for_each(glist, &data->current_entry->object.file.state_list)
     {
-      state_t *pstate = glist_entry(glist, state_t, state_list);
+      state_t *state = glist_entry(glist, state_t, state_list);
 
-      if ((pstate->state_type == STATE_TYPE_SHARE) &&
-          (pstate->state_powner->so_type == STATE_OPEN_OWNER_NFSV4) &&
-          (pstate->state_powner->so_owner.so_nfs4_owner.so_clientid ==
+      if ((state->state_type == STATE_TYPE_SHARE) &&
+          (state->state_powner->so_type == STATE_OPEN_OWNER_NFSV4) &&
+          (state->state_powner->so_owner.so_nfs4_owner.so_clientid ==
            data->psession->clientid))
         {
           last_close = FALSE;
@@ -188,7 +187,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                           glistn,
                           &data->current_entry->object.file.state_list)
         {
-          state_t *pstate = glist_entry(glist, state_t, state_list);
+          state_t *state = glist_entry(glist, state_t, state_list);
           bool_t deleted = FALSE;
           struct pnfs_segment entire = {
                .io_mode = LAYOUTIOMODE4_ANY,
@@ -196,18 +195,18 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                .length = NFS4_UINT64_MAX
           };
 
-          if ((pstate->state_type == STATE_TYPE_LAYOUT) &&
-              (pstate->state_powner->so_type == STATE_CLIENTID_OWNER_NFSV4) &&
-              (pstate->state_powner->so_owner.so_nfs4_owner.so_clientid ==
+          if ((state->state_type == STATE_TYPE_LAYOUT) &&
+              (state->state_powner->so_type == STATE_CLIENTID_OWNER_NFSV4) &&
+              (state->state_powner->so_owner.so_nfs4_owner.so_clientid ==
                data->psession->clientid) &&
-              pstate->state_data.layout.state_return_on_close)
+              state->state_data.layout.state_return_on_close)
             {
               nfs4_return_one_state(data->current_entry,
                                     data->pcontext,
                                     TRUE,
                                     FALSE,
                                     0,
-                                    pstate,
+                                    state,
                                     entire,
                                     0,
                                     NULL,
@@ -244,17 +243,14 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 }                               /* nfs41_op_close */
 
 /**
- * nfs41_op_close_Free: frees what was allocared to handle nfs4_op_close.
+ * @brief Free memory allocated for results of nfs4_op_close
  *
- * Frees what was allocared to handle nfs4_op_close.
+ * This function frees memory allocated for results of nfs4_op_close.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
- *
+ * @param[in,out] resp  nfs4_op results
  */
 void nfs41_op_close_Free(CLOSE4res * resp)
 {
   /* Nothing to be done */
   return;
-}                               /* nfs41_op_close_Free */
+} /* nfs41_op_close_Free */

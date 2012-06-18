@@ -60,36 +60,257 @@
 #include "sal_functions.h"
 #endif /* _PNFS_MDS */
 
-#ifdef _PNFS_MDS
-static nfsstat4 acquire_layout_state(compound_data_t *data,
-                                     stateid4 *supplied_stateid,
-                                     layouttype4 layout_type,
-                                     state_t **layout_state,
-                                     const char *tag);
 
-static nfsstat4 one_segment(fsal_handle_t *handle,
-                            fsal_op_context_t *context,
-                            state_t *layout_state,
-                            const struct fsal_layoutget_arg *arg,
-                            struct fsal_layoutget_res *res,
-                            layout4 *current);
-#endif /* _PNFS_MDS */
+#ifdef _PNFS_MDS
+/**
+ *
+ * @brief Get or make a layout state
+ *
+ * If the stateid supplied by the client refers to a layout state,
+ * that state is returned.  Otherwise, if it is a share, lock, or
+ * delegation, a new state is created.  Any layout state matching
+ * clientid, file, and type is freed.
+ *
+ * @param[in,out] data Compound    Compound request's data
+ * @param[in]     supplied_stateid The stateid included in
+ *                                 the arguments to layoutget
+ * @param[in]     layout_type      Type of layout being requested
+ * @param[out]    layout_state     The layout state
+ *
+ * @return NFS4_OK if successfull, other values on error
+ */
+
+static nfsstat4
+acquire_layout_state(compound_data_t *data,
+                     stateid4 *supplied_stateid,
+                     layouttype4 layout_type,
+                     state_t **layout_state,
+                     const char *tag)
+{
+     /* State associated with the client-supplied stateid */
+     state_t *supplied_state = NULL;
+     /* State owner for per-clientid states */
+     state_owner_t *clientid_owner = NULL;
+     /* Return from this function */
+     nfsstat4 nfs_status = 0;
+     /* Return from state functions */
+     state_status_t state_status = 0;
+     /* Layout state, forgotten about by caller */
+     state_t *condemned_state = NULL;
+
+     if ((state_status = get_clientid_owner(data->psession->clientid,
+                                            &clientid_owner))
+         != STATE_SUCCESS) {
+          nfs_status = nfs4_Errno_state(state_status);
+     }
+
+     /* Retrieve state corresponding to supplied ID, inspect it and, if
+        necessary, create a new layout state */
+
+     if ((nfs_status = nfs4_Check_Stateid(supplied_stateid,
+                                          data->current_entry,
+                                          &supplied_state,
+                                          data,
+                                          STATEID_SPECIAL_CURRENT,
+                                          tag)) != NFS4_OK) {
+          goto out;
+     }
+
+     if (supplied_state->state_type == STATE_TYPE_LAYOUT) {
+          /* If the state supplied is a layout state, we can simply
+           * use it */
+          *layout_state = supplied_state;
+     } else if ((supplied_state->state_type == STATE_TYPE_SHARE) ||
+                (supplied_state->state_type == STATE_TYPE_DELEG) ||
+                (supplied_state->state_type == STATE_TYPE_LOCK)) {
+          /* For share, delegation, and lock states, create a new
+             layout state. */
+          state_data_t layout_data;
+          memset(&layout_data, 0, sizeof(state_data_t));
+          /* See if a layout state already exists */
+          state_status = state_lookup_layout_state(data->current_entry,
+                                                   clientid_owner,
+                                                   layout_type,
+                                                   &condemned_state);
+          /* If it does, we assume that the client is using the
+             forgetful model and has forgotten it had any layouts.
+             Free all layouts associated with the state and delete
+             it. */
+          if (state_status == STATE_SUCCESS) {
+               /* Flag indicating whether all layouts were returned
+                  and the state was deleted */
+               bool_t deleted = FALSE;
+               struct pnfs_segment entire = {
+                    .io_mode = LAYOUTIOMODE4_ANY,
+                    .offset = 0,
+                    .length = NFS4_UINT64_MAX
+               };
+               if ((nfs_status
+                    = nfs4_return_one_state(data->current_entry,
+                                            data->pcontext,
+                                            TRUE,
+                                            FALSE,
+                                            0,
+                                            condemned_state,
+                                            entire,
+                                            0,
+                                            NULL,
+                                            &deleted)) != NFS4_OK) {
+                    goto out;
+               }
+               if (!deleted) {
+                    nfs_status = NFS4ERR_SERVERFAULT;
+                    goto out;
+               }
+               condemned_state = NULL;
+          } else if (state_status != STATE_NOT_FOUND) {
+               nfs_status = nfs4_Errno_state(state_status);
+               goto out;
+          }
+
+          layout_data.layout.state_layout_type = layout_type;
+          layout_data.layout.state_return_on_close = FALSE;
+
+          if (state_add(data->current_entry,
+                        STATE_TYPE_LAYOUT,
+                        &layout_data,
+                        clientid_owner,
+                        data->pcontext,
+                        layout_state,
+                        &state_status) != STATE_SUCCESS) {
+               nfs_status = nfs4_Errno_state(state_status);
+               goto out;
+          }
+
+          init_glist(&(*layout_state)->state_data.layout.state_segments);
+     } else {
+          /* A state eixsts but is of an invalid type. */
+          nfs_status = NFS4ERR_BAD_STATEID;
+          goto out;
+     }
+
+out:
+
+     return nfs_status;
+}
 
 /**
  *
- * \brief The NFS4_OP_LAYOUTGET operation.
+ * @brief Grant and add one layout segment
+ *
+ * This is a wrapper around the FSAL call that populates one entry in
+ * the logr_layout array and adds one segment to the state list.
+ *
+ * @param[in]     handle  File handle
+ * @param[in]     context FSAL operaton context
+ * @param[in]     arg     Input arguments to the FSAL
+ * @param[in,out] res     Input/output and output arguments to the FSAL
+ * @param[out]    current Current entry in the logr_layout array.
+ *
+ * @return NFS4_OK if successfull, other values show an error.
+ */
+
+static nfsstat4
+one_segment(fsal_handle_t *handle,
+            fsal_op_context_t *context,
+            state_t *layout_state,
+            const struct fsal_layoutget_arg *arg,
+            struct fsal_layoutget_res *res,
+            layout4 *current)
+{
+     /* The initial position of the XDR stream after creation, so we
+        can find the total length of encoded data. */
+     size_t start_position = 0;
+     /* XDR stream to encode loc_body of the current segment */
+     XDR loc_body;
+     /* Return code from this function */
+     nfsstat4 nfs_status = 0;
+     /* Return from state calls */
+     state_status_t state_status = 0;
+     /* Size of a loc_body buffer */
+     size_t loc_body_size =
+          context->export_context->fe_static_fs_info->loc_buffer_size;
+
+     if (loc_body_size == 0) {
+          LogCrit(COMPONENT_PNFS,
+                  "The FSAL must specify a non-zero loc_buffer_size "
+                  "in its fsal_staticfsinfo_t");
+          nfs_status = NFS4ERR_SERVERFAULT;
+          goto out;
+     }
+
+     /* Initialize the layout_content4 structure, allocate a buffer,
+     and create an XDR stream for the FSAL to encode to. */
+
+     current->lo_content.loc_type
+          = arg->type;
+     current->lo_content.loc_body.loc_body_val
+          = gsh_malloc(loc_body_size);
+
+     xdrmem_create(&loc_body,
+                   current->lo_content.loc_body.loc_body_val,
+                   loc_body_size,
+                   XDR_ENCODE);
+
+     start_position = xdr_getpos(&loc_body);
+
+     /*
+      * XXX This assumes a single FSAL and must be changed after the
+      * XXX Lieb Rearchitecture.  The MDS function structure
+      * XXX associated with the current filehandle should be used.
+      */
+
+     nfs_status
+          = fsal_mdsfunctions.layoutget(handle,
+                                        context,
+                                        &loc_body,
+                                        arg,
+                                        res);
+
+     current->lo_content.loc_body.loc_body_len
+          = xdr_getpos(&loc_body) - start_position;
+     xdr_destroy(&loc_body);
+
+     if (nfs_status != NFS4_OK) {
+          goto out;
+     }
+
+     current->lo_offset = res->segment.offset;
+     current->lo_length = res->segment.length;
+     current->lo_iomode = res->segment.io_mode;
+
+     if ((state_status = state_add_segment(layout_state,
+                                           &res->segment,
+                                           res->fsal_seg_data,
+                                           res->return_on_close))
+         != STATE_SUCCESS) {
+          nfs_status = nfs4_Errno_state(state_status);
+          goto out;
+     }
+
+out:
+
+     if (nfs_status != NFS4_OK) {
+          if (current->lo_content.loc_body.loc_body_val)
+               gsh_free(current->lo_content.loc_body.loc_body_val);
+     }
+
+     return nfs_status;
+}
+#endif /* _PNFS_MDS */
+
+/**
+ * @brief The NFS4_OP_LAYOUTGET operation
  *
  * This function implements the NFS4_OP_LAYOUTGET operation.
  *
- * \param op    [IN]    pointer to nfs4_op arguments
- * \param data  [INOUT] Pointer to the compound request's data
- * \param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
  *
- * \return NFS4_OK if successfull, other values show an error.
+ * @return per RFC5661 pp. 366-7
  *
- * \see all the nfs4_op_<*> function
- * \see nfs4_Compound
- *
+ * @see nfs4_Compound
  */
 
 #define arg_LAYOUTGET4 op->nfs_argop4_u.oplayoutget
@@ -99,7 +320,6 @@ int nfs41_op_layoutget(struct nfs_argop4 *op,
                        compound_data_t * data,
                        struct nfs_resop4 *resp)
 {
-     char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
 #ifdef _PNFS_MDS
      /* Return code from state functions */
      state_status_t state_status = 0;
@@ -276,16 +496,14 @@ out:
 
 
 /**
- * nfs41_op_layoutget_Free: frees what was allocared to handle nfs41_op_layoutget.
+ * @brief Free memory allocated for LAYOUTGET result
  *
- * Frees what was allocared to handle nfs41_op_layoutget.
+ * This function frees any memory allocated for the NFS4_OP_LAYOUTGET
+ * result.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
- *
+ * @param[in,out] resp nfs4_op results
  */
-void nfs41_op_layoutget_Free(LAYOUTGET4res * resp)
+void nfs41_op_layoutget_Free(LAYOUTGET4res *resp)
 {
 #ifdef _PNFS_MDS
      size_t i = 0;
@@ -300,244 +518,4 @@ void nfs41_op_layoutget_Free(LAYOUTGET4res * resp)
      }
 #endif /* !_PNFS_MDS */
      return;
-}                               /* nfs41_op_layoutget_Free */
-
-#ifdef _PNFS_MDS
-
-/**
- *
- * \brief Get or make a layout state
- *
- * If the stateid supplied by the client refers to a layout state,
- * that state is returned.  Otherwise, if it is a share, lock, or
- * delegation, a new state is created.  Any layout state matching
- * clientid, file, and type is freed.
- *
- * \param data             [IN]  Pointer to the compound request's data
- * \param supplied_stateid [IN]  Pointer to the stateid included in
- *                               the arguments to layoutget
- * \param layout_type      [IN]  The type of layout being requested.
- * \param layout_state     [OUT] The layout state.
- *
- * \return NFS4_OK if successfull, other values show an error.
- */
-
-static nfsstat4
-acquire_layout_state(compound_data_t *data,
-                     stateid4 *supplied_stateid,
-                     layouttype4 layout_type,
-                     state_t **layout_state,
-                     const char *tag)
-{
-     /* State associated with the client-supplied stateid */
-     state_t *supplied_state = NULL;
-     /* State owner for per-clientid states */
-     state_owner_t *clientid_owner = NULL;
-     /* Return from this function */
-     nfsstat4 nfs_status = 0;
-     /* Return from state functions */
-     state_status_t state_status = 0;
-     /* Layout state, forgotten about by caller */
-     state_t *condemned_state = NULL;
-
-     if ((state_status = get_clientid_owner(data->psession->clientid,
-                                            &clientid_owner))
-         != STATE_SUCCESS) {
-          nfs_status = nfs4_Errno_state(state_status);
-     }
-
-     /* Retrieve state corresponding to supplied ID, inspect it and, if
-        necessary, create a new layout state */
-
-     if ((nfs_status = nfs4_Check_Stateid(supplied_stateid,
-                                          data->current_entry,
-                                          &supplied_state,
-                                          data,
-                                          STATEID_SPECIAL_CURRENT,
-                                          tag)) != NFS4_OK) {
-          goto out;
-     }
-
-     if (supplied_state->state_type == STATE_TYPE_LAYOUT) {
-          /* If the state supplied is a layout state, we can simply
-           * use it */
-          *layout_state = supplied_state;
-     } else if ((supplied_state->state_type == STATE_TYPE_SHARE) ||
-                (supplied_state->state_type == STATE_TYPE_DELEG) ||
-                (supplied_state->state_type == STATE_TYPE_LOCK)) {
-          /* For share, delegation, and lock states, create a new
-             layout state. */
-          state_data_t layout_data;
-          memset(&layout_data, 0, sizeof(state_data_t));
-          /* See if a layout state already exists */
-          state_status = state_lookup_layout_state(data->current_entry,
-                                                   clientid_owner,
-                                                   layout_type,
-                                                   &condemned_state);
-          /* If it does, we assume that the client is using the
-             forgetful model and has forgotten it had any layouts.
-             Free all layouts associated with the state and delete
-             it. */
-          if (state_status == STATE_SUCCESS) {
-               /* Flag indicating whether all layouts were returned
-                  and the state was deleted */
-               bool_t deleted = FALSE;
-               struct pnfs_segment entire = {
-                    .io_mode = LAYOUTIOMODE4_ANY,
-                    .offset = 0,
-                    .length = NFS4_UINT64_MAX
-               };
-               if ((nfs_status
-                    = nfs4_return_one_state(data->current_entry,
-                                            data->pcontext,
-                                            TRUE,
-                                            FALSE,
-                                            0,
-                                            condemned_state,
-                                            entire,
-                                            0,
-                                            NULL,
-                                            &deleted)) != NFS4_OK) {
-                    goto out;
-               }
-               if (!deleted) {
-                    nfs_status = NFS4ERR_SERVERFAULT;
-                    goto out;
-               }
-               condemned_state = NULL;
-          } else if (state_status != STATE_NOT_FOUND) {
-               nfs_status = nfs4_Errno_state(state_status);
-               goto out;
-          }
-
-          layout_data.layout.state_layout_type = layout_type;
-          layout_data.layout.state_return_on_close = FALSE;
-
-          if (state_add(data->current_entry,
-                        STATE_TYPE_LAYOUT,
-                        &layout_data,
-                        clientid_owner,
-                        data->pcontext,
-                        layout_state,
-                        &state_status) != STATE_SUCCESS) {
-               nfs_status = nfs4_Errno_state(state_status);
-               goto out;
-          }
-
-          init_glist(&(*layout_state)->state_data.layout.state_segments);
-     } else {
-          /* A state eixsts but is of an invalid type. */
-          nfs_status = NFS4ERR_BAD_STATEID;
-          goto out;
-     }
-
-out:
-
-     return nfs_status;
-}
-
-/**
- *
- * \brief Grant and add one layout segment
- *
- * This is a wrapper around the FSAL call that populates one entry in
- * the logr_layout array and adds one segment to the state list.
- *
- * \param handle  [IN]     Pointer to the file handle
- * \param context [IN]     Pointer to the FSAL operaton context
- * \param arg     [IN]     The input arguments to the FSAL
- * \param res     [IN,OUT] The input/output and output arguments to
- *                         the FSAL
- * \param current [OUT]    The current entry in the logr_layout array.
- *
- * \return NFS4_OK if successfull, other values show an error.
- */
-
-static nfsstat4
-one_segment(fsal_handle_t *handle,
-            fsal_op_context_t *context,
-            state_t *layout_state,
-            const struct fsal_layoutget_arg *arg,
-            struct fsal_layoutget_res *res,
-            layout4 *current)
-{
-     /* The initial position of the XDR stream after creation, so we
-        can find the total length of encoded data. */
-     size_t start_position = 0;
-     /* XDR stream to encode loc_body of the current segment */
-     XDR loc_body;
-     /* Return code from this function */
-     nfsstat4 nfs_status = 0;
-     /* Return from state calls */
-     state_status_t state_status = 0;
-     /* Size of a loc_body buffer */
-     size_t loc_body_size =
-          context->export_context->fe_static_fs_info->loc_buffer_size;
-
-     if (loc_body_size == 0) {
-          LogCrit(COMPONENT_PNFS,
-                  "The FSAL must specify a non-zero loc_buffer_size "
-                  "in its fsal_staticfsinfo_t");
-          nfs_status = NFS4ERR_SERVERFAULT;
-          goto out;
-     }
-
-     /* Initialize the layout_content4 structure, allocate a buffer,
-     and create an XDR stream for the FSAL to encode to. */
-
-     current->lo_content.loc_type
-          = arg->type;
-     current->lo_content.loc_body.loc_body_val
-          = gsh_malloc(loc_body_size);
-
-     xdrmem_create(&loc_body,
-                   current->lo_content.loc_body.loc_body_val,
-                   loc_body_size,
-                   XDR_ENCODE);
-
-     start_position = xdr_getpos(&loc_body);
-
-     /*
-      * XXX This assumes a single FSAL and must be changed after the
-      * XXX Lieb Rearchitecture.  The MDS function structure
-      * XXX associated with the current filehandle should be used.
-      */
-
-     nfs_status
-          = fsal_mdsfunctions.layoutget(handle,
-                                        context,
-                                        &loc_body,
-                                        arg,
-                                        res);
-
-     current->lo_content.loc_body.loc_body_len
-          = xdr_getpos(&loc_body) - start_position;
-     xdr_destroy(&loc_body);
-
-     if (nfs_status != NFS4_OK) {
-          goto out;
-     }
-
-     current->lo_offset = res->segment.offset;
-     current->lo_length = res->segment.length;
-     current->lo_iomode = res->segment.io_mode;
-
-     if ((state_status = state_add_segment(layout_state,
-                                           &res->segment,
-                                           res->fsal_seg_data,
-                                           res->return_on_close))
-         != STATE_SUCCESS) {
-          nfs_status = nfs4_Errno_state(state_status);
-          goto out;
-     }
-
-out:
-
-     if (nfs_status != NFS4_OK) {
-          if (current->lo_content.loc_body.loc_body_val)
-               gsh_free(current->lo_content.loc_body.loc_body_val);
-     }
-
-     return nfs_status;
-}
-#endif /* _PNFS_MDS */
+} /* nfs41_op_layoutget_Free */

@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs4_op_close.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:50 $
- * \version $Revision: 1.8 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file  nfs4_op_close.c
+ * @brief Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_close.c : Routines used for managing the NFS4 COMPOUND functions.
+ * @brief Routines used for managing the NFS4 COMPOUND functions.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -50,16 +48,16 @@
 
 /**
  *
- * nfs4_op_close: Implemtation of NFS4_OP_CLOSE
+ * Brief Implemtation of NFS4_OP_CLOSE
  *
- * Implemtation of NFS4_OP_CLOSE. Implementation is partial for now, so it always returns NFS4_OK.  
+ * This function implemtats the NFS4_OP_CLOSE
+ * operation.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
  *
- * @return NFS4_OK
- *
+ * @return per RFC5661, p. 362
  */
 
 #define arg_CLOSE4 op->nfs_argop4_u.opclose
@@ -67,10 +65,8 @@
 
 int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_close";
-
   int                    rc = 0;
-  state_t              * pstate_found = NULL;
+  state_t              * state_found = NULL;
   cache_inode_status_t   cache_status;
   state_status_t         state_status;
   state_owner_t        * popen_owner;
@@ -102,7 +98,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
                               data->current_entry,
-                              &pstate_found,
+                              &state_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
                               tag)) != NFS4_OK)
@@ -113,7 +109,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_CLOSE4.status;
     }
 
-  popen_owner = pstate_found->state_powner;
+  popen_owner = state_found->state_powner;
 
   P(popen_owner->so_mutex);
 
@@ -129,7 +125,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   pthread_rwlock_wrlock(&data->current_entry->state_lock);
   /* Check is held locks remain */
-  glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)
+  glist_for_each(glist, &state_found->state_data.share.share_lockstates)
     {
       state_t * plock_state = glist_entry(glist,
                                           state_t,
@@ -152,7 +148,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 
   /* Handle stateid/seqid for success */
-  update_stateid(pstate_found,
+  update_stateid(state_found,
                  &res_CLOSE4.CLOSE4res_u.open_stateid,
                  data,
                  tag);
@@ -161,7 +157,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
 
   /* File is closed, release the corresponding lock states */
-  glist_for_each_safe(glist, glistn, &pstate_found->state_data.share.share_lockstates)
+  glist_for_each_safe(glist, glistn, &state_found->state_data.share.share_lockstates)
     {
       state_t * plock_state = glist_entry(glist,
                                           state_t,
@@ -178,11 +174,11 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* File is closed, release the share state */
-  if(pstate_found->state_type == STATE_TYPE_SHARE)
+  if(state_found->state_type == STATE_TYPE_SHARE)
     {
-      if(state_share_remove(pstate_found->state_pentry,
+      if(state_share_remove(state_found->state_pentry,
                             popen_owner,
-                            pstate_found,
+                            state_found,
                             &state_status) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
@@ -193,7 +189,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* File is closed, release the corresponding state */
   if((state_status
-      = state_del_locked(pstate_found,
+      = state_del_locked(state_found,
                          data->current_entry)) != STATE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
@@ -228,22 +224,20 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 }                               /* nfs4_op_close */
 
 /**
- * nfs4_op_close_Free: frees what was allocared to handle nfs4_op_close.
- * 
- * Frees what was allocared to handle nfs4_op_close.
+ * @brief Free memory allocated for CLOSE result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_CLOSE operation.
  *
- * @return nothing (void function )
- * 
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_close_Free(CLOSE4res * resp)
+void nfs4_op_close_Free(CLOSE4res *resp)
 {
   /* Nothing to be done */
   return;
 }                               /* nfs4_op_close_Free */
 
-void nfs4_op_close_CopyRes(CLOSE4res * resp_dst, CLOSE4res * resp_src)
+void nfs4_op_close_CopyRes(CLOSE4res *res_dst, CLOSE4res *res_src)
 {
   /* Nothing to be done */
   return;

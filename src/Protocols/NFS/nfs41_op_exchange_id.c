@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs41_op_exchange_id.c
- * \brief   Routines used for managing the NFS4_OP_EXCHANGE_ID operation.
+ * @file    nfs41_op_exchange_id.c
+ * @brief   Routines used for managing the NFS4_OP_EXCHANGE_ID operation.
  *
  * Routines used for managing the EXCHANGE_ID operation.
  *
@@ -50,40 +50,31 @@
 
 /**
  *
- * nfs41_op_exchange_id:  The NFS4_OP_EXCHANGE_ID operation.
+ * @brief The NFS4_OP_EXCHANGE_ID operation.
  *
- * Gets the currentFH for the current compound requests.
+ * This function implements the NFS4_OP_EXCHANGE_ID operation in
+ * nfs4_Compound.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op    Arguments for nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
  *
- * @return NFS4_OK if successfull, other values show an error. 
+ * @return per RFC5661, p. 364
  *
  * @see nfs4_Compound
  *
  */
 
-#if 0
-static uint32_t all_eia_flags =
-    EXCHGID4_FLAG_SUPP_MOVED_MIGR |
-    EXCHGID4_FLAG_BIND_PRINC_STATEID |
-    EXCHGID4_FLAG_USE_NON_PNFS |
-    EXCHGID4_FLAG_USE_PNFS_MDS |
-    EXCHGID4_FLAG_USE_PNFS_DS |
-    EXCHGID4_FLAG_MASK_PNFS |
-    EXCHGID4_FLAG_UPD_CONFIRMED_REC_A | EXCHGID4_FLAG_CONFIRMED_R;
-#endif
-
 int nfs41_op_exchange_id(struct nfs_argop4 *op,
-                         compound_data_t * data, struct nfs_resop4 *resp)
+                         compound_data_t *data,
+                         struct nfs_resop4 *resp)
 {
   char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
   char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
   char                  str_client_addr[SOCK_NAME_MAX];
-  nfs_client_record_t * pclient_record;
-  nfs_client_id_t     * pconf;
-  nfs_client_id_t     * punconf;
+  nfs_client_record_t * client_record;
+  nfs_client_id_t     * conf;
+  nfs_client_id_t     * unconf;
   sockaddr_t            client_addr;
   int                   rc;
   int                   len;
@@ -91,15 +82,6 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   bool_t                update;
   const char          * update_str;
   log_components_t      component = COMPONENT_CLIENTID;
-
-#if 0 /** @todo: plante le client sous windows. Ai-je réellement besoin de cela ???? */
-  /* Check flags value (test EID4) */
-  if(arg_EXCHANGE_ID4.eia_flags & all_eia_flags != arg_EXCHANGE_ID4.eia_flags)
-    {
-      res_EXCHANGE_ID4.eir_status = NFS4ERR_INVAL;
-      return res_EXCHANGE_ID4.eir_status;
-    }
-#endif
 
   if(isDebug(COMPONENT_SESSIONS))
     component = COMPONENT_SESSIONS;
@@ -134,9 +116,11 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
            str_client_addr, str_client, str_verifier, update_str);
 
   /* Do we already have one or more records for client id (x)? */
-  pclient_record = get_client_record(arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
-                                     arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
-  if(pclient_record == NULL)
+  client_record = get_client_record(arg_EXCHANGE_ID4.eia_clientowner
+                                    .co_ownerid.co_ownerid_val,
+                                    arg_EXCHANGE_ID4.eia_clientowner
+                                    .co_ownerid.co_ownerid_len);
+  if(client_record == NULL)
     {
       /* Some major failure */
       LogCrit(component,
@@ -151,95 +135,99 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
    * This attempts to implement the logic described in 18.35.4. IMPLEMENTATION
    */
 
-  P(pclient_record->cr_mutex);
+  P(client_record->cr_mutex);
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      display_client_record(pclient_record, str);
+      display_client_record(client_record, str);
 
       LogFullDebug(COMPONENT_CLIENTID,
-                   "Client Record %s cr_pconfirmed_id=%p cr_punconfirmed_id=%p",
+                   "Client Record %s cr_pconfirmed_id=%p "
+                   "cr_punconfirmed_id=%p",
                    str,
-                   pclient_record->cr_pconfirmed_id,
-                   pclient_record->cr_punconfirmed_id);
+                   client_record->cr_pconfirmed_id,
+                   client_record->cr_punconfirmed_id);
     }
 
-  pconf = pclient_record->cr_pconfirmed_id;
+  conf = client_record->cr_pconfirmed_id;
 
-  if(pconf != NULL)
+  if(conf != NULL)
     {
       /* Need a reference to the confirmed record for below */
-      inc_client_id_ref(pconf);
+      inc_client_id_ref(conf);
     }
 
-  if(pconf != NULL && !update)
+  if(conf != NULL && !update)
     {
       /* EXCHGID4_FLAG_UPD_CONFIRMED_REC_A not set */
-      /** @todo FSF: old code ifdefed out nfs_compare_clientcred with _NFSV4_COMPARE_CRED_IN_EXCHANGE_ID */
-      if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
-         !cmp_sockaddr(&pconf->cid_client_addr, &client_addr, IGNORE_PORT))
+      if(!nfs_compare_clientcred(&conf->cid_credential, &data->credential) ||
+         !cmp_sockaddr(&conf->cid_client_addr, &client_addr, IGNORE_PORT))
         {
           /** @todo FSF: should also check if there is no state */
-          P(pconf->cid_mutex);
+          P(conf->cid_mutex);
 
-          if(valid_lease(pconf))
+          if(valid_lease(conf))
             {
-              V(pconf->cid_mutex);
+              V(conf->cid_mutex);
 
               /* CASE 3, client collisions, old clientid is expired */
               if(isDebug(COMPONENT_CLIENTID))
                 {
                   char str[HASHTABLE_DISPLAY_STRLEN];
 
-                  display_client_id_rec(pconf, str);
+                  display_client_id_rec(conf, str);
                   LogDebug(COMPONENT_CLIENTID,
                            "Expiring %s",
                            str);
                 }
               /* Expire clientid and release our reference. */
-              nfs_client_id_expire(pconf);
+              nfs_client_id_expire(conf);
 
-              dec_client_id_ref(pconf);
+              dec_client_id_ref(conf);
 
-              pconf = NULL;
+              conf = NULL;
             }
           else
             {
-              V(pconf->cid_mutex);
+              V(conf->cid_mutex);
 
               /* CASE 3, client collisions, old clientid is not expired */
               if(isDebug(component))
                 {
                   char confirmed_addr[SOCK_NAME_MAX];
 
-                  sprint_sockip(&pconf->cid_client_addr, confirmed_addr, sizeof(confirmed_addr));
+                  sprint_sockip(&conf->cid_client_addr,
+                                confirmed_addr,
+                                sizeof(confirmed_addr));
 
                   LogDebug(component,
-                           "Confirmed ClientId %"PRIx64"->'%s': Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
-                           pconf->cid_clientid, str_client, confirmed_addr);
+                           "Confirmed ClientId %"PRIx64"->'%s': "
+                           "Principals do not match... confirmed addr=%s "
+                           "Return NFS4ERR_CLID_INUSE",
+                           conf->cid_clientid, str_client, confirmed_addr);
                 }
 
               res_EXCHANGE_ID4.eir_status = NFS4ERR_CLID_INUSE;
 
               /* Release our reference to the confirmed clientid. */
-              dec_client_id_ref(pconf);
+              dec_client_id_ref(conf);
 
               goto out;
             }
         }
       else if(memcmp(arg_EXCHANGE_ID4.eia_clientowner.co_verifier,
-                     pconf->cid_incoming_verifier,
+                     conf->cid_incoming_verifier,
                      NFS4_VERIFIER_SIZE) == 0)
         {
           /* CASE 2, Non-Update on Existing Client ID */
           /* Return what was last returned without changing any refcounts */
           LogDebug(COMPONENT_CLIENTID,
                    "Non-update of confirmed ClientId %"PRIx64"->%s",
-                   pconf->cid_clientid, str_client);
+                   conf->cid_clientid, str_client);
 
-          punconf = pconf;
+          unconf = conf;
 
           goto return_ok;
         }
@@ -249,31 +237,33 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
           /** @todo FSF: expire old clientid? */
           LogDebug(component,
                    "Restarted ClientId %"PRIx64"->%s",
-                   pconf->cid_clientid, str_client);
+                   conf->cid_clientid, str_client);
           
         }
     }
-  else if(pconf != NULL)
+  else if(conf != NULL)
     {
       /* EXCHGID4_FLAG_UPD_CONFIRMED_REC_A set */
       if(memcmp(arg_EXCHANGE_ID4.eia_clientowner.co_verifier,
-                pconf->cid_incoming_verifier,
+                conf->cid_incoming_verifier,
                 NFS4_VERIFIER_SIZE) == 0)
         {
-          /** @todo FSF: old code ifdefed out nfs_compare_clientcred with _NFSV4_COMPARE_CRED_IN_EXCHANGE_ID */
-          if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
-             !cmp_sockaddr(&pconf->cid_client_addr, &client_addr, IGNORE_PORT))
+          if(!nfs_compare_clientcred(&conf->cid_credential,
+                                     &data->credential) ||
+             !cmp_sockaddr(&conf->cid_client_addr, &client_addr, IGNORE_PORT))
             {
               /* CASE 9, Update but wrong principal */
               if(isDebug(component))
                 {
                   char confirmed_addr[SOCK_NAME_MAX];
 
-                  sprint_sockip(&pconf->cid_client_addr, confirmed_addr, sizeof(confirmed_addr));
+                  sprint_sockip(&conf->cid_client_addr, confirmed_addr, sizeof(confirmed_addr));
 
                   LogDebug(component,
-                           "Confirmed ClientId %"PRIx64"->'%s': Principals do not match... confirmed addr=%s Return NFS4ERR_PERM",
-                           pconf->cid_clientid, str_client, confirmed_addr);
+                           "Confirmed ClientId %"PRIx64"->'%s': "
+                           "Principals do not match... confirmed addr=%s "
+                           "Return NFS4ERR_PERM",
+                           conf->cid_clientid, str_client, confirmed_addr);
                 }
 
               res_EXCHANGE_ID4.eir_status = NFS4ERR_PERM;
@@ -295,23 +285,23 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
               char str_old_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
 
               sprint_mem(str_old_verifier,
-                         pconf->cid_incoming_verifier,
+                         conf->cid_incoming_verifier,
                          NFS4_VERIFIER_SIZE);
 
               LogDebug(component,
                        "Confirmed clientid %"PRIx64"->'%s': Verifiers do not match... confirmed verifier=%s",
-                       pconf->cid_clientid, str_client, str_old_verifier);
+                       conf->cid_clientid, str_client, str_old_verifier);
             }
 
           res_EXCHANGE_ID4.eir_status = NFS4ERR_NOT_SAME;
         }
 
       /* Release our reference to the confirmed clientid. */
-      dec_client_id_ref(pconf);
+      dec_client_id_ref(conf);
 
       goto out;
     }
-  else if(pconf == NULL && update)
+  else if(conf == NULL && update)
     {
       LogDebug(component,
                "No confirmed clientid to update for %s",
@@ -326,9 +316,9 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
    * pre-existing unconfirmed record.
    */
 
-  punconf = pclient_record->cr_punconfirmed_id;
+  unconf = client_record->cr_punconfirmed_id;
 
-  if(punconf != NULL)
+  if(unconf != NULL)
     {
       /* CASE 4, replacement of unconfirmed record */
 
@@ -337,7 +327,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
         {
           char str[HASHTABLE_DISPLAY_STRLEN];
 
-          display_client_id_rec(punconf, str);
+          display_client_id_rec(unconf, str);
 
           LogDebug(COMPONENT_CLIENTID,
                    "Replacing %s",
@@ -345,19 +335,19 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
         }
 
       /* unhash the clientid record */
-      remove_unconfirmed_client_id(punconf);
+      remove_unconfirmed_client_id(unconf);
     }
 
   /* Now we can proceed to build the new unconfirmed record. We have determined
    * the clientid and setclientid_confirm values above.
    */
 
-  punconf = create_client_id(0,
-                             pclient_record,
-                             &client_addr,
-                             &data->credential);
+  unconf = create_client_id(0,
+                            client_record,
+                            &client_addr,
+                            &data->credential);
 
-  if(punconf == NULL)
+  if(unconf == NULL)
     {
       /* Error already logged, return */
       res_EXCHANGE_ID4.eir_status = NFS4ERR_RESOURCE;
@@ -365,27 +355,27 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       goto out;
     }
 
-  memcpy(punconf->cid_incoming_verifier,
+  memcpy(unconf->cid_incoming_verifier,
          arg_EXCHANGE_ID4.eia_clientowner.co_verifier,
          NFS4_VERIFIER_SIZE);
 
-  if(gethostname(punconf->cid_server_owner,
-                 sizeof(punconf->cid_server_owner)) == -1)
+  if(gethostname(unconf->cid_server_owner,
+                 sizeof(unconf->cid_server_owner)) == -1)
     {
       /* Free the clientid record and return */
-      free_client_id(punconf);
+      free_client_id(unconf);
 
       res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
 
       goto out;
     }
 
-  snprintf(punconf->cid_server_scope,
-           sizeof(punconf->cid_server_scope),
+  snprintf(unconf->cid_server_scope,
+           sizeof(unconf->cid_server_scope),
            "%s_NFS-Ganesha",
-           punconf->cid_server_owner);
+           unconf->cid_server_owner);
 
-  rc = nfs_client_id_insert(punconf);
+  rc = nfs_client_id_insert(unconf);
 
   if(rc != CLIENT_ID_SUCCESS)
     {
@@ -401,16 +391,16 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
  return_ok:
 
   /* Build the reply */
-  res_EXCHANGE_ID4_ok.eir_clientid   = punconf->cid_clientid;
-  res_EXCHANGE_ID4_ok.eir_sequenceid = punconf->cid_create_session_sequence;
-#if defined(_USE_FSALMDS) && defined(_USE_FSALDS)
+  res_EXCHANGE_ID4_ok.eir_clientid   = unconf->cid_clientid;
+  res_EXCHANGE_ID4_ok.eir_sequenceid = unconf->cid_create_session_sequence;
+#if defined(_PNFS_MDS) && defined(_PNFS_DS)
   res_EXCHANGE_ID4_ok.eir_flags = EXCHGID4_FLAG_USE_PNFS_MDS |
                                   EXCHGID4_FLAG_USE_PNFS_DS |
                                   EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#elif defined(_USE_FSALMDS)
+#elif defined(_PNFS_MDS)
   res_EXCHANGE_ID4_ok.eir_flags = EXCHGID4_FLAG_USE_PNFS_MDS |
                                   EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#elif defined(_USE_FSALDS)
+#elif defined(_PNFS_DS)
   res_EXCHANGE_ID4_ok.eir_flags = EXCHGID4_FLAG_USE_PNFS_DS |
                                   EXCHGID4_FLAG_SUPP_MOVED_REFER;
 #elif defined(_USE_DS)
@@ -424,7 +414,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   res_EXCHANGE_ID4_ok.eir_state_protect.spr_how = SP4_NONE;
 
-  len  = strlen(punconf->cid_server_owner);
+  len  = strlen(unconf->cid_server_owner);
   temp = gsh_malloc(len);
   if(temp == NULL)
     {
@@ -434,13 +424,13 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       len = 0;
     }
   else
-    memcpy(temp, punconf->cid_server_owner, len);
+    memcpy(temp, unconf->cid_server_owner, len);
 
   res_EXCHANGE_ID4_ok.eir_server_owner.so_major_id.so_major_id_len = len;
   res_EXCHANGE_ID4_ok.eir_server_owner.so_major_id.so_major_id_val = temp;
   res_EXCHANGE_ID4_ok.eir_server_owner.so_minor_id = 0;
 
-  len  = strlen(punconf->cid_server_scope);
+  len  = strlen(unconf->cid_server_scope);
   temp = gsh_malloc(len);
   if(temp == NULL)
     {
@@ -450,7 +440,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       len = 0;
     }
   else
-    memcpy(temp, punconf->cid_server_scope, len);
+    memcpy(temp, unconf->cid_server_scope, len);
 
   res_EXCHANGE_ID4_ok.eir_server_scope.eir_server_scope_len = len;
   res_EXCHANGE_ID4_ok.eir_server_scope.eir_server_scope_val = temp;
@@ -466,7 +456,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
                  arg_EXCHANGE_ID4.eia_clientowner.co_verifier,
                  NFS4_VERIFIER_SIZE);
 
-      display_client_id_rec(punconf, str);
+      display_client_id_rec(unconf, str);
 
       LogDebug(COMPONENT_CLIENTID,
                "EXCHANGE_ID reply Verifier=%s %s",
@@ -477,34 +467,38 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
  out:
 
-  V(pclient_record->cr_mutex);
+  V(client_record->cr_mutex);
 
   /* Release our reference to the client record */
-  dec_client_record_ref(pclient_record);
+  dec_client_record_ref(client_record);
 
   return res_EXCHANGE_ID4.eir_status;
 }                               /* nfs41_op_exchange_id */
 
 /**
- * nfs4_op_setclientid_Free: frees what was allocared to handle nfs4_op_setclientid.
+ * @brief free memory alocated for nfs4_op_exchange_id result
  *
- * Frees what was allocared to handle nfs4_op_setclientid.
+ * This function frees memory alocated for nfs4_op_exchange_id result.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
- * @return nothing (void function )
- *
  */
-void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp)
+void nfs41_op_exchange_id_Free(EXCHANGE_ID4res *resp)
 {
   if(resp->eir_status == NFS4_OK)
     {
-      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val != NULL)
-        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val);
-      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.so_major_id_val != NULL)
-        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.so_major_id_val);
-      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.eir_server_impl_id_val != NULL)
-        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.eir_server_impl_id_val);
+      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope
+         .eir_server_scope_val != NULL)
+        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope
+                 .eir_server_scope_val);
+      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id
+         .so_major_id_val != NULL)
+        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner
+                 .so_major_id.so_major_id_val);
+      if(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id
+         .eir_server_impl_id_val != NULL)
+        gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id
+                 .eir_server_impl_id_val);
     }
   return;
 }                               /* nfs41_op_exchange_id_Free */

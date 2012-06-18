@@ -7,18 +7,19 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------*/
 #ifdef HAVE_CONFIG_H
@@ -31,14 +32,11 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -49,30 +47,27 @@
 #include "nfs_tools.h"
 
 /**
+ * @brief The NFS4_OP_GETFH operation
  *
- *	nfs4_op_getfh: The NFS4_OP_GETFH operation
+ * Gets the currentFH for the current compound requests.  This
+ * operation returns the current FH in the reply structure.
  *
- * Gets the currentFH for the current compound requests.
- * This operation returns the current FH in the reply structure.
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @return per RFC5661, p. 366
  *
- * @return NFS4_OK if successfull, other values show an error.
- *
- * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
- *
  */
 
 #define arg_GETFG op->nfs_argop4_u.opgetfh
 #define res_GETFH resp->nfs_resop4_u.opgetfh
 
-int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_getfh(struct nfs_argop4 *op,
+                  compound_data_t *data,
+                  struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getfh";
-
   resp->resop = NFS4_OP_GETFH;
   res_GETFH.status = NFS4_OK;
 
@@ -97,7 +92,8 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     return res_GETFH.status;
 
   /* Put the data in place */
-  res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_len = data->currentFH.nfs_fh4_len;
+  res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_len
+       = data->currentFH.nfs_fh4_len;
   memcpy(res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_val,
          data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
 
@@ -107,16 +103,14 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 }                               /* nfs4_op_getfh */
 
 /**
- * nfs4_op_getfh_Free: frees what was allocared to handle nfs4_op_getfh.
+ * @brief Free memory allocated for GETFH result
  *
- * Frees what was allocared to handle nfs4_op_getfh.
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_GETFH operation.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
- *
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_getfh_Free(GETFH4res * resp)
+void nfs4_op_getfh_Free(GETFH4res *resp)
 {
   if(resp->status == NFS4_OK)
     gsh_free(resp->GETFH4res_u.resok4.object.nfs_fh4_val);

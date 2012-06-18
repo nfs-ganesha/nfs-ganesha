@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs41_op_layoutreturn.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:50 $
- * \version $Revision: 1.8 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs41_op_layoutreturn.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs41_op_lock.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  *
  */
@@ -66,19 +64,17 @@
 
 /**
  *
- * \brief The NFS4_OP_LAYOUTRETURN operation.
+ * @brief The NFS4_OP_LAYOUTRETURN operation.
  *
  * This function implements the NFS4_OP_LAYOUTRETURN operation.
  *
- * \param op    [IN]    pointer to nfs4_op arguments
- * \param data  [INOUT] Pointer to the compound request's data
- * \param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op    Arguments fo nfs4_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs4_op
  *
- * \return NFS4_OK if successfull, other values show an error.
+ * @return per RFC5661 p. 367
  *
- * \see all the nfs41_op_<*> function
- * \see nfs4_Compound
- *
+ * @see nfs4_Compound
  */
 
 
@@ -89,7 +85,6 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
                           compound_data_t *data,
                           struct nfs_resop4 *resp)
 {
-     char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutreturn";
 #ifdef _PNFS_MDS
      /* Return code from cache_inode operations */
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -296,16 +291,15 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
 } /* nfs41_op_layoutreturn */
 
 /**
- * nfs41_op_layoutreturn_Free: frees what was allocared to handle nfs41_op_layoutreturn.
+ * @brief Free memory allocated for LAYOUTRETURN result
  *
- * Frees what was allocared to handle nfs41_op_layoutreturn.
+ * This function frees any memory allocated for the result from
+ * the NFS4_OP_LAYOUTRETURN operation.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
+ * @param[in] resp nfs4_op results
  *
  */
-void nfs41_op_layoutreturn_Free(LOCK4res * resp)
+void nfs41_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
 {
      return;
 } /* nfs41_op_layoutreturn_Free */

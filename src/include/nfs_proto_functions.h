@@ -431,12 +431,12 @@ int rquota_setactivequota(nfs_arg_t *parg,
  * @{
  */
 
-int nfs_Null(nfs_arg_t *parg,
-             exportlist_t *pexport,
+int nfs_Null(nfs_arg_t *arg,
+             exportlist_t *export,
              struct user_cred *creds,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres);
+             nfs_worker_data_t *worker,
+             struct svc_req *req,
+             nfs_res_t *res);
 
 int nfs_Getattr(nfs_arg_t *parg,
                 exportlist_t *pexport,

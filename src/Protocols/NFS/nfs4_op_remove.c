@@ -7,32 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs4_op_remove.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:51 $
- * \version $Revision: 1.10 $
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_remove.c : Routines used for managing the NFS4 COMPOUND functions.
- *
- *
+ * Routines used for managing the NFS4 COMPOUND functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -42,15 +38,7 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "log.h"
-#include "ganesha_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -61,25 +49,25 @@
 #include "sal_functions.h"
 
 /**
- * nfs4_op_remove: The NFS4_OP_REMOVE operation.
- * 
- * This functions handles the NFS4_OP_REMOVE operation in NFSv4. This function can be called only from nfs4_Compound.
+ * @brief The NFS4_OP_REMOVE operation.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * This function implements the NFS4_OP_REMOVE operation in
+ * NFSv4. This function can be called only from nfs4_Compound.
  *
- * @return NFS4_OK if successfull, other values show an error.  
- * 
+ * @param[in]     op   Arguments for nfs4_op
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp Results for nfs4_op
+ *
+ * @return per RFC5661, pp. 372-3
  */
 
 #define arg_REMOVE4 op->nfs_argop4_u.opremove
 #define res_REMOVE4 resp->nfs_resop4_u.opremove
 
-int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_remove(struct nfs_argop4 *op,
+                   compound_data_t *data,
+                   struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_remove";
-
   cache_entry_t        * parent_entry = NULL;
   fsal_attrib_list_t     attr_parent;
   fsal_name_t            name;
@@ -179,17 +167,15 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 }                               /* nfs4_op_remove */
 
 /**
- * nfs4_op_remove_Free: frees what was allocared to handle nfs4_op_remove.
- * 
- * Frees what was allocared to handle nfs4_op_remove.
+ * @brief Free memory allocated for REMOVE result
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * This function frees any memory allocated for the result of the
+ * NFS4_OP_REMOVE operation.
  *
- * @return nothing (void function )
- * 
+ * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_remove_Free(REMOVE4res * resp)
+void nfs4_op_remove_Free(REMOVE4res *resp)
 {
   /* Nothing to be done */
   return;
-}                               /* nfs4_op_remove_Free */
+} /* nfs4_op_remove_Free */
