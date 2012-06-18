@@ -43,7 +43,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <sys/stat.h>
+#include <sys/stat.h> 
+#include <sys/types.h>
+#include <attr/xattr.h>
 #include "nfs_core.h"
 #include "stuff_alloc.h"
 #include "log.h"
@@ -119,7 +121,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
                                        &pfid->fsal_op_context,
                                        pfid->specdata.xattr.xattr_content, 
                                        *size, 
-                                       TRUE);
+                                        (*flag == XATTR_REPLACE) ? FALSE : TRUE ) ;
 
      if(FSAL_IS_ERROR(fsal_status))
        return  _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
