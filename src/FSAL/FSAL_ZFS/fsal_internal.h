@@ -313,6 +313,8 @@ fsal_status_t ZFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      /* 
                                         fsal_op_context_t * p_context,       /* IN */
                                         const fsal_name_t * xattr_name) /* IN */ ;
 
+int ZFSFSAL_GetXattrOffsetSetable( void ) ;
+
 unsigned int ZFSFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t ZFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */

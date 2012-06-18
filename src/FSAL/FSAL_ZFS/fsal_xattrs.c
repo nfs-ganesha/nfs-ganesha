@@ -927,3 +927,8 @@ fsal_status_t ZFSFSAL_RemoveXAttrByName(fsal_handle_t * obj_handle,    /* IN */
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_SetXAttrValue);
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
+
+int ZFSFSAL_GetXattrOffsetSetable( void )
+{
+  return XATTR_COUNT ;
+}

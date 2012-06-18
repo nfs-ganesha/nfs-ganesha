@@ -572,3 +572,8 @@ fsal_status_t GPFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* I
 {
   ReturnCode(ERR_FSAL_NOTSUPP, 0);
 }                               /* FSAL_RemoveXAttrById */
+
+int GPFSFSAL_GetXattrOffsetSetable( void )
+{
+  return XATTR_COUNT ;
+}

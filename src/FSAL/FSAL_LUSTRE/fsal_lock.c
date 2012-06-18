@@ -94,7 +94,8 @@ fsal_status_t LUSTREFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN
     }
 
   LogFullDebug(COMPONENT_FSAL, "Locking: op:%d type:%d start:%llu length:%llu ", lock_op,
-               request_lock.lock_type, request_lock.lock_start, request_lock.lock_length);
+               request_lock.lock_type, (unsigned long long)request_lock.lock_start,
+              (unsigned long long)request_lock.lock_length);
 
   if(lock_op == FSAL_OP_LOCKT)
     fcntl_comm = F_GETLK;

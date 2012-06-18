@@ -412,6 +412,8 @@ fsal_status_t PROXYFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,  /* IN
                                           fsal_op_context_t * p_context,   /* IN */
                                           const fsal_name_t * xattr_name) /* IN */ ;
 
+int PROXYFSAL_GetXattrOffsetSetable( void ) ;
+
 unsigned int PROXYFSAL_GetFileno(fsal_file_t * pfile);
 
 #endif

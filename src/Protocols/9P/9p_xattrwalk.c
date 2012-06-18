@@ -115,7 +115,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
    {
       /* xattrwalk is used with an empty name, this is a listxattr request */
       fsal_status = FSAL_ListXAttrs( &pxattrfid->pentry->handle,
-                                     1, /* XATTR_COUNT Show only the attributes set by the user */
+                                     FSAL_GetXattrOffsetSetable(),
                                      &pxattrfid->fsal_op_context,
                                      xattrs_tab,
                                      100, /* for wanting of something smarter */  

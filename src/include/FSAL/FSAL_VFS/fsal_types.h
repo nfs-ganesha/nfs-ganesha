@@ -72,6 +72,7 @@
 
 #define CONF_LABEL_FS_SPECIFIC   "VFS"
 
+
 /* -------------------------------------------
  *      POSIX FS dependant definitions
  * ------------------------------------------- */

@@ -411,6 +411,8 @@ fsal_status_t GPFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      /*
                                         fsal_op_context_t * p_context,       /* IN */
                                         const fsal_name_t * xattr_name) /* IN */ ;
 
+int GPFSFSAL_GetXattrOffsetSetable( void ) ;
+
 unsigned int GPFSFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t GPFSFSAL_commit( fsal_file_t * p_file_descriptor,

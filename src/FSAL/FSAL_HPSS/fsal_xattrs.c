@@ -1202,3 +1202,8 @@ fsal_status_t HPSSFSAL_RemoveXAttrByName(hpssfsal_handle_t * p_objecthandle,    
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* FSAL_RemoveXAttrById */
+
+int HPSSFSAL_GetXattrOffsetSetable( void )
+{
+  return XATTR_COUNT ;
+}

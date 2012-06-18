@@ -401,6 +401,8 @@ fsal_status_t HPSSFSAL_RemoveXAttrByName(hpssfsal_handle_t * p_objecthandle,    
                                          hpssfsal_op_context_t * p_context,     /* IN */
                                          const fsal_name_t * xattr_name) /* IN */ ;
 
+int HPSSFSAL_GetXattrOffsetSetable( void ) ;
+
 unsigned int HPSSFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t HPSSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */

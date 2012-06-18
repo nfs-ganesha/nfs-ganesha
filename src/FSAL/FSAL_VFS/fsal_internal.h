@@ -374,6 +374,8 @@ fsal_status_t VFSFSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* 
                                       fsal_op_context_t * p_context, /* IN */
                                       unsigned int xattr_id) /* IN */ ;
 
+int VFSFSAL_GetXattrOffsetSetable( void ) ;
+
 fsal_status_t VFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      /* IN */
                                         fsal_op_context_t * p_context,       /* IN */
                                         const fsal_name_t * xattr_name) /* IN */ ;

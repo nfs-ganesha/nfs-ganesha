@@ -924,6 +924,14 @@ fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
                                      fsal_op_context_t * p_context,     /* IN */
                                      const fsal_name_t * xattr_name);   /* IN */
 
+/**
+ * Gets the offset for setable xattr
+ *
+ * \param nothing
+ *
+ * \return the first setable position of xattr
+ */
+int FSAL_GetXattrOffsetSetable( void ) ;
 
 /******************************************************
  *                FSAL miscelaneous tools.
@@ -1430,6 +1438,9 @@ typedef struct fsal_functions__
    fsal_status_t(*fsal_removexattrbyname) (fsal_handle_t * p_objecthandle,      /* IN */
                                            fsal_op_context_t * p_context,       /* IN */
                                            const fsal_name_t * xattr_name) /* IN */ ;
+
+  /* FSAL_GetXattrOffsetSetable */
+  int(*fsal_getxattroffsetsetable)(void) ;
 
   /* FSAL_getextattrs */
   fsal_status_t (*fsal_getextattrs)( fsal_handle_t * p_filehandle, /* IN */

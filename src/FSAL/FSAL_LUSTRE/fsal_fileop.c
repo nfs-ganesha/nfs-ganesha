@@ -532,7 +532,7 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
                                                        : (p_seek_descriptor->whence ==
                                                           FSAL_SEEK_END ? "SEEK_END" :
                                                           "ERROR"))),
-                        (long long int)p_seek_descriptor->offset, buffer_size);
+                        (long long int)p_seek_descriptor->offset, (unsigned long long)buffer_size);
 
     }
 

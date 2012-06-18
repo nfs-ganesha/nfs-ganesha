@@ -423,4 +423,6 @@ fsal_status_t POSIXFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,  /* IN
                                           fsal_op_context_t * p_context,   /* IN */
                                           const fsal_name_t * xattr_name) /* IN */ ;
 
+int POSIXFSAL_GetXattrOffsetSetable( void ) ;
+
 unsigned int POSIXFSAL_GetFileno(fsal_file_t * pfile);

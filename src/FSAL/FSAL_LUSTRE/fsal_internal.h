@@ -347,6 +347,8 @@ fsal_status_t LUSTREFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      
                                            fsal_op_context_t * p_context, /* IN */
                                            const fsal_name_t * xattr_name) /* IN */ ;
 
+int LUSTREFSAL_GetXattrOffsetSetable( void ) ;
+
 fsal_status_t LUSTREFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
                                   fsal_handle_t     * p_filehandle,        /* IN */
                                   fsal_op_context_t * p_context,           /* IN */
@@ -366,8 +368,9 @@ fsal_status_t LUSTREFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
                                    fsal_uid_t fsal_uid,    /* IN */
                                    fsal_quota_t * pquota) ;  /* OUT */
 
-fsal_status_t LUSTREFSAL_check_quota( char              * path,  /* IN */
-                                      fsal_uid_t          fsal_uid) ;     /* IN */
+fsal_status_t LUSTREFSAL_check_quota( char *path,  /* IN */
+                                      fsal_quota_type_t  quota_type,
+                                      fsal_uid_t fsal_uid);      /* IN */
 
 unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile);
 #ifdef _PNFS_MDS

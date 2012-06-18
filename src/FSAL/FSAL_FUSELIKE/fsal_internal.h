@@ -348,6 +348,8 @@ fsal_status_t FUSEFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* I
                                          fsal_op_context_t * p_context,     /* IN */
                                          const fsal_name_t * xattr_name) /* IN */ ;
 
+int FUSEFSAL_GetXattrOffsetSetable( void ) ;
+
 unsigned int FUSEFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t FUSEFSAL_commit( fsal_file_t * p_file_descriptor,

@@ -268,7 +268,7 @@ fsal_status_t XFSFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
                                 fsal_uid_t fsal_uid,    /* IN */
                                 fsal_quota_t * pquota); /* OUT */
 
-fsal_status_t XFSFSAL_check_quota( fsal_path_t * path,  /* IN */
+fsal_status_t XFSFSAL_check_quota( char * path,  /* IN */
                                    fsal_quota_type_t   quota_type,
                                    fsal_uid_t fsal_uid);      /* IN */
 
@@ -393,6 +393,8 @@ fsal_status_t XFSFSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* 
 fsal_status_t XFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      /* IN */
                                         fsal_op_context_t * p_context,       /* IN */
                                         const fsal_name_t * xattr_name) /* IN */ ;
+
+int XFSFSAL_GetXattrOffsetSetable( void ) ;
 
 unsigned int XFSFSAL_GetFileno(fsal_file_t * pfile);
 

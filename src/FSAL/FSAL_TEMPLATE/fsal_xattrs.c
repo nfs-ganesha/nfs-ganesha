@@ -528,3 +528,8 @@ fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* FSAL_RemoveXAttrById */
+
+int FSAL_GetXattrOffsetSetable( void )
+{
+  return XATTR_COUNT ;
+}

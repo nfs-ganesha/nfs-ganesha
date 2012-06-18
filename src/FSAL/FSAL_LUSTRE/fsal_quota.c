@@ -61,6 +61,7 @@
 
 
 fsal_status_t LUSTREFSAL_check_quota( char              * path,  /* IN */
+                                      fsal_quota_type_t   quota_type,
                                       fsal_uid_t          fsal_uid)      /* IN */
 {
   struct if_quotactl dataquota ;
@@ -74,7 +75,7 @@ fsal_status_t LUSTREFSAL_check_quota( char              * path,  /* IN */
   memset((char *)&dataquota, 0, sizeof(struct if_quotactl));
 
   dataquota.qc_cmd  = LUSTRE_Q_GETQUOTA ;
-  dataquota.qc_type = USRQUOTA ; // UGQUOTA ??
+  dataquota.qc_type = quota_type ; // UGQUOTA ??
   dataquota.qc_id = fsal_uid ;
 
   if(llapi_quotactl( path, &dataquota) < 0 )
@@ -196,7 +197,6 @@ fsal_status_t LUSTREFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
                                    fsal_uid_t fsal_uid,    /* IN */
                                    fsal_quota_t * pquota)  /* OUT */
 {
-  fsal_status_t fsal_status;
   struct if_quotactl dataquota ;
 
   memset((char *)&dataquota, 0, sizeof(struct if_quotactl));
