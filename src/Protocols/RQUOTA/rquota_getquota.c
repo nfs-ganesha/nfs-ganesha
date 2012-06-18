@@ -63,8 +63,8 @@
  * @param[out] pres     Ignored
  *
  */
-int rquota_getquota(nfs_arg_t  parg,
-                    exportlist_t  pexport,
+int rquota_getquota(nfs_arg_t  *parg,
+                    exportlist_t  *pexport,
                     fsal_op_context_t *pcontext,
                     nfs_worker_data_t *pworker,
                     struct svc_req *preq,
