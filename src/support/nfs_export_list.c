@@ -179,6 +179,10 @@ int get_req_uid_gid(struct svc_req *req,
       LogFullDebug(COMPONENT_DISPATCH,
                    "Request xid=%u has authentication AUTH_NONE",
                    req->rq_xid);
+      user_credentials->caller_uid = pexport->anonymous_uid;
+      user_credentials->caller_gid = pexport->anonymous_gid;
+      user_credentials->caller_glen = 0;
+      user_credentials->caller_garray = NULL;
       break;
 
     case AUTH_UNIX:
