@@ -24,13 +24,10 @@
  */
 
 /**
- * \file    nfs_core.h
- * \author  $Author: leibovic $
- * \date    $Date: 2006/02/22 12:02:39 $
- * \version $Revision: 1.43 $
- * \brief   Prototypes for the different threads in the nfs core.
+ * @file    nfs_core.h
+ * @brief   Prototypes for the different threads in the nfs core.
  *
- * nfs_core.h : Prototypes for the different threads in the nfs core.
+ * Prototypes for the different threads in the nfs core.
  *
  */
 
@@ -275,12 +272,10 @@ typedef struct nfs_idmap_cache_param__
   char mapfile[MAXPATHLEN];
 } nfs_idmap_cache_parameter_t;
 
-#ifdef _USE_NFS4_1
 typedef struct nfs_session_id_param__
 {
   hash_parameter_t hash_param;
 } nfs_session_id_parameter_t;
-#endif
 
 typedef struct nfs_fsal_up_param__
 {
@@ -314,19 +309,17 @@ typedef struct nfs_param__
   nfs_ip_stats_parameter_t ip_stats_param;
 #ifdef _USE_9P
   _9p_parameter_t _9p_param ;
-#endif
+#endif /* _USE_9P */
 #ifdef _USE_FSAL_UP
   nfs_fsal_up_parameter_t fsal_up_param;
-#endif
+#endif /* _USE_FSAL_UP */
 #ifdef _HAVE_GSSAPI
   nfs_krb5_parameter_t krb5_param;
-#endif  
+#endif /* _HAVE_GSSAPI */
   nfs_version4_parameter_t nfsv4_param;
   nfs_client_id_parameter_t client_id_param;
   nfs_state_id_parameter_t state_id_param;
-#ifdef _USE_NFS4_1
   nfs_session_id_parameter_t session_id_param;
-#endif                          /* _USE_NFS4_1 */
   nfs4_owner_parameter_t nfs4_owner_param;
 #ifdef _USE_NLM
   hash_parameter_t nsm_client_hash_param;
@@ -727,10 +720,8 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam);
 int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * pparam);
 int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * pparam);
 int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * pparam);
-#ifdef _USE_NFS4_1
 int nfs_read_session_id_conf(config_file_t in_config,
                              nfs_session_id_parameter_t * pparam);
-#endif                          /* _USE_NFS4_1 */
 
 int nfs_export_create_root_entry(exportlist_t * pexportlist);
 

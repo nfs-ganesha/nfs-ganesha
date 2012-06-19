@@ -264,7 +264,6 @@ nfs_client_record_t *get_client_record(char * value, int len);
  *
  ******************************************************************************/
 
-#ifdef _USE_NFS4_1
 int display_session_id_key(hash_buffer_t * pbuff, char *str);
 int display_session_id_val(hash_buffer_t * pbuff, char *str);
 int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
@@ -288,7 +287,6 @@ void nfs41_Build_sessionid(clientid4 * pclientid, char * sessionid);
 void nfs41_Session_PrintAll(void);
 int display_session(nfs41_session_t * psession, char * str);
 int display_session_id(char * session_id, char * str);
-#endif
 
 /******************************************************************************
  *

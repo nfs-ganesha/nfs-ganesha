@@ -51,14 +51,6 @@ typedef struct nfs4_op_desc__
 
 /* This array maps the operation number to the related position in
    array optab4 */
-#ifndef _USE_NFS4_1
-const int optab4index[] = {
-     0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-     16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-     32, 33, 34, 35, 36, 37, 38, 39
-};
-
-#else
 const int optab4index[] = {
      0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
      17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
@@ -66,10 +58,8 @@ const int optab4index[] = {
      51, 52, 53, 54, 55, 56, 57, 58
 };
 
-#endif
-
-#define POS_ILLEGAL_V40 40
-#define POS_ILLEGAL_V41 59
+static const uint32_t POS_ILLEGAL_V40 = 40;
+static const uint32_t POS_ILLEGAL_V41 = 59;
 
 static const nfs4_op_desc_t optab4v0[] = {
   {"OP_ACCESS", NFS4_OP_ACCESS, nfs4_op_access},
@@ -112,7 +102,6 @@ static const nfs4_op_desc_t optab4v0[] = {
   {"OP_ILLEGAL", NFS4_OP_ILLEGAL, nfs4_op_illegal}
 };
 
-#ifdef _USE_NFS4_1
 static const nfs4_op_desc_t optab4v1[] = {
   {"OP_ACCESS", NFS4_OP_ACCESS, nfs4_op_access},
   {"OP_CLOSE", NFS4_OP_CLOSE, nfs41_op_close},
@@ -166,23 +155,18 @@ static const nfs4_op_desc_t optab4v1[] = {
   {"OP_SECINFO_NO_NAME", NFS4_OP_SECINFO_NO_NAME, nfs4_op_illegal},     /* tbd */
   {"OP_SEQUENCE", NFS4_OP_SEQUENCE, nfs41_op_sequence},
   {"OP_SET_SSV", NFS4_OP_SET_SSV, nfs41_op_set_ssv},
-  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs41_op_test_stateid}, 
-  {"OP_WANT_DELEGATION", NFS4_OP_WANT_DELEGATION, nfs4_op_illegal},     /* tbd */
-  {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_illegal},   /* tbd */
+  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs41_op_test_stateid},
+  {"OP_WANT_DELEGATION", NFS4_OP_WANT_DELEGATION, nfs4_op_illegal}, /* tbd */
+  {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_illegal}, /* tbd */
   {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs41_op_reclaim_complete},
   {"OP_ILLEGAL", NFS4_OP_ILLEGAL, nfs4_op_illegal}
 };
-#endif                          /* _USE_NFS4_1 */
 
-#ifdef _USE_NFS4_1
-nfs4_op_desc_t *optabvers[] =
-    { (nfs4_op_desc_t *) optab4v0, (nfs4_op_desc_t *) optab4v1 };
-#else
-nfs4_op_desc_t *optabvers[] = { (nfs4_op_desc_t *) optab4v0 };
-#endif
+nfs4_op_desc_t *optabvers[] = {(nfs4_op_desc_t *)optab4v0,
+                               (nfs4_op_desc_t *)optab4v1};
 
 /**
- * @brief nfs4_COMPOUND: The NFS PROC4 COMPOUND
+ * @brief The NFS PROC4 COMPOUND
  *
  * Implements the NFS PROC4 COMPOUND.  This routine processes the
  * content of the nfsv4 operation list and composes the result.  On
@@ -212,25 +196,21 @@ int nfs4_Compound(nfs_arg_t *arg,
 {
   unsigned int i = 0;
   int status = NFS4_OK;
-  struct nfs_resop4 resop;
   compound_data_t data;
   int opindex;
   #define TAGLEN 64
   char tagstr[TAGLEN + 1 + 5];
+  const uint32_t compound4_minor = arg->arg_compound4.minorversion;
+  const uint32_t argarray_len =
+       arg->arg_compound4.argarray.argarray_len;
+  nfs_argop4 *const argarray =
+       arg->arg_compound4.argarray.argarray_val;
 
-  /* A "local" #define to avoid typo with nfs (too) long structure names */
-#define COMPOUND4_ARRAY arg->arg_compound4.argarray
-#define COMPOUND4_MINOR arg->arg_compound4.minorversion
-
-#ifdef _USE_NFS4_1
-  if(COMPOUND4_MINOR > 1)
-#else
-  if(COMPOUND4_MINOR != 0)
-#endif
+  if(compound4_minor > 1)
     {
       LogCrit(COMPONENT_NFS_V4,
               "Bad Minor Version %d",
-              COMPOUND4_MINOR);
+              compound4_minor);
 
       res->res_compound4.status = NFS4ERR_MINOR_VERS_MISMATCH;
       res->res_compound4.resarray.resarray_len = 0;
@@ -238,7 +218,7 @@ int nfs4_Compound(nfs_arg_t *arg,
     }
 
   /* Check for empty COMPOUND request */
-  if(COMPOUND4_ARRAY.argarray_len == 0)
+  if(argarray_len == 0)
     {
       LogMajor(COMPONENT_NFS_V4,
                "An empty COMPOUND (no operation in it) was received");
@@ -260,11 +240,11 @@ int nfs4_Compound(nfs_arg_t *arg,
    }
 
   /* Check for too long request */
-  if(COMPOUND4_ARRAY.argarray_len > 30)
+  if(argarray_len > 30)
     {
       LogMajor(COMPONENT_NFS_V4,
                "A COMPOUND with too many operations (%d) was received",
-               COMPOUND4_ARRAY.argarray_len);
+               argarray_len);
 
       res->res_compound4.status = NFS4ERR_RESOURCE;
       res->res_compound4.resarray.resarray_len = 0;
@@ -275,7 +255,7 @@ int nfs4_Compound(nfs_arg_t *arg,
   memset(&data, 0, sizeof(data));
 
   /* Minor version related stuff */
-  data.minorversion = COMPOUND4_MINOR;
+  data.minorversion = compound4_minor;
   /**
    * @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be
    * set here
@@ -306,7 +286,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 
   /* Allocating the reply nfs_resop4 */
   if((res->res_compound4.resarray.resarray_val =
-      gsh_calloc((COMPOUND4_ARRAY.argarray_len),
+      gsh_calloc((argarray_len),
                  sizeof(struct nfs_resop4))) == NULL)
     {
       return NFS_REQ_DROP;
@@ -325,16 +305,15 @@ int nfs4_Compound(nfs_arg_t *arg,
   /* Managing the operation list */
   LogDebug(COMPONENT_NFS_V4,
            "COMPOUND: There are %d operations%s",
-           COMPOUND4_ARRAY.argarray_len, tagstr);
+           argarray_len, tagstr);
 
-#ifdef _USE_NFS4_1
   /* Manage error NFS4ERR_NOT_ONLY_OP */
-  if(COMPOUND4_ARRAY.argarray_len > 1)
+  if(argarray_len > 1)
     {
       /* If not prepended ny OP4_SEQUENCE, OP4_EXCHANGE_ID should be
        * the only request in the compound see 18.35.3. and test EID8
        * for details */
-      if(optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val
+      if(optabvers[1][optab4index[argarray[0].argop]].val
          == NFS4_OP_EXCHANGE_ID)
         {
           status = NFS4ERR_NOT_ONLY_OP;
@@ -345,16 +324,14 @@ int nfs4_Compound(nfs_arg_t *arg,
           return NFS_REQ_OK;
         }
     }
-#endif
 
-  res->res_compound4.resarray.resarray_len = COMPOUND4_ARRAY.argarray_len;
-  for(i = 0; i < COMPOUND4_ARRAY.argarray_len; i++)
+  res->res_compound4.resarray.resarray_len = argarray_len;
+  for(i = 0; i < argarray_len; i++)
     {
       /* Use optab4index to reference the operation */
-#ifdef _USE_NFS4_1
       data.oppos = i;           /* Useful to check if OP_SEQUENCE is used as the first operation */
 
-      if(COMPOUND4_MINOR == 1)
+      if(compound4_minor == 1)
         {
           if(data.psession != NULL)
             {
@@ -364,49 +341,42 @@ int nfs4_Compound(nfs_arg_t *arg,
                   res->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.
                       status = status;
                   res->res_compound4.resarray.resarray_val[i].resop =
-                      COMPOUND4_ARRAY.argarray_val[i].argop;
+                      argarray[i].argop;
                   res->res_compound4.status = status;
                   break;        /* stop loop */
                 }
             }
         }
 
-      /* if( COMPOUND4_MINOR == 1 ) */
-      if((COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER
-          && COMPOUND4_MINOR == 0)
-         || (COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RECLAIM_COMPLETE
-             && COMPOUND4_MINOR == 1))
-#else
-      if(COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER)
-#endif
-        opindex = optab4index[COMPOUND4_ARRAY.argarray_val[i].argop];
+      if((argarray[i].argop <= NFS4_OP_RELEASE_LOCKOWNER
+          && compound4_minor == 0)
+         || (argarray[i].argop <= NFS4_OP_RECLAIM_COMPLETE
+             && compound4_minor == 1))
+        opindex = optab4index[argarray[i].argop];
       else
        {
          /* Set optindex to op_illegal */
-#ifdef _USE_NFS4_1
-         opindex = (COMPOUND4_MINOR==0)?optab4index[POS_ILLEGAL_V40]:optab4index[POS_ILLEGAL_V41];  
-#else
-         opindex = optab4index[POS_ILLEGAL_V40];
-#endif
-         LogMajor( COMPONENT_NFS_V4, "Client is using Illegal operation #%u", COMPOUND4_ARRAY.argarray_val[i].argop ) ;
+         opindex = ((compound4_minor == 0 ) ?
+                    optab4index[POS_ILLEGAL_V40] :
+                    optab4index[POS_ILLEGAL_V41]);
+         LogMajor(COMPONENT_NFS_V4,
+                  "Client is using Illegal operation #%u",
+                  argarray[i].argop);
        }
 
       LogDebug(COMPONENT_NFS_V4,
                "Request %d is %d = %s, entry %d in the op array%s",
                i,
-               optabvers[COMPOUND4_MINOR][opindex].val,
-               optabvers[COMPOUND4_MINOR][opindex].name,
+               optabvers[compound4_minor][opindex].val,
+               optabvers[compound4_minor][opindex].name,
                opindex,
                tagstr);
 
-      memset(&res, 0, sizeof(res));
-      status = (optabvers[COMPOUND4_MINOR][opindex].funct)(
-           &(COMPOUND4_ARRAY.argarray_val[i]),
-           &data,
-           &resop);
-
-      memcpy(&(res->res_compound4.resarray.resarray_val[i]),
-             &resop, sizeof(resop));
+      status
+        = (optabvers[compound4_minor][opindex].funct)(
+             &(argarray[i]),
+             &data,
+             &(res->res_compound4.resarray.resarray_val[i]));
 
       LogCompoundFH(&data);
 
@@ -421,7 +391,7 @@ int nfs4_Compound(nfs_arg_t *arg,
              the COMPOUND, this may be a regular behaviour */
           LogDebug(COMPONENT_NFS_V4,
                    "Status of %s in position %d = %s%s",
-                   optabvers[COMPOUND4_MINOR][opindex].name,
+                   optabvers[compound4_minor][opindex].name,
                    i,
                    nfsstat4_to_str(status),
                    tagstr);
@@ -430,7 +400,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 
           break;
         }
-#ifdef _USE_NFS4_1
       /* Check Req size */
 
       /* NFS_V4.1 specific stuff */
@@ -451,13 +420,12 @@ int nfs4_Compound(nfs_arg_t *arg,
           status = ((COMPOUND4res *) data.pcached_res)->status;
           break;    /* Exit the for loop */
         }
-#endif
     }                           /* for */
 
-  /* Complete the reply, in particular, tell where you stopped if unsuccessfull COMPOUD */
+  /* Complete the reply, in particular, tell where you stopped if
+     unsuccessfull COMPOUD */
   res->res_compound4.status = status;
 
-#ifdef _USE_NFS4_1
   /* Manage session's DRC: keep NFS4.1 replay for later use, but don't save a
    * replayed result again.
    */
@@ -495,7 +463,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 
       V(data.preserved_clientid->cid_mutex);
     }
-#endif
 
   if(status != NFS4_OK)
     LogDebug(COMPONENT_NFS_V4,
@@ -671,7 +638,6 @@ void nfs4_Compound_FreeOne(nfs_resop4 *res)
                                          .oprelease_lockowner));
         break;
 
-#ifdef _USE_NFS4_1
       case NFS4_OP_EXCHANGE_ID:
         nfs41_op_exchange_id_Free(&(res->nfs_resop4_u.opexchange_id));
         break;
@@ -714,7 +680,6 @@ void nfs4_Compound_FreeOne(nfs_resop4 *res)
       case NFS4_OP_RECLAIM_COMPLETE:
         nfs41_op_reclaim_complete_Free(&(res->nfs_resop4_u.opreclaim_complete));
         break;
-#endif
 
       case NFS4_OP_ILLEGAL:
         nfs4_op_illegal_Free(&(res->nfs_resop4_u.opillegal));
@@ -896,7 +861,6 @@ void nfs4_Compound_CopyResOne(nfs_resop4 *res_dst,
       case NFS4_OP_RELEASE_LOCKOWNER:
         break;
 
-#ifdef _USE_NFS4_1
       case NFS4_OP_EXCHANGE_ID:
       case NFS4_OP_CREATE_SESSION:
       case NFS4_OP_SEQUENCE:
@@ -917,7 +881,6 @@ void nfs4_Compound_CopyResOne(nfs_resop4 *res_dst,
       case NFS4_OP_DESTROY_CLIENTID:
       case NFS4_OP_RECLAIM_COMPLETE:
         break;
-#endif
 
       case NFS4_OP_ILLEGAL:
         break;
@@ -974,8 +937,9 @@ int nfs4_op_stat_update(nfs_arg_t *arg,
                         nfs_request_stat_t *stat_req)
 {
   int i = 0;
+  const uint32_t compound4_minor = arg->arg_compound4.minorversion;
 
-  switch (COMPOUND4_MINOR)
+  switch (compound4_minor)
     {
     case 0:
       for(i = 0; i < res->res_compound4.resarray.resarray_len; i++)
@@ -996,7 +960,6 @@ int nfs4_op_stat_update(nfs_arg_t *arg,
         }
       break;
 
-#ifdef _USE_NFS4_1
     case 1:
       for(i = 0; i < res->res_compound4.resarray.resarray_len; i++)
         {
@@ -1016,7 +979,6 @@ int nfs4_op_stat_update(nfs_arg_t *arg,
         }
 
       break;
-#endif
 
     default:
       /* Bad parameter */

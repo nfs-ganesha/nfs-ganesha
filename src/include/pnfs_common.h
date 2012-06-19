@@ -40,16 +40,6 @@
 #include "config.h"
 #endif                          /* HAVE_CONFIG_H */
 
-#ifdef _USE_NFS4_1
-
-#ifndef false
-#define false 0
-#endif
-
-#ifndef true
-#define true 1
-#endif
-
 /******************************************************
  *               Basic in-memory types
  ******************************************************/
@@ -246,6 +236,5 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
                                   uint16_t port);
 
 nfsstat4 posix2nfs4_error(int posix_errorcode);
-#endif /* _USE_NFS4_1 */
 
 #endif /* _FSAL_PNFS_COMMON_H */

@@ -769,7 +769,6 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
   return 0;
 }                               /* nfs_state_id_conf */
 
-#ifdef _USE_NFS4_1
 int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t * pparam)
 {
   int var_max;
@@ -827,8 +826,6 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
 
   return 0;
 }                               /* nfs_session_id_conf */
-
-#endif
 
 /**
  *

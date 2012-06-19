@@ -24,11 +24,10 @@
  */
 
 /**
- * \file    nfs_init.c
- * \brief   The file that contain most of the init routines
+ * @file    nfs_init.c
+ * @brief   The file that contain most of the init routines
  *
  * The file that contain most of the init routines.
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -281,7 +280,6 @@ nfs_parameter_t nfs_param =
   .state_id_param.hash_param.val_to_str = display_state_id_val,
   .state_id_param.hash_param.flags = HT_FLAG_CACHE,
 
-#ifdef _USE_NFS4_1
   /* NFSv4 Session Id hash */
   .session_id_param.hash_param.index_size = PRIME_STATE_ID,
   .session_id_param.hash_param.alphabet_length = 10,        /* ipaddr is a numerical decimal value */
@@ -291,8 +289,6 @@ nfs_parameter_t nfs_param =
   .session_id_param.hash_param.key_to_str = display_session_id_key,
   .session_id_param.hash_param.val_to_str = display_session_id_val,
   .session_id_param.hash_param.flags = HT_FLAG_CACHE,
-
-#endif                          /* _USE_NFS4_1 */
 
   /* NFSv4 Open Owner hash */
   .nfs4_owner_param.hash_param.index_size = PRIME_STATE_ID,
@@ -718,13 +714,12 @@ int nfs_set_param_from_conf(config_file_t config_struct,
       /* No such stanza in configuration file */
       if(rc == 1)
         LogDebug(COMPONENT_INIT,
-		 "No state id configuration found in config file, using default");
+                 "No state id configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
-		 "state id configuration read from config file");
+                 "state id configuration read from config file");
     }
 
-#ifdef _USE_NFS4_1
   /* Worker paramters: session_id hash table */
   if((rc = nfs_read_session_id_conf(config_struct, &nfs_param.session_id_param)) < 0)
     {
@@ -736,21 +731,20 @@ int nfs_set_param_from_conf(config_file_t config_struct,
     {
       /* No such stanza in configuration file */
       if(rc == 1)
-        LogDebug(COMPONENT_INIT, 
-		 "No session id configuration found in config file, using default");
+        LogDebug(COMPONENT_INIT,
+                 "No session id configuration found in config file, "
+                 "using default");
       else
         LogDebug(COMPONENT_INIT,
-		 "session id configuration read from config file");
+                 "session id configuration read from config file");
     }
-
-#endif                          /* _USE_NFS4_1 */
 
 #ifdef _HAVE_GSSAPI
   /* NFS kerberos5 configuration */
   if((rc = nfs_read_krb5_conf(config_struct, &nfs_param.krb5_param)) < 0)
     {
       LogCrit(COMPONENT_INIT,
-	      "Error while parsing NFS/KRB5 configuration for RPCSEC_GSS");
+              "Error while parsing NFS/KRB5 configuration for RPCSEC_GSS");
       return -1;
     }
   else
@@ -758,10 +752,10 @@ int nfs_set_param_from_conf(config_file_t config_struct,
       /* No such stanza in configuration file */
       if(rc == 1)
         LogDebug(COMPONENT_INIT,
-		 "No NFS/KRB5 configuration found in config file, using default");
+                 "No NFS/KRB5 configuration found in config file, using default");
       else
         LogDebug(COMPONENT_INIT,
-		 "NFS/KRB5 configuration read from config file");
+                 "NFS/KRB5 configuration read from config file");
     }
 #endif
 
@@ -792,9 +786,9 @@ int nfs_set_param_from_conf(config_file_t config_struct,
                    "No 9P configuration found, using default");
         else
           {
-	     LogCrit( COMPONENT_INIT,
-	   	      "Error while parsing 9P configuration" ) ;
-             return -1 ;
+            LogCrit( COMPONENT_INIT,
+                     "Error while parsing 9P configuration" ) ;
+            return -1 ;
           }
     }
 #endif
@@ -991,9 +985,7 @@ int nfs_check_param_consistency()
       !is_prime(nfs_param.client_id_param.cid_confirmed_hash_param.index_size) ||
       !is_prime(nfs_param.client_id_param.cr_hash_param.index_size) ||
       !is_prime(nfs_param.state_id_param.hash_param.index_size) ||
-#ifdef _USE_NFS4_1
       !is_prime(nfs_param.session_id_param.hash_param.index_size) ||
-#endif
       !is_prime(nfs_param.nfs4_owner_param.hash_param.index_size) ||
 #ifdef _USE_NLM
       !is_prime(nfs_param.nsm_client_hash_param.index_size) ||
@@ -1319,12 +1311,10 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
      cache_inode_init() so the GC policy has been set */
   cache_inode_lru_pkginit();
 
-#ifdef _USE_NFS4_1
   nfs41_session_pool = pool_init("NFSv4.1 session pool",
                                  sizeof(nfs41_session_t),
                                  pool_basic_substrate,
                                  NULL, NULL, NULL);
-#endif /* _USE_NFS4_1 */
 
   request_pool = pool_init("Request pool",
                            sizeof(request_data_t),
@@ -1617,7 +1607,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           "9P Owner cache successfully initialized");
 #endif 
 
-#ifdef _USE_NFS4_1
   LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");
   if(nfs41_Init_session_id(nfs_param.session_id_param) != 0)
     {
@@ -1626,7 +1615,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 Session Id cache successfully initialized");
-#endif
 
 #ifdef _USE_NFS4_ACL
   LogDebug(COMPONENT_INIT, "Now building NFSv4 ACL cache");

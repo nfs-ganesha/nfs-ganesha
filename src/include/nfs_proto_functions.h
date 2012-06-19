@@ -770,7 +770,6 @@ int nfs4_op_illegal(struct nfs_argop4 *op,      /* [IN] NFS4 OP arguments */
                     compound_data_t * data,     /* [IN] current data for the compound request */
                     struct nfs_resop4 *resp);   /* [OUT] NFS4 OP results */
 
-#ifdef _USE_NFS4_1
 int nfs41_op_exchange_id(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
                          compound_data_t * data,        /* [IN] current data for the compound request */
                          struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
@@ -855,7 +854,6 @@ int nfs41_op_write(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
                    compound_data_t * data,      /* [IN] current data for the compound request */
                    struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
 
-#endif                          /* _USE_NFS4_1 */
 
 /* Available operations on pseudo fs */
 int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
@@ -1130,7 +1128,6 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   ,
   {
   "FATTR4_MOUNTED_ON_FILEID", 55, 1, sizeof(fattr4_mounted_on_fileid), FATTR4_ATTR_READ}
-#ifdef _USE_NFS4_1
   ,
   {
   "FATTR4_DIR_NOTIF_DELAY", 56, 0, sizeof(fattr4_dir_notif_delay),
@@ -1204,7 +1201,6 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   ,
   {
   "FATTR4_FS_CHARSET_CAP", 76, 0, sizeof(fattr4_fs_charset_cap), FATTR4_ATTR_READ}
-#endif                          /* _USE_NFS4_1 */
 };
 
 /* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be used instead */
@@ -1330,7 +1326,6 @@ void nfs4_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src);
 void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst, OPEN_CONFIRM4res * resp_src);
 void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst, OPEN_DOWNGRADE4res * resp_src);
 
-#ifdef _USE_NFS4_1
 void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp);
 void nfs41_op_close_Free(CLOSE4res * resp);
 void nfs41_op_create_session_Free(CREATE_SESSION4res * resp);
@@ -1354,7 +1349,6 @@ void nfs41_op_locku_CopyRes(LOCKU4res * resp_dst, LOCKU4res * resp_src);
 void nfs41_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src);
 void nfs41_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst, OPEN_CONFIRM4res * resp_src);
 void nfs41_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst, OPEN_DOWNGRADE4res * resp_src);
-#endif                          /* _USE_NFS4_1 */
 
 void compound_data_Free(compound_data_t * data);
 

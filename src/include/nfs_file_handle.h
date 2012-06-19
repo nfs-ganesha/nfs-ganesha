@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs_file_handle.h
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/24 11:43:15 $
- * \version $Revision: 1.8 $
- * \brief   Prototypes for the file handle in v2, v3, v4
+ * @file    nfs_file_handle.h
+ * @brief   Prototypes for the file handle in v2, v3, v4
  *
- * nfs_file_handle.h : Prototypes for the file handle in v2, v3, v4. 
+ * Prototypes for the file handle in v2, v3, v4.
  *
  */
 
@@ -62,7 +60,7 @@
 /* This must be exactly 32 bytes long, and aligned on 32 bits */
 typedef struct file_handle_v2
 {
-  uint8_t fhversion;	/* set to 0x41 to separate from Linux knfsd len = 1 byte */
+  uint8_t fhversion;    /* set to 0x41 to separate from Linux knfsd len = 1 byte */
   uint8_t xattr_pos;    /* Used for xattr management                len = 1 byte  */
   uint16_t exportid;    /* must be correlated to exportlist_t::id   len = 2 bytes  */
   uint8_t fsopaque[28]; /* persistent part of FSAL handle, opaque   len = 28 bytes */
@@ -73,13 +71,13 @@ typedef struct file_handle_v2
  */
 
 struct alloc_file_handle_v2 {
-	struct file_handle_v2 handle;	/* the real handle */
+  struct file_handle_v2 handle; /* the real handle */
 };
 
 /* This is up to 64 bytes long, aligned on 32 bits */
 typedef struct file_handle_v3
 {
-  uint8_t fhversion;	/* set to 0x41 to separate from Linux knfsd len = 1 byte */
+  uint8_t fhversion;    /* set to 0x41 to separate from Linux knfsd len = 1 byte */
   uint8_t xattr_pos;    /* Used for xattr management                len = 1  byte  */
   uint16_t exportid;    /* must be correlated to exportlist_t::id   len = 2 bytes   */
   uint8_t fs_len;       /* actual length of opaque handle           len = 1  byte */
@@ -91,8 +89,8 @@ typedef struct file_handle_v3
  */
 
 struct alloc_file_handle_v3 {
-	struct file_handle_v3 handle;	/* the real handle */
-	uint8_t pad[58];			/* pad to mandatory max 64 bytes */
+        struct file_handle_v3 handle;  /* the real handle */
+        uint8_t pad[58]; /* pad to mandatory max 64 bytes */
 };
 
 /* nfs3_sizeof_handle
@@ -101,14 +99,14 @@ struct alloc_file_handle_v3 {
 
 static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
 {
-	return offsetof(struct file_handle_v3, fsopaque) + hdl->fs_len;
+  return offsetof(struct file_handle_v3, fsopaque) + hdl->fs_len;
 }
 
 /* This is up to 128 bytes, aligned on 32 bits
  */
 typedef struct file_handle_v4
 {
-  uint8_t fhversion;	  /* set to 0x41 to separate from Linux knfsd len = 1 byte */
+  uint8_t fhversion;      /* set to 0x41 to separate from Linux knfsd len = 1 byte */
   uint8_t xattr_pos;      /*                                          len = 1 byte    */
   uint16_t exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
   uint32_t srvboot_time;  /* 0 if FH won't expire                     len = 4 bytes   */
@@ -120,12 +118,13 @@ typedef struct file_handle_v4
   uint8_t fsopaque[];     /* persistent part of FSAL handle           len <= 113 bytes */
 } file_handle_v4_t;
 
-/* An NFSv4 handle of maximum size.  use for allocations, sizeof, and memset only
- * the pad space is where the opaque handle expands into. pad is struct aligned
+/* An NFSv4 handle of maximum size.  use for allocations, sizeof, and
+ * memset only the pad space is where the opaque handle expands
+ * into. pad is struct aligned
  */
 struct alloc_file_handle_v4 {
-	struct file_handle_v4 handle;	/* the real handle */
-	uint8_t pad[112];			/* pad to mandatory max 128 bytes */
+        struct file_handle_v4 handle; /* the real handle */
+        uint8_t pad[112]; /* pad to mandatory max 128 bytes */
 };
 
 /* nfs4_sizeof_handle
@@ -134,7 +133,7 @@ struct alloc_file_handle_v4 {
 
 static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 {
-	return offsetof(struct file_handle_v4, fsopaque) + hdl->fs_len;
+  return offsetof(struct file_handle_v4, fsopaque) + hdl->fs_len;
 }
 
 #define LEN_FH_STR 1024
@@ -151,13 +150,13 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2,
 		       struct netbuf *fh_desc,
                        struct fsal_export *export);
 
-int nfs4_FSALToFhandle(nfs_fh4 * pfh4,
-		       struct fsal_obj_handle *pfsalhandle,
-                       compound_data_t * data);
-int nfs3_FSALToFhandle(nfs_fh3 * pfh3, struct fsal_obj_handle *pfsalhandle,
-                       exportlist_t * pexport);
-int nfs2_FSALToFhandle(fhandle2 * pfh2, struct fsal_obj_handle *pfsalhandle,
-                       exportlist_t * pexport);
+int nfs4_FSALToFhandle(nfs_fh4 *fh4,
+                       struct fsal_obj_handle *fsalhandle,
+                       compound_data_t *data);
+int nfs3_FSALToFhandle(nfs_fh3 *fh3, struct fsal_obj_handle *fsalhandle,
+                       exportlist_t *export);
+int nfs2_FSALToFhandle(fhandle2 *fh2, struct fsal_obj_handle *fsalhandle,
+                       exportlist_t *export);
 
 /* Extraction of export id from a file handle */
 short nfs2_FhandleToExportId(fhandle2 * pfh2);

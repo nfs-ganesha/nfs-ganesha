@@ -7,27 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs4_pseudo.c
- * \brief   Routines used for managing the NFS4 pseudo file system.
+ * @file    nfs4_pseudo.c
+ * @brief   Routines used for managing the NFS4 pseudo file system.
  *
- * nfs4_pseudo.c: Routines used for managing the NFS4 pseudo file system.
+ * Routines used for managing the NFS4 pseudo file system.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -351,10 +352,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
   fattr4_mounted_on_fileid mounted_on_fileid;
-#ifdef _USE_NFS4_1
   fattr4_fs_layout_types layout_types;
   layouttype4 layouts[1];
-#endif
 
   u_int fhandle_len = 0;
   unsigned int LastOffset;
@@ -365,24 +364,14 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   unsigned int attrmasklen = 0;
   unsigned int attribute_to_set = 0;
 
-#ifdef _USE_NFS4_1
   unsigned int attrmasklist[FATTR4_FS_CHARSET_CAP];     /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
   unsigned int attrvalslist[FATTR4_FS_CHARSET_CAP];     /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
-#else
-  unsigned int attrmasklist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
-  unsigned int attrvalslist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
-#endif
   char attrvalsBuffer[ATTRVALS_BUFFLEN];
 
   /* memset to make sure the arrays are initiated to 0 */
   memset(attrvalsBuffer, 0, NFS4_ATTRVALS_BUFFLEN);
-#ifdef _USE_NFS4_1
   memset(attrmasklist, 0, FATTR4_FS_CHARSET_CAP * sizeof(uint32_t));
   memset(attrvalslist, 0, FATTR4_FS_CHARSET_CAP * sizeof(uint32_t));
-#else
-  memset(attrmasklist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
-  memset(attrvalslist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof(uint32_t));
-#endif
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(Bitmap, &attrmasklen, attrmasklist);
@@ -1152,29 +1141,27 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           op_attr_success = 1;
           break;
 
-#ifdef _USE_NFS4_1
         case FATTR4_FS_LAYOUT_TYPES:
           layout_types.fattr4_fs_layout_types_len = htonl(1);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
+          memcpy(attrvalsBuffer + LastOffset,
                  &layout_types.fattr4_fs_layout_types_len, sizeof(u_int));
           LastOffset += sizeof(u_int);
 
           layout_types.fattr4_fs_layout_types_val = layouts;
           layouts[0] = htonl(LAYOUT4_NFSV4_1_FILES);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 layout_types.fattr4_fs_layout_types_val, sizeof(layouttype4));
+          memcpy(attrvalsBuffer + LastOffset,
+                 layout_types.fattr4_fs_layout_types_val,
+                 sizeof(layouttype4));
           LastOffset += sizeof(layouttype4);
 
           op_attr_success = 1;
           break;
-#endif
 
         default:
-	  LogWarn(COMPONENT_NFS_V4_PSEUDO, "Bad file attributes %d queried",
+          LogWarn(COMPONENT_NFS_V4_PSEUDO, "Bad file attributes %d queried",
                   attribute_to_set);
-          /* BUGAZOMEU : un traitement special ici */
           break;
-        }                       /* switch( attr_to_set ) */
+        } /* switch( attr_to_set ) */
 
       /* Increase the Offset for the next operation if this was a success */
       if(op_attr_success)

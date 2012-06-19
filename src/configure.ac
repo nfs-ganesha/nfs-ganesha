@@ -799,17 +799,6 @@ case $RPCAL in
 
 esac
 
-case $NFS4_MINOR in
-	"0")
-		AC_DEFINE([_USE_NFS4_0],1, [Use NFSv4.0] )
-		;;
-	"1")
-		AC_DEFINE([_USE_NFS4_1],1, [Use NFSv4.1] )
-		;;
-	*)
-		AC_MSG_ERROR([This NFSv4 minor version is not supported])
-esac
-
 # Sanity check : no pnfs if NFS4_MINOR is not NFSv4.1
 if test x$PNFS = "xyes"; then
   if test x$NFS4_MINOR != "x1"; then

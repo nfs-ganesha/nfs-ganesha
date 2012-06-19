@@ -41,22 +41,12 @@
 
 #include "nfs4.h"
 
-#ifdef _USE_NFS4_1
-
-#ifdef _USE_LUSTRE
-#include "FSAL/FSAL_LUSTRE/fsal_pnfs_types.h"
-#endif 
-
-#ifdef _USE_CEPH
-#include "FSAL/FSAL_CEPH/fsal_pnfs_types.h"
-#endif 
-
 /******************************************************
  *         FSAL MDS function argument structs
  ******************************************************/
 
 /**
- * \brief Input parameters to FSAL_layoutget
+ * @brief Input parameters to FSAL_layoutget
  */
 
 struct fsal_layoutget_arg {
@@ -515,7 +505,5 @@ void FSAL_LoadMDSFunctions(void);
 
 fsal_dsfunctions_t FSAL_GetDSFunctions();
 void FSAL_LoadDSFunctions(void);
-
-#endif /* _USE_NFS4_1 */
 
 #endif /* _FSAL_PNFS_H */

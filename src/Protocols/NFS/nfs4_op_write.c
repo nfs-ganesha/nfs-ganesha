@@ -227,15 +227,17 @@ int nfs4_op_write(struct nfs_argop4 *op,
 
           case STATE_TYPE_LOCK:
             state_open = state_found->state_data.lock.popenstate;
-            // TODO FSF: should check that write is in range of an exclusive lock...
+            /**
+             * @todo FSF: should check that write is in range of an
+             * exclusive lock... */
             break;
 
           case STATE_TYPE_DELEG:
-#ifdef _USE_NFS4_1
+            /**
+             * TODO FSF: should check that this is a write delegation?
+             */
           case STATE_TYPE_LAYOUT:
-#endif /* _USE_NFS4_1 */
             state_open = NULL;
-            // TODO FSF: should check that this is a write delegation?
             break;
 
           default:
@@ -246,9 +248,11 @@ int nfs4_op_write(struct nfs_argop4 *op,
             return res_WRITE4.status;
         }
 
-      /* This is a write operation, this means that the file MUST have been opened for writing */
+      /* This is a write operation, this means that the file MUST have
+         been opened for writing */
       if(state_open != NULL &&
-         (state_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE) == 0)
+         (state_open->state_data.share.share_access &
+          OPEN4_SHARE_ACCESS_WRITE) == 0)
         {
           /* Bad open mode, return NFS4ERR_OPENMODE */
           res_WRITE4.status = NFS4ERR_OPENMODE;

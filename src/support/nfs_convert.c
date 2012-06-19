@@ -195,7 +195,6 @@ char *nfsstat4_to_str(nfsstat4 code)
     case NFS4ERR_FILE_OPEN:           return "NFS4ERR_FILE_OPEN";
     case NFS4ERR_ADMIN_REVOKED:       return "NFS4ERR_ADMIN_REVOKED";
     case NFS4ERR_CB_PATH_DOWN:        return "NFS4ERR_CB_PATH_DOWN";
-#ifdef _USE_NFS4_1
     case NFS4ERR_BADIOMODE:                 return "NFS4ERR_BADIOMODE";
     case NFS4ERR_BADLAYOUT:                 return "NFS4ERR_BADLAYOUT";
     case NFS4ERR_BAD_SESSION_DIGEST:        return "NFS4ERR_BAD_SESSION_DIGEST";
@@ -234,7 +233,6 @@ char *nfsstat4_to_str(nfsstat4 code)
     case NFS4ERR_REJECT_DELEG:              return "NFS4ERR_REJECT_DELEG";
     case NFS4ERR_RETURNCONFLICT:            return "NFS4ERR_RETURNCONFLICT";
     case NFS4ERR_DELEG_REVOKED:             return "NFS4ERR_DELEG_REVOKED";
-#endif
     }
   return "UNKNOWN NFSv4 ERROR CODE";
 }

@@ -377,13 +377,11 @@ struct nfs_client_id_t
           } v40;
       } cb_u;
   } cid_cb;
-#ifdef _USE_NFS4_1
   char                           cid_server_owner[MAXNAMLEN];
   char                           cid_server_scope[MAXNAMLEN];
   unsigned int                   cid_nb_session;
   nfs41_session_slot_t           cid_create_session_slot;
   unsigned                       cid_create_session_sequence;
-#endif
   state_owner_t                  cid_owner;
   int32_t                        cid_refcount;
   int                            cid_lease_reservations;
