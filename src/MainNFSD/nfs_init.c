@@ -592,13 +592,12 @@ void nfs_set_param_default()
   /* 9P Lock Owner hash */
   nfs_param._9p_owner_hash_param.index_size = PRIME_STATE_ID;
   nfs_param._9p_owner_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param._9p_owner_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
   nfs_param._9p_owner_hash_param.hash_func_key = _9p_owner_value_hash_func;
   nfs_param._9p_owner_hash_param.hash_func_rbt = _9p_owner_rbt_hash_func;
   nfs_param._9p_owner_hash_param.compare_key = compare_9p_owner_key;
   nfs_param._9p_owner_hash_param.key_to_str = display_9p_owner_key;
   nfs_param._9p_owner_hash_param.val_to_str = display_9p_owner_val;
-  nfs_param._9p_owner_hash_param.name = "NLM Owner";
+  nfs_param._9p_owner_hash_param.ht_name = "9P Owner";
 #endif 
 
   /* Cache inode parameters : hash table */

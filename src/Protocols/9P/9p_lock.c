@@ -46,7 +46,6 @@
 #include <sys/stat.h>
 #include <netdb.h>
 #include "nfs_core.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "sal_functions.h"
@@ -61,7 +60,6 @@ int _9p_lock( _9p_request_data_t * preq9p,
               char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
  
   u16  * msgtag        = NULL ;
   u32  * fid           = NULL ;
@@ -148,7 +146,6 @@ int _9p_lock( _9p_request_data_t * preq9p,
                         &lock,
                         &holder,
                         &conflict,
-                        &pwkrdata->cache_inode_client,
                         &state_status) != STATE_SUCCESS)
            {
               if( state_status == STATE_LOCK_BLOCKED ) 
@@ -168,7 +165,6 @@ int _9p_lock( _9p_request_data_t * preq9p,
                           powner,
                           NULL,
                           &lock,
-                          &pwkrdata->cache_inode_client,
                           &state_status) != STATE_SUCCESS)
              status = _9P_LOCK_ERROR ;
          else

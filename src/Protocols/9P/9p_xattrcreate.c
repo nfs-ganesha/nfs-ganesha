@@ -47,7 +47,6 @@
 #include <sys/types.h>
 #include <attr/xattr.h>
 #include "nfs_core.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "fsal.h"
@@ -113,7 +112,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
      /* Size != 0 , this is a creation/replacement of xattr */
 
      /* Create the xattr at the FSAL level and cache result */
-     if( ( pfid->specdata.xattr.xattr_content = Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL ) 
+     if( ( pfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL ) 
        return _9p_rerror( preq9p, msgtag, ENOMEM, plenout, preply ) ;
 
      fsal_status = FSAL_SetXAttrValue( &pfid->pentry->handle,

@@ -56,7 +56,6 @@ int _9p_mknod( _9p_request_data_t * preq9p,
                   char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
@@ -123,7 +122,6 @@ int _9p_mknod( _9p_request_data_t * preq9p,
                                              *mode,
                                              &create_arg,
                                              &fsalattr,
-                                             &pwkrdata->cache_inode_client,
                                              &pfid->fsal_op_context,
                                              &cache_status)) == NULL)
     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

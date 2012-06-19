@@ -907,7 +907,7 @@ void dec_state_owner_ref_locked(state_owner_t        * powner)
 #endif
 #ifdef _USE_9P
           case STATE_LOCK_OWNER_9P:
-            remove_9p_owner(pclient, powner, str);
+            remove_9p_owner( powner, str);
 #endif
           case STATE_OPEN_OWNER_NFSV4:
           case STATE_LOCK_OWNER_NFSV4:

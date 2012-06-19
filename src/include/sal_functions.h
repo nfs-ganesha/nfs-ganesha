@@ -89,9 +89,8 @@ int display_9p_owner(state_owner_t * pkey, char * str);
 int display_9p_owner_key(hash_buffer_t * pbuff, char *str) ;
 int display_9p_owner_val(hash_buffer_t * pbuff, char *str) ;
 
-void remove_9p_owner(cache_inode_client_t * pclient,
-                     state_owner_t        * powner,
-                     const char           * str);
+void remove_9p_owner( state_owner_t        * powner,
+                      const char           * str);
 
 uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t * buffclef) ;

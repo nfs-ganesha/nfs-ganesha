@@ -107,7 +107,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
 
   snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
 
-  if( ( pxattrfid->specdata.xattr.xattr_content = Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL ) 
+  if( ( pxattrfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL ) 
     return _9p_rerror( preq9p, msgtag, ENOMEM, plenout, preply ) ;
 
   if( *name_len == 0 ) 

@@ -41,7 +41,6 @@
 #include <ctype.h>
 #include <pthread.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
@@ -242,8 +241,7 @@ int _9p_owner_Set(state_owner_t * pkey,
   return 1;
 }                               /* _9p_owner_Set */
 
-void remove_9p_owner( cache_inode_client_t * pclient,
-                      state_owner_t        * powner,
+void remove_9p_owner( state_owner_t        * powner,
                       const char           * str)
 {
   hash_buffer_t buffkey, old_key, old_value;
@@ -262,8 +260,8 @@ void remove_9p_owner( cache_inode_client_t * pclient,
             memset(old_key.pdata, 0, old_key.len);
             memset(old_value.pdata, 0, old_value.len);
           }
-        Mem_Free(old_key.pdata);
-        Mem_Free(old_value.pdata);
+        gsh_free(old_key.pdata);
+        gsh_free(old_value.pdata);
         break;
 
       case HASHTABLE_NOT_DELETED:
@@ -350,7 +348,7 @@ state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
 {
   state_owner_t * pkey, *powner;
 
-  pkey = (state_owner_t *)Mem_Alloc(sizeof(*pkey));
+  pkey = (state_owner_t *)gsh_malloc(sizeof(*pkey));
   if(pkey == NULL)
     return NULL;
 
@@ -375,7 +373,7 @@ state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
   if(_9p_owner_Get_Pointer(pkey, &powner) == 1 )
     {
       /* Discard the key we created and return the found 9P Owner */
-      Mem_Free(pkey);
+      gsh_free(pkey);
 
       if(isFullDebug(COMPONENT_STATE))
         {
@@ -390,10 +388,10 @@ state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
       return powner;
     }
     
-  powner = (state_owner_t *)Mem_Alloc(sizeof(*pkey));
+  powner = (state_owner_t *)gsh_malloc(sizeof(*pkey));
   if(powner == NULL)
     {
-      Mem_Free(pkey);
+      gsh_free(pkey);
       return NULL;
     }
 
@@ -404,8 +402,8 @@ state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
   if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
     {
       /* Mutex initialization failed, free the key and created owner */
-      Mem_Free(pkey);
-      Mem_Free(powner);
+      gsh_free(pkey);
+      gsh_free(powner);
       return NULL;
     }
 
@@ -434,7 +432,7 @@ state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
       return powner;
     }
 
-  Mem_Free(pkey);
-  Mem_Free(powner);
+  gsh_free(pkey);
+  gsh_free(powner);
   return NULL;
 }

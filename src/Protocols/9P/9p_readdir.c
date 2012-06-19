@@ -124,7 +124,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                  char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = pworker_data ;
 
   _9p_cb_data_t cb_data ;
 
@@ -195,7 +194,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    {
       /* compute the parent entry */
       if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
-                                                  &pwkrdata->cache_inode_client,
                                                   &pfid->fsal_op_context,
                                                   &cache_status ) ) == NULL )
         return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
@@ -235,7 +233,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                              cookie,
                              &num_entries,
                              &eod_met,
-                             &pwkrdata->cache_inode_client,
                              &pfid->fsal_op_context, 
                              _9p_readdir_callback,
                              &cb_data,

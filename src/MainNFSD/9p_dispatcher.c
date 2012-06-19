@@ -193,13 +193,12 @@ void * _9p_socket_thread( void * Arg )
      if( fds[0].revents & (POLLIN|POLLRDNORM) )
       {
         /* choose a worker depending on its queue length */
-        worker_index = nfs_core_select_worker_queue();
+        worker_index = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
 
         /* Get a preq from the worker's pool */
         P(workers_data[worker_index].request_pool_mutex);
 
-        preq = pool_alloc(workers_data[worker_index].request_pool,
-                          NULL);
+        preq = pool_alloc( request_pool, NULL ) ;
 
         V(workers_data[worker_index].request_pool_mutex);
 
@@ -226,8 +225,8 @@ void * _9p_socket_thread( void * Arg )
 
                 /* Release the entry */
                 P(workers_data[worker_index].request_pool_mutex);
-                pool_free(&workers_data[worker_index].request_pool,
-                          preq);
+                pool_free(request_pool, preq ) ;
+
                 workers_data[worker_index].passcounter += 1;
                 V(workers_data[worker_index].request_pool_mutex);
 
@@ -252,7 +251,7 @@ void * _9p_socket_thread( void * Arg )
 
                     /* Release the entry */
                     P(workers_data[worker_index].request_pool_mutex);
-                    ReleaseToPool(preq, &workers_data[worker_index].request_pool);
+                    pool_free( request_pool, preq ) ;
   	    	    workers_data[worker_index].passcounter += 1;
                     V(workers_data[worker_index].request_pool_mutex);
 

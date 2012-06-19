@@ -56,7 +56,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
                 char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  //nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
   u32 * fid = NULL ;
@@ -149,13 +149,12 @@ int _9p_attach( _9p_request_data_t * preq9p,
 
   /* refcount */
   if (pfid->pentry) {
-      cache_inode_put(pfid->pentry, &pwkrdata->cache_inode_client);
+      cache_inode_put(pfid->pentry);
   }
 
   /* refcount +1 */
   pfid->pentry = cache_inode_get( &fsdata,
                                   &fsalattr,
-                                  &pwkrdata->cache_inode_client,
                                   &pfid->fsal_op_context,
                                   NULL,
                                   &cache_status ) ;
