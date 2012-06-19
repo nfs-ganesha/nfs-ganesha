@@ -66,7 +66,6 @@ int _9p_write( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
 
-  fsal_seek_t seek_descriptor;
   fsal_size_t size;
   fsal_size_t written_size = 0;
   fsal_boolean_t eof_met;
@@ -95,9 +94,6 @@ int _9p_write( _9p_request_data_t * preq9p,
   pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Do the job */
-  seek_descriptor.whence = FSAL_SEEK_SET ;
-  seek_descriptor.offset = *offset;
-
   size = *count ;
 
   if( pfid->specdata.xattr.xattr_content != NULL )

@@ -61,7 +61,7 @@ int _9p_rename( _9p_request_data_t * preq9p,
   u32 * fid       = NULL ;
   u32 * dfid      = NULL ;
   u16  * name_len = NULL ;
-  char * name_str = NULL ;
+  __attribute__((unused)) char * name_str = NULL ; /* for unused-but-set-variable */
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
