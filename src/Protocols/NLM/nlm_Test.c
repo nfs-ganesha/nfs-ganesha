@@ -5,19 +5,20 @@
  * --------------------------
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  *
  */
 
@@ -34,7 +35,6 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nlm4.h"
 #include "sal_functions.h"
 #include "nlm_util.h"
@@ -43,21 +43,21 @@
 /**
  * nlm4_Test: Test lock
  *
- *  @param parg        [IN]
- *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
- *  @param pclient     [INOUT]
- *  @param preq        [IN]
- *  @param pres        [OUT]
+ * @param[in]  parg
+ * @param[in]  pexport
+ * @param[in]  pcontext
+ * @param[in]  pworker
+ * @param[in]  preq
+ * @param[out] pres
  *
  */
 
-int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
-              exportlist_t * pexport /* IN     */ ,
-              fsal_op_context_t * pcontext /* IN     */ ,
-              cache_inode_client_t * pclient /* INOUT  */ ,
-              struct svc_req *preq /* IN     */ ,
-              nfs_res_t * pres /* OUT    */ )
+int nlm4_Test(nfs_arg_t *parg,
+              exportlist_t *pexport,
+              fsal_op_context_t *pcontext,
+              nfs_worker_data_t *pworker,
+              struct svc_req *preq,
+              nfs_res_t *pres)
 {
   nlm4_testargs      * arg = &parg->arg_nlm4_test;
   cache_entry_t      * pentry;
@@ -107,7 +107,6 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
                               &lock,
                               &pentry,
                               pcontext,
-                              pclient,
                               CARE_NO_MONITOR,
                               &nsm_client,
                               &nlm_client,
@@ -130,7 +129,6 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
                 &lock,
                 &holder,
                 &conflict,
-                pclient,
                 &state_status) != STATE_SUCCESS)
     {
       pres->res_nlm4test.test_stat.stat = nlm_convert_state_error(state_status);
@@ -139,8 +137,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
         {
           nlm_process_conflict(&pres->res_nlm4test.test_stat.nlm4_testrply_u.holder,
                                holder,
-                               &conflict,
-                               pclient);
+                               &conflict);
         }
     }
   else
@@ -154,7 +151,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   /* Release the NLM Client and NLM Owner references we have */
   dec_nsm_client_ref(nsm_client);
   dec_nlm_client_ref(nlm_client);
-  dec_state_owner_ref(nlm_owner, pclient);
+  dec_state_owner_ref(nlm_owner);
+  cache_inode_put(pentry);
 
   LogDebug(COMPONENT_NLM,
            "REQUEST RESULT: nlm4_Test %s",
@@ -181,27 +179,27 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
   nlm4_Test_Free(&nlm_arg->nlm_async_args.nlm_async_res);
   dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
   dec_nlm_client_ref(nlm_arg->nlm_async_host);
-  Mem_Free(arg);
+  gsh_free(arg);
 }
 
 /**
- * nlm4_Test_Message: Test lock Message
+ * @brief Test lock Message
  *
- *  @param parg        [IN]
- *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
- *  @param pclient     [INOUT]
- *  @param preq        [IN]
- *  @param pres        [OUT]
+ * @param[in]  parg
+ * @param[in]  pexport
+ * @param[in]  pcontext
+ * @param[in]  pworker
+ * @param[in]  preq
+ * @param[out] pres
  *
  */
 
-int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
-                      exportlist_t * pexport /* IN     */ ,
-                      fsal_op_context_t * pcontext /* IN     */ ,
-                      cache_inode_client_t * pclient /* INOUT  */ ,
-                      struct svc_req *preq /* IN     */ ,
-                      nfs_res_t * pres /* OUT    */ )
+int nlm4_Test_Message(nfs_arg_t *parg,
+                      exportlist_t *pexport,
+                      fsal_op_context_t *pcontext,
+                      nfs_worker_data_t *pworker,
+                      struct svc_req *preq,
+                      nfs_res_t *pres)
 {
   state_nlm_client_t * nlm_client = NULL;
   state_nsm_client_t * nsm_client;
@@ -218,7 +216,7 @@ int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-    rc = nlm4_Test(parg, pexport, pcontext, pclient, preq, pres);
+    rc = nlm4_Test(parg, pexport, pcontext, pworker, preq, pres);
 
   if(rc == NFS_REQ_OK)
     rc = nlm_send_async_res_nlm4test(nlm_client, nlm4_test_message_resp, pres);

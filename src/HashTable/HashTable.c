@@ -45,7 +45,6 @@
 #include <pthread.h>
 #include "RW_Lock.h"
 #include "HashTable.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include <assert.h>
 
@@ -57,8 +56,35 @@
 #define FALSE 0
 #endif
 
-#define CACHE_PAGE_SIZE(ht) ((ht)->parameter.cache_entry_count * sizeof(struct rbt_node*))
+/**
+ * @brief Total size of the cache page configured for a table
+ *
+ * This function returns the size of the cache page for the given hash
+ * table, based on the configured entry count.
+ *
+ * @param[in] ht The hash table to query
+ *
+ * @return The cache page size
+ */
+static inline size_t
+CACHE_PAGE_SIZE(const hash_table_t *ht)
+{
+     return ((ht->parameter.cache_entry_count) *
+             sizeof(struct rbt_node*));
+}
 
+/**
+ * @brief Offset of a pointer in the cache
+ *
+ * This function returns the offset into a cache array of the given
+ * hash value.
+ *
+ * @param[in] ht      The hash table to query
+ * @param[in] rbthash The hash value to look up
+ *
+ * @return the offset into the cache at which the hash value might be
+ *         found
+ */
 static inline
 int cache_offsetof(struct hash_table *ht, uint64_t rbthash)
 {
@@ -70,6 +96,16 @@ int cache_offsetof(struct hash_table *ht, uint64_t rbthash)
  *@{
  */
 
+/**
+ * @brief Return an error string for an error code
+ *
+ * This function returns an error string corresponding to the supplied
+ * error code.
+ *
+ * @param[in] erro The error code to look up
+ *
+ * @return An error string or "UNKNOWN HASH TABLE ERROR"
+ */
 const char *
 hash_table_err_to_str(hash_error_t err)
 {
@@ -104,11 +140,11 @@ hash_table_err_to_str(hash_error_t err)
  * partition and returns, if one exists, a pointer to a node matching
  * the supplied key.
  *
- * @param ht [in] The hashtable to be used
- * @param key [in] The key to look up
- * @param index [in] Index into RBT array
- * @param rbthash [in] Hash in red-black tree
- * @param node [out] On success, the found node, NULL otherwise
+ * @param[in]  ht      The hashtable to be used
+ * @param[in]  key     The key to look up
+ * @param[in]  index   Index into RBT array
+ * @param[in]  rbthash Hash in red-black tree
+ * @param[out] node    On success, the found node, NULL otherwise
  *
  * @retval HASHTABLE_SUCCESS if successfull
  * @retval HASHTABLE_NO_SUCH_KEY if key was not found
@@ -160,9 +196,11 @@ Key_Locate(struct hash_table *ht,
      RBT_FIND_LEFT(root, cursor, rbthash);
 
      if (cursor == NULL) {
-          LogFullDebug(COMPONENT_HASHTABLE,
-                       "Key not found: rbthash = %"PRIu64,
-                       rbthash);
+          if(isFullDebug(COMPONENT_HASHTABLE) &&
+             isFullDebug(ht->parameter.ht_log_component))
+               LogFullDebug(ht->parameter.ht_log_component,
+                            "Key not found: rbthash = %"PRIu64,
+                            rbthash);
           return HASHTABLE_ERROR_NO_SUCH_KEY;
      }
 
@@ -180,8 +218,10 @@ Key_Locate(struct hash_table *ht,
      }
 
      if (!found) {
-          LogFullDebug(COMPONENT_HASHTABLE,
-                       "Matching hash found, but no matching key.");
+          if(isFullDebug(COMPONENT_HASHTABLE) &&
+             isFullDebug(ht->parameter.ht_log_component))
+               LogFullDebug(ht->parameter.ht_log_component,
+                            "Matching hash found, but no matching key.");
           return HASHTABLE_ERROR_NO_SUCH_KEY;
      }
 
@@ -197,10 +237,14 @@ out:
  * This function computes the index and RBT hash values for the
  * specified key.
  *
- * @param ht [in] The hash table whose parameters determine computation
- * @param key [in] The key from which to compute the values
- * @param index [out] The partition index
- * @param rbt_hash [out] The hash in the Red-Black tree
+ * @param[in]  ht       The hash table whose parameters determine computation
+ * @param[in]  key      The key from which to compute the values
+ * @param[out] index    The partition index
+ * @param[out] rbt_hash The hash in the Red-Black tree
+ *
+ * @retval HASHTABLE_SUCCESS if values computed
+ * @retval HASHTABLE_ERROR_INVALID_ARGUMENT if the supplied function
+ *         fails
  */
 
 static inline hash_error_t
@@ -244,13 +288,12 @@ compute(struct hash_table *ht, struct hash_buff *key,
  *
  * This function initializes and allocates storage for a hash table.
  *
- * @param hparam [in] Parameters to determine the hash table's
+ * @param[in] hparam Parameters to determine the hash table's
  *                    behaviour
  *
  * @return Pointer to the new hash table, NULL on failure
  *
  */
-
 struct hash_table *
 HashTable_Init(struct hash_param *hparam)
 {
@@ -267,7 +310,6 @@ HashTable_Init(struct hash_param *hparam)
      uint32_t completed = 0;
 
      if (pthread_rwlockattr_init(&rwlockattr) != 0) {
-          Mem_Free(ht);
           return NULL;
      }
 
@@ -283,45 +325,24 @@ HashTable_Init(struct hash_param *hparam)
      }
 #endif /* GLIBC */
 
-     if ((ht = Mem_Alloc(sizeof(struct hash_table) +
-                         sizeof(struct hash_partition) *
-                         hparam->index_size)) == NULL) {
+     if ((ht = gsh_calloc(1, sizeof(struct hash_table) +
+                          (sizeof(struct hash_partition) *
+                           hparam->index_size))) == NULL) {
           goto deconstruct;
      }
-
-     memset(ht, 0,
-            sizeof(struct hash_table) +
-            sizeof(struct hash_partition) * hparam->index_size);
 
      /* Fixup entry size */
      if (hparam->flags & HT_FLAG_CACHE) {
          if (! hparam->cache_entry_count)
-             hparam->cache_entry_count = 32767; /* works fine with a good hash algo */
+              /* works fine with a good hash algo */
+              hparam->cache_entry_count = 32767;
      }
 
      /* We need to save copy of the parameters in the table. */
      ht->parameter = *hparam;
-
      for (index = 0; index < hparam->index_size; ++index) {
-
           partition = (&ht->partitions[index]);
-
-          MakePool(&partition->node_pool, hparam->nb_node_prealloc,
-                   rbt_node_t, NULL, NULL);
-          if (!IsPoolPreallocated(&partition->node_pool)) {
-               goto deconstruct;
-          }
-          MakePool(&partition->data_pool,
-                   hparam->nb_node_prealloc, hash_data_t, NULL, NULL);
-          if (!IsPoolPreallocated(&partition->data_pool))
-               goto deconstruct;
           RBT_HEAD_INIT(&(partition->rbt));
-
-          /**
-           * @todo: ACE: When a function to destroy a memory pool is
-           * created, then the memory pools allocated on THIS
-           * ITERATION should be freed before jumping to deconstruct.
-           */
 
           if (pthread_rwlock_init(&partition->lock, &rwlockattr) != 0) {
                LogCrit(COMPONENT_HASHTABLE,
@@ -331,39 +352,112 @@ HashTable_Init(struct hash_param *hparam)
 
           /* Allocate a cache if requested */
           if (hparam->flags & HT_FLAG_CACHE) {
-              partition->cache = Mem_Alloc(CACHE_PAGE_SIZE(ht));
-              memset(partition->cache, 0, CACHE_PAGE_SIZE(ht));
+               partition->cache = gsh_calloc(1, CACHE_PAGE_SIZE(ht));
+               if (!(partition->cache)) {
+                    pthread_rwlock_destroy(&partition->lock);
+                    goto deconstruct;
+               }
           }
-
           completed++;
      }
 
-     pthread_rwlockattr_destroy(&rwlockattr);
+     ht->node_pool = pool_init(NULL, sizeof(rbt_node_t),
+                               pool_basic_substrate,
+                               NULL, NULL, NULL);
+     if (!(ht->node_pool)) {
+          goto deconstruct;
+     }
+     ht->data_pool = pool_init(NULL, sizeof(hash_data_t),
+                               pool_basic_substrate,
+                               NULL, NULL, NULL);
+     if (!(ht->data_pool))
+          goto deconstruct;
 
+     pthread_rwlockattr_destroy(&rwlockattr);
      return ht;
 
 deconstruct:
 
      while (completed != 0) {
-          /**
-           * @todo ACE: This does nothing about the memory pools
-           * because there is no function in stuff_alloc.h that I
-           * could see to destroy a memory pool.  Such a function
-           * should be added and called here.
-           */
           if (hparam->flags & HT_FLAG_CACHE)
-              Mem_Free(ht->partitions[completed - 1].cache);
+              gsh_free(ht->partitions[completed - 1].cache);
 
           pthread_rwlock_destroy(
                &(ht->partitions[completed - 1].lock));
           completed--;
      }
+     pool_destroy(ht->node_pool);
+     pool_destroy(ht->data_pool);
 
-     Mem_Free(ht);
+     gsh_free(ht);
      return (ht = NULL);
-
 } /* HashTable_Init */
 
+/**
+ * @brief Dispose of a hash table
+ *
+ * This function deletes all the entries from the given hash table and
+ * then destroys the hash table.
+ *
+ * @param[in,out] ht        Pointer to the hash table.  After calling
+ *                          this function, the memory pointed to by ht
+ *                          must not be accessed in any way.
+ * @param[in]     free_func Function to free entries as they are
+ *                          deleted
+ *
+ * @return HASHTABLE_SUCCESS on success, other things on failure
+ */
+hash_error_t
+HashTable_Destroy(struct hash_table *ht,
+                  int (*free_func)(struct hash_buff,
+                                   struct hash_buff))
+{
+     size_t index = 0;
+     hash_error_t hrc = HASHTABLE_SUCCESS;
+
+     hrc = HashTable_Delall(ht, free_func);
+     if (hrc != HASHTABLE_SUCCESS) {
+          goto out;
+     }
+
+     for (index = 0; index < ht->parameter.index_size; ++index) {
+          if (ht->partitions[index].cache) {
+               gsh_free(ht->partitions[index].cache);
+               ht->partitions[index].cache = NULL;
+          }
+
+          pthread_rwlock_destroy(&(ht->partitions[index].lock));
+     }
+     pool_destroy(ht->node_pool);
+     pool_destroy(ht->data_pool);
+     gsh_free(ht);
+
+out:
+     return hrc;
+}
+
+/**
+ * @brief Look up an entry, latching the table
+ *
+ * This function looks up an entry in the hash table and latches the
+ * partition in which that entry would belong in preparation for other
+ * activities.  This function is a primitive and is intended more for
+ * use building other access functions than for client code itself.
+ *
+ * @brief[in]  ht        The hash table to search
+ * @brief[in]  key       The key for which to search
+ * @brief[out] val       The value found
+ * @brief[in]  may_write This must be TRUE if the followup call might
+ *                       mutate the hash table (set or delete)
+ * @brief[out] latch     Opaque structure holding information on the
+ *                       table.
+ *
+ * @retval HASHTABLE_SUCCESS The entry was found, the table is
+ *         latched.
+ * @retval HASHTABLE_ERROR_NOT_FOUND The entry was not found, the
+ *         table is latched.
+ * @retval Others, failure, the table is not latched.
+ */
 hash_error_t
 HashTable_GetLatch(struct hash_table *ht,
                    struct hash_buff *key,
@@ -390,6 +484,22 @@ HashTable_GetLatch(struct hash_table *ht,
           return rc;
      }
 
+     if(isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component)) {
+          char dispkey[HASHTABLE_DISPLAY_STRLEN];
+
+          if(ht->parameter.key_to_str != NULL)
+               ht->parameter.key_to_str(key, dispkey);
+          else
+               dispkey[0] = '\0';
+
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Get %s Key=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" latch=%p",
+                       ht->parameter.ht_name,
+                       key->pdata, dispkey,
+                       index, rbt_hash, latch);
+     }
+
      /* Acquire mutex */
      if (may_write) {
           pthread_rwlock_wrlock(&(ht->partitions[index].lock));
@@ -406,6 +516,22 @@ HashTable_GetLatch(struct hash_table *ht,
                val->pdata = data->buffval.pdata;
                val->len = data->buffval.len;
           }
+
+          if(isDebug(COMPONENT_HASHTABLE) &&
+             isFullDebug(ht->parameter.ht_log_component)) {
+               char dispval[HASHTABLE_DISPLAY_STRLEN];
+
+               if(ht->parameter.val_to_str != NULL)
+                    ht->parameter.val_to_str(&data->buffval, dispval);
+               else
+                    dispval[0] = '\0';
+
+               LogFullDebug(ht->parameter.ht_log_component,
+                            "Get %s returning Value=%p {%s}",
+                            ht->parameter.ht_name,
+                            data->buffval.pdata, dispval);
+          }
+
      }
 
      if (((rc == HASHTABLE_SUCCESS) ||
@@ -417,6 +543,14 @@ HashTable_GetLatch(struct hash_table *ht,
      } else {
           pthread_rwlock_unlock(&ht->partitions[index].lock);
      }
+
+     if(rc != HASHTABLE_SUCCESS &&
+        isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component))
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Get %s returning failure %s",
+                       ht->parameter.ht_name,
+                       hash_table_err_to_str(rc));
 
      return rc;
 } /* HashTable_GetLatch */
@@ -431,13 +565,11 @@ HashTable_GetLatch(struct hash_table *ht,
  * freed by some other means (HashTable_SetLatched or
  * HashTable_DelLatched).
  *
- * @param ht [in] The hash table with the lock to be released
- * @param latch [in] The latch structure holding retained state
- *
- * @returns HASHTABLE_SUCCESS.
+ * @param[in] ht    The hash table with the lock to be released
+ * @param[in] latch The latch structure holding retained state
  */
 
-hash_error_t
+void
 HashTable_ReleaseLatched(struct hash_table *ht,
                          struct hash_latch *latch)
 {
@@ -445,8 +577,6 @@ HashTable_ReleaseLatched(struct hash_table *ht,
           pthread_rwlock_unlock(&ht->partitions[latch->index].lock);
           memset(latch, 0, sizeof(struct hash_latch));
      }
-
-     return HASHTABLE_SUCCESS;
 } /* HashTable_ReleaseLatched */
 
 /**
@@ -458,24 +588,23 @@ HashTable_ReleaseLatched(struct hash_table *ht,
  * after such a call made with the may_write parameter set to true.
  * In all cases, the lock on the hash table is released.
  *
- * @param ht [in] The hash store to be modified
- * @param key [in] A buffer descriptor locating the key to set
- * @param val [in] A buffer descriptor locating the value to insert
- * @param latch [in] A pointer to a structure filled by a previous
- *                   call to HashTable_GetLatched.
- * @param overwrite [in] If true, overwrite a prexisting key,
- *                       otherwise return error on collision.
- * @param stored_key [out] If non-NULL, a buffer descriptor for an
- *                         overwritten key as stored.
- * @param stored_val [out] If non-NULL, a buffer descriptor for an
- *                         overwritten value as stored.
+ * @param[in,out] ht          The hash store to be modified
+ * @param[in]     key         A buffer descriptor locating the key to set
+ * @param[in]     val         A buffer descriptor locating the value to insert
+ * @param[in]     latch       A pointer to a structure filled by a previous
+ *                            call to HashTable_GetLatched.
+ * @param[in]     overwrite   If true, overwrite a prexisting key,
+ *                            otherwise return error on collision.
+ * @param[out]    stored_key If non-NULL, a buffer descriptor for an
+ *                           overwritten key as stored.
+ * @param[out]    stored_val If non-NULL, a buffer descriptor for an
+ *                           overwritten value as stored.
  *
  * @retval HASHTABLE_SUCCESS on non-colliding insert
  * @retval HASHTABLE_ERROR_KEY_ALREADY_EXISTS if overwrite disabled
  * @retval HASHTABLE_OVERWRITTEN on successful overwrite
  * @retval Other errors on failure
  */
-
 hash_error_t
 HashTable_SetLatched(struct hash_table *ht,
                      struct hash_buff *key,
@@ -495,6 +624,29 @@ HashTable_SetLatched(struct hash_table *ht,
      /* New node for the case of non-overwrite */
      struct rbt_node *mutator = NULL;
 
+     if(isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component)) {
+          char dispkey[HASHTABLE_DISPLAY_STRLEN];
+          char dispval[HASHTABLE_DISPLAY_STRLEN];
+
+          if(ht->parameter.key_to_str != NULL)
+               ht->parameter.key_to_str(key, dispkey);
+          else
+               dispkey[0] = '\0';
+
+          if(ht->parameter.val_to_str != NULL)
+               ht->parameter.val_to_str(val, dispval);
+          else
+               dispval[0] = '\0';
+
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Set %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64,
+                       ht->parameter.ht_name,
+                       key->pdata, dispkey,
+                       val->pdata, dispval,
+                       latch->index, latch->rbt_hash);
+     }
+
      /* In the case of collision */
      if (latch->locator) {
           if (!overwrite) {
@@ -503,6 +655,30 @@ HashTable_SetLatched(struct hash_table *ht,
           }
 
           descriptors = RBT_OPAQ(latch->locator);
+
+          if(isDebug(COMPONENT_HASHTABLE) &&
+             isFullDebug(ht->parameter.ht_log_component)) {
+               char dispkey[HASHTABLE_DISPLAY_STRLEN];
+               char dispval[HASHTABLE_DISPLAY_STRLEN];
+
+               if(ht->parameter.key_to_str != NULL)
+                    ht->parameter.key_to_str(&descriptors->buffkey, dispkey);
+               else
+                    dispkey[0] = '\0';
+
+               if(ht->parameter.val_to_str != NULL)
+                    ht->parameter.val_to_str(&descriptors->buffval, dispval);
+               else
+                    dispval[0] = '\0';
+
+               LogFullDebug(ht->parameter.ht_log_component,
+                            "Set %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" was replaced",
+                            ht->parameter.ht_name,
+                            descriptors->buffkey.pdata, dispkey,
+                            descriptors->buffval.pdata, dispval,
+                            latch->index, latch->rbt_hash);
+          }
+
           if (stored_key) {
                *stored_key = descriptors->buffkey;
           }
@@ -521,18 +697,15 @@ HashTable_SetLatched(struct hash_table *ht,
      RBT_FIND(&ht->partitions[latch->index].rbt,
               locator, latch->rbt_hash);
 
-     GetFromPool(mutator, &ht->partitions[latch->index].node_pool,
-                 rbt_node_t);
+     mutator = pool_alloc(ht->node_pool, NULL);
      if (mutator == NULL) {
           rc = HASHTABLE_INSERT_MALLOC_ERROR;
           goto out;
      }
 
-     GetFromPool(descriptors,
-                 &ht->partitions[latch->index].data_pool, hash_data_t);
+     descriptors = pool_alloc(ht->data_pool, NULL);
      if (descriptors == NULL) {
-          ReleaseToPool(mutator,
-                        &ht->partitions[latch->index].node_pool);
+          pool_free(ht->node_pool, mutator);
           rc = HASHTABLE_INSERT_MALLOC_ERROR;
           goto out;
      }
@@ -554,11 +727,19 @@ HashTable_SetLatched(struct hash_table *ht,
 
 out:
      HashTable_ReleaseLatched(ht, latch);
+
+     if(rc != HASHTABLE_SUCCESS &&
+        isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component))
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Set %s returning failure %s",
+                       ht->parameter.ht_name,
+                       hash_table_err_to_str(rc));
+
      return rc;
 } /* HashTable_SetLatched */
 
 /**
- *
  * @brief Delete a value from the store following a previous GetLatch
  *
  * This function removes a value from the a hash store, the value
@@ -566,19 +747,18 @@ out:
  * lock is released.  HashTable_GetLatch must have been called with
  * may_read true.
  *
- * @param ht [in] The hash store to be modified
- * @param key [in] A buffer descriptore locating the key to remove
- * @param latch [in] A pointer to a structure filled by a previous
- *                   call to HashTable_GetLatched.
- * @param stored_key [out] If non-NULL, a buffer descriptor the
- *                         removed key as stored.
- * @param stored_val [out] If non-NULL, a buffer descriptor for the
- *                         removed value as stored.
+ * @param[in,out] ht      The hash store to be modified
+ * @param[in]     key     A buffer descriptore locating the key to remove
+ * @param[in]     latch   A pointer to a structure filled by a previous
+ *                        call to HashTable_GetLatched.
+ * @param[out] stored_key If non-NULL, a buffer descriptor the
+ *                        removed key as stored.
+ * @param[out] stored_val If non-NULL, a buffer descriptor for the
+ *                        removed value as stored.
  *
  * @retval HASHTABLE_SUCCESS on non-colliding insert
  * @retval Other errors on failure
  */
-
 hash_error_t
 HashTable_DeleteLatched(struct hash_table *ht,
                         struct hash_buff *key,
@@ -588,14 +768,39 @@ HashTable_DeleteLatched(struct hash_table *ht,
 {
      /* The pair of buffer descriptors comprising the stored entry */
      struct hash_data *data = NULL;
-
      /* Its partition */
      struct hash_partition *partition = &ht->partitions[latch->index];
 
-     if (!latch->locator)
-         return( HashTable_ReleaseLatched(ht, latch) );
+     if (!latch->locator) {
+         HashTable_ReleaseLatched(ht, latch);
+         return HASHTABLE_SUCCESS;
+     }
 
      data = RBT_OPAQ(latch->locator);
+
+     if(isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component)) {
+          char dispkey[HASHTABLE_DISPLAY_STRLEN];
+          char dispval[HASHTABLE_DISPLAY_STRLEN];
+
+          if(ht->parameter.key_to_str != NULL)
+               ht->parameter.key_to_str(&data->buffkey, dispkey);
+          else
+               dispkey[0] = '\0';
+
+          if(ht->parameter.val_to_str != NULL)
+               ht->parameter.val_to_str(&data->buffval, dispval);
+          else
+               dispval[0] = '\0';
+
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Delete %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" was removed",
+                       ht->parameter.ht_name,
+                       data->buffkey.pdata, dispkey,
+                       data->buffval.pdata, dispval,
+                       latch->index, latch->rbt_hash);
+     }
+
      if (stored_key) {
           *stored_key = data->buffkey;
      }
@@ -629,28 +834,25 @@ HashTable_DeleteLatched(struct hash_table *ht,
 
      /* Now remove the entry */
      RBT_UNLINK(&partition->rbt, latch->locator);
-     ReleaseToPool(data, &partition->data_pool);
-     ReleaseToPool(latch->locator, &partition->node_pool);
+     pool_free(ht->data_pool, data);
+     pool_free(ht->node_pool, latch->locator);
 
      HashTable_ReleaseLatched(ht, latch);
      return HASHTABLE_SUCCESS;
 } /* HashTable_DeleteLatched */
 
 /**
- *
  * @brief Remove and free all (key,val) couples from the hash store
  *
  * This function removes all (key,val) couples from the hashtable and
  * frees the stored data using the supplied function
  *
- * @param ht [in] The hashtable to be cleared of all entries
- * @param free_func [in] The function with which to free the contents
- *                       of each entry
+ * @param[in,out] ht        The hashtable to be cleared of all entries
+ * @param[in]     free_func The function with which to free the contents
+ *                          of each entry
  *
  * @return HASHTABLE_SUCCESS or errors
- *
  */
-
 hash_error_t
 HashTable_Delall(struct hash_table *ht,
                  int (*free_func)(struct hash_buff,
@@ -689,8 +891,8 @@ HashTable_Delall(struct hash_table *ht,
                key = data->buffkey;
                val = data->buffval;
 
-               ReleaseToPool(data, &ht->partitions[index].data_pool);
-               ReleaseToPool(holder, &ht->partitions[index].node_pool);
+               pool_free(ht->data_pool, data);
+               pool_free(ht->node_pool, holder);
                --ht->partitions[index].count;
                rc = free_func(key, val);
 
@@ -706,18 +908,15 @@ HashTable_Delall(struct hash_table *ht,
 } /* HashTable_Delall */
 
 /**
- *
  * @brief Get information on the hash table
  *
  * This function provides statistical information (mostly for
  * debugging purposes) on the hash table.  Some of this information
  * must be computed at call-time
  *
- * @param ht [in] The hashtable to be interrogate
- * @param hstat [out] The result structure to be filled in
- *
+ * @param[in]  ht    The hashtable to be interrogate
+ * @param[out] hstat The result structure to be filled in
  */
-
 void
 HashTable_GetStats(struct hash_table *ht,
                    struct hash_stat *hstat)
@@ -755,16 +954,14 @@ HashTable_GetStats(struct hash_table *ht,
 } /* Hashtable_GetStats */
 
 /**
- *
  * @brief Gets the number of entries in the hashtable.
  *
  * This function gets the number of entries in the hashtable.
  *
- * @param ht [in] The hashtable to be interrogated
+ * @param[in] ht The hashtable to be interrogated
  *
  * @return the number of found entries
  */
-
 size_t
 HashTable_GetSize(struct hash_table *ht)
 {
@@ -784,8 +981,8 @@ HashTable_GetSize(struct hash_table *ht)
  * This debugging function prints information about the hash table to
  * the log.
  *
- * @param component the component debugging config to use.
- * @param ht the hashtable to be used.
+ * @param[in] component The component debugging config to use.
+ * @param[in] ht        The hashtable to be used.
  *
  */
 void
@@ -850,7 +1047,6 @@ HashTable_Log(log_components_t component,
      }
 } /* HashTable_Log */
 
-
 /**
  *
  * @brief Set a pair (key,value) into the Hash Table
@@ -860,11 +1056,11 @@ HashTable_Log(log_components_t component,
  *
  * This function is deprecated.
  *
- * @param ht [in] The hashtable to test or alter
- * @param key [in] The key to be set
- * @param val [in] The value to be stored
- * @param how [in] A value determining whether this is a test, a set
- *                 with overwrite, or a set without overwrite.
+ * @param[in,out] ht  The hashtable to test or alter
+ * @param[in]     key The key to be set
+ * @param[in]     val The value to be stored
+ * @param[in]     how A value determining whether this is a test, a set
+ *                    with overwrite, or a set without overwrite.
  *
  * @retval HASHTABLE_SUCCESS if successfull.
  */
@@ -918,7 +1114,6 @@ HashTable_Test_And_Set(struct hash_table *ht,
 } /* HashTable_Test_And_Set */
 
 /**
- *
  * @brief Look up a value and take a reference
  *
  * This function attempts to locate a key in the hash store and return
@@ -926,15 +1121,14 @@ HashTable_Test_And_Set(struct hash_table *ht,
  * a reference before releasing the partition lock.  It is implemented
  * as a wrapper around HashTable_GetLatched.
  *
- * @param ht [in] The hash store to be searched
- * @param key [in] A buffer descriptore locating the key to find
- * @param val [out] A buffer descriptor locating the value found
- * @param get_ref [in] A function to take a reference on the supplied
+ * @param[in]  ht      The hash store to be searched
+ * @param[in]  key     A buffer descriptore locating the key to find
+ * @param[out] val     A buffer descriptor locating the value found
+ * @param[in]  get_ref A function to take a reference on the supplied
  *                     value
  *
  * @return HASHTABLE_SUCCESS or errors
  */
-
 hash_error_t
 HashTable_GetRef(hash_table_t *ht,
                  hash_buffer_t *key,
@@ -965,16 +1159,15 @@ HashTable_GetRef(hash_table_t *ht,
 } /* HashTable_GetRef */
 
 /**
- *
  * @brief Look up, return, and remove an entry
  *
  * If the object specified by key can be found, it will be removed
  * from the hash table and returned to the caller.
  *
- * @param ht [in] The hash table to be altered
- * @param key [in] The key to search for and remove
- * @param val [out] The value associated with the found object
- * @param stored_key [out] Buffer descriptor for key actually stored
+ * @param[in]  ht         The hash table to be altered
+ * @param[in]  key        The key to search for and remove
+ * @param[out] val        The value associated with the found object
+ * @param[out] stored_key Buffer descriptor for key actually stored
  *
  * @return HASHTABLE_SUCCESS or errors
  */
@@ -1017,21 +1210,19 @@ HashTable_Get_and_Del(hash_table_t  *ht,
  * This function decrements the reference count and deletes the entry
  * if it goes to zero.
  *
- * @param ht [in] The hashtable to be modified
- * @param key [in] The key corresponding to the entry to delete
- * @param stored_key [out] If non-NULL, a buffer descriptor specifying
- *                         the key as stored in the hash table
- * @param stored_val [out] If non-NULL, a buffer descriptor specifying
- *                         the key as stored in the hash table
- * @param put_ref [in] Function to decrement the reference count of
- *                     the located object.  If the function returns 0,
- *                     the entry is deleted.  If put_ref is NULL, the
- *                     entry is deleted unconditionally.
- *
+ * @param[in,out] ht         The hashtable to be modified
+ * @param[in]     key        The key corresponding to the entry to delete
+ * @param[out]    stored_key If non-NULL, a buffer descriptor specifying
+ *                           the key as stored in the hash table
+ * @param[out]    stored_val If non-NULL, a buffer descriptor specifying
+ *                           the key as stored in the hash table
+ * @param[in]     put_ref    Function to decrement the reference count of
+ *                           the located object.  If the function returns 0,
+ *                           the entry is deleted.  If put_ref is NULL, the
+ *                           entry is deleted unconditionally.
  * @retval HASHTABLE_SUCCESS on deletion
  * @retval HASHTABLE_NOT_DELETED put_ref returned a non-zero value
  */
-
 hash_error_t
 HashTable_DelRef(hash_table_t *ht,
                  hash_buffer_t *key,
@@ -1081,16 +1272,15 @@ out:
 } /* HashTable_DelRef */
 
 /**
- *
  * @brief Remove an entry if key and value both match
  *
  * This function looks up an entry and removes it if both the key and
  * the supplied pointer matches the stored value pointer.
  *
- * @param ht [in] The hashtable to be modified
- * @param key [in] The key corresponding to the entry to delete
- * @param val [in] A pointer, which should match the stored entry's
- *                 value pointer.
+ * @param[in,out] ht  The hashtable to be modified
+ * @param[in]     key The key corresponding to the entry to delete
+ * @param[in]     val A pointer, which should match the stored entry's
+ *                    value pointer.
  *
  * @retval HASHTABLE_SUCCESS on deletion
  * @retval HASHTABLE_NO_SUCH_KEY if the key was not found or the

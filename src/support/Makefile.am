@@ -1,19 +1,13 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-if USE_BUDDY_SYSTEM
-BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
-else
-BUDDY_LIB_FLAGS =
-endif
-
 #check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name test_support
 check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name
 
 test_nfs_ip_stats_SOURCES = test_nfs_ip_stats.c
-test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la ../RW_Lock/librwlock.la
+test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la ../Log/liblog.la ../RW_Lock/librwlock.la
 
 test_nfs_ip_name_SOURCES = test_nfs_ip_name.c
-test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
+test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
 
 
 TESTS = test_nfs_ip_stats test_nfs_ip_name $(check_SCRIPTS)
@@ -28,7 +22,6 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          nfs_stat_mgmt.c                    \
                          nfs_ip_name.c                      \
                          nfs_ip_stats.c                     \
-                         nfs_client_id.c                    \
                          exports.c                          \
                          fridgethr.c                        \
                          lookup3.c                          \
@@ -60,8 +53,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/nfs_proto_functions.h   \
                          ../include/nfs_proto_tools.h       \
                          ../include/nfs_stat.h              \
-                         ../include/err_inject.h            \
-                         ../include/stuff_alloc.h
+                         ../include/err_inject.h
 
 libsupport_la_LIBADD = ../cidr/libcidr.la
 
@@ -71,10 +63,6 @@ endif
 
 if USE_NFS4_ACL
 libsupport_la_SOURCES += nfs4_acls.c
-endif
-
-if USE_NFS4_1
-libsupport_la_SOURCES += nfs_session_id.c 
 endif
 
 if ERROR_INJECTION

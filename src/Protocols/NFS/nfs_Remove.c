@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -65,32 +64,30 @@
 
 /**
  *
- * nfs_Create: The NFS PROC2 and PROC3 REMOVE
+ * @brief The NFS PROC2 and PROC3 REMOVE
  *
  * Implements the NFS PROC REMOVE function (for V2 and V3).
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS arguments union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
-               exportlist_t * pexport /* IN  */ ,
-               fsal_op_context_t * pcontext /* IN  */ ,
-               cache_inode_client_t * pclient /* IN  */ ,
-               struct svc_req *preq /* IN  */ ,
-               nfs_res_t * pres /* OUT */ )
+int nfs_Remove(nfs_arg_t *parg,
+               exportlist_t *pexport,
+               fsal_op_context_t *pcontext,
+               nfs_worker_data_t *pworker,
+               struct svc_req *preq,
+               nfs_res_t *pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Remove";
-
   cache_entry_t *parent_pentry = NULL;
   cache_entry_t *pentry_child = NULL;
   fsal_attrib_list_t pre_parent_attr;
@@ -145,14 +142,14 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                                          &(pres->res_remove3.status),
                                          NULL,
                                          &pre_parent_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
     }
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_remove3.object.dir)))) {
-    rc = nfs3_Remove_Xattr(parg, pexport, pcontext, pclient, preq, pres);
+    rc = nfs3_Remove_Xattr(parg, pexport, pcontext, preq, pres);
     goto out;
   }
 
@@ -206,13 +203,12 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
          CACHE_INODE_SUCCESS)
         {
           /*
-           * Lookup to the child entry to check if it is a directory 
+           * Lookup to the child entry to check if it is a directory
            *
            */
           if((pentry_child = cache_inode_lookup(parent_pentry,
                                                 &name,
                                                 &pentry_child_attr,
-                                                pclient,
                                                 pcontext,
                                                 &cache_status)) != NULL)
             {
@@ -243,12 +239,11 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                            name.name);
 
               /*
-               * Remove the entry. 
+               * Remove the entry.
                */
               if(cache_inode_remove(parent_pentry,
                                     &name,
                                     &parent_attr,
-                                    pclient,
                                     pcontext, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   switch (preq->rq_vers)
@@ -297,10 +292,10 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
 out:
   /* return references */
   if (pentry_child)
-      cache_inode_put(pentry_child, pclient);
+      cache_inode_put(pentry_child);
 
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   return (rc);
 

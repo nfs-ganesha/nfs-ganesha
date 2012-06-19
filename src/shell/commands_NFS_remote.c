@@ -40,12 +40,12 @@ typedef unsigned short u_short;
 #include "fsal.h"
 #include "cache_inode.h"
 #include "commands.h"
-#include "stuff_alloc.h"
 #include "Getopt.h"
 #include "cmd_nfstools.h"
 #include "cmd_tools.h"
 #include "nfs_file_handle.h"
 #include "nfs_core.h"
+#include "abstract_mem.h"
 
 #include "nfs23.h"
 #include "mount.h"
@@ -1296,7 +1296,7 @@ int nfs_remote_readdirplus(shell_fh3_t * p_dir_hdl,     /* IN */
   arg.dircount = 1024;
   arg.maxcount = 4096;
 
-  p_res = (READDIRPLUS3res *) Mem_Alloc(sizeof(READDIRPLUS3res));
+  p_res = gsh_malloc(sizeof(READDIRPLUS3res));
 
   do
     {
@@ -1320,7 +1320,7 @@ int nfs_remote_readdirplus(shell_fh3_t * p_dir_hdl,     /* IN */
   if(rc != NFS3_OK)
     {
       nfs3_remote_Readdirplus_Free((nfs_res_t *) p_res);
-      Mem_Free(p_res);
+      gsh_free(p_res);
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       return rc;
     }
@@ -1340,7 +1340,7 @@ void nfs_remote_readdirplus_free(nfs_res_t * to_free)
     return;
 
   nfs3_remote_Readdirplus_Free((nfs_res_t *) to_free);
-  Mem_Free(to_free);
+  gsh_free(to_free);
 }                               /* nfs_remote_readdirplus_free */
 
 /** nfs_remote_readdir */
@@ -1366,7 +1366,7 @@ int nfs_remote_readdir(shell_fh3_t * p_dir_hdl, /* IN */
   memcpy(&arg.cookieverf, p_cookieverf, sizeof(cookieverf3));
   arg.count = 4096;
 
-  p_res = (READDIR3res *) Mem_Alloc(sizeof(READDIR3res));
+  p_res = gsh_malloc(sizeof(READDIR3res));
 
   do
     {
@@ -1390,7 +1390,7 @@ int nfs_remote_readdir(shell_fh3_t * p_dir_hdl, /* IN */
   if(rc != NFS3_OK)
     {
       nfs3_remote_Readdir_Free((nfs_res_t *) p_res);
-      Mem_Free(p_res);
+      gsh_free(p_res);
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       return rc;
     }
@@ -1410,7 +1410,7 @@ void nfs_remote_readdir_free(nfs_res_t * to_free)
     return;
 
   nfs3_remote_Readdir_Free((nfs_res_t *) to_free);
-  Mem_Free(to_free);
+  gsh_free(to_free);
 }                               /* nfs_remote_readdir_free */
 
 /** nfs_remote_create */

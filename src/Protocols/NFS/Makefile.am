@@ -85,7 +85,6 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          nfs4_cb_recall.c                    \
                          ../../include/nfs_proto_functions.h \
                          ../../include/nfs_core.h            \
-                         ../../include/stuff_alloc.h         \
                          ../../include/nfs23.h               \
                          ../../include/nfs4.h                \
                          ../../include/mount.h               \
@@ -122,7 +121,7 @@ endif
 
 test_mnt_proto_SOURCES       = test_mnt_proto.c
 
-test_mnt_proto_LDADD = libnfsproto.la ../../BuddyMalloc/libBuddyMalloc.la ../../Log/liblog.la
+test_mnt_proto_LDADD = libnfsproto.la ../../Log/liblog.la
 
 new: clean all
 

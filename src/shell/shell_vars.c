@@ -37,17 +37,11 @@
  * Revision 1.6  2005/07/26 12:54:47  leibovic
  * Multi-thread shell with synchronisation routines.
  *
- * Revision 1.5  2005/05/10 14:02:45  leibovic
- * Removing adherence to BuddyMalloc.
- *
  * Revision 1.4  2005/05/09 12:23:55  leibovic
  * Version 2 of ganeshell.
  *
  * Revision 1.3  2005/05/03 08:06:23  leibovic
  * Adding meminfo command.
- *
- * Revision 1.2  2005/05/03 07:37:58  leibovic
- * Using Mem_Alloc and Mem_Free.
  *
  * Revision 1.1  2004/12/14 09:56:00  leibovic
  * Variables management.
@@ -63,7 +57,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "shell_vars.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 
 /* variable struct */
 typedef struct shell_variable__
@@ -150,8 +144,7 @@ static shell_variable_t *create_var(char *str)
   shell_variable_t *var_table = GetVarTable();
 
   /* remembers name */
-  shell_variable_t *new_item = (shell_variable_t *) Mem_Alloc(sizeof(shell_variable_t));
-  memset( (char *)new_item, 0, sizeof(shell_variable_t ) ) ;
+  shell_variable_t *new_item = gsh_calloc(1, sizeof(shell_variable_t));
 
   strncpy(new_item->var_name, str, MAX_VAR_LEN);
 
@@ -176,7 +169,7 @@ static void set_var(shell_variable_t * var, char *value)
   /* clears old value, if any */
   if(var->var_value)
     {
-      Mem_Free(var->var_value);
+      gsh_free(var->var_value);
       var->var_value = NULL;
       var->datalen = 0;
     }
@@ -184,7 +177,7 @@ static void set_var(shell_variable_t * var, char *value)
   /* alloc and set new value */
   dlen = strlen(value) + 1;
   var->datalen = dlen;
-  var->var_value = (char *)Mem_Alloc(dlen);
+  var->var_value = gsh_malloc(dlen);
   strncpy(var->var_value, value, dlen);
 
 }
@@ -210,9 +203,9 @@ static void del_var(shell_variable_t * var)
 
   /* free */
   if(var->var_value)
-    Mem_Free(var->var_value);
+    gsh_free(var->var_value);
 
-  Mem_Free((caddr_t) var);
+  gsh_free(var);
 
 }
 

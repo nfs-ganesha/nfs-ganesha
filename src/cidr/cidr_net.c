@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stuff_alloc.h"
-#include "../include/cidr.h"
+#include "cidr.h"
+#include "abstract_mem.h"
 
 
 /* Get the CIDR's immediate supernet */
@@ -54,10 +54,10 @@ cidr_net_supernet(const CIDR *addr)
 	/*
 	 * Now zero out the host bits in the addr.  Do this manually instead
 	 * of calling cidr_addr_network() to save some extra copies and
-	 * Mem_Alloc()'s and so forth.
+	 * allocationss and so forth.
 	 */
-	for(/* i */ ; i<=15 ; i++)
-	{
+        for(/* i */ ; i<=15 ; i++)
+        {
 		for(/* j */ ; j>=0 ; j--)
 			(toret->addr)[i] &= ~(1<<j);
 		j=7;
@@ -91,7 +91,7 @@ cidr_net_subnets(const CIDR *addr)
 		return(NULL);
 	}
 
-	toret = (CIDR **)Mem_Alloc(2 * sizeof(CIDR *));
+	toret = gsh_calloc(2, sizeof(CIDR *));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;
@@ -102,7 +102,7 @@ cidr_net_subnets(const CIDR *addr)
 	toret[0] = cidr_addr_network(addr);
 	if(toret[0]==NULL)
 	{
-		Mem_Free(toret);
+		gsh_free(toret);
 		return(NULL); /* Preserve errno */
 	}
 
@@ -120,7 +120,7 @@ cidr_net_subnets(const CIDR *addr)
 	if(toret[1]==NULL)
 	{
 		cidr_free(toret[0]);
-		Mem_Free(toret);
+		gsh_free(toret);
 		return(NULL); /* Preserve errno */
 	}
 

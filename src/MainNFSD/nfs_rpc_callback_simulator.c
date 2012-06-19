@@ -40,13 +40,14 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
-#include "stuff_alloc.h"
 #include "nlm_list.h"
+#include "abstract_mem.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "log.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_rpc_callback_simulator.h"
+#include "sal_functions.h"
 #include "ganesha_dbus.h"
 
 /**
@@ -87,17 +88,19 @@ static const char* introspection_xml =
 "</node>\n"
 ;
 
+extern hash_table_t *ht_confirmed_client_id;
+
 static DBusHandlerResult
 nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
                       void *user_data)
 {
   DBusMessage* reply;
   static uint32_t i, serial = 1;
-  hash_table_t *ht = ht_client_id;
+  hash_table_t *ht = ht_confirmed_client_id;
   struct rbt_head *head_rbt;
   hash_data_t *pdata = NULL;
   struct rbt_node *pn;
-  nfs_client_id_t *clientp;
+  nfs_client_id_t *pclientid;
   uint64_t clientid;
   DBusMessageIter iter, sub_iter;
 
@@ -109,21 +112,21 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
                                    DBUS_TYPE_UINT64_AS_STRING, &sub_iter);
   /* For each bucket of the hashtable */
   for(i = 0; i < ht->parameter.index_size; i++) {
-    head_rbt = &(ht->array_rbt[i]);
+    head_rbt = &(ht->partitions[i].rbt);
     
     /* acquire mutex */
-    P_w(&(ht->array_lock[i]));
+    pthread_rwlock_wrlock(&(ht->partitions[i].lock));
     
     /* go through all entries in the red-black-tree*/
     RBT_LOOP(head_rbt, pn) {
       pdata = RBT_OPAQ(pn);
-      clientp =
+      pclientid =
 	(nfs_client_id_t *)pdata->buffval.pdata;
-      clientid = clientp->clientid;
+      clientid = pclientid->cid_clientid;
       dbus_message_iter_append_basic(&sub_iter, DBUS_TYPE_UINT64, &clientid);
       RBT_INCREMENT(pn);      
     }
-    V_w(&(ht->array_lock[i]));
+    pthread_rwlock_unlock(&(ht->partitions[i].lock));
   }
   dbus_message_iter_close_container(&iter, &sub_iter);
   /* send the reply && flush the connection */
@@ -140,12 +143,12 @@ static int32_t
 cbsim_test_bchan(clientid4 clientid)
 {
     int32_t tries, code = 0;
-    nfs_client_id_t *clid = NULL;
+    nfs_client_id_t *pclientid = NULL;
     struct timeval CB_TIMEOUT = {15, 0};
     rpc_call_channel_t *chan;
     enum clnt_stat stat;
 
-    code  = nfs_client_id_Get_Pointer(clientid, &clid);
+    code = nfs_client_id_get_confirmed(clientid, &pclientid);
     if (code != CLIENT_ID_SUCCESS) {
         LogCrit(COMPONENT_NFS_CB,
                 "No clid record for %"PRIx64" (%d) code %d", clientid,
@@ -154,12 +157,12 @@ cbsim_test_bchan(clientid4 clientid)
         goto out;
     }
 
-    assert(clid);
+    assert(pclientid);
 
     /* create (fix?) channel */
     for (tries = 0; tries < 2; ++tries) {
 
-        chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
+        chan = nfs_rpc_get_chan(pclientid, NFS_RPC_FLAG_NONE);
         if (! chan) {
             LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
             goto out;
@@ -200,11 +203,11 @@ static void cbsim_free_compound(nfs4_compound_t *cbt)
         if (argop) {
             switch (argop->argop) {
             case  NFS4_OP_CB_RECALL:
-                Mem_Free(argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val);
+                gsh_free(argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val);
                 break;
             default:
                 /* TODO:  ahem */
-                break;                
+                break;
             }
         }
     }
@@ -238,7 +241,7 @@ static int32_t
 cbsim_fake_cbrecall(clientid4 clientid)
 {
     int32_t code = 0;
-    nfs_client_id_t *clid = NULL;
+    nfs_client_id_t *pclientid = NULL;
     rpc_call_channel_t *chan = NULL;
     nfs_cb_argop4 argop[1];
     rpc_call_t *call;
@@ -246,7 +249,7 @@ cbsim_fake_cbrecall(clientid4 clientid)
     LogDebug(COMPONENT_NFS_CB,
              "called with clientid %"PRIx64, clientid);
 
-    code  = nfs_client_id_Get_Pointer(clientid, &clid);
+    code  = nfs_client_id_get_confirmed(clientid, &pclientid);
     if (code != CLIENT_ID_SUCCESS) {
         LogCrit(COMPONENT_NFS_CB,
                 "No clid record for %"PRIx64" (%d) code %d", clientid,
@@ -255,9 +258,9 @@ cbsim_fake_cbrecall(clientid4 clientid)
         goto out;
     }
 
-    assert(clid);
+    assert(pclientid);
 
-    chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
+    chan = nfs_rpc_get_chan(pclientid, NFS_RPC_FLAG_NONE);
     if (! chan) {
         LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
         goto out;
@@ -273,7 +276,8 @@ cbsim_fake_cbrecall(clientid4 clientid)
     call->chan = chan;
 
     /* setup a compound */
-    cb_compound_init_v4(&call->cbt, 6, clid->cb.cb_u.v40.callback_ident,
+    cb_compound_init_v4(&call->cbt, 6,
+			pclientid->cid_cb.cb_u.v40.cb_callback_ident,
                         "brrring!!!", 10);
 
     /* TODO: api-ify */
@@ -285,7 +289,7 @@ cbsim_fake_cbrecall(clientid4 clientid)
     argop->nfs_cb_argop4_u.opcbrecall.truncate = TRUE;
     argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 11;
     /* leaks, sorry */
-    argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = Str_Dup("0xabadcafe");
+    argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = gsh_strdup("0xabadcafe");
 
     /* add ops, till finished (dont exceed count) */
     cb_compound_add_op(&call->cbt, argop);

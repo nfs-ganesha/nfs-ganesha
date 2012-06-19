@@ -7,28 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs41_op_sequence.c
- * \author  $Author: deniel $
  * \brief   Routines used for managing the NFS4_OP_SEQUENCE operation.
  *
- * nfs41_op_sequence.c : Routines used for managing the NFS4_OP_SEQUENCE operation.
+ * Routines used for managing the NFS4_OP_SEQUENCE operation.
  *
  *
  */
@@ -40,37 +40,18 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
-#include "log.h"
-#include "ganesha_rpc.h"
-#include "stuff_alloc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "cache_inode.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_tools.h"
-#include "nfs_file_handle.h"
 #include "sal_functions.h"
 
 /**
  *
- * nfs41_op_sequence: the NFS4_OP_SEQUENCE operation
+ * @brief the NFS4_OP_SEQUENCE operation
  *
- * This functions handles the NFS4_OP_SEQUENCE operation in NFSv4. This function can be called only from nfs4_Compound.
+ * This functions handles the NFS4_OP_SEQUENCE operation in
+ * NFSv4. This function can be called only from nfs4_Compound.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * @param[in]     op   nfs4_op arguments
+ * @param[in,out] data Compound request's data
+ * @param[out]    resp nfs4_op results
  *
  * @return NFS4_OK if successfull, other values show an error.
  *
@@ -84,8 +65,7 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
 #define arg_SEQUENCE4  op->nfs_argop4_u.opsequence
 #define res_SEQUENCE4  resp->nfs_resop4_u.opsequence
 
-  nfs41_session_t *psession = NULL;
-  nfs_client_id_t *nfs_clientid = NULL;
+  nfs41_session_t *psession;
 
   resp->resop = NFS4_OP_SEQUENCE;
   res_SEQUENCE4.sr_status = NFS4_OK;
@@ -103,23 +83,31 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
       return res_SEQUENCE4.sr_status;
     }
 
-  /* Is this an existing client id ? */
-  if(nfs_client_id_Get_Pointer(psession->clientid, &nfs_clientid) !=
-     CLIENT_ID_SUCCESS)
+  /** @todo FSF: there is a tiny window here... should have a ref count on session */
+
+  /* Check if lease is expired and reserve it */
+  P(psession->pclientid_record->cid_mutex);
+
+  if(!reserve_lease(psession->pclientid_record))
     {
-      /* Unknown client id */
-      res_SEQUENCE4.sr_status = NFS4ERR_STALE_CLIENTID;
+      V(psession->pclientid_record->cid_mutex);
+
+      dec_client_id_ref(psession->pclientid_record);
+
+      if(isDebug(COMPONENT_SESSIONS))
+        LogDebug(COMPONENT_SESSIONS,
+                 "SEQUENCE returning NFS4ERR_EXPIRED");
+      else
+        LogDebug(COMPONENT_CLIENTID,
+                 "SEQUENCE returning NFS4ERR_EXPIRED");
+
+      res_SEQUENCE4.sr_status = NFS4ERR_EXPIRED;
       return res_SEQUENCE4.sr_status;
     }
 
-  if (nfs4_is_lease_expired(nfs_clientid))
-    {
-      res_SEQUENCE4.sr_status = NFS4ERR_EXPIRED;
-    }
-  else
-    {
-      nfs_clientid->last_renew = time(NULL);
-    }
+  data->preserved_clientid = psession->pclientid_record;
+
+  V(psession->pclientid_record->cid_mutex);
 
   /* Check is slot is compliant with ca_maxrequests */
   if(arg_SEQUENCE4.sa_slotid >= psession->fore_channel_attrs.ca_maxrequests)
@@ -140,7 +128,11 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
             {
               /* Replay operation through the DRC */
               data->use_drc = TRUE;
-              data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
+              data->pcached_res = &psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
+
+              LogFullDebug(COMPONENT_SESSIONS,
+                           "Use sesson slot %"PRIu32"=%p for DRC",
+                           arg_SEQUENCE4.sa_slotid, data->pcached_res);
 
               res_SEQUENCE4.sr_status = NFS4_OK;
               return res_SEQUENCE4.sr_status;
@@ -174,13 +166,21 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
 
   if(arg_SEQUENCE4.sa_cachethis == TRUE)
     {
-      data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
+      data->pcached_res = &psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
       psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = TRUE;
+
+      LogFullDebug(COMPONENT_SESSIONS,
+                   "Use sesson slot %"PRIu32"=%p for DRC",
+                   arg_SEQUENCE4.sa_slotid, data->pcached_res);
     }
   else
     {
       data->pcached_res = NULL;
       psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = FALSE;
+
+      LogFullDebug(COMPONENT_SESSIONS,
+                   "Don't use sesson slot %"PRIu32"=NULL for DRC",
+                   arg_SEQUENCE4.sa_slotid);
     }
   V(psession->slots[arg_SEQUENCE4.sa_slotid].lock);
 

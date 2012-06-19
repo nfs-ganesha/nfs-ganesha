@@ -47,7 +47,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "nfs_core.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "9p.h"
 

@@ -38,7 +38,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -51,25 +50,24 @@
 #include "nfs_proto_functions.h"
 
 /**
- * rquota_Null: The Rquota ount proc null function, for all versions.
+ * @brief The RQUOTA proc null function, for all versions.
  *
  * The RQUOTA proc null function, for all versions.
  *
- *  @param parg        [IN]    ignored
- *  @param pexportlist [IN]    ignored
- *  @param pcontextp   [IN]    ignored
- *  @param pclient     [INOUT] ignored
- *  @param preq        [IN]    ignored
- *  @param pres        [OUT]   ignored
- *
+ * @param[in]  parg     Ignored
+ * @param[in]  pexport  Ignored
+ * @param[in]  pcontext Ignored
+ * @param[in]  pworker  Ignored
+ * @param[in]  preq     Ignored
+ * @param[out] pres     Ignored
  */
 
-int rquota_Null(nfs_arg_t * parg /* IN     */ ,
-                exportlist_t * pexport /* IN     */ ,
-                fsal_op_context_t * pcontext /* IN     */ ,
-                cache_inode_client_t * pclient /* INOUT  */ ,
-                struct svc_req *preq /* IN     */ ,
-                nfs_res_t * pres /* OUT    */ )
+int rquota_Null(nfs_arg_t *parg,
+                exportlist_t *pexport,
+                fsal_op_context_t *pcontext,
+                nfs_worker_data_t *pworker,
+                struct svc_req *preq,
+                nfs_res_t *pres)
 {
   LogFullDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling rquota_Null");
   /* 0 is success */

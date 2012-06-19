@@ -43,7 +43,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -51,7 +50,6 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -62,7 +60,7 @@
 
 /**
  *
- * @brief: Implements parent lookup functionality
+ * @brief Implements parent lookup functionality
  *
  * Looks up (and caches) the parent directory for a directory.  If an
  * entry is returned, that entry's refcount is incremented by one.
@@ -72,19 +70,15 @@
  * If result was not cached, the function will drop the read lock and
  * acquire a write lock so it can add the result to the cache.
  *
- * @param entry [IN] Entry whose parent is to be obtained
- * @param client [INOUT] Per-thread resource control structure
- * @param context [IN] FSAL operation context
- * @param status [OUT] returned status.
+ * @param[in]  entry   Entry whose parent is to be obtained
+ * @param[in]  context FSAL operation context
+ * @param[out] status  Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when
- *                               validating the entry
+ * @return the found entry or NULL on error.
  */
 
 cache_entry_t *
 cache_inode_lookupp_impl(cache_entry_t *entry,
-                         cache_inode_client_t *client,
                          fsal_op_context_t *context,
                          cache_inode_status_t *status)
 {
@@ -102,7 +96,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           /* Bump the refcount on the current entry (so the caller's
              releasing decrementing it doesn't take us below the
              sentinel count */
-          if (cache_inode_lru_ref(entry, client, 0) !=
+          if (cache_inode_lru_ref(entry, 0) !=
               CACHE_INODE_SUCCESS) {
                /* This cannot actually happen */
                LogFatal(COMPONENT_CACHE_INODE,
@@ -116,7 +110,6 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      /* Try the weakref to the parent first.  This increments the
         refcount. */
      parent = cache_inode_weakref_get(&entry->object.dir.parent,
-                                      client,
                                       LRU_REQ_INITIAL);
      if (!parent) {
           /* If we didn't find it, drop the read lock, get a write
@@ -124,7 +117,6 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           pthread_rwlock_unlock(&entry->content_lock);
           pthread_rwlock_wrlock(&entry->content_lock);
           parent = cache_inode_weakref_get(&entry->object.dir.parent,
-                                           client,
                                            LRU_REQ_INITIAL);
      }
 
@@ -133,14 +125,14 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           memset(&parent_handle, 0, sizeof(fsal_handle_t));
 
           memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));
-          object_attributes.asked_attributes = client->attrmask;
+          object_attributes.asked_attributes = cache_inode_params.attrmask;
           fsal_status =
                FSAL_lookup(&entry->handle, (fsal_name_t *) &FSAL_DOT_DOT,
                            context, &parent_handle, &object_attributes);
 
           if(FSAL_IS_ERROR(fsal_status)) {
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry, client);
+                    cache_inode_kill_entry(entry);
                }
                *status = cache_inode_error_convert(fsal_status);
                return NULL;
@@ -158,7 +150,6 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
              parent entry.  This increments the refcount. */
           if((parent = cache_inode_get(&fsdata,
                                        &object_attributes,
-                                       client,
                                        context,
                                        entry,
                                        status)) == NULL) {
@@ -181,24 +172,21 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
  *
  * If a cache entry is returned, its refcount is +1.
  *
- * @param pentry [IN] Entry whose parent is to be obtained.
- * @param pclient [INOUT] Structure for per-thread resouce allocation
- * @param pcontext [IN] FSAL credentials
- * @param pstatus [OUT] Returned status
+ * @param[in]  entry   Entry whose parent is to be obtained.
+ * @param[in]  context FSAL credentials
+ * @param[out] status  Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when
- *                               validating the entry
- *
+ * @return the found entry or NULL on error.
  */
-cache_entry_t *cache_inode_lookupp(cache_entry_t *pentry,
-                                   cache_inode_client_t *pclient,
-                                   fsal_op_context_t *pcontext,
-                                   cache_inode_status_t *pstatus)
+
+cache_entry_t *
+cache_inode_lookupp(cache_entry_t *entry,
+                    fsal_op_context_t *context,
+                    cache_inode_status_t *status)
 {
-     cache_entry_t *parent_entry = NULL;
-     pthread_rwlock_rdlock(&pentry->content_lock);
-     parent_entry = cache_inode_lookupp_impl(pentry, pclient, pcontext, pstatus);
-     pthread_rwlock_unlock(&pentry->content_lock);
-     return parent_entry;
+     cache_entry_t *parent = NULL;
+     pthread_rwlock_rdlock(&entry->content_lock);
+     parent = cache_inode_lookupp_impl(entry, context, status);
+     pthread_rwlock_unlock(&entry->content_lock);
+     return parent;
 } /* cache_inode_lookupp */

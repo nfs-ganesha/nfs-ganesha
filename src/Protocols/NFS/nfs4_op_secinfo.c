@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -130,7 +129,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
   if((entry_src = cache_inode_lookup(data->current_entry,
                                          &secinfo_fh_name,
                                          &attr_secinfo,
-                                         data->pclient,
                                          data->pcontext, &cache_status)) == NULL)
     {
       res_SECINFO4.status = nfs4_Errno(cache_status);
@@ -150,14 +148,14 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
     num_entry++;
 
   if((res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val =
-      (secinfo4 *) Mem_Alloc(num_entry * sizeof(secinfo4))) == NULL)
+      gsh_calloc(num_entry, sizeof(secinfo4))) == NULL)
     {
       res_SECINFO4.status = NFS4ERR_SERVERFAULT;
       return res_SECINFO4.status;
     }
 
   /* XXX we have the opportunity to associate a preferred security triple
-   * with a specific fs/export.  For now, list all implemented. */  
+   * with a specific fs/export.  For now, list all implemented. */
   int idx=0;
   if (data->pexport->options & EXPORT_OPTION_AUTH_NONE)
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].flavor = AUTH_NONE;
@@ -191,13 +189,13 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
 
 /**
  * nfs4_op_secinfo_Free: frees what was allocared to handle nfs4_op_secinfo.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_secinfo.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_secinfo_Free(SECINFO4res * resp)
 {

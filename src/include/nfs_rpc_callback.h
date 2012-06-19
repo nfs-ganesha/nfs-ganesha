@@ -94,31 +94,31 @@ void free_rpc_call(rpc_call_t *call);
 
 static inline nfs_cb_argop4 * alloc_cb_argop(uint32_t cnt)
 {
-    return ((nfs_cb_argop4 *) Mem_Alloc(cnt*sizeof(nfs_cb_argop4)));
+     return (gsh_calloc(cnt, sizeof(nfs_cb_argop4)));
 }
 
 static inline nfs_cb_resop4 * alloc_cb_resop(uint32_t cnt)
 {
-    return ((nfs_cb_resop4 *) Mem_Alloc(cnt*sizeof(nfs_cb_resop4)));
+     return (gsh_calloc(cnt, sizeof(nfs_cb_resop4)));
 }
 
 static inline void free_cb_argop(nfs_cb_argop4 *ptr)
 {
-    Mem_Free(ptr);
+    gsh_free(ptr);
 }
 
 static inline void free_cb_resop(nfs_cb_resop4 *ptr)
 {
-    Mem_Free(ptr);
+    gsh_free(ptr);
 }
 
-rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *client,
+rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
                                      uint32_t flags);
 
 enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
                            struct timeval timeout);
 
-static inline void nfs_rpc_init_call(void *ptr)
+static inline void nfs_rpc_init_call(void *ptr, void *parameters)
 {
     rpc_call_t *call = (rpc_call_t *) ptr;
     memset(call, 0, sizeof(rpc_call_t));
@@ -130,7 +130,7 @@ void nfs_rpc_cb_pkgshutdown(void);
 
 /* Create a channel for a new clientid (v4) or session, optionally
  * connecting it */
-int nfs_rpc_create_chan_v40(nfs_client_id_t *client,
+int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
                             uint32_t flags);
 
 #if defined (USE_NFS4_1)

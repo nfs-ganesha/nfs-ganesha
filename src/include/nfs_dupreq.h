@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs_dupreq.h
- * \author  $Author: leibovic $
- * \date    $Date: 2006/01/20 07:36:19 $
- * \version $Revision: 1.9 $
  * \brief   Prototypes for duplicate requsts cache management.
  *
- * nfs_dupreq.h : Prototypes for duplicate requsts cache management.
+ * Prototypes for duplicate requsts cache management.
  *
  *
  */
@@ -89,39 +87,30 @@ typedef struct dupreq_entry__
   time_t timestamp;
 } dupreq_entry_t;
 
-unsigned int get_rpc_xid(struct svc_req *reqp);
-
-int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int compare_req(hash_buffer_t *buff1, hash_buffer_t *buff2);
 int print_entry_dupreq(LRU_data_t data, char *str);
-int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
-int nfs_dupreq_gc_function(LRU_entry_t * pentry, void *addparam);
+int clean_entry_dupreq(LRU_entry_t *pentry, void *addparam);
+int nfs_dupreq_gc_function(LRU_entry_t *pentry, void *addparam);
 
-nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *pstatus);
-int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
-                      struct prealloc_pool *dupreq_pool);
-int nfs_dupreq_add_not_finished(long xid,
-				struct svc_req *ptr_req,
-				SVCXPRT *xprt,
-				struct prealloc_pool *dupreq_pool,
-				nfs_res_t *res_nfs);
+nfs_res_t nfs_dupreq_get(struct svc_req *req, int *pstatus);
+int nfs_dupreq_delete(struct svc_req *req);
+int nfs_dupreq_add_not_finished(struct svc_req *req, nfs_res_t *res_nfs);
 
-int nfs_dupreq_finish(long xid,
-		      struct svc_req *ptr_req,
-		      SVCXPRT *xprt,
-		      nfs_res_t * p_res_nfs,
-		      LRU_list_t * lru_dupreq);
+int nfs_dupreq_finish(struct svc_req *req, nfs_res_t *p_res_nfs,
+                      LRU_list_t *lru_dupreq);
 
-uint32_t dupreq_value_hash_func(hash_parameter_t * p_hparam,
-                                     hash_buffer_t * buffclef);
-uint64_t dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
-void nfs_dupreq_get_stats(hash_stat_t * phstat_udp, hash_stat_t * phstat_tcp ) ;
+uint32_t dupreq_value_hash_func(hash_parameter_t *p_hparam,
+                                     hash_buffer_t *buffclef);
+uint64_t dupreq_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef);
+void nfs_dupreq_get_stats(hash_stat_t *phstat_udp, hash_stat_t *phstat_tcp ) ;
 
-
-#define DUPREQ_SUCCESS             0
-#define DUPREQ_INSERT_MALLOC_ERROR 1
-
-#define DUPREQ_NOT_FOUND           2
-#define DUPREQ_BEING_PROCESSED     3
-#define DUPREQ_ALREADY_EXISTS      4
+typedef enum dupreq_status
+{
+    DUPREQ_SUCCESS = 0,
+    DUPREQ_INSERT_MALLOC_ERROR,
+    DUPREQ_NOT_FOUND,
+    DUPREQ_BEING_PROCESSED,
+    DUPREQ_ALREADY_EXISTS,
+} dupreq_status_t;
 
 #endif                          /* _NFS_DUPREQ_H */

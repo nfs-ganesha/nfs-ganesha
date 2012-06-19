@@ -1032,7 +1032,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_CLIENT_ID_COMPUTE, "COMPONENT_CLIENT_ID_COMPUTE", "CLIENT ID COMPUTE",
+  { COMPONENT_CLIENTID,          "COMPONENT_CLIENTID", "CLIENT ID",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
@@ -1333,7 +1333,7 @@ rpc_warnx(/* const */ char *fmt, ...)
                             comp, fmt, ap);
       break;
     case STDERRLOG:
-        DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
+      DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
       break;
     case STDOUTLOG:
       DisplayLogFlux_valist(stdout, "rpc", comp, fmt, ap);

@@ -48,11 +48,9 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
-#include "cache_content_policy.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #ifdef _PNFS_DS
@@ -78,17 +76,12 @@ static int op_dswrite(struct nfs_argop4 *op,
  *
  */
 
-extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier from nfs_Main.c     */
-
 #define arg_WRITE4 op->nfs_argop4_u.opwrite
 #define res_WRITE4 resp->nfs_resop4_u.opwrite
 
 int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_write";
-
   fsal_size_t              size;
-  fsal_size_t              check_size;
   fsal_size_t              written_size;
   fsal_off_t               offset;
   fsal_boolean_t           eof_met;
@@ -99,7 +92,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_t                * pstate_open;
   cache_inode_status_t     cache_status;
   cache_entry_t          * pentry = NULL;
-  fsal_staticfsinfo_t    * pstaticinfo = NULL ;
 #ifdef _USE_QUOTA
   fsal_status_t            fsal_status ;
 #endif
@@ -145,7 +137,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 #endif /* _PNFS_DS */
 
-  pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
   /* Manage access type */
   switch( data->pexport->access_type )
    {
@@ -170,15 +161,8 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Check stateid correctness and get pointer to state
    * (also checks for special stateids)
    */
-
   res_WRITE4.status = nfs4_Check_Stateid(&arg_WRITE4.stateid,
                                          pentry,
-#ifdef _USE_NFS41
-                                         (data->minorversion == 0 ?
-                                          0LL : data->psession->clientid),
-#else
-                                         0LL,
-#endif /* _USE_NFS41 */
                                          &pstate_found,
                                          data,
                                          STATEID_SPECIAL_ANY,
@@ -255,7 +239,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       if(cache_inode_access(pentry,
                             FSAL_WRITE_ACCESS,
-                            data->pclient,
                             data->pcontext,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
@@ -288,14 +271,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked
    * by the client at mount time, but we check this by security */
 
-  /* We should check against the value we returned in getattr. This was not
-   * the case before the following check_size code was added.
-   */
-  if( ((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)) 
-    check_size = data->pexport->MaxWrite;
-  else
-    check_size = pstaticinfo->maxwrite;
-  if( size > check_size )
+  if( size > data->pexport->MaxWrite )
     {
       /*
        * The client asked for too much data, we
@@ -304,9 +280,9 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       LogFullDebug(COMPONENT_NFS_V4,
                "NFS4_OP_WRITE: write requested size = %"PRIu64" write allowed size = %"PRIu64,
-               size, check_size);
+               size, data->pexport->MaxWrite);
 
-      size = check_size;
+      size = data->pexport->MaxWrite;
     }
 
   /* Where are the data ? */
@@ -349,7 +325,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       &written_size,
                       bufferdata,
                       &eof_met,
-                      data->pclient,
                       data->pcontext,
                       stability,
                       &cache_status) != CACHE_INODE_SUCCESS)
@@ -451,4 +426,3 @@ static int op_dswrite(struct nfs_argop4 *op,
   return res_WRITE4.status;
 }
 #endif /* _PNFS_DS */
-

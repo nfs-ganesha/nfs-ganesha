@@ -1,4 +1,5 @@
-noinst_HEADERS = BuddyMalloc.h                   \
+noinst_HEADERS = abstract_atomic.h               \
+                 abstract_mem.h                  \
                  fsal.h                          \
                  fsal_pnfs.h                     \
                  pnfs_common.h                   \
@@ -39,7 +40,6 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  nfs4.h                          \
                  nfsv40.h                        \
                  nfsv41.h                        \
-                 nfs41_session.h                 \
                  nfs_core.h                      \
                  err_inject.h                    \
                  nfs_creds.h                     \
@@ -54,7 +54,6 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  posixdb_consistency.h           \
                  rbt_node.h                      \
                  rbt_tree.h                      \
-                 stuff_alloc.h                   \
                  nfs_ip_stats.h                  \
                  Connectathon_config_parsing.h   \
 		 ganesha_rpc.h 	\

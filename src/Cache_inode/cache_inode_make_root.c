@@ -48,7 +48,6 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -58,44 +57,44 @@
 #include <assert.h>
 
 /**
- * cache_inode_make_root: Inserts the root of a FS in the cache.
+ * @brief Inserts the root of a FS in the cache.
  *
- * Inserts the root of a FS in the cache. This function will be called at junction traversal.
+ * This ensures that the directory specified by fsdata is in the cache
+ * and marks it as an export root.
  *
- * @param pfsdata [IN] FSAL data for the root.
- * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials. Unused here.
- * @param pstatus [OUT] returned status.
+ * @param[in]  fsdata  Handle for the root
+ * @param[in]  context FSAL credentials. Unused here
+ * @param[out] status  Returned status
+ *
+ * @return the newly created cache entry.
  */
 
-cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
-                                     cache_inode_client_t * pclient,
-                                     fsal_op_context_t * pcontext,
-                                     cache_inode_status_t * pstatus)
+cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t *fsdata,
+                                     fsal_op_context_t *context,
+                                     cache_inode_status_t *status)
 {
-  cache_entry_t *pentry = NULL;
+  cache_entry_t *entry = NULL;
   fsal_attrib_list_t attr;
   /* sanity check */
-  if(pstatus == NULL)
+  if(status == NULL)
     return NULL;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS;
+  *status = CACHE_INODE_SUCCESS;
 
-  if((pentry = cache_inode_get(pfsdata,
-                               &attr,
-                               pclient,
-                               pcontext,
-                               NULL,
-                               pstatus)) != NULL)
+  if((entry = cache_inode_get(fsdata,
+                              &attr,
+                              context,
+                              NULL,
+                              status)) != NULL)
     {
       /* The root directory is its own parent.  (Even though this is a
          weakref, it shouldn't be broken in practice.) */
-      pthread_rwlock_wrlock(&pentry->content_lock);
-      pentry->object.dir.parent = pentry->weakref;
-      pthread_rwlock_unlock(&pentry->content_lock);
-      pentry->object.dir.root = TRUE;
+      pthread_rwlock_wrlock(&entry->content_lock);
+      entry->object.dir.parent = entry->weakref;
+      entry->object.dir.root = TRUE;
+      pthread_rwlock_unlock(&entry->content_lock);
     }
 
-  return pentry;
+  return entry;
 }                               /* cache_inode_make_root */

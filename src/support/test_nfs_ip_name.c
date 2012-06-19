@@ -4,7 +4,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "config_parsing.h"
-#include "stuff_alloc.h"
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -89,10 +88,8 @@ void nfs_set_ip_name_param_default()
 
 }
 
-void init() 
+void init()
 {
-    BuddyInit(NULL);
-
     nfs_set_ip_name_param_default();
     nfs_Init_ip_name(nfs_param.ip_name_param);
 

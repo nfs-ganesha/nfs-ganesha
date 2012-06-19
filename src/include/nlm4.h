@@ -170,12 +170,12 @@ extern "C"
   };
   typedef struct nlm4_shareres nlm4_shareres;
 
-  struct nlm4_notify
+  struct nlm4_free_allargs
   {
     char *name;
-    int64_t state;
+    uint32_t state;
   };
-  typedef struct nlm4_notify nlm4_notify;
+  typedef struct nlm4_free_allargs nlm4_free_allargs;
 
   struct nlm4_sm_notifyargs
   {
@@ -251,8 +251,8 @@ extern "C"
   extern nlm4_res *nlmproc4_nm_lock_4(nlm4_lockargs *, CLIENT *);
   extern nlm4_res *nlmproc4_nm_lock_4_svc(nlm4_lockargs *, struct svc_req *);
 #define NLMPROC4_FREE_ALL 23
-  extern void *nlmproc4_free_all_4(nlm4_notify *, CLIENT *);
-  extern void *nlmproc4_free_all_4_svc(nlm4_notify *, struct svc_req *);
+  extern void *nlmproc4_free_all_4(nlm4_free_allargs *, CLIENT *);
+  extern void *nlmproc4_free_all_4_svc(nlm4_free_allargs *, struct svc_req *);
   extern int nlmprog_4_freeresult(SVCXPRT *, xdrproc_t, caddr_t);
 
 #else                           /* K&R C */
@@ -345,7 +345,7 @@ extern "C"
   extern bool_t xdr_nlm4_share(XDR *, nlm4_share *);
   extern bool_t xdr_nlm4_shareargs(XDR *, nlm4_shareargs *);
   extern bool_t xdr_nlm4_shareres(XDR *, nlm4_shareres *);
-  extern bool_t xdr_nlm4_notify(XDR *, nlm4_notify *);
+  extern bool_t xdr_nlm4_free_allargs(XDR *, nlm4_free_allargs *);
   extern bool_t xdr_nlm4_sm_notifyargs(XDR *, nlm4_sm_notifyargs *);
 
 #else                           /* K&R C */
@@ -369,7 +369,7 @@ extern "C"
   extern bool_t xdr_nlm4_share();
   extern bool_t xdr_nlm4_shareargs();
   extern bool_t xdr_nlm4_shareres();
-  extern bool_t xdr_nlm4_notify();
+  extern bool_t xdr_nlm4_free_allargs();
   extern bool_t xdr_nlm4_sm_notifyargs();
 
 #endif                          /* K&R C */

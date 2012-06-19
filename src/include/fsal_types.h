@@ -699,7 +699,8 @@ typedef fsal_ushort_t fsal_openflags_t;
 #define FSAL_O_WRONLY   0x0004  /* write only */
 #define FSAL_O_APPEND   0x0008  /* append     */
 #define FSAL_O_TRUNC    0x0010  /* truncate   */
-#define FSAL_O_CREATE   0x0020  /* truncate   */
+#define FSAL_O_CREATE   0x0020  /* create     */
+#define FSAL_O_SYNC     0x0040  /* sync       */
 
 /** Describes an absolute or relative
  *  position in a file.

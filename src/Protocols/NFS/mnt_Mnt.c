@@ -49,7 +49,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -62,25 +61,25 @@
 #include "nfs_proto_tools.h"
 
 /**
- * mnt_Mnt: The Mount proc mount function, for all versions.
- * 
+ * @brief The Mount proc mount function, for all versions.
+ *
  * The MOUNT proc proc function, for all versions.
- * 
- *  @param parg        [IN]    The export path to be mounted.
- *  @param pexportlist [IN]    The export list.
- *  @param pcontextp   [IN]    ignored
- *  @param pclient     [INOUT] ignored
- *  @param preq        [IN]    ignored 
- *  @param pres        [OUT]   Pointer to the result structure.
+ *
+ * @param[in]  parg     The export path to be mounted
+ * @param[in]  pexport  The export list
+ * @param[in]  pcontext ignored
+ * @param[in]  pworker  ignored
+ * @param[in]  preq     ignored
+ * @param[out] pres     Result structure.
  *
  */
 
-int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
-            exportlist_t * pexport /* IN      */ ,
-            fsal_op_context_t * pcontext /* IN      */ ,
-            cache_inode_client_t * pclient /* IN/OUT  */ ,
-            struct svc_req *preq /* IN      */ ,
-            nfs_res_t * pres /* OUT     */ )
+int mnt_Mnt(nfs_arg_t *parg,
+            exportlist_t *pexport,
+            fsal_op_context_t *pcontext,
+            nfs_worker_data_t *pworker,
+            struct svc_req *preq,
+            nfs_res_t *pres)
 {
 
   char exportPath[MNTPATHLEN + 1];
@@ -293,9 +292,12 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 #ifdef _HAVE_GSSAPI
       if(nfs_param.krb5_param.active_krb5 == TRUE)
         {
-          auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
-          auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
-          auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
+	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_NONE)
+	    auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
+	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_INTG)
+	    auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
+	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+	    auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
         }
 #endif
 
@@ -304,7 +306,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
 #define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
       if((RES_MOUNTINFO.auth_flavors.auth_flavors_val =
-          (int *)Mem_Alloc(index_auth * sizeof(int))) == NULL)
+          gsh_calloc(index_auth, sizeof(int))) == NULL)
         return NFS_REQ_DROP;
 
       RES_MOUNTINFO.auth_flavors.auth_flavors_len = index_auth;
@@ -348,9 +350,9 @@ void mnt3_Mnt_Free(nfs_res_t * pres)
 {
   if(pres->res_mnt3.fhs_status == MNT3_OK)
     {
-      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.
+      gsh_free(pres->res_mnt3.mountres3_u.mountinfo.
                auth_flavors.auth_flavors_val);
-      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val);
+      gsh_free(pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val);
     }
   return;
 }                               /* mnt_Mnt_Free */

@@ -44,7 +44,6 @@
 #include "log.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include <unistd.h>             /* for using gethostname */
 #include <stdlib.h>             /* for using exit */
@@ -74,10 +73,10 @@ uint32_t cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
                                  p_hparam->alphabet_length,
                                  p_hparam->index_size);
 
-    if(isFullDebug(COMPONENT_HASHTABLE))
+    if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_CACHE_INODE))
         {
             snprintHandle(printbuf, 512, pfsal_handle);
-            LogFullDebug(COMPONENT_HASHTABLE,
+            LogFullDebug(COMPONENT_CACHE_INODE,
                          "hash_func key: buff = (Handle=%s, Cookie=%"PRIu64"), hash value=%lu",
                          printbuf, 0UL, h);
         }
@@ -110,10 +109,10 @@ uint64_t cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
 
     h = Lookup3_hash_buff((char *)pfsal_handle, buffclef->len );
 
-    if(isFullDebug(COMPONENT_HASHTABLE))
+    if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_CACHE_INODE))
         {
             snprintHandle(printbuf, 512, pfsal_handle);
-            LogFullDebug(COMPONENT_HASHTABLE,
+            LogFullDebug(COMPONENT_CACHE_INODE,
                          "hash_func rbt: buff = (Handle=%s, Cookie=%"PRIu64"), value=%u",
                          printbuf, 0UL, h);
         }
@@ -133,10 +132,10 @@ unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
 
     h = FSAL_Handle_to_RBTIndex(pfsal_handle, 0);
 
-    if(isFullDebug(COMPONENT_HASHTABLE))
+    if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_CACHE_INODE))
         {
             snprintHandle(printbuf, 512, pfsal_handle);
-            LogFullDebug(COMPONENT_HASHTABLE,
+            LogFullDebug(COMPONENT_CACHE_INODE,
                          "hash_func rbt: buff = (Handle=%s, Cookie=%"PRIu64"), value=%lu",
                          printbuf, 0UL, h);
         }
@@ -186,16 +185,16 @@ static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
     if( rc == 0 )
       {
           snprintHandle(printbuf, 512, pfsal_handle);
-          LogMajor(COMPONENT_HASHTABLE,
+          LogMajor(COMPONENT_CACHE_INODE,
                    "Unable to hash (Handle=%s)",
                    printbuf);
           return 0 ;
       }
 
-    if(isFullDebug(COMPONENT_HASHTABLE))
+    if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_CACHE_INODE))
       {
           snprintHandle(printbuf, 512, buffclef->pdata);
-          LogFullDebug(COMPONENT_HASHTABLE,
+          LogFullDebug(COMPONENT_CACHE_INODE,
                        "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
                        printbuf, 0UL, FSALindex, FSALrbt);
       }
@@ -222,10 +221,10 @@ static int cache_inode_fsal_rbt_both_locally(hash_parameter_t * p_hparam,
     *phashval = h1 ;
     *prbtval = h2 ;
 
-    if(isFullDebug(COMPONENT_HASHTABLE))
+    if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_CACHE_INODE))
         {
             snprintHandle(printbuf, 512, pfsal_handle);
-            LogFullDebug(COMPONENT_HASHTABLE,
+            LogFullDebug(COMPONENT_CACHE_INODE,
                          "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
                          printbuf, 0UL, h1, h2 );
         }
@@ -239,7 +238,7 @@ int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
                                hash_buffer_t    * buffclef,
                                uint32_t * phashval, uint64_t * prbtval )
 {
-  if( nfs_param.cache_layers_param.cache_inode_client_param.use_fsal_hash == FALSE )
+  if(cache_inode_params.use_fsal_hash == FALSE )
     return cache_inode_fsal_rbt_both_locally( p_hparam, buffclef, phashval, prbtval ) ;
   else
     return cache_inode_fsal_rbt_both_on_fsal( p_hparam, buffclef, phashval, prbtval ) ;

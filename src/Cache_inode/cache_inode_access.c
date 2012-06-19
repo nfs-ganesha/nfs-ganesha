@@ -47,7 +47,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -57,28 +57,25 @@
 
 /**
  *
- * cache_inode_access: checks for an entry accessibility.
+ * @brief Checks the permissions on an object
  *
- * Checks for an entry accessibility.
+ * This function returns success if the supplied credentials possess
+ * permission required to meet the specified access.
  *
- * @param pentry      [IN]    entry pointer for the fs object to be checked.
- * @param access_type [IN]    flags used to describe the kind of access to be checked.
- * @param pclient     [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext    [IN]    FSAL context
- * @param pstatus     [OUT]   returned status.
- * @param use_mutex   [IN]    a flag to tell if mutex are to be used or not.
+ * @param[in]  entry       The object to be checked
+ * @param[in]  access_type The kind of access to be checked
+ * @param[in]  context     FSAL context
+ * @param[out] status      Returned status
+ * @param[in]  use_mutex   Whether to acquire a read lock
  *
- * @return CACHE_INODE_SUCCESS if operation is a success \n
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry \n
- * @return any other values show an unauthorized access.
+ * @return CACHE_INODE_SUCCESS if operation is a success
  *
  */
 cache_inode_status_t
-cache_inode_access_sw(cache_entry_t *pentry,
+cache_inode_access_sw(cache_entry_t *entry,
                       fsal_accessflags_t access_type,
-                      cache_inode_client_t *pclient,
-                      fsal_op_context_t *pcontext,
-                      cache_inode_status_t *pstatus,
+                      fsal_op_context_t *context,
+                      cache_inode_status_t *status,
                       int use_mutex)
 {
      fsal_status_t fsal_status;
@@ -89,7 +86,7 @@ cache_inode_access_sw(cache_entry_t *pentry,
                   access_type);
 
      /* Set the return default to CACHE_INODE_SUCCESS */
-     *pstatus = CACHE_INODE_SUCCESS;
+     *status = CACHE_INODE_SUCCESS;
 
      /*
       * We do no explicit access test in FSAL for FSAL_F_OK: it is
@@ -109,97 +106,93 @@ cache_inode_access_sw(cache_entry_t *pentry,
            * configuration file.
            */
 
-          if(pclient->use_test_access == 1) {
+          if(cache_inode_params.use_test_access == 1) {
                /* We actually need the lock here since we're using
                   the attribute cache, so get it if the caller didn't
                   acquire it.  */
                if(use_mutex) {
-                    if ((*pstatus
-                         = cache_inode_lock_trust_attrs(pentry,
-                                                        pcontext,
-                                                        pclient))
+                    if ((*status
+                         = cache_inode_lock_trust_attrs(entry,
+                                                        context))
                         != CACHE_INODE_SUCCESS) {
                          goto out;
                     }
                }
                fsal_status
-                    = FSAL_test_access(pcontext,
+                    = FSAL_test_access(context,
                                        used_access_type,
-                                       &pentry->attributes);
+                                       &entry->attributes);
                if (use_mutex) {
-                    pthread_rwlock_unlock(&pentry->attr_lock);
+                    pthread_rwlock_unlock(&entry->attr_lock);
                }
           } else {
                /* There is no reason to hold the mutex here, since we
                   aren't doing anything with cached attributes. */
-                    fsal_status = FSAL_access(&pentry->handle, pcontext,
+                    fsal_status = FSAL_access(&entry->handle, context,
                                               used_access_type, NULL);
           }
 
           if(FSAL_IS_ERROR(fsal_status)) {
-               *pstatus = cache_inode_error_convert(fsal_status);
+               *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(pentry, pclient);
+                    cache_inode_kill_entry(entry);
                }
           } else {
-               *pstatus = CACHE_INODE_SUCCESS;
+               *status = CACHE_INODE_SUCCESS;
           }
      }
 
 out:
-     return *pstatus;
+     return *status;
 }
 
 /**
  *
- * cache_inode_access_no_mutex: checks for an entry accessibility. No mutex management
+ * @brief Checks entry permissions without taking a lock
  *
- * Checks for an entry accessibility.
+ * This function checks whether the specified permissions are
+ * available on the object.  This function may only be called if an
+ * attribute lock is held.
  *
- * @param pentry      [IN]    entry pointer for the fs object to be checked.
- * @param access_type [IN]    flags used to describe the kind of access to be checked.
- * @param pclient     [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext       [IN]    FSAL credentials
- * @param pstatus     [OUT]   returned status.
+ * @param[in]  entry       entry pointer for the fs object to be checked.
+ * @param[in]  access_type The kind of access to be checked
+ * @param[in]  context     FSAL credentials
+ * @param[out] status      Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success \n
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
+ * @return CACHE_INODE_SUCCESS if operation is a success
  *
  */
 cache_inode_status_t
-cache_inode_access_no_mutex(cache_entry_t * pentry,
+cache_inode_access_no_mutex(cache_entry_t *entry,
                             fsal_accessflags_t access_type,
-                            cache_inode_client_t * pclient,
-                            fsal_op_context_t * pcontext,
-                            cache_inode_status_t * pstatus)
+                            fsal_op_context_t *context,
+                            cache_inode_status_t *status)
 {
-    return cache_inode_access_sw(pentry, access_type,
-                                 pclient, pcontext, pstatus, FALSE);
+    return cache_inode_access_sw(entry, access_type,
+                                 context, status, FALSE);
 }
 
 /**
  *
- * cache_inode_access: checks for an entry accessibility.
+ * @brief Checks permissions on an entry
  *
- * Checks for an entry accessibility.
+ * This function acquires the attribute lock on the supplied cach
+ * entry then checks if the supplied credentials are sufficient to
+ * gain the supplied access.
  *
- * @param pentry      [IN]    entry pointer for the fs object to be checked.
- * @param access_type [IN]    flags used to describe the kind of access to be checked.
- * @param pclient     [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext       [IN]    FSAL credentials
- * @param pstatus     [OUT]   returned status.
+ * @param[in] entry       The object to be checked
+ * @param[in] access_type The kind of access to be checked
+ * @param[in] context     FSAL credentials
+ * @param[in] status      Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success \n
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
- *
+ * @return CACHE_INODE_SUCCESS if operation is a success
  */
 cache_inode_status_t
-cache_inode_access(cache_entry_t * pentry,
+cache_inode_access(cache_entry_t *entry,
                    fsal_accessflags_t access_type,
-                   cache_inode_client_t * pclient,
-                   fsal_op_context_t * pcontext,
-                   cache_inode_status_t * pstatus)
+                   fsal_op_context_t *context,
+                   cache_inode_status_t *status)
 {
-    return cache_inode_access_sw(pentry, access_type,
-                                 pclient, pcontext, pstatus, TRUE);
+    return cache_inode_access_sw(entry, access_type,
+                                 context, status, TRUE);
 }

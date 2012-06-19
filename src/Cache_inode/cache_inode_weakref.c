@@ -10,18 +10,19 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
@@ -40,7 +41,6 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
-#include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -83,6 +83,10 @@ void cache_inode_weakref_init()
  * This function installs an entry in the weakref table.  The caller
  * must already hold a reference to it.  It is expected this function
  * will only be called by cache_inode_new_entry.
+ *
+ * @param[in] entry The entry to be installed
+ *
+ * @return The weak reference created
  */
 
 gweakref_t cache_inode_weakref_insert(cache_entry_t *entry)
@@ -102,17 +106,15 @@ gweakref_t cache_inode_weakref_insert(cache_entry_t *entry)
  *
  * @see cache_inode_lru_unref for the other half of the story.
  *
- * @param ref [in] The weakref from which to derive a reference
- * @param client [in] The per-thread resource management structure
- * @param flags [in] Flags passed in to cache_inode_lru_ref, for scan
- *                   resistance
+ * @param[in] ref   The weakref from which to derive a reference
+ * @param[in] flags Flags passed in to cache_inode_lru_ref, for scan
+ *                  resistance
  *
  * @return A pointer to the cache_entry_t on success, or NULL on
  *         failure.
  */
 
 cache_entry_t *cache_inode_weakref_get(gweakref_t *ref,
-                                       cache_inode_client_t *client,
                                        uint32_t flags)
 {
     pthread_rwlock_t *lock = NULL;
@@ -120,7 +122,7 @@ cache_entry_t *cache_inode_weakref_get(gweakref_t *ref,
         (cache_entry_t *) gweakref_lookupex(cache_inode_wt, ref, &lock);
 
     if (entry) {
-        if (cache_inode_lru_ref(entry, client, flags)
+        if (cache_inode_lru_ref(entry, flags)
             != CACHE_INODE_SUCCESS) {
             pthread_rwlock_unlock(lock);
             return NULL;
@@ -138,13 +140,7 @@ cache_entry_t *cache_inode_weakref_get(gweakref_t *ref,
  * only by cache_inode_lru_unref, cache_inode_get, and
  * cache_inode_kill_entry.
  *
- * @todo ACE: Should cache_inode_kill entry actually use it?
- *            Probably, since we don't want people getting more
- *            references on bad filehandles, even if we are waiting
- *            for people who have references on them to relinquish
- *            them before deallocating.
- *
- * @param ref [in] The entry to delete
+ * @param[in] ref The entry to delete
  */
 
 void cache_inode_weakref_delete(gweakref_t *ref)

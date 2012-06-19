@@ -42,7 +42,7 @@
 #include "LRU_List.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "cmd_tools.h"
 #include "commands.h"
 #include "Getopt.h"
@@ -110,7 +110,6 @@ typedef struct cmdCacheInode_thr_info__
   char current_path[FSAL_MAX_PATH_LEN]; /* current path */
 
   /** Thread specific variable : the client for the cache */
-  cache_inode_client_t client;
   cache_content_client_t dc_client;
 
 } cmdCacheInode_thr_info_t;
@@ -154,8 +153,8 @@ static cmdCacheInode_thr_info_t *GetCacheInodeContext()
     {
 
       /* allocates thread structure */
-      p_current_thread_vars =
-          (cmdCacheInode_thr_info_t *) Mem_Alloc(sizeof(cmdCacheInode_thr_info_t));
+      p_current_thread_vars
+           = gsh_malloc(sizeof(cmdCacheInode_thr_info_t));
 
       /* panic !!! */
       if(p_current_thread_vars == NULL)
@@ -569,6 +568,9 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   cache_param.hparam.compare_key = cache_inode_compare_key_fsal;
   cache_param.hparam.key_to_str = NULL;
   cache_param.hparam.val_to_str = NULL;
+  cache_param.hparam.ht_name = "Cache Inode";
+  cache_param.hparam.flags = HT_FLAG_CACHE;
+  cache_param.hparam.ht_log_component = COMPONENT_CACHE_INODE;
 
   if(flag_v)
     cache_inode_print_conf_hash_parameter(output, cache_param);
@@ -3867,7 +3869,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   /* Now all arguments have been parsed, let's act ! */
 
   /* alloc a buffer */
-  p_read_buff = Mem_Alloc(block_size);
+  p_read_buff = gsh_malloc(block_size);
 
   if(p_read_buff == NULL)
     {
@@ -3965,7 +3967,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
       fprintf(output, "Bandwidth: %f MB/s\n", bandwidth);
 
     }
-  Mem_Free(p_read_buff);
+  gsh_free(p_read_buff);
 
   return 0;
 }                               /* fn_Cache_inode_read */
@@ -4291,7 +4293,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           return EINVAL;
         }
 
-      databuff = Mem_Alloc(datasize + 1);
+      databuff = gsh_malloc(datasize + 1);
 
       if(databuff == NULL)
         {
@@ -4310,7 +4312,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           /* if it is not odd: error */
           fprintf(output, "write: error: \"%s\" in not a valid hexa format.\n", str_hexa);
 
-          Mem_Free(str_hexa);
+          gsh_malloc(str_hexa);
 
           return EINVAL;
         }
@@ -4403,7 +4405,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
     }
 
   if(flag_X)
-    Mem_Free(databuff);
+    gsh_free(databuff);
 
   return 0;
 }                               /* fn_Cache_inode_write */

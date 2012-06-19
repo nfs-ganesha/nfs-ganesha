@@ -42,13 +42,11 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 #include "config_parsing.h"
 
 #include <unistd.h>
@@ -59,25 +57,28 @@
 #include <string.h>
 
 static const char *CONF_LABEL_CACHE_INODE_GCPOL = "CacheInode_GC_Policy";
-static const char *CONF_LABEL_CACHE_INODE_CLIENT = "CacheInode_Client";
+static const char *CONF_LABEL_CACHE_INODE = "CacheInode";
 static const char *CONF_LABEL_CACHE_INODE_HASH = "CacheInode_Hash";
 
 
 /**
  *
- * cache_inode_read_conf_hash_parameter: read the configuration for the hash in Cache_inode layer.
+ * @brief Read the configuration for the Cache_inode hash table
  *
- * Reads the configuration for the hash in Cache_inode layer.
+ * This funcion reads the configuration for the hash table used by the
+ * Cache_inode layer.
  *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  config Configuration file handle
+ * @param[out] param  Read parameters
  *
- * @return CACHE_INODE_SUCCESS if ok, CACHE_INODE_NOT_FOUND is stanza is not there, CACHE_INODE_INVALID_ARGUMENT otherwise.
+ * @retval CACHE_INODE_SUCCESS on success.
+ * @retval CACHE_INODE_NOT_FOUND if stanza is not present.
+ * @retval CACHE_INODE_INVALID_ARGUMENT otherwise.
  *
  */
-cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_config,
-                                                          cache_inode_parameter_t *
-                                                          pparam)
+cache_inode_status_t
+cache_inode_read_conf_hash_parameter(config_file_t config,
+                                     cache_inode_parameter_t *param)
 {
   int var_max;
   int var_index;
@@ -87,11 +88,12 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
+  if(config == NULL || param == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_HASH)) == NULL)
+  if((block = config_FindItemByName(config,
+                                    CONF_LABEL_CACHE_INODE_HASH)) == NULL)
     {
       LogDebug(COMPONENT_CONFIG,
                "Cannot read item \"%s\" from configuration file",
@@ -126,15 +128,11 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
 
       if(!strcasecmp(key_name, "Index_Size"))
         {
-          pparam->hparam.index_size = atoi(key_value);
+          param->hparam.index_size = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
-          pparam->hparam.alphabet_length = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-        {
-          pparam->hparam.nb_node_prealloc = atoi(key_value);
+          param->hparam.alphabet_length = atoi(key_value);
         }
       else
         {
@@ -195,20 +193,18 @@ void cache_inode_expire_to_str(cache_inode_expire_type_t type, time_t value, cha
 }
 
 /**
+ * @brief Read the configuration for the Cache inode layer
  *
- * cache_inode_read_conf_client_parameter: read the configuration for a client to Cache inode layer.
+ * @param[in]  config Configuration file handle
+ * @param[out] param  Read parameters
  *
- * Reads the configuration for a client to Cache inode layer (typically a worker thread).
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
- *
- * @return CACHE_INODE_SUCCESS if ok, CACHE_INODE_NOT_FOUND is stanza is not there, CACHE_INODE_INVALID_ARGUMENT otherwise.
- *
+ * @retval CACHE_INODE_SUCCESS on success.
+ * @retval CACHE_INODE_NOT_FOUND if stanza not present
+ * @retval CACHE_INODE_INVALID_ARGUMENT otherwise
  */
-cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_config,
-                                                            cache_inode_client_parameter_t
-                                                            * pparam)
+cache_inode_status_t
+cache_inode_read_conf_parameter(config_file_t config,
+                                cache_inode_parameter_t *param)
 {
   int var_max;
   int var_index;
@@ -221,15 +217,16 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
   char *LogFile = NULL;
 
   /* Is the config tree initialized ? */
-  if(in_config == NULL || pparam == NULL)
+  if(config == NULL || param == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_CLIENT)) == NULL)
+  if((block = config_FindItemByName(config,
+                                    CONF_LABEL_CACHE_INODE)) == NULL)
     {
       LogDebug(COMPONENT_CONFIG,
                "Cannot read item \"%s\" from configuration file",
-               CONF_LABEL_CACHE_INODE_CLIENT);
+               CONF_LABEL_CACHE_INODE);
       return CACHE_INODE_NOT_FOUND;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
@@ -237,7 +234,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
       /* Expected to be a block */
       LogCrit(COMPONENT_CONFIG,
               "Item \"%s\" is expected to be a block",
-              CONF_LABEL_CACHE_INODE_CLIENT);
+              CONF_LABEL_CACHE_INODE);
       return CACHE_INODE_INVALID_ARGUMENT;
     }
 
@@ -254,53 +251,45 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
         {
           LogCrit(COMPONENT_CONFIG,
                   "Error reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_CACHE_INODE_CLIENT);
+                  var_index, CONF_LABEL_CACHE_INODE);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      else if(!strcasecmp(key_name, "Entry_Prealloc_PoolSize"))
-        {
-          pparam->nb_prealloc_entry = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "State_v4_Prealloc_PoolSize"))
-        {
-          pparam->nb_pre_state_v4 = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "Attr_Expiration_Time"))
         {
-          err = parse_cache_expire(&pparam->expire_type_attr,
-                                   &pparam->grace_period_attr,
+          err = parse_cache_expire(&param->expire_type_attr,
+                                   &param->grace_period_attr,
                                    key_value);
           if(err != CACHE_INODE_SUCCESS)
             return err;
         }
       else if(!strcasecmp(key_name, "Symlink_Expiration_Time"))
         {
-          err = parse_cache_expire(&pparam->expire_type_link,
-                                   &pparam->grace_period_link,
+          err = parse_cache_expire(&param->expire_type_link,
+                                   &param->grace_period_link,
                                    key_value);
           if(err != CACHE_INODE_SUCCESS)
             return err;
         }
       else if(!strcasecmp(key_name, "Directory_Expiration_Time"))
         {
-          err = parse_cache_expire(&pparam->expire_type_dirent,
-                                   &pparam->grace_period_dirent,
+          err = parse_cache_expire(&param->expire_type_dirent,
+                                   &param->grace_period_dirent,
                                    key_value);
           if(err != CACHE_INODE_SUCCESS)
             return err;
         }
       else if(!strcasecmp(key_name, "Use_Getattr_Directory_Invalidation"))
         {
-          pparam->getattr_dir_invalidation = StrToBoolean(key_value);
+          param->getattr_dir_invalidation = StrToBoolean(key_value);
         }
       else if(!strcasecmp(key_name, "Use_Test_Access"))
         {
-          pparam->use_test_access = atoi(key_value);
+          param->use_test_access = atoi(key_value);
         }
       else if(!strcasecmp( key_name, "Use_FSAL_Hash" ) )
         {
-          pparam->use_fsal_hash = StrToBoolean(key_value);
+          param->use_fsal_hash = StrToBoolean(key_value);
         }
       else if(!strcasecmp(key_name, "DebugLevel"))
         {
@@ -324,7 +313,7 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
         {
           LogCrit(COMPONENT_CONFIG,
                   "Unknown or unsettable key: %s (item %s)",
-                  key_name, CONF_LABEL_CACHE_INODE_CLIENT);
+                  key_name, CONF_LABEL_CACHE_INODE);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
     }
@@ -337,22 +326,26 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
     SetComponentLogLevel(COMPONENT_CACHE_INODE, DebugLevel);
 
   return CACHE_INODE_SUCCESS;
-}                               /* cache_inode_read_conf_client_parameter */
+} /* cache_inode_read_conf_parameter */
 
 /**
  *
- * cache_inode_read_conf_gc_policy: read the garbage collection policy in configuration file.
+ * @brief Read the garbage collection policy
  *
- * Reads the garbage collection policy in configuration file.
+ * This function reads the garbage collection policy from the
+ * configuration file.
  *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  config Configuration file handle
+ * @param[out] param  Read parameters
  *
- * @return CACHE_INODE_SUCCESS if ok, CACHE_INODE_NOT_FOUND is stanza is not there, CACHE_INODE_INVALID_ARGUMENT otherwise.
+ * @retval CACHE_INODE_SUCCESS on success.
+ * @retval CACHE_INODE_NOT_FOUND if stanza is not present.
+ * @retval CACHE_INODE_INVALID_ARGUMENT otherwise.
  *
  */
-cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
-                                                     cache_inode_gc_policy_t * ppolicy)
+cache_inode_status_t
+cache_inode_read_conf_gc_policy(config_file_t config,
+                                cache_inode_gc_policy_t *policy)
 {
   int var_max;
   int var_index;
@@ -362,11 +355,12 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
   config_item_t block;
 
   /* Is the config tree initialized ? */
-  if(in_config == NULL || ppolicy == NULL)
+  if(config == NULL || policy == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Get the config BLOCK */
-  if((block = config_FindItemByName(in_config, CONF_LABEL_CACHE_INODE_GCPOL)) == NULL)
+  if((block = config_FindItemByName(config,
+                                    CONF_LABEL_CACHE_INODE_GCPOL)) == NULL)
     {
       LogDebug(COMPONENT_CONFIG,
                "Cannot read item \"%s\" from configuration file",
@@ -400,47 +394,47 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "Entries_HWMark"))
         {
-          ppolicy->entries_hwmark = atoi(key_value);
+          policy->entries_hwmark = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Entries_LWMark"))
         {
-          ppolicy->entries_lwmark = atoi(key_value);
+          policy->entries_lwmark = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Cache_FDs"))
         {
-          ppolicy->use_fd_cache = StrToBoolean(key_value);
+          policy->use_fd_cache = StrToBoolean(key_value);
         }
       else if(!strcasecmp(key_name, "LRU_Run_Interval"))
         {
-          ppolicy->lru_run_interval = atoi(key_value);
+          policy->lru_run_interval = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "FD_Limit_Percent"))
         {
-          ppolicy->fd_limit_percent = atoi(key_value);
+          policy->fd_limit_percent = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "FD_HWMark_Percent"))
         {
-          ppolicy->fd_hwmark_percent = atoi(key_value);
+          policy->fd_hwmark_percent = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "FD_LWMark_Percent"))
         {
-          ppolicy->fd_lwmark_percent = atoi(key_value);
+          policy->fd_lwmark_percent = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Reaper_Work"))
         {
-          ppolicy->reaper_work = atoi(key_value);
+          policy->reaper_work = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Biggest_Window"))
         {
-          ppolicy->biggest_window = atoi(key_value);
+          policy->biggest_window = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Required_Progress"))
         {
-          ppolicy->required_progress = atoi(key_value);
+          policy->required_progress = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Futility_Count"))
         {
-          ppolicy->futility_count = atoi(key_value);
+          policy->futility_count = atoi(key_value);
         }
       else
         {
@@ -457,66 +451,57 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
 
 /**
  *
- * cache_inode_print_conf_gc_policy: prints the garbage collection policy.
+ * @brief Prints the garbage collection policy
  *
- * Prints the garbage collection policy in configuration file.
+ * This function prints the garbage collection policy to the supplied
+ * stream descriptor.
  *
- * @param output [IN] a descriptor to the IO for printing the data.
- * @param param [IN] structure to be printed.
- *
- * @return nothing (void function).
+ * @param[in] output A stream to which to print
+ * @param[in] param  The structure to be printed
  *
  */
-void cache_inode_print_conf_hash_parameter(FILE * output, cache_inode_parameter_t param)
+void cache_inode_print_conf_hash_parameter(FILE *output,
+                                           cache_inode_parameter_t *param)
 {
   fprintf(output, "CacheInode Hash: Index_Size              = %d\n",
-          param.hparam.index_size);
+          param->hparam.index_size);
   fprintf(output, "CacheInode Hash: Alphabet_Length         = %d\n",
-          param.hparam.alphabet_length);
-  fprintf(output, "CacheInode Hash: Prealloc_Node_Pool_Size = %zd\n",
-          param.hparam.nb_node_prealloc);
+          param->hparam.alphabet_length);
 }                               /* cache_inode_print_conf_hash_parameter */
 
 /**
  *
- * cache_inode_print_conf_client_parameter: prints the client parameter.
+ * @brief Prints cache inode configuration
  *
- * Prints the client parameters.
+ * Prints the cache inode configuration to the supplied stream.
  *
- * @param output [IN] a descriptor to the IO for printing the data.
- * @param param [IN] structure to be printed.
- *
- * @return nothing (void function).
- *
+ * @param[in] output A stream to which to print the data
+ * @param[in] param  structure to be printed
  */
-void cache_inode_print_conf_client_parameter(FILE * output,
-                                             cache_inode_client_parameter_t param)
+void cache_inode_print_conf_parameter(FILE *output,
+                                      cache_inode_parameter_t *param)
 {
-  fprintf(output, "CacheInode Client: Entry_Prealloc_PoolSize      = %jd\n",
-          param.nb_prealloc_entry);
-  fprintf(output, "CacheInode Client: Attr_Expiration_Time         = %d\n",
-          (int)param.grace_period_attr);
-  fprintf(output, "CacheInode Client: Symlink_Expiration_Time      = %d\n",
-          (int)param.grace_period_link);
-  fprintf(output, "CacheInode Client: Directory_Expiration_Time    = %d\n",
-          (int)param.grace_period_dirent);
-  fprintf(output, "CacheInode Client: Use_Test_Access              = %d\n",
-          param.use_test_access);
-}                               /* cache_inode_print_conf_client_parameter */
+  fprintf(output, "CacheInode: Attr_Expiration_Time         = %jd\n",
+          param->grace_period_attr);
+  fprintf(output, "CacheInode: Symlink_Expiration_Time      = %jd\n",
+          param->grace_period_link);
+  fprintf(output, "CacheInode: Directory_Expiration_Time    = %jd\n",
+          param->grace_period_dirent);
+  fprintf(output, "CacheInode: Use_Test_Access              = %s\n",
+          (param->use_test_access ? "TRUE" : "FALSE"));
+} /* cache_inode_print_conf_parameter */
 
 /**
  *
- * cache_inode_print_gc_pol: prints the garbage collection policy.
+ * @brief Prints the garbage collection policy.
  *
  * Prints the garbage collection policy.
  *
- * @param output [IN] a descriptor to the IO for printing the data.
- * @param param [IN] structure to be printed.
- *
- * @return nothing (void function).
+ * @param[in] output The stream to which to print the data
+ * @param[in] param  Structure to be printed
  *
  */
-void cache_inode_print_conf_gc_policy(FILE * output,
+void cache_inode_print_conf_gc_policy(FILE *output,
                                       cache_inode_gc_policy_t *gcpolicy)
 {
      fprintf(output,

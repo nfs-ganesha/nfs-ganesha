@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
@@ -208,11 +207,12 @@ uint32_t gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef
   hash_func =
       (unsigned long)pgss_ctx->mech_type + (unsigned long)pgss_ctx->internal_ctx_id;
 
-  /* LogFullDebug(COMPONENT_HASHTABLE,
-                  "gss_ctx_hash_func : 0x%lx%lx --> %lx",
-                  (unsigned long)pgss_ctx->internal_ctx_id,
-                  (unsigned long)pgss_ctx->mech_type,
-                  hash_func ) ; */
+  if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_RPCSEC_GSS))
+    LogFullDebug(COMPONENT_RPCSEC_GSS,
+                 "gss_ctx_hash_func : 0x%lx%lx --> %lx",
+                 (unsigned long)pgss_ctx->internal_ctx_id,
+                 (unsigned long)pgss_ctx->mech_type,
+                 hash_func );
 
   return hash_func % p_hparam->index_size;
 }                               /*  gss_ctx_hash_func */
@@ -245,11 +245,12 @@ uint64_t gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buff
   hash_func =
       (unsigned long)pgss_ctx->mech_type ^ (unsigned long)pgss_ctx->internal_ctx_id;
 
-  /* LogFullDebug(COMPONENT_HASHTABLE,
-                  "gss_ctx_rbt_hash_func : 0x%lx%lx --> %lx",
-                  (unsigned long)pgss_ctx->internal_ctx_id,
-                  (unsigned long)pgss_ctx->mech_type,
-                  hash_func ); */
+  if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_RPCSEC_GSS))
+    LogFullDebug(COMPONENT_RPCSEC_GSS,
+                 "gss_ctx_rbt_hash_func : 0x%lx%lx --> %lx",
+                 (unsigned long)pgss_ctx->internal_ctx_id,
+                 (unsigned long)pgss_ctx->mech_type,
+                 hash_func );
 
   return hash_func;
 }                               /* gss_ctx_rbt_hash_func */
@@ -345,7 +346,7 @@ int Gss_ctx_Hash_Set(gss_union_ctx_id_desc *pgss_ctx, struct svc_rpc_gss_data *g
 
   sprint_ctx(ctx_str, (char *)pgss_ctx, sizeof(*pgss_ctx));
 
-  if((buffkey.pdata = (caddr_t) Mem_Alloc(sizeof(*pgss_ctx))) == NULL)
+  if((buffkey.pdata = gsh_malloc(sizeof(*pgss_ctx))) == NULL)
     {
       failure = "no memory for context";
       goto fail;
@@ -355,7 +356,7 @@ int Gss_ctx_Hash_Set(gss_union_ctx_id_desc *pgss_ctx, struct svc_rpc_gss_data *g
   buffkey.len = sizeof(*pgss_ctx);
 
   if((buffval.pdata =
-      (caddr_t) Mem_Alloc(sizeof(struct svc_rpc_gss_data_stored))) == NULL)
+      gsh_malloc(sizeof(struct svc_rpc_gss_data_stored))) == NULL)
     {
       failure = "no memory for stored data";
       goto fail;
@@ -461,8 +462,8 @@ int Gss_ctx_Hash_Del(gss_union_ctx_id_desc * pgss_ctx)
   if(HashTable_Del(ht_gss_ctx, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
       /* free the key that was stored in hash table */
-      Mem_Free((void *)old_key.pdata);
-      Mem_Free((void *)old_value.pdata);
+      gsh_free(old_key.pdata);
+      gsh_free(old_value.pdata);
 
       return 1;
     }

@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -78,16 +77,8 @@
 
 int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-#ifdef _WITH_NO_NFSV4_LOCKS
-  resp->resop = NFS4_OP_LOCKT;
-  res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCKT4.status;
-#else
-
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lockt";
-
   state_status_t            state_status;
-  nfs_client_id_t         * nfs_client_id;
+  nfs_client_id_t         * pclientid;
   state_nfs4_owner_name_t   owner_name;
   state_owner_t           * plock_owner;
   state_owner_t           * conflict_owner = NULL;
@@ -153,27 +144,27 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check clientid */
-  if(nfs_client_id_Get_Pointer(arg_LOCKT4.owner.clientid, &nfs_client_id) != CLIENT_ID_SUCCESS)
-    {
-      res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
-      return res_LOCKT4.status;
-    }
-
-  /* The client id should be confirmed */
-  if(nfs_client_id->confirmed != CONFIRMED_CLIENT_ID)
+  if(nfs_client_id_get_confirmed(arg_LOCKT4.owner.clientid,
+                                 &pclientid) != CLIENT_ID_SUCCESS)
     {
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;
     }
 
   /* The protocol doesn't allow for EXPIRED, so return STALE_CLIENTID */
-  if (nfs4_is_lease_expired(nfs_client_id))
+  P(pclientid->cid_mutex);
+
+  if(!reserve_lease(pclientid))
     {
-      nfs_client_id_expire(nfs_client_id);
+      V(pclientid->cid_mutex);
+
+      dec_client_id_ref(pclientid);
+
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;
     }
-  nfs4_update_lease(nfs_client_id);
+
+  V(pclientid->cid_mutex);
 
   /* Is this lock_owner known ? */
   convert_nfs4_lock_owner(&arg_LOCKT4.owner, &owner_name, 0LL);
@@ -181,9 +172,9 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
     {
       /* This lock owner is not known yet, allocated and set up a new one */
-      plock_owner = create_nfs4_owner(data->pclient,
-                                      &owner_name,
-                                      STATE_OPEN_OWNER_NFSV4,
+      plock_owner = create_nfs4_owner(&owner_name,
+                                      pclientid,
+                                      STATE_LOCK_OWNER_NFSV4,
                                       NULL,
                                       0);
 
@@ -192,7 +183,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           LogFullDebug(COMPONENT_NFS_V4_LOCK,
                        "LOCKT unable to create lock owner");
           res_LOCKT4.status = NFS4ERR_SERVERFAULT;
-          return res_LOCKT4.status;
+          goto out;
         }
     }
   else if(isFullDebug(COMPONENT_NFS_V4_LOCK))
@@ -223,24 +214,33 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 &lock_desc,
                 &conflict_owner,
                 &conflict_desc,
-                data->pclient,
                 &state_status) == STATE_LOCK_CONFLICT)
     {
       /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
       Process_nfs4_conflict(&res_LOCKT4.LOCKT4res_u.denied,
                             conflict_owner,
-                            &conflict_desc,
-                            data->pclient);
+                            &conflict_desc);
     }
 
   /* Release NFS4 Open Owner reference */
-  dec_state_owner_ref(plock_owner, data->pclient);
+  dec_state_owner_ref(plock_owner);
 
   /* Return result */
   res_LOCKT4.status = nfs4_Errno_state(state_status);
+
+ out:
+ 
+  /* Update the lease before exit */
+  P(pclientid->cid_mutex);
+
+  update_lease(pclientid);
+
+  V(pclientid->cid_mutex);
+
+  dec_client_id_ref(pclientid);
+
   return res_LOCKT4.status;
 
-#endif
 }                               /* nfs4_op_lockt */
 
 /**

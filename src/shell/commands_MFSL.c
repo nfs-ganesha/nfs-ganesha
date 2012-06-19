@@ -53,7 +53,7 @@
 #include "cmd_tools.h"
 #include "commands.h"
 #include "Getopt.h"
-#include "stuff_alloc.h"
+#icnlude "abstract_mem.h"
 
 static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
 
@@ -120,7 +120,7 @@ cmdmfsl_thr_info_t *GetMFSLCmdContext()
 
       /* allocates thread structure */
       p_current_thread_vars =
-          (cmdmfsl_thr_info_t *) Mem_Alloc(sizeof(cmdmfsl_thr_info_t));
+          gsh_malloc(sizeof(cmdmfsl_thr_info_t));
 
       /* panic !!! */
       if(p_current_thread_vars == NULL)
@@ -3462,7 +3462,7 @@ int fn_mfsl_read(int argc,      /* IN : number of args in argv */
   /* Now all arguments have been parsed, let's act ! */
 
   /* alloc a buffer */
-  p_read_buff = Mem_Alloc(block_size);
+  p_read_buff = gsh_malloc(block_size);
 
   if(p_read_buff == NULL)
     {
@@ -3497,7 +3497,7 @@ int fn_mfsl_read(int argc,      /* IN : number of args in argv */
             }
           else
             {
-              Mem_Free(p_read_buff);
+              gsh_free(p_read_buff);
               return st.major;
             }
         }
@@ -3558,7 +3558,7 @@ int fn_mfsl_read(int argc,      /* IN : number of args in argv */
       fprintf(output, "Bandwidth: %f MB/s\n", bandwidth);
 
     }
-  Mem_Free(p_read_buff);
+  gsh_free(p_read_buff);
 
   return 0;
 }
@@ -3910,7 +3910,7 @@ int fn_mfsl_write(int argc,     /* IN : number of args in argv */
           return EINVAL;
         }
 
-      databuff = Mem_Alloc(datasize + 1);
+      databuff = gsh_malloc(datasize + 1);
 
       if(databuff == NULL)
         {
@@ -3929,7 +3929,7 @@ int fn_mfsl_write(int argc,     /* IN : number of args in argv */
           /* if it is not odd: error */
           fprintf(output, "write: error: \"%s\" in not a valid hexa format.\n", str_hexa);
 
-          Mem_Free(str_hexa);
+          gsh_free(str_hexa);
 
           return EINVAL;
         }
@@ -3982,7 +3982,7 @@ int fn_mfsl_write(int argc,     /* IN : number of args in argv */
           else
             {
               if(flag_X)
-                Mem_Free(databuff);
+                gsh_free(databuff);
               return st.major;
             }
         }
@@ -4031,7 +4031,7 @@ int fn_mfsl_write(int argc,     /* IN : number of args in argv */
     }
 
   if(flag_X)
-    Mem_Free(databuff);
+    gsh_free(databuff);
 
   return 0;
 

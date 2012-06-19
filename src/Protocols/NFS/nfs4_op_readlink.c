@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -106,20 +105,20 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
   /* Using cache_inode_readlink */
   if(cache_inode_readlink(data->current_entry,
                           &symlink_path,
-                          data->pclient,
-                          data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                          data->pcontext, &cache_status)
+     == CACHE_INODE_SUCCESS)
     {
       /* Alloc read link */
 
       if((res_READLINK4.READLINK4res_u.resok4.link.utf8string_val =
-          (char *)Mem_Alloc_Label(symlink_path.len, "nfs4_op_readlink")) == NULL)
+          gsh_malloc(symlink_path.len)) == NULL)
         {
           res_READLINK4.status = NFS4ERR_INVAL;
           return res_READLINK4.status;
         }
 
       /* convert the fsal path to a utf8 string */
-      if(str2utf8((char *)symlink_path.path, &res_READLINK4.READLINK4res_u.resok4.link)
+      if(str2utf8(symlink_path.path, &res_READLINK4.READLINK4res_u.resok4.link)
          == -1)
         {
           res_READLINK4.status = NFS4ERR_INVAL;
@@ -142,12 +141,13 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_readlink_Free(READLINK4res * resp)
 {
-  if(resp->status == NFS4_OK && resp->READLINK4res_u.resok4.link.utf8string_len > 0)
-    Mem_Free((char *)resp->READLINK4res_u.resok4.link.utf8string_val);
+  if(resp->status == NFS4_OK && resp->READLINK4res_u.resok4.link
+     .utf8string_len > 0)
+    gsh_free(resp->READLINK4res_u.resok4.link.utf8string_val);
 
   return;
 }                               /* nfs4_op_readlink_Free */

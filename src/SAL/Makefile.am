@@ -10,12 +10,12 @@ libsal_la_SOURCES = state_async.c                    \
                     state_lock.c                     \
                     state_share.c                    \
                     state_misc.c                     \
+                    nfs4_clientid.c                  \
                     nfs4_state.c                     \
                     nfs4_state_id.c                  \
                     nfs4_owner.c                     \
                     nfs4_lease.c                     \
                     nfs4_recovery.c                  \
-                    ../include/BuddyMalloc.h         \
                     ../include/HashData.h            \
                     ../include/HashTable.h           \
                     ../include/LRU_List.h            \
@@ -36,8 +36,7 @@ libsal_la_SOURCES = state_async.c                    \
                     ../include/nsm.h                 \
                     ../include/ganesha_rpc.h         \
                     ../include/sal_data.h            \
-                    ../include/sal_functions.h       \
-                    ../include/stuff_alloc.h
+                    ../include/sal_functions.h
 
 if USE_NLM
 libsal_la_SOURCES += nlm_owner.c
@@ -51,6 +50,9 @@ if USE_PNFS_MDS
 libsal_la_SOURCES += state_layout.c
 endif
 
+if USE_NFS4_1
+libsal_la_SOURCES += nfs41_session_id.c 
+endif
 
 new: clean all
 

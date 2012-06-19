@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#include "stuff_alloc.h"
 #include "sal_functions.h"
 #include "nlm4.h"
 #include "nlm_util.h"
@@ -46,7 +45,7 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host,
                             state_async_func_t   func,
                             nfs_res_t          * pres)
 {
-  state_async_queue_t    * arg = (state_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  state_async_queue_t    * arg = gsh_malloc(sizeof(*arg));
   state_nlm_async_data_t * nlm_arg;
   state_status_t           status;
 
@@ -62,7 +61,7 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host,
         {
           LogFullDebug(COMPONENT_NLM,
                        "Unable to copy async response file handle");
-          Mem_Free(arg);
+          gsh_free(arg);
           return NFS_REQ_DROP;
         }
    }
@@ -77,7 +76,7 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host,
 
   if(status != STATE_SUCCESS)
     {
-      Mem_Free(arg);
+      gsh_free(arg);
       return NFS_REQ_DROP;
     }
 
@@ -88,7 +87,7 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
                                 state_async_func_t   func,
                                 nfs_res_t          * pres)
 {
-  state_async_queue_t    * arg = (state_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  state_async_queue_t    * arg = gsh_malloc(sizeof(*arg));
   state_nlm_async_data_t * nlm_arg;
   state_status_t           status;
 
@@ -104,7 +103,7 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
         {
           LogFullDebug(COMPONENT_NLM,
                        "Unable to copy async response file handle");
-          Mem_Free(arg);
+          gsh_free(arg);
           return NFS_REQ_DROP;
         }
       else if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
@@ -115,7 +114,7 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
               LogFullDebug(COMPONENT_NLM,
                            "Unable to copy async response oh");
               netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
-              Mem_Free(arg);
+              gsh_free(arg);
               return NFS_REQ_DROP;
             }
         }
@@ -135,7 +134,7 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
       netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
       if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
         netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh);
-      Mem_Free(arg);
+      gsh_free(arg);
       return NFS_REQ_DROP;
     }
 

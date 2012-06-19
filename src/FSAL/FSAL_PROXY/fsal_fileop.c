@@ -28,13 +28,13 @@
 #endif
 #include "nfs4.h"
 
-#include "stuff_alloc.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
 
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
+#include "abstract_mem.h"
 
 #ifdef _APPLE
 #define strnlen( s, l ) strlen( s )
@@ -1083,7 +1083,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
       GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
       (fsal_handle_t *) &file_descriptor->fhandle) == FALSE)
     {
-      Mem_Free((char *)name.utf8string_val);
+      gsh_free(name.utf8string_val);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
     }
 

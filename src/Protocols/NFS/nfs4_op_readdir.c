@@ -36,7 +36,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -170,8 +169,9 @@ nfs4_op_readdir(struct nfs_argop4 *op,
           goto out;
      }
 
-     /* If maxcount is too short, return NFS4ERR_TOOSMALL */
-     if (maxcount < sizeof(entry4) || estimated_num_entries == 0) {
+     /* If maxcount is too short (14 should be enough for an empty directory)
+          return NFS4ERR_TOOSMALL */
+     if (maxcount < 14 || estimated_num_entries == 0) {
           res_READDIR4.status = NFS4ERR_TOOSMALL;
           goto out;
      }
@@ -203,10 +203,8 @@ nfs4_op_readdir(struct nfs_argop4 *op,
 
      /* Prepare to read the entries */
 
-     entries = Mem_Alloc(estimated_num_entries *
-                         sizeof(entry4));
-     memset(entries, 0, estimated_num_entries * sizeof(entry4));
-
+     entries = gsh_calloc(estimated_num_entries,
+                          sizeof(entry4));
      cb_data.entries = entries;
      cb_data.mem_left = maxcount - sizeof(READDIR4resok);
      cb_data.count = 0;
@@ -219,7 +217,6 @@ nfs4_op_readdir(struct nfs_argop4 *op,
                              cookie,
                              &num_entries,
                              &eod_met,
-                             data->pclient,
                              data->pcontext,
                              nfs4_readdir_callback,
                              &cb_data,
@@ -236,7 +233,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
           /* Put the entry's list in the READDIR reply if there were any. */
           res_READDIR4.READDIR4res_u.resok4.reply.entries = entries;
      } else {
-          Mem_Free(entries);
+          gsh_free(entries);
           res_READDIR4.READDIR4res_u.resok4.reply.entries
                = entries = NULL;
      }
@@ -336,7 +333,7 @@ nfs4_readdir_callback(void* opaque,
      tracker->mem_left -= (namelen + 1);
      tracker->entries[tracker->count].name.utf8string_len = namelen;
      tracker->entries[tracker->count].name.utf8string_val
-          = Mem_Alloc(namelen + 1);
+          = gsh_malloc(namelen + 1);
      strcpy(tracker->entries[tracker->count].name.utf8string_val,
             name);
 
@@ -344,7 +341,7 @@ nfs4_readdir_callback(void* opaque,
          (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {
           if (!nfs4_FSALToFhandle(&entryFH, handle, tracker->data)) {
                tracker->error = NFS4ERR_SERVERFAULT;
-               Mem_Free(tracker->entries[tracker->count].name.utf8string_val);
+               gsh_free(tracker->entries[tracker->count].name.utf8string_val);
                return FALSE;
           }
      }
@@ -368,11 +365,11 @@ nfs4_readdir_callback(void* opaque,
            sizeof(uint32_t)) +
           (tracker->entries[tracker->count]
            .attrs.attr_vals.attrlist4_len))) {
-          Mem_Free(tracker->entries[tracker->count]
+          gsh_free(tracker->entries[tracker->count]
                    .attrs.attrmask.bitmap4_val);
-          Mem_Free(tracker->entries[tracker->count]
+          gsh_free(tracker->entries[tracker->count]
                    .attrs.attr_vals.attrlist4_val);
-          Mem_Free(tracker->entries[tracker->count].name.utf8string_val);
+          gsh_free(tracker->entries[tracker->count].name.utf8string_val);
           if (tracker->count == 0) {
                tracker->error = NFS4ERR_TOOSMALL;
           }
@@ -403,15 +400,15 @@ free_entries(entry4 *entries)
           entry = entry->nextentry) {
           if (entry->attrs.attrmask.bitmap4_val !=
               RdAttrErrorBitmap.bitmap4_val) {
-               Mem_Free(entry->attrs.attrmask.bitmap4_val);
+               gsh_free(entry->attrs.attrmask.bitmap4_val);
           }
           if (entry->attrs.attr_vals.attrlist4_val !=
               RdAttrErrorVals.attrlist4_val) {
-               Mem_Free(entry->attrs.attr_vals.attrlist4_val);
+               gsh_free(entry->attrs.attr_vals.attrlist4_val);
           }
-          Mem_Free(entry->name.utf8string_val);
+          gsh_free(entry->name.utf8string_val);
      }
-     Mem_Free(entries);
+     gsh_free(entries);
 
      return;
 } /* free_entries */

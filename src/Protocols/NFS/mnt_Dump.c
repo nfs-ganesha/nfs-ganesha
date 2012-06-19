@@ -47,7 +47,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -59,23 +58,23 @@
 #include "nfs_proto_functions.h"
 
 /**
- * mnt_Dump: The Mount proc Dump function, for all versions.
+ * @brief The Mount proc Dump function, for all versions.
  *
- *  @param parg        [IN]
- *  @param pexportlist [IN]
- *  @param pcontextp      [IN]
- *  @param pclient     [INOUT]
- *  @param preq        [IN]
- *	@param pres        [OUT]
+ * @param[in]  parg     Arguments (ignored)
+ * @param[in]  pexport  Ignored
+ * @param[in]  pcontext Ignored
+ * @param[in]  pworker  Ignored
+ * @param[in]  preq     Ignored
+ * @param[out] pres     Pointer to results
  *
  */
 
-int mnt_Dump(nfs_arg_t * parg /* IN     */ ,
-             exportlist_t * pexport /* IN     */ ,
-             fsal_op_context_t * pcontext /* IN     */ ,
-             cache_inode_client_t * pclient /* INOUT  */ ,
-             struct svc_req *preq /* IN     */ ,
-             nfs_res_t * pres /* OUT    */ )
+int mnt_Dump(nfs_arg_t *parg,
+             exportlist_t *pexport,
+             fsal_op_context_t *pcontext,
+             nfs_worker_data_t *pworker,
+             struct svc_req *preq,
+             nfs_res_t * pres)
 {
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
 

@@ -10,7 +10,7 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -55,7 +55,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -66,32 +65,27 @@
 #include "mount.h"
 #include "nfs_proto_functions.h"
 
-/* BUGAZOMEU: /!\ Free is used as 'Mem_Free'. BuddyMalloc stuff is to be put here */
-#define Free(a ) Mem_Free( a )
-
 /**
- * mnt_Export: The Mount proc export function, for all versions.
- * 
+ * @brief The Mount proc export function, for all versions.
+ *
  * The MOUNT proc null function, for all versions.
- * 
- *  @param parg        [IN]    ignored
- *  @param pexportlist [IN]    The export list to be return to the client.
- *	@param pcontextp      [IN]    ignored
- *  @param pclient     [INOUT] ignored
- *  @param preq        [IN]    ignored
- *	@param pres        [OUT]   Pointer to the export list.
+ *
+ * @param[in]  parg     Ignored
+ * @param[in]  pexport  The export list to be return to the client.
+ * @param[in]  pcontext Ignored
+ * @param[in]  pworker  Ignored
+ * @param[in]  preq     Ignored
+ * @param[out] pres     Pointer to the export list
  *
  */
 
-int mnt_Export(nfs_arg_t * parg /* IN     */ ,
-               exportlist_t * pexport /* IN     */ ,
-               fsal_op_context_t * pcontext /* IN     */ ,
-               cache_inode_client_t * pclient /* INOUT  */ ,
-               struct svc_req *preq /* IN     */ ,
-               nfs_res_t * pres /* OUT    */ )
+int mnt_Export(nfs_arg_t *parg,
+               exportlist_t *pexport,
+               fsal_op_context_t *pcontext,
+               nfs_worker_data_t *pworker,
+               struct svc_req *preq,
+               nfs_res_t * pres)
 {
-
-  /* @todo : memset after Mem_Alloc */
 
   exportlist_t *p_current_item = pexport;       /* the current export item. */
 
@@ -112,10 +106,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
       exports new_expnode;      /* the export node to be added to the list */
       int buffsize;
 
-      new_expnode = (exports) Mem_Alloc(sizeof(exportnode));
-
-      /* paranoid command, to avoid parasites in the structure. */
-      memset(new_expnode, 0, sizeof(exportnode));
+      new_expnode = gsh_calloc(1,sizeof(exportnode));
 
       /* ---- ex_dir ------ */
 
@@ -128,10 +119,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
       buffsize = strlen(p_current_item->fullpath) + 1;
 
-      new_expnode->ex_dir = Mem_Alloc(buffsize);
-
-      /* Buffers Init */
-      memset(new_expnode->ex_dir, 0, buffsize);
+      new_expnode->ex_dir = gsh_calloc(1,buffsize);
 
       strncpy(new_expnode->ex_dir, p_current_item->fullpath, buffsize);
 
@@ -147,10 +135,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
           /* allocates the memory for all the groups, once for all */
           new_expnode->ex_groups =
-              (groups) Mem_Alloc(p_clients->num_clients * sizeof(groupnode));
-
-          /* paranoid command, to avoid parasites in the allocated strcuture. */
-          memset(new_expnode->ex_groups, 0, p_clients->num_clients * sizeof(groupnode));
+               gsh_calloc(p_clients->num_clients, sizeof(groupnode));
 
           for(i = 0; i < p_clients->num_clients; i++)
             {
@@ -169,10 +154,9 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
                 case HOSTIF_CLIENT:
 
                   /* allocates target buffer (+1 for security ) */
-                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(INET_ADDRSTRLEN + 1);
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_calloc(1, INET_ADDRSTRLEN + 1);
 
-                  /* clears memory : */
-                  memset(new_expnode->ex_groups[i].gr_name, 0, INET_ADDRSTRLEN + 1);
                   if(inet_ntop
                      (AF_INET, &(p_clients->clientarray[i].client.hostif.clientaddr),
                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
@@ -186,10 +170,9 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
                 case NETWORK_CLIENT:
 
                   /* allocates target buffer (+1 for security ) */
-                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(INET_ADDRSTRLEN + 1);
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_calloc(1, INET_ADDRSTRLEN + 1);
 
-                  /* clears memory : */
-                  memset(new_expnode->ex_groups[i].gr_name, 0, INET_ADDRSTRLEN + 1);
                   if(inet_ntop
                      (AF_INET, &(p_clients->clientarray[i].client.network.netaddr),
                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
@@ -204,10 +187,8 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
                   /* allocates target buffer */
 
-                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
-
-                  /* clears memory : */
-                  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_calloc(1, MAXHOSTNAMELEN);
 
                   strncpy(new_expnode->ex_groups[i].gr_name,
                           p_clients->clientarray[i].client.netgroup.netgroupname,
@@ -218,10 +199,8 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
                 case WILDCARDHOST_CLIENT:
 
                   /* allocates target buffer */
-                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
-
-                  /* clears memory : */
-                  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_calloc(1, MAXHOSTNAMELEN);
 
                   strncpy(new_expnode->ex_groups[i].gr_name,
                           p_clients->clientarray[i].client.wildcard.wildcard,
@@ -230,10 +209,8 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
                 case GSSPRINCIPAL_CLIENT:
 
-                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
-
-                  /* clears memory : */
-                  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_calloc(1, MAXHOSTNAMELEN);
 
                   strncpy(new_expnode->ex_groups[i].gr_name,
                           p_clients->clientarray[i].client.gssprinc.princname,
@@ -243,9 +220,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
                 default:
 
-                  /* Mem_Free resources and returns an error. */
-
-                  /* @todo : Mem_Free allocated resources */
+                  /* @todo : free allocated resources */
 
                   LogCrit(COMPONENT_NFSPROTO,
                           "MNT_EXPORT: Unknown export entry type: %d",
@@ -318,13 +293,13 @@ void mnt_Export_Free(nfs_res_t * pres)
 
       while (g)
         {
-          Mem_Free(g->gr_name);
+          gsh_free(g->gr_name);
           g = g->gr_next;
         }
-      Mem_Free(e->ex_groups);
-      Mem_Free(e->ex_dir);
-      Mem_Free(e);
-          
+      gsh_free(e->ex_groups);
+      gsh_free(e->ex_dir);
+      gsh_free(e);
+
       e = n;
   }
 }                               /* mnt_Export_Free */

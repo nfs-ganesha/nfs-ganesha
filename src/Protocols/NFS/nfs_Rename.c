@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -65,32 +64,30 @@
 
 /**
  *
- * nfs_Create: The NFS PROC2 and PROC3 SYMLINK
+ * @brief The NFS PROC2 and PROC3 RENAME
  *
- * Implements the NFS PROC SYMLINK function (for V2 and V3).
+ * Implements the NFS PROC RENAME function (for V2 and V3).
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS argument union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pclient  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
-               exportlist_t * pexport /* IN  */ ,
-               fsal_op_context_t * pcontext /* IN  */ ,
-               cache_inode_client_t * pclient /* IN  */ ,
-               struct svc_req *preq /* IN  */ ,
-               nfs_res_t * pres /* OUT */ )
+int nfs_Rename(nfs_arg_t *parg,
+               exportlist_t *pexport,
+               fsal_op_context_t *pcontext,
+               nfs_worker_data_t *pworker,
+               struct svc_req *preq,
+               nfs_res_t *pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Rename";
-
   char *str_entry_name = NULL;
   fsal_name_t entry_name;
   char *str_new_entry_name = NULL;
@@ -163,7 +160,7 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                          &(pres->res_dirop2.status),
                                          &(pres->res_create3.status),
                                          NULL,
-                                         &pre_attr, pcontext, pclient, &rc)) == NULL)
+                                         &pre_attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -178,7 +175,7 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                              &(pres->res_create3.status),
                                              NULL,
                                              &new_parent_attr,
-                                             pcontext, pclient, &rc)) == NULL)
+                                             pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -244,7 +241,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
       should_not_exists = cache_inode_lookup(new_parent_pentry,
                                              &new_entry_name,
                                              &tst_attr,
-                                             pclient,
                                              pcontext,
                                              &cache_status);
 
@@ -254,7 +250,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
           should_exists = cache_inode_lookup(parent_pentry,
                                              &entry_name,
                                              &tst_attr,
-                                             pclient,
                                              pcontext,
                                              &cache_status);
 
@@ -265,7 +260,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                new_parent_pentry,
                                &new_entry_name,
                                &attr, &new_attr,
-                               pclient,
                                pcontext, &cache_status);
 
           if(cache_status == CACHE_INODE_SUCCESS)
@@ -351,7 +345,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
               if((should_exists = cache_inode_lookup(parent_pentry,
                                                      &entry_name,
                                                      &tst_attr,
-                                                     pclient,
                                                      pcontext,
                                                      &cache_status))
                  != NULL)
@@ -393,14 +386,13 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                       goto out;
                     }
                   
-                  if(cache_inode_type_are_rename_compatible
+                  if(cache_inode_types_are_rename_compatible
                      (should_exists, should_not_exists))
                     {
                       /* Remove the old entry before renaming it */
                       if(cache_inode_remove(new_parent_pentry,
                                             &new_entry_name,
                                             &tst_attr,
-                                            pclient,
                                             pcontext,
                                             &cache_status) == CACHE_INODE_SUCCESS)
                         {
@@ -410,7 +402,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                                 &new_entry_name,
                                                 &attr,
                                                 &new_attr,
-                                                pclient,
                                                 pcontext,
                                                 &cache_status) == CACHE_INODE_SUCCESS)
                             {
@@ -481,16 +472,16 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
 
 out:
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   if (new_parent_pentry)
-      cache_inode_put(new_parent_pentry, pclient);
+      cache_inode_put(new_parent_pentry);
 
   if (should_not_exists)
-      cache_inode_put(should_not_exists, pclient);
+      cache_inode_put(should_not_exists);
 
   if (should_exists)
-      cache_inode_put(should_exists, pclient);
+      cache_inode_put(should_exists);
 
   return (rc);
 

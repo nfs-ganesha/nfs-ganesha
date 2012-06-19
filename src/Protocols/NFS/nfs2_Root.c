@@ -50,7 +50,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -62,25 +61,26 @@
 #include "nfs_tools.h"
 
 /**
- * nfs2_Root: Implements NFSPROC2_ROOT.
+ * @brief Implements NFSPROC2_ROOT.
  *
  * Implements NFSPROC2_ROOT.
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS argument union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return always NFS_REQ_OK (this routine does nothing)
+ * @retval NFS_REQ_OK (this routine does nothing)
  *
  */
-int nfs2_Root(nfs_arg_t * parg,
-              exportlist_t * pexport,
-              fsal_op_context_t * pcontext,
-              cache_inode_client_t * pclient,
-              struct svc_req *preq, nfs_res_t * pres)
+int nfs2_Root(nfs_arg_t *parg,
+              exportlist_t *pexport,
+              fsal_op_context_t *pcontext,
+              nfs_worker_data_t *pworker,
+              struct svc_req *preq,
+              nfs_res_t *pres)
 {
   /* This is an unsupported function, it is never used */
   LogCrit(COMPONENT_NFSPROTO,

@@ -146,7 +146,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "commands.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "Getopt.h"
 #include "cmd_nfstools.h"
 #include "cmd_tools.h"
@@ -236,7 +236,6 @@ typedef struct cmdnfs_thr_info__
   struct authunix_parms authunix_struct;
 
   /** Thread specific variable : the client for the cache */
-  cache_inode_client_t client;
   cache_content_client_t dc_client;
 
   /* info for advanced commands (pwd, ls, cd, ...) */
@@ -290,7 +289,7 @@ cmdnfs_thr_info_t *GetNFSClient()
     {
 
       /* allocates thread structure */
-      p_thr_info = (cmdnfs_thr_info_t *) Mem_Alloc(sizeof(cmdnfs_thr_info_t));
+      p_thr_info = gsh_malloc(sizeof(cmdnfs_thr_info_t));
 
       /* panic !!! */
       if(p_thr_info == NULL)
@@ -374,15 +373,9 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   p_thr_info->authunix_struct.aup_gid = getgid();
   p_thr_info->authunix_struct.aup_len = 0; /** @todo No secondary groups support. */
 
-  /* Init the cache_inode client */
-  if(cache_inode_client_init(&p_thr_info->client, &cache_client_param, 0, NULL) != 0)
-    return 1;
-
   /* Init the cache content client */
   if(cache_content_client_init(&p_thr_info->dc_client, datacache_client_param, "") != 0)
     return 1;
-
-  p_thr_info->client.pcontent_client = (caddr_t) & p_thr_info->dc_client;
 
   p_thr_info->is_thread_init = TRUE;
 
@@ -1315,7 +1308,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
       return -1;
     }
 
-  p_res = (READDIRPLUS3res *) Mem_Alloc(sizeof(READDIRPLUS3res));
+  p_res = gsh_malloc(sizeof(READDIRPLUS3res));
 
   rc = nfs3_Readdirplus((nfs_arg_t *) & arg,
                         pexport,
@@ -1324,7 +1317,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
 
   if(rc != 0)
     {
-      Mem_Free(p_res);
+      gsh_free(p_res);
       fprintf(output, "Error %d in nfs3_Readdirplus.\n", rc);
       return rc;
     }
@@ -1333,7 +1326,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
   if(rc != NFS3_OK)
     {
       nfs3_Readdirplus_Free((nfs_res_t *) p_res);
-      Mem_Free(p_res);
+      gsh_free(p_res);
       fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
       return rc;
     }
@@ -1353,7 +1346,7 @@ void nfs_readdirplus_free(nfs_res_t * to_free)
     return;
 
   nfs3_Readdirplus_Free((nfs_res_t *) to_free);
-  Mem_Free(to_free);
+  gsh_free(to_free);
 }
 
 static int nfs_create(cmdnfs_thr_info_t * p_thr_info,

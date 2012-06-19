@@ -69,14 +69,9 @@
 fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* IN */
-                            fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
-    )
+                            fsal_file_t * file_descriptor,      /* NOT USED */
+                            fsal_attrib_list_t * p_object_attributes) /* [ IN/OUT ] */
 {
-
-  int errsv, rc = 0;
-  int fd = -1;
-  gpfsfsal_file_t *file_desc = (gpfsfsal_file_t *)file_descriptor;
   fsal_status_t st;
 
   /* sanity checks.
@@ -85,48 +80,15 @@ fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
   if(!p_filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  if (file_desc && file_desc->fd != 0)
-    {
-      fd = file_desc->fd;
-      TakeTokenFSCall();
-      rc = ftruncate(fd, length);
-      errsv = errno;
-      ReleaseTokenFSCall();
-    }
-
-  /* either the fd passed in was 0, or invalid */
-  if (rc || fd == -1)
-    {
-      TakeTokenFSCall();
-      st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDWR);
-      ReleaseTokenFSCall();
-
-      if (FSAL_IS_ERROR(st))
-        ReturnStatus(st, INDEX_FSAL_truncate);
-
-      /* Executes the POSIX truncate operation */
-
-      TakeTokenFSCall();
-      rc = ftruncate(fd, length);
-      errsv = errno;
-      ReleaseTokenFSCall();
-
-      close(fd);
-    }
-
-  /* convert return code */
-  if(rc)
-    {
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
-    }
+  TakeTokenFSCall();
+  st = fsal_trucate_by_handle(p_context, p_filehandle, length);
+  ReleaseTokenFSCall();
+  if (FSAL_IS_ERROR(st))
+    ReturnStatus(st, INDEX_FSAL_truncate);
 
   /* Optionally retrieve attributes */
   if(p_object_attributes)
     {
-
       fsal_status_t st;
 
       st = GPFSFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
@@ -136,7 +98,6 @@ fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
         }
-
     }
 
   /* No error occurred */

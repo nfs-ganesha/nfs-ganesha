@@ -9,8 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stuff_alloc.h"
-#include "../include/cidr.h"
+#include "cidr.h"
+#include "abstract_mem.h"
+
 
 
 /* Get the prefix length */
@@ -84,7 +85,7 @@ cidr_get_addr(const CIDR *addr)
 		return(NULL);
 	}
 
-	toret = Mem_Alloc(16*sizeof(uint8_t));
+	toret = gsh_calloc(16, sizeof(uint8_t));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;
@@ -110,7 +111,7 @@ cidr_get_mask(const CIDR *addr)
 		return(NULL);
 	}
 
-	toret = Mem_Alloc(16*sizeof(uint8_t));
+	toret = gsh_calloc(16, sizeof(uint8_t));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;

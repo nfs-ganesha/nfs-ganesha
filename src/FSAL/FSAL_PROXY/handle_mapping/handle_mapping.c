@@ -37,7 +37,6 @@
 #include "handle_mapping_db.h"
 #include "handle_mapping_internal.h"
 #include "../fsal_internal.h"
-#include "stuff_alloc.h"
 
 /* hashe table definitions */
 
@@ -58,7 +57,10 @@ static hash_parameter_t handle_hash_config = {
   .hash_func_rbt = hash_digest_rbt,
   .compare_key = cmp_digest,
   .key_to_str = print_digest,
-  .val_to_str = print_handle
+  .val_to_str = print_handle,
+  .ht_name = "PROXY Handle Cache",
+  .flags = HT_FLAG_CACHE,
+  .ht_log_component = COMPONENT_FSAL
 };
 
 static hash_table_t *handle_map_hash = NULL;
@@ -79,10 +81,10 @@ typedef struct handle_pool_entry__
 
 static unsigned int nb_pool_prealloc = 1024;
 
-struct prealloc_pool digest_pool;
+struct pool_t *digest_pool;
 static pthread_mutex_t digest_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-struct prealloc_pool handle_pool;
+struct pool_th andle_pool;
 static pthread_mutex_t handle_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* helpers for pool allocation */
@@ -92,7 +94,7 @@ static digest_pool_entry_t *digest_alloc()
   digest_pool_entry_t *p_new;
 
   P(digest_pool_mutex);
-  GetFromPool(p_new, &digest_pool, digest_pool_entry_t);
+  p_new = pool_alloc(digest_pool, NULL);
   V(digest_pool_mutex);
 
   memset(p_new, 0, sizeof(digest_pool_entry_t));
@@ -105,7 +107,7 @@ static void digest_free(digest_pool_entry_t * p_digest)
   memset(p_digest, 0, sizeof(digest_pool_entry_t));
 
   P(digest_pool_mutex);
-  ReleaseToPool(p_digest, &digest_pool);
+  pool_free(digest_pool, p_digest);
   V(digest_pool_mutex);
 }
 
@@ -114,7 +116,7 @@ static handle_pool_entry_t *handle_alloc()
   handle_pool_entry_t *p_new;
 
   P(handle_pool_mutex);
-  GetFromPool(p_new, &handle_pool, handle_pool_entry_t);
+  p_new = pool_alloc(handle_pool, NULL);
   V(handle_pool_mutex);
 
   memset(p_new, 0, sizeof(handle_pool_entry_t));
@@ -127,7 +129,7 @@ static void handle_free(handle_pool_entry_t * p_handle)
   memset(p_handle, 0, sizeof(handle_pool_entry_t));
 
   P(handle_pool_mutex);
-  ReleaseToPool(p_handle, &handle_pool);
+  pool_free(handle_pool, p_handle);
   V(handle_pool_mutex);
 }
 
@@ -280,9 +282,9 @@ int HandleMap_Init(const handle_map_param_t * p_param)
 
   /* initialize memory pool of digests and handles */
 
-  MakePool(&digest_pool, nb_pool_prealloc, digest_pool_entry_t, NULL, NULL);
+  digest_pool = init_pool(NULL, sizeof(digest_pool_entry_t), NULL, NULL);
 
-  MakePool(&handle_pool, nb_pool_prealloc, handle_pool_entry_t, NULL, NULL);
+  handle_pool = init_pool(NULL, sizeof(handle_pool_entry_t), NULL, NULL);
 
   /* create hash table */
 

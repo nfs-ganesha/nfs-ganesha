@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -66,32 +65,30 @@
 
 /**
  *
- * nfs_Create: The NFS PROC2 and PROC3 SYMLINK
+ * @brief The NFS PROC2 and PROC3 SYMLINK
  *
  * Implements the NFS PROC SYMLINK function (for V2 and V3).
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS argument union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
-                exportlist_t * pexport /* IN  */ ,
-                fsal_op_context_t * pcontext /* IN  */ ,
-                cache_inode_client_t * pclient /* IN  */ ,
-                struct svc_req *preq /* IN  */ ,
-                nfs_res_t * pres /* OUT */ )
+int nfs_Symlink(nfs_arg_t *parg,
+                exportlist_t *pexport,
+                fsal_op_context_t *pcontext,
+                nfs_worker_data_t *pworker,
+                struct svc_req *preq,
+                nfs_res_t *pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Symlink";
-
   char *str_symlink_name = NULL;
   fsal_name_t symlink_name;
   char *str_target_path = NULL;
@@ -158,7 +155,7 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                                          &(pres->res_symlink3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;;
@@ -248,7 +245,7 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                                               mode,
                                               &create_arg,
                                               &attr_symlink,
-                                              pclient, pcontext, &cache_status)) != NULL)
+                                              pcontext, &cache_status)) != NULL)
         {
           switch (preq->rq_vers)
             {
@@ -289,7 +286,6 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                   /* A call to cache_inode_setattr is required */
                   if(cache_inode_setattr(symlink_pentry,
                                          &attributes_symlink,
-                                         pclient,
                                          pcontext, &cache_status) != CACHE_INODE_SUCCESS)
                     {
                       /* If we are here, there was an error */
@@ -327,7 +323,7 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                  (&pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
                   pfsal_handle, pexport) == 0)
                 {
-                  Mem_Free((char *)pres->res_symlink3.SYMLINK3res_u.resok.obj.
+                  gsh_free(pres->res_symlink3.SYMLINK3res_u.resok.obj.
                            post_op_fh3_u.handle.data.data_val);
 
                   pres->res_symlink3.status = NFS3ERR_BADHANDLE;
@@ -338,11 +334,11 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
               /* The the parent pentry attributes for building Wcc Data */
               if(cache_inode_getattr(parent_pentry,
                                      &attr_parent_after,
-                                     pclient,
                                      pcontext,
-                                     &cache_status_parent) != CACHE_INODE_SUCCESS)
+                                     &cache_status_parent)
+                 != CACHE_INODE_SUCCESS)
                 {
-                  Mem_Free((char *)pres->res_symlink3.SYMLINK3res_u.resok.obj.
+                  gsh_free(pres->res_symlink3.SYMLINK3res_u.resok.obj.
                            post_op_fh3_u.handle.data.data_val);
 
                   pres->res_symlink3.status = NFS3ERR_BADHANDLE;
@@ -397,10 +393,10 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
 out:
   /* return references */
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   if (symlink_pentry)
-      cache_inode_put(symlink_pentry, pclient);
+      cache_inode_put(symlink_pentry);
 
   return (rc);
 
@@ -418,6 +414,6 @@ void nfs_Symlink_Free(nfs_res_t * resp)
 {
   if((resp->res_symlink3.status == NFS3_OK) &&
      (resp->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows == TRUE))
-    Mem_Free(resp->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.data.
-             data_val);
+    gsh_free(resp->res_symlink3.SYMLINK3res_u.resok.obj
+             .post_op_fh3_u.handle.data.data_val);
 }                               /* nfs_Symlink_Free */

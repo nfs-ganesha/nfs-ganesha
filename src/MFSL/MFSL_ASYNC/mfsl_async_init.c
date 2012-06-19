@@ -10,21 +10,21 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    fsal.h
+ * \file    fsal_async_init.h
  * \author  $Author: leibovic $
  * \date    $Date: 2006/02/17 13:41:01 $
  * \version $Revision: 1.72 $
@@ -48,9 +48,7 @@
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "stuff_alloc.h"
-
-#ifndef _USE_SWIG
+#include "abstract_mem.h"
 
 pthread_t mfsl_async_adt_thrid;
 pthread_t *mfsl_async_synclet_thrid;
@@ -89,12 +87,12 @@ fsal_status_t MFSL_Init(mfsl_parameter_t * init_info    /* IN */
 
   /* Allocate the synclet related structure */
   if((mfsl_async_synclet_thrid =
-      (pthread_t *) Mem_Alloc(init_info->nb_synclet * sizeof(pthread_t))) == NULL)
+      gsh_malloc(init_info->nb_synclet * sizeof(pthread_t))) == NULL)
     MFSL_return(ERR_FSAL_NOMEM, errno);
 
   if((synclet_data =
-      (mfsl_synclet_data_t *) Mem_Alloc(init_info->nb_synclet *
-                                        sizeof(mfsl_synclet_data_t))) == NULL)
+      gsh_calloc(init_info->nb_synclet,
+                 sizeof(mfsl_synclet_data_t))) == NULL)
     MFSL_return(ERR_FSAL_NOMEM, errno);
 
   for(i = 0; i < init_info->nb_synclet; i++)
@@ -135,5 +133,3 @@ fsal_status_t MFSL_Init(mfsl_parameter_t * init_info    /* IN */
   /* Regular Exit */
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }
-
-#endif                          /* ! _USE_SWIG */

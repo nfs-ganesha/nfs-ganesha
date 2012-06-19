@@ -56,7 +56,6 @@
  *		register struct rpc_msg *msg;
  *
  */
-
 enum auth_stat Gssrpc__svcauth_none(register struct svc_req *rqst,
                                     register struct rpc_msg *msg, bool_t * no_dispatch);
 
@@ -122,7 +121,8 @@ Rpcsecgss__authenticate(register struct svc_req *rqst,
   *no_dispatch = FALSE;
   for(i = 0; i < svcauthnum; i++)
     {
-      if(cred_flavor == svcauthsw[i].flavor && svcauthsw[i].authenticator != NULL)
+      if((cred_flavor == svcauthsw[i].flavor) &&
+         (svcauthsw[i].authenticator != NULL))
         {
           return ((*(svcauthsw[i].authenticator)) (rqst, msg, no_dispatch));
         }

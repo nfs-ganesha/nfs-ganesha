@@ -33,7 +33,6 @@
 #endif
 
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
@@ -89,7 +88,7 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
         int duration;
 
         /* limit the grace period to a maximum of 45 seconds */
-        duration = MIN(45, nfs_param.nfsv4_param.lease_lifetime);
+        duration = MIN(60, nfs_param.nfsv4_param.lease_lifetime);
 
         P(grace.g_mutex);
 
@@ -100,7 +99,7 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
         if (gsp && gsp->nodeid != 0)
                 nfs4_load_recov_clids_nolock(gsp->nodeid);
 
-        LogDebug(COMPONENT_NFS_V4, "grace period started, duration(%d)",
+        LogDebug(COMPONENT_STATE, "grace period started, duration(%d)",
             duration);
 
         grace.g_start = time(NULL);
@@ -120,7 +119,7 @@ nfs_in_grace()
 
         V(grace.g_mutex);
 
-        LogDebug(COMPONENT_NFS_V4, "in grace period  == %d", gp);
+        LogDebug(COMPONENT_STATE, "in grace period  == %d", gp);
 
         return gp;
 }
@@ -131,7 +130,7 @@ nfs_in_grace()
  * will be allowed to do reclaims during grace period.
  */
 void
-nfs4_create_clid_name(nfs_client_id_t *nfs_clientid, struct svc_req *svcp)
+nfs4_create_clid_name(nfs_client_id_t *pclientid, struct svc_req *svcp)
 {
         sockaddr_t sa;
         char buf[SOCK_NAME_MAX];
@@ -142,16 +141,16 @@ nfs4_create_clid_name(nfs_client_id_t *nfs_clientid, struct svc_req *svcp)
         else
                 strncpy(buf, "Unknown", SOCK_NAME_MAX);
 
-        nfs_clientid->recov_dir = Mem_Alloc(256);
-        if (nfs_clientid->recov_dir == NULL) {
-                LogEvent(COMPONENT_NFS_V4, "Mem_Alloc FAILED");
+        pclientid->cid_recov_dir = gsh_malloc(256);
+        if (pclientid->cid_recov_dir == NULL) {
+                LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
                 return;
         }
-        (void) snprintf(nfs_clientid->recov_dir, 256, "%s-%llx", buf,
-            (longlong_t)nfs_clientid->clientid);
+        (void) snprintf(pclientid->cid_recov_dir, 256, "%s-%llx", buf,
+            (longlong_t)pclientid->cid_clientid);
 
-        LogDebug(COMPONENT_NFS_V4, "Created client name [%s]",
-            nfs_clientid->recov_dir);
+        LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
+            pclientid->cid_recov_dir);
 }
 
 /*
@@ -159,27 +158,27 @@ nfs4_create_clid_name(nfs_client_id_t *nfs_clientid, struct svc_req *svcp)
  * will be able to reclaim state after a server reboot/restart.
  */
 void
-nfs4_add_clid(nfs_client_id_t *nfs_clientid)
+nfs4_add_clid(nfs_client_id_t *pclientid)
 {
         int err;
         char path[PATH_MAX];
 
-        if (nfs_clientid->recov_dir == NULL) {
-                LogDebug(COMPONENT_NFS_V4,
+        if (pclientid->cid_recov_dir == NULL) {
+                LogDebug(COMPONENT_CLIENTID,
                     "Failed to create client in recovery dir, no name");
                 return;
         }
 
         snprintf(path, PATH_MAX, "%s/%s", v4_recov_dir,
-            nfs_clientid->recov_dir);
+            pclientid->cid_recov_dir);
 
         err = mkdir(path, 0700);
         if (err == -1 && errno != EEXIST) {
-                LogEvent(COMPONENT_NFS_V4,
+                LogEvent(COMPONENT_CLIENTID,
                     "Failed to create client in recovery dir (%s), errno=%d",
                     path, errno);
         } else {
-                LogDebug(COMPONENT_NFS_V4, "Created client dir [%s]", path);
+                LogDebug(COMPONENT_CLIENTID, "Created client dir [%s]", path);
         }
 }
 
@@ -200,7 +199,7 @@ nfs4_rm_clid(char *recov_dir)
 
         err = rmdir(path);
         if (err == -1) {
-                LogEvent(COMPONENT_NFS_V4,
+                LogEvent(COMPONENT_CLIENTID,
                     "Failed to remove client in recovery dir (%s), errno=%d",
                     path, errno);
         }
@@ -211,7 +210,7 @@ nfs4_rm_clid(char *recov_dir)
  * if the server is not in grace period, then no reclaim can happen.
  */
 void
-nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
+nfs4_chk_clid(nfs_client_id_t *pclientid)
 {
         struct glist_head *node;
         clid_entry_t *clid_ent;
@@ -235,15 +234,20 @@ nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
          */
         glist_for_each(node, &grace.g_clid_list) {
                 clid_ent = glist_entry(node, clid_entry_t, cl_list);
-                LogDebug(COMPONENT_NFS_V4, "compare %s to %s",
-                    clid_ent->cl_name, nfs_clientid->recov_dir);
-                if (!strncmp(clid_ent->cl_name ,nfs_clientid->recov_dir,
+                LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
+                    clid_ent->cl_name, pclientid->cid_recov_dir);
+                if (!strncmp(clid_ent->cl_name, pclientid->cid_recov_dir,
                     256)) {
-                        LogDebug(COMPONENT_NFS_V4,
-                            "[%s] %llx is allowed to reclaim ",
-                            nfs_clientid->client_name,
-                            (long long)nfs_clientid->clientid);
-                        nfs_clientid->allow_reclaim = 1;
+                        if (isDebug(COMPONENT_CLIENTID)) {
+                            char str[HASHTABLE_DISPLAY_STRLEN];
+
+                            display_client_id_rec(pclientid, str);
+
+                            LogFullDebug(COMPONENT_CLIENTID,
+                                         "Allowed to reclaim ClientId %s",
+                                         str);
+                        }
+                        pclientid->cid_allow_reclaim = 1;
                         V(grace.g_mutex);
                         return;
                 }
@@ -273,15 +277,15 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
         while (dentp != NULL) {
                 /* don't add '.' and '..', or any '.*' entry */
                 if (dentp->d_name[0] != '.') {
-                        new_ent =
-                            (clid_entry_t *) Mem_Alloc(sizeof(clid_entry_t));
+                        new_ent = gsh_malloc(sizeof(clid_entry_t));
                         if (new_ent == NULL) {
-                                LogEvent(COMPONENT_NFS_V4, "Mem_Alloc FAILED");
+                                LogEvent(COMPONENT_CLIENTID,
+                                         "Unable to allocate memory.");
                                 return -1;
                         }
                         strncpy(new_ent->cl_name, dentp->d_name, 256);
                         glist_add(&grace.g_clid_list, &new_ent->cl_list);
-                        LogDebug(COMPONENT_NFS_V4, "added %s to clid list",
+                        LogDebug(COMPONENT_CLIENTID, "added %s to clid list",
                             new_ent->cl_name);
                         if (srcdir != NULL) {
                                 (void) snprintf(src, PATH_MAX, "%s/%s",
@@ -293,7 +297,7 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
                                 else
                                         rc = rename(src, dest);
                                 if (rc == -1) {
-                                        LogEvent(COMPONENT_NFS_V4,
+                                        LogEvent(COMPONENT_CLIENTID,
                                           "Failed to make dir (%s), errno=%d",
                                           dest, errno);
                                 }
@@ -321,13 +325,13 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                                 glist_del(node);
                                 clid_entry = glist_entry(node,
                                     clid_entry_t, cl_list);
-                                Mem_Free(clid_entry);
+                                gsh_free(clid_entry);
                         }
                 }
 
                 dp = opendir(v4_old_dir);
                 if (dp == NULL) {
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to open v4 recovery dir (%s), errno=%d",
                             v4_old_dir, errno);
                         return;
@@ -335,7 +339,7 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                 rc = nfs4_read_recov_clids(dp, NULL, 0);
                 if (rc == -1) {
                         (void) closedir(dp);
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to read v4 recovery dir (%s)", v4_old_dir);
                         return;
                 }
@@ -343,7 +347,7 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
 
                 dp = opendir(v4_recov_dir);
                 if (dp == NULL) {
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to open v4 recovery dir (%s), errno=%d",
                             v4_recov_dir, errno);
                         return;
@@ -352,14 +356,14 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                 rc = nfs4_read_recov_clids(dp, v4_recov_dir, 0);
                 if (rc == -1) {
                         (void) closedir(dp);
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to read v4 recovery dir (%s)",
                             v4_recov_dir);
                         return;
                 }
                 rc = closedir(dp);
                 if (rc == -1) {
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to close v4 recovery dir (%s), errno=%d",
                             v4_recov_dir, errno);
                 }
@@ -370,7 +374,7 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
 
                 dp = opendir(path);
                 if (dp == NULL) {
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to open v4 recovery dir (%s), errno=%d",
                             path, errno);
                         return;
@@ -379,14 +383,14 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                 rc = nfs4_read_recov_clids(dp, path, 1);
                 if (rc == -1) {
                         (void) closedir(dp);
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to read v4 recovery dir (%s)",
                             path);
                         return;
                 }
                 rc = closedir(dp);
                 if (rc == -1) {
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to close v4 recovery dir (%s), errno=%d",
                             path, errno);
                 }
@@ -414,7 +418,7 @@ nfs4_clean_old_recov_dir()
 
         dp = opendir(v4_old_dir);
         if (dp == NULL) {
-                LogEvent(COMPONENT_NFS_V4,
+                LogEvent(COMPONENT_CLIENTID,
                     "Failed to open old v4 recovery dir (%s), errno=%d",
                     v4_old_dir, errno);
                 return;
@@ -430,7 +434,7 @@ nfs4_clean_old_recov_dir()
 
                 rc = rmdir(path);
                 if (rc == -1) {
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to remove %s, errno=%d",
                             path, errno);
                 }
@@ -449,7 +453,7 @@ nfs4_create_recov_dir()
 
         err = mkdir(NFS_V4_RECOV_ROOT, 0755);
         if (err == -1 && errno != EEXIST) {
-                LogEvent(COMPONENT_NFS_V4,
+                LogEvent(COMPONENT_CLIENTID,
                     "Failed to create v4 recovery dir (%s), errno=%d",
                     NFS_V4_RECOV_ROOT, errno);
         }
@@ -458,7 +462,7 @@ nfs4_create_recov_dir()
             NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR);
         err = mkdir(v4_recov_dir, 0755);
         if (err == -1 && errno != EEXIST) {
-                LogEvent(COMPONENT_NFS_V4,
+                LogEvent(COMPONENT_CLIENTID,
                     "Failed to create v4 recovery dir(%s), errno=%d",
                     v4_recov_dir, errno);
         }
@@ -467,7 +471,7 @@ nfs4_create_recov_dir()
             NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR);
         err = mkdir(v4_old_dir, 0755);
         if (err == -1 && errno != EEXIST) {
-                LogEvent(COMPONENT_NFS_V4,
+                LogEvent(COMPONENT_CLIENTID,
                     "Failed to create v4 recovery dir(%s), errno=%d",
                     v4_old_dir, errno);
         }
@@ -477,7 +481,7 @@ nfs4_create_recov_dir()
 
                 err = mkdir(v4_recov_dir, 0755);
                 if (err == -1 && errno != EEXIST) {
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to create v4 recovery dir(%s), errno=%d",
                             v4_recov_dir, errno);
                 }
@@ -487,7 +491,7 @@ nfs4_create_recov_dir()
 
                 err = mkdir(v4_old_dir, 0755);
                 if (err == -1 && errno != EEXIST) {
-                        LogEvent(COMPONENT_NFS_V4,
+                        LogEvent(COMPONENT_CLIENTID,
                             "Failed to create v4 recovery dir(%s), errno=%d",
                             v4_old_dir, errno);
                 }

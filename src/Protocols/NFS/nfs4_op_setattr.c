@@ -10,12 +10,12 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -84,8 +83,7 @@
 int nfs4_op_setattr(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_setattr";
-
+  struct timeval         t;
   fsal_attrib_list_t     sattr;
   fsal_attrib_list_t     parent_attr;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
@@ -155,7 +153,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       /* Check stateid correctness and get pointer to state */
       res_SETATTR4.status = nfs4_Check_Stateid(&arg_SETATTR4.stateid,
                                                data->current_entry,
-                                               0LL,
                                                &pstate_found,
                                                data,
                                                STATEID_SPECIAL_ANY,
@@ -203,7 +200,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
            * Special stateid, no open state, check to see if any share conflicts
            * The stateid is all-0 or all-1
            */
-          res_SETATTR4.status = nfs4_check_special_stateid(pentry,"SETATTR(size)",
+          res_SETATTR4.status = nfs4_check_special_stateid(pentry,
+                                                           "SETATTR(size)",
                                                            FATTR4_ATTR_WRITE);
           if(res_SETATTR4.status != NFS4_OK)
             return res_SETATTR4.status;
@@ -212,7 +210,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       if((cache_status = cache_inode_truncate(data->current_entry,
                                               sattr.filesize,
                                               &parent_attr,
-                                              data->pclient,
                                               data->pcontext,
                                               &cache_status)) != CACHE_INODE_SUCCESS)
         {
@@ -253,18 +250,28 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
               return res_SETATTR4.status;
             }
         }
-#ifdef _TOTO
-      /* get the current time */
-      gettimeofday(&t, NULL);
 
+#define S_NSECS 1000000000UL  /* nsecs in 1s */
       /* Set the atime and mtime (ctime is not setable) */
+
+      /* get the current time */
+       gettimeofday(&t, NULL);
+
       /** @todo : check correctness of this block... looks suspicious */
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) == SET_TO_SERVER_TIME4)
         {
           sattr.atime.seconds = t.tv_sec;
           sattr.atime.nseconds = t.tv_usec;
         }
-
+      else
+        {
+          /* a carry into seconds considered invalid */
+          if (sattr.atime.nseconds >= S_NSECS)
+          {
+            res_SETATTR4.status = NFS4ERR_INVAL;
+            return res_SETATTR4.status;
+          }
+        }
       /* Should we use the time from the client handside or from the server handside ? */
       /** @todo : check correctness of this block... looks suspicious */
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
@@ -272,23 +279,17 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           sattr.mtime.seconds = t.tv_sec;
           sattr.mtime.nseconds = t.tv_usec;
         }
-#endif
-
-//warning fix for real (still hunting for root cause)
-#define S_NSECS 1000000000UL	/* nsecs in 1s */
-      /* a carry into seconds appears clearly ruled out */
-      if (sattr.atime.nseconds > S_NSECS)
-          sattr.atime.nseconds = 0;
-
-      if (sattr.mtime.nseconds > S_NSECS)
-          sattr.mtime.nseconds = 0;
-
-      if (sattr.ctime.nseconds > S_NSECS)
-          sattr.ctime.nseconds = 0;
+      else
+        {
+          if (sattr.mtime.nseconds >= S_NSECS)
+          {
+            res_SETATTR4.status = NFS4ERR_INVAL;
+            return res_SETATTR4.status;
+          }
+        }
 
       if(cache_inode_setattr(data->current_entry,
                              &sattr,
-                             data->pclient,
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_SETATTR4.status = nfs4_Errno(cache_status);
@@ -300,13 +301,11 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   res_SETATTR4.attrsset.bitmap4_len = arg_SETATTR4.obj_attributes.attrmask.bitmap4_len;
 
   if((res_SETATTR4.attrsset.bitmap4_val =
-      (uint32_t *) Mem_Alloc(res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int))) == NULL)
+      gsh_calloc(res_SETATTR4.attrsset.bitmap4_len, sizeof(uint32_t))) == NULL)
     {
       res_SETATTR4.status = NFS4ERR_SERVERFAULT;
       return res_SETATTR4.status;
     }
-  memset((char *)res_SETATTR4.attrsset.bitmap4_val, 0,
-         res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int));
 
   memcpy(res_SETATTR4.attrsset.bitmap4_val,
          arg_SETATTR4.obj_attributes.attrmask.bitmap4_val,
@@ -320,17 +319,17 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
 /**
  * nfs4_op_setattr_Free: frees what was allocated to handle nfs4_op_setattr.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_setattr.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_setattr_Free(SETATTR4res * resp)
 {
   if(resp->status == NFS4_OK)
-    Mem_Free(resp->attrsset.bitmap4_val);
+    gsh_free(resp->attrsset.bitmap4_val);
   return;
 }                               /* nfs4_op_setattr_Free */

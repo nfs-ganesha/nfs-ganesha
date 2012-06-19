@@ -3,7 +3,6 @@
 #endif
 
 #include "namespace.h"
-#include "BuddyMalloc.h"
 
 typedef struct ns_testset__
 {
@@ -49,10 +48,6 @@ int main(int argc, char **argv)
   SetDefaultLogging("TEST");
   SetNameFunction("main");
   InitLogging();
-
-#ifndef _NO_BUDDY_SYSTEM
-  BuddyInit(NULL);
-#endif
 
   /* namespace init */
   rc = NamespaceInit(ROOT_INODE, DEV, &gen);

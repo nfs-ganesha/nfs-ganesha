@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -81,7 +80,6 @@
 int nfs_cb_Null(nfs_arg_t * parg /* IN     */ ,
                 exportlist_t * pexport /* IN     */ ,
                 fsal_op_context_t * pcontext /* IN     */ ,
-                cache_inode_client_t * pclient /* INOUT  */ ,
                 hash_table_t * ht /* INOUT  */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )

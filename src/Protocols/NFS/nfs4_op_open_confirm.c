@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -74,8 +73,6 @@
 int nfs4_op_open_confirm(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_confirm";
-
   int              rc = 0;
   state_t        * pstate_found = NULL;
   state_owner_t  * popen_owner;
@@ -95,7 +92,6 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid,
                               data->current_entry,
-                              0LL,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,

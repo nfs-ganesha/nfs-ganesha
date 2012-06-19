@@ -47,7 +47,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>             /* for using gethostname */
 #include <stdlib.h>             /* for using exit */
@@ -188,6 +187,10 @@ int mfsl_async_hash_init(void)
   mfsl_hparam.compare_key = mfsl_async_compare_key;
   mfsl_hparam.key_to_str = mfsl_async_display_key;
   mfsl_hparam.val_to_str = mfsl_async_display_not_implemented;
+  mfsl_hparam.ht_name = "MFSL Async Cache";
+  mfsl_hparam.flags = HT_FLAG_CACHE;
+  mfsl_hparam.ht_log_component = COMPONENT_MFSL;
+  
 
   /* Init de la table */
   if((mfsl_ht = HashTable_Init(&mfsl_hparam)) == NULL)
@@ -266,8 +269,6 @@ int mfsl_async_remove_specdata(mfsl_object_t * key)
   if(HashTable_Del(mfsl_ht, &buffkey, &old_key, NULL) == HASHTABLE_SUCCESS)
     {
       status = 1;
-        /** @todo release previously allocated specdata */
-      // Mem_Free( old_key.pdata ) ;
     }
   else
     {

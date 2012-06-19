@@ -4,7 +4,6 @@
 #ifndef GANESHA_RPC_H
 #define GANESHA_RPC_H
 
-
 #include <rpc/xdr_inline.h>
 #include <rpc/rpc.h>
 #include <rpc/svc.h>
@@ -27,45 +26,15 @@ void socket_setoptions(int socketFd);
 #define __FDS_BITS(set) ((set)->fds_bits)
 #endif
 
-#ifdef _USE_TIRPC
 typedef struct sockaddr_storage sockaddr_t;
-#else
-typedef struct sockaddr_in sockaddr_t;
-#endif
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-#define XP_SOCK xp_fd
-#else
-#define XP_SOCK xp_sock
-#endif
+#define SOCK_NAME_MAX 128
 
-#ifndef AUTH_SYS
-#define AUTH_SYS 1
-#endif
-
-#ifdef _USE_TIRPC
 extern void Svc_dg_soft_destroy(SVCXPRT * xport);
 extern struct netconfig *getnetconfigent(const char *netid);
 extern void freenetconfigent(struct netconfig *);
 extern SVCXPRT *Svc_vc_create(int, u_int, u_int);
 extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
-
-#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
-extern int CheckXprt(SVCXPRT *xprt);
-#else
-#define CheckXprt(ptr)
-#endif
-
-#else                       /* not _USE_TIRPC */
-
-extern void Svcudp_soft_destroy(SVCXPRT * xprt);
-extern SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
-extern SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz);
-extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
-                    int protocol);
-#define CheckXprt(ptr)
-
-#endif                          /* _USE_TIRPC */
 
 #ifdef _SOLARIS
 #define _authenticate __authenticate
@@ -111,9 +80,7 @@ int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param);
 enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst,
                                        struct rpc_msg *msg,
                                        bool_t * no_dispatch);
-#endif
 
-#ifdef _HAVE_GSSAPI
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
 uint32_t gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 uint64_t gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
@@ -122,13 +89,92 @@ int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
 const char *str_gc_proc(rpc_gss_proc_t gc_proc);
+
 #endif                          /* _HAVE_GSSAPI */
 
-#ifdef _USE_TIRPC
-#define SOCK_NAME_MAX 128
-#else
-#define SOCK_NAME_MAX 32
-#endif
+/* Private data associated with a new TI-RPC (TCP) SVCXPRT (transport
+ * connection), ie, xprt->xp_u1.
+ */
+#define XPRT_PRIVATE_FLAG_NONE       0x0000
+#define XPRT_PRIVATE_FLAG_DESTROYED  0x0001 /* forward destroy */
+#define XPRT_PRIVATE_FLAG_LOCKED     0x0002
+#define XPRT_PRIVATE_FLAG_REF        0x0004
+
+typedef struct gsh_xprt_private
+{
+    uint32_t flags;
+    uint32_t refcnt;
+    uint32_t multi_cnt; /* multi-dispatch counter */
+} gsh_xprt_private_t;
+
+static inline gsh_xprt_private_t *
+alloc_gsh_xprt_private(uint32_t flags)
+{
+    gsh_xprt_private_t *xu = gsh_malloc(sizeof(gsh_xprt_private_t));
+
+    xu->flags = 0;
+    xu->multi_cnt = 0;
+
+    if (flags & XPRT_PRIVATE_FLAG_REF)
+        xu->refcnt = 1;
+    else
+        xu->refcnt = 0;
+
+    return (xu);
+}
+
+static inline void
+free_gsh_xprt_private(gsh_xprt_private_t *xu)
+{
+    gsh_free(xu);
+}
+
+static inline void
+gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
+{
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+
+    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
+        pthread_rwlock_wrlock(&xprt->lock);
+
+    ++(xu->refcnt);
+
+    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
+        pthread_rwlock_unlock(&xprt->lock);
+}
+
+static inline void
+gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
+{
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    uint32_t refcnt;
+
+    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
+        pthread_rwlock_wrlock(&xprt->lock);
+
+    refcnt = --(xu->refcnt);
+
+    pthread_rwlock_unlock(&xprt->lock);
+
+    /* finalize */
+    if (refcnt == 0) {
+        if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
+            SVC_DESTROY(xprt);
+        }
+    }
+}
+
+static inline void
+gsh_xprt_destroy(SVCXPRT *xprt)
+{
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+
+    pthread_rwlock_wrlock(&xprt->lock);
+    xu->flags |= XPRT_PRIVATE_FLAG_DESTROYED;
+
+    gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED);
+}
+
 extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
@@ -162,4 +208,4 @@ extern CLIENT *Clnt_create(char *host,
 
 void Clnt_destroy(CLIENT *clnt);
 
-#endif
+#endif /* GANESHA_RPC_H */

@@ -18,7 +18,6 @@
 #include <signal.h>             /* for sigaction */
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "fsal.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -124,7 +123,7 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
 main(int argc, char *argv[])
 {
   SetDefaultLogging("TEST");
-  SetNamePgm("test_buddy");
+  SetNamePgm("test");
 
   char name[30];
   uint32_t valeur;

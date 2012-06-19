@@ -1,17 +1,10 @@
 ACLOCAL_AMFLAGS = -I m4
 
-if USE_BUDDY_SYSTEM
-BUDDYDIR = BuddyMalloc
-else
-BUDDYDIR =
-endif
-
 TIRPCDIR = libtirpc
 
 SUBDIRS = include             \
           Log 		      \
           $(LIBTREEDIR)       \
-          $(BUDDYDIR)         \
           Common              \
           ConfigParsing       \
           cidr                \
@@ -52,10 +45,6 @@ DOCDIRS = Cache_inode ConfigParsing HashTable IdMapper LRU Log MainNFSD Protocol
           FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS
 
 TESTRUNNER_DIRS = HashTable LRU Log RW_Lock
-
-if USE_BUDDY_SYSTEM
-TESTRUNNER_DIRS += BuddyMalloc
-endif
 
 testrunner: 
 	for i in $(TESTRUNNER_DIRS) ; do cd $$i ; make testrunner ; cd .. ; done

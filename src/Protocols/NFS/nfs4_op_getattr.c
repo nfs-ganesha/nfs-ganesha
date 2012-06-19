@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -137,7 +136,6 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
    */
   if(cache_inode_getattr(data->current_entry,
                          &attr,
-                         data->pclient,
                          data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       if(nfs4_FSALattr_To_Fattr(data->pexport,

@@ -42,7 +42,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -181,8 +180,7 @@ int nfs41_op_layoutget(struct nfs_argop4 *op,
           goto out;
      }
 
-     if ((layouts = (layout4*) Mem_Alloc(sizeof(layout4) *
-                                         max_segment_count))
+     if ((layouts = gsh_calloc(max_segment_count, sizeof(layout4)))
          == NULL) {
           nfs_status = NFS4ERR_SERVERFAULT;
           goto out;
@@ -255,15 +253,14 @@ out:
                size_t i;
                for (i = 0; i < numlayouts; i++) {
                     if (layouts[i].lo_content.loc_body.loc_body_val) {
-                         Mem_Free(layouts[i].lo_content.loc_body.loc_body_val);
+                         gsh_free(layouts[i].lo_content.loc_body.loc_body_val);
                     }
                }
-               Mem_Free(layouts);
+               gsh_free(layouts);
           }
 
           if ((layout_state) && (layout_state->state_seqid == 0)) {
                state_del(layout_state,
-                         data->pclient,
                          &state_status);
                layout_state = NULL;
           }
@@ -297,7 +294,7 @@ void nfs41_op_layoutget_Free(LAYOUTGET4res * resp)
                i < (resp->LAYOUTGET4res_u.logr_resok4
                     .logr_layout.logr_layout_len);
                i++) {
-               Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.
+               gsh_free(resp->LAYOUTGET4res_u.logr_resok4.logr_layout.
                         logr_layout_val[i].lo_content.loc_body.loc_body_val);
           }
      }
@@ -354,7 +351,6 @@ acquire_layout_state(compound_data_t *data,
 
      if ((nfs_status = nfs4_Check_Stateid(supplied_stateid,
                                           data->current_entry,
-                                          0LL,
                                           &supplied_state,
                                           data,
                                           STATEID_SPECIAL_CURRENT,
@@ -393,7 +389,6 @@ acquire_layout_state(compound_data_t *data,
                };
                if ((nfs_status
                     = nfs4_return_one_state(data->current_entry,
-                                            data->pclient,
                                             data->pcontext,
                                             TRUE,
                                             FALSE,
@@ -422,7 +417,6 @@ acquire_layout_state(compound_data_t *data,
                         STATE_TYPE_LAYOUT,
                         &layout_data,
                         clientid_owner,
-                        data->pclient,
                         data->pcontext,
                         layout_state,
                         &state_status) != STATE_SUCCESS) {
@@ -494,7 +488,7 @@ one_segment(fsal_handle_t *handle,
      current->lo_content.loc_type
           = arg->type;
      current->lo_content.loc_body.loc_body_val
-          = Mem_Alloc(loc_body_size);
+          = gsh_malloc(loc_body_size);
 
      xdrmem_create(&loc_body,
                    current->lo_content.loc_body.loc_body_val,
@@ -541,7 +535,7 @@ out:
 
      if (nfs_status != NFS4_OK) {
           if (current->lo_content.loc_body.loc_body_val)
-               Mem_Free(current->lo_content.loc_body.loc_body_val);
+               gsh_free(current->lo_content.loc_body.loc_body_val);
      }
 
      return nfs_status;

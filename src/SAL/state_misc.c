@@ -46,6 +46,8 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include <ctype.h>
+#include <assert.h>
 
 #include "log.h"
 #include "HashData.h"
@@ -53,6 +55,10 @@
 #include "fsal.h"
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
+
+pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
+pool_t *state_nfs4_owner_name_pool; /*< Pool for NFSv4 files's open_owner */
+pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
 
 const char *state_err_str(state_status_t err)
 {
@@ -376,7 +382,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       break;
 
     case STATE_STATE_CONFLICT:
-      nfserror = NFS4ERR_PERM;
+      nfserror = NFS4ERR_SHARE_DENIED;
       break;
 
     case STATE_QUOTA_EXCEEDED:
@@ -864,8 +870,7 @@ void inc_state_owner_ref(state_owner_t *powner)
   inc_state_owner_ref_locked(powner);
 }
 
-void dec_state_owner_ref_locked(state_owner_t        * powner,
-                                cache_inode_client_t * pclient)
+void dec_state_owner_ref_locked(state_owner_t        * powner)
 {
   bool_t remove = FALSE;
   char   str[HASHTABLE_DISPLAY_STRLEN];
@@ -897,7 +902,7 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
         {
 #ifdef _USE_NLM
           case STATE_LOCK_OWNER_NLM:
-            remove_nlm_owner(pclient, powner, str);
+            remove_nlm_owner(powner, str);
             break;
 #endif
 #ifdef _USE_9P
@@ -907,7 +912,7 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
           case STATE_OPEN_OWNER_NFSV4:
           case STATE_LOCK_OWNER_NFSV4:
           case STATE_CLIENTID_OWNER_NFSV4:
-            remove_nfs4_owner(pclient, powner, str);
+            remove_nfs4_owner(powner, str);
             break;
 
           case STATE_LOCK_OWNER_UNKNOWN:
@@ -919,16 +924,14 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
     }
 }
 
-void dec_state_owner_ref(state_owner_t        * powner,
-                         cache_inode_client_t * pclient)
+void dec_state_owner_ref(state_owner_t        * powner)
 {
   P(powner->so_mutex);
 
-  dec_state_owner_ref_locked(powner, pclient);
+  dec_state_owner_ref_locked(powner);
 }
 
-void state_wipe_file(cache_entry_t        * pentry,
-                     cache_inode_client_t * pclient)
+void state_wipe_file(cache_entry_t        * pentry)
 {
   bool_t had_lock = FALSE;
 
@@ -950,10 +953,47 @@ void state_wipe_file(cache_entry_t        * pentry,
       pthread_rwlock_unlock(&pentry->state_lock);
     }
   pthread_rwlock_wrlock(&pentry->state_lock);
-  state_lock_wipe(pentry, pclient);
-  state_nfs4_state_wipe(pentry, pclient);
+  state_lock_wipe(pentry);
+  state_nfs4_state_wipe(pentry);
   if (!had_lock)
     {
       pthread_rwlock_unlock(&pentry->state_lock);
     }
+}
+
+int DisplayOpaqueValue(char * value, int len, char * str)
+{
+  unsigned int   i = 0;
+  char         * strtmp = str;
+
+  if(value == NULL || len == 0)
+    return sprintf(str, "(NULL)");
+
+  strtmp += sprintf(strtmp, "(%d:", len);
+
+  assert(len > 0);
+
+  if(len < 0 || len > 1024)
+    len = 1024;
+
+  for(i = 0; i < len; i++)
+    if(!isprint(value[i]))
+      break;
+
+  if(i == len)
+    {
+      memcpy(strtmp, value, len);
+      strtmp += len;
+      *strtmp = '\0';
+    }
+  else
+    {
+      strtmp += sprintf(strtmp, "0x");
+      for(i = 0; i < len; i++)
+        strtmp += sprintf(strtmp, "%02x", (unsigned char)value[i]);
+    }
+
+  strtmp += sprintf(strtmp, ")");
+
+  return strtmp - str;
 }

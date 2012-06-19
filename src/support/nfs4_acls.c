@@ -6,7 +6,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "fsal.h"
 #include "HashTable.h"
 #include "log.h"
@@ -14,14 +14,10 @@
 #include "nfs4_acls.h"
 #include <openssl/md5.h>
 
-#ifndef _NO_BLOCK_PREALLOC
-static unsigned int nb_pool_prealloc = 1024;
-#endif
-
-struct prealloc_pool fsal_acl_pool;
+pool_t *fsal_acl_pool;
 static pthread_mutex_t fsal_acl_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-struct prealloc_pool fsal_acl_key_pool;
+pool_t *fsal_acl_key_pool;
 static pthread_mutex_t fsal_acl_key_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int fsal_acl_hash_both(hash_parameter_t * p_hparam,
@@ -37,13 +33,15 @@ static int display_fsal_acl_val(hash_buffer_t * p_val, char *outbuff);
 static hash_parameter_t fsal_acl_hash_config = {
   .index_size = 67,
   .alphabet_length = 10,
-  .nb_node_prealloc = 1024,
   .hash_func_key = NULL,
   .hash_func_rbt = NULL,
   .hash_func_both = fsal_acl_hash_both,
   .compare_key = compare_fsal_acl,
   .key_to_str = display_fsal_acl_key,
-  .val_to_str = display_fsal_acl_val
+  .val_to_str = display_fsal_acl_val,
+  .ht_name = "ACL Table",
+  .flags = HT_FLAG_CACHE,
+  .ht_log_component = COMPONENT_NFS_V4_ACL
 };
 
 static hash_table_t *fsal_acl_hash = NULL;
@@ -102,8 +100,7 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
 {
   fsal_ace_t *pace = NULL;
 
-  pace = (fsal_ace_t *)Mem_Alloc(nace * sizeof(fsal_ace_t));
-  memset(pace, 0, nace * sizeof(fsal_ace_t));
+  pace = gsh_calloc(nace, sizeof(fsal_ace_t));
   return pace;
 }
 
@@ -111,9 +108,7 @@ static fsal_acl_t *nfs4_acl_alloc()
 {
   fsal_acl_t *pacl = NULL;
 
-  P(fsal_acl_pool_mutex);
-  GetFromPool(pacl, &fsal_acl_pool, fsal_acl_t);
-  V(fsal_acl_pool_mutex);
+  pacl = pool_alloc(fsal_acl_pool, NULL);
 
   if(pacl == NULL)
   {
@@ -133,7 +128,7 @@ void nfs4_ace_free(fsal_ace_t *pace)
   LogDebug(COMPONENT_NFS_V4_ACL,
            "free ace %p", pace);
 
-  Mem_Free(pace);
+  gsh_free(pace);
 }
 
 static void nfs4_acl_free(fsal_acl_t *pacl)
@@ -145,7 +140,7 @@ static void nfs4_acl_free(fsal_acl_t *pacl)
     nfs4_ace_free(pacl->aces);
 
   P(fsal_acl_pool_mutex);
-  ReleaseToPool(pacl, &fsal_acl_pool);
+  pool_free(fsal_acl_pool, pacl);
   V(fsal_acl_pool_mutex);
  }
 
@@ -154,9 +149,7 @@ static int nfs4_acldata_2_key(hash_buffer_t * pkey, fsal_acl_data_t *pacldata)
   MD5_CTX c;
   fsal_acl_key_t *pacl_key = NULL;
 
-  P(fsal_acl_key_pool_mutex);
-  GetFromPool(pacl_key, &fsal_acl_key_pool, fsal_acl_key_t);
-  V(fsal_acl_key_pool_mutex);
+  pacl_key = pool_alloc(fsal_acl_key_pool, NULL);
 
   if(pacl_key == NULL)
   {
@@ -188,7 +181,7 @@ static void nfs4_release_acldata_key(hash_buffer_t *pkey)
     return;
 
   P(fsal_acl_key_pool_mutex);
-  ReleaseToPool(pacl_key, &fsal_acl_key_pool);
+  pool_free(fsal_acl_key_pool, pacl_key);
   V(fsal_acl_key_pool_mutex);
  }
 
@@ -489,13 +482,19 @@ static void nfs4_acls_test()
 int nfs4_acls_init()
 {
   LogDebug(COMPONENT_NFS_V4_ACL, "Initialize NFSv4 ACLs");
-  LogDebug(COMPONENT_NFS_V4_ACL, "sizeof(fsal_ace_t)=%lu, sizeof(fsal_acl_t)=%lu", (long unsigned int)sizeof(fsal_ace_t), (long unsigned int)sizeof(fsal_acl_t));
+  LogDebug(COMPONENT_NFS_V4_ACL,
+           "sizeof(fsal_ace_t)=%zu, sizeof(fsal_acl_t)=%zu",
+           sizeof(fsal_ace_t), sizeof(fsal_acl_t));
 
   /* Initialize memory pool of ACLs. */
-  MakePool(&fsal_acl_pool, nb_pool_prealloc, fsal_acl_t, NULL, NULL);
+  fsal_acl_pool = pool_init(NULL, sizeof(fsal_acl_t),
+                            pool_basic_substrate,
+                            NULL, NULL, NULL);
 
   /* Initialize memory pool of ACL keys. */
-  MakePool(&fsal_acl_key_pool, nb_pool_prealloc, fsal_acl_key_t, NULL, NULL);
+  fsal_acl_key_pool = pool_init(NULL, sizeof(fsal_acl_key_t),
+                                pool_basic_substrate,
+                                NULL, NULL, NULL);
 
   /* Create hash table. */
   fsal_acl_hash = HashTable_Init(&fsal_acl_hash_config);

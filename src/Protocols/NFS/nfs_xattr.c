@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
@@ -283,7 +282,6 @@ int nfs_SetPostOpXAttrFile(fsal_op_context_t * pcontext,
 int nfs3_Access_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
-                      cache_inode_client_t * pclient,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   fsal_attrib_list_t attr;
@@ -302,7 +300,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
                                   NULL,
                                   NULL,
                                   &(pres->res_access3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -355,7 +353,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
       if(parg->arg_access3.access & ACCESS3_LOOKUP)
         access_mode |= FSAL_X_OK;
 
-      xattrs.asked_attributes = pclient->attrmask;
+      xattrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -412,7 +410,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 }                               /* nfs3_Access_Xattr */
@@ -436,7 +434,6 @@ out:
 int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
-                      cache_inode_client_t * pclient,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   cache_inode_status_t cache_status;
@@ -456,7 +453,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                                       NULL,
                                       NULL,
                                       &(pres->res_lookup3.status),
-                                      NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                      NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
         goto out;
@@ -502,7 +499,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                                             data));
 
       /* Retrieve xattr attributes */
-      xattr_attrs.asked_attributes = pclient->attrmask;
+      xattr_attrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &xattr_attrs);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -538,7 +535,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry_dir)
-      cache_inode_put(pentry_dir, pclient);
+      cache_inode_put(pentry_dir);
 
   return (rc);
 }                               /* nfs3_Lookup_Xattr */
@@ -562,7 +559,6 @@ out:
 int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
                        fsal_op_context_t * pcontext,
-                       cache_inode_client_t * pclient,
                        struct svc_req *preq, nfs_res_t * pres)
 {
   typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
@@ -609,7 +605,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                                       NULL,
                                       &(pres->res_readdir3.status),
                                       NULL,
-                                      &dir_attr, pcontext, pclient, &rc)) == NULL)
+                                      &dir_attr, pcontext, &rc)) == NULL)
     {
       /* return NFS_REQ_DROP ; */
       goto out;
@@ -708,10 +704,9 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
       else
         {
           /* Allocation of the structure for reply */
-          entry_name_array =
-              (entry_name_array_item_t *) Mem_Alloc_Label(estimated_num_entries *
-                                                          (FSAL_MAX_NAME_LEN + 1),
-                                                          "entry_name_array in nfs3_Readdir");
+          entry_name_array
+            = gsh_calloc(estimated_num_entries,
+                         (FSAL_MAX_NAME_LEN + 1));
 
           if(entry_name_array == NULL)
             {
@@ -720,12 +715,11 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
             }
 
           pres->res_readdir3.READDIR3res_u.resok.reply.entries =
-              (entry3 *) Mem_Alloc_Label(estimated_num_entries * sizeof(entry3),
-                                         "READDIR3res_u.resok.reply.entries");
+            gsh_calloc(estimated_num_entries, sizeof(entry3));
 
           if(pres->res_readdir3.READDIR3res_u.resok.reply.entries == NULL)
             {
-              Mem_Free((char *)entry_name_array);
+              gsh_free(entry_name_array);
               rc = NFS_REQ_DROP;
               goto out;
             }
@@ -733,13 +727,12 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
           /* Allocation of the file handles */
 
           fh3_array =
-              (fh3_buffer_item_t *) Mem_Alloc_Label(estimated_num_entries * NFS3_FHSIZE,
-                                                    "Filehandle V3 in nfs3_Readdir");
+            gsh_calloc(estimated_num_entries, NFS3_FHSIZE);
 
           if(fh3_array == NULL)
             {
-              Mem_Free((char *)entry_name_array);
-              Mem_Free(pres->res_readdir3.READDIR3res_u.resok.reply.entries);
+              gsh_free(entry_name_array);
+              gsh_free(pres->res_readdir3.READDIR3res_u.resok.reply.entries);
               pres->res_readdir3.READDIR3res_u.resok.reply.entries = NULL;
               rc = NFS_REQ_DROP;
               goto out;
@@ -804,10 +797,12 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                       /*
                        * Not enough room to make even a single reply
                        */
-                      Mem_Free((char *)entry_name_array);
-                      Mem_Free((char *)fh3_array);
-                      Mem_Free(pres->res_readdir3.READDIR3res_u.resok.reply.entries);
-                      pres->res_readdir3.READDIR3res_u.resok.reply.entries = NULL;
+                      gsh_free(entry_name_array);
+                      gsh_free(fh3_array);
+                      gsh_free(pres->res_readdir3.READDIR3res_u
+                               .resok.reply.entries);
+                      pres->res_readdir3.READDIR3res_u.resok.reply.entries
+                        = NULL;
 
                       pres->res_readdir3.status = NFS3ERR_TOOSMALL;
 
@@ -871,7 +866,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (dir_pentry)
-      cache_inode_put(dir_pentry, pclient);
+      cache_inode_put(dir_pentry);
 
   return (rc);
 
@@ -895,7 +890,6 @@ out:
 int nfs3_Create_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
-                      cache_inode_client_t * pclient,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *parent_pentry = NULL;
@@ -919,7 +913,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
                                          &(pres->res_dirop2.status),
                                          NULL,
                                          NULL,
-                                         &pre_attr, pcontext, pclient, &rc)) == NULL)
+                                         &pre_attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -952,7 +946,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
       goto out;
     }
 
-  attr_attrs.asked_attributes = pclient->attrmask;
+  attr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, attr_id, &attr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -974,7 +968,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
   /* Set Post Op Fh3 structure */
   if(nfs3_FSALToFhandle(&resok->obj.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
     {
-      Mem_Free((char *)(resok->obj.post_op_fh3_u.handle.data.data_val));
+      gsh_free(resok->obj.post_op_fh3_u.handle.data.data_val);
       pres->res_create3.status = NFS3ERR_BADHANDLE;
       rc = NFS_REQ_OK;
       goto out;
@@ -1011,18 +1005,15 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   return (rc);
 
 }
 
-extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
-
 int nfs3_Write_Xattr(nfs_arg_t * parg,
                      exportlist_t * pexport,
                      fsal_op_context_t * pcontext,
-                     cache_inode_client_t * pclient,
                      struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *pentry;
@@ -1044,7 +1035,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
                                   NULL,
                                   NULL,
                                   &(pres->res_write3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -1094,7 +1085,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
 
   /* @TODO deal with error cases */
 
-  attr_attrs.asked_attributes = pclient->attrmask;
+  attr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &attr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -1119,7 +1110,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 }                               /* nfs3_Write_Xattr */
@@ -1142,7 +1133,6 @@ out:
 int nfs3_Read_Xattr(nfs_arg_t * parg,
                     exportlist_t * pexport,
                     fsal_op_context_t * pcontext,
-                    cache_inode_client_t * pclient,
                     struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *pentry;
@@ -1163,7 +1153,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
                                   NULL,
                                   NULL,
                                   &(pres->res_read3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -1202,13 +1192,11 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   size = parg->arg_read3.count;
 
   /* Get the xattr related to this xattr_id */
-  if((data = (char *)Mem_Alloc(XATTR_BUFFERSIZE)) == NULL)
+  if((data = gsh_calloc(1, XATTR_BUFFERSIZE)) == NULL)
     {
       rc = NFS_REQ_DROP;
       goto out;
     }
-  memset(data, 0, XATTR_BUFFERSIZE);
-
   size_returned = size;
   fsal_status = FSAL_GetXAttrValueById(pfsal_handle,
                                        xattr_id,
@@ -1225,7 +1213,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   pres->res_read3.READ3res_u.resok.eof = TRUE;
 
   /* Retrieve xattr attributes */
-  xattr_attrs.asked_attributes = pclient->attrmask;
+  xattr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &xattr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -1254,7 +1242,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 
@@ -1282,7 +1270,6 @@ out:
 int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            exportlist_t * pexport,
                            fsal_op_context_t * pcontext,
-                           cache_inode_client_t * pclient,
                            struct svc_req *preq, nfs_res_t * pres)
 {
   typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
@@ -1330,7 +1317,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                                       NULL,
                                       &(pres->res_readdirplus3.status),
                                       NULL,
-                                      &dir_attr, pcontext, pclient, &rc)) == NULL)
+                                      &dir_attr, pcontext, &rc)) == NULL)
     {
       /* return NFS_REQ_DROP ; */
       goto out;
@@ -1434,9 +1421,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
         {
           /* Allocation of the structure for reply */
           entry_name_array =
-              (entry_name_array_item_t *) Mem_Alloc_Label(estimated_num_entries *
-                                                         (FSAL_MAX_NAME_LEN + 1),
-                                                         "entry_name_array in nfs3_Readdirplus");
+            gsh_calloc(estimated_num_entries,
+                       (FSAL_MAX_NAME_LEN + 1));
 
           if(entry_name_array == NULL)
             {
@@ -1445,26 +1431,26 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
             }
 
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries =
-              (entryplus3 *) Mem_Alloc_Label(estimated_num_entries * sizeof(entryplus3),
-                                             "READDIRPLUS3res_u.resok.reply.entries");
+            gsh_calloc(estimated_num_entries, sizeof(entryplus3));
 
-          if(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries == NULL)
+          if(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries
+             == NULL)
             {
-              Mem_Free((char *)entry_name_array);
+              gsh_free(entry_name_array);
               rc = NFS_REQ_DROP;
               goto out;
             }
 
           /* Allocation of the file handles */
-          fh3_array =
-              (fh3_buffer_item_t *) Mem_Alloc_Label(estimated_num_entries * NFS3_FHSIZE,
-                                                    "Filehandle V3 in nfs3_Readdirplus");
+          fh3_array = gsh_calloc(estimated_num_entries, NFS3_FHSIZE);
 
           if(fh3_array == NULL)
             {
-              Mem_Free((char *)entry_name_array);
-              Mem_Free(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries);
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
+              gsh_free(entry_name_array);
+              gsh_free(pres->res_readdirplus3.READDIRPLUS3res_u
+                       .resok.reply.entries);
+              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries
+                = NULL;
 
               rc = NFS_REQ_DROP;
               goto out;
@@ -1569,11 +1555,12 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                       /*
                        * Not enough room to make even a single reply
                        */
-                      Mem_Free((char *)entry_name_array);
-                      Mem_Free((char *)fh3_array);
-                      Mem_Free(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                               entries);
-                      pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
+                      gsh_free(entry_name_array);
+                      gsh_free(fh3_array);
+                      gsh_free(pres->res_readdirplus3.READDIRPLUS3res_u
+                               .resok.reply.entries);
+                      pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply
+                           .entries = NULL;
 
                       pres->res_readdirplus3.status = NFS3ERR_TOOSMALL;
 
@@ -1673,7 +1660,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (dir_pentry)
-      cache_inode_put(dir_pentry, pclient);
+      cache_inode_put(dir_pentry);
 
   return (rc);
 
@@ -1697,7 +1684,6 @@ out:
 int nfs3_Getattr_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
                        fsal_op_context_t * pcontext,
-                       cache_inode_client_t * pclient,
                        struct svc_req *preq, nfs_res_t * pres)
 {
   fsal_attrib_list_t attr;
@@ -1713,7 +1699,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
                                   NULL,
                                   NULL,
                                   &(pres->res_getattr3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -1746,7 +1732,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
       fsal_status_t fsal_status;
       fsal_attrib_list_t xattrs;
 
-      xattrs.asked_attributes = pclient->attrmask;
+      xattrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = FSAL_GetXAttrAttrs(pfsal_handle, pcontext, xattr_id, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -1767,7 +1753,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 
@@ -1776,7 +1762,6 @@ out:
 int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
                       exportlist_t * pexport /* IN  */ ,
                       fsal_op_context_t * pcontext /* IN  */ ,
-                      cache_inode_client_t * pclient /* IN  */ ,
                       struct svc_req *preq /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {
@@ -1793,7 +1778,7 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
                                   NULL,
                                   NULL,
                                   &(pres->res_remove3.status),
-                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -1823,7 +1808,7 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 

@@ -29,7 +29,7 @@
 #endif
 #include "nfs4.h"
 
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -165,11 +165,11 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   if(nbreaddir > FSAL_READDIR_SIZE)
     nbreaddir = FSAL_READDIR_SIZE;
 
-  pxy_e4 = (struct proxy_entry4 *)Mem_Calloc(nbreaddir, sizeof(*pxy_e4));
+  pxy_e4 = gsh_calloc(nbreaddir, sizeof(*pxy_e4));
   if(pxy_e4 == NULL)
    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
-  memcpy( (char *)&start_position.data, (char *)&start_pos.data, sizeof( nfs_cookie4 ) ) ;
+  memcpy(&start_position.data, &start_pos.data, sizeof( nfs_cookie4));
 
   LogFullDebug(COMPONENT_FSAL, "---> Readdir Offset=%llu sizeof(entry4)=%lu sizeof(fsal_dirent_t)=%lu \n",
                (unsigned long long)start_position.data, sizeof(entry4), sizeof(fsal_dirent_t));
@@ -216,7 +216,7 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   /* >> Call your filesystem lookup function here << */
   if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &dir_descriptor->fhandle) == FALSE)
    {
-    Mem_Free( pxy_e4 ) ;
+    gsh_free(pxy_e4);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
    }
   /** @todo : use NFS4_OP_VERIFY to implement a cache validator, BUGAZOMEU */
@@ -231,13 +231,13 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   if(rc != RPC_SUCCESS)
     {
 
-      Mem_Free( pxy_e4 ) ;
+      gsh_free(pxy_e4) ;
       Return(ERR_FSAL_IO, rc, INDEX_FSAL_readdir);
     }
 
   if(resnfs4.status != NFS4_OK)
     {
-      Mem_Free( pxy_e4 ) ;
+      gsh_free(pxy_e4);
       return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_readdir);
     }
 
@@ -264,14 +264,14 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
           FSAL_CLEAR_MASK(pdirent[cpt].attributes.asked_attributes);
           FSAL_SET_MASK(pdirent[cpt].attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
 
-          Mem_Free( pxy_e4 ) ;
+          gsh_free(pxy_e4);
           Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
         }
 
       if(fsal_internal_proxy_fsal_utf8_2_name(&(pdirent[cpt].name),
                                               &(piter_entry->name)) == FALSE)
         {
-          Mem_Free( pxy_e4 ) ;
+          gsh_free(pxy_e4);
           Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
         }
 
@@ -294,7 +294,7 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   /* The number of entries to be returned */
   *nb_entries = cpt;
 
-  Mem_Free( pxy_e4 ) ;
+  gsh_free(pxy_e4);
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 
 }

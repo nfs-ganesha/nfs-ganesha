@@ -1265,7 +1265,7 @@ out:
 char *
 gssd_k5_err_msg(krb5_context context, krb5_error_code code)
 {
-	const char *origmsg;
+        const char *origmsg __attribute__((unused));
 	char *msg = NULL;
 
 #if HAVE_KRB5_GET_ERROR_MESSAGE

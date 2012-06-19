@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -87,8 +86,6 @@ static int op_dscommit(struct nfs_argop4 *op,
  * @return NFS4_OK
  *
  */
-
-extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier */
 
 #define arg_COMMIT4 op->nfs_argop4_u.opcommit
 #define res_COMMIT4 resp->nfs_resop4_u.opcommit
@@ -130,7 +127,6 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                         arg_COMMIT4.offset,
                         arg_COMMIT4.count,
                         CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
-                        data->pclient,
                         data->pcontext,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {

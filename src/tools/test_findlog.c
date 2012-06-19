@@ -50,6 +50,13 @@
 
 /* expected too much - need to figure out how to fix the script */
 
+#define MACRO \
+  LogWarn(COMPONENT_CONFIG,            \
+          "MACRO") \
+          { }
+
+/* expected too much - need to figure out how to fix the script */
+
   LogComponents[dont find me];
   LogAlways("but find me on line 53");
       LogTest("and me",
@@ -82,5 +89,28 @@
                       "find me 2 on 82",
                       key_name);
 
+  (Logtest("in parens"));
+
+  LogTest("foo") ;
+  if(LogTest("simple if"))
+    foo;
+  foo("oops shouldn't pick this up");
+
+  if(LogTest("if with braces on same line")) {
+    foo;
+  }
+  foo("oops shouldn't pick this up");
+
+  if(LogTest("if with braces"))
+    {
+      foo;
+    }
+  foo("oops shouldn't pick this up");
+
+  if(LogTest("if with braces 2"))
+    {
+      foo();
+    }
+  foo("oops shouldn't pick this up");
+
   LogTest("fini");
-  

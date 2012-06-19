@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -78,8 +77,6 @@
 
 int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_locku";
-
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
   state_owner_t     * plock_owner;
@@ -94,13 +91,10 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->resop = NFS4_OP_LOCKU;
   res_LOCKU4.status = NFS4_OK;
 
-#ifdef _WITH_NO_NFSV4_LOCKS
-  /* Lock are not supported */
-  res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCKU4.status;
-#else
-
-  /* Do basic checks on a filehandle */
+  /*
+   * Do basic checks on a filehandle
+   * LOCKU is done only on a file
+   */
   res_LOCKU4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
   if(res_LOCKU4.status != NFS4_OK)
     return res_LOCKU4.status;
@@ -129,7 +123,6 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
                               data->current_entry,
-                              data->psession->clientid,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
@@ -172,7 +165,6 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                   plock_owner,
                   pstate_found,
                   &lock_desc,
-                  data->pclient,
                   &state_status) != STATE_SUCCESS)
     {
       res_LOCKU4.status = nfs4_Errno_state(state_status);
@@ -189,7 +181,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                  tag);
 
   return res_LOCKU4.status;
-#endif
+
 }                               /* nfs41_op_locku */
 
 /**
@@ -204,6 +196,5 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
  */
 void nfs41_op_locku_Free(LOCKU4res * resp)
 {
-  /* Nothing to Mem_Free */
   return;
 }                               /* nfs41_op_locku_Free */

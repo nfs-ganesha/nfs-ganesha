@@ -35,7 +35,6 @@
 #endif                          /* _SOLARIS */
 
 #include "log.h"
-#include "stuff_alloc.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_avl.h"

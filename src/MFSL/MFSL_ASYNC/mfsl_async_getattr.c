@@ -43,9 +43,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
-
-#ifndef _USE_SWIG
 
 /**
  *
@@ -153,5 +150,3 @@ fsal_status_t MFSL_getattrs(mfsl_object_t * filehandle, /* IN */
       return FSAL_getattrs(&filehandle->handle, p_context, object_attributes);
     }
 }                               /* MFSL_getattrs */
-
-#endif                          /* ! _USE_SWIG */

@@ -42,7 +42,6 @@
 #include <pthread.h>
 #include <assert.h>
 #include <stdint.h>
-#include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -194,7 +193,7 @@ gweakref_table_t *gweakref_init(uint32_t npart, uint32_t cache_sz)
     gweakref_partition_t *wp = NULL;
     gweakref_table_t *wt = NULL;
 
-    wt = (gweakref_table_t *) Mem_Alloc(sizeof(gweakref_table_t));
+    wt = gsh_calloc(1, sizeof(gweakref_table_t));
     if (!wt)
         goto out;
 
@@ -209,16 +208,14 @@ gweakref_table_t *gweakref_init(uint32_t npart, uint32_t cache_sz)
 
     /* npart should be a small integer */
     wt->npart = npart;
-    wt->partition = (gweakref_partition_t *)
-        Mem_Alloc(npart * sizeof(gweakref_partition_t));
+    wt->partition = gsh_calloc(npart, sizeof(gweakref_partition_t));
     for (ix = 0; ix < npart; ++ix) {
         wp = &wt->partition[ix];
         pthread_rwlock_init(&wp->lock, &rwlock_attr);
         avltree_init(&wp->t, wk_cmpf, 0 /* must be 0 */);
         if (cache_sz > 0) {
             wt->cache_sz = cache_sz;
-            wp->cache = Mem_Alloc(cache_sz * sizeof(struct avltree_node *));
-            memset(wp->cache, 0, (cache_sz * sizeof(struct avltree_node *)));            
+            wp->cache = gsh_calloc(cache_sz, sizeof(struct avltree_node *));
         }
         wp->genctr = 0;
     }
@@ -249,7 +246,7 @@ gweakref_t gweakref_insert(gweakref_table_t *wt, void *obj)
     gweakref_partition_t *wp;
     struct avltree_node *node;
 
-    ref = (gweakref_priv_t *) Mem_Alloc(sizeof(gweakref_priv_t));
+    ref = gsh_calloc(1, sizeof(gweakref_priv_t));
     ref->k.ptr = obj;
 
     wp = (gweakref_partition_t *) gwt_partition_of_addr_k(wt, ref->k.ptr);
@@ -396,7 +393,7 @@ static inline void gweakref_delete_impl(gweakref_table_t *wt, gweakref_t *ref,
         if (tref->k.gen == ref->gen) {
             /* unhook it */
             avltree_remove(node, &wp->t);
-            Mem_Free(tref);
+            gsh_free(tref);
             if (wp->cache)
                 wp->cache[cache_offsetof(wt, refk.k.ptr)] = NULL;
         }
@@ -445,17 +442,17 @@ void gweakref_destroy(gweakref_table_t *wt)
         do {
             if (onode) {
                 tref = avltree_container_of(onode, gweakref_priv_t, node_k);
-                Mem_Free(tref);
+                gsh_free(tref);
             }
         } while ((onode = node) && (node = avltree_next(node)));
         if (onode) {
             tref = avltree_container_of(onode, gweakref_priv_t, node_k);
-            Mem_Free(tref);
+            gsh_free(tref);
         }
         avltree_init(&wp->t, wk_cmpf, 0 /* must be 0 */);
         if (wp->cache)
-            Mem_Free(wp->cache);
+            gsh_free(wp->cache);
     }
-    Mem_Free(wt->partition);
-    Mem_Free(wt);
+    gsh_free(wt->partition);
+    gsh_free(wt);
 }

@@ -10,7 +10,7 @@
  * \version $Revision: 1.24 $
  * \brief   Defines the datas that are to be
  *          accessed as extern by the fsal modules
- * 
+ *
  */
 #define FSAL_INTERNAL_C
 #ifdef HAVE_CONFIG_H
@@ -18,13 +18,13 @@
 #endif
 
 #include "fsal_internal.h"
-#include "stuff_alloc.h"
 #include "SemN.h"
 #include "fsal_convert.h"
 #include <libgen.h>             /* used for 'dirname' */
 
 #include <pthread.h>
 #include <string.h>
+#include "abstract_mem.h"
 
 /* credential lifetime (1h) */
 fsal_uint_t CredentialLifetime = 3600;
@@ -126,11 +126,11 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
     {
       int i;
 
-      bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
+      bythread_stat = gsh_malloc(sizeof(fsal_statistics_t));
 
       if(bythread_stat == NULL)
         {
-          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, ENOMEM);
         }
 
       /* inits the struct */
@@ -196,8 +196,8 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
       int i;
 
       if((bythread_stat =
-          (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
-        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          gsh_malloc(sizeof(fsal_statistics_t))) == NULL)
+        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, ENOMEM);
 
       /* inits the struct */
       for(i = 0; i < FSAL_NB_FUNC; i++)

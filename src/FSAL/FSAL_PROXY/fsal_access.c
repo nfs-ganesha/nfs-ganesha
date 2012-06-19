@@ -30,7 +30,6 @@
 
 #include <string.h>
 
-#include "stuff_alloc.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"

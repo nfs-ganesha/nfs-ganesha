@@ -41,7 +41,15 @@
 #include "HashData.h"
 #include "log.h"
 #include "lookup3.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
 
 /**
  * @defgroup HTStructs Structures used by the hash table code
@@ -73,8 +81,8 @@ typedef int (*val_display_function_t)(struct hash_buff*,
  * given hash table.
  */
 
-#define HT_FLAG_NONE            0x0000
-#define HT_FLAG_CACHE           0x0001 
+#define HT_FLAG_NONE 0x0000
+#define HT_FLAG_CACHE 0x0001
 
 struct hash_param
 {
@@ -85,8 +93,6 @@ struct hash_param
      uint32_t alphabet_length; /*< Size of the input alphabet for
                                    the template (and other polynomial
                                    style) hash functions. */
-     size_t nb_node_prealloc; /*< Number of nodes to allocate when new
-                                  nodes are necessary. */
      index_function_t hash_func_key; /*< Partition function, returns an
                                          integer from 0 to (index_size
                                          - 1).  This should be
@@ -111,7 +117,9 @@ struct hash_param
                                             to a string. */
      val_display_function_t val_to_str; /*< Function to convert a
                                             value to a string. */
-     char *name; /*< Name of this hash table. */
+     char *ht_name; /*< Name of this hash table. */
+     log_components_t ht_log_component; /*< Log component to use for this
+                                            hash table */
 };
 
 typedef struct hash_stat
@@ -134,22 +142,18 @@ typedef struct hash_stat
 
 struct hash_partition
 {
-    size_t count; /*< Numer of entries in this partition */
-    struct rbt_head rbt; /*< The red-black tree */
-    pthread_rwlock_t lock; /*< Lock for this partition */
-    struct prealloc_pool node_pool; /*< Pre-allocated nodes,
-                                      ready to use for new
-                                      entries */
-    struct prealloc_pool data_pool ; /*< Pre-allocated pdata buffers
-                                       ready to use for new
-                                       entries */
-    struct rbt_node** cache; /*< expected entry cache */
+     size_t count; /*< Numer of entries in this partition */
+     struct rbt_head rbt; /*< The red-black tree */
+     pthread_rwlock_t lock; /*< Lock for this partition */
+     struct rbt_node** cache; /*< expected entry cache */
 };
 
 typedef struct hash_table
 {
      struct hash_param parameter; /*< Definitive parameter for the
                                       HashTable */
+     pool_t *node_pool; /*< Pool of RBT nodes */
+     pool_t *data_pool; /*< Pool of buffer pairs */
      struct hash_partition partitions[]; /*< Parameter.index_size partitions of
                                              the hash table. */
 } hash_table_t;
@@ -169,7 +173,7 @@ typedef enum hash_set_how {
 /* @} */
 
 /* How many character used to display a key or value */
-#define HASHTABLE_DISPLAY_STRLEN 8192
+static const size_t HASHTABLE_DISPLAY_STRLEN = 8192;
 
 /* Possible errors */
 typedef enum hash_error {
@@ -189,13 +193,16 @@ const char *hash_table_err_to_str(hash_error_t err);
 /* These are the primitives of the hash table */
 
 struct hash_table *HashTable_Init(struct hash_param *hparam);
+hash_error_t HashTable_Destroy(struct hash_table *ht,
+                               int (*free_func)(struct hash_buff,
+                                                struct hash_buff));
 hash_error_t HashTable_GetLatch(struct hash_table *ht,
                                 struct hash_buff *key,
                                 struct hash_buff *val,
                                 int may_write,
                                 struct hash_latch *latch);
-hash_error_t HashTable_ReleaseLatched(struct hash_table *ht,
-                                      struct hash_latch *latch);
+void HashTable_ReleaseLatched(struct hash_table *ht,
+                              struct hash_latch *latch);
 hash_error_t HashTable_SetLatched(struct hash_table *ht,
                                   struct hash_buff *key,
                                   struct hash_buff *val,
@@ -220,18 +227,17 @@ void HashTable_Log(log_components_t component, struct hash_table *ht);
 /* These are very simple wrappers around the primitives */
 
 /**
- *
  * @brief Look up a value
  *
  * This function attempts to locate a key in the hash store and return
  * the associated value.  It is implemented as a wrapper around
  * the HashTable_GetLatched function.
  *
- * @param ht [in] The hash store to be searched
- * @param key [in] A buffer descriptore locating the key to find
- * @param val [out] A buffer descriptor locating the value found
+ * @param[in]  ht  The hash store to be searched
+ * @param[in]  key A buffer descriptor locating the key to find
+ * @param[out] val A buffer descriptor locating the value found
  *
- * @return HASHTABLE_SUCCESS or errors
+ * @return Same possibilities as HahTable_GetLatch
  */
 
 static inline hash_error_t
@@ -243,7 +249,6 @@ HashTable_Get(struct hash_table *ht,
 } /* HashTable_Get */
 
 /**
- *
  * @brief Set a pair (key,value) into the Hash Table
  *
  * This function sets a value into the hash table with no overwrite.
@@ -252,9 +257,9 @@ HashTable_Get(struct hash_table *ht,
  * overwrite as the only value for a function that doesn't return the
  * original buffers is a bad idea and can lead to leaks.
  *
- * @param ht [in] The hashtable to test or alter
- * @param key [in] The key to be set
- * @param val [in] The value to be stored
+ * @param[in,out] ht  The hashtable to test or alter
+ * @param[in]     key The key to be set
+ * @param[in]     val The value to be stored
  *
  * @retval HASHTABLE_SUCCESS if successfull
  * @retval HASHTABLE_KEY_ALREADY_EXISTS if the key already exists
@@ -292,21 +297,19 @@ HashTable_Set(struct hash_table *ht,
 
 
 /**
- *
  * @brief Remove an entry from the hash table
  *
  * This function deletes an entry from the hash table.
  *
- * @param ht [in] The hashtable to be modified
- * @param key [in] The key corresponding to the entry to delete
- * @param stored_key [out] If non-NULL, a buffer descriptor specifying
- *                         the key as stored in the hash table
- * @param stored_val [out] If non-NULL, a buffer descriptor specifying
- *                         the key as stored in the hash table
+ * @param[in,out] ht         The hashtable to be modified
+ * @param[in]     key        The key corresponding to the entry to delete
+ * @param[out]    stored_key If non-NULL, a buffer descriptor
+ *                           specifying the key as stored in the hash table
+ * @param[out]    stored_val If non-NULL, a buffer descriptor
+ *                           specifying the key as stored in the hash table
  *
  * @retval HASHTABLE_SUCCESS on deletion
  */
-
 static inline hash_error_t
 HashTable_Del(struct hash_table *ht,
               struct hash_buff *key,
@@ -361,11 +364,4 @@ hash_error_t HashTable_DelSafe(hash_table_t *ht,
                                hash_buffer_t *key,
                                hash_buffer_t *val);
 
-/**
- * @todo ACE: HashTable.h seems a singularly inappropriate place for a
- * reference to the clientid hash table.  Come back later, remove
- * this, see what breaks, and find somewhere more appropriate to put
- * it.
- */
-extern hash_table_t * ht_client_id;
 #endif                          /* _HASHTABLE_H */

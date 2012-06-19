@@ -15,12 +15,12 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-#include "stuff_alloc.h"
 
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
 #include <attr/xattr.h>
+#include "abstract_mem.h"
 
 /* generic definitions for extended attributes */
 
@@ -845,7 +845,7 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
     {
       /* 2 bytes per initial byte +'0x' +\n +\0 */
       char *curr_out;
-      char *tmp_buf = (char *)Mem_Alloc(3 * size_in + 4);
+      char *tmp_buf = gsh_malloc(3 * size_in + 4);
       if(!tmp_buf)
         return ERR_FSAL_NOMEM;
       curr_out = tmp_buf;
@@ -867,7 +867,7 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
       *datalen = strlen(tmp_buf) + 1;
       if(*datalen > maxlen)
         *datalen = maxlen;
-      Mem_Free(tmp_buf);
+      gsh_free(tmp_buf);
       return ERR_FSAL_NO_ERROR;
     }
 }

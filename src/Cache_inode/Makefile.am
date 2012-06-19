@@ -31,8 +31,6 @@ libcache_inode_la_SOURCES = cache_inode_access.c             \
 			    cache_inode_lru.c                \
 			    cache_inode_weakref.c            \
                             ../include/cache_inode.h         \
-                            ../include/BuddyMalloc.h         \
-                            ../include/stuff_alloc.h         \
 			    ../include/fsal.h                \
                             ../include/fsal_types.h          \
                             ../include/log.h       \

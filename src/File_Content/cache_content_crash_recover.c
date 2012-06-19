@@ -63,7 +63,6 @@
  *
  * cache_content_crash_recover: recovers the data cache and the associated inode after a crash.
  *
- * @param pclient [IN]  ressource allocated by the client for the nfs management.
  * @pstatus [OUT] returned status.
  *
  * @return CACHE_CONTENT_SUCCESS is successful.
@@ -73,7 +72,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                    unsigned int index,
                                                    unsigned int mod,
                                                    cache_content_client_t * pclient_data,
-                                                   cache_inode_client_t * pclient_inode,
                                                    fsal_op_context_t * pcontext,
                                                    cache_content_status_t * pstatus)
 {
@@ -156,7 +154,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
 
                   if((pentry = cache_inode_get(&fsal_data,
                                                &fsal_attr,
-                                               pclient_inode,
                                                pcontext, &cache_inode_status)) == NULL)
                     {
                       LogCrit(COMPONENT_CACHE_CONTENT,

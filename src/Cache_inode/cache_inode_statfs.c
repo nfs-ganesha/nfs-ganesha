@@ -50,7 +50,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -87,14 +86,9 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t *entry,
                                          dynamicinfo))))
     {
       *status = cache_inode_error_convert(fsal_status);
-/**
- * @todo ACE: Re-enable this after we kill cache_inode_client_t
- */
-#if 0
       if (fsal_status.major == ERR_FSAL_STALE) {
-           cache_inode_kill_entry(entry, client);
+           cache_inode_kill_entry(entry);
       }
-#endif /* 0 */
       return *status;
     }
   LogFullDebug(COMPONENT_CACHE_INODE,

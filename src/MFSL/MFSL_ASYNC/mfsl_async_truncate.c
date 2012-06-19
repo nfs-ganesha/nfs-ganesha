@@ -43,9 +43,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
-
-#ifndef _USE_SWIG
 
 extern mfsl_parameter_t mfsl_param;
 
@@ -132,7 +129,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
 
   P(p_mfsl_context->lock);
 
-  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
+  pasyncopdesc = pool_alloc(p_mfsl_context->pool_async_op, NULL);
 
   V(p_mfsl_context->lock);
 
@@ -152,7 +149,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
       /* Not yet asynchronous object */
       P(p_mfsl_context->lock);
 
-      GetFromPool(pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
+      pasyncdata = pool_alloc(p_mfsl_context->pool_spec_data, NULL);
 
       V(p_mfsl_context->lock);
 
@@ -198,5 +195,3 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_truncate */
-
-#endif                          /* ! _USE_SWIG */

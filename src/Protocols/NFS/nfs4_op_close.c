@@ -43,7 +43,6 @@
 
 #include <pthread.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_tools.h"
@@ -103,7 +102,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
                               data->current_entry,
-                              0LL,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
@@ -171,8 +169,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       if((state_status
           = state_del_locked(plock_state,
-                             data->current_entry,
-                             data->pclient)) != STATE_SUCCESS)
+                             data->current_entry)) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
                    "CLOSE failed to release lock stateid error %s",
@@ -187,7 +184,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                             data->pcontext,
                             popen_owner,
                             pstate_found,
-                            data->pclient,
                             &state_status) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
@@ -199,8 +195,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* File is closed, release the corresponding state */
   if((state_status
       = state_del_locked(pstate_found,
-                         data->current_entry,
-                         data->pclient)) != STATE_SUCCESS)
+                         data->current_entry)) != STATE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
                "CLOSE failed to release stateid error %s",
@@ -209,7 +204,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Close the file in FSAL through the cache inode */
   if(cache_inode_close(data->current_entry,
-                       data->pclient,
                        0,
                        &cache_status) != CACHE_INODE_SUCCESS)
     {

@@ -81,8 +81,6 @@ fsal_status_t GPFSFSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   if(!p_linkhandle || !p_context || !p_link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
-  memset(link_content_out, 0, FSAL_MAX_PATH_LEN);
-
   /* Read the link on the filesystem */
   TakeTokenFSCall();
   status =

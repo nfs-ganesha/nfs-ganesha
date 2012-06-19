@@ -53,7 +53,6 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 
 typedef int cache_content_status_t;
 
@@ -165,7 +164,7 @@ typedef struct cache_content_stat__
 
 typedef struct cache_content_client__
 {
-  struct prealloc_pool content_pool;                /**< Worker's preallocad cache entries pool                   */
+  pool_t *content_pool;                             /**< Worker's preallocad cache entries pool                   */
   unsigned int nb_prealloc;                         /**< Size of the preallocated pool                            */
   cache_content_stat_t stat;                        /**< File content statistics for this client                  */
   char cache_dir[MAXPATHLEN];                       /**< Path to the directory where data are cached              */
@@ -332,7 +331,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                    unsigned int index,
                                                    unsigned int mod,
                                                    cache_content_client_t * pclient_data,
-                                                   cache_inode_client_t * pclient_inode,
                                                    fsal_op_context_t * pcontext,
                                                    cache_content_status_t * pstatus);
 

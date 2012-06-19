@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -111,7 +110,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   bool_t                    AttrProvided = FALSE;
   bool_t                    ReuseState = FALSE;
   fsal_accessmode_t         mode = 0600;
-  nfs_client_id_t         * nfs_clientid;
+  nfs_client_id_t         * pclientid;
   state_t                 * pfile_state = NULL;
   state_t                 * pstate_iterate;
   state_nfs4_owner_name_t   owner_name;
@@ -181,7 +180,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                                    &(res_OPEN4.status),
                                                    &attr,
                                                    data->pcontext,
-                                                   data->pclient,
                                                    &retval)) == NULL)
         {
           res_OPEN4.status = NFS4ERR_RESOURCE;
@@ -205,28 +203,30 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   LogDebug(COMPONENT_STATE,
            "OPEN Client id = %llx",
            (unsigned long long)arg_OPEN4.owner.clientid);
-  if(nfs_client_id_Get_Pointer(arg_OPEN4.owner.clientid, &nfs_clientid) !=
+
+  if(nfs_client_id_get_confirmed(arg_OPEN4.owner.clientid, &pclientid) !=
       CLIENT_ID_SUCCESS)
     {
       res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
-      goto out2;
+      cause2 = " (failed to find confirmed clientid)";
+      goto out3;
     }
 
-  /* The client id should be confirmed */
-  if(nfs_clientid->confirmed != CONFIRMED_CLIENT_ID)
-    {
-      res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
-      cause2 = " (not confirmed)";
-      goto out2;
-    }
+  /* Check if lease is expired and reserve it */
+  P(pclientid->cid_mutex);
 
-  if (nfs4_is_lease_expired(nfs_clientid))
+  if(!reserve_lease(pclientid))
     {
-      nfs_client_id_expire(nfs_clientid);
+      V(pclientid->cid_mutex);
+
+      dec_client_id_ref(pclientid);
+
       res_OPEN4.status = NFS4ERR_EXPIRED;
-      goto out2;
+      cause2 = " (clientid expired)";
+      goto out3;
     }
-  nfs4_update_lease(nfs_clientid);
+
+  V(pclientid->cid_mutex);
 
   if (arg_OPEN4.openhow.opentype == OPEN4_CREATE && claim != CLAIM_NULL) {
       res_OPEN4.status = NFS4ERR_INVAL;
@@ -274,8 +274,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   if(powner == NULL)
     {
       /* This open owner is not known yet, allocated and set up a new one */
-      powner = create_nfs4_owner(data->pclient,
-                                 &owner_name,
+      powner = create_nfs4_owner(&owner_name,
+                                 pclientid,
                                  STATE_OPEN_OWNER_NFSV4,
                                  NULL,
                                  0);
@@ -285,15 +285,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           res_OPEN4.status = NFS4ERR_RESOURCE;
           LogDebug(COMPONENT_STATE,
                    "NFS4 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL (could not create NFS4 Owner");
+          dec_client_id_ref(pclientid);
           return res_OPEN4.status;
         }
-      LogDebug(COMPONENT_STATE,
-                       "NFS4 OPEN adding owners to client record ");
-
-
-      P(nfs_clientid->clientid_mutex);
-      glist_add_tail(&nfs_clientid->clientid_openowners, &powner->so_owner.so_nfs4_owner.so_perclient);
-      V(nfs_clientid->clientid_mutex);
     }
 
   if (nfs_in_grace() && claim != CLAIM_PREVIOUS)
@@ -303,7 +297,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
        goto out;
     }
   if (nfs_in_grace() && claim == CLAIM_PREVIOUS &&
-     nfs_clientid->allow_reclaim != 1)
+     pclientid->cid_allow_reclaim != 1)
     {
        cause2 = " (client cannot reclaim)";
        res_OPEN4.status = NFS4ERR_NO_GRACE;
@@ -408,7 +402,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       /* Status of parent directory before the operation */
       if(cache_inode_getattr(pentry_parent,
                              &attr_parent,
-                             data->pclient,
                              data->pcontext,
                              &cache_status) != CACHE_INODE_SUCCESS)
         {
@@ -456,6 +449,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           if( FSAL_IS_ERROR( fsal_status ) )
             {
               res_OPEN4.status = NFS4ERR_DQUOT ;
+              dec_client_id_ref(pclientid);
               return res_OPEN4.status;
             }
 #endif /* _USE_QUOTA */
@@ -469,7 +463,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           pentry_lookup = cache_inode_lookup(pentry_parent,
                                              &filename,
                                              &attr_newfile,
-                                             data->pclient,
                                              data->pcontext,
                                              &cache_status);
           if(cache_status != CACHE_INODE_NOT_FOUND)
@@ -516,19 +509,15 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
                   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
                   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-                      Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.
-                                bitmap4_len * sizeof(uint32_t))) == NULL)
+                      gsh_calloc(res_OPEN4.OPEN4res_u.resok4.attrset.
+                                 bitmap4_len, sizeof(uint32_t))) == NULL)
                     {
                       res_OPEN4.status = NFS4ERR_RESOURCE;
                       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-                      cause2 = " (Mem_Alloc of bitmap failed)";
+                      cause2 = " (allocation of bitmap failed)";
                       goto out;
                     }
 
-                  memset(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val,
-                         0,
-                         res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len
-                         * sizeof(uint32_t));
                   res_OPEN4.OPEN4res_u.resok4.cinfo.after
                        = cache_inode_get_changeid4(pentry_parent);
                   res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = FALSE;
@@ -551,7 +540,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   V(powner->so_mutex);
 
                   if (data->current_entry) {
-                    cache_inode_put(data->current_entry, data->pclient);
+                    cache_inode_put(data->current_entry);
                     data->current_entry = NULL;
                   }
 
@@ -632,8 +621,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                               V(powner->so_mutex);
 
                               if (data->current_entry) {
-                                  cache_inode_put(data->current_entry,
-                                                  data->pclient);
+                                  cache_inode_put(data->current_entry);
                                   data->current_entry = NULL;
                               }
 
@@ -689,7 +677,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                    mode,
                                    NULL,
                                    &attr_newfile,
-                                   data->pclient,
                                    data->pcontext,
                                    &cache_status)) == NULL)
             {
@@ -719,7 +706,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
               if((cache_status
                   = cache_inode_setattr(pentry_newfile,
                                         &sattr,
-                                        data->pclient,
                                         data->pcontext,
                                         &cache_status)) !=
                  CACHE_INODE_SUCCESS)
@@ -738,7 +724,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
             openflags = FSAL_O_RDWR;
           if(arg_OPEN4.share_access != 0)
-            openflags = FSAL_O_RDWR;
+            openflags = FSAL_O_RDWR;    /** @todo : FSF - I don't think we can just ignore this : Something better later */
 
           pthread_rwlock_wrlock(&pentry_newfile->state_lock);
           status4 = nfs4_do_open(op, data, pentry_newfile, pentry_parent,
@@ -762,7 +748,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
               = cache_inode_lookup(pentry_parent,
                                    &filename,
                                    &attr_newfile,
-                                   data->pclient,
                                    data->pcontext,
                                    &cache_status)) == NULL)
             {
@@ -918,6 +903,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           LogDebug(COMPONENT_STATE,
                    "NFS4 OPEN returning NFS4ERR_NAMETOOLONG "
                    "for CLAIM_DELEGATE");
+          dec_client_id_ref(pclientid);
           return res_OPEN4.status;
         }
 
@@ -927,12 +913,14 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           res_OPEN4.status = NFS4ERR_INVAL;
           LogDebug(COMPONENT_STATE,
                    "NFS4 OPEN returning NFS4ERR_INVAL for CLAIM_DELEGATE");
+          dec_client_id_ref(pclientid);
           return res_OPEN4.status;
         }
 
       res_OPEN4.status = NFS4ERR_NOTSUPP;
       LogDebug(COMPONENT_STATE,
                "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
+      dec_client_id_ref(pclientid);
       return res_OPEN4.status;
 
     default:
@@ -945,8 +933,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   /* Decrement the current entry here, because nfs4_create_fh
      replaces the current fh. */
   if (data->current_entry) {
-      cache_inode_put(data->current_entry,
-                      data->pclient);
+      cache_inode_put(data->current_entry);
       data->current_entry = NULL;
   }
   status4 = nfs4_create_fh(data, pentry_newfile, &text);
@@ -960,7 +947,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   /* Status of parent directory after the operation */
   if((cache_status = cache_inode_getattr(pentry_parent,
                                          &attr_parent,
-                                         data->pclient,
                                          data->pcontext,
                                          &cache_status))
      != CACHE_INODE_SUCCESS)
@@ -974,19 +960,15 @@ out_prev:
 
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-      Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len *
-                sizeof(uint32_t))) == NULL)
+      gsh_calloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len,
+                 sizeof(uint32_t))) == NULL)
     {
       res_OPEN4.status = NFS4ERR_SERVERFAULT;
       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-      cause2 = " (Mem_Alloc attr failed)";
+      cause2 = " (allocation of attr failed)";
       goto out;
     }
 
-  memset(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val,
-         0,
-         res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len
-         * sizeof(uint32_t));
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0]
     = 0; /* No Attributes set */
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[1]
@@ -1034,11 +1016,9 @@ out_prev:
                  data,
                  tag);
 
-  nfs4_update_lease(nfs_clientid);
-
   /* If we are re-using stateid, then release extra reference to open owner */
   if(ReuseState)
-    dec_state_owner_ref(powner, data->pclient);
+    dec_state_owner_ref(powner);
 
  out:
 
@@ -1046,6 +1026,17 @@ out_prev:
   Copy_nfs4_state_req(powner, arg_OPEN4.seqid, op, data, resp, tag);
 
  out2:
+
+  /* Update the lease before exit */
+  P(pclientid->cid_mutex);
+
+  update_lease(pclientid);
+
+  V(pclientid->cid_mutex);
+
+  dec_client_id_ref(pclientid);
+
+ out3:
 
   if(res_OPEN4.status != NFS4_OK)
     {
@@ -1067,7 +1058,6 @@ out_prev:
         {
           /* Need to destroy open owner and state */
           if(state_del(pfile_state,
-                       data->pclient,
                        &state_status) != STATE_SUCCESS)
             LogDebug(COMPONENT_NFS_V4_LOCK,
                      "state_del failed with status %s",
@@ -1076,7 +1066,7 @@ out_prev:
       else if(powner != NULL)
         {
           /* Need to release the open owner */
-          dec_state_owner_ref(powner, data->pclient);
+          dec_state_owner_ref(powner);
         }
     }
 
@@ -1096,7 +1086,7 @@ out_prev:
 void nfs4_op_open_Free(OPEN4res * resp)
 {
   if(resp->OPEN4res_u.resok4.attrset.bitmap4_val != NULL)
-    Mem_Free(resp->OPEN4res_u.resok4.attrset.bitmap4_val);
+    gsh_free(resp->OPEN4res_u.resok4.attrset.bitmap4_val);
   resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
 }                               /* nfs4_op_open_Free */
 
@@ -1105,8 +1095,8 @@ void nfs4_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src)
   if(resp_src->OPEN4res_u.resok4.attrset.bitmap4_val != NULL)
     {
       if((resp_dst->OPEN4res_u.resok4.attrset.bitmap4_val =
-          (uint32_t *) Mem_Alloc(resp_dst->OPEN4res_u.resok4.attrset.bitmap4_len *
-                                 sizeof(uint32_t))) == NULL)
+          gsh_calloc(resp_dst->OPEN4res_u.resok4.attrset.bitmap4_len,
+                     sizeof(uint32_t))) == NULL)
         {
           resp_dst->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
         }
@@ -1127,7 +1117,7 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
          * write access, in this case, check caller has write access
          * to the file */
         if(args->share_deny & OPEN4_SHARE_DENY_WRITE) {
-                if(cache_inode_access(pentry, wr_acc, data->pclient,
+                if(cache_inode_access(pentry, wr_acc,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
@@ -1136,14 +1126,14 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         /* Same check on read: check for readability of a file before opening
          * it for read */
         if(args->share_access & OPEN4_SHARE_ACCESS_READ) {
-                if(cache_inode_access(pentry, rd_acc, data->pclient,
+                if(cache_inode_access(pentry, rd_acc,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
         }
 
         if(AttrProvided == TRUE) {      /* Set the attribute if provided */
-                if(cache_inode_setattr(pentry, sattr, data->pclient,
+                if(cache_inode_setattr(pentry, sattr,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
                         return nfs4_Errno(cache_status);
                 }
@@ -1157,7 +1147,7 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
 
         /* Same check on write */
         if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
-                if(cache_inode_access(pentry, wr_acc, data->pclient,
+                if(cache_inode_access(pentry, wr_acc,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
@@ -1183,20 +1173,22 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         int new_state = 0;
 
-                /* Set the state for the related file */
-                /* Prepare state management structure */
-                candidate_type                    = STATE_TYPE_SHARE;
-                candidate_data.share.share_deny   = args->share_deny;
-                candidate_data.share.share_access = args->share_access;
+        /* Set the state for the related file */
+        /* Prepare state management structure */
+        candidate_type                         = STATE_TYPE_SHARE;
+        candidate_data.share.share_access      = args->share_access;
+        candidate_data.share.share_deny        = args->share_deny;
         candidate_data.share.share_access_prev = 0;
-        candidate_data.share.share_deny_prev = 0;
+        candidate_data.share.share_deny_prev   = 0;
 
         /* Quick exit if there is any share conflict */
-        if(state_share_check_conflict(pentry_newfile, &candidate_data,
+        if(state_share_check_conflict(pentry_newfile,
+                                      candidate_data.share.share_access,
+                                      candidate_data.share.share_deny,
                                       &state_status) != STATE_SUCCESS)
           {
             *cause2 = " (share conflict)";
-            return NFS4ERR_SHARE_DENIED;
+            return nfs4_Errno_state(state_status);
           }
 
         if(*statep == NULL) {
@@ -1211,10 +1203,10 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                 }
 
                 if(state_add_impl(pentry_newfile, candidate_type, &candidate_data,
-                    powner, data->pclient, data->pcontext, statep,
+                    powner, data->pcontext, statep,
                     &state_status) != STATE_SUCCESS) {
                         *cause2 = STATE_ADD;
-                        return NFS4ERR_SHARE_DENIED;
+                        return nfs4_Errno_state(state_status);
                 }
 
                 init_glist(&((*statep)->state_data.share.share_lockstates));
@@ -1241,13 +1233,13 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
 
         if (pentry_parent != NULL) {    /* claim null */
           /* Open the file */
-          if(cache_inode_open(pentry_newfile, data->pclient, openflags, data->pcontext,
+          if(cache_inode_open(pentry_newfile, openflags, data->pcontext,
                               0, &cache_status) != CACHE_INODE_SUCCESS) {
             *cause2 = " cache_inode_open";
             return NFS4ERR_ACCESS;
           }
         } else { /* claim previous */
-          if (cache_inode_open(pentry_newfile, data->pclient, openflags,
+          if (cache_inode_open(pentry_newfile, openflags,
                                data->pcontext, 0, &cache_status) != CACHE_INODE_SUCCESS) {
             *cause2 = CACHE_INODE_OPEN;
             return nfs4_Errno(cache_status);
@@ -1260,9 +1252,9 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
         if(new_state)
           {
             if(state_share_add(pentry_newfile, data->pcontext, powner, *statep,
-                               data->pclient, &state_status) != STATE_SUCCESS)
+                               &state_status) != STATE_SUCCESS)
               {
-                if(cache_inode_close(pentry_newfile, data->pclient,
+                if(cache_inode_close(pentry_newfile,
                                      0, &cache_status) != CACHE_INODE_SUCCESS)
                   {
                     /* Log bad close and continue. */
@@ -1270,7 +1262,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                              cache_status);
                   }
                 *cause2 = STATE_SHARE_ADD;
-                return NFS4ERR_SHARE_DENIED;
+                return nfs4_Errno_state(state_status);
               }
           }
         else
@@ -1282,10 +1274,9 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                 LogFullDebug(COMPONENT_STATE, "Update existing share state");
                 if(state_share_upgrade(pentry_newfile, data->pcontext,
                                        &candidate_data, powner, *statep,
-                                       data->pclient,
                                        &state_status) != STATE_SUCCESS)
                   {
-                    if(cache_inode_close(pentry_newfile, data->pclient,
+                    if(cache_inode_close(pentry_newfile,
                                          0, &cache_status) != CACHE_INODE_SUCCESS)
                       {
                         /* Log bad close and continue. */
@@ -1295,7 +1286,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                     LogEvent(COMPONENT_STATE, "Failed to update existing "
                                  "share state");
                     *cause2 = STATE_SHARE_UP;
-                    return NFS4ERR_SHARE_DENIED;
+                    return nfs4_Errno_state(state_status);
                   }
               }
           }

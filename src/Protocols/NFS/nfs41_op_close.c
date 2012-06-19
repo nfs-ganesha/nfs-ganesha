@@ -42,7 +42,6 @@
 #include <pthread.h>
 #include <stdint.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
@@ -68,8 +67,6 @@
 int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                    struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_close";
-
   int                    rc = 0;
   state_t              * pstate_found = NULL;
   cache_inode_status_t   cache_status;
@@ -104,7 +101,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
                               data->current_entry,
-                              0LL,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
@@ -149,7 +145,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                                           state_data.lock.state_sharelist);
 
       if(state_del(plock_state,
-                   data->pclient,
                    &state_status) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
@@ -160,7 +155,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
   /* File is closed, release the corresponding state */
   if(state_del(pstate_found,
-               data->pclient,
                &state_status) != STATE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
@@ -209,7 +203,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
               pstate->state_data.layout.state_return_on_close)
             {
               nfs4_return_one_state(data->current_entry,
-                                    data->pclient,
                                     data->pcontext,
                                     TRUE,
                                     FALSE,
@@ -232,7 +225,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
   /* Close the file in FSAL through the cache inode */
   if(cache_inode_close(data->current_entry,
-                       data->pclient,
                        0,
                        &cache_status) != CACHE_INODE_SUCCESS)
     {

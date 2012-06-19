@@ -9,24 +9,14 @@
 #include "RW_Lock.h"
 #endif
 
-#define xp_free(x) if(x) Mem_Free(x)
+#define xp_free(x) if(x) gsh_free(x)
 
-extern int Xprt_register(SVCXPRT * xprt);
-extern void Xprt_unregister(SVCXPRT * xprt);
+extern int Xprt_register(SVCXPRT *xprt);
+extern void Xprt_unregister(SVCXPRT *xprt);
 
 extern void FreeXprt(SVCXPRT *xprt);
 
-#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
-extern int CheckAuth(SVCAUTH *auth);
-#else
 #define CheckAuth(ptr)
-#endif
-
-#ifdef _USE_TIRPC
-/* public data : */
-extern rw_lock_t Svc_fd_lock;
-extern unsigned int get_tirpc_xid(SVCXPRT *xprt);
-#endif
 
 #ifdef _HAVE_GSSAPI
 /*

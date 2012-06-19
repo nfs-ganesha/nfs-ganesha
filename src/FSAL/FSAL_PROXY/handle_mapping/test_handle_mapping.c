@@ -1,6 +1,5 @@
 #include "config.h"
 #include "handle_mapping_db.h"
-#include "stuff_alloc.h"
 #include <sys/time.h>
 
 int main(int argc, char **argv)
@@ -24,16 +23,6 @@ int main(int argc, char **argv)
       LogTest("usage: test_handle_mapping <db_dir> <db_count>");
       exit(1);
     }
-
-#ifndef _NO_BUDDY_SYSTEM
-
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogCrit(COMPONENT_FSAL, "ERROR: Could not initialize memory manager");
-      exit(rc);
-    }
-#endif
 
   dir = argv[1];
 

@@ -59,43 +59,30 @@
 
 /**
  *
- * cache_inode_link: hardlinks a pentry to another.
+ * @brief Links a new name to a file
  *
- * Hard links a pentry to another. This is basically a equivalent of
- * FSAL_link in the cache inode layer.
+ * This function hard links a new name to an existing file.
  *
- * The caller has at least initial reference to pentry_src and
- * pentry_dir_dest.  No refcount increment is charged to the caller.
+ * @param[in]  entry    The file to which to add the new name.  Must
+ *                      not be a directory.
+ * @param[in]  dest_dir The directory in which to create the new name
+ * @param[in]  name     The new name to add to the file
+ * @param[out] attr     The attributes on entry after the operation
+ * @param[in]  context  FSAL credentials
+ * @param[out] status   returned status.
  *
- * @param pentry_src [IN] entry pointer the entry to be linked. This
- *                        can't be a directory.
- * @param pentry_dir_dest [INOUT] entry pointer for the destination
- *                                directory in which the link will be
- *                                created.
- * @param plink_name [IN] pointer to the name of the object in the
- *                        destination directory.
- * @param pattr [OUT] attributes for the linked attributes after the
- *                    operation.
- * @param pclient [INOUT] ressource allocated by the client for the
- *                        nfs management.
- * @param pcontext [IN] FSAL credentials
- * @param pstatus [OUT] returned status.
- *
- * @return CACHE_INODE_SUCCESS if operation is a success
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when
- *                               validating the entry
- * @return CACHE_INODE_BAD_TYPE either source or destination have
+ * @retval CACHE_INODE_SUCCESS if operation is a success
+ * @retval CACHE_INODE_BAD_TYPE either source or destination have
  *                              incorrect type
- * @return CACHE_INODE_ENTRY_EXISTS entry of that name already exists
+ * @retval CACHE_INODE_ENTRY_EXISTS entry of that name already exists
  *                                  in destination.
  */
-cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
-                                      cache_entry_t * pentry_dir_dest,
-                                      fsal_name_t * plink_name,
-                                      fsal_attrib_list_t * pattr,
-                                      cache_inode_client_t * pclient,
-                                      fsal_op_context_t * pcontext,
-                                      cache_inode_status_t * pstatus)
+cache_inode_status_t cache_inode_link(cache_entry_t *entry,
+                                      cache_entry_t *dest_dir,
+                                      fsal_name_t *name,
+                                      fsal_attrib_list_t *attr,
+                                      fsal_op_context_t *context,
+                                      cache_inode_status_t *status)
 {
      fsal_status_t fsal_status = {0, 0};
      bool_t srcattrlock = FALSE;
@@ -109,36 +96,35 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 
 
      /* Set the return default to CACHE_INODE_SUCCESS */
-     *pstatus = CACHE_INODE_SUCCESS;
+     *status = CACHE_INODE_SUCCESS;
 
      /* The file to be hardlinked can't be a DIRECTORY */
-     if (pentry_src->type == DIRECTORY) {
-          *pstatus = CACHE_INODE_BAD_TYPE;
+     if (entry->type == DIRECTORY) {
+          *status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
 
      /* Is the destination a directory? */
-     if ((pentry_dir_dest->type != DIRECTORY) &&
-         (pentry_dir_dest->type != FS_JUNCTION)) {
-          *pstatus = CACHE_INODE_BAD_TYPE;
+     if ((dest_dir->type != DIRECTORY) &&
+         (dest_dir->type != FS_JUNCTION)) {
+          *status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
      /* Acquire the attribute lock */
-     pthread_rwlock_wrlock(&pentry_dir_dest->attr_lock);
+     pthread_rwlock_wrlock(&dest_dir->attr_lock);
      destattrlock = TRUE;
 
      /* Check if caller is allowed to perform the operation */
      access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
 
-     if ((*pstatus = cache_inode_access_sw(pentry_dir_dest,
-                                           access_mask,
-                                           pclient,
-                                           pcontext,
-                                           pstatus,
-                                           FALSE))
+     if ((*status = cache_inode_access_sw(dest_dir,
+                                          access_mask,
+                                          context,
+                                          status,
+                                          FALSE))
          != CACHE_INODE_SUCCESS) {
           goto out;
      }
@@ -146,47 +132,45 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
      /* Rather than performing a lookup first, just try to make the
         link and return the FSAL's error if it fails. */
 
-     pthread_rwlock_wrlock(&pentry_src->attr_lock);
+     pthread_rwlock_wrlock(&entry->attr_lock);
      srcattrlock = TRUE;
 
-     if ((pentry_src->type == UNASSIGNED) ||
-         (pentry_src->type == RECYCLED)) {
+     if ((entry->type == UNASSIGNED) ||
+         (entry->type == RECYCLED)) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "Invalid source type: type=%d, line %d in file %s",
-                  pentry_src->type, __LINE__, __FILE__);
+                  entry->type, __LINE__, __FILE__);
           goto out;
      }
 
      /* Acquire the directory entry lock */
-     pthread_rwlock_wrlock(&pentry_dir_dest->content_lock);
+     pthread_rwlock_wrlock(&dest_dir->content_lock);
      destdirlock = TRUE;
 
      /* Do the link at FSAL level */
 #ifdef _USE_NFS4_ACL
-     saved_acl = pentry_src->attributes.acl;
+     saved_acl = entry->attributes.acl;
 #endif /* _USE_NFS4_ACL */
      fsal_status =
-          FSAL_link(&pentry_src->handle, &pentry_dir_dest->handle,
-                    plink_name, pcontext, &pentry_src->attributes);
+          FSAL_link(&entry->handle, &dest_dir->handle,
+                    name, context, &entry->attributes);
      if (FSAL_IS_ERROR(fsal_status)) {
-          *pstatus = cache_inode_error_convert(fsal_status);
+          *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
                fsal_attrib_list_t attrs;
-               attrs.asked_attributes = pclient->attrmask;
-               fsal_status = FSAL_getattrs(&pentry_src->handle,
-                                           pcontext,
+               attrs.asked_attributes = cache_inode_params.attrmask;
+               fsal_status = FSAL_getattrs(&entry->handle,
+                                           context,
                                            &attrs);
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(pentry_src,
-                                           pclient);
+                    cache_inode_kill_entry(entry);
                }
-               attrs.asked_attributes = pclient->attrmask;
-               fsal_status = FSAL_getattrs(&pentry_dir_dest->handle,
-                                           pcontext,
+               attrs.asked_attributes = cache_inode_params.attrmask;
+               fsal_status = FSAL_getattrs(&dest_dir->handle,
+                                           context,
                                            &attrs);
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(pentry_dir_dest,
-                                           pclient);
+                    cache_inode_kill_entry(dest_dir);
                }
           }
           goto out;
@@ -202,44 +186,42 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 #endif /* _USE_NFS4_ACL */
      }
 
-     cache_inode_fixup_md(pentry_src);
-     *pattr = pentry_src->attributes;
-     pthread_rwlock_unlock(&pentry_src->attr_lock);
+     cache_inode_fixup_md(entry);
+     *attr = entry->attributes;
+     pthread_rwlock_unlock(&entry->attr_lock);
      srcattrlock = FALSE;
 
      /* Reload the destination directory's attributes so the caller
         will have an updated changeid. */
-     cache_inode_refresh_attrs(pentry_dir_dest, pcontext, pclient);
-     pthread_rwlock_unlock(&pentry_dir_dest->attr_lock);
+     cache_inode_refresh_attrs(dest_dir, context);
+     pthread_rwlock_unlock(&dest_dir->attr_lock);
      destattrlock = FALSE;
 
      /* Add the new entry in the destination directory */
-     if (cache_inode_add_cached_dirent(pentry_dir_dest,
-                                       plink_name,
-                                       pentry_src,
+     if (cache_inode_add_cached_dirent(dest_dir,
+                                       name,
+                                       entry,
                                        NULL,
-                                       pclient,
-                                       pcontext,
-                                       pstatus) != CACHE_INODE_SUCCESS) {
+                                       status) != CACHE_INODE_SUCCESS) {
           goto out;
      }
 
-     pthread_rwlock_unlock(&pentry_dir_dest->content_lock);
+     pthread_rwlock_unlock(&dest_dir->content_lock);
      destdirlock = FALSE;
 
 out:
 
      if (srcattrlock) {
-          pthread_rwlock_unlock(&pentry_src->attr_lock);
+          pthread_rwlock_unlock(&entry->attr_lock);
      }
 
      if (destattrlock) {
-          pthread_rwlock_unlock(&pentry_dir_dest->attr_lock);
+          pthread_rwlock_unlock(&dest_dir->attr_lock);
      }
 
      if (destdirlock) {
-          pthread_rwlock_unlock(&pentry_dir_dest->content_lock);
+          pthread_rwlock_unlock(&dest_dir->content_lock);
      }
 
-     return *pstatus;
+     return *status;
 }

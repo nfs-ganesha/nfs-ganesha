@@ -42,7 +42,7 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
+#include "abstract_atomic.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -62,26 +62,20 @@
  * Copy the content of a symbolic link into the address pointed to by
  * link_content.
  *
- * @todo ACE: If policy changes, do we need to allocate a symlink
- *            object, or can we assume that either policy is immutable
- *            or that the allocation would take place at the site of
- *            policy change?
- *
- * @param entry [in] The link to read
- * @param link_content [out] The location into which to write the
- *                           target
- * @param client [in] Structure for resource management
- * @param context [in] FSAL operation context
- * @param status [out] Status of the operation.
+ * @param[in]  entry        The link to read
+ * @param[out] link_content The location into which to write the
+ *                          target
+ * @param[in]  context      FSAL operation context
+ * @param[out] status       Status of the operation
  *
  * @return CACHE_INODE_SUCCESS on success, other things on failure.
  */
 
-cache_inode_status_t cache_inode_readlink(cache_entry_t *entry,
-                                          fsal_path_t *link_content,
-                                          cache_inode_client_t *client,
-                                          fsal_op_context_t *context,
-                                          cache_inode_status_t *status)
+cache_inode_status_t
+cache_inode_readlink(cache_entry_t *entry,
+                     fsal_path_t *link_content,
+                     fsal_op_context_t *context,
+                     cache_inode_status_t *status)
 {
      fsal_status_t fsal_status = {0, 0};
 
@@ -110,8 +104,8 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t *entry,
                                     &entry->object.symlink->content,
                                     NULL);
                if (!(FSAL_IS_ERROR(fsal_status))) {
-                    atomic_set_int_bits(&entry->flags,
-                                        CACHE_INODE_TRUST_CONTENT);
+                    atomic_set_uint32_t_bits(&entry->flags,
+                                             CACHE_INODE_TRUST_CONTENT);
                }
           }
      }
@@ -124,7 +118,7 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t *entry,
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
-               cache_inode_kill_entry(entry, client);
+               cache_inode_kill_entry(entry);
           }
           return *status;
      }

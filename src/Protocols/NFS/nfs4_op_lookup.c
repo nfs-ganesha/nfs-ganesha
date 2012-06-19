@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -178,7 +177,6 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if((file_pentry = cache_inode_lookup(dir_pentry,
                                        &name,
                                        &attrlookup,
-                                       data->pclient,
                                        data->pcontext, &cache_status)) != NULL)
     {
       /* Extract the fsal attributes from the cache inode pentry */
@@ -188,7 +186,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if(!nfs4_FSALToFhandle(&data->currentFH, pfsal_handle, data))
         {
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(file_pentry, data->pclient);
+          cache_inode_put(file_pentry);
           return res_LOOKUP4.status;
         }
 
@@ -224,7 +222,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
          operations or nfs4_Compound to clean up current_entry. */
 
       if (dir_pentry)
-        cache_inode_put(dir_pentry, data->pclient);
+        cache_inode_put(dir_pentry);
 
       /* Keep the pointer within the compound data */
       data->current_entry = file_pentry;
@@ -245,7 +243,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           if(!nfs4_Set_Fh_Referral(&(data->currentFH)))
             {
               res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-              cache_inode_put(file_pentry, data->pclient);
+              cache_inode_put(file_pentry);
               return res_LOOKUP4.status;
             }
         }

@@ -397,8 +397,8 @@ extern "C"
 
   struct netaddr4
   {
-    char *na_r_netid;
-    char *na_r_addr;
+    char *r_netid;
+    char *r_addr;
   };
   typedef struct netaddr4 netaddr4;
 
@@ -3865,9 +3865,9 @@ static inline bool_t xdr_specdata4(XDR * xdrs, specdata4 * objp)
 
 static inline bool_t xdr_netaddr4(XDR * xdrs, netaddr4 * objp)
 {
-  if(!inline_xdr_string(xdrs, &objp->na_r_netid, ~0))
+  if(!inline_xdr_string(xdrs, &objp->r_netid, ~0))
     return FALSE;
-  if(!inline_xdr_string(xdrs, &objp->na_r_addr, ~0))
+  if(!inline_xdr_string(xdrs, &objp->r_addr, ~0))
     return FALSE;
   return TRUE;
 }

@@ -30,8 +30,6 @@
 #include <pthread.h>
 #include "nfs4.h"
 
-#include "BuddyMalloc.h"
-#include "stuff_alloc.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -103,13 +101,8 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
   cbproxy.cb_program = 0;
   strncpy(cbnetid, "tcp", MAXNAMLEN);
   strncpy(cbaddr, "127.0.0.1", MAXNAMLEN);
-#ifdef _USE_NFS4_1
-  cbproxy.cb_location.na_r_netid = cbnetid;
-  cbproxy.cb_location.na_r_addr = cbaddr;
-#else
   cbproxy.cb_location.r_netid = cbnetid;
   cbproxy.cb_location.r_addr = cbaddr;
-#endif
 
   COMPOUNDV4_ARG_ADD_OP_SETCLIENTID(argnfs4, nfsclientid, cbproxy);
 
@@ -293,17 +286,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 
   sleep(6);    /** @todo: use getattr to have an actual value of server's lease duration */
 
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogCrit(COMPONENT_FSAL,
-          "FSAL_proxy_clientid_renewer_thread: Memory manager could not be initialized, exiting...");
-      exit(1);
-    }
-#endif
-
-  memset((char *)&fsal_context, 0, sizeof(proxyfsal_op_context_t));
+  memset(&fsal_context, 0, sizeof(proxyfsal_op_context_t));
   fsal_status = PROXYFSAL_InitClientContext((fsal_op_context_t *)p_context);
 
   if(FSAL_IS_ERROR(fsal_status))

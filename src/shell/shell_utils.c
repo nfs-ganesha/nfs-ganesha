@@ -67,20 +67,7 @@
 #include "Getopt.h"
 #include <string.h>
 
-#include "stuff_alloc.h"
-
-/* For mallinfo */
-#ifdef _LINUX
-#include <malloc.h>
-#endif
-
-#if( defined(  _APPLE ) && !defined( _FREEBSD )  )
-#include <malloc/malloc.h>
-#endif
-
-#ifdef _SOLARIS
-#include <malloc.h>
-#endif
+#include "abstract_mem.h"
 
 #include <sys/time.h>
 
@@ -293,70 +280,6 @@ int util_meminfo(int argc,      /* IN : number of args in argv */
                  FILE * output  /* IN : output stream          */
     )
 {
-#if( !defined( _APPLE ) && !defined( _SOLARIS ) )
-
-#ifndef _NO_BUDDY_SYSTEM
-  buddy_stats_t bstats;
-#endif
-
-  /* standard mallinfo */
-
-  struct mallinfo meminfo = mallinfo();
-
-  fprintf(output, "Mallinfo:\n");
-
-  fprintf(output, "   Total space in arena: %lu\n", (unsigned long)meminfo.arena);
-  fprintf(output, "   Number of ordinary blocks: %d\n", meminfo.ordblks);
-  fprintf(output, "   Number of small blocks: %d\n", meminfo.smblks);
-  fprintf(output, "   Number of holding blocks: %d\n", meminfo.hblks);
-  fprintf(output, "   Space in holding block headers: %d\n", meminfo.hblkhd);
-  fprintf(output, "   Space in small blocks in use: %lu\n",
-          (unsigned long)meminfo.usmblks);
-  fprintf(output, "   Space in free small blocks: %lu\n", (unsigned long)meminfo.fsmblks);
-  fprintf(output, "   Space in ordinary blocks in use: %lu\n",
-          (unsigned long)meminfo.uordblks);
-  fprintf(output, "   Space in free ordinary blocks: %lu\n",
-          (unsigned long)meminfo.fordblks);
-  fprintf(output, "   Cost of enabling keep option: %d\n", meminfo.keepcost);
-  fprintf(output, "\n");
-
-#ifndef _NO_BUDDY_SYSTEM
-
-  BuddyGetStats(&bstats);
-
-  fprintf(output, "Buddy info (thread %p):\n", (caddr_t) pthread_self());
-  /* Buddy sytem info */
-
-  fprintf(output, "Total Space in Arena: %lu  (Watermark: %lu)\n",
-          (unsigned long)bstats.TotalMemSpace, (unsigned long)bstats.WM_TotalMemSpace);
-  fprintf(output, "\n");
-
-  fprintf(output, "Total Space for Standard Pages: %lu  (Watermark: %lu)\n",
-          (unsigned long)bstats.StdMemSpace, (unsigned long)bstats.WM_StdMemSpace);
-
-  fprintf(output, "      Nb Standard Pages: %lu\n", (unsigned long)bstats.NbStdPages);
-
-  fprintf(output, "      Size of Std Pages: %lu\n", (unsigned long)bstats.StdPageSize);
-
-  fprintf(output, "      Space Used inside Std Pages: %lu  (Watermark: %lu)\n",
-          (unsigned long)bstats.StdUsedSpace, (unsigned long)bstats.WM_StdUsedSpace);
-
-  fprintf(output, "      Nb of Std Pages Used: %lu  (Watermark: %lu)\n",
-          (unsigned long)bstats.NbStdUsed, (unsigned long)bstats.WM_NbStdUsed);
-
-  if(bstats.NbStdUsed > 0)
-    {
-      fprintf(output, "      Memory Fragmentation: %.2f %%\n",
-              100.0 -
-              (100.0 * bstats.StdUsedSpace /
-               (1.0 * bstats.NbStdUsed * bstats.StdPageSize)));
-    }
-
-  fprintf(output, "\n");
-
-#endif
-
-#endif                          /* _APPLE */
   return 0;
 
 }                               /* util_meminfo */
@@ -714,10 +637,10 @@ int util_chomp(int argc,        /* IN : number of args in argv */
   if(in[len - 1] == '\n')
     {
 
-      out = (char *)Mem_Alloc(len + 1);
+      out = gsh_malloc(len + 1);
 
       if(out == NULL)
-        return Mem_Errno;
+        return ENOMEM;
 
       /* local copy */
       strncpy(out, in, len + 1);
@@ -726,7 +649,7 @@ int util_chomp(int argc,        /* IN : number of args in argv */
 
       fprintf(output, "%s", out);
 
-      Mem_Free(out);
+      gsh_free(out);
 
     }
   else

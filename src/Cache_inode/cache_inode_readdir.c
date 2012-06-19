@@ -30,7 +30,8 @@
  * \version $Revision: 1.50 $
  * \brief   Reads the content of a directory.
  *
- * cache_inode_readdir.c : Reads the content of a directory. Contains also the needed function for directory browsing.
+ * @brief Reads the content of a directory, also includes support
+ *        functions for cached directories.
  *
  *
  */
@@ -42,11 +43,10 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
+#include "abstract_atomic.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "stuff_alloc.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
@@ -66,16 +66,14 @@
  * Invalidates all the entries for a cached directory.  The content
  * lock must be held when this function is called.
  *
- * @param entry [in,out] The directory to be managed
- * @param client [in,out] Structure for per-client resource management
- * @param status [OUT] Returned status.
+ * @param[in,out] entry  The directory to be managed
+ * @param[out]    status Returned status.
  *
  * @return the same as *status
  *
  */
 cache_inode_status_t
 cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry,
-                                         cache_inode_client_t *client,
                                          cache_inode_status_t *status)
 {
      /* Set the return default to CACHE_INODE_SUCCESS */
@@ -88,117 +86,117 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry,
      }
 
      /* Get ride of entries cached in the DIRECTORY */
-     cache_inode_release_dirents(entry, client, CACHE_INODE_AVL_BOTH);
+     cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
 
      /* Mark directory as not populated */
-     atomic_clear_int_bits(&entry->flags, (CACHE_INODE_DIR_POPULATED |
-                                           CACHE_INODE_TRUST_CONTENT));
+     atomic_clear_uint32_t_bits(&entry->flags, (CACHE_INODE_DIR_POPULATED |
+                                                CACHE_INODE_TRUST_CONTENT));
      *status = CACHE_INODE_SUCCESS;
 
      return *status;
-}                               /* cache_inode_invalidate_all_cached_dirent */
+} /* cache_inode_invalidate_all_cached_dirent */
 
 
 /**
+ * @brief Perform an operation on it on a cached entry
  *
- * cache_inode_operate_cached_dirent: locates a dirent in the cached dirent,
- * and perform an operation on it.
+ * This function looks up an entry in the drectory cache and performs
+ * the indicated operation.  If the directory has not been populated,
+ * it will not return not found errors.
  *
- * Looks up for an dirent in the cached dirent. Thus function searches
- * only in the entries listed in the dir_entries array. Some entries
- * may be missing but existing and not be cached (if no readdir was
- * ever performed on the entry for example. This function provides a
- * way to operate on the dirent.
+ * The caller must hold the content lock on the directory.
  *
- * @param pentry_parent [IN] directory entry to be searched.
- * @param name [IN] name for the searched entry.
- * @param newname [IN] newname if function is used to rename a dirent
- * @param pclient [INOUT] resource allocated by the client for the nfs management.
- * @param dirent_op [IN] operation (ADD, LOOKUP or REMOVE) to do on the dirent
- *        if found.
+ * @param[in] directory The directory to be operated upon
+ * @param[in] name      The name of the relevant entry
+ * @param[in] newname   The new name for renames
+ * @param[in] dirent_op The operation (LOOKUP, REMOVE, or RENAME) to
+ *                      perform
  *
- * @return returned status.
- *
+ * @retval CACHE_INODE_SUCCESS on success or failure in an unpopulated
+ *                             directory.
+ * @retval CACHE_INODE_BAD_TYPE if the supplied cache entry is not a
+ *                             directory.
+ * @retval CACHE_INODE_NOT_FOUND on lookup failure in a populated
+ *                             directory.
+ * @retval CACHE_INODE_ENTRY_EXISTS on rename collission in a
+ *                             populated directory.
  */
+
 cache_inode_status_t
-cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
-                                  fsal_name_t * pname,
-                                  fsal_name_t * newname,
-                                  cache_inode_client_t * pclient,
+cache_inode_operate_cached_dirent(cache_entry_t *directory,
+                                  fsal_name_t *name,
+                                  fsal_name_t *newname,
                                   cache_inode_dirent_op_t dirent_op)
 {
      cache_inode_dir_entry_t dirent_key[1], *dirent, *dirent2, *dirent3;
-     cache_inode_status_t pstatus = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
      int code = 0;
 
      /* Sanity check */
-     if(pentry_parent->type != DIRECTORY) {
-         pstatus = CACHE_INODE_BAD_TYPE;
+     if(directory->type != DIRECTORY) {
+         status = CACHE_INODE_BAD_TYPE;
          goto out;
      }
 
      /* If no active entry, do nothing */
-     if (pentry_parent->object.dir.nbactive == 0) {
-       if (!((pentry_parent->flags & CACHE_INODE_TRUST_CONTENT) &&
-             (pentry_parent->flags & CACHE_INODE_DIR_POPULATED))) {
+     if (directory->object.dir.nbactive == 0) {
+       if (!((directory->flags & CACHE_INODE_TRUST_CONTENT) &&
+             (directory->flags & CACHE_INODE_DIR_POPULATED))) {
          /* We cannot serve negative lookups. */
-           /* pstatus == CACHE_INODE_SUCCESS; */
+           /* status == CACHE_INODE_SUCCESS; */
        } else {
-           pstatus = CACHE_INODE_NOT_FOUND;
+           status = CACHE_INODE_NOT_FOUND;
        }
        goto out;
      }
 
-     FSAL_namecpy(&dirent_key->name, pname);
-     dirent = cache_inode_avl_qp_lookup_s(pentry_parent, dirent_key, 1);
+     FSAL_namecpy(&dirent_key->name, name);
+     dirent = cache_inode_avl_qp_lookup_s(directory, dirent_key, 1);
      if ((!dirent) || (dirent->flags & DIR_ENTRY_FLAG_DELETED)) {
-       if (!((pentry_parent->flags & CACHE_INODE_TRUST_CONTENT) &&
-             (pentry_parent->flags & CACHE_INODE_DIR_POPULATED))) {
+       if (!((directory->flags & CACHE_INODE_TRUST_CONTENT) &&
+             (directory->flags & CACHE_INODE_DIR_POPULATED))) {
          /* We cannot serve negative lookups. */
-         /* pstatus == CACHE_INODE_SUCCESS; */
+         /* status == CACHE_INODE_SUCCESS; */
        } else {
-         pstatus = CACHE_INODE_NOT_FOUND;
+         status = CACHE_INODE_NOT_FOUND;
        }
        goto out;
      }
 
 
-     /* We perform operations anyway even if
-        CACHE_INODE_TRUST_CONTENT is clear.  That way future upcalls
-        can call in to this function to update the content to be
-        correct.  We just don't ever return a not found or exists
-        error. */
+     /* We perform operations anyway even if CACHE_INODE_TRUST_CONTENT
+        is clear.  That way future upcalls can call in to this
+        function to update the content to be correct.  We just don't
+        ever return a not found or exists error. */
 
      switch (dirent_op) {
      case CACHE_INODE_DIRENT_OP_REMOVE:
          /* mark deleted */
-         avl_dirent_set_deleted(pentry_parent, dirent);
-         pentry_parent->object.dir.nbactive--;
+         avl_dirent_set_deleted(directory, dirent);
+         directory->object.dir.nbactive--;
          break;
 
      case CACHE_INODE_DIRENT_OP_RENAME:
-         /* change the installed inode only the rename can succeed */
          FSAL_namecpy(&dirent_key->name, newname);
-         dirent2 = cache_inode_avl_qp_lookup_s(pentry_parent,
+         dirent2 = cache_inode_avl_qp_lookup_s(directory,
                                                dirent_key, 1);
          if (dirent2) {
              /* rename would cause a collision */
-             if (pentry_parent->flags &
+             if (directory->flags &
                  CACHE_INODE_TRUST_CONTENT) {
                  /* We are not up to date. */
-                 /* pstatus == CACHE_INODE_SUCCESS; */
+                 /* status == CACHE_INODE_SUCCESS; */
              } else {
-                 pstatus = CACHE_INODE_ENTRY_EXISTS;
+                 status = CACHE_INODE_ENTRY_EXISTS;
              }
          } else {
              /* try to rename--no longer in-place */
-             avl_dirent_set_deleted(pentry_parent, dirent);
-             GetFromPool(dirent3, &pclient->pool_dir_entry,
-                         cache_inode_dir_entry_t);
+             avl_dirent_set_deleted(directory, dirent);
+             dirent3 = pool_alloc(cache_inode_dir_entry_pool, NULL);
              FSAL_namecpy(&dirent3->name, newname);
              dirent3->flags = DIR_ENTRY_FLAG_NONE;
              dirent3->entry = dirent->entry;
-             code = cache_inode_avl_qp_insert(pentry_parent, dirent3);
+             code = cache_inode_avl_qp_insert(directory, dirent3);
              switch (code) {
              case 0:
                  /* CACHE_INODE_SUCCESS */
@@ -206,22 +204,22 @@ cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
              case 1:
                  /* we reused an existing dirent, dirent has been deep
                   * copied, dispose it */
-                 ReleaseToPool(dirent3, &pclient->pool_dir_entry);
+                  pool_free(cache_inode_dir_entry_pool, dirent3);
                  /* CACHE_INODE_SUCCESS */
                  break;
              case -1:
                  /* collision, tree state unchanged (unlikely) */
-                 pstatus = CACHE_INODE_ENTRY_EXISTS;
+                 status = CACHE_INODE_ENTRY_EXISTS;
                  /* dirent is on persist tree, undelete it */
-                 avl_dirent_clear_deleted(pentry_parent, dirent);
+                 avl_dirent_clear_deleted(directory, dirent);
                  /* dirent3 was never inserted */
-                 ReleaseToPool(dirent3, &pclient->pool_dir_entry);
+                 pool_free(cache_inode_dir_entry_pool, dirent3);
              default:
                  LogCrit(COMPONENT_NFS_READDIR,
                          "DIRECTORY: insert error renaming dirent "
                          "(%s, %s)",
-                         pname->name, newname->name);
-                 pstatus = CACHE_INODE_INSERT_ERROR;
+                         name->name, newname->name);
+                 status = CACHE_INODE_INSERT_ERROR;
                  break;
              }
          } /* !found */
@@ -230,82 +228,66 @@ cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
      default:
          /* Should never occur, in any case, it costs nothing to handle
           * this situation */
-         pstatus = CACHE_INODE_INVALID_ARGUMENT;
+         status = CACHE_INODE_INVALID_ARGUMENT;
          break;
 
      }                       /* switch */
 
 out:
-     return (pstatus);
-}                               /* cache_inode_operate_cached_dirent */
+     return (status);
+} /* cache_inode_operate_cached_dirent */
 
 /**
  *
  * @brief Adds a directory entry to a cached directory.
  *
- * A dirent pointing to a cache entry counts as an internal reference
- * to that entry, similar to the internal reference owned by the hash
- * table.  So when this function returns successfully,
- * pentry_added->refcount is increased by 1, but the increase is not
- * charged to the call path (and should not be returned until the
- * dirent becomes unreachable).
+ * This function adds a new directory entry to a directory.  Directory
+ * entries have only weak references, so they do not prevent recycling
+ * or freeing the entry they locate.  This function may be called
+ * either once (for handling creation) or iteratively in directory
+ * population.
  *
- * Adds a directory entry to a cached directory. This is use when
- * creating a new entry through nfs and keep it to the cache. It also
- * allocates and caches the entry.  This function can be call
- * iteratively, within a loop (like what is done in
- * cache_inode_readdir_populate).  In this case, pentry_parent should
- * be set to the value returned in *pentry_next.  This function should
- * never be used for managing a junction.
+ * @param[in,out] parent    Cache entry of the directory being updated
+ * @param[in]     name      The name to add to the entry
+ * @param[in]     entry     The cache entry associated with name
+ * @param[out]    dir_entry The directory entry newly added (optional)
+ * @param[out]    status    Same as return value
  *
- * @param pentry_parent [INOUT] cache entry representing the directory to be
- *                              managed.
- * @param name          [IN]    name of the entry to add.
- * @param pentry_added  [IN]    the pentry added to the dirent array
- * @param pentry_next   [OUT]   the next pentry to use for next call.
- * @param pclient       [INOUT] resource allocated by the client for the nfs
- *                              management.
- * @param pstatus       [OUT]   returned status.
- *
- * @return the DIRECTORY that contain this entry in its array_dirent\n
- * @return NULL if failed, see *pstatus for error's meaning.
+ * @return CACHE_INODE_SUCCESS or errors on failure.
  *
  */
 cache_inode_status_t
-cache_inode_add_cached_dirent(cache_entry_t *pentry_parent,
-                              fsal_name_t *pname,
-                              cache_entry_t *pentry_added,
-                              cache_inode_dir_entry_t **pnew_dir_entry,
-                              cache_inode_client_t *pclient,
-                              fsal_op_context_t *pcontext,
-                              cache_inode_status_t *pstatus)
+cache_inode_add_cached_dirent(cache_entry_t *parent,
+                              fsal_name_t *name,
+                              cache_entry_t *entry,
+                              cache_inode_dir_entry_t **dir_entry,
+                              cache_inode_status_t *status)
 {
      cache_inode_dir_entry_t *new_dir_entry = NULL;
      int code = 0;
 
-     *pstatus = CACHE_INODE_SUCCESS;
+     *status = CACHE_INODE_SUCCESS;
 
      /* Sanity check */
-     if(pentry_parent->type != DIRECTORY) {
-          *pstatus = CACHE_INODE_BAD_TYPE;
-          return *pstatus;
+     if(parent->type != DIRECTORY) {
+          *status = CACHE_INODE_BAD_TYPE;
+          return *status;
      }
 
      /* in cache inode avl, we always insert on pentry_parent */
-     GetFromPool(new_dir_entry, &pclient->pool_dir_entry,
-                 cache_inode_dir_entry_t);
+     new_dir_entry = pool_alloc(cache_inode_dir_entry_pool, NULL);
      if(new_dir_entry == NULL) {
-          *pstatus = CACHE_INODE_MALLOC_ERROR;
-          return *pstatus;
+          *status = CACHE_INODE_MALLOC_ERROR;
+          return *status;
      }
 
      new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 
-     FSAL_namecpy(&new_dir_entry->name, pname);
-     new_dir_entry->entry = pentry_added->weakref;
+     FSAL_namecpy(&new_dir_entry->name, name);
+     new_dir_entry->entry = entry->weakref;
 
      /* add to avl */
-     code = cache_inode_avl_qp_insert(pentry_parent, new_dir_entry);
+     code = cache_inode_avl_qp_insert(parent, new_dir_entry);
      switch (code) {
      case 0:
          /* CACHE_INODE_SUCCESS */
@@ -313,89 +295,83 @@ cache_inode_add_cached_dirent(cache_entry_t *pentry_parent,
      case 1:
          /* we reused an existing dirent, dirent has been deep
           * copied, dispose it */
-         ReleaseToPool(new_dir_entry, &pclient->pool_dir_entry);
+         pool_free(cache_inode_dir_entry_pool, new_dir_entry);
          /* CACHE_INODE_SUCCESS */
          break;
      default:
          /* collision, tree not updated--release both pool objects and return
           * err */
-         ReleaseToPool(new_dir_entry, &pclient->pool_dir_entry);
-         *pstatus = CACHE_INODE_ENTRY_EXISTS;
-         return *pstatus;
+         pool_free(cache_inode_dir_entry_pool, new_dir_entry);
+         *status = CACHE_INODE_ENTRY_EXISTS;
+         return *status;
          break;
      }
 
-     if (pnew_dir_entry) {
-         *pnew_dir_entry = new_dir_entry;
+     if (dir_entry) {
+         *dir_entry = new_dir_entry;
      }
 
      /* we're going to succeed */
-     pentry_parent->object.dir.nbactive++;
+     parent->object.dir.nbactive++;
 
-     return *pstatus;
+     return *status;
 } /* cache_inode_add_cached_dirent */
 
 /**
  *
- * cache_inode_remove_cached_dirent: Removes a directory entry to a cached
- * directory.
+ * @brief Removes an entry from a cached directory.
  *
- * Removes a directory entry to a cached directory. No MT safety managed here !!
+ * This function removes the named entry from a cached directory.  The
+ * caller must hold the content lock.
  *
- * @param pentry_parent [INOUT] cache entry representing the directory to be
- * managed.
- * @param name [IN] name of the entry to remove.
- * @param pclient [INOUT] ressource allocated by the client for the nfs
- * management.
- * @param pstatus [OUT] returned status.
+ * @param[in,out] directory The cache entry representing the directory
+ * @param[in]     name      The name indicating the entry to remove
+ * @param[out]    status    Returned status
  *
- * @return the same as *pstatus
+ * @retval CACHE_INODE_SUCCESS on success.
+ * @retval CACHE_INODE_BAD_TYPE if directory is not a directory.
+ * @retval The result of cache_inode_operate_cached_dirent
  *
  */
-cache_inode_status_t cache_inode_remove_cached_dirent(
-    cache_entry_t * pentry_parent,
-    fsal_name_t * pname,
-    cache_inode_client_t * pclient,
-    cache_inode_status_t * pstatus)
+cache_inode_status_t
+cache_inode_remove_cached_dirent(cache_entry_t *directory,
+                                 fsal_name_t *name,
+                                 cache_inode_status_t *status)
 {
-
   /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS;
+  *status = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if(pentry_parent->type != DIRECTORY)
+  if(directory->type != DIRECTORY)
     {
-      *pstatus = CACHE_INODE_BAD_TYPE;
-      return *pstatus;
+      *status = CACHE_INODE_BAD_TYPE;
+      return *status;
     }
 
-  *pstatus = cache_inode_operate_cached_dirent(pentry_parent,
-                                               pname,
-                                               NULL,
-                                               pclient,
-                                               CACHE_INODE_DIRENT_OP_REMOVE);
-  return (*pstatus);
+  *status
+       = cache_inode_operate_cached_dirent(directory,
+                                           name,
+                                           NULL,
+                                           CACHE_INODE_DIRENT_OP_REMOVE);
+  return (*status);
 
-}                               /* cache_inode_remove_cached_dirent */
+} /* cache_inode_remove_cached_dirent */
 
 /**
  *
  * @brief Cache complete directory contents
  *
- * This function fully reads a complete directory from the FSAL and
- * caches botht the names and associated entries.  The content lock
- * must be held on the directory being read.
- * safety managed here !!
+ * This function reads a complete directory from the FSAL and caches
+ * both the names and filess.  The content lock must be held on the
+ * directory being read.
  *
  * @param[in]     directory  Entry for the parent directory to be read
- * @param[in,out] client     Per-thread resource management structure
  * @param[in]     context    FSAL credentials
  * @param[out]    status     Returned status
  *
  */
 cache_inode_status_t
 cache_inode_readdir_populate(cache_entry_t *directory,
-                             cache_inode_client_t *client,
                              fsal_op_context_t *context,
                              cache_inode_status_t *status)
 {
@@ -441,19 +417,18 @@ cache_inode_readdir_populate(cache_entry_t *directory,
 
   /* Invalidate all the dirents */
   if(cache_inode_invalidate_all_cached_dirent(directory,
-                                              client,
                                               status) != CACHE_INODE_SUCCESS)
     return *status;
 
   /* Open the directory */
-  dir_attributes.asked_attributes = client->attrmask;
+  dir_attributes.asked_attributes = cache_inode_params.attrmask;
   fsal_status = FSAL_opendir(&directory->handle,
                              context, &dir_handle, &dir_attributes);
   if(FSAL_IS_ERROR(fsal_status))
     {
       *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
-           cache_inode_kill_entry(directory, client);
+           cache_inode_kill_entry(directory);
       }
       return *status;
     }
@@ -468,7 +443,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
       fsal_status
         = FSAL_readdir(&dir_handle,
                        begin_cookie,
-                       client->attrmask,
+                       cache_inode_params.attrmask,
                        FSAL_READDIR_SIZE * sizeof(fsal_dirent_t),
                        array_dirent, &end_cookie, &found, &eod);
 
@@ -502,7 +477,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
              == SYMBOLIC_LINK)
             {
               /* Let's read the link for caching its value */
-              object_attributes.asked_attributes = client->attrmask;
+              object_attributes.asked_attributes = cache_inode_params.attrmask;
               fsal_status
                 = FSAL_readlink(&array_dirent[iter].handle,
                                 context,
@@ -512,7 +487,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                 {
                      *status = cache_inode_error_convert(fsal_status);
                      if (fsal_status.major == ERR_FSAL_STALE) {
-                          cache_inode_kill_entry(directory, client);
+                          cache_inode_kill_entry(directory);
                      }
                      goto bail;
                 }
@@ -536,9 +511,6 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                                       &array_dirent[iter].attributes,
                                       type,
                                       &create_arg,
-                                      client,
-                                      context,
-                                      CACHE_INODE_FLAG_NONE,
                                       status)) == NULL)
             goto bail;
           cache_status
@@ -546,13 +518,11 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                                             &(array_dirent[iter].name),
                                             entry,
                                             &new_dir_entry,
-                                            client,
-                                            context,
                                             status);
 
           /* Once the weakref is stored in the directory entry, we
              can release the reference we took on the entry. */
-          cache_inode_lru_unref(entry, client, 0);
+          cache_inode_lru_unref(entry, 0);
 
           if(cache_status != CACHE_INODE_SUCCESS
              && cache_status != CACHE_INODE_ENTRY_EXISTS)
@@ -591,9 +561,9 @@ cache_inode_readdir_populate(cache_entry_t *directory,
     }
 
   /* End of work */
-  atomic_set_int_bits(&directory->flags,
-                      (CACHE_INODE_DIR_POPULATED |
-                       CACHE_INODE_TRUST_CONTENT));
+  atomic_set_uint32_t_bits(&directory->flags,
+                           (CACHE_INODE_DIR_POPULATED |
+                            CACHE_INODE_TRUST_CONTENT));
   *status = CACHE_INODE_SUCCESS;
   return *status;
 
@@ -606,40 +576,32 @@ bail:
 
 /**
  *
- * cache_inode_readdir: Reads a directory.
+ * @brief Reads a directory
  *
- * If content caching is enabled, iterate over the cached directory
- * entries (possibly after populating the cache) calling a callback
- * function for each one.  Otherwise call the FSAL directly.
+ * This function iterates over the cached directory entries (possibly
+ * after populating the cache) and invokes a supplied callback
+ * function for each one.
  *
- * This is the only function in the cache_inode_readdir.c file that manages MT
- * safety on a directory cache entry.
+ * The caller must not hold the attribute or content locks on
+ * directory.
  *
- * @param dir_entry [IN] Entry for the parent directory to be read.
- * @param policy [IN] Caching policy.
- * @param cookie [IN] Cookie for the readdir operation (basically the offset).
- * @param nbfound [OUT] Number of entries returned.
- * @param eod_met [OUT] A flag to know if end of directory was met
- *                      during this call.
- * @param client [INOUT] Ressource allocated by the client for the
- *                        nfs management.
- * @param context [IN] FSAL credentials
- * @param cb [IN] The callback function to receive entries
- * @param cb_opaque [IN] A pointerp assed as the first argument to cb
- * @param status [OUT] returned status.
+ * @param[in]  directory The directory to be read
+ * @param[in]  cookie    Starting cookie for the readdir operation
+ * @param[out] nbfound   Number of entries returned.
+ * @param[out] eod_met   Whether the end of directory was met
+ * @param[in]  context   FSAL credentials
+ * @param[in]  cb        The callback function to receive entries
+ * @param[in]  cb_opaque A pointer passed as the first argument to cb
+ * @param[out] status    Returned status
  *
- * @return The same value as *status
  * @retval CACHE_INODE_SUCCESS if operation is a success
  * @retval CACHE_INODE_BAD_TYPE if entry is not related to a directory
- * @retval CACHE_INODE_LRU_ERROR if allocation error occured when
- *                               validating the entry
  */
 cache_inode_status_t
-cache_inode_readdir(cache_entry_t * dir_entry,
+cache_inode_readdir(cache_entry_t *directory,
                     uint64_t cookie,
                     unsigned int *nbfound,
                     bool_t *eod_met,
-                    cache_inode_client_t *client,
                     fsal_op_context_t *context,
                     cache_inode_readdir_cb_t cb,
                     void *cb_opaque,
@@ -662,7 +624,7 @@ cache_inode_readdir(cache_entry_t * dir_entry,
      *status = CACHE_INODE_SUCCESS;
 
      /* readdir can be done only with a directory */
-     if (dir_entry->type != DIRECTORY) {
+     if (directory->type != DIRECTORY) {
           *status = CACHE_INODE_BAD_TYPE;
           /* no lock acquired so far, just return status */
           return *status;
@@ -670,35 +632,33 @@ cache_inode_readdir(cache_entry_t * dir_entry,
 
      /* cache_inode_lock_trust_attrs can return an error, and no lock will be
         acquired */
-     *status = cache_inode_lock_trust_attrs(dir_entry, context, client);
+     *status = cache_inode_lock_trust_attrs(directory, context);
      if (*status != CACHE_INODE_SUCCESS)
        return *status;
 
      /* Check if user (as specified by the credentials) is authorized to read
       * the directory or not */
-     if (cache_inode_access_no_mutex(dir_entry,
+     if (cache_inode_access_no_mutex(directory,
                                      access_mask,
-                                     client,
                                      context,
                                      status)
          != CACHE_INODE_SUCCESS) {
           goto unlock_attrs;
      }
 
-     if (!((dir_entry->flags & CACHE_INODE_TRUST_CONTENT) &&
-           (dir_entry->flags & CACHE_INODE_DIR_POPULATED))) {
-          pthread_rwlock_wrlock(&dir_entry->content_lock);
-          pthread_rwlock_unlock(&dir_entry->attr_lock);
-          if (cache_inode_readdir_populate(dir_entry,
-                                           client,
+     if (!((directory->flags & CACHE_INODE_TRUST_CONTENT) &&
+           (directory->flags & CACHE_INODE_DIR_POPULATED))) {
+          pthread_rwlock_wrlock(&directory->content_lock);
+          pthread_rwlock_unlock(&directory->attr_lock);
+          if (cache_inode_readdir_populate(directory,
                                            context,
                                            status)
               != CACHE_INODE_SUCCESS) {
                goto unlock_dir;
           }
      } else {
-          pthread_rwlock_rdlock(&dir_entry->content_lock);
-          pthread_rwlock_unlock(&dir_entry->attr_lock);
+          pthread_rwlock_rdlock(&directory->content_lock);
+          pthread_rwlock_unlock(&directory->attr_lock);
      }
 
      /* deal with initial cookie value:
@@ -717,7 +677,7 @@ cache_inode_readdir(cache_entry_t * dir_entry,
           }
 
           /* we assert this can now succeed */
-          dirent = cache_inode_avl_lookup_k(dir_entry, cookie,
+          dirent = cache_inode_avl_lookup_k(directory, cookie,
                                             CACHE_INODE_FLAG_NEXT_ACTIVE);
           if (!dirent) {
                LogFullDebug(COMPONENT_NFS_READDIR,
@@ -733,15 +693,15 @@ cache_inode_readdir(cache_entry_t * dir_entry,
 
      } else {
           /* initial readdir */
-         dirent_node = avltree_first(&dir_entry->object.dir.avl.t);
+         dirent_node = avltree_first(&directory->object.dir.avl.t);
      }
 
      LogFullDebug(COMPONENT_NFS_READDIR,
-                  "About to readdir in cache_inode_readdir: pentry=%p "
+                  "About to readdir in cache_inode_readdir: directory=%p "
                   "cookie=%"PRIu64" collisions %d",
-                  dir_entry,
+                  directory,
                   cookie,
-                  dir_entry->object.dir.avl.collisions);
+                  directory->object.dir.avl.collisions);
 
      /* Now satisfy the request from the cached readdir--stop when either
       * the requested sequence or dirent sequence is exhausted */
@@ -758,14 +718,12 @@ cache_inode_readdir(cache_entry_t * dir_entry,
 
           if ((entry
                = cache_inode_weakref_get(&dirent->entry,
-                                         client,
                                          LRU_REQ_SCAN))
               == NULL) {
                /* Entry fell out of the cache, load it back in. */
                if ((entry
-                    = cache_inode_lookup_impl(dir_entry,
+                    = cache_inode_lookup_impl(directory,
                                               &dirent->name,
-                                              client,
                                               context,
                                               &lookup_status))
                    == NULL) {
@@ -773,8 +731,8 @@ cache_inode_readdir(cache_entry_t * dir_entry,
                          /* Directory changed out from under us.
                             Invalidate it, skip the name, and keep
                             going. */
-                         atomic_clear_int_bits(&dir_entry->flags,
-                                               CACHE_INODE_TRUST_CONTENT);
+                         atomic_clear_uint32_t_bits(&directory->flags,
+                                                    CACHE_INODE_TRUST_CONTENT);
                          continue;
                     } else {
                          /* Something is more seriously wrong,
@@ -791,10 +749,10 @@ cache_inode_readdir(cache_entry_t * dir_entry,
                        dirent, dirent->name.name,
                        dirent->hk.k, dirent->hk.p);
 
-          *status = cache_inode_lock_trust_attrs(entry, context, client);
+          *status = cache_inode_lock_trust_attrs(entry, context);
           if (*status != CACHE_INODE_SUCCESS)
             {
-              cache_inode_lru_unref(entry, client, 0);
+              cache_inode_lru_unref(entry, 0);
               goto unlock_dir;
             }
 
@@ -805,7 +763,7 @@ cache_inode_readdir(cache_entry_t * dir_entry,
                          dirent->hk.k);
           (*nbfound)++;
           pthread_rwlock_unlock(&entry->attr_lock);
-          cache_inode_lru_unref(entry, client, 0);
+          cache_inode_lru_unref(entry, 0);
           if (!in_result) {
                break;
           }
@@ -823,11 +781,11 @@ cache_inode_readdir(cache_entry_t * dir_entry,
 
 unlock_dir:
 
-     pthread_rwlock_unlock(&dir_entry->content_lock);
+     pthread_rwlock_unlock(&directory->content_lock);
      return *status;
 
 unlock_attrs:
 
-     pthread_rwlock_unlock(&dir_entry->attr_lock);
+     pthread_rwlock_unlock(&directory->attr_lock);
      return *status;
 } /* cache_inode_readdir */

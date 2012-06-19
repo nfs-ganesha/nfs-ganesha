@@ -28,12 +28,12 @@ fsal_const_t fsal_consts_array[NB_AVAILABLE_FSAL];
 #define fsal_functions fsal_functions_array[0]
 #define fsal_consts fsal_consts_array[0]
 
-#ifdef _USE_FSALMDS
+#ifdef _USE_PNFS_MDS
 fsal_mdsfunctions_t fsal_mdsfunctions;
-#endif                                          /* _USE_FSALMDS */
-#ifdef _USE_FSALDS
+#endif /* _USE_PNFS_MDS */
+#ifdef _USE_PNFS_DS
 fsal_dsfunctions_t fsal_dsfunctions;
-#endif                                          /* _USE_FSALMDS */
+#endif /* _USE_PNFS_DS */
 
 fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
                           fsal_op_context_t * p_context,        /* IN */
@@ -770,7 +770,7 @@ fsal_status_t FSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* I
     return fsal_functions.fsal_up_addfilter(pupebfilter, pupebcontext);
 }
 
-fsal_status_t FSAL_UP_GetEvents( fsal_up_event_t ** pevents,            /* OUT */
+fsal_status_t FSAL_UP_GetEvents( struct glist_head * pevent_head,            /* OUT */
                                  fsal_count_t * event_nb,          /* IN */
                                  fsal_time_t timeout,                       /* IN */
                                  fsal_count_t * peventfound,                /* OUT */
@@ -779,7 +779,7 @@ fsal_status_t FSAL_UP_GetEvents( fsal_up_event_t ** pevents,            /* OUT *
   if (fsal_functions.fsal_up_getevents == NULL)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_UP_getevents);
   else
-    return fsal_functions.fsal_up_getevents(pevents, event_nb, timeout,
+    return fsal_functions.fsal_up_getevents(pevent_head, event_nb, timeout,
                                             peventfound, pupebcontext);
 }
 #endif /* _USE_FSAL_UP */
@@ -799,16 +799,16 @@ void FSAL_LoadConsts(void)
   fsal_consts = FSAL_GetConsts();
 }
 
-#ifdef _USE_FSALMDS
+#ifdef _USE_PNFS_MDS
 void FSAL_LoadMDSFunctions(void)
 {
   fsal_mdsfunctions = FSAL_GetMDSFunctions();
 }
-#endif /* _USE_FSALMDS */
+#endif /* _USE_PNFS_MDS */
 
-#ifdef _USE_FSALDS
+#ifdef _USE_PNFS_DS
 void FSAL_LoadDSFunctions(void)
 {
   fsal_dsfunctions = FSAL_GetDSFunctions();
 }
-#endif /* _USE_FSALDS */
+#endif /* _USE_PNFS_DS */

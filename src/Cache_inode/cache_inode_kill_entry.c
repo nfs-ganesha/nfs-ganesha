@@ -60,7 +60,6 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
-#include "stuff_alloc.h"
 #include "nfs4_acls.h"
 #include "sal_functions.h"
 
@@ -76,13 +75,11 @@
  * removed until the refcount falls to 0, we just let the caller
  * remove locks as for any error.
  *
- * @param entry [in] The entry to be killed
- * @param client [in,out] Structure to manage per-thread resources
+ * @param[in] entry The entry to be killed
  */
 
 void
-cache_inode_kill_entry(cache_entry_t *entry,
-                       cache_inode_client_t *client)
+cache_inode_kill_entry(cache_entry_t *entry)
 {
      cache_inode_fsal_data_t fsaldata;
      hash_buffer_t key;
@@ -95,7 +92,7 @@ cache_inode_kill_entry(cache_entry_t *entry,
              "Using cache_inode_kill_entry for entry %p", entry);
 
      cache_inode_unpinnable(entry);
-     state_wipe_file(entry, client);
+     state_wipe_file(entry);
 
      fsaldata.fh_desc = entry->fh_desc;
      FSAL_ExpandHandle(NULL,
@@ -125,5 +122,5 @@ cache_inode_kill_entry(cache_entry_t *entry,
      /* Idempotently return the sentry reference.  (This function
         will only decrement the refcount once, no matter how many
         times it's called. */
-     cache_inode_lru_kill(entry, client);
+     cache_inode_lru_kill(entry);
 } /* cache_inode_kill_entry */

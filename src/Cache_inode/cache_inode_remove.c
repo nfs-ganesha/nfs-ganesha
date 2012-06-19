@@ -25,7 +25,6 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -36,53 +35,59 @@
 
 /**
  *
- * cache_inode_is_dir_empty: checks if a directory is empty or not. No mutex management.
+ * @brief Checks if a directory is empty without a lock.
  *
- * Checks if a directory is empty or not. No mutex management
+ * This function checks if the supplied directory is empty.  The
+ * caller must hold the content lock.
  *
- * @param pentry [IN] entry to be checked (should be of type DIRECTORY)
+ * @param[in] entry Entry to be checked (should be of type DIRECTORY)
  *
- * @retval CACHE_INODE_SUCCESS is directory is empty\n
+ * @retval CACHE_INODE_SUCCESS is directory is empty
  * @retval CACHE_INODE_BAD_TYPE is pentry is not of type DIRECTORY
  * @retval CACHE_INODE_DIR_NOT_EMPTY if pentry is not empty
  *
  */
-cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t *pentry)
+cache_inode_status_t
+cache_inode_is_dir_empty(cache_entry_t *entry)
 {
      cache_inode_status_t status;
 
      /* Sanity check */
-     if(pentry->type != DIRECTORY) {
+     if(entry->type != DIRECTORY) {
           return CACHE_INODE_BAD_TYPE;
      }
 
-     status = (pentry->object.dir.nbactive == 0) ?
+     status = (entry->object.dir.nbactive == 0) ?
           CACHE_INODE_SUCCESS :
           CACHE_INODE_DIR_NOT_EMPTY;
 
      return status;
-}                               /* cache_inode_is_dir_empty */
+} /* cache_inode_is_dir_empty */
 
 /**
  *
- * cache_inode_is_dir_empty_WithLock: checks if a directory is empty or not, BUT has lock management.
+ * @brief Checks if a directory is empty, acquiring lock
  *
- * Checks if a directory is empty or not, BUT has lock management.
+ * This function checks if the supplied cache entry represents an
+ * empty directory.  This function acquires the content lock, which
+ * must not be held by the caller.
  *
- * @param pentry [IN] entry to be checked (should be of type DIRECTORY)
+ * @param[in] entry Entry to be checked (should be of type DIRECTORY)
  *
- * @return CACHE_INODE_SUCCESS is directory is empty\n
- * @return CACHE_INODE_BAD_TYPE is pentry is not of type DIRECTORY\n
- * @return CACHE_INODE_DIR_NOT_EMPTY if pentry is not empty
+ * @retval CACHE_INODE_SUCCESS is directory is empty
+ * @retval CACHE_INODE_BAD_TYPE is pentry is not of type DIRECTORY
+ * @retval CACHE_INODE_DIR_NOT_EMPTY if pentry is not empty
  *
  */
-cache_inode_status_t cache_inode_is_dir_empty_WithLock(cache_entry_t * pentry)
+
+cache_inode_status_t
+cache_inode_is_dir_empty_WithLock(cache_entry_t *entry)
 {
      cache_inode_status_t status;
 
-     pthread_rwlock_rdlock(&pentry->content_lock);
-     status = cache_inode_is_dir_empty(pentry);
-     pthread_rwlock_unlock(&pentry->content_lock);
+     pthread_rwlock_rdlock(&entry->content_lock);
+     status = cache_inode_is_dir_empty(entry);
+     pthread_rwlock_unlock(&entry->content_lock);
 
      return status;
 }                               /* cache_inode_is_dir_empty_WithLock */
@@ -93,14 +98,12 @@ cache_inode_status_t cache_inode_is_dir_empty_WithLock(cache_entry_t * pentry)
  * This function frees the various resources associated wiith a cache
  * entry.
  *
- * @param entry [in] Entry to be cleaned
- * @param client [in,out] Structure for per-thread resource management
+ * @param[in] entry Entry to be cleaned
  *
  * @return CACHE_INODE_SUCCESS or various errors
  */
 cache_inode_status_t
-cache_inode_clean_internal(cache_entry_t *entry,
-                           cache_inode_client_t *client)
+cache_inode_clean_internal(cache_entry_t *entry)
 {
      hash_buffer_t key, val;
      hash_error_t rc = 0;
@@ -134,7 +137,7 @@ cache_inode_clean_internal(cache_entry_t *entry,
 
      if (entry->type == SYMBOLIC_LINK) {
           pthread_rwlock_wrlock(&entry->content_lock);
-          cache_inode_release_symlink(entry, &client->pool_entry_symlink);
+          cache_inode_release_symlink(entry);
           pthread_rwlock_unlock(&entry->content_lock);
      }
 
@@ -145,43 +148,40 @@ cache_inode_clean_internal(cache_entry_t *entry,
  *
  * @brief Public function to remove a name from a directory.
  *
- * Removes a pentry addressed by its parent pentry and its FSAL name.
+ * Removes a name from the supplied directory.  The caller should hold
+ * no locks on the directory.
  *
- * @param pentry [IN] Entry for the parent directory to be managed
- * @param pnode_name [IN] Name to be removed
- * @param pattr [OUT] Attributes of the directory on success
- * @param pclient [INOUT] Ressource allocated by the client for NFS management
- * @param pcontext [IN] FSAL credentials
- * @param pstatus [OUT] Returned status.
+ * @param[in]  entry   Entry for the parent directory to be managed
+ * @param[in]  name    Name to be removed
+ * @param[out] attr    Attributes of the directory on success
+ * @param[in]  context FSAL credentials
+ * @param[out] status  Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success \n
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
- *
+ * @retval CACHE_INODE_SUCCESS if operation is a success
  */
 
-cache_inode_status_t cache_inode_remove(cache_entry_t *pentry,
-                                        fsal_name_t *pnode_name,
-                                        fsal_attrib_list_t *pattr,
-                                        cache_inode_client_t *pclient,
-                                        fsal_op_context_t *pcontext,
-                                        cache_inode_status_t *pstatus)
+cache_inode_status_t
+cache_inode_remove(cache_entry_t *entry,
+                   fsal_name_t *name,
+                   fsal_attrib_list_t *attr,
+                   fsal_op_context_t *context,
+                   cache_inode_status_t *status)
 {
-     cache_inode_status_t status;
+     cache_inode_status_t cache_status;
      fsal_accessflags_t access_mask = 0;
 
      /* Get the attribute lock and check access */
-     pthread_rwlock_wrlock(&pentry->attr_lock);
+     pthread_rwlock_wrlock(&entry->attr_lock);
 
      /* Check if caller is allowed to perform the operation */
      access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD));
 
-     if((*pstatus
-         = cache_inode_access_sw(pentry,
+     if((*status
+         = cache_inode_access_sw(entry,
                                  access_mask,
-                                 pclient,
-                                 pcontext,
-                                 &status,
+                                 context,
+                                 &cache_status,
                                  FALSE))
         != CACHE_INODE_SUCCESS) {
           goto unlock_attr;
@@ -189,13 +189,12 @@ cache_inode_status_t cache_inode_remove(cache_entry_t *pentry,
 
      /* Acquire the directory lock and remove the entry */
 
-     pthread_rwlock_wrlock(&pentry->content_lock);
+     pthread_rwlock_wrlock(&entry->content_lock);
 
-     cache_inode_remove_impl(pentry,
-                             pnode_name,
-                             pclient,
-                             pcontext,
-                             pstatus,
+     cache_inode_remove_impl(entry,
+                             name,
+                             context,
+                             status,
                              /* Keep the attribute lock so we can copy
                                 attributes back to the caller.  I plan
                                 to get rid of this later. --ACE */
@@ -203,39 +202,34 @@ cache_inode_status_t cache_inode_remove(cache_entry_t *pentry,
                              CACHE_INODE_FLAG_ATTR_HOLD |
                              CACHE_INODE_FLAG_CONTENT_HAVE);
 
-     *pattr = pentry->attributes;
+     *attr = entry->attributes;
 
 unlock_attr:
 
-     pthread_rwlock_unlock(&pentry->attr_lock);
+     pthread_rwlock_unlock(&entry->attr_lock);
 
-     return *pstatus;
+     return *status;
 }                               /* cache_inode_remove */
 
 /**
- *
  * @brief Implement actual work of removing file
  *
  * Actually remove an entry from the directory.  Assume that the
  * directory contents and attributes are locked for writes.  The
  * attribute lock is released unless keep_md_lock is TRUE.
  *
- * @param entry [IN] Entry for the parent directory to be managed.
- * @param name [IN] Name of the entry that we are looking for in the cache.
- * @param client [INOUT] Ressource allocated by the client for NFS management.
- * @param context [IN] FSAL credentials
- * @param status [OUT] Returned status.
- * @param flags [IN] Flags to control lock retention
+ * @param[in] entry   Entry for the parent directory to be managed.
+ * @param[in] name    Name of the entry that we are looking for in the cache.
+ * @param[in] context FSAL credentials
+ * @param[in] status  Returned status
+ * @param[in] flags   Flags to control lock retention
  *
- * @return CACHE_INODE_SUCCESS if operation is a success \n
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when
- *                               validating the entry
+ * @return CACHE_INODE_SUCCESS if operation is a success
  *
  */
 cache_inode_status_t
 cache_inode_remove_impl(cache_entry_t *entry,
                         fsal_name_t *name,
-                        cache_inode_client_t *client,
                         fsal_op_context_t *context,
                         cache_inode_status_t *status,
                         uint32_t flags)
@@ -265,7 +259,6 @@ cache_inode_remove_impl(cache_entry_t *entry,
      if ((to_remove_entry
           = cache_inode_lookup_impl(entry,
                                     name,
-                                    client,
                                     context,
                                     status)) == NULL) {
           goto out;
@@ -289,7 +282,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
-               cache_inode_kill_entry(entry, client);
+               cache_inode_kill_entry(entry);
           }
           goto unlock;
      } else {
@@ -311,7 +304,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
      }
 
      /* Remove the entry from parent dir_entries avl */
-     cache_inode_remove_cached_dirent(entry, name, client, status);
+     cache_inode_remove_cached_dirent(entry, name, status);
 
      LogFullDebug(COMPONENT_CACHE_INODE,
                   "cache_inode_remove_cached_dirent: status=%d", *status);
@@ -321,8 +314,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
      if ((to_remove_entry->type != DIRECTORY) &&
          (to_remove_entry->attributes.numlinks > 1)) {
           if ((*status = cache_inode_refresh_attrs(to_remove_entry,
-                                                   context,
-                                                   client))
+                                                   context))
               != CACHE_INODE_SUCCESS) {
                goto unlock;
           }
@@ -340,7 +332,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
           pthread_rwlock_unlock(&to_remove_entry->attr_lock);
           /* Kill off the sentinel reference (and mark the entry so
              it doesn't get recycled while a reference exists.) */
-          cache_inode_lru_kill(to_remove_entry, client);
+          cache_inode_lru_kill(to_remove_entry);
      } else {
      unlock:
 
@@ -356,7 +348,7 @@ out:
      /* This is for the reference taken by lookup */
      if (to_remove_entry)
        {
-         cache_inode_put(to_remove_entry, client);
+         cache_inode_put(to_remove_entry);
        }
 
      return *status;

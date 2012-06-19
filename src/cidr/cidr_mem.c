@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stuff_alloc.h"
-#include "../include/cidr.h"
+#include "abstract_mem.h"
+#include "cidr.h"
 
 
 /* Allocate a struct cidr_addr */
@@ -19,7 +19,7 @@ cidr_alloc(void)
 {
 	CIDR *toret;
 
-	toret = (CIDR*)Mem_Alloc(sizeof(CIDR));
+	toret = gsh_malloc(sizeof(CIDR));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;
@@ -50,6 +50,5 @@ cidr_dup(const CIDR *src)
 void
 cidr_free(CIDR *tofree)
 {
-
-	Mem_Free(tofree);
+	gsh_free(tofree);
 }

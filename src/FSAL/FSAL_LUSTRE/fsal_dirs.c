@@ -18,13 +18,13 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-#include "stuff_alloc.h"
 #include <string.h>
+#include "abstract_mem.h"
 
 /**
  * FSAL_opendir :
  *     Opens a directory for reading its content.
- *     
+ *
  * \param dir_handle (input)
  *         the handle of the directory to be opened.
  * \param cred (input)
@@ -295,7 +295,7 @@ fsal_status_t LUSTREFSAL_closedir(fsal_dir_t * p_dir_descriptor   /* IN */
 
 #ifdef _USE_POSIXDB_READDIR_BLOCK
   if(((lustrefsal_dir_t *)p_dir_descriptor)->p_dbentries)
-    Mem_Free(p_dir_descriptor->p_dbentries);
+    gsh_free(p_dir_descriptor->p_dbentries);
 #endif
 
   rc = closedir(((lustrefsal_dir_t *)p_dir_descriptor)->p_dir);

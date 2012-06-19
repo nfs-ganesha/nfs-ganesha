@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -66,31 +65,30 @@
 
 /**
  *
- * nfs_Create: The NFS PROC2 and PROC3 CREATE
+ * @brief The NFS PROC2 and PROC3 CREATE
  *
  * Implements the NFS PROC CREATE function (for V2 and V3).
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS arguments union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
+ * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Create(nfs_arg_t * parg,
-               exportlist_t * pexport,
-               fsal_op_context_t * pcontext,
-               cache_inode_client_t * pclient,
-               struct svc_req *preq, nfs_res_t * pres)
+int nfs_Create(nfs_arg_t *parg,
+               exportlist_t *pexport,
+               fsal_op_context_t *pcontext,
+               nfs_worker_data_t *pworker,
+               struct svc_req *preq,
+               nfs_res_t *pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Create";
-
   char *str_file_name = NULL;
   fsal_name_t file_name;
   fsal_accessmode_t mode = 0;
@@ -136,7 +134,7 @@ int nfs_Create(nfs_arg_t * parg,
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_create3.where.dir))))
     {
-      rc = nfs3_Create_Xattr(parg, pexport, pcontext, pclient, preq, pres);
+      rc = nfs3_Create_Xattr(parg, pexport, pcontext, preq, pres);
       goto out;
     }
 
@@ -156,7 +154,7 @@ int nfs_Create(nfs_arg_t * parg,
                                          &(pres->res_create3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -273,7 +271,6 @@ int nfs_Create(nfs_arg_t * parg,
           file_pentry = cache_inode_lookup(parent_pentry,
                                            &file_name,
                                            &attr,
-                                           pclient,
                                            pcontext,
                                            &cache_status_lookup);
 
@@ -295,7 +292,7 @@ int nfs_Create(nfs_arg_t * parg,
                                                  mode,
                                                  NULL,
                                                  &attr_newfile,
-                                                 pclient, pcontext, &cache_status);
+                                                 pcontext, &cache_status);
 
               if(file_pentry != NULL)
                 {
@@ -351,7 +348,6 @@ int nfs_Create(nfs_arg_t * parg,
                       /* A call to cache_inode_setattr is required */
                       if(cache_inode_setattr(file_pentry,
                                              &attributes_create,
-                                             pclient,
                                              pcontext,
                                              &cache_status) != CACHE_INODE_SUCCESS)
                         {
@@ -379,7 +375,6 @@ int nfs_Create(nfs_arg_t * parg,
                       /* Get the resulting attributes from the Cache Inode */
                       if(cache_inode_getattr(file_pentry,
                                              &attr_newfile,
-                                             pclient,
                                              pcontext,
                                              &cache_status) != CACHE_INODE_SUCCESS)
                         {
@@ -445,7 +440,7 @@ int nfs_Create(nfs_arg_t * parg,
                                 .obj.post_op_fh3_u.handle),
                               &file_pentry->handle, pexport) == 0)
                         {
-                          Mem_Free(pres->res_create3.CREATE3res_u.resok.obj.
+                          gsh_free(pres->res_create3.CREATE3res_u.resok.obj.
                                    post_op_fh3_u.handle.data.data_val);
 
                           pres->res_create3.status = NFS3ERR_BADHANDLE;
@@ -559,10 +554,10 @@ int nfs_Create(nfs_arg_t * parg,
 out:
   /* return references */
   if (file_pentry)
-      cache_inode_put(file_pentry, pclient);
+      cache_inode_put(file_pentry);
 
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   return (rc);
 
@@ -580,5 +575,6 @@ void nfs_Create_Free(nfs_res_t * resp)
 {
   if((resp->res_create3.status == NFS3_OK) &&
      (resp->res_create3.CREATE3res_u.resok.obj.handle_follows == TRUE))
-    Mem_Free(resp->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle.data.data_val);
+    gsh_free(resp->res_create3.CREATE3res_u.resok.obj
+             .post_op_fh3_u.handle.data.data_val);
 }

@@ -14,17 +14,17 @@
 #include "config.h"
 #endif
 
-#include "stuff_alloc.h"
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "HPSSclapiExt/hpssclapiext.h"
 #include <string.h>
+#include "abstract_mem.h"
 
 /**
  * FSAL_opendir :
  *     Opens a directory for reading its content.
- *     
+ *
  * \param dir_handle (input)
  *         the handle of the directory to be opened.
  * \param p_context (input)
@@ -142,7 +142,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
   if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
-  if( ( outbuff = ( ns_DirEntry_t * )Mem_Alloc( sizeof(  ns_DirEntry_t ) * FSAL_READDIR_SIZE ) ) == NULL )
+  if((outbuff = gsh_calloc(FSAL_READDIR_SIZE, sizeof(ns_DirEntry_t))) == NULL)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   /* handle provides : suppattr, type, fileid */
@@ -197,7 +197,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
 
       if(rc < 0)
        {
-         Mem_Free( outbuff ) ;
+         gsh_free( outbuff ) ;
          Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_readdir);
        }
       else
@@ -290,14 +290,14 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
 
   LogDebug(COMPONENT_FSAL, "%s() returned %u entries, end_of_dir=%d", __func__, *nb_entries, *end_of_dir);
 
-  Mem_Free( outbuff ) ;
+  gsh_free( outbuff ) ;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir); /* @todo badly set fsal_log ? */
 }
 
 /**
  * FSAL_closedir :
  * Free the resources allocated for reading directory entries.
- *     
+ *
  * \param dir_descriptor (input):
  *        Pointer to a directory descriptor filled by FSAL_opendir.
  * 

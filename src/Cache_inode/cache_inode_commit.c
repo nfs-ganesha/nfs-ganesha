@@ -48,7 +48,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 
 #include <unistd.h>
@@ -64,13 +63,12 @@
  *
  * This function commits writes from unstable to stable storage.
  *
- * @param entry [in] File whose data should be committed
- * @param offset [in] Start of region to commit
- * @param count [in] Number of bytes to commit
- * @param typeofcommit [in] What type of commit operation this is
- * @param client [in/out] Per-thread resource management structure
- * @param context [IN] FSAL credentials
- * @param status [OUT] Operation status
+ * @param[in]  entry        File whose data should be committed
+ * @param[in]  offset       Start of region to commit
+ * @param[in]  count        Number of bytes to commit
+ * @param[in]  typeofcommit What type of commit operation this is
+ * @param[in]  context      FSAL credentials
+ * @param[out] status       Operation status
  *
  * @return CACHE_INODE_SUCCESS or various errors
  */
@@ -80,7 +78,6 @@ cache_inode_commit(cache_entry_t *entry,
                    uint64_t offset,
                    size_t count,
                    cache_inode_stability_t stability,
-                   cache_inode_client_t *client,
                    fsal_op_context_t *context,
                    cache_inode_status_t *status)
 {
@@ -114,7 +111,6 @@ cache_inode_commit(cache_entry_t *entry,
                pthread_rwlock_wrlock(&entry->content_lock);
                if (!is_open_for_write(entry)) {
                     if (cache_inode_open(entry,
-                                         client,
                                          FSAL_O_WRONLY,
                                          context,
                                          CACHE_INODE_FLAG_CONTENT_HAVE |
@@ -136,14 +132,13 @@ cache_inode_commit(cache_entry_t *entry,
 
                *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry, client);
+                    cache_inode_kill_entry(entry);
                     goto out;
                }
                /* Close the FD if we opened it. No need to catch an
                   additional error form a close? */
                if (opened) {
                     cache_inode_close(entry,
-                                      client,
                                       CACHE_INODE_FLAG_CONTENT_HAVE |
                                       CACHE_INODE_FLAG_CONTENT_HOLD,
                                       status);
@@ -154,7 +149,6 @@ cache_inode_commit(cache_entry_t *entry,
           /* Close the FD if we opened it. */
           if (opened) {
                if (cache_inode_close(entry,
-                                     client,
                                      CACHE_INODE_FLAG_CONTENT_HAVE |
                                      CACHE_INODE_FLAG_CONTENT_HOLD,
                                      status) !=
@@ -185,14 +179,13 @@ cache_inode_commit(cache_entry_t *entry,
                                          &bytes_moved,
                                          udata->buffer,
                                          NULL,
-                                         client,
                                          context,
                                          CACHE_INODE_SAFE_WRITE_TO_FS,
                                          status);
                if (status != CACHE_INODE_SUCCESS) {
                     goto out;
                }
-               Mem_Free(udata->buffer);
+               gsh_free(udata->buffer);
                udata->buffer = NULL;
           } else {
                if (offset < udata->offset) {
@@ -208,7 +201,6 @@ cache_inode_commit(cache_entry_t *entry,
                                 (udata->buffer +
                                  offset - udata->offset),
                                 NULL,
-                                client,
                                 context,
                                 CACHE_INODE_SAFE_WRITE_TO_FS,
                                 status);

@@ -2,12 +2,6 @@ DLOPEN_FLAGS = -rdynamic
 
 AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
 
-if USE_BUDDY_SYSTEM
-BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
-else
-BUDDY_LIB_FLAGS =
-endif
-
 if USE_FSAL_UP
 FSAL_UP_LIB_FLAGS = ../FSAL_UP/libfsalup.la
 else
@@ -142,7 +136,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/nfs_exports.h             \
                              ../include/nfs_proto_functions.h     \
                              ../include/nfs_file_handle.h         \
-                             ../include/stuff_alloc.h             \
                              ../include/RW_Lock.h                 \
                              ../include/SemN.h                    \
                              ../include/fsal.h                    \
@@ -167,7 +160,6 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       $(NFSIDMAP_LIB_FLAGS)                             \
                                       $(NFS4_ACL_LIB_FLAGS)                             \
                                       $(STAT_SNMP_LIB_FLAGS)                            \
-                                      $(BUDDY_LIB_FLAGS)                                \
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
                                       ../NodeList/libNodeList.la                        \

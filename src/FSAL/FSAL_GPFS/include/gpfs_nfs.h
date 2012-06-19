@@ -92,6 +92,10 @@ struct flock
 #define OPENHANDLE_SET_DELEGATION 126
 #define OPENHANDLE_CLOSE_FILE     127
 #define OPENHANDLE_LINK_BY_FH     128
+#define OPENHANDLE_RENAME_BY_FH   129
+#define OPENHANDLE_STAT_BY_NAME   130
+#define OPENHANDLE_GET_HANDLE     131
+#define OPENHANDLE_READLINK_BY_FD 132
 
 int gpfs_ganesha(int op, void *oarg);
 
@@ -131,6 +135,15 @@ struct name_handle_arg
   struct gpfs_file_handle *handle;
 };
 
+struct get_handle_arg
+{
+  int mountdirfd;
+  int len;
+  char *name;
+  struct gpfs_file_handle *dir_fh;
+  struct gpfs_file_handle *out_fh;
+};
+
 struct open_arg
 {
   int mountdirfd;
@@ -146,6 +159,17 @@ struct link_fh_arg
   char *name;
   struct gpfs_file_handle *dir_fh;
   struct gpfs_file_handle *dst_fh;
+};
+
+struct rename_fh_arg
+{
+  int mountdirfd;
+  int old_len;
+  char *old_name;
+  int new_len;
+  char *new_name;
+  struct gpfs_file_handle *old_fh;
+  struct gpfs_file_handle *new_fh;
 };
 
 struct glock
@@ -199,6 +223,14 @@ struct link_arg
 struct readlink_arg
 {
   int fd;
+  char *buffer;
+  int size;
+};
+
+struct readlink_fh_arg
+{
+  int mountdirfd;
+  struct gpfs_file_handle *handle;
   char *buffer;
   int size;
 };
@@ -436,6 +468,15 @@ struct stat_arg
 #else
     struct stat *buf;
 #endif
+};
+
+struct stat_name_arg
+{
+    int mountdirfd;
+    int len;
+    char *name;
+    struct gpfs_file_handle *handle;
+    struct stat *buf;
 };
 
 struct callback_arg

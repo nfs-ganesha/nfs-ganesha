@@ -65,7 +65,6 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
-#include "stuff_alloc.h"
 #include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
@@ -486,16 +485,13 @@ void InitRPC(int num_sock)
 
 #if 0 /* XXXX todo:  pkginit new style */
   /* Allocate resources that are based on the maximum number of open file descriptors */
-  Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
+  Xports = gsh_calloc(num_sock, sizeof(SVCXPRT *));
   if(Xports == NULL)
     LogFatal(COMPONENT_RPC,
              "Xports array allocation failed");
 
-  memset(Xports, 0, num_sock * sizeof(SVCXPRT *));
-  mutex_cond_xprt = (pthread_mutex_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_mutex_t ), "mutex_cond_xprt array");
-  memset(mutex_cond_xprt, 0, num_sock * sizeof(pthread_mutex_t ));
-  condvar_xprt = (pthread_cond_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_cond_t ), "condvar_xprt array");
-  memset(condvar_xprt, 0, num_sock * sizeof(pthread_cond_t ));
+  mutex_cond_xprt = gsh_calloc(num_sock, sizeof(pthread_mutex_t));
+  condvar_xprt = gsh_calloc(num_sock, sizeof(pthread_cond_t));
 
   FD_ZERO(&Svc_fdset);
 

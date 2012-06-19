@@ -40,7 +40,6 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "fsal.h"
 
 #ifdef _USE_HPSS

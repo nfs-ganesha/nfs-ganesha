@@ -21,7 +21,6 @@
 #include <stdlib.h>             /* for using exit */
 #include <string.h>
 #include <sys/types.h>
-#include "BuddyMalloc.h"
 
 #define READDIR_SIZE 5
 
@@ -179,10 +178,6 @@ int main(int argc, char **argv)
     }
   test = argv[1];
   /* retrieving params */
-
-#ifndef _NO_BUDDY_SYSTEM
-  BuddyInit(NULL);
-#endif
 
   /* init debug */
   SetDefaultLogging("TEST");

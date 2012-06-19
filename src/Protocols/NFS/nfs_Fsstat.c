@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -65,29 +64,30 @@
 
 /**
  *
- * nfs_Fsstat: The NFS PROC2 and PROC3 FSSTAT
+ * @brief The NFS PROC2 and PROC3 FSSTAT
  *
- * Implements the NFS PROC2 and PROC3 FSSTAT. 
- * 
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * Implements the NFS PROC2 and PROC3 FSSTAT.
  *
- * @return always NFS_REQ_OK or NFS_REQ_DROP
+ * @param[in]  parg     NFS argument union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
+ *
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Fsstat(nfs_arg_t * parg,
-               exportlist_t * pexport,
-               fsal_op_context_t * pcontext,
-               cache_inode_client_t * pclient,
-               struct svc_req *preq, nfs_res_t * pres)
+int nfs_Fsstat(nfs_arg_t *parg,
+               exportlist_t *pexport,
+               fsal_op_context_t *pcontext,
+               nfs_worker_data_t *pworker,
+               struct svc_req *preq,
+               nfs_res_t * pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Fsstat";
-
   fsal_dynamicfsinfo_t dynamicinfo;
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
@@ -119,7 +119,7 @@ int nfs_Fsstat(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_statfs2.status),
                                   &(pres->res_fsstat3.status),
-                                  NULL, NULL, pcontext, pclient, &rc)) == NULL)
+                                  NULL, NULL, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       /* return NFS_REQ_DROP ; */
@@ -135,7 +135,7 @@ int nfs_Fsstat(nfs_arg_t * parg,
       /* This call is costless, the pentry was cached during call to nfs_FhandleToCache */
       if((cache_status = cache_inode_getattr(pentry,
                                              &attr,
-                                             pclient, pcontext,
+                                             pcontext,
                                              &cache_status)) == CACHE_INODE_SUCCESS)
         {
 
@@ -217,7 +217,7 @@ int nfs_Fsstat(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 

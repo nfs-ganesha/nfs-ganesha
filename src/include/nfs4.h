@@ -14,3 +14,6 @@
 #include "nfsv41.h"
 #endif
 
+#ifndef NFS4_MAX_DOMAIN_LEN
+#define NFS4_MAX_DOMAIN_LEN 512
+#endif

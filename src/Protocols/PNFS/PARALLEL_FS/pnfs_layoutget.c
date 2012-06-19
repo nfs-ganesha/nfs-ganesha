@@ -36,7 +36,6 @@
 #endif
 
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -48,6 +47,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "pnfs.h" 
+#include "abstract_mem.h"
 
 #include "pnfs_internal.h" 
 
@@ -70,7 +70,7 @@ nfsstat4 PARALLEL_FS_pnfs_layoutget( LAYOUTGET4args   * playoutgetargs,
 
   pnfsfh4 = &data->currentFH ; 
 
-  if((buff = Mem_Alloc(1024)) == NULL)
+  if((buff = gsh_malloc(1024)) == NULL)
     {
       playoutgetres->logr_status = NFS4ERR_SERVERFAULT;
       return playoutgetres->logr_status ;
@@ -88,7 +88,7 @@ nfsstat4 PARALLEL_FS_pnfs_layoutget( LAYOUTGET4args   * playoutgetargs,
   /* Now the layout specific information */
   playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1;  /** @todo manages more than one segment */
   playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val =
-      (layout4 *) Mem_Alloc(sizeof(layout4));
+      gsh_malloc(sizeof(layout4));
 
   playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_offset =
       playoutgetargs->loga_offset;

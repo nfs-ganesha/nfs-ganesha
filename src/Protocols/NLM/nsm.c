@@ -50,7 +50,7 @@ bool_t nsm_connect()
       return FALSE;
     }
 
-  nodename = Mem_Alloc(strlen(utsname.nodename)+1);
+  nodename = gsh_malloc(strlen(utsname.nodename)+1);
   if(nodename == NULL)
     {
       LogDebug(COMPONENT_NLM,
@@ -73,7 +73,7 @@ void nsm_disconnect()
       Clnt_destroy(nsm_clnt);
       nsm_clnt = NULL;
       if(nodename != NULL)
-        Mem_Free(nodename);
+        gsh_free(nodename);
     }
 }
 
@@ -145,7 +145,7 @@ bool_t nsm_monitor(state_nsm_client_t *host)
   nsm_count++;
   host->ssc_monitored = TRUE;
   LogDebug(COMPONENT_NLM,
-           "Monitored %s", nsm_mon.mon_id.mon_name);
+           "Monitored %s for nodename %s", nsm_mon.mon_id.mon_name, nodename);
 
   V(nsm_mutex);
   return TRUE;
@@ -206,7 +206,7 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
   nsm_count--;
   nsm_disconnect();
   LogDebug(COMPONENT_NLM,
-           "Unonitored %s", nsm_mon_id.mon_name);
+           "Unonitored %s for nodename %s", nsm_mon_id.mon_name, nodename);
 
   V(nsm_mutex);
   return TRUE;

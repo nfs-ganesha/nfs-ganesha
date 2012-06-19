@@ -85,7 +85,6 @@
 #include <grp.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -123,27 +122,23 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 #ifndef _NO_MOUNT_LIST
 
   /* Allocate the new entry */
-  if((pnew_mnt_list_entry = (mountlist) Mem_Alloc_Label(sizeof(struct mountbody),
-                                                        "struct mountbody")) == NULL)
+  if((pnew_mnt_list_entry = gsh_calloc(1, sizeof(struct mountbody))) == NULL)
     return 0;
 
-  memset(pnew_mnt_list_entry, 0, sizeof(struct mountbody));
-
-  if((pnew_mnt_list_entry->ml_hostname = (char *)Mem_Alloc_Label(MAXHOSTNAMELEN, "ml_hostname")) == NULL)
+  if((pnew_mnt_list_entry->ml_hostname
+      = gsh_calloc(1, MAXHOSTNAMELEN)) == NULL)
     {
-      Mem_Free(pnew_mnt_list_entry);
+      gsh_free(pnew_mnt_list_entry);
       return 0;
     }
-  memset(pnew_mnt_list_entry->ml_hostname, 0, MAXHOSTNAMELEN);
 
-  if((pnew_mnt_list_entry->ml_directory = (char *)Mem_Alloc_Label(MAXPATHLEN, "ml_directory")) == NULL)
+  if((pnew_mnt_list_entry->ml_directory
+      = gsh_calloc(1, MAXPATHLEN)) == NULL)
     {
-      Mem_Free(pnew_mnt_list_entry->ml_hostname);
-      Mem_Free(pnew_mnt_list_entry);
+      gsh_free(pnew_mnt_list_entry->ml_hostname);
+      gsh_free(pnew_mnt_list_entry);
       return 0;
     }
-  memset(pnew_mnt_list_entry->ml_directory, 0, MAXPATHLEN);
-
   /* Copy the data */
   strncpy(pnew_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN);
   strncpy(pnew_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN);
@@ -168,24 +163,6 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 
   if(isFullDebug(COMPONENT_NFSPROTO))
     nfs_Print_MountList();
-
-  if(isFullDebug(COMPONENT_MEMCORRUPT))
-    {
-      if(!BuddyCheck(MNT_List_head, 0) || !BuddyCheck(MNT_List_tail, 0))
-        {
-          LogFullDebug(COMPONENT_MEMCORRUPT,
-                       "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.",
-                       MNT_List_head, MNT_List_tail);
-        }
-      if(!BuddyCheck(pnew_mnt_list_entry->ml_hostname, 0)
-         || !BuddyCheck(pnew_mnt_list_entry->ml_directory, 0))
-        {
-          LogFullDebug(COMPONENT_MEMCORRUPT,
-                       "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.",
-                       pnew_mnt_list_entry->ml_hostname,
-                       pnew_mnt_list_entry->ml_directory);
-        }
-    }
 
 #endif
 
@@ -222,19 +199,6 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
   for(piter_mnt_list_entry = MNT_List_head;
       piter_mnt_list_entry != NULL; piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
     {
-
-      if(isFullDebug(COMPONENT_MEMCORRUPT))
-        {
-          if(!BuddyCheck(piter_mnt_list_entry, 0)
-             || !BuddyCheck(piter_mnt_list_entry->ml_hostname, 0)
-             || !BuddyCheck(piter_mnt_list_entry->ml_directory, 0))
-            {
-              LogFullDebug(COMPONENT_MEMCORRUPT,
-                           "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.",
-                           piter_mnt_list_entry, MNT_List_head, MNT_List_tail);
-            }
-        }
-
       /* BUGAZOMEU: pas de verif sur le path */
       if(!strncmp(piter_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN)
          /*  && !strncmp( piter_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN ) */ )
@@ -259,9 +223,9 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
       if(MNT_List_tail == piter_mnt_list_entry)
         MNT_List_tail = piter_mnt_list_entry_prev;
 
-      Mem_Free(piter_mnt_list_entry->ml_hostname);
-      Mem_Free(piter_mnt_list_entry->ml_directory);
-      Mem_Free(piter_mnt_list_entry);
+      gsh_free(piter_mnt_list_entry->ml_hostname);
+      gsh_free(piter_mnt_list_entry->ml_directory);
+      gsh_free(piter_mnt_list_entry);
 
     }
 
@@ -297,9 +261,9 @@ int nfs_Purge_MountList(void)
   while(piter_mnt_list_entry_next != NULL)
     {
       piter_mnt_list_entry_next = piter_mnt_list_entry->ml_next;
-      Mem_Free(piter_mnt_list_entry->ml_hostname);
-      Mem_Free(piter_mnt_list_entry->ml_directory);
-      Mem_Free(piter_mnt_list_entry);
+      gsh_free(piter_mnt_list_entry->ml_hostname);
+      gsh_free(piter_mnt_list_entry->ml_directory);
+      gsh_free(piter_mnt_list_entry);
       piter_mnt_list_entry = piter_mnt_list_entry_next;
     }
 

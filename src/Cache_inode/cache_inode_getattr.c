@@ -42,13 +42,11 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -59,59 +57,56 @@
 
 /**
  *
- * cache_inode_getattr: Gets the attributes for a cached entry.
+ * @brief Gets the attributes for a cached entry
  *
- * Gets the attributes for a cached entry. The FSAL attributes are kept in a structure when the entry
- * is added to the cache.
+ * Gets the attributes for a cached entry. The FSAL attributes are
+ * kept in a structure when the entry is added to the cache.
+ * Currently this structure is copied out to the caller after possibly
+ * being reloaded from the FSAL.
  *
- * @param pentry [IN] entry to be managed.
- * @param pattr [OUT] pointer to the results
- * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials
- * @param pstatus [OUT] returned status.
+ * @param[in]  entry   Entry to be managed.
+ * @param[out] attr    Pointer to the results
+ * @param[in]  context FSAL credentials
+ * @param[out] status  Returned status
  *
- * @return CACHE_INODE_SUCCESS if operation is a success \n
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
+ * @retval CACHE_INODE_SUCCESS if operation is a success
  *
  */
 cache_inode_status_t
-cache_inode_getattr(cache_entry_t *pentry,
-                    fsal_attrib_list_t *pattr, /* XXX Change this so
+cache_inode_getattr(cache_entry_t *entry,
+                    fsal_attrib_list_t *attr, /* XXX Change this so
                                                 * we don't just copy
                                                 * stuff on the stack. */
-                    cache_inode_client_t *pclient,
-                    fsal_op_context_t *pcontext,
-                    cache_inode_status_t *pstatus)
+                    fsal_op_context_t *context,
+                    cache_inode_status_t *status)
 {
      /* sanity check */
-     if(pentry == NULL || pattr == NULL || pclient == NULL ||
-        pcontext == NULL) {
-          *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+     if(entry == NULL || attr == NULL || context == NULL) {
+          *status = CACHE_INODE_INVALID_ARGUMENT;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_getattr: returning "
                    "CACHE_INODE_INVALID_ARGUMENT because of bad arg");
-          return *pstatus;
+          return *status;
      }
 
      /* Set the return default to CACHE_INODE_SUCCESS */
-     *pstatus = CACHE_INODE_SUCCESS;
+     *status = CACHE_INODE_SUCCESS;
 
 /* Lock (and refresh if necessary) the attributes, copy them out, and
    unlock. */
 
-     if ((*pstatus
-          = cache_inode_lock_trust_attrs(pentry,
-                                         pcontext,
-                                         pclient))
+     if ((*status
+          = cache_inode_lock_trust_attrs(entry,
+                                         context))
          != CACHE_INODE_SUCCESS) {
           goto out;
      }
 
-     *pattr = pentry->attributes;
+     *attr = entry->attributes;
 
-     pthread_rwlock_unlock(&pentry->attr_lock);
+     pthread_rwlock_unlock(&entry->attr_lock);
 
 out:
 
-    return *pstatus;
+    return *status;
 }

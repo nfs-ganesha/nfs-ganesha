@@ -60,9 +60,9 @@
 #include "nfs_stat.h"
 #include "nfs_exports.h"
 #include "nodelist.h"
-#include "stuff_alloc.h"
 #include "fsal.h"
 #include "ganesha_rpc.h"
+#include "abstract_mem.h"
 
 #define DEFAULT_PORT "10401"
 
@@ -198,7 +198,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
   /* allocate clients strings  */
   for(idx = 0; idx < count; idx++)
     {
-      client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
+      client_list[idx] = gsh_malloc(EXPORT_MAX_CLIENTLEN);
       client_list[idx][0] = '\0';
     }
 
@@ -219,7 +219,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
-        Mem_Free((caddr_t) client_list[idx]);
+        gsh_free(client_list[idx]);
 
       return rc;
     }
@@ -235,7 +235,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
-        Mem_Free((caddr_t) client_list[idx]);
+        gsh_free(client_list[idx]);
 
       return rc;
     }
@@ -244,7 +244,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 
   /* free client strings */
   for(idx = 0; idx < count; idx++)
-    Mem_Free((caddr_t) client_list[idx]);
+    gsh_free(client_list[idx]);
 
   return rc;
 }

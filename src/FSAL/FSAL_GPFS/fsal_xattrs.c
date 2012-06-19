@@ -207,7 +207,8 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
   if(p_xattr_attrs->asked_attributes & FSAL_ATTR_CHGTIME)
     {
       p_xattr_attrs->chgtime = file_attrs->chgtime;
-      p_xattr_attrs->change = (uint64_t) p_xattr_attrs->chgtime.seconds;
+      p_xattr_attrs->change = (uint64_t) p_xattr_attrs->chgtime.seconds +
+                              (uint64_t) p_xattr_attrs->chgtime.nseconds;
     }
 
   if(p_xattr_attrs->asked_attributes & FSAL_ATTR_SIZE)

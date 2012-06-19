@@ -52,7 +52,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -66,32 +65,30 @@
 
 /**
  *
- * nfs_Write: The NFS PROC2 and PROC3 WRITE
+ * @brief The NFS PROC2 and PROC3 WRITE
  *
  * Implements the NFS PROC WRITE function (for V2 and V3).
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS argument union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
-extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
 
-int nfs_Write(nfs_arg_t * parg,
-              exportlist_t * pexport,
-              fsal_op_context_t * pcontext,
-              cache_inode_client_t * pclient,
-              struct svc_req *preq, nfs_res_t * pres)
+int nfs_Write(nfs_arg_t *parg,
+              exportlist_t *pexport,
+              fsal_op_context_t *pcontext,
+              nfs_worker_data_t *pworker,
+              struct svc_req *preq,
+              nfs_res_t *pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Write";
-
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   fsal_attrib_list_t pre_attr;
@@ -159,7 +156,7 @@ int nfs_Write(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_attr2.status),
                                   &(pres->res_write3.status),
-                                  NULL, &pre_attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &pre_attr, pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -167,13 +164,12 @@ int nfs_Write(nfs_arg_t * parg,
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_write3.file))))
   {
-    rc = nfs3_Write_Xattr(parg, pexport, pcontext, pclient, preq, pres);
+    rc = nfs3_Write_Xattr(parg, pexport, pcontext, preq, pres);
     goto out;
   }
 
   if(cache_inode_access(pentry,
                         FSAL_WRITE_ACCESS,
-                        pclient,
                         pcontext,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
@@ -450,11 +446,10 @@ int nfs_Write(nfs_arg_t * parg,
                            &written_size,
                            data,
                            &eof_met,
-                           pclient,
                            pcontext,
                            stability,
                            &cache_status) == CACHE_INODE_SUCCESS) &&
-         (cache_inode_getattr(pentry, &attr, pclient, pcontext,
+         (cache_inode_getattr(pentry, &attr, pcontext,
                               &cache_status) == CACHE_INODE_SUCCESS)) {
 
 
@@ -524,7 +519,7 @@ int nfs_Write(nfs_arg_t * parg,
 out:
   /* return references */
   if (pentry)
-      cache_inode_put(pentry, pclient);
+      cache_inode_put(pentry);
 
   return (rc);
 

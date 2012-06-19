@@ -3,7 +3,6 @@
 #include "handle_mapping_db.h"
 #include "handle_mapping_internal.h"
 #include "../fsal_internal.h"
-#include "stuff_alloc.h"
 #include <sqlite3.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -141,7 +140,7 @@ typedef struct db_thread_info__
   /* this pool is accessed by submitter
    * and by the db thread */
   pthread_mutex_t pool_mutex;
-  struct prealloc_pool dbop_pool;
+  pool_t *dbop_pool;
 
 } db_thread_info_t;
 
@@ -196,7 +195,10 @@ static int init_db_thread_info(db_thread_info_t * p_thr_info,
   if(pthread_mutex_init(&p_thr_info->pool_mutex, NULL))
     return HANDLEMAP_SYSTEM_ERROR;
 
-  InitPool(&p_thr_info->dbop_pool, nb_dbop_prealloc, db_op_item_t, NULL, NULL);
+  p_thr_info->dbop_pool =
+       pool_init(NULL, sizeof(db_op_item_t),
+                 pool_basic_substrate,
+                 NULL, NULL, NULL);
 
   return HANDLEMAP_SUCCESS;
 }
@@ -487,16 +489,6 @@ static void *database_worker_thread(void *arg)
 
   /* initialize memory management */
 
-#ifndef _NO_BUDDY_SYSTEM
-
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogCrit(COMPONENT_FSAL, "ERROR: Could not initialize memory manager");
-      exit(rc);
-    }
-#endif
-
   rc = init_database_access(p_info);
 
   if(rc != HANDLEMAP_SUCCESS)
@@ -601,7 +593,7 @@ static void *database_worker_thread(void *arg)
 
       /* free the db operation item */
       P(p_info->pool_mutex);
-      ReleaseToPool(to_be_done, &p_info->dbop_pool);
+      pool_free(&p_info->dbop_pool, to_be_done);
       V(p_info->pool_mutex);
 
     }                           /* loop forever */
@@ -777,7 +769,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
       /* get a new db operation  */
       P(db_thread[i].pool_mutex);
 
-      GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
+      new_task = pool_alloc(&db_thread[i].dbop_pool, NULL);
 
       V(db_thread[i].pool_mutex);
 
@@ -825,7 +817,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
       /* get a new db operation  */
       P(db_thread[i].pool_mutex);
 
-      GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
+      new_task = pool_alloc(db_thread[i].dbop_pool, NULL);
 
       V(db_thread[i].pool_mutex);
 
@@ -866,7 +858,7 @@ int handlemap_db_delete(nfs23_map_handle_t * p_in_nfs23_digest)
   /* get a new db operation  */
   P(db_thread[i].pool_mutex);
 
-  GetFromPool(new_task, &db_thread[i].dbop_pool, db_op_item_t);
+  new_task = pool_alloc(db_thread[i].dbop_pool, NULL);
 
   V(db_thread[i].pool_mutex);
 

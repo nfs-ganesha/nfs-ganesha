@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -94,7 +93,7 @@ int ___cache_content_invalidate_flushed(LRU_entry_t * plru_entry, void *addparam
     }
 
   /* Release the entry */
-  ReleaseToPool(pentry, &pclient->content_pool);
+  pool_free(pclient->content_pool, pentry);
 
   /* Retour de la pentry dans le pool */
   return LRU_LIST_SET_INVALID;

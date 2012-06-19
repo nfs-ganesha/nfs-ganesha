@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "sal_functions.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 
 /**
@@ -88,17 +87,13 @@ state_add_segment(state_t *state,
           return STATE_BAD_TYPE;
      }
 
-     new_segment =
-          (state_layout_segment_t*) Mem_Alloc_Label(sizeof(*new_segment),
-                                                    "state_layout_segment_t");
+     new_segment = gsh_calloc(1, sizeof(*new_segment));
      if(!new_segment) {
           return STATE_MALLOC_ERROR;
      }
 
-     memset(new_segment, 0, sizeof(state_layout_segment_t));
-
      if(pthread_mutex_init(&new_segment->sls_mutex, NULL) == -1) {
-          Mem_Free(new_segment);
+          gsh_free(new_segment);
           return STATE_POOL_MUTEX_INIT_ERROR;
      }
 
@@ -124,7 +119,7 @@ state_add_segment(state_t *state,
 state_status_t state_delete_segment(state_layout_segment_t *segment) {
      glist_del(&segment->sls_state_segments);
      pthread_mutex_unlock(&segment->sls_mutex);
-     Mem_Free((char*) segment);
+     gsh_free(segment);
      return STATE_SUCCESS;
 }
 

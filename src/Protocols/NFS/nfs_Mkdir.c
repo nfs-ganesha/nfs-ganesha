@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -65,31 +64,30 @@
 
 /**
  *
- * nfs_Mkdir: The NFS PROC2 and PROC3 MKDIR
+ * @brief The NFS PROC2 and PROC3 MKDIR
  *
  * Implements the NFS PROC MKDIR function (for V2 and V3).
  *
- * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
- * @param pclient [INOUT] client resource to be used
- * @param preq    [IN]    pointer to SVC request related to this call 
- * @param pres    [OUT]   pointer to the structure to contain the result of the call
+ * @param[in]  parg     NFS arguments union
+ * @param[in]  pexport  NFS export list
+ * @param[in]  pcontext Credentials to be used for this request
+ * @param[in]  pworker  Worker thread data
+ * @param[in]  preq     SVC request related to this call
+ * @param[out] pres     Structure to contain the result of the call
  *
- * @return NFS_REQ_OK if successfull \n
- *         NFS_REQ_DROP if failed but retryable  \n
- *         NFS_REQ_FAILED if failed and not retryable.
+ * @retval NFS_REQ_OK if successful
+ * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
-int nfs_Mkdir(nfs_arg_t * parg,
-              exportlist_t * pexport,
-              fsal_op_context_t * pcontext,
-              cache_inode_client_t * pclient,
-              struct svc_req *preq, nfs_res_t * pres)
+int nfs_Mkdir(nfs_arg_t *parg,
+              exportlist_t *pexport,
+              fsal_op_context_t *pcontext,
+              nfs_worker_data_t *pworker,
+              struct svc_req *preq,
+              nfs_res_t *pres)
 {
-  static char __attribute__ ((__unused__)) funcName[] = "nfs_Mkdir";
-
   char *str_dir_name = NULL;
   fsal_accessmode_t mode = 0;
   cache_entry_t *dir_pentry = NULL;
@@ -151,7 +149,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
                                          &(pres->res_mkdir3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pcontext, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -257,7 +255,6 @@ int nfs_Mkdir(nfs_arg_t * parg,
           dir_pentry = cache_inode_lookup(parent_pentry,
                                           &dir_name,
                                           &attr,
-                                          pclient,
                                           pcontext,
                                           &cache_status_lookup);
 
@@ -274,11 +271,10 @@ int nfs_Mkdir(nfs_arg_t * parg,
                                                   mode,
                                                   &create_arg,
                                                   &attr,
-                                                  pclient,
                                                   pcontext, &cache_status)) != NULL)
                 {
                   /*
-                   * Get the FSAL handle for this entry 
+                   * Get the FSAL handle for this entry
                    */
                   pfsal_handle = &dir_pentry->handle;
 
@@ -327,10 +323,11 @@ int nfs_Mkdir(nfs_arg_t * parg,
                             }
 
                           if(nfs3_FSALToFhandle
-                             (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                              handle, pfsal_handle, pexport) == 0)
+                             (&pres->res_mkdir3.MKDIR3res_u.resok.obj
+                              .post_op_fh3_u.handle, pfsal_handle,
+                              pexport) == 0)
                             {
-                              Mem_Free((char *)pres->res_mkdir3.MKDIR3res_u.resok.obj.
+                              gsh_free(pres->res_mkdir3.MKDIR3res_u.resok.obj.
                                        post_op_fh3_u.handle.data.data_val);
                               pres->res_mkdir3.status = NFS3ERR_INVAL;
                               rc = NFS_REQ_OK;
@@ -371,10 +368,10 @@ int nfs_Mkdir(nfs_arg_t * parg,
                         }
 
                       if(nfs3_FSALToFhandle
-                         (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                          handle, pfsal_handle, pexport) == 0)
+                         (&pres->res_mkdir3.MKDIR3res_u.resok.obj
+                          .post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                         {
-                          Mem_Free((char *)pres->res_mkdir3.MKDIR3res_u.resok.obj.
+                          gsh_free(pres->res_mkdir3.MKDIR3res_u.resok.obj.
                                    post_op_fh3_u.handle.data.data_val);
                           pres->res_mkdir3.status = NFS3ERR_INVAL;
                           rc = NFS_REQ_OK;
@@ -494,10 +491,10 @@ int nfs_Mkdir(nfs_arg_t * parg,
 out:
   /* return references */
   if (dir_pentry)
-      cache_inode_put(dir_pentry, pclient);
+      cache_inode_put(dir_pentry);
 
   if (parent_pentry)
-      cache_inode_put(parent_pentry, pclient);
+      cache_inode_put(parent_pentry);
 
   return (rc);
 }
@@ -514,5 +511,6 @@ void nfs_Mkdir_Free(nfs_res_t * resp)
 {
   if((resp->res_mkdir3.status == NFS3_OK) &&
      (resp->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows == TRUE))
-    Mem_Free(resp->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.handle.data.data_val);
+    gsh_free(resp->res_mkdir3.MKDIR3res_u.resok.obj
+             .post_op_fh3_u.handle.data.data_val);
 }                               /* nfs_Mkdir_Free */

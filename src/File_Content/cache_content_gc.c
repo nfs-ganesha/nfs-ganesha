@@ -41,7 +41,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "stuff_alloc.h"
 #include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"

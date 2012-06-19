@@ -33,7 +33,6 @@
 #include <pthread.h>
 
 #include "nfs_core.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "fsal.h"
 #include "cache_inode.h"
@@ -51,12 +50,47 @@ fsal_status_t dumb_fsal_up_invalidate(fsal_up_event_data_t * pevdata)
   cache_inode_status_t cache_status;
 
   LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_get()");
+           "FSAL_UP_DUMB: calling cache_inode_invalidate()");
 
   /* Lock the entry */
   cache_inode_invalidate(&pevdata->event_context.fsal_data,
                          &cache_status);
 
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
+{
+  cache_inode_status_t cache_status;
+  cache_entry_t        * pentry = NULL;
+  fsal_attrib_list_t     attr;
+
+  LogFullDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: Entered dumb_fsal_up_update\n");
+  if ((pevdata->type.update.upu_flags & FSAL_UP_NLINK) &&
+      (pevdata->type.update.upu_stat_buf.st_nlink == 0) )
+    {
+      pentry = cache_inode_get(&pevdata->event_context.fsal_data,
+                               &attr, NULL, NULL,
+                               &cache_status);
+      if(pentry == NULL)
+        {
+          LogDebug(COMPONENT_FSAL_UP,
+                   "FSAL_UP_DUMB: cache inode get failed.");
+          /* Not an error. Expecting some nodes will not have it in cache in
+           * a cluster. */
+          ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        }
+
+      LogFullDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: nlink has become zero; close fds\n");
+      cache_inode_close(pentry, CACHE_INODE_FLAG_REALLYCLOSE, &cache_status);
+    }
+
+  cache_inode_invalidate(&pevdata->event_context.fsal_data, &cache_status);
+
+  if(pentry)
+    cache_inode_put(pentry);
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -105,7 +139,6 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
            "FSAL_UP_DUMB: calling cache_inode_get()");
   pentry = cache_inode_get(&pevdata->event_context.fsal_data,
                            &attr, NULL, NULL,
-                           NULL,
                            &cache_status);
   if(pentry == NULL)
     {
@@ -122,12 +155,11 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
 
   grant_blocked_lock_upcall(pentry,
                             pevdata->type.lock_grant.lock_owner,
-                            &pevdata->type.lock_grant.lock_param,
-                            NULL);
+                            &pevdata->type.lock_grant.lock_param);
 
 
   if(pentry)
-    cache_inode_put(pentry, NULL);
+    cache_inode_put(pentry);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 #else
@@ -145,8 +177,7 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
   LogDebug(COMPONENT_FSAL_UP,
            "FSAL_UP_DUMB: calling cache_inode_get()");
   pentry = cache_inode_get(&pevdata->event_context.fsal_data,
-                           &attr, NULL, NULL, NULL,
-                           &cache_status);
+                           &attr, NULL, NULL, &cache_status);
   if(pentry == NULL)
     {
       LogDebug(COMPONENT_FSAL_UP,
@@ -162,11 +193,10 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
 
   available_blocked_lock_upcall(pentry,
                                 pevdata->type.lock_grant.lock_owner,
-                                &pevdata->type.lock_grant.lock_param,
-                                NULL);
+                                &pevdata->type.lock_grant.lock_param);
 
   if(pentry)
-    cache_inode_put(pentry, NULL);
+    cache_inode_put(pentry);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 #else
@@ -201,6 +231,7 @@ fsal_up_event_functions_t dumb_event_func = {
   .fsal_up_open = dumb_fsal_up_open,
   .fsal_up_close = dumb_fsal_up_close,
   .fsal_up_setattr = dumb_fsal_up_setattr,
+  .fsal_up_update = dumb_fsal_up_update,
   .fsal_up_invalidate = dumb_fsal_up_invalidate
 };
 

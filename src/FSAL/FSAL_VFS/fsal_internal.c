@@ -40,7 +40,6 @@
 
 #include  "fsal.h"
 #include "fsal_internal.h"
-#include "stuff_alloc.h"
 #include "SemN.h"
 #include "fsal_convert.h"
 #include <libgen.h>             /* used for 'dirname' */
@@ -48,6 +47,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <mntent.h>
+#include "abstract_mem.h"
 
 
 /* Add missing prototype in vfs.h */
@@ -151,11 +151,11 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
     {
       int i;
 
-      bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
+      bythread_stat = gsh_malloc(sizeof(fsal_statistics_t));
 
       if(bythread_stat == NULL)
         {
-          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, ENOMEM);
         }
 
       /* inits the struct */
@@ -221,8 +221,8 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
       int i;
 
       if((bythread_stat =
-          (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
-        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          gsh_malloc(sizeof(fsal_statistics_t))) == NULL)
+        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, ENOMEM);
 
       /* inits the struct */
       for(i = 0; i < FSAL_NB_FUNC; i++)

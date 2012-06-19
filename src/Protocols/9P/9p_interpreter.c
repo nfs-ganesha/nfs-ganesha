@@ -45,7 +45,6 @@
 #include <pthread.h>
 
 
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "9p.h"
 #include "cache_inode.h"

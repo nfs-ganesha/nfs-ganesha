@@ -57,16 +57,11 @@
 #ifdef _USE_BLOCKING_LOCKS
 static pthread_t               state_async_thread_id;
 static struct glist_head       state_async_queue;
-cache_inode_client_parameter_t state_async_cache_inode_client_param;
-cache_inode_client_t           state_async_cache_inode_client;
 nfs_tcb_t                      state_async_tcb;
 
 /* Execute a func from the async queue */
 void *state_async_thread(void *UnusedArg)
 {
-#ifndef _NO_BUDDY_SYSTEM
-  int rc;
-#endif
   state_async_queue_t * entry;
   struct timeval        now;
   struct timespec       timeout;
@@ -74,16 +69,6 @@ void *state_async_thread(void *UnusedArg)
 
   SetNameFunction("state_async_thread");
 
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_STATE,
-               "State Async Thread: Memory manager could not be initialized");
-    }
-  LogInfo(COMPONENT_STATE,
-          "State Async Thread: Memory manager successfully initialized");
-#endif
   if(mark_thread_existing(&state_async_tcb) == PAUSE_EXIT)
     {
       /* Oops, that didn't last long... exit. */
@@ -155,8 +140,7 @@ void *state_async_thread(void *UnusedArg)
           /* Block is off list, no need to hold mutex any more */
           V(blocked_locks_mutex);
 
-          process_blocked_lock_upcall(pblock,
-                                      &state_async_cache_inode_client);
+          process_blocked_lock_upcall(pblock);
 
           continue;
         }
@@ -234,31 +218,6 @@ state_status_t state_async_init()
 {
 #ifdef _USE_BLOCKING_LOCKS
   init_glist(&state_async_queue);
-
-  /* setting the 'state_async_cache_inode_client_param' structure */
-  state_async_cache_inode_client_param.nb_prealloc_entry           = 0;
-  state_async_cache_inode_client_param.nb_pre_state_v4             = 0;
-  state_async_cache_inode_client_param.grace_period_link           = 0;
-  state_async_cache_inode_client_param.grace_period_attr           = 0;
-  state_async_cache_inode_client_param.grace_period_dirent         = 0;
-  state_async_cache_inode_client_param.grace_period_attr           = 0;
-  state_async_cache_inode_client_param.grace_period_link           = 0;
-  state_async_cache_inode_client_param.grace_period_dirent         = 0;
-  state_async_cache_inode_client_param.expire_type_attr            = CACHE_INODE_EXPIRE_NEVER;
-  state_async_cache_inode_client_param.expire_type_link            = CACHE_INODE_EXPIRE_NEVER;
-  state_async_cache_inode_client_param.expire_type_dirent          = CACHE_INODE_EXPIRE_NEVER;
-  state_async_cache_inode_client_param.use_test_access             = 1;
-  state_async_cache_inode_client_param.attrmask                    = 0;
-
-  if(cache_inode_client_init(&state_async_cache_inode_client,
-                             &state_async_cache_inode_client_param,
-                             NLM_THREAD_INDEX, NULL))
-    {
-      LogCrit(COMPONENT_STATE,
-              "Could not initialize cache inode client for State Async Thread");
-      return STATE_INIT_ENTRY_FAILED;
-    }
-
   tcb_new(&state_async_tcb, "State Async Thread");
 #endif
   return STATE_SUCCESS;

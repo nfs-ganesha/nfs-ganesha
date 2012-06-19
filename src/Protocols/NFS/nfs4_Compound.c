@@ -41,24 +41,8 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
-#include "log.h"
-#include "ganesha_rpc.h"
-#include "stuff_alloc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "cache_inode.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
+#include "sal_functions.h"
+#include "nfs_tools.h"
 
 typedef struct nfs4_op_desc__
 {
@@ -208,24 +192,24 @@ nfs4_op_desc_t *optabvers[] = { (nfs4_op_desc_t *) optab4v0 };
  * Operation and functions necessary to process them are defined in array optab4 .
  *
  *
- *  @param parg        [IN]  generic nfs arguments
- *  @param pexportlist [IN]  the full export list
- *  @param pcontex     [IN]  context for the FSAL (unused but kept for nfs functions prototype homogeneity)
- *  @param pclient     [INOUT] client resource for request management
- *  @param preq        [IN]  RPC svc request
- *  @param pres        [OUT] generic nfs reply
+ *  @param[in]  parg        Generic nfs arguments
+ *  @param[in]  pexportlist The full export list
+ *  @param[in]  pcontex     Context for the FSAL
+ *  @param[in]  pworker     Worker thread data
+ *  @param[in]  preq        NFSv4 request structure
+ *  @param[out] pres        NFSv4 reply structure
  *
- *  @see   nfs4_op_<*> functions
- *  @see   nfs4_GetPseudoFs
+ *  @see nfs4_op_<*> functions
+ *  @see nfs4_GetPseudoFs
  *
  */
 
-int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
-                  exportlist_t * pexport /* IN     */ ,
-                  fsal_op_context_t * pcontext /* IN     */ ,
-                  cache_inode_client_t * pclient /* INOUT  */ ,
-                  struct svc_req *preq /* IN     */ ,
-                  nfs_res_t * pres /* OUT    */ )
+int nfs4_Compound(nfs_arg_t *parg,
+                  exportlist_t *pexport,
+                  fsal_op_context_t *pcontext,
+                  nfs_worker_data_t *pworker,
+                  struct svc_req *preq,
+                  nfs_res_t * pres)
 {
   unsigned int i = 0;
   int status = NFS4_OK;
@@ -295,11 +279,13 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   data.minorversion = COMPOUND4_MINOR;
   /** @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here */
 
-  data.pfullexportlist = pexport;       /* Full export list is provided in input */
-  data.pcontext = pcontext;     /* Get the fsal credentials from the worker thread */
+  data.pfullexportlist = pexport;       /* Full export list is
+                                           provided in input */
+  data.pcontext = pcontext; /* Get the fsal credentials from the
+                               worker thread */
+  data.pworker = pworker;
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = preq;
-  data.pclient = pclient;
 
   strcpy(data.MntPath, "/");
 
@@ -319,8 +305,8 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 
   /* Allocating the reply nfs_resop4 */
   if((pres->res_compound4.resarray.resarray_val =
-      (struct nfs_resop4 *)Mem_Alloc((COMPOUND4_ARRAY.argarray_len) *
-                                     sizeof(struct nfs_resop4))) == NULL)
+      gsh_calloc((COMPOUND4_ARRAY.argarray_len),
+                 sizeof(struct nfs_resop4))) == NULL)
     {
       return NFS_REQ_DROP;
     }
@@ -441,26 +427,22 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       /* Check Req size */
 
       /* NFS_V4.1 specific stuff */
-      if(COMPOUND4_MINOR == 1)
+      if(data.use_drc)
         {
-          if(i == 0)            /* OP_SEQUENCE is always the first operation within the request */
-            {
-              if((optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val ==
-                  NFS4_OP_SEQUENCE)
-                 || (optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val
-                     == NFS4_OP_CREATE_SESSION))
-                {
-                  /* Manage sessions's DRC : replay previously cached request */
-                  if(data.use_drc == TRUE)
-                    {
-                      /* Replay cache */
-                      memcpy((char *)pres, data.pcached_res,
-                             (COMPOUND4_ARRAY.argarray_len) * sizeof(struct nfs_resop4));
-                      status = ((COMPOUND4res *) data.pcached_res)->status;
-                      break;    /* Exit the for loop */
-                    }
-                }
-            }
+          /* Replay cache, only true for SEQUENCE or CREATE_SESSION w/o SEQUENCE.
+           * Since will only be set in those cases, no need to check operation or anything.
+           */
+          LogFullDebug(COMPONENT_SESSIONS,
+                       "Use session replay cache %p",
+                       data.pcached_res);
+
+          /* Free the reply allocated above */
+          gsh_free(pres->res_compound4.resarray.resarray_val);
+
+          /* Copy the reply from the cache */
+          pres->res_compound4_extended = *data.pcached_res;
+          status = ((COMPOUND4res *) data.pcached_res)->status;
+          break;    /* Exit the for loop */
         }
 #endif
     }                           /* for */
@@ -469,14 +451,42 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   pres->res_compound4.status = status;
 
 #ifdef _USE_NFS4_1
-  /* Manage session's DRC : keep NFS4.1 replay for later use */
-  if(COMPOUND4_MINOR == 1)
+  /* Manage session's DRC: keep NFS4.1 replay for later use, but don't save a
+   * replayed result again.
+   */
+  if(data.pcached_res != NULL && !data.use_drc)
     {
-      if(data.pcached_res != NULL)      /* Pointer has been set by nfs41_op_sequence and points to cached zone */
+      /* Pointer has been set by nfs41_op_sequence and points to slot to cache
+       * result in.
+       */
+      LogFullDebug(COMPONENT_SESSIONS,
+                   "Save result in session replay cache %p sizeof nfs_res_t=%d",
+                   data.pcached_res,
+                   (int) sizeof(nfs_res_t));
+
+      /* Indicate to nfs4_Compound_Free that this reply is cached. */
+      pres->res_compound4_extended.res_cached = TRUE;
+
+      /* If the cache is already in use, free it. */
+      if(data.pcached_res->res_cached)
         {
-          memcpy(data.pcached_res, (char *)pres,
-                 (COMPOUND4_ARRAY.argarray_len) * sizeof(struct nfs_resop4));
+          data.pcached_res->res_cached = FALSE;
+          nfs4_Compound_Free((nfs_res_t *)data.pcached_res);
         }
+
+      /* Save the result in the cache. */
+      *data.pcached_res = pres->res_compound4_extended;
+    }
+
+  /* If we have reserved a lease, update it and release it */
+  if(data.preserved_clientid != NULL)
+    {
+      /* Update and release lease */
+      P(data.preserved_clientid->cid_mutex);
+
+      update_lease(data.preserved_clientid);
+
+      V(data.preserved_clientid->cid_mutex);
     }
 #endif
 
@@ -492,21 +502,17 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 
 /**
  *
- * nfs4_Compound_FreeOne: Mem_Free the result for one NFS4_OP
+ * @brief Free the result for one NFS4_OP
  *
- * @param resp pointer to be Mem_Freed
+ * @param resp pointer to be freed
  *
  * @return nothing (void function).
  *
  * @see nfs4_op_getfh
  *
  */
-void nfs4_Compound_FreeOne(nfs_resop4 * pres)
+void nfs4_Compound_FreeOne(nfs_resop4 *pres)
 {
-  /* LogFullDebug(COMPONENT_NFS_V4,
-                  "nfs4_Compound_Free sur op=%s",
-                  optabvers[COMPOUND4_MINOR][optab4index[pres->resop]].name);
-  */
   switch (pres->resop)
     {
       case NFS4_OP_ACCESS:
@@ -710,30 +716,48 @@ void nfs4_Compound_FreeOne(nfs_resop4 * pres)
 
 /**
  *
- * nfs4_Compound_Free: Mem_Free the result for NFS4PROC_COMPOUND
+ * nfs4_Compound_Free: Free the result for NFS4PROC_COMPOUND
  *
- * Mem_Free the result for NFS4PROC_COMPOUND.
+ * Free the result for NFS4PROC_COMPOUND.
  *
- * @param resp pointer to be Mem_Freed
+ * @param resp pointer to be freed
  *
  * @return nothing (void function).
  *
  * @see nfs4_op_getfh
  *
  */
-void nfs4_Compound_Free(nfs_res_t * pres)
+void nfs4_Compound_Free(nfs_res_t *pres)
 {
-  unsigned int i = 0;
+  unsigned int     i = 0;
+  log_components_t component = COMPONENT_NFS_V4;
 
-  LogFullDebug(COMPONENT_NFS_V4,
-               "nfs4_Compound_Free de %p (resarraylen : %i)",
+  if(isFullDebug(COMPONENT_SESSIONS))
+    component = COMPONENT_SESSIONS;
+
+  if(pres->res_compound4_extended.res_cached)
+    {
+      LogFullDebug(component,
+                   "Skipping free of NFS4 result %p",
+                   pres);
+      return;
+    }
+
+  LogFullDebug(component,
+               "nfs4_Compound_Free %p (resarraylen=%i)",
                pres,
                pres->res_compound4.resarray.resarray_len);
 
-  for(i = 0; i < pres->res_compound4.resarray.resarray_len; i++)
-    nfs4_Compound_FreeOne(&pres->res_compound4.resarray.resarray_val[i]);
+  for(i = 0; i < pres->res_compound4.resarray.resarray_len; i++) {
+      nfs_resop4 *val = &pres->res_compound4.resarray.resarray_val[i];
+      if (val) {
+          /* !val is an error case, but it can occur, so avoid
+           * indirect on NULL */
+          nfs4_Compound_FreeOne(val);
+      }
+  }
 
-  Mem_Free((char *)pres->res_compound4.resarray.resarray_val);
+  gsh_free(pres->res_compound4.resarray.resarray_val);
   free_utf8(&pres->res_compound4.tag);
 
   return;
@@ -741,11 +765,11 @@ void nfs4_Compound_Free(nfs_res_t * pres)
 
 /**
  *
- * compound_data_Free: Mem_Frees the compound data structure.
+ * compound_data_Free: Frees the compound data structure.
  *
- * Mem_Frees the compound data structure..
+ * Frees the compound data structure..
  *
- * @param data pointer to be Mem_Freed
+ * @param data pointer to be freed
  *
  * @return nothing (void function).
  *
@@ -754,28 +778,27 @@ void nfs4_Compound_Free(nfs_res_t * pres)
  */
 void compound_data_Free(compound_data_t * data)
 {
-
   /* Release refcounted cache entries */
   if (data->current_entry)
-      cache_inode_put(data->current_entry, data->pclient);
+      cache_inode_put(data->current_entry);
 
   if (data->saved_entry)
-      cache_inode_put(data->saved_entry, data->pclient);
+      cache_inode_put(data->saved_entry);
 
   if(data->currentFH.nfs_fh4_val != NULL)
-    Mem_Free((char *)data->currentFH.nfs_fh4_val);
+    gsh_free(data->currentFH.nfs_fh4_val);
 
   if(data->rootFH.nfs_fh4_val != NULL)
-    Mem_Free((char *)data->rootFH.nfs_fh4_val);
+    gsh_free(data->rootFH.nfs_fh4_val);
 
   if(data->publicFH.nfs_fh4_val != NULL)
-    Mem_Free((char *)data->publicFH.nfs_fh4_val);
+    gsh_free(data->publicFH.nfs_fh4_val);
 
   if(data->savedFH.nfs_fh4_val != NULL)
-    Mem_Free((char *)data->savedFH.nfs_fh4_val);
+    gsh_free(data->savedFH.nfs_fh4_val);
 
   if(data->mounted_on_FH.nfs_fh4_val != NULL)
-    Mem_Free((char *)data->mounted_on_FH.nfs_fh4_val);
+    gsh_free(data->mounted_on_FH.nfs_fh4_val);
 
 }                               /* compound_data_Free */
 
@@ -903,7 +926,7 @@ void nfs4_Compound_CopyResOne(nfs_resop4 * pres_dst, nfs_resop4 * pres_src)
  *
  * Copy the result for NFS4PROC_COMPOUND.
  *
- * @param resp pointer to be Mem_Freed
+ * @param resp pointer to be freed
  *
  * @return nothing (void function).
  *
@@ -964,6 +987,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
         }
       break;
 
+#ifdef _USE_NFS4_1
     case 1:
       for(i = 0; i < pres->res_compound4.resarray.resarray_len; i++)
         {
@@ -982,6 +1006,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
         }
 
       break;
+#endif
 
     default:
       /* Bad parameter */

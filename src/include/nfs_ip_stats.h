@@ -7,7 +7,6 @@
 #include "ganesha_rpc.h"
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
-#include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
 
@@ -51,7 +50,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname);
 int nfs_ip_name_remove(sockaddr_t *ipaddr);
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-                     sockaddr_t * ipaddr, struct prealloc_pool *ip_stats_pool);
+                     sockaddr_t * ipaddr, pool_t *ip_stats_pool);
 
 int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
                       sockaddr_t * ipaddr,
@@ -62,7 +61,7 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
                      sockaddr_t * ipaddr, nfs_ip_stats_t ** pnfs_ip_stats);
 
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-                        sockaddr_t * ipaddr, struct prealloc_pool *ip_stats_pool);
+                        sockaddr_t * ipaddr, pool_t *ip_stats_pool);
 void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
                        unsigned int nb_worker, char *path_stat);
 

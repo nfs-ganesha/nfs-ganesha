@@ -41,7 +41,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "stuff_alloc.h"
 #include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
@@ -135,12 +134,13 @@ int cache_content_client_init(cache_content_client_t * pclient,
   pclient->use_fd_cache = param.use_fd_cache;
   strncpy(pclient->cache_dir, param.cache_dir, MAXPATHLEN);
 
-  MakePool(&pclient->content_pool, pclient->nb_prealloc, cache_content_entry_t,
-           NULL, NULL);
-  NamePool(&pclient->content_pool, "Data Cache Client Pool for %s", name);
-  if(!IsPoolPreallocated(&pclient->content_pool))
+  pclient->content_pool = pool_init("Data Cache Client Pool",
+                                    sizeof(cache_content_entry_t),
+                                    pool_basic_substrate,
+                                    NULL, NULL, NULL);
+  if(!(pclient->content_pool))
     {
-      LogCrit(COMPONENT_CACHE_CONTENT, 
+      LogCrit(COMPONENT_CACHE_CONTENT,
               "Error : can't init data_cache client entry pool");
       return 1;
     }

@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stuff_alloc.h"
-#include "../include/cidr.h"
+#include "cidr.h"
+#include "abstract_mem.h"
 
 char *
 cidr_to_str(const CIDR *block, int flags)
@@ -59,7 +59,7 @@ cidr_to_str(const CIDR *block, int flags)
 	 * consumers of the library can count on this behavior...  well, I
 	 * haven't decided yet.  Lemme alone.
 	 */
-	toret = Mem_Alloc(128);
+	toret = gsh_malloc(128);
 	if(toret==NULL)
 	{
 		errno = ENOMEM;
@@ -170,7 +170,7 @@ cidr_to_str(const CIDR *block, int flags)
 				pflen = cidr_get_pflen(block);
 				if(pflen==-1)
 				{
-					Mem_Free(toret);
+					gsh_free(toret);
 					return(NULL); /* Preserve errno */
 				}
 				/* Special handling for forced modes */
@@ -346,7 +346,7 @@ cidr_to_str(const CIDR *block, int flags)
 				nmtmp = cidr_alloc();
 				if(nmtmp==NULL)
 				{
-					Mem_Free(toret);
+					gsh_free(toret);
 					return(NULL); /* Preserve errno */
 				}
 				nmtmp->proto = block->proto;
@@ -371,7 +371,7 @@ cidr_to_str(const CIDR *block, int flags)
 				cidr_free(nmtmp);
 				if(nmstr==NULL)
 				{
-					Mem_Free(toret);
+					gsh_free(toret);
 					return(NULL); /* Preserve errno */
 				}
 
@@ -379,7 +379,7 @@ cidr_to_str(const CIDR *block, int flags)
 
 				/* Just add it on */
 				strcat(toret, nmstr);
-				Mem_Free(nmstr);
+				gsh_free(nmstr);
 			}
 			else
 			{
@@ -387,7 +387,7 @@ cidr_to_str(const CIDR *block, int flags)
 				pflen = cidr_get_pflen(block);
 				if(pflen==-1)
 				{
-					Mem_Free(toret);
+					gsh_free(toret);
 					return(NULL); /* Preserve errno */
 				}
 				/* Special handling for forced modes */
@@ -402,7 +402,7 @@ cidr_to_str(const CIDR *block, int flags)
 	else
 	{
 		/* Well, *I* dunno what the fuck it is */
-		Mem_Free(toret);
+		gsh_free(toret);
 		errno = ENOENT; /* Bad choice of errno */
 		return(NULL);
 	}

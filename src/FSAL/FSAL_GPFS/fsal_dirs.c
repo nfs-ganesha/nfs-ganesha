@@ -18,7 +18,6 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-#include "stuff_alloc.h"
 #include <string.h>
 
 /**
@@ -173,7 +172,6 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
 
   int rc = 0;
 
-  memset(buff, 0, BUF_SIZE);
   memset(&entry_name, 0, sizeof(fsal_name_t));
 
   /*****************/
@@ -197,7 +195,7 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
     }
   else
     {
-      //seekdir(p_dir_descriptor->p_dir, start_position.cookie);
+      lseek(p_dir_descriptor->fd, start_position.data.cookie, SEEK_SET);
       rc = errno;
     }
 

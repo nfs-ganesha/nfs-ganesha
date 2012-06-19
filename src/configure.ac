@@ -8,7 +8,7 @@ AC_SUBST(RELEASE, [1])
 
 AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
 
-AC_CONFIG_AUX_DIR([build-aux])
+dnl AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS/CEPH .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
@@ -203,6 +203,35 @@ GA_PROG_NETSNMP_CONFIG
 
 # Features options
 
+# Cofigure the allocator
+AC_ARG_WITH([allocator], AS_HELP_STRING([--with-allocator=jemalloc|tcmalloc|libc],
+                                        [specify the memory allocator to use]),
+            [ALLOCATOR="$withval"])
+
+if test "x${with_allocator+set}" == "xset"; then
+        if test "x$ALLOCATOR" = "xjemalloc"; then
+                AC_CHECK_LIB(jemalloc, malloc, ,[AC_MSG_ERROR([libjemalloc cannot be found])])
+        elif test "x$ALLOCATOR" = "xtcmalloc"; then
+                AC_CHECK_LIB(tcmalloc, malloc, ,[AC_MSG_ERROR([libtcmalloc cannot be found])])
+        elif text "x$ALLOCATOR" != "xlibc"; then
+                AC_MSG_ERROR([$ALLOCATOR is not a valid option.])
+        fi
+else
+        AC_CHECK_LIB(jemalloc, malloc, [ALLOCATOR="jemalloc"], [ALLOCATOR=""])
+        if test "x$ALLOCATOR" = "x"; then
+                AC_CHECK_LIB(tcmalloc, malloc, [ALLOCATOR="tcmalloc"], [ALLOCATOR=""])
+        fi
+        if test "x$ALLOCATOR" = "x"; then
+                ALLOCATOR="libc"
+        fi
+fi
+
+if test "x$ALLOCATOR" = "xjemalloc"; then
+        LDFLAGS="$LDFLAGS -ljemalloc"
+elif test "x$ALLOCATOR" = "xtcmalloc"; then
+        LDFLAGS="$LDFLAGS -ltcmalloc"
+fi
+
 
 # NLMv4
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
@@ -296,10 +325,17 @@ dnl echo "TIRPCDIR: ${TIRPCDIR}"
 if test -d ${TIRPCDIR}; then
 	cd ${TIRPCDIR}
 	sh autogen.sh
-	./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix="${prefix}"
+	./configure CFLAGS="${CFLAGS}" --enable-gss --prefix="${prefix}"
 	cd ${_SRCDIR}
 else
 	AC_MSG_ERROR([${TIRPCDIR} not present (cf. README.TIRPC).])
+fi
+
+# TI-RPC Packaging
+libtool_15="`libtool --version|grep 1.5`"
+if test "x$libtool_15" != "x" ; then
+   LIBTOOL_15="_libtool_15"
+   AC_SUBST(_LIBTOOL_15)
 fi
 
 # My auto-foo doesn't extend to this
@@ -388,9 +424,6 @@ fi
 
 AC_SUBST(EFENCE)
 
-# Debugging options
-#GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
-GA_DISABLE_FLAG( [prealloc],             [disable memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		  [-D_NO_TCP_REGISTER] )
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				  [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],               [-D_NO_XATTRD])
@@ -401,8 +434,6 @@ GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganes
 GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		          [-D_WITH_PLPGSQL])
 GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                  [-D_ENABLE_CACHE_PATH])
 GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	          [-D_HANDLE_MAPPING])
-GA_DISABLE_FLAG( [nfs4-locks],	         [disable NFSv4 locks],                                           [-D_WITH_NO_NFSV4_LOCKS])
-GA_DISABLE_FLAG( [nfs41-locks],          [disable NFSv4 locks],                                           [-D_WITH_NO_NFSV41_LOCKS])
 
 
 # for using it in makefiles
@@ -471,16 +502,6 @@ if test "$enable_ipv6" == "yes"; then
 		AC_MSG_ERROR([IPv6 support is available only when --with-rpcal=TIRPC is used])
 	fi
 fi
-
-# BuddyMalloc
-GA_DISABLE_AM_CONDITION([BuddyMalloc], [disable memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
-
-if test "$enable_BuddyMalloc" == "yes"; then
-        AC_DEFINE(_BUDDY_SYSTEM, 1, [enable memory allocator])
-else
-	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable memory allocator, for debug purpose only])
-fi
-AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 
 # explicit Ceph path @todo : add a defaut value
 AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
@@ -814,14 +835,6 @@ if test x$PNFS = "xyes"; then
   fi
 fi
 
-# Sanity check for FSAL based DS support
-if test "$enable_fsal_ds" == "yes"; then
-  if [[ x$NFS4_MINOR != "x1" ]] ; then
-     AC_MSG_ERROR("You must activate NFSv4.1 support to enable FSAL data server support" )
-  fi
-        AC_DEFINE(_USE_FSALDS,1,[enable FSAL based pNFS DS support])
-fi
-
 AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
@@ -852,7 +865,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
                  include/FSAL/FSAL_CEPH/Makefile
-                 BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
                  Log/Makefile

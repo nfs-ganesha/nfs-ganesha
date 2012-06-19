@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -130,16 +129,16 @@ struct nfs3_readdir_cb_data
  *
  * Implements the NFS PROC READDIR function (for V2 and V3).
  *
- * @param arg [IN] Pointer to NFS arguments union
- * @param export [IN] Pointer to NFS export list
- * @param context [IN] Credentials to be used for this request
- * @param client [INOUT] Client resource to be used
- * @param req [IN] Pointer to SVC request related to this call
- * @param res [OUT] Pointer to the structure to contain the result of the call
+ * @param[in]  arg     NFS argument union
+ * @param[in]  export  NFS export list
+ * @param[in]  context Credentials to be used for this request
+ * @param[in]  worker  Worker thread data
+ * @param[in]  req     SVC request related to this call
+ * @param[out] res     Structure to contain the result of the call
  *
- * @return Status codes
- * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
+ * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
 
@@ -147,12 +146,10 @@ int
 nfs_Readdir(nfs_arg_t *arg,
             exportlist_t *export,
             fsal_op_context_t *context,
-            cache_inode_client_t *client,
+            nfs_worker_data_t *worker,
             struct svc_req *req,
             nfs_res_t *res)
 {
-     static char __attribute__ ((__unused__)) funcName[] = "nfs_Readdir";
-
      cache_entry_t *dir_entry = NULL;
      unsigned long count = 0;
      fsal_attrib_list_t dir_attr;
@@ -206,7 +203,6 @@ nfs_Readdir(nfs_arg_t *arg,
                                NULL,
                                &dir_attr,
                                context,
-                               client,
                                &rc)) == NULL) {
           /* Stale NFS FH? */
           goto out;
@@ -214,7 +210,7 @@ nfs_Readdir(nfs_arg_t *arg,
 
      if ((req->rq_vers == NFS_V3) &&
          (nfs3_Is_Fh_Xattr(&(arg->arg_readdir3.dir)))) {
-          rc = nfs3_Readdir_Xattr(arg, export, context, client, req, res);
+          rc = nfs3_Readdir_Xattr(arg, export, context, req, res);
           goto out;
      }
 
@@ -250,8 +246,8 @@ nfs_Readdir(nfs_arg_t *arg,
                goto out;
           }
 
-          cb2.entries = (entry2 *) Mem_Calloc(estimated_num_entries,
-                                              sizeof(entry2));
+          cb2.entries = gsh_calloc(estimated_num_entries,
+                                   sizeof(entry2));
           if (cb2.entries == NULL) {
                rc = NFS_REQ_DROP;
                goto out;
@@ -306,8 +302,8 @@ nfs_Readdir(nfs_arg_t *arg,
                }
           }
 
-          cb3.entries = (entry3 *) Mem_Calloc(estimated_num_entries,
-                                              sizeof(entry3));
+          cb3.entries = gsh_calloc(estimated_num_entries,
+                                   sizeof(entry3));
           if (cb3.entries == NULL) {
                rc = NFS_REQ_DROP;
                goto out;
@@ -322,7 +318,7 @@ nfs_Readdir(nfs_arg_t *arg,
      }
 
      /* Adjust the cookie we supply to cache_inode */
-     if (cookie > 1)  /* it is not the cookie for "." nor ".." */ {
+     if (cookie > 2)  /* it is not the cookie for "." nor ".." */ {
           cache_inode_cookie = cookie;
      } else {
           cache_inode_cookie = 0;
@@ -339,7 +335,6 @@ nfs_Readdir(nfs_arg_t *arg,
           fsal_attrib_list_t parent_dir_attr;
           /* Get parent pentry */
           parent_dir_entry = cache_inode_lookupp(dir_entry,
-                                                 client,
                                                  context,
                                                  &cache_status_gethandle);
           if (parent_dir_entry == NULL) {
@@ -355,7 +350,6 @@ nfs_Readdir(nfs_arg_t *arg,
           }
           if ((cache_inode_getattr(parent_dir_entry,
                                    &parent_dir_attr,
-                                   client,
                                    context,
                                    &cache_status_gethandle))
               != CACHE_INODE_SUCCESS) {
@@ -372,7 +366,7 @@ nfs_Readdir(nfs_arg_t *arg,
           if (!cbfunc(cbdata, "..", &parent_dir_entry->handle,
                       &parent_dir_attr, 2))
                 goto outerr;
-          cache_inode_put(parent_dir_entry, client);
+          cache_inode_put(parent_dir_entry);
           parent_dir_entry = NULL;
      }
 
@@ -387,7 +381,6 @@ nfs_Readdir(nfs_arg_t *arg,
                              cache_inode_cookie,
                              &num_entries,
                              &eod_met,
-                             client,
                              context,
                              cbfunc,
                              cbdata,
@@ -436,11 +429,11 @@ nfs_Readdir(nfs_arg_t *arg,
 out:
      /* return references */
      if (dir_entry) {
-          cache_inode_put(dir_entry, client);
+          cache_inode_put(dir_entry);
      }
 
      if (parent_dir_entry) {
-          cache_inode_put(parent_dir_entry, client);
+          cache_inode_put(parent_dir_entry);
      }
 
      /* Deallocate memory in the event of an error */
@@ -556,7 +549,7 @@ nfs2_readdir_callback(void* opaque,
                        FSAL_DIGEST_FILEID2,
                        handle,
                        &id_descriptor);
-     e2->name = Mem_Alloc(namelen + 1);
+     e2->name = gsh_malloc(namelen + 1);
      if (e2->name == NULL) {
           tracker->error = NFSERR_IO;
           return FALSE;
@@ -619,7 +612,7 @@ nfs3_readdir_callback(void* opaque,
                        handle,
                        &id_descriptor);
 
-     e3->name = Mem_Alloc(namelen + 1);
+     e3->name = gsh_malloc(namelen + 1);
      if (e3->name == NULL) {
           tracker->error = NFS3ERR_IO;
           return FALSE;
@@ -652,9 +645,9 @@ free_entry2s(entry2 *entry2s)
      for (entry = entry2s;
           entry != NULL;
           entry = entry->nextentry) {
-          Mem_Free(entry->name);
+          gsh_free(entry->name);
      }
-     Mem_Free(entry2s);
+     gsh_free(entry2s);
 
      return;
 } /* free_entry2s */
@@ -676,9 +669,9 @@ free_entry3s(entry3 *entry3s)
      for (entry = entry3s;
           entry != NULL;
           entry = entry->nextentry) {
-          Mem_Free(entry->name);
+          gsh_free(entry->name);
      }
-     Mem_Free(entry3s);
+     gsh_free(entry3s);
 
      return;
 } /* free_entry3s */

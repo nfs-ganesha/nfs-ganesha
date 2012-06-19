@@ -3,7 +3,6 @@
 #include "config_parsing.h"
 #include "nfs_stat.h"
 #include "nfs_ip_stats.h"
-#include "stuff_alloc.h"
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -16,7 +15,7 @@ hash_table_t * stats[1];
 hash_table_t * ipstats;
 nfs_ip_stats_t * nfs_ip_stats;
 nfs_parameter_t nfs_param;
-struct prealloc_pool *ip_stats_pool;
+pool_t *ip_stats_pool;
 
 #define EQUALS(a, b, msg, args...) do {             \
   if (a != b) {                             \
@@ -87,17 +86,15 @@ void nfs_set_ip_stats_param_default()
 
 void init() 
 {
-    BuddyInit(NULL);
-
     nfs_set_ip_stats_param_default();
     ipstats = nfs_Init_ip_stats(nfs_param.ip_stats_param);
-    ip_stats_pool = calloc(1, sizeof(struct prealloc_pool));
+    ip_stats_pool = NULL;
     stats[0] = ipstats;
 
-    MakePool(ip_stats_pool,
-             100,//           nfs_param.worker_param.nb_ip_stats_prealloc,
-             nfs_ip_stats_t, NULL, NULL);
-    NamePool(ip_stats_pool, "IP Stats Cache Pool");
+    ip_stats_pool =
+         pool_init("IP Stats Cache Pool", sizeof(nfs_ip_stats_t),
+                   pool_basic_substrate,
+                   NULL, NULL, NULL);
 
     create_ipv4("10.10.5.1", 2048, (struct sockaddr_in * ) &ipv4a);
     //    create_ipv4("10.10.5.1", 2049, (struct sockaddr_in * ) &ipv4b);
@@ -107,7 +104,7 @@ void init()
     create_ipv6("2001::1", 2048, (struct sockaddr_in6 *) &ipv6a);
     // create_ipv6("2001::1", 2049, (struct sockaddr_in6 *) &ipv6b);
     create_ipv6("2001::f:1", 2048, (struct sockaddr_in6 *) &ipv6c);
-#endif    
+#endif
 
 }
 

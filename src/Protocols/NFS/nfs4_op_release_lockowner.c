@@ -51,11 +51,11 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"
+#include "sal_functions.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
@@ -74,20 +74,93 @@
  * @return NFS4_OK if ok, any other value show an error.
  *
  */
-#define arg_RELEASE_LOCKOWNER4 op->nfs_argop4_u.oplock
-#define res_RELEASE_LOCKOWNER4 resp->nfs_resop4_u.oplock
+#define arg_RELEASE_LOCKOWNER4 op->nfs_argop4_u.oprelease_lockowner
+#define res_RELEASE_LOCKOWNER4 resp->nfs_resop4_u.oprelease_lockowner
 
-int nfs4_op_release_lockowner(struct nfs_argop4 *op,
-                              compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_release_lockowner(struct nfs_argop4 * op,
+                              compound_data_t   * data,
+                              struct nfs_resop4 * resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_release_lockowner";
+  nfs_client_id_t         * pnfs_client_id;
+  state_owner_t           * plock_owner;
+  state_nfs4_owner_name_t   owner_name;
 
-  /* Lock are not supported, but return NFS4_OK and do noting */
+  LogDebug(COMPONENT_NFS_V4_LOCK,
+           "Entering NFS v4 RELEASE_LOCKOWNER handler -----------------------------------------------------");
+
   resp->resop = NFS4_OP_RELEASE_LOCKOWNER;
   res_RELEASE_LOCKOWNER4.status = NFS4_OK;
 
+  /* Check clientid */
+  if(nfs_client_id_get_confirmed(arg_RELEASE_LOCKOWNER4.lock_owner.clientid,
+                                 &pnfs_client_id) != CLIENT_ID_SUCCESS)
+    {
+      res_RELEASE_LOCKOWNER4.status = NFS4ERR_STALE_CLIENTID;
+      goto out2;
+    }
+
+  /* The protocol doesn't allow for EXPIRED, so return STALE_CLIENTID */
+  P(pnfs_client_id->cid_mutex);
+
+  if(!reserve_lease(pnfs_client_id))
+    {
+      V(pnfs_client_id->cid_mutex);
+
+      dec_client_id_ref(pnfs_client_id);
+
+      res_RELEASE_LOCKOWNER4.status = NFS4ERR_STALE_CLIENTID;
+      goto out2;
+    }
+
+  V(pnfs_client_id->cid_mutex);
+
+  /* look up the lock owner and see if we can find it */
+  convert_nfs4_lock_owner(&arg_RELEASE_LOCKOWNER4.lock_owner, &owner_name, 0LL);
+
+  if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
+    {
+      /* the owner doesn't exist, we are done */
+      LogDebug(COMPONENT_NFS_V4_LOCK,
+               "lock owner does not exist");
+      res_RELEASE_LOCKOWNER4.status = NFS4_OK;
+      goto out1;
+    }
+
+  /* got the owner, does it still have any locks being held */
+  if(!glist_empty(&plock_owner->so_lock_list))
+    {
+      res_RELEASE_LOCKOWNER4.status = NFS4ERR_LOCKS_HELD;
+    }
+  else
+    {
+      /* found the lock owner and it doesn't have any locks, release it */
+      release_lockstate(plock_owner);
+
+      res_RELEASE_LOCKOWNER4.status = NFS4_OK;
+    }
+
+  /* Release the reference to the lock owner acquired via
+     nfs4_owner_Get_Pointer */
+  dec_state_owner_ref(plock_owner);
+
+ out1:
+
+  /* Update the lease before exit */
+  P(pnfs_client_id->cid_mutex);
+
+  update_lease(pnfs_client_id);
+
+  V(pnfs_client_id->cid_mutex);
+
+  dec_client_id_ref(pnfs_client_id);
+
+ out2:
+
+  LogDebug(COMPONENT_NFS_V4_LOCK,
+           "Leaving NFS v4 RELEASE_LOCKOWNER handler -----------------------------------------------------");
+
   return res_RELEASE_LOCKOWNER4.status;
-}                               /* nfs4_op_lock */
+}                               /* nfs4_op_release_lock_owner */
 
 /**
  * nfs4_op_release_lockowner_Free: frees what was allocared to handle nfs4_op_release_lockowner.

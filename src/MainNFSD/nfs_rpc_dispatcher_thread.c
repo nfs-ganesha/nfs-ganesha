@@ -54,7 +54,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -80,14 +79,6 @@
 
 static pthread_mutex_t lock_worker_selection = PTHREAD_MUTEX_INITIALIZER;
 
-#ifndef _NO_BUDDY_SYSTEM
-/* This structure is set to initial state (zero-ed) in stat thread */
-buddy_stats_t          global_tcp_dispatcher_buddy_stat;
-
-/* This structure exists per tcp dispatcher thread */
-buddy_stats_t __thread local_tcp_dispatcher_buddy_stat;
-#endif /*!_NO_BUDDY_SYSTEM*/
-
 /* TI-RPC event channels.  Each channel is a thread servicing an event
  * demultiplexer. */
 
@@ -108,57 +99,7 @@ static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
 static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
                           void *u_data);
 static bool_t nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
-
-#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
-/**
- *
- * nfs_debug_debug_label_debug_info: a function used for debugging purpose, tracing Buddy Malloc activity.
- *
- * @param none (void arguments)
- *
- * @return nothing (void function)
- *
- */
-void nfs_debug_debug_label_info()
-{
-  buddy_stats_t bstats;
-
-  if(isFullDebug(COMPONENT_MEMLEAKS) && isFullDebug(COMPONENT_DISPATCH))
-    {
-      BuddyLabelsSummary(COMPONENT_DISPATCH);
-
-      BuddyGetStats(&bstats);
-      LogFullDebug(COMPONENT_MEMLEAKS,
-                   "------- TOTAL SPACE USED FOR WORKER THREAD: %12lu (on %2u pages)",
-                   (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
-
-      /* DisplayMemoryMap(); */
-
-      LogFullDebug(COMPONENT_MEMLEAKS,
-                   "--------------------------------------------------");
-    }
-
-}                               /* nfs_debug_debug_label_info */
-
-void nfs_debug_buddy_info()
-{
-  buddy_stats_t bstats;
-
-  if(isFullDebug(COMPONENT_MEMLEAKS) && isFullDebug(COMPONENT_DISPATCH))
-    {
-      BuddyLabelsSummary(COMPONENT_DISPATCH);
-
-      BuddyGetStats(&bstats);
-      LogFullDebug(COMPONENT_MEMLEAKS,
-                   "------- TOTAL SPACE USED FOR DISPATCHER THREAD: %12lu (on %2u pages)",
-                   (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
-
-      LogFullDebug(COMPONENT_MEMLEAKS,
-                   "--------------------------------------------------");
-    }
-}
-
-#endif
+static void nfs_rpc_free_xprt(SVCXPRT *xprt);
 
 /**
  *
@@ -295,6 +236,12 @@ void Create_udp(protos prot)
     /* Hook xp_getreq */
     (void) SVC_CONTROL(udp_xprt[prot], SVCSET_XP_GETREQ, nfs_rpc_getreq_ng);
 
+    /* Hook xp_free_xprt (finalize/free private data) */
+    (void) SVC_CONTROL(udp_xprt[prot], SVCSET_XP_FREE_XPRT, nfs_rpc_free_xprt);
+
+    /* Setup private data */
+    (udp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(XPRT_PRIVATE_FLAG_REF);
+
     /* bind xprt to channel--unregister it from the global event
      * channel (if applicable) */
     (void) svc_rqst_evchan_reg(rpc_evchan[UDP_EVENT_CHAN].chan_id, udp_xprt[prot],
@@ -309,7 +256,6 @@ void Create_udp(protos prot)
 
 void Create_tcp(protos prot)
 {
-
 #if 0
     /* XXXX By itself, non-block mode will currently stall, so, we probably
      * will remove this. */
@@ -327,8 +273,8 @@ void Create_tcp(protos prot)
 
     /* bind xprt to channel--unregister it from the global event
      * channel (if applicable) */
-    (void) svc_rqst_evchan_reg(rpc_evchan[TCP_RDVS_CHAN].chan_id, tcp_xprt[prot],
-                               SVC_RQST_FLAG_XPRT_UREG);
+    (void) svc_rqst_evchan_reg(rpc_evchan[TCP_RDVS_CHAN].chan_id,
+                               tcp_xprt[prot], SVC_RQST_FLAG_XPRT_UREG);
 
     /* Hook xp_getreq */
     (void) SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_GETREQ, nfs_rpc_getreq_ng);
@@ -336,7 +282,14 @@ void Create_tcp(protos prot)
     /* Hook xp_rdvs -- allocate new xprts to event channels */
     (void) SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_RDVS, nfs_rpc_rdvs);
 
-/* XXXX the following code cannot compile (socket, binadaddr_udp6 are gone) (Matt) */
+    /* Hook xp_free_xprt (finalize/free private data) */
+    (void) SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_FREE_XPRT, nfs_rpc_free_xprt);
+
+    /* Setup private data */
+    (tcp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(XPRT_PRIVATE_FLAG_REF);
+
+/* XXXX the following code cannot compile (socket, binadaddr_udp6 are gone)
+ * (Matt) */
 #ifdef _USE_TIRPC_IPV6
     if(listen(socket, pdata[prot].bindaddr_udp6.qlen) != 0)
         LogFatal(COMPONENT_DISPATCH,
@@ -543,20 +496,17 @@ void nfs_Init_svc()
   if (!tirpc_control(TIRPC_SET_WARNX, (warnx_t) rpc_warnx))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC __warnx");
 
-  /* Is BuddyMalloc useful as a general RPC allocator?  We should find out.  Permit
-   * comparative profiling.
-   */
 #define TIRPC_SET_ALLOCATORS 0
-#if !defined(_NO_BUDDY_SYSTEM) && defined(TIRPC_SET_ALLOCATORS)
-  if (!tirpc_control(TIRPC_SET_MALLOC, (mem_alloc_t) BuddyMallocZ))
+#if TIRPC_SET_ALLOCATORS
+  if (!tirpc_control(TIRPC_SET_MALLOC, (mem_alloc_t) gsh_malloc))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC alloc");
 
-  if (!tirpc_control(TIRPC_SET_MEM_FREE, (mem_free_t) BuddyFreeSize))
+  if (!tirpc_control(TIRPC_SET_MEM_FREE, (mem_free_t) gsh_free_size))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC mem_free");
 
-  if (!tirpc_control(TIRPC_SET_FREE, (std_free_t) BuddyFree))
+  if (!tirpc_control(TIRPC_SET_FREE, (std_free_t) gsh_free))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC __free");
-#endif
+#endif /* TIRPC_SET_ALLOCATORS */
 
     for (ix = 0; ix < N_EVENT_CHAN; ++ix) {
         rpc_evchan[ix].chan_id = 0;
@@ -782,6 +732,9 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
     if (++next_chan >= N_EVENT_CHAN)
         next_chan = TCP_EVCHAN_0;
 
+    /* setup private data (freed when xprt is destroyed) */
+    newxprt->xp_u1 = alloc_gsh_xprt_private(XPRT_PRIVATE_FLAG_REF);
+
     pthread_mutex_unlock(&mtx);
 
     (void) svc_rqst_evchan_reg(rpc_evchan[tchan].chan_id, newxprt,
@@ -790,15 +743,66 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
     return (0);
 }
 
+static void nfs_rpc_free_xprt(SVCXPRT *xprt)
+{
+    if (xprt->xp_u1)
+        free_gsh_xprt_private(xprt->xp_u1);
+}
+
 /**
  * Selects the smallest request queue,
  * whome the worker is ready and is not garbagging.
  */
 
-/* PhD: Please note that I renamed this function, added 
+/* PhD: Please note that I renamed this function, added
  * it prototype to include/nfs_core.h and removed its "static" tag.
  * This is done to share this code with the 9P implementation */
-unsigned int nfs_core_select_worker_queue()
+
+static inline worker_available_rc
+worker_available(unsigned long worker_index, unsigned int avg_number_pending)
+{
+  worker_available_rc rc = WORKER_AVAILABLE;
+  P(workers_data[worker_index].wcb.tcb_mutex);
+  switch(workers_data[worker_index].wcb.tcb_state)
+    {
+      case STATE_AWAKE:
+      case STATE_AWAKEN:
+        /* Choose only fully initialized workers and that does not gc. */
+        if(workers_data[worker_index].wcb.tcb_ready == FALSE)
+          {
+            LogFullDebug(COMPONENT_THREAD,
+                         "worker thread #%lu is not ready", worker_index);
+            rc = WORKER_PAUSED;
+          }
+        else if(workers_data[worker_index].gc_in_progress == TRUE)
+          {
+            LogFullDebug(COMPONENT_THREAD,
+                         "worker thread #%lu is doing garbage collection", worker_index);
+            rc = WORKER_GC;
+          }
+        else if(workers_data[worker_index].pending_request_len >= avg_number_pending)
+          {
+            rc = WORKER_BUSY;
+          }
+        break;
+
+      case STATE_STARTUP:
+      case STATE_PAUSE:
+      case STATE_PAUSED:
+        rc = WORKER_ALL_PAUSED;
+        break;
+
+      case STATE_EXIT:
+        rc = WORKER_EXIT;
+        break;
+    }
+  V(workers_data[worker_index].wcb.tcb_mutex);
+
+  return rc;
+}
+
+unsigned int
+nfs_core_select_worker_queue(unsigned int avoid_index)
 {
   #define NO_VALUE_CHOOSEN  1000000
   unsigned int worker_index = NO_VALUE_CHOOSEN;
@@ -827,26 +831,32 @@ unsigned int nfs_core_select_worker_queue()
     }
 
   /* Choose the queue whose length is smaller than average. */
-      for(i = (last + 1) % nfs_param.core_param.nb_worker, cpt = 0;
-          cpt < nfs_param.core_param.nb_worker;
-          cpt++, i = (i + 1) % nfs_param.core_param.nb_worker)
-        {
-          /* Choose only fully initialized workers and that does not gc. */
-          rc_worker = worker_available(i, avg_number_pending);
-          if(rc_worker == WORKER_AVAILABLE)
-            {
-              worker_index = i;
-              break;
-            }
-          else if(rc_worker == WORKER_ALL_PAUSED)
-            {
-              /* Wait for the threads to awaken */
-              wait_for_threads_to_awaken();
-            }
-          else if(rc_worker == WORKER_EXIT)
-            {
-            }
-        }
+  for(i = (last + 1) % nfs_param.core_param.nb_worker, cpt = 0;
+      cpt < nfs_param.core_param.nb_worker;
+      cpt++, i = (i + 1) % nfs_param.core_param.nb_worker)
+    {
+      /* Avoid worker at avoid_index (provided to permit a worker thread to avoid
+       * dispatching work to itself). */
+      if (i == avoid_index)
+          continue;
+
+      /* Choose only fully initialized workers and that does not gc. */
+      rc_worker = worker_available(i, avg_number_pending);
+      if(rc_worker == WORKER_AVAILABLE)
+      {
+        worker_index = i;
+        break;
+      }
+      else if(rc_worker == WORKER_ALL_PAUSED)
+      {
+        /* Wait for the threads to awaken */
+        wait_for_threads_to_awaken();
+      }
+      else if(rc_worker == WORKER_EXIT)
+      {
+        /* do nothing */
+      }
+    } /* for */
 
   if(worker_index == NO_VALUE_CHOOSEN)
     worker_index = (last + 1) % nfs_param.core_param.nb_worker;
@@ -865,14 +875,79 @@ unsigned int nfs_core_select_worker_queue()
 request_data_t *
 nfs_rpc_get_nfsreq(nfs_worker_data_t *worker, uint32_t flags)
 {
-    request_data_t *pnfsreq = NULL;
+    request_data_t *nfsreq = NULL;
 
-    P(worker->request_pool_mutex);
-    GetFromPool(pnfsreq, &worker->request_pool,
-                request_data_t);
-    V(worker->request_pool_mutex);
+    nfsreq = pool_alloc(request_pool, NULL);
 
-    return (pnfsreq);
+    return (nfsreq);
+}
+
+process_status_t
+dispatch_rpc_subrequest(nfs_worker_data_t *mydata,
+                        request_data_t *onfsreq)
+{
+  char *cred_area;
+  struct rpc_msg *msg;
+  struct svc_req *req;
+  request_data_t *nfsreq = NULL;
+  unsigned int worker_index;
+  process_status_t rc = PROCESS_DONE;
+
+  /* choose a worker who is not us */
+  worker_index = nfs_core_select_worker_queue(mydata->worker_index);
+
+  LogDebug(COMPONENT_DISPATCH,
+           "Use request from Worker Thread #%u's pool, xprt->xp_fd=%d, "
+           "thread has %d pending requests",
+           worker_index, onfsreq->r_u.nfs->xprt->xp_fd,
+           workers_data[worker_index].pending_request_len);
+
+  /* Get a nfsreq from the worker's pool */
+  nfsreq = pool_alloc(request_pool, NULL);
+
+  if(nfsreq == NULL)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+               "Unable to allocate request. Exiting...");
+      Fatal();
+    }
+
+  /* Set the request as NFS already-read */
+  nfsreq->rtype = NFS_REQUEST;
+
+  /* tranfer onfsreq */
+  nfsreq->r_u.nfs = onfsreq->r_u.nfs;
+
+  /* And fixup onfsreq */
+  onfsreq->r_u.nfs = pool_alloc(request_data_pool, NULL);
+
+  if(onfsreq->r_u.nfs == NULL)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+               "Empty request data pool! Exiting...");
+      Fatal();
+    }
+
+  /* Set up cred area */
+  cred_area = onfsreq->r_u.nfs->cred_area;
+  req = &(onfsreq->r_u.nfs->req);
+  msg = &(onfsreq->r_u.nfs->msg);
+
+  msg->rm_call.cb_cred.oa_base = cred_area;
+  msg->rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
+  req->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
+
+  /* Set up xprt */
+  onfsreq->r_u.nfs->xprt = nfsreq->r_u.nfs->xprt;
+  req->rq_xprt = onfsreq->r_u.nfs->xprt;
+
+  /* count as 1 ref */
+  gsh_xprt_ref(req->rq_xprt, XPRT_PRIVATE_FLAG_LOCKED);
+
+  /* Hand it off */
+  DispatchWorkNFS(nfsreq, worker_index);
+
+  return (rc);
 }
 
 /**
@@ -884,7 +959,7 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
   char *cred_area;
   struct rpc_msg *pmsg;
   struct svc_req *preq;
-  request_data_t *pnfsreq = NULL;
+  request_data_t *nfsreq = NULL;
   unsigned int worker_index;
   process_status_t rc = PROCESS_DONE;
 
@@ -902,7 +977,7 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
 #endif
     {
        /* choose a worker depending on its queue length */
-       worker_index = nfs_core_select_worker_queue();
+       worker_index = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
     }
 
   LogFullDebug(COMPONENT_DISPATCH,
@@ -911,39 +986,45 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
                worker_index, xprt->xp_fd,
                workers_data[worker_index].pending_request_len);
 
-  /* Get a pnfsreq from the worker's pool */
-  P(workers_data[worker_index].request_pool_mutex);
+  /* Get a nfsreq from the worker's pool */
+  nfsreq = pool_alloc(request_pool, NULL);
 
-  GetFromPool(pnfsreq, &workers_data[worker_index].request_pool,
-              request_data_t);
-
-  V(workers_data[worker_index].request_pool_mutex);
-
-  if(pnfsreq == NULL)
+  if(nfsreq == NULL)
     {
       LogMajor(COMPONENT_DISPATCH,
-               "Empty request pool for the chosen worker ! Exiting...");
+               "Unable to allocate request.  Exiting...");
       Fatal();
     }
 
-  /* Set the request as a NFS related one */
-  pnfsreq->rtype = NFS_REQUEST ;
+  /* Set the request as NFS with xprt hand-off */
+  nfsreq->rtype = NFS_REQUEST_LEADER ;
+
+  nfsreq->r_u.nfs = pool_alloc(request_data_pool, NULL);
+  if(nfsreq->r_u.nfs == NULL)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+               "Unable to allocate request data.  Exiting...");
+      Fatal();
+    }
 
   /* Set up cred area */
-  cred_area = pnfsreq->r_u.nfs.cred_area;
-  preq = &(pnfsreq->r_u.nfs.req);
-  pmsg = &(pnfsreq->r_u.nfs.msg);
+  cred_area = nfsreq->r_u.nfs->cred_area;
+  preq = &(nfsreq->r_u.nfs->req);
+  pmsg = &(nfsreq->r_u.nfs->msg);
 
   pmsg->rm_call.cb_cred.oa_base = cred_area;
   pmsg->rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
   preq->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
 
   /* Set up xprt */
-  pnfsreq->r_u.nfs.xprt = xprt;
+  nfsreq->r_u.nfs->xprt = xprt;
   preq->rq_xprt = xprt;
 
+  /* Count as 1 ref */
+  gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_NONE);
+
   /* Hand it off */
-  DispatchWorkNFS(pnfsreq, worker_index);
+  DispatchWorkNFS(nfsreq, worker_index);
 
   return (rc);
 }
@@ -1045,7 +1126,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
      * completion of SVC_RECV */
     (void) svc_rqst_block_events(xprt, SVC_RQST_FLAG_NONE);
 
-    code = dispatch_rpc_request(xprt);
+    dispatch_rpc_request(xprt);
 
     return (TRUE);
 }
@@ -1090,16 +1171,6 @@ void *rpc_dispatcher_thread(void *arg)
     LogDebug(COMPONENT_DISPATCH,
              "My pthread id is %p", (caddr_t) pthread_self());
 
-#ifndef _NO_BUDDY_SYSTEM
-    /* XXXX check */
-    /* Initialisation of the Buddy Malloc */
-    LogInfo(COMPONENT_DISPATCH,
-            "Initialization of memory manager");
-    if(BuddyInit(&nfs_param.buddy_param_tcp_mgr)!= BUDDY_SUCCESS)
-        LogFatal(COMPONENT_DISPATCH,
-                 "Memory manager could not be initialized");
-#endif
-
     svc_rqst_thrd_run(chan_id, SVC_RQST_FLAG_NONE);
 
     return (NULL);
@@ -1117,11 +1188,10 @@ void *rpc_dispatcher_thread(void *arg)
  *
  */
 
-void constructor_nfs_request_data_t(void *ptr)
+void constructor_nfs_request_data_t(void *ptr, void *parameters)
 {
   nfs_request_data_t * pdata = (nfs_request_data_t *) ptr;
-
-  memset(pdata, 0, sizeof(*pdata));
+  memset(pdata, 0, sizeof(nfs_request_data_t));
 }
 
 /**
@@ -1135,10 +1205,8 @@ void constructor_nfs_request_data_t(void *ptr)
  * @return nothing (void function) will exit the program if failed.
  *
  */
-
-void constructor_request_data_t(void *ptr)
+void constructor_request_data_t(void *ptr, void *parameters)
 {
   request_data_t * pdata = (request_data_t *) ptr;
-
-  constructor_nfs_request_data_t( &(pdata->r_u.nfs) ) ;
+  memset(pdata, 0, sizeof(request_data_t));
 }

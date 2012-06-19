@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -78,14 +77,6 @@
 
 int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
-
-#ifdef _WITH_NO_NFSV4_LOCKS
-  resp->resop = NFS4_OP_LOCKU;
-  res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCKU4.status;
-#else
-
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
   state_owner_t     * plock_owner;
@@ -132,7 +123,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
                               data->current_entry,
-                              0LL,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
@@ -195,7 +185,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   plock_owner,
                   pstate_found,
                   &lock_desc,
-                  data->pclient,
                   &state_status) != STATE_SUCCESS)
     {
       res_LOCKU4.status = nfs4_Errno_state(state_status);
@@ -219,7 +208,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
 
   return res_LOCKU4.status;
-#endif
+
 }                               /* nfs4_op_locku */
 
 /**
@@ -234,7 +223,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
  */
 void nfs4_op_locku_Free(LOCKU4res * resp)
 {
-  /* Nothing to Mem_Free */
   return;
 }                               /* nfs4_op_locku_Free */
 

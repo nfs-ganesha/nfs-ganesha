@@ -45,11 +45,11 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include "nfs_core.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "cache_inode.h"
 #include "fsal.h"
 #include "9p.h"
+#include "abstract_mem.h"
 
 u8 qid_type_file = _9P_QTFILE ;
 u8 qid_type_symlink = _9P_QTSYMLINK ;
@@ -118,13 +118,13 @@ static bool_t _9p_readdir_callback( void* opaque,
 
 }
 
-int _9p_readdir( _9p_request_data_t * preq9p, 
+int _9p_readdir( _9p_request_data_t * preq9p,
                  void  * pworker_data,
-                 u32 * plenout, 
+                 u32 * plenout,
                  char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  nfs_worker_data_t * pwkrdata = pworker_data ;
 
   _9p_cb_data_t cb_data ;
 
@@ -175,18 +175,19 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
   /* Use Cache Inode to read the directory's content */
   cookie = (unsigned int)*offset ;
- 
-  /* For each entry, returns: 
-   * qid     = 13 bytes 
+
+  /* For each entry, returns:
+   * qid     = 13 bytes
    * offset  = 8 bytes
    * type    = 1 byte
    * namelen = 2 bytes
    * namestr = ~16 bytes (average size)
    * -------------------
-   * total   = ~40 bytes (average size) per dentry */ 
-  estimated_num_entries = (unsigned int)( *count / 40 ) ;  
+   * total   = ~40 bytes (average size) per dentry */
+  estimated_num_entries = (unsigned int)( *count / 40 ) ;
 
-  if( ( cb_data.entries = (_9p_cb_entry_t * ) Mem_Alloc(  estimated_num_entries * sizeof( _9p_cb_entry_t ) ) ) == NULL )
+  if((cb_data.entries = gsh_calloc(estimated_num_entries,
+                                   sizeof(_9p_cb_entry_t))) == NULL)
     return _9p_rerror( preq9p, msgtag, EIO, plenout, preply ) ;
 
    /* Is this the first request ? */
@@ -293,10 +294,9 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                *qid_type, name_str ) ;
    } /* for( i = 0 , ... ) */
 
-  Mem_Free( cb_data.entries ) ;
- 
+  gsh_free( cb_data.entries ) ;
   /* Set buffsize in previously saved position */
-  _9p_setvalue( dcount_pos, dcount, u32 ) ; 
+  _9p_setvalue( dcount_pos, dcount, u32 ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;

@@ -43,7 +43,6 @@
 #if defined(USE_DBUS)
 #include <dbus/dbus.h>
 #endif /* USE_DBUS */
-#include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -168,8 +167,8 @@ int32_t gsh_dbus_register_path(const char *name,
     snprintf(path, 512, "/org/ganesha/nfsd/%s", name);
 
     handler = (ganesha_dbus_handler_t *)
-        Mem_Alloc(sizeof(ganesha_dbus_handler_t));
-    handler->name = Str_Dup(path);
+        gsh_malloc(sizeof(ganesha_dbus_handler_t));
+    handler->name = gsh_strdup(path);
     handler->vtable.unregister_function = path_unregistered_func;
     handler->vtable.message_function =  method;
 
@@ -186,7 +185,7 @@ int32_t gsh_dbus_register_path(const char *name,
     if (! code) {
         LogFatal(COMPONENT_DBUS, "dbus_connection_register_object_path "
                  "failed");
-        Mem_Free(handler);
+        gsh_free(handler);
         goto out;
     }
 
@@ -206,7 +205,6 @@ void gsh_dbus_pkgshutdown(void)
 {
     struct avltree_node *node, *onode;
     ganesha_dbus_handler_t *handler;
-    int code = 0;
 
     LogDebug(COMPONENT_DBUS, "shutdown");
 
@@ -217,29 +215,29 @@ void gsh_dbus_pkgshutdown(void)
         if (onode) {
             handler = avltree_container_of(onode, ganesha_dbus_handler_t,
                                            node_k);
-            code = dbus_bus_release_name(thread_state.dbus_conn, handler->name,
+            dbus_bus_release_name(thread_state.dbus_conn, handler->name,
                                          &thread_state.dbus_err);
             if (dbus_error_is_set(&thread_state.dbus_err)) { 
                 LogCrit(COMPONENT_DBUS, "err releasing name (%s, %s)",
                         handler->name, thread_state.dbus_err.message);
                 dbus_error_free(&thread_state.dbus_err);
             }
-            Mem_Free(handler->name);
-            Mem_Free(handler);
+            gsh_free(handler->name);
+            gsh_free(handler);
         }
     } while ((onode = node) && (node = avltree_next(node)));
     if (onode) {
         handler = avltree_container_of(onode, ganesha_dbus_handler_t,
                                        node_k);
-        code = dbus_bus_release_name(thread_state.dbus_conn, handler->name,
+        dbus_bus_release_name(thread_state.dbus_conn, handler->name,
                                      &thread_state.dbus_err);
         if (dbus_error_is_set(&thread_state.dbus_err)) { 
             LogCrit(COMPONENT_DBUS, "err releasing name (%s, %s)",
                     handler->name, thread_state.dbus_err.message);
             dbus_error_free(&thread_state.dbus_err);
         }
-        Mem_Free(handler->name);
-        Mem_Free(handler);
+        gsh_free(handler->name);
+        gsh_free(handler);
     }
     avltree_init(&thread_state.callouts, dbus_callout_cmpf, 0);
 
@@ -255,17 +253,6 @@ void *gsh_dbus_thread(void *arg)
     DBusMessage* msg;
 
     SetNameFunction("gsh_dbus_thread");
- 
-     /* Initialize BuddyMalloc */
-#ifndef _NO_BUDDY_SYSTEM
-    if ((BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS) {
-        /* Failed init */
-        LogFatal(COMPONENT_DBUS,
-                 "Memory manager could not be initialized");
-    }
-    LogFullDebug(COMPONENT_DBUS,
-                 "Memory manager successfully initialized");
-#endif
 
     if (! thread_state.dbus_conn) {
         LogCrit(COMPONENT_DBUS, "DBUS not initialized, service thread "

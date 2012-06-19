@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
@@ -78,38 +77,40 @@
 
 int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_renew";
-
-  nfs_client_id_t *nfs_clientid;
+  nfs_client_id_t *pclientid;
 
   /* Lock are not supported */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_RENEW;
-  res_RENEW4.status = NFS4_OK;
 
   /* Tell the admin what I am doing... */
-  LogFullDebug(COMPONENT_NFS_V4, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);
+  LogFullDebug(COMPONENT_CLIENTID, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);
 
   /* Is this an existing client id ? */
-  if(nfs_client_id_Get_Pointer(arg_RENEW4.clientid, &nfs_clientid) !=
+  if(nfs_client_id_get_confirmed(arg_RENEW4.clientid, &pclientid) !=
       CLIENT_ID_SUCCESS)
     {
       /* Unknown client id */
       res_RENEW4.status = NFS4ERR_STALE_CLIENTID;
-      goto out;
+      return res_RENEW4.status;
     }
 
-  if (nfs4_is_lease_expired(nfs_clientid))
+  P(pclientid->cid_mutex);
+
+  if(!reserve_lease(pclientid))
     {
       res_RENEW4.status = NFS4ERR_EXPIRED;
     }
   else
     {
-      nfs_clientid->last_renew = time(NULL);
+      update_lease(pclientid);
       res_RENEW4.status = NFS4_OK;      /* Regular exit */
     }
 
-out:
+  V(pclientid->cid_mutex);
+
+  dec_client_id_ref(pclientid);
+
   return res_RENEW4.status;
 }                               /* nfs4_op_renew */
 

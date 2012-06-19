@@ -54,7 +54,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -201,7 +200,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   nfsstat4 * pstatus4,
                                   fsal_attrib_list_t * pattr,
                                   fsal_op_context_t * pcontext,
-                                  cache_inode_client_t * pclient,
                                   int *prc)
 {
   cache_inode_fsal_data_t fsal_data;
@@ -276,7 +274,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       return NULL;
     }
 
-  if((pentry = cache_inode_get(&fsal_data, &attr, pclient, pcontext,
+  if((pentry = cache_inode_get(&fsal_data, &attr, pcontext,
                                NULL, &cache_status)) == NULL)
     {
       switch (rq_vers)
@@ -773,7 +771,7 @@ nfs_tools_xdr_utf8(utf8str_mixed *utf8, char *attrvalsBuffer)
   LastOffset += utf8->utf8string_len;
 
   /* Free what was allocated by uid2utf8 */
-  Mem_Free((char *)utf8->utf8string_val);
+  gsh_free(utf8->utf8string_val);
 
   /* Pad with zero to keep xdr alignement */
   if(deltalen)
@@ -789,13 +787,13 @@ void nfs4_Fattr_Free(fattr4 *fattr)
 {
   if(fattr->attrmask.bitmap4_val != NULL)
     {
-      Mem_Free(fattr->attrmask.bitmap4_val);
+      gsh_free(fattr->attrmask.bitmap4_val);
       fattr->attrmask.bitmap4_val = NULL;
     }
 
   if(fattr->attr_vals.attrlist4_val != NULL)
     {
-      Mem_Free(fattr->attr_vals.attrlist4_val);
+      gsh_free(fattr->attr_vals.attrlist4_val);
       fattr->attr_vals.attrlist4_val = NULL;
     }
 }
@@ -996,15 +994,12 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           /* Let set the reply bitmap */
 #ifdef _USE_NFS4_1
           if((supported_attrs.bitmap4_val =
-              (uint32_t *) Mem_Alloc_Label(3 * sizeof(uint32_t),
-                                           "FSALattr_To_Fattr:supported_bitmap")) == NULL)
+              gsh_calloc(3, sizeof(uint32_t))) == NULL)
             return -1;
-          memset(supported_attrs.bitmap4_val, 0, 3 * sizeof(uint32_t));
 #else
           if((supported_attrs.bitmap4_val =
-              (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+              gsh_calloc(2, sizeof(uint32_t))) == NULL)
             return -1;
-          memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
 #endif
 
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
@@ -1032,7 +1027,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
               LastOffset += sizeof(uint32_t);
             }
 
-          Mem_Free((char *)supported_attrs.bitmap4_val);
+          gsh_free(supported_attrs.bitmap4_val);
           break;
 
         case FATTR4_TYPE:
@@ -1405,7 +1400,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           op_attr_success = 1;
           break;
 
-          /* The following MAXREAD-MAXWRITE code establishes these semantics: 
+        case FATTR4_MAXREAD:
+          /* The exports.c MAXREAD-MAXWRITE code establishes these semantics: 
            *  a. If you set the MaxWrite and MaxRead defaults in an export file
            *  they apply. 
            *  b. If you set the MaxWrite and MaxRead defaults in the main.conf
@@ -1414,22 +1410,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
            *  file then the defaults values in the FSAL apply. 
            */
 
-        case FATTR4_MAXREAD:
-          if ( ((pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD ))
-            maxread = nfs_htonl64((fattr4_maxread) pexport->MaxRead );
-          else
-            maxread = nfs_htonl64((fattr4_maxread) pstaticinfo->maxread);
-
+          maxread = nfs_htonl64((fattr4_maxread) pexport->MaxRead );
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxread, sizeof(fattr4_maxread));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
 
         case FATTR4_MAXWRITE:
-          if ( ((pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE ))
-            maxwrite = nfs_htonl64((fattr4_maxwrite) pexport->MaxWrite );
-          else
-            maxwrite = nfs_htonl64((fattr4_maxwrite) pstaticinfo->maxwrite);
+          maxwrite = nfs_htonl64((fattr4_maxwrite) pexport->MaxWrite );
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxwrite,
                  sizeof(fattr4_maxwrite));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
@@ -1778,10 +1766,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
   /* Set the bitmap for result */
   memset(Fattr, 0, sizeof(*Fattr));
-  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc_Label(3 * sizeof(uint32_t),
-                                                                 "FSALattr_To_Fattr:bitmap")) == NULL)
+  if((Fattr->attrmask.bitmap4_val = gsh_calloc(3, sizeof(uint32_t))) == NULL)
     return -1;
-  memset((char *)Fattr->attrmask.bitmap4_val, 0, 3 * sizeof(uint32_t));
 
   nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
 
@@ -1790,11 +1776,10 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   Fattr->attr_vals.attrlist4_len = LastOffset;
   if(LastOffset != 0)           /* No need to allocate an empty buffer */
     {
-      Fattr->attr_vals.attrlist4_val = Mem_Alloc_Label(LastOffset,
-                                                       "FSALattr_To_Fattr:attrvals");
+      Fattr->attr_vals.attrlist4_val = gsh_malloc(LastOffset);
       if(Fattr->attr_vals.attrlist4_val == NULL)
         {
-          Mem_Free(Fattr->attrmask.bitmap4_val);
+          gsh_free(Fattr->attrmask.bitmap4_val);
           return -1;
         }
       memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer,
@@ -2127,7 +2112,7 @@ void free_utf8(utf8string * utf8str)
   if(utf8str != NULL)
     {
       if(utf8str->utf8string_val != NULL)
-        Mem_Free(utf8str->utf8string_val);
+        gsh_free(utf8str->utf8string_val);
       utf8str->utf8string_val = 0;
       utf8str->utf8string_len = 0;
     }
@@ -2154,8 +2139,7 @@ int utf8dup(utf8string * newstr, utf8string * oldstr)
   if(oldstr->utf8string_len == 0 || oldstr->utf8string_val == NULL)
     return 0;
 
-  newstr->utf8string_val = (char *)Mem_Alloc_Label(oldstr->utf8string_len,
-                                                   "utf82str");
+  newstr->utf8string_val = gsh_malloc(oldstr->utf8string_len);
   if(newstr->utf8string_val == NULL)
     return -1;
 
@@ -4210,8 +4194,7 @@ int nfs3_AllocateFH(nfs_fh3 *fh)
 
   /* Allocating the filehandle in memory */
   fh->data.data_len = sizeof(struct alloc_file_handle_v3);
-  if((fh->data.data_val = (char *)Mem_Alloc_Label(fh->data.data_len,
-                                                "nfs3_AllocateFH")) == NULL)
+  if((fh->data.data_val = gsh_malloc(fh->data.data_len)) == NULL)
     {
       LogError(COMPONENT_NFSPROTO, ERR_SYS, ERR_MALLOC, errno);
       return NFS3ERR_SERVERFAULT;
@@ -4242,8 +4225,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
 
   /* Allocating the filehandle in memory */
   fh->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
-  if((fh->nfs_fh4_val = (char *)Mem_Alloc_Label(fh->nfs_fh4_len,
-                                                "nfs4_AllocateFH")) == NULL)
+  if((fh->nfs_fh4_val = gsh_malloc(fh->nfs_fh4_len)) == NULL)
     {
       LogError(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
       return NFS4ERR_RESOURCE;
@@ -4268,10 +4250,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
 int nfs4_MakeCred(compound_data_t * data)
 {
   exportlist_client_entry_t related_client;
-  nfs_worker_data_t *pworker = NULL;
   struct user_cred user_credentials;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
   if (get_req_uid_gid(data->reqp,
                       data->pexport,
@@ -4280,20 +4259,21 @@ int nfs4_MakeCred(compound_data_t * data)
 
   LogFullDebug(COMPONENT_DISPATCH,
                "nfs4_MakeCred about to call nfs_export_check_access");
-  if(nfs_export_check_access(&pworker->hostaddr,
+  if(nfs_export_check_access(&data->pworker->hostaddr,
                              data->reqp,
                              data->pexport,
                              nfs_param.core_param.program[P_NFS],
                              nfs_param.core_param.program[P_MNT],
-                             pworker->ht_ip_stats,
-                             &pworker->ip_stats_pool,
+                             data->pworker->ht_ip_stats,
+                             ip_stats_pool,
                              &related_client,
                              &user_credentials,
                              FALSE) /* So check_access() doesn't deny based on whether this is a RO export. */
      == FALSE)
     return NFS4ERR_WRONGSEC;
 
-  if(nfs_build_fsal_context(data->reqp,
+  if(nfs_check_anon(&related_client, data->pexport, &user_credentials) == FALSE
+     || nfs_build_fsal_context(data->reqp,
                             data->pexport,
                             data->pcontext,
                             &user_credentials) == FALSE)

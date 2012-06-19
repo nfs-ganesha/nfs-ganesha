@@ -37,7 +37,6 @@
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
 
-#include "stuff_alloc.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -45,6 +44,7 @@
 
 #include <pthread.h>
 #include <string.h>
+#include "abstract_mem.h"
 
 extern time_t ServerBootTime;
 extern fsal_staticfsinfo_t global_fs_info;
@@ -493,8 +493,7 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
 
   if(utf8str->utf8string_len == 0)
     {
-      if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(pname->len,
-                                                            "fsal_internal_proxy_fsal_name_2_utf8")) == NULL)
+      if((utf8str->utf8string_val = gsh_malloc(pname->len)) == NULL)
         return FALSE;
       else
         utf8str->utf8string_len = pname->len;
@@ -531,8 +530,7 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
 
   if(utf8str->utf8string_len == 0)
     {
-      if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(ppath->len,
-                                                            "fsal_internal_proxy_fsal_path_2_utf8")) == NULL)
+      if((utf8str->utf8string_val = gsh_malloc(ppath->len)) == NULL)
         return FALSE;
       else
         utf8str->utf8string_len = ppath->len;

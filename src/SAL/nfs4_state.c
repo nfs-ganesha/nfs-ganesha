@@ -6,30 +6,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
  * \file    nfs4_state.c
- * \author  $Author: deniel $
- * \date    $Date$
- * \version $Revision$
  * \brief   This file contains functions used in state management.
  *
- * nfs4_state.c : This file contains functions used in state management.
+ * This file contains functions used in state management.
  *
  *
  */
@@ -56,7 +54,6 @@
 #include "nfs4.h"
 #include "fsal.h"
 #include "sal_functions.h"
-#include "stuff_alloc.h"
 #include "cache_inode_lru.h"
 
 /**
@@ -119,7 +116,6 @@ int state_conflict(state_t      * pstate,
  * @param state_type    [IN]    state to be defined
  * @param pstate_data   [IN]    data related to this state
  * @param powner_input  [IN]    related open_owner
- * @param pclient       [INOUT] cache inode client to be used
  * @param pcontext      [IN]    FSAL credentials
  * @param ppstate       [OUT]   pointer to a pointer to the new state
  * @param pstatus       [OUT]   returned status
@@ -131,7 +127,6 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                               state_type_t            state_type,
                               state_data_t          * pstate_data,
                               state_owner_t         * powner_input,
-                              cache_inode_client_t  * pclient,
                               fsal_op_context_t     * pcontext,
                               state_t              ** ppstate,
                               state_status_t        * pstatus)
@@ -158,7 +153,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
       got_pinned = TRUE;
     }
 
-  GetFromPool(pnew_state, &pclient->pool_state_v4, state_t);
+  pnew_state = pool_alloc(state_v4_pool, NULL);
 
   if(pnew_state == NULL)
     {
@@ -188,7 +183,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                    pentry);
 
           /* stat */
-          ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+          pool_free(state_v4_pool, pnew_state);
 
           *pstatus = STATE_STATE_CONFLICT;
 
@@ -222,7 +217,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                "Can't create a new state id %s for the pentry %p (F)",
                debug_str, pentry);
 
-      ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+      pool_free(state_v4_pool, pnew_state);
 
       /* Return STATE_MALLOC_ERROR since most likely the nfs4_State_Set failed
        * to allocate memory.
@@ -265,7 +260,6 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
  * @param state_type    [IN]    state to be defined
  * @param pstate_data   [IN]    data related to this state
  * @param powner_input  [IN]    related open_owner
- * @param pclient       [INOUT] cache inode client to be used
  * @param pcontext      [IN]    FSAL credentials
  * @param ppstate       [OUT]   pointer to a pointer to the new state
  * @param pstatus       [OUT]   returned status
@@ -277,7 +271,6 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_type_t            state_type,
                          state_data_t          * pstate_data,
                          state_owner_t         * powner_input,
-                         cache_inode_client_t  * pclient,
                          fsal_op_context_t     * pcontext,
                          state_t              ** ppstate,
                          state_status_t        * pstatus)
@@ -298,15 +291,14 @@ state_status_t state_add(cache_entry_t         * pentry,
 
   pthread_rwlock_wrlock(&pentry->state_lock);
   state_add_impl(pentry, state_type, pstate_data, powner_input,
-                 pclient, pcontext, ppstate, pstatus);
+                 pcontext, ppstate, pstatus);
   pthread_rwlock_unlock(&pentry->state_lock);
 
   return *pstatus;
 }                               /* state_add */
 
 state_status_t state_del_locked(state_t              * pstate,
-                                cache_entry_t        * pentry,
-                                cache_inode_client_t * pclient)
+                                cache_entry_t        * pentry)
 {
   char            debug_str[OTHERSIZE * 2 + 1];
 
@@ -331,7 +323,7 @@ state_status_t state_del_locked(state_t              * pstate,
       P(pstate->state_powner->so_mutex);
       glist_del(&pstate->state_owner_list);
       V(pstate->state_powner->so_mutex);
-      dec_state_owner_ref(pstate->state_powner, pclient);
+      dec_state_owner_ref(pstate->state_powner);
     }
 
   /* Remove from the list of states for a particular cache entry */
@@ -346,7 +338,7 @@ state_status_t state_del_locked(state_t              * pstate,
   glist_del(&pstate->state_export_list);
   V(pstate->state_pexport->exp_state_mutex);
 
-  ReleaseToPool(pstate, &pclient->pool_state_v4);
+  pool_free(state_v4_pool, pstate);
 
   LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
 
@@ -363,60 +355,165 @@ state_status_t state_del_locked(state_t              * pstate,
  * Deletes a state from the hash's state
  *
  * @param pstate   [OUT]   pointer to the new state
- * @param pclient  [INOUT] related cache inode client
  * @param pstatus  [OUT]   returned status
  *
  * @return the same as *pstatus
  *
  */
 state_status_t state_del(state_t              * pstate,
-                         cache_inode_client_t * pclient,
                          state_status_t       * pstatus)
 {
   cache_entry_t *entry = pstate->state_pentry;
 
   pthread_rwlock_wrlock(&entry->state_lock);
 
-  *pstatus = state_del_locked(pstate, pstate->state_pentry, pclient);
+  *pstatus = state_del_locked(pstate, pstate->state_pentry);
 
   pthread_rwlock_unlock(&entry->state_lock);
 
   return *pstatus;
 }                               /* state_del */
 
-void state_nfs4_state_wipe(cache_entry_t        * pentry,
-                           cache_inode_client_t * pclient)
+void state_nfs4_state_wipe(cache_entry_t        * pentry)
 {
-  struct glist_head * glist;
+  struct glist_head * glist, *glistn;
   state_t           * pstate = NULL;
 
   if(glist_empty(&pentry->state_list))
     return;
 
-  /* Iterate through file's state to wipe out all stateids */
-  glist_for_each(glist, &pentry->state_list)
+  glist_for_each_safe(glist, glistn, &pentry->state_list)
     {
       pstate = glist_entry(glist, state_t, state_list);
-
-      switch(pstate->state_type)
-        {
-          case STATE_TYPE_SHARE:
-            break;
-
-          case STATE_TYPE_LOCK:
-            break;
-
-          case STATE_TYPE_DELEG:
-            break;
-
-          case STATE_TYPE_LAYOUT:
-            break;
-
-          case STATE_TYPE_NONE:
-            break;
-        }
-      state_del_locked(pstate, pentry, pclient);
+      state_del_locked(pstate, pentry);
     }
 
-  cache_inode_dec_pin_ref(pstate->state_pentry);
+  return;
+}
+
+/**
+ * release_lockstate: Remove every state belonging to the lock owner.
+ *
+ * Remove every state belonging to the lock owner.
+ *
+ * @param plock_owner   [IN]   lock owner to release state for.
+ *
+ */
+void release_lockstate(state_owner_t * plock_owner)
+{
+  state_status_t         state_status;
+  struct glist_head    * glist, * glistn;
+
+  glist_for_each_safe(glist, glistn, &plock_owner->so_owner.so_nfs4_owner.so_state_list)
+    {
+      state_t * pstate_found = glist_entry(glist,
+                                           state_t,
+                                           state_owner_list);
+
+      /* Make sure we hold an lru ref to the cache inode while calling state_del */
+      if(cache_inode_lru_ref(pstate_found->state_pentry,
+                             0) != CACHE_INODE_SUCCESS)
+        LogCrit(COMPONENT_CLIENTID,
+                "Ugliness - cache_inode_lru_ref has returned non-success");
+
+      if(state_del(pstate_found,
+                   &state_status) != STATE_SUCCESS)
+      {
+        LogDebug(COMPONENT_CLIENTID,
+               "release_lockstate failed to release stateid error %s",
+                state_err_str(state_status));
+      }
+
+      /* Release the lru ref to the cache inode we held while calling state_del */
+      cache_inode_lru_unref(pstate_found->state_pentry,
+                            0);
+    }
+
+  /* Release the reference to the lock owner that keeps it in the hash table */
+  dec_state_owner_ref(plock_owner);
+}
+
+/**
+ * release_openstate: Remove every state belonging to the open owner.
+ *
+ * Remove every state belonging to the open owner.
+ *
+ * @param popen_owner   [IN]   open owner to release state for.
+ *
+ */
+void release_openstate(state_owner_t * popen_owner)
+{
+  state_status_t         state_status;
+  struct glist_head    * glist, * glistn;
+
+  glist_for_each_safe(glist, glistn, &popen_owner->so_owner.so_nfs4_owner.so_state_list)
+    {
+      fsal_op_context_t        fsal_context;
+      fsal_status_t            fsal_status;
+
+      state_t * pstate_found = glist_entry(glist,
+                                           state_t,
+                                           state_owner_list);
+
+      cache_entry_t        * pentry = pstate_found->state_pentry;
+      cache_inode_status_t   cache_status;
+
+      /* Make sure we hold an lru ref to the cache inode while calling state_del */
+      if(cache_inode_lru_ref(pentry,
+                             0) != CACHE_INODE_SUCCESS)
+        LogCrit(COMPONENT_CLIENTID,
+                "Ugliness - cache_inode_lru_ref has returned non-success");
+
+      pthread_rwlock_wrlock(&pentry->state_lock);
+      /* Construct the fsal context based on the export and root credential */
+      fsal_status = FSAL_GetClientContext(&fsal_context,
+                                          &pstate_found->state_pexport->FS_export_context,
+                                          0,
+                                          0,
+                                          NULL,
+                                          0);
+
+      if(FSAL_IS_ERROR(fsal_status))
+        {
+          /* log error here , and continue? */
+          LogEvent(COMPONENT_CLIENTID,
+                   "FSAL_GetClientConext failed");
+        }
+      else if(pstate_found->state_type == STATE_TYPE_SHARE)
+        {
+          if(state_share_remove(pstate_found->state_pentry,
+                                &fsal_context,
+                                popen_owner,
+                                pstate_found,
+                                &state_status) != STATE_SUCCESS)
+            {
+              LogEvent(COMPONENT_CLIENTID,
+                       "EXPIRY failed to release share stateid error %s",
+                       state_err_str(state_status));
+            }
+        }
+
+      if((state_status
+          = state_del_locked(pstate_found,
+                             pentry)) != STATE_SUCCESS)
+        {
+          LogDebug(COMPONENT_CLIENTID,
+                   "EXPIRY failed to release stateid error %s",
+                   state_err_str(state_status));
+        }
+
+      /* Close the file in FSAL through the cache inode */
+      cache_inode_close(pentry,
+                        0,
+                        &cache_status);
+
+      pthread_rwlock_unlock(&pentry->state_lock);
+
+      /* Release the lru ref to the cache inode we held while calling state_del */
+      cache_inode_lru_unref(pentry,
+                            0);
+    }
+
+  /* Release the reference to the open owner that keeps it in the hash table */
+  dec_state_owner_ref(popen_owner);
 }
