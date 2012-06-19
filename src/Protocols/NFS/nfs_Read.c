@@ -70,6 +70,10 @@ nfs_read_ok(exportlist_t * pexport,
             fsal_attrib_list_t *attr,
             int eof)
 {
+    if((read_size == 0) && (data != NULL)) {
+        gsh_free(data);
+        data = NULL;
+    }
     switch (preq->rq_vers) {
     case NFS_V2:
         pres->res_read2.READ2res_u.readok.data.nfsdata2_val = data;
@@ -355,7 +359,6 @@ int nfs_Read(nfs_arg_t *parg,
   else
     {
       data = gsh_malloc(size);
-
       if(data == NULL)
         {
           rc = NFS_REQ_DROP;
@@ -381,6 +384,7 @@ int nfs_Read(nfs_arg_t *parg,
           rc = NFS_REQ_OK;
           goto out;
         }
+      gsh_free(data);
     }
 
   /* If we are here, there was an error */
