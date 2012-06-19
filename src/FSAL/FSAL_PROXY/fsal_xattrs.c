@@ -469,7 +469,7 @@ fsal_status_t PROXYFSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,      /* IN
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
 fsal_status_t PROXYFSAL_ListXAttrs(fsal_handle_t * p_objecthandle, /* IN */
-                                   unsigned int cookie, /* IN */
+                                   unsigned int argcookie, /* IN */
                                    fsal_op_context_t * p_context,  /* IN */
                                    fsal_xattrent_t * xattrs_tab,        /* IN/OUT */
                                    unsigned int xattrs_tabsize, /* IN */
@@ -481,10 +481,14 @@ fsal_status_t PROXYFSAL_ListXAttrs(fsal_handle_t * p_objecthandle, /* IN */
   unsigned int out_index;
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
+  unsigned int cookie = argcookie ;
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !xattrs_tab || !p_nb_returned || !end_of_list)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_ListXAttrs);
+
+  /* Deal with special cookie */
+  if( argcookie == FSAL_XATTR_RW_COOKIE ) cookie = XATTR_COUNT ;
 
   /* object attributes we want to retrieve from parent */
   file_attrs.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_FILEID | FSAL_ATTR_OWNER

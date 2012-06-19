@@ -2340,7 +2340,7 @@ void *worker_thread(void *IndexArg)
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");
-      if (nfsreq->r_u.nfs)
+      if( nfsreq->rtype != _9P_REQUEST && nfsreq->r_u.nfs ) /** @todo : check if this does not produce memleak as 9P is used */
         pool_free(request_data_pool, nfsreq->r_u.nfs);
       pool_free(request_pool, nfsreq);
 

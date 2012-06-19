@@ -2,6 +2,7 @@ Makefile.in
 Makefile
 libtool
 configure
+depcomp
 config.*
 aclocal.m4
 autom4te.cache/

@@ -711,7 +711,6 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_setxattrvaluebyid = WRAP_HPSSFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = WRAP_HPSSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = WRAP_HPSSFSAL_RemoveXAttrByName,
-  .fsal_getxattroffsetsetable = HPSSFSAL_GetXattrOffsetSetable,
   .fsal_getextattrs = WRAP_HPSSFSAL_getextattrs,
   .fsal_getfileno = HPSSFSAL_GetFileno,
   .fsal_share_op = COMMON_share_op_notsupp

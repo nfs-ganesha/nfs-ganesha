@@ -86,7 +86,6 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_setxattrvaluebyid = XFSFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = XFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = XFSFSAL_RemoveXAttrByName,
-  .fsal_getxattroffsetsetable = XFSFSAL_GetXattrOffsetSetable,
   .fsal_getextattrs = XFSFSAL_getextattrs,
   .fsal_getfileno = XFSFSAL_GetFileno,
   .fsal_share_op = COMMON_share_op_notsupp

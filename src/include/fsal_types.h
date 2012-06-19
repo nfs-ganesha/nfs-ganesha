@@ -151,6 +151,9 @@ typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
 /* number of FSAL functions */
 #define FSAL_NB_FUNC  68
 
+/* Cookie to be used in FSAL_ListXAttrs() to bypass RO xattr */
+#define FSAL_XATTR_RW_COOKIE ~0 
+
 extern const char *fsal_function_names[];
 
 typedef unsigned long long fsal_u64_t;    /**< 64 bit unsigned integer.     */

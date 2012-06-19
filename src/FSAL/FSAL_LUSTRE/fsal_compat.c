@@ -93,7 +93,6 @@ fsal_functions_t fsal_lustre_functions = {
   .fsal_setxattrvaluebyid = LUSTREFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = LUSTREFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = LUSTREFSAL_RemoveXAttrByName,
-  .fsal_getxattroffsetsetable =  LUSTREFSAL_GetXattrOffsetSetable,
   .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = LUSTREFSAL_GetFileno,
   .fsal_share_op = COMMON_share_op_notsupp
