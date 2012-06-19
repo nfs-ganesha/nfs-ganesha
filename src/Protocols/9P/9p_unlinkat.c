@@ -60,7 +60,7 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   u32  * dfid     = NULL ;
   u16  * name_len = NULL ;
   char * name_str = NULL ;
-  u32  * flags    = NULL ;
+   __attribute__((unused)) u32  * flags    = NULL ; /* for unused-but-set-variable */
 
   _9p_fid_t * pdfid = NULL ;
 

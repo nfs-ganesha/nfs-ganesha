@@ -67,7 +67,6 @@ int _9p_read( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
 
-  size_t size;
   size_t read_size = 0;
   bool_t eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -88,7 +87,6 @@ int _9p_read( _9p_request_data_t * preq9p,
   pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Do the job */
-  size = *count ;
   if( pfid->specdata.xattr.xattr_content != NULL )
     {
       /* Copy the value cached during xattrwalk */
