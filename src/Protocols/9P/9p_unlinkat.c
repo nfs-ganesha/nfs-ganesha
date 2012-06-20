@@ -88,6 +88,7 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
 
   /* Let's do the job */
   snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+  name.len = *name_len + 1 ;
 
   if( cache_inode_remove( pdfid->pentry,
                           &name,

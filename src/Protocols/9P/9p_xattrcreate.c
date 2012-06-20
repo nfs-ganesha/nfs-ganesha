@@ -91,7 +91,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
   pfid = &preq9p->pconn->fids[*fid] ;
   
   snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-
+  name.len = *name_len + 1 ;
 
   if( *size == 0LL ) 
    {

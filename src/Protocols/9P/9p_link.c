@@ -96,6 +96,7 @@ int _9p_link( _9p_request_data_t * preq9p,
 
    /* Let's do the job */
    snprintf( link_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+   link_name.len = *name_len +1 ;
 
    if( cache_inode_link( ptargetfid->pentry,
                          pdfid->pentry,

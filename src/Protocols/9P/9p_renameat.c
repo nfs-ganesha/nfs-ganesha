@@ -101,7 +101,9 @@ int _9p_renameat( _9p_request_data_t * preq9p,
 
   /* Let's do the job */
   snprintf( oldname.name, FSAL_MAX_NAME_LEN, "%.*s", *oldname_len, oldname_str ) ;
+  oldname.len = *oldname_len + 1 ;
   snprintf( newname.name, FSAL_MAX_NAME_LEN, "%.*s", *newname_len, newname_str ) ;
+  newname.len = *newname_len + 1 ;
 
   if( cache_inode_rename( poldfid->pentry,
                           &oldname,

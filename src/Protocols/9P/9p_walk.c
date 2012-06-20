@@ -125,6 +125,8 @@ int _9p_walk( _9p_request_data_t * preq9p,
       for( i = 0 ; i <  *nwname ; i ++ )
         {
            snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
+           name.len =  *(wnames_len[i]) + 1 ;
+
            LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
             (u32)*msgtag, *fid, *newfid, i+1, *nwname, name.name ) ;
 

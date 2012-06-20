@@ -97,8 +97,10 @@ int _9p_symlink( _9p_request_data_t * preq9p,
    pfid = &preq9p->pconn->fids[*fid] ;
  
    snprintf( symlink_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+   symlink_name.len = *name_len + 1 ;
    snprintf( create_arg.link_content.path, FSAL_MAX_PATH_LEN, "%.*s", *linkcontent_len, linkcontent_str ) ;
-
+   create_arg.link_content.len =  *linkcontent_len + 1 ;
+ 
    /* Let's do the job */
    /* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
    if( ( pentry_symlink = cache_inode_create( pfid->pentry,
