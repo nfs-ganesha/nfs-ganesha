@@ -3416,7 +3416,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
   /* Check attributes data */
   if((Fattr->attr_vals.attrlist4_val == NULL) ||
      (Fattr->attr_vals.attrlist4_len == 0))
-    return NFS4ERR_BADXDR;
+    return NFS4_OK;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
