@@ -185,10 +185,9 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
   if(!p_posix_flags)
     return ERR_FSAL_FAULT;
 
-  /* check that all used flags exist */
-
   if(fsal_flags &
-     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC))
+     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND |
+       FSAL_O_SYNC   | FSAL_O_TRUNC))
     return ERR_FSAL_INVAL;
 
   /* Check for flags compatibility */
