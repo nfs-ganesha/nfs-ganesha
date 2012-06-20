@@ -326,6 +326,9 @@ int main(int argc, char *argv[])
            FSAL_GetFSName());
 
   LogEvent(COMPONENT_MAIN,
+           ">>>>>>>>>> Version " VERSION "-" RELEASE DIST_VER " <<<<<<<<<<");
+
+  LogEvent(COMPONENT_MAIN,
            ">>>>>>>>>>--------------------------------------- <<<<<<<<<<" ) ;
 
   /* initialize default parameters */

@@ -1,3 +1,4 @@
+%define dist @DIST_VER@
 %define _with_@FS_NAME@ 1
 %define _with_sharedfsal@SHARED_FSAL_PKG@ 1
 

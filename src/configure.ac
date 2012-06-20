@@ -5,6 +5,7 @@ AC_PREREQ(2.59)
 AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [1])
+AC_SUBST(DIST_VER, [_2012June20])
 
 AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
 
@@ -860,6 +861,8 @@ AC_SUBST(ac_configure_args)
 
 # for using fs name in binairies
 AC_DEFINE_UNQUOTED([FS_NAME], "$FS_NAME", [Name of the filesystem])
+AC_DEFINE_UNQUOTED([RELEASE], "$RELEASE", [Release of the software])
+AC_DEFINE_UNQUOTED([DIST_VER], "$DIST_VER", [Distribution version])
 
 AC_CONFIG_FILES([include/Makefile
                  include/FSAL/Makefile
