@@ -698,6 +698,7 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
 
         rc = pxy_nfsv4_call(dir_hdl->export, opcnt, argoparray, resoparray);
+        nfs4_Fattr_Free(&input_attr);
         if(rc != NFS4_OK)
                 return nfsstat4_to_fsal(rc);
 
@@ -857,6 +858,7 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
 
         rc = pxy_nfsv4_call(dir_hdl->export, opcnt, argoparray, resoparray);
+        nfs4_Fattr_Free(&input_attr);
         if(rc != NFS4_OK)
                 return nfsstat4_to_fsal(rc);
 
