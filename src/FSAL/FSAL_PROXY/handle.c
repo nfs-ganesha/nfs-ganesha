@@ -66,7 +66,7 @@ struct pxy_fattr_storage {
 #define FATTR_BLOB_SZ sizeof(struct pxy_fattr_storage)
 
 /*
- * This is what becomes an opaque FSAL handle for the upper layers 
+ * This is what becomes an opaque FSAL handle for the upper layers.
  *
  * The type is a placeholder for future expansion.
  */
@@ -79,6 +79,9 @@ struct pxy_handle_blob {
 struct pxy_obj_handle {
         struct fsal_obj_handle obj;
         nfs_fh4 fh4;
+#ifdef _HANDLE_MAPPING
+        nfs23_map_handle_t h23;
+#endif
         fsal_openflags_t openflags;
         struct pxy_handle_blob blob;
 };
@@ -576,7 +579,7 @@ static fsal_status_t
 pxy_do_close(const nfs_fh4 *fh4, stateid4 *sid, struct fsal_export *exp)
 {
         int rc;
-        int opcnt;
+        int opcnt = 0;
 #define FSAL_CLOSE_NB_OP_ALLOC 2
         nfs_argop4 argoparray[FSAL_CLOSE_NB_OP_ALLOC];
         nfs_resop4 resoparray[FSAL_CLOSE_NB_OP_ALLOC];
@@ -1291,6 +1294,11 @@ pxy_handle_digest(struct fsal_obj_handle *obj_hdl,
 	switch(output_type) {
 	case FSAL_DIGEST_NFSV2:
 	case FSAL_DIGEST_NFSV3:
+#ifdef _HANDLE_MAPPING
+                fhs = sizeof(ph->h23);
+                data = &ph->h23;
+                break;
+#endif
 	case FSAL_DIGEST_NFSV4:
                 fhs = ph->blob.len;
                 data = &ph->blob;
@@ -1570,6 +1578,41 @@ struct fsal_obj_ops pxy_obj_ops = {
 	.handle_to_key = pxy_handle_to_key
 };
 
+#ifdef _HANDLE_MAPPING
+static unsigned int
+hash_nfs_fh4(const nfs_fh4 *fh, unsigned int cookie)
+{
+        const char *cpt;
+        unsigned int sum = cookie;
+        unsigned int extract;
+        unsigned int mod = fh->nfs_fh4_len % sizeof(unsigned int);
+
+        for(cpt = fh->nfs_fh4_val;
+            cpt - fh->nfs_fh4_val < fh->nfs_fh4_len - mod;
+            cpt += sizeof(unsigned int)) {
+                memcpy(&extract, cpt, sizeof(unsigned int));
+                sum = (3 * sum + 5 * extract + 1999);
+        }
+
+        /*
+         * If the handle is not 32 bits-aligned, the last loop will
+         * get uninitialized chars after the end of the handle. We
+         * must avoid this by skipping the last loop and doing a
+         * special processing for the last bytes
+         */
+        if(mod) {
+                extract = 0;
+                while(cpt - fh->nfs_fh4_val < fh->nfs_fh4_len) {
+                        extract <<= 8;
+                        extract |= (uint8_t)(*cpt++);
+                }
+                sum = (3 * sum + 5 * extract + 1999);
+        }
+
+        return sum;
+}
+#endif
+
 static struct pxy_obj_handle *
 pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
                  const fsal_attrib_list_t *attr)
@@ -1577,9 +1620,23 @@ pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
         struct pxy_obj_handle *n = malloc(sizeof(*n) + fh->nfs_fh4_len);
 
         if (n) {
+#ifdef _HANDLE_MAPPING
+                int rc;
+                memset(&n->h23, 0, sizeof(n->h23));
+                n->h23.len = sizeof(n->h23);
+                n->h23.type = PXY_HANDLE_MAPPED;
+                n->h23.object_id = attr->fileid;
+                n->h23.handle_hash = hash_nfs_fh4(fh, attr->fileid);
+
+                rc = HandleMap_SetFH(&n->h23, fh);
+                if((rc != HANDLEMAP_SUCCESS) && (rc != HANDLEMAP_EXISTS)) {
+                        free(n);
+                        return NULL;
+                }
+#endif
                 n->fh4 = *fh;
                 n->fh4.nfs_fh4_val = n->blob.bytes;
-                memcpy(n->fh4.nfs_fh4_val, fh->nfs_fh4_val, fh->nfs_fh4_len);
+                memcpy(n->blob.bytes, fh->nfs_fh4_val, fh->nfs_fh4_len);
                 n->obj.attributes = *attr;
                 n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
                 n->blob.type = attr->type;
@@ -1632,6 +1689,10 @@ pxy_lookup_path(struct fsal_export *exp_hdl,
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
+/*
+ * Create an FSAL 'object' from the handle - used
+ * to construct objects from a handle provided by the NFS client
+ */
 fsal_status_t
 pxy_create_handle(struct fsal_export *exp_hdl,
 		  struct fsal_handle_desc *hdl_desc,
@@ -1641,12 +1702,27 @@ pxy_create_handle(struct fsal_export *exp_hdl,
         nfs_fh4 fh4;
         fsal_attrib_list_t attr;
         struct pxy_obj_handle *ph;
+#ifdef _HANDLE_MAPPING
+        char fh_data[NFS4_FHSIZE];
+#endif
 
         if(!exp_hdl || !hdl_desc || !handle || (hdl_desc->len > NFS4_FHSIZE))
                 ReturnCode(ERR_FSAL_INVAL, 0);
 
         fh4.nfs_fh4_val = hdl_desc->start;
         fh4.nfs_fh4_len = hdl_desc->len;
+#ifdef _HANDLE_MAPPING
+        if(hdl_desc->len == sizeof(nfs23_map_handle_t)) {
+                nfs23_map_handle_t *h23 = (nfs23_map_handle_t*)hdl_desc->start;
+                if(h23->type == PXY_HANDLE_MAPPED) {
+                        fh4.nfs_fh4_val = fh_data;
+                        fh4.nfs_fh4_len = sizeof(fh_data);
+                
+                        if(HandleMap_GetFH(h23, &fh4) != HANDLEMAP_SUCCESS)
+                                ReturnCode(ERR_FSAL_STALE, 0);
+                }
+        }
+#endif
 
         st = pxy_getattrs_impl(exp_hdl, &fh4, &attr);
         if (FSAL_IS_ERROR(st))
@@ -1800,6 +1876,10 @@ pxy_extract_handle(struct fsal_export *exp_hdl,
 
         pxyblob = (struct pxy_handle_blob *)fh_desc->start;
         fh_size = pxyblob->len;
+#ifdef _HANDLE_MAPPING
+        if((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3))
+                fh_size = sizeof(nfs23_map_handle_t);
+#endif
         if(in_type == FSAL_DIGEST_NFSV2) {
                 if(fh_desc->len < fh_size) {
                         LogMajor(COMPONENT_FSAL,

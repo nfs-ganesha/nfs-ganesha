@@ -49,12 +49,10 @@ static proxyfs_specific_initinfo_t default_pxy_params = {
         .keytab = "etc/krb5.keytab", /* Path to krb5 keytab file */
         .cred_lifetime = 86400,      /* 24h is a good default    */
 #ifdef _HANDLE_MAPPING
-        .hdlmap_dbdir = "/var/ganesha/handlemap",
-        .hdlmap_tmpdir = "/var/ganesha/tmp",
-        .hdlmap_dbcount = 8,
-        .hdlmap_hashsize = 103j
-        .hdlmap_nb_entry_prealloc = 16384,
-        .hdlmap_nb_db_op_prealloc = 1024,
+        .hdlmap.databases_directory = "/var/ganesha/handlemap",
+        .hdlmap.temp_directory = "/var/ganesha/tmp",
+        .hdlmap.database_count = 8,
+        .hdlmap.hashtable_size = 103,
 #endif
 };
 
@@ -165,17 +163,13 @@ pxy_key_to_param(const char *key, const char *val,
                 }
 #ifdef _HANDLE_MAPPING
         } else if(!strcasecmp(key, "HandleMap_DB_Dir")) {
-                strncpy(init_info->hdlmap_dbdir, val, MAXPATHLEN);
+                strncpy(init_info->hdlmap.databases_directory, val, MAXPATHLEN);
         } else if(!strcasecmp(key, "HandleMap_Tmp_Dir")) {
-                strncpy(init_info->hdlmap_tmpdir, val, MAXPATHLEN);
+                strncpy(init_info->hdlmap.temp_directory, val, MAXPATHLEN);
         } else if(!strcasecmp(key, "HandleMap_DB_Count")) {
-                init_info->hdlmap_dbcount = (unsigned int)atoi(val);
+                init_info->hdlmap.database_count = (unsigned int)atoi(val);
         } else if(!strcasecmp(key, "HandleMap_HashTable_Size")) {
-                init_info->hdlmap_hashsize = (unsigned int)atoi(val);
-        } else if(!strcasecmp(key, "HandleMap_Nb_Entries_Prealloc")) {
-                init_info->hdlmap_nb_entry_prealloc = (unsigned int)atoi(val);
-        } else if(!strcasecmp(key, "HandleMap_Nb_DB_Operations_Prealloc")) {
-                init_info->hdlmap_nb_db_op_prealloc = (unsigned int)atoi(val);
+                init_info->hdlmap.hashtable_size = (unsigned int)atoi(val);
 #endif
         } else {
                 LogCrit(COMPONENT_CONFIG,
@@ -254,6 +248,11 @@ pxy_init_config(struct fsal_module *fsal_hdl,
 
         if (load_pxy_config("NFSv4_Proxy", config_struct, pxy))
                 ReturnCode(ERR_FSAL_INVAL, EINVAL);
+
+#ifdef _HANDLE_MAPPING
+        if((st.minor = HandleMap_Init(&pxy->special.hdlmap)) < 0)
+                ReturnCode(ERR_FSAL_INVAL, -st.minor);
+#endif
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 

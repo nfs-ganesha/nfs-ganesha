@@ -2372,6 +2372,7 @@ void nfs4_list_to_bitmap4(bitmap4 * b, uint_t plen, uint32_t * pval)
                   "Mismatch between bitmap len and the list: "
                   "got %d, need %d to accomodate attribute %d",
                   b->bitmap4_len, intpos+1, pval[i]);
+        assert(intpos < b->bitmap4_len);
           continue;
         }
       b->bitmap4_val[intpos] |= (1U << bitpos);

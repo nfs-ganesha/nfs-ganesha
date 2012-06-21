@@ -36,6 +36,7 @@
 #define _HANDLE_MAPPING_H
 
 #include "fsal.h"
+#include <nfs4.h>
 
 /* parameters for Handle Map module */
 typedef struct handle_map_param__
@@ -52,12 +53,6 @@ typedef struct handle_map_param__
   /* hash table size */
   unsigned int hashtable_size;
 
-  /* number of preallocated FSAL handles */
-  unsigned int nb_handles_prealloc;
-
-  /* number of preallocated DB operations */
-  unsigned int nb_db_op_prealloc;
-
   /* synchronous insert mode */
   int synchronous_insert;
 
@@ -65,13 +60,16 @@ typedef struct handle_map_param__
 
 /* this describes a handle digest for nfsv2 and nfsv3 */
 
+#define PXY_HANDLE_MAPPED 0x23
+
 typedef struct nfs23_map_handle__
 {
-  /* object id */
-  uint64_t object_id;
-
+  uint8_t len;
+  uint8_t type; /* Must be PXY_HANDLE_MAPPED */
   /* to avoid reusing handles, when object_id is reused */
   unsigned int handle_hash;
+  /* object id */
+  uint64_t object_id;
 
 } nfs23_map_handle_t;
 
@@ -103,13 +101,12 @@ int HandleMap_Init(const handle_map_param_t * p_param);
  * \return HANDLEMAP_SUCCESS if the handle is available,
  *         HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
  */
-int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest,
-                    fsal_handle_t * p_out_fsal_handle);
+int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest, nfs_fh4 * p_out_fsal_handle);
 
 /**
  * Save the handle association if it was unknown.
  */
-int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, fsal_handle_t * p_in_handle);
+int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, const nfs_fh4 * p_in_handle);
 
 /**
  * Remove a handle from the map

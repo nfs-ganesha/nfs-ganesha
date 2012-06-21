@@ -29,7 +29,7 @@ int handlemap_db_count(const char *dir);
 int handlemap_db_init(const char *db_dir,
                       const char *tmp_dir,
                       unsigned int db_count,
-                      unsigned int nb_dbop_prealloc, int synchronous_insert);
+                      int synchronous_insert);
 
 /**
  * Gives the order to each DB thread to reload
@@ -44,7 +44,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash);
  * The request is inserted in the appropriate db queue.
  */
 int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
-                        fsal_handle_t * p_in_handle);
+                        const nfs_fh4 * p_in_handle);
 
 /**
  * Submit a db 'delete' request.

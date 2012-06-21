@@ -581,12 +581,7 @@ case $FSAL in
 		AC_DEFINE([_USE_PROXY], 1, [GANESHA is compiled with NFS PROXY FSAL])
                 FSAL_CFLAGS=
                 FSAL_LDFLAGS=$SEC_RPATH
-		if test "$enable_handle_mapping" == "yes"; then
-			FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PROXY/libfsalproxy.la \$(top_builddir)/FSAL/FSAL_PROXY/handle_mapping/libhandlemapping.la"
-			FSAL_LDFLAGS="$FSAL_LDFLAGS -lsqlite3"
-		else
-                	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PROXY/libfsalproxy.la"
-		fi
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PROXY/libfsalproxy.la"
                 FS_NAME="proxy"
                 ;;
 	FUSE)
@@ -897,7 +892,6 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_POSIX/DBExt/PGSQL/Makefile
 		 FSAL/FSAL_POSIX/DBExt/MYSQL/Makefile
 		 FSAL/FSAL_PROXY/Makefile
-		 FSAL/FSAL_PROXY/handle_mapping/Makefile
 		 FSAL/FSAL_CEPH/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile

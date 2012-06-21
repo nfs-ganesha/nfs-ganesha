@@ -1,6 +1,10 @@
 #ifndef _PXY_FSAL_METHODS_H
 #define _PXY_FSAL_METHODS_H
 
+#ifdef _HANDLE_MAPPING
+#include "handle_mapping/handle_mapping.h"
+#endif
+
 typedef struct
 {
   unsigned int retry_sleeptime;
@@ -22,12 +26,7 @@ typedef struct
   int enable_handle_mapping;
 
 #ifdef _HANDLE_MAPPING
-  char hdlmap_dbdir[MAXPATHLEN];
-  char hdlmap_tmpdir[MAXPATHLEN];
-  unsigned int hdlmap_dbcount;
-  unsigned int hdlmap_hashsize;
-  unsigned int hdlmap_nb_entry_prealloc;
-  unsigned int hdlmap_nb_db_op_prealloc;
+  handle_map_param_t hdlmap;
 #endif
 } proxyfs_specific_initinfo_t;
 
