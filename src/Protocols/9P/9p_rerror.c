@@ -68,7 +68,7 @@ int _9p_rerror( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RERROR: err=(%u|%s)", err, strerror( err ) ) ;
+  LogDebug( COMPONENT_9P, "RERROR: tag=%u err=(%u|%s)", *msgtag, err, strerror( err ) ) ;
  
   return 1 ;
 }
