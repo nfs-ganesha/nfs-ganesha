@@ -24,6 +24,7 @@ lib9p_la_SOURCES = 9p_interpreter.c  \
                    9p_remove.c       \
                    9p_rename.c       \
                    9p_renameat.c     \
+                   9p_fsync.c        \
                    9p_unlinkat.c     \
                    9p_setattr.c      \
                    9p_statfs.c       \

@@ -472,11 +472,6 @@ void _9p_tools_acess2fsal( u32 * paccessin, fsal_accessflags_t * pfsalaccess ) ;
 void _9p_chomp_attr_value(char *str, size_t size) ;
 
 /* Protocol functions */
-int _9p_dummy( _9p_request_data_t * preq9p, 
-               void * pworker_data,
-               u32 * plenout, 
-               char * preply) ;
-
 int _9p_not_2000L( _9p_request_data_t * preq9p, 
                    void * pworker_data,
                    u32 * plenout, 
@@ -586,6 +581,11 @@ int _9p_statfs( _9p_request_data_t * preq9p,
                 void * pworker_data,
                 u32 * plenout, 
                 char * preply) ;
+
+int _9p_fsync( _9p_request_data_t * preq9p, 
+               void  * pworker_data,
+               u32 * plenout, 
+               char * preply) ;
 
 int _9p_unlinkat( _9p_request_data_t * preq9p, 
                   void * pworker_data,

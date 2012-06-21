@@ -95,7 +95,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_xattrwalk, "_9P_TXATTRWALK" },
         { _9p_xattrcreate, "_9P_TXATTRCREATE" },
         { _9p_readdir, "_9P_TREADDIR" },
-        { _9p_dummy, "_9P_TFSYNC" },
+        { _9p_fsync, "_9P_TFSYNC" },
         { _9p_lock, "_9P_TLOCK" },
         { _9p_getlock, "_9P_TGETLOCK" },
         { _9p_link, "_9P_TLINK" },
@@ -118,26 +118,6 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_not_2000L, "no function" }
 } ;
 
-/* Will disappear when all work will have been done */
-int _9p_dummy( _9p_request_data_t * preq9p, 
-               void * pworker_data,
-               u32 * plenout, 
-               char * preply)
-{
-  char * msgdata = preq9p->_9pmsg + _9P_HDR_SIZE ;
-  u8 * pmsgtype = NULL ;
-  u16 msgtag = 0 ;
-
-  /* Get message's type */
-  pmsgtype = (u8 *)msgdata ;
-  LogEvent( COMPONENT_9P,  "(%u|%s) not implemented yet, returning ENOTSUP", *pmsgtype,  _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname  ) ;
-
-  _9p_rerror( preq9p, &msgtag, ENOTSUP, plenout, preply ) ;
-
-  return -1 ;
-} /* _9p_dummy */
-
-/* Will disappear when all work will have been done */
 int _9p_not_2000L( _9p_request_data_t * preq9p, 
                    void * pworker_data,
                    u32 * plenout, 
