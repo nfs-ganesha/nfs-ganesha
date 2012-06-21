@@ -119,7 +119,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_OPEN4.status = NFS4_OK;
 
   uint32_t tmp_attr[2];
-  uint_t tmp_int = 2;
 
   cache_inode_create_arg_t create_arg = {
        .newly_created_dir = FALSE
@@ -1031,16 +1030,11 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       goto out;
     }
 
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0] = 0;       /* No Attributes set */
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[1] = 0;       /* No Attributes set */
-
   if(arg_OPEN4.openhow.opentype == OPEN4_CREATE)
     {
-      tmp_int = 2;
       tmp_attr[0] = FATTR4_SIZE;
       tmp_attr[1] = FATTR4_MODE;
-      nfs4_list_to_bitmap4(&(res_OPEN4.OPEN4res_u.resok4.attrset), &tmp_int, tmp_attr);
-      res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
+      nfs4_list_to_bitmap4(&(res_OPEN4.OPEN4res_u.resok4.attrset), 2, tmp_attr);
     }
 
   res_OPEN4.OPEN4res_u.resok4.cinfo.after

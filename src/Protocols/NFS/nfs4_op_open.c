@@ -122,7 +122,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   open_claim_type4          claim = arg_OPEN4.claim.claim;
   nfsstat4                  status4;
   uint32_t                  tmp_attr[2];
-  uint_t                    tmp_int = 2;
 #ifdef _USE_QUOTA
   fsal_status_t            fsal_status;
 #endif
@@ -971,20 +970,11 @@ out_prev:
       goto out;
     }
 
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0]
-    = 0; /* No Attributes set */
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[1]
-    = 0; /* No Attributes set */
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[2]
-    = 0; /* No Attributes set */
-
   if(arg_OPEN4.openhow.opentype == OPEN4_CREATE)
     {
-      tmp_int = 2;
       tmp_attr[0] = FATTR4_SIZE;
       tmp_attr[1] = FATTR4_MODE;
-      nfs4_list_to_bitmap4(&(res_OPEN4.OPEN4res_u.resok4.attrset), &tmp_int, tmp_attr);
-      res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
+      nfs4_list_to_bitmap4(&(res_OPEN4.OPEN4res_u.resok4.attrset), 2, tmp_attr);
     }
 
   res_OPEN4.OPEN4res_u.resok4.cinfo.after

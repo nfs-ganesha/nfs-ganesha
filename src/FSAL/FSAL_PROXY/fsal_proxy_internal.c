@@ -71,7 +71,7 @@ void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
   if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_CTIME))
     tmpattrlist[attrlen++] = FATTR4_TIME_METADATA;
  
-  nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
+  nfs4_list_to_bitmap4(pbitmap, attrlen, tmpattrlist);
 }                               /* fsal_interval_proxy_fsalattr2bitmap4 */
 
 /**
@@ -110,7 +110,7 @@ void fsal_internal_proxy_create_fattr_bitmap(bitmap4 * pbitmap)
 
   attrlen = 14;
 
-  nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
+  nfs4_list_to_bitmap4(pbitmap, attrlen, tmpattrlist);
 
 }                               /* fsal_internal_proxy_create_fattr_bitmap */
 
@@ -140,7 +140,7 @@ void fsal_internal_proxy_create_fattr_readdir_bitmap(bitmap4 * pbitmap)
 
   attrlen = 15;
 
-  nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
+  nfs4_list_to_bitmap4(pbitmap, attrlen, tmpattrlist);
 
 }                               /* fsal_internal_proxy_create_fattr_readdir_bitmap */
 
@@ -161,7 +161,7 @@ void fsal_internal_proxy_create_fattr_fsinfo_bitmap(bitmap4 * pbitmap)
 
   attrlen = 6;
 
-  nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
+  nfs4_list_to_bitmap4(pbitmap, attrlen, tmpattrlist);
 
 }                               /* fsal_internal_proxy_create_fattr_fsinfo_bitmap */
 

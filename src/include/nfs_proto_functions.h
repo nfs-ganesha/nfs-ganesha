@@ -1503,6 +1503,9 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File att
 
 int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask);
 
+int nfs4_Fattr_Fill(fattr4 *Fattr, int attrcnt, uint32_t *attrlist,
+                    int valsiz, char *attrvals);
+int nfs4_supported_attrs_to_fattr(char *outbuf);
 int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
                            fsal_attrib_list_t *pattr,
                            fattr4 *Fattr,
@@ -1510,7 +1513,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
                            nfs_fh4 *objFH,
                            bitmap4 *Bitmap);
 
-void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
+void nfs4_list_to_bitmap4(bitmap4 * b, uint_t plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);
 
 int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;
