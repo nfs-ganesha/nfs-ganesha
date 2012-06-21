@@ -2354,28 +2354,29 @@ exit:
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval)
 {
   uint_t i;
-  uint_t intpos = 0;
-  uint_t bitpos = 0;
-  uint_t val = 0;
-  /* Both uint32 int the bitmap MUST be allocated */
-  b->bitmap4_val[0] = 0;
-  b->bitmap4_val[1] = 0;
-  b->bitmap4_val[2] = 0;
+  int maxpos =  -1;
+
+  memset(b->bitmap4_val, 0, sizeof(uint32_t)*b->bitmap4_len);
 
   for(i = 0; i < *plen; i++)
     {
-      intpos = pval[i] / 32;
-      bitpos = pval[i] % 32;
-      val = 1 << bitpos;
-      b->bitmap4_val[intpos] |= val;
+      int intpos = pval[i] / 32;
+      int bitpos = pval[i] % 32;
 
-      if(intpos == 0)
-        b->bitmap4_len = 1;
-      else if(intpos == 1)
-        b->bitmap4_len = 2;
-      else if(intpos == 2)
-        b->bitmap4_len = 3;
+      if(intpos >= b->bitmap4_len)
+        {
+          LogCrit(COMPONENT_NFS_V4,
+                  "Mismatch between bitmap len and the list: "
+                  "got %d, need %d to accomodate attribute %d",
+                  b->bitmap4_len, intpos+1, pval[i]);
+          continue;
+        }
+      b->bitmap4_val[intpos] |= (1U << bitpos);
+      if(intpos > maxpos)
+        maxpos = intpos;
     }
+
+  b->bitmap4_len = maxpos + 1;
   LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u   Val = %u|%u|%u",
                b->bitmap4_len,
                b->bitmap4_len >= 1 ? b->bitmap4_val[0] : 0,
