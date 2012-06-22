@@ -255,7 +255,7 @@ pxy_init_config(struct fsal_module *fsal_hdl,
                 ReturnCode(ERR_FSAL_INVAL, -rc);
 #endif
 
-        rc = pxy_init_rpc(&pxy->special);
+        rc = pxy_init_rpc(pxy);
         if(rc)
                 ReturnCode(ERR_FSAL_FAULT, rc);
         ReturnCode(ERR_FSAL_NO_ERROR, 0);

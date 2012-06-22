@@ -883,16 +883,16 @@ free_io_contexts(void)
 }
 
 int
-pxy_init_rpc(proxyfs_specific_initinfo_t *info)
+pxy_init_rpc(const struct pxy_fsal_module *pm)
 {
         int rc;
-        int i;
+        int i = pm->init.max_fs_calls;
 
         /* TCP is the only protocol supported at the moment */
-        if(strcmp(info->srv_proto, "tcp")) {
+        if(strcmp(pm->special.srv_proto, "tcp")) {
                 LogCrit(COMPONENT_FSAL,
                         "Protocol '%s' is not supported, consider using TCP",
-                        info->srv_proto);
+                        pm->special.srv_proto);
                 return ENOTSUP;
         }
 
@@ -905,28 +905,27 @@ pxy_init_rpc(proxyfs_specific_initinfo_t *info)
                 strncpy(pxy_hostname, "NFS-GANESHA/Proxy",
                         sizeof(pxy_hostname));
 
-        for(i=0; i < 16; i++) {
+        for(i = i?:16; i > 0; i--) {
                 struct pxy_rpc_io_context *c = malloc(sizeof(*c) +
-                                                      info->srv_sendsize +
-                                                      info->srv_recvsize);
-
+                                                      pm->special.srv_sendsize +
+                                                      pm->special.srv_recvsize);
                 if(!c) {
                         free_io_contexts();
                         return ENOMEM;
                 }
-
                 pthread_mutex_init(&c->iolock, NULL);
                 pthread_cond_init(&c->iowait, NULL);
-                c->nfs_prog = info->srv_prognum;
-                c->sendbuf_sz = info->srv_sendsize;
-                c->recvbuf_sz = info->srv_recvsize;
+                c->nfs_prog = pm->special.srv_prognum;
+                c->sendbuf_sz = pm->special.srv_sendsize;
+                c->recvbuf_sz = pm->special.srv_recvsize;
                 c->sendbuf = (char *)(c + 1);
                 c->recvbuf = c->sendbuf + c->sendbuf_sz;
 
                 glist_add(&free_contexts, &c->calls);
         }
 
-        rc = pthread_create(&pxy_recv_thread, NULL, pxy_rpc_recv, info);
+        rc = pthread_create(&pxy_recv_thread, NULL, pxy_rpc_recv,
+                            (void *)&pm->special);
         if(rc) {
                 LogCrit(COMPONENT_FSAL,
                         "Cannot create proxy rpc receiver thread - %s",
