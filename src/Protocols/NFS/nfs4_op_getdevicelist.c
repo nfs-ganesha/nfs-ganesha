@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs41_op_getdevicelist.c
- * \brief   Routines used for managing the NFS4_OP_GETDEVICELIST operation.
+ * @file    nfs4_op_getdevicelist.c
+ * @brief   Routines used for managing the NFS4_OP_GETDEVICELIST operation.
  *
  * Routines used for managing the GETDEVICELIST operation.
  *
@@ -84,9 +84,9 @@
 #define arg_GETDEVICELIST4  op->nfs_argop4_u.opgetdevicelist
 #define res_GETDEVICELIST4  resp->nfs_resop4_u.opgetdevicelist
 
-int nfs41_op_getdevicelist(struct nfs_argop4 *op,
-                           compound_data_t *data,
-                           struct nfs_resop4 *resp)
+int nfs4_op_getdevicelist(struct nfs_argop4 *op,
+                          compound_data_t *data,
+                          struct nfs_resop4 *resp)
 {
 #ifdef _PNFS_MDS
      /* NFS4 return code */
@@ -104,6 +104,11 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
 #endif /* _PNFS_MDS */
 
      resp->resop = NFS4_OP_GETDEVICELIST;
+
+     if (data->minorversion == 0) {
+          return (res_GETDEVICELIST4.gdlr_status = NFS4ERR_INVAL);
+     }
+
 
 #ifdef _PNFS_MDS
      if ((nfs_status = nfs4_sanity_check_FH(data, 0))
@@ -217,7 +222,7 @@ out:
  * @param[in.out] resp nfs4_op results
  *
  */
-void nfs41_op_getdevicelist_Free(GETDEVICELIST4res * resp)
+void nfs4_op_getdevicelist_Free(GETDEVICELIST4res * resp)
 {
 #ifdef _PNFS_MDS
      if (resp->gdlr_status == NFS4_OK) {

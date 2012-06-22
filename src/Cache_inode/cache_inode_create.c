@@ -24,15 +24,10 @@
  */
 
 /**
- * \file    cache_inode_create.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:26 $
- * \version $Revision: 1.29 $
- * \brief   Creation of a file through the cache layer.
+ * @file    cache_inode_create.c
+ * @brief   Creation of a file through the cache layer.
  *
- * cache_inode_mkdir.c : Creation of an entry through the cache layer
- *
- *
+ * Creation of an entry through the cache layer
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -42,7 +37,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -62,7 +56,8 @@
  *
  * This function creates an entry in the cache and underlying
  * filesystem.  If an entry is returned, its refcount charged to the
- * call path is +1.
+ * call path is +1.  An entry is returned for both CACHE_INODE_SUCCESS
+ * and CACHE_INODE_ENTRY_EXISTS.
  *
  * @param[in]  parent     Parent directory
  * @param[in]  name       Name of the object to create
@@ -73,7 +68,7 @@
  * @param[in]  context    FSAL credentials
  * @param[out] status     Returned status
  *
- * @return Cache entry for the file created
+ * @return Cache entry for the file created or found.
  */
 
 cache_entry_t *
@@ -249,7 +244,9 @@ cache_inode_create(cache_entry_t *parent,
      pthread_rwlock_unlock(&parent->attr_lock);
 
      /* Copy up the child attributes */
-     *attr = object_attributes;
+     if (attr) {
+          *attr = object_attributes;
+     }
 
      *status = CACHE_INODE_SUCCESS;
 

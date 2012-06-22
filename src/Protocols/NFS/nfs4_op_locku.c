@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs4_op_locku.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_locku.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  *
@@ -53,6 +53,8 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
+static const char * locku_tag = "LOCKU";
+
 /**
  *
  * @brief The NFS4_OP_LOCKU operation
@@ -68,142 +70,137 @@
  * @see nfs4_Compound
  */
 
-#define arg_LOCKU4 op->nfs_argop4_u.oplocku
-#define res_LOCKU4 resp->nfs_resop4_u.oplocku
 
-int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_locku(struct nfs_argop4 *op,
+                  compound_data_t *data,
+                  struct nfs_resop4 *resp)
 {
-  state_status_t      state_status;
-  state_t           * state_found = NULL;
-  state_owner_t     * lock_owner;
-  fsal_lock_param_t   lock_desc;
-  unsigned int        rc = 0;
-  const char        * tag = "LOCKU";
+        /* Alias for arguments */
+        LOCKU4args  * const arg_LOCKU4 = &op->nfs_argop4_u.oplocku;
+        /* Alias for response */
+        LOCKU4res   * const res_LOCKU4 = &resp->nfs_resop4_u.oplocku;
+        /* Return for state functions */
+        state_status_t      state_status = STATE_SUCCESS;
+        /* Found lock state */
+        state_t           * state_found = NULL;
+        /* Owner of lock state */
+        state_owner_t     * lock_owner = NULL;
+        /* Descritpion of lock to free */
+        fsal_lock_param_t   lock_desc;
+        /*  */
+        nfsstat4            nfs_status = NFS4_OK;
 
-  LogDebug(COMPONENT_NFS_V4_LOCK,
-           "Entering NFS v4 LOCKU handler -----------------------------------------------------");
+        LogDebug(COMPONENT_NFS_V4_LOCK,
+                 "Entering NFS v4 LOCKU handler ----------------------------");
 
-  /* Initialize to sane default */
-  resp->resop = NFS4_OP_LOCKU;
-  res_LOCKU4.status = NFS4_OK;
+        /* Initialize to sane default */
+        resp->resop = NFS4_OP_LOCKU;
+        res_LOCKU4->status = NFS4_OK;
 
-  /*
-   * Do basic checks on a filehandle
-   * LOCKU is done only on a file
-   */
-  res_LOCKU4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
-  if(res_LOCKU4.status != NFS4_OK)
-    return res_LOCKU4.status;
+        res_LOCKU4->status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+        if(res_LOCKU4->status != NFS4_OK) {
+                return res_LOCKU4->status;
+        }
 
-  /* Convert lock parameters to internal types */
-  switch(arg_LOCKU4.locktype)
-    {
-      case READ_LT:
-      case READW_LT:
-        lock_desc.lock_type = FSAL_LOCK_R;
-        break;
+        /* Convert lock parameters to internal types */
+        switch(arg_LOCKU4->locktype) {
+        case READ_LT:
+        case READW_LT:
+                lock_desc.lock_type = FSAL_LOCK_R;
+                break;
 
-      case WRITE_LT:
-      case WRITEW_LT:
-        lock_desc.lock_type = FSAL_LOCK_W;
-        break;
-    }
+        case WRITE_LT:
+        case WRITEW_LT:
+                lock_desc.lock_type = FSAL_LOCK_W;
+                break;
+        }
 
-  lock_desc.lock_start = arg_LOCKU4.offset;
+        lock_desc.lock_start = arg_LOCKU4->offset;
 
-  if(arg_LOCKU4.length != STATE_LOCK_OFFSET_EOF)
-    lock_desc.lock_length = arg_LOCKU4.length;
-  else
-    lock_desc.lock_length = 0;
+        if (arg_LOCKU4->length != STATE_LOCK_OFFSET_EOF) {
+                lock_desc.lock_length = arg_LOCKU4->length;
+        } else {
+                lock_desc.lock_length = 0;
+        }
 
-  /* Check stateid correctness and get pointer to state */
-  if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
-                              data->current_entry,
-                              &state_found,
-                              data,
-                              STATEID_SPECIAL_FOR_LOCK,
-                              tag)) != NFS4_OK)
-    {
-      res_LOCKU4.status = rc;
-      return res_LOCKU4.status;
-    }
+        /* Check stateid correctness and get pointer to state */
+        if ((nfs_status = nfs4_Check_Stateid(&arg_LOCKU4->lock_stateid,
+                                             data->current_entry,
+                                             &state_found,
+                                             data,
+                                             STATEID_SPECIAL_FOR_LOCK,
+                                             locku_tag)) != NFS4_OK) {
+                res_LOCKU4->status = nfs_status;
+                return res_LOCKU4->status;
+        }
 
-  lock_owner = state_found->state_powner;
+        lock_owner = state_found->state_powner;
 
-  /* Check seqid (lock_seqid or open_seqid) */
-  if(!Check_nfs4_seqid(lock_owner,
-                       arg_LOCKU4.seqid,
-                       op,
+        /* Check seqid (lock_seqid or open_seqid) */
+        if (data->minorversion == 0) {
+                if (!Check_nfs4_seqid(lock_owner,
+                                      arg_LOCKU4->seqid,
+                                      op,
+                                      data,
+                                      resp,
+                                      locku_tag)) {
+                        /* Response is all setup for us and LogDebug
+                           told what was wrong */
+                        return res_LOCKU4->status;
+                }
+        }
+
+        /* Lock length should not be 0 */
+        if (arg_LOCKU4->length == 0LL) {
+                res_LOCKU4->status = NFS4ERR_INVAL;
+                goto out;
+        }
+
+        /* Check for range overflow Remember that a length with all
+           bits set to 1 means "lock until the end of file" (RFC3530,
+           page 157) */
+        if (lock_desc.lock_length >
+            (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start)) {
+                res_LOCKU4->status = NFS4ERR_INVAL;
+                goto out;
+        }
+
+        LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
+                locku_tag,
+                data->current_entry,
+                lock_owner,
+                &lock_desc);
+
+        /* Now we have a lock owner and a stateid.  Go ahead and push
+           unlock into SAL (and FSAL). */
+        if (state_unlock(data->current_entry,
+                         data->pexport,
+                         lock_owner,
+                         state_found,
+                         &lock_desc,
+                         &state_status) != STATE_SUCCESS) {
+                res_LOCKU4->status = nfs4_Errno_state(state_status);
+                goto out;
+        }
+
+        /* Successful exit */
+        res_LOCKU4->status = NFS4_OK;
+
+        /* Handle stateid/seqid for success */
+        update_stateid(state_found,
+                       &res_LOCKU4->LOCKU4res_u.lock_stateid,
                        data,
-                       resp,
-                       tag))
-    {
-      /* Response is all setup for us and LogDebug told what was wrong */
-      return res_LOCKU4.status;
-    }
+                       locku_tag);
 
-  /* Lock length should not be 0 */
-  if(arg_LOCKU4.length == 0LL)
-    {
-      res_LOCKU4.status = NFS4ERR_INVAL;
+out:
+        if (data->minorversion == 0) {
+                /* Save the response in the lock owner */
+                Copy_nfs4_state_req(lock_owner, arg_LOCKU4->seqid, op,
+                                    data, resp, locku_tag);
+        }
 
-      /* Save the response in the lock owner */
-      Copy_nfs4_state_req(lock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
-
-      return res_LOCKU4.status;
-    }
-
-  /* Check for range overflow
-   * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
-  if(lock_desc.lock_length > (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start))
-    {
-      res_LOCKU4.status = NFS4ERR_INVAL;
-
-      /* Save the response in the lock owner */
-      Copy_nfs4_state_req(lock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
-
-      return res_LOCKU4.status;
-    }
-
-  LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
-          tag,
-          data->current_entry,
-          lock_owner,
-          &lock_desc);
-
-  /* Now we have a lock owner and a stateid.
-   * Go ahead and push unlock into SAL (and FSAL).
-   */
-  if(state_unlock(data->current_entry,
-                  data->pexport,
-                  lock_owner,
-                  state_found,
-                  &lock_desc,
-                  &state_status) != STATE_SUCCESS)
-    {
-      res_LOCKU4.status = nfs4_Errno_state(state_status);
-
-      /* Save the response in the lock owner */
-      Copy_nfs4_state_req(lock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
-
-      return res_LOCKU4.status;
-    }
-
-  /* Successful exit */
-  res_LOCKU4.status = NFS4_OK;
-
-  /* Handle stateid/seqid for success */
-  update_stateid(state_found,
-                 &res_LOCKU4.LOCKU4res_u.lock_stateid,
-                 data,
-                 tag);
-
-  /* Save the response in the lock owner */
-  Copy_nfs4_state_req(lock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
-
-  return res_LOCKU4.status;
-
-}                               /* nfs4_op_locku */
+        return res_LOCKU4->status;
+} /* nfs4_op_locku */
 
 /**
  * @brief Free memory allocated for LOCKU result
@@ -215,12 +212,12 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
  */
 void nfs4_op_locku_Free(LOCKU4res * resp)
 {
-  return;
-}                               /* nfs4_op_locku_Free */
+        return;
+} /* nfs4_op_locku_Free */
 
 void nfs4_op_locku_CopyRes(LOCKU4res *res_dst,
                            LOCKU4res *res_src)
 {
-  /* Nothing to deep copy */
-  return;
+        /* Nothing to deep copy */
+        return;
 } /* nfs4_op_locku_CopyRes */

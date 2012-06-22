@@ -25,12 +25,10 @@
  */
 
 /**
- * @file    nfs41_op_layoutreturn.c
+ * @file    nfs4_op_layoutreturn.c
  * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
- *
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -81,9 +79,9 @@
 #define arg_LAYOUTRETURN4 op->nfs_argop4_u.oplayoutreturn
 #define res_LAYOUTRETURN4 resp->nfs_resop4_u.oplayoutreturn
 
-int nfs41_op_layoutreturn(struct nfs_argop4 *op,
-                          compound_data_t *data,
-                          struct nfs_resop4 *resp)
+int nfs4_op_layoutreturn(struct nfs_argop4 *op,
+                         compound_data_t *data,
+                         struct nfs_resop4 *resp)
 {
 #ifdef _PNFS_MDS
      /* Return code from cache_inode operations */
@@ -113,6 +111,9 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
 #endif /* _PNFS_MDS */
 
      resp->resop = NFS4_OP_LAYOUTRETURN;
+     if (data->minorversion == 0) {
+          return (res_LAYOUTRETURN4.lorr_status = NFS4ERR_INVAL);
+     }
 
 #ifdef _PNFS_MDS
      switch (arg_LAYOUTRETURN4.lora_layoutreturn.lr_returntype) {
@@ -299,7 +300,7 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
  * @param[in] resp nfs4_op results
  *
  */
-void nfs41_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
+void nfs4_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
 {
      return;
 } /* nfs41_op_layoutreturn_Free */

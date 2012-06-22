@@ -34,11 +34,10 @@ noinst_HEADERS = abstract_atomic.h               \
                  err_rpc.h                       \
                  extended_types.h                \
                  external_tools.h                \
-                 log.h                 \
+                 log.h                           \
                  mount.h                         \
                  nfs23.h                         \
                  nfs4.h                          \
-                 nfsv40.h                        \
                  nfsv41.h                        \
                  nfs_core.h                      \
                  err_inject.h                    \

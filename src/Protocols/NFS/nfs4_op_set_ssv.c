@@ -25,7 +25,7 @@
  */
 
 /**
- * @file    nfs41_op_set_ssv.c
+ * @file    nfs4_op_set_ssv.c
  * @brief   Routines for the NFS4_OP_SET_SSV operation
  *
  * Routines for the NFS4_OP_SEQUENCE operation.
@@ -77,11 +77,15 @@
 #define arg_SET_SSV4  op->nfs_argop4_u.opset_ssv
 #define res_SET_SSV4  resp->nfs_resop4_u.opset_ssv
 
-int nfs41_op_set_ssv(struct nfs_argop4 *op,
+int nfs4_op_set_ssv(struct nfs_argop4 *op,
                      compound_data_t * data, struct nfs_resop4 *resp)
 {
   resp->resop = NFS4_OP_SET_SSV;
   res_SET_SSV4.ssr_status = NFS4_OK;
+  if (data->minorversion == 0)
+    {
+      return (res_SET_SSV4.ssr_status = NFS4ERR_INVAL);
+    }
 
   return res_SET_SSV4.ssr_status;       /* I know this is pretty dirty... But this is an early implementation... */
 }                               /* nfs41_op_set_ssv */
@@ -94,7 +98,7 @@ int nfs41_op_set_ssv(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs41_op_set_ssv_Free(SET_SSV4res * resp)
+void nfs4_op_set_ssv_Free(SET_SSV4res * resp)
 {
   /* Nothing to be done */
   return;

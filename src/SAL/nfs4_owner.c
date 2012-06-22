@@ -480,68 +480,67 @@ void convert_nfs4_lock_owner(lock_owner4             * pnfsowner,
          pnfsowner->owner.owner_len);
 }                               /* convert_nfs4_lock_owner */
 
-state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
-                                 nfs_client_id_t         * pclientid,
+state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * name,
+                                 nfs_client_id_t         * clientid,
                                  state_owner_type_t        type,
                                  state_owner_t           * related_owner,
                                  unsigned int              init_seqid)
 {
-  state_owner_t           * powner;
-  state_nfs4_owner_name_t * powner_name;
+  state_owner_t           * owner;
+  state_nfs4_owner_name_t * owner_name;
 
   /* This lock owner is not known yet, allocated and set up a new one */
-  powner = pool_alloc(state_owner_pool, NULL);
+  owner = pool_alloc(state_owner_pool, NULL);
 
-  if(powner == NULL)
+  if(owner == NULL)
     return NULL;
 
-  powner_name = pool_alloc(state_nfs4_owner_name_pool, NULL);
+  owner_name = pool_alloc(state_nfs4_owner_name_pool, NULL);
 
-  if(powner_name == NULL)
+  if(owner_name == NULL)
     {
-      pool_free(state_owner_pool, powner);
+      pool_free(state_owner_pool, owner);
       return NULL;
     }
 
-  *powner_name = *pname;
+  *owner_name = *name;
 
   /* set up the content of the open_owner */
-  memset(powner, 0, sizeof(*powner));
-  powner->so_type                                 = type;
-  powner->so_owner.so_nfs4_owner.so_seqid         = init_seqid;
-  powner->so_owner.so_nfs4_owner.so_related_owner = related_owner;
-  powner->so_owner.so_nfs4_owner.so_clientid      = pname->son_clientid;
-  powner->so_owner.so_nfs4_owner.so_pclientid     = pclientid;
-  powner->so_owner_len                            = pname->son_owner_len;
-  powner->so_owner.so_nfs4_owner.so_resp.resop    = NFS4_OP_ILLEGAL;
-  powner->so_owner.so_nfs4_owner.so_args.argop    = NFS4_OP_ILLEGAL;
-  powner->so_refcount                             = 1;
+  owner->so_type                                 = type;
+  owner->so_owner.so_nfs4_owner.so_seqid         = init_seqid;
+  owner->so_owner.so_nfs4_owner.so_related_owner = related_owner;
+  owner->so_owner.so_nfs4_owner.so_clientid      = name->son_clientid;
+  owner->so_owner.so_nfs4_owner.so_pclientid     = clientid;
+  owner->so_owner_len                            = name->son_owner_len;
+  owner->so_owner.so_nfs4_owner.so_resp.resop    = NFS4_OP_ILLEGAL;
+  owner->so_owner.so_nfs4_owner.so_args.argop    = NFS4_OP_ILLEGAL;
+  owner->so_refcount                             = 1;
 #if 0
   /* WAITING FOR COMMUNITY FIX */
   /* setting lock owner confirmed */
-  if ( type == STATE_LOCK_OWNER_NFSV4)
-    powner->so_owner.so_nfs4_owner.so_confirmed   = 1;
+  if (type == STATE_LOCK_OWNER_NFSV4)
+    owner->so_owner.so_nfs4_owner.so_confirmed   = 1;
 #endif
-  init_glist(&powner->so_lock_list);
-  init_glist(&powner->so_owner.so_nfs4_owner.so_state_list);
+  init_glist(&owner->so_lock_list);
+  init_glist(&owner->so_owner.so_nfs4_owner.so_state_list);
 
-  memcpy(powner->so_owner_val,
-         pname->son_owner_val,
-         pname->son_owner_len);
+  memcpy(owner->so_owner_val,
+         name->son_owner_val,
+         name->son_owner_len);
 
-  powner->so_owner_val[powner->so_owner_len] = '\0';
+  owner->so_owner_val[owner->so_owner_len] = '\0';
 
-  if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
+  if(pthread_mutex_init(&owner->so_mutex, NULL) == -1)
     {
-      pool_free(state_owner_pool, powner);
-      pool_free(state_nfs4_owner_name_pool, powner_name);
+      pool_free(state_owner_pool, owner);
+      pool_free(state_nfs4_owner_name_pool, owner_name);
       return NULL;
     }
 
-  if(!nfs4_owner_Set(powner_name, powner))
+  if(!nfs4_owner_Set(owner_name, owner))
     {
-      pool_free(state_owner_pool, powner);
-      pool_free(state_nfs4_owner_name_pool, powner_name);
+      pool_free(state_owner_pool, owner);
+      pool_free(state_nfs4_owner_name_pool, owner_name);
       return NULL;
     }
 
@@ -549,7 +548,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      DisplayOwner(powner, str);
+      DisplayOwner(owner, str);
       LogFullDebug(COMPONENT_STATE,
                    "New Owner %s", str);
     }
@@ -558,27 +557,35 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
   if(related_owner != NULL)
     inc_state_owner_ref(related_owner);
 
-  P(pclientid->cid_mutex);
+  P(clientid->cid_mutex);
 
   if (type == STATE_OPEN_OWNER_NFSV4)
     {
       /* If open owner, add to clientid lock owner list */
-      powner->so_refcount++;
-      glist_add_tail(&pclientid->cid_openowners, &powner->so_owner.so_nfs4_owner.so_perclient);
+      owner->so_refcount++;
+      glist_add_tail(&clientid->cid_openowners,
+                     &owner->so_owner.so_nfs4_owner.so_perclient);
     }
   else if(type == STATE_LOCK_OWNER_NFSV4)
     {
       /* If lock owner, add to clientid open owner list */
-      powner->so_refcount++;
-      glist_add_tail(&pclientid->cid_lockowners, &powner->so_owner.so_nfs4_owner.so_perclient);
+      owner->so_refcount++;
+      glist_add_tail(&clientid->cid_lockowners,
+                     &owner->so_owner.so_nfs4_owner.so_perclient);
     }
 
   /* Increment reference count for clientid record */
-  inc_client_id_ref(pclientid);
+  inc_client_id_ref(clientid);
 
-  V(pclientid->cid_mutex);
+  /* NFSv4.1 does not haver owner confirmation */
+  if (clientid->cid_minorversion > 0)
+    {
+      owner->so_owner.so_nfs4_owner.so_confirmed = 1;
+    }
 
-  return powner;
+  V(clientid->cid_mutex);
+
+  return owner;
 }
 
 void Process_nfs4_conflict(LOCK4denied          * denied,    /* NFS v4 LOck4denied structure to fill in */

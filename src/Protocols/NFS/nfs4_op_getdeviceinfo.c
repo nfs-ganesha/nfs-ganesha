@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs41_op_getdeviceinfo.c
- * \brief   Routines used for managing the NFS4_OP_GETDEVICEINFO operation.
+ * @file    nfs4_op_getdeviceinfo.c
+ * @brief   Routines used for managing the NFS4_OP_GETDEVICEINFO operation.
  *
  * Routines used for managing the GETDEVICEINFO operation.
  */
@@ -82,9 +82,9 @@
 #define arg_GETDEVICEINFO4  op->nfs_argop4_u.opgetdeviceinfo
 #define res_GETDEVICEINFO4  resp->nfs_resop4_u.opgetdeviceinfo
 
-int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
-                           compound_data_t *data,
-                           struct nfs_resop4 *resp)
+int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
+                          compound_data_t *data,
+                          struct nfs_resop4 *resp)
 {
 #ifdef _PNFS_MDS
      /* The separated deviceid passed to the FSAL */
@@ -108,6 +108,10 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
 #endif /* _PNFS_MDS */
 
      resp->resop = NFS4_OP_GETDEVICEINFO;
+
+     if (data->minorversion == 0) {
+          return (res_GETDEVICEINFO4.gdir_status = NFS4ERR_INVAL);
+     }
 
 #ifdef _PNFS_MDS
 
@@ -238,7 +242,7 @@ out:
  * @param[in,out] resp  Results for nfs4_op
  *
  */
-void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res *resp)
+void nfs4_op_getdeviceinfo_Free(GETDEVICEINFO4res *resp)
 {
 #ifdef _PNFS_MDS
      if (resp->gdir_status == NFS4_OK) {

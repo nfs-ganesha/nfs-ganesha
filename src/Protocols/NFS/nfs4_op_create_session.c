@@ -64,9 +64,9 @@
  *
  */
 
-int nfs41_op_create_session(struct nfs_argop4 *op,
-                            compound_data_t * data,
-                            struct nfs_resop4 *resp)
+int nfs4_op_create_session(struct nfs_argop4 *op,
+                           compound_data_t *data,
+                           struct nfs_resop4 *resp)
 {
   nfs_client_id_t     * conf   = NULL;
   nfs_client_id_t     * unconf = NULL;
@@ -90,6 +90,11 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_CREATE_SESSION;
   res_CREATE_SESSION4.csr_status = NFS4_OK;
   clientid = arg_CREATE_SESSION4.csa_clientid;
+
+  if (data->minorversion == 0)
+    {
+      return (res_CREATE_SESSION4.csr_status = NFS4ERR_INVAL);
+    }
 
   copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
 
@@ -516,7 +521,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
  * @param[in,out] resp  nfs4_op results
  *
  */
-void nfs41_op_create_session_Free(CREATE_SESSION4res * resp)
+void nfs4_op_create_session_Free(CREATE_SESSION4res * resp)
 {
   return;
 } /* nfs41_op_create_session_Free */

@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs41_op_test_stateid.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_test_stateid.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  *
@@ -72,13 +72,18 @@
 #define arg_TEST_STATEID4 op->nfs_argop4_u.optest_stateid
 #define res_TEST_STATEID4 resp->nfs_resop4_u.optest_stateid
 
-int nfs41_op_test_stateid(struct nfs_argop4 *op,
-                          compound_data_t *data,
-                          struct nfs_resop4 *resp)
+int nfs4_op_test_stateid(struct nfs_argop4 *op,
+                         compound_data_t *data,
+                         struct nfs_resop4 *resp)
 {
   /* Lock are not supported */
   resp->resop = NFS4_OP_TEST_STATEID;
   res_TEST_STATEID4.tsr_status = NFS4_OK;
+
+  if (data->minorversion == 0)
+    {
+      return (res_TEST_STATEID4.tsr_status = NFS4ERR_INVAL);
+    }
 
   /* Do basic checks on a filehandle */
   res_TEST_STATEID4.tsr_status = nfs4_sanity_check_FH(data, 0LL);
@@ -94,7 +99,7 @@ int nfs41_op_test_stateid(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs41_op_test_stateid_Free(TEST_STATEID4res * resp)
+void nfs4_op_test_stateid_Free(TEST_STATEID4res * resp)
 {
   return;
 } /* nfs41_op_test_stateid_Free */

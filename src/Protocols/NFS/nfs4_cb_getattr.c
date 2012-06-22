@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs4_cb_getattr.c
- * \brief   Routines used for managing the NFS4_CB_GETATTR operation
+ * @file    nfs4_cb_getattr.c
+ * @brief   Routines used for managing the NFS4_CB_GETATTR operation
  *
  * Routines used for managing the NFS4_CB_GETATTR operation
  *

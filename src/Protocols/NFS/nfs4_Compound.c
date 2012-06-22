@@ -61,7 +61,7 @@ const int optab4index[] = {
 static const uint32_t POS_ILLEGAL_V40 = 40;
 static const uint32_t POS_ILLEGAL_V41 = 59;
 
-static const nfs4_op_desc_t optab4v0[] = {
+static const nfs4_op_desc_t optabv4[] = {
   {"OP_ACCESS", NFS4_OP_ACCESS, nfs4_op_access},
   {"OP_CLOSE", NFS4_OP_CLOSE, nfs4_op_close},
   {"OP_COMMIT", NFS4_OP_COMMIT, nfs4_op_commit},
@@ -95,75 +95,31 @@ static const nfs4_op_desc_t optab4v0[] = {
   {"OP_SECINFO", NFS4_OP_SECINFO, nfs4_op_secinfo},
   {"OP_SETATTR", NFS4_OP_SETATTR, nfs4_op_setattr},
   {"OP_SETCLIENTID", NFS4_OP_SETCLIENTID, nfs4_op_setclientid},
-  {"OP_SETCLIENTID_CONFIRM", NFS4_OP_SETCLIENTID_CONFIRM, nfs4_op_setclientid_confirm},
-  {"OP_VERIFY", NFS4_OP_VERIFY, nfs4_op_verify},
-  {"OP_WRITE", NFS4_OP_WRITE, nfs4_op_write},
-  {"OP_RELEASE_LOCKOWNER", NFS4_OP_RELEASE_LOCKOWNER, nfs4_op_release_lockowner},
-  {"OP_ILLEGAL", NFS4_OP_ILLEGAL, nfs4_op_illegal}
-};
-
-static const nfs4_op_desc_t optab4v1[] = {
-  {"OP_ACCESS", NFS4_OP_ACCESS, nfs4_op_access},
-  {"OP_CLOSE", NFS4_OP_CLOSE, nfs41_op_close},
-  {"OP_COMMIT", NFS4_OP_COMMIT, nfs4_op_commit},
-  {"OP_CREATE", NFS4_OP_CREATE, nfs4_op_create},
-  {"OP_DELEGPURGE", NFS4_OP_DELEGPURGE, nfs4_op_delegpurge},
-  {"OP_DELEGRETURN", NFS4_OP_DELEGRETURN, nfs4_op_delegreturn},
-  {"OP_GETATTR", NFS4_OP_GETATTR, nfs4_op_getattr},
-  {"OP_GETFH", NFS4_OP_GETFH, nfs4_op_getfh},
-  {"OP_LINK", NFS4_OP_LINK, nfs4_op_link},
-  {"OP_LOCK", NFS4_OP_LOCK, nfs41_op_lock},
-  {"OP_LOCKT", NFS4_OP_LOCKT, nfs41_op_lockt},
-  {"OP_LOCKU", NFS4_OP_LOCKU, nfs41_op_locku},
-  {"OP_LOOKUP", NFS4_OP_LOOKUP, nfs4_op_lookup},
-  {"OP_LOOKUPP", NFS4_OP_LOOKUPP, nfs4_op_lookupp},
-  {"OP_NVERIFY", NFS4_OP_NVERIFY, nfs4_op_nverify},
-  {"OP_OPEN", NFS4_OP_OPEN, nfs41_op_open},
-  {"OP_OPENATTR", NFS4_OP_OPENATTR, nfs4_op_openattr},
-  {"OP_OPEN_CONFIRM", NFS4_OP_OPEN_CONFIRM, nfs4_op_illegal},   /* OP_OPEN_CONFIRM is deprecated in NFSv4.1 */
-  {"OP_OPEN_DOWNGRADE", NFS4_OP_OPEN_DOWNGRADE, nfs4_op_open_downgrade},
-  {"OP_PUTFH", NFS4_OP_PUTFH, nfs4_op_putfh},
-  {"OP_PUTPUBFH", NFS4_OP_PUTPUBFH, nfs4_op_putpubfh},
-  {"OP_PUTROOTFH", NFS4_OP_PUTROOTFH, nfs4_op_putrootfh},
-  {"OP_READ", NFS4_OP_READ, nfs4_op_read},
-  {"OP_READDIR", NFS4_OP_READDIR, nfs4_op_readdir},
-  {"OP_READLINK", NFS4_OP_READLINK, nfs4_op_readlink},
-  {"OP_REMOVE", NFS4_OP_REMOVE, nfs4_op_remove},
-  {"OP_RENAME", NFS4_OP_RENAME, nfs4_op_rename},
-  {"OP_RENEW", NFS4_OP_RENEW, nfs4_op_renew},
-  {"OP_RESTOREFH", NFS4_OP_RESTOREFH, nfs4_op_restorefh},
-  {"OP_SAVEFH", NFS4_OP_SAVEFH, nfs4_op_savefh},
-  {"OP_SECINFO", NFS4_OP_SECINFO, nfs4_op_secinfo},
-  {"OP_SETATTR", NFS4_OP_SETATTR, nfs4_op_setattr},
-  {"OP_SETCLIENTID", NFS4_OP_SETCLIENTID, nfs4_op_setclientid},
-  {"OP_SETCLIENTID_CONFIRM", NFS4_OP_SETCLIENTID_CONFIRM, nfs4_op_setclientid_confirm},
+  {"OP_SETCLIENTID_CONFIRM", NFS4_OP_SETCLIENTID_CONFIRM,nfs4_op_setclientid_confirm},
   {"OP_VERIFY", NFS4_OP_VERIFY, nfs4_op_verify},
   {"OP_WRITE", NFS4_OP_WRITE, nfs4_op_write},
   {"OP_RELEASE_LOCKOWNER", NFS4_OP_RELEASE_LOCKOWNER, nfs4_op_release_lockowner},
   {"OP_BACKCHANNEL_CTL", NFS4_OP_BACKCHANNEL_CTL, nfs4_op_illegal},     /* tbd */
   {"OP_BIND_CONN_TO_SESSION", NFS4_OP_BIND_CONN_TO_SESSION, nfs4_op_illegal},   /* tbd */
-  {"OP_EXCHANGE_ID", NFS4_OP_EXCHANGE_ID, nfs41_op_exchange_id},
-  {"OP_CREATE_SESSION", NFS4_OP_CREATE_SESSION, nfs41_op_create_session},
-  {"OP_DESTROY_SESSION", NFS4_OP_DESTROY_SESSION, nfs41_op_destroy_session},
-  {"OP_FREE_STATEID", NFS4_OP_FREE_STATEID, nfs41_op_free_stateid},   
+  {"OP_EXCHANGE_ID", NFS4_OP_EXCHANGE_ID, nfs4_op_exchange_id},
+  {"OP_CREATE_SESSION", NFS4_OP_CREATE_SESSION, nfs4_op_create_session},
+  {"OP_DESTROY_SESSION", NFS4_OP_DESTROY_SESSION, nfs4_op_destroy_session},
+  {"OP_FREE_STATEID", NFS4_OP_FREE_STATEID, nfs4_op_free_stateid},
   {"OP_GET_DIR_DELEGATION", NFS4_OP_GET_DIR_DELEGATION, nfs4_op_illegal},       /* tbd */
-  {"OP_GETDEVICEINFO", NFS4_OP_GETDEVICEINFO, nfs41_op_getdeviceinfo},
-  {"OP_GETDEVICELIST", NFS4_OP_GETDEVICELIST, nfs41_op_getdevicelist},
-  {"OP_LAYOUTCOMMIT", NFS4_OP_LAYOUTCOMMIT, nfs41_op_layoutcommit},
-  {"OP_LAYOUTGET", NFS4_OP_LAYOUTGET, nfs41_op_layoutget},
-  {"OP_LAYOUTRETURN", NFS4_OP_LAYOUTRETURN, nfs41_op_layoutreturn},
+  {"OP_GETDEVICEINFO", NFS4_OP_GETDEVICEINFO, nfs4_op_getdeviceinfo},
+  {"OP_GETDEVICELIST", NFS4_OP_GETDEVICELIST, nfs4_op_getdevicelist},
+  {"OP_LAYOUTCOMMIT", NFS4_OP_LAYOUTCOMMIT, nfs4_op_layoutcommit},
+  {"OP_LAYOUTGET", NFS4_OP_LAYOUTGET, nfs4_op_layoutget},
+  {"OP_LAYOUTRETURN", NFS4_OP_LAYOUTRETURN, nfs4_op_layoutreturn},
   {"OP_SECINFO_NO_NAME", NFS4_OP_SECINFO_NO_NAME, nfs4_op_illegal},     /* tbd */
-  {"OP_SEQUENCE", NFS4_OP_SEQUENCE, nfs41_op_sequence},
-  {"OP_SET_SSV", NFS4_OP_SET_SSV, nfs41_op_set_ssv},
-  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs41_op_test_stateid},
+  {"OP_SEQUENCE", NFS4_OP_SEQUENCE, nfs4_op_sequence},
+  {"OP_SET_SSV", NFS4_OP_SET_SSV, nfs4_op_set_ssv},
+  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs4_op_test_stateid},
   {"OP_WANT_DELEGATION", NFS4_OP_WANT_DELEGATION, nfs4_op_illegal}, /* tbd */
   {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_illegal}, /* tbd */
-  {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs41_op_reclaim_complete},
+  {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs4_op_reclaim_complete},
   {"OP_ILLEGAL", NFS4_OP_ILLEGAL, nfs4_op_illegal}
 };
-
-nfs4_op_desc_t *optabvers[] = {(nfs4_op_desc_t *)optab4v0,
-                               (nfs4_op_desc_t *)optab4v1};
 
 /**
  * @brief The NFS PROC4 COMPOUND
@@ -313,7 +269,7 @@ int nfs4_Compound(nfs_arg_t *arg,
       /* If not prepended ny OP4_SEQUENCE, OP4_EXCHANGE_ID should be
        * the only request in the compound see 18.35.3. and test EID8
        * for details */
-      if(optabvers[1][optab4index[argarray[0].argop]].val
+      if(optabv4[optab4index[argarray[0].argop]].val
          == NFS4_OP_EXCHANGE_ID)
         {
           status = NFS4ERR_NOT_ONLY_OP;
@@ -367,13 +323,13 @@ int nfs4_Compound(nfs_arg_t *arg,
       LogDebug(COMPONENT_NFS_V4,
                "Request %d is %d = %s, entry %d in the op array%s",
                i,
-               optabvers[compound4_minor][opindex].val,
-               optabvers[compound4_minor][opindex].name,
+               optabv4[opindex].val,
+               optabv4[opindex].name,
                opindex,
                tagstr);
 
       status
-        = (optabvers[compound4_minor][opindex].funct)(
+        = (optabv4[opindex].funct)(
              &(argarray[i]),
              &data,
              &(res->res_compound4.resarray.resarray_val[i]));
@@ -391,7 +347,7 @@ int nfs4_Compound(nfs_arg_t *arg,
              the COMPOUND, this may be a regular behaviour */
           LogDebug(COMPONENT_NFS_V4,
                    "Status of %s in position %d = %s%s",
-                   optabvers[compound4_minor][opindex].name,
+                   optabv4[opindex].name,
                    i,
                    nfsstat4_to_str(status),
                    tagstr);
@@ -431,7 +387,7 @@ int nfs4_Compound(nfs_arg_t *arg,
    */
   if(data.pcached_res != NULL && !data.use_drc)
     {
-      /* Pointer has been set by nfs41_op_sequence and points to slot to cache
+      /* Pointer has been set by nfs4_op_sequence and points to slot to cache
        * result in.
        */
       LogFullDebug(COMPONENT_SESSIONS,
@@ -639,31 +595,31 @@ void nfs4_Compound_FreeOne(nfs_resop4 *res)
         break;
 
       case NFS4_OP_EXCHANGE_ID:
-        nfs41_op_exchange_id_Free(&(res->nfs_resop4_u.opexchange_id));
+        nfs4_op_exchange_id_Free(&(res->nfs_resop4_u.opexchange_id));
         break;
 
       case NFS4_OP_CREATE_SESSION:
-        nfs41_op_create_session_Free(&(res->nfs_resop4_u.opcreate_session));
+        nfs4_op_create_session_Free(&(res->nfs_resop4_u.opcreate_session));
         break;
 
       case NFS4_OP_SEQUENCE:
-        nfs41_op_sequence_Free(&(res->nfs_resop4_u.opsequence));
+        nfs4_op_sequence_Free(&(res->nfs_resop4_u.opsequence));
         break;
 
       case NFS4_OP_GETDEVICEINFO:
-        nfs41_op_getdeviceinfo_Free(&(res->nfs_resop4_u.opgetdeviceinfo));
+        nfs4_op_getdeviceinfo_Free(&(res->nfs_resop4_u.opgetdeviceinfo));
         break;
 
       case NFS4_OP_GETDEVICELIST:
-        nfs41_op_getdevicelist_Free(&(res->nfs_resop4_u.opgetdevicelist));
+        nfs4_op_getdevicelist_Free(&(res->nfs_resop4_u.opgetdevicelist));
         break;
 
       case NFS4_OP_TEST_STATEID:
-        nfs41_op_test_stateid_Free(&(res->nfs_resop4_u.optest_stateid));
+        nfs4_op_test_stateid_Free(&(res->nfs_resop4_u.optest_stateid));
         break;
 
       case NFS4_OP_FREE_STATEID:
-        nfs41_op_free_stateid_Free(&(res->nfs_resop4_u.opfree_stateid));
+        nfs4_op_free_stateid_Free(&(res->nfs_resop4_u.opfree_stateid));
         break;
 
       case NFS4_OP_BACKCHANNEL_CTL:
@@ -678,7 +634,7 @@ void nfs4_Compound_FreeOne(nfs_resop4 *res)
       case NFS4_OP_WANT_DELEGATION:
       case NFS4_OP_DESTROY_CLIENTID:
       case NFS4_OP_RECLAIM_COMPLETE:
-        nfs41_op_reclaim_complete_Free(&(res->nfs_resop4_u.opreclaim_complete));
+        nfs4_op_reclaim_complete_Free(&(res->nfs_resop4_u.opreclaim_complete));
         break;
 
       case NFS4_OP_ILLEGAL:

@@ -145,7 +145,7 @@ is_open_for_read(cache_entry_t *entry)
 cache_inode_status_t
 cache_inode_open(cache_entry_t *entry,
                  fsal_openflags_t openflags,
-		 struct user_cred *creds,
+                 struct user_cred *creds,
                  uint32_t flags,
                  cache_inode_status_t *status)
 {

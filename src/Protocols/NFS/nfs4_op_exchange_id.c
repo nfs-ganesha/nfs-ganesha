@@ -25,12 +25,10 @@
  */
 
 /**
- * @file    nfs41_op_exchange_id.c
+ * @file    nfs4_op_exchange_id.c
  * @brief   Routines used for managing the NFS4_OP_EXCHANGE_ID operation.
  *
  * Routines used for managing the EXCHANGE_ID operation.
- *
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -65,9 +63,9 @@
  *
  */
 
-int nfs41_op_exchange_id(struct nfs_argop4 *op,
-                         compound_data_t *data,
-                         struct nfs_resop4 *resp)
+int nfs4_op_exchange_id(struct nfs_argop4 *op,
+                        compound_data_t *data,
+                        struct nfs_resop4 *resp)
 {
   char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
   char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
@@ -91,6 +89,10 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 #define res_EXCHANGE_ID4_ok resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4
 
   resp->resop = NFS4_OP_EXCHANGE_ID;
+  if (data->minorversion == 0)
+    {
+      return (res_EXCHANGE_ID4.eir_status = NFS4ERR_INVAL);
+    }
 
   copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
 
@@ -483,7 +485,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  */
-void nfs41_op_exchange_id_Free(EXCHANGE_ID4res *resp)
+void nfs4_op_exchange_id_Free(EXCHANGE_ID4res *resp)
 {
   if(resp->eir_status == NFS4_OK)
     {

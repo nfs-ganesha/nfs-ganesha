@@ -25,11 +25,8 @@
  */
 
 /**
- * \file    cache_inode_lookup.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:26 $
- * \version $Revision: 1.33 $
- * \brief   Perform lookup through the cache.
+ * @file    cache_inode_lookup.c
+ * @brief   Perform lookup through the cache.
  *
  * @brief Perform lookup through the cache.
  *
@@ -277,7 +274,7 @@ cache_inode_lookup(cache_entry_t *parent,
                                      status);
      pthread_rwlock_unlock(&parent->content_lock);
 
-     if (entry) {
+     if (entry && attr) {
           *status = cache_inode_lock_trust_attrs(entry);
           if(*status == CACHE_INODE_SUCCESS)
             {

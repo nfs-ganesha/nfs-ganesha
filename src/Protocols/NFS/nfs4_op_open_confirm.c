@@ -74,6 +74,12 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
 
+  if (data->minorversion > 0)
+    {
+      res_OPEN_CONFIRM4.status = NFS4ERR_NOTSUPP;
+      return res_OPEN_CONFIRM4.status;
+    }
+
   /*
    * Do basic checks on a filehandle
    * Should not operate on non-file objects

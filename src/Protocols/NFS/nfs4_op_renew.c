@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs4_op_renew.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_renew.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  *
@@ -72,6 +72,12 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
   /* Lock are not supported */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_RENEW;
+
+  if (data->minorversion > 0)
+    {
+      res_RENEW4.status = NFS4ERR_NOTSUPP;
+      return res_RENEW4.status;
+    }
 
   /* Tell the admin what I am doing... */
   LogFullDebug(COMPONENT_CLIENTID, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);

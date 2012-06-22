@@ -23,11 +23,12 @@
  *
  * --------------------------------------- */
 /**
- * \file    nfs4_op_getattr.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_getattr.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

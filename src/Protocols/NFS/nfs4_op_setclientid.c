@@ -82,6 +82,11 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 #define res_SETCLIENTID4_INUSE resp->nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.client_using
 
   resp->resop = NFS4_OP_SETCLIENTID;
+  if (data->minorversion > 0)
+    {
+      res_SETCLIENTID4.status = NFS4ERR_NOTSUPP;
+      return res_SETCLIENTID4.status;
+    }
 
   copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
 

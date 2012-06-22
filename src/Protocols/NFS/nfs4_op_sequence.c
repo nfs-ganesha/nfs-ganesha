@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs41_op_sequence.c
- * \brief   Routines used for managing the NFS4_OP_SEQUENCE operation.
+ * @file    nfs4_op_sequence.c
+ * @brief   Routines used for managing the NFS4_OP_SEQUENCE operation.
  *
  * Routines used for managing the NFS4_OP_SEQUENCE operation.
  *
@@ -58,8 +58,9 @@
  * @see nfs4_Compound
  *
  */
-int nfs41_op_sequence(struct nfs_argop4 *op,
-                      compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_sequence(struct nfs_argop4 *op,
+                     compound_data_t *data,
+                     struct nfs_resop4 *resp)
 {
 #define arg_SEQUENCE4  op->nfs_argop4_u.opsequence
 #define res_SEQUENCE4  resp->nfs_resop4_u.opsequence
@@ -68,6 +69,10 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
 
   resp->resop = NFS4_OP_SEQUENCE;
   res_SEQUENCE4.sr_status = NFS4_OK;
+  if (data->minorversion == 0)
+    {
+      return (res_SEQUENCE4.sr_status = NFS4ERR_INVAL);
+    }
 
   /* OP_SEQUENCE is always the first operation of the request */
   if(data->oppos != 0)
@@ -198,7 +203,7 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs41_op_sequence_Free(SEQUENCE4res * resp)
+void nfs4_op_sequence_Free(SEQUENCE4res *resp)
 {
   /* Nothing to be done */
   return;

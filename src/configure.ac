@@ -470,13 +470,6 @@ if test "${with_cunit+set}" == "set"; then
 fi
 
 
-# NFSv4.0 NFSv4.1 switch
-AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=1)], [specify if server support NFSv4 or NFSv4.1] ),
-             NFS4_MINOR="$withval", NFS4_MINOR="1" )
-
-AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
-AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
-
 # RPCAL now fixed as TIRPC
 RPCAL="TIRPC"
 AM_CONDITIONAL(USE_TIRPC,  true )
@@ -798,13 +791,6 @@ case $RPCAL in
 		AC_MSG_ERROR([This RPCAL is not supported])
 
 esac
-
-# Sanity check : no pnfs if NFS4_MINOR is not NFSv4.1
-if test x$PNFS = "xyes"; then
-  if test x$NFS4_MINOR != "x1"; then
-     AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs support" )
-  fi
-fi
 
 AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)

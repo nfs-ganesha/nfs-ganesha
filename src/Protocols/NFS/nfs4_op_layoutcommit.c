@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs41_op_layoutcommit.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_layoutcommit.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  *
@@ -85,8 +85,9 @@
 #define arg_LAYOUTCOMMIT4 op->nfs_argop4_u.oplayoutcommit
 #define res_LAYOUTCOMMIT4 resp->nfs_resop4_u.oplayoutcommit
 
-int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
-                          struct nfs_resop4 *resp)
+int nfs4_op_layoutcommit(struct nfs_argop4 *op,
+                         compound_data_t *data,
+                         struct nfs_resop4 *resp)
 {
 #ifdef _PNFS_MDS
      /* Return from cache_inode calls */
@@ -114,6 +115,10 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
 #endif /* _PNFS_MDS */
 
   resp->resop = NFS4_OP_LAYOUTCOMMIT;
+  if (data->minorversion == 0)
+    {
+      return (res_LAYOUTCOMMIT4.locr_status = NFS4ERR_INVAL);
+    }
 
 #ifdef _PNFS_MDS
      if ((nfs_status = nfs4_sanity_check_FH(data,
@@ -254,7 +259,7 @@ out:
  * @param[in,out] resp  Results for nfs4_op
  *
  */
-void nfs41_op_layoutcommit_Free(LAYOUTCOMMIT4res *resp)
+void nfs4_op_layoutcommit_Free(LAYOUTCOMMIT4res *resp)
 {
      return;
 } /* nfs41_op_layoutcommit_Free */

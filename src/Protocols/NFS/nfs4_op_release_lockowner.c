@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs4_op_release_lockowner.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_release_lockowner.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  *
@@ -77,6 +77,12 @@ int nfs4_op_release_lockowner(struct nfs_argop4 * op,
 
   resp->resop = NFS4_OP_RELEASE_LOCKOWNER;
   res_RELEASE_LOCKOWNER4.status = NFS4_OK;
+
+  if (data->minorversion > 0)
+    {
+      res_RELEASE_LOCKOWNER4.status = NFS4ERR_NOTSUPP;
+      return res_RELEASE_LOCKOWNER4.status;
+    }
 
   /* Check clientid */
   if(nfs_client_id_get_confirmed(arg_RELEASE_LOCKOWNER4.lock_owner.clientid,

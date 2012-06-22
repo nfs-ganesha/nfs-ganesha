@@ -316,9 +316,9 @@ out:
 #define arg_LAYOUTGET4 op->nfs_argop4_u.oplayoutget
 #define res_LAYOUTGET4 resp->nfs_resop4_u.oplayoutget
 
-int nfs41_op_layoutget(struct nfs_argop4 *op,
-                       compound_data_t * data,
-                       struct nfs_resop4 *resp)
+int nfs4_op_layoutget(struct nfs_argop4 *op,
+                      compound_data_t *data,
+                      struct nfs_resop4 *resp)
 {
 #ifdef _PNFS_MDS
      /* Return code from state functions */
@@ -347,6 +347,9 @@ int nfs41_op_layoutget(struct nfs_argop4 *op,
 #endif /* _PNFS_MDS */
 
      resp->resop = NFS4_OP_LAYOUTGET;
+     if (data->minorversion == 0) {
+          return (res_LAYOUTGET4.logr_status = NFS4ERR_INVAL);
+     }
 
 #ifdef _PNFS_MDS
 
@@ -503,7 +506,7 @@ out:
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs41_op_layoutget_Free(LAYOUTGET4res *resp)
+void nfs4_op_layoutget_Free(LAYOUTGET4res *resp)
 {
 #ifdef _PNFS_MDS
      size_t i = 0;

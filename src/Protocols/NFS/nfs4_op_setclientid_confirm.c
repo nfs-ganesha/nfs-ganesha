@@ -82,6 +82,12 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
   res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
   clientid                        = arg_SETCLIENTID_CONFIRM4.clientid;
 
+  if (data->minorversion > 0)
+    {
+      res_SETCLIENTID_CONFIRM4.status = NFS4ERR_NOTSUPP;
+      return res_SETCLIENTID_CONFIRM4.status;
+    }
+
   copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
 
   if(isDebug(COMPONENT_CLIENTID))

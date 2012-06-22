@@ -25,7 +25,7 @@
  */
 
 /**
- * @file    nfs41_op_free_stateid.c
+ * @file    nfs4_op_free_stateid.c
  * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
@@ -73,10 +73,17 @@
 #define arg_FREE_STATEID4 op->nfs_argop4_u.opfree_stateid
 #define res_FREE_STATEID4 resp->nfs_resop4_u.opfree_stateid
 
-int nfs41_op_free_stateid(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_free_stateid(struct nfs_argop4 *op,
+                         compound_data_t *data,
+                         struct nfs_resop4 *resp)
 {
   resp->resop = NFS4_OP_FREE_STATEID;
   res_FREE_STATEID4.fsr_status = NFS4_OK;
+
+  if (data->minorversion == 0)
+    {
+      return (res_FREE_STATEID4.fsr_status = NFS4ERR_INVAL);
+    }
 
   /* Do basic checks on a filehandle */
   res_FREE_STATEID4.fsr_status = nfs4_sanity_check_FH(data,0LL);
@@ -96,7 +103,7 @@ int nfs41_op_free_stateid(struct nfs_argop4 *op, compound_data_t * data, struct 
  * @param[in,out] resp nfs4_op results
  *
  */
-void nfs41_op_free_stateid_Free(FREE_STATEID4res * resp)
+void nfs4_op_free_stateid_Free(FREE_STATEID4res * resp)
 {
   return;
 } /* nfs41_op_free_stateid_Free */

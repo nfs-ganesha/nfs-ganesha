@@ -16,6 +16,7 @@ libsal_la_SOURCES = state_async.c                    \
                     nfs4_owner.c                     \
                     nfs4_lease.c                     \
                     nfs4_recovery.c                  \
+                    nfs41_session_id.c               \
                     ../include/HashData.h            \
                     ../include/HashTable.h           \
                     ../include/LRU_List.h            \
@@ -24,7 +25,7 @@ libsal_la_SOURCES = state_async.c                    \
                     ../include/err_cache_inode.h     \
                     ../include/fsal.h                \
                     ../include/fsal_types.h          \
-                    ../include/log.h       \
+                    ../include/log.h                 \
                     ../include/nfs4.h                \
                     ../include/nfs_core.h            \
                     ../include/nfs_exports.h         \
@@ -50,9 +51,5 @@ if USE_PNFS_MDS
 libsal_la_SOURCES += state_layout.c
 endif
 
-if USE_NFS4_1
-libsal_la_SOURCES += nfs41_session_id.c 
-endif
 
 new: clean all
-

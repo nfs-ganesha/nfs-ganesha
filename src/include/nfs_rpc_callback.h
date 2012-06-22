@@ -133,12 +133,10 @@ void nfs_rpc_cb_pkgshutdown(void);
 int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
                             uint32_t flags);
 
-#if defined (USE_NFS4_1)
 /* Create a channel for a new clientid (v4) or session, optionally
  * connecting it */
 int nfs_rpc_create_chan_v41(nfs41_session_t *session,
                             uint32_t flags);
-#endif
 
 /* Dispose a channel. */
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);

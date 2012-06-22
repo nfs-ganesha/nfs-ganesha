@@ -24,15 +24,10 @@
  */
 
 /**
- * \file    sal_data.h
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/24 11:43:15 $
- * \version $Revision: 1.95 $
- * \brief   Management of the state abstraction layer.
+ * @file    sal_data.h
+ * @brief   Management of the state abstraction layer.
  *
- * sal_data.h : Management of the state abstraction layer
- *
- *
+ * Management of the state abstraction layer
  */
 
 #ifndef _SAL_DATA_H
@@ -132,7 +127,7 @@ struct nfs41_session__
  *
  * NFSv4 State data
  *
- ******************************************************************************/
+ *****************************************************************************/
 
 typedef enum state_type_t
 {
@@ -145,19 +140,18 @@ typedef enum state_type_t
 
 typedef struct state_share__
 {
-  char              share_oexcl_verifier[8]; /**< Verifier to use when opening a file as EXCLUSIVE4       */
-  unsigned int      share_access;            /**< The NFSv4 Share Access state                            */
-  unsigned int      share_deny;              /**< The NFSv4 Share Deny state                              */
-  struct glist_head share_lockstates;        /**< The list of lock states associated with this open state */
-  unsigned int      share_access_prev;       /**< The bitmap to keep track of previous share access state */
-  unsigned int      share_deny_prev;         /**< The bitmap to keep track of previous share deny state   */
+  unsigned int      share_access;            /*< The NFSv4 Share Access state                            */
+  unsigned int      share_deny;              /*< The NFSv4 Share Deny state                              */
+  struct glist_head share_lockstates;        /*< The list of lock states associated with this open state */
+  unsigned int      share_access_prev;       /*< The bitmap to keep track of previous share access state */
+  unsigned int      share_deny_prev;         /*< The bitmap to keep track of previous share deny state   */
 } state_share_t;
 
 typedef struct state_lock_t
 {
-  state_t           * popenstate;      /**< The related open-stateid            */
-  struct glist_head   state_locklist;  /**< List of locks owned by this stateid */
-  struct glist_head   state_sharelist; /**< List of states related to a share          */
+  state_t           * popenstate;      /*< The related open-stateid            */
+  struct glist_head   state_locklist;  /*< List of locks owned by this stateid */
+  struct glist_head   state_sharelist; /*< List of states related to a share          */
 } state_lock_t;
 
 typedef struct state_deleg__
@@ -192,16 +186,16 @@ extern char all_one[OTHERSIZE];
 
 struct state_t
 {
-  struct glist_head   state_list;                /**< List of states on a file                   */
-  struct glist_head   state_owner_list;          /**< List of states for an owner                */
-  struct glist_head   state_export_list;         /**< List of states on the same export          */
-  exportlist_t      * state_pexport;             /**< Export this entry belongs to               */
-  state_owner_t     * state_powner;              /**< State Owner related to this state          */
-  cache_entry_t     * state_pentry;              /**< Related pentry                             */
+  struct glist_head   state_list;                /*< List of states on a file                   */
+  struct glist_head   state_owner_list;          /*< List of states for an owner                */
+  struct glist_head   state_export_list;         /*< List of states on the same export          */
+  exportlist_t      * state_pexport;             /*< Export this entry belongs to               */
+  state_owner_t     * state_powner;              /*< State Owner related to this state          */
+  cache_entry_t     * state_pentry;              /*< Related pentry                             */
   state_type_t        state_type;
   state_data_t        state_data;
-  u_int32_t           state_seqid;               /**< The NFSv4 Sequence id                      */
-  char                stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
+  u_int32_t           state_seqid;               /*< The NFSv4 Sequence id                      */
+  char                stateid_other[OTHERSIZE];  /*< "Other" part of state id, used as hash key */
 };
 
 /******************************************************************************
@@ -296,16 +290,16 @@ struct nfs_argop4_state
 struct state_nfs4_owner_t
 {
   clientid4           so_clientid;
-  nfs_client_id_t   * so_pclientid;     /** < Pointer to owning client id record        */
+  nfs_client_id_t   * so_pclientid;     /*< Pointer to owning client id record        */
   unsigned int        so_confirmed;
   seqid4              so_seqid;
-  uint32_t            so_counter;       /** < Counter is used to build unique stateids  */
-  nfs_argop4_state    so_args;          /** < Saved args                                */
-  cache_entry_t     * so_last_pentry;   /** < Last file operated on by this state owner */
-  nfs_resop4          so_resp;          /** < Saved response                            */
+  uint32_t            so_counter;       /*< Counter is used to build unique stateids  */
+  nfs_argop4_state    so_args;          /*< Saved args                                */
+  cache_entry_t     * so_last_pentry;   /*< Last file operated on by this state owner */
+  nfs_resop4          so_resp;          /*< Saved response                            */
   state_owner_t     * so_related_owner;
-  struct glist_head   so_state_list;    /** < States owned by this owner */
-  struct glist_head   so_perclient;     /** open owner entry to be linked to client */
+  struct glist_head   so_state_list;    /*< States owned by this owner */
+  struct glist_head   so_perclient;     /*< open owner entry to be linked to client */
 };
 
 /* Undistinguished lock owner type */
@@ -335,7 +329,7 @@ extern state_owner_t unknown_owner;
  *
  * NFSv4 Clientid data
  *
- ******************************************************************************/
+ *****************************************************************************/
 
 typedef enum nfs_clientid_confirm_state__
 {
@@ -366,9 +360,10 @@ struct nfs_client_id_t
   struct glist_head              cid_openowners;
   struct glist_head              cid_lockowners;
   pthread_mutex_t                cid_mutex;
+        /* supplied univ. address */
   struct {
-      char                       cid_client_r_addr[SOCK_NAME_MAX]; /* supplied univ. address */
-      gsh_addr_t                 cid_addr; 
+      char                       cid_client_r_addr[SOCK_NAME_MAX];
+      gsh_addr_t                 cid_addr;
       uint32_t                   cid_program;
       union {
           struct {
@@ -385,6 +380,7 @@ struct nfs_client_id_t
   state_owner_t                  cid_owner;
   int32_t                        cid_refcount;
   int                            cid_lease_reservations;
+  uint32_t                       cid_minorversion;
 };
 
 struct nfs_client_record_t
@@ -406,7 +402,7 @@ extern hash_table_t    * ht_unconfirmed_client_id;
  *
  * Possible Errors from SAL Code
  *
- ******************************************************************************/
+ *****************************************************************************/
 
 typedef enum state_status_t
 {
@@ -463,7 +459,7 @@ typedef enum state_status_t
  *
  * Lock Data
  *
- ******************************************************************************/
+ *****************************************************************************/
 
 typedef enum state_blocking_t
 {

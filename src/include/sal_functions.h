@@ -381,8 +381,8 @@ void nfs4_owner_PrintAll(void);
 int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
                            state_owner_t           ** powner);
 
-state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
-                                 nfs_client_id_t         * pclientid,
+state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * name,
+                                 nfs_client_id_t         * clientid,
                                  state_owner_type_t        type,
                                  state_owner_t           * related_owner,
                                  unsigned int              init_seqid);

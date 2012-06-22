@@ -25,7 +25,7 @@
  */
 
 /**
- * @file    nfs41_op_reclaim_complete.c
+ * @file    nfs4_op_reclaim_complete.c
  * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
@@ -79,15 +79,19 @@
 #define arg_RECLAIM_COMPLETE4 op->nfs_argop4_u.opreclaim_complete
 #define res_RECLAIM_COMPLETE4 resp->nfs_resop4_u.opreclaim_complete
 
-int nfs41_op_reclaim_complete(struct nfs_argop4 *op,
-                              compound_data_t *data,
-                              struct nfs_resop4 *resp)
+int nfs4_op_reclaim_complete(struct nfs_argop4 *op,
+                             compound_data_t *data,
+                             struct nfs_resop4 *resp)
 {
   resp->resop = NFS4_OP_RECLAIM_COMPLETE;
 
   res_RECLAIM_COMPLETE4.rcr_status = NFS4_OK;
+  if (data->minorversion == 0)
+    {
+      return (res_RECLAIM_COMPLETE4.rcr_status = NFS4ERR_INVAL);
+    }
   return res_RECLAIM_COMPLETE4.rcr_status;
-}                               /* nfs41_op_reclaim_complete */
+} /* nfs41_op_reclaim_complete */
 
 /**
  * @brief Free memory allocated for RECLAIM_COMPLETE result
@@ -95,7 +99,7 @@ int nfs41_op_reclaim_complete(struct nfs_argop4 *op,
  * This function frees anty memory allocated for the result of the
  * NFS4_OP_RECLAIM_COMPLETE operation.
  */
-void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res *resp)
+void nfs4_op_reclaim_complete_Free(RECLAIM_COMPLETE4res *resp)
 {
   return;
-}                               /* nfs41_op_reclaim_complete_Free */
+} /* nfs41_op_reclaim_complete_Free */
