@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
   int c;
-  FILE * pidfile = NULL ;
+  int pidfile;
 #ifndef HAVE_DAEMON
   pid_t son_pid;
 #endif
@@ -267,15 +267,28 @@ int main(int argc, char *argv[])
 #endif
 
   /* Echo PID into pidfile */
-  if( ( pidfile = fopen( pidfile_path, "w" ) ) == NULL )
+  if( ( pidfile = open(pidfile_path, O_RDWR|O_CREAT) ) == -1 )
    {
-     LogCrit( COMPONENT_MAIN, "Can't open pid file %si for writing", pidfile_path ) ;
+     LogFatal( COMPONENT_MAIN, "Can't open pid file %si for writing", pidfile_path ) ;
    }
   else
    {
+     char linebuf[1024];
+     struct flock lk;
+
+     /* Try to obtain a lock on the file */
+     lk.l_type = F_WRLCK;
+     lk.l_whence = SEEK_SET;
+     lk.l_start = (off_t)0;
+     lk.l_len = (off_t)0;
+     if (fcntl(pidfile, F_SETLK, &lk) == -1)
+       LogFatal( COMPONENT_MAIN, "Ganesha already started");
+
      /* Put pid into file, then close it */
-     fprintf( pidfile, "%u", getpid() ) ;
-     fclose( pidfile ) ;
+     (void) snprintf(linebuf, sizeof(linebuf), "%u\n", getpid() ) ;
+     if (write(pidfile, linebuf, strlen(linebuf)) == -1)
+       LogCrit( COMPONENT_MAIN, "Couldn't write pid to file %s",
+           pidfile_path);
    }
 
   /* Set up for the signal handler.

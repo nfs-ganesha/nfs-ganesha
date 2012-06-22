@@ -156,7 +156,7 @@ fsal_status_t fsal_internal_access(fsal_op_context_t * p_context,   /* IN */
                                    fsal_attrib_list_t *p_object_attributes /* IN */ );
 
 fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
-                                  fsal_handle_t * p_handle, struct stat64 *buf);
+                                  fsal_handle_t * p_handle, struct stat *buf);
 
 fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
                                        fsal_handle_t * p_handle, gpfsfsal_xstat_t *p_buffxstat);
@@ -167,7 +167,7 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
 
 fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN */
                                         fsal_accessflags_t access_type,  /* IN */
-                                        struct stat64 *p_buffstat /* IN */);
+                                        struct stat *p_buffstat /* IN */);
 
 fsal_status_t fsal_trucate_by_handle(fsal_op_context_t * p_context,
                                      fsal_handle_t * p_handle,

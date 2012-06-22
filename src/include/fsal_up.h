@@ -138,7 +138,7 @@ typedef struct fsal_up_event_data_invalidate_
 
 typedef struct fsal_up_event_data_update_
 {
-  struct stat64 upu_stat_buf;
+  struct stat upu_stat_buf;
   int upu_flags;
 } fsal_up_event_data_update_t;
 

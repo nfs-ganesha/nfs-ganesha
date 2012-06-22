@@ -991,7 +991,7 @@ fsal_status_t fsal_internal_access(fsal_op_context_t * p_context,   /* IN */
  */
 
 fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
-                                  fsal_handle_t * p_handle, struct stat64 *buf)
+                                  fsal_handle_t * p_handle, struct stat *buf)
 {
   int rc;
   int dirfd = 0;
@@ -1148,7 +1148,7 @@ fsal_status_t fsal_trucate_by_handle(fsal_op_context_t * p_context,
 /* Access check function that accepts stat64. */
 fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN */
                                         fsal_accessflags_t access_type,  /* IN */
-                                        struct stat64 *p_buffstat /* IN */)
+                                        struct stat *p_buffstat /* IN */)
 {
   struct stat buffstat;
 

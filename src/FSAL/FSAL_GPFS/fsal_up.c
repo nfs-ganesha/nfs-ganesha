@@ -56,7 +56,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
                                      fsal_up_event_bus_context_t * pupebcontext   /* IN */ )
 {
   int rc = 0;
-  struct stat64 buf;
+  struct stat buf;
   struct glock fl;
   struct callback_arg callback;
   cache_inode_fsal_data_t pfsal_data;

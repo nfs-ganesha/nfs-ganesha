@@ -463,11 +463,7 @@ struct stat_arg
 {
     int mountdirfd;
     struct gpfs_file_handle *handle;
-#if BITS_PER_LONG != 64
-    struct stat64 *buf;
-#else
     struct stat *buf;
-#endif
 };
 
 struct stat_name_arg
@@ -486,11 +482,7 @@ struct callback_arg
     struct gpfs_file_handle *handle;
     struct glock *fl;
     int *flags;
-#if BITS_PER_LONG != 64
-    struct stat64 *buf;
-#else
     struct stat *buf;
-#endif
 };
 
 /* Defines for the flags in callback_arg, keep up to date with CXIUP_xxx */
@@ -540,11 +532,7 @@ struct xstat_arg
     struct gpfs_file_handle *handle;
     struct gpfs_acl *acl;
     int attr_changed;
-#if BITS_PER_LONG != 64
-    struct stat64 *buf;
-#else
     struct stat *buf;
-#endif
 };
 
 struct xstat_access_arg

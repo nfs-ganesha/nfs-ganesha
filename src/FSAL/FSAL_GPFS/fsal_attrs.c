@@ -41,9 +41,6 @@
 #include <utime.h>
 #include <sys/time.h>
 
-extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
-                                                   fsal_attrib_list_t * p_fsalattr_out);
-
 extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
                                                       fsal_attrib_list_t *p_fsalattr_out);
 
