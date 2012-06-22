@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <arpa/inet.h>
+#include <sys/poll.h>
 #include "nlm_list.h"
 #include "FSAL/fsal_commonlib.h"
 #include "pxy_fsal_methods.h"
@@ -40,6 +41,35 @@
 #include "nfs_proto_tools.h"
 
 #define FSAL_PROXY_NFS_V4 4
+
+static clientid4 pxy_clientid;
+static pthread_mutex_t pxy_clientid_mutex = PTHREAD_MUTEX_INITIALIZER;
+static char pxy_hostname[MAXNAMLEN];
+static pthread_t pxy_recv_thread;
+static pthread_t pxy_renewer_thread;
+static struct glist_head rpc_calls;
+static struct glist_head free_contexts;
+static int rpc_sock = -1;
+static unsigned int rpc_xid;
+static pthread_mutex_t listlock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t sockless = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t need_context = PTHREAD_COND_INITIALIZER;
+
+/* NB! nfs_prog is just an easy way to get this info into the call
+ *     It should really be fetched via export pointer */
+struct pxy_rpc_io_context {
+        pthread_mutex_t iolock;
+        pthread_cond_t iowait;
+        struct glist_head calls;
+        uint32_t rpc_xid;
+        int iodone;
+        int ioresult;
+        unsigned int nfs_prog;
+        unsigned int sendbuf_sz;
+        unsigned int recvbuf_sz;
+        char *sendbuf;
+        char *recvbuf;
+};
 
 /* Use this to estimate storage requirements for fattr4 blob */
 struct pxy_fattr_storage {
@@ -259,201 +289,6 @@ pxy_create_settable_bitmap(const fsal_attrib_list_t * attrs, bitmap4 *bm)
         nfs4_list_to_bitmap4(bm, attrlen, tmpattrlist);
 }
 
-static CLIENT *rpc_client;
-
-static int
-pxy_create_rpc_clnt(const proxyfs_specific_initinfo_t *ctx)
-{
-        int sock;
-        struct sockaddr_in addr_rpc;
-        struct timeval timeout = TIMEOUTRPC;
-        int rc;
-        int priv_port = 0 ; 
-        char addr[INET_ADDRSTRLEN];
-
-        memset(&addr_rpc, 0, sizeof(addr_rpc));
-        addr_rpc.sin_port = ctx->srv_port;
-        addr_rpc.sin_family = AF_INET;
-        addr_rpc.sin_addr.s_addr = ctx->srv_addr;
-
-        if(!strcmp(ctx->srv_proto, "udp")) {
-                if((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-                        return 0;
-
-                rpc_client = clntudp_bufcreate(&addr_rpc, ctx->srv_prognum,
-                                               FSAL_PROXY_NFS_V4,
-                                               (struct timeval){ 25, 0},
-                                               &sock,
-                                               ctx->srv_sendsize,
-                                               ctx->srv_recvsize);
-
-        } else if(!strcmp(ctx->srv_proto, "tcp")) {
-                if(ctx->use_privileged_client_port) {
-                        if((sock = rresvport(&priv_port)) < 0) {
-                                LogCrit(COMPONENT_FSAL, "Cannot create a tcp socket on a privileged port");
-                                return 0;
-                        }
-                } else {
-                        if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-                                LogCrit(COMPONENT_FSAL, "Cannot create a tcp socket - %d", errno);
-                                return 0;
-                        }
-                }
-
-                if(connect(sock, (struct sockaddr *)&addr_rpc,
-                           sizeof(addr_rpc)) < 0) {
-                        LogCrit(COMPONENT_FSAL,
-                                "Cannot connect to server addr=%s port=%u",
-                                inet_ntop(AF_INET, &ctx->srv_addr, addr, sizeof(addr)),
-                                ntohs(ctx->srv_port));
-
-                        return 0;
-                }
-
-                rpc_client = clnttcp_create(&addr_rpc, ctx->srv_prognum,
-                                            FSAL_PROXY_NFS_V4,
-                                            &sock,
-                                            ctx->srv_sendsize,
-                                            ctx->srv_recvsize);
-        } else {
-                return 0;
-        }
-
-        if(rpc_client == NULL) {
-                LogCrit(COMPONENT_FSAL,
-                        "Cannot contact program %u on %s:%u via %s",
-                         ctx->srv_prognum,
-                         inet_ntop(AF_INET, &ctx->srv_addr, addr, sizeof(addr)),
-                         ntohs(ctx->srv_port), ctx->srv_proto);
-
-                return 0;
-        }
-
-        if((rpc_client->cl_auth = authunix_create_default()) == NULL)
-                return 0;
-
-        rc = clnt_call(rpc_client, NFSPROC4_NULL,
-                       (xdrproc_t) xdr_void, (caddr_t) NULL,
-                       (xdrproc_t) xdr_void, (caddr_t) NULL, timeout);
-        return (rc == RPC_SUCCESS);
-        /* TODO - set client id */
-}
-
-static pthread_mutex_t rpc_call_lock = PTHREAD_MUTEX_INITIALIZER;
-
-static int
-pxy_nfsv4_simple_call(uint32_t cnt, nfs_argop4 *argoparray,
-                      nfs_resop4 *resoparray)
-{
-        int rc;
-        struct timeval timeout = TIMEOUTRPC;
-        COMPOUND4args arg = {
-                .argarray.argarray_val = argoparray,
-                .argarray.argarray_len = cnt
-        };
-        COMPOUND4res res = {
-                .resarray.resarray_val = resoparray,
-                .resarray.resarray_len = cnt
-        };
-
-        rc = clnt_call(rpc_client, NFSPROC4_COMPOUND, 
-                       (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&arg, 
-                       (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&res,
-                       timeout);
-
-        if(rc == RPC_SUCCESS ) {
-                return res.status;
-        }
-        return rc;
-}
-
-static int
-pxy_nfsv4_call(struct fsal_export *exp, uint32_t cnt, nfs_argop4 *argoparray, nfs_resop4 *resoparray)
-{
-        struct pxy_export *pxyexp =
-                container_of(exp, struct pxy_export, exp);
-        int renewed = 0;
-        int rc;
-        pthread_mutex_lock(&rpc_call_lock);
-        if(rpc_client == NULL)
-                pxy_create_rpc_clnt(pxyexp->info);
-        do {
-#if 0
-                if(FSAL_proxy_change_user(pcontext) == NULL)
-                        return -1;
-#endif
-
-                rc = pxy_nfsv4_simple_call(cnt, argoparray, resoparray);
-                if(rc >= 0)
-                        break;
-
-                LogEvent(COMPONENT_FSAL, "Call failed, reconnecting to the remote server");
-                do {
-                        renewed = pxy_create_rpc_clnt(pxyexp->info);
-                        if (!renewed) {
-                                LogEvent(COMPONENT_FSAL,
-                                         "Cannot reconnect, will sleep for %d seconds",
-                                         pxyexp->info->retry_sleeptime);
-                                sleep(pxyexp->info->retry_sleeptime);
-                        }
-                } while(!renewed);
-        } while(1);
-
-        pthread_mutex_unlock(&rpc_call_lock);
-        return rc;
-}
-
-clientid4 pxy_cid;
-
-static fsal_status_t
-pxy_get_clientid(struct fsal_export *exp)
-{
-        int rc;
-        nfs_argop4 arg;
-        nfs_resop4 res;
-        nfs_client_id4 nfsclientid;
-        cb_client4 cbproxy;
-        char clientid_name[MAXNAMLEN];
-        SETCLIENTID4resok *sok;
-        extern time_t ServerBootTime;
-
-        if(pxy_cid)
-                ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
-        snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u", getpid());
-        nfsclientid.id.id_len = strlen(clientid_name);
-        nfsclientid.id.id_val = clientid_name;
-        snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
-
-        cbproxy.cb_program = 0;
-        cbproxy.cb_location.r_netid = "tcp";
-        cbproxy.cb_location.r_addr = "127.0.0.1";
-
-        sok = &res.nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.resok4;
-        arg.argop = NFS4_OP_SETCLIENTID;
-        arg.nfs_argop4_u.opsetclientid.client = nfsclientid;
-        arg.nfs_argop4_u.opsetclientid.callback = cbproxy;
-        arg.nfs_argop4_u.opsetclientid.callback_ident = 0;
-
-        rc = pxy_nfsv4_call(exp, 1, &arg, &res);
-        if(rc != NFS4_OK)
-                return nfsstat4_to_fsal(rc);
-
-        arg.argop = NFS4_OP_SETCLIENTID_CONFIRM;
-        arg.nfs_argop4_u.opsetclientid_confirm.clientid = sok->clientid;
-        memcpy(arg.nfs_argop4_u.opsetclientid_confirm.setclientid_confirm,
-               sok->setclientid_confirm, NFS4_VERIFIER_SIZE);
-
-        rc = pxy_nfsv4_call(exp, 1, &arg, &res);
-        if(rc != NFS4_OK)
-                return nfsstat4_to_fsal(rc);
-
-        /* Keep the confirmed client id */
-        pxy_cid = arg.nfs_argop4_u.opsetclientid_confirm.clientid;
-
-        ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
-
 static GETATTR4resok *
 pxy_fill_getattr_reply(nfs_resop4 *resop, uint32_t *bitmap,
                        char *blob, size_t blob_sz)
@@ -466,6 +301,649 @@ pxy_fill_getattr_reply(nfs_resop4 *resop, uint32_t *bitmap,
         a->obj_attributes.attr_vals.attrlist4_len = blob_sz;
 
         return a;
+}
+
+static int 
+pxy_got_rpc_reply(struct pxy_rpc_io_context *ctx, int sock, int sz, u_int xid)
+{
+        char *repbuf = ctx->recvbuf;
+        int size;
+
+        if(sz > ctx->recvbuf_sz)
+                return -E2BIG;
+
+        pthread_mutex_lock(&ctx->iolock);
+        memcpy(repbuf, &xid, sizeof(xid));
+        /*
+         * sz includes 4 bytes of xid which have been processed
+         * together with record mark - reduce the read to avoid
+         * gobbing up next record mark.
+         */
+        repbuf += 4;
+        ctx->ioresult = 4;
+        sz -= 4;
+
+        while(sz > 0) {
+                /* TODO: handle timeouts - use poll(2) */
+                int bc = read(sock, repbuf, sz);
+
+                if(bc <= 0) {
+                        ctx->ioresult = -((bc < 0) ? errno : ETIMEDOUT);
+                        break;
+                }
+                repbuf += bc;
+                ctx->ioresult += bc;
+                sz -= bc;
+        }
+        ctx->iodone = 1;
+        size = ctx->ioresult;
+        pthread_cond_signal(&ctx->iowait);
+        pthread_mutex_unlock(&ctx->iolock);
+        return size;
+}
+
+static int
+pxy_rpc_read_reply(int sock)
+{
+        struct {
+                uint recmark;
+                uint xid;
+        } h;
+        char *buf = (char *)&h;
+        struct glist_head *c;
+        char sink[256];
+        int cnt = 0;
+
+        while(cnt < 8) {
+                int bc = read(sock, buf + cnt, 8 - cnt);
+                if(bc < 0)
+                        return -errno;
+                cnt += bc;
+        }
+
+        h.recmark = ntohl(h.recmark);
+        /* TODO: check for final fragment */
+        h.xid = ntohl(h.xid);
+
+        LogDebug(COMPONENT_FSAL, "Recmark %x, xid %u\n", h.recmark, h.xid);
+        h.recmark &= ~(1U<<31);
+
+        pthread_mutex_lock(&listlock);
+        glist_for_each(c, &rpc_calls) {
+                struct pxy_rpc_io_context *ctx =
+                        container_of(c, struct pxy_rpc_io_context, calls);
+
+                if(ctx->rpc_xid == h.xid) {
+                        glist_del(c);
+                        pthread_mutex_unlock(&listlock);
+                        return pxy_got_rpc_reply(ctx, sock, h.recmark, h.xid);
+                }
+        }
+        pthread_mutex_unlock(&listlock);
+
+        cnt = h.recmark - 4;
+        LogDebug(COMPONENT_FSAL,
+                 "xid %u is not on the list, skip %d bytes\n", h.xid, cnt);
+        while(cnt > 0) {
+                int rb = (cnt > sizeof(sink)) ? sizeof(sink) : cnt;
+
+                rb = read(sock, sink, rb);
+                if(rb <= 0)
+                        return -errno;
+                cnt -= rb;
+        }
+
+        return 0;
+}
+
+static void pxy_new_socket_ready(void)
+{
+        struct glist_head *nxt;
+        struct glist_head *c;
+
+
+        /* If there is anyone waiting for the socket then tell them
+         * it's ready */
+        pthread_cond_broadcast(&sockless);
+
+        /* If there are any outstanding calls then tell them to resend */
+        glist_for_each_safe(c, nxt, &rpc_calls) {
+                struct pxy_rpc_io_context *ctx =
+                        container_of(c, struct pxy_rpc_io_context, calls);
+
+                glist_del(c);
+
+                pthread_mutex_lock(&ctx->iolock);
+                ctx->iodone = 1;
+                ctx->ioresult = -EAGAIN;
+                pthread_cond_signal(&ctx->iowait);
+                pthread_mutex_unlock(&ctx->iolock);
+        }
+}
+
+static int
+pxy_connect(const proxyfs_specific_initinfo_t *info,
+            struct sockaddr_in *dest)
+{
+        int sock;
+        if(info->use_privileged_client_port) {
+                int priv_port = 0;
+                if((sock = rresvport(&priv_port)) < 0) 
+                        LogCrit(COMPONENT_FSAL,
+                                "Cannot create TCP socket on privileged port");
+        } else {
+                if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+                        LogCrit(COMPONENT_FSAL,
+                                "Cannot create TCP socket - %d", errno);
+        }
+
+        if(sock >= 0) {
+                if(connect(sock, (struct sockaddr *)dest, sizeof(*dest)) < 0) {
+                        close(sock);
+                        sock = -1;
+                } else {
+                        pxy_new_socket_ready();
+                } 
+        }
+        return sock;
+}
+
+/*
+ * NB! rpc_sock can be closed by the sending thread but it will not be
+ *     changing its value. Only this function will change rpc_sock which 
+ *     means that it can look at the value without holding the lock.
+ */
+static void *
+pxy_rpc_recv(void *arg)
+{
+        const proxyfs_specific_initinfo_t *info = arg;
+        struct sockaddr_in addr_rpc;
+        char addr[INET_ADDRSTRLEN];
+        struct pollfd pfd;
+        int millisec = info->srv_timeout * 1000;
+
+        memset(&addr_rpc, 0, sizeof(addr_rpc));
+        addr_rpc.sin_family = AF_INET;
+        addr_rpc.sin_port = info->srv_port;
+        addr_rpc.sin_addr.s_addr = info->srv_addr;
+
+        for(;;) {
+                int nsleeps = 0;
+                pthread_mutex_lock(&listlock);
+                do {
+                        rpc_sock = pxy_connect(info, &addr_rpc);
+                        if(rpc_sock < 0) {
+                                if (nsleeps == 0)
+                                        LogCrit(COMPONENT_FSAL,
+                                                "Cannot connect to server %s:%u",
+                                                inet_ntop(AF_INET,
+                                                          &info->srv_addr, addr,
+                                                          sizeof(addr)),
+                                                ntohs(info->srv_port));
+                                pthread_mutex_unlock(&listlock);
+                                sleep(info->retry_sleeptime);
+                                nsleeps++;
+                                pthread_mutex_lock(&listlock);
+                        } else {
+                                LogDebug(COMPONENT_FSAL,
+                                         "Connected after %d sleeps, "
+                                         "resending outstanding calls",
+                                         nsleeps);
+                        }
+                } while(rpc_sock < 0);
+                pthread_mutex_unlock(&listlock);
+
+                pfd.fd = rpc_sock;
+                pfd.events = POLLIN | POLLRDHUP;
+
+                while(rpc_sock >= 0) {
+                        switch (poll(&pfd, 1, millisec)) {
+                        case 0:
+                                LogDebug(COMPONENT_FSAL,
+                                         "Timeout, wait again...");
+                                continue;
+
+                        case -1:
+                                break;
+
+                        default:
+                                if(pfd.revents & POLLRDHUP) {
+                                        LogEvent(COMPONENT_FSAL,
+                                                 "Other end has closed "
+                                                 "connection, reconnecting...");
+                                } else if(pfd.revents & POLLNVAL) {
+                                        LogEvent(COMPONENT_FSAL,
+                                                 "Socket is closed");
+                                } else {
+                                        if(pxy_rpc_read_reply(rpc_sock) >= 0)
+                                                continue;
+                                }
+                                break;
+                        }
+
+                        pthread_mutex_lock(&listlock);
+                        close(rpc_sock);
+                        rpc_sock = -1;
+                        pthread_mutex_unlock(&listlock);
+                }
+        }
+
+        return NULL;
+}
+
+static enum clnt_stat
+pxy_process_reply(struct pxy_rpc_io_context * ctx, COMPOUND4res *res)
+{
+        enum clnt_stat rc = RPC_CANTRECV;
+        struct timespec ts;
+
+        pthread_mutex_lock(&ctx->iolock);
+        ts.tv_sec = time(NULL) + 60;
+        ts.tv_nsec = 0;
+
+        while(!ctx->iodone) {
+                int w = pthread_cond_timedwait(&ctx->iowait, &ctx->iolock, &ts);
+                if(w == ETIMEDOUT) {
+                        pthread_mutex_unlock(&ctx->iolock);
+                        return RPC_TIMEDOUT;
+                }
+        }
+
+        ctx->iodone = 0;
+        pthread_mutex_unlock(&ctx->iolock);
+
+        if(ctx->ioresult > 0) {
+                struct rpc_msg reply;
+                XDR x;
+
+                memset(&reply, 0, sizeof(reply));
+                reply.acpted_rply.ar_results.proc = (xdrproc_t)xdr_COMPOUND4res;
+                reply.acpted_rply.ar_results.where = (caddr_t)res;
+
+                xdrmem_create(&x, ctx->recvbuf, ctx->ioresult, XDR_DECODE);
+
+                if(xdr_replymsg(&x, &reply)) {
+                        if(reply.rm_reply.rp_stat == MSG_ACCEPTED) {
+                                switch(reply.rm_reply.rp_acpt.ar_stat) {
+                                case SUCCESS: rc = RPC_SUCCESS; break;
+                                case PROG_UNAVAIL: rc = RPC_PROGUNAVAIL; break;
+                                case PROG_MISMATCH: rc = RPC_PROGVERSMISMATCH; break;
+                                case PROC_UNAVAIL: rc = RPC_PROCUNAVAIL; break;
+                                case GARBAGE_ARGS: rc = RPC_CANTDECODEARGS; break;
+                                case SYSTEM_ERR: rc = RPC_SYSTEMERROR; break;
+                                default: rc = RPC_FAILED; break;
+                                }
+                        } else {
+                                switch(reply.rm_reply.rp_rjct.rj_stat) {
+                                case RPC_MISMATCH: rc = RPC_VERSMISMATCH; break;
+                                case AUTH_ERROR: rc = RPC_AUTHERROR; break;
+                                default: rc = RPC_FAILED; break;
+                                }
+                        }
+                } else {
+                        rc = RPC_CANTDECODERES;
+                }
+
+                reply.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
+                reply.acpted_rply.ar_results.where = NULL;
+
+                xdr_free((xdrproc_t)xdr_replymsg,&reply);
+        }
+        return rc;
+}
+
+static void
+pxy_rpc_need_sock(void)
+{
+        pthread_mutex_lock(&listlock);
+        while(rpc_sock < 0)
+                pthread_cond_wait(&sockless, &listlock);
+        pthread_mutex_unlock(&listlock);
+}
+
+static int 
+pxy_rpc_renewer_wait(int timeout)
+{
+        struct timespec ts;
+        int rc;
+
+        pthread_mutex_lock(&listlock);
+        ts.tv_sec = time(NULL) + timeout;
+        ts.tv_nsec = 0;
+
+        rc = pthread_cond_timedwait(&sockless, &listlock, &ts);
+        pthread_mutex_unlock(&listlock);
+        return (rc == ETIMEDOUT);
+}
+
+static int 
+pxy_compoundv4_call(struct pxy_rpc_io_context * pcontext, 
+                    COMPOUND4args *args,
+                    COMPOUND4res *res)
+{
+        XDR x;
+        struct rpc_msg rmsg;
+        AUTH *au;
+        enum clnt_stat rc;
+
+        pthread_mutex_lock(&listlock);
+        rmsg.rm_xid = rpc_xid++;
+        pthread_mutex_unlock(&listlock);
+        rmsg.rm_direction = CALL;
+
+        rmsg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
+        rmsg.rm_call.cb_prog = pcontext->nfs_prog;
+        rmsg.rm_call.cb_vers = FSAL_PROXY_NFS_V4;
+        rmsg.rm_call.cb_proc = NFSPROC4_COMPOUND;
+
+#if 0
+        au = authunix_create(pxy_hostname,
+                             pcontext->credential.user,
+                             pcontext->credential.group,
+                             pcontext->credential.nbgroups,
+                             pcontext->credential.alt_groups);
+#endif
+        au = authunix_create_default();
+        if(au == NULL)
+                return RPC_AUTHERROR;
+
+        rmsg.rm_call.cb_cred = au->ah_cred;
+        rmsg.rm_call.cb_verf = au->ah_verf;
+
+        xdrmem_create(&x, pcontext->sendbuf + 4, pcontext->sendbuf_sz,
+                      XDR_ENCODE);
+        if(xdr_callmsg(&x, &rmsg) && xdr_COMPOUND4args(&x, args)) {
+                u_int pos = xdr_getpos(&x);
+                u_int recmark = ntohl(pos | (1U << 31));
+                int first_try = 1;
+
+                pcontext->rpc_xid = rmsg.rm_xid;
+
+                memcpy(pcontext->sendbuf, &recmark, sizeof(recmark));
+                pos += 4;
+
+                do {
+                        int bc = 0;
+                        char *buf = pcontext->sendbuf;
+                        LogDebug(COMPONENT_FSAL, "%ssend XID %u with %d bytes",
+                                 (first_try ? "First attempt to " : "Re"),
+                                 rmsg.rm_xid, pos);
+                        pthread_mutex_lock(&listlock);
+                        while(bc < pos) {
+                                int wc = write(rpc_sock, buf, pos - bc);
+                                if(wc <= 0) {
+                                        close(rpc_sock);
+                                        break;
+                                }
+                                bc += wc;
+                                buf += wc;
+                        }
+
+                        if(bc == pos) {
+                                if(first_try) {
+                                        glist_add_tail(&rpc_calls,
+                                                       &pcontext->calls);
+                                        first_try = 0;
+                                }
+                        } else {
+                                if(!first_try)
+                                        glist_del(&pcontext->calls);
+                        }
+                        pthread_mutex_unlock(&listlock);
+
+                        if(bc == pos)
+                                rc = pxy_process_reply(pcontext, res);
+                        else
+                                rc = RPC_CANTSEND;
+                } while(rc == RPC_TIMEDOUT);
+        } else {
+                rc = RPC_CANTENCODEARGS;
+        }
+        if(au)
+                auth_destroy(au);
+        return rc;
+}
+
+int 
+pxy_compoundv4_execute(const char *caller,
+                       uint32_t cnt,
+                       nfs_argop4 *argoparray,
+                       nfs_resop4 *resoparray)
+{
+        enum clnt_stat rc;
+        struct pxy_rpc_io_context *ctx;
+        COMPOUND4args arg = {
+                .argarray.argarray_val = argoparray,
+                .argarray.argarray_len = cnt
+        };
+        COMPOUND4res res = {
+                .resarray.resarray_val = resoparray,
+                .resarray.resarray_len = cnt
+        };
+
+        pthread_mutex_lock(&listlock);
+        while(glist_empty(&free_contexts))
+                pthread_cond_wait(&need_context, &listlock);
+        ctx = glist_first_entry(&free_contexts, struct pxy_rpc_io_context,
+                                calls);
+        glist_del(&ctx->calls);
+        pthread_mutex_unlock(&listlock);
+
+        do {
+                rc = pxy_compoundv4_call(ctx, &arg, &res);
+                if(rc != RPC_SUCCESS)
+                        LogDebug(COMPONENT_FSAL,
+                                 "%s failed with %d", caller, rc);
+                if(rc == RPC_CANTSEND)
+                        pxy_rpc_need_sock();
+        } while ((rc == RPC_CANTRECV && (ctx->ioresult == -EAGAIN)) ||
+                 (rc == RPC_CANTSEND));
+
+
+        pthread_mutex_lock(&listlock);
+        if(glist_empty(&free_contexts))
+                pthread_cond_signal(&need_context);
+        glist_add(&free_contexts, &ctx->calls);
+        pthread_mutex_unlock(&listlock);
+
+        if(rc == RPC_SUCCESS)
+                return res.status;
+        return rc;
+}
+
+#define pxy_nfsv4_call(exp, cnt, args, resp) \
+        pxy_compoundv4_execute(__func__, cnt, args, resp)
+
+void pxy_get_clientid(clientid4 *ret)
+{
+  pthread_mutex_lock(&pxy_clientid_mutex);
+  *ret = pxy_clientid;
+  pthread_mutex_unlock(&pxy_clientid_mutex);
+}
+
+static int 
+pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
+{
+        int rc;
+        int opcnt = 0;
+#define FSAL_CLIENTID_NB_OP_ALLOC 2
+        nfs_argop4 arg[FSAL_CLIENTID_NB_OP_ALLOC];
+        nfs_resop4 res[FSAL_CLIENTID_NB_OP_ALLOC]; 
+        nfs_client_id4 nfsclientid;
+        cb_client4 cbproxy;
+        char clientid_name[MAXNAMLEN];
+        uint32_t lease_bits[] = {1U << FATTR4_LEASE_TIME};
+        uint32_t bitmap_res[2];
+        GETATTR4resok *rok4;
+        SETCLIENTID4resok *sok;
+        extern time_t ServerBootTime;
+
+        LogEvent(COMPONENT_FSAL,
+                 "Negotiating a new ClientId with the remote server") ;
+
+        snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u",
+                 getpid());
+        nfsclientid.id.id_len = strlen(clientid_name);
+        nfsclientid.id.id_val = clientid_name;
+        snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x",
+                 (int)ServerBootTime);
+
+        cbproxy.cb_program = 0;
+        cbproxy.cb_location.r_netid = "tcp";
+        cbproxy.cb_location.r_addr = "127.0.0.1";
+
+        sok = &res[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.resok4;
+        arg[0].argop = NFS4_OP_SETCLIENTID;
+        arg[0].nfs_argop4_u.opsetclientid.client = nfsclientid;
+        arg[0].nfs_argop4_u.opsetclientid.callback = cbproxy;
+        arg[0].nfs_argop4_u.opsetclientid.callback_ident = 0;
+
+        rc = pxy_compoundv4_execute(__func__, 1, arg, res);
+        if(rc != NFS4_OK)
+                return -1;
+
+        arg[0].argop = NFS4_OP_SETCLIENTID_CONFIRM;
+        arg[0].nfs_argop4_u.opsetclientid_confirm.clientid = sok->clientid;
+        memcpy(arg[0].nfs_argop4_u.opsetclientid_confirm.setclientid_confirm,
+               sok->setclientid_confirm, NFS4_VERIFIER_SIZE);
+
+        rc = pxy_compoundv4_execute(__func__, 1, arg, res);
+        if(rc != NFS4_OK)
+                return -1;
+
+        /* Keep the confirmed client id */
+        *resultclientid = arg[0].nfs_argop4_u.opsetclientid_confirm.clientid;
+
+        /* Get the lease time */
+        opcnt = 0;
+        COMPOUNDV4_ARG_ADD_OP_PUTROOTFH(opcnt, arg);
+        rok4 = pxy_fill_getattr_reply(res + opcnt, bitmap_res,
+                                      (char *)lease_time, sizeof(*lease_time));
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, arg, lease_bits);
+
+        rc = pxy_compoundv4_execute(__func__, opcnt, arg, res);
+        if(rc != NFS4_OK)
+                *lease_time = 60;
+        else
+                *lease_time = ntohl(*lease_time);
+
+        return 0;
+}
+
+static void *
+pxy_clientid_renewer(void *Arg)
+{
+        int rc;
+        int needed = 1;
+        nfs_argop4 arg;
+        nfs_resop4 res;
+        uint32_t lease_time = 60;
+ 
+        while(1) {
+                clientid4 newcid;
+
+                if(!needed && pxy_rpc_renewer_wait(lease_time - 5)) {
+                        /* Simply renew the client id you've got */
+                        LogDebug(COMPONENT_FSAL, "Renewing client id %lx",
+                                 pxy_clientid);
+                        arg.argop = NFS4_OP_RENEW;
+                        arg.nfs_argop4_u.oprenew.clientid = pxy_clientid;
+                        rc = pxy_compoundv4_execute(__func__, 1, &arg, &res);
+                        if(rc == NFS4_OK) {
+                                LogDebug(COMPONENT_FSAL,
+                                         "Renewed client id %lx", pxy_clientid);
+                                continue;
+                        }
+                }
+
+                /* We've either failed to renew or rpc socket has been 
+                 * reconnected and we need new client id */
+                LogDebug(COMPONENT_FSAL, "Need %d new client id", needed);
+                pxy_rpc_need_sock();
+                needed = pxy_setclientid(&newcid, &lease_time);
+                if(!needed) {
+                        pthread_mutex_lock(&pxy_clientid_mutex);
+                        pxy_clientid = newcid;
+                        pthread_mutex_unlock(&pxy_clientid_mutex);
+                }
+        }
+        return NULL;
+}
+
+static void
+free_io_contexts(void)
+{
+        struct glist_head *cur, *n;
+        glist_for_each_safe(cur, n, &free_contexts) {
+                struct pxy_rpc_io_context *c =
+                        container_of(cur, struct pxy_rpc_io_context, calls);
+                glist_del(cur);
+                free(c);
+        }
+}
+
+int
+pxy_init_rpc(proxyfs_specific_initinfo_t *info)
+{
+        int rc;
+        int i;
+
+        /* TCP is the only protocol supported at the moment */
+        if(strcmp(info->srv_proto, "tcp")) {
+                LogCrit(COMPONENT_FSAL,
+                        "Protocol '%s' is not supported, consider using TCP",
+                        info->srv_proto);
+                return ENOTSUP;
+        }
+
+        init_glist(&rpc_calls);
+        init_glist(&free_contexts);
+
+        rpc_xid = getpid() ^ time(NULL);
+
+        if(gethostname(pxy_hostname, sizeof(pxy_hostname)))
+                strncpy(pxy_hostname, "NFS-GANESHA/Proxy",
+                        sizeof(pxy_hostname));
+
+        for(i=0; i < 16; i++) {
+                struct pxy_rpc_io_context *c = malloc(sizeof(*c) +
+                                                      info->srv_sendsize +
+                                                      info->srv_recvsize);
+
+                if(!c) {
+                        free_io_contexts();
+                        return ENOMEM;
+                }
+
+                pthread_mutex_init(&c->iolock, NULL);
+                pthread_cond_init(&c->iowait, NULL);
+                c->nfs_prog = info->srv_prognum;
+                c->sendbuf_sz = info->srv_sendsize;
+                c->recvbuf_sz = info->srv_recvsize;
+                c->sendbuf = (char *)(c + 1);
+                c->recvbuf = c->sendbuf + c->sendbuf_sz;
+
+                glist_add(&free_contexts, &c->calls);
+        }
+
+        rc = pthread_create(&pxy_recv_thread, NULL, pxy_rpc_recv, info);
+        if(rc) {
+                LogCrit(COMPONENT_FSAL,
+                        "Cannot create proxy rpc receiver thread - %s",
+                        strerror(rc));
+                free_io_contexts();
+                return rc;
+        }
+
+        rc = pthread_create(&pxy_renewer_thread, NULL, pxy_clientid_renewer,
+                            NULL);
+        if(rc) {
+                LogCrit(COMPONENT_FSAL,
+                        "Cannot create proxy clientid renewer thread - %s",
+                        strerror(rc));
+                free_io_contexts();
+        }
+        return rc;
 }
 
 static fsal_status_t
@@ -659,13 +1137,10 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
         OPEN4resok *opok;
         struct pxy_obj_handle *ph;
         fsal_status_t st;
+        clientid4 cid;
 
         if(!dir_hdl || !name || !name->len || !attrib || !handle)
                 ReturnCode(ERR_FSAL_FAULT, EINVAL);
-
-        st = pxy_get_clientid(dir_hdl->export);
-        if(FSAL_IS_ERROR(st))
-                return st;
 
         /* Create the owner */
         snprintf(owner_val, sizeof(owner_val), "GANESHA/PROXY: pid=%u %ld",
@@ -684,8 +1159,9 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
         opok = &resoparray[opcnt].nfs_resop4_u.opopen.OPEN4res_u.resok4;
         opok->attrset.bitmap4_val = bitmap_create;
         opok->attrset.bitmap4_len = 2;
+        pxy_get_clientid(&cid);
         COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE(opcnt, argoparray, name, input_attr,
-                                          pxy_cid, owner_val, owner_len);
+                                          cid, owner_val, owner_len);
 
         fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
         fhok->object.nfs_fh4_val = padfilehandle;
@@ -1004,12 +1480,9 @@ pxy_do_readdir(struct pxy_obj_handle *ph, nfs_cookie4 *cookie,
                 if(FSAL_IS_ERROR(st))
                         break;
         }
-        pthread_mutex_lock(&rpc_call_lock);
-        clnt_freeres(rpc_client, (xdrproc_t)xdr_readdirres, resoparray);
-        pthread_mutex_unlock(&rpc_call_lock);
+        xdr_free((xdrproc_t)xdr_readdirres, resoparray);
         return st;
 }
-
 
 /* What to do about verifier if server needs one? */
 static fsal_status_t

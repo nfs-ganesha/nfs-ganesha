@@ -42,7 +42,7 @@
 static proxyfs_specific_initinfo_t default_pxy_params = {
         .retry_sleeptime = 10, /* Time to sleep when retrying */
         .srv_prognum = 100003, /* Default NFS prognum         */
-        .srv_timeout = 2,      /* RPC Client timeout          */
+        .srv_timeout = 60,     /* RPC Client timeout          */
         .srv_proto = "tcp",    /* Protocol to use */
         .srv_sendsize = 32768, /* Default Buffer Send Size    */
         .srv_recvsize = 32768, /* Default Buffer Send Size    */
@@ -232,6 +232,7 @@ pxy_init_config(struct fsal_module *fsal_hdl,
                 config_file_t config_struct)
 {
         fsal_status_t st;
+        int rc;
         struct pxy_fsal_module *pxy =
                 container_of(fsal_hdl, struct pxy_fsal_module, module);
 
@@ -250,9 +251,13 @@ pxy_init_config(struct fsal_module *fsal_hdl,
                 ReturnCode(ERR_FSAL_INVAL, EINVAL);
 
 #ifdef _HANDLE_MAPPING
-        if((st.minor = HandleMap_Init(&pxy->special.hdlmap)) < 0)
-                ReturnCode(ERR_FSAL_INVAL, -st.minor);
+        if((rc = HandleMap_Init(&pxy->special.hdlmap)) < 0)
+                ReturnCode(ERR_FSAL_INVAL, -rc);
 #endif
+
+        rc = pxy_init_rpc(&pxy->special);
+        if(rc)
+                ReturnCode(ERR_FSAL_FAULT, rc);
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
