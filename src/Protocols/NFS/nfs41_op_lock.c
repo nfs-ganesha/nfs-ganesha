@@ -294,7 +294,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
               "LOCK failed, non-reclaim while in grace",
               data->current_entry,
-              data->pcontext,
               plock_owner,
               &lock_desc);
       res_LOCK4.status = NFS4ERR_GRACE;
@@ -307,7 +306,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
               "LOCK failed, invalid reclaim while in grace",
               data->current_entry,
-              data->pcontext,
               plock_owner,
               &lock_desc);
       res_LOCK4.status = NFS4ERR_NO_GRACE;
@@ -319,7 +317,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
               "LOCK failed, reclaim while not in grace",
               data->current_entry,
-              data->pcontext,
               plock_owner,
               &lock_desc);
       res_LOCK4.status = NFS4ERR_NO_GRACE;

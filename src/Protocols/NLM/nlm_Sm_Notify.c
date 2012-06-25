@@ -73,6 +73,7 @@ int nlm4_Sm_Notify(nfs_arg_t *parg,
        * by this SM_NOTIFY.
        */
       if(state_nlm_notify(nsm_client,
+			  creds,
                           (void *) (ptrdiff_t) arg->state,
                           &state_status) != STATE_SUCCESS)
         {

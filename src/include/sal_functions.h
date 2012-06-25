@@ -527,6 +527,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 
 #ifdef _USE_NLM
 state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
+				struct user_cred     * creds,
                                 state_t              * pstate,
                                 state_status_t       * pstatus);
 #endif
@@ -645,7 +646,7 @@ void state_share_anonymous_io_done(cache_entry_t  * pentry,
                                    int              share_access);
 
 state_status_t state_nlm_share(cache_entry_t        * pentry,
-                               fsal_op_context_t    * pcontext,
+			       struct user_cred     *creds,
                                exportlist_t         * pexport,
                                int                    share_access,
                                int                    share_deny,
@@ -653,7 +654,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                                state_status_t       * pstatus);
 
 state_status_t state_nlm_unshare(cache_entry_t        * pentry,
-                                 fsal_op_context_t    * pcontext,
+				 struct user_cred     *creds,
                                  int                    share_access,
                                  int                    share_deny,
                                  state_owner_t        * powner,

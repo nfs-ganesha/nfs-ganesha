@@ -629,7 +629,7 @@ void state_share_anonymous_io_done(cache_entry_t  * pentry,
 
 #ifdef _USE_NLM
 state_status_t state_nlm_share(cache_entry_t        * pentry,
-                               fsal_op_context_t    * pcontext,
+                               struct user_cred     * creds,
                                exportlist_t         * pexport,
                                int                    share_access,
                                int                    share_deny,
@@ -656,7 +656,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
   if(cache_inode_open(pentry,
                       FSAL_O_RDWR,
-                      pcontext,
+                      creds,
                       0,
                       &cache_status) != CACHE_INODE_SUCCESS)
     {
@@ -760,7 +760,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
       share_param.share_access = new_pentry_share_access;
       share_param.share_deny   = new_pentry_share_deny;
 
-      *pstatus = do_share_op(pentry, pcontext, powner, &share_param);
+      *pstatus = do_share_op(pentry, powner, &share_param);
 
       if(*pstatus != STATE_SUCCESS)
         {
@@ -821,7 +821,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 }
 
 state_status_t state_nlm_unshare(cache_entry_t        * pentry,
-                                 fsal_op_context_t    * pcontext,
+                                 struct user_cred     * creds,
                                  int                    share_access,
                                  int                    share_deny,
                                  state_owner_t        * powner,
@@ -895,7 +895,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
           share_param.share_access = new_pentry_share_access;
           share_param.share_deny   = new_pentry_share_deny;
 
-          *pstatus = do_share_op(pentry, pcontext, powner, &share_param);
+          *pstatus = do_share_op(pentry, powner, &share_param);
 
           if(*pstatus != STATE_SUCCESS)
             {

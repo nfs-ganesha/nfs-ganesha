@@ -53,7 +53,7 @@
 
 int nlm4_Unshare(nfs_arg_t            * parg,
                  exportlist_t         * pexport,
-                 fsal_op_context_t    * pcontext,
+		 struct user_cred     *creds,
                  nfs_worker_data_t    * pworker,
                  struct svc_req       * preq,
                  nfs_res_t            * pres)
@@ -101,8 +101,8 @@ int nlm4_Unshare(nfs_arg_t            * parg,
 
   rc = nlm_process_share_parms(preq,
                                &arg->share,
+			       pexport->export_hdl,
                                &pentry,
-                               pcontext,
                                CARE_NOT,
                                &nsm_client,
                                &nlm_client,
@@ -118,7 +118,7 @@ int nlm4_Unshare(nfs_arg_t            * parg,
     }
 
   if(state_nlm_unshare(pentry,
-                       pcontext,
+                       creds,
                        arg->share.access,
                        arg->share.mode,
                        nlm_owner,

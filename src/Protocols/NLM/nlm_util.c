@@ -405,8 +405,8 @@ int nlm_process_parameters(struct svc_req        * preq,
 
 int nlm_process_share_parms(struct svc_req        * preq,
                             nlm4_share            * share,
+			    struct fsal_export    *exp_hdl,
                             cache_entry_t        ** ppentry,
-                            fsal_op_context_t     * pcontext,
                             care_t                  care,
                             state_nsm_client_t   ** ppnsm_client,
                             state_nlm_client_t   ** ppnlm_client,
@@ -424,7 +424,7 @@ int nlm_process_share_parms(struct svc_req        * preq,
 
   /* Convert file handle into a cache entry */
   if(share->fh.n_len > MAX_NETOBJ_SZ ||
-     !nfs3_FhandleToFSAL((nfs_fh3 *) &share->fh, &fsal_data.fh_desc, pcontext))
+     !nfs3_FhandleToFSAL((nfs_fh3 *) &share->fh, &fsal_data.fh_desc, exp_hdl))
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
@@ -433,7 +433,6 @@ int nlm_process_share_parms(struct svc_req        * preq,
   /* Now get the cached inode attributes */
   *ppentry = cache_inode_get(&fsal_data,
                              &attr,
-                             pcontext,
                              NULL,
                              &cache_status);
 

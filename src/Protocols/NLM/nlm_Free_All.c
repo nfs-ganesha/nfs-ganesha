@@ -53,7 +53,7 @@
 
 int nlm4_Free_All(nfs_arg_t *parg,
                   exportlist_t *pexport,
-                  fsal_op_context_t *pcontext,
+		  struct user_cred *creds,
                   nfs_worker_data_t *pworker,
                   struct svc_req *preq,
                   nfs_res_t *pres)
@@ -76,6 +76,7 @@ int nlm4_Free_All(nfs_arg_t *parg,
        * by this NLM_FREE_ALL.
        */
       if(state_nlm_notify(nsm_client,
+			  creds,
                           (void *) (ptrdiff_t) arg->state,
                           &state_status) != STATE_SUCCESS)
         {

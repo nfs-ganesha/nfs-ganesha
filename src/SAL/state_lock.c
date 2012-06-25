@@ -1371,7 +1371,7 @@ void grant_blocked_lock_immediate(cache_entry_t         * pentry,
   LogEntry("Immediate Granted entry", lock_entry);
 
   /* A lock downgrade could unblock blocked locks */
-  grant_blocked_locks(pentry, pcontext);
+  grant_blocked_locks(pentry);
 }
 
 void state_complete_grant(state_cookie_entry_t  * cookie_entry)
@@ -1964,7 +1964,7 @@ state_status_t state_test(cache_entry_t        * pentry,
       return *pstatus;
     }
 
-  if(cache_inode_open(pentry, FSAL_O_RDWR, creds, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_open(pentry, FSAL_O_RDWR, creds, 0, &cache_status) != CACHE_INODE_SUCCESS)
     {
       *pstatus = cache_inode_status_to_state_status(cache_status);
       LogFullDebug(COMPONENT_STATE,
@@ -2062,7 +2062,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
       return *pstatus;
     }
 
-  if(cache_inode_open(pentry, FSAL_O_RDWR, creds, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_open(pentry, FSAL_O_RDWR, creds, 0, &cache_status) != CACHE_INODE_SUCCESS)
     {
       cache_inode_dec_pin_ref(pentry);
       *pstatus = cache_inode_status_to_state_status(cache_status);
@@ -2448,7 +2448,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
     {
       LogLock(COMPONENT_STATE, NIV_DEBUG,
               "Bad Unlock",
-              pentry, pcontext, powner, plock);
+              pentry, powner, plock);
       *pstatus = STATE_BAD_TYPE;
       return *pstatus;
     }
@@ -2583,7 +2583,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
     {
       LogLock(COMPONENT_STATE, NIV_DEBUG,
               "Bad Cancel",
-              pentry, pcontext, powner, plock);
+              pentry, powner, plock);
       *pstatus = STATE_BAD_TYPE;
       return *pstatus;
     }
@@ -2660,6 +2660,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
  *
  */
 state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
+				struct user_cred     * creds,
                                 state_t              * pstate,
                                 state_status_t       * pstatus)
 {
@@ -2800,6 +2801,7 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
 
       /* Remove all shares held by this NSM Client and Owner on the file */
       if(state_nlm_unshare(pentry,
+			   creds,
                            OPEN4_SHARE_ACCESS_NONE,
                            OPEN4_SHARE_DENY_NONE,
                            powner,

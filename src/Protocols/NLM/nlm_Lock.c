@@ -53,7 +53,7 @@
 
 int nlm4_Lock(nfs_arg_t            * parg,
               exportlist_t         * pexport,
-              struct user_cred     * creds /* IN     */ ,
+              struct user_cred     * creds,
               nfs_worker_data_t    * pworker,
               struct svc_req       * preq,
               nfs_res_t            * pres)
@@ -209,8 +209,7 @@ static void nlm4_lock_message_resp(state_async_queue_t *arg)
  */
 int nlm4_Lock_Message(nfs_arg_t *parg,
                       exportlist_t *pexport,
-                      struct user_cred *creds /* IN     */ ,
-                      fsal_op_context_t *pcontext,
+                      struct user_cred *creds,
                       nfs_worker_data_t *pworker,
                       struct svc_req *preq,
                       nfs_res_t *pres)

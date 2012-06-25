@@ -62,7 +62,6 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
   char                   buffer[1024];
   state_status_t         state_status = STATE_SUCCESS;
   state_cookie_entry_t * cookie_entry;
-  exportlist_t  *pexport; /* not really used */
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
