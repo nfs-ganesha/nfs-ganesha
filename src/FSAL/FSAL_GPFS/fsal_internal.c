@@ -852,6 +852,59 @@ fsal_status_t fsal_internal_unlink(fsal_op_context_t * p_context,
 }
 
 /**
+ * fsal_internal_create:
+ * Create a file/directory by name
+ *
+ * \param p_context (input):
+ *        Pointer to current context.  Used to get export root fd.
+ * \param p_dir_handle (input):
+ *          file handle of directory
+ * \param name (input):
+ *          name to create
+ * \param mode & dev (input):
+ *          file type and dev for mknode
+ * \param fh & stat (outut):
+ *          file handle of new file and attributes
+ *
+ * \return status of operation
+ */
+fsal_status_t fsal_internal_create(fsal_op_context_t * p_context,
+                                   fsal_handle_t * p_dir_handle,
+                                   fsal_name_t * p_stat_name,
+                                   mode_t mode, dev_t dev,
+                                   fsal_handle_t * p_new_handle,
+                                   struct stat *buf)
+{
+  int rc;
+  int dirfd = 0;
+  struct create_name_arg crarg;
+
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+
+  if(!p_stat_name->name)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  crarg.mountdirfd = dirfd;
+  crarg.mode = mode;
+  crarg.dev = dev;
+  crarg.len = p_stat_name->len;
+  crarg.name = p_stat_name->name;
+  crarg.dir_fh = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_dir_handle)->data.handle;
+  crarg.new_fh = (struct gpfs_file_handle *) &p_new_handle->data.handle;
+  crarg.new_fh->handle_size = OPENHANDLE_HANDLE_LEN;
+  crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
+  crarg.new_fh->handle_version = OPENHANDLE_VERSION;
+  crarg.buf = buf;
+
+  rc = gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
  * fsal_internal_rename_fh:
  * Rename old file name to new name
  *

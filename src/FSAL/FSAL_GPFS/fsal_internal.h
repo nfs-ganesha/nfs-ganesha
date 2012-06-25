@@ -139,6 +139,13 @@ fsal_status_t fsal_internal_unlink(fsal_op_context_t * p_context,
                                    fsal_name_t * p_stat_name,
                                    struct stat *buf);
 
+fsal_status_t fsal_internal_create(fsal_op_context_t * p_context,
+                                   fsal_handle_t * p_dir_handle,
+                                   fsal_name_t * p_stat_name,
+                                   mode_t mode, dev_t dev,
+                                   fsal_handle_t * p_new_handle,
+                                   struct stat *buf);
+
 fsal_status_t fsal_internal_rename_fh(fsal_op_context_t * p_context,
                                     fsal_handle_t * p_old_handle,
                                     fsal_handle_t * p_new_handle,
