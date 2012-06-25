@@ -584,6 +584,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libganeshaNFS.a
 %{_libdir}/libganeshaNFS.so.*
 %{_bindir}/fuse.ganesha.convertFH
+%{_bindir}/fuse.ganesha.printFH
 
 
 %files fuselike-devel
