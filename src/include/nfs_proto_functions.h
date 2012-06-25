@@ -357,14 +357,14 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
 
 int nlm4_Share(nfs_arg_t            * parg,
                exportlist_t         * pexport,
-               fsal_op_context_t    * pcontext,
+               struct user_cred *creds,
                nfs_worker_data_t    * pworker,
                struct svc_req       * preq,
                nfs_res_t            * pres);
 
 int nlm4_Unshare(nfs_arg_t            * parg,
                  exportlist_t         * pexport,
-                 fsal_op_context_t    * pcontext,
+                 struct user_cred *creds,
                  nfs_worker_data_t    * pworker,
                  struct svc_req       * preq,
                  nfs_res_t            * pres);
@@ -409,7 +409,7 @@ int rquota_getactivequota(nfs_arg_t *parg,
 
 int rquota_setquota(nfs_arg_t * parg /* IN  */ ,
                     exportlist_t * pexport /* IN  */ ,
-                    fsal_op_context_t * pcontext /* IN  */ ,
+                    struct user_cred *creds,
                     nfs_worker_data_t *pworker,
                     struct svc_req *preq /* IN  */ ,
                     nfs_res_t * pres /* OUT */ );
@@ -1503,7 +1503,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File att
 
 int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask);
 
-int nfs4_Fattr_Fill(fattr4 *Fattr, int attrcnt, uint32_t *attrlist,
+int nfs4_Fattr_Fill(fattr4 *Fattr, uint_t attrcnt, uint32_t *attrlist,
                     int valsiz, char *attrvals);
 int nfs4_supported_attrs_to_fattr(char *outbuf);
 int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
@@ -1513,7 +1513,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
                            nfs_fh4 *objFH,
                            bitmap4 *Bitmap);
 
-void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
+void nfs4_list_to_bitmap4(bitmap4 * b, uint_t plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(const bitmap4 * b, uint_t * plen, uint32_t * pval);
 
 int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;

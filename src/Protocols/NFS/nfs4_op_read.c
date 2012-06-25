@@ -85,7 +85,7 @@ static int op_dsread(struct nfs_argop4 *op,
 
 int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  size_t                   size = 0;
+  size_t                   size = 0, check_size = 0;
   size_t                   read_size = 0;
   fsal_off_t               offset = 0;
   fsal_boolean_t           eof_met = FALSE;

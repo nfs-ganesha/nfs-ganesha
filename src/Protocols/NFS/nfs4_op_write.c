@@ -81,7 +81,7 @@ static int op_dswrite(struct nfs_argop4 *op,
 
 int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_size_t              size;
+  fsal_size_t              size, check_size;
   fsal_size_t              written_size;
   fsal_off_t               offset;
   fsal_boolean_t           eof_met;

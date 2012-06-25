@@ -351,7 +351,6 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
         access_mode |= FSAL_X_OK;
 
       xattrs.asked_attributes = cache_inode_params.attrmask;
-      xattrs.asked_attributes = pclient->attrmask;
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
 						   xattr_id, &xattrs);
 
@@ -952,8 +951,6 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
     }
 
   attr_attrs.asked_attributes = cache_inode_params.attrmask;
-  fsal_status = pfsal_handle->ops->getextattr_attrs(pfsal_handle,
-						    attr_id, &attr_attrs);
   fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
 					       attr_id, &attr_attrs);
 

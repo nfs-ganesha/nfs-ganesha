@@ -840,7 +840,7 @@ int nfs4_supported_attrs_to_fattr(char *attrvalsBuffer)
    * to be a consequence of fattr4tab and avoid incoherency */
 
   /* How many supported attributes ? Compute the result in variable named c */
-  int k, c = 0;
+  uint_t k, c = 0;
   for(k = FATTR4_SUPPORTED_ATTRS; k <= lastbit; k++)
     {
       if(fattr4tab[k].supported)
@@ -874,7 +874,7 @@ int nfs4_supported_attrs_to_fattr(char *attrvalsBuffer)
   return LastOffset;
 }
 
-int nfs4_Fattr_Fill(fattr4 *Fattr, int cnt, uint32_t *attrvalslist,
+int nfs4_Fattr_Fill(fattr4 *Fattr, uint_t cnt, uint32_t *attrvalslist,
                     int LastOffset, char *attrvalsBuffer)
 {
   /* Set the bitmap for result */
