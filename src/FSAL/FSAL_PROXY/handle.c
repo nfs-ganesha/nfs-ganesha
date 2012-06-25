@@ -777,16 +777,27 @@ pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
         GETATTR4resok *rok4;
         SETCLIENTID4resok *sok;
         extern time_t ServerBootTime;
+        struct sockaddr_in sin;
+        socklen_t slen = sizeof(sin);
+        char addrbuf[sizeof("255.255.255.255")];
 
         LogEvent(COMPONENT_FSAL,
                  "Negotiating a new ClientId with the remote server") ;
 
-        snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u",
+        if(getsockname(rpc_sock, &sin, &slen))
+                return -errno;
+
+        snprintf(clientid_name, MAXNAMLEN, "%s(%d) - GANESHA NFSv4 Proxy",
+                 inet_ntop(AF_INET, &sin.sin_addr, addrbuf, sizeof(addrbuf)),
                  getpid());
         nfsclientid.id.id_len = strlen(clientid_name);
         nfsclientid.id.id_val = clientid_name;
-        snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x",
-                 (int)ServerBootTime);
+        if(sizeof(ServerBootTime) == NFS4_VERIFIER_SIZE)
+                memcpy(&nfsclientid.verifier, &ServerBootTime,
+                       sizeof(nfsclientid.verifier));
+        else
+                snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%08x",
+                         (int)ServerBootTime);
 
         cbproxy.cb_program = 0;
         cbproxy.cb_location.r_netid = "tcp";
@@ -840,7 +851,7 @@ pxy_clientid_renewer(void *Arg)
         uint32_t lease_time = 60;
  
         while(1) {
-                clientid4 newcid;
+                clientid4 newcid = 0;
 
                 if(!needed && pxy_rpc_renewer_wait(lease_time - 5)) {
                         /* Simply renew the client id you've got */
