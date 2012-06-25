@@ -1998,22 +1998,6 @@ void *worker_thread(void *IndexArg)
                "NFS WORKER #%lu: Initialization of thread's credential",
                worker_index);
 
-/** @TODO suspicious of this
- */
-  /* Init the Cache inode client for this worker */
-  if(cache_inode_client_init(
-         &pmydata->cache_inode_client,
-         &nfs_param.cache_layers_param.cache_inode_client_param,
-         worker_index, pmydata))
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_DISPATCH,
-               "Cache Inode client could not be initialized");
-    }
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Cache Inode client successfully initialized");
->>>>>>> Update the thread core(s) to the new api
-
   LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
 
   /* Worker's infinite loop */
