@@ -186,6 +186,14 @@ typedef struct nfs_rpc_dupreq_param__
   hash_parameter_t hash_param;
 } nfs_rpc_dupreq_parameter_t;
 
+/** @TODO troublesome decl.  Max cleaned up some of this...
+ */
+typedef struct nfs_cache_layer_parameter__
+{
+  cache_inode_parameter_t cache_param;
+  cache_inode_gc_policy_t gcpol;
+} nfs_cache_layers_parameter_t;
+
 typedef enum protos
 {
   P_NFS,
