@@ -401,7 +401,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           /* If the directory is newly created, it is empty.  Because
              we know its content, we consider it read. */
           if (flags & CACHE_INODE_FLAG_CREATE) {
-               atomic_set_uint32__bits(&entry->flags,
+               atomic_set_uint32_t_bits(&entry->flags,
 				       CACHE_INODE_TRUST_CONTENT |
 				       CACHE_INODE_DIR_POPULATED);
           } else {

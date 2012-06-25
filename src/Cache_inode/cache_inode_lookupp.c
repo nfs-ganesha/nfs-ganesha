@@ -187,7 +187,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 
 cache_entry_t *
 cache_inode_lookupp(cache_entry_t *entry,
-		    struct user_credential *creds,
+		    struct user_cred *creds,
                     cache_inode_status_t *status)
 {
      cache_entry_t *parent = NULL;

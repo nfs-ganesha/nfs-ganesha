@@ -100,7 +100,7 @@ cache_inode_getattr(cache_entry_t *entry,
          != CACHE_INODE_SUCCESS) {
           goto out;
      }
-     *pattr = pentry->obj_handle->attributes;
+     *attr = entry->obj_handle->attributes;
 
      pthread_rwlock_unlock(&entry->attr_lock);
 

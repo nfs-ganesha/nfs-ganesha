@@ -94,7 +94,7 @@ cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
     } else {
       LogCrit(COMPONENT_CACHE_INODE,
 	      "Unable to add root entry to cache, status = %s",
-	      cache_inode_err_str(*pstatus));
+	      cache_inode_err_str(*status));
     }
 
   return entry;

@@ -362,7 +362,6 @@ cache_inode_remove_cached_dirent(cache_entry_t *directory,
 
 struct cache_inode_populate_cb_state {
 	cache_entry_t *directory;
-	cache_inode_client_t *client;
 	cache_inode_status_t *status;
 	uint64_t offset_cookie;
 };
@@ -398,7 +397,6 @@ static fsal_status_t populate(const char *name,
 		return status;
 	}
 	pentry = cache_inode_new_entry(entry_hdl,
-				       state->client,
 				       CACHE_INODE_FLAG_NONE,
 				       state->status);
 	if(pentry == NULL) {
@@ -411,7 +409,6 @@ static fsal_status_t populate(const char *name,
 						      &entry_name,
 						      pentry,
 						      &new_dir_entry,
-						      state->client,
 						      state->status);
 	if(*state->status != CACHE_INODE_SUCCESS &&
 	   *state->status != CACHE_INODE_ENTRY_EXISTS) {
@@ -483,7 +480,6 @@ cache_inode_readdir_populate(cache_entry_t *directory,
     return *status;
 
   state.directory = directory;
-  state.client = client;
   state.status = status;
   state.offset_cookie = 0;
 

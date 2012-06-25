@@ -628,7 +628,7 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 cache_entry_t *cache_inode_lookup_impl(cache_entry_t *entry_parent,
                                        fsal_name_t *name,
                                        struct user_cred *creds,
-                                       cache_inode_status_t pstatus);
+                                       cache_inode_status_t *status);
 cache_entry_t *cache_inode_lookup(cache_entry_t *entry_parent,
                                   fsal_name_t *name,
                                   fsal_attrib_list_t *attr,
@@ -777,9 +777,6 @@ cache_inode_status_t cache_inode_commit(cache_entry_t *entry,
                                         struct user_cred *creds,
                                         cache_inode_status_t *status);
 
-cache_inode_status_t cache_inode_readdir_populate(
-     cache_entry_t *directory,
-     cache_inode_status_t *status);
 cache_inode_status_t cache_inode_readdir(cache_entry_t *directory,
                                          uint64_t cookie,
                                          unsigned int *nbfound,
@@ -795,12 +792,10 @@ cache_inode_status_t cache_inode_add_cached_dirent(
      cache_entry_t *entry,
      cache_inode_dir_entry_t **dir_entry,
      cache_inode_status_t *status);
-cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t *fsdata,
+cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
                                      cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_check_trust(cache_entry_t *entry);
-
-cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type);
 
 int cache_inode_types_are_rename_compatible(cache_entry_t *src,
                                             cache_entry_t *dest);
@@ -923,7 +918,7 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 #endif /* _USE_NFS4_ACL */
 
      memset(&attributes, 0, sizeof(fsal_attrib_list_t));
-     attributes.asked_attributes = client->attrmask;
+     attributes.asked_attributes = cache_inode_params.attrmask;
 
      fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
 						    &attributes);
@@ -994,7 +989,7 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry)
                              FSAL_ATTR_RDATTR_ERR)) {
                /* Release the lock on error */
                if ((cache_status =
-                    cache_inode_refresh_attrs(entry,
+                    cache_inode_refresh_attrs(entry))
                    != CACHE_INODE_SUCCESS) {
                     pthread_rwlock_unlock(&entry->attr_lock);
                }

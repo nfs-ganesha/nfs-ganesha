@@ -121,7 +121,7 @@ cache_inode_create(cache_entry_t *parent,
                                      FSAL_ACE_PERM_ADD_SUBDIRECTORY);
     *status = cache_inode_access(parent,
                                 access_mask,
-                                creds, &status);
+                                creds, status);
     if (*status != CACHE_INODE_SUCCESS)
         {
           entry = NULL;
@@ -150,7 +150,7 @@ cache_inode_create(cache_entry_t *parent,
 
     dir_handle = parent->obj_handle;
 /* we pass in attributes to the create.  We will get them back below */
-    object_attributes.asked_attributes = client->attrmask;
+    object_attributes.asked_attributes = cache_inode_params.attrmask;
     object_attributes.owner = creds->caller_uid;
     object_attributes.group = creds->caller_gid; /* be more selective? */
     object_attributes.mode = mode;

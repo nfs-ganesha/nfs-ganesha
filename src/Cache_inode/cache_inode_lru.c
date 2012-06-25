@@ -787,18 +787,6 @@ lru_thread(void *arg __attribute__((unused)))
                                    continue;
                               }
 
-                              if (is_open(entry)) {
-                                   cache_inode_close(
-                                        entry,
-                                        CACHE_INODE_FLAG_REALLYCLOSE,
-                                        &cache_status);
-                                   if (cache_status != CACHE_INODE_SUCCESS) {
-                                        LogCrit(COMPONENT_CACHE_INODE_LRU,
-                                                "Error closing file in "
-                                                "LRU thread.");
-                                   } else
-                                     ++closed;
-                              }
                               /* Move the entry to L2 whatever the
                                  result of examining it.*/
                               lru_move_entry(lru, LRU_ENTRY_L2,

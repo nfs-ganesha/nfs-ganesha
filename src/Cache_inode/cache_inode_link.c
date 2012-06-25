@@ -155,7 +155,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      attrs.asked_attributes = cache_inode_params.attrmask;
      fsal_status = entry->obj_handle->ops->link(entry->obj_handle,
 						dest_dir->obj_handle,
-						plink_name);
+						name);
      if( !FSAL_IS_ERROR(fsal_status)) 
 	  fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
 							 &attrs);

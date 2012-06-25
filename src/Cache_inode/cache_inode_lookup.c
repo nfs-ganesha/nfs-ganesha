@@ -187,11 +187,11 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
      }
 
-     dir_handle = pentry_parent->obj_handle;
+     dir_handle = parent->obj_handle;
      memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));
-     object_attributes.asked_attributes = pclient->attrmask;
+     object_attributes.asked_attributes = cache_inode_params.attrmask;
      fsal_status = dir_handle->ops->lookup(dir_handle,
-					   pname->name,
+					   name->name,
 					   &object_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
@@ -202,9 +202,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      }
 
      /* Allocation of a new entry in the cache */
-     if((pentry = cache_inode_new_entry(object_handle,
-                                        CACHE_INODE_FLAG_NONE,
-                                        pstatus)) == NULL) {
+     if((entry = cache_inode_new_entry(object_handle,
+				       CACHE_INODE_FLAG_NONE,
+				       status)) == NULL) {
           return NULL;
      }
 
@@ -281,7 +281,7 @@ cache_inode_lookup(cache_entry_t *parent,
           *status = cache_inode_lock_trust_attrs(entry);
           if(*status == CACHE_INODE_SUCCESS)
             {
-              *attr = entry->attributes;
+              *attr = entry->obj_handle->attributes;
               pthread_rwlock_unlock(&entry->attr_lock);
             }
      }

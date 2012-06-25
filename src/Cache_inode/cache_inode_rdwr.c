@@ -309,7 +309,7 @@ cache_inode_rdwr(cache_entry_t *entry,
      pthread_rwlock_wrlock(&entry->attr_lock);
      attributes_locked = TRUE;
      if (io_direction == CACHE_INODE_WRITE) {
-          if ((*status = cache_inode_refresh_attrs(entry)
+	  if ((*status = cache_inode_refresh_attrs(entry))
               != CACHE_INODE_SUCCESS) {
                goto out;
           }

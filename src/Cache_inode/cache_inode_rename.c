@@ -221,7 +221,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 						    FSAL_W_OK | FSAL_X_OK);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      *pstatus = cache_inode_error_convert(fsal_status);
+      *status = cache_inode_error_convert(fsal_status);
       goto out;
     }
 
@@ -252,11 +252,11 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
     goto out;
   }
   if( !sticky_dir_allows(phandle_dirsrc,
-			 pentry_lookup_src->obj_handle,
+			 lookup_src->obj_handle,
 			 creds))
     {
-      src_dest_unlock(pentry_dirsrc, pentry_dirdest);
-      *pstatus = CACHE_INODE_FSAL_EPERM;
+      src_dest_unlock(dir_src, dir_dest);
+      *status = CACHE_INODE_FSAL_EPERM;
       goto out;
     }
 
@@ -268,7 +268,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                 creds,
                                 status)) != NULL)
   if( !sticky_dir_allows(phandle_dirdest,
-			 lookup_dest != NULL) ?
+			 (lookup_dest != NULL) ?
 			 lookup_src->obj_handle : NULL,
 			 creds))
     {
@@ -367,8 +367,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 
   if(dir_src->type == DIRECTORY)
     {
-      phandle_dirsrc = pentry_dirsrc->obj_handle;
-      pattrsrc = &pentry_dirsrc->obj_handle->attributes;
+      phandle_dirsrc = dir_src->obj_handle;
+      attr_src = &dir_src->obj_handle->attributes;
     }
   else
     {
@@ -394,38 +394,36 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 					    phandle_dirdest,
 					    newname);
   if( !FSAL_IS_ERROR(fsal_status))
-	  fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, pattrsrc);
+	  fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, attr_src);
   if( !FSAL_IS_ERROR(fsal_status))
-	  fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest, pattrdest);
+	  fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest, attr_dest);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      *pstatus = cache_inode_error_convert(fsal_status);
+      *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
            fsal_attrib_list_t attrs;
 
-           attrs.asked_attributes = pclient->attrmask;
+           attrs.asked_attributes = cache_inode_params.attrmask;
 	   fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, &attrs);
            if (fsal_status.major == ERR_FSAL_STALE) {
-                cache_inode_kill_entry(pentry_dirsrc,
-                                       pclient);
+                cache_inode_kill_entry(dir_src);
            }
-           attrs.asked_attributes = pclient->attrmask;
+           attrs.asked_attributes = cache_inode_params.attrmask;
            fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest, &attrs);
            if (fsal_status.major == ERR_FSAL_STALE) {
-                cache_inode_kill_entry(pentry_dirdest,
-                                       pclient);
+                cache_inode_kill_entry(dir_dest);
            }
       }
-      src_dest_unlock(pentry_dirsrc, pentry_dirdest);
+      src_dest_unlock(dir_src, dir_dest);
       goto out;
     }
 
   /* Manage the returned attributes */
   if(attr_src != NULL)
-    *attr_src = dir_src->attributes;
+    *attr_src = dir_src->obj_handle->attributes;
 
   if(attr_dest != NULL)
-    *attr_dest = dir_dest->attributes;
+    *attr_dest = dir_dest->obj_handle->attributes;
 
   if(dir_src == dir_dest)
     {

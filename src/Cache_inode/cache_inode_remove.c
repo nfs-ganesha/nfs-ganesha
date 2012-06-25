@@ -147,12 +147,6 @@ cache_inode_clean_internal(cache_entry_t *entry)
      /* Delete from the weakref table */
      cache_inode_weakref_delete(&entry->weakref);
 
-     if (entry->type == SYMBOLIC_LINK) {
-          pthread_rwlock_wrlock(&entry->content_lock);
-          cache_inode_release_symlink(entry);
-          pthread_rwlock_unlock(&entry->content_lock);
-     }
-
      return CACHE_INODE_SUCCESS;
 } /* cache_inode_clean_internal */
 

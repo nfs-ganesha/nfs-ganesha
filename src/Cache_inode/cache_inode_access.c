@@ -78,7 +78,7 @@ cache_inode_access_sw(cache_entry_t *entry,
 {
      fsal_status_t fsal_status;
      fsal_accessflags_t used_access_type;
-     struct fsal_obj_handle *pfsal_handle = pentry->obj_handle;
+     struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
 
      LogFullDebug(COMPONENT_CACHE_INODE,
                   "cache_inode_access_sw: access_type=0X%x",
@@ -101,7 +101,7 @@ cache_inode_access_sw(cache_entry_t *entry,
           used_access_type = access_type & ~FSAL_F_OK;
 
 	  /* We get the attributes */
-	  attr = pentry->obj_handle->attributes;
+	  attr = pfsal_handle->attributes;
 
 
           if(cache_inode_params.use_test_access == 1) {
