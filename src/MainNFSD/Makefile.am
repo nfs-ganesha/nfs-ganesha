@@ -209,22 +209,20 @@ libganeshaNFS_la_DEPENDENCIES = fuse_binding.c $(libMainServices_la_SOURCES) $(l
 
 else
 
-bin_PROGRAMS               = $(FS_NAME).ganesha.nfsd
+bin_PROGRAMS               = ganesha.nfsd
 
-__FS_NAME__ganesha_nfsd_SOURCES    = nfs_main.c  \
-                                     nfs_init.h
+ganesha_nfsd_SOURCES    = nfs_main.c  \
+                          nfs_init.h
 
-__FS_NAME__ganesha_nfsd_LDADD      =  ./libMainServices.la \
-                                       \
-                                      $(FSAL_LDFLAGS) \
-                                      $(TIRPC_STATIC_LIB) \
-				      $(EXT_LDADD)  \
-                                      $(SEC_LIB_FLAGS) \
-                                      @EFENCE@ \
-	                              @EXTRA_LIB@
+ganesha_nfsd_LDADD      =  ./libMainServices.la \
+			   $(FSAL_LDFLAGS) \
+                           $(TIRPC_STATIC_LIB) \
+			   $(EXT_LDADD)  \
+                           $(SEC_LIB_FLAGS) \
+                           @EFENCE@ \
+	                   @EXTRA_LIB@
 
 endif
-
 
 new: clean all
 

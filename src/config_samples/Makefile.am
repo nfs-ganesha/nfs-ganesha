@@ -19,12 +19,7 @@ EXTRA_DIST = hosts.ganesha             \
 	     zfs.ganesha.nfsd.conf     \
 	     logrotate_ganesha
 
-if USE_FSAL_FUSE
 sysconf_DATA = hosts.ganesha snmp.conf uidgid_mapfile.ganesha
-else
-sysconf_DATA = hosts.ganesha snmp.conf uidgid_mapfile.ganesha \
-	     @FS_NAME@.ganesha.nfsd.conf
-endif
 
 if USE_FSAL_GPFS
 sysconf_DATA += gpfs.ganesha.main.conf \

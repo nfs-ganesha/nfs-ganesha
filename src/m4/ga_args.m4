@@ -75,3 +75,12 @@ AC_DEFUN([GA_DISABLE_AM_CONDITION],
 
 	AM_CONDITIONAL([$3], test "[$enable_]m4_bpatsubst([$1],-,_)"  == "no" )
 ])
+
+# Set AM_CONDITIONAL on unless caller explictly disables it
+AC_DEFUN([GA_AM_COND_ON_UNLESS],
+[
+AC_ARG_ENABLE([$1],AS_HELP_STRING([--disable-$1],[$2]),
+       [enable_]m4_bpatsubst([$1],-,_)=$enableval, [enable_]m4_bpatsubst([$1],-,_)='yes' )
+
+AM_CONDITIONAL([$3], test "[$enable_]m4_bpatsubst([$1],-,_)"  == "yes" )
+])

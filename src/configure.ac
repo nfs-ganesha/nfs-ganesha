@@ -285,28 +285,23 @@ if test "$enable_cb_simulator" == "yes"; then
 fi
 AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 
-# FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
-             [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
+# FSAL selection
+# FSALs which are enabled by default but could be disabled
+# during the build
+GA_AM_COND_ON_UNLESS([fsal-proxy],[do not build PROXY FSAL shared library],[USE_FSAL_PROXY])
+GA_AM_COND_ON_UNLESS([fsal-vfs],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
 
-# exporting USE_FSAL_... for conditional compilation
-AM_CONDITIONAL(USE_FSAL_HPSS,     test "$FSAL" = "HPSS")
-AM_CONDITIONAL(USE_FSAL_POSIX,    test "$FSAL" = "POSIX")
-AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
-AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
-AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
-AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
-AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
-AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
-AM_CONDITIONAL(USE_FSAL_CEPH,     test "$FSAL" = "CEPH")
-AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
-AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
-AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
-
-
-AM_CONDITIONAL(RESULT_IS_LIB,      test "$FSAL" = "FUSE")
-AM_CONDITIONAL(RESULT_IS_DAEMON,   test "$FSAL" != "FUSE")
-
+# FSALs whicha re disabled by default
+GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
+GA_ENABLE_AM_CONDITION([fsal-posix],[build POSIX FSAL],[USE_FSAL_POSIX])
+GA_ENABLE_AM_CONDITION([fsal-fuse],[build FUSE FSAL],[USE_FSAL_FUSE])
+GA_ENABLE_AM_CONDITION([fsal-lustre],[build LUSTRE FSAL],[USE_FSAL_LUSTRE])
+# SHOOK is a variant of Lustre FSAL
+GA_ENABLE_AM_CONDITION([fsal-shook],[build SHOOK FSAL],[USE_FSAL_SHOOK])
+GA_ENABLE_AM_CONDITION([fsal-xfs],[build XFS FSAL],[USE_FSAL_XFS])
+GA_ENABLE_AM_CONDITION([fsal-gpfs],[build GPFS FSAL],[USE_FSAL_GPFS])
+GA_ENABLE_AM_CONDITION([fsal-ceph],[build CEPH FSAL],[USE_FSAL_CEPH])
+GA_ENABLE_AM_CONDITION([fsal-zfs],[build ZFS FSAL],[USE_FSAL_ZFS])
 
 # FSAL_UP
 GA_ENABLE_AM_CONDITION([fsal-up],[enable FSAL Upcall Interface support],[USE_FSAL_UP])
@@ -557,246 +552,236 @@ AC_DEFINE([_NO_MOUNT_LIST], 1, [Don't use MOUNT PROTOCOL's client list])
 
 # POSIX must be the last of the list (extraneous installed file in posixdb)
 
-case $FSAL in
-	HPSS)
-		# HPSS specific options
-		AC_ARG_WITH( [hpss-version], AS_HELP_STRING([--with-hpss-version=5.1|6.2|6.2.2|7.1|7.3 (default=6.2.2)],
-			[specify HPSS version] ), HPSS="$withval", HPSS="6.2.2" )
-		GA_ENABLE_FLAG(  [strip-cs-uuid], [Strip core server UUID from handle (shorter NFS handle)],
-				 [-D_STRIP_CORESERVER_UUID])
+if test "$enable_fsal_hpss" = "yes"; then
+	# HPSS specific options
+	AC_ARG_WITH( [hpss-version], AS_HELP_STRING([--with-hpss-version=5.1|6.2|6.2.2|7.1|7.3 (default=6.2.2)],
+		[specify HPSS version] ), HPSS="$withval", HPSS="6.2.2" )
+	GA_ENABLE_FLAG(  [strip-cs-uuid], [Strip core server UUID from handle (shorter NFS handle)],
+			 [-D_STRIP_CORESERVER_UUID])
 
-		AC_DEFINE([_USE_HPSS], 1, [GANESHA is compiled with HPSS FSAL])
-		FSAL_CFLAGS="-I/opt/hpss/include"
-		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss -lhpsscs"
-        	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_HPSS/libfsalhpss.la \$(top_builddir)/FSAL/FSAL_HPSS/HPSSclapiExt/libhpssapiext.la"
-               	FS_NAME="hpss"
+	AC_DEFINE([_USE_HPSS], 1, [GANESHA is compiled with HPSS FSAL])
+	FSAL_CFLAGS="-I/opt/hpss/include"
+	FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss -lhpsscs"
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_HPSS/libfsalhpss.la \$(top_builddir)/FSAL/FSAL_HPSS/HPSSclapiExt/libhpssapiext.la"
 
-		case "$HPSS" in
-			"5.1")
-				FSAL_LDFLAGS="$FSAL_LDFLAGS -L/opt/dcelocal/lib -ldce -ldcepthreads"
-				;;
-		esac
+	case "$HPSS" in
+	"5.1")
+		FSAL_LDFLAGS="$FSAL_LDFLAGS -L/opt/dcelocal/lib -ldce -ldcepthreads"
 		;;
-	PROXY)
-		AC_DEFINE([_USE_PROXY], 1, [GANESHA is compiled with NFS PROXY FSAL])
-                FSAL_CFLAGS=
-                FSAL_LDFLAGS=$SEC_RPATH
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PROXY/libfsalproxy.la"
-                FS_NAME="proxy"
-                ;;
-	FUSE)
-		AC_DEFINE([_USE_FUSE], 1, [GANESHA is compiled as a FUSE-like library])
-		FSAL_CFLAGS=
-                FSAL_LDFLAGS=""
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_FUSELIKE/libfsalfuse.la"
-		FS_NAME="fuse"
-		;;
-	LUSTRE)
-		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
-		if test "x$have_lustre2_api" != "xyes" ; then
-	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
-		fi
-		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+	esac
+fi
 
-		# check if this Lustre version has HSM functions
-    		AC_CHECK_LIB([lustreapi], [llapi_hsm_state_get], [lustre_hsm="yes"])
-		if test "x$lustre_hsm" == "xyes"; then
-			AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
-		fi
+if test "$enable_fsal_proxy" == "yes"; then
+AC_MSG_WARN([PROXY FSAL is enabled])
+	AC_DEFINE([_USE_PROXY], 1, [GANESHA is compiled with NFS PROXY FSAL])
+	FSAL_CFLAGS=
+	FSAL_LDFLAGS=$SEC_RPATH
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PROXY/libfsalproxy.la"
+fi
+
+if test "$enable_fsal_fuse" == "yes"; then
+	AC_DEFINE([_USE_FUSE], 1, [GANESHA is compiled as a FUSE-like library])
+	FSAL_CFLAGS=
+	FSAL_LDFLAGS=""
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_FUSELIKE/libfsalfuse.la"
+fi
+
+if test "$enable_fsal_lustre" == "yes"; then
+	AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+	AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+	if test "x$have_lustre2_api" != "xyes" ; then
+	    AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
+	fi
+	AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+
+	# check if this Lustre version has HSM functions
+	AC_CHECK_LIB([lustreapi], [llapi_hsm_state_get], [lustre_hsm="yes"])
+	if test "x$lustre_hsm" == "xyes"; then
+		AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
+	fi
 
         FSAL_CFLAGS=
         FSAL_LDFLAGS="-llustreapi"
         FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
-		FS_NAME="lustre"
-		;;
-        SHOOK)
-                # Lustre FSAL compiled with special compilation directives
-                AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
-                AC_DEFINE(_SHOOK, 1, [shook is enabled])
+fi
 
-		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
-		if test "x$have_lustre2_api" != "xyes" ; then
-	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
-		fi
-		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+if test "$enable_fsal_shook" == "yes"; then
+        # Lustre FSAL compiled with special compilation directives
+        AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
+        AC_DEFINE(_SHOOK, 1, [shook is enabled])
+
+	AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+	AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+	if test "x$have_lustre2_api" != "xyes" ; then
+		AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
+	fi
+	AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
         FSAL_CFLAGS=
         FSAL_LDFLAGS="-lshooksvr -llustreapi"
         FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsalshook.la"
-		FS_NAME="shook"
-        ;;
+fi
 
-	XFS)
-		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
- 		AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR( missing xfs include files)])
-                AC_CHECK_HEADERS([xfs/handle.h], [], [AC_MSG_ERROR(missimg xfs include files)])
-		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-		FSAL_CFLAGS=
-                FSAL_LDFLAGS="-lhandle"
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
-		FS_NAME="xfs"
-		;;
-	CEPH)
-		AC_DEFINE([_USE_CEPH], 1, [GANESHA exports CEPH Filesystem])
-                dnl AC_CHECK_HEADERS([ceph/libceph.h], [], [AC_MSG_ERROR( missing ceph include files)])
-		CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64 ${CFLAGS}"
-		FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
-		LDFLAGS="-L${CEPH_PREFIX}/lib"
-                FSAL_LDFLAGS=-lcephfs
-                if test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \); then
-			FSALPNFS_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalpnfsceph.la"
-		else
-			FSALPNFS_LIB=""
-		fi
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
-                FS_NAME="ceph"
-                ;;
+if test "$enable_fsal_xfs" == "yes"; then
+	AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
+	AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR( missing xfs include files)])
+	AC_CHECK_HEADERS([xfs/handle.h], [], [AC_MSG_ERROR(missimg xfs include files)])
+	AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+	FSAL_CFLAGS=
+	FSAL_LDFLAGS="-lhandle"
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
+fi
 
-	GPFS)
-		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
-		AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
+if test "$enable_fsal_ceph" == "yes"; then
+	AC_DEFINE([_USE_CEPH], 1, [GANESHA exports CEPH Filesystem])
+	dnl AC_CHECK_HEADERS([ceph/libceph.h], [], [AC_MSG_ERROR( missing ceph include files)])
+	CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64 ${CFLAGS}"
+	FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
+	LDFLAGS="-L${CEPH_PREFIX}/lib"
+	FSAL_LDFLAGS=-lcephfs
+	if test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \); then
+		FSALPNFS_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalpnfsceph.la"
+	else
+		FSALPNFS_LIB=""
+	fi
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
+fi
 
-		AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h gpfs_lweTypes.h],
-				 [],
-                                 [AC_MSG_ERROR(Missing RPMS. You may run ./install_files_gpfs.sh as root from src/FSAL/FSAL_GPFS)],
-				 [])
-		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
+if test "$enable_fsal_gpfs" == "yes"; then
+	AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
+	AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
+
+	AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h gpfs_lweTypes.h],
+			 [],
+			 [AC_MSG_ERROR(Missing RPMS. You may run ./install_files_gpfs.sh as root from src/FSAL/FSAL_GPFS)],
+			 [])
+	AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
                 #include <fcntl.h>
 		#include <stdint.h>
                 ])
 
-                AC_CHECK_MEMBER([struct file_handle.f_handle], [
-                                        AC_DEFINE([_GPFS_DECLARES_HANDLE], 1, [GPFS declares the handle structure])
-                                      ],
-                                      [],
-                                      [
+	AC_CHECK_MEMBER([struct file_handle.f_handle], [
+			AC_DEFINE([_GPFS_DECLARES_HANDLE], 1, [GPFS declares the handle structure])
+			      ],
+			      [],
+			      [
                                         #include <fcntl.h>
 					#include <stdint.h>
                                         #include <gpfs_nfs.h>
-                                      ])
+			      ])
 
-		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [
+	AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [
                   #include <fcntl.h>
   		  #include <stdint.h>
                   #include <gpfs_nfs.h>
-                ])
+	])
 
-		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE,
-                                OPENHANDLE_OPEN_BY_HANDLE,
-                                OPENHANDLE_LINK_BY_FD,
-		                OPENHANDLE_READLINK_BY_FD,
-                                OPENHANDLE_STAT_BY_HANDLE,
-                                OPENHANDLE_GET_LOCK,
-                                OPENHANDLE_SET_LOCK,
-                                XATTR_STAT,
-                                XATTR_MODE,
-                                XATTR_UID,
-                                XATTR_GID,
-                                XATTR_ATIME_SET,
-                                XATTR_MTIME_SET,
-                                XATTR_ACL],
-		               [],
-		               [AC_MSG_ERROR(GPFS < 3.5.0 found, you must upgrade GPFS to use this feature)],
-		               [
-                                 #include <fcntl.h>
-				 #include <stdint.h>
-                                 #include <gpfs_nfs.h>
-                               ])
+	AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE,
+			OPENHANDLE_OPEN_BY_HANDLE,
+			OPENHANDLE_LINK_BY_FD,
+			OPENHANDLE_READLINK_BY_FD,
+			OPENHANDLE_STAT_BY_HANDLE,
+			OPENHANDLE_GET_LOCK,
+			OPENHANDLE_SET_LOCK,
+			XATTR_STAT,
+			XATTR_MODE,
+			XATTR_UID,
+			XATTR_GID,
+			XATTR_ATIME_SET,
+			XATTR_MTIME_SET,
+			XATTR_ACL],
+		       [],
+		       [AC_MSG_ERROR(GPFS < 3.5.0 found, you must upgrade GPFS to use this feature)],
+		       [
+			 #include <fcntl.h>
+			 #include <stdint.h>
+			 #include <gpfs_nfs.h>
+		       ])
 
-		AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
-		FSAL_CFLAGS=
-		FSAL_LDFLAGS=""
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
-		FS_NAME="gpfs"
-		;;
-	VFS)
-		AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem (kernel is >= 2.6.39])
-		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-		FSAL_CFLAGS=
-                FSAL_LDFLAGS=""
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
-		FS_NAME="vfs"
-		;;
-        ZFS)
-                AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
-                PKG_CHECK_MODULES(ZFSWRAP, libzfswrap,
-                [
-                  FSAL_CFLAGS="$ZFSWRAP_CFLAGS"
-                  FSAL_LDFLAGS="$ZFSWRAP_LIBS"
-                ],[
-                  AC_MSG_ERROR(Impossible to find the libzfswrap library)
-                ])
-                FSAL_LIB="\$(top_builddir)/FSAL/FSAL_ZFS/libfsalzfs.la"
-                FS_NAME="zfs"
-                ;;
-	POSIX)
+	AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
+	FSAL_CFLAGS=
+	FSAL_LDFLAGS=""
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
+fi
 
-		case "$DBTYPE" in
+if test "$enable_fsal_vfs" == "yes"; then
+	AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem (kernel is >= 2.6.39])
+	FSAL_CFLAGS=
+	FSAL_LDFLAGS=""
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
+fi
 
-		"PGSQL")
-			# define PG_CONFIG program name and PGSQL_VERSION
-			GA_PGSQL_INFO
+if test "$enable_fsal_zfs" == "yes"; then
+	AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
+	PKG_CHECK_MODULES(ZFSWRAP, libzfswrap,
+	[
+	  FSAL_CFLAGS="$ZFSWRAP_CFLAGS"
+	  FSAL_LDFLAGS="$ZFSWRAP_LIBS"
+	],[
+	  AC_MSG_ERROR(Impossible to find the libzfswrap library)
+	])
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_ZFS/libfsalzfs.la"
+fi
 
-			DBEXT_INC_PATH=`$PG_CONFIG --includedir`
-			DBEXT_LIB_PATH=`$PG_CONFIG --libdir`
-			DBEXT_FLAGS="-I$DBEXT_INC_PATH"
+if test "$enable_fsal_posix" == "yes"; then
+	case "$DBTYPE" in
+	"PGSQL")
+		# define PG_CONFIG program name and PGSQL_VERSION
+		GA_PGSQL_INFO
 
-			DEBIAN_DB_DEP="postgresql"
-			DEBIAN_DB_VERSION="7.1"
+		DBEXT_INC_PATH=`$PG_CONFIG --includedir`
+		DBEXT_LIB_PATH=`$PG_CONFIG --libdir`
+		DBEXT_FLAGS="-I$DBEXT_INC_PATH"
 
-			case "$MYOS" in
-				"LINUX")
-					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lcrypt -lpq"
-					;;
-				"MACOS")
-					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
-					;;
-				"FREEBSD")
-					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
-					;;
-				"SOLARIS")
-					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
-					;;
-			esac
+		DEBIAN_DB_DEP="postgresql"
+		DEBIAN_DB_VERSION="7.1"
 
-			case "$PGSQL_VERSION" in
-				"7."*)
-					AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
-					;;
-				"8."*|"9."*)
-					AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
-					AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version >= 8.x])
-					;;
-				*)
-					AC_MSG_ERROR("Unsupported PostgreSQL version: $PGSQL_VERSION")
-			esac
-			;;
-
-		"MYSQL")
-
-			# define MYSQL_CONFIG program name and MYSQL_VERSION
-			GA_MYSQL_INFO
-
-			DBEXT_LDADD=`$MYSQL_CONFIG --libs_r`
-			DBEXT_FLAGS=`$MYSQL_CONFIG --include`
-
-			DEBIAN_DB_DEP="mysql"
-			DEBIAN_DB_VERSION="5.0"
-
-			AC_DEFINE([_USE_MYSQL], 1, [Using MySQL database])
-			;;
+		case "$MYOS" in
+			"LINUX")
+				DBEXT_LDADD="-L$DBEXT_LIB_PATH -lcrypt -lpq"
+				;;
+			"MACOS")
+				DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
+				;;
+			"FREEBSD")
+				DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
+				;;
+			"SOLARIS")
+				DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
+				;;
 		esac
 
-		AC_DEFINE([_USE_POSIX], 1, [GANESHA is compiled with POSIX FSAL])
-                FSAL_CFLAGS="$DBEXT_FLAGS"
-                FSAL_LDFLAGS="$DBEXT_LDADD"
-                FSAL_LIB="\$(top_builddir)/FSAL/FSAL_POSIX/libfsalposix.la \$(top_builddir)/FSAL/FSAL_POSIX/DBExt/$DBTYPE/libfsaldbext.la"
-                FS_NAME="posix"
-                ;;
-	*)
-		AC_MSG_ERROR([This FSAL is not supported])
-esac
+		case "$PGSQL_VERSION" in
+			"7."*)
+				AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
+				;;
+			"8."*|"9."*)
+				AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
+				AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version >= 8.x])
+				;;
+			*)
+				AC_MSG_ERROR("Unsupported PostgreSQL version: $PGSQL_VERSION")
+		esac
+		;;
+
+	"MYSQL")
+		# define MYSQL_CONFIG program name and MYSQL_VERSION
+		GA_MYSQL_INFO
+
+		DBEXT_LDADD=`$MYSQL_CONFIG --libs_r`
+		DBEXT_FLAGS=`$MYSQL_CONFIG --include`
+
+		DEBIAN_DB_DEP="mysql"
+		DEBIAN_DB_VERSION="5.0"
+
+		AC_DEFINE([_USE_MYSQL], 1, [Using MySQL database])
+		;;
+	esac
+
+	AC_DEFINE([_USE_POSIX], 1, [GANESHA is compiled with POSIX FSAL])
+	FSAL_CFLAGS="$DBEXT_FLAGS"
+	FSAL_LDFLAGS="$DBEXT_LDADD"
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_POSIX/libfsalposix.la \$(top_builddir)/FSAL/FSAL_POSIX/DBExt/$DBTYPE/libfsaldbext.la"
+fi
 
 case $RPCAL in
 	"TIRPC")
@@ -836,7 +821,6 @@ AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
 AC_SUBST(FSALPNFS_LIB)
-AC_SUBST(FS_NAME)
 AC_SUBST(SEC_CFLAGS)
 AC_SUBST(SEC_LFLAGS)
 AC_SUBST(DEBIAN_DB_DEP)
@@ -844,9 +828,6 @@ AC_SUBST(DEBIAN_DB_VERSION)
 
 # for exporting to spec file
 AC_SUBST(ac_configure_args)
-
-# for using fs name in binairies
-AC_DEFINE_UNQUOTED([FS_NAME], "$FS_NAME", [Name of the filesystem])
 
 AC_CONFIG_FILES([include/Makefile
                  include/FSAL/Makefile

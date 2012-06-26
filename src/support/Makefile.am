@@ -57,10 +57,6 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
 
 libsupport_la_LIBADD = ../cidr/libcidr.la
 
-if RESULT_IS_DAEMON
-libsupport_la_LIBADD         +=   ../RPCAL/librpcal.la 
-endif
-
 if USE_NFS4_ACL
 libsupport_la_SOURCES += nfs4_acls.c
 endif
