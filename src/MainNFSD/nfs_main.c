@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 #endif
 
   /* Echo PID into pidfile */
-  if( ( pidfile = open(pidfile_path, O_RDWR|O_CREAT) ) == -1 )
+  if( ( pidfile = open(pidfile_path, O_CREAT|O_RDWR, 0644)) == -1 )
    {
      LogFatal( COMPONENT_MAIN, "Can't open pid file %si for writing", pidfile_path ) ;
    }
