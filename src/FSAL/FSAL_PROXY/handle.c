@@ -830,6 +830,10 @@ pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
         COMPOUNDV4_ARG_ADD_OP_PUTROOTFH(opcnt, arg);
         rok4 = pxy_fill_getattr_reply(res + opcnt, bitmap_res,
                                       (char *)lease_time, sizeof(*lease_time));
+	if(rok4) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "Using rok4 to suppress not used strict compile error");
+	}
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, arg, lease_bits);
 
         rc = pxy_compoundv4_execute(__func__, opcnt, arg, res);
