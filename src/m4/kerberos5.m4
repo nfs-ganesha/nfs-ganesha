@@ -33,26 +33,9 @@ AC_DEFUN([AC_KERBEROS_V5],[
       KRBCFLAGS=`$K5CONFIG --cflags`
       KRBLIBS=`$K5CONFIG --libs gssapi`
       K5VERS=`$K5CONFIG --version | head -n 1 | awk '{split($(4),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }'`
+      KRBDIR=`$K5CONFIG --prefix`
       AC_DEFINE_UNQUOTED(KRB5_VERSION, $K5VERS, [Define this as the Kerberos version number])
-
-      dnl Ok, the baseline test presumably needs review--K5LIBDIR is used
-      dnl incautiously, at best
-      HAVE_K5LIBDIR=`echo $KRBLIBS | grep '\-L'`
-      if test "$HAVE_K5LIBDIR" == ""; then
-	  K5LIBDIR="/usr/lib"
-      else
-	  K5LIBDIR=[`echo $KRBLIBS | head -1 | sed 's/^.*-L\(.[^ ]\+\) .*$/\1/'`]
-      fi
-
-      if test -e $dir/include/gssapi/gssapi_krb5.h -a \
-                \( -e $dir/lib/libgssapi_krb5.a -o \
-                   -e $dir/lib64/libgssapi_krb5.a -o \
-                   -e $dir/lib64/libgssapi_krb5.so -o \
-                   -e $dir/lib/libgssapi_krb5.so -o \
-                   -e $K5LIBDIR/libgssapi_krb5.so -o \
-                   -e $K5LIBDIR/libgssapi_krb5.a \) ; then
-         AC_DEFINE(HAVE_KRB5, 1, [Define this if you have MIT Kerberos libraries])
-         KRBDIR="$dir"
+      AC_DEFINE(HAVE_KRB5, 1, [Define this if you have MIT Kerberos libraries])
   dnl If we are using MIT K5 1.3.1 and before, we *MUST* use the
   dnl private function (gss_krb5_ccache_name) to get correct
   dnl behavior of changing the ccache used by gssapi.
@@ -73,7 +56,6 @@ AC_DEFUN([AC_KERBEROS_V5],[
          KRBDIR="$dir"
          gssapi_lib=gssapi
         break
-      fi
     fi
   done
   dnl We didn't find a usable Kerberos environment
