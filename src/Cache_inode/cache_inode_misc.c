@@ -48,6 +48,7 @@
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
 #include "nfs4_acls.h"
+#include "sal_functions.h"
 #include "nfs_core.h"
 
 #include <unistd.h>
