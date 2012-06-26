@@ -48,6 +48,7 @@
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
 #include "nfs4_acls.h"
+#include "nfs_core.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -57,8 +58,57 @@
 #include <string.h>
 #include <assert.h>
 
-cache_inode_gc_policy_t cache_inode_gc_policy;
-cache_inode_parameter_t cache_inode_params;
+cache_inode_gc_policy_t cache_inode_gc_policy = {
+        /* Cache inode parameters: Garbage collection policy */
+        .entries_hwmark = 100000,
+        .entries_lwmark = 50000,
+        .use_fd_cache = TRUE,
+        .lru_run_interval = 600,
+        .fd_limit_percent = 99,
+        .fd_hwmark_percent = 90,
+        .fd_lwmark_percent = 50,
+        .reaper_work = 1000,
+        .biggest_window = 40,
+        .required_progress = 5,
+        .futility_count = 8
+};
+
+cache_inode_parameter_t cache_inode_params = {
+        /* Cache inode parameters : hash table */
+	.hparam.index_size = PRIME_CACHE_INODE,
+	.hparam.alphabet_length = 10,
+	.hparam.hash_func_both = cache_inode_fsal_rbt_both,
+	.hparam.compare_key = cache_inode_compare_key_fsal,
+	.hparam.key_to_str = display_cache,
+	.hparam.val_to_str = display_cache,
+	.hparam.ht_name = "Cache Inode",
+	.hparam.flags = HT_FLAG_CACHE,
+	.hparam.ht_log_component = COMPONENT_CACHE_INODE,
+
+#ifdef _USE_NLM
+        /* Cache inode parameters : cookie hash table */
+	.cookie_param.index_size = PRIME_STATE_ID,
+	.cookie_param.alphabet_length = 10,
+	.cookie_param.hash_func_key = lock_cookie_value_hash_func,
+	.cookie_param.hash_func_rbt = lock_cookie_rbt_hash_func ,
+	.cookie_param.compare_key = compare_lock_cookie_key,
+	.cookie_param.key_to_str = display_lock_cookie_key,
+	.cookie_param.val_to_str = display_lock_cookie_val,
+	.cookie_param.ht_name = "Lock Cookie",
+	.cookie_param.flags = HT_FLAG_NONE,
+	.cookie_param.ht_log_component = COMPONENT_STATE,
+#endif
+	.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER,
+	.expire_type_link    = CACHE_INODE_EXPIRE_NEVER,
+	.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER,
+	.use_test_access = 1,
+#ifdef _USE_NFS4_ACL
+	.attrmask = FSAL_ATTR_MASK_V4,
+#else
+	.attrmask = FSAL_ATTR_MASK_V2_V3,
+#endif
+	.use_fsal_hash = 1
+};
 
 pool_t *cache_inode_entry_pool;
 pool_t *cache_inode_symlink_pool;
