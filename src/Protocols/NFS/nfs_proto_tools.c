@@ -798,6 +798,107 @@ void nfs4_Fattr_Free(fattr4 *fattr)
     }
 }
 
+static int fsal_time_to_settime4(const fsal_time_t *ts, char *attrval)
+{
+  time_how4 how = htonl(SET_TO_CLIENT_TIME4);
+  int64_t sec = nfs_htonl64((int64_t)ts->seconds);
+  uint32_t nsec = htonl(ts->nseconds);
+  int LastOffset = 0;
+
+  memcpy(attrval + LastOffset, &how, sizeof(how));
+  LastOffset += sizeof(how);
+  memcpy(attrval + LastOffset, &sec, sizeof(sec));
+  LastOffset += sizeof(sec);
+  memcpy(attrval + LastOffset, &nsec, sizeof(nsec));
+  LastOffset += sizeof(uint32_t);
+
+  return LastOffset;
+}
+
+int nfs4_supported_attrs_to_fattr(char *attrvalsBuffer)
+{
+#ifdef _USE_NFS4_1
+  int lastbit = FATTR4_FS_CHARSET_CAP;
+  unsigned int attrvalslist_supported[FATTR4_FS_CHARSET_CAP];
+  uint32_t bitmap_val[3];
+#else
+  int lastbit = FATTR4_MOUNTED_ON_FILEID;
+  unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID];
+  uint32_t bitmap_val[2];
+#endif
+  int LastOffset = 0;
+  fattr4_supported_attrs supported_attrs;
+  uint32_t supported_attrs_len;
+  uint32_t supported_attrs_val;
+
+  /* The supported attributes have field ',supported' set in tab fattr4tab, I will proceed in 2 pass 
+   * 1st: compute the number of supported attributes
+   * 2nd: allocate the replyed bitmap and fill it
+   *
+   * I do not set a #define to keep the number of supported attributes because I want this parameter
+   * to be a consequence of fattr4tab and avoid incoherency */
+
+  /* How many supported attributes ? Compute the result in variable named c */
+  int k, c = 0;
+  for(k = FATTR4_SUPPORTED_ATTRS; k <= lastbit; k++)
+    {
+      if(fattr4tab[k].supported)
+        attrvalslist_supported[c++] = k;
+    }
+
+  supported_attrs.bitmap4_val = bitmap_val;
+  supported_attrs.bitmap4_len = sizeof(bitmap_val)/sizeof(bitmap_val[0]);
+  nfs4_list_to_bitmap4(&supported_attrs, c, attrvalslist_supported);
+
+  LogFullDebug(COMPONENT_NFS_V4,
+               "Fattr (regular) supported_attrs(len)=%u -> %u|%u",
+               supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
+               supported_attrs.bitmap4_val[1]);
+
+  /* we store the index */
+  supported_attrs_len = htonl(supported_attrs.bitmap4_len);
+  memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_len,
+         sizeof(uint32_t));
+  LastOffset += sizeof(uint32_t);
+
+  /* And then the data */
+  for(k = 0; k < supported_attrs.bitmap4_len; k++)
+    {
+      supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
+      memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
+             sizeof(uint32_t));
+      LastOffset += sizeof(uint32_t);
+    }
+
+  return LastOffset;
+}
+
+int nfs4_Fattr_Fill(fattr4 *Fattr, int cnt, uint32_t *attrvalslist,
+                    int LastOffset, char *attrvalsBuffer)
+{
+  /* Set the bitmap for result */
+  memset(Fattr, 0, sizeof(*Fattr));
+  if((Fattr->attrmask.bitmap4_val = gsh_calloc(3, sizeof(uint32_t))) == NULL)
+    return -1;
+  Fattr->attrmask.bitmap4_len = 3;
+  nfs4_list_to_bitmap4(&(Fattr->attrmask), cnt, attrvalslist);
+
+  /* Set the attrlist4 */
+  /* LastOffset contains the length of the attrvalsBuffer usefull data */
+  Fattr->attr_vals.attrlist4_len = LastOffset;
+  if(LastOffset != 0)           /* No need to allocate an empty buffer */
+    {
+      Fattr->attr_vals.attrlist4_val = gsh_malloc(LastOffset);
+      if(Fattr->attr_vals.attrlist4_val == NULL)
+        {
+          gsh_free(Fattr->attrmask.bitmap4_val);
+          return -1;
+        }
+      memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer,
+             Fattr->attr_vals.attrlist4_len);
+    }
+  return 0;
+}
 /**
  *
  * nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -860,10 +961,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   fattr4_files_free files_free;
   fattr4_files_total files_total;
   fattr4_lease_time lease_time;
-  fattr4_time_backup time_backup;
   fattr4_time_create time_create;
   fattr4_maxfilesize max_filesize;
-  fattr4_supported_attrs supported_attrs;
   fattr4_maxread maxread;
   fattr4_maxwrite maxwrite;
   fattr4_maxname maxname;
@@ -877,8 +976,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
-  fattr4_time_modify_set __attribute__ ((__unused__)) time_modify_set;
-  fattr4_time_access_set __attribute__ ((__unused__)) time_access_set;
 #ifdef _PNFS_MDS
   fattr4_layout_blksize layout_blksize;
 #endif /* _PNFS_MDS */
@@ -889,19 +986,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   uint32_t attribute_to_set = 0;
 
   u_int fhandle_len = 0;
-  uint32_t supported_attrs_len;
-  uint32_t supported_attrs_val;
   u_int LastOffset;
   u_int len = 0, off = 0;       /* Use for XDR alignment */
   int op_attr_success = 0;
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_FSALattr_To_Fattr";
 
 #ifdef _USE_NFS4_1
-  unsigned int attrvalslist_supported[FATTR4_FS_CHARSET_CAP];
   uint32_t attrmasklist[FATTR4_FS_CHARSET_CAP]; /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
   uint32_t attrvalslist[FATTR4_FS_CHARSET_CAP]; /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
 #else
-  unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID];
   uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   uint32_t attrvalslist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
 #endif
@@ -910,8 +1002,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
   uint_t i = 0;
   uint_t j = 0;
-  uint_t k = 0;
-  uint_t c = 0;
 
   cache_inode_status_t cache_status;
 
@@ -970,64 +1060,10 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
       switch (attribute_to_set)
         {
         case FATTR4_SUPPORTED_ATTRS:
-          /* The supported attributes have field ',supported' set in tab fattr4tab, I will proceed in 2 pass 
-           * 1st: compute the number of supported attributes
-           * 2nd: allocate the replyed bitmap and fill it
-           *
-           * I do not set a #define to keep the number of supported attributes because I want this parameter
-           * to be a consequence of fattr4tab and avoid incoherency */
-
-          /* How many supported attributes ? Compute the result in variable named c */
-          c = 0;
-#ifdef _USE_NFS4_1
-          for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_FS_CHARSET_CAP; k++)
-#else
-          for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
-#endif
-            {
-              if(fattr4tab[k].supported)
-                {
-                  attrvalslist_supported[c++] = k;
-                }
-            }
-
-          /* Let set the reply bitmap */
-#ifdef _USE_NFS4_1
-          if((supported_attrs.bitmap4_val =
-              gsh_calloc(3, sizeof(uint32_t))) == NULL)
-            return -1;
-#else
-          if((supported_attrs.bitmap4_val =
-              gsh_calloc(2, sizeof(uint32_t))) == NULL)
-            return -1;
-#endif
-
-          nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
-
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "Fattr (regular) supported_attrs(len)=%u -> %u|%u",
-                       supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
-                       supported_attrs.bitmap4_val[1]);
+          LastOffset += nfs4_supported_attrs_to_fattr(attrvalsBuffer + LastOffset);
 
           /* This kind of operation is always a success */
           op_attr_success = 1;
-
-          /* we store the index */
-          supported_attrs_len = htonl(supported_attrs.bitmap4_len);
-          memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_len,
-                 sizeof(uint32_t));
-          LastOffset += sizeof(uint32_t);
-
-          /* And then the data */
-          for(k = 0; k < supported_attrs.bitmap4_len; k++)
-            {
-              supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
-              memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
-                     sizeof(uint32_t));
-              LastOffset += sizeof(uint32_t);
-            }
-
-          gsh_free(supported_attrs.bitmap4_val);
           break;
 
         case FATTR4_TYPE:
@@ -1609,35 +1645,13 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_TIME_ACCESS_SET:
-          time_access_set.set_it = htonl(SET_TO_CLIENT_TIME4);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_access_set.set_it, sizeof(time_how4));
-          LastOffset += sizeof(time_how4);
-
-          time_access_set.settime4_u.time.seconds =
-              nfs_htonl64((int64_t) pattr->mtime.seconds);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_access_set.settime4_u.time.seconds, sizeof(int64_t));
-          LastOffset += sizeof(int64_t);
-
-          time_access_set.settime4_u.time.nseconds = htonl(pattr->mtime.nseconds);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_access_set.settime4_u.time.nseconds, sizeof(uint32_t));
-          LastOffset += sizeof(uint32_t);
-
-          op_attr_success = 0;
+          LastOffset += fsal_time_to_settime4(&pattr->atime,
+                                              attrvalsBuffer + LastOffset);
+          op_attr_success = 1;
           break;
 
         case FATTR4_TIME_BACKUP:
           /* No time backup, return unix's beginning of time */
-          time_backup.seconds = nfs_htonl64(0LL);
-          time_backup.nseconds = htonl(0);
-          memcpy((char *)(attrvalsBuffer + LastOffset), &time_backup,
-                 fattr4tab[attribute_to_set].size_fattr4);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 0;
-          break;
-
         case FATTR4_TIME_CREATE:
           /* No time create, return unix's beginning of time */
           time_create.seconds = nfs_htonl64(0LL);
@@ -1645,7 +1659,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           memcpy((char *)(attrvalsBuffer + LastOffset), &time_create,
                  fattr4tab[attribute_to_set].size_fattr4);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 0;
+          op_attr_success = 1;
           break;
 
         case FATTR4_TIME_DELTA:
@@ -1682,23 +1696,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-          time_modify_set.set_it = htonl(SET_TO_CLIENT_TIME4);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_modify_set.set_it, sizeof(time_how4));
-          LastOffset += sizeof(time_how4);
-
-          time_modify_set.settime4_u.time.seconds =
-              nfs_htonl64((int64_t) pattr->mtime.seconds);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_modify_set.settime4_u.time.seconds, sizeof(int64_t));
-          LastOffset += sizeof(int64_t);
-
-          time_modify_set.settime4_u.time.nseconds = htonl(pattr->mtime.nseconds);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &time_modify_set.settime4_u.time.nseconds, sizeof(uint32_t));
-          LastOffset += sizeof(uint32_t);
-
-          op_attr_success = 0;
+          LastOffset += fsal_time_to_settime4(&pattr->mtime,
+                                              attrvalsBuffer + LastOffset);
+          op_attr_success = 1;
           break;
 
         case FATTR4_MOUNTED_ON_FILEID:
@@ -1764,29 +1764,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
     }                           /* for i */
 
-  /* Set the bitmap for result */
-  memset(Fattr, 0, sizeof(*Fattr));
-  if((Fattr->attrmask.bitmap4_val = gsh_calloc(3, sizeof(uint32_t))) == NULL)
-    return -1;
-
-  nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
-
-  /* Set the attrlist4 */
-  /* LastOffset contains the length of the attrvalsBuffer usefull data */
-  Fattr->attr_vals.attrlist4_len = LastOffset;
-  if(LastOffset != 0)           /* No need to allocate an empty buffer */
-    {
-      Fattr->attr_vals.attrlist4_val = gsh_malloc(LastOffset);
-      if(Fattr->attr_vals.attrlist4_val == NULL)
-        {
-          gsh_free(Fattr->attrmask.bitmap4_val);
-          return -1;
-        }
-      memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer,
-             Fattr->attr_vals.attrlist4_len);
-    }
-
-  return 0;
+  return nfs4_Fattr_Fill(Fattr, j, attrvalslist, LastOffset, attrvalsBuffer);
 }                               /* nfs4_FSALattr_To_Fattr */
 
 /**
@@ -2374,31 +2352,32 @@ exit:
  */
 
 /* This function converts a list of attributes to a bitmap4 structure */
-void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval)
+void nfs4_list_to_bitmap4(bitmap4 * b, uint_t plen, uint32_t * pval)
 {
   uint_t i;
-  uint_t intpos = 0;
-  uint_t bitpos = 0;
-  uint_t val = 0;
-  /* Both uint32 int the bitmap MUST be allocated */
-  b->bitmap4_val[0] = 0;
-  b->bitmap4_val[1] = 0;
-  b->bitmap4_val[2] = 0;
+  int maxpos =  -1;
 
-  for(i = 0; i < *plen; i++)
+  memset(b->bitmap4_val, 0, sizeof(uint32_t)*b->bitmap4_len);
+
+  for(i = 0; i < plen; i++)
     {
-      intpos = pval[i] / 32;
-      bitpos = pval[i] % 32;
-      val = 1 << bitpos;
-      b->bitmap4_val[intpos] |= val;
+      int intpos = pval[i] / 32;
+      int bitpos = pval[i] % 32;
 
-      if(intpos == 0)
-        b->bitmap4_len = 1;
-      else if(intpos == 1)
-        b->bitmap4_len = 2;
-      else if(intpos == 2)
-        b->bitmap4_len = 3;
+      if(intpos >= b->bitmap4_len)
+        {
+          LogCrit(COMPONENT_NFS_V4,
+                  "Mismatch between bitmap len and the list: "
+                  "got %d, need %d to accomodate attribute %d",
+                  b->bitmap4_len, intpos+1, pval[i]);
+          continue;
+        }
+      b->bitmap4_val[intpos] |= (1U << bitpos);
+      if(intpos > maxpos)
+        maxpos = intpos;
     }
+
+  b->bitmap4_len = maxpos + 1;
   LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u   Val = %u|%u|%u",
                b->bitmap4_len,
                b->bitmap4_len >= 1 ? b->bitmap4_val[0] : 0,
@@ -3437,7 +3416,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
   /* Check attributes data */
   if((Fattr->attr_vals.attrlist4_val == NULL) ||
      (Fattr->attr_vals.attrlist4_len == 0))
-    return NFS4ERR_BADXDR;
+    return NFS4_OK;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);

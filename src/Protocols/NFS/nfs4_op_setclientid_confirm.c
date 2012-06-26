@@ -419,6 +419,16 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
           goto out;
         }
 
+      /*
+       * We have successfully added a new confirmed client id.  Now
+       * add it to stable storage.
+       */
+      nfs4_create_clid_name(pclient_record, punconf, data->reqp);
+      nfs4_add_clid(punconf);
+
+      /* check if the client can perform reclaims */
+      nfs4_chk_clid(punconf);
+
       if(isDebug(COMPONENT_CLIENTID))
         {
           char str[HASHTABLE_DISPLAY_STRLEN];

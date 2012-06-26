@@ -244,7 +244,7 @@ fsal_status_t GPFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
                            "Write a block (%llu bytes) to FSAL",
                             (unsigned long long)local_size);
 
-              st = FSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
+              st = FSAL_write(&fs_fd, p_context, NULL, local_size, IObuffer, &fs_size);
               if(FSAL_IS_ERROR(st))
                 {
                   LogFullDebug(COMPONENT_FSAL,

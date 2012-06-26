@@ -48,6 +48,7 @@
 
 #include <pthread.h>
 #include <string.h>
+#include <sys/fsuid.h>
 
 //#include "gpfs_nfs.h"
 #include "gpfs.h"
@@ -1092,9 +1093,10 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
                                        fsal_handle_t * p_handle, int attr_valid,
                                        int attr_changed, gpfsfsal_xstat_t *p_buffxstat)
 {
-  int rc;
+  int rc, errsv;
   int dirfd = 0;
   struct xstat_arg xstatarg;
+  int fsuid, fsgid;
 
   if(!p_handle || !p_context || !p_context->export_context || !p_buffxstat)
       ReturnCode(ERR_FSAL_FAULT, 0);
@@ -1108,38 +1110,19 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
   xstatarg.attr_changed = attr_changed;
   xstatarg.buf = &p_buffxstat->buffstat;
 
+  fsuid = setfsuid(p_context->credential.user);
+  fsgid = setfsgid(p_context->credential.group);
   rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
+  errsv = errno;
+  setfsuid(fsuid);
+  setfsgid(fsgid);
+
   LogDebug(COMPONENT_FSAL, "gpfs_ganesha: SET_XSTAT returned, rc = %d", rc);
 
   if(rc < 0)
-    ReturnCode(posix2fsal_error(errno), errno);
+    ReturnCode(posix2fsal_error(errsv), errsv);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
-
-/* fchown by handle */
-fsal_status_t fsal_set_own_by_handle(fsal_op_context_t * p_context,
-                                     fsal_handle_t * p_handle,
-                                     uid_t user, u_int32_t group)
-{
-  int attr_valid;
-  int attr_changed;
-  gpfsfsal_xstat_t buffxstat;
-
-  if(!p_handle || !p_context || !p_context->export_context)
-      ReturnCode(ERR_FSAL_FAULT, 0);
-
-  attr_valid = XATTR_STAT;
-  attr_changed = XATTR_UID;
-  buffxstat.buffstat.st_uid = user;
-  if (group != -1)
-    {
-      attr_changed |= XATTR_GID;
-      buffxstat.buffstat.st_gid = group;
-    }
-
-  return fsal_set_xstat_by_handle(p_context, p_handle, attr_valid,
-                                 attr_changed, &buffxstat);
 }
 
 /* trucate by handle */

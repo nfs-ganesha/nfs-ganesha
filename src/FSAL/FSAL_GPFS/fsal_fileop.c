@@ -38,6 +38,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include <sys/fsuid.h>
 
 /**
  * FSAL_open_byname:
@@ -314,6 +315,8 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
  *
  * \param file_descriptor (input):
  *        The file descriptor returned by FSAL_open.
+ * \param p_context (input):
+ *        Authentication context for the operation (user,...).
  * \param seek_descriptor (optional input):
  *        Specifies the position where data is to be written.
  *        If not specified, data will be written at the current position.
@@ -330,6 +333,7 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
  *      - Another error code if an error occured during this call.
  */
 fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
+                         fsal_op_context_t * p_context,     /* IN */
                          fsal_seek_t * p_seek_descriptor,       /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -340,7 +344,7 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
   ssize_t nb_written;
   size_t i_size;
   int rc = 0, errsv = 0;
-  int pcall = FALSE;
+  int pcall = FALSE, fsuid, fsgid;
   gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
 
   /* sanity checks. */
@@ -412,12 +416,16 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
 
   TakeTokenFSCall();
 
+  fsuid = setfsuid(p_context->credential.user);
+  fsgid = setfsgid(p_context->credential.group);
   if(pcall)
     nb_written = pwrite(p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset);
   else
     nb_written = write(p_file_descriptor->fd, buffer, i_size);
   errsv = errno;
 
+  setfsuid(fsuid);
+  setfsgid(fsgid);
   ReleaseTokenFSCall();
 
   /** @todo: manage ssize_t to fsal_size_t convertion */

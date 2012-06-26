@@ -99,7 +99,6 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   fattr4_files_total files_total;
   fattr4_lease_time lease_time;
   fattr4_maxfilesize max_filesize;
-  fattr4_supported_attrs supported_attrs;
   fattr4_maxread maxread;
   fattr4_maxwrite maxwrite;
   fattr4_maxname maxname;
@@ -116,19 +115,14 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   fsal_attrib_list_t fsalattr;
 
   u_int fhandle_len = 0;
-  uint32_t supported_attrs_len = 0;
-  uint32_t supported_attrs_val = 0;
   unsigned int LastOffset;
   unsigned int len = 0, off = 0;        /* Use for XDR alignment */
   int op_attr_success = 0;
-  unsigned int c = 0;
   unsigned int i = 0;
   unsigned int j = 0;
-  unsigned int k = 0;
   unsigned int attrmasklen = 0;
   unsigned int attribute_to_set = 0;
 
-  unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID];
   unsigned int attrmasklist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   unsigned int attrvalslist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   char attrvalsBuffer[ATTRVALS_BUFFLEN];
@@ -175,53 +169,10 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
         case FATTR4_SUPPORTED_ATTRS:
           LogFullDebug(COMPONENT_NFS_V4_XATTR,
                        "-----> Wanting FATTR4_SUPPORTED_ATTRS");
-
-          /* The supported attributes have field ',supported' set in tab fattr4tab, I will proceed in 2 pass 
-           * 1st: compute the number of supported attributes
-           * 2nd: allocate the replyed bitmap and fill it
-           *
-           * I do not set a #define to keep the number of supported attributes because I want this parameter
-           * to be a consequence of fattr4tab and avoid incoherency */
-
-          /* How many supported attributes ? Compute the result in variable named c and set attrvalslist_supported  */
-          c = 0;
-          for(k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
-            {
-              if(fattr4tab[k].supported)
-                {
-                  attrvalslist_supported[c++] = k;
-                }
-            }
-
-          /* Let set the reply bitmap */
-          /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-          if((supported_attrs.bitmap4_val
-              = gsh_calloc(2, sizeof(uint32_t))) == NULL)
-            return -1;
-          nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
-
-	  LogFullDebug(COMPONENT_NFS_V4_XATTR,
-                       "Fattr (pseudo) supported_attrs(len)=%u -> %u|%u",
-                       supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
-                       supported_attrs.bitmap4_val[1]);
+          LastOffset += nfs4_supported_attrs_to_fattr(attrvalsBuffer+LastOffset);
 
           /* This kind of operation is always a success */
           op_attr_success = 1;
-
-          /* we store the index */
-          supported_attrs_len = htonl(supported_attrs.bitmap4_len);
-          memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_len,
-                 sizeof(uint32_t));
-          LastOffset += sizeof(uint32_t);
-
-          /* And then the data */
-          for(k = 0; k < supported_attrs.bitmap4_len; k++)
-            {
-              supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
-              memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
-                     sizeof(uint32_t));
-              LastOffset += sizeof(uint32_t);
-            }
           break;
 
         case FATTR4_TYPE:
@@ -994,31 +945,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
                "Fattr (pseudo) At the end LastOffset = %u, i=%d, j=%d",
                LastOffset, i, j);
 
-  /* Set the bitmap for result */
-  /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if((Fattr->attrmask.bitmap4_val = gsh_calloc(3, sizeof(uint32_t))) == NULL)
-    return -1;
-
-  nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
-
-  /* Set the attrlist4 */
-  Fattr->attr_vals.attrlist4_len = LastOffset;
-
-  /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if((Fattr->attr_vals.attrlist4_val
-      = gsh_calloc(1, Fattr->attr_vals.attrlist4_len)) == NULL)
-    return -1;
-  memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer, Fattr->attr_vals.attrlist4_len);
-
-  LogFullDebug(COMPONENT_NFS_V4_XATTR,
-               "nfs4_PseudoToFattr (end): Fattr->attr_vals.attrlist4_len = %d",
-               Fattr->attr_vals.attrlist4_len);
-  LogFullDebug(COMPONENT_NFS_V4_XATTR,
-               "nfs4_PseudoToFattr (end):Fattr->attrmask.bitmap4_len = %d  [0]=%u, [1]=%u",
-               Fattr->attrmask.bitmap4_len, Fattr->attrmask.bitmap4_val[0],
-               Fattr->attrmask.bitmap4_val[1]);
-
-  return 0;
+  return nfs4_Fattr_Fill(Fattr, j, attrvalslist, LastOffset, attrvalsBuffer);
 }                               /* nfs4_XattrToFattr */
 
 /** 

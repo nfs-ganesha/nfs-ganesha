@@ -161,6 +161,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       else
 #endif /* _PNFS_DS */
         {
+          if (data->current_entry)
+            cache_inode_put(data->current_entry);
           /* Build the pentry.  Refcount +1. */
           if((data->current_entry = nfs_FhandleToCache(NFS_V4,
                                                        NULL,

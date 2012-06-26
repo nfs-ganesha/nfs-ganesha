@@ -180,6 +180,7 @@ fsal_status_t LUSTREFSAL_read(fsal_file_t * p_file_descriptor,    /* IN */
                               fsal_boolean_t * p_end_of_file /* OUT */ );
 
 fsal_status_t LUSTREFSAL_write(fsal_file_t * p_file_descriptor,   /* IN */
+                               fsal_op_context_t * p_context,     /* IN */
                                fsal_seek_t * p_seek_descriptor, /* IN */
                                fsal_size_t buffer_size, /* IN */
                                caddr_t buffer,  /* IN */

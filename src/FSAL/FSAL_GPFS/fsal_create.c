@@ -60,7 +60,7 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
 {
 
   int rc = 0, errsv;
-  int setgid_bit = 0;
+  int fsuid, fsgid;
   fsal_status_t status;
 
   int fd, newfd;
@@ -99,10 +99,7 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
       ReturnStatus(status, INDEX_FSAL_create);
     }
 
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
-
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
-    setgid_bit = 1;
+  /* Check the user can write in the directory */
 
   /* Set both mode and ace4 mask */
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
@@ -122,10 +119,18 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
   /* call to filesystem */
 
   TakeTokenFSCall();
+  fsuid = setfsuid(p_context->credential.user);
+  fsgid = setfsgid(p_context->credential.group);
+
   /* create the file.
    * O_EXCL=>  error if the file already exists */
-  newfd = openat(fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
+  newfd = openat(fd,
+                 p_filename->name,
+                 O_CREAT | O_WRONLY | O_TRUNC | O_EXCL,
+                 unix_mode);
   errsv = errno;
+  setfsuid(fsuid);
+  setfsgid(fsgid);
 
   if(newfd < 0)
     {
@@ -161,26 +166,6 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
     {
       close(newfd);
       ReturnStatus(status, INDEX_FSAL_create);
-    }
-
-  /* the file has been created */
-  /* chown the file to the current user */
-
-  if(p_context->credential.user != geteuid())
-    {
-      TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of
-          the created file, because it's already the parentdir's group */
-      status = fsal_set_own_by_handle(p_context, p_object_handle,
-                                      p_context->credential.user,
-                                      setgid_bit ? -1 :
-                                      (int)p_context->credential.group);
-      ReleaseTokenFSCall();
-      if(FSAL_IS_ERROR(status))
-        {
-          close(newfd);
-          ReturnStatus(status, INDEX_FSAL_create);
-        }
     }
 
   /* if we got this far successfully, but the file close fails, we've
@@ -252,6 +237,7 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
   fsal_status_t status;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
+  int fsuid, fsgid;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -306,8 +292,14 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
   /* creates the directory and get its handle */
 
   TakeTokenFSCall();
+  fsuid = setfsuid(p_context->credential.user);
+  fsgid = setfsgid(p_context->credential.group);
+
   rc = mkdirat(fd, p_dirname->name, unix_mode);
   errsv = errno;
+  setfsuid(fsuid);
+  setfsgid(fsgid);
+
   if(rc)
     {
       close(fd);
@@ -329,32 +321,12 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
                                 p_dirname, p_object_handle);
   ReleaseTokenFSCall();
 
+  close(fd);
+
   if(FSAL_IS_ERROR(status))
     {
-      close(fd);
       ReturnStatus(status, INDEX_FSAL_mkdir);
     }
-
-  /* the directory has been created */
-  /* chown the dir to the current user/group */
-
-  if(p_context->credential.user != geteuid())
-    {
-      TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      status = fsal_set_own_by_handle(p_context, p_object_handle,
-                                      p_context->credential.user,
-                                      setgid_bit ? -1 :
-                                      (int)p_context->credential.group);
-      ReleaseTokenFSCall();
-      if(FSAL_IS_ERROR(status))
-        {
-          close(fd);
-          ReturnStatus(status, INDEX_FSAL_mkdir);
-        }
-    }
-
-  close(fd);
 
   /* retrieve file attributes */
   if(p_object_attributes)
@@ -497,12 +469,10 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     )
 {
   int rc, errsv;
-  int setgid_bit = 0;
   fsal_status_t status;
   int fd;
   int flags=(O_RDONLY|O_NOFOLLOW);
-  int saved_uid=-1;
-  int saved_gid=-1;
+  int fsuid, fsgid;
 
   mode_t unix_mode = 0;
   dev_t unix_dev = 0;
@@ -567,9 +537,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       ReturnStatus(status, INDEX_FSAL_mknode);
     }
 
-  /* Check the user can write in the directory, and check weither the setgid bit on the directory */
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
-    setgid_bit = 1;
+  /* Check the user can write in the directory */
 
   /* Set both mode and ace4 mask */
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
@@ -586,34 +554,14 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       ReturnStatus(status, INDEX_FSAL_mknode);
     }
 
-  /* creates the node, then stats it */
-  if((nodetype == FSAL_TYPE_SOCK) &&
-     (p_context->credential.user != geteuid()))
-    {
-      saved_uid = setfsuid(p_context->credential.user);
-      if (saved_uid == -1)
-        {
-          close(fd);
-          Return(posix2fsal_error(errno), errno, INDEX_FSAL_mknode);
-        }
-      if (setgid_bit == 0)
-        {
-          saved_gid = setfsgid(p_context->credential.group);
-          if (saved_gid == -1)
-            {
-              close(fd);
-              Return(posix2fsal_error(errno), errno, INDEX_FSAL_mknode);
-            }
-        }
-    }
+  fsuid = setfsuid(p_context->credential.user);
+  fsgid = setfsgid(p_context->credential.group);
+
   rc = mknodat(fd, p_node_name->name, unix_mode, unix_dev);
-  if (saved_uid != -1)
-    {
-      setfsuid(saved_uid);
-      if (setgid_bit == 0)
-        setfsgid(saved_gid);
-    }
   errsv = errno;
+
+  setfsuid(fsuid);
+  setfsgid(fsgid);
 
   if(rc)
     {
@@ -633,29 +581,6 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       close(fd);
       ReturnStatus(status, INDEX_FSAL_mknode);
     }
-
-  /* 1. there is no need to chown for mknod b and mknod c, only root can mknod b and c */
-  /* 2. socket cannot be opened */
-  if ((nodetype != FSAL_TYPE_SOCK) && 
-      (nodetype != FSAL_TYPE_CHR)  &&
-      (nodetype != FSAL_TYPE_BLK)  &&
-      (p_context->credential.user != geteuid()))
-  {
-    /* the node has been created */
-    /* chown the file to the current user/group */
-
-    /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-    status = fsal_set_own_by_handle(p_context, p_object_handle,
-                                    p_context->credential.user,
-                                    setgid_bit ? -1 :
-                                    (int)p_context->credential.group);
-
-    if(FSAL_IS_ERROR(status))
-      {
-        close(fd);
-        ReturnStatus(status, INDEX_FSAL_mknode);
-      }
-  }
 
   close(fd);
 

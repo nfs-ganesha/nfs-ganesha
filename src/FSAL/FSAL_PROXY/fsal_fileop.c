@@ -566,6 +566,8 @@ fsal_status_t PROXYFSAL_read(fsal_file_t * file_desc,        /* IN */
  *
  * \param file_descriptor (input):
  *        The file descriptor returned by FSAL_open.
+ * \param p_context (input):
+ *        Authentication context for the operation (user,...).
  * \param seek_descriptor (optional input):
  *        Specifies the position where data is to be written.
  *        If not specified, data will be written at the current position.
@@ -586,6 +588,7 @@ fsal_status_t PROXYFSAL_read(fsal_file_t * file_desc,        /* IN */
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
 fsal_status_t PROXYFSAL_write(fsal_file_t * file_desc,       /* IN */
+                              fsal_op_context_t * p_context, /* IN */
                               fsal_seek_t * seek_descriptor,    /* IN */
                               fsal_size_t buffer_size,  /* IN */
                               caddr_t buffer,   /* IN */

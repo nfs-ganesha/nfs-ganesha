@@ -243,7 +243,6 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           if(!nfs4_Set_Fh_Referral(&(data->currentFH)))
             {
               res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-              cache_inode_put(file_pentry);
               return res_LOOKUP4.status;
             }
         }
