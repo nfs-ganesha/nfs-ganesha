@@ -209,11 +209,7 @@ static void pxy_create_getattr_bitmap(uint32_t *pbitmap)
                 FATTR4_TIME_MODIFY,
                 FATTR4_RAWDEV
         };
-        uint32_t attrlen = ARRAY_SIZE(tmpattrlist);
-
-        memset(pbitmap, 0, sizeof(uint32_t) * bm.bitmap4_len);
-
-        nfs4_list_to_bitmap4(&bm, &attrlen, tmpattrlist);
+        nfs4_list_to_bitmap4(&bm, ARRAY_SIZE(tmpattrlist), tmpattrlist);
 }
 
 /* Until readdir callback can take more information do not ask for more then
@@ -224,11 +220,7 @@ static void pxy_create_readdir_bitmap(uint32_t *pbitmap)
         uint32_t tmpattrlist[] = {
                 FATTR4_TYPE,
         };
-        uint32_t attrlen = ARRAY_SIZE(tmpattrlist);
-
-        memset(pbitmap, 0, sizeof(uint32_t) * bm.bitmap4_len);
-
-        nfs4_list_to_bitmap4(&bm, &attrlen, tmpattrlist);
+        nfs4_list_to_bitmap4(&bm, ARRAY_SIZE(tmpattrlist), tmpattrlist);
 }
 
 static struct
@@ -261,7 +253,7 @@ pxy_create_settable_bitmap(const fsal_attrib_list_t * attrs, bitmap4 *bm)
                 if(FSAL_TEST_MASK(attrs->asked_attributes, fsal_mask2bit[i].mask))
                         tmpattrlist[attrlen++] = fsal_mask2bit[i].fattr_bit;
         }
-        nfs4_list_to_bitmap4(bm, &attrlen, tmpattrlist);
+        nfs4_list_to_bitmap4(bm, attrlen, tmpattrlist);
 }
 
 static CLIENT *rpc_client;
@@ -431,13 +423,8 @@ pxy_get_clientid(struct fsal_export *exp)
         snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
 
         cbproxy.cb_program = 0;
-#ifdef _USE_NFS4_1
-        cbproxy.cb_location.na_r_netid = "tcp";
-        cbproxy.cb_location.na_r_addr = "127.0.0.1";
-#else
         cbproxy.cb_location.r_netid = "tcp";
         cbproxy.cb_location.r_addr = "127.0.0.1";
-#endif
 
         sok = &res.nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.resok4;
         arg.argop = NFS4_OP_SETCLIENTID;
@@ -1685,11 +1672,7 @@ pxy_create_fsinfo_bitmap(uint32_t *pbitmap)
                 FATTR4_SPACE_FREE,
                 FATTR4_SPACE_TOTAL
         };
-        uint32_t attrlen = ARRAY_SIZE(tmpattrlist);
-
-        memset(pbitmap, 0, sizeof(uint32_t) * bm.bitmap4_len);
-
-        nfs4_list_to_bitmap4(&bm, &attrlen, tmpattrlist);
+        nfs4_list_to_bitmap4(&bm, ARRAY_SIZE(tmpattrlist), tmpattrlist);
 }
 
 static int
