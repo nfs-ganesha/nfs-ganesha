@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
+#include "FSAL/FSAL_VFS/fsal_handle_syscalls.h"
 
 /** vfs_open
  * called with appropriate locks taken at the cache inode level
@@ -322,7 +323,10 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			conflicting_lock->lock_type = FSAL_NO_LOCK;
 		}
 	}
-	myself->u.file.lock_status = 1;  /* what is status on failure path? */
+	if(lock_op == FSAL_OP_LOCK)
+		myself->u.file.lock_status++;
+	else
+		myself->u.file.lock_status--;
 out:
 	ReturnCode(fsal_error, retval);	
 }

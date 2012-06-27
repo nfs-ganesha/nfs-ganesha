@@ -1246,7 +1246,7 @@ static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
 	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mount_fd = vfs_get_root_fd(obj_hdl->export);
-	fd = open_by_handle_at(mount_fd, myself->handle, O_PATH|O_RDWR);
+	fd = open_by_handle_at(mount_fd, myself->handle, O_RDWR);
 	if(fd < 0) {
 		retval = errno;
 		if(retval == ENOENT)
