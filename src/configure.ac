@@ -286,7 +286,7 @@ fi
 AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
              [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -615,10 +615,10 @@ case $FSAL in
         FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
 		;;
-    SHOOK)
-        # Lustre FSAL compiled with special compilation directives
-        AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
-        AC_DEFINE(_SHOOK, 1, [shook is enabled])
+        SHOOK)
+                # Lustre FSAL compiled with special compilation directives
+                AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
+                AC_DEFINE(_SHOOK, 1, [shook is enabled])
 
 		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
 		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
@@ -717,6 +717,7 @@ case $FSAL in
 		;;
 	VFS)
 		AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem (kernel is >= 2.6.39])
+		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"

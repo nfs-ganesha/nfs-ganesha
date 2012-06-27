@@ -108,9 +108,9 @@ name-spaces. This package provides support for NFS-GANESHA as a PROXY.
 %package xfs
 Summary: The NFS-GANESHA server compiled as a NFS gateway to XFS
 Group: Applications/System
-Requires: xfsprogs
+Requires: xfsprogs libattr
 BuildRequires: xfsprogs-devel libattr-devel
-Requires: %{name}-common = %{version}-%{release}
+Requires: %{name}-common = %{version}-%{release} libattr
 
 %description xfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -134,7 +134,7 @@ name-spaces. This package provides support for NFS-GANESHA used on top of GPFS.
 %package vfs
 Summary: The NFS-GANESHA server compiled for use with GPFS
 Group: Applications/System
-Requires: %{name}-common = %{version}-%{release}
+Requires: %{name}-common = %{version}-%{release} libattr
 
 %description vfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -149,11 +149,12 @@ This feature requires a kernel higher than 2.6.39
 Summary: The NFS-GANESHA server compiled for using the POSIX interface
 Group: Applications/System
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
+BuildRequires: libattr-devel
 Requires: postgresql >= 7.1  postgresql-server >= 7.1
 %else
 Requires: mysql >= 5.0  mysql-server >= 5.0
 %endif
-Requires: %{name}-common = %{version}-%{release}
+Requires: %{name}-common = %{version}-%{release} libattr
 
 %description posix
 NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -181,8 +182,8 @@ interface.
 %package lustre
 Summary: The NFS-GANESHA server compiled for using the LUSTRE interface
 Group: Applications/System
-BuildRequires: libattr-devel
-Requires: %{name}-common = %{version}-%{release}
+BuildRequires: libattr-devel lustre-client
+Requires: %{name}-common = %{version}-%{release} libattr lustre-client
 
 %description lustre
 NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -195,8 +196,8 @@ interface.
 %package shook
 Summary: The NFS-GANESHA server compiled for exporting Lustre filesystem with shook HSM binding system.
 Group: Applications/System
-BuildRequires: libattr-devel
-Requires: %{name}-common = %{version}-%{release}
+BuildRequires: libattr-devel lustre-client
+Requires: %{name}-common = %{version}-%{release} lustre-client
 
 %description shook
 NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -217,24 +218,6 @@ The NFS-GANESHA server compiled in a FSAL-les way.
 This requires the use of FSAL compiled as shared objects. FSALs are loaded
 dynamically at runtime using the dlopen() function.
 %endif
-
-%if %{?_with_snmp:1}%{!?_with_snmp:0}
-%package snmp
-Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP
-Group: Applications/System
-Requires: net-snmp >= 5.1
-Requires: lm_sensors-devel >= 2.10
-BuildRequires: net-snmp-libs >= 5.1
-BuildRequires: net-snmp-devel >= 5.1
-Requires: %{name}-common = %{version}-%{release}
-
-%description snmp
-NFS-GANESHA is a NFS Server running in user space with a large cache.
-It comes with various back-end modules to support different file systems and
-name-spaces. This package provides a NFS gateway to SNMP, making it possible to
-browse SNMP exported information in a procfs-like way.
-%endif
-
 
 %if %{?_with_fuse:1}%{!?_with_fuse:0}
 %package fuselike
@@ -565,18 +548,6 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/posix.ganesha*
 %endif
 
-
-%if %{?_with_snmp:1}%{!?_with_snmp:0}
-%files snmp
-%defattr(-,root,root,-)
-%{_bindir}/snmp.ganesha.*
-#ganeshell temporarily blocked
-#%{_bindir}/snmp.ganeshell
-%{_sysconfdir}/init.d/nfs-ganesha-snmp
-%{_sysconfdir}/sysconfig/ganesha
-%config(noreplace) %{_sysconfdir}/ganesha/snmp.ganesha*
-%endif
-
 %if %{?_with_fuse:1}%{!?_with_fuse:0}
 %files fuselike
 %defattr(-,root,root,-)
@@ -674,14 +645,6 @@ chkconfig --del nfs-ganesha-posix
 
 %post posix
 chkconfig --add nfs-ganesha-posix
-%endif
-
-%if %{?_with_snmp:1}%{!?_with_snmp:0}
-%preun snmp
-chkconfig --del nfs-ganesha-snmp
-
-%post snmp
-chkconfig --add nfs-ganesha-snmp
 %endif
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
