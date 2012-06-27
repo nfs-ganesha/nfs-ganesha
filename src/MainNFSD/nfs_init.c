@@ -239,6 +239,45 @@ nfs_parameter_t nfs_param =
   .ip_stats_param.hash_param.val_to_str = display_ip_stats_val,
   .ip_stats_param.hash_param.flags = HT_FLAG_NONE,
 
+  /*  Worker parameters : NFSv4 Unconfirmed Client id table */
+  .client_id_param.cid_unconfirmed_hash_param.index_size = PRIME_CLIENT_ID,
+  .client_id_param.cid_unconfirmed_hash_param.alphabet_length = 10, /* ipaddr is a numerical decimal value */
+  .client_id_param.cid_unconfirmed_hash_param.hash_func_key = client_id_value_hash_func,
+  .client_id_param.cid_unconfirmed_hash_param.hash_func_rbt = client_id_rbt_hash_func,
+  .client_id_param.cid_unconfirmed_hash_param.hash_func_both = NULL ,
+  .client_id_param.cid_unconfirmed_hash_param.compare_key = compare_client_id,
+  .client_id_param.cid_unconfirmed_hash_param.key_to_str = display_client_id_key,
+  .client_id_param.cid_unconfirmed_hash_param.val_to_str = display_client_id_val,
+  .client_id_param.cid_unconfirmed_hash_param.ht_name = "Unconfirmed Client ID",
+  .client_id_param.cid_unconfirmed_hash_param.flags = HT_FLAG_CACHE,
+  .client_id_param.cid_unconfirmed_hash_param.ht_log_component = COMPONENT_CLIENTID,
+
+  /*  Worker parameters : NFSv4 Confirmed Client id table */
+  .client_id_param.cid_confirmed_hash_param.index_size = PRIME_CLIENT_ID,
+  .client_id_param.cid_confirmed_hash_param.alphabet_length = 10, /* ipaddr is a numerical decimal value */
+  .client_id_param.cid_confirmed_hash_param.hash_func_key = client_id_value_hash_func,
+  .client_id_param.cid_confirmed_hash_param.hash_func_rbt = client_id_rbt_hash_func,
+  .client_id_param.cid_confirmed_hash_param.hash_func_both = NULL ,
+  .client_id_param.cid_confirmed_hash_param.compare_key = compare_client_id,
+  .client_id_param.cid_confirmed_hash_param.key_to_str = display_client_id_key,
+  .client_id_param.cid_confirmed_hash_param.val_to_str = display_client_id_val,
+  .client_id_param.cid_confirmed_hash_param.ht_name = "Confirmed Client ID",
+  .client_id_param.cid_confirmed_hash_param.flags = HT_FLAG_CACHE,
+  .client_id_param.cid_confirmed_hash_param.ht_log_component = COMPONENT_CLIENTID,
+
+  /*  Worker parameters : NFSv4 Client Record table */
+  .client_id_param.cr_hash_param.index_size = PRIME_CLIENT_ID,
+  .client_id_param.cr_hash_param.alphabet_length = 10, /* ipaddr is a numerical decimal value */
+  .client_id_param.cr_hash_param.hash_func_key = client_record_value_hash_func,
+  .client_id_param.cr_hash_param.hash_func_rbt = client_record_rbt_hash_func,
+  .client_id_param.cr_hash_param.hash_func_both = NULL ,
+  .client_id_param.cr_hash_param.compare_key = compare_client_record,
+  .client_id_param.cr_hash_param.key_to_str = display_client_record_key,
+  .client_id_param.cr_hash_param.val_to_str = display_client_record_val,
+  .client_id_param.cr_hash_param.ht_name = "Client Record",
+  .client_id_param.cr_hash_param.flags = HT_FLAG_CACHE,
+  .client_id_param.cr_hash_param.ht_log_component = COMPONENT_CLIENTID,
+
   /* NFSv4 State Id hash */
   .state_id_param.hash_param.index_size = PRIME_STATE_ID,
   .state_id_param.hash_param.alphabet_length = 10,  /* ipaddr is a numerical decimal value */
