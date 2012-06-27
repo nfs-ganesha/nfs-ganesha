@@ -171,6 +171,9 @@ const char *cache_inode_err_str(cache_inode_status_t err)
 int cache_inode_compare_key_fsal(hash_buffer_t *buff1,
                                  hash_buffer_t *buff2)
 {
+  int rc;
+  fsal_status_t fsal_status;
+
   /* Test if one of the entries is NULL */
   if(buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
@@ -179,14 +182,16 @@ int cache_inode_compare_key_fsal(hash_buffer_t *buff1,
       if(buff2->pdata == NULL) {
         return -1;              /* left member is the greater one */
       }
-      int rc;
 
-      rc = (((buff1->len == buff2->len) &&
-             (memcmp(buff1->pdata, buff2->pdata, buff1->len) == 0)) ?
-            0 :
-            1);
-
-      return rc;
+      rc = FSAL_handlecmp((fsal_handle_t *)buff1->pdata,
+                          (fsal_handle_t *)buff2->pdata,
+                          &fsal_status);
+      if((rc != 0) || FSAL_IS_ERROR(fsal_status))
+        {
+          LogDebug(COMPONENT_CACHE_INODE, "Handle cmp failed rc:%d\n", rc);
+          return 1; /* Failure */
+        }
+      return 0; /* Success */
     }
   /* This line should never be reached */
 } /* cache_inode_compare_key_fsal */
