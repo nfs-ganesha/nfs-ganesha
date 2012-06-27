@@ -44,6 +44,8 @@
 #include <string.h>
 #include <signal.h>
 #include <libgen.h>
+#include <execinfo.h>
+#include <sys/resource.h>
 
 #include "log.h"
 //#include "nfs_core.h"
@@ -211,6 +213,111 @@ void Fatal(void)
 {
   Cleanup();
   exit(1);
+}
+
+extern uint32_t open_fd_count;
+char *get_debug_info(int *size) {
+  int rc, i, bt_str_size, offset, BT_MAX = 256;
+  long bt_data[BT_MAX];
+  char **bt_str, *debug_str, *final_bt_str;
+  int ret;
+
+  struct rlimit rlim = {
+    .rlim_cur = RLIM_INFINITY,
+    .rlim_max = RLIM_INFINITY
+  };
+
+  rc = backtrace((void **)&bt_data, BT_MAX);
+  if (rc > 0)
+    bt_str = backtrace_symbols((void **)&bt_data, rc);
+  else
+    return NULL;
+  if (bt_str == NULL || *bt_str == NULL)
+    return NULL;
+
+  // Form a single printable string from array of backtrace symbols
+  bt_str_size = 0;
+  for(i=0; i < rc; i++)
+    bt_str_size += strlen(bt_str[i]);
+  final_bt_str = malloc(sizeof(char)*(bt_str_size+rc+20));
+  offset = 0;
+  for(i=0; i < rc; i++)
+    {
+      // note: strlen excludes '\0', strcpy includes '\0'
+      strncpy(final_bt_str+offset, bt_str[i], strlen(bt_str[i]));
+      offset += strlen(bt_str[i]);
+      final_bt_str[offset++] = '\n';
+    }
+  final_bt_str[offset-1] = '\0';
+  free(bt_str);
+
+  getrlimit(RLIMIT_NOFILE, &rlim);
+
+  debug_str = malloc(sizeof(char) * strlen(final_bt_str)
+                     + sizeof(char) * 512);
+  if (debug_str == NULL) {
+    free(bt_str);
+    return NULL;
+  }
+
+  ret = sprintf(debug_str,
+                "\nDEBUG INFO -->\n"
+                "backtrace:\n%s\n\n"
+                "open_fd_count        = %-6d\n"
+                "rlimit_cur           = %-6ld\n"
+                "rlimit_max           = %-6ld\n"
+                "<--DEBUG INFO\n\n",
+                final_bt_str,
+                open_fd_count,
+                rlim.rlim_cur,
+                rlim.rlim_max);
+  if (size != NULL)
+    *size = ret;
+
+  return debug_str;
+}
+
+void print_debug_info_fd(int fd)
+{
+  char *str = get_debug_info(NULL);
+
+  if (str != NULL)
+    {
+      write(fd, str, strlen(str));
+      free(str);
+    }
+}
+
+void print_debug_info_file(FILE *flux)
+{
+  char *str = get_debug_info(NULL);
+
+  if (str != NULL)
+    {
+      fprintf(flux, "%s", str);
+      free(str);
+    }
+}
+
+void print_debug_info_syslog(int level)
+{
+  int size;
+  char *debug_str = get_debug_info(&size);
+  char *end_c=debug_str, *first_c=debug_str;
+
+  while(*end_c != '\0' && (end_c - debug_str) <= size)
+    {
+      if (*end_c == '\n' || *end_c == '\0')
+        {
+          *end_c = '\0';
+          if ((end_c - debug_str) != 0)
+              syslog(tabLogLevel[level].syslog_level, "%s", first_c);
+          first_c = end_c+1;
+        }
+      end_c++;
+    }
+
+  free(debug_str);
 }
 
 #ifdef _DONT_HAVE_LOCALTIME_R
@@ -582,18 +689,24 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function,
   else
     syslog(tabLogLevel[level].syslog_level, "[%s] :%s :%s", threadname, function, texte);
 
+  if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
+      && level != NIV_NULL)
+      print_debug_info_syslog(level);
+
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogFlux_valist(FILE * flux, char * function,
-                                 log_components_t component, char *format,
-                                 va_list arguments)
+static int DisplayLogFlux_valist(FILE * flux, char * function, log_components_t component,
+                                 int level, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
 
   DisplayLogString_valist(tampon, function, component, format, arguments);
 
   fprintf(flux, "%s", tampon);
+  if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
+      && level != NIV_NULL)
+    print_debug_info_file(flux);
   return fflush(flux);
 }                               /* DisplayLogFlux_valist */
 
@@ -615,8 +728,8 @@ static int DisplayBuffer_valist(char *buffer, log_components_t component,
 }
 
 static int DisplayLogPath_valist(char *path, char * function,
-                                 log_components_t component, char *format,
-                                 va_list arguments)
+                                 log_components_t component, int level,
+                                 char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
   int fd, my_status;
@@ -641,6 +754,9 @@ static int DisplayLogPath_valist(char *path, char * function,
             {
               /* Si la prise du verrou est OK */
               write(fd, tampon, strlen(tampon));
+              if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
+                  && level != NIV_NULL)
+                print_debug_info_fd(fd);
 
               /* Relache du verrou sur fichier */
               lock_file.l_type = F_UNLCK;
@@ -649,6 +765,7 @@ static int DisplayLogPath_valist(char *path, char * function,
 
               /* fermeture du fichier */
               close(fd);
+
               return SUCCES;
             }                   /* if fcntl */
           else
@@ -666,11 +783,16 @@ static int DisplayLogPath_valist(char *path, char * function,
           {
             fprintf(stderr, "Error: couldn't complete write to the log file, ensure disk has not filled up");
             close(fd);
+
             return ERR_FICHIER_LOG;
           }
+          if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
+              && level != NIV_NULL)
+            print_debug_info_fd(fd);
 
           /* fermeture du fichier */
           close(fd);
+
           return SUCCES;
         }
 #endif
@@ -1112,6 +1234,12 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { LOG_MESSAGE_DEBUGINFO,        "LOG_MESSAGE_DEBUGINFO",
+                                  "LOG MESSAGE DEBUGINFO",
+    NIV_NULL,
+    SYSLOG,
+    "SYSLOG"
+  },
   { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY",
                                   "LOG MESSAGE VERBOSITY",
     NIV_NULL,
@@ -1135,13 +1263,13 @@ int DisplayLogComponentLevel(log_components_t component,
       rc = DisplayLogSyslog_valist(component, function, level, format, arguments);
       break;
     case FILELOG:
-      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, function, component, format, arguments);
+      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, function, component, level, format, arguments);
       break;
     case STDERRLOG:
-      rc = DisplayLogFlux_valist(stderr, function, component, format, arguments);
+      rc = DisplayLogFlux_valist(stderr, function, component, level, format, arguments);
       break;
     case STDOUTLOG:
-      rc = DisplayLogFlux_valist(stdout, function, component, format, arguments);
+      rc = DisplayLogFlux_valist(stdout, function, component, level, format, arguments);
       break;
     case TESTLOG:
       rc = DisplayTest_valist(component, format, arguments);
@@ -1330,13 +1458,13 @@ rpc_warnx(/* const */ char *fmt, ...)
       break;
     case FILELOG:
       DisplayLogPath_valist(LogComponents[comp].comp_log_file, "rpc",
-                            comp, fmt, ap);
+                            comp, level, fmt, ap);
       break;
     case STDERRLOG:
-      DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
+      DisplayLogFlux_valist(stderr, "rpc", comp, level, fmt, ap);
       break;
     case STDOUTLOG:
-      DisplayLogFlux_valist(stdout, "rpc", comp, fmt, ap);
+      DisplayLogFlux_valist(stdout, "rpc", comp, level, fmt, ap);
       break;
     case TESTLOG:
       DisplayTest_valist(comp, fmt, ap);
