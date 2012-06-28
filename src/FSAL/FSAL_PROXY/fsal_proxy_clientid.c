@@ -27,6 +27,7 @@
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #endif
+#include <arpa/inet.h>
 #include <pthread.h>
 #include "nfs4.h"
 
@@ -74,13 +75,21 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
   char cbaddr[MAXNAMLEN];
   char cbnetid[MAXNAMLEN];
   struct timeval timeout = TIMEOUTRPC;
+  int fd;
+  struct sockaddr_in sin;
+  socklen_t l = sizeof(sin);
 
   LogEvent( COMPONENT_FSAL, "Negotiating a new ClientId with the remote server" ) ;
 
   /* sanity checks.
    */
   if(!p_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
+    ReturnCode(ERR_FSAL_FAULT, 0);
+  if(!CLNT_CONTROL(p_context->rpc_client, CLGET_FD, &fd))
+    ReturnCode(ERR_FSAL_FAULT, EBADF);
+
+  if(getsockname(fd, &sin, &l))
+    ReturnCode(ERR_FSAL_FAULT, errno);
 
   /* Client id negociation is to be done only one time for the whole FSAL */
   P(fsal_clientid_mutex_renew);
@@ -93,7 +102,10 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
 
-  snprintf(clientid_name, MAXNAMLEN, "GANESHA NFSv4 Proxy Pid=%u", getpid());
+  snprintf(clientid_name, MAXNAMLEN, "%s(%d) - GANESHA NFSv4 Proxy",
+           inet_ntop(AF_INET, &sin.sin_addr, cbaddr, sizeof(cbaddr)),
+           getpid());
+
   nfsclientid.id.id_len = strlen(clientid_name);
   nfsclientid.id.id_val = clientid_name;
   snprintf(nfsclientid.verifier, NFS4_VERIFIER_SIZE, "%x", (int)ServerBootTime);
@@ -120,7 +132,7 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
 
       V(fsal_clientid_mutex_renew);
 
-      Return(ERR_FSAL_IO, rc, INDEX_FSAL_InitClientContext);
+      ReturnCode(ERR_FSAL_IO, rc);
     }
 
   ReleaseTokenFSCall();
@@ -157,7 +169,7 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
 
       V(fsal_clientid_mutex_renew);
 
-      Return(ERR_FSAL_IO, rc, INDEX_FSAL_InitClientContext);
+      ReturnCode(ERR_FSAL_IO, rc);
     }
 
   ReleaseTokenFSCall();
@@ -179,7 +191,7 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
   p_context->clientid = fsal_clientid;
   p_context->last_lease_renewal = 0;    /* Needs to be renewed */
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* FSAL_proxy_setclientid_force */
 
 /**
@@ -198,13 +210,7 @@ fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context)
 {
   time_t now = time( NULL ) ;
 
-#if 0
-LogEvent(COMPONENT_FSAL, "Mine %lx, global %lx, time %ld vs %ld",
-p_context->clientid, fsal_clientid ,
-  p_context->clientid_renewed , now );
-#endif
-
-  /* The first to come is the only one to do the clientid renegociation */ 
+  /* The first to come is the only one to do the clientid renegociation */
   if( ( p_context->clientid_renewed <  now ) && (p_context->clientid == fsal_clientid ) )
     return FSAL_proxy_setclientid_force( p_context ) ;
   else
