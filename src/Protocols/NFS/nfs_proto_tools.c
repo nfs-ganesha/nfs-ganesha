@@ -209,6 +209,8 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
   short exportid = 0;
+  char fkey_data[NFS4_FHSIZE];
+  struct netbuf fkey = {.maxlen = sizeof(fkey_data), .buf = fkey_data};
 
   /* Default behaviour */
   *prc = NFS_REQ_OK;
@@ -218,7 +220,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   switch (rq_vers)
     {
     case NFS_V4:
-      if(!nfs4_FhandleToFSAL(pfh4, &fsal_data.fh_desc, pexport->export_hdl))
+      if(!nfs4_FhandleToFSAL(pfh4, &fkey, pexport->export_hdl))
         {
           *prc = NFS_REQ_OK;
           *pstatus4 = NFS4ERR_BADHANDLE;
@@ -228,7 +230,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
 
     case NFS_V3:
-      if(!nfs3_FhandleToFSAL(pfh3, &fsal_data.fh_desc, pexport->export_hdl))
+      if(!nfs3_FhandleToFSAL(pfh3, &fkey, pexport->export_hdl))
         {
           *prc = NFS_REQ_OK;
           *pstatus3 = NFS3ERR_BADHANDLE;
@@ -238,7 +240,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
 
     case NFS_V2:
-      if(!nfs2_FhandleToFSAL(pfh2, &fsal_data.fh_desc, pexport->export_hdl))
+      if(!nfs2_FhandleToFSAL(pfh2, &fkey, pexport->export_hdl))
         {
           *prc = NFS_REQ_OK;
           *pstatus2 = NFSERR_STALE;
@@ -247,6 +249,9 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       exportid = nfs2_FhandleToExportId(pfh2);
       break;
     }
+
+  fsal_data.fh_desc.start = fkey.buf;
+  fsal_data.fh_desc.len = fkey.len;
 
   print_buff(COMPONENT_FILEHANDLE,
              fsal_data.fh_desc.start,

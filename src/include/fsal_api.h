@@ -101,7 +101,7 @@ struct export_ops {
 				struct fsal_obj_handle **handle);
 	fsal_status_t (*extract_handle)(struct fsal_export *exp_hdl,
 					fsal_digesttype_t in_type,
-					struct fsal_handle_desc *fh_desc);
+					struct netbuf *fh_desc);
 	fsal_status_t (*create_handle)(struct fsal_export *exp_hdl,
 				       struct fsal_handle_desc *hdl_desc,
 				       struct fsal_obj_handle **handle);

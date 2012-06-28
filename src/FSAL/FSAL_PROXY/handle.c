@@ -2175,7 +2175,8 @@ pxy_lookup_path(struct fsal_export *exp_hdl,
 
 /*
  * Create an FSAL 'object' from the handle - used
- * to construct objects from a handle provided by the NFS client
+ * to construct objects from a handle which has been
+ * 'extracted' by .extract_handle.
  */
 fsal_status_t
 pxy_create_handle(struct fsal_export *exp_hdl,
@@ -2186,35 +2187,18 @@ pxy_create_handle(struct fsal_export *exp_hdl,
         nfs_fh4 fh4;
         fsal_attrib_list_t attr;
         struct pxy_obj_handle *ph;
-#ifdef _HANDLE_MAPPING
-        char fh_data[NFS4_FHSIZE+2];
-#endif
+        struct pxy_handle_blob *blob;
 
-        if(!exp_hdl || !hdl_desc || !handle || (hdl_desc->len > NFS4_FHSIZE))
+        if(!exp_hdl || !hdl_desc || !handle ||
+           (hdl_desc->len > NFS4_FHSIZE) || (hdl_desc->len < sizeof(*blob)))
                 ReturnCode(ERR_FSAL_INVAL, 0);
 
-        fh4.nfs_fh4_val = hdl_desc->start;
-        fh4.nfs_fh4_len = hdl_desc->len;
+        blob = (struct pxy_handle_blob *)hdl_desc->start;
+        if (blob->len != hdl_desc->len)
+                ReturnCode(ERR_FSAL_INVAL, 0);
 
-#ifdef _HANDLE_MAPPING
-        if(hdl_desc->len == sizeof(nfs23_map_handle_t)) {
-                nfs23_map_handle_t *h23 = (nfs23_map_handle_t*)hdl_desc->start;
-                if(h23->type == PXY_HANDLE_MAPPED) {
-                        struct netbuf fh = {
-                                .maxlen = sizeof(fh_data),
-                                .buf = fh_data
-                        };
-                        struct pxy_handle_blob *blob;
-                
-                        if(HandleMap_GetFH(h23, &fh) != HANDLEMAP_SUCCESS)
-                                ReturnCode(ERR_FSAL_STALE, 0);
-
-                        blob = fh.buf;
-                        fh4.nfs_fh4_val = blob->bytes;
-                        fh4.nfs_fh4_len = fh.len - sizeof(*blob);
-                }
-        }
-#endif
+        fh4.nfs_fh4_val = blob->bytes;
+        fh4.nfs_fh4_len = blob->len - sizeof(*blob);
 
         st = pxy_getattrs_impl(exp_hdl, &fh4, &attr);
         if (FSAL_IS_ERROR(st))
@@ -2355,18 +2339,20 @@ pxy_get_dynamic_info(struct fsal_export *exp_hdl,
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
+/* Convert of-the-wire digest into unique 'handle' which
+ * can be used to identify the object */
 fsal_status_t
 pxy_extract_handle(struct fsal_export *exp_hdl,
 		   fsal_digesttype_t in_type,
-		   struct fsal_handle_desc *fh_desc)
+		   struct netbuf *fh_desc)
 {
         struct pxy_handle_blob *pxyblob;
         size_t fh_size;
 
-        if( !fh_desc || !fh_desc->start)
+        if( !fh_desc || !fh_desc->buf)
                 ReturnCode(ERR_FSAL_FAULT, EINVAL);
 
-        pxyblob = (struct pxy_handle_blob *)fh_desc->start;
+        pxyblob = (struct pxy_handle_blob *)fh_desc->buf;
         fh_size = pxyblob->len;
 #ifdef _HANDLE_MAPPING
         if((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3))
@@ -2375,16 +2361,32 @@ pxy_extract_handle(struct fsal_export *exp_hdl,
         if(in_type == FSAL_DIGEST_NFSV2) {
                 if(fh_desc->len < fh_size) {
                         LogMajor(COMPONENT_FSAL,
-                                 "V2 size too small for handle.  should be %zd, got %zd",
+                                 "V2 size too small for handle.  should be %zd, got %d",
                                  fh_size, fh_desc->len);
                         ReturnCode(ERR_FSAL_SERVERFAULT, 0);
                 }
-        } else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
+        } else if(fh_desc->len != fh_size) {
                 LogMajor(COMPONENT_FSAL,
-                         "Size mismatch for handle.  should be %zd, got %zd",
+                         "Size mismatch for handle.  should be %zd, got %d",
                          fh_size, fh_desc->len);
                 ReturnCode(ERR_FSAL_SERVERFAULT, 0);
         }
+#ifdef _HANDLE_MAPPING
+        if((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3)) {
+                nfs23_map_handle_t *h23 = (nfs23_map_handle_t*)fh_desc->buf;
+
+                if(h23->type != PXY_HANDLE_MAPPED) 
+                        ReturnCode(ERR_FSAL_STALE, ESTALE);
+
+                /* As long as HandleMap_GetFH copies nfs23 handle into
+                 * the key before lookup I can get away with using
+                 * the same buffer for input and output */
+                if(HandleMap_GetFH(h23, fh_desc) != HANDLEMAP_SUCCESS)
+                        ReturnCode(ERR_FSAL_STALE, 0);
+                fh_size = fh_desc->len;
+        }
+#endif
+
         fh_desc->len = fh_size;
 	ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

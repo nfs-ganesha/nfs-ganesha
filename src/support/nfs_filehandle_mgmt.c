@@ -113,6 +113,16 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
+
+static void opaque_to_netbuf(struct netbuf *nb, const void *data,
+                             unsigned int len)
+{
+        if(len <= nb->maxlen) {
+                memcpy(nb->buf, data, len);
+                nb->len = len;
+        }
+}
+
 /**
  *
  *  nfs4_FhandleToFSAL: converts a nfs4 file handle to a FSAL file handle.
@@ -127,7 +137,7 @@
  */
 
 int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
-		       struct fsal_handle_desc *fh_desc,
+		       struct netbuf *fh_desc,
                        struct fsal_export *export)
 {
   fsal_status_t fsal_status;
@@ -147,8 +157,7 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
     return 0;                   /* Bad FH */
 
   /* Fill in the fs opaque part */
-  fh_desc->start = (caddr_t)&pfile_handle->fsopaque;
-  fh_desc->len = pfile_handle->fs_len;
+  opaque_to_netbuf(fh_desc, &pfile_handle->fsopaque, pfile_handle->fs_len);
 
   fsal_status = export->ops->extract_handle(export,
 					     FSAL_DIGEST_NFSV4,
@@ -173,7 +182,7 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
  *
  */
 int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
-		       struct fsal_handle_desc *fh_desc,
+		       struct netbuf *fh_desc,
                        struct fsal_export *export)
 {
   fsal_status_t fsal_status;
@@ -190,8 +199,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
     return 0;                   /* Bad FH */
 
   /* Fill in the fs opaque part */
-  fh_desc->start = (caddr_t) &pfile_handle->fsopaque;
-  fh_desc->len = pfile_handle->fs_len;
+  opaque_to_netbuf(fh_desc, &pfile_handle->fsopaque, pfile_handle->fs_len);
 
   fsal_status = export->ops->extract_handle(export,
 					     FSAL_DIGEST_NFSV3,
@@ -216,7 +224,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
  *
  */
 int nfs2_FhandleToFSAL(fhandle2 * pfh2,
-		       struct fsal_handle_desc *fh_desc,
+		       struct netbuf *fh_desc,
                        struct fsal_export *export)
 {
   fsal_status_t fsal_status;
@@ -232,16 +240,15 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2,
     return 0;                   /* Bad FH */
 
   /* Fill in the fs opaque part */
-  fh_desc->start = (caddr_t) & (pfile_handle->fsopaque);
-  fh_desc->len = sizeof(pfile_handle->fsopaque);
-
+  opaque_to_netbuf(fh_desc, &pfile_handle->fsopaque, 
+                   sizeof(pfile_handle->fsopaque)); 
   fsal_status = export->ops->extract_handle(export,
 					     FSAL_DIGEST_NFSV2,
 					     fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)fh_desc->start, fh_desc->len);
+  print_buff(COMPONENT_FILEHANDLE, (char *)fh_desc->buf, fh_desc->len);
 
   return 1;
 }                               /* nfs2_FhandleToFSAL */

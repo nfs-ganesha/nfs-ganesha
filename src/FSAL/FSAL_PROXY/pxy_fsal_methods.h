@@ -112,6 +112,6 @@ pxy_get_dynamic_info(struct fsal_export *, fsal_dynamicfsinfo_t *);
 
 fsal_status_t
 pxy_extract_handle(struct fsal_export *, fsal_digesttype_t,
-                   struct fsal_handle_desc *);
+                   struct netbuf *);
 
 #endif
