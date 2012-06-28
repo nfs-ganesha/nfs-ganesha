@@ -2431,7 +2431,6 @@ nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t * FSAL_attr,
                    "%s: Caller wants 0x%llx, we only have 0x%llx - missing 0x%llx",
                    __func__, want, FSAL_attr->asked_attributes, 
                    (FSAL_attr->asked_attributes & want) ^ want);
-      return 0;
     }
 
   if(FSAL_attr->asked_attributes & FSAL_ATTR_TYPE)
