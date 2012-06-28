@@ -96,6 +96,8 @@ struct flock
 #define OPENHANDLE_STAT_BY_NAME   130
 #define OPENHANDLE_GET_HANDLE     131
 #define OPENHANDLE_READLINK_BY_FH 132
+#define OPENHANDLE_UNLINK_BY_NAME 133
+#define OPENHANDLE_CREATE_BY_NAME 134
 
 int gpfs_ganesha(int op, void *oarg);
 
@@ -463,11 +465,19 @@ struct stat_arg
 {
     int mountdirfd;
     struct gpfs_file_handle *handle;
-#if BITS_PER_LONG != 64
-    struct stat64 *buf;
-#else
     struct stat *buf;
-#endif
+};
+
+struct create_name_arg
+{
+    int mountdirfd;
+    struct gpfs_file_handle *dir_fh;
+    u_int32_t dev;
+    int mode;
+    int len;
+    char *name;
+    struct gpfs_file_handle *new_fh;
+    struct stat *buf;
 };
 
 struct stat_name_arg
@@ -486,11 +496,7 @@ struct callback_arg
     struct gpfs_file_handle *handle;
     struct glock *fl;
     int *flags;
-#if BITS_PER_LONG != 64
-    struct stat64 *buf;
-#else
     struct stat *buf;
-#endif
 };
 
 /* Defines for the flags in callback_arg, keep up to date with CXIUP_xxx */
@@ -540,11 +546,7 @@ struct xstat_arg
     struct gpfs_file_handle *handle;
     struct gpfs_acl *acl;
     int attr_changed;
-#if BITS_PER_LONG != 64
-    struct stat64 *buf;
-#else
     struct stat *buf;
-#endif
 };
 
 struct xstat_access_arg

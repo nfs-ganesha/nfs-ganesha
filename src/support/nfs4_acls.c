@@ -332,6 +332,9 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
   /* Set the return default to NFS_V4_ACL_SUCCESS */
   *pstatus = NFS_V4_ACL_SUCCESS;
 
+  if (pacl == NULL)
+    return;
+
   P_w(&pacl->lock);
   if(pacl->ref > 1)
     {

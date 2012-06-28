@@ -59,11 +59,9 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
     )
 {
 
-  int rc = 0, errsv;
   int fsuid, fsgid;
   fsal_status_t status;
 
-  int fd, newfd;
   mode_t unix_mode;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
@@ -82,22 +80,11 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
 
   LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
-  TakeTokenFSCall();
-  status =
-      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd,
-                              O_RDONLY | O_DIRECTORY);
-  ReleaseTokenFSCall();
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
-
   /* retrieve directory metadata */
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_create);
-    }
+    ReturnStatus(status, INDEX_FSAL_create);
 
   /* Check the user can write in the directory */
 
@@ -111,68 +98,21 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
     status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_create);
-    }
+    ReturnStatus(status, INDEX_FSAL_create);
 
   /* call to filesystem */
 
-  TakeTokenFSCall();
   fsuid = setfsuid(p_context->credential.user);
   fsgid = setfsgid(p_context->credential.group);
-
-  /* create the file.
-   * O_EXCL=>  error if the file already exists */
-  newfd = openat(fd,
-                 p_filename->name,
-                 O_CREAT | O_WRONLY | O_TRUNC | O_EXCL,
-                 unix_mode);
-  errsv = errno;
+  TakeTokenFSCall();
+  status = fsal_internal_create(p_context, p_parent_directory_handle,
+                                p_filename, unix_mode | S_IFREG, 0,
+                                p_object_handle, NULL);
+  ReleaseTokenFSCall();
   setfsuid(fsuid);
   setfsgid(fsgid);
-
-  if(newfd < 0)
-    {
-      close(fd);
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-    }
-
-  /* we no longer need the parent directory open any more */
-  close(fd);
-
-  /* close the file descriptor */
-  /*** 
-   * Previously the file handle was closed here.  I don't think that
-   we need that, but leaving the commented out logic just in case.
-   rc = close(newfd);
-   
-   errsv = errno;
-   if(rc)
-   {
-   close(fd);
-   ReleaseTokenFSCall();
-   Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-   }
-  */
-
-  /* get a handle for this new fd, doing this directly ensures no race
-     because we still have the fd open until the end of this function */
-  status = fsal_internal_fd2handle(newfd, p_object_handle);
-  ReleaseTokenFSCall();
-
   if(FSAL_IS_ERROR(status))
-    {
-      close(newfd);
-      ReturnStatus(status, INDEX_FSAL_create);
-    }
-
-  /* if we got this far successfully, but the file close fails, we've
-     got a problem, possibly a disk full problem. */
-  close(newfd);
-  if(rc)
-    Return(posix2fsal_error(errno), errno, INDEX_FSAL_create);
+    ReturnStatus(status, INDEX_FSAL_create);
 
   /* retrieve file attributes */
   if(p_object_attributes)
@@ -230,8 +170,6 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
                          fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */
     )
 {
-
-  int rc, fd, errsv;
   int setgid_bit = 0;
   mode_t unix_mode;
   fsal_status_t status;
@@ -251,21 +189,11 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
-  TakeTokenFSCall();
-  status = fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd, O_RDONLY);
-  ReleaseTokenFSCall();
-
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mkdir);
-
   /* get directory metadata */
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_mkdir);
-    }
+    ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* Check the user can write in the directory, and check the setgid bit on the directory */
 
@@ -282,51 +210,25 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
     status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_mkdir);
-    }
+    ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* build new entry path */
 
   /* creates the directory and get its handle */
 
-  TakeTokenFSCall();
   fsuid = setfsuid(p_context->credential.user);
   fsgid = setfsgid(p_context->credential.group);
 
-  rc = mkdirat(fd, p_dirname->name, unix_mode);
-  errsv = errno;
+  TakeTokenFSCall();
+  status = fsal_internal_create(p_context, p_parent_directory_handle,
+                                p_dirname, unix_mode | S_IFDIR, 0,
+                                p_object_handle, NULL);
+  ReleaseTokenFSCall();
   setfsuid(fsuid);
   setfsgid(fsgid);
 
-  if(rc)
-    {
-      close(fd);
-
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-    }
-
-  ReleaseTokenFSCall();
-
-  /****
-   *  There is a race here between mkdir creation and the open, not
-   *  sure there is any way to close it in practice.
-   */
-
-  /* get the new handle */
-  TakeTokenFSCall();
-  status = fsal_internal_get_fh(p_context, p_parent_directory_handle,
-                                p_dirname, p_object_handle);
-  ReleaseTokenFSCall();
-
-  close(fd);
-
   if(FSAL_IS_ERROR(status))
-    {
-      ReturnStatus(status, INDEX_FSAL_mkdir);
-    }
+    ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* retrieve file attributes */
   if(p_object_attributes)
@@ -468,9 +370,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     )
 {
-  int rc, errsv;
   fsal_status_t status;
-  int fd;
   int flags=(O_RDONLY|O_NOFOLLOW);
   int fsuid, fsgid;
 
@@ -521,21 +421,11 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_mknode);
     }
 
-  /* build the directory path */
-  status =
-      fsal_internal_handle2fd(p_context, parentdir_handle, &fd, O_RDONLY | O_DIRECTORY);
-
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mknode);
-
   /* retrieve directory attributes */
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(parentdir_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_mknode);
-    }
+    ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* Check the user can write in the directory */
 
@@ -549,40 +439,22 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     status = fsal_internal_access(p_context, parentdir_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_mknode);
-    }
+    ReturnStatus(status, INDEX_FSAL_mknode);
 
   fsuid = setfsuid(p_context->credential.user);
   fsgid = setfsgid(p_context->credential.group);
 
-  rc = mknodat(fd, p_node_name->name, unix_mode, unix_dev);
-  errsv = errno;
+  TakeTokenFSCall();
+  status = fsal_internal_create(p_context, parentdir_handle,
+                                p_node_name, unix_mode, unix_dev,
+                                p_object_handle, NULL);
+  ReleaseTokenFSCall();
 
   setfsuid(fsuid);
   setfsgid(fsgid);
 
-  if(rc)
-    {
-      close(fd);
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
-    }
-
-  /* WARNING:
-   * After creating the new node, the node name could have been changed.
-   * This is a race condition. However only root creates new nodes. This
-   * is an unlikely race condition, but hopefully can be fixed someday.
-   */
-
-  if(FSAL_IS_ERROR(status = fsal_internal_get_fh(p_context, parentdir_handle,
-                                                 p_node_name, p_object_handle)))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_mknode);
-    }
-
-  close(fd);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* Fills the attributes if needed */
   if(node_attributes)

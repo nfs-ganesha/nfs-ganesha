@@ -838,7 +838,7 @@ lru_thread(void *arg __attribute__((unused)))
                currentopen = open_fd_count;
                if (extremis &&
                    ((currentopen > formeropen) ||
-                    (formeropen - currentopen >
+                    (formeropen - currentopen <
                      (((formeropen - lru_state.fds_hiwat) *
                        cache_inode_gc_policy.required_progress) /
                       100)))) {

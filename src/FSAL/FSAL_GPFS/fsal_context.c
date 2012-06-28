@@ -71,6 +71,8 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
         if (strncmp(p_mnt->mnt_dir, p_export_path->path, strlen(p_mnt->mnt_dir)) == 0)
           mntexists = 1;
   
+  endmntent(fp);
+
   if (mntexists == 0)
     {
       LogMajor(COMPONENT_FSAL,

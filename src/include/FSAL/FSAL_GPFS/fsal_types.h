@@ -207,7 +207,7 @@ typedef struct
 typedef struct fsal_xstat__
 {
   int attr_valid;
-  struct stat64 buffstat;
+  struct stat buffstat;
   char buffacl[GPFS_ACL_BUF_SIZE];
 } gpfsfsal_xstat_t;
 
