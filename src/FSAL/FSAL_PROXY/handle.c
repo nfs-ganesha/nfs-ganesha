@@ -774,7 +774,6 @@ pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
         char clientid_name[MAXNAMLEN];
         uint32_t lease_bits[] = {1U << FATTR4_LEASE_TIME};
         uint32_t bitmap_res[2];
-        GETATTR4resok *rok4;
         SETCLIENTID4resok *sok;
         extern time_t ServerBootTime;
         struct sockaddr_in sin;
@@ -828,12 +827,8 @@ pxy_setclientid(clientid4 *resultclientid, uint32_t *lease_time)
         /* Get the lease time */
         opcnt = 0;
         COMPOUNDV4_ARG_ADD_OP_PUTROOTFH(opcnt, arg);
-        rok4 = pxy_fill_getattr_reply(res + opcnt, bitmap_res,
-                                      (char *)lease_time, sizeof(*lease_time));
-	if(rok4) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "Using rok4 to suppress not used strict compile error");
-	}
+        pxy_fill_getattr_reply(res + opcnt, bitmap_res,
+                               (char *)lease_time, sizeof(*lease_time));
         COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, arg, lease_bits);
 
         rc = pxy_compoundv4_execute(__func__, opcnt, arg, res);
