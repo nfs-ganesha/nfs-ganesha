@@ -2168,6 +2168,12 @@ void *worker_thread(void *IndexArg)
            break;
        }
 
+      /* Zero out worker timer_start to indicate done processing.
+       * This timer is used by long_processing_thread to report worker threads
+       * that take a long time to process.
+       */
+      memset(&pmydata->timer_start, 0, sizeof(struct timeval));
+
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");
