@@ -704,7 +704,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 				 uint32_t *link_len,
 				 fsal_boolean_t refresh)
 {
-	struct vfs_fsal_obj_handle *myself;
+	struct vfs_fsal_obj_handle *myself = NULL;
 	int fd, mntfd;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
