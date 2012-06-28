@@ -220,7 +220,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
     case NFS_V4:
       if(!nfs4_FhandleToFSAL(pfh4, &fsal_data.fh_desc, pexport->export_hdl))
         {
-          *prc = NFS_REQ_DROP;
+          *prc = NFS_REQ_OK;
           *pstatus4 = NFS4ERR_BADHANDLE;
           return NULL;
         }
@@ -230,7 +230,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
     case NFS_V3:
       if(!nfs3_FhandleToFSAL(pfh3, &fsal_data.fh_desc, pexport->export_hdl))
         {
-          *prc = NFS_REQ_DROP;
+          *prc = NFS_REQ_OK;
           *pstatus3 = NFS3ERR_BADHANDLE;
           return NULL;
         }
@@ -240,7 +240,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
     case NFS_V2:
       if(!nfs2_FhandleToFSAL(pfh2, &fsal_data.fh_desc, pexport->export_hdl))
         {
-          *prc = NFS_REQ_DROP;
+          *prc = NFS_REQ_OK;
           *pstatus2 = NFSERR_STALE;
           return NULL;
         }
