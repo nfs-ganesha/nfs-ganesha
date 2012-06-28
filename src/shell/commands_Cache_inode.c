@@ -38,7 +38,6 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
-#include "LRU_List.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "abstract_mem.h"

@@ -48,7 +48,6 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   shell_utils.h                       \
                                   shell_vars.h                        \
                                   ../include/avltree.h                \
-                                  ../include/LRU_List.h               \
                                   ../include/cache_content.h          \
                                   ../include/cache_inode.h            \
                                   ../include/config_parsing.h         \

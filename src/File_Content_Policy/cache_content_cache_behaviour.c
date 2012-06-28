@@ -22,7 +22,6 @@
 #include "solaris_port.h"
 #endif
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"

@@ -44,7 +44,6 @@
 #include <sys/statvfs.h>
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"

@@ -785,10 +785,6 @@ void Print_param_in_log();
 
 void nfs_reset_stats(void);
 
-int display_req_key(hash_buffer_t * pbuff, char *str);
-int display_req_val(hash_buffer_t * pbuff, char *str);
-int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2);
-
 void auth_stat2str(enum auth_stat, char *str);
 
 uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,

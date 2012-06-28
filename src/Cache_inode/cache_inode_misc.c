@@ -50,6 +50,7 @@
 #include "nfs4_acls.h"
 #include "sal_functions.h"
 #include "nfs_core.h"
+#include "nfs_tools.h"
 
 #include <unistd.h>
 #include <sys/types.h>

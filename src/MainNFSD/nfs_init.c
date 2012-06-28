@@ -127,15 +127,6 @@ nfs_parameter_t nfs_param =
   .core_param.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE,
   .core_param.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE,
 
-  /* Worker parameters : LRU dupreq */
-  .worker_param.lru_dupreq.nb_call_gc_invalid = 100,
-  .worker_param.lru_dupreq.clean_entry = clean_entry_dupreq,
-  .worker_param.lru_dupreq.entry_to_str = print_entry_dupreq,
-  .worker_param.lru_dupreq.lp_name = "Worker DupReq LRU",
-
-  /* Worker parameters : GC */
-  .worker_param.nb_before_gc = NB_REQUEST_BEFORE_GC,
-
   /* Workers parameters : IP/Name values pool prealloc */
 
 #ifdef _HAVE_GSSAPI
@@ -160,16 +151,6 @@ nfs_parameter_t nfs_param =
   .nfsv4_param.return_bad_stateid = TRUE,
   .nfsv4_param.domainname = DEFAULT_DOMAIN,
   .nfsv4_param.idmapconf = DEFAULT_IDMAPCONF,
-
-  /* Worker parameters : dupreq hash table */
-  .dupreq_param.hash_param.index_size = PRIME_DUPREQ,
-  .dupreq_param.hash_param.alphabet_length = 10,    /* Xid is a numerical decimal value */
-  .dupreq_param.hash_param.hash_func_key = dupreq_value_hash_func,
-  .dupreq_param.hash_param.hash_func_rbt = dupreq_rbt_hash_func,
-  .dupreq_param.hash_param.compare_key = compare_req,
-  .dupreq_param.hash_param.key_to_str = display_req_key,
-  .dupreq_param.hash_param.val_to_str = display_req_val,
-  .dupreq_param.hash_param.flags = HT_FLAG_NONE, /* ! */
 
   /*  Worker parameters : IP/name hash table */
   .ip_name_param.hash_param.index_size = PRIME_IP_NAME,
@@ -508,7 +489,6 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char 
 
   /* Register error families */
   AddFamilyError(ERR_POSIX, "POSIX Errors", tab_systeme_status);
-  AddFamilyError(ERR_LRU, "LRU related Errors", tab_errctx_LRU);
   AddFamilyError(ERR_HASHTABLE, "HashTable related Errors", tab_errctx_hash);
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "Cache Inode related Errors",

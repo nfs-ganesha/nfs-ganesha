@@ -57,7 +57,6 @@
 #include <grp.h>
 
 #include "rpcal.h"
-#include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"

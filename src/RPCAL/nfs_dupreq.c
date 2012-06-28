@@ -1174,7 +1174,6 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
     dupreq_entry_t *ov = NULL, *dv = (dupreq_entry_t *) req->rq_u1;
     dupreq_status_t status = DUPREQ_SUCCESS;
     struct rbtree_x_part *t;
-    struct opr_queue *qn;
     drc_t *drc = NULL;
 
    /* do nothing if req is v41 */

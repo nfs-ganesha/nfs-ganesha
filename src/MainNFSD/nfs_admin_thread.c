@@ -47,6 +47,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "nfs_core.h"
+#include "nfs_tools.h"
 #include "log.h"
 #include "nfs_tcb.h"
 

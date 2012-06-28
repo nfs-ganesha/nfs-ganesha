@@ -19,7 +19,6 @@ libsal_la_SOURCES = state_async.c                    \
                     nfs41_session_id.c               \
                     ../include/HashData.h            \
                     ../include/HashTable.h           \
-                    ../include/LRU_List.h            \
                     ../include/cache_inode.h         \
                     ../include/config.h              \
                     ../include/err_cache_inode.h     \

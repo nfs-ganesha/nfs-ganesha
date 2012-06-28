@@ -7,12 +7,10 @@ noinst_HEADERS = abstract_atomic.h               \
                  fsal_pnfs_files.h               \
                  HashData.h                      \
                  HashTable.h                     \
-                 LRU_List.h                      \
                  MesureTemps.h                   \
                  RW_Lock.h                       \
                  HashData.h                      \
                  HashTable.h                     \
-                 LRU_List.h                      \
                  avltree.h                       \
                  cache_inode_avl.h               \
                  murmur3.h                       \
@@ -28,7 +26,6 @@ noinst_HEADERS = abstract_atomic.h               \
                  common_utils.h                  \
                  config_parsing.h                \
                  err_HashTable.h                 \
-                 err_LRU_List.h                  \
                  err_cache_inode.h               \
                  err_fsal.h                      \
                  err_ghost_fs.h                  \

@@ -43,7 +43,6 @@
 #include <time.h>
 #include <pthread.h>
 
-#include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"

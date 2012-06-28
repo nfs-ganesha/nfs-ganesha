@@ -80,12 +80,5 @@ unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam,
 
 int display_cache(hash_buffer_t * pbuff, char *str);
 int compare_cache(hash_buffer_t * buff1, hash_buffer_t * buff2);
-int print_cache(LRU_data_t data, char *str);
-int clean_cache(LRU_entry_t * pentry, void *addparam);
-
-int lru_data_entry_to_str(LRU_data_t data, char *str);
-int lru_inode_clean_entry(LRU_entry_t * entry, void *adddata);
-int lru_data_clean_entry(LRU_entry_t * entry, void *adddata);
-int lru_inode_entry_to_str(LRU_data_t data, char *str);
 
 #endif                          /* _NFS_TOOLS_H */

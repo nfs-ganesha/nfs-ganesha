@@ -1139,23 +1139,6 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 }
 
 /**
- *
- * print_pending_request: prints an entry related to a pending request in the LRU list.
- *
- * prints an entry related to a pending request in the LRU list.
- *
- * @param data [IN] data stored in a LRU entry to be printed.
- * @param str [OUT] string used to store the result.
- *
- * @return 0 if ok, other values mean an error.
- *
- */
-int print_pending_request(LRU_data_t data, char *str)
-{
-  return snprintf(str, LRU_DISPLAY_STRLEN, "not implemented for now");
-}                               /* print_pending_request */
-
-/**
  * rpc_dispatcher_thread
  *
  * Thread used to service an (epoll, etc) event channel.

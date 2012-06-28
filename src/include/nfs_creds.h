@@ -43,15 +43,12 @@
 #include <sys/param.h>
 
 #include "ganesha_rpc.h"
-#include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
 
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
-
-#include "err_LRU_List.h"
 #include "err_HashTable.h"
 
 typedef enum CredType__

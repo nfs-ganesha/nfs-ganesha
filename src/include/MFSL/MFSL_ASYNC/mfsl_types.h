@@ -55,7 +55,6 @@
 #include <pthread.h>
 #include <dirent.h>             /* for MAXNAMLEN */
 #include "config_parsing.h"
-#include "LRU_List.h"
 #include "HashTable.h"
 #include "err_fsal.h"
 #include "err_mfsl.h"
