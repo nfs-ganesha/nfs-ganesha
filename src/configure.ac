@@ -704,7 +704,9 @@ if test "$enable_fsal_gpfs" == "yes"; then
 fi
 
 if test "$enable_fsal_vfs" == "yes"; then
-	AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem (kernel is >= 2.6.39])
+	AC_CHECK_FUNC([open_by_handle_at],
+		      [AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem ])],
+		      [USE_FSAL_VFS_TRUE='#'])
 	FSAL_CFLAGS=
 	FSAL_LDFLAGS=""
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
