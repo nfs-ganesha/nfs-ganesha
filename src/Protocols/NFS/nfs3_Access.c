@@ -90,7 +90,6 @@ int nfs3_Access(nfs_arg_t *parg,
   cache_inode_status_t cache_status;
   cache_inode_file_type_t filetype;
   cache_entry_t *pentry = NULL;
-  cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t attr;
   int rc = NFS_REQ_OK;
 
@@ -113,33 +112,13 @@ int nfs3_Access(nfs_arg_t *parg,
   pres->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow
     = FALSE;
 
-  /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_access3.object),
-                        &fsal_data.fh_desc, pexport->export_hdl) == 0)
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  /* Get the entry in the cache_inode */
-  if((pentry = cache_inode_get(&fsal_data,
-                               &attr,
-                               NULL,
-                               &cache_status)) == NULL)
-    {
-      if(nfs_RetryableError(cache_status))
-        {
-          rc = NFS_REQ_DROP;
+  /* Convert file handle into a vnode */
+  pentry = nfs_FhandleToCache(preq->rq_vers, NULL, &(parg->arg_access3.object),
+                              NULL, NULL, &(pres->res_access3.status),
+                              NULL, &attr, pexport, &rc);
+  if(pentry == NULL)
           goto out;
-        }
-      else
-        {
-          pres->res_access3.status = nfs3_Errno(cache_status);
-          rc = NFS_REQ_OK;
-          goto out;
-        }
-    }
-
+     
   /* Get file type */
   filetype = attr.type;
 

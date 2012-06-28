@@ -87,7 +87,6 @@ int nfs3_Commit(nfs_arg_t *parg,
 {
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
-  cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t pre_attr;
   fsal_attrib_list_t *ppre_attr;
   uint64_t typeofcommit;
@@ -106,26 +105,11 @@ int nfs3_Commit(nfs_arg_t *parg,
   pres->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow = FALSE;
   ppre_attr = NULL;
 
-  /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file),
-			&fsal_data.fh_desc,
-			pexport->export_hdl) == 0)
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  /* Get the entry in the cache_inode */
-  if((pentry = cache_inode_get(&fsal_data,
-                               &pre_attr,
-                               NULL,
-                               &cache_status)) == NULL)
-    {
-      /* Stale NFS FH ? */
-      pres->res_commit3.status = NFS3ERR_STALE;
-      rc = NFS_REQ_OK;
-      goto out;
-    }
+  pentry = nfs_FhandleToCache(preq->rq_vers, NULL, &parg->arg_commit3.file,
+                              NULL, NULL, &pres->res_commit3.status, NULL,
+                              &pre_attr, pexport, &rc);
+  if(pentry == NULL)
+    goto out;
 
   if((pexport->use_commit == TRUE) &&
      (pexport->use_ganesha_write_buffer == FALSE))

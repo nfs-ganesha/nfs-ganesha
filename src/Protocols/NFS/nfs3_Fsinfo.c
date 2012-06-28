@@ -84,9 +84,7 @@ int nfs3_Fsinfo(nfs_arg_t *parg,
                 struct svc_req *preq,
                 nfs_res_t * pres)
 {
-  cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
-  cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t attr;
   int rc = NFS_REQ_OK;
 
@@ -101,26 +99,11 @@ int nfs3_Fsinfo(nfs_arg_t *parg,
   /* to avoid setting it on each error case */
   pres->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
-  /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_fsinfo3.fsroot),
-			&fsal_data.fh_desc,
-			pexport->export_hdl) == 0)
-    {
-      rc = NFS_REQ_DROP;
+  pentry = nfs_FhandleToCache(preq->rq_vers, NULL, &parg->arg_fsinfo3.fsroot,
+                              NULL, NULL, &pres->res_fsinfo3.status, NULL,
+                              &attr, pexport, &rc);
+  if(pentry == NULL)
       goto out;
-    }
-
-  /* Get the entry in the cache_inode */
-  if((pentry = cache_inode_get(&fsal_data,
-                               &attr,
-                               NULL,
-                               &cache_status)) == NULL)
-    {
-      /* Stale NFS FH ? */
-      pres->res_fsinfo3.status = NFS3ERR_STALE;
-      rc = NFS_REQ_OK;
-      goto out;
-    }
 
   /*
    * New fields were added to nfs_config_t to handle this value. We use
