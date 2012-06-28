@@ -167,13 +167,17 @@ static int print_handle(hash_buffer_t * p_val, char *outbuff)
 
 int handle_mapping_hash_add(hash_table_t * p_hash,
                             uint64_t object_id,
-                            unsigned int handle_hash, const nfs_fh4 * p_handle)
+                            unsigned int handle_hash,
+                            const void *data, uint32_t datalen)
 {
   int rc;
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   digest_pool_entry_t *digest;
   handle_pool_entry_t *handle;
+
+  if(datalen >= sizeof(handle->fh_data))
+    return HANDLEMAP_INVALID_PARAM;
 
   digest = digest_alloc();
   handle = handle_alloc();
@@ -184,8 +188,8 @@ int handle_mapping_hash_add(hash_table_t * p_hash,
   digest->nfs23_digest.object_id = object_id;
   digest->nfs23_digest.handle_hash = handle_hash;
   memset(handle->fh_data, 0, sizeof(handle->fh_data));
-  memcpy(handle->fh_data, p_handle->nfs_fh4_val, p_handle->nfs_fh4_len);
-  handle->fh_len = p_handle->nfs_fh4_len;
+  memcpy(handle->fh_data, data, datalen);
+  handle->fh_len = datalen;
 
   buffkey.pdata = (caddr_t) digest;
   buffkey.len = sizeof(digest_pool_entry_t);
@@ -309,8 +313,8 @@ int HandleMap_Init(const handle_map_param_t * p_param)
  * \return HANDLEMAP_SUCCESS if the handle is available,
  *         HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
  */
-int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest,
-                    nfs_fh4 * p_out_fsal_handle)
+int HandleMap_GetFH(const nfs23_map_handle_t * p_in_nfs23_digest,
+                    struct netbuf * p_out_fsal_handle)
 {
 
   int rc;
@@ -329,11 +333,18 @@ int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest,
   if(rc == HASHTABLE_SUCCESS)
     {
       handle_pool_entry_t *h = (handle_pool_entry_t *)buffval.pdata;
-      p_out_fsal_handle->nfs_fh4_len = h->fh_len;
-      memcpy(p_out_fsal_handle->nfs_fh4_val, h->fh_data,  h->fh_len);
+      if(h->fh_len < p_out_fsal_handle->maxlen)
+        {
+          p_out_fsal_handle->len = h->fh_len;
+          memcpy(p_out_fsal_handle->buf, h->fh_data,  h->fh_len);
+          rc = HANDLEMAP_SUCCESS;
+        }
+      else
+        {
+          rc = HANDLEMAP_INTERNAL_ERROR;
+        }
       HashTable_ReleaseLatched(handle_map_hash, &hl);
-
-      return HANDLEMAP_SUCCESS;
+      return rc;
     }
 
   if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
@@ -344,14 +355,15 @@ int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest,
 /**
  * Save the handle association if it was unknown.
  */
-int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, const nfs_fh4 * p_in_handle)
+int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest,
+                    const void *data, uint32_t len)
 {
   int rc;
 
   /* first, try to insert it to the hash table */
 
   rc = handle_mapping_hash_add(handle_map_hash, p_in_nfs23_digest->object_id,
-                               p_in_nfs23_digest->handle_hash, p_in_handle);
+                               p_in_nfs23_digest->handle_hash, data, len);
 
   if((rc != 0) && (rc != HANDLEMAP_EXISTS))
     /* error */
@@ -362,7 +374,7 @@ int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, const nfs_fh4 * p_in
   else
     {
       /* insert it to DB */
-      return handlemap_db_insert(p_in_nfs23_digest, p_in_handle);
+      return handlemap_db_insert(p_in_nfs23_digest, data, len);
     }
 }
 

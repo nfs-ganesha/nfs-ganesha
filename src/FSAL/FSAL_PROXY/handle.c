@@ -2104,6 +2104,12 @@ pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
         struct pxy_obj_handle *n = malloc(sizeof(*n) + fh->nfs_fh4_len);
 
         if (n) {
+                n->fh4 = *fh;
+                n->fh4.nfs_fh4_val = n->blob.bytes;
+                memcpy(n->blob.bytes, fh->nfs_fh4_val, fh->nfs_fh4_len);
+                n->obj.attributes = *attr;
+                n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
+                n->blob.type = attr->type;
 #ifdef _HANDLE_MAPPING
                 int rc;
                 memset(&n->h23, 0, sizeof(n->h23));
@@ -2112,18 +2118,12 @@ pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
                 n->h23.object_id = attr->fileid;
                 n->h23.handle_hash = hash_nfs_fh4(fh, attr->fileid);
 
-                rc = HandleMap_SetFH(&n->h23, fh);
+                rc = HandleMap_SetFH(&n->h23, &n->blob, n->blob.len);
                 if((rc != HANDLEMAP_SUCCESS) && (rc != HANDLEMAP_EXISTS)) {
                         free(n);
                         return NULL;
                 }
 #endif
-                n->fh4 = *fh;
-                n->fh4.nfs_fh4_val = n->blob.bytes;
-                memcpy(n->blob.bytes, fh->nfs_fh4_val, fh->nfs_fh4_len);
-                n->obj.attributes = *attr;
-                n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
-                n->blob.type = attr->type;
                 if(fsal_obj_handle_init(&n->obj, &pxy_obj_ops, exp,
                                         attr->type)) {
                         free(n);
@@ -2187,7 +2187,7 @@ pxy_create_handle(struct fsal_export *exp_hdl,
         fsal_attrib_list_t attr;
         struct pxy_obj_handle *ph;
 #ifdef _HANDLE_MAPPING
-        char fh_data[NFS4_FHSIZE];
+        char fh_data[NFS4_FHSIZE+2];
 #endif
 
         if(!exp_hdl || !hdl_desc || !handle || (hdl_desc->len > NFS4_FHSIZE))
@@ -2195,15 +2195,23 @@ pxy_create_handle(struct fsal_export *exp_hdl,
 
         fh4.nfs_fh4_val = hdl_desc->start;
         fh4.nfs_fh4_len = hdl_desc->len;
+
 #ifdef _HANDLE_MAPPING
         if(hdl_desc->len == sizeof(nfs23_map_handle_t)) {
                 nfs23_map_handle_t *h23 = (nfs23_map_handle_t*)hdl_desc->start;
                 if(h23->type == PXY_HANDLE_MAPPED) {
-                        fh4.nfs_fh4_val = fh_data;
-                        fh4.nfs_fh4_len = sizeof(fh_data);
+                        struct netbuf fh = {
+                                .maxlen = sizeof(fh_data),
+                                .buf = fh_data
+                        };
+                        struct pxy_handle_blob *blob;
                 
-                        if(HandleMap_GetFH(h23, &fh4) != HANDLEMAP_SUCCESS)
+                        if(HandleMap_GetFH(h23, &fh) != HANDLEMAP_SUCCESS)
                                 ReturnCode(ERR_FSAL_STALE, 0);
+
+                        blob = fh.buf;
+                        fh4.nfs_fh4_val = blob->bytes;
+                        fh4.nfs_fh4_len = fh.len - sizeof(*blob);
                 }
         }
 #endif

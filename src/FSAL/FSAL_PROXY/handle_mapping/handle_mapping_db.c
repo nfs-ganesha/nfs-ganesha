@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <fnmatch.h>
 #include <pthread.h>
+#include <nfsv40.h>
 
 /* sqlite check macros */
 
@@ -303,7 +304,6 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
   unsigned int handle_hash;
   const char *fsal_handle_str;
   char fh4_data[NFS4_FHSIZE];
-  nfs_fh4 fh4;
   unsigned int nb_loaded = 0;
   int rc;
   struct timeval t1;
@@ -343,12 +343,9 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
                 }
               else
                 {
-                  fh4.nfs_fh4_val = fh4_data;
-                  fh4.nfs_fh4_len = len/2;
-
                   /* now insert it to the hash table */
                   rc = handle_mapping_hash_add(p_hash, object_id, handle_hash,
-                                               &fh4);
+                                               fh4_data, len/2);
 
                   if(rc == 0)
                     nb_loaded++;
@@ -830,7 +827,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
  * The request is inserted in the appropriate db queue.
  */
 int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
-                        const nfs_fh4 *fh4)
+                        const void *data, uint32_t len)
 {
   unsigned int i;
   db_op_item_t *new_task;
@@ -855,9 +852,8 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
       /* fill the task info */
       new_task->op_type = INSERT;
       new_task->op_arg.fh_info.nfs23_digest = *p_in_nfs23_digest;
-      memcpy(new_task->op_arg.fh_info.fh4_data, fh4->nfs_fh4_val, 
-             fh4->nfs_fh4_len);
-      new_task->op_arg.fh_info.fh4_len = fh4->nfs_fh4_len;
+      memcpy(new_task->op_arg.fh_info.fh4_data, data, len);
+      new_task->op_arg.fh_info.fh4_len = len;
 
       rc = dbop_push(&db_thread[i].work_queue, new_task);
 

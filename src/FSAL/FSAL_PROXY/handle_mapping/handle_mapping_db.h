@@ -44,7 +44,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash);
  * The request is inserted in the appropriate db queue.
  */
 int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
-                        const nfs_fh4 * p_in_handle);
+                        const void *data, uint32_t len);
 
 /**
  * Submit a db 'delete' request.
