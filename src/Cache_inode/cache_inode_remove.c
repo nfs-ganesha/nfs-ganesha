@@ -110,12 +110,13 @@ cache_inode_clean_internal(cache_entry_t *entry)
      fsal_status_t fsal_status = {0, 0};
      hash_error_t rc = 0;
 
+     if (! entry->obj_handle)
+       goto unref;
+
      entry->obj_handle->ops->handle_to_key(entry->obj_handle,
 					   &fh_desc);
      key.pdata = fh_desc.start;
      key.len = fh_desc.len;
-
-
      val.pdata = entry;
      val.len = sizeof(cache_entry_t);
 
@@ -142,8 +143,9 @@ cache_inode_clean_internal(cache_entry_t *entry)
                   "fsal_status.major=%u", fsal_status.major);
      }
 
-     entry->obj_handle = NULL;;
+     entry->obj_handle = NULL;
 
+ unref:
      /* Delete from the weakref table */
      cache_inode_weakref_delete(&entry->weakref);
 
