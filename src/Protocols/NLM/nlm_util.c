@@ -36,6 +36,7 @@
 #include "ganesha_rpc.h"
 #include "nlm4.h"
 #include "sal_functions.h"
+#include "nfs_proto_tools.h"
 #include "nlm_util.h"
 #include "nsm.h"
 #include "nlm_async.h"
@@ -270,9 +271,8 @@ int nlm_process_parameters(struct svc_req        * preq,
                            state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data)
 {
-  cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t      attr;
-  cache_inode_status_t    cache_status;
+  nfsstat3                nfsstat3;
   SVCXPRT                *ptr_svc = preq->rq_xprt;
   int                     rc;
 
@@ -281,21 +281,11 @@ int nlm_process_parameters(struct svc_req        * preq,
   *ppowner      = NULL;
 
   /* Convert file handle into a cache entry */
-  if(alock->fh.n_len > MAX_NETOBJ_SZ ||
-     !nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh,
-			 &fsal_data.fh_desc,
-			 pexport->export_hdl))
-    {
-      /* handle is not valid */
-      return NLM4_STALE_FH;
-    }
-
-  /* Now get the cached inode attributes */
-  *ppentry = cache_inode_get(&fsal_data,
-                             &attr,
-                             NULL,
-                             &cache_status);
-  if(*ppentry == NULL)
+  *ppentry = nfs_FhandleToCache(preq->rq_vers,
+				NULL, (struct nfs_fh3 *)&alock->fh, NULL,
+				NULL, &nfsstat3, NULL,
+				&attr, pexport, &rc);
+  if(*ppentry == NULL || nfsstat3 == NFS3ERR_STALE)
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
@@ -412,9 +402,8 @@ int nlm_process_share_parms(struct svc_req        * preq,
                             state_nlm_client_t   ** ppnlm_client,
                             state_owner_t        ** ppowner)
 {
-  cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t      attr;
-  cache_inode_status_t    cache_status;
+  nfsstat3                nfsstat3;
   SVCXPRT                *ptr_svc = preq->rq_xprt;
   int                     rc;
 
@@ -423,20 +412,11 @@ int nlm_process_share_parms(struct svc_req        * preq,
   *ppowner      = NULL;
 
   /* Convert file handle into a cache entry */
-  if(share->fh.n_len > MAX_NETOBJ_SZ ||
-     !nfs3_FhandleToFSAL((nfs_fh3 *) &share->fh, &fsal_data.fh_desc, exp_hdl))
-    {
-      /* handle is not valid */
-      return NLM4_STALE_FH;
-    }
-
-  /* Now get the cached inode attributes */
-  *ppentry = cache_inode_get(&fsal_data,
-                             &attr,
-                             NULL,
-                             &cache_status);
-
-  if(*ppentry == NULL)
+  *ppentry = nfs_FhandleToCache(preq->rq_vers,
+				NULL, (struct nfs_fh3 *)&share->fh, NULL,
+				NULL, &nfsstat3, NULL,
+				&attr, exp_hdl->exp_entry, &rc);
+  if(*ppentry == NULL || nfsstat3 == NFS3ERR_STALE)
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
