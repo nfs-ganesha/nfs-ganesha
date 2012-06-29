@@ -99,6 +99,21 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(res_LOCKT4.status != NFS4_OK)
     return res_LOCKT4.status;
 
+  /* This can't be done on the pseudofs */
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+    { 
+      res_LOCKT4.status = NFS4ERR_ROFS;
+      LogDebug(COMPONENT_STATE,
+               "NFS4 LOCKT returning NFS4ERR_ROFS");
+      return res_LOCKT4.status;
+    }
+
+  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+    {
+      res_LOCKT4.status = NFS4ERR_PERM;
+      return res_LOCKT4.status;
+    }
+
   /* Lock length should not be 0 */
   if(arg_LOCKT4.length == 0LL)
     {

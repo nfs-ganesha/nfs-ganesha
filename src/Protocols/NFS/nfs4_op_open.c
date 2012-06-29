@@ -159,6 +159,12 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       return res_OPEN4.status;
     }
 
+  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+    {
+      res_OPEN4.status = NFS4ERR_PERM;
+      return res_OPEN4.status;
+    }
+
   /*
    * If Filehandle points to a xattr object, manage it via the xattrs
    * specific functions

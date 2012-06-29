@@ -89,6 +89,21 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   if(res_OPEN_CONFIRM4.status != NFS4_OK)
     return res_OPEN_CONFIRM4.status;
 
+  /* This can't be done on the pseudofs */
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+    {
+      res_OPEN_CONFIRM4.status = NFS4ERR_ROFS;
+      LogDebug(COMPONENT_STATE,
+               "NFS4 OPEN_CONFIRM returning NFS4ERR_ROFS");
+      return res_OPEN_CONFIRM4.status;
+    }
+
+  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+    {
+      res_OPEN_CONFIRM4.status = NFS4ERR_PERM;
+      return res_OPEN_CONFIRM4.status;
+    }
+
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid,
                               data->current_entry,

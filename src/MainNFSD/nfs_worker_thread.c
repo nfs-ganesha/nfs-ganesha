@@ -223,7 +223,7 @@ const nfs_function_desc_t nfs4_func_desc[] = {
    (xdrproc_t) xdr_void, "nfs_Null",
    NOTHING_SPECIAL},
   {nfs4_Compound, nfs4_Compound_Free, (xdrproc_t) xdr_COMPOUND4args,
-   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED | SUPPORTS_GSS}
+   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED}
 };
 
 const nfs_function_desc_t mnt1_func_desc[] = {
@@ -1162,173 +1162,18 @@ static void nfs_rpc_execute(request_data_t *preq,
   if(pworker_data->pfuncdesc->dispatch_behaviour & SUPPORTS_GSS)
     {
       /* Test if export allows the authentication provided */
-      switch (req->rq_cred.oa_flavor)
+      if (nfs_export_check_security(req, pexport) == FALSE)
         {
-          case AUTH_NONE:
-            if((pexport->options & EXPORT_OPTION_AUTH_NONE) == 0)
-              {
-                LogInfo(COMPONENT_DISPATCH,
-                        "Export %s does not support AUTH_NONE",
-                        pexport->dirname);
-                svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-                svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                  {
-                    LogCrit(COMPONENT_DISPATCH,
-                            "Attempt to delete duplicate request failed on "
-                            "line %d", __LINE__);
-                  }
-                return;
-              }
-            break;
-
-          case AUTH_UNIX:
-            if((pexport->options & EXPORT_OPTION_AUTH_UNIX) == 0)
-              {
-                LogInfo(COMPONENT_DISPATCH,
-                        "Export %s does not support AUTH_UNIX",
-                        pexport->dirname);
-                svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-                svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                  {
-                    LogCrit(COMPONENT_DISPATCH,
-                            "Attempt to delete duplicate request failed on "
-                            "line %d", __LINE__);
-                  }
-                return;
-              }
-            break;
-
-#ifdef _HAVE_GSSAPI
-          case RPCSEC_GSS:
-            if((pexport->options &
-                 (EXPORT_OPTION_RPCSEC_GSS_NONE |
-                  EXPORT_OPTION_RPCSEC_GSS_INTG |
-                  EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
-              {
-                LogInfo(COMPONENT_DISPATCH,
-                        "Export %s does not support RPCSEC_GSS",
-                        pexport->dirname);
-                if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                  {
-                    LogCrit(COMPONENT_DISPATCH,
-                            "Attempt to delete duplicate request failed on "
-                            "line %d", __LINE__);
-                  }
-                svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-                svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                return;
-              }
-            else
-              {
-                struct svc_rpc_gss_data *gd;
-                rpc_gss_svc_t svc;
-                gd = SVCAUTH_PRIVATE(req->rq_xprt->xp_auth);
-                svc = gd->sec.svc;
-                LogFullDebug(COMPONENT_DISPATCH,
-                             "Testing svc %d", (int) svc);
-                switch(svc)
-                  {
-                    case RPCSEC_GSS_SVC_NONE:
-                      if((pexport->options &
-                          EXPORT_OPTION_RPCSEC_GSS_NONE) == 0)
-                        {
-                          LogInfo(COMPONENT_DISPATCH,
-                                  "Export %s does not support "
-                                  "RPCSEC_GSS_SVC_NONE",
-                                  pexport->dirname);
-                          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-                          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                            {
-                              LogCrit(COMPONENT_DISPATCH,
-                                      "Attempt to delete duplicate request "
-                                      "failed on line %d", __LINE__);
-                            }
-                          return;
-                        }
-                      break;
-
-                    case RPCSEC_GSS_SVC_INTEGRITY:
-                      if((pexport->options &
-                          EXPORT_OPTION_RPCSEC_GSS_INTG) == 0)
-                        {
-                          LogInfo(COMPONENT_DISPATCH,
-                                  "Export %s does not support "
-                                  "RPCSEC_GSS_SVC_INTEGRITY",
-                                  pexport->dirname);
-                          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-                          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                            {
-                              LogCrit(COMPONENT_DISPATCH,
-                                      "Attempt to delete duplicate request "
-                                      "failed on line %d", __LINE__);
-                            }
-                          return;
-                        }
-                      break;
-
-                    case RPCSEC_GSS_SVC_PRIVACY:
-                      if((pexport->options &
-                          EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0)
-                        {
-                          LogInfo(COMPONENT_DISPATCH,
-                                  "Export %s does not support "
-                                  "RPCSEC_GSS_SVC_PRIVACY",
-                                  pexport->dirname);
-                          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-                          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                            {
-                              LogCrit(COMPONENT_DISPATCH,
-                                      "Attempt to delete duplicate request "
-                                      "failed on line %d", __LINE__);
-                            }
-                          return;
-                        }
-                      break;
-
-                    default:
-                      LogInfo(COMPONENT_DISPATCH,
-                              "Export %s does not support unknown "
-                              "RPCSEC_GSS_SVC %d",
-                              pexport->dirname, (int) svc);
-                      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                      svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-                      svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                      if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                        {
-                          LogCrit(COMPONENT_DISPATCH,
-                                  "Attempt to delete duplicate request failed "
-                                  "on line %d", __LINE__);
-                        }
-                      return;
-                  }
-              }
-            break;
-#endif
-          default:
-            LogInfo(COMPONENT_DISPATCH,
-                    "Export %s does not support unknown oa_flavor %d",
-                    pexport->dirname, (int) req->rq_cred.oa_flavor);
-            svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-            svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-            svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-            if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-              {
-                LogCrit(COMPONENT_DISPATCH,
-                        "Attempt to delete duplicate request failed on line %d",
-                        __LINE__);
-              }
-            return;
+          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
+          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
+            {
+              LogCrit(COMPONENT_DISPATCH,
+                      "Attempt to delete duplicate request failed on "
+                      "line %d", __LINE__);
+            }
+          return;
         }
     }
 

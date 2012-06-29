@@ -98,6 +98,12 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     return nfs4_op_getattr_pseudo(op, data, resp);
 
+  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+    {
+      res_GETATTR4.status = NFS4ERR_PERM;
+      return res_GETATTR4.status;
+    }
+
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_getattr_xattr(op, data, resp);
