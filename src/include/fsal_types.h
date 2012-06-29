@@ -194,25 +194,6 @@ typedef enum
 
 #define cache_inode_file_type_t object_file_type_t
 
-
-/** @TODO deprecate this.  Not only a duplicate of cache_inode_file_type_t
- * but the bits don't even line up.  Replace usage with ^^
- * for now, make the bits line up.  DO NOT USE in new api!!!
- */
-/** FS object types */
-/* typedef enum fsal_nodetype__ */
-/* { */
-/*   FSAL_TYPE_FIFO =  7,   /\**< Fifo              *\/ */
-/*   FSAL_TYPE_CHR =   3,   /\**< character special *\/ */
-/*   FSAL_TYPE_DIR =   8,   /\**< directory         *\/ */
-/*   FSAL_TYPE_BLK =   4,   /\**< block special     *\/ */
-/*   FSAL_TYPE_FILE =  2,   /\**< regular file      *\/ */
-/*   FSAL_TYPE_LNK =   5,   /\**< symbolic link     *\/ */
-/*   FSAL_TYPE_SOCK =  6,   /\**< socket            *\/ */
-/*   FSAL_TYPE_XATTR = 10,  /\**< extended attribute *\/ */
-/*   FSAL_TYPE_JUNCTION = 9 /\**< junction to another fileset *\/ */
-/* } fsal_nodetype_t; */
-
 /* ---------------
  *  FS dependant :
  * --------------*/
@@ -253,7 +234,7 @@ struct user_cred {
 };
 
 /* deprecated and replaced by user_cred
- * used mainly in the fsal_op_context_t which is itself deprecated
+ * still used in include/sal_data.h
  */
 
 struct user_credentials {

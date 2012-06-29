@@ -237,15 +237,6 @@ fsal_status_t FSAL_name2buffdesc(fsal_name_t * in_name, fsal_buffdesc_t * out_bu
 #define sscanAttrs(p_attrs,str_source) \
   sscanmem( (caddr_t)p_attrs,sizeof(fsal_attrib_list_t),str_source )
 
-/** @TODO new fsal call to be added to new api
- */
-/* fsal_status_t FSAL_share_op( fsal_file_t       * p_file_descriptor,   /\* IN *\/ */
-/*                              fsal_handle_t     * p_filehandle,        /\* IN *\/ */
-/*                              fsal_op_context_t * p_context,           /\* IN *\/ */
-/*                              void              * p_owner,             /\* IN (opaque to FSAL) *\/ */
-/*                              fsal_share_param_t  request_share        /\* IN *\/ */
-/*                              ); */
-
 /* FSAL_UP functions */
 /* These structs are defined here because including fsal_up.h causes
  * preprocessor issues. */
