@@ -722,6 +722,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
            change_info4 of whatever filehandle is current when the
            OPEN operation is invoked. */
         cache_entry_t           * entry_change = NULL;
+        cache_entry_t           * entry = NULL;
         /* Open flags to be passed to the FSAL */
         fsal_openflags_t          openflags = 0;
         /* Return code from state oeprations */
