@@ -4185,21 +4185,13 @@ int nfs4_MakeCred(compound_data_t * data)
                              data->pworker->ht_ip_stats,
                              ip_stats_pool,
                              &related_client,
-                             &user_credentials,
+                             data->req_ctx->creds,
                              FALSE) /* So check_access() doesn't deny based on whether this is a RO export. */
      == FALSE)
     return NFS4ERR_WRONGSEC;
-/** @TODO This is probably where we set up the request context
- *  or at least, what is here gets moved to the right place.
- */
-  if(nfs_check_anon(&related_client, data->pexport, &user_credentials) == FALSE
-    /*  || nfs_build_fsal_context(data->reqp, */
-/*                             data->pexport, */
-/*                             data->pcontext, */
-/*                             &user_credentials) == FALSE */)
+  if(nfs_check_anon(&related_client, data->pexport, data->req_ctx->creds) == FALSE)
     return NFS4ERR_WRONGSEC;
 
-  data->user_credentials = user_credentials;
   return NFS4_OK;
 }                               /* nfs4_MakeCred */
 

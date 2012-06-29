@@ -202,7 +202,7 @@ typedef union nfs_res__
 
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
                                         exportlist_t *,
-                                        struct user_cred *,
+                                        struct req_op_context *req_ctx,
                                         nfs_worker_data_t *,
                                         struct svc_req *, nfs_res_t *);
 
@@ -227,42 +227,42 @@ typedef struct nfs_function_desc__
  */
 int mnt_Null(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds,
+             struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres);
 
 int mnt_Mnt(nfs_arg_t *parg,
             exportlist_t *pexport,
-            struct user_cred *creds,
+            struct req_op_context *req_ctx,
             nfs_worker_data_t *pworker,
             struct svc_req *preq,
             nfs_res_t *pres);
 
 int mnt_Dump(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds,
+             struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres);
 
 int mnt_Umnt(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds,
+             struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres);
 
 int mnt_UmntAll(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int mnt_Export(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+               struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t * pres);
@@ -279,70 +279,70 @@ int mnt_Export(nfs_arg_t *parg,
 
 int nlm_Null(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds,
+             struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres);
 
 int nlm4_Test(nfs_arg_t *parg,
               exportlist_t *pexport,
-              struct user_cred *creds,
+              struct req_op_context *req_ctx,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres);
 
 int nlm4_Lock(nfs_arg_t *parg,
               exportlist_t *pexport,
-              struct user_cred *creds,
+              struct req_op_context *req_ctx,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres);
 
 int nlm4_Cancel(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nlm4_Unlock(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nlm4_Sm_Notify(nfs_arg_t *parg,
                    exportlist_t *pexport,
-                   struct user_cred *creds,
+                   struct req_op_context *req_ctx,
                    nfs_worker_data_t *pworker,
                    struct svc_req *preq,
                    nfs_res_t *pres);
 
 int nlm4_Test_Message(nfs_arg_t *parg,
                       exportlist_t *pexport,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       nfs_worker_data_t *pworker,
                       struct svc_req *preq,
                       nfs_res_t *pres);
 
 int nlm4_Cancel_Message(nfs_arg_t *parg,
                         exportlist_t *pexport,
-                        struct user_cred *creds,
+                        struct req_op_context *req_ctx,
                         nfs_worker_data_t *pworker,
                         struct svc_req *preq,
                         nfs_res_t *pres);
 
 int nlm4_Lock_Message(nfs_arg_t *parg,
                       exportlist_t *pexport,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       nfs_worker_data_t *pworker,
                       struct svc_req *preq,
                       nfs_res_t *pres);
 
 int nlm4_Unlock_Message(nfs_arg_t *parg,
                         exportlist_t *pexport,
-                        struct user_cred *creds,
+                        struct req_op_context *req_ctx,
                         nfs_worker_data_t *pworker,
                         struct svc_req *preq,
                         nfs_res_t *pres);
@@ -350,28 +350,28 @@ int nlm4_Unlock_Message(nfs_arg_t *parg,
 
 int nlm4_Granted_Res(nfs_arg_t *parg,
                      exportlist_t *pexport,
-                     struct user_cred *creds,
+                     struct req_op_context *req_ctx,
                      nfs_worker_data_t *pworker,
                      struct svc_req *preq,
                      nfs_res_t *pres);
 
 int nlm4_Share(nfs_arg_t            * parg,
                exportlist_t         * pexport,
-               struct user_cred *creds,
+               struct req_op_context *req_ctx,
                nfs_worker_data_t    * pworker,
                struct svc_req       * preq,
                nfs_res_t            * pres);
 
 int nlm4_Unshare(nfs_arg_t            * parg,
                  exportlist_t         * pexport,
-                 struct user_cred *creds,
+                 struct req_op_context *req_ctx,
                  nfs_worker_data_t    * pworker,
                  struct svc_req       * preq,
                  nfs_res_t            * pres);
 
 int nlm4_Free_All(nfs_arg_t *parg,
                   exportlist_t *pexport,
-                  struct user_cred *creds,
+                  struct req_op_context *req_ctx,
                   nfs_worker_data_t *pworker,
                   struct svc_req *preq,
                   nfs_res_t *pres);
@@ -388,35 +388,35 @@ int nlm4_Free_All(nfs_arg_t *parg,
 
 int rquota_Null(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int rquota_getquota(nfs_arg_t *parg,
                     exportlist_t *pexport,
-                    struct user_cred *creds,
+                    struct req_op_context *req_ctx,
                     nfs_worker_data_t *pworker,
                     struct svc_req *preq,
                     nfs_res_t *pres);
 
 int rquota_getactivequota(nfs_arg_t *parg,
                           exportlist_t *pexport,
-                          struct user_cred *creds,
+                          struct req_op_context *req_ctx,
                           nfs_worker_data_t *pworker,
                           struct svc_req *preq,
                           nfs_res_t * pres);
 
 int rquota_setquota(nfs_arg_t * parg /* IN  */ ,
                     exportlist_t * pexport /* IN  */ ,
-                    struct user_cred *creds,
+                    struct req_op_context *req_ctx,
                     nfs_worker_data_t *pworker,
                     struct svc_req *preq /* IN  */ ,
                     nfs_res_t * pres /* OUT */ );
 
 int rquota_setactivequota(nfs_arg_t *parg,
                           exportlist_t *pexport,
-                          struct user_cred *creds,
+                          struct req_op_context *req_ctx,
                           nfs_worker_data_t *pworker,
                           struct svc_req *preq,
                           nfs_res_t *pres);
@@ -433,168 +433,168 @@ int rquota_setactivequota(nfs_arg_t *parg,
 
 int nfs_Null(nfs_arg_t *arg,
              exportlist_t *export,
-             struct user_cred *creds,
+             struct req_op_context *req_ctx,
              nfs_worker_data_t *worker,
              struct svc_req *req,
              nfs_res_t *res);
 
 int nfs_Getattr(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nfs_Setattr(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nfs2_Root(nfs_arg_t *parg,
               exportlist_t *pexport,
-              struct user_cred *creds,
+              struct req_op_context *req_ctx,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres);
 
 int nfs_Lookup(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+               struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres);
 
 int nfs_Readlink(nfs_arg_t *parg,
                  exportlist_t *pexport,
-                 struct user_cred *creds,
+                 struct req_op_context *req_ctx,
                  nfs_worker_data_t *pworker,
                  struct svc_req *preq,
                  nfs_res_t *pres);
 
 int nfs_Read(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds,
+             struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres);
 
 int nfs2_Writecache(nfs_arg_t *parg,
                     exportlist_t *pexport,
-                    struct user_cred *creds,
+                    struct req_op_context *req_ctx,
                     nfs_worker_data_t *pworker,
                     struct svc_req *preq,
                     nfs_res_t *pres);
 
 int nfs_Write(nfs_arg_t *parg,
               exportlist_t *pexport,
-              struct user_cred *creds,
+              struct req_op_context *req_ctx,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres);
 
 int nfs_Create(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+               struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres);
 
 int nfs_Remove(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+               struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres);
 
 int nfs_Rename(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+               struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres);
 
 int nfs_Link(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds,
+             struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres);
 
 int nfs_Symlink(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nfs_Mkdir(nfs_arg_t *parg,
               exportlist_t *pexport,
-              struct user_cred *creds,
+              struct req_op_context *req_ctx,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres);
 
 int nfs_Rmdir(nfs_arg_t *parg,
               exportlist_t *pexport,
-              struct user_cred *creds,
+              struct req_op_context *req_ctx,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres);
 
 int nfs_Readdir(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nfs_Fsstat(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+               struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres);
 
 int nfs3_Access(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nfs3_Readdirplus(nfs_arg_t *parg,
                      exportlist_t *pexport,
-                     struct user_cred *creds,
+                     struct req_op_context *req_ctx,
                      nfs_worker_data_t *pworker,
                      struct svc_req *preq,
                      nfs_res_t *pres);
 
 int nfs3_Fsinfo(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nfs3_Pathconf(nfs_arg_t *parg,
                   exportlist_t *pexport,
-                  struct user_cred *creds,
+                  struct req_op_context *req_ctx,
                   nfs_worker_data_t *pworker,
                   struct svc_req *preq,
                   nfs_res_t *pres);
 
 int nfs3_Commit(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
 int nfs3_Mknod(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+               struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres);
@@ -603,7 +603,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
 
 int nfs4_Compound(nfs_arg_t *parg,
                   exportlist_t *pexport,
-                  struct user_cred *creds,
+                  struct req_op_context *req_ctx,
                   nfs_worker_data_t *pworker,
                   struct svc_req *preq /* IN  */ ,
                   nfs_res_t *pres);
@@ -1428,47 +1428,47 @@ nfsstat3 nfs3_fh_to_xattrfh(nfs_fh3 * pfhin, nfs_fh3 * pfhout);
 
 int nfs3_Access_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Getattr_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
-                       struct user_cred *creds,
+                       struct req_op_context *req_ctx,
                        struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Read_Xattr(nfs_arg_t * parg,
                     exportlist_t * pexport,
-                    struct user_cred *creds,
+                    struct req_op_context *req_ctx,
                     struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Create_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Write_Xattr(nfs_arg_t * parg,
                      exportlist_t * pexport,
-                     struct user_cred *creds,
+                     struct req_op_context *req_ctx,
                      struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
-                       struct user_cred *creds,
+                       struct req_op_context *req_ctx,
                        struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            exportlist_t * pexport,
-                           struct user_cred *creds,
+                           struct req_op_context *req_ctx,
                            struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
                       exportlist_t * pexport /* IN  */ ,
-                      struct user_cred *creds /* IN  */ ,
+                      struct req_op_context *req_ctx /* IN  */ ,
                       struct svc_req *preq /* IN  */ ,
                       nfs_res_t * pres /* OUT */ );
 

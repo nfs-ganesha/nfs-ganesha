@@ -774,6 +774,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   dupreq_status_t dpq_status;
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
+  struct req_op_context req_ctx;
   int   update_per_share_stats;
 
   struct timeval *timer_start = &pworker_data->timer_start;
@@ -1213,6 +1214,12 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
     }
 
+  /* should these values be export config set?
+   */
+  user_credentials.caller_uid = -2;
+  user_credentials.caller_gid = -2;
+  user_credentials.caller_glen = 0;
+  user_credentials.caller_garray = NULL;
   if (pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
     {
       if (get_req_uid_gid(req, pexport, &user_credentials) == FALSE)
@@ -1340,8 +1347,12 @@ static void nfs_rpc_execute(request_data_t *preq,
                 }
               return;
             }
-	  pworker_data->user_credentials = user_credentials;
         }
+
+      /* set up the request context
+       */
+      req_ctx.creds = &user_credentials;
+      req_ctx.caller_addr = &hostaddr;
 
       /* processing */
       P(pworker_data->request_pool_mutex);
@@ -1367,7 +1378,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
       rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
 						     pexport, 
-						     &pworker_data->user_credentials,
+						     &req_ctx,
                                                      pworker_data, 
                                                      req, 
                                                      &res_nfs); 

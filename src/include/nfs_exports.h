@@ -352,9 +352,7 @@ typedef struct compoud_data
   cache_entry_t *saved_entry; /*< Cache entry for saved filehandle */
   cache_inode_file_type_t current_filetype; /*< File type of current entry */
   cache_inode_file_type_t saved_filetype; /*< File type of saved entry */
-  struct user_cred user_credentials; /*< Credentials related to this
-				       fileset (to handle different uid
-				       mapping) */
+  struct req_op_context *req_ctx; /* the context including related, mapped creds */
   exportlist_t *pexport; /*< Export entry related to the request */
   exportlist_t *pfullexportlist; /*< The whole exportlist */
   pseudofs_t *pseudofs; /*< Pointer to the pseudo filesystem tree */

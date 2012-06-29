@@ -546,7 +546,6 @@ struct nfs_worker_data__
   sigset_t sigmask; /* masked signals */
   unsigned int gc_in_progress;
   unsigned int current_xid;
-  struct user_cred user_credentials;
 
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *pfuncdesc;

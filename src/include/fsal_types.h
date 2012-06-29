@@ -245,6 +245,49 @@ struct user_credentials {
   sockaddr_t caller_addr;
 };
 
+/**
+ * @brief request op context
+ *
+ * This is created early in the operation with the context of the
+ * operation.  The difference between "context" and request parameters
+ * or arguments is that the context is derived information such as
+ * the resolved credentials, socket (network and client host) data
+ * and other bits of environment associated with the request.  It gets
+ * passed down the call chain only as far as it needs to go for the op
+ * i.e. don't put it in the function/method proto "just because".
+ *
+ * The lifetime of this structure and all the data it points to is the
+ * operation for V2,3 and the compound for V4+.  All elements and what
+ * they point to are invariant for the lifetime.
+ *
+ * NOTE: This is a across-the-api shared structure.  It must survive with
+ *       older consumers of its contents.  Future development
+ *       can change this struct so long as it follows the rules:
+ *
+ *       1. New elements are appended at the end, never inserted in the middle.
+ *
+ *       2. This structure _only_ contains pointers.
+ *
+ *       3. Changing an already defined struct pointer is strictly not allowed.
+ *
+ *       4. This struct is always passed by reference, never by value.
+ *
+ *       5. This struct is never copied/saved.
+ *
+ *       6. Code changes are first introduced in the core.  Assume the fsal
+ *          module does not know and the code will still do the right thing.
+ */
+
+/** @TODO this struct will replace struct user_cred *creds throughout
+ *  protocol and fsal_api where creds replaced fsal_op_context.
+ */
+
+struct req_op_context {
+	struct user_cred *creds; /* resolved user creds from request */
+	sockaddr_t *caller_addr; /* IP connection info */
+	/* add new context members here */
+};
+
 typedef struct fsal_name__
 {
   char name[FSAL_MAX_NAME_LEN];

@@ -145,7 +145,7 @@ static const nfs4_op_desc_t optabv4[] = {
 
 int nfs4_Compound(nfs_arg_t *arg,
                   exportlist_t *export,
-                  struct user_cred *creds,
+		  struct req_op_context *req_ctx,
                   nfs_worker_data_t *worker,
                   struct svc_req *req,
                   nfs_res_t *res)
@@ -209,6 +209,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 
   /* Initialisation of the compound request internal's data */
   memset(&data, 0, sizeof(data));
+  data.req_ctx = req_ctx;
 
   /* Minor version related stuff */
   data.minorversion = compound4_minor;
@@ -219,7 +220,6 @@ int nfs4_Compound(nfs_arg_t *arg,
 
   data.pfullexportlist = export; /* Full export list is provided in
                                     input */
-  data.user_credentials = *creds;     /* Get the client user's credentials */
   data.pworker = worker;
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = req;
