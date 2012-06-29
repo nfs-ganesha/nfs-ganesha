@@ -126,9 +126,6 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
   fsal_mdsize_t strsize = MAXPATHLEN + 1;
   struct stat buffstat;
   time_t max_acmtime = 0;
-#ifdef _USE_PROXY
-  __attribute__((unused)) fsal_u64_t fileid;
-#endif
   cache_content_flush_behaviour_t local_flushhow = flushhow;
   unsigned int passcounter = 0;
 #ifdef _SOLARIS

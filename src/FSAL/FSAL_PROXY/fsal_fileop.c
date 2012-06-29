@@ -780,11 +780,6 @@ fsal_status_t PROXYFSAL_close(fsal_file_t * file_desc        /* IN */
 
 fsal_status_t PROXYFSAL_close_by_fileid(fsal_file_t * file_desc /* IN */ ,
                                         fsal_u64_t fileid)
-#ifndef _USE_PROXY
-{
-  return ERR_FSAL_NOTSUPP;
-}
-#else
 {
   int rc;
   COMPOUND4args argnfs4;
@@ -897,11 +892,6 @@ fsal_status_t PROXYFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
                                        fsal_file_t * file_desc,      /* OUT */
                                        fsal_attrib_list_t *
                                        file_attributes /* [ IN/OUT ] */ )
-#ifndef _USE_PROXY
-{
-  return ERR_FSAL_NOTSUPP;
-}
-#else
 {
   int rc;
   COMPOUND4args argnfs4;

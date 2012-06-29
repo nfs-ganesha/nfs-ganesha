@@ -573,7 +573,6 @@ fi
 
 if test "$enable_fsal_proxy" == "yes"; then
 AC_MSG_WARN([PROXY FSAL is enabled])
-	AC_DEFINE([_USE_PROXY], 1, [GANESHA is compiled with NFS PROXY FSAL])
 	FSAL_CFLAGS=
 	FSAL_LDFLAGS=$SEC_RPATH
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PROXY/libfsalproxy.la"

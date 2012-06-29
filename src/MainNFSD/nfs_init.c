@@ -110,16 +110,9 @@ nfs_parameter_t nfs_param =
   .core_param.stats_update_delay = 60,
   .core_param.long_processing_threshold = 10, /* seconds */
   .core_param.tcp_fridge_expiration_delay = -1,
-/* only NFSv4 is supported for the FSAL_PROXY */
-#if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
-  .core_param.core_options = CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4,
-#else
-  .core_param.core_options = CORE_OPTION_NFSV4,
-#endif                          /* _USE_PROXY */
-
+  .core_param.core_options = CORE_OPTION_ALL_VERS,
   .core_param.stats_file_path = "/tmp/ganesha.stat",
   .core_param.stats_per_client_directory = "/tmp",
-
   .core_param.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE,
   .core_param.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE,
 

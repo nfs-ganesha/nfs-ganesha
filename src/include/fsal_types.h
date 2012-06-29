@@ -945,14 +945,7 @@ typedef enum fsal_quota_type__
 
 #define FSAL_DIGEST_SIZE_HDLV2 29
 #define FSAL_DIGEST_SIZE_HDLV3 61
-
-#ifdef _USE_PROXY
 #define FSAL_DIGEST_SIZE_HDLV4 108 
-#else
-#define FSAL_DIGEST_SIZE_HDLV4 61 
-#endif /* _USE_FSAL_PROXY */
-
-
 
 #define FSAL_DIGEST_SIZE_FILEID2 (sizeof(int))
 #define FSAL_DIGEST_SIZE_FILEID3 (sizeof(fsal_u64_t))
