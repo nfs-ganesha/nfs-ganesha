@@ -170,7 +170,7 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
                          fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */
     )
 {
-  int setgid_bit = 0;
+/*   int setgid_bit = 0; */
   mode_t unix_mode;
   fsal_status_t status;
   fsal_accessflags_t access_mask = 0;
@@ -197,8 +197,8 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
 
   /* Check the user can write in the directory, and check the setgid bit on the directory */
 
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
-    setgid_bit = 1;
+/*   if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID) */
+/*     setgid_bit = 1; */
 
   /* Set both mode and ace4 mask */
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
@@ -371,7 +371,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     )
 {
   fsal_status_t status;
-  int flags=(O_RDONLY|O_NOFOLLOW);
+/*   int flags=(O_RDONLY|O_NOFOLLOW); */
   int fsuid, fsgid;
 
   mode_t unix_mode = 0;
@@ -412,7 +412,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 
     case FSAL_TYPE_FIFO:
       unix_mode |= S_IFIFO;
-      flags = (O_RDONLY | O_NOFOLLOW | O_NONBLOCK);
+/*       flags = (O_RDONLY | O_NOFOLLOW | O_NONBLOCK); */
       break;
 
     default:
