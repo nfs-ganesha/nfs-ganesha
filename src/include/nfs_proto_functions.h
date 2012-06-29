@@ -1418,9 +1418,9 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
 int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related export entry */
                            const fsal_attrib_list_t * pFSAL_attr,     /* In: file attributes  */
                            fattr3 * pFattr);    /* Out: file attributes */
-int nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t *,
-                                  fsal_attrib_mask_t,
-                                  fattr3 *);
+void nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t *FSAL_attr,
+                                   fsal_attrib_mask_t *mask,
+                                   fattr3 *Fattr);
 int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file attributes */
                            sattr3 * pFattr);    /* In: file attributes  */
 

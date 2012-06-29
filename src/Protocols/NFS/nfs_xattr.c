@@ -350,7 +350,6 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
       if(parg->arg_access3.access & ACCESS3_LOOKUP)
         access_mode |= FSAL_X_OK;
 
-      xattrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
 						   xattr_id, &xattrs);
 
@@ -500,9 +499,8 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                                             data));
 
       /* Retrieve xattr attributes */
-      xattr_attrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
-						   xattr_id, &xattr_attrs);
+                                                   xattr_id, &xattr_attrs);
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -950,9 +948,8 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
       goto out;
     }
 
-  attr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
-					       attr_id, &attr_attrs);
+                                               attr_id, &attr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -1082,15 +1079,14 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
     }
 
   fsal_status = obj_hdl->ops->setextattr_value_by_id(obj_hdl,
-						     xattr_id,
-						     parg->arg_write3.data.data_val,
-						     parg->arg_write3.data.data_len);
+                                                     xattr_id,
+                                                     parg->arg_write3.data.data_val,
+                                                     parg->arg_write3.data.data_len);
 
   /* @TODO deal with error cases */
 
-  attr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
-					       xattr_id, &attr_attrs);
+                                               xattr_id, &attr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -1217,9 +1213,8 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   pres->res_read3.READ3res_u.resok.eof = TRUE;
 
   /* Retrieve xattr attributes */
-  xattr_attrs.asked_attributes = cache_inode_params.attrmask;
   fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
-					       xattr_id, &xattr_attrs);
+                                               xattr_id, &xattr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -1731,9 +1726,8 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
       fsal_status_t fsal_status;
       fsal_attrib_list_t xattrs;
 
-      xattrs.asked_attributes = cache_inode_params.attrmask;
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
-						   xattr_id, &xattrs);
+                                                   xattr_id, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
         {

@@ -118,7 +118,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
    * trunc may change Xtime so we have to start with trunc and finish
    * by the mtime and atime
    */
-  if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_SIZE))
+  if(FSAL_TEST_MASK(sattr.mask, FSAL_ATTR_SIZE))
     {
       /* Setting the size of a directory is prohibited */
       if(data->current_filetype == DIRECTORY)
@@ -205,86 +205,73 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           return res_SETATTR4.status;
         }
       /* we just did the truncate, turn off these attrs */
-      sattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-      sattr.asked_attributes &= ~FSAL_ATTR_SIZE;
+      sattr.mask &= ~FSAL_ATTR_SPACEUSED;
+      sattr.mask &= ~FSAL_ATTR_SIZE;
     }
 
-  /* Now, we set the mode */
-  if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE) ||
-     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_OWNER) ||
-     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_GROUP) ||
-     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) ||
-#ifdef _USE_NFS4_ACL
-     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) ||
-     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ACL))
-#else
-     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME))
-#endif
+  /* Check for root access when using chmod */
+  if(FSAL_TEST_MASK(sattr.mask, FSAL_ATTR_MODE))
     {
-      /* Check for root access when using chmod */
-      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE))
+      if(((sattr.mode & FSAL_MODE_SUID) &&
+          ((data->pexport->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID))
+         || ((sattr.mode & FSAL_MODE_SGID)
+             && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
+                 EXPORT_OPTION_NOSGID)))
         {
-          if(((sattr.mode & FSAL_MODE_SUID) &&
-              ((data->pexport->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID))
-             || ((sattr.mode & FSAL_MODE_SGID)
-                 && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
-                     EXPORT_OPTION_NOSGID)))
-            {
-              LogInfo(COMPONENT_NFS_V4,
-                      "Setattr denied because setuid or setgid bit is "
-                      "disabled in configuration file. setuid=%d, setgid=%d",
-                      sattr.mode & FSAL_MODE_SUID ? 1 : 0,
-                      sattr.mode & FSAL_MODE_SGID ? 1 : 0);
-              res_SETATTR4.status = NFS4ERR_PERM;
-              return res_SETATTR4.status;
-            }
-        }
-
-#define S_NSECS 1000000000UL  /* nsecs in 1s */
-      /* Set the atime and mtime (ctime is not setable) */
-
-      /* get the current time */
-       gettimeofday(&t, NULL);
-
-      /** @todo : check correctness of this block... looks suspicious */
-      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) == SET_TO_SERVER_TIME4)
-        {
-          sattr.atime.seconds = t.tv_sec;
-          sattr.atime.nseconds = t.tv_usec;
-        }
-      else
-        {
-          /* a carry into seconds considered invalid */
-          if (sattr.atime.nseconds >= S_NSECS)
-          {
-            res_SETATTR4.status = NFS4ERR_INVAL;
-            return res_SETATTR4.status;
-          }
-        }
-      /* Should we use the time from the client handside or from the server handside ? */
-      /** @todo : check correctness of this block... looks suspicious */
-      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
-        {
-          sattr.mtime.seconds = t.tv_sec;
-          sattr.mtime.nseconds = t.tv_usec;
-        }
-      else
-        {
-          if (sattr.mtime.nseconds >= S_NSECS)
-          {
-            res_SETATTR4.status = NFS4ERR_INVAL;
-            return res_SETATTR4.status;
-          }
-        }
-
-      if(cache_inode_setattr(data->current_entry,
-                             &sattr,
-                             data->req_ctx,
-			     &cache_status) != CACHE_INODE_SUCCESS)
-        {
-          res_SETATTR4.status = nfs4_Errno(cache_status);
+          LogInfo(COMPONENT_NFS_V4,
+                  "Setattr denied because setuid or setgid bit is "
+                  "disabled in configuration file. setuid=%d, setgid=%d",
+                  sattr.mode & FSAL_MODE_SUID ? 1 : 0,
+                  sattr.mode & FSAL_MODE_SGID ? 1 : 0);
+          res_SETATTR4.status = NFS4ERR_PERM;
           return res_SETATTR4.status;
         }
+    }
+
+#define S_NSECS 1000000000UL  /* nsecs in 1s */
+  /* Set the atime and mtime (ctime is not setable) */
+
+  /* get the current time */
+  gettimeofday(&t, NULL);
+
+  /** @todo : check correctness of this block... looks suspicious */
+  if(FSAL_TEST_MASK(sattr.mask, FSAL_ATTR_ATIME) == SET_TO_SERVER_TIME4)
+    {
+      sattr.atime.seconds = t.tv_sec;
+      sattr.atime.nseconds = t.tv_usec;
+    }
+  else
+    {
+      /* a carry into seconds considered invalid */
+      if (sattr.atime.nseconds >= S_NSECS)
+        {
+          res_SETATTR4.status = NFS4ERR_INVAL;
+          return res_SETATTR4.status;
+        }
+    }
+  /* Should we use the time from the client handside or from the server handside ? */
+  /** @todo : check correctness of this block... looks suspicious */
+  if(FSAL_TEST_MASK(sattr.mask, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
+    {
+      sattr.mtime.seconds = t.tv_sec;
+      sattr.mtime.nseconds = t.tv_usec;
+    }
+  else
+    {
+      if (sattr.mtime.nseconds >= S_NSECS)
+        {
+          res_SETATTR4.status = NFS4ERR_INVAL;
+          return res_SETATTR4.status;
+        }
+    }
+
+  if(cache_inode_setattr(data->current_entry,
+                         &sattr,
+                         data->req_ctx,
+                         &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      res_SETATTR4.status = nfs4_Errno(cache_status);
+      return res_SETATTR4.status;
     }
 
   /* Set the replyed structure */

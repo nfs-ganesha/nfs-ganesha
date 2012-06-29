@@ -145,7 +145,6 @@ cache_inode_create(cache_entry_t *parent,
 
     dir_handle = parent->obj_handle;
 /* we pass in attributes to the create.  We will get them back below */
-    object_attributes.asked_attributes = cache_inode_params.attrmask;
     object_attributes.owner = req_ctx->creds->caller_uid;
     object_attributes.group = req_ctx->creds->caller_gid; /* be more selective? */
     object_attributes.mode = mode;
@@ -153,52 +152,52 @@ cache_inode_create(cache_entry_t *parent,
     switch (type) {
     case REGULAR_FILE:
             fsal_status = dir_handle->ops->create(dir_handle,
-						  name,
-						  &object_attributes,
-						  &object_handle);
+                                                  name,
+                                                  &object_attributes,
+                                                  &object_handle);
             break;
 
     case DIRECTORY:
             fsal_status = dir_handle->ops->mkdir(dir_handle,
-						 name,
-						 &object_attributes,
-						 &object_handle);
+                                                 name,
+                                                 &object_attributes,
+                                                 &object_handle);
             break;
 
     case SYMBOLIC_LINK:
             fsal_status = dir_handle->ops->symlink(dir_handle,
-						   name,
-						   &create_arg->link_content,
-						   &object_attributes,
-						   &object_handle);
+                                                   name,
+                                                   &create_arg->link_content,
+                                                   &object_attributes,
+                                                   &object_handle);
             break;
 
         case SOCKET_FILE:
         case FIFO_FILE:
             fsal_status = dir_handle->ops->mknode(dir_handle,
-						  name,
-						  type,
-						  NULL, /* no dev_t needed */
-						  &object_attributes,
-						  &object_handle);
+                                                  name,
+                                                  type,
+                                                  NULL, /* no dev_t needed */
+                                                  &object_attributes,
+                                                  &object_handle);
             break;
 
         case BLOCK_FILE:
         case CHARACTER_FILE:
             fsal_status = dir_handle->ops->mknode(dir_handle,
-						  name,
-						  type,
-						  &create_arg->dev_spec,
-						  &object_attributes,
-						  &object_handle);
+                                                  name,
+                                                  type,
+                                                  &create_arg->dev_spec,
+                                                  &object_attributes,
+                                                  &object_handle);
             break;
 
     default:
-	    /* we should never go there */
-	    *status = CACHE_INODE_INCONSISTENT_ENTRY;
-	    entry = NULL;
-	    goto out;
-	    break;
+            /* we should never go there */
+            *status = CACHE_INODE_INCONSISTENT_ENTRY;
+            entry = NULL;
+            goto out;
+            break;
     }
 
      /* Check for the result */

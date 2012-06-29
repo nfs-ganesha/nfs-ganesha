@@ -55,36 +55,17 @@ static struct fsal_obj_ops obj_ops;
 /* helpers
  */
 
-/*
- * is_supported_attribute
- */
-
-static int is_supported_attribute(struct fsal_obj_handle *obj_hdl,
-					 fsal_attrib_list_t *attr)
-{
-	fsal_attrib_mask_t mask;
-
-	mask = obj_hdl->export->ops->fs_supported_attrs(obj_hdl->export);
-	if(attr->asked_attributes & ~mask) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "Unsupported attributes: asked = %#llX, allowed = %#llX",
-			     attr->asked_attributes, mask);
-		return FALSE;
-	}
-	return TRUE;
-}
-
 /* alloc_handle
  * allocate and fill in a handle
  * this uses malloc/free for the time being.
  */
 
 static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
-						struct stat *stat,
-						const char *link_content,
-						struct file_handle *dir_fh,
-						const char *sock_name,
-						struct fsal_export *exp_hdl)
+                                                struct stat *stat,
+                                                const char *link_content,
+                                                struct file_handle *dir_fh,
+                                                const char *sock_name,
+                                                struct fsal_export *exp_hdl)
 {
 	struct vfs_fsal_obj_handle *hdl;
 	fsal_status_t st;
@@ -131,10 +112,10 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 		strcpy(hdl->u.sock.sock_name, sock_name);
 	}
 	hdl->obj_handle.export = exp_hdl;
-	hdl->obj_handle.attributes.asked_attributes
+	hdl->obj_handle.attributes.mask
 		= exp_hdl->ops->fs_supported_attrs(exp_hdl);
 	hdl->obj_handle.attributes.supported_attributes
-		= hdl->obj_handle.attributes.asked_attributes;
+                = hdl->obj_handle.attributes.mask;
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if(FSAL_IS_ERROR(st))
 		goto spcerr;
@@ -961,88 +942,83 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 	close(oldfd);
 	close(newfd);
 out:
-	ReturnCode(fsal_error, retval);	
+	ReturnCode(fsal_error, retval);
 }
 
-/* FIXME:  attributes are now merged into fsal_obj_handle.  This
- * spreads everywhere these methods are used.
- * eventually deprecate everywhere except where we explicitly want to
- * to refresh them.
- * NOTE: this is done under protection of the attributes rwlock in the cache entry.
+/* FIXME: attributes are now merged into fsal_obj_handle.  This
+ * spreads everywhere these methods are used.  eventually deprecate
+ * everywhere except where we explicitly want to to refresh them.
+ * NOTE: this is done under protection of the attributes rwlock in the
+ * cache entry.
  */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      fsal_attrib_list_t *obj_attr)
+                              fsal_attrib_list_t *obj_attr)
 {
-	struct vfs_fsal_obj_handle *myself;
-	int fd = -1, mntfd;
-	int open_flags = O_RDONLY;
-	struct stat stat;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t st;
-	int retval = 0;
+        struct vfs_fsal_obj_handle *myself;
+        int fd = -1, mntfd;
+        int open_flags = O_RDONLY;
+        struct stat stat;
+        fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+        fsal_status_t st;
+        int retval = 0;
 
-	if( !is_supported_attribute(obj_hdl, obj_attr)) {
-		fsal_error = ERR_FSAL_ATTRNOTSUPP;
-		goto out;
-	}
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	mntfd = vfs_get_root_fd(obj_hdl->export);
-	if(obj_hdl->type == SOCKET_FILE) {
-		fd = open_by_handle_at(mntfd,
-				       myself->u.sock.sock_dir,
-				       (O_PATH|O_NOACCESS));
-		if(fd < 0) {
-			goto errout;
-		}
-		retval = fstatat(fd,
-				 myself->u.sock.sock_name,
-				 &stat,
-				 AT_SYMLINK_NOFOLLOW);
-		if(retval < 0) {
-			goto errout;
-		}
-	} else {
-		if(obj_hdl->type == SYMBOLIC_LINK)
-			open_flags |= O_PATH;
-		else if(obj_hdl->type == FIFO_FILE)
-			open_flags |= O_NONBLOCK;
-		fd = open_by_handle_at(mntfd, myself->handle, open_flags);
-		if(fd < 0) {
-			goto errout;
-		}
-		retval = fstatat(fd,
-				 "",
-				 &stat,
-				 (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
-		if(retval < 0) {
-			goto errout;
-		}
-	}
+        myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+        mntfd = vfs_get_root_fd(obj_hdl->export);
+        if(obj_hdl->type == SOCKET_FILE) {
+                fd = open_by_handle_at(mntfd,
+                                       myself->u.sock.sock_dir,
+                                       (O_PATH|O_NOACCESS));
+                if(fd < 0) {
+                        goto errout;
+                }
+                retval = fstatat(fd,
+                                 myself->u.sock.sock_name,
+                                 &stat,
+                                 AT_SYMLINK_NOFOLLOW);
+                if(retval < 0) {
+                        goto errout;
+                }
+        } else {
+                if(obj_hdl->type == SYMBOLIC_LINK)
+                        open_flags |= O_PATH;
+                else if(obj_hdl->type == FIFO_FILE)
+                        open_flags |= O_NONBLOCK;
+                fd = open_by_handle_at(mntfd, myself->handle, open_flags);
+                if(fd < 0) {
+                        goto errout;
+                }
+                retval = fstatat(fd,
+                                 "",
+                                 &stat,
+                                 (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
+                if(retval < 0) {
+                        goto errout;
+                }
+        }
 
-	/* convert attributes */
-	obj_hdl->attributes.asked_attributes = obj_attr->asked_attributes;
-	st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
-	if(FSAL_IS_ERROR(st)) {
-		FSAL_CLEAR_MASK(obj_attr->asked_attributes);
-		FSAL_SET_MASK(obj_attr->asked_attributes,
-			      FSAL_ATTR_RDATTR_ERR);
-		fsal_error = st.major;  retval = st.minor;
-		goto out;
-	}
-	memcpy(obj_attr, &obj_hdl->attributes, sizeof(fsal_attrib_list_t));
-	goto out;
+        /* convert attributes */
+        st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
+        if(FSAL_IS_ERROR(st)) {
+                FSAL_CLEAR_MASK(obj_attr->mask);
+                FSAL_SET_MASK(obj_attr->mask,
+                              FSAL_ATTR_RDATTR_ERR);
+                fsal_error = st.major;  retval = st.minor;
+                goto out;
+        }
+        memcpy(obj_attr, &obj_hdl->attributes, sizeof(fsal_attrib_list_t));
+        goto out;
 
 errout:
-	retval = errno;
-	if(retval == ENOENT)
-		fsal_error = ERR_FSAL_STALE;
-	else
-		fsal_error = posix2fsal_error(retval);
+        retval = errno;
+        if(retval == ENOENT)
+                fsal_error = ERR_FSAL_STALE;
+        else
+                fsal_error = posix2fsal_error(retval);
 out:
-	if(fd >= 0)
-		close(fd);
-	ReturnCode(fsal_error, retval);	
+        if(fd >= 0)
+                close(fd);
+        ReturnCode(fsal_error, retval);
 }
 
 /*
@@ -1050,149 +1026,158 @@ out:
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      fsal_attrib_list_t *attrs)
+                              fsal_attrib_list_t *attrs)
 {
-	struct vfs_fsal_obj_handle *myself;
-	int fd, mntfd;
-	int open_flags = O_RDONLY;
-	struct stat stat;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+        struct vfs_fsal_obj_handle *myself;
+        int fd, mntfd;
+        int open_flags = O_RDONLY;
+        struct stat stat;
+        fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+        int retval = 0;
+        /* Something of a hack, but at least it's here in this
+           function.  The set of attributes we can set is not the
+           same as the set we can get.  */
+        const fsal_attrib_mask_t can_set
+                = (FSAL_ATTR_MODE                    |
+                   FSAL_ATTR_OWNER | FSAL_ATTR_GROUP |
+                   FSAL_ATTR_ATIME | FSAL_ATTR_MTIME);
 
-	if( !is_supported_attribute(obj_hdl, attrs)) {
-		fsal_error = ERR_FSAL_ATTRNOTSUPP;
-		goto out;
-	}
-	/* apply umask, if mode attribute is to be changed */
-	if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_MODE)) {
-		attrs->mode
-			&= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
-	}
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	mntfd = vfs_get_root_fd(obj_hdl->export);
+        if (attrs->mask & ~can_set) {
+                fsal_error = ERR_FSAL_ATTRNOTSUPP;
+                goto out;
+        }
+        /* apply umask, if mode attribute is to be changed */
+        if(FSAL_TEST_MASK(attrs->mask, FSAL_ATTR_MODE)) {
+                attrs->mode
+                        &= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
+        }
+        myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+        mntfd = vfs_get_root_fd(obj_hdl->export);
 
-	/* This is yet another "you can't get there from here".  If this object
-	 * is a socket (AF_UNIX), an fd on the socket s useless _period_.
-	 * If it is for a symlink, without O_PATH, you will get an ELOOP error
-	 * and (f)chmod doesn't work for a symlink anyway - not that it matters
-	 * because access checking is not done on the symlink but the final target.
-	 * AF_UNIX sockets are also ozone material.  If the socket is already active
-	 * listeners et al, you can manipulate the mode etc.  If it is just sitting
-	 * there as in you made it with a mknod (one of those leaky abstractions...)
-	 * or the listener forgot to unlink it, it is lame duck.
+        /* This is yet another "you can't get there from here".  If
+	 * this object is a socket (AF_UNIX), an fd on the socket's
+	 * useless _period_.  If it is for a symlink, without O_PATH,
+	 * you will get an ELOOP error and (f)chmod doesn't work for a
+	 * symlink anyway - not that it matters because access
+	 * checking is not done on the symlink but the final target.
+	 * AF_UNIX sockets are also ozone material.  If the socket is
+	 * already active listeners et al, you can manipulate the mode
+	 * etc.  If it is just sitting there as in you made it with a
+	 * mknod (one of those leaky abstractions...)  or the listener
+	 * forgot to unlink it, it is lame duck.
 	 */
 
-	if(obj_hdl->type == SOCKET_FILE) {
-		fd = open_by_handle_at(mntfd,
-				       myself->u.sock.sock_dir,
-				       (O_PATH|O_NOACCESS));
-		if(fd < 0) {
-			retval = errno;
-			if(retval == ENOENT)
-				fsal_error = ERR_FSAL_STALE;
-			else
-				fsal_error = posix2fsal_error(retval);
-			goto out;
-		}
-		retval = fstatat(fd,
-				 myself->u.sock.sock_name,
-				 &stat,
-				 AT_SYMLINK_NOFOLLOW);
-	} else {
-		if(obj_hdl->type == SYMBOLIC_LINK)
-			open_flags |= O_PATH;
-		else if(obj_hdl->type == FIFO_FILE)
-			open_flags |= O_NONBLOCK;
-		fd = open_by_handle_at(mntfd, myself->handle, open_flags);
-		if(fd < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-			goto out;
-		}
-		retval = fstatat(fd, "", &stat, (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
-	}
-	if(retval < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		close(fd);
-		goto out;
-	}
-	/** CHMOD **/
-	if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_MODE)) {
-		/* The POSIX chmod call doesn't affect the symlink object, but
+        if(obj_hdl->type == SOCKET_FILE) {
+                fd = open_by_handle_at(mntfd,
+                                       myself->u.sock.sock_dir,
+                                       (O_PATH|O_NOACCESS));
+                if(fd < 0) {
+                        retval = errno;
+                        if(retval == ENOENT)
+                                fsal_error = ERR_FSAL_STALE;
+                        else
+                                fsal_error = posix2fsal_error(retval);
+                        goto out;
+                }
+                retval = fstatat(fd,
+                                 myself->u.sock.sock_name,
+                                 &stat,
+                                 AT_SYMLINK_NOFOLLOW);
+        } else {
+                if(obj_hdl->type == SYMBOLIC_LINK)
+                        open_flags |= O_PATH;
+                else if(obj_hdl->type == FIFO_FILE)
+                        open_flags |= O_NONBLOCK;
+                fd = open_by_handle_at(mntfd, myself->handle, open_flags);
+                if(fd < 0) {
+                        retval = errno;
+                        fsal_error = posix2fsal_error(retval);
+                        goto out;
+                }
+                retval = fstatat(fd, "", &stat, (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
+        }
+        if(retval < 0) {
+                retval = errno;
+                fsal_error = posix2fsal_error(retval);
+                close(fd);
+                goto out;
+        }
+        /** CHMOD **/
+        if(FSAL_TEST_MASK(attrs->mask, FSAL_ATTR_MODE)) {
+                /* The POSIX chmod call doesn't affect the symlink object, but
 		 * the entry it points to. So we must ignore it.
 		 */
-		if(!S_ISLNK(stat.st_mode)) {
-			if(obj_hdl->type == SOCKET_FILE)
-				retval = fchmodat(fd,
-						  myself->u.sock.sock_name,
-						  fsal2unix_mode(attrs->mode), 0);
-			else
-				retval = fchmod(fd, fsal2unix_mode(attrs->mode));
+                if(!S_ISLNK(stat.st_mode)) {
+                        if(obj_hdl->type == SOCKET_FILE)
+                                retval = fchmodat(fd,
+                                                  myself->u.sock.sock_name,
+                                                  fsal2unix_mode(attrs->mode), 0);
+                        else
+                                retval = fchmod(fd, fsal2unix_mode(attrs->mode));
 
-			if(retval != 0) {
-				goto fileerr;
-			}
-		}
-	}
-		
-	/**  CHOWN  **/
-	if(FSAL_TEST_MASK(attrs->asked_attributes,
-			  FSAL_ATTR_OWNER | FSAL_ATTR_GROUP)) {
-		uid_t user = FSAL_TEST_MASK(attrs->asked_attributes,
-					    FSAL_ATTR_OWNER) ? (int)attrs->owner : -1;
-		gid_t group = FSAL_TEST_MASK(attrs->asked_attributes,
-					     FSAL_ATTR_GROUP) ? (int)attrs->group : -1;
+                        if(retval != 0) {
+                                goto fileerr;
+                        }
+                }
+        }
 
-		if(obj_hdl->type == SOCKET_FILE)
-			retval = fchownat(fd,
-					  myself->u.sock.sock_name,
-					  user,
-					  group,
-					  AT_SYMLINK_NOFOLLOW);
-		else
-			retval = fchown(fd, user, group);
+        /**  CHOWN  **/
+        if(FSAL_TEST_MASK(attrs->mask,
+                          FSAL_ATTR_OWNER | FSAL_ATTR_GROUP)) {
+                uid_t user = FSAL_TEST_MASK(attrs->mask,
+                                            FSAL_ATTR_OWNER) ? (int)attrs->owner : -1;
+                gid_t group = FSAL_TEST_MASK(attrs->mask,
+                                             FSAL_ATTR_GROUP) ? (int)attrs->group : -1;
 
-		if(retval) {
-			goto fileerr;
-		}
-	}
-		
-	/**  UTIME  **/
-	if(FSAL_TEST_MASK(attrs->asked_attributes,
-			  FSAL_ATTR_ATIME | FSAL_ATTR_MTIME)) {
-		struct timeval timebuf[2];
+                if(obj_hdl->type == SOCKET_FILE)
+                        retval = fchownat(fd,
+                                          myself->u.sock.sock_name,
+                                          user,
+                                          group,
+                                          AT_SYMLINK_NOFOLLOW);
+                else
+                        retval = fchown(fd, user, group);
 
-		/* Atime */
-		timebuf[0].tv_sec =
-			(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_ATIME) ?
-			 (time_t) attrs->atime.seconds : stat.st_atime);
-		timebuf[0].tv_usec = 0;
+                if(retval) {
+                        goto fileerr;
+                }
+        }
 
-		/* Mtime */
-		timebuf[1].tv_sec =
-			(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_MTIME) ?
-			 (time_t) attrs->mtime.seconds : stat.st_mtime);
-		timebuf[1].tv_usec = 0;
-		if(obj_hdl->type == SOCKET_FILE)
-			retval = futimesat(fd,
-					   myself->u.sock.sock_name,
-					   timebuf);
-		else
-			retval = futimes(fd, timebuf);
-		if(retval != 0) {
-			goto fileerr;
-		}
-	}
-	close(fd);
-	ReturnCode(fsal_error, retval);	
+        /**  UTIME  **/
+        if(FSAL_TEST_MASK(attrs->mask,
+                          FSAL_ATTR_ATIME | FSAL_ATTR_MTIME)) {
+                struct timeval timebuf[2];
 
-fileerr:	
-	retval = errno;
-	close(fd);
-	fsal_error = posix2fsal_error(retval);
+                /* Atime */
+                timebuf[0].tv_sec =
+                        (FSAL_TEST_MASK(attrs->mask, FSAL_ATTR_ATIME) ?
+                         (time_t) attrs->atime.seconds : stat.st_atime);
+                timebuf[0].tv_usec = 0;
+
+                /* Mtime */
+                timebuf[1].tv_sec =
+                        (FSAL_TEST_MASK(attrs->mask, FSAL_ATTR_MTIME) ?
+                         (time_t) attrs->mtime.seconds : stat.st_mtime);
+                timebuf[1].tv_usec = 0;
+                if(obj_hdl->type == SOCKET_FILE)
+                        retval = futimesat(fd,
+                                           myself->u.sock.sock_name,
+                                           timebuf);
+                else
+                        retval = futimes(fd, timebuf);
+                if(retval != 0) {
+                        goto fileerr;
+                }
+        }
+        close(fd);
+        ReturnCode(fsal_error, retval);
+
+fileerr:
+        retval = errno;
+        close(fd);
+        fsal_error = posix2fsal_error(retval);
 out:
-	ReturnCode(fsal_error, retval);	
+        ReturnCode(fsal_error, retval);
 }
 
 /* handle_is
@@ -1200,9 +1185,9 @@ out:
  */
 
 static fsal_boolean_t handle_is(struct fsal_obj_handle *obj_hdl,
-				object_file_type_t type)
+                                object_file_type_t type)
 {
-	return obj_hdl->type == type;
+        return obj_hdl->type == type;
 }
 
 /* compare

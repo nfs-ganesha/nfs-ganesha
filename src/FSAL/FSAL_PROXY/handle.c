@@ -283,7 +283,7 @@ pxy_create_settable_bitmap(const fsal_attrib_list_t * attrs, bitmap4 *bm)
         int i;
 
         for(i=0; i < ARRAY_SIZE(fsal_mask2bit); i++) {
-                if(FSAL_TEST_MASK(attrs->asked_attributes, fsal_mask2bit[i].mask))
+                if(FSAL_TEST_MASK(attrs->mask, fsal_mask2bit[i].mask))
                         tmpattrlist[attrlen++] = fsal_mask2bit[i].fattr_bit;
         }
         nfs4_list_to_bitmap4(bm, attrlen, tmpattrlist);
@@ -1156,7 +1156,7 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
                  getpid(), __sync_add_and_fetch(&fcnt, 1));
         owner_len = strnlen(owner_val, sizeof(owner_val));
 
-        attrib->asked_attributes &= FSAL_ATTR_MODE|FSAL_ATTR_OWNER|FSAL_ATTR_GROUP;
+        attrib->mask &= FSAL_ATTR_MODE|FSAL_ATTR_OWNER|FSAL_ATTR_GROUP;
         pxy_create_settable_bitmap(attrib, &bmap);
         if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
                                   NULL, &bmap) == -1)
@@ -1239,7 +1239,7 @@ pxy_mkdir(struct fsal_obj_handle *dir_hdl,
          * The caller gives us partial attributes which include mode and owner
          * and expects the full attributes back at the end of the call.
          */
-        attrib->asked_attributes &= FSAL_ATTR_MODE|FSAL_ATTR_OWNER|FSAL_ATTR_GROUP;
+        attrib->mask &= FSAL_ATTR_MODE|FSAL_ATTR_OWNER|FSAL_ATTR_GROUP;
         pxy_create_settable_bitmap(attrib, &bmap);
 
         if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
@@ -1311,7 +1311,7 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
         struct pxy_obj_handle *ph;
 
         if(!dir_hdl || !name || !name->len || !link_path || !link_path->len ||
-           !attrib || !handle || !(attrib->asked_attributes & FSAL_ATTR_MODE))
+           !attrib || !handle || !(attrib->mask & FSAL_ATTR_MODE))
                 ReturnCode(ERR_FSAL_FAULT, EINVAL);
 
         /* Tests if symlinking is allowed by configuration. */
@@ -1319,7 +1319,7 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
                                                symlink_support))
                 ReturnCode(ERR_FSAL_NOTSUPP, ENOTSUP);
 
-        attrib->asked_attributes = FSAL_ATTR_MODE;
+        attrib->mask = FSAL_ATTR_MODE;
         pxy_create_settable_bitmap(attrib, &bmap);
         if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
                                   NULL, &bmap) == -1)
@@ -1637,7 +1637,7 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
         if(!obj_hdl || !attrs)
                 ReturnCode(ERR_FSAL_FAULT, EINVAL);
 
-        if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_MODE))
+        if(FSAL_TEST_MASK(attrs->mask, FSAL_ATTR_MODE))
                 attrs->mode &= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
 
         ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
@@ -1705,7 +1705,7 @@ pxy_compare_hdl(struct fsal_obj_handle *a,
 
 static fsal_status_t
 pxy_truncate(struct fsal_obj_handle *obj_hdl,
-	     fsal_size_t length)
+             fsal_size_t length)
 {
         fsal_attrib_list_t size;
 
@@ -1715,9 +1715,9 @@ pxy_truncate(struct fsal_obj_handle *obj_hdl,
         if(obj_hdl->type != REGULAR_FILE)
                 ReturnCode(ERR_FSAL_INVAL, EINVAL);
 
-        size.asked_attributes = FSAL_ATTR_SIZE;
+        size.mask = FSAL_ATTR_SIZE;
         size.filesize = length;
-        
+
         return pxy_setattrs(obj_hdl, &size);
 }
 

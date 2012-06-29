@@ -1050,8 +1050,8 @@ fsal_status_t PROXYFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
                              resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.
                              opgetattr.GETATTR4res_u.resok4.obj_attributes) != NFS4_OK)
     {
-      FSAL_CLEAR_MASK(file_attributes->asked_attributes);
-      FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+      FSAL_CLEAR_MASK(file_attributes->mask);
+      FSAL_SET_MASK(file_attributes->mask, FSAL_ATTR_RDATTR_ERR);
 
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_fileid);
     }

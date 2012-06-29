@@ -189,8 +189,11 @@ int nfs_Setattr(nfs_arg_t *parg,
            * This feature of nfsv3 is used to avoid several setattr 
            * to occur concurently on the same object, from different clients */
           fattr3 attributes;
+          fsal_attrib_mask_t got = FSAL_ATTR_CTIME;
 
-          if(nfs3_FSALattr_To_PartialFattr(ppre_attr, FSAL_ATTR_CTIME, &attributes) == 0)
+          nfs3_FSALattr_To_PartialFattr(ppre_attr, &got, &attributes);
+
+          if (!(got & FSAL_ATTR_CTIME))
             {
               pres->res_setattr3.status = NFS3ERR_INVAL;
               rc = NFS_REQ_OK;
@@ -246,8 +249,8 @@ int nfs_Setattr(nfs_arg_t *parg,
                                               setattr.filesize,
                                               &trunc_attr,
                                               req_ctx, &cache_status);
-          setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-          setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
+          setattr.mask &= ~FSAL_ATTR_SPACEUSED;
+          setattr.mask &= ~FSAL_ATTR_SIZE;
         }
     }
   else
@@ -258,7 +261,7 @@ int nfs_Setattr(nfs_arg_t *parg,
       /* Add code to support partially completed setattr */
       if(do_trunc)
         {
-          if(setattr.asked_attributes != 0)
+          if(setattr.mask != 0)
             {
               cache_status = cache_inode_setattr(pentry,
                                                  &setattr,

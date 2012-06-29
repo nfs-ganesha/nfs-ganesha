@@ -265,20 +265,20 @@ int nfs_Symlink(nfs_arg_t *parg,
 
               /* Mode is managed above (in cache_inode_create), there is no need 
                * to manage it */
-              if(attributes_symlink.asked_attributes & FSAL_ATTR_MODE)
-                attributes_symlink.asked_attributes &= ~FSAL_ATTR_MODE;
+              if(attributes_symlink.mask & FSAL_ATTR_MODE)
+                attributes_symlink.mask &= ~FSAL_ATTR_MODE;
 
               /* Some clients (like Solaris 10) try to set the size of the file to 0
                * at creation time. The FSAL create empty file, so we ignore this */
-              if(attributes_symlink.asked_attributes & FSAL_ATTR_SIZE)
-                attributes_symlink.asked_attributes &= ~FSAL_ATTR_SIZE;
+              if(attributes_symlink.mask & FSAL_ATTR_SIZE)
+                attributes_symlink.mask &= ~FSAL_ATTR_SIZE;
 
-              if(attributes_symlink.asked_attributes & FSAL_ATTR_SPACEUSED)
-                attributes_symlink.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
+              if(attributes_symlink.mask & FSAL_ATTR_SPACEUSED)
+                attributes_symlink.mask &= ~FSAL_ATTR_SPACEUSED;
 
               /* Are there attributes to be set (additional to the mode) ? */
-              if(attributes_symlink.asked_attributes != 0ULL &&
-                 attributes_symlink.asked_attributes != FSAL_ATTR_MODE)
+              if(attributes_symlink.mask != 0ULL &&
+                 attributes_symlink.mask != FSAL_ATTR_MODE)
                 {
                   /* A call to cache_inode_setattr is required */
                   if(cache_inode_setattr(symlink_pentry,

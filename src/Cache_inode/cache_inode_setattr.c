@@ -89,7 +89,7 @@ cache_inode_setattr(cache_entry_t *entry,
           goto out;
      }
 
-     if ((attr->asked_attributes & FSAL_ATTR_SIZE) &&
+     if ((attr->mask & FSAL_ATTR_SIZE) &&
          (entry->type != REGULAR_FILE)) {
           LogMajor(COMPONENT_CACHE_INODE,
                    "Attempt to truncate non-regular file: type=%d",
@@ -98,11 +98,12 @@ cache_inode_setattr(cache_entry_t *entry,
      }
 
      /* Is it allowed to change times ? */
-     if( !obj_handle->export->ops->fs_supports(obj_handle->export, cansettime) &&
-	 (attr->asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION |
-				     FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))) {
-	     *status = CACHE_INODE_INVALID_ARGUMENT;
-	     goto out;
+     if(!obj_handle->export->ops->fs_supports(obj_handle->export,
+                                               cansettime) &&
+        (attr->mask & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION |
+                       FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))) {
+             *status = CACHE_INODE_INVALID_ARGUMENT;
+             goto out;
      }
 
      pthread_rwlock_wrlock(&entry->attr_lock);
@@ -113,7 +114,7 @@ cache_inode_setattr(cache_entry_t *entry,
       */
      if(creds->caller_uid != 0 &&
 	creds->caller_uid != obj_handle->attributes.owner) {
-	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_MODE)) {
+	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_MODE)) {
 		     LogFullDebug(COMPONENT_FSAL,
 				  "Permission denied for CHMOD operation: "
 				  "current owner=%d, credential=%d",
@@ -121,7 +122,7 @@ cache_inode_setattr(cache_entry_t *entry,
 		     *status = CACHE_INODE_FSAL_EACCESS;
 		     goto unlock;
 	     }
-	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_OWNER)) {
+	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_OWNER)) {
 		     LogFullDebug(COMPONENT_FSAL,
 				  "Permission denied for CHOWN operation: "
 				  "current owner=%d, credential=%d",
@@ -129,7 +130,7 @@ cache_inode_setattr(cache_entry_t *entry,
 		     *status = CACHE_INODE_FSAL_EACCESS;
 		     goto unlock;
 	     }
-	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_GROUP)) {
+	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_GROUP)) {
 		     int in_group = 0, i;
 
 		     if(creds->caller_gid == obj_handle->attributes.group) {
@@ -152,21 +153,21 @@ cache_inode_setattr(cache_entry_t *entry,
 			     goto unlock;
 		     }
 	     }
-	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_ATIME)) {
+	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_ATIME)) {
 		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_R_OK);
 		if(FSAL_IS_ERROR(fsal_status)) {
 		     *status = cache_inode_error_convert(fsal_status);
 		     goto unlock;
 		}
 	     }
-	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_MTIME)) {
+	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_MTIME)) {
 		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_W_OK);
 		if(FSAL_IS_ERROR(fsal_status)) {
 		     *status = cache_inode_error_convert(fsal_status);
 		     goto unlock;
 		}
 	     }
-	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_SIZE)) {
+	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_SIZE)) {
 		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_W_OK);
 		if(FSAL_IS_ERROR(fsal_status)) {
 		     *status = cache_inode_error_convert(fsal_status);
@@ -174,15 +175,15 @@ cache_inode_setattr(cache_entry_t *entry,
 		}
 	     }
      }
-     if (attr->asked_attributes & FSAL_ATTR_SIZE) {
-	  fsal_status = obj_handle->ops->truncate(obj_handle, attr->filesize);
-          if (FSAL_IS_ERROR(fsal_status)) {
-               *status = cache_inode_error_convert(fsal_status);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry);
-               }
-               goto unlock;
-          }
+     if (attr->mask& FSAL_ATTR_SIZE) {
+             fsal_status = obj_handle->ops->truncate(obj_handle, attr->filesize);
+             if (FSAL_IS_ERROR(fsal_status)) {
+                     *status = cache_inode_error_convert(fsal_status);
+                     if (fsal_status.major == ERR_FSAL_STALE) {
+                             cache_inode_kill_entry(entry);
+                     }
+                     goto unlock;
+             }
      }
 
 #ifdef _USE_NFS4_ACL

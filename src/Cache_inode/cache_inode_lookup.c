@@ -186,10 +186,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 
      dir_handle = parent->obj_handle;
      memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));
-     object_attributes.asked_attributes = cache_inode_params.attrmask;
      fsal_status = dir_handle->ops->lookup(dir_handle,
-					   name->name,
-					   &object_handle);
+                                           name->name,
+                                           &object_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(parent);

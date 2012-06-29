@@ -403,13 +403,12 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
       if (fsal_status.major == ERR_FSAL_STALE) {
            fsal_attrib_list_t attrs;
 
-           attrs.asked_attributes = cache_inode_params.attrmask;
-	   fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, &attrs);
+           fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, &attrs);
            if (fsal_status.major == ERR_FSAL_STALE) {
                 cache_inode_kill_entry(dir_src);
            }
-           attrs.asked_attributes = cache_inode_params.attrmask;
-           fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest, &attrs);
+           fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest,
+                                                        &attrs);
            if (fsal_status.major == ERR_FSAL_STALE) {
                 cache_inode_kill_entry(dir_dest);
            }

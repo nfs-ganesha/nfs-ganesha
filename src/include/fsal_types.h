@@ -606,13 +606,7 @@ typedef fsal_u64_t fsal_attrib_mask_t;
 
 typedef struct fsal_attrib_list__
 {
-
-  fsal_attrib_mask_t asked_attributes;      /**< Indicates the attributes
-                                             *   to be got or set,
-                                             *   i.e. significative fields
-                                             *   in this structure.
-                                             */
-
+  fsal_attrib_mask_t mask;
   fsal_attrib_mask_t supported_attributes;
   object_file_type_t type;
   fsal_size_t filesize;
@@ -635,17 +629,16 @@ typedef struct fsal_attrib_list__
 
 } fsal_attrib_list_t;
 
-/** A list of FS object's extended attributes (like generation numbers or creation time). */
+/**
+ * A list of FS object's extended attributes (like generation numbers
+ * or creation time).
+ */
 
 typedef struct fsal_extattrib_list__
 {
- fsal_attrib_mask_t asked_attributes;      /**< Indicates the attributes
-                                            * to be got or set,
-                                            * i.e. significative fields
-                                            *  in this structure.
-                                            */
- fsal_uint_t   generation ;
-} fsal_extattrib_list_t ;
+  fsal_attrib_mask_t mask;
+  fsal_uint_t   generation;
+} fsal_extattrib_list_t;
 
 /** Mask for permission testing. Both mode and ace4 mask are encoded. */
 

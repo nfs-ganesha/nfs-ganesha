@@ -133,7 +133,6 @@ typedef struct cache_inode_parameter__
   hash_parameter_t cookie_param; /*< Parameters used for lock cookie hash table
                                      initialization */
 #endif
-  fsal_attrib_mask_t attrmask; /*< FSAL attributes to be used in FSAL */
   cache_inode_expire_type_t expire_type_attr; /*< Cache inode expiration type
                                                   for attributes */
   cache_inode_expire_type_t expire_type_link; /*< Cache inode expiration type
@@ -918,10 +917,9 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 #endif /* _USE_NFS4_ACL */
 
      memset(&attributes, 0, sizeof(fsal_attrib_list_t));
-     attributes.asked_attributes = cache_inode_params.attrmask;
 
      fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
-						    &attributes);
+                                                    &attributes);
      if (FSAL_IS_ERROR(fsal_status)) {
           cache_inode_kill_entry(entry);
           cache_status
@@ -979,13 +977,13 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry)
      pthread_rwlock_rdlock(&entry->attr_lock);
      /* Do we need to refresh? */
      if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
-         FSAL_TEST_MASK(entry->obj_handle->attributes.asked_attributes,
+         FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
                         FSAL_ATTR_RDATTR_ERR)) {
           pthread_rwlock_unlock(&entry->attr_lock);
           pthread_rwlock_wrlock(&entry->attr_lock);
           /* Has someone else done it for us? */
           if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
-              FSAL_TEST_MASK(entry->obj_handle->attributes.asked_attributes,
+              FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
                              FSAL_ATTR_RDATTR_ERR)) {
                /* Release the lock on error */
                if ((cache_status =

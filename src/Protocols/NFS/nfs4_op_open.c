@@ -573,11 +573,11 @@ open4_create(OPEN4args           * arg,
            set. */
         if (cache_status == CACHE_INODE_ENTRY_EXISTS) {
                 if (sattr_provided &&
-                    (FSAL_TEST_MASK(sattr.asked_attributes,
+                    (FSAL_TEST_MASK(sattr.mask,
                                     FSAL_ATTR_SIZE)) &&
                     (sattr.filesize == 0)) {
-                        FSAL_CLEAR_MASK(sattr.asked_attributes);
-                        FSAL_SET_MASK(sattr.asked_attributes,
+                        FSAL_CLEAR_MASK(sattr.mask);
+                        FSAL_SET_MASK(sattr.mask,
                                       FSAL_ATTR_SIZE);
                 } else {
                         sattr_provided = FALSE;
