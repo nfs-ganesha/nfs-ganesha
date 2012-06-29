@@ -82,7 +82,6 @@ fsal_status_t XFSFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
   struct stat buffstat;
 
   int parentfd;
-  int errsrv;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -129,7 +128,7 @@ fsal_status_t XFSFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
   /* get directory metadata */
   TakeTokenFSCall();
   rc = fstat(parentfd, &buffstat);
-  errsrv = errno;
+  errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)

@@ -80,7 +80,7 @@ void populatedb(fsal_posixdb_conn * p_conn, char *path)
     }
 
   /* add files */
-  printf("Adding entries in %s... ", path);
+  printf("Adding entries in %s... rc=%d ", path, rc);
   fflush(stdout);
   add_dir(p_conn, path, &handle_parent);
   puts("done");

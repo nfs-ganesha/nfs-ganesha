@@ -356,7 +356,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   LogDebug(COMPONENT_FSAL, "global_fs_info {");
-  LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
+  LogDebug(COMPONENT_FSAL, "  maxfilesize  = %zu    ",
            global_fs_info.maxfilesize);
   LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ", global_fs_info.maxlink);
   LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
@@ -394,9 +394,9 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
            global_fs_info.homogenous);
   LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
            global_fs_info.supported_attrs);
-  LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
+  LogDebug(COMPONENT_FSAL, "  maxread  = %zu     ",
            global_fs_info.maxread);
-  LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
+  LogDebug(COMPONENT_FSAL, "  maxwrite  = %zu     ",
            global_fs_info.maxwrite);
   LogDebug(COMPONENT_FSAL, "  umask  = %X ", global_fs_info.umask);
   LogDebug(COMPONENT_FSAL, "}");
@@ -510,7 +510,7 @@ fsal_status_t fsal_internal_getPathFromHandle(posixfsal_op_context_t * p_context
 {
   fsal_status_t status;
   fsal_posixdb_status_t statusdb;
-  int rc, errsv, count, i;
+  int rc, /* errsv,  */count, i;
   fsal_posixdb_fileinfo_t infofs;
   fsal_path_t paths[global_fs_info.maxlink];
 
@@ -536,7 +536,7 @@ fsal_status_t fsal_internal_getPathFromHandle(posixfsal_op_context_t * p_context
         {
           TakeTokenFSCall();
           rc = lstat(paths[i].path, p_buffstat);
-          errsv = errno;
+/*           errsv = errno; */
           ReleaseTokenFSCall();
 
           if(rc)

@@ -463,7 +463,7 @@ fsal_status_t XFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
                                                        : (p_seek_descriptor->whence ==
                                                           FSAL_SEEK_END ? "SEEK_END" :
                                                           "ERROR"))),
-                        p_seek_descriptor->offset, (unsigned long long)buffer_size);
+                        p_seek_descriptor->offset, buffer_size);
 
     }
 

@@ -141,8 +141,6 @@ int main(int argc, char *argv[])
 {
   int c;
   int exportid = 0;
-  int flag_i = FALSE;
-  int flag_p = FALSE ;
   char argpath[FSAL_MAX_PATH_LEN];
   char filepath[FSAL_MAX_PATH_LEN];
   fsal_path_t fsal_path ;
@@ -209,12 +207,10 @@ int main(int argc, char *argv[])
                       optarg);
               exit(1);
             }
-          flag_i = TRUE;
           break;
 
         case 'p':
           strncpy( argpath, optarg, MAXPATHLEN ) ;
-          flag_p = TRUE ;
           break ;
 
         case '?':

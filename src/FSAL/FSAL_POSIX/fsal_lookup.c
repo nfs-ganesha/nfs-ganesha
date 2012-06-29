@@ -59,7 +59,7 @@ fsal_status_t POSIXFSAL_lookup(fsal_handle_t * parent_directory_handle,  /* IN *
   posixfsal_handle_t * p_object_handle = (posixfsal_handle_t *) object_handle;
   int rc, errsv;
   fsal_status_t status;
-  fsal_posixdb_status_t statusdb;
+/*   fsal_posixdb_status_t statusdb; */
   fsal_posixdb_fileinfo_t infofs;
   struct stat buffstat;
   fsal_path_t pathfsal;
@@ -163,10 +163,9 @@ fsal_status_t POSIXFSAL_lookup(fsal_handle_t * parent_directory_handle,  /* IN *
       else if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT_DOT))
         {
           /* lookup ".." */
-          statusdb = fsal_posixdb_getParentDirHandle(p_context->p_conn,
+		/* statusdb = */(void) fsal_posixdb_getParentDirHandle(p_context->p_conn,
                                                      p_parent_directory_handle,
                                                      p_object_handle);
-
         }
       else
         {

@@ -191,7 +191,7 @@ fsal_status_t POSIXFSAL_open(fsal_handle_t * filehandle, /* IN */
         }
     }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
+  Return(ERR_FSAL_NO_ERROR, errsv, INDEX_FSAL_open); /* use the error... */
 
 }
 

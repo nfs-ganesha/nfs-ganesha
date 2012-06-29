@@ -50,7 +50,7 @@ fsal_status_t POSIXFSAL_opendir(fsal_handle_t * dir_handle,      /* IN */
   posixfsal_handle_t * p_dir_handle = (posixfsal_handle_t *) dir_handle;
   posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   posixfsal_dir_t * p_dir_descriptor = (posixfsal_dir_t *) dir_descriptor;
-  int rc, errsv;
+  int rc;
   fsal_status_t status;
 
   fsal_path_t fsalpath;
@@ -104,7 +104,6 @@ fsal_status_t POSIXFSAL_opendir(fsal_handle_t * dir_handle,      /* IN */
 
       TakeTokenFSCall();
       rc = lstat(fsalpath.path, &buffstat);
-      errsv = errno;
       ReleaseTokenFSCall();
       if(rc)                    /* lstat failed */
         goto attr_err;
