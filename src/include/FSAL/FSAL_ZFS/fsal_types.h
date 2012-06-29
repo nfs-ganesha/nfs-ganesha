@@ -43,6 +43,8 @@
 # define CONF_LABEL_FS_SPECIFIC   "ZFS"
 
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/param.h>
 #include <inttypes.h>
 #include "config_parsing.h"

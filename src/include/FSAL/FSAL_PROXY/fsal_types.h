@@ -58,6 +58,8 @@
 
 /* other includes */
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/param.h>
 #include "config_parsing.h"
 #include "err_fsal.h"
