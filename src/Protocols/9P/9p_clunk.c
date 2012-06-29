@@ -85,9 +85,8 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   if( ( pfid->pentry->type == REGULAR_FILE ) && 
       ( cache_inode_fd( pfid->pentry ) != NULL ) )
    {
-     printf( "Close on clunck\n" ) ;
      if(cache_inode_close( pfid->pentry,
-                           0,
+                           CACHE_INODE_FLAG_REALLYCLOSE, // A clunk is associated with an actual close on the client side
                            &cache_status) != CACHE_INODE_SUCCESS)
         return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
    }
