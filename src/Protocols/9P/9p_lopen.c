@@ -52,20 +52,20 @@
 
 
 int _9p_lopen( _9p_request_data_t * preq9p, 
-                  void  * pworker_data,
-                  u32 * plenout, 
-                  char * preply)
+               void  * pworker_data,
+               u32 * plenout, 
+               char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
-  u32 * mode   = NULL ;
+  u32 * flags  = NULL ;
 
-  fsal_accessflags_t fsalaccess ;
   cache_inode_status_t cache_status ;
+  fsal_openflags_t openflags = 0 ;
 
-  if ( !preq9p || !pworker_data || !plenout || !preply )
+  if( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
   _9p_fid_t * pfid = NULL ;
@@ -73,24 +73,27 @@ int _9p_lopen( _9p_request_data_t * preq9p,
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
   _9p_getptr( cursor, fid,    u32 ) ; 
-  _9p_getptr( cursor, mode,   u32 ) ; 
+  _9p_getptr( cursor, flags,  u32 ) ; 
   
-  LogDebug( COMPONENT_9P, "TLOPEN: tag=%u fid=%u mode=0x%x",
-            (u32)*msgtag, *fid, *mode  ) ;
+  LogDebug( COMPONENT_9P, "TLOPEN: tag=%u fid=%u flags=0x%x",
+            (u32)*msgtag, *fid, *flags  ) ;
 
    if( *fid >= _9P_FID_PER_CONN )
      return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
  
    pfid =  &preq9p->pconn->fids[*fid] ;
 
-  _9p_tools_acess2fsal( mode, &fsalaccess ) ;
+  _9p_openflags2FSAL( flags, &openflags ) ; 
 
-  /* Perform the 'access' call */
-  if(cache_inode_access( pfid->pentry,
-                         fsalaccess,
-                         &pfid->fsal_op_context, 
-                         &cache_status ) != CACHE_INODE_SUCCESS )
-     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+  if( pfid->pentry->type == REGULAR_FILE ) /** @todo: Maybe other types (FIFO, sOCKET,...) may require to be opened too */
+   {
+      if(cache_inode_open( pfid->pentry, 
+                           openflags, 
+                           &pfid->fsal_op_context,
+                           0, 
+                           &cache_status) != CACHE_INODE_SUCCESS) 
+         return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+   }
 
    /* iounit = 0 by default */
    pfid->specdata.iounit = 0 ;

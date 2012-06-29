@@ -61,6 +61,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   u32 * fid    = NULL ;
 
   _9p_fid_t * pfid = NULL ;
+  cache_inode_status_t cache_status ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -79,6 +80,17 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   /* If the fid is related to a xattr, free the related memory */
   if( pfid->specdata.xattr.xattr_content != NULL )
     gsh_free( pfid->specdata.xattr.xattr_content ) ;
+
+  /* If object is an opened file, close it */
+  if( ( pfid->pentry->type == REGULAR_FILE ) && 
+      ( cache_inode_fd( pfid->pentry ) != NULL ) )
+   {
+     printf( "Close on clunck\n" ) ;
+     if(cache_inode_close( pfid->pentry,
+                           0,
+                           &cache_status) != CACHE_INODE_SUCCESS)
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+   }
 
   /* Clean the fid */
   memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;

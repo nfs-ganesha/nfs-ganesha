@@ -24,10 +24,10 @@
  */
 
 /**
- * \file    9p_create.c
+ * \file    9p_lcreate.c
  * \brief   9P version
  *
- * 9p_create.c : _9P_interpretor, request CREATE
+ * 9p_lcreate.c : _9P_interpretor, request LCREATE
  *
  *
  */
@@ -50,7 +50,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_create( _9p_request_data_t * preq9p, 
+int _9p_lcreate( _9p_request_data_t * preq9p, 
                   void  * pworker_data,
                   u32 * plenout, 
                   char * preply)
@@ -73,6 +73,7 @@ int _9p_create( _9p_request_data_t * preq9p,
   fsal_name_t           file_name ; 
   fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
+  fsal_openflags_t      openflags = 0 ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -85,7 +86,7 @@ int _9p_create( _9p_request_data_t * preq9p,
   _9p_getptr( cursor, mode,   u32 ) ;
   _9p_getptr( cursor, gid,    u32 ) ;
 
-  LogDebug( COMPONENT_9P, "TCREATE: tag=%u fid=%u name=%.*s flags=0%o mode=0%o gid=%u",
+  LogDebug( COMPONENT_9P, "TLCREATE: tag=%u fid=%u name=%.*s flags=0%o mode=0%o gid=%u",
             (u32)*msgtag, *fid, *name_len, name_str, *flags, *mode, *gid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
@@ -108,7 +109,16 @@ int _9p_create( _9p_request_data_t * preq9p,
                                               &pfid->fsal_op_context, 
      			 		      &cache_status)) == NULL)
      return  _9p_rerror( preq9p, msgtag,  _9p_tools_errno( cache_status ) , plenout, preply ) ;
-   
+      
+   _9p_openflags2FSAL( flags, &openflags ) ; 
+
+   if(cache_inode_open( pentry_newfile, 
+                        openflags, 
+                        &pfid->fsal_op_context,
+                        0, 
+                        &cache_status) != CACHE_INODE_SUCCESS) 
+     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;
    qid_newfile.version = 0 ;
@@ -124,7 +134,7 @@ int _9p_create( _9p_request_data_t * preq9p,
 
 
    /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RCREATE ) ;
+  _9p_setinitptr( cursor, preply, _9P_RLCREATE ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
   _9p_setqid( cursor, qid_newfile ) ;
@@ -134,7 +144,7 @@ int _9p_create( _9p_request_data_t * preq9p,
   _9p_checkbound( cursor, preply, plenout ) ;
 
   LogDebug( COMPONENT_9P, 
-            "RCREATE: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu) iounit=%u",
+            "RLCREATE: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu) iounit=%u",
             (u32)*msgtag, *fid, *name_len, name_str, qid_newfile.type, qid_newfile.version, (unsigned long long)qid_newfile.path, iounit ) ;
 
   return 1 ;

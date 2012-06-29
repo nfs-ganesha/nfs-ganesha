@@ -256,4 +256,15 @@ void _9p_chomp_attr_value(char *str, size_t size)
     str[len - 1] = '\0';
 }
 
+void _9p_openflags2FSAL( u32 * inflags, fsal_openflags_t * outflags )
+{
+  if( inflags == NULL || outflags == NULL )
+    return ; 
+
+  if( *inflags & O_RDONLY ) *outflags |= FSAL_O_RDONLY ;
+  if( *inflags & O_WRONLY ) *outflags |= FSAL_O_WRONLY  ;
+  if( *inflags & O_RDWR ) *outflags |= FSAL_O_RDWR  ;
+
+  return ;
+} /* _9p_openflags2FSAL */
 

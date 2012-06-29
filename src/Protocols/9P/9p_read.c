@@ -70,7 +70,8 @@ int _9p_read( _9p_request_data_t * preq9p,
   size_t read_size = 0;
   bool_t eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
+  // uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
+  uint64_t stable_flag = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
 
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
