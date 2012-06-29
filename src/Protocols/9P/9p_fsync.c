@@ -59,16 +59,27 @@ int _9p_fsync( _9p_request_data_t * preq9p,
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
 
+  _9p_fid_t * pfid = NULL ;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
   _9p_getptr( cursor, fid,    u32 ) ; 
-  
   
   LogDebug( COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid ) ; 
 
   if( *fid >= _9P_FID_PER_CONN )
     return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
 
+  pfid = &preq9p->pconn->fids[*fid] ;
+
+  if(cache_inode_commit( pfid->pentry,
+                         0LL, // start at beginning of file
+                         0LL, // Mimic sync_file_range's behavior : count=0 means "whole file"
+                         CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
+                         &pfid->fsal_op_context,
+                         &cache_status) != CACHE_INODE_SUCCESS )
+    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RFSYNC ) ;
