@@ -208,7 +208,7 @@ int nfs4_op_link(struct nfs_argop4 *op,
                       dir_pentry,
                       &newname,
                       &attr,
-                      &data->user_credentials, &cache_status) != CACHE_INODE_SUCCESS)
+                      data->req_ctx->creds, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;

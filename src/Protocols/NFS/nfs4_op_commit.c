@@ -123,7 +123,7 @@ int nfs4_op_commit(struct nfs_argop4 *op,
                         arg_COMMIT4.offset,
                         arg_COMMIT4.count,
                         CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
-                        &data->user_credentials,
+                        data->req_ctx->creds,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_COMMIT4.status = NFS4ERR_INVAL;

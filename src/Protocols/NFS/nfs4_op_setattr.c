@@ -198,7 +198,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       if((cache_status = cache_inode_truncate(data->current_entry,
                                               sattr.filesize,
                                               &parent_attr,
-                                              &data->user_credentials,
+                                              data->req_ctx->creds,
                                               &cache_status)) != CACHE_INODE_SUCCESS)
         {
           res_SETATTR4.status = nfs4_Errno(cache_status);
@@ -279,7 +279,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
       if(cache_inode_setattr(data->current_entry,
                              &sattr,
-                             &data->user_credentials,
+                             data->req_ctx->creds,
 			     &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_SETATTR4.status = nfs4_Errno(cache_status);

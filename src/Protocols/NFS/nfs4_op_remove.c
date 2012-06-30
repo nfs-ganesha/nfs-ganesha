@@ -146,7 +146,7 @@ int nfs4_op_remove(struct nfs_argop4 *op,
   if((cache_status = cache_inode_remove(parent_entry,
                                         &name,
                                         &attr_parent,
-                                        &data->user_credentials,
+                                        data->req_ctx->creds,
                                         &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_REMOVE4.status = nfs4_Errno(cache_status);

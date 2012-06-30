@@ -120,7 +120,7 @@ open4_do_open(struct nfs_argop4  * op,
         if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) ||
             (args->share_access & OPEN4_SHARE_ACCESS_WRITE)) {
                 if (cache_inode_access(data->current_entry, FSAL_WRITE_ACCESS,
-                                       &data->user_credentials, &cache_status)
+                                       data->req_ctx->creds, &cache_status)
                     != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
@@ -129,7 +129,7 @@ open4_do_open(struct nfs_argop4  * op,
         if (args->share_access & OPEN4_SHARE_ACCESS_READ) {
                 if (cache_inode_access(data->current_entry,
                                        FSAL_READ_ACCESS,
-                                       &data->user_credentials,
+                                       data->req_ctx->creds,
                                        &cache_status) != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
@@ -205,7 +205,7 @@ open4_do_open(struct nfs_argop4  * op,
         }
 
         if (cache_inode_open(data->current_entry, openflags,
-                             &data->user_credentials,
+                             data->req_ctx->creds,
                              0, &cache_status)
             != CACHE_INODE_SUCCESS) {
                 return nfs4_Errno(cache_status);
@@ -553,7 +553,7 @@ open4_create(OPEN4args           * arg,
                                            0600,
                                            NULL,
                                            NULL,
-                                           &data->user_credentials,
+                                           data->req_ctx->creds,
                                            &cache_status);
 
         /* Complete failure */
@@ -587,7 +587,7 @@ open4_create(OPEN4args           * arg,
         if (sattr_provided) {
                 cache_inode_setattr(entry_newfile,
                                     &sattr,
-                                    &data->user_credentials,
+                                    data->req_ctx->creds,
                                     &cache_status);
                 if (cache_status != CACHE_INODE_SUCCESS) {
                         return nfs4_Errno(cache_status);
@@ -672,7 +672,7 @@ open4_claim_null(OPEN4args        * arg,
                 *entry = cache_inode_lookup(parent,
                                             &filename,
                                             NULL,
-                                            &data->user_credentials,
+                                            data->req_ctx->creds,
                                             &cache_status);
 
                 if (cache_status != CACHE_INODE_SUCCESS) {
