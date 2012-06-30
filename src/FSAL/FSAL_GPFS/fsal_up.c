@@ -107,16 +107,20 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_UP_getevents);
     }
 
+  callback.handle->handle_fsid[0] = p_export_context->fsid[0];
+  callback.handle->handle_fsid[1] = p_export_context->fsid[1];
   LogDebug(COMPONENT_FSAL,
            "inode update: rc %d reason %d update ino %ld",
            rc, reason, callback.buf->st_ino);
   LogDebug(COMPONENT_FSAL,
-           "inode update: tmp_handlep:%p flags:%x callback.handle:%p  pfsal_data.fh_desc.start:%p handle size = %u handle_type:%d handle_version:%d key_size = %u f_handle:%p", tmp_handlep, *callback.flags, callback.handle,
+           "inode update: tmp_handlep:%p flags:%x callback.handle:%p  pfsal_data.fh_desc.start:%p handle size = %u handle_type:%d handle_version:%d key_size = %u handle_fsid[0] = 0x%x  handle_fsid[1] = 0x%x f_handle:%p", tmp_handlep, *callback.flags, callback.handle,
            pfsal_data.fh_desc.start,
            callback.handle->handle_size,
            callback.handle->handle_type,
            callback.handle->handle_version,
            callback.handle->handle_key_size,
+           callback.handle->handle_fsid[0],
+           callback.handle->handle_fsid[1],
            callback.handle->f_handle);
 
   callback.handle->handle_version = OPENHANDLE_VERSION;

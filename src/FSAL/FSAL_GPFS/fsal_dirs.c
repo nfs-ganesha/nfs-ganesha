@@ -262,12 +262,8 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
           strncpy(entry_name.name, dp->d_name, sizeof(entry_name.name));
           entry_name.len = strlen(entry_name.name);
 
-          if(FSAL_IS_ERROR
-             (st =
-              fsal_internal_get_handle_at(p_dir_descriptor->fd, &entry_name,
-                                          &(p_pdirent[*p_nb_entries].handle))))
-            ReturnStatus(st, INDEX_FSAL_readdir);
-
+          st = fsal_internal_get_handle_at(p_dir_descriptor->fd, &entry_name,
+                                          &(p_pdirent[*p_nb_entries].handle), &dir_desc->context);
           if(FSAL_IS_ERROR(st))
             ReturnStatus(st, INDEX_FSAL_readdir);
 

@@ -549,6 +549,9 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
+  harg.handle->handle_fsid[0] = p_context->export_context->fsid[0];
+  harg.handle->handle_fsid[1] = p_context->export_context->fsid[1];
+
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -567,9 +570,9 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
  */
 
 fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
-                                          fsal_name_t * p_fsalname,     /* IN */
-                                          fsal_handle_t * p_handle      /* OUT
-                                                                         */ )
+                                          fsal_name_t * p_fsalname,    /* IN */
+                                          fsal_handle_t * p_handle,    /* OUT */
+                                          fsal_op_context_t * p_context /* IN */ )
 {
   int rc;
   gpfsfsal_handle_t *p_gpfs_handle = (gpfsfsal_handle_t *)p_handle;
@@ -589,11 +592,13 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   LogFullDebug(COMPONENT_FSAL,
                "Lookup handle at for %s",
                p_fsalname->name);
-
   rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
+
+  harg.handle->handle_fsid[0] = p_context->export_context->fsid[0];
+  harg.handle->handle_fsid[1] = p_context->export_context->fsid[1];
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -646,6 +651,9 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
+  harg.out_fh->handle_fsid[0] = p_context->export_context->fsid[0];
+  harg.out_fh->handle_fsid[1] = p_context->export_context->fsid[1];
+
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -667,7 +675,12 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
   gpfsfsal_handle_t * p_handle = (gpfsfsal_handle_t *)handle;
 
   if(!p_handle || !&p_handle->data.handle)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+     ReturnCode(ERR_FSAL_FAULT, 0);
+
+  LogEvent(COMPONENT_FSAL,
+               "fsal_internal_fd2handle called.");
+/* Function not called If it ever is will need context changes. */
+  ReturnCode(ERR_FSAL_FAULT, 0);
 
   harg.handle = (struct gpfs_file_handle *) &p_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
@@ -900,6 +913,10 @@ fsal_status_t fsal_internal_create(fsal_op_context_t * p_context,
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
+
+  crarg.new_fh->handle_fsid[0] = p_context->export_context->fsid[0];
+  crarg.new_fh->handle_fsid[1] = p_context->export_context->fsid[1];
+
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1240,7 +1257,7 @@ fsal_status_t fsal_trucate_by_handle(fsal_op_context_t * p_context,
                                  attr_changed, &buffxstat);
 }
 
-/* Access check function that accepts stat64. */
+/* Access check function that accepts stat. */
 fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN */
                                         fsal_accessflags_t access_type,  /* IN */
                                         struct stat *p_buffstat /* IN */)

@@ -230,7 +230,7 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
 
   /* now get the associated handle, while there is a race, there is
      also a race lower down  */
-  status = fsal_internal_get_handle_at(fd, p_linkname, p_link_handle);
+  status = fsal_internal_get_handle_at(fd, p_linkname, p_link_handle, p_context);
 
   if(FSAL_IS_ERROR(status))
     {

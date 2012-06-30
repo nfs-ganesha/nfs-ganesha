@@ -82,11 +82,13 @@ int GPFSFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
   if(handle1->data.handle.handle_size != handle2->data.handle.handle_size)
     return -2;
 
+  if(( handle1->data.handle.handle_fsid[0] != handle2->data.handle.handle_fsid[0])
+   || (handle1->data.handle.handle_fsid[1] != handle2->data.handle.handle_fsid[1]))
+    return -3;
+
   if(memcmp
      (handle1->data.handle.f_handle, handle2->data.handle.f_handle, handle1->data.handle.handle_key_size))
-    //FSF && (handle1->fsid[0] == handle2->fsid[0])
-    //FSF && (handle1->fsid[1] == handle2->fsid[1]) )
-    return -3;
+    return -4;
 
   return 0;
 }
