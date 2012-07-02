@@ -75,6 +75,7 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
     )
 {
   fsal_status_t status;
+  int parentfd;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
   gpfsfsal_handle_t *p_object_handle = (gpfsfsal_handle_t *)object_handle;
@@ -117,12 +118,23 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookup);
     }
 
+  /* retrieve directory attributes */
+  TakeTokenFSCall();
+  status =
+      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &parentfd, O_RDONLY);
+  ReleaseTokenFSCall();
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_lookup);
+
   /* get directory metadata */
 
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
+    {
+      close(parentfd);
       ReturnStatus(status, INDEX_FSAL_lookup);
+    }
 
   /* Be careful about junction crossing, symlinks, hardlinks,... */
   switch (parent_dir_attrs.type)
@@ -133,15 +145,18 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
 
     case FSAL_TYPE_JUNCTION:
       // This is a junction
+      close(parentfd);
       Return(ERR_FSAL_XDEV, 0, INDEX_FSAL_lookup);
 
     case FSAL_TYPE_FILE:
     case FSAL_TYPE_LNK:
     case FSAL_TYPE_XATTR:
       // not a directory 
+      close(parentfd);
       Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_lookup);
 
     default:
+      close(parentfd);
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
     }
 
@@ -162,12 +177,15 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
     status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
+    {
+      close(parentfd);
       ReturnStatus(status, INDEX_FSAL_lookup);
+    }
 
   /* get file handle, it it exists */
   /* This might be a race, but it's the best we can currently do */
-  status = fsal_internal_get_fh(p_context, p_parent_directory_handle,
-                                p_filename, p_object_handle);
+  status = fsal_internal_get_handle_at(parentfd, p_filename, object_handle);
+  close(parentfd);
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
