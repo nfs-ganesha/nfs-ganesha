@@ -143,6 +143,12 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             return res_PUTFH4.status;
         }
 
+      if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+        {
+          res_PUTFH4.status = NFS4ERR_PERM;
+          return res_PUTFH4.status;
+        }
+
 #ifdef _PNFS_DS
       /* As usual, protect existing refcounts */
       if (data->current_entry) {

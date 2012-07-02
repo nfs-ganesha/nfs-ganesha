@@ -110,6 +110,21 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if(res_LOCK4.status != NFS4_OK)
     return res_LOCK4.status;
 
+  /* This can't be done on the pseudofs */
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+    { 
+      res_LOCK4.status = NFS4ERR_ROFS;
+      LogDebug(COMPONENT_STATE,
+               "NFS4 LOCK returning NFS4ERR_ROFS");
+      return res_LOCK4.status;
+    }
+
+  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+    {
+      res_LOCK4.status = NFS4ERR_PERM;
+      return res_LOCK4.status;
+    }
+
   /* Convert lock parameters to internal types */
   switch(arg_LOCK4.locktype)
     {

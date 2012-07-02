@@ -128,6 +128,12 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CREATE4.status;
     }
 
+  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+    {
+      res_CREATE4.status = NFS4ERR_PERM;
+      return res_CREATE4.status;
+    }
+
   /* Ask only for supported attributes */
   if(!nfs4_Fattr_Supported(&arg_CREATE4.createattrs))
     {

@@ -2514,6 +2514,120 @@ int export_client_matchv6(struct in6_addr *paddrv6,
 }                               /* export_client_matchv6 */
 
 /**
+ * nfs_export_check_security: checks if request security flavor is suffcient for the requested export
+ *
+ * Checks if request security flavor is suffcient for the requested export
+ *
+ * @param ptr_req       [IN]    pointer to the related RPC request.
+ * @param pexpprt       [IN]    related export entry (if found, NULL otherwise).
+ *
+ * @return TRUE if the request flavor exists in the matching export
+ * FALSE otherwise
+ *
+ */
+int nfs_export_check_security(struct svc_req *req, exportlist_t * pexport)
+{
+  switch (req->rq_cred.oa_flavor)
+    {
+      case AUTH_NONE:
+        if((pexport->options & EXPORT_OPTION_AUTH_NONE) == 0)
+          {
+            LogInfo(COMPONENT_DISPATCH,
+                    "Export %s does not support AUTH_NONE",
+                    pexport->dirname);
+            return FALSE;
+          }
+        break;
+
+      case AUTH_UNIX:
+        if((pexport->options & EXPORT_OPTION_AUTH_UNIX) == 0)
+          {
+            LogInfo(COMPONENT_DISPATCH,
+                    "Export %s does not support AUTH_UNIX",
+                    pexport->dirname);
+            return FALSE;
+          }
+        break;
+
+#ifdef _HAVE_GSSAPI
+      case RPCSEC_GSS:
+        if((pexport->options &
+           (EXPORT_OPTION_RPCSEC_GSS_NONE |
+            EXPORT_OPTION_RPCSEC_GSS_INTG |
+            EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
+          {
+            LogInfo(COMPONENT_DISPATCH,
+                    "Export %s does not support RPCSEC_GSS",
+                    pexport->dirname);
+            return FALSE;
+          }
+        else
+          {
+            struct svc_rpc_gss_data *gd;
+            rpc_gss_svc_t svc;
+            gd = SVCAUTH_PRIVATE(req->rq_xprt->xp_auth);
+            svc = gd->sec.svc;
+            LogFullDebug(COMPONENT_DISPATCH,
+                         "Testing svc %d", (int) svc);
+            switch(svc)
+              {
+                case RPCSEC_GSS_SVC_NONE:
+                  if((pexport->options &
+                      EXPORT_OPTION_RPCSEC_GSS_NONE) == 0)
+                    {
+                      LogInfo(COMPONENT_DISPATCH,
+                              "Export %s does not support "
+                              "RPCSEC_GSS_SVC_NONE",
+                              pexport->dirname);
+                      return FALSE;
+                    }
+                  break;
+
+                case RPCSEC_GSS_SVC_INTEGRITY:
+                  if((pexport->options &
+                      EXPORT_OPTION_RPCSEC_GSS_INTG) == 0)
+                    {
+                      LogInfo(COMPONENT_DISPATCH,
+                              "Export %s does not support "
+                              "RPCSEC_GSS_SVC_INTEGRITY",
+                              pexport->dirname);
+                      return FALSE;
+                    }
+                  break;
+
+                case RPCSEC_GSS_SVC_PRIVACY:
+                  if((pexport->options &
+                      EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0)
+                    {
+                      LogInfo(COMPONENT_DISPATCH,
+                              "Export %s does not support "
+                              "RPCSEC_GSS_SVC_PRIVACY",
+                              pexport->dirname);
+                      return FALSE;
+                    }
+                  break;
+
+                  default:
+                    LogInfo(COMPONENT_DISPATCH,
+                            "Export %s does not support unknown "
+                            "RPCSEC_GSS_SVC %d",
+                            pexport->dirname, (int) svc);
+                    return FALSE;
+              }
+          }
+      break;
+#endif
+      default:
+        LogInfo(COMPONENT_DISPATCH,
+                "Export %s does not support unknown oa_flavor %d",
+                pexport->dirname, (int) req->rq_cred.oa_flavor);
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+/**
  * nfs_export_check_access: checks if a machine is authorized to access an export entry.
  *
  * Checks if a machine is authorized to access an export entry.

@@ -1704,7 +1704,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   pseudofs_entry_t psfsentry;
   pseudofs_entry_t *iter = NULL;
   entry4 *entry_nfs_array = NULL;
-  entry_name_array_item_t *entry_name_array = NULL;
   exportlist_t *save_pexport;
   nfs_fh4 entryFH;
   cache_inode_fsal_data_t fsdata;
@@ -1714,6 +1713,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   fsal_mdsize_t strsize = MNTPATHLEN + 1;
   fsal_status_t fsal_status;
   int error = 0;
+  size_t namelen = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_entry_t *pentry = NULL;
 
@@ -1880,13 +1880,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     }
 
   /* Allocation of the entries array */
-  if((entry_name_array =
-      gsh_calloc(estimated_num_entries, (FSAL_MAX_NAME_LEN + 1))) == NULL)
-    {
-      LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
-      res_READDIR4.status = NFS4ERR_SERVERFAULT;
-      return res_READDIR4.status;
-    }
   if((entry_nfs_array =
       gsh_calloc(estimated_num_entries, sizeof(entry4))) == NULL)
     {
@@ -1937,10 +1930,17 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS: Found entry %s", iter->name);
 
-      entry_nfs_array[i].name.utf8string_len = strlen(iter->name);
-      strncpy(entry_name_array[i], iter->name, FSAL_MAX_NAME_LEN);
+      namelen = strlen(iter->name);
+      entry_nfs_array[i].name.utf8string_len = namelen;
+      if ((entry_nfs_array[i].name.utf8string_val = gsh_malloc(namelen + 1)) == NULL) 
+        {
+            LogError(COMPONENT_NFS_V4_PSEUDO, ERR_SYS, ERR_MALLOC, errno);
+            res_READDIR4.status = NFS4ERR_SERVERFAULT;
+            return res_READDIR4.status;
+        }
+      strncpy(entry_nfs_array[i].name.utf8string_val, iter->name, namelen);
+      entry_nfs_array[i].name.utf8string_val[namelen] = '\0';
 
-      entry_nfs_array[i].name.utf8string_val = entry_name_array[i];
       entry_nfs_array[i].cookie = iter->pseudo_id + 3;
 
       /* This used to be in an if with a bogus check for FATTR4_FILEHANDLE. Such

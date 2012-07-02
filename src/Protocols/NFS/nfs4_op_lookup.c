@@ -120,6 +120,12 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     return nfs4_op_lookup_pseudo(op, data, resp);
 
+  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+    {
+      res_LOOKUP4.status = NFS4ERR_PERM;
+      return res_LOOKUP4.status;
+    }
+
 #ifndef _NO_XATTRD
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
