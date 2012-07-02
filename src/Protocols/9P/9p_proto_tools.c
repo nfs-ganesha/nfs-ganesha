@@ -261,9 +261,12 @@ void _9p_openflags2FSAL( u32 * inflags, fsal_openflags_t * outflags )
   if( inflags == NULL || outflags == NULL )
     return ; 
 
-  if( *inflags & O_RDONLY ) *outflags |= FSAL_O_RDONLY ;
   if( *inflags & O_WRONLY ) *outflags |= FSAL_O_WRONLY  ;
   if( *inflags & O_RDWR ) *outflags |= FSAL_O_RDWR  ;
+  /* Exception : O_RDONLY has value 0, it can't be tested with a logical and */
+  /* We consider that a non( has O_WRONLY or has O_RDWR ) case is RD_ONLY */
+  if( !(*inflags & (O_WRONLY|O_RDWR)) )
+     *outflags = FSAL_O_RDONLY ;
 
   return ;
 } /* _9p_openflags2FSAL */
