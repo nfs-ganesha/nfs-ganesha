@@ -243,6 +243,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
                         uint32_t flags)
 {
      cache_entry_t *to_remove_entry = NULL;
+     fsal_attrib_list_t to_remove_attrs;
+     fsal_attrib_list_t entry_attrs;
      fsal_status_t fsal_status = {0, 0};
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
@@ -273,10 +275,10 @@ cache_inode_remove_impl(cache_entry_t *entry,
      }
 
      if( !sticky_dir_allows(entry->obj_handle,
-			    to_remove_entry->obj_handle,
-			    req_ctx->creds)) {
-	 *status = CACHE_INODE_FSAL_EPERM;
-	 goto out;
+                            to_remove_entry->obj_handle,
+                            req_ctx->creds)) {
+         *status = CACHE_INODE_FSAL_EPERM;
+         goto out;
      }
      /* Lock the attributes (so we can decrement the link count) */
      pthread_rwlock_wrlock(&to_remove_entry->attr_lock);
@@ -289,10 +291,13 @@ cache_inode_remove_impl(cache_entry_t *entry,
      saved_acl = entry->attributes.acl;
 #endif /* _USE_NFS4_ACL */
      fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, name);
-     if( !FSAL_IS_ERROR(fsal_status))
-	  fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
-							 &entry->obj_handle->attributes);
-
+     if(!FSAL_IS_ERROR(fsal_status)) {
+          /* Is this actually necessary?  We don't actually want the
+             attributes copied, but the memcpy used by the
+             FSAL shouldn't overlap. */
+          fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
+                                                         &entry_attrs);
+     }
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
@@ -325,11 +330,11 @@ cache_inode_remove_impl(cache_entry_t *entry,
 
      /* Update the attributes for the removed entry */
      fsal_status
-	     = to_remove_entry->obj_handle->ops->getattrs(to_remove_entry->obj_handle,
-							      &to_remove_entry->obj_handle->attributes);
+          = to_remove_entry->obj_handle->ops->getattrs(to_remove_entry->obj_handle,
+                                                       &to_remove_attrs);
      if(FSAL_IS_ERROR(fsal_status)) {
-	     if(fsal_status.major == ERR_FSAL_STALE)
-		     to_remove_entry->obj_handle->attributes.numlinks = 0;
+          if(fsal_status.major == ERR_FSAL_STALE)
+               to_remove_entry->obj_handle->attributes.numlinks = 0;
      }
 
      /** @TODO this logic is a bit bogus in the new api.
