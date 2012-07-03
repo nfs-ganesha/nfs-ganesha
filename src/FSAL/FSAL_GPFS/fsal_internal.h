@@ -92,10 +92,6 @@ fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
 fsal_status_t fsal_internal_handle2fd_at(int dirfd,
                                          fsal_handle_t * phandle, int *pfd, int oflags);
 
-fsal_status_t fsal_internal_get_handle_at(int dfd, fsal_name_t * p_fsalname, 
-                                          fsal_handle_t * p_handle,
-                                          fsal_op_context_t * p_context);
-
 /**
  * Gets a file handle from a parent handle and name
  */

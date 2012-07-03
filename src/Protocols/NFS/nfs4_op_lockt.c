@@ -195,7 +195,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       if(plock_owner == NULL)
         {
-          LogFullDebug(COMPONENT_NFS_V4_LOCK,
+          LogEvent(COMPONENT_NFS_V4_LOCK,
                        "LOCKT unable to create lock owner");
           res_LOCKT4.status = NFS4ERR_SERVERFAULT;
           goto out;

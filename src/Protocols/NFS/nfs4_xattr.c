@@ -1552,6 +1552,8 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
   /* Get the xattr related to this xattr_id */
   if((buffer = gsh_calloc(1, XATTR_BUFFERSIZE)) == NULL)
     {
+      LogEvent(COMPONENT_NFS_V4_XATTR,
+               "FAILED to allocate xattr buffer");
       res_READ4.status = NFS4ERR_SERVERFAULT;
       return res_READ4.status;
     }

@@ -106,7 +106,7 @@ int mnt_Mnt(nfs_arg_t *parg,
 
   if(parg->arg_mnt == NULL)
     {
-      LogCrit(COMPONENT_NFSPROTO,
+      LogEvent(COMPONENT_NFSPROTO,
               "MOUNT: NULL path passed as Mount argument !!!");
       return NFS_REQ_DROP;
     }
@@ -302,7 +302,7 @@ int mnt_Mnt(nfs_arg_t *parg,
 #endif
 
       LogDebug(COMPONENT_NFSPROTO,
-               "MOUNT: Entry support %d different flavours", index_auth);
+               "MOUNT: Entry supports %d different flavours", index_auth);
 
 #define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
       if((RES_MOUNTINFO.auth_flavors.auth_flavors_val =

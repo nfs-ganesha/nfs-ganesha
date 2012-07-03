@@ -171,7 +171,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           = state_del_locked(plock_state,
                              data->current_entry)) != STATE_SUCCESS)
         {
-          LogDebug(COMPONENT_STATE,
+          LogEvent(COMPONENT_STATE,
                    "CLOSE failed to release lock stateid error %s",
                    state_err_str(state_status));
         }
@@ -186,7 +186,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                             pstate_found,
                             &state_status) != STATE_SUCCESS)
         {
-          LogDebug(COMPONENT_STATE,
+          LogEvent(COMPONENT_STATE,
                    "CLOSE failed to release share state error %s",
                    state_err_str(state_status));
         }
@@ -197,7 +197,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       = state_del_locked(pstate_found,
                          data->current_entry)) != STATE_SUCCESS)
     {
-      LogDebug(COMPONENT_STATE,
+      LogEvent(COMPONENT_STATE,
                "CLOSE failed to release stateid error %s",
                state_err_str(state_status));
     }

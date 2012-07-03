@@ -304,6 +304,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       gsh_calloc(res_SETATTR4.attrsset.bitmap4_len, sizeof(uint32_t))) == NULL)
     {
       res_SETATTR4.status = NFS4ERR_SERVERFAULT;
+      LogEvent(COMPONENT_NFS_V4,
+               "FAILED to allocate bitmap");
       return res_SETATTR4.status;
     }
 

@@ -87,7 +87,7 @@ int mnt_Umnt(nfs_arg_t *parg,
 
   if(hostname == NULL)
     {
-      LogCrit(COMPONENT_NFSPROTO, "NULL passed as Umount argument !!!");
+      LogEvent(COMPONENT_NFSPROTO, "NULL passed as Umount argument !!!");
       return NFS_REQ_DROP;
     }
 

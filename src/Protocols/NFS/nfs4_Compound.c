@@ -299,7 +299,7 @@ int nfs4_Compound(nfs_arg_t *parg,
 
   if(utf8dup(&(pres->res_compound4.tag), &(parg->arg_compound4.tag)) == -1)
     {
-      LogCrit(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
+      LogEvent(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
       return NFS_REQ_DROP;
     }
 

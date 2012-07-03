@@ -188,7 +188,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                                    &retval)) == NULL)
         {
           res_OPEN4.status = NFS4ERR_RESOURCE;
-          LogDebug(COMPONENT_STATE,
+          LogEvent(COMPONENT_STATE,
                    "NFS4 OPEN returning NFS4ERR_RESOURCE after "
                    "trying to repopulate cache");
           return res_OPEN4.status;
@@ -288,7 +288,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       if(powner == NULL)
         {
           res_OPEN4.status = NFS4ERR_RESOURCE;
-          LogDebug(COMPONENT_STATE,
+          LogEvent(COMPONENT_STATE,
                    "NFS4 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL (could not create NFS4 Owner");
           dec_client_id_ref(pclientid);
           return res_OPEN4.status;

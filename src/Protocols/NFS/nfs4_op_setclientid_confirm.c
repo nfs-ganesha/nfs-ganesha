@@ -413,6 +413,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
           else
             res_SETCLIENTID_CONFIRM4.status = NFS4ERR_RESOURCE;
 
+          LogEvent(COMPONENT_CLIENTID,
+                   "FAILED to confirm client");
+
+
           /* Release our reference to the unconfirmed record */
           dec_client_id_ref(punconf);
 

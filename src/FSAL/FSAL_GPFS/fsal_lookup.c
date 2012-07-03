@@ -184,7 +184,8 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
 
   /* get file handle, it it exists */
   /* This might be a race, but it's the best we can currently do */
-  status = fsal_internal_get_handle_at(parentfd, p_filename, object_handle);
+  status = fsal_internal_get_handle_at(parentfd, p_filename, object_handle,
+      p_context);
   close(parentfd);
 
   if(FSAL_IS_ERROR(status))

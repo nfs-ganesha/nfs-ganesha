@@ -114,7 +114,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
     {
       /* Some major failure */
       LogCrit(COMPONENT_CLIENTID,
-              "SETCLIENTID failed");
+              "SETCLIENTID failed to create client record");
 
       res_SETCLIENTID4.status = NFS4ERR_SERVERFAULT;
 

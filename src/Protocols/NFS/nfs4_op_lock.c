@@ -470,7 +470,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             {
               res_LOCK4.status = NFS4ERR_RESOURCE;
 
-              LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+              LogLock(COMPONENT_NFS_V4_LOCK, NIV_EVENT,
                       "LOCK failed to create new lock owner",
                       data->current_entry,
                       data->pcontext,
@@ -496,7 +496,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         {
           res_LOCK4.status = NFS4ERR_RESOURCE;
 
-          LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+          LogLock(COMPONENT_NFS_V4_LOCK, NIV_EVENT,
                   "LOCK failed to add new stateid",
                   data->current_entry,
                   data->pcontext,
@@ -560,7 +560,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* Need to destroy lock owner and state */
           if(state_del(plock_state,
                        &state_status) != STATE_SUCCESS)
-            LogDebug(COMPONENT_NFS_V4_LOCK,
+            LogEvent(COMPONENT_NFS_V4_LOCK,
                      "state_del failed with status %s",
                      state_err_str(state_status));
         }
