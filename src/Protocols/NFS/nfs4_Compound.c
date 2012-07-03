@@ -239,7 +239,7 @@ int nfs4_Compound(nfs_arg_t *arg,
 		   UTF8_SCAN_CKUTF8);
   if(status != NFS4_OK) {
       if(status == NFS4ERR_SERVERFAULT) {
-         LogCrit(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
+         LogEvent(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
       }
       res->res_compound4.status = status;
       return NFS_REQ_OK;

@@ -297,6 +297,8 @@ nfs4_op_read(struct nfs_argop4 *op,
 
         /* Some work is to be done */
         if ((bufferdata = gsh_malloc_aligned(4096, size)) == NULL) {
+                LogEvent(COMPONENT_NFS_V4,
+                        "FAILED to allocate bufferdata");
                 res_READ4.status = NFS4ERR_SERVERFAULT;
                 goto done;
         }
@@ -424,6 +426,8 @@ static int op_dsread(struct nfs_argop4 *op,
 
         buffer = gsh_malloc_aligned(4096, arg_READ4.count);
         if (buffer == NULL) {
+                LogEvent(COMPONENT_NFS_V4,
+                        "FAILED to allocate read buffer");
                 res_READ4.status = NFS4ERR_SERVERFAULT;
                 return res_READ4.status;
         }

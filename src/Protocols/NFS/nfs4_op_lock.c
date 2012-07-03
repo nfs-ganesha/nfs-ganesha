@@ -561,7 +561,7 @@ check_seqid:
                         /* Need to destroy new state */
                         state_status = state_del(lock_state, false);
                         if(state_status != STATE_SUCCESS)
-                                LogDebug(COMPONENT_NFS_V4_LOCK,
+                                LogEvent(COMPONENT_NFS_V4_LOCK,
                                          "state_del failed with status %s",
                                          state_err_str(state_status));
                 }
