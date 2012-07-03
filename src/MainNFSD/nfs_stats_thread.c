@@ -85,7 +85,8 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
     nfs_worker_stat_t      *global_worker_stat = &ganesha_stats->global_worker_stat;
     unsigned int           i, j;
 
-    /* This is done only on worker[0]: the hashtable is shared and worker 0 always exists */
+    memset(ganesha_stats, 0, sizeof(ganesha_stats_t));
+
     HashTable_GetStats(fh_to_cache_entry_ht, cache_inode_stat);
 
     /* Merging the NFS protocols stats together */
