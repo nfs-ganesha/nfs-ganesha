@@ -456,6 +456,9 @@ if test "$enable_nfs4_acl" == "yes"; then
 fi
 AM_CONDITIONAL(USE_NFS4_ACL, test "$enable_nfs4_acl" == "yes" )
 
+# MSPAC support
+GA_ENABLE_FLAG([mspac],[enable mspac support],[-D_MSPAC_SUPPORT -lwbclient])
+
 # makes it possible to add some extra include dir
 
 AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>], [Alternative path to include files] ),

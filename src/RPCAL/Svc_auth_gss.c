@@ -857,6 +857,14 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
                                  (xdrproc_t)xdr_void,
                                  (caddr_t) NULL);
 
+#ifdef _MSPAC_SUPPORT
+      if (gd->pac_blob.data != NULL)
+      {
+        free(gd->pac_blob.data);
+        gd->pac_blob.data = NULL;
+      }
+#endif
+
       if(!Gss_ctx_Hash_Del(gss_ctx_data))
         {
           LogCrit(COMPONENT_RPCSEC_GSS,
@@ -873,7 +881,9 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
 	}
 
       if(rqst->rq_xprt->xp_auth)
+      {
         SVCAUTH_DESTROY(rqst->rq_xprt->xp_auth);
+      }
       rqst->rq_xprt->xp_auth = &Svc_auth_none;
 
       break;

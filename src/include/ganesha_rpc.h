@@ -41,6 +41,14 @@ extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
 #endif
 
 #ifdef _HAVE_GSSAPI
+
+#ifdef _MSPAC_SUPPORT
+struct wbc_Blob {
+        uint8_t *data;
+        size_t length;
+};
+#endif
+
 struct svc_rpc_gss_data
 {
   bool_t established;           /* context established */
@@ -53,6 +61,10 @@ struct svc_rpc_gss_data
   uint32_t seqmask;             /* bitmask of seqnums */
   gss_name_t client_name;       /* unparsed name string */
   gss_buffer_desc checksum;     /* so we can free it */
+#ifdef _MSPAC_SUPPORT
+  struct wbc_Blob pac_blob;
+#endif
+
 };
 
 typedef struct nfs_krb5_param__

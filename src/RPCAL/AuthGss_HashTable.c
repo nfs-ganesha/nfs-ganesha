@@ -10,6 +10,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _MSPAC_SUPPORT
+#include <stdint.h>
+#include <stdbool.h>
+#include <wbclient.h>
+#endif
+
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
@@ -28,6 +34,8 @@
 #define GSS_CNAMELEN  1024
 #define GSS_CKSUM_LEN 1024
 
+#define URN_MSPAC "urn:mspac:"
+
 struct svc_rpc_gss_data_stored
 {
   bool_t established;
@@ -42,6 +50,10 @@ struct svc_rpc_gss_data_stored
   gss_name_t client_name;
   char checksum_val[GSS_CKSUM_LEN];
   size_t checksum_len;
+#ifdef _MSPAC_SUPPORT
+  struct wbc_Blob pac_blob;
+#endif
+
 };
 
 /**
@@ -61,6 +73,11 @@ static const char *gss_data2stored(struct svc_rpc_gss_data *gd,
 {
   OM_uint32 major;
   OM_uint32 minor;
+
+#ifdef _MSPAC_SUPPORT
+  pstored->pac_blob.data = NULL;
+  pstored->pac_blob.length = 0;
+#endif
 
   /* Save the data with a fixed size */
   pstored->established = gd->established;
@@ -82,6 +99,45 @@ static const char *gss_data2stored(struct svc_rpc_gss_data *gd,
                                  gd->client_name,
                                  &pstored->client_name)) != GSS_S_COMPLETE)
     return "could not duplicate client_name";
+
+#ifdef _MSPAC_SUPPORT
+
+  gss_buffer_desc pac_buffer;
+  gss_buffer_desc pac_display_buffer;
+  gss_buffer_desc pac_name = {
+                .value = URN_MSPAC,
+                .length = sizeof(URN_MSPAC)-1
+  };
+  int more = -1;
+  int authenticated = TRUE;
+  int complete = FALSE;
+
+  major = gss_get_name_attribute(
+                &minor, gd->client_name, &pac_name,
+                &authenticated, &complete,
+                &pac_buffer, &pac_display_buffer, &more);
+
+  if (major == GSS_S_COMPLETE)
+  {
+    if (authenticated && complete)
+    {
+      if((pstored->pac_blob.data = (void *)malloc(pac_buffer.length)) == NULL)
+        return "could not allocate mspac";
+      pstored->pac_blob.length = pac_buffer.length;
+      memcpy(pstored->pac_blob.data, pac_buffer.value, pac_buffer.length);
+      gss_release_buffer(&minor,&pac_buffer);
+      gss_release_buffer(&minor,&pac_display_buffer);
+    }
+    else
+    { 
+      LogEvent(COMPONENT_RPCSEC_GSS, "%s maj_stat=%d completed=%d authenticated=%d", __FUNCTION__, major, complete, authenticated);
+    }
+  }
+  else
+  {   
+    LogEvent(COMPONENT_RPCSEC_GSS, "%s maj_stat=%d completed=%d authenticated=%d", __FUNCTION__, major, complete, authenticated);
+  }
+#endif
 
   /* export the sec context */
   if((major = gss_export_sec_context(&minor,
@@ -169,11 +225,20 @@ static const char *gss_stored2data(struct svc_rpc_gss_data *gd,
                                  &gd->client_name)) != GSS_S_COMPLETE)
     return "could not duplicate client_name";
 
+
   /* Import the sec context */
   gss_delete_sec_context(&minor, &gd->ctx, GSS_C_NO_BUFFER);
   if((major = gss_import_sec_context(&minor,
                                      &pstored->ctx_exported, &gd->ctx)) != GSS_S_COMPLETE)
     return "could not import context";
+
+#ifdef _MSPAC_SUPPORT
+  if ((pstored->pac_blob.length != 0) && (pstored->pac_blob.data != NULL))
+  { 
+    gd->pac_blob.length = pstored->pac_blob.length;
+    gd->pac_blob.data = pstored->pac_blob.data;
+  }
+#endif
 
   return NULL;
 }                               /* gss_stored2data */

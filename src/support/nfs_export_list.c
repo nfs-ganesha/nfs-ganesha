@@ -258,7 +258,11 @@ int get_req_uid_gid(struct svc_req *req,
       principal[gd->cname.length] = 0;
 
       /* Convert to uid */
+#if _MSPAC_SUPPORT
+      if(!principal2uid(principal, &user_credentials->caller_uid, gd))
+#else
       if(!principal2uid(principal, &user_credentials->caller_uid))
+#endif
 	{
           LogWarn(COMPONENT_IDMAPPER,
 		  "WARNING: Could not map principal to uid; mapping principal "

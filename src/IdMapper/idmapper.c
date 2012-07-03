@@ -51,6 +51,11 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#ifdef _MSPAC_SUPPORT
+#include <stdint.h>
+#include <stdbool.h>
+#include <wbclient.h>
+#endif
 
 #ifdef _USE_NFSIDMAP
 
@@ -363,7 +368,11 @@ int name2uid(char *name, uid_t * puid)
  *
  */
 #ifdef _HAVE_GSSAPI
+#ifdef _MSPAC_SUPPORT
+int principal2uid(char *principal, uid_t * puid, struct svc_rpc_gss_data *gd)
+#else
 int principal2uid(char *principal, uid_t * puid)
+#endif
 {
 #ifdef _USE_NFSIDMAP
   gid_t gss_gid;
@@ -382,14 +391,98 @@ int principal2uid(char *principal, uid_t * puid)
       /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds */
       LogFullDebug(COMPONENT_IDMAPPER,
                    "calling nfs4_gss_princ_to_ids() to map principal to uid/gid");
+
       rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid, &gss_gid);
       if(rc)
         {
+#ifdef _MSPAC_SUPPORT
+          short found_uid=false;
+          short found_gid=false;
+          gid_t gss_gid_tmp=0;
+          uid_t gss_uid_tmp=0;
+          if (gd->pac_blob.data != NULL)
+          {
+            wbcErr wbc_err;
+            struct wbcDomainSid *sids;
+            struct wbcUnixId *xids;
+            struct wbcBlob local_pac_blob;
+            uint32_t num_ids;
+            int i;
+
+            local_pac_blob.data = gd->pac_blob.data;
+            local_pac_blob.length =  gd->pac_blob.length;
+            wbc_err = wbcPacToSids(local_pac_blob, &num_ids, &sids);
+            if (!WBC_ERROR_IS_OK(wbc_err)) {
+              LogEvent(COMPONENT_IDMAPPER, "wbcPacToSids returned %s",
+                             wbcErrorString(wbc_err));
+              return 0;
+            }
+#if 0
+            char sid_str[WBC_SID_STRING_BUFLEN];
+
+            for (i = 0; i < num_ids; i++) {
+              wbcSidToStringBuf(&sids[i], sid_str, sizeof(sid_str));
+              fprintf(stderr, "SID %s\n", sid_str);
+            }
+#endif
+
+            xids = calloc(num_ids, sizeof(*xids));
+
+            if (xids == NULL) {
+              LogEvent(COMPONENT_IDMAPPER, "xids calloc failed\n");
+              wbcFreeMemory(sids);
+              return 0;
+            }
+
+            wbc_err = wbcSidsToUnixIds(sids, num_ids, xids);
+            wbcFreeMemory(sids);
+            if (!WBC_ERROR_IS_OK(wbc_err)) {
+              LogFullDebug(COMPONENT_IDMAPPER, "wbcSidsToUnixIds returned %s",
+                             wbcErrorString(wbc_err));
+              free(xids);
+              return 0;
+            }
+            for (i = 0; i < num_ids; i++) {
+              struct wbcUnixId* id = &xids[i];
+
+              switch(id->type) {
+              case WBC_ID_TYPE_NOT_SPECIFIED:
+                LogFullDebug(COMPONENT_IDMAPPER, "type not specified");
+                break;
+              case WBC_ID_TYPE_UID:
+                LogFullDebug(COMPONENT_IDMAPPER, "uid %d", id->id.uid);
+                gss_uid_tmp = id->id.uid;
+                found_uid = true;
+                break;
+              case WBC_ID_TYPE_GID:
+                LogFullDebug(COMPONENT_IDMAPPER, "gid %d\n", id->id.gid);
+                gss_gid_tmp = id->id.gid;
+                found_gid = true;
+                break;
+              default:
+                break;
+              };
+            }
+            free(xids);
+          }
+#endif
           LogFullDebug(COMPONENT_IDMAPPER,
                        "principal2uid: nfs4_gss_princ_to_ids %s failed %d (%s)",
                        principal, -rc, strerror(-rc));
+#ifdef _MSPAC_SUPPORT
+          if ((found_uid == true) && (found_gid == true))
+          {
+            gss_uid = gss_uid_tmp;
+            gss_gid = gss_gid_tmp;
+            goto principal_found;
+          }
+#endif
+      
           return 0;
         }
+#ifdef _MSPAC_SUPPORT
+principal_found:
+#endif
       if(uidmap_add(principal, gss_uid) != ID_MAPPER_SUCCESS)
 	{
 	  LogCrit(COMPONENT_IDMAPPER,
