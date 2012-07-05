@@ -193,7 +193,7 @@ void *file_content_gc_thread(void *UnusedArg)
             }
         }
 
-      LogEvent(COMPONENT_MAIN,
+      LogDebug(COMPONENT_MAIN,
                "NFS FILE CONTENT GARBAGE COLLECTION : processing...");
       for(pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
         {
@@ -223,7 +223,7 @@ void *file_content_gc_thread(void *UnusedArg)
                       break;
                     }
                   else {
-                    LogEvent(COMPONENT_MAIN,
+                    LogDebug(COMPONENT_MAIN,
                              "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is not reached");
 		  }
 

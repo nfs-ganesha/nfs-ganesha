@@ -479,7 +479,7 @@ void nfs_Init_svc()
     int ix, code __attribute__((unused)) = 0;
     int one = 1;
 
-    LogInfo(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
+    LogDebug(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
             nfs_param.core_param.core_options);
 
     LogInfo(COMPONENT_DISPATCH, "NFS INIT: using TIRPC");
@@ -662,7 +662,7 @@ void nfs_Init_svc()
                      "Cannot acquire credentials for principal %s",
                      nfs_param.krb5_param.svc.principal);
           else
-            LogInfo(COMPONENT_DISPATCH,
+            LogDebug(COMPONENT_DISPATCH,
                     "Principal %s is suitable for acquiring credentials",
                     nfs_param.krb5_param.svc.principal);
         }
@@ -705,7 +705,7 @@ void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr)
                      ix, errno, strerror(errno));
         }
     }
-    LogEvent(COMPONENT_THREAD,
+    LogInfo(COMPONENT_THREAD,
              "%d rpc dispatcher threads were started successfully",
              N_EVENT_CHAN); 
 }

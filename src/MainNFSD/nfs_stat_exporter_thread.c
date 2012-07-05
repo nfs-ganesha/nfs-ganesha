@@ -718,7 +718,7 @@ void *stat_exporter_thread(void *UnusedArg)
 
   if((rc = getaddrinfo(NULL, nfs_param.extern_param.stat_export.export_stat_port, &hints, &servinfo)) != 0)
     {
-      LogCrit(COMPONENT_MAIN, "getaddrinfo: %s", gai_strerror(rc));
+      LogCrit(COMPONENT_MAIN, "getaddrinfo Failed: %s", gai_strerror(rc));
       return NULL;
     }
   for(p = servinfo; p != NULL; p = p->ai_next)

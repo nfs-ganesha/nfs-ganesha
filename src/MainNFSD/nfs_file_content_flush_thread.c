@@ -169,7 +169,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
             }
           else
             {
-              LogEvent(COMPONENT_MAIN,
+              LogDebug(COMPONENT_MAIN,
                        "Flush on Export Entry #%u is ok", pexport->id);
 
               /* XXX: for now, all cached data are put in the export directory (with export_id=0)
@@ -181,7 +181,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
 
         }
       else
-        LogEvent(COMPONENT_MAIN,
+        LogDebug(COMPONENT_MAIN,
                  "Export Entry #%u is not data cached, skipping..",
                  pexport->id);
     }

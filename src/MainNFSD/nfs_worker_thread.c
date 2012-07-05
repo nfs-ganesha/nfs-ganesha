@@ -509,9 +509,9 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
         {
           if(xprt != NULL)
             {
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "Invalid NFS Version #%d",
-                           (int)preq->rq_vers);
+              LogEvent(COMPONENT_DISPATCH,
+                       "Invalid NFS Version #%d",
+                       (int)preq->rq_vers);
               lo_vers = NFS_V4;
               hi_vers = NFS_V2;
               if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
@@ -584,9 +584,9 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
           if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)
             hi_vers = MOUNT_V1;
 
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Invalid Mount Version #%d",
-                       (int)preq->rq_vers);
+          LogEvent(COMPONENT_DISPATCH,
+                   "Invalid Mount Version #%d",
+                   (int)preq->rq_vers);
           svcerr_progvers2(xprt, preq, lo_vers, hi_vers);
         }
       return FALSE;
@@ -600,9 +600,9 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
       if(preq->rq_vers != NLM4_VERS)
         {
           /* Bad NLM version */
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Invalid NLM Version #%d",
-                       (int)preq->rq_vers);
+          LogEvent(COMPONENT_DISPATCH,
+                   "Invalid NLM Version #%d",
+                   (int)preq->rq_vers);
           if(xprt != NULL)
             svcerr_progvers2(xprt, preq, NLM4_VERS, NLM4_VERS);
           return FALSE;
@@ -624,12 +624,12 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
        if((preq->rq_vers != RQUOTAVERS) &&
           (preq->rq_vers != EXT_RQUOTAVERS))
          {
-           /* Bad NLM version */
+           /* Bad RQUOTA version */
            if(xprt != NULL)
              {
-               LogFullDebug(COMPONENT_DISPATCH,
-                            "Invalid RQUOTA Version #%d",
-                            (int)preq->rq_vers);
+               LogEvent(COMPONENT_DISPATCH,
+                        "Invalid RQUOTA Version #%d",
+                        (int)preq->rq_vers);
                svcerr_progvers2(xprt, preq, RQUOTAVERS, EXT_RQUOTAVERS);
              }
            return FALSE;
@@ -650,9 +650,9 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
   /* No such program */
   if(xprt != NULL)
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Invalid Program number #%d",
-                   (int)preq->rq_prog);
+      LogEvent(COMPONENT_DISPATCH,
+               "Invalid Program number #%d",
+               (int)preq->rq_prog);
       svcerr_noprog2(xprt, preq);        /* This is no NFS, MOUNT program, exit... */
     }
   return FALSE;
@@ -712,7 +712,7 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 
   /* Oops, should never get here! */
   svcerr_noprog2(preqnfs->xprt, req);
-  LogFullDebug(COMPONENT_DISPATCH,
+  LogEvent(COMPONENT_DISPATCH,
                "INVALID_FUNCDESC for Program %d, Version %d, Function %d",
                (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc);
   return INVALID_FUNCDESC;
@@ -857,7 +857,7 @@ static void nfs_rpc_execute(request_data_t *preq,
              (xprt, req, pworker_data->pfuncdesc->xdr_encode_func,
               (caddr_t) &res_nfs) == FALSE)
             {
-              LogDebug(COMPONENT_DISPATCH,
+              LogWarn(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: FAILURE: Error while calling "
                        "svc_sendreply");
               svcerr_systemerr2(xprt, req);
@@ -1495,7 +1495,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       if(svc_sendreply2(xprt, req, pworker_data->pfuncdesc->xdr_encode_func,
                         (caddr_t) &res_nfs) == FALSE)
         {
-          LogDebug(COMPONENT_DISPATCH,
+          LogEvent(COMPONENT_DISPATCH,
                    "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
           svcerr_systemerr2(xprt, req);
 

@@ -460,7 +460,7 @@ void *stats_thread(void *UnusedArg)
         {
           /* Stats file has changed */
           LogEvent(COMPONENT_MAIN,
-                   "NFS STATS : stats file has changed or was removed, I close and reopen it");
+                   "NFS STATS : stats file has changed or was removed, close and reopen it");
           fflush(stats_file);
           fclose(stats_file);
           if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
