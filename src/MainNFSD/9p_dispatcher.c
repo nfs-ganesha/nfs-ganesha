@@ -46,6 +46,10 @@
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
 #include <sys/select.h>
+#include <sys/types.h>          
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <poll.h>
 #include "HashData.h"
 #include "HashTable.h"
@@ -291,6 +295,8 @@ int _9p_create_socket( void )
 {
   int sock = -1 ;
   int one = 1 ;
+  int centvingt = 120 ;
+  int neuf = 9 ;
   struct sockaddr_in sinaddr;
 #ifdef _USE_TIRPC_IPV6
   struct sockaddr_in6 sinaddr_tcp6;
@@ -298,22 +304,23 @@ int _9p_create_socket( void )
   struct t_bind bindaddr_tcp6;
   struct __rpc_sockinfo si_tcp6;
 #endif
+  int bad = 1 ;
+  
+  if( ( sock= socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP) ) != -1 )
+   if(!setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
+    if(!setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)))
+     if(!setsockopt( sock, IPPROTO_TCP, TCP_KEEPIDLE, &centvingt, sizeof(centvingt)))
+      if(!setsockopt( sock, IPPROTO_TCP, TCP_KEEPINTVL, &centvingt, sizeof(centvingt)))
+       if(!setsockopt( sock, IPPROTO_TCP, TCP_KEEPCNT, &neuf, sizeof(neuf)))
+        bad = 0 ;
 
-  if( ( sock= socket(P_FAMILY, SOCK_STREAM, IPPROTO_TCP) ) == -1 )
-    {
-          LogFatal(COMPONENT_9P_DISPATCH,
-                   "Cannot allocate a tcp socket for 9p, error %d (%s)", errno, strerror(errno));
-	  return -1 ;
-    }
-
-  if(setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
+   if( bad ) 
     {
 	LogFatal(COMPONENT_9P_DISPATCH,
-                 "Bad tcp socket options for 9p, error %d (%s)", errno, strerror(errno));
+                 "Bad socket option 9p, error %d (%s)", errno, strerror(errno));
         return -1 ;
     }
-
-  socket_setoptions(sock);
+  socket_setoptions( sock ) ;
 
 #ifndef _USE_TIRPC_IPV6
   memset( &sinaddr, 0, sizeof(sinaddr));
