@@ -56,7 +56,8 @@ typedef uint64_t u64;
 #define _9P_HDR_SIZE  4
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
-#define _9p_BLK_SIZE 4096
+#define _9P_BLK_SIZE 4096
+#define _9P_IOUNIT   0
 
 /**
  * enum _9p_msg_t - 9P message types

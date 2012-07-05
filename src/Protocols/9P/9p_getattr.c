@@ -124,8 +124,8 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   nlink      = (*request_mask & _9P_GETATTR_NLINK)  ? (u64 *)&pfid->pentry->attributes.numlinks:&zero64 ;  
   rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pentry->attributes.rawdev.major:&zero64 ; 
   size       = (*request_mask & _9P_GETATTR_SIZE)   ? (u64 *)&pfid->pentry->attributes.filesize:&zero64 ; 
-  blksize    = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)_9p_BLK_SIZE:0LL ; 
-  blocks     = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)(pfid->pentry->attributes.filesize/_9p_BLK_SIZE):0LL ; 
+  blksize    = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)_9P_BLK_SIZE:0LL ; 
+  blocks     = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)(pfid->pentry->attributes.filesize/_9P_BLK_SIZE):0LL ; 
   atime_sec  = (*request_mask & _9P_GETATTR_ATIME ) ? (u64 *)&pfid->pentry->attributes.atime.seconds:&zero64 ;
   atime_nsec = &zero64 ;
   mtime_sec  = (*request_mask & _9P_GETATTR_MTIME ) ? (u64 *)&pfid->pentry->attributes.mtime.seconds:&zero64 ;

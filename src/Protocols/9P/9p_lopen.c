@@ -85,7 +85,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
 
   _9p_openflags2FSAL( flags, &openflags ) ; 
 
-  if( pfid->pentry->type == REGULAR_FILE ) /** @todo: Maybe other types (FIFO, sOCKET,...) may require to be opened too */
+  if( pfid->pentry->type == REGULAR_FILE ) /** @todo: Maybe other types (FIFO, SOCKET,...) may require to be opened too */
    {
       if(cache_inode_open( pfid->pentry, 
                            openflags, 
@@ -96,7 +96,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
    }
 
    /* iounit = 0 by default */
-   pfid->specdata.iounit = 0 ;
+   pfid->specdata.iounit = _9P_IOUNIT ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RLOPEN ) ;

@@ -67,7 +67,7 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
   _9p_qid_t qid_newfile ;
-  u32 iounit = 0 ;
+  u32 iounit = _9P_IOUNIT ; ;
 
   cache_entry_t       * pentry_newfile = NULL ;
   fsal_name_t           file_name ; 
