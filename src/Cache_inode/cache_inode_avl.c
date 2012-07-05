@@ -255,6 +255,8 @@ cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
 
     dirent_key->hk.k = k;
 
+    printf( "====== cache_inode_avl_lookup_k ======> key: %llu\n", (unsigned long long)k ) ; 
+
     node = avltree_inline_lookup(&dirent_key->node_hk, t);
     if (node) {
         if (flags & CACHE_INODE_FLAG_NEXT_ACTIVE)

@@ -59,10 +59,11 @@ char pathdotdot[] = ".." ;
 
 typedef struct _9p_cb_entry
 {
-   u64    qid_path ;
-   u8   * qid_type ;
-   char * name_str ;
-   u16    name_len ;
+   u64       qid_path ;
+   u8      * qid_type ;
+   char    * name_str ;
+   u16       name_len ;
+   uint64_t  cookie   ;
 } _9p_cb_entry_t ;
 
 typedef struct _9p_cb_data 
@@ -89,6 +90,7 @@ static bool_t _9p_readdir_callback( void* opaque,
   cb_data->entries[cb_data->count].qid_path = pattrs->fileid ;
   cb_data->entries[cb_data->count].name_str = name ;
   cb_data->entries[cb_data->count].name_len = strlen( name ) ;
+  cb_data->entries[cb_data->count].cookie = cookie ;
  
   switch( pattrs->type ) 
    {
@@ -147,7 +149,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   bool_t eod_met;
   cache_entry_t * pentry_dot_dot = NULL ;
 
-  unsigned int cookie = 0;
+  uint64_t cookie = 0LL ;
   unsigned int estimated_num_entries = 0 ;
   unsigned int num_entries = 0 ;
   unsigned int delta = 0 ;
@@ -173,7 +175,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Use Cache Inode to read the directory's content */
-  cookie = (unsigned int)*offset ;
+  cookie = (uint64_t)(*offset) ;
 
   /* For each entry, returns:
    * qid     = 13 bytes
@@ -203,12 +205,14 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       cb_data.entries[0].qid_type =  &qid_type_dir ;
       cb_data.entries[0].name_str =  pathdot ;
       cb_data.entries[0].name_len =  strlen( pathdot ) ;
+      cb_data.entries[0].cookie   =  0LL ;
 
 
       cb_data.entries[1].qid_path =  pentry_dot_dot->attributes.fileid ;
       cb_data.entries[1].qid_type =  &qid_type_dir ;
       cb_data.entries[1].name_str =  pathdotdot ;
       cb_data.entries[1].name_len =  strlen( pathdotdot ) ;
+      cb_data.entries[1].cookie   =  1LL ;
 
       delta = 2 ;
    }
@@ -241,7 +245,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    }
   /* Never go behind _9P_MAXDIRCOUNT */
   if( num_entries > _9P_MAXDIRCOUNT ) num_entries = _9P_MAXDIRCOUNT ;
-
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RREADDIR ) ;
@@ -279,7 +282,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      
      /* offset */
      //_9p_setvalue( cursor, i+cookie+1, u64 ) ;   
-     _9p_setvalue( cursor, (dcount+ (*offset)), u64 ) ;   
+     //_9p_setvalue( cursor, (dcount+ (*offset)), u64 ) ;   
+     _9p_setvalue( cursor, cb_data.entries[i].cookie, u64 ) ;   
 
      /* Type (again ?) */
      _9p_setptr( cursor, qid_type, u8 ) ;
@@ -287,8 +291,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      /* name */
      _9p_setstr( cursor, name_len, name_str ) ;
   
-     LogDebug( COMPONENT_9P, "RREADDIR dentry: recsize=%u dentry={off=%llu,dcount=%u,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-               recsize, (unsigned long long)i+cookie+1, dcount, *qid_type, 0, (unsigned long long)*qid_path, 
+     LogDebug( COMPONENT_9P, "RREADDIR dentry: recsize=%u dentry={fsal_cookie=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
+               recsize, (unsigned long long)cb_data.entries[i].cookie , *qid_type, 0, (unsigned long long)*qid_path, 
                *qid_type, name_str ) ;
    } /* for( i = 0 , ... ) */
 
