@@ -1238,7 +1238,9 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   /* Be careful (Issue #66) : it makes no sense to check access for
    * a MOUNT request */
-  if(req->rq_prog != nfs_param.core_param.program[P_MNT])
+  if((req->rq_prog != nfs_param.core_param.program[P_MNT]) &&
+     !((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
+      (req->rq_vers == NFS_V4)))
    {
      LogFullDebug(COMPONENT_DISPATCH,
                   "nfs_rpc_execute about to call nfs_export_check_access");

@@ -4230,6 +4230,7 @@ int nfs4_MakeCred(compound_data_t * data)
 {
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
+  unsigned int export_check_result;
 
   if (get_req_uid_gid(data->reqp,
                       data->pexport,
@@ -4238,7 +4239,7 @@ int nfs4_MakeCred(compound_data_t * data)
 
   LogFullDebug(COMPONENT_DISPATCH,
                "nfs4_MakeCred about to call nfs_export_check_access");
-  if(nfs_export_check_access(&data->pworker->hostaddr,
+  export_check_result = nfs_export_check_access(&data->pworker->hostaddr,
                              data->reqp,
                              data->pexport,
                              nfs_param.core_param.program[P_NFS],
@@ -4247,8 +4248,8 @@ int nfs4_MakeCred(compound_data_t * data)
                              ip_stats_pool,
                              &related_client,
                              &user_credentials,
-                             FALSE) /* So check_access() doesn't deny based on whether this is a RO export. */
-     == FALSE)
+                             FALSE); /* So check_access() doesn't deny based on whether this is a RO export. */
+  if (export_check_result != EXPORT_PERMISSION_GRANTED)
     return NFS4ERR_WRONGSEC;
 
   if(nfs_check_anon(&related_client, data->pexport, &user_credentials) == FALSE
