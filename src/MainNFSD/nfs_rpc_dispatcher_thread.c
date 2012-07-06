@@ -1169,8 +1169,8 @@ void *rpc_dispatcher_thread(void *arg)
 /**
  * constructor_nfs_request_data_t: Constructor for a nfs_request_data_t structure
  *
- * This function is used to init the nfs_request_data for a worker. These data are used by the
- * worker for RPC processing.
+ * This function is used to init the nfs_request_data for a worker. These
+ * data are used by the worker for RPC processing.
  *
  * @param ptr void pointer to the structure to be managed
  *
@@ -1180,15 +1180,14 @@ void *rpc_dispatcher_thread(void *arg)
 
 void constructor_nfs_request_data_t(void *ptr, void *parameters)
 {
-  nfs_request_data_t * pdata = (nfs_request_data_t *) ptr;
-  memset(pdata, 0, sizeof(nfs_request_data_t));
+    /* do nothing */
 }
 
 /**
  * constructor_request_data_t: Constructor for a request_data_t structure
  *
- * This function is used to init the request_data for a worker. These data are used by the
- * worker for RPC processing.
+ * This function is used to init the request_data for a worker. These data
+ * are used by the worker for RPC processing.
  *
  * @param ptr void pointer to the structure to be managed
  *
@@ -1197,6 +1196,5 @@ void constructor_nfs_request_data_t(void *ptr, void *parameters)
  */
 void constructor_request_data_t(void *ptr, void *parameters)
 {
-  request_data_t * pdata = (request_data_t *) ptr;
-  memset(pdata, 0, sizeof(request_data_t));
+    /* do nothing */
 }
