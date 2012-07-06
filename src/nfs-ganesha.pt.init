@@ -172,10 +172,6 @@ ganesha_status() {
 	    echo "ProtecTIER Ganesha is not running."
 	    RETVAL=1
     fi
-    status rpc.statd
-    if [ -n "$RQUOTAD" ] ; then
-    	status rpc.rquotad
-    fi
     return $RETVAL
 }
 
