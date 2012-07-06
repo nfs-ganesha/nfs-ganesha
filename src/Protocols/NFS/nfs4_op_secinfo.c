@@ -87,7 +87,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
 
   fsal_name_t secinfo_fh_name;
   cache_inode_status_t cache_status;
-  cache_entry_t *entry_src;
+  cache_entry_t *entry_src=NULL;
   fsal_attrib_list_t attr_secinfo;
   sec_oid4 v5oid = {krb5oid.length, (char *)krb5oid.elements};
   int num_entry = 0;
@@ -126,13 +126,29 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
       return res_SECINFO4.status;
     }
 
-  if((entry_src = cache_inode_lookup(data->current_entry,
+  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+    {
+      if ((nfs4_op_lookup_pseudo(op, data, resp) != NFS4_OK) ||
+          (data->pexport == NULL))
+        {
+          /* reuse lookup routine, need to set the correct OP */
+          resp->resop = NFS4_OP_SECINFO;
+          res_SECINFO4.status = NFS4ERR_INVAL;
+          return res_SECINFO4.status;
+        }
+        /* reuse lookup routine, need to set the correct OP */
+        resp->resop = NFS4_OP_SECINFO;
+    }
+  else 
+    {
+      if((entry_src = cache_inode_lookup(data->current_entry,
                                          &secinfo_fh_name,
                                          &attr_secinfo,
                                          data->pcontext, &cache_status)) == NULL)
-    {
-      res_SECINFO4.status = nfs4_Errno(cache_status);
-      return res_SECINFO4.status;
+      {
+        res_SECINFO4.status = nfs4_Errno(cache_status);
+        return res_SECINFO4.status;
+      }
     }
 
   /* get the number of entries */
@@ -151,7 +167,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
       gsh_calloc(num_entry, sizeof(secinfo4))) == NULL)
     {
       res_SECINFO4.status = NFS4ERR_SERVERFAULT;
-      cache_inode_put(entry_src);
+      if (entry_src)
+        cache_inode_put(entry_src);
       return res_SECINFO4.status;
     }
 
@@ -185,7 +202,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
     }
   res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
-  cache_inode_put(entry_src);
+  if (entry_src)
+    cache_inode_put(entry_src);
 
   return res_SECINFO4.status;
 }                               /* nfs4_op_secinfo */
