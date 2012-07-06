@@ -216,6 +216,23 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
       delta = 2 ;
    }
+  else if( *offset == 1  )
+   {
+      /* compute the parent entry */
+      if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
+                                                  &pfid->fsal_op_context,
+                                                  &cache_status ) ) == NULL )
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+
+      /* Deal with ".." */
+      cb_data.entries[0].qid_path =  pentry_dot_dot->attributes.fileid ;
+      cb_data.entries[0].qid_type =  &qid_type_dir ;
+      cb_data.entries[0].name_str =  pathdotdot ;
+      cb_data.entries[0].name_len =  strlen( pathdotdot ) ;
+      cb_data.entries[0].cookie   =  1LL ;
+
+      delta = 1 ;
+   }
   else
    delta = 0 ;
 
