@@ -80,7 +80,7 @@
 
 int nfs3_Commit(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+		struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -129,7 +129,7 @@ int nfs3_Commit(nfs_arg_t *parg,
                         parg->arg_commit3.offset,
                         parg->arg_commit3.count,
                         typeofcommit,
-                        creds,
+                        req_ctx->creds,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       pres->res_commit3.status = NFS3ERR_IO;;

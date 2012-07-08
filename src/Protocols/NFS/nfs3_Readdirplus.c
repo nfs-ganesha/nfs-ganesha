@@ -113,8 +113,8 @@ struct nfs3_readdirplus_cb_data
 int
 nfs3_Readdirplus(nfs_arg_t *arg,
                  exportlist_t *export,
-		 struct user_cred *creds,
-                 nfs_worker_data_t *pworker,
+		 struct req_op_context *req_ctx,
+		 nfs_worker_data_t *pworker,
                  struct svc_req *req,
                  nfs_res_t *res)
 {
@@ -178,7 +178,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
      /* Is this a xattr FH ? */
      if (nfs3_Is_Fh_Xattr(&(arg->arg_readdirplus3.dir))) {
-	  rc = nfs3_Readdirplus_Xattr(arg, export, creds,
+	  rc = nfs3_Readdirplus_Xattr(arg, export, req_ctx,
                                       req, res);
           goto out;
      }
@@ -269,7 +269,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           fsal_attrib_list_t parent_dir_attr;
           cache_entry_t *parent_dir_entry
                = cache_inode_lookupp(dir_entry,
-                                     creds,
+                                     req_ctx->creds,
                                      &cache_status_gethandle);
           if (parent_dir_entry == NULL) {
                res->res_readdirplus3.status
@@ -305,7 +305,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                              cache_inode_cookie,
                              &num_entries,
                              &eod_met,
-                             creds,
+                             req_ctx->creds,
                              nfs3_readdirplus_callback,
                              &cb_opaque,
                              &cache_status) != CACHE_INODE_SUCCESS) {

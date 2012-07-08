@@ -80,7 +80,7 @@
 
 int nfs3_Mknod(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+	       struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t * pres)
@@ -225,7 +225,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
   fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
 						      pexport->fullpath, 
 						      FSAL_QUOTA_INODES,
-						      creds) ;
+						      req_ctx->creds) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
         pres->res_mknod3.status = NFS3ERR_DQUOT;
@@ -248,7 +248,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
       node_pentry = cache_inode_lookup(parent_pentry,
                                        &file_name,
                                        &attr,
-                                       creds,
+                                       req_ctx->creds,
                                        &cache_status_lookup);
 
       if(cache_status_lookup == CACHE_INODE_NOT_FOUND)
@@ -262,7 +262,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
                                                mode,
                                                &create_arg,
                                                &attr,
-                                               creds,
+                                               req_ctx->creds,
                                                &cache_status)) != NULL)
             {
               MKNOD3resok *rok = &pres->res_mknod3.MKNOD3res_u.resok;
