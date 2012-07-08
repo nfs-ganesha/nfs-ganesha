@@ -121,7 +121,7 @@ nfs_read_ok(exportlist_t * pexport,
 
 int nfs_Read(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds,
+	     struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres)
@@ -196,13 +196,13 @@ int nfs_Read(nfs_arg_t *parg,
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_read3.file))))
   {
-    rc = nfs3_Read_Xattr(parg, pexport, creds, preq, pres);
+    rc = nfs3_Read_Xattr(parg, pexport, req_ctx, preq, pres);
     goto out;
   }
 
   if(cache_inode_access(pentry,
                         FSAL_READ_ACCESS,
-                        creds,
+                        req_ctx->creds,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       switch (preq->rq_vers)
@@ -368,7 +368,7 @@ int nfs_Read(nfs_arg_t *parg,
                            &read_size,
                            data,
                            &eof_met,
-                           creds,
+                           req_ctx->creds,
                            CACHE_INODE_SAFE_WRITE_TO_FS,
                            &cache_status) == CACHE_INODE_SUCCESS) &&
          (cache_inode_getattr(pentry, &attr,

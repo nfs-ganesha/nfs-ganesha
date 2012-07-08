@@ -83,7 +83,7 @@
 
 int nfs_Remove(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds /* IN  */ ,
+	       struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres)
@@ -147,7 +147,7 @@ int nfs_Remove(nfs_arg_t *parg,
     }
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_remove3.object.dir)))) {
-    rc = nfs3_Remove_Xattr(parg, pexport, creds, preq, pres);
+    rc = nfs3_Remove_Xattr(parg, pexport, req_ctx, preq, pres);
     goto out;
   }
 
@@ -204,7 +204,7 @@ int nfs_Remove(nfs_arg_t *parg,
           if((pentry_child = cache_inode_lookup(parent_pentry,
                                                 &name,
                                                 &pentry_child_attr,
-                                                creds,
+                                                req_ctx->creds,
                                                 &cache_status)) != NULL)
             {
               /*
@@ -236,7 +236,7 @@ int nfs_Remove(nfs_arg_t *parg,
               if(cache_inode_remove(parent_pentry,
                                     &name,
                                     &parent_attr,
-                                    creds, &cache_status) == CACHE_INODE_SUCCESS)
+                                    req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   switch (preq->rq_vers)
                     {

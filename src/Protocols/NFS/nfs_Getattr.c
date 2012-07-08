@@ -84,7 +84,7 @@
 
 int nfs_Getattr(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+		struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -122,7 +122,7 @@ int nfs_Getattr(nfs_arg_t *parg,
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
     {
-      rc = nfs3_Getattr_Xattr(parg, pexport, creds, preq, pres);
+      rc = nfs3_Getattr_Xattr(parg, pexport, req_ctx, preq, pres);
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs_Getattr returning %d from nfs3_Getattr_Xattr", rc);
       goto out;

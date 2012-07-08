@@ -84,7 +84,7 @@
 
 int nfs_Link(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds,
+	     struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t * pres)
@@ -242,7 +242,7 @@ int nfs_Link(nfs_arg_t *parg,
                                   parent_pentry,
                                   &link_name,
                                   &attr,
-                                  creds, &cache_status) == CACHE_INODE_SUCCESS)
+                                  req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   if(cache_inode_getattr(parent_pentry,
                                          &attr_parent_after,

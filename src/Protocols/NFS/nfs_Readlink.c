@@ -84,7 +84,7 @@
 
 int nfs_Readlink(nfs_arg_t *parg,
                  exportlist_t *pexport,
-                 struct user_cred *creds,
+		 struct req_op_context *req_ctx,
                  nfs_worker_data_t *pworker,
                  struct svc_req *preq,
                  nfs_res_t * pres)
@@ -147,7 +147,7 @@ int nfs_Readlink(nfs_arg_t *parg,
   /* Perform readlink on the pentry */
   if(cache_inode_readlink(pentry,
                           &symlink_data,
-                          creds, &cache_status) == CACHE_INODE_SUCCESS)
+                          req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
     {
       if((ptr = gsh_malloc(symlink_data.len+1)) == NULL)
         {

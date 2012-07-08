@@ -279,7 +279,7 @@ int nfs_SetPostOpXAttrFile(exportlist_t * pexport,
 
 int nfs3_Access_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   fsal_attrib_list_t attr;
@@ -361,7 +361,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
           goto out;
         }
 
-      fsal_status = obj_hdl->ops->test_access(obj_hdl, creds, access_mode);
+      fsal_status = obj_hdl->ops->test_access(obj_hdl, req_ctx->creds, access_mode);
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -370,10 +370,10 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
               pres->res_access3.ACCESS3res_u.resok.access = 0;
 
               /* we have to check read/write permissions */
-              if(!FSAL_IS_ERROR(obj_hdl->ops->test_access(obj_hdl, creds,
+              if(!FSAL_IS_ERROR(obj_hdl->ops->test_access(obj_hdl, req_ctx->creds,
 							  FSAL_R_OK)))
                 pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_READ;
-              if(!FSAL_IS_ERROR(obj_hdl->ops->test_access(obj_hdl, creds,
+              if(!FSAL_IS_ERROR(obj_hdl->ops->test_access(obj_hdl, req_ctx->creds,
 							  FSAL_W_OK)))
                 pres->res_access3.ACCESS3res_u.resok.access |=
                     ACCESS3_MODIFY | ACCESS3_EXTEND;
@@ -433,7 +433,7 @@ out:
 
 int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   cache_inode_status_t cache_status;
@@ -562,7 +562,7 @@ nfs_xattr.c: In function 'nfs3_Write_Xattr':
 
 int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
-                       struct user_cred *creds,
+                       struct req_op_context *req_ctx,
                        struct svc_req *preq, nfs_res_t * pres)
 {
   typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
@@ -892,7 +892,7 @@ out:
  */
 int nfs3_Create_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *parent_pentry = NULL;
@@ -1018,7 +1018,7 @@ out:
 
 int nfs3_Write_Xattr(nfs_arg_t * parg,
                      exportlist_t * pexport,
-                     struct user_cred *creds,
+                     struct req_op_context *req_ctx,
                      struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *pentry;
@@ -1136,7 +1136,7 @@ out:
  */
 int nfs3_Read_Xattr(nfs_arg_t * parg,
                     exportlist_t * pexport,
-                    struct user_cred *creds,
+                    struct req_op_context *req_ctx,
                     struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *pentry;
@@ -1273,7 +1273,7 @@ out:
 
 int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            exportlist_t * pexport,
-                           struct user_cred *creds,
+                           struct req_op_context *req_ctx,
                            struct svc_req *preq, nfs_res_t * pres)
 {
   typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
@@ -1683,7 +1683,7 @@ out:
  */
 int nfs3_Getattr_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
-                       struct user_cred *creds,
+                       struct req_op_context *req_ctx,
                        struct svc_req *preq, nfs_res_t * pres)
 {
   fsal_attrib_list_t attr;
@@ -1761,7 +1761,7 @@ out:
 
 int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
                       exportlist_t * pexport /* IN  */ ,
-                      struct user_cred *creds /* IN  */ ,
+                      struct req_op_context *req_ctx /* IN  */ ,
                       struct svc_req *preq /* IN  */ ,
                       nfs_res_t * pres /* OUT */ )
 {

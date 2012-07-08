@@ -83,7 +83,7 @@
 
 int nfs_Lookup(nfs_arg_t *parg,
                exportlist_t *pexport,
-               struct user_cred *creds,
+	       struct req_op_context *req_ctx,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t * pres)
@@ -168,7 +168,7 @@ int nfs_Lookup(nfs_arg_t *parg,
 
   if((preq->rq_vers == NFS_V3) &&
      (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir)))) {
-      rc = nfs3_Lookup_Xattr(parg, pexport, creds, preq, pres);
+      rc = nfs3_Lookup_Xattr(parg, pexport, req_ctx, preq, pres);
       goto out;
   }
 
@@ -182,7 +182,7 @@ int nfs_Lookup(nfs_arg_t *parg,
           = cache_inode_lookup(pentry_dir,
                                &name,
                                &attr,
-                               creds,
+                               req_ctx->creds,
                                &cache_status)) != NULL)
         {
           /* Do not forget cross junction management */

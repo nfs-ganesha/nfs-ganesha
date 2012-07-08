@@ -141,8 +141,8 @@ struct nfs3_readdir_cb_data
 int
 nfs_Readdir(nfs_arg_t *arg,
             exportlist_t *export,
-	    struct user_cred *creds,
-            nfs_worker_data_t *worker,
+	    struct req_op_context *req_ctx,
+	    nfs_worker_data_t *worker,
             struct svc_req *req,
             nfs_res_t *res)
 {
@@ -206,7 +206,7 @@ nfs_Readdir(nfs_arg_t *arg,
 
      if ((req->rq_vers == NFS_V3) &&
          (nfs3_Is_Fh_Xattr(&(arg->arg_readdir3.dir)))) {
-          rc = nfs3_Readdir_Xattr(arg, export, creds, req, res);
+          rc = nfs3_Readdir_Xattr(arg, export, req_ctx, req, res);
           goto out;
      }
 
@@ -329,7 +329,7 @@ nfs_Readdir(nfs_arg_t *arg,
           fsal_attrib_list_t parent_dir_attr;
           /* Get parent pentry */
           parent_dir_entry = cache_inode_lookupp(dir_entry,
-                                                 creds,
+                                                 req_ctx->creds,
                                                  &cache_status_gethandle);
           if (parent_dir_entry == NULL) {
                if (req->rq_vers == NFS_V2) {
@@ -373,7 +373,7 @@ nfs_Readdir(nfs_arg_t *arg,
                              cache_inode_cookie,
                              &num_entries,
                              &eod_met,
-                             creds,
+                             req_ctx->creds,
                              cbfunc,
                              cbdata,
                              &cache_status) != CACHE_INODE_SUCCESS) {

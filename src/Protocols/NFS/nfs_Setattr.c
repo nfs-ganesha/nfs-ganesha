@@ -81,7 +81,7 @@
 
 int nfs_Setattr(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+		struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -245,7 +245,7 @@ int nfs_Setattr(nfs_arg_t *parg,
           cache_status = cache_inode_truncate(pentry,
                                               setattr.filesize,
                                               &trunc_attr,
-                                              creds, &cache_status);
+                                              req_ctx->creds, &cache_status);
           setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
           setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
         }
@@ -262,7 +262,7 @@ int nfs_Setattr(nfs_arg_t *parg,
             {
               cache_status = cache_inode_setattr(pentry,
                                                  &setattr,
-                                                 creds, &cache_status);
+                                                 req_ctx->creds, &cache_status);
             }
           else
             {
@@ -274,7 +274,7 @@ int nfs_Setattr(nfs_arg_t *parg,
       else
         cache_status = cache_inode_setattr(pentry,
                                            &setattr,
-                                           creds, &cache_status);
+                                           req_ctx->creds, &cache_status);
     }
 
   if(cache_status == CACHE_INODE_SUCCESS)
