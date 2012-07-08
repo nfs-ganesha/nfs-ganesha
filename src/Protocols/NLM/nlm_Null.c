@@ -55,7 +55,7 @@
 
 int nlm_Null(nfs_arg_t *parg,
              exportlist_t *pexport,
-             struct user_cred *creds /* IN     */ ,
+	     struct req_op_context *req_ctx,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres)

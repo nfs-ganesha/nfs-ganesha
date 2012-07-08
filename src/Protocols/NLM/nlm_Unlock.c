@@ -52,7 +52,7 @@
 
 int nlm4_Unlock(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                struct user_cred *creds,
+		struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -177,7 +177,7 @@ static void nlm4_unlock_message_resp(state_async_queue_t *arg)
  */
 int nlm4_Unlock_Message(nfs_arg_t *parg,
                         exportlist_t *pexport,
-                        struct user_cred *creds,
+			struct req_op_context *req_ctx,
                         nfs_worker_data_t *pworker,
                         struct svc_req *preq,
                         nfs_res_t *pres)
@@ -197,7 +197,7 @@ int nlm4_Unlock_Message(nfs_arg_t *parg,
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-	  rc = nlm4_Unlock(parg, pexport, creds, pworker, preq, pres);
+	  rc = nlm4_Unlock(parg, pexport, req_ctx, pworker, preq, pres);
 
   if(rc == NFS_REQ_OK)
     rc = nlm_send_async_res_nlm4(nlm_client, nlm4_unlock_message_resp, pres);

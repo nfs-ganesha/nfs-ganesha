@@ -53,8 +53,8 @@
 
 int nlm4_Share(nfs_arg_t            * parg,
                exportlist_t         * pexport,
-	       struct user_cred     *creds,
-               nfs_worker_data_t    * pworker,
+	       struct req_op_context *req_ctx,
+	       nfs_worker_data_t    * pworker,
                struct svc_req       * preq,
                nfs_res_t            * pres)
 {
@@ -116,7 +116,7 @@ int nlm4_Share(nfs_arg_t            * parg,
     }
 
   if(state_nlm_share(pentry,
-                     creds,
+                     req_ctx->creds,
                      pexport,
                      arg->share.access,
                      arg->share.mode,

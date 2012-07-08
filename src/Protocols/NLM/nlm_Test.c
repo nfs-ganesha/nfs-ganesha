@@ -54,7 +54,7 @@
 
 int nlm4_Test(nfs_arg_t *parg,
               exportlist_t *pexport,
-              struct user_cred *creds /* IN     */ ,
+	      struct req_op_context *req_ctx,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres)
@@ -124,7 +124,7 @@ int nlm4_Test(nfs_arg_t *parg,
 
   if(state_test(pentry,
                 pexport,
-		creds,
+		req_ctx->creds,
                 nlm_owner,
                 &lock,
                 &holder,
@@ -196,7 +196,7 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
 
 int nlm4_Test_Message(nfs_arg_t *parg,
                       exportlist_t *pexport,
-                      struct user_cred *creds /* IN     */ ,
+		      struct req_op_context *req_ctx,
                       nfs_worker_data_t *pworker,
                       struct svc_req *preq,
                       nfs_res_t *pres)
@@ -216,7 +216,7 @@ int nlm4_Test_Message(nfs_arg_t *parg,
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-    rc = nlm4_Test(parg, pexport, creds, pworker, preq, pres);
+    rc = nlm4_Test(parg, pexport, req_ctx, pworker, preq, pres);
 
   if(rc == NFS_REQ_OK)
     rc = nlm_send_async_res_nlm4test(nlm_client, nlm4_test_message_resp, pres);
