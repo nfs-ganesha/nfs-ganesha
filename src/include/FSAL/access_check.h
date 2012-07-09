@@ -12,7 +12,7 @@
  */
 
 fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
-			       struct user_cred *creds,
+			       struct req_op_context *req_ctx,
 			       fsal_accessflags_t access_type);
 
 

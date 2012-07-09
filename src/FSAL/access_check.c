@@ -482,21 +482,21 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
  */
 
 fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
-			       struct user_cred *creds,
+			       struct req_op_context *req_ctx,
 			       fsal_accessflags_t access_type)
 {
 	fsal_attrib_list_t *attribs = &obj_hdl->attributes;
 	int retval;
 
 	/* The root user always wins */
-	if(creds->caller_uid == 0)
+	if(req_ctx->creds->caller_uid == 0)
 		ReturnCode(ERR_FSAL_NO_ERROR, 0);
 	if(attribs->acl && IS_FSAL_ACE4_MASK_VALID(access_type)) {
-		retval = fsal_check_access_acl(creds,
+		retval = fsal_check_access_acl(req_ctx->creds,
 					       FSAL_ACE4_MASK(access_type),
 					       attribs);
 	} else { /* fall back to use mode to check access. */
-		retval = fsal_check_access_no_acl(creds,
+		retval = fsal_check_access_no_acl(req_ctx->creds,
 						  FSAL_MODE_MASK(access_type),
 						  attribs);
 	}

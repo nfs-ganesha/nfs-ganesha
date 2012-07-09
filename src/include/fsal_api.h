@@ -132,16 +132,16 @@ struct export_ops {
 	fsal_status_t (*check_quota)(struct fsal_export *exp_hdl,
 				   const char * filepath,
 				   int quota_type,
-				   struct user_cred *creds);
+				   struct req_op_context *req_ctx);
 	fsal_status_t (*get_quota)(struct fsal_export *exp_hdl,
 				   const char * filepath,
 				   int quota_type,
-				   struct user_cred *creds,
+				   struct req_op_context *req_ctx,
 				   fsal_quota_t * pquota);
 	fsal_status_t (*set_quota)(struct fsal_export *exp_hdl,
 				   const char * filepath,
 				   int quota_type,
-				   struct user_cred *creds,
+				   struct req_op_context *req_ctx,
 				   fsal_quota_t * pquota,
 				   fsal_quota_t * presquota);
 };
@@ -225,7 +225,7 @@ struct fsal_obj_ops {
 
 	/* file object operations */
 	fsal_status_t (*test_access)(struct fsal_obj_handle *obj_hdl,
-				     struct user_cred *creds,
+				     struct req_op_context *req_ctx,
 				     fsal_accessflags_t access_type);
 	fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl,
 				  fsal_attrib_list_t *obj_attr);
