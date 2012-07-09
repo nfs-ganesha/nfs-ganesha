@@ -110,9 +110,9 @@ void *fsal_up_process_thread(void *UnUsedArg)
       return NULL;
     }
 
-  LogFullDebug(COMPONENT_FSAL_UP,
-          "FSAL_UP Process Thread: my pthread id is %p",
-          (caddr_t) pthread_self());
+  LogFullDebug(COMPONENT_INIT,
+               "FSAL_UP Process Thread: my pthread id is %p",
+               (caddr_t) pthread_self());
 
   while(1)
     {
@@ -127,7 +127,6 @@ void *fsal_up_process_thread(void *UnUsedArg)
                   !glist_empty(&fsal_up_process_queue))
                 {
                   V(fsal_up_process_tcb.tcb_mutex);
-                  LogDebug(COMPONENT_INIT, "FSAL_UP Process Thread: breaking..1");
                   break;
                 }
               switch(thread_sm_locked(&fsal_up_process_tcb))
@@ -145,8 +144,6 @@ void *fsal_up_process_thread(void *UnUsedArg)
                       rc = pthread_cond_timedwait(&fsal_up_process_tcb.tcb_condvar,
                                                   &fsal_up_process_tcb.tcb_mutex,
                                                   &timeout);
-                      LogFullDebug(COMPONENT_INIT,
-                                   "FSAL_UP Process Thread: wokeup:%d", rc);
                     }
                   V(fsal_up_process_tcb.tcb_mutex);
                   continue;
@@ -192,16 +189,16 @@ void create_fsal_up_threads()
 
   /* Initialization of thread attrinbutes borrowed from nfs_init.c */
   if(pthread_attr_init(&attr_thr) != 0)
-    LogDebug(COMPONENT_THREAD, "can't init pthread's attributes");
+    LogCrit(COMPONENT_THREAD, "can't init pthread's attributes");
 
   if(pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
-    LogDebug(COMPONENT_THREAD, "can't set pthread's scope");
+    LogCrit(COMPONENT_THREAD, "can't set pthread's scope");
 
   if(pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) != 0)
-    LogDebug(COMPONENT_THREAD, "can't set pthread's join state");
+    LogCrit(COMPONENT_THREAD, "can't set pthread's join state");
 
   if(pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE) != 0)
-    LogDebug(COMPONENT_THREAD, "can't set pthread's stack size");
+    LogCrit(COMPONENT_THREAD, "can't set pthread's stack size");
 
   /* The admin thread is the only other thread that may be
    * messing around with the export entries. */
@@ -216,7 +213,7 @@ void create_fsal_up_threads()
 
       /* Make sure there are not multiple fsal_up_threads handling multiple
        * exports on the same filesystem. This could potentially cause issues. */
-      LogEvent(COMPONENT_INIT, "Checking if export id %d with filesystem "
+      LogMidDebug(COMPONENT_INIT, "Checking if export id %d with filesystem "
                "id %llu.%llu already has an assigned FSAL_UP thread.",
                pcurrent->fsalid, pcurrent->filesystem_id.major,
                pcurrent->filesystem_id.minor);
@@ -224,7 +221,7 @@ void create_fsal_up_threads()
       id = fsal_up_thread_exists(pcurrent);
       if (id)
         {
-          LogEvent(COMPONENT_INIT, "Filesystem %llu.%llu already has an "
+          LogDebug(COMPONENT_INIT, "Filesystem %llu.%llu already has an "
                    "assigned FSAL_UP with export id %d so export w/ id %d"
                    " is not being assigned a new FSAL_UP thread.",
                    pcurrent->filesystem_id.major,
@@ -233,7 +230,7 @@ void create_fsal_up_threads()
         }
       else
         {
-          LogEvent(COMPONENT_INIT, "Filesystem %llu.%llu export id %d does not"
+          LogDebug(COMPONENT_INIT, "Filesystem %llu.%llu export id %d does not"
                    " have an FSAL_UP thread yet, creating a thread now.",
                    pcurrent->filesystem_id.major, pcurrent->filesystem_id.minor,
                    pcurrent->id);
@@ -241,7 +238,8 @@ void create_fsal_up_threads()
           if((fsal_up_args =
               gsh_calloc(1, sizeof(fsal_up_arg_t))) == NULL)
             {
-              LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+              LogCrit(COMPONENT_INIT,
+                      "Error while allocating FSAL UP args.");
               Fatal();
             }
 
@@ -274,8 +272,8 @@ void nfs_Init_FSAL_UP()
   memset(&nfs_param.fsal_up_param, 0, sizeof(nfs_param.fsal_up_param));
 
   /* DEBUGGING */
-  LogDebug(COMPONENT_INIT,
-           "FSAL_UP: Initializing FSAL UP data pool");
+  LogFullDebug(COMPONENT_INIT,
+               "FSAL_UP: Initializing FSAL UP data pool");
   /* Allocation of the FSAL UP pool */
   nfs_param.fsal_up_param.event_pool
        = pool_init("FSAL UP Data Pool", sizeof(fsal_up_event_t),
@@ -284,8 +282,7 @@ void nfs_Init_FSAL_UP()
   if(!(nfs_param.fsal_up_param.event_pool))
     {
       LogCrit(COMPONENT_INIT,
-              "Error while allocating FSAL UP data pool");
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+              "Error while allocating FSAL UP event pool");
       Fatal();
     }
 
@@ -303,59 +300,59 @@ fsal_status_t process_event(fsal_up_event_t *myevent, fsal_up_event_functions_t 
   switch(myevent->event_type)
     {
     case FSAL_UP_EVENT_CREATE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process CREATE event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process CREATE event");
       myevent->event_process_func = event_func->fsal_up_create;
       break;
     case FSAL_UP_EVENT_UNLINK:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process UNLINK event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process UNLINK event");
       myevent->event_process_func = event_func->fsal_up_unlink;
       break;
     case FSAL_UP_EVENT_RENAME:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process RENAME event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process RENAME event");
       myevent->event_process_func = event_func->fsal_up_rename;
       break;
     case FSAL_UP_EVENT_COMMIT:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process COMMIT event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process COMMIT event");
       myevent->event_process_func = event_func->fsal_up_commit;
       break;
     case FSAL_UP_EVENT_WRITE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process WRITE event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process WRITE event");
       myevent->event_process_func = event_func->fsal_up_write;
       break;
     case FSAL_UP_EVENT_LINK:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LINK event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LINK event");
       myevent->event_process_func = event_func->fsal_up_link;
       break;
     case FSAL_UP_EVENT_LOCK_GRANT:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK GRANT event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK GRANT event");
       myevent->event_process_func = event_func->fsal_up_lock_grant;
       break;
     case FSAL_UP_EVENT_LOCK_AVAIL:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK AVAIL event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK AVAIL event");
       myevent->event_process_func = event_func->fsal_up_lock_avail;
       break;
     case FSAL_UP_EVENT_OPEN:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process OPEN event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process OPEN event");
       myevent->event_process_func = event_func->fsal_up_open;
       break;
     case FSAL_UP_EVENT_CLOSE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process CLOSE event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process CLOSE event");
       myevent->event_process_func = event_func->fsal_up_close;
       break;
     case FSAL_UP_EVENT_SETATTR:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process SETATTR event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process SETATTR event");
       myevent->event_process_func = event_func->fsal_up_setattr;
       break;
     case FSAL_UP_EVENT_UPDATE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process UPDATE event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process UPDATE event");
       myevent->event_process_func = event_func->fsal_up_update;
       break;
     case FSAL_UP_EVENT_INVALIDATE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process INVALIDATE event");
+      LogFullDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process INVALIDATE event");
       myevent->event_process_func = event_func->fsal_up_invalidate;
       break;
     default:
-      LogDebug(COMPONENT_FSAL_UP, "Unknown FSAL UP event type found: %d",
+      LogWarn(COMPONENT_FSAL_UP, "Unknown FSAL UP event type found: %d",
               myevent->event_type);
       gsh_free(myevent->event_data.event_context.fsal_data.fh_desc.start);
 
@@ -467,7 +464,7 @@ void *fsal_up_thread(void *Arg)
   fsal_up_context.event_pool = nfs_param.fsal_up_param.event_pool;
   fsal_up_context.event_pool_lock = &nfs_param.fsal_up_param.event_pool_lock;
 
-  LogDebug(COMPONENT_FSAL_UP, "Initializing FSAL Callback context.");
+  LogFullDebug(COMPONENT_FSAL_UP, "Initializing FSAL Callback context.");
   status = FSAL_UP_Init(&fsal_up_bus_param, &fsal_up_context);
   if (FSAL_IS_ERROR(status))
     {
@@ -476,6 +473,8 @@ void *fsal_up_thread(void *Arg)
               fsal_up_args->export_entry->filesystem_id.major,
               fsal_up_args->export_entry->filesystem_id.minor,
               fsal_up_args->export_entry->id);
+      gsh_free(Arg);
+      return NULL;
     }
 
   /* Add filters ... later if needed we could add arguments to filters
@@ -483,11 +482,11 @@ void *fsal_up_thread(void *Arg)
   for(filter = fsal_up_args->export_entry->fsal_up_filter_list;
       filter != NULL; filter = filter->next)
     {
-      LogEvent(COMPONENT_FSAL_UP, "Applying filter \"%s\" to FSAL UP thread "
-               "for filesystem id %llu.%llu export id %d.", filter->name,
-              fsal_up_args->export_entry->filesystem_id.major,
-              fsal_up_args->export_entry->filesystem_id.minor,
-              fsal_up_args->export_entry->id);
+      LogMidDebug(COMPONENT_FSAL_UP, "Applying filter \"%s\" to FSAL UP thread "
+                  "for filesystem id %llu.%llu export id %d.", filter->name,
+                  fsal_up_args->export_entry->filesystem_id.major,
+                  fsal_up_args->export_entry->filesystem_id.minor,
+                  fsal_up_args->export_entry->id);
 
       /* Find predefined filter */
       pupebfilter = find_filter(filter->name);
@@ -497,10 +496,12 @@ void *fsal_up_thread(void *Arg)
                    filter->name);
         }
 
-      /* Applying filter */
-      FSAL_UP_AddFilter(pupebfilter, &fsal_up_context);
+      else
+        {
+          /* Applying filter */
+          FSAL_UP_AddFilter(pupebfilter, &fsal_up_context);
+        }
     }
-
 
   /* Set the timeout for getting events. */
   timeout = fsal_up_args->export_entry->fsal_up_timeout;
@@ -514,7 +515,8 @@ void *fsal_up_thread(void *Arg)
       event_nb = 0;
       nb_events_found = 0;
       init_glist(&pevent_head);
-      LogDebug(COMPONENT_FSAL_UP, "Requesting event from FSAL Callback interface.");
+      LogFullDebug(COMPONENT_FSAL_UP,
+                   "Requesting event from FSAL Callback interface.");
       status = FSAL_UP_GetEvents(&pevent_head,     /* out */
                                  &event_nb,        /* in/out */
                                  timeout,          /* in */
@@ -541,18 +543,19 @@ void *fsal_up_thread(void *Arg)
             }
           else
             {
-              LogDebug(COMPONENT_FSAL_UP, "Error: FSAL_UP_EB_GetEvents() "
+              LogWarn(COMPONENT_FSAL_UP, "Error: FSAL_UP_EB_GetEvents() "
                        "failed");
               continue;
             }
         }
 
-      LogDebug(COMPONENT_FSAL_UP, "Received %lu events to process for filesystem"
-                     " id %llu.%llu export id %u.",
-               event_nb,
-               fsal_up_args->export_entry->filesystem_id.major,
-               fsal_up_args->export_entry->filesystem_id.minor,
-               fsal_up_args->export_entry->id);
+      LogMidDebug(COMPONENT_FSAL_UP,
+                  "Received %lu events to process for filesystem"
+                  " id %llu.%llu export id %u.",
+                  event_nb,
+                  fsal_up_args->export_entry->filesystem_id.major,
+                  fsal_up_args->export_entry->filesystem_id.minor,
+                  fsal_up_args->export_entry->id);
 
       /* process the list of events */
       while(!glist_empty(&pevent_head))
@@ -562,19 +565,13 @@ void *fsal_up_thread(void *Arg)
           status = process_event(event, event_func);
           if (FSAL_IS_ERROR(status))
             {
-              LogDebug(COMPONENT_FSAL_UP, "Error: Event could not be processed "
+              LogWarn(COMPONENT_FSAL_UP, "Error: Event could not be processed "
                        "for filesystem %llu.%llu export id %u.",
                        fsal_up_args->export_entry->filesystem_id.major,
                        fsal_up_args->export_entry->filesystem_id.minor,
                        fsal_up_args->export_entry->id);
             }
         }
-
-      LogDebug(COMPONENT_FSAL_UP, "%lu events not found for filesystem"
-               " %llu.%llu export id %u", event_nb,
-               fsal_up_args->export_entry->filesystem_id.major,
-               fsal_up_args->export_entry->filesystem_id.minor,
-               fsal_up_args->export_entry->id);
     }
 
   gsh_free(Arg);
