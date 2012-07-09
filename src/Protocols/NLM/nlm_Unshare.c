@@ -118,7 +118,6 @@ int nlm4_Unshare(nfs_arg_t            * parg,
     }
 
   if(state_nlm_unshare(pentry,
-                       req_ctx->creds,
                        arg->share.access,
                        arg->share.mode,
                        nlm_owner,

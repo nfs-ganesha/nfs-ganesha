@@ -124,7 +124,7 @@ int nlm4_Test(nfs_arg_t *parg,
 
   if(state_test(pentry,
                 pexport,
-		req_ctx->creds,
+		req_ctx,
                 nlm_owner,
                 &lock,
                 &holder,

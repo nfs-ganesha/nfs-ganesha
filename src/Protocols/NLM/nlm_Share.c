@@ -116,7 +116,7 @@ int nlm4_Share(nfs_arg_t            * parg,
     }
 
   if(state_nlm_share(pentry,
-                     req_ctx->creds,
+                     req_ctx,
                      pexport,
                      arg->share.access,
                      arg->share.mode,

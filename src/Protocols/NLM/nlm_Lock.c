@@ -135,7 +135,7 @@ int nlm4_Lock(nfs_arg_t            * parg,
    */
   if(state_lock(pentry,
                 pexport,
-		req_ctx->creds,
+		req_ctx,
                 nlm_owner,
                 (void *) (ptrdiff_t) arg->state,
                 arg->block ? STATE_NLM_BLOCKING : STATE_NON_BLOCKING,
