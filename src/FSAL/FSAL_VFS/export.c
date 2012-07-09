@@ -280,7 +280,7 @@ static fsal_size_t layout_blksize(struct fsal_export *exp_hdl)
 static fsal_status_t check_quota(struct fsal_export *exp_hdl,
 				 const char * filepath,
 				 int quota_type,
-				 struct user_cred *creds)
+				 struct req_op_context *req_ctx)
 {
 	ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
 }
@@ -297,7 +297,7 @@ static fsal_status_t check_quota(struct fsal_export *exp_hdl,
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char * filepath,
 			       int quota_type,
-			       struct user_cred *creds,
+			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota)
 {
 	struct vfs_fsal_export *myself;
@@ -325,7 +325,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 		retval = 0;
 		goto out;
 	}
-	id = (quota_type == USRQUOTA) ? creds->caller_uid : creds->caller_gid;
+	id = (quota_type == USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	retval = quotactl(QCMD(Q_GETQUOTA, quota_type),
 			  myself->fs_spec,
@@ -356,7 +356,7 @@ out:
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath,
 			       int quota_type,
-			       struct user_cred *creds,
+			       struct req_op_context *req_ctx,
 			       fsal_quota_t * pquota,
 			       fsal_quota_t * presquota)
 {
@@ -385,7 +385,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		retval = 0;
 		goto err;
 	}
-	id = (quota_type == USRQUOTA) ? creds->caller_uid : creds->caller_gid;
+	id = (quota_type == USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	if(pquota->bhardlimit != 0) {
 		fs_quota.dqb_bhardlimit = pquota->bhardlimit;
@@ -417,8 +417,8 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		goto err;
 	}
 	if(presquota != NULL) {
-		return exp_hdl->ops->get_quota(exp_hdl, filepath, quota_type,
-					       creds, presquota);
+		return get_quota(exp_hdl, filepath, quota_type,
+				 req_ctx, presquota);
 	}
 err:
 	ReturnCode(fsal_error, retval);	
