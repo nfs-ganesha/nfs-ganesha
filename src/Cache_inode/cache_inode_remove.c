@@ -172,7 +172,7 @@ cache_inode_status_t
 cache_inode_remove(cache_entry_t *entry,
                    fsal_name_t *name,
                    fsal_attrib_list_t *attr,
-		   struct user_cred *creds,
+		   struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
      cache_inode_status_t cache_status;
@@ -188,7 +188,7 @@ cache_inode_remove(cache_entry_t *entry,
      if((*status
          = cache_inode_access_sw(entry,
                                  access_mask,
-                                 creds,
+                                 req_ctx,
                                  &cache_status,
                                  FALSE))
         != CACHE_INODE_SUCCESS) {
@@ -201,7 +201,7 @@ cache_inode_remove(cache_entry_t *entry,
 
      cache_inode_remove_impl(entry,
                              name,
-                             creds,
+                             req_ctx,
                              status,
                              /* Keep the attribute lock so we can copy
                                 attributes back to the caller.  I plan
@@ -239,7 +239,7 @@ unlock_attr:
 cache_inode_status_t
 cache_inode_remove_impl(cache_entry_t *entry,
                         fsal_name_t *name,
-			struct user_cred *creds,
+			struct req_op_context *req_ctx,
                         cache_inode_status_t *status,
                         uint32_t flags)
 {
@@ -268,14 +268,14 @@ cache_inode_remove_impl(cache_entry_t *entry,
      if ((to_remove_entry
           = cache_inode_lookup_impl(entry,
                                     name,
-                                    creds,
+                                    req_ctx,
                                     status)) == NULL) {
           goto out;
      }
 
      if( !sticky_dir_allows(entry->obj_handle,
 			    to_remove_entry->obj_handle,
-			    creds)) {
+			    req_ctx->creds)) {
 	 *status = CACHE_INODE_FSAL_EPERM;
 	 goto out;
      }

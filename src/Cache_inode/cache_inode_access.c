@@ -72,7 +72,7 @@
 cache_inode_status_t
 cache_inode_access_sw(cache_entry_t *entry,
                       fsal_accessflags_t access_type,
-                      struct user_cred *creds,
+                      struct req_op_context *req_ctx,
                       cache_inode_status_t *status,
                       int use_mutex)
 {
@@ -133,7 +133,7 @@ cache_inode_access_sw(cache_entry_t *entry,
                /* There is no reason to hold the mutex here, since we
                   aren't doing anything with cached attributes. */
 	       fsal_status = pfsal_handle->ops->test_access(pfsal_handle,
-							    creds,
+							    req_ctx,
 							    used_access_type);
           }
 
@@ -170,11 +170,11 @@ out:
 cache_inode_status_t
 cache_inode_access_no_mutex(cache_entry_t *entry,
                             fsal_accessflags_t access_type,
-			    struct user_cred *creds,
+			    struct req_op_context *req_ctx,
                             cache_inode_status_t * status)
 {
     return cache_inode_access_sw(entry, access_type,
-                                 creds, status, FALSE);
+                                 req_ctx, status, FALSE);
 }
 
 /**
@@ -195,9 +195,9 @@ cache_inode_access_no_mutex(cache_entry_t *entry,
 cache_inode_status_t
 cache_inode_access(cache_entry_t *entry,
                    fsal_accessflags_t access_type,
-		   struct user_cred *creds,
+		   struct req_op_context *req_ctx,
                    cache_inode_status_t * status)
 {
     return cache_inode_access_sw(entry, access_type,
-                                 creds, status, TRUE);
+                                 req_ctx, status, TRUE);
 }

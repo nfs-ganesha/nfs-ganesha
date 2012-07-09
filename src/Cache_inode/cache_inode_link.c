@@ -81,7 +81,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                                       cache_entry_t *dest_dir,
                                       fsal_name_t *name,
                                       fsal_attrib_list_t *attr,
-                                      struct user_cred *creds,
+                                      struct req_op_context *req_ctx,
                                       cache_inode_status_t *status)
 {
      fsal_status_t fsal_status = {0, 0};
@@ -123,7 +123,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 
      if ((*status = cache_inode_access_sw(dest_dir,
                                           access_mask,
-                                          creds,
+                                          req_ctx,
                                           status,
                                           FALSE))
          != CACHE_INODE_SUCCESS) {

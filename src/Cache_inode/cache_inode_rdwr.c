@@ -90,7 +90,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                  size_t *bytes_moved,
                  void *buffer,
                  bool_t *eof,
-                 struct user_cred *creds,
+                 struct req_op_context *req_ctx,
                  cache_inode_stability_t stable,
                  cache_inode_status_t *status)
 {
@@ -196,7 +196,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                     loflags != openflags)) {
                     if (cache_inode_open(entry,
                                          openflags,
-                                         creds,
+                                         req_ctx,
                                          (CACHE_INODE_FLAG_CONTENT_HAVE |
 					  CACHE_INODE_FLAG_CONTENT_HOLD),
                                          status) != CACHE_INODE_SUCCESS) {

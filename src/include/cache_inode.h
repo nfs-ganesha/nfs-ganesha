@@ -586,17 +586,17 @@ void cache_inode_put(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
                                            fsal_accessflags_t access_type,
-					   struct user_cred *creds,
+					   struct req_op_context *req_ctx,
                                            cache_inode_status_t *status,
                                            bool_t use_mutex);
 cache_inode_status_t cache_inode_access_no_mutex(
     cache_entry_t *entry,
     fsal_accessflags_t access_type,
-    struct user_cred *creds,
+    struct req_op_context *req_ctx,
     cache_inode_status_t *status);
 cache_inode_status_t cache_inode_access(cache_entry_t *entry,
                                         fsal_accessflags_t access_type,
-					struct user_cred *creds,
+					struct req_op_context *req_ctx,
                                         cache_inode_status_t *status);
 
 bool_t is_open(cache_entry_t *pentry);
@@ -605,7 +605,7 @@ bool_t is_open_for_write(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_open(cache_entry_t *entry,
                                       fsal_openflags_t openflags,
-                                      struct user_cred *creds,
+                                      struct req_op_context *req_ctx,
                                       uint32_t flags,
                                       cache_inode_status_t *status);
 cache_inode_status_t cache_inode_close(cache_entry_t *entry,
@@ -618,7 +618,7 @@ cache_entry_t *cache_inode_create(cache_entry_t *entry_parent,
                                   fsal_accessmode_t mode,
                                   cache_inode_create_arg_t *create_arg,
                                   fsal_attrib_list_t *attr,
-                                  struct user_cred *creds,
+                                  struct req_op_context *req_ctx,
                                   cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
@@ -627,19 +627,19 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 
 cache_entry_t *cache_inode_lookup_impl(cache_entry_t *entry_parent,
                                        fsal_name_t *name,
-                                       struct user_cred *creds,
+                                       struct req_op_context *req_ctx,
                                        cache_inode_status_t *status);
 cache_entry_t *cache_inode_lookup(cache_entry_t *entry_parent,
                                   fsal_name_t *name,
                                   fsal_attrib_list_t *attr,
-                                  struct user_cred *creds,
+                                  struct req_op_context *req_ctx,
                                   cache_inode_status_t *status);
 
 cache_entry_t *cache_inode_lookupp_impl(cache_entry_t *entry,
-                                        struct user_cred *creds,
+                                        struct req_op_context *req_ctx,
                                         cache_inode_status_t *status);
 cache_entry_t *cache_inode_lookupp(cache_entry_t *entry,
-                                   struct user_cred *creds,
+                                   struct req_op_context *req_ctx,
                                    cache_inode_status_t *status);
 
 
@@ -652,17 +652,17 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry_src,
                                       cache_entry_t *entry_dir_dest,
                                       fsal_name_t *link_name,
                                       fsal_attrib_list_t *attr,
-                                      struct user_cred *creds,
+                                      struct req_op_context *req_ctx,
                                       cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_remove(cache_entry_t *entry,
                                         fsal_name_t *node_name,
                                         fsal_attrib_list_t *attr,
-					struct user_cred *creds,
+					struct req_op_context *req_ctx,
                                         cache_inode_status_t *status);
 cache_inode_status_t cache_inode_remove_impl(cache_entry_t *entry,
                                              fsal_name_t *name,
-                                             struct user_cred *creds,
+                                             struct req_op_context *req_ctx,
                                              cache_inode_status_t *status,
                                              uint32_t flags);
 
@@ -692,25 +692,25 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *entry,
                                         fsal_name_t *newname,
                                         fsal_attrib_list_t *attr_src,
                                         fsal_attrib_list_t *attr_dst,
-                                        struct user_cred *creds,
+                                        struct req_op_context *req_ctx,
                                         cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
                                          fsal_attrib_list_t *attr,
-                                         struct user_cred *creds,
+                                         struct req_op_context *req_ctx,
                                          cache_inode_status_t *status);
 
 cache_inode_status_t
 cache_inode_truncate_impl(cache_entry_t *entry,
                           fsal_size_t length,
                           fsal_attrib_list_t *attr,
-                          struct user_cred *creds,
+                          struct req_op_context *req_ctx,
                           cache_inode_status_t *status);
 cache_inode_status_t cache_inode_truncate(
      cache_entry_t *entry,
      fsal_size_t length,
      fsal_attrib_list_t *attr,
-     struct user_cred *creds,
+     struct req_op_context *req_ctx,
      cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
@@ -734,7 +734,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
                                       size_t *bytes_moved,
                                       void *buffer,
                                       bool_t *eof,
-                                      struct user_cred *creds,
+                                      struct req_op_context *req_ctx,
                                       cache_inode_stability_t stable,
                                       cache_inode_status_t *status);
 
@@ -745,12 +745,12 @@ cache_inode_read(cache_entry_t *entry,
                  size_t *bytes_moved,
                  void *buffer,
                  bool_t *eof,
-                 struct user_cred *creds,
+                 struct req_op_context *req_ctx,
                  cache_inode_stability_t stable,
                  cache_inode_status_t *status)
 {
   return cache_inode_rdwr(entry, CACHE_INODE_READ, offset, io_size,
-                          bytes_moved, buffer, eof, creds,
+                          bytes_moved, buffer, eof, req_ctx,
                           stable, status);
 }
 
@@ -761,12 +761,12 @@ cache_inode_write(cache_entry_t *entry,
                   size_t *bytes_moved,
                   void *buffer,
                   bool_t *eof,
-                  struct user_cred *creds,
+                  struct req_op_context *req_ctx,
                   cache_inode_stability_t stable,
                   cache_inode_status_t *status)
 {
   return cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, io_size,
-                          bytes_moved, buffer, eof, creds,
+                          bytes_moved, buffer, eof, req_ctx,
                           stable, status);
 }
 
@@ -774,14 +774,14 @@ cache_inode_status_t cache_inode_commit(cache_entry_t *entry,
                                         uint64_t offset,
                                         size_t count,
                                         cache_inode_stability_t stability,
-                                        struct user_cred *creds,
+                                        struct req_op_context *req_ctx,
                                         cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_readdir(cache_entry_t *directory,
                                          uint64_t cookie,
                                          unsigned int *nbfound,
                                          bool_t *eod_met,
-					 struct user_cred *creds,
+					 struct req_op_context *req_ctx,
                                          cache_inode_readdir_cb_t cb,
                                          void *cb_opaque,
                                          cache_inode_status_t *status);

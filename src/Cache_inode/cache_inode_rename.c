@@ -188,7 +188,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                         fsal_name_t *newname,
                                         fsal_attrib_list_t *attr_src,
                                         fsal_attrib_list_t *attr_dest,
-                                        struct user_cred *creds,
+                                        struct req_op_context *req_ctx,
                                         cache_inode_status_t *status)
 {
   fsal_status_t fsal_status = {0, 0};
@@ -213,11 +213,11 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
    * sticky bit also applies to both files after looking them up.
    */
   fsal_status = phandle_dirsrc->ops->test_access(phandle_dirsrc,
-						 creds,
+						 req_ctx,
 						 FSAL_W_OK | FSAL_X_OK);
   if( !FSAL_IS_ERROR(fsal_status))
     fsal_status = phandle_dirdest->ops->test_access(phandle_dirdest,
-						    creds,
+						    req_ctx,
 						    FSAL_W_OK | FSAL_X_OK);
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -237,7 +237,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   if((lookup_src
       = cache_inode_lookup_impl(dir_src,
                                 oldname,
-                                creds,
+                                req_ctx,
                                 status)) == NULL) {
     /* If FSAL FH is stale, then this was managed in cache_inode_lookup */
     if(*status != CACHE_INODE_FSAL_ESTALE)
@@ -253,7 +253,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   }
   if( !sticky_dir_allows(phandle_dirsrc,
 			 lookup_src->obj_handle,
-			 creds))
+			 req_ctx->creds))
     {
       src_dest_unlock(dir_src, dir_dest);
       *status = CACHE_INODE_FSAL_EPERM;
@@ -265,12 +265,12 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   if((lookup_dest
       = cache_inode_lookup_impl(dir_dest,
                                 newname,
-                                creds,
+                                req_ctx,
                                 status)) != NULL)
   if( !sticky_dir_allows(phandle_dirdest,
 			 (lookup_dest != NULL) ?
 			 lookup_src->obj_handle : NULL,
-			 creds))
+			 req_ctx->creds))
     {
       src_dest_unlock(dir_src, dir_dest);
       *status = CACHE_INODE_FSAL_EPERM;
@@ -338,7 +338,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 
       cache_inode_remove_impl(dir_dest,
                               newname,
-                              creds,
+                              req_ctx,
                               status,
                               CACHE_INODE_FLAG_CONTENT_HAVE |
                               CACHE_INODE_FLAG_CONTENT_HOLD);

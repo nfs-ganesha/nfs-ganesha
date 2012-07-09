@@ -69,11 +69,15 @@
  * @return CACHE_INODE_SUCCESS if operation is a success
  */
 
+/** @TODO Do we even need these functions given that 
+ *  cache_inode_setattr also does a truncate????
+ */
+
 cache_inode_status_t
 cache_inode_truncate_impl(cache_entry_t *entry,
                           fsal_size_t length,
                           fsal_attrib_list_t *attr,
-			  struct user_cred *creds,
+			  struct req_op_context *req_ctx,
                           cache_inode_status_t *status)
 {
   fsal_status_t fsal_status;
@@ -88,6 +92,14 @@ cache_inode_truncate_impl(cache_entry_t *entry,
       *status = CACHE_INODE_BAD_TYPE;
       return *status;
     }
+
+  /* You have to be able to write the file to truncate it
+   */
+  fsal_status = obj_hdl->ops->test_access(obj_hdl, req_ctx, FSAL_W_OK);
+  if(FSAL_IS_ERROR(fsal_status)) {
+	  *status = cache_inode_error_convert(fsal_status);
+	  return *status;
+  }
 
   /* Call FSAL to actually truncate */
   fsal_status = obj_hdl->ops->truncate(obj_hdl, length);
@@ -130,7 +142,7 @@ cache_inode_status_t
 cache_inode_truncate(cache_entry_t *entry,
                      fsal_size_t length,
                      fsal_attrib_list_t *attr,
-		     struct user_cred *creds,
+		     struct req_op_context *req_ctx,
                      cache_inode_status_t *status)
 {
   cache_inode_status_t ret;
@@ -138,7 +150,7 @@ cache_inode_truncate(cache_entry_t *entry,
   pthread_rwlock_wrlock(&entry->attr_lock);
   pthread_rwlock_wrlock(&entry->content_lock);
   ret = cache_inode_truncate_impl(entry,
-                                  length, attr, creds, status);
+                                  length, attr, req_ctx, status);
   pthread_rwlock_unlock(&entry->attr_lock);
   pthread_rwlock_unlock(&entry->content_lock);
   return ret;

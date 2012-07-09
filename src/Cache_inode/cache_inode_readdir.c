@@ -536,7 +536,7 @@ cache_inode_readdir(cache_entry_t *directory,
                     uint64_t cookie,
                     unsigned int *nbfound,
                     bool_t *eod_met,
-                    struct user_cred *creds,
+                    struct req_op_context *req_ctx,
                     cache_inode_readdir_cb_t cb,
                     void *cb_opaque,
                     cache_inode_status_t *status)
@@ -574,7 +574,7 @@ cache_inode_readdir(cache_entry_t *directory,
       * the directory or not */
      if (cache_inode_access_no_mutex(directory,
                                      access_mask,
-                                     creds,
+                                     req_ctx,
                                      status)
          != CACHE_INODE_SUCCESS) {
           goto unlock_attrs;
@@ -657,7 +657,7 @@ cache_inode_readdir(cache_entry_t *directory,
                if ((entry
                     = cache_inode_lookup_impl(directory,
                                               &dirent->name,
-                                              creds,
+                                              req_ctx,
                                               &lookup_status))
                    == NULL) {
                     if (lookup_status == CACHE_INODE_NOT_FOUND) {

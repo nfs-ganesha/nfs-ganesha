@@ -78,7 +78,7 @@ cache_inode_commit(cache_entry_t *entry,
                    uint64_t offset,
                    size_t count,
                    cache_inode_stability_t stability,
-                   struct user_cred *creds,
+                   struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
      /* Number of bytes actually written */
@@ -112,7 +112,7 @@ cache_inode_commit(cache_entry_t *entry,
                if (!is_open_for_write(entry)) {
                     if (cache_inode_open(entry,
                                          FSAL_O_WRONLY,
-                                         creds,
+                                         req_ctx,
                                          CACHE_INODE_FLAG_CONTENT_HAVE |
                                          CACHE_INODE_FLAG_CONTENT_HOLD,
                                          status) != CACHE_INODE_SUCCESS) {
@@ -179,7 +179,7 @@ cache_inode_commit(cache_entry_t *entry,
                                          &bytes_moved,
                                          udata->buffer,
                                          NULL,
-                                         creds,
+                                         req_ctx,
                                          CACHE_INODE_SAFE_WRITE_TO_FS,
                                          status);
                if (status != CACHE_INODE_SUCCESS) {
@@ -201,7 +201,7 @@ cache_inode_commit(cache_entry_t *entry,
                                 (udata->buffer +
                                  offset - udata->offset),
                                 NULL,
-                                creds,
+                                req_ctx,
                                 CACHE_INODE_SAFE_WRITE_TO_FS,
                                 status);
           }

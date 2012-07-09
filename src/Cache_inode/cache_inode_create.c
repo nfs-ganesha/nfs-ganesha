@@ -78,7 +78,7 @@ cache_inode_create(cache_entry_t *parent,
                    fsal_accessmode_t mode,
                    cache_inode_create_arg_t *create_arg,
                    fsal_attrib_list_t *attr,
-                   struct user_cred *creds,
+                   struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
      cache_entry_t *entry = NULL;
@@ -116,7 +116,7 @@ cache_inode_create(cache_entry_t *parent,
                                      FSAL_ACE_PERM_ADD_SUBDIRECTORY);
     *status = cache_inode_access(parent,
                                 access_mask,
-                                creds, status);
+                                req_ctx, status);
     if (*status != CACHE_INODE_SUCCESS)
         {
           entry = NULL;
@@ -127,7 +127,7 @@ cache_inode_create(cache_entry_t *parent,
      entry = cache_inode_lookup(parent,
                                 name,
                                 &object_attributes,
-                                creds,
+                                req_ctx,
                                 status);
      if (entry != NULL) {
           *status = CACHE_INODE_ENTRY_EXISTS;
@@ -146,8 +146,8 @@ cache_inode_create(cache_entry_t *parent,
     dir_handle = parent->obj_handle;
 /* we pass in attributes to the create.  We will get them back below */
     object_attributes.asked_attributes = cache_inode_params.attrmask;
-    object_attributes.owner = creds->caller_uid;
-    object_attributes.group = creds->caller_gid; /* be more selective? */
+    object_attributes.owner = req_ctx->creds->caller_uid;
+    object_attributes.group = req_ctx->creds->caller_gid; /* be more selective? */
     object_attributes.mode = mode;
 
     switch (type) {

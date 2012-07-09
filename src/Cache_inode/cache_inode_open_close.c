@@ -145,7 +145,7 @@ is_open_for_read(cache_entry_t *entry)
 cache_inode_status_t
 cache_inode_open(cache_entry_t *entry,
                  fsal_openflags_t openflags,
-                 struct user_cred *creds,
+                 struct req_op_context *req_ctx,
                  uint32_t flags,
                  cache_inode_status_t *status)
 {
@@ -155,7 +155,7 @@ cache_inode_open(cache_entry_t *entry,
      fsal_openflags_t current_flags;
      struct fsal_obj_handle *obj_hdl;
 
-     if ((entry == NULL) || (creds == NULL) || (status == NULL)) {
+     if ((entry == NULL) || (req_ctx == NULL) || (status == NULL)) {
           *status = CACHE_INODE_INVALID_ARGUMENT;
           goto out;
      }
@@ -185,7 +185,7 @@ cache_inode_open(cache_entry_t *entry,
       */
      obj_hdl = entry->obj_handle;
      fsal_status = obj_hdl->ops->test_access(obj_hdl,
-					     creds, access_type);
+					     req_ctx, access_type);
      if(FSAL_IS_ERROR(fsal_status)) {
 	 *status = cache_inode_error_convert(fsal_status);
 

@@ -85,7 +85,7 @@
 
 cache_entry_t *
 cache_inode_lookupp_impl(cache_entry_t *entry,
-                         struct user_cred *creds,
+                         struct req_op_context *req_ctx,
                          cache_inode_status_t *status)
 {
      cache_entry_t *parent = NULL;
@@ -115,7 +115,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 
      /* we have to be able to read or scan the dir to do this lookup */
      fsal_status = entry->obj_handle->ops->test_access(entry->obj_handle,
-						       creds,
+						       req_ctx,
 						       FSAL_R_OK|FSAL_X_OK);
      if(FSAL_IS_ERROR(fsal_status)) {
 	 *status = CACHE_INODE_FSAL_EACCESS;
@@ -187,12 +187,12 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 
 cache_entry_t *
 cache_inode_lookupp(cache_entry_t *entry,
-		    struct user_cred *creds,
+		    struct req_op_context *req_ctx,
                     cache_inode_status_t *status)
 {
      cache_entry_t *parent = NULL;
      pthread_rwlock_rdlock(&entry->content_lock);
-     parent = cache_inode_lookupp_impl(entry, creds, status);
+     parent = cache_inode_lookupp_impl(entry, req_ctx, status);
      pthread_rwlock_unlock(&entry->content_lock);
      return parent;
 } /* cache_inode_lookupp */

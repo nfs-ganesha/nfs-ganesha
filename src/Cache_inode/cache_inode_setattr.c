@@ -69,10 +69,11 @@
 cache_inode_status_t
 cache_inode_setattr(cache_entry_t *entry,
                     fsal_attrib_list_t *attr,
-		    struct user_cred *creds,
+		    struct req_op_context *req_ctx,
                     cache_inode_status_t *status)
 {
      struct fsal_obj_handle *obj_handle = entry->obj_handle;
+     struct user_cred *creds = req_ctx->creds;
      fsal_status_t fsal_status = {0, 0};
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
@@ -152,21 +153,21 @@ cache_inode_setattr(cache_entry_t *entry,
 		     }
 	     }
 	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_ATIME)) {
-		fsal_status = obj_handle->ops->test_access(obj_handle, creds, FSAL_R_OK);
+		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_R_OK);
 		if(FSAL_IS_ERROR(fsal_status)) {
 		     *status = cache_inode_error_convert(fsal_status);
 		     goto unlock;
 		}
 	     }
 	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_MTIME)) {
-		fsal_status = obj_handle->ops->test_access(obj_handle, creds, FSAL_W_OK);
+		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_W_OK);
 		if(FSAL_IS_ERROR(fsal_status)) {
 		     *status = cache_inode_error_convert(fsal_status);
 		     goto unlock;
 		}
 	     }
 	     if(FSAL_TEST_MASK(attr->asked_attributes, FSAL_ATTR_SIZE)) {
-		fsal_status = obj_handle->ops->test_access(obj_handle, creds, FSAL_W_OK);
+		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_W_OK);
 		if(FSAL_IS_ERROR(fsal_status)) {
 		     *status = cache_inode_error_convert(fsal_status);
 		     goto unlock;

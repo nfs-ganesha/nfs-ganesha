@@ -82,7 +82,7 @@
 cache_entry_t *
 cache_inode_lookup_impl(cache_entry_t *parent,
                         fsal_name_t *name,
-                        struct user_cred     * creds,
+                        struct req_op_context *req_ctx,
                         cache_inode_status_t *status)
 {
      cache_inode_dir_entry_t dirent_key;
@@ -131,7 +131,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
            * of this, the parent list is always limited to one element for
            * a dir.  Clients SHOULD never 'lookup( .. )' in something that
            * is no dir. */
-          entry = cache_inode_lookupp_impl(parent, creds, status);
+          entry = cache_inode_lookupp_impl(parent, req_ctx, status);
           goto out;
      } else {
           int write_locked = 0;
@@ -251,7 +251,7 @@ cache_entry_t *
 cache_inode_lookup(cache_entry_t *parent,
                    fsal_name_t *name,
                    fsal_attrib_list_t *attr,
-		   struct user_cred     * creds,
+		   struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
      cache_entry_t *entry = NULL;
@@ -261,7 +261,7 @@ cache_inode_lookup(cache_entry_t *parent,
 
      if (cache_inode_access(parent,
                             access_mask,
-                            creds,
+                            req_ctx,
                             status) !=
          CACHE_INODE_SUCCESS) {
           return NULL;
@@ -270,7 +270,7 @@ cache_inode_lookup(cache_entry_t *parent,
      pthread_rwlock_rdlock(&parent->content_lock);
      entry = cache_inode_lookup_impl(parent,
                                      name,
-                                     creds,
+                                     req_ctx,
                                      status);
      pthread_rwlock_unlock(&parent->content_lock);
 
