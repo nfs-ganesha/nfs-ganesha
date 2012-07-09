@@ -187,7 +187,7 @@ static fsal_status_t
 pxy_check_quota(struct fsal_export *exp_hdl,
                 const char * filepath,
 		int quota_type,
-		struct user_cred *creds)
+		struct req_op_context *req_ctx)
 {
 	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
 }
@@ -196,7 +196,7 @@ static fsal_status_t
 pxy_get_quota(struct fsal_export *exp_hdl,
 	  const char * filepath,
 	  int quota_type,
-	  struct user_cred *creds,
+	  struct req_op_context *req_ctx,
 	  fsal_quota_t *pquota)
 {
 	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
@@ -206,7 +206,7 @@ static fsal_status_t
 pxy_set_quota(struct fsal_export *exp_hdl,
 	      const char *filepath,
 	      int quota_type,
-	      struct user_cred *creds,
+	      struct req_op_context *req_ctx,
 	      fsal_quota_t * pquota,
 	      fsal_quota_t * presquota)
 {
