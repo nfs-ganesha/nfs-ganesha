@@ -248,7 +248,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if((tst_entry_src = cache_inode_lookup(src_entry,
                                          &oldname,
                                          &attr_tst_src,
-                                         data->req_ctx->creds,
+                                         data->req_ctx,
 					 &cache_status)) == NULL)
     {
       res_RENAME4.status = nfs4_Errno(cache_status);
@@ -260,7 +260,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   tst_entry_dst = cache_inode_lookup(dst_entry,
                                      &newname,
                                      &attr_tst_dst,
-				     data->req_ctx->creds,
+				     data->req_ctx,
                                      &cache_status);
   if((cache_status != CACHE_INODE_SUCCESS) &&
      (cache_status != CACHE_INODE_NOT_FOUND))
@@ -360,7 +360,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                     &newname,
                                     &attr_src,
                                     &attr_dst,
-                                    data->req_ctx->creds,
+                                    data->req_ctx,
 				    &cache_status) != CACHE_INODE_SUCCESS)
                {
 
@@ -384,7 +384,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                             &newname,
                             &attr_src,
                             &attr_dst,
-                            data->req_ctx->creds,
+                            data->req_ctx,
 			    &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_RENAME4.status = nfs4_Errno(cache_status);

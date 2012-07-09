@@ -178,7 +178,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op,
   if((file_entry = cache_inode_lookup(dir_entry,
                                       &name,
                                       &attrlookup,
-                                      data->req_ctx->creds,
+                                      data->req_ctx,
                                       &cache_status)) != NULL)
     {
       /* Convert it to a file handle */

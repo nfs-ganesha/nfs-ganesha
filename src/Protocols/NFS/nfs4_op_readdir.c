@@ -348,7 +348,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
                              cookie,
                              &num_entries,
                              &eod_met,
-                             data->req_ctx->creds,
+                             data->req_ctx,
                              nfs4_readdir_callback,
                              &cb_data,
                              &cache_status) != CACHE_INODE_SUCCESS) {

@@ -190,7 +190,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
 
         if (state_test(data->current_entry,
                        data->pexport,
-                       data->req_ctx->creds,
+                       data->req_ctx,
                        lock_owner,
                        &lock_desc,
                        &conflict_owner,

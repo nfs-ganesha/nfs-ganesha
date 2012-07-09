@@ -254,7 +254,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     {
       if(cache_inode_access(entry,
                             FSAL_READ_ACCESS,
-                            data->req_ctx->creds,
+                            data->req_ctx,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_READ4.status = nfs4_Errno(cache_status);
@@ -324,7 +324,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       &read_size,
                       bufferdata,
                       &eof_met,
-                      data->req_ctx->creds,
+                      data->req_ctx,
                       CACHE_INODE_SAFE_WRITE_TO_FS,
                       &cache_status) != CACHE_INODE_SUCCESS) {
           res_READ4.status = nfs4_Errno(cache_status);
