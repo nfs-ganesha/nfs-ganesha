@@ -129,7 +129,7 @@ int nfs3_Commit(nfs_arg_t *parg,
                         parg->arg_commit3.offset,
                         parg->arg_commit3.count,
                         typeofcommit,
-                        req_ctx->creds,
+                        req_ctx,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       pres->res_commit3.status = NFS3ERR_IO;;

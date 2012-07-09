@@ -269,7 +269,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           fsal_attrib_list_t parent_dir_attr;
           cache_entry_t *parent_dir_entry
                = cache_inode_lookupp(dir_entry,
-                                     req_ctx->creds,
+                                     req_ctx,
                                      &cache_status_gethandle);
           if (parent_dir_entry == NULL) {
                res->res_readdirplus3.status
@@ -305,7 +305,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                              cache_inode_cookie,
                              &num_entries,
                              &eod_met,
-                             req_ctx->creds,
+                             req_ctx,
                              nfs3_readdirplus_callback,
                              &cb_opaque,
                              &cache_status) != CACHE_INODE_SUCCESS) {

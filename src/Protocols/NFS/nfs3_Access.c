@@ -152,7 +152,7 @@ int nfs3_Access(nfs_arg_t *parg,
   /* Perform the 'access' call */
   if(cache_inode_access(pentry,
                         access_mode,
-                        req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                        req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
     {
       nfs3_access_debug("granted access", parg->arg_access3.access);
 
@@ -185,19 +185,19 @@ int nfs3_Access(nfs_arg_t *parg,
       access_mode = nfs_get_access_mask(ACCESS3_READ, &attr);
       if(cache_inode_access(pentry,
                             access_mode,
-                            req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                            req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
         pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_READ;
 
       access_mode = nfs_get_access_mask(ACCESS3_MODIFY, &attr);
       if(cache_inode_access(pentry,
                             access_mode,
-                            req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                            req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
         pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_MODIFY;
 
       access_mode = nfs_get_access_mask(ACCESS3_EXTEND, &attr);
       if(cache_inode_access(pentry,
                             access_mode,
-                            req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                            req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
         pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXTEND;
 
       if(filetype == REGULAR_FILE)
@@ -205,7 +205,7 @@ int nfs3_Access(nfs_arg_t *parg,
           access_mode = nfs_get_access_mask(ACCESS3_EXECUTE, &attr);
           if(cache_inode_access(pentry,
                                 access_mode,
-                                req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                                req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXECUTE;
         }
       else
@@ -213,7 +213,7 @@ int nfs3_Access(nfs_arg_t *parg,
           access_mode = nfs_get_access_mask(ACCESS3_LOOKUP, &attr);
           if(cache_inode_access(pentry,
                                 access_mode,
-                                req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                                req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_LOOKUP;
         }
 
@@ -222,7 +222,7 @@ int nfs3_Access(nfs_arg_t *parg,
           access_mode = nfs_get_access_mask(ACCESS3_DELETE, &attr);
           if(cache_inode_access(pentry,
                                 access_mode,
-                                req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                                req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_DELETE;
         }
 
