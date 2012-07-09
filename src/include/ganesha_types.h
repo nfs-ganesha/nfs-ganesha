@@ -33,8 +33,6 @@
 #ifndef GANESHA_TYPES__
 #define GANESHA_TYPES__
 
-#include "nfsv41.h"
-
 /**
  * @brief Store high-res time
  *
@@ -59,18 +57,5 @@ struct gsh_buffdesc {
         void *addr;  /*< First octet/byte of the buffer */
         size_t len;  /*< Length of the buffer */
 };
-
-static inline char *
-nfs4_utf8string2dynamic(const utf8string *input)
-{
-        char *name = gsh_malloc(input->utf8string_len + 1);
-        if (name != NULL) {
-                memcpy(name,
-                       input->utf8string_val,
-                       input->utf8string_len);
-                name[input->utf8string_len] = '\0';
-        }
-        return name;
-}
 
 #endif /* !GANESHA_TYPES__ */

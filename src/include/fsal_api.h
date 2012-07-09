@@ -25,6 +25,9 @@
  * ------------- 
  */
 
+#ifndef FSAL_API__
+#define FSAL_API__
+
 /* FSAL API
  * object oriented fsal api.
  */
@@ -217,9 +220,11 @@ struct export_ops {
 				   fsal_quota_t * presquota);
 };
 
-/* filesystem object
- * used for files of all types including directories, anything
- * that has a usable handle.
+/**
+ * @brief Public structuer for filesystem objects
+ *
+ * This structure is used for files of all types including directories
+ * and anything else that can be operated on via NFS.
  */
 
 struct fsal_obj_handle {
@@ -232,21 +237,25 @@ struct fsal_obj_handle {
 	struct fsal_obj_ops *ops;
 };
 
-/* this cookie gets allocated at cache_inode_dir_entry create time
- * to the size specified by size.  It is at the end of the dir entry
- * so the cookie[] allocation can expand as needed.
- * However, given how GetFromPool works, these have to be fixed size
- * as a result, we go for a V4 handle size for things like proxy until
- * we can fix this. It is a crazy waste of space.  Make this go away with
- * a fixing of GetFromPool.  For now, make it big enough to hold a SHA1...
- * Also note that the readdir code doesn't have to check this (both are hard
- * coded) so long as they obey the proper setting of size.
+/**
+ * @brief Directory cookie
+ *
+ * This cookie gets allocated at cache_inode_dir_entry create time to
+ * the size specified by size.  It is at the end of the dir entry so
+ * the cookie[] allocation can expand as needed.  However, given how
+ * GetFromPool works, these have to be fixed size as a result, we go
+ * for a V4 handle size for things like proxy until we can fix
+ * this. It is a crazy waste of space.  Make this go away with a
+ * fixing of GetFromPool.  For now, make it big enough to hold a
+ * SHA1...  Also note that the readdir code doesn't have to check this
+ * (both are hard coded) so long as they obey the proper setting of
+ * size.
  */
 
 #define FSAL_READDIR_COOKIE_MAX 40
 struct fsal_cookie {
-	int size;
-	unsigned char cookie[FSAL_READDIR_COOKIE_MAX];
+        int size;
+        unsigned char cookie[FSAL_READDIR_COOKIE_MAX];
 };
 
 struct fsal_obj_ops {
@@ -392,4 +401,5 @@ struct fsal_obj_ops {
 	void (*handle_to_key)(struct fsal_obj_handle *obj_hdl,
                               struct gsh_buffdesc *fh_desc);
 };
-	
+
+#endif /* !FSAL_API__ */
