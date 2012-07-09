@@ -242,7 +242,7 @@ int nfs_Link(nfs_arg_t *parg,
                                   parent_pentry,
                                   &link_name,
                                   &attr,
-                                  req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                                  req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   if(cache_inode_getattr(parent_pentry,
                                          &attr_parent_after,

@@ -169,7 +169,7 @@ int nfs_Write(nfs_arg_t *parg,
 
   if(cache_inode_access(pentry,
                         FSAL_WRITE_ACCESS,
-                        req_ctx->creds,
+                        req_ctx,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       /* NFSv3 exception : if user wants to write to a file that is readonly 
@@ -294,7 +294,7 @@ int nfs_Write(nfs_arg_t *parg,
     fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
 							pexport->fullpath, 
 							FSAL_QUOTA_BLOCKS,
-							req_ctx->creds) ;
+							req_ctx) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
 
@@ -443,7 +443,7 @@ int nfs_Write(nfs_arg_t *parg,
                            &written_size,
                            data,
                            &eof_met,
-                           req_ctx->creds,
+                           req_ctx,
                            stability,
                            &cache_status) == CACHE_INODE_SUCCESS) &&
          (cache_inode_getattr(pentry, &attr,

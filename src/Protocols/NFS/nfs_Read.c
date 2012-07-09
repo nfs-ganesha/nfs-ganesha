@@ -202,7 +202,7 @@ int nfs_Read(nfs_arg_t *parg,
 
   if(cache_inode_access(pentry,
                         FSAL_READ_ACCESS,
-                        req_ctx->creds,
+                        req_ctx,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       switch (preq->rq_vers)
@@ -368,7 +368,7 @@ int nfs_Read(nfs_arg_t *parg,
                            &read_size,
                            data,
                            &eof_met,
-                           req_ctx->creds,
+                           req_ctx,
                            CACHE_INODE_SAFE_WRITE_TO_FS,
                            &cache_status) == CACHE_INODE_SUCCESS) &&
          (cache_inode_getattr(pentry, &attr,

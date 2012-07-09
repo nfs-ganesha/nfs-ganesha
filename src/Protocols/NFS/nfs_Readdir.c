@@ -329,7 +329,7 @@ nfs_Readdir(nfs_arg_t *arg,
           fsal_attrib_list_t parent_dir_attr;
           /* Get parent pentry */
           parent_dir_entry = cache_inode_lookupp(dir_entry,
-                                                 req_ctx->creds,
+                                                 req_ctx,
                                                  &cache_status_gethandle);
           if (parent_dir_entry == NULL) {
                if (req->rq_vers == NFS_V2) {
@@ -373,7 +373,7 @@ nfs_Readdir(nfs_arg_t *arg,
                              cache_inode_cookie,
                              &num_entries,
                              &eod_met,
-                             req_ctx->creds,
+                             req_ctx,
                              cbfunc,
                              cbdata,
                              &cache_status) != CACHE_INODE_SUCCESS) {

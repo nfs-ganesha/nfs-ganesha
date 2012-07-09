@@ -245,7 +245,7 @@ int nfs_Setattr(nfs_arg_t *parg,
           cache_status = cache_inode_truncate(pentry,
                                               setattr.filesize,
                                               &trunc_attr,
-                                              req_ctx->creds, &cache_status);
+                                              req_ctx, &cache_status);
           setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
           setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
         }
@@ -262,7 +262,7 @@ int nfs_Setattr(nfs_arg_t *parg,
             {
               cache_status = cache_inode_setattr(pentry,
                                                  &setattr,
-                                                 req_ctx->creds, &cache_status);
+                                                 req_ctx, &cache_status);
             }
           else
             {
@@ -274,7 +274,7 @@ int nfs_Setattr(nfs_arg_t *parg,
       else
         cache_status = cache_inode_setattr(pentry,
                                            &setattr,
-                                           req_ctx->creds, &cache_status);
+                                           req_ctx, &cache_status);
     }
 
   if(cache_status == CACHE_INODE_SUCCESS)

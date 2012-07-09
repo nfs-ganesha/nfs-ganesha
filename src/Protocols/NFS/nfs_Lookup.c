@@ -182,7 +182,7 @@ int nfs_Lookup(nfs_arg_t *parg,
           = cache_inode_lookup(pentry_dir,
                                &name,
                                &attr,
-                               req_ctx->creds,
+                               req_ctx,
                                &cache_status)) != NULL)
         {
           /* Do not forget cross junction management */

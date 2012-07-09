@@ -189,7 +189,7 @@ int nfs_Symlink(nfs_arg_t *parg,
   fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
 						      pexport->fullpath, 
 						      FSAL_QUOTA_INODES,
-						      req_ctx->creds) ;
+						      req_ctx) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
 
@@ -242,7 +242,7 @@ int nfs_Symlink(nfs_arg_t *parg,
                                               mode,
                                               &create_arg,
                                               &attr_symlink,
-                                              req_ctx->creds, &cache_status)) != NULL)
+                                              req_ctx, &cache_status)) != NULL)
         {
           switch (preq->rq_vers)
             {
@@ -283,7 +283,7 @@ int nfs_Symlink(nfs_arg_t *parg,
                   /* A call to cache_inode_setattr is required */
                   if(cache_inode_setattr(symlink_pentry,
                                          &attributes_symlink,
-                                         req_ctx->creds, &cache_status) != CACHE_INODE_SUCCESS)
+                                         req_ctx, &cache_status) != CACHE_INODE_SUCCESS)
                     {
                       /* If we are here, there was an error */
                       nfs_SetFailedStatus(pexport,

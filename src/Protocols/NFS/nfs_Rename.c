@@ -235,7 +235,7 @@ int nfs_Rename(nfs_arg_t *parg,
       should_not_exists = cache_inode_lookup(new_parent_pentry,
                                              &new_entry_name,
                                              &tst_attr,
-                                             req_ctx->creds,
+                                             req_ctx,
                                              &cache_status);
 
       if(cache_status == CACHE_INODE_NOT_FOUND)
@@ -244,7 +244,7 @@ int nfs_Rename(nfs_arg_t *parg,
           should_exists = cache_inode_lookup(parent_pentry,
                                              &entry_name,
                                              &tst_attr,
-                                             req_ctx->creds,
+                                             req_ctx,
                                              &cache_status);
 
           /* Rename entry */
@@ -254,7 +254,7 @@ int nfs_Rename(nfs_arg_t *parg,
                                new_parent_pentry,
                                &new_entry_name,
                                &attr, &new_attr,
-                               req_ctx->creds, &cache_status);
+                               req_ctx, &cache_status);
 
           if(cache_status == CACHE_INODE_SUCCESS)
             {
@@ -339,7 +339,7 @@ int nfs_Rename(nfs_arg_t *parg,
               if((should_exists = cache_inode_lookup(parent_pentry,
                                                      &entry_name,
                                                      &tst_attr,
-                                                     req_ctx->creds,
+                                                     req_ctx,
                                                      &cache_status))
                  != NULL)
                 {
@@ -387,7 +387,7 @@ int nfs_Rename(nfs_arg_t *parg,
                       if(cache_inode_remove(new_parent_pentry,
                                             &new_entry_name,
                                             &tst_attr,
-                                            req_ctx->creds,
+                                            req_ctx,
                                             &cache_status) == CACHE_INODE_SUCCESS)
                         {
                           if(cache_inode_rename(parent_pentry,
@@ -396,7 +396,7 @@ int nfs_Rename(nfs_arg_t *parg,
                                                 &new_entry_name,
                                                 &attr,
                                                 &new_attr,
-                                                req_ctx->creds,
+                                                req_ctx,
                                                 &cache_status) == CACHE_INODE_SUCCESS)
                             {
                               switch (preq->rq_vers)

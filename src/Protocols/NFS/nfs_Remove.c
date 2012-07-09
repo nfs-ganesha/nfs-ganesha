@@ -204,7 +204,7 @@ int nfs_Remove(nfs_arg_t *parg,
           if((pentry_child = cache_inode_lookup(parent_pentry,
                                                 &name,
                                                 &pentry_child_attr,
-                                                req_ctx->creds,
+                                                req_ctx,
                                                 &cache_status)) != NULL)
             {
               /*
@@ -236,7 +236,7 @@ int nfs_Remove(nfs_arg_t *parg,
               if(cache_inode_remove(parent_pentry,
                                     &name,
                                     &parent_attr,
-                                    req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                                    req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   switch (preq->rq_vers)
                     {

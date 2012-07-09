@@ -183,7 +183,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
   fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
 						      pexport->fullpath, 
 						      FSAL_QUOTA_INODES,
-						      req_ctx->creds) ;
+						      req_ctx) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
 
@@ -252,7 +252,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
           dir_pentry = cache_inode_lookup(parent_pentry,
                                           &dir_name,
                                           &attr,
-                                          req_ctx->creds,
+                                          req_ctx,
                                           &cache_status_lookup);
 
           if(cache_status_lookup == CACHE_INODE_NOT_FOUND)
@@ -268,7 +268,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
                                                   mode,
                                                   &create_arg,
                                                   &attr,
-                                                  req_ctx->creds, &cache_status)) != NULL)
+                                                  req_ctx, &cache_status)) != NULL)
                 {
                   /*
                    * Get the FSAL handle for this entry

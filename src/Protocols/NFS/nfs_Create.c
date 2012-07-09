@@ -226,7 +226,7 @@ int nfs_Create(nfs_arg_t *parg,
   fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
 						      pexport->fullpath, 
 						      FSAL_QUOTA_INODES,
-						      req_ctx->creds) ;
+						      req_ctx) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
 
@@ -268,7 +268,7 @@ int nfs_Create(nfs_arg_t *parg,
           file_pentry = cache_inode_lookup(parent_pentry,
                                            &file_name,
                                            &attr,
-                                           req_ctx->creds,
+                                           req_ctx,
                                            &cache_status_lookup);
 
           if((cache_status_lookup == CACHE_INODE_NOT_FOUND) ||
@@ -289,7 +289,7 @@ int nfs_Create(nfs_arg_t *parg,
                                                  mode,
                                                  NULL,
                                                  &attr_newfile,
-                                                 req_ctx->creds, &cache_status);
+                                                 req_ctx, &cache_status);
 
               if(file_pentry != NULL)
                 {
@@ -345,7 +345,7 @@ int nfs_Create(nfs_arg_t *parg,
                       /* A call to cache_inode_setattr is required */
                       if(cache_inode_setattr(file_pentry,
                                              &attributes_create,
-                                             req_ctx->creds,
+                                             req_ctx,
                                              &cache_status) != CACHE_INODE_SUCCESS)
                         {
                           /* If we are here, there was an error */
