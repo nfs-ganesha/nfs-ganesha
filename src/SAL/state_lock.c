@@ -1940,7 +1940,7 @@ void copy_conflict(state_lock_entry_t  * found_entry,
  */
 state_status_t state_test(cache_entry_t        * pentry,
                           exportlist_t         * pexport,
-                          struct user_cred     * creds,
+                          struct req_op_context *req_ctx,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
@@ -1964,7 +1964,7 @@ state_status_t state_test(cache_entry_t        * pentry,
       return *pstatus;
     }
 
-  if(cache_inode_open(pentry, FSAL_O_RDWR, creds, 0, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_open(pentry, FSAL_O_RDWR, req_ctx, 0, &cache_status) != CACHE_INODE_SUCCESS)
     {
       *pstatus = cache_inode_status_to_state_status(cache_status);
       LogFullDebug(COMPONENT_STATE,
@@ -2033,7 +2033,7 @@ state_status_t state_test(cache_entry_t        * pentry,
  */
 state_status_t state_lock(cache_entry_t         * pentry,
                           exportlist_t          * pexport,
-                          struct user_cred      * creds,
+                          struct req_op_context *req_ctx,
                           state_owner_t         * powner,
                           state_t               * pstate,
                           state_blocking_t        blocking,
@@ -2062,7 +2062,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
       return *pstatus;
     }
 
-  if(cache_inode_open(pentry, FSAL_O_RDWR, creds, 0, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_open(pentry, FSAL_O_RDWR, req_ctx, 0, &cache_status) != CACHE_INODE_SUCCESS)
     {
       cache_inode_dec_pin_ref(pentry);
       *pstatus = cache_inode_status_to_state_status(cache_status);
@@ -2801,7 +2801,6 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
 
       /* Remove all shares held by this NSM Client and Owner on the file */
       if(state_nlm_unshare(pentry,
-			   creds,
                            OPEN4_SHARE_ACCESS_NONE,
                            OPEN4_SHARE_DENY_NONE,
                            powner,

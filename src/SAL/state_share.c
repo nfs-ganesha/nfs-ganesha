@@ -629,7 +629,7 @@ void state_share_anonymous_io_done(cache_entry_t  * pentry,
 
 #ifdef _USE_NLM
 state_status_t state_nlm_share(cache_entry_t        * pentry,
-                               struct user_cred     * creds,
+                               struct req_op_context *req_ctx,
                                exportlist_t         * pexport,
                                int                    share_access,
                                int                    share_deny,
@@ -656,7 +656,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
   if(cache_inode_open(pentry,
                       FSAL_O_RDWR,
-                      creds,
+                      req_ctx,
                       0,
                       &cache_status) != CACHE_INODE_SUCCESS)
     {
@@ -821,7 +821,6 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 }
 
 state_status_t state_nlm_unshare(cache_entry_t        * pentry,
-                                 struct user_cred     * creds,
                                  int                    share_access,
                                  int                    share_deny,
                                  state_owner_t        * powner,

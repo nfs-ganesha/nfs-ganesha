@@ -489,7 +489,7 @@ state_status_t state_release_grant(state_cookie_entry_t * cookie_entry,
 
 state_status_t state_test(cache_entry_t        * pentry,
                           exportlist_t         * pexport,
-                          struct user_cred     * creds,
+                          struct req_op_context *req_ctx,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
@@ -498,7 +498,7 @@ state_status_t state_test(cache_entry_t        * pentry,
 
 state_status_t state_lock(cache_entry_t         * pentry,
                           exportlist_t          * pexport,
-                          struct user_cred      * creds,
+                          struct req_op_context *req_ctx,
                           state_owner_t         * powner,
                           state_t               * pstate,
                           state_blocking_t        blocking,
@@ -644,7 +644,7 @@ void state_share_anonymous_io_done(cache_entry_t  * pentry,
                                    int              share_access);
 
 state_status_t state_nlm_share(cache_entry_t        * pentry,
-			       struct user_cred     *creds,
+			       struct req_op_context *req_ctx,
                                exportlist_t         * pexport,
                                int                    share_access,
                                int                    share_deny,
@@ -652,8 +652,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                                state_status_t       * pstatus);
 
 state_status_t state_nlm_unshare(cache_entry_t        * pentry,
-				 struct user_cred     *creds,
-                                 int                    share_access,
+				 int                    share_access,
                                  int                    share_deny,
                                  state_owner_t        * powner,
                                  state_status_t       * pstatus);
