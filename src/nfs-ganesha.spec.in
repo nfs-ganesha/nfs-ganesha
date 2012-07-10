@@ -130,6 +130,18 @@ It comes with various back-end modules to support different file systems and
 name-spaces. This package provides support for NFS-GANESHA used on top of GPFS.
 %endif
 
+%if %{?_with_pt:1}%{!?_with_pt:0}
+%package pt
+Summary: The NFS-GANESHA server compiled for use with ProtecTIER
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description pt
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for NFS-GANESHA used on top of GPFS/PT.
+%endif
+
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
 %package vfs
 Summary: The NFS-GANESHA server compiled for use with GPFS
@@ -479,6 +491,15 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha*
 %endif
 
+%if %{?_with_pt:1}%{!?_with_pt:0}
+%files pt
+%defattr(-,root,root,-)
+%{_bindir}/pt.ganesha.*
+%{_sysconfdir}/init.d/nfs-ganesha-pt
+%{_sysconfdir}/sysconfig/ganesha
+%config(noreplace) %{_sysconfdir}/ganesha/pt.ganesha*
+%endif
+
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
 %files vfs
 %defattr(-,root,root,-)
@@ -620,6 +641,14 @@ chkconfig --del nfs-ganesha-gpfs
 
 %post gpfs
 chkconfig --add nfs-ganesha-gpfs
+%endif
+
+%if %{?_with_pt:1}%{!?_with_pt:0}
+%preun pt
+chkconfig --del nfs-ganesha-pt
+
+%post pt
+chkconfig --add nfs-ganesha-pt
 %endif
 
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
