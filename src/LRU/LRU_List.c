@@ -100,6 +100,15 @@
 #include "LRU_List.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
+#include <string.h>
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef TRUE
+#define TRUE 1
+#endif
 
 /* ------ This group contains all the functions used to manipulate the LRU from outside this module ----- */
 

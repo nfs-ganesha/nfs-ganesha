@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.2.6.2.sx9], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.2.6.3.sx9], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [2])
 
@@ -438,6 +438,7 @@ fi
 
 # BuddyMalloc
 GA_DISABLE_AM_CONDITION([BuddyMalloc], [disable GANESHA's memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
+GA_ENABLE_AM_CONDITION([jemalloc], [enable jemalloc], [_USE_JEMALLOC])
 
 echo "enable_BuddyMalloc=$enable_BuddyMalloc"
 
@@ -447,6 +448,14 @@ else
 	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable GANESHA's memory allocator, for debug purpose only])
 fi
 AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
+
+
+if test "$enable_jemalloc" == "yes"; then
+        AC_DEFINE(_USE_JEMALLOC, 1, [enable Jemalloc memory allocator])
+#        AM_CONDITIONAL(USE_JEMALOC, test "$enable_jemalloc" == "yes")
+fi
+
+
 
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
