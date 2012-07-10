@@ -39,14 +39,13 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
-
-// FSI new define
-#define FSI_HANDLE_SIZE            32
 #define fsi_dirent                 dirent
 #define FSI_MAX_HANDLE_CACHE_ENTRY 2500
+#define IO_BUFFER_SIZE             262144 //256k
 
-extern int       debug_flag;
-extern struct    fsi_handle_cache_t  g_fsi_name_handle_cache;
+extern int             debug_flag;
+extern struct          fsi_handle_cache_t  g_fsi_name_handle_cache;
+extern pthread_mutex_t g_fsi_name_handle_mutex;
 
 void fsi_get_whole_path(const char * parentPath,
                         const char * name,
@@ -65,18 +64,14 @@ void fsi_remove_cache_by_fullpath(char * path);
 
 void fsi_remove_cache_by_handle(char * handle);
 
-void ccl_log(int    debugLevel,
-             char * debugString);
-
-struct fsi_handle_cache_entry_t {
-  char m_handle[FSI_HANDLE_SIZE];
+struct fsi_handle_cache_entry_t { 
+  char m_handle[FSI_PERSISTENT_HANDLE_N_BYTES];
   char m_name[PATH_MAX];
 };
 
 struct fsi_handle_cache_t {
   /* we need to set a constant to manage this and add LRU cleanup */
   struct fsi_handle_cache_entry_t m_entry[FSI_MAX_HANDLE_CACHE_ENTRY];
-  // mutexes go here
   int m_count;
 };
 
@@ -130,14 +125,14 @@ int ptfsal_ftruncate(fsal_op_context_t * p_context,
                      uint64_t            offset);
 
 int ptfsal_unlink(fsal_op_context_t * p_context,
-                  fsal_handle_t * p_parent_directory_handle,
-                  char * p_filename);
+                  fsal_handle_t     * p_parent_directory_handle,
+                  char              * p_filename);
 
 int ptfsal_rename(fsal_op_context_t * p_context,
-                  fsal_handle_t * p_old_parentdir_handle,
-                  char * p_old_name,
-                  fsal_handle_t * p_new_parentdir_handle,
-                  char * p_new_name);
+                  fsal_handle_t     * p_old_parentdir_handle,
+                  char              * p_old_name,
+                  fsal_handle_t     * p_new_parentdir_handle,
+                  char              * p_new_name);
 
 int fsi_check_handle_index(int handle_index);
 
@@ -162,8 +157,8 @@ int ptfsal_mkdir(fsal_handle_t     * p_parent_directory_handle,
                  fsal_handle_t     * p_object_handle);
 
 int ptfsal_rmdir(fsal_op_context_t * p_context,
-                 fsal_handle_t * p_parent_directory_handle,
-                 char  * p_object_name);
+                 fsal_handle_t     * p_parent_directory_handle,
+                 char              * p_object_name);
 
 int ptfsal_dynamic_fsinfo(fsal_handle_t        * p_filehandle,
                           fsal_op_context_t    * p_context,
@@ -180,7 +175,7 @@ int ptfsal_symlink(fsal_handle_t     * p_parent_directory_handle,
                    fsal_accessmode_t   accessmode,
                    fsal_handle_t     * p_link_handle);
 
-int ptfsal_SetDefault_FS_specific_parameter(/* param TBD fsal_parameter_t * out_parameter */);
+int ptfsal_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter);
 
 int ptfsal_name_to_handle(fsal_op_context_t * p_context,
                           fsal_path_t       * p_fsalpath,
@@ -206,5 +201,6 @@ void ptfsal_print_handle(char * handle);
 
 mode_t fsal_type2unix(int fsal_type);
 
-void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context, ccl_context_t * context);
+void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context, 
+                                ccl_context_t     * context);
 #endif // ifndef __PT_GANESHA_H__

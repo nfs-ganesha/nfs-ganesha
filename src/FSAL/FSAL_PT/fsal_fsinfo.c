@@ -51,8 +51,8 @@
  */
 fsal_status_t
 PTFSAL_dynamic_fsinfo(fsal_handle_t        * p_filehandle, /* IN */
-			fsal_op_context_t    * p_context,    /* IN */
-			fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */)
+                      fsal_op_context_t    * p_context,    /* IN */
+                      fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */)
 {
   int rc, errsv;
   char fsi_name[PATH_MAX];
@@ -61,8 +61,7 @@ PTFSAL_dynamic_fsinfo(fsal_handle_t        * p_filehandle, /* IN */
   if(!p_filehandle || !p_dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
-  memset(fsi_name, 0, PATH_MAX);
-  TakeTokenFSCall();
+  memset(fsi_name, 0, sizeof(fsi_name));
   rc = ptfsal_handle_to_name(p_filehandle, p_context, fsi_name);
   errsv = errno;
   if(rc)
@@ -74,7 +73,6 @@ PTFSAL_dynamic_fsinfo(fsal_handle_t        * p_filehandle, /* IN */
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_dynamic_fsinfo);
   
-  ReleaseTokenFSCall();
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_dynamic_fsinfo);
 

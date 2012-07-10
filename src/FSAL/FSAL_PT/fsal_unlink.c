@@ -77,10 +77,11 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t PTFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                            fsal_name_t * p_object_name,                  /* IN */
-                            fsal_op_context_t * p_context,                /* IN */
-                            fsal_attrib_list_t * p_parent_directory_attributes    /* [IN/OUT ] */)
+fsal_status_t 
+PTFSAL_unlink(fsal_handle_t      * p_parent_directory_handle,    /* IN */
+              fsal_name_t        * p_object_name,                /* IN */
+              fsal_op_context_t  * p_context,                    /* IN */
+              fsal_attrib_list_t * p_parent_directory_attributes /*[IN/OU ]*/)
 {
 
   fsal_status_t status;
@@ -93,45 +94,40 @@ fsal_status_t PTFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN 
   if(!p_parent_directory_handle || !p_context || !p_object_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
-  /* build the FID path */
-  // TakeTokenFSCall();
-  // status =
-  //    fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd,
-  //                            O_RDONLY | O_DIRECTORY);
-  // ReleaseTokenFSCall();
-  // if(FSAL_IS_ERROR(status))
-  //  ReturnStatus(status, INDEX_FSAL_unlink);
-
   FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL_unlink [%s] entry\n",p_object_name->name);
 
   /* get directory metadata */
   parent_dir_attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
-  status = PTFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
+  status = PTFSAL_getattrs(p_parent_directory_handle, p_context, 
+                           &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
 
   /* build the child path */
 
-  FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL_unlink [%s] build child path\n",p_object_name->name);
+  FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL_unlink [%s] build child path\n",
+            p_object_name->name);
 
   /* get file metadata */
-  TakeTokenFSCall();
-  rc = ptfsal_stat_by_parent_name(p_context, p_parent_directory_handle, p_object_name->name, &buffstat);
-  ReleaseTokenFSCall();
+  rc = ptfsal_stat_by_parent_name(p_context, p_parent_directory_handle, 
+                                  p_object_name->name, &buffstat);
   if (rc) {
-      FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL_unlink stat [%s] rc %d\n",p_object_name->name, rc);
+      FSI_TRACE(FSI_DEBUG, "FSI - PTFSAL_unlink stat [%s] rc %d\n",
+                p_object_name->name, rc);
       Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlink);
   }
 
   /* check access rights */
 
-  /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
+  /* Sticky bit on the directory => the user who wants to delete the file 
+   * must own it or its parent dir 
+   */
   if((fsal2unix_mode(parent_dir_attrs.mode) & S_ISVTX)
      && parent_dir_attrs.owner != p_context->credential.user
-     && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
-    {
-      Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
-    }
+     && buffstat.st_uid != p_context->credential.user 
+     && p_context->credential.user != 0) {
+    Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);
+  }
 
   /* client must be able to lookup the parent directory and modify it */
 
@@ -140,9 +136,11 @@ fsal_status_t PTFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN 
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
 
   if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-    status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
+    status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+                                      &parent_dir_attrs);
   else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
+    status = fsal_internal_access(p_context, p_parent_directory_handle, 
+                                  access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
@@ -151,42 +149,38 @@ fsal_status_t PTFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN 
    * DELETE FROM THE FILESYSTEM *
    ******************************/
 
-  TakeTokenFSCall();
-  /* If the object to delete is a directory, use 'rmdir' to delete the object, else use 'unlink' */
-  if (S_ISDIR(buffstat.st_mode))
-    {
-      FSI_TRACE(FSI_DEBUG, "Deleting directory %s",p_object_name->name);
-      rc = ptfsal_rmdir(p_context, p_parent_directory_handle, p_object_name->name);
+  /* If the object to delete is a directory, use 'rmdir' to delete the object, 
+   * else use 'unlink' 
+   */
+  if (S_ISDIR(buffstat.st_mode)) {
+    FSI_TRACE(FSI_DEBUG, "Deleting directory %s",p_object_name->name);
+    rc = ptfsal_rmdir(p_context, p_parent_directory_handle, 
+                      p_object_name->name);
 
-    }
-  else
-    {
-      FSI_TRACE(FSI_DEBUG, "Deleting file %s", p_object_name->name);
-      rc = ptfsal_unlink(p_context, p_parent_directory_handle, p_object_name->name);
-    }
-  if(rc)
-    {
-      errsv = errno;
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
-    }
-  ReleaseTokenFSCall();
+  } else {
+    FSI_TRACE(FSI_DEBUG, "Deleting file %s", p_object_name->name);
+    rc = ptfsal_unlink(p_context, p_parent_directory_handle, 
+                       p_object_name->name);
+  }
+  if(rc) {
+    errsv = errno;
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
+  }
 
   /***********************
    * FILL THE ATTRIBUTES *
    ***********************/
 
-  if(p_parent_directory_attributes)
-    {
-      status =
-          PTFSAL_getattrs(p_parent_directory_handle, p_context,
-                        p_parent_directory_attributes);
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_parent_directory_attributes->asked_attributes);
-          FSAL_SET_MASK(p_parent_directory_attributes->asked_attributes,
-                        FSAL_ATTR_RDATTR_ERR);
-        }
+  if(p_parent_directory_attributes) {
+    status =
+      PTFSAL_getattrs(p_parent_directory_handle, p_context,
+                      p_parent_directory_attributes);
+    if(FSAL_IS_ERROR(status)) {
+      FSAL_CLEAR_MASK(p_parent_directory_attributes->asked_attributes);
+      FSAL_SET_MASK(p_parent_directory_attributes->asked_attributes,
+                    FSAL_ATTR_RDATTR_ERR);
     }
+  }
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlink);
 

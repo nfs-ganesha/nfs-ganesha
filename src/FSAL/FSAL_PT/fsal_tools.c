@@ -97,7 +97,8 @@ int PTFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
     return -2;
 
   if(memcmp
-     (handle1->data.handle.f_handle, handle2->data.handle.f_handle, handle1->data.handle.handle_key_size))
+     (handle1->data.handle.f_handle, handle2->data.handle.f_handle, 
+      handle1->data.handle.handle_key_size))
     return -3;
 
   return 0;
@@ -116,9 +117,11 @@ int PTFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
  *
  * \return The hash value
  */
-unsigned int PTFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
-                                      unsigned int cookie,
-                                      unsigned int alphabet_len, unsigned int index_size)
+unsigned int 
+PTFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
+                           unsigned int cookie,
+                           unsigned int alphabet_len, 
+                           unsigned int index_size)
 {
   unsigned int cpt = 0;
   unsigned int sum = 0;
@@ -129,23 +132,27 @@ unsigned int PTFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
   // so we can see something we understand... set all hashes to 0
   return 0;
 
-  /* XXX If the handle is not 32 bits-aligned, the last loop will get uninitialized
-   * chars after the end of the handle. We must avoid this by skipping the last loop
-   * and doing a special processing for the last bytes */
+  /* XXX If the handle is not 32 bits-aligned, the last loop will get 
+   * uninitialized chars after the end of the handle. We must avoid this 
+   * by skipping the last loop and doing a special processing for the 
+   * last bytes */
 
   mod = p_handle->data.handle.handle_key_size % sizeof(unsigned int);
 
   sum = cookie;
-  for(cpt = 0; cpt < p_handle->data.handle.handle_key_size - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.handle.handle_key_size - mod; cpt += 
+      sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), 
+             sizeof(unsigned int));
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->data.handle.handle_key_size - mod; cpt < p_handle->data.handle.handle_key_size;
+      for(cpt = p_handle->data.handle.handle_key_size - mod; 
+          cpt < p_handle->data.handle.handle_key_size;
           cpt++)
         {
           /* shift of 1 byte */
@@ -170,7 +177,8 @@ unsigned int PTFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
  * \return The hash value
  */
 
-unsigned int PTFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int cookie)
+unsigned int PTFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, 
+                                       unsigned int cookie)
 {
   unsigned int h = 0;
   unsigned int cpt = 0;
@@ -183,22 +191,26 @@ unsigned int PTFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int cook
 
   return h;
 
-  /* XXX If the handle is not 32 bits-aligned, the last loop will get uninitialized
-   * chars after the end of the handle. We must avoid this by skipping the last loop
-   * and doing a special processing for the last bytes */
+  /* XXX If the handle is not 32 bits-aligned, the last loop will get 
+   * uninitialized chars after the end of the handle. We must avoid this 
+   * by skipping the last loop and doing a special processing for the last 
+   * bytes */
 
   mod = p_handle->data.handle.handle_key_size % sizeof(unsigned int);
 
-  for(cpt = 0; cpt < p_handle->data.handle.handle_key_size - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.handle.handle_key_size - mod; cpt += 
+      sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), 
+             sizeof(unsigned int));
       h = (857 * h ^ extract) % 715827883;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->data.handle.handle_key_size - mod; cpt < p_handle->data.handle.handle_key_size;
+      for(cpt = p_handle->data.handle.handle_key_size - mod; cpt < 
+          p_handle->data.handle.handle_key_size;
           cpt++)
         {
           /* shift of 1 byte */
@@ -225,13 +237,14 @@ unsigned int PTFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int cook
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t PTFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
+fsal_status_t PTFSAL_DigestHandle(fsal_export_context_t *exp_context, /* IN */
+                                fsal_digesttype_t output_type,        /* IN */
                                 fsal_handle_t * in_fsal_handle,       /* IN */
-                                struct fsal_handle_desc *fh_desc /* IN/OUT */
+                                struct fsal_handle_desc *fh_desc  /* IN/OUT */
 	)
 {
-  ptfsal_export_context_t * p_expcontext = (ptfsal_export_context_t *)exp_context;
+  ptfsal_export_context_t * p_expcontext = 
+    (ptfsal_export_context_t *)exp_context;
   ptfsal_handle_t * p_in_fsal_handle = (ptfsal_handle_t *)in_fsal_handle;
   size_t fh_size;
 
@@ -254,7 +267,8 @@ fsal_status_t PTFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN */
       if(fh_desc->len < fh_size)
         {
           LogMajor(COMPONENT_FSAL,
-                   "GPFSFSAL_DigestHandle: space too small for handle.Need %lu, have %lu",
+                   "GPFSFSAL_DigestHandle: space too small for handle.Need " 
+                   "%lu, have %lu",
                    (unsigned long)fh_size, (unsigned long)fh_desc->len);
           ReturnCode(ERR_FSAL_TOOSMALL, 0);
         }
@@ -267,7 +281,8 @@ fsal_status_t PTFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN */
       if(fh_desc->len < fh_size)
         {
           LogMajor(COMPONENT_FSAL,
-                   "GPFSFSAL_DigestHandle: space too small for handle.Need %lu, have %lu",
+                   "GPFSFSAL_DigestHandle: space too small for handle.Need " 
+                   "%lu, have %lu",
                    (unsigned long)fh_size, (unsigned long)fh_desc->len);
           ReturnCode(ERR_FSAL_TOOSMALL, 0);
         }
@@ -285,20 +300,25 @@ fsal_status_t PTFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN */
     case FSAL_DIGEST_FILEID3:
       FSI_TRACE (FSI_DEBUG,"DIGEST_FILEID3 memcpy");
       /* sanity check about output size */
-      /* If the handle_size is the full OPENHANDLE_HANDLE_LEN then we assume it's a new style PTFS handle */
+      /* If the handle_size is the full OPENHANDLE_HANDLE_LEN then we assume 
+       * it's a new style PTFS handle */
       if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
-        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle, sizeof(uint32_t)); 
+        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle, 
+               sizeof(uint32_t)); 
       else
-        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t)); 
+        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle + 
+               OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t)); 
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
       FSI_TRACE (FSI_DEBUG,"DIGEST_FILEID4 memcpy");
       if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
-        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle, sizeof(uint32_t)); 
+        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle, 
+               sizeof(uint32_t)); 
       else
-        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
+        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle + 
+               OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
       break;
 
     default:
@@ -324,9 +344,9 @@ fsal_status_t PTFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN */
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t PTFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                struct fsal_handle_desc *fh_desc  /* OUT */)
+fsal_status_t PTFSAL_ExpandHandle(fsal_export_context_t *exp_context,  /* IN */
+                                fsal_digesttype_t in_type,             /* IN */
+                                struct fsal_handle_desc *fh_desc     /* OUT */)
 {
   struct file_handle *hdl;
   size_t fh_size;
@@ -346,7 +366,8 @@ fsal_status_t PTFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN */
   else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
     {
       LogMajor(COMPONENT_FSAL,
-               "GPFSFSAL_ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
+               "GPFSFSAL_ExpandHandle: size mismatch for handle. " 
+               "should be %lu, got %lu",
                fh_size, fh_desc->len);
      ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
@@ -365,7 +386,8 @@ fsal_status_t PTFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN */
  *         ERR_FSAL_SERVERFAULT (unexpected error)
  */
 
-fsal_status_t PTFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
+fsal_status_t 
+PTFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
   /* defensive programming... */
   if(out_parameter == NULL)
@@ -419,8 +441,9 @@ fsal_status_t PTFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_par
 
 /* load specific filesystem configuration options */
 
-fsal_status_t PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                          fsal_parameter_t * out_parameter)
+fsal_status_t 
+PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
+                                            fsal_parameter_t * out_parameter)
 {
   int err;
   int var_max, var_index;
@@ -436,7 +459,8 @@ fsal_status_t PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_confi
   if(block == NULL)
     {
       LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
+              "FSAL LOAD PARAMETER: Cannot read item \"%s\" " 
+              "from configuration file",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }
@@ -460,7 +484,8 @@ fsal_status_t PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_confi
       if(err)
         {
           LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+                  "FSAL LOAD PARAMETER: ERROR reading key[%d] " 
+                  "from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
@@ -476,7 +501,8 @@ fsal_status_t PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_confi
           if (bool == -1)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value " 
+                      "for %s: 0 or 1 expected.",
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
@@ -485,16 +511,19 @@ fsal_status_t PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_confi
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: " 
+                  "%s (item %s)",
                   key_name, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
     }
 
-  if(initinfo->use_kernel_module_interface && initinfo->open_by_handle_dev_file[0] == '\0')
+  if(initinfo->use_kernel_module_interface && 
+     initinfo->open_by_handle_dev_file[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",
+              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified " 
+              "in the configuration file (item %s)",
               CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
     }

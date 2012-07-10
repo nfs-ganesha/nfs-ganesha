@@ -64,63 +64,69 @@
  */
 fsal_status_t
 PTFSAL_access(fsal_handle_t      * p_object_handle,     /* IN */
-		fsal_op_context_t  * p_context,           /* IN */
-		fsal_accessflags_t   access_type,         /* IN */
-		fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */)
+              fsal_op_context_t  * p_context,           /* IN */
+              fsal_accessflags_t   access_type,         /* IN */
+              fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */)
 {
 
-  fsal_status_t status;
+  fsal_status_t     status;
   ptfsal_handle_t * p_fsi_handle = (ptfsal_handle_t *)p_object_handle;
 
   /* sanity checks.
    * note : object_attributes is optionnal in PTFSAL_getattrs.
    */
-  if(!p_object_handle || !p_context)
+  if(!p_object_handle || !p_context) {
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
+  }
 
   /*
    * If an error occures during getattr operation,
    * it is returned, even though the access operation succeeded.
    */
 
-  if(p_object_attributes)
-    {
+  if(p_object_attributes) {
 
-      FSI_TRACE(FSI_DEBUG, "FSI - fsal_access for handle %s\n", p_fsi_handle->data.handle.f_handle );
+    FSI_TRACE(FSI_DEBUG, "FSI - fsal_access for handle %s\n", 
+              p_fsi_handle->data.handle.f_handle );
 
-      p_object_attributes->asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
-      status = PTFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+    p_object_attributes->asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
+    status = PTFSAL_getattrs(p_object_handle, 
+                             p_context, 
+                             p_object_attributes);
 
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-          Return(status.major, status.minor, INDEX_FSAL_access);
-        }
-
-      status = fsal_internal_access(p_context, p_object_handle, access_type,
-                                    p_object_attributes);
-
+    /* on error, we set a special bit in the mask. */
+    if(FSAL_IS_ERROR(status)) {
+      FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
+      FSAL_SET_MASK(p_object_attributes->asked_attributes, 
+                    FSAL_ATTR_RDATTR_ERR);
+      Return(status.major, status.minor, INDEX_FSAL_access);
     }
-  else
-    { 
-      /* p_object_attributes is NULL */
-      fsal_attrib_list_t attrs;
 
-      FSI_TRACE(FSI_DEBUG, "FSI - fsal_access null %s \n", p_fsi_handle->data.handle.f_handle );
+    status = fsal_internal_access(p_context, p_object_handle, access_type,
+                                  p_object_attributes);
 
-      FSAL_CLEAR_MASK(attrs.asked_attributes);
-      attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
+  } else { 
+    /* p_object_attributes is NULL */
+    fsal_attrib_list_t attrs;
 
-      status = PTFSAL_getattrs(p_object_handle, p_context, &attrs);
+    FSI_TRACE(FSI_DEBUG, "FSI - fsal_access null %s \n", 
+              p_fsi_handle->data.handle.f_handle );
 
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        Return(status.major, status.minor, INDEX_FSAL_access);
+    FSAL_CLEAR_MASK(attrs.asked_attributes);
+    attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
 
-      status = fsal_internal_access(p_context, p_object_handle, access_type, &attrs);
+    status = PTFSAL_getattrs(p_object_handle, p_context, &attrs);
+
+    /* on error, we set a special bit in the mask. */
+    if(FSAL_IS_ERROR(status)) {
+      Return(status.major, status.minor, INDEX_FSAL_access);
     }
+
+    status = fsal_internal_access(p_context, 
+                                  p_object_handle, 
+                                  access_type, 
+                                  &attrs);
+  }
 
   Return(status.major, status.minor, INDEX_FSAL_access);
 

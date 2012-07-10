@@ -98,9 +98,6 @@
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
-#define FSAL_GPFS_HANDLE_LEN 64
-#define FSAL_GPFS_FSHANDLE_LEN 64
-
 #define PT_MAX_FS_EXPORT_ID 40
 
 /** the following come from using the character driver */
@@ -136,7 +133,6 @@ struct file_handle
 
 static inline size_t pt_sizeof_handle(struct file_handle *hdl)
 {
-  //return offsetof(struct file_handle, f_handle) + hdl->handle_key_size;
   return offsetof(struct file_handle, f_handle) + OPENHANDLE_KEY_LEN;
 }
 /** end of open by handle structures */
@@ -148,7 +144,6 @@ typedef struct
 {
   struct
   {
-    //  unsigned int fsid[2];
     struct file_handle handle;
   } data ;
 } __attribute__((__may_alias__)) ptfsal_handle_t;  /**< FS object handle */
@@ -157,7 +152,8 @@ typedef struct
 
 typedef struct
 {
-  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+  /* Must be the first entry in this structure */
+  fsal_staticfsinfo_t * fe_static_fs_info;  
 
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
@@ -169,11 +165,13 @@ typedef struct
   uint64_t pt_export_id; /* This is PT side FS export ID */ 
 } ptfsal_export_context_t;
 
-#define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
+#define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) \
+  (uint64_t)((_pexport_context)->dev_id)
 
 typedef struct
 {
-  ptfsal_export_context_t *export_context;        /* Must be the first entry in this structure */
+  /* Must be the first entry in this structure */
+  ptfsal_export_context_t *export_context;     
   struct user_credentials credential;
 } ptfsal_op_context_t;
 
@@ -217,7 +215,6 @@ typedef struct
   uint64_t  export_id;      // export id
   uint64_t  uid;            // user id of the connecting user
   uint64_t  gid;            // group id of the connecting user 
-  // char    * client_address; // The ip address of client 
 } ptfsal_file_t;
 
 /* Define the buffer size for GPFS NFS4 ACL. */

@@ -81,12 +81,14 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t PTFSAL_test_access(fsal_op_context_t * p_context,   /* IN */
-                                   fsal_accessflags_t access_type,  /* IN */
-                                   fsal_attrib_list_t * p_object_attributes /* IN */
+fsal_status_t 
+PTFSAL_test_access(fsal_op_context_t * p_context,   /* IN */
+                   fsal_accessflags_t access_type,  /* IN */
+                   fsal_attrib_list_t * p_object_attributes /* IN */
     )
 {
   fsal_status_t status;
-  status = fsal_internal_testAccess(p_context, access_type, NULL, p_object_attributes);
+  status = fsal_internal_testAccess(p_context, access_type, NULL, 
+                                    p_object_attributes);
   Return(status.major, status.minor, INDEX_FSAL_test_access);
 }

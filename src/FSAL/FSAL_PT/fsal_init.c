@@ -27,7 +27,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  
+ * USA
  *
  * -------------
  */
@@ -57,7 +58,8 @@ pthread_mutex_t g_dir_mutex; // dir handle mutex
 pthread_mutex_t g_acl_mutex; // acl handle mutex
 pthread_mutex_t g_handle_mutex; // file handle processing mutex
 pthread_mutex_t g_parseio_mutex; // only one thread can parse an io at a time
-pthread_mutex_t g_transid_mutex; // only one thread can change global transid at a time
+// only one thread can change global transid at a time
+pthread_mutex_t g_transid_mutex; 
 pthread_mutex_t g_non_io_mutex;
 
 /* Following are for FSI_TRACE control and mapping to Ganesha Trace Facility */
@@ -96,12 +98,12 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* These are initial values until we get our own Ganesha component */
-  g_ptfsal_debug_level = FSI_NOTICE;   // TODO get our own mechanism to set
+  g_ptfsal_debug_level = FSI_NOTICE ; // TODO get our own mechanism to set
                                       //  or have these settable by Ganesha
                                       //  debug control
   g_ptfsal_comp_num = (int) COMPONENT_FSAL;  // till we get our own comp
   g_ptfsal_comp_level = (int) NIV_INFO;      // only has meaning if syslog
-                                             // used, using g_ptfsal_debug_level
+                                             // used,using g_ptfsal_debug_level
                                              // to control instead, 
 
   /* proceeds FSAL internal initialization */
@@ -118,8 +120,10 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   pthread_mutex_init(&g_non_io_mutex,NULL);
   pthread_mutex_init(&g_parseio_mutex,NULL);
   pthread_mutex_init(&g_transid_mutex,NULL);
+  pthread_mutex_init(&g_fsi_name_handle_mutex, NULL);
 
   g_fsi_name_handle_cache.m_count = 0;
+ 
 
   /* FSI CCL Layer INIT */
   int rc = ccl_init(MULTITHREADED);
@@ -132,9 +136,9 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
 }
 
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 //   CCL Up Call defintions
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 int ccl_up_mutex_lock( pthread_mutex_t * pmutex)
 {
@@ -155,7 +159,8 @@ int ccl_up_mutex_unlock( pthread_mutex_t * pmutex)
     FSI_TRACE(FSI_ERR, "error code from pthread_mutex_unlock = %d "
               "probably did not own lock", rc);
   } else {
-    FSI_TRACE(FSI_DEBUG, "successfully unlocked 0x%lx ", (unsigned int) pmutex);
+    FSI_TRACE(FSI_DEBUG, "successfully unlocked 0x%lx ", 
+              (unsigned int) pmutex);
   }
 }
 

@@ -218,7 +218,8 @@ fsal2posix_openflags(fsal_openflags_t fsal_flags,
   /* check that all used flags exist */
 
   if(fsal_flags &
-     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC))
+     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND 
+       | FSAL_O_TRUNC))
     return ERR_FSAL_INVAL;
 
   /* Check for flags compatibility */
@@ -243,8 +244,10 @@ fsal2posix_openflags(fsal_openflags_t fsal_flags,
 
   /* FSAL_O_TRUNC without FSAL_O_WRONLY or FSAL_O_RDWR */
 
-  if((fsal_flags & FSAL_O_TRUNC) && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR)))
+  if((fsal_flags & FSAL_O_TRUNC) 
+    && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR))){ 
     return ERR_FSAL_INVAL;
+  }
 
   /* conversion */
   *p_posix_flags = 0;
@@ -347,7 +350,9 @@ posix2fsal_attributes(fsi_stat_struct    * p_buffstat,
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
     {
       p_fsalattr_out->chgtime
-        = posix2fsal_time(MAX_2(p_buffstat->st_mtime_sec, p_buffstat->st_ctime_sec), 0);
+        = posix2fsal_time(MAX_2(
+                            p_buffstat->st_mtime_sec, 
+                            p_buffstat->st_ctime_sec), 0);
       p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
     }
 
@@ -358,7 +363,7 @@ posix2fsal_attributes(fsi_stat_struct    * p_buffstat,
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
     {
-      p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
+      p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);  
     }
 
   /* everything has been copied ! */
@@ -436,24 +441,29 @@ posixstat64_2_fsal_attributes(struct stat64      * p_buffstat,
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
         {
-          p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, p_buffstat->st_atim.tv_nsec);
+          p_fsalattr_out->atime = 
+            posix2fsal_time(p_buffstat->st_atime, p_buffstat->st_atim.tv_nsec);
 
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
         {
-          p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
+          p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, 
+                                                  p_buffstat->st_ctim.tv_nsec);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
         {
-          p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
+          p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, 
+                                                  p_buffstat->st_mtim.tv_nsec);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
         {
             p_fsalattr_out->chgtime
-              = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
-            p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
+              = posix2fsal_time(MAX_2(p_buffstat->st_mtime, 
+                                      p_buffstat->st_ctime), 0);
+            p_fsalattr_out->change = 
+              (uint64_t) p_fsalattr_out->chgtime.seconds ;
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
@@ -463,7 +473,7 @@ posixstat64_2_fsal_attributes(struct stat64      * p_buffstat,
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
         {
-            p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
+            p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);  
         }
 
     /* everything has been copied ! */
@@ -506,7 +516,8 @@ ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t     * p_buffxstat,
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
         {
             p_fsalattr_out->supported_attributes = supp_attr;
-            LogFullDebug(COMPONENT_FSAL, "supported_attributes = %llu", p_fsalattr_out->supported_attributes);
+            LogFullDebug(COMPONENT_FSAL, "supported_attributes = %llu", 
+                         p_fsalattr_out->supported_attributes);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
         {
@@ -516,12 +527,15 @@ ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t     * p_buffxstat,
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
         {
             p_fsalattr_out->filesize = p_buffstat->st_size;
-            LogFullDebug(COMPONENT_FSAL, "filesize = %lu", p_fsalattr_out->filesize);
+            LogFullDebug(COMPONENT_FSAL, "filesize = %lu", 
+                         p_fsalattr_out->filesize);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
         {
             p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
-            LogFullDebug(COMPONENT_FSAL, "fsid major = %llu, minor = %llu", p_fsalattr_out->fsid.major, p_fsalattr_out->fsid.minor);
+            LogFullDebug(COMPONENT_FSAL, "fsid major = %llu, minor = %llu", 
+                         p_fsalattr_out->fsid.major, 
+                         p_fsalattr_out->fsid.minor);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
         {
@@ -546,18 +560,21 @@ ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t     * p_buffxstat,
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
         {
             p_fsalattr_out->fileid = (fsal_u64_t) (p_buffstat->st_ino);
-            LogFullDebug(COMPONENT_FSAL, "fileid = %llu", p_fsalattr_out->fileid);
+            LogFullDebug(COMPONENT_FSAL, "fileid = %llu", 
+                         p_fsalattr_out->fileid);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
         {
             p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
-            LogFullDebug(COMPONENT_FSAL, "mode = %llu", (long long unsigned int) p_fsalattr_out->mode);
+            LogFullDebug(COMPONENT_FSAL, "mode = %llu", 
+                         (long long unsigned int) p_fsalattr_out->mode);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
         {
             p_fsalattr_out->numlinks = p_buffstat->st_nlink;
-            LogFullDebug(COMPONENT_FSAL, "numlinks = %lu", p_fsalattr_out->numlinks);
+            LogFullDebug(COMPONENT_FSAL, "numlinks = %lu", 
+                         p_fsalattr_out->numlinks);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
         {
@@ -571,38 +588,48 @@ ptfsal_xstat_2_fsal_attributes(ptfsal_xstat_t     * p_buffxstat,
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
         {
-          p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, p_buffstat->st_atim.tv_nsec);
-            LogFullDebug(COMPONENT_FSAL, "atime = %u", p_fsalattr_out->atime.seconds);
+          p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, 
+                                                  p_buffstat->st_atim.tv_nsec);
+            LogFullDebug(COMPONENT_FSAL, "atime = %u", 
+                         p_fsalattr_out->atime.seconds);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
         {
-          p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
-            LogFullDebug(COMPONENT_FSAL, "ctime = %u", p_fsalattr_out->ctime.seconds);
+          p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, 
+                                                  p_buffstat->st_ctim.tv_nsec);
+            LogFullDebug(COMPONENT_FSAL, "ctime = %u", 
+                         p_fsalattr_out->ctime.seconds);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
         {
-          p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
-            LogFullDebug(COMPONENT_FSAL, "mtime = %u", p_fsalattr_out->mtime.seconds);
+          p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, 
+                                                  p_buffstat->st_mtim.tv_nsec);
+            LogFullDebug(COMPONENT_FSAL, "mtime = %u", 
+                         p_fsalattr_out->mtime.seconds);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
         {
             p_fsalattr_out->chgtime
-              = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
-            p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
-            LogFullDebug(COMPONENT_FSAL, "chgtime = %u", p_fsalattr_out->chgtime.seconds);
+              = posix2fsal_time(MAX_2(p_buffstat->st_mtime, 
+                                      p_buffstat->st_ctime), 0);
+            p_fsalattr_out->change = 
+              (uint64_t) p_fsalattr_out->chgtime.seconds ;
+            LogFullDebug(COMPONENT_FSAL, "chgtime = %u", 
+                         p_fsalattr_out->chgtime.seconds);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
         {
             p_fsalattr_out->spaceused = p_buffstat->st_blocks * S_BLKSIZE;
-            LogFullDebug(COMPONENT_FSAL, "spaceused = %lu", p_fsalattr_out->spaceused);
+            LogFullDebug(COMPONENT_FSAL, "spaceused = %lu", 
+                         p_fsalattr_out->spaceused);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
         {
-            p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
+            p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);   
             LogFullDebug(COMPONENT_FSAL,
                          "rawdev major = %u, minor = %u",
                          (unsigned int) p_fsalattr_out->rawdev.major,
@@ -657,18 +684,22 @@ ptfs_acl_2_fsal_acl(fsal_attrib_list_t * p_object_attributes,
         }
 
         LogDebug(COMPONENT_FSAL,
-                 "ptfs_acl_2_fsal_acl: fsal ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
-                 pace->type, pace->flag, pace->perm, IS_FSAL_ACE_SPECIAL_ID(*pace),
+                 "ptfs_acl_2_fsal_acl: fsal ace: type = 0x%x, flag = "  
+                 "0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+                 pace->type, pace->flag, pace->perm, 
+                 IS_FSAL_ACE_SPECIAL_ID(*pace),
                  GET_FSAL_ACE_WHO_TYPE(*pace), GET_FSAL_ACE_WHO(*pace));
     }
 
   /* Create a new hash table entry for fsal acl. */
   pacl = nfs4_acl_new_entry(&acldata, &status);
-  LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u", pacl, status);
+  LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u", 
+           pacl, status);
 
   if(pacl == NULL)
     {
-      LogCrit(COMPONENT_FSAL, "ptfs_acl_2_fsal_acl: failed to create a new acl entry");
+      LogCrit(COMPONENT_FSAL, 
+              "ptfs_acl_2_fsal_acl: failed to create a new acl entry");
       return ERR_FSAL_FAULT;
     }
 
@@ -693,9 +724,12 @@ fsal_acl_2_ptfs_acl(fsal_acl_t     * p_fsalacl,
   p_ptfsacl->acl_version =  PTFS_ACL_VERSION_NFS4;
   p_ptfsacl->acl_type    =  PTFS_ACL_TYPE_NFS4;
   p_ptfsacl->acl_nace = p_fsalacl->naces;
-  p_ptfsacl->acl_len = ((int)(signed long)&(((gpfs_acl_t *) 0)->ace_v1)) + p_ptfsacl->acl_nace * sizeof(ptfs_ace_v4_t);
+  p_ptfsacl->acl_len = ((int)(signed long)&(((gpfs_acl_t *) 0)->ace_v1)) 
+                       + p_ptfsacl->acl_nace * sizeof(ptfs_ace_v4_t);
 
-  for(pace = p_fsalacl->aces, i = 0; pace < p_fsalacl->aces + p_fsalacl->naces; pace++, i++)
+  for(pace = p_fsalacl->aces, i = 0; 
+      pace < p_fsalacl->aces + p_fsalacl->naces; 
+      pace++, i++)
     {
       p_ptfsacl->ace_v4[i].aceType = pace->type;
       p_ptfsacl->ace_v4[i].aceFlags = pace->flag;
@@ -712,10 +746,14 @@ fsal_acl_2_ptfs_acl(fsal_acl_t     * p_fsalacl,
             p_ptfsacl->ace_v4[i].aceWho = pace->who.uid;
         }
 
-      LogDebug(COMPONENT_FSAL, "fsal_acl_2_ptfs_acl: ptfs ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
-               p_ptfsacl->ace_v4[i].aceType, p_ptfsacl->ace_v4[i].aceFlags, p_ptfsacl->ace_v4[i].aceMask,
-               (p_ptfsacl->ace_v4[i].aceIFlags & FSAL_ACE_IFLAG_SPECIAL_ID) ? 1 : 0,
-               (p_ptfsacl->ace_v4[i].aceFlags & FSAL_ACE_FLAG_GROUP_ID) ? "gid" : "uid",
+      LogDebug(COMPONENT_FSAL, "fsal_acl_2_ptfs_acl: ptfs ace: " 
+               "type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+               p_ptfsacl->ace_v4[i].aceType, p_ptfsacl->ace_v4[i].aceFlags, 
+               p_ptfsacl->ace_v4[i].aceMask,
+               (p_ptfsacl->ace_v4[i].aceIFlags 
+               & FSAL_ACE_IFLAG_SPECIAL_ID) ? 1 : 0,
+               (p_ptfsacl->ace_v4[i].aceFlags 
+               & FSAL_ACE_FLAG_GROUP_ID) ? "gid" : "uid",
                p_ptfsacl->ace_v4[i].aceWho);
 
     }
@@ -852,7 +890,8 @@ fsal_mode_2_ptfs_mode(fsal_accessmode_t  fsal_mode,
     }
 
   LogDebug(COMPONENT_FSAL,
-           "fsal_mode 0x%x, v4mask 0x%x, is_dir %d converted to ptfs_mode 0x%x",
+           "fsal_mode 0x%x, v4mask 0x%x, is_dir %d converted " 
+           "to ptfs_mode 0x%x",
            fsal_mode, v4mask, is_dir, ptfs_mode);
 
   *p_ptfsmode = ptfs_mode;

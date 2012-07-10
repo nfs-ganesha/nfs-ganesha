@@ -79,16 +79,23 @@
  *        - Another error code if an error occurred.
  */
 
-fsal_status_t PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
-                                fsal_op_context_t * p_context,      /* IN */
-                                fsal_size_t length, /* IN */
-                                fsal_file_t * file_descriptor,      /* Unused in this FSAL */
-                                fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */)
+fsal_status_t 
+PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
+                fsal_op_context_t * p_context,      /* IN */
+                fsal_size_t length,                 /* IN */
+                fsal_file_t * file_descriptor,      /* IN */
+                fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */)
 {
 
   int rc=0, errsv;
   int fd = -1;
   fsal_status_t st;
+  fsal_file_t file_desc;
+  ptfsal_op_context_t     * fsi_op_context     =
+    (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context =
+    fsi_op_context->export_context;
+
   FSI_TRACE(FSI_DEBUG,"Truncate called, length=%d",length);
   /* sanity checks.
    * note : object_attributes is optional.
@@ -99,61 +106,64 @@ fsal_status_t PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
   ptfsal_print_handle(p_filehandle);
   /* Check to see if we already have fd */
   if (file_descriptor && file_descriptor->fd != 0)
-    {
-      fd = file_descriptor->fd;
-      FSI_TRACE(FSI_DEBUG, "Truncating with fd=%d, truncate length=%d",fd,length );
-      TakeTokenFSCall();
-      rc = ptfsal_ftruncate(p_context, fd, length);
-      errsv = errno;
-      ReleaseTokenFSCall();
-    }
+  {
+    fd = file_descriptor->fd;
+    FSI_TRACE(FSI_DEBUG, "Truncating with fd=%d, truncate length=%d",
+              fd,length );
+    rc = ptfsal_ftruncate(p_context, fd, length);
+    errsv = errno;
+  }
 
   /* either the fd passed in was 0, or invalid */
   if (rc || fd == -1)
-    {
-      TakeTokenFSCall();
-      /* Get an fd since we dont have one */
-      st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDWR);
-      ReleaseTokenFSCall();
+  {
+    /* Get an fd since we dont have one */
+    st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDWR);
 
-      if (FSAL_IS_ERROR(st))
-        ReturnStatus(st, INDEX_FSAL_truncate);
+    if (FSAL_IS_ERROR(st))
+      ReturnStatus(st, INDEX_FSAL_truncate);
 
-      /* Executes the POSIX truncate operation */
-      FSI_TRACE(FSI_DEBUG, "Truncating with POSIX truncate fd=%d, truncate length=%d",fd,length );
-      TakeTokenFSCall();
-      rc = ptfsal_ftruncate(p_context, fd, length);
-      errsv = errno;
-      ReleaseTokenFSCall();
-
-      /* Close the fd we opened */
-      close(fd);
-    }
-
-  /* convert return code */
-  if(rc)
-    {
+    /* Executes the PT truncate operation */
+    FSI_TRACE(FSI_DEBUG, 
+              "Truncating with POSIX truncate fd=%d, truncate length=%d",
+              fd,length );
+    rc = ptfsal_ftruncate(p_context, fd, length);
+    errsv = errno;
+    /* convert return code */
+    if(rc) {
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
       else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
     }
 
+    /* Close the fd we opened */
+    file_desc.fd = fd;
+    file_desc.export_id = fsi_export_context->pt_export_id; 
+    file_desc.uid = fsi_op_context->credential.user;
+    file_desc.gid = fsi_op_context->credential.group;
+    rc = ptfsal_close(&file_desc);
+    if(rc) {
+      FSI_TRACE(FSI_ERR, "Closing file failed\n");
+    }
+  }
+
   /* Optionally retrieve attributes */
   if(p_object_attributes)
+  {
+
+    fsal_status_t st;
+
+    st = PTFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
+
+    if(FSAL_IS_ERROR(st))
     {
-
-      fsal_status_t st;
-
-      st = PTFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
-
-      if(FSAL_IS_ERROR(st))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-        }
-
+      FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
+      FSAL_SET_MASK(p_object_attributes->asked_attributes, 
+                    FSAL_ATTR_RDATTR_ERR);
     }
+
+  }
  
   /* No error occurred */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);

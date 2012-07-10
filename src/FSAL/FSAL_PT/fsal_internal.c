@@ -27,7 +27,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  
+ * USA
  *
  * -------------
  */
@@ -100,7 +101,8 @@ static fsal_staticfsinfo_t default_ptfs_info = {
   0,                            /* maxwrite size */
   0,                            /* default umask */
   0,                            /* cross junctions */
-  0400,                         /* default access rights for xattrs: root=RW, owner=R */
+  0400,                         /* default access rights for xattrs: root=RW, 
+                                 * owner=R */
   0                             /* default access check support in FSAL */
 };
 
@@ -113,29 +115,32 @@ static pthread_key_t key_stats;
 static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
 #ifdef _USE_NFS4_ACL
-static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,   /* IN */
-                                                  fsal_aceperm_t v4mask,  /* IN */
-                                                  fsal_attrib_list_t * p_object_attributes   /* IN */ );
+static fsal_status_t
+fsal_internal_testAccess_acl(fsal_op_context_t  * p_context,          /* IN */
+                             fsal_aceperm_t       v4mask,             /* IN */
+                             fsal_attrib_list_t * p_object_attributes /*IN*/);
 
-static fsal_status_t fsal_check_access_by_handle(fsal_op_context_t * p_context,   /* IN */
-                                                 fsal_handle_t * p_handle   /* IN */,
-                                                 fsal_accessmode_t mode,   /* IN */
-                                                 fsal_accessflags_t v4mask,   /* IN */
-                                                 fsal_attrib_list_t * p_object_attributes   /* IN */ );
+static fsal_status_t 
+fsal_check_access_by_handle(fsal_op_context_t  * p_context,          /* IN */
+                            fsal_handle_t      * p_handle            /* IN */,
+                            fsal_accessmode_t    mode,               /* IN */
+                            fsal_accessflags_t   v4mask,             /* IN */
+                            fsal_attrib_list_t * p_object_attributes /* IN */);
 
 extern fsal_status_t fsal_cred_2_ptfs_cred(struct user_credentials *p_fsalcred,
                                            struct xstat_cred_t *p_ptfscred);
 
-extern fsal_status_t fsal_mode_2_ptfs_mode(fsal_accessmode_t fsal_mode,
+extern fsal_status_t fsal_mode_2_ptfs_mode(fsal_accessmode_t  fsal_mode,
                                            fsal_accessflags_t v4mask,
-                                           unsigned int *p_ptfsmode,
-                                           fsal_boolean_t is_dir);
+                                           unsigned int     * p_ptfsmode,
+                                           fsal_boolean_t     is_dir);
 #endif  /* _USE_NFS4_ACL */
 
-static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_context,   /* IN */
-                                                     fsal_accessflags_t access_type,  /* IN */
-                                                     struct stat *p_buffstat, /* IN */
-                                                     fsal_attrib_list_t * p_object_attributes /* IN */ );
+static fsal_status_t 
+fsal_internal_testAccess_no_acl(fsal_op_context_t  * p_context,         /* IN */
+                                fsal_accessflags_t   access_type,       /* IN */
+                                struct stat        * p_buffstat,        /* IN */
+                                fsal_attrib_list_t * p_object_attributes/*IN*/);
 
 static void free_pthread_specific_stats(void *buff)
 {
@@ -147,7 +152,8 @@ static void init_keys(void)
 {
   if(pthread_key_create(&key_stats, free_pthread_specific_stats) == -1)
     LogMajor(COMPONENT_FSAL,
-             "Could not create thread specific stats (pthread_key_create) err %d (%s)",
+             "Could not create thread specific stats (pthread_key_create) " 
+             "err %d (%s)",
              errno, strerror(errno));
 
   return;
@@ -178,13 +184,13 @@ fsal_increment_nbcall(int           function_index,
 
   /* first, we init the keys if this is the first time */
 
-  if(pthread_once(&once_key, init_keys) != 0)
-    {
-      LogMajor(COMPONENT_FSAL,
-               "Could not create thread specific stats (pthread_once) err %d (%s)",
-               errno, strerror(errno));
-      return;
-    }
+  if(pthread_once(&once_key, init_keys) != 0) {
+    LogMajor(COMPONENT_FSAL,
+             "Could not create thread specific stats (pthread_once) " 
+             "err %d (%s)",
+             errno, strerror(errno));
+    return;
+  }
 
   /* we get the specific value */
 
@@ -192,49 +198,47 @@ fsal_increment_nbcall(int           function_index,
 
   /* we allocate stats if this is the first time */
 
-  if(bythread_stat == NULL)
-    {
-      int i;
+  if(bythread_stat == NULL) {
+    int i;
 
-      bythread_stat = (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t");
+    bythread_stat = 
+      (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), 
+      "fsal_statistics_t");
 
-      if(bythread_stat == NULL)
-        {
-          LogCrit(COMPONENT_FSAL,
-                  "Could not allocate memory for FSAL statistics err %d (%s)",
-                  Mem_Errno, strerror(Mem_Errno));
-          /* we don't have real memory, bail */
-          return;
-        }
-
-      /* inits the struct */
-
-      for(i = 0; i < FSAL_NB_FUNC; i++)
-        {
-          bythread_stat->func_stats.nb_call[i] = 0;
-          bythread_stat->func_stats.nb_success[i] = 0;
-          bythread_stat->func_stats.nb_err_retryable[i] = 0;
-          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-        }
-
-      /* set the specific value */
-      pthread_setspecific(key_stats, (void *)bythread_stat);
-
+    if(bythread_stat == NULL) {
+      LogCrit(COMPONENT_FSAL,
+              "Could not allocate memory for FSAL statistics err %d (%s)",
+              Mem_Errno, strerror(Mem_Errno));
+      /* we don't have real memory, bail */
+      return;
     }
+
+    /* inits the struct */
+
+    for(i = 0; i < FSAL_NB_FUNC; i++) {
+      bythread_stat->func_stats.nb_call[i] = 0;
+      bythread_stat->func_stats.nb_success[i] = 0;
+      bythread_stat->func_stats.nb_err_retryable[i] = 0;
+      bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+    }
+
+    /* set the specific value */
+    pthread_setspecific(key_stats, (void *)bythread_stat);
+
+  }
 
   /* we increment the values */
 
-  if(bythread_stat)
-    {
-      bythread_stat->func_stats.nb_call[function_index]++;
+  if(bythread_stat) {
+    bythread_stat->func_stats.nb_call[function_index]++;
 
-      if(!FSAL_IS_ERROR(status))
-        bythread_stat->func_stats.nb_success[function_index]++;
-      else if(fsal_is_retryable(status))
-        bythread_stat->func_stats.nb_err_retryable[function_index]++;
-      else
-        bythread_stat->func_stats.nb_err_unrecover[function_index]++;
-    }
+    if(!FSAL_IS_ERROR(status))
+      bythread_stat->func_stats.nb_success[function_index]++;
+    else if(fsal_is_retryable(status))
+      bythread_stat->func_stats.nb_err_retryable[function_index]++;
+    else
+      bythread_stat->func_stats.nb_err_unrecover[function_index]++;
+  }
 
   return;
 }
@@ -256,45 +260,43 @@ fsal_internal_getstats(fsal_statistics_t * output_stats)
   fsal_statistics_t *bythread_stat = NULL;
 
   /* first, we init the keys if this is the first time */
-  if(pthread_once(&once_key, init_keys) != 0)
-    {
-      LogMajor(COMPONENT_FSAL,
-               "Could not create thread specific stats (pthread_once) err %d (%s)",
-               errno, strerror(errno));
-      return;
-    }
+  if(pthread_once(&once_key, init_keys) != 0) {
+    LogMajor(COMPONENT_FSAL,
+             "Could not create thread specific stats (pthread_once) " 
+             "err %d (%s)",
+             errno, strerror(errno));
+    return;
+  }
 
   /* we get the specific value */
   bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
 
   /* we allocate stats if this is the first time */
-  if(bythread_stat == NULL)
-    {
-      int i;
+  if(bythread_stat == NULL) {
+    int i;
 
-      if((bythread_stat =
-          (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t")) == NULL)
-      {
-        /* we don't have working memory, bail */
-        LogCrit(COMPONENT_FSAL,
-                "Could not allocate memory for FSAL statistics err %d (%s)",
-                Mem_Errno, strerror(Mem_Errno));
-        return;
-      }
-
-      /* inits the struct */
-      for(i = 0; i < FSAL_NB_FUNC; i++)
-        {
-          bythread_stat->func_stats.nb_call[i] = 0;
-          bythread_stat->func_stats.nb_success[i] = 0;
-          bythread_stat->func_stats.nb_err_retryable[i] = 0;
-          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-        }
-
-      /* set the specific value */
-      pthread_setspecific(key_stats, (void *)bythread_stat);
-
+    if((bythread_stat =
+       (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), 
+       "fsal_statistics_t")) == NULL) {
+       /* we don't have working memory, bail */
+       LogCrit(COMPONENT_FSAL,
+               "Could not allocate memory for FSAL statistics err %d (%s)",
+               Mem_Errno, strerror(Mem_Errno));
+       return;
     }
+
+    /* inits the struct */
+    for(i = 0; i < FSAL_NB_FUNC; i++) {
+      bythread_stat->func_stats.nb_call[i] = 0;
+      bythread_stat->func_stats.nb_success[i] = 0;
+      bythread_stat->func_stats.nb_err_retryable[i] = 0;
+      bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+    }
+
+    /* set the specific value */
+    pthread_setspecific(key_stats, (void *)bythread_stat);
+
+  }
 
   if(output_stats)
     (*output_stats) = (*bythread_stat);
@@ -319,32 +321,6 @@ fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
   CredentialLifetime = lifetime_in;
 }
 
-/**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void
-TakeTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == FALSE)
-    return;
-
-  /* there is a limit */
-  semaphore_P(&sem_fs_calls);
-
-}
-
-void
-ReleaseTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == FALSE)
-    return;
-
-  /* there is a limit */
-  semaphore_V(&sem_fs_calls);
-}
-
 /*
  *  This function initializes shared variables of the fsal.
  */
@@ -359,34 +335,32 @@ fsal_internal_init_global(fsal_init_info_t       * fsal_info,
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* inits FS call semaphore */
-  if(fsal_info->max_fs_calls > 0)
-    {
-      int rc;
+  if(fsal_info->max_fs_calls > 0) {
+    int rc;
 
-      limit_calls = TRUE;
+    limit_calls = TRUE;
 
-      rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
+    rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 
-      if(rc != 0)
-        ReturnCode(ERR_FSAL_SERVERFAULT, rc);
+    if(rc != 0)
+      ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
-      LogDebug(COMPONENT_FSAL,
-               "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
-               fsal_info->max_fs_calls);
-    }
-  else
-    {
-      LogDebug(COMPONENT_FSAL,
-               "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
-    }
+    LogDebug(COMPONENT_FSAL,
+             "FSAL INIT: Max simultaneous calls to filesystem is limited " 
+             "to %u.",
+             fsal_info->max_fs_calls);
+  } else {
+    LogDebug(COMPONENT_FSAL,
+             "FSAL INIT: Max simultaneous calls to filesystem is " 
+             "unlimited.");
+  }
 
   /* setting default values. */
   global_fs_info = default_ptfs_info;
 
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      display_fsinfo(&default_ptfs_info);
-    }
+  if(isFullDebug(COMPONENT_FSAL)) {
+    display_fsinfo(&default_ptfs_info);
+  }
 
   /* Analyzing fs_common_info struct */
 
@@ -501,15 +475,19 @@ fsal_internal_handle2fd_at(fsal_op_context_t * p_context,
   if(!phandle || !pfd)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  FSI_TRACE(FSI_DEBUG, "Handle Type: %d", p_fsi_handle->data.handle.handle_type);
+  FSI_TRACE(FSI_DEBUG, "Handle Type: %d", 
+            p_fsi_handle->data.handle.handle_type);
   if (p_fsi_handle->data.handle.handle_type != FSAL_TYPE_DIR) {
     FSI_TRACE(FSI_DEBUG, "FSI - handle2fdat - opening regular file\n");
     open_rc = ptfsal_open_by_handle(p_context, phandle, oflags, 0777);
   } else {
-    stat_rc =  fsi_get_name_from_handle(p_context, p_fsi_handle->data.handle.f_handle, fsi_name);
+    stat_rc =  fsi_get_name_from_handle(p_context, 
+                                        p_fsi_handle->data.handle.f_handle, 
+                                        fsi_name);
     if(stat_rc < 0)
     {
-      FSI_TRACE(FSI_DEBUG, "Handle to name failed handle %s", p_fsi_handle->data.handle.f_handle);
+      FSI_TRACE(FSI_DEBUG, "Handle to name failed handle %s", 
+                p_fsi_handle->data.handle.f_handle);
       ReturnCode(posix2fsal_error(errno), errno);
     }
     FSI_TRACE(FSI_DEBUG, "NAME: %s", fsi_name);
@@ -562,14 +540,16 @@ fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
     ReturnCode(ERR_FSAL_NOENT, errno);
   }
   memset(p_handle, 0, sizeof(ptfsal_handle_t));
-  memcpy(&p_fsi_handle->data.handle.f_handle, &buffstat.st_persistentHandle.handle, FSI_PERSISTENT_HANDLE_N_BYTES);
+  memcpy(&p_fsi_handle->data.handle.f_handle, 
+         &buffstat.st_persistentHandle.handle, FSI_PERSISTENT_HANDLE_N_BYTES);
   p_fsi_handle->data.handle.handle_size = FSI_PERSISTENT_HANDLE_N_BYTES;
   p_fsi_handle->data.handle.handle_version = OPENHANDLE_VERSION;
   FSI_TRACE(FSI_DEBUG, "Handle=%s", p_fsi_handle->data.handle.f_handle);
   p_fsi_handle->data.handle.handle_type = posix2fsal_type(buffstat.st_mode);
 
   FSI_TRACE(FSI_NOTICE,"FSI - fsal_internal_get_handle[%s] type %x\n", 
-            p_fsi_handle->data.handle.f_handle, p_fsi_handle->data.handle.handle_type);
+            p_fsi_handle->data.handle.f_handle, 
+            p_fsi_handle->data.handle.handle_type);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -596,6 +576,7 @@ fsal_internal_get_handle_at(fsal_op_context_t * p_context,  /* IN */
   fsi_stat_struct buffstat;
   int stat_rc;
   ptfsal_handle_t *p_fsi_handle = (ptfsal_handle_t *)p_handle;
+  ptfsal_handle_t fsi_handle;
   fsal_path_t fsal_path;
 
   FSI_TRACE(FSI_DEBUG, "FSI - get_handle_at for %s \n",  p_fsalname->name);
@@ -603,20 +584,25 @@ fsal_internal_get_handle_at(fsal_op_context_t * p_context,  /* IN */
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(p_fsi_handle, 0, sizeof(*p_fsi_handle));
+  memset(p_fsi_handle, 0, sizeof(ptfsal_handle_t));
 
   LogFullDebug(COMPONENT_FSAL,
                "Lookup handle at for %s",
                p_fsalname->name);
 
-  FSI_TRACE(FSI_DEBUG, "FSI - gethandleat OPENHANDLE_NAME_TO_HANDLE [%s] dfd %d\n",p_fsalname->name,dfd);
+  FSI_TRACE(FSI_DEBUG, 
+            "FSI - gethandleat OPENHANDLE_NAME_TO_HANDLE [%s] dfd %d\n",
+            p_fsalname->name,dfd);
 
   memset(&fsal_path, 0, sizeof(fsal_path_t));
-  memcpy(&fsal_path.path, p_fsalname->name, sizeof(*p_fsalname)); /* ??? need full path */
+  memcpy(&fsal_path.path, p_fsalname->name, 
+         sizeof(fsal_path.path));
   stat_rc = ptfsal_stat_by_name(p_context, &fsal_path, &buffstat);
 
   if(stat_rc == 0) {
-    memcpy(&p_fsi_handle->data.handle.f_handle, &buffstat.st_persistentHandle.handle, sizeof(*p_fsi_handle));
+    memcpy(&p_fsi_handle->data.handle.f_handle, 
+           &buffstat.st_persistentHandle.handle, 
+           sizeof(fsi_handle.data.handle.f_handle));
     p_fsi_handle->data.handle.handle_size = FSI_PERSISTENT_HANDLE_N_BYTES;
     p_fsi_handle->data.handle.handle_type = posix2fsal_type(buffstat.st_mode);
     p_fsi_handle->data.handle.handle_key_size = OPENHANDLE_KEY_LEN;
@@ -645,7 +631,7 @@ fsal_internal_fd2handle(fsal_op_context_t * p_context,
 			int                 fd,
 			fsal_handle_t     * handle)
 {
-  ptfsal_handle_t *p_handle = (ptfsal_handle_t *)p_handle;
+  ptfsal_handle_t *p_handle = (ptfsal_handle_t *)handle;
 
   FSI_TRACE(FSI_DEBUG, "FSI - fd2handle\n");
 
@@ -725,22 +711,26 @@ fsal_internal_testAccess(fsal_op_context_t  * p_context,          /* IN */
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
 #ifdef _USE_NFS4_ACL
-  /* If ACL exists and given access type is ace4 mask, use ACL to check access. */
+  /* If ACL exists and given access type is ace4 mask, use ACL to check 
+   * access. 
+   */
   LogDebug(COMPONENT_FSAL, "pattr=%p, pacl=%p, is_ace4_mask=%d",
-           p_object_attributes, p_object_attributes ? p_object_attributes->acl : 0,
+           p_object_attributes, p_object_attributes ? 
+             p_object_attributes->acl : 0,
            IS_FSAL_ACE4_MASK_VALID(access_type));
 
   if(p_object_attributes && p_object_attributes->acl &&
-     IS_FSAL_ACE4_MASK_VALID(access_type))
-    {
-      return fsal_internal_testAccess_acl(p_context, FSAL_ACE4_MASK(access_type),
-                                          p_object_attributes);
-    }
+     IS_FSAL_ACE4_MASK_VALID(access_type)) {
+    return fsal_internal_testAccess_acl(p_context, 
+                                        FSAL_ACE4_MASK(access_type),
+                                        p_object_attributes);
+  }
 #endif
 
   /* Use mode to check access. */
-  return fsal_internal_testAccess_no_acl(p_context, FSAL_MODE_MASK(access_type),
-                                           p_buffstat, p_object_attributes);
+  return fsal_internal_testAccess_no_acl(p_context, 
+                                         FSAL_MODE_MASK(access_type),
+                                         p_buffstat, p_object_attributes);
 
   LogDebug(COMPONENT_FSAL, "invalid access_type = 0X%x",
            access_type);
@@ -748,7 +738,9 @@ fsal_internal_testAccess(fsal_op_context_t  * p_context,          /* IN */
   ReturnCode(ERR_FSAL_ACCESS, 0);
 }
 
-/* Check the access at the file system. It is called when Use_Test_Access = 0. */
+/* Check the access at the file system. It is called when Use_Test_Access 
+ * = 0. 
+ */
 fsal_status_t
 fsal_internal_access(fsal_op_context_t  * p_context,          /* IN */
 		     fsal_handle_t      * p_handle,           /* IN */
@@ -785,12 +777,14 @@ fsal_internal_access(fsal_op_context_t  * p_context,          /* IN */
 	if(status2.major != status.major)
 	{
 	  LogFullDebug(COMPONENT_FSAL,
-	               "access error: access result major %d, test_access result major %d",
-                   status.major, status2.major);
+	               "access error: access result major %d, "  
+                       "test_access result major %d", status.major, 
+                       status2.major);
 	}
 	else
 	  LogFullDebug(COMPONENT_FSAL,
-	               "access ok: access and test_access produced the same result");
+	               "access ok: access and test_access produced " 
+                       "the same result");
   }
 #else
   status = fsal_internal_testAccess(p_context, access_type, NULL,
@@ -884,12 +878,14 @@ fsal_check_access_by_mode(fsal_op_context_t  * p_context,   /* IN */
 }
 
 #ifdef _USE_NFS4_ACL
-static fsal_boolean_t fsal_check_ace_owner(fsal_uid_t uid, fsal_op_context_t *p_context)
+static fsal_boolean_t fsal_check_ace_owner(fsal_uid_t uid, 
+                                           fsal_op_context_t *p_context)
 {
   return (p_context->credential.user == uid);
 }
 
-static fsal_boolean_t fsal_check_ace_group(fsal_gid_t gid, fsal_op_context_t *p_context)
+static fsal_boolean_t fsal_check_ace_group(fsal_gid_t gid, 
+                                           fsal_op_context_t *p_context)
 {
   int i;
 
@@ -899,11 +895,10 @@ static fsal_boolean_t fsal_check_ace_group(fsal_gid_t gid, fsal_op_context_t *p_
   if(p_context->credential.group == gid)
     return TRUE;
 
-  for(i = 0; i < p_context->credential.nbgroups; i++)
-    {
-      if(p_context->credential.alt_groups[i] == gid)
-        return TRUE;
-    }
+  for(i = 0; i < p_context->credential.nbgroups; i++) {
+    if(p_context->credential.alt_groups[i] == gid)
+      return TRUE;
+  }
 
   return FALSE;
 }
@@ -918,7 +913,7 @@ static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
 
   FSI_TRACE(FSI_DEBUG, "FSI - check_ace_matches\n");
 
-  if (IS_FSAL_ACE_SPECIAL_ID(*pace))
+  if (IS_FSAL_ACE_SPECIAL_ID(*pace)) {
     switch(pace->who.uid)
       {
         case FSAL_ACE_SPECIAL_OWNER:
@@ -945,22 +940,17 @@ static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
         default:
         break;
       }
-  else if (IS_FSAL_ACE_GROUP_ID(*pace))
-    {
-      if(fsal_check_ace_group(pace->who.gid, p_context))
-        {
-          result = TRUE;
-          cause = "group";
-        }
+  } else if (IS_FSAL_ACE_GROUP_ID(*pace)) {
+    if(fsal_check_ace_group(pace->who.gid, p_context)) {
+      result = TRUE;
+      cause = "group";
     }
-  else
-    {
-      if(fsal_check_ace_owner(pace->who.uid, p_context))
-        {
-          result = TRUE;
-          cause = "owner";
-        }
+  } else {
+    if(fsal_check_ace_owner(pace->who.uid, p_context)) {
+      result = TRUE;
+      cause = "owner";
     }
+  }
 
   LogDebug(COMPONENT_FSAL,
            "result: %d, cause: %s, flag: 0x%X, who: %d",
@@ -969,11 +959,11 @@ static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
   return result;
 }
 
-static fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
-                                                fsal_op_context_t *p_context,
-                                                fsal_boolean_t is_dir,
-                                                fsal_boolean_t is_owner,
-                                                fsal_boolean_t is_group)
+static fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t        * pace,
+                                                fsal_op_context_t * p_context,
+                                                fsal_boolean_t      is_dir,
+                                                fsal_boolean_t      is_owner,
+                                                fsal_boolean_t      is_group)
 {
   fsal_boolean_t is_applicable = FALSE;
   fsal_boolean_t is_file = !is_dir;
@@ -981,31 +971,25 @@ static fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
   FSI_TRACE(FSI_DEBUG, "FSI - check_ace_applicable\n");
 
   /* To be applicable, the entry should not be INHERIT_ONLY. */
-  if (IS_FSAL_ACE_INHERIT_ONLY(*pace))
-    {
-      LogDebug(COMPONENT_FSAL, "Not applicable, "
-               "inherit only");
-      return FALSE;
-    }
+  if (IS_FSAL_ACE_INHERIT_ONLY(*pace)) {
+    LogDebug(COMPONENT_FSAL, "Not applicable, "
+             "inherit only");
+    return FALSE;
+  }
 
   /* Use PTFS internal flag to further check the entry is applicable to this
    * object type. */
-  if(is_file)
-    {
-      if(!IS_FSAL_FILE_APPLICABLE(*pace))
-        {
-          LogDebug(COMPONENT_FSAL, "Not applicable to file");
-          return FALSE;
-        }
+  if(is_file) {
+    if(!IS_FSAL_FILE_APPLICABLE(*pace)) {
+      LogDebug(COMPONENT_FSAL, "Not applicable to file");
+      return FALSE;
     }
-  else  /* directory */
-    {
-      if(!IS_FSAL_DIR_APPLICABLE(*pace))
-        {
-          LogDebug(COMPONENT_FSAL, "Not applicable to dir");
-          return FALSE;
-        }
+  } else  /* directory */ {
+    if(!IS_FSAL_DIR_APPLICABLE(*pace)) {
+      LogDebug(COMPONENT_FSAL, "Not applicable to dir");
+      return FALSE;
     }
+  }
 
   /* The user should match who value. */
   is_applicable = fsal_check_ace_matches(pace, p_context, is_owner, is_group);
@@ -1052,18 +1036,22 @@ static void fsal_print_ace(int ace_number, fsal_ace_t *pace)
   fsal_print_inherit_flags(pace, inherit_flags);
 
   /* Print the entire ACE. */
-  sprintf(ace_buf, "ACE %d %s %s %s %d %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s %s",
+  sprintf(ace_buf, 
+          "ACE %d %s %s %s %d %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s %s",
           ace_number,
           /* ACE type. */
           IS_FSAL_ACE_ALLOW(*pace)? "allow":
           IS_FSAL_ACE_DENY(*pace) ? "deny":
           IS_FSAL_ACE_AUDIT(*pace)? "audit": "?",
           /* ACE who and its type. */
-          (IS_FSAL_ACE_SPECIAL_ID(*pace) && IS_FSAL_ACE_SPECIAL_OWNER(*pace))    ? "owner@":
-          (IS_FSAL_ACE_SPECIAL_ID(*pace) && IS_FSAL_ACE_SPECIAL_GROUP(*pace))    ? "group@":
-          (IS_FSAL_ACE_SPECIAL_ID(*pace) && IS_FSAL_ACE_SPECIAL_EVERYONE(*pace)) ? "everyone@":"",
-          IS_FSAL_ACE_SPECIAL_ID(*pace)						 ? "specialid":
-          IS_FSAL_ACE_GROUP_ID(*pace) 						 ? "gid": "uid",
+          (IS_FSAL_ACE_SPECIAL_ID(*pace) && 
+            IS_FSAL_ACE_SPECIAL_OWNER(*pace))    ? "owner@":
+          (IS_FSAL_ACE_SPECIAL_ID(*pace) && 
+            IS_FSAL_ACE_SPECIAL_GROUP(*pace))    ? "group@":
+          (IS_FSAL_ACE_SPECIAL_ID(*pace) && 
+            IS_FSAL_ACE_SPECIAL_EVERYONE(*pace)) ? "everyone@":"",
+          IS_FSAL_ACE_SPECIAL_ID(*pace)          ? "specialid":
+          IS_FSAL_ACE_GROUP_ID(*pace)            ? "gid": "uid",
           GET_FSAL_ACE_WHO(*pace),
           /* ACE mask. */
           IS_FSAL_ACE_READ_DATA(*pace)           ? "read":"",
@@ -1114,9 +1102,10 @@ static void fsal_print_v4mask(fsal_aceperm_t v4mask)
   LogDebug(COMPONENT_FSAL, "%s", v4mask_buf);
 }
 
-static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,   /* IN */
-                                                  fsal_aceperm_t v4mask,  /* IN */
-                                                  fsal_attrib_list_t * p_object_attributes   /* IN */ )
+static fsal_status_t 
+fsal_internal_testAccess_acl(fsal_op_context_t * p_context,   /* IN */
+                             fsal_aceperm_t v4mask,  /* IN */
+                             fsal_attrib_list_t * p_object_attributes /*IN*/)
 {
   fsal_aceperm_t missing_access;
   fsal_uid_t uid;
@@ -1132,11 +1121,10 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
 
   /* unsatisfied flags */
   missing_access = v4mask;
-  if(!missing_access)
-    {
-      LogDebug(COMPONENT_FSAL, "Nothing was requested");
-      ReturnCode(ERR_FSAL_NO_ERROR, 0);
-    }
+  if(!missing_access) {
+    LogDebug(COMPONENT_FSAL, "Nothing was requested");
+    ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  }
 
   /* Get file ownership information. */
   uid = p_object_attributes->owner;
@@ -1161,16 +1149,14 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
 
   /* Always grant READ_ACL, WRITE_ACL and READ_ATTR, WRITE_ATTR to the file
    * owner. */
-  if(is_owner)
-    {
-      missing_access &= ~(FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_READ_ACL);
-      missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
-      if(!missing_access)
-        {
-          LogDebug(COMPONENT_FSAL, "Met owner privileges");
-          ReturnCode(ERR_FSAL_NO_ERROR, 0);
-        }
+  if(is_owner) {
+    missing_access &= ~(FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_READ_ACL);
+    missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
+    if(!missing_access) {
+      LogDebug(COMPONENT_FSAL, "Met owner privileges");
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
+  }
 
   for(pace = pacl->aces; pace < pacl->aces + pacl->naces; pace++)
     {
@@ -1186,7 +1172,8 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
           LogDebug(COMPONENT_FSAL, "allow or deny");
 
           /* Check if this ACE is applicable. */
-          if(fsal_check_ace_applicable(pace, p_context, is_dir, is_owner, is_group))
+          if(fsal_check_ace_applicable(pace, p_context, is_dir, is_owner, 
+                                       is_group))
             {
               if(IS_FSAL_ACE_ALLOW(*pace))
                 {
@@ -1234,11 +1221,12 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t fsal_check_access_by_handle(fsal_op_context_t * p_context,   /* IN */
-                                                 fsal_handle_t * p_handle   /* IN */,
-                                                 fsal_accessmode_t mode,   /* IN */
-                                                 fsal_accessflags_t v4mask,   /* IN */
-                                                 fsal_attrib_list_t * p_object_attributes  /* IN */)
+static fsal_status_t 
+fsal_check_access_by_handle(fsal_op_context_t  * p_context,          /* IN */
+                            fsal_handle_t      * p_handle            /* IN */,
+                            fsal_accessmode_t    mode,               /* IN */
+                            fsal_accessflags_t   v4mask,             /* IN */
+                            fsal_attrib_list_t * p_object_attributes /* IN */)
 
 {
   int rc;
@@ -1274,10 +1262,11 @@ static fsal_status_t fsal_check_access_by_handle(fsal_op_context_t * p_context, 
 }
 #endif                          /* _USE_NFS4_ACL */
 
-static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_context,   /* IN */
-                                                     fsal_accessflags_t access_type,  /* IN */
-                                                     struct stat *p_buffstat, /* IN */
-                                                     fsal_attrib_list_t * p_object_attributes /* IN */ )
+static fsal_status_t 
+fsal_internal_testAccess_no_acl(fsal_op_context_t  * p_context,        /* IN */
+                                fsal_accessflags_t   access_type,      /* IN */
+                                struct stat        * p_buffstat,       /* IN */
+                                fsal_attrib_list_t * p_object_attributes /*IN*/)
 {
   fsal_accessflags_t missing_access;
   unsigned int is_grp, i;
@@ -1293,25 +1282,21 @@ static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_conte
 
   /* unsatisfied flags */
   missing_access = access_type;
-  if(!missing_access)
-    {
-      LogDebug(COMPONENT_FSAL, "Nothing was requested");
-      ReturnCode(ERR_FSAL_NO_ERROR, 0);
-    }
+  if(!missing_access) {
+    LogDebug(COMPONENT_FSAL, "Nothing was requested");
+    ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  }
 
-  if(p_object_attributes)
-    {
-      uid = p_object_attributes->owner;
-      gid = p_object_attributes->group;
-      mode = p_object_attributes->mode;
+  if(p_object_attributes) {
+    uid = p_object_attributes->owner;
+    gid = p_object_attributes->group;
+    mode = p_object_attributes->mode;
 
-    }
-  else
-    {
-      uid = p_buffstat->st_uid;
-      gid = p_buffstat->st_gid;
-      mode = unix2fsal_mode(p_buffstat->st_mode);
-    }
+  } else {
+    uid = p_buffstat->st_uid;
+    gid = p_buffstat->st_gid;
+    mode = unix2fsal_mode(p_buffstat->st_mode);
+  }
 
   LogDebug(COMPONENT_FSAL,
                "file Mode=%#o, file uid=%d, file gid= %d",
@@ -1324,36 +1309,34 @@ static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_conte
 
   /* If the uid of the file matches the uid of the user,
    * then the uid mode bits take precedence. */
-  if(p_context->credential.user == uid)
-    {
+  if(p_context->credential.user == uid) {
 
+    LogDebug(COMPONENT_FSAL,
+             "File belongs to user %d", uid);
+
+    if(mode & FSAL_MODE_RUSR)
+      missing_access &= ~FSAL_R_OK;
+
+    if(mode & FSAL_MODE_WUSR)
+      missing_access &= ~FSAL_W_OK;
+
+    if(mode & FSAL_MODE_XUSR)
+      missing_access &= ~FSAL_X_OK;
+
+    /* handle the creation of a new 500 file correctly */
+    if((missing_access & FSAL_OWNER_OK) != 0)
+      missing_access = 0;
+
+    if(missing_access == 0)
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
+    else {
       LogDebug(COMPONENT_FSAL,
-                   "File belongs to user %d", uid);
-
-      if(mode & FSAL_MODE_RUSR)
-        missing_access &= ~FSAL_R_OK;
-
-      if(mode & FSAL_MODE_WUSR)
-        missing_access &= ~FSAL_W_OK;
-
-      if(mode & FSAL_MODE_XUSR)
-        missing_access &= ~FSAL_X_OK;
-
-      /* handle the creation of a new 500 file correctly */
-      if((missing_access & FSAL_OWNER_OK) != 0)
-        missing_access = 0;
-
-      if(missing_access == 0)
-        ReturnCode(ERR_FSAL_NO_ERROR, 0);
-      else
-        {
-          LogDebug(COMPONENT_FSAL,
-                       "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
-                       mode, access_type, missing_access);
-          ReturnCode(ERR_FSAL_ACCESS, 0);
-        }
-
+               "Mode=%#o, Access=0X%x, Rights missing: 0X%x",
+               mode, access_type, missing_access);
+      ReturnCode(ERR_FSAL_ACCESS, 0);
     }
+
+  }
 
   /* missing_access will be nonzero triggering a failure
    * even though FSAL_OWNER_OK is not even a real posix file
@@ -1368,38 +1351,36 @@ static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_conte
                  p_context->credential.group);
 
   /* Test if file belongs to alt user's groups */
-  if(!is_grp)
-    for(i = 0; i < p_context->credential.nbgroups; i++)
-      {
-        is_grp = (p_context->credential.alt_groups[i] == gid);
-        if(is_grp)
-          LogDebug(COMPONENT_FSAL,
-                       "File belongs to user's alt group %d",
-                       p_context->credential.alt_groups[i]);
-        if(is_grp)
-          break;
-      }
-
+  if(!is_grp) {
+    for(i = 0; i < p_context->credential.nbgroups; i++) {
+      is_grp = (p_context->credential.alt_groups[i] == gid);
+      if(is_grp)
+        LogDebug(COMPONENT_FSAL,
+                 "File belongs to user's alt group %d",
+                  p_context->credential.alt_groups[i]);
+      if(is_grp)
+        break;
+    }
+  }
   /* If the gid of the file matches the gid of the user or
    * one of the alternatve gids of the user, then the uid mode
    * bits take precedence. */
-  if(is_grp)
-    {
-      if(mode & FSAL_MODE_RGRP)
-        missing_access &= ~FSAL_R_OK;
+  if(is_grp) {
+    if(mode & FSAL_MODE_RGRP)
+      missing_access &= ~FSAL_R_OK;
 
-      if(mode & FSAL_MODE_WGRP)
-        missing_access &= ~FSAL_W_OK;
+    if(mode & FSAL_MODE_WGRP)
+      missing_access &= ~FSAL_W_OK;
 
-      if(mode & FSAL_MODE_XGRP)
-        missing_access &= ~FSAL_X_OK;
+    if(mode & FSAL_MODE_XGRP)
+      missing_access &= ~FSAL_X_OK;
 
-      if(missing_access == 0)
-        ReturnCode(ERR_FSAL_NO_ERROR, 0);
-      else
-        ReturnCode(ERR_FSAL_ACCESS, 0);
+    if(missing_access == 0)
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
+    else
+      ReturnCode(ERR_FSAL_ACCESS, 0);
 
-    }
+  }
 
   /* If the user uid is not 0, the uid does not match the file's, and
    * the user's gids do not match the file's gid, we apply the "other"

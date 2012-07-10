@@ -275,7 +275,8 @@ fsal_status_t PTFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
           LogFullDebug(COMPONENT_FSAL,
                        "Read a block from FSAL");
           fs_size = 0;
-          st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
+          st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, 
+                         &eof);
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */

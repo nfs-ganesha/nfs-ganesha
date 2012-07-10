@@ -64,11 +64,11 @@
  */
 fsal_status_t
 PTFSAL_create(fsal_handle_t      * p_parent_directory_handle, /* IN */
-		fsal_name_t        * p_filename,                /* IN */
-		fsal_op_context_t  * p_context,                 /* IN */
-		fsal_accessmode_t    accessmode,                /* IN */
-		fsal_handle_t      * p_object_handle,           /* OUT */
-		fsal_attrib_list_t * p_object_attributes        /* [ IN/OUT ] */)
+              fsal_name_t        * p_filename,                /* IN */
+              fsal_op_context_t  * p_context,                 /* IN */
+              fsal_accessmode_t    accessmode,                /* IN */
+              fsal_handle_t      * p_object_handle,           /* OUT */
+              fsal_attrib_list_t * p_object_attributes        /* [ IN/OUT ] */)
 {
 
   int errsv;
@@ -86,8 +86,8 @@ PTFSAL_create(fsal_handle_t      * p_parent_directory_handle, /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if(!p_parent_directory_handle || !p_context || !p_object_handle || !p_filename)
-  {
+  if(!p_parent_directory_handle || !p_context || !p_object_handle || 
+     !p_filename) {
     FSI_TRACE(FSI_DEBUG, "BAD Happen!");
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
   }
@@ -102,53 +102,62 @@ PTFSAL_create(fsal_handle_t      * p_parent_directory_handle, /* IN */
 
   /* retrieve directory metadata */
   parent_dir_attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
-  status = PTFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
+  status = PTFSAL_getattrs(p_parent_directory_handle, p_context, 
+                           &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status)) {
     ReturnStatus(status, INDEX_FSAL_create);
+  }
 
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
+  /* Check the user can write in the directory, and check the setgid bit 
+   * on the directory 
+   */
 
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
+  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID) {
     setgid_bit = 1;
+  }
 
   /* Set both mode and ace4 mask */
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
 
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-    status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
+  if(!p_context->export_context->fe_static_fs_info->accesscheck_support) {
+    status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+                                      &parent_dir_attrs);
+  } else {
+    status = fsal_internal_access(p_context, 
+                                  p_parent_directory_handle, 
+                                  access_mask,
                                   &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
+  }
+  if(FSAL_IS_ERROR(status)) {
     ReturnStatus(status, INDEX_FSAL_create);
-
-  TakeTokenFSCall();
+  }
 
   // Create the file, return handle
-  open_rc = ptfsal_open(p_parent_directory_handle, p_filename, p_context, unix_mode, p_object_handle);
+  open_rc = ptfsal_open(p_parent_directory_handle, 
+                        p_filename, p_context, unix_mode, p_object_handle);
   if (open_rc < 0) {
      errsv = errno;
-     ReleaseTokenFSCall();
      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
   }
-  ReleaseTokenFSCall();
 
-  FSI_TRACE(FSI_DEBUG, "New Handle = %s", (char *)&p_fsi_handle->data.handle.f_handle);
+  FSI_TRACE(FSI_DEBUG, "New Handle = %s", 
+            (char *)&p_fsi_handle->data.handle.f_handle);
 
   /* retrieve file attributes */
-  if(p_object_attributes)
-    {
-      status = PTFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+  if(p_object_attributes) {
+    status = PTFSAL_getattrs(p_object_handle, 
+                             p_context, 
+                             p_object_attributes);
 
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-        }
-
+    /* on error, we set a special bit in the mask. */
+    if(FSAL_IS_ERROR(status)) {
+      FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
+      FSAL_SET_MASK(p_object_attributes->asked_attributes, 
+                    FSAL_ATTR_RDATTR_ERR);
     }
+
+  }
 
   FSI_TRACE(FSI_DEBUG, "End to create file************************\n");
 
@@ -187,12 +196,12 @@ PTFSAL_create(fsal_handle_t      * p_parent_directory_handle, /* IN */
  *        - Another error code if an error occured.
  */
 fsal_status_t
-PTFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
-	       fsal_name_t * p_dirname,                       /* IN */
-	       fsal_op_context_t * p_context,                 /* IN */
-	       fsal_accessmode_t accessmode,                  /* IN */
-	       fsal_handle_t * p_object_handle,               /* OUT */
-	       fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */)
+PTFSAL_mkdir(fsal_handle_t      * p_parent_directory_handle, /* IN */
+             fsal_name_t        * p_dirname,                 /* IN */
+             fsal_op_context_t  * p_context,                 /* IN */
+             fsal_accessmode_t    accessmode,                /* IN */
+             fsal_handle_t      * p_object_handle,           /* OUT */
+             fsal_attrib_list_t * p_object_attributes        /* [ IN/OUT ] */)
 {
 
   int rc, errsv;
@@ -208,98 +217,101 @@ PTFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if(!p_parent_directory_handle || !p_context || !p_object_handle || !p_dirname)
+  if(!p_parent_directory_handle || !p_context || !p_object_handle || 
+     !p_dirname) {
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
+  }
 
   /* convert FSAL mode to unix mode. */
   unix_mode = fsal2unix_mode(accessmode);
 
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
-  // TakeTokenFSCall();
-  // status = fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd, O_RDONLY);
-  // ReleaseTokenFSCall();
-
-  // if(FSAL_IS_ERROR(status))
-  //   ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* get directory metadata */
   parent_dir_attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
-  status = PTFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
+  status = PTFSAL_getattrs(p_parent_directory_handle, p_context, 
+                           &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status)) {
     ReturnStatus(status, INDEX_FSAL_create);
+  }
 
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
+  /* Check the user can write in the directory, and check the 
+   * setgid bit on the directory 
+   */
 
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
+  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID) {
     setgid_bit = 1;
+  }
 
   /* Set both mode and ace4 mask */
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
 
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-    status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
-  else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
+  if(!p_context->export_context->fe_static_fs_info->accesscheck_support) {
+    status = fsal_internal_testAccess(p_context, access_mask, NULL, 
+                                      &parent_dir_attrs);
+  } else {
+    status = fsal_internal_access(p_context, p_parent_directory_handle, 
+                                  access_mask,
                                   &parent_dir_attrs);
-  if(FSAL_IS_ERROR(status))
+  }
+  if(FSAL_IS_ERROR(status)) {
     ReturnStatus(status, INDEX_FSAL_mkdir);
+  }
 
-  TakeTokenFSCall();
-  rc = ptfsal_mkdir(p_parent_directory_handle, p_dirname, p_context, unix_mode, p_object_handle);
+  rc = ptfsal_mkdir(p_parent_directory_handle, p_dirname, 
+                    p_context, unix_mode, p_object_handle);
   errsv = errno;
-  if(rc)
-    {
-      ReleaseTokenFSCall();
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-    }
-  ReleaseTokenFSCall();
+  if(rc) {
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
+  }
 
-  if(FSAL_IS_ERROR(status))
-    {
-      ReturnStatus(status, INDEX_FSAL_mkdir);
-    }
+  if(FSAL_IS_ERROR(status)) {
+    ReturnStatus(status, INDEX_FSAL_mkdir);
+  }
 
   /* the directory has been created */
   /* chown the dir to the current user/group */
 
-  if(p_context->credential.user != geteuid())
-    {
-      FSI_TRACE(FSI_DEBUG, "MKDIR %d",__LINE__);
-      TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
+  if(p_context->credential.user != geteuid()) {
+    FSI_TRACE(FSI_DEBUG, "MKDIR %d",__LINE__);
+    /* if the setgid_bit was set on the parent directory, do not change 
+     * the group of the created file, because it's already the parentdir's 
+     * group       
+     */
 
-      if( fsi_get_name_from_handle(p_context, (char *)p_object_handle->data.handle.f_handle, (char *)newPath) < 0)
-      {
-        FSI_TRACE(FSI_DEBUG, "Failed to get name from handle %s", (char *)p_object_handle->data.handle.f_handle);
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-      }  
-      rc = ptfsal_chown(p_context, newPath,
-                        p_context->credential.user,
-                        setgid_bit ? -1 : (int)p_context->credential.group);
-      errsv = errno;
-      ReleaseTokenFSCall();
-      if(rc)
-        {
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-        }
+    if(fsi_get_name_from_handle(
+       p_context, 
+       (char *)p_object_handle->data.handle.f_handle, 
+       (char *)newPath) < 0) {
+       FSI_TRACE(FSI_DEBUG, "Failed to get name from handle %s", 
+                 (char *)p_object_handle->data.handle.f_handle);
+       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
+    }  
+    rc = ptfsal_chown(p_context, newPath,
+                      p_context->credential.user,
+                      setgid_bit ? -1 : (int)p_context->credential.group);
+    errsv = errno;
+    if(rc) {
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
     }
+  }
 
   /* retrieve file attributes */
-  if(p_object_attributes)
-    {
-      FSI_TRACE(FSI_DEBUG, "MKDIR %d",__LINE__);
-      status = PTFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+  if(p_object_attributes) {
+    FSI_TRACE(FSI_DEBUG, "MKDIR %d",__LINE__);
+    status = PTFSAL_getattrs(p_object_handle, p_context, 
+                             p_object_attributes);
 
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-        }
-
+    /* on error, we set a special bit in the mask. */
+    if(FSAL_IS_ERROR(status)) {
+      FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
+      FSAL_SET_MASK(p_object_attributes->asked_attributes, 
+                    FSAL_ATTR_RDATTR_ERR);
     }
+
+  }
   FSI_TRACE(FSI_INFO,"MKDIR END ------------------\n");
   FSI_TRACE(FSI_DEBUG, "MKDIR %d",__LINE__);
   /* OK */
@@ -338,10 +350,10 @@ PTFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
  */
 fsal_status_t
 PTFSAL_link(fsal_handle_t      * p_target_handle, /* IN */
-	      fsal_handle_t      * p_dir_handle,    /* IN */
-	      fsal_name_t        * p_link_name,     /* IN */
-	      fsal_op_context_t  * p_context,       /* IN */
-	      fsal_attrib_list_t * p_attributes     /* [ IN/OUT ] */)
+            fsal_handle_t      * p_dir_handle,    /* IN */
+            fsal_name_t        * p_link_name,     /* IN */
+            fsal_op_context_t  * p_context,       /* IN */
+            fsal_attrib_list_t * p_attributes     /* [ IN/OUT ] */)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 }
@@ -355,13 +367,13 @@ PTFSAL_link(fsal_handle_t      * p_target_handle, /* IN */
  */
 fsal_status_t
 PTFSAL_mknode(fsal_handle_t      * parentdir_handle, /* IN */
-		fsal_name_t        * p_node_name,      /* IN */
-		fsal_op_context_t  * p_context,        /* IN */
-		fsal_accessmode_t    accessmode,       /* IN */
-		fsal_nodetype_t      nodetype,         /* IN */
-		fsal_dev_t         * dev,              /* IN */
-		fsal_handle_t      * p_object_handle,  /* OUT (handle to the created node) */
-		fsal_attrib_list_t * node_attributes   /* [ IN/OUT ] */)
+              fsal_name_t        * p_node_name,      /* IN */
+              fsal_op_context_t  * p_context,        /* IN */
+              fsal_accessmode_t    accessmode,       /* IN */
+              fsal_nodetype_t      nodetype,         /* IN */
+              fsal_dev_t         * dev,              /* IN */
+              fsal_handle_t      * p_object_handle,  /* OUT (handle to the created node) */
+              fsal_attrib_list_t * node_attributes   /* [ IN/OUT ] */)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
 }

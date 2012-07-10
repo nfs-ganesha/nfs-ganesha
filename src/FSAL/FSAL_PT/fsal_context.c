@@ -47,15 +47,16 @@
  */
 fsal_status_t
 PTFSAL_BuildExportContext(fsal_export_context_t * export_context,     /* OUT */
-			    fsal_path_t           * p_export_path,      /* IN */
-			    char                  * fs_specific_options /* IN */)
+                          fsal_path_t           * p_export_path,      /* IN */
+                          char                  * fs_specific_options /* IN */)
 {
-  fsal_status_t status;
-  fsal_op_context_t op_context;
-  ptfsal_export_context_t *p_export_context = (ptfsal_export_context_t *)export_context;
-  exportlist_t * p_exportlist = NULL;
-  char * endptr = NULL;
-
+  fsal_status_t             status;
+  fsal_op_context_t         op_context;
+  ptfsal_export_context_t * p_export_context = 
+    (ptfsal_export_context_t *)export_context;
+  exportlist_t            * p_exportlist = NULL;
+  char                    * endptr = NULL;
+  int                       n; 
 
   FSI_TRACE(FSI_DEBUG, "Begin-------------------\n");
 
@@ -67,34 +68,47 @@ PTFSAL_BuildExportContext(fsal_export_context_t * export_context,     /* OUT */
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     }
 
-  FSI_TRACE(FSI_DEBUG, "PT FS Export ID=%s Mount Path=%s", fs_specific_options, p_export_path->path);
+  FSI_TRACE(FSI_DEBUG, "PT FS Export ID=%s Mount Path=%s", 
+            fs_specific_options, p_export_path->path);
   status = PTFSAL_GetExportEntry(fs_specific_options, &p_exportlist);
-  if(FSAL_IS_ERROR(status))
-    {
-      LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from ptfs filesystem root path to handle failed : %d",
-               status.minor);
-      ReturnCode(ERR_FSAL_INVAL, 0);
-    }  
+  if(FSAL_IS_ERROR(status)) {
+    LogMajor(COMPONENT_FSAL,
+             "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from "  
+             "ptfs filesystem root path to handle failed : %d",
+             status.minor);
+    ReturnCode(ERR_FSAL_INVAL, 0);
+  }  
 
   p_export_context->fe_static_fs_info = &global_fs_info;
-  strncpy(p_export_context->mount_point, p_export_path->path, p_export_path->len);
+  strncpy(p_export_context->mount_point, p_export_path->path, 
+          sizeof(p_export_context->mount_point));
+  p_export_context->mount_point[sizeof(p_export_context->mount_point)-1] = '\0';
   p_export_context->fsid[0] = 0;
   p_export_context->fsid[1] = p_exportlist->id;
   op_context.export_context = export_context;
   p_export_context->ganesha_export_id = p_exportlist->id;
+
+  errno = 0;
   p_export_context->pt_export_id  = strtoll(fs_specific_options, &endptr, 10);
+  if (p_export_context->pt_export_id  == LLONG_MIN ||
+      p_export_context->pt_export_id  == LLONG_MAX || errno != 0) {
+    LogMajor(COMPONENT_FSAL,
+             "FSAL BUILD EXPORT CONTEXT: ERROR: "
+             "Get Export ID failed : %d", errno);
+    ReturnCode(ERR_FSAL_INVAL, 0);  
+  }
 
   status = PTFSAL_GetMountRootFD(&op_context);
-  if(FSAL_IS_ERROR(status))
-    {
-      LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Get mount root fd failed : %d",
-               status.minor);
-      ReturnCode(ERR_FSAL_INVAL, 0);
-    }
+  if(FSAL_IS_ERROR(status)) {
+    LogMajor(COMPONENT_FSAL,
+             "FSAL BUILD EXPORT CONTEXT: ERROR: "
+             "Get mount root fd failed : %d",
+             status.minor);
+    ReturnCode(ERR_FSAL_INVAL, 0);
+  }
 
-  FSI_TRACE(FSI_DEBUG, "Export Id=%d, PT FS Export ID=%ld Mount Path=%s Mount root fd=%d", 
+  FSI_TRACE(FSI_DEBUG, 
+            "Export Id=%d, PT FS Export ID=%ld Mount Path=%s Mount root fd=%d",
             p_export_context->ganesha_export_id, 
             p_export_context->pt_export_id,
             p_export_context->mount_point,
@@ -115,8 +129,7 @@ fsal_status_t
 PTFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
 {
   FSI_TRACE(FSI_DEBUG, "Begin----------");
-  if(p_export_context == NULL)
-  {
+  if(p_export_context == NULL) {
     LogCrit(COMPONENT_FSAL,
             "NULL mandatory argument passed to %s()", __FUNCTION__);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_CleanUpExportContext);
@@ -126,14 +139,15 @@ PTFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
-/* Look up export entry based on fs specific options which stores PT FS export ID */
+/* Look up export entry based on fs specific options which stores 
+ * PT FS export ID 
+ */
 fsal_status_t
-PTFSAL_GetExportEntry(char         * p_fs_info,   /* IN */
+PTFSAL_GetExportEntry(char          * p_fs_info,   /* IN */
 		      exportlist_t ** exportlist /* OUT */)
 {
   exportlist_t * p_exportlist;
-  if (p_fs_info == NULL) 
-  {
+  if (p_fs_info == NULL) {
     FSI_TRACE(FSI_DEBUG, "NULL mandatory FS information\n");
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext); 
   }
@@ -141,9 +155,10 @@ PTFSAL_GetExportEntry(char         * p_fs_info,   /* IN */
 
   p_exportlist = nfs_param.pexportlist;
   while (p_exportlist != NULL) {
-    FSI_TRACE(FSI_DEBUG, "FS info in Export list: %s", p_exportlist->FS_specific);
-    if(strcmp(p_fs_info, p_exportlist->FS_specific))    
-    {
+    FSI_TRACE(FSI_DEBUG, "FS info in Export list: %s", 
+              p_exportlist->FS_specific);
+    if(strncmp(p_fs_info, p_exportlist->FS_specific, 
+       sizeof(p_exportlist->FS_specific))) {
       p_exportlist = p_exportlist->next;
       continue;
     } else {
@@ -151,8 +166,7 @@ PTFSAL_GetExportEntry(char         * p_fs_info,   /* IN */
       break;
     }
   }
-  if (p_exportlist == NULL)
-  {
+  if (p_exportlist == NULL) {
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
   }
   *exportlist = p_exportlist;
@@ -167,8 +181,9 @@ PTFSAL_GetExportEntry(char         * p_fs_info,   /* IN */
 fsal_status_t
 PTFSAL_GetMountRootFD(fsal_op_context_t * p_context)
 {
-  ptfsal_op_context_t     * fsi_op_context     = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
+  ptfsal_op_context_t     * fsi_op_context = (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
   
   /* PT basically doesn't need mount root FD, so we could set it to zero */
   fsi_export_context->mount_root_fd = 0;

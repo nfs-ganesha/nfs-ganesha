@@ -1,24 +1,18 @@
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Copyright IBM Corp. 2010, 2011
 // All Rights Reserved
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Filename:    pt_ganesha.c
 // Description: Main layer for PT's Ganesha FSAL
 // Author:      FSI IPC Team
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 #include "pt_ganesha.h"
 
 struct  fsi_handle_cache_t  g_fsi_name_handle_cache;
+pthread_mutex_t g_fsi_name_handle_mutex;
 
-// -----------------------------------------------------------------------------
-void
-ccl_log(int    debugLevel,
-        char * debugString)
-{
-  LogDebug(5, "%s", debugString);
-}
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 void
 fsi_get_whole_path(const char * parentPath,
                    const char * name,
@@ -32,31 +26,34 @@ fsi_get_whole_path(const char * parentPath,
   }
   FSI_TRACE(FSI_DEBUG, "Full Path: %s", path);
 }
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 int
 fsi_cache_name_and_handle(fsal_op_context_t * p_context,
                           char              * handle,
                           char              * name)
 {
   int rc;
+  struct fsi_handle_cache_entry_t handle_entry;
 
   rc = fsi_get_name_from_handle(p_context, handle, name);
 
   if (rc < 0) {
-    if (g_fsi_name_handle_cache.m_count++ >= FSI_MAX_HANDLE_CACHE_ENTRY) {
-      g_fsi_name_handle_cache.m_count = 0;
-    } else {
-      g_fsi_name_handle_cache.m_count++;
-    }
+    pthread_mutex_lock(&g_fsi_name_handle_mutex);
+    g_fsi_name_handle_cache.m_count = (g_fsi_name_handle_cache.m_count + 1) 
+      % FSI_MAX_HANDLE_CACHE_ENTRY;
 
-    memset(&g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_handle,
-           0, FSI_HANDLE_SIZE);
-    memcpy(&g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_handle,
-           &handle[0],FSI_HANDLE_SIZE);
-    strncpy(g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
-            name, PATH_MAX);
+    memcpy(
+      &g_fsi_name_handle_cache
+      .m_entry[g_fsi_name_handle_cache.m_count].m_handle,
+      &handle[0],sizeof(handle_entry.m_handle));
+    strncpy(
+      g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
+      name, sizeof(handle_entry.m_name));
+    g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count]
+    .m_name[sizeof(handle_entry.m_name)-1] = '\0';
     FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
               name,g_fsi_name_handle_cache.m_count);
+    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
   }
 
   return 0;
@@ -69,23 +66,29 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
 {
   int index;
   int rc;
-  ccl_context_t ccl_context;
+  ccl_context_t           ccl_context;
   struct PersistentHandle pt_handler;
-  char * client_ip;
+  char                  * client_ip;
+  struct fsi_handle_cache_entry_t handle_entry;
 
   FSI_TRACE(FSI_DEBUG, "Get name from handle: \n");
   ptfsal_print_handle(handle);
-
+  
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
+  pthread_mutex_lock(&g_fsi_name_handle_mutex);
   for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
-
-    if (memcmp(&handle[0], &g_fsi_name_handle_cache.m_entry[index].m_handle, FSI_HANDLE_SIZE) == 0) {
-      strncpy(name, g_fsi_name_handle_cache.m_entry[index].m_name, PATH_MAX);
+    if (memcmp(&handle[0], &g_fsi_name_handle_cache.m_entry[index].m_handle, 
+        FSI_PERSISTENT_HANDLE_N_BYTES) == 0) {
+      strncpy(name, g_fsi_name_handle_cache.m_entry[index].m_name, 
+              sizeof(handle_entry.m_name));
+      name[sizeof(handle_entry.m_name)-1] = '\0';
       FSI_TRACE(FSI_DEBUG, "FSI - name = %s \n", name);
+      pthread_mutex_unlock(&g_fsi_name_handle_mutex);
       return 0;
     }
   }
+  pthread_mutex_unlock(&g_fsi_name_handle_mutex);
 
   /* Not in cache */
   memset(&pt_handler.handle, 0, FSI_PERSISTENT_HANDLE_N_BYTES);
@@ -97,20 +100,22 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   FSI_TRACE(FSI_DEBUG, "The rc %d, handle %s, name %s", rc, handle, name);
   
   if (rc == 0) {
-    if (g_fsi_name_handle_cache.m_count++ >= FSI_MAX_HANDLE_CACHE_ENTRY) {
-      g_fsi_name_handle_cache.m_count = 0;
-    } else {
-      g_fsi_name_handle_cache.m_count++;
-    }
+    pthread_mutex_lock(&g_fsi_name_handle_mutex);
+    g_fsi_name_handle_cache.m_count = (g_fsi_name_handle_cache.m_count + 1)
+      % FSI_MAX_HANDLE_CACHE_ENTRY;
 
-    memset(&g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_handle,
-           0, FSI_HANDLE_SIZE);
-    memcpy(&g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_handle,
-           &handle[0],FSI_HANDLE_SIZE);
-    strncpy(g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
-            name, PATH_MAX);
+    memcpy(
+      &g_fsi_name_handle_cache
+      .m_entry[g_fsi_name_handle_cache.m_count].m_handle,
+      &handle[0],FSI_PERSISTENT_HANDLE_N_BYTES);
+    strncpy(
+      g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
+      name, sizeof(handle_entry.m_name));
+    g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count]
+    .m_name[sizeof(handle_entry.m_name)-1] = '\0';
     FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
               name,g_fsi_name_handle_cache.m_count);
+    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
   }  
 
   return rc;
@@ -121,19 +126,30 @@ int
 fsi_update_cache_name(char * oldname,
                       char * newname)
 {
-  int index;
+  int    index;
+  struct fsi_handle_cache_entry_t handle_entry;
 
   FSI_TRACE(FSI_DEBUG, "oldname[%s]->newname[%s]",oldname,newname);
+  
+  pthread_mutex_lock(&g_fsi_name_handle_mutex);
   for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
     FSI_TRACE(FSI_DEBUG, "cache entry[%d]: %s",index,
               g_fsi_name_handle_cache.m_entry[index].m_name);
-    if (strncmp((const char *)oldname, (const char *)&g_fsi_name_handle_cache.m_entry[index].m_name, PATH_MAX) == 0) {
-      FSI_TRACE(FSI_DEBUG, "FSI - Updating cache old name[%s]-> new name[%s] \n",
+    if (strncmp((const char *)oldname, 
+                (const char *)
+                &g_fsi_name_handle_cache.m_entry[index].m_name, PATH_MAX) 
+                == 0) {
+      FSI_TRACE(FSI_DEBUG, 
+                "FSI - Updating cache old name[%s]-> new name[%s] \n",
                 g_fsi_name_handle_cache.m_entry[index].m_name, newname);
-      strncpy(g_fsi_name_handle_cache.m_entry[index].m_name, newname, PATH_MAX);
+      strncpy(g_fsi_name_handle_cache.m_entry[index].m_name, newname, 
+              sizeof(handle_entry.m_name));
+      g_fsi_name_handle_cache.m_entry[index]
+      .m_name[sizeof(handle_entry.m_name)-1] = '\0';
     }
   }
-
+  pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+  
   return 0;
 }
 
@@ -141,17 +157,20 @@ void
 fsi_remove_cache_by_handle(char * handle)
 {
   int index;
+  pthread_mutex_lock(&g_fsi_name_handle_mutex);
   for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
 
-    if (memcmp(handle, &g_fsi_name_handle_cache.m_entry[index].m_handle, FSI_HANDLE_SIZE) == 0) {
+    if (memcmp(handle, &g_fsi_name_handle_cache.m_entry[index].m_handle, 
+      FSI_PERSISTENT_HANDLE_N_BYTES) == 0) {
       FSI_TRACE(FSI_DEBUG, "Handle will be removed from cache:")
       ptfsal_print_handle(handle);
       /* Mark the both handle and name to 0 */
-      strncpy(g_fsi_name_handle_cache.m_entry[index].m_handle, "0", PATH_MAX);
-      strncpy(g_fsi_name_handle_cache.m_entry[index].m_name, "0", PATH_MAX);
-      return;
+      g_fsi_name_handle_cache.m_entry[index].m_handle[0] = '\0';
+      g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
+      break;
     }
   }
+  pthread_mutex_unlock(&g_fsi_name_handle_mutex);
 }
 
 void
@@ -163,15 +182,22 @@ fsi_remove_cache_by_fullpath(char * path)
   if (len > PATH_MAX)
      return;
 
+  /* TBD. The error return from pthread_mutex_lock will be handled
+   * when improve read/write lock.
+   */
+  pthread_mutex_lock(&g_fsi_name_handle_mutex);
   for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
-    if (memcmp(path, g_fsi_name_handle_cache.m_entry[index].m_name, len) == 0) {
-      FSI_TRACE(FSI_DEBUG, "Handle will be removed from cache by path %s:", path);
+    if (memcmp(path, g_fsi_name_handle_cache.m_entry[index].m_name, len) 
+        == 0) {
+      FSI_TRACE(FSI_DEBUG, "Handle will be removed from cache by path %s:", 
+                path);
       /* Mark the both handle and name to 0 */
-      strncpy(g_fsi_name_handle_cache.m_entry[index].m_handle, "0", FSI_HANDLE_SIZE);
-      strncpy(g_fsi_name_handle_cache.m_entry[index].m_name, "0", PATH_MAX);
-      return;
+      g_fsi_name_handle_cache.m_entry[index].m_handle[0] = '\0';
+      g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
+      break;
     }
   }
+  pthread_mutex_unlock(&g_fsi_name_handle_mutex);
 }
 
 // -----------------------------------------------------------------------------
@@ -197,24 +223,32 @@ ptfsal_rename(fsal_op_context_t * p_context,
   int rc;
 
   ccl_context_t ccl_context;
-  ptfsal_op_context_t     * fsi_op_context     = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
+  ptfsal_op_context_t     * fsi_op_context     
+    = (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
   char fsi_old_parent_dir_name[PATH_MAX];
   char fsi_new_parent_dir_name[PATH_MAX];
   char fsi_old_fullpath[PATH_MAX];
   char fsi_new_fullpath[PATH_MAX];
-  ptfsal_handle_t * p_old_parent_dir_handle = (ptfsal_handle_t *)p_old_parentdir_handle;
-  ptfsal_handle_t * p_new_parent_dir_handle = (ptfsal_handle_t *)p_new_parentdir_handle;
+  ptfsal_handle_t * p_old_parent_dir_handle = 
+    (ptfsal_handle_t *)p_old_parentdir_handle;
+  ptfsal_handle_t * p_new_parent_dir_handle = 
+    (ptfsal_handle_t *)p_new_parentdir_handle;
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
-  rc = fsi_get_name_from_handle(p_context, p_old_parent_dir_handle->data.handle.f_handle, fsi_old_parent_dir_name);
+  rc = fsi_get_name_from_handle(p_context, 
+                                p_old_parent_dir_handle->data.handle.f_handle, 
+                                fsi_old_parent_dir_name);
   if( rc < 0 )
   {
     FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
     return rc;
   }
-  rc = fsi_get_name_from_handle(p_context, p_new_parent_dir_handle->data.handle.f_handle, fsi_new_parent_dir_name);
+  rc = fsi_get_name_from_handle(p_context, 
+                                p_new_parent_dir_handle->data.handle.f_handle, 
+                                fsi_new_parent_dir_name);
   if( rc < 0 )
   {
     FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
@@ -254,13 +288,17 @@ ptfsal_stat_by_parent_name(fsal_op_context_t * p_context,
   ccl_context_t ccl_context;
   char fsi_parent_dir_name[PATH_MAX];
   char fsi_fullpath[PATH_MAX];
-  ptfsal_handle_t * p_parent_dir_handle = (ptfsal_handle_t *)p_parentdir_handle;
+  ptfsal_handle_t * p_parent_dir_handle = 
+    (ptfsal_handle_t *)p_parentdir_handle;
   ptfsal_op_context_t * fsi_op_context     = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
-  stat_rc = fsi_get_name_from_handle(p_context, p_parent_dir_handle->data.handle.f_handle, fsi_parent_dir_name);
+  stat_rc = fsi_get_name_from_handle(p_context, 
+                                     p_parent_dir_handle->data.handle.f_handle, 
+                                     fsi_parent_dir_name);
   if( stat_rc < 0 )
   {
     FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
@@ -305,9 +343,12 @@ ptfsal_stat_by_handle(fsal_handle_t     * p_filehandle,
   char fsi_name[PATH_MAX];
 
   ccl_context_t ccl_context;
-  ptfsal_handle_t         * p_fsi_handle       = (ptfsal_handle_t *)p_filehandle;
-  ptfsal_op_context_t     * fsi_op_context     = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
+  ptfsal_handle_t         * p_fsi_handle       = 
+    (ptfsal_handle_t *)p_filehandle;
+  ptfsal_op_context_t     * fsi_op_context     = 
+    (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
 
   FSI_TRACE(FSI_DEBUG, "FSI - handle: \n");
   ptfsal_print_handle(p_fsi_handle->data.handle.f_handle);
@@ -315,10 +356,13 @@ ptfsal_stat_by_handle(fsal_handle_t     * p_filehandle,
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
   memset(fsi_name, 0, sizeof(fsi_name));
-  stat_rc =  fsi_get_name_from_handle(p_context, p_fsi_handle->data.handle.f_handle, fsi_name);
+  stat_rc =  fsi_get_name_from_handle(p_context, 
+                                      p_fsi_handle->data.handle.f_handle, 
+                                      fsi_name);
   FSI_TRACE(FSI_DEBUG, "FSI - rc = %d\n", stat_rc);
   if (stat_rc) {
-    FSI_TRACE(FSI_DEBUG, "Return rc %d from get name from handle %s", stat_rc, p_fsi_handle->data.handle.f_handle);
+    FSI_TRACE(FSI_DEBUG, "Return rc %d from get name from handle %s", 
+              stat_rc, p_fsi_handle->data.handle.f_handle);
     return stat_rc;
   }
   FSI_TRACE(FSI_DEBUG, "FSI - name = %s\n", fsi_name);
@@ -359,19 +403,24 @@ ptfsal_readdir(fsal_dir_t      * dir_desc,
 
   ccl_context_t ccl_context;
   ptfsal_dir_t            * p_dir_descriptor   = (ptfsal_dir_t *)dir_desc;
-  ptfsal_op_context_t     * fsi_op_context     = (ptfsal_op_context_t *)(&dir_desc->context);
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
+  ptfsal_op_context_t     * fsi_op_context     = 
+    (ptfsal_op_context_t *)(&dir_desc->context);
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
 
   dir_hnd_index     = p_dir_descriptor->fd;
   ptfsal_set_fsi_handle_data(fsi_op_context, &ccl_context);
 
-  struct fsi_struct_dir_t * dirp = (struct fsi_struct_dir_t *)&g_fsi_dir_handles.m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
+  struct fsi_struct_dir_t * dirp = 
+    (struct fsi_struct_dir_t *)
+    &g_fsi_dir_handles.m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
 
   readdir_rc = ccl_readdir(&ccl_context, dirp, sbuf);
   if (readdir_rc == 0) {
-    strcpy(fsi_dname, dirp->dname);
+    strncpy(fsi_dname, dirp->dname, FSAL_MAX_PATH_LEN);
+    fsi_dname[FSAL_MAX_PATH_LEN-1] = '\0';
   } else {
-    fsi_dname[0] = 0;
+    fsi_dname[0] = '\0';
   }
 
   return readdir_rc;
@@ -382,15 +431,20 @@ ptfsal_closedir(fsal_dir_t * dir_desc)
 {
   int dir_hnd_index;
   ccl_context_t ccl_context;
-  ptfsal_op_context_t     * fsi_op_context        = (ptfsal_op_context_t *)(&dir_desc->context);
-  ptfsal_export_context_t * fsi_export_context    = fsi_op_context->export_context;
-  ptfsal_dir_t            * ptfsal_dir_descriptor = (ptfsal_dir_t *)dir_desc;
+  ptfsal_op_context_t     * fsi_op_context        = 
+    (ptfsal_op_context_t *)(&dir_desc->context);
+  ptfsal_export_context_t * fsi_export_context    = 
+    fsi_op_context->export_context;
+  ptfsal_dir_t            * ptfsal_dir_descriptor = 
+    (ptfsal_dir_t *)dir_desc;
 
   ptfsal_set_fsi_handle_data(fsi_op_context, &ccl_context);
 
   dir_hnd_index = ptfsal_dir_descriptor->fd;
 
-  struct fsi_struct_dir_t * dirp = (struct fsi_struct_dir_t *)&g_fsi_dir_handles.m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
+  struct fsi_struct_dir_t * dirp = 
+    (struct fsi_struct_dir_t *)
+    &g_fsi_dir_handles.m_dir_handle[dir_hnd_index].m_fsi_struct_dir;
 
   return ccl_closedir(&ccl_context, dirp);
 }
@@ -412,7 +466,6 @@ ptfsal_fsync(fsal_file_t * p_file_descriptor)
   ccl_context.export_id = p_file_desc->export_id;
   ccl_context.uid       = p_file_desc->uid;
   ccl_context.gid       = p_file_desc->gid;
-  // strncpy(ccl_context.client_address, p_file_desc->client_address, 256);
 
   return ccl_fsync(&ccl_context,handle_index);
 }
@@ -426,9 +479,12 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
   int  open_rc, rc;
   char fsi_filename[PATH_MAX];
 
-  ptfsal_handle_t         * p_fsi_handle       = (ptfsal_handle_t *)p_object_handle;
-  ptfsal_op_context_t     * fsi_op_context     = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
+  ptfsal_handle_t         * p_fsi_handle       = 
+    (ptfsal_handle_t *)p_object_handle;
+  ptfsal_op_context_t     * fsi_op_context     = 
+    (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
   ccl_context_t ccl_context;
 
   FSI_TRACE(FSI_DEBUG, "Open by Handle:");
@@ -437,7 +493,9 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
   strcpy(fsi_filename,"");
-  rc = fsi_get_name_from_handle(p_context, (char *)&p_fsi_handle->data.handle.f_handle,(char *)&fsi_filename);
+  rc = fsi_get_name_from_handle(p_context, 
+                                (char *)&p_fsi_handle->data.handle.f_handle,
+                                (char *)&fsi_filename);
   if(rc < 0)
   {
     FSI_TRACE(FSI_DEBUG, "Handle to name failed rc=%d", rc);
@@ -460,15 +518,21 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
   char fsi_name[PATH_MAX];
   char fsi_parent_dir_name[PATH_MAX];
 
-  ptfsal_handle_t         * p_fsi_handle        = (ptfsal_handle_t *)p_object_handle;
-  ptfsal_handle_t         * p_fsi_parent_handle = (ptfsal_handle_t *)p_parent_directory_handle;
-  ptfsal_op_context_t     * fsi_op_context      = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context  = fsi_op_context->export_context;
+  ptfsal_handle_t         * p_fsi_handle        = 
+    (ptfsal_handle_t *)p_object_handle;
+  ptfsal_handle_t         * p_fsi_parent_handle = 
+    (ptfsal_handle_t *)p_parent_directory_handle;
+  ptfsal_op_context_t     * fsi_op_context      = 
+    (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context  = 
+    fsi_op_context->export_context;
   ccl_context_t ccl_context;
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
-  rc = fsi_get_name_from_handle(p_context, p_fsi_parent_handle->data.handle.f_handle, fsi_parent_dir_name);
+  rc = fsi_get_name_from_handle(p_context, 
+                                p_fsi_parent_handle->data.handle.f_handle, 
+                                fsi_parent_dir_name);
   if(rc < 0)
   {
     FSI_TRACE(FSI_DEBUG, "Handle to name failed rc=%d", rc);
@@ -488,7 +552,9 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
     memcpy(&fsal_path.path, &fsi_name, sizeof(fsi_name));
     ptfsal_name_to_handle(p_context, &fsal_path, p_object_handle);
     ccl_close(&ccl_context, rc);
-    fsi_cache_name_and_handle(p_context, (char *)&p_fsi_handle->data.handle.f_handle, fsi_name);
+    fsi_cache_name_and_handle(p_context, 
+                              (char *)&p_fsi_handle->data.handle.f_handle, 
+                              fsi_name);
   }
 
   return rc;
@@ -507,7 +573,6 @@ ptfsal_close(fsal_file_t * p_file_descriptor)
   ccl_context.export_id = p_descriptor->export_id;
   ccl_context.uid       = p_descriptor->uid;
   ccl_context.gid       = p_descriptor->gid;
-  // strncpy(ccl_context.client_address, p_descriptor->client_address, 256);
 
   handle_index = ((ptfsal_file_t *)p_file_descriptor)->fd;
   FSI_TRACE(FSI_DEBUG, "Handle index = %d\n", handle_index);
@@ -516,7 +581,9 @@ ptfsal_close(fsal_file_t * p_file_descriptor)
   }
 
   rc = ccl_close(&ccl_context, handle_index);
-
+  if (rc) {
+    FSI_TRACE(FSI_DEBUG, "ccl_close failed.\n");
+  }
   FSI_TRACE(FSI_DEBUG, "Close rc = %d\n", rc);
   return rc;
 }
@@ -525,7 +592,8 @@ int
 ptfsal_close_mount_root(fsal_export_context_t * p_export_context)
 {
   ccl_context_t ccl_context;
-  ptfsal_export_context_t * fsi_export_context = (ptfsal_export_context_t *)p_export_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    (ptfsal_export_context_t *)p_export_context;
 
   ccl_context.export_id = fsi_export_context->pt_export_id;
   ccl_context.uid       = 0;
@@ -553,13 +621,18 @@ ptfsal_unlink(fsal_op_context_t * p_context,
 {
   int rc;
   ccl_context_t ccl_context;
-  ptfsal_op_context_t     * fsi_op_context     = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
+  ptfsal_op_context_t     * fsi_op_context     = 
+    (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
   char fsi_parent_dir_name[PATH_MAX];
   char fsi_fullpath[PATH_MAX];
-  ptfsal_handle_t * p_parent_dir_handle = (ptfsal_handle_t *)p_parent_directory_handle;
+  ptfsal_handle_t * p_parent_dir_handle = 
+    (ptfsal_handle_t *)p_parent_directory_handle;
 
-  rc = fsi_get_name_from_handle(p_context, p_parent_dir_handle->data.handle.f_handle, fsi_parent_dir_name);
+  rc = fsi_get_name_from_handle(p_context, 
+                                p_parent_dir_handle->data.handle.f_handle, 
+                                fsi_parent_dir_name);
   if( rc < 0 )
   {
     FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
@@ -626,19 +699,26 @@ ptfsal_mkdir(fsal_handle_t     * p_parent_directory_handle,
   char fsi_parent_dir_name[PATH_MAX];
   char fsi_name[PATH_MAX];
 
-  ptfsal_handle_t         * p_fsi_parent_handle = (ptfsal_handle_t *)p_parent_directory_handle;
-  ptfsal_handle_t         * p_fsi_handle        = (ptfsal_handle_t *)p_object_handle;
-  ptfsal_op_context_t     * fsi_op_context      = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context  = fsi_op_context->export_context;
+  ptfsal_handle_t         * p_fsi_parent_handle = 
+    (ptfsal_handle_t *)p_parent_directory_handle;
+  ptfsal_handle_t         * p_fsi_handle        = 
+    (ptfsal_handle_t *)p_object_handle;
+  ptfsal_op_context_t     * fsi_op_context      = 
+    (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context  = 
+    fsi_op_context->export_context;
   ccl_context_t ccl_context;
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
   /* build new entry path */
-  rc = fsi_get_name_from_handle(p_context, p_fsi_parent_handle->data.handle.f_handle, fsi_parent_dir_name);
+  rc = fsi_get_name_from_handle(p_context, 
+                                p_fsi_parent_handle->data.handle.f_handle, 
+                                fsi_parent_dir_name);
   if(rc < 0)
   {
-    FSI_TRACE(FSI_DEBUG, "Handle to name failed for hanlde %s", p_fsi_parent_handle->data.handle.f_handle);
+    FSI_TRACE(FSI_DEBUG, "Handle to name failed for hanlde %s", 
+              p_fsi_parent_handle->data.handle.f_handle);
     return rc;
   }
   FSI_TRACE(FSI_DEBUG, "Parent dir name=%s\n", fsi_parent_dir_name);
@@ -655,7 +735,9 @@ ptfsal_mkdir(fsal_handle_t     * p_parent_directory_handle,
     memcpy(&fsal_path.path, &fsi_name, sizeof(fsi_name));
 
     ptfsal_name_to_handle(p_context, &fsal_path, p_object_handle);
-    fsi_cache_name_and_handle(p_context, (char *)&p_fsi_handle->data.handle.f_handle, fsi_name);
+    fsi_cache_name_and_handle(p_context, 
+                              (char *)&p_fsi_handle->data.handle.f_handle, 
+                              fsi_name);
   }
 
   return rc;
@@ -668,13 +750,17 @@ ptfsal_rmdir(fsal_op_context_t * p_context,
 {
   int rc;
   ccl_context_t ccl_context;
-  ptfsal_op_context_t     * fsi_op_context     = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
+  ptfsal_op_context_t     * fsi_op_context     = 
+    (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
   char fsi_parent_dir_name[PATH_MAX];
   char fsi_fullpath[PATH_MAX];
-  ptfsal_handle_t * p_parent_dir_handle = (ptfsal_handle_t *)p_parent_directory_handle;
+  ptfsal_handle_t * p_parent_dir_handle = 
+    (ptfsal_handle_t *)p_parent_directory_handle;
 
-  rc = fsi_get_name_from_handle(p_context, p_parent_dir_handle->data.handle.f_handle, fsi_parent_dir_name);
+  rc = fsi_get_name_from_handle(p_context, 
+    p_parent_dir_handle->data.handle.f_handle, fsi_parent_dir_name);
   if( rc < 0 )
   {
     FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
@@ -701,6 +787,7 @@ ptfsal_read(ptfsal_file_t * p_file_descriptor,
   size_t cur_size    = size;
   int    split_count = 0;
   size_t buf_offset  = 0;
+  int    rc;
 
   ccl_context_t ccl_context;
 
@@ -708,23 +795,31 @@ ptfsal_read(ptfsal_file_t * p_file_descriptor,
   ccl_context.export_id    = p_file_descriptor->export_id;
   ccl_context.uid          = p_file_descriptor->uid;
   ccl_context.gid          = p_file_descriptor->gid;
-  // strncpy(ccl_context.client_address, p_file_descriptor->client_address, 256);
 
   // we will use 256K i/o with vtl but allow larger i/o from NFS
-  FSI_TRACE(FSI_DEBUG, "FSI - [%4d] xmp_read off %ld size %ld\n", in_handle, offset, size);
-  while (cur_size > 262144) {
-    FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pread - split %d\n", in_handle, split_count);
-    ccl_pread(&ccl_context, &buf[buf_offset], 262144, cur_offset);
-    cur_size   -= 262144;
-    cur_offset += 262144;
-    buf_offset += 262144;
+  FSI_TRACE(FSI_DEBUG, "FSI - [%4d] xmp_read off %ld size %ld\n", 
+            in_handle, offset, size);
+  while (cur_size > IO_BUFFER_SIZE) {
+    FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pread - split %d\n", 
+              in_handle, split_count);
+    rc = ccl_pread(&ccl_context, &buf[buf_offset], IO_BUFFER_SIZE, cur_offset);
+    if (rc == -1) {
+      return rc;
+    }
+    cur_size   -= IO_BUFFER_SIZE;
+    cur_offset += IO_BUFFER_SIZE;
+    buf_offset += IO_BUFFER_SIZE;
     split_count++;
   }
 
   // call with remainder
   if (cur_size > 0) {
-    FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pread - split %d\n", in_handle, split_count);
-    ccl_pread(&ccl_context, &buf[buf_offset], cur_size, cur_offset);
+    FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pread - split %d\n", in_handle, 
+              split_count);
+    rc = ccl_pread(&ccl_context, &buf[buf_offset], cur_size, cur_offset);
+    if (rc == -1) {
+      return rc;
+    }
   }
 
   return size;
@@ -741,31 +836,42 @@ ptfsal_write(fsal_file_t * file_desc,
   size_t cur_size    = size;
   int    split_count = 0;
   size_t buf_offset  = 0;
+  int    rc;
 
-  ptfsal_file_t   * p_file_descriptor = (ptfsal_file_t *)file_desc;
-  ccl_context_t ccl_context;
+  ptfsal_file_t * p_file_descriptor = (ptfsal_file_t *)file_desc;
+  ccl_context_t   ccl_context;
 
   ccl_context.handle_index = p_file_descriptor->fd;
   ccl_context.export_id    = p_file_descriptor->export_id;
   ccl_context.uid          = p_file_descriptor->uid;
   ccl_context.gid          = p_file_descriptor->gid;
-  // strncpy(ccl_context.client_address, p_file_descriptor->client_address, 256);
 
   // we will use 256K i/o with vtl but allow larger i/o from NFS
-  FSI_TRACE(FSI_DEBUG, "FSI - [%4d] xmp_write off %ld size %ld\n", in_handle, offset, size);
-  while (cur_size > 262144) {
-    FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pwrite - split %d\n", in_handle, split_count);
-    ccl_pwrite(&ccl_context, in_handle, &buf[buf_offset], 262144, cur_offset);
-    cur_size   -= 262144;
-    cur_offset += 262144;
-    buf_offset += 262144;
+  FSI_TRACE(FSI_DEBUG, "FSI - [%4d] xmp_write off %ld size %ld\n", 
+            in_handle, offset, size);
+  while (cur_size > IO_BUFFER_SIZE) {
+    FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pwrite - split %d\n", 
+              in_handle, split_count);
+    rc = ccl_pwrite(&ccl_context, in_handle, &buf[buf_offset], IO_BUFFER_SIZE, 
+                    cur_offset);
+    if (rc == -1) {
+      return rc;
+    }
+    cur_size   -= IO_BUFFER_SIZE;
+    cur_offset += IO_BUFFER_SIZE;
+    buf_offset += IO_BUFFER_SIZE;
     split_count++;
   }
 
   // call with remainder
   if (cur_size > 0) {
-    FSI_TRACE(FSI_DEBUG, "FSI - [%4d]  pwrite - split %d\n", in_handle,  split_count);
-    ccl_pwrite(&ccl_context, in_handle, &buf[buf_offset], cur_size, cur_offset);
+    FSI_TRACE(FSI_DEBUG, "FSI - [%4d]  pwrite - split %d\n", in_handle,  
+              split_count);
+    rc = ccl_pwrite(&ccl_context, in_handle, &buf[buf_offset], cur_size, 
+                    cur_offset);
+    if (rc == -1) {
+      return rc;
+    }
   }
 
   return size;
@@ -817,18 +923,18 @@ ptfsal_readlink(fsal_handle_t     * p_linkhandle,
   int  rc;
   char fsi_name[PATH_MAX];
 
-  ccl_context_t ccl_context;
-  struct PersistentHandle pt_handler;
-  ptfsal_handle_t * p_fsi_handle = (ptfsal_handle_t *)p_linkhandle;
+  ccl_context_t             ccl_context;
+  struct PersistentHandle   pt_handler;
+  ptfsal_handle_t         * p_fsi_handle = (ptfsal_handle_t *)p_linkhandle;
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
-  memset(&pt_handler.handle, 0, sizeof(struct PersistentHandle));
-  memcpy(&pt_handler.handle, &p_fsi_handle->data.handle.f_handle, FSI_PERSISTENT_HANDLE_N_BYTES);
+  memcpy(&pt_handler.handle, &p_fsi_handle->data.handle.f_handle, 
+         sizeof(pt_handler.handle));
 
   FSI_TRACE(FSI_DEBUG, "Handle=%s", pt_handler.handle);
 
-  memset(fsi_name, 0, PATH_MAX);
+  memset(fsi_name, 0, sizeof(fsi_name));
   rc = ptfsal_handle_to_name(p_linkhandle, p_context, fsi_name);
   if (rc) {
     return rc;
@@ -886,7 +992,8 @@ ptfsal_name_to_handle(fsal_op_context_t * p_context,
     return rc;
   }
 
-  memcpy(&p_fsi_handle->data.handle.f_handle, &pt_handler.handle, FSI_PERSISTENT_HANDLE_N_BYTES);
+  memcpy(&p_fsi_handle->data.handle.f_handle, &pt_handler.handle, 
+         sizeof(p_fsi_handle->data.handle.f_handle));
 
   p_fsi_handle->data.handle.handle_size     = FSI_PERSISTENT_HANDLE_N_BYTES;
   p_fsi_handle->data.handle.handle_key_size = OPENHANDLE_KEY_LEN;
@@ -911,7 +1018,8 @@ ptfsal_handle_to_name(fsal_handle_t     * p_filehandle,
 
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
-  memcpy(&pt_handler.handle, &p_fsi_handle->data.handle.f_handle, FSI_PERSISTENT_HANDLE_N_BYTES);
+  memcpy(&pt_handler.handle, &p_fsi_handle->data.handle.f_handle, 
+         sizeof(pt_handler.handle));
   ptfsal_print_handle(pt_handler.handle);
 
   rc = ccl_handle_to_name(&ccl_context, &pt_handler, path);
@@ -980,25 +1088,29 @@ mode_t fsal_type2unix(int fsal_type)
       outMode = FSAL_TYPE_SOCK;
       break;
     default:
-      LogWarn(COMPONENT_FSAL, "Unknown fsal type: %d", fsal_type);
+      FSI_TRACE(FSI_ERR, "Unknown fsal type: %d", fsal_type);
     }
 
     return outMode;
 }
 
 // This function will fill in ccl_context_t
-void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context, ccl_context_t * ccl_context) 
+void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context, 
+                                ccl_context_t     * ccl_context) 
 {
-  ptfsal_op_context_t     * fsi_op_context     = (ptfsal_op_context_t *)p_context;
-  ptfsal_export_context_t * fsi_export_context = fsi_op_context->export_context;
-  char * client_ip;
+  ptfsal_op_context_t     * fsi_op_context     = 
+    (ptfsal_op_context_t *)p_context;
+  ptfsal_export_context_t * fsi_export_context = 
+    fsi_op_context->export_context;
 
   ccl_context->export_id = fsi_export_context->pt_export_id;
   ccl_context->uid       = fsi_op_context->credential.user;
   ccl_context->gid       = fsi_op_context->credential.group;
   ccl_context->export_path = fsi_export_context->mount_point;
-  FSI_TRACE(FSI_DEBUG, "Export Path = %s\n", fsi_export_context->mount_point);
-  //client_ip = inet_ntoa(((struct sockaddr_in *)(&(fsi_op_context->credential.caller_addr)))->sin_addr);
-  //strncpy(ccl_context->client_address, client_ip, 256);  
+  FSI_TRACE(FSI_DEBUG, "Export ID = %ld, uid = %ld, gid = %ld, Export Path = \
+            %s\n", fsi_export_context->pt_export_id, 
+            fsi_op_context->credential.user,
+            fsi_op_context->credential.group, 
+            fsi_export_context->mount_point);
 }
 
