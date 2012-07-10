@@ -46,8 +46,8 @@ struct prealloc_pool;
 #ifdef _NO_BUDDY_SYSTEM
 
 #ifdef _USE_JEMALLOC
+#include <stddef.h>
 #include <jemalloc/jemalloc.h>
-#include<jemalloc/jemalloc_defs.h>
 #else 
 #include <malloc.h>
 #endif

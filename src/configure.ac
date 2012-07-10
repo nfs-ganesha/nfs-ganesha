@@ -452,7 +452,6 @@ AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 
 if test "$enable_jemalloc" == "yes"; then
         AC_DEFINE(_USE_JEMALLOC, 1, [enable Jemalloc memory allocator])
-#        AM_CONDITIONAL(USE_JEMALOC, test "$enable_jemalloc" == "yes")
 fi
 
 
@@ -905,6 +904,12 @@ if [[ $FSAL == "HPSS" ]] ; then
 		AC_MSG_ERROR([FSAL_HPSS and MFSL_ASYNC are incompatible])
   fi
 fi
+
+if test "$enable_jemalloc" == "yes"; then
+        LDFLAGS="$LDFLAGS -ljemalloc"
+fi
+
+
 
 AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)

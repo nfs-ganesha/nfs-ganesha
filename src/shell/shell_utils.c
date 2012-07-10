@@ -71,7 +71,12 @@
 
 /* For mallinfo */
 #ifdef _LINUX
+#ifdef _USE_JEMALLOC
+#include <stddef.h>
+#include <jemalloc/jemalloc.h>
+#else 
 #include <malloc.h>
+#endif
 #endif
 
 #if( defined(  _APPLE ) && !defined( _FREEBSD )  )
@@ -299,6 +304,7 @@ int util_meminfo(int argc,      /* IN : number of args in argv */
   buddy_stats_t bstats;
 #endif
 
+#ifndef _USE_JEMALLOC
   /* standard mallinfo */
 
   struct mallinfo meminfo = mallinfo();
@@ -354,6 +360,7 @@ int util_meminfo(int argc,      /* IN : number of args in argv */
 
   fprintf(output, "\n");
 
+#endif
 #endif
 
 #endif                          /* _APPLE */
