@@ -47,11 +47,6 @@
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
 
-/* Handle object shared methods vector
- */
-
-static struct fsal_obj_ops obj_ops;
-
 /* helpers
  */
 
@@ -119,7 +114,9 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if(FSAL_IS_ERROR(st))
 		goto spcerr;
-	if(!fsal_obj_handle_init(&hdl->obj_handle, &obj_ops, exp_hdl,
+	if(!fsal_obj_handle_init(&hdl->obj_handle,
+				 exp_hdl->fsal->obj_ops,
+				 exp_hdl,
 	                         posix2fsal_type(stat->st_mode)))
                 return hdl;
 
@@ -1180,19 +1177,9 @@ out:
         ReturnCode(fsal_error, retval);
 }
 
-/* handle_is
- * test the type of this handle
- */
-
-static fsal_boolean_t handle_is(struct fsal_obj_handle *obj_hdl,
-                                object_file_type_t type)
-{
-        return obj_hdl->type == type;
-}
-
 /* compare
  * compare two handles.
- * return 0 for equal, -1 for anything else
+ * return TRUE for equal, FALSE for anything else
  */
 static fsal_boolean_t compare(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *other_hdl)
@@ -1432,49 +1419,35 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	ReturnCode(fsal_error, 0);
 }
 
-static struct fsal_obj_ops obj_ops = {
-	.get = fsal_handle_get,
-	.put = fsal_handle_put,
-	.release = release,
-	.lookup = lookup,
-	.readdir = read_dirents,
-	.create = create,
-	.mkdir = makedir,
-	.mknode = makenode,
-	.symlink = makesymlink,
-	.readlink = readsymlink,
-	.test_access = fsal_test_access,
-	.getattrs = getattrs,
-	.setattrs = setattrs,
-	.link = linkfile,
-	.rename = renamefile,
-	.unlink = file_unlink,
-	.truncate = file_truncate,
-	.open = vfs_open,
-	.status = vfs_status,
-	.read = vfs_read,
-	.write = vfs_write,
-	.commit = vfs_commit,
-	.lock_op = vfs_lock_op,
-	.share_op = vfs_share_op,
-	.close = vfs_close,
-	.rcp = vfs_rcp,
-	.getextattrs = vfs_getextattrs,
-	.list_ext_attrs = vfs_list_ext_attrs,
-	.getextattr_id_by_name = vfs_getextattr_id_by_name,
-	.getextattr_value_by_name = vfs_getextattr_value_by_name,
-	.getextattr_value_by_id = vfs_getextattr_value_by_id,
-	.setextattr_value = vfs_setextattr_value,
-	.setextattr_value_by_id = vfs_setextattr_value_by_id,
-	.getextattr_attrs = vfs_getextattr_attrs,
-	.remove_extattr_by_id = vfs_remove_extattr_by_id,
-	.remove_extattr_by_name = vfs_remove_extattr_by_name,
-	.handle_is = handle_is,
-	.lru_cleanup = vfs_lru_cleanup,
-	.compare = compare,
-	.handle_digest = handle_digest,
-	.handle_to_key = handle_to_key
-};
+void vfs_handle_ops_init(struct fsal_obj_ops *ops)
+{
+	ops->release = release;
+	ops->lookup = lookup;
+	ops->readdir = read_dirents;
+	ops->create = create;
+	ops->mkdir = makedir;
+	ops->mknode = makenode;
+	ops->symlink = makesymlink;
+	ops->readlink = readsymlink;
+	ops->test_access = fsal_test_access;
+	ops->getattrs = getattrs;
+	ops->setattrs = setattrs;
+	ops->link = linkfile;
+	ops->rename = renamefile;
+	ops->unlink = file_unlink;
+	ops->truncate = file_truncate;
+	ops->open = vfs_open;
+	ops->status = vfs_status;
+	ops->read = vfs_read;
+	ops->write = vfs_write;
+	ops->commit = vfs_commit;
+	ops->lock_op = vfs_lock_op;
+	ops->close = vfs_close;
+	ops->lru_cleanup = vfs_lru_cleanup;
+	ops->compare = compare;
+	ops->handle_digest = handle_digest;
+	ops->handle_to_key = handle_to_key;
+}
 
 /* export methods that create object handles
  */

@@ -45,6 +45,12 @@
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
 
+/** @TODO Philippe has implemented xattrs in the old api
+ *  do them here too.  right now, all these are unref'd
+ *  in the ops vector.  The text of these has been copied to
+ *  ../default_methods.c
+ */
+
 /* extended attributes management */
 fsal_status_t vfs_getextattrs(struct fsal_obj_handle *obj_hdl,
 			      fsal_extattrib_list_t * object_attributes)

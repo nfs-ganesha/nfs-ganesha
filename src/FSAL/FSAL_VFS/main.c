@@ -52,10 +52,6 @@ struct vfs_fsal_module {
 	 /* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
-/* I keep a static pointer to my instance
- * needed for ctor/dtor ops
- */
-static struct fsal_module *myself;
 const char myname[] = "VFS";
 
 /* filesystem info for VFS */
@@ -142,11 +138,6 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-static void dump_config(struct fsal_module *fsal_hdl, int log_fd)
-{
-}
-
-
 /* Internal VFS method linkage to export object
  */
 
@@ -162,40 +153,41 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
  * keep a private pointer to me in myself
  */
 
+/* my module private storage
+ */
+
+static struct vfs_fsal_module VFS;
+
+/* linkage to the exports and handle ops initializers
+ */
+
+void vfs_export_ops_init(struct export_ops *ops);
+void vfs_handle_ops_init(struct fsal_obj_ops *ops);
+
 MODULE_INIT void vfs_init(void) {
 	int retval;
-	struct vfs_fsal_module *vfs_me;
+	struct fsal_module *myself = &VFS.fsal;
 
-	vfs_me = malloc(sizeof(struct vfs_fsal_module)+sizeof(struct fsal_ops));
-	if(vfs_me== NULL) {
-		LogCrit(COMPONENT_FSAL,
-			 "vfs_init: VFS module cannot allocate space for itself");
-		return;
-	}
-	memset(vfs_me, 0, sizeof(struct vfs_fsal_module)+sizeof(struct fsal_ops));
-	myself = &vfs_me->fsal;
-	myself->ops = (struct fsal_ops *) &vfs_me[1];
-	retval = register_fsal(myself, myname);
+	retval = register_fsal(myself, myname,
+			       FSAL_MAJOR_VERSION,
+			       FSAL_MINOR_VERSION);
 	if(retval != 0) {
-		free(vfs_me);
-		myself = NULL;
+		fprintf(stderr, "VFS module failed to register");
 		return;
 	}
-	myself->ops->init_config = init_config;
-	myself->ops->dump_config = dump_config;
 	myself->ops->create_export = vfs_create_export;
-	init_fsal_parameters(&vfs_me->fsal_info);
+	myself->ops->init_config = init_config;
+	vfs_export_ops_init(myself->exp_ops);
+	vfs_handle_ops_init(myself->obj_ops);
+	init_fsal_parameters(&VFS.fsal_info);
 }
 
 MODULE_FINI void vfs_unload(void) {
-	struct vfs_fsal_module *vfs_me;
 	int retval;
 
-	retval = unregister_fsal(myself);
-	if(retval == 0 && myself != NULL) {
-		vfs_me = container_of(myself, struct vfs_fsal_module, fsal);
-		/* free my resources */
-		free(vfs_me);
-		myself = NULL;
+	retval = unregister_fsal(&VFS.fsal);
+	if(retval != 0) {
+		fprintf(stderr, "VFS module failed to unregister");
+		return;
 	}
 }

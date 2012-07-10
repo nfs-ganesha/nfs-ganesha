@@ -255,35 +255,6 @@ static fsal_accessmode_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 	return fsal_xattr_access_rights(info);
 }
 
-#ifdef _USE_FSALMDS
-static fattr4_fs_layout_types fs_layout_types(struct fsal_export *exp_hdl)
-{
-	struct fsal_staticfsinfo_t *info;
-
-	info = vfs_staticinfo(exp_hdl->fsal);
-	return fsal_fs_layout_types(info);
-}
-
-static fsal_size_t layout_blksize(struct fsal_export *exp_hdl)
-{
-	struct fsal_staticfsinfo_t *info;
-
-	info = vfs_staticinfo(exp_hdl->fsal);
-	return fsal_layout_blksize(info);
-}
-#endif
-
-/* check_quota
- * return happiness for now.
- */
-
-static fsal_status_t check_quota(struct fsal_export *exp_hdl,
-				 const char * filepath,
-				 int quota_type,
-				 struct req_op_context *req_ctx)
-{
-	ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
-}
 
 /* get_quota
  * return quotas for this export.
@@ -431,9 +402,9 @@ err:
  * is the option to also adjust the start pointer.
  */
 
-fsal_status_t extract_handle(struct fsal_export *exp_hdl,
-					fsal_digesttype_t in_type,
-					struct netbuf *fh_desc)
+static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
+				    fsal_digesttype_t in_type,
+				    struct netbuf *fh_desc)
 {
 	struct file_handle *hdl;
 	size_t fh_size;
@@ -461,46 +432,33 @@ fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* NOP methods
+/* vfs_export_ops_init
+ * overwrite vector entries with the methods that we support
  */
 
-fsal_status_t lookup_junction(struct fsal_export *exp_hdl,
-			      struct fsal_obj_handle *junction,
-			      struct fsal_obj_handle **handle)
+void vfs_export_ops_init(struct export_ops *ops)
 {
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);	
+	ops->release = release;
+	ops->lookup_path = vfs_lookup_path;
+	ops->extract_handle = extract_handle;
+	ops->create_handle = vfs_create_handle;
+	ops->get_fs_dynamic_info = get_dynamic_info;
+	ops->fs_supports = fs_supports;
+	ops->fs_maxfilesize = fs_maxfilesize;
+	ops->fs_maxread = fs_maxread;
+	ops->fs_maxwrite = fs_maxwrite;
+	ops->fs_maxlink = fs_maxlink;
+	ops->fs_maxnamelen = fs_maxnamelen;
+	ops->fs_maxpathlen = fs_maxpathlen;
+	ops->fs_fh_expire_type = fs_fh_expire_type;
+	ops->fs_lease_time = fs_lease_time;
+	ops->fs_acl_support = fs_acl_support;
+	ops->fs_supported_attrs = fs_supported_attrs;
+	ops->fs_umask = fs_umask;
+	ops->fs_xattr_access_rights = fs_xattr_access_rights;
+	ops->get_quota = get_quota;
+	ops->set_quota = set_quota;
 }
-
-static struct export_ops exp_ops = {
-	.get = fsal_export_get,
-	.put = fsal_export_put,
-	.release = release,
-	.lookup_path = vfs_lookup_path,
-	.lookup_junction = lookup_junction,
-	.extract_handle = extract_handle,
-	.create_handle = vfs_create_handle,
-	.get_fs_dynamic_info = get_dynamic_info,
-	.fs_supports = fs_supports,
-	.fs_maxfilesize = fs_maxfilesize,
-	.fs_maxread = fs_maxread,
-	.fs_maxwrite = fs_maxwrite,
-	.fs_maxlink = fs_maxlink,
-	.fs_maxnamelen = fs_maxnamelen,
-	.fs_maxpathlen = fs_maxpathlen,
-	.fs_fh_expire_type = fs_fh_expire_type,
-	.fs_lease_time = fs_lease_time,
-	.fs_acl_support = fs_acl_support,
-	.fs_supported_attrs = fs_supported_attrs,
-	.fs_umask = fs_umask,
-	.fs_xattr_access_rights = fs_xattr_access_rights,
-#ifdef _USE_FSALMDS
-	.fs_layout_types = fs_layout_types,
-	.layout_blksize = layout_blksize,
-#endif
-	.check_quota = check_quota,
-	.get_quota = get_quota,
-	.set_quota = set_quota
-};
 
 /* create_export
  * Create an export point and return a handle to it to be kept
@@ -549,7 +507,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	memset(myself, 0, sizeof(struct vfs_fsal_export));
 	myself->root_fd = -1;
 
-        fsal_export_init(&myself->export, &exp_ops, exp_entry);
+        fsal_export_init(&myself->export, fsal_hdl->exp_ops, exp_entry);
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
