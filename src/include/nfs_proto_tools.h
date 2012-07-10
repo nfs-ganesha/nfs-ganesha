@@ -80,29 +80,30 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   nfsstat2 * pstatus2,
                                   nfsstat3 * pstatus3,
                                   nfsstat4 * pstatus4,
-                                  fsal_attrib_list_t * pattr,
+                                  struct attrlist *pattr,
                                   exportlist_t *pexport,
                                   int *prc);
 
 void nfs_SetWccData(exportlist_t * pexport,
-                    fsal_attrib_list_t * pbefore_attr,
-                    fsal_attrib_list_t * pafter_attr, wcc_data * pwcc_data);
+                    const struct attrlist *pbefore_attr,
+                    const struct attrlist *pafter_attr, wcc_data * pwcc_data);
 
 int nfs_SetPostOpAttr(exportlist_t * pexport,
-                      const fsal_attrib_list_t * pfsal_attr,
+                      const struct attrlist *pfsal_attr,
                       post_op_attr * presult);
 
 int nfs_SetPostOpXAttrDir(exportlist_t * pexport,
-                          fsal_attrib_list_t * pfsal_attr, post_op_attr * presult);
+                          const struct attrlist  *pfsal_attr, post_op_attr * presult);
 
 int nfs_SetPostOpXAttrFile(exportlist_t * pexport,
-                           fsal_attrib_list_t * pfsal_attr, post_op_attr * presult);
+                           const struct attrlist *pfsal_attr, post_op_attr * presult);
 
-void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr);
+void nfs_SetPreOpAttr(const struct attrlist *pfsal_attr, pre_op_attr * pattr);
 
 int nfs_RetryableError(cache_inode_status_t cache_status);
 
-int nfs3_Sattr_To_FSAL_attr(fsal_attrib_list_t * pFSALattr, sattr3 * psattr);
+int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr,
+                            sattr3 *psattr);
 
 void nfs_SetFailedStatus(exportlist_t * pexport,
                          int version,
@@ -112,12 +113,13 @@ void nfs_SetFailedStatus(exportlist_t * pexport,
                          cache_entry_t * pentry0,
                          post_op_attr * ppost_op_attr,
                          cache_entry_t * pentry1,
-                         fsal_attrib_list_t * ppre_vattr1,
+                         const struct attrlist *ppre_vattr1,
                          wcc_data * pwcc_data1,
                          cache_entry_t * pentry2,
-                         fsal_attrib_list_t * ppre_vattr2, wcc_data * pwcc_data2);
+                         const struct attrlist *ppre_vattr2, wcc_data * pwcc_data2);
 
-fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr);
+uint32_t nfs_get_access_mask(uint32_t op,
+                             const struct attrlist *pattr);
 
 void nfs3_access_debug(char *label, uint32_t access);
 
@@ -139,5 +141,5 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 fsal_boolean_t nfs4_pnfs_supported(const exportlist_t *export);
 #endif /* _PNFS_MDS */
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
-                              cache_inode_file_type_t required_type);
+                              object_file_type_t required_type);
 #endif                          /* _NFS_PROTO_TOOLS_H */

@@ -195,14 +195,14 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   nfsstat2 * pstatus2,
                                   nfsstat3 * pstatus3,
                                   nfsstat4 * pstatus4,
-                                  fsal_attrib_list_t * pattr,
-				  exportlist_t *pexport,
+                                  struct attrlist * pattr,
+                                  exportlist_t *pexport,
                                   int *prc)
 {
   cache_inode_fsal_data_t fsal_data;
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   short exportid = 0;
   char fkey_data[NFS4_FHSIZE];
   struct netbuf fkey = {.maxlen = sizeof(fkey_data), .buf = fkey_data};
@@ -245,11 +245,11 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
     }
 
-  fsal_data.fh_desc.start = fkey.buf;
+  fsal_data.fh_desc.addr = fkey.buf;
   fsal_data.fh_desc.len = fkey.len;
 
   print_buff(COMPONENT_FILEHANDLE,
-             fsal_data.fh_desc.start,
+             fsal_data.fh_desc.addr,
              fsal_data.fh_desc.len);
 
   if((pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
@@ -315,7 +315,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
  *
  */
 int nfs_SetPostOpAttr(exportlist_t *pexport,
-                      const fsal_attrib_list_t *pfsal_attr,
+                      const struct attrlist *pfsal_attr,
                       post_op_attr *presult)
 {
   if(pfsal_attr == NULL)
@@ -349,7 +349,8 @@ int nfs_SetPostOpAttr(exportlist_t *pexport,
  * @return nothing (void function)
  *
  */
-void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr)
+void nfs_SetPreOpAttr(const struct attrlist *pfsal_attr,
+                      pre_op_attr *pattr)
 {
   if(pfsal_attr == NULL)
     {
@@ -383,9 +384,10 @@ void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr)
  * @return nothing (void function).
  *
  */
-void nfs_SetWccData(exportlist_t * pexport,
-                    fsal_attrib_list_t * pbefore_attr,
-                    fsal_attrib_list_t * pafter_attr, wcc_data * pwcc_data)
+void nfs_SetWccData(exportlist_t *pexport,
+                    const struct attrlist *pbefore_attr,
+                    const struct attrlist *pafter_attr,
+                    wcc_data *pwcc_data)
 {
   /* Build directory pre operation attributes */
   nfs_SetPreOpAttr(pbefore_attr, &(pwcc_data->before));
@@ -509,18 +511,19 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
   return FALSE;
 }
 
-void nfs_SetFailedStatus(exportlist_t * pexport,
+void nfs_SetFailedStatus(exportlist_t *pexport,
                          int version,
                          cache_inode_status_t status,
-                         nfsstat2 * pstatus2,
-                         nfsstat3 * pstatus3,
-                         cache_entry_t * pentry0,
-                         post_op_attr * ppost_op_attr,
-                         cache_entry_t * pentry1,
-                         fsal_attrib_list_t * ppre_vattr1,
-                         wcc_data * pwcc_data1,
+                         nfsstat2 *pstatus2,
+                         nfsstat3 *pstatus3,
+                         cache_entry_t *pentry0,
+                         post_op_attr *ppost_op_attr,
+                         cache_entry_t *pentry1,
+                         const struct attrlist *ppre_vattr1,
+                         wcc_data *pwcc_data1,
                          cache_entry_t * pentry2,
-                         fsal_attrib_list_t * ppre_vattr2, wcc_data * pwcc_data2)
+                         const struct attrlist *ppre_vattr2,
+                         wcc_data *pwcc_data2)
 {
   switch (version)
     {
@@ -799,7 +802,7 @@ void nfs4_Fattr_Free(fattr4 *fattr)
     }
 }
 
-static int fsal_time_to_settime4(const fsal_time_t *ts, char *attrval)
+static int fsal_time_to_settime4(const gsh_time_t *ts, char *attrval)
 {
   time_how4 how = htonl(SET_TO_CLIENT_TIME4);
   int64_t sec = nfs_htonl64((int64_t)ts->seconds);
@@ -916,7 +919,7 @@ int nfs4_Fattr_Fill(fattr4 *Fattr, uint_t cnt, uint32_t *attrvalslist,
  */
 
 int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
-                           fsal_attrib_list_t *pattr,
+                           const struct attrlist *pattr,
                            fattr4 *Fattr,
                            compound_data_t *data,
                            nfs_fh4 *objFH,
@@ -1082,10 +1085,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
               file_type = 0;
               op_attr_success = 0;      /* This was no success */
               break;
-	    case UNASSIGNED: /** @TODO this and junction are a bit bogus */
-	    case RECYCLED:   /* these are both file types and cache entry states */
-	      assert(0);     /* this is bad, so die. This needs to be fixed. */
-	      break;
             }                   /* switch( pattr->type ) */
 
           memcpy((char *)(attrvalsBuffer + LastOffset), &file_type, sizeof(fattr4_type));
@@ -1757,8 +1756,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
  * @return 0 if failed, 1 if successful.
  *
  */
-int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file attributes */
-                           sattr3 * psattr)     /* In: file attributes  */
+int nfs3_Sattr_To_FSALattr(struct attrlist *pFSAL_attr,
+                           sattr3 *psattr)
 {
   struct timeval t;
 
@@ -1773,7 +1772,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
                    "nfs3_Sattr_To_FSALattr: mode = %o",
                    psattr->mode.set_mode3_u.mode);
       pFSAL_attr->mode = unix2fsal_mode(psattr->mode.set_mode3_u.mode);
-      pFSAL_attr->mask |= FSAL_ATTR_MODE;
+      pFSAL_attr->mask |= ATTR_MODE;
     }
 
   if(psattr->uid.set_it == TRUE)
@@ -1782,7 +1781,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
                    "nfs3_Sattr_To_FSALattr: uid = %d",
                    psattr->uid.set_uid3_u.uid);
       pFSAL_attr->owner = psattr->uid.set_uid3_u.uid;
-      pFSAL_attr->mask |= FSAL_ATTR_OWNER;
+      pFSAL_attr->mask |= ATTR_OWNER;
     }
 
   if(psattr->gid.set_it == TRUE)
@@ -1791,7 +1790,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
                    "nfs3_Sattr_To_FSALattr: gid = %d",
                    psattr->gid.set_gid3_u.gid);
       pFSAL_attr->group = psattr->gid.set_gid3_u.gid;
-      pFSAL_attr->mask |= FSAL_ATTR_GROUP;
+      pFSAL_attr->mask |= ATTR_GROUP;
     }
 
   if(psattr->size.set_it == TRUE)
@@ -1799,9 +1798,11 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs3_Sattr_To_FSALattr: size = %lld",
                    psattr->size.set_size3_u.size);
-      pFSAL_attr->filesize = (fsal_size_t) psattr->size.set_size3_u.size;
-      /* Both FSAL_ATTR_SIZE and FSAL_ATTR_SPACEUSED are to be managed */
-      pFSAL_attr->mask |= FSAL_ATTR_SIZE;
+      pFSAL_attr->filesize = psattr->size.set_size3_u.size;
+      pFSAL_attr->spaceused = psattr->size.set_size3_u.size;
+      /* Both ATTR_SIZE and ATTR_SPACEUSED are to be managed */
+      pFSAL_attr->mask |= ATTR_SIZE;
+      pFSAL_attr->mask |= ATTR_SPACEUSED;
     }
 
   if(psattr->atime.set_it != DONT_CHANGE)
@@ -1823,7 +1824,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
           pFSAL_attr->atime.seconds = t.tv_sec;
           pFSAL_attr->atime.nseconds = 0;
         }
-      pFSAL_attr->mask |= FSAL_ATTR_ATIME;
+      pFSAL_attr->mask |= ATTR_ATIME;
     }
 
   if(psattr->mtime.set_it != DONT_CHANGE)
@@ -1843,28 +1844,27 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
           pFSAL_attr->mtime.seconds = t.tv_sec;
           pFSAL_attr->mtime.nseconds = 0 ;
         }
-      pFSAL_attr->mask |= FSAL_ATTR_MTIME;
+      pFSAL_attr->mask |= ATTR_MTIME;
     }
 
   return 1;
 }                               /* nfs3_Sattr_To_FSALattr */
 
 /**
- * 
  * nfs2_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv2 attributes.
- * 
+ *
  * Converts FSAL Attributes to NFSv2 attributes.
  *
  * @param pexport   [IN]  the related export entry.
  * @param FSAL_attr [IN]  pointer to FSAL attributes.
  * @param Fattr     [OUT] pointer to NFSv2 attributes. 
  * 
- * @return 1 if successful, 0 otherwise. 
+ * @return 1 if successful, 0 otherwise.
  *
  */
-int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related export entry */
-                           fsal_attrib_list_t * pFSAL_attr,     /* In: file attributes  */
-                           fattr2 * pFattr)     /* Out: file attributes */
+int nfs2_FSALattr_To_Fattr(exportlist_t *pexport,
+                           const struct attrlist *pFSAL_attr,
+                           fattr2 *pFattr)
 {
   /* Badly formed arguments */
   if(pFSAL_attr == NULL || pFattr == NULL)
@@ -1914,8 +1914,6 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
 
     case EXTENDED_ATTR:
     case FS_JUNCTION:
-    case UNASSIGNED:
-    case RECYCLED:
       pFattr->type = NFBAD;
     }
 
@@ -1928,7 +1926,9 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
   pFattr->fsid = (u_int) (pexport->filesystem_id.major & 0xFFFFFFFFLL);
 
   LogFullDebug(COMPONENT_NFSPROTO,
-               "nfs2_FSALattr_To_Fattr: fsid.major = %#llX (%llu), fsid.minor = %#llX (%llu), nfs2_fsid = %#X (%u)",
+               "nfs2_FSALattr_To_Fattr: fsid.major = %#"PRIX64" (%"PRIu64"), "
+               "fsid.minor = %#"PRIX64" (%"PRIu64"), "
+               "nfs2_fsid = %#X (%u)",
                pexport->filesystem_id.major, pexport->filesystem_id.major,
                pexport->filesystem_id.minor, pexport->filesystem_id.minor, pFattr->fsid,
                pFattr->fsid);
@@ -2378,22 +2378,14 @@ void nfs4_list_to_bitmap4(bitmap4 * b, uint_t plen, uint32_t * pval)
  *
  */
 void
-nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t *FSAL_attr,
-                              fsal_attrib_mask_t *mask,
+nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
+                              attrmask_t *mask,
                               fattr3 *Fattr)
 {
-        if ((FSAL_attr->mask & *mask) != *mask) {
-                LogEvent(COMPONENT_NFSPROTO,
-                         "%s: Caller wants 0x%llx, we only have 0x%llx "
-                         "- missing 0x%llx",
-                         __func__, *mask, FSAL_attr->mask,
-                         (FSAL_attr->mask & *mask) ^ *mask);
-        }
-
         *mask = 0;
 
-        if (FSAL_attr->mask & FSAL_ATTR_TYPE) {
-                *mask |= FSAL_ATTR_TYPE;
+        if (FSAL_attr->mask & ATTR_TYPE) {
+                *mask |= ATTR_TYPE;
                 switch (FSAL_attr->type) {
                 case FIFO_FILE:
                         Fattr->type = NF3FIFO;
@@ -2428,67 +2420,67 @@ nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t *FSAL_attr,
                         LogEvent(COMPONENT_NFSPROTO,
                                  "nfs3_FSALattr_To_Fattr: Bogus type = %d",
                                  FSAL_attr->type);
-                        *mask &= ~FSAL_ATTR_TYPE;
+                        *mask &= ~ATTR_TYPE;
                 }
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_MODE) {
+        if (FSAL_attr->mask & ATTR_MODE) {
                 Fattr->mode = fsal2unix_mode(FSAL_attr->mode);
-                *mask |= FSAL_ATTR_MODE;
+                *mask |= ATTR_MODE;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_NUMLINKS) {
+        if (FSAL_attr->mask & ATTR_NUMLINKS) {
                 Fattr->nlink = FSAL_attr->numlinks;
-                *mask |= FSAL_ATTR_NUMLINKS;
+                *mask |= ATTR_NUMLINKS;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_OWNER) {
+        if (FSAL_attr->mask & ATTR_OWNER) {
                 Fattr->uid = FSAL_attr->owner;
-                *mask |= FSAL_ATTR_OWNER;
+                *mask |= ATTR_OWNER;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_GROUP) {
+        if (FSAL_attr->mask & ATTR_GROUP) {
                 Fattr->gid = FSAL_attr->group;
-                *mask |= FSAL_ATTR_GROUP;
+                *mask |= ATTR_GROUP;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_SIZE) {
+        if (FSAL_attr->mask & ATTR_SIZE) {
                 Fattr->size = FSAL_attr->filesize;
-                *mask |= FSAL_ATTR_SIZE;
+                *mask |= ATTR_SIZE;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_SPACEUSED) {
+        if (FSAL_attr->mask & ATTR_SPACEUSED) {
                 Fattr->used = FSAL_attr->spaceused;
-                *mask |= FSAL_ATTR_SPACEUSED;
+                *mask |= ATTR_SPACEUSED;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_RAWDEV) {
+        if (FSAL_attr->mask & ATTR_RAWDEV) {
                 Fattr->rdev.specdata1 = FSAL_attr->rawdev.major;
                 Fattr->rdev.specdata2 = FSAL_attr->rawdev.minor;
-                *mask |= FSAL_ATTR_RAWDEV;
+                *mask |= ATTR_RAWDEV;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_FILEID) {
+        if (FSAL_attr->mask & ATTR_FILEID) {
                 Fattr->fileid = FSAL_attr->fileid;
-                *mask |= FSAL_ATTR_FILEID;
+                *mask |= ATTR_FILEID;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_ATIME) {
+        if (FSAL_attr->mask & ATTR_ATIME) {
                 Fattr->atime.seconds = FSAL_attr->atime.seconds;
                 Fattr->atime.nseconds = FSAL_attr->atime.nseconds;
-                *mask |= FSAL_ATTR_ATIME;
+                *mask |= ATTR_ATIME;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_MTIME) {
+        if (FSAL_attr->mask & ATTR_MTIME) {
                 Fattr->mtime.seconds = FSAL_attr->mtime.seconds;
                 Fattr->mtime.nseconds = FSAL_attr->mtime.nseconds;
-                *mask |= FSAL_ATTR_MTIME;
+                *mask |= ATTR_MTIME;
         }
 
-        if (FSAL_attr->mask & FSAL_ATTR_CTIME) {
+        if (FSAL_attr->mask & ATTR_CTIME) {
                 Fattr->ctime.seconds = FSAL_attr->ctime.seconds;
                 Fattr->ctime.nseconds = FSAL_attr->ctime.nseconds;
-                *mask |= FSAL_ATTR_CTIME;
+                *mask |= ATTR_CTIME;
         }
 }                         /* nfs3_FSALattr_To_PartialFattr */
 
@@ -2502,23 +2494,23 @@ nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t *FSAL_attr,
  *
  * @param pexport   [IN]  the related export entry
  * @param FSAL_attr [IN]  pointer to FSAL attributes.
- * @param Fattr     [OUT] pointer to NFSv3 attributes. 
+ * @param Fattr     [OUT] pointer to NFSv3 attributes.
  *
  * @return 1 if successful, 0 otherwise.
  *
  */
-int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related export entry */
-                           const fsal_attrib_list_t * FSAL_attr,      /* In: file attributes */
-                           fattr3 * Fattr)      /* Out: file attributes */
+int nfs3_FSALattr_To_Fattr(exportlist_t *pexport,
+                           const struct attrlist *FSAL_attr,
+                           fattr3 *Fattr)
 {
-        fsal_attrib_mask_t want, got;
+        attrmask_t want, got;
 
-        want = got = (FSAL_ATTR_TYPE      | FSAL_ATTR_MODE   |
-                      FSAL_ATTR_NUMLINKS  | FSAL_ATTR_OWNER  |
-                      FSAL_ATTR_GROUP     | FSAL_ATTR_SIZE   |
-                      FSAL_ATTR_SPACEUSED | FSAL_ATTR_RAWDEV |
-                      FSAL_ATTR_ATIME     | FSAL_ATTR_MTIME  |
-                      FSAL_ATTR_CTIME);
+        want = got = (ATTR_TYPE      | ATTR_MODE   |
+                      ATTR_NUMLINKS  | ATTR_OWNER  |
+                      ATTR_GROUP     | ATTR_SIZE   |
+                      ATTR_SPACEUSED | ATTR_RAWDEV |
+                      ATTR_ATIME     | ATTR_MTIME  |
+                      ATTR_CTIME);
 
   if(FSAL_attr == NULL || Fattr == NULL)
     {
@@ -2538,28 +2530,30 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
   /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
   Fattr->fsid = (nfs3_uint64) pexport->filesystem_id.major;
   LogFullDebug(COMPONENT_NFSPROTO,
-               "%s: fsid.major = %#llX (%llu), fsid.minor = %#llX (%llu), nfs3_fsid = %#llX (%llu)",
-               __func__,
+               "fsid.major = %#"PRIX64" (%"PRIu64
+               "), fsid.minor = %#"PRIX64" (%"PRIu64
+               "), nfs3_fsid = %#"PRIX64" (%"PRIu64")",
                pexport->filesystem_id.major, pexport->filesystem_id.major,
-               pexport->filesystem_id.minor, pexport->filesystem_id.minor, Fattr->fsid,
-               Fattr->fsid);
+               pexport->filesystem_id.minor,
+               pexport->filesystem_id.minor,
+               (uint64_t) Fattr->fsid,
+               (uint64_t) Fattr->fsid);
   return 1;
 }
 
 /**
- * 
  * nfs2_Sattr_To_FSALattr: Converts NFSv2 Set Attributes to FSAL attributes.
- * 
+ *
  * Converts NFSv2 Set Attributes to FSAL attributes.
  *
  * @param FSAL_attr [IN]  pointer to FSAL attributes.
- * @param Fattr     [OUT] pointer to NFSv2 set attributes. 
- * 
- * @return 1 if successful, 0 otherwise. 
+ * @param Fattr     [OUT] pointer to NFSv2 set attributes.
+ *
+ * @return 1 if successful, 0 otherwise.
  *
  */
-int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file attributes */
-                           sattr2 * Fattr)      /* In: file attributes */
+int nfs2_Sattr_To_FSALattr(struct attrlist *pFSAL_attr,
+                           sattr2 *Fattr)
 {
   struct timeval t;
 
@@ -2568,28 +2562,28 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
   if(Fattr->mode != (unsigned int)-1)
     {
       pFSAL_attr->mode = unix2fsal_mode(Fattr->mode);
-      FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_MODE);
+      FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MODE);
     }
 
   if(Fattr->uid != (unsigned int)-1)
     {
       pFSAL_attr->owner = Fattr->uid;
-      FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_OWNER);
+      FSAL_SET_MASK(pFSAL_attr->mask, ATTR_OWNER);
     }
 
   if(Fattr->gid != (unsigned int)-1)
     {
       pFSAL_attr->group = Fattr->gid;
-      FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_GROUP);
+      FSAL_SET_MASK(pFSAL_attr->mask, ATTR_GROUP);
     }
 
   if(Fattr->size != (unsigned int)-1)
     {
-      /* Both FSAL_ATTR_SIZE and FSAL_ATTR_SPACEUSED are to be managed */
-      pFSAL_attr->filesize = (fsal_size_t) Fattr->size;
-      pFSAL_attr->spaceused = (fsal_size_t) Fattr->size;
-      FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_SIZE);
-      FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_SPACEUSED);
+      /* Both ATTR_SIZE and ATTR_SPACEUSED are to be managed */
+      pFSAL_attr->filesize = Fattr->size;
+      pFSAL_attr->spaceused = Fattr->size;
+      FSAL_SET_MASK(pFSAL_attr->mask, ATTR_SIZE);
+      FSAL_SET_MASK(pFSAL_attr->mask, ATTR_SPACEUSED);
     }
 
   /* if mtime.useconds == 1 millions,
@@ -2602,8 +2596,8 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
       pFSAL_attr->atime.seconds = pFSAL_attr->mtime.seconds = t.tv_sec;
       pFSAL_attr->atime.nseconds = pFSAL_attr->mtime.nseconds = 0 ;
-      FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_ATIME);
-      FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_MTIME);
+      FSAL_SET_MASK(pFSAL_attr->mask, ATTR_ATIME);
+      FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MTIME);
     }
   else
     {
@@ -2618,7 +2612,7 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
           else
             pFSAL_attr->atime.nseconds = 0;     /* ignored */
 
-          FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_ATIME);
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_ATIME);
         }
 
       /* set mtime to client */
@@ -2632,7 +2626,7 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
           else
             pFSAL_attr->mtime.nseconds = 0;     /* ignored */
 
-          FSAL_SET_MASK(pFSAL_attr->mask, FSAL_ATTR_MTIME);
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MTIME);
         }
     }
 
@@ -3210,7 +3204,8 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
+int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap,
+                                  attrmask_t *attrmask)
 {
   unsigned int offset = 0;
   unsigned int i = 0;
@@ -3224,61 +3219,61 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
             switch (val)
               {
               case FATTR4_TYPE:
-                *attrmask |= FSAL_ATTR_TYPE;
+                *attrmask |= ATTR_TYPE;
                 break;
               case FATTR4_FILEID:
-                *attrmask |= FSAL_ATTR_FILEID;
+                *attrmask |= ATTR_FILEID;
                 break;
               case FATTR4_FSID:
-                *attrmask |= FSAL_ATTR_FSID;
+                *attrmask |= ATTR_FSID;
                 break;
               case FATTR4_NUMLINKS:
-                *attrmask |= FSAL_ATTR_NUMLINKS;
+                *attrmask |= ATTR_NUMLINKS;
                 break;
               case FATTR4_SIZE:
-                *attrmask |= FSAL_ATTR_SIZE;
+                *attrmask |= ATTR_SIZE;
                 break;
               case FATTR4_MODE:
-                *attrmask |= FSAL_ATTR_MODE;
+                *attrmask |= ATTR_MODE;
                 break;
               case FATTR4_OWNER:
-                *attrmask |= FSAL_ATTR_OWNER;
+                *attrmask |= ATTR_OWNER;
                 break;
               case FATTR4_OWNER_GROUP:
-                *attrmask |= FSAL_ATTR_GROUP;
+                *attrmask |= ATTR_GROUP;
                 break;
               case FATTR4_CHANGE:
-                *attrmask |= FSAL_ATTR_CHGTIME;
+                *attrmask |= ATTR_CHGTIME;
                 break;
               case FATTR4_RAWDEV:
-                *attrmask |= FSAL_ATTR_RAWDEV;
+                *attrmask |= ATTR_RAWDEV;
                 break;
               case FATTR4_SPACE_USED:
-                *attrmask |= FSAL_ATTR_SPACEUSED;
+                *attrmask |= ATTR_SPACEUSED;
                 break;
               case FATTR4_TIME_ACCESS:
-                *attrmask |= FSAL_ATTR_ATIME;
+                *attrmask |= ATTR_ATIME;
                 break;
               case FATTR4_TIME_METADATA:
-                *attrmask |= FSAL_ATTR_CTIME;
+                *attrmask |= ATTR_CTIME;
                 break;
               case FATTR4_TIME_MODIFY:
-                *attrmask |= FSAL_ATTR_MTIME;
+                *attrmask |= ATTR_MTIME;
                 break;
               case FATTR4_TIME_ACCESS_SET:
-                *attrmask |= FSAL_ATTR_ATIME;
+                *attrmask |= ATTR_ATIME;
                 break;
               case FATTR4_TIME_MODIFY_SET:
-                *attrmask |= FSAL_ATTR_MTIME;
+                *attrmask |= ATTR_MTIME;
                 break;
               case FATTR4_FILEHANDLE:
                 LogFullDebug(COMPONENT_NFS_V4,
                              "Filehandle attribute requested on readdir!");
-                /* pFSAL_attr->asked_attributes |= FSAL_ATTR_FILEHANDLE; */
+                /* pFSAL_attr->asked_attributes |= ATTR_FILEHANDLE; */
                 break;
 #ifdef _USE_NFS4_ACL
               case FATTR4_ACL:
-                *attrmask |= FSAL_ATTR_ACL;
+                *attrmask |= ATTR_ACL;
                 break;
 #endif                          /* _USE_NFS4_ACL */
               }
@@ -3288,7 +3283,8 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
   return NFS4_OK;
 }                               /* nfs4_Fattr_To_FSAL_attr */
 
-static int nfstime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
+static int nfstime4_to_fsal_time(gsh_time_t *ts,
+                                 const char *attrval)
 {
   int LastOffset = 0;
   uint64_t seconds;
@@ -3306,7 +3302,8 @@ static int nfstime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
   return LastOffset; 
 }
 
-static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
+static int settime4_to_fsal_time(gsh_time_t *ts,
+                                 const char *attrval)
 {
   time_how4 how;
   int LastOffset = 0;
@@ -3344,7 +3341,8 @@ static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4 *hdl4)
+int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
+                        fattr4 *Fattr, nfs_fh4 *hdl4)
 {
   u_int LastOffset = 0;
   unsigned int i = 0;
@@ -3383,7 +3381,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
                "   nfs4_bitmap4_to_list ====> attrmasklen = %d", attrmasklen);
 
   /* Init */
-  pFSAL_attr->mask = 0;
+  FSAL_CLEAR_MASK(pFSAL_attr->mask);
 
   for(i = 0; i < attrmasklen; i++)
     {
@@ -3445,31 +3443,31 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
               return NFS4ERR_BADXDR;
             }                   /* switch( pattr->type ) */
 
-          pFSAL_attr->mask |= FSAL_ATTR_TYPE;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_TYPE);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           break;
 
         case FATTR4_FILEID:
           /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem"
            * I use hpss_GetObjId to extract this information from the Name Server's handle */
-          memcpy((char *)&attr_fileid,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+          memcpy(&attr_fileid,
+                 (Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_fileid));
           pFSAL_attr->fileid = nfs_ntohl64(attr_fileid);
 
-          pFSAL_attr->mask |= FSAL_ATTR_FILEID;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_FILEID);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
 
         case FATTR4_FSID:
-          memcpy((char *)&attr_fsid,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+          memcpy(&attr_fsid,
+                 (Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_fsid));
           pFSAL_attr->fsid.major = nfs_ntohl64(attr_fsid.major);
           pFSAL_attr->fsid.minor = nfs_ntohl64(attr_fsid.minor);
 
-          pFSAL_attr->mask |= FSAL_ATTR_FSID;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_FSID);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
@@ -3480,7 +3478,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
                  sizeof(fattr4_numlinks));
           pFSAL_attr->numlinks = ntohl(attr_numlinks);
 
-          pFSAL_attr->mask |= FSAL_ATTR_NUMLINKS;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_NUMLINKS);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
@@ -3493,21 +3491,21 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
           /* Do not forget the XDR marshalling for the fattr4 stuff */
           pFSAL_attr->filesize = nfs_ntohl64(attr_size);
 
-          pFSAL_attr->mask |= FSAL_ATTR_SIZE;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_SIZE);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           LogFullDebug(COMPONENT_NFS_V4,
                        "      SATTR: size seen %zu", (size_t)pFSAL_attr->filesize);
           break;
 
         case FATTR4_MODE:
-          memcpy((char *)&(pFSAL_attr->mode),
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+          memcpy(&(pFSAL_attr->mode),
+                 (Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_mode));
 
           /* Do not forget the XDR marshalling for the fattr4 stuff */
           pFSAL_attr->mode = ntohl(pFSAL_attr->mode);
 
-          pFSAL_attr->mask |= FSAL_ATTR_MODE;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MODE);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           LogFullDebug(COMPONENT_NFS_V4,
                        "      SATTR: We see the mode 0%o", pFSAL_attr->mode);
@@ -3532,12 +3530,12 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
           utf8buffer.utf8string_len = strlen(buffer);
 
           utf82uid(&utf8buffer, &(pFSAL_attr->owner));
-          pFSAL_attr->mask |= FSAL_ATTR_OWNER;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_OWNER);
 
           LogFullDebug(COMPONENT_NFS_V4,
                        "      SATTR: We see the owner %s len = %d", buffer, len);
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner %d", pFSAL_attr->owner);
+                       "      SATTR: We see the owner %"PRIu64, pFSAL_attr->owner);
           break;
 
         case FATTR4_OWNER_GROUP:
@@ -3559,25 +3557,25 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
           utf8buffer.utf8string_len = strlen(buffer);
 
           utf82gid(&utf8buffer, &(pFSAL_attr->group));
-          pFSAL_attr->mask |= FSAL_ATTR_GROUP;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_GROUP);
 
           LogFullDebug(COMPONENT_NFS_V4,
                        "      SATTR: We see the owner_group %s len = %d", buffer, len);
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner_group %d", pFSAL_attr->group);
+                       "      SATTR: We see the owner_group %"PRIu64, pFSAL_attr->group);
           break;
 
         case FATTR4_CHANGE:
-          memcpy((char *)&attr_change,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+          memcpy(&attr_change,
+                 (Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_change));
           pFSAL_attr->chgtime.seconds = (uint32_t) nfs_ntohl64(attr_change);
           pFSAL_attr->chgtime.nseconds = 0;
 
           pFSAL_attr->change =  nfs_ntohl64(attr_change);
 
-          pFSAL_attr->mask |= FSAL_ATTR_CHGTIME;
-          pFSAL_attr->mask |= FSAL_ATTR_CHANGE;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_CHGTIME);
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_CHANGE);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
@@ -3589,7 +3587,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
           pFSAL_attr->rawdev.major = (uint32_t) nfs_ntohl64(attr_rawdev.specdata1);
           pFSAL_attr->rawdev.minor = (uint32_t) nfs_ntohl64(attr_rawdev.specdata2);
 
-          pFSAL_attr->mask |= FSAL_ATTR_RAWDEV;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_RAWDEV);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
@@ -3600,7 +3598,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
                  sizeof(fattr4_space_used));
           pFSAL_attr->spaceused = (uint32_t) nfs_ntohl64(attr_space_used);
 
-          pFSAL_attr->mask |= FSAL_ATTR_SPACEUSED;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_SPACEUSED);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
@@ -3608,31 +3606,31 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
         case FATTR4_TIME_ACCESS:       /* Used only by FSAL_PROXY to reverse convert */
           LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->atime, 
                                               (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
-          pFSAL_attr->mask |= FSAL_ATTR_ATIME;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_ATIME);
           break;
 
         case FATTR4_TIME_METADATA:     /* Used only by FSAL_PROXY to reverse convert */
-          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->ctime, 
+          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->ctime,
                                               (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
-          pFSAL_attr->mask |= FSAL_ATTR_CTIME;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_CTIME);
           break;
 
         case FATTR4_TIME_MODIFY:       /* Used only by FSAL_PROXY to reverse convert */
-          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->mtime, 
+          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->mtime,
                                               (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
-          pFSAL_attr->mask |= FSAL_ATTR_MTIME;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MTIME);
           break;
 
         case FATTR4_TIME_ACCESS_SET:
           LastOffset += settime4_to_fsal_time(&pFSAL_attr->atime,
                                               Fattr->attr_vals.attrlist4_val + LastOffset);
-          pFSAL_attr->mask |= FSAL_ATTR_ATIME;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_ATIME);
           break;
 
         case FATTR4_TIME_MODIFY_SET:
           LastOffset += settime4_to_fsal_time(&pFSAL_attr->mtime,
                                               Fattr->attr_vals.attrlist4_val + LastOffset);
-          pFSAL_attr->mask |= FSAL_ATTR_MTIME;
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MTIME);
 
           break;
 
@@ -3665,7 +3663,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
           if((rc = nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset)) != NFS4_OK)
             return rc;
 
-          pFSAL_attr->asked_attributes |= FSAL_ATTR_ACL;
+          pFSAL_attr->asked_attributes |= ATTR_ACL;
           break;
 #endif                          /* _USE_NFS4_ACL */
 
@@ -3689,12 +3687,12 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
  * Converts NFSv4 attributes buffer to a FSAL attributes structure.
  *
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
- * @param Fattr      [IN] pointer to NFSv4 attributes. 
+ * @param Fattr      [IN] pointer to NFSv4 attributes.
  * 
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
+int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr, fattr4 *Fattr)
 {
   return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL);
 }
@@ -4208,7 +4206,8 @@ int nfs4_MakeCred(compound_data_t * data)
 
 /* Create access mask based on given access operation. Both mode and ace4
  * mask are encoded. */
-fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr)
+fsal_accessflags_t nfs_get_access_mask(uint32_t op,
+                                       const struct attrlist *pattr)
 {
   fsal_accessflags_t access_mask = 0;
 
@@ -4216,14 +4215,14 @@ fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr)
     {
       case ACCESS3_READ:
         access_mask |= FSAL_MODE_MASK_SET(FSAL_R_OK);
-        if(IS_FSAL_DIR(pattr->type))
+        if(pattr->type == DIRECTORY)
           access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
         else
           access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA);
       break;
 
       case ACCESS3_LOOKUP:
-        if(!IS_FSAL_DIR(pattr->type))
+        if(pattr->type != DIRECTORY)
           break;
         access_mask |= FSAL_MODE_MASK_SET(FSAL_X_OK);
         access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
@@ -4231,7 +4230,7 @@ fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr)
 
       case ACCESS3_MODIFY:
         access_mask |= FSAL_MODE_MASK_SET(FSAL_W_OK);
-        if(IS_FSAL_DIR(pattr->type))
+        if(pattr->type == DIRECTORY)
           access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
         else
           access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
@@ -4239,7 +4238,7 @@ fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr)
 
       case ACCESS3_EXTEND:
         access_mask |= FSAL_MODE_MASK_SET(FSAL_W_OK);
-        if(IS_FSAL_DIR(pattr->type))
+        if(pattr->type == DIRECTORY)
           access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
                                             FSAL_ACE_PERM_ADD_SUBDIRECTORY);
         else
@@ -4247,14 +4246,14 @@ fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr)
       break;
 
       case ACCESS3_DELETE:
-        if(!IS_FSAL_DIR(pattr->type))
+        if(pattr->type != DIRECTORY)
           break;
         access_mask |= FSAL_MODE_MASK_SET(FSAL_W_OK);
         access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
       break;
 
       case ACCESS3_EXECUTE:
-        if(IS_FSAL_DIR(pattr->type))
+        if(pattr->type == DIRECTORY)
           break;
         access_mask |= FSAL_MODE_MASK_SET(FSAL_X_OK);
         access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE);
@@ -4321,7 +4320,7 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 
 nfsstat4
 nfs4_sanity_check_FH(compound_data_t *data,
-                     cache_inode_file_type_t required_type)
+                     object_file_type_t required_type)
 {
         /* If there is no FH */
         if (nfs4_Is_Fh_Empty(&(data->currentFH))) {

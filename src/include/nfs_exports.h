@@ -186,15 +186,15 @@ typedef struct exportlist__
   bool_t use_ganesha_write_buffer;
   bool_t use_commit;
 
-  fsal_size_t MaxRead;          /* Max Read for this entry                           */
-  fsal_size_t MaxWrite;         /* Max Write for this entry                          */
-  fsal_size_t PrefRead;         /* Preferred Read size                               */
-  fsal_size_t PrefWrite;        /* Preferred Write size                              */
-  fsal_size_t PrefReaddir;      /* Preferred Readdir size                            */
-  fsal_off_t MaxOffsetWrite;    /* Maximum Offset allowed for write                  */
-  fsal_off_t MaxOffsetRead;     /* Maximum Offset allowed for read                   */
-  fsal_off_t MaxCacheSize;      /* Maximum Cache Size allowed                        */
-  unsigned int UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
+  uint32_t MaxRead;          /* Max Read for this entry                           */
+  uint32_t MaxWrite;         /* Max Write for this entry                          */
+  uint32_t PrefRead;         /* Preferred Read size                               */
+  uint32_t PrefWrite;        /* Preferred Write size                              */
+  uint32_t PrefReaddir;      /* Preferred Readdir size                            */
+  uint64_t MaxOffsetWrite;    /* Maximum Offset allowed for write                  */
+  uint64_t MaxOffsetRead;     /* Maximum Offset allowed for read                   */
+  uint64_t MaxCacheSize;      /* Maximum Cache Size allowed                        */
+  bool_t UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
   struct exportlist__ *next;    /* next entry                                        */
   struct fsal_export *export_hdl;	/* handle into our FSAL */
@@ -350,8 +350,8 @@ typedef struct compoud_data
   unsigned int minorversion; /*< NFSv4 minor version */
   cache_entry_t *current_entry; /*< Cache entry for current filehandle */
   cache_entry_t *saved_entry; /*< Cache entry for saved filehandle */
-  cache_inode_file_type_t current_filetype; /*< File type of current entry */
-  cache_inode_file_type_t saved_filetype; /*< File type of saved entry */
+  object_file_type_t current_filetype; /*< File type of current entry */
+  object_file_type_t saved_filetype; /*< File type of saved entry */
   struct req_op_context *req_ctx; /* the context including related, mapped creds */
   exportlist_t *pexport; /*< Export entry related to the request */
   exportlist_t *pfullexportlist; /*< The whole exportlist */

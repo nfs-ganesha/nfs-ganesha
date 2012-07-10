@@ -82,20 +82,19 @@
 
 int nfs_Rmdir(nfs_arg_t *parg,
               exportlist_t *pexport,
-	      struct req_op_context *req_ctx,
+              struct req_op_context *req_ctx,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres)
 {
   cache_entry_t *parent_pentry = NULL;
   cache_entry_t *pentry_child = NULL;
-  fsal_attrib_list_t pre_parent_attr;
-  fsal_attrib_list_t parent_attr;
-  fsal_attrib_list_t *ppre_attr;
-  fsal_attrib_list_t pentry_child_attr;
+  struct attrlist pre_parent_attr;
+  struct attrlist parent_attr;
+  struct attrlist *ppre_attr;
+  struct attrlist pentry_child_attr;
   cache_inode_status_t cache_status;
-  fsal_name_t name;
-  char *dir_name = NULL;
+  char *name = NULL;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -105,10 +104,10 @@ int nfs_Rmdir(nfs_arg_t *parg,
       switch (preq->rq_vers)
         {
         case NFS_V2:
-          dir_name = parg->arg_rmdir2.name;
+          name = parg->arg_rmdir2.name;
           break;
         case NFS_V3:
-          dir_name = parg->arg_rmdir3.object.name;
+          name = parg->arg_rmdir3.object.name;
           break;
         }
 
@@ -119,7 +118,7 @@ int nfs_Rmdir(nfs_arg_t *parg,
                        str);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Rmdir handle: %s name: %s",
-               str, dir_name);
+               str, name);
     }
 
   if(preq->rq_vers == NFS_V3)
@@ -171,84 +170,77 @@ int nfs_Rmdir(nfs_arg_t *parg,
   switch (preq->rq_vers)
     {
     case NFS_V2:
-      dir_name = parg->arg_rmdir2.name;
+      name = parg->arg_rmdir2.name;
       break;
 
     case NFS_V3:
-      dir_name = parg->arg_rmdir3.object.name;
+      name = parg->arg_rmdir3.object.name;
       break;
 
     }
 
-  //if(dir_name == NULL || strlen(dir_name) == 0)
-  if(dir_name == NULL || *dir_name == '\0' )
+  if(name == NULL || *name == '\0' )
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;      /* for lack of better... */
     }
   else
     {
-      if((cache_status = cache_inode_error_convert(FSAL_str2name(dir_name,
-                                                                 FSAL_MAX_NAME_LEN,
-                                                                 &name))) ==
-         CACHE_INODE_SUCCESS)
+      /*
+       * Lookup to the entry to be removed to check if it is a directory
+       */
+      if((pentry_child = cache_inode_lookup(parent_pentry,
+                                            name,
+                                            &pentry_child_attr,
+                                            req_ctx,
+                                            &cache_status)) != NULL)
         {
           /*
-           * Lookup to the entry to be removed to check if it is a directory
+           * Sanity check: make sure we are about to remove a directory
            */
-          if((pentry_child = cache_inode_lookup(parent_pentry,
-                                                &name,
-                                                &pentry_child_attr,
-                                                req_ctx,
-                                                &cache_status)) != NULL)
+          if(pentry_child_attr.type != DIRECTORY)
             {
-              /*
-               * Sanity check: make sure we are about to remove a directory
-               */
-              if(pentry_child_attr.type != DIRECTORY)
+              switch (preq->rq_vers)
                 {
-                  switch (preq->rq_vers)
-                    {
-                    case NFS_V2:
-                      pres->res_stat2 = NFSERR_NOTDIR;
-                      break;
+                case NFS_V2:
+                  pres->res_stat2 = NFSERR_NOTDIR;
+                  break;
 
-                    case NFS_V3:
-                      pres->res_rmdir3.status = NFS3ERR_NOTDIR;
-                      break;
-                    }
-                  rc = NFS_REQ_OK;
-                  goto out;
+                case NFS_V3:
+                  pres->res_rmdir3.status = NFS3ERR_NOTDIR;
+                  break;
                 }
+              rc = NFS_REQ_OK;
+              goto out;
+            }
 
-              /*
-               * Remove the directory.  Use NULL vnode for the directory
-               * that's being removed because we know the directory's name. 
-               */
+          /*
+           * Remove the directory.  Use NULL vnode for the directory
+           * that's being removed because we know the directory's name.
+           */
 
-              if(cache_inode_remove(parent_pentry,
-                                    &name,
-                                    &parent_attr,
-                                    req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
+          if(cache_inode_remove(parent_pentry,
+                                name,
+                                &parent_attr,
+                                req_ctx, &cache_status) == CACHE_INODE_SUCCESS)
+            {
+              switch (preq->rq_vers)
                 {
-                  switch (preq->rq_vers)
-                    {
-                    case NFS_V2:
-                      pres->res_stat2 = NFS_OK;
-                      break;
+                case NFS_V2:
+                  pres->res_stat2 = NFS_OK;
+                  break;
 
-                    case NFS_V3:
-                      /* Build Weak Cache Coherency data */
-                      nfs_SetWccData(pexport,
-                                     ppre_attr,
-                                     &parent_attr,
-                                     &(pres->res_rmdir3.RMDIR3res_u.resok.dir_wcc));
+                case NFS_V3:
+                  /* Build Weak Cache Coherency data */
+                  nfs_SetWccData(pexport,
+                                 ppre_attr,
+                                 &parent_attr,
+                                 &(pres->res_rmdir3.RMDIR3res_u.resok.dir_wcc));
 
-                      pres->res_rmdir3.status = NFS3_OK;
-                      break;
-                    }
-                  rc = NFS_REQ_OK;
-                  goto out;
+                  pres->res_rmdir3.status = NFS3_OK;
+                  break;
                 }
+              rc = NFS_REQ_OK;
+              goto out;
             }
         }
     }

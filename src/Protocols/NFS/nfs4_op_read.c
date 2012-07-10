@@ -81,13 +81,13 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 {
   size_t                   size = 0, check_size = 0;
   size_t                   read_size = 0;
-  fsal_off_t               offset = 0;
-  fsal_boolean_t           eof_met = FALSE;
-  caddr_t                  bufferdata = NULL;
+  uint64_t                 offset = 0;
+  bool_t                   eof_met = FALSE;
+  void                   * bufferdata = NULL;
   cache_inode_status_t     cache_status = CACHE_INODE_SUCCESS;
   state_t                * state_found = NULL;
   state_t                * state_open = NULL;
-  fsal_attrib_list_t       attr;
+  struct attrlist          attr;
   cache_entry_t          * entry = NULL;
   /* This flag is set to true in the case of an anonymous read so that
      we know to release the state lock afterward.  The state lock does
@@ -265,13 +265,9 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   offset = arg_READ4.offset;
   size = arg_READ4.count;
 
-  LogFullDebug(COMPONENT_NFS_V4,
-               "NFS4_OP_READ: offset = %"PRIu64"  length = %zu",
-               offset, size);
-
   if((data->pexport->options & EXPORT_OPTION_MAXOFFSETREAD) ==
      EXPORT_OPTION_MAXOFFSETREAD)
-    if((fsal_off_t) (offset + size) > data->pexport->MaxOffsetRead)
+    if((offset + size) > data->pexport->MaxOffsetRead)
       {
         res_READ4.status = NFS4ERR_DQUOT;
         goto done;
@@ -292,7 +288,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
        * client will get FATTR4_MAXREAD value at mount time */
 
       LogFullDebug(COMPONENT_NFS_V4,
-               "NFS4_OP_READ: read requested size = %zu  read allowed size = %zu",
+                   "NFS4_OP_READ: read requested size = %zu "
+                   " read allowed size = %"PRIu32,
                size, data->pexport->MaxRead);
       size = data->pexport->MaxRead;
     }

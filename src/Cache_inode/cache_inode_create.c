@@ -73,18 +73,18 @@
 
 cache_entry_t *
 cache_inode_create(cache_entry_t *parent,
-                   fsal_name_t *name,
-                   cache_inode_file_type_t type,
-                   fsal_accessmode_t mode,
+                   const char *name,
+                   object_file_type_t type,
+                   uint32_t mode,
                    cache_inode_create_arg_t *create_arg,
-                   fsal_attrib_list_t *attr,
+                   struct attrlist *attr,
                    struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
      cache_entry_t *entry = NULL;
      fsal_status_t fsal_status = {0, 0};
      struct fsal_obj_handle *object_handle;
-     fsal_attrib_list_t object_attributes;
+     struct attrlist object_attributes;
      struct fsal_obj_handle *dir_handle;
      cache_inode_create_arg_t zero_create_arg;
      fsal_accessflags_t access_mask = 0;
@@ -167,7 +167,7 @@ cache_inode_create(cache_entry_t *parent,
     case SYMBOLIC_LINK:
             fsal_status = dir_handle->ops->symlink(dir_handle,
                                                    name,
-                                                   &create_arg->link_content,
+                                                   create_arg->link_content,
                                                    &object_attributes,
                                                    &object_handle);
             break;

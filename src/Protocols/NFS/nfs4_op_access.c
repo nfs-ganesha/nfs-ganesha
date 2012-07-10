@@ -77,7 +77,7 @@ int nfs4_op_access(struct nfs_argop4 *op,
                    compound_data_t *data,
                    struct nfs_resop4 *resp)
 {
-  fsal_attrib_list_t   attr;
+  struct attrlist attr;
   fsal_accessflags_t   access_mask = 0;
   cache_inode_status_t cache_status;
   uint32_t max_access = (ACCESS4_READ | ACCESS4_LOOKUP | ACCESS4_MODIFY |

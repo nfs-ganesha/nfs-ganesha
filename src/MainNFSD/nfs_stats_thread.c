@@ -83,7 +83,6 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
 {
     hash_stat_t            *cache_inode_stat = &ganesha_stats->cache_inode_hstat;
     nfs_worker_stat_t      *global_worker_stat = &ganesha_stats->global_worker_stat;
-    fsal_statistics_t      *global_fsal_stat = &ganesha_stats->global_fsal;
     unsigned int           i, j;
 
     /* This is done only on worker[0]: the hashtable is shared and worker 0 always exists */
@@ -358,25 +357,6 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
     idmap_get_stats(GIDMAP_TYPE, &ganesha_stats->gid_map, &ganesha_stats->gid_reverse);
     /* Stats for the IP/Name hashtable */
     nfs_ip_name_get_stats(&ganesha_stats->ip_name_map);
-
-    /* fsal statistics */
-    memset(global_fsal_stat, 0, sizeof(fsal_statistics_t));
-    ganesha_stats->total_fsal_calls = 0;
-
-    for (i = 0; i < nfs_param.core_param.nb_worker; i++) {
-        for (j = 0; j < FSAL_NB_FUNC; j++) {
-            ganesha_stats->total_fsal_calls += workers_data[i].stats.fsal_stats.func_stats.nb_call[j];
-
-            global_fsal_stat->func_stats.nb_call[j] +=
-                workers_data[i].stats.fsal_stats.func_stats.nb_call[j];
-            global_fsal_stat->func_stats.nb_success[j] +=
-                workers_data[i].stats.fsal_stats.func_stats.nb_success[j];
-            global_fsal_stat->func_stats.nb_err_retryable[j] +=
-                workers_data[i].stats.fsal_stats.func_stats.nb_err_retryable[j];
-            global_fsal_stat->func_stats.nb_err_unrecover[j] +=
-                workers_data[i].stats.fsal_stats.func_stats.nb_err_unrecover[j];
-        }
-    }
 }
 
 void *stats_thread(void *UnusedArg)
@@ -402,7 +382,6 @@ void *stats_thread(void *UnusedArg)
   hash_stat_t            *hstat_gid_reverse = &ganesha_stats.gid_reverse;
   hash_stat_t            *hstat_drc_udp = &ganesha_stats.drc_udp;
   hash_stat_t            *hstat_drc_tcp = &ganesha_stats.drc_tcp;
-  fsal_statistics_t      *global_fsal_stat = &ganesha_stats.global_fsal;
 
 
   SetNameFunction("stat_thr");
@@ -666,16 +645,6 @@ void *stats_thread(void *UnusedArg)
               ip_name_hstat->min_rbt_num_node,
               ip_name_hstat->max_rbt_num_node,
               ip_name_hstat->average_rbt_num_node);
-
-      fprintf(stats_file, "FSAL_CALLS,%s;%llu", strdate,
-              ganesha_stats.total_fsal_calls);
-      for(j = 0; j < FSAL_NB_FUNC; j++)
-        fprintf(stats_file, "|%u,%u,%u,%u",
-                global_fsal_stat->func_stats.nb_call[j],
-                global_fsal_stat->func_stats.nb_success[j],
-                global_fsal_stat->func_stats.nb_err_retryable[j],
-                global_fsal_stat->func_stats.nb_err_unrecover[j]);
-      fprintf(stats_file, "\n");
 
       /* Flush the data written */
       fprintf(stats_file, "END, ----- NO MORE STATS FOR THIS PASS ----\n");

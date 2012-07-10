@@ -185,8 +185,8 @@ do {                                                                          \
   op->nfs_argop4_u.opopen.openhow.openflag4_u.how.mode = GUARDED4 ;           \
   op->nfs_argop4_u.opopen.openhow.openflag4_u.how.createhow4_u.createattrs = inattrs ; \
   op->nfs_argop4_u.opopen.claim.claim = CLAIM_NULL ;                          \
-  op->nfs_argop4_u.opopen.claim.open_claim4_u.file.utf8string_val = inname->name; \
-  op->nfs_argop4_u.opopen.claim.open_claim4_u.file.utf8string_len = inname->len;  \
+  op->nfs_argop4_u.opopen.claim.open_claim4_u.file.utf8string_val = inname; \
+  op->nfs_argop4_u.opopen.claim.open_claim4_u.file.utf8string_len = strlen(inname); \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_MKDIR(opcnt, argarray, inname, inattrs )      \
@@ -194,8 +194,8 @@ do {                                                                        \
   nfs_argop4 *op = argarray + opcnt; opcnt++;                               \
   op->argop = NFS4_OP_CREATE ;                                              \
   op->nfs_argop4_u.opcreate.objtype.type = NF4DIR ;                         \
-  op->nfs_argop4_u.opcreate.objname.utf8string_val = inname->name ;         \
-  op->nfs_argop4_u.opcreate.objname.utf8string_len = inname->len ;          \
+  op->nfs_argop4_u.opcreate.objname.utf8string_val = inname ;         \
+  op->nfs_argop4_u.opcreate.objname.utf8string_len = strlen(inname) ;   \
   op->nfs_argop4_u.opcreate.createattrs = inattrs ;                         \
 } while ( 0 )
 
@@ -204,10 +204,10 @@ do {                                                                          \
   nfs_argop4 *op = args + opcnt; opcnt++;                                 \
   op->argop = NFS4_OP_CREATE ;                                                \
   op->nfs_argop4_u.opcreate.objtype.type = NF4LNK ;                           \
-  op->nfs_argop4_u.opcreate.objtype.createtype4_u.linkdata.utf8string_val = incontent->path ;      \
-  op->nfs_argop4_u.opcreate.objtype.createtype4_u.linkdata.utf8string_len = incontent->len ;      \
-  op->nfs_argop4_u.opcreate.objname.utf8string_val = inname->name;            \
-  op->nfs_argop4_u.opcreate.objname.utf8string_len = inname->len;             \
+  op->nfs_argop4_u.opcreate.objtype.createtype4_u.linkdata.utf8string_val = incontent; \
+  op->nfs_argop4_u.opcreate.objtype.createtype4_u.linkdata.utf8string_len = strlen(incontent) ; \
+  op->nfs_argop4_u.opcreate.objname.utf8string_val = inname;            \
+  op->nfs_argop4_u.opcreate.objname.utf8string_len = strlen(inname); \
   op->nfs_argop4_u.opcreate.createattrs = inattrs ;                           \
 } while ( 0 )
 
@@ -215,26 +215,26 @@ do {                                                                          \
 do {                                                                         \
   nfs_argop4 *op = argarray+opcnt; opcnt++;                                  \
   op->argop = NFS4_OP_LINK ;                                                 \
-  op->nfs_argop4_u.oplink.newname.utf8string_val = inname->name;             \
-  op->nfs_argop4_u.oplink.newname.utf8string_len = inname->len;              \
+  op->nfs_argop4_u.oplink.newname.utf8string_val = inname;             \
+  op->nfs_argop4_u.oplink.newname.utf8string_len = strlen(inname);     \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_REMOVE(opcnt, argarray, inname )               \
 do {                                                                         \
   nfs_argop4 *op = argarray+opcnt; opcnt++;                                  \
   op->argop = NFS4_OP_REMOVE ;                                               \
-  op->nfs_argop4_u.opremove.target.utf8string_val = inname->name ;           \
-  op->nfs_argop4_u.opremove.target.utf8string_len = inname->len ;            \
+  op->nfs_argop4_u.opremove.target.utf8string_val = inname;           \
+  op->nfs_argop4_u.opremove.target.utf8string_len = strlen(inname); \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_RENAME(opcnt, argarray, inoldname, innewname)  \
 do {                                                                         \
   nfs_argop4 *op = argarray+opcnt; opcnt++;                                  \
   op->argop = NFS4_OP_RENAME ;                                               \
-  op->nfs_argop4_u.oprename.oldname.utf8string_val = inoldname->name ;       \
-  op->nfs_argop4_u.oprename.oldname.utf8string_len = inoldname->len ;        \
-  op->nfs_argop4_u.oprename.newname.utf8string_val = innewname->name ;       \
-  op->nfs_argop4_u.oprename.newname.utf8string_len = innewname->len ;        \
+  op->nfs_argop4_u.oprename.oldname.utf8string_val = inoldname ;       \
+  op->nfs_argop4_u.oprename.oldname.utf8string_len = strlen(inoldname) ; \
+  op->nfs_argop4_u.oprename.newname.utf8string_val = innewname ;       \
+  op->nfs_argop4_u.oprename.newname.utf8string_len = strlen(innewname) ; \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_READLINK(opcnt, argarray )                     \

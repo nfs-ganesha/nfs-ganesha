@@ -20,19 +20,19 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
  * obj_hdl == NULL, just do directory check
  */
 
-static inline fsal_boolean_t sticky_dir_allows(struct fsal_obj_handle *dir_hdl,
-					       struct fsal_obj_handle *obj_hdl,
-					       struct user_cred *creds)
+static inline bool_t sticky_dir_allows(struct fsal_obj_handle *dir_hdl,
+                                       struct fsal_obj_handle *obj_hdl,
+                                       struct user_cred *creds)
 {
 	struct fsal_export *exp_hdl = dir_hdl->export;
-	fsal_attrib_list_t *dir_attr = &dir_hdl->attributes;
-	fsal_attrib_list_t *obj_attr = NULL;
-	fsal_boolean_t retval = TRUE;
+	struct attrlist *dir_attr = &dir_hdl->attributes;
+	struct attrlist *obj_attr = NULL;
+	bool_t retval = TRUE;
 
 	if(obj_hdl)
 		obj_attr = &obj_hdl->attributes;
 	if(exp_hdl->ops->fs_supports(exp_hdl, dirs_have_sticky_bit) &&
-	   dir_attr->mode & FSAL_MODE_SVTX &&
+	   dir_attr->mode & S_ISVTX &&
 	   dir_attr->owner != creds->caller_uid &&
 	   (obj_attr && (obj_attr->owner != creds->caller_uid)) &&
 	   creds->caller_uid != 0)

@@ -68,8 +68,8 @@
 
 cache_inode_status_t
 cache_inode_setattr(cache_entry_t *entry,
-                    fsal_attrib_list_t *attr,
-		    struct req_op_context *req_ctx,
+                    struct attrlist *attr,
+                    struct req_op_context *req_ctx,
                     cache_inode_status_t *status)
 {
      struct fsal_obj_handle *obj_handle = entry->obj_handle;
@@ -80,16 +80,7 @@ cache_inode_setattr(cache_entry_t *entry,
      fsal_acl_status_t acl_status = 0;
 #endif /* _USE_NFS4_ACL */
 
-     if ((entry->type == UNASSIGNED) ||
-         (entry->type == RECYCLED)) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "WARNING: unknown source entry type: type=%d, "
-                  "line %d in file %s", entry->type, __LINE__, __FILE__);
-          *status = CACHE_INODE_BAD_TYPE;
-          goto out;
-     }
-
-     if ((attr->mask & FSAL_ATTR_SIZE) &&
+     if ((attr->mask & ATTR_SIZE) &&
          (entry->type != REGULAR_FILE)) {
           LogMajor(COMPONENT_CACHE_INODE,
                    "Attempt to truncate non-regular file: type=%d",
@@ -100,8 +91,8 @@ cache_inode_setattr(cache_entry_t *entry,
      /* Is it allowed to change times ? */
      if(!obj_handle->export->ops->fs_supports(obj_handle->export,
                                                cansettime) &&
-        (attr->mask & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION |
-                       FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))) {
+        (FSAL_TEST_MASK(attr->mask, (ATTR_ATIME | ATTR_CREATION |
+                                     ATTR_CTIME | ATTR_MTIME)))) {
              *status = CACHE_INODE_INVALID_ARGUMENT;
              goto out;
      }
@@ -113,70 +104,81 @@ cache_inode_setattr(cache_entry_t *entry,
       * we do this here because this is an exception/extension to the usual access check.
       */
      if(creds->caller_uid != 0 &&
-	creds->caller_uid != obj_handle->attributes.owner) {
-	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_MODE)) {
-		     LogFullDebug(COMPONENT_FSAL,
-				  "Permission denied for CHMOD operation: "
-				  "current owner=%d, credential=%d",
-				  obj_handle->attributes.owner, creds->caller_uid);
-		     *status = CACHE_INODE_FSAL_EACCESS;
-		     goto unlock;
-	     }
-	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_OWNER)) {
-		     LogFullDebug(COMPONENT_FSAL,
-				  "Permission denied for CHOWN operation: "
-				  "current owner=%d, credential=%d",
-				  obj_handle->attributes.owner, creds->caller_uid);
-		     *status = CACHE_INODE_FSAL_EACCESS;
-		     goto unlock;
-	     }
-	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_GROUP)) {
-		     int in_group = 0, i;
+        creds->caller_uid != obj_handle->attributes.owner) {
+             if(FSAL_TEST_MASK(attr->mask, ATTR_MODE)) {
+                     LogFullDebug(COMPONENT_FSAL,
+                                  "Permission denied for CHMOD operation: "
+                                  "current owner=%"PRIu64
+                                  ", credential=%d",
+                                  obj_handle->attributes.owner, creds->caller_uid);
+                     *status = CACHE_INODE_FSAL_EACCESS;
+                     goto unlock;
+             }
+             if(FSAL_TEST_MASK(attr->mask, ATTR_OWNER)) {
+                     LogFullDebug(COMPONENT_FSAL,
+                                  "Permission denied for CHOWN operation: "
+                                  "current owner=%"PRIu64", credential=%d",
+                                  obj_handle->attributes.owner,
+                                  creds->caller_uid);
+                     *status = CACHE_INODE_FSAL_EACCESS;
+                     goto unlock;
+             }
+             if(FSAL_TEST_MASK(attr->mask, ATTR_GROUP)) {
+                     int in_group = 0, i;
 
-		     if(creds->caller_gid == obj_handle->attributes.group) {
-			     in_group = 1;
-		     } else { 
-			     for(i = 0; i < creds->caller_glen; i++) {
-				     if(creds->caller_garray[i] == obj_handle->attributes.group) {
-					     in_group = 1;
-					     break;
-				     }
-			     }
-		     }
-		     if( !in_group) {
-			     LogFullDebug(COMPONENT_FSAL,
-					  "Permission denied for CHOWN operation: "
-					  "current group=%d, credential=%d, new group=%d",
-					  obj_handle->attributes.group,
-					  creds->caller_gid, attr->group);
-			     *status = CACHE_INODE_FSAL_EACCESS;
-			     goto unlock;
-		     }
-	     }
-	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_ATIME)) {
-		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_R_OK);
-		if(FSAL_IS_ERROR(fsal_status)) {
-		     *status = cache_inode_error_convert(fsal_status);
-		     goto unlock;
-		}
-	     }
-	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_MTIME)) {
-		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_W_OK);
-		if(FSAL_IS_ERROR(fsal_status)) {
-		     *status = cache_inode_error_convert(fsal_status);
-		     goto unlock;
-		}
-	     }
-	     if(FSAL_TEST_MASK(attr->mask, FSAL_ATTR_SIZE)) {
-		fsal_status = obj_handle->ops->test_access(obj_handle, req_ctx, FSAL_W_OK);
-		if(FSAL_IS_ERROR(fsal_status)) {
-		     *status = cache_inode_error_convert(fsal_status);
-		     goto unlock;
-		}
-	     }
+                     if(creds->caller_gid == obj_handle->attributes.group) {
+                             in_group = 1;
+                     } else {
+                             for(i = 0; i < creds->caller_glen; i++) {
+                                     if(creds->caller_garray[i] == obj_handle->attributes.group) {
+                                             in_group = 1;
+                                             break;
+                                     }
+                             }
+                     }
+                     if( !in_group) {
+                             LogFullDebug(COMPONENT_FSAL,
+                                          "Permission denied for CHOWN operation: "
+                                          "current group=%"PRIu64
+                                          ", credential=%d, new group=%"PRIu64,
+                                          obj_handle->attributes.group,
+                                          creds->caller_gid, attr->group);
+                             *status = CACHE_INODE_FSAL_EACCESS;
+                             goto unlock;
+                     }
+             }
+             if(FSAL_TEST_MASK(attr->mask, ATTR_ATIME)) {
+                     fsal_status =
+                             obj_handle->ops->test_access(obj_handle,
+                                                          req_ctx, FSAL_R_OK);
+                     if(FSAL_IS_ERROR(fsal_status)) {
+                             *status = cache_inode_error_convert(fsal_status);
+                             goto unlock;
+                     }
+             }
+             if(FSAL_TEST_MASK(attr->mask, ATTR_MTIME)) {
+                     fsal_status =
+                             obj_handle->ops->test_access(obj_handle,
+                                                          req_ctx, FSAL_W_OK);
+                     if(FSAL_IS_ERROR(fsal_status)) {
+                             *status = cache_inode_error_convert(fsal_status);
+                             goto unlock;
+                     }
+             }
+             if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
+                     fsal_status
+                             = obj_handle->ops->test_access(obj_handle,
+                                                            req_ctx,
+                                                            FSAL_W_OK);
+                     if (FSAL_IS_ERROR(fsal_status)) {
+                             *status = cache_inode_error_convert(fsal_status);
+                             goto unlock;
+                     }
+             }
      }
-     if (attr->mask& FSAL_ATTR_SIZE) {
-             fsal_status = obj_handle->ops->truncate(obj_handle, attr->filesize);
+     if (attr->mask & ATTR_SIZE) {
+             fsal_status = obj_handle->ops->truncate(obj_handle,
+                                                     attr->filesize);
              if (FSAL_IS_ERROR(fsal_status)) {
                      *status = cache_inode_error_convert(fsal_status);
                      if (fsal_status.major == ERR_FSAL_STALE) {

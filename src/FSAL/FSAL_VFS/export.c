@@ -111,11 +111,11 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 
 	pthread_mutex_destroy(&exp_hdl->lock);
 	free(myself);  /* elvis has left the building */
-	ReturnCode(fsal_error, retval);
+	return fsalstat(fsal_error, retval);
 
 errout:
 	pthread_mutex_unlock(&exp_hdl->lock);
-	ReturnCode(fsal_error, retval);
+	return fsalstat(fsal_error, retval);
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
@@ -147,11 +147,11 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->time_delta.nseconds = 0;
 
 out:
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
-static fsal_boolean_t fs_supports(struct fsal_export *exp_hdl,
-				  fsal_fsinfo_options_t option)
+static bool_t fs_supports(struct fsal_export *exp_hdl,
+                          fsal_fsinfo_options_t option)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -159,7 +159,7 @@ static fsal_boolean_t fs_supports(struct fsal_export *exp_hdl,
 	return fsal_supports(info, option);
 }
 
-static fsal_size_t fs_maxfilesize(struct fsal_export *exp_hdl)
+static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -167,7 +167,7 @@ static fsal_size_t fs_maxfilesize(struct fsal_export *exp_hdl)
 	return fsal_maxfilesize(info);
 }
 
-static fsal_size_t fs_maxread(struct fsal_export *exp_hdl)
+static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -175,7 +175,7 @@ static fsal_size_t fs_maxread(struct fsal_export *exp_hdl)
 	return fsal_maxread(info);
 }
 
-static fsal_size_t fs_maxwrite(struct fsal_export *exp_hdl)
+static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -183,7 +183,7 @@ static fsal_size_t fs_maxwrite(struct fsal_export *exp_hdl)
 	return fsal_maxwrite(info);
 }
 
-static fsal_count_t fs_maxlink(struct fsal_export *exp_hdl)
+static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -191,7 +191,7 @@ static fsal_count_t fs_maxlink(struct fsal_export *exp_hdl)
 	return fsal_maxlink(info);
 }
 
-static fsal_mdsize_t fs_maxnamelen(struct fsal_export *exp_hdl)
+static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -199,7 +199,7 @@ static fsal_mdsize_t fs_maxnamelen(struct fsal_export *exp_hdl)
 	return fsal_maxnamelen(info);
 }
 
-static fsal_mdsize_t fs_maxpathlen(struct fsal_export *exp_hdl)
+static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -215,7 +215,7 @@ static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
 	return fsal_fh_expire_type(info);
 }
 
-static fsal_time_t fs_lease_time(struct fsal_export *exp_hdl)
+static gsh_time_t fs_lease_time(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -231,7 +231,7 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 	return fsal_acl_support(info);
 }
 
-static fsal_attrib_mask_t fs_supported_attrs(struct fsal_export *exp_hdl)
+static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -239,7 +239,7 @@ static fsal_attrib_mask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 	return fsal_supported_attrs(info);
 }
 
-static fsal_accessmode_t fs_umask(struct fsal_export *exp_hdl)
+static uint32_t fs_umask(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
@@ -247,14 +247,13 @@ static fsal_accessmode_t fs_umask(struct fsal_export *exp_hdl)
 	return fsal_umask(info);
 }
 
-static fsal_accessmode_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
+static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
 	info = vfs_staticinfo(exp_hdl->fsal);
 	return fsal_xattr_access_rights(info);
 }
-
 
 /* get_quota
  * return quotas for this export.
@@ -317,7 +316,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	pquota->bsize = DEV_BSIZE;
 	
 out:
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
 /* set_quota
@@ -392,7 +391,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 				 req_ctx, presquota);
 	}
 err:
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
 /* extract a file handle from a buffer.
@@ -411,7 +410,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 
 	/* sanity checks */
 	if( !fh_desc || !fh_desc->buf)
-		ReturnCode(ERR_FSAL_FAULT, 0);
+		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	hdl = (struct file_handle *)fh_desc->buf;
 	fh_size = vfs_sizeof_handle(hdl);
@@ -420,16 +419,16 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 			LogMajor(COMPONENT_FSAL,
 				 "V2 size too small for handle.  should be %lu, got %u",
 				 fh_size, fh_desc->len);
-			ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
 	} else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %u",
 			 fh_size, fh_desc->len);
-		ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 	fh_desc->len = fh_size;  /* pass back the actual size */
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* vfs_export_ops_init
@@ -490,19 +489,19 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	   || strlen(export_path) > MAXPATHLEN) {
 		LogMajor(COMPONENT_FSAL,
 			 "vfs_create_export: export path empty or too big");
-		ReturnCode(ERR_FSAL_INVAL, 0);
+		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 	if(next_fsal != NULL) {
 		LogCrit(COMPONENT_FSAL,
 			"This module is not stackable");
-		ReturnCode(ERR_FSAL_INVAL, 0);
+		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
 	myself = malloc(sizeof(struct vfs_fsal_export));
 	if(myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "vfs_fsal_create: out of memory for object");
-		ReturnCode(posix2fsal_error(errno), errno);
+		return fsalstat(posix2fsal_error(errno), errno);
 	}
 	memset(myself, 0, sizeof(struct vfs_fsal_export));
 	myself->root_fd = -1;
@@ -623,7 +622,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	myself->mntdir = strdup(mntdir);
 	*export = &myself->export;
 	pthread_mutex_unlock(&myself->export.lock);
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 errout:
 	if(myself->root_fd >= 0)
@@ -640,7 +639,7 @@ errout:
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
 	free(myself);  /* elvis has left the building */
-	ReturnCode(fsal_error, retval);
+	return fsalstat(fsal_error, retval);
 }
 
 

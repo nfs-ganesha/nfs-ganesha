@@ -69,9 +69,9 @@ int nfs4_op_remove(struct nfs_argop4 *op,
                    struct nfs_resop4 *resp)
 {
   cache_entry_t        * parent_entry = NULL;
-  fsal_attrib_list_t     attr_parent;
-  fsal_name_t            name;
-  cache_inode_status_t   cache_status;
+  struct attrlist        attr_parent;
+  char                 * name = NULL;
+  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
 
   resp->resop = NFS4_OP_REMOVE;
   res_REMOVE4.status = NFS4_OK;
@@ -83,24 +83,27 @@ int nfs4_op_remove(struct nfs_argop4 *op,
    */
   res_REMOVE4.status = nfs4_sanity_check_FH(data, DIRECTORY);
   if(res_REMOVE4.status != NFS4_OK)
-    return res_REMOVE4.status;
+    goto out;
 
   /* Pseudo Fs is explictely a Read-Only File system */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       res_REMOVE4.status = NFS4ERR_ROFS;
-      return res_REMOVE4.status;
+      goto out;
     }
 
   if (nfs_in_grace())
     {
       res_REMOVE4.status = NFS4ERR_GRACE;
-      return res_REMOVE4.status;
+      goto out;
     }
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
-    return nfs4_op_remove_xattr(op, data, resp);
+    {
+      res_REMOVE4.status = nfs4_op_remove_xattr(op, data, resp);
+      goto out;
+    }
 
   /* Get the parent entry (aka the current one in the compound data) */
   parent_entry = data->current_entry;
@@ -110,47 +113,36 @@ int nfs4_op_remove(struct nfs_argop4 *op,
   res_REMOVE4.REMOVE4res_u.resok4.cinfo.before =
        cache_inode_get_changeid4(parent_entry);
 
-  /* Check for name length */
-  if(arg_REMOVE4.target.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_REMOVE4.status = NFS4ERR_NAMETOOLONG;
-      return res_REMOVE4.status;
-    }
 
   /* get the filename from the argument, it should not be empty */
   if(arg_REMOVE4.target.utf8string_len == 0)
     {
       res_REMOVE4.status = NFS4ERR_INVAL;
-      return res_REMOVE4.status;
+      goto out;
     }
 
-  /* NFS4_OP_REMOVE can delete files as well as directory, it replaces NFS3_RMDIR and NFS3_REMOVE
-   * because of this, we have to know if object is a directory or not */
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_REMOVE4.target,
-                                 &name))) != CACHE_INODE_SUCCESS)
+  if (!(name = nfs4_utf8string2dynamic(&arg_REMOVE4.target)))
     {
-      res_REMOVE4.status = nfs4_Errno(cache_status);
-      return res_REMOVE4.status;
+      res_REMOVE4.status = NFS4ERR_SERVERFAULT;
+      goto out;
     }
 
   /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
-  if(!FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT)
-     || !FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT_DOT))
+  if ((strcmp(name, ".") == 0) ||
+      (strcmp(name, "..") == 0))
     {
       res_REMOVE4.status = NFS4ERR_BADNAME;
-      return res_REMOVE4.status;
+      goto out;
     }
 
   if((cache_status = cache_inode_remove(parent_entry,
-                                        &name,
+                                        name,
                                         &attr_parent,
                                         data->req_ctx,
                                         &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_REMOVE4.status = nfs4_Errno(cache_status);
-      return res_REMOVE4.status;
+      goto out;
     }
 
   res_REMOVE4.REMOVE4res_u.resok4.cinfo.after
@@ -162,6 +154,13 @@ int nfs4_op_remove(struct nfs_argop4 *op,
   /* If you reach this point, everything was ok */
 
   res_REMOVE4.status = NFS4_OK;
+
+ out:
+
+  if (name) {
+    gsh_free(name);
+    name = NULL;
+  }
 
   return NFS4_OK;
 }                               /* nfs4_op_remove */

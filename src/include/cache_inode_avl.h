@@ -89,7 +89,7 @@ cache_inode_dir_entry_t *cache_inode_avl_lookup_k(
     uint32_t flags);
 cache_inode_dir_entry_t *cache_inode_avl_qp_lookup_s(
     cache_entry_t *entry,
-    cache_inode_dir_entry_t *v,
+    const char *name,
     int maxj);
 
 static inline void

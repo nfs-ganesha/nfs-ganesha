@@ -91,7 +91,7 @@ int nfs_Fsstat(nfs_arg_t *parg,
   fsal_dynamicfsinfo_t dynamicinfo;
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -143,7 +143,10 @@ int nfs_Fsstat(nfs_arg_t *parg,
                        dynamicinfo.free_bytes,
                        dynamicinfo.avail_bytes);
           LogFullDebug(COMPONENT_NFSPROTO, 
-                       "nfs_Fsstat --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu",
+                       "nfs_Fsstat --> "
+                       "dynamicinfo.total_files = %"PRIu64
+                       " dynamicinfo.free_files = %"PRIu64
+                       " dynamicinfo.avail_files = %"PRIu64,
                        dynamicinfo.total_files,
                        dynamicinfo.free_files,
                        dynamicinfo.avail_files);

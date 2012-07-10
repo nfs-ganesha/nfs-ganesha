@@ -89,7 +89,7 @@ int nfs_Getattr(nfs_arg_t *parg,
                 struct svc_req *preq,
                 nfs_res_t *pres)
 {
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   cache_entry_t *pentry = NULL;
   cache_inode_status_t cache_status;
   int rc = NFS_REQ_OK;

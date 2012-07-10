@@ -81,16 +81,16 @@
 
 int nfs3_Access(nfs_arg_t *parg,
                 exportlist_t *pexport,
-		struct req_op_context *req_ctx,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
 {
-  fsal_accessflags_t access_mode;
+  uint32_t access_mode;
   cache_inode_status_t cache_status;
-  cache_inode_file_type_t filetype;
+  object_file_type_t filetype;
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))

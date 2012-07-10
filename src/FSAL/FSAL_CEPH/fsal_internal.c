@@ -53,12 +53,12 @@ fsal_staticfsinfo_t global_fs_info;
 cephfs_specific_initinfo_t global_spec_info;
 
 #define SUPPORTED_ATTRIBUTES (                                       \
-          FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \
-          FSAL_ATTR_FSID     | FSAL_ATTR_FILEID   | \
-          FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
-          FSAL_ATTR_GROUP    | FSAL_ATTR_ATIME    | FSAL_ATTR_RAWDEV    | \
-          FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
-          FSAL_ATTR_CHGTIME  )
+          ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
+          ATTR_FSID     | ATTR_FILEID   | \
+          ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
+          ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
+          ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
+          ATTR_CHGTIME  )
 
 #ifdef _PNFS_MDS
 static layouttype4 layout_type_list[] = {LAYOUT4_NFSV4_1_FILES};

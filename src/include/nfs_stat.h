@@ -160,7 +160,6 @@ typedef struct nfs_worker_stat__
   nfs_request_stat_t stat_req;
 
   time_t last_stat_update;
-  fsal_statistics_t fsal_stats;
 } nfs_worker_stat_t;
 
 void nfs_stat_update(nfs_stat_type_t type,

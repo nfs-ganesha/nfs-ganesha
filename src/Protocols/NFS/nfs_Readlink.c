@@ -84,16 +84,21 @@
 
 int nfs_Readlink(nfs_arg_t *parg,
                  exportlist_t *pexport,
-		 struct req_op_context *req_ctx,
+                 struct req_op_context *req_ctx,
                  nfs_worker_data_t *pworker,
                  struct svc_req *preq,
                  nfs_res_t * pres)
 {
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   cache_inode_status_t cache_status;
-  fsal_path_t symlink_data;
+  /**
+   * @todo ACE: Bogus, fix in callbacification
+   */
+  char symlink_data[1024];
   char *ptr = NULL;
+  struct gsh_buffdesc link_buffer = {.addr = symlink_data,
+                                     .len  = 1024};
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -146,10 +151,11 @@ int nfs_Readlink(nfs_arg_t *parg,
   /* if */
   /* Perform readlink on the pentry */
   if(cache_inode_readlink(pentry,
-                          &symlink_data,
-                          req_ctx->creds, &cache_status) == CACHE_INODE_SUCCESS)
+                          &link_buffer,
+                          req_ctx->creds, &cache_status)
+     == CACHE_INODE_SUCCESS)
     {
-      if((ptr = gsh_malloc(symlink_data.len+1)) == NULL)
+      if((ptr = gsh_malloc(link_buffer.len+1)) == NULL)
         {
           switch (preq->rq_vers)
             {
@@ -164,7 +170,7 @@ int nfs_Readlink(nfs_arg_t *parg,
           goto out;
         }
 
-      strcpy(ptr, symlink_data.path);
+      strcpy(ptr, symlink_data);
 
       /* Reply to the client (think about free data after use ) */
       switch (preq->rq_vers)

@@ -81,18 +81,18 @@
 
 int nfs_Setattr(nfs_arg_t *parg,
                 exportlist_t *pexport,
-		struct req_op_context *req_ctx,
+                struct req_op_context *req_ctx,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
 {
   sattr3 new_attributes3;
   sattr2 new_attributes2;
-  fsal_attrib_list_t setattr;
+  struct attrlist setattr;
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t trunc_attr;
-  fsal_attrib_list_t *ppre_attr;
+  struct attrlist pre_attr;
+  struct attrlist trunc_attr;
+  struct attrlist *ppre_attr;
   cache_inode_status_t cache_status;
   int do_trunc = FALSE;
   int rc = NFS_REQ_OK;
@@ -189,11 +189,11 @@ int nfs_Setattr(nfs_arg_t *parg,
            * This feature of nfsv3 is used to avoid several setattr 
            * to occur concurently on the same object, from different clients */
           fattr3 attributes;
-          fsal_attrib_mask_t got = FSAL_ATTR_CTIME;
+          attrmask_t got = ATTR_CTIME;
 
           nfs3_FSALattr_To_PartialFattr(ppre_attr, &got, &attributes);
 
-          if (!(got & FSAL_ATTR_CTIME))
+          if (!(got & ATTR_CTIME))
             {
               pres->res_setattr3.status = NFS3ERR_INVAL;
               rc = NFS_REQ_OK;
@@ -236,7 +236,7 @@ int nfs_Setattr(nfs_arg_t *parg,
 
   /*
    * trunc may change Xtime so we have to start with trunc and finish
-   * by the mtime and atime 
+   * by the mtime and atime
    */
   if(do_trunc)
     {
@@ -249,8 +249,8 @@ int nfs_Setattr(nfs_arg_t *parg,
                                               setattr.filesize,
                                               &trunc_attr,
                                               req_ctx, &cache_status);
-          setattr.mask &= ~FSAL_ATTR_SPACEUSED;
-          setattr.mask &= ~FSAL_ATTR_SIZE;
+          FSAL_UNSET_MASK(setattr.mask, ATTR_SPACEUSED);
+          FSAL_UNSET_MASK(setattr.mask, ATTR_SIZE);
         }
     }
   else

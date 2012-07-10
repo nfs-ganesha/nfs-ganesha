@@ -1400,7 +1400,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   fsal_status_t fsal_status;
 /*   cache_inode_fsal_data_t fsdata; */
   char pathfsal[MAXPATHLEN] ;
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   struct fsal_export *exp_hdl;
   struct fsal_obj_handle *fsal_handle;
   cache_entry_t *pentry = NULL;
@@ -1677,7 +1677,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   exportlist_t *save_pexport;
   nfs_fh4 entryFH;
   cache_inode_fsal_data_t fsdata;
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   struct fsal_export *exp_hdl;
   struct fsal_obj_handle *fsal_handle;
   fsal_status_t fsal_status;

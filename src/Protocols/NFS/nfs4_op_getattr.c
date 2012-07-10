@@ -75,8 +75,8 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
                     compound_data_t *data,
                     struct nfs_resop4 *resp)
 {
-  fsal_attrib_list_t   attr;
-  cache_inode_status_t cache_status;
+  struct attrlist attr;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
   /* This is a NFS4_OP_GETTAR */
   resp->resop = NFS4_OP_GETATTR;

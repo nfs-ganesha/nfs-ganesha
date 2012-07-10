@@ -1,5 +1,6 @@
 noinst_HEADERS = abstract_atomic.h               \
                  abstract_mem.h                  \
+		 ganesha_types.h                 \
                  fsal.h                          \
                  fsal_pnfs.h                     \
                  pnfs_common.h                   \

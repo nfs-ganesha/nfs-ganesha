@@ -484,7 +484,7 @@ open4_create(OPEN4args           * arg,
              OPEN4res            * res,
              cache_entry_t       * parent,
              cache_entry_t      ** entry,
-             fsal_name_t         * filename)
+             const char          * filename)
 {
         /* Newly created file */
         cache_entry_t      * entry_newfile = NULL;
@@ -493,7 +493,7 @@ open4_create(OPEN4args           * arg,
         fsal_status_t        fsal_status = {0, 0};
 #endif /* _USE_QUOTA */
         /* Convertedattributes to set */
-        fsal_attrib_list_t   sattr;
+        struct attrlist      sattr;
         /* Whether the client supplied any attributes */
         bool_t               sattr_provided = FALSE;
         /* Return from Cache Inode calls */
@@ -574,11 +574,11 @@ open4_create(OPEN4args           * arg,
         if (cache_status == CACHE_INODE_ENTRY_EXISTS) {
                 if (sattr_provided &&
                     (FSAL_TEST_MASK(sattr.mask,
-                                    FSAL_ATTR_SIZE)) &&
+                                    ATTR_SIZE)) &&
                     (sattr.filesize == 0)) {
-                        FSAL_CLEAR_MASK(sattr.mask);
+                       FSAL_CLEAR_MASK(sattr.mask);
                         FSAL_SET_MASK(sattr.mask,
-                                      FSAL_ATTR_SIZE);
+                                      ATTR_SIZE);
                 } else {
                         sattr_provided = FALSE;
                 }
@@ -626,25 +626,24 @@ open4_claim_null(OPEN4args        * arg,
         /* NFS Status from function calls */
         nfsstat4              nfs_status = NFS4_OK;
         /* The filename to create */
-        fsal_name_t           filename;
+        char                * filename = NULL;
 
         parent = data->current_entry;
 
-        /* Check for name length */
-        if (arg->claim.open_claim4_u.file.utf8string_len
-            > FSAL_MAX_NAME_LEN) {
-                return NFS4ERR_NAMETOOLONG;
-        }
         if (arg->claim.open_claim4_u.file.utf8string_len == 0) {
-                return NFS4ERR_INVAL;
+                nfs_status = NFS4ERR_INVAL;
+                goto out;
         }
 
         /**
          * @todo ACE: Fix this after fsal_name_t is eradicated..
          */
-        FSAL_buffdesc2name(((fsal_buffdesc_t *)
-                            &arg->claim.open_claim4_u.file),
-                           &filename);
+        if (!(filename
+              = nfs4_utf8string2dynamic(&arg->claim
+                                        .open_claim4_u.file))) {
+                nfs_status = NFS4ERR_SERVERFAULT;
+                goto out;
+        }
 
         /* Check parent */
         parent = data->current_entry;
@@ -652,9 +651,11 @@ open4_claim_null(OPEN4args        * arg,
         /* Parent must be a directory */
         if ((parent->type != DIRECTORY)) {
                 if (parent->type == SYMBOLIC_LINK) {
-                        return NFS4ERR_SYMLINK;
+                        nfs_status = NFS4ERR_SYMLINK;
+                        goto out;
                 } else {
-                        return NFS4ERR_NOTDIR;
+                        nfs_status = NFS4ERR_NOTDIR;
+                        goto out;
                 }
         }
 
@@ -665,12 +666,12 @@ open4_claim_null(OPEN4args        * arg,
                                           res,
                                           parent,
                                           entry,
-                                          &filename);
+                                          filename);
                 break;
 
         case OPEN4_NOCREATE:
                 *entry = cache_inode_lookup(parent,
-                                            &filename,
+                                            filename,
                                             NULL,
                                             data->req_ctx,
                                             &cache_status);
@@ -678,10 +679,17 @@ open4_claim_null(OPEN4args        * arg,
                 if (cache_status != CACHE_INODE_SUCCESS) {
                         nfs_status = nfs4_Errno(cache_status);
                 }
+                break;
+
         default:
                 nfs_status = NFS4ERR_INVAL;
         }
 
+out:
+        if (filename) {
+                gsh_free(filename);
+                filename = NULL;
+        }
         return nfs_status;
 }
 
@@ -869,9 +877,9 @@ int nfs4_op_open(struct nfs_argop4 *op,
         if (arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_BOTH) {
                 openflags = FSAL_O_RDWR;
         } else if(arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_READ) {
-                openflags = FSAL_O_RDONLY;
+                openflags = FSAL_O_READ;
         } else if(arg_OPEN4->share_access == OPEN4_SHARE_ACCESS_WRITE) {
-                openflags = FSAL_O_WRONLY;
+                openflags = FSAL_O_WRITE;
         }
 
         /* Set the current entry to the file to be opened */
@@ -923,10 +931,10 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         /* Set the openflags variable */
         if (arg_OPEN4->share_deny & OPEN4_SHARE_DENY_WRITE) {
-                openflags |= FSAL_O_RDONLY;
+                openflags |= FSAL_O_READ;
         }
         if (arg_OPEN4->share_deny & OPEN4_SHARE_DENY_READ) {
-                openflags |= FSAL_O_WRONLY;
+                openflags |= FSAL_O_WRITE;
         }
         if (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE) {
                 openflags = FSAL_O_RDWR;

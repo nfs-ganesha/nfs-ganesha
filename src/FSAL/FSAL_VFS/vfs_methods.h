@@ -14,7 +14,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 			      struct fsal_obj_handle **handle);
 
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
-				struct fsal_handle_desc *hdl_desc,
+				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **handle);
 
 /*
@@ -57,16 +57,16 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 		       fsal_openflags_t openflags);
 fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
-		       fsal_seek_t * seek_descriptor,
+		       uint64_t offset,
 		       size_t buffer_size,
-		       caddr_t buffer,
-		       ssize_t * read_amount,
-		       fsal_boolean_t * end_of_file);
+		       void *buffer,
+		       size_t *read_amount,
+		       bool_t *end_of_file);
 fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
-			fsal_seek_t * seek_descriptor,
+                        uint64_t offset,
 			size_t buffer_size,
-			caddr_t buffer,
-			ssize_t * write_amount);
+			void *buffer,
+			size_t * write_amount);
 fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 			 off_t offset,
 			 size_t len);
@@ -81,13 +81,8 @@ fsal_status_t vfs_share_op(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			      lru_actions_t requests);
-fsal_status_t vfs_rcp(struct fsal_obj_handle *obj_hdl,
-		      const char *local_path,
-		      fsal_rcpflag_t transfer_opt);
 
 /* extended attributes management */
-fsal_status_t vfs_getextattrs(struct fsal_obj_handle *obj_hdl,
-			      fsal_extattrib_list_t * object_attributes);
 fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				 unsigned int cookie,
 				 fsal_xattrent_t * xattrs_tab,
@@ -118,7 +113,7 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					 size_t buffer_size);
 fsal_status_t vfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				   unsigned int xattr_id,
-				   fsal_attrib_list_t * p_attrs);
+				   struct attrlist *p_attrs);
 fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 				       unsigned int xattr_id);
 fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,

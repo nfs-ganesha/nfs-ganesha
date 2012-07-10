@@ -87,8 +87,8 @@ int nfs3_Commit(nfs_arg_t *parg,
 {
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t *ppre_attr;
+  struct attrlist pre_attr;
+  struct attrlist *ppre_attr;
   uint64_t typeofcommit;
   int rc = NFS_REQ_OK;
 

@@ -107,8 +107,6 @@ cache_inode_parameter_t cache_inode_params = {
 };
 
 pool_t *cache_inode_entry_pool;
-pool_t *cache_inode_symlink_pool;
-pool_t *cache_inode_dir_entry_pool;
 
 const char *cache_inode_err_str(cache_inode_status_t err)
 {
@@ -248,7 +246,7 @@ int cache_inode_compare_key_fsal(hash_buffer_t *buff1,
  * @return 0 if keys if successfully build, -1 otherwise
  *
  */
-int cache_inode_set_time_current(fsal_time_t *time)
+int cache_inode_set_time_current(gsh_time_t *time)
 {
   struct timeval t;
 
@@ -294,11 +292,11 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      bool_t latched = FALSE;
      struct hash_latch latch;
      hash_error_t hrc = 0;
-     struct fsal_handle_desc fh_desc;
+     struct gsh_buffdesc fh_desc;
      fsal_status_t fsal_status;
 
      new_obj->ops->handle_to_key(new_obj, &fh_desc);
-     key.pdata = fh_desc.start;
+     key.pdata = fh_desc.addr;
      key.len = fh_desc.len;
 
      /* Check if the entry doesn't already exists */
@@ -556,7 +554,6 @@ out:
  */
 void cache_inode_clean_entry(cache_entry_t *entry)
 {
-  entry->type = RECYCLED;
   pthread_rwlock_destroy(&entry->content_lock);
   pthread_rwlock_destroy(&entry->state_lock);
   pthread_rwlock_destroy(&entry->attr_lock);
@@ -751,7 +748,7 @@ void cache_inode_print_dir(cache_entry_t *entry)
                                     node_hk);
       LogFullDebug(COMPONENT_CACHE_INODE,
                    "Name = %s, DIRECTORY entry = (%p, %"PRIu64") i=%d",
-                   dirent->name.name,
+                   dirent->name,
                    dirent->entry.ptr,
                    dirent->entry.gen,
                    i);
@@ -815,7 +812,7 @@ void cache_inode_release_dirents(cache_entry_t *entry,
                                            cache_inode_dir_entry_t,
                                            node_hk);
              avltree_remove(dirent_node, tree);
-             pool_free(cache_inode_dir_entry_pool, dirent);
+             gsh_free(dirent);
              dirent_node = next_dirent_node;
            }
 
@@ -867,9 +864,7 @@ cache_inode_check_trust(cache_entry_t *entry)
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      time_t oldmtime = 0;
 
-     if ((entry->type == FS_JUNCTION) ||
-         (entry->type == UNASSIGNED) ||
-         (entry->type == RECYCLED)) {
+     if (entry->type == FS_JUNCTION) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_check_attrs called on file %p of bad type %d",
                   entry, entry->type);

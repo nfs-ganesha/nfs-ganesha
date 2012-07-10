@@ -123,11 +123,11 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry,
 
 cache_inode_status_t
 cache_inode_operate_cached_dirent(cache_entry_t *directory,
-                                  fsal_name_t *name,
-                                  fsal_name_t *newname,
+                                  const char *name,
+                                  const char *newname,
                                   cache_inode_dirent_op_t dirent_op)
 {
-     cache_inode_dir_entry_t dirent_key[1], *dirent, *dirent2, *dirent3;
+     cache_inode_dir_entry_t *dirent, *dirent2, *dirent3;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
      int code = 0;
 
@@ -149,8 +149,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
        goto out;
      }
 
-     FSAL_namecpy(&dirent_key->name, name);
-     dirent = cache_inode_avl_qp_lookup_s(directory, dirent_key, 1);
+     dirent = cache_inode_avl_qp_lookup_s(directory, name, 1);
      if ((!dirent) || (dirent->flags & DIR_ENTRY_FLAG_DELETED)) {
        if (!((directory->flags & CACHE_INODE_TRUST_CONTENT) &&
              (directory->flags & CACHE_INODE_DIR_POPULATED))) {
@@ -176,9 +175,8 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
          break;
 
      case CACHE_INODE_DIRENT_OP_RENAME:
-         FSAL_namecpy(&dirent_key->name, newname);
          dirent2 = cache_inode_avl_qp_lookup_s(directory,
-                                               dirent_key, 1);
+                                               newname, 1);
          if (dirent2) {
              /* rename would cause a collision */
              if (directory->flags &
@@ -189,37 +187,23 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
                  status = CACHE_INODE_ENTRY_EXISTS;
              }
          } else {
+             /* Size (including terminating NUL) of the filename */
+             size_t newnamesize = strlen(newname) + 1;
              /* try to rename--no longer in-place */
              avl_dirent_set_deleted(directory, dirent);
-             dirent3 = pool_alloc(cache_inode_dir_entry_pool, NULL);
-             FSAL_namecpy(&dirent3->name, newname);
+             dirent3 = gsh_malloc(sizeof(cache_inode_dir_entry_t)
+                                  + newnamesize);
+             memcpy(dirent3->name, newname, newnamesize);
              dirent3->flags = DIR_ENTRY_FLAG_NONE;
              dirent3->entry = dirent->entry;
              code = cache_inode_avl_qp_insert(directory, dirent3);
-             switch (code) {
-             case 0:
-                 /* CACHE_INODE_SUCCESS */
-                 break;
-             case 1:
-                 /* we reused an existing dirent, dirent has been deep
-                  * copied, dispose it */
-                  pool_free(cache_inode_dir_entry_pool, dirent3);
-                 /* CACHE_INODE_SUCCESS */
-                 break;
-             case -1:
+             if (code < 0) {
                  /* collision, tree state unchanged (unlikely) */
                  status = CACHE_INODE_ENTRY_EXISTS;
                  /* dirent is on persist tree, undelete it */
                  avl_dirent_clear_deleted(directory, dirent);
                  /* dirent3 was never inserted */
-                 pool_free(cache_inode_dir_entry_pool, dirent3);
-             default:
-                 LogCrit(COMPONENT_NFS_READDIR,
-                         "DIRECTORY: insert error renaming dirent "
-                         "(%s, %s)",
-                         name->name, newname->name);
-                 status = CACHE_INODE_INSERT_ERROR;
-                 break;
+                 gsh_free(dirent3);
              }
          } /* !found */
          break;
@@ -258,12 +242,13 @@ out:
 
 cache_inode_status_t
 cache_inode_add_cached_dirent(cache_entry_t *parent,
-                              fsal_name_t *name,
+                              const char *name,
                               cache_entry_t *entry,
                               cache_inode_dir_entry_t **dir_entry,
                               cache_inode_status_t *status)
 {
      cache_inode_dir_entry_t *new_dir_entry = NULL;
+     size_t namesize = strlen(name) + 1;
      int code = 0;
 
      *status = CACHE_INODE_SUCCESS;
@@ -275,40 +260,30 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
      }
 
      /* in cache inode avl, we always insert on pentry_parent */
-     new_dir_entry = pool_alloc(cache_inode_dir_entry_pool, NULL);
-     if(new_dir_entry == NULL) {
+     new_dir_entry = gsh_malloc(sizeof(cache_inode_dir_entry_t) +
+                                namesize);
+     if (new_dir_entry == NULL) {
           *status = CACHE_INODE_MALLOC_ERROR;
           return *status;
      }
 
      new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 
-     FSAL_namecpy(&new_dir_entry->name, name);
+     memcpy(&new_dir_entry->name, name, namesize);
      new_dir_entry->entry = entry->weakref;
 
      /* add to avl */
      code = cache_inode_avl_qp_insert(parent, new_dir_entry);
-     switch (code) {
-     case 0:
-         /* CACHE_INODE_SUCCESS */
-         break;
-     case 1:
-         /* we reused an existing dirent, dirent has been deep
-          * copied, dispose it */
-         pool_free(cache_inode_dir_entry_pool, new_dir_entry);
-         /* CACHE_INODE_SUCCESS */
-         break;
-     default:
-         /* collision, tree not updated--release both pool objects and return
+     if (code < 0) {
+          /* collision, tree not updated--release both pool objects and return
           * err */
-         pool_free(cache_inode_dir_entry_pool, new_dir_entry);
+         gsh_free(new_dir_entry);
          *status = CACHE_INODE_ENTRY_EXISTS;
          return *status;
-         break;
      }
 
      if (dir_entry) {
-         *dir_entry = new_dir_entry;
+          *dir_entry = new_dir_entry;
      }
 
      /* we're going to succeed */
@@ -335,7 +310,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
  */
 cache_inode_status_t
 cache_inode_remove_cached_dirent(cache_entry_t *directory,
-                                 fsal_name_t *name,
+                                 const char *name,
                                  cache_inode_status_t *status)
 {
   /* Set the return default to CACHE_INODE_SUCCESS */
@@ -376,64 +351,61 @@ struct cache_inode_populate_cb_state {
  */
 
 static fsal_status_t populate(const char *name,
-			      unsigned int dtype,
-			      struct fsal_obj_handle *dir_hdl,
-			      void *dir_state,
-			      struct fsal_cookie *cookie)
+                              unsigned int dtype,
+                              struct fsal_obj_handle *dir_hdl,
+                              void *dir_state,
+                              struct fsal_cookie *cookie)
 {
-	struct cache_inode_populate_cb_state *state
-		= (struct cache_inode_populate_cb_state *)dir_state;
-	struct fsal_obj_handle *entry_hdl;
-	cache_inode_dir_entry_t *new_dir_entry = NULL;
-	cache_entry_t *pentry = NULL;
-	fsal_status_t status;
-	fsal_name_t entry_name;
+        struct cache_inode_populate_cb_state *state
+                = (struct cache_inode_populate_cb_state *)dir_state;
+        struct fsal_obj_handle *entry_hdl;
+        cache_inode_dir_entry_t *new_dir_entry = NULL;
+        cache_entry_t *pentry = NULL;
+        fsal_status_t status;
 
-	status = FSAL_str2name(name, FSAL_MAX_PATH_LEN, &entry_name);
-	if(FSAL_IS_ERROR(status))
-		return status;
-	status = dir_hdl->ops->lookup(dir_hdl, name, &entry_hdl);
-	if(FSAL_IS_ERROR(status)) {
-		return status;
-	}
-	pentry = cache_inode_new_entry(entry_hdl,
-				       CACHE_INODE_FLAG_NONE,
-				       state->status);
-	if(pentry == NULL) {
-		status.major = ERR_FSAL_NOENT; /* error for signalling cache inode errors */
-		status.minor = *state->status;
-		/* we do not free entry_hdl because it is consumed by cache_inode_new_entry */
-		return status;
-	}
-	*state->status = cache_inode_add_cached_dirent(state->directory,
-						      &entry_name,
-						      pentry,
-						      &new_dir_entry,
-						      state->status);
-	if(*state->status != CACHE_INODE_SUCCESS &&
-	   *state->status != CACHE_INODE_ENTRY_EXISTS) {
-		status.major = ERR_FSAL_NOENT;
-		status.minor = *state->status;
-		goto error;
-	}
-	if(*state->status != CACHE_INODE_ENTRY_EXISTS) {
-		/* somehow make the cookie into a uint64_t
-		 * this is a hammer and fsal_cookie_t is a bit strange
-		 * the VFS fsal can just stuff the offset (64 bits) into it
-		 * and that works here.  If other FSALs have something different,
-		 * particularly larger than 64 bits, beware and/or make sure
-		 * the readdir method gets the most important 64 bits where they
-		 * belong. Short circuit the FSAL_cookie_to_uint64() call.
+        status = dir_hdl->ops->lookup(dir_hdl, name, &entry_hdl);
+        if(FSAL_IS_ERROR(status)) {
+                return status;
+        }
+        pentry = cache_inode_new_entry(entry_hdl,
+                                       CACHE_INODE_FLAG_NONE,
+                                       state->status);
+        if(pentry == NULL) {
+                status.major = ERR_FSAL_NOENT; /* error for signalling cache inode errors */
+                status.minor = *state->status;
+                /* we do not free entry_hdl because it is consumed by cache_inode_new_entry */
+                return status;
+        }
+        *state->status = cache_inode_add_cached_dirent(state->directory,
+                                                       name,
+                                                       pentry,
+                                                       &new_dir_entry,
+                                                       state->status);
+        if (*state->status != CACHE_INODE_SUCCESS &&
+            *state->status != CACHE_INODE_ENTRY_EXISTS) {
+                status.major = ERR_FSAL_NOENT;
+                status.minor = *state->status;
+                goto error;
+        }
+        if(*state->status != CACHE_INODE_ENTRY_EXISTS) {
+                /* somehow make the cookie into a uint64_t this is a
+		 * hammer and fsal_cookie_t is a bit strange the VFS
+		 * fsal can just stuff the offset (64 bits) into it
+		 * and that works here.  If other FSALs have something
+		 * different, particularly larger than 64 bits, beware
+		 * and/or make sure the readdir method gets the most
+		 * important 64 bits where they belong. Short circuit
+		 * the FSAL_cookie_to_uint64() call.
 		 */
-		
-		memcpy(&new_dir_entry->fsal_cookie, cookie, sizeof(uint64_t));
-	}
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+                memcpy(&new_dir_entry->fsal_cookie, cookie, sizeof(uint64_t));
+        }
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 error:
-	ReturnCode(status.major, status.minor);
+        return fsalstat(status.major, status.minor);
 }
-			      
+
 /**
  *
  * @brief Cache complete directory contents
@@ -453,7 +425,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                              cache_inode_status_t *status)
 {
   fsal_status_t fsal_status;
-  fsal_boolean_t eod = FALSE;
+  bool_t eod = FALSE;
 
   struct cache_inode_populate_cb_state state;
 
@@ -656,7 +628,7 @@ cache_inode_readdir(cache_entry_t *directory,
                /* Entry fell out of the cache, load it back in. */
                if ((entry
                     = cache_inode_lookup_impl(directory,
-                                              &dirent->name,
+                                              dirent->name,
                                               req_ctx,
                                               &lookup_status))
                    == NULL) {
@@ -679,7 +651,7 @@ cache_inode_readdir(cache_entry_t *directory,
           LogFullDebug(COMPONENT_NFS_READDIR,
                        "cache_inode_readdir: dirent=%p name=%s "
                        "cookie=%"PRIu64" (probes %d)",
-                       dirent, dirent->name.name,
+                       dirent, dirent->name,
                        dirent->hk.k, dirent->hk.p);
 
           *status = cache_inode_lock_trust_attrs(entry);
@@ -690,7 +662,7 @@ cache_inode_readdir(cache_entry_t *directory,
             }
 
           in_result = cb(cb_opaque,
-                         dirent->name.name,
+                         dirent->name,
                          entry->obj_handle,
                          dirent->hk.k);
           (*nbfound)++;

@@ -70,8 +70,8 @@ int nfs4_op_verify(struct nfs_argop4 *op,
                    compound_data_t *data,
                    struct nfs_resop4 *resp)
 {
-  fsal_attrib_list_t   file_attr;
-  cache_inode_status_t cache_status;
+  struct attrlist      file_attr;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   fattr4               file_attr4;
   int                  rc = 0;
 

@@ -108,16 +108,12 @@ cache_inode_rdwr(cache_entry_t *entry,
      bool_t opened = FALSE;
      /* We need this until Jim Lieb redoes the FSAL interface.  But
         there's no reason to make users of cache_inode deal with it. */
-     fsal_seek_t seek_descriptor = {
-          .whence = FSAL_SEEK_SET,
-          .offset = offset
-     };
 
      /* Set flags for a read or write, as appropriate */
      if (io_direction == CACHE_INODE_READ) {
-          openflags = FSAL_O_RDONLY;
+          openflags = FSAL_O_READ;
      } else {
-          openflags = FSAL_O_WRONLY;
+          openflags = FSAL_O_WRITE;
           if (stable == CACHE_INODE_SAFE_WRITE_TO_FS)
              openflags |= FSAL_O_SYNC;
      }
@@ -208,18 +204,18 @@ cache_inode_rdwr(cache_entry_t *entry,
 
           /* Call FSAL_read or FSAL_write */
           if (io_direction == CACHE_INODE_READ) {
-	       fsal_status = obj_hdl->ops->read(obj_hdl,
-						&seek_descriptor,
-						io_size,
-						buffer,
-						bytes_moved,
-						eof);
+               fsal_status = obj_hdl->ops->read(obj_hdl,
+                                                offset,
+                                                io_size,
+                                                buffer,
+                                                bytes_moved,
+                                                eof);
           } else {
-	       fsal_status = obj_hdl->ops->write(obj_hdl,
-						 &seek_descriptor,
-						 io_size,
-						 buffer,
-						 bytes_moved);
+               fsal_status = obj_hdl->ops->write(obj_hdl,
+                                                 offset,
+                                                 io_size,
+                                                 buffer,
+                                                 bytes_moved);
 
                /* Alright, the unstable write is complete. Now if it was
                   supposed to be a stable write we can sync to the hard

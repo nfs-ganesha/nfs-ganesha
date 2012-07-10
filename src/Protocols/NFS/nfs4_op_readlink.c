@@ -46,6 +46,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "ganesha_types.h"
 
 /**
  * @brief The NFS4_OP_READLINK operation.
@@ -70,7 +71,11 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
                      struct nfs_resop4 *resp)
 {
   cache_inode_status_t cache_status;
-  fsal_path_t          symlink_path;
+  /* This is a gross hack that should be fixed by callbackification
+     of Readlink */
+  char                 symlink_path[1024];
+  struct gsh_buffdesc  link_buffer = { .addr = symlink_path,
+                                       .len  = 1024};
 
   resp->resop = NFS4_OP_READLINK;
   res_READLINK4.status = NFS4_OK;
@@ -85,21 +90,21 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
 
   /* Using cache_inode_readlink */
   if(cache_inode_readlink(data->current_entry,
-                          &symlink_path,
+                          &link_buffer,
                           data->req_ctx->creds,
-			  &cache_status) == CACHE_INODE_SUCCESS)
+                          &cache_status) == CACHE_INODE_SUCCESS)
     {
       /* Alloc read link */
 
       if((res_READLINK4.READLINK4res_u.resok4.link.utf8string_val =
-          gsh_malloc(symlink_path.len)) == NULL)
+          gsh_malloc(link_buffer.len)) == NULL)
         {
           res_READLINK4.status = NFS4ERR_INVAL;
           return res_READLINK4.status;
         }
 
       /* convert the fsal path to a utf8 string */
-      if(str2utf8(symlink_path.path, &res_READLINK4.READLINK4res_u.resok4.link)
+      if(str2utf8(link_buffer.addr, &res_READLINK4.READLINK4res_u.resok4.link)
          == -1)
         {
           res_READLINK4.status = NFS4ERR_INVAL;

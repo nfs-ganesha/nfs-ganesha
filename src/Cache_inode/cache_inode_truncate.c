@@ -75,9 +75,9 @@
 
 cache_inode_status_t
 cache_inode_truncate_impl(cache_entry_t *entry,
-                          fsal_size_t length,
-                          fsal_attrib_list_t *attr,
-			  struct req_op_context *req_ctx,
+                          uint64_t length,
+                          struct attrlist *attr,
+                          struct req_op_context *req_ctx,
                           cache_inode_status_t *status)
 {
   fsal_status_t fsal_status;
@@ -140,9 +140,9 @@ cache_inode_truncate_impl(cache_entry_t *entry,
  */
 cache_inode_status_t
 cache_inode_truncate(cache_entry_t *entry,
-                     fsal_size_t length,
-                     fsal_attrib_list_t *attr,
-		     struct req_op_context *req_ctx,
+                     uint64_t length,
+                     struct attrlist *attr,
+                     struct req_op_context *req_ctx,
                      cache_inode_status_t *status)
 {
   cache_inode_status_t ret;

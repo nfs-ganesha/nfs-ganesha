@@ -90,7 +90,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 {
      cache_entry_t *parent = NULL;
      fsal_status_t fsal_status;
-     fsal_attrib_list_t object_attributes;
+     struct attrlist object_attributes;
      cache_inode_fsal_data_t fsdata;
 
      /* Set the return default to CACHE_INODE_SUCCESS */
@@ -150,8 +150,8 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 
           /* Call cache_inode_get to populate the cache with the
              parent entry.  This increments the refcount. */
-	  parent_handle->ops->handle_to_key(parent_handle, &fsdata.fh_desc);
-	  fsdata.export = parent_handle->export;
+          parent_handle->ops->handle_to_key(parent_handle, &fsdata.fh_desc);
+          fsdata.export = parent_handle->export;
 
           if((parent = cache_inode_get(&fsdata,
                                        &object_attributes,
@@ -187,7 +187,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 
 cache_entry_t *
 cache_inode_lookupp(cache_entry_t *entry,
-		    struct req_op_context *req_ctx,
+                    struct req_op_context *req_ctx,
                     cache_inode_status_t *status)
 {
      cache_entry_t *parent = NULL;

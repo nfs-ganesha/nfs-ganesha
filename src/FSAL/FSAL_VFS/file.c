@@ -73,7 +73,7 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	myself->u.file.lock_status = 0; /* no locks on new files */
 
 out:
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
 /* vfs_status
@@ -93,15 +93,14 @@ fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
-		       fsal_seek_t * seek_descriptor,
-		       size_t buffer_size,
-		       caddr_t buffer,
-		       ssize_t *read_amount,
-		       fsal_boolean_t * end_of_file)
+		       uint64_t offset,
+                       size_t buffer_size,
+                       void *buffer,
+		       size_t *read_amount,
+		       bool_t *end_of_file)
 {
 	struct vfs_fsal_obj_handle *myself;
 	ssize_t nb_read;
-	off_t offset = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
@@ -109,34 +108,20 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 
 	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	if(seek_descriptor == NULL) {
-		nb_read = read(myself->u.file.fd, buffer, buffer_size);
-	} else {
-		if(seek_descriptor->whence == FSAL_SEEK_SET) {
-			nb_read = pread(myself->u.file.fd,
-					buffer,
-					buffer_size,
-					seek_descriptor->offset);
-		} else {
-			int whence = seek_descriptor->whence ? SEEK_CUR : SEEK_END;
+        nb_read = pread(myself->u.file.fd,
+                        buffer,
+                        buffer_size,
+                        offset);
 
-			offset = lseek(myself->u.file.fd,
-				       seek_descriptor->offset,
-				       whence);
-			if(offset != -1) {
-				nb_read = read(myself->u.file.fd, buffer, buffer_size);
-			}
-		}
-	}
-	if(offset == -1 || nb_read == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		goto out;
-	}
-	*end_of_file = nb_read == 0 ? TRUE : FALSE;
-	*read_amount = nb_read;
+        if(offset == -1 || nb_read == -1) {
+                retval = errno;
+                fsal_error = posix2fsal_error(retval);
+                goto out;
+        }
+        *end_of_file = nb_read == 0 ? TRUE : FALSE;
+        *read_amount = nb_read;
 out:
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
 /* vfs_write
@@ -144,14 +129,13 @@ out:
  */
 
 fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
-			fsal_seek_t *seek_descriptor,
+			uint64_t offset,
 			size_t buffer_size,
-			caddr_t buffer,
-			ssize_t *write_amount)
+			void *buffer,
+			size_t *write_amount)
 {
 	struct vfs_fsal_obj_handle *myself;
 	ssize_t nb_written;
-	off_t offset = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
@@ -159,33 +143,19 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 
 	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
 
-	if(seek_descriptor == NULL) {
-		nb_written = write(myself->u.file.fd, buffer, buffer_size);
-	} else {
-		if(seek_descriptor->whence == FSAL_SEEK_SET) {
-			nb_written = pwrite(myself->u.file.fd,
-					buffer,
-					buffer_size,
-					seek_descriptor->offset);
-		} else {
-			int whence = seek_descriptor->whence ? SEEK_CUR : SEEK_END;
+        nb_written = pwrite(myself->u.file.fd,
+                            buffer,
+                            buffer_size,
+                            offset);
 
-			offset = lseek(myself->u.file.fd,
-				       seek_descriptor->offset,
-				       whence);
-			if(offset != -1) {
-				nb_written = write(myself->u.file.fd, buffer, buffer_size);
-			}
-		}
-	}
 	if(offset == -1 || nb_written == -1) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
-	*write_amount = (fsal_size_t) nb_written;
+	*write_amount = nb_written;
 out:
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
 /* vfs_commit
@@ -210,7 +180,7 @@ fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
 /* vfs_lock_op
@@ -328,7 +298,7 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	else
 		myself->u.file.lock_status--;
 out:
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
 /* vfs_share_op @TODO still true?
@@ -365,7 +335,7 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	myself->u.file.fd = -1;
 	myself->u.file.lock_status = 0;
 	myself->u.file.openflags = FSAL_O_CLOSED;
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
 
 /* vfs_lru_cleanup
@@ -392,120 +362,5 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
-	ReturnCode(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);	
 }
-
-/* vfs_rcp
- * copy a VFS file to/from a local filesystem (file cache)
- * this hardly makes sense in this context but it is here as
- * the model for other fsals with slow backends such as HPSS
- * or PROXY.  This should really be in the file content cache
- * as it has access to the local filesystem and would be making
- * handle calls for these bits anyway...
- * better yet, file content cache should be a layered/stacked fsal
- * and this gone.
- * Leave it here for now.
- */
-
-#define RCP_BUFFER_SIZE 10485760
-fsal_status_t vfs_rcp(struct fsal_obj_handle *obj_hdl,
-		      const char *local_path,
-		      fsal_rcpflag_t transfer_opt)
-{
-/* 	struct vfs_fsal_obj_handle *myself; */
-	int fd;
-	int local_flags;
-	fsal_openflags_t fs_flags;
-	caddr_t buffer;
-	int local_to_fs = FALSE;
-	int eof = FALSE;
-	ssize_t local_size, fs_size;
-	fsal_status_t st;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
-
-/* 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle); */
-	local_to_fs = !!(transfer_opt & FSAL_RCP_LOCAL_TO_FS);
-	if(local_to_fs) {
-		local_flags = O_RDONLY;
-		fs_flags = FSAL_O_WRONLY | FSAL_O_TRUNC;
-	} else {
-		local_flags = O_WRONLY | O_TRUNC;
-		if(transfer_opt & FSAL_RCP_LOCAL_CREAT)
-			local_flags |= O_CREAT;
-		if(transfer_opt & FSAL_RCP_LOCAL_EXCL)
-			local_flags |= O_EXCL;
-		fs_flags = FSAL_O_WRONLY | FSAL_O_TRUNC;
-	}
-	fd = open(local_path, local_flags, 0600);
-	if(fd == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		goto out;
-	}
-	st = vfs_open(obj_hdl, fs_flags);
-	if(FSAL_IS_ERROR(st)) {
-		close(fd);
-		fsal_error = st.major;
-		goto out;
-	}
-	buffer = malloc(RCP_BUFFER_SIZE);
-	if(buffer == NULL) {
-		close(fd);
-		vfs_close(obj_hdl);
-		goto out;
-	}
-	if(local_to_fs) {
-		while( !eof) {
-			local_size = read(fd, buffer, RCP_BUFFER_SIZE);
-			if(local_size > 0) {
-				st = vfs_write(obj_hdl,
-					       NULL,
-					       RCP_BUFFER_SIZE,
-					       buffer,
-					       &fs_size);
-				if(FSAL_IS_ERROR(st) ||
-				   fs_size != RCP_BUFFER_SIZE) {
-					fsal_error = st.major;
-					retval = st.minor;
-					break;
-				}
-			} else if(local_size < 0) {
-				fsal_error = ERR_FSAL_IO;
-				retval = errno;
-				break;
-			} else {
-				eof = TRUE;
-			}
-		}
-	} else {  /* fs to local file */
-		while( !eof) {
-			fs_size = 0;
-			st = vfs_read(obj_hdl,
-				      NULL,
-				      RCP_BUFFER_SIZE,
-				      buffer,
-				      &fs_size,
-				      &eof);
-			if(FSAL_IS_ERROR(st)) {
-				fsal_error = st.major;
-				retval = st.minor;
-				break;
-			}
-			if( !eof) {
-				local_size = write(fd, buffer, fs_size);
-				if(local_size == -1) {
-					st.major = ERR_FSAL_IO;
-					st.minor = errno;
-					break;        /* exit loop */
-				}
-			}
-		}
-	}
-	free(buffer);
-	close(fd);
-	vfs_close(obj_hdl);
-out:
-	ReturnCode(fsal_error, retval);	
-}
-

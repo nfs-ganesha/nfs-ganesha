@@ -95,13 +95,13 @@ cache_inode_access_sw(cache_entry_t *entry,
       * managed internally
       */
      if(access_type != FSAL_F_OK) {
-          fsal_attrib_list_t attr;
+          struct attrlist attr;
 
           /* We get ride of F_OK */
           used_access_type = access_type & ~FSAL_F_OK;
 
-	  /* We get the attributes */
-	  attr = pfsal_handle->attributes;
+          /* We get the attributes */
+          attr = pfsal_handle->attributes;
 
 
           if(cache_inode_params.use_test_access == 1) {

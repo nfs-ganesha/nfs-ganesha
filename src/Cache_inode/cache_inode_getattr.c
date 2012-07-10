@@ -74,9 +74,9 @@
  */
 cache_inode_status_t
 cache_inode_getattr(cache_entry_t *entry,
-                    fsal_attrib_list_t *attr, /* XXX Change this so
-                                                * we don't just copy
-                                                * stuff on the stack. */
+                    struct attrlist *attr, /* XXX Change this so
+                                            * we don't just copy
+                                            * stuff on the stack. */
                     cache_inode_status_t *status)
 {
 

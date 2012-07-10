@@ -106,7 +106,7 @@ cache_inode_status_t
 cache_inode_clean_internal(cache_entry_t *entry)
 {
      hash_buffer_t key, val;
-     struct fsal_handle_desc fh_desc;
+     struct gsh_buffdesc fh_desc;
      fsal_status_t fsal_status = {0, 0};
      hash_error_t rc = 0;
 
@@ -114,8 +114,8 @@ cache_inode_clean_internal(cache_entry_t *entry)
        goto unref;
 
      entry->obj_handle->ops->handle_to_key(entry->obj_handle,
-					   &fh_desc);
-     key.pdata = fh_desc.start;
+                                           &fh_desc);
+     key.pdata = fh_desc.addr;
      key.len = fh_desc.len;
      val.pdata = entry;
      val.len = sizeof(cache_entry_t);
@@ -170,9 +170,9 @@ cache_inode_clean_internal(cache_entry_t *entry)
 
 cache_inode_status_t
 cache_inode_remove(cache_entry_t *entry,
-                   fsal_name_t *name,
-                   fsal_attrib_list_t *attr,
-		   struct req_op_context *req_ctx,
+                   const char *name,
+                   struct attrlist *attr,
+                   struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
      cache_inode_status_t cache_status;
@@ -238,8 +238,8 @@ unlock_attr:
 
 cache_inode_status_t
 cache_inode_remove_impl(cache_entry_t *entry,
-                        fsal_name_t *name,
-			struct req_op_context *req_ctx,
+                        const char *name,
+                        struct req_op_context *req_ctx,
                         cache_inode_status_t *status,
                         uint32_t flags)
 {
@@ -283,7 +283,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
      pthread_rwlock_wrlock(&to_remove_entry->attr_lock);
 
      LogDebug(COMPONENT_CACHE_INODE,
-              "---> Cache_inode_remove : %s", name->name);
+              "---> Cache_inode_remove : %s", name);
 
 
 #ifdef _USE_NFS4_ACL

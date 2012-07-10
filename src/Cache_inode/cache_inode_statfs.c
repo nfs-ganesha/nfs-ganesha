@@ -84,9 +84,10 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
       status =  cache_inode_error_convert(fsal_status);
     }
   LogFullDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_statfs: dynamicinfo: {total_bytes = %zu, "
-               "free_bytes = %zu, avail_bytes = %zu, total_files = %llu, "
-               "free_files = %llu, avail_files = %llu}",
+               "cache_inode_statfs: dynamicinfo: {total_bytes = %"PRIu64", "
+               "free_bytes = %"PRIu64", avail_bytes = %"PRIu64
+               ", total_files = %"PRIu64", free_files = %"PRIu64
+               ", avail_files = %"PRIu64"}",
                dynamicinfo->total_bytes, dynamicinfo->free_bytes,
                dynamicinfo->avail_bytes, dynamicinfo->total_files,
                dynamicinfo->free_files, dynamicinfo->avail_files);

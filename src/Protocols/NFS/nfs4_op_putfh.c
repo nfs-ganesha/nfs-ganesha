@@ -74,8 +74,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op,
                   compound_data_t *data,
                   struct nfs_resop4 *resp)
 {
-  int                rc;
-  fsal_attrib_list_t attr;
+  int                rc = 0;
+  struct attrlist    attr;
 
   resp->resop = NFS4_OP_PUTFH;
   res_PUTFH4.status = NFS4_OK;

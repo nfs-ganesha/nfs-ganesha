@@ -84,7 +84,7 @@ cache_inode_kill_entry(cache_entry_t *entry)
      hash_buffer_t key;
      hash_buffer_t val;
      struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
-     struct fsal_handle_desc fh_desc;
+     struct gsh_buffdesc fh_desc;
      int rc = 0;
 
      LogInfo(COMPONENT_CACHE_INODE,
@@ -95,7 +95,7 @@ cache_inode_kill_entry(cache_entry_t *entry)
 
      /* Use the handle to build the key */
      pfsal_handle->ops->handle_to_key(pfsal_handle, &fh_desc);
-     key.pdata = fh_desc.start;
+     key.pdata = fh_desc.addr;
      key.len = fh_desc.len;
 
      val.pdata = entry;

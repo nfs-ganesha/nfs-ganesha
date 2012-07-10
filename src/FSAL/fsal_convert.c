@@ -61,39 +61,9 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
  *
  * \return The posix mode associated to fsal_mode.
  */
-mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode)
+mode_t fsal2unix_mode(uint32_t fsal_mode)
 {
-
-  mode_t out_mode = 0;
-
-  if((fsal_mode & FSAL_MODE_SUID))
-    out_mode |= S_ISUID;
-  if((fsal_mode & FSAL_MODE_SGID))
-    out_mode |= S_ISGID;
-  if((fsal_mode & FSAL_MODE_SVTX))
-    out_mode |= S_ISVTX;
-
-  if((fsal_mode & FSAL_MODE_RUSR))
-    out_mode |= S_IRUSR;
-  if((fsal_mode & FSAL_MODE_WUSR))
-    out_mode |= S_IWUSR;
-  if((fsal_mode & FSAL_MODE_XUSR))
-    out_mode |= S_IXUSR;
-  if((fsal_mode & FSAL_MODE_RGRP))
-    out_mode |= S_IRGRP;
-  if((fsal_mode & FSAL_MODE_WGRP))
-    out_mode |= S_IWGRP;
-  if((fsal_mode & FSAL_MODE_XGRP))
-    out_mode |= S_IXGRP;
-  if((fsal_mode & FSAL_MODE_ROTH))
-    out_mode |= S_IROTH;
-  if((fsal_mode & FSAL_MODE_WOTH))
-    out_mode |= S_IWOTH;
-  if((fsal_mode & FSAL_MODE_XOTH))
-    out_mode |= S_IXOTH;
-
-  return out_mode;
-
+  return fsal_mode;
 }
 
 /**
@@ -105,41 +75,9 @@ mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode)
  *
  * \return The FSAL mode associated to unix_mode.
  */
-fsal_accessmode_t unix2fsal_mode(mode_t unix_mode)
+uint32_t unix2fsal_mode(mode_t unix_mode)
 {
-
-  fsal_accessmode_t fsalmode = 0;
-
-  if(unix_mode & S_ISUID)
-    fsalmode |= FSAL_MODE_SUID;
-  if(unix_mode & S_ISGID)
-    fsalmode |= FSAL_MODE_SGID;
-  if(unix_mode & S_ISVTX)
-    fsalmode |= FSAL_MODE_SVTX;
-
-  if(unix_mode & S_IRUSR)
-    fsalmode |= FSAL_MODE_RUSR;
-  if(unix_mode & S_IWUSR)
-    fsalmode |= FSAL_MODE_WUSR;
-  if(unix_mode & S_IXUSR)
-    fsalmode |= FSAL_MODE_XUSR;
-
-  if(unix_mode & S_IRGRP)
-    fsalmode |= FSAL_MODE_RGRP;
-  if(unix_mode & S_IWGRP)
-    fsalmode |= FSAL_MODE_WGRP;
-  if(unix_mode & S_IXGRP)
-    fsalmode |= FSAL_MODE_XGRP;
-
-  if(unix_mode & S_IROTH)
-    fsalmode |= FSAL_MODE_ROTH;
-  if(unix_mode & S_IWOTH)
-    fsalmode |= FSAL_MODE_WOTH;
-  if(unix_mode & S_IXOTH)
-    fsalmode |= FSAL_MODE_XOTH;
-
-  return fsalmode;
-
+  return unix_mode;
 }
 
 /**
@@ -186,12 +124,12 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in)
 
 }
 
-fsal_time_t posix2fsal_time(time_t tsec, time_t nsec)
+gsh_time_t posix2fsal_time(time_t tsec, time_t nsec)
 {
-  fsal_time_t fsaltime;
+  gsh_time_t fsaltime;
 
-  fsaltime.seconds = (fsal_uint_t) tsec;
-  fsaltime.nseconds = (fsal_uint_t) nsec;
+  fsaltime.seconds = tsec;
+  fsaltime.nseconds = nsec;
 
   return fsaltime;
 }
@@ -201,7 +139,7 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)
 
   fsal_fsid_t fsid;
 
-  fsid.major = (fsal_u64_t) posix_devid;
+  fsid.major = posix_devid;
   fsid.minor = 0;
 
   return fsid;

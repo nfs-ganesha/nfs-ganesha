@@ -79,8 +79,8 @@
  */
 cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                                       cache_entry_t *dest_dir,
-                                      fsal_name_t *name,
-                                      fsal_attrib_list_t *attr,
+                                      const char *name,
+                                      struct attrlist *attr,
                                       struct req_op_context *req_ctx,
                                       cache_inode_status_t *status)
 {
@@ -89,7 +89,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      bool_t destattrlock = FALSE;
      bool_t destdirlock = FALSE;
      fsal_accessflags_t access_mask = 0;
-     fsal_attrib_list_t attrs;
+     struct attrlist attrs;
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
@@ -136,14 +136,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      pthread_rwlock_wrlock(&entry->attr_lock);
      srcattrlock = TRUE;
 
-     if ((entry->type == UNASSIGNED) ||
-         (entry->type == RECYCLED)) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "Invalid source type: type=%d, line %d in file %s",
-                  entry->type, __LINE__, __FILE__);
-          goto out;
-     }
-
      /* Acquire the directory entry lock */
      pthread_rwlock_wrlock(&dest_dir->content_lock);
      destdirlock = TRUE;
@@ -162,7 +154,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
                fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
-								   &attrs);
+                                                              &attrs);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);
                }
