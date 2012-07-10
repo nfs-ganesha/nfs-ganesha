@@ -1,6 +1,84 @@
+/*
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright (C) Panasas Inc., 2011
+ * Author: Jim Lieb jlieb@panasas.com
+ *
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
+ */
+
 /* FSAL API
  * object oriented fsal api.
  */
+
+/** VERSIONING RULES
+ *
+ * One intent in this API is to be able to support fsals that are built
+ * out-of-tree and possibly out of synch with the core of Ganesha.  This
+ * is managed by version numbers in this file that are validated at load
+ * time for the fsal.  There are major and minor version numbers which are
+ * monotonically increasing numbers ( V1 < V2 means V2 is newer).
+ *
+ * API guarantee:
+ *
+ * * If major version numbers differ, the fsal will not be loaded because
+ *   the api has changed enough to make it unsafe.
+ *
+ * * If the major versions are equal, the minor version determines loadability.
+ *
+ *   - A fsal that is older than the Ganesha core can safely load and run.
+ *
+ *   - A fsal that is newer than the Ganesha core is not safe and will not
+ *     be loaded.
+ */
+
+/* Major Version
+ * Increment this whenever any part of the existing API is changed, e.g.
+ * the argument list changed or a method is removed.
+ */
+
+#define FSAL_MAJOR_VERSION 1
+
+/* Minor Version
+ * Increment this whenever a new method is appended to the ops vector.  The
+ * remainder of the API is unchanged.
+ *
+ * If the major version is incremented, reset the minor to 0 (zero).
+ *
+ * If new members are appended to struct req_op_context (following its own
+ * rules), increment the minor version
+ */
+
+#define FSAL_MINOR_VERSION 0
+
+/* forward references for object methods
+ */
+
+struct fsal_export;
+struct export_ops;
+struct fsal_obj_handle;
+struct fsal_obj_ops;
+struct exportlist__; /* we just need a pointer, not all of nfs_exports.h
+		      * full def in include/nfs_exports.h
+		      */
 
 /* fsal manager
  */
@@ -17,13 +95,12 @@ struct fsal_module {
 	char *name;			/* name set from .so and/or config */
 	char *path;			/* path to .so file */
 	void *dl_handle;		/* NULL if statically linked */
-	struct fsal_ops *ops;
+	struct fsal_ops *ops;		/* fsal module methods vector */
+	struct export_ops *exp_ops;	/* shared export object methods vector */
+	struct fsal_obj_ops *obj_ops;   /* shared handle methods vector */
 };
 
 /* fsal module methods */
-
-struct fsal_export;
-struct exportlist__;  /* full def in include/nfs_exports.h */
 
 struct fsal_ops {
 	/* base methods implemented in fsal_manager.c */
@@ -59,7 +136,9 @@ int init_fsals(config_file_t config);
  */
 
 int register_fsal(struct fsal_module *fsal_hdl,
-		  const char *name);
+		  const char *name,
+		  uint32_t major_version,
+		  uint32_t minor_version);
 int unregister_fsal(struct fsal_module *fsal_hdl);
 
 /* find and take a reference on a fsal
@@ -72,9 +151,6 @@ struct fsal_module *lookup_fsal(const char *name);
 /* export object
  * Created by fsal and referenced by the export list
  */
-
-struct fsal_obj_handle;
-struct exportlist__; /* we just need a pointer, not all of nfs_exports.h */
 
 struct fsal_export {
 	struct fsal_module *fsal;

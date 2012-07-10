@@ -378,103 +378,6 @@ struct fsal_module *lookup_fsal(const char *name)
 	return NULL;
 }
 
-/* put_fsal
- * put the fsal back that we got with lookup_fsal.
- * Indicates that we are no longer interested in it (for now)
- */
-
-static int put(struct fsal_module *fsal_hdl)
-{
-	int retval = EINVAL; /* too many 'puts" */
-
-	pthread_mutex_lock(&fsal_hdl->lock);
-	if(fsal_hdl->refs > 0) {
-		fsal_hdl->refs--;
-		retval = 0;
-	}
-	pthread_mutex_unlock(&fsal_hdl->lock);
-	return retval;
-}
-
-/* get_name
- * return the name of the loaded fsal.
- * Must be called while holding a reference.
- * Return a pointer to the name, possibly NULL;
- * Note! do not dereference after doing a 'put'.
- */
-
-static const char *get_name(struct fsal_module *fsal_hdl)
-{
-	char *name;
-
-	pthread_mutex_lock(&fsal_hdl->lock);
-	if(fsal_hdl->refs <= 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"Called without reference!");
-		name = NULL;
-	} else {
-		name = fsal_hdl->name;
-	}
-	pthread_mutex_unlock(&fsal_hdl->lock);
-	return name;
-}
-
-/* fsal_get_lib_name
- * return the pathname loaded for the fsal.
- * Must be called while holding a reference.
- * Return a pointer to the library path, possibly NULL;
- * Note! do not dereference after doing a 'put'.
- */
-
-static const char *get_lib_name(struct fsal_module *fsal_hdl)
-{
-	char *path;
-
-	pthread_mutex_lock(&fsal_hdl->lock);
-	if(fsal_hdl->refs <= 0) {
-		LogCrit(COMPONENT_CONFIG,
-			"Called without reference!");
-		path = NULL;
-	} else {
-		path = fsal_hdl->path;
-	}
-	pthread_mutex_unlock(&fsal_hdl->lock);
-	return path;
-}
-
-/* unload fsal
- * called while holding the last remaining reference
- * remove from list and dlclose the module
- * if references are held, return EBUSY
- * if it is a static, return EACCES
- */
-
-static int unload_fsal(struct fsal_module *fsal_hdl)
-{
-	int retval = EBUSY; /* someone still has a reference */
-
-	pthread_mutex_lock(&fsal_lock);
-	pthread_mutex_lock(&fsal_hdl->lock);
-	if(fsal_hdl->refs != 0 || !glist_empty(&fsal_hdl->exports))
-		goto err;
-	if(fsal_hdl->dl_handle == NULL) {
-		retval = EACCES;  /* cannot unload static linked fsals */
-		goto err;
-	}
-	glist_del(&fsal_hdl->fsals);
-	pthread_mutex_unlock(&fsal_hdl->lock);
-	pthread_mutex_destroy(&fsal_hdl->lock);
-	fsal_hdl->refs = 0;
-
-	retval = dlclose(fsal_hdl->dl_handle);
-	return retval;
-
-err:
-	pthread_mutex_unlock(&fsal_hdl->lock);
-	pthread_mutex_unlock(&fsal_lock);
-	return retval;
-}
-
 /* functions only called by modules at ctor/dtor time
  */
 
@@ -493,10 +396,33 @@ err:
  * Change load_state only for dynamically loaded modules.
  */
 
-int register_fsal(struct fsal_module *fsal_hdl, const char *name)
+/** @TODO implement api versioning and pass the major,minor here
+ */
+
+int register_fsal(struct fsal_module *fsal_hdl,
+		  const char *name,
+		  uint32_t major_version,
+		  uint32_t minor_version)
 {
 	pthread_mutexattr_t attrs;
+	extern struct fsal_ops def_fsal_ops;
+	extern struct export_ops def_export_ops;
+	extern struct fsal_obj_ops def_handle_ops;
 
+	if((major_version != FSAL_MAJOR_VERSION) ||
+	   (minor_version > FSAL_MINOR_VERSION)) {
+		so_error = EINVAL;
+		LogCrit(COMPONENT_INIT,
+			"FSAL \"%s\" failed to register because "
+			"of version mismatch core = %d.%d, fsal = %d.%d",
+			name,
+			FSAL_MAJOR_VERSION,
+			FSAL_MINOR_VERSION,
+			major_version,
+			minor_version);
+		load_state = error;
+		return so_error;
+	}
 	pthread_mutex_lock(&fsal_lock);
 	so_error = 0;
 	if( !(load_state == loading || load_state == init)) {
@@ -511,13 +437,30 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name)
 			goto errout;
 		}
 	}
-/* we set the base class method pointers here. the .init constructor sets
- * instance pointers, e.g. "create_export" from the fsal itself
+/* allocate and init ops vectors to system wide defaults
+ * from FSAL/default_methods.c
  */
-	fsal_hdl->ops->get_name = get_name;
-	fsal_hdl->ops->get_lib_name = get_lib_name;
-	fsal_hdl->ops->put = put;
-	fsal_hdl->ops->unload = unload_fsal;
+	fsal_hdl->ops = malloc(sizeof(struct fsal_ops));
+	if(fsal_hdl->ops == NULL) {
+		so_error = ENOMEM;
+		goto errout;
+	}
+	memcpy(fsal_hdl->ops, &def_fsal_ops, sizeof(struct fsal_ops));
+
+	fsal_hdl->exp_ops = malloc(sizeof(struct export_ops));
+	if(fsal_hdl->exp_ops == NULL) {
+		so_error = ENOMEM;
+		goto errout;
+	}
+	memcpy(fsal_hdl->exp_ops, &def_export_ops, sizeof(struct export_ops));
+
+	fsal_hdl->obj_ops = malloc(sizeof(struct fsal_obj_ops));
+	if(fsal_hdl->obj_ops == NULL) {
+		so_error = ENOMEM;
+		goto errout;
+	}
+	memcpy(fsal_hdl->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
+
 	pthread_mutexattr_init(&attrs);
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
 	pthread_mutex_init(&fsal_hdl->lock, &attrs);
@@ -530,6 +473,16 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name)
 	return 0;
 
 errout:
+	if(fsal_hdl->path)
+		free(fsal_hdl->path);
+	if(fsal_hdl->name)
+		free(fsal_hdl->name);
+	if(fsal_hdl->ops)
+		free(fsal_hdl->ops);
+	if(fsal_hdl->exp_ops)
+		free(fsal_hdl->exp_ops);
+	if(fsal_hdl->obj_ops)
+		free(fsal_hdl->obj_ops);
 	load_state = error;
 	pthread_mutex_unlock(&fsal_lock);
 	LogCrit(COMPONENT_INIT,
@@ -555,6 +508,12 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
 		free(fsal_hdl->path);
 	if(fsal_hdl->name)
 		free(fsal_hdl->name);
+	if(fsal_hdl->ops)
+		free(fsal_hdl->ops);
+	if(fsal_hdl->exp_ops)
+		free(fsal_hdl->exp_ops);
+	if(fsal_hdl->obj_ops)
+		free(fsal_hdl->obj_ops);
 	retval = 0;
 out:
 	return retval;

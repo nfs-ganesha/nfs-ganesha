@@ -114,52 +114,6 @@ void fsal_detach_handle(struct fsal_export *exp_hdl,
 	pthread_mutex_unlock(&exp_hdl->lock);
 }
 
-/* fsal_export common methods
- */
-
-void fsal_export_get(struct fsal_export *exp_hdl)
-{
-	pthread_mutex_lock(&exp_hdl->lock);
-	exp_hdl->refs++;
-	pthread_mutex_unlock(&exp_hdl->lock);
-}
-
-int fsal_export_put(struct fsal_export *exp_hdl)
-{
-	int retval = EINVAL; /* too many 'puts" */
-
-	pthread_mutex_lock(&exp_hdl->lock);
-	if(exp_hdl->refs > 0) {
-		exp_hdl->refs--;
-		retval = 0;
-	}
-	pthread_mutex_unlock(&exp_hdl->lock);
-	return retval;
-}
-
-/* fsal_obj_handle common methods
- */
-
-void fsal_handle_get(struct fsal_obj_handle *obj_hdl)
-{
-	pthread_mutex_lock(&obj_hdl->lock);
-	obj_hdl->refs++;
-	pthread_mutex_unlock(&obj_hdl->lock);
-}
-
-int fsal_handle_put(struct fsal_obj_handle *obj_hdl)
-{
-	int retval = EINVAL; /* too many 'puts" */
-
-	pthread_mutex_lock(&obj_hdl->lock);
-	if(obj_hdl->refs > 0) {
-		obj_hdl->refs--;
-		retval = 0;
-	}
-	pthread_mutex_unlock(&obj_hdl->lock);
-	return retval;
-}
-
 void fsal_export_init(struct fsal_export *exp, struct export_ops *exp_ops,
                       struct exportlist__ *exp_entry)
 {
