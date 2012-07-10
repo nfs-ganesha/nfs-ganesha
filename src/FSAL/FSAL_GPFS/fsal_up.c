@@ -125,8 +125,6 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
 
   callback.handle->handle_version = OPENHANDLE_VERSION;
 
-  // TODO: Workaround until we get new GPFS code.
-  callback.handle->handle_type = 7;
 
   fhP = (int *)&(callback.handle->f_handle[0]);
   LogDebug(COMPONENT_FSAL,
