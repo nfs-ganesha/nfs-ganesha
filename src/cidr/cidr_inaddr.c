@@ -7,6 +7,7 @@
 #include <string.h>
 /* netinet/in.h is pulled in by libcidr.h */
 
+#include "config.h"
 #include "stuff_alloc.h"
 #include "../include/cidr.h"
 

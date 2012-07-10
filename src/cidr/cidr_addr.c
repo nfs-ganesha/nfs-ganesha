@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "config.h"
 #include "stuff_alloc.h"
 #include "../include/cidr.h"
 
