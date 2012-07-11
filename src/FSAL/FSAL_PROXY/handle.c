@@ -2003,64 +2003,35 @@ pxy_close(struct fsal_obj_handle *obj_hdl)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t
-pxy_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-		lru_actions_t requests)
+
+void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 {
-	ReturnCode(ERR_FSAL_PERM, EPERM);
+	ops->release = pxy_hdl_release;
+	ops->lookup = pxy_lookup;
+	ops->readdir = pxy_readdir;
+	ops->create = pxy_create;
+	ops->mkdir = pxy_mkdir;
+	ops->mknode = pxy_mknod;
+	ops->symlink = pxy_symlink;
+	ops->readlink = pxy_readlink;
+	ops->getattrs = pxy_getattrs;
+	ops->setattrs = pxy_setattrs;
+	ops->link = pxy_link;
+	ops->rename = pxy_rename;
+	ops->unlink = pxy_unlink;
+	ops->truncate = pxy_truncate;
+	ops->open = pxy_open;
+	ops->read = pxy_read;
+	ops->write = pxy_write;
+	ops->commit = pxy_commit;
+	ops->lock_op = pxy_lock_op;
+	ops->share_op = pxy_share_op;
+	ops->close = pxy_close;
+	ops->handle_is = pxy_handle_is;
+	ops->compare = pxy_compare_hdl;
+	ops->handle_digest = pxy_handle_digest;
+	ops->handle_to_key = pxy_handle_to_key;
 }
-
-static fsal_status_t
-pxy_rcp(struct fsal_obj_handle *obj_hdl,
-        const char *local_path,
-        fsal_rcpflag_t transfer_opt)
-{
-	ReturnCode(ERR_FSAL_PERM, EPERM);
-}
-
-
-struct fsal_obj_ops pxy_obj_ops = {
-	.get = fsal_handle_get,
-	.put = fsal_handle_put,
-	.release = pxy_hdl_release,
-	.lookup = pxy_lookup,
-	.readdir = pxy_readdir,
-	.create = pxy_create,
-	.mkdir = pxy_mkdir,
-	.mknode = pxy_mknod,
-	.symlink = pxy_symlink,
-	.readlink = pxy_readlink,
-	.test_access = fsal_test_access,
-	.getattrs = pxy_getattrs,
-	.setattrs = pxy_setattrs,
-	.link = pxy_link,
-	.rename = pxy_rename,
-	.unlink = pxy_unlink,
-	.truncate = pxy_truncate,
-	.open = pxy_open,
-	.read = pxy_read,
-	.write = pxy_write,
-	.commit = pxy_commit,
-	.lock_op = pxy_lock_op,
-	.share_op = pxy_share_op,
-	.close = pxy_close,
-	.rcp = pxy_rcp,
-	.getextattrs = pxy_getextattrs,
-	.list_ext_attrs = pxy_list_ext_attrs,
-	.getextattr_id_by_name = pxy_getextattr_id_by_name,
-	.getextattr_value_by_name = pxy_getextattr_value_by_name,
-	.getextattr_value_by_id = pxy_getextattr_value_by_id,
-	.setextattr_value = pxy_setextattr_value,
-	.setextattr_value_by_id = pxy_setextattr_value_by_id,
-	.getextattr_attrs = pxy_getextattr_attrs,
-	.remove_extattr_by_id = pxy_remove_extattr_by_id,
-	.remove_extattr_by_name = pxy_remove_extattr_by_name,
-	.handle_is = pxy_handle_is,
-	.lru_cleanup = pxy_lru_cleanup,
-	.compare = pxy_compare_hdl,
-	.handle_digest = pxy_handle_digest,
-	.handle_to_key = pxy_handle_to_key
-};
 
 #ifdef _HANDLE_MAPPING
 static unsigned int
@@ -2124,7 +2095,7 @@ pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
                         return NULL;
                 }
 #endif
-                if(fsal_obj_handle_init(&n->obj, &pxy_obj_ops, exp,
+                if(fsal_obj_handle_init(&n->obj, exp->fsal->obj_ops, exp,
                                         attr->type)) {
                         free(n);
                         n = NULL;

@@ -35,13 +35,14 @@ struct pxy_fsal_module {
       fsal_staticfsinfo_t fsinfo;
       fsal_init_info_t init;
       proxyfs_specific_initinfo_t special;
-      struct fsal_ops pxy_ops;
+/*       struct fsal_ops pxy_ops; */
 };
 
 struct pxy_export {
         struct fsal_export exp;
         const proxyfs_specific_initinfo_t *info;
 };
+
 
 int pxy_init_rpc(const struct pxy_fsal_module *);
 

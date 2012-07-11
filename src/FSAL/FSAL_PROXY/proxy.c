@@ -261,22 +261,23 @@ pxy_init_config(struct fsal_module *fsal_hdl,
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-static void pxy_dump_config(struct fsal_module *fsal_hdl, int log_fd)
-{
-}
+static struct pxy_fsal_module PROXY;
 
-static struct pxy_fsal_module PROXY = {
-	.pxy_ops.init_config = pxy_init_config,
-	.pxy_ops.dump_config = pxy_dump_config,
-	.pxy_ops.create_export = pxy_create_export,
-};
+void pxy_export_ops_init(struct export_ops *ops);
+void pxy_handle_ops_init(struct fsal_obj_ops *ops);
+
 
 MODULE_INIT void 
 pxy_init(void)
 {
-        PROXY.module.ops = &PROXY.pxy_ops;
-
-	register_fsal(&PROXY.module, "PROXY");
+	if(register_fsal(&PROXY.module, "PROXY",
+			 FSAL_MAJOR_VERSION,
+			 FSAL_MINOR_VERSION) != 0)
+		return;
+	PROXY.module.ops->init_config = pxy_init_config;
+	PROXY.module.ops->create_export = pxy_create_export;
+	pxy_export_ops_init(PROXY.module.exp_ops);
+	pxy_handle_ops_init(PROXY.module.obj_ops);
 }
 
 MODULE_FINI void 

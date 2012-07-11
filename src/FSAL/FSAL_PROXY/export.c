@@ -183,73 +183,26 @@ pxy_layout_blksize(struct fsal_export *exp_hdl)
 }
 #endif
 
-static fsal_status_t
-pxy_check_quota(struct fsal_export *exp_hdl,
-                const char * filepath,
-		int quota_type,
-		struct req_op_context *req_ctx)
+void pxy_export_ops_init(struct export_ops *ops)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
-}
-
-static fsal_status_t
-pxy_get_quota(struct fsal_export *exp_hdl,
-	  const char * filepath,
-	  int quota_type,
-	  struct req_op_context *req_ctx,
-	  fsal_quota_t *pquota)
-{
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
-}
-
-static fsal_status_t
-pxy_set_quota(struct fsal_export *exp_hdl,
-	      const char *filepath,
-	      int quota_type,
-	      struct req_op_context *req_ctx,
-	      fsal_quota_t * pquota,
-	      fsal_quota_t * presquota)
-{
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
-}
-
-fsal_status_t 
-pxy_lookup_junction(struct fsal_export *exp_hdl,
-		    struct fsal_obj_handle *junction,
-		    struct fsal_obj_handle **handle)
-{
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);	
-}
-
-static struct export_ops pxy_exp_ops = {
-	.get = fsal_export_get,
-	.put = fsal_export_put,
-	.release = pxy_release,
-	.lookup_path = pxy_lookup_path,
-	.lookup_junction = pxy_lookup_junction,
-	.extract_handle = pxy_extract_handle,
-	.create_handle = pxy_create_handle,
-	.get_fs_dynamic_info = pxy_get_dynamic_info,
-	.fs_supports = pxy_get_supports,
-	.fs_maxfilesize = pxy_get_maxfilesize,
-	.fs_maxread = pxy_get_maxread,
-	.fs_maxwrite = pxy_get_maxwrite,
-	.fs_maxlink = pxy_get_maxlink,
-	.fs_maxnamelen = pxy_get_maxnamelen,
-	.fs_maxpathlen = pxy_get_maxpathlen,
-	.fs_fh_expire_type = pxy_fh_expire_type,
-	.fs_lease_time = pxy_get_lease_time,
-	.fs_acl_support = pxy_get_acl_support,
-	.fs_supported_attrs = pxy_get_supported_attrs,
-	.fs_umask = pxy_get_umask,
-	.fs_xattr_access_rights = pxy_get_xattr_access_rights,
-#ifdef _USE_FSALMDS
-	.fs_layout_types = pxy_get_layout_types,
-	.layout_blksize = pxy_layout_blksize,
-#endif
-	.check_quota = pxy_check_quota,
-	.get_quota = pxy_get_quota,
-	.set_quota = pxy_set_quota
+	ops->release = pxy_release;
+	ops->lookup_path = pxy_lookup_path;
+	ops->extract_handle = pxy_extract_handle;
+	ops->create_handle = pxy_create_handle;
+	ops->get_fs_dynamic_info = pxy_get_dynamic_info;
+	ops->fs_supports = pxy_get_supports;
+	ops->fs_maxfilesize = pxy_get_maxfilesize;
+	ops->fs_maxread = pxy_get_maxread;
+	ops->fs_maxwrite = pxy_get_maxwrite;
+	ops->fs_maxlink = pxy_get_maxlink;
+	ops->fs_maxnamelen = pxy_get_maxnamelen;
+	ops->fs_maxpathlen = pxy_get_maxpathlen;
+	ops->fs_fh_expire_type = pxy_fh_expire_type;
+	ops->fs_lease_time = pxy_get_lease_time;
+	ops->fs_acl_support = pxy_get_acl_support;
+	ops->fs_supported_attrs = pxy_get_supported_attrs;
+	ops->fs_umask = pxy_get_umask;
+	ops->fs_xattr_access_rights = pxy_get_xattr_access_rights;
 };
 
 
@@ -270,7 +223,7 @@ pxy_create_export(struct fsal_module *fsal_hdl,
 
         if (!exp)
                 ReturnCode(ERR_FSAL_NOMEM, ENOMEM); 
-        fsal_export_init(&exp->exp, &pxy_exp_ops, exp_entry);
+        fsal_export_init(&exp->exp, fsal_hdl->exp_ops, exp_entry);
         exp->info = &pxy->special;
         exp->exp.fsal = fsal_hdl;
         *export = &exp->exp;
