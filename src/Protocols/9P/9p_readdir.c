@@ -174,9 +174,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
-  /* Use Cache Inode to read the directory's content */
-  cookie = (uint64_t)(*offset) ;
-
   /* For each entry, returns:
    * qid     = 13 bytes
    * offset  = 8 bytes
@@ -192,7 +189,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
     return _9p_rerror( preq9p, msgtag, EIO, plenout, preply ) ;
 
    /* Is this the first request ? */
-  if( *offset == 0 )
+  if( *offset == 0LL )
    {
       /* compute the parent entry */
       if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
@@ -205,30 +202,46 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       cb_data.entries[0].qid_type =  &qid_type_dir ;
       cb_data.entries[0].name_str =  pathdot ;
       cb_data.entries[0].name_len =  strlen( pathdot ) ;
-      cb_data.entries[0].cookie   =  0LL ;
+      cb_data.entries[0].cookie   =  1LL ;
 
 
       cb_data.entries[1].qid_path =  pentry_dot_dot->attributes.fileid ;
       cb_data.entries[1].qid_type =  &qid_type_dir ;
       cb_data.entries[1].name_str =  pathdotdot ;
       cb_data.entries[1].name_len =  strlen( pathdotdot ) ;
-      cb_data.entries[1].cookie   =  1LL ;
+      cb_data.entries[1].cookie   =  2LL ;
 
       delta = 2 ;
+      cookie = 0LL ;
    }
-  else
-   delta = 0 ;
-
-  if( *offset == 2 )
+  else if( *offset == 1LL )
    {
-      /* offset == 2 as an input as one and only reason:
-       *   - a former call with offset=0 was made and the dir was empty
-       *   - '.' and '..' were returned and nothing else
-       *   - the client makes a new call, expecting it to have empty return
-       */
-      num_entries = 0 ; /* Empty return */
+      /* compute the parent entry */
+      if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
+                                                  &pfid->fsal_op_context,
+                                                  &cache_status ) ) == NULL )
+        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+
+      cb_data.entries[0].qid_path =  pentry_dot_dot->attributes.fileid ;
+      cb_data.entries[0].qid_type =  &qid_type_dir ;
+      cb_data.entries[0].name_str =  pathdotdot ;
+      cb_data.entries[0].name_len =  strlen( pathdotdot ) ;
+      cb_data.entries[0].cookie   =  1LL ;
+
+      delta = 1 ;
+      cookie = 0LL ;
+   }
+  else if( *offset == 2LL )
+   {
+      delta = 0 ;
+      cookie = 0LL ;
    }
   else
+   {
+     delta = 0 ;
+     cookie = (uint64_t)(*offset) ;
+   }
+
    {
      cb_data.count = delta ;
      cb_data.max = _9P_MAXDIRCOUNT - delta ;
@@ -281,11 +294,9 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      _9p_setptr( cursor, qid_path, u64 ) ;
      
      /* offset */
-     //_9p_setvalue( cursor, i+cookie+1, u64 ) ;   
-     //_9p_setvalue( cursor, (dcount+ (*offset)), u64 ) ;   
      _9p_setvalue( cursor, cb_data.entries[i].cookie, u64 ) ;   
 
-     /* Type (again ?) */
+     /* Type (this time outside the qid)) */
      _9p_setptr( cursor, qid_type, u8 ) ;
 
      /* name */
