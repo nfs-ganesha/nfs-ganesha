@@ -132,7 +132,7 @@ cache_inode_invalidate(struct fsal_obj_handle * obj_hdl,
         without invalidating content (since any change in content
         really ought to modify mtime, at least.) */
 
-     if (flags == CACHE_INODE_INVALIDATE_CLEARBITS)
+     if ((flags & CACHE_INODE_INVALIDATE_CLEARBITS) != 0)
        atomic_clear_uint32_t_bits(&entry->flags,
                                   CACHE_INODE_TRUST_ATTRS |
                                   CACHE_INODE_DIR_POPULATED |
@@ -142,7 +142,7 @@ cache_inode_invalidate(struct fsal_obj_handle * obj_hdl,
         don't clear the trust bits while someone is populating the
         directory or refreshing attributes. */
 
-     if ((flags == CACHE_INODE_INVALIDATE_CLOSE) &&
+     if (((flags & CACHE_INODE_INVALIDATE_CLOSE) != 0) &&
          (entry->type == REGULAR_FILE)) {
           cache_inode_close(entry,
                             (CACHE_INODE_FLAG_REALLYCLOSE |
