@@ -427,15 +427,16 @@ lru_move_entry(cache_inode_lru_t *lru,
 static inline void
 cache_inode_lru_clean(cache_entry_t *entry)
 {
+    cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
      /* Clean an LRU entry re-use.  */
      assert((entry->lru.refcount == LRU_SENTINEL_REFCOUNT) ||
             (entry->lru.refcount == (LRU_SENTINEL_REFCOUNT - 1)));
 
      if (is_open(entry)) {
-          cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-
-          cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE,
+          cache_inode_close(entry, 
+                            CACHE_INODE_FLAG_REALLYCLOSE |
+                            CACHE_INODE_FLAG_NOT_PINNED,
                             &cache_status);
           if (cache_status != CACHE_INODE_SUCCESS) {
                LogCrit(COMPONENT_CACHE_INODE_LRU,
@@ -744,6 +745,11 @@ lru_thread(void *arg __attribute__((unused)))
                          cache_inode_lru_t *lru = NULL;
                          /* Number of entries closed in this run. */
                          size_t closed = 0;
+                         /* a cache_status */
+                         cache_inode_status_t cache_status =
+                             CACHE_INODE_SUCCESS;
+                         /* a cache entry */
+                         cache_entry_t *entry;
 
                          LogDebug(COMPONENT_CACHE_INODE_LRU,
                                   "Reaping up to %d entries from lane %zd",
@@ -789,6 +795,21 @@ lru_thread(void *arg __attribute__((unused)))
                                       flags are set, the entry isn't
                                       in this queue fragment any more. */
                                    continue;
+                              }
+
+                              entry = container_of(lru, cache_entry_t, lru);
+                              if (is_open(entry)) {
+                                   cache_inode_close(
+                                        entry,
+                                        CACHE_INODE_FLAG_REALLYCLOSE |
+                                        CACHE_INODE_FLAG_NOT_PINNED,
+                                        &cache_status);
+                                   if (cache_status != CACHE_INODE_SUCCESS) {
+                                        LogCrit(COMPONENT_CACHE_INODE_LRU,
+                                                "Error closing file in "
+                                                "LRU thread.");
+                                   } else
+                                     ++closed;
                               }
 
                               /* Move the entry to L2 whatever the
@@ -1208,6 +1229,28 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
      pthread_mutex_unlock(&entry->lru.mtx);
 
      return CACHE_INODE_SUCCESS;
+}
+
+/**
+ * @brief Return true if a file is pinned.
+ *
+ * This function returns true if a file is pinned.
+ *
+ * @param[in] entry The file to be checked
+ *
+ * @return TRUE if pinned, FALSE otherwise.
+ */
+bool_t cache_inode_is_pinned(cache_entry_t *entry)
+{
+     bool_t rc;
+
+     pthread_mutex_lock(&entry->lru.mtx);
+
+     rc = entry->lru.pin_refcnt > 0;
+
+     pthread_mutex_unlock(&entry->lru.mtx);
+
+     return rc;
 }
 
 /**
