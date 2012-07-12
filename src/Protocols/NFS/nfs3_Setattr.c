@@ -175,10 +175,16 @@ nfs_Setattr(nfs_arg_t *arg,
         /* Set the NFS return */
         /* Build Weak Cache Coherency data */
         res->res_setattr3.status = NFS3_OK;
-        nfs_SetWccData(&pre_attr,
-                       entry,
-                       req_ctx,
-                       &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
+        if (arg->arg_setattr3.new_attributes.size.set_it &&
+            !(setattr.mask ^ (ATTR_SPACEUSED|ATTR_SIZE))) {
+            res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before.attributes_follow = FALSE;
+            res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.attributes_follow = FALSE;
+         } else {
+            nfs_SetWccData(&pre_attr,
+                           entry,
+                           req_ctx,
+                           &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
+         }
 
         rc = NFS_REQ_OK;
 out:
@@ -201,7 +207,6 @@ out_fail:
                                req_ctx,
                                &res->res_setattr3.SETATTR3res_u.resfail
                                .obj_wcc);
-
 
         if (nfs_RetryableError(cache_status)) {
                 rc = NFS_REQ_DROP;
