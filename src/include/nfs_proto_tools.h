@@ -88,9 +88,9 @@ void nfs_SetWccData(exportlist_t * pexport,
                     fsal_attrib_list_t * pbefore_attr,
                     fsal_attrib_list_t * pafter_attr, wcc_data * pwcc_data);
 
-int nfs_SetPostOpAttr(exportlist_t * pexport,
-                      const fsal_attrib_list_t * pfsal_attr,
-                      post_op_attr * presult);
+void nfs_SetPostOpAttr(exportlist_t * pexport,
+                       const fsal_attrib_list_t * pfsal_attr,
+                       post_op_attr * presult);
 
 int nfs_SetPostOpXAttrDir(fsal_op_context_t * pcontext,
                           exportlist_t * pexport,
