@@ -293,10 +293,15 @@ int nfs_Setattr(nfs_arg_t *parg,
 
         case NFS_V3:
           /* Build Weak Cache Coherency data */
-          nfs_SetWccData(pexport,
-                         ppre_attr,
-                         &setattr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
-
+          if(do_trunc && 
+             !(setattr.asked_attributes ^ (FSAL_ATTR_SPACEUSED|FSAL_ATTR_SIZE)))
+            {
+              pres->res_setattr3.SETATTR3res_u.resok.obj_wcc.after.attributes_follow = FALSE;
+              pres->res_setattr3.SETATTR3res_u.resok.obj_wcc.after.attributes_follow = FALSE;
+            }
+          else 
+            nfs_SetWccData(pexport, ppre_attr, &setattr,
+                           &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
           pres->res_setattr3.status = NFS3_OK;
           break;
         }
