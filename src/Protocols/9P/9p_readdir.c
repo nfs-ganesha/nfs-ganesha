@@ -242,20 +242,27 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      cookie = (uint64_t)(*offset) ;
    }
 
-   {
-     cb_data.count = delta ;
-     cb_data.max = _9P_MAXDIRCOUNT - delta ;
+   
+  cb_data.count = delta ;
+  cb_data.max = _9P_MAXDIRCOUNT - delta ;
 
-     if(cache_inode_readdir( pfid->pentry,
-                             cookie,
-                             &num_entries,
-                             &eod_met,
-                             &pfid->fsal_op_context, 
-                             _9p_readdir_callback,
-                             &cb_data,
-                             &cache_status) != CACHE_INODE_SUCCESS)
-        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+  if(cache_inode_readdir( pfid->pentry,
+                          cookie,
+                          &num_entries,
+                          &eod_met,
+                          &pfid->fsal_op_context, 
+                          _9p_readdir_callback,
+                          &cb_data,
+                          &cache_status) != CACHE_INODE_SUCCESS)
+   {
+     /* The avl lookup will try to get the next entry after 'cookie'. If none is found CACHE_INODE_NOT_FOUND is returned */
+     /* In the 9P logic, this situation just mean "end of directory reached */
+     if( cache_status != CACHE_INODE_NOT_FOUND )
+       return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+     else 
+       num_entries = 0 ;
    }
+
   /* Never go behind _9P_MAXDIRCOUNT */
   if( num_entries > _9P_MAXDIRCOUNT ) num_entries = _9P_MAXDIRCOUNT ;
 
