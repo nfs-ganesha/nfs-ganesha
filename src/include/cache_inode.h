@@ -523,6 +523,11 @@ static const uint32_t CACHE_INODE_FLAG_REALLYCLOSE = 0x80; /*< Close a file
                                                         even with
                                                         caching
                                                         enabled */
+static const uint32_t CACHE_INODE_FLAG_NOT_PINNED = 0x100; /*< File can't be
+                                                        pinned, so close need
+                                                        not check.
+                                                        */
+
 /*
  * Flags to cache_inode_invalidate
  */
@@ -888,7 +893,6 @@ void cache_inode_print_conf_gc_policy(FILE *output,
 void cache_inode_expire_to_str(cache_inode_expire_type_t type,
                                time_t value,
                                char *out);
-inline bool_t cache_inode_file_holds_state(cache_entry_t *entry);
 
 inline int cache_inode_set_time_current(fsal_time_t *ptime);
 

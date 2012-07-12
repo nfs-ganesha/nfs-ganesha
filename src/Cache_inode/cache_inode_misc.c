@@ -894,26 +894,6 @@ void cache_inode_release_dirents(cache_entry_t *entry,
 }
 
 /**
- * @brief Return true if a file holds state
- *
- * This function returns true if state is held on the file.  The state
- * lock must be held for read when calling this function.
- *
- * @param[in] entry The file to be checked
- *
- * @return TRUE if state is held, FALSE otherwise.
- */
-
-inline bool_t
-cache_inode_file_holds_state(cache_entry_t *entry)
-{
-     return (entry != NULL) &&
-             ((entry->type == REGULAR_FILE &&
-               !glist_empty(&entry->object.file.lock_list)) ||
-              !glist_empty(&entry->state_list));
-} /* cache_inode_file_holds_state */
-
-/**
  * @brief Conditionally refresh attributes
  *
  * This function tests whether we should still trust the current

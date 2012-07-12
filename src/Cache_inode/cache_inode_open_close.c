@@ -271,6 +271,8 @@ cache_inode_close(cache_entry_t *entry,
      }
 
      if (entry->type != REGULAR_FILE) {
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "Entry %p File not a REGULAR_FILE", entry);
           *status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
@@ -284,23 +286,27 @@ cache_inode_close(cache_entry_t *entry,
           if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
                pthread_rwlock_unlock(&entry->content_lock);
           }
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "Entry %p File not open", entry);
           *status = CACHE_INODE_SUCCESS;
           return *status;
      }
 
-     /* If state is held in the file, do not close it.  This should
+     /* If file is pinned, do not close it.  This should
         be refined.  (A non return_on_close layout should not prevent
-        the file from closing.)  The caller should hold the state
-        lock. */
-     if (cache_inode_file_holds_state(entry)) {
+        the file from closing.) */
+     if (((flags & CACHE_INODE_FLAG_NOT_PINNED) == 0) &&
+         cache_inode_is_pinned(entry)) {
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "Entry %p is pinned", entry);
           *status = CACHE_INODE_SUCCESS;
           goto unlock;
      }
 
      if (!cache_inode_lru_caching_fds() ||
          (flags & CACHE_INODE_FLAG_REALLYCLOSE)) {
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_close: entry %p", entry);
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "Closing entry %p", entry);
           fsal_status = FSAL_close(&(entry->object.file.open_fd.fd));
 
           entry->object.file.open_fd.openflags = FSAL_O_CLOSED;
@@ -311,8 +317,8 @@ cache_inode_close(cache_entry_t *entry,
                     cache_inode_kill_entry(entry);
                }
                LogCrit(COMPONENT_CACHE_INODE,
-                       "cache_inode_close: returning %d(%s) from FSAL_close",
-                       *status, cache_inode_err_str(*status));
+                       "FSAL_close failed, returning %d(%s) for entry %p",
+                       *status, cache_inode_err_str(*status), entry);
                goto unlock;
           }
           if (!FSAL_IS_ERROR(fsal_status))

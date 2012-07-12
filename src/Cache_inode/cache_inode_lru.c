@@ -435,7 +435,8 @@ cache_inode_lru_clean(cache_entry_t *entry)
             (entry->lru.refcount == (LRU_SENTINEL_REFCOUNT - 1)));
 
      if (cache_inode_fd(entry)) {
-          cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE,
+          cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE |
+                                   CACHE_INODE_FLAG_NOT_PINNED,
                             &cache_status);
           if (cache_status != CACHE_INODE_SUCCESS) {
                LogCrit(COMPONENT_CACHE_INODE_LRU,
@@ -805,7 +806,8 @@ lru_thread(void *arg __attribute__((unused)))
                               if (cache_inode_fd(entry)) {
                                    cache_inode_close(
                                         entry,
-                                        CACHE_INODE_FLAG_REALLYCLOSE,
+                                        CACHE_INODE_FLAG_REALLYCLOSE |
+                                        CACHE_INODE_FLAG_NOT_PINNED,
                                         &cache_status);
                                    if (cache_status != CACHE_INODE_SUCCESS) {
                                         LogCrit(COMPONENT_CACHE_INODE_LRU,
@@ -1231,6 +1233,28 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
      pthread_mutex_unlock(&entry->lru.mtx);
 
      return CACHE_INODE_SUCCESS;
+}
+
+/**
+ * @brief Return true if a file is pinned.
+ *
+ * This function returns true if a file is pinned.
+ *
+ * @param[in] entry The file to be checked
+ *
+ * @return TRUE if pinned, FALSE otherwise.
+ */
+bool_t cache_inode_is_pinned(cache_entry_t *entry)
+{
+     bool_t rc;
+
+     pthread_mutex_lock(&entry->lru.mtx);
+
+     rc = entry->lru.pin_refcnt > 0;
+
+     pthread_mutex_unlock(&entry->lru.mtx);
+
+     return rc;
 }
 
 /**
