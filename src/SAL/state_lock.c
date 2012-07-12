@@ -2500,6 +2500,13 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                           pstatus,
                           &pentry->object.file.lock_list);
 
+  /* If the lock list has become zero; decrement the pin ref count pt placed.
+   * Do this here just in case subtract_lock_from_list has made list empty
+   * even if it failed.
+   */
+  if(glist_empty(&pentry->object.file.lock_list))
+      cache_inode_dec_pin_ref(pentry);
+
   if(*pstatus != STATE_SUCCESS)
     {
       /* The unlock has not taken affect (other than canceling any blocking locks. */
@@ -2513,11 +2520,6 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 
       return *pstatus;
     }
-
-  /* If the lock list has become zero; decrement the pin ref count pt placed */
-  if(glist_empty(&pentry->object.file.lock_list))
-      cache_inode_dec_pin_ref(pentry);
-
 
   /* Unlocking the entire region will remove any FSAL locks we held, whether
    * from fully granted locks, or from blocking locks that were in the process
