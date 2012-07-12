@@ -71,7 +71,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
   tmp_handlep = gsh_malloc(sizeof(fsal_handle_t));
   if (tmp_handlep == NULL)
     {
-      LogCrit(COMPONENT_FSAL, "Error: Could not malloc ... ENOMEM");
+      LogCrit(COMPONENT_FSAL_UP, "Error: Could not malloc ... ENOMEM");
       Return(ERR_FSAL_NOMEM, ENOMEM, INDEX_FSAL_UP_getevents);
     }
 
@@ -81,7 +81,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
 
   if (pupebcontext == NULL || event_nb == NULL)
     {
-      LogDebug(COMPONENT_FSAL, "Error: GPFSFSAL_UP_GetEvents() received"
+      LogDebug(COMPONENT_FSAL_UP, "Error: GPFSFSAL_UP_GetEvents() received"
                " unexpectedly NULL arguments.");
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_UP_getevents);
     }
@@ -101,7 +101,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
   rc = gpfs_ganesha(OPENHANDLE_INODE_UPDATE, &callback);
   if (rc != 0)
     {
-      LogCrit(COMPONENT_FSAL,
+      LogCrit(COMPONENT_FSAL_UP,
         "Error: OPENHANDLE_INODE_UPDATE failed. rc %d, errno %d", rc, errno);
       gsh_free(tmp_handlep);
       if (errno == EUNATCH)
@@ -114,10 +114,10 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
 
   callback.handle->handle_fsid[0] = p_export_context->fsid[0];
   callback.handle->handle_fsid[1] = p_export_context->fsid[1];
-  LogDebug(COMPONENT_FSAL,
+  LogDebug(COMPONENT_FSAL_UP,
            "inode update: rc %d reason %d update ino %ld",
            rc, reason, callback.buf->st_ino);
-  LogDebug(COMPONENT_FSAL,
+  LogDebug(COMPONENT_FSAL_UP,
            "inode update: tmp_handlep:%p flags:%x callback.handle:%p  pfsal_data.fh_desc.start:%p handle size = %u handle_type:%d handle_version:%d key_size = %u handle_fsid[0] = 0x%x  handle_fsid[1] = 0x%x f_handle:%p", tmp_handlep, *callback.flags, callback.handle,
            pfsal_data.fh_desc.start,
            callback.handle->handle_size,
@@ -132,8 +132,8 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
 
 
   fhP = (int *)&(callback.handle->f_handle[0]);
-  LogDebug(COMPONENT_FSAL,
-           " inode update: handle %08x %08x %08x %08x %08x %08x %08x\n",
+  LogDebug(COMPONENT_FSAL_UP,
+           " inode update: handle %08x %08x %08x %08x %08x %08x %08x",
            fhP[0],fhP[1],fhP[2],fhP[3],fhP[4],fhP[5],fhP[6]);
 
   /* Here is where we decide what type of event this is
@@ -149,7 +149,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
   switch (reason)
     {
       case INODE_LOCK_GRANTED: /* Lock Event */
-        LogDebug(COMPONENT_FSAL,
+        LogDebug(COMPONENT_FSAL_UP,
                  "inode lock granted: owner %p pid %d type %d start %lld len %lld",
                  fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
                  (long long) fl.flock.l_start, (long long) fl.flock.l_len);
@@ -160,7 +160,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
         pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
         break;
       case INODE_LOCK_AGAIN: /* Lock Event */
-        LogDebug(COMPONENT_FSAL,
+        LogDebug(COMPONENT_FSAL_UP,
                  "inode lock again: owner %p pid %d type %d start %lld len %lld",
                  fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
                  (long long) fl.flock.l_start, (long long) fl.flock.l_len);
@@ -171,7 +171,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
         pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
         break;
       case INODE_UPDATE: /* Update Event */
-        LogDebug(COMPONENT_FSAL,
+        LogDebug(COMPONENT_FSAL_UP,
                  "inode update: flags:%x update ino %ld n_link:%d",
                  flags, callback.buf->st_ino, (int)callback.buf->st_nlink);
         pevent->event_data.type.update.upu_flags = 0;

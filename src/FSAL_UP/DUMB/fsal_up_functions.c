@@ -74,17 +74,18 @@ fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t * pevdata)
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
+
 fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
 {
   cache_inode_status_t cache_status;
 
   LogFullDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: Entered dumb_fsal_up_update\n");
+               "FSAL_UP_DUMB: Entered dumb_fsal_up_update");
   if ((pevdata->type.update.upu_flags & FSAL_UP_NLINK) &&
       (pevdata->type.update.upu_stat_buf.st_nlink == 0) )
     {
       LogFullDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: nlink has become zero; close fds\n");
+               "FSAL_UP_DUMB: nlink has become zero; close fds");
       cache_inode_invalidate(&pevdata->event_context.fsal_data,
                              &cache_status,
                              (CACHE_INODE_INVALIDATE_CLEARBITS |

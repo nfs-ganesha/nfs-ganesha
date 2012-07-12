@@ -76,7 +76,7 @@ fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
   P(fsal_up_process_tcb.tcb_mutex);
   glist_add_tail(fsal_up_process_queue, &arg->event_list);
   rc = pthread_cond_signal(&fsal_up_process_tcb.tcb_condvar);
-  LogFullDebug(COMPONENT_FSAL_UP,"Signaling tcb_condvar\n");
+  LogFullDebug(COMPONENT_FSAL_UP,"Signaling tcb_condvar");
   if (rc == -1)
     {
       LogDebug(COMPONENT_FSAL_UP,
