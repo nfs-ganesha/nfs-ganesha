@@ -884,7 +884,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
                                            data,
                                            res_OPEN4,
                                            &entry);
-                if (entry) {
+                if (res_OPEN4->status == NFS4_OK) {
                         /* Decrement the current entry here, because
                            nfs4_create_fh replaces the current fh. */
                         cache_inode_put(data->current_entry);
