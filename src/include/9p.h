@@ -226,7 +226,7 @@ enum _9p_qid_t {
 
 /* Room for readdir header */
 #define _9P_READDIRHDRSZ	24
-#define _9P_FID_PER_CONN        32
+#define _9P_FID_PER_CONN        1024
 
 /**
  * struct _9p_str - length prefixed string type
