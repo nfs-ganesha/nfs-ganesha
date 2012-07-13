@@ -3344,6 +3344,14 @@ static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
+
+/** @TODO This needs fixing.  It can overrun the buffer etc.
+ *  what is needed is the bitmap to list or ??? conversion calculates the last offset,
+ *  actually the length based on the xdr encoding+attr type and then compare that to
+ *  what is passed in the buffer from XDR.  If != return NFS4ERR_BADXDR
+ *  we fail multiple pynfs tests with bad sizes.... Just how right now is TBD and work.
+ */
+
 int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4 *hdl4)
 {
   u_int LastOffset = 0;
