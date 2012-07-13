@@ -45,19 +45,6 @@
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
 
-/** @TODO Philippe has implemented xattrs in the old api
- *  do them here too.  right now, all these are unref'd
- *  in the ops vector.  The text of these has been copied to
- *  ../default_methods.c
- */
-
-/* extended attributes management */
-fsal_status_t vfs_getextattrs(struct fsal_obj_handle *obj_hdl,
-			      fsal_extattrib_list_t * object_attributes)
-{
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
-}
-
 fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				 unsigned int cookie,
 				 fsal_xattrent_t * xattrs_tab,
@@ -65,14 +52,14 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				 unsigned int *p_nb_returned,
 				 int *end_of_list)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+        return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					const char *xattr_name,
 					unsigned int *pxattr_id)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
@@ -81,7 +68,7 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					   size_t buffer_size,
 					   size_t * p_output_size)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -90,7 +77,7 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					 size_t buffer_size,
 					 size_t *p_output_size)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
@@ -99,7 +86,7 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 				   size_t buffer_size,
 				   int create)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
@@ -107,25 +94,25 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					 caddr_t buffer_addr,
 					 size_t buffer_size)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t vfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				   unsigned int xattr_id,
-				   fsal_attrib_list_t * p_attrs)
+                                   struct attrlist *p_attrs)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 				       unsigned int xattr_id)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					 const char *xattr_name)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 

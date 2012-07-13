@@ -46,10 +46,11 @@ struct fsal_alloc_ops {
 void init_fsal_parameters(fsal_init_info_t *init_info);
 
 typedef int (*fsal_extra_arg_parser_f)(const char *key, const char *val,
-                                       fsal_init_info_t *info, const char *block);
+                                       fsal_init_info_t *info,
+                                       const char *block);
 
 fsal_status_t fsal_load_config(const char *name,
                                config_file_t,
                                fsal_init_info_t *,
-                               fsal_staticfsinfo_t *,
+                               struct fsal_staticfsinfo_t *,
                                fsal_extra_arg_parser_f);

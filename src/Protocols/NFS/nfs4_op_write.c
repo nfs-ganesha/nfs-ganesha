@@ -124,19 +124,19 @@ int nfs4_op_write(struct nfs_argop4 *op,
                   compound_data_t *data,
                   struct nfs_resop4 *resp)
 {
-  fsal_size_t              size, check_size;
-  fsal_size_t              written_size;
-  fsal_off_t               offset;
-  fsal_boolean_t           eof_met;
+  uint32_t                 size, check_size;
+  size_t                   written_size;
+  uint64_t                 offset;
+  bool_t                   eof_met;
   cache_inode_stability_t  stability = CACHE_INODE_SAFE_WRITE_TO_FS;
-  caddr_t                  bufferdata;
+  void                   * bufferdata;
   stable_how4              stable_how;
   state_t                * state_found = NULL;
-  state_t                * state_open;
-  cache_inode_status_t     cache_status;
+  state_t                * state_open = NULL;
+  cache_inode_status_t     cache_status = CACHE_INODE_SUCCESS;
   cache_entry_t          * entry = NULL;
 #ifdef _USE_QUOTA
-  fsal_status_t            fsal_status ;
+  fsal_status_t            fsal_status;
 #endif
   /* This flag is set to true in the case of an anonymous read so that
      we know to release the state lock afterward.  The state lock does
@@ -301,12 +301,13 @@ int nfs4_op_write(struct nfs_argop4 *op,
   size = arg_WRITE4.data.data_len;
   stable_how = arg_WRITE4.stable;
   LogFullDebug(COMPONENT_NFS_V4,
-               "NFS4_OP_WRITE: offset = %"PRIu64"  length = %zu  stable = %d",
+               "NFS4_OP_WRITE: offset = %"PRIu64"  length = %"PRIu32
+               "  stable = %d",
                offset, size, stable_how);
 
   if((data->pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
      EXPORT_OPTION_MAXOFFSETWRITE)
-    if((fsal_off_t) (offset + size) > data->pexport->MaxOffsetWrite)
+    if((offset + size) > data->pexport->MaxOffsetWrite)
       {
         res_WRITE4.status = NFS4ERR_DQUOT;
         if (anonymous)
@@ -335,8 +336,8 @@ int nfs4_op_write(struct nfs_argop4 *op,
        */
 
       LogFullDebug(COMPONENT_NFS_V4,
-                   "NFS4_OP_WRITE: write requested size = %"PRIu64
-                   " write allowed size = %"PRIu64,
+                   "NFS4_OP_WRITE: write requested size = %"PRIu32
+                   " write allowed size = %"PRIu32,
                    size, data->pexport->MaxWrite);
 
       size = data->pexport->MaxWrite;
@@ -346,7 +347,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
   bufferdata = arg_WRITE4.data.data_val;
 
   LogFullDebug(COMPONENT_NFS_V4,
-               "NFS4_OP_WRITE: offset = %"PRIu64" length = %zu",
+               "NFS4_OP_WRITE: offset = %"PRIu64" length = %"PRIu32,
                offset, size);
 
   /* if size == 0 , no I/O) are actually made and everything is alright */

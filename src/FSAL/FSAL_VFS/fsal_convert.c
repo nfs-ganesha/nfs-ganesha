@@ -175,120 +175,91 @@ int posix2fsal_error(int posix_errorcode)
 
 
 fsal_status_t posix2fsal_attributes(struct stat *buffstat,
-                                    fsal_attrib_list_t *fsalattr)
+                                    struct attrlist *fsalattr)
 {
   FSAL_CLEAR_MASK(fsalattr->mask);
   /* sanity checks */
   if(!buffstat || !fsalattr)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
+  FSAL_CLEAR_MASK(fsalattr->mask);
+
+  /* Fills the output struct */
   fsalattr->type = posix2fsal_type(buffstat->st_mode);
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_TYPE);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_TYPE);
 
   fsalattr->filesize = buffstat->st_size;
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_SIZE);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_SIZE);
 
   fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_FSID);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_FSID);
 
   fsalattr->fileid = buffstat->st_ino;
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_FILEID);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_FILEID);
 
   fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_MODE);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_MODE);
 
   fsalattr->numlinks = buffstat->st_nlink;
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_NUMLINKS);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_NUMLINKS);
 
   fsalattr->owner = buffstat->st_uid;
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_OWNER);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_OWNER);
 
   fsalattr->group = buffstat->st_gid;
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_GROUP);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_GROUP);
 
   fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_ATIME);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
 
   fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_CTIME);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
 
   fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_MTIME);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
 
-  fsalattr->chgtime = posix2fsal_time(MAX_2(buffstat->st_mtime,
-                                                buffstat->st_ctime), 0);
+  fsalattr->chgtime
+    = posix2fsal_time(MAX_2(buffstat->st_mtime,
+                            buffstat->st_ctime), 0);
   fsalattr->change = fsalattr->chgtime.seconds;
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_CHGTIME);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
 
   fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_SPACEUSED);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_SPACEUSED);
 
   fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
-  FSAL_SET_MASK(fsalattr->mask, FSAL_ATTR_RAWDEV);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_RAWDEV);
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
-  int cpt;
-
   if(!p_posix_flags)
     return ERR_FSAL_FAULT;
 
   /* check that all used flags exist */
 
   if(fsal_flags &
-     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND |
-       FSAL_O_SYNC   | FSAL_O_TRUNC))
+     ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
     return ERR_FSAL_INVAL;
 
   /* Check for flags compatibility */
 
   /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
 
-  cpt = 0;
-  if(fsal_flags & FSAL_O_RDONLY)
-    cpt++;
-  if(fsal_flags & FSAL_O_RDWR)
-    cpt++;
-  if(fsal_flags & FSAL_O_WRONLY)
-    cpt++;
-
-  if(cpt > 1)
-    return ERR_FSAL_INVAL;
-
-  /* FSAL_O_APPEND et FSAL_O_TRUNC cannot be used together */
-
-  if((fsal_flags & FSAL_O_APPEND) && (fsal_flags & FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
-
-  /* FSAL_O_TRUNC without FSAL_O_WRONLY or FSAL_O_RDWR */
-
-  if((fsal_flags & FSAL_O_TRUNC) && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR)))
-    return ERR_FSAL_INVAL;
-
   /* conversion */
   *p_posix_flags = 0;
 
-  if(fsal_flags & FSAL_O_RDONLY)
+  if(fsal_flags & FSAL_O_READ)
     *p_posix_flags |= O_RDONLY;
 
   if(fsal_flags & FSAL_O_RDWR)
     *p_posix_flags |= O_RDWR;
 
-  if(fsal_flags & FSAL_O_WRONLY)
+  if(fsal_flags & FSAL_O_WRITE)
     *p_posix_flags |= O_WRONLY;
-
-  if(fsal_flags & FSAL_O_APPEND)
-    *p_posix_flags |= O_APPEND;
-
-  if(fsal_flags & FSAL_O_TRUNC)
-    *p_posix_flags |= O_TRUNC;
-
-  if(fsal_flags & FSAL_O_CREATE)
-    *p_posix_flags |= O_CREAT;
 
   if(fsal_flags & FSAL_O_SYNC)
     *p_posix_flags |= O_SYNC;

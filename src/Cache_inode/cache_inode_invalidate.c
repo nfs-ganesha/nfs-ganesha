@@ -78,7 +78,7 @@ cache_inode_invalidate(struct fsal_obj_handle * obj_hdl,
                        uint32_t flags)
 {
      hash_buffer_t key, value;
-     struct fsal_handle_desc fh_desc;
+     struct gsh_buffdesc fh_desc;
      int rc = 0 ;
      cache_entry_t *entry;
      struct hash_latch latch;
@@ -92,7 +92,7 @@ cache_inode_invalidate(struct fsal_obj_handle * obj_hdl,
      obj_hdl->ops->handle_to_key(obj_hdl, &fh_desc);
 
      /* Turn the input to a hash key */
-     key.pdata = fh_desc.start;
+     key.pdata = fh_desc.addr;
      key.len = fh_desc.len;
 
      if ((rc = HashTable_GetLatch(fh_to_cache_entry_ht,

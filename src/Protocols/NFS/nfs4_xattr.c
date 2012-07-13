@@ -112,7 +112,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   fattr4_quota_used quota_used;
   fattr4_rdattr_error rdattr_error;
   file_handle_v4_t *pfile_handle = NULL;
-  fsal_attrib_list_t fsalattr;
+  struct attrlist fsalattr;
 
   u_int fhandle_len = 0;
   unsigned int LastOffset;
@@ -1082,10 +1082,8 @@ int nfs4_op_access_xattr(struct nfs_argop4 *op,
 int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_name_t name;
-  char strname[MAXNAMLEN];
+  char name[MAXNAMLEN];
   fsal_status_t fsal_status;
-  cache_inode_status_t cache_status;
   struct fsal_obj_handle *obj_hdl = NULL;
   unsigned int xattr_id = 0;
   file_handle_v4_t *pfile_handle = NULL;
@@ -1097,20 +1095,10 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   obj_hdl = data->current_entry->obj_handle;
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname);
-
-  /* Build the FSAL name */
-  if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
-                                                             MAXNAMLEN,
-                                                             &name))) !=
-     CACHE_INODE_SUCCESS)
-    {
-      res_LOOKUP4.status = nfs4_Errno(cache_status);
-      return res_LOOKUP4.status;
-    }
+  utf82str(name, sizeof(name), &arg_LOOKUP4.objname);
 
   /* Try to get a FSAL_XAttr of that name */
-  fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name.name, &xattr_id);
+  fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name, &xattr_id);
   if(FSAL_IS_ERROR(fsal_status))
     {
       return NFS4ERR_NOENT;
@@ -1318,7 +1306,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
     {
       /* Allocation of reply structures */
       if((entry_name_array =
-          gsh_calloc(estimated_num_entries, (FSAL_MAX_NAME_LEN + 1))) == NULL)
+          gsh_calloc(estimated_num_entries, (1024 + 1))) == NULL)
         {
           LogError(COMPONENT_NFS_V4_XATTR, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -1337,7 +1325,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
         {
           entry_nfs_array[i].name.utf8string_val = entry_name_array[i];
 
-          if(str2utf8(xattrs_tab[i].xattr_name.name, &entry_nfs_array[i].name) == -1)
+          if(str2utf8(xattrs_tab[i].xattr_name, &entry_nfs_array[i].name) == -1)
             {
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
@@ -1403,10 +1391,8 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 int nfs4_op_open_xattr(struct nfs_argop4 *op,
                        compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_name_t name;
-  char strname[MAXNAMLEN];
+  char name[MAXNAMLEN];
   fsal_status_t fsal_status;
-  cache_inode_status_t cache_status;
   struct fsal_obj_handle *obj_hdl = NULL;
   unsigned int xattr_id = 0;
   file_handle_v4_t *pfile_handle = NULL;
@@ -1418,17 +1404,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
   obj_hdl = data->current_entry->obj_handle;
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  utf82str(strname, sizeof(strname), &arg_OPEN4.claim.open_claim4_u.file);
-
-  /* Build the FSAL name */
-  if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
-                                                             MAXNAMLEN,
-                                                             &name))) !=
-     CACHE_INODE_SUCCESS)
-    {
-      res_OPEN4.status = nfs4_Errno(cache_status);
-      return res_OPEN4.status;
-    }
+  utf82str(name, sizeof(name), &arg_OPEN4.claim.open_claim4_u.file);
 
   /* we do not use the stateful logic for accessing xattrs */
   switch (arg_OPEN4.openhow.opentype)
@@ -1437,9 +1413,10 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       /* To be done later */
       /* set empty attr */
       fsal_status = obj_hdl->ops->setextattr_value(obj_hdl,
-						   name.name,
-						   empty_buff, sizeof(empty_buff),
-						   TRUE);
+                                                   name,
+                                                   empty_buff,
+                                                   sizeof(empty_buff),
+                                                   TRUE);
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -1448,7 +1425,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
         }
 
       /* Now, getr the id */
-      fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name.name, &xattr_id);
+      fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name, &xattr_id);
       if(FSAL_IS_ERROR(fsal_status))
         {
           res_OPEN4.status = NFS4ERR_NOENT;
@@ -1472,7 +1449,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
     case OPEN4_NOCREATE:
 
       /* Try to get a FSAL_XAttr of that name */
-      fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name.name, &xattr_id);
+      fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name, &xattr_id);
       if(FSAL_IS_ERROR(fsal_status))
         {
           res_OPEN4.status = NFS4ERR_NOENT;
@@ -1619,16 +1596,8 @@ int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data,
                          struct nfs_resop4 *resp)
 {
   fsal_status_t fsal_status;
-  cache_inode_status_t cache_status;
   struct fsal_obj_handle *obj_hdl = NULL;
-  fsal_name_t name;
-
-  /* Check for name length */
-  if(arg_REMOVE4.target.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_REMOVE4.status = NFS4ERR_NAMETOOLONG;
-      return res_REMOVE4.status;
-    }
+  char *name;
 
   /* get the filename from the argument, it should not be empty */
   if(arg_REMOVE4.target.utf8string_len == 0)
@@ -1639,27 +1608,23 @@ int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data,
 
   /* NFS4_OP_REMOVE can delete files as well as directory, it replaces NFS3_RMDIR and NFS3_REMOVE
    * because of this, we have to know if object is a directory or not */
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_REMOVE4.target,
-                                 &name))) != CACHE_INODE_SUCCESS)
-    {
-      res_REMOVE4.status = nfs4_Errno(cache_status);
-      return res_REMOVE4.status;
-    }
+  name = alloca(arg_REMOVE4.target.utf8string_len + 1);
+  name[arg_REMOVE4.target.utf8string_len] = '\0';
+  memcpy(name, arg_REMOVE4.target.utf8string_val,
+         arg_REMOVE4.target.utf8string_len);
 
   /* Get the FSAL Handle fo the current object */
   obj_hdl = data->current_entry->obj_handle;
 
   /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
-  if(!FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT)
-     || !FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT_DOT))
+  if ((strcmp(name, ".") == 0) ||
+      (strcmp(name, "..") == 0))
     {
       res_REMOVE4.status = NFS4ERR_BADNAME;
       return res_REMOVE4.status;
     }
 
-  fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl, name.name);
+  fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl, name);
   if(FSAL_IS_ERROR(fsal_status))
     {
       res_REMOVE4.status = NFS4ERR_SERVERFAULT;

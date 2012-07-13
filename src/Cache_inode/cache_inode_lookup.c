@@ -81,7 +81,7 @@
 
 cache_entry_t *
 cache_inode_lookup_impl(cache_entry_t *parent,
-                        fsal_name_t *name,
+                        const char *name,
                         struct req_op_context *req_ctx,
                         cache_inode_status_t *status)
 {
@@ -91,7 +91,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      fsal_status_t fsal_status = {0, 0};
      struct fsal_obj_handle *object_handle;
      struct fsal_obj_handle *dir_handle;
-     fsal_attrib_list_t object_attributes;
+     struct attrlist object_attributes;
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
      cache_inode_fsal_data_t new_entry_fsdata;
      cache_inode_dir_entry_t *broken_dirent = NULL;
@@ -111,7 +111,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      }
 
      /* if name is ".", use the input value */
-     if (!FSAL_namecmp(name, (fsal_name_t *) &FSAL_DOT)) {
+     if (strcmp(name, ".") == 0) {
           entry = parent;
           /* Increment the refcount so the caller's decrementing it
              doesn't take us below the sentinel count. */
@@ -124,7 +124,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                         "we should have referenced.");
           }
           goto out;
-     } else if (!FSAL_namecmp(name, (fsal_name_t *) &FSAL_DOT_DOT)) {
+     } else if (strcmp(name, "..") == 0) {
           /* Directory do only have exactly one parent. This a limitation
            * in all FS, which implies that hard link are forbidden on
            * directories (so that they exists only in one dir).  Because
@@ -137,12 +137,11 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           int write_locked = 0;
           /* We first try avltree_lookup by name.  If that fails, we
            * dispatch to the FSAL. */
-          FSAL_namecpy(&dirent_key.name, name);
           for (write_locked = 0; write_locked < 2; ++write_locked) {
                /* If the dirent cache is untrustworthy, don't even ask it */
                if (parent->flags & CACHE_INODE_TRUST_CONTENT) {
                     dirent = cache_inode_avl_qp_lookup_s(parent,
-                                                         &dirent_key, 1);
+                                                         name, 1);
                     if (dirent) {
                          /* Getting a weakref itself increases the refcount. */
                          entry = cache_inode_weakref_get(&dirent->entry,
@@ -185,9 +184,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      }
 
      dir_handle = parent->obj_handle;
-     memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));
+     memset(&object_attributes, 0, sizeof(struct attrlist));
      fsal_status = dir_handle->ops->lookup(dir_handle,
-                                           name->name,
+                                           name,
                                            &object_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
@@ -248,9 +247,9 @@ out:
 
 cache_entry_t *
 cache_inode_lookup(cache_entry_t *parent,
-                   fsal_name_t *name,
-                   fsal_attrib_list_t *attr,
-		   struct req_op_context *req_ctx,
+                   const char *name,
+                   struct attrlist *attr,
+                   struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
      cache_entry_t *entry = NULL;

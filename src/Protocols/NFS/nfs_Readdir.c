@@ -148,13 +148,13 @@ nfs_Readdir(nfs_arg_t *arg,
 {
      cache_entry_t *dir_entry = NULL;
      unsigned long count = 0;
-     fsal_attrib_list_t dir_attr;
+     struct attrlist dir_attr;
      uint64_t cookie = 0;
      uint64_t cache_inode_cookie = 0;
      cookieverf3 cookie_verifier;
      unsigned int num_entries;
      unsigned long estimated_num_entries = 0;
-     cache_inode_file_type_t dir_filetype = 0;
+     object_file_type_t dir_filetype = 0;
      bool_t eod_met = FALSE;
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
      cache_inode_status_t cache_status_gethandle = CACHE_INODE_SUCCESS;
@@ -326,7 +326,7 @@ nfs_Readdir(nfs_arg_t *arg,
 
      /* Fills ".." */
      if ((cookie <= 1) && (estimated_num_entries > 1)) {
-          fsal_attrib_list_t parent_dir_attr;
+          struct attrlist parent_dir_attr;
           /* Get parent pentry */
           parent_dir_entry = cache_inode_lookupp(dir_entry,
                                                  req_ctx,
@@ -523,8 +523,8 @@ nfs2_readdir_callback(void* opaque,
      uint32_t truncookie = htonl((uint32_t) cookie);
      entry2 *e2 = tracker->entries + tracker->count;
      /* Fileid descriptor */
-     struct fsal_handle_desc id_descriptor
-          = {sizeof(e2->fileid), (caddr_t) &e2->fileid};
+     struct gsh_buffdesc id_descriptor
+          = {.len = sizeof(e2->fileid), .addr = &e2->fileid};
      size_t need = sizeof(entry2) + ((namelen + 3) & ~3) + 4;
 
      if (tracker->count == tracker->total_entries) {
@@ -536,9 +536,9 @@ nfs2_readdir_callback(void* opaque,
           }
           return FALSE;
      }
-     (void)obj_hdl->ops->handle_digest(obj_hdl,
-				       FSAL_DIGEST_FILEID2,
-				       &id_descriptor);
+     obj_hdl->ops->handle_digest(obj_hdl,
+                                 FSAL_DIGEST_FILEID2,
+                                 &id_descriptor);
      e2->name = gsh_malloc(namelen + 1);
      if (e2->name == NULL) {
           tracker->error = NFSERR_IO;
@@ -583,8 +583,9 @@ nfs3_readdir_callback(void* opaque,
      size_t namelen = strlen(name);
      entry3 *e3 = tracker->entries + tracker->count;
      /* Fileid descriptor */
-     struct fsal_handle_desc id_descriptor
-          = {sizeof(e3->fileid), (caddr_t) &e3->fileid};
+     struct gsh_buffdesc id_descriptor
+             = {.len = sizeof(e3->fileid),
+                .addr = &e3->fileid};
      size_t need = sizeof(entry3) + ((namelen + 3) & ~3) + 4;
 
      if (tracker->count == tracker->total_entries) {

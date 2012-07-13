@@ -77,11 +77,9 @@
 int nfs4_op_lookupp(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_name_t            name;
   cache_entry_t        * dir_entry = NULL;
   cache_entry_t        * file_entry = NULL;
-  fsal_attrib_list_t     attrlookup;
-  cache_inode_status_t   cache_status;
+  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
   int                    error = 0;
 
   resp->resop = NFS4_OP_LOOKUPP;
@@ -123,14 +121,12 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   /* Preparying for cache_inode_lookup ".." */
   file_entry = NULL;
   dir_entry = data->current_entry;
-  name = FSAL_DOT_DOT;
 
   /* BUGAZOMEU: Faire la gestion des cross junction traverse */
   if((file_entry
-      = cache_inode_lookup(dir_entry,
-                           &name,
-                           &attrlookup,
-                           data->req_ctx, &cache_status)) != NULL)
+      = cache_inode_lookupp(dir_entry,
+                            data->req_ctx,
+                            &cache_status)) != NULL)
     {
       /* Convert it to a file handle */
       if(!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle, data))

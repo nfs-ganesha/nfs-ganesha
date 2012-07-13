@@ -58,19 +58,19 @@ static proxyfs_specific_initinfo_t default_pxy_params = {
 
 /* defined the set of attributes supported with POSIX */
 #define SUPPORTED_ATTRIBUTES (                                       \
-          FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \
-          FSAL_ATTR_FSID     |  FSAL_ATTR_FILEID  | \
-          FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
-          FSAL_ATTR_GROUP    | FSAL_ATTR_ATIME    | FSAL_ATTR_RAWDEV    | \
-          FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
-          FSAL_ATTR_CHGTIME  )
+          ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
+          ATTR_FSID     |  ATTR_FILEID  | \
+          ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
+          ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
+          ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
+          ATTR_CHGTIME  )
 
 /* filesystem info for VFS */
-static fsal_staticfsinfo_t proxy_info = {
+static struct fsal_staticfsinfo_t proxy_info = {
 	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL,
 	.maxlink = _POSIX_LINK_MAX,
-	.maxnamelen = FSAL_MAX_NAME_LEN,
-	.maxpathlen = FSAL_MAX_PATH_LEN,
+        .maxnamelen = 1024,
+        .maxpathlen = 1024,
 	.no_trunc = TRUE,
 	.chown_restricted = TRUE,
 	.case_preserving = TRUE,
@@ -248,17 +248,17 @@ pxy_init_config(struct fsal_module *fsal_hdl,
                 return st;
 
         if (load_pxy_config("NFSv4_Proxy", config_struct, pxy))
-                ReturnCode(ERR_FSAL_INVAL, EINVAL);
+                return fsalstat(ERR_FSAL_INVAL, EINVAL);
 
 #ifdef _HANDLE_MAPPING
         if((rc = HandleMap_Init(&pxy->special.hdlmap)) < 0)
-                ReturnCode(ERR_FSAL_INVAL, -rc);
+                return fsalstat(ERR_FSAL_INVAL, -rc);
 #endif
 
         rc = pxy_init_rpc(pxy);
         if(rc)
-                ReturnCode(ERR_FSAL_FAULT, rc);
-        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+                return fsalstat(ERR_FSAL_FAULT, rc);
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 static struct pxy_fsal_module PROXY;

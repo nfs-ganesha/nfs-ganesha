@@ -62,6 +62,9 @@
  * Copy the content of a symbolic link into the address pointed to by
  * link_content.
  *
+ * @todo ACE: Fix this to remove the grotesque buffer hack as part of
+ * callbackification.
+ *
  * @param[in]  entry        The link to read
  * @param[out] link_content The location into which to write the
  *                          target
@@ -73,12 +76,11 @@
 
 cache_inode_status_t
 cache_inode_readlink(cache_entry_t *entry,
-                     fsal_path_t *link_content,
-		     struct user_cred *creds,
+                     struct gsh_buffdesc *link_content,
+                     struct user_cred *creds,
                      cache_inode_status_t *status)
 {
      fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
-     uint32_t link_size = FSAL_MAX_PATH_LEN;
 
      /* Set the return default to CACHE_INODE_SUCCESS */
      *status = CACHE_INODE_SUCCESS;
@@ -99,21 +101,20 @@ cache_inode_readlink(cache_entry_t *entry,
              waiting. */
           if (!(entry->flags & CACHE_INODE_TRUST_CONTENT)) {
                fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
-							      link_content->path,
-							      &link_size,
-							      TRUE); 
+                                                              link_content->addr,
+                                                              &link_content->len,
+                                                              TRUE);
                if (!(FSAL_IS_ERROR(fsal_status))) {
                     atomic_set_uint32_t_bits(&entry->flags,
                                              CACHE_INODE_TRUST_CONTENT);
                }
           }
      } else {
-	  fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
-							      link_content->path,
-							      &link_size,
-							      FALSE);
+             fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
+                                                         link_content->addr,
+                                                         &link_content->len,
+                                                         FALSE);
      }
-     link_content->len = link_size; /* fake FSAL_pathcpy */
      pthread_rwlock_unlock(&entry->content_lock);
 
      if (FSAL_IS_ERROR(fsal_status)) {

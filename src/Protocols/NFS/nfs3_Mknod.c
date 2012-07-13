@@ -86,17 +86,16 @@ int nfs3_Mknod(nfs_arg_t *parg,
                nfs_res_t * pres)
 {
   cache_entry_t *parent_pentry = NULL;
-  fsal_attrib_list_t parent_attr;
-  fsal_attrib_list_t *ppre_attr;
-  fsal_attrib_list_t attr_parent_after;
-  cache_inode_file_type_t nodetype;
-  char *str_file_name = NULL;
-  fsal_name_t file_name;
+  struct attrlist parent_attr;
+  struct attrlist *ppre_attr;
+  struct attrlist attr_parent_after;
+  object_file_type_t nodetype;
+  char *file_name = NULL;
   cache_inode_status_t cache_status;
   cache_inode_status_t cache_status_lookup;
-  fsal_accessmode_t mode = 0;
+  uint32_t mode = 0;
   cache_entry_t *node_pentry = NULL;
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   cache_inode_create_arg_t create_arg;
   struct fsal_obj_handle *pfsal_handle;
   int rc = NFS_REQ_OK;
@@ -150,7 +149,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
       goto out;
     }
 
-  str_file_name = parg->arg_mknod3.where.name;
+  file_name = parg->arg_mknod3.where.name;
 
   switch (parg->arg_mknod3.what.type)
     {
@@ -158,11 +157,10 @@ int nfs3_Mknod(nfs_arg_t *parg,
     case NF3BLK:
 
       if(parg->arg_mknod3.what.mknoddata3_u.device.dev_attributes.mode.set_it)
-        mode =
-            (fsal_accessmode_t) parg->arg_mknod3.what.mknoddata3_u.device.dev_attributes.
-            mode.set_mode3_u.mode;
+        mode = (parg->arg_mknod3.what.mknoddata3_u.device
+                .dev_attributes.mode.set_mode3_u.mode);
       else
-        mode = (fsal_accessmode_t) 0;
+        mode = 0;
 
       create_arg.dev_spec.major =
           parg->arg_mknod3.what.mknoddata3_u.device.spec.specdata1;
@@ -175,11 +173,10 @@ int nfs3_Mknod(nfs_arg_t *parg,
     case NF3SOCK:
 
       if(parg->arg_mknod3.what.mknoddata3_u.pipe_attributes.mode.set_it)
-        mode =
-            (fsal_accessmode_t) parg->arg_mknod3.what.mknoddata3_u.pipe_attributes.mode.
-            set_mode3_u.mode;
+        mode = (parg->arg_mknod3.what.mknoddata3_u
+                .pipe_attributes.mode.set_mode3_u.mode);
       else
-        mode = (fsal_accessmode_t) 0;
+        mode = 0;
 
       create_arg.dev_spec.major = 0;
       create_arg.dev_spec.minor = 0;
@@ -212,8 +209,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
       goto out;
     }
 
-  //if(str_file_name == NULL || strlen(str_file_name) == 0)
-  if(str_file_name == NULL || *str_file_name == '\0' )
+  if(file_name == NULL || *file_name == '\0' )
     {
       pres->res_mknod3.status = NFS3ERR_INVAL;
       rc = NFS_REQ_OK;
@@ -223,9 +219,9 @@ int nfs3_Mknod(nfs_arg_t *parg,
 #ifdef _USE_QUOTA
     /* if quota support is active, then we should check is the FSAL allows inode creation or not */
   fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
-						      pexport->fullpath, 
-						      FSAL_QUOTA_INODES,
-						      req_ctx) ;
+                                                      pexport->fullpath,
+                                                      FSAL_QUOTA_INODES,
+                                                      req_ctx) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
         pres->res_mknod3.status = NFS3ERR_DQUOT;
@@ -234,131 +230,123 @@ int nfs3_Mknod(nfs_arg_t *parg,
 #endif /* _USE_QUOTA */
 
 
-  /* convert node name */
+    /* convert node name */
 
-  if((cache_status = cache_inode_error_convert(FSAL_str2name(str_file_name,
-                                                             FSAL_MAX_NAME_LEN,
-                                                             &file_name))) ==
-     CACHE_INODE_SUCCESS)
-    {
-      /*
-       * Lookup node to see if it exists.  If so, use it.  Otherwise
-       * create a new one.
-       */
-      node_pentry = cache_inode_lookup(parent_pentry,
-                                       &file_name,
-                                       &attr,
-                                       req_ctx,
-                                       &cache_status_lookup);
+    /*
+     * Lookup node to see if it exists.  If so, use it.  Otherwise
+     * create a new one.
+     */
+    node_pentry = cache_inode_lookup(parent_pentry,
+                                     file_name,
+                                     &attr,
+                                     req_ctx,
+                                     &cache_status_lookup);
 
-      if(cache_status_lookup == CACHE_INODE_NOT_FOUND)
-        {
+    if(cache_status_lookup == CACHE_INODE_NOT_FOUND)
+      {
+        /* Create the node */
 
-          /* Create the node */
+        if((node_pentry = cache_inode_create(parent_pentry,
+                                             file_name,
+                                             nodetype,
+                                             mode,
+                                             &create_arg,
+                                             &attr,
+                                             req_ctx,
+                                             &cache_status)) != NULL)
+          {
+            MKNOD3resok *rok = &pres->res_mknod3.MKNOD3res_u.resok;
+            /*
+             * Get the FSAL handle for this entry
+             */
+            pfsal_handle = node_pentry->obj_handle;
 
-          if((node_pentry = cache_inode_create(parent_pentry,
-                                               &file_name,
-                                               nodetype,
-                                               mode,
-                                               &create_arg,
-                                               &attr,
-                                               req_ctx,
-                                               &cache_status)) != NULL)
-            {
-              MKNOD3resok *rok = &pres->res_mknod3.MKNOD3res_u.resok;
-              /*
-               * Get the FSAL handle for this entry
-               */
-              pfsal_handle = node_pentry->obj_handle;
+            /* Build file handle */
+            pres->res_mknod3.status =
+              nfs3_AllocateFH(&rok->obj.post_op_fh3_u.handle);
+            if(pres->res_mknod3.status !=  NFS3_OK)
+              return NFS_REQ_OK;
 
-              /* Build file handle */
-              pres->res_mknod3.status =
-                    nfs3_AllocateFH(&rok->obj.post_op_fh3_u.handle);
-              if(pres->res_mknod3.status !=  NFS3_OK)
-                return NFS_REQ_OK;
+            if(nfs3_FSALToFhandle(&rok->obj.post_op_fh3_u.handle,
+                                  pfsal_handle, pexport) == 0)
+              {
+                gsh_free(rok->obj.post_op_fh3_u.handle.data.data_val);
+                pres->res_mknod3.status = NFS3ERR_INVAL;
+                rc = NFS_REQ_OK;
+                goto out;
+              }
 
-              if(nfs3_FSALToFhandle(&rok->obj.post_op_fh3_u.handle,
-                                    pfsal_handle, pexport) == 0)
-                {
-                  gsh_free(rok->obj.post_op_fh3_u.handle.data.data_val);
-                  pres->res_mknod3.status = NFS3ERR_INVAL;
-                  rc = NFS_REQ_OK;
-                  goto out;
-                }
+            /* Set Post Op Fh3 structure */
+            rok->obj.handle_follows = TRUE;
 
-              /* Set Post Op Fh3 structure */
-              rok->obj.handle_follows = TRUE;
+            /* Build entry attributes */
+            nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
 
-              /* Build entry attributes */
-              nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
+            /* Get the attributes of the parent after the operation */
+            attr_parent_after = parent_pentry->obj_handle->attributes;
 
-              /* Get the attributes of the parent after the operation */
-              attr_parent_after = parent_pentry->obj_handle->attributes;
+            /* Build Weak Cache Coherency data */
+            nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
+                           &rok->dir_wcc);
 
-              /* Build Weak Cache Coherency data */
-              nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
+            pres->res_mknod3.status = NFS3_OK;
+
+            /* Set Post Op Fh3 structure */
+            rok->obj.handle_follows = TRUE;
+
+            /* Build entry attributes */
+            nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
+
+            /* Get the attributes of the parent after the operation */
+            attr_parent_after = parent_pentry->obj_handle->attributes;
+
+            /* Build Weak Cache Coherency data */
+            nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
                              &rok->dir_wcc);
 
-              pres->res_mknod3.status = NFS3_OK;
+            pres->res_mknod3.status = NFS3_OK;
+            rc = NFS_REQ_OK;
+            goto out;
+          }
+      }                       /* not found */
+    else
+      {
+        /* object already exists or failure during lookup */
+        if(cache_status_lookup == CACHE_INODE_SUCCESS)
+          {
+            /* Trying to create an entry that already exists */
+            cache_status = CACHE_INODE_ENTRY_EXISTS;
+            pres->res_mknod3.status = NFS3ERR_EXIST;
+          }
+        else
+          {
+            /* Server fault */
+            cache_status = cache_status_lookup;
+            pres->res_mknod3.status = NFS3ERR_INVAL;
+          }
 
-              /* Set Post Op Fh3 structure */
-              rok->obj.handle_follows = TRUE;
+        nfs_SetFailedStatus(pexport,
+                            preq->rq_vers,
+                            cache_status,
+                            NULL,
+                            &pres->res_mknod3.status,
+                            NULL, NULL,
+                            parent_pentry,
+                            ppre_attr,
+                            &(pres->res_mknod3.MKNOD3res_u.resfail.dir_wcc),
+                            NULL, NULL, NULL);
 
-              /* Build entry attributes */
-              nfs_SetPostOpAttr(pexport, &attr, &rok->obj_attributes);
+        rc = NFS_REQ_OK;
+        goto out;
+      }
 
-              /* Get the attributes of the parent after the operation */
-              attr_parent_after = parent_pentry->obj_handle->attributes;
-
-              /* Build Weak Cache Coherency data */
-              nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
-                             &rok->dir_wcc);
-
-              pres->res_mknod3.status = NFS3_OK;
-              rc = NFS_REQ_OK;
-              goto out;
-            }
-        }                       /* not found */
-      else
-        {
-          /* object already exists or failure during lookup */
-          if(cache_status_lookup == CACHE_INODE_SUCCESS)
-            {
-              /* Trying to create an entry that already exists */
-              cache_status = CACHE_INODE_ENTRY_EXISTS;
-              pres->res_mknod3.status = NFS3ERR_EXIST;
-            }
-          else
-            {
-              /* Server fault */
-              cache_status = cache_status_lookup;
-              pres->res_mknod3.status = NFS3ERR_INVAL;
-            }
-
-          nfs_SetFailedStatus(pexport,
-                              preq->rq_vers,
-                              cache_status,
-                              NULL,
-                              &pres->res_mknod3.status,
-                              NULL, NULL,
-                              parent_pentry,
-                              ppre_attr,
-                              &(pres->res_mknod3.MKNOD3res_u.resfail.dir_wcc),
-                              NULL, NULL, NULL);
-
-          rc = NFS_REQ_OK;
-          goto out;
-        }
-
-    }
-
-  /* convertion OK */
-  /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
+    /* convertion OK */
+    /* If we are here, there was an error */
+    if(nfs_RetryableError(cache_status))
+      {
+        rc = NFS_REQ_DROP;
+        goto out;
+      }
   nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,

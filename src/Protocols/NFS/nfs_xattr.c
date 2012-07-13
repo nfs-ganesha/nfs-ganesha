@@ -73,7 +73,7 @@ static void nfs_set_times_current(fattr3 * attrs)
   attrs->ctime.nseconds = 0;
 }
 
-static void fsal_set_times_current(fsal_attrib_list_t * attrs)
+static void fsal_set_times_current(struct attrlist *attrs)
 {
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -87,33 +87,6 @@ static void fsal_set_times_current(fsal_attrib_list_t * attrs)
   attrs->ctime.seconds = tv.tv_sec;
   attrs->ctime.nseconds = 1000 * tv.tv_usec;
 }
-
-/**
- *
- * nfs_Is_XattrD_Name: returns true is the string given as input is the name of an xattr object.
- *
- * Returns true is the string given as input is the name of an xattr object and returns the name of the object
- *
- * @param strname    [IN]  the name that is to be tested
- * @param objectname [OUT] if strname is related to a xattr, contains the name of the related object
- *
- * @return TRUE if strname is a xattr, FALSE otherwise
- *
- */
-int nfs_XattrD_Name(char *strname, char *objectname)
-{
-  if(strname == NULL)
-    return 0;
-
-  if(!strncmp(strname, XATTRD_NAME, XATTRD_NAME_LEN))
-    {
-      memcpy(objectname, (char *)(strname + XATTRD_NAME_LEN),
-             strlen(strname) - XATTRD_NAME_LEN + 1);
-      return 1;
-    }
-
-  return 0;
-}                               /* nfs_Is_XattrD_Name */
 
 /**
  * nfs3_fh_to_xattrfh: builds the fh to the xattrs ghost directory
@@ -161,7 +134,7 @@ nfsstat3 nfs3_fh_to_xattrfh(nfs_fh3 * pfhin, nfs_fh3 * pfhout)
  *
  */
 int nfs3_FSALattr_To_XattrDir(exportlist_t * pexport,   /* In: the related export entry */
-                              fsal_attrib_list_t * FSAL_attr,   /* In: file attributes */
+                              const struct attrlist *FSAL_attr,   /* In: file attributes */
                               fattr3 * Fattr)   /* Out: file attributes */
 {
   if(FSAL_attr == NULL || Fattr == NULL)
@@ -209,8 +182,9 @@ int nfs3_FSALattr_To_XattrDir(exportlist_t * pexport,   /* In: the related expor
  * @return 0 in all cases (making it a void function maybe a good idea)
  *
  */
-int nfs_SetPostOpXAttrDir(exportlist_t * pexport,
-                          fsal_attrib_list_t * pfsal_attr, post_op_attr * presult)
+int nfs_SetPostOpXAttrDir(exportlist_t *pexport,
+                          const struct attrlist *pfsal_attr,
+                          post_op_attr *presult)
 {
   if(pfsal_attr == NULL)
     {
@@ -240,8 +214,9 @@ int nfs_SetPostOpXAttrDir(exportlist_t * pexport,
  * @return 0 in all cases (making it a void function maybe a good idea)
  *
  */
-int nfs_SetPostOpXAttrFile(exportlist_t * pexport,
-                           fsal_attrib_list_t * pfsal_attr, post_op_attr * presult)
+int nfs_SetPostOpXAttrFile(exportlist_t *pexport,
+                           const struct attrlist *pfsal_attr,
+                           post_op_attr *presult)
 {
   if(pfsal_attr == NULL)
     {
@@ -282,7 +257,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
                       struct req_op_context *req_ctx,
                       struct svc_req *preq, nfs_res_t * pres)
 {
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   struct fsal_obj_handle *obj_hdl = NULL;
   cache_entry_t *pentry = NULL;
   file_handle_v3_t *pfile_handle = NULL;
@@ -337,7 +312,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
   else                          /* named attribute */
     {
       fsal_status_t fsal_status;
-      fsal_attrib_list_t xattrs;
+      struct attrlist xattrs;
       fsal_accessflags_t access_mode;
 
       access_mode = 0;
@@ -351,7 +326,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
         access_mode |= FSAL_X_OK;
 
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
-						   xattr_id, &xattrs);
+                                                   xattr_id, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -435,13 +410,11 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                       struct req_op_context *req_ctx,
                       struct svc_req *preq, nfs_res_t * pres)
 {
-  cache_inode_status_t cache_status;
-  fsal_attrib_list_t attr, xattr_attrs;
-  fsal_name_t name;
+  struct attrlist attr, xattr_attrs;
   fsal_status_t fsal_status;
   unsigned int xattr_id = 0;
   struct fsal_obj_handle *obj_hdl = NULL;
-  char *strpath = parg->arg_lookup3.what.name;
+  char *name = parg->arg_lookup3.what.name;
   file_handle_v3_t *pfile_handle = NULL;
   cache_entry_t *pentry_dir = NULL;
   int rc = NFS_REQ_OK;
@@ -460,19 +433,9 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
 
   obj_hdl = pentry_dir->obj_handle;
 
-  if((cache_status = cache_inode_error_convert(FSAL_str2name(strpath,
-                                                             MAXNAMLEN,
-                                                             &name))) !=
-     CACHE_INODE_SUCCESS)
-    {
-      pres->res_lookup3.status = nfs3_Errno(cache_status);
-      rc = NFS_REQ_OK;
-      goto out;
-    }
-
   /* Try to get a FSAL_XAttr of that name */
-  fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl,
-						    name.name, &xattr_id);
+  fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name,
+                                                    &xattr_id);
   if(FSAL_IS_ERROR(fsal_status))
     {
       pres->res_lookup3.status = nfs3_Errno(cache_inode_error_convert(fsal_status));
@@ -563,14 +526,14 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        struct req_op_context *req_ctx,
                        struct svc_req *preq, nfs_res_t * pres)
 {
-  typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
+  typedef char entry_name_array_item_t[1024];
   typedef char fh3_buffer_item_t[NFS3_FHSIZE];
 
   unsigned int delta = 0;
   cache_entry_t *dir_pentry = NULL;
   unsigned long dircount;
   unsigned long maxcount = 0;
-  fsal_attrib_list_t dir_attr;
+  struct attrlist dir_attr;
   unsigned int begin_cookie;
   unsigned int xattr_cookie;
   cookieverf3 cookie_verifier;
@@ -709,7 +672,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
           /* Allocation of the structure for reply */
           entry_name_array
             = gsh_calloc(estimated_num_entries,
-                         (FSAL_MAX_NAME_LEN + 1));
+                         (1024));
 
           if(entry_name_array == NULL)
             {
@@ -791,7 +754,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
               /* dircount is the size without the FH and attributes overhead, so entry3 is used intead of entryplus3 */
               needed =
                   sizeof(entry3) +
-                  ((strlen(xattrs_tab[i - delta].xattr_name.name) + 3) & ~3);
+                  ((strlen(xattrs_tab[i - delta].xattr_name) + 3) & ~3);
 
               if((space_used += needed) > maxcount)
                 {
@@ -816,8 +779,6 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                 }
               RES_READDIR_REPLY.entries[i].fileid =
                   0xFFFFFFFF & xattrs_tab[i - delta].attributes.fileid;
-              FSAL_name2str(&xattrs_tab[i - delta].xattr_name, entry_name_array[i],
-                            FSAL_MAX_NAME_LEN);
               RES_READDIR_REPLY.entries[i].name = entry_name_array[i];
 
               RES_READDIR_REPLY.entries[i].cookie =
@@ -894,11 +855,11 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
                       struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *parent_pentry = NULL;
-  fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t post_attr;
-  fsal_attrib_list_t attr_attrs;
+  struct attrlist pre_attr;
+  struct attrlist post_attr;
+  struct attrlist attr_attrs;
   struct fsal_obj_handle *obj_hdl = NULL;
-  fsal_name_t attr_name = FSAL_NAME_INITIALIZER;
+  char *attr_name;
   fsal_status_t fsal_status;
   file_handle_v3_t *p_handle_out;
   unsigned int attr_id;
@@ -922,14 +883,13 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
 
   obj_hdl = parent_pentry->obj_handle;
 
-  /* convert attr name to FSAL name */
-  FSAL_str2name(parg->arg_create3.where.name, FSAL_MAX_NAME_LEN, &attr_name);
+  attr_name = parg->arg_create3.where.name;
 
   /* set empty attr */
   fsal_status = obj_hdl->ops->setextattr_value(obj_hdl,
-					       attr_name.name,
-					       empty_buff,
-					       sizeof(empty_buff), TRUE);
+                                               attr_name,
+                                               empty_buff,
+                                               sizeof(empty_buff), TRUE);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -940,7 +900,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
 
   /* get attr id */
   fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl,
-						    attr_name.name, &attr_id);
+                                                    attr_name, &attr_id);
   if(FSAL_IS_ERROR(fsal_status))
     {
       pres->res_create3.status = nfs3_Errno(cache_inode_error_convert(fsal_status));
@@ -1019,9 +979,9 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
                      struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *pentry;
-  fsal_attrib_list_t attr;
-  fsal_attrib_list_t attr_attrs;
-  fsal_off_t offset = 0;
+  struct attrlist attr;
+  struct attrlist attr_attrs;
+  uint64_t offset = 0;
   fsal_status_t fsal_status;
   file_handle_v3_t *pfile_handle = NULL;
   struct fsal_obj_handle *obj_hdl = NULL;
@@ -1136,8 +1096,8 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
                     struct svc_req *preq, nfs_res_t * pres)
 {
   cache_entry_t *pentry;
-  fsal_attrib_list_t attr, xattr_attrs;
-  fsal_size_t size = 0;
+  struct attrlist attr, xattr_attrs;
+  uint32_t size = 0;
   size_t size_returned = 0;
   fsal_status_t fsal_status;
   caddr_t data = NULL;
@@ -1271,14 +1231,14 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            struct req_op_context *req_ctx,
                            struct svc_req *preq, nfs_res_t * pres)
 {
-  typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
+  typedef char entry_name_array_item_t[1024];
   typedef char fh3_buffer_item_t[NFS3_FHSIZE];
 
   unsigned int delta = 0;
   cache_entry_t *dir_pentry = NULL;
   unsigned long dircount;
   unsigned long maxcount = 0;
-  fsal_attrib_list_t dir_attr;
+  struct attrlist dir_attr;
   unsigned int begin_cookie;
   unsigned int xattr_cookie;
   cookieverf3 cookie_verifier;
@@ -1420,7 +1380,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
           /* Allocation of the structure for reply */
           entry_name_array =
             gsh_calloc(estimated_num_entries,
-                       (FSAL_MAX_NAME_LEN + 1));
+                       (1024));
 
           if(entry_name_array == NULL)
             {
@@ -1543,7 +1503,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
               /* dircount is the size without the FH and attributes overhead, so entry3 is used intead of entryplus3 */
               needed =
                   sizeof(entry3) +
-                  ((strlen(xattrs_tab[i - delta].xattr_name.name) + 3) & ~3);
+                  ((strlen(xattrs_tab[i - delta].xattr_name) + 3) & ~3);
 
               if((space_used += needed) > maxcount)
                 {
@@ -1569,9 +1529,10 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 
               /* Try to get a FSAL_XAttr of that name */
               /* Build the FSAL name */
-              fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl,
-								xattrs_tab[i - delta].xattr_name.name,
-								&xattr_id);
+              fsal_status = obj_hdl->ops->getextattr_id_by_name(
+                      obj_hdl,
+                      xattrs_tab[i - delta].xattr_name,
+                      &xattr_id);
               if(FSAL_IS_ERROR(fsal_status))
                 {
                   pres->res_readdirplus3.status =
@@ -1582,8 +1543,6 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 
               RES_READDIRPLUS_REPLY.entries[i].fileid =
                 (0xFFFFFFFF & xattrs_tab[i - delta].attributes.fileid) - xattr_id;
-              FSAL_name2str(&xattrs_tab[i - delta].xattr_name, entry_name_array[i],
-                            FSAL_MAX_NAME_LEN);
               RES_READDIRPLUS_REPLY.entries[i].name = entry_name_array[i];
 
               RES_READDIRPLUS_REPLY.entries[i].cookie =
@@ -1681,7 +1640,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
                        struct req_op_context *req_ctx,
                        struct svc_req *preq, nfs_res_t * pres)
 {
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   struct fsal_obj_handle *obj_hdl;
   cache_entry_t *pentry = NULL;
   file_handle_v3_t *pfile_handle = NULL;
@@ -1724,7 +1683,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
   else
     {
       fsal_status_t fsal_status;
-      fsal_attrib_list_t xattrs;
+      struct attrlist xattrs;
 
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
                                                    xattr_id, &xattrs);
@@ -1762,8 +1721,8 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
   cache_entry_t *pentry = NULL;
   struct fsal_obj_handle *obj_hdl;
   fsal_status_t fsal_status;
-  fsal_name_t name = FSAL_NAME_INITIALIZER;
-  fsal_attrib_list_t attr;
+  char *name;
+  struct attrlist attr;
   int rc = NFS_REQ_OK;
 
   if((pentry = nfs_FhandleToCache(NFS_V3,
@@ -1780,10 +1739,9 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
 
   obj_hdl = pentry->obj_handle;
 
-  /* convert attr name to FSAL name */
-  FSAL_str2name(parg->arg_remove3.object.name, MAXNAMLEN, &name);
+  name = parg->arg_remove3.object.name;
 
-  fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl, name.name);
+  fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl, name);
   if(FSAL_IS_ERROR(fsal_status))
     {
       pres->res_remove3.status = NFS3ERR_SERVERFAULT;

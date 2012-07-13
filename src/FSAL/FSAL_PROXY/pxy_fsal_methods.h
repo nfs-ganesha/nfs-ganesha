@@ -32,7 +32,7 @@ typedef struct
 
 struct pxy_fsal_module {
       struct fsal_module module;
-      fsal_staticfsinfo_t fsinfo;
+      struct fsal_staticfsinfo_t fsinfo;
       fsal_init_info_t init;
       proxyfs_specific_initinfo_t special;
 /*       struct fsal_ops pxy_ops; */
@@ -45,10 +45,6 @@ struct pxy_export {
 
 
 int pxy_init_rpc(const struct pxy_fsal_module *);
-
-fsal_status_t
-pxy_getextattrs(struct fsal_obj_handle *obj_hdl,
-		fsal_extattrib_list_t * object_attributes);
 
 fsal_status_t
 pxy_list_ext_attrs(struct fsal_obj_handle *obj_hdl, unsigned int cookie,
@@ -80,7 +76,7 @@ pxy_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 pxy_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-		     unsigned int xattr_id, fsal_attrib_list_t * attrs);
+		     unsigned int xattr_id, struct attrlist * attrs);
 
 fsal_status_t
 pxy_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
@@ -96,7 +92,7 @@ pxy_lookup_path(struct fsal_export *exp_hdl, const char *path,
 
 fsal_status_t
 pxy_create_handle(struct fsal_export *exp_hdl,
-                  struct fsal_handle_desc *hdl_desc,
+                  struct gsh_buffdesc *hdl_desc,
                   struct fsal_obj_handle **handle);
 
 fsal_status_t

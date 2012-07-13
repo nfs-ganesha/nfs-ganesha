@@ -111,7 +111,7 @@ cache_inode_commit(cache_entry_t *entry,
                pthread_rwlock_wrlock(&entry->content_lock);
                if (!is_open_for_write(entry)) {
                     if (cache_inode_open(entry,
-                                         FSAL_O_WRONLY,
+                                         FSAL_O_WRITE,
                                          req_ctx,
                                          CACHE_INODE_FLAG_CONTENT_HAVE |
                                          CACHE_INODE_FLAG_CONTENT_HOLD,

@@ -268,12 +268,12 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2,
  */
 
 int nfs4_FSALToFhandle(nfs_fh4 * pfh4,
-		       struct fsal_obj_handle *pfsalhandle,
+                       struct fsal_obj_handle *pfsalhandle,
                        compound_data_t * data)
 {
   fsal_status_t fsal_status;
   file_handle_v4_t *file_handle;
-  struct fsal_handle_desc fh_desc;
+  struct gsh_buffdesc fh_desc;
 
   /* reset the buffer to be used as handle */
   pfh4->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
@@ -281,11 +281,11 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4,
   file_handle = (file_handle_v4_t *)pfh4->nfs_fh4_val;
 
   /* Fill in the fs opaque part */
-  fh_desc.start = (caddr_t) &file_handle->fsopaque;
+  fh_desc.addr = &file_handle->fsopaque;
   fh_desc.len = pfh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
   fsal_status = pfsalhandle->ops->handle_digest(pfsalhandle,
-						FSAL_DIGEST_NFSV4,
-						&fh_desc);
+                                                FSAL_DIGEST_NFSV4,
+                                                &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;
 
@@ -323,12 +323,12 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4,
  * compensate??
  */
 int nfs3_FSALToFhandle(nfs_fh3 * pfh3,
-		       struct fsal_obj_handle *pfsalhandle,
+                       struct fsal_obj_handle *pfsalhandle,
                        exportlist_t * pexport)
 {
   fsal_status_t fsal_status;
   file_handle_v3_t *file_handle;
-  struct fsal_handle_desc fh_desc;
+  struct gsh_buffdesc fh_desc;
 
   /* reset the buffer to be used as handle */
   pfh3->data.data_len = sizeof(struct alloc_file_handle_v3);
@@ -336,15 +336,13 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3,
   file_handle = (file_handle_v3_t *)pfh3->data.data_val;
 
   /* Fill in the fs opaque part */
-  fh_desc.start = (caddr_t) &file_handle->fsopaque;
+  fh_desc.addr = &file_handle->fsopaque;
   fh_desc.len = pfh3->data.data_len - offsetof(file_handle_v3_t, fsopaque);
   fsal_status = pfsalhandle->ops->handle_digest(pfsalhandle,
-						FSAL_DIGEST_NFSV3,
-						&fh_desc);
+                                                FSAL_DIGEST_NFSV3,
+                                                &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;
-
-  print_buff(COMPONENT_FILEHANDLE, fh_desc.start, fh_desc.len);
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   file_handle->fs_len = fh_desc.len;   /* set the actual size */
@@ -373,23 +371,23 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3,
  *
  */
 int nfs2_FSALToFhandle(fhandle2 * pfh2,
-		       struct fsal_obj_handle *pfsalhandle,
+                       struct fsal_obj_handle *pfsalhandle,
                        exportlist_t * pexport)
 {
   fsal_status_t fsal_status;
   file_handle_v2_t *file_handle;
-  struct fsal_handle_desc fh_desc;
+  struct gsh_buffdesc fh_desc;
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh2, 0, sizeof(struct alloc_file_handle_v2));
   file_handle = (file_handle_v2_t *)pfh2;
 
   /* Fill in the fs opaque part */
-  fh_desc.start = (caddr_t) &file_handle->fsopaque;
+  fh_desc.addr = &file_handle->fsopaque;
   fh_desc.len = sizeof(file_handle->fsopaque);
   fsal_status = pfsalhandle->ops->handle_digest(pfsalhandle,
-						FSAL_DIGEST_NFSV2,
-						&fh_desc);
+                                                FSAL_DIGEST_NFSV2,
+                                                &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
    {
      if( fsal_status.major == ERR_FSAL_TOOSMALL )
@@ -399,8 +397,6 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2,
                fsal_status.major, fsal_status.minor, __func__ ) ;
     return 0;
    }
-
-  print_buff(COMPONENT_FILEHANDLE, fh_desc.start, fh_desc.len);
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   /* keep track of the export id */

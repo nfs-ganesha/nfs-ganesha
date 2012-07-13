@@ -858,7 +858,7 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
  *
  * @return 0 if successful, -1 otherwise.
  */
-int utf82uid(utf8string * utf8str, uid_t * Uid)
+int utf82uid(utf8string * utf8str, uint64_t *Uid)
 {
   char buff[2 * NFS4_MAX_DOMAIN_LEN];
   char uidname[NFS4_MAX_DOMAIN_LEN];
@@ -866,6 +866,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
   char domainname[NFS4_MAX_DOMAIN_LEN];
 #endif
   int  rc;
+  uid_t sysuid = 0;
 
   if(utf8str->utf8string_len == 0)
     {
@@ -884,7 +885,8 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
   strncpy(uidname, buff, NFS4_MAX_DOMAIN_LEN);
 #endif
 
-  rc = name2uid(uidname, Uid);
+  rc = name2uid(uidname, &sysuid);
+  *Uid = sysuid;
 
   if(rc == 0)
     {
@@ -893,7 +895,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
     }
 
   LogDebug(COMPONENT_IDMAPPER,
-           "utf82uid: Mapped %s to uid = %d",
+           "utf82uid: Mapped %s to uid = %"PRIu64,
            buff, *Uid);
 
   return 0;
@@ -910,7 +912,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
  *
  * @return 0 in all cases
  */
-int utf82gid(utf8string * utf8str, gid_t * Gid)
+int utf82gid(utf8string * utf8str, uint64_t *Gid)
 {
   char buff[2 * NFS4_MAX_DOMAIN_LEN];
   char gidname[NFS4_MAX_DOMAIN_LEN];
@@ -918,6 +920,7 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
   char domainname[NFS4_MAX_DOMAIN_LEN];
 #endif
   int  rc;
+  gid_t sysgid;
 
   if(utf8str->utf8string_len == 0)
     {
@@ -936,7 +939,8 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
   strncpy(gidname, buff, NFS4_MAX_DOMAIN_LEN);
 #endif
 
-  rc = name2gid(gidname, Gid);
+  rc = name2gid(gidname, &sysgid);
+  *Gid = sysgid;
 
   if(rc == 0)
     {
@@ -945,7 +949,7 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
     }
 
   LogDebug(COMPONENT_IDMAPPER,
-           "utf82gid: Mapped %s to gid = %d",
+           "utf82gid: Mapped %s to gid = %"PRIu64,
            buff, *Gid);
 
   return 0;

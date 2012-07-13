@@ -70,10 +70,10 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
                     compound_data_t *data,
                     struct nfs_resop4 *resp)
 {
-  fsal_name_t secinfo_fh_name;
-  cache_inode_status_t cache_status;
-  cache_entry_t *entry_src;
-  fsal_attrib_list_t attr_secinfo;
+  char *secinfo_fh_name = NULL;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+  cache_entry_t *entry_src = NULL;
+  struct attrlist attr_secinfo;
   sec_oid4 v5oid = {krb5oid.length, (char *)krb5oid.elements};
   int num_entry = 0;
 
@@ -84,7 +84,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
   if(arg_SECINFO4.name.utf8string_len == 0)
     {
       res_SECINFO4.status = NFS4ERR_INVAL;
-      return res_SECINFO4.status;
+      goto out;
     }
 
   /*
@@ -93,31 +93,27 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
    */
   res_SECINFO4.status = nfs4_sanity_check_FH(data, DIRECTORY);
   if(res_SECINFO4.status != NFS4_OK)
-    return res_SECINFO4.status;
+    goto out;
 
   if (nfs_in_grace())
     {
       res_SECINFO4.status = NFS4ERR_GRACE;
-      return res_SECINFO4.status;
+      goto out;
     }
 
-  /* get the names from the RPC input */
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_SECINFO4.name,
-                                 &secinfo_fh_name))) != CACHE_INODE_SUCCESS)
+  if (!(secinfo_fh_name = nfs4_utf8string2dynamic(&arg_SECINFO4.name)))
     {
-      res_SECINFO4.status = NFS4ERR_INVAL;
-      return res_SECINFO4.status;
+      res_SECINFO4.status = NFS4ERR_SERVERFAULT;
+      goto out;
     }
 
   if((entry_src = cache_inode_lookup(data->current_entry,
-                                         &secinfo_fh_name,
+                                         secinfo_fh_name,
                                          &attr_secinfo,
                                          data->req_ctx, &cache_status)) == NULL)
     {
       res_SECINFO4.status = nfs4_Errno(cache_status);
-      return res_SECINFO4.status;
+      goto out;
     }
 
   /* get the number of entries */
@@ -137,7 +133,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
     {
       res_SECINFO4.status = NFS4ERR_SERVERFAULT;
       cache_inode_put(entry_src);
-      return res_SECINFO4.status;
+      goto out;
     }
 
   /* XXX we have the opportunity to associate a preferred security triple
@@ -185,6 +181,13 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
   res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
   cache_inode_put(entry_src);
+
+ out:
+
+  if (secinfo_fh_name) {
+    gsh_free(secinfo_fh_name);
+    secinfo_fh_name = NULL;
+  }
 
   return res_SECINFO4.status;
 } /* nfs4_op_secinfo */

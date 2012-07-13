@@ -213,7 +213,7 @@ if test "x${with_allocator+set}" == "xset"; then
                 AC_CHECK_LIB(jemalloc, malloc, ,[AC_MSG_ERROR([libjemalloc cannot be found])])
         elif test "x$ALLOCATOR" = "xtcmalloc"; then
                 AC_CHECK_LIB(tcmalloc, malloc, ,[AC_MSG_ERROR([libtcmalloc cannot be found])])
-        elif text "x$ALLOCATOR" != "xlibc"; then
+        elif test "x$ALLOCATOR" != "xlibc"; then
                 AC_MSG_ERROR([$ALLOCATOR is not a valid option.])
         fi
 else
@@ -698,10 +698,20 @@ if test "$enable_fsal_gpfs" == "yes"; then
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
 fi
 
+# This function doesn't actually seem to exist in my C library, and
+# FSAL_VFS calls into the kernel directly.  -- ACE
+
+dnl if test "$enable_fsal_vfs" == "yes"; then
+dnl	AC_CHECK_FUNC([open_by_handle_at],
+dnl		      [AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem ])],
+dnl		      [USE_FSAL_VFS_TRUE='#'])
+dnl	FSAL_CFLAGS=
+dnl	FSAL_LDFLAGS=""
+dnl	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
+dnl fi
+
 if test "$enable_fsal_vfs" == "yes"; then
-	AC_CHECK_FUNC([open_by_handle_at],
-		      [AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem ])],
-		      [USE_FSAL_VFS_TRUE='#'])
+        AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem ])
 	FSAL_CFLAGS=
 	FSAL_LDFLAGS=""
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"

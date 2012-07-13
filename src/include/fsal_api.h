@@ -176,34 +176,29 @@ struct export_ops {
 				struct fsal_obj_handle *junction,
 				struct fsal_obj_handle **handle);
 	fsal_status_t (*extract_handle)(struct fsal_export *exp_hdl,
-					fsal_digesttype_t in_type,
-					struct netbuf *fh_desc);
+                                        fsal_digesttype_t in_type,
+                                        struct netbuf *fh_desc);
 	fsal_status_t (*create_handle)(struct fsal_export *exp_hdl,
-				       struct fsal_handle_desc *hdl_desc,
+				       struct gsh_buffdesc *hdl_desc,
 				       struct fsal_obj_handle **handle);
 
 	/* statistics and configuration access */
 	fsal_status_t (*get_fs_dynamic_info)(struct fsal_export *exp_hdl,
 					     fsal_dynamicfsinfo_t *infop);
-	fsal_boolean_t (*fs_supports)(struct fsal_export *exp_hdl,
+	bool_t (*fs_supports)(struct fsal_export *exp_hdl,
 				      fsal_fsinfo_options_t option);
-	fsal_size_t (*fs_maxfilesize)(struct fsal_export *exp_hdl);
-	fsal_size_t (*fs_maxread)(struct fsal_export *exp_hdl);
-	fsal_size_t (*fs_maxwrite)(struct fsal_export *exp_hdl);
-	fsal_count_t (*fs_maxlink)(struct fsal_export *exp_hdl);
-	fsal_mdsize_t (*fs_maxnamelen)(struct fsal_export *exp_hdl);
-	fsal_mdsize_t (*fs_maxpathlen)(struct fsal_export *exp_hdl);
+	uint64_t (*fs_maxfilesize)(struct fsal_export *exp_hdl);
+	uint32_t (*fs_maxread)(struct fsal_export *exp_hdl);
+	uint32_t (*fs_maxwrite)(struct fsal_export *exp_hdl);
+	uint32_t (*fs_maxlink)(struct fsal_export *exp_hdl);
+	uint32_t (*fs_maxnamelen)(struct fsal_export *exp_hdl);
+	uint32_t (*fs_maxpathlen)(struct fsal_export *exp_hdl);
 	fsal_fhexptype_t (*fs_fh_expire_type)(struct fsal_export *exp_hdl);
-	fsal_time_t (*fs_lease_time)(struct fsal_export *exp_hdl);
+	gsh_time_t (*fs_lease_time)(struct fsal_export *exp_hdl);
 	fsal_aclsupp_t (*fs_acl_support)(struct fsal_export *exp_hdl);
-	fsal_attrib_mask_t (*fs_supported_attrs)(struct fsal_export *exp_hdl);
-	fsal_accessmode_t (*fs_umask)(struct fsal_export *exp_hdl);
-	fsal_accessmode_t (*fs_xattr_access_rights)(struct fsal_export *exp_hdl);
-/* FIXME: these _USE_FOO conditionals in api headers are evil.  Remove asap */
-#ifdef _USE_FSALMDS
-	fattr4_fs_layout_types (*fs_layout_types)(struct fsal_staticfsinfo_t *info);
-	fsal_size_t (*layout_blksize)(struct fsal_staticinfo_t *info);
-#endif
+	attrmask_t (*fs_supported_attrs)(struct fsal_export *exp_hdl);
+	uint32_t (*fs_umask)(struct fsal_export *exp_hdl);
+	uint32_t (*fs_xattr_access_rights)(struct fsal_export *exp_hdl);
 	/* quotas are managed at the file system (export) level */
 	fsal_status_t (*check_quota)(struct fsal_export *exp_hdl,
 				   const char * filepath,
@@ -233,7 +228,7 @@ struct fsal_obj_handle {
 	int refs;
 	object_file_type_t type;
 	struct fsal_export *export;	/* export who created me */
-	fsal_attrib_list_t attributes;  /* used to be in cache_entry */
+	struct attrlist attributes;  /* used to be in cache_entry */
 	struct fsal_obj_ops *ops;
 };
 
@@ -274,66 +269,66 @@ struct fsal_obj_ops {
 					 struct fsal_obj_handle *dir_hdl,
 					 void *dir_state,
 					 struct fsal_cookie *cookie),
-				 fsal_boolean_t *eof);
+				 bool_t *eof);
 	fsal_status_t (*create)(struct fsal_obj_handle *dir_hdl,
-				fsal_name_t *name,
-				fsal_attrib_list_t *attrib,
+				const char *name,
+				struct attrlist *attrib,
 				struct fsal_obj_handle **new_obj);
 	fsal_status_t (*mkdir)(struct fsal_obj_handle *dir_hdl,
-			       fsal_name_t *name,
-			       fsal_attrib_list_t *attrib,
+			       const char *name,
+			       struct attrlist *attrib,
 			       struct fsal_obj_handle **new_obj);
 	fsal_status_t (*mknode)(struct fsal_obj_handle *dir_hdl,
-				fsal_name_t *name,
-				object_file_type_t nodetype,  /* IN */
-				fsal_dev_t *dev,  /* IN */
-				fsal_attrib_list_t *attrib,
+				const char *name,
+				object_file_type_t nodetype,
+				fsal_dev_t *dev,
+				struct attrlist *attrib,
 				struct fsal_obj_handle **new_obj);
 	fsal_status_t (*symlink)(struct fsal_obj_handle *dir_hdl,
-				 fsal_name_t *name,
-				 fsal_path_t *link_path,
-				 fsal_attrib_list_t *attrib,
+				 const char *name,
+				 const char *link_path,
+				 struct attrlist *attrib,
 				 struct fsal_obj_handle **new_obj);
 	fsal_status_t (*readlink)(struct fsal_obj_handle *obj_hdl,
 				  char *link_content,
-				  uint32_t *link_len,
-				  fsal_boolean_t refresh);
+				  size_t *link_len,
+				  bool_t refresh);
 
 	/* file object operations */
 	fsal_status_t (*test_access)(struct fsal_obj_handle *obj_hdl,
 				     struct req_op_context *req_ctx,
 				     fsal_accessflags_t access_type);
 	fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl,
-				  fsal_attrib_list_t *obj_attr);
+				  struct attrlist *obj_attr);
 	fsal_status_t (*setattrs)(struct fsal_obj_handle *obj_hdl,
-				  fsal_attrib_list_t *attrib_set);
+				  struct attrlist *attrib_set);
 	fsal_status_t (*link)(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *destdir_hdl,
-			      fsal_name_t *name);
+			      const char *name);
 	fsal_status_t (*rename)(struct fsal_obj_handle *olddir_hdl,
-				fsal_name_t *old_name,
+				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
-				fsal_name_t *new_name);
+				const char *new_name);
 	fsal_status_t (*unlink)(struct fsal_obj_handle *obj_hdl,
-				fsal_name_t *name);
+				const char *name);
 	fsal_status_t (*truncate)(struct fsal_obj_handle *obj_hdl,
-				  fsal_size_t length);
+				  uint64_t length);
 
 	/* I/O management */
 	fsal_status_t (*open)(struct fsal_obj_handle *obj_hdl,
 			      fsal_openflags_t openflags);
 	fsal_openflags_t (*status)(struct fsal_obj_handle *obj_hdl);
 	fsal_status_t (*read)(struct fsal_obj_handle *obj_hdl,
-			      fsal_seek_t * seek_descriptor,
+			      uint64_t offset,
 			      size_t buffer_size,
-			      caddr_t buffer,
-			      ssize_t *read_amount,
-			      fsal_boolean_t * end_of_file); /* needed? */
+			      void *buffer,
+			      size_t *read_amount,
+			      bool_t *end_of_file); /* needed? */
 	fsal_status_t (*write)(struct fsal_obj_handle *obj_hdl,
-			       fsal_seek_t * seek_descriptor,
+                               uint64_t offset,
 			       size_t buffer_size,
-			       caddr_t buffer,
-			       ssize_t *write_amount);
+			       void *buffer,
+                               size_t *write_amount);
 	fsal_status_t (*commit)(struct fsal_obj_handle *obj_hdl, /* sync */
 				off_t offset,
 				size_t len);
@@ -346,13 +341,8 @@ struct fsal_obj_ops {
 				  void *p_owner,         /* IN (opaque to FSAL) */
 				  fsal_share_param_t  request_share);
 	fsal_status_t (*close)(struct fsal_obj_handle *obj_hdl);
-	fsal_status_t (*rcp)(struct fsal_obj_handle *obj_hdl,
-			     const char *local_path,
-			     fsal_rcpflag_t transfer_opt);
 
 	/* extended attributes management */
-	fsal_status_t (*getextattrs)(struct fsal_obj_handle *obj_hdl,
-				     fsal_extattrib_list_t * object_attributes);
 	fsal_status_t (*list_ext_attrs)(struct fsal_obj_handle *obj_hdl,
 					unsigned int cookie,
 					fsal_xattrent_t * xattrs_tab,
@@ -383,23 +373,23 @@ struct fsal_obj_ops {
 						size_t buffer_size);
 	fsal_status_t (*getextattr_attrs)(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id,
-					  fsal_attrib_list_t * p_attrs);
+					  struct attrlist *p_attrs);
 	fsal_status_t (*remove_extattr_by_id)(struct fsal_obj_handle *obj_hdl,
 					      unsigned int xattr_id);
 	fsal_status_t (*remove_extattr_by_name)(struct fsal_obj_handle *obj_hdl,
 						const char *xattr_name);
 
 	/* handle operations */
-	fsal_boolean_t (*handle_is)(struct fsal_obj_handle *obj_hdl,
-				    object_file_type_t type);
+	bool_t (*handle_is)(struct fsal_obj_handle *obj_hdl,
+                            object_file_type_t type);
 	fsal_status_t (*lru_cleanup)(struct fsal_obj_handle *obj_hdl,
 				     lru_actions_t requests);
-	fsal_boolean_t (*compare)(struct fsal_obj_handle *obj1_hdl,
-				  struct fsal_obj_handle *obj2_hdl);
+	bool_t (*compare)(struct fsal_obj_handle *obj1_hdl,
+                          struct fsal_obj_handle *obj2_hdl);
 	fsal_status_t (*handle_digest)(struct fsal_obj_handle *obj_hdl,
-				       fsal_digesttype_t output_type,
-				       struct fsal_handle_desc *fh_desc);
+				       uint32_t output_type,
+				       struct gsh_buffdesc *fh_desc);
 	void (*handle_to_key)(struct fsal_obj_handle *obj_hdl,
-				       struct fsal_handle_desc *fh_desc);
+                              struct gsh_buffdesc *fh_desc);
 };
 	

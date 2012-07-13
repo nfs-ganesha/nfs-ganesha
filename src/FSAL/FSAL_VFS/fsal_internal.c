@@ -54,13 +54,13 @@
 int fd_to_handle(int fd, void **hanp, size_t * hlen);
 
 /* credential lifetime (1h) */
-fsal_uint_t CredentialLifetime = 3600;
+uint32_t CredentialLifetime = 3600;
 
 /* static filesystem info.
  * The access is thread-safe because
  * it is read-only, except during initialization.
  */
-fsal_staticfsinfo_t global_fs_info;
+struct fsal_staticfsinfo_t global_fs_info;
 
 /* filesystem info for VFS */
 /* static fsal_staticfsinfo_t default_posix_info = { */
@@ -96,186 +96,6 @@ fsal_staticfsinfo_t global_fs_info;
 /*   0,                            /\* default share reservation support in FSAL *\/ */
 /*   0                             /\* default share reservation support with open owners in F *//* }; */
 
-/* variables for limiting the calls to the filesystem */
-static int limit_calls = FALSE;
-semaphore_t sem_fs_calls;
-
-/* threads keys for stats */
-static pthread_key_t key_stats;
-static pthread_once_t once_key = PTHREAD_ONCE_INIT;
-
-/* init keys */
-static void init_keys(void)
-{
-  if(pthread_key_create(&key_stats, NULL) == -1)
-    LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
-
-  return;
-}                               /* init_keys */
-
-/**
- * fsal_increment_nbcall:
- * Updates fonction call statistics.
- *
- * \param function_index (input):
- *        Index of the function whom number of call is to be incremented.
- * \param status (input):
- *        Status the function returned.
- *
- * \return Nothing.
- */
-void fsal_increment_nbcall(int function_index, fsal_status_t status)
-{
-
-  fsal_statistics_t *bythread_stat = NULL;
-
-  /* verify index */
-
-  if(function_index >= FSAL_NB_FUNC)
-    return;
-
-  /* first, we init the keys if this is the first time */
-
-  if(pthread_once(&once_key, init_keys) != 0)
-    {
-      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
-      return;
-    }
-
-  /* we get the specific value */
-
-  bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
-
-  /* we allocate stats if this is the first time */
-
-  if(bythread_stat == NULL)
-    {
-      int i;
-
-      bythread_stat = gsh_malloc(sizeof(fsal_statistics_t));
-
-      if(bythread_stat == NULL)
-        {
-          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, ENOMEM);
-        }
-
-      /* inits the struct */
-
-      for(i = 0; i < FSAL_NB_FUNC; i++)
-        {
-          bythread_stat->func_stats.nb_call[i] = 0;
-          bythread_stat->func_stats.nb_success[i] = 0;
-          bythread_stat->func_stats.nb_err_retryable[i] = 0;
-          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-        }
-
-      /* set the specific value */
-      pthread_setspecific(key_stats, (void *)bythread_stat);
-
-    }
-
-  /* we increment the values */
-
-  if(bythread_stat)
-    {
-      bythread_stat->func_stats.nb_call[function_index]++;
-
-      if(!FSAL_IS_ERROR(status))
-        bythread_stat->func_stats.nb_success[function_index]++;
-      else if(status.major == ERR_FSAL_DELAY)   /* Error is retryable */
-        bythread_stat->func_stats.nb_err_retryable[function_index]++;
-      else
-        bythread_stat->func_stats.nb_err_unrecover[function_index]++;
-    }
-
-  return;
-}
-
-/**
- * fsal_internal_getstats:
- * (For internal use in the FSAL).
- * Retrieve call statistics for current thread.
- *
- * \param output_stats (output):
- *        Pointer to the call statistics structure.
- *
- * \return Nothing.
- */
-void fsal_internal_getstats(fsal_statistics_t * output_stats)
-{
-
-  fsal_statistics_t *bythread_stat = NULL;
-
-  /* first, we init the keys if this is the first time */
-  if(pthread_once(&once_key, init_keys) != 0)
-    {
-      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
-      return;
-    }
-
-  /* we get the specific value */
-  bythread_stat = (fsal_statistics_t *) pthread_getspecific(key_stats);
-
-  /* we allocate stats if this is the first time */
-  if(bythread_stat == NULL)
-    {
-      int i;
-
-      if((bythread_stat =
-          gsh_malloc(sizeof(fsal_statistics_t))) == NULL)
-        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, ENOMEM);
-
-      /* inits the struct */
-      for(i = 0; i < FSAL_NB_FUNC; i++)
-        {
-          bythread_stat->func_stats.nb_call[i] = 0;
-          bythread_stat->func_stats.nb_success[i] = 0;
-          bythread_stat->func_stats.nb_err_retryable[i] = 0;
-          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-        }
-
-      /* set the specific value */
-      pthread_setspecific(key_stats, (void *)bythread_stat);
-
-    }
-
-  if(output_stats)
-    (*output_stats) = (*bythread_stat);
-
-  return;
-
-}
-
-/* N.B. the initialization of the semaphore is not done so these
- * are effectively NOPs.  They serve no useful purpose for VFS
- * other than slow things dowm a little.  Remove after all call
- * sites are removed.
- */
-
-/**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == FALSE)
-    return;
-
-  /* there is a limit */
-  semaphore_P(&sem_fs_calls);
-
-}
-
-void ReleaseTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == FALSE)
-    return;
-
-  /* there is a limit */
-  semaphore_V(&sem_fs_calls);
-
-}
 
 #if 0
 fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,

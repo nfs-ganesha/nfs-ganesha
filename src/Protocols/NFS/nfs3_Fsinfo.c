@@ -85,7 +85,7 @@ int nfs3_Fsinfo(nfs_arg_t *parg,
                 nfs_res_t * pres)
 {
   cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t attr;
+  struct attrlist attr;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))

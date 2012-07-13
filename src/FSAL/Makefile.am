@@ -6,8 +6,7 @@ if USE_PNFS
 noinst_LTLIBRARIES += libfsalpnfscommon.la
 endif
 
-libfsalcommon_la_SOURCES = fsal_strings.c          \
-                           fsal_errors.c           \
+libfsalcommon_la_SOURCES = fsal_errors.c           \
                            fsal_convert.c          \
                            fsal_commonlib.c	   \
 			   fsal_manager.c          \

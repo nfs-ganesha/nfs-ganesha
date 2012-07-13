@@ -72,8 +72,8 @@
 
 cache_inode_status_t
 cache_inode_rename_cached_dirent(cache_entry_t *parent,
-                                 fsal_name_t *oldname,
-                                 fsal_name_t *newname,
+                                 const char *oldname,
+                                 const char *newname,
                                  cache_inode_status_t *status)
 {
   /* Set the return default to CACHE_INODE_SUCCESS */
@@ -183,11 +183,11 @@ static inline void src_dest_unlock(cache_entry_t *src,
  *
  */
 cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
-                                        fsal_name_t *oldname,
+                                        const char *oldname,
                                         cache_entry_t *dir_dest,
-                                        fsal_name_t *newname,
-                                        fsal_attrib_list_t *attr_src,
-                                        fsal_attrib_list_t *attr_dest,
+                                        const char *newname,
+                                        struct attrlist *attr_src,
+                                        struct attrlist *attr_dest,
                                         struct req_op_context *req_ctx,
                                         cache_inode_status_t *status)
 {
@@ -247,13 +247,12 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 
     LogDebug(COMPONENT_CACHE_INODE,
              "Rename (%p,%s)->(%p,%s) : source doesn't exist",
-             dir_src, oldname->name,
-             dir_dest, newname->name);
+             dir_src, oldname, dir_dest, newname);
     goto out;
   }
   if( !sticky_dir_allows(phandle_dirsrc,
-			 lookup_src->obj_handle,
-			 req_ctx->creds))
+                         lookup_src->obj_handle,
+                         req_ctx->creds))
     {
       src_dest_unlock(dir_src, dir_dest);
       *status = CACHE_INODE_FSAL_EPERM;
@@ -280,7 +279,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
     {
       LogDebug(COMPONENT_CACHE_INODE,
                "Rename (%p,%s)->(%p,%s) : destination already exists",
-               dir_src, oldname->name, dir_dest, newname->name);
+               dir_src, oldname, dir_dest, newname);
 
       /* If the already existing object is a directory, source object
          should be a directory */
@@ -312,7 +311,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
           src_dest_unlock(dir_src, dir_dest);
           LogDebug(COMPONENT_CACHE_INODE,
                    "Rename (%p,%s)->(%p,%s) : rename the object on itself",
-                   dir_src, oldname->name, dir_dest, newname->name);
+                   dir_src, oldname, dir_dest, newname);
 
           goto out;
         }
@@ -330,7 +329,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
           LogDebug(COMPONENT_CACHE_INODE,
                    "Rename (%p,%s)->(%p,%s) : destination is a non-empty "
                    "directory",
-                   dir_src, oldname->name, dir_dest, newname->name);
+                   dir_src, oldname, dir_dest, newname);
           goto out;
         }
 
@@ -401,7 +400,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
     {
       *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
-           fsal_attrib_list_t attrs;
+           struct attrlist attrs;
 
            fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, &attrs);
            if (fsal_status.major == ERR_FSAL_STALE) {
@@ -434,7 +433,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
       LogDebug(COMPONENT_CACHE_INODE,
                "Rename (%p,%s)->(%p,%s) : source and target directory are "
                "the same",
-               dir_src, oldname->name, dir_dest, newname->name);
+               dir_src, oldname, dir_dest, newname);
 
       cache_inode_rename_cached_dirent(dir_dest, oldname,
                                        newname, status);
@@ -450,8 +449,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
     {
       LogDebug(COMPONENT_CACHE_INODE,
                "Rename (%p,%s)->(%p,%s) : moving entry",
-               dir_src, oldname->name,
-               dir_dest, newname->name);
+               dir_src, oldname, dir_dest, newname);
 
       /* Add the new entry */
       cache_inode_add_cached_dirent(dir_dest,

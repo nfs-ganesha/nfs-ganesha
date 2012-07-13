@@ -80,20 +80,20 @@ int nfs4_op_create(struct nfs_argop4 *op,
 {
   cache_entry_t        * entry_parent = NULL;
   cache_entry_t        * entry_new = NULL;
-  fsal_attrib_list_t     attr_parent;
-  fsal_attrib_list_t     attr_new;
-  fsal_attrib_list_t     sattr;
+  struct attrlist        attr_parent;
+  struct attrlist        attr_new;
+  struct attrlist        sattr;
   nfs_fh4                newfh4;
-  cache_inode_status_t   cache_status;
+  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
   int                    convrc = 0;
-  fsal_accessmode_t      mode = 0777;
-  fsal_name_t            name;
+  uint32_t               mode = 0777;
+  char                   *name = NULL;
+  char                   *link_content = NULL;
 #ifdef _USE_QUOTA
   struct fsal_export    *exp_hdl = data->current_entry->obj_handle->export;
-  fsal_status_t          fsal_status ;
+  fsal_status_t          fsal_status;
 #endif
   cache_inode_create_arg_t create_arg;
-  unsigned int             i = 0;
 
   memset(&create_arg, 0, sizeof(create_arg));
 
@@ -103,7 +103,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   /* Do basic checks on a filehandle */
   res_CREATE4.status = nfs4_sanity_check_FH(data, 0LL);
   if(res_CREATE4.status != NFS4_OK)
-    return res_CREATE4.status;
+    goto out;
 
 #ifdef _USE_QUOTA
   /* if quota support is active, then we should check is the FSAL allows
@@ -115,7 +115,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   if( FSAL_IS_ERROR( fsal_status ) )
     {
       res_CREATE4.status = NFS4ERR_DQUOT ;
-      return res_CREATE4.status;
+      goto out;
     }
 #endif /* _USE_QUOTA */
 
@@ -123,44 +123,38 @@ int nfs4_op_create(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       res_CREATE4.status = NFS4ERR_ROFS;
-      return res_CREATE4.status;
+      goto out;
     }
 
   if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
     {
       res_CREATE4.status = NFS4ERR_PERM;
-      return res_CREATE4.status;
+      goto out;
     }
 
   /* Ask only for supported attributes */
   if(!nfs4_Fattr_Supported(&arg_CREATE4.createattrs))
     {
       res_CREATE4.status = NFS4ERR_ATTRNOTSUPP;
-      return res_CREATE4.status;
+      goto out;
     }
 
   /* Do not use READ attr, use WRITE attr */
   if(!nfs4_Fattr_Check_Access(&arg_CREATE4.createattrs, FATTR4_ATTR_WRITE))
     {
       res_CREATE4.status = NFS4ERR_INVAL;
-      return res_CREATE4.status;
+      goto out;
     }
 
-  /* Check for name to long */
-  if(arg_CREATE4.objname.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_CREATE4.status = NFS4ERR_NAMETOOLONG;
-      return res_CREATE4.status;
-    }
 
-  /* 
+  /*
    * This operation is used to create a non-regular file, 
    * this means: - a symbolic link
    *             - a block device file
    *             - a character device file
    *             - a socket file
    *             - a fifo
-   *             - a directory 
+   *             - a directory
    *
    * You can't use this operation to create a regular file, you have to use NFS4_OP_OPEN for this
    */
@@ -169,37 +163,15 @@ int nfs4_op_create(struct nfs_argop4 *op,
   if(arg_CREATE4.objname.utf8string_len == 0)
     {
       res_CREATE4.status = NFS4ERR_INVAL;
-      return res_CREATE4.status;
+      goto out;
     }
 
-  if(utf82str(name.name, sizeof(name.name), &arg_CREATE4.objname) == -1)
-    {
-      res_CREATE4.status = NFS4ERR_INVAL;
-      return res_CREATE4.status;
-    }
-  name.len = strlen(name.name);
+  name = nfs4_utf8string2dynamic(&arg_CREATE4.objname);
+  if (name == NULL) {
+      res_CREATE4.status = NFS4ERR_SERVERFAULT;
+      goto out;
+  }
 
-  /* Sanuty check: never create a directory named '.' or '..' */
-  if(arg_CREATE4.objtype.type == NF4DIR)
-    {
-      if(!FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT)
-         || !FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT_DOT))
-        {
-          res_CREATE4.status = NFS4ERR_BADNAME;
-          return res_CREATE4.status;
-        }
-
-    }
-
-  /* Filename should contain not slash */
-  for(i = 0; i < name.len; i++)
-    {
-      if(name.name[i] == '/')
-        {
-          res_CREATE4.status = NFS4ERR_BADCHAR;
-          return res_CREATE4.status;
-        }
-    }
   /* Convert current FH into a cached entry, the current_entry
      (assocated with the current FH will be used for this */
   entry_parent = data->current_entry;
@@ -208,7 +180,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   if(data->current_filetype != DIRECTORY)
     {
       res_CREATE4.status = NFS4ERR_NOTDIR;
-      return res_CREATE4.status;
+      goto out;
     }
 
   /* get attributes of parent directory, for 'change4' info replyed */
@@ -218,7 +190,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
      != CACHE_INODE_SUCCESS)
     {
       res_CREATE4.status = nfs4_Errno(cache_status);
-      return res_CREATE4.status;
+      goto out;
     }
 
   res_CREATE4.CREATE4res_u.resok4.cinfo.before
@@ -233,7 +205,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
       if(convrc != NFS4_OK)
         {
           res_CREATE4.status = convrc;
-          return res_CREATE4.status;
+          goto out;
         }
     }
 
@@ -245,23 +217,22 @@ int nfs4_op_create(struct nfs_argop4 *op,
       if(arg_CREATE4.objtype.createtype4_u.linkdata.utf8string_len == 0)
         {
           res_CREATE4.status = NFS4ERR_INVAL;
-          return res_CREATE4.status;
+          goto out;
         }
       else
         {
-          if(utf82str
-             (create_arg.link_content.path, sizeof(create_arg.link_content.path),
-              &arg_CREATE4.objtype.createtype4_u.linkdata) == -1)
-            {
-              res_CREATE4.status = NFS4ERR_INVAL;
-              return res_CREATE4.status;
-            }
-          create_arg.link_content.len = strlen(create_arg.link_content.path);
+          link_content = nfs4_utf8string2dynamic(&arg_CREATE4.objtype
+                                                 .createtype4_u.linkdata);
+          if (link_content == NULL) {
+            res_CREATE4.status = NFS4ERR_SERVERFAULT;
+            goto out;
+          }
+          create_arg.link_content = link_content;
         }
 
       /* do the symlink operation */
       if((entry_new = cache_inode_create(entry_parent,
-                                         &name,
+                                         name,
                                          SYMBOLIC_LINK,
                                          mode,
                                          &create_arg,
@@ -270,7 +241,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
-          return res_CREATE4.status;
+          goto out;
         }
 
       /* If entry exists entry_new is not null but cache_status was set */
@@ -278,7 +249,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
         {
           res_CREATE4.status = NFS4ERR_EXIST;
           cache_inode_put(entry_new);
-          return res_CREATE4.status;
+          goto out;
         }
 
       break;
@@ -290,7 +261,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
       create_arg.newly_created_dir = TRUE ;
 
       if((entry_new = cache_inode_create(entry_parent,
-                                         &name,
+                                         name,
                                          DIRECTORY,
                                          mode,
                                          &create_arg,
@@ -299,7 +270,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
-          return res_CREATE4.status;
+          goto out;
         }
 
       /* If entry exists entry_new is not null but cache_status was set */
@@ -307,7 +278,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
         {
           res_CREATE4.status = NFS4ERR_EXIST;
           cache_inode_put(entry_new);
-          return res_CREATE4.status;
+          goto out;
         }
       break;
 
@@ -315,7 +286,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
       /* Create a new socket file */
       if((entry_new = cache_inode_create(entry_parent,
-                                         &name,
+                                         name,
                                          SOCKET_FILE,
                                          mode,
                                          NULL,
@@ -324,7 +295,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
-          return res_CREATE4.status;
+          goto out;
         }
 
       /* If entry exists entry_new is not null but cache_status was set */
@@ -332,7 +303,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
         {
           res_CREATE4.status = NFS4ERR_EXIST;
           cache_inode_put(entry_new);
-          return res_CREATE4.status;
+          goto out;
         }
       break;
 
@@ -340,7 +311,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
       /* Create a new socket file */
       if((entry_new = cache_inode_create(entry_parent,
-                                         &name,
+                                         name,
                                          FIFO_FILE,
                                          mode,
                                          NULL,
@@ -349,7 +320,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
-          return res_CREATE4.status;
+          goto out;
         }
 
       /* If entry exists entry_new is not null but cache_status was set */
@@ -357,7 +328,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
         {
           res_CREATE4.status = NFS4ERR_EXIST;
           cache_inode_put(entry_new);
-          return res_CREATE4.status;
+          goto out;
         }
       break;
 
@@ -370,7 +341,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
       /* Create a new socket file */
       if((entry_new = cache_inode_create(entry_parent,
-                                         &name,
+                                         name,
                                          CHARACTER_FILE,
                                          mode,
                                          &create_arg,
@@ -380,7 +351,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
          == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
-          return res_CREATE4.status;
+          goto out;
         }
 
       /* If entry exists entry_new is not null but cache_status was set */
@@ -388,7 +359,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
         {
           res_CREATE4.status = NFS4ERR_EXIST;
           cache_inode_put(entry_new);
-          return res_CREATE4.status;
+          goto out;
         }
       break;
 
@@ -399,7 +370,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
       /* Create a new socket file */
       if((entry_new = cache_inode_create(entry_parent,
-                                         &name,
+                                         name,
                                          BLOCK_FILE,
                                          mode,
                                          &create_arg,
@@ -408,7 +379,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
-          return res_CREATE4.status;
+          goto out;
         }
 
       /* If entry exists entry_new is not null but cache_status was set */
@@ -416,14 +387,14 @@ int nfs4_op_create(struct nfs_argop4 *op,
         {
           res_CREATE4.status = NFS4ERR_EXIST;
           cache_inode_put(entry_new);
-          return res_CREATE4.status;
+          goto out;
         }
       break;
 
     default:
       /* Should never happen, but return NFS4ERR_BADTYPE in this case */
       res_CREATE4.status = NFS4ERR_BADTYPE;
-      return res_CREATE4.status;
+      goto out;
       break;
     }                           /* switch( arg_CREATE4.objtype.type ) */
 
@@ -432,7 +403,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
     {
       res_CREATE4.status = NFS4ERR_SERVERFAULT;
       cache_inode_put(entry_new);
-      return res_CREATE4.status;
+      goto out;
     }
 
   /* Building the new file handle */
@@ -440,7 +411,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
     {
       res_CREATE4.status = NFS4ERR_SERVERFAULT;
       cache_inode_put(entry_new);
-      return res_CREATE4.status;
+      goto out;
     }
 
   /* This new fh replaces the current FH */
@@ -451,7 +422,8 @@ int nfs4_op_create(struct nfs_argop4 *op,
   gsh_free(newfh4.nfs_fh4_val);
 
   /* Set the mode if requested */
-  /* Use the same fattr mask for reply, if one attribute was not settable, NFS4ERR_ATTRNOTSUPP was replyied */
+  /* Use the same fattr mask for reply, if one attribute was not
+     settable, NFS4ERR_ATTRNOTSUPP was replyied */
   res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_len =
       arg_CREATE4.createattrs.attrmask.bitmap4_len;
 
@@ -465,7 +437,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           cache_inode_put(entry_new);
-          return res_CREATE4.status;
+          goto out;
         }
 
       /* Allocate a new bitmap */
@@ -477,7 +449,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
         {
           res_CREATE4.status = NFS4ERR_SERVERFAULT;
           cache_inode_put(entry_new);
-          return res_CREATE4.status;
+          goto out;
         }
       memcpy(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val,
              arg_CREATE4.createattrs.attrmask.bitmap4_val,
@@ -492,7 +464,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
     {
       res_CREATE4.status = nfs4_Errno(cache_status);
       cache_inode_put(entry_new);
-      return res_CREATE4.status;
+      goto out;
     }
   memset(&(res_CREATE4.CREATE4res_u.resok4.cinfo.after), 0, sizeof(changeid4));
   res_CREATE4.CREATE4res_u.resok4.cinfo.after
@@ -519,6 +491,16 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
   /* If you reach this point, then no error occured */
   res_CREATE4.status = NFS4_OK;
+
+ out:
+
+  if (name != NULL) {
+    gsh_free(name);
+  }
+
+  if (link_content != NULL) {
+    gsh_free(link_content);
+  }
 
   return res_CREATE4.status;
 }                               /* nfs4_op_create */

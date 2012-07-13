@@ -91,7 +91,6 @@ avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
 #endif
 
     v->flags |= DIR_ENTRY_FLAG_DELETED;
-    v->name.len = 0;
     v->entry.ptr = (void*)0xdeaddeaddeaddead;
     v->entry.gen = 0;
 
@@ -122,7 +121,6 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
 {
     int code = -1;
     struct avltree_node *node;
-    cache_inode_dir_entry_t *v_exist = NULL;
     struct avltree *t = &entry->object.dir.avl.t;
     struct avltree *c = &entry->object.dir.avl.c;
 
@@ -136,6 +134,9 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         node = avltree_first(c);
     }
 
+    /* We can't really re-use slots safely, since filenames can
+       have wildly differing lengths. */
+#if 0
     if (node) {
         /* reuse the slot */
         v_exist = avltree_container_of(node, cache_inode_dir_entry_t,
@@ -150,6 +151,16 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         node = avltree_insert(&v->node_hk, t);
         if (! node)
             code = 0;
+    }
+#endif /* 0 */
+
+    if (node) {
+        avltree_remove(node, c);
+        node = NULL;
+    }
+    node = avltree_insert(&v->node_hk, t);
+    if (! node) {
+        code = 0;
     }
 
     switch (code) {
@@ -166,6 +177,11 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         break;
     default:
         /* already inserted, or, keep trying at current j, j2 */
+        LogCrit(COMPONENT_CACHE_INODE,
+                "Already existant when inserting new dirent on entry=%p "
+                "cookie=%"PRIu64" this should never happen.",
+                entry, v->hk.k);
+        abort();
         break;
     }
     return (code);
@@ -191,7 +207,7 @@ int cache_inode_avl_qp_insert(
     int j, j2, code = -1;
 
     /* don't permit illegal cookies */
-    MurmurHash3_x64_128(v->name.name,  FSAL_MAX_NAME_LEN, 67, hk);
+    MurmurHash3_x64_128(v->name, strlen(v->name), 67, hk);
     memcpy(&v->hk.k, hk, 8);
 
     /* XXX would we really wait for UINT64_MAX?  if not, how many
@@ -211,7 +227,7 @@ int cache_inode_avl_qp_insert(
 
     LogCrit(COMPONENT_CACHE_INODE,
             "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)",
-            j, v->name.name);
+            j, v->name);
 
     memcpy(&v->hk.k, hk, 8);
     for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
@@ -224,7 +240,7 @@ int cache_inode_avl_qp_insert(
 
     LogCrit(COMPONENT_CACHE_INODE,
             "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)",
-            j, v->name.name);
+            j, v->name);
 
     return (-1);
 }
@@ -273,25 +289,31 @@ out:
 }
 
 cache_inode_dir_entry_t *
-cache_inode_avl_qp_lookup_s(
-    cache_entry_t *entry, cache_inode_dir_entry_t *v, int maxj)
+cache_inode_avl_qp_lookup_s(cache_entry_t *entry,
+                            const char *name,
+                            int maxj)
 {
     struct avltree *t = &entry->object.dir.avl.t;
     struct avltree_node *node;
     cache_inode_dir_entry_t *v2;
-    uint32_t hk[4];
+    uint32_t hashbuff[4];
     int j;
+    size_t namelen = strlen(name);
+    cache_inode_dir_entry_t v;
 
-    MurmurHash3_x64_128(v->name.name,  FSAL_MAX_NAME_LEN, 67, hk);
-    memcpy(&v->hk.k, hk, 8);
+    MurmurHash3_x64_128(name, namelen, 67, hashbuff);
+    /* This seems to be correct.  The avltree_lookup function looks
+       as hk.k, but does no namecmp on its own, so there's no need to
+       allocate space for or copy the name in the key. */
+    memcpy(&v.hk.k, hashbuff, 8);
 
     for (j = 0; j < maxj; j++) {
-        v->hk.k = (v->hk.k + (j * 2));
-        node = avltree_lookup(&v->node_hk, t);
+        v.hk.k = (v.hk.k + (j * 2));
+        node = avltree_lookup(&v.node_hk, t);
         if (node) {
             /* ensure that node is related to v */
             v2 = avltree_container_of(node, cache_inode_dir_entry_t, node_hk);
-            if (! FSAL_namecmp(&v->name, &v2->name)) {
+            if (strcmp(name, v2->name) == 0) {
                 assert(!(v2->flags & DIR_ENTRY_FLAG_DELETED));
                 return (v2);
             }
@@ -300,7 +322,7 @@ cache_inode_avl_qp_lookup_s(
 
     LogFullDebug(COMPONENT_CACHE_INODE,
                  "cache_inode_avl_qp_lookup_s: entry not found at j=%d (%s)",
-                 j, v->name.name);
+                 j, name);
 
     return (NULL);
 }

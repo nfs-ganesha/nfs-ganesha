@@ -119,13 +119,13 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                  nfs_res_t *res)
 {
      cache_entry_t *dir_entry = NULL;
-     fsal_attrib_list_t dir_attr;
+     struct attrlist dir_attr;
      uint64_t begin_cookie = 0;
      uint64_t cache_inode_cookie = 0;
      cookieverf3 cookie_verifier;
      unsigned int num_entries = 0;
      unsigned long estimated_num_entries = 0;
-     cache_inode_file_type_t dir_filetype = 0;
+     object_file_type_t dir_filetype = 0;
      bool_t eod_met = FALSE;
      cache_inode_status_t cache_status = 0;
      cache_inode_status_t cache_status_gethandle = 0;
@@ -266,7 +266,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
      /* Fill in ".." */
      if (begin_cookie <= 1) {
-          fsal_attrib_list_t parent_dir_attr;
+          struct attrlist parent_dir_attr;
           cache_entry_t *parent_dir_entry
                = cache_inode_lookupp(dir_entry,
                                      req_ctx,
@@ -426,8 +426,9 @@ nfs3_readdirplus_callback(void* opaque,
      size_t namelen = strlen(name);
      /* Fileid buffer descriptor */
      entryplus3 *ep3 = tracker->entries + tracker->count;
-     struct fsal_handle_desc id_descriptor
-          = {sizeof(ep3->fileid), (caddr_t) &ep3->fileid};
+     struct gsh_buffdesc id_descriptor
+          = {.len = sizeof(ep3->fileid),
+             .addr = &ep3->fileid};
 
      if (tracker->count == tracker->total_entries) {
           return FALSE;

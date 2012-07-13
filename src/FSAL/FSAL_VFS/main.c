@@ -55,11 +55,11 @@ struct vfs_fsal_module {
 const char myname[] = "VFS";
 
 /* filesystem info for VFS */
-static fsal_staticfsinfo_t default_posix_info = {
+static struct fsal_staticfsinfo_t default_posix_info = {
 	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL, /* (64bits) */
 	.maxlink = _POSIX_LINK_MAX,
-	.maxnamelen = FSAL_MAX_NAME_LEN,
-	.maxpathlen = FSAL_MAX_PATH_LEN,
+	.maxnamelen = 1024,
+	.maxpathlen = 1024,
 	.no_trunc = TRUE,
 	.chown_restricted = TRUE,
 	.case_insensitive = FALSE,
@@ -127,15 +127,15 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 
 	display_fsinfo(&vfs_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes constant = 0x%llX.",
-		     VFS_SUPPORTED_ATTRIBUTES);
+		     "Supported attributes constant = 0x%"PRIx64,
+                     (uint64_t) VFS_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes default = 0x%llX.",
+		     "Supported attributes default = 0x%"PRIx64,
 		     default_posix_info.supported_attrs);
 	LogDebug(COMPONENT_FSAL,
-		 "FSAL INIT: Supported attributes mask = 0x%llX.",
+		 "FSAL INIT: Supported attributes mask = 0x%"PRIx64,
 		 vfs_me->fs_info.supported_attrs);
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* Internal VFS method linkage to export object
@@ -179,7 +179,7 @@ MODULE_INIT void vfs_init(void) {
 	myself->ops->init_config = init_config;
 	vfs_export_ops_init(myself->exp_ops);
 	vfs_handle_ops_init(myself->obj_ops);
-	init_fsal_parameters(&VFS.fsal_info);
+        init_fsal_parameters(&VFS.fsal_info);
 }
 
 MODULE_FINI void vfs_unload(void) {

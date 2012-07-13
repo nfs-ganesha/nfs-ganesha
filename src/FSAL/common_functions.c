@@ -18,20 +18,20 @@
 #include <sys/quota.h>
 #include "log.h"
 #include "fsal.h"
-#include "FSAL/common_functions.h"
+#include "fsal_types.h"
 
 /* Internal and misc functions used by all/most FSALs
  */
 
-void display_fsinfo(fsal_staticfsinfo_t *info) {
+void display_fsinfo(struct fsal_staticfsinfo_t *info) {
 	LogDebug(COMPONENT_FSAL, "FileSystem info: {");
 	LogDebug(COMPONENT_FSAL, "  maxfilesize  = %zX    ",
 		 info->maxfilesize);
-	LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
+        LogDebug(COMPONENT_FSAL, "  maxlink  = %"PRIu32,
 		 info->maxlink);
-	LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
+	LogDebug(COMPONENT_FSAL, "  maxnamelen  = %"PRIu32,
 		 info->maxnamelen);
-	LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
+	LogDebug(COMPONENT_FSAL, "  maxpathlen  = %"PRIu32,
 		 info->maxpathlen);
 	LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ",
 		 info->no_trunc);
@@ -63,11 +63,11 @@ void display_fsinfo(fsal_staticfsinfo_t *info) {
 		 info->cansettime);
 	LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
 		 info->homogenous);
-	LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
+	LogDebug(COMPONENT_FSAL, "  supported_attrs  = %"PRIX64,
 		 info->supported_attrs);
-	LogDebug(COMPONENT_FSAL, "  maxread  = %zX     ",
+	LogDebug(COMPONENT_FSAL, "  maxread  = %"PRIu32,
 		 info->maxread);
-	LogDebug(COMPONENT_FSAL, "  maxwrite  = %zX     ",
+	LogDebug(COMPONENT_FSAL, "  maxwrite  = %"PRIu32,
 		 info->maxwrite);
 	LogDebug(COMPONENT_FSAL, "  umask  = %X ", info->umask);
 	LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",

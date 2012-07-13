@@ -34,16 +34,15 @@
 
 #include "fsal.h"
 #include <sys/stat.h>
-#include "FSAL/common_functions.h"
 
 /* defined the set of attributes supported with POSIX */
 #define VFS_SUPPORTED_ATTRIBUTES (                                       \
-          FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \
-          FSAL_ATTR_FSID     |  FSAL_ATTR_FILEID  | \
-          FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
-          FSAL_ATTR_GROUP    | FSAL_ATTR_ATIME    | FSAL_ATTR_RAWDEV    | \
-          FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
-          FSAL_ATTR_CHGTIME  )
+          ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
+          ATTR_FSID     | ATTR_FILEID  | \
+          ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
+          ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
+          ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
+          ATTR_CHGTIME  )
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C
@@ -51,7 +50,7 @@
 /* static filesystem info.
  * read access only.
  */
-extern fsal_staticfsinfo_t global_fs_info;
+extern struct fsal_staticfsinfo_t global_fs_info;
 
 /* export_context_t is not given to every function, but
  * most functions need to use the open-by-handle funcionality.
@@ -66,16 +65,6 @@ extern int open_by_handle_fd;
  */
 void fsal_increment_nbcall(int function_index, fsal_status_t status);
 
-/**
- * Retrieves current thread statistics.
- */
-void fsal_internal_getstats(fsal_statistics_t * output_stats);
-
-/**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall();
-void ReleaseTokenFSCall();
 
 #if 0
 /**

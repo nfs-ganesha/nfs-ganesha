@@ -67,8 +67,6 @@ extern int __build_bug_on_failed;
 #include "fsal_types.h"
 #include "common_utils.h"
 
-#ifndef _USE_SWIG
-
 /******************************************************
  *            Attribute mask management.
  ******************************************************/
@@ -86,6 +84,9 @@ extern int __build_bug_on_failed;
  */
 #define FSAL_SET_MASK( _attrib_mask_ , _attr_const_ ) \
                     ( (_attrib_mask_) |= (_attr_const_) )
+
+#define FSAL_UNSET_MASK( _attrib_mask_ , _attr_const_ ) \
+                    ( (_attrib_mask_) &= ~(_attr_const_) )
 
 /** this macro clears the attribute mask
  *  example :
@@ -114,42 +115,15 @@ extern int __build_bug_on_failed;
  ******************************************************/
 
 /**
- * Return :
- * Macro for returning from functions
- * with trace and function call increment.
- */
-
-#define Return( _code_, _minor_ , _f_ ) do {                                   \
-               fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ;          \
-               (_struct_status_).major = (_code_) ;                            \
-               (_struct_status_).minor = (_minor_) ;                           \
-               fsal_increment_nbcall( _f_,_struct_status_ );                   \
-               if(isDebug(COMPONENT_FSAL))                                     \
-                 {                                                             \
-                   if((_struct_status_).major != ERR_FSAL_NO_ERROR)            \
-                     LogDebug(COMPONENT_FSAL,                                  \
-                       "%s returns (%s, %s, %d)",fsal_function_names[_f_],     \
-                       label_fsal_err(_code_), msg_fsal_err(_code_), _minor_); \
-                   else                                                        \
-                     LogFullDebug(COMPONENT_FSAL,                              \
-                       "%s returns (%s, %s, %d)",fsal_function_names[_f_],     \
-                       label_fsal_err(_code_), msg_fsal_err(_code_), _minor_); \
-                 }                                                             \
-               return (_struct_status_);                                       \
-              } while(0)
-
-#define ReturnStatus( _st_, _f_ )	Return( (_st_).major, (_st_).minor, _f_ )
-
-/**
  *  ReturnCode :
  *  Macro for returning a fsal_status_t without trace nor stats increment.
  */
-#define ReturnCode( _code_, _minor_ ) do {                               \
-               fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ;\
-               (_struct_status_).major = (_code_) ;          \
-               (_struct_status_).minor = (_minor_) ;         \
-               return (_struct_status_);                     \
-              } while(0)
+static inline fsal_status_t
+fsalstat(fsal_errors_t major, uint32_t minor)
+{                                                                       \
+        fsal_status_t status = {major, minor};
+        return status;
+}
 
 /******************************************************
  *              FSAL Errors handling.
@@ -164,78 +138,6 @@ extern int __build_bug_on_failed;
 #define FSAL_IS_ERROR( _status_ ) \
         ( ! ( ( _status_ ).major == ERR_FSAL_NO_ERROR ) )
 
-/**
- *  Tests whether an error code is retryable.
- */
-fsal_boolean_t fsal_is_retryable(fsal_status_t status);
-
-#endif                          /* ! _USE_SWIG */
-
-/******************************************************
- *              FSAL Strings handling.
- ******************************************************/
-
-fsal_status_t FSAL_str2name(const char *string, /* IN */
-                            fsal_mdsize_t in_str_maxlen,        /* IN */
-                            fsal_name_t * name  /* OUT */
-    );
-
-fsal_status_t FSAL_name2str(fsal_name_t * p_name,       /* IN */
-                            char *string,       /* OUT */
-                            fsal_mdsize_t out_str_maxlen        /* IN */
-    );
-
-int FSAL_namecmp(const fsal_name_t *p_name1,
-                 const fsal_name_t *p_name2);
-
-fsal_status_t FSAL_namecpy(fsal_name_t * p_tgt_name, fsal_name_t * p_src_name);
-
-fsal_status_t FSAL_str2path(char *string,       /* IN */
-                            fsal_mdsize_t in_str_maxlen,        /* IN */
-                            fsal_path_t * p_path        /* OUT */
-    );
-
-fsal_status_t FSAL_path2str(fsal_path_t * p_path,       /* IN */
-                            char *string,       /* OUT */
-                            fsal_mdsize_t out_str_maxlen        /* IN */
-    );
-
-int FSAL_pathcmp(fsal_path_t * p_path1, fsal_path_t * p_path2);
-
-fsal_status_t FSAL_pathcpy(fsal_path_t * p_tgt_path, fsal_path_t * p_src_path);
-
-#ifndef _USE_SWIG
-/** utf8 management functions. */
-
-fsal_status_t FSAL_buffdesc2name(fsal_buffdesc_t * in_buf, fsal_name_t * out_name);
-
-fsal_status_t FSAL_buffdesc2path(fsal_buffdesc_t * in_buf, fsal_path_t * out_path);
-
-fsal_status_t FSAL_path2buffdesc(fsal_path_t * in_path, fsal_buffdesc_t * out_buff);
-
-fsal_status_t FSAL_name2buffdesc(fsal_name_t * in_name, fsal_buffdesc_t * out_buff);
-
-#endif                          /* ! _USE_SWIG */
-
-/* snprintmem and sscanmem are defined into common_utils */
-
-#define snprintHandle(target, tgt_size, p_handle) \
-  do {                                                           \
-        struct fsal_handle_desc fd = {                           \
-                .start = (char *)p_handle                        \
-        };                                                       \
-        FSAL_ExpandHandle(NULL, FSAL_DIGEST_SIZEOF, &fd);        \
-        snprintmem(target,tgt_size,(caddr_t)p_handle,fd.len);    \
-  } while(0)
-
-#define snprintCookie(target, tgt_size, p_cookie) \
-  snprintmem(target,tgt_size,(caddr_t)p_cookie,sizeof(fsal_cookie_t))
-
-#define snprintAttrs(target, tgt_size, p_attrs) \
-  snprintmem(target,tgt_size,(caddr_t)p_attrs,sizeof(fsal_attrib_list_t))
-
-#define sscanAttrs(p_attrs,str_source) \
-  sscanmem( (caddr_t)p_attrs,sizeof(fsal_attrib_list_t),str_source )
 
 /* FSAL_UP functions */
 /* These structs are defined here because including fsal_up.h causes
@@ -263,8 +165,6 @@ fsal_status_t FSAL_UP_GetEvents(struct glist_head * pevent_head,           /* OU
 /* To be called before exiting */
 fsal_status_t FSAL_terminate();
 
-#ifndef _USE_SWIG
-
 /******************************************************
  *          FSAL extended attributes management.
  ******************************************************/
@@ -275,11 +175,10 @@ fsal_status_t FSAL_terminate();
 /** An extented attribute entry */
 typedef struct fsal_xattrent__
 {
-  unsigned int xattr_id;                 /**< xattr index */
-  fsal_name_t xattr_name;                /**< attribute name  */
-  unsigned int xattr_cookie;             /**< cookie for getting xattrs list from the next entry */
-  fsal_attrib_list_t attributes;         /**< entry attributes (if supported) */
-
+  uint64_t xattr_id; /*< xattr index */
+  uint64_t xattr_cookie; /*< cookie for getting xattrs list from the next entry */
+  struct attrlist attributes;/*< entry attributes (if supported) */
+  char xattr_name[]; /*< attribute name  */
 } fsal_xattrent_t;
 
 /**
@@ -291,7 +190,7 @@ typedef struct fsal_xattrent__
  *
  * \return The posix mode associated to fsal_mode.
  */
-mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode);
+mode_t fsal2unix_mode(uint32_t fsal_mode);
 
 fsal_dev_t posix2fsal_devt(dev_t posix_devid);
 
@@ -304,7 +203,7 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid);
  *
  * \return The FSAL mode associated to unix_mode.
  */
-fsal_accessmode_t unix2fsal_mode(mode_t unix_mode);
+uint32_t unix2fsal_mode(mode_t unix_mode);
 
 /******************************************************
  *                Structure used to define a fsal
@@ -331,6 +230,6 @@ fsal_accessmode_t unix2fsal_mode(mode_t unix_mode);
 #include "fsal_api.h"
 #include "FSAL/access_check.h" /* rethink where this should go */
 
-#endif                          /* ! _USE_SWIG */
+void display_fsinfo(struct fsal_staticfsinfo_t *info);
 
 #endif                          /* _FSAL_H */

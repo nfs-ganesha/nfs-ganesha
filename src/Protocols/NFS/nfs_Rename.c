@@ -88,22 +88,20 @@ int nfs_Rename(nfs_arg_t *parg,
                struct svc_req *preq,
                nfs_res_t *pres)
 {
-  char *str_entry_name = NULL;
-  fsal_name_t entry_name;
-  char *str_new_entry_name = NULL;
-  fsal_name_t new_entry_name;
+  char *entry_name = NULL;
+  char *new_entry_name = NULL;
   cache_entry_t *parent_pentry = NULL;
   cache_entry_t *new_parent_pentry = NULL;
   cache_entry_t *should_not_exists = NULL;
   cache_entry_t *should_exists = NULL;
   cache_inode_status_t cache_status;
-  fsal_attrib_list_t *ppre_attr;
-  fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t *pnew_pre_attr;
-  fsal_attrib_list_t new_attr;
-  fsal_attrib_list_t new_parent_attr;
-  fsal_attrib_list_t attr;
-  fsal_attrib_list_t tst_attr;
+  struct attrlist *ppre_attr;
+  struct attrlist pre_attr;
+  struct attrlist *pnew_pre_attr;
+  struct attrlist new_attr;
+  struct attrlist new_parent_attr;
+  struct attrlist attr;
+  struct attrlist tst_attr;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -113,13 +111,13 @@ int nfs_Rename(nfs_arg_t *parg,
       switch (preq->rq_vers)
         {
         case NFS_V2:
-            str_entry_name = parg->arg_rename2.from.name;
-            str_new_entry_name = parg->arg_rename2.to.name;
+            entry_name = parg->arg_rename2.from.name;
+            new_entry_name = parg->arg_rename2.to.name;
             break;
 
         case NFS_V3:
-            str_entry_name = parg->arg_rename3.from.name;
-            str_new_entry_name = parg->arg_rename3.to.name;
+            entry_name = parg->arg_rename3.from.name;
+            new_entry_name = parg->arg_rename3.to.name;
             break;
         }
 
@@ -136,7 +134,7 @@ int nfs_Rename(nfs_arg_t *parg,
                        strto);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Rename from handle: %s name %s to handle: %s name: %s",
-               strfrom, str_entry_name, strto, str_new_entry_name);
+               strfrom, entry_name, strto, new_entry_name);
     }
 
   if(preq->rq_vers == NFS_V3)
@@ -207,33 +205,27 @@ int nfs_Rename(nfs_arg_t *parg,
   switch (preq->rq_vers)
     {
     case NFS_V2:
-      str_entry_name = parg->arg_rename2.from.name;
-      str_new_entry_name = parg->arg_rename2.to.name;
+      entry_name = parg->arg_rename2.from.name;
+      new_entry_name = parg->arg_rename2.to.name;
       break;
 
     case NFS_V3:
-      str_entry_name = parg->arg_rename3.from.name;
-      str_new_entry_name = parg->arg_rename3.to.name;
+      entry_name = parg->arg_rename3.from.name;
+      new_entry_name = parg->arg_rename3.to.name;
       break;
     }
 
-  if(str_entry_name == NULL ||
-     *str_entry_name == '\0' ||
-     str_new_entry_name == NULL ||
-     *str_new_entry_name == '\0' ||
-     FSAL_IS_ERROR(FSAL_str2name(str_entry_name, FSAL_MAX_NAME_LEN, &entry_name)) ||
-     FSAL_IS_ERROR(FSAL_str2name(str_new_entry_name, FSAL_MAX_NAME_LEN, &new_entry_name)))
-    {
-      cache_status = CACHE_INODE_INVALID_ARGUMENT;
-    }
-  else
+  if(!(entry_name == NULL ||
+       *entry_name == '\0' ||
+       new_entry_name == NULL ||
+       *new_entry_name == '\0'))
     {
       /*
        * Lookup file to see if new entry exists
        *
        */
       should_not_exists = cache_inode_lookup(new_parent_pentry,
-                                             &new_entry_name,
+                                             new_entry_name,
                                              &tst_attr,
                                              req_ctx,
                                              &cache_status);
@@ -242,7 +234,7 @@ int nfs_Rename(nfs_arg_t *parg,
         {
           /* We need to lookup over the old entry also */
           should_exists = cache_inode_lookup(parent_pentry,
-                                             &entry_name,
+                                             entry_name,
                                              &tst_attr,
                                              req_ctx,
                                              &cache_status);
@@ -250,9 +242,9 @@ int nfs_Rename(nfs_arg_t *parg,
           /* Rename entry */
           if(cache_status == CACHE_INODE_SUCCESS)
             cache_inode_rename(parent_pentry,
-                               &entry_name,
+                               entry_name,
                                new_parent_pentry,
-                               &new_entry_name,
+                               new_entry_name,
                                &attr, &new_attr,
                                req_ctx, &cache_status);
 
@@ -293,7 +285,7 @@ int nfs_Rename(nfs_arg_t *parg,
           /* If name are the same (basically renaming a/file1 to a/file1, this is a non-erroneous situation to be managed */
           if(new_parent_pentry == parent_pentry)
             {
-              if(!FSAL_namecmp(&new_entry_name, &entry_name))
+              if(strcmp(new_entry_name, entry_name) == 0)
                 {
                   /* trying to rename a file to himself, this is allowed */
                   cache_status = CACHE_INODE_SUCCESS;
@@ -337,7 +329,7 @@ int nfs_Rename(nfs_arg_t *parg,
             {
               /* We need to lookup over the old entry also */
               if((should_exists = cache_inode_lookup(parent_pentry,
-                                                     &entry_name,
+                                                     entry_name,
                                                      &tst_attr,
                                                      req_ctx,
                                                      &cache_status))
@@ -385,15 +377,15 @@ int nfs_Rename(nfs_arg_t *parg,
                     {
                       /* Remove the old entry before renaming it */
                       if(cache_inode_remove(new_parent_pentry,
-                                            &new_entry_name,
+                                            new_entry_name,
                                             &tst_attr,
                                             req_ctx,
                                             &cache_status) == CACHE_INODE_SUCCESS)
                         {
                           if(cache_inode_rename(parent_pentry,
-                                                &entry_name,
+                                                entry_name,
                                                 new_parent_pentry,
-                                                &new_entry_name,
+                                                new_entry_name,
                                                 &attr,
                                                 &new_attr,
                                                 req_ctx,

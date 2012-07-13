@@ -90,15 +90,15 @@ int nfs_Write(nfs_arg_t *parg,
               nfs_res_t *pres)
 {
   cache_entry_t *pentry;
-  fsal_attrib_list_t attr;
-  fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t *ppre_attr;
+  struct attrlist attr;
+  struct attrlist pre_attr;
+  struct attrlist *ppre_attr;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   size_t size = 0;
   size_t written_size;
-  fsal_off_t offset = 0;
-  caddr_t data = NULL;
-  fsal_boolean_t eof_met;
+  uint64_t offset = 0;
+  void *data = NULL;
+  bool_t eof_met;
   cache_inode_stability_t stability = CACHE_INODE_SAFE_WRITE_TO_FS;
   int rc = NFS_REQ_OK;
 #ifdef _USE_QUOTA
@@ -178,9 +178,9 @@ int nfs_Write(nfs_arg_t *parg,
       if( ( cache_status == CACHE_INODE_FSAL_EACCESS  ) &&
           ( pentry->obj_handle->attributes.owner ==  req_ctx->creds->caller_uid) )
        {
-          LogDebug( COMPONENT_NFSPROTO,
-                    "Exception management: allowed user %u to write to read-only file belonging to him",
-                    pentry->obj_handle->attributes.owner ) ;
+          LogDebug(COMPONENT_NFSPROTO,
+                   "Exception management: allowed user %"PRIu64" to write to read-only file belonging to him",
+                   pentry->obj_handle->attributes.owner ) ;
        }
       else
        {
@@ -381,7 +381,7 @@ int nfs_Write(nfs_arg_t *parg,
                    (unsigned long long) size,
                    (unsigned long long) pexport->MaxOffsetWrite);
 
-      if((fsal_off_t) (offset + size) > pexport->MaxOffsetWrite)
+      if((offset + size) > pexport->MaxOffsetWrite)
         {
           LogEvent(COMPONENT_NFSPROTO,
                    "NFS WRITE: A client tryed to violate max file size %llu for exportid #%hu",

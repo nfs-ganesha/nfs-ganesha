@@ -57,7 +57,7 @@ typedef enum fsal_initflag__
 
 struct fsal_settable_bool {
         fsal_initflag_t how;
-        fsal_boolean_t val;
+        bool_t val;
 };
 
 struct fsal_settable_int32 {
@@ -175,12 +175,6 @@ struct fsal_fs_params {
         break;                                               \
     }
 
-void init_fsal_parameters(fsal_init_info_t *init_info)
-{
-  /* init max FS calls = unlimited */
-  init_info->max_fs_calls = 0;
-}
-
 static fsal_status_t
 load_FSAL_parameters_from_conf(config_file_t in_config,
 			       const char *fsal_name,
@@ -201,13 +195,13 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
      LogFatal(COMPONENT_INIT,
 	      "Cannot find item \"%s\" in configuration",
 	      CONF_LABEL_FSAL);
-     ReturnCode(ERR_FSAL_NOENT, 0);
+     return fsalstat(ERR_FSAL_NOENT, 0);
   }
   if(config_ItemType(fsal_block) != CONFIG_ITEM_BLOCK) {
      LogFatal(COMPONENT_INIT,
 	      "\"%s\" is not a block",
 	      CONF_LABEL_FSAL);
-     ReturnCode(ERR_FSAL_NOENT, 0);
+     return fsalstat(ERR_FSAL_NOENT, 0);
   }
   fsal_cnt = config_GetNbItems(fsal_block);
   for(i = 0; i < fsal_cnt; i++)
@@ -222,14 +216,14 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
      LogFatal(COMPONENT_INIT,
 	      "Cannot find the %s section of %s in the configuration file",
 	      fsal_name, CONF_LABEL_FSAL);
-     ReturnCode(ERR_FSAL_NOENT, 0);
+     return fsalstat(ERR_FSAL_NOENT, 0);
   }
   if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       LogCrit(COMPONENT_CONFIG,
               "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
               fsal_name);
-      ReturnCode(ERR_FSAL_INVAL, 0);
+      return fsalstat(ERR_FSAL_INVAL, 0);
     }
 
   /* read variable for fsal init */
@@ -248,7 +242,7 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
           LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FSAL);
-          ReturnCode(ERR_FSAL_SERVERFAULT, err);
+          return fsalstat(ERR_FSAL_SERVERFAULT, err);
         }
 
       if(!STRCMP(key_name, "DebugLevel"))
@@ -260,7 +254,7 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Invalid debug level name: \"%s\".",
                       key_value);
-              ReturnCode(ERR_FSAL_INVAL, -1);
+              return fsalstat(ERR_FSAL_INVAL, -1);
             }
 
         }
@@ -280,22 +274,21 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: null or positive integer expected.",
                       key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
+              return fsalstat(ERR_FSAL_INVAL, 0);
             }
-
-          init_info->max_fs_calls = (unsigned int)maxcalls;
 
         }
       else if(strcasecmp(key_name, "FSAL_Shared_Library") == 0)
         {
 	  continue; /* scanned at load time */
         }
-      else if((extra == NULL) || ((*extra)(key_name, key_value, init_info, fsal_name)))
+      else if((extra == NULL) || ((*extra)(key_name, key_value,
+                                           init_info, fsal_name)))
         {
           LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FSAL);
-          ReturnCode(ERR_FSAL_INVAL, 0);
+          return fsalstat(ERR_FSAL_INVAL, 0);
         }
 
     }
@@ -308,11 +301,11 @@ load_FSAL_parameters_from_conf(config_file_t in_config,
   if(DebugLevel != -1)
     SetComponentLogLevel(COMPONENT_FSAL, DebugLevel);
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
-static fsal_status_t
+fsal_status_t
 load_FS_common_parameters_from_conf(config_file_t in_config,
                                     struct fsal_fs_params *common_info)
 {
@@ -330,14 +323,14 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
       LogCrit(COMPONENT_CONFIG,
               "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
               CONF_LABEL_FS_COMMON);
-      ReturnCode(ERR_FSAL_NOENT, 0);
+      return fsalstat(ERR_FSAL_NOENT, 0);
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       LogCrit(COMPONENT_CONFIG,
               "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
               CONF_LABEL_FS_COMMON);
-      ReturnCode(ERR_FSAL_INVAL, 0);
+      return fsalstat(ERR_FSAL_INVAL, 0);
     }
 
   var_max = config_GetNbItems(block);
@@ -354,7 +347,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
           LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_FS_COMMON);
-          ReturnCode(ERR_FSAL_SERVERFAULT, err);
+          return fsalstat(ERR_FSAL_SERVERFAULT, err);
         }
 
       /* does the variable exists ? */
@@ -368,7 +361,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
+              return fsalstat(ERR_FSAL_INVAL, 0);
             }
 
           /* if set to false, force value to false.
@@ -387,7 +380,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
+              return fsalstat(ERR_FSAL_INVAL, 0);
             }
 
           /* if set to false, force value to false.
@@ -405,7 +398,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
                       key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
+              return fsalstat(ERR_FSAL_INVAL, 0);
             }
 
           /* if set to false, force value to false.
@@ -417,15 +410,9 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
         }
       else if(!STRCMP(key_name, "maxread"))
         {
-          fsal_u64_t size;
+          int size;
 
-          if(s_read_int64(key_value, &size))
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
-                      key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
-            }
+          size = s_read_int(key_value);
 
           SET_INIT_INFO(common_info, maxread,
                              FSAL_INIT_FORCE_VALUE, size);
@@ -433,15 +420,9 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
         }
       else if(!STRCMP(key_name, "maxwrite"))
         {
-          fsal_u64_t size;
+          uint32_t size;
 
-          if(s_read_int64(key_value, &size))
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: positive integer expected.",
-                      key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
-            }
+          size = s_read_int(key_value);
 
           SET_INIT_INFO(common_info, maxwrite,
                              FSAL_INIT_FORCE_VALUE, size);
@@ -456,7 +437,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
                       key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
+              return fsalstat(ERR_FSAL_INVAL, 0);
             }
 
           SET_INIT_INFO(common_info, umask,
@@ -472,7 +453,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
                       key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
+              return fsalstat(ERR_FSAL_INVAL, 0);
             }
 
           SET_INIT_INFO(common_info, auth_exportpath_xdev,
@@ -487,7 +468,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: octal expected.",
                       key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
+              return fsalstat(ERR_FSAL_INVAL, 0);
             }
 
           SET_INIT_INFO(common_info, xattr_access_rights,
@@ -499,19 +480,19 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
           LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                    key_name, CONF_LABEL_FS_COMMON);
-          ReturnCode(ERR_FSAL_INVAL, 0);
+          return fsalstat(ERR_FSAL_INVAL, 0);
         }
 
     }
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* filesystem info handlers
  * common functions for fsal info methods
  */
 
-fsal_boolean_t fsal_supports(struct fsal_staticfsinfo_t *info,
+bool_t fsal_supports(struct fsal_staticfsinfo_t *info,
 			     fsal_fsinfo_options_t option)
 {
 	switch(option) {
@@ -560,22 +541,22 @@ fsal_boolean_t fsal_supports(struct fsal_staticfsinfo_t *info,
 	}
 }
 
-fsal_size_t fsal_maxfilesize(struct fsal_staticfsinfo_t *info)
+uint64_t fsal_maxfilesize(struct fsal_staticfsinfo_t *info)
 {
-	return info->maxfilesize;
+        return info->maxfilesize;
 }
 
-fsal_count_t fsal_maxlink(struct fsal_staticfsinfo_t *info)
+uint32_t fsal_maxlink(struct fsal_staticfsinfo_t *info)
 {
-	return info->maxlink;
+        return info->maxlink;
 }
 
-fsal_mdsize_t fsal_maxnamelen(struct fsal_staticfsinfo_t *info)
+uint32_t fsal_maxnamelen(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxnamelen;
 }
 
-fsal_mdsize_t fsal_maxpathlen(struct fsal_staticfsinfo_t *info)
+uint32_t fsal_maxpathlen(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxpathlen;
 }
@@ -585,7 +566,7 @@ fsal_fhexptype_t fsal_fh_expire_type(struct fsal_staticfsinfo_t *info)
 	return info->fh_expire_type;
 }
 
-fsal_time_t fsal_lease_time(struct fsal_staticfsinfo_t *info)
+gsh_time_t fsal_lease_time(struct fsal_staticfsinfo_t *info)
 {
 	return info->lease_time;
 }
@@ -595,48 +576,36 @@ fsal_aclsupp_t fsal_acl_support(struct fsal_staticfsinfo_t *info)
 	return info->acl_support;
 }
 
-fsal_attrib_mask_t fsal_supported_attrs(struct fsal_staticfsinfo_t *info)
+attrmask_t fsal_supported_attrs(struct fsal_staticfsinfo_t *info)
 {
 	return info->supported_attrs;
 }
 
-fsal_size_t fsal_maxread(struct fsal_staticfsinfo_t *info)
+uint32_t fsal_maxread(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxread;
 }
 
-fsal_size_t fsal_maxwrite(struct fsal_staticfsinfo_t *info)
+uint32_t fsal_maxwrite(struct fsal_staticfsinfo_t *info)
 {
 	return info->maxwrite;
 }
 
-fsal_accessmode_t fsal_umask(struct fsal_staticfsinfo_t *info)
+uint32_t fsal_umask(struct fsal_staticfsinfo_t *info)
 {
 	return info->umask;
 }
 
-fsal_accessmode_t fsal_xattr_access_rights(struct fsal_staticfsinfo_t *info)
+uint32_t fsal_xattr_access_rights(struct fsal_staticfsinfo_t *info)
 {
 	return info->xattr_access_rights;
 }
 
-#ifdef _USE_FSALMDS
-fattr4_fs_layout_types fsal_fs_layout_types(struct fsal_staticfsinfo_t *info)
-{
-	return info->fs_layout_types;
-}
-
-fsal_size_t fsal_layout_blksize(struct fsal_staticinfo_t *info)
-{
-	return info->layout_blksize;
-}
-#endif
-
 fsal_status_t
 fsal_load_config(const char *name,
                  config_file_t config_struct,
-                 fsal_init_info_t * fsal_init,
-                 fsal_staticfsinfo_t * fs_info,
+                 fsal_init_info_t *fsal_init,
+                 struct fsal_staticfsinfo_t * fs_info,
                  fsal_extra_arg_parser_f extra)
 {
 	fsal_status_t st;
@@ -665,5 +634,12 @@ fsal_load_config(const char *name,
 	SET_BOOLEAN_PARAM(fs_info, common_info, auth_exportpath_xdev);
 	SET_BITMAP_PARAM(fs_info, common_info, xattr_access_rights);
 
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
+
+void init_fsal_parameters(fsal_init_info_t *init_info)
+{
+        return;
+}
+
+

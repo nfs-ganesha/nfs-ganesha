@@ -7,8 +7,7 @@ AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC
                                 ../FSAL/fsal_convert.lo \
                                 ../FSAL/fsal_manager.lo \
                                 ../FSAL/fsal_config.lo \
-                                ../FSAL/fsal_errors.lo \
-                                ../FSAL/fsal_strings.lo
+                                ../FSAL/fsal_errors.lo
 
 
 if USE_FSAL_UP

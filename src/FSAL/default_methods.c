@@ -44,6 +44,7 @@
 #include "fsal.h"
 #include "nfs_core.h"
 #include "config_parsing.h"
+#include "ganesha_types.h"
 
 /** fsal module method defaults and common methods
  */
@@ -169,9 +170,9 @@ err:
  */
 
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct)
+                                 config_file_t config_struct)
 {
-	ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
+        return fsalstat(ERR_FSAL_NO_ERROR, 0) ;
 }
 
 /* dump_config
@@ -194,7 +195,7 @@ static fsal_status_t create_export(struct fsal_module *fsal_hdl,
 				   struct fsal_module *next_fsal,
 				   struct fsal_export **export)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
 }
 
 /* Default fsal module method vector.
@@ -242,7 +243,7 @@ static int export_put(struct fsal_export *exp_hdl)
 
 static fsal_status_t export_release(struct fsal_export *exp_hdl)
 {
-	ReturnCode(ERR_FSAL_FAULT, 0) ;
+	return fsalstat(ERR_FSAL_FAULT, 0) ;
 }
 
 /* lookup_path
@@ -253,14 +254,14 @@ fsal_status_t lookup_path(struct fsal_export *exp_hdl,
 			  const char *path,
 			  struct fsal_obj_handle **handle)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
 }
 
 static fsal_status_t lookup_junction(struct fsal_export *exp_hdl,
 				     struct fsal_obj_handle *junction,
 				     struct fsal_obj_handle **handle)
 {
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);	
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);	
 }
 
 /* extract_handle
@@ -271,18 +272,19 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct netbuf *fh_desc)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
+
 
 /* create_handle
  * default case is not supported
  */
 
 static fsal_status_t create_handle(struct fsal_export *exp_hdl,
-				   struct fsal_handle_desc *hdl_desc,
-				   struct fsal_obj_handle **handle)
+                                   struct gsh_buffdesc *hdl_desc,
+                                   struct fsal_obj_handle **handle)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
 }
 
 /* get_dynamic_info
@@ -292,15 +294,15 @@ static fsal_status_t create_handle(struct fsal_export *exp_hdl,
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 					 fsal_dynamicfsinfo_t *infop)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
 }
 
 /* fs_supports
  * default case is supports nothing
  */
 
-static fsal_boolean_t fs_supports(struct fsal_export *exp_hdl,
-				  fsal_fsinfo_options_t option)
+static bool_t fs_supports(struct fsal_export *exp_hdl,
+                          fsal_fsinfo_options_t option)
 {
 	return FALSE;
 }
@@ -309,7 +311,7 @@ static fsal_boolean_t fs_supports(struct fsal_export *exp_hdl,
  * default case is zero size
  */
 
-static fsal_size_t fs_maxfilesize(struct fsal_export *exp_hdl)
+static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 {
 	return 0;
 }
@@ -318,7 +320,7 @@ static fsal_size_t fs_maxfilesize(struct fsal_export *exp_hdl)
  * default case is zero length
  */
 
-static fsal_size_t fs_maxread(struct fsal_export *exp_hdl)
+static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 {
 	return 0;
 }
@@ -327,7 +329,7 @@ static fsal_size_t fs_maxread(struct fsal_export *exp_hdl)
  * default case is zero length
  */
 
-static fsal_size_t fs_maxwrite(struct fsal_export *exp_hdl)
+static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 {
 	return 0;
 }
@@ -336,27 +338,27 @@ static fsal_size_t fs_maxwrite(struct fsal_export *exp_hdl)
  * default case is zero links
  */
 
-static fsal_count_t fs_maxlink(struct fsal_export *exp_hdl)
+static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 {
-	return 0;
+        return 0;
 }
 
 /* fs_maxnamelen
  * default case is zero length
  */
 
-static fsal_mdsize_t fs_maxnamelen(struct fsal_export *exp_hdl)
+static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 {
-	return 0;
+        return 0;
 }
 
 /* fs_maxpathlen
  * default case is zero length
  */
 
-static fsal_mdsize_t fs_maxpathlen(struct fsal_export *exp_hdl)
+static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 {
-	return 0;
+        return 0;
 }
 
 /* fs_fh_expire_type
@@ -372,11 +374,11 @@ static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
  * default case is zero interval time
  */
 
-static fsal_time_t fs_lease_time(struct fsal_export *exp_hdl)
+static gsh_time_t fs_lease_time(struct fsal_export *exp_hdl)
 {
-	fsal_time_t lease_time = {0,0};
+        gsh_time_t lease_time = {0,0};
 
-	return lease_time;
+        return lease_time;
 }
 
 /* fs_acl_support
@@ -392,27 +394,27 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
  * default case is none
  */
 
-static fsal_attrib_mask_t fs_supported_attrs(struct fsal_export *exp_hdl)
+static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
-	return 0;
+        return 0;
 }
 
 /* fs_umask
  * default case is no access
  */
 
-static fsal_accessmode_t fs_umask(struct fsal_export *exp_hdl)
+static uint32_t fs_umask(struct fsal_export *exp_hdl)
 {
-	return 0000;
+        return 0000;
 }
 
 /* fs_xattr_access_rights
  * default case is no access
  */
 
-static fsal_accessmode_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
+static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
-	return 0000;
+        return 0000;
 }
 
 /* check_quota
@@ -424,7 +426,7 @@ static fsal_status_t check_quota(struct fsal_export *exp_hdl,
 				 int quota_type,
 				 struct req_op_context *req_ctx)
 {
-	ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0) ;
 }
 
 /* get_quota
@@ -437,7 +439,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
 }
 
 /* set_quota
@@ -451,7 +453,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       fsal_quota_t * pquota,
 			       fsal_quota_t * presquota)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0) ;
+	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
 }
 
 /* Default fsal export method vector.
@@ -515,8 +517,8 @@ static int handle_put(struct fsal_obj_handle *obj_hdl)
  * test the type of this handle
  */
 
-static fsal_boolean_t handle_is(struct fsal_obj_handle *obj_hdl,
-                                object_file_type_t type)
+static bool_t handle_is(struct fsal_obj_handle *obj_hdl,
+                        object_file_type_t type)
 {
         return obj_hdl->type == type;
 }
@@ -528,7 +530,7 @@ static fsal_boolean_t handle_is(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t handle_release(struct fsal_obj_handle *obj_hdl)
 {
-	ReturnCode(ERR_FSAL_FAULT, 0) ;
+	return fsalstat(ERR_FSAL_FAULT, 0) ;
 }
 
 /* lookup
@@ -539,7 +541,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path,
 			    struct fsal_obj_handle **handle)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* read_dirents
@@ -556,9 +558,9 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 					  struct fsal_obj_handle *dir_hdl,
 					  void *dir_state,
 					  struct fsal_cookie *cookie),
-				  fsal_boolean_t *eof)
+                                  bool_t *eof)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* create
@@ -566,11 +568,11 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    fsal_name_t *name,
-			    fsal_attrib_list_t *attrib,
-			    struct fsal_obj_handle **handle)
+                            const char *name,
+                            struct attrlist *attrib,
+                            struct fsal_obj_handle **handle)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* makedir
@@ -578,11 +580,11 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     fsal_name_t *name,
-			     fsal_attrib_list_t *attrib,
+                             const char *name,
+			     struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* makenode
@@ -590,13 +592,13 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
-			      fsal_name_t *name,
-			      object_file_type_t nodetype,  /* IN */
-			      fsal_dev_t *dev,  /* IN */
-			      fsal_attrib_list_t *attrib,
-			      struct fsal_obj_handle **handle)
+                              const char *name,
+                              object_file_type_t nodetype,
+                              fsal_dev_t *dev,
+                              struct attrlist *attrib,
+                              struct fsal_obj_handle **handle)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* makesymlink
@@ -604,12 +606,12 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
-				 fsal_name_t *name,
-				 fsal_path_t *link_path,
-				 fsal_attrib_list_t *attrib,
-				 struct fsal_obj_handle **handle)
+                                 const char *name,
+                                 const char *link_path,
+                                 struct attrlist *attrib,
+                                 struct fsal_obj_handle **handle)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+        return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* readsymlink
@@ -617,11 +619,11 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
-				 char *link_content,
-				 uint32_t *link_len,
-				 fsal_boolean_t refresh)
+                                 char *link_content,
+                                 size_t *link_len,
+                                 bool_t refresh)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* getattrs
@@ -629,9 +631,9 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-                              fsal_attrib_list_t *obj_attr)
+                              struct attrlist *obj_attr)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* setattrs
@@ -639,9 +641,9 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-                              fsal_attrib_list_t *attrs)
+                              struct attrlist *attrs)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* linkfile
@@ -649,10 +651,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
-			      struct fsal_obj_handle *destdir_hdl,
-			      fsal_name_t *name)
+                              struct fsal_obj_handle *destdir_hdl,
+                              const char *name)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* renamefile
@@ -660,11 +662,11 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
-				fsal_name_t *old_name,
-				struct fsal_obj_handle *newdir_hdl,
-				fsal_name_t *new_name)
+                                const char *old_name,
+                                struct fsal_obj_handle *newdir_hdl,
+                                const char *new_name)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* file_unlink
@@ -672,9 +674,9 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
-				 fsal_name_t *name)
+                                 const char *name)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* file_truncate
@@ -682,9 +684,9 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
-				   fsal_size_t length)
+                                   uint64_t length)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+        return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* file_open
@@ -694,7 +696,7 @@ static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
 			       fsal_openflags_t openflags)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* file_status
@@ -711,13 +713,13 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
  */
 
 static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-			       fsal_seek_t * seek_descriptor,
-			       size_t buffer_size,
-			       caddr_t buffer,
-			       ssize_t *read_amount,
-			       fsal_boolean_t * end_of_file)
+                               uint64_t seek_descriptor,
+                               size_t buffer_size,
+                               void *buffer,
+                               size_t *read_amount,
+                               bool_t *end_of_file)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* file_write
@@ -725,12 +727,12 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-				fsal_seek_t *seek_descriptor,
-				size_t buffer_size,
-				caddr_t buffer,
-				ssize_t *write_amount)
+                                uint64_t seek_descriptor,
+                                size_t buffer_size,
+                                void *buffer,
+                                size_t *write_amount)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* commit
@@ -741,7 +743,7 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl, /* sync */
 			    off_t offset,
 			    size_t len)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* lock_op
@@ -754,7 +756,7 @@ static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
 			     fsal_lock_param_t   request_lock,
 			     fsal_lock_param_t * conflicting_lock)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* share_op
@@ -765,7 +767,7 @@ static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
 			      void *p_owner,
 			      fsal_share_param_t  request_share)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* file_close
@@ -774,28 +776,7 @@ static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
-}
-
-/* file_rcp
- * default case not supported
- */
-
-static fsal_status_t file_rcp(struct fsal_obj_handle *obj_hdl,
-			      const char *local_path,
-			      fsal_rcpflag_t transfer_opt)
-{
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
-}
-
-/* getextattrs
- * default case not supported
- */
-
-static fsal_status_t getextattrs(struct fsal_obj_handle *obj_hdl,
-				 fsal_extattrib_list_t * object_attributes)
-{
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* list_ext_attrs
@@ -809,7 +790,7 @@ static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				    unsigned int *p_nb_returned,
 				    int *end_of_list)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* getextattr_id_by_name
@@ -820,7 +801,7 @@ static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					   const char *xattr_name,
 					   unsigned int *pxattr_id)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* getextattr_value_by_name
@@ -833,7 +814,7 @@ static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					      size_t buffer_size,
 					      size_t * p_output_size)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* getextattr_value_by_id
@@ -846,7 +827,7 @@ static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    size_t buffer_size,
 					    size_t *p_output_size)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* setextattr_value
@@ -859,7 +840,7 @@ static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
 				      size_t buffer_size,
 				      int create)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* setextattr_value_by_id
@@ -871,7 +852,7 @@ static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    caddr_t buffer_addr,
 					    size_t buffer_size)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* getextattr_attrs
@@ -879,10 +860,10 @@ static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				      unsigned int xattr_id,
-				      fsal_attrib_list_t * p_attrs)
+                                      unsigned int xattr_id,
+                                      struct attrlist* p_attrs)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* remove_extattr_by_id
@@ -892,7 +873,7 @@ static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* remove_extattr_by_name
@@ -902,7 +883,7 @@ static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *xattr_name)
 {
-	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 /* lru_cleanup
@@ -912,17 +893,17 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			      lru_actions_t requests)
 {
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* lru_cleanup
  * default case never equal
  */
 
-static fsal_boolean_t compare(struct fsal_obj_handle *obj_hdl,
-			      struct fsal_obj_handle *other_hdl)
+static bool_t compare(struct fsal_obj_handle *obj_hdl,
+                              struct fsal_obj_handle *other_hdl)
 {
-	return FALSE;
+        return FALSE;
 }
 
 /* handle_digest
@@ -930,10 +911,10 @@ static fsal_boolean_t compare(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
-				   fsal_digesttype_t output_type,
-				   struct fsal_handle_desc *fh_desc)
+                                   fsal_digesttype_t output_type,
+                                   struct gsh_buffdesc *fh_desc)
 {
-	ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+        return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 }
 
 /* handle_digest
@@ -941,10 +922,10 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
  */
 
 static void handle_to_key(struct fsal_obj_handle *obj_hdl,
-				  struct fsal_handle_desc *fh_desc)
+                          struct gsh_buffdesc *fh_desc)
 {
-	fh_desc->start = (caddr_t)obj_hdl;
-	fh_desc->len = 0;
+        fh_desc->addr = obj_hdl;
+        fh_desc->len = 0;
 }
 
 /* Default fsal handle object method vector.
@@ -977,8 +958,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.lock_op = lock_op,
 	.share_op = share_op,
 	.close = file_close,
-	.rcp = file_rcp,
-	.getextattrs = getextattrs,
 	.list_ext_attrs = list_ext_attrs,
 	.getextattr_id_by_name = getextattr_id_by_name,
 	.getextattr_value_by_name = getextattr_value_by_name,

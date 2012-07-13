@@ -66,8 +66,8 @@ nfs_read_ok(exportlist_t * pexport,
             struct svc_req *preq, 
             nfs_res_t * pres,
             char *data,
-            fsal_size_t read_size,
-            fsal_attrib_list_t *attr,
+            uint32_t read_size,
+            struct attrlist *attr,
             int eof)
 {
     if((read_size == 0) && (data != NULL)) {
@@ -127,14 +127,14 @@ int nfs_Read(nfs_arg_t *parg,
              nfs_res_t *pres)
 {
   cache_entry_t *pentry;
-  fsal_attrib_list_t attr;
-  fsal_attrib_list_t pre_attr;
+  struct attrlist attr;
+  struct attrlist pre_attr;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   size_t size = 0;
   size_t read_size = 0;
-  fsal_off_t offset = 0;
+  uint64_t offset = 0;
   void *data = NULL;
-  fsal_boolean_t eof_met=FALSE;
+  bool_t eof_met=FALSE;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -294,12 +294,12 @@ int nfs_Read(nfs_arg_t *parg,
   if((pexport->options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
     {
       LogFullDebug(COMPONENT_NFSPROTO,
-                   "-----> Read offset=%llu count=%llu MaxOffSet=%llu",
-                   (unsigned long long) offset,
-                   (unsigned long long) size,
-                   (unsigned long long) pexport->MaxOffsetRead);
+                   "-----> Read offset=%"PRIu64" count=%zd MaxOffSet=%"PRIu64,
+                   offset,
+                   size,
+                   pexport->MaxOffsetRead);
 
-      if((fsal_off_t) (offset + size) > pexport->MaxOffsetRead)
+      if((offset + size) > pexport->MaxOffsetRead)
         {
           LogEvent(COMPONENT_NFSPROTO,
                    "NFS READ: A client tryed to violate max file size %llu for exportid #%hu",

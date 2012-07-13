@@ -1393,7 +1393,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->MaxRead = (fsal_size_t) size;
+          p_entry->MaxRead = size;
           p_entry->options |= EXPORT_OPTION_MAXREAD;
 
           set_options |= FLAG_EXPORT_MAX_READ;
@@ -1433,7 +1433,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->MaxWrite = (fsal_size_t) size;
+          p_entry->MaxWrite = size;
           p_entry->options |= EXPORT_OPTION_MAXWRITE;
 
           set_options |= FLAG_EXPORT_MAX_WRITE;
@@ -1473,7 +1473,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->PrefRead = (fsal_size_t) size;
+          p_entry->PrefRead = size;
           p_entry->options |= EXPORT_OPTION_PREFREAD;
 
           set_options |= FLAG_EXPORT_PREF_READ;
@@ -1513,7 +1513,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->PrefWrite = (fsal_size_t) size;
+          p_entry->PrefWrite = size;
           p_entry->options |= EXPORT_OPTION_PREFWRITE;
 
           set_options |= FLAG_EXPORT_PREF_WRITE;
@@ -1553,7 +1553,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->PrefReaddir = (fsal_size_t) size;
+          p_entry->PrefReaddir = size;
           p_entry->options |= EXPORT_OPTION_PREFRDDIR;
 
           set_options |= FLAG_EXPORT_PREF_READDIR;
@@ -1593,7 +1593,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->PrefWrite = (fsal_size_t) size;
+          p_entry->PrefWrite = size;
           p_entry->options |= EXPORT_OPTION_PREFWRITE;
 
           set_options |= FLAG_EXPORT_PREF_WRITE;
@@ -1649,8 +1649,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->filesystem_id.major = (fsal_u64_t) major;
-          p_entry->filesystem_id.minor = (fsal_u64_t) minor;
+          p_entry->filesystem_id.major = major;
+          p_entry->filesystem_id.minor = minor;
 
           set_options |= FLAG_EXPORT_FSID;
 
@@ -1859,7 +1859,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
-          long long int offset;
+          uint64_t offset;
           char *end_ptr;
 
           errno = 0;
@@ -1876,7 +1876,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->MaxOffsetWrite = (fsal_size_t) offset;
+          p_entry->MaxOffsetWrite = offset;
           p_entry->options |= EXPORT_OPTION_MAXOFFSETWRITE;
 
           set_options |= FLAG_EXPORT_MAX_OFF_WRITE;
@@ -1884,7 +1884,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_CACHE_SIZE))
         {
-          long long int offset;
+          uint64_t offset;
           char *end_ptr;
 
           errno = 0;
@@ -1901,7 +1901,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->MaxCacheSize = (fsal_size_t) offset;
+          p_entry->MaxCacheSize = offset;
           p_entry->options |= EXPORT_OPTION_MAXCACHESIZE;
 
           set_options |= FLAG_EXPORT_MAX_CACHE_SIZE;
@@ -1909,7 +1909,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_READ))
         {
-          long long int offset;
+          uint64_t offset;
           char *end_ptr;
 
           errno = 0;
@@ -1926,7 +1926,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* set filesystem_id */
 
-          p_entry->MaxOffsetRead = (fsal_size_t) offset;
+          p_entry->MaxOffsetRead = offset;
           p_entry->options |= EXPORT_OPTION_MAXOFFSETREAD;
 
           set_options |= FLAG_EXPORT_MAX_OFF_READ;
@@ -2209,10 +2209,10 @@ exportlist_t *BuildDefaultExport()
   p_entry->status = EXPORTLIST_OK;
   p_entry->clients.num_clients = 0;
   p_entry->access_type = ACCESSTYPE_RW;
-  p_entry->anonymous_uid = (uid_t) ANON_UID;
-  p_entry->MaxOffsetWrite = (fsal_off_t) 0;
-  p_entry->MaxOffsetRead = (fsal_off_t) 0;
-  p_entry->MaxCacheSize = (fsal_off_t) 0;
+  p_entry->anonymous_uid = ANON_UID;
+  p_entry->MaxOffsetWrite = 0;
+  p_entry->MaxOffsetRead = 0;
+  p_entry->MaxCacheSize = 0;
 
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
@@ -2226,14 +2226,14 @@ exportlist_t *BuildDefaultExport()
     p_entry->options |= EXPORT_OPTION_NFSV4;
   p_entry->options |= EXPORT_OPTION_UDP | EXPORT_OPTION_TCP;
 
-  p_entry->filesystem_id.major = (fsal_u64_t) 101;
-  p_entry->filesystem_id.minor = (fsal_u64_t) 101;
+  p_entry->filesystem_id.major = 101;
+  p_entry->filesystem_id.minor = 101;
 
-  p_entry->MaxWrite = (fsal_size_t) 16384;
-  p_entry->MaxRead = (fsal_size_t) 16384;
-  p_entry->PrefWrite = (fsal_size_t) 16384;
-  p_entry->PrefRead = (fsal_size_t) 16384;
-  p_entry->PrefReaddir = (fsal_size_t) 16384;
+  p_entry->MaxWrite = 0x100000;
+  p_entry->MaxRead = 0x100000;
+  p_entry->PrefWrite = 0x100000;
+  p_entry->PrefRead = 0x100000;
+  p_entry->PrefReaddir = 0x100000;
 
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "ganesha");

@@ -1068,7 +1068,6 @@ void nfs_reset_stats(void)
         }
 
       workers_data[i].stats.last_stat_update = 0;
-      memset(&workers_data[i].stats.fsal_stats, 0, sizeof(fsal_statistics_t));
     }                           /* for( i = 0 ; i < nfs_param.core_param.nb_worker ; i++ ) */
 
 }                               /* void nfs_reset_stats( void ) */

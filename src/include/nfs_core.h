@@ -283,7 +283,10 @@ typedef struct nfs_fsal_up_param__
   pool_t *event_pool;
 } nfs_fsal_up_parameter_t;
 
-typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
+/**
+ * @todo ACE: delendum est
+ */
+typedef char entry_name_array_item_t[1024];
 
 typedef struct nfs_version4_parameter__
 {
@@ -578,7 +581,6 @@ typedef struct ganesha_stats__ {
     hash_stat_t             gid_reverse;
     hash_stat_t             drc_udp;
     hash_stat_t             drc_tcp;
-    fsal_statistics_t       global_fsal;
     unsigned int min_pending_request;
     unsigned int max_pending_request;
     unsigned int total_pending_request;

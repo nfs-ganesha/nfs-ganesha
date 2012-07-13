@@ -898,8 +898,6 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
 int nfs4_op_remove_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp);
 
-int nfs_XattrD_Name(char *strname, char *objectname);
-
 int nfs4_XattrToFattr(fattr4 * Fattr,
                       compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
 
@@ -1349,9 +1347,9 @@ pseudofs_t *nfs4_GetPseudoFs(void);
 int nfs4_SetCompoundExport(compound_data_t * data);
 int nfs4_MakeCred(compound_data_t * data);
 
-int nfs4_fsal_attr_To_Fattr(fsal_attrib_list_t * pattr, fattr4 * Fattr,
+int nfs4_fsal_attr_To_Fattr(const struct attrlist *pattr, fattr4 * Fattr,
                             compound_data_t * data, bitmap4 * Bitmap);
-int nfs4_Fattr_To_fsal_attr(fsal_attrib_list_t * pattr, fattr4 * Fattr,
+int nfs4_Fattr_To_fsal_attr(struct attrlist *pattr, fattr4 * Fattr,
                             compound_data_t * data, bitmap4 * Bitmap);
 int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access);
 int nfs4_Fattr_Check_Access_Bitmap(bitmap4 * pbitmap, int access);
@@ -1396,7 +1394,7 @@ int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
 
 int uid2utf8(uid_t uid, utf8string * utf8str);
-int utf82uid(utf8string * utf8str, uid_t * Uid);
+int utf82uid(utf8string * utf8str, uint64_t *Uid);
 
 int uid2str(uid_t uid, char *str);
 int str2uid(char *str, uid_t * Uid);
@@ -1405,28 +1403,28 @@ int gid2str(gid_t gid, char *str);
 int str2gid(char *str, gid_t * Gid);
 
 int gid2utf8(gid_t gid, utf8string * utf8str);
-int utf82gid(utf8string * utf8str, gid_t * Gid);
+int utf82gid(utf8string * utf8str, uint64_t *Gid);
 
 void nfs4_stringid_split(char *buff, char *uidname, char *domainname);
 
 seqid4 nfs4_NextSeqId(seqid4 seqid);
 
 /* Attributes conversion */
-int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file attributes */
-                           sattr2 * pFattr);    /* In: file attributes  */
+int nfs2_Sattr_To_FSALattr(struct attrlist*pFSAL_attr,
+                           sattr2 * pFattr);
 
-int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related export entry */
-                           fsal_attrib_list_t * pFSAL_attr,     /* In: file attributes  */
-                           fattr2 * pFattr);    /* Out: file attributes */
+int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,
+                           const struct attrlist *pFSAL_attr,
+                           fattr2 * pFattr);
 
-int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related export entry */
-                           const fsal_attrib_list_t * pFSAL_attr,     /* In: file attributes  */
-                           fattr3 * pFattr);    /* Out: file attributes */
-void nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t *FSAL_attr,
-                                   fsal_attrib_mask_t *mask,
+int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,
+                           const struct attrlist *pFSAL_attr,
+                           fattr3 * pFattr);
+void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
+                                   attrmask_t *mask,
                                    fattr3 *Fattr);
-int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file attributes */
-                           sattr3 * pFattr);    /* In: file attributes  */
+int nfs3_Sattr_To_FSALattr(struct attrlist * pFSAL_attr,
+                           sattr3 * pFattr);
 
 nfsstat3 nfs3_fh_to_xattrfh(nfs_fh3 * pfhin, nfs_fh3 * pfhout);
 
@@ -1482,19 +1480,19 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
 int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
-int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File attributes  */
+int Fattr4_To_FSAL_attr(struct attrlist* pFSAL_attr,    /* Out: File attributes  */
                         fattr4 * pFattr,   /* In: File attributes   */
                         nfs_fh4 *fh);
-int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File attributes  */
+int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr,    /* Out: File attributes  */
                             fattr4 * pFattr);   /* In: File attributes   */
 
-int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask);
+int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, attrmask_t *attrmask);
 
 int nfs4_Fattr_Fill(fattr4 *Fattr, uint_t attrcnt, uint32_t *attrlist,
                     int valsiz, char *attrvals);
 int nfs4_supported_attrs_to_fattr(char *outbuf);
 int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
-                           fsal_attrib_list_t *pattr,
+                           const struct attrlist *pattr,
                            fattr4 *Fattr,
                            compound_data_t *data,
                            nfs_fh4 *objFH,
