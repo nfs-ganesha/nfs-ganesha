@@ -44,6 +44,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <attr/xattr.h>
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
@@ -149,10 +151,14 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
                                            &name, 
                                            &pxattrfid->fsal_op_context,
                                            &pxattrfid->specdata.xattr.xattr_id);
-
       if(FSAL_IS_ERROR(fsal_status))
-        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
-  
+       {
+         if( fsal_status.major == ERR_FSAL_NOENT ) /* ENOENT for xattr is ENOATTR (set setxattr's manpage) */
+           return _9p_rerror( preq9p, msgtag, ENOATTR, plenout, preply ) ;
+         else 
+           return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+       }
+
       fsal_status = FSAL_GetXAttrValueByName( &pxattrfid->pentry->handle,
                                               &name, 
                                               &pxattrfid->fsal_op_context,
