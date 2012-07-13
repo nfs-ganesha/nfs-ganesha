@@ -219,7 +219,7 @@ fsal2posix_openflags(fsal_openflags_t fsal_flags,
 
   if(fsal_flags &
      ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND 
-       | FSAL_O_TRUNC))
+       | FSAL_O_TRUNC | FSAL_O_SYNC))
     return ERR_FSAL_INVAL;
 
   /* Check for flags compatibility */
@@ -258,6 +258,8 @@ fsal2posix_openflags(fsal_openflags_t fsal_flags,
     *p_posix_flags |= O_WRONLY;
   if(fsal_flags & FSAL_O_RDWR)
     *p_posix_flags |= O_RDWR;
+  if(fsal_flags & FSAL_O_SYNC)
+    *p_posix_flags |= O_SYNC;
 
   return ERR_FSAL_NO_ERROR;
 

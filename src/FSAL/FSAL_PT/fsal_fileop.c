@@ -354,6 +354,7 @@ fsal_status_t PTFSAL_read(fsal_file_t * file_desc,            /* IN */
  *      - Another error code if an error occured during this call.
  */
 fsal_status_t PTFSAL_write(fsal_file_t * file_desc,           /* IN */
+                           fsal_op_context_t * p_context,     /* IN */
                            fsal_seek_t * p_seek_descriptor,   /* IN */
                            fsal_size_t buffer_size,           /* IN */
                            caddr_t buffer,                    /* IN */
