@@ -504,10 +504,11 @@ open4_create(OPEN4args           * arg,
 #ifdef _USE_QUOTA
         /* if quota support is active, then we should check is
            the FSAL allows inode creation or not */
-        fsal_status = FSAL_check_quota(
-                data->pexport->fullpath,
-                FSAL_QUOTA_INODES,
-                FSAL_OP_CONTEXT_TO_UID(data->pcontext));
+	fsal_status
+		= data->pexport->export_hdl->ops->check_quota(data->pexport->export_hdl,
+							      data->pexport->fullpath,
+							      FSAL_QUOTA_INODES,
+							      data->req_ctx);
         if (FSAL_IS_ERROR(fsal_status)) {
                 return NFS4ERR_DQUOT;
         }
@@ -726,10 +727,6 @@ int nfs4_op_open(struct nfs_argop4 *op,
         state_owner_t           * owner = NULL;
         /* The supplied calim type */
         open_claim_type4          claim = arg_OPEN4->claim.claim;
-#ifdef _USE_QUOTA
-        /* Return from FSAL operations */
-        fsal_status_t             fsal_status;
-#endif
         /* The open state for the file */
         state_t           * file_state = NULL;
         /* True if the state was newly created */

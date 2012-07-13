@@ -65,7 +65,7 @@
  */
 int rquota_setquota(nfs_arg_t *parg,
                     exportlist_t *pexport,
-                    struct user_cred *creds /* IN  */ ,
+		    struct req_op_context *req_ctx,
                     nfs_worker_data_t *pworker,
                     struct svc_req *preq,
                     nfs_res_t * pres)
@@ -75,15 +75,11 @@ int rquota_setquota(nfs_arg_t *parg,
   fsal_quota_t fsal_quota_out;
   fsal_path_t fsal_path;
   int quota_type = USRQUOTA;
-  struct user_cred tempcreds;
   char work[MAXPATHLEN];
 
   LogFullDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling rquota_setquota");
 
-  memset(&tempcreds, 0, sizeof(struct user_cred));
-  tempcreds.caller_uid = parg->arg_rquota_getquota.gqa_uid;
-  tempcreds.caller_gid = parg->arg_ext_rquota_getquota.gqa_id;
   if(preq->rq_vers == EXT_RQUOTAVERS)
     {
       quota_type = parg->arg_ext_rquota_getquota.gqa_type;
@@ -128,7 +124,7 @@ int rquota_setquota(nfs_arg_t *parg,
   fsal_status = pexport->export_hdl->ops->set_quota(pexport->export_hdl,
 						    work,
 						    quota_type,
-						    &tempcreds,
+						    req_ctx,
 						    &fsal_quota_in,
 						    &fsal_quota_out);
   if(FSAL_IS_ERROR(fsal_status))
