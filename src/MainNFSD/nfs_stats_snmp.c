@@ -490,12 +490,17 @@ static int get_nfs4(snmp_adm_type_union * param, void *opt_arg)
   return 0;
 }
 
+/** @TODO
+ *  these stats are no longer relevant in the new api. throw an error for now.
+ */
+
+#if 0
 static int get_fsal(snmp_adm_type_union * param, void *opt_arg)
 {
-  long cmd = ((long)opt_arg) / 4;
+/*   long cmd = ((long)opt_arg) / 4; */
   long stat = ((long)opt_arg) % 4;
 
-  unsigned int i;
+/*   unsigned int i; */
 
   param->integer = 0;
 
@@ -524,6 +529,7 @@ static int get_fsal(snmp_adm_type_union * param, void *opt_arg)
     }
   return 0;
 }
+#endif
 
 static register_get_set snmp_export_stat_general[] = {
   {"uptime", "Server uptime in sec", SNMP_ADM_TIMETICKS, SNMP_ADM_ACCESS_RO, getuptime,
@@ -973,6 +979,11 @@ static void create_dyn_nfsv4_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
 
 static void create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
+/** @TODO these stats are no longer relevant in the new api.
+ *  as they refer to old api functions.  NOP for now
+ */
+
+#if 0
   long j;
 
   *p_dyn_gs_count = 4 * FSAL_NB_FUNC;
@@ -1017,6 +1028,7 @@ static void create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
       (*p_dyn_gs)[j + 3].setter = NULL;
       (*p_dyn_gs)[j + 3].opt_arg = (void *)(j + 3);
     }
+#endif
 }
 
 static void create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)

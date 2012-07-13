@@ -271,7 +271,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                            state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data)
 {
-  fsal_attrib_list_t      attr;
+  struct attrlist         attr;
   nfsstat3                nfsstat3;
   SVCXPRT                *ptr_svc = preq->rq_xprt;
   int                     rc;
@@ -402,7 +402,7 @@ int nlm_process_share_parms(struct svc_req        * preq,
                             state_nlm_client_t   ** ppnlm_client,
                             state_owner_t        ** ppowner)
 {
-  fsal_attrib_list_t      attr;
+  struct attrlist         attr;
   nfsstat3                nfsstat3;
   SVCXPRT                *ptr_svc = preq->rq_xprt;
   int                     rc;

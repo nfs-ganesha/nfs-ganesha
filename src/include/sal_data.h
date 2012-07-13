@@ -516,7 +516,6 @@ struct state_block_data_t
   state_cookie_entry_t         * sbd_blocked_cookie;
   state_lock_entry_t           * sbd_lock_entry;
   block_data_to_fsal_context_t   sbd_block_data_to_fsal_context;
-  struct user_credentials        sbd_credential;
   union
     {
 #ifdef _USE_NLM

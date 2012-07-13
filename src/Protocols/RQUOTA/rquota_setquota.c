@@ -73,7 +73,6 @@ int rquota_setquota(nfs_arg_t *parg,
   fsal_status_t fsal_status;
   fsal_quota_t fsal_quota_in;
   fsal_quota_t fsal_quota_out;
-  fsal_path_t fsal_path;
   int quota_type = USRQUOTA;
   char work[MAXPATHLEN];
 
@@ -102,12 +101,6 @@ int rquota_setquota(nfs_arg_t *parg,
           pres->res_rquota_getquota.status = Q_EPERM;
           return NFS_REQ_OK;
         }
-    }
-
-  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(work, MAXPATHLEN, &fsal_path))))
-    {
-      pres->res_rquota_setquota.status = Q_EPERM;
-      return NFS_REQ_OK;
     }
 
   memset((char *)&fsal_quota_in, 0, sizeof(fsal_quota_t));
