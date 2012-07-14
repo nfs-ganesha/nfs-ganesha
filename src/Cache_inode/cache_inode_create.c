@@ -213,9 +213,7 @@ cache_inode_create(cache_entry_t *parent,
                                    CACHE_INODE_FLAG_CREATE,
                                    status);
      if (entry == NULL) {
-          *status = CACHE_INODE_INSERT_ERROR;
-
-          return NULL;
+          goto out;
      }
 
      pthread_rwlock_wrlock(&parent->content_lock);
