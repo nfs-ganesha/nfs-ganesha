@@ -1798,7 +1798,7 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
       fsal_status = pentry->obj_handle->ops->lock_op(pentry->obj_handle,
 						     NULL,
 						     FSAL_OP_UNLOCK,
-						     *punlock,
+						     punlock,
 						     NULL);
 
       t_status = state_error_convert(fsal_status);
@@ -1869,7 +1869,7 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
 									      lock_support_owner) ?
 						     powner : NULL,
 						     lock_op,
-						     *plock,
+						     plock,
 						     &conflicting_lock);
 
       status = state_error_convert(fsal_status);

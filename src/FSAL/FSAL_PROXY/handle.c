@@ -1970,24 +1970,6 @@ pxy_commit(struct fsal_obj_handle *obj_hdl,
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t 
-pxy_lock_op(struct fsal_obj_handle *obj_hdl,
-	    void * p_owner,
-	    fsal_lock_op_t lock_op,
-	    fsal_lock_param_t   request_lock,
-	    fsal_lock_param_t * conflicting_lock)
-{
-        return fsalstat(ERR_FSAL_PERM, EPERM);
-}
-
-static fsal_status_t
-pxy_share_op(struct fsal_obj_handle *obj_hdl,
-	     void *p_owner,
-	     fsal_share_param_t request_share)
-{
-	return fsalstat(ERR_FSAL_NOTSUPP, 0);
-}
-
 static fsal_status_t
 pxy_close(struct fsal_obj_handle *obj_hdl)
 {
@@ -2023,8 +2005,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->read = pxy_read;
 	ops->write = pxy_write;
 	ops->commit = pxy_commit;
-	ops->lock_op = pxy_lock_op;
-	ops->share_op = pxy_share_op;
 	ops->close = pxy_close;
 	ops->handle_is = pxy_handle_is;
 	ops->compare = pxy_compare_hdl;

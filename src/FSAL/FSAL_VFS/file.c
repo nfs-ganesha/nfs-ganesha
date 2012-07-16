@@ -192,8 +192,8 @@ fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			  void * p_owner,
 			  fsal_lock_op_t lock_op,
-			  fsal_lock_param_t   request_lock,
-			  fsal_lock_param_t * conflicting_lock)
+			  fsal_lock_param_t *request_lock,
+			  fsal_lock_param_t *conflicting_lock)
 {
 	struct vfs_fsal_obj_handle *myself;
 	struct flock lock_args;
@@ -220,11 +220,11 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 	LogFullDebug(COMPONENT_FSAL,
-		     "Locking: op:%d type:%d start:%lu length:%lu ",
+		     "Locking: op:%d type:%d start:%"PRIu64" length:%lu ",
 		     lock_op,
-		     request_lock.lock_type,
-		     request_lock.lock_start,
-		     request_lock.lock_length);
+		     request_lock->lock_type,
+		     request_lock->lock_start,
+		     request_lock->lock_length);
 	if(lock_op == FSAL_OP_LOCKT) {
 		fcntl_comm = F_GETLK;
 	} else if(lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_UNLOCK) {
@@ -236,9 +236,9 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	if(request_lock.lock_type == FSAL_LOCK_R) {
+	if(request_lock->lock_type == FSAL_LOCK_R) {
 		lock_args.l_type = F_RDLCK;
-	} else if(request_lock.lock_type == FSAL_LOCK_W) {
+	} else if(request_lock->lock_type == FSAL_LOCK_W) {
 		lock_args.l_type = F_WRLCK;
 	} else {
 		LogDebug(COMPONENT_FSAL,
@@ -250,8 +250,8 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 	if(lock_op == FSAL_OP_UNLOCK)
 		lock_args.l_type = F_UNLCK;
 
-	lock_args.l_len = request_lock.lock_length;
-	lock_args.l_start = request_lock.lock_start;
+	lock_args.l_len = request_lock->lock_length;
+	lock_args.l_start = request_lock->lock_start;
 	lock_args.l_whence = SEEK_SET;
 
 	errno = 0;
