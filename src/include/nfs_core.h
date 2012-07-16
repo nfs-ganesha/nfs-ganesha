@@ -735,7 +735,6 @@ int parseAccessParam(char *var_name, char *var_value,
 
 /* Checks an access list for a specific client */
 int export_client_match(sockaddr_t *hostaddr,
-                        char *ipstring,
                         exportlist_client_t *clients,
                         exportlist_client_entry_t * pclient_found,
                         unsigned int export_option);
