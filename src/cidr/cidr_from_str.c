@@ -56,13 +56,13 @@ cidr_from_str(const char *addr)
 	 */
 	buf = NULL;
 	/* Handle the deprecated RFC1886 form of v6 PTR */
-	if(strcasecmp(addr+alen-8, ".ip6.int")==0)
+	if((alen >= 8) && strcasecmp(addr+alen-8, ".ip6.int")==0)
 	{
 		toret->proto = CIDR_IPV6;
 		buf = addr+alen-8;
 	}
 
-	if(buf!=NULL || strcasecmp(addr+alen-5, ".arpa")==0)
+	if(buf!=NULL || ((alen >= 5) && strcasecmp(addr+alen-5, ".arpa")==0))
 	{
 		/*
 		 * Do all this processing here, instead of trying to intermix it
@@ -72,12 +72,14 @@ cidr_from_str(const char *addr)
 		if(buf==NULL) /* If not set by .ip6.int above */
 		{
 			/* First, see what protocol it is */
-			if(strncasecmp(addr+alen-9, ".ip6", 3)==0)
+			if((alen >= 9) &&
+                           strncasecmp(addr+alen-9, ".ip6", 3)==0)
 			{
 				toret->proto = CIDR_IPV6;
 				buf = addr+alen-9;
 			}
-			else if(strncasecmp(addr+alen-13, ".in-addr", 7)==0)
+			else if((alen >= 13) && 
+                                strncasecmp(addr+alen-13, ".in-addr", 7)==0)
 			{
 				toret->proto = CIDR_IPV4;
 				buf = addr+alen-13;
