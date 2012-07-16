@@ -102,7 +102,6 @@ cache_inode_parameter_t cache_inode_params = {
         .expire_type_attr    = CACHE_INODE_EXPIRE_NEVER,
         .expire_type_link    = CACHE_INODE_EXPIRE_NEVER,
         .expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER,
-        .use_test_access = 1,
         .use_fsal_hash = 1
 };
 

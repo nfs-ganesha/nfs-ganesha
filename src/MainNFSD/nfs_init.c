@@ -1666,17 +1666,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogInfo(COMPONENT_INIT,
           "Cache Inode root entries successfully created");
 
-  /* Set accesscheck_support value to FSAL context object. */
-#ifdef _USE_NFS4_ACL
-  if (nfs_param.pexportlist)
-    {
-      nfs_param.pexportlist->FS_export_context
-           .fe_static_fs_info->accesscheck_support
-           = !cache_inode_params.use_test_access;
-      LogDebug(COMPONENT_INIT, "accesscheck_support is set to %d",
-           nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support);
-    }
-#endif
 
      /* callback dispatch */
      nfs_rpc_cb_pkginit();

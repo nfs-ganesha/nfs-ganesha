@@ -95,48 +95,25 @@ cache_inode_access_sw(cache_entry_t *entry,
       * managed internally
       */
      if(access_type != FSAL_F_OK) {
-          struct attrlist attr;
-
-          /* We get ride of F_OK */
           used_access_type = access_type & ~FSAL_F_OK;
 
-          /* We get the attributes */
-          attr = pfsal_handle->attributes;
+	  /* We actually need the lock here since we're using
+	     the attribute cache, so get it if the caller didn't
+	     acquire it.  */
+	  if(use_mutex) {
+	      if ((*status
+		   = cache_inode_lock_trust_attrs(entry))
+		  != CACHE_INODE_SUCCESS) {
+		      goto out;
+	      }
+	  }
+	  fsal_status = pfsal_handle->ops->test_access(pfsal_handle,
+						       req_ctx,
+						       used_access_type);
 
-
-          if(cache_inode_params.use_test_access == 1) {
-/** @TODO There is something way too clever with this use_test_access
- * flag.  If the flag is set, the FSAL_IS_ERROR is testing an uninitialized
- * fsal_status.  Also, the 'then' part is a NOP given the line above.
- * we will get the deref right for now.  The issue in the comment is solved
- * at the fsal level anyway because we have the access method but the fsal
- * writer makes the decision on how it is to be handled (locally in the fsal
- * or using the supplied common. This is also another struct copy...
- * NOTE: below, we use test_access method that uses the handle object's attrs
- * anyway.
- */
-               /* We actually need the lock here since we're using
-                  the attribute cache, so get it if the caller didn't
-                  acquire it.  */
-               if(use_mutex) {
-                    if ((*status
-                         = cache_inode_lock_trust_attrs(entry))
-                        != CACHE_INODE_SUCCESS) {
-                         goto out;
-                    }
-               }
-	       fsal_status = pfsal_handle->ops->getattrs(pfsal_handle, &attr);
-               if (use_mutex) {
-                    pthread_rwlock_unlock(&entry->attr_lock);
-               }
-          } else {
-               /* There is no reason to hold the mutex here, since we
-                  aren't doing anything with cached attributes. */
-	       fsal_status = pfsal_handle->ops->test_access(pfsal_handle,
-							    req_ctx,
-							    used_access_type);
-          }
-
+	  if (use_mutex) {
+		  pthread_rwlock_unlock(&entry->attr_lock);
+	  }
           if(FSAL_IS_ERROR(fsal_status)) {
                *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
