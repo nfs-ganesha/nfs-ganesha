@@ -626,10 +626,10 @@ static int DisplayLogPath_valist(char *path, char * function,
 #ifdef _LOCK_LOG
       if((fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, masque_log)) != -1)
         {
-          /* un verrou sur fichier */
+          /* A lock on file */
           struct flock lock_file;
+          int rc = 0;
 
-          /* mise en place de la structure de verrou sur fichier */
           lock_file.l_type = F_WRLCK;
           lock_file.l_whence = SEEK_SET;
           lock_file.l_start = 0;
@@ -637,21 +637,18 @@ static int DisplayLogPath_valist(char *path, char * function,
 
           if(fcntl(fd, F_SETLKW, (char *)&lock_file) != -1)
             {
-              /* Si la prise du verrou est OK */
-              write(fd, tampon, strlen(tampon));
+              rc = write(fd, tampon, strlen(tampon));
 
-              /* Relache du verrou sur fichier */
+              /* Release the lock */
               lock_file.l_type = F_UNLCK;
 
               fcntl(fd, F_SETLKW, (char *)&lock_file);
 
-              /* fermeture du fichier */
               close(fd);
               return SUCCES;
             }                   /* if fcntl */
           else
             {
-              /* Si la prise du verrou a fait un probleme */
               my_status = errno;
               close(fd);
             }
@@ -667,14 +664,12 @@ static int DisplayLogPath_valist(char *path, char * function,
             return ERR_FICHIER_LOG;
           }
 
-          /* fermeture du fichier */
           close(fd);
           return SUCCES;
         }
 #endif
       else
         {
-          /* Si l'ouverture du fichier s'est mal passee */
           my_status = errno;
         }
       fprintf(stderr, "Error %s : %s : status %d on file %s message was:\n%s\n",
