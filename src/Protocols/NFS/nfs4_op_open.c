@@ -919,11 +919,12 @@ int nfs4_op_open(struct nfs_argop4 *op,
         if (data->current_entry->type != REGULAR_FILE) {
                 if (data->current_entry->type == DIRECTORY) {
                         res_OPEN4->status = NFS4ERR_ISDIR;
-                        goto out;
-                } else {
+                } else if (data->current_entry->type == SYMBOLIC_LINK){
                         res_OPEN4->status = NFS4ERR_SYMLINK;
-                        goto out;
+                } else {
+                        res_OPEN4->status = NFS4ERR_INVAL;
                 }
+		goto out;
         }
 
         /* Set the openflags variable */
