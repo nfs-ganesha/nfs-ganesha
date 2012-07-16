@@ -112,6 +112,9 @@ pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
 pthread_t reaper_thrid;
+#ifdef SONAS
+pthread_t recovery_thrid;
+#endif
 pthread_t gsh_dbus_thrid;
 pthread_t upp_thrid;
 nfs_tcb_t gccb;
@@ -1415,6 +1418,19 @@ static void nfs_Start_threads(void)
     }
   LogEvent(COMPONENT_THREAD,
            "reaper thread was started successfully");
+
+#ifdef SONAS
+  /* Starting the recovery thread */
+  if((rc =
+      pthread_create(&recovery_thrid, &attr_thr, recovery_thread, NULL)) != 0)
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create recovery_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD,
+           "recovery thread was started successfully");
+#endif
 
 #ifdef _USE_UPCALL_SIMULATOR
   /* Starts the thread that mimics upcalls from the FSAL */

@@ -69,6 +69,9 @@
 #include "err_inject.h"
 #endif
 
+/* HACK for ease of testing, remove this - jw */
+#define SONAS
+
 /* Maximum thread count */
 #define NB_MAX_WORKER_THREAD 4096
 #define NB_MAX_FLUSHER_THREAD 100
@@ -672,6 +675,9 @@ void *stat_exporter_thread(void *UnusedArg);
 void *file_content_gc_thread(void *UnusedArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
 void *reaper_thread(void *UnusedArg);
+#ifdef SONAS
+void *recovery_thread(void *UnusedArg);
+#endif
 void *rpc_tcp_socket_manager_thread(void *Arg);
 void *sigmgr_thread( void * UnusedArg );
 void *fsal_up_thread(void *Arg);

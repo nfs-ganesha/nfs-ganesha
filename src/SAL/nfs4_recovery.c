@@ -168,6 +168,18 @@ nfs4_add_clid(nfs_client_id_t *pclientid)
         int err;
         char path[PATH_MAX];
 
+        /*
+         * A little trickery here.  This client is now talking to the server
+         * so it is allowed to do reclaim (during grace).  If the server
+         * reboots, this is pointless.  However, if grace is started due to
+         * a failover/takeover, then the stable storage won't be read in
+         * and the client wouldn't be marked as able to reclaim.  Now, since
+         * the server didn't reboot, the client doesn't need to reclaim, but
+         * it may get ERR_GRACE during this failover grace period and decide
+         * it needs to run through recovery.
+         */
+        pclientid->cid_allow_reclaim = 1;
+
         if (pclientid->cid_recov_dir == NULL) {
                 LogDebug(COMPONENT_CLIENTID,
                     "Failed to create client in recovery dir, no name");
@@ -372,6 +384,71 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                             "Failed to close v4 recovery dir (%s), errno=%d",
                             v4_recov_dir, errno);
                 }
+/* *** *** HACK *** *** */
+/* hack design:
+ * only when clustered...
+ * all nodes rebooted on failover/takeover
+ * all nodes read all other node's recovery directories at start up
+ * open the parent dir, read its entries and use those dirs
+ * if dirent.name == this node, don't read it again
+ * since a node will move its clids to old dir after reading them in
+ * read in both node recov and old dir
+ */
+                if (nfs_param.core_param.clustered) {
+                        DIR *pdp;
+                        char parent[200];
+                        char mynode[50];
+                        struct dirent *dep;
+
+                        snprintf(parent, 200, "%s/%s",
+                            NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR);
+                        snprintf(mynode, 50, "node%d", g_nodeid);
+                        pdp = opendir(parent);
+                        if (pdp == NULL) {
+                            LogEvent(COMPONENT_CLIENTID,
+                              "(HACK)Failed to open v4 recovery dir (%s), errno=%d",
+                              parent, errno);
+                            return;
+                        }
+                        dep = readdir(pdp);
+                        while (dep != NULL) {
+                                if (dep->d_name[0] == '.' ||
+                                    !strcmp(mynode, dep->d_name)) {
+                                        dep = readdir(pdp);
+                                        continue;
+                                }
+
+                                snprintf(path, PATH_MAX, "%s/%s/%s",
+                                    NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
+                                    dep->d_name);
+                                dp = opendir(path);
+                                if (dp == NULL) {
+                                        LogEvent(COMPONENT_CLIENTID,
+                                          "(HACK)Failed to open v4 recovery dir (%s), errno=%d",
+                                          path, errno);
+                                        dep = readdir(pdp);
+                                        continue;  /* ignore errors */
+                                }
+                                rc = nfs4_read_recov_clids(dp, path, 1);
+                                (void) closedir(dp);
+                                snprintf(path, PATH_MAX, "%s/%s/node%s",
+                                    NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR,
+                                    dep->d_name);
+                                dp = opendir(path);
+                                if (dp == NULL) {
+                                        LogEvent(COMPONENT_CLIENTID,
+                                          "(HACK)Failed to open v4 recovery dir (%s), errno=%d",
+                                          path, errno);
+                                        dep = readdir(pdp);
+                                        continue;  /* ignore errors */
+                                }
+                                rc = nfs4_read_recov_clids(dp, path, 1);
+                                (void) closedir(dp);
+
+                                dep = readdir(pdp);
+                        }
+                }
+/* *** *** END HACK *** *** */
 
         } else {
                 snprintf(path, PATH_MAX, "%s/%s/node%d",
@@ -482,6 +559,16 @@ nfs4_create_recov_dir()
                     v4_old_dir, errno);
         }
         if (nfs_param.core_param.clustered) {
+#ifdef SONAS
+                short nodeid;
+
+                /* HACK - get the node ID */
+                nodeid = gpfs_ganesha(OPENHANDLE_GET_NODEID, NULL);
+                /* GPFS starts with 0, we want node ids to be > 0 */
+                g_nodeid = nodeid + 1;
+LogEvent(COMPONENT_NFS_V4, "nodeid = (%d)", nodeid);
+#endif
+
                 snprintf(v4_recov_dir, PATH_MAX, "%s/%s/node%d",
                     NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, g_nodeid);
 
