@@ -498,3 +498,27 @@
        (has mode r---r--r-- for example)
       - Bug Fix: bad memory padding in fsal_handle_t and fsal_cookie_t
 
+1.5.0 - Mon 16 Jul 2012
+      - TIRPC library was significantly refurbished with bi-directional RPC
+      support (required for NFSv4.1 backchannel support).
+      - Multiple RPC dispatch is now supported
+      - Cache inode has been reworked on its handling of directory entries
+      - Cache inode readdir logic is now based on callbacks to take advantage
+        of AVL tree work
+      - State Management has been unified and improved. Locking is consistent
+        across both NFSv3 and NFSv4.x
+      - Client id management support has been added	
+      - 9p.2000L support has been added. Dev is currently under alpha version
+      - Improved file handle support. Handles's versions and variable length handles 
+        are better supported.
+      - Memory allocation has been refactored. The configure step can detect the memory
+        allocators available for the build and select the best allocator (jemalloc preferred 
+	if available) with a fallback to the standard C library malloc/free. 
+	The buddy allocator has been completely removed.
+      - Improved Kerberos support.  Autoconf now probes it correctly.
+        Compatibility with Microsoft AD Kerberos is improved.
+      - Numerous bits of experimental and partially implemented feature code
+        have been removed, significantly reducing the code line count and eliminating 
+	unused build time configuration options.  These include:
+       - FSAL_SNMP is now officially deprecated
+

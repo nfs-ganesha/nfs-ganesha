@@ -671,6 +671,19 @@ chkconfig --add nfs-ganesha-zfs
 
 
 %changelog
+* Mon Jul 16 2012 Philippe Deniel <philippe.deniel@cea.fr> 1.5.0-1
+- TIRPC library was significantly refurbished with bi-directional RPC support (required for NFSv4.1 backchannels)
+- Multiple RPC dispatch is now supported
+- Cache inode has been reworked on its handling of directory entries
+- Cache inode readdir logic is now based on callbacks to take advantage of AVL tree work
+- State Management has been unified and improved. Locking is consistent across both NFSv3 and NFSv4.x
+- Client id management support has been added	
+- 9p.2000L support has been added. Dev is currently under alpha version
+- Improved file handle support. Handles's versions and variable length handles are better supported.
+- Memory allocation has been refactored. TC-Malloc or Jemalloc can be use with a fallback to libC's malloc/free
+- Improved Kerberos support. Compatibility with Microsoft AD Kerberos is improved.
+- FSAL_SNMP is now officially deprecated
+
 * Thu Mar 15 2012 Philippe Deniel <philippe.deniel@cea.fr> 1.4.0-1
 - Bug Fix: Memory leak fixed in RPC's DRC
 - Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable 
