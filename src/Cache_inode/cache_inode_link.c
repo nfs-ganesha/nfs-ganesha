@@ -124,6 +124,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                                           access_mask,
                                           context,
                                           status,
+                                          NULL,
                                           FALSE))
          != CACHE_INODE_SUCCESS) {
           goto out;
