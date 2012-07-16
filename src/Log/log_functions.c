@@ -280,10 +280,11 @@ char *get_debug_info(int *size) {
 void print_debug_info_fd(int fd)
 {
   char *str = get_debug_info(NULL);
+  int rc;
 
   if (str != NULL)
     {
-      write(fd, str, strlen(str));
+      rc = write(fd, str, strlen(str));
       free(str);
     }
 }
@@ -752,8 +753,7 @@ static int DisplayLogPath_valist(char *path, char * function,
 
           if(fcntl(fd, F_SETLKW, (char *)&lock_file) != -1)
             {
-              /* Si la prise du verrou est OK */
-              write(fd, tampon, strlen(tampon));
+              rc = write(fd, tampon, strlen(tampon));
               if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
                   && level != NIV_NULL)
                 print_debug_info_fd(fd);
