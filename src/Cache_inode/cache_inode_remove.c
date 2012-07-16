@@ -182,6 +182,7 @@ cache_inode_remove(cache_entry_t *entry,
                                  access_mask,
                                  context,
                                  &cache_status,
+                                 NULL,
                                  FALSE))
         != CACHE_INODE_SUCCESS) {
           goto unlock_attr;

@@ -625,6 +625,7 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
                                            fsal_accessflags_t access_type,
                                            fsal_op_context_t *context,
                                            cache_inode_status_t *status,
+                                           fsal_attrib_list_t *attrs,
                                            bool_t use_mutex);
 cache_inode_status_t cache_inode_access_no_mutex(
     cache_entry_t *entry,
@@ -635,6 +636,12 @@ cache_inode_status_t cache_inode_access(cache_entry_t *entry,
                                         fsal_accessflags_t access_type,
                                         fsal_op_context_t *context,
                                         cache_inode_status_t *status);
+
+cache_inode_status_t cache_inode_access2(cache_entry_t *entry,
+                                         fsal_accessflags_t access_type,
+                                         fsal_op_context_t *context,
+                                         fsal_attrib_list_t *attrs,
+                                         cache_inode_status_t *status);
 
 fsal_file_t *cache_inode_fd(cache_entry_t *entry);
 
