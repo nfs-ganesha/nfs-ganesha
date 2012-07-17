@@ -962,7 +962,12 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mntfd = vfs_get_root_fd(obj_hdl->export);
-	if(obj_hdl->type == SOCKET_FILE) {
+	if(obj_hdl->type == REGULAR_FILE) {
+		if(myself->u.file.fd < 0) {
+			goto open_file;  /* no file open at the moment */
+		}
+		fstat(myself->u.file.fd, &stat);
+	} else if(obj_hdl->type == SOCKET_FILE) {
 		fd = open_by_handle_at(mntfd,
 				       myself->u.sock.sock_dir,
 				       (O_PATH|O_NOACCESS));
@@ -981,6 +986,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			open_flags |= O_PATH;
 		else if(obj_hdl->type == FIFO_FILE)
 			open_flags |= O_NONBLOCK;
+	open_file:
 		fd = open_by_handle_at(mntfd, myself->handle, open_flags);
 		if(fd < 0) {
 			goto errout;
