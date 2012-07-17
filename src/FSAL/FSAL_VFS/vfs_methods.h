@@ -38,7 +38,6 @@ struct vfs_fsal_obj_handle {
 		struct {
 			int fd;
 			fsal_openflags_t openflags;
-			uint32_t lock_status; /* != 0, locks in play */
 		} file;
 		struct {
 			unsigned char *link_content;

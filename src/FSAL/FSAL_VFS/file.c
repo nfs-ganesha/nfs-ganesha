@@ -70,7 +70,6 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	}
 	myself->u.file.fd = fd;
 	myself->u.file.openflags = openflags;
-	myself->u.file.lock_status = 0; /* no locks on new files */
 
 out:
 	return fsalstat(fsal_error, retval);	
@@ -293,26 +292,14 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			conflicting_lock->lock_type = FSAL_NO_LOCK;
 		}
 	}
-	if(lock_op == FSAL_OP_LOCK)
-		myself->u.file.lock_status++;
-	else
-		myself->u.file.lock_status--;
 out:
 	return fsalstat(fsal_error, retval);	
 }
 
-/* vfs_share_op @TODO still true?
- * do a share request.  Not supported here.
- * at least in GPFS, we get the mount dir from
- * vfs_get_root_fd and the file's fd from myself->fd.
- * the rest comes from request_share.
- */
-
 /* vfs_close
  * Close the file if it is still open.
  * Yes, we ignor lock status.  Closing a file in POSIX
- * releases all locks.
- * TBD, do we have to clear/verify as clear locks first?
+ * releases all locks but that is state and cache inode's problem.
  */
 
 fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
@@ -322,18 +309,12 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-
-	assert(myself->u.file.fd >= 0
-	       && myself->u.file.openflags != FSAL_O_CLOSED
-	       && !myself->u.file.lock_status);
-
 	retval = close(myself->u.file.fd);
 	if(retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
 	myself->u.file.fd = -1;
-	myself->u.file.lock_status = 0;
 	myself->u.file.openflags = FSAL_O_CLOSED;
 	return fsalstat(fsal_error, retval);	
 }
@@ -352,10 +333,9 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->u.file.fd >= 0 && !(myself->u.file.lock_status)) {
+	if(myself->u.file.fd >= 0) {
 		retval = close(myself->u.file.fd);
 		myself->u.file.fd = -1;
-		myself->u.file.lock_status = 0;
 		myself->u.file.openflags = FSAL_O_CLOSED;
 	}
 	if(retval == -1) {

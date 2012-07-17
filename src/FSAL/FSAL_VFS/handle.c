@@ -80,7 +80,6 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	if(hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd = -1;  /* no open on this yet */
 		hdl->u.file.openflags = FSAL_O_CLOSED;
-		hdl->u.file.lock_status = 0;
 	} else if(hdl->obj_handle.type == SYMBOLIC_LINK
 	   && link_content != NULL) {
 		size_t len = strlen(link_content) + 1;
@@ -1381,17 +1380,15 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	pthread_mutex_lock(&obj_hdl->lock);
 	obj_hdl->refs--;  /* subtract the reference when we were created */
 	if(obj_hdl->refs != 0 || (obj_hdl->type == REGULAR_FILE
-				  && (myself->u.file.lock_status != 0
-				      || myself->u.file.fd >=0
+				  && (myself->u.file.fd >=0
 				      || myself->u.file.openflags != FSAL_O_CLOSED))) {
 		pthread_mutex_unlock(&obj_hdl->lock);
 		retval = obj_hdl->refs > 0 ? EBUSY : EINVAL;
 		LogCrit(COMPONENT_FSAL,
 			"Tried to release busy handle, "
-			"hdl = 0x%p->refs = %d, fd = %d, openflags = 0x%x, lock = %d",
+			"hdl = 0x%p->refs = %d, fd = %d, openflags = 0x%x",
 			obj_hdl, obj_hdl->refs,
-			myself->u.file.fd, myself->u.file.openflags,
-			myself->u.file.lock_status);
+			myself->u.file.fd, myself->u.file.openflags);
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
 	fsal_detach_handle(exp, &obj_hdl->handles);
