@@ -216,7 +216,8 @@ nfs3_Readdirplus(nfs_arg_t *arg,
         only a set of zeros is returned (trivial value) */
 
      if (export->UseCookieVerifier) {
-          memcpy(cookie_verifier, &(dir_attr.mtime), sizeof(dir_attr.mtime));
+          memcpy(cookie_verifier, &(dir_attr.mtime.seconds),
+                 sizeof(dir_attr.mtime.seconds));
      }
 
      if (export->UseCookieVerifier && (begin_cookie != 0)) {

@@ -881,9 +881,9 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         /* Set the current entry to the file to be opened */
         switch (claim) {
-                cache_entry_t *entry = NULL;
-
         case CLAIM_NULL:
+                {
+                cache_entry_t *entry = NULL;
                 res_OPEN4->status
                         = open4_claim_null(arg_OPEN4,
                                            data,
@@ -895,6 +895,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
                         cache_inode_put(data->current_entry);
                         data->current_entry = NULL;
                         res_OPEN4->status = open4_create_fh(data, entry);
+                }
                 }
                 break;
 

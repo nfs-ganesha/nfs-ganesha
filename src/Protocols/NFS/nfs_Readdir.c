@@ -280,8 +280,8 @@ nfs_Readdir(nfs_arg_t *arg,
              is returned (trivial value). */
           if (export->UseCookieVerifier)
                memcpy(cookie_verifier,
-                      &(dir_attr.mtime),
-                      sizeof(dir_attr.mtime));
+                      &(dir_attr.mtime.seconds),
+                      sizeof(dir_attr.mtime.seconds));
           /* Nothing to do if != 0 because the area is already full of
              zero */
           if ((cookie != 0) &&

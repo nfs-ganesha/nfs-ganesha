@@ -2359,7 +2359,6 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
  * function for matching a specific option in the client export list.
  */
 int export_client_match(sockaddr_t *hostaddr,
-			char *ipstring,
 			exportlist_client_t *clients,
 			exportlist_client_entry_t * pclient_found,
 			unsigned int export_option)
@@ -2367,6 +2366,8 @@ int export_client_match(sockaddr_t *hostaddr,
   unsigned int i;
   int rc;
   char hostname[MAXHOSTNAMELEN];
+  char ipstring[SOCK_NAME_MAX];
+  int ipvalid = -1; /* -1 need to print, 0 - invalid, 1 - ok */
   in_addr_t addr = get_in_addr(hostaddr);
 
   if(export_option & EXPORT_OPTION_ROOT)
@@ -2451,9 +2452,12 @@ int export_client_match(sockaddr_t *hostaddr,
 
         case WILDCARDHOST_CLIENT:
           /* Now checking for IP wildcards */
-          if(fnmatch
-             (clients->clientarray[i].client.wildcard.wildcard, ipstring,
-              FNM_PATHNAME) == 0)
+          if(ipvalid < 0)
+            ipvalid = sprint_sockip(hostaddr, ipstring, sizeof(ipstring));
+            
+          if(ipvalid && 
+             (fnmatch(clients->clientarray[i].client.wildcard.wildcard,
+                      ipstring, FNM_PATHNAME) == 0))
             {
               *pclient_found = clients->clientarray[i];
               return TRUE;
@@ -2723,8 +2727,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                             bool_t proc_makes_write)
 {
   int rc;
-  char ipstring[SOCK_NAME_MAX];
-  int ipvalid;
 
   if (pexport != NULL)
     {
@@ -2734,10 +2736,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
         return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
     }
 
-  ipstring[0] = '\0';
-  ipvalid = sprint_sockip(hostaddr, ipstring, sizeof(ipstring));
-  LogFullDebug(COMPONENT_DISPATCH,
-               "nfs_export_check_access for address %s", ipstring);
 
   /* For now, no matching client is found */
   memset(pclient_found, 0, sizeof(exportlist_client_entry_t));
@@ -2769,13 +2767,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
     {
 #endif                          /* _USE_TIRPC_IPV6 */
 
-      /* Use IP address as a string for wild character access checks. */
-      if(!ipvalid)
-        {
-          LogCrit(COMPONENT_DISPATCH,
-                  "Could not convert the IPv4 address to a character string.");
-          return EXPORT_PERMISSION_DENIED;
-        }
 
       if(pexport == NULL)
         {
@@ -2788,7 +2779,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
       if(user_credentials->caller_uid == 0)
         {
           if(export_client_match(hostaddr,
-                                 ipstring,
                                  &(pexport->clients),
                                  pclient_found,
                                  EXPORT_OPTION_ROOT))
@@ -2812,7 +2802,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
       if(proc_makes_write)
         {
           if(export_client_match(hostaddr,
-                                 ipstring,
                                  &(pexport->clients),
                                  pclient_found,
                                  EXPORT_OPTION_WRITE_ACCESS))
@@ -2823,7 +2812,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             }
           else if(pexport->new_access_list_version &&
                   export_client_match(hostaddr,
-                                      ipstring,
                                       &(pexport->clients),
                                       pclient_found,
                                       EXPORT_OPTION_MD_WRITE_ACCESS))
@@ -2838,7 +2826,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
         {
           /* request will not write anything */
           if(export_client_match(hostaddr,
-                                 ipstring,
                                  &(pexport->clients),
                                  pclient_found,
                                  EXPORT_OPTION_READ_ACCESS))
@@ -2859,7 +2846,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             }
           else if(pexport->new_access_list_version &&
                   export_client_match(hostaddr,
-                                      ipstring,
                                       &(pexport->clients),
                                       pclient_found,
                                       EXPORT_OPTION_MD_READ_ACCESS))
@@ -2918,26 +2904,26 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
           /* Proceed with IPv4 dedicated function */
           /* check if any root access export matches this client */
           if((user_credentials->caller_uid == 0) &&
-             export_client_match(hostaddr, ipstring, &(pexport->clients),
+             export_client_match(hostaddr, &(pexport->clients),
                                  pclient_found, EXPORT_OPTION_ROOT))
             return EXPORT_PERMISSION_GRANTED;
           /* else, check if any access only export matches this client */
           if(proc_makes_write)
             {
-              if (export_client_match(hostaddr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
+              if (export_client_match(hostaddr, &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
                 return EXPORT_PERMISSION_GRANTED;
               else if (pexport->new_access_list_version &&
-                       export_client_match(hostaddr, ipstring,
+                       export_client_match(hostaddr,
                                            &(pexport->clients), pclient_found, EXPORT_OPTION_MD_WRITE_ACCESS))
                 {
                   pexport->access_type = ACCESSTYPE_MDONLY;
                   return EXPORT_MDONLY_GRANTED;
                 }
             } else { /* request will not write anything */
-            if (export_client_match(hostaddr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
+            if (export_client_match(hostaddr, &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
               return EXPORT_PERMISSION_GRANTED;
             else if (pexport->new_access_list_version &&
-                     export_client_match(hostaddr, ipstring,
+                     export_client_match(hostaddr,
                                          &(pexport->clients), pclient_found, EXPORT_OPTION_MD_READ_ACCESS))
               {
                 pexport->access_type = ACCESSTYPE_MDONLY_RO;

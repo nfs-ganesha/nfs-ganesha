@@ -87,7 +87,6 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
   char ip6string[MAXHOSTNAMELEN];
   memset(ten_bytes_all_0, 0, 10);
 #endif
-  char ipstring[SOCK_NAME_MAX];
 
   psockaddr_in = (sockaddr_t *)pssaddr;
 
@@ -98,16 +97,8 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
   if(psockaddr_in->sin_family == AF_INET)
     {
 #endif                          /* _USE_TIRPC_IPV6 */
-      /* Convert IP address into a string for wild character access checks. */
-      sprint_sockip(psockaddr_in, ipstring, sizeof(ipstring));
-      if(ipstring == NULL)
-        {
-          LogCrit(COMPONENT_MAIN,
-                  "Stat Export Check Access: Could not convert the IPv4 address to a character string.");
-          return FALSE;
-        }
-      if(export_client_match
-         (psockaddr_in, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
+      if(export_client_match(psockaddr_in, clients, pclient_found,
+                 EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }

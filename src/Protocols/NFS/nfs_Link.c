@@ -89,7 +89,7 @@ int nfs_Link(nfs_arg_t *parg,
              struct svc_req *preq,
              nfs_res_t * pres)
 {
- char *link_name;
+  char *link_name = NULL;
   cache_entry_t *target_pentry = NULL;
   cache_entry_t *parent_pentry;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
