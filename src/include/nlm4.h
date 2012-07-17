@@ -325,52 +325,48 @@ extern "C"
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
-  extern bool_t xdr_int32_t(XDR *, int32_t *);
-  extern bool_t xdr_uint32_t(XDR *, uint32_t *);
-  extern bool_t xdr_int64_t(XDR *, int64_t *);
-  extern bool_t xdr_uint64_t(XDR *, uint64_t *);
-  extern bool_t xdr_nlm4_stats(XDR *, nlm4_stats *);
-  extern bool_t xdr_nlm4_stat(XDR *, nlm4_stat *);
-  extern bool_t xdr_nlm4_res(XDR *, nlm4_res *);
-  extern bool_t xdr_nlm4_holder(XDR *, nlm4_holder *);
-  extern bool_t xdr_nlm4_testrply(XDR *, nlm4_testrply *);
-  extern bool_t xdr_nlm4_testres(XDR *, nlm4_testres *);
-  extern bool_t xdr_nlm4_lock(XDR *, nlm4_lock *);
-  extern bool_t xdr_nlm4_lockargs(XDR *, nlm4_lockargs *);
-  extern bool_t xdr_nlm4_cancargs(XDR *, nlm4_cancargs *);
-  extern bool_t xdr_nlm4_testargs(XDR *, nlm4_testargs *);
-  extern bool_t xdr_nlm4_unlockargs(XDR *, nlm4_unlockargs *);
-  extern bool_t xdr_fsh4_mode(XDR *, fsh4_mode *);
-  extern bool_t xdr_fsh4_access(XDR *, fsh4_access *);
-  extern bool_t xdr_nlm4_share(XDR *, nlm4_share *);
-  extern bool_t xdr_nlm4_shareargs(XDR *, nlm4_shareargs *);
-  extern bool_t xdr_nlm4_shareres(XDR *, nlm4_shareres *);
-  extern bool_t xdr_nlm4_free_allargs(XDR *, nlm4_free_allargs *);
-  extern bool_t xdr_nlm4_sm_notifyargs(XDR *, nlm4_sm_notifyargs *);
+  extern bool xdr_int64_t(XDR *, int64_t *);
+  extern bool xdr_uint64_t(XDR *, uint64_t *);
+  extern bool xdr_nlm4_stats(XDR *, nlm4_stats *);
+  extern bool xdr_nlm4_stat(XDR *, nlm4_stat *);
+  extern bool xdr_nlm4_res(XDR *, nlm4_res *);
+  extern bool xdr_nlm4_holder(XDR *, nlm4_holder *);
+  extern bool xdr_nlm4_testrply(XDR *, nlm4_testrply *);
+  extern bool xdr_nlm4_testres(XDR *, nlm4_testres *);
+  extern bool xdr_nlm4_lock(XDR *, nlm4_lock *);
+  extern bool xdr_nlm4_lockargs(XDR *, nlm4_lockargs *);
+  extern bool xdr_nlm4_cancargs(XDR *, nlm4_cancargs *);
+  extern bool xdr_nlm4_testargs(XDR *, nlm4_testargs *);
+  extern bool xdr_nlm4_unlockargs(XDR *, nlm4_unlockargs *);
+  extern bool xdr_fsh4_mode(XDR *, fsh4_mode *);
+  extern bool xdr_fsh4_access(XDR *, fsh4_access *);
+  extern bool xdr_nlm4_share(XDR *, nlm4_share *);
+  extern bool xdr_nlm4_shareargs(XDR *, nlm4_shareargs *);
+  extern bool xdr_nlm4_shareres(XDR *, nlm4_shareres *);
+  extern bool xdr_nlm4_free_allargs(XDR *, nlm4_free_allargs *);
+  extern bool xdr_nlm4_sm_notifyargs(XDR *, nlm4_sm_notifyargs *);
 
 #else                           /* K&R C */
-  extern bool_t xdr_int32_t();
-  extern bool_t xdr_uint32_t();
-  extern bool_t xdr_int64_t();
-  extern bool_t xdr_uint64_t();
-  extern bool_t xdr_nlm4_stats();
-  extern bool_t xdr_nlm4_stat();
-  extern bool_t xdr_nlm4_res();
-  extern bool_t xdr_nlm4_holder();
-  extern bool_t xdr_nlm4_testrply();
-  extern bool_t xdr_nlm4_testres();
-  extern bool_t xdr_nlm4_lock();
-  extern bool_t xdr_nlm4_lockargs();
-  extern bool_t xdr_nlm4_cancargs();
-  extern bool_t xdr_nlm4_testargs();
-  extern bool_t xdr_nlm4_unlockargs();
-  extern bool_t xdr_fsh4_mode();
-  extern bool_t xdr_fsh4_access();
-  extern bool_t xdr_nlm4_share();
-  extern bool_t xdr_nlm4_shareargs();
-  extern bool_t xdr_nlm4_shareres();
-  extern bool_t xdr_nlm4_free_allargs();
-  extern bool_t xdr_nlm4_sm_notifyargs();
+  extern bool xdr_int64_t();
+  extern bool xdr_uint64_t();
+  extern bool xdr_nlm4_stats();
+  extern bool xdr_nlm4_stat();
+  extern bool xdr_nlm4_res();
+  extern bool xdr_nlm4_holder();
+  extern bool xdr_nlm4_testrply();
+  extern bool xdr_nlm4_testres();
+  extern bool xdr_nlm4_lock();
+  extern bool xdr_nlm4_lockargs();
+  extern bool xdr_nlm4_cancargs();
+  extern bool xdr_nlm4_testargs();
+  extern bool xdr_nlm4_unlockargs();
+  extern bool xdr_fsh4_mode();
+  extern bool xdr_fsh4_access();
+  extern bool xdr_nlm4_share();
+  extern bool xdr_nlm4_shareargs();
+  extern bool xdr_nlm4_shareres();
+  extern bool xdr_nlm4_free_allargs();
+  extern bool xdr_nlm4_sm_notifyargs();
 
 #endif                          /* K&R C */
 

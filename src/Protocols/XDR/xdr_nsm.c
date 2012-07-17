@@ -9,14 +9,14 @@
 
 #include "nsm.h"
 
-bool_t xdr_res(XDR * xdrs, res * objp)
+bool xdr_res(XDR * xdrs, res * objp)
 {
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
   return TRUE;
 }
 
-bool_t xdr_sm_stat_res(XDR * xdrs, sm_stat_res * objp)
+bool xdr_sm_stat_res(XDR * xdrs, sm_stat_res * objp)
 {
   if(!xdr_res(xdrs, &objp->res_stat))
     return FALSE;
@@ -25,14 +25,14 @@ bool_t xdr_sm_stat_res(XDR * xdrs, sm_stat_res * objp)
   return TRUE;
 }
 
-bool_t xdr_sm_stat(XDR * xdrs, sm_stat * objp)
+bool xdr_sm_stat(XDR * xdrs, sm_stat * objp)
 {
   if(!xdr_int(xdrs, &objp->state))
     return FALSE;
   return TRUE;
 }
 
-bool_t xdr_my_id(XDR * xdrs, my_id * objp)
+bool xdr_my_id(XDR * xdrs, my_id * objp)
 {
   if(!xdr_string(xdrs, &objp->my_name, SM_MAXSTRLEN))
     return FALSE;
@@ -45,7 +45,7 @@ bool_t xdr_my_id(XDR * xdrs, my_id * objp)
   return TRUE;
 }
 
-bool_t xdr_mon_id(XDR * xdrs, mon_id * objp)
+bool xdr_mon_id(XDR * xdrs, mon_id * objp)
 {
   if(!xdr_string(xdrs, &objp->mon_name, SM_MAXSTRLEN))
     return FALSE;
@@ -54,7 +54,7 @@ bool_t xdr_mon_id(XDR * xdrs, mon_id * objp)
   return TRUE;
 }
 
-bool_t xdr_mon(XDR * xdrs, mon * objp)
+bool xdr_mon(XDR * xdrs, mon * objp)
 {
   if(!xdr_mon_id(xdrs, &objp->mon_id))
     return FALSE;
