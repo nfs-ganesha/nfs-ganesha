@@ -314,27 +314,14 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
  * @param pattr      [OUT] NFSv3 PostOp structure attributes.
  *
  */
-int nfs_SetPostOpAttr(exportlist_t *pexport,
-                      const struct attrlist *pfsal_attr,
-                      post_op_attr *presult)
+void nfs_SetPostOpAttr(exportlist_t *pexport,
+                       const struct attrlist *pfsal_attr,
+                       post_op_attr *presult)
 {
-  if(pfsal_attr == NULL)
-    {
-      presult->attributes_follow
+  presult->attributes_follow
            = nfs3_FSALattr_To_Fattr(pexport,
                                     pfsal_attr,
                                     &(presult->post_op_attr_u.attributes));
-    }
-
-  if(nfs3_FSALattr_To_Fattr(pexport,
-                            pfsal_attr,
-                            &(presult->post_op_attr_u.attributes))
-     == 0)
-    presult->attributes_follow = FALSE;
-  else
-    presult->attributes_follow = TRUE;
-
-  return 0;
 } /* nfs_SetPostOpAttr */
 
 /**

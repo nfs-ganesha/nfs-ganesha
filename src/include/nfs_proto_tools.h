@@ -88,7 +88,7 @@ void nfs_SetWccData(exportlist_t * pexport,
                     const struct attrlist *pbefore_attr,
                     const struct attrlist *pafter_attr, wcc_data * pwcc_data);
 
-int nfs_SetPostOpAttr(exportlist_t * pexport,
+void nfs_SetPostOpAttr(exportlist_t * pexport,
                       const struct attrlist *pfsal_attr,
                       post_op_attr * presult);
 
