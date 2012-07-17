@@ -115,6 +115,19 @@ int nfs4_op_lock(struct nfs_argop4 *op,
         }
 
 
+        /* Convert lock parameters to internal types */
+        switch(arg_LOCK4->locktype) {
+        case READ_LT:
+        case READW_LT:
+                lock_desc.lock_type = FSAL_LOCK_R;
+                break;
+
+        case WRITE_LT:
+        case WRITEW_LT:
+                lock_desc.lock_type = FSAL_LOCK_W;
+                break;
+        }
+
         lock_desc.lock_start = arg_LOCK4->offset;
 
         if (arg_LOCK4->length != STATE_LOCK_OFFSET_EOF) {
