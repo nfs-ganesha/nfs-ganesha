@@ -606,7 +606,8 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
    */
 
   if(pexport->UseCookieVerifier)
-    memcpy(cookie_verifier, &(dir_attr.mtime), sizeof(dir_attr.mtime));
+    memcpy(cookie_verifier, &(dir_attr.mtime.seconds),
+           sizeof(dir_attr.mtime.seconds));
 
   /*
    * nothing to do if != 0 because the area is already full of
@@ -1312,7 +1313,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
    */
 
   if(pexport->UseCookieVerifier)
-    memcpy(cookie_verifier, &(dir_attr.mtime), sizeof(dir_attr.mtime));
+    memcpy(cookie_verifier, &dir_attr.mtime.seconds,
+           sizeof(dir_attr.mtime.seconds));
 
   /*
    * nothing to do if != 0 because the area is already full of
