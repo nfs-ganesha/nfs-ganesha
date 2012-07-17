@@ -20,9 +20,10 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
 /* Initialize configuration parameters
@@ -354,9 +355,9 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
       if(!STRCMP(key_name, "link_support"))
         {
 
-          int bool = StrToBoolean(key_value);
+          int val = StrToBoolean(key_value);
 
-          if(bool == -1)
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
@@ -368,14 +369,14 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
            * else keep fs default.
            */
           SET_INIT_INFO(common_info, link_support,
-                             FSAL_INIT_MAX_LIMIT, bool);
+                             FSAL_INIT_MAX_LIMIT, val);
 
         }
       else if(!STRCMP(key_name, "symlink_support"))
         {
-          int bool = StrToBoolean(key_value);
+          int val = StrToBoolean(key_value);
 
-          if(bool == -1)
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
@@ -387,13 +388,13 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
            * else keep fs default.
            */
           SET_INIT_INFO(common_info, symlink_support,
-                             FSAL_INIT_MAX_LIMIT, bool);
+                             FSAL_INIT_MAX_LIMIT, val);
         }
       else if(!STRCMP(key_name, "cansettime"))
         {
-          int bool = StrToBoolean(key_value);
+          int val = StrToBoolean(key_value);
 
-          if(bool == -1)
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
@@ -405,7 +406,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
            * else keep fs default.
            */
           SET_INIT_INFO(common_info, cansettime,
-                             FSAL_INIT_MAX_LIMIT, bool);
+                             FSAL_INIT_MAX_LIMIT, val);
 
         }
       else if(!STRCMP(key_name, "maxread"))
@@ -446,9 +447,9 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
         }
       else if(!STRCMP(key_name, "auth_xdev_export"))
         {
-          int bool = StrToBoolean(key_value);
+          int val = StrToBoolean(key_value);
 
-          if(bool == -1)
+          if(val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: boolean expected.",
@@ -457,7 +458,7 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
             }
 
           SET_INIT_INFO(common_info, auth_exportpath_xdev,
-                             FSAL_INIT_FORCE_VALUE, bool);
+                             FSAL_INIT_FORCE_VALUE, val);
         }
       else if(!STRCMP(key_name, "xattr_access_rights"))
         {

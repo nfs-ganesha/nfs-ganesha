@@ -16,7 +16,7 @@
 #include "nfs23.h"
 
 
-bool_t xdr_mountstat3(xdrs, objp)
+bool xdr_mountstat3(xdrs, objp)
 register XDR *xdrs;
 mountstat3 *objp;
 {
@@ -32,7 +32,7 @@ mountstat3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_fhandle3(xdrs, objp)
+bool xdr_fhandle3(xdrs, objp)
 register XDR *xdrs;
 fhandle3 *objp;
 {
@@ -49,7 +49,7 @@ fhandle3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_dirpath(xdrs, objp)
+bool xdr_dirpath(xdrs, objp)
 register XDR *xdrs;
 dirpath *objp;
 {
@@ -65,7 +65,7 @@ dirpath *objp;
   return (TRUE);
 }
 
-bool_t xdr_name(xdrs, objp)
+bool xdr_name(xdrs, objp)
 register XDR *xdrs;
 name *objp;
 {
@@ -81,7 +81,7 @@ name *objp;
   return (TRUE);
 }
 
-bool_t xdr_groups(xdrs, objp)
+bool xdr_groups(xdrs, objp)
 register XDR *xdrs;
 groups *objp;
 {
@@ -98,7 +98,7 @@ groups *objp;
   return (TRUE);
 }
 
-bool_t xdr_groupnode(xdrs, objp)
+bool xdr_groupnode(xdrs, objp)
 register XDR *xdrs;
 groupnode *objp;
 {
@@ -116,7 +116,7 @@ groupnode *objp;
   return (TRUE);
 }
 
-bool_t xdr_exports(xdrs, objp)
+bool xdr_exports(xdrs, objp)
 register XDR *xdrs;
 exports *objp;
 {
@@ -133,7 +133,7 @@ exports *objp;
   return (TRUE);
 }
 
-bool_t xdr_exportnode(xdrs, objp)
+bool xdr_exportnode(xdrs, objp)
 register XDR *xdrs;
 exportnode *objp;
 {
@@ -153,7 +153,7 @@ exportnode *objp;
   return (TRUE);
 }
 
-bool_t xdr_mountlist(xdrs, objp)
+bool xdr_mountlist(xdrs, objp)
 register XDR *xdrs;
 mountlist *objp;
 {
@@ -170,7 +170,7 @@ mountlist *objp;
   return (TRUE);
 }
 
-bool_t xdr_mountbody(xdrs, objp)
+bool xdr_mountbody(xdrs, objp)
 register XDR *xdrs;
 mountbody *objp;
 {
@@ -190,7 +190,7 @@ mountbody *objp;
   return (TRUE);
 }
 
-bool_t xdr_mountres3_ok(xdrs, objp)
+bool xdr_mountres3_ok(xdrs, objp)
 register XDR *xdrs;
 mountres3_ok *objp;
 {
@@ -211,7 +211,7 @@ mountres3_ok *objp;
   return (TRUE);
 }
 
-bool_t xdr_mountres3(xdrs, objp)
+bool xdr_mountres3(xdrs, objp)
 register XDR *xdrs;
 mountres3 *objp;
 {
