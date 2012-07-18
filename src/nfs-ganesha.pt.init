@@ -32,7 +32,7 @@
 
 PATHPROG=/usr/bin/pt.ganesha.nfsd
 PROG=pt.ganesha.nfsd
-LOGFILE=/var/log/nfs-ganesha.log
+LOGFILE=/pt_work/log/ganesha/nfs-ganesha.log
 #LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
