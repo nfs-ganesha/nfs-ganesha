@@ -62,15 +62,16 @@ static const uint32_t FSAL_XATTR_RW_COOKIE = ~0;
  * @brief Object file type within the system
  */
 typedef enum {
-        REGULAR_FILE = 0,
-        CHARACTER_FILE = 1,
-        BLOCK_FILE = 2,
-        SYMBOLIC_LINK = 3,
-        SOCKET_FILE = 4,
-        FIFO_FILE = 5,
-        DIRECTORY = 6,
-        FS_JUNCTION = 7,
-        EXTENDED_ATTR = 8
+	NO_FILE_TYPE = 0, /* sanity check to ignore type */
+        REGULAR_FILE = 1,
+        CHARACTER_FILE = 2,
+        BLOCK_FILE = 3,
+        SYMBOLIC_LINK = 4,
+        SOCKET_FILE = 5,
+        FIFO_FILE = 6,
+        DIRECTORY = 7,
+        FS_JUNCTION = 8,
+        EXTENDED_ATTR = 9
 } object_file_type_t;
 
 /**

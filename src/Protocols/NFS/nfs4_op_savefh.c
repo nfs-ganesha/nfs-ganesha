@@ -83,7 +83,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
   res_SAVEFH.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_SAVEFH.status = nfs4_sanity_check_FH(data, 0LL);
+  res_SAVEFH.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE);
   if(res_SAVEFH.status != NFS4_OK)
     return res_SAVEFH.status;
 

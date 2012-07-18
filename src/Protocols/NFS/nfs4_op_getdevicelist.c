@@ -111,7 +111,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op,
 
 
 #ifdef _PNFS_MDS
-     if ((nfs_status = nfs4_sanity_check_FH(data, 0))
+     if ((nfs_status = nfs4_sanity_check_FH(data, NO_FILE_TYPE))
          != NFS4_OK) {
           goto out;
      }

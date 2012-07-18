@@ -101,7 +101,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   res_CREATE4.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_CREATE4.status = nfs4_sanity_check_FH(data, 0LL);
+  res_CREATE4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE);
   if(res_CREATE4.status != NFS4_OK)
     goto out;
 

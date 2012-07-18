@@ -186,7 +186,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
      case LAYOUTRETURN4_FSID:
           if ((nfs_status
                = nfs4_sanity_check_FH(data,
-                                      0))
+                                      NO_FILE_TYPE))
               != NFS4_OK) {
                res_LAYOUTRETURN4.lorr_status = nfs_status;
                return res_LAYOUTRETURN4.lorr_status;

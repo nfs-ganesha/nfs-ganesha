@@ -1067,6 +1067,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
               file_type = htonl(NF4FIFO);       /* Special File - fifo */
               break;
 
+	    case NO_FILE_TYPE:
             case FS_JUNCTION:
               /* For wanting of a better solution */
               file_type = 0;
@@ -1899,6 +1900,7 @@ int nfs2_FSALattr_To_Fattr(exportlist_t *pexport,
       /** @todo mode mask ? */
       break;
 
+    case NO_FILE_TYPE:
     case EXTENDED_ATTR:
     case FS_JUNCTION:
       pFattr->type = NFBAD;
@@ -4339,7 +4341,7 @@ nfs4_sanity_check_FH(compound_data_t *data,
         }
 
         /* Check for the correct file type */
-        if (required_type) {
+        if (required_type != NO_FILE_TYPE) {
                 if (data->current_filetype != required_type) {
                         LogDebug(COMPONENT_NFSPROTO,
                                  "Wrong file type");
