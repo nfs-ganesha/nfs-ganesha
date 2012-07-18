@@ -104,10 +104,6 @@ cache_inode_rdwr(cache_entry_t *entry,
      bool_t content_locked = FALSE;
      /* TRUE if we have taken the attribute lock on 'entry' */
      bool_t attributes_locked = FALSE;
-     /* TRUE if we opened a previously closed FD */
-     bool_t opened = FALSE;
-     /* We need this until Jim Lieb redoes the FSAL interface.  But
-        there's no reason to make users of cache_inode deal with it. */
 
      /* Set flags for a read or write, as appropriate */
      if (io_direction == CACHE_INODE_READ) {
@@ -120,7 +116,8 @@ cache_inode_rdwr(cache_entry_t *entry,
 
      /* IO is done only on REGULAR_FILEs */
      if (entry->type != REGULAR_FILE) {
-          *status = CACHE_INODE_BAD_TYPE;
+          *status = entry->type == DIRECTORY
+		  ? CACHE_INODE_IS_A_DIRECTORY : CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
@@ -198,7 +195,6 @@ cache_inode_rdwr(cache_entry_t *entry,
                                          status) != CACHE_INODE_SUCCESS) {
                          goto out;
                     }
-                    opened = TRUE;
                }
           }
 
@@ -284,7 +280,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                        "bytes_moved=%zu, offset=%"PRIu64,
                        io_size, *bytes_moved, offset);
 
-          if (opened) {
+          if (is_open(entry)) {
                if (cache_inode_close(entry,
                                      CACHE_INODE_FLAG_CONTENT_HAVE |
                                      CACHE_INODE_FLAG_CONTENT_HOLD,
