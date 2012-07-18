@@ -61,6 +61,7 @@ typedef struct _9p_cb_entry
 {
    u64       qid_path ;
    u8      * qid_type ;
+   char      d_type   ; /* Attention, this is a VFS d_type, not a 9P type */
    char    * name_str ;
    u16       name_len ;
    uint64_t  cookie   ;
@@ -95,20 +96,39 @@ static bool_t _9p_readdir_callback( void* opaque,
   switch( pattrs->type ) 
    {
       case FSAL_TYPE_FIFO:
+        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
+        cb_data->entries[cb_data->count].d_type = DT_FIFO ;
+        break ;
+
       case FSAL_TYPE_CHR:
+        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
+        cb_data->entries[cb_data->count].d_type = DT_CHR ;
+        break ;
+
       case FSAL_TYPE_BLK:
+        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
+        cb_data->entries[cb_data->count].d_type = DT_BLK ;
+        break ;
+
       case FSAL_TYPE_FILE:
+        cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
+        cb_data->entries[cb_data->count].d_type = DT_REG ;
+        break ;
+
       case FSAL_TYPE_SOCK:
         cb_data->entries[cb_data->count].qid_type = &qid_type_file ;
+        cb_data->entries[cb_data->count].d_type = DT_SOCK ;
         break ;
 
       case FSAL_TYPE_JUNCTION:
       case FSAL_TYPE_DIR:
         cb_data->entries[cb_data->count].qid_type = &qid_type_dir ;
+        cb_data->entries[cb_data->count].d_type = DT_DIR ;
         break ;
 
       case FSAL_TYPE_LNK:
         cb_data->entries[cb_data->count].qid_type = &qid_type_symlink ;
+        cb_data->entries[cb_data->count].d_type = DT_LNK ;
         break ;
     
       default:
@@ -142,6 +162,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
   u8  * qid_type    = NULL ;
   u64 * qid_path    = NULL ;
+  char d_type       = 0 ;
 
   char * dcount_pos = NULL ;
 
@@ -200,6 +221,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       /* Deal with "." and ".." */
       cb_data.entries[0].qid_path =  pfid->pentry->attributes.fileid ;
       cb_data.entries[0].qid_type =  &qid_type_dir ;
+      cb_data.entries[0].d_type   =  DT_DIR ;
       cb_data.entries[0].name_str =  pathdot ;
       cb_data.entries[0].name_len =  strlen( pathdot ) ;
       cb_data.entries[0].cookie   =  1LL ;
@@ -207,6 +229,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
       cb_data.entries[1].qid_path =  pentry_dot_dot->attributes.fileid ;
       cb_data.entries[1].qid_type =  &qid_type_dir ;
+      cb_data.entries[1].d_type   =  DT_DIR ;
       cb_data.entries[1].name_str =  pathdotdot ;
       cb_data.entries[1].name_len =  strlen( pathdotdot ) ;
       cb_data.entries[1].cookie   =  2LL ;
@@ -224,6 +247,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
       cb_data.entries[0].qid_path =  pentry_dot_dot->attributes.fileid ;
       cb_data.entries[0].qid_type =  &qid_type_dir ;
+      cb_data.entries[0].d_type   =  DT_DIR ;
       cb_data.entries[0].name_str =  pathdotdot ;
       cb_data.entries[0].name_len =  strlen( pathdotdot ) ;
       cb_data.entries[0].cookie   =  1LL ;
@@ -281,6 +305,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      /* Build qid */
      qid_path = &cb_data.entries[i].qid_path ;
      qid_type = cb_data.entries[i].qid_type ;
+     d_type =  cb_data.entries[i].d_type ;
 
      /* Get dirent name information */
      name_str = cb_data.entries[i].name_str ;
@@ -296,7 +321,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
        dcount += recsize ;
 
      /* qid in 3 parts */
-     _9p_setptr( cursor, qid_type, u8 ) ;
+     _9p_setptr( cursor, qid_type, u8 ) ; /* 9P entry type */
      _9p_setvalue( cursor, 0, u32 ) ; /* qid_version set to 0 to prevent the client from caching */
      _9p_setptr( cursor, qid_path, u64 ) ;
      
@@ -304,14 +329,14 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      _9p_setvalue( cursor, cb_data.entries[i].cookie, u64 ) ;   
 
      /* Type (this time outside the qid)) */
-     _9p_setptr( cursor, qid_type, u8 ) ;
+     _9p_setvalue( cursor, d_type, u8 ) ; /* VFS d_type (like in getdents) */
 
      /* name */
      _9p_setstr( cursor, name_len, name_str ) ;
   
      LogDebug( COMPONENT_9P, "RREADDIR dentry: recsize=%u dentry={fsal_cookie=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
                recsize, (unsigned long long)cb_data.entries[i].cookie , *qid_type, 0, (unsigned long long)*qid_path, 
-               *qid_type, name_str ) ;
+               d_type, name_str ) ;
    } /* for( i = 0 , ... ) */
 
   gsh_free( cb_data.entries ) ;
