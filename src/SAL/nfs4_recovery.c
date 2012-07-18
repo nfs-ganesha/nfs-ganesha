@@ -444,6 +444,7 @@ nfs4_clean_old_recov_dir()
                             path, errno);
                 }
         }
+        closedir(dp);
 }
 
 /*

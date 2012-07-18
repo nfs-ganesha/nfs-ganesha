@@ -878,6 +878,7 @@ find_keytab_entry(krb5_context context, krb5_keytab kt, const char *hostname,
 				k5err = gssd_k5_err_msg(context, code);
 				printerr(1, "%s while building principal for '%s'\n",
 					 k5err, spn);
+                                free(k5err);
 				continue;
 			}
 			code = krb5_kt_get_entry(context, kt, princ, 0, 0, kte);
@@ -886,6 +887,7 @@ find_keytab_entry(krb5_context context, krb5_keytab kt, const char *hostname,
 				k5err = gssd_k5_err_msg(context, code);
 				printerr(3, "%s while getting keytab entry for '%s'\n",
 					 k5err, spn);
+                                free(k5err);
 			} else {
 				printerr(3, "Success getting keytab entry for '%s'\n",spn);
 				retval = 0;
