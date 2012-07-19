@@ -485,6 +485,16 @@ if test "$enable_9p" == "yes"; then
 	AC_DEFINE(_USE_9P, 1, [enable 9P support])
 fi
 
+# Enable 9P_RDMA support
+GA_ENABLE_AM_CONDITION([9p-rdma],[enable 9P_RDMA support], [USE_9P_RDMA])
+if test "$enable_9p_rdma" == "yes"; then
+        if test "$enable_9p" != "yes"; then
+            AC_MSG_ERROR([You must activate 9P support to activate 9P_RDMA support])
+        else
+	    AC_DEFINE(_USE_9P_RDMA, 1, [enable 9P_RDMA support])
+        fi
+fi
+
 
 # IPv6
 GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
