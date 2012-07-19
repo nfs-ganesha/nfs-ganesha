@@ -1536,12 +1536,6 @@ static void nfs_rpc_execute(request_data_t *preq,
    * mark the dupreq cached info eligible for being reuse by other requests */
   if(!do_dupreq_cache)
     {
-      if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-        {
-          LogCrit(COMPONENT_DISPATCH,
-                  "Attempt to delete duplicate request failed on line %d",
-                  __LINE__);
-        }
       /* Free only the non dropped requests */
       if(rc == NFS_REQ_OK) {
           pworker_data->pfuncdesc->free_function(&res_nfs);
