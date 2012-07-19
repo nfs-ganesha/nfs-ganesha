@@ -127,13 +127,18 @@ int nfs4_op_link(struct nfs_argop4 *op,
       goto out;
     }
 
-  /* get info from compound data */
-  dir_pentry = data->current_entry;
-
   /* Destination FH (the currentFH) must be a directory */
   if(data->current_filetype != DIRECTORY)
     {
       res_LINK4.status = NFS4ERR_NOTDIR;
+      goto out;
+    }
+
+  /* Target object (the savedFH) must be real.
+   * which is the case if a SAVEFH was not done before here */
+  if(data->saved_filetype == NO_FILE_TYPE || data->saved_entry == NULL)
+    {
+      res_LINK4.status = NFS4ERR_NOFILEHANDLE;
       goto out;
     }
 
@@ -143,6 +148,9 @@ int nfs4_op_link(struct nfs_argop4 *op,
       res_LINK4.status = NFS4ERR_ISDIR;
       goto out;
     }
+
+  /* get info from compound data */
+  dir_pentry = data->current_entry;
 
   /* We have to keep track of the 'change' file attribute for reply
      structure */
@@ -183,7 +191,7 @@ int nfs4_op_link(struct nfs_argop4 *op,
   if (newname) {
     gsh_free(newname);
   }
-  return NFS4_OK;
+  return res_LINK4.status;
 }                               /* nfs4_op_link */
 
 /**
