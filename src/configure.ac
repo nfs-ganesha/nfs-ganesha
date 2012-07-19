@@ -290,6 +290,7 @@ AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 # during the build
 GA_AM_COND_ON_UNLESS([fsal-proxy],[do not build PROXY FSAL shared library],[USE_FSAL_PROXY])
 GA_AM_COND_ON_UNLESS([fsal-vfs],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
+GA_AM_COND_ON_UNLESS([fsal-ceph],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
 
 # FSALs whicha re disabled by default
 GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
@@ -496,7 +497,7 @@ fi
 
 # explicit Ceph path @todo : add a defaut value
 AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
-		CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
+	    CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
 
 # pNFS Metadata Server Support
 GA_ENABLE_AM_CONDITION([pnfs-mds], [enable pNFS Metadata Server support (NFSv4.1 support is mandatory)],[USE_PNFS_MDS])
@@ -627,19 +628,21 @@ if test "$enable_fsal_xfs" == "yes"; then
 fi
 
 if test "$enable_fsal_ceph" == "yes"; then
-	AC_DEFINE([_USE_CEPH], 1, [GANESHA exports CEPH Filesystem])
-	dnl AC_CHECK_HEADERS([ceph/libceph.h], [], [AC_MSG_ERROR( missing ceph include files)])
-	CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64 ${CFLAGS}"
-	FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
-	LDFLAGS="-L${CEPH_PREFIX}/lib"
-	FSAL_LDFLAGS=-lcephfs
-	if test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \); then
-		FSALPNFS_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalpnfsceph.la"
-	else
-		FSALPNFS_LIB=""
-	fi
-	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
+	AC_CHECK_LIB([cephfs], [ceph_ll_connectable_x],
+		      [AC_DEFINE([_USE_CEPH], 1, [GANESHA exports Ceph Filesystem ])],
+		      [USE_FSAL_VFS_TRUE='#'])
+	CEPH_CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64"
+        CEPH_LDFLAGS="-L${CEPH_PREFIX}/lib"
+	CEPH_LIB="-lcephfs"
+else
+        CEPH_CFLAGS=""
+        CEPH_LDFLAGS=""
+        CEPH_LIB=""
 fi
+
+AC_SUBST(CEPH_CFLAGS)
+AC_SUBST(CEPH_LDFLAGS)
+AC_SUBST(CEPH_LIB)
 
 if test "$enable_fsal_gpfs" == "yes"; then
 	AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
@@ -830,7 +833,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_ZFS/Makefile
                  include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
-                 include/FSAL/FSAL_CEPH/Makefile
                  Common/Makefile
                  support/Makefile
                  Log/Makefile
