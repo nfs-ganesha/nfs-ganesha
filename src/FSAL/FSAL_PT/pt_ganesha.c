@@ -551,40 +551,12 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
     memset(&fsal_path, 0, sizeof(fsal_path_t));
     memcpy(&fsal_path.path, &fsi_name, sizeof(fsi_name));
     ptfsal_name_to_handle(p_context, &fsal_path, p_object_handle);
-    ccl_close(&ccl_context, rc);
+    ccl_close(&ccl_context, rc, 1 /* Use lock */);
     fsi_cache_name_and_handle(p_context, 
                               (char *)&p_fsi_handle->data.handle.f_handle, 
                               fsi_name);
   }
 
-  return rc;
-}
-// -----------------------------------------------------------------------------
-int
-ptfsal_close(fsal_file_t * p_file_descriptor)
-{
-  int handle_index;
-  int rc;
-
-  ptfsal_file_t * p_descriptor = (ptfsal_file_t *)p_file_descriptor;
-  ccl_context_t ccl_context;
-
-  ccl_context.handle_index = p_descriptor->fd;
-  ccl_context.export_id = p_descriptor->export_id;
-  ccl_context.uid       = p_descriptor->uid;
-  ccl_context.gid       = p_descriptor->gid;
-
-  handle_index = ((ptfsal_file_t *)p_file_descriptor)->fd;
-  FSI_TRACE(FSI_DEBUG, "Handle index = %d\n", handle_index);
-  if (fsi_check_handle_index (handle_index) < 0) {
-    return -1;
-  }
-
-  rc = ccl_close(&ccl_context, handle_index);
-  if (rc) {
-    FSI_TRACE(FSI_DEBUG, "ccl_close failed.\n");
-  }
-  FSI_TRACE(FSI_DEBUG, "Close rc = %d\n", rc);
   return rc;
 }
 // -----------------------------------------------------------------------------
@@ -599,7 +571,8 @@ ptfsal_close_mount_root(fsal_export_context_t * p_export_context)
   ccl_context.uid       = 0;
   ccl_context.gid       = 0;
 
-  return ccl_close(&ccl_context, fsi_export_context->mount_root_fd);
+  ccl_update_handle_nfs_state(fsi_export_context->mount_root_fd, NFS_CLOSE);
+  return 0;
 }
 // -----------------------------------------------------------------------------
 int

@@ -19,7 +19,6 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-#include "log.h"
 
 // Linux includes
 #include <stdio.h>
@@ -116,8 +115,6 @@ int ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
                 mode_t              mode,
                 fsal_handle_t     * p_object_handle);
 
-int ptfsal_close(fsal_file_t * p_file_descriptor);
-
 int ptfsal_close_mount_root(fsal_export_context_t * p_export_context);
 
 int ptfsal_ftruncate(fsal_op_context_t * p_context,
@@ -175,7 +172,8 @@ int ptfsal_symlink(fsal_handle_t     * p_parent_directory_handle,
                    fsal_accessmode_t   accessmode,
                    fsal_handle_t     * p_link_handle);
 
-int ptfsal_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter);
+int ptfsal_SetDefault_FS_specific_parameter(
+    /* param TBD fsal_parameter_t * out_parameter */);
 
 int ptfsal_name_to_handle(fsal_op_context_t * p_context,
                           fsal_path_t       * p_fsalpath,
@@ -203,4 +201,5 @@ mode_t fsal_type2unix(int fsal_type);
 
 void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context, 
                                 ccl_context_t     * context);
+void *ptfsal_closeHandle_listener_thread(void *args);
 #endif // ifndef __PT_GANESHA_H__

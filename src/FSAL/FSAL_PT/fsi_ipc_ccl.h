@@ -91,7 +91,7 @@ extern int g_ptfsal_debug_level;    // ptfsal sets to control
 extern int g_ptfsal_comp_num;       // ptfsal sets to COMPONENT_FSAL (5)
 extern int g_ptfsal_comp_level;     // ptfsal sets to NIV_INFO or NIV_DEBUG
 
-#define CCL_DEBUG( level, format, func, ... )                                     \
+#define CCL_DEBUG( level, format, func, ... )                              \
 {                                                                          \
   if (level <= g_ptfsal_debug_level) {                                     \
     DisplayLogComponentLevel( g_ptfsal_comp_num, "FSAL_PT",                \
@@ -114,18 +114,6 @@ extern int g_ptfsal_comp_level;     // ptfsal sets to NIV_INFO or NIV_DEBUG
   compile_time_check_func( format, ## __VA_ARGS__ );                       \
   CCL_DEBUG( (level), "[" #level "]: "   "%s: "  format, __func__,         \
                    ## __VA_ARGS__);                                        \
-}
-
-// Our own trace macro that adds standard prefix to statements that includes
-// the level and function name
-#define FSI_TRACE_GANESHA_TEMP( level, format, ... )                       \
-{                                                                          \
-  compile_time_check_func( format, ## __VA_ARGS__ );                       \
-  if (level <= FSI_DEBUG) {                                                \
-    printf("[" #level "]: "   "%s: "  format "\n",                         \
-             __func__,  ## __VA_ARGS__ );                                  \
-    fflush(NULL);                                                              \
-  }                                                                        \
 }
 
 #define FSI_TRACE_COND_RC(rc, errVal, ... )                                \
@@ -304,6 +292,7 @@ struct file_handle_t {
   uint64_t               m_file_flags;        // flags
   fsi_stat_struct        m_stat;
   uint64_t               m_fs_handle;         // handle
+  uint64_t               m_exportId;          // export id
   int                    m_deferred_io_rc;    // deferred io return code
 
   int                    m_dir_not_file_flag; // set if this handle represents a
@@ -326,6 +315,8 @@ struct file_handle_t {
   uint64_t               m_perf_pread_count;  // number of pread while open
   uint64_t               m_perf_aio_count;    // number of aio_force while open
   uint64_t               m_perf_fstat_count;  // number of fstat while open
+  enum e_nfs_state       m_nfs_state;
+  time_t                 m_last_io_time;      // Last time I/O was performed.
 };
 
 // ----------------------------------------------------------------------------
@@ -345,7 +336,7 @@ struct fsi_struct_dir_t {
   uint64_t m_dir_handle_index;
   uint64_t m_last_ino;  // last inode we responded with
   char     dname[PATH_MAX];
-  struct dirent64 dbuf;        // generic DIRENT buffer
+  struct dirent dbuf;        // generic DIRENT buffer
 };
 
 // ----------------------------------------------------------------------------
@@ -673,7 +664,8 @@ int ccl_open(ccl_context_t   * handle,
               int                   flags,
               mode_t                mode);
 int ccl_close(ccl_context_t * handle,
-               int handle_index);
+               int handle_index,
+              int useLock);
 int merge_errno_rc(int rc_a,
                    int rc_b);
 int get_all_io_responses(int     handle_index,
@@ -788,7 +780,10 @@ int ccl_readlink(ccl_context_t * pvfs_handle,
 int ccl_symlink(ccl_context_t * pvfs_handle,
                 const char    * path,
                 const char    * link_content);
-
+int ccl_find_oldest_handle(void);
+void ccl_update_handle_nfs_state(int handle_index, enum e_nfs_state state);
+void ccl_update_handle_last_io_timestamp(int handle_index);
+int ccl_implicit_close_for_nfs(int handle_index_to_close);
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
 //     Layer provide a copy of these functions and CCL call them (up calls)
@@ -799,11 +794,16 @@ extern int ccl_up_mutex_unlock(pthread_mutex_t *mutex);
 extern unsigned long ccl_up_self();
 
 // externs to globals the Samba VFS or Ganesha must provide
-extern pthread_mutex_t g_dir_mutex; // dir handle mutex
-extern pthread_mutex_t g_acl_mutex; // acl handle mutex
-extern pthread_mutex_t g_handle_mutex; // file handle processing mutex
-extern pthread_mutex_t g_parseio_mutex; // only one thread can parse an io at a time
-extern pthread_mutex_t g_transid_mutex; // only one thread can change global transid at a time
+// dir handle mutex
+extern pthread_mutex_t g_dir_mutex;
+// acl handle mutex
+extern pthread_mutex_t g_acl_mutex;
+// file handle processing mutex
+extern pthread_mutex_t g_handle_mutex;
+// only one thread can parse an io at a time
+extern pthread_mutex_t g_parseio_mutex;
+// only one thread can change global transid at a time
+extern pthread_mutex_t g_transid_mutex;
 extern pthread_mutex_t g_non_io_mutex;
 
 #endif // ifndef __FSI_IPC_CCL_H__

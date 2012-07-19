@@ -142,10 +142,6 @@ PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
     file_desc.export_id = fsi_export_context->pt_export_id; 
     file_desc.uid = fsi_op_context->credential.user;
     file_desc.gid = fsi_op_context->credential.group;
-    rc = ptfsal_close(&file_desc);
-    if(rc) {
-      FSI_TRACE(FSI_ERR, "Closing file failed\n");
-    }
   }
 
   /* Optionally retrieve attributes */
