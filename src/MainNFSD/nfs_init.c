@@ -409,6 +409,10 @@ nfs_tcb_t gccb;
 pthread_t _9p_dispatcher_thrid;
 #endif
 
+#ifdef _USE_9P_RDMA
+pthread_t _9p_rdma_dispatcher_thrid ;
+#endif
+
 #ifdef _USE_UPCALL_SIMULATOR
 pthread_t upcall_simulator_thrid;
 #endif
@@ -1142,16 +1146,30 @@ static void nfs_Start_threads(void)
   nfs_rpc_dispatch_threads(&attr_thr);
 
 #ifdef _USE_9P
-  /* Starting the 9p dispatcher thread */
+  /* Starting the 9P/TCP dispatcher thread */
   if((rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
                           _9p_dispatcher_thread, NULL ) ) != 0 )
     {
       LogFatal(COMPONENT_THREAD,
-               "Could not create  9p dispatcher_thread, error = %d (%s)",
+               "Could not create  9P/TCP dispatcher, error = %d (%s)",
                errno, strerror(errno));
     }
-  LogEvent(COMPONENT_THREAD, "9p dispatcher thread was started successfully");
+  LogEvent(COMPONENT_THREAD, "9P/TCP dispatcher thread was started successfully");
 #endif
+
+#ifdef _USE_9P_RDMA
+  /* Starting the 9P/RDMA dispatcher thread */
+  if((rc = pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
+                          _9p_rdma_dispatcher_thread, NULL ) ) != 0 )
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create  9P/RDMA dispatcher, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD, "9P/RDMA dispatcher thread was started successfully");
+#endif
+
+
 
 #ifdef USE_DBUS
       /* DBUS event thread */

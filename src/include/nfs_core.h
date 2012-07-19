@@ -690,6 +690,10 @@ void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
 void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) ;
 #endif
 
+#ifdef _USE_9P_RDMA
+void * _9p_rdma_dispatcher_thread(void *arg);
+#endif
+
 void nfs_operate_on_sigusr1() ;
 void nfs_operate_on_sigterm() ;
 void nfs_operate_on_sighup() ;
