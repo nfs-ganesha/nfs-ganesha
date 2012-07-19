@@ -40,7 +40,7 @@
 extern fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t *);
 
 static int fsal_up_thread_exists(exportlist_t *entry);
-static struct glist_head       fsal_up_process_queue;
+static struct glist_head       *fsal_up_process_queue;
 nfs_tcb_t                      fsal_up_process_tcb;
 
 fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
@@ -74,7 +74,7 @@ fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
   LogFullDebug(COMPONENT_FSAL_UP, "Schedule %p", arg);
 
   P(fsal_up_process_tcb.tcb_mutex);
-  glist_add_tail(&fsal_up_process_queue, &arg->event_list);
+  glist_add_tail(fsal_up_process_queue, &arg->event_list);
   rc = pthread_cond_signal(&fsal_up_process_tcb.tcb_condvar);
   LogFullDebug(COMPONENT_FSAL_UP,"Signaling tcb_condvar\n");
   if (rc == -1)
@@ -98,7 +98,14 @@ void *fsal_up_process_thread(void *UnUsedArg)
 
   SetNameFunction("fsal_up_process_thread");
 
-  init_glist(&fsal_up_process_queue);
+  if ((fsal_up_process_queue =
+       gsh_calloc(1, sizeof (struct glist_head))) == NULL)
+    {
+       LogFatal(COMPONENT_INIT,
+                "Error while allocating FSAL UP process queue.");
+    }
+
+  init_glist(fsal_up_process_queue);
   tcb_new(&fsal_up_process_tcb, "FSAL_UP Process Thread");
 
   if (mark_thread_existing(&fsal_up_process_tcb) == PAUSE_EXIT)
@@ -118,13 +125,13 @@ void *fsal_up_process_thread(void *UnUsedArg)
     {
       /* Check without tcb lock*/
       if ((fsal_up_process_tcb.tcb_state != STATE_AWAKE) ||
-          glist_empty(&fsal_up_process_queue))
+          glist_empty(fsal_up_process_queue))
         {
           while(1)
             {
               P(fsal_up_process_tcb.tcb_mutex);
               if ((fsal_up_process_tcb.tcb_state == STATE_AWAKE) &&
-                  !glist_empty(&fsal_up_process_queue))
+                  !glist_empty(fsal_up_process_queue))
                 {
                   V(fsal_up_process_tcb.tcb_mutex);
                   break;
@@ -136,7 +143,7 @@ void *fsal_up_process_thread(void *UnUsedArg)
                   continue;
 
                   case THREAD_SM_BREAK:
-                  if (glist_empty(&fsal_up_process_queue))
+                  if (glist_empty(fsal_up_process_queue))
                     {
                       gettimeofday(&now, NULL);
                       timeout.tv_sec = 10 + now.tv_sec;
@@ -155,7 +162,7 @@ void *fsal_up_process_thread(void *UnUsedArg)
              }
           }
         P(fsal_up_process_tcb.tcb_mutex);
-        fupevent = glist_first_entry(&fsal_up_process_queue,
+        fupevent = glist_first_entry(fsal_up_process_queue,
                                      fsal_up_event_t,
                                      event_list);
         if(fupevent != NULL)
@@ -215,7 +222,7 @@ void create_fsal_up_threads()
        * exports on the same filesystem. This could potentially cause issues. */
       LogMidDebug(COMPONENT_INIT, "Checking if export id %d with filesystem "
                "id %llu.%llu already has an assigned FSAL_UP thread.",
-               pcurrent->fsalid, pcurrent->filesystem_id.major,
+               pcurrent->id, pcurrent->filesystem_id.major,
                pcurrent->filesystem_id.minor);
 
       id = fsal_up_thread_exists(pcurrent);
@@ -430,7 +437,7 @@ void *fsal_up_thread(void *Arg)
   fsal_up_event_bus_filter_t * pupebfilter = NULL;
   fsal_up_filter_list_t *filter = NULL;
   fsal_up_event_t *event;
-  static struct glist_head pevent_head;
+  struct glist_head pevent_head;
   fsal_up_event_functions_t *event_func;
   fsal_count_t nb_events_found, event_nb;
   fsal_time_t timeout;
