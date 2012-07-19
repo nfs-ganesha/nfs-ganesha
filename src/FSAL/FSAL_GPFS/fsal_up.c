@@ -104,6 +104,11 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
       LogCrit(COMPONENT_FSAL,
         "Error: OPENHANDLE_INODE_UPDATE failed. rc %d, errno %d", rc, errno);
       gsh_free(tmp_handlep);
+      if (errno == EUNATCH)
+        {
+          LogFatal(COMPONENT_FSAL, "The GPFS file system has gone away.");
+          Fatal();
+        }
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_UP_getevents);
     }
 
@@ -175,6 +180,13 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
           pevent->event_data.type.update.upu_flags |= FSAL_UP_NLINK;
         pevent->event_type = FSAL_UP_EVENT_UPDATE;
         break;
+      case THREAD_STOP: /* GPFS export no longer available */
+        LogWarn(COMPONENT_FSAL, "Export is no longer available");
+        gsh_free(tmp_handlep);
+        pthread_mutex_lock(pupebcontext->event_pool_lock);
+        pool_free(pupebcontext->event_pool, pevent);
+        pthread_mutex_unlock(pupebcontext->event_pool_lock);
+        Return(ERR_FSAL_BAD_INIT, 0, INDEX_FSAL_UP_getevents);
       default: /* Invalidate Event - Default */
         pevent->event_type = FSAL_UP_EVENT_INVALIDATE;
     }

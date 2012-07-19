@@ -541,6 +541,16 @@ void *fsal_up_thread(void *Arg)
                       fsal_up_args->export_entry->id);
               return NULL;
             }
+          else if (status.major == ERR_FSAL_BAD_INIT)
+            {
+              LogCrit(COMPONENT_FSAL_UP, "Exiting FSAL UP Thread for filesystem"
+                      " id %llu.%llu export id %u because the FSAL Callback"
+                      " reports that the GPFS export has gone away.",
+                      fsal_up_args->export_entry->filesystem_id.major,
+                      fsal_up_args->export_entry->filesystem_id.minor,
+                      fsal_up_args->export_entry->id);
+              return NULL;
+            }
           else
             {
               LogWarn(COMPONENT_FSAL_UP, "Error: FSAL_UP_EB_GetEvents() "
