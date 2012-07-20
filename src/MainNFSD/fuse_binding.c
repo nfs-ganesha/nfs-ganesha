@@ -275,9 +275,6 @@ int ganefuse_main(int argc, char *argv[],
            ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
            FSAL_GetFSName());
 
-  /* initialize default parameters */
-  nfs_set_param_default();
-
   /* return all errors */
   nfs_param.core_param.drop_io_errors = FALSE;
   nfs_param.core_param.drop_inval_errors = FALSE;

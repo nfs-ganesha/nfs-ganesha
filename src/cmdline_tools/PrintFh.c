@@ -237,10 +237,6 @@ int main(int argc, char *argv[])
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-  /* initialize default parameters */
-
-  nfs_set_param_default();
-
   /* parse configuration file */
 
   if(nfs_set_param_from_conf(&nfs_start_info))

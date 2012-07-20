@@ -54,12 +54,6 @@ typedef struct __nfs_start_info
 void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path);
 
 /**
- * nfs_set_param_default:
- * Set p_nfs_param structure to default parameters.
- */
-void nfs_set_param_default();
-
-/**
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */

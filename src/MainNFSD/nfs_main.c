@@ -330,10 +330,6 @@ int main(int argc, char *argv[])
   FSAL_LoadDSFunctions();
 #endif
 
-  /* initialize default parameters */
-
-  nfs_set_param_default();
-
   /* parse configuration file */
 
   if(nfs_set_param_from_conf(config_struct, &my_nfs_start_info))

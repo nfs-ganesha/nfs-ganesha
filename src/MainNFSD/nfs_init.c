@@ -555,15 +555,6 @@ void nfs_print_param_config()
 }                               /* nfs_print_param_config */
 
 /**
- * nfs_set_param_default:
- * Set p_nfs_param structure to default parameters.
- */
-void nfs_set_param_default()
-{
-/** @TODO now that this is a noop, kill it post rebase
-}                               /* nfs_set_param_default */
-
-/**
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */
