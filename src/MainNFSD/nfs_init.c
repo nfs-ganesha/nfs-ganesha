@@ -561,7 +561,6 @@ void nfs_print_param_config()
 void nfs_set_param_default()
 {
 /** @TODO now that this is a noop, kill it post rebase
- */
 }                               /* nfs_set_param_default */
 
 /**

@@ -326,7 +326,7 @@ int _9p_create_socket( void )
   memset( &sinaddr, 0, sizeof(sinaddr));
   sinaddr.sin_family      = AF_INET;
   sinaddr.sin_addr.s_addr = nfs_param.core_param.bind_addr.sin_addr.s_addr;
-  sinaddr.sin_port        = htons(nfs_param._9p_param._9p_port);
+  sinaddr.sin_port        = htons(nfs_param._9p_param._9p_tcp_port);
 
   if(bind(sock, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) == -1)
    {
@@ -347,7 +347,7 @@ int _9p_create_socket( void )
   memset(&sinaddr_tcp6, 0, sizeof(sinaddr_tcp6));
   sinaddr_tcp6.sin6_family = AF_INET6;
   sinaddr_tcp6.sin6_addr   = in6addr_any;     /* All the interfaces on the machine are used */
-  sinaddr_tcp6.sin6_port   = htons(nfs_param.core_param._9p_port);
+  sinaddr_tcp6.sin6_port   = htons(nfs_param.core_param._9p_tcp_port);
 
   netbuf_tcp6.maxlen = sizeof(sinaddr_tcp6);
   netbuf_tcp6.len    = sizeof(sinaddr_tcp6);

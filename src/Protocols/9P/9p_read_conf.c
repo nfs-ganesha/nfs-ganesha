@@ -86,9 +86,13 @@ int _9p_read_conf( config_file_t   in_config,
                   var_index, CONF_LABEL_9P );
           return -1 ;
         }
-      if(!strcasecmp(key_name, "_9P_Port"))     
+      if(!strcasecmp(key_name, "_9P_TCP_Port"))     
         {
-          pparam->_9p_port = atoi( key_value ) ;
+          pparam->_9p_tcp_port = atoi( key_value ) ;
+        }
+      else if(!strcasecmp(key_name, "_9P_RDMA_Port"))     
+        {
+          pparam->_9p_rdma_port = atoi( key_value ) ;
         }
       else if(!strcasecmp(key_name, "DebugLevel"))
         {

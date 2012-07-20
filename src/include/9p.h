@@ -44,7 +44,8 @@ typedef uint64_t u64;
 #define NB_PREALLOC_FID_9P  100
 #define PRIME_9P 17 
 
-#define _9P_PORT 564
+#define _9P_TCP_PORT 564
+#define _9P_RDMA_PORT 10564
 #define _9P_SEND_BUFFER_SIZE 131072
 #define _9P_RECV_BUFFER_SIZE 131072
 #define _9p_READ_BUFFER_SIZE _9P_SEND_BUFFER_SIZE
@@ -272,7 +273,8 @@ typedef struct _9p_qid {
 
 typedef struct _9p_param__
 {
-  unsigned short _9p_port ;
+  unsigned short _9p_tcp_port ;
+  unsigned short _9p_rdma_port ;
 } _9p_parameter_t ;
 
 typedef struct _9p_fid__
