@@ -22,7 +22,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /*
@@ -44,6 +44,8 @@
 #include "fsal.h"
 #include "nfs_core.h"
 #include "config_parsing.h"
+#include "pnfs_common.h"
+#include "fsal_pnfs_files.h"
 
 /* List of loaded fsal modules
  * static to be private to the functions in this module
@@ -82,6 +84,9 @@ int start_fsals(config_file_t config)
 	config_item_t item;
 	char *key, *value;
 	int fb, fsal_cnt, item_cnt;
+
+        /* Call something in pnfs_common.c */
+        pnfs_common_dummy();
 
 	fsal_block = config_FindItemByName(config, CONF_LABEL_FSAL);
 	if(fsal_block == NULL) {
@@ -152,6 +157,8 @@ int start_fsals(config_file_t config)
 		LogFatal(COMPONENT_INIT,
 			 "No fsal modules loaded");
 	}
+
+        
 	return 1;
 }
 
@@ -519,3 +526,21 @@ out:
 	return retval;
 }
 
+/**
+ * @brief Dummy function
+ *
+ * This function exists so there can be something in common_pnfs.c to
+ * be called from Ganesha core.
+ */
+
+uint64_t pnfs_common_dummy(void)
+{
+        uint64_t accumulator = (uint64_t) xdr_fsal_deviceid;
+
+        accumulator += (uint64_t) FSAL_encode_ipv4_netaddr;
+        accumulator += (uint64_t) FSAL_encode_file_layout;
+        accumulator += (uint64_t) FSAL_encode_v4_multipath;
+        accumulator += (uint64_t) posix2nfs4_error;
+
+        return accumulator;
+}

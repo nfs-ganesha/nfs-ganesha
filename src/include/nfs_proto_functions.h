@@ -1138,11 +1138,7 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   "FATTR4_FS_STATUS", 61, 0, sizeof(fattr4_fs_status), FATTR4_ATTR_READ}
   ,
   {
-#ifdef _PNFS_MDS
   "FATTR4_FS_LAYOUT_TYPES", 62, 1, sizeof(fattr4_fs_layout_types), FATTR4_ATTR_READ}
-#else
-  "FATTR4_FS_LAYOUT_TYPES", 62, 0, sizeof(fattr4_fs_layout_types), FATTR4_ATTR_READ}
-#endif /* _PNFS_MDS */
   ,
   {
   "FATTR4_LAYOUT_HINT", 63, 0, sizeof(fattr4_layout_hint), FATTR4_ATTR_WRITE}
@@ -1151,11 +1147,7 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   "FATTR4_LAYOUT_TYPES", 64, 0, sizeof(fattr4_layout_types), FATTR4_ATTR_READ}
   ,
   {
-#ifdef _PNFS_MDS
   "FATTR4_LAYOUT_BLKSIZE", 65, 1, sizeof(fattr4_layout_blksize), FATTR4_ATTR_READ}
-#else
-  "FATTR4_LAYOUT_BLKSIZE", 65, 0, sizeof(fattr4_layout_blksize), FATTR4_ATTR_READ}
-#endif /* _PNFS_MDS */
   ,
   {
   "FATTR4_LAYOUT_ALIGNMENT", 66, 0, sizeof(fattr4_layout_alignment), FATTR4_ATTR_READ}

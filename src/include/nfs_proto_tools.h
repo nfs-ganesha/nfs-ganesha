@@ -52,9 +52,7 @@
 #include "nfs_tools.h"
 #include "nfs_creds.h"
 #include "nfs_file_handle.h"
-#ifdef _PNFS_MDS
 #include "sal_data.h"
-#endif /* _PNFS_MDS */
 
 /* type flag into mode field */
 #define NFS2_MODE_NFDIR 0040000
@@ -127,19 +125,17 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask);
 void nfs4_Fattr_Free(fattr4 *fattr);
 
 
-#ifdef _PNFS_MDS
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
-                               fsal_op_context_t* context,
-                               fsal_boolean_t synthetic,
-                               fsal_boolean_t reclaim,
+                               struct req_op_context *req_ctx,
+                               bool_t synthetic,
+                               bool_t reclaim,
                                layoutreturn_type4 return_type,
                                state_t *layout_state,
                                struct pnfs_segment spec_segment,
-                               u_int body_len,
-                               const char* body_val,
+                               size_t body_len,
+                               const void* body_val,
                                bool_t* deleted);
-fsal_boolean_t nfs4_pnfs_supported(const exportlist_t *export);
-#endif /* _PNFS_MDS */
+bool_t nfs4_pnfs_supported(const exportlist_t *export);
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
                               object_file_type_t required_type);
 

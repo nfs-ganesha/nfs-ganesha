@@ -136,12 +136,10 @@ int nfs4_op_putfh(struct nfs_argop4 *op,
           return res_PUTFH4.status;
         }
 
-#ifdef _PNFS_DS
       /* As usual, protect existing refcounts */
       if (data->current_entry) {
           cache_inode_put(data->current_entry);
           data->current_entry = NULL;
-          data->current_filetype = UNASSIGNED;
       }
       /* The export and fsalid should be updated, but DS handles
          don't support metdata operations.  Thus, we can't call into
@@ -152,7 +150,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op,
           data->current_filetype = REGULAR_FILE;
         }
       else
-#endif /* _PNFS_DS */
         {
           if (data->current_entry)
             cache_inode_put(data->current_entry);

@@ -46,11 +46,10 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#ifdef _PNFS_DS
 #include "fsal_pnfs.h"
-#endif /* _PNFS_DS */
 
-#ifdef _PNFS_DS
+#if 0
+
 /**
  * @brief Write for a data server
  *
@@ -102,7 +101,8 @@ static int op_dswrite(struct nfs_argop4 *op,
   res_WRITE4.status = nfs_status;
   return res_WRITE4.status;
 }
-#endif /* _PNFS_DS */
+
+#endif /* 0 */
 
 /**
  * @brief The NFS4_OP_WRITE operation
@@ -173,13 +173,14 @@ int nfs4_op_write(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_write_xattr(op, data, resp);
 
-#ifdef _PNFS_DS
+#if 0
+
   if((data->minorversion == 1) &&
      (nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {
       return(op_dswrite(op, data, resp));
     }
-#endif /* _PNFS_DS */
+#endif /* 0 */
 
   /* Manage access type */
   switch( data->pexport->access_type )

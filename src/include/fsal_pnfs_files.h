@@ -40,8 +40,6 @@
 #include "config.h"
 #endif                          /* HAVE_CONFIG_H */
 
-#ifdef _PNFS_DS
-
 /**
  * This type exists soleley so arrays of hosts can be passed to
  * FSAL_encode_multipath_list.
@@ -55,23 +53,19 @@ typedef struct fsal_multipath_member
      uint16_t port;
 } fsal_multipath_member_t;
 
-nfsstat4 FSAL_fh4_dshandle(fsal_handle_t *fsal_handle,
-                          unsigned short export_id,
-                          fsal_export_context_t *export,
-                          nfs_fh4 *wirehandle);
+nfsstat4
+FSAL_encode_file_layout(XDR *xdrs,
+                        const struct pnfs_deviceid *deviceid,
+                        nfl_util4 util,
+                        const uint32_t first_idx,
+                        const offset4 ptrn_ofst,
+                        const unsigned int export_id,
+                        const uint32_t num_fhs,
+                        const struct gsh_buffdesc *fhs);
 
-nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
-                                 fsal_op_context_t *context,
-                                 const struct pnfs_deviceid *deviceid,
-                                 nfl_util4 util,
-                                 uint32_t first_idx,
-                                 offset4 ptrn_ofst,
-                                 uint32_t num_fhs,
-                                 fsal_handle_t *fhs);
 
 nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs,
-                                  uint32_t num_hosts,
-                                  fsal_multipath_member_t *hosts);
+                                  const uint32_t num_hosts,
+                                  const fsal_multipath_member_t *hosts);
 
-#endif /* _PNFS_DS */
 #endif /* _FSAL_PNFS_FILES_H */

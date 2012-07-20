@@ -573,7 +573,8 @@ typedef enum {
         accesscheck_support,
         share_support,
         share_support_owner,
-        pnfs_supported
+        pnfs_mds_supported,
+        pnfs_ds_supported
 } fsal_fsinfo_options_t;
 
 struct fsal_staticfsinfo_t

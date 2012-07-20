@@ -531,10 +531,6 @@ bool_t fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->share_support;
 	case share_support_owner:
 		return !!info->share_support_owner;
-#ifdef _USE_FSALMDS
-	case pnfs_supported:
-		return !!info->pnfs_supported;
-#endif
 	default:
 		return FALSE; /* whatever I don't know about,
 			       * you can't do

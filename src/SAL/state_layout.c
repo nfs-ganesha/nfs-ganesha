@@ -152,7 +152,7 @@ state_lookup_layout_state(cache_entry_t * pentry,
      /* The state found, if one exists */
      state_t           * pstate_found = NULL;
 
-     glist_for_each(glist_iter, &pentry->object.file.state_list) {
+     glist_for_each(glist_iter, &pentry->state_list) {
           pstate_iter = glist_entry(glist_iter, state_t, state_list);
           if ((pstate_iter->state_type == STATE_TYPE_LAYOUT) &&
               (pstate_iter->state_powner == powner) &&

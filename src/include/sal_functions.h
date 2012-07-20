@@ -572,7 +572,6 @@ uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
 uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t * buffclef);
 
-#ifdef _PNFS_MDS
 state_status_t state_add_segment(state_t             * pstate,
                                  struct pnfs_segment * segment,
                                  void                * fsal_data,
@@ -583,8 +582,6 @@ state_status_t state_lookup_layout_state(cache_entry_t * pentry,
                                          state_owner_t * powner,
                                          layouttype4     type,
                                          state_t      ** pstate);
-#endif /*  _PNFS_MDS */
-
 void state_nfs4_state_wipe(cache_entry_t        * pentry);
 
 void release_lockstate(state_owner_t * plock_owner);

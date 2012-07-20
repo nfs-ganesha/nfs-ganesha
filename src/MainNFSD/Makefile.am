@@ -172,7 +172,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
 libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \
                                       $(NLM_LIB)                                        \
                                       $(RQUOTA_LIB)                                      \
-                                      $(FSALPNFS_LIB)                                    \
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \
                                       $(NFSIDMAP_LIB_FLAGS)                             \
@@ -199,10 +198,6 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Common/libcommon_utils.la
 
 libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
-
-if USE_PNFS
-libMainServices_la_LIBADD += ../FSAL/libfsalpnfscommon.la
-endif
 
 if USE_FSAL_FUSE
 

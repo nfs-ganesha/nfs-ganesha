@@ -84,9 +84,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
         struct glist_head    * glist = NULL;
         /* Secondary safe iterator to continue traversal on delete*/
         struct glist_head    * glistn = NULL;
-#ifdef _PNFS_MDS
         bool_t                 last_close = TRUE;
-#endif /* _PNFS_MDS */
 
         LogDebug(COMPONENT_STATE,
                  "Entering NFS v4 CLOSE handler ----------------------------");
@@ -204,60 +202,69 @@ int nfs4_op_close(struct nfs_argop4 *op,
                          state_err_str(state_status));
         }
 
-#ifdef _PNFS_MDS
-        /* We can't simply grab a pointer to a layout state and free
-           it later, since a client could have multiple layout states
-           (since a layout state covers layouts of only one layout
-           type) each marked return_on_close. */
+        if (data->minorversion > 0) {
+                /* We can't simply grab a pointer to a layout state
+                   and free it later, since a client could have
+                   multiple layout states (since a layout state covers
+                   layouts of only one layout type) each marked
+                   return_on_close. */
 
-        glist_for_each(glist, &data->current_entry->object.file.state_list) {
-                state_t *state = glist_entry(glist, state_t, state_list);
-
-                if ((state->state_type == STATE_TYPE_SHARE) &&
-                    (state->state_powner->so_type == STATE_OPEN_OWNER_NFSV4) &&
-                    (state->state_powner->so_owner.so_nfs4_owner.so_clientid ==
-                     data->psession->clientid)) {
-                        last_close = FALSE;
-                        break;
-                }
-        }
-
-        if (last_close) {
-                glist_for_each_safe(
-                        glist, glistn,
-                        &data->current_entry->object.file.state_list) {
+                glist_for_each(glist, &data->current_entry->state_list) {
                         state_t *state = glist_entry(glist, state_t,
                                                      state_list);
-                        bool_t deleted = FALSE;
-                        struct pnfs_segment entire = {
-                                .io_mode = LAYOUTIOMODE4_ANY,
-                                .offset = 0,
-                                .length = NFS4_UINT64_MAX
-                        };
 
-                        if ((state->state_type == STATE_TYPE_LAYOUT) &&
+                        if ((state->state_type == STATE_TYPE_SHARE) &&
+                            (state->state_powner->so_type
+                             == STATE_OPEN_OWNER_NFSV4) &&
                             (state->state_powner->so_owner.so_nfs4_owner
-                             .so_pclientid == clientid) &&
-                            state->state_data.layout.state_return_on_close) {
-                                nfs4_return_one_state(data->current_entry,
-                                                      data->pcontext,
-                                                      TRUE,
-                                                      FALSE,
-                                                      0,
-                                                      state,
-                                                      entire,
-                                                      0,
-                                                      NULL,
-                                                      &deleted);
-                                if (!deleted) {
-                                        LogCrit(COMPONENT_PNFS,
-                                                "Layout state not destroyed "
-                                                "on last close return.");
+                             .so_clientid ==
+                             data->psession->clientid)) {
+                                last_close = FALSE;
+                                break;
+                        }
+                }
+
+                if (last_close) {
+                        glist_for_each_safe(
+                                glist, glistn,
+                                &data->current_entry->state_list) {
+                                state_t *state = glist_entry(glist, state_t,
+                                                             state_list);
+                                bool_t deleted = FALSE;
+                                struct pnfs_segment entire = {
+                                        .io_mode = LAYOUTIOMODE4_ANY,
+                                        .offset = 0,
+                                        .length = NFS4_UINT64_MAX
+                                };
+
+                                if ((state->state_type == STATE_TYPE_LAYOUT) &&
+                                    (state->state_powner
+                                     ->so_owner.so_nfs4_owner
+                                     .so_pclientid ==
+                                     data->psession->pclientid_record) &&
+                                    state->state_data.layout
+                                    .state_return_on_close) {
+                                        nfs4_return_one_state(
+                                                data->current_entry,
+                                                data->req_ctx,
+                                                TRUE,
+                                                FALSE,
+                                                0,
+                                                state,
+                                                entire,
+                                                0,
+                                                NULL,
+                                                &deleted);
+                                        if (!deleted) {
+                                                LogCrit(COMPONENT_PNFS,
+                                                        "Layout state not "
+                                                        "destroyed on last "
+                                                        "close return.");
+                                        }
                                 }
                         }
                 }
         }
-#endif /* _PNFS_MDS */
 
         /* Close the file in FSAL through the cache inode */
         if (cache_inode_close(data->current_entry,
@@ -265,7 +272,6 @@ int nfs4_op_close(struct nfs_argop4 *op,
             != CACHE_INODE_SUCCESS) {
                 res_CLOSE4->status = nfs4_Errno(cache_status);
                 pthread_rwlock_unlock(&data->current_entry->state_lock);
-
                 goto out;
         }
 

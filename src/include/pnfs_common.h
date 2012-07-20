@@ -228,7 +228,7 @@ pnfs_segment_difference(struct pnfs_segment minuend,
  *            Convenience XDR functions
  ******************************************************/
 
-fsal_boolean_t xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid);
+bool_t xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid);
 
 nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
                                   uint16_t proto,
@@ -236,5 +236,7 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
                                   uint16_t port);
 
 nfsstat4 posix2nfs4_error(int posix_errorcode);
+
+uint64_t pnfs_common_dummy(void);
 
 #endif /* _FSAL_PNFS_COMMON_H */

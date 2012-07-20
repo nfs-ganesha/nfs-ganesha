@@ -395,24 +395,13 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
   /* Build the reply */
   res_EXCHANGE_ID4_ok.eir_clientid   = unconf->cid_clientid;
   res_EXCHANGE_ID4_ok.eir_sequenceid = unconf->cid_create_session_sequence;
-#if defined(_PNFS_MDS) && defined(_PNFS_DS)
+  /**
+   * @todo ACE: Revisit this, if no exports support pNFS, don't
+   * advertise pNFS.
+   */
   res_EXCHANGE_ID4_ok.eir_flags = EXCHGID4_FLAG_USE_PNFS_MDS |
                                   EXCHGID4_FLAG_USE_PNFS_DS |
                                   EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#elif defined(_PNFS_MDS)
-  res_EXCHANGE_ID4_ok.eir_flags = EXCHGID4_FLAG_USE_PNFS_MDS |
-                                  EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#elif defined(_PNFS_DS)
-  res_EXCHANGE_ID4_ok.eir_flags = EXCHGID4_FLAG_USE_PNFS_DS |
-                                  EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#elif defined(_USE_DS)
-  res_EXCHANGE_ID4_ok.eir_flags = EXCHGID4_FLAG_USE_PNFS_MDS |
-                                  EXCHGID4_FLAG_USE_PNFS_DS |
-                                  EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#else
-  res_EXCHANGE_ID4_ok.eir_flags = EXCHGID4_FLAG_USE_NON_PNFS |
-                                  EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#endif
 
   res_EXCHANGE_ID4_ok.eir_state_protect.spr_how = SP4_NONE;
 

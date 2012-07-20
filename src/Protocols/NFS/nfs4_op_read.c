@@ -49,17 +49,17 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#ifdef _PNFS_DS
 #include <stdlib.h>
 #include <unistd.h>
 #include "fsal_pnfs.h"
-#endif /* _PNFS_DS */
 
-#ifdef _PNFS_DS
+#if 0
+
 static int op_dsread(struct nfs_argop4 *op,
                      compound_data_t * data,
                      struct nfs_resop4 *resp);
-#endif /* _PNFS_DS */
+
+#endif /* 0 */
 
 /**
  * @brief The NFS4_OP_READ operation
@@ -112,13 +112,13 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_read_xattr(op, data, resp);
 
-#ifdef _PNFS_DS
+#if 0
   if((data->minorversion == 1) &&
      (nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {
       return(op_dsread(op, data, resp));
     }
-#endif /* _PNFS_DS */
+#endif /* 0 */
 
   /* Manage access type MDONLY */
   if(( data->pexport->access_type == ACCESSTYPE_MDONLY ) ||
@@ -376,8 +376,7 @@ void nfs4_op_read_Free(READ4res *resp)
   return;
 } /* nfs4_op_read_Free */
 
-
-#ifdef _PNFS_DS
+#if 0
 
 /**
  * @brief Read on a pNFS pNFS data server
@@ -460,4 +459,5 @@ static int op_dsread(struct nfs_argop4 *op,
 
   return res_READ4.status;
 }
-#endif /* _PNFS_DS */
+
+#endif /* 0 */

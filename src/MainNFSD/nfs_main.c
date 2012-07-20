@@ -24,12 +24,8 @@
  */
 
 /**
- * \file    nfs_main.c
- * \author  $Author: deniel $
- * \brief   The file that contain the 'main' routine for the nfsd.
- *
- * nfs_main.c : The file that contain the 'main' routine for the nfsd.
- *
+ * @file nfs_main.c
+ * @brief The file that contain the 'main' routine for the nfsd.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -51,9 +47,7 @@
 #include <pthread.h>
 #include <signal.h>             /* for sigaction */
 #include <errno.h>
-#ifdef _PNFS
 #include "fsal_pnfs.h"
-#endif /* _PNFS */
 
 /* parameters for NFSd startup and default values */
 
@@ -322,13 +316,6 @@ int main(int argc, char *argv[])
     }
 
   start_fsals(config_struct);
-
-#ifdef _PNFS_MDS
-  FSAL_LoadMDSFunctions();
-#endif /* _PNFS_MDS */
-#ifdef _PNFS_DS
-  FSAL_LoadDSFunctions();
-#endif
 
   /* parse configuration file */
 

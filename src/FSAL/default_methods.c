@@ -456,36 +456,124 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
 }
 
+/**
+ * @brief Be uninformative about a device
+ */
+
+static nfsstat4
+getdeviceinfo(struct fsal_export *exp_hdl,
+               XDR *da_addr_body,
+               const layouttype4 type,
+               const struct pnfs_deviceid *deviceid)
+{
+        return NFS4ERR_NOTSUPP;
+}
+
+/**
+ * @brief Be uninformative about all devices
+ */
+
+static nfsstat4
+getdevicelist(struct fsal_export *exp_hdl,
+              layouttype4 type,
+              void *opaque,
+              bool_t (*cb)(void *opaque,
+                           const uint64_t id),
+              struct fsal_getdevicelist_res *res)
+{
+        return NFS4ERR_NOTSUPP;
+}
+
+/**
+ * @brief Support no layout types
+ */
+
+static void
+fs_layouttypes(struct fsal_export *exp_hdl,
+               size_t *count,
+               layouttype4 **types)
+{
+        *count = 0;
+        *types = NULL;
+}
+
+/**
+ * @brief Read no bytes through layouts
+ */
+
+static uint32_t
+fs_layout_blocksize(struct fsal_export *exp_hdl)
+{
+        return 0;
+}
+
+/**
+ * @brief No segments
+ */
+
+static uint32_t
+fs_maximum_segments(struct fsal_export *exp_hdl)
+{
+        return 0;
+}
+
+/**
+ * @brief No loc_body
+ */
+
+static size_t
+fs_loc_body_size(struct fsal_export *exp_hdl)
+{
+        return 0;
+}
+
+/**
+ * No da_addr.
+ */
+
+static size_t
+fs_da_addr_size(struct fsal_export *exp_hdl)
+{
+        return 0;
+}
+
 /* Default fsal export method vector.
  * copied to allocated vector at register time
  */
 
 
 struct export_ops def_export_ops = {
-	.get = export_get,
-	.put = export_put,
-	.release = export_release,
-	.lookup_path = lookup_path,
-	.lookup_junction = lookup_junction,
-	.extract_handle = extract_handle,
-	.create_handle = create_handle,
-	.get_fs_dynamic_info = get_dynamic_info,
-	.fs_supports = fs_supports,
-	.fs_maxfilesize = fs_maxfilesize,
-	.fs_maxread = fs_maxread,
-	.fs_maxwrite = fs_maxwrite,
-	.fs_maxlink = fs_maxlink,
-	.fs_maxnamelen = fs_maxnamelen,
-	.fs_maxpathlen = fs_maxpathlen,
-	.fs_fh_expire_type = fs_fh_expire_type,
-	.fs_lease_time = fs_lease_time,
-	.fs_acl_support = fs_acl_support,
-	.fs_supported_attrs = fs_supported_attrs,
-	.fs_umask = fs_umask,
-	.fs_xattr_access_rights = fs_xattr_access_rights,
-	.check_quota = check_quota,
-	.get_quota = get_quota,
-	.set_quota = set_quota
+        .get = export_get,
+        .put = export_put,
+        .release = export_release,
+        .lookup_path = lookup_path,
+        .lookup_junction = lookup_junction,
+        .extract_handle = extract_handle,
+        .create_handle = create_handle,
+        .get_fs_dynamic_info = get_dynamic_info,
+        .fs_supports = fs_supports,
+        .fs_maxfilesize = fs_maxfilesize,
+        .fs_maxread = fs_maxread,
+        .fs_maxwrite = fs_maxwrite,
+        .fs_maxlink = fs_maxlink,
+        .fs_maxnamelen = fs_maxnamelen,
+        .fs_maxpathlen = fs_maxpathlen,
+        .fs_fh_expire_type = fs_fh_expire_type,
+        .fs_lease_time = fs_lease_time,
+        .fs_acl_support = fs_acl_support,
+        .fs_supported_attrs = fs_supported_attrs,
+        .fs_umask = fs_umask,
+        .fs_xattr_access_rights = fs_xattr_access_rights,
+        .check_quota = check_quota,
+        .get_quota = get_quota,
+        .set_quota = set_quota,
+        .getdeviceinfo = getdeviceinfo,
+        .getdevicelist = getdevicelist,
+        .fs_layouttypes = fs_layouttypes,
+        .fs_layout_blocksize = fs_layout_blocksize,
+        .fs_maximum_segments = fs_maximum_segments,
+        .fs_loc_body_size = fs_loc_body_size,
+        .fs_da_addr_size = fs_da_addr_size
 };
 
 
@@ -927,6 +1015,77 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
         fh_desc->len = 0;
 }
 
+/**
+ * @brief Fail to grant a layout segment.
+ *
+ * @param[in]     obj_hdl  The handle of the file on which the layout is
+ *                         requested.
+ * @param[in]     req_ctx  Request context
+ * @param[out]    loc_body An XDR stream to which the FSAL must encode
+ *                         the layout specific portion of the granted
+ *                         layout segment.
+ * @param[in]     arg      Input arguments of the function
+ * @param[in,out] res      In/out and output arguments of the function
+ *
+ * @return NFS4ERR_LAYOUTUNAVAILABLE
+ */
+static nfsstat4
+layoutget(struct fsal_obj_handle *obj_hdl,
+          struct req_op_context *req_ctx,
+          XDR *loc_body,
+          const struct fsal_layoutget_arg *arg,
+          struct fsal_layoutget_res *res)
+{
+        return NFS4ERR_LAYOUTUNAVAILABLE;
+}
+
+/**
+ * @brief Don't return a layout segment
+ *
+ * @param[in] obj_hdl  The object on which a segment is to be returned
+ * @param[in] req_ctx  Request context
+ * @param[in] lrf_body In the case of a non-synthetic return, this is
+ *                     an XDR stream corresponding to the layout
+ *                     type-specific argument to LAYOUTRETURN.  In
+ *                     the case of a synthetic or bulk return,
+ *                     this is a NULL pointer.
+ * @param[in] arg      Input arguments of the function
+ *
+ * @return NFS4ERR_NOTSUPP
+ */
+static nfsstat4
+layoutreturn(struct fsal_obj_handle *obj_hdl,
+             struct req_op_context *req_ctx,
+             XDR *lrf_body,
+             const struct fsal_layoutreturn_arg *arg)
+{
+        return NFS4ERR_NOTSUPP;
+}
+
+/**
+ * @brief Fail to commit a segment of a layout
+ *
+ * @param[in]     obj_hdl  The object on which to commit
+ * @param[in]     req_ctx  Request context
+ * @param[in]     lou_body An XDR stream containing the layout
+ *                         type-specific portion of the LAYOUTCOMMIT
+ *                         arguments.
+ * @param[in]     arg      Input arguments of the function
+ * @param[in,out] res      In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, p. 366.
+ */
+static nfsstat4
+layoutcommit(struct fsal_obj_handle *obj_hdl,
+             struct req_op_context *req_ctx,
+             XDR *lou_body,
+             const struct fsal_layoutcommit_arg *arg,
+             struct fsal_layoutcommit_res *res)
+{
+        return NFS4ERR_NOTSUPP;
+}
+
+
 /* Default fsal handle object method vector.
  * copied to allocated vector at register time
  */
@@ -970,5 +1129,8 @@ struct fsal_obj_ops def_handle_ops = {
 	.lru_cleanup = lru_cleanup,
 	.compare = compare,
 	.handle_digest = handle_digest,
-	.handle_to_key = handle_to_key
+        .handle_to_key = handle_to_key,
+        .layoutget = layoutget,
+        .layoutreturn = layoutreturn,
+        .layoutcommit = layoutcommit
 };

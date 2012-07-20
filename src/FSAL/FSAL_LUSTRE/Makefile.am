@@ -41,12 +41,11 @@ libfsalshook_la_SOURCES = fsal_convert.c   \
                           ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
 
-libfsalshook_la_CFLAGS                = $(FSAL_CFLAGS) $(SEC_CFLAGS) @LUSTRE_CFLAGS@
-libfsalshook_la_LDFLAGS               = @LUSTRE_LDFLAGS@
-libfsalshook_la_LIBADD                = @LUSTRE_LIB@
+libfsalshook_la_CFLAGS                = $(FSAL_CFLAGS) $(SEC_CFLAGS) @SHOOK_CFLAGS@
+libfsalshook_la_LDFLAGS               = @SHOOK_LDFLAGS@
+libfsalshook_la_LIBADD                = @SHOOK_LIB@
 
 endif
-
 
 new: clean all
 

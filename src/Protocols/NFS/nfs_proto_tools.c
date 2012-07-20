@@ -63,13 +63,11 @@
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
 #include "nfs4_acls.h"
-#ifdef _PNFS_MDS
 #include "sal_data.h"
 #include "sal_functions.h"
 #include "fsal.h"
 #include "fsal_pnfs.h"
 #include "pnfs_common.h"
-#endif /* _PNFS_MDS */
 
 #ifdef _USE_NFS4_ACL
 /* Define mapping of NFS4 who name and type. */
@@ -1049,9 +1047,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
-#ifdef _PNFS_MDS
   fattr4_layout_blksize layout_blksize;
-#endif /* _PNFS_MDS */
 
   u_int tmp_int;
   char tmp_buff[1024];
@@ -1763,36 +1759,37 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_FS_LAYOUT_TYPES:
-#ifdef _PNFS_MDS
-          *((uint32_t*)(attrvalsBuffer+LastOffset))
-		  = htonl(export->ops->fs_layout_types(export)
-                    .fattr4_fs_layout_types_len);
+          {
+            layouttype4 *layouttypes = NULL;
+            size_t typecount = 0;
+            size_t index = 0;
+            export->ops->fs_layouttypes(export,
+                                        &typecount,
+                                        &layouttypes);
+            *((uint32_t*)(attrvalsBuffer+LastOffset))
+              = htonl(typecount);
 
-          LastOffset += sizeof(uint32_t);
-          for (k = 0; k < (export->ops->fs_layout_types(export)
-                           .fattr4_fs_layout_types_len); k++)
-            {
-              *((layouttype4*)(attrvalsBuffer+LastOffset))
-                = htonl((export->ops->fs_layout_types(export)
-                         .fattr4_fs_layout_types_val[k]));
-              LastOffset += sizeof(layouttype4);
-            }
+            LastOffset += sizeof(uint32_t);
+            for (index = 0; index < typecount; ++index)
+              {
+                *((layouttype4*)(attrvalsBuffer+LastOffset))
+                  = htonl(layouttypes[index]);
+                LastOffset += sizeof(layouttype4);
+              }
 
-          op_attr_success = 1;
+            op_attr_success = 1;
+          }
           break;
-#endif /* _PNFS_MDS */
 
-#ifdef _PNFS_MDS
         case FATTR4_LAYOUT_BLKSIZE:
           layout_blksize
-		  = htonl((fattr4_layout_blksize) export->ops->layout_blksize(export));
+            = htonl(export->ops->fs_layout_blocksize(export));
           memcpy((char *)(attrvalsBuffer + LastOffset),
                  &layout_blksize, sizeof(fattr4_layout_blksize));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           op_attr_success = 1;
           break;
-#endif /* _PNFS_MDS */
 
         default:
           LogFullDebug(COMPONENT_NFS_V4,

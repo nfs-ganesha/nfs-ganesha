@@ -590,24 +590,6 @@ if test "$enable_ipv6" == "yes"; then
 	fi
 fi
 
-# pNFS Metadata Server Support
-GA_ENABLE_AM_CONDITION([pnfs-mds], [enable pNFS Metadata Server support (NFSv4.1 support is mandatory)],[USE_PNFS_MDS])
-if test "x$enable_pnfs_mds" = "xyes"; then
-        AC_DEFINE(_PNFS_MDS,1,[pNFS Metadata Server support])
-fi
-
-# pNFS Data Server support (for LAYOUT4_NFSV4_1_FILES support.)
-GA_ENABLE_AM_CONDITION([pnfs-ds],[enable pNFS Data Server support (NFSv4.1 support is mandatory)],[USE_PNFS_DS])
-if test "x$enable_pnfs_ds" = "xyes"; then
-        AC_DEFINE(_PNFS_DS,1,[pNFS LAYOUT4_NFSV4_1_FILES Data Server support])
-fi
-
-# For common files used by either one
-AM_CONDITIONAL(USE_PNFS, test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \))
-if test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \); then
-        AC_DEFINE(_PNFS,1,[pNFS support])
-fi
-
 # Database switch (for POSIX FSAL)
 AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
 	     DBTYPE="$withval", DBTYPE="MYSQL" )
@@ -863,7 +845,6 @@ AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
-AC_SUBST(FSALPNFS_LIB)
 AC_SUBST(SEC_CFLAGS)
 AC_SUBST(SEC_LFLAGS)
 AC_SUBST(DEBIAN_DB_DEP)

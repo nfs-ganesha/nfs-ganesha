@@ -58,16 +58,15 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
-#ifdef _PNFS_DS
 #include "fsal_pnfs.h"
-#endif /* _PNFS_DS */
 
-#ifdef _PNFS_DS
+#if 0
+
 static int op_dscommit(struct nfs_argop4 *op,
                        compound_data_t * data,
                        struct nfs_resop4 *resp);
-#endif /* _PNFS_DS */
 
+#endif /* 0 */
 
 /**
  *
@@ -108,13 +107,14 @@ int nfs4_op_commit(struct nfs_argop4 *op,
   if(res_COMMIT4.status != NFS4_OK)
     return res_COMMIT4.status;
 
-#ifdef _PNFS_DS
+#if 0
+
   if((data->minorversion == 1) &&
      (nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {
       return(op_dscommit(op, data, resp));
     }
-#endif /* _PNFS_DS */
+#endif /* 0*/
 
   // FIX ME!! At the moment we just assume the user is _not_ using
   // the ganesha unsafe buffer. In the future, a check based on
@@ -152,7 +152,8 @@ void nfs4_op_commit_Free(COMMIT4res *resp)
   return;
 } /* nfs4_op_commit_Free */
 
-#ifdef _PNFS_DS
+#if 0
+
 /**
  *
  * @brief Call pNFS data server commit
@@ -172,8 +173,8 @@ static int op_dscommit(struct nfs_argop4 *op,
                        compound_data_t * data,
                        struct nfs_resop4 *resp)
 {
-  /* FSAL file handle */
-  fsal_handle_t handle;
+        /* FSAL file handle */
+        fsal_handle_t handle;
   struct fsal_handle_desc fh_desc;
   /* NFSv4 status code */
   nfsstat4 nfs_status = 0;
@@ -204,4 +205,4 @@ static int op_dscommit(struct nfs_argop4 *op,
   return res_COMMIT4.status;
 }
 
-#endif /* _PNFS_DS */
+#endif /* 0 */

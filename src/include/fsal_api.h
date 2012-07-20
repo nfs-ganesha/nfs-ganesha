@@ -29,6 +29,8 @@
 #ifndef FSAL_API__
 #define FSAL_API__
 
+#include "fsal_pnfs.h"
+
 /* FSAL API
  * object oriented fsal api.
  */
@@ -820,10 +822,124 @@ struct export_ops {
                                    fsal_quota_t * quota,
                                    fsal_quota_t * resquota);
 /*@}*/
+
+/*@{*/
+/**
+ * pNFS functions
+ */
+
+/**
+ * @brief Get information about a pNFS device
+ *
+ * When this function is called, the FSAL should write device
+ * information to the @c da_addr_body stream.
+ *
+ * @param[in]  exp_hdl      Export handle
+ * @param[out] da_addr_body An XDR stream to which the FSAL is to
+ *                          write the layout type-specific information
+ *                          corresponding to the deviceid.
+ * @param[in]  type         The tyep of layout the specified the
+ *                          device
+ *
+ * @param[in]  deviceid     The device to look up
+ *
+ * @return Valid error codes in RFC 5661, p. 365.
+ */
+        nfsstat4 (*getdeviceinfo)(
+                struct fsal_export *exp_hdl,
+                XDR *da_addr_body,
+                const layouttype4 type,
+                const struct pnfs_deviceid *deviceid);
+
+/**
+* @brief Get list of available devices
+*
+* This function should populate calls @c cb @c values representing the
+* low quad of deviceids it wishes to make the available to the
+* caller.  it should continue calling @c cb until @c cb returns FALSE
+* or it runs out of deviceids to make available.  If @c cb returns
+* FALSE, it should assume that @c cb has not stored the most recent
+* deviceid and set @c res->cookie to a value that will begin witht he
+* most recently provided.
+*
+* If it wishes to return no deviceids, it may set @c res->eof to TRUE
+* without calling @c cb at all.
+*
+* @param[in]     exp_hdl Export handle
+* @param[in]     type    Type of layout to get devices for
+* @param[in]     cb      Functioning taking device ID halves
+* @param[in,out] res     In/outand output arguments of the function
+*
+* @return Valid error codes in RFC 5661, pp. 365-6.
+*/
+        nfsstat4 (*getdevicelist)(
+                struct fsal_export *exp_hdl,
+                layouttype4 type,
+                void *opaque,
+                bool_t (*cb)(void *opaque,
+                             const uint64_t id),
+                struct fsal_getdevicelist_res *res);
+
+
+/**
+ * @brief Get layout types supported by export
+ *
+ * @param[in]  exp_hdl Filesystem to interrogate
+ * @param[out] count   Number of layout types in array
+ * @param[out] types   Static array of layout types that must not be
+ *                     freed or modified and must not be dereferenced
+ *                     after export reference is relinquished
+ */
+        void (*fs_layouttypes)(struct fsal_export *exp_hdl,
+                               size_t *count,
+                               layouttype4 **types);
+
+/**
+ * @brief Get layout block size for export
+ *
+ * This is the preferred read/write block size.  Clients are requested
+ * (but don't have to) read and write in multiples.
+ *
+ * @param[in] exp_hdl Filesystem to interrogate
+ *
+ * @return The preferred layout block size.
+ */
+        uint32_t (*fs_layout_blocksize)(struct fsal_export *exp_hdl);
+
+/**
+ * @brief Maximum number of segments we will use
+ *
+ * This function returns the maximum number of segments that will be
+ * used to construct the response to any single layoutget call.
+ *
+ * @param[in]  exp_hdl Filesystem to interrogate
+ *
+ * @return The preferred layout block size.
+ */
+        uint32_t (*fs_maximum_segments)(struct fsal_export *exp_hdl);
+
+/**
+ * @brief Size of the buffer needed for a loc_body
+ *
+ * @param[in]  exp_hdl Filesystem to interrogate
+ *
+ * @return Size of the buffer needed for a loc_body
+ */
+        size_t (*fs_loc_body_size)(struct fsal_export *exp_hdl);
+
+/**
+ * @brief Size of the buffer needed for a ds_addr
+ *
+ * @param[in]  exp_hdl Filesystem to interrogate
+ *
+ * @return Size of the buffer needed for a ds_addr
+ */
+        size_t (*fs_da_addr_size)(struct fsal_export *exp_hdl);
+/*@}*/
 };
 
 /**
- * @brief Public structuer for filesystem objects
+ * @brief Public structure for filesystem objects
  *
  * This structure is used for files of all types including directories
  * and anything else that can be operated on via NFS.
@@ -1600,6 +1716,105 @@ struct fsal_obj_ops {
  */
         void (*handle_to_key)(struct fsal_obj_handle *obj_hdl,
                               struct gsh_buffdesc *fh_desc);
+/*@}*/
+
+/*@{*/
+
+/**
+ * pNFS functions
+ */
+
+/**
+ * @brief Grant a layout segment.
+ *
+ * This function is called by nfs41_op_layoutget.  It may be called
+ * multiple times, to satisfy a request with multiple segments.  The
+ * FSAL may track state (what portion of the request has been or
+ * remains to be satisfied or any other information it wishes) in the
+ * bookkeeper member of res.  Each segment may have FSAL-specific
+ * information associated with it its segid.  This segid will be
+ * supplied to the FSAL when the segment is committed or returned.
+ * When the granting the last segment it intends to grant, the FSAL
+ * must set the last_segment flag in res.
+ *
+ * @param[in]     obj_hdl  The handle of the file on which the layout is
+ *                         requested.
+ * @param[in]     req_ctx  Request context
+ * @param[out]    loc_body An XDR stream to which the FSAL must encode
+ *                         the layout specific portion of the granted
+ *                         layout segment.
+ *
+ * @param[in]     arg      Input arguments of the function
+ * @param[in,out] res      In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, pp. 366-7.
+ */
+        nfsstat4 (*layoutget)(
+                struct fsal_obj_handle *obj_hdl,
+                struct req_op_context *req_ctx,
+                XDR *loc_body,
+                const struct fsal_layoutget_arg *arg,
+                struct fsal_layoutget_res *res);
+
+/**
+ * @brief Potentially return one layout segment
+ *
+ * This function is called once on each segment matching the IO mode
+ * and intersecting the range specified in a LAYOUTRETURN operation or
+ * for all layouts corresponding to a given stateid on last close,
+ * leas expiry, or a layoutreturn with a return-type of FSID or ALL.
+ * Whther it is called in the former or latter case is indicated by
+ * the synthetic flag in the arg structure, with synthetic being true
+ * in the case of last-close or lease expiry.
+ *
+ * If arg->dispose is true, all resources associated with the
+ * layout must be freed.
+ *
+ * @param[in] obj_hdl  The object on which a segment is to be returned
+ * @param[in] req_ctx  Request context
+ * @param[in] lrf_body In the case of a non-synthetic return, this is
+ *                     an XDR stream corresponding to the layout
+ *                     type-specific argument to LAYOUTRETURN.  In
+ *                     the case of a synthetic or bulk return,
+ *                     this is a NULL pointer.
+ * @param[in] arg      Input arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, p. 367.
+ */
+        nfsstat4 (*layoutreturn)(
+                struct fsal_obj_handle *obj_hdl,
+                struct req_op_context *req_ctx,
+                XDR *lrf_body,
+                const struct fsal_layoutreturn_arg *arg);
+
+/**
+ * \brief Commit a segment of a layout
+ *
+ * This function is called once on every segment of a layout.  The
+ * FSAL may avoid being called again after it has finished all tasks
+ * necessary for the commit by setting res->commit_done to TRUE.
+ *
+ * The calling function does not inspect or act on the value of
+ * size_supplied or new_size until after the last call to
+ * FSAL_layoutcommit.
+ *
+ * @param[in]     obj_hdl  The object on which to commit
+ * @param[in]     req_ctx  Request context
+ * @param[in]     lou_body An XDR stream containing the layout
+ *                         type-specific portion of the LAYOUTCOMMIT
+ *                         arguments.
+ * @param[in]     arg      Input arguments of the function
+ * @param[in,out] res      In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, p. 366.
+ */
+        nfsstat4 (*layoutcommit)(
+                struct fsal_obj_handle *obj_hdl,
+                struct req_op_context *req_ctx,
+                XDR *lou_body,
+                const struct fsal_layoutcommit_arg *arg,
+                struct fsal_layoutcommit_res *res);
+/*@}*/
 };
 
 #endif /* !FSAL_API__ */

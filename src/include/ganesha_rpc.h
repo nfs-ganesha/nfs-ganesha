@@ -4,6 +4,8 @@
 #ifndef GANESHA_RPC_H
 #define GANESHA_RPC_H
 
+#include "config.h"
+
 #include <rpc/xdr_inline.h>
 #include <rpc/rpc.h>
 #include <rpc/svc.h>

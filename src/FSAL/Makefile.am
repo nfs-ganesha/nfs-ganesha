@@ -2,10 +2,6 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS) -ldl
 
 noinst_LTLIBRARIES          = libfsalcommon.la
 
-if USE_PNFS
-noinst_LTLIBRARIES += libfsalpnfscommon.la
-endif
-
 libfsalcommon_la_SOURCES = fsal_errors.c           \
                            fsal_convert.c          \
                            fsal_commonlib.c	   \
@@ -14,6 +10,7 @@ libfsalcommon_la_SOURCES = fsal_errors.c           \
 			   common_functions.c      \
 			   fsal_config.c	   \
 			   default_methods.c       \
+                           common_pnfs.c           \
 			   ../include/FSAL/access_check.h \
 			   ../include/FSAL/common_functions.h \
 			   ../include/FSAL/fsal_commonlib.h \
@@ -28,12 +25,6 @@ libfsalcommon_la_SOURCES = fsal_errors.c           \
 # COMMON_* functions are in the current directory, it must be compiled before the FSAL_* directories
 
 SUBDIRS = . 
-
-if USE_PNFS
-libfsalpnfscommon_la_SOURCES = common_pnfs.c
-else
-libfsalpnfscommon_la_sources =
-endif
 
 if USE_FSAL_HPSS
 SUBDIRS += FSAL_HPSS
