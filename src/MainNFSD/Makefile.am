@@ -84,7 +84,9 @@ TIRPC_STATIC_LIB = @TIRPCPATH@/src/.libs/libntirpc.a
 if USE_9P
 _9P_LIB = ../Protocols/9P/lib9p.la
 if USE_9P_RDMA
-DISPATCH_9P_FILES = 9p_dispatcher.c 9p_rdma_dispatcher.c
+DISPATCH_9P_FILES = 9p_dispatcher.c      \
+                    9p_rdma_dispatcher.c \
+                    9p_rdma_callbacks.c
 else
 DISPATCH_9P_FILES = 9p_dispatcher.c 
 endif # USE_9P_RDMA

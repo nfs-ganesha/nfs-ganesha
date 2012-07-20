@@ -51,6 +51,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
+#include <arpa/inet.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
@@ -66,6 +67,10 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 #include "9p.h"
+
+#include <infiniband/arch.h>
+#include <rdma/rdma_cma.h>
+#include "trans_rdma.h"
 
 #ifndef _USE_TIRPC_IPV6
   #define P_FAMILY AF_INET
@@ -85,6 +90,20 @@
 
 void * _9p_rdma_dispatcher_thread( void * Arg )
 {
+  //msk_trans_t *trans;
+  //msk_trans_t *child_trans;
+
+  msk_trans_attr_t trans_attr;
+
+  memset(&trans_attr, 0, sizeof(msk_trans_attr_t));
+
+  trans_attr.server = 10;  /** @todo : why 10 ? To be seen with Dominique */
+
+  trans_attr.rq_depth = _9P_RDMA_RECV_NUM+2;
+  trans_attr.addr.sa_in.sin_family = AF_INET;
+  trans_attr.addr.sa_in.sin_port =  htons(nfs_param._9p_param._9p_rdma_port) ;
+  trans_attr.disconnect_callback = _9p_rdma_callback_disconnect;
+  inet_pton(AF_INET, "0.0.0.0", &trans_attr.addr.sa_in.sin_addr);
 
   SetNameFunction("_9p_rdma_dispatch_thr" ) ;
 

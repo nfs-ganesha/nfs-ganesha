@@ -35,6 +35,12 @@
 #include "fsal.h"
 #include "cache_inode.h"
 
+#ifdef _USE_9P_RDMA
+#include <infiniband/arch.h>
+#include <rdma/rdma_cma.h>
+#include "trans_rdma.h"
+#endif
+
 typedef uint8_t   u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -60,6 +66,9 @@ typedef uint64_t u64;
 //#define _9P_BLK_SIZE 512
 #define _9P_BLK_SIZE 4096
 #define _9P_IOUNIT   0
+
+#define _9P_RDMA_CHUNK_SIZE 8*1024
+#define _9P_RDMA_RECV_NUM 1
 
 /**
  * enum _9p_msg_t - 9P message types
@@ -475,6 +484,14 @@ void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pst
 void _9p_tools_acess2fsal( u32 * paccessin, fsal_accessflags_t * pfsalaccess ) ;
 void _9p_openflags2FSAL( u32 * inflags, fsal_openflags_t * outflags ) ;
 void _9p_chomp_attr_value(char *str, size_t size) ;
+
+#ifdef _USE_9P_RDMA
+/* 9P/RDMA callbacks */
+void* _9p_rdma_handle_trans(void *arg) ;
+void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg) ;
+void _9p_rdma_callback_disconnect(msk_trans_t *trans) ;
+void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) ;
+#endif
 
 /* Protocol functions */
 int _9p_not_2000L( _9p_request_data_t * preq9p, 
