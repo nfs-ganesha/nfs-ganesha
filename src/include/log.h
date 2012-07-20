@@ -574,6 +574,9 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 /*
  *  Re-export component logging to TI-RPC internal logging
  */
+int get_tirpc_debug_bitmask(snmp_adm_type_union *param, void *opt);
+int set_tirpc_debug_bitmask(const snmp_adm_type_union *param, void *opt);
+void set_tirpc_debug_mask(int mask);
 void rpc_warnx(/* const */ char *fmt, ...);
 
 #endif

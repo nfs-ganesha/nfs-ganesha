@@ -48,6 +48,7 @@
 #include <sys/resource.h>
 
 #include "log.h"
+#include "rpc/rpc.h"
 //#include "nfs_core.h"
 
 /* La longueur d'une chaine */
@@ -1421,6 +1422,32 @@ void SetComponentLogBuffer(log_components_t component, char *buffer)
 {
   LogComponents[component].comp_log_type = BUFFLOG;
   LogComponents[component].comp_buffer   = buffer;
+}
+
+/* Enable/disable logging for tirpc */
+int get_tirpc_debug_bitmask(snmp_adm_type_union *param, void *opt)
+{
+  unsigned int mask;
+  char out[10];
+
+  if (!tirpc_control(TIRPC_GET_DEBUG_FLAGS, (void *)&mask))
+    LogCrit(COMPONENT_INIT, "Failed get debug mask for TI-RPC __warnx");
+  sprintf(out, "%d", mask);
+  strcpy(param->string, out);
+  return 0;
+}
+
+int set_tirpc_debug_bitmask(const snmp_adm_type_union *param, void *opt)
+{
+  set_tirpc_debug_mask(atoi(param->string));
+  return 0;
+}
+
+void set_tirpc_debug_mask(int mask)
+{
+  if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &mask))
+    LogCrit(COMPONENT_INIT, "Failed setting debug mask for TI-RPC __warnx"
+            " with mask %d", mask);
 }
 
 /*
