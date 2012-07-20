@@ -41,6 +41,7 @@
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
 #include "internal.h"
+#include "fsal_pnfs_files.h"
 
 /**
  * @brief Clean up an export
@@ -376,7 +377,10 @@ fs_supports(struct fsal_export *pub_export,
         case share_support_owner:
                 return FALSE;
 
-        case pnfs_supported:
+        case pnfs_mds_supported:
+                return TRUE;
+
+        case pnfs_ds_supported:
                 return FALSE;
         }
 
@@ -542,13 +546,13 @@ fs_acl_support(struct fsal_export *pub_export)
  *
  * This function returns the mask of attributes this FSAL can support.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return supported_attributes as defined in internal.c.
  */
 
 static attrmask_t
-fs_supported_attrs(struct fsal_export *exp_hdl)
+fs_supported_attrs(struct fsal_export *export_pub)
 {
         return supported_attributes;
 }
@@ -586,6 +590,241 @@ fs_xattr_access_rights(struct fsal_export *pub_export)
         return 0644;
 }
 
+
+/**
+ * @brief Describe a Ceph striping pattern
+ *
+ * At present, we support a files based layout only.  The CRUSH
+ * striping pattern is a-periodic
+ *
+ * @param[in]  export_pub   Public export handle
+ * @param[out] da_addr_body Stream we write the result to
+ * @param[in]  type         Type of layout that gave the device
+ * @param[in]  deviceid     The device to look up
+ *
+ * @return Valid error codes in RFC 5661, p. 365.
+ */
+
+nfsstat4
+static getdeviceinfo(struct fsal_export *export_pub,
+                     XDR *da_addr_body,
+                     const layouttype4 type,
+                     const struct pnfs_deviceid *deviceid)
+{
+        /* Full 'private' export */
+        struct export* export
+                = container_of(export_pub, struct export, export);
+        /* The number of Ceph OSDs in the cluster */
+        unsigned num_osds = ceph_ll_num_osds(export->cmount);
+        /* Minimal information needed to get layout info */
+        vinodeno_t vinode;
+        /* Structure containing the storage parameters of the file within
+           the Ceph cluster. */
+        struct ceph_file_layout file_layout;
+        /* Currently, all layouts have the same number of stripes */
+        uint32_t stripes = BIGGEST_PATTERN;
+        /* Index for iterating over stripes */
+        size_t stripe  = 0;
+        /* Index for iterating over OSDs */
+        size_t osd = 0;
+        /* NFSv4 status code */
+        nfsstat4 nfs_status = 0;
+
+        vinode.ino.val = deviceid->devid;
+        vinode.snapid.val = CEPH_NOSNAP;
+
+        /* Sanity check on type */
+        if (type != LAYOUT4_NFSV4_1_FILES) {
+                LogCrit(COMPONENT_PNFS,
+                        "Unsupported layout type: %x",
+                        type);
+                return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+        }
+
+        /* Retrieve and calculate storage parameters of layout */
+
+        memset(&file_layout, 0, sizeof(struct ceph_file_layout));
+        ceph_ll_file_layout(export->cmount, vinode, &file_layout);
+
+        /* As this is large, we encode as we go rather than building a
+           structure and encoding it all at once. */
+
+
+        /* The first entry in the nfsv4_1_file_ds_addr4 is the array
+           of stripe indices. First we encode the count of stripes.
+           Since our pattern doesn't repeat, we have as many indices
+           as we do stripes. */
+
+        if (!xdr_uint32_t(da_addr_body, &stripes)) {
+                LogCrit(COMPONENT_PNFS, "Failed to encode length of "
+                        "stripe_indices array: %" PRIu32 ".", stripes);
+                return NFS4ERR_SERVERFAULT;
+        }
+
+        for (stripe = 0; stripe < stripes; stripe++) {
+                uint32_t stripe_osd
+                        = stripe_osd
+                        = ceph_ll_get_stripe_osd(export->cmount,
+                                                 vinode,
+                                                 stripe,
+                                                 &file_layout);
+                if (stripe_osd < 0) {
+                        LogCrit(COMPONENT_PNFS, "Failed to retrieve OSD for "
+                                "stripe %lu of file %" PRIu64 ".  Error: %u",
+                                stripe, deviceid->devid, -stripe_osd);
+                        return NFS4ERR_SERVERFAULT;
+                }
+                if (!xdr_uint32_t(da_addr_body, &stripe_osd)) {
+                        LogCrit(COMPONENT_PNFS,
+                                "Failed to encode OSD for stripe %lu.",
+                                stripe);
+                        return NFS4ERR_SERVERFAULT;
+                }
+        }
+
+        /* The number of OSDs in our cluster is the length of our
+           array of multipath_lists */
+
+        if (!xdr_uint32_t(da_addr_body, &num_osds)) {
+                LogCrit(COMPONENT_PNFS, "Failed to encode length of "
+                        "multipath_ds_list array: %u", num_osds);
+                return NFS4ERR_SERVERFAULT;
+        }
+
+        /* Since our index is the OSD number itself, we have only one
+           host per multipath_list. */
+
+        for(osd = 0; osd < num_osds; osd++) {
+                fsal_multipath_member_t host;
+                memset(&host, 0, sizeof(fsal_multipath_member_t));
+                host.proto = 6;
+                if (ceph_ll_osdaddr(export->cmount, osd, &host.addr) < 0) {
+                        LogCrit(COMPONENT_PNFS,
+                                "Unable to get IP address for OSD %lu.",
+                                osd);
+                        return NFS4ERR_SERVERFAULT;
+                }
+                host.port = 2049;
+                if ((nfs_status
+                     = FSAL_encode_v4_multipath(da_addr_body,
+                                                1,
+                                                &host))
+                    != NFS4_OK) {
+                        return nfs_status;
+                }
+        }
+
+        return NFS4_OK;
+}
+
+/**
+ * @brief Get list of available devices
+ *
+ * We do not support listing devices and just set EOF without doing
+ * anything.
+ *
+ * @param[in]     export_pub Export handle
+ * @param[in]     type      Type of layout to get devices for
+ * @param[in]     cb        Function taking device ID halves
+ * @param[in,out] res       In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, pp. 365-6.
+ */
+static nfsstat4
+getdevicelist(struct fsal_export *export_pub,
+              layouttype4 type,
+              void *opaque,
+              bool_t (*cb)(void *opaque,
+                           const uint64_t id),
+              struct fsal_getdevicelist_res *res)
+{
+        res->eof = TRUE;
+        return NFS4_OK;
+}
+
+
+/**
+ * @brief Get layout types supported by export
+ *
+ * We just return a pointer to the single type and set the count to 1.
+ *
+ * @param[in]  export_pub Public export handle
+ * @param[out] count      Number of layout types in array
+ * @param[out] types      Static array of layout types that must not be
+ *                        freed or modified and must not be dereferenced
+ *                        after export reference is relinquished
+ */
+
+static void
+fs_layouttypes(struct fsal_export *export_pub,
+               size_t *count,
+               const layouttype4 **types)
+{
+        static const layouttype4 supported_layout_type
+                = LAYOUT4_NFSV4_1_FILES;
+        *types = &supported_layout_type;
+        *count = 1;
+}
+
+/**
+ * @brief Get layout block size for export
+ *
+ * This function just return the Ceph default.
+ *
+ * @param[in] export_pub Public export handle
+ *
+ * @return 4 MB.
+ */
+static uint32_t
+fs_layout_blocksize(struct fsal_export *export_pub)
+{
+        return 0x400000;
+}
+
+/**
+ * @brief Maximum number of segments we will use
+ *
+ * Since current clients only support 1, that's what we'll use.
+ *
+ * @param[in] export_pub Public export handle
+ *
+ * @return 1
+ */
+static uint32_t
+fs_maximum_segments(struct fsal_export *export_pub)
+{
+        return 1;
+}
+
+/**
+ * @brief Size of the buffer needed for a loc_body
+ *
+ * Just a handle plus a bit.
+ *
+ * @param[in] export_pub Public export handle
+ *
+ * @return Size of the buffer needed for a loc_body
+ */
+static size_t
+fs_loc_body_size(struct fsal_export *export_pub)
+{
+        return 0x100;
+}
+
+/**
+ * @brief Size of the buffer needed for a ds_addr
+ *
+ * This one is huge, due to the striping pattern.
+ *
+ * @param[in] export_pub Public export handle
+ *
+ * @return Size of the buffer needed for a ds_addr
+ */
+size_t fs_da_addr_size(struct fsal_export *export_pub)
+{
+        return 0x1400;
+}
+
 /**
  * @brief Set operations for exports
  *
@@ -616,5 +855,12 @@ export_ops_init(struct export_ops *ops)
         ops->fs_supported_attrs = fs_supported_attrs;
         ops->fs_umask = fs_umask;
         ops->fs_xattr_access_rights = fs_xattr_access_rights;
+        ops->getdeviceinfo = getdeviceinfo;
+        ops->getdevicelist = getdevicelist;
+        ops->fs_layouttypes = fs_layouttypes;
+        ops->fs_layout_blocksize = fs_layout_blocksize;
+        ops->fs_maximum_segments = fs_maximum_segments;
+        ops->fs_loc_body_size = fs_loc_body_size;
+        ops->fs_da_addr_size = fs_da_addr_size;
 }
 

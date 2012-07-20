@@ -36,7 +36,9 @@
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"
+#include "fsal_pnfs_files.h"
 #include "internal.h"
+#include "nfs_exports.h"
 
 /**
  * @brief Look up an object by name
@@ -1005,6 +1007,291 @@ handle_to_key(struct fsal_obj_handle *handle_pub,
 }
 
 /**
+ * @brief Grant a layout segment.
+ *
+ * Grant a layout on a subset of a file requested.  As a special case,
+ * lie and grant a whole-file layout if requested, because Linux will
+ * ignore it otherwise.
+ *
+ * @param[in]     obj_pub  Public object handle
+ * @param[in]     req_ctx  Request context
+ * @param[out]    loc_body An XDR stream to which the FSAL must encode
+ *                         the layout specific portion of the granted
+ *                         layout segment.
+ * @param[in]     arg      Input arguments of the function
+ * @param[in,out] res      In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, pp. 366-7.
+ */
+
+static nfsstat4
+layoutget(struct fsal_obj_handle *obj_pub,
+          struct req_op_context *req_ctx,
+          XDR *loc_body,
+          const struct fsal_layoutget_arg *arg,
+          struct fsal_layoutget_res *res)
+{
+        /* The private 'full' export */
+        struct export *export
+                = container_of(obj_pub->export, struct export, export);
+        /* The private 'full' object handle */
+        struct handle *handle
+                = container_of(obj_pub, struct handle, handle);
+        /* Structure containing the storage parameters of the file within
+           the Ceph cluster. */
+        struct ceph_file_layout file_layout;
+        /* Width of each stripe on the file */
+        uint32_t stripe_width = 0;
+        /* Utility parameter */
+        nfl_util4 util = 0;
+        /* The last byte that can be accessed through pNFS */
+        uint64_t last_possible_byte = 0;
+        /* The deviceid for this layout */
+        struct pnfs_deviceid deviceid = {0, 0};
+        /* NFS Status */
+        nfsstat4 nfs_status = 0;
+        /* DS wire handle */
+        struct ds_wire ds_wire;
+        /* Descriptor for DS handle */
+        struct gsh_buffdesc ds_desc = {.addr = &ds_wire,
+                                       .len = sizeof(struct ds_wire)};
+
+        /* We support only LAYOUT4_NFSV4_1_FILES layouts */
+
+        if (arg->type != LAYOUT4_NFSV4_1_FILES) {
+                LogCrit(COMPONENT_PNFS,
+                        "Unsupported layout type: %x",
+                        arg->type);
+                return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+        }
+
+        /* Get basic information on the file and calculate the dimensions
+           of the layout we can support. */
+
+        memset(&file_layout, 0, sizeof(struct ceph_file_layout));
+
+        ceph_ll_file_layout(export->cmount, handle->wire.vi, &file_layout);
+        stripe_width = file_layout.fl_stripe_unit;
+        last_possible_byte = (BIGGEST_PATTERN * stripe_width) - 1;
+
+        /* Since the Linux kernel refuses to work with any layout that
+           doesn't cover the whole file, if a whole file layout is
+           requested, lie.
+
+           Otherwise, make sure the required layout doesn't go beyond
+           what can be accessed through pNFS. */
+        if (!((res->segment.offset == 0) &&
+              (res->segment.length == NFS4_UINT64_MAX))) {
+                struct pnfs_segment smallest_acceptable = {
+                        .io_mode = res->segment.io_mode,
+                        .offset = res->segment.offset,
+                        .length = arg->minlength
+                };
+                struct pnfs_segment forbidden_area = {
+                        .io_mode = res->segment.io_mode,
+                        .offset = last_possible_byte + 1,
+                        .length = NFS4_UINT64_MAX
+                };
+                if (pnfs_segments_overlap(smallest_acceptable,
+                                          forbidden_area)) {
+                        LogCrit(COMPONENT_PNFS,
+                                "Required layout extends beyond allowed "
+                                "region. offset: %"PRIu64
+                                ", minlength: %" PRIu64".",
+                                res->segment.offset,
+                                arg->minlength);
+                        return NFS4ERR_BADLAYOUT;
+                }
+                res->segment.offset = 0;
+                res->segment.length = stripe_width * BIGGEST_PATTERN;
+                res->segment.io_mode = LAYOUTIOMODE4_RW;
+        }
+
+        /* For now, just make the low quad of the deviceid be the
+           inode number.  With the span of the layouts constrained
+           above, this lets us generate the device address on the fly
+           from the deviceid rather than storing it. */
+
+        deviceid.export_id = arg->export_id;
+        deviceid.devid = handle->wire.vi.ino.val;
+
+        /* We return exactly one filehandle, filling in the necessary
+           information for the DS server to speak to the Ceph OSD
+           directly. */
+
+        ds_wire.wire = handle->wire;
+        ds_wire.layout = file_layout;
+        ds_wire.snapseq = ceph_ll_snap_seq(export->cmount,
+                                           handle->wire.vi);
+
+        /* We are using sparse layouts with commit-through-DS, so our
+           utility word contains only the stripe width, our first
+           stripe is always at the beginning of the layout, and there
+           is no pattern offset. */
+
+        if ((stripe_width & ~NFL4_UFLG_STRIPE_UNIT_SIZE_MASK) != 0) {
+                LogCrit(COMPONENT_PNFS,
+                        "Ceph returned stripe width that is disallowed by "
+                        "NFS: %"PRIu32".", stripe_width);
+                return NFS4ERR_SERVERFAULT;
+        }
+        util = stripe_width;
+
+        if ((nfs_status
+             = FSAL_encode_file_layout(loc_body,
+                                       &deviceid,
+                                       util,
+                                       0,
+                                       0,
+                                       obj_pub->export->exp_entry->id,
+                                       1,
+                                       &ds_desc))) {
+                LogCrit(COMPONENT_PNFS,
+                        "Failed to encode nfsv4_1_file_layout.");
+                return nfs_status;
+        }
+
+        /* We grant only one segment, and we want it back when the file
+           is closed. */
+
+        res->return_on_close = TRUE;
+        res->last_segment = TRUE;
+
+        return NFS4_OK;
+}
+
+/**
+ * @brief Potentially return one layout segment
+ *
+ * Since we don't make any reservations, in this version, or get any
+ * pins to release, always succeed
+ *
+ * @param[in] obj_pub  Public object handle
+ * @param[in] req_ctx  Request context
+ * @param[in] lrf_body Nothing for us
+ * @param[in] arg      Input arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, p. 367.
+ */
+static nfsstat4
+layoutreturn(struct fsal_obj_handle *obj_pub,
+             struct req_op_context *req_ctx,
+             XDR *lrf_body,
+             const struct fsal_layoutreturn_arg *arg)
+{
+        /* Sanity check on type */
+        if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
+                LogCrit(COMPONENT_PNFS,
+                        "Unsupported layout type: %x",
+                        arg->lo_type);
+                return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+        }
+
+        /* Since we no longer store DS addresses, we no longer have
+           anything to free.  Later on we should unravel the Ceph
+           client a bit more and coordinate with the Ceph MDS's notion
+           of read and write pins, but that isn't germane until we
+           have LAYOUTRECALL. */
+
+        return NFS4_OK;
+}
+
+/**
+ * @brief Commit a segment of a layout
+ *
+ * Update the size and time for a file accessed through a layout.
+ *
+ * @param[in]     obj_pub  Public object handle
+ * @param[in]     req_ctx  Request context
+ * @param[in]     lou_body An XDR stream containing the layout
+ *                         type-specific portion of the LAYOUTCOMMIT
+ *                         arguments.
+ * @param[in]     arg      Input arguments of the function
+ * @param[in,out] res      In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, p. 366.
+ */
+nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
+                      struct req_op_context *req_ctx,
+                      XDR *lou_body,
+                      const struct fsal_layoutcommit_arg *arg,
+                      struct fsal_layoutcommit_res *res)
+{
+        /* The private 'full' export */
+        struct export *export
+                = container_of(obj_pub->export, struct export, export);
+        /* The private 'full' object handle */
+        struct handle *handle
+                = container_of(obj_pub, struct handle, handle);
+        /* Old stat, so we don't truncate file or reverse time */
+        struct stat stold;
+        /* new stat to set time and size */
+        struct stat stnew;
+        /* Mask to determine exactly what gets set */
+        int attrmask = 0;
+        /* Error returns from Ceph */
+        int ceph_status = 0;
+
+        /* Sanity check on type */
+        if (arg->type != LAYOUT4_NFSV4_1_FILES) {
+                LogCrit(COMPONENT_PNFS,
+                        "Unsupported layout type: %x",
+                        arg->type);
+                return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+        }
+
+        /* A more proper and robust implementation of this would use
+           Ceph caps, but we need to hack at the client to expose
+           those before it can work. */
+
+        memset(&stold, 0, sizeof(struct stat));
+        if ((ceph_status
+             = ceph_ll_getattr(export->cmount, handle->wire.vi,
+                               &stold, 0, 0)) < 0) {
+                LogCrit(COMPONENT_PNFS,
+                        "Error %d in attempt to get attributes of "
+                        "file %" PRIu64 ".",
+                        -ceph_status, handle->wire.vi.ino.val);
+                return posix2nfs4_error(-ceph_status);
+        }
+
+        memset(&stnew, 0, sizeof(struct stat));
+        if (arg->new_offset) {
+                if (stold.st_size < arg->last_write + 1) {
+                        attrmask |= CEPH_SETATTR_SIZE;
+                        stnew.st_size = arg->last_write + 1;
+                        res->size_supplied = TRUE;
+                        res->new_size = arg->last_write + 1;
+                }
+        }
+
+        if ((arg->time_changed) &&
+            (arg->new_time.seconds > stold.st_mtime)) {
+                stnew.st_mtime = arg->new_time.seconds;
+        } else {
+                stnew.st_mtime = time(NULL);
+        }
+
+        attrmask |= CEPH_SETATTR_MTIME;
+
+        if ((ceph_status = ceph_ll_setattr(export->cmount,
+                                           handle->wire.vi, &stnew,
+                                           attrmask, 0, 0)) < 0) {
+                LogCrit(COMPONENT_PNFS,
+                        "Error %d in attempt to get attributes of "
+                        "file %" PRIu64 ".",
+                        -ceph_status, handle->wire.vi.ino.val);
+                return posix2nfs4_error(-ceph_status);
+        }
+
+        /* This is likely universal for files. */
+
+        res->commit_done = TRUE;
+
+        return NFS4_OK;
+}
+
+/**
  * @brief Override functions in ops vector
  *
  * This function overrides implemented functions in the ops vector
@@ -1036,4 +1323,7 @@ handle_ops_init(struct fsal_obj_ops *ops)
         ops->close = fsal_close;
         ops->handle_digest = handle_digest;
         ops->handle_to_key = handle_to_key;
+        ops->layoutget = layoutget;
+        ops->layoutreturn = layoutreturn;
+        ops->layoutcommit = layoutcommit;
 }

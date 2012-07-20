@@ -72,11 +72,29 @@ struct handle {
         fsal_openflags_t openflags;
 };
 
+/**
+ * The internals of a DS (data server) handle.
+ */
+
+struct ds_wire
+{
+        struct wire_handle wire; /*< All the information of a regualr handle */
+        struct ceph_file_layout layout; /*< Layout information */
+        uint64_t snapseq; /*< And a single entry giving a degernate
+                              snaprealm. */
+};
+
 #ifndef CEPH_INTERNAL_C
 /* Keep internal.c from clashing with itself */
 extern attrmask_t supported_attributes;
 extern attrmask_t settable_attributes;
 #endif /* !CEPH_INTERNAL_C */
+
+static const size_t BIGGEST_PATTERN = 512; /* Linux supports a stripe
+                                              pattern with no more than 4096
+                                              stripes, but for now we stick
+                                              to 1024 to keep them da_addrs
+                                              from being too gigantic. */
 
 /* Prototypes */
 

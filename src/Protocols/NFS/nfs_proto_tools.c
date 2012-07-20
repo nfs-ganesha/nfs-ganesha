@@ -1760,7 +1760,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
         case FATTR4_FS_LAYOUT_TYPES:
           {
-            layouttype4 *layouttypes = NULL;
+            const layouttype4 *layouttypes = NULL;
             size_t typecount = 0;
             size_t index = 0;
             export->ops->fs_layouttypes(export,

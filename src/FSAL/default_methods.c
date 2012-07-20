@@ -491,7 +491,7 @@ getdevicelist(struct fsal_export *exp_hdl,
 static void
 fs_layouttypes(struct fsal_export *exp_hdl,
                size_t *count,
-               layouttype4 **types)
+               const layouttype4 **types)
 {
         *count = 0;
         *types = NULL;

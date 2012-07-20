@@ -838,9 +838,8 @@ struct export_ops {
  * @param[out] da_addr_body An XDR stream to which the FSAL is to
  *                          write the layout type-specific information
  *                          corresponding to the deviceid.
- * @param[in]  type         The tyep of layout the specified the
+ * @param[in]  type         The type of layout that specified the
  *                          device
- *
  * @param[in]  deviceid     The device to look up
  *
  * @return Valid error codes in RFC 5661, p. 365.
@@ -852,26 +851,26 @@ struct export_ops {
                 const struct pnfs_deviceid *deviceid);
 
 /**
-* @brief Get list of available devices
-*
-* This function should populate calls @c cb @c values representing the
-* low quad of deviceids it wishes to make the available to the
-* caller.  it should continue calling @c cb until @c cb returns FALSE
-* or it runs out of deviceids to make available.  If @c cb returns
-* FALSE, it should assume that @c cb has not stored the most recent
-* deviceid and set @c res->cookie to a value that will begin witht he
-* most recently provided.
-*
-* If it wishes to return no deviceids, it may set @c res->eof to TRUE
-* without calling @c cb at all.
-*
-* @param[in]     exp_hdl Export handle
-* @param[in]     type    Type of layout to get devices for
-* @param[in]     cb      Functioning taking device ID halves
-* @param[in,out] res     In/outand output arguments of the function
-*
-* @return Valid error codes in RFC 5661, pp. 365-6.
-*/
+ * @brief Get list of available devices
+ *
+ * This function should populate calls @c cb @c values representing the
+ * low quad of deviceids it wishes to make the available to the
+ * caller.  it should continue calling @c cb until @c cb returns FALSE
+ * or it runs out of deviceids to make available.  If @c cb returns
+ * FALSE, it should assume that @c cb has not stored the most recent
+ * deviceid and set @c res->cookie to a value that will begin witht he
+ * most recently provided.
+ *
+ * If it wishes to return no deviceids, it may set @c res->eof to TRUE
+ * without calling @c cb at all.
+ *
+ * @param[in]     exp_hdl Export handle
+ * @param[in]     type    Type of layout to get devices for
+ * @param[in]     cb      Function taking device ID halves
+ * @param[in,out] res     In/out and output arguments of the function
+ *
+ * @return Valid error codes in RFC 5661, pp. 365-6.
+ */
         nfsstat4 (*getdevicelist)(
                 struct fsal_export *exp_hdl,
                 layouttype4 type,
@@ -892,7 +891,7 @@ struct export_ops {
  */
         void (*fs_layouttypes)(struct fsal_export *exp_hdl,
                                size_t *count,
-                               layouttype4 **types);
+                               const layouttype4 **types);
 
 /**
  * @brief Get layout block size for export
@@ -910,9 +909,10 @@ struct export_ops {
  * @brief Maximum number of segments we will use
  *
  * This function returns the maximum number of segments that will be
- * used to construct the response to any single layoutget call.
+ * used to construct the response to any single layoutget call.  Bear
+ * in mind that current clients only support 1 segment.
  *
- * @param[in]  exp_hdl Filesystem to interrogate
+ * @param[in] exp_hdl Filesystem to interrogate
  *
  * @return The preferred layout block size.
  */
@@ -921,7 +921,7 @@ struct export_ops {
 /**
  * @brief Size of the buffer needed for a loc_body
  *
- * @param[in]  exp_hdl Filesystem to interrogate
+ * @param[in] exp_hdl Filesystem to interrogate
  *
  * @return Size of the buffer needed for a loc_body
  */
@@ -930,7 +930,7 @@ struct export_ops {
 /**
  * @brief Size of the buffer needed for a ds_addr
  *
- * @param[in]  exp_hdl Filesystem to interrogate
+ * @param[in] exp_hdl Filesystem to interrogate
  *
  * @return Size of the buffer needed for a ds_addr
  */
@@ -1743,7 +1743,6 @@ struct fsal_obj_ops {
  * @param[out]    loc_body An XDR stream to which the FSAL must encode
  *                         the layout specific portion of the granted
  *                         layout segment.
- *
  * @param[in]     arg      Input arguments of the function
  * @param[in,out] res      In/out and output arguments of the function
  *
@@ -1788,7 +1787,7 @@ struct fsal_obj_ops {
                 const struct fsal_layoutreturn_arg *arg);
 
 /**
- * \brief Commit a segment of a layout
+ * @brief Commit a segment of a layout
  *
  * This function is called once on every segment of a layout.  The
  * FSAL may avoid being called again after it has finished all tasks

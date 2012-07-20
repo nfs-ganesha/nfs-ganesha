@@ -64,9 +64,6 @@ static const char *module_name = "Ceph";
  * inefficient.  It may also not be something we expect to use enough
  * to care about.
  *
- * @todo ACE: We currently do not stash a root filehandle.  This
- * should be fixed.
- *
  * @param[in]     module_in  The supplied module handle
  * @param[in]     path       The path to export
  * @param[in]     options    Export specific options for the FSAL
