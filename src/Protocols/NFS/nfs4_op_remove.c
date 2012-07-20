@@ -162,7 +162,7 @@ int nfs4_op_remove(struct nfs_argop4 *op,
     name = NULL;
   }
 
-  return NFS4_OK;
+  return res_REMOVE4.status;
 }                               /* nfs4_op_remove */
 
 /**

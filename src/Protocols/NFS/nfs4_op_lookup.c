@@ -97,6 +97,12 @@ nfs4_op_lookup(struct nfs_argop4 *op,
         /* Do basic checks on a filehandle */
         res_LOOKUP4->status = nfs4_sanity_check_FH(data, DIRECTORY);
         if (res_LOOKUP4->status != NFS4_OK) {
+		/* for some reason lookup is picky.  Just not being
+		 * dir is not enough.  We want to know it is a symlink
+		 */
+		if(res_LOOKUP4->status == NFS4ERR_NOTDIR
+		   && data->current_filetype == SYMBOLIC_LINK)
+			res_LOOKUP4->status = NFS4ERR_SYMLINK;
                 goto out;
         }
 
@@ -104,6 +110,12 @@ nfs4_op_lookup(struct nfs_argop4 *op,
         if (op->nfs_argop4_u.oplookup.objname.utf8string_len == 0 ||
             op->nfs_argop4_u.oplookup.objname.utf8string_val == NULL) {
                 res_LOOKUP4->status = NFS4ERR_INVAL;
+                goto out;
+        }
+
+        /* Check for name too long */
+        if (op->nfs_argop4_u.oplookup.objname.utf8string_len > MAXNAMLEN) {
+                res_LOOKUP4->status = NFS4ERR_NAMETOOLONG;
                 goto out;
         }
 

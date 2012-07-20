@@ -4350,7 +4350,7 @@ nfs4_sanity_check_FH(compound_data_t *data,
                                 return NFS4ERR_NOTDIR;
                         }
                         else if(required_type == SYMBOLIC_LINK) {
-                                        return NFS4ERR_INVAL;
+                                return NFS4ERR_INVAL;
                         }
 
                         switch (data->current_filetype) {
