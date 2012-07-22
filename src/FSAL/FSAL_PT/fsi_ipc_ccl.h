@@ -157,9 +157,12 @@ extern int       g_shmem_rsp_msgq;
 extern char      g_chdir_dirpath[PATH_MAX];
 extern uint64_t  g_client_pid;
 extern uint64_t  g_server_pid;
-extern struct    file_handles_struct_t g_fsi_handles;        // FSI client handles
-extern struct    dir_handles_struct_t  g_fsi_dir_handles;    // FSI client Dir handles
-extern struct    acl_handles_struct_t  g_fsi_acl_handles;    // FSI client ACL handles
+extern struct    file_handles_struct_t g_fsi_handles;     // FSI client
+                                                          // handles
+extern struct    dir_handles_struct_t  g_fsi_dir_handles; // FSI client Dir
+                                                          // handles
+extern struct    acl_handles_struct_t  g_fsi_acl_handles; // FSI client ACL
+                                                          // handles
 extern uint64_t  g_client_trans_id;  // FSI global transaction id
 extern int       g_close_trace;      // FSI global trace of io rates at close
 extern int       g_multithreaded;    // ganesha = true, samba = false
@@ -185,19 +188,23 @@ extern pthread_mutex_t g_non_io_mutex;
 extern pthread_mutex_t g_dir_mutex; // dir handle mutex
 extern pthread_mutex_t g_acl_mutex; // acl handle mutex
 extern pthread_mutex_t g_handle_mutex; // file handle Processing mutex
-extern pthread_mutex_t g_parseio_mutex; // only one thread can parse an io at a time
-extern pthread_mutex_t g_transid_mutex; // only one thread can change global transid at a time
+extern pthread_mutex_t g_parseio_mutex; // only one thread can parse an io
+                                        // at a time
+extern pthread_mutex_t g_transid_mutex; // only one thread can change global
+                                        // transid at a time
 
 
-#define SAMBA_FSI_IPC_PARAM_NAME   "fsiparam"  // To designate as our parms
-#define SAMBA_EXPORT_ID_PARAM_NAME "exportid"  // For ExportID
-#define SAMBA_STATDELTA_PARAM_NAME "statdelta" // For Statistics Output
-#define MAX_FSI_PERF_COUNT         1000        // for m_perf_xxx counters
-
+#define SAMBA_FSI_IPC_PARAM_NAME      "fsiparam"  // To designate as our parms
+#define SAMBA_EXPORT_ID_PARAM_NAME    "exportid"  // For ExportID
+#define SAMBA_STATDELTA_PARAM_NAME    "statdelta" // For Statistics Output
+#define MAX_FSI_PERF_COUNT            1000        // for m_perf_xxx counters
+#define CCL_OLDEST_HANDLE_TIMEOUT_SEC 10          // Timeout for opened handle
+                                                  // to be considered old
 // enum for client buffer return code state
 enum e_buf_rc_state {
   BUF_RC_STATE_UNKNOWN = 0,             // default
   BUF_RC_STATE_PENDING,                 // waiting on server Rc
+  BUF_RC_STATE_FILLING,                 // filling with write data 
   BUF_RC_STATE_RC_NOT_PROCESSED,        // received Rc, not processed by client
   BUF_RC_STATE_RC_PROCESSED             // client processed received Rc
 };
@@ -205,6 +212,11 @@ enum e_buf_rc_state {
 enum e_fsi_name_enum {
   FSI_NAME_DEFAULT = 0,                 // default (normal file)
   FSI_NAME_DIR                          // name is a directory
+};
+
+enum e_ccl_write_mode {
+  CCL_WRITE_IMMEDIATE = 0,              // write should be immediately issued  
+  CCL_WRITE_BUFFERED                    // pwrite does not need to issue write
 };
 
 
@@ -249,7 +261,8 @@ typedef struct fsi_stat_struct__ {
   uint64_t                st_ctime_sec;    // Time of last change  sec
   //struct timespec         st_btime;      // Birthtime  not used
   uint64_t                st_blksize;      // Optimal block size for I/O
-  uint64_t                st_blocks;       // Number of 512-byte blocks allocated
+  uint64_t                st_blocks;       // Number of 512-byte blocks
+                                           // allocated
   struct PersistentHandle st_persistentHandle;
 } fsi_stat_struct;
 
@@ -265,12 +278,18 @@ struct file_handle_t {
   int                    m_prev_io_op;        // enumerated I/O operation
                                               // (read/write/other I/O)
   struct io_buf_status_t m_writebuf_state[MAX_FSI_IPC_SHMEM_BUF_PER_STREAM *
-                                          FSI_IPC_SHMEM_WRITEBUF_PER_BUF * 2];
+                                          FSI_IPC_SHMEM_WRITEBUF_PER_BUF];
                                               // one entry per write data buffer
   int                    m_writebuf_cnt;      // how many write buffers this
                                               // handle actually uses
+  int                    m_write_inuse_index; // index of the filling
+                                              // write buffer (-1 if none)
+  int                    m_write_inuse_bytes; // number of bytes in the
+                                              // filling write buffer
+  uint64_t               m_write_inuse_offset; // offset of first byte in
+                                              // filling buffer
   struct io_buf_status_t m_readbuf_state [MAX_FSI_IPC_SHMEM_BUF_PER_STREAM *
-                                          FSI_IPC_SHMEM_READBUF_PER_BUF * 2];
+                                          FSI_IPC_SHMEM_READBUF_PER_BUF];
                                               // one entry per read data buffer
   int                    m_readbuf_cnt;       // how many read buffers this
                                               // handle actually uses
@@ -279,8 +298,10 @@ struct file_handle_t {
   int                    m_first_write_done;  // set if we are writing and first
                                               // write is complete
   int                    m_first_read_done;   // set if we completed first read
-  int                    m_close_rsp_rcvd;    // IPC close file response received
-  int                    m_fsync_rsp_rcvd;    // IPC fsync file response received
+  int                    m_close_rsp_rcvd;    // IPC close file response
+                                              // received
+  int                    m_fsync_rsp_rcvd;    // IPC fsync file response
+                                              // received
 
   int                    m_read_at_eof;       // set if at EOF - only for read
   uint64_t               m_file_loc;          // used for writes and fstat
@@ -344,7 +365,8 @@ struct fsi_struct_dir_t {
 /// @brief  directory handle
 // ----------------------------------------------------------------------------
 struct dir_handle_t {
-  int                     m_dir_handle_in_use; // used to flag available entries
+  int                     m_dir_handle_in_use; // used to flag available
+                                               // entries
   uint64_t                m_fs_dir_handle;     // fsi_facade handle
   struct fsi_struct_dir_t m_fsi_struct_dir;    // directory struct
   uint64_t                m_resourceHandle;    // server resource handle
@@ -654,18 +676,18 @@ ssize_t ccl_pread(ccl_context_t * handle,
                    void              * data,
                    size_t              n,
                    uint64_t            offset);
-ssize_t ccl_pwrite(ccl_context_t * handle,
-                    int handle_index,
-                    const void        * data,
-                    size_t              n,
-                    uint64_t           offset);
+ssize_t ccl_pwrite(ccl_context_t         * handle,
+                    int                    handle_index,
+                    const void           * data,
+                    size_t                 n,
+                    uint64_t               offset);
 int ccl_open(ccl_context_t   * handle,
               char                  * path,
               int                   flags,
               mode_t                mode);
 int ccl_close(ccl_context_t * handle,
                int handle_index,
-              int useLock);
+               int useLock);
 int merge_errno_rc(int rc_a,
                    int rc_b);
 int get_all_io_responses(int     handle_index,
@@ -709,6 +731,7 @@ int verify_io_response(int                      transaction_type,
 int wait_free_write_buf(int     handle_index,
                         int   * p_combined_rc,
                         struct msg_t* p_msg);
+int flush_write_buffer(int handle_index, ccl_context_t * handle);
 void ccl_ipc_stats_init();
 void ccl_ipc_stats_logger();
 void ccl_ipc_stats_on_io_complete(struct timeval * done_time);
