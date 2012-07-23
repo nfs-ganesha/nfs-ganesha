@@ -117,13 +117,15 @@ int nfs4_op_lock(struct nfs_argop4 *op,
 
         /* Convert lock parameters to internal types */
         switch(arg_LOCK4->locktype) {
-        case READ_LT:
         case READW_LT:
+		blocking            = STATE_NFSV4_BLOCKING;
+        case READ_LT:
                 lock_desc.lock_type = FSAL_LOCK_R;
                 break;
 
-        case WRITE_LT:
         case WRITEW_LT:
+		blocking            = STATE_NFSV4_BLOCKING;
+        case WRITE_LT:
                 lock_desc.lock_type = FSAL_LOCK_W;
                 break;
         }
