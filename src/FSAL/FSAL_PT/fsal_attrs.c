@@ -296,9 +296,6 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                 fsal2unix_mode(current_attrs.mode), 
                 buffxstat.buffstat.st_mode);
 
-      FSI_TRACE(FSI_INFO, "current mode = %o, new mode = %o",
-                fsal2unix_mode(current_attrs.mode), 
-                buffxstat.buffstat.st_mode);
       if (fsi_get_name_from_handle(p_context, 
                                    p_filehandle->data.handle.f_handle, 
                                    fsi_name) < 0) {
@@ -422,18 +419,23 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
     /* Fill wanted owner. */
     if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER)) {
       buffxstat.buffstat.st_uid = (int)wanted_attrs.owner;
-      FSI_TRACE(FSI_DEBUG,
-                "current uid = %d, new uid = %d",
-                current_attrs.owner, buffxstat.buffstat.st_uid);
+    } else {
+      buffxstat.buffstat.st_uid = (int)current_attrs.owner;
     }
+    FSI_TRACE(FSI_DEBUG,
+              "current uid = %d, new uid = %d",
+              current_attrs.owner, buffxstat.buffstat.st_uid);
 
     /* Fill wanted group. */
     if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP)) {
-       buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
-      FSI_TRACE(FSI_DEBUG,
-                "current gid = %d, new gid = %d",
-                current_attrs.group, buffxstat.buffstat.st_gid);
+      buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
+    } else {
+      buffxstat.buffstat.st_gid = (int)current_attrs.group;
     }
+    FSI_TRACE(FSI_DEBUG,
+              "current gid = %d, new gid = %d",
+              current_attrs.group, buffxstat.buffstat.st_gid);
+
     if (fsi_get_name_from_handle(p_context, 
                                  p_filehandle->data.handle.f_handle, 
                                  fsi_name) < 0) {
@@ -508,16 +510,24 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                 "current atime = %lu, new atime = %lu",
                 (unsigned long)current_attrs.atime.seconds, 
                 (unsigned long)buffxstat.buffstat.st_atime);
+    } else {
+      buffxstat.buffstat.st_atime = (time_t) current_attrs.atime.seconds;
     }
+    FSI_TRACE(FSI_DEBUG,
+              "current atime = %lu, new atime = %lu",
+              (unsigned long)current_attrs.atime.seconds,
+              (unsigned long)buffxstat.buffstat.st_atime);
 
     /* Fill wanted mtime. */
     if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME)) {
       buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
-      FSI_TRACE(FSI_DEBUG,
-                "current mtime = %lu, new mtime = %lu",
-                (unsigned long)current_attrs.mtime.seconds, 
-                (unsigned long)buffxstat.buffstat.st_mtime);
+    } else {
+      buffxstat.buffstat.st_mtime = (time_t) current_attrs.mtime.seconds;
     }
+    FSI_TRACE(FSI_DEBUG,
+              "current mtime = %lu, new mtime = %lu",
+              (unsigned long)current_attrs.mtime.seconds,
+              (unsigned long)buffxstat.buffstat.st_mtime);
 
     if (fsi_get_name_from_handle(p_context, 
                                  p_filehandle->data.handle.f_handle, 
