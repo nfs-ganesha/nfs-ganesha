@@ -1507,8 +1507,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 	}
 	if(S_ISLNK(stat.st_mode)) {
-		char *link_content = malloc(PATH_MAX);
-
+		link_content = malloc(PATH_MAX);
 		retlink = readlinkat(dir_fd, basepart,
 				     link_content, PATH_MAX);
 		if(retlink < 0 || retlink == PATH_MAX) {
