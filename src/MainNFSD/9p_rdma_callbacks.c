@@ -68,14 +68,6 @@
 #define TEST_Z(x)  do { if ( (x)) { LogFatal(COMPONENT_9P,"error: " #x " failed (returned non-zero)." ); }} while (0)
 #define TEST_NZ(x) do { if (!(x)) { LogFatal(COMPONENT_9P,"error: " #x " failed (returned zero/null)."); }} while (0)
 
-struct _9p_datamr {
-	msk_data_t *data;
-	struct ibv_mr *mr;
-	msk_data_t *ackdata;
-	pthread_mutex_t *lock;
-	pthread_cond_t *cond;
-};
-
 void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) {
 
 }
