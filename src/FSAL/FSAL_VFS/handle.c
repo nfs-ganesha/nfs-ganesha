@@ -236,6 +236,55 @@ errout:
 	return fsalstat(fsal_error, retval);	
 }
 
+/* make_file_safe
+ * the file/dir got created mode 0, uid root (me)
+ * which leaves it inaccessible. Set ownership first
+ * followed by mode.
+ * could use setfsuid/gid around the mkdir/mknod/openat
+ * but that only works on Linux and is more syscalls
+ * 5 (set uid/gid, create, unset uid/gid) vs. 3
+ * NOTE: this way escapes quotas however we do check quotas
+ * first in cache_inode_*
+ */
+
+static inline
+int make_file_safe(int dir_fd,
+		   const char *name,
+		   mode_t unix_mode,
+		   uid_t user,
+		   gid_t group,
+		   struct file_handle *fh,
+		   struct stat *stat)
+{
+	int mnt_id = 0;
+	int retval;
+
+	
+	retval = fchownat(dir_fd, name,
+			  user, group, AT_SYMLINK_NOFOLLOW);
+	if(retval < 0) {
+		goto fileerr;
+	}
+
+	/* now that it is owned properly, set accessible mode */
+	
+	retval = fchmodat(dir_fd, name, unix_mode, 0);
+	if(retval < 0) {
+		goto fileerr;
+	}
+	retval = name_to_handle_at(dir_fd, name, fh, &mnt_id, 0);
+	if(retval < 0) {
+		goto fileerr;
+	}
+	retval = fstatat(dir_fd, name, stat, AT_SYMLINK_NOFOLLOW);
+	if(retval < 0) {
+		goto fileerr;
+	}
+
+fileerr:
+	retval = errno;
+	return retval;
+}
 /* create
  * create a regular file and set its attributes
  */
@@ -291,7 +340,9 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	if(stat.st_mode & S_ISGID)
 		group = -1; /*setgid bit on dir propagates dir group owner */
 
-	/* create it with no access because we are root when we do this */
+	/* create it with no access because we are root when we do this
+	 * we use openat because there is no creatat...
+	 */
 	fd = openat(dir_fd, name, O_CREAT|O_WRONLY|O_TRUNC|O_EXCL, 0000);
 	if(fd < 0) {
 		retval = errno;
@@ -299,27 +350,13 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		close(dir_fd);
 		goto errout;
 	}
+	close(fd);  /* don't need it anymore. */
+
+	retval = make_file_safe(dir_fd, name, user, group, fh, &stat);
+	if(retval < 0) {
+		goto fileerr;
+	}
 	close(dir_fd); /* done with parent */
-
-	retval = fchown(fd, user, group);
-	if(retval < 0) {
-		goto fileerr;
-	}
-
-	/* now that it is owned properly, set to an accessible mode */
-	retval = fchmod(fd, unix_mode);
-	if(retval < 0) {
-		goto fileerr;
-	}
-	retval = name_to_handle_at(fd, "", fh, &mnt_id, AT_EMPTY_PATH);
-	if(retval < 0) {
-		goto fileerr;
-	}
-	retval = fstatat(fd, "", &stat, AT_EMPTY_PATH);
-	if(retval < 0) {
-		goto fileerr;
-	}
-	close(fd);
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, &stat, NULL, NULL, NULL, dir_hdl->export);
@@ -332,9 +369,9 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 fileerr:
-	retval = errno;
 	fsal_error = posix2fsal_error(retval);
-	close(fd);
+	unlinkat(dir_fd, name, 0);  /* remove the evidence on errors */
+	close(dir_fd); /* done with parent */
 errout:
 	return fsalstat(fsal_error, retval);	
 }
@@ -346,7 +383,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int mnt_id = 0;
-	int fd, mount_fd, dir_fd;
+	int mount_fd, dir_fd;
 	struct stat stat;
 	mode_t unix_mode;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -392,35 +429,10 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	if(retval < 0) {
 		goto direrr;
 	}
-	fd = openat(dir_fd, name, O_RDONLY | O_DIRECTORY);
-/** @TODO. my fd leak caused this to fail, leaving the dir around.
- * do an unlinkat on failed dirs.  same for other f/s object is we don't
- * get through the full dance to a real and safe object
- */
-	if(fd < 0) {
-		goto direrr;
-	}
-	close(dir_fd); /* done with the parent */
-
-	retval = fchown(fd, user, group);
+	retval = make_file_safe(dir_fd, name, user, group, fh, &stat);
 	if(retval < 0) {
 		goto fileerr;
 	}
-
-	/* now that it is owned properly, set accessible mode */
-	retval = fchmod(fd, unix_mode);
-	if(retval < 0) {
-		goto fileerr;
-	}
-	retval = name_to_handle_at(fd, "", fh, &mnt_id, AT_EMPTY_PATH);
-	if(retval < 0) {
-		goto fileerr;
-	}
-	retval = fstatat(fd, "", &stat, AT_EMPTY_PATH);
-	if(retval < 0) {
-		goto fileerr;
-	}
-	close(fd);
 
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, &stat, NULL, NULL, NULL, dir_hdl->export);
@@ -440,9 +452,9 @@ direrr:
 	return fsalstat(fsal_error, retval);	
 
 fileerr:
-	retval = errno;
 	fsal_error = posix2fsal_error(retval);
-	close(fd);
+	unlinkat(dir_fd, name, AT_REMOVEDIR);  /* remove the evidence on errors */
+	close(dir_fd); /* done with the parent */
 errout:
 	return fsalstat(fsal_error, retval);	
 }
@@ -531,6 +543,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	}
 	retval = fstatat(dir_fd, "", &stat, AT_EMPTY_PATH);
 	if(retval < 0) {
+		retval = errno;
 		goto direrr;
 	}
 	if(stat.st_mode & S_ISGID)
@@ -539,26 +552,10 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	/* create it with no access because we are root when we do this */
 	retval = mknodat(dir_fd, name, create_mode, unix_dev);
 	if(retval < 0) {
+		retval = errno;
 		goto direrr;
 	}
-	retval = name_to_handle_at(dir_fd, name, fh, &mnt_id, 0);
-	if(retval < 0) {
-		goto direrr;
-	}
-
-	retval = fchownat(dir_fd, name,
-			  user, group, AT_SYMLINK_NOFOLLOW);
-	if(retval < 0) {
-		goto direrr;
-	}
-
-	/* now that it is owned properly, set accessible mode */
-	retval = fchmodat(dir_fd, name,
-			  unix_mode, 0);
-	if(retval < 0) {
-		goto direrr;
-	}
-	retval = fstatat(dir_fd, name, &stat, 0);
+	retval = make_file_safe(dir_fd, name, user, group, fh, &stat);
 	if(retval < 0) {
 		goto direrr;
 	}
@@ -574,7 +571,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	
 	
 direrr:
-	retval = errno;
 	fsal_error = posix2fsal_error(retval);
 errout:
 	unlinkat(dir_fd, name, 0);
@@ -635,15 +631,17 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	if(retval < 0) {
 		goto direrr;
 	}
-	retval = name_to_handle_at(dir_fd, name, fh, &mnt_id, 0);
-	if(retval < 0) {
-		goto linkerr;
-	}
+	/* do this all by hand because we can't use fchmodat on symlinks...
+	 */
 	retval = fchownat(dir_fd, name, user, group, AT_SYMLINK_NOFOLLOW);
 	if(retval < 0) {
 		goto linkerr;
 	}
 
+	retval = name_to_handle_at(dir_fd, name, fh, &mnt_id, 0);
+	if(retval < 0) {
+		goto linkerr;
+	}
 	/* now get attributes info, being careful to get the link, not the target */
 	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
 	if(retval < 0) {
