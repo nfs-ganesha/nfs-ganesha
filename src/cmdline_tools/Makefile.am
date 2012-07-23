@@ -37,7 +37,13 @@ __FS_NAME__ganesha_printFH_LDADD += ../snmp_adm/libsnmp_adm.la	\
 	$(EXT_LDADD)
 endif
 
+if USE_9P_RDMA
+__FS_NAME__ganesha_convertFH_LDADD += -lmsk -lrdmacm -libverbs
+__FS_NAME__ganesha_printFH_LDADD += -lmsk -lrdmacm -libverbs
+endif
+
 if USE_NFSIDMAP
 __FS_NAME__ganesha_convertFH_LDADD += -lnfsidmap
 __FS_NAME__ganesha_printFH_LDADD += -lnfsidmap
 endif
+

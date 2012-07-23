@@ -79,26 +79,135 @@
 #endif
 
 /**
- * _9p_rdma_dispatcher_thread: 9P/RDMA listener and dispatcher
+ * _9p_rdma_handle_trans_thr: 9P/RDMA listener
+ * 
+ * @param Arg : contains the child trans to be managed
+ * 
+ * @return NULL 
+ * 
+ */
+
+void * _9p_rdma_handle_trans_thread( void * Arg )
+{
+  msk_trans_t   * trans   = Arg  ;
+  uint8_t       * rdmabuf = NULL ;
+  struct ibv_mr * mr      = NULL ;
+  msk_data_t    * wdata   = NULL ;
+  msk_data_t    * ackdata = NULL ;
+  msk_data_t   ** rdata   = NULL ;
+  struct _9p_datamr * datamr  = NULL ;
+  pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER ;
+  pthread_cond_t cond = PTHREAD_COND_INITIALIZER ;
+  unsigned int i = 0 ;
+  int rc = 0 ;
+
+  printf( "=============> Kawabounga !!!!!!!\n" ) ;
+
+  /* Alloc rdmabuf */
+  if( ( rdmabuf = gsh_malloc( (_9P_RDMA_RECV_NUM+2)*_9P_RDMA_CHUNK_SIZE)) == NULL ) 
+    LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc rdmabuf" ) ;
+
+  /* Memset it to 0 (always useful) */
+  memset( rdmabuf, 0, (_9P_RDMA_RECV_NUM+2)*_9P_RDMA_CHUNK_SIZE);
+  
+  /* Register rdmabuf */
+  if( ( mr = msk_reg_mr( trans, 
+                         rdmabuf, 
+                         (_9P_RDMA_RECV_NUM+2)*_9P_RDMA_CHUNK_SIZE, 
+                         IBV_ACCESS_LOCAL_WRITE)) == NULL  )
+    LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not register rdmabuf" ) ;
+
+  /* Get prepared to recv data */
+ if( ( ackdata = gsh_malloc( sizeof( msk_data_t ) ) ) == NULL )
+    LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc ackdata" ) ;
+
+  ackdata->data = rdmabuf+(_9P_RDMA_RECV_NUM+1)*_9P_RDMA_CHUNK_SIZE;
+  ackdata->max_size = _9P_RDMA_CHUNK_SIZE;
+  ackdata->size = 1;
+  ackdata->data[0] = 0;
+
+  if( ( rdata = gsh_malloc( _9P_RDMA_RECV_NUM * sizeof(msk_data_t* ) ) ) == NULL )
+    LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc rdata" ) ;
+
+  if( (datamr = gsh_malloc(_9P_RDMA_RECV_NUM*sizeof(struct _9p_datamr))) == NULL )
+    LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc datamr" ) ;
+
+  for( i=0; i < _9P_RDMA_RECV_NUM; i++)
+   {
+      if( ( rdata[i] = gsh_malloc( sizeof( msk_data_t ) ) ) == NULL )
+         LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc rdata[%u]", i ) ;
+
+      rdata[i]->data=rdmabuf+i*_9P_RDMA_CHUNK_SIZE ;
+      rdata[i]->max_size=_9P_RDMA_CHUNK_SIZE ;
+      datamr[i].data = rdata[i];
+      datamr[i].mr = mr;
+      datamr[i].ackdata = ackdata;
+      datamr[i].lock = &lock;
+      datamr[i].cond = &cond;
+
+      if( ( rc = msk_post_recv( trans, 
+                                rdata[i], 
+                                1, 
+                                mr, 
+                                _9p_rdma_callback_recv, 
+                                &(datamr[i]) ) ) != 0 )
+        {
+          LogEvent( COMPONENT_9P,  "9P/RDMA: trans handler could recv first byte of datamr[%u], rc=%u", i, rc ) ;
+          goto exit ;
+        }
+   } /*  for (unsigned int i=0; i < _9P_RDMA_RECV_NUM; i++)  */
+
+  /* Finalize accept */
+  if( ( rc = msk_finalize_accept( trans ) ) != 0 )
+    {
+      LogMajor( COMPONENT_9P, "9P/RDMA: trans handler could not finalize accept, rc=%u", rc ) ;
+      goto exit ;
+    }
+
+  while( trans->state == MSK_CONNECTED )
+   {
+     pthread_mutex_lock(&lock);
+
+     pthread_cond_wait(&cond, &lock);
+     pthread_mutex_unlock(&lock);
+   }
+
+exit:
+  msk_destroy_trans( &trans ) ;
+  
+  for( i = 0 ; i < _9P_RDMA_RECV_NUM ; i++ )
+    if( !rdata[i] ) gsh_free( rdata[i] ) ;
+
+  if( !datamr ) gsh_free( datamr ) ;
+  if( !rdata ) gsh_free( rdata ) ;
+  if( !ackdata ) gsh_free( ackdata ) ;
+  if( !rdmabuf ) gsh_free( rdmabuf ) ;
+
+  pthread_exit(NULL);
+} /* _9p_rdma_handle_trans */
+
+
+
+/**
+ * _9p_rdma_dispatcher_thread: 9P/RDMA dispatcher
  *
  * @param Arg the socket number cast as a void * in pthread_create
  *
  * @return NULL 
  *
  */
-
-
 void * _9p_rdma_dispatcher_thread( void * Arg )
 {
-  //msk_trans_t *trans;
-  //msk_trans_t *child_trans;
+  msk_trans_t *trans;
+  msk_trans_t *child_trans;
 
   msk_trans_attr_t trans_attr;
+  pthread_attr_t attr_thr ; 
+  pthread_t thrid_handle_trans ;
 
   memset(&trans_attr, 0, sizeof(msk_trans_attr_t));
 
-  trans_attr.server = 10;  /** @todo : why 10 ? To be seen with Dominique */
-
+  trans_attr.server = _9P_RDMA_BACKLOG; 
   trans_attr.rq_depth = _9P_RDMA_RECV_NUM+2;
   trans_attr.addr.sa_in.sin_family = AF_INET;
   trans_attr.addr.sa_in.sin_port =  htons(nfs_param._9p_param._9p_rdma_port) ;
@@ -114,14 +223,51 @@ void * _9p_rdma_dispatcher_thread( void * Arg )
   LogDebug(COMPONENT_9P_DISPATCH,
            "My pthread id is %p", (caddr_t) pthread_self());
 
- /* Start infinite loop here */
- for( ;; ) 
-   {
+  /* Prepare attr_thr for dispatch */
+  memset( (char *)&attr_thr, 0 , sizeof( attr_thr ) ) ;
+
+  /* Set the pthread attributes */
+  if( pthread_attr_init( &attr_thr ) )
+   LogFatal( COMPONENT_9P, "9P/RDMA dispatcher could not init pthread_attr_t" ) ;
+
+  if( pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) )
+   LogFatal( COMPONENT_9P, "9P/RDMA dispatcher could not set pthread_attr_t:scope_system" ) ;
+
+  if( pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE ) )
+   LogFatal( COMPONENT_9P, "9P/RDMA dispatcher could not set pthread_attr_t:create_joignable" ) ;
+
+  /* Init RDMA via mooshika */
+  if( msk_init( &trans, &trans_attr ) )
+    LogFatal( COMPONENT_9P, "9P/RDMA dispatcher could not start mooshika engine" ) ;
+  else
+    LogEvent( COMPONENT_9P, "Mooshika engine is started" ) ;
+
+  /* Bind Mooshika */
+  if( msk_bind_server(trans ) )
+    LogFatal( COMPONENT_9P, "9P/RDMA dispatcher could not bind mooshika engine" ) ;
+  else
+    LogEvent( COMPONENT_9P, "Mooshika engine is bound" ) ;
  
-      sleep( 1 ) ; 
-   } /* for( ;; ) */
  
-  return NULL ;
+  /* Start infinite loop here */
+  while( 1 ) 
+    {
+      if( ( child_trans = msk_accept_one( trans ) ) == NULL )
+        LogMajor( COMPONENT_9P, "9P/RDMA : dispatcher failed to accept a new client" ) ;
+      else
+       {
+         if( !pthread_create( &thrid_handle_trans, 
+                              &attr_thr, 
+                              _9p_rdma_handle_trans_thread, 
+                              child_trans ) )
+           LogMajor( COMPONENT_9P, "9P/RDMA : dispatcher accepted a new client but could not spawn a related thread" ) ;
+         else
+	   LogEvent( COMPONENT_9P, "9P/RDMA: thread #%u spawned to managed new child_trans", 
+		     (unsigned int)thrid_handle_trans ) ;
+       }
+    } /* for( ;; ) */
+ 
+   return NULL ;
 } /* _9p_rdma_dispatcher_thread */
 
 
