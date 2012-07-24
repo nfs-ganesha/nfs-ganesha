@@ -24,11 +24,10 @@
 
 #include "config.h"
 #include <sys/utsname.h>
+#include "abstract_atomic.h"
 #include "ganesha_rpc.h"
 #include "nsm.h"
-#include "nlm4.h"
-#include "log.h"
-#include "nfs_core.h"
+#include "sal_data.h"
 
 pthread_mutex_t nsm_mutex = PTHREAD_MUTEX_INITIALIZER;
 CLIENT *nsm_clnt;
@@ -44,36 +43,43 @@ bool_t nsm_connect()
 
   if(uname(&utsname) == -1)
     {
-      LogDebug(COMPONENT_NLM,
-               "uname failed with errno %d (%s)",
-               errno, strerror(errno));
+      LogCrit(COMPONENT_NLM,
+              "uname failed with errno %d (%s)",
+              errno, strerror(errno));
       return FALSE;
     }
 
   nodename = gsh_malloc(strlen(utsname.nodename)+1);
   if(nodename == NULL)
     {
-      LogDebug(COMPONENT_NLM,
-               "failed to allocate memory for nodename");
+      LogCrit(COMPONENT_NLM,
+              "failed to allocate memory for nodename");
       return FALSE;
     }
 
   strcpy(nodename, utsname.nodename);
 
+  nsm_clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
+
   if(nsm_clnt == NULL)
-    nsm_clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
+    {
+      LogCrit(COMPONENT_NLM,
+              "failed to connect to statd");
+      gsh_free(nodename);
+      nodename = NULL;
+    }
 
   return nsm_clnt != NULL;
 }
 
 void nsm_disconnect()
 {
-  if(nsm_count == 0)
+  if(nsm_count == 0 && nsm_clnt != NULL)
     {
       Clnt_destroy(nsm_clnt);
       nsm_clnt = NULL;
-      if(nodename != NULL)
-        gsh_free(nodename);
+      gsh_free(nodename);
+      nodename = NULL;
     }
 }
 
@@ -87,8 +93,13 @@ bool_t nsm_monitor(state_nsm_client_t *host)
   if(host == NULL)
     return TRUE;
 
-  if(host->ssc_monitored)
-    return TRUE;
+  P(host->ssc_mutex);
+
+  if(atomic_fetch_int32_t(&host->ssc_monitored))
+    {
+      V(host->ssc_mutex);
+      return TRUE;
+    }
 
   nsm_mon.mon_id.mon_name      = host->ssc_nlm_caller_name;
   nsm_mon.mon_id.my_id.my_prog = NLMPROG;
@@ -104,10 +115,11 @@ bool_t nsm_monitor(state_nsm_client_t *host)
   /* create a connection to nsm on the localhost */
   if(!nsm_connect())
     {
-      LogDebug(COMPONENT_NLM,
-               "Can not monitor %s clnt_create returned NULL",
-               nsm_mon.mon_id.mon_name);
+      LogCrit(COMPONENT_NLM,
+              "Can not monitor %s clnt_create returned NULL",
+              nsm_mon.mon_id.mon_name);
       V(nsm_mutex);
+      V(host->ssc_mutex);
       return FALSE;
     }
 
@@ -124,30 +136,33 @@ bool_t nsm_monitor(state_nsm_client_t *host)
 
   if(ret != RPC_SUCCESS)
     {
-      LogDebug(COMPONENT_NLM,
-               "Can not monitor %s SM_MON ret %d %s",
-               nsm_mon.mon_id.mon_name, ret, clnt_sperror(nsm_clnt, ""));
+      LogCrit(COMPONENT_NLM,
+              "Can not monitor %s SM_MON ret %d %s",
+              nsm_mon.mon_id.mon_name, ret, clnt_sperror(nsm_clnt, ""));
       nsm_disconnect();
       V(nsm_mutex);
+      V(host->ssc_mutex);
       return FALSE;
     }
 
   if(res.res_stat != STAT_SUCC)
     {
-      LogDebug(COMPONENT_NLM,
-               "Can not monitor %s SM_MON status %d",
-               nsm_mon.mon_id.mon_name, res.res_stat);
+      LogCrit(COMPONENT_NLM,
+              "Can not monitor %s SM_MON status %d",
+              nsm_mon.mon_id.mon_name, res.res_stat);
       nsm_disconnect();
       V(nsm_mutex);
+      V(host->ssc_mutex);
       return FALSE;
     }
 
   nsm_count++;
-  host->ssc_monitored = TRUE;
+  atomic_store_int32_t(&host->ssc_monitored, TRUE);
   LogDebug(COMPONENT_NLM,
            "Monitored %s for nodename %s", nsm_mon.mon_id.mon_name, nodename);
 
   V(nsm_mutex);
+  V(host->ssc_mutex);
   return TRUE;
 }
 
@@ -161,8 +176,13 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
   if(host == NULL)
     return TRUE;
 
-  if(!host->ssc_monitored)
-    return TRUE;
+  P(host->ssc_mutex);
+
+  if(!atomic_fetch_int32_t(&host->ssc_monitored))
+    {
+      V(host->ssc_mutex);
+      return TRUE;
+    }
 
   nsm_mon_id.mon_name      = host->ssc_nlm_caller_name;
   nsm_mon_id.my_id.my_prog = NLMPROG;
@@ -174,10 +194,11 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
   /* create a connection to nsm on the localhost */
   if(!nsm_connect())
     {
-      LogDebug(COMPONENT_NLM,
-               "Can not unmonitor %s clnt_create returned NULL",
-               nsm_mon_id.mon_name);
+      LogCrit(COMPONENT_NLM,
+              "Can not unmonitor %s clnt_create returned NULL",
+              nsm_mon_id.mon_name);
       V(nsm_mutex);
+      V(host->ssc_mutex);
       return FALSE;
     }
 
@@ -194,21 +215,25 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
 
   if(ret != RPC_SUCCESS)
     {
-      LogDebug(COMPONENT_NLM,
-               "Can not unmonitor %s SM_MON ret %d %s",
-               nsm_mon_id.mon_name, ret, clnt_sperror(nsm_clnt, ""));
+      LogCrit(COMPONENT_NLM,
+              "Can not unmonitor %s SM_MON ret %d %s",
+              nsm_mon_id.mon_name, ret, clnt_sperror(nsm_clnt, ""));
       nsm_disconnect();
       V(nsm_mutex);
+      V(host->ssc_mutex);
       return FALSE;
     }
 
-  host->ssc_monitored = FALSE;
+  atomic_store_int32_t(&host->ssc_monitored, FALSE);
   nsm_count--;
-  nsm_disconnect();
+
   LogDebug(COMPONENT_NLM,
            "Unonitored %s for nodename %s", nsm_mon_id.mon_name, nodename);
 
+  nsm_disconnect();
+
   V(nsm_mutex);
+  V(host->ssc_mutex);
   return TRUE;
 }
 
@@ -228,8 +253,8 @@ void nsm_unmonitor_all(void)
   /* create a connection to nsm on the localhost */
   if(!nsm_connect())
     {
-      LogDebug(COMPONENT_NLM,
-               "Can not unmonitor all clnt_create returned NULL");
+      LogCrit(COMPONENT_NLM,
+              "Can not unmonitor all clnt_create returned NULL");
       V(nsm_mutex);
       return;
     }
@@ -247,9 +272,9 @@ void nsm_unmonitor_all(void)
 
   if(ret != RPC_SUCCESS)
     {
-      LogDebug(COMPONENT_NLM,
-               "Can not unmonitor all ret %d %s",
-               ret, clnt_sperror(nsm_clnt, ""));
+      LogCrit(COMPONENT_NLM,
+              "Can not unmonitor all ret %d %s",
+              ret, clnt_sperror(nsm_clnt, ""));
     }
 
   nsm_disconnect();

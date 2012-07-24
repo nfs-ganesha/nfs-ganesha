@@ -111,10 +111,10 @@ int Init_9p_hash(void) ;
  ******************************************************************************/
 
 #ifdef _USE_NLM
-void inc_nsm_client_ref_locked(state_nsm_client_t * pclient);
+/* These refcount functions must not be called holding the ssc_mutex */
 void inc_nsm_client_ref(state_nsm_client_t * pclient);
-void dec_nsm_client_ref_locked(state_nsm_client_t * pclient);
 void dec_nsm_client_ref(state_nsm_client_t * pclient);
+
 int display_nsm_client(state_nsm_client_t * pkey, char * str);
 int display_nsm_client_val(hash_buffer_t * pbuff, char * str);
 int display_nsm_client_key(hash_buffer_t * pbuff, char * str);
@@ -130,14 +130,10 @@ uint32_t nsm_client_value_hash_func(hash_parameter_t * p_hparam,
 uint64_t nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                   hash_buffer_t    * buffclef);
 
-state_nsm_client_t *get_nsm_client(care_t       care,
-                                   SVCXPRT    * xprt,
-                                   const char * caller_name);
-void nsm_client_PrintAll(void);
-
-void inc_nlm_client_ref_locked(state_nlm_client_t * pclient);
+state_nsm_client_t *get_nsm_client(care_t    care,
+                                   SVCXPRT * xprt,
+                                   char    * caller_name);
 void inc_nlm_client_ref(state_nlm_client_t * pclient);
-void dec_nlm_client_ref_locked(state_nlm_client_t * pclient);
 void dec_nlm_client_ref(state_nlm_client_t * pclient);
 int display_nlm_client(state_nlm_client_t * pkey, char * str);
 int display_nlm_client_val(hash_buffer_t * pbuff, char * str);
@@ -157,8 +153,7 @@ uint64_t nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
 state_nlm_client_t *get_nlm_client(care_t               care,
                                    SVCXPRT            * xprt,
                                    state_nsm_client_t * pnsm_client,
-                                   const char         * caller_name);
-void nlm_client_PrintAll(void);
+                                   char               * caller_name);
 
 void remove_nlm_owner(state_owner_t        * powner,
                       const char           * str);
