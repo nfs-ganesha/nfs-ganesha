@@ -922,7 +922,7 @@ out:
 		k5_free_default_realm(context, default_realm);
 	if (realmnames)
 		krb5_free_host_realm(context, realmnames);
-	free(k5err);
+
 	return retval;
 }
 
@@ -1214,7 +1214,8 @@ gssd_refresh_krb5_machine_credential(char *hostname,
 		printerr(0, "ERROR: %s: %s while initializing krb5 context\n",
 			 __func__, k5err);
 		retval = code;
-		goto out;
+                free(k5err);
+                goto out_wo_context;
 	}
 
 	if ((code = krb5_kt_resolve(context, keytabfile, &kt))) {
@@ -1257,7 +1258,7 @@ out:
 	if (kt)
 		krb5_kt_close(context, kt);
 	krb5_free_context(context);
-	free(k5err);
+out_wo_context:
 	return retval;
 }
 
