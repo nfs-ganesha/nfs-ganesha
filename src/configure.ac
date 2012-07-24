@@ -290,7 +290,7 @@ AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 # during the build
 GA_AM_COND_ON_UNLESS([fsal-proxy],[do not build PROXY FSAL shared library],[USE_FSAL_PROXY])
 GA_AM_COND_ON_UNLESS([fsal-vfs],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
-GA_AM_COND_ON_UNLESS([fsal-ceph],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
+GA_AM_COND_ON_UNLESS([fsal-ceph],[do not build VFS FSAL shared library],[USE_FSAL_CEPH])
 
 # FSALs whicha re disabled by default
 GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
