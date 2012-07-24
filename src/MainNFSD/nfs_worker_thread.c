@@ -2114,7 +2114,7 @@ void *worker_thread(void *IndexArg)
     finalize_req:
       /* XXX Signal the request processing has completed, though at
        * present there may be no effect. */
-      LogInfo(COMPONENT_DISPATCH, "Signaling completion of request");
+      LogDebug(COMPONENT_DISPATCH, "Signaling completion of request");
 
       /* Drop multi_cnt and xprt refcnt, if appropriate */
       switch(nfsreq->rtype) {
