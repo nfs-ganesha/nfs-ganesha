@@ -222,11 +222,14 @@ state_status_t state_add_impl(cache_entry_t *entry,
   /* Add state to list for cache entry */
   glist_add_tail(&entry->state_list, &pnew_state->state_list);
 
+  inc_state_owner_ref(owner_input);
+
   P(owner_input->so_mutex);
+
   glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,
                  &pnew_state->state_owner_list);
-  /* This function releases the lock. */
-  inc_state_owner_ref_locked(owner_input);
+
+  V(owner_input->so_mutex);
 
   /* Copy the result */
   *state = pnew_state;
@@ -429,9 +432,6 @@ void release_lockstate(state_owner_t *lock_owner)
       /* Release the lru ref to the cache inode we held while calling state_del */
       cache_inode_lru_unref(entry, 0);
     }
-
-  /* Release the reference to the lock owner that keeps it in the hash table */
-  dec_state_owner_ref(lock_owner);
 }
 
 /**
@@ -491,8 +491,5 @@ void release_openstate(state_owner_t *open_owner)
       cache_inode_lru_unref(entry,
                             0);
     }
-
-  /* Release the reference to the open owner that keeps it in the hash table */
-  dec_state_owner_ref(open_owner);
 }
 /** @} */

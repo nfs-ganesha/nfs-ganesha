@@ -96,6 +96,10 @@ int nfs4_op_lock(struct nfs_argop4 *op,
         state_blocking_t          blocking = STATE_NON_BLOCKING;
 	/* Tracking data for the lock state */
 	struct state_refer        refer;
+	/* Indicate if we have a lock owner that must be released. */
+	bool_t                    release_lock_owner = FALSE;
+	/* Indicate if we have a open owner that must be released. */
+	bool_t                    release_open_owner = FALSE;
 	int rc;
 
         LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -168,6 +172,9 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 resp_owner = open_owner;
                 seqid = arg_LOCK4->locker.locker4_u.open_owner.open_seqid;
 
+                inc_state_owner_ref(open_owner);
+                release_open_owner = TRUE;
+
                 LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
                         "LOCK New lock owner from open owner",
                         data->current_entry,
@@ -184,7 +191,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
 			res_LOCK4->status = clientid_error_to_nfsstat(rc);
                         LogDebug(COMPONENT_NFS_V4_LOCK,
                                  "LOCK failed nfs_client_id_get");
-                        return res_LOCK4->status;
+                        goto out2;
                 }
 
                 if (isDebug(COMPONENT_CLIENTID) &&
@@ -218,10 +225,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 /* Is this lock_owner known ? */
                 convert_nfs4_lock_owner(&arg_LOCK4->locker.locker4_u
                                         .open_owner.lock_owner,
-                                        &owner_name,
-                                        (data->minorversion == 0 ?
-                                         0LL :
-                                         data->psession->clientid));
+                                        &owner_name);
         } else {
                 /* Existing lock owner Find the lock stateid From
                    that, get the open_owner */
@@ -281,6 +285,9 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 state_open = lock_state->state_data.lock.openstate;
                 resp_owner = lock_owner;
                 seqid = arg_LOCK4->locker.locker4_u.lock_owner.lock_seqid;
+
+                inc_state_owner_ref(lock_owner);
+                release_lock_owner = TRUE;
 
                 LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
                         "LOCK Existing lock owner",
@@ -382,13 +389,37 @@ int nfs4_op_lock(struct nfs_argop4 *op,
         }
 
         if (arg_LOCK4->locker.new_lock_owner) {
+                bool_t isnew;
+
                 /* A lock owner is always associated with a previously
                    made open which has itself a previously made
                    stateid */
 
-                if (nfs4_owner_Get_Pointer(&owner_name, &lock_owner)) {
-                        /* Lock owner already exists. Check lock_seqid
-                           if it has attached locks. */
+                /* This lock owner is not known yet, allocated and set
+                   up a new one */
+                lock_owner = create_nfs4_owner(&owner_name,
+                                               clientid,
+                                               STATE_LOCK_OWNER_NFSV4,
+                                               open_owner,
+                                               0,
+                                               &isnew,
+                                               CARE_ALWAYS);
+
+                if(lock_owner == NULL) {
+                     res_LOCK4->status = NFS4ERR_RESOURCE;
+                     LogLock(COMPONENT_NFS_V4_LOCK, NIV_EVENT,
+                             "LOCK failed to create new lock owner",
+                             data->current_entry,
+                             open_owner,
+                             &lock_desc);
+                     goto out2;
+                 }
+
+                 release_lock_owner = TRUE;
+
+                 if(!isnew) {
+                      P(lock_owner->so_mutex);
+                      /* Check lock_seqid if it has attached locks. */
                         if (!glist_empty(&lock_owner->so_lock_list) &&
                             (data->minorversion == 0) &&
                             !Check_nfs4_seqid(lock_owner,
@@ -404,49 +435,15 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                                         &lock_desc);
                                 dump_all_locks("All locks (re-use of lock "
                                                "owner)");
+                                
+                                V(lock_owner->so_mutex);
                                 /* Response is all setup for us and
                                    LogDebug told what was wrong */
                                 goto out2;
                         }
 
-                        if (lock_owner->so_owner.so_nfs4_owner
-                            .so_related_owner == NULL) {
-                                /* Attach open owner to lock owner now
-                                   that we know it. */
-                                inc_state_owner_ref(open_owner);
-                                lock_owner->so_owner.so_nfs4_owner
-                                        .so_related_owner = open_owner;
-                        }
-                        else if(lock_owner->so_owner.so_nfs4_owner
-                                .so_related_owner != open_owner) {
-                                res_LOCK4->status = NFS4ERR_INVAL;
-                                LogDebug(COMPONENT_NFS_V4_LOCK,
-                                         "LOCK failed related owner %p "
-                                         "doesn't match open owner %p",
-                                         lock_owner->so_owner.so_nfs4_owner
-                                         .so_related_owner,
-                                         open_owner);
-                                goto out2;
-                        }
-                } else {
-                        /* This lock owner is not known yet, allocated
-                           and set up a new one */
-                        lock_owner = create_nfs4_owner(&owner_name,
-                                                       clientid,
-                                                       STATE_LOCK_OWNER_NFSV4,
-                                                       open_owner,
-                                                       0);
+                        V(lock_owner->so_mutex);
 
-                        if (lock_owner == NULL) {
-                                res_LOCK4->status = NFS4ERR_RESOURCE;
-
-                                LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-                                        "LOCK failed to create new lock owner",
-                                        data->current_entry,
-                                        open_owner,
-                                        &lock_desc);
-                                goto out2;
-                        }
                 }
 
                 /* Prepare state management structure */
@@ -470,7 +467,6 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                                 lock_owner,
                                 &lock_desc);
 
-                        dec_state_owner_ref(lock_owner);
                         goto out2;
                 }
 
@@ -531,7 +527,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 }
 
                 if (arg_LOCK4->locker.new_lock_owner) {
-                        /* Need to destroy lock owner and state */
+                        /* Need to destroy new state */
                         state_status = state_del(lock_state, false);
                         if(state_status != STATE_SUCCESS)
                                 LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -573,7 +569,14 @@ out:
 
 out2:
 
-        dec_client_id_ref(clientid);
+        if(release_open_owner)
+          dec_state_owner_ref(open_owner);
+
+        if(release_lock_owner)
+          dec_state_owner_ref(lock_owner);
+
+        if(clientid != NULL)
+          dec_client_id_ref(clientid);
 
         return res_LOCK4->status;
 } /* nfs4_op_lock */

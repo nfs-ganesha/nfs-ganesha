@@ -408,28 +408,32 @@ open4_open_owner(struct nfs_argop4 * op,
         OPEN4res        * const res_OPEN4 = &(res->nfs_resop4_u.opopen);
         /* The parsed-out name of the open owner */
         state_nfs4_owner_name_t owner_name;
+        /* Indicates if the owner is new */
+        bool_t isnew;
 
         /* Is this open_owner known? If so, get it so we can use
            replay cache */
         convert_nfs4_open_owner(&arg_OPEN4->owner,
-                                &owner_name,
-                                (data->minorversion == 1 ?
-                                 data->psession->clientid :
-                                 0LL));
+                                &owner_name);
 
-        if (!nfs4_owner_Get_Pointer(&owner_name, owner)) {
-                LogFullDebug(COMPONENT_STATE, "OPEN new owner");
-        } else {
-                if (isFullDebug(COMPONENT_STATE)) {
-                        char str[HASHTABLE_DISPLAY_STRLEN];
+        /* If this open owner is not known yet, allocate and set up a new one */
+        *owner = create_nfs4_owner(&owner_name,
+                                   clientid,
+                                   STATE_OPEN_OWNER_NFSV4,
+                                   NULL,
+                                   0,
+                                   &isnew,
+                                   CARE_ALWAYS);
 
-                        display_nfs4_owner(*owner, str);
-                        LogFullDebug(COMPONENT_STATE,
-                                     "A previously known open_owner is used: "
-                                     "%p %s arg_OPEN4.seqid=%u",
-                                     owner, str, arg_OPEN4->seqid);
-                }
+        if(*owner == NULL) {
+             res_OPEN4->status = NFS4ERR_RESOURCE;
+             LogEvent(COMPONENT_STATE,
+                      "NFS4 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL"
+                      " (could not create NFS4 Owner");
+             return res_OPEN4->status;
+        }
 
+        if(!isnew) {
                 /* Seqid checking is only proper for NFSv4.0 */
                 if (data->minorversion == 0) {
                         if (arg_OPEN4->seqid == 0) {
@@ -451,30 +455,6 @@ open4_open_owner(struct nfs_argop4 * op,
                                         return res_OPEN4->status;
                                 }
                         }
-                }
-        }
-
-        /* Is this open_owner known ? */
-        if (*owner == NULL) {
-                /* This open owner is not known yet, allocated and set
-                   up a new one */
-                *owner = create_nfs4_owner(&owner_name,
-                                          clientid,
-                                          STATE_OPEN_OWNER_NFSV4,
-                                          NULL,
-                                          (data->minorversion == 0 ?
-                                           0 : 1));
-
-                if (owner == NULL) {
-                        res_OPEN4->status
-                                = (data->minorversion == 0 ?
-                                   NFS4ERR_RESOURCE :
-                                   NFS4ERR_SERVERFAULT);
-                        LogDebug(COMPONENT_STATE,
-                                 "NFS4 OPEN returning error for "
-                                 "CLAIM_NULL (could not create NFS4 Owner");
-                        dec_client_id_ref(clientid);
-                        return res_OPEN4->status;
                 }
         }
 
@@ -868,7 +848,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
         /* Return code from state oeprations */
         state_status_t state_status = STATE_SUCCESS;
         /* The found client record */
-        nfs_client_id_t *clientid;
+        nfs_client_id_t *clientid = NULL;
         /* The found or created state owner for this open */
         state_owner_t *owner = NULL;
         /* The supplied calim type */
@@ -956,7 +936,6 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         if (!reserve_lease(clientid)) {
                 V(clientid->cid_mutex);
-                dec_client_id_ref(clientid);
                 res_OPEN4->status = NFS4ERR_EXPIRED;
                 goto out3;
         }
@@ -971,7 +950,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
                                                   clientid,
                                                   &owner))
             != NFS4_OK) {
-                goto out3;
+                goto out2;
         }
 
         /* Do the claim check here, so we can save the result in the
@@ -1249,9 +1228,11 @@ out2:
                 pthread_mutex_unlock(&clientid->cid_mutex);
         }
 
-        dec_client_id_ref(clientid);
-
 out3:
+
+        if(clientid != NULL) {
+                dec_client_id_ref(clientid);
+        }
 
         /* Clean up if we have an error exit */
         if ((file_state != NULL) &&

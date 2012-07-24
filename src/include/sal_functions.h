@@ -62,13 +62,13 @@ nfsstat3 nfs3_Errno_state(state_status_t error);
 const char * state_owner_type_to_str(state_owner_type_t type);
 bool different_owners(state_owner_t *owner1, state_owner_t *owner2);
 int DisplayOwner(state_owner_t *owner, char *buf);
-void Hash_inc_state_owner_ref(struct gsh_buffdesc *buffval);
-int Hash_dec_state_owner_ref(struct gsh_buffdesc *buffval);
-void inc_state_owner_ref_locked(state_owner_t *owner);
 void inc_state_owner_ref(state_owner_t *owner);
-
-void dec_state_owner_ref_locked(state_owner_t *owner);
 void dec_state_owner_ref(state_owner_t *owner);
+
+state_owner_t *get_state_owner(care_t               care,
+                               state_owner_t      * pkey,
+                               state_owner_init_t   init_owner,
+                               bool_t             * isnew);
 
 int DisplayOpaqueValue(char *value, int len, char *str);
 
@@ -90,14 +90,10 @@ int display_9p_owner(state_owner_t *key, char *str);
 int display_9p_owner_key(struct gsh_buffdesc *buff, char *str);
 int display_9p_owner_val(struct gsh_buffdesc *buff, char *str);
 
-void remove_9p_owner(state_owner_t *owner,
-                     const char *str);
-
 uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
                                    struct gsh_buffdesc *key);
 uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
                                  struct gsh_buffdesc *key);
-void _9p_owner_PrintAll(void);
 
 state_owner_t *get_9p_owner(struct sockaddr_storage *client_addr,
                              uint32_t proc_id);
@@ -156,8 +152,7 @@ state_nlm_client_t *get_nlm_client(care_t care,
                                    state_nsm_client_t *nsm_client,
                                    char *caller_name);
 
-void remove_nlm_owner(state_owner_t *owner,
-                      const char *str);
+void free_nlm_owner(state_owner_t * powner);
 
 int display_nlm_owner(state_owner_t *key, char *str);
 int display_nlm_owner_val(struct gsh_buffdesc *buff, char *str);
@@ -179,7 +174,6 @@ state_owner_t *get_nlm_owner(care_t care,
                              state_nlm_client_t *client,
                              netobj *oh,
                              uint32_t svid);
-void nlm_owner_PrintAll(void);
 
 int Init_nlm_hash(void);
 
@@ -357,9 +351,7 @@ int valid_lease(nfs_client_id_t *clientid);
  *
  ******************************************************************************/
 
-void remove_nfs4_owner(state_owner_t *owner,
-                       const char *str);
-
+void free_nfs4_owner(state_owner_t * owner);
 int display_nfs4_owner(state_owner_t *owner, char *str);
 int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str);
 int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str);
@@ -375,24 +367,41 @@ uint32_t nfs4_owner_value_hash_func(hash_parameter_t *hparam,
 uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t *hparam,
                                   struct gsh_buffdesc *key);
 
-void convert_nfs4_open_owner(open_owner4  *nfsowner,
-                             state_nfs4_owner_name_t *name_owner,
-                             clientid4 clientid);
+/**
+ * @brief Convert an open_owner to an owner name
+ *
+ * @param[in]  nfsowner   Open owner as specified in NFS
+ * @param[out] name_owner Name used as key in owner table
+ */
+static inline void convert_nfs4_open_owner(open_owner4             * nfsowner,
+                                           state_nfs4_owner_name_t * name_owner)
+{
+  name_owner->son_owner_len = nfsowner->owner.owner_len;
+  name_owner->son_owner_val = nfsowner->owner.owner_val;
+}
 
-void convert_nfs4_lock_owner(lock_owner4 *nfsowoner,
-                             state_nfs4_owner_name_t *name_owner,
-                             clientid4 clientid);
+/**
+ * @brief Convert a lock_owner to an owner name
+ *
+ * @param[in]  nfsowner   Open owner as specified in NFS
+ * @param[out] name_owner Name used as key in owner table
+ */
+static inline void convert_nfs4_lock_owner(lock_owner4             * nfsowner,
+                                           state_nfs4_owner_name_t * name_owner)
+{
+  name_owner->son_owner_len = nfsowner->owner.owner_len;
+  name_owner->son_owner_val = nfsowner->owner.owner_val;
+}
 
 void nfs4_owner_PrintAll(void);
-
-int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t *name,
-                           state_owner_t **owner);
 
 state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
                                  nfs_client_id_t *clientid,
                                  state_owner_type_t type,
                                  state_owner_t *related_owner,
-                                 unsigned int init_seqid);
+                                 unsigned int init_seqid,
+                                 bool_t *pisnew,
+                                 care_t care);
 
 int Init_nfs4_owner(nfs4_owner_parameter_t param);
 

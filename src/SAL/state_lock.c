@@ -138,7 +138,7 @@ state_status_t state_lock_init(hash_parameter_t cookie_param)
   state_status_t status = STATE_SUCCESS;
 
   memset(&unknown_owner, 0, sizeof(unknown_owner));
-  strcpy(unknown_owner.so_owner_val, "ganesha_unknown_owner");
+  unknown_owner.so_owner_val = "ganesha_unknown_owner";
   unknown_owner.so_type      = STATE_LOCK_OWNER_UNKNOWN;
   unknown_owner.so_refcount  = 1;
   unknown_owner.so_owner_len = strlen(unknown_owner.so_owner_val);
@@ -173,10 +173,7 @@ state_status_t state_lock_init(hash_parameter_t cookie_param)
                                sizeof(state_owner_t),
                                pool_basic_substrate,
                                NULL, NULL, NULL);
-  state_nfs4_owner_name_pool = pool_init("Owner names",
-                                         sizeof(state_nfs4_owner_name_t),
-                                         pool_basic_substrate,
-                                         NULL, NULL, NULL);
+
   state_v4_pool = pool_init("NFSv4 files states",
                             sizeof(state_t),
                             pool_basic_substrate,
@@ -596,6 +593,8 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
     }
 
   /* Add to list of locks owned by owner */
+  inc_state_owner_ref(owner);
+
   P(owner->so_mutex);
 
   if(owner->so_type == STATE_LOCK_OWNER_NFSV4 && state != NULL)
@@ -606,7 +605,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t *entry,
 
   glist_add_tail(&owner->so_lock_list, &new_entry->sle_owner_locks);
 
-  inc_state_owner_ref_locked(owner);
+  V(owner->so_mutex);
 
 #ifdef DEBUG_SAL
   P(all_locks_mutex);
@@ -742,7 +741,9 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 
       glist_del(&lock_entry->sle_owner_locks);
 
-      dec_state_owner_ref_locked(owner);
+      V(owner->so_mutex);
+
+      dec_state_owner_ref(owner);
     }
 
   lock_entry->sle_owner = NULL;
@@ -3259,10 +3260,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
       export = found_share->sns_export;
 
       /* get a reference to the owner */
-      /** @todo FSF: actually do this when we convert to atomic and don't need lock here */
-#ifdef FSF
-      inc_state_owner_ref_locked(owner);
-#endif
+      inc_state_owner_ref(owner);
 
       V(nsmclient->ssc_mutex);
 
@@ -3283,9 +3281,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
           errcnt++;
         }
 
-#ifdef FSF
-      dec_state_owner_ref_locked(owner);
-#endif
+      dec_state_owner_ref(owner);
     }
 
   /* Put locks from current client incarnation onto end of list */

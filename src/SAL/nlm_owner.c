@@ -470,8 +470,10 @@ int display_nlm_owner(state_owner_t *key, char *str)
 
   strtmp += DisplayOpaqueValue(key->so_owner_val, key->so_owner_len, strtmp);
 
-  strtmp += sprintf(strtmp, " svid=%d", key->so_owner.so_nlm_owner.so_nlm_svid);
-  strtmp += sprintf(strtmp, " refcount=%d", key->so_refcount);
+  strtmp += sprintf(strtmp, " svid=%d",
+                    key->so_owner.so_nlm_owner.so_nlm_svid);
+  strtmp += sprintf(strtmp, " refcount=%d",
+                    atomic_fetch_int32_t(&key->so_refcount));
 
   return strtmp - str;
 }
@@ -1359,146 +1361,33 @@ state_nlm_client_t *get_nlm_client(care_t care,
   return NULL;
 }
 
-/**
- * @brief Set an NLM owner in the hashtable
+/*******************************************************************************
  *
- * @param[in] key   Hash key
+ * NLM Owner Routines
+ *
+ ******************************************************************************/
+
+/**
+ * @brief Free an NLM owner object
+ *
  * @param[in] owner Stored owner
- *
- * @retval 1 if ok.
- * @retval 0 if not ok.
  */
-int nlm_owner_Set(state_owner_t *key,
-                  state_owner_t *owner)
+void free_nlm_owner(state_owner_t *owner)
 {
-  struct gsh_buffdesc buffkey;
-  struct gsh_buffdesc buffval;
-
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      buffkey.addr = key;
-      buffkey.len = sizeof(*key);
-
-      display_nlm_owner_key(&buffkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s}", str);
-    }
-
-  buffkey.addr = key;
-  buffkey.len = sizeof(*key);
-
-  buffval.addr = owner;
-  buffval.len = sizeof(*owner);
-
-  if(HashTable_Test_And_Set
-     (ht_nlm_owner, &buffkey, &buffval,
-      HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
-    return 0;
-
-  return 1;
-}                               /* nlm_owner_Set */
-
-/**
- * @brief Remove an NLM owner from the hash table
- *
- * @param[in] owner Owner to remove
- * @param[in] str   Arbitrary string for debuging/logging
- */
-void remove_nlm_owner(state_owner_t *owner,
-                      const char *str)
-{
-  struct gsh_buffdesc buffkey, old_key, old_value;
-
-  buffkey.addr = owner;
-  buffkey.len = sizeof(*owner);
-
-  switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_dec_state_owner_ref))
-    {
-      case HASHTABLE_SUCCESS:
-        LogFullDebug(COMPONENT_STATE,
-                     "Free %s size %llx",
-                     str, (unsigned long long) old_value.len);
-        dec_nlm_client_ref(owner->so_owner.so_nlm_owner.so_client);
-        if(isFullDebug(COMPONENT_MEMLEAKS))
-          {
-            memset(old_key.addr, 0, old_key.len);
-            memset(old_value.addr, 0, old_value.len);
-          }
-        gsh_free(old_key.addr);
-        gsh_free(old_value.addr);
-        break;
-
-      case HASHTABLE_NOT_DELETED:
-        /* ref count didn't end up at 0, don't free. */
-        LogDebug(COMPONENT_STATE,
-                 "HashTable_DelRef didn't reduce refcount to 0 for %s",
-                  str);
-        break;
-
-      default:
-        /* some problem occurred */
-        LogDebug(COMPONENT_STATE,
-                 "HashTable_DelRef failed for %s",
-                  str);
-        break;
-    }
+  if(owner->so_owner.so_nlm_owner.so_client != NULL)
+    dec_nlm_client_ref(owner->so_owner.so_nlm_owner.so_client);
 }
 
 /**
- * @brief Get an NLM owner from the nlm_owner hashtable
+ * @brief Initialize an NLM owner object
  *
- * @param[in]  key   Key to look up
- * @param[out] owner Found owner
- *
- * @retval 1 if ok.
- * @retval 0 if not ok.
- *
+ * @param[in] owner Stored owner
  */
-static int nlm_owner_Get_Pointer(state_owner_t *key,
-				 state_owner_t **owner)
+static void init_nlm_owner(state_owner_t * owner)
 {
-  struct gsh_buffdesc buffkey;
-  struct gsh_buffdesc buffval;
+  inc_nlm_client_ref(owner->so_owner.so_nlm_owner.so_client);
 
-  *owner = NULL; // in case we dont find it, return NULL
-  buffkey.addr = key;
-  buffkey.len = sizeof(*key);
-
-  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_owner_key(&buffkey, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s}", str);
-    }
-
-  if(HashTable_GetRef(ht_nlm_owner,
-                      &buffkey,
-                      &buffval,
-                      Hash_inc_state_owner_ref) != HASHTABLE_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_STATE,
-                   "NOTFOUND");
-      return 0;
-    }
-
-  *owner = buffval.addr;
-
-  LogFullDebug(COMPONENT_STATE,
-               "FOUND");
-
-  return 1;
-}                               /* nlm_owner_Get_Pointer */
-
-/**
- * @brief Print the hashtable used to store the NLM owners. 
- */
-void nlm_owner_PrintAll(void)
-{
-  HashTable_Log(COMPONENT_STATE, ht_nlm_owner);
+  init_glist(&owner->so_owner.so_nlm_owner.so_nlm_shares);
 }
 
 /**
@@ -1514,101 +1403,19 @@ state_owner_t *get_nlm_owner(care_t care,
                              netobj *oh,
                              uint32_t svid)
 {
-  state_owner_t * pkey, *powner;
+  state_owner_t key;
 
   if(client == NULL || oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
     return NULL;
 
-  pkey = gsh_malloc(sizeof(*pkey));
-  if(pkey == NULL)
-    return NULL;
+  memset(&key, 0, sizeof(key));
 
-  memset(pkey, 0, sizeof(*pkey));
-  pkey->so_type                             = STATE_LOCK_OWNER_NLM;
-  pkey->so_refcount                         = 1;
-  pkey->so_owner.so_nlm_owner.so_client     = client;
-  pkey->so_owner.so_nlm_owner.so_nlm_svid   = svid;
-  pkey->so_owner_len                        = oh->n_len;
-  memcpy(pkey->so_owner_val, oh->n_bytes, oh->n_len);
+  key.so_type                             = STATE_LOCK_OWNER_NLM;
+  key.so_owner.so_nlm_owner.so_client     = client;
+  key.so_owner.so_nlm_owner.so_nlm_svid   = svid;
+  key.so_owner_len                        = oh->n_len;
+  key.so_owner_val                        = oh->n_bytes;
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_owner(pkey, str);
-
-      LogFullDebug(COMPONENT_STATE,
-                   "Find NLM Owner KEY {%s}", str);
-    }
-
-  /* If we found it, return it, if we don't care, return NULL */
-  if(nlm_owner_Get_Pointer(pkey, &powner) == 1 || care == CARE_NOT)
-    {
-      /* Discard the key we created and return the found NLM Owner */
-      gsh_free(pkey);
-
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
-          display_nlm_owner(powner, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Found {%s}",
-                       str);
-        }
-
-      return powner;
-    }
-
-  powner = gsh_malloc(sizeof(*pkey));
-  if(powner == NULL)
-    {
-      gsh_free(pkey);
-      return NULL;
-    }
-
-  /* Copy everything over */
-  *powner = *pkey;
-  init_glist(&powner->so_lock_list);
-  init_glist(&powner->so_owner.so_nlm_owner.so_nlm_shares);
-
-  if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
-    {
-      /* Mutex initialization failed, free the key and created owner */
-      gsh_free(pkey);
-      gsh_free(powner);
-      return NULL;
-    }
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_owner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "New {%s}", str);
-    }
-
-  /* Ref count the client as being used by this owner */
-  inc_nlm_client_ref(client);
-  if(nlm_owner_Set(pkey, powner) == 1)
-    {
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
-          display_nlm_owner(powner, str);
-          LogFullDebug(COMPONENT_STATE,
-                       "Set NLM Owner {%s}",
-                       str);
-        }
-
-      return powner;
-    }
-
-  dec_nlm_client_ref(client);
-  gsh_free(pkey);
-  gsh_free(powner);
-  return NULL;
+  return get_state_owner(care, &key, init_nlm_owner, NULL);
 }
 /** @} */
