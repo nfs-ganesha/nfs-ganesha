@@ -2138,6 +2138,18 @@ void *worker_thread(void *IndexArg)
                      "when 9P support is disabled" ) ;
 #endif
            break;
+
+      case _9P_RDMA:
+           printf( "Worker does RDMA !!!!!\n" ) ;
+#ifdef _USE_9P_RDMA
+           _9p_rdma_do_recv( nfsreq->r_u._9p_rdma.rdma_conn.trans,
+                             nfsreq->r_u._9p_rdma.rdma_conn.datamr ) ;
+#else
+	  LogCrit(COMPONENT_DISPATCH, "Implementation error, 9P_RDMA message "
+                     "when 9P_RDMA support is disabled" ) ;
+
+#endif
+           break;
          }
 
     finalize_req:

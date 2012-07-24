@@ -434,7 +434,8 @@ typedef enum request_type__
   NFS_CALL,
   NFS_REQUEST,
   NFS_REQUEST_LEADER,
-  _9P_REQUEST
+  _9P_REQUEST,
+  _9P_RDMA
 } request_type_t ;
 
 typedef struct request_data__
@@ -448,6 +449,9 @@ typedef struct request_data__
         nfs_request_data_t *nfs ;
 #ifdef _USE_9P
         _9p_request_data_t _9p ;
+#endif
+#ifdef _USE_9P_RDMA
+        _9p_rdma_request_data_t _9p_rdma ;
 #endif
     } r_u ;
 } request_data_t ;

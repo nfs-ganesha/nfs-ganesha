@@ -326,8 +326,24 @@ typedef struct _9p_conn__
 typedef struct _9p_request_data__
 {
   char         _9pmsg[_9P_MSG_SIZE] ;
-  _9p_conn_t  *  pconn ; 
+  _9p_conn_t  *  pconn ;
 } _9p_request_data_t ;
+
+#ifdef _USE_9P_RDMA
+typedef struct _9p_rdma_conn__
+{
+  _9p_datamr_t *  datamr ;
+  msk_trans_t     * trans ;
+  struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
+  _9p_fid_t       fids[_9P_FID_PER_CONN] ;
+} _9p_rdma_conn_t ;
+
+typedef struct _9p_rdma_request_data__
+{
+  char         _9pmsg[_9P_MSG_SIZE] ;
+  _9p_rdma_conn_t rdma_conn ;
+} _9p_rdma_request_data_t ;
+#endif
 
 typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
                                void * pworker_data,
@@ -502,6 +518,11 @@ void* _9p_rdma_handle_trans(void *arg) ;
 void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg) ;
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) ;
 void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) ;
+
+void _9p_rdma_do_recv(msk_trans_t *trans, struct _9p_datamr *_9p_datamr ) ;
+void _9p_rdma_callback_recv_wkr(msk_trans_t *trans, void *arg) ;
+
+
 #endif
 
 /* Protocol functions */
