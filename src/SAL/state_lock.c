@@ -459,12 +459,14 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   if(powner->so_type == STATE_LOCK_OWNER_NLM)
     {
       /* Add to list of locks owned by client that powner belongs to */
+      inc_nsm_client_ref(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
+
       P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
 
       glist_add_tail(&powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_lock_list,
                      &new_entry->sle_client_locks);
 
-      inc_nsm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
+      V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
 
       /* Add to list of locks owned by export */
       P(pexport->exp_state_mutex);
@@ -579,7 +581,9 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry)
 
           glist_del(&lock_entry->sle_client_locks);
 
-          dec_nsm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
+          V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
+
+          dec_nsm_client_ref(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
 
           /* Remove from list of locks owned by export */
           P(lock_entry->sle_pexport->exp_state_mutex);

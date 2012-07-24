@@ -718,13 +718,14 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
   /* implicit V(powner->so_mutex); */
 
   /* Add share to list for NSM Client */
+  inc_nsm_client_ref(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
+
   P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
 
   glist_add_tail(&powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_share_list,
                  &nlm_share->sns_share_per_client);
 
-  inc_nsm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
-  /* implicit V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex); */
+  V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
 
   /* Add share to list for file, if list was empty take a pin ref to keep this
    * file pinned in the inode cache.
@@ -785,8 +786,9 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
           glist_del(&nlm_share->sns_share_per_client);
 
-          dec_nsm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
-          /* implicit V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex); */
+          V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
+
+          dec_nsm_client_ref(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
 
           /* Remove the share from the NLM Owner list */
           P(powner->so_mutex);
@@ -934,8 +936,9 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
 
       glist_del(&nlm_share->sns_share_per_client);
 
-      dec_nsm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
-      /* implicit V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex); */
+      V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
+
+      dec_nsm_client_ref(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
 
       /* Remove the share from the NLM Owner list */
       P(powner->so_mutex);

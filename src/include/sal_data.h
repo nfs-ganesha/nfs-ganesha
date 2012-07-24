@@ -40,6 +40,7 @@
 #include <pthread.h>
 
 #include "cache_inode.h"
+#include "abstract_atomic.h"
 #include "abstract_mem.h"
 #include "RW_Lock.h"
 #include "HashData.h"
@@ -240,20 +241,19 @@ typedef struct state_nsm_client_t
   struct glist_head       ssc_lock_list;
   struct glist_head       ssc_share_list;
   sockaddr_t              ssc_client_addr;
-  int                     ssc_refcount;
-  bool_t                  ssc_monitored;
-  int                     ssc_nlm_caller_name_len;
+  int32_t                 ssc_refcount;
+  int32_t                 ssc_monitored;
+  int32_t                 ssc_nlm_caller_name_len;
   char                  * ssc_nlm_caller_name;
 } state_nsm_client_t;
 
 struct state_nlm_client_t
 {
-  pthread_mutex_t         slc_mutex;
   state_nsm_client_t    * slc_nsm_client;
   xprt_type_t             slc_client_type;
-  int                     slc_refcount;
-  int                     slc_nlm_caller_name_len;
-  char                    slc_nlm_caller_name[LM_MAXSTRLEN+1];
+  int32_t                 slc_refcount;
+  int32_t                 slc_nlm_caller_name_len;
+  char                  * slc_nlm_caller_name;
   CLIENT                * slc_callback_clnt;
 };
 
