@@ -959,4 +959,48 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
   return *pstatus;
 }
 
+void state_share_wipe(cache_entry_t * pentry)
+{
+  state_nlm_share_t * nlm_share;
+  struct glist_head * glist;
+  struct glist_head * glistn;
+  state_owner_t     * powner;
+
+  glist_for_each_safe(glist, glistn, &pentry->object.file.nlm_share_list)
+    {
+      nlm_share = glist_entry(glist, state_nlm_share_t, sns_share_per_file);
+
+      powner = nlm_share->sns_powner;
+
+      /* Remove the share from the list for the file. If the list is now
+       * empty also remove the extra pin ref.
+       */
+      glist_del(&nlm_share->sns_share_per_file);
+
+      if(glist_empty(&pentry->object.file.nlm_share_list))
+        cache_inode_dec_pin_ref(pentry);
+
+      /* Remove the share from the NSM Client list */
+      P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
+
+      glist_del(&nlm_share->sns_share_per_client);
+
+      V(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
+
+      dec_nsm_client_ref(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
+
+      /* Remove the share from the NLM Owner list */
+      P(powner->so_mutex);
+
+      glist_del(&nlm_share->sns_share_per_owner);
+
+      V(powner->so_mutex);
+
+      dec_state_owner_ref(powner);
+
+      /* Free the NLM Share (and continue to look for more) */
+      gsh_free(nlm_share);
+    }
+}
+
 #endif /* _USE_NLM */

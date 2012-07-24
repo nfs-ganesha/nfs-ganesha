@@ -953,8 +953,15 @@ void state_wipe_file(cache_entry_t        * pentry)
       pthread_rwlock_unlock(&pentry->state_lock);
     }
   pthread_rwlock_wrlock(&pentry->state_lock);
+
   state_lock_wipe(pentry);
+
+#ifdef _USE_NLM
+  state_share_wipe(pentry);
+#endif
+
   state_nfs4_state_wipe(pentry);
+
   if (!had_lock)
     {
       pthread_rwlock_unlock(&pentry->state_lock);
