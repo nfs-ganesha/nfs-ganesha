@@ -444,6 +444,10 @@ cache_inode_lru_clean(cache_entry_t *entry)
           }
      }
 
+     if (entry->type == DIRECTORY) {
+             cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
+     }
+
      /* Clean up the associated ressources in the FSAL */
      if (FSAL_IS_ERROR(fsal_status
                        = FSAL_CleanObjectResources(&entry->handle))) {
