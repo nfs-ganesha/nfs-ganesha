@@ -295,7 +295,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
                             struct fsal_obj_handle **handle)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
-	int mnt_id = 0;
 	int fd, mount_fd, dir_fd;
 	struct stat stat;
 	mode_t unix_mode;
@@ -352,7 +351,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	}
 	close(fd);  /* don't need it anymore. */
 
-	retval = make_file_safe(dir_fd, name, user, group, fh, &stat);
+	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -382,7 +381,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     struct fsal_obj_handle **handle)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
-	int mnt_id = 0;
 	int mount_fd, dir_fd;
 	struct stat stat;
 	mode_t unix_mode;
@@ -429,7 +427,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	if(retval < 0) {
 		goto direrr;
 	}
-	retval = make_file_safe(dir_fd, name, user, group, fh, &stat);
+	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -467,7 +465,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
                               struct fsal_obj_handle **handle)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
-	int mnt_id = 0;
 	int mount_fd, dir_fd = -1;
 	struct stat stat;
 	mode_t unix_mode, create_mode = 0;
@@ -555,7 +552,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto direrr;
 	}
-	retval = make_file_safe(dir_fd, name, user, group, fh, &stat);
+	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
 	if(retval < 0) {
 		goto direrr;
 	}
