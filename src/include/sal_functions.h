@@ -543,7 +543,7 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
                                       state_t              * pstate,
                                       state_status_t       * pstatus);
 
-void state_lock_wipe(cache_entry_t        * pentry);
+void state_lock_wipe(cache_entry_t * pentry);
 
 /******************************************************************************
  *
@@ -658,6 +658,7 @@ state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
 void state_share_anonymous_io_done(cache_entry_t  * pentry,
                                    int              share_access);
 
+#ifdef _USE_NLM
 state_status_t state_nlm_share(cache_entry_t        * pentry,
                                fsal_op_context_t    * pcontext,
                                exportlist_t         * pexport,
@@ -672,6 +673,9 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
                                  int                    share_deny,
                                  state_owner_t        * powner,
                                  state_status_t       * pstatus);
+
+void state_share_wipe(cache_entry_t * pentry);
+#endif
 
 /******************************************************************************
  *
