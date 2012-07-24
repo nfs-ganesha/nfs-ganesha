@@ -73,6 +73,10 @@ int DisplayOpaqueValue(char * value, int len, char * str);
 
 void state_wipe_file(cache_entry_t * pentry);
 
+#ifdef _DEBUG_MEMLEAKS
+void dump_all_owners(void);
+#endif
+
 /******************************************************************************
  *
  * 9P State functions
@@ -596,6 +600,10 @@ void state_nfs4_state_wipe(cache_entry_t        * pentry);
 
 void release_lockstate(state_owner_t * plock_owner);
 void release_openstate(state_owner_t * popen_owner);
+
+#ifdef _DEBUG_MEMLEAKS
+void dump_all_states(void);
+#endif
 
 /******************************************************************************
  *

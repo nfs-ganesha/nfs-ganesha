@@ -197,6 +197,9 @@ struct state_t
   struct glist_head   state_list;                /**< List of states on a file                   */
   struct glist_head   state_owner_list;          /**< List of states for an owner                */
   struct glist_head   state_export_list;         /**< List of states on the same export          */
+#ifdef _DEBUG_MEMLEAKS
+  struct glist_head   state_list_all;
+#endif
   exportlist_t      * state_pexport;             /**< Export this entry belongs to               */
   state_owner_t     * state_powner;              /**< State Owner related to this state          */
   cache_entry_t     * state_pentry;              /**< Related pentry                             */
@@ -324,6 +327,9 @@ struct state_owner_t
 {
   state_owner_type_t      so_type;
   struct glist_head       so_lock_list;
+#ifdef _DEBUG_MEMLEAKS
+  struct glist_head       sle_all_owners;
+#endif /* _DEBUG_MEMLEAKS */
   pthread_mutex_t         so_mutex;
   int32_t                 so_refcount;
   int32_t                 so_owner_len;
@@ -650,6 +656,11 @@ struct state_async_queue_t
 
 extern pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
 extern pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
+
+#ifdef _DEBUG_MEMLEAKS
+extern struct glist_head state_v4_all;
+extern struct glist_head state_owners_all;
+#endif
 
 struct state_nlm_share_t
 {

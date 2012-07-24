@@ -138,6 +138,8 @@ state_status_t state_lock_init(state_status_t * pstatus)
 
 #ifdef _DEBUG_MEMLEAKS
   init_glist(&state_all_locks);
+  init_glist(&state_owners_all);
+  init_glist(&state_v4_all);
 #endif
  
 #ifdef _USE_BLOCKING_LOCKS

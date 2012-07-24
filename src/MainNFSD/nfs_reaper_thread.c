@@ -132,7 +132,7 @@ void *reaper_thread(void *UnusedArg)
 {
   int    old_state_cleaned = 0;
   int    count = 0;
-  bool_t logged = FALSE;
+  bool_t logged = TRUE;
   bool_t in_grace;
 
   SetNameFunction("reaper_thr");
@@ -164,7 +164,15 @@ void *reaper_thread(void *UnusedArg)
           LogDebug(COMPONENT_CLIENTID,
                    "Now checking NFS4 clients for expiration");
 
-          logged = TRUE;
+          logged = count == 0;
+
+#ifdef _DEBUG_MEMLEAKS
+          if(count == 0)
+            {
+              dump_all_states();
+              dump_all_owners();
+            }
+#endif
         }
 
       count = reap_hash_table(ht_confirmed_client_id) +

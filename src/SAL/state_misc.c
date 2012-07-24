@@ -46,7 +46,11 @@
 #include "sal_functions.h"
 
 pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
-pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
+
+#ifdef _DEBUG_MEMLEAKS
+struct glist_head state_owners_all;
+pthread_mutex_t all_state_owners_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 const char *state_err_str(state_status_t err)
 {
@@ -844,6 +848,14 @@ void free_state_owner(state_owner_t * powner)
 
   pthread_mutex_destroy(&powner->so_mutex);
 
+#ifdef _DEBUG_MEMLEAKS
+  P(all_state_owners_mutex);
+
+  glist_del(&powner->sle_all_owners);
+
+  V(all_state_owners_mutex);
+#endif
+
   pool_free(state_owner_pool, powner);
 }
 
@@ -1106,6 +1118,14 @@ state_owner_t *get_state_owner(care_t               care,
       return NULL;
     }
 
+#ifdef _DEBUG_MEMLEAKS
+  P(all_state_owners_mutex);
+
+  glist_add_tail(&state_owners_all, &powner->sle_all_owners);
+
+  V(all_state_owners_mutex);
+#endif
+
   /* Do any owner type specific initialization */
   if(init_owner != NULL)
     init_owner(powner);
@@ -1191,6 +1211,7 @@ void state_wipe_file(cache_entry_t        * pentry)
       had_lock = TRUE;
       pthread_rwlock_unlock(&pentry->state_lock);
     }
+
   pthread_rwlock_wrlock(&pentry->state_lock);
 
   state_lock_wipe(pentry);
@@ -1205,6 +1226,10 @@ void state_wipe_file(cache_entry_t        * pentry)
     {
       pthread_rwlock_unlock(&pentry->state_lock);
     }
+
+#ifdef _DEBUG_MEMLEAKS
+  dump_all_states();
+#endif
 }
 
 int DisplayOpaqueValue(char * value, int len, char * str)
@@ -1243,3 +1268,36 @@ int DisplayOpaqueValue(char * value, int len, char * str)
 
   return strtmp - str;
 }
+
+#ifdef _DEBUG_MEMLEAKS
+void dump_all_owners(void)
+{
+  if(!isDebug(COMPONENT_STATE))
+    return;
+
+  P(all_state_owners_mutex);
+
+  if(!glist_empty(&state_owners_all))
+    {
+      char                str[HASHTABLE_DISPLAY_STRLEN];
+      struct glist_head * glist;
+
+      LogDebug(COMPONENT_STATE,
+               " ---------------------- State Owner List ----------------------");
+
+      glist_for_each(glist, &state_owners_all)
+        {
+          DisplayOwner(glist_entry(glist, state_owner_t, sle_all_owners), str);
+          LogDebug(COMPONENT_STATE,
+                   "{%s}", str);
+        }
+
+      LogDebug(COMPONENT_STATE,
+               " ---------------------- --------------- ----------------------");
+    }
+  else
+    LogDebug(COMPONENT_STATE, "All state owners released");
+
+  V(all_state_owners_mutex);
+}
+#endif

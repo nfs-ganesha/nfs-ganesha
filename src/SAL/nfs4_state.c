@@ -56,6 +56,13 @@
 #include "sal_functions.h"
 #include "cache_inode_lru.h"
 
+pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
+
+#ifdef _DEBUG_MEMLEAKS
+struct glist_head state_v4_all;
+pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 /**
  *
  * state_conflict : checks for a conflict between an existing state and a candidate state.
@@ -240,6 +247,14 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                  &pnew_state->state_owner_list);
   V(powner_input->so_mutex);
 
+#ifdef _DEBUG_MEMLEAKS
+  P(all_state_v4_mutex);
+
+  glist_add_tail(&state_v4_all, &pnew_state->state_list_all);
+
+  V(all_state_v4_mutex);
+#endif
+
   /* Copy the result */
   *ppstate = pnew_state;
 
@@ -339,6 +354,14 @@ state_status_t state_del_locked(state_t              * pstate,
   P(pstate->state_pexport->exp_state_mutex);
   glist_del(&pstate->state_export_list);
   V(pstate->state_pexport->exp_state_mutex);
+
+#ifdef _DEBUG_MEMLEAKS
+  P(all_state_v4_mutex);
+
+  glist_del(&pstate->state_list_all);
+
+  V(all_state_v4_mutex);
+#endif
 
   pool_free(state_v4_pool, pstate);
 
@@ -513,3 +536,49 @@ void release_openstate(state_owner_t * popen_owner)
                             0);
     }
 }
+
+#ifdef _DEBUG_MEMLEAKS
+void dump_all_states(void)
+{
+  if(!isDebug(COMPONENT_STATE))
+    return;
+
+  P(all_state_v4_mutex);
+
+  if(!glist_empty(&state_v4_all))
+    {
+      struct glist_head *glist;
+
+      LogDebug(COMPONENT_STATE,
+               " ---------------------- State List ----------------------");
+
+      glist_for_each(glist, &state_v4_all)
+        {
+          state_t * pstate = glist_entry(glist, state_t, state_list_all);
+          char    * state_type = "unknown";
+          char      str[HASHTABLE_DISPLAY_STRLEN];
+
+          switch(pstate->state_type)
+            {
+              case STATE_TYPE_NONE:   state_type = "NONE";        break;
+              case STATE_TYPE_SHARE:  state_type = "SHARE";       break;
+              case STATE_TYPE_DELEG:  state_type = "DELEGATION";  break;
+              case STATE_TYPE_LOCK:   state_type = "LOCK";        break;
+              case STATE_TYPE_LAYOUT: state_type = "LAYOUT";      break;
+            }
+
+          DisplayOwner(pstate->state_powner, str);
+          LogDebug(COMPONENT_STATE,
+                   "State %p type %s owner {%s}",
+                   pstate, state_type, str);
+        }
+
+      LogDebug(COMPONENT_STATE,
+               " ---------------------- ---------- ----------------------");
+    }
+  else
+    LogDebug(COMPONENT_STATE, "All states released");
+
+  V(all_state_v4_mutex);
+}
+#endif
