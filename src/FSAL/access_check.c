@@ -343,139 +343,61 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 				    fsal_accessflags_t access_type,  /* IN */
 				    struct attrlist * p_object_attributes /* IN */ )
 {
-  fsal_accessflags_t missing_access;
-  unsigned int is_grp, i;
-  uint64_t uid;
-  uint64_t gid;
-  uint32_t mode;
+	uint64_t uid;
+	uint64_t gid;
+	mode_t mode, mask;
 
-  /* unsatisfied flags */
-  missing_access = access_type;
-  if(!missing_access)
-    {
-      LogDebug(COMPONENT_FSAL, "fsal_check_access_no_acl: Nothing was requested");
-      return TRUE;
-    }
+	if( !access_type) {
+		LogDebug(COMPONENT_FSAL, "fsal_check_access_no_acl: Nothing was requested");
+		return TRUE;
+	}
 
-  uid = p_object_attributes->owner;
-  gid = p_object_attributes->group;
-  mode = p_object_attributes->mode;
+	uid = p_object_attributes->owner;
+	gid = p_object_attributes->group;
+	mode = p_object_attributes->mode;
+	mask = ((access_type & FSAL_R_OK) ? S_IROTH : 0)
+		| ((access_type & FSAL_W_OK) ? S_IWOTH : 0)
+		| ((access_type & FSAL_X_OK) ? S_IXOTH : 0);
 
-  LogDebug(COMPONENT_FSAL,
-           "fsal_check_access_no_acl: file Mode=%#o, file uid=%"PRIu64
-           ", file gid= %"PRIu64,
-           mode,uid, gid);
-  LogDebug(COMPONENT_FSAL,
-           "fsal_check_access_no_acl: user uid=%d, user gid= %d, access_type=0X%x",
-           creds->caller_uid,
-           creds->caller_gid,
-           access_type);
+	LogDebug(COMPONENT_FSAL,
+		 "fsal_check_access_no_acl: file Mode=%#o, file uid=%"PRIu64
+		 ", file gid= %"PRIu64
+		 ", user uid=%d, user gid= %d, access_type=0X%x",
+		 mode,uid, gid,
+		 creds->caller_uid,
+		 creds->caller_gid,
+		 access_type);
 
-  /* If the uid of the file matches the uid of the user,
-   * then the uid mode bits take precedence. */
-  if(creds->caller_uid == uid)
-    {
+	/* If the uid of the file matches the uid of the user,
+	 * then the uid mode bits take precedence. */
+	if(creds->caller_uid == uid) {
+		if(access_type & FSAL_OWNER_OK) {
+			LogDebug(COMPONENT_FSAL,
+				 "fsal_check_access_no_acl: File owner ok user %"PRIu64,
+				 uid);
+			return TRUE;
+		}
+		mode >>= 6;
+	} else { /* followed by group(s) */
+		if(creds->caller_gid == gid) {
+			mode >>= 3;
+		} else {
+			/* Test if file belongs to alt user's groups */
+			int i;
 
-      LogDebug(COMPONENT_FSAL,
-               "fsal_check_access_no_acl: File belongs to user %"PRIu64,
-               uid);
-
-      if(mode & S_IRUSR)
-        missing_access &= ~FSAL_R_OK;
-
-      if(mode & S_IWUSR)
-        missing_access &= ~FSAL_W_OK;
-
-      if(mode & S_IXUSR)
-        missing_access &= ~FSAL_X_OK;
-
-      /* handle the creation of a new 500 file correctly */
-      if((missing_access & FSAL_OWNER_OK) != 0)
-        missing_access = 0;
-
-      if(missing_access == 0)
-        return TRUE;
-      else
-        {
-          LogDebug(COMPONENT_FSAL,
-                       "fsal_check_access_no_acl: Mode=%#o, Access=0X%x, Rights missing: 0X%x",
-                       mode, access_type, missing_access);
-          return FALSE;
-        }
-
-    }
-
-  /* missing_access will be nonzero triggering a failure
-   * even though FSAL_OWNER_OK is not even a real posix file
-   * permission */
-  missing_access &= ~FSAL_OWNER_OK;
-
-  /* Test if the file belongs to user's group. */
-  is_grp = (creds->caller_gid == gid);
-  if(is_grp)
-    {
-      LogDebug(COMPONENT_FSAL,
-	       "fsal_check_access_no_acl: File belongs to user's group %d",
-	       creds->caller_gid);
-    }
-  else
-    {
-	    /* Test if file belongs to alt user's groups */
-      for(i = 0; i < creds->caller_glen; i++)
-        {
-          is_grp = (creds->caller_garray[i] == gid);
-          if(is_grp)
-            {
-              LogDebug(COMPONENT_FSAL,
-                       "fsal_check_access_no_acl: File belongs to user's alt group %d",
-                       creds->caller_garray[i]);
-	      break;
-            }
-        }
-    }
-
-  /* If the gid of the file matches the gid of the user or
-   * one of the alternatve gids of the user, then the uid mode
-   * bits take precedence. */
-  if(is_grp)
-    {
-      if(mode & S_IRGRP)
-        missing_access &= ~FSAL_R_OK;
-
-      if(mode & S_IWGRP)
-        missing_access &= ~FSAL_W_OK;
-
-      if(mode & S_IXGRP)
-        missing_access &= ~FSAL_X_OK;
-
-      if(missing_access == 0)
-        return TRUE;
-      else
-        return FALSE;
-
-    }
-
-  /* If the user uid is not 0, the uid does not match the file's, and
-   * the user's gids do not match the file's gid, we apply the "other"
-   * mode bits to the user. */
-  if(mode & S_IROTH)
-    missing_access &= ~FSAL_R_OK;
-
-  if(mode & S_IWOTH)
-    missing_access &= ~FSAL_W_OK;
-
-  if(mode & S_IXOTH)
-    missing_access &= ~FSAL_X_OK;
-
-  if(missing_access == 0)
-    return TRUE;
-  else {
-    LogDebug(COMPONENT_FSAL,
-                 "fsal_check_access_no_acl: Mode=%#o, Access=0X%x, Rights missing: 0X%x",
-                 mode, access_type, missing_access);
-    return FALSE;
-  }
-
+			for(i = 0; i < creds->caller_glen; i++) {
+				if(creds->caller_garray[i] == gid) {
+					mode >>= 3;
+					break;
+				}
+			}
+		}
+	}
+	/* others fall out the bottom... */
+	if((mask & ~mode & S_IRWXO) == 0)
+		return TRUE;
+	else
+		return FALSE;
 }
 
 /* test_access
