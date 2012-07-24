@@ -106,8 +106,9 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
                 }
         }
 
-        LogDebug(COMPONENT_STATE, "grace period started, duration(%d)",
-            duration);
+        LogEvent(COMPONENT_STATE,
+                 "NFS Server Now IN GRACE, duration %d",
+                 duration);
 
         grace.g_start = time(NULL);
         grace.g_duration = duration;
@@ -115,20 +116,33 @@ nfs4_start_grace(nfs_grace_start_array_t *gsap)
         V(grace.g_mutex);
 }
 
+int last_grace = -1;
+
 int
 nfs_in_grace()
 {
-        int gp;
+        int in_grace;
 
         P(grace.g_mutex);
 
-        gp = ((grace.g_start + grace.g_duration) > time(NULL));
+        in_grace = ((grace.g_start + grace.g_duration) > time(NULL));
+
+        if(in_grace != last_grace)
+          {
+            LogEvent(COMPONENT_STATE,
+                     "NFS Server Now %s",
+                     in_grace ? "IN GRACE" : "NOT IN GRACE");
+            last_grace = in_grace;
+          }
+        else if(in_grace)
+          {
+            LogDebug(COMPONENT_STATE,
+                    "NFS Server IN GRACE");
+          }
 
         V(grace.g_mutex);
 
-        LogDebug(COMPONENT_STATE, "in grace period  == %d", gp);
-
-        return gp;
+        return in_grace;
 }
 
 /*

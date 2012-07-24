@@ -43,7 +43,7 @@
 
 unsigned int reaper_delay = REAPER_DELAY;
 
-static void reap_hash_table(hash_table_t * ht_reap)
+static int reap_hash_table(hash_table_t * ht_reap)
 {
   struct rbt_head     * head_rbt;
   hash_data_t         * pdata = NULL;
@@ -52,6 +52,7 @@ static void reap_hash_table(hash_table_t * ht_reap)
   struct rbt_node     * pn;
   nfs_client_id_t     * pclientid;
   nfs_client_record_t * precord;
+  int                   count = 0;
 
   /* For each bucket of the requested hashtable */
   for(i = 0; i < ht_reap->parameter.index_size; i++)
@@ -68,6 +69,8 @@ static void reap_hash_table(hash_table_t * ht_reap)
           pdata = RBT_OPAQ(pn);
 
           pclientid = (nfs_client_id_t *)pdata->buffval.pdata;
+          count++;
+
           /*
            * little hack: only want to reap v4 clients
            * 4.1 initializess this field to '1'
@@ -121,11 +124,16 @@ static void reap_hash_table(hash_table_t * ht_reap)
 
       pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
     }
+
+  return count;
 }
 
 void *reaper_thread(void *UnusedArg)
 {
-  int old_state_cleaned = 0;
+  int    old_state_cleaned = 0;
+  int    count = 0;
+  bool_t logged = FALSE;
+  bool_t in_grace;
 
   SetNameFunction("reaper_thr");
 
@@ -139,22 +147,28 @@ void *reaper_thread(void *UnusedArg)
       /* sleep(nfs_param.core_param.reaper_delay); */
       sleep(reaper_delay);
 
+      in_grace = nfs_in_grace();
+
       if (old_state_cleaned == 0)
         {
           /* if not in grace period, clean up the old state */
-          if(!nfs_in_grace())
+          if(!in_grace)
             {
               nfs4_clean_old_recov_dir();
               old_state_cleaned = 1;
             }
         }
 
-      LogFullDebug(COMPONENT_CLIENTID,
-                   "Now checking NFS4 clients for expiration%s",
-                   nfs_in_grace() ? " IN GRACE" : "");
+      if(isDebug(COMPONENT_CLIENTID) && ((count > 0) || !logged))
+        {
+          LogDebug(COMPONENT_CLIENTID,
+                   "Now checking NFS4 clients for expiration");
 
-      reap_hash_table(ht_confirmed_client_id);
-      reap_hash_table(ht_unconfirmed_client_id);
+          logged = TRUE;
+        }
+
+      count = reap_hash_table(ht_confirmed_client_id) +
+              reap_hash_table(ht_unconfirmed_client_id);
     }                           /* while ( 1 ) */
 
   return NULL;
