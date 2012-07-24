@@ -112,7 +112,7 @@ state_status_t state_lock_init(state_status_t * pstatus)
   *pstatus = STATE_SUCCESS;
 
   memset(&unknown_owner, 0, sizeof(unknown_owner));
-  strcpy(unknown_owner.so_owner_val, "ganesha_unknown_owner");
+  unknown_owner.so_owner_val = "ganesha_unknown_owner";
   unknown_owner.so_type      = STATE_LOCK_OWNER_UNKNOWN;
   unknown_owner.so_refcount  = 1;
   unknown_owner.so_owner_len = strlen(unknown_owner.so_owner_val);
@@ -151,10 +151,7 @@ state_status_t state_lock_init(state_status_t * pstatus)
                                sizeof(state_owner_t),
                                pool_basic_substrate,
                                NULL, NULL, NULL);
-  state_nfs4_owner_name_pool = pool_init("Owner names",
-                                         sizeof(state_nfs4_owner_name_t),
-                                         pool_basic_substrate,
-                                         NULL, NULL, NULL);
+
   state_v4_pool = pool_init("NFSv4 files states",
                             sizeof(state_t),
                             pool_basic_substrate,
@@ -477,6 +474,8 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
     }
 #endif
   /* Add to list of locks owned by powner */
+  inc_state_owner_ref(powner);
+
   P(powner->so_mutex);
 
   if(powner->so_type == STATE_LOCK_OWNER_NFSV4 && pstate != NULL)
@@ -487,7 +486,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
 
   glist_add_tail(&powner->so_lock_list, &new_entry->sle_owner_locks);
 
-  inc_state_owner_ref_locked(powner);
+  V(powner->so_mutex);
 
 #ifdef _DEBUG_MEMLEAKS
   P(all_locks_mutex);
@@ -605,7 +604,9 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry)
 
       glist_del(&lock_entry->sle_owner_locks);
 
-      dec_state_owner_ref_locked(powner);
+      V(powner->so_mutex);
+
+      dec_state_owner_ref(powner);
     }
 
   lock_entry->sle_owner = NULL;
@@ -2855,10 +2856,7 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
       pexport = found_share->sns_pexport;
 
       /* get a reference to the owner */
-      /** @todo FSF: actually do this when we convert to atomic and don't need lock here */
-#ifdef FSF
-      inc_state_owner_ref_locked(powner);
-#endif
+      inc_state_owner_ref(powner);
 
       V(pnsmclient->ssc_mutex);
 
@@ -2871,9 +2869,7 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
                                           0);
       if(FSAL_IS_ERROR(fsal_status))
         {
-#ifdef FSF
-          dec_state_owner_ref_locked(powner);
-#endif
+          dec_state_owner_ref(powner);
 
           /* log error here , and continue? */
           LogDebug(COMPONENT_STATE,
@@ -2898,9 +2894,7 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
           errcnt++;
         }
 
-#ifdef FSF
-      dec_state_owner_ref_locked(powner);
-#endif
+      dec_state_owner_ref(powner);
     }
 
   /* Put locks from current client incarnation onto end of list */

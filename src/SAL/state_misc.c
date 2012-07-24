@@ -40,24 +40,12 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <time.h>
-#include <pthread.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
-
-#include "log.h"
-#include "HashData.h"
-#include "HashTable.h"
-#include "fsal.h"
 #include "sal_functions.h"
-#include "cache_inode_lru.h"
 
 pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
-pool_t *state_nfs4_owner_name_pool; /*< Pool for NFSv4 files's open_owner */
 pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
 
 const char *state_err_str(state_status_t err)
@@ -774,161 +762,412 @@ int different_owners(state_owner_t *powner1, state_owner_t *powner2)
 
 int DisplayOwner(state_owner_t *powner, char *buf)
 {
-  if(powner != NULL)
-    switch(powner->so_type)
-      {
+  if(powner == NULL)
+    return sprintf(buf, "<NULL>");
+
+  switch(powner->so_type)
+    {
 #ifdef _USE_NLM
-        case STATE_LOCK_OWNER_NLM:
-          return display_nlm_owner(powner, buf);
+      case STATE_LOCK_OWNER_NLM:
+        return display_nlm_owner(powner, buf);
 #endif
 #ifdef _USE_9P
-        case STATE_LOCK_OWNER_9P:
-          return display_9p_owner(powner, buf);
+      case STATE_LOCK_OWNER_9P:
+        return display_9p_owner(powner, buf);
 #endif
 
-        case STATE_OPEN_OWNER_NFSV4:
-        case STATE_LOCK_OWNER_NFSV4:
-        case STATE_CLIENTID_OWNER_NFSV4:
-          return display_nfs4_owner(powner, buf);
+      case STATE_OPEN_OWNER_NFSV4:
+      case STATE_LOCK_OWNER_NFSV4:
+      case STATE_CLIENTID_OWNER_NFSV4:
+        return display_nfs4_owner(powner, buf);
 
-        case STATE_LOCK_OWNER_UNKNOWN:
-          return sprintf(buf,
-                         "%s powner=%p: refcount=%d",
-                         state_owner_type_to_str(powner->so_type), powner, powner->so_refcount);
+      case STATE_LOCK_OWNER_UNKNOWN:
+        return sprintf(buf,
+                       "%s powner=%p: refcount=%d",
+                       state_owner_type_to_str(powner->so_type),
+                       powner,
+                       atomic_fetch_int32_t(&powner->so_refcount));
     }
 
   return sprintf(buf, "%s", invalid_state_owner_type);
 }
 
-int Hash_dec_state_owner_ref(hash_buffer_t *buffval)
+void inc_state_owner_ref(state_owner_t * powner)
 {
-  int rc;
-  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
-
-  P(powner->so_mutex);
-
-  powner->so_refcount--;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      DisplayOwner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount for {%s}",
-                   str);
-    }
-
-  rc = powner->so_refcount;
-
-  V(powner->so_mutex);
-
-  return rc;
-}
-
-void Hash_inc_state_owner_ref(hash_buffer_t *buffval)
-{
-  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
-
-  P(powner->so_mutex);
-  powner->so_refcount++;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      DisplayOwner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount for {%s}",
-                   str);
-    }
-
-  V(powner->so_mutex);
-}
-
-void inc_state_owner_ref_locked(state_owner_t *powner)
-{
-  powner->so_refcount++;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      DisplayOwner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount for {%s}",
-                   str);
-    }
-
-  V(powner->so_mutex);
-}
-
-void inc_state_owner_ref(state_owner_t *powner)
-{
-  P(powner->so_mutex);
-
-  inc_state_owner_ref_locked(powner);
-}
-
-void dec_state_owner_ref_locked(state_owner_t        * powner)
-{
-  bool_t remove = FALSE;
-  char   str[HASHTABLE_DISPLAY_STRLEN];
+  char    str[HASHTABLE_DISPLAY_STRLEN];
+  int32_t refcount;
 
   if(isDebug(COMPONENT_STATE))
     DisplayOwner(powner, str);
 
-  if(powner->so_refcount > 1)
-    {
-      powner->so_refcount--;
+  refcount = atomic_inc_int32_t(&powner->so_refcount);
 
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount for {%s}",
-                   str);
-    }
-  else
-    {
-      LogFullDebug(COMPONENT_STATE,
-                   "Refcount for {%s} is 1",
-                   str);
-      remove = TRUE;
-    }
-
-  V(powner->so_mutex);
-
-  if(remove)
-    {
-      switch(powner->so_type)
-        {
-#ifdef _USE_NLM
-          case STATE_LOCK_OWNER_NLM:
-            remove_nlm_owner(powner, str);
-            break;
-#endif
-#ifdef _USE_9P
-          case STATE_LOCK_OWNER_9P:
-            remove_9p_owner( powner, str);
-#endif
-          case STATE_OPEN_OWNER_NFSV4:
-          case STATE_LOCK_OWNER_NFSV4:
-          case STATE_CLIENTID_OWNER_NFSV4:
-            remove_nfs4_owner(powner, str);
-            break;
-
-          case STATE_LOCK_OWNER_UNKNOWN:
-            LogDebug(COMPONENT_STATE,
-                     "Unexpected removal of powner=%p: %s",
-                     powner, str);
-            break;
-        }
-    }
+  LogFullDebug(COMPONENT_STATE,
+               "Increment refcount now=%"PRId32" {%s}",
+               refcount, str);
 }
 
-void dec_state_owner_ref(state_owner_t        * powner)
+void free_state_owner(state_owner_t * powner)
 {
-  P(powner->so_mutex);
+  char str[HASHTABLE_DISPLAY_STRLEN];
 
-  dec_state_owner_ref_locked(powner);
+  switch(powner->so_type)
+    {
+#ifdef _USE_NLM
+      case STATE_LOCK_OWNER_NLM:
+        free_nlm_owner(powner);
+        break;
+#endif
+
+#ifdef _USE_9P
+      case STATE_LOCK_OWNER_9P:
+        break;
+#endif
+
+      case STATE_OPEN_OWNER_NFSV4:
+      case STATE_LOCK_OWNER_NFSV4:
+      case STATE_CLIENTID_OWNER_NFSV4:
+        free_nfs4_owner(powner);
+        break;
+
+      case STATE_LOCK_OWNER_UNKNOWN:
+        DisplayOwner(powner, str);
+
+        LogCrit(COMPONENT_STATE,
+                "Unexpected removal of {%s}",
+                str);
+        return;
+    }
+
+  if(powner->so_owner_val != NULL)
+    gsh_free(powner->so_owner_val);
+
+  pthread_mutex_destroy(&powner->so_mutex);
+
+  pool_free(state_owner_pool, powner);
+}
+
+hash_table_t * get_state_owner_hash_table(state_owner_t * powner)
+{
+  switch(powner->so_type)
+    {
+#ifdef _USE_NLM
+      case STATE_LOCK_OWNER_NLM:
+        return ht_nlm_owner;
+#endif
+
+#ifdef _USE_9P
+      case STATE_LOCK_OWNER_9P:
+        returnht_9p_owner;
+#endif
+
+      case STATE_OPEN_OWNER_NFSV4:
+      case STATE_LOCK_OWNER_NFSV4:
+      case STATE_CLIENTID_OWNER_NFSV4:
+        return ht_nfs4_owner;
+
+      case STATE_LOCK_OWNER_UNKNOWN:
+        break;
+    }
+
+  return NULL;
+}
+
+void dec_state_owner_ref(state_owner_t * powner)
+{
+  char                str[HASHTABLE_DISPLAY_STRLEN];
+  struct hash_latch   latch;
+  hash_error_t        rc;
+  hash_buffer_t       buffkey;
+  hash_buffer_t       old_value;
+  hash_buffer_t       old_key;
+  int32_t             refcount;
+  hash_table_t      * ht_owner;
+
+  if(isDebug(COMPONENT_STATE))
+    DisplayOwner(powner, str);
+
+  refcount = atomic_dec_int32_t(&powner->so_refcount);
+
+  if(refcount != 0)
+    {
+      LogFullDebug(COMPONENT_STATE,
+                   "Decrement refcount now=%"PRId32" {%s}",
+                   refcount, str);
+
+      assert(refcount > 0);
+
+      return;
+    }
+
+  ht_owner = get_state_owner_hash_table(powner);
+
+  if(ht_owner == NULL)
+    {
+      DisplayOwner(powner, str);
+
+      LogCrit(COMPONENT_STATE,
+              "Unexpected owner {%s}",
+              str);
+
+      assert(ht_owner);
+
+      return;
+    }
+
+  buffkey.pdata = powner;
+  buffkey.len   = sizeof(*powner);
+
+  /* Get the hash table entry and hold latch */
+  rc = HashTable_GetLatch(ht_owner,
+                          &buffkey,
+                          &old_value,
+                          TRUE,
+                          &latch);
+
+  if(rc != HASHTABLE_SUCCESS)
+    {
+      if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+        HashTable_ReleaseLatched(ht_owner, &latch);
+
+      DisplayOwner(powner, str);
+
+      LogDebug(COMPONENT_STATE,
+               "Error %s, could not find {%s}",
+               hash_table_err_to_str(rc), str);
+
+      return;
+    }
+
+  refcount = atomic_fetch_int32_t(&powner->so_refcount);
+
+  if(refcount > 0)
+    {
+      LogDebug(COMPONENT_STATE,
+               "Did not release {%s} refcount now=%"PRId32,
+               str, refcount);
+
+      HashTable_ReleaseLatched(ht_owner, &latch);
+
+      return;
+    }
+
+  /* use the key to delete the entry */
+  rc = HashTable_DeleteLatched(ht_owner,
+                               &buffkey,
+                               &latch,
+                               &old_key,
+                               &old_value);
+
+  if(rc != HASHTABLE_SUCCESS)
+    {
+      if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+        HashTable_ReleaseLatched(ht_owner, &latch);
+
+      DisplayOwner(powner, str);
+
+      LogCrit(COMPONENT_STATE,
+              "Error %s, could not remove {%s}",
+              hash_table_err_to_str(rc), str);
+
+      return;
+    }
+
+  LogFullDebug(COMPONENT_STATE,
+               "Free {%s}",
+               str);
+
+  free_state_owner(powner);
+}
+
+state_owner_t *get_state_owner(care_t               care,
+                               state_owner_t      * pkey,
+                               state_owner_init_t   init_owner,
+                               bool_t             * isnew)
+{
+  state_owner_t      * powner;
+  char                 str[HASHTABLE_DISPLAY_STRLEN];
+  struct hash_latch    latch;
+  hash_error_t         rc;
+  hash_buffer_t        buffkey;
+  hash_buffer_t        buffval;
+  hash_table_t       * ht_owner;
+
+  if(isnew != NULL)
+    *isnew = FALSE;
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      DisplayOwner(pkey, str);
+
+      LogFullDebug(COMPONENT_STATE,
+                   "Find {%s}", str);
+    }
+
+  ht_owner = get_state_owner_hash_table(pkey);
+
+  if(ht_owner == NULL)
+    {
+      DisplayOwner(pkey, str);
+
+      LogCrit(COMPONENT_STATE,
+              "ht=%p Unexpected key {%s}",
+              ht_owner, str);
+      return NULL;
+    }
+
+  buffkey.pdata = pkey;
+  buffkey.len   = sizeof(*pkey);
+
+  rc = HashTable_GetLatch(ht_owner,
+                          &buffkey,
+                          &buffval,
+                          TRUE,
+                          &latch);
+
+  /* If we found it, return it */
+  if(rc == HASHTABLE_SUCCESS)
+    {
+      powner = buffval.pdata;
+
+      /* Return the found NSM Client */
+      if(isFullDebug(COMPONENT_STATE))
+        {
+          DisplayOwner(powner, str);
+          LogFullDebug(COMPONENT_STATE,
+                       "Found {%s}",
+                       str);
+        }
+
+      /* Increment refcount under hash latch.
+       * This prevents dec ref from removing this entry from hash if a race
+       * occurs.
+       */
+      inc_state_owner_ref(powner);
+
+      HashTable_ReleaseLatched(ht_owner, &latch);
+
+      return powner;
+    }
+
+  /* An error occurred, return NULL */
+  if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
+    {
+      DisplayOwner(pkey, str);
+
+      LogCrit(COMPONENT_STATE,
+              "Error %s, could not find {%s}",
+              hash_table_err_to_str(rc), str);
+
+      return NULL;
+    }
+
+  /* Not found, but we don't care, return NULL */
+  if(care == CARE_NOT)
+    {
+      /* Return the found NSM Client */
+      if(isFullDebug(COMPONENT_STATE))
+        {
+          DisplayOwner(pkey, str);
+          LogFullDebug(COMPONENT_STATE,
+                       "Ignoring {%s}",
+                       str);
+        }
+
+      HashTable_ReleaseLatched(ht_owner, &latch);
+
+      return NULL;
+    }
+
+  powner = pool_alloc(state_owner_pool, NULL);
+
+  if(powner == NULL)
+    {
+      DisplayOwner(pkey, str);
+      LogCrit(COMPONENT_STATE,
+              "No memory for {%s}",
+              str);
+
+      return NULL;
+    }
+
+  /* Copy everything over */
+  memcpy(powner, pkey, sizeof(*pkey));
+
+  if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
+    {
+      /* Mutex initialization failed, free the created owner */
+      DisplayOwner(pkey, str);
+      LogCrit(COMPONENT_STATE,
+              "Could not init mutex for {%s}",
+              str);
+
+      gsh_free(powner);
+      return NULL;
+    }
+
+  /* Do any owner type specific initialization */
+  if(init_owner != NULL)
+    init_owner(powner);
+
+  powner->so_owner_val = gsh_malloc(pkey->so_owner_len);
+
+  if(powner->so_owner_val == NULL)
+    {
+      /* Discard the created owner */
+      DisplayOwner(pkey, str);
+      LogCrit(COMPONENT_STATE,
+              "No memory for {%s}",
+              str);
+
+      free_state_owner(powner);
+      return NULL;
+    }
+
+  memcpy(powner->so_owner_val, pkey->so_owner_val, pkey->so_owner_len);
+
+  init_glist(&powner->so_lock_list);
+
+  powner->so_refcount = 1;
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      DisplayOwner(powner, str);
+      LogFullDebug(COMPONENT_STATE,
+                   "New {%s}", str);
+    }
+
+  buffkey.pdata = powner;
+  buffkey.len   = sizeof(*powner);
+  buffval.pdata = powner;
+  buffval.len   = sizeof(*powner);
+
+  rc = HashTable_SetLatched(ht_owner,
+                            &buffval,
+                            &buffval,
+                            &latch,
+                            FALSE,
+                            NULL,
+                            NULL);
+
+  /* An error occurred, return NULL */
+  if(rc != HASHTABLE_SUCCESS)
+    {
+      DisplayOwner(powner, str);
+
+      LogCrit(COMPONENT_STATE,
+              "Error %s, inserting {%s}",
+              hash_table_err_to_str(rc), str);
+
+      free_state_owner(powner);
+
+      return NULL;
+    }
+
+  if(isnew != NULL)
+    *isnew = TRUE;
+
+  return powner;
 }
 
 void state_wipe_file(cache_entry_t        * pentry)

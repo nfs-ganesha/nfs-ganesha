@@ -143,35 +143,23 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Is this lock_owner known ? */
-  convert_nfs4_lock_owner(&arg_LOCKT4.owner, &owner_name,
-                          data->psession->clientid);
+  convert_nfs4_lock_owner(&arg_LOCKT4.owner, &owner_name);
 
-  if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
+  /* This lock owner is not known yet, allocated and set up a new one */
+  plock_owner = create_nfs4_owner(&owner_name,
+                                  data->psession->pclientid_record,
+                                  STATE_LOCK_OWNER_NFSV4,
+                                  NULL,
+                                  0,
+                                  NULL,
+                                  CARE_ALWAYS);
+
+  if(plock_owner == NULL)
     {
-      /* This lock owner is not known yet, allocated and set up a new one */
-      plock_owner = create_nfs4_owner(&owner_name,
-                                      data->psession->pclientid_record,
-                                      STATE_LOCK_OWNER_NFSV4,
-                                      NULL,
-                                      0);
-
-      if(plock_owner == NULL)
-        {
-          LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                       "LOCKT unable to create lock owner");
-          res_LOCKT4.status = NFS4ERR_SERVERFAULT;
-          return res_LOCKT4.status;
-        }
-    }
-  else if(isFullDebug(COMPONENT_NFS_V4_LOCK))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      DisplayOwner(plock_owner, str);
-      
       LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCKT A previously known owner is used %s",
-                   str);
+                   "LOCKT unable to create lock owner");
+      res_LOCKT4.status = NFS4ERR_SERVERFAULT;
+      return res_LOCKT4.status;
     }
 
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,

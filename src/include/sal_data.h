@@ -212,12 +212,20 @@ struct state_t
  *
  ******************************************************************************/
 
+typedef void (state_owner_init_t) (state_owner_t * powner);
+
+#ifdef _USE_NLM
+extern hash_table_t *ht_nlm_owner;
+#endif
+#ifdef _USE_9P
+extern hash_table_t *ht_9p_owner;
+#endif
+extern hash_table_t *ht_nfs4_owner;
+
 typedef struct state_nfs4_owner_name_t
 {
-  clientid4    son_clientid;
-  unsigned int son_owner_len;
-  char         son_owner_val[MAXNAMLEN];
-  bool_t       son_islock;
+  unsigned int   son_owner_len;
+  char         * son_owner_val;
 } state_nfs4_owner_name_t;
 
 typedef enum state_owner_type_t
@@ -234,14 +242,17 @@ typedef enum state_owner_type_t
   STATE_CLIENTID_OWNER_NFSV4
 } state_owner_type_t;
 
-#ifdef _USE_NLM
 typedef enum care_t
 {
   CARE_NOT,
+  CARE_ALWAYS,
+#ifdef _USE_NLM
   CARE_NO_MONITOR,
-  CARE_MONITOR
+  CARE_MONITOR,
+#endif
 } care_t;
 
+#ifdef _USE_NLM
 typedef struct state_nsm_client_t
 {
   pthread_mutex_t         ssc_mutex;
@@ -300,7 +311,6 @@ struct state_nfs4_owner_t
   nfs_client_id_t   * so_pclientid;     /** < Pointer to owning client id record        */
   unsigned int        so_confirmed;
   seqid4              so_seqid;
-  uint32_t            so_counter;       /** < Counter is used to build unique stateids  */
   nfs_argop4_state    so_args;          /** < Saved args                                */
   cache_entry_t     * so_last_pentry;   /** < Last file operated on by this state owner */
   nfs_resop4          so_resp;          /** < Saved response                            */
@@ -315,9 +325,9 @@ struct state_owner_t
   state_owner_type_t      so_type;
   struct glist_head       so_lock_list;
   pthread_mutex_t         so_mutex;
-  int                     so_refcount;
-  int                     so_owner_len;
-  char                    so_owner_val[NFS4_OPAQUE_LIMIT]; /* big enough for all owners */
+  int32_t                 so_refcount;
+  int32_t                 so_owner_len;
+  char                  * so_owner_val;
   union
   {
     state_nfs4_owner_t    so_nfs4_owner;
@@ -639,7 +649,6 @@ struct state_async_queue_t
 /* Memory pools */
 
 extern pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
-extern pool_t *state_nfs4_owner_name_pool; /*< Pool for NFSv4 files's open_owner */
 extern pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
 
 struct state_nlm_share_t

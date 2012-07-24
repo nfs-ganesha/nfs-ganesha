@@ -203,30 +203,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     case CLAIM_NULL:
       cause = "CLAIM_NULL";
 
-      /* Is this open_owner known? If so, get it so we can use replay cache */
-      convert_nfs4_open_owner(&arg_OPEN4.owner,
-                              &owner_name,
-                              data->psession->clientid);
-
-      if(!nfs4_owner_Get_Pointer(&owner_name, &powner))
-        {
-          LogFullDebug(COMPONENT_STATE,
-                       "OPEN new owner");
-        }
-      else
-        {
-          if(isFullDebug(COMPONENT_STATE))
-            {
-              char str[HASHTABLE_DISPLAY_STRLEN];
-
-              display_nfs4_owner(powner, str);
-
-              LogFullDebug(COMPONENT_STATE,
-                           "A previously known open_owner is used:%p %s arg_OPEN4.seqid=%u",
-                           powner, str, arg_OPEN4.seqid);
-            }
-        }
-
       /* Check for name length */
       if(arg_OPEN4.claim.open_claim4_u.file.utf8string_len > FSAL_MAX_NAME_LEN)
         {
@@ -304,23 +280,24 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                "OPEN Client id = %llx",
                (unsigned long long)arg_OPEN4.owner.clientid);
 
-      /* Is this open_owner known ? */
+      /* Is this open_owner known? If so, get it so we can use replay cache */
+      convert_nfs4_open_owner(&arg_OPEN4.owner, &owner_name);
+
+      /* If this open owner is not known yet, allocated and set up a new one */
+      powner = create_nfs4_owner(&owner_name,
+                                 data->psession->pclientid_record,
+                                 STATE_OPEN_OWNER_NFSV4,
+                                 NULL,
+                                 1, /* NFSv4.1 specific, initial seqid is 1 */
+                                 NULL,
+                                 CARE_ALWAYS);
+
       if(powner == NULL)
         {
-          /* This open owner is not known yet, allocated and set up a new one */
-          powner = create_nfs4_owner(&owner_name,
-                                     data->psession->pclientid_record,
-                                     STATE_OPEN_OWNER_NFSV4,
-                                     NULL,
-                                     1); /* NFSv4.1 specific, initial seqid is 1 */
-
-          if(powner == NULL)
-            {
-              res_OPEN4.status = NFS4ERR_RESOURCE;
-              LogDebug(COMPONENT_STATE,
-                       "NFS41 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL (could not create NFS41 Owner");
-              goto out;
-            }
+          res_OPEN4.status = NFS4ERR_RESOURCE;
+          LogDebug(COMPONENT_STATE,
+                   "NFS41 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL (could not create NFS41 Owner");
+          goto out;
         }
 
       /* Status of parent directory before the operation */

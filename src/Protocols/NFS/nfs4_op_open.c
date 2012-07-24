@@ -126,6 +126,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   fsal_status_t            fsal_status;
 #endif
   char                    * text = "";
+  bool_t                    isnew;
 
   LogDebug(COMPONENT_STATE,
            "Entering NFS v4 OPEN handler -----------------------------------------------------");
@@ -240,25 +241,28 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   }
 
   /* Is this open_owner known? If so, get it so we can use replay cache */
-  convert_nfs4_open_owner(&arg_OPEN4.owner, &owner_name, 0LL);
+  convert_nfs4_open_owner(&arg_OPEN4.owner, &owner_name);
 
-  if(!nfs4_owner_Get_Pointer(&owner_name, &powner))
+  /* If this open owner is not known yet, allocated and set up a new one */
+  powner = create_nfs4_owner(&owner_name,
+                             pclientid,
+                             STATE_OPEN_OWNER_NFSV4,
+                             NULL,
+                             0,
+                             &isnew,
+                             CARE_ALWAYS);
+
+  if(powner == NULL)
     {
-      LogFullDebug(COMPONENT_STATE, "OPEN new owner");
+      res_OPEN4.status = NFS4ERR_RESOURCE;
+      LogEvent(COMPONENT_STATE,
+               "NFS4 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL (could not create NFS4 Owner");
+      dec_client_id_ref(pclientid);
+      return res_OPEN4.status;
     }
-  else
+
+  if(!isnew)
     {
-      if(isFullDebug(COMPONENT_STATE))
-        {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
-          display_nfs4_owner(powner, str);
-
-          LogFullDebug(COMPONENT_STATE,
-                       "A previously known open_owner is used:%p %s arg_OPEN4.seqid=%u",
-                       powner, str, arg_OPEN4.seqid);
-        }
-
       if(arg_OPEN4.seqid == 0)
         {
           LogDebug(COMPONENT_STATE,
@@ -271,27 +275,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           if(!Check_nfs4_seqid(powner, arg_OPEN4.seqid, op, data, resp, tag))
             {
               /* Response is setup for us and LogDebug told what was wrong */
-              goto out2;
+              goto out4;
             }
-        }
-    }
-  /* Is this open_owner known ? */
-  if(powner == NULL)
-    {
-      /* This open owner is not known yet, allocated and set up a new one */
-      powner = create_nfs4_owner(&owner_name,
-                                 pclientid,
-                                 STATE_OPEN_OWNER_NFSV4,
-                                 NULL,
-                                 0);
-
-      if(powner == NULL)
-        {
-          res_OPEN4.status = NFS4ERR_RESOURCE;
-          LogEvent(COMPONENT_STATE,
-                   "NFS4 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL (could not create NFS4 Owner");
-          dec_client_id_ref(pclientid);
-          return res_OPEN4.status;
         }
     }
 
@@ -1014,14 +999,15 @@ out_prev:
                  data,
                  tag);
 
-  /* If we are re-using stateid, then release extra reference to open owner */
-  if(ReuseState)
-    dec_state_owner_ref(powner);
-
  out:
 
   /* Save the response in the lock or open owner */
   Copy_nfs4_state_req(powner, arg_OPEN4.seqid, op, data, resp, tag);
+
+ out4:
+
+  /* Release the owner reference from create_nfs4_owner */
+  dec_state_owner_ref(powner);
 
  out2:
 
@@ -1060,11 +1046,6 @@ out_prev:
             LogDebug(COMPONENT_NFS_V4_LOCK,
                      "state_del failed with status %s",
                      state_err_str(state_status));
-        }
-      else if(powner != NULL)
-        {
-          /* Need to release the open owner */
-          dec_state_owner_ref(powner);
         }
     }
 

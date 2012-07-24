@@ -717,12 +717,13 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
   nlm_share->sns_pexport = pexport;
 
   /* Add share to list for NLM Owner */
+  inc_state_owner_ref(powner);
+
   P(powner->so_mutex);
 
   glist_add_tail(&powner->so_owner.so_nlm_owner.so_nlm_shares, &nlm_share->sns_share_per_owner);
 
-  inc_state_owner_ref_locked(powner);
-  /* implicit V(powner->so_mutex); */
+  V(powner->so_mutex);
 
   /* Add share to list for NSM Client */
   inc_nsm_client_ref(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client);
@@ -802,8 +803,9 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
           glist_del(&nlm_share->sns_share_per_owner);
 
-          dec_state_owner_ref_locked(powner);
-          /* implicit V(powner->so_mutex); */
+          V(powner->so_mutex);
+
+          dec_state_owner_ref(powner);
 
           /* Free the NLM Share and exit */
           gsh_free(nlm_share);
@@ -953,8 +955,9 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
 
       glist_del(&nlm_share->sns_share_per_owner);
 
-      dec_state_owner_ref_locked(powner);
-      /* implicit V(powner->so_mutex); */
+      V(powner->so_mutex);
+
+      dec_state_owner_ref(powner);
 
       /* Free the NLM Share (and continue to look for more) */
       gsh_free(nlm_share);

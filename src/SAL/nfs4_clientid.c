@@ -172,11 +172,11 @@ void dec_client_id_ref(nfs_client_id_t *pclientid)
   /* We don't need a lock to look at cid_confirmed because when refcount has
    * gone to 0, no other threads can have a pointer to the clientid record.
    */
-  if(pclientid->cid_confirmed != EXPIRED_CLIENT_ID)
+  if(pclientid->cid_confirmed == EXPIRED_CLIENT_ID)
     {
       /* Is not in any hash table, so we can just delete it */
       LogFullDebug(COMPONENT_CLIENTID,
-                   "Free Clientid {%s} refcount now=0",
+                   "Free Clientid refcount now=0 {%s}",
                    str);
 
       free_client_id(pclientid);
@@ -583,13 +583,13 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
   hash_buffer_t          old_value;
   hash_table_t         * ht_expire;
   nfs_client_record_t  * precord;
+  char                   str[HASHTABLE_DISPLAY_STRLEN];
 
   P(pclientid->cid_mutex);
   if (pclientid->cid_confirmed == EXPIRED_CLIENT_ID)
     {
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
           display_client_id_rec(pclientid, str);
           LogFullDebug(COMPONENT_CLIENTID,
                        "Expired (skipped) {%s}", str);
@@ -601,7 +601,6 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
 
   if(isDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
       display_client_id_rec(pclientid, str);
       LogDebug(COMPONENT_CLIENTID,
                "Expiring {%s}", str);
@@ -687,17 +686,26 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
       state_owner_t * plock_owner = glist_entry(glist,
                                           state_owner_t,
 					  so_owner.so_nfs4_owner.so_perclient);
+
+      inc_state_owner_ref(plock_owner);
+
       release_lockstate(plock_owner);
 
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char owner[HASHTABLE_DISPLAY_STRLEN];
+          int32_t refcount = atomic_fetch_int32_t(&plock_owner->so_refcount);
 
-          DisplayOwner(plock_owner, owner);
-          LogFullDebug(COMPONENT_CLIENTID,
-                       "Expired lock state for {%s}",
-                       owner);
+          DisplayOwner(plock_owner, str);
+
+          if(refcount > 1)
+            LogWarn(COMPONENT_CLIENTID,
+                     "Expired State, Possibly extra references to {%s}", str);
+          else
+            LogFullDebug(COMPONENT_CLIENTID,
+                         "Expired State for {%s}", str);
         }
+
+      dec_state_owner_ref(plock_owner);
     }
 
   /* release the corresponding open states , close files*/
@@ -706,17 +714,26 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
       state_owner_t * popen_owner = glist_entry(glist,
                                           state_owner_t,
 					  so_owner.so_nfs4_owner.so_perclient);
+
+      inc_state_owner_ref(popen_owner);
+
       release_openstate(popen_owner);
 
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char owner[HASHTABLE_DISPLAY_STRLEN];
+          int32_t refcount = atomic_fetch_int32_t(&popen_owner->so_refcount);
 
-          DisplayOwner(popen_owner, owner);
-          LogFullDebug(COMPONENT_CLIENTID,
-                       "Expired open state for {%s}",
-                       owner);
+          DisplayOwner(popen_owner, str);
+
+          if(refcount > 1)
+            LogWarn(COMPONENT_CLIENTID,
+                     "Expired State, Possibly extra references to {%s}", str);
+          else
+            LogFullDebug(COMPONENT_CLIENTID,
+                         "Expired State for {%s}", str);
         }
+
+      dec_state_owner_ref(popen_owner);
     }
 
   if (pclientid->cid_recov_dir != NULL)
@@ -728,7 +745,6 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
       display_client_id_rec(pclientid, str);
       LogFullDebug(COMPONENT_CLIENTID,
                    "Expired (done) {%s}", str);
@@ -736,7 +752,6 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
 
   if(isDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
       display_client_id_rec(pclientid, str);
       LogDebug(COMPONENT_CLIENTID,
                "About to release last reference to {%s}", str);
@@ -1001,8 +1016,8 @@ void dec_client_record_ref(nfs_client_record_t *precord)
   if(refcount > 0)
     {
       LogFullDebug(COMPONENT_CLIENTID,
-                   "Decrement refcount {%s} refcount now=%"PRId32,
-                   str, refcount);
+                   "Decrement refcount refcount now=%"PRId32" {%s}",
+                   refcount, str);
 
       return;
     }
@@ -1026,9 +1041,13 @@ void dec_client_record_ref(nfs_client_record_t *precord)
       if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
         HashTable_ReleaseLatched(ht_client_record, &latch);
 
-      LogDebug(COMPONENT_CLIENTID,
-               "Error %s, could not find {%s}",
-               hash_table_err_to_str(rc), str);
+      display_client_record(precord, str);
+
+      LogCrit(COMPONENT_CLIENTID,
+              "Error %s, could not find {%s}",
+              hash_table_err_to_str(rc), str);
+
+      return;
     }
 
   refcount = atomic_fetch_int32_t(&precord->cr_refcount);
@@ -1036,8 +1055,8 @@ void dec_client_record_ref(nfs_client_record_t *precord)
   if(refcount > 0)
     {
       LogDebug(COMPONENT_CLIENTID,
-               "Did not release {%s} refcount now=%"PRId32,
-               str, refcount);
+               "Did not release refcount now=%"PRId32" {%s}",
+               refcount, str);
 
       HashTable_ReleaseLatched(ht_client_record, &latch);
 
@@ -1056,9 +1075,13 @@ void dec_client_record_ref(nfs_client_record_t *precord)
       if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
         HashTable_ReleaseLatched(ht_client_record, &latch);
 
-      LogDebug(COMPONENT_CLIENTID,
-               "Error %s, could not remove {%s}",
-               hash_table_err_to_str(rc), str);
+      display_client_record(precord, str);
+
+      LogCrit(COMPONENT_CLIENTID,
+              "Error %s, could not remove {%s}",
+              hash_table_err_to_str(rc), str);
+
+      return;
     }
 
   LogFullDebug(COMPONENT_CLIENTID,

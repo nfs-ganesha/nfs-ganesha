@@ -127,6 +127,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   V(popen_owner->so_mutex);
 
+  inc_state_owner_ref(popen_owner);
+
   pthread_rwlock_wrlock(&data->current_entry->state_lock);
   /* Check is held locks remain */
   glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)
@@ -145,6 +147,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
           /* Save the response in the open owner */
           Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
+
+          dec_state_owner_ref(popen_owner);
 
           return res_CLOSE4.status;
         }
@@ -213,6 +217,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* Save the response in the open owner */
       Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
 
+      dec_state_owner_ref(popen_owner);
+
       return res_CLOSE4.status;
     }
 
@@ -224,6 +230,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       nfs_State_PrintAll();
       nfs4_owner_PrintAll();
     }
+
+  dec_state_owner_ref(popen_owner);
 
   return NFS4_OK;
 }                               /* nfs4_op_close */

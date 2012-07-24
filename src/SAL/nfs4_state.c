@@ -233,6 +233,8 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
   /* Add state to list for cache entry */
   glist_add_tail(&pentry->state_list, &pnew_state->state_list);
 
+  inc_state_owner_ref(powner_input);
+
   P(powner_input->so_mutex);
   glist_add_tail(&powner_input->so_owner.so_nfs4_owner.so_state_list,
                  &pnew_state->state_owner_list);
@@ -428,9 +430,6 @@ void release_lockstate(state_owner_t * plock_owner)
       cache_inode_lru_unref(pstate_found->state_pentry,
                             0);
     }
-
-  /* Release the reference to the lock owner that keeps it in the hash table */
-  dec_state_owner_ref(plock_owner);
 }
 
 /**
@@ -513,7 +512,4 @@ void release_openstate(state_owner_t * popen_owner)
       cache_inode_lru_unref(pentry,
                             0);
     }
-
-  /* Release the reference to the open owner that keeps it in the hash table */
-  dec_state_owner_ref(popen_owner);
 }

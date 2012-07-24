@@ -134,6 +134,8 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   plock_owner = pstate_found->state_powner;
 
+  inc_state_owner_ref(plock_owner);
+
   /* Check seqid (lock_seqid or open_seqid) */
   if(!Check_nfs4_seqid(plock_owner,
                        arg_LOCKU4.seqid,
@@ -143,6 +145,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                        tag))
     {
       /* Response is all setup for us and LogDebug told what was wrong */
+      dec_state_owner_ref(plock_owner);
       return res_LOCKU4.status;
     }
 
@@ -151,10 +154,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       res_LOCKU4.status = NFS4ERR_INVAL;
 
-      /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
-
-      return res_LOCKU4.status;
+      goto out;
     }
 
   /* Check for range overflow
@@ -163,10 +163,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       res_LOCKU4.status = NFS4ERR_INVAL;
 
-      /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
-
-      return res_LOCKU4.status;
+      goto out;
     }
 
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
@@ -189,10 +186,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       res_LOCKU4.status = nfs4_Errno_state(state_status);
 
-      /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
-
-      return res_LOCKU4.status;
+      goto out;
     }
 
   /* Successful exit */
@@ -204,8 +198,12 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                  data,
                  tag);
 
+ out:
+
   /* Save the response in the lock owner */
   Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
+
+  dec_state_owner_ref(plock_owner);
 
   return res_LOCKU4.status;
 
