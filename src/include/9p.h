@@ -272,7 +272,7 @@ struct _9p_str {
  * @version: 16-bit monotonically incrementing version number
  * @path: 64-bit per-server-unique ID for a file system element
  *
- * qids are identifiers used by 9P servers to track file system
+ * qids are /identifiers used by 9P servers to track file system
  * entities.  The type is used to differentiate semantics for operations
  * on the entity (ie. read means something different on a directory than
  * on a file).  The path provides a server unique index for an entity
@@ -524,10 +524,7 @@ void* _9p_rdma_handle_trans(void *arg) ;
 void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg) ;
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) ;
 void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) ;
-
-void _9p_rdma_do_recv(msk_trans_t *trans, struct _9p_datamr *_9p_datamr ) ;
 void _9p_rdma_callback_recv_wkr(msk_trans_t *trans, void *arg) ;
-
 
 #endif
 

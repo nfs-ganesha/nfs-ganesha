@@ -78,19 +78,31 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
   switch( preq->rtype )
    {
 	case _9P_REQUEST:
-	  LogDebug(COMPONENT_DISPATCH,
-        	   "Awaking Worker Thread #%u for 9P/TCP request %p, tcpsock=%lu",
-           	worker_index, preq, preq->r_u._9p.pconn->trans_data.sockfd);
-	  break ;
+          switch( preq->r_u._9p.pconn->trans_type )
+           {
+	      case _9P_TCP:
+	        LogDebug(COMPONENT_DISPATCH,
+        	         "Awaking Worker Thread #%u for 9P/TCP request %p, tcpsock=%lu",
+           	         worker_index, preq, preq->r_u._9p.pconn->trans_data.sockfd);
+		break ;
 
-	case _9P_RDMA:
-	  LogDebug(COMPONENT_DISPATCH,
-		   "Awaking Worker Thread #%u for 9P/RDMA request", worker_index ) ;
-          break ;
+              case _9P_RDMA:
+	        LogDebug(COMPONENT_DISPATCH,
+        	         "Awaking Worker Thread #%u for 9P/RDMA",
+           	         worker_index );
+	        break ;
+                 
+              default:
+		LogCrit( COMPONENT_DISPATCH, "/!\\ Implementation error, bad 9P transport type" ) ;
+		return ;
+		break ;
+           }
+	  break ;
 
 	default:
 	  LogCrit( COMPONENT_DISPATCH,
 		   "/!\\ Implementation error, 9P Dispatch function is called for non-9P request !!!!");
+	  return ;
 	  break ;
    }
   P(workers_data[worker_index].wcb.tcb_mutex);

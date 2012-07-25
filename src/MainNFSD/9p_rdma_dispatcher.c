@@ -93,7 +93,6 @@ void * _9p_rdma_thread( void * Arg )
   msk_trans_t   * trans   = Arg  ;
   uint8_t       * rdmabuf = NULL ;
   struct ibv_mr * mr      = NULL ;
-  msk_data_t    * wdata   = NULL ;
   msk_data_t    * ackdata = NULL ;
   msk_data_t   ** rdata   = NULL ;
   struct _9p_datamr * datamr  = NULL ;
