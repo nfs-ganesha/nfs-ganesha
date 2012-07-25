@@ -695,6 +695,7 @@ gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 	if ((code = krb5_kt_get_name(context, kt, kt_name, BUFSIZ))) {
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s attempting to get keytab name\n", k5err);
+		free(k5err);
 		retval = code;
 		goto out;
 	}
@@ -702,6 +703,7 @@ gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s while beginning keytab scan "
 			    "for keytab '%s'\n", k5err, kt_name);
+		free(k5err);
 		retval = code;
 		goto out;
 	}
@@ -714,6 +716,7 @@ gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 				 "we failed to unparse principal name: %s\n",
 				 k5err);
 			k5_free_kt_entry(context, kte);
+			free(k5err);
 			continue;
 		}
 		printerr(4, "Processing keytab entry for principal '%s'\n",
@@ -753,11 +756,11 @@ gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "WARNING: %s while ending keytab scan for "
 			    "keytab '%s'\n", k5err, kt_name);
+		free(k5err);
 	}
 
 	retval = 0;
   out:
-	free(k5err);
 	return retval;
 }
 
@@ -793,6 +796,7 @@ find_keytab_entry(krb5_context context, krb5_keytab kt, const char *hostname,
 	if (retval) {
 		k5err = gssd_k5_err_msg(context, retval);
 		printerr(1, "%s while getting local hostname\n", k5err);
+		free(k5err);
 		goto out;
 	}
 
@@ -812,6 +816,7 @@ find_keytab_entry(krb5_context context, krb5_keytab kt, const char *hostname,
 		retval = code;
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(1, "%s while getting default realm name\n", k5err);
+		free(k5err);
 		goto out;
 	}
 
@@ -826,6 +831,7 @@ find_keytab_entry(krb5_context context, krb5_keytab kt, const char *hostname,
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s while getting realm(s) for host '%s'\n",
 			 k5err, targethostname);
+		free(k5err);
 		retval = code;
 		goto out;
 	}
@@ -1157,6 +1163,7 @@ gssd_destroy_krb5_machine_creds(void)
 	if (code) {
 		k5err = gssd_k5_err_msg(NULL, code);
 		printerr(0, "ERROR: %s while initializing krb5\n", k5err);
+		free(k5err);
 		goto out;
 	}
 
@@ -1168,6 +1175,7 @@ gssd_destroy_krb5_machine_creds(void)
 			printerr(0, "WARNING: %s while resolving credential "
 				    "cache '%s' for destruction\n", k5err,
 				    ple->ccname);
+			free(k5err);
 			continue;
 		}
 
@@ -1175,10 +1183,10 @@ gssd_destroy_krb5_machine_creds(void)
 			k5err = gssd_k5_err_msg(context, code);
 			printerr(0, "WARNING: %s while destroying credential "
 				    "cache '%s'\n", k5err, ple->ccname);
+			free(k5err);
 		}
 	}
   out:
-	free(k5err);
 	krb5_free_context(context);
 }
 
@@ -1222,6 +1230,7 @@ gssd_refresh_krb5_machine_credential(char *hostname,
 		k5err = gssd_k5_err_msg(context, code);
 		printerr(0, "ERROR: %s: %s while resolving keytab '%s'\n",
 			 __func__, k5err, keytabfile);
+                free(k5err);
 		goto out;
 	}
 
