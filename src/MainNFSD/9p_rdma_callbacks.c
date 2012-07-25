@@ -79,10 +79,15 @@ void _9p_rdma_callback_disconnect(msk_trans_t *trans) {
 	pthread_mutex_unlock(_9p_datamr->lock);
 }
 
-void _9p_rdma_do_recv(msk_trans_t *trans, struct _9p_datamr *_9p_datamr )
+void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) 
 {
-  msk_data_t *pdata = _9p_datamr->data;
+  msk_data_t *pdata = preq9p->pconn->trans_data.rdma_ep.datamr->data ;
+  _9p_datamr_t * datamr =  preq9p->pconn->trans_data.rdma_ep.datamr ;
+  msk_trans_t * trans =  preq9p->pconn->trans_data.rdma_ep.trans ;
   uint32_t * p_9pmsglen = NULL ;
+  char replydata[_9P_MSG_SIZE] ; // unclean, use RDMA buffer instead
+  u32 outdatalen = 0 ;
+  int rc = 0 ; 
 
   if (pdata->size != 1 || pdata->data[0] != '\0')
    {
@@ -92,58 +97,37 @@ void _9p_rdma_do_recv(msk_trans_t *trans, struct _9p_datamr *_9p_datamr )
 	  LogMajor( COMPONENT_9P, "Malformed 9P/RDMA packet, bad header size" ) ;
       else
         {
-	  // Nothing
 	  p_9pmsglen = (uint32_t *)pdata->data ;
 
+          outdatalen = _9P_MSG_SIZE  -  _9P_HDR_SIZE ;
           LogFullDebug( COMPONENT_9P,
                         "Received 9P/RDMA message of size %u",
                          *p_9pmsglen ) ;
 
+          // Really unclean, but I want to see if other stuff works properly
+          memcpy( &preq9p->_9pmsg, pdata->data, pdata->size ) ;
+
+          if ( ( rc = _9p_process_buffer( preq9p, pworker_data, replydata, &outdatalen ) ) != 1 )
+             LogMajor( COMPONENT_9P, "Could not process 9P buffer on socket #%lu", preq9p->pconn->trans_data.sockfd ) ;
+
+          // Really unclean, but I want to see if other stuff works properly
+          memcpy( pdata->data, replydata, outdatalen ) ;
+          pdata->size = outdatalen ;
+         
+          msk_post_send( trans, pdata, 1, datamr->mr, _9p_rdma_callback_send, NULL ) ;
         }
 
       /* Mark the buffer ready for later recv */
-      msk_post_recv(trans, pdata, 1, _9p_datamr->mr, _9p_rdma_callback_recv, _9p_datamr);
+      msk_post_recv(trans, pdata, 1, datamr->mr, _9p_rdma_callback_recv, datamr);
    } 
   else
    {
-      msk_post_recv(trans, pdata, 1, _9p_datamr->mr, _9p_rdma_callback_recv, _9p_datamr);
+      msk_post_recv(trans, pdata, 1, datamr->mr, _9p_rdma_callback_recv, datamr);
 
-      pthread_mutex_lock(_9p_datamr->lock);
-      pthread_cond_signal(_9p_datamr->cond);
-      pthread_mutex_unlock(_9p_datamr->lock);
+      pthread_mutex_lock(datamr->lock);
+      pthread_cond_signal(datamr->cond);
+      pthread_mutex_unlock(datamr->lock);
    }
-}
-
-/* to be erased */
-void _9p_rdma_do_recv_rcat(msk_trans_t *trans, struct _9p_datamr *_9p_datamr )
-{
-        msk_data_t *pdata = _9p_datamr->data;
-
-        if (pdata->size != 1 || pdata->data[0] != '\0') {
-                fprintf( stdout, "Received %u bytes:", pdata->size ) ;
-                fflush(stdout);
-                //write(1, (char *)pdata->data, pdata->size);
-                //fflush(stdout);
-
-                msk_post_recv(trans, pdata, 1, _9p_datamr->mr, _9p_rdma_callback_recv, _9p_datamr);
-                msk_post_send(trans, _9p_datamr->ackdata, 1, _9p_datamr->mr, NULL, NULL);
-        } else {
-                msk_post_recv(trans, pdata, 1, _9p_datamr->mr, _9p_rdma_callback_recv, _9p_datamr);
-
-                pthread_mutex_lock(_9p_datamr->lock);
-                pthread_cond_signal(_9p_datamr->cond);
-                pthread_mutex_unlock(_9p_datamr->lock);
-        }
-}
-
-void _9p_rdma_callback_recv_old(msk_trans_t *trans, void *arg) {
-   struct _9p_datamr *_9p_datamr = arg;
-  if (!_9p_datamr)
-    {
-	LogEvent( COMPONENT_9P, "no callback_arg in _9p_rdma_callback_recv");
-	return;
-    }
-  _9p_rdma_do_recv( trans, _9p_datamr ) ;
 }
 
 void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg) 
