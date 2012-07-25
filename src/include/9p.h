@@ -77,7 +77,8 @@ typedef uint64_t u64;
 #define _9P_BLK_SIZE 4096
 #define _9P_IOUNIT   0
 
-#define _9P_RDMA_CHUNK_SIZE 8*1024
+//#define _9P_RDMA_CHUNK_SIZE 8*1024
+#define _9P_RDMA_CHUNK_SIZE 65*1024
 #define _9P_RDMA_RECV_NUM 1
 #define _9P_RDMA_BACKLOG 10 
 
@@ -315,10 +316,30 @@ typedef struct _9p_fid__
     } specdata ;
 } _9p_fid_t ;
 
+typedef enum _9p_trans_type__
+{
+  _9P_TCP,
+  _9P_RDMA
+} _9p_trans_type_t ;
+
+#ifdef _USE_9P_RDMA
+typedef struct _9p_rdma_ep__
+{
+  _9p_datamr_t * datamr ;
+  msk_trans_t  * trans ;
+} _9p_rdma_ep_t ;
+#endif
 
 typedef struct _9p_conn__
 {
-  long int        sockfd ;
+  union  trans_data
+   {
+     long int        sockfd ;
+#ifdef _USE_9P_RDMA
+      _9p_rdma_ep_t  rdma_ep ;
+#endif 
+   } trans_data ;
+  _9p_trans_type_t trans_type ;
   struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
   _9p_fid_t       fids[_9P_FID_PER_CONN] ;
 } _9p_conn_t ;
@@ -329,21 +350,6 @@ typedef struct _9p_request_data__
   _9p_conn_t  *  pconn ;
 } _9p_request_data_t ;
 
-#ifdef _USE_9P_RDMA
-typedef struct _9p_rdma_conn__
-{
-  _9p_datamr_t *  datamr ;
-  msk_trans_t     * trans ;
-  struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
-  _9p_fid_t       fids[_9P_FID_PER_CONN] ;
-} _9p_rdma_conn_t ;
-
-typedef struct _9p_rdma_request_data__
-{
-  char         _9pmsg[_9P_MSG_SIZE] ;
-  _9p_rdma_conn_t rdma_conn ;
-} _9p_rdma_request_data_t ;
-#endif
 
 typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
                                void * pworker_data,
