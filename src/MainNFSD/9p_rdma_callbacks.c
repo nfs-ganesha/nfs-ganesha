@@ -81,13 +81,49 @@ void _9p_rdma_callback_disconnect(msk_trans_t *trans) {
 
 void _9p_rdma_do_recv(msk_trans_t *trans, struct _9p_datamr *_9p_datamr )
 {
+  msk_data_t *pdata = _9p_datamr->data;
+  uint32_t * p_9pmsglen = NULL ;
+
+  if (pdata->size != 1 || pdata->data[0] != '\0')
+   {
+      printf( "Received %u bytes:\n", pdata->size ) ;
+
+      if( pdata->size < _9P_HDR_SIZE )
+	  LogMajor( COMPONENT_9P, "Malformed 9P/RDMA packet, bad header size" ) ;
+      else
+        {
+	  // Nothing
+	  p_9pmsglen = (uint32_t *)pdata->data ;
+
+          LogFullDebug( COMPONENT_9P,
+                        "Received 9P/RDMA message of size %u",
+                         *p_9pmsglen ) ;
+
+        }
+
+      /* Mark the buffer ready for later recv */
+      msk_post_recv(trans, pdata, 1, _9p_datamr->mr, _9p_rdma_callback_recv, _9p_datamr);
+   } 
+  else
+   {
+      msk_post_recv(trans, pdata, 1, _9p_datamr->mr, _9p_rdma_callback_recv, _9p_datamr);
+
+      pthread_mutex_lock(_9p_datamr->lock);
+      pthread_cond_signal(_9p_datamr->cond);
+      pthread_mutex_unlock(_9p_datamr->lock);
+   }
+}
+
+/* to be erased */
+void _9p_rdma_do_recv_rcat(msk_trans_t *trans, struct _9p_datamr *_9p_datamr )
+{
         msk_data_t *pdata = _9p_datamr->data;
 
         if (pdata->size != 1 || pdata->data[0] != '\0') {
                 fprintf( stdout, "Received %u bytes:", pdata->size ) ;
                 fflush(stdout);
-                write(1, (char *)pdata->data, pdata->size);
-                fflush(stdout);
+                //write(1, (char *)pdata->data, pdata->size);
+                //fflush(stdout);
 
                 msk_post_recv(trans, pdata, 1, _9p_datamr->mr, _9p_rdma_callback_recv, _9p_datamr);
                 msk_post_send(trans, _9p_datamr->ackdata, 1, _9p_datamr->mr, NULL, NULL);
@@ -115,6 +151,7 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg)
   struct _9p_datamr *_9p_datamr = arg;
   unsigned int worker_index;
   request_data_t *preq = NULL;
+  _9p_conn_t _9p_conn ;
 
 
  if (!_9p_datamr) 
@@ -133,9 +170,12 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg)
 
   V(workers_data[worker_index].request_pool_mutex);
 
-   preq->rtype = _9P_RDMA ;
-   preq->r_u._9p_rdma.rdma_conn.datamr = _9p_datamr ;
-   preq->r_u._9p_rdma.rdma_conn.trans = trans ;
+   preq->rtype = _9P_REQUEST ;
+   preq->r_u._9p.pconn = &_9p_conn ;  // Pas bon... A passer en arg et a initier dans le thread d'avant
+
+   _9p_conn.trans_type = _9P_RDMA ;
+   _9p_conn.trans_data.rdma_ep.datamr = _9p_datamr ;
+   _9p_conn.trans_data.rdma_ep.trans = trans ;
  
    DispatchWork9P( preq, worker_index ) ;
   //_9p_rdma_do_recv( trans, _9p_datamr ) ;
