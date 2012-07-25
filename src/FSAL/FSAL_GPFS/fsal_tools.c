@@ -401,8 +401,10 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
   char *key_name;
   char *key_value;
   config_item_t block;
+#if 0
   gpfsfs_specific_initinfo_t *initinfo
 	  = (gpfsfs_specific_initinfo_t *) &out_parameter->fs_specific_info;
+#endif
 
   block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
 
@@ -439,38 +441,23 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
           ReturnCode(ERR_FSAL_SERVERFAULT, err);
         }
       /* does the variable exists ? */
-      if(!STRCMP(key_name, "OpenByHandleDeviceFile"))
+#if 0
+      if(!STRCMP(key_name, "Dummy"))
         {
-          strncpy(initinfo->open_by_handle_dev_file, key_value,
-                  MAXPATHLEN);
+          do something....
         }
-      else if(!STRCMP(key_name, "Use_Kernel_Module_Interface"))
+      else if(!STRCMP(key_name, "Dummy2"))
         {
-          int bool = StrToBoolean(key_value);
-          if (bool == -1)
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
-                      key_name);
-              ReturnCode(ERR_FSAL_INVAL, 0);
-            }
-          initinfo->use_kernel_module_interface = bool;
+          do something different...
         }
       else
+#endif
         {
           LogCrit(COMPONENT_CONFIG,
                   "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_FS_SPECIFIC);
           ReturnCode(ERR_FSAL_INVAL, 0);
         }
-    }
-
-  if(initinfo->use_kernel_module_interface && initinfo->open_by_handle_dev_file[0] == '\0')
-    {
-      LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",
-              CONF_LABEL_FS_SPECIFIC);
-      ReturnCode(ERR_FSAL_NOENT, 0);
     }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
