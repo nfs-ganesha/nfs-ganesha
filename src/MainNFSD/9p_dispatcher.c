@@ -75,10 +75,24 @@
 
 void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
 {
-  LogDebug(COMPONENT_DISPATCH,
-           "Awaking Worker Thread #%u for 9P request %p, tcpsock=%lu",
-           worker_index, preq, preq->r_u._9p.pconn->sockfd);
+  switch( preq->rtype )
+   {
+	case _9P_REQUEST:
+	  LogDebug(COMPONENT_DISPATCH,
+        	   "Awaking Worker Thread #%u for 9P/TCP request %p, tcpsock=%lu",
+           	worker_index, preq, preq->r_u._9p.pconn->trans_data.sockfd);
+	  break ;
 
+	case _9P_RDMA:
+	  LogDebug(COMPONENT_DISPATCH,
+		   "Awaking Worker Thread #%u for 9P/RDMA request", worker_index ) ;
+          break ;
+
+	default:
+	  LogCrit( COMPONENT_DISPATCH,
+		   "/!\\ Implementation error, 9P Dispatch function is called for non-9P request !!!!");
+	  break ;
+   }
   P(workers_data[worker_index].wcb.tcb_mutex);
   P(workers_data[worker_index].request_pool_mutex);
 
@@ -136,7 +150,8 @@ void * _9p_socket_thread( void * Arg )
   SetNameFunction(my_name);
 
   /* Init the _9p_conn_t structure */
-  _9p_conn.sockfd = tcp_sock ;
+  _9p_conn.trans_type = _9P_TCP ;
+  _9p_conn.trans_data.sockfd = tcp_sock ;
 
   if( gettimeofday( &_9p_conn.birth, NULL ) == -1 )
    LogFatal( COMPONENT_9P, "Can get connection's time of birth" ) ;
@@ -218,13 +233,13 @@ void * _9p_socket_thread( void * Arg )
            p_9pmsglen = (uint32_t *)_9pmsg ;
 
             LogFullDebug( COMPONENT_9P,
-                          "Received message of size %u from client %s on socket %lu",
+                          "Received 9P/TCP message of size %u from client %s on socket %lu",
                           *p_9pmsglen, strcaller, tcp_sock ) ;
 
             if( *p_9pmsglen < _9P_HDR_SIZE ) 
               {
 		LogEvent( COMPONENT_9P, 
-			  "Badly formed 9P message: Header is too small for client %s on socket %lu: readlen=%u expected=%u", 
+			  "Badly formed 9P/TCP message: Header is too small for client %s on socket %lu: readlen=%u expected=%u", 
                           strcaller, tcp_sock, readlen, *p_9pmsglen - _9P_HDR_SIZE ) ;
 
                 /* Release the entry */

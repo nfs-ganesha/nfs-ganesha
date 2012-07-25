@@ -87,7 +87,8 @@
  * 
  */
 
-void * _9p_rdma_handle_trans_thread( void * Arg )
+/* Equivalent du _9p_socket_thread( */
+void * _9p_rdma_thread( void * Arg )
 {
   msk_trans_t   * trans   = Arg  ;
   uint8_t       * rdmabuf = NULL ;
@@ -256,10 +257,10 @@ void * _9p_rdma_dispatcher_thread( void * Arg )
         LogMajor( COMPONENT_9P, "9P/RDMA : dispatcher failed to accept a new client" ) ;
       else
        {
-         if( !pthread_create( &thrid_handle_trans, 
-                              &attr_thr, 
-                              _9p_rdma_handle_trans_thread, 
-                              child_trans ) )
+         if( pthread_create( &thrid_handle_trans, 
+                             &attr_thr, 
+                             _9p_rdma_thread, 
+                             child_trans ) )
            LogMajor( COMPONENT_9P, "9P/RDMA : dispatcher accepted a new client but could not spawn a related thread" ) ;
          else
 	   LogEvent( COMPONENT_9P, "9P/RDMA: thread #%u spawned to managed new child_trans", 
