@@ -218,7 +218,6 @@ typedef struct nfs_core_param__ {
 	unsigned int program[P_COUNT];
 	unsigned int nb_worker;
 	unsigned int nb_call_before_queue_avg;
-	unsigned int nb_max_concurrent_gc;
 	long core_dump_size;
 	int nb_max_fd;
 	unsigned int drop_io_errors;
@@ -252,7 +251,6 @@ typedef struct nfs_core_param__ {
 	int decoder_fridge_expiration_delay;
 	char stats_file_path[MAXPATHLEN];
 	char stats_per_client_directory[MAXPATHLEN];
-	char fsal_shared_library[MAXPATHLEN];
 	unsigned int core_options;
 	unsigned int max_send_buffer_size; /*< Size of RPC send buffer */
 	unsigned int max_recv_buffer_size; /*< Size of RPC recv buffer */
@@ -617,7 +615,6 @@ void nfs_Init_svc(void);
 void nfs_Init_admin_data(void);
 int nfs_Init_worker_data(nfs_worker_data_t *pdata);
 int nfs_Init_request_data(nfs_request_data_t *pdata);
-int nfs_Init_gc_counter(void);
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
 
 /* Config parsing routines */

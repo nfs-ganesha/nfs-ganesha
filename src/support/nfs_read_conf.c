@@ -196,10 +196,6 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->nb_call_before_queue_avg = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Nb_MaxConcurrentGC"))
-        {
-          pparam->nb_max_concurrent_gc = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "DRC_Disabled"))
         {
             pparam->drc.disabled = StrToBoolean(key_value);
@@ -417,10 +413,6 @@ int nfs_read_core_conf(config_file_t in_config,
       else if(!strcasecmp(key_name, "Stats_Per_Client_Directory"))
         {
           strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
-        }
-      else if(!strcasecmp(key_name, "FSAL_Shared_Library"))
-        {
-          strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
         }
       else if(!strcasecmp( key_name, "MaxRPCSendBufferSize" ) )
         {
