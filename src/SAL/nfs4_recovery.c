@@ -224,7 +224,7 @@ nfs4_add_clid(nfs_client_id_t *clientid)
         char path[PATH_MAX + 1];
 
         if (clientid->cid_recov_dir == NULL) {
-                LogDebug(COMPONENT_CLIENTID,
+                LogEvent(COMPONENT_CLIENTID,
                     "Failed to create client in recovery dir, no name");
                 return;
         }

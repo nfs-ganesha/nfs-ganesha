@@ -241,8 +241,8 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
       return STATE_BAD_COOKIE;
 
     case ERR_FSAL_NOT_OPENED:
-      LogDebug(COMPONENT_STATE,
-               "Conversion of ERR_FSAL_NOT_OPENED to STATE_FSAL_ERROR");
+      LogCrit(COMPONENT_STATE,
+              "Conversion of ERR_FSAL_NOT_OPENED to STATE_FSAL_ERROR");
       return STATE_FSAL_ERROR;
 
     case ERR_FSAL_SYMLINK:
@@ -606,9 +606,9 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
     case STATE_GRACE_PERIOD:
     case STATE_SIGNAL_ERROR:
         /* Should not occur */
-        LogDebug(COMPONENT_NFSPROTO,
-                 "Unexpected status for conversion = %s",
-                 state_err_str(error));
+        LogCrit(COMPONENT_NFSPROTO,
+                "Unexpected status for conversion = %s",
+                state_err_str(error));
       nfserror = NFS3ERR_INVAL;
       break;
     }
@@ -893,9 +893,9 @@ void dec_state_owner_ref(state_owner_t * owner)
 
       DisplayOwner(owner, str);
 
-      LogDebug(COMPONENT_STATE,
-               "Error %s, could not find {%s}",
-               hash_table_err_to_str(rc), str);
+      LogCrit(COMPONENT_STATE,
+              "Error %s, could not find {%s}",
+              hash_table_err_to_str(rc), str);
 
       return;
     }

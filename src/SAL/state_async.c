@@ -112,7 +112,7 @@ state_status_t state_async_schedule(state_async_queue_t *arg)
 
   if (rc != 0)
     {
-      LogMajor(COMPONENT_STATE,
+      LogCrit(COMPONENT_STATE,
 	       "Unable to schedule request: %d",
 	       rc);
     }

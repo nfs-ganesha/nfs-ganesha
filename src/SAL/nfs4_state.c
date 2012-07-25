@@ -151,8 +151,8 @@ state_status_t state_add_impl(cache_entry_t *entry,
 
   if(pnew_state == NULL)
     {
-      LogDebug(COMPONENT_STATE,
-               "Can't allocate a new file state from cache pool");
+      LogCrit(COMPONENT_STATE,
+              "Can't allocate a new file state from cache pool");
 
       /* stat */
       status = STATE_MALLOC_ERROR;
@@ -209,9 +209,11 @@ state_status_t state_add_impl(cache_entry_t *entry,
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
     {
-      LogDebug(COMPONENT_STATE,
-               "Can't create a new state id %s for the entry %p (F)",
-               debug_str, entry);
+      sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
+
+      LogCrit(COMPONENT_STATE,
+              "Can't create a new state id %s for the entry %p (F)",
+              debug_str, entry);
 
       pool_free(state_v4_pool, pnew_state);
 
@@ -325,7 +327,9 @@ state_status_t state_del_locked(state_t *state,
   /* Remove the entry from the HashTable */
   if(!nfs4_State_Del(state->stateid_other))
     {
-      LogDebug(COMPONENT_STATE, "Could not delete state %s", debug_str);
+      sprint_mem(debug_str, (char *)state->stateid_other, OTHERSIZE);
+
+      LogCrit(COMPONENT_STATE, "Could not delete state %s", debug_str);
 
       return STATE_STATE_ERROR;
     }

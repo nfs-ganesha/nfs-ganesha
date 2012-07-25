@@ -287,9 +287,9 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t *state)
                             &buffval,
                             HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
     {
-      LogDebug(COMPONENT_STATE,
-               "HashTable_Test_And_Set failed for key %p",
-               buffkey.addr);
+      LogCrit(COMPONENT_STATE,
+              "HashTable_Test_And_Set failed for key %p",
+              buffkey.addr);
       gsh_free(buffkey.addr);
       return 0;
     }
