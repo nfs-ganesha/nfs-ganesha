@@ -243,10 +243,6 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->nb_call_before_queue_avg = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Nb_MaxConcurrentGC"))
-        {
-          pparam->nb_max_concurrent_gc = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "DupReq_Expiration"))
         {
           pparam->expiration_dupreq = atoi(key_value);
@@ -424,10 +420,6 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
       else if(!strcasecmp(key_name, "Stats_Per_Client_Directory"))
         {
           strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
-        }
-      else if(!strcasecmp(key_name, "FSAL_Shared_Library"))
-        {
-          strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
         }
       else if(!strcasecmp( key_name, "MaxRPCSendBufferSize" ) )
         {

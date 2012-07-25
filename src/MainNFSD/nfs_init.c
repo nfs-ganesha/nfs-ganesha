@@ -234,7 +234,6 @@ void nfs_print_param_config()
   printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tNb_Worker = %u ; \n", nfs_param.core_param.nb_worker);
   printf("\tb_Call_Before_Queue_Avg = %u ; \n", nfs_param.core_param.nb_call_before_queue_avg);
-  printf("\tNb_MaxConcurrentGC = %u ; \n", nfs_param.core_param.nb_max_concurrent_gc);
   printf("\tDupReq_Expiration = %lu ; \n", nfs_param.core_param.expiration_dupreq);
   printf("\tCore_Dump_Size = %ld ; \n", nfs_param.core_param.core_dump_size);
   printf("\tNb_Max_Fd = %d ; \n", nfs_param.core_param.nb_max_fd);
@@ -280,7 +279,6 @@ void nfs_set_param_default()
   /* Core parameters */
   nfs_param.core_param.nb_worker = NB_WORKER_THREAD_DEFAULT;
   nfs_param.core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG;
-  nfs_param.core_param.nb_max_concurrent_gc = NB_MAX_CONCURRENT_GC;
   nfs_param.core_param.expiration_dupreq = DUPREQ_EXPIRATION;
   nfs_param.core_param.port[P_NFS] = NFS_PORT;
   nfs_param.core_param.port[P_MNT] = 0;
@@ -1673,11 +1671,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       Fatal();
     }
-  if(nfs_Init_gc_counter() != 0)
-    {
-      LogFatal(COMPONENT_INIT, "Error while initializing worker gc counter");
-    }
-  LogDebug(COMPONENT_INIT, "worker gc counter successfully initialized");
 
   LogDebug(COMPONENT_INIT, "Initializing workers data structure");
 

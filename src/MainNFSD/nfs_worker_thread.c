@@ -79,10 +79,6 @@ pool_t *request_data_pool;
 pool_t *dupreq_pool;
 pool_t *ip_stats_pool;
 
-/* These two variables keep state of the thread that gc at this time */
-unsigned int nb_current_gc_workers;
-pthread_mutex_t lock_nb_current_gc_workers;
-
 const nfs_function_desc_t invalid_funcdesc =
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
    "invalid_function", NOTHING_SPECIAL};
@@ -444,34 +440,6 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 #endif                          /* _USE_RQUOTA */
 
 extern const char *pause_state_str[];
-
-/**
- * nfs_Init_gc_counter: Init the worker's gc counters.
- *
- * This functions is used to init a mutex and a counter associated
- * with it, to keep track of the number of worker currently performing
- * the garbage collection.
- *
- * @param void No parameters
- *
- * @return 0 if successfull, -1 otherwise.
- *
- */
-
-int nfs_Init_gc_counter(void)
-{
-  pthread_mutexattr_t mutexattr;
-
-  if(pthread_mutexattr_init(&mutexattr) != 0)
-    return -1;
-
-  if(pthread_mutex_init(&lock_nb_current_gc_workers, &mutexattr) != 0)
-    return -1;
-
-  nb_current_gc_workers = 0;
-
-  return 0;                     /* Success */
-}                               /* nfs_Init_gc_counter */
 
 struct timeval time_diff(struct timeval time_from, struct timeval time_to)
 {
@@ -1985,7 +1953,6 @@ void *worker_thread(void *IndexArg)
 {
   request_data_t *nfsreq;
   int rc = 0;
-  unsigned int gc_allowed = FALSE;
   unsigned long worker_index = (unsigned long) IndexArg;
   nfs_worker_data_t *pmydata = &(workers_data[worker_index]);
   char thr_name[32];
@@ -2255,35 +2222,6 @@ void *worker_thread(void *IndexArg)
                      pmydata->passcounter,
                      nfs_param.worker_param.nb_before_gc);
       pmydata->passcounter += 1;
-
-      /* If needed, perform garbage collection on cache_inode layer */
-      P(lock_nb_current_gc_workers);
-      if(nb_current_gc_workers < nfs_param.core_param.nb_max_concurrent_gc)
-        {
-          nb_current_gc_workers += 1;
-          gc_allowed = TRUE;
-        }
-      else
-        gc_allowed = FALSE;
-      V(lock_nb_current_gc_workers);
-
-      P(pmydata->wcb.tcb_mutex);
-      if(gc_allowed == TRUE && pmydata->wcb.tcb_state == STATE_AWAKE)
-        {
-          pmydata->gc_in_progress = TRUE;
-          V(pmydata->wcb.tcb_mutex);
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "There are %d concurrent garbage collection",
-                       nb_current_gc_workers);
-
-          P(lock_nb_current_gc_workers);
-          nb_current_gc_workers -= 1;
-          V(lock_nb_current_gc_workers);
-
-          P(pmydata->wcb.tcb_mutex);
-          pmydata->gc_in_progress = FALSE;
-        }
-      V(pmydata->wcb.tcb_mutex);
 
     }                           /* while( 1 ) */
   tcb_remove(&pmydata->wcb);
