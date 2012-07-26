@@ -234,6 +234,12 @@ void * _9p_socket_thread( void * Arg )
         V(workers_data[worker_index].request_pool_mutex);
 
         /* Prepare to read the message */
+        if( ( preq->r_u._9p._9pmsg = gsh_malloc( _9P_MSG_SIZE ) ) == NULL )
+         {
+            LogCrit( COMPONENT_9P, "Could not allocate 9pmsg buffer for client %s on socket %lu", strcaller, tcp_sock ) ;
+            close( tcp_sock ) ;
+            return NULL ;
+         }
         preq->rtype = _9P_REQUEST ;
         _9pmsg = preq->r_u._9p._9pmsg ;
         preq->r_u._9p.pconn = &_9p_conn ;
@@ -300,6 +306,7 @@ void * _9p_socket_thread( void * Arg )
          {
            LogEvent( COMPONENT_9P, "Client %s on socket %lu has shut down", strcaller, tcp_sock ) ;
            close( tcp_sock );
+           gsh_free( _9pmsg ) ;
            return NULL ;
          }
       } /* if( fds[0].revents & (POLLIN|POLLRDNORM) ) */
