@@ -1389,7 +1389,6 @@ int gid2name(char *name, gid_t * pgid);
 int name2gid(char *name, gid_t * pgid);
 
 void free_utf8(utf8string * utf8str);
-int utf8dup(utf8string * newstr, utf8string * oldstr);
 int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
 

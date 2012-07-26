@@ -536,6 +536,92 @@ void nfs_SetFailedStatus(exportlist_t *pexport,
     }
 }
 
+/* goes in a more global header?
+ */
+
+#define likely(x)      __builtin_expect(!!(x), 1)
+#define unlikely(x)    __builtin_expect(!!(x), 0)
+
+/** path_filter
+ * scan the path we are given for bad filenames.
+ *
+ * scan control:
+ *    UTF8_SCAN_NOSLASH - detect and reject '/' in names
+ *    UTF8_NODOT - detect and reject "." and ".." as the name
+ *    UTF8_SCAN_CKUTF8 - detect invalid utf8 sequences
+ *
+ * NULL termination is required.  It also speeds up the scan
+ * UTF-8 scanner courtesy Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/>
+ * GPL licensed per licensing referenced in source.
+ *
+ */
+
+static nfsstat4 path_filter(const char *name,
+			    utf8_scantype_t scan)
+{
+	const unsigned char *np = (const unsigned char *)name;
+	nfsstat4 status = NFS4_OK;
+	unsigned int c, first;
+
+	first = 1;
+	c = *np++;
+	while (c) {
+		if (likely(c < 0x80)) { /* ascii */
+			if (unlikely(c == '/' && (scan & UTF8_SCAN_NOSLASH))) {
+				status = NFS4ERR_BADCHAR;
+				goto error;
+			}
+			if (unlikely(first && c == '.' && (scan & UTF8_SCAN_NODOT))) {
+				if (np[0] == '\0' || (np[0] == '.' && np[1] == '\0')) {
+					status = NFS4ERR_BADNAME;
+					goto error;
+				}
+			}
+		} else if(likely(scan & UTF8_SCAN_CKUTF8)) { /* UTF-8 range */
+			if ((c & 0xe0) == 0xc0) { /* 2 octet UTF-8 */
+				if ((*np & 0xc0) != 0x80 ||
+				    (c & 0xfe) == 0xc0) { /* overlong */
+					goto badutf8;
+				} else {
+					np++;
+				}
+			} else if ((c & 0xf0) == 0xe0) { /* 3 octet UTF-8 */
+				if ((*np & 0xc0) != 0x80 ||
+				    (np[1] & 0xc0) != 0x80 ||
+				    (c == 0xe0 && (*np & 0xe0) == 0x80) || /* overlong */
+				    (c == 0xed && (*np & 0xe0) == 0xa0) || /* surrogate */
+				    (c == 0xef && *np == 0xbf &&
+				     (np[1] & 0xfe) == 0xbe)) { /* U+fffe - u+ffff*/
+					goto badutf8;
+				} else {
+					np += 2;
+				}
+			} else if ((c & 0xf8) == 0xf0) { /* 4 octet UTF-8 */
+				if ((*np & 0xc0) != 0x80 ||
+				    (np[1] & 0xc0) != 0x80 ||
+				    (np[2] & 0xc0) != 0x80 ||
+				    (c == 0xf0 && (*np & 0xf0) == 0x80) || /* overlong */
+				    (c == 0xf4 && *np > 0x8f) ||
+				    c > 0xf4) { /* > u+10ffff */
+					goto badutf8;
+				} else {
+					np += 3;
+				}
+			} else {
+				goto badutf8;
+			}
+		}
+		c = *np++;
+		first = 0;
+	}
+	return NFS4_OK;
+
+badutf8:
+	status = NFS4ERR_INVAL;
+error:
+	return status;
+}
+
 #ifdef _USE_NFS4_ACL
 /* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
 static int nfs4_encode_acl_special_user(int who, char *attrvalsBuffer,
@@ -2073,25 +2159,29 @@ void free_utf8(utf8string * utf8str)
  * @return -1 if failed, 0 if successful.
  *
  */
-int utf8dup(utf8string * newstr, utf8string * oldstr)
+nfsstat4 utf8dup(utf8string * newstr,
+	    utf8string * oldstr,
+	    utf8_scantype_t scan)
 {
-  if(newstr == NULL)
-    return -1;
+  nfsstat4 status = NFS4_OK;
 
   newstr->utf8string_len = oldstr->utf8string_len;
   newstr->utf8string_val = NULL;
 
   if(oldstr->utf8string_len == 0 || oldstr->utf8string_val == NULL)
-    return 0;
+    return status;
 
-  newstr->utf8string_val = gsh_malloc(oldstr->utf8string_len);
+  newstr->utf8string_val = gsh_malloc(oldstr->utf8string_len + 1);
   if(newstr->utf8string_val == NULL)
-    return -1;
+    return NFS4ERR_SERVERFAULT;
 
   strncpy(newstr->utf8string_val, oldstr->utf8string_val, oldstr->utf8string_len);
+  newstr->utf8string_val[oldstr->utf8string_len] = '\0';  /* NULL term just in case */
+  if(scan != UTF8_SCAN_NONE)
+	  status = path_filter(newstr->utf8string_val, scan);
 
-  return 0;
-}                               /* uft82str */
+  return status;
+}
 
 /**
  *
@@ -4368,4 +4458,40 @@ nfs4_sanity_check_FH(compound_data_t *data,
 
         return NFS4_OK;
 } /* nfs4_sanity_check_FH */
+
+/* nfs4_utf8string2dynamic
+ * unpack the input string from the XDR into a null term'd string
+ * scan for bad chars
+ */
+
+nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
+				 utf8_scantype_t scan,
+				 char **obj_name)
+{
+	nfsstat4 status = NFS4_OK;
+
+	*obj_name = NULL;
+	if(input->utf8string_val == NULL ||
+	   input->utf8string_len == 0) {
+		return NFS4ERR_INVAL;
+	}
+	if(input->utf8string_len >  MAXNAMLEN) {
+		return NFS4ERR_NAMETOOLONG;
+	}
+        char *name = gsh_malloc(input->utf8string_len + 1);
+        if (name == NULL) {
+		return NFS4ERR_SERVERFAULT;
+        }
+	memcpy(name,
+	       input->utf8string_val,
+	       input->utf8string_len);
+	name[input->utf8string_len] = '\0';
+	if(scan != UTF8_SCAN_NONE)
+		status = path_filter(name, scan);
+	if(status == NFS4_OK)
+		*obj_name = name;
+	else
+		gsh_free(name);
+        return status;
+}
 

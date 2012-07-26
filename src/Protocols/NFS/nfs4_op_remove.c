@@ -92,6 +92,14 @@ int nfs4_op_remove(struct nfs_argop4 *op,
       goto out;
     }
 
+  /* Validate and convert the UFT8 target to a regular string */
+  res_REMOVE4.status = nfs4_utf8string2dynamic(&arg_REMOVE4.target,
+					       UTF8_SCAN_ALL,
+					       &name);
+  if (res_REMOVE4.status != NFS4_OK) {
+      goto out;
+  }
+
   if (nfs_in_grace())
     {
       res_REMOVE4.status = NFS4ERR_GRACE;
@@ -113,27 +121,6 @@ int nfs4_op_remove(struct nfs_argop4 *op,
   res_REMOVE4.REMOVE4res_u.resok4.cinfo.before =
        cache_inode_get_changeid4(parent_entry);
 
-
-  /* get the filename from the argument, it should not be empty */
-  if(arg_REMOVE4.target.utf8string_len == 0)
-    {
-      res_REMOVE4.status = NFS4ERR_INVAL;
-      goto out;
-    }
-
-  if (!(name = nfs4_utf8string2dynamic(&arg_REMOVE4.target)))
-    {
-      res_REMOVE4.status = NFS4ERR_SERVERFAULT;
-      goto out;
-    }
-
-  /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
-  if ((strcmp(name, ".") == 0) ||
-      (strcmp(name, "..") == 0))
-    {
-      res_REMOVE4.status = NFS4ERR_BADNAME;
-      goto out;
-    }
 
   if((cache_status = cache_inode_remove(parent_entry,
                                         name,

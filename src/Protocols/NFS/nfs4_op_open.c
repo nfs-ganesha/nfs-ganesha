@@ -637,12 +637,12 @@ open4_claim_null(OPEN4args        * arg,
         }
 
         /**
-         * @todo ACE: Fix this after fsal_name_t is eradicated..
+         * Validate and convert the utf8 filename
          */
-        if (!(filename
-              = nfs4_utf8string2dynamic(&arg->claim
-                                        .open_claim4_u.file))) {
-                nfs_status = NFS4ERR_SERVERFAULT;
+	nfs_status = nfs4_utf8string2dynamic(&arg->claim.open_claim4_u.file,
+					     UTF8_SCAN_ALL,
+					     &filename);
+        if (nfs_status != NFS4_OK) {
                 goto out;
         }
 

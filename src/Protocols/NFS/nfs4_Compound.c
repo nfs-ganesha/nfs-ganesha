@@ -41,6 +41,7 @@
 
 #include "sal_functions.h"
 #include "nfs_tools.h"
+#include "nfs_proto_tools.h"
 
 typedef struct nfs4_op_desc__
 {
@@ -231,13 +232,15 @@ int nfs4_Compound(nfs_arg_t *arg,
     return NFS_REQ_DROP;        /* Malformed credential */
 
   /* Keeping the same tag as in the arguments */
-  memcpy(&(res->res_compound4.tag), &(arg->arg_compound4.tag),
-         sizeof(arg->arg_compound4.tag));
-
-  if(utf8dup(&(res->res_compound4.tag), &(arg->arg_compound4.tag)) == -1)
-    {
-      LogCrit(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
-      return NFS_REQ_DROP;
+  status = utf8dup(&res->res_compound4.tag,
+		   &arg->arg_compound4.tag,
+		   UTF8_SCAN_CKUTF8);
+  if(status != NFS4_OK) {
+      if(status == NFS4ERR_SERVERFAULT) {
+         LogCrit(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
+      }
+      res->res_compound4.status = status;
+      return NFS_REQ_OK;
     }
 
   /* Allocating the reply nfs_resop4 */

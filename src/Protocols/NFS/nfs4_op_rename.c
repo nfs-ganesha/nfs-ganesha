@@ -83,13 +83,19 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->resop = NFS4_OP_RENAME;
   res_RENAME4.status = NFS4_OK;
 
-  /* Read oldname and newname from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
-  if((arg_RENAME4.oldname.utf8string_len == 0) ||
-     (arg_RENAME4.newname.utf8string_len == 0))
-    {
-      res_RENAME4.status = NFS4ERR_INVAL;
+  /* Read and validate oldname and newname from uft8 strings. */
+  res_RENAME4.status = nfs4_utf8string2dynamic(&arg_RENAME4.oldname,
+					       UTF8_SCAN_ALL,
+					       &oldname);
+  if (res_RENAME4.status != NFS4_OK) {
       goto out;
-    }
+  }
+  res_RENAME4.status = nfs4_utf8string2dynamic(&arg_RENAME4.newname,
+					       UTF8_SCAN_ALL,
+					       &newname);
+  if (res_RENAME4.status != NFS4_OK) {
+      goto out;
+  }
 
   /* Do basic checks on a filehandle */
   res_RENAME4.status = nfs4_sanity_check_FH(data, DIRECTORY);
@@ -115,27 +121,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_RENAME4.status = nfs4_SetCompoundExport(data);
       if (res_RENAME4.status != NFS4_OK)
         goto out;
-    }
-
-  if (!(oldname = nfs4_utf8string2dynamic(&arg_RENAME4.oldname)))
-    {
-      res_RENAME4.status = NFS4ERR_SERVERFAULT;
-      goto out;
-    }
-
-  if (!(newname = nfs4_utf8string2dynamic(&arg_RENAME4.newname)))
-    {
-      res_RENAME4.status = NFS4ERR_SERVERFAULT;
-      goto out;
-    }
-
-  if ((strcmp(newname, ".") == 0) ||
-      (strcmp(newname, "..") == 0) ||
-      (strcmp(oldname, ".") == 0) ||
-      (strcmp(oldname, "..") == 0))
-    {
-      res_RENAME4.status = NFS4ERR_BADNAME;
-      goto out;
     }
 
   /* No Cross Device */

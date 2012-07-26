@@ -143,17 +143,21 @@ fsal_boolean_t nfs4_pnfs_supported(const exportlist_t *export);
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
                               object_file_type_t required_type);
 
-static inline char *
-nfs4_utf8string2dynamic(const utf8string *input)
-{
-        char *name = gsh_malloc(input->utf8string_len + 1);
-        if (name != NULL) {
-                memcpy(name,
-                       input->utf8string_val,
-                       input->utf8string_len);
-                name[input->utf8string_len] = '\0';
-        }
-        return name;
-}
+typedef enum {
+	UTF8_SCAN_NONE = 0,    /* do no validation other than size */
+	UTF8_SCAN_NOSLASH = 1, /* disallow '/' */
+	UTF8_SCAN_NODOT = 2,   /* disallow '.' and '..' */
+	UTF8_SCAN_CKUTF8 = 4,  /* validate utf8 */
+	UTF8_SCAN_SYMLINK = 6, /* a symlink, allow '/', no "." or "..", utf8 */
+	UTF8_SCAN_NAME = 3,    /* a name (no embedded /, "." or "..") */
+	UTF8_SCAN_ALL = 7      /* do the whole thing, name+valid utf8 */
+} utf8_scantype_t;
+
+nfsstat4 utf8dup(utf8string * newstr, utf8string * oldstr,
+	    utf8_scantype_t scan);
+nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
+				 utf8_scantype_t scan,
+				 char **obj_name);
 
 #endif                          /* _NFS_PROTO_TOOLS_H */
+

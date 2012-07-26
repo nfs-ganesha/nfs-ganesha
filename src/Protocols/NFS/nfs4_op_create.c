@@ -160,16 +160,11 @@ int nfs4_op_create(struct nfs_argop4 *op,
    * You can't use this operation to create a regular file, you have to use NFS4_OP_OPEN for this
    */
 
-  /* Convert the UFT8 objname to a regular string */
-  if(arg_CREATE4.objname.utf8string_len == 0)
-    {
-      res_CREATE4.status = NFS4ERR_INVAL;
-      goto out;
-    }
-
-  name = nfs4_utf8string2dynamic(&arg_CREATE4.objname);
-  if (name == NULL) {
-      res_CREATE4.status = NFS4ERR_SERVERFAULT;
+  /* Validate and convert the UFT8 objname to a regular string */
+  res_CREATE4.status = nfs4_utf8string2dynamic(&arg_CREATE4.objname,
+					       UTF8_SCAN_ALL,
+					       &name);
+  if (res_CREATE4.status != NFS4_OK) {
       goto out;
   }
 
@@ -215,21 +210,13 @@ int nfs4_op_create(struct nfs_argop4 *op,
     {
     case NF4LNK:
       /* Convert the name to link from into a regular string */
-      if(arg_CREATE4.objtype.createtype4_u.linkdata.utf8string_len == 0)
-        {
-          res_CREATE4.status = NFS4ERR_INVAL;
-          goto out;
-        }
-      else
-        {
-          link_content = nfs4_utf8string2dynamic(&arg_CREATE4.objtype
-                                                 .createtype4_u.linkdata);
-          if (link_content == NULL) {
-            res_CREATE4.status = NFS4ERR_SERVERFAULT;
-            goto out;
-          }
-          create_arg.link_content = link_content;
-        }
+      res_CREATE4.status = nfs4_utf8string2dynamic(&arg_CREATE4.objtype.createtype4_u.linkdata,
+						   UTF8_SCAN_SYMLINK,
+						   &link_content);
+      if (res_CREATE4.status != NFS4_OK) {
+	      goto out;
+      }
+      create_arg.link_content = link_content;
 
       /* do the symlink operation */
       if((entry_new = cache_inode_create(entry_parent,

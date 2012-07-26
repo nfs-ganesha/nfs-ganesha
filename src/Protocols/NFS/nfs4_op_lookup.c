@@ -106,19 +106,6 @@ nfs4_op_lookup(struct nfs_argop4 *op,
                 goto out;
         }
 
-        /* Check for empty name */
-        if (op->nfs_argop4_u.oplookup.objname.utf8string_len == 0 ||
-            op->nfs_argop4_u.oplookup.objname.utf8string_val == NULL) {
-                res_LOOKUP4->status = NFS4ERR_INVAL;
-                goto out;
-        }
-
-        /* Check for name too long */
-        if (op->nfs_argop4_u.oplookup.objname.utf8string_len > MAXNAMLEN) {
-                res_LOOKUP4->status = NFS4ERR_NAMETOOLONG;
-                goto out;
-        }
-
         /* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
         if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
                 res_LOOKUP4->status = nfs4_op_lookup_pseudo(op, data, resp);
@@ -131,18 +118,13 @@ nfs4_op_lookup(struct nfs_argop4 *op,
         }
 
 
-        /* UTF8 strings may not end with \0, but they carry their length */
-        if (!(name = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname))) {
-                res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
-                goto out;
-        }
-
-
-        if((strcmp(name, ".") == 0) ||
-           (strcmp(name, "..") == 0)) {
-                res_LOOKUP4->status = NFS4ERR_BADNAME;
-                goto out;
-        }
+        /* Validate and convert the UFT8 objname to a regular string */
+        res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
+						      UTF8_SCAN_ALL,
+						      &name);
+	if (res_LOOKUP4->status  != NFS4_OK) {
+		goto out;
+	}
 
         /* Do the lookup in the FSAL */
         file_entry = NULL;

@@ -81,11 +81,12 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
   res_SECINFO4.status = NFS4_OK;
 
   /* Read name from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
-  if(arg_SECINFO4.name.utf8string_len == 0)
-    {
-      res_SECINFO4.status = NFS4ERR_INVAL;
+  res_SECINFO4.status = nfs4_utf8string2dynamic(&arg_SECINFO4.name,
+						UTF8_SCAN_ALL,
+						&secinfo_fh_name);
+  if (res_SECINFO4.status != NFS4_OK) {
       goto out;
-    }
+  }
 
   /*
    * Do basic checks on a filehandle
@@ -98,12 +99,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
   if (nfs_in_grace())
     {
       res_SECINFO4.status = NFS4ERR_GRACE;
-      goto out;
-    }
-
-  if (!(secinfo_fh_name = nfs4_utf8string2dynamic(&arg_SECINFO4.name)))
-    {
-      res_SECINFO4.status = NFS4ERR_SERVERFAULT;
       goto out;
     }
 

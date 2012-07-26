@@ -106,26 +106,13 @@ int nfs4_op_link(struct nfs_argop4 *op,
    * name arg_LINK4.target
    */
 
-  /* If name is empty, return EINVAL */
-  if(arg_LINK4.newname.utf8string_len == 0)
-    {
-      res_LINK4.status = NFS4ERR_INVAL;
+  /* Validate and convert the UFT8 objname to a regular string */
+  res_LINK4.status = nfs4_utf8string2dynamic(&arg_LINK4.newname,
+					     UTF8_SCAN_ALL,
+					     &newname);
+  if (res_LINK4.status != NFS4_OK) {
       goto out;
-    }
-
-  if (!(newname = nfs4_utf8string2dynamic(&arg_LINK4.newname)))
-    {
-      res_LINK4.status = NFS4ERR_SERVERFAULT;
-      goto out;
-    }
-
-  /* Sanity check: never create a link named '.' or '..' */
-  if((strcmp(newname, ".") == 0) ||
-     (strcmp(newname, "..") == 0))
-    {
-      res_LINK4.status = NFS4ERR_BADNAME;
-      goto out;
-    }
+  }
 
   /* Destination FH (the currentFH) must be a directory */
   if(data->current_filetype != DIRECTORY)
