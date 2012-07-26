@@ -3660,6 +3660,7 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
       fsal_export_context_t *export_context = NULL;
 
       /* Get the context for FSAL super user */
+      memset(&context, 0, sizeof(fsal_op_context_t));
       fsal_status = FSAL_InitClientContext(&context);
       if(FSAL_IS_ERROR(fsal_status))
         {
