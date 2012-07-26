@@ -290,7 +290,32 @@ AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 # during the build
 GA_AM_COND_ON_UNLESS([fsal-proxy],[do not build PROXY FSAL shared library],[USE_FSAL_PROXY])
 GA_AM_COND_ON_UNLESS([fsal-vfs],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
-GA_AM_COND_ON_UNLESS([fsal-ceph],[do not build VFS FSAL shared library],[USE_FSAL_CEPH])
+
+# We only want to turn Ceph on if we have the right library
+
+# explicit Ceph path
+AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation]),
+	    CEPH_PREFIX="$withval", CEPH_PREFIX="/usr")
+
+
+AC_ARG_ENABLE([fsal-ceph],AS_HELP_STRING([--disable-ceph],[USE_FSAL_CEPH]),
+              [enable_fsal_ceph]=$enableval, [enable_fsal_ceph]='yes')
+
+if test "$enable_fsal_ceph" == "yes"; then
+	AC_CHECK_LIB([cephfs], [ceph_ll_connectable_x],
+		      [AC_DEFINE([_USE_CEPH], 1, [GANESHA exports Ceph Filesystem ])],
+		      [enable_fsal_ceph='no']) 
+	CEPH_CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64"
+        CEPH_LDFLAGS="-L${CEPH_PREFIX}/lib"
+	CEPH_LIB="-lcephfs"
+else
+        CEPH_CFLAGS=""
+        CEPH_LDFLAGS=""
+        CEPH_LIB=""
+fi
+
+AM_CONDITIONAL([USE_FSAL_CEPH], test "[$enable_fsal_ceph]"  == "yes")
+
 
 # FSALs whicha re disabled by default
 GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
@@ -301,7 +326,6 @@ GA_ENABLE_AM_CONDITION([fsal-lustre],[build LUSTRE FSAL],[USE_FSAL_LUSTRE])
 GA_ENABLE_AM_CONDITION([fsal-shook],[build SHOOK FSAL],[USE_FSAL_SHOOK])
 GA_ENABLE_AM_CONDITION([fsal-xfs],[build XFS FSAL],[USE_FSAL_XFS])
 GA_ENABLE_AM_CONDITION([fsal-gpfs],[build GPFS FSAL],[USE_FSAL_GPFS])
-GA_ENABLE_AM_CONDITION([fsal-ceph],[build CEPH FSAL],[USE_FSAL_CEPH])
 GA_ENABLE_AM_CONDITION([fsal-zfs],[build ZFS FSAL],[USE_FSAL_ZFS])
 
 # FSAL_UP
@@ -505,10 +529,6 @@ if test "$enable_ipv6" == "yes"; then
 	fi
 fi
 
-# explicit Ceph path @todo : add a defaut value
-AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
-	    CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
-
 # pNFS Metadata Server Support
 GA_ENABLE_AM_CONDITION([pnfs-mds], [enable pNFS Metadata Server support (NFSv4.1 support is mandatory)],[USE_PNFS_MDS])
 if test "x$enable_pnfs_mds" = "xyes"; then
@@ -635,19 +655,6 @@ if test "$enable_fsal_xfs" == "yes"; then
 	FSAL_CFLAGS=
 	FSAL_LDFLAGS="-lhandle"
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
-fi
-
-if test "$enable_fsal_ceph" == "yes"; then
-	AC_CHECK_LIB([cephfs], [ceph_ll_connectable_x],
-		      [AC_DEFINE([_USE_CEPH], 1, [GANESHA exports Ceph Filesystem ])],
-		      [USE_FSAL_VFS_TRUE='#'])
-	CEPH_CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64"
-        CEPH_LDFLAGS="-L${CEPH_PREFIX}/lib"
-	CEPH_LIB="-lcephfs"
-else
-        CEPH_CFLAGS=""
-        CEPH_LDFLAGS=""
-        CEPH_LIB=""
 fi
 
 AC_SUBST(CEPH_CFLAGS)
