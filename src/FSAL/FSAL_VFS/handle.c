@@ -280,6 +280,7 @@ int make_file_safe(int dir_fd,
 	if(retval < 0) {
 		goto fileerr;
 	}
+	return 0;
 
 fileerr:
 	retval = errno;
@@ -352,7 +353,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	close(fd);  /* don't need it anymore. */
 
 	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval < 0) {
+	if(retval != 0) {
 		goto fileerr;
 	}
 	close(dir_fd); /* done with parent */
@@ -428,7 +429,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval < 0) {
+	if(retval != 0) {
 		goto fileerr;
 	}
 
@@ -553,7 +554,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval < 0) {
+	if(retval != 0) {
 		goto direrr;
 	}
 
