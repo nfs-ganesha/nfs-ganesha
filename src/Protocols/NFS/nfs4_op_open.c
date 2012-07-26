@@ -135,7 +135,9 @@ open4_do_open(struct nfs_argop4  * op,
                 }
         }
 
-        candidate_data.share.share_access      = args->share_access;
+        candidate_data.share.share_access
+                = (args->share_access &
+                   ~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK);
         candidate_data.share.share_deny        = args->share_deny;
         candidate_data.share.share_access_prev = 0;
         candidate_data.share.share_deny_prev   = 0;
@@ -864,7 +866,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
          * have any invalid bits set.
          */
         if (!(arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_BOTH) ||
-            (arg_OPEN4->share_access & ~OPEN4_SHARE_ACCESS_BOTH) ||
+            (arg_OPEN4->share_access & (~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK &
+                                        ~OPEN4_SHARE_ACCESS_BOTH)) ||
             (arg_OPEN4->share_deny & ~OPEN4_SHARE_DENY_BOTH)) {
                 res_OPEN4->status = NFS4ERR_INVAL;
                 goto out;
