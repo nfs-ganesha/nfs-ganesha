@@ -346,7 +346,7 @@ typedef struct _9p_conn__
 
 typedef struct _9p_request_data__
 {
-  char         _9pmsg[_9P_MSG_SIZE] ;
+  char        * _9pmsg ;
   _9p_conn_t  *  pconn ;
 } _9p_request_data_t ;
 

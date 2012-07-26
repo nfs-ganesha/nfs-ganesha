@@ -104,8 +104,8 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
                         "Received 9P/RDMA message of size %u",
                          *p_9pmsglen ) ;
 
-          // Really unclean, but I want to see if other stuff works properly
-          memcpy( &preq9p->_9pmsg, pdata->data, pdata->size ) ;
+          /* Use buffer received via RDMA as a 9P message */
+          preq9p->_9pmsg = pdata->data ;
 
           if ( ( rc = _9p_process_buffer( preq9p, pworker_data, replydata, &outdatalen ) ) != 1 )
              LogMajor( COMPONENT_9P, "Could not process 9P buffer on socket #%lu", preq9p->pconn->trans_data.sockfd ) ;
