@@ -169,6 +169,9 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
       MNT_List_tail = pnew_mnt_list_entry;
     }
 
+  LogFullDebug(COMPONENT_NFSPROTO,
+               "MOUNT: mount list entry (%s,%s) added", hostname, dirpath);
+
   if(isFullDebug(COMPONENT_NFSPROTO))
     nfs_Print_MountList();
 

@@ -226,9 +226,12 @@ const nfs_function_desc_t mnt1_func_desc[] = {
   {mnt_Null, mnt_Null_Free, (xdrproc_t) xdr_void,
    (xdrproc_t) xdr_void, "mnt_Null",
    NOTHING_SPECIAL},
+  /* Mnt defers any credential handling and export processing for actual
+   * operation processing, the export is not known until the dirpath is parsed.
+   */
   {mnt_Mnt, mnt1_Mnt_Free, (xdrproc_t) xdr_dirpath,
    (xdrproc_t) xdr_fhstatus2, "mnt_Mnt",
-   NEEDS_CRED},
+   NOTHING_SPECIAL},
   {mnt_Dump, mnt_Dump_Free, (xdrproc_t) xdr_void,
    (xdrproc_t) xdr_mountlist, "mnt_Dump",
    NOTHING_SPECIAL},
@@ -1027,7 +1030,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           break;
 
         default:
-          /* NFSv4 or invalid version (which should never get here) */
+          /* Invalid version (which should never get here) */
           pexport = nfs_param.pexportlist;
           break;
         }                       /* switch( ptr_req->rq_vers ) */
@@ -1211,8 +1214,7 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
     }
 
-  /* Be careful (Issue #66) : it makes no sense to check access for
-   * a MOUNT request */
+  /* Mount Protocol and NFSv4 should not do access check. */
   if((req->rq_prog != nfs_param.core_param.program[P_MNT]) &&
      !((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
       (req->rq_vers == NFS_V4)))
@@ -1232,8 +1234,6 @@ static void nfs_rpc_execute(request_data_t *preq,
    }
   else
    {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Call to a function from the MOUNT protocol, no call to nfs_export_check_access() required" ) ;
       export_check_result = EXPORT_PERMISSION_GRANTED ;
    }
 
@@ -1300,11 +1300,11 @@ static void nfs_rpc_execute(request_data_t *preq,
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
           /* Swap the anonymous uid/gid if the user should be anonymous */
-          if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
-             || nfs_build_fsal_context(req,
-                                       pexport,
-                                       &pworker_data->thread_fsal_context,
-                                       &user_credentials) == FALSE)
+          nfs_check_anon(&related_client, pexport, &user_credentials);
+          if(nfs_build_fsal_context(req,
+                                    pexport,
+                                    &pworker_data->thread_fsal_context,
+                                    &user_credentials) == FALSE)
             {
               LogInfo(COMPONENT_DISPATCH,
                       "authentication failed, rejecting client");
