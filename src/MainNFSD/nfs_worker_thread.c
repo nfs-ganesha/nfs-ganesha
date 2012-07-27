@@ -941,6 +941,10 @@ static void nfs_rpc_execute(request_data_t *preq,
        * used.  In NFSv4, junction traversal is managed by the protocol itself
        * so the whole export list is provided to NFSv4 request. */
 
+      char dumpfh[1024];
+      char *reason = NULL;
+      char addrbuf[SOCK_NAME_MAX];
+
       switch (req->rq_vers)
         {
         case NFS_V2:
@@ -957,9 +961,6 @@ static void nfs_rpc_execute(request_data_t *preq,
                    * file handle) */
                   if(isInfo(COMPONENT_DISPATCH))
                     {
-                      char dumpfh[1024];
-                      char *reason;
-                      char addrbuf[SOCK_NAME_MAX];
                       sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
                       if(exportid < 0)
                         reason = "has badly formed handle";
@@ -1005,47 +1006,52 @@ static void nfs_rpc_execute(request_data_t *preq,
                                                  exportid)) == NULL ||
                  (pexport->options & EXPORT_OPTION_NFSV3) == 0)
                 {
-                  /* Reject the request for authentication reason (incompatible
-                   * file handle) */
-                  if(isInfo(COMPONENT_DISPATCH))
-                    {
-                      char dumpfh[1024];
-                      char *reason;
-                      char addrbuf[SOCK_NAME_MAX];
-                      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
-                      if(exportid < 0)
-                        reason = "has badly formed handle";
-                      else if(pexport == NULL)
-                        reason = "has invalid export";
-                      else
-                        reason = "V3 not allowed on this export";
-                      sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
-                      LogMajor(COMPONENT_DISPATCH,
-                               "NFS3 Request from host %s %s, proc=%d, FH=%s",
-                               addrbuf, reason,
-                               (int)req->rq_proc, dumpfh);
-                    }
-                  /* Bad argument */
-                  svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                  svcerr_auth2(xprt, req, AUTH_FAILED);
-                  svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                  if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                    {
-                      LogCrit(COMPONENT_DISPATCH,
-                              "Attempt to delete duplicate request failed on "
-                              "line %d", __LINE__);
-                    }
-                  return;
-                }
 
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "Found export entry for dirname=%s as exportid=%d",
-                           pexport->dirname, pexport->id);
+                  if(exportid < 0)
+                      reason = "has badly formed handle";
+                  else if(pexport == NULL)
+                    reason = "has invalid export";
+                  else
+                    reason = "V3 not allowed on this export";
+                }
+              else
+                {
+                  LogFullDebug(COMPONENT_DISPATCH,
+                               "Found export entry for dirname=%s as exportid=%d",
+                                pexport->dirname, pexport->id);
+                  break;
+                }
+            }
+          else if (nfs_param.pexportlist != NULL)
+            {
+              pexport = nfs_param.pexportlist;
+              break;
             }
           else
-            pexport = nfs_param.pexportlist;
+            reason = "has invalid export";
 
-          break;
+          /* Reject the request for authentication reason (incompatible
+           * file handle) */
+          if(isInfo(COMPONENT_DISPATCH))
+            {
+              sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+              sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
+              LogMajor(COMPONENT_DISPATCH,
+                      "NFS3 Request from host %s %s, proc=%d, FH=%s",
+                       addrbuf, reason,
+                       (int)req->rq_proc, dumpfh);
+            }
+          /* Bad argument */
+          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          svcerr_auth2(xprt, req, AUTH_FAILED);
+          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
+            {
+              LogCrit(COMPONENT_DISPATCH,
+                      "Attempt to delete duplicate request failed on "
+                      "line %d", __LINE__);
+             }
+          return;
 
         case NFS_V4:
           /* NFSv4 requires entire export list */
