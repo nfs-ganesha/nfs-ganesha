@@ -266,21 +266,19 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                 newname,
                                 req_ctx,
                                 status)) != NULL)
-  if( !sticky_dir_allows(phandle_dirdest,
-			 (lookup_dest != NULL) ?
-			 lookup_src->obj_handle : NULL,
-			 req_ctx->creds))
-    {
-      src_dest_unlock(dir_src, dir_dest);
-      *status = CACHE_INODE_FSAL_EPERM;
-      goto out;
-    }
-  if(lookup_dest  != NULL)
     {
       LogDebug(COMPONENT_CACHE_INODE,
                "Rename (%p,%s)->(%p,%s) : destination already exists",
                dir_src, oldname, dir_dest, newname);
 
+      if( !sticky_dir_allows(phandle_dirdest,
+			 lookup_dest->obj_handle,
+			 req_ctx->creds))
+        {
+          src_dest_unlock(dir_src, dir_dest);
+          *status = CACHE_INODE_FSAL_EPERM;
+          goto out;
+	}
       /* If the already existing object is a directory, source object
          should be a directory */
       if(lookup_dest->type == DIRECTORY &&
@@ -360,7 +358,15 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
           src_dest_unlock(dir_src, dir_dest);
           goto out;
         }
-    }
+      if( !sticky_dir_allows(phandle_dirdest,
+			 NULL,
+			 req_ctx->creds))
+        {
+          src_dest_unlock(dir_src, dir_dest);
+          *status = CACHE_INODE_FSAL_EPERM;
+          goto out;
+	}
+     }
 
   /* Get the handle for the dirsrc entry */
 
