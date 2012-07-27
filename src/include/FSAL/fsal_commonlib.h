@@ -30,3 +30,17 @@ void fsal_export_init(struct fsal_export *, struct export_ops *,
 
 int fsal_obj_handle_init(struct fsal_obj_handle *, struct fsal_obj_ops *,
                          struct fsal_export *, object_file_type_t);
+
+
+
+/*
+ * pNFS DS Helpers
+ */
+
+int fsal_attach_ds(struct fsal_export *exp_hdl,
+                   struct glist_head *ds_link);
+void fsal_detach_ds(struct fsal_export *exp_hdl,
+                    struct glist_head *ds_link);
+int fsal_ds_handle_init(struct fsal_ds_handle *, struct fsal_ds_ops *,
+                        struct fsal_export *);
+int fsal_ds_handle_uninit(struct fsal_ds_handle *ds);

@@ -86,7 +86,9 @@ int nfs4_op_test_stateid(struct nfs_argop4 *op,
     }
 
   /* Do basic checks on a filehandle */
-  res_TEST_STATEID4.tsr_status = nfs4_sanity_check_FH(data, NO_FILE_TYPE);
+  res_TEST_STATEID4.tsr_status = nfs4_sanity_check_FH(data,
+                                                      NO_FILE_TYPE,
+                                                      FALSE);
 
   return res_TEST_STATEID4.tsr_status;
 }                               /* nfs41_op_lock */

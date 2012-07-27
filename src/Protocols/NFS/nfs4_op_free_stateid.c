@@ -85,8 +85,6 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op,
       return (res_FREE_STATEID4.fsr_status = NFS4ERR_INVAL);
     }
 
-  /* Do basic checks on a filehandle */
-  res_FREE_STATEID4.fsr_status = nfs4_sanity_check_FH(data, NO_FILE_TYPE);
   /**
    * @todo ACE: This function needs to be implemented.
    */

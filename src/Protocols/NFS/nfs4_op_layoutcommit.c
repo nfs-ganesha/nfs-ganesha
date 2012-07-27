@@ -117,7 +117,8 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
         }
 
         if ((nfs_status = nfs4_sanity_check_FH(data,
-                                               REGULAR_FILE))
+                                               REGULAR_FILE,
+                                               FALSE))
             != NFS4_OK) {
                 goto out;
         }

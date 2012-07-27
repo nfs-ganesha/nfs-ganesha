@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs4_op_restorefh.c
- * \brief   Routines used for managing the NFS4_OP_RESTOREFH operation (number 31).
+ * @file    nfs4_op_restorefh.c
+ * @brief   The NFS4_OP_RESTOREFH operation.
  *
  * Routines used for managing the NFS4_OP_RESTOREFH operation.
  */
@@ -46,6 +46,7 @@
 #include "cache_inode_lru.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
@@ -80,28 +81,12 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_RESTOREFH;
   res_RESTOREFH.status = NFS4_OK;
 
-  /* If there is no currentFH, teh return an error */
-  if(nfs4_Is_Fh_Empty(&(data->savedFH)))
-    {
-      /* There is no current FH, return NFS4ERR_RESTOREFH (cg RFC3530,
-         page 202) */
-      res_RESTOREFH.status = NFS4ERR_RESTOREFH;
-      return res_RESTOREFH.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->savedFH)))
-    {
-      res_RESTOREFH.status = NFS4ERR_BADHANDLE;
-      return res_RESTOREFH.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->savedFH)))
-    {
-      res_RESTOREFH.status = NFS4ERR_FHEXPIRED;
-      return res_RESTOREFH.status;
-    }
+  /* If there is no currentFH, then return an error */
+  res_RESTOREFH.status = nfs4_sanity_check_saved_FH(data,
+                                                    NO_FILE_TYPE,
+                                                    TRUE);
+  if (res_RESTOREFH.status != NFS4_OK)
+    return res_RESTOREFH.status;
 
   /* If data->exportp is null, a junction from pseudo fs was
      traversed, credp and exportp have to be updated */
@@ -133,6 +118,10 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   if (data->current_entry) {
       cache_inode_put(data->current_entry);
       data->current_entry = NULL;
+  }
+  if (data->current_ds) {
+      data->current_ds->ops->put(data->current_ds);
+      data->current_ds = NULL;
   }
 
   data->current_entry = data->saved_entry;

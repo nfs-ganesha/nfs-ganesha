@@ -349,6 +349,8 @@ typedef struct compoud_data
   unsigned int minorversion; /*< NFSv4 minor version */
   cache_entry_t *current_entry; /*< Cache entry for current filehandle */
   cache_entry_t *saved_entry; /*< Cache entry for saved filehandle */
+  struct fsal_ds_handle *current_ds; /*< current ds handle */
+  struct fsal_ds_handle *saved_ds; /*< Saved DS handle */
   object_file_type_t current_filetype; /*< File type of current entry */
   object_file_type_t saved_filetype; /*< File type of saved entry */
   struct req_op_context *req_ctx; /*< the context including related, mapped creds */

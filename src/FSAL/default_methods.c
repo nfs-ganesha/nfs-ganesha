@@ -22,7 +22,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /*
@@ -285,6 +285,23 @@ static fsal_status_t create_handle(struct fsal_export *exp_hdl,
                                    struct fsal_obj_handle **handle)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
+}
+
+/**
+ * @brief Fail to create a FSAL data server handle from a wire handle
+ *
+ * @param[in]  exp_hdl  The export in which to create the handle
+ * @param[out] handle   FSAL object handle
+ *
+ * @retval NFS4ERR_BADHANDLE.
+ */
+
+static nfsstat4
+create_ds_handle(struct fsal_export *const exp_hdl,
+                 const struct gsh_buffdesc *const hdl_desc,
+                 struct fsal_ds_handle **const handle)
+{
+        return NFS4ERR_BADHANDLE;
 }
 
 /* get_dynamic_info
@@ -550,6 +567,7 @@ struct export_ops def_export_ops = {
         .lookup_junction = lookup_junction,
         .extract_handle = extract_handle,
         .create_handle = create_handle,
+        .create_ds_handle = create_ds_handle,
         .get_fs_dynamic_info = get_dynamic_info,
         .fs_supports = fs_supports,
         .fs_maxfilesize = fs_maxfilesize,
@@ -1133,4 +1151,164 @@ struct fsal_obj_ops def_handle_ops = {
         .layoutget = layoutget,
         .layoutreturn = layoutreturn,
         .layoutcommit = layoutcommit
+};
+
+/* fsal_ds_handle common methods */
+
+/**
+ * @brief Get a reference on a handle
+ *
+ * This function increments the reference count on a handle.  It
+ * should not be overridden.
+ *
+ * @param[in] obj_hdl The handle to reference
+ */
+
+static void
+ds_get(struct fsal_ds_handle *const ds_hdl)
+{
+        pthread_mutex_lock(&ds_hdl->lock);
+        if (ds_hdl->refs > 0) {
+                ds_hdl->refs++;
+        }
+        pthread_mutex_unlock(&ds_hdl->lock);
+}
+
+/**
+ * @brief Release a reference on a handle
+ *
+ * This function releases a reference to a handle.  Once a caller's
+ * reference is released they should make no attempt to access the
+ * handle or even dereference a pointer to it.  This function should
+ * not be overridden.
+ *
+ * @param[in] obj_hdl The handle to relinquish
+ *
+ * @return NFS status codes.
+ */
+static nfsstat4
+ds_put(struct fsal_ds_handle *const ds_hdl)
+{
+        int retval = EINVAL; /* too many 'puts" */
+
+        pthread_mutex_lock(&ds_hdl->lock);
+        if (ds_hdl->refs > 0) {
+                ds_hdl->refs--;
+                retval = 0;
+        }
+        pthread_mutex_unlock(&ds_hdl->lock);
+        if (ds_hdl->refs == 0) {
+                return ds_hdl->ops->release(ds_hdl);
+        }
+
+        return retval;
+}
+
+/**
+ * @brief Fail to clean up a filehandle
+ *
+ * Getting here is bad, it means we support but have not completely
+ * impelmented DS handles.
+ *
+ * @param[in] release Handle to release
+ *
+ * @return NFSv4.1 status codes.
+ */
+static nfsstat4
+ds_release(struct fsal_ds_handle *const ds_hdl)
+{
+        LogCrit(COMPONENT_PNFS,
+                "Unimplemented DS release!");
+        return NFS4ERR_SERVERFAULT;
+}
+
+/**
+ * @brief Fail to read from a data-server handle.
+ *
+ * @param[in]  ds_hdl           FSAL DS handle
+ * @param[in]  req_ctx          Credentials
+ * @param[in]  stateid          The stateid supplied with the READ operation,
+ *                              for validation
+ * @param[in]  offset           The offset at which to read
+ * @param[in]  requested_length Length of read requested (and size of buffer)
+ * @param[out] buffer           The buffer to which to store read data
+ * @param[out] supplied_length  Length of data read
+ * @param[out] eof              TRUE on end of file
+ *
+ * @return NFS4ERR_NOTSUPP.
+ */
+static nfsstat4
+ds_read(struct fsal_ds_handle *const ds_hdl,
+        struct req_op_context *const req_ctx,
+        const stateid4 *stateid,
+        const offset4 offset,
+        const count4 requested_length,
+        void *const buffer,
+        count4 *const supplied_length,
+        bool_t *const end_of_file)
+{
+        return NFS4ERR_NOTSUPP;
+}
+
+/**
+ * @brief Fail to write to a data-server handle.
+ *
+ * @param[in]  ds_hdl           FSAL DS handle
+ * @param[in]  req_ctx          Credentials
+ * @param[in]  stateid          The stateid supplied with the READ operation,
+ *                              for validation
+ * @param[in]  offset           The offset at which to read
+ * @param[in]  write_length     Length of write requested (and size of buffer)
+ * @param[out] buffer           The buffer to which to store read data
+ * @param[in]  stability wanted Stability of write
+ * @param[out] written_length   Length of data written
+ * @param[out] writeverf        Write verifier
+ * @param[out] stability_got    Stability used for write (must be as
+ *                              or more stable than request)
+ *
+ * @return An NFSv4.1 status code.
+ */
+static nfsstat4
+ds_write(struct fsal_ds_handle *const ds_hdl,
+         struct req_op_context *const req_ctx,
+         const stateid4 *stateid,
+         const offset4 offset,
+         const count4 write_length,
+         const void *buffer,
+         const stable_how4 stability_wanted,
+         count4 *const written_length,
+         verifier4 *const writeverf,
+         stable_how4 *const stability_got)
+{
+        return NFS4ERR_NOTSUPP;
+}
+
+/**
+ * @brief Fail to commit a byte range on a DS handle.
+ *
+ * @param[in]  ds_hdl    FSAL DS handle
+ * @param[in]  req_ctx   Credentials
+ * @param[in]  offset    Start of commit window
+ * @param[in]  count     Length of commit window
+ * @param[out] writeverf Write verifier
+ *
+ * @return An NFSv4.1 status code.
+ */
+static nfsstat4
+ds_commit(struct fsal_ds_handle *const ds_hdl,
+          struct req_op_context *const req_ctx,
+          const offset4 offset,
+          const count4 count,
+          verifier4 *const writeverf)
+{
+        return NFS4ERR_NOTSUPP;
+}
+
+struct fsal_ds_ops def_ds_ops = {
+        .get = ds_get,
+        .put = ds_put,
+        .release = ds_release,
+        .read = ds_read,
+        .write = ds_write,
+        .commit = ds_commit
 };

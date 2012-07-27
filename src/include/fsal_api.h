@@ -179,6 +179,8 @@ struct fsal_obj_ops;
 struct exportlist__; /* We just need a pointer, not all of
 		        nfs_exports.h full def in
 		        include/nfs_exports.h */
+struct fsal_ds_handle;
+struct fsal_ds_ops;
 
 /**
  * @brief FSAL object definition
@@ -203,6 +205,7 @@ struct fsal_module {
         struct fsal_ops *ops; /*< FSAL module methods vector */
         struct export_ops *exp_ops; /*< Shared export object methods vector */
         struct fsal_obj_ops *obj_ops;   /*< Shared handle methods vector */
+        struct fsal_ds_ops *ds_ops;   /*< Shared handle methods vector */
 };
 
 /**
@@ -431,6 +434,7 @@ struct fsal_export {
                                   manipulating the list of handles. */
         volatile int refs; /*< Reference count */
         struct glist_head handles; /*< Head of list of object handles */
+        struct glist_head ds_handles; /*< Head of lsit of DS handles */
         struct glist_head exports; /*< Link in list of exports from
                                        the same FSAL. */
         struct exportlist__ *exp_entry; /*< Pointer to the export
@@ -582,6 +586,23 @@ struct export_ops {
         fsal_status_t (*create_handle)(struct fsal_export *exp_hdl,
                                        struct gsh_buffdesc *hdl_desc,
                                        struct fsal_obj_handle **handle);
+
+/**
+ * @brief Create a FSAL data server handle from a wire handle
+ *
+ * This function creates a FSAL data server handle from a client
+ * supplied "wire" handle.
+ *
+ * @param[in]  exp_hdl  The export in which to create the handle
+ * @param[in]  hdl_desc Buffer from which to creat the file
+ * @param[out] handle   FSAL object handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+        nfsstat4 (*create_ds_handle)(
+                struct fsal_export *const exp_hdl,
+                const struct gsh_buffdesc *const hdl_desc,
+                struct fsal_ds_handle **const handle);
 /*@}*/
 
 /**
@@ -961,7 +982,7 @@ struct fsal_obj_handle {
         pthread_mutex_t lock; /*< Lock on handle */
         struct glist_head handles; /*< Link in list of handles under
                                        an export */
-        int refs;
+        int refs; /*< Reference count */
         object_file_type_t type; /*< Object file type */
         struct fsal_export *export; /*< Link back to export */
         struct attrlist attributes; /*< Cached attributes */
@@ -1032,7 +1053,7 @@ struct fsal_obj_ops {
  * filehandle and deallocates it.  Implement this method or you will
  * leak.
  *
- * @param[in] release Handle to release
+ * @param[in] obj_hdl Handle to release
  *
  * @return FSAL status.
  */
@@ -1816,4 +1837,165 @@ struct fsal_obj_ops {
 /*@}*/
 };
 
+/**
+ * @brief Public structure for DS file handles
+ *
+ * This structure is used for files of all types including directories
+ * and anything else that can be operated on via NFS.  Having an
+ * independent reference count and lock here makes sense, since there
+ * is no caching infrastructure overlaying this system.
+ *
+ */
+
+struct fsal_ds_handle {
+        pthread_mutex_t lock; /*< Lock on handle */
+        struct glist_head ds_handles; /*< Link in list of DS handles under
+                                          an export */
+        int refs; /*< Reference count */
+        struct fsal_export *export; /*< Link back to export */
+        struct fsal_ds_ops *ops; /*< Operations vector */
+};
+
+
+struct fsal_ds_ops {
+/*@{*/
+
+/*
+ * Lifecycle management.
+ */
+
+/**
+ * @brief Get a reference on a handle
+ *
+ * This function increments the reference count on a handle.  It
+ * should not be overridden.
+ *
+ * @param[in] ds_hdl The handle to reference
+ */
+        void (*get)(struct fsal_ds_handle *const ds_hdl);
+
+/**
+ * @brief Release a reference on a handle
+ *
+ * This function releases a reference to a handle.  Once a caller's
+ * reference is released they should make no attempt to access the
+ * handle or even dereference a pointer to it.  This function should
+ * not be overridden.
+ *
+ * @param[in] ds_hdl The handle to relinquish
+ *
+ * @retval 0 on success.
+ * @retval EINVAL if no references were outstanding.
+ */
+        nfsstat4 (*put)(struct fsal_ds_handle *const ds_hdl);
+
+/**
+ * @brief Clean up a DS handle
+ *
+ * This function cleans up private resources associated with a
+ * filehandle and deallocates it.  Implement this method or you will
+ * leak.  This function should not be called directly.
+ *
+ * @param[in] ds_hdl Handle to release
+ *
+ * @return NFSv4.1 status codes.
+ */
+        nfsstat4 (*release)(struct fsal_ds_handle *const ds_hdl);
+/*@}*/
+
+/*@{*/
+
+/**
+ * I/O Functions
+ */
+
+/**
+ * @brief Read from a data-server handle.
+ *
+ * NFSv4.1 data server handles are disjount from normal
+ * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
+ * structure) and do not get loaded into cache_inode or processed the
+ * normal way.
+ *
+ * @param[in]  ds_hdl           FSAL DS handle
+ * @param[in]  req_ctx          Credentials
+ * @param[in]  stateid          The stateid supplied with the READ operation,
+ *                              for validation
+ * @param[in]  offset           The offset at which to read
+ * @param[in]  requested_length Length of read requested (and size of buffer)
+ * @param[out] buffer           The buffer to which to store read data
+ * @param[out] supplied_length  Length of data read
+ * @param[out] eof              TRUE on end of file
+ *
+ * @return An NFSv4.1 status code.
+ */
+        nfsstat4 (*read)(
+                struct fsal_ds_handle *const ds_hdl,
+                struct req_op_context *const req_ctx,
+                const stateid4 *stateid,
+                const offset4 offset,
+                const count4 requested_length,
+                void *const buffer,
+                count4 *const supplied_length,
+                bool_t *const end_of_file);
+
+/**
+ *
+ * @brief Write to a data-server handle.
+ *
+ * NFSv4.1 data server filehandles are disjount from normal
+ * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
+ * structure) and do not get loaded into cache_inode or processed the
+ * normal way.
+ *
+ * @param[in]  ds_hdl           FSAL DS handle
+ * @param[in]  req_ctx          Credentials
+ * @param[in]  stateid          The stateid supplied with the READ operation,
+ *                              for validation
+ * @param[in]  offset           The offset at which to read
+ * @param[in]  write_length     Length of write requested (and size of buffer)
+ * @param[out] buffer           The buffer to which to store read data
+ * @param[in]  stability wanted Stability of write
+ * @param[out] written_length   Length of data written
+ * @param[out] writeverf        Write verifier
+ * @param[out] stability_got    Stability used for write (must be as
+ *                              or more stable than request)
+ *
+ * @return An NFSv4.1 status code.
+ */
+        nfsstat4 (*write)(
+                struct fsal_ds_handle *const ds_hdl,
+                struct req_op_context *const req_ctx,
+                const stateid4 *stateid,
+                const offset4 offset,
+                const count4 write_length,
+                const void *buffer,
+                const stable_how4 stability_wanted,
+                count4 *const written_length,
+                verifier4 *const writeverf,
+                stable_how4 *const stability_got);
+
+/**
+ * @brief Commit a byte range to a DS handle.
+ *
+ * NFSv4.1 data server filehandles are disjount from normal
+ * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
+ * structure) and do not get loaded into cache_inode or processed the
+ * normal way.
+ *
+ * @param[in]  ds_hdl    FSAL DS handle
+ * @param[in]  req_ctx   Credentials
+ * @param[in]  offset    Start of commit window
+ * @param[in]  count     Length of commit window
+ * @param[out] writeverf Write verifier
+ *
+ * @return An NFSv4.1 status code.
+ */
+        nfsstat4 (*commit)(
+                struct fsal_ds_handle *const ds_hdl,
+                struct req_op_context *const req_ctx,
+                const offset4 offset,
+                const count4 count,
+                verifier4 *const writeverf);
+};
 #endif /* !FSAL_API__ */

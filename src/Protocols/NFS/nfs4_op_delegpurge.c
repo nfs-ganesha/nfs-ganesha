@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs4_op_delegpurge.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_delegpurge.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */

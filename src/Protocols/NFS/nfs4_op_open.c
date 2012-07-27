@@ -753,7 +753,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
         res_OPEN4->OPEN4res_u.resok4.rflags = 0 ;
 
         /* Do basic checks on a filehandle */
-        res_OPEN4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE);
+        res_OPEN4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
+                                                 FALSE);
         if (res_OPEN4->status != NFS4_OK) {
                 return res_OPEN4->status;
         }

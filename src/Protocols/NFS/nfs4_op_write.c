@@ -48,61 +48,9 @@
 #include "nfs_proto_tools.h"
 #include "fsal_pnfs.h"
 
-#if 0
-
-/**
- * @brief Write for a data server
- *
- * This function bypasses cache_inode and calls directly into the FSAL
- * to perform a pNFS data server write.
- *
- * @param[in]     op    Arguments for nfs41_op
- * @param[in,out] data  Compound request's data
- * @param[out]    resp  Results for nfs41_op
- *
- * @return per RFC5661, p. 376
- *
- */
-
 static int op_dswrite(struct nfs_argop4 *op,
                       compound_data_t *data,
-                      struct nfs_resop4 *resp)
-{
-  /* FSAL file handle */
-  fsal_handle_t handle;
-  /* NFSv4 return code */
-  nfsstat4 nfs_status = 0;
-  struct fsal_handle_desc fh_desc;
-
-  /* Construct the FSAL file handle */
-
-  if ((nfs4_FhandleToFSAL(&data->currentFH,
-                          &fh_desc,
-                          data->pcontext)) == 0)
-    {
-      res_WRITE4.status = NFS4ERR_INVAL;
-      return res_WRITE4.status;
-    }
-
-  memset((caddr_t) &handle, 0, sizeof(handle));
-  memcpy((caddr_t) &handle, fh_desc.start, fh_desc.len);
-  nfs_status
-    = fsal_dsfunctions.DS_write(&handle,
-                                data->pcontext,
-                                &arg_WRITE4.stateid,
-                                arg_WRITE4.offset,
-                                arg_WRITE4.data.data_len,
-                                arg_WRITE4.data.data_val,
-                                arg_WRITE4.stable,
-                                &res_WRITE4.WRITE4res_u.resok4.count,
-                                &res_WRITE4.WRITE4res_u.resok4.writeverf,
-                                &res_WRITE4.WRITE4res_u.resok4.committed);
-
-  res_WRITE4.status = nfs_status;
-  return res_WRITE4.status;
-}
-
-#endif /* 0 */
+                      struct nfs_resop4 *resp);
 
 /**
  * @brief The NFS4_OP_WRITE operation
@@ -152,7 +100,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
    * Do basic checks on a filehandle
    * Only files can be written
    */
-  res_WRITE4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  res_WRITE4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, TRUE);
   if(res_WRITE4.status != NFS4_OK)
     return res_WRITE4.status;
 
@@ -173,14 +121,11 @@ int nfs4_op_write(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_write_xattr(op, data, resp);
 
-#if 0
-
   if((data->minorversion == 1) &&
      (nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {
       return(op_dswrite(op, data, resp));
     }
-#endif /* 0 */
 
   /* Manage access type */
   switch( data->pexport->access_type )
@@ -434,3 +379,42 @@ void nfs4_op_write_Free(WRITE4res *resp)
   /* Nothing to be done */
   return;
 } /* nfs4_op_write_Free */
+
+/**
+ * @brief Write for a data server
+ *
+ * This function bypasses cache_inode and calls directly into the FSAL
+ * to perform a pNFS data server write.
+ *
+ * @param[in]     op    Arguments for nfs41_op
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  Results for nfs41_op
+ *
+ * @return per RFC5661, p. 376
+ *
+ */
+
+static int
+op_dswrite(struct nfs_argop4 *op,
+           compound_data_t *data,
+           struct nfs_resop4 *resp)
+{
+        /* NFSv4 return code */
+        nfsstat4 nfs_status = 0;
+
+        nfs_status = data->current_ds->ops->write(
+                data->current_ds,
+                data->req_ctx,
+                &arg_WRITE4.stateid,
+                arg_WRITE4.offset,
+                arg_WRITE4.data.data_len,
+                arg_WRITE4.data.data_val,
+                arg_WRITE4.stable,
+                &res_WRITE4.WRITE4res_u.resok4.count,
+                &res_WRITE4.WRITE4res_u.resok4.writeverf,
+                &res_WRITE4.WRITE4res_u.resok4.committed);
+
+        res_WRITE4.status = nfs_status;
+        return res_WRITE4.status;
+}
+

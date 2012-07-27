@@ -87,7 +87,7 @@ int nfs4_op_link(struct nfs_argop4 *op,
   res_LINK4.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_LINK4.status = nfs4_sanity_check_FH(data, DIRECTORY);
+  res_LINK4.status = nfs4_sanity_check_FH(data, DIRECTORY, FALSE);
   if(res_LINK4.status != NFS4_OK)
     goto out;
 

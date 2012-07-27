@@ -101,7 +101,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   res_CREATE4.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_CREATE4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE);
+  res_CREATE4.status = nfs4_sanity_check_FH(data, DIRECTORY, FALSE);
   if(res_CREATE4.status != NFS4_OK)
     goto out;
 
@@ -110,9 +110,9 @@ int nfs4_op_create(struct nfs_argop4 *op,
    * inode creation or not */
   exp_hdl = data->pexport->export_hdl;
   fsal_status = exp_hdl->ops->check_quota(exp_hdl,
-					  data->pexport->fullpath,
-					  FSAL_QUOTA_INODES,
-					  data->req_ctx);
+                                          data->pexport->fullpath,
+                                          FSAL_QUOTA_INODES,
+                                          data->req_ctx);
   if( FSAL_IS_ERROR( fsal_status ) )
     {
       res_CREATE4.status = NFS4ERR_DQUOT ;
@@ -474,6 +474,10 @@ int nfs4_op_create(struct nfs_argop4 *op,
   if (data->current_entry) {
       cache_inode_put(data->current_entry);
   }
+  if (data->current_ds) {
+      data->current_ds->ops->put(data->current_ds);
+  }
+  data->current_ds = NULL;
   data->current_entry = entry_new;
   data->current_filetype = entry_new->type;
 

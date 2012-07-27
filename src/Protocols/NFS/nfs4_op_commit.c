@@ -25,8 +25,8 @@
  */
 
 /**
- * \file    nfs4_op_commit.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs4_op_commit.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  *
@@ -60,16 +60,11 @@
 #include "nfs_file_handle.h"
 #include "fsal_pnfs.h"
 
-#if 0
-
 static int op_dscommit(struct nfs_argop4 *op,
                        compound_data_t * data,
                        struct nfs_resop4 *resp);
 
-#endif /* 0 */
-
 /**
- *
  * @brief Implemtation of NFS4_OP_COMMIT
  *
  * This function implemtats NFS4_OP_COMMIT.
@@ -103,18 +98,14 @@ int nfs4_op_commit(struct nfs_argop4 *op,
   /*
    * Do basic checks on a filehandle Commit is done only on a file
    */
-  res_COMMIT4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  res_COMMIT4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, TRUE);
   if(res_COMMIT4.status != NFS4_OK)
     return res_COMMIT4.status;
 
-#if 0
-
-  if((data->minorversion == 1) &&
-     (nfs4_Is_Fh_DSHandle(&data->currentFH)))
+  if ((nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {
       return(op_dscommit(op, data, resp));
     }
-#endif /* 0*/
 
   // FIX ME!! At the moment we just assume the user is _not_ using
   // the ganesha unsafe buffer. In the future, a check based on
@@ -152,8 +143,6 @@ void nfs4_op_commit_Free(COMMIT4res *resp)
   return;
 } /* nfs4_op_commit_Free */
 
-#if 0
-
 /**
  *
  * @brief Call pNFS data server commit
@@ -169,40 +158,26 @@ void nfs4_op_commit_Free(COMMIT4res *resp)
  *
  */
 
-static int op_dscommit(struct nfs_argop4 *op,
-                       compound_data_t * data,
-                       struct nfs_resop4 *resp)
+static int
+op_dscommit(struct nfs_argop4 *op,
+            compound_data_t *data,
+            struct nfs_resop4 *resp)
 {
-        /* FSAL file handle */
-        fsal_handle_t handle;
-  struct fsal_handle_desc fh_desc;
-  /* NFSv4 status code */
-  nfsstat4 nfs_status = 0;
+        /* NFSv4 status code */
+        nfsstat4 nfs_status = 0;
 
-  /* Construct the FSAL file handle */
+        /* Construct the FSAL file handle */
 
-  if ((nfs4_FhandleToFSAL(&data->currentFH,
-                          &fh_desc,
-                          data->pcontext)) == 0)
-    {
-      res_COMMIT4.status = NFS4ERR_INVAL;
-      return res_COMMIT4.status;
-    }
+        /* Call the commit operation */
+        nfs_status = data->current_ds->ops->commit(data->current_ds,
+                                                   data->req_ctx,
+                                                   arg_COMMIT4.offset,
+                                                   arg_COMMIT4.count,
+                                                   &res_COMMIT4
+                                                   .COMMIT4res_u.resok4
+                                                   .writeverf);
 
-  memset(&handle, 0, sizeof(handle));
-  memcpy(&handle, fh_desc.start, fh_desc.len);
-
-  /* Call the commit operation */
-
-  nfs_status = fsal_dsfunctions
-    .DS_commit(&handle,
-               data->pcontext,
-               arg_COMMIT4.offset,
-               arg_COMMIT4.count,
-               &res_COMMIT4.COMMIT4res_u.resok4.writeverf);
-
-  res_COMMIT4.status = nfs_status;
-  return res_COMMIT4.status;
+        res_COMMIT4.status = nfs_status;
+        return res_COMMIT4.status;
 }
 
-#endif /* 0 */

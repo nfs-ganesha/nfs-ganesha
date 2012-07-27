@@ -94,7 +94,8 @@ int nfs4_op_close(struct nfs_argop4 *op,
         res_CLOSE4->status = NFS4_OK;
 
         /* Do basic checks on a filehandle Object should be a file */
-        res_CLOSE4->status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+        res_CLOSE4->status = nfs4_sanity_check_FH(data, REGULAR_FILE,
+                                                  FALSE);
         if (res_CLOSE4->status != NFS4_OK) {
                 return res_CLOSE4->status;
         }

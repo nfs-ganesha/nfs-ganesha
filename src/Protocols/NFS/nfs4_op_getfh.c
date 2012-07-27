@@ -74,7 +74,7 @@ int nfs4_op_getfh(struct nfs_argop4 *op,
   LogHandleNFS4("NFS4 GETFH BEFORE: %s", &data->currentFH);
 
   /* Do basic checks on a filehandle */
-  res_GETFH.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE);
+  res_GETFH.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, TRUE);
   if(res_GETFH.status != NFS4_OK)
     return res_GETFH.status;
 

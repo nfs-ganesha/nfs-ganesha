@@ -708,19 +708,29 @@ void compound_data_Free(compound_data_t *data)
   if (data->saved_entry)
       cache_inode_put(data->saved_entry);
 
-  if(data->currentFH.nfs_fh4_val != NULL)
+  if (data->current_ds) {
+      data->current_ds->ops->put(data->current_ds);
+      data->current_ds = NULL;
+  }
+
+  if (data->saved_ds) {
+      data->saved_ds->ops->put(data->saved_ds);
+      data->saved_ds = NULL;
+  }
+
+  if (data->currentFH.nfs_fh4_val != NULL)
     gsh_free(data->currentFH.nfs_fh4_val);
 
-  if(data->rootFH.nfs_fh4_val != NULL)
+  if (data->rootFH.nfs_fh4_val != NULL)
     gsh_free(data->rootFH.nfs_fh4_val);
 
-  if(data->publicFH.nfs_fh4_val != NULL)
+  if (data->publicFH.nfs_fh4_val != NULL)
     gsh_free(data->publicFH.nfs_fh4_val);
 
-  if(data->savedFH.nfs_fh4_val != NULL)
+  if (data->savedFH.nfs_fh4_val != NULL)
     gsh_free(data->savedFH.nfs_fh4_val);
 
-  if(data->mounted_on_FH.nfs_fh4_val != NULL)
+  if (data->mounted_on_FH.nfs_fh4_val != NULL)
     gsh_free(data->mounted_on_FH.nfs_fh4_val);
 
 }                               /* compound_data_Free */

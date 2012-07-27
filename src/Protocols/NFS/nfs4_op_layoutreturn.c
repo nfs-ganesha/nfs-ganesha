@@ -117,7 +117,8 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
         switch (arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype) {
         case LAYOUTRETURN4_FILE:
                 if ((nfs_status = nfs4_sanity_check_FH(data,
-                                                       REGULAR_FILE))
+                                                       REGULAR_FILE,
+                                                       FALSE))
                     != NFS4_OK) {
                         res_LAYOUTRETURN4->lorr_status = nfs_status;
                         return res_LAYOUTRETURN4->lorr_status;
@@ -188,7 +189,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
 
         case LAYOUTRETURN4_FSID:
                 if ((nfs_status
-                     = nfs4_sanity_check_FH(data, 0))
+                     = nfs4_sanity_check_FH(data, NO_FILE_TYPE, FALSE))
                     != NFS4_OK) {
                         res_LAYOUTRETURN4->lorr_status = nfs_status;
                         return res_LAYOUTRETURN4->lorr_status;

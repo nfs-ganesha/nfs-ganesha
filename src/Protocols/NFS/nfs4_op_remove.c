@@ -81,7 +81,7 @@ int nfs4_op_remove(struct nfs_argop4 *op,
    * Delete arg_REMOVE4.target in directory pointed by currentFH
    * Make sure the currentFH is pointed a directory
    */
-  res_REMOVE4.status = nfs4_sanity_check_FH(data, DIRECTORY);
+  res_REMOVE4.status = nfs4_sanity_check_FH(data, DIRECTORY, FALSE);
   if(res_REMOVE4.status != NFS4_OK)
     goto out;
 

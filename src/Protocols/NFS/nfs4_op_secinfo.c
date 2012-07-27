@@ -92,7 +92,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
    * Do basic checks on a filehandle
    * SecInfo is done only on a directory
    */
-  res_SECINFO4.status = nfs4_sanity_check_FH(data, DIRECTORY);
+  res_SECINFO4.status = nfs4_sanity_check_FH(data, DIRECTORY, FALSE);
   if(res_SECINFO4.status != NFS4_OK)
     goto out;
 

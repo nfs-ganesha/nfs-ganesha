@@ -84,7 +84,8 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
    * Do basic checks on a filehandle You can readlink only on a link
    * ...
    */
-  res_READLINK4.status = nfs4_sanity_check_FH(data, SYMBOLIC_LINK);
+  res_READLINK4.status = nfs4_sanity_check_FH(data, SYMBOLIC_LINK,
+                                              FALSE);
   if(res_READLINK4.status != NFS4_OK)
     return res_READLINK4.status;
 

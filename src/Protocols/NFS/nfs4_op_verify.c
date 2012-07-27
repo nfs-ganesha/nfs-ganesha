@@ -79,7 +79,7 @@ int nfs4_op_verify(struct nfs_argop4 *op,
   res_VERIFY4.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_VERIFY4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE);
+  res_VERIFY4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, FALSE);
   if(res_VERIFY4.status != NFS4_OK)
     return res_VERIFY4.status;
 

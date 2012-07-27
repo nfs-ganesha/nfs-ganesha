@@ -97,7 +97,8 @@ int nfs4_op_locku(struct nfs_argop4 *op,
         resp->resop = NFS4_OP_LOCKU;
         res_LOCKU4->status = NFS4_OK;
 
-        res_LOCKU4->status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+        res_LOCKU4->status = nfs4_sanity_check_FH(data, REGULAR_FILE,
+                                                  FALSE);
         if(res_LOCKU4->status != NFS4_OK) {
                 return res_LOCKU4->status;
         }

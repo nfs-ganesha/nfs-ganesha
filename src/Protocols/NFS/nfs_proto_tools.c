@@ -4407,8 +4407,7 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 }
 
 /**
- *
- * nfs4_sanity_check_FH: Do basic checks on a filehandle
+ * @brief Do basic checks on a filehandle
  *
  * This function performs basic checks to make sure the supplied
  * filehandle is sane for a given operation.
@@ -4416,13 +4415,15 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
  * @param data          [IN] Compound_data_t for the operation to check
  * @param required_type [IN] The file type this operation requires.
  *                           Set to 0 to allow any type.
+ * @param ds_allowed    [IN] TRUE if DS handles are allowed.
  *
  * @return NFSv4.1 status codes
  */
 
 nfsstat4
 nfs4_sanity_check_FH(compound_data_t *data,
-                     object_file_type_t required_type)
+                     object_file_type_t required_type,
+                     bool_t ds_allowed)
 {
         /* If there is no FH */
         if (nfs4_Is_Fh_Empty(&(data->currentFH))) {
@@ -4467,7 +4468,7 @@ nfs4_sanity_check_FH(compound_data_t *data,
                 }
         }
 
-        if (nfs4_Is_Fh_DSHandle(&data->currentFH)) {
+        if (nfs4_Is_Fh_DSHandle(&data->currentFH) && !ds_allowed) {
                 return NFS4ERR_INVAL;
         }
 
@@ -4510,3 +4511,72 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
         return status;
 }
 
+/**
+ *
+ * @brief Do basic checks on saved filehandle
+ *
+ * This function performs basic checks to make sure the supplied
+ * filehandle is sane for a given operation.
+ *
+ * @param data          [IN] Compound_data_t for the operation to check
+ * @param required_type [IN] The file type this operation requires.
+ *                           Set to 0 to allow any type.
+ * @param ds_allowed    [IN] TRUE if DS handles are allowed.
+ *
+ * @return NFSv4.1 status codes
+ */
+
+nfsstat4
+nfs4_sanity_check_saved_FH(compound_data_t *data,
+                           object_file_type_t required_type,
+                           bool_t ds_allowed)
+{
+        /* If there is no FH */
+        if (nfs4_Is_Fh_Empty(&(data->savedFH))) {
+                LogDebug(COMPONENT_FILEHANDLE,
+                         "nfs4_Is_Fh_Empty failed");
+                return NFS4ERR_NOFILEHANDLE;
+        }
+
+        /* If the filehandle is invalid */
+        if (nfs4_Is_Fh_Invalid(&(data->savedFH))) {
+                LogDebug(COMPONENT_FILEHANDLE,
+                         "nfs4_Is_Fh_Invalid failed");
+                return NFS4ERR_BADHANDLE;
+        }
+
+        /* Tests if the Filehandle is expired (for volatile filehandle) */
+        if (nfs4_Is_Fh_Expired(&(data->savedFH))) {
+                LogDebug(COMPONENT_FILEHANDLE,
+                         "nfs4_Is_Fh_Expired failed");
+                return NFS4ERR_FHEXPIRED;
+        }
+
+        /* Check for the correct file type */
+        if (required_type != NO_FILE_TYPE) {
+                if (data->saved_filetype != required_type) {
+                        LogDebug(COMPONENT_NFSPROTO,
+                                 "Wrong file type");
+
+                        if (required_type == DIRECTORY) {
+                                return NFS4ERR_NOTDIR;
+                        }
+                        else if (required_type == SYMBOLIC_LINK) {
+                                return NFS4ERR_INVAL;
+                        }
+
+                        switch (data->saved_filetype) {
+                        case DIRECTORY:
+                                return NFS4ERR_ISDIR;
+                        default:
+                                return NFS4ERR_INVAL;
+                        }
+                }
+        }
+
+        if (nfs4_Is_Fh_DSHandle(&data->savedFH) && !ds_allowed) {
+                return NFS4ERR_INVAL;
+        }
+
+        return NFS4_OK;
+} /* nfs4_sanity_check_saved_FH */

@@ -415,6 +415,7 @@ int register_fsal(struct fsal_module *fsal_hdl,
 	extern struct fsal_ops def_fsal_ops;
 	extern struct export_ops def_export_ops;
 	extern struct fsal_obj_ops def_handle_ops;
+	extern struct fsal_ds_ops def_ds_ops;
 
 	if((major_version != FSAL_MAJOR_VERSION) ||
 	   (minor_version > FSAL_MINOR_VERSION)) {
@@ -467,6 +468,13 @@ int register_fsal(struct fsal_module *fsal_hdl,
 		goto errout;
 	}
 	memcpy(fsal_hdl->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
+
+        fsal_hdl->ds_ops = malloc(sizeof(struct fsal_obj_ops));
+        if(fsal_hdl->ds_ops == NULL) {
+                so_error = ENOMEM;
+                goto errout;
+        }
+        memcpy(fsal_hdl->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
 
 	pthread_mutexattr_init(&attrs);
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);

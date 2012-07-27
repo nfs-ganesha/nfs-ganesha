@@ -95,7 +95,8 @@ nfs4_op_lookup(struct nfs_argop4 *op,
         res_LOOKUP4->status = NFS4_OK;
 
         /* Do basic checks on a filehandle */
-        res_LOOKUP4->status = nfs4_sanity_check_FH(data, DIRECTORY);
+        res_LOOKUP4->status = nfs4_sanity_check_FH(data, DIRECTORY,
+                                                   FALSE);
         if (res_LOOKUP4->status != NFS4_OK) {
 		/* for some reason lookup is picky.  Just not being
 		 * dir is not enough.  We want to know it is a symlink

@@ -84,7 +84,8 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
    * Do basic checks on a filehandle
    * Should not operate on non-file objects
    */
-  res_OPEN_CONFIRM4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  res_OPEN_CONFIRM4.status = nfs4_sanity_check_FH(data, REGULAR_FILE,
+                                                  FALSE);
   if(res_OPEN_CONFIRM4.status != NFS4_OK)
     return res_OPEN_CONFIRM4.status;
 

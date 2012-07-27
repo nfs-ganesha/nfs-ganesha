@@ -249,7 +249,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      res_READDIR4.status = NFS4_OK;
 
      if ((res_READDIR4.status
-          = nfs4_sanity_check_FH(data, DIRECTORY)) != NFS4_OK) {
+          = nfs4_sanity_check_FH(data, DIRECTORY, FALSE)) != NFS4_OK) {
           goto out;
      }
 

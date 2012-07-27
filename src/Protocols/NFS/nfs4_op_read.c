@@ -53,13 +53,9 @@
 #include <unistd.h>
 #include "fsal_pnfs.h"
 
-#if 0
-
 static int op_dsread(struct nfs_argop4 *op,
                      compound_data_t * data,
                      struct nfs_resop4 *resp);
-
-#endif /* 0 */
 
 /**
  * @brief The NFS4_OP_READ operation
@@ -103,7 +99,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
    * Do basic checks on a filehandle
    * Only files can be read
    */
-  res_READ4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  res_READ4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, TRUE);
   if(res_READ4.status != NFS4_OK)
     return res_READ4.status;
 
@@ -112,13 +108,10 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_read_xattr(op, data, resp);
 
-#if 0
-  if((data->minorversion == 1) &&
-     (nfs4_Is_Fh_DSHandle(&data->currentFH)))
+  if (nfs4_Is_Fh_DSHandle(&data->currentFH))
     {
       return(op_dsread(op, data, resp));
     }
-#endif /* 0 */
 
   /* Manage access type MDONLY */
   if(( data->pexport->access_type == ACCESSTYPE_MDONLY ) ||
@@ -376,8 +369,6 @@ void nfs4_op_read_Free(READ4res *resp)
   return;
 } /* nfs4_op_read_Free */
 
-#if 0
-
 /**
  * @brief Read on a pNFS pNFS data server
  *
@@ -396,68 +387,51 @@ static int op_dsread(struct nfs_argop4 *op,
                      compound_data_t *data,
                      struct nfs_resop4 *resp)
 {
-  /* The FSAL file handle */
-  fsal_handle_t handle;
-  struct fsal_handle_desc fh_desc;
-  /* NFSv4 return code */
-  nfsstat4 nfs_status = 0;
-  /* Buffer into which data is to be read */
-  caddr_t buffer = NULL;
-  /* End of file flag */
-  fsal_boolean_t eof = FALSE;
+        /* NFSv4 return code */
+        nfsstat4 nfs_status = 0;
+        /* Buffer into which data is to be read */
+        void *buffer = NULL;
+        /* End of file flag */
+        bool_t eof = FALSE;
 
-  /* Don't bother calling the FSAL if the read length is 0. */
+        /* Don't bother calling the FSAL if the read length is 0. */
 
-  if(arg_READ4.count == 0)
-    {
-      res_READ4.READ4res_u.resok4.eof = FALSE;
-      res_READ4.READ4res_u.resok4.data.data_len = 0;
-      res_READ4.READ4res_u.resok4.data.data_val = NULL;
-      res_READ4.status = NFS4_OK;
-      return res_READ4.status;
-    }
+        if (arg_READ4.count == 0) {
+                res_READ4.READ4res_u.resok4.eof = FALSE;
+                res_READ4.READ4res_u.resok4.data.data_len = 0;
+                res_READ4.READ4res_u.resok4.data.data_val = NULL;
+                res_READ4.status = NFS4_OK;
+                return res_READ4.status;
+        }
 
-  /* Construct the FSAL file handle */
+        /* Construct the FSAL file handle */
 
-  if ((nfs4_FhandleToFSAL(&data->currentFH,
-                          &fh_desc,
-                          data->pcontext)) == 0)
-    {
-      res_READ4.status = NFS4ERR_INVAL;
-      return res_READ4.status;
-    }
-  memset(&handle, 0, sizeof(handle));
-  memcpy(&handle, fh_desc.start, fh_desc.len);
+        buffer = gsh_malloc_aligned(4096, arg_READ4.count);
+        if (buffer == NULL) {
+                res_READ4.status = NFS4ERR_SERVERFAULT;
+                return res_READ4.status;
+        }
 
-  buffer = gsh_malloc_aligned(4096, arg_READ4.count);
-  if (buffer == NULL)
-    {
-      res_READ4.status = NFS4ERR_SERVERFAULT;
-      return res_READ4.status;
-    }
+        res_READ4.READ4res_u.resok4.data.data_val = buffer;
 
-  res_READ4.READ4res_u.resok4.data.data_val = buffer;
+        if ((nfs_status
+             = data->current_ds->ops->read(data->current_ds,
+                                           data->req_ctx,
+                                           &arg_READ4.stateid,
+                                           arg_READ4.offset,
+                                           arg_READ4.count,
+                                           res_READ4.READ4res_u
+                                           .resok4.data.data_val,
+                                           &res_READ4.READ4res_u
+                                           .resok4.data.data_len,
+                                           &eof)) != NFS4_OK) {
+                gsh_free(buffer);
+                buffer = NULL;
+        }
 
-  if ((nfs_status
-       = fsal_dsfunctions.DS_read(&handle,
-                                  data->pcontext,
-                                  &arg_READ4.stateid,
-                                  arg_READ4.offset,
-                                  arg_READ4.count,
-                                  res_READ4.READ4res_u.resok4.data.data_val,
-                                  &res_READ4.READ4res_u.resok4.data.data_len,
-                                  &eof))
-      != NFS4_OK)
-    {
-      gsh_free(buffer);
-      buffer = NULL;
-    }
+        res_READ4.READ4res_u.resok4.eof = eof;
 
-  res_READ4.READ4res_u.resok4.eof = eof;
+        res_READ4.status = nfs_status;
 
-  res_READ4.status = nfs_status;
-
-  return res_READ4.status;
+        return res_READ4.status;
 }
-
-#endif /* 0 */
