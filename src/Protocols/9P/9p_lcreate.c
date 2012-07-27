@@ -70,8 +70,8 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
   u32 iounit = _9P_IOUNIT ; ;
 
   cache_entry_t       * pentry_newfile = NULL ;
-  fsal_name_t           file_name ; 
-  fsal_attrib_list_t    fsalattr ;
+  char                  file_name[MAXNAMLEN] ; 
+  struct attrlist       fsalattr ;
   cache_inode_status_t  cache_status ;
   fsal_openflags_t      openflags = 0 ;
 
@@ -94,19 +94,18 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
-   snprintf( file_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-   file_name.len = *name_len+1 ;
+   snprintf( file_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
    /* Create the file */
 
    /* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
    if( ( pentry_newfile = cache_inode_create( pfid->pentry,
-                                              &file_name,
+                                              file_name,
                                               REGULAR_FILE,
                                               *mode,
                                               NULL,
                                               &fsalattr,
-                                              &pfid->fsal_op_context, 
+                                              &pfid->op_context, 
      			 		      &cache_status)) == NULL)
      return  _9p_rerror( preq9p, msgtag,  _9p_tools_errno( cache_status ) , plenout, preply ) ;
       
@@ -114,7 +113,7 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 
    if(cache_inode_open( pentry_newfile, 
                         openflags, 
-                        &pfid->fsal_op_context,
+                        &pfid->op_context,
                         0, 
                         &cache_status) != CACHE_INODE_SUCCESS) 
      return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

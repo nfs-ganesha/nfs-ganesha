@@ -77,7 +77,8 @@ typedef uint64_t u64;
 #define _9P_BLK_SIZE 4096
 #define _9P_IOUNIT   0
 
-#define _9P_RDMA_CHUNK_SIZE 8*1024
+//#define _9P_RDMA_CHUNK_SIZE 8*1024
+#define _9P_RDMA_CHUNK_SIZE 65*1024
 #define _9P_RDMA_RECV_NUM 1
 #define _9P_RDMA_BACKLOG 10 
 
@@ -271,7 +272,7 @@ struct _9p_str {
  * @version: 16-bit monotonically incrementing version number
  * @path: 64-bit per-server-unique ID for a file system element
  *
- * qids are identifiers used by 9P servers to track file system
+ * qids are /identifiers used by 9P servers to track file system
  * entities.  The type is used to differentiate semantics for operations
  * on the entity (ie. read means something different on a directory than
  * on a file).  The path provides a server unique index for an entity
@@ -299,11 +300,12 @@ typedef struct _9p_param__
 
 typedef struct _9p_fid__
 {
-  u32                  fid ;
-  fsal_op_context_t    fsal_op_context ;
-  exportlist_t       * pexport ;
-  cache_entry_t      * pentry ;
-  _9p_qid_t            qid ;
+  u32                     fid ;
+  struct req_op_context   op_context ;
+  struct user_cred        ucred ;
+  exportlist_t          * pexport ;
+  cache_entry_t         * pentry ;
+  _9p_qid_t               qid ;
   union 
     { 
        u32      iounit ;
@@ -315,19 +317,40 @@ typedef struct _9p_fid__
     } specdata ;
 } _9p_fid_t ;
 
+typedef enum _9p_trans_type__
+{
+  _9P_TCP,
+  _9P_RDMA
+} _9p_trans_type_t ;
+
+#ifdef _USE_9P_RDMA
+typedef struct _9p_rdma_ep__
+{
+  _9p_datamr_t * datamr ;
+  msk_trans_t  * trans ;
+} _9p_rdma_ep_t ;
+#endif
 
 typedef struct _9p_conn__
 {
-  long int        sockfd ;
+  union  trans_data
+   {
+     long int        sockfd ;
+#ifdef _USE_9P_RDMA
+      _9p_rdma_ep_t  rdma_ep ;
+#endif 
+   } trans_data ;
+  _9p_trans_type_t trans_type ;
   struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
   _9p_fid_t       fids[_9P_FID_PER_CONN] ;
 } _9p_conn_t ;
 
 typedef struct _9p_request_data__
 {
-  char         _9pmsg[_9P_MSG_SIZE] ;
-  _9p_conn_t  *  pconn ; 
+  char        * _9pmsg ;
+  _9p_conn_t  *  pconn ;
 } _9p_request_data_t ;
+
 
 typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
                                void * pworker_data,
@@ -488,10 +511,10 @@ int _9p_read_conf( config_file_t   in_config,
 int _9p_init( _9p_parameter_t * pparam ) ;
 
 /* Tools functions */
-int _9p_tools_get_fsal_op_context_by_uid( u32 uid, _9p_fid_t * pfid ) ;
-int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) ;
+int _9p_tools_get_req_context_by_uid( u32 uid, _9p_fid_t * pfid ) ;
+int _9p_tools_get_req_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) ;
 int _9p_tools_errno( cache_inode_status_t cache_status ) ;
-void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pstat ) ;
+void _9p_tools_fsal_attr2stat( struct attrlist * pfsalattr, struct stat * pstat ) ;
 void _9p_tools_acess2fsal( u32 * paccessin, fsal_accessflags_t * pfsalaccess ) ;
 void _9p_openflags2FSAL( u32 * inflags, fsal_openflags_t * outflags ) ;
 void _9p_chomp_attr_value(char *str, size_t size) ;
@@ -502,6 +525,8 @@ void* _9p_rdma_handle_trans(void *arg) ;
 void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg) ;
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) ;
 void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) ;
+void _9p_rdma_callback_recv_wkr(msk_trans_t *trans, void *arg) ;
+
 #endif
 
 /* Protocol functions */

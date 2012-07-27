@@ -82,8 +82,8 @@ int _9p_clunk( _9p_request_data_t * preq9p,
     gsh_free( pfid->specdata.xattr.xattr_content ) ;
 
   /* If object is an opened file, close it */
-  if( ( pfid->pentry->type == REGULAR_FILE ) && 
-      ( cache_inode_fd( pfid->pentry ) != NULL ) )
+  /* BUGAZOMEU : Verifier que le fichier est bien ouvert avant de le fermer (ex cache_inode_fd ) */
+  if( pfid->pentry->type == REGULAR_FILE )  
    {
      if(cache_inode_close( pfid->pentry,
                            CACHE_INODE_FLAG_REALLYCLOSE, // A clunk is associated with an actual close on the client side

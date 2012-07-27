@@ -66,9 +66,9 @@ int _9p_link( _9p_request_data_t * preq9p,
   _9p_fid_t * pdfid = NULL ;
   _9p_fid_t * ptargetfid = NULL ;
 
-  fsal_attrib_list_t    fsalattr ;
+  struct attrlist       fsalattr ;
   cache_inode_status_t  cache_status ;
-  fsal_name_t           link_name ;
+  char                  link_name[MAXNAMLEN] ; ;
 
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -95,14 +95,13 @@ int _9p_link( _9p_request_data_t * preq9p,
    ptargetfid = &preq9p->pconn->fids[*targetfid] ;
 
    /* Let's do the job */
-   snprintf( link_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-   link_name.len = *name_len +1 ;
+   snprintf( link_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
    if( cache_inode_link( ptargetfid->pentry,
                          pdfid->pentry,
-                         &link_name,
+                         link_name,
                          &fsalattr,
-                         &pdfid->fsal_op_context,
+                         &pdfid->op_context,
                          &cache_status) != CACHE_INODE_SUCCESS )
      return  _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 

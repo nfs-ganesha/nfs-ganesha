@@ -93,10 +93,8 @@ int _9p_statfs( _9p_request_data_t * preq9p,
   pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Get the FS's stats */
-  if( cache_inode_statfs( pfid->pentry,
-                          &dynamicinfo,
-                          &pfid->fsal_op_context, 
-                          &cache_status ) != CACHE_INODE_SUCCESS )
+  if( ( cache_status = cache_inode_statfs( pfid->pentry,
+                                           &dynamicinfo ) ) != CACHE_INODE_SUCCESS )
     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
   blocks  = (u64 *)&dynamicinfo.total_bytes ;
@@ -104,7 +102,7 @@ int _9p_statfs( _9p_request_data_t * preq9p,
   bavail  = (u64 *)&dynamicinfo.avail_bytes ;
   files   = (u64 *)&dynamicinfo.total_files ;
   ffree   = (u64 *)&dynamicinfo.free_files ;
-  fsid    = (u64 )pfid->pentry->attributes.rawdev.major ;
+  fsid    = (u64 )pfid->pentry->obj_handle->attributes.rawdev.major ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RSTATFS ) ;

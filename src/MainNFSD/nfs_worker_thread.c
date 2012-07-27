@@ -1716,7 +1716,12 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *nfsreq,
 static void _9p_execute( _9p_request_data_t * preq9p, 
                           nfs_worker_data_t * pworker_data)
 {
-  _9p_process_request( preq9p, pworker_data ) ;
+  if( preq9p->pconn->trans_type == _9P_TCP )
+    _9p_tcp_process_request( preq9p, pworker_data ) ;
+#ifdef _USE_9P_RDMA
+  else if( preq9p->pconn->trans_type == _9P_RDMA )
+     _9p_rdma_process_request( preq9p, pworker_data ) ;
+#endif
   return ;
 } /* _9p_execute */
 #endif

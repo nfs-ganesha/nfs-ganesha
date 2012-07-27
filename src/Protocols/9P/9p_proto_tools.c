@@ -55,13 +55,12 @@ int _9p_init(  _9p_parameter_t * pparam )
   return 0 ;
 } /* _9p_init */
 
-int _9p_tools_get_fsal_op_context_by_uid( u32 uid, _9p_fid_t * pfid ) 
+int _9p_tools_get_req_context_by_uid( u32 uid, _9p_fid_t * pfid ) 
 {
   char buff[1024];
   struct passwd p;
   struct passwd *pp;
   gid_t gid ;
-  fsal_status_t fsal_status ;
 
   if((getpwuid_r( uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL))
     {
@@ -70,18 +69,19 @@ int _9p_tools_get_fsal_op_context_by_uid( u32 uid, _9p_fid_t * pfid )
     }
   else
    gid = p.pw_gid ;
-  
+ 
+  pfid->ucred.caller_uid = uid;
+  pfid->ucred.caller_gid = gid;
+  pfid->ucred.caller_glen = 0;
+  pfid->ucred.caller_garray = NULL;
 
-  fsal_status = FSAL_GetClientContext( &pfid->fsal_op_context,
-                                       &pfid->pexport->FS_export_context,
-                                       uid, gid, NULL, 0 ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-   return -fsal_status.major ; 
+  pfid->op_context.creds = &pfid->ucred;
+  pfid->op_context.caller_addr = NULL ; /* Useless for 9P, we'll see if daemon crashes... */
 
   return 0 ;
 } /* _9p_tools_get_fsal_cred */
 
-int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) 
+int _9p_tools_get_req_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) 
 {
   char name[1024] ;
   uid_t uid ;
@@ -96,7 +96,7 @@ int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_
   else
     return -ENOENT ;
   
-  return _9p_tools_get_fsal_op_context_by_uid( uid, pfid ) ; 
+  return _9p_tools_get_req_context_by_uid( uid, pfid ) ; 
 } /* _9p_tools_get_fsal_cred */
 
 
@@ -202,7 +202,7 @@ int _9p_tools_errno( cache_inode_status_t cache_status )
   return rc ;
 } /* _9p_tools_errno */
 
-void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pstat )
+void _9p_tools_fsal_attr2stat( struct attrlist * pfsalattr, struct stat * pstat )
 {
   /* zero output structure */
   memset( (char *)pstat, 0, sizeof( struct stat ) ) ;
@@ -211,13 +211,13 @@ void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pst
   pstat->st_ino   = pfsalattr->fileid ;
 
   pstat->st_mode  = pfsalattr->mode ;
-  if( pfsalattr->type == FSAL_TYPE_DIR ) pstat->st_mode  |= __S_IFDIR  ;
-  if( pfsalattr->type == FSAL_TYPE_FILE ) pstat->st_mode |= __S_IFREG  ;
-  if( pfsalattr->type == FSAL_TYPE_LNK ) pstat->st_mode  |= __S_IFLNK  ;
-  if( pfsalattr->type == FSAL_TYPE_SOCK ) pstat->st_mode |= __S_IFSOCK ;
-  if( pfsalattr->type == FSAL_TYPE_BLK ) pstat->st_mode  |= __S_IFBLK  ;
-  if( pfsalattr->type == FSAL_TYPE_CHR ) pstat->st_mode  |= __S_IFCHR  ;
-  if( pfsalattr->type == FSAL_TYPE_FIFO ) pstat->st_mode |= __S_IFIFO  ;
+  if( pfsalattr->type == DIRECTORY ) pstat->st_mode  |= __S_IFDIR  ;
+  if( pfsalattr->type == REGULAR_FILE ) pstat->st_mode |= __S_IFREG  ;
+  if( pfsalattr->type == SYMBOLIC_LINK ) pstat->st_mode  |= __S_IFLNK  ;
+  if( pfsalattr->type == SOCKET_FILE ) pstat->st_mode |= __S_IFSOCK ;
+  if( pfsalattr->type == BLOCK_FILE ) pstat->st_mode  |= __S_IFBLK  ;
+  if( pfsalattr->type == CHARACTER_FILE ) pstat->st_mode  |= __S_IFCHR  ;
+  if( pfsalattr->type == FIFO_FILE ) pstat->st_mode |= __S_IFIFO  ;
 
   pstat->st_nlink   = (u32)pfsalattr->numlinks ;
   pstat->st_uid     = pfsalattr->owner ;
@@ -261,12 +261,12 @@ void _9p_openflags2FSAL( u32 * inflags, fsal_openflags_t * outflags )
   if( inflags == NULL || outflags == NULL )
     return ; 
 
-  if( *inflags & O_WRONLY ) *outflags |= FSAL_O_WRONLY  ;
+  if( *inflags & O_WRONLY ) *outflags |= FSAL_O_WRITE  ;
   if( *inflags & O_RDWR ) *outflags |= FSAL_O_RDWR  ;
   /* Exception : O_RDONLY has value 0, it can't be tested with a logical and */
   /* We consider that a non( has O_WRONLY or has O_RDWR ) case is RD_ONLY */
   if( !(*inflags & (O_WRONLY|O_RDWR)) )
-     *outflags = FSAL_O_RDONLY ;
+     *outflags = FSAL_O_READ ;
 
   return ;
 } /* _9p_openflags2FSAL */

@@ -66,9 +66,9 @@ int _9p_write( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
 
-  fsal_size_t size;
-  fsal_size_t written_size = 0;
-  fsal_boolean_t eof_met;
+  size_t size;
+  size_t written_size = 0;
+  bool_t eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   //uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
   uint64_t stable_flag = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
@@ -101,11 +101,10 @@ int _9p_write( _9p_request_data_t * preq9p,
    { 
      snprintf( xattrval, XATTR_BUFFERSIZE, "%.*s", *count, databuffer ) ;
 
-     fsal_status = FSAL_SetXAttrValueById( &pfid->pentry->handle,
-                                           pfid->specdata.xattr.xattr_id,
-                                           &pfid->fsal_op_context,
-                                           xattrval,
-                                           size+1 ) ;
+     fsal_status = pfid->pentry->obj_handle->ops->setextattr_value_by_id( pfid->pentry->obj_handle,
+                                                                          pfid->specdata.xattr.xattr_id,
+                                                                          xattrval,
+                                                                          size+1 ) ;
      if(FSAL_IS_ERROR(fsal_status))
        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
@@ -123,7 +122,7 @@ int _9p_write( _9p_request_data_t * preq9p,
                           &written_size,
                           databuffer,
                           &eof_met,
-                          &pfid->fsal_op_context,
+                          &pfid->op_context,
                           stable_flag,
                           &cache_status ) != CACHE_INODE_SUCCESS )
         return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;

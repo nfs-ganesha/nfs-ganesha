@@ -434,7 +434,7 @@ typedef enum request_type__
   NFS_CALL,
   NFS_REQUEST,
   NFS_REQUEST_LEADER,
-  _9P_REQUEST
+  _9P_REQUEST,
 } request_type_t ;
 
 typedef struct request_data__
@@ -687,11 +687,14 @@ void * upcall_simulator_thread( void * UnusedArg ) ;
 #ifdef _USE_9P
 void * _9p_dispatcher_thread(void *arg);
 void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
-void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) ;
+void _9p_tcp_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) ;
+int _9p_process_buffer(  _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data,
+                        char * replydata, u32 * poutlen ) ;
 #endif
 
 #ifdef _USE_9P_RDMA
 void * _9p_rdma_dispatcher_thread(void *arg);
+void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) ;
 #endif
 
 void nfs_operate_on_sigusr1() ;

@@ -77,7 +77,7 @@ int _9p_fsync( _9p_request_data_t * preq9p,
                          0LL, // start at beginning of file
                          0LL, // Mimic sync_file_range's behavior : count=0 means "whole file"
                          CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
-                         &pfid->fsal_op_context,
+                         &pfid->op_context,
                          &cache_status) != CACHE_INODE_SUCCESS )
     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 

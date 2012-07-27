@@ -68,8 +68,8 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
   _9p_qid_t qid_newdir ;
 
   cache_entry_t       * pentry_newdir = NULL ;
-  fsal_name_t           dir_name ; 
-  fsal_attrib_list_t    fsalattr ;
+  char                  dir_name[MAXNAMLEN] ; 
+  struct attrlist       fsalattr ;
   cache_inode_status_t  cache_status ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -91,19 +91,18 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
-  snprintf( dir_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-  dir_name.len = *name_len + 1 ;
+  snprintf( dir_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
    /* Create the directory */
 
    /* BUGAZOMEU: @todo : the gid parameter is not used yet */
    if( ( pentry_newdir = cache_inode_create( pfid->pentry,
-                                             &dir_name,
+                                             dir_name,
                                              DIRECTORY,
                                              *mode,
                                              NULL,
                                              &fsalattr,
-                                             &pfid->fsal_op_context,
+                                             &pfid->op_context,
                                              &cache_status)) == NULL)
     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 

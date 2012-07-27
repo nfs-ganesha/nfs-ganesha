@@ -313,7 +313,7 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry,
     memcpy(&v.hk.k, hashbuff, 8);
 #ifdef _USE_9P
     // tmp hook : it seems like client running v9fs dislike "negative" cookies
-    if( ((int64_t)v->hk.k) < 0LL ) v->hk.k = - v->hk.k ;
+    if( ((int64_t)v.hk.k) < 0LL ) v.hk.k = - v.hk.k ;
 #endif
 
     for (j = 0; j < maxj; j++) {

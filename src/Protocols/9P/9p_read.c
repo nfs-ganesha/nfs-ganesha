@@ -104,7 +104,7 @@ int _9p_read( _9p_request_data_t * preq9p,
                             &read_size,
                             databuffer,
                             &eof_met,
-                            &pfid->fsal_op_context,
+                            &pfid->op_context,
                             stable_flag,
                             &cache_status ) != CACHE_INODE_SUCCESS )
          return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

@@ -69,10 +69,10 @@ int _9p_walk( _9p_request_data_t * preq9p,
 
   unsigned int i = 0 ;
 
-  fsal_name_t name ; 
-  fsal_attrib_list_t fsalattr ;
-  cache_inode_status_t cache_status ;
-  cache_entry_t * pentry = NULL ;
+  char name[MAXNAMLEN] ; 
+  struct attrlist        fsalattr ;
+  cache_inode_status_t   cache_status ;
+  cache_entry_t        * pentry = NULL ;
 
   _9p_fid_t * pfid = NULL ;
   _9p_fid_t * pnewfid = NULL ;
@@ -117,24 +117,23 @@ int _9p_walk( _9p_request_data_t * preq9p,
   else 
    {
       pnewfid->fid = *newfid ;
-      pnewfid->fsal_op_context = pfid->fsal_op_context ;
+      pnewfid->op_context = pfid->op_context ;
       pnewfid->pexport = pfid->pexport ;
 
       /* the walk is in fact a lookup */
       pentry = pfid->pentry ;
       for( i = 0 ; i <  *nwname ; i ++ )
         {
-           snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
-           name.len =  *(wnames_len[i]) + 1 ;
+           snprintf( name, MAXNAMLEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
 
            LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
-            (u32)*msgtag, *fid, *newfid, i+1, *nwname, name.name ) ;
+            (u32)*msgtag, *fid, *newfid, i+1, *nwname, name ) ;
 
            /* refcount +1 */
            if( ( pnewfid->pentry = cache_inode_lookup( pentry,
-                                                       &name,
+                                                       name,
                                                        &fsalattr,
-                                                       &pfid->fsal_op_context,
+                                                       &pfid->op_context,
                                                        &cache_status ) ) == NULL )
               return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
@@ -143,7 +142,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
 
      /* Build the qid */
      pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
-     pnewfid->qid.path = (u64)pnewfid->pentry->attributes.fileid ;
+     pnewfid->qid.path = (u64)pnewfid->pentry->obj_handle->attributes.fileid ;
 
      pnewfid->specdata.xattr.xattr_id = 0 ;
      pnewfid->specdata.xattr.xattr_content = NULL ;
@@ -167,8 +166,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
           pnewfid->qid.type = _9P_QTDIR ;
 	  break ;
 
-        case UNASSIGNED:
-        case RECYCLED:
         default:
           LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
           return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
