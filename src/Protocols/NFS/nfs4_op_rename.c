@@ -260,7 +260,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
  *  itself.  equality here means same inode.
  */
 
-      if( !tst_entry_dst->obj_handle->ops->compare(tst_entry_dst->obj_handle,
+      if(tst_entry_dst->obj_handle->ops->compare(tst_entry_dst->obj_handle,
                                                    tst_entry_src->obj_handle))
         {
           /* For the change_info4, get the 'change' attributes for
