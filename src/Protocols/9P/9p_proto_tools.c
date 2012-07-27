@@ -61,7 +61,6 @@ int _9p_tools_get_req_context_by_uid( u32 uid, _9p_fid_t * pfid )
   struct passwd p;
   struct passwd *pp;
   gid_t gid ;
-  fsal_status_t fsal_status ;
 
   if((getpwuid_r( uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL))
     {
@@ -78,9 +77,6 @@ int _9p_tools_get_req_context_by_uid( u32 uid, _9p_fid_t * pfid )
 
   pfid->op_context.creds = &pfid->ucred;
   pfid->op_context.caller_addr = NULL ; /* Useless for 9P, we'll see if daemon crashes... */
-
-  if( FSAL_IS_ERROR( fsal_status ) )
-   return -fsal_status.major ; 
 
   return 0 ;
 } /* _9p_tools_get_fsal_cred */
