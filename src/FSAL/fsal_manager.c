@@ -301,7 +301,7 @@ errout:
 	load_state = idle;
 	pthread_mutex_unlock(&fsal_lock);
 	LogMajor(COMPONENT_INIT,
-		 "Failed to load module (%s) because: %s\n",
+		 "Failed to load module (%s) because: %s",
 		 path, strerror(retval));
 	return retval;
 }
