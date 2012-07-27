@@ -498,7 +498,7 @@ fsal_status_t PTFSAL_close(fsal_file_t * p_file_descriptor   /* IN */ )
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   /* call to close */
-  ccl_update_handle_nfs_state(p_file_descriptor->fd, NFS_CLOSE);
+  ptfsal_update_handle_nfs_state(p_file_descriptor->fd, NFS_CLOSE);
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
 }

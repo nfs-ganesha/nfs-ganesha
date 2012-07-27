@@ -198,8 +198,7 @@ extern pthread_mutex_t g_transid_mutex; // only one thread can change global
 #define SAMBA_EXPORT_ID_PARAM_NAME    "exportid"  // For ExportID
 #define SAMBA_STATDELTA_PARAM_NAME    "statdelta" // For Statistics Output
 #define MAX_FSI_PERF_COUNT            1000        // for m_perf_xxx counters
-#define CCL_OLDEST_HANDLE_TIMEOUT_SEC 10          // Timeout for opened handle
-                                                  // to be considered old
+
 // enum for client buffer return code state
 enum e_buf_rc_state {
   BUF_RC_STATE_UNKNOWN = 0,             // default
@@ -803,10 +802,7 @@ int ccl_readlink(ccl_context_t * pvfs_handle,
 int ccl_symlink(ccl_context_t * pvfs_handle,
                 const char    * path,
                 const char    * link_content);
-int ccl_find_oldest_handle(void);
-void ccl_update_handle_nfs_state(int handle_index, enum e_nfs_state state);
 void ccl_update_handle_last_io_timestamp(int handle_index);
-int ccl_implicit_close_for_nfs(int handle_index_to_close);
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
 //     Layer provide a copy of these functions and CCL call them (up calls)
