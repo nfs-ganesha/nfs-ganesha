@@ -101,12 +101,6 @@ else
 _9P_RDMA_LDADD = 
 endif
 
-if USE_9P_RDMA
-_9P_RDMA_LDADD = -lmsk -lrdmacm -libverbs
-else
-_9P_RDMA_LDADD = 
-endif
-
 if USE_FSAL_FUSE
 noinst_LTLIBRARIES           = libMainServices.la
 lib_LTLIBRARIES              = libganeshaNFS.la
