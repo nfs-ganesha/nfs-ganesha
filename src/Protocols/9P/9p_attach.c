@@ -78,7 +78,8 @@ int _9p_attach( _9p_request_data_t * preq9p,
   unsigned int found = FALSE;
   cache_inode_status_t cache_status ;
   cache_inode_fsal_data_t fsdata ;
-  struct netbuf fkey  ;
+  char fkey_data[NFS4_FHSIZE];
+  struct netbuf fkey = {.maxlen = sizeof(fkey_data), .buf = fkey_data};
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
