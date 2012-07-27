@@ -596,7 +596,7 @@ open4_create(OPEN4args           * arg,
         }
 
         *entry = entry_newfile;
-        return NFS4_OK;
+        return nfs4_Errno(cache_status);
 }
 
 
