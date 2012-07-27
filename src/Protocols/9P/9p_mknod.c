@@ -69,12 +69,12 @@ int _9p_mknod( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
   _9p_qid_t qid_newobj ;
 
-  cache_entry_t       * pentry_newobj = NULL ;
-  fsal_name_t           obj_name ; 
-  fsal_attrib_list_t    fsalattr ;
-  cache_inode_status_t  cache_status ;
-  cache_inode_file_type_t nodetype;
-  cache_inode_create_arg_t create_arg;
+  cache_entry_t            * pentry_newobj = NULL ;
+  char                       obj_name[MAXNAMLEN] ; 
+  struct attrlist            fsalattr ;
+  cache_inode_status_t       cache_status ;
+  object_file_type_t    nodetype;
+  cache_inode_create_arg_t   create_arg;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -99,8 +99,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
  
   pfid = &preq9p->pconn->fids[*fid] ;
 
-  snprintf( obj_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-  obj_name.len = *name_len + 1 ;
+  snprintf( obj_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
   /* Check for bad type */
   if( !( *mode & (S_IFCHR|S_IFBLK|S_IFIFO|S_IFSOCK) ) )
@@ -118,12 +117,12 @@ int _9p_mknod( _9p_request_data_t * preq9p,
    /* Create the directory */
    /**  @todo  BUGAZOMEU the gid parameter is not used yet */
    if( ( pentry_newobj = cache_inode_create( pfid->pentry,
-                                             &obj_name,
+                                             obj_name,
                                              nodetype,
                                              *mode,
                                              &create_arg,
                                              &fsalattr,
-                                             &pfid->fsal_op_context,
+                                             &pfid->op_context,
                                              &cache_status)) == NULL)
     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 

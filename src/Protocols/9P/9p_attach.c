@@ -66,7 +66,9 @@ int _9p_attach( _9p_request_data_t * preq9p,
   char * aname_str = NULL ;
   u32 * n_aname = NULL ;
 
-  fsal_attrib_list_t fsalattr ;
+  struct attrlist fsalattr ;
+  struct fsal_export *exp_hdl = NULL ;
+  fsal_status_t fsal_status ;
 
   u32 err = 0 ;
  
@@ -76,6 +78,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   unsigned int found = FALSE;
   cache_inode_status_t cache_status ;
   cache_inode_fsal_data_t fsdata ;
+  struct netbuf fkey  ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -132,19 +135,32 @@ int _9p_attach( _9p_request_data_t * preq9p,
   if( *uname_len != 0 )
    {
      /* Build the fid creds */
-    if( ( err = _9p_tools_get_fsal_op_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
+    if( ( err = _9p_tools_get_req_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
       return _9p_rerror( preq9p, msgtag, -err, plenout, preply ) ;
    }
   else
    {
     /* Build the fid creds */
-    if( ( err = _9p_tools_get_fsal_op_context_by_uid( *n_aname, pfid ) ) !=  0 )
+    if( ( err = _9p_tools_get_req_context_by_uid( *n_aname, pfid ) ) !=  0 )
       return _9p_rerror( preq9p, msgtag, -err, plenout, preply ) ;
    }
 
   /* Get the related pentry */
-  fsdata.fh_desc.start = (char *)pexport->proot_handle ;
-  FSAL_ExpandHandle(pfid->fsal_op_context.export_context, FSAL_DIGEST_SIZEOF, &fsdata.fh_desc);
+  exp_hdl = pexport->export_hdl;
+
+  fsal_status = exp_hdl->ops->extract_handle(exp_hdl, FSAL_DIGEST_SIZEOF, &fkey );
+  if( FSAL_IS_ERROR( fsal_status ) )
+   {
+      LogCrit( COMPONENT_9P, "Could not extract handle from export: fsal_status=(%u,%u)", 
+               fsal_status.major, fsal_status.minor ) ;
+      return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
+   }
+
+  memset(&fsdata, 0, sizeof(fsdata));
+
+  fsdata.export= pexport->export_hdl ;
+  fsdata.fh_desc.addr = fkey.buf;
+  fsdata.fh_desc.len = fkey.len;
 
   /* refcount */
   if (pfid->pentry) {
@@ -154,12 +170,11 @@ int _9p_attach( _9p_request_data_t * preq9p,
   /* refcount +1 */
   pfid->pentry = cache_inode_get( &fsdata,
                                   &fsalattr,
-                                  &pfid->fsal_op_context,
                                   NULL,
                                   &cache_status ) ;
 
   if( pfid->pentry == NULL )
-     return _9p_rerror( preq9p, msgtag, err, plenout, preply ) ;
+     return _9p_rerror( preq9p, msgtag,  _9p_tools_errno( cache_status ), plenout, preply ) ;
 
   /* Compute the qid */
   pfid->qid.type = _9P_QTDIR ;

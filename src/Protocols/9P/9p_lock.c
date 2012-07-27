@@ -137,8 +137,8 @@ int _9p_lock( _9p_request_data_t * preq9p,
          }
 
         if( state_lock( pfid->pentry,
-                        &pfid->fsal_op_context,
                         pfid->pexport,
+                        &pfid->op_context,
                         powner,
                         &state,
                         STATE_NON_BLOCKING,
@@ -160,7 +160,6 @@ int _9p_lock( _9p_request_data_t * preq9p,
 
       case _9P_LOCK_TYPE_UNLCK:
          if(state_unlock( pfid->pentry,
-                          &pfid->fsal_op_context,
                           pfid->pexport,
                           powner,
                           NULL,

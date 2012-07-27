@@ -300,11 +300,12 @@ typedef struct _9p_param__
 
 typedef struct _9p_fid__
 {
-  u32                  fid ;
-  fsal_op_context_t    fsal_op_context ;
-  exportlist_t       * pexport ;
-  cache_entry_t      * pentry ;
-  _9p_qid_t            qid ;
+  u32                     fid ;
+  struct req_op_context   op_context ;
+  struct user_cred        ucred ;
+  exportlist_t          * pexport ;
+  cache_entry_t         * pentry ;
+  _9p_qid_t               qid ;
   union 
     { 
        u32      iounit ;
@@ -510,10 +511,10 @@ int _9p_read_conf( config_file_t   in_config,
 int _9p_init( _9p_parameter_t * pparam ) ;
 
 /* Tools functions */
-int _9p_tools_get_fsal_op_context_by_uid( u32 uid, _9p_fid_t * pfid ) ;
-int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) ;
+int _9p_tools_get_req_context_by_uid( u32 uid, _9p_fid_t * pfid ) ;
+int _9p_tools_get_req_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) ;
 int _9p_tools_errno( cache_inode_status_t cache_status ) ;
-void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pstat ) ;
+void _9p_tools_fsal_attr2stat( struct attrlist * pfsalattr, struct stat * pstat ) ;
 void _9p_tools_acess2fsal( u32 * paccessin, fsal_accessflags_t * pfsalaccess ) ;
 void _9p_openflags2FSAL( u32 * inflags, fsal_openflags_t * outflags ) ;
 void _9p_chomp_attr_value(char *str, size_t size) ;

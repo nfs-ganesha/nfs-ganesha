@@ -67,13 +67,13 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   _9p_fid_t * poldfid = NULL ;
   _9p_fid_t * pnewfid = NULL ;
 
-  fsal_attrib_list_t    oldfsalattr ;
-  fsal_attrib_list_t    newfsalattr ;
+  struct attrlist    oldfsalattr ;
+  struct attrlist    newfsalattr ;
 
   cache_inode_status_t  cache_status ;
 
-  fsal_name_t           oldname ;
-  fsal_name_t           newname ;
+  char oldname[MAXNAMLEN] ;
+  char newname[MAXNAMLEN] ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -100,18 +100,16 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   pnewfid = &preq9p->pconn->fids[*newfid] ;
 
   /* Let's do the job */
-  snprintf( oldname.name, FSAL_MAX_NAME_LEN, "%.*s", *oldname_len, oldname_str ) ;
-  oldname.len = *oldname_len + 1 ;
-  snprintf( newname.name, FSAL_MAX_NAME_LEN, "%.*s", *newname_len, newname_str ) ;
-  newname.len = *newname_len + 1 ;
+  snprintf( oldname, MAXNAMLEN, "%.*s", *oldname_len, oldname_str ) ;
+  snprintf( newname, MAXNAMLEN, "%.*s", *newname_len, newname_str ) ;
 
   if( cache_inode_rename( poldfid->pentry,
-                          &oldname,
+                          oldname,
                           pnewfid->pentry,
-                          &newname,
+                          newname,
                           &oldfsalattr,
                           &newfsalattr,
-                          &poldfid->fsal_op_context, 
+                          &poldfid->op_context, 
                           &cache_status) != CACHE_INODE_SUCCESS )
     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 

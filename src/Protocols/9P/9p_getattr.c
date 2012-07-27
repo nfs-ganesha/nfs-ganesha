@@ -63,7 +63,7 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
   u64 * request_mask = NULL ;
-
+ 
   _9p_fid_t * pfid = NULL ;
 
   u64   valid        = 0LL ;  /* Not a pointer */
@@ -107,30 +107,30 @@ int _9p_getattr( _9p_request_data_t * preq9p,
 
   if( *request_mask & _9P_GETATTR_RDEV )
    {  
-     mode   = (u32)pfid->pentry->attributes.mode ;
-     if( pfid->pentry->attributes.type == FSAL_TYPE_DIR )  mode |= __S_IFDIR  ;
-     if( pfid->pentry->attributes.type == FSAL_TYPE_FILE ) mode |= __S_IFREG  ;
-     if( pfid->pentry->attributes.type == FSAL_TYPE_LNK )  mode |= __S_IFLNK  ;
-     if( pfid->pentry->attributes.type == FSAL_TYPE_SOCK ) mode |= __S_IFSOCK ;
-     if( pfid->pentry->attributes.type == FSAL_TYPE_BLK )  mode |= __S_IFBLK  ;
-     if( pfid->pentry->attributes.type == FSAL_TYPE_CHR )  mode |= __S_IFCHR  ;
-     if( pfid->pentry->attributes.type == FSAL_TYPE_FIFO ) mode |= __S_IFIFO  ;
+     mode   = (u32)pfid->pentry->obj_handle->attributes.mode ;
+     if( pfid->pentry->obj_handle->attributes.type == DIRECTORY )       mode |= __S_IFDIR  ;
+     if( pfid->pentry->obj_handle->attributes.type == REGULAR_FILE )    mode |= __S_IFREG  ;
+     if( pfid->pentry->obj_handle->attributes.type == SYMBOLIC_LINK )   mode |= __S_IFLNK  ;
+     if( pfid->pentry->obj_handle->attributes.type == SOCKET_FILE )     mode |= __S_IFSOCK ;
+     if( pfid->pentry->obj_handle->attributes.type == BLOCK_FILE )      mode |= __S_IFBLK  ;
+     if( pfid->pentry->obj_handle->attributes.type == CHARACTER_FILE )  mode |= __S_IFCHR  ;
+     if( pfid->pentry->obj_handle->attributes.type == FIFO_FILE )       mode |= __S_IFIFO  ;
    }
  else
    mode = 0 ;
 
-  uid        = (*request_mask & _9P_GETATTR_UID)    ? (u32 *)&pfid->pentry->attributes.owner:&zero32 ;
-  gid        = (*request_mask & _9P_GETATTR_GID)    ? (u32 *)&pfid->pentry->attributes.group:&zero32 ;
-  nlink      = (*request_mask & _9P_GETATTR_NLINK)  ? (u64 *)&pfid->pentry->attributes.numlinks:&zero64 ;  
-  rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pentry->attributes.rawdev.major:&zero64 ; 
-  size       = (*request_mask & _9P_GETATTR_SIZE)   ? (u64 *)&pfid->pentry->attributes.filesize:&zero64 ; 
+  uid        = (*request_mask & _9P_GETATTR_UID)    ? (u32 *)&pfid->pentry->obj_handle->attributes.owner:&zero32 ;
+  gid        = (*request_mask & _9P_GETATTR_GID)    ? (u32 *)&pfid->pentry->obj_handle->attributes.group:&zero32 ;
+  nlink      = (*request_mask & _9P_GETATTR_NLINK)  ? (u64 *)&pfid->pentry->obj_handle->attributes.numlinks:&zero64 ;  
+  rdev       = (*request_mask & _9P_GETATTR_RDEV)   ? (u64 *)&pfid->pentry->obj_handle->attributes.rawdev.major:&zero64 ; 
+  size       = (*request_mask & _9P_GETATTR_SIZE)   ? (u64 *)&pfid->pentry->obj_handle->attributes.filesize:&zero64 ; 
   blksize    = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)_9P_BLK_SIZE:0LL ; 
-  blocks     = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)(pfid->pentry->attributes.filesize/DEV_BSIZE):0LL ; 
-  atime_sec  = (*request_mask & _9P_GETATTR_ATIME ) ? (u64 *)&pfid->pentry->attributes.atime.seconds:&zero64 ;
+  blocks     = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)(pfid->pentry->obj_handle->attributes.filesize/DEV_BSIZE):0LL ; 
+  atime_sec  = (*request_mask & _9P_GETATTR_ATIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.atime.seconds:&zero64 ;
   atime_nsec = &zero64 ;
-  mtime_sec  = (*request_mask & _9P_GETATTR_MTIME ) ? (u64 *)&pfid->pentry->attributes.mtime.seconds:&zero64 ;
+  mtime_sec  = (*request_mask & _9P_GETATTR_MTIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.mtime.seconds:&zero64 ;
   mtime_nsec = &zero64 ;
-  ctime_sec  = (*request_mask & _9P_GETATTR_CTIME ) ? (u64 *)&pfid->pentry->attributes.ctime.seconds:&zero64 ;
+  ctime_sec  = (*request_mask & _9P_GETATTR_CTIME ) ? (u64 *)&pfid->pentry->obj_handle->attributes.ctime.seconds:&zero64 ;
   ctime_nsec = &zero64 ;
 
   /* Not yet supported attributes */

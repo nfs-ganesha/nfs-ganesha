@@ -89,7 +89,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
    {
       if(cache_inode_open( pfid->pentry, 
                            openflags, 
-                           &pfid->fsal_op_context,
+                           &pfid->op_context,
                            0, 
                            &cache_status) != CACHE_INODE_SUCCESS) 
          return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
