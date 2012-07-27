@@ -216,7 +216,7 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 
 	pthread_mutex_lock(&fsal_lock);
 	if(dl == NULL) {
-		retval = errno;
+		retval = ELIBACC; /* hand craft a meaningful error */
 		dl_error = strdup(dlerror());
 		LogCrit(COMPONENT_INIT,
 			"Could not dlopen module:%s Error:%s", path, dl_error);
