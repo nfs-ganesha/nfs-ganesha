@@ -41,12 +41,13 @@
 #define fsi_dirent                 dirent
 #define FSI_MAX_HANDLE_CACHE_ENTRY 2500
 #define IO_BUFFER_SIZE             262144 //256k
-#define PTFSAL_POLLING_HANDLE_TIMEOUT_SEC 300     // Time interval between polling
-                                                  // for handle to close in the
-                                                  // background
-#define PTFSAL_OLDEST_HANDLE_TIMEOUT_SEC  30      // Timeout for opened handle to
-                                                  // be considered old in
-                                                  // close_on_open path
+#define PTFSAL_POLLING_HANDLE_TIMEOUT_SEC 300  // Time interval between 
+                                               // polling for handle to 
+                                               // close in the
+                                               // background
+#define PTFSAL_OLDEST_HANDLE_TIMEOUT_SEC  30   // Timeout for opened handle 
+                                               // to be considered old in
+                                               // close_on_open path
 extern int             debug_flag;
 extern struct          fsi_handle_cache_t  g_fsi_name_handle_cache;
 extern pthread_mutex_t g_fsi_name_handle_mutex;

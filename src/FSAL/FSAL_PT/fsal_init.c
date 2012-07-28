@@ -138,15 +138,19 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
   }
 
-  FSI_TRACE(FSI_NOTICE, "About to call ptfsal_closeHandle_listener_thread_init");
+  FSI_TRACE(FSI_NOTICE, "About to call "
+            "ptfsal_closeHandle_listener_thread_init");
   if (ptfsal_closeHandle_listener_thread_init() == -1) {
-    FSI_TRACE(FSI_ERR, "ptfsal_closeHandle_listener_thread_init returned rc = -1");
+    FSI_TRACE(FSI_ERR, "ptfsal_closeHandle_listener_thread_init "
+              "returned rc = -1");
     Return(ERR_FSAL_FAULT, 1, INDEX_FSAL_Init);
   }
 
-  FSI_TRACE(FSI_NOTICE, "About to call ptfsal_polling_closeHandler_thread_init");
+  FSI_TRACE(FSI_NOTICE, "About to call "
+            "ptfsal_polling_closeHandler_thread_init");
   if (ptfsal_polling_closeHandler_thread_init() == -1) {
-    FSI_TRACE(FSI_ERR, "ptfsal_polling_closeHandler_thread_init returned rc = -1");
+    FSI_TRACE(FSI_ERR, "ptfsal_polling_closeHandler_thread_init "
+              "returned rc = -1");
     Return(ERR_FSAL_FAULT, 1, INDEX_FSAL_Init);
   }
 

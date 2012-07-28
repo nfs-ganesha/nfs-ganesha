@@ -56,7 +56,7 @@ void *ptfsal_closeHandle_listener_thread(void *args)
   struct CommonMsgHdr         * p_hdr;
   int close_rc;
   struct CommonMsgHdr *msgHdr;
-  SetNameFunction("CloseOnOpen Handler");
+  SetNameFunction("PT FSAL CloseOnOpen Handler");
 
   rc = ptfsal_closeHandle_attach_to_queues();
   if (rc == -1) {
@@ -149,15 +149,7 @@ void ptfsal_close_timedout_handle_bkg(void)
 
 void *ptfsal_polling_closeHandler_thread(void *args)
 {
-  int i;
-  int rc;
-  struct msg_t msg;
-  int msg_rc;
-  int msg_bytes;
-  struct CommonMsgHdr         * p_hdr;
-  int close_rc;
-  struct CommonMsgHdr *msgHdr;
-  SetNameFunction("Polling Close");
+  SetNameFunction("PT FSAL Polling Close");
   while (1) {
     FSI_TRACE(FSI_INFO, "Periodic check for opened handle to close");
     ptfsal_close_timedout_handle_bkg();
