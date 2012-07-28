@@ -1,0 +1,73 @@
+
+Posix Support  -   Paul Sheer <paulsheer@gmail.com>   -   27 July 2012
+
+
+This is a technical description of what Posix support is and how it is
+implemented.
+
+
+Handles:
+
+Within Ganesha, "Posix" means systems that do not have operating system
+specific handle-lookup system calls. They support *merely* the basic
+system calls of a posix system, like open(), mkdir(), etc.
+
+You see NFS refers to all files by handles, and hence the NFS server
+needs to look up a file by a handle. A handle is an arbitrary, say,
+64-byte binary string used by NFS protocols.
+
+In order to implement an NFS server without these OS-specific system
+calls, the NFS server has to store the handles persistantly as well as
+look-up the handles when the mounted NFS clients send these handles back
+to the server.
+
+
+Storing Handles Persistently:
+
+In my implementation I have chosen to store these handles in-memory
+within a small server I call "nodedb".  Nodedb is not an actual
+executable, but a fork()ed process of bin/ganesha.nfsd.  The fork()
+happens when the POSIX module is initialized. The code for the in-memory
+data structure is in src/FSAL/FSAL_POSIX/nodedb/.
+
+Nodedb binds to 127.0.0.1 port 31337 and listens for connections. The
+parent process of bin/ganesha.nfsd creates a connection pool, and
+executes CORBA-interface-like commands to nodedb. Note I did not
+implement IIOP/BER or other encoding, just an extremely basic
+and minimal encode-decode schema.
+
+Hence nodedb is merely a loadable library that works via a socket
+instead of via dynamically linked methods. (It could just as well have
+used RPC.)
+
+You will notice a simple parser (nodedb/marshal.c) that turns the nodedb
+interface into encode-decode operations so that encoders/decoders for
+new methods need not be implemented by hand.
+
+
+The Data Structure:
+
+Nodedb stores the entire *known* file system as a tree-structure with
+nodes and multiple binary-tree indexes. It can, for instance,
+efficiently lookup inodes by handle, handle by inodes, and paths by
+handles. Files under each directory are stored in a binary-tree, and
+ordered by filename. Hence a directory can efficiently hold millions of
+files.
+
+If bin/ganesha.nfsd is restarted, it will again try to fork() and bind
+to the same port. This will silently fail because there is already a
+nodedb running. However bin/ganesha.nfsd will continue connect to the
+previous instance of nodedb and find all its previously stored handles
+intact and ready to use.
+
+The only time you need to kill nodedb is if you make code changes to it.
+
+
+Configuration:
+
+Nodedb requires no configuration. It works silently and stores handles
+until the system reboots.
+
+
+
+
