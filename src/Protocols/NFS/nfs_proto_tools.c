@@ -2602,6 +2602,23 @@ int nfs3_FSALattr_To_Fattr(exportlist_t *pexport,
   nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
   if (want & ~got)
     {
+
+#if 0
+// FIXME: why are we getting here for certain ops???  - paulsheer@gmail.com
+// printf("ATTR_ATIME      = %d vs %d\n", (int) (want & ATTR_ATIME), (int) (got & ATTR_ATIME));
+// printf("ATTR_CTIME      = %d vs %d\n", (int) (want & ATTR_CTIME), (int) (got & ATTR_CTIME));
+// printf("ATTR_GROUP      = %d vs %d\n", (int) (want & ATTR_GROUP), (int) (got & ATTR_GROUP));
+// printf("ATTR_MODE       = %d vs %d\n", (int) (want & ATTR_MODE), (int) (got & ATTR_MODE));
+// printf("ATTR_MTIME      = %d vs %d\n", (int) (want & ATTR_MTIME), (int) (got & ATTR_MTIME));
+// printf("ATTR_NUMLINKS   = %d vs %d\n", (int) (want & ATTR_NUMLINKS), (int) (got & ATTR_NUMLINKS));
+// printf("ATTR_OWNER      = %d vs %d\n", (int) (want & ATTR_OWNER), (int) (got & ATTR_OWNER));
+// printf("ATTR_RAWDEV     = %d vs %d\n", (int) (want & ATTR_RAWDEV), (int) (got & ATTR_RAWDEV));
+// printf("ATTR_SIZE       = %d vs %d\n", (int) (want & ATTR_SIZE), (int) (got & ATTR_SIZE));
+// printf("ATTR_SPACEUSED  = %d vs %d\n", (int) (want & ATTR_SPACEUSED), (int) (got & ATTR_SPACEUSED));
+// printf("ATTR_TYPE       = %d vs %d\n", (int) (want & ATTR_TYPE), (int) (got & ATTR_TYPE));
+#endif
+
+
       LogCrit(COMPONENT_NFSPROTO,
               "Likely bug: FSAL did not fill in a standard NFSv3 attribute.");
     }

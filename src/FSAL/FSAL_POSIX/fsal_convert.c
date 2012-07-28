@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:expandtab:shiftwidth=4:tabstop=4:
  */
 
 /**
@@ -7,7 +7,7 @@
  * \file    fsal_convert.c
  * \date    $Date: 2006/01/17 15:53:39 $
  * \version $Revision: 1.31 $
- * \brief   HPSS-FSAL type translation functions.
+ * \brief   POSIX-FSAL type translation functions.
  *
  *
  */
@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
 
 #define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
 #define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
@@ -35,19 +36,18 @@
  *         to posix_errorcode.
  *
  */
-int posix2fsal_error(int posix_errorcode)
+int posix2fsal_error (int posix_errorcode)
 {
 
-  switch (posix_errorcode)
-    {
+    switch (posix_errorcode) {
 
     case EPERM:
-      return ERR_FSAL_PERM;
+        return ERR_FSAL_PERM;
 
     case ENOENT:
-      return ERR_FSAL_NOENT;
+        return ERR_FSAL_NOENT;
 
-      /* connection error */
+        /* connection error */
 #ifdef _AIX_5
     case ENOCONNECT:
 #elif defined _LINUX
@@ -56,27 +56,27 @@ int posix2fsal_error(int posix_errorcode)
     case ECONNRESET:
 #endif
 
-      /* IO error */
+        /* IO error */
     case EIO:
 
-      /* too many open files */
+        /* too many open files */
     case ENFILE:
     case EMFILE:
 
-      /* broken pipe */
+        /* broken pipe */
     case EPIPE:
 
-      /* all shown as IO errors */
-      return ERR_FSAL_IO;
+        /* all shown as IO errors */
+        return ERR_FSAL_IO;
 
-      /* no such device */
+        /* no such device */
     case ENODEV:
     case ENXIO:
-      return ERR_FSAL_NXIO;
+        return ERR_FSAL_NXIO;
 
-      /* invalid file descriptor : */
+        /* invalid file descriptor : */
     case EBADF:
-      /* we suppose it was not opened... */
+        /* we suppose it was not opened... */
 
       /**
        * @todo: The EBADF error also happens when file
@@ -85,46 +85,47 @@ int posix2fsal_error(int posix_errorcode)
        *        but it doesn't seems to be a correct error translation.
        */
 
-      return ERR_FSAL_NOT_OPENED;
+        return ERR_FSAL_NOT_OPENED;
 
     case ENOMEM:
-      return ERR_FSAL_NOMEM;
+    case ENOLCK:
+        return ERR_FSAL_NOMEM;
 
     case EACCES:
-      return ERR_FSAL_ACCESS;
+        return ERR_FSAL_ACCESS;
 
     case EFAULT:
-      return ERR_FSAL_FAULT;
+        return ERR_FSAL_FAULT;
 
     case EEXIST:
-      return ERR_FSAL_EXIST;
+        return ERR_FSAL_EXIST;
 
     case EXDEV:
-      return ERR_FSAL_XDEV;
+        return ERR_FSAL_XDEV;
 
     case ENOTDIR:
-      return ERR_FSAL_NOTDIR;
+        return ERR_FSAL_NOTDIR;
 
     case EISDIR:
-      return ERR_FSAL_ISDIR;
+        return ERR_FSAL_ISDIR;
 
     case EINVAL:
-      return ERR_FSAL_INVAL;
+        return ERR_FSAL_INVAL;
 
     case EFBIG:
-      return ERR_FSAL_FBIG;
+        return ERR_FSAL_FBIG;
 
     case ENOSPC:
-      return ERR_FSAL_NOSPC;
+        return ERR_FSAL_NOSPC;
 
     case EMLINK:
-      return ERR_FSAL_MLINK;
+        return ERR_FSAL_MLINK;
 
     case EDQUOT:
-      return ERR_FSAL_DQUOT;
+        return ERR_FSAL_DQUOT;
 
     case ENAMETOOLONG:
-      return ERR_FSAL_NAMETOOLONG;
+        return ERR_FSAL_NAMETOOLONG;
 
 /**
  * @warning
@@ -138,304 +139,126 @@ int posix2fsal_error(int posix_errorcode)
     case ENOTEMPTY:
     case -ENOTEMPTY:
 #endif
-      return ERR_FSAL_NOTEMPTY;
+        return ERR_FSAL_NOTEMPTY;
 
     case ESTALE:
-      return ERR_FSAL_STALE;
+        return ERR_FSAL_STALE;
 
-      /* Error code that needs a retry */
+        /* Error code that needs a retry */
     case EAGAIN:
     case EBUSY:
 
-      return ERR_FSAL_DELAY;
+        return ERR_FSAL_DELAY;
+
+    case ENOTSUP:
+        return ERR_FSAL_NOTSUPP;
+
+    case EOVERFLOW:
+        return ERR_FSAL_OVERFLOW;
+
+    case EDEADLK:
+        return ERR_FSAL_DEADLOCK;
+
+    case EINTR:
+        return ERR_FSAL_INTERRUPT;
 
     default:
 
-      /* other unexpected errors */
-      return ERR_FSAL_SERVERFAULT;
+        /* other unexpected errors */
+        return ERR_FSAL_SERVERFAULT;
 
     }
 
 }
 
-/**
- * fsal2posix_openflags:
- * Convert FSAL open flags to Posix open flags.
- *
- * \param fsal_flags (input):
- *        The FSAL open flags to be translated.
- * \param p_hpss_flags (output):
- *        Pointer to the POSIX open flags.
- *
- * \return - ERR_FSAL_NO_ERROR (no error).
- *         - ERR_FSAL_FAULT    (p_hpss_flags is a NULL pointer).
- *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
- */
-#ifdef _FSAL_POSIX_USE_STREAM
-int fsal2posix_openflags(fsal_openflags_t fsal_flags, char *p_posix_flags)
+
+fsal_status_t posix2fsal_attributes (const struct stat * buffstat, struct attrlist * fsalattr)
 {
-  int cpt;
+    FSAL_CLEAR_MASK (fsalattr->mask);
+    /* sanity checks */
+    if (!buffstat || !fsalattr)
+        return fsalstat (ERR_FSAL_FAULT, 0);
 
-  if(!p_posix_flags)
-    return ERR_FSAL_FAULT;
+    FSAL_CLEAR_MASK (fsalattr->mask);
 
-  /* check that all used flags exist */
+    /* Fills the output struct */
+    fsalattr->type = posix2fsal_type (buffstat->st_mode);
+    FSAL_SET_MASK (fsalattr->mask, ATTR_TYPE);
 
-  if(fsal_flags &
-     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
+    fsalattr->filesize = buffstat->st_size;
+    FSAL_SET_MASK (fsalattr->mask, ATTR_SIZE);
 
-  /* Check for flags compatibility */
+    fsalattr->fsid = posix2fsal_fsid (buffstat->st_dev);
+    FSAL_SET_MASK (fsalattr->mask, ATTR_FSID);
 
-  /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
+    fsalattr->fileid = buffstat->st_ino;
+    FSAL_SET_MASK (fsalattr->mask, ATTR_FILEID);
 
-  cpt = 0;
-  if(fsal_flags & FSAL_O_RDONLY)
-    cpt++;
-  if(fsal_flags & FSAL_O_RDWR)
-    cpt++;
-  if(fsal_flags & FSAL_O_WRONLY)
-    cpt++;
+    fsalattr->mode = unix2fsal_mode (buffstat->st_mode);
+    FSAL_SET_MASK (fsalattr->mask, ATTR_MODE);
 
-  if(cpt > 1)
-    return ERR_FSAL_INVAL;
+    fsalattr->numlinks = buffstat->st_nlink;
+    FSAL_SET_MASK (fsalattr->mask, ATTR_NUMLINKS);
 
-  /* FSAL_O_APPEND et FSAL_O_TRUNC cannot be used together */
+    fsalattr->owner = buffstat->st_uid;
+    FSAL_SET_MASK (fsalattr->mask, ATTR_OWNER);
 
-  if((fsal_flags & FSAL_O_APPEND) && (fsal_flags & FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
+    fsalattr->group = buffstat->st_gid;
+    FSAL_SET_MASK (fsalattr->mask, ATTR_GROUP);
 
-  /* FSAL_O_TRUNC without FSAL_O_WRONLY or FSAL_O_RDWR */
+    fsalattr->atime = posix2fsal_time (buffstat->st_atime, 0);
+    FSAL_SET_MASK (fsalattr->mask, ATTR_ATIME);
 
-  if((fsal_flags & FSAL_O_TRUNC) && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR)))
-    return ERR_FSAL_INVAL;
+    fsalattr->ctime = posix2fsal_time (buffstat->st_ctime, 0);
+    FSAL_SET_MASK (fsalattr->mask, ATTR_CTIME);
 
-  /* conversion */
+    fsalattr->mtime = posix2fsal_time (buffstat->st_mtime, 0);
+    FSAL_SET_MASK (fsalattr->mask, ATTR_MTIME);
 
-  if(fsal_flags & FSAL_O_RDONLY)
-    strcpy(p_posix_flags, "r");
-  else if(fsal_flags & FSAL_O_WRONLY & FSAL_O_APPEND)
-    strcpy(p_posix_flags, "a");
-  else if(fsal_flags & FSAL_O_WRONLY & FSAL_O_TRUNC)
-    strcpy(p_posix_flags, "w");
-  else if(fsal_flags & FSAL_O_APPEND)
-    strcpy(p_posix_flags, "a+");
-  else if(fsal_flags & FSAL_O_TRUNC)
-    strcpy(p_posix_flags, "w+");
-  else
-    strcpy(p_posix_flags, "r+");
+    fsalattr->chgtime = posix2fsal_time (MAX_2 (buffstat->st_mtime, buffstat->st_ctime), 0);
+    fsalattr->change = fsalattr->chgtime.seconds;
+    FSAL_SET_MASK (fsalattr->mask, ATTR_CHGTIME);
 
-  return ERR_FSAL_NO_ERROR;
+    fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
+    FSAL_SET_MASK (fsalattr->mask, ATTR_SPACEUSED);
 
+    fsalattr->rawdev = posix2fsal_devt (buffstat->st_rdev);
+    FSAL_SET_MASK (fsalattr->mask, ATTR_RAWDEV);
+
+    return fsalstat (ERR_FSAL_NO_ERROR, 0);
 }
-#else
-int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
+
+
+int fsal2posix_openflags (fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
-  int cpt;
+    if (!p_posix_flags)
+        return ERR_FSAL_FAULT;
 
-  if(!p_posix_flags)
-    return ERR_FSAL_FAULT;
+    /* check that all used flags exist */
 
-  /* check that all used flags exist */
+    if (fsal_flags & ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
+        return ERR_FSAL_INVAL;
 
-  if(fsal_flags &
-     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
+    /* Check for flags compatibility */
 
-  /* Check for flags compatibility */
+    /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
 
-  /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
+    /* conversion */
+    *p_posix_flags = 0;
 
-  cpt = 0;
-  if(fsal_flags & FSAL_O_RDONLY)
-    cpt++;
-  if(fsal_flags & FSAL_O_RDWR)
-    cpt++;
-  if(fsal_flags & FSAL_O_WRONLY)
-    cpt++;
+    if (fsal_flags & FSAL_O_READ)
+        *p_posix_flags |= O_RDONLY;
 
-  if(cpt > 1)
-    return ERR_FSAL_INVAL;
+    if (fsal_flags & FSAL_O_RDWR)
+        *p_posix_flags |= O_RDWR;
 
-  /* FSAL_O_APPEND et FSAL_O_TRUNC cannot be used together */
+    if (fsal_flags & FSAL_O_WRITE)
+        *p_posix_flags |= O_WRONLY;
 
-  if((fsal_flags & FSAL_O_APPEND) && (fsal_flags & FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
+    if (fsal_flags & FSAL_O_SYNC)
+        *p_posix_flags |= O_SYNC;
 
-  /* FSAL_O_TRUNC without FSAL_O_WRONLY or FSAL_O_RDWR */
-
-  if((fsal_flags & FSAL_O_TRUNC) && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR)))
-    return ERR_FSAL_INVAL;
-
-  /* conversion */
-  *p_posix_flags = 0;
-
-  if(fsal_flags & FSAL_O_RDONLY)
-    *p_posix_flags |= O_RDONLY;
-
-  if(fsal_flags & FSAL_O_RDWR)
-    *p_posix_flags |= O_RDWR;
-
-  if(fsal_flags & FSAL_O_WRONLY)
-    *p_posix_flags |= O_WRONLY;
-
-  if(fsal_flags & FSAL_O_APPEND)
-    *p_posix_flags |= O_APPEND;
-
-  if(fsal_flags & FSAL_O_TRUNC)
-    *p_posix_flags |= O_TRUNC;
-
-  if(fsal_flags & FSAL_O_CREATE)
-    *p_posix_flags |= O_CREAT;
-
-  return ERR_FSAL_NO_ERROR;
-}
-#endif                          /* _FSAL_POSIX_USE_STREAM */
-
-fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
-                                    fsal_attrib_list_t * p_fsalattr_out)
-{
-
-  fsal_attrib_mask_t supp_attr, unsupp_attr;
-
-  /* sanity checks */
-  if(!p_buffstat || !p_fsalattr_out)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* check that asked attributes are supported */
-  supp_attr = global_fs_info.supported_attrs;
-
-  unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
-  if(unsupp_attr)
-    {
-      LogFullDebug(COMPONENT_FSAL, "Unsupported attributes: %#llX", unsupp_attr);
-      ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
-    }
-
-  /* Initialize ACL regardless of whether ACL was asked or not.
-   * This is needed to make sure ACL attribute is initialized. */
-  p_fsalattr_out->acl = NULL;
-
-  /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
-    {
-      p_fsalattr_out->supported_attributes = supp_attr;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
-    {
-      p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
-    {
-      p_fsalattr_out->filesize = p_buffstat->st_size;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
-    {
-      p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
-    {
-      p_fsalattr_out->acl = NULL;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
-    {
-      p_fsalattr_out->fileid = (fsal_u64_t) (p_buffstat->st_ino);
-    }
-
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
-    {
-      p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
-    {
-      p_fsalattr_out->numlinks = p_buffstat->st_nlink;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
-    {
-      p_fsalattr_out->owner = p_buffstat->st_uid;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
-    {
-      p_fsalattr_out->group = p_buffstat->st_gid;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
-    {
-      p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, p_buffstat->st_atim.tv_nsec);
-
-    }
-
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
-    {
-      p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_atim.tv_nsec);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
-    {
-      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_atim.tv_nsec);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
-    {
-      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_atim.tv_nsec);
-    }
-
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
-    {
-      p_fsalattr_out->chgtime
-	      = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
-    }
-
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
-    {
-      p_fsalattr_out->spaceused = p_buffstat->st_blocks * S_BLKSIZE;
-    }
-
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
-    {
-      p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
-    }
-  /* mounted_on_fileid :
-     if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
-     FSAL_ATTR_MOUNTFILEID )){
-     p_fsalattr_out->mounted_on_fileid = 
-     hpss2fsal_64( p_hpss_attr_in->FilesetRootId );
-     }
-   */
-
-  /* everything has been copied ! */
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+    return ERR_FSAL_NO_ERROR;
 }
 
-/**
- * Concert fsal_posixdb_status_t to fsal_status_t
- */
-fsal_status_t posixdb2fsal_error(fsal_posixdb_status_t statusdb)
-{
-  switch (statusdb.major)
-    {
-    case ERR_FSAL_POSIXDB_TOOMANYPATHS:
-      LogEvent(COMPONENT_FSAL, "Fsal posixdb : too many paths ! (%d)", statusdb.minor);
-    case ERR_FSAL_POSIXDB_NOERR:
-      ReturnCode(ERR_FSAL_NO_ERROR, statusdb.major);
 
-    case ERR_FSAL_POSIXDB_BADCONN:
-    case ERR_FSAL_POSIXDB_CMDFAILED:
-      ReturnCode(ERR_FSAL_SERVERFAULT, statusdb.major);
-
-    case ERR_FSAL_POSIXDB_NOENT:
-    case ERR_FSAL_POSIXDB_NOPATH:
-      ReturnCode(ERR_FSAL_STALE, statusdb.major);
-
-    case ERR_FSAL_POSIXDB_FAULT:
-      ReturnCode(ERR_FSAL_FAULT, statusdb.major);
-
-    case ERR_FSAL_POSIXDB_NO_MEM:
-      ReturnCode(ERR_FSAL_NOMEM, statusdb.major);
-
-    case ERR_FSAL_POSIXDB_PATHTOOLONG:
-      ReturnCode(ERR_FSAL_NAMETOOLONG, statusdb.major);
-
-    default:
-      LogEvent(COMPONENT_FSAL, "Unknown posixdb error type: %d", statusdb.major);
-      ReturnCode(ERR_FSAL_FAULT, statusdb.major);
-    }
-}

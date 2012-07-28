@@ -90,6 +90,7 @@ cache_inode_create(cache_entry_t *parent,
      fsal_accessflags_t access_mask = 0;
 
      memset(&zero_create_arg, 0, sizeof(zero_create_arg));
+     memset(&object_attributes, 0, sizeof(object_attributes));
 
      if (create_arg == NULL) {
           create_arg = &zero_create_arg;

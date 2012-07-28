@@ -222,6 +222,8 @@ int nfs_Symlink(nfs_arg_t *parg,
       break;
     }
 
+    create_arg.link_content = target_path;
+
   if(symlink_name == NULL ||
      *symlink_name == '\0'||
      target_path == NULL  ||
