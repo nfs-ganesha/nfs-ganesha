@@ -35,13 +35,10 @@
 #include "log.h"
 #include "nfs_core.h"
 #include "nfs4.h"
+#include "nfs4rec.h"
 #include "sal_functions.h"
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
-#define NFS_V4_RECOV_DIR "v4recov"
-#define NFS_V4_OLD_DIR "v4old"
 
 char v4_recov_dir[PATH_MAX];
 char v4_old_dir[PATH_MAX];
@@ -83,11 +80,13 @@ nfs4_init_grace()
  */
 
 void
-nfs4_start_grace(nfs_grace_start_t *gsp)
+nfs4_start_grace(nfs_grace_start_array_t *gsap)
 {
         int duration;
+        int i, iend;
+        nfs_grace_start_t *gsp;
 
-        /* limit the grace period to a maximum of 45 seconds */
+        /* limit the grace period to a maximum of 60 seconds */
         duration = MIN(60, nfs_param.nfsv4_param.lease_lifetime);
 
         P(grace.g_mutex);
@@ -96,8 +95,16 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
          * if called from failover code and given a nodeid, then this node
          * is doing a take over.  read in the client ids from the failing node
          */
-        if (gsp && gsp->nodeid != 0)
-                nfs4_load_recov_clids_nolock(gsp->nodeid);
+        if (gsap) {
+                iend = gsap->num_elements;
+                assert(iend);
+                gsp = gsap->nfs_grace_start;
+                for (i=0; i < iend; i++) {
+                        assert(gsp->nodeid);  /* for initial debug */
+                        nfs4_load_recov_clids_nolock(gsp->nodeid);
+                        gsp++;
+                }
+        }
 
         LogDebug(COMPONENT_STATE, "grace period started, duration(%d)",
             duration);
@@ -325,15 +332,52 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
 
         return 0;
 }
+void nfs4_load_recov_clids_cluster_nolock(ushort nodeid)
+{
+        DIR *dp;
+        int rc;
+        char path[PATH_MAX];
+
+        snprintf(path, PATH_MAX, "%s/%s/node%d",
+        NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, nodeid);
+
+        dp = opendir(path);
+        if (dp == NULL) {
+                LogEvent(COMPONENT_CLIENTID,
+                "Failed to open v4 recovery dir (%s), errno=%d",
+                 path, errno);
+                 return;
+        }
+
+        rc = nfs4_read_recov_clids(dp, path, 1);
+        if (rc == -1) {
+                 (void) closedir(dp);
+                 LogEvent(COMPONENT_CLIENTID,
+                 "Failed to read v4 recovery dir (%s)",
+                 path);
+                 return;
+        }
+        rc = closedir(dp);
+        if (rc == -1) {
+                 LogEvent(COMPONENT_CLIENTID,
+                 "Failed to close v4 recovery dir (%s), errno=%d",
+                  path, errno);
+        }
+        return;
+ }
+
 
 static void
 nfs4_load_recov_clids_nolock(ushort nodeid)
 {
         DIR *dp;
+        struct dirent **namelist;
         struct glist_head *node;
         clid_entry_t *clid_entry;
-        int rc;
+        int rc, n;
+        ushort u_nodeid;
         char path[PATH_MAX];
+        char *cp;
 
         if (nodeid == 0) {
                 /* when not doing a takeover, start with an empty list */
@@ -384,100 +428,43 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                             "Failed to close v4 recovery dir (%s), errno=%d",
                             v4_recov_dir, errno);
                 }
-/* *** *** HACK *** *** */
-/* hack design:
- * only when clustered...
- * all nodes rebooted on failover/takeover
- * all nodes read all other node's recovery directories at start up
- * open the parent dir, read its entries and use those dirs
- * if dirent.name == this node, don't read it again
- * since a node will move its clids to old dir after reading them in
- * read in both node recov and old dir
- */
-                if (nfs_param.core_param.clustered) {
-                        DIR *pdp;
-                        char parent[200];
-                        char mynode[50];
-                        struct dirent *dep;
-
-                        snprintf(parent, 200, "%s/%s",
-                            NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR);
-                        snprintf(mynode, 50, "node%d", g_nodeid);
-                        pdp = opendir(parent);
-                        if (pdp == NULL) {
-                            LogEvent(COMPONENT_CLIENTID,
-                              "(HACK)Failed to open v4 recovery dir (%s), errno=%d",
-                              parent, errno);
-                            return;
-                        }
-                        dep = readdir(pdp);
-                        while (dep != NULL) {
-                                if (dep->d_name[0] == '.' ||
-                                    !strcmp(mynode, dep->d_name)) {
-                                        dep = readdir(pdp);
-                                        continue;
-                                }
-
-                                snprintf(path, PATH_MAX, "%s/%s/%s",
-                                    NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
-                                    dep->d_name);
-                                dp = opendir(path);
-                                if (dp == NULL) {
-                                        LogEvent(COMPONENT_CLIENTID,
-                                          "(HACK)Failed to open v4 recovery dir (%s), errno=%d",
-                                          path, errno);
-                                        dep = readdir(pdp);
-                                        continue;  /* ignore errors */
-                                }
-                                rc = nfs4_read_recov_clids(dp, path, 1);
-                                (void) closedir(dp);
-                                snprintf(path, PATH_MAX, "%s/%s/node%s",
-                                    NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR,
-                                    dep->d_name);
-                                dp = opendir(path);
-                                if (dp == NULL) {
-                                        LogEvent(COMPONENT_CLIENTID,
-                                          "(HACK)Failed to open v4 recovery dir (%s), errno=%d",
-                                          path, errno);
-                                        dep = readdir(pdp);
-                                        continue;  /* ignore errors */
-                                }
-                                rc = nfs4_read_recov_clids(dp, path, 1);
-                                (void) closedir(dp);
-
-                                dep = readdir(pdp);
-                        }
-                }
-/* *** *** END HACK *** *** */
-
-        } else {
-                snprintf(path, PATH_MAX, "%s/%s/node%d",
-                    NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, nodeid);
-
-                dp = opendir(path);
-                if (dp == NULL) {
-                        LogEvent(COMPONENT_CLIENTID,
-                            "Failed to open v4 recovery dir (%s), errno=%d",
-                            path, errno);
-                        return;
-                }
-
-                rc = nfs4_read_recov_clids(dp, path, 1);
-                if (rc == -1) {
-                        (void) closedir(dp);
-                        LogEvent(COMPONENT_CLIENTID,
-                            "Failed to read v4 recovery dir (%s)",
-                            path);
-                        return;
-                }
-                rc = closedir(dp);
-                if (rc == -1) {
-                        LogEvent(COMPONENT_CLIENTID,
-                            "Failed to close v4 recovery dir (%s), errno=%d",
-                            path, errno);
-                }
+                return;
+        } 
+        /* nodeid != 0 */
+        assert(nfs_param.core_param.clustered);
+        if ( nodeid != ALL_NODES) {
+                nfs4_load_recov_clids_cluster_nolock(nodeid);
+                return;
         }
+        /* ALL_NODES */ 
+        snprintf(path, PATH_MAX, "%s/%s",
+        NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR);
 
+        n = scandir(path, &namelist, 0, alphasort);
+        if (n < 0) {
+                LogEvent(COMPONENT_CLIENTID,
+                "Failed to scan v4 recovery dir (%s), errno=%d",
+                path, errno);
+                return;
+        }
+        if (n <= 2) {
+                LogEvent(COMPONENT_CLIENTID,
+                "Empty v4 recovery dir (%s)",
+                path);
+                return;
+        }
+        while ( n > 2 ) {
+                cp = namelist[n-1]->d_name;
+                cp += 4; /* skip over the "node" */
+                u_nodeid = (ushort) atoi(cp);
+                nfs4_load_recov_clids_cluster_nolock(u_nodeid);
+                free(namelist[n-1]);
+                n--;
+        }
+        free(namelist[1]);
+        free(namelist[0]);
+        free(namelist);
+        return;
 }
 
 void
@@ -521,7 +508,6 @@ nfs4_clean_old_recov_dir()
                             path, errno);
                 }
         }
-        closedir(dp);
 }
 
 /*

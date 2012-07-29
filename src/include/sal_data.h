@@ -56,6 +56,7 @@
 #include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
+#include "nfs4rec.h"
 #include "nfs_proto_functions.h"
 #ifdef _USE_NLM
 #include "nlm4.h"
@@ -634,13 +635,6 @@ struct state_async_queue_t
     } state_async_data;
 };
 #endif /* _USE_BLOCKING_LOCKS */
-
-typedef struct nfs_grace_start
-{
-  int      event;
-  ushort   nodeid;
-  void   * ipaddr;
-} nfs_grace_start_t;
 
 /* Memory pools */
 
