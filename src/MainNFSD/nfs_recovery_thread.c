@@ -47,7 +47,7 @@ time_t t_after; /* Careful here. */
 
 
 
-int check_for_me( int inum, struct dirent **namelist, ushort id)
+int check_for_id( int inum, struct dirent **namelist, ushort id)
 {
 char *cp, *cp2;
 int icnt = 0;
@@ -76,16 +76,22 @@ char workpath[PATH_MAX];
                         ientry--;
                         continue;
                 }
-                /* id is the 3rd entry */
-                cp2++;
-                cp = cp2;
-                while(*cp2 != DELIMIT)
-                        cp2++;
-                *cp2 = '\0';
-                i = atoi(cp);
-                if ( ((ushort) i == id ))
-                        icnt++;
-                ientry--;
+               if ( id > 0 ) {
+                       /* id is the 3rd entry */
+                       cp2++;
+                       cp = cp2;
+                       while(*cp2 != DELIMIT)
+                         cp2++;
+                       *cp2 = '\0';
+                       i = atoi(cp);
+                       if ( ((ushort) i == id ))
+                               icnt++;
+                       ientry--;
+               } else {
+                       t_after = t_this_entry + 1;
+                       icnt = 1;
+                       break;
+               }
         }
         LogDebug(COMPONENT_THREAD, "ipcount %d for node %d after %ld", icnt, id, t_after);
         return(icnt);
@@ -318,7 +324,7 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                         /* If we reach here then we have "takeip" records 
                          */
 
-                        if ((ipcount = check_for_me( n, namelist, myid))) { 
+                        if ((ipcount = check_for_id( n, namelist, myid))) { 
 
                         /* Clients are coming to this node for reclaims */
                         /* See if we can find from where, if so we will
@@ -355,8 +361,10 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                                 }
                                 break;
                         } else {
-                                nfs4_start_grace(NULL);
-                                LogEvent(COMPONENT_THREAD, "Grace entered with no nodes on node %d", myid);
+                                if ((check_for_id( n, namelist, 0))) {
+                                        nfs4_start_grace(NULL);
+                                        LogEvent(COMPONENT_THREAD, "Grace started with NULL node id %d", myid);
+                                }
                                 break;
                         }
                 }
