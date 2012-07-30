@@ -25,7 +25,6 @@
 
 /**
  * \file    fsal_types.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/08 12:45:27 $
  * \version $Revision: 1.19 $
  * \brief   File System Abstraction Layer types and constants.
@@ -69,7 +68,6 @@
 /*
  * labels in the config file
  */
-
 #define CONF_LABEL_FS_SPECIFIC   "VFS"
 
 

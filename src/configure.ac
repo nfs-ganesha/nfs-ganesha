@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr] )
 
 AC_SUBST(RELEASE, [1])
 
@@ -316,14 +316,14 @@ fi
 
 AM_CONDITIONAL([USE_FSAL_CEPH], test "[$enable_fsal_ceph]"  == "yes")
 
+GA_AM_COND_ON_UNLESS([fsal-lustre],[do not build LUSTRE FSAL shared library],[USE_FSAL_LUSTRE])
+# SHOOK is a variant of Lustre FSAL
+GA_AM_COND_ON_UNLESS([fsal-shook],[do not build SHOOK FSAL shared library],[USE_FSAL_SHOOK])
 
 # FSALs whicha re disabled by default
 GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
 GA_ENABLE_AM_CONDITION([fsal-posix],[build POSIX FSAL],[USE_FSAL_POSIX])
 GA_ENABLE_AM_CONDITION([fsal-fuse],[build FUSE FSAL],[USE_FSAL_FUSE])
-GA_ENABLE_AM_CONDITION([fsal-lustre],[build LUSTRE FSAL],[USE_FSAL_LUSTRE])
-# SHOOK is a variant of Lustre FSAL
-GA_ENABLE_AM_CONDITION([fsal-shook],[build SHOOK FSAL],[USE_FSAL_SHOOK])
 GA_ENABLE_AM_CONDITION([fsal-xfs],[build XFS FSAL],[USE_FSAL_XFS])
 GA_ENABLE_AM_CONDITION([fsal-gpfs],[build GPFS FSAL],[USE_FSAL_GPFS])
 GA_ENABLE_AM_CONDITION([fsal-zfs],[build ZFS FSAL],[USE_FSAL_ZFS])
@@ -599,7 +599,7 @@ if test "$enable_fsal_hpss" = "yes"; then
 fi
 
 if test "$enable_fsal_proxy" == "yes"; then
-AC_MSG_WARN([PROXY FSAL is enabled])
+        AC_MSG_WARN([PROXY FSAL is enabled])
 	FSAL_CFLAGS=
 	FSAL_LDFLAGS=$SEC_RPATH
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PROXY/libfsalproxy.la"
@@ -613,6 +613,7 @@ if test "$enable_fsal_fuse" == "yes"; then
 fi
 
 if test "$enable_fsal_lustre" == "yes"; then
+        AC_MSG_WARN([LUSTRE FSAL is enabled])
 	AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
 	AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
 	if test "x$have_lustre2_api" != "xyes" ; then
@@ -632,6 +633,7 @@ if test "$enable_fsal_lustre" == "yes"; then
 fi
 
 if test "$enable_fsal_shook" == "yes"; then
+        AC_MSG_WARN([SHOOK FSAL is enabled])
         # Lustre FSAL compiled with special compilation directives
         AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
         AC_DEFINE(_SHOOK, 1, [shook is enabled])

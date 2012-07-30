@@ -25,7 +25,6 @@
 
 /**
  * \file    shell.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/24 08:33:44 $
  * \version $Revision: 1.20 $
  * \brief   Internal routines for the shell.
@@ -1965,7 +1964,6 @@ int shellcmd_set(int argc,      /* IN : number of args in argv */
     {
 
       /* other variables */
-
       if(!is_authorized_varname(varname))
         {
           snprintf(tracebuff, TRACEBUFFSIZE, "%s: Invalid variable name \"%s\".", argv[0],

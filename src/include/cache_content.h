@@ -26,7 +26,6 @@
 
 /**
  * \file    cache_content.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/17 13:41:01 $
  * \version $Revision: 1.29 $
  * \brief   Management of the cached content layer.

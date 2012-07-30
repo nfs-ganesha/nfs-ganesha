@@ -5,7 +5,6 @@
 /**
  *
  * \file    fsal_errors.c
- * \author  $Author: leibovic $
  * \date    $Date: 2005/07/27 13:30:26 $
  * \version $Revision: 1.3 $
  * \brief   Routines for handling errors.

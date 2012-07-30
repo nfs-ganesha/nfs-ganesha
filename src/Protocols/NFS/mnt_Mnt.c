@@ -25,7 +25,6 @@
 
 /**
  * \file    mnt_Mnt.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/18 07:29:11 $
  * \version $Revision: 1.18 $
  * \brief   MOUNTPROC_MNT for Mount protocol v1 and v3.

@@ -25,7 +25,6 @@
 
 /**
  * \file    cmd_nfstools.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/17 13:37:44 $
  * \version $Revision: 1.24 $
  * \brief   nfs conversion tools.
@@ -1101,7 +1100,6 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
               else
                 {
                   a_usec = my_atoi(usec_str);
-                  /* 1 million is authorized and is interpreted by server as a "set to server time" */
                   if((a_usec < 0) || (a_usec > 1000000))
                     return FALSE;
                 }
@@ -1128,7 +1126,6 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
               else
                 {
                   m_usec = my_atoi(usec_str);
-                  /* 1 million is authorized and is interpreted by server as a "set to server time" */
                   if((m_usec < 0) || (m_usec > 1000000))
                     return FALSE;
                 }

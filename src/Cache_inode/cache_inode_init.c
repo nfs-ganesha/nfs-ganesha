@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_init.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/24 13:44:40 $
  * \version $Revision: 1.21 $
  * \brief   Init the cache_inode.

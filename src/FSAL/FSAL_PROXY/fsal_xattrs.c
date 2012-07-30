@@ -1,7 +1,6 @@
 /**
  *
  * \file    fsal_xattrs.c
- * \author  $Author: leibovic $
  * \date    $Date: 2007/08/23 $
  * \version $Revision: 1.0 $
  * \brief   Extended attributes functions.

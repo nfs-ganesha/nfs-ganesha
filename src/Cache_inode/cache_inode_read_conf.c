@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_read_conf.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/16 08:21:47 $
  * \version $Revision: 1.11 $
  * \brief   Read the configuration file for the Cache inode initialization.

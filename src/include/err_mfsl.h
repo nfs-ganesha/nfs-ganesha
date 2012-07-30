@@ -24,7 +24,6 @@
 
 /**
  * \file    err_fsal.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/17 14:22:57 $
  * \version $Revision: 1.30 $
  * \brief   MFSL error codes.

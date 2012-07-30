@@ -4,7 +4,6 @@
 
 /**
  * \file    fsal_fileop.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/15 14:26:10 $
  * \version $Revision: 1.11 $
  * \brief   Files operations.

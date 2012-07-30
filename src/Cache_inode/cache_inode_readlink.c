@@ -26,7 +26,6 @@
 
 /**
  * \file    cache_inode_readlink.c
- * \author  $Author: deniel $
  * \date    $Date: 2005/12/05 09:02:36 $
  * \version $Revision: 1.16 $
  * \brief   Reads a symlink.

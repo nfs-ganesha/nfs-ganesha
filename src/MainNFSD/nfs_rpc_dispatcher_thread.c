@@ -25,7 +25,6 @@
 
 /**
  * \file    nfs_rpc_dispatcher.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/23 12:33:05 $
  * \version $Revision: 1.96 $
  * \brief   The file that contain the 'rpc_dispatcher_thread' routine for the nfsd.

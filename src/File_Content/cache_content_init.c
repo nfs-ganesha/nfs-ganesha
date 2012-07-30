@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_content_init.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/24 13:46:35 $
  * \version $Revision: 1.8 $
  * \brief   Management of the file content cache: initialisation.

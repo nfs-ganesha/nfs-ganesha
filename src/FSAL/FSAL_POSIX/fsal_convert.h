@@ -1,7 +1,6 @@
 /**
  *
  * \file    fsal_convert.h
- * \author  $Author: leibovic $
  * \date    $Date: 2005/07/27 14:15:57 $
  * \version $Revision: 1.13 $
  * \brief   HPSS to FSAL type converting function.

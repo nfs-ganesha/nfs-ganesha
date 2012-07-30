@@ -4,7 +4,6 @@
 
 /**
  * \file    fsal_symlinks.c
- * \author  $Author: leibovic $
  * \date    $Date: 2005/07/29 09:39:04 $
  * \version $Revision: 1.15 $
  * \brief   symlinks operations.

@@ -1,7 +1,6 @@
 /**
  *
  * \file    cache_inode_remove.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/31 10:18:58 $
  * \version $Revision: 1.32 $
  * \brief   Removes an entry of any type.
@@ -351,7 +350,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
       * for those cases where someone is really interested.  It's like
       * walking up to Grant's Tomb every day and asking who's inside...
       */
-
+#if 0
      if ((to_remove_entry->type != DIRECTORY) &&
          (to_remove_entry->obj_handle->attributes.numlinks > 1)) {
           if ((*status = cache_inode_refresh_attrs(to_remove_entry))
@@ -363,6 +362,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
              directory. */
           to_remove_entry->obj_handle->attributes.numlinks = 0;
      }
+#endif
 
      /* Now, delete "to_remove_entry" from the cache inode and free
         its associated resources, but only if numlinks == 0 */

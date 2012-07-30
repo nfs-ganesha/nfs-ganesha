@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_link.c
- * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:26 $
  * \version $Revision: 1.16 $
  * \brief   Creation of an hardlink.

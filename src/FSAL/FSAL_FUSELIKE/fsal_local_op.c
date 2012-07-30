@@ -5,7 +5,6 @@
 /**
  *
  * \file    fsal_local_check.c
- * \author  $Author: deniel $
  * \date    $Date: 2008/03/13 14:20:07 $
  * \version $Revision: 1.0 $
  * \brief   Check for FSAL authentication locally

@@ -25,7 +25,6 @@
 
 /**
  * \file    fsal.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/17 13:41:01 $
  * \version $Revision: 1.72 $
  * \brief   File System Abstraction Layer interface.
@@ -73,9 +72,7 @@ fsal_status_t MFSL_truncate_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
 /**
  *
- * MFSAL_truncate_check_perms : Checks authorization to perform an asynchronous truncate.
  *
- * Checks authorization to perform an asynchronous truncate.
  *
  * @param filehandle        [IN]    mfsl object to be operated on.
  * @param pspecdata         [INOUT] mfsl object associated specific data

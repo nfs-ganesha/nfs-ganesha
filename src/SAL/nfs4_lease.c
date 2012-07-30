@@ -25,7 +25,6 @@
 
 /**
  * \file    nfs4_lease.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/20 07:39:22 $
  * \version $Revision: 1.43 $
  * \brief   Some tools very usefull in the nfs4 protocol implementation.

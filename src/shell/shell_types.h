@@ -1,7 +1,6 @@
 /**
  *
  * \file    shell_types.h
- * \author  $Author: leibovic $
  * \date    $Date: 2005/07/26 12:54:47 $
  * \version $Revision: 1.2 $
  * \brief   Internal routines for the shell.

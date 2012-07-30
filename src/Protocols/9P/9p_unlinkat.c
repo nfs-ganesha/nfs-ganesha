@@ -103,7 +103,7 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "TUNLINKAT: tag=%u dfid=%u name=%.*s",
+  LogDebug( COMPONENT_9P, "RUNLINKAT: tag=%u dfid=%u name=%.*s",
             (u32)*msgtag, *dfid, *name_len, name_str ) ;
 
   return 1 ;

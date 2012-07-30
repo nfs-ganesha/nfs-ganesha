@@ -26,7 +26,6 @@
 
 /**
  * \file    cache_inode_setattr.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/14 11:47:40 $
  * \version $Revision: 1.19 $
  * \brief   Sets the attributes for an entry.

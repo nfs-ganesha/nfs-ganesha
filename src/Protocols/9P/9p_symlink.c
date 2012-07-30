@@ -97,6 +97,11 @@ int _9p_symlink( _9p_request_data_t * preq9p,
    pfid = &preq9p->pconn->fids[*fid] ;
  
    snprintf( symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
+
+   if( ( create_arg.link_content = gsh_malloc( MAXPATHLEN ) ) == NULL )
+    return _9p_rerror( preq9p, msgtag, EFAULT, plenout, preply ) ;
+   
+   
    snprintf( create_arg.link_content, MAXPATHLEN, "%.*s", *linkcontent_len, linkcontent_str ) ;
  
    /* Let's do the job */
@@ -109,7 +114,10 @@ int _9p_symlink( _9p_request_data_t * preq9p,
                                               &fsalattr,
                                               &pfid->op_context,
                                               &cache_status)) == NULL)
-     return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+    {
+      if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
+      return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+    }
 
    /* Build the qid */
    qid_symlink.type    = _9P_QTSYMLINK ;
@@ -129,6 +137,8 @@ int _9p_symlink( _9p_request_data_t * preq9p,
             "RSYMLINK: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
             (u32)*msgtag, *fid, *name_len, name_str, qid_symlink.type, qid_symlink.version, (unsigned long long)qid_symlink.path ) ;
 
+  /* Clean allocated buffer */
+  if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
 
   return 1 ;
 }

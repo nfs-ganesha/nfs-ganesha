@@ -26,7 +26,6 @@
 
 /**
  * \file    commands_NFS.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/23 07:42:53 $
  * \version $Revision: 1.34 $
  * \brief   calls to NFSv2, NFSv3, MNTv1, MNTv3 commands.

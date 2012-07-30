@@ -23,7 +23,6 @@
 
 /**
  * \file    nfs_tcb.c
- * \author  $Author: leibovic $
  * \brief   The file that contain thread control block related code
  *
  * nfs_tcb.c : The file that contain thread control block related code

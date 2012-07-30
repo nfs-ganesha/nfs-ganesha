@@ -25,7 +25,6 @@
 
 /**
  * \file    nfs_ip_stats.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/24 13:49:12 $
  * \version $Revision: 1.4 $
  * \brief   The management of the IP stats per machines.

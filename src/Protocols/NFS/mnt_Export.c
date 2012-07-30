@@ -25,7 +25,6 @@
 
 /**
  * \file    mnt_Export.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/18 17:01:40 $
  * \version $Revision: 1.19 $
  * \brief   MOUNTPROC_EXPORT for Mount protocol v1 and v3.

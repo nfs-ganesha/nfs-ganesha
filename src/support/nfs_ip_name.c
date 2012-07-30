@@ -25,7 +25,6 @@
 
 /**
  * \file    nfs_ip_name.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/20 07:39:23 $
  * \version $Revision: 1.6 $
  * \brief   The management of the IP/name cache.

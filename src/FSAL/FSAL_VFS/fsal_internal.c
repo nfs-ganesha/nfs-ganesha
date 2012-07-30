@@ -26,7 +26,6 @@
 /**
  *
  * \file    fsal_internal.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/17 14:20:07 $
  * \version $Revision: 1.24 $
  * \brief   Defines the datas that are to be

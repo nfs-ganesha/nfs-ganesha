@@ -4,7 +4,6 @@
 
 /**
  * \file    fsal_lookup.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/08 12:46:59 $
  * \version $Revision: 1.18 $
  * \brief   Lookup operations.
@@ -254,7 +253,6 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
  *        - ERR_FSAL_NOENT        (an element in the path does not exist)
  *        - ERR_FSAL_NOTDIR       (an element in the path is not a directory)
  *        - ERR_FSAL_XDEV         (tried to cross a filesystem junction,
- *                                 whereas is has not been authorized in the server
  *                                 configuration - FSAL::auth_xdev_export parameter)
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...

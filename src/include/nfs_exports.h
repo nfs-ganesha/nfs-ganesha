@@ -26,7 +26,6 @@
 
 /**
  * \file    nfs_exports.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/23 16:15:10 $
  * \version $Revision: 1.32 $
  * \brief   Prototypes for what's related to export list management.

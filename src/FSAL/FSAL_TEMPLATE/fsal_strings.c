@@ -4,7 +4,6 @@
 
 /**
  * \file    fsal_strings.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/18 08:30:37 $
  * \version $Revision: 1.5 $
  * \brief   FSAL names handling functions.
