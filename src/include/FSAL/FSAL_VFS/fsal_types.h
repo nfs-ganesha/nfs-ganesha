@@ -68,7 +68,6 @@
 /*
  * labels in the config file
  */
-
 #define CONF_LABEL_FS_SPECIFIC   "VFS"
 
 
