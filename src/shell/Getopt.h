@@ -1,7 +1,6 @@
 /**
  *
  * \file    Getopt.h
- * \author  $Author: leibovic $
  * \date    $Date: 2005/02/02 09:05:30 $
  * \version $Revision: 1.1 $
  * \brief   Prototype for GANESHA's version of getopt,

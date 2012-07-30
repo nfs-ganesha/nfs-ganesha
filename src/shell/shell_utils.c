@@ -25,7 +25,6 @@
 
 /**
  * \file    shell_utils.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/17 14:56:22 $
  * \version $Revision: 1.8 $
  * \brief   Miscellaneous build-in commands for shell.

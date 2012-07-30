@@ -5,7 +5,6 @@
 /**
  *
  * \file    fsal_truncate.c
- * \author  $Author: leibovic $
  * \date    $Date: 2005/07/29 09:39:05 $
  * \version $Revision: 1.4 $
  * \brief   Truncate function.

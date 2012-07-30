@@ -1,7 +1,6 @@
 /**
  *
  * \file    cmd_tools.h
- * \author  $Author: leibovic $
  * \date    $Date $
  * \version $Revision $
  * \brief   Header file for functions used by several layers.

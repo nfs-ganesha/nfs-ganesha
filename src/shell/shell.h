@@ -1,7 +1,6 @@
 /**
  *
  * \file    shell.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/23 07:42:53 $
  * \version $Revision: 1.7 $
  * \brief   Internal routines for the shell.

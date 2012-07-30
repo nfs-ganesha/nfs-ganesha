@@ -5,7 +5,6 @@
 /**
  *
  * \file    fsal_creds.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/24 13:45:36 $
  * \version $Revision: 1.15 $
  * \brief   FSAL credentials handling functions.

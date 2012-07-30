@@ -1,7 +1,6 @@
 /**
  *
  * \file    cache_inode_remove.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/31 10:18:58 $
  * \version $Revision: 1.32 $
  * \brief   Removes an entry of any type.

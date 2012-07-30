@@ -25,7 +25,6 @@
 
 /**
  * \file    nfs_init.h
- * \author  $Author: leibovic $
  * \brief   NFSd initialization prototypes.
  *
  */

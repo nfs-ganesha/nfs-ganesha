@@ -4,7 +4,6 @@
 
 /**
  * \file    fsal_tools.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/09 12:16:07 $
  * \version $Revision: 1.28 $
  * \brief   miscelaneous FSAL tools.

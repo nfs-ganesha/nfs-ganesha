@@ -26,7 +26,6 @@
 
 /**
  * \file    cache_inode_lookupp.c
- * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:26 $
  * \version $Revision: 1.5 $
  * \brief   Perform lookup through the cache to get the parent entry for a directory.

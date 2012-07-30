@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_truncate.c
- * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:28 $
  * \version $Revision: 1.19 $
  * \brief   Truncates a regular file.

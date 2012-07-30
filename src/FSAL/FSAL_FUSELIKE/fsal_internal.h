@@ -1,7 +1,6 @@
 /**
  *
  * \file    fsal_internal.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/24 13:45:37 $
  * \version $Revision: 1.12 $
  * \brief   Extern definitions for variables that are

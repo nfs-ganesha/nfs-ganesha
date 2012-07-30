@@ -1,7 +1,6 @@
 /**
  *
  * \file    commands.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/24 15:04:22 $
  * \version $Revision: 1.52 $
  * \brief   Header file for processing user's command line.

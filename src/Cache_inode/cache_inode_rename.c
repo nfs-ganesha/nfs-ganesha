@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_rename.c
- * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:27 $
  * \version $Revision: 1.20 $
  * \brief   Renames an entry.

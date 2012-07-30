@@ -25,7 +25,6 @@
 
 /**
  * \file    Getopt.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/18 17:03:35 $
  * \version $Revision: 1.4 $
  * \brief   GANESHA's version of getopt, to avoid portability issues.

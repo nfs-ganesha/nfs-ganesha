@@ -5,7 +5,6 @@
 /**
  *
  * \file    fsal_rcp.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/24 13:45:37 $
  * \version $Revision: 1.7 $
  * \brief   Transfer operations.

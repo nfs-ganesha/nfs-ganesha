@@ -4,7 +4,6 @@
 
 /**
  * \file    fsal_lookup.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/08 12:46:59 $
  * \version $Revision: 1.18 $
  * \brief   Lookup operations.

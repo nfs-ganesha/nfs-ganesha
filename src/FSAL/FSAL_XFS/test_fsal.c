@@ -5,7 +5,6 @@
 /**
  *
  * \file    test_fsal.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/09 12:40:52 $
  * \version $Revision: 1.25 $
  * \brief   Program for testing fsal.

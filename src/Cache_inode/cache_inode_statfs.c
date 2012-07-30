@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_statfs.c
- * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:28 $
  * \version $Revision: 1.13 $
  * \brief   Get and eventually cache an entry.

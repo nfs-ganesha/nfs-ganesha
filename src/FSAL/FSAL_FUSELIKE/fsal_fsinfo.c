@@ -5,7 +5,6 @@
 /**
  *
  * \file    fsal_fsinfo.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/16 08:20:22 $
  * \version $Revision: 1.12 $
  * \brief   functions for retrieving filesystem info.

@@ -5,7 +5,6 @@
 /**
  *
  * \file    fsal_convert.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/17 15:53:39 $
  * \version $Revision: 1.31 $
  * \brief   HPSS-FSAL type translation functions.

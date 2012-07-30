@@ -25,7 +25,6 @@
 
 /**
  * \file    fsal_async_init.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/17 13:41:01 $
  * \version $Revision: 1.72 $
  * \brief   File System Abstraction Layer interface.

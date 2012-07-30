@@ -25,7 +25,6 @@
 
 /**
  * \file    commands.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/17 13:37:44 $
  * \version $Revision: 1.74 $
  * \brief   Converts user's commands to Cache_inode commands.

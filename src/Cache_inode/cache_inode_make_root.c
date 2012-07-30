@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_make_root.c
- * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:26 $
  * \version $Revision: 1.12 $
  * \brief   Insert in the cache an entry that is the root of the FS cached.

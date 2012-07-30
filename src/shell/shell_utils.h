@@ -1,7 +1,6 @@
 /**
  *
  * \file    shell_utils.h
- * \author  $Author: leibovic $
  * \date    $Date: 2005/05/11 07:25:45 $
  * \version $Revision: 1.3 $
  * \brief   Miscellaneous build-in commands for shell.

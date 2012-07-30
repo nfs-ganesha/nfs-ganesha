@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_access.c
- * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:26 $
  * \version $Revision: 1.19 $
  * \brief   Check for object accessibility.

@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_fsal_hash.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/20 07:39:23 $
  * \version $Revision: 1.9 $
  * \brief   Glue functions between the FSAL and the Cache inode layers.

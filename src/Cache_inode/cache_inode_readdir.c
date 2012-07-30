@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_inode_readdir.c
- * \author  $Author: deniel $
  * \date    $Date: 2006/01/24 11:43:05 $
  * \version $Revision: 1.50 $
  * \brief   Reads the content of a directory.

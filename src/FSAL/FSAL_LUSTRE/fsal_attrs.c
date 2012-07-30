@@ -5,7 +5,6 @@
 /**
  *
  * \file    fsal_attrs.c
- * \author  $Author: leibovic $
  * \date    $Date: 2005/09/09 15:22:49 $
  * \version $Revision: 1.19 $
  * \brief   Attributes functions.

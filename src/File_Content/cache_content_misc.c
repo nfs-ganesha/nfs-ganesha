@@ -25,7 +25,6 @@
 
 /**
  * \file    cache_content_misc.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/18 07:29:11 $
  * \version $Revision: 1.14 $
  * \brief   Management of the file content cache: miscellaneous functions.

@@ -25,7 +25,6 @@
 
 /**
  * \file    fsal.h
- * \author  $Author: leibovic $
  * \date    $Date: 2006/02/17 13:41:01 $
  * \version $Revision: 1.72 $
  * \brief   File System Abstraction Layer interface.
@@ -75,9 +74,7 @@ fsal_status_t MFSL_unlink_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
 /**
  *
- * MFSAL_link_check_perms : Checks authorization to perform an asynchronous setattr.
  *
- * Checks authorization to perform an asynchronous link.
  *
  * @param target_handle     [IN]    mfsl object to be operated on.
  * @param dir_handle        [IN]    mfsl object to be operated on.

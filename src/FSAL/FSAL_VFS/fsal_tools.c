@@ -25,7 +25,6 @@
 
 /**
  * \file    fsal_tools.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/17 14:20:07 $
  * \version $Revision: 1.26 $
  * \brief   miscelaneous FSAL tools.

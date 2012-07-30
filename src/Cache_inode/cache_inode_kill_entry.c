@@ -27,7 +27,6 @@
 /**
  *
  * \File    cache_inode_kill_entry.c
- * \author  $Author: deniel $
  * \date    $Date: 2006/01/05 15:14:51 $
  * \version $Revision: 1.63 $
  * \brief   Some routines for management of the cache_inode layer, shared by other calls.

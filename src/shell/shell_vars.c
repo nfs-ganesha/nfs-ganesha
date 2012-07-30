@@ -25,7 +25,6 @@
 
 /**
  * \file    shell_vars.c
- * \author  $Author: leibovic $
  * \date    $Date: 2006/01/24 13:49:33 $
  * \version $Revision: 1.8 $
  * \brief   variables management for the shell.
@@ -213,10 +212,8 @@ static void del_var(shell_variable_t * var)
 #define IS_LETTER_CAP(_c_) (((_c_) >= 'A') && ((_c_) <= 'Z'))
 #define IS_NUMERIC(_c_) (((_c_) >= '0') && ((_c_) <= '9'))
 
-/** indicates whether a name is authorized for a variable.
  *  A variable name must be in [a-zA-Z0-9._:]*
  */
-int is_authorized_varname(char *str)
 {
 
   int len = 0;
