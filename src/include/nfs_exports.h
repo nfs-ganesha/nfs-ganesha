@@ -224,11 +224,7 @@ typedef struct exportlist__
 #define EXPORT_OPTION_NOSUID          0x00000001        /* mask off setuid mode bit            */
 #define EXPORT_OPTION_NOSGID          0x00000002        /* mask off setgid mode bit            */
 #define EXPORT_OPTION_ROOT            0x00000004        /* allow root access as root uid       */
-#define EXPORT_OPTION_NETENT          0x00000008        /* client entry is a network entry     */
 #define EXPORT_OPTION_READ_ACCESS     0x00000010        /* R_Access= option specified          */
-#define EXPORT_OPTION_NETGRP          0x00000020        /* client entry is a netgroup          */
-#define EXPORT_OPTION_WILDCARD        0x00000040        /* client entry is wildcarded          */
-#define EXPORT_OPTION_GSSPRINC        0x00000080        /* client entry is a GSS principal     */
 #define EXPORT_OPTION_PSEUDO          0x00000100        /* pseudopath is provided              */
 #define EXPORT_OPTION_MAXREAD         0x00000200        /* Max read is provided                */
 #define EXPORT_OPTION_MAXWRITE        0x00000400        /* Max write is provided               */

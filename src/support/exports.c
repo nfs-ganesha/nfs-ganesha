@@ -391,7 +391,6 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
           strncpy(p_clients[i].client.netgroup.netgroupname,
                   (char *)(client_hostname + 1), MAXHOSTNAMELEN);
 
-          p_clients[i].options |= EXPORT_OPTION_NETGRP;
           p_clients[i].type = NETGROUP_CLIENT;
 
           LogDebug(COMPONENT_CONFIG,
@@ -406,7 +405,6 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
         {
           /* Entry is a network definition */
           p_clients[i].client.network.netaddr = netAddr;
-          p_clients[i].options |= EXPORT_OPTION_NETENT;
           p_clients[i].client.network.netmask = netMask;
           p_clients[i].type = NETWORK_CLIENT;
 
