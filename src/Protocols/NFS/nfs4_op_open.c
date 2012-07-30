@@ -633,11 +633,6 @@ open4_claim_null(OPEN4args        * arg,
 
         parent = data->current_entry;
 
-        if (arg->claim.open_claim4_u.file.utf8string_len == 0) {
-                nfs_status = NFS4ERR_INVAL;
-                goto out;
-        }
-
         /**
          * Validate and convert the utf8 filename
          */

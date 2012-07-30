@@ -106,6 +106,14 @@ nfs4_op_lookup(struct nfs_argop4 *op,
                 goto out;
         }
 
+        /* Validate and convert the UFT8 objname to a regular string */
+        res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
+						      UTF8_SCAN_ALL,
+						      &name);
+	if (res_LOOKUP4->status  != NFS4_OK) {
+		goto out;
+	}
+
         /* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
         if (nfs4_Is_Fh_Pseudo(&(data->currentFH))) {
                 res_LOOKUP4->status = nfs4_op_lookup_pseudo(op, data, resp);
@@ -117,14 +125,6 @@ nfs4_op_lookup(struct nfs_argop4 *op,
                 goto out;
         }
 
-
-        /* Validate and convert the UFT8 objname to a regular string */
-        res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
-						      UTF8_SCAN_ALL,
-						      &name);
-	if (res_LOOKUP4->status  != NFS4_OK) {
-		goto out;
-	}
 
         /* Do the lookup in the FSAL */
         file_entry = NULL;
