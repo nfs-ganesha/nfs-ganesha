@@ -173,7 +173,7 @@ int posix2fsal_error(int posix_errorcode)
 }
 
 
-fsal_status_t posix2fsal_attributes(struct stat *buffstat,
+fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
                                     struct attrlist *fsalattr)
 {
   FSAL_CLEAR_MASK(fsalattr->mask);
