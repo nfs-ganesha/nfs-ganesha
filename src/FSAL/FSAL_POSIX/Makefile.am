@@ -15,7 +15,6 @@ libfsalposix_la_SOURCES = fsal_convert.c   \
 	                ../../include/fsal.h                     \
                         ../../include/fsal_types.h	         \
 	                ../../include/err_fsal.h	         \
-	                ../../include/FSAL/FSAL_POSIX/fsal_types.h \
 	                ../../include/FSAL/FSAL_POSIX/fsal_handle_syscalls.h
 
 
