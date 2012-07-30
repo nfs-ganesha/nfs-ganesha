@@ -4263,8 +4263,8 @@ int nfs4_MakeCred(compound_data_t * data)
     return NFS4ERR_WRONGSEC;
   }
 
-  if(nfs_check_anon(&related_client, data->pexport, &user_credentials) == FALSE
-     || nfs_build_fsal_context(data->reqp,
+  nfs_check_anon(&related_client, data->pexport, &user_credentials);
+  if(nfs_build_fsal_context(data->reqp,
                             data->pexport,
                             data->pcontext,
                             &user_credentials) == FALSE)

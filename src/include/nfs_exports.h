@@ -378,7 +378,7 @@ typedef struct compoud_data
 /* Export list related functions */
 exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot,
                                    unsigned short exportid);
-int nfs_check_anon(exportlist_client_entry_t * pexport_client,
+void nfs_check_anon(exportlist_client_entry_t * pexport_client,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials);
 int nfs_build_fsal_context(struct svc_req *ptr_req,

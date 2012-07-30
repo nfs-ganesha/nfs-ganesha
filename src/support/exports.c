@@ -631,7 +631,9 @@ bool_t fsal_specific_checks(exportlist_t *p_entry)
  * Don't stop immediately on error,
  * continue parsing the file, for listing other errors.
  */
-static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
+static int BuildExportEntry(config_item_t block,
+                            exportlist_t ** pp_export,
+                            exportlist_t * exportroot)
 {
   exportlist_t *p_entry;
   int i, rc;
@@ -782,6 +784,16 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           p_entry->id = (unsigned short)export_id;
           set_options |= FLAG_EXPORT_ID;
+
+          if(nfs_Get_export_by_id(exportroot,
+                                  p_entry->id) != NULL)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ_EXPORT: ERROR: Duplicate Export_id: \"%ld\"",
+                      export_id);
+              err_flag = TRUE;
+              continue;
+            }
 
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PATH))
@@ -2254,7 +2266,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
       if(!STRCMP(blk_name, CONF_LABEL_EXPORT))
         {
 
-          rc = BuildExportEntry(block, &p_export_item);
+          rc = BuildExportEntry(block, &p_export_item, *ppexportlist);
 
           /* If the entry is errorneous, ignore it
            * and continue checking syntax of other entries.
@@ -2305,17 +2317,30 @@ int export_client_match(sockaddr_t *hostaddr,
   char hostname[MAXHOSTNAMELEN];
   in_addr_t addr = get_in_addr(hostaddr);
 
-  if(export_option & EXPORT_OPTION_ROOT)
-    LogFullDebug(COMPONENT_DISPATCH,
-                 "Looking for root access entries");
+  if(isFullDebug(COMPONENT_DISPATCH))
+    {
+      char * root_access = "";
+      char * read_access = "";
+      char * write_access = "";
 
-  if(export_option & EXPORT_OPTION_READ_ACCESS)
-    LogFullDebug(COMPONENT_DISPATCH,
-                  "Looking for nonroot access read entries");
+      if(export_option & EXPORT_OPTION_ROOT)
+        root_access = " ROOT";
+      if(export_option & EXPORT_OPTION_READ_ACCESS)
+        read_access = " READ";
+      if(export_option & EXPORT_OPTION_WRITE_ACCESS)
+        write_access = " WRITE";
 
-  if(export_option & EXPORT_OPTION_WRITE_ACCESS)
-    LogFullDebug(COMPONENT_DISPATCH,
-                 "Looking for nonroot access write entries");
+      if((export_option & (EXPORT_OPTION_ROOT |
+                           EXPORT_OPTION_READ_ACCESS |
+                           EXPORT_OPTION_WRITE_ACCESS)) == 0)
+        root_access = " NONE";
+
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Checking client %s for%s%s%s clients=%p",
+                   ipstring,
+                   root_access, read_access, write_access,
+                   clients);
+    }
 
   for(i = 0; i < clients->num_clients; i++)
     {
@@ -2330,31 +2355,36 @@ int export_client_match(sockaddr_t *hostaddr,
         case HOSTIF_CLIENT:
           if(clients->clientarray[i].client.hostif.clientaddr == addr)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches host address");
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "This matches host address for entry %u",
+                           i);
               *pclient_found = clients->clientarray[i];
               return TRUE;
             }
           break;
 
         case NETWORK_CLIENT:
-          LogDebug( COMPONENT_DISPATCH, "test NETWORK_CLIENT: addr=%#.08X, netmask=%#.08X, match with %#.08X",
-                    clients->clientarray[i].client.network.netaddr,
-                    clients->clientarray[i].client.network.netmask, ntohl(addr));
           LogFullDebug(COMPONENT_DISPATCH,
-                       "Test net %d.%d.%d.%d in %d.%d.%d.%d ??",
-                       (unsigned int)(clients->clientarray[i].client.network.netaddr >> 24),
-                       (unsigned int)((clients->clientarray[i].client.network.netaddr >> 16) & 0xFF),
-                       (unsigned int)((clients->clientarray[i].client.network.netaddr >> 8) & 0xFF),
-                       (unsigned int)(clients->clientarray[i].client.network.netaddr & 0xFF),
-                       (unsigned int)(addr >> 24),
-                       (unsigned int)(addr >> 16) & 0xFF,
-                       (unsigned int)(addr >> 8) & 0xFF,
-                       (unsigned int)(addr & 0xFF));
+                       "Test NETWORK_CLIENT: Test net %d.%d.%d.%d mask %d.%d.%d.%d, match with %d.%d.%d.%d",
+                       (int)(clients->clientarray[i].client.network.netaddr >> 24),
+                       (int)((clients->clientarray[i].client.network.netaddr >> 16) & 0xFF),
+                       (int)((clients->clientarray[i].client.network.netaddr >> 8) & 0xFF),
+                       (int)(clients->clientarray[i].client.network.netaddr & 0xFF),
+                       (int)(clients->clientarray[i].client.network.netmask >> 24),
+                       (int)((clients->clientarray[i].client.network.netmask >> 16) & 0xFF),
+                       (int)((clients->clientarray[i].client.network.netmask >> 8) & 0xFF),
+                       (int)(clients->clientarray[i].client.network.netmask & 0xFF),
+                       (int)(addr >> 24),
+                       (int)(addr >> 16) & 0xFF,
+                       (int)(addr >> 8) & 0xFF,
+                       (int)(addr & 0xFF));
 
           if((clients->clientarray[i].client.network.netmask & ntohl(addr)) ==
              clients->clientarray[i].client.network.netaddr)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches network address");
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "This matches network address for entry %u",
+                           i);
               *pclient_found = clients->clientarray[i];
               return TRUE;
             }
@@ -2381,6 +2411,9 @@ int export_client_match(sockaddr_t *hostaddr,
               NULL, NULL) == 1)
             {
               *pclient_found = clients->clientarray[i];
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "This matches netgroup for entry %u",
+                           i);
               return TRUE;
             }
           break;
@@ -2392,6 +2425,9 @@ int export_client_match(sockaddr_t *hostaddr,
               FNM_PATHNAME) == 0)
             {
               *pclient_found = clients->clientarray[i];
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "This matches wildcard for entry %u",
+                           i);
               return TRUE;
             }
 
@@ -2427,6 +2463,9 @@ int export_client_match(sockaddr_t *hostaddr,
               FNM_PATHNAME) == 0)
             {
               *pclient_found = clients->clientarray[i];
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "This matches wildcard for entry %u",
+                           i);
               return TRUE;
             }
           LogFullDebug(COMPONENT_DISPATCH, "'%s' not matching '%s'",
@@ -2733,13 +2772,15 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                  pexport->access_type == ACCESSTYPE_MDONLY)
                 {
                   LogFullDebug(COMPONENT_DISPATCH,
-                               "Root granted MDONLY export permission");
+                               "Root granted MDONLY export %d permission",
+                               pexport->id);
                   return EXPORT_MDONLY_GRANTED;
                 }
               else
                 {
                   LogFullDebug(COMPONENT_DISPATCH,
-                               "Root granted export permission");
+                               "Root granted export %d permission",
+                               pexport->id);
                   return EXPORT_PERMISSION_GRANTED;
                 }
             }
@@ -2754,7 +2795,8 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                                  EXPORT_OPTION_WRITE_ACCESS))
             {
               LogFullDebug(COMPONENT_DISPATCH,
-                           "Write permission to export granted");
+                           "Write permission to export %d granted",
+                           pexport->id);
               return EXPORT_PERMISSION_GRANTED;
             }
           else if(pexport->new_access_list_version &&
@@ -2766,7 +2808,8 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             {
               pexport->access_type = ACCESSTYPE_MDONLY;
               LogFullDebug(COMPONENT_DISPATCH,
-                           "MDONLY export permission granted");
+                           "MDONLY export %d permission granted",
+                           pexport->id);
               return EXPORT_MDONLY_GRANTED;
             }
         }
@@ -2783,13 +2826,15 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                  pexport->access_type == ACCESSTYPE_MDONLY)
                 {
                   LogFullDebug(COMPONENT_DISPATCH,
-                               "MDONLY export permission granted - no write");
+                               "MDONLY export %d permission granted - no write",
+                               pexport->id);
                   return EXPORT_MDONLY_GRANTED;
                 }
               else
                 {
                   LogFullDebug(COMPONENT_DISPATCH,
-                               "Read export permission granted");
+                               "Read export %d permission granted",
+                               pexport->id);
                   return EXPORT_PERMISSION_GRANTED;
                 }
             }
@@ -2802,12 +2847,14 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             {
               pexport->access_type = ACCESSTYPE_MDONLY_RO;
               LogFullDebug(COMPONENT_DISPATCH,
-                           "MDONLY export permission granted new access list");
+                           "MDONLY export %d permission granted new access list",
+                           pexport->id);
               return EXPORT_MDONLY_GRANTED;
             }
         }
       LogFullDebug(COMPONENT_DISPATCH,
-                   "export permission denied");
+                   "export %d permission denied",
+                   pexport->id);
       return EXPORT_PERMISSION_DENIED;
 
 #ifdef _USE_TIRPC_IPV6
@@ -2914,7 +2961,8 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
 
   /* If this point is reached, no matching entry was found */
   LogFullDebug(COMPONENT_DISPATCH,
-               "export permission denied - no matching entry");
+               "export %d permission denied - no matching entry",
+               pexport->id);
   return EXPORT_PERMISSION_DENIED;
 
 }                               /* nfs_export_check_access */

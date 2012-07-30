@@ -182,8 +182,11 @@ int get_req_uid_gid(struct svc_req *req,
     case AUTH_NONE:
       /* Nothing to be done here... */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Request xid=%u has authentication AUTH_NONE",
-                   req->rq_xid);
+                   "Request xid=%u has authentication AUTH_NONE, expordid=%d, uid=%d, gid=%d",
+                   req->rq_xid,
+                   pexport->id,
+                   (int)pexport->anonymous_uid,
+                   (int)pexport->anonymous_gid);
       user_credentials->caller_uid = pexport->anonymous_uid;
       user_credentials->caller_gid = pexport->anonymous_gid;
       user_credentials->caller_glen = 0;
@@ -191,22 +194,21 @@ int get_req_uid_gid(struct svc_req *req,
       break;
 
     case AUTH_UNIX:
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Request xid=%u has authentication AUTH_UNIX",
-                   req->rq_xid);
       /* We map the rq_cred to Authunix_parms */
       punix_creds = (struct authunix_parms *) req->rq_clntcred;
+
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Request xid=%u has authentication AUTH_UNIX, expordid=%d, uid=%d, gid=%d",
+                   req->rq_xid,
+                   pexport->id,
+                   (int)punix_creds->aup_uid,
+                   (int)punix_creds->aup_gid);
 
       /* Get the uid/gid couple */
       user_credentials->caller_uid = punix_creds->aup_uid;
       user_credentials->caller_gid = punix_creds->aup_gid;
       user_credentials->caller_glen = punix_creds->aup_len;
       user_credentials->caller_garray = punix_creds->aup_gids;
-
-      LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
-                   (unsigned int)user_credentials->caller_uid,
-                   (unsigned int)user_credentials->caller_gid);
-
       break;
 
 #ifdef _HAVE_GSSAPI
@@ -288,7 +290,7 @@ int get_req_uid_gid(struct svc_req *req,
       if(uidgidmap_get(user_credentials->caller_uid,
                        &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
         {
-          LogMajor(COMPONENT_DISPATCH,
+          LogMajor(COMPONENT_IDMAPPER,
                    "FAILURE: Could not resolve uidgid map for %u",
                    user_credentials->caller_uid);
           user_credentials->caller_gid = -1;
@@ -329,9 +331,10 @@ int get_req_uid_gid(struct svc_req *req,
         return FALSE;
       }
 
-      LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
-                   (unsigned int)user_credentials->caller_uid,
-                   (unsigned int)user_credentials->caller_gid);
+      LogFullDebug(COMPONENT_DISPATCH, "----> exportid=%d,uid=%d,gid=%d",
+                   pexport->id,
+                   (int)user_credentials->caller_uid,
+                   (int)user_credentials->caller_gid);
       user_credentials->caller_glen = num_grps;
       user_credentials->caller_garray = grps;
 
@@ -350,19 +353,23 @@ int get_req_uid_gid(struct svc_req *req,
   return TRUE;
 }
 
-int nfs_check_anon(exportlist_client_entry_t * pexport_client,
-                   exportlist_t * pexport,
-                   struct user_cred *user_credentials)
+void nfs_check_anon(exportlist_client_entry_t * pexport_client,
+                    exportlist_t * pexport,
+                    struct user_cred *user_credentials)
 {
-  if (user_credentials == NULL)
-    return FALSE;
-
   /* Do we have root access ? */
   /* Are we squashing _all_ users to the anonymous uid/gid ? */
   if( ((user_credentials->caller_uid == 0)
        && !(pexport_client->options & EXPORT_OPTION_ROOT))
       || pexport->all_anonymous == TRUE)
     {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
+                   pexport->id,
+                   user_credentials->caller_uid,
+                   user_credentials->caller_gid,
+                   pexport->anonymous_uid,
+                   pexport->anonymous_gid);
       user_credentials->caller_uid = pexport->anonymous_uid;
       user_credentials->caller_gid = pexport->anonymous_gid;
       
@@ -370,8 +377,14 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
       user_credentials->caller_glen = 0 ;
       user_credentials->caller_garray = NULL ;
     }
-
-  return TRUE;
+  else
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Accepting credentials for export %d caller uid=%d gid=%d",
+                   pexport->id,
+                   user_credentials->caller_uid,
+                   user_credentials->caller_gid);
+    }
 }
 
 /**
@@ -428,14 +441,16 @@ int nfs_build_fsal_context(struct svc_req *req,
     {
       LogEvent(COMPONENT_DISPATCH,
                "NFS DISPATCHER: FAILURE: Could not get credentials for "
-               "(uid=%d,gid=%d), fsal error=(%d,%d)",
+               "(exportid=%d,uid=%d,gid=%d), fsal error=(%d,%d)",
+               pexport->id,
                user_credentials->caller_uid, user_credentials->caller_gid,
                fsal_status.major, fsal_status.minor);
       return FALSE;
     }
   else
     LogDebug(COMPONENT_DISPATCH,
-             "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
+             "NFS DISPATCHER: FSAL Cred acquired for (exportid=%d,uid=%d,gid=%d)",
+             pexport->id,
              user_credentials->caller_uid, user_credentials->caller_gid);
 
   return TRUE;
