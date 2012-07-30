@@ -317,6 +317,9 @@ fi
 AM_CONDITIONAL([USE_FSAL_CEPH], test "[$enable_fsal_ceph]"  == "yes")
 
 GA_AM_COND_ON_UNLESS([fsal-lustre],[do not build LUSTRE FSAL shared library],[USE_FSAL_LUSTRE])
+# SHOOK is a variant of Lustre FSAL
+GA_AM_COND_ON_UNLESS([fsal-shook],[do not build SHOOK FSAL shared library],[USE_FSAL_SHOOK])
+
 GA_AM_COND_ON_UNLESS([fsal-posix],[do not build POSIX FSAL shared library],[USE_FSAL_POSIX])
 
 # FSALs whicha re disabled by default
