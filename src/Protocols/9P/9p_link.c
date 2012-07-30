@@ -113,7 +113,7 @@ int _9p_link( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "TLINK: tag=%u dfid=%u targetfid=%u name=%.*s",
+  LogDebug( COMPONENT_9P, "RLINK: tag=%u dfid=%u targetfid=%u name=%.*s",
             (u32)*msgtag, *dfid, *targetfid, *name_len, name_str ) ;
 
   return 1 ;

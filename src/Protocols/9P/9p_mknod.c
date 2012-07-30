@@ -140,7 +140,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "TMKNOD: tag=%u fid=%u name=%.*s major=%u minor=%u qid=(type=%u,version=%u,path=%llu)",
+  LogDebug( COMPONENT_9P, "RMKNOD: tag=%u fid=%u name=%.*s major=%u minor=%u qid=(type=%u,version=%u,path=%llu)",
             (u32)*msgtag, *fid, *name_len, name_str, *major, *minor,
             qid_newobj.type, qid_newobj.version, (unsigned long long)qid_newobj.path ) ;
 
