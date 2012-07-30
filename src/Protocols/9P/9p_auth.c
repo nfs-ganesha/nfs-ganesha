@@ -66,9 +66,6 @@ int _9p_auth( _9p_request_data_t * preq9p,
   u32 * n_aname = NULL ;
 
   struct attrlist fsalattr ;
-  struct fsal_export *exp_hdl = NULL ;
-  fsal_status_t fsal_status ;
-  struct netbuf fkey  ;
 
   u32 err = 0 ;
  
@@ -78,6 +75,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
   unsigned int found = FALSE;
   cache_inode_status_t cache_status ;
   cache_inode_fsal_data_t fsdata ;
+  char fkey_data[NFS4_FHSIZE];
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -146,20 +144,11 @@ int _9p_auth( _9p_request_data_t * preq9p,
 
   /* Get the related pentry */
   memset(&fsdata, 0, sizeof(fsdata));
+  fsdata.fh_desc.addr = fkey_data ; 
+  fsdata.fh_desc.len = sizeof( fkey_data ) ;
+  fsdata.export = pexport->export_hdl ;
 
-  exp_hdl = pfid->pexport->export_hdl;
-  fsal_status = exp_hdl->ops->extract_handle(exp_hdl, FSAL_DIGEST_SIZEOF, &fkey );
-  if( FSAL_IS_ERROR( fsal_status ) )
-   {
-      LogCrit( COMPONENT_9P, "Could not extract handle from export: fsal_status=(%u,%u)", 
-               fsal_status.major, fsal_status.minor ) ;
-      return _9p_rerror( preq9p, msgtag, EINVAL,  plenout, preply ) ;
-   }
-
-  fsdata.export= pfid->pexport->export_hdl ;
-  fsdata.fh_desc.addr = fkey.buf;
-  fsdata.fh_desc.len = fkey.len;
-
+  pexport->proot_handle->ops->handle_to_key( pexport->proot_handle, &fsdata.fh_desc ) ;
 
   pfid->pentry = cache_inode_get( &fsdata,
                                   &fsalattr,
