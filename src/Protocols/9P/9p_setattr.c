@@ -119,44 +119,60 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   memset(&parent_attr, 0, sizeof(parent_attr));
 
   if( *valid & _9P_SETATTR_MODE )
-    fsalattr.mode = *mode ;
-   
+   {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_MODE);
+      fsalattr.mode = *mode ;
+   }
 
   if( *valid & _9P_SETATTR_UID )
-    fsalattr.owner = *uid ;
+   {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_OWNER);
+      fsalattr.owner = *uid ;
+   }
 
   if( *valid & _9P_SETATTR_GID )
-    fsalattr.group = *gid ;
+   {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_GROUP);
+      fsalattr.group = *gid ;
+   }
 
   if( *valid & _9P_SETATTR_SIZE )
-    fsalattr.filesize = *size ;
+   {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_SIZE);
+      fsalattr.filesize = *size ;
+   }
 
   if( *valid & _9P_SETATTR_ATIME )
    {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
       fsalattr.atime.seconds  = t.tv_sec ;
       fsalattr.atime.nseconds = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_MTIME )
    {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_MTIME);
       fsalattr.mtime.seconds  = t.tv_sec ;
       fsalattr.mtime.nseconds = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_CTIME )
    {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_CTIME);
       fsalattr.ctime.seconds  = t.tv_sec ;
       fsalattr.ctime.nseconds = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_ATIME_SET )
    {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
       fsalattr.atime.seconds  = *atime_sec ;
       fsalattr.atime.nseconds = *atime_nsec ;
    }
 
   if( *valid & _9P_SETATTR_MTIME_SET )
    {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_MTIME);
       fsalattr.mtime.seconds  = *mtime_sec ;
       fsalattr.mtime.nseconds = *mtime_nsec ;
    }
@@ -164,6 +180,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   /* Set size if needed */
   if( *valid & _9P_SETATTR_SIZE )
     {
+      FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
       if((cache_status = cache_inode_truncate( pfid->pentry,
                                                *size,
                                                &parent_attr,
