@@ -22,8 +22,11 @@
 
 #define MAX_VAR_LEN   32
 
+/** indicates whether a name is authorized for a variable.
  *  A variable name must be in [a-zA-Z0-9._:]*
  */
+int is_authorized_varname(char *str);
+
 
 /** returns the value for a variable,
  *  NULL if the variable doesn't exist.

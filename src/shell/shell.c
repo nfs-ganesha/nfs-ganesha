@@ -1964,7 +1964,7 @@ int shellcmd_set(int argc,      /* IN : number of args in argv */
     {
 
       /* other variables */
-
+      if(!is_authorized_varname(varname))
         {
           snprintf(tracebuff, TRACEBUFFSIZE, "%s: Invalid variable name \"%s\".", argv[0],
                    varname);
