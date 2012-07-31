@@ -93,12 +93,9 @@ int PTFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
       return -1;
     }
 
-  if(handle1->data.handle.handle_size != handle2->data.handle.handle_size)
-    return -2;
-
   if(memcmp
      (handle1->data.handle.f_handle, handle2->data.handle.f_handle, 
-      handle1->data.handle.handle_key_size))
+      OPENHANDLE_KEY_LEN))
     return -3;
 
   return 0;
