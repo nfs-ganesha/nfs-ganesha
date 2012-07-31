@@ -33,7 +33,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 
 struct lustre_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
-	struct file_handle *handle;
+	struct lustre_file_handle *handle;
 	union {
 		struct {
 			int fd;
@@ -44,7 +44,7 @@ struct lustre_fsal_obj_handle {
 			int link_size;
 		} symlink;
 		struct {
-			struct file_handle *sock_dir;
+			struct lustre_file_handle *sock_dir;
 			char *sock_name;
 		} sock;
 	} u;
