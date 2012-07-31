@@ -237,7 +237,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
      res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
 
      /* Fudge cookie for "." and "..", if necessary */
-     if (begin_cookie > 1) {
+     if (begin_cookie > 2) {
           cache_inode_cookie = begin_cookie;
      } else {
           cache_inode_cookie = 0;
