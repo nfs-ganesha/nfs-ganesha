@@ -73,7 +73,7 @@ struct handle {
 };
 
 /**
- * The internals of a DS (data server) handle.
+ * The wire content of a DS (data server) handle
  */
 
 struct ds_wire
@@ -84,17 +84,31 @@ struct ds_wire
                               snaprealm. */
 };
 
+/**
+ * The full, 'private' DS (data server) handle
+ */
+
+struct ds
+{
+        struct ds_wire wire; /*< Wire data */
+        struct fsal_ds_handle ds; /*< Public DS handle */
+        bool_t connected; /*< True if the handle has been connected
+                              (in Ceph) */
+};
+
 #ifndef CEPH_INTERNAL_C
 /* Keep internal.c from clashing with itself */
 extern attrmask_t supported_attributes;
 extern attrmask_t settable_attributes;
 #endif /* !CEPH_INTERNAL_C */
 
-static const size_t BIGGEST_PATTERN = 512; /* Linux supports a stripe
-                                              pattern with no more than 4096
-                                              stripes, but for now we stick
-                                              to 1024 to keep them da_addrs
-                                              from being too gigantic. */
+/**
+ * Linux supports a stripe pattern with no more than 4096 stripes, but
+ * for now we stick to 1024 to keep them da_addrs from being too
+ * gigantic.
+ */
+
+static const size_t BIGGEST_PATTERN = 1024;
 
 /* Prototypes */
 
@@ -106,5 +120,6 @@ void ceph2fsal_attributes(const struct stat *buffstat,
                           struct attrlist *fsalattr);
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
+void ds_ops_init(struct fsal_ds_ops *ops);
 
 #endif /* !FSAL_CEPH_INTERNAL_INTERNAL__ */

@@ -222,6 +222,7 @@ init(void)
 
         export_ops_init(module->exp_ops);
         handle_ops_init(module->obj_ops);
+        ds_ops_init(module->ds_ops);
 }
 
 /**

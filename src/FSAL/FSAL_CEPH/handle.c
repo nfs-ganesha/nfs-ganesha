@@ -39,6 +39,45 @@
 #include "fsal_pnfs_files.h"
 #include "internal.h"
 #include "nfs_exports.h"
+#include "FSAL/fsal_commonlib.h"
+
+/**
+ * @brief Release an object
+ *
+ * This function looks up an object by name in a directory.
+ *
+ * @param[in] obj_pub The object to release
+ *
+ * @return FSAL status codes.
+ */
+static fsal_status_t
+release(struct fsal_obj_handle *obj_pub)
+{
+        /* Generic status return */
+        int rc = 0;
+        /* The private 'full' handle */
+        struct handle *obj
+                = container_of(obj_pub, struct handle, handle);
+
+        pthread_mutex_lock(&obj_pub->lock);
+        obj_pub->refs--;  /* subtract the reference when we were created */
+        if ((obj_pub->refs != 0) ||
+            (obj_pub->type == REGULAR_FILE)) {
+                pthread_mutex_unlock(&obj_pub->lock);
+                rc = obj_pub->refs > 0 ? -EBUSY : -EINVAL;
+                LogCrit(COMPONENT_FSAL,
+                        "Tried to release busy handle, hdl = 0x%p->refs = %d",
+                        obj_pub, obj_pub->refs);
+                return ceph2fsal_error(rc);
+        }
+        fsal_detach_handle(obj_pub->export, &obj_pub->handles);
+        pthread_mutex_unlock(&obj_pub->lock);
+        pthread_mutex_destroy(&obj_pub->lock);
+        obj->handle.ops = NULL; /*poison myself */
+        obj->handle.export = NULL;
+        gsh_free(obj);
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
 
 /**
  * @brief Look up an object by name
@@ -51,7 +90,6 @@
  *
  * @return FSAL status codes.
  */
-
 static fsal_status_t
 lookup(struct fsal_obj_handle *dir_pub,
        const char *path,
@@ -1303,6 +1341,7 @@ nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 void
 handle_ops_init(struct fsal_obj_ops *ops)
 {
+        ops->release = release;
         ops->lookup = lookup;
         ops->create = fsal_create;
         ops->mkdir = fsal_mkdir;

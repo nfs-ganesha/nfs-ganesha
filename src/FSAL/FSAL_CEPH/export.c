@@ -56,11 +56,11 @@
  */
 
 static fsal_status_t
-release(struct fsal_export *pub_export)
+release(struct fsal_export *export_pub)
 {
         /* The priate, expanded export */
         struct export *export
-                = container_of(pub_export, struct export, export);
+                = container_of(export_pub, struct export, export);
         /* Return code */
         fsal_status_t status = {ERR_FSAL_INVAL, 0};
 
@@ -93,7 +93,7 @@ release(struct fsal_export *pub_export)
  * host:/path), we check to see if the path begins with / and, if not,
  * skip until we find one.
  *
- * @param[in]  pub_export The export in which to look up the file
+ * @param[in]  export_pub The export in which to look up the file
  * @param[in]  path       The path to look up
  * @param[out] pub_handle The created public FSAL handle
  *
@@ -101,12 +101,12 @@ release(struct fsal_export *pub_export)
  */
 
 static fsal_status_t
-lookup_path(struct fsal_export *pub_export,
+lookup_path(struct fsal_export *export_pub,
             const char *path,
             struct fsal_obj_handle **pub_handle)
 {
         /* The 'private' full export handle */
-        struct export *export = container_of(pub_export,
+        struct export *export = container_of(export_pub,
                                              struct export,
                                              export);
         /* The 'private' full object handle */
@@ -192,24 +192,87 @@ extract_handle(struct fsal_export *export_pub,
 }
 
 /**
+ * @brief Create a FSAL data server handle from a wire handle
+ *
+ * This function creates a FSAL data server handle from a client
+ * supplied "wire" handle.  This is also where validation gets done,
+ * since PUTFH is the only operation that can return
+ * NFS4ERR_BADHANDLE.
+ *
+ * @param[in]  export_pub The export in which to create the handle
+ * @param[in]  desc       Buffer from which to create the file
+ * @param[out] ds_pub     FSAL data server handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+nfsstat4
+create_ds_handle(struct fsal_export *const export_pub,
+                 const struct gsh_buffdesc *const desc,
+                 struct fsal_ds_handle **const ds_pub)
+{
+        /* Full 'private' export structure */
+        struct export *export = container_of(export_pub,
+                                             struct export,
+                                             export);
+        /* Handle to be created */
+        struct ds *ds = NULL;
+
+        *ds_pub= NULL;
+
+        if (desc->len != sizeof(struct ds_wire)) {
+                return NFS4ERR_BADHANDLE;
+        }
+
+        ds = gsh_calloc(1, sizeof(struct ds));
+
+        if (ds == NULL) {
+                return NFS4ERR_SERVERFAULT;
+        }
+
+        /* Connect lazily when a FILE_SYNC4 write forces us to, not
+           here. */
+
+        ds->connected = FALSE;
+
+
+        memcpy(&ds->wire, desc->addr, desc->len);
+
+        if (ds->wire.layout.fl_stripe_unit == 0) {
+                gsh_free(ds);
+                return NFS4ERR_BADHANDLE;
+        }
+
+        if (fsal_ds_handle_init(&ds->ds,
+                                export->export.fsal->ds_ops,
+                                &export->export)) {
+                gsh_free(ds);
+                return NFS4ERR_SERVERFAULT;
+        }
+
+        *ds_pub = &ds->ds;
+
+        return NFS4_OK;
+}
+
+/**
  * @brief Create a handle object from a wire handle
  *
  * The wire handle is given in a buffer outlined by desc, which it
  * looks like we shouldn't modify.
  *
- * @param[in]  pub_export Public export
+ * @param[in]  export_pub Public export
  * @param[in]  desc       Handle buffer descriptor
  * @param[out] pub_handle The created handle
  *
  * @return FSAL status.
  */
 static fsal_status_t
-create_handle(struct fsal_export *pub_export,
+create_handle(struct fsal_export *export_pub,
               struct gsh_buffdesc *desc,
               struct fsal_obj_handle **pub_handle)
 {
         /* Full 'private' export structure */
-        struct export *export = container_of(pub_export,
+        struct export *export = container_of(export_pub,
                                              struct export,
                                              export);
         /* FSAL status to return */
@@ -263,19 +326,19 @@ out:
  * This function returns dynamic filesystem information for the given
  * export.
  *
- * @param[in]  pub_export The public export handle
+ * @param[in]  export_pub The public export handle
  * @param[out] info       The dynamic FS information
  *
  * @return FSAL status.
  */
 
 static fsal_status_t
-get_fs_dynamic_info(struct fsal_export *pub_export,
+get_fs_dynamic_info(struct fsal_export *export_pub,
                     fsal_dynamicfsinfo_t *info)
 {
         /* Full 'private' export */
         struct export* export
-                = container_of(pub_export, struct export, export);
+                = container_of(export_pub, struct export, export);
         /* Return value from Ceph calls */
         int rc = 0;
         /* Filesystem stat */
@@ -310,7 +373,7 @@ get_fs_dynamic_info(struct fsal_export *pub_export,
  *
  * This function queries the capabilities of an FSAL export.
  *
- * @param[in] pub_export The public export handle
+ * @param[in] export_pub The public export handle
  * @param[in] option     The option to check
  *
  * @retval TRUE if the option is supported.
@@ -318,7 +381,7 @@ get_fs_dynamic_info(struct fsal_export *pub_export,
  */
 
 static bool_t
-fs_supports(struct fsal_export *pub_export,
+fs_supports(struct fsal_export *export_pub,
             fsal_fsinfo_options_t option)
 {
         switch (option) {
@@ -392,13 +455,13 @@ fs_supports(struct fsal_export *pub_export,
  *
  * This function returns the length of the longest file supported.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return UINT64_MAX.
  */
 
 static uint64_t
-fs_maxfilesize(struct fsal_export *pub_export)
+fs_maxfilesize(struct fsal_export *export_pub)
 {
         return UINT64_MAX;
 }
@@ -408,13 +471,13 @@ fs_maxfilesize(struct fsal_export *pub_export)
  *
  * This function returns the length of the longest read supported.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return 4 mebibytes.
  */
 
 static uint32_t
-fs_maxread(struct fsal_export *pub_export)
+fs_maxread(struct fsal_export *export_pub)
 {
         return 0x400000;
 }
@@ -424,13 +487,13 @@ fs_maxread(struct fsal_export *pub_export)
  *
  * This function returns the length of the longest write supported.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return 4 mebibytes.
  */
 
 static uint32_t
-fs_maxwrite(struct fsal_export *pub_export)
+fs_maxwrite(struct fsal_export *export_pub)
 {
         return 0x400000;
 }
@@ -441,13 +504,13 @@ fs_maxwrite(struct fsal_export *pub_export)
  * This function returns the maximum number of hard links supported to
  * any file.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return 1024.
  */
 
 static uint32_t
-fs_maxlink(struct fsal_export *pub_export)
+fs_maxlink(struct fsal_export *export_pub)
 {
         /* Ceph does not like hard links.  See the anchor table
            design.  We should fix this, but have to do it in the Ceph
@@ -460,13 +523,13 @@ fs_maxlink(struct fsal_export *pub_export)
  *
  * This function returns the maximum filename length.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return UINT32_MAX.
  */
 
 static uint32_t
-fs_maxnamelen(struct fsal_export *pub_export)
+fs_maxnamelen(struct fsal_export *export_pub)
 {
         /* Ceph actually supports filenames of unlimited length, at
            least according to the protocol docs.  We may wish to
@@ -479,13 +542,13 @@ fs_maxnamelen(struct fsal_export *pub_export)
  *
  * This function returns the maximum path length.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return UINT32_MAX.
  */
 
 static uint32_t
-fs_maxpathlen(struct fsal_export *pub_export)
+fs_maxpathlen(struct fsal_export *export_pub)
 {
         /* Similarly unlimited int he protocol */
         return UINT32_MAX;
@@ -496,13 +559,13 @@ fs_maxpathlen(struct fsal_export *pub_export)
  *
  * This function returns the FH expiry type.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return FSAL_EXPTYPE_PERSISTENT
  */
 
 static fsal_fhexptype_t
-fs_fh_expire_type(struct fsal_export *pub_export)
+fs_fh_expire_type(struct fsal_export *export_pub)
 {
         return FSAL_EXPTYPE_PERSISTENT;
 }
@@ -512,13 +575,13 @@ fs_fh_expire_type(struct fsal_export *pub_export)
  *
  * This function returns the lease time.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return five minutes.
  */
 
 static gsh_time_t
-fs_lease_time(struct fsal_export *pub_export)
+fs_lease_time(struct fsal_export *export_pub)
 {
         gsh_time_t lease = {300, 0};
 
@@ -530,13 +593,13 @@ fs_lease_time(struct fsal_export *pub_export)
  *
  * This function returns the export's ACL support.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return FSAL_ACLSUPPORT_DENY.
  */
 
 static fsal_aclsupp_t
-fs_acl_support(struct fsal_export *pub_export)
+fs_acl_support(struct fsal_export *export_pub)
 {
         return FSAL_ACLSUPPORT_DENY;
 }
@@ -562,13 +625,13 @@ fs_supported_attrs(struct fsal_export *export_pub)
  *
  * This function returns the default mode on any new file created.
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return 0600.
  */
 
 static uint32_t
-fs_umask(struct fsal_export *pub_export)
+fs_umask(struct fsal_export *export_pub)
 {
         return 0600;
 }
@@ -579,13 +642,13 @@ fs_umask(struct fsal_export *pub_export)
  * This function returns the access mode applied to extended
  * attributes.  This seems a bit dubious
  *
- * @param[in] pub_export The public export
+ * @param[in] export_pub The public export
  *
  * @return 0644.
  */
 
 static uint32_t
-fs_xattr_access_rights(struct fsal_export *pub_export)
+fs_xattr_access_rights(struct fsal_export *export_pub)
 {
         return 0644;
 }
@@ -841,6 +904,7 @@ export_ops_init(struct export_ops *ops)
         ops->lookup_path = lookup_path;
         ops->extract_handle = extract_handle;
         ops->create_handle = create_handle;
+        ops->create_ds_handle = create_ds_handle;
         ops->get_fs_dynamic_info = get_fs_dynamic_info;
         ops->fs_supports = fs_supports;
         ops->fs_maxfilesize = fs_maxfilesize;

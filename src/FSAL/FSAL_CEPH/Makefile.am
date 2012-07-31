@@ -1,9 +1,9 @@
-
 lib_LTLIBRARIES           = libfsalceph.la
 
 libfsalceph_la_SOURCES    = main.c                     \
 			    export.c                   \
 			    handle.c                   \
+			    ds.c                       \
 			    internal.c                 \
 			    internal.h                 \
 	                    ../../include/fsal.h       \
