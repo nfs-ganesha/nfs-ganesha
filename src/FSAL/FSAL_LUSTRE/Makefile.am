@@ -1,5 +1,3 @@
-AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
-
 if USE_FSAL_LUSTRE
 
 #noinst_LTLIBRARIES          = libfsallustre.la
@@ -31,6 +29,10 @@ endif
 if USE_PNFS_DS
 libfsallustre_la_SOURCES += fsal_ds.c 
 endif
+
+libfsallustre_la_CFLAGS                = $(FSAL_CFLAGS) $(SEC_CFLAGS) @LUSTRE_CFLAGS@
+libfsallustre_la_LDFLAGS               = @LUSTRE_LDFLAGS@
+libfsallustre_la_LIBADD                = @LUSTRE_LIB@
 
 endif
 
@@ -64,6 +66,9 @@ if USE_PNFS_DS
 libfsalshook_la_SOURCES += fsal_ds.c
 endif
 
+libfsalshook_la_CFLAGS                = $(FSAL_CFLAGS) $(SEC_CFLAGS) @SHOOK_CFLAGS@
+libfsalshook_la_LDFLAGS               = @SHOOK_LDFLAGS@
+libfsalshook_la_LIBADD                = @SHOOK_LIB@
 
 endif
 

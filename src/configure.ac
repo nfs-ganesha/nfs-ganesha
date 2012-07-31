@@ -304,7 +304,8 @@ AC_ARG_ENABLE([fsal-ceph],AS_HELP_STRING([--disable-ceph],[USE_FSAL_CEPH]),
 if test "$enable_fsal_ceph" == "yes"; then
 	AC_CHECK_LIB([cephfs], [ceph_ll_connectable_x],
 		      [AC_DEFINE([_USE_CEPH], 1, [GANESHA exports Ceph Filesystem ])],
-		      [enable_fsal_ceph='no']) 
+		      [enable_fsal_ceph='no'
+		       AC_MSG_WARN([Unsable to find Ceph libraries, disabling.])])
 	CEPH_CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64"
         CEPH_LDFLAGS="-L${CEPH_PREFIX}/lib"
 	CEPH_LIB="-lcephfs"
@@ -316,9 +317,66 @@ fi
 
 AM_CONDITIONAL([USE_FSAL_CEPH], test "[$enable_fsal_ceph]"  == "yes")
 
-GA_AM_COND_ON_UNLESS([fsal-lustre],[do not build LUSTRE FSAL shared library],[USE_FSAL_LUSTRE])
+# We only want to turn Lustre on if we have the right library
+
+AC_ARG_ENABLE([fsal-lustre],AS_HELP_STRING([--disable-lustre],[USE_FSAL_LUSTRE]),
+              [enable_fsal_lustre]=$enableval, [enable_fsal_lustre]='yes')
+
+if test "$enable_fsal_lustre" == "yes"; then
+	AC_CHECK_HEADERS([attr/xattr.h], [], [enable_fsal_lustre='no'
+                                              AC_MSG_WARN([Missing xattr files.  Disabling Lustre.])])
+	AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+	if test "x$have_lustre2_api" != "xyes" ; then
+	    AC_MSG_WARN([Lustre 2.x and liblustreapi not found.  Disabling Lustre.])
+            LUSTRE_CFLAGS=
+            LUSTRE_LDFLAGS=
+            LUSTRE_LIB=
+            enable_fsal_lustre='no'
+        else 
+	    AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+	    # check if this Lustre version has HSM functions
+            AC_CHECK_LIB([lustreapi], [llapi_hsm_state_get], [lustre_hsm="yes"])
+            	if test "x$lustre_hsm" == "xyes"; then
+		   AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
+                fi
+                LUSTRE_CFLAGS=
+                LUSTRE_LDFLAGS="-llustreapi"
+                LUSTRE_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+        fi
+fi
+
+AM_CONDITIONAL([USE_FSAL_LUSTRE], test "[$enable_fsal_lustre]"  == "yes")
+
 # SHOOK is a variant of Lustre FSAL
-GA_AM_COND_ON_UNLESS([fsal-shook],[do not build SHOOK FSAL shared library],[USE_FSAL_SHOOK])
+
+AC_ARG_ENABLE([fsal-shook],AS_HELP_STRING([--disable-shook],[USE_FSAL_SHOOK]),
+              [enable_fsal_shook]=$enableval, [enable_fsal_shook]='yes')
+
+if test "$enable_fsal_shook" == "yes"; then
+        # Lustre FSAL compiled with special compilation directives
+	AC_CHECK_HEADERS([attr/xattr.h], [], [enable_fsal_shook='no';
+                                              AC_MSG_ERROR(Missing xattr files.  Disabling SHOOK.)])
+        AC_CHECK_LIB([shooksvr], [shook_restore],,
+        [AC_MSG_WARN([libshooksvr not found.  Disabling SHOOK.])
+         enable_fsal_shook='no'])
+
+	AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+	if test "x$have_lustre2_api" != "xyes" ; then
+	    AC_MSG_WARN([Lustre 2.x and liblustreapi not found.  Disabling SHOOK.])
+            SHOOK_CFLAGS=
+            SHOOK_LDFLAGS=
+            SHOOK_LIB=
+            enable_fsal_lustre='no'
+        else
+                AC_DEFINE(_SHOOK, 1, [shook is enabled])
+                AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+                SHOOK_CFLAGS=
+                SHOOK_LDFLAGS="-lshooksvr -llustreapi"
+                SHOOK_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsalshook.la"
+	fi
+fi
+
+AM_CONDITIONAL([USE_FSAL_SHOOK], test "[$enable_fsal_shook]"  == "yes")
 
 GA_AM_COND_ON_UNLESS([fsal-posix],[do not build POSIX FSAL shared library],[USE_FSAL_POSIX])
 
@@ -615,61 +673,6 @@ if test "$enable_fsal_fuse" == "yes"; then
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_FUSELIKE/libfsalfuse.la"
 fi
 
-if test "$enable_fsal_lustre" == "yes"; then
-        AC_MSG_WARN([LUSTRE FSAL is enabled])
-	AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-	AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
-	if test "x$have_lustre2_api" != "xyes" ; then
-	    AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
-	fi
-	AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
-
-	# check if this Lustre version has HSM functions
-	AC_CHECK_LIB([lustreapi], [llapi_hsm_state_get], [lustre_hsm="yes"])
-	if test "x$lustre_hsm" == "xyes"; then
-		AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
-	fi
-
-        LUSTRE_CFLAGS=
-        LUSTRE_LIB="-llustreapi"
-        LUSTRE_LDFLAGS=
-else
-        LUSTRE_CFLAGS=
-        LUSTRE_LDFLAGS=
-        LUSTRE_LIB=
-fi
-
-AC_SUBST(LUSTRE_CFLAGS)
-AC_SUBST(LUSTRE_LDFLAGS)
-AC_SUBST(LUSTRE_LIB)
-
-if test "$enable_fsal_shook" == "yes"; then
-        AC_MSG_WARN([SHOOK FSAL is enabled])
-        # Lustre FSAL compiled with special compilation directives
-        AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
-        AC_DEFINE(_SHOOK, 1, [shook is enabled])
-
-	AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-	AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
-	if test "x$have_lustre2_api" != "xyes" ; then
-		AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
-	fi
-	AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
-
-        SHOOK_CFLAGS=
-        SHOOK_LDFLAGS=
-        SHOOK_LIB="-lshooksvr -llustreapi"
-else
-        SHOOK_CFLAGS=
-        SHOOK_LDFLAGS=
-        SHOOK_LIB=
-fi
-
-AC_SUBST(SHOOK_CFLAGS)
-AC_SUBST(SHOOK_LDFLAGS)
-AC_SUBST(SHOOK_LIB)
-
-
 if test "$enable_fsal_xfs" == "yes"; then
 	AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
 	AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR( missing xfs include files)])
@@ -683,6 +686,14 @@ fi
 AC_SUBST(CEPH_CFLAGS)
 AC_SUBST(CEPH_LDFLAGS)
 AC_SUBST(CEPH_LIB)
+
+AC_SUBST(LUSTRE_CFLAGS)
+AC_SUBST(LUSTRE_LDFLAGS)
+AC_SUBST(LUSTRE_LIB)
+
+AC_SUBST(SHOOK_CFLAGS)
+AC_SUBST(SHOOK_LDFLAGS)
+AC_SUBST(SHOOK_LIB)
 
 if test "$enable_fsal_gpfs" == "yes"; then
 	AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
