@@ -174,6 +174,14 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
+
+        retval = lustre_name_to_handle_at( lustre_get_root_path( parent->export ), dir_hdl, path, fh,  0);
+        if(retval < 0) {
+                retval = errno;
+                fsal_error = posix2fsal_error(retval);
+                goto errout;
+        }
+
 	fd = lustre_open_by_handle( lustre_get_root_path( parent->export ), fh, O_PATH|O_NOACCESS);
 	if(fd < 0) {
 		retval = errno;
