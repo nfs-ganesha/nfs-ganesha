@@ -610,7 +610,6 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		goto errout;
 	} else {
 		struct stat root_stat;
-		int mnt_id = 0;
 		struct lustre_file_handle *fh = alloca(sizeof(struct lustre_file_handle) ) ;
 
 		memset(fh, 0, sizeof(struct lustre_file_handle) ) ;
@@ -624,11 +623,10 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 			goto errout;
 		}
 		myself->root_dev = root_stat.st_dev;
-		retval = lustre_name_to_handle_at(myself->root_fd, "", fh,
-					          &mnt_id, AT_EMPTY_PATH);
+		retval = lustre_path_to_handle(export_path, fh );
 		if(retval != 0) {
 			LogMajor(COMPONENT_FSAL,
-				 "lustre_name_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
+				 "lustre_name_to_handle_at: root_path: %s, root_fd=%d, errno=(%d) %s",
 				 mntdir, myself->root_fd, errno, strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;

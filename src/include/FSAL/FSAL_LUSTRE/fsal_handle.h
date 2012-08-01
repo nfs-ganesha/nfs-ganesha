@@ -62,15 +62,27 @@ typedef  struct lustre_file_handle
     unsigned long long inode;
 } lustre_file_handle_t;  /**< FS object handle */
 
-static inline int lustre_name_to_handle_at(int mdirfd, const char *name,
-                                           struct lustre_file_handle * handle, int *mnt_id, int flags)
+static inline int lustre_handle_to_path(  struct lustre_file_handle * out_handle, char * path )
 {
   abort() ;
   return 1 ;
 }
 
-static inline int lustre_open_by_handle_at(int mdirfd, struct lustre_file_handle * handle,
-                                           int flags)
+static inline int lustre_path_to_handle( const char * path, struct lustre_file_handle * out_handle )
+{
+  abort() ;
+  return 1 ;
+}
+
+static inline int lustre_name_to_handle_at(struct lustre_file_handle * at_handle, const char *name,
+                                           struct lustre_file_handle * out_handle, int flags)
+{
+  abort() ;
+  return 1 ;
+}
+
+static inline int lustre_open_by_handle( struct lustre_file_handle * handle,
+                                         int flags)
 {
   abort() ;
   return 1 ;
@@ -79,82 +91,6 @@ static inline int lustre_open_by_handle_at(int mdirfd, struct lustre_file_handle
 static inline size_t lustre_sizeof_handle(struct lustre_file_handle *hdl)
 {
 	return (size_t)sizeof( struct lustre_file_handle ) ;
-}
-
-static inline int lustre_name_to_handle(const char *name, lustre_file_handle_t *fh, int *mnt_id)
-{
-  abort() ;
-  return 1 ;
-}
-
-static inline int lustre_lname_to_handle(const char *name, lustre_file_handle_t *fh, int *mnt_id )
-{
-  abort() ;
-  return 1 ;
-}
-
-static inline int lustre_fd_to_handle(int fd, lustre_file_handle_t * fh, int *mnt_id)
-{
-  abort() ;
-  return 1 ;
-}
-
-static inline int lustre_open_by_handle(int mountfd, lustre_file_handle_t * fh, int flags)
-{
-  abort() ;
-  return 1 ;
-}
-
-static inline int lustre_name_by_handle_at(int atfd, const char *name, lustre_file_handle_t *fh)
-{
-  abort() ;
-
-  return 1 ;
-}
-
-static inline ssize_t lustre_readlink_by_handle(int mountfd, lustre_file_handle_t *fh, char *buf, size_t bufsize)
-{
-        int fd, ret;
-
-        fd = lustre_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
-        if (fd < 0)
-                return fd;
-        ret = readlinkat(fd, "", buf, bufsize);
-        close(fd);
-        return ret;
-}
-
-static inline int lustre_stat_by_handle(int mountfd, lustre_file_handle_t *fh, struct stat *buf)
-{
-        int fd, ret;
-        fd = lustre_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
-        if (fd < 0)
-                return fd;
-        ret = fstatat(fd, "", buf, AT_EMPTY_PATH);
-        close(fd);
-        return ret;
-}
-
-static inline int lustre_link_by_handle(int mountfd, lustre_file_handle_t *fh, int newdirfd, char *newname)
-{
-        int fd, ret;
-        fd = lustre_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
-        if (fd < 0)
-                return fd;
-        ret = linkat(fd, "", newdirfd, newname, AT_EMPTY_PATH);
-        close(fd);
-        return ret;
-}
-
-static inline int lustre_chown_by_handle(int mountfd, lustre_file_handle_t *fh, uid_t owner, gid_t group)
-{
-        int fd, ret;
-        fd = lustre_open_by_handle(mountfd, fh, (O_PATH|O_NOACCESS));
-        if (fd < 0)
-                return fd;
-        ret = fchownat(fd, "", owner, group, AT_EMPTY_PATH);
-        close(fd);
-        return ret;
 }
 
 #endif /* LUSTRE_HANDLE_H */

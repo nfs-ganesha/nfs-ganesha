@@ -52,7 +52,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 		       fsal_openflags_t openflags)
 {
 	struct lustre_fsal_obj_handle *myself;
-	int fd, mntfd;
+	int fd;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
@@ -61,8 +61,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	assert(myself->u.file.fd == -1
 	       && myself->u.file.openflags == FSAL_O_CLOSED);
 
-	mntfd = lustre_get_root_fd(obj_hdl->export);
-	fd = lustre_open_by_handle_at(mntfd, myself->handle, (O_RDWR));
+	fd = lustre_open_by_handle( myself->handle, (O_RDWR));
 	if(fd < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
