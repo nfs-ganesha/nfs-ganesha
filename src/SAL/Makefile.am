@@ -36,7 +36,8 @@ libsal_la_SOURCES = state_async.c                    \
                     ../include/nsm.h                 \
                     ../include/ganesha_rpc.h         \
                     ../include/sal_data.h            \
-                    ../include/sal_functions.h
+                    ../include/sal_functions.h       \
+                    ../include/nfs4rec.h
 
 if USE_NLM
 libsal_la_SOURCES += nlm_owner.c
