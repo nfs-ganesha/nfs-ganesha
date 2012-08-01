@@ -36,7 +36,7 @@
 #include <sys/stat.h>
 
 /* defined the set of attributes supported with POSIX */
-#define VFS_SUPPORTED_ATTRIBUTES (                                       \
+#define LUSTRE_SUPPORTED_ATTRIBUTES (                                       \
           ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
           ATTR_FSID     | ATTR_FILEID  | \
           ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \

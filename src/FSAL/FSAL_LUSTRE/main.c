@@ -42,19 +42,19 @@
 #include "fsal_internal.h"
 #include "FSAL/fsal_init.h"
 
-/* VFS FSAL module private storage
+/* LUSTRE FSAL module private storage
  */
 
-struct vfs_fsal_module {	
+struct lustre_fsal_module {	
 	struct fsal_module fsal;
 	struct fsal_staticfsinfo_t fs_info;
 	fsal_init_info_t fsal_info;
 	 /* vfsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
-const char myname[] = "VFS";
+const char myname[] = "LUSTRE";
 
-/* filesystem info for VFS */
+/* filesystem info for LUSTRE */
 static struct fsal_staticfsinfo_t default_posix_info = {
 	.maxfilesize = 0xFFFFFFFFFFFFFFFFLL, /* (64bits) */
 	.maxlink = _POSIX_LINK_MAX,
@@ -76,7 +76,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,
 	.cansettime = TRUE,
 	.homogenous = TRUE,
-	.supported_attrs = VFS_SUPPORTED_ATTRIBUTES,
+	.supported_attrs = LUSTRE_SUPPORTED_ATTRIBUTES,
 	.maxread = 0,
 	.maxwrite = 0,
 	.umask = 0,
@@ -88,11 +88,11 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 /* private helper for export object
  */
 
-struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl)
+struct fsal_staticfsinfo_t *lustre_staticinfo(struct fsal_module *hdl)
 {
-	struct vfs_fsal_module *myself;
+	struct lustre_fsal_module *myself;
 
-	myself = container_of(hdl, struct vfs_fsal_module, fsal);
+	myself = container_of(hdl, struct lustre_fsal_module, fsal);
 	return &myself->fs_info;
 }
 
@@ -106,16 +106,16 @@ struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl)
 static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct)
 {
-	struct vfs_fsal_module *vfs_me
-		= container_of(fsal_hdl, struct vfs_fsal_module, fsal);
+	struct lustre_fsal_module *lustre_me
+		= container_of(fsal_hdl, struct lustre_fsal_module, fsal);
 	fsal_status_t fsal_status;
 
-	vfs_me->fs_info = default_posix_info; /* get a copy of the defaults */
+	lustre_me->fs_info = default_posix_info; /* get a copy of the defaults */
 
         fsal_status = fsal_load_config(fsal_hdl->ops->get_name(fsal_hdl),
                                        config_struct,
-                                       &vfs_me->fsal_info,
-                                       &vfs_me->fs_info,
+                                       &lustre_me->fsal_info,
+                                       &lustre_me->fs_info,
                                        NULL);
 
 	if(FSAL_IS_ERROR(fsal_status))
@@ -125,23 +125,23 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	 * params.
 	 */
 
-	display_fsinfo(&vfs_me->fs_info);
+	display_fsinfo(&lustre_me->fs_info);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%"PRIx64,
-                     (uint64_t) VFS_SUPPORTED_ATTRIBUTES);
+                     (uint64_t) LUSTRE_SUPPORTED_ATTRIBUTES);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes default = 0x%"PRIx64,
 		     default_posix_info.supported_attrs);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%"PRIx64,
-		 vfs_me->fs_info.supported_attrs);
+		 lustre_me->fs_info.supported_attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* Internal VFS method linkage to export object
+/* Internal LUSTRE method linkage to export object
  */
 
-fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
+fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 				const char *export_path,
 				const char *fs_options,
 				struct exportlist__ *exp_entry,
@@ -156,38 +156,38 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 /* my module private storage
  */
 
-static struct vfs_fsal_module VFS;
+static struct lustre_fsal_module LUSTRE;
 
 /* linkage to the exports and handle ops initializers
  */
 
-void vfs_export_ops_init(struct export_ops *ops);
-void vfs_handle_ops_init(struct fsal_obj_ops *ops);
+void lustre_export_ops_init(struct export_ops *ops);
+void lustre_handle_ops_init(struct fsal_obj_ops *ops);
 
-MODULE_INIT void vfs_init(void) {
+MODULE_INIT void lustre_init(void) {
 	int retval;
-	struct fsal_module *myself = &VFS.fsal;
+	struct fsal_module *myself = &LUSTRE.fsal;
 
 	retval = register_fsal(myself, myname,
 			       FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION);
 	if(retval != 0) {
-		fprintf(stderr, "VFS module failed to register");
+		fprintf(stderr, "LUSTRE module failed to register");
 		return;
 	}
-	myself->ops->create_export = vfs_create_export;
+	myself->ops->create_export = lustre_create_export;
 	myself->ops->init_config = init_config;
-	vfs_export_ops_init(myself->exp_ops);
-	vfs_handle_ops_init(myself->obj_ops);
-        init_fsal_parameters(&VFS.fsal_info);
+	lustre_export_ops_init(myself->exp_ops);
+	lustre_handle_ops_init(myself->obj_ops);
+        init_fsal_parameters(&LUSTRE.fsal_info);
 }
 
-MODULE_FINI void vfs_unload(void) {
+MODULE_FINI void lustre_unload(void) {
 	int retval;
 
-	retval = unregister_fsal(&VFS.fsal);
+	retval = unregister_fsal(&LUSTRE.fsal);
 	if(retval != 0) {
-		fprintf(stderr, "VFS module failed to unregister");
+		fprintf(stderr, "LUSTRE module failed to unregister");
 		return;
 	}
 }
