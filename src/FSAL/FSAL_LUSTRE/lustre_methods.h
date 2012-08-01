@@ -3,8 +3,7 @@
 
 /* private helpers from export
  */
-
-int lustre_get_root_fd(struct fsal_export *exp_hdl);
+char * lustre_get_root_path(struct fsal_export *exp_hdl) ;
 
 /* method proto linkage to handle.c for export
  */

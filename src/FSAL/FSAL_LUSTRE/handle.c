@@ -174,7 +174,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
-	fd = lustre_open_by_handle( fh, O_PATH|O_NOACCESS);
+	fd = lustre_open_by_handle( lustre_get_root_path( parent->export ), fh, O_PATH|O_NOACCESS);
 	if(fd < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
@@ -235,7 +235,8 @@ errout:
  */
 
 static inline
-int make_file_safe( struct lustre_file_handle * infh,
+int make_file_safe( char * mntpath,
+                    struct lustre_file_handle * infh,
 		    const char *name,
 		    mode_t unix_mode,
 		    uid_t user,
@@ -247,7 +248,7 @@ int make_file_safe( struct lustre_file_handle * infh,
         char lustre_path[MAXPATHLEN] ;
         unsigned int dir_fd = 0  ;
 
-        retval = lustre_handle_to_path( infh, lustre_path ) ;
+        retval = lustre_handle_to_path( mntpath, infh, lustre_path ) ;
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -264,7 +265,7 @@ int make_file_safe( struct lustre_file_handle * infh,
 		goto fileerr;
 	}
 
-	retval = lustre_name_to_handle_at( infh, name, fh, 0);
+	retval = lustre_name_to_handle_at( mntpath, infh, name, fh, 0);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -315,7 +316,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	group = attrib->group;
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
-	dir_fd = lustre_open_by_handle( myself->handle, O_PATH|O_NOACCESS);
+	dir_fd = lustre_open_by_handle( lustre_get_root_path( dir_hdl->export ), myself->handle, O_PATH|O_NOACCESS);
 	if(dir_fd < 0) {
 		retval = errno;
 		if(retval == ENOENT)
@@ -346,7 +347,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	}
 	close(fd);  /* don't need it anymore. */
 
-	retval = make_file_safe( myself->handle, name, unix_mode, user, group, fh, &stat);
+	retval = make_file_safe( lustre_get_root_path( dir_hdl->export), myself->handle, name, unix_mode, user, group, fh, &stat);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -399,7 +400,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	group = attrib->group;
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
-	dir_fd = lustre_open_by_handle( myself->handle, O_PATH|O_NOACCESS);
+	dir_fd = lustre_open_by_handle( lustre_get_root_path( dir_hdl->export), myself->handle, O_PATH|O_NOACCESS);
 	if(dir_fd < 0) {
 		retval = errno;
 		if(retval == ENOENT)
@@ -420,7 +421,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	if(retval < 0) {
 		goto direrr;
 	}
-	retval = make_file_safe( myself->handle, name, unix_mode, user, group, fh, &stat);
+	retval = make_file_safe( lustre_get_root_path( dir_hdl->export), myself->handle, name, unix_mode, user, group, fh, &stat);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -520,7 +521,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		fsal_error = ERR_FSAL_INVAL;
 		goto errout;
 	}
-	dir_fd = lustre_open_by_handle( myself->handle, O_PATH|O_NOACCESS);
+	dir_fd = lustre_open_by_handle( lustre_get_root_path( dir_hdl->export),myself->handle, O_PATH|O_NOACCESS);
 	if(dir_fd < 0) {
 		retval = errno;
 		if(retval == ENOENT)
@@ -543,7 +544,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto direrr;
 	}
-	retval = make_file_safe(myself->handle, name, unix_mode, user, group, fh, &stat);
+	retval = make_file_safe(lustre_get_root_path( dir_hdl->export),myself->handle, name, unix_mode, user, group, fh, &stat);
 	if(retval < 0) {
 		goto direrr;
 	}
@@ -599,7 +600,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	myself = container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	user = attrib->owner;
 	group = attrib->group;
-	dir_fd = lustre_open_by_handle( myself->handle, O_PATH|O_NOACCESS);
+	dir_fd = lustre_open_by_handle( lustre_get_root_path( dir_hdl->export), myself->handle, O_PATH|O_NOACCESS);
 	if(dir_fd < 0) {
 		retval = errno;
 		goto errout;
@@ -623,7 +624,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		goto linkerr;
 	}
 
-	retval = lustre_name_to_handle_at( myself->handle, name, fh, 0);
+	retval = lustre_name_to_handle_at( lustre_get_root_path( dir_hdl->export),myself->handle, name, fh, 0);
 	if(retval < 0) {
 		goto linkerr;
 	}
@@ -665,7 +666,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  bool_t refresh)
 {
 	struct lustre_fsal_obj_handle *myself = NULL;
-	int fd, mntfd;
+	int fd;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -683,8 +684,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 			myself->u.symlink.link_content = NULL;
 			myself->u.symlink.link_size = 0;
 		}
-		mntfd = lustre_get_root_fd(obj_hdl->export);
-		fd = lustre_open_by_handle(myself->handle, (O_PATH|O_NOACCESS));
+		fd = lustre_open_by_handle(lustre_get_root_path( obj_hdl->export),myself->handle, (O_PATH|O_NOACCESS));
 		if(fd < 0) {
 			retval = errno;
 			fsal_error = posix2fsal_error(retval);
@@ -727,7 +727,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			      const char *name)
 {
 	struct lustre_fsal_obj_handle *myself, *destdir;
-	int srcfd, destdirfd, mntfd;
+	int srcfd, destdirfd ;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -736,15 +736,14 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	mntfd = lustre_get_root_fd(obj_hdl->export);
-	srcfd = lustre_open_by_handle( myself->handle, (O_PATH|O_NOACCESS));
+	srcfd = lustre_open_by_handle( lustre_get_root_path( obj_hdl->export),myself->handle, (O_PATH|O_NOACCESS));
 	if(srcfd < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
 	destdir = container_of(destdir_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	destdirfd = lustre_open_by_handle( destdir->handle, (O_PATH|O_NOACCESS));
+	destdirfd = lustre_open_by_handle( lustre_get_root_path( obj_hdl->export),destdir->handle, (O_PATH|O_NOACCESS));
 	if(destdirfd < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
@@ -807,7 +806,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
                                   bool_t *eof)
 {
 	struct lustre_fsal_obj_handle *myself;
-	int dirfd, mntfd;
+	int dirfd ;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	fsal_status_t status;
 	int retval = 0;
@@ -828,8 +827,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	}
 	entry_cookie = alloca(sizeof(struct fsal_cookie) + sizeof(off_t));
 	myself = container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	mntfd = lustre_get_root_fd(dir_hdl->export);
-	dirfd = lustre_open_by_handle( myself->handle, (O_RDONLY|O_DIRECTORY));
+	dirfd = lustre_open_by_handle( lustre_get_root_path( dir_hdl->export),myself->handle, (O_RDONLY|O_DIRECTORY));
 	if(dirfd < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
@@ -893,20 +891,19 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
 				const char *new_name)
 {
 	struct lustre_fsal_obj_handle *olddir, *newdir;
-	int oldfd, newfd, mntfd;
+	int oldfd, newfd ;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
 	olddir = container_of(olddir_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	mntfd = lustre_get_root_fd(olddir_hdl->export);
-	oldfd = lustre_open_by_handle( olddir->handle, (O_PATH|O_NOACCESS));
+	oldfd = lustre_open_by_handle( lustre_get_root_path( olddir_hdl->export),olddir->handle, (O_PATH|O_NOACCESS));
 	if(oldfd < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
 	newdir = container_of(newdir_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	newfd = lustre_open_by_handle( newdir->handle, (O_PATH|O_NOACCESS));
+	newfd = lustre_open_by_handle( lustre_get_root_path( newdir_hdl->export),newdir->handle, (O_PATH|O_NOACCESS));
 	if(newfd < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
@@ -935,7 +932,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
                               struct attrlist *obj_attr)
 {
 	struct lustre_fsal_obj_handle *myself;
-	int fd = -1, mntfd;
+	int fd = -1;
 	int open_flags = O_RDONLY;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -943,14 +940,13 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	mntfd = lustre_get_root_fd(obj_hdl->export);
 	if(obj_hdl->type == REGULAR_FILE) {
 		if(myself->u.file.fd < 0) {
 			goto open_file;  /* no file open at the moment */
 		}
 		fstat(myself->u.file.fd, &stat);
 	} else if(obj_hdl->type == SOCKET_FILE) {
-	        fd= lustre_open_by_handle( myself->u.sock.sock_dir,
+	        fd= lustre_open_by_handle(lustre_get_root_path( obj_hdl->export), myself->u.sock.sock_dir,
 			 	              (O_PATH|O_NOACCESS));
 		if(fd < 0) {
 			goto errout;
@@ -968,7 +964,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		else if(obj_hdl->type == FIFO_FILE)
 			open_flags |= O_NONBLOCK;
 	open_file:
-		fd = lustre_open_by_handle( myself->handle, open_flags);
+		fd = lustre_open_by_handle( lustre_get_root_path( obj_hdl->export),myself->handle, open_flags);
 		if(fd < 0) {
 			goto errout;
 		}
@@ -1014,7 +1010,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      struct attrlist *attrs)
 {
 	struct lustre_fsal_obj_handle *myself;
-	int fd, mntfd;
+	int fd ;
 	int open_flags = O_RDONLY;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -1026,7 +1022,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			&= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
 	}
 	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	mntfd = lustre_get_root_fd(obj_hdl->export);
 
 	/* This is yet another "you can't get there from here".  If this object
 	 * is a socket (AF_UNIX), an fd on the socket s useless _period_.
@@ -1040,7 +1035,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	 */
 
 	if(obj_hdl->type == SOCKET_FILE) {
-	        fd = lustre_open_by_handle( myself->u.sock.sock_dir,
+	        fd = lustre_open_by_handle( lustre_get_root_path( obj_hdl->export),myself->u.sock.sock_dir,
 				            (O_PATH|O_NOACCESS));
 		if(fd < 0) {
 			retval = errno;
@@ -1059,7 +1054,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			open_flags |= O_PATH;
 		else if(obj_hdl->type == FIFO_FILE)
 			open_flags |= O_NONBLOCK;
-		fd = lustre_open_by_handle( myself->handle, open_flags);
+		fd = lustre_open_by_handle( lustre_get_root_path( obj_hdl->export),myself->handle, open_flags);
 		if(fd < 0) {
 			retval = errno;
 			fsal_error = posix2fsal_error(retval);
@@ -1192,7 +1187,7 @@ static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
 		goto errout;
 	}
 	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	fd = lustre_open_by_handle( myself->handle, O_RDWR);
+	fd = lustre_open_by_handle( lustre_get_root_path( obj_hdl->export),myself->handle, O_RDWR);
 	if(fd < 0) {
 		retval = errno;
 		if(retval == ENOENT)
@@ -1226,7 +1221,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 
 	myself = container_of(dir_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	fd = lustre_open_by_handle( myself->handle, O_PATH|O_RDWR);
+	fd = lustre_open_by_handle( lustre_get_root_path( dir_hdl->export),myself->handle, O_PATH|O_RDWR);
 	if(fd < 0) {
 		retval = errno;
 		if(retval == ENOENT)
@@ -1572,7 +1567,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 
 	fh = alloca(hdl_desc->len);
 	memcpy(fh, hdl_desc->addr, hdl_desc->len);  /* struct aligned copy */
-	fd = lustre_open_by_handle(fh, O_PATH|O_NOACCESS);
+	fd = lustre_open_by_handle(lustre_get_root_path( exp_hdl ),fh, O_PATH|O_NOACCESS);
 	if(fd < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);

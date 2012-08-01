@@ -61,7 +61,7 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 	assert(myself->u.file.fd == -1
 	       && myself->u.file.openflags == FSAL_O_CLOSED);
 
-	fd = lustre_open_by_handle( myself->handle, (O_RDWR));
+	fd = lustre_open_by_handle( lustre_get_root_path( obj_hdl->export),myself->handle, (O_RDWR));
 	if(fd < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;

@@ -54,6 +54,11 @@
 #define O_NOACCESS O_ACCMODE
 #endif
 
+#ifndef LPX64
+#define LPX64 "%#llx"
+#endif
+
+#define DFID_NOBRACE    LPX64":0x%x:0x%x"
 
 typedef  struct lustre_file_handle 
 {
@@ -62,30 +67,58 @@ typedef  struct lustre_file_handle
     unsigned long long inode;
 } lustre_file_handle_t;  /**< FS object handle */
 
-static inline int lustre_handle_to_path(  struct lustre_file_handle * out_handle, char * path )
+static inline int lustre_handle_to_path( char * mntpath, struct lustre_file_handle * out_handle, char * path )
 {
-  abort() ;
-  return 1 ;
+  /* A Lustre fid path is looking like /where_lustre_is_mounted/.lustre/fid/0x200000400:0x469a:0x0
+   * the "0x200000400:0x469a:0x0" represent the displayed fid */
+  return snprintf( path, MAXPATHLEN, "%s/.lustre/fid/"DFID_NOBRACE, mntpath, PFID( &out_handle->fid) ) ;
 }
 
 static inline int lustre_path_to_handle( const char * path, struct lustre_file_handle * out_handle )
 {
-  abort() ;
+  lustre_fid fid ;
+  struct stat ino;
+
+
+  /* Here, call liblustreapi's magic */
+  if( llapi_path2fid( path, &fid) != 0 )
+    return -1 ;
+
+  out_handle->fid = fid ;
+
+  /* Get the inode number */
+  if( lstat(path, &ino) != 0 )
+   return -1  ;
+
+  out_handle->inode = ino.st_ino ;
+
   return 1 ;
 }
 
-static inline int lustre_name_to_handle_at(struct lustre_file_handle * at_handle, const char *name,
-                                           struct lustre_file_handle * out_handle, int flags)
+static inline int lustre_name_to_handle_at( char * mntpath, struct lustre_file_handle * at_handle, const char *name,
+                                            struct lustre_file_handle * out_handle, int flags)
 {
-  abort() ;
-  return 1 ;
+  char path[MAXPATHLEN] ;
+
+  lustre_handle_to_path( mntpath, at_handle, path ) ;
+
+  if( flags != AT_EMPTY_PATH )
+   {
+     strncat( path, "/", MAXPATHLEN ) ;
+     strncat( path, name, MAXPATHLEN ) ;  
+   }
+
+  return lustre_path_to_handle( path, out_handle ) ;
 }
 
-static inline int lustre_open_by_handle( struct lustre_file_handle * handle,
+static inline int lustre_open_by_handle( char * mntpath, struct lustre_file_handle * handle,
                                          int flags)
 {
-  abort() ;
-  return 1 ;
+  char path[MAXPATHLEN] ;
+
+  lustre_handle_to_path( mntpath, handle, path ) ;
+
+  return open( path, flags ) ;
 }
 
 static inline size_t lustre_sizeof_handle(struct lustre_file_handle *hdl)

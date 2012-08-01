@@ -66,6 +66,14 @@ struct lustre_fsal_export {
 	struct file_handle *root_handle;
 };
 
+char * lustre_get_root_path(struct fsal_export *exp_hdl) {
+        struct lustre_fsal_export *myself;
+
+        myself = container_of(exp_hdl, struct lustre_fsal_export, export);
+        return myself->mntdir;
+}
+
+
 /* helpers to/from other VFS objects
  */
 
