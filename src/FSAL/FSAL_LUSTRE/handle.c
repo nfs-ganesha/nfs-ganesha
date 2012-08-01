@@ -1421,6 +1421,7 @@ void lustre_handle_ops_init(struct fsal_obj_ops *ops)
 /* lookup_path
  * modeled on old api except we don't stuff attributes.
  * KISS
+ * @todo : use of dirfd is no more needed with FSAL_LUSTRE
  */
 
 fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
@@ -1473,7 +1474,7 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 	}
 	basepart++;
         snprintf( dirfullpath, MAXPATHLEN, "%s/%s", dirpart, basepart ) ;
-	retval = lustre_path_to_handle(dirpart, fh);
+	retval = lustre_path_to_handle(path, fh);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -1497,7 +1498,7 @@ fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
 	} else if(S_ISSOCK(stat.st_mode)) { /* AF_UNIX sockets require craziness */
 		dir_fh = malloc(sizeof(struct lustre_file_handle) );
 		memset(dir_fh, 0, sizeof(struct lustre_file_handle) );
-		retval = lustre_path_to_handle( dirfullpath,
+		retval = lustre_path_to_handle( path,
 					        dir_fh ) ;
 		if(retval < 0) {
 			goto fileerr;

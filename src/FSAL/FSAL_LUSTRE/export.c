@@ -583,9 +583,9 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 						  pathlen) == 0) &&
 					  ((export_path[pathlen] == '/') ||
 					   (export_path[pathlen] == '\0'))) {
-					if(strcasecmp(p_mnt->mnt_type, "xfs") == 0) {
+					if(strcasecmp(p_mnt->mnt_type, "lustre") != 0) {
 						LogDebug(COMPONENT_FSAL,
-							 "Mount (%s) is XFS, skipping",
+							 "Mount (%s) is not LUSTRE, skipping",
 							 p_mnt->mnt_dir);
 						continue;
 					}
@@ -632,7 +632,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 		}
 		myself->root_dev = root_stat.st_dev;
 		retval = lustre_path_to_handle(export_path, fh );
-		if(retval != 0) {
+		if(retval < 0) {
 			LogMajor(COMPONENT_FSAL,
 				 "lustre_name_to_handle_at: root_path: %s, root_fd=%d, errno=(%d) %s",
 				 mntdir, myself->root_fd, errno, strerror(errno));
