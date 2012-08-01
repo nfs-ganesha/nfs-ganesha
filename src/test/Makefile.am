@@ -9,6 +9,8 @@ check_PROGRAMS                = test_avl \
 
 liboutils_profiling_la_SOURCES = MesureTemps.c ../include/MesureTemps.h
 
+TIRPC_STATIC_LIB = @TIRPCPATH@/src/.libs/libntirpc.a
+
 COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
                $(SEC_LIB_FLAGS)                                  \
                $(SVC_LIB_FLAGS)                                  \
@@ -19,8 +21,6 @@ COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
 	       ../RPCAL/librpcal.la				 \
                  ../NodeList/libNodeList.la                      \
                ../Cache_inode/libcache_inode.la                  \
-               ../File_Content/libcache_content.la               \
-               ../File_Content_Policy/libcache_content_policy.la \
                ../HashTable/libhashtable.la                      \
                ../LRU/liblru.la                                  \
                ../FSAL/libfsalcommon.la                          \
@@ -28,6 +28,7 @@ COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
                ../Log/liblog.la                                  \
                ../ConfigParsing/libConfigParsing.la              \
                ../Protocols/XDR/libnfs_mnt_xdr.la                \
+               $(TIRPC_STATIC_LIB)                               \
                ../SemN/libSemN.la                                \
                ../RW_Lock/librwlock.la                           \
                ../Common/libcommon_utils.la                      \

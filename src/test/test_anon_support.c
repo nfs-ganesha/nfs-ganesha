@@ -35,10 +35,8 @@ const char *opnames[] = {"MOUNT", "READ", "WRITE", "MDONLY_READ", "MDONLY_WRITE"
 #define INVALID_UID -9999
 #define INVALID_GID -9999
 
-void init_vars(hash_table_t **ht_ip_stats, pool_t *ip_stats_pool)
+void init_vars(hash_table_t **ht_ip_stats, pool_t **ip_stats_pool)
 {
-  int rc;
-
   /* Get the FSAL functions */
   FSAL_LoadFunctions();
 
@@ -62,12 +60,12 @@ void init_vars(hash_table_t **ht_ip_stats, pool_t *ip_stats_pool)
     }
 
   /*ip_stats_pool*/
-  ip_stats_pool = pool_init("IP Stats Cache Pool",
-                            sizeof(nfs_ip_stats_t),
-                            pool_basic_substrate,
-                            NULL, NULL, NULL);
+  *ip_stats_pool = pool_init("IP Stats Cache Pool",
+                             sizeof(nfs_ip_stats_t),
+                             pool_basic_substrate,
+                             NULL, NULL, NULL);
 
-  if(!(ip_stats_pool))
+  if(!(*ip_stats_pool))
     {
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool");
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
@@ -82,14 +80,13 @@ struct user_cred test_access(char *addr, char *hostname,
                              int gid, int operation)
 {
   struct svc_req ptr_req;
-  exportlist_client_entry_t pclient_found;
+  export_perms_t export_perms;
   struct user_cred user_credentials;
   unsigned int nfs_prog;
   unsigned int mnt_prog;
   sockaddr_t ssaddr;
   sockaddr_t *pssaddr = &ssaddr;
   int errcode;
-  int export_check_result;
   bool_t proc_makes_write;
 
   if (operation == OP_WRITE || operation == OP_MDONLY_WRITE)
@@ -126,20 +123,13 @@ struct user_cred test_access(char *addr, char *hostname,
   user_credentials.caller_uid = uid;
   user_credentials.caller_gid = gid;
 
-  export_check_result = nfs_export_check_access(pssaddr,
-                                                &ptr_req,
-                                                pexport,
-                                                nfs_prog,
-                                                mnt_prog,
-                                                ht_ip_stats,
-                                                ip_stats_pool,
-                                                &pclient_found,
-                                                &user_credentials,
-                                                proc_makes_write);
+  nfs_export_check_access(pssaddr,
+                          pexport,
+                          &export_perms);
 
   /* This is the function used to changed uid/gid when they should
    * be anonymous. */
-  nfs_check_anon(&pclient_found, pexport, &user_credentials);
+  nfs_check_anon(&export_perms, pexport, &user_credentials);
   return user_credentials;
 }
 
@@ -191,7 +181,7 @@ int main(int argc, char *argv[])
                 
                 /* This is critical */
                 pexport.new_access_list_version = 1;
-                pexport.all_anonymous = squashall;
+                pexport.options |= EXPORT_OPTION_ALL_ANONYMOUS;
                 pexport.anonymous_uid = ANON_UID;
                 pexport.anonymous_gid = ANON_GID;
                 
@@ -212,7 +202,7 @@ int main(int argc, char *argv[])
                              root, read, write, mdonly_read, mdonly_write, uid, squashall, opnames[operation]);
 		      struct user_cred user_credentials;
 
-                      user_credentials = test_access(ip, hostname, ht_ip_stats, &ip_stats_pool,
+                      user_credentials = test_access(ip, hostname, ht_ip_stats, ip_stats_pool,
                                                         &pexport, uid, gid, operation);
                       if (user_credentials.caller_uid == INVALID_UID || user_credentials.caller_gid == INVALID_GID)
 			{
@@ -275,7 +265,7 @@ int main(int argc, char *argv[])
             
             /* This is critical */
             pexport.new_access_list_version = 0;
-            pexport.all_anonymous = squashall;
+            pexport.options |= EXPORT_OPTION_ALL_ANONYMOUS;
             pexport.anonymous_uid = ANON_UID;
             pexport.anonymous_gid = ANON_GID;
             
@@ -306,7 +296,7 @@ int main(int argc, char *argv[])
                   printf(": %d ",uid);
                   printf("%s", opnames[operation]);
                   
-                  user_credentials = test_access(ip, hostname, ht_ip_stats, &ip_stats_pool,
+                  user_credentials = test_access(ip, hostname, ht_ip_stats, ip_stats_pool,
 						 &pexport, uid, gid, operation);
 
 		  /* anonymous uid/gid doesn't apply during a mount */
