@@ -255,7 +255,7 @@ PTFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
                   fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */)
 {
   fsal_status_t status;
-  ptfsal_handle_t *p_fsi_handle = (ptfsal_handle_t *)object_handle;
+  ptfsal_handle_t *p_fsi_handle;
 
   FSI_TRACE(FSI_DEBUG, "Begin-------------------------------------\n");
 
@@ -274,13 +274,16 @@ PTFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
   status = fsal_internal_get_handle(p_context, p_path, object_handle);
 
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_lookupPath);
+
+  p_fsi_handle = (ptfsal_handle_t *)object_handle;
+
   // add to handle/name cache
   fsi_cache_name_and_handle (p_context, 
                              (char *)&p_fsi_handle->data.handle.f_handle, 
                              p_path->path);
 
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookupPath);
 
   /* get object attributes */
   if(p_object_attributes)
