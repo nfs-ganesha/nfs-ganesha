@@ -2715,14 +2715,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
          !memcmp((psockaddr_in6->sin6_addr.s6_addr + 10),
                  &two_bytes_all_1, 2))
         {
-          /* Use IP address as a string for wild character access checks. */
-          if(!ipvalid)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "Error: Could not convert the IPv6 address to a character string.");
-              return EXPORT_PERMISSION_DENIED;
-            }
-
           /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
           memcpy(&hostaddr, (psockaddr_in6->sin6_addr.s6_addr + 12), 4);
 

@@ -327,8 +327,9 @@ int _9p_create_socket( void )
   int one = 1 ;
   int centvingt = 120 ;
   int neuf = 9 ;
+#ifndef _USE_TIRPC_IPV6
   struct sockaddr_in sinaddr;
-#ifdef _USE_TIRPC_IPV6
+#else
   struct sockaddr_in6 sinaddr_tcp6;
   struct netbuf netbuf_tcp6;
   struct t_bind bindaddr_tcp6;
@@ -377,7 +378,7 @@ int _9p_create_socket( void )
   memset(&sinaddr_tcp6, 0, sizeof(sinaddr_tcp6));
   sinaddr_tcp6.sin6_family = AF_INET6;
   sinaddr_tcp6.sin6_addr   = in6addr_any;     /* All the interfaces on the machine are used */
-  sinaddr_tcp6.sin6_port   = htons(nfs_param.core_param._9p_tcp_port);
+  sinaddr_tcp6.sin6_port   = htons(nfs_param._9p_param._9p_tcp_port);
 
   netbuf_tcp6.maxlen = sizeof(sinaddr_tcp6);
   netbuf_tcp6.len    = sizeof(sinaddr_tcp6);
@@ -389,14 +390,14 @@ int _9p_create_socket( void )
   if(!__rpc_fd2sockinfo(sock, &si_tcp6))
    {
      LogFatal(COMPONENT_DISPATCH,
-              "Cannot get 9p socket info for tcp6 socket rc=%d errno=%d (%s)",
-              rc, errno, strerror(errno));
+              "Cannot get 9p socket info for tcp6 socket errno=%d (%s)",
+              errno, strerror(errno));
      return -1 ;
    }
 
   if(bind( sock,
           (struct sockaddr *)bindaddr_tcp6.addr.buf,
-          (socklen_t) si_nfs_tcp6.si_alen) == -1)
+          (socklen_t) si_tcp6.si_alen) == -1)
    {
        LogFatal(COMPONENT_DISPATCH,
                 "Cannot bind 9p tcp6 socket, error %d (%s)",
