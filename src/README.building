@@ -1,0 +1,87 @@
+
+Building  -   Paul Sheer <paulsheer@gmail.com>   -   30 July 2012
+
+
+This is an explanation of how to build and what you need before you
+build.  I put this together from trial and error.  If the core
+developers could update this file please.
+
+
+1. You seem to need the package krb5-1.10.2.  Compile and install as per
+its own instructions.  I use --prefix=/opt/nfs-ganesha to install
+everything under /opt/ and allow for a clean removal.
+
+2. You seem to need the package libnfsidmap-0.25.  Compile and install
+as per its own instructions.  I use --prefix=/opt/nfs-ganesha to install
+everything under /opt/ and allow for a clean removal.
+
+2.1: Are there other dependencies?
+
+2.2: Install all the autoconf tools as per your distribution. This means
+automake, autoconf, and libtool. Others?
+
+3. Because the "configure" and "autoconf" tools are broken and
+unworkable, you need this before you continue:
+
+    export PATH=/opt/nfs-ganesha/bin/:$PATH
+    export PKG_CONFIG_PATH=/opt/nfs-ganesha/lib/pkgconfig/
+    export LDFLAGS=-L/opt/nfs-ganesha/lib/
+
+
+4. If you are compiling from a git dump, then you need to do a whole lot
+of stuff first. Fortunately a lot of this is packed into to scripts:
+
+   ./tirpc.sh
+   ./autogen.sh
+
+
+5. Because the "configure" and "autoconf" tools are broken and
+unworkable, you need edit this line in MainNFSD/Makefile.am:
+
+Find the line,
+
+    libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
+
+and change into:
+
+    libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES)
+
+
+6. For a generic Linux or other-Unix build, do:
+
+    ./configure --prefix=/opt/nfs-ganesha \
+            --with-fsal=POSIX \
+            --disable-fsal-proxy \
+            --disable-fsal-lustre \
+            --disable-fsal-shook \
+            --with-krb5=/opt/nfs-ganesha
+
+or for kernels 3.0.0 and over:
+
+    ./configure --prefix=/opt/nfs-ganesha \
+            --with-fsal=VFS \
+            --disable-fsal-proxy \
+            --disable-fsal-lustre \
+            --disable-fsal-shook \
+            --with-krb5=/opt/nfs-ganesha
+
+7. Type
+
+    make
+    make install
+
+8. Now you need to create configuration from the samples under the
+source tree. This is left as an exercise.
+
+9. Run nfsd as follows:
+
+    /opt/nfs-ganesha/bin/ganesha.nfsd -L /tmp/nfs-ganesha.log -f /etc/ganesha/vfs.ganesha.nfsd.conf -N NIV_CRIT
+
+
+10. That should have taken you quite a few hours at least. What could be
+simpler!?
+
+
+
+
+

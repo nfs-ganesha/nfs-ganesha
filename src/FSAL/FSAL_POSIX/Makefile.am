@@ -3,7 +3,7 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 #noinst_LTLIBRARIES          = libfsalposix.la
 lib_LTLIBRARIES          = libfsalposix.la
 
-libfsalposix_la_SOURCES = fsal_convert.c   \
+libfsalposix_la_SOURCES = interface.c fsal_convert.c   \
                         fsal_internal.c	 \
                         fsal_internal.h  \
                         main.c		 \
@@ -11,7 +11,7 @@ libfsalposix_la_SOURCES = fsal_convert.c   \
 			handle.c	 \
 			file.c		 \
 			xattrs.c         \
-	                interface.c sockbuf.c encoding.c nodedb.c redblack.c connection.c connectionpool.c \
+	                sockbuf.c encoding.c nodedb.c redblack.c connection.c connectionpool.c \
 	                ../../include/fsal.h                     \
                         ../../include/fsal_types.h	         \
 	                ../../include/err_fsal.h	         \
@@ -29,6 +29,11 @@ nodedb:
 
 interface.c: nodedb
 
-
-
+interface.lo: interface.c
+sockbuf.lo: sockbuf.c
+encoding.lo: encoding.c
+nodedb.lo: nodedb.c
+redblack.lo: redblack.c
+connection.lo: connection.c
+connectionpool.lo: connectionpool.c
 

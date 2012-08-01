@@ -809,7 +809,7 @@ if test "$enable_fsal_posix" == "yes"; then
 	AC_DEFINE([_USE_POSIX], 1, [GANESHA is compiled with POSIX FSAL])
 	FSAL_CFLAGS="$DBEXT_FLAGS"
 	FSAL_LDFLAGS="$DBEXT_LDADD"
-	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_POSIX/libfsalposix.la \$(top_builddir)/FSAL/FSAL_POSIX/DBExt/$DBTYPE/libfsaldbext.la"
+	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_POSIX/libfsalposix.la"
 fi
 
 case $RPCAL in
@@ -879,9 +879,6 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile
 		 FSAL/FSAL_POSIX/Makefile
-		 FSAL/FSAL_POSIX/DBExt/Makefile
-		 FSAL/FSAL_POSIX/DBExt/PGSQL/Makefile
-		 FSAL/FSAL_POSIX/DBExt/MYSQL/Makefile
 		 FSAL/FSAL_PROXY/Makefile
 		 FSAL/FSAL_CEPH/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
