@@ -1222,6 +1222,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   if (pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
     {
+      user_credentials.caller_garray = NULL;
       if (get_req_uid_gid(req, pexport, &user_credentials) == FALSE)
         {
           LogInfo(COMPONENT_DISPATCH,
@@ -1288,7 +1289,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                   "Attempt to delete duplicate request failed on line %d",
                   __LINE__);
         }
-      return;
+      goto exe_exit;
     }
   else if ((export_check_result == EXPORT_WRITE_ATTEMPT_WHEN_RO) ||
            (export_check_result == EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO))
@@ -1351,7 +1352,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                          "Attempt to delete duplicate request failed on line %d",
                          __LINE__);
                 }
-              return;
+              goto exe_exit;
             }
         }
 
@@ -1512,7 +1513,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                       __LINE__);
             }
           svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-          return;
+          goto exe_exit;
         }
 
       LogFullDebug(COMPONENT_DISPATCH,
@@ -1559,6 +1560,15 @@ static void nfs_rpc_execute(request_data_t *preq,
           pworker_data->pfuncdesc->free_function(&res_nfs);
       }
     }
+
+exe_exit:
+#ifdef _HAVE_GSSAPI
+  /* since caller_garray is allocated in get_req_uid_gid, free here */
+  if((req->rq_cred.oa_flavor == RPCSEC_GSS) && (user_credentials.caller_garray != NULL))
+  {
+    free(user_credentials.caller_garray);
+  }
+#endif
 
   /* By now the dupreq cache entry should have been completed w/ a request
    * that is reusable or the dupreq cache entry should have been removed. */

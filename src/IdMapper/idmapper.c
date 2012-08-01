@@ -398,72 +398,56 @@ int principal2uid(char *principal, uid_t * puid)
 #ifdef _MSPAC_SUPPORT
           short found_uid=false;
           short found_gid=false;
-          gid_t gss_gid_tmp=0;
-          uid_t gss_uid_tmp=0;
           if (gd->pac_blob.data != NULL)
           {
+            struct wbcAuthUserParams params;
             wbcErr wbc_err;
-            struct wbcDomainSid *sids;
-            struct wbcUnixId *xids;
-            struct wbcBlob local_pac_blob;
-            uint32_t num_ids;
-            int i;
+            struct wbcAuthUserInfo *info;
+            struct wbcAuthErrorInfo *error = NULL;
 
-            local_pac_blob.data = gd->pac_blob.data;
-            local_pac_blob.length =  gd->pac_blob.length;
-            wbc_err = wbcPacToSids(local_pac_blob, &num_ids, &sids);
+            memset(&params, 0, sizeof(params));
+            params.level = WBC_AUTH_USER_LEVEL_PAC;
+            params.password.pac.data = (uint8_t *)gd->pac_blob.data;
+            params.password.pac.length = gd->pac_blob.length;
+
+            wbc_err = wbcAuthenticateUserEx(&params, &info, &error);
             if (!WBC_ERROR_IS_OK(wbc_err)) {
-              LogEvent(COMPONENT_IDMAPPER, "wbcPacToSids returned %s",
-                             wbcErrorString(wbc_err));
-              return 0;
-            }
-#if 0
-            char sid_str[WBC_SID_STRING_BUFLEN];
-
-            for (i = 0; i < num_ids; i++) {
-              wbcSidToStringBuf(&sids[i], sid_str, sizeof(sid_str));
-              fprintf(stderr, "SID %s\n", sid_str);
-            }
-#endif
-
-            xids = calloc(num_ids, sizeof(*xids));
-
-            if (xids == NULL) {
-              LogEvent(COMPONENT_IDMAPPER, "xids calloc failed\n");
-              wbcFreeMemory(sids);
+              LogCrit(COMPONENT_IDMAPPER,"wbcAuthenticateUserEx returned %s",
+                       wbcErrorString(wbc_err));
               return 0;
             }
 
-            wbc_err = wbcSidsToUnixIds(sids, num_ids, xids);
-            wbcFreeMemory(sids);
+            if (error) {
+              LogCrit(COMPONENT_IDMAPPER,"nt_status: %s, display_string %s",
+                      error->nt_string, error->display_string);
+              wbcFreeMemory(error); 
+              return 0;
+            }
+
+            LogFullDebug(COMPONENT_IDMAPPER,"account_name: %s", info->account_name);
+            LogFullDebug(COMPONENT_IDMAPPER,"domain_name: %s", info->domain_name);
+            LogFullDebug(COMPONENT_IDMAPPER,"num_sids: %d", info->num_sids);
+
+            /* 1st SID is account sid, see wbclient.h */
+            wbc_err = wbcSidToUid(&info->sids[0].sid, &gss_uid);
             if (!WBC_ERROR_IS_OK(wbc_err)) {
-              LogFullDebug(COMPONENT_IDMAPPER, "wbcSidsToUnixIds returned %s",
-                             wbcErrorString(wbc_err));
-              free(xids);
+              LogCrit(COMPONENT_IDMAPPER,"wbcSidToUid for uid returned %s",
+                      wbcErrorString(wbc_err));
+              wbcFreeMemory(info);
               return 0;
             }
-            for (i = 0; i < num_ids; i++) {
-              struct wbcUnixId* id = &xids[i];
 
-              switch(id->type) {
-              case WBC_ID_TYPE_NOT_SPECIFIED:
-                LogFullDebug(COMPONENT_IDMAPPER, "type not specified");
-                break;
-              case WBC_ID_TYPE_UID:
-                LogFullDebug(COMPONENT_IDMAPPER, "uid %d", id->id.uid);
-                gss_uid_tmp = id->id.uid;
-                found_uid = true;
-                break;
-              case WBC_ID_TYPE_GID:
-                LogFullDebug(COMPONENT_IDMAPPER, "gid %d\n", id->id.gid);
-                gss_gid_tmp = id->id.gid;
-                found_gid = true;
-                break;
-              default:
-                break;
-              };
+            /* 2nd SID is primary_group sid, see wbclient.h */
+            wbc_err = wbcSidToGid(&info->sids[1].sid, &gss_gid);
+            if (!WBC_ERROR_IS_OK(wbc_err)) {
+              LogCrit(COMPONENT_IDMAPPER,"wbcSidToUid for gid returned %s\n",
+                      wbcErrorString(wbc_err));
+              wbcFreeMemory(info);
+              return 0;
             }
-            free(xids);
+            wbcFreeMemory(info);
+            found_uid = true;
+            found_gid = true;
           }
 #endif
           LogFullDebug(COMPONENT_IDMAPPER,
@@ -472,8 +456,6 @@ int principal2uid(char *principal, uid_t * puid)
 #ifdef _MSPAC_SUPPORT
           if ((found_uid == true) && (found_gid == true))
           {
-            gss_uid = gss_uid_tmp;
-            gss_gid = gss_gid_tmp;
             goto principal_found;
           }
 #endif

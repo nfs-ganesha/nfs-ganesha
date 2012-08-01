@@ -4232,6 +4232,7 @@ int nfs4_MakeCred(compound_data_t * data)
   struct user_cred user_credentials;
   unsigned int export_check_result;
 
+  user_credentials.caller_garray = NULL;
   if (get_req_uid_gid(data->reqp,
                       data->pexport,
                       &user_credentials) == FALSE)
@@ -4250,15 +4251,37 @@ int nfs4_MakeCred(compound_data_t * data)
                              &user_credentials,
                              FALSE); /* So check_access() doesn't deny based on whether this is a RO export. */
   if (export_check_result != EXPORT_PERMISSION_GRANTED)
+  {
+#ifdef _HAVE_GSSAPI
+    if((data->reqp->rq_cred.oa_flavor == RPCSEC_GSS) && (user_credentials.caller_garray != NULL))
+    {
+      gsh_free(user_credentials.caller_garray);
+    }
+#endif
     return NFS4ERR_WRONGSEC;
+  }
 
   if(nfs_check_anon(&related_client, data->pexport, &user_credentials) == FALSE
      || nfs_build_fsal_context(data->reqp,
                             data->pexport,
                             data->pcontext,
                             &user_credentials) == FALSE)
+  {
+#ifdef _HAVE_GSSAPI
+    if((data->reqp->rq_cred.oa_flavor == RPCSEC_GSS) && (user_credentials.caller_garray != NULL))
+    {
+      gsh_free(user_credentials.caller_garray);
+    }
+#endif
     return NFS4ERR_WRONGSEC;
+  }
 
+#ifdef _HAVE_GSSAPI
+  if((data->reqp->rq_cred.oa_flavor == RPCSEC_GSS) && (user_credentials.caller_garray != NULL))
+  {
+    gsh_free(user_credentials.caller_garray);
+  }
+#endif
   return NFS4_OK;
 }                               /* nfs4_MakeCred */
 

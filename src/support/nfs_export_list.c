@@ -167,6 +167,11 @@ int get_req_uid_gid(struct svc_req *req,
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
   char principal[MAXNAMLEN];
+  int ret, num_grps = NGROUPS;
+  struct passwd pwd;
+  gid_t *grps;
+  struct passwd *pp;
+  char buff[NFS4_MAX_DOMAIN_LEN];
 #endif
 
   if (user_credentials == NULL)
@@ -288,11 +293,47 @@ int get_req_uid_gid(struct svc_req *req,
                    user_credentials->caller_uid);
           user_credentials->caller_gid = -1;
         }
+
+#ifdef _SOLARIS
+      if(getpwuid_r(user_credentials->caller_uid, &pwd, buff, MAXPATHLEN) != 0)
+#else
+      if((getpwuid_r(user_credentials->caller_uid, &pwd, buff, MAXPATHLEN, &pp) != 0) ||
+               (pp == NULL))
+#endif                          /* _SOLARIS */
+        { 
+          LogCrit(COMPONENT_IDMAPPER,"getpwnuid failed uid=%u", user_credentials->caller_uid);
+          return FALSE;
+        }
+
+      LogFullDebug(COMPONENT_IDMAPPER,"Name: %s", pwd.pw_name);
+      LogFullDebug(COMPONENT_IDMAPPER,"UID: %d", pwd.pw_uid);
+      LogFullDebug(COMPONENT_IDMAPPER,"Primary GID: %d", pwd.pw_gid);
+
+      grps = gsh_malloc(NGROUPS * sizeof(gid_t));
+      ret = getgrouplist(pwd.pw_name, pwd.pw_gid, grps, &num_grps);
+      if (ret == -1) {
+        LogEvent(COMPONENT_IDMAPPER,"getgrouplist failed with -1. name=%s gid=%d num_grps=%d, retry.",
+                       pwd.pw_name, pwd.pw_gid, num_grps);
+        /* resize and retry */
+        ret = getgrouplist(pwd.pw_name, pwd.pw_gid, grps, &num_grps);
+        if (ret < 0)
+          {
+            LogCrit(COMPONENT_IDMAPPER,"getgrouplist failed with %d. name=%s gid=%d",
+                       ret, pwd.pw_name, pwd.pw_gid);
+            return FALSE;
+          }
+      }
+      else if (ret < -1) {
+        LogCrit(COMPONENT_IDMAPPER,"getgrouplist failed with %d. name=%s gid=%d",
+                       ret, pwd.pw_name, pwd.pw_gid);
+        return FALSE;
+      }
+
       LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
                    (unsigned int)user_credentials->caller_uid,
                    (unsigned int)user_credentials->caller_gid);
-      user_credentials->caller_glen = 0;
-      user_credentials->caller_garray = 0;
+      user_credentials->caller_glen = num_grps;
+      user_credentials->caller_garray = grps;
 
       break;
 #endif                          /* _USE_GSSRPC */
