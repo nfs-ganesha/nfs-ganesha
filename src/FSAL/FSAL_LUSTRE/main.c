@@ -178,6 +178,8 @@ MODULE_INIT void lustre_init(void) {
 	}
 	myself->ops->create_export = lustre_create_export;
 	myself->ops->init_config = init_config;
+	lustre_export_ops_init(myself->exp_ops);
+	lustre_handle_ops_init(myself->obj_ops);
         init_fsal_parameters(&LUSTRE.fsal_info);
 }
 
