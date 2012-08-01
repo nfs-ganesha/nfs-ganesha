@@ -75,90 +75,39 @@
 #define EXPORT_MAX_CLIENTS 20
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
-int stat_export_check_access(struct sockaddr_storage *pssaddr,
-                             exportlist_client_t *clients,
+int stat_export_check_access(sockaddr_t                * hostaddr,
+                             exportlist_client_t       * clients,
                              exportlist_client_entry_t * pclient_found)
 {
-  sockaddr_t *psockaddr_in;
-#ifdef _USE_TIRPC_IPV6
-  struct sockaddr_in6 *psockaddr_in6;
-  static char ten_bytes_all_0[10];
-  static unsigned two_bytes_all_1 = 0xFFFF;
-  char ip6string[MAXHOSTNAMELEN];
-  memset(ten_bytes_all_0, 0, 10);
-#endif
   char ipstring[SOCK_NAME_MAX];
-
-  psockaddr_in = (sockaddr_t *)pssaddr;
+  int ipvalid;
+  sockaddr_t alt_hostaddr;
+  sockaddr_t * puse_hostaddr;
 
   /* For now, no matching client is found */
   memset(pclient_found, 0, sizeof(exportlist_client_entry_t));
 
-#ifdef _USE_TIPRC_IPV6
-  if(psockaddr_in->sin_family == AF_INET)
-    {
-#endif                          /* _USE_TIRPC_IPV6 */
-      /* Convert IP address into a string for wild character access checks. */
-      sprint_sockip(psockaddr_in, ipstring, sizeof(ipstring));
-      if(ipstring == NULL)
-        {
-          LogCrit(COMPONENT_MAIN,
-                  "Stat Export Check Access: Could not convert the IPv4 address to a character string.");
-          return FALSE;
-        }
-      if(export_client_match
-         (psockaddr_in, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
-        return TRUE;
-#ifdef _USE_TIRPC_IPV6
-    }
-  else
-    {
-      psockaddr_in6 = (struct sockaddr_in6 *)pssaddr;
-      if(isFulldebug(COMPONENT_MAIN))
-        {
-          char txtaddrv6[100];
+  puse_hostaddr = check_convert_ipv6_to_ipv4(hostaddr, &alt_hostaddr);
 
-          inet_ntop(psockaddr_in6->sin6_family,
-                    psockaddr_in6->sin6_addr.s6_addr, txtaddrv6, 100);
-          LogFullDebug(COMPONENT_MAIN,
-                       "Client has IPv6 adress = %s", txtaddrv6);
-        }
-      /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here
-       * This kind of adress is shaped like this:
-       * |---------------------------------------------------------------|
-       * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
-       * |---------------------------------------------------------------|
-       * |            0          |        FFFF       |    IPv4 address   |
-       * |---------------------------------------------------------------|   */
-      if(!memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
-         !memcmp((char *)(psockaddr_in6->sin6_addr.s6_addr + 10),
-                 (char *)&two_bytes_all_1, 2))
-        {
-          /* Convert IP address into a string for wild character access checks. */
-          inet_ntop(psockaddr_in->sin6_family, &psockaddr_in->sin6_addr,
-                    ip6string, INET6_ADDRSTRLEN);
-          if(ip6string == NULL)
-            {
-              LogCrit(COMPONENT_MAIN,
-                      "Error: Could not convert the IPv6 address to a character string.");
-              return FALSE;
-            }
-          /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
-          memcpy((char *)&addr, (char *)(psockaddr_in6->sin6_addr.s6_addr + 12), 4);
+  ipstring[0] = '\0';
+  ipvalid = sprint_sockip(puse_hostaddr, ipstring, sizeof(ipstring));
 
-          /* Proceed with IPv4 dedicated function */
-          /* else, check if any access only export matches this client */
-          if(export_client_match
-             (addr, ip6string, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
-            return TRUE;
-        }
-      if(export_client_matchv6
-         (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
-        return TRUE;
+  /* Use IP address as a string for wild character access checks. */
+  if(!ipvalid)
+    {
+      LogCrit(COMPONENT_MAIN,
+              "Could not convert the IP address to a character string.");
+      return FALSE;
     }
-#endif                          /* _USE_TIRPC_IPV6 */
-  /* If this point is reached, no matching entry was found */
-  return FALSE;
+
+  LogFullDebug(COMPONENT_MAIN,
+               "Check for address %s", ipstring);
+
+  return export_client_match_any(puse_hostaddr,
+                                 ipstring,
+                                 clients,
+                                 pclient_found,
+                                 EXPORT_OPTION_RW_ACCESS);
 
 }                               /* stat_export_check_access */
 
@@ -225,7 +174,9 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
     }
 
   rc = nfs_AddClientsToClientArray( clients, rc,
-                                    (char **)client_list, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
+                                    (char **)client_list,
+                                    EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS,
+                                    var_name);
   if(rc != 0)
     {
       err_flag = TRUE;
@@ -697,7 +648,7 @@ void *stat_exporter_thread(void *UnusedArg)
 {
   int sockfd, new_fd;
   struct addrinfo hints, *servinfo, *p;
-  struct sockaddr_storage their_addr;
+  sockaddr_t their_addr;
   socklen_t sin_size;
   int yes = 1;
   char s[INET6_ADDRSTRLEN];

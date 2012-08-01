@@ -199,6 +199,8 @@ typedef union nfs_res__
 #define NEEDS_CRED      0x0002  /* A credential is needed for this operation                      */
 #define CAN_BE_DUP      0x0004  /* Handling of dup request can be done for this request           */
 #define SUPPORTS_GSS    0x0008  /* Request may be authenticated by RPCSEC_GSS                     */
+#define MAKES_IO        0x0010  /* Request may do I/O (not allowed on MD ONLY exports             */
+#define NEEDS_EXPORT    0x0020  /* Request needs an export                                        */
 
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
                                         exportlist_t *,

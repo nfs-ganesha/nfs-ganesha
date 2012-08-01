@@ -160,7 +160,6 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
  *
  */
 int get_req_uid_gid(struct svc_req *req,
-                    exportlist_t * pexport,
                     struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
@@ -169,7 +168,6 @@ int get_req_uid_gid(struct svc_req *req,
   char principal[MAXNAMLEN];
   int ret, num_grps = NGROUPS;
   struct passwd pwd;
-  gid_t *grps;
   struct passwd *pp;
   char buff[NFS4_MAX_DOMAIN_LEN];
 #endif
@@ -182,15 +180,9 @@ int get_req_uid_gid(struct svc_req *req,
     case AUTH_NONE:
       /* Nothing to be done here... */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Request xid=%u has authentication AUTH_NONE, expordid=%d, uid=%d, gid=%d",
-                   req->rq_xid,
-                   pexport->id,
-                   (int)pexport->anonymous_uid,
-                   (int)pexport->anonymous_gid);
-      user_credentials->caller_uid = pexport->anonymous_uid;
-      user_credentials->caller_gid = pexport->anonymous_gid;
-      user_credentials->caller_glen = 0;
-      user_credentials->caller_garray = NULL;
+                   "Request xid=%u has authentication AUTH_NONE,",
+                   req->rq_xid);
+      user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
       break;
 
     case AUTH_UNIX:
@@ -198,9 +190,8 @@ int get_req_uid_gid(struct svc_req *req,
       punix_creds = (struct authunix_parms *) req->rq_clntcred;
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Request xid=%u has authentication AUTH_UNIX, expordid=%d, uid=%d, gid=%d",
+                   "Request xid=%u has authentication AUTH_UNIX, uid=%d, gid=%d",
                    req->rq_xid,
-                   pexport->id,
                    (int)punix_creds->aup_uid,
                    (int)punix_creds->aup_gid);
 
@@ -213,6 +204,18 @@ int get_req_uid_gid(struct svc_req *req,
 
 #ifdef _HAVE_GSSAPI
     case RPCSEC_GSS:
+      if(user_credentials->caller_flags & USER_CRED_GSS_PROCESSED)
+        {
+          /* Only process credentials once. */
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Request xid=%u has authentication RPCSEC_GSS, uid=%d, gid=%d",
+                       req->rq_xid,
+                       user_credentials->caller_uid,
+                       user_credentials->caller_gid);
+          break;
+        }
+
+      user_credentials->caller_flags |= USER_CRED_GSS_PROCESSED;
       LogFullDebug(COMPONENT_DISPATCH,
                    "Request xid=%u has authentication RPCSEC_GSS",
                    req->rq_xid);
@@ -277,12 +280,7 @@ int get_req_uid_gid(struct svc_req *req,
 
 	  /* For compatibility with Linux knfsd, we set the uid/gid
 	   * to anonymous when a name->uid mapping can't be found. */
-	  user_credentials->caller_uid = pexport->anonymous_uid;
-	  user_credentials->caller_gid = pexport->anonymous_gid;
-	  
-	  /* No alternate groups for "nobody" */
-	  user_credentials->caller_glen = 0 ;
-	  user_credentials->caller_garray = NULL ;
+	  user_credentials->caller_flags |= USER_CRED_ANONYMOUS;
 
 	  return TRUE;
 	}
@@ -311,33 +309,66 @@ int get_req_uid_gid(struct svc_req *req,
       LogFullDebug(COMPONENT_IDMAPPER,"UID: %d", pwd.pw_uid);
       LogFullDebug(COMPONENT_IDMAPPER,"Primary GID: %d", pwd.pw_gid);
 
-      grps = gsh_malloc(NGROUPS * sizeof(gid_t));
-      ret = getgrouplist(pwd.pw_name, pwd.pw_gid, grps, &num_grps);
-      if (ret == -1) {
-        LogEvent(COMPONENT_IDMAPPER,"getgrouplist failed with -1. name=%s gid=%d num_grps=%d, retry.",
-                       pwd.pw_name, pwd.pw_gid, num_grps);
-        /* resize and retry */
-        ret = getgrouplist(pwd.pw_name, pwd.pw_gid, grps, &num_grps);
-        if (ret < 0)
-          {
-            LogCrit(COMPONENT_IDMAPPER,"getgrouplist failed with %d. name=%s gid=%d",
-                       ret, pwd.pw_name, pwd.pw_gid);
-            return FALSE;
-          }
-      }
-      else if (ret < -1) {
-        LogCrit(COMPONENT_IDMAPPER,"getgrouplist failed with %d. name=%s gid=%d",
-                       ret, pwd.pw_name, pwd.pw_gid);
-        return FALSE;
-      }
+      user_credentials->caller_garray = gsh_malloc(NGROUPS * sizeof(gid_t));
 
-      LogFullDebug(COMPONENT_DISPATCH, "----> exportid=%d,uid=%d,gid=%d",
-                   pexport->id,
+      if(user_credentials->caller_garray == NULL)
+        {
+          LogCrit(COMPONENT_DISPATCH,
+                  "Failure to allocate memory for GSS grouplist");
+          return FALSE;
+        }
+
+      ret = getgrouplist(pwd.pw_name,
+                         pwd.pw_gid,
+                         user_credentials->caller_garray,
+                         &num_grps);
+
+      if (ret == -1)
+        {
+          LogEvent(COMPONENT_IDMAPPER,"getgrouplist failed with -1. name=%s gid=%d num_grps=%d, retry.",
+                         pwd.pw_name, pwd.pw_gid, num_grps);
+          /* resize and retry */
+          gsh_free(user_credentials->caller_garray);
+          user_credentials->caller_garray = gsh_malloc(num_grps * sizeof(gid_t));
+
+          if(user_credentials->caller_garray == NULL)
+            {
+              LogCrit(COMPONENT_DISPATCH,
+                      "Failure to allocate memory for GSS grouplist");
+              return FALSE;
+            }
+
+          ret = getgrouplist(pwd.pw_name,
+                             pwd.pw_gid,
+                             user_credentials->caller_garray,
+                             &num_grps);
+
+          if (ret < 0)
+            {
+              LogCrit(COMPONENT_IDMAPPER,"getgrouplist failed with %d. name=%s gid=%d",
+                         ret, pwd.pw_name, pwd.pw_gid);
+
+              gsh_free(user_credentials->caller_garray);
+              user_credentials->caller_garray = NULL;
+              return FALSE;
+            }
+        }
+      else if (ret < -1)
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "getgrouplist failed with %d. name=%s gid=%d",
+                  ret, pwd.pw_name, pwd.pw_gid);
+
+          gsh_free(user_credentials->caller_garray);
+          user_credentials->caller_garray = NULL;
+          return FALSE;
+        }
+
+      LogFullDebug(COMPONENT_DISPATCH, "----> uid=%d,gid=%d",
                    (int)user_credentials->caller_uid,
                    (int)user_credentials->caller_gid);
-      user_credentials->caller_glen = num_grps;
-      user_credentials->caller_garray = grps;
 
+      user_credentials->caller_glen = num_grps;
       break;
 #endif                          /* _USE_GSSRPC */
 
@@ -353,29 +384,72 @@ int get_req_uid_gid(struct svc_req *req,
   return TRUE;
 }
 
-void nfs_check_anon(exportlist_client_entry_t * pexport_client,
+void nfs_check_anon(export_perms_t * pexport_perms,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials)
 {
+  /* Do we need to revert? */
+  if(user_credentials->caller_flags & USER_CRED_SAVED)
+    {
+      user_credentials->caller_uid  = user_credentials->caller_uid_saved;
+      user_credentials->caller_gid  = user_credentials->caller_gid_saved;
+      user_credentials->caller_glen = user_credentials->caller_glen_saved;
+      if(user_credentials->caller_gpos_root < user_credentials->caller_glen_saved)
+        user_credentials->caller_garray[user_credentials->caller_gpos_root] = 0;
+    }
+
   /* Do we have root access ? */
   /* Are we squashing _all_ users to the anonymous uid/gid ? */
   if( ((user_credentials->caller_uid == 0)
-       && !(pexport_client->options & EXPORT_OPTION_ROOT))
-      || pexport->all_anonymous == TRUE)
+       && !(pexport_perms->options & EXPORT_OPTION_ROOT))
+      || pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS
+      || ((user_credentials->caller_flags & USER_CRED_ANONYMOUS) != 0))
     {
       LogFullDebug(COMPONENT_DISPATCH,
                    "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
                    pexport->id,
                    user_credentials->caller_uid,
                    user_credentials->caller_gid,
-                   pexport->anonymous_uid,
-                   pexport->anonymous_gid);
-      user_credentials->caller_uid = pexport->anonymous_uid;
-      user_credentials->caller_gid = pexport->anonymous_gid;
+                   pexport_perms->anonymous_uid,
+                   pexport_perms->anonymous_gid);
+
+      /* Save old credentials */
+      user_credentials->caller_uid_saved  = user_credentials->caller_uid;
+      user_credentials->caller_gid_saved  = user_credentials->caller_gid;
+      user_credentials->caller_glen_saved = user_credentials->caller_glen;
+      user_credentials->caller_gpos_root  = user_credentials->caller_glen + 1;
+      user_credentials->caller_flags |= USER_CRED_SAVED;
+
+      /* Map uid and gid to "nobody" */
+      user_credentials->caller_uid = pexport_perms->anonymous_uid;
+      user_credentials->caller_gid = pexport_perms->anonymous_gid;
       
       /* No alternate groups for "nobody" */
       user_credentials->caller_glen = 0 ;
       user_credentials->caller_garray = NULL ;
+    }
+  else if ((user_credentials->caller_gid == 0)
+       && !(pexport_perms->options & EXPORT_OPTION_ROOT))
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Anonymizing for export %d caller uid=%d gid=%d to uid=%d gid=%d",
+                   pexport->id,
+                   user_credentials->caller_uid,
+                   user_credentials->caller_gid,
+                   user_credentials->caller_uid,
+                   pexport_perms->anonymous_gid);
+
+      /* Save old credentials */
+      user_credentials->caller_uid_saved  = user_credentials->caller_uid;
+      user_credentials->caller_gid_saved  = user_credentials->caller_gid;
+      user_credentials->caller_glen_saved = user_credentials->caller_glen;
+      user_credentials->caller_gpos_root  = user_credentials->caller_glen + 1;
+      user_credentials->caller_flags |= USER_CRED_SAVED;
+
+      /* Map gid to "nobody" */
+      user_credentials->caller_gid = pexport_perms->anonymous_gid;
+      
+      /* Keep alternate groups, we may squash them below */
     }
   else
     {
@@ -385,6 +459,56 @@ void nfs_check_anon(exportlist_client_entry_t * pexport_client,
                    user_credentials->caller_uid,
                    user_credentials->caller_gid);
     }
+
+  /* Check the garray for gid 0 to squash */
+  if(!(pexport_perms->options & EXPORT_OPTION_ROOT) &&
+     user_credentials->caller_glen > 0)
+    {
+      unsigned int i;
+      for(i = 0; i < user_credentials->caller_glen; i++)
+        {
+          if(user_credentials->caller_garray[i] == 0)
+            {
+              if((user_credentials->caller_flags & USER_CRED_SAVED) == 0)
+                {
+                  /* Save old credentials */
+                  user_credentials->caller_uid_saved  = user_credentials->caller_uid;
+                  user_credentials->caller_gid_saved  = user_credentials->caller_gid;
+                  user_credentials->caller_glen_saved = user_credentials->caller_glen;
+                  user_credentials->caller_gpos_root  = user_credentials->caller_glen + 1;
+                  user_credentials->caller_flags |= USER_CRED_SAVED;
+                }
+
+              /* Save the position of the first instance of root in the garray */
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "Squashing alternate group #%d to %d",
+                           i, pexport_perms->anonymous_gid);
+              if(user_credentials->caller_gpos_root >= user_credentials->caller_glen_saved)
+                user_credentials->caller_gpos_root = i;
+              user_credentials->caller_garray[i] = pexport_perms->anonymous_gid;
+            }
+        }
+    }
+}
+
+void init_credentials(struct user_cred *user_credentials)
+{
+  memset(user_credentials, 0, sizeof(*user_credentials));
+  user_credentials->caller_uid = (uid_t) ANON_UID;
+  user_credentials->caller_gid = (gid_t) ANON_GID;
+}
+
+void clean_credentials(struct user_cred *user_credentials)
+{
+#ifdef _HAVE_GSSAPI
+  if(((user_credentials->caller_flags & USER_CRED_GSS_PROCESSED) != 0) &&
+     (user_credentials->caller_garray != NULL))
+    {
+      gsh_free(user_credentials->caller_garray);
+    }
+#endif
+
+  init_credentials(user_credentials);
 }
 
 /**

@@ -230,10 +230,19 @@ struct fsal_handle_desc {
 
 /** object name.  */
 
+#define USER_CRED_ANONYMOUS     0x0001
+#define USER_CRED_GSS_PROCESSED 0x0002
+#define USER_CRED_SAVED         0x0004
+
 /* Used to record the uid and gid of the client that made a request. */
 struct user_cred {
   uid_t caller_uid;
   gid_t caller_gid;
+  uid_t caller_uid_saved;
+  gid_t caller_gid_saved;
+  int   caller_flags;
+  unsigned int caller_glen_saved;
+  unsigned int caller_gpos_root;
   unsigned int caller_glen;
   gid_t *caller_garray;
 };

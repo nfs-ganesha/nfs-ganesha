@@ -152,6 +152,15 @@ typedef struct exportlist_client__
 struct fsal_up_filter_list_t_;
 #endif
 
+typedef struct export_perms__
+{
+  uid_t anonymous_uid;          /* root uid when no root access is available   */
+                                /* uid when access is available but all users are being squashed. */
+  gid_t anonymous_gid;          /* root gid when no root access is available   */
+                                /* gid when access is available but all users are being squashed. */
+  unsigned int options;         /* avail. mnt options */
+} export_perms_t;
+
 typedef struct exportlist__
 {
   unsigned short id;            /* entry identifier   */
@@ -179,7 +188,6 @@ typedef struct exportlist__
                                 /* uid when access is available but all users are being squashed. */
   gid_t anonymous_gid;          /* root gid when no root access is available   */
                                 /* gid when access is available but all users are being squashed. */
-  bool_t all_anonymous;         /* When set to true, all users including root will be given the anon uid/gid */
   unsigned int options;         /* avail. mnt options */
 
   unsigned char seckey[EXPORT_KEY_SIZE];        /* Checksum for FH validity */
@@ -224,7 +232,44 @@ typedef struct exportlist__
 #define EXPORT_OPTION_NOSUID          0x00000001        /* mask off setuid mode bit            */
 #define EXPORT_OPTION_NOSGID          0x00000002        /* mask off setgid mode bit            */
 #define EXPORT_OPTION_ROOT            0x00000004        /* allow root access as root uid       */
+#define EXPORT_OPTION_ALL_ANONYMOUS   0x00000008        /* all users are squashed to anonymous */
 #define EXPORT_OPTION_READ_ACCESS     0x00000010        /* R_Access= option specified          */
+#define EXPORT_OPTION_WRITE_ACCESS    0x00000020        /* RW_Access= option specified         */
+#define EXPORT_OPTION_RW_ACCESS       (EXPORT_OPTION_READ_ACCESS     | \
+                                       EXPORT_OPTION_WRITE_ACCESS)
+#define EXPORT_OPTION_MD_WRITE_ACCESS 0x00000040        /* MDONLY_Access= option specified     */
+#define EXPORT_OPTION_MD_READ_ACCESS  0x00000080        /* MDONLY_RO_Access= option specified  */
+#define EXPORT_OPTION_MD_ACCESS       (EXPORT_OPTION_MD_WRITE_ACCESS | \
+                                       EXPORT_OPTION_MD_READ_ACCESS)
+#define EXPORT_OPTION_MODIFY_ACCESS   (EXPORT_OPTION_WRITE_ACCESS | \
+                                       EXPORT_OPTION_MD_WRITE_ACCESS)
+#define EXPORT_OPTION_ALL_ACCESS       (EXPORT_OPTION_ROOT            | \
+                                       EXPORT_OPTION_ALL_ANONYMOUS   | \
+                                       EXPORT_OPTION_READ_ACCESS     | \
+                                       EXPORT_OPTION_WRITE_ACCESS    | \
+                                       EXPORT_OPTION_RW_ACCESS       | \
+                                       EXPORT_OPTION_MD_WRITE_ACCESS | \
+                                       EXPORT_OPTION_MD_READ_ACCESS  | \
+                                       EXPORT_OPTION_MD_ACCESS       | \
+                                       EXPORT_OPTION_PRIVILEGED_PORT | \
+                                       EXPORT_OPTION_AUTH_NONE       | \
+                                       EXPORT_OPTION_AUTH_UNIX       | \
+                                       EXPORT_OPTION_RPCSEC_GSS_NONE | \
+                                       EXPORT_OPTION_RPCSEC_GSS_INTG | \
+                                       EXPORT_OPTION_RPCSEC_GSS_PRIV | \
+                                       EXPORT_OPTION_NFSV2           | \
+                                       EXPORT_OPTION_NFSV3           | \
+                                       EXPORT_OPTION_NFSV4           | \
+                                       EXPORT_OPTION_UDP             | \
+                                       EXPORT_OPTION_TCP)
+#define EXPORT_OPTION_CUR_ACCESS      (EXPORT_OPTION_ROOT            | \
+                                       EXPORT_OPTION_READ_ACCESS     | \
+                                       EXPORT_OPTION_WRITE_ACCESS    | \
+                                       EXPORT_OPTION_RW_ACCESS       | \
+                                       EXPORT_OPTION_MD_WRITE_ACCESS | \
+                                       EXPORT_OPTION_MD_READ_ACCESS  | \
+                                       EXPORT_OPTION_MD_ACCESS)
+
 #define EXPORT_OPTION_PSEUDO          0x00000100        /* pseudopath is provided              */
 #define EXPORT_OPTION_MAXREAD         0x00000200        /* Max read is provided                */
 #define EXPORT_OPTION_MAXWRITE        0x00000400        /* Max write is provided               */
@@ -233,9 +278,6 @@ typedef struct exportlist__
 #define EXPORT_OPTION_PREFRDDIR       0x00002000        /* Pref readdir size is provided       */
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000        /* clients use only privileged port    */
 #define EXPORT_OPTION_USE_DATACACHE   0x00008000        /* Is export entry data cached ?       */
-#define EXPORT_OPTION_WRITE_ACCESS    0x00010000        /* RW_Access= option specified         */
-#define EXPORT_OPTION_MD_WRITE_ACCESS 0x00020000        /* MDONLY_Access= option specified     */
-#define EXPORT_OPTION_MD_READ_ACCESS  0x00040000        /* MDONLY_RO_Access= option specified  */
 
 /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 
@@ -252,6 +294,11 @@ typedef struct exportlist__
 #define EXPORT_OPTION_NFSV4           0x00800000        /* NFSv4 operations are supported      */
 #define EXPORT_OPTION_UDP             0x01000000        /* UDP protocol is supported      */
 #define EXPORT_OPTION_TCP             0x02000000        /* TCP protocol is supported      */
+#define EXPORT_OPTION_PROTOCOLS       (EXPORT_OPTION_NFSV2           | \
+                                       EXPORT_OPTION_NFSV3           | \
+                                       EXPORT_OPTION_NFSV4           | \
+                                       EXPORT_OPTION_UDP             | \
+                                       EXPORT_OPTION_TCP)
 
 /* Maximum offset set for R/W */
 #define EXPORT_OPTION_MAXOFFSETWRITE  0x04000000        /* Maximum Offset for write is set  */
@@ -260,13 +307,7 @@ typedef struct exportlist__
 #define EXPORT_OPTION_USE_PNFS        0x20000000        /* Using pNFS or not using pNFS ?   */
 #define EXPORT_OPTION_USE_UQUOTA      0x40000000        /* Using user quota for this export */
 
-/* nfs_export_check_access() return values */
-#define EXPORT_PERMISSION_GRANTED            0x00000001
-#define EXPORT_MDONLY_GRANTED                0x00000002
-#define EXPORT_PERMISSION_DENIED             0x00000003
-#define EXPORT_WRITE_ATTEMPT_WHEN_RO         0x00000004
-#define EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO  0x00000005
-
+#define EXPORT_OPTION_ACCESS_LIST     0x80000000        /* Flags access list entry as Access=  */
 
 /* NFS4 specific structures */
 
@@ -352,7 +393,9 @@ typedef struct compoud_data
   fsal_op_context_t *pcontext; /*< Credentials related to this
                                    fileset (to handle different uid
                                    mapping) */
+  struct user_cred user_credentials; /*< Extracted credentials for this request */
   exportlist_t *pexport; /*< Export entry related to the request */
+  export_perms_t export_perms; /*< Permissions for export for this request */
   exportlist_t *pfullexportlist; /*< The whole exportlist */
   pseudofs_t *pseudofs; /*< Pointer to the pseudo filesystem tree */
   char MntPath[MAXPATHLEN]; /*< Path (in pseudofs) of the current entry */
@@ -372,9 +415,11 @@ typedef struct compoud_data
 } compound_data_t;
 
 /* Export list related functions */
+sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4);
+
 exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot,
                                    unsigned short exportid);
-void nfs_check_anon(exportlist_client_entry_t * pexport_client,
+void nfs_check_anon(export_perms_t * pexport_perms,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials);
 int nfs_build_fsal_context(struct svc_req *ptr_req,
@@ -382,23 +427,23 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
                            fsal_op_context_t * pcontext,
                            struct user_cred *user_credentials);
 int get_req_uid_gid(struct svc_req *ptr_req,
-                    exportlist_t * pexport,
                     struct user_cred *user_credentials);
 
+void init_credentials(struct user_cred *user_credentials);
+void clean_credentials(struct user_cred *user_credentials);
 
 int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2);
 int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred);
 
-int nfs_export_check_access(sockaddr_t *hostaddr,
-                            struct svc_req *ptr_req,
-                            exportlist_t * pexport,
-                            unsigned int nfs_prog,
-                            unsigned int mnt_prog,
-                            hash_table_t * ht_ip_stats,
-                            pool_t *ip_stats_pool,
+int export_client_match_any(sockaddr_t                * hostaddr,
+                            char                      * ipstring,
+                            exportlist_client_t       * clients,
                             exportlist_client_entry_t * pclient_found,
-                            struct user_cred *user_credentials,
-                            bool_t proc_makes_write);
+                            unsigned int                export_option);
+
+void nfs_export_check_access(sockaddr_t     * hostaddr,
+                             exportlist_t   * pexport,
+                             export_perms_t * pexport_perms);
 
 int nfs_export_check_security(struct svc_req *ptr_req, exportlist_t * pexport);
 

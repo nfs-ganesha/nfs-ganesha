@@ -92,55 +92,55 @@ const nfs_function_desc_t nfs2_func_desc[] = {
    NOTHING_SPECIAL},
   {nfs_Getattr, nfs_Getattr_Free, (xdrproc_t) xdr_fhandle2,
    (xdrproc_t) xdr_ATTR2res, "nfs_Getattr",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs_Setattr, nfs_Setattr_Free, (xdrproc_t) xdr_SETATTR2args,
    (xdrproc_t) xdr_ATTR2res, "nfs_Setattr",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs2_Root, nfs2_Root_Free, (xdrproc_t) xdr_void,
    (xdrproc_t) xdr_void, "nfs2_Root",
    NOTHING_SPECIAL},
   {nfs_Lookup, nfs2_Lookup_Free, (xdrproc_t) xdr_diropargs2,
    (xdrproc_t) xdr_DIROP2res, "nfs_Lookup",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs_Readlink, nfs2_Readlink_Free, (xdrproc_t) xdr_fhandle2,
    (xdrproc_t) xdr_READLINK2res, "nfs_Readlink",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs_Read, nfs2_Read_Free, (xdrproc_t) xdr_READ2args,
    (xdrproc_t) xdr_READ2res, "nfs_Read",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS | MAKES_IO},
   {nfs2_Writecache, nfs2_Writecache_Free, (xdrproc_t) xdr_void,
    (xdrproc_t) xdr_void, "nfs_Writecache",
    NOTHING_SPECIAL},
   {nfs_Write, nfs_Write_Free, (xdrproc_t) xdr_WRITE2args,
    (xdrproc_t) xdr_ATTR2res, "nfs_Write",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS | MAKES_IO},
   {nfs_Create, nfs_Create_Free, (xdrproc_t) xdr_CREATE2args,
    (xdrproc_t) xdr_DIROP2res, "nfs_Create",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Remove, nfs_Remove_Free, (xdrproc_t) xdr_diropargs2,
    (xdrproc_t) xdr_nfsstat2, "nfs_Remove",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Rename, nfs_Rename_Free, (xdrproc_t) xdr_RENAME2args,
    (xdrproc_t) xdr_nfsstat2, "nfs_Rename",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Link, nfs_Link_Free, (xdrproc_t) xdr_LINK2args,
    (xdrproc_t) xdr_nfsstat2, "nfs_Link",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Symlink, nfs_Symlink_Free, (xdrproc_t) xdr_SYMLINK2args,
    (xdrproc_t) xdr_nfsstat2, "nfs_Symlink",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Mkdir, nfs_Mkdir_Free, (xdrproc_t) xdr_CREATE2args,
    (xdrproc_t) xdr_DIROP2res, "nfs_Mkdir",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Rmdir, nfs_Rmdir_Free, (xdrproc_t) xdr_diropargs2,
    (xdrproc_t) xdr_nfsstat2, "nfs_Rmdir",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Readdir, nfs2_Readdir_Free, (xdrproc_t) xdr_READDIR2args,
    (xdrproc_t) xdr_READDIR2res, "nfs_Readdir",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs_Fsstat, nfs_Fsstat_Free, (xdrproc_t) xdr_fhandle2,
    (xdrproc_t) xdr_STATFS2res, "nfs_Fsstat",
-   NEEDS_CRED | SUPPORTS_GSS}
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS}
 };
 
 const nfs_function_desc_t nfs3_func_desc[] = {
@@ -149,67 +149,68 @@ const nfs_function_desc_t nfs3_func_desc[] = {
    "nfs_Null",
    NOTHING_SPECIAL},
   {nfs_Getattr, nfs_Getattr_Free, (xdrproc_t) xdr_GETATTR3args,
-   (xdrproc_t) xdr_GETATTR3res, "nfs_Getattr", NEEDS_CRED | SUPPORTS_GSS},
+   (xdrproc_t) xdr_GETATTR3res, "nfs_Getattr",
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs_Setattr, nfs_Setattr_Free, (xdrproc_t) xdr_SETATTR3args,
    (xdrproc_t) xdr_SETATTR3res, "nfs_Setattr",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Lookup, nfs3_Lookup_Free, (xdrproc_t) xdr_LOOKUP3args,
    (xdrproc_t) xdr_LOOKUP3res, "nfs_Lookup",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs3_Access, nfs3_Access_Free, (xdrproc_t) xdr_ACCESS3args,
    (xdrproc_t) xdr_ACCESS3res, "nfs3_Access",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs_Readlink, nfs3_Readlink_Free, (xdrproc_t) xdr_READLINK3args,
    (xdrproc_t) xdr_READLINK3res, "nfs_Readlink",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs_Read, nfs3_Read_Free, (xdrproc_t) xdr_READ3args,
    (xdrproc_t) xdr_READ3res, "nfs_Read",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS | MAKES_IO},
   {nfs_Write, nfs_Write_Free, (xdrproc_t) xdr_WRITE3args,
    (xdrproc_t) xdr_WRITE3res, "nfs_Write",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS | MAKES_IO},
   {nfs_Create, nfs_Create_Free, (xdrproc_t) xdr_CREATE3args,
    (xdrproc_t) xdr_CREATE3res, "nfs_Create",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Mkdir, nfs_Mkdir_Free, (xdrproc_t) xdr_MKDIR3args,
    (xdrproc_t) xdr_MKDIR3res, "nfs_Mkdir",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Symlink, nfs_Symlink_Free, (xdrproc_t) xdr_SYMLINK3args,
    (xdrproc_t) xdr_SYMLINK3res, "nfs_Symlink",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs3_Mknod, nfs3_Mknod_Free, (xdrproc_t) xdr_MKNOD3args,
    (xdrproc_t) xdr_MKNOD3res, "nfs3_Mknod",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Remove, nfs_Remove_Free, (xdrproc_t) xdr_REMOVE3args,
    (xdrproc_t) xdr_REMOVE3res, "nfs_Remove",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Rmdir, nfs_Rmdir_Free, (xdrproc_t) xdr_RMDIR3args,
    (xdrproc_t) xdr_RMDIR3res, "nfs_Rmdir",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Rename, nfs_Rename_Free, (xdrproc_t) xdr_RENAME3args,
    (xdrproc_t) xdr_RENAME3res, "nfs_Rename",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Link, nfs_Link_Free, (xdrproc_t) xdr_LINK3args,
    (xdrproc_t) xdr_LINK3res, "nfs_Link",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs_Readdir, nfs3_Readdir_Free, (xdrproc_t) xdr_READDIR3args,
    (xdrproc_t) xdr_READDIR3res, "nfs_Readdir",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs3_Readdirplus, nfs3_Readdirplus_Free, (xdrproc_t) xdr_READDIRPLUS3args,
    (xdrproc_t) xdr_READDIRPLUS3res, "nfs3_Readdirplus",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs_Fsstat, nfs_Fsstat_Free, (xdrproc_t) xdr_FSSTAT3args,
    (xdrproc_t) xdr_FSSTAT3res, "nfs_Fsstat",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs3_Fsinfo, nfs3_Fsinfo_Free, (xdrproc_t) xdr_FSINFO3args,
    (xdrproc_t) xdr_FSINFO3res, "nfs3_Fsinfo",
-   NEEDS_CRED},
+   NEEDS_CRED | NEEDS_EXPORT},
   {nfs3_Pathconf, nfs3_Pathconf_Free, (xdrproc_t) xdr_PATHCONF3args,
    (xdrproc_t) xdr_PATHCONF3res, "nfs3_Pathconf",
-   NEEDS_CRED | SUPPORTS_GSS},
+   NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS},
   {nfs3_Commit, nfs3_Commit_Free, (xdrproc_t) xdr_COMMIT3args,
    (xdrproc_t) xdr_COMMIT3res, "nfs3_Commit",
-   MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS}
+   MAKES_WRITE | NEEDS_CRED | NEEDS_EXPORT | SUPPORTS_GSS}
 };
 
 /* Remeber that NFSv4 manages authentication though junction crossing, and
@@ -219,7 +220,8 @@ const nfs_function_desc_t nfs4_func_desc[] = {
    (xdrproc_t) xdr_void, "nfs_Null",
    NOTHING_SPECIAL},
   {nfs4_Compound, nfs4_Compound_Free, (xdrproc_t) xdr_COMPOUND4args,
-   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED}
+   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound",
+   NOTHING_SPECIAL}
 };
 
 const nfs_function_desc_t mnt1_func_desc[] = {
@@ -252,7 +254,7 @@ const nfs_function_desc_t mnt3_func_desc[] = {
    NOTHING_SPECIAL},
   {mnt_Mnt, mnt3_Mnt_Free, (xdrproc_t) xdr_dirpath,
    (xdrproc_t) xdr_mountres3, "mnt_Mnt",
-   NEEDS_CRED},
+   NOTHING_SPECIAL},
   {mnt_Dump, mnt_Dump_Free, (xdrproc_t) xdr_void,
    (xdrproc_t) xdr_mountlist, "mnt_Dump",
    NOTHING_SPECIAL},
@@ -279,19 +281,19 @@ const nfs_function_desc_t nlm4_func_desc[] = {
   [NLMPROC4_TEST] = {
       nlm4_Test, nlm4_Test_Free, (xdrproc_t) xdr_nlm4_testargs,
       (xdrproc_t) xdr_nlm4_testres, "nlm4_Test",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_LOCK] = {
       nlm4_Lock, nlm4_Lock_Free, (xdrproc_t) xdr_nlm4_lockargs,
       (xdrproc_t) xdr_nlm4_res, "nlm4_Lock",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_CANCEL] = {
       nlm4_Cancel, nlm4_Cancel_Free, (xdrproc_t) xdr_nlm4_cancargs,
       (xdrproc_t) xdr_nlm4_res, "nlm4_Cancel",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_UNLOCK] = {
       nlm4_Unlock, nlm4_Unlock_Free, (xdrproc_t) xdr_nlm4_unlockargs,
       (xdrproc_t) xdr_nlm4_res, "nlm4_Unlock",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_GRANTED] = {
       nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
       (xdrproc_t) xdr_void, "nlm4_Granted",
@@ -300,22 +302,22 @@ const nfs_function_desc_t nlm4_func_desc[] = {
       nlm4_Test_Message, nlm4_Test_Free,
       (xdrproc_t) xdr_nlm4_testargs,
       (xdrproc_t) xdr_void, "nlm4_Test_msg",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_LOCK_MSG] = {
       nlm4_Lock_Message, nlm4_Lock_Free,
       (xdrproc_t) xdr_nlm4_lockargs,
       (xdrproc_t) xdr_void, "nlm4_Lock_msg",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_CANCEL_MSG] = {
       nlm4_Cancel_Message, nlm4_Cancel_Free,
       (xdrproc_t) xdr_nlm4_cancargs,
       (xdrproc_t) xdr_void, "nlm4_Cancel_msg",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_UNLOCK_MSG] = {
       nlm4_Unlock_Message, nlm4_Unlock_Free,
       (xdrproc_t) xdr_nlm4_unlockargs,
       (xdrproc_t) xdr_void, "nlm4_Unlock_msg",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_GRANTED_MSG] = {
       nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t) xdr_void,
       (xdrproc_t) xdr_void, "nlm4_Granted_msg",
@@ -339,7 +341,7 @@ const nfs_function_desc_t nlm4_func_desc[] = {
   [NLMPROC4_GRANTED_RES] = {
       nlm4_Granted_Res, nlm4_Granted_Res_Free, (xdrproc_t) xdr_nlm4_res,
       (xdrproc_t) xdr_void, "nlm4_Granted_res",
-      NEEDS_CRED},
+      NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_SM_NOTIFY] = {
       nlm4_Sm_Notify, nlm4_Sm_Notify_Free,
       (xdrproc_t) xdr_nlm4_sm_notifyargs, (xdrproc_t) xdr_void,
@@ -363,11 +365,11 @@ const nfs_function_desc_t nlm4_func_desc[] = {
   [NLMPROC4_SHARE] {nlm4_Share, nlm4_Share_Free,
                     (xdrproc_t) xdr_nlm4_shareargs, (xdrproc_t) xdr_nlm4_shareres,
                     "nlm4_Share",
-                    NEEDS_CRED},
+                    NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_UNSHARE] = {nlm4_Unshare, nlm4_Unshare_Free,
                         (xdrproc_t) xdr_nlm4_shareargs, (xdrproc_t) xdr_nlm4_shareres,
                         "nlm4_Unshare",
-                        NEEDS_CRED},
+                        NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_NM_LOCK] = {
                         /* NLM_NM_LOCK uses the same handling as NLM_LOCK except for
                          * monitoring, nlm4_Lock will make that determination.
@@ -375,7 +377,7 @@ const nfs_function_desc_t nlm4_func_desc[] = {
                         nlm4_Lock, nlm4_Lock_Free,
                         (xdrproc_t) xdr_nlm4_lockargs, (xdrproc_t) xdr_nlm4_res,
                         "nlm4_Nm_lock",
-                        NEEDS_CRED},
+                        NEEDS_CRED | NEEDS_EXPORT},
   [NLMPROC4_FREE_ALL] = {nlm4_Free_All, nlm4_Free_All_Free,
                          (xdrproc_t) xdr_nlm4_free_allargs, (xdrproc_t) xdr_void,
                          "nlm4_Free_all",
@@ -728,7 +730,6 @@ int nfs_rpc_get_args(nfs_request_data_t *preqnfs, const nfs_function_desc_t *pfu
 static void nfs_rpc_execute(request_data_t *preq,
                             nfs_worker_data_t *pworker_data)
 {
-  unsigned int export_check_result;
   exportlist_t *pexport = NULL;
   nfs_request_data_t *preqnfs = preq->r_u.nfs;
   nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
@@ -743,7 +744,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   int rc;
   int do_dupreq_cache;
   dupreq_status_t dpq_status;
-  exportlist_client_entry_t related_client;
+  export_perms_t export_perms;
   struct user_cred user_credentials;
   int   update_per_share_stats;
   fsal_op_context_t * pfsal_op_ctx = NULL ;
@@ -753,8 +754,15 @@ static void nfs_rpc_execute(request_data_t *preq,
   struct timeval timer_diff;
   struct timeval queue_timer_diff;
   nfs_request_latency_stat_t latency_stat;
+  char addrbuf[SOCK_NAME_MAX];
 
-  memset(&related_client, 0, sizeof(exportlist_client_entry_t));
+  /* Initialize permissions to allow nothing */
+  export_perms.options       = 0;
+  export_perms.anonymous_uid = (uid_t) ANON_UID;
+  export_perms.anonymous_gid = (gid_t) ANON_GID;
+
+  /* Initialized user_credentials */
+  init_credentials(&user_credentials);
 
   /* Get the value from the worker data */
   lru_dupreq = pworker_data->duplicate_request;
@@ -787,21 +795,18 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   port = get_port(&hostaddr);
 
-  if(isDebug(COMPONENT_DISPATCH))
-    {
-      char addrbuf[SOCK_NAME_MAX];
-      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
-      LogDebug(COMPONENT_DISPATCH,
-               "Request from %s for Program %d, Version %d, Function %d "
-               "has xid=%u",
-               addrbuf,
-               (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
-               req->rq_xid);
-    }
+  sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+
+  LogDebug(COMPONENT_DISPATCH,
+           "Request from %s for Program %d, Version %d, Function %d has xid=%u",
+           addrbuf,
+           (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
+           req->rq_xid);
 
   do_dupreq_cache = pworker_data->pfuncdesc->dispatch_behaviour & CAN_BE_DUP;
   LogFullDebug(COMPONENT_DISPATCH, "do_dupreq_cache = %d", do_dupreq_cache);
   dpq_status = nfs_dupreq_add_not_finished(req, &res_nfs);
+
   switch(dpq_status)
     {
       /* a new request, continue processing it */
@@ -932,7 +937,6 @@ static void nfs_rpc_execute(request_data_t *preq,
                    * file handle) */
                   if(isInfo(COMPONENT_DISPATCH))
                     {
-                      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
                       if(exportid < 0)
                         reason = "has badly formed handle";
                       else if(pexport == NULL)
@@ -963,7 +967,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                            pexport->dirname, pexport->id);
             }
           else
-            pexport = nfs_param.pexportlist;
+            pexport = NULL;
 
           break;
 
@@ -977,7 +981,6 @@ static void nfs_rpc_execute(request_data_t *preq,
                                                  exportid)) == NULL ||
                  (pexport->options & EXPORT_OPTION_NFSV3) == 0)
                 {
-
                   if(exportid < 0)
                       reason = "has badly formed handle";
                   else if(pexport == NULL)
@@ -1000,12 +1003,12 @@ static void nfs_rpc_execute(request_data_t *preq,
             }
           else
             reason = "has invalid export";
+            pexport = NULL;
 
           /* Reject the request for authentication reason (incompatible
            * file handle) */
           if(isInfo(COMPONENT_DISPATCH))
             {
-              sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
               sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
               LogMajor(COMPONENT_DISPATCH,
                       "NFS3 Request from host %s %s, proc=%d, FH=%s",
@@ -1026,12 +1029,12 @@ static void nfs_rpc_execute(request_data_t *preq,
 
         case NFS_V4:
           /* NFSv4 requires entire export list */
-          pexport = nfs_param.pexportlist;
+          pexport = NULL;
           break;
 
         default:
           /* Invalid version (which should never get here) */
-          pexport = nfs_param.pexportlist;
+          pexport = NULL;
           break;
         }                       /* switch( ptr_req->rq_vers ) */
     }
@@ -1095,8 +1098,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                 {
                   char dumpfh[1024];
                   char *reason;
-                  char addrbuf[SOCK_NAME_MAX];
-                  sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+
                   if(exportid < 0)
                     reason = "has badly formed handle";
                   else if(pexport == NULL)
@@ -1127,13 +1129,13 @@ static void nfs_rpc_execute(request_data_t *preq,
                        pexport->dirname, pexport->id);
         }
       else
-        pexport = nfs_param.pexportlist;
+        pexport = NULL;
     }
 #endif                          /* _USE_NLM */
   else
     {
-      /* All other protocols use the whole export list */
-      pexport = nfs_param.pexportlist;
+      /* All other protocols do not have a specific export */
+      pexport = NULL;
     }
 
   if(pworker_data->pfuncdesc->dispatch_behaviour & SUPPORTS_GSS)
@@ -1167,7 +1169,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   /* Check if client is using a privileged port, but only for NFS protocol */
   if ((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
-      (req->rq_proc != 0))
+      (pexport != NULL))
     {
       if ((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
          (port >= IPPORT_RESERVED))
@@ -1193,8 +1195,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   if (pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
     {
-      user_credentials.caller_garray = NULL;
-      if (get_req_uid_gid(req, pexport, &user_credentials) == FALSE)
+      if (get_req_uid_gid(req, &user_credentials) == FALSE)
         {
           LogInfo(COMPONENT_DISPATCH,
                   "could not get uid and gid, rejecting client");
@@ -1214,33 +1215,149 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
     }
 
-  /* Mount Protocol and NFSv4 should not do access check. */
-  if((req->rq_prog != nfs_param.core_param.program[P_MNT]) &&
-     !((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
-      (req->rq_vers == NFS_V4)))
-   {
-     LogFullDebug(COMPONENT_DISPATCH,
-                  "nfs_rpc_execute about to call nfs_export_check_access");
-     export_check_result = nfs_export_check_access(&pworker_data->hostaddr,
-                                                   req,
-                                                   pexport,
-                                                   nfs_param.core_param.program[P_NFS],
-                                                   nfs_param.core_param.program[P_MNT],
-                                                   pworker_data->ht_ip_stats,
-                                                   ip_stats_pool,
-                                                   &related_client,
-                                                   &user_credentials,
-                                                   (pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE) == MAKES_WRITE);
-   }
-  else
-   {
-      export_check_result = EXPORT_PERMISSION_GRANTED ;
-   }
+  if(pworker_data->hostaddr.ss_family == AF_INET)
+    /* Increment the stats per client address (for IPv4 Only) */
+    if(nfs_ip_stats_incr(pworker_data->ht_ip_stats,
+                         &pworker_data->hostaddr,
+                         nfs_param.core_param.program[P_NFS],
+                         nfs_param.core_param.program[P_MNT],
+                         req) == IP_STATS_NOT_FOUND)
+      {
+        if(nfs_ip_stats_add(pworker_data->ht_ip_stats,
+                            &pworker_data->hostaddr,
+                            ip_stats_pool) == IP_STATS_SUCCESS)
+          {
+            nfs_ip_stats_incr(pworker_data->ht_ip_stats,
+                              &pworker_data->hostaddr,
+                              nfs_param.core_param.program[P_NFS],
+                              nfs_param.core_param.program[P_MNT],
+                              req);
+          }
+      }
 
-  if (export_check_result == EXPORT_PERMISSION_DENIED)
+  /* Only do access check if we have an export. */
+  if((pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_EXPORT) != 0)
     {
-      char addrbuf[SOCK_NAME_MAX];
-      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "nfs_rpc_execute about to call nfs_export_check_access");
+
+     nfs_export_check_access(&pworker_data->hostaddr,
+                             pexport,
+                             &export_perms);
+
+      if(export_perms.options == 0)
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
+                  addrbuf,
+                  (int)req->rq_vers, (int)req->rq_proc);
+
+          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
+          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+
+          pworker_data->current_xid = 0;        /* No more xid managed */
+
+          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
+            {
+              LogCrit(COMPONENT_DISPATCH,
+                      "Attempt to delete duplicate request failed on line %d",
+                      __LINE__);
+            }
+          return;
+        }
+    }
+  else
+    {
+      pexport = nfs_param.pexportlist;
+    }
+
+  P(pworker_data->request_pool_mutex);
+  gettimeofday(timer_start, NULL);
+
+  LogDebug(COMPONENT_DISPATCH,
+           "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
+           pworker_data->pfuncdesc->funcname,
+           (unsigned long long)timer_start->tv_sec,
+           (unsigned long long)timer_start->tv_usec);
+
+  V(pworker_data->request_pool_mutex);
+
+  if((pworker_data->pfuncdesc->dispatch_behaviour & MAKES_IO) != 0 &&
+     (export_perms.options & EXPORT_OPTION_RW_ACCESS) == 0)
+    {
+      /* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level
+       * This is done by replying EDQUOT (this error is known for not disturbing
+       * the client's requests cache
+       */
+      if(req->rq_prog == nfs_param.core_param.program[P_NFS])
+        switch(req->rq_vers)
+          {
+          case NFS_V2:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Returning NFSERR_DQUOT because request is on an MD Only export");
+            res_nfs.res_attr2.status = NFSERR_DQUOT;
+            rc = NFS_REQ_OK;
+            break;
+
+          case NFS_V3:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Returning NFS3ERR_DQUOT because request is on an MD Only export");
+            res_nfs.res_attr2.status = NFS3ERR_DQUOT;
+            rc = NFS_REQ_OK;
+            break;
+
+          default:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Dropping IO request on an MD Only export");
+            rc = NFS_REQ_DROP;
+            break;
+          }
+      else
+        {
+          LogDebug(COMPONENT_DISPATCH,
+                   "Dropping IO request on an MD Only export");
+          rc = NFS_REQ_DROP;
+        }
+    }
+  else if((pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE) != 0 &&
+          (export_perms.options & (EXPORT_OPTION_WRITE_ACCESS |
+                                   EXPORT_OPTION_MD_WRITE_ACCESS)) == 0)
+    {
+      if(req->rq_prog == nfs_param.core_param.program[P_NFS])
+        switch(req->rq_vers)
+          {
+          case NFS_V2:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Returning NFSERR_ROFS because request is on a Read Only export");
+            res_nfs.res_attr2.status = NFSERR_ROFS;
+            rc = NFS_REQ_OK;
+            break;
+
+          case NFS_V3:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Returning NFS3ERR_ROFS because request is on a Read Only export");
+            res_nfs.res_attr2.status = NFS3ERR_ROFS;
+            rc = NFS_REQ_OK;
+            break;
+
+          default:
+            LogDebug(COMPONENT_DISPATCH,
+                     "Dropping request o an Read Only export");
+            rc = NFS_REQ_DROP;
+            break;
+          }
+      else
+        {
+          LogDebug(COMPONENT_DISPATCH,
+                   "Dropping request o an Read Only export");
+          rc = NFS_REQ_DROP;
+        }
+    }
+  else if((pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_EXPORT) != 0 &&
+          (export_perms.options & (EXPORT_OPTION_READ_ACCESS |
+                                   EXPORT_OPTION_MD_READ_ACCESS)) == 0)
+    {
       LogInfo(COMPONENT_DISPATCH,
               "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
               addrbuf,
@@ -1259,48 +1376,14 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
       goto exe_exit;
     }
-  else if ((export_check_result == EXPORT_WRITE_ATTEMPT_WHEN_RO) ||
-           (export_check_result == EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO))
+  else
     {
-      LogDebug(COMPONENT_DISPATCH,
-               "Dropping request because nfs_export_check_access() reported this is a RO filesystem.");
-      if(req->rq_prog == nfs_param.core_param.program[P_NFS])
-        {
-          if(req->rq_vers == NFS_V2)
-            {
-              /* All the nfs_res structure in V2 have the status at the same place (because it is an union) */
-              res_nfs.res_attr2.status = NFSERR_ROFS;
-              rc = NFS_REQ_OK;  /* Processing of the request is done */
-            }
-          else
-            {
-              /* V3 request */
-              /* All the nfs_res structure in V2 have the status at the same place, and so does V3 ones */
-              res_nfs.res_attr2.status = (nfsstat2) NFS3ERR_ROFS;
-              rc = NFS_REQ_OK;  /* Processing of the request is done */
-            }
-        }
-      else                      /* unexpected protocol (mount doesn't make write) */
-        rc = NFS_REQ_DROP;
-    }
-  else if ((export_check_result != EXPORT_PERMISSION_GRANTED) &&
-           (export_check_result != EXPORT_MDONLY_GRANTED))
-    {
-      /* If not EXPORT_PERMISSION_GRANTED, then we are all out of options! */
-      LogMajor(COMPONENT_DISPATCH,
-               "nfs_export_check_access() returned none of the expected flags. This is an unexpected state!");
-      rc = NFS_REQ_DROP;
-    }
-  else  /* export_check_result == EXPORT_PERMISSION_GRANTED is TRUE */
-    {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "nfs_export_check_access() reported PERMISSION GRANTED.");
-
       /* Do the authentication stuff, if needed */
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
           /* Swap the anonymous uid/gid if the user should be anonymous */
-          nfs_check_anon(&related_client, pexport, &user_credentials);
+          nfs_check_anon(&export_perms, pexport, &user_credentials);
+
           if(nfs_build_fsal_context(req,
                                     pexport,
                                     &pworker_data->thread_fsal_context,
@@ -1325,16 +1408,6 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
 
       /* processing */
-      P(pworker_data->request_pool_mutex);
-      gettimeofday(timer_start, NULL);
-
-      LogDebug(COMPONENT_DISPATCH,
-               "NFS DISPATCHER: Calling service function %s start_time %llu.%.6llu",
-               pworker_data->pfuncdesc->funcname,
-               (unsigned long long)timer_start->tv_sec,
-               (unsigned long long)timer_start->tv_usec);
-
-      V(pworker_data->request_pool_mutex);
 
 #ifdef _ERROR_INJECTION
       if(worker_delay_time != 0)
@@ -1530,13 +1603,8 @@ static void nfs_rpc_execute(request_data_t *preq,
     }
 
 exe_exit:
-#ifdef _HAVE_GSSAPI
-  /* since caller_garray is allocated in get_req_uid_gid, free here */
-  if((req->rq_cred.oa_flavor == RPCSEC_GSS) && (user_credentials.caller_garray != NULL))
-  {
-    free(user_credentials.caller_garray);
-  }
-#endif
+
+  clean_credentials(&user_credentials);
 
   /* By now the dupreq cache entry should have been completed w/ a request
    * that is reusable or the dupreq cache entry should have been removed. */

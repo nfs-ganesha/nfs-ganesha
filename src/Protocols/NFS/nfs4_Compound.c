@@ -274,6 +274,7 @@ int nfs4_Compound(nfs_arg_t *parg,
 
   /* Initialisation of the compound request internal's data */
   memset(&data, 0, sizeof(data));
+  init_credentials(&data.user_credentials);
 
   /* Minor version related stuff */
   data.minorversion = COMPOUND4_MINOR;
@@ -495,6 +496,7 @@ int nfs4_Compound(nfs_arg_t *parg,
              "End status = %s lastindex = %d%s",
              nfsstat4_to_str(status), i, tagstr);
 
+  clean_credentials(&data.user_credentials);
   compound_data_Free(&data);
 
   return NFS_REQ_OK;
