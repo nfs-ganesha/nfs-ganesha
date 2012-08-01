@@ -249,8 +249,8 @@ void Create_udp(protos prot)
 
     /* XXXX why are we doing this?  Is it also stale (see below)? */
 #ifdef _USE_TIRPC_IPV6
-    udp_xprt[prot]->xp_netid = Str_Dup(netconfig_udpv6->nc_netid);
-    udp_xprt[prot]->xp_tp    = Str_Dup(netconfig_udpv6->nc_device);
+    udp_xprt[prot]->xp_netid = gsh_strdup(netconfig_udpv6->nc_netid);
+    udp_xprt[prot]->xp_tp    = gsh_strdup(netconfig_udpv6->nc_device);
 #endif
 }
 
@@ -291,13 +291,13 @@ void Create_tcp(protos prot)
 /* XXXX the following code cannot compile (socket, binadaddr_udp6 are gone)
  * (Matt) */
 #ifdef _USE_TIRPC_IPV6
-    if(listen(socket, pdata[prot].bindaddr_udp6.qlen) != 0)
+    if(listen(tcp_socket[prot], pdata[prot].bindaddr_udp6.qlen) != 0)
         LogFatal(COMPONENT_DISPATCH,
                  "Cannot listen on  %s/TCPv6 SVCXPRT, errno=%u (%s)",
                  tags[prot], errno, strerror(errno));
     /* XXX what if we errored above? */
-    tcp_xprt[prot]->xp_netid = Str_Dup(netconfig_tcpv6->nc_netid);
-    tcp_xprt[prot]->xp_tp    = Str_Dup(netconfig_tcpv6->nc_device);
+    tcp_xprt[prot]->xp_netid = gsh_strdup(netconfig_tcpv6->nc_netid);
+    tcp_xprt[prot]->xp_tp    = gsh_strdup(netconfig_tcpv6->nc_device);
 #endif
 }
 
@@ -362,12 +362,12 @@ void Bind_sockets(void)
 
         if(!__rpc_fd2sockinfo(udp_socket[p], &pdatap->si_udp6))
           LogFatal(COMPONENT_DISPATCH,
-                   "Cannot get %s socket info for udp6 socket rc=%d errno=%d (%s)",
-                   tags[p], rc, errno, strerror(errno));
+                   "Cannot get %s socket info for udp6 socket errno=%d (%s)",
+                   tags[p], errno, strerror(errno));
 
         if(bind(udp_socket[p],
                 (struct sockaddr *)pdatap->bindaddr_udp6.addr.buf,
-                (socklen_t) si_nfs_udp6.si_alen) == -1)
+                (socklen_t) pdatap->si_udp6.si_alen) == -1)
           LogFatal(COMPONENT_DISPATCH,
                    "Cannot bind %s udp6 socket, error %d (%s)",
                    tags[p], errno, strerror(errno));
@@ -386,12 +386,12 @@ void Bind_sockets(void)
 
         if(!__rpc_fd2sockinfo(tcp_socket[p], &pdatap->si_tcp6))
           LogFatal(COMPONENT_DISPATCH,
-                   "Cannot get %s socket info for tcp6 socket rc=%d errno=%d (%s)",
-                   tags[p], rc, errno, strerror(errno));
+                   "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
+                   tags[p], errno, strerror(errno));
 
         if(bind(tcp_socket[p],
                 (struct sockaddr *)pdatap->bindaddr_tcp6.addr.buf,
-                (socklen_t) si_nfs_tcp6.si_alen) == -1)
+                (socklen_t) pdatap->si_tcp6.si_alen) == -1)
           LogFatal(COMPONENT_DISPATCH,
                    "Cannot bind %s tcp6 socket, error %d (%s)",
                    tags[p], errno, strerror(errno));
