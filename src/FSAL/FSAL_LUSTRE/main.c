@@ -162,6 +162,9 @@ static struct lustre_fsal_module LUSTRE;
 /* linkage to the exports and handle ops initializers
  */
 
+void lustre_export_ops_init(struct export_ops *ops);
+void lustre_handle_ops_init(struct fsal_obj_ops *ops);
+
 MODULE_INIT void lustre_init(void) {
 	int retval;
 	struct fsal_module *myself = &LUSTRE.fsal;
@@ -175,6 +178,8 @@ MODULE_INIT void lustre_init(void) {
 	}
 	myself->ops->create_export = lustre_create_export;
 	myself->ops->init_config = init_config;
+	lustre_export_ops_init(myself->exp_ops);
+	lustre_handle_ops_init(myself->obj_ops);
         init_fsal_parameters(&LUSTRE.fsal_info);
 }
 
