@@ -51,7 +51,7 @@ typedef unsigned long u_long;
 #include "nfs4.h"
 #include "nfs_core.h"
 #include <misc/rbtree_x.h>
-#include <misc/opr_queue.h>
+#include <misc/queue.h>
 
 enum drc_type
 {
@@ -70,9 +70,9 @@ enum drc_type
 typedef struct drc
 {
     enum drc_type type;
-    pthread_mutex_t mtx;
     struct rbtree_x xt;
-    struct opr_queue dupreq_q;
+    TAILQ_HEAD(drc_tailq, dupreq_entry) dupreq_q;
+    pthread_spinlock_t sp;
     uint32_t npart;
     uint32_t cachesz;
     uint32_t size;
@@ -85,8 +85,8 @@ typedef struct drc
     union {
         struct {
             sockaddr_t addr;
-            struct opr_queue recycle_q;
             struct opr_rbtree_node recycle_k;
+            TAILQ_ENTRY(drc) recycle_q; /* XXX drc */
             time_t recycle_time;
             uint64_t hk[2]; /* hash key */
         } tcp;
@@ -100,11 +100,11 @@ typedef enum dupreq_state
     DUPREQ_DELETED
 } dupreq_state_t;
 
-typedef struct dupreq_entry__
+struct dupreq_entry
 {
-    pthread_mutex_t mtx;
     struct opr_rbtree_node rbt_k;
-    struct opr_queue fifo_q;
+    TAILQ_ENTRY(dupreq_entry) fifo_q;
+    pthread_spinlock_t sp;
     struct {
         drc_t *drc;
         sockaddr_t addr;
@@ -121,9 +121,10 @@ typedef struct dupreq_entry__
     uint32_t refcnt;
     nfs_res_t *res;
     time_t timestamp;
-} dupreq_entry_t;
+};
 
-typedef struct dupreq_key dupreq_key_t;
+typedef struct dupreq_entry dupreq_entry_t;
+
 extern pool_t *nfs_res_pool;
 
 static inline nfs_res_t *
