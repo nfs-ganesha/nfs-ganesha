@@ -1145,7 +1145,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
-        if( !S_ISDIR(stat.st_mode))
+        if( S_ISDIR(stat.st_mode))
 	  retval = rmdir( filepath ) ;
         else
 	  retval = unlink( filepath ) ;
