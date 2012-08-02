@@ -163,6 +163,9 @@ int posix2fsal_error(int posix_errorcode)
     case EINTR:
       return ERR_FSAL_INTERRUPT;
 
+    case EROFS:
+       return ERR_FSAL_ROFS ;
+
     default:
 
       /* other unexpected errors */
