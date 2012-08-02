@@ -140,7 +140,8 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
-	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(myself->u.file.fd >= 0 &&
+	       myself->u.file.openflags != FSAL_O_CLOSED);
 
         nb_written = pwrite(myself->u.file.fd,
                             buffer,
@@ -172,7 +173,8 @@ fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
-	assert(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(myself->u.file.fd >= 0 &&
+	       myself->u.file.openflags != FSAL_O_CLOSED);
 
 	retval = fsync(myself->u.file.fd);
 	if(retval == -1) {
@@ -308,14 +310,18 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
+	assert(obj_hdl->type == REGULAR_FILE);
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	retval = close(myself->u.file.fd);
-	if(retval < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
+	if(myself->u.file.fd >= 0 &&
+	   myself->u.file.openflags != FSAL_O_CLOSED){
+		retval = close(myself->u.file.fd);
+		if(retval < 0) {
+			retval = errno;
+			fsal_error = posix2fsal_error(retval);
+		}
+		myself->u.file.fd = -1;
+		myself->u.file.openflags = FSAL_O_CLOSED;
 	}
-	myself->u.file.fd = -1;
-	myself->u.file.openflags = FSAL_O_CLOSED;
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -333,7 +339,7 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->u.file.fd >= 0) {
+	if(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
 		retval = close(myself->u.file.fd);
 		myself->u.file.fd = -1;
 		myself->u.file.openflags = FSAL_O_CLOSED;
