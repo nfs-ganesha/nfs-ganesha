@@ -70,6 +70,7 @@ int _9p_flush( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "TFLUSH: tag=%u oldtag=%u", (u32)*msgtag, (u32)*oldtag ) ;
 
+  FlushFlushHook(preq9p->pconn, (int) *oldtag);
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RFLUSH ) ;

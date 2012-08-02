@@ -331,6 +331,24 @@ typedef struct _9p_rdma_ep__
 } _9p_rdma_ep_t ;
 #endif
 
+
+
+
+typedef struct _9p_flush_hook__
+{
+  int tag;
+  int flushed;
+  struct glist_head list;
+} _9p_flush_hook_t;
+
+typedef struct _9p_flush_bucket__
+{
+  pthread_mutex_t lock;
+  struct glist_head list;
+} _9p_flush_bucket_t;
+
+#define FLUSH_BUCKETS 64
+
 typedef struct _9p_conn__
 {
   union  trans_data
@@ -343,12 +361,14 @@ typedef struct _9p_conn__
   _9p_trans_type_t trans_type ;
   struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
   _9p_fid_t       fids[_9P_FID_PER_CONN] ;
+  _9p_flush_bucket_t flush_buckets[FLUSH_BUCKETS];
 } _9p_conn_t ;
 
 typedef struct _9p_request_data__
 {
   char        * _9pmsg ;
   _9p_conn_t  *  pconn ;
+  _9p_flush_hook_t flush_hook;
 } _9p_request_data_t ;
 
 
@@ -528,6 +548,11 @@ void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) ;
 void _9p_rdma_callback_recv_wkr(msk_trans_t *trans, void *arg) ;
 
 #endif
+void AddFlushHook(_9p_request_data_t *req, int tag);
+void FlushFlushHook(_9p_conn_t *conn, int tag);
+int LockAndTestFlushHook(_9p_request_data_t *req);
+void ReleaseFlushHook(_9p_request_data_t *req);
+void DiscardFlushHook(_9p_request_data_t *req);
 
 /* Protocol functions */
 int _9p_not_2000L( _9p_request_data_t * preq9p, 
