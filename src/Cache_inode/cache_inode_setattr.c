@@ -185,6 +185,7 @@ cache_inode_setattr(cache_entry_t *entry,
                      }
                      goto unlock;
              }
+             attr->mask &= ~ATTR_SIZE;
      }
 
 #ifdef _USE_NFS4_ACL
