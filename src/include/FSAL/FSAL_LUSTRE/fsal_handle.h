@@ -67,11 +67,14 @@ typedef  struct lustre_file_handle
     unsigned long long inode;
 } lustre_file_handle_t;  /**< FS object handle */
 
-static inline int lustre_handle_to_path( char * mntpath, struct lustre_file_handle * out_handle, char * path )
+static inline int lustre_handle_to_path( char * mntpath, struct lustre_file_handle * handle, char * path )
 {
+  if( !mntpath || !handle || !path ) 
+    return -1 ;
+
   /* A Lustre fid path is looking like /where_lustre_is_mounted/.lustre/fid/0x200000400:0x469a:0x0
    * the "0x200000400:0x469a:0x0" represent the displayed fid */
-  return snprintf( path, MAXPATHLEN, "%s/.lustre/fid/"DFID_NOBRACE, mntpath, PFID( &out_handle->fid) ) ;
+  return snprintf( path, MAXPATHLEN, "%s/.lustre/fid/"DFID_NOBRACE, mntpath, PFID( &handle->fid) ) ;
 }
 
 static inline int lustre_path_to_handle( const char * path, struct lustre_file_handle * out_handle )
@@ -79,6 +82,8 @@ static inline int lustre_path_to_handle( const char * path, struct lustre_file_h
   lustre_fid fid ;
   struct stat ino;
 
+  if( !path || !out_handle )
+    return -1 ;
 
   /* Here, call liblustreapi's magic */
   if( llapi_path2fid( path, &fid) != 0 )
@@ -99,6 +104,9 @@ static inline int lustre_name_to_handle_at( char * mntpath, struct lustre_file_h
                                             struct lustre_file_handle * out_handle, int flags)
 {
   char path[MAXPATHLEN] ;
+  
+  if( !mntpath || !at_handle || !name || !out_handle )
+   return -1 ;
 
   lustre_handle_to_path( mntpath, at_handle, path ) ;
 

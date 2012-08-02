@@ -154,12 +154,13 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 {
 	struct lustre_fsal_obj_handle *parent_hdl, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval, fd;
+	int retval;
 	struct stat stat;
 	char *link_content = NULL;
 	struct lustre_file_handle *dir_hdl = NULL;
 	const char *sock_name = NULL;
 	ssize_t retlink;
+        char fidpath[MAXPATHLEN] ;
 	char link_buff[1024];
 	struct lustre_file_handle *fh
 		= alloca(sizeof(struct lustre_file_handle));
@@ -175,34 +176,33 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 
-        retval = lustre_name_to_handle_at( lustre_get_root_path( parent->export ), dir_hdl, path, fh,  0);
+        retval = lustre_name_to_handle_at( lustre_get_root_path( parent->export ), parent_hdl->handle, path, fh,  0);
+        if(retval < 0) {
+                retval = errno;
+                fsal_error = posix2fsal_error(retval);
+                goto errout;
+        }
+ 
+        retval = lustre_handle_to_path( lustre_get_root_path( parent->export ), fh, fidpath ) ;
         if(retval < 0) {
                 retval = errno;
                 fsal_error = posix2fsal_error(retval);
                 goto errout;
         }
 
-	fd = lustre_open_by_handle( lustre_get_root_path( parent->export ), fh, O_PATH|O_NOACCESS);
-	if(fd < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		goto errout;
-	}
-	retval = fstatat(fd, "", &stat, AT_EMPTY_PATH);
+	retval = lstat(fidpath, &stat );
 	if(retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
-		close(fd);
 		goto errout;
 	}
 	if(S_ISLNK(stat.st_mode)) { /* I could lazy eval this... */
-		retlink = readlinkat(fd, "", link_buff, 1024);
+		retlink = readlink( fidpath, link_buff, 1024);
 		if(retlink < 0 || retlink == 1024) {
 			retval = errno;
 			if(retlink == 1024)
 				retval = ENAMETOOLONG;
 			fsal_error = posix2fsal_error(retval);
-			close(fd);
 			goto errout;
 		}
 		link_buff[retlink] = '\0';
@@ -211,7 +211,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		dir_hdl = parent_hdl->handle;
 		sock_name = path;
 	}
-	close(fd);
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, &stat,
 			   link_content,
@@ -230,6 +229,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 errout:
 	return fsalstat(fsal_error, retval);	
 }
+
 
 /* make_file_safe
  * the file/dir got created mode 0, uid root (me)
