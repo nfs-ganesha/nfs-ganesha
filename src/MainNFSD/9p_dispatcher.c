@@ -124,7 +124,7 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
   V(workers_data[worker_index].wcb.tcb_mutex);
 }
 
-void AddFlushHook(_9p_request_data_t *req, int tag)
+void AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence)
 {
         int bucket = tag % FLUSH_BUCKETS;
         _9p_flush_hook_t *hook = &req->flush_hook;
@@ -132,12 +132,13 @@ void AddFlushHook(_9p_request_data_t *req, int tag)
 
         hook->tag = tag;
         hook->flushed = 0;
+        hook->sequence = sequence;
         pthread_mutex_lock(&conn->flush_buckets[bucket].lock);
         glist_add(&conn->flush_buckets[bucket].list, &hook->list);
         pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
 }
 
-void FlushFlushHook(_9p_conn_t *conn, int tag)
+void FlushFlushHook(_9p_conn_t *conn, int tag, unsigned long sequence)
 {
         int bucket = tag % FLUSH_BUCKETS;
         struct glist_head *node;
@@ -146,7 +147,10 @@ void FlushFlushHook(_9p_conn_t *conn, int tag)
         pthread_mutex_lock(&conn->flush_buckets[bucket].lock);
         glist_for_each(node, &conn->flush_buckets[bucket].list) {
                 hook = glist_entry(node, _9p_flush_hook_t, list);
-                if (hook->tag == tag) {
+                /* Cancel a request that has the right tag
+                 * --AND-- is older than the flush request.
+                 **/
+                if ((hook->tag == tag) && (hook->sequence < sequence)){
                         hook->flushed = 1;
                         glist_del(&hook->list);
                         LogFullDebug( COMPONENT_9P, "Found tag to flush %d\n", tag);
@@ -211,6 +215,7 @@ void * _9p_socket_thread( void * Arg )
   unsigned int worker_index;
   int tag;
   int i;
+  unsigned long sequence = 0;
 
   char * _9pmsg ;
   uint32_t * p_9pmsglen = NULL ;
@@ -366,7 +371,7 @@ void * _9p_socket_thread( void * Arg )
              } /* while */
              
              tag = *(u16*) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
-             AddFlushHook(&preq->r_u._9p, tag);
+             AddFlushHook(&preq->r_u._9p, tag, sequence++);
              LogFullDebug( COMPONENT_9P, "Request tag is %d\n", tag);
 
 	     /* Message was OK push it the request to the right worker */

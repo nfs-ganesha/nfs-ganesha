@@ -338,6 +338,7 @@ typedef struct _9p_flush_hook__
 {
   int tag;
   int flushed;
+  unsigned long sequence;
   struct glist_head list;
 } _9p_flush_hook_t;
 
@@ -548,8 +549,8 @@ void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) ;
 void _9p_rdma_callback_recv_wkr(msk_trans_t *trans, void *arg) ;
 
 #endif
-void AddFlushHook(_9p_request_data_t *req, int tag);
-void FlushFlushHook(_9p_conn_t *conn, int tag);
+void AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence);
+void FlushFlushHook(_9p_conn_t *conn, int tag, unsigned long sequence);
 int LockAndTestFlushHook(_9p_request_data_t *req);
 void ReleaseFlushHook(_9p_request_data_t *req);
 void DiscardFlushHook(_9p_request_data_t *req);
