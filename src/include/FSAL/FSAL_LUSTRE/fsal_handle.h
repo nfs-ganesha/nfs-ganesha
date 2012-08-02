@@ -126,8 +126,6 @@ static inline int lustre_open_by_handle( char * mntpath, struct lustre_file_hand
 
   lustre_handle_to_path( mntpath, handle, path ) ;
 
-  printf( "===> open_by_handle: %s\n", path ) ;
-
   return open( path, flags ) ;
 }
 
