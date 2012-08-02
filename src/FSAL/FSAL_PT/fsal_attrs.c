@@ -88,7 +88,7 @@ PTFSAL_getattrs(fsal_handle_t      * p_filehandle,        /* IN */
   /* sanity checks.
    * note : object_attributes is mandatory in PTFSAL_getattrs.
    */
-  if(!p_filehandle || !p_context || !p_object_attributes) { 
+  if (!p_filehandle || !p_context || !p_object_attributes) { 
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
   }
 
@@ -102,12 +102,12 @@ PTFSAL_getattrs(fsal_handle_t      * p_filehandle,        /* IN */
 
   st = posix2fsal_attributes(&buffstat, p_object_attributes);
   FSI_TRACE(FSI_DEBUG, "Handle type=%d st_mode=%o (octal)", 
-            p_object_attributes->type,buffstat.st_mode);
+            p_object_attributes->type, buffstat.st_mode);
 
   p_object_attributes->mounted_on_fileid = 
     fsi_export_context->ganesha_export_id;
 
-  if(FSAL_IS_ERROR(st)) {
+  if (FSAL_IS_ERROR(st)) {
     FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
     FSAL_SET_MASK(p_object_attributes->asked_attributes, 
                   FSAL_ATTR_RDATTR_ERR);
@@ -120,14 +120,14 @@ PTFSAL_getattrs(fsal_handle_t      * p_filehandle,        /* IN */
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ATTR |
                                        FSAL_ACE_PERM_READ_ACL);
 
-    if(!p_context->export_context->fe_static_fs_info->accesscheck_support) {
+    if (!p_context->export_context->fe_static_fs_info->accesscheck_support) {
       st = fsal_internal_testAccess(p_context, access_mask, NULL, 
                                     p_object_attributes);
     } else {
       st = fsal_internal_access(p_context, p_filehandle, access_mask,
                                 p_object_attributes);
     } 
-    if(FSAL_IS_ERROR(st)) {
+    if (FSAL_IS_ERROR(st)) {
       ReturnStatus(st, INDEX_FSAL_getattrs);
     }
 #endif
@@ -166,7 +166,7 @@ PTFSAL_getattrs_descriptor(
   fsal_op_context_t  * p_context,          /* IN */
   fsal_attrib_list_t * p_object_attributes /* IN/OUT */) 
 {
-  if(!p_file_descriptor) {
+  if (!p_file_descriptor) {
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs_descriptor);
   }
   ptfsal_file_t * p_file_desc = (ptfsal_file_t *)p_file_descriptor;
@@ -212,14 +212,15 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t wanted_attrs, current_attrs;
   mode_t             st_mode_in_cache = 0;
-  char              fsi_name[PATH_MAX];
+  char               fsi_name[PATH_MAX];
+  int                rc;
 
   FSI_TRACE(FSI_DEBUG, "Begin-----------------------------------------\n");
 
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if(!p_filehandle || !p_context || !p_attrib_set) {
+  if (!p_filehandle || !p_context || !p_attrib_set) {
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
   }
 
@@ -227,9 +228,9 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
   wanted_attrs = *p_attrib_set;
 
   /* First, check that FSAL attributes changes are allowed. */
-  if(!global_fs_info.cansettime) {
+  if (!global_fs_info.cansettime) {
 
-    if(wanted_attrs.asked_attributes
+    if (wanted_attrs.asked_attributes
        & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME 
        | FSAL_ATTR_MTIME)) {
        /* handled as an unsettable attribute. */
@@ -238,14 +239,14 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
   }
 
   /* apply umask, if mode attribute is to be changed */
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MODE)) {
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MODE)) {
     wanted_attrs.mode &= (~global_fs_info.umask);
   }
 
   /* get current attributes */
   current_attrs.asked_attributes = PTFS_SUPPORTED_ATTRIBUTES;
   status = PTFSAL_getattrs(p_filehandle, p_context, &current_attrs);
-  if(FSAL_IS_ERROR(status)) {
+  if (FSAL_IS_ERROR(status)) {
     FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
     FSAL_SET_MASK(p_object_attributes->asked_attributes, 
                   FSAL_ATTR_RDATTR_ERR);
@@ -255,15 +256,15 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
   /***********
    *  CHMOD  *
    ***********/
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MODE)) {
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MODE)) {
     FSI_TRACE(FSI_DEBUG, "Begin chmod------------------\n");
     /* The POSIX chmod call don't affect the symlink object, but
      * the entry it points to. So we must ignore it.
      */
-    if(current_attrs.type != FSAL_TYPE_LNK) {
+    if (current_attrs.type != FSAL_TYPE_LNK) {
 
       /* For modifying mode, user must be root or the owner */
-      if((p_context->credential.user != 0)
+      if ((p_context->credential.user != 0)
          && (p_context->credential.user != current_attrs.owner)) {
         FSI_TRACE(FSI_DEBUG,
                   "Permission denied for CHMOD opeartion: " 
@@ -278,14 +279,14 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
           access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
                         FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 
-          if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
+          if (!p_context->export_context->fe_static_fs_info->accesscheck_support)
             status = fsal_internal_testAccess(p_context, access_mask, NULL, 
             &current_attrs);
           else
             status = fsal_internal_access(p_context, p_filehandle, access_mask,
                                           &current_attrs);
 
-          if(FSAL_IS_ERROR(status))
+          if (FSAL_IS_ERROR(status))
             ReturnStatus(status, INDEX_FSAL_setattrs);
 #endif
 
@@ -296,9 +297,10 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                 fsal2unix_mode(current_attrs.mode), 
                 buffxstat.buffstat.st_mode);
 
-      if (fsi_get_name_from_handle(p_context, 
-                                   p_filehandle->data.handle.f_handle, 
-                                   fsi_name) < 0) {
+      rc = fsi_get_name_from_handle(p_context, 
+                                    p_filehandle->data.handle.f_handle, 
+                                    fsi_name);
+      if (rc < 0) {
         FSI_TRACE(FSI_ERR, 
                   "Failed to convert file handle back to filename" );
         FSI_TRACE(FSI_DEBUG, "Handle to name failed for hanlde %s", 
@@ -308,8 +310,9 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
       FSI_TRACE(FSI_DEBUG, "Handle to name: %s for handle %s", 
                 fsi_name, p_filehandle->data.handle.f_handle);
 
-      if (ptfsal_chmod(p_context, fsi_name, 
-                       buffxstat.buffstat.st_mode) == -1) {
+      rc = ptfsal_chmod(p_context, fsi_name, 
+                        buffxstat.buffstat.st_mode);
+      if (rc == -1) {
         FSI_TRACE(FSI_ERR, "chmod FAILED");
         Return (ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
       } else {
@@ -332,12 +335,12 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
   /* Only root can change uid and A normal user must be in the group 
    * he wants to set 
    */
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER)) {
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER)) {
 
     /* For modifying owner, user must be root or current 
      * owner==wanted==client 
      */
-    if((p_context->credential.user != 0) &&
+    if ((p_context->credential.user != 0) &&
        ((p_context->credential.user != current_attrs.owner) ||
        (p_context->credential.user != wanted_attrs.owner))) {
       FSI_TRACE(FSI_DEBUG,
@@ -353,40 +356,40 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
           access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
                         FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
 
-        if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
+        if (!p_context->export_context->fe_static_fs_info->accesscheck_support)
           status = fsal_internal_testAccess(p_context, access_mask, NULL, 
                                             &current_attrs);
         else
           status = fsal_internal_access(p_context, p_filehandle, access_mask,
                                         &current_attrs);
 
-          if(FSAL_IS_ERROR(status))
+          if (FSAL_IS_ERROR(status))
             ReturnStatus(status, INDEX_FSAL_setattrs);
 #endif
 
         }
 
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP)) {
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP)) {
 
     /* For modifying group, user must be root or current owner */
-    if((p_context->credential.user != 0)
+    if ((p_context->credential.user != 0)
        && (p_context->credential.user != current_attrs.owner)) {
        Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
     }
 
     int in_grp = 0;
     /* set in_grp */
-    if(p_context->credential.group == wanted_attrs.group) {
+    if (p_context->credential.group == wanted_attrs.group) {
       in_grp = 1;
     } else {
       for(i = 0; i < p_context->credential.nbgroups; i++) {
-        if((in_grp = (wanted_attrs.group == 
+        if ((in_grp = (wanted_attrs.group == 
             p_context->credential.alt_groups[i])))
           break;
       }
     }
     /* it must also be in target group */
-    if(p_context->credential.user != 0 && !in_grp) {
+    if (p_context->credential.user != 0 && !in_grp) {
       FSI_TRACE(FSI_DEBUG,
                 "Permission denied for CHOWN operation: " 
                 "current group=%d, credential=%d, new group=%d",
@@ -400,24 +403,24 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
       access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
 
-      if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
+      if (!p_context->export_context->fe_static_fs_info->accesscheck_support)
         status = fsal_internal_testAccess(p_context, access_mask, NULL, 
                       &current_attrs);
       else
         status = fsal_internal_access(p_context, p_filehandle, access_mask,
                                       &current_attrs);
 
-      if(FSAL_IS_ERROR(status))
+      if (FSAL_IS_ERROR(status))
         ReturnStatus(status, INDEX_FSAL_setattrs);
 #endif
 
     }
 
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER | 
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER | 
      FSAL_ATTR_GROUP)) {
 
     /* Fill wanted owner. */
-    if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER)) {
+    if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER)) {
       buffxstat.buffstat.st_uid = (int)wanted_attrs.owner;
     } else {
       buffxstat.buffstat.st_uid = (int)current_attrs.owner;
@@ -427,7 +430,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
               current_attrs.owner, buffxstat.buffstat.st_uid);
 
     /* Fill wanted group. */
-    if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP)) {
+    if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP)) {
       buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
     } else {
       buffxstat.buffstat.st_gid = (int)current_attrs.group;
@@ -436,9 +439,10 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
               "current gid = %d, new gid = %d",
               current_attrs.group, buffxstat.buffstat.st_gid);
 
-    if (fsi_get_name_from_handle(p_context, 
-                                 p_filehandle->data.handle.f_handle, 
-                                 fsi_name) < 0) {
+    rc = fsi_get_name_from_handle(p_context, 
+                                  p_filehandle->data.handle.f_handle, 
+                                  fsi_name);
+    if (rc < 0) {
       FSI_TRACE(FSI_ERR, "Failed to convert file handle back to filename" );
       FSI_TRACE(FSI_DEBUG, "Handle to name failed for hanlde %s", 
                 p_filehandle->data.handle.f_handle);
@@ -447,8 +451,9 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
    
     FSI_TRACE(FSI_DEBUG, "handle to name: %s for handle %s", 
               fsi_name, p_filehandle->data.handle.f_handle);
-    if (ptfsal_chown(p_context, fsi_name, buffxstat.buffstat.st_uid, 
-                     buffxstat.buffstat.st_gid) == -1) {
+    rc = ptfsal_chown(p_context, fsi_name, buffxstat.buffstat.st_uid, 
+                      buffxstat.buffstat.st_gid);
+    if (rc == -1) {
       FSI_TRACE(FSI_ERR, "chown FAILED");
       Return (ERR_FSAL_PERM, 1, INDEX_FSAL_setattrs);
     } else {
@@ -465,7 +470,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
   access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK) |
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support) {
+  if (!p_context->export_context->fe_static_fs_info->accesscheck_support) {
     status = fsal_internal_testAccess(p_context, access_mask, NULL, 
                                       &current_attrs);
   } else {
@@ -473,7 +478,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                                   &current_attrs);
   }
 
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME)
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME)
      && (p_context->credential.user != 0)
      && (p_context->credential.user != current_attrs.owner)
      && (status.major
@@ -485,14 +490,14 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support) {
+  if (!p_context->export_context->fe_static_fs_info->accesscheck_support) {
     status = fsal_internal_testAccess(p_context, access_mask, NULL, 
                                       &current_attrs);
   } else {
     status = fsal_internal_access(p_context, p_filehandle, access_mask,
                                   &current_attrs);
   }
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME)
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME)
      && (p_context->credential.user != 0)
      && (p_context->credential.user != current_attrs.owner)
      && (status.major
@@ -500,11 +505,11 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
      ReturnStatus(status, INDEX_FSAL_setattrs);
   }
 
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME | 
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME | 
                     FSAL_ATTR_MTIME)) {
 
     /* Fill wanted atime. */
-    if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME)) {
+    if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME)) {
       buffxstat.buffstat.st_atime = (time_t) wanted_attrs.atime.seconds;
       FSI_TRACE(FSI_DEBUG,
                 "current atime = %lu, new atime = %lu",
@@ -519,7 +524,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
               (unsigned long)buffxstat.buffstat.st_atime);
 
     /* Fill wanted mtime. */
-    if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME)) {
+    if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME)) {
       buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
     } else {
       buffxstat.buffstat.st_mtime = (time_t) current_attrs.mtime.seconds;
@@ -529,9 +534,10 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
               (unsigned long)current_attrs.mtime.seconds,
               (unsigned long)buffxstat.buffstat.st_mtime);
 
-    if (fsi_get_name_from_handle(p_context, 
-                                 p_filehandle->data.handle.f_handle, 
-                                 fsi_name) < 0) {
+    rc = fsi_get_name_from_handle(p_context, 
+                                  p_filehandle->data.handle.f_handle, 
+                                  fsi_name);
+    if (rc < 0) {
       FSI_TRACE(FSI_ERR, 
                 "Failed to convert file handle back to filename "  
                 "from cache" );
@@ -542,8 +548,10 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
     FSI_TRACE(FSI_DEBUG, "Handle to name: %s for handle %s", 
               fsi_name, p_filehandle->data.handle.f_handle); 
-    if (ptfsal_ntimes(p_context, fsi_name, buffxstat.buffstat.st_atime, 
-        buffxstat.buffstat.st_mtime) == -1) {
+   
+    rc = ptfsal_ntimes(p_context, fsi_name, buffxstat.buffstat.st_atime, 
+                       buffxstat.buffstat.st_mtime);
+    if (rc == -1) {
       FSI_TRACE(FSI_ERR, "ntime FAILED");
       Return (ERR_FSAL_PERM, 2, INDEX_FSAL_setattrs);
     } else {
@@ -558,28 +566,28 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
    *  ACL  *
    ***********/
 
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ACL)) {
+  if (FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ACL)) {
     /* Check permission to set ACL. */
     access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
                   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
 
-    if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
+    if (!p_context->export_context->fe_static_fs_info->accesscheck_support)
       status = fsal_internal_testAccess(p_context, access_mask, NULL, 
                                         &current_attrs);
     else
       status = fsal_internal_access(p_context, p_filehandle, access_mask,
                                       &current_attrs);
 
-    if(FSAL_IS_ERROR(status))
+    if (FSAL_IS_ERROR(status))
       ReturnStatus(status, INDEX_FSAL_setattrs);
 
-    if(wanted_attrs.acl) {
+    if (wanted_attrs.acl) {
       LogDebug(COMPONENT_FSAL, "setattr acl = %p", wanted_attrs.acl);
 
       /* Convert FSAL ACL to PTFS NFS4 ACL and fill the buffer. */
       status = fsal_acl_2_ptfs_acl(wanted_attrs.acl, &buffxstat);
 
-      if(FSAL_IS_ERROR(status))
+      if (FSAL_IS_ERROR(status))
         ReturnStatus(status, INDEX_FSAL_setattrs);
     } else {
       LogCrit(COMPONENT_FSAL, "setattr acl is NULL");
@@ -591,11 +599,11 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
 
   /* Optionaly fills output attributes. */
 
-  if(p_object_attributes) {
+  if (p_object_attributes) {
     status = PTFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
     /* on error, we set a special bit in the mask. */
-    if(FSAL_IS_ERROR(status)) {
+    if (FSAL_IS_ERROR(status)) {
       FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
       FSAL_SET_MASK(p_object_attributes->asked_attributes, 
                     FSAL_ATTR_RDATTR_ERR);
