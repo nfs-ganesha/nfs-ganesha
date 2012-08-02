@@ -249,18 +249,23 @@ int make_file_safe( char * mntpath,
 {
 	int retval;
         char lustre_path[MAXPATHLEN] ;
-        char path_name[MAXPATHLEN] ;
+        char filepath[MAXPATHLEN] ;
 
-        lustre_handle_to_path( mntpath, infh, lustre_path ) ;
-	
-	retval = lchown( lustre_path, user, group ) ;
+        retval = lustre_handle_to_path( mntpath, infh, lustre_path ) ;
+	if(retval < 0) {
+                retval = errno ;
+		goto fileerr;
+	}
+        snprintf( filepath, MAXPATHLEN, "%s/%s", lustre_path, name ) ;
+
+	retval = lchown( filepath, user, group ) ;
 	if(retval < 0) {
 		goto fileerr;
 	}
         
 	/* now that it is owned properly, set accessible mode */
 	
-	retval = chmod( lustre_path, unix_mode );
+	retval = chmod( filepath, unix_mode );
 	if(retval < 0) {
                 retval = errno ;
 		goto fileerr;
@@ -271,9 +276,8 @@ int make_file_safe( char * mntpath,
 		goto fileerr;
 	}
 
-        snprintf( path_name, MAXPATHLEN, "%s/%s", lustre_path, name ) ;
 
-	retval = lstat( path_name, stat);
+	retval = lstat( filepath, stat);
 	if(retval < 0) {
                 retval = errno ;
 		goto fileerr;
