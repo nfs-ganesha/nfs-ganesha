@@ -121,8 +121,6 @@ fsal_status_t fsal_internal_fd2handle(int fd,   /* IN */
                                       fsal_handle_t * p_handle  /* OUT */
     );
 
-fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
-
 fsal_status_t fsal_internal_link_fh(fsal_op_context_t * p_context,
                                     fsal_handle_t * p_target_handle,
                                     fsal_handle_t * p_dir_handle,
@@ -165,9 +163,6 @@ fsal_status_t fsal_internal_access(fsal_op_context_t * p_context,   /* IN */
                                    fsal_handle_t * p_handle,   /* IN */
                                    fsal_accessflags_t access_type,  /* IN */
                                    fsal_attrib_list_t *p_object_attributes /* IN */ );
-
-fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
-                                  fsal_handle_t * p_handle, struct stat *buf);
 
 fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
                                        fsal_handle_t * p_handle, gpfsfsal_xstat_t *p_buffxstat);

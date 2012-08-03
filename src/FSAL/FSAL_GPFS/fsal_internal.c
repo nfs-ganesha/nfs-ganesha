@@ -703,40 +703,6 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
 }
 
 /**
- * fsal_internal_link_at:
- * Create a link based on a file descriptor, dirfd, and new name
- *
- * \param srcfd (input):
- *          file descriptor of source file
- * \param dirfd (input):
- *          file descriptor of target directory
- * \param name (input):
- *          name for the new file
- *
- * \return status of operation
- */
-fsal_status_t fsal_internal_link_at(int srcfd, int dirfd, char *name)
-{
-  int rc;
-  struct link_arg linkarg;
-
-  if(!name)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  linkarg.dir_fd = dirfd;
-  linkarg.file_fd = srcfd;
-  linkarg.name = name;
-
-  rc = gpfs_ganesha(OPENHANDLE_LINK_BY_FD, &linkarg);
-
-  if(rc < 0)
-    ReturnCode(posix2fsal_error(errno), errno);
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
-}
-
-/**
  * fsal_internal_link_fh:
  * Create a link based on a file fh, dir fh, and new name
  *
@@ -1101,31 +1067,6 @@ fsal_status_t fsal_internal_access(fsal_op_context_t * p_context,   /* IN */
  *
  * \return status of operation
  */
-
-fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
-                                  fsal_handle_t * p_handle, struct stat *buf)
-{
-  int rc;
-  int dirfd = 0;
-  struct stat_arg statarg;
-
-  if(!p_handle || !p_context || !p_context->export_context)
-      ReturnCode(ERR_FSAL_FAULT, 0);
-
-  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
-
-  statarg.mountdirfd = dirfd;
-
-  statarg.handle = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_handle)->data.handle;
-  statarg.buf = buf;
-
-  rc = gpfs_ganesha(OPENHANDLE_STAT_BY_HANDLE, &statarg);
-
-  if(rc < 0)
-    ReturnCode(posix2fsal_error(errno), errno);
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
 
 /* Get NFS4 ACL as well as stat. For now, get stat only until NFS4 ACL
  * support is enabled. */
