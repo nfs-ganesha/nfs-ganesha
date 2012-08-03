@@ -44,6 +44,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
@@ -70,8 +71,8 @@ typedef struct _9p_cb_entry
 typedef struct _9p_cb_data 
 {
    _9p_cb_entry_t * entries ;
-   size_t count ;
-   size_t max ;
+   unsigned int count ;
+   unsigned int max ;
 } _9p_cb_data_t ;
 
 static bool_t _9p_readdir_callback( void                   * opaque,
@@ -84,7 +85,7 @@ static bool_t _9p_readdir_callback( void                   * opaque,
   if( cb_data == NULL )
    return FALSE ;
 
-  if( cb_data->count > cb_data->max )
+  if( cb_data->count >= cb_data->max )
    return FALSE ;
 
   cb_data->entries[cb_data->count].qid_path = handle->attributes.fileid ;
@@ -203,9 +204,12 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    * -------------------
    * total   = ~40 bytes (average size) per dentry */
   estimated_num_entries = (unsigned int)( *count / 40 ) ;
+  if (estimated_num_entries > _9P_MAXDIRCOUNT)
+    estimated_num_entries = _9P_MAXDIRCOUNT ;
 
-  if((cb_data.entries = gsh_calloc(estimated_num_entries,
-                                   sizeof(_9p_cb_entry_t))) == NULL)
+  if((estimated_num_entries < 2) || /* require room for . and .. */
+    ((cb_data.entries = gsh_calloc(estimated_num_entries,
+                                   sizeof(_9p_cb_entry_t))) == NULL))
     return _9p_rerror( preq9p, msgtag, EIO, plenout, preply ) ;
 
    /* Is this the first request ? */
@@ -267,7 +271,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
    
   cb_data.count = delta ;
-  cb_data.max = _9P_MAXDIRCOUNT - delta ;
+  cb_data.max = estimated_num_entries ;
 
   if(cache_inode_readdir( pfid->pentry,
                           cookie,
@@ -282,12 +286,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      /* In the 9P logic, this situation just mean "end of directory reached */
      if( cache_status != CACHE_INODE_NOT_FOUND )
        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
-     else 
-       num_entries = 0 ;
    }
-
-  /* Never go behind _9P_MAXDIRCOUNT */
-  if( num_entries > _9P_MAXDIRCOUNT ) num_entries = _9P_MAXDIRCOUNT ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RREADDIR ) ;
@@ -297,7 +296,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   _9p_savepos( cursor, dcount_pos, u32 ) ;
 
   /* fills in the dentry in 9P marshalling */
-  for( i = 0 ; i < num_entries + delta ; i++ )
+  for( i = 0 ; i < cb_data.count ; i++ )
    {
      recsize = 0 ;
 
