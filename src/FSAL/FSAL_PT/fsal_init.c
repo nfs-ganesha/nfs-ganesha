@@ -61,7 +61,7 @@ pthread_mutex_t g_parseio_mutex; // only one thread can parse an io at a time
 // only one thread can change global transid at a time
 pthread_mutex_t g_transid_mutex; 
 pthread_mutex_t g_non_io_mutex;
-
+pthread_mutex_t g_close_mutex;
 pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
 

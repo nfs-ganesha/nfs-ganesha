@@ -551,7 +551,7 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
     memset(&fsal_path, 0, sizeof(fsal_path_t));
     memcpy(&fsal_path.path, &fsi_name, sizeof(fsi_name));
     ptfsal_name_to_handle(p_context, &fsal_path, p_object_handle);
-    ccl_close(&ccl_context, rc, 1 /* Use lock */);
+    ccl_close(&ccl_context, rc);
     fsi_cache_name_and_handle(p_context, 
                               (char *)&p_fsi_handle->data.handle.f_handle, 
                               fsi_name);

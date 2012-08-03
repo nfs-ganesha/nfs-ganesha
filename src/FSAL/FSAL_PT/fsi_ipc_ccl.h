@@ -685,8 +685,7 @@ int ccl_open(ccl_context_t   * handle,
               int                   flags,
               mode_t                mode);
 int ccl_close(ccl_context_t * handle,
-               int handle_index,
-               int useLock);
+               int handle_index);
 int merge_errno_rc(int rc_a,
                    int rc_b);
 int get_all_io_responses(int     handle_index,
@@ -824,5 +823,5 @@ extern pthread_mutex_t g_parseio_mutex;
 // only one thread can change global transid at a time
 extern pthread_mutex_t g_transid_mutex;
 extern pthread_mutex_t g_non_io_mutex;
-
+extern pthread_mutex_t g_close_mutex;
 #endif // ifndef __FSI_IPC_CCL_H__
