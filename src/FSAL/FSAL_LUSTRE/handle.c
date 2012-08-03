@@ -997,11 +997,11 @@ static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
 			if(obj_hdl->type == SOCKET_FILE)
                           {
                                 snprintf( mysockpath, MAXPATHLEN, "%s/%s", mypath, myself->u.sock.sock_name ) ;
-				retval = lchmod( mysockpath,
+				retval = chmod( mysockpath,
 						 fsal2unix_mode(attrs->mode));
                           }   
 			else
-				retval = lchmod(mypath, fsal2unix_mode(attrs->mode));
+				retval = chmod(mypath, fsal2unix_mode(attrs->mode));
 
 			if(retval != 0) {
 				goto fileerr;
