@@ -146,6 +146,9 @@ srpm: nfs-ganesha.spec dist rpmdirs
 else  
 rpm: nfs-ganesha.spec remove_hpss rpmdirs
 	rpmbuild  $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+if USE_FSAL_PT
+	rm `pwd`/rpm/RPMS/$(host_cpu)/*libntirpc*.rpm
+endif
 
 srpm: nfs-ganesha.spec remove_hpss rpmdirs
 	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
