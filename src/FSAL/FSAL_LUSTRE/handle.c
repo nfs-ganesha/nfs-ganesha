@@ -702,6 +702,7 @@ static fsal_status_t lustre_linkfile(struct fsal_obj_handle *obj_hdl,
 	struct lustre_fsal_obj_handle *myself, *destdir;
         char srcpath[MAXPATHLEN] ;
         char destdirpath[MAXPATHLEN] ;
+        char destnamepath[MAXPATHLEN] ;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -715,7 +716,9 @@ static fsal_status_t lustre_linkfile(struct fsal_obj_handle *obj_hdl,
 	destdir = container_of(destdir_hdl, struct lustre_fsal_obj_handle, obj_handle);
         lustre_handle_to_path( lustre_get_root_path( obj_hdl->export ), destdir->handle, destdirpath ) ;
 
-	retval = link(srcpath, destdirpath);
+        snprintf( destnamepath, MAXPATHLEN, "%s/%s", destdirpath, name ) ;
+
+	retval = link(srcpath, destnamepath);
 	if(retval == -1) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
