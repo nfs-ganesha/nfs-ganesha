@@ -357,10 +357,10 @@ void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr)
     {
       pattr->pre_op_attr_u.attributes.size = pfsal_attr->filesize;
       pattr->pre_op_attr_u.attributes.mtime.seconds = pfsal_attr->mtime.seconds;
-      pattr->pre_op_attr_u.attributes.mtime.nseconds = 0 ;
+      pattr->pre_op_attr_u.attributes.mtime.nseconds = pfsal_attr->mtime.nseconds;
 
       pattr->pre_op_attr_u.attributes.ctime.seconds = pfsal_attr->ctime.seconds;
-      pattr->pre_op_attr_u.attributes.ctime.nseconds = 0; 
+      pattr->pre_op_attr_u.attributes.ctime.nseconds = pfsal_attr->ctime.nseconds;
 
       pattr->attributes_follow = TRUE;
     }
@@ -1837,7 +1837,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       if(psattr->atime.set_it == SET_TO_CLIENT_TIME)
         {
           pFSAL_attr->atime.seconds = psattr->atime.set_atime_u.atime.seconds;
-          pFSAL_attr->atime.nseconds = 0;
+          pFSAL_attr->atime.nseconds = psattr->atime.set_atime_u.atime.nseconds;
         }
       else
         {
@@ -1845,7 +1845,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
           gettimeofday(&t, NULL);
 
           pFSAL_attr->atime.seconds = t.tv_sec;
-          pFSAL_attr->atime.nseconds = 0;
+          pFSAL_attr->atime.nseconds = t.tv_usec * 1000;
         }
       pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
     }
@@ -1858,14 +1858,14 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       if(psattr->mtime.set_it == SET_TO_CLIENT_TIME)
         {
           pFSAL_attr->mtime.seconds = psattr->mtime.set_mtime_u.mtime.seconds;
-          pFSAL_attr->mtime.nseconds = 0 ;
+          pFSAL_attr->mtime.nseconds = psattr->mtime.set_mtime_u.mtime.nseconds;
         }
       else
         {
           /* Use the server's current time */
           gettimeofday(&t, NULL);
           pFSAL_attr->mtime.seconds = t.tv_sec;
-          pFSAL_attr->mtime.nseconds = 0 ;
+          pFSAL_attr->mtime.nseconds = t.tv_usec * 1000;
         }
       pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
     }
@@ -2614,7 +2614,7 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       gettimeofday(&t, NULL);
 
       pFSAL_attr->atime.seconds = pFSAL_attr->mtime.seconds = t.tv_sec;
-      pFSAL_attr->atime.nseconds = pFSAL_attr->mtime.nseconds = 0 ;
+      pFSAL_attr->atime.nseconds = pFSAL_attr->mtime.nseconds = t.tv_usec * 1000;
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_ATIME);
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_MTIME);
     }
@@ -3352,14 +3352,16 @@ static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
 {
   time_how4 how;
   int LastOffset = 0;
+  struct timeval t;
 
   memcpy(&how, attrval + LastOffset , sizeof(how));
   LastOffset += sizeof(how);
 
   if(ntohl(how) == SET_TO_SERVER_TIME4)
     {
-      ts->seconds = time(NULL);   /* Use current server's time */
-      ts->nseconds = 0;
+      gettimeofday(&t, NULL);
+      ts->seconds = t.tv_sec;   /* Use current server's time */
+      ts->nseconds = t.tv_usec * 1000;
     }
   else
     {

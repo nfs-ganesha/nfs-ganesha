@@ -470,7 +470,7 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       /* Fill wanted mtime. */
       if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME))
         {
-          attr_changed |= XATTR_CTIME;
+          attr_changed |= XATTR_MTIME;
           buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
           LogDebug(COMPONENT_FSAL,
                    "current mtime = %lu, new mtime = %lu",
@@ -483,8 +483,8 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
    *  ACL  *
    ***********/
 
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ACL))
-    {
+  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ACL)) 
+   {
       /* Check permission to set ACL. */
       access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
