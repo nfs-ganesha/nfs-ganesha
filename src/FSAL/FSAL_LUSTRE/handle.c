@@ -862,12 +862,12 @@ static fsal_status_t lustre_renamefile(struct fsal_obj_handle *olddir_hdl,
 
 	olddir = container_of(olddir_hdl, struct lustre_fsal_obj_handle, obj_handle);
         lustre_handle_to_path( lustre_get_root_path( olddir_hdl->export ), olddir->handle, olddirpath ) ;
+        snprintf( oldnamepath, MAXPATHLEN, "%s/%s", olddirpath, old_name ) ;
 
 	newdir = container_of(newdir_hdl, struct lustre_fsal_obj_handle, obj_handle);
         lustre_handle_to_path( lustre_get_root_path( newdir_hdl->export ), newdir->handle, newdirpath ) ;
-
-        snprintf( oldnamepath, MAXPATHLEN, "%s/%s", olddirpath, new_name ) ;
         snprintf( newnamepath, MAXPATHLEN, "%s/%s", newdirpath, new_name ) ;
+
 	retval = rename(oldnamepath, newnamepath);
 	if(retval < 0) {
 		retval = errno;
