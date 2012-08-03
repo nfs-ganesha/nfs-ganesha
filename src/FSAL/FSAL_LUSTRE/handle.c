@@ -1461,7 +1461,7 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 	struct lustre_file_handle  *fh;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
-	int fd;
+        char objpath[MAXPATHLEN] ;
 	char *link_content = NULL;
 	ssize_t retlink;
 	char link_buff[PATH_MAX];
@@ -1474,33 +1474,25 @@ fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
 
 	fh = alloca(hdl_desc->len);
 	memcpy(fh, hdl_desc->addr, hdl_desc->len);  /* struct aligned copy */
-	fd = lustre_open_by_handle(lustre_get_root_path( exp_hdl ),fh, O_PATH|O_NOACCESS);
-	if(fd < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		goto errout;
-	}
-	retval = fstatat(fd, "", &stat, AT_EMPTY_PATH);
+        lustre_handle_to_path( lustre_get_root_path( exp_hdl ), fh, objpath ) ;
+	retval = lstat( objpath, &stat);
 	if(retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
-		close(fd);
 		goto errout;
 	}
 	if(S_ISLNK(stat.st_mode)) { /* I could lazy eval this... */
-		retlink = readlinkat(fd, "", link_buff, PATH_MAX);
+		retlink = readlink(objpath, link_buff, PATH_MAX);
 		if(retlink < 0 || retlink == PATH_MAX) {
 			retval = errno;
 			if(retlink == PATH_MAX)
 				retval = ENAMETOOLONG;
 			fsal_error = posix2fsal_error(retval);
-			close(fd);
 			goto errout;
 		}
 		link_buff[retlink] = '\0';
 		link_content = &link_buff[0];
 	}
-	close(fd);
 
 	hdl = alloc_handle(fh, &stat, link_content, NULL, NULL, exp_hdl);
 	if(hdl == NULL) {
