@@ -50,7 +50,9 @@
 #include "log.h"
 #include "nfs_tcb.h"
 
+#ifdef FIXME_EXPORT_RELOAD
 exportlist_t *temp_pexportlist;
+#endif
 pthread_cond_t admin_condvar = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex_admin_condvar = PTHREAD_MUTEX_INITIALIZER;
 bool_t reload_exports;
@@ -62,6 +64,10 @@ void nfs_Init_admin_data(void)
 
 void admin_replace_exports()
 {
+#ifndef FIXME_EXPORT_RELOAD
+  LogWarn(COMPONENT_MAIN,
+          "Export reload is not supported");
+#else
   P(mutex_admin_condvar);
   reload_exports = TRUE;
   if(pthread_cond_signal(&(admin_condvar)) == -1)
@@ -69,11 +75,15 @@ void admin_replace_exports()
               "admin_replace_exports - admin cond signal failed , errno = %d (%s)",
               errno, strerror(errno));
   V(mutex_admin_condvar);
+#endif
 }
 
 /* Skips deleting first entry of export list. */
 int rebuild_export_list()
 {
+#ifndef FIXME_EXPORT_RELOAD
+  return 0;
+#else
   int status = 0;
   config_file_t config_struct;
 
@@ -121,49 +131,24 @@ int rebuild_export_list()
     }
 
   return 1;
+#endif
 }
 
 static int ChangeoverExports()
 {
-
-  exportlist_t *pcurrent = NULL;
-
-  /* Now we know that the configuration was parsed successfully.
-   * And that worker threads are no longer accessing the export list.
-   * Remove all but the first export entry in the exports list.
+#ifndef FIXME_EXPORT_RELOAD
+  return ENOTSUP;
+#else
+  /* To be supported again, this routine will need to handle
+   * comparing new exports to old exports. Any exports that
+   * are just being updated, will need to be updated in place
+   * to preserve references to them.
+   *
+   * Entries that are to be removed will need to be cleaned
+   * up, SAL state revoked, maybe some cache_inode work to
+   * free cache_inode entries and such.
    */
-  if (nfs_param.pexportlist)
-    pcurrent = nfs_param.pexportlist->next;
-
-  while(pcurrent != NULL)
-    {
-      /* Leave the head so that the list may be replaced later without
-       * changing the reference pointer in worker threads. */
-      CleanUpExportContext(&pcurrent->FS_export_context);
-
-      if (pcurrent == nfs_param.pexportlist)
-        break;
-
-      nfs_param.pexportlist->next = RemoveExportEntry(pcurrent);
-      pcurrent = nfs_param.pexportlist->next;
-    }
-
-  /* Allocate memory if needed, could have started with NULL exports */
-  if (nfs_param.pexportlist == NULL)
-    nfs_param.pexportlist = gsh_malloc(sizeof(exportlist_t));
-
-  if (nfs_param.pexportlist == NULL)
-    return ENOMEM;
-
-  /* Changed the old export list head to the new export list head.
-   * All references to the exports list should be up-to-date now. */
-  memcpy(nfs_param.pexportlist, temp_pexportlist, sizeof(exportlist_t));
-
-  /* We no longer need the head that was created for
-   * the new list since the export list is built as a linked list. */
-  gsh_free(temp_pexportlist);
-  temp_pexportlist = NULL;
-  return 0;
+#endif
 }
 
 void *admin_thread(void *UnusedArg)
