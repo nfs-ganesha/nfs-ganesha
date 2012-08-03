@@ -1874,7 +1874,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   nfs_Init_FSAL_UP(); /* initalizes an event pool */
 #endif /* _USE_FSAL_UP */
 
-  /* Create stable storage directory, this should not be necessary */
+  /* Create stable storage directory, this needs to be done before
+   * starting the recovery thread.
+   */
   nfs4_create_recov_dir();
 
   /* initialize grace and read in the client IDs */

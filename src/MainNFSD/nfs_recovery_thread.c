@@ -45,20 +45,171 @@
 #define DELIMIT '_'
 time_t t_after; /* Careful here. */
 
+extern hash_table_t *ht_nsm_client;
 
+static void
+nfs_release_nlm_state()
+{
+        hash_table_t *ht = ht_nsm_client;
+        state_nsm_client_t *nsm_cp;
+        struct rbt_head *head_rbt;
+        struct rbt_node *pn;
+        hash_data_t *pdata;
+        state_status_t err, status;
+        int i;
 
+        /* walk the client list and call state_nlm_notify */
+        for(i = 0; i < ht->parameter.index_size; i++) {
+                pthread_rwlock_wrlock(&ht->partitions[i].lock);
+                head_rbt = &ht->partitions[i].rbt;
+                /* go through all entries in the red-black-tree*/
+                RBT_LOOP(head_rbt, pn) {
+                        pdata = RBT_OPAQ(pn);
+
+                        nsm_cp = (state_nsm_client_t *)pdata->buffval.pdata;
+                        inc_nsm_client_ref(nsm_cp);
+                        err = state_nlm_notify(nsm_cp, NULL, &status);
+                        if (err != STATE_SUCCESS)
+                                LogDebug(COMPONENT_THREAD,
+                                    "state_nlm_notify failed with %d",
+                                    status);
+                        dec_nsm_client_ref(nsm_cp);
+                        RBT_INCREMENT(pn);
+                }
+                pthread_rwlock_unlock(&ht->partitions[i].lock);
+        }
+        return;
+}
+
+static int
+ip_match(char *ip, char *recov_dir)
+{
+        size_t rdlen = 0;
+        char *cp;
+
+        /* ip is of the form a.b.c.d_N_interface */
+        cp = ip;
+        while(*cp != DELIMIT)
+                cp++;
+        *cp = '\0';
+
+        /* recov_dir is of the form a.b.c.d-NN */
+        while (recov_dir[rdlen] != '-')
+                rdlen++;
+
+        if (rdlen != strlen(ip))
+                return 0;
+
+        if (strncmp(ip, recov_dir, rdlen))
+                return 0;
+
+        return 1; /* they match */
+}
+
+/*
+ * try to find a V4 client that matches the IP we are releasing.
+ * only search the confirmed clients, unconfirmed clients won't
+ * have any state to release.
+ */
+static void
+nfs_release_v4_client(char *ip)
+{
+        hash_table_t *ht = ht_confirmed_client_id;
+        struct rbt_head *head_rbt;
+        struct rbt_node *pn;
+        hash_data_t *pdata;
+        nfs_client_id_t *cp;
+        nfs_client_record_t *recp;
+        int i;
+
+        /* go through the confirmed clients looking for a match */
+        for(i = 0; i < ht->parameter.index_size; i++) {
+
+                pthread_rwlock_wrlock(&ht->partitions[i].lock);
+                head_rbt = &ht->partitions[i].rbt;
+
+                /* go through all entries in the red-black-tree*/
+                RBT_LOOP(head_rbt, pn) {
+                        pdata = RBT_OPAQ(pn);
+
+                        cp = (nfs_client_id_t *)pdata->buffval.pdata;
+                        P(cp->cid_mutex);
+                        if (ip_match(ip, cp->cid_recov_dir)) {
+                                inc_client_id_ref(cp);
+
+                                /* Take a reference to the client record */
+                                recp = cp->cid_client_record;
+                                inc_client_record_ref(recp);
+
+                                V(cp->cid_mutex);
+
+                                pthread_rwlock_unlock(&ht->partitions[i].lock);
+
+                                P(recp->cr_mutex);
+
+                                (void) nfs_client_id_expire(cp);
+
+                                V(recp->cr_mutex);
+
+                                dec_client_id_ref(cp);
+                                dec_client_record_ref(recp);
+                                return;
+                        } else {
+                                V(cp->cid_mutex);
+                        }
+
+                        RBT_INCREMENT(pn);
+                }
+
+                pthread_rwlock_unlock(&ht->partitions[i].lock);
+        }
+}
+
+void release_ip(char *ip, int notdone)
+{
+        if (notdone)
+                nfs_release_nlm_state();
+        nfs_release_v4_client(ip);
+}
+
+/* try to find this node's id in an event */
 int check_for_id( int inum, struct dirent **namelist, ushort id)
 {
 char *cp, *cp2;
 int icnt = 0;
-int i, ientry;
+int i, ientry, notdone;
+int take, rel;
 time_t t_this_entry;
 char workpath[PATH_MAX];
 
-        ientry = inum - 1;
-        while(ientry > 1) {              
-                if ((namelist[ientry]->d_name[0] != 't'))
-                        break;
+        /*
+         * if there are releaseip events, we need to expire the v4
+         * client for each IP being released.  however, we also need
+         * to drop all v3 locks (state) for this server since the
+         * v3 clients will be notified that the server rebooted.  we
+         * only want to do this once, no matter how many releaseip
+         * events there are in this list, hence the 'notdone' flag.
+         */
+        notdone = 1;
+
+        /* stop at 2 to skip '.' and '..' */
+        for (ientry = (inum - 1); ientry > 2; ientry--) {
+                take = rel = 0;
+                switch (namelist[ientry]->d_name[0]) {
+                        case 'r':
+                                rel = 1; /* releaseip event */
+                                break;
+                        case 't':
+                                take = 1; /* takeip event */
+                                break;
+                }
+                /*
+                 * if not a takeip event nor a releaseip event skip.
+                 * if id is 0 we only care about takeip events.
+                 */
+                if ((!take && !rel) || (id == 0 && rel))
+                        continue;
+
                 strcpy(workpath, namelist[ientry]->d_name);
                 cp = workpath;
                 i = 1; /* time is the second entry */
@@ -73,27 +224,35 @@ char workpath[PATH_MAX];
                 *cp2 = '\0';
                 t_this_entry = (time_t) atol(cp);
                 if (t_this_entry < t_after) {
-                        ientry--;
                         continue;
                 }
-               if ( id > 0 ) {
-                       /* id is the 3rd entry */
-                       cp2++;
-                       cp = cp2;
-                       while(*cp2 != DELIMIT)
-                         cp2++;
-                       *cp2 = '\0';
-                       i = atoi(cp);
-                       if ( ((ushort) i == id ))
-                               icnt++;
-                       ientry--;
-               } else {
-                       t_after = t_this_entry + 1;
-                       icnt = 1;
-                       break;
-               }
+                if ( id > 0 ) {
+                        /* id is the 3rd entry */
+                        cp2++;
+                        cp = cp2;
+                        while(*cp2 != DELIMIT)
+                                cp2++;
+                        *cp2 = '\0';
+                        i = atoi(cp);
+                        if ( ((ushort) i == id )) {
+                                icnt++;
+                                if (rel) {
+                                        /* IP is the 4th entry */
+                                        cp2++;
+                                        release_ip(cp2, notdone);
+                                        /* we are done with v3 */
+                                        notdone = 0;
+                                }
+                        }
+                } else {
+                        t_after = t_this_entry + 1;
+                        icnt = 1;
+                        break;
+                }
         }
-        LogDebug(COMPONENT_THREAD, "ipcount %d for node %d after %ld", icnt, id, t_after);
+        LogDebug(COMPONENT_THREAD, "ipcount %d for node %d after %ld",
+            icnt, id, t_after);
+
         return(icnt);
 }
 time_t parse_time( char *the_target)
@@ -291,12 +450,10 @@ struct dirent **namelist;
 int n, ipcount;
 uint32_t uerr=0;
 uint32_t ucnt=0;
-ushort myid;
 size_t size;
 nfs_grace_start_array_t *nfs_grace_start_array;
 
         SetNameFunction("recovery_thr");
-        myid = gpfs_ganesha(OPENHANDLE_GET_NODEID, NULL) + 1;
         t_after = 0;
 
         while(1) {
@@ -317,14 +474,16 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                 } 
                 uerr = 0;
                 while(1) {
-                        if (( n <= 2 ) || (namelist[n-1]->d_name[0] != 't')) {
+                        if ( n <= 2 ) {  /* '.' and '..' are counted */
                                 /* Common case. Nothing to do. */
                                 break;
                         }
-                        /* If we reach here then we have "takeip" records 
+                        /*
+                         * If we reach here then we have either "takeip"
+                         * or "releaseip" records 
                          */
 
-                        if ((ipcount = check_for_id( n, namelist, myid))) { 
+                        if ((ipcount = check_for_id( n, namelist, g_nodeid))) { 
 
                         /* Clients are coming to this node for reclaims */
                         /* See if we can find from where, if so we will
@@ -344,15 +503,15 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                                         break;
                                 }
                                 nfs_grace_start_array->num_elements = ipcount;
-                                if (( match_to_releaseip( n, namelist, myid, nfs_grace_start_array))) {
+                                if (( match_to_releaseip( n, namelist, g_nodeid, nfs_grace_start_array))) {
                                 /* Couldn't match them all need to read all nodes */
                                         nfs_grace_start_array->num_elements = 1;
                                         nfs_grace_start_array->nfs_grace_start->nodeid = ALL_NODES;
                                         nfs_grace_start_array->nfs_grace_start->ipaddr[0]='\0';
                                         nfs_grace_start_array->nfs_grace_start->event=NOTSPECIFIED;
-                                        LogEvent(COMPONENT_THREAD, "Grace entered for ALL_NODES on node %d ", myid);
+                                        LogEvent(COMPONENT_THREAD, "Grace entered for ALL_NODES on node %d ", g_nodeid);
                                 } else {
-                                       LogEvent(COMPONENT_THREAD, "Grace entered for specific nodes on node %d ", myid);
+                                       LogEvent(COMPONENT_THREAD, "Grace entered for specific nodes on node %d ", g_nodeid);
                                 }
                                 nfs4_start_grace( nfs_grace_start_array );
                                 if ( nfs_grace_start_array ) {
@@ -363,7 +522,7 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                         } else {
                                 if ((check_for_id( n, namelist, 0))) {
                                         nfs4_start_grace(NULL);
-                                        LogEvent(COMPONENT_THREAD, "Grace started with NULL node id %d", myid);
+                                        LogEvent(COMPONENT_THREAD, "Grace started with NULL node id %d", g_nodeid);
                                 }
                                 break;
                         }

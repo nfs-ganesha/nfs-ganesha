@@ -566,7 +566,7 @@ nfs4_create_recov_dir()
                 nodeid = gpfs_ganesha(OPENHANDLE_GET_NODEID, NULL);
                 /* GPFS starts with 0, we want node ids to be > 0 */
                 g_nodeid = nodeid + 1;
-LogEvent(COMPONENT_NFS_V4, "nodeid = (%d)", nodeid);
+                LogDebug(COMPONENT_NFS_V4, "nodeid = (%d)", g_nodeid);
 #endif
 
                 snprintf(v4_recov_dir, PATH_MAX, "%s/%s/node%d",
