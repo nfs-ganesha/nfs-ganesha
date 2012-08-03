@@ -333,7 +333,7 @@ typedef struct nfs_param__
   external_tools_parameter_t extern_param;
 
   /* list of exports declared in config file */
-  exportlist_t *pexportlist;
+  struct glist_head *pexportlist;
 } nfs_parameter_t;
 
 typedef struct nfs_dupreq_stat__
@@ -723,7 +723,7 @@ int nfs_read_session_id_conf(config_file_t in_config,
                              nfs_session_id_parameter_t * pparam);
 #endif                          /* _USE_NFS4_1 */
 
-int nfs_export_create_root_entry(exportlist_t * pexportlist);
+int nfs_export_create_root_entry(struct glist_head * pexportlist);
 
 /* Add a list of clients to the client array of either an exports entry or
  * another service that has a client array (like snmp or statistics exporter) */
@@ -736,7 +736,6 @@ int parseAccessParam(char *var_name, char *var_value,
 /* Config reparsing routines */
 void admin_replace_exports();
 int CleanUpExportContext(fsal_export_context_t * p_export_context);
-exportlist_t *RemoveExportEntry(exportlist_t * exportEntry);
 exportlist_t *GetExportEntry(char *exportPath);
 
 /* Tools */

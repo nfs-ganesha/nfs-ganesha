@@ -148,7 +148,6 @@ int main(int argc, char *argv[])
   char *tempo_exec_name = NULL;
   fsal_op_context_t fsal_op_context;
   fsal_export_context_t fsal_export_context;
-  exportlist_t *pexportlist = NULL;
   exportlist_t *pexport = NULL;
   nfs_start_info_t nfs_start_info;
   fsal_status_t fsal_status;
@@ -263,8 +262,6 @@ int main(int argc, char *argv[])
       return -1;
     }
 
-  pexportlist = nfs_param.pexportlist;
-
   /* not initialization is needed for converting fileid to path in datacache */
   fsal_status = FSAL_Init(&nfs_param.fsal_param);
   if(FSAL_IS_ERROR(fsal_status))
@@ -275,7 +272,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
     {
       fprintf(stderr, "NFS FH has exportid %u which is invalid....\n", exportid);
       exit(1);

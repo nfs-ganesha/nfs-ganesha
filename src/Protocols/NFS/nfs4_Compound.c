@@ -270,8 +270,6 @@ int nfs4_Compound(nfs_arg_t *parg,
   data.minorversion = COMPOUND4_MINOR;
   /** @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here */
 
-  data.pfullexportlist = pexport;       /* Full export list is
-                                           provided in input */
   data.pcontext = pcontext; /* Get the fsal credentials from the
                                worker thread */
   data.pworker = pworker;

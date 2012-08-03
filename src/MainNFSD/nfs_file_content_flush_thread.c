@@ -92,6 +92,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   xfsfsal_export_context_t export_context ;
   fsal_path_t export_path ;
 #endif
+  struct glist_head glist;
 
   p_flush_data = (nfs_flush_thread_data_t *) flush_data_arg;
 
@@ -116,8 +117,9 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
     }
 
   /* check for each pexport entry to get those who are data cached */
-  for(pexport = nfs_param.pexportlist; pexport != NULL; pexport = pexport->next)
+  glist_for_each(glist, nfs_param.pexportlist)
     {
+      pexport = glist_entry(glist, exportlist_t, exp_list);
 
       if(pexport->options & EXPORT_OPTION_USE_DATACACHE)
         {

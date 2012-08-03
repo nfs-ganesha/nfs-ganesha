@@ -209,10 +209,6 @@ extern cache_content_client_parameter_t datacache_client_param;
 /* NFS layer initialization status*/
 static int is_nfs_layer_initialized = FALSE;
 
-/* Global variable: export list */
-exportlist_t exportlist[128];
-exportlist_t *pexportlist = exportlist;
-
 /* Global variable: local host name */
 static char localmachine[256];
 
@@ -404,6 +400,7 @@ int nfs_init(char *filename, int flag_v, FILE * output)
   config_file_t config_file;
   int rc;
 
+  init_glist(&exportlist);
   nfs_param.cache_layers_param.cache_content_client_param.nb_prealloc_entry = 100;
   nfs_param.cache_layers_param.cache_content_client_param.flush_force_fsal = 1;
   nfs_param.cache_layers_param.cache_content_client_param.max_fd = 20;
@@ -434,7 +431,7 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   /* Read export list from file */
 
-  rc = ReadExports(config_file, &pexportlist);
+  rc = ReadExports(config_file, &exportlist);
 
   if(rc < 0)
     {
@@ -443,7 +440,7 @@ int nfs_init(char *filename, int flag_v, FILE * output)
     }
 
   /* initalize export entries */
-  if((rc = nfs_export_create_root_entry(pexportlist)) != TRUE)
+  if((rc = nfs_export_create_root_entry(&exportlist)) != TRUE)
     {
       fprintf(output, "nfs_init: Error %d initializing root entries, exiting...", -rc);
       return -1;
@@ -606,7 +603,7 @@ int fn_MNT1_command(int argc,   /* IN : number of args in argv */
           /* nfs call */
 
           rc = funcdesc->func_call(&nfs_arg,
-                                   pexportlist,
+                                   NULL,
                                    &(p_thr_info->context),
                                    &(p_thr_info->client), &req, &nfs_res);
 
@@ -696,7 +693,7 @@ int fn_MNT3_command(int argc,   /* IN : number of args in argv */
           /* nfs call */
 
           rc = funcdesc->func_call(&nfs_arg,
-                                   pexportlist,
+                                   NULL,
                                    &(p_thr_info->context),
                                    &(p_thr_info->client), &req, &nfs_res);
 
@@ -789,7 +786,7 @@ int fn_NFS2_command(int argc,   /* IN : number of args in argv */
           if(funcdesc->func_call != nfs_Null)
             {
               exportid = nfs2_FhandleToExportId((fhandle2 *) & nfs_arg);
-              if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+              if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
                 {
                   /* invalid handle */
                   fprintf(output, "\t%s: Bad arguments: Invalid file handle.\n", argv[0]);
@@ -896,7 +893,7 @@ int fn_NFS3_command(int argc,   /* IN : number of args in argv */
           if(funcdesc->func_call != nfs_Null)
             {
               exportid = nfs3_FhandleToExportId((nfs_fh3 *) & nfs_arg);
-              if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+              if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
                 {
                   /* invalid handle */
                   fprintf(output, "\t%s: Bad arguments: Invalid file handle.\n", argv[0]);
@@ -1043,7 +1040,7 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
       req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
       exportid = nfs3_FhandleToExportId(&dirop_arg.dir);
-      if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+      if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
         {
           /* invalid handle */
           fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1127,7 +1124,7 @@ static int nfs_getattr(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl,
   set_nfs_fh3(&nfshdl, p_hdl);
 
   exportid = nfs3_FhandleToExportId(&nfshdl);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1184,7 +1181,7 @@ static int nfs_access(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl, nfs3_
   req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
   exportid = nfs3_FhandleToExportId(&arg.object);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1239,7 +1236,7 @@ static int nfs_readlink(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl,
   req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
   exportid = nfs3_FhandleToExportId(&nfshdl);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1301,7 +1298,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
   req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
   exportid = nfs3_FhandleToExportId(&arg.dir);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1373,7 +1370,7 @@ static int nfs_create(cmdnfs_thr_info_t * p_thr_info,
   req.rq_clntcred = (caddr_t) & p_thr_info->authunix_struct;
 
   exportid = nfs3_FhandleToExportId(&arg.where.dir);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1447,7 +1444,7 @@ static int nfs_mkdir(cmdnfs_thr_info_t * p_thr_info,
   arg.where.name = obj_name;
 
   exportid = nfs3_FhandleToExportId(&arg.where.dir);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1521,7 +1518,7 @@ static int nfs_rmdir(cmdnfs_thr_info_t * p_thr_info,
 
   /* extract expoort id */
   exportid = nfs3_FhandleToExportId(&arg.dir);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1576,7 +1573,7 @@ static int nfs_remove(cmdnfs_thr_info_t * p_thr_info,
   /* extract export id */
 
   exportid = nfs3_FhandleToExportId(&arg.dir);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1631,7 +1628,7 @@ static int nfs_setattr(cmdnfs_thr_info_t * p_thr_info,
 
   /* extract export id */
   exportid = nfs3_FhandleToExportId(&arg.object);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1688,7 +1685,7 @@ static int nfs_rename(cmdnfs_thr_info_t * p_thr_info,
 
   /* extract export id */
   exportid = nfs3_FhandleToExportId(&arg.from.dir);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1744,7 +1741,7 @@ static int nfs_link(cmdnfs_thr_info_t * p_thr_info,
 
   /* extract export id */
   exportid = nfs3_FhandleToExportId(&arg.file);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1801,7 +1798,7 @@ static int nfs_symlink(cmdnfs_thr_info_t * p_thr_info,
   arg.symlink.symlink_data = link_content;
 
   exportid = nfs3_FhandleToExportId(&arg.where.dir);
-  if((pexport = nfs_Get_export_by_id(pexportlist, exportid)) == NULL)
+  if((pexport = nfs_Get_export_by_id(&exportlist, exportid)) == NULL)
     {
       /* invalid handle */
       fprintf(output, "\tBad arguments: Invalid file handle.\n");
@@ -1906,7 +1903,7 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
   /* nfs call */
 
   rc = mnt_Mnt(&nfs_arg,
-               pexportlist,
+               NULL,
                &(p_thr_info->context), &(p_thr_info->client), &req, &nfs_res);
 
   /* freeing args */
@@ -2009,7 +2006,7 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
   /* nfs call */
 
   rc = mnt_Umnt(&nfs_arg,
-                pexportlist,
+                NULL,
                 &(p_thr_info->context), &(p_thr_info->client), &req, &nfs_res);
 
   /* freeing args */

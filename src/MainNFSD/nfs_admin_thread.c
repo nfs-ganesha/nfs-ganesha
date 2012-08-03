@@ -51,7 +51,7 @@
 #include "nfs_tcb.h"
 
 #ifdef FIXME_EXPORT_RELOAD
-exportlist_t *temp_pexportlist;
+struct glist_head temp_exportlist;
 #endif
 pthread_cond_t admin_condvar = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex_admin_condvar = PTHREAD_MUTEX_INITIALIZER;
@@ -107,7 +107,7 @@ int rebuild_export_list()
     }
 
   /* Create the new exports list */
-  status = ReadExports(config_struct, &temp_pexportlist);
+  status = ReadExports(config_struct, &temp_exportlist);
   if(status < 0)
     {
       LogCrit(COMPONENT_CONFIG,
@@ -123,7 +123,7 @@ int rebuild_export_list()
 
   /* At least one worker thread should exist. Each worker thread has a pointer to
    * the same hash table. */
-  if(nfs_export_create_root_entry(temp_pexportlist) != TRUE)
+  if(nfs_export_create_root_entry(&temp_exportlist) != TRUE)
     {
       LogCrit(COMPONENT_MAIN,
               "replace_exports: Error initializing Cache Inode root entries");

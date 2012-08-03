@@ -125,13 +125,16 @@ const char *Rpc_gss_svc_name[] =
  * @return the pointer to the pointer to the export list or NULL if failed.
  *
  */
-exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid)
+exportlist_t *nfs_Get_export_by_id(struct glist_head * pexportlist, unsigned short exportid)
 {
   exportlist_t *piter;
+  struct glist_head * glist;
   int found = 0;
 
-  for(piter = exportroot; piter != NULL; piter = piter->next)
+  glist_for_each(glist, pexportlist)
     {
+      piter = glist_entry(glist, exportlist_t, exp_list);
+
       if(piter->id == exportid)
         {
           found = 1;
@@ -704,16 +707,20 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
   return 1;
 }                               /* nfs_rpc_req2client_cred */
 
-int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen,
+int nfs_export_tag2path(struct glist_head * pexportlist,
+                        char *tag, int taglen,
                         char *path, int pathlen)
 {
+  exportlist_t *piter;
+  struct glist_head * glist;
+
   if(!tag || !path)
     return -1;
 
-  exportlist_t *piter;
-
-  for(piter = exportroot; piter != NULL; piter = piter->next)
+  glist_for_each(glist, pexportlist)
     {
+      piter = glist_entry(glist, exportlist_t, exp_list);
+
       if(!strncmp(tag, piter->FS_tag, taglen))
         {
           strncpy(path, piter->fullpath, pathlen);

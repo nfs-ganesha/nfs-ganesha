@@ -996,9 +996,9 @@ static void nfs_rpc_execute(request_data_t *preq,
                   break;
                 }
             }
-          else if (nfs_param.pexportlist != NULL)
+          else if (!glist_empty(nfs_param.pexportlist))
             {
-              pexport = nfs_param.pexportlist;
+              pexport = NULL;
               break;
             }
           else
@@ -1269,7 +1269,7 @@ static void nfs_rpc_execute(request_data_t *preq,
     }
   else
     {
-      pexport = nfs_param.pexportlist;
+      pexport = NULL;
     }
 
   P(pworker_data->request_pool_mutex);
@@ -1454,7 +1454,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       update_per_share_stats = TRUE;
   }
   /* Update per-share counter and process time */
-  if (update_per_share_stats) {
+  if (update_per_share_stats && pexport != NULL) {
       nfs_stat_update(stat_type,
 		      &(pexport->worker_stats[pworker_data->worker_index].stat_req),
 		      req, &latency_stat);
@@ -1469,7 +1469,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                   &latency_stat);
 
   /* Update per-share process time + queue time */
-  if (update_per_share_stats) {
+  if (update_per_share_stats && pexport != NULL) {
       nfs_stat_update(GANESHA_STAT_SUCCESS,
 		      &(pexport->worker_stats[pworker_data->worker_index].stat_req),
 		      req, &latency_stat);

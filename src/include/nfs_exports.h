@@ -154,6 +154,7 @@ typedef struct export_perms__
 
 typedef struct exportlist__
 {
+  struct glist_head exp_list;
   unsigned short id;            /* entry identifier   */
   exportlist_status_t status;   /* entry's status     */
   char dirname[MAXNAMLEN];      /* path relative to fs root */
@@ -190,7 +191,6 @@ typedef struct exportlist__
   fsal_off_t MaxCacheSize;      /* Maximum Cache Size allowed                        */
   unsigned int UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
-  struct exportlist__ *next;    /* next entry                                        */
   unsigned int fsalid ;
 
   pthread_mutex_t   exp_state_mutex; /* Mutex to protect the following two lists */
@@ -385,7 +385,6 @@ typedef struct compoud_data
   struct user_cred user_credentials; /*< Extracted credentials for this request */
   exportlist_t *pexport; /*< Export entry related to the request */
   export_perms_t export_perms; /*< Permissions for export for this request */
-  exportlist_t *pfullexportlist; /*< The whole exportlist */
   pseudofs_t *pseudofs; /*< Pointer to the pseudo filesystem tree */
   char MntPath[MAXPATHLEN]; /*< Path (in pseudofs) of the current entry */
   struct svc_req *reqp; /*< RPC Request related to the compound */
@@ -403,10 +402,13 @@ typedef struct compoud_data
 #endif                          /* USE_NFS4_1 */
 } compound_data_t;
 
+/* Export list data */
+extern struct glist_head exportlist;
+
 /* Export list related functions */
 sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4);
 
-exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot,
+exportlist_t *nfs_Get_export_by_id(struct glist_head * exportlist,
                                    unsigned short exportid);
 void nfs_check_anon(export_perms_t * pexport_perms,
                     exportlist_t * pexport,
@@ -436,7 +438,8 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 
 int nfs_export_check_security(struct svc_req *ptr_req, exportlist_t * pexport);
 
-int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen, char *path,
-                        int pathlen);
+int nfs_export_tag2path(struct glist_head * pexportlist,
+                        char *tag, int taglen,
+                        char *path, int pathlen);
 
 #endif                          /* _NFS_EXPORTS_H */

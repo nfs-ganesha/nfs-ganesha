@@ -154,6 +154,8 @@
 #define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
+struct glist_head exportlist;
+
 /**
  * nfs_ParseConfLine: parse a line with a settable separator and  end of line
  *
@@ -576,7 +578,7 @@ bool_t fsal_specific_checks(exportlist_t *p_entry)
  */
 static int BuildExportEntry(config_item_t block,
                             exportlist_t ** pp_export,
-                            exportlist_t * exportroot)
+                            struct glist_head * pexportlist)
 {
   exportlist_t *p_entry;
   int i, rc;
@@ -727,7 +729,7 @@ static int BuildExportEntry(config_item_t block,
           p_entry->id = (unsigned short)export_id;
           set_options |= FLAG_EXPORT_ID;
 
-          if(nfs_Get_export_by_id(exportroot,
+          if(nfs_Get_export_by_id(pexportlist,
                                   p_entry->id) != NULL)
             {
               LogCrit(COMPONENT_CONFIG,
@@ -2154,7 +2156,7 @@ exportlist_t *BuildDefaultExport()
  *         the number of export entries else.
  */
 int ReadExports(config_file_t in_config,        /* The file that contains the export list */
-                exportlist_t ** ppexportlist)   /* Pointer to the export list */
+                struct glist_head * pexportlist)   /* Pointer to the export list */
 {
 
   int nb_blk, rc, i;
@@ -2162,14 +2164,11 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
   int err_flag = FALSE;
 
   exportlist_t *p_export_item = NULL;
-  exportlist_t *p_export_last = NULL;
 
   int nb_entries = 0;
 
-  if(!ppexportlist)
+  if(!pexportlist)
     return -EFAULT;
-
-  *ppexportlist = NULL;
 
   /* get the number of blocks in the configuration file */
   nb_blk = config_GetNbBlocks(in_config);
@@ -2196,7 +2195,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
       if(!STRCMP(blk_name, CONF_LABEL_EXPORT))
         {
 
-          rc = BuildExportEntry(block, &p_export_item, *ppexportlist);
+          rc = BuildExportEntry(block, &p_export_item, pexportlist);
 
           /* If the entry is errorneous, ignore it
            * and continue checking syntax of other entries.
@@ -2207,17 +2206,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
               continue;
             }
 
-          p_export_item->next = NULL;
-
-          if(*ppexportlist == NULL)
-            {
-              *ppexportlist = p_export_item;
-            }
-          else
-            {
-              p_export_last->next = p_export_item;
-            }
-          p_export_last = p_export_item;
+          glist_add_tail(pexportlist, &p_export_item->exp_list);
 
           nb_entries++;
 
@@ -2883,9 +2872,10 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
  * @return TRUE is successfull, FALSE if something wrong occured.
  *
  */
-int nfs_export_create_root_entry(exportlist_t * pexportlist)
+int nfs_export_create_root_entry(struct glist_head * pexportlist)
 {
       exportlist_t *pcurrent = NULL;
+      struct glist_head * glist;
       cache_inode_status_t cache_status;
 #ifdef _CRASH_RECOVERY_AT_STARTUP
       cache_content_status_t cache_content_status;
@@ -2911,9 +2901,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
         }
 
       /* loop the export list */
-
-      for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
+      glist_for_each(glist, pexportlist)
         {
+          pcurrent = glist_entry(glist, exportlist_t, exp_list);
 
           /* Build the FSAL path */
           if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(pcurrent->fullpath,
@@ -3053,41 +3043,21 @@ int CleanUpExportContext(fsal_export_context_t * p_export_context)
 
 
 /* Frees current export entry and returns next export entry. */
-exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
-{
-  exportlist_t *next;
-
-  if (exportEntry == NULL)
-    return NULL;
-
-  next = exportEntry->next;
-
-  if (exportEntry->proot_handle != NULL)
-    gsh_free(exportEntry->proot_handle);
-
-  if (exportEntry->worker_stats != NULL)
-    gsh_free(exportEntry->worker_stats);
-
-  gsh_free(exportEntry);
-  return next;
-}
-
 exportlist_t *GetExportEntry(char *exportPath)
 {
-  exportlist_t *pexport = NULL;
   exportlist_t *p_current_item = NULL;
+  struct glist_head * glist;
   char tmplist_path[MAXPATHLEN];
   char tmpexport_path[MAXPATHLEN];
   int found = 0;
 
-  pexport = nfs_param.pexportlist;
-
   /*
    * Find the export for the dirname (using as well Path or Tag )
    */
-  for(p_current_item = pexport; p_current_item != NULL;
-      p_current_item = p_current_item->next)
-  {
+  glist_for_each(glist, nfs_param.pexportlist)
+    {
+    p_current_item = glist_entry(glist, exportlist_t, exp_list);
+
     LogDebug(COMPONENT_CONFIG, "full path %s, export path %s",
              p_current_item->fullpath, exportPath);
 

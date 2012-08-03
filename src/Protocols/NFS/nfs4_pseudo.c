@@ -112,10 +112,10 @@ pseudofs_t *nfs4_GetPseudoFs(void)
  * 
  */
 
-int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
+int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
 {
   exportlist_t *entry;
-  exportlist_t *next;           /* exportlist entry   */
+  struct glist_head * glist;
   int i = 0;
   int j = 0;
   int found = 0;
@@ -127,8 +127,6 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
   pseudofs_entry_t *PseudoFsCurrent = NULL;
   pseudofs_entry_t *newPseudoFsEntry = NULL;
   pseudofs_entry_t *iterPseudoFs = NULL;
-
-  entry = pexportlist;
 
   PseudoFs = &gPseudoFs;
 
@@ -147,8 +145,10 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
     if((PathTok[i] = gsh_malloc(MAXNAMLEN)) == NULL)
       return ENOMEM;
 
-  while(entry)
+  glist_for_each(glist, pexportlist)
     {
+      entry = glist_entry(glist, exportlist_t, exp_list);
+
       /* To not forget to init "/" entry */
       PseudoFsCurrent = &(PseudoFs->root);
       PseudoFs->reverse_tab[0] = &(PseudoFs->root);
@@ -156,8 +156,6 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
       /* skip exports that aren't for NFS v4 */
       if((entry->options & EXPORT_OPTION_NFSV4) == 0)
         {
-          next = entry->next;
-          entry = next;
           continue;
         }
 
@@ -194,8 +192,6 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
               LogCrit(COMPONENT_NFS_V4_PSEUDO,
                       "BUILDING PSEUDOFS: Invalid 'pseudo' option: %s",
                       entry->pseudopath);
-              next = entry->next;
-              entry = next;
               continue;
             }
 
@@ -206,8 +202,6 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
               LogCrit(COMPONENT_NFS_V4_PSEUDO,
                       "Pseudo Path '%s' is badly formed",
                       entry->pseudopath);
-              next = entry->next;
-              entry = next;
               continue;
             }
 
@@ -274,9 +268,6 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
 
         }
       /* if( entry->options & EXPORT_OPTION_PSEUDO ) */
-      next = entry->next;
-
-      entry = next;
     }                           /* while( entry ) */
 
   /* desalocation of the parsing table */

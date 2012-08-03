@@ -663,7 +663,8 @@ void nfs_set_param_default()
   FSAL_SetDefault_FS_common_parameter(&nfs_param.fsal_param);
   FSAL_SetDefault_FS_specific_parameter(&nfs_param.fsal_param);
 
-  nfs_param.pexportlist = NULL;
+  init_glist(&exportlist);
+  nfs_param.pexportlist = &exportlist;
 
   /* SNMP ADM parameters */
 #ifdef _SNMP_ADM_ACTIVE
@@ -1071,7 +1072,7 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   /* Load export entries from parsed file
    * returns the number of export entries.
    */
-  rc = ReadExports(config_struct, &nfs_param.pexportlist);
+  rc = ReadExports(config_struct, nfs_param.pexportlist);
   if(rc < 0)
     {
       LogCrit(COMPONENT_INIT,
@@ -1888,13 +1889,17 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Set accesscheck_support value to FSAL context object. */
 #ifdef _USE_NFS4_ACL
-  if (nfs_param.pexportlist)
+  if (!glist_empty(nfs_param.pexportlist))
     {
-      nfs_param.pexportlist->FS_export_context
+      exportlist_t * pfirst_export;
+      pfirst_export = glist_first_entry(nfs_param.pexportlist,
+                                        exportlist_t,
+                                        exp_list);
+      pfirst_export->FS_export_context
            .fe_static_fs_info->accesscheck_support
            = !cache_inode_params.use_test_access;
       LogDebug(COMPONENT_INIT, "accesscheck_support is set to %d",
-           nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support);
+           pfirst_export->FS_export_context.fe_static_fs_info->accesscheck_support);
     }
 #endif
 

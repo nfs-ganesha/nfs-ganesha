@@ -85,7 +85,8 @@ int mnt_Mnt(nfs_arg_t *parg,
 {
 
   char MountPath[MNTPATHLEN + 1];
-  exportlist_t *p_current_item;
+  exportlist_t *p_current_item = NULL;
+  struct glist_head * glist;
 
   fsal_handle_t pfsal_handle;
   fsal_status_t fsal_status;
@@ -125,9 +126,10 @@ int mnt_Mnt(nfs_arg_t *parg,
   /*
    * Find the export for the dirname (using as well Path or Tag ) 
    */
-  for(p_current_item = pexport; p_current_item != NULL;
-      p_current_item = p_current_item->next)
+  glist_for_each(glist, nfs_param.pexportlist)
     {
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
+
       if(MountPath[0] != '/')
         {
           /* The input value may be a "Tag" */

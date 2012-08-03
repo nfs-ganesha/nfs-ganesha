@@ -191,6 +191,7 @@ void create_fsal_up_threads()
   pthread_attr_t attr_thr;
   fsal_up_arg_t *fsal_up_args;
   exportlist_t *pcurrent;
+  struct glist_head * glist;
 
   memset(&attr_thr, 0, sizeof(attr_thr));
 
@@ -211,10 +212,10 @@ void create_fsal_up_threads()
    * messing around with the export entries. */
 
   //  LOCK EXPORT LIST
-  for(pcurrent = nfs_param.pexportlist;
-      pcurrent != NULL;
-      pcurrent = pcurrent->next)
+  glist_for_each(glist, nfs_param.pexportlist)
     {
+      pcurrent = glist_entry(glist, exportlist_t, exp_list);
+
       if (pcurrent->use_fsal_up == FALSE)
         continue;
 
@@ -378,6 +379,7 @@ fsal_status_t process_event(fsal_up_event_t *myevent, fsal_up_event_functions_t 
 static int fsal_up_thread_exists(exportlist_t *entry)
 {
   exportlist_t *pcurrent;
+  struct glist_head * glist;
   pthread_t zeros;
   memset(&zeros, 0, sizeof(zeros));
 
@@ -386,10 +388,10 @@ static int fsal_up_thread_exists(exportlist_t *entry)
    * from the same filesystem. In this case, check if there is
    * already an FSAL UP thread running. If there is, return TRUE
    * so we don't create multiple threads. */
-  for(pcurrent = nfs_param.pexportlist;
-      pcurrent != NULL;
-      pcurrent = pcurrent->next)
+  glist_for_each(glist, nfs_param.pexportlist)
     {
+      pcurrent = glist_entry(glist, exportlist_t, exp_list);
+
       if (pcurrent == entry)
         continue;
 

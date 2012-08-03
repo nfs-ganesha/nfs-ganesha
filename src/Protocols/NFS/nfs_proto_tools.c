@@ -2007,7 +2007,7 @@ int nfs4_SetCompoundExport(compound_data_t * data)
   if((exportid = nfs4_FhandleToExportId(&(data->currentFH))) == 0)
     return NFS4ERR_BADHANDLE;
 
-  pexport = nfs_Get_export_by_id(data->pfullexportlist, exportid);
+  pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid);
 
   if(pexport == NULL)
     {

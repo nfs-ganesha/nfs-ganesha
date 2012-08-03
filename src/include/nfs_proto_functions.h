@@ -1362,7 +1362,7 @@ void compound_data_Free(compound_data_t * data);
 
 #ifndef _USE_SWIG
 /* Pseudo FS functions */
-int nfs4_ExportToPseudoFS(exportlist_t * pexportlist);
+int nfs4_ExportToPseudoFS(struct glist_head * pexportlist);
 pseudofs_t *nfs4_GetPseudoFs(void);
 
 int nfs4_SetCompoundExport(compound_data_t * data);

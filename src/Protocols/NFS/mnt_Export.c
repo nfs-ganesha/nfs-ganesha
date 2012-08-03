@@ -87,7 +87,8 @@ int mnt_Export(nfs_arg_t *parg,
                nfs_res_t * pres)
 {
 
-  exportlist_t *p_current_item = pexport;       /* the current export item. */
+  exportlist_t *p_current_item;       /* the current export item. */
+  struct glist_head * glist;
 
   exports p_exp_out = NULL;     /* Pointer to the first export entry. */
   exports p_exp_current = NULL; /* Pointer to the last  export entry. */
@@ -100,8 +101,9 @@ int mnt_Export(nfs_arg_t *parg,
   memset(pres, 0, sizeof(nfs_res_t));
 
   /* for each existing export entry */
-  while(p_current_item)
+  glist_for_each(glist, nfs_param.pexportlist)
     {
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
 
       exports new_expnode;      /* the export node to be added to the list */
       int buffsize;
@@ -260,9 +262,6 @@ int mnt_Export(nfs_arg_t *parg,
           p_exp_out = new_expnode;
           p_exp_current = new_expnode;
         }
-
-      p_current_item = (exportlist_t *) (p_current_item->next);
-
     }
 
   /* return the pointer to the export list */

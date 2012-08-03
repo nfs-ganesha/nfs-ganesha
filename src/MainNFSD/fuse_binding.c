@@ -309,10 +309,10 @@ int ganefuse_main(int argc, char *argv[],
    * in config file (always '/')
    */
 
-  if(!nfs_param.pexportlist)
+  if(glist_empty(nfs_param.pexportlist))
     {
-      nfs_param.pexportlist = BuildDefaultExport();
-      if(nfs_param.pexportlist == NULL)
+      BuildDefaultExport();
+      if(glist_empty(nfs_param.pexportlist))
         {
           LogCrit(COMPONENT_MAIN,
                   "NFS MAIN: Could not create export entry for '/'");
