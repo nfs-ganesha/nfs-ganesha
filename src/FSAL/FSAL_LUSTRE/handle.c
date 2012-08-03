@@ -148,7 +148,7 @@ spcerr:
  * deprecated NULL parent && NULL path implies root handle
  */
 
-static fsal_status_t lookup(struct fsal_obj_handle *parent,
+static fsal_status_t lustre_lookup(struct fsal_obj_handle *parent,
 			    const char *path,
 			    struct fsal_obj_handle **handle)
 {
@@ -291,7 +291,7 @@ fileerr:
  * create a regular file and set its attributes
  */
 
-static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
+static fsal_status_t lustre_create(struct fsal_obj_handle *dir_hdl,
                             const char *name,
                             struct attrlist *attrib,
                             struct fsal_obj_handle **handle)
@@ -368,7 +368,7 @@ errout:
 	return fsalstat(fsal_error, retval);	
 }
 
-static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
+static fsal_status_t lustre_makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
 			     struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
@@ -442,7 +442,7 @@ errout:
 	return fsalstat(fsal_error, retval);	
 }
 
-static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
+static fsal_status_t lustre_makenode(struct fsal_obj_handle *dir_hdl,
                               const char *name,
                               object_file_type_t nodetype,  /* IN */
                               fsal_dev_t *dev,  /* IN */
@@ -557,7 +557,7 @@ errout:
  *  anyway (default is 0777) because open uses that target's mode
  */
 
-static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
+static fsal_status_t lustre_makesymlink(struct fsal_obj_handle *dir_hdl,
                                  const char *name,
                                  const char *link_path,
                                  struct attrlist *attrib,
@@ -640,7 +640,7 @@ errout:
 	return fsalstat(fsal_error, retval);	
 }
 
-static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
                                  char *link_content,
                                  size_t *link_len,
                                  bool_t refresh)
@@ -695,7 +695,7 @@ out:
 	return fsalstat(fsal_error, retval);	
 }
 
-static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t lustre_linkfile(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
@@ -755,7 +755,7 @@ struct linux_dirent {
  * @param eof [OUT] eof marker TRUE == end of dir
  */
 
-static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
+static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 				  uint32_t entry_cnt,
 				  struct fsal_cookie *whence,
 				  void *dir_state,
@@ -847,7 +847,7 @@ out:
 }
 
 
-static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
+static fsal_status_t lustre_renamefile(struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
@@ -883,7 +883,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
  * cache entry.
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t lustre_getattrs(struct fsal_obj_handle *obj_hdl,
                               struct attrlist *obj_attr)
 {
 	struct lustre_fsal_obj_handle *myself;
@@ -948,8 +948,8 @@ out:
  * NOTE: this is done under protection of the attributes rwlock in the cache entry.
  */
 
-static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
+static fsal_status_t lustre_setattrs(struct fsal_obj_handle *obj_hdl,
+			             struct attrlist *attrs)
 {
 	struct lustre_fsal_obj_handle *myself;
         char mypath[MAXPATHLEN] ;
@@ -1096,7 +1096,7 @@ static bool_t compare(struct fsal_obj_handle *obj_hdl,
  * size should really be off_t...
  */
 
-static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t lustre_file_truncate(struct fsal_obj_handle *obj_hdl,
 				   uint64_t length)
 {
 	struct lustre_fsal_obj_handle *myself;
@@ -1123,7 +1123,7 @@ errout:
  * unlink the named file in the directory
  */
 
-static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+static fsal_status_t lustre_file_unlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name)
 {
 	struct lustre_fsal_obj_handle *myself;
@@ -1169,7 +1169,7 @@ out:
  * the whole struct.
  */
 
-static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
+static fsal_status_t lustre_handle_digest(struct fsal_obj_handle *obj_hdl,
                                    fsal_digesttype_t output_type,
                                    struct gsh_buffdesc *fh_desc)
 {
@@ -1236,7 +1236,7 @@ errout:
  * after the handle is released.
  */
 
-static void handle_to_key(struct fsal_obj_handle *obj_hdl,
+static void lustre_handle_to_key(struct fsal_obj_handle *obj_hdl,
                           struct gsh_buffdesc *fh_desc)
 {
 	struct lustre_fsal_obj_handle *myself;
@@ -1294,20 +1294,20 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 void lustre_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
-	ops->lookup = lookup;
-	ops->readdir = read_dirents;
-	ops->create = create;
-	ops->mkdir = makedir;
-	ops->mknode = makenode;
-	ops->symlink = makesymlink;
-	ops->readlink = readsymlink;
+	ops->lookup = lustre_lookup;
+	ops->readdir = lustre_read_dirents;
+	ops->create = lustre_create;
+	ops->mkdir = lustre_makedir;
+	ops->mknode = lustre_makenode;
+	ops->symlink = lustre_makesymlink;
+	ops->readlink = lustre_readsymlink;
 	ops->test_access = fsal_test_access;
-	ops->getattrs = getattrs;
-	ops->setattrs = setattrs;
-	ops->link = linkfile;
-	ops->rename = renamefile;
-	ops->unlink = file_unlink;
-	ops->truncate = file_truncate;
+	ops->getattrs = lustre_getattrs;
+	ops->setattrs = lustre_setattrs;
+	ops->link = lustre_linkfile;
+	ops->rename = lustre_renamefile;
+	ops->unlink = lustre_file_unlink;
+	ops->truncate = lustre_file_truncate;
 	ops->open = lustre_open;
 	ops->status = lustre_status;
 	ops->read = lustre_read;
@@ -1317,8 +1317,8 @@ void lustre_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->close = lustre_close;
 	ops->lru_cleanup = lustre_lru_cleanup;
 	ops->compare = compare;
-	ops->handle_digest = handle_digest;
-	ops->handle_to_key = handle_to_key;
+	ops->handle_digest = lustre_handle_digest;
+	ops->handle_to_key = lustre_handle_to_key;
 }
 
 /* export methods that create object handles
