@@ -180,7 +180,6 @@ int main(int argc, char *argv[])
                                    EXPORT_OPTION_MD_WRITE_ACCESS | EXPORT_OPTION_MD_READ_ACCESS);
                 
                 /* This is critical */
-                pexport.new_access_list_version = 1;
                 pexport.options |= EXPORT_OPTION_ALL_ANONYMOUS;
                 pexport.anonymous_uid = ANON_UID;
                 pexport.anonymous_gid = ANON_GID;
@@ -253,18 +252,17 @@ int main(int argc, char *argv[])
               parseAccessParam("Access", match_str, &pexport, EXPORT_OPTION_READ_ACCESS|EXPORT_OPTION_WRITE_ACCESS);
             
             if (accesstype == OP_READ)
-              pexport.access_type = ACCESSTYPE_RO;
+              pexport.options |= EXPORT_OPTION_READ_ACCESS;
             else if (accesstype == OP_WRITE)
-              pexport.access_type = ACCESSTYPE_RW;
+              pexport.options |= EXPORT_OPTION_RW_ACCESS;
             else if (accesstype == OP_MDONLY_READ)
-              pexport.access_type = ACCESSTYPE_MDONLY_RO;
+              pexport.options |= EXPORT_OPTION_MD_READ_ACCESS;
             else if (accesstype == OP_MDONLY_WRITE)
-              pexport.access_type = ACCESSTYPE_MDONLY;
+              pexport.options |= EXPORT_OPTION_MD_ACCESS;
             else
               printf("FAIL: INVALID access_type \n");
             
             /* This is critical */
-            pexport.new_access_list_version = 0;
             pexport.options |= EXPORT_OPTION_ALL_ANONYMOUS;
             pexport.anonymous_uid = ANON_UID;
             pexport.anonymous_gid = ANON_GID;

@@ -315,9 +315,6 @@ int main(int argc, char *argv[])
 		parseAccessParam("MDONLY_Access", match_str, &pexport,
 				 EXPORT_OPTION_MD_WRITE_ACCESS | EXPORT_OPTION_MD_READ_ACCESS);
 
-	      /* This is critical */
-	      pexport.new_access_list_version = 1;
-
               /* With this export entry test both root and user access. */
               for(root_user=0; root_user < 2; root_user++)
                 for(operation=0; operation < 5; operation++)
@@ -370,19 +367,16 @@ int main(int argc, char *argv[])
 	  parseAccessParam("Access", match_str, &pexport, EXPORT_OPTION_READ_ACCESS|EXPORT_OPTION_WRITE_ACCESS);
 
 	if (accesstype == TEST_READ)
-	  pexport.access_type = ACCESSTYPE_RO;
+	  pexport.options |= EXPORT_OPTION_READ_ACCESS;
 	else if (accesstype == TEST_WRITE)
-	  pexport.access_type = ACCESSTYPE_RW;
+	  pexport.options |= EXPORT_OPTION_RW_ACCESS;
 	else if (accesstype == MDONLY_READ)
-	  pexport.access_type = ACCESSTYPE_MDONLY_RO;
+	  pexport.options |= EXPORT_OPTION_MD_READ_ACCESS;
 	else if (accesstype == MDONLY_WRITE)
-	  pexport.access_type = ACCESSTYPE_MDONLY;
+	  pexport.options |= EXPORT_OPTION_MD_ACCESS;
 	else
 	  printf("FAIL: INVALID access_type \n");
 
-	/* This is critical */
-	pexport.new_access_list_version = 0;
-	
 	/* With this export entry test both root and user access. */
 	for(root_user=0; root_user < 2; root_user++)
 	  for(operation=0; operation < 5; operation++)

@@ -97,15 +97,6 @@ typedef struct exportlist_client_gss__
   char princname[GSS_DEFINE_LEN_TEMP];
 } exportlist_client_gss_t;
 
-typedef enum exportlist_access_type__
-{
-  ACCESSTYPE_RW        = 1,     /* All operations are allowed                */
-  ACCESSTYPE_RO        = 2,     /* Filesystem is readonly (nfs_read allowed) */
-  ACCESSTYPE_MDONLY    = 3,     /* Data operations are forbidden             */
-  ACCESSTYPE_MDONLY_RO = 4      /* Data operations are forbidden,
-                                   and the filesystem is read-only.          */
-} exportlist_access_type_t;
-
 typedef enum exportlist_client_type__
 { 
   HOSTIF_CLIENT       = 1,
@@ -175,12 +166,6 @@ typedef struct exportlist__
   char FS_tag[MAXPATHLEN];      /* filesystem "tag" string */
   fsal_export_context_t FS_export_context;      /* the export context associated with this export entry */
 
-  exportlist_access_type_t access_type; /* allowed operations for this export. Used by the older Access
-                                         * list Access_Type export permissions scheme as well as the newer
-                                         * R_Access, RW_Access, MDONLY_Access, MDONLY_R_Access lists.*/
-  bool_t new_access_list_version;   /* the new access list version (TRUE) is teh *_Access lists.
-                                     * The old (FALSE) is Access and Access_Type. */
-
   fsal_fsid_t filesystem_id;    /* fileset id         */
   fsal_handle_t *proot_handle;  /* FSAL handle for the root of the file system */
 
@@ -243,6 +228,10 @@ typedef struct exportlist__
                                        EXPORT_OPTION_MD_READ_ACCESS)
 #define EXPORT_OPTION_MODIFY_ACCESS   (EXPORT_OPTION_WRITE_ACCESS | \
                                        EXPORT_OPTION_MD_WRITE_ACCESS)
+#define EXPORT_OPTION_ACCESS_TYPE     (EXPORT_OPTION_READ_ACCESS     | \
+                                       EXPORT_OPTION_WRITE_ACCESS    | \
+                                       EXPORT_OPTION_MD_WRITE_ACCESS | \
+                                       EXPORT_OPTION_MD_READ_ACCESS)
 #define EXPORT_OPTION_ALL_ACCESS       (EXPORT_OPTION_ROOT            | \
                                        EXPORT_OPTION_ALL_ANONYMOUS   | \
                                        EXPORT_OPTION_READ_ACCESS     | \

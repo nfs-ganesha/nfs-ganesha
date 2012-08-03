@@ -118,11 +118,8 @@
 /** @todo : add encrypt handles option */
 
 /* Internal identifiers */
-#define FLAG_EXPORT_ID            0x000000001
-#define FLAG_EXPORT_PATH          0x000000002
-
-#define FLAG_EXPORT_ROOT_OR_ACCESS 0x000000004
-
+#define FLAG_EXPORT_ID              0x000000001
+#define FLAG_EXPORT_PATH            0x000000002
 #define FLAG_EXPORT_PSEUDO          0x000000010
 #define FLAG_EXPORT_ACCESSTYPE      0x000000020
 #define FLAG_EXPORT_ANON_ROOT       0x000000040
@@ -146,7 +143,6 @@
 #define FLAG_EXPORT_MAX_CACHE_SIZE  0x001000000
 #define FLAG_EXPORT_USE_PNFS        0x002000000
 #define FLAG_EXPORT_ACCESS_LIST     0x004000000
-#define FLAG_EXPORT_ACCESSTYPE_LIST 0x008000000
 #define FLAG_EXPORT_ANON_GROUP      0x010000000
 #define FLAG_EXPORT_ALL_ANON        0x020000000
 #define FLAG_EXPORT_ANON_USER       0x040000000
@@ -591,7 +587,7 @@ static int BuildExportEntry(config_item_t block,
 
   unsigned int mandatory_options =
       (FLAG_EXPORT_ID | FLAG_EXPORT_PATH |
-       FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_PSEUDO);
+       FLAG_EXPORT_ACCESS_LIST | FLAG_EXPORT_PSEUDO);
 
   /* the given options */
 
@@ -606,7 +602,6 @@ static int BuildExportEntry(config_item_t block,
     return ENOMEM;
 
   p_entry->status = EXPORTLIST_OK;
-  p_entry->access_type = ACCESSTYPE_RW;
   p_entry->anonymous_uid = (uid_t) ANON_UID;
   p_entry->anonymous_gid = (gid_t) ANON_GID;
   p_entry->use_commit = TRUE;
@@ -782,7 +777,7 @@ static int BuildExportEntry(config_item_t block,
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
-          set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
+          set_options |= FLAG_EXPORT_ACCESS_LIST;
 
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESS))
@@ -796,7 +791,7 @@ static int BuildExportEntry(config_item_t block,
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
-	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESS_LIST;
+	  set_options |= FLAG_EXPORT_ACCESS_LIST;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MD_ACCESS))
         {
@@ -809,7 +804,7 @@ static int BuildExportEntry(config_item_t block,
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
-	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESSTYPE_LIST;
+	  set_options |= FLAG_EXPORT_ACCESS_LIST;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MD_RO_ACCESS))
         {
@@ -822,7 +817,7 @@ static int BuildExportEntry(config_item_t block,
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
-	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESSTYPE_LIST;
+	  set_options |= FLAG_EXPORT_ACCESS_LIST;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_READ_ACCESS))
         {
@@ -835,7 +830,7 @@ static int BuildExportEntry(config_item_t block,
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
-	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESSTYPE_LIST;
+	  set_options |= FLAG_EXPORT_ACCESS_LIST;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_READWRITE_ACCESS))
         {
@@ -848,7 +843,7 @@ static int BuildExportEntry(config_item_t block,
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
-	  set_options |= FLAG_EXPORT_ROOT_OR_ACCESS | FLAG_EXPORT_ACCESSTYPE_LIST;
+	  set_options |= FLAG_EXPORT_ACCESS_LIST;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {
@@ -888,26 +883,33 @@ static int BuildExportEntry(config_item_t block,
               continue;
             }
 
+          p_entry->options &= ~EXPORT_OPTION_ACCESS_TYPE;
+
           if(!STRCMP(var_value, "RW"))
             {
-              p_entry->access_type = ACCESSTYPE_RW;
+              p_entry->options |= EXPORT_OPTION_RW_ACCESS;
             }
           else if(!STRCMP(var_value, "RO"))
             {
-              p_entry->access_type = ACCESSTYPE_RO;
+              p_entry->options |= EXPORT_OPTION_READ_ACCESS;
             }
           else if(!STRCMP(var_value, "MDONLY"))
             {
-              p_entry->access_type = ACCESSTYPE_MDONLY;
+              p_entry->options |= EXPORT_OPTION_MD_ACCESS;
             }
           else if(!STRCMP(var_value, "MDONLY_RO"))
             {
-              p_entry->access_type = ACCESSTYPE_MDONLY_RO;
+              p_entry->options |= EXPORT_OPTION_MD_READ_ACCESS;
+            }
+          else if(!STRCMP(var_value, "NONE"))
+            {
+              LogFullDebug(COMPONENT_CONFIG,
+                           "Export access type NONE");
             }
           else
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid access type \"%s\". Values can be: RW, RO, MDONLY, MDONLY_RO.",
+                      "NFS READ_EXPORT: ERROR: Invalid access type \"%s\". Values can be: RW, RO, MDONLY, MDONLY_RO, NONE.",
                       var_value);
               err_flag = TRUE;
               continue;
@@ -2022,7 +2024,7 @@ static int BuildExportEntry(config_item_t block,
                 "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                 CONF_EXPORT_PATH);
 
-      if((set_options & FLAG_EXPORT_ROOT_OR_ACCESS) != FLAG_EXPORT_ROOT_OR_ACCESS)
+      if((set_options & FLAG_EXPORT_ACCESS_LIST) != FLAG_EXPORT_ACCESS_LIST)
         LogCrit(COMPONENT_CONFIG,
                 "NFS READ_EXPORT: ERROR: Must have at least one of %s, %s, %s, %s, %s, or %s",
                 CONF_EXPORT_ACCESS,      CONF_EXPORT_ROOT,
@@ -2036,22 +2038,6 @@ static int BuildExportEntry(config_item_t block,
 
       err_flag = TRUE;
     }
-
-  if (
-      ((set_options & FLAG_EXPORT_ACCESSTYPE) || (set_options & FLAG_EXPORT_ACCESS_LIST)) &&
-      (set_options & FLAG_EXPORT_ACCESSTYPE_LIST))
-    {
-      LogCrit(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: %s list cannot be used when %s and/or %s are used in the same export entry config.",
-              CONF_EXPORT_READWRITE_ACCESS, CONF_EXPORT_ACCESSTYPE,
-              CONF_EXPORT_ACCESS);
-      err_flag = TRUE;
-    }
-
-  if ((set_options & FLAG_EXPORT_ACCESSTYPE) || (set_options & FLAG_EXPORT_ACCESS_LIST))
-    p_entry->new_access_list_version = FALSE;
-  else
-    p_entry->new_access_list_version = TRUE;
 
   /* check if there had any error.
    * if so, free the p_entry and return an error.
@@ -2093,22 +2079,18 @@ exportlist_t *BuildDefaultExport()
   int rc;
 
   /* allocates new export entry */
-  p_entry = gsh_malloc(sizeof(exportlist_t));
+  p_entry = gsh_calloc(1, sizeof(exportlist_t));
 
   if(p_entry == NULL)
     return NULL;
 
   /** @todo set default values here */
 
-  p_entry->next = NULL;
-  p_entry->options = 0;
   p_entry->status = EXPORTLIST_OK;
-  p_entry->clients.num_clients = 0;
-  p_entry->access_type = ACCESSTYPE_RW;
   p_entry->anonymous_uid = (uid_t) ANON_UID;
-  p_entry->MaxOffsetWrite = (fsal_off_t) 0;
-  p_entry->MaxOffsetRead = (fsal_off_t) 0;
-  p_entry->MaxCacheSize = (fsal_off_t) 0;
+
+  /* By default, export is RW */
+  p_entry->options |= EXPORT_OPTION_RW_ACCESS;
 
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;

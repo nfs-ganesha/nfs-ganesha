@@ -137,24 +137,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 #endif /* _PNFS_DS */
 
-  /* Manage access type */
-  switch( data->pexport->access_type )
-   {
-     case ACCESSTYPE_MDONLY:
-     case ACCESSTYPE_MDONLY_RO:
-        res_WRITE4.status = NFS4ERR_DQUOT;
-        return res_WRITE4.status;
-        break ;
-
-     case ACCESSTYPE_RO:
-        res_WRITE4.status = NFS4ERR_ROFS ;
-        return res_WRITE4.status;
-        break ;
-
-     default:
-        break ;
-   } /* switch( data->pexport->access_type ) */
-
   /* vnode to manage is the current one */
   pentry = data->current_entry;
 

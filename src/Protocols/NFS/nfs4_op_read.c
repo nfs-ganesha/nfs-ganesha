@@ -126,14 +126,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     }
 #endif /* _PNFS_DS */
 
-  /* Manage access type MDONLY */
-  if(( data->pexport->access_type == ACCESSTYPE_MDONLY ) ||
-     ( data->pexport->access_type == ACCESSTYPE_MDONLY_RO ) )
-    {
-      res_READ4.status = NFS4ERR_DQUOT;
-      return res_READ4.status;
-    }
-
   /* vnode to manage is the current one */
   pentry = data->current_entry;
 
