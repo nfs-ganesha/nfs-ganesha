@@ -516,7 +516,6 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
 
     {
         struct stat root_stat;
-        int mnt_id = 0;
         struct file_handle *fh = alloca (sizeof (struct file_handle)
                                          + HANDLE_SIZE);
 
