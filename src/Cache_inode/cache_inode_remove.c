@@ -243,8 +243,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
                         uint32_t flags)
 {
      cache_entry_t *to_remove_entry = NULL;
-     fsal_attrib_list_t to_remove_attrs;
-     fsal_attrib_list_t entry_attrs;
+     struct attrlist to_remove_attrs;
+     struct attrlist entry_attrs;
      fsal_status_t fsal_status = {0, 0};
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
