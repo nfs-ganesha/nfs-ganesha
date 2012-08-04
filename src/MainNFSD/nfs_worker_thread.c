@@ -724,10 +724,11 @@ int nfs_rpc_get_args(nfs_request_data_t *preqnfs,
  * This is the regular RPC dispatcher that every RPC server should include.
  *
  * @param[in,out] preq NFS request
+ * @param[in,out] worker_data worker thread context
  *
  */
 static void nfs_rpc_execute(request_data_t *preq,
-                            nfs_worker_data_t *pworker_data)
+                            nfs_worker_data_t *worker_data)
 {
   unsigned int export_check_result;
   exportlist_t *pexport = NULL;
@@ -747,7 +748,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   bool do_dupreq_cache;
   int port, rc;
 
-  struct timeval *timer_start = &pworker_data->timer_start;
+  struct timeval *timer_start = &worker_data->timer_start;
   struct timeval timer_end;
   struct timeval timer_diff;
   struct timeval queue_timer_diff;
@@ -775,9 +776,9 @@ static void nfs_rpc_execute(request_data_t *preq,
                    (int)req->rq_prog, (int)req->rq_vers,
                    (int)req->rq_proc);
       /* XXX move lock wrapper into RPC API */
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      svc_dplx_lock_x(xprt, &worker_data->sigmask);
       svcerr_systemerr2(xprt, req);
-      svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+      svc_dplx_unlock_x(xprt, &worker_data->sigmask);
       return;
     }
 
@@ -821,7 +822,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                      "Before svc_sendreply on socket %d (dup req)",
                      xprt->xp_fd);
 
-        svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+        svc_dplx_lock_x(xprt, &worker_data->sigmask);
         if(svc_sendreply2
            (xprt, req, preqnfs->pfuncdesc->xdr_encode_func,
             (caddr_t) res_nfs) == FALSE)
@@ -840,7 +841,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                    "active thread will reply",
                    req->rq_xid);
       /* Free the arguments */
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      svc_dplx_lock_x(xprt, &worker_data->sigmask);
       /* Ignore the request, send no error */
       goto freeargs;
 
@@ -849,7 +850,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       LogCrit(COMPONENT_DISPATCH,
               "DUP: Did not find the request in the duplicate request cache "
               "and couldn't add the request.");
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      svc_dplx_lock_x(xprt, &worker_data->sigmask);
       svcerr_systemerr2(xprt, req);
       goto freeargs;
       break;
@@ -858,7 +859,7 @@ static void nfs_rpc_execute(request_data_t *preq,
     case DUPREQ_INSERT_MALLOC_ERROR:
       LogCrit(COMPONENT_DISPATCH,
               "DUP: Cannot process request, not enough memory available!");
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      svc_dplx_lock_x(xprt, &worker_data->sigmask);
       svcerr_systemerr2(xprt, req);
       goto freeargs;
       break;
@@ -867,7 +868,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       LogCrit(COMPONENT_DISPATCH,
               "DUP: Unknown duplicate request cache status. This should never "
               "be reached!");
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      svc_dplx_lock_x(xprt, &worker_data->sigmask);
       svcerr_systemerr2(xprt, req);
       goto freeargs;
       break;
@@ -915,7 +916,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                                (int)req->rq_proc, dumpfh);
                     }
                   /* Bad argument */
-                  svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+                  svc_dplx_lock_x(xprt, &worker_data->sigmask);
                   svcerr_auth2(xprt, req, AUTH_FAILED);
                   if (do_dupreq_cache &&
                       (nfs_dupreq_delete(req) != DUPREQ_SUCCESS))
@@ -967,7 +968,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                                (int)req->rq_proc, dumpfh);
                     }
                   /* Bad argument */
-                  svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+                  svc_dplx_lock_x(xprt, &worker_data->sigmask);
                   svcerr_auth2(xprt, req, AUTH_FAILED);
                   if (do_dupreq_cache &&
                       (nfs_dupreq_delete(req) != DUPREQ_SUCCESS))
@@ -1074,7 +1075,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                            (int)req->rq_proc, dumpfh);
                 }
               /* Bad argument */
-              svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+              svc_dplx_lock_x(xprt, &worker_data->sigmask);
               svcerr_auth2(xprt, req, AUTH_FAILED);
               if (do_dupreq_cache &&
                   (nfs_dupreq_delete(req) != DUPREQ_SUCCESS))
@@ -1105,7 +1106,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       /* Test if export allows the authentication provided */
       if (nfs_export_check_security(req, pexport) == FALSE)
         {
-            svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+            svc_dplx_lock_x(xprt, &worker_data->sigmask);
             svcerr_auth2(xprt, req, AUTH_TOOWEAK);
             if (do_dupreq_cache &&
                 (nfs_dupreq_delete(req) != DUPREQ_SUCCESS))
@@ -1127,7 +1128,7 @@ static void nfs_rpc_execute(request_data_t *preq,
    * It is now time for checking if export list allows the machine to perform
    * the request
    */
-  pworker_data->hostaddr = hostaddr;
+  worker_data->hostaddr = hostaddr;
 
   /* Check if client is using a privileged port, but only for NFS protocol */
   if ((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
@@ -1139,9 +1140,9 @@ static void nfs_rpc_execute(request_data_t *preq,
           LogInfo(COMPONENT_DISPATCH,
                   "Port %d is too high for this export entry, rejecting client",
                   port);
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          svc_dplx_lock_x(xprt, &worker_data->sigmask);
           svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-          pworker_data->current_xid = 0; /* No more xid managed */
+          worker_data->current_xid = 0; /* No more xid managed */
           if (do_dupreq_cache &&
               (nfs_dupreq_delete(req) != DUPREQ_SUCCESS))
             {
@@ -1166,9 +1167,9 @@ static void nfs_rpc_execute(request_data_t *preq,
         {
           LogInfo(COMPONENT_DISPATCH,
                   "could not get uid and gid, rejecting client");
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          svc_dplx_lock_x(xprt, &worker_data->sigmask);
           svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-          pworker_data->current_xid = 0; /* No more xid managed */
+          worker_data->current_xid = 0; /* No more xid managed */
 
           if(do_dupreq_cache && nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
             {
@@ -1187,12 +1188,12 @@ static void nfs_rpc_execute(request_data_t *preq,
      LogFullDebug(COMPONENT_DISPATCH,
                   "nfs_rpc_execute about to call nfs_export_check_access");
      export_check_result = nfs_export_check_access(
-         &pworker_data->hostaddr,
+         &worker_data->hostaddr,
          req,
          pexport,
          nfs_param.core_param.program[P_NFS],
          nfs_param.core_param.program[P_MNT],
-         pworker_data->ht_ip_stats,
+         worker_data->ht_ip_stats,
          ip_stats_pool,
          &related_client,
          &user_credentials,
@@ -1216,9 +1217,9 @@ static void nfs_rpc_execute(request_data_t *preq,
               "proc=%d",
               addrbuf,
               (int)req->rq_vers, (int)req->rq_proc);
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      svc_dplx_lock_x(xprt, &worker_data->sigmask);
       svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-      pworker_data->current_xid = 0; /* No more xid managed */
+      worker_data->current_xid = 0; /* No more xid managed */
       if (do_dupreq_cache &&
           (nfs_dupreq_delete(req) != DUPREQ_SUCCESS))
         {
@@ -1278,9 +1279,9 @@ static void nfs_rpc_execute(request_data_t *preq,
             {
               LogInfo(COMPONENT_DISPATCH,
                       "authentication failed, rejecting client");
-              svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+              svc_dplx_lock_x(xprt, &worker_data->sigmask);
               svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-              pworker_data->current_xid = 0; /* No more xid managed */
+              worker_data->current_xid = 0; /* No more xid managed */
               if (do_dupreq_cache &&
                   (nfs_dupreq_delete(req) != DUPREQ_SUCCESS))
                 {
@@ -1292,7 +1293,7 @@ static void nfs_rpc_execute(request_data_t *preq,
               goto freeargs;
             }
 #if 0 /* XXXX lieb: breakage? */
-          pworker_data->user_credentials = user_credentials;
+          worker_data->user_credentials = user_credentials;
 #endif
         }
 
@@ -1302,7 +1303,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       req_ctx.caller_addr = &hostaddr;
 
       /* processing */
-      P(pworker_data->request_pool_mutex); /* timer_start is thread var */
+      P(worker_data->request_pool_mutex); /* timer_start is thread var */
       gettimeofday(timer_start, NULL);
 
       LogDebug(COMPONENT_DISPATCH,
@@ -1311,7 +1312,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                preqnfs->pfuncdesc->funcname,
                (unsigned long long)timer_start->tv_sec,
                (unsigned long long)timer_start->tv_usec);
-      V(pworker_data->request_pool_mutex);
+      V(worker_data->request_pool_mutex);
 
 #ifdef _ERROR_INJECTION
       if(worker_delay_time != 0)
@@ -1328,7 +1329,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           arg_nfs,
           pexport,
           &req_ctx,
-          pworker_data,
+          worker_data,
           req,
           res_nfs);
     }
@@ -1338,16 +1339,16 @@ static void nfs_rpc_execute(request_data_t *preq,
 
   /* process time */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
-  P(pworker_data->request_pool_mutex);
+  P(worker_data->request_pool_mutex);
   timer_diff = time_diff(*timer_start, timer_end);
 
   /* this thread is done, reset the timer start to avoid long processing */
   memset(timer_start, 0, sizeof(struct timeval));
-  V(pworker_data->request_pool_mutex);
+  V(worker_data->request_pool_mutex);
   latency_stat.type = SVC_TIME;
   latency_stat.latency = timer_diff.tv_sec * 1000000
     + timer_diff.tv_usec; /* microseconds */
-  nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), req,
+  nfs_stat_update(stat_type, &(worker_data->stats.stat_req), req,
                   &latency_stat);
 
   if ((req->rq_prog == nfs_param.core_param.program[P_MNT]) ||
@@ -1360,7 +1361,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   /* Update per-share counter and process time */
   if (update_per_share_stats) {
       nfs_stat_update(stat_type,
-                      &(pexport->worker_stats[pworker_data->worker_index].
+                      &(pexport->worker_stats[worker_data->worker_index].
                         stat_req),
                       req, &latency_stat);
   }
@@ -1370,22 +1371,22 @@ static void nfs_rpc_execute(request_data_t *preq,
   latency_stat.type = AWAIT_TIME;
   latency_stat.latency = queue_timer_diff.tv_sec * 1000000
     + queue_timer_diff.tv_usec; /* microseconds */
-  nfs_stat_update(GANESHA_STAT_SUCCESS, &(pworker_data->stats.stat_req), req,
+  nfs_stat_update(GANESHA_STAT_SUCCESS, &(worker_data->stats.stat_req), req,
                   &latency_stat);
 
   /* Update per-share process time + queue time */
   if (update_per_share_stats) {
       nfs_stat_update(GANESHA_STAT_SUCCESS,
-                      &(pexport->worker_stats[pworker_data->worker_index].
+                      &(pexport->worker_stats[worker_data->worker_index].
                         stat_req),
                       req, &latency_stat);
 
       /* Update per-share total counters */
-      pexport->worker_stats[pworker_data->worker_index].nb_total_req += 1;
+      pexport->worker_stats[worker_data->worker_index].nb_total_req += 1;
   }
 
   /* Update total counters */
-  pworker_data->stats.nb_total_req += 1;
+  worker_data->stats.nb_total_req += 1;
 
   if(timer_diff.tv_sec >= nfs_param.core_param.long_processing_threshold)
     LogEvent(COMPONENT_DISPATCH,
@@ -1414,9 +1415,9 @@ static void nfs_rpc_execute(request_data_t *preq,
   if(req->rq_vers == NFS_V4)
       if(req->rq_proc == NFSPROC4_COMPOUND)
           nfs4_op_stat_update(arg_nfs, res_nfs,
-                              &(pworker_data->stats.stat_req));
+                              &(worker_data->stats.stat_req));
 
-  pworker_data->current_xid = 0; /* No more xid managed */
+  worker_data->current_xid = 0; /* No more xid managed */
 
   /* If request is dropped, no return to the client */
   if(rc == NFS_REQ_DROP)
@@ -1446,7 +1447,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                    "Before svc_sendreply on socket %d",
                    xprt->xp_fd);
 
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      svc_dplx_lock_x(xprt, &worker_data->sigmask);
 
       /* encoding the result on xdr output */
       if(svc_sendreply2(xprt, req, preqnfs->pfuncdesc->xdr_encode_func,
@@ -1494,7 +1495,7 @@ freeargs:
   }
 
   /* XXX we must hold xprt lock across SVC_FREEARGS */
-  svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+  svc_dplx_unlock_x(xprt, &worker_data->sigmask);
 
   /* Finalize the request. */
   if (res_nfs)
@@ -1650,20 +1651,20 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *nfsreq,
  *
  * Executes 9P request
  *
- * @param nfsreq      [INOUT] pointer to 9p request
- * @param pworker_data [INOUT] pointer to worker's specific data
+ * @param req9p       [INOUT] pointer to 9p request
+ * @param worker_data [INOUT] pointer to worker's specific data
  *
  * @return nothing (void function)
  *
  */
-static void _9p_execute( _9p_request_data_t * preq9p, 
-                          nfs_worker_data_t * pworker_data)
+static void _9p_execute( _9p_request_data_t *req9p, 
+                          nfs_worker_data_t *worker_data)
 {
   if( preq9p->pconn->trans_type == _9P_TCP )
-    _9p_tcp_process_request( preq9p, pworker_data ) ;
+    _9p_tcp_process_request( req9p, worker_data ) ;
 #ifdef _USE_9P_RDMA
   else if( preq9p->pconn->trans_type == _9P_RDMA )
-     _9p_rdma_process_request( preq9p, pworker_data ) ;
+     _9p_rdma_process_request( req9p, worker_data ) ;
 #endif
 
   return ;
