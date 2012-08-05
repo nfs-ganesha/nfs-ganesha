@@ -836,6 +836,7 @@ HashTable_DeleteLatched(struct hash_table *ht,
      RBT_UNLINK(&partition->rbt, latch->locator);
      pool_free(ht->data_pool, data);
      pool_free(ht->node_pool, latch->locator);
+     --ht->partitions[latch->index].count;
 
      HashTable_ReleaseLatched(ht, latch);
      return HASHTABLE_SUCCESS;
