@@ -678,6 +678,7 @@ void nfs_set_param_default()
   nfs_param.extern_param.snmp_adm.export_nfs_calls_detail = FALSE;
   nfs_param.extern_param.snmp_adm.export_fsal_calls_detail = FALSE;
 #endif
+  init_glist(&nfs_param.extern_param.stat_export.allowed_clients.client_list);
 }                               /* nfs_set_param_default */
 
 /**

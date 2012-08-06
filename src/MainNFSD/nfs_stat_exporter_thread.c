@@ -114,7 +114,7 @@ int stat_export_check_access(sockaddr_t                * hostaddr,
 static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
                                              exportlist_client_t *clients)
 {
-  int rc = 0, err_flag __attribute__((unused)) = FALSE;
+  int rc = 0;
   char *expended_node_list;
 
   /* temp array of clients */
@@ -128,7 +128,6 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 
   if(count <= 0)
     {
-      err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
               "STAT_EXPORT_ACCESS: ERROR: Invalid format for client list in EXPORT::%s definition",
               var_name);
@@ -137,7 +136,6 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
     }
   else if(count > EXPORT_MAX_CLIENTS)
     {
-      err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
               "STAT_EXPORT_ACCESS: ERROR: Client list too long (%d>%d)",
               count, EXPORT_MAX_CLIENTS);
@@ -162,36 +160,24 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 
   if(rc < 0)
     {
-      err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
               "STAT_EXPORT_ACCESS: ERROR: Client list too long (>%d)", count);
 
-      /* free client strings */
-      for(idx = 0; idx < count; idx++)
-        gsh_free(client_list[idx]);
-
-      return rc;
+      goto out;
     }
 
-  rc = nfs_AddClientsToClientArray( clients, rc,
-                                    (char **)client_list,
-                                    EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS,
-                                    var_name);
+  rc = nfs_AddClientsToClientList(clients, rc,
+                                  (char **)client_list,
+                                  EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS,
+                                  var_name);
   if(rc != 0)
     {
-      err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
               "STAT_EXPORT_ACCESS: ERROR: Invalid client found in \"%s\"",
               var_value);
-
-      /* free client strings */
-      for(idx = 0; idx < count; idx++)
-        gsh_free(client_list[idx]);
-
-      return rc;
     }
 
-  /* everything is OK */
+ out:
 
   /* free client strings */
   for(idx = 0; idx < count; idx++)

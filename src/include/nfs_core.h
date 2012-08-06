@@ -725,10 +725,13 @@ int nfs_read_session_id_conf(config_file_t in_config,
 
 int nfs_export_create_root_entry(struct glist_head * pexportlist);
 
-/* Add a list of clients to the client array of either an exports entry or
- * another service that has a client array (like snmp or statistics exporter) */
-int nfs_AddClientsToClientArray(exportlist_client_t *clients, int new_clients_number,
-    char **new_clients_name, int option, char * var_name);
+/* Add a list of clients to the client list of either an exports entry or
+ * another service that has a client list (like snmp or statistics exporter) */
+int nfs_AddClientsToClientList(exportlist_client_t * clients,
+                               int                   new_clients_number,
+                               char               ** new_clients_name,
+                               int                   option,
+                               char                * var_name);
 
 int parseAccessParam(char *var_name, char *var_value,
                      exportlist_t *p_entry, int access_option);

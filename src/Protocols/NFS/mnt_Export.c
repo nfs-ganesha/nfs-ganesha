@@ -93,7 +93,7 @@ int mnt_Export(nfs_arg_t *parg,
   exports p_exp_out = NULL;     /* Pointer to the first export entry. */
   exports p_exp_current = NULL; /* Pointer to the last  export entry. */
 
-  unsigned int i;
+  unsigned int i = 0;
 
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Export");
 
@@ -106,7 +106,6 @@ int mnt_Export(nfs_arg_t *parg,
       p_current_item = glist_entry(glist, exportlist_t, exp_list);
 
       exports new_expnode;      /* the export node to be added to the list */
-      int buffsize;
 
       new_expnode = gsh_calloc(1,sizeof(exportnode));
 
@@ -115,15 +114,10 @@ int mnt_Export(nfs_arg_t *parg,
       /* we set the export path */
 
       LogFullDebug(COMPONENT_NFSPROTO,
-                   "MNT_EXPORT: Export entry: %s | Numclients: %d | PtrClients: %p",
-                   p_current_item->fullpath, p_current_item->clients.num_clients,
-                   p_current_item->clients.clientarray);
+                   "Export entry: %s, Numclients: %d",
+                   p_current_item->fullpath, p_current_item->clients.num_clients);
 
-      buffsize = strlen(p_current_item->fullpath) + 1;
-
-      new_expnode->ex_dir = gsh_calloc(1,buffsize);
-
-      strncpy(new_expnode->ex_dir, p_current_item->fullpath, buffsize);
+      new_expnode->ex_dir = gsh_strdup(p_current_item->fullpath);
 
       /* ---- ex_groups ---- */
 
@@ -131,6 +125,7 @@ int mnt_Export(nfs_arg_t *parg,
 
       if(p_current_item->clients.num_clients > 0)
         {
+          struct glist_head * glist_cl;
 
           /* Alias, to make the code slim... */
           exportlist_client_t *p_clients = &(p_current_item->clients);
@@ -139,8 +134,14 @@ int mnt_Export(nfs_arg_t *parg,
           new_expnode->ex_groups =
                gsh_calloc(p_clients->num_clients, sizeof(groupnode));
 
-          for(i = 0; i < p_clients->num_clients; i++)
+          i = 0;
+
+          glist_for_each(glist_cl, &p_current_item->clients.client_list)
             {
+              exportlist_client_entry_t * p_client_entry;
+              p_client_entry = glist_entry(glist_cl, exportlist_client_entry_t, cle_list);
+
+              LogClientListEntry(COMPONENT_NFSPROTO, p_client_entry);
 
               /* ---- gr_next ----- */
 
@@ -151,7 +152,7 @@ int mnt_Export(nfs_arg_t *parg,
 
               /* ---- gr_name ----- */
 
-              switch (p_clients->clientarray[i].type)
+              switch (p_client_entry->type)
                 {
                 case HOSTIF_CLIENT:
 
@@ -159,13 +160,24 @@ int mnt_Export(nfs_arg_t *parg,
                   new_expnode->ex_groups[i].gr_name
                        = gsh_calloc(1, INET_ADDRSTRLEN + 1);
 
+                  if(new_expnode->ex_groups[i].gr_name == NULL)
+                    {
+                      LogCrit(COMPONENT_NFSPROTO,
+                              "Could not allocate memory for response");
+                      break;
+                    }
+
                   if(inet_ntop
-                     (AF_INET, &(p_clients->clientarray[i].client.hostif.clientaddr),
+                     (AF_INET, &(p_client_entry->client.hostif.clientaddr),
                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
                     {
                       strncpy(new_expnode->ex_groups[i].gr_name, "Invalid Host address",
-                              MAXHOSTNAMELEN);
+                              INET_ADDRSTRLEN);
                     }
+
+                  LogFullDebug(COMPONENT_NFSPROTO,
+                               "%p HOSTIF_CLIENT=%s",
+                               p_client_entry, new_expnode->ex_groups[i].gr_name);
 
                   break;
 
@@ -175,14 +187,20 @@ int mnt_Export(nfs_arg_t *parg,
                   new_expnode->ex_groups[i].gr_name
                        = gsh_calloc(1, INET_ADDRSTRLEN + 1);
 
+                  if(new_expnode->ex_groups[i].gr_name == NULL)
+                    {
+                      LogCrit(COMPONENT_NFSPROTO,
+                              "Could not allocate memory for response");
+                      break;
+                    }
+
                   if(inet_ntop
-                     (AF_INET, &(p_clients->clientarray[i].client.network.netaddr),
+                     (AF_INET, &(p_client_entry->client.network.netaddr),
                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
                     {
                       strncpy(new_expnode->ex_groups[i].gr_name,
                               "Invalid Network address", MAXHOSTNAMELEN);
                     }
-
                   break;
 
                 case NETGROUP_CLIENT:
@@ -190,34 +208,42 @@ int mnt_Export(nfs_arg_t *parg,
                   /* allocates target buffer */
 
                   new_expnode->ex_groups[i].gr_name
-                       = gsh_calloc(1, MAXHOSTNAMELEN);
+                       = gsh_strdup(p_client_entry->client.netgroup.netgroupname);
 
-                  strncpy(new_expnode->ex_groups[i].gr_name,
-                          p_clients->clientarray[i].client.netgroup.netgroupname,
-                          MAXHOSTNAMELEN);
-
+                  if(new_expnode->ex_groups[i].gr_name == NULL)
+                    {
+                      LogCrit(COMPONENT_NFSPROTO,
+                              "Could not allocate memory for response");
+                      break;
+                    }
                   break;
 
                 case WILDCARDHOST_CLIENT:
 
                   /* allocates target buffer */
                   new_expnode->ex_groups[i].gr_name
-                       = gsh_calloc(1, MAXHOSTNAMELEN);
+                       = gsh_strdup(p_client_entry->client.wildcard.wildcard);
 
-                  strncpy(new_expnode->ex_groups[i].gr_name,
-                          p_clients->clientarray[i].client.wildcard.wildcard,
-                          MAXHOSTNAMELEN);
+                  if(new_expnode->ex_groups[i].gr_name == NULL)
+                    {
+                      LogCrit(COMPONENT_NFSPROTO,
+                              "Could not allocate memory for response");
+                      break;
+                    }
                   break;
 
                 case GSSPRINCIPAL_CLIENT:
 
                   new_expnode->ex_groups[i].gr_name
-                       = gsh_calloc(1, MAXHOSTNAMELEN);
+                       = gsh_strdup(p_client_entry->client.gssprinc.princname);
 
-                  strncpy(new_expnode->ex_groups[i].gr_name,
-                          p_clients->clientarray[i].client.gssprinc.princname,
-                          MAXHOSTNAMELEN);
 
+                  if(new_expnode->ex_groups[i].gr_name == NULL)
+                    {
+                      LogCrit(COMPONENT_NFSPROTO,
+                              "Could not allocate memory for response");
+                      break;
+                    }
                   break;
 
                 default:
@@ -226,15 +252,22 @@ int mnt_Export(nfs_arg_t *parg,
 
                   LogCrit(COMPONENT_NFSPROTO,
                           "MNT_EXPORT: Unknown export entry type: %d",
-                          p_clients->clientarray[i].type);
+                          p_client_entry->type);
 
-                  new_expnode->ex_groups[i].gr_name = NULL;
+                  new_expnode->ex_groups[i].gr_name = gsh_strdup("<unknown>");
 
-                  return NFS_REQ_DROP;
+                  if(new_expnode->ex_groups[i].gr_name == NULL)
+                    {
+                      LogCrit(COMPONENT_NFSPROTO,
+                              "Could not allocate memory for response");
+                      break;
+                    }
+
+                  break;
                 }
 
+              i++;
             }
-
         }
       else
         {
@@ -292,7 +325,8 @@ void mnt_Export_Free(nfs_res_t * pres)
 
       while (g)
         {
-          gsh_free(g->gr_name);
+          if(g->gr_name)
+            gsh_free(g->gr_name);
           g = g->gr_next;
         }
       gsh_free(e->ex_groups);

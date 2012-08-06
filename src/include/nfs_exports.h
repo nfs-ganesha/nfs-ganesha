@@ -124,17 +124,16 @@ typedef union exportlist_client_union__
 
 typedef struct exportlist_client_entry__
 {
+  struct glist_head cle_list;
   exportlist_client_type_t type;
   exportlist_client_union_t client;
   unsigned int options;         /* avail. mnt options */
 } exportlist_client_entry_t;
 
-#define EXPORTS_NB_MAX_CLIENTS 128
-
 typedef struct exportlist_client__
 {
   unsigned int num_clients;     /* num clients        */
-  exportlist_client_entry_t clientarray[EXPORTS_NB_MAX_CLIENTS];        /* allowed clients    */
+  struct glist_head client_list; /* Allowed clients */
 } exportlist_client_t;
 
 /* fsal up filter list is needed in exportlist.
@@ -441,5 +440,10 @@ int nfs_export_check_security(struct svc_req *ptr_req, exportlist_t * pexport);
 int nfs_export_tag2path(struct glist_head * pexportlist,
                         char *tag, int taglen,
                         char *path, int pathlen);
+
+void LogClientListEntry(log_components_t            component,
+                        exportlist_client_entry_t * entry);
+
+void RemoveExportEntry(exportlist_t * p_entry);
 
 #endif                          /* _NFS_EXPORTS_H */
