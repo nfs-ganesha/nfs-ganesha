@@ -772,6 +772,11 @@ lru_thread(void *arg __attribute__((unused)))
                               atomic_inc_int64_t(&lru->refcount);
                               pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
 
+                              /* Acquire the content lock first; we may
+                               * need to look at fds and clsoe it.
+                               */
+                              pthread_rwlock_wrlock(&entry->content_lock);
+
                               /* Acquire the entry mutex.  If the entry
                                  is condemned, removed, pinned, or in
                                  L2, we have no interest in it. Also
@@ -785,11 +790,12 @@ lru_thread(void *arg __attribute__((unused)))
                                   (lru->flags & LRU_ENTRY_L2) ||
                                   (lru->flags & LRU_ENTRY_KILLED) ||
                                   (lru->lane == LRU_NO_LANE)) {
-                                   /* Drop the entry lock, thenr
-                                      eacquire the queue lock so we
+                                   /* Drop the entry lock, then
+                                      reacquire the queue lock so we
                                       can make another trip through
                                       the loop. */
                                    pthread_mutex_unlock(&lru->mtx);
+                                   pthread_rwlock_unlock(&entry->content_lock);
                                    pthread_mutex_lock(&LRU_1[lane].lru.mtx);
                                    /* By definition, if any of these
                                       flags are set, the entry isn't
@@ -802,7 +808,9 @@ lru_thread(void *arg __attribute__((unused)))
                                    cache_inode_close(
                                         entry,
                                         CACHE_INODE_FLAG_REALLYCLOSE |
-                                        CACHE_INODE_FLAG_NOT_PINNED,
+                                        CACHE_INODE_FLAG_NOT_PINNED |
+                                        CACHE_INODE_FLAG_CONTENT_HAVE |
+                                        CACHE_INODE_FLAG_CONTENT_HOLD,
                                         &cache_status);
                                    if (cache_status != CACHE_INODE_SUCCESS) {
                                         LogCrit(COMPONENT_CACHE_INODE_LRU,
@@ -811,6 +819,7 @@ lru_thread(void *arg __attribute__((unused)))
                                    } else
                                      ++closed;
                               }
+                              pthread_rwlock_unlock(&entry->content_lock);
 
                               /* Move the entry to L2 whatever the
                                  result of examining it.*/
