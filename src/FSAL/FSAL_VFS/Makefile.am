@@ -6,6 +6,7 @@ lib_LTLIBRARIES          = libfsalvfs.la
 libfsalvfs_la_SOURCES = fsal_convert.c   \
                         fsal_internal.c	 \
                         fsal_internal.h  \
+                        vfs_methods.h    \
                         main.c		 \
 			export.c	 \
 			handle.c	 \
