@@ -415,7 +415,8 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         }
       else if(!strcasecmp( key_name, "TCP_Fridge_Expiration_Delay" ) )
         {
-          pparam->tcp_fridge_expiration_delay = atoi(key_value);
+          LogWarn(COMPONENT_CONFIG,
+                  "%s is no longer used and will be removed soon", key_name);
         }
       else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
         {

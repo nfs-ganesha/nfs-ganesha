@@ -111,7 +111,6 @@ nfs_parameter_t nfs_param =
   .core_param.nb_max_fd = 1024,
   .core_param.stats_update_delay = 60,
   .core_param.long_processing_threshold = 10, /* seconds */
-  .core_param.tcp_fridge_expiration_delay = -1,
   .core_param.core_options = CORE_OPTION_ALL_VERS,
   .core_param.stats_file_path = "/tmp/ganesha.stat",
   .core_param.stats_per_client_directory = "/tmp",
@@ -527,7 +526,6 @@ void nfs_print_param_config()
   printf("\tStats_File_Path = %s ; \n", nfs_param.core_param.stats_file_path);
   printf("\tStats_Update_Delay = %d ; \n", nfs_param.core_param.stats_update_delay);
   printf("\tLong_Processing_Threshold = %d ; \n", nfs_param.core_param.long_processing_threshold);
-  printf("\tTCP_Fridge_Expiration_Delay = %d ; \n", nfs_param.core_param.tcp_fridge_expiration_delay);
   printf("\tStats_Per_Client_Directory = %s ; \n",
          nfs_param.core_param.stats_per_client_directory);
 
@@ -1090,12 +1088,6 @@ static void nfs_Start_threads(void)
 
   if(pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE) != 0)
     LogDebug(COMPONENT_THREAD, "can't set pthread's stack size");
-
-  /* Initialisation of Threads's fridge */
-  if( fridgethr_init() != 0 )
-   {
-     LogFatal(COMPONENT_THREAD, "can't run fridgethr_init");
-   }
 
   /* Starting the thread dedicated to signal handling */
   if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, NULL ) ) != 0 )

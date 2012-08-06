@@ -227,7 +227,6 @@ typedef struct nfs_core_param__
   char stats_file_path[MAXPATHLEN];
   char stats_per_client_directory[MAXPATHLEN];
   char fsal_shared_library[MAXPATHLEN];
-  int tcp_fridge_expiration_delay ;
   unsigned int core_options;
   unsigned int max_send_buffer_size; /* Size of RPC send buffer */
   unsigned int max_recv_buffer_size; /* Size of RPC recv buffer */
@@ -833,10 +832,6 @@ int namemap_clear();
 
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
                      hash_stat_t * phstat_reverse);
-
-int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
-void * fridgethr_freeze( ) ;
-int fridgethr_init() ;
 
 #define WORKER_INDEX_ANY INT_MAX
 unsigned int nfs_core_select_worker_queue(unsigned int avoid_index) ;
