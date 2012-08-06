@@ -634,9 +634,9 @@ void nfs_set_param_default()
   cache_inode_gc_policy.use_fd_cache = TRUE;
   cache_inode_gc_policy.lru_run_interval = 600;
   cache_inode_gc_policy.fd_limit_percent = 99;
+  cache_inode_gc_policy.reaper_work = 1000;
   cache_inode_gc_policy.fd_hwmark_percent = 90;
   cache_inode_gc_policy.fd_lwmark_percent = 50;
-  cache_inode_gc_policy.reaper_work = 1000;
   cache_inode_gc_policy.biggest_window = 40;
   cache_inode_gc_policy.required_progress = 5;
   cache_inode_gc_policy.futility_count = 8;
