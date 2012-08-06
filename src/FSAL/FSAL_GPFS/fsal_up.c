@@ -67,6 +67,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
   unsigned int *fhP;
   cache_inode_fsal_data_t *event_fsal_data;
   fsal_up_event_t *pevent;
+  int retry = 0;
 
   tmp_handlep = gsh_malloc(sizeof(fsal_handle_t));
   if (tmp_handlep == NULL)
@@ -74,6 +75,8 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
       LogCrit(COMPONENT_FSAL_UP, "Error: Could not malloc ... ENOMEM");
       Return(ERR_FSAL_NOMEM, ENOMEM, INDEX_FSAL_UP_getevents);
     }
+
+retryit:
 
   pfsal_data.fh_desc.start = (caddr_t)tmp_handlep;
   pfsal_data.fh_desc.len = sizeof(*tmp_handlep);
@@ -102,7 +105,13 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
   if (rc != 0)
     {
       LogCrit(COMPONENT_FSAL_UP,
-        "Error: OPENHANDLE_INODE_UPDATE failed. rc %d, errno %d", rc, errno);
+        "Error: OPENHANDLE_INODE_UPDATE failed. rc %d, errno %d reason %d",
+        rc, errno, reason);
+      if (retry < 100)
+        {
+          retry++;
+          goto retryit;
+        }
       gsh_free(tmp_handlep);
       if (errno == EUNATCH)
         {
@@ -111,6 +120,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
         }
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_UP_getevents);
     }
+  retry = 0;
 
   callback.handle->handle_fsid[0] = p_export_context->fsid[0];
   callback.handle->handle_fsid[1] = p_export_context->fsid[1];
