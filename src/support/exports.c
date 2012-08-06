@@ -135,18 +135,15 @@
 #define FLAG_EXPORT_NOSUID          0x000010000
 #define FLAG_EXPORT_NOSGID          0x000020000
 #define FLAG_EXPORT_PRIVILEGED_PORT 0x000040000
-#define FLAG_EXPORT_USE_DATACACHE   0x000080000
 #define FLAG_EXPORT_FS_SPECIFIC     0x000100000
 #define FLAG_EXPORT_FS_TAG          0x000200000
 #define FLAG_EXPORT_MAX_OFF_WRITE   0x000400000
 #define FLAG_EXPORT_MAX_OFF_READ    0x000800000
-#define FLAG_EXPORT_MAX_CACHE_SIZE  0x001000000
 #define FLAG_EXPORT_USE_PNFS        0x002000000
 #define FLAG_EXPORT_ACCESS_LIST     0x004000000
 #define FLAG_EXPORT_ANON_GROUP      0x010000000
 #define FLAG_EXPORT_ALL_ANON        0x020000000
 #define FLAG_EXPORT_ANON_USER       0x040000000
-#define FLAG_EXPORT_CACHE_POLICY    0x080000000
 #define FLAG_EXPORT_USE_UQUOTA      0x100000000
 
 /* limites for nfs_ParseConfLine */
@@ -319,9 +316,6 @@ void StrExportOptions(int    option,
     buf += sprintf(buf, ", NOSUID");
   if((option & EXPORT_OPTION_NOSGID) == EXPORT_OPTION_NOSGID)
     buf += sprintf(buf, ", NOSUID");
-
-  if((option & EXPORT_OPTION_USE_DATACACHE) == EXPORT_OPTION_USE_DATACACHE)
-    buf += sprintf(buf, ", DATA CACHE");
 
   if((option & EXPORT_OPTION_AUTH_NONE) == EXPORT_OPTION_AUTH_NONE)
     buf += sprintf(buf, ", AUTH_NONE");
@@ -1848,31 +1842,9 @@ static int BuildExportEntry(config_item_t block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_USE_DATACACHE))
         {
-          /* check if it has not already been set */
-          if((set_options & FLAG_EXPORT_USE_DATACACHE) == FLAG_EXPORT_USE_DATACACHE)
-            {
-              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_DATACACHE");
-              continue;
-            }
-
-          switch (StrToBoolean(var_value))
-            {
-            case 1:
-              p_entry->options |= EXPORT_OPTION_USE_DATACACHE;
-              break;
-
-            case 0:
-              /*default (false) */
-              break;
-
-            default:           /* error */
-              LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
-                      var_name, var_value);
-              err_flag = TRUE;
-              continue;
-            }
-          set_options |= FLAG_EXPORT_USE_DATACACHE;
+          LogInfo(COMPONENT_CONFIG,
+                  "Deprecated EXPORT option %s ignored",
+                  var_name);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PNFS))
         {
@@ -1986,28 +1958,9 @@ static int BuildExportEntry(config_item_t block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_CACHE_SIZE))
         {
-          long long int offset;
-          char *end_ptr;
-
-          errno = 0;
-          offset = strtoll(var_value, &end_ptr, 10);
-
-          if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid MaxCacheSize: \"%s\"",
-                      var_value);
-              err_flag = TRUE;
-              continue;
-            }
-
-          /* set filesystem_id */
-
-          p_entry->MaxCacheSize = (fsal_size_t) offset;
-          p_entry->options |= EXPORT_OPTION_MAXCACHESIZE;
-
-          set_options |= FLAG_EXPORT_MAX_CACHE_SIZE;
-
+          LogInfo(COMPONENT_CONFIG,
+                  "Deprecated EXPORT option %s ignored",
+                  var_name);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_READ))
         {

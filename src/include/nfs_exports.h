@@ -187,7 +187,6 @@ typedef struct exportlist__
   fsal_size_t PrefReaddir;      /* Preferred Readdir size                            */
   fsal_off_t MaxOffsetWrite;    /* Maximum Offset allowed for write                  */
   fsal_off_t MaxOffsetRead;     /* Maximum Offset allowed for read                   */
-  fsal_off_t MaxCacheSize;      /* Maximum Cache Size allowed                        */
   unsigned int UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
   unsigned int fsalid ;
@@ -265,7 +264,6 @@ typedef struct exportlist__
 #define EXPORT_OPTION_PREFWRITE       0x00001000        /* Pref write is provided              */
 #define EXPORT_OPTION_PREFRDDIR       0x00002000        /* Pref readdir size is provided       */
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000        /* clients use only privileged port    */
-#define EXPORT_OPTION_USE_DATACACHE   0x00008000        /* Is export entry data cached ?       */
 
 /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 
@@ -291,7 +289,6 @@ typedef struct exportlist__
 /* Maximum offset set for R/W */
 #define EXPORT_OPTION_MAXOFFSETWRITE  0x04000000        /* Maximum Offset for write is set  */
 #define EXPORT_OPTION_MAXOFFSETREAD   0x08000000        /* Maximum Offset for read is set   */
-#define EXPORT_OPTION_MAXCACHESIZE    0x10000000        /* Maximum Offset for read is set   */
 #define EXPORT_OPTION_USE_PNFS        0x20000000        /* Using pNFS or not using pNFS ?   */
 #define EXPORT_OPTION_USE_UQUOTA      0x40000000        /* Using user quota for this export */
 
