@@ -114,6 +114,7 @@
 #define CONF_EXPORT_FSAL_UP_TIMEOUT    "FSAL_UP_Timeout"
 #define CONF_EXPORT_FSAL_UP_TYPE       "FSAL_UP_Type"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
+#define CONF_EXPORT_SQUASH             "Squash"
 
 /** @todo : add encrypt handles option */
 
@@ -144,6 +145,7 @@
 #define FLAG_EXPORT_ANON_GROUP      0x010000000
 #define FLAG_EXPORT_ALL_ANON        0x020000000
 #define FLAG_EXPORT_ANON_USER       0x040000000
+#define FLAG_EXPORT_SQUASH          0x080000000
 #define FLAG_EXPORT_USE_UQUOTA      0x100000000
 
 /* limites for nfs_ParseConfLine */
@@ -580,6 +582,10 @@ int nfs_AddClientsToClientList(exportlist_client_t * clients,
 #define DEFINED_TWICE_WARNING( _str_ ) \
   LogWarn(COMPONENT_CONFIG,            \
           "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
+
+#define DEFINED_CONFLICT_WARNING( _opt1_ , _opt2_ ) \
+  LogWarn(COMPONENT_CONFIG,            \
+          "NFS READ_EXPORT: WARNING: %s defined when %s was already defined (ignored)", _opt1_ , _opt2_ )
 
 int parseAccessParam(char *var_name, char *var_value,
 			    exportlist_t *p_entry, int access_option) {
@@ -1254,13 +1260,20 @@ static int BuildExportEntry(config_item_t block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_USER);
+              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_ROOT);
               continue;
             }
 
+          /* Check for conflicts */
           if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_ROOT);
+              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_ROOT, CONF_EXPORT_ANON_USER);
+              continue;
+            }
+
+          if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
+            {
+              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_ROOT, CONF_EXPORT_SQUASH);
               continue;
             }
 
@@ -1296,9 +1309,16 @@ static int BuildExportEntry(config_item_t block,
               continue;
             }
 
+          /* Check for conflicts */
           if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_ROOT);
+              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_USER, CONF_EXPORT_ANON_ROOT);
+              continue;
+            }
+
+          if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
+            {
+              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_USER, CONF_EXPORT_SQUASH);
               continue;
             }
 
@@ -2097,6 +2117,62 @@ static int BuildExportEntry(config_item_t block,
                 continue;
               }
             }
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_SQUASH))
+        {
+          /* check if it has not already been set */
+          if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
+            {
+              DEFINED_TWICE_WARNING(CONF_EXPORT_SQUASH);
+              continue;
+            }
+
+          /* Check for conflicts */
+          if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
+            {
+              DEFINED_CONFLICT_WARNING(CONF_EXPORT_SQUASH, CONF_EXPORT_ANON_ROOT);
+              continue;
+            }
+
+          if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
+            {
+              DEFINED_CONFLICT_WARNING(CONF_EXPORT_SQUASH, CONF_EXPORT_ANON_USER);
+              continue;
+            }
+
+          if(!STRCMP(var_value, "Root") ||
+             !STRCMP(var_value, "Root_Squash") ||
+             !STRCMP(var_value, "RootSquash"))
+            {
+              /* Nothing to do, default is root squash */
+            }
+          else if(!STRCMP(var_value, "All") ||
+                  !STRCMP(var_value, "All_Squash") ||
+                  !STRCMP(var_value, "AllSquash"))
+            {
+              /* Squash all users */
+              p_entry->options |= EXPORT_OPTION_ALL_ANONYMOUS;
+            }
+          else if(!STRCMP(var_value, "No_Root_Squash") ||
+                  !STRCMP(var_value, "None") ||
+                  !STRCMP(var_value, "NoIdSquash"))
+            {
+              /* Allow Root access */
+              p_entry->options |= EXPORT_OPTION_ROOT;
+            }
+          else
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): "
+                      "Root, Root_Squash, RootSquash,"
+                      "All, All_Squash, AllSquash,"
+                      "No_Root_Squash, NoIdSquash, or None expected.",
+                      var_name, var_value);
+              err_flag = TRUE;
+              continue;
+            }
+
+          set_options |= FLAG_EXPORT_SQUASH;
         }
       else
         {
