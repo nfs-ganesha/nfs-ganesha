@@ -239,7 +239,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                "NFS4_OP_WRITE: offset = %"PRIu64"  length = %zu  stable = %d",
                offset, size, stable_how);
 
-  if((data->pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
+  if((data->pexport->export_perms.options & EXPORT_OPTION_MAXOFFSETWRITE) ==
      EXPORT_OPTION_MAXOFFSETWRITE)
     if((fsal_off_t) (offset + size) > data->pexport->MaxOffsetWrite)
       {

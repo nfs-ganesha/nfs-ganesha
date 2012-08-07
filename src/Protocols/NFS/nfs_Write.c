@@ -317,7 +317,7 @@ int nfs_Write(nfs_arg_t *parg,
   /*
    * do not exceed maxium WRITE offset if set
    */
-  if((pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) == EXPORT_OPTION_MAXOFFSETWRITE)
+  if((pexport->export_perms.options & EXPORT_OPTION_MAXOFFSETWRITE) == EXPORT_OPTION_MAXOFFSETWRITE)
     {
       LogFullDebug(COMPONENT_NFSPROTO,
                    "-----> Write offset=%llu count=%llu MaxOffSet=%llu",
@@ -362,7 +362,7 @@ int nfs_Write(nfs_arg_t *parg,
    * We should take care not to exceed FSINFO wtmax
    * field for the size 
    */
-  if(((pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE) &&
+  if(((pexport->export_perms.options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE) &&
      size > pexport->MaxWrite)
     {
       /*

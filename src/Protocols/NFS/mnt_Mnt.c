@@ -205,7 +205,7 @@ int mnt_Mnt(nfs_arg_t *parg,
   switch (preq->rq_vers)
     {
     case MOUNT_V1:
-      if((p_current_item->options & EXPORT_OPTION_NFSV2) != 0)
+      if((p_current_item->export_perms.options & EXPORT_OPTION_NFSV2) != 0)
         break;
       LogEvent(COMPONENT_NFSPROTO,
                "MOUNT: Export entry %s does not support NFS v2",
@@ -214,7 +214,7 @@ int mnt_Mnt(nfs_arg_t *parg,
       return NFS_REQ_OK;
 
     case MOUNT_V3:
-      if((p_current_item->options & EXPORT_OPTION_NFSV3) != 0)
+      if((p_current_item->export_perms.options & EXPORT_OPTION_NFSV3) != 0)
         break;
       LogEvent(COMPONENT_NFSPROTO,
                "MOUNT: Export entry %s does not support NFS v3",
@@ -352,18 +352,18 @@ int mnt_Mnt(nfs_arg_t *parg,
   /* Return the supported authentication flavor in V3 */
   if(preq->rq_vers == MOUNT_V3)
     {
-      if(p_current_item->options & EXPORT_OPTION_AUTH_NONE)
+      if(p_current_item->export_perms.options & EXPORT_OPTION_AUTH_NONE)
         auth_flavor[index_auth++] = AUTH_NONE;
-      if(p_current_item->options & EXPORT_OPTION_AUTH_UNIX)
+      if(p_current_item->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
         auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _HAVE_GSSAPI
       if(nfs_param.krb5_param.active_krb5 == TRUE)
         {
-	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_NONE)
+	  if(p_current_item->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE)
 	    auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
-	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_INTG)
+	  if(p_current_item->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG)
 	    auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
-	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+	  if(p_current_item->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
 	    auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
         }
 #endif

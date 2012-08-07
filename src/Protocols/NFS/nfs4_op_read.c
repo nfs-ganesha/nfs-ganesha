@@ -272,7 +272,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                "NFS4_OP_READ: offset = %"PRIu64"  length = %zu",
                offset, size);
 
-  if((data->pexport->options & EXPORT_OPTION_MAXOFFSETREAD) ==
+  if((data->pexport->export_perms.options & EXPORT_OPTION_MAXOFFSETREAD) ==
      EXPORT_OPTION_MAXOFFSETREAD)
     if((fsal_off_t) (offset + size) > data->pexport->MaxOffsetRead)
       {

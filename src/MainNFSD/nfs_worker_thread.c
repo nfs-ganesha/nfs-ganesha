@@ -931,7 +931,7 @@ static void nfs_rpc_execute(request_data_t *preq,
               if(exportid < 0 ||
                  (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
                                                  exportid)) == NULL ||
-                 (pexport->options & EXPORT_OPTION_NFSV2) == 0)
+                 (pexport->export_perms.options & EXPORT_OPTION_NFSV2) == 0)
                 {
                   /* Reject the request for authentication reason (incompatible
                    * file handle) */
@@ -979,7 +979,7 @@ static void nfs_rpc_execute(request_data_t *preq,
               if(exportid < 0 ||
                  (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
                                                  exportid)) == NULL ||
-                 (pexport->options & EXPORT_OPTION_NFSV3) == 0)
+                 (pexport->export_perms.options & EXPORT_OPTION_NFSV3) == 0)
                 {
                   if(exportid < 0)
                       reason = "has badly formed handle";
@@ -1090,7 +1090,7 @@ static void nfs_rpc_execute(request_data_t *preq,
           if(exportid < 0 ||
              (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
                                              exportid)) == NULL ||
-             (pexport->options & EXPORT_OPTION_NFSV3) == 0)
+             (pexport->export_perms.options & EXPORT_OPTION_NFSV3) == 0)
             {
               /* Reject the request for authentication reason (incompatible 
                * file handle) */
@@ -1171,7 +1171,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   if ((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
       (pexport != NULL))
     {
-      if ((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
+      if ((pexport->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) &&
          (port >= IPPORT_RESERVED))
         {
           LogInfo(COMPONENT_DISPATCH,

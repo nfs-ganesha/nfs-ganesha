@@ -2019,7 +2019,7 @@ int nfs4_SetCompoundExport(compound_data_t * data)
     {
      data->pexport = pexport;
 
-      if((data->pexport->options & EXPORT_OPTION_NFSV4) == 0)
+      if((data->pexport->export_perms.options & EXPORT_OPTION_NFSV4) == 0)
         return NFS4ERR_ACCESS;
 
       if(nfs4_MakeCred(data) != NFS4_OK)

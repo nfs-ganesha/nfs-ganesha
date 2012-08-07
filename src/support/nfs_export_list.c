@@ -150,6 +150,43 @@ exportlist_t *nfs_Get_export_by_id(struct glist_head * pexportlist, unsigned sho
 
 /**
  *
+ * nfs_Get_export_by_path: Gets an export entry from its export id. 
+ *
+ * Gets an export entry from its path. 
+ *
+ * @paran exportroot [IN] the root for the export list
+ * @param path       [IN] the path for the entry to be found.
+ *
+ * @return the pointer to the pointer to the export list or NULL if failed.
+ *
+ */
+exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
+                                     char * path)
+{
+  exportlist_t *p_current_item = NULL;
+  struct glist_head * glist;
+
+  /*
+   * Find the export for the path
+   */
+  glist_for_each(glist, nfs_param.pexportlist)
+    {
+      p_current_item = glist_entry(glist, exportlist_t, exp_list);
+
+      /* Is p_current_item->fullpath is equal to tmpfind_path ? */
+      if(!strcmp(p_current_item->fullpath, path))
+        {
+          LogDebug(COMPONENT_CONFIG, "returning export id %u", p_current_item->id);
+          return p_current_item;
+        }
+    }
+
+  LogDebug(COMPONENT_CONFIG, "returning export NULL");
+  return NULL;
+}                               /* nfs_Get_export_by_id */
+
+/**
+ *
  * get_req_uid_gid: 
  *
  * 

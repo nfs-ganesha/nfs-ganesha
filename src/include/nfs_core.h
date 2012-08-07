@@ -733,8 +733,10 @@ int nfs_AddClientsToClientList(exportlist_client_t * clients,
                                int                   option,
                                char                * var_name);
 
-int parseAccessParam(char *var_name, char *var_value,
-                     exportlist_t *p_entry, int access_option);
+int parseAccessParam(char                * var_name,
+                     char                * var_value,
+                     exportlist_client_t * clients,
+                     int                   access_option);
 
 /* Config reparsing routines */
 void admin_replace_exports();

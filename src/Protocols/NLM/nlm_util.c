@@ -598,7 +598,7 @@ bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
   /* Get export matching export ID */
   if(exportid < 0 ||
      (pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL ||
-     (pexport->options & EXPORT_OPTION_NFSV3) == 0)
+     (pexport->export_perms.options & EXPORT_OPTION_NFSV3) == 0)
     {
       /* Reject the request for authentication reason (incompatible file handle) */
       if(isInfo(COMPONENT_NLM))

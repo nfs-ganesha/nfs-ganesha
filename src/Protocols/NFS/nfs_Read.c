@@ -265,7 +265,7 @@ int nfs_Read(nfs_arg_t *parg,
   /* 
    * do not exceed maxium READ offset if set 
    */
-  if((pexport->options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
+  if((pexport->export_perms.options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
     {
       LogFullDebug(COMPONENT_NFSPROTO,
                    "-----> Read offset=%llu count=%llu MaxOffSet=%llu",
@@ -308,7 +308,7 @@ int nfs_Read(nfs_arg_t *parg,
    * We should not exceed the FSINFO rtmax field for
    * the size 
    */
-  if(((pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
+  if(((pexport->export_perms.options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
      size > pexport->MaxRead)
     {
       /*

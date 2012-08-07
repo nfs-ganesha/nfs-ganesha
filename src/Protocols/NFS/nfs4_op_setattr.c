@@ -238,9 +238,9 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE))
         {
           if(((sattr.mode & FSAL_MODE_SUID) &&
-              ((data->pexport->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID))
+              ((data->pexport->export_perms.options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID))
              || ((sattr.mode & FSAL_MODE_SGID)
-                 && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
+                 && ((data->pexport->export_perms.options & EXPORT_OPTION_NOSGID) ==
                      EXPORT_OPTION_NOSGID)))
             {
               LogInfo(COMPONENT_NFS_V4,

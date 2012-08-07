@@ -154,25 +154,25 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
       PseudoFs->reverse_tab[0] = &(PseudoFs->root);
 
       /* skip exports that aren't for NFS v4 */
-      if((entry->options & EXPORT_OPTION_NFSV4) == 0)
+      if((entry->export_perms.options & EXPORT_OPTION_NFSV4) == 0)
         {
           continue;
         }
 
-      if(entry->options & EXPORT_OPTION_PSEUDO)
+      if(entry->export_perms.options & EXPORT_OPTION_PSEUDO)
         {
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                        "BUILDING PSEUDOFS: Id          = %d",
                        entry->id);
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                        "BUILDING PSEUDOFS: ANON        = %d",
-                       entry->anonymous_uid);
+                       entry->export_perms.anonymous_uid);
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                        "BUILDING PSEUDOFS: Path        = %s",
                        entry->fullpath);
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                        "BUILDING PSEUDOFS: Options     = 0x%x",
-                       entry->options);
+                       entry->export_perms.options);
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                        "BUILDING PSEUDOFS: Num Clients = %d",
                        entry->clients.num_clients);
@@ -267,7 +267,7 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
           PseudoFsCurrent->junction_export = entry;
 
         }
-      /* if( entry->options & EXPORT_OPTION_PSEUDO ) */
+      /* if( entry->export_perms.options & EXPORT_OPTION_PSEUDO ) */
     }                           /* while( entry ) */
 
   /* desalocation of the parsing table */
