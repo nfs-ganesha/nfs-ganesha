@@ -123,10 +123,17 @@ typedef struct nfs_request_stat__
 } nfs_request_stat_t;
 
 #define _9P_NB_COMMAND 33
+typedef struct _9p_stat_item__
+{
+  unsigned int total;
+  unsigned int success;
+  unsigned int failed;
+} _9p_stat_item_t;
+
 typedef struct _9p_request_stat__
 {
   int  nb_9p_req ;
-  unsigned int stat_req_9p[_9P_NB_COMMAND] ;
+  _9p_stat_item_t stat_req_9p[_9P_NB_COMMAND] ;
 } _9p_request_stat_t ;
 
 
@@ -175,6 +182,7 @@ typedef struct nfs_worker_stat__
 
 #ifdef _USE_9P
 void _9p_stat_update( uint8_t type,
+                      bool_t success,
                        _9p_request_stat_t * pstat_req ) ;
 #endif
 void nfs_stat_update(nfs_stat_type_t type,

@@ -192,7 +192,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, (unsigned long long)*offset, *count  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -211,7 +211,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   if((estimated_num_entries < 2) || /* require room for . and .. */
     ((cb_data.entries = gsh_calloc(estimated_num_entries,
                                    sizeof(_9p_cb_entry_t))) == NULL))
-    return _9p_rerror( preq9p, msgtag, EIO, plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
 
    /* Is this the first request ? */
   if( *offset == 0LL )
@@ -220,7 +220,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
                                                   &pfid->op_context,
                                                   &cache_status ) ) == NULL )
-        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
       /* Deal with "." and ".." */  
       cb_data.entries[0].qid_path =  pfid->pentry->obj_handle->attributes.fileid ;
@@ -247,7 +247,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
                                                   &pfid->op_context,
                                                   &cache_status ) ) == NULL )
-        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
       cb_data.entries[0].qid_path =  pentry_dot_dot->obj_handle->attributes.fileid ;
       cb_data.entries[0].qid_type =  &qid_type_dir ;
@@ -286,7 +286,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      /* The avl lookup will try to get the next entry after 'cookie'. If none is found CACHE_INODE_NOT_FOUND is returned */
      /* In the 9P logic, this situation just mean "end of directory reached */
      if( cache_status != CACHE_INODE_NOT_FOUND )
-       return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+       return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
    }
 
   /* Build the reply */
@@ -348,7 +348,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RREADDIR: tag=%u fid=%u dcount=%u",
             (u32)*msgtag, *fid , dcount ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

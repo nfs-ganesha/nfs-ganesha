@@ -99,10 +99,10 @@ int _9p_walk( _9p_request_data_t * preq9p,
    }
 
   if( *fid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   if( *newfid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
   pnewfid = &preq9p->pconn->fids[*newfid] ;
@@ -137,7 +137,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
                                                        &fsalattr,
                                                        &pfid->op_context,
                                                        &cache_status ) ) == NULL )
-              return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+              return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
            pentry =  pnewfid->pentry ;
         }
@@ -170,7 +170,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
 
         default:
           LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
-          return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
+          return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
           break ;
       }
 
@@ -196,7 +196,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p",
             (u32)*msgtag, *fid, *newfid, *nwqid,  (unsigned long long)pnewfid->qid.path, pnewfid->pentry ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

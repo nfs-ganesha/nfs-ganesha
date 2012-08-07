@@ -101,7 +101,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
             (unsigned long long)*mtime_sec, (unsigned long long)*mtime_nsec  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -112,7 +112,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
        {
          LogMajor( COMPONENT_9P, "TSETATTR: tag=%u fid=%u ERROR !! gettimeofday returned -1 with errno=%u",
                    (u32)*msgtag, *fid, errno ) ;
-         return _9p_rerror( preq9p, msgtag, errno, plenout, preply ) ;
+         return  _9p_rerror( preq9p, pworker_data,  msgtag, errno, plenout, preply ) ;
        }
    }
 
@@ -188,7 +188,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
                                                &parent_attr,
                                                &pfid->op_context,
                                                &cache_status)) != CACHE_INODE_SUCCESS)
-        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
 
   /* Now set the attr */ 
@@ -196,7 +196,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
                            &fsalattr,
                            &pfid->op_context,
                            &cache_status ) != CACHE_INODE_SUCCESS )
-        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RSETATTR ) ;
@@ -205,7 +205,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

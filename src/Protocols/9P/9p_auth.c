@@ -119,10 +119,10 @@ int _9p_auth( _9p_request_data_t * preq9p,
 
   /* Did we find something ? */
   if( found == FALSE )
-   return _9p_rerror( preq9p, msgtag, ENOENT, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOENT, plenout, preply ) ;
 
   if( *afid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
  
   /* Set pexport and fid id in fid */
   pfid= &preq9p->pconn->fids[*afid] ;
@@ -134,14 +134,14 @@ int _9p_auth( _9p_request_data_t * preq9p,
   if( *uname_len != 0 )
    {
      /* Build the fid creds */
-    if( ( err = _9p_tools_get_req_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
-       return _9p_rerror( preq9p, msgtag, -err, plenout, preply ) ;
+    if( ( err = _9p_tools_get_fsal_op_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
+       return  _9p_rerror( preq9p, pworker_data,  msgtag, -err, plenout, preply ) ;
    }
   else
    {
     /* Build the fid creds */
-    if( ( err = _9p_tools_get_req_context_by_uid( *n_aname, pfid ) ) !=  0 )
-       return _9p_rerror( preq9p, msgtag, -err, plenout, preply ) ;
+    if( ( err = _9p_tools_get_fsal_op_context_by_uid( *n_aname, pfid ) ) !=  0 )
+       return  _9p_rerror( preq9p, pworker_data,  msgtag, -err, plenout, preply ) ;
    }
 
   /* Get the related pentry */
@@ -158,7 +158,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
                                   &cache_status ) ;
 
   if( pfid->pentry == NULL )
-    return _9p_rerror( preq9p, msgtag,  _9p_tools_errno( cache_status ),  plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag,  _9p_tools_errno( cache_status ),  plenout, preply ) ;
 
   /* Compute the qid */
   pfid->qid.type = _9P_QTDIR ;
@@ -177,7 +177,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RAUTH: tag=%u afid=%u qid=(type=%u,version=%u,path=%llu)", 
             *msgtag, *afid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

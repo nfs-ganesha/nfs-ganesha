@@ -92,7 +92,7 @@ int _9p_write( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, (unsigned long long)*offset, *count  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -108,7 +108,7 @@ int _9p_write( _9p_request_data_t * preq9p,
                                                                           xattrval,
                                                                           size+1 ) ;
      if(FSAL_IS_ERROR(fsal_status))
-       return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
+       return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
       /* Cache the value */
       memcpy( pfid->specdata.xattr.xattr_content, xattrval, size ) ;
@@ -127,7 +127,7 @@ int _9p_write( _9p_request_data_t * preq9p,
                           &pfid->op_context,
                           stable_flag,
                           &cache_status ) != CACHE_INODE_SUCCESS )
-        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 
       outcount = (u32)written_size ;
     }
@@ -144,7 +144,7 @@ int _9p_write( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RWRITE: tag=%u fid=%u offset=%llu input count=%u output count=%u",
             (u32)*msgtag, *fid , (unsigned long long)*offset, *count, outcount ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

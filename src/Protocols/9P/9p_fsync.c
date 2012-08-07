@@ -71,7 +71,7 @@ int _9p_fsync( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid ) ; 
 
   if( *fid >= _9P_FID_PER_CONN )
-    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -81,7 +81,7 @@ int _9p_fsync( _9p_request_data_t * preq9p,
                          CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
                          &pfid->op_context,
                          &cache_status) != CACHE_INODE_SUCCESS )
-    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RFSYNC ) ;
@@ -92,7 +92,7 @@ int _9p_fsync( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid ) ; 
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

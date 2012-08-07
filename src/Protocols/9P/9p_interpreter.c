@@ -132,7 +132,7 @@ int _9p_not_2000L( _9p_request_data_t * preq9p,
   LogEvent( COMPONENT_9P,  "(%u|%s) is not a 9P2000.L message, returning ENOTSUP", 
             *pmsgtype,  _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname  ) ;
 
-  _9p_rerror( preq9p, &msgtag, ENOTSUP, plenout, preply ) ;
+  _9p_rerror( preq9p, pworker_data, &msgtag, ENOTSUP, plenout, preply ) ;
 
   return -1 ;
 } /* _9p_not_2000L */

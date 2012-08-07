@@ -70,9 +70,9 @@ int _9p_remove( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32)*msgtag, *fid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   /* Not supported use TUNLINKAT instead */
-  return _9p_rerror( preq9p, msgtag, ENOTSUP, plenout, preply ) ;
+  return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOTSUP, plenout, preply ) ;
 }
 

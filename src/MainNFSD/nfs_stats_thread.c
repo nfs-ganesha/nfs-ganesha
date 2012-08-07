@@ -335,11 +335,23 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
 #ifdef _USE_9P
         for (j = 0; j < _9P_NB_COMMAND; j++) {
             if (i == 0) 
-                global_worker_stat->_9p_stat_req.stat_req_9p[j] = 
-                     workers_data[i].stats._9p_stat_req.stat_req_9p[j] ;
-            else 
-                global_worker_stat->_9p_stat_req.stat_req_9p[j] += 
-                     workers_data[i].stats._9p_stat_req.stat_req_9p[j] ;
+             {
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].total = 
+                     workers_data[i].stats._9p_stat_req.stat_req_9p[j].total ;
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].success = 
+                     workers_data[i].stats._9p_stat_req.stat_req_9p[j].success ;
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].failed = 
+                     workers_data[i].stats._9p_stat_req.stat_req_9p[j].failed ;
+             }
+            else
+             { 
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].total += 
+                     workers_data[i].stats._9p_stat_req.stat_req_9p[j].total ;
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].success += 
+                     workers_data[i].stats._9p_stat_req.stat_req_9p[j].success ;
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].failed += 
+                     workers_data[i].stats._9p_stat_req.stat_req_9p[j].failed ;
+             }
         }
 #endif
 
@@ -624,7 +636,10 @@ void *stats_thread(void *UnusedArg)
       fprintf(stats_file, "9P REQUEST,%s;%u", strdate,
               global_worker_stat->_9p_stat_req.nb_9p_req);
       for(j = 0; j < _9P_NB_COMMAND; j++)
-        fprintf(stats_file, "|%u", global_worker_stat->_9p_stat_req.stat_req_9p[j] ) ;
+        fprintf(stats_file, "|%u,%u,%u", 
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].total,
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].success,
+                global_worker_stat->_9p_stat_req.stat_req_9p[j].failed ) ;
       fprintf(stats_file, "\n");
 #endif
 

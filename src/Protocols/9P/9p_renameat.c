@@ -92,12 +92,12 @@ int _9p_renameat( _9p_request_data_t * preq9p,
             (u32)*msgtag, *oldfid, *oldname_len, oldname_str, *newfid, *newname_len, newname_str ) ;
 
   if( *oldfid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   poldfid = &preq9p->pconn->fids[*oldfid] ;
 
   if( *newfid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   pnewfid = &preq9p->pconn->fids[*newfid] ;
 
@@ -113,7 +113,7 @@ int _9p_renameat( _9p_request_data_t * preq9p,
                           &newfsalattr,
                           &poldfid->op_context, 
                           &cache_status) != CACHE_INODE_SUCCESS )
-    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RRENAMEAT ) ;
@@ -125,7 +125,7 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
             (u32)*msgtag, *oldfid, *oldname_len, oldname_str, *newfid, *newname_len, newname_str ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

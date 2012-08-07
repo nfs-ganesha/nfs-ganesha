@@ -703,6 +703,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
                    char * preply) ;
 
 int _9p_rerror( _9p_request_data_t * preq9p,
+                void * pworker_data,
                 u16 * msgtag,
                 u32   err, 
 	        u32 * plenout, 

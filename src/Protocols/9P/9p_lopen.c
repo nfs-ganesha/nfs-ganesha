@@ -81,7 +81,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *flags  ) ;
 
    if( *fid >= _9P_FID_PER_CONN )
-     return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+     return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
  
    pfid =  &preq9p->pconn->fids[*fid] ;
 
@@ -94,7 +94,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
                            &pfid->op_context,
                            0, 
                            &cache_status) != CACHE_INODE_SUCCESS) 
-         return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
    }
 
    /* iounit = 0 by default */
@@ -113,7 +113,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RLOPEN: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu) iounit=%u", 
             *msgtag, *fid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path, pfid->specdata.iounit ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

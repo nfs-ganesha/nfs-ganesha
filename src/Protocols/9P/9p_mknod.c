@@ -97,7 +97,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *name_len, name_str, *mode, *major, *minor, *gid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-   return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
  
   pfid = &preq9p->pconn->fids[*fid] ;
 
@@ -105,7 +105,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
 
   /* Check for bad type */
   if( !( *mode & (S_IFCHR|S_IFBLK|S_IFIFO|S_IFSOCK) ) )
-   return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
+   return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
 
   /* Set the nodetype */
   if( *mode &  S_IFCHR  ) nodetype = CHARACTER_FILE ;
@@ -126,7 +126,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
                                              &fsalattr,
                                              &pfid->op_context,
                                              &cache_status)) == NULL)
-    return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* Build the qid */
    qid_newobj.type    = _9P_QTTMP ; /** @todo BUGAZOMEU For wanting of something better */
@@ -146,7 +146,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *name_len, name_str, *major, *minor,
             qid_newobj.type, qid_newobj.version, (unsigned long long)qid_newobj.path ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

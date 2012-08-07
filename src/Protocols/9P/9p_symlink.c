@@ -94,7 +94,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *name_len, name_str, *linkcontent_len, linkcontent_str, *gid ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
    pfid = &preq9p->pconn->fids[*fid] ;
  
@@ -118,7 +118,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
                                               &cache_status)) == NULL)
     {
       if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
-      return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+      return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
 
    /* Build the qid */
@@ -142,7 +142,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
   /* Clean allocated buffer */
   if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

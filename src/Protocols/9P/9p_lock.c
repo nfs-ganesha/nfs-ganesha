@@ -109,7 +109,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
             *proc_id, *client_id_len, client_id_str ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
-    return _9p_rerror( preq9p, msgtag, ERANGE, plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
 #if 0 /* Tmp hook to avoid lock issue when compiling kernels. This should not impact ONE client only */
@@ -117,12 +117,12 @@ int _9p_lock( _9p_request_data_t * preq9p,
   snprintf( name, MAXNAMLEN, "%.*s",*client_id_len, client_id_str ) ;
 
   if( ( hp = gethostbyname( name ) ) == NULL )
-    return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
 
   memcpy( (char *)&client_addr, hp->h_addr, hp->h_length ) ;
 
   if( ( powner = get_9p_owner( &client_addr, *proc_id ) ) == NULL )
-    return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
 
   /* Do the job */
   switch( *type )
@@ -176,7 +176,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
         break ;
 
       default:
-        return _9p_rerror( preq9p, msgtag, EINVAL, plenout, preply ) ;
+        return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
         break ;
    } /* switch( *type ) */ 
 #endif
@@ -193,7 +193,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *type, *flags, (unsigned long long)*start, (unsigned long long)*length, 
             *proc_id, *client_id_len, client_id_str, status ) ;
 
-  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 
