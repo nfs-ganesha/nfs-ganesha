@@ -151,7 +151,6 @@
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
 #define EXPORT_MAX_CLIENTS   128        /* number of clients */
-#define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
 struct glist_head exportlist;
 
@@ -202,7 +201,7 @@ int nfs_ParseConfLine(char *Argv[],
 
       /* je valide la lecture du token */
       *p2 = '\0';
-      strcpy(Argv[output_value++], p1);
+      strncpy(Argv[output_value++], p1, MNTNAMLEN);
                    
 
       /* Je me prepare pour la suite */
@@ -624,7 +623,7 @@ int parseAccessParam(char *var_name, char *var_value,
   /* allocate clients strings  */
   for(idx = 0; idx < count; idx++)
     {
-      client_list[idx] = gsh_malloc(EXPORT_MAX_CLIENTLEN);
+      client_list[idx] = gsh_malloc(MNTNAMLEN+1);
       if(client_list[idx] == NULL)
         {
           int i;

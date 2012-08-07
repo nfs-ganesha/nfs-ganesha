@@ -73,7 +73,6 @@
 
 /* Make sure this is <= the same macro in support/exports.c */
 #define EXPORT_MAX_CLIENTS 20
-#define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
 int stat_export_check_access(sockaddr_t                * hostaddr,
                              exportlist_client_t       * clients,
@@ -145,7 +144,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
   /* allocate clients strings  */
   for(idx = 0; idx < count; idx++)
     {
-      client_list[idx] = gsh_malloc(EXPORT_MAX_CLIENTLEN);
+      client_list[idx] = gsh_malloc(MNTNAMLEN+1);
       client_list[idx][0] = '\0';
     }
 
