@@ -124,7 +124,7 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
   V(workers_data[worker_index].wcb.tcb_mutex);
 }
 
-void AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence)
+void _9p_AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence)
 {
         int bucket = tag % FLUSH_BUCKETS;
         _9p_flush_hook_t *hook = &req->flush_hook;
@@ -138,7 +138,7 @@ void AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence)
         pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
 }
 
-void FlushFlushHook(_9p_conn_t *conn, int tag, unsigned long sequence)
+void _9p_FlushFlushHook(_9p_conn_t *conn, int tag, unsigned long sequence)
 {
         int bucket = tag % FLUSH_BUCKETS;
         struct glist_head *node;
@@ -160,7 +160,7 @@ void FlushFlushHook(_9p_conn_t *conn, int tag, unsigned long sequence)
         pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
 }
 
-int LockAndTestFlushHook(_9p_request_data_t *req)
+int _9p_LockAndTestFlushHook(_9p_request_data_t *req)
 {
         _9p_flush_hook_t *hook = &req->flush_hook;
         _9p_conn_t *conn = req->pconn;
@@ -170,7 +170,7 @@ int LockAndTestFlushHook(_9p_request_data_t *req)
         return hook->flushed;
 }
 
-void ReleaseFlushHook(_9p_request_data_t *req)
+void _9p_ReleaseFlushHook(_9p_request_data_t *req)
 {
         _9p_flush_hook_t *hook = &req->flush_hook;
         _9p_conn_t *conn = req->pconn;
@@ -182,10 +182,10 @@ void ReleaseFlushHook(_9p_request_data_t *req)
         pthread_mutex_unlock(&conn->flush_buckets[bucket].lock);
 }
 
-void DiscardFlushHook(_9p_request_data_t *req)
+void _9p_DiscardFlushHook(_9p_request_data_t *req)
 {
-        LockAndTestFlushHook(req);
-        ReleaseFlushHook(req);
+        _9p_LockAndTestFlushHook(req);
+        _9p_ReleaseFlushHook(req);
 }
 
 
@@ -214,7 +214,6 @@ void * _9p_socket_thread( void * Arg )
   request_data_t *preq = NULL;
   unsigned int worker_index;
   int tag;
-  int i;
   unsigned long sequence = 0;
 
   char * _9pmsg ;
@@ -371,7 +370,7 @@ void * _9p_socket_thread( void * Arg )
              } /* while */
              
              tag = *(u16*) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
-             AddFlushHook(&preq->r_u._9p, tag, sequence++);
+             _9p_AddFlushHook(&preq->r_u._9p, tag, sequence++);
              LogFullDebug( COMPONENT_9P, "Request tag is %d\n", tag);
 
 	     /* Message was OK push it the request to the right worker */

@@ -143,19 +143,21 @@ void _9p_tcp_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * p
   int rc = 0 ; 
   char replydata[_9P_MSG_SIZE] ;
 
-  if ( ( rc = _9p_process_buffer( preq9p, pworker_data, replydata, &outdatalen ) ) != 1 ) {
+  if ( ( rc = _9p_process_buffer( preq9p, pworker_data, replydata, &outdatalen ) ) != 1 )
+   {
     LogMajor( COMPONENT_9P, "Could not process 9P buffer on socket #%lu", preq9p->pconn->trans_data.sockfd ) ;
-    DiscardFlushHook(preq9p);
+    _9p_DiscardFlushHook(preq9p);
    } 
   else
    {
     /* Send reply only if no TFLUSH was received */
-    if (!LockAndTestFlushHook(preq9p)) {
+    if (!_9p_LockAndTestFlushHook(preq9p))
+     {
       if( send( preq9p->pconn->trans_data.sockfd, replydata, outdatalen, 0 ) != outdatalen ) 
         LogMajor( COMPONENT_9P, "Could not send 9P/TCP reply correclty on socket #%lu", 
                                        preq9p->pconn->trans_data.sockfd ) ;
       }
-      ReleaseFlushHook(preq9p);
+      _9p_ReleaseFlushHook(preq9p);
    }
   return ;
 } /* _9p_process_request */

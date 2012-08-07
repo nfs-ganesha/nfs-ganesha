@@ -549,11 +549,11 @@ void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) ;
 void _9p_rdma_callback_recv_wkr(msk_trans_t *trans, void *arg) ;
 
 #endif
-void AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence);
-void FlushFlushHook(_9p_conn_t *conn, int tag, unsigned long sequence);
-int LockAndTestFlushHook(_9p_request_data_t *req);
-void ReleaseFlushHook(_9p_request_data_t *req);
-void DiscardFlushHook(_9p_request_data_t *req);
+void _9p_AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence);
+void _9p_FlushFlushHook(_9p_conn_t *conn, int tag, unsigned long sequence);
+int _9p_LockAndTestFlushHook(_9p_request_data_t *req);
+void _9p_ReleaseFlushHook(_9p_request_data_t *req);
+void _9p_DiscardFlushHook(_9p_request_data_t *req);
 
 /* Protocol functions */
 int _9p_not_2000L( _9p_request_data_t * preq9p, 
