@@ -251,8 +251,9 @@ int get_req_uid_gid(struct svc_req *req,
           if((maj_stat = gss_oid_to_str(
                   &min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "Error in gss_oid_to_str: %u|%u",
-                           maj_stat, min_stat);
+              LogCrit(COMPONENT_DISPATCH,
+                      "Error in gss_oid_to_str: %u|%u",
+                      maj_stat, min_stat);
             }
           else
             {

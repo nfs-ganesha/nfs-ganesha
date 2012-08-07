@@ -421,15 +421,15 @@ void LogClientListEntry(log_components_t            component,
         return;
 
       case BAD_CLIENT:
-        LogFullDebug(component,
-                     "  %p BAD_CLIENT: <unknown>(%s)",
-                     entry, perms);
+        LogCrit(component,
+                "  %p BAD_CLIENT: <unknown>(%s)",
+                entry, perms);
         return;
     }
 
-  LogFullDebug(component,
-               "  %p UNKNOWN_CLIENT_TYPE: %08x(%s)",
-               entry, entry->type, perms);
+  LogCrit(component,
+          "  %p UNKNOWN_CLIENT_TYPE: %08x(%s)",
+          entry, entry->type, perms);
 }
 
 int nfs_AddClientsToClientList(exportlist_client_t * clients,
@@ -816,10 +816,19 @@ static int BuildExportEntry(config_item_t block,
 
       if((rc != 0) || (var_value == NULL))
         {
-          RemoveExportEntry(p_entry);
-          LogCrit(COMPONENT_CONFIG,
-                  "NFS READ_EXPORT: ERROR: internal error %d", rc);
           /* free the entry before exiting */
+          RemoveExportEntry(p_entry);
+          if(rc == -2)
+            LogCrit(COMPONENT_CONFIG,
+                    "NFS READ_EXPORT: ERROR: var name \"%s\" was truncated",
+                    var_name);
+          else if(rc == -3)
+            LogCrit(COMPONENT_CONFIG,
+                    "NFS READ_EXPORT: ERROR: var value for \"%s\"=\"%s\" was truncated",
+                    var_name, var_value);
+          else
+            LogCrit(COMPONENT_CONFIG,
+                    "NFS READ_EXPORT: ERROR: internal error %d", rc);
           return -1;
         }
 
@@ -1152,7 +1161,7 @@ static int BuildExportEntry(config_item_t block,
                                   | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: WARNING: /!\\ Empty NFS_protocols list");
+                      "NFS READ_EXPORT: ERROR: Empty NFS_protocols list");
               err_flag = TRUE;
             }
 
@@ -1218,7 +1227,7 @@ static int BuildExportEntry(config_item_t block,
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                          "NFS READ_EXPORT: ERROR: Invalid protocol \"%s\". Values can be: UDP, TCP.",
+                          "NFS READ_EXPORT: ERROR: Invalid transport \"%s\". Values can be: UDP, TCP.",
                           transproto_list[idx]);
                   err_flag = TRUE;
                 }
@@ -1231,8 +1240,11 @@ static int BuildExportEntry(config_item_t block,
 
           /* check that at least one TRANS protocol has been specified */
           if((p_entry->options & (EXPORT_OPTION_UDP | EXPORT_OPTION_TCP)) == 0)
-            LogCrit(COMPONENT_CONFIG,
-                    "TRANS READ_EXPORT: WARNING: /!\\ Empty protocol list");
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ_EXPORT: ERROR: Empty transport list");
+              err_flag = TRUE;
+            }
 
           set_options |= FLAG_EXPORT_TRANS_PROTO;
 
@@ -1284,8 +1296,8 @@ static int BuildExportEntry(config_item_t block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid Anonymous_uid: \"%s\"",
-                      var_value);
+                      "NFS READ_EXPORT: ERROR: Invalid %s: \"%s\"",
+                      var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1329,8 +1341,8 @@ static int BuildExportEntry(config_item_t block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid Anonymous_uid: \"%s\"",
-                      var_value);
+                      "NFS READ_EXPORT: ERROR: Invalid %s: \"%s\"",
+                      var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1363,8 +1375,8 @@ static int BuildExportEntry(config_item_t block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid Anonymous_gid: \"%s\"",
-                      var_value);
+                      "NFS READ_EXPORT: ERROR: Invalid %s: \"%s\"",
+                      var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1467,8 +1479,8 @@ static int BuildExportEntry(config_item_t block,
                                   | EXPORT_OPTION_RPCSEC_GSS_NONE
                                   | EXPORT_OPTION_RPCSEC_GSS_INTG
                                   | EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
-            LogCrit(COMPONENT_CONFIG,
-                    "NFS READ_EXPORT: WARNING: /!\\ Empty SecType");
+            LogWarn(COMPONENT_CONFIG,
+                    "NFS READ_EXPORT: WARNING: Empty SecType");
 
           set_options |= FLAG_EXPORT_SECTYPE;
 
@@ -2175,7 +2187,7 @@ static int BuildExportEntry(config_item_t block,
         }
       else
         {
-          LogCrit(COMPONENT_CONFIG,
+          LogWarn(COMPONENT_CONFIG,
                   "NFS READ_EXPORT: WARNING: Unknown option: %s",
                   var_name);
         }
@@ -2607,12 +2619,12 @@ int export_client_match(sockaddr_t *hostaddr,
                   if(nfs_ip_name_add(hostaddr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
-                      LogFullDebug(COMPONENT_DISPATCH,
-                                   "Could not resolve hostame for addr %d.%d.%d.%d ... not checking if a hostname wildcard matches",
-                                   (int)(ntohl(addr) & 0xFF),
-                                   (int)(ntohl(addr) >> 8) & 0xFF,
-                                   (int)(ntohl(addr) >> 16) & 0xFF,
-                                   (int)(ntohl(addr) >> 24));
+                      LogInfo(COMPONENT_DISPATCH,
+                              "Could not resolve hostame for addr %d.%d.%d.%d ... not checking if a hostname wildcard matches",
+                              (int)(ntohl(addr) & 0xFF),
+                              (int)(ntohl(addr) >> 8) & 0xFF,
+                              (int)(ntohl(addr) >> 16) & 0xFF,
+                              (int)(ntohl(addr) >> 24));
                       break;
                     }
                 }
@@ -2644,7 +2656,7 @@ int export_client_match(sockaddr_t *hostaddr,
           break;
 
        case BAD_CLIENT:
-          LogDebug(COMPONENT_DISPATCH,
+          LogCrit(COMPONENT_DISPATCH,
                   "Bad client in position %u seen in export list", i );
 	  continue ;
 
@@ -3097,6 +3109,7 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
 {
       exportlist_t *pcurrent = NULL;
       struct glist_head * glist;
+      struct glist_head * glistn;
       cache_inode_status_t cache_status;
 #ifdef _CRASH_RECOVERY_AT_STARTUP
       cache_content_status_t cache_content_status;
@@ -3122,14 +3135,20 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
         }
 
       /* loop the export list */
-      glist_for_each(glist, pexportlist)
+      glist_for_each_safe(glist, glistn, pexportlist)
         {
           pcurrent = glist_entry(glist, exportlist_t, exp_list);
 
           /* Build the FSAL path */
           if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(pcurrent->fullpath,
                                                         strsize, &exportpath_fsal))))
-            return FALSE;
+            {
+              LogCrit(COMPONENT_INIT,
+                      "Couldn't build FSAL path for %s, removing export id %u",
+                      pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
+            }
 
           /* inits context for the current export entry */
 
@@ -3140,9 +3159,10 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
           if(FSAL_IS_ERROR(fsal_status))
             {
               LogCrit(COMPONENT_INIT,
-                      "Couldn't build export context for %s",
-                      pcurrent->fullpath);
-              return FALSE;
+                      "Couldn't build export context for %s, removing export id %u",
+                      pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
             }
 
           /* get the related client context */
@@ -3151,18 +3171,21 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
           if(FSAL_IS_ERROR(fsal_status))
             {
               LogCrit(COMPONENT_INIT,
-                      "Couldn't get the credentials for FSAL super user");
-              return FALSE;
+                      "Couldn't get the credentials for FSAL super user for %s, removing export id %u",
+                      pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
             }
 
           /* Lookup for the FSAL Path */
           if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context, &fsal_handle, NULL))))
             {
               LogCrit(COMPONENT_INIT,
-                      "Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
-                      pcurrent->id, pcurrent->fullpath, fsal_status.major,
-                      fsal_status.minor);
-              return FALSE;
+                      "Couldn't access the root of the exported namespace, FSAL_ERROR=(%u,%u) for %s, removing export id %u",
+                      fsal_status.major, fsal_status.minor,
+                      pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
             }
 
           /* stores handle to the export entry */
@@ -3172,8 +3195,10 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
           if(FSAL_IS_ERROR(fsal_status))
             {
               LogCrit(COMPONENT_INIT,
-                      "Couldn't allocate memory");
-              return FALSE;
+                      "Couldn't allocate memory for %s, removing export id %u",
+                      pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
             }
 
           *pcurrent->proot_handle = fsal_handle;
@@ -3225,9 +3250,10 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
                                              &cache_status)) == NULL)
             {
               LogCrit(COMPONENT_INIT,
-                      "Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
-                      pcurrent->fullpath, pcurrent->id, cache_status);
-              return FALSE;
+                      "Error %s when creating root cached entry for %s, removing export id %u",
+                      cache_inode_err_str(cache_status), pcurrent->fullpath, pcurrent->id);
+              RemoveExportEntry(pcurrent);
+              continue;
             }
           else
             LogInfo(COMPONENT_INIT,
