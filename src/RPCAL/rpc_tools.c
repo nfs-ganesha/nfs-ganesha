@@ -442,11 +442,11 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
       switch (rc)
         {
           case EAI_SYSTEM:
-            LogFullDebug(COMPONENT_RPC,
+            LogCrit(COMPONENT_RPC,
                          "getaddrinfo %s returned %d(%s)",
                          str, errno, strerror(errno));
           default:
-            LogFullDebug(COMPONENT_RPC,
+            LogCrit(COMPONENT_RPC,
                          "getaddrinfo %s returned %d(%s)",
                          str, rc, gai_strerror(rc));
         }
@@ -467,7 +467,7 @@ CLIENT *Clnt_create(char *host,
   if(clnt == NULL)
     {
       const char *err = clnt_spcreateerror("clnt_create failed");
-      LogDebug(COMPONENT_RPC, "%s", err);
+      LogCrit(COMPONENT_RPC, "%s", err);
     }
   pthread_mutex_unlock(&clnt_create_mutex);
   return clnt;

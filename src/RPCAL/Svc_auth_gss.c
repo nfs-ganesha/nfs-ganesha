@@ -659,7 +659,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
   /* Check version. */
   if(gc->gc_v != RPCSEC_GSS_VERSION)
     {
-      LogDebug(COMPONENT_RPCSEC_GSS,
+      LogCrit(COMPONENT_RPCSEC_GSS,
                "BAD AUTH: bad GSS version.");
       ret_freegc(AUTH_BADCRED);
     }
@@ -669,7 +669,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
      (gc->gc_svc != RPCSEC_GSS_SVC_INTEGRITY) &&
      (gc->gc_svc != RPCSEC_GSS_SVC_PRIVACY))
     {
-      LogDebug(COMPONENT_RPCSEC_GSS,
+      LogCrit(COMPONENT_RPCSEC_GSS,
                "BAD AUTH: bad GSS service (krb5, krb5i, krb5p)");
       ret_freegc(AUTH_BADCRED);
     }
@@ -680,7 +680,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
       /* Sequence should be less than the max sequence number */
       if(gc->gc_seq > MAXSEQ)
         {
-          LogDebug(COMPONENT_RPCSEC_GSS,
+          LogCrit(COMPONENT_RPCSEC_GSS,
                    "BAD AUTH: max sequence number exceeded.");
           ret_freegc(RPCSEC_GSS_CTXPROBLEM);
         }
@@ -703,11 +703,11 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
               || (gd->seqmask & (1 << (unsigned int)offset)))
         {
           if ((unsigned int)offset >= gd->win)
-            LogDebug(COMPONENT_RPCSEC_GSS,
+            LogCrit(COMPONENT_RPCSEC_GSS,
                      "BAD AUTH: the current seqnum is lower "
                      "than seqlast by %d and out of the seq window of size %d.", offset, gd->win);
           else
-            LogDebug(COMPONENT_RPCSEC_GSS,
+            LogCrit(COMPONENT_RPCSEC_GSS,
                      "BAD AUTH: the current seqnum has already been used.");
 
           *no_dispatch = TRUE;
@@ -737,21 +737,21 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
       LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_CONTINUE_INIT:");
       if(rqst->rq_proc != NULLPROC)
         {
-          LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: request proc != NULL "
+          LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: request proc != NULL "
                        "during INIT request");
           ret_freegc(AUTH_FAILED);        /* XXX ? */
         }
 
       if(!Svcauth_gss_acquire_cred())
         {
-          LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Can't acquire "
+          LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: Can't acquire "
                        "credentials from RPC request.");
           ret_freegc(AUTH_FAILED);
         }
 
       if(!Svcauth_gss_accept_sec_context(rqst, &gr))
         {
-          LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Can't accept the "
+          LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: Can't accept the "
                        "security context.");
           ret_freegc(AUTH_REJECTEDCRED);
         }
@@ -760,7 +760,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
         {
           gss_release_buffer(&min_stat, &gr.gr_token);
           gsh_free(gr.gr_ctx.value);
-          LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification "
+          LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification "
                        "failed");
           ret_freegc(AUTH_FAILED);
         }
@@ -793,7 +793,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
 
       if(!call_stat)
 	{
-	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: svc_sendreply failed.");
+	  LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: svc_sendreply failed.");
 	  ret_freegc(AUTH_FAILED);
 	}
 
@@ -814,14 +814,14 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
       LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_DATA:");
       if(!Svcauth_gss_validate(rqst, gd, msg))
 	{
-	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Couldn't validate "
+	  LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: Couldn't validate "
                        "request.");
 	  ret_freegc(RPCSEC_GSS_CREDPROBLEM);
 	}
 
       if(!Svcauth_gss_nextverf(rqst, htonl(gc->gc_seq)))
 	{
-	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification "
+	  LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification "
                        "failed.");
 	  ret_freegc(AUTH_FAILED);
 	}
@@ -839,14 +839,18 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
     case RPCSEC_GSS_DESTROY:
       LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_DESTROY:");
       if(rqst->rq_proc != NULLPROC)
-        ret_freegc(AUTH_FAILED);        /* XXX ? */
+        {
+          LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: request proc != NULL "
+                       "during DESTROY request");
+          ret_freegc(AUTH_FAILED);        /* XXX ? */
+        }
 
       if(!Svcauth_gss_validate(rqst, gd, msg))
         ret_freegc(RPCSEC_GSS_CREDPROBLEM);
 
       if(!Svcauth_gss_nextverf(rqst, htonl(gc->gc_seq)))
 	{
-	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification "
+	  LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification "
                        "failed.");
 	  ret_freegc(AUTH_FAILED);
 	}
@@ -875,7 +879,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
 
       if(!Svcauth_gss_release_cred())
 	{
-	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Failed to release "
+	  LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: Failed to release "
                        "credentials.");
 	  ret_freegc(AUTH_FAILED);
 	}
@@ -889,7 +893,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
       break;
 
     default:
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Request is not INIT, "
+      LogCrit(COMPONENT_RPCSEC_GSS, "BAD AUTH: Request is not INIT, "
                    "INIT_CONTINUE, DATA, OR DESTROY.");
       ret_freegc(AUTH_REJECTEDCRED);
       break;
@@ -1012,7 +1016,7 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		maj_stat = gss_get_mic(&min_stat, ctx, qop,
 				       &databuf, &wrapbuf);
 		if (maj_stat != GSS_S_COMPLETE) {
-			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_get_mic failed");
+			LogCrit(COMPONENT_RPCSEC_GSS,"gss_get_mic failed");
 			return (FALSE);
 		}
 		/* Marshal checksum. */
@@ -1026,7 +1030,7 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		maj_stat = gss_wrap(&min_stat, ctx, TRUE, qop, &databuf,
 				    &conf_state, &wrapbuf);
 		if (maj_stat != GSS_S_COMPLETE) {
-			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_wrap %d %d",
+			LogCrit(COMPONENT_RPCSEC_GSS,"gss_wrap %d %d",
                                      maj_stat, min_stat);
 			return (FALSE);
 		}
@@ -1060,7 +1064,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	if (svc == RPCSEC_GSS_SVC_INTEGRITY) {
 		/* Decode databody_integ. */
 		if (!Xdr_rpc_gss_buf(xdrs, &databuf, (u_int)-1)) {
-			LogFullDebug(COMPONENT_RPCSEC_GSS,"xdr decode "
+			LogCrit(COMPONENT_RPCSEC_GSS,"xdr decode "
                                      "databody_integ failed");
 			return (FALSE);
 		}
@@ -1071,7 +1075,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 #else
 			gsh_free(databuf.value);
 #endif
-			LogFullDebug(COMPONENT_RPCSEC_GSS,
+			LogCrit(COMPONENT_RPCSEC_GSS,
                                      "xdr decode checksum failed");
 			return (FALSE);
 		}
@@ -1090,7 +1094,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 #else
 			gsh_free(databuf.value);
 #endif
-			LogFullDebug(COMPONENT_RPCSEC_GSS,
+			LogCrit(COMPONENT_RPCSEC_GSS,
                                      "gss_verify_mic %d %d", maj_stat,
                                      min_stat);
 			return (FALSE);
@@ -1099,7 +1103,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	else if (svc == RPCSEC_GSS_SVC_PRIVACY) {
 		/* Decode databody_priv. */
 		if (!Xdr_rpc_gss_buf(xdrs, &wrapbuf, (u_int)-1)) {
-			LogFullDebug(COMPONENT_RPCSEC_GSS,
+			LogCrit(COMPONENT_RPCSEC_GSS,
                                      "xdr decode databody_priv failed");
 			return (FALSE);
 		}
@@ -1113,7 +1117,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		if (maj_stat != GSS_S_COMPLETE || qop_state != qop ||
 			conf_state != TRUE) {
 			gss_release_buffer(&min_stat, &databuf);
-			LogFullDebug(COMPONENT_RPCSEC_GSS,
+			LogCrit(COMPONENT_RPCSEC_GSS,
                                      "gss_unwrap %d %d", maj_stat, min_stat);
 			return (FALSE);
 		}
@@ -1131,7 +1135,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 
 	/* Verify sequence number. */
 	if (xdr_stat == TRUE && seq_num != seq) {
-		LogFullDebug(COMPONENT_RPCSEC_GSS,
+		LogCrit(COMPONENT_RPCSEC_GSS,
                              "wrong sequence number in databody");
 		return (FALSE);
 	}
@@ -1250,7 +1254,7 @@ int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
         {
           /* Should be Svc_auth_none */
           if(xprt_orig->xp_auth != &Svc_auth_none)
-            LogFullDebug(COMPONENT_RPCSEC_GSS,
+            LogCrit(COMPONENT_RPCSEC_GSS,
                          "copy_svc_authgss copying unknown xp_auth");
           xprt_copy->xp_auth = xprt_orig->xp_auth;
         }

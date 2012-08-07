@@ -130,7 +130,7 @@ int uid2name(char *name, uid_t * puid)
       rc = nfs4_uid_to_name(*puid, idmap_domain, name, NFS4_MAX_DOMAIN_LEN);
       if(rc != 0)
         {
-          LogDebug(COMPONENT_IDMAPPER,
+          LogCrit(COMPONENT_IDMAPPER,
                    "uid2name: nfs4_uid_to_name %d returned %d (%s)",
                    *puid, -rc, strerror(-rc));
           return 0;
@@ -181,7 +181,7 @@ int uid2name(char *name, uid_t * puid)
 	 (pp == NULL))
 #endif                          /* _SOLARIS */
         {
-          LogFullDebug(COMPONENT_IDMAPPER,
+          LogCrit(COMPONENT_IDMAPPER,
                        "uid2name: getpwuid_r %d failed",
                        *puid);
           return 0;
@@ -263,7 +263,7 @@ int name2uid(char *name, uid_t * puid)
       if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN, &res) != 0)
 #endif                          /* _SOLARIS */
         {
-          LogFullDebug(COMPONENT_IDMAPPER,
+          LogCrit(COMPONENT_IDMAPPER,
                        "name2uid: getpwnam_r %s failed",
                        name);
           *puid = -1;
@@ -309,7 +309,7 @@ int name2uid(char *name, uid_t * puid)
       rc = nfs4_name_to_uid(fqname, puid);
       if(rc)
         {
-          LogFullDebug(COMPONENT_IDMAPPER,
+          LogInfo(COMPONENT_IDMAPPER,
                        "name2uid: nfs4_name_to_uid %s failed %d (%s)",
                        fqname, -rc, strerror(-rc));
           return 0;
@@ -333,7 +333,7 @@ int name2uid(char *name, uid_t * puid)
       rc = nfs4_gss_princ_to_ids("krb5", name, &gss_uid, &gss_gid);
       if(rc)
         {
-          LogFullDebug(COMPONENT_IDMAPPER,
+          LogInfo(COMPONENT_IDMAPPER,
                        "name2uid: nfs4_gss_princ_to_ids %s failed %d (%s)",
                        name, -rc, strerror(-rc));
           return 0;
@@ -537,7 +537,7 @@ int gid2name(char *name, gid_t * pgid)
       rc = nfs4_gid_to_name(*pgid, idmap_domain, name, NFS4_MAX_DOMAIN_LEN);
       if(rc != 0)
         {
-          LogDebug(COMPONENT_IDMAPPER,
+          LogInfo(COMPONENT_IDMAPPER,
                    "gid2name: nfs4_gid_to_name %d returned %d (%s)",
                    *pgid, -rc, strerror(-rc));
           return 0;
@@ -575,7 +575,7 @@ int gid2name(char *name, gid_t * pgid)
 	 (pg == NULL))
 #endif                          /* _SOLARIS */
         {
-          LogFullDebug(COMPONENT_IDMAPPER,
+          LogCrit(COMPONENT_IDMAPPER,
                        "gid2name: getgrgid_r %d failed",
                        *pgid);
           return 0;
@@ -637,7 +637,7 @@ int name2gid(char *name, gid_t * pgid)
       rc = nfs4_name_to_gid(name, pgid);
       if(rc)
         {
-          LogFullDebug(COMPONENT_IDMAPPER,
+          LogInfo(COMPONENT_IDMAPPER,
                        "name2gid: nfs4_name_to_gid %s failed %d (%s)",
                        name, -rc, strerror(-rc));
           return 0;
@@ -666,7 +666,7 @@ int name2gid(char *name, gid_t * pgid)
       if(getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN, &pg) != 0)
 #endif
         {
-          LogFullDebug(COMPONENT_IDMAPPER,
+          LogCrit(COMPONENT_IDMAPPER,
                        "name2gid: getgrnam_r %s failed",
                        name);
           *pgid = -1;
@@ -686,7 +686,7 @@ int name2gid(char *name, gid_t * pgid)
         }
       else
         {
-          LogFullDebug(COMPONENT_IDMAPPER,
+          LogCrit(COMPONENT_IDMAPPER,
                        "name2gid: %s is unknown",
                        name);
           *pgid = -1;

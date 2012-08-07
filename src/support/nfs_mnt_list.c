@@ -117,17 +117,24 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 
   /* Sanity check */
   if(hostname == NULL || dirpath == NULL)
+  {
+    LogEvent(COMPONENT_NFSPROTO, "hostname=%s dirpath=%s", hostname, dirpath);
     return 0;
+  }
 
 #ifndef _NO_MOUNT_LIST
 
   /* Allocate the new entry */
   if((pnew_mnt_list_entry = gsh_calloc(1, sizeof(struct mountbody))) == NULL)
+  {
+    LogEvent(COMPONENT_NFSPROTO, "add_mountlist_entry malloc failed");
     return 0;
+  }
 
   if((pnew_mnt_list_entry->ml_hostname
       = gsh_calloc(1, MAXHOSTNAMELEN)) == NULL)
     {
+      LogEvent(COMPONENT_NFSPROTO, "add_mountlist_entry malloc failed");
       gsh_free(pnew_mnt_list_entry);
       return 0;
     }
@@ -135,6 +142,7 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
   if((pnew_mnt_list_entry->ml_directory
       = gsh_calloc(1, MAXPATHLEN)) == NULL)
     {
+      LogEvent(COMPONENT_NFSPROTO, "add_mountlist_entry malloc failed");
       gsh_free(pnew_mnt_list_entry->ml_hostname);
       gsh_free(pnew_mnt_list_entry);
       return 0;
