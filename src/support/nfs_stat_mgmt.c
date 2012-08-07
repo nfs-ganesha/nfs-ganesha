@@ -76,6 +76,29 @@
 #include "nfs_proto_tools.h"
 #include "nfs_stat.h"
 
+#ifdef _USE_9P
+/**
+ *
+ * _9p__stat_update: Update a client's statistics.
+ *
+ * Update a client's statistics.
+ *
+ * @param type    [IN]    type of the stat to dump
+ * @param pclient [INOUT] client resource to be used
+ *
+ * @return nothing (void function)
+ *
+ */
+extern int _9ptabindex [] ;
+void _9p_stat_update( uint8_t type,
+                       _9p_request_stat_t * pstat_req ) 
+{
+   pstat_req->nb_9p_req += 1 ;
+   pstat_req->stat_req_9p[_9ptabindex[type]] += 1 ;
+}
+#endif
+
+
 /**
  *
  * nfs_stat_update: Update a client's statistics.

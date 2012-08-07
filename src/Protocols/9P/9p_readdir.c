@@ -145,6 +145,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                  char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+  u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
+  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   _9p_cb_data_t cb_data ;
 
@@ -346,6 +348,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RREADDIR: tag=%u fid=%u dcount=%u",
             (u32)*msgtag, *fid , dcount ) ;
 
+  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

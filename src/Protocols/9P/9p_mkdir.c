@@ -56,6 +56,8 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
                   char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+  u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
+  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
@@ -124,6 +126,7 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
             "RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
             (u32)*msgtag, *fid, *name_len, name_str, qid_newdir.type, qid_newdir.version, (unsigned long long)qid_newdir.path ) ;
 
+  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

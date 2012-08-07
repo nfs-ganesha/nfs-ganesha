@@ -55,6 +55,8 @@ int _9p_renameat( _9p_request_data_t * preq9p,
                 char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+  u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
+  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16  * msgtag      = NULL ;
   u32  * oldfid      = NULL ;
@@ -123,6 +125,7 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
             (u32)*msgtag, *oldfid, *oldname_len, oldname_str, *newfid, *newname_len, newname_str ) ;
 
+  _9p_stat_update( *pmsgtype, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

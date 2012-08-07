@@ -122,6 +122,14 @@ typedef struct nfs_request_stat__
   nfs_request_stat_item_t stat_req_rquota2[RQUOTA_NB_COMMAND];
 } nfs_request_stat_t;
 
+#define _9P_NB_COMMAND 33
+typedef struct _9p_request_stat__
+{
+  int  nb_9p_req ;
+  unsigned int stat_req_9p[_9P_NB_COMMAND] ;
+} _9p_request_stat_t ;
+
+
 typedef enum
 {
   SVC_TIME = 0,
@@ -158,10 +166,17 @@ typedef struct nfs_worker_stat__
   unsigned int nb_udp_req;
   unsigned int nb_tcp_req;
   nfs_request_stat_t stat_req;
+#ifdef _USE_9P
+  _9p_request_stat_t _9p_stat_req;
+#endif 
 
   time_t last_stat_update;
 } nfs_worker_stat_t;
 
+#ifdef _USE_9P
+void _9p_stat_update( uint8_t type,
+                       _9p_request_stat_t * pstat_req ) ;
+#endif
 void nfs_stat_update(nfs_stat_type_t type,
                      nfs_request_stat_t * pstat_req, struct svc_req *preq,
                      nfs_request_latency_stat_t * lstat_req);
