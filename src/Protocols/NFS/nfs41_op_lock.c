@@ -149,6 +149,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                   &pstate_open,
                                   data,
                                   STATEID_SPECIAL_FOR_LOCK,
+                                  0,FALSE,                  /* do not check seqid */
                                   tag)) != NFS4_OK)
         {
           res_LOCK4.status = rc;
@@ -201,6 +202,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                   &plock_state,
                                   data,
                                   STATEID_SPECIAL_FOR_LOCK,
+                                  0,FALSE,                  /* do not check seqid */
                                   tag)) != NFS4_OK)
         {
           res_LOCK4.status = rc;

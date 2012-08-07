@@ -126,6 +126,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
+                              0,FALSE,                  /* do not check seqid */
                               tag)) != NFS4_OK)
     {
       res_LOCKU4.status = rc;

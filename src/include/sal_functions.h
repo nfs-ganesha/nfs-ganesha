@@ -302,6 +302,8 @@ int nfs4_Check_Stateid(stateid4        * pstate,
                        state_t        ** ppstate,
                        compound_data_t * data,
                        char              flags,
+                       seqid4            owner_seqid,
+                       unsigned char     version4,
                        const char      * tag);
 
 void update_stateid(state_t         * pstate,

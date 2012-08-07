@@ -145,6 +145,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                         &pstate_found,
                                         data,
                                         STATEID_SPECIAL_ANY,
+                                        0,FALSE,                  /* do not check owner seqid */
                                         "READ");
   if(res_READ4.status != NFS4_OK)
     return res_READ4.status;

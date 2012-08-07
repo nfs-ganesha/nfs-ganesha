@@ -158,6 +158,7 @@ extern "C"
     NFS4ERR_REJECT_DELEG = 10085,
     NFS4ERR_RETURNCONFLICT = 10086,
     NFS4ERR_DELEG_REVOKED = 10087,
+    NFS4ERR_REPLAY = 11001
   };
   typedef enum nfsstat4 nfsstat4;
 

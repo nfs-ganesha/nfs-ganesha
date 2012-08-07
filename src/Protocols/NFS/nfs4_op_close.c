@@ -105,6 +105,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
+                              0,FALSE,                  /* do not check owner seqid */
                               tag)) != NFS4_OK)
     {
       res_CLOSE4.status = rc;

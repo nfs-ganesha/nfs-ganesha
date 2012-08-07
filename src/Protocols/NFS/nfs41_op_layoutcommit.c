@@ -173,6 +173,7 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
                                &layout_state,
                                data,
                                STATEID_SPECIAL_CURRENT,
+                               0,FALSE,                  /* do not check seqid */
                                tag)) != NFS4_OK) {
           goto out;
      }

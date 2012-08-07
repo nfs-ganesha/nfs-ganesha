@@ -166,6 +166,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                          &pstate_found,
                                          data,
                                          STATEID_SPECIAL_ANY,
+                                         0,FALSE,                  /* do not check owner seqid */
                                          "WRITE");
   if(res_WRITE4.status != NFS4_OK)
     return res_WRITE4.status;
