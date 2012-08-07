@@ -129,7 +129,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
                 }
         }
 
-        pthread_mutex_unlock(&open_owner->so_mutex);
+        inc_state_owner_ref_locked(open_owner);
 
         pthread_rwlock_wrlock(&data->current_entry->state_lock);
         /* Check is held locks remain */
@@ -286,6 +286,7 @@ out:
                                     op, data, resp, close_tag);
         }
 
+        dec_state_owner_ref(open_owner);
         return res_CLOSE4->status;
 } /* nfs4_op_close */
 

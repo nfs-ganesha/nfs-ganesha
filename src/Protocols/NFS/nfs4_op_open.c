@@ -171,7 +171,6 @@ open4_do_open(struct nfs_argop4  * op,
                         *new_state = FALSE;
                         /* If we are re-using stateid, then release
                            extra reference to open owner */
-                        dec_state_owner_ref(owner);
                         break;
                 }
         }
@@ -217,7 +216,7 @@ open4_do_open(struct nfs_argop4  * op,
            file share state. */
 
         if (*new_state) {
-                if (state_share_add(data->current_entry, 
+                if (state_share_add(data->current_entry,
                                     owner, file_state, &state_status)
                     != STATE_SUCCESS) {
                         if (cache_inode_close(data->current_entry,
@@ -1027,13 +1026,15 @@ out3:
                         LogDebug(COMPONENT_NFS_V4_LOCK,
                                  "state_del failed with status %s",
                                  state_err_str(state_status));
-        } else if(owner != NULL) {
-                /* Need to release the open owner */
-                dec_state_owner_ref(owner);
         }
 
         if (entry_change) {
                 cache_inode_put(entry_change);
+        }
+
+        if(owner != NULL) {
+                /* Need to release the open owner for this call */
+                dec_state_owner_ref(owner);
         }
 
         return res_OPEN4->status;

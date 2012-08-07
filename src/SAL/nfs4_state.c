@@ -233,7 +233,8 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
   P(powner_input->so_mutex);
   glist_add_tail(&powner_input->so_owner.so_nfs4_owner.so_state_list,
                  &pnew_state->state_owner_list);
-  V(powner_input->so_mutex);
+  /* This function releases the lock. */
+  inc_state_owner_ref_locked(powner_input);
 
   /* Copy the result */
   *ppstate = pnew_state;
