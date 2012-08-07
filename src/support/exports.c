@@ -2066,6 +2066,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
  	        {
 	          LogCrit(COMPONENT_CONFIG,
 			  "Could not create FSAL export for %s", p_entry->fullpath);
+                  err_flag = TRUE;
                 }
               fsal_hdl->ops->put(fsal_hdl); /* unlock the fsal */
             }
@@ -2104,6 +2105,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             {
 	      LogCrit(COMPONENT_CONFIG,
 		      "Could not create FSAL export for %s", p_entry->fullpath);
+              err_flag = TRUE;
             }
           fsal_hdl->ops->put(fsal_hdl);
         }

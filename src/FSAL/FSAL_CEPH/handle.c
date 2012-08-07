@@ -1012,7 +1012,7 @@ handle_digest(struct fsal_obj_handle *handle_pub,
         case FSAL_DIGEST_FILEID3:
         case FSAL_DIGEST_FILEID4:
                 memcpy(fh_desc->addr, &handle->wire.vi.ino.val,
-                       sizeof(handle->wire));
+                       sizeof(uint64_t));
                 fh_desc->len = sizeof(uint64_t);
                 break;
 
