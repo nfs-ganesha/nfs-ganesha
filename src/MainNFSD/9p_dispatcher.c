@@ -215,7 +215,7 @@ void * _9p_socket_thread( void * Arg )
   unsigned int worker_index;
   int tag;
   unsigned long sequence = 0;
-
+  unsigned int i = 0 ;
   char * _9pmsg ;
   uint32_t * p_9pmsglen = NULL ;
 
