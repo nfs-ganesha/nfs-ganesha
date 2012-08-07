@@ -350,7 +350,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
       * for those cases where someone is really interested.  It's like
       * walking up to Grant's Tomb every day and asking who's inside...
       */
-#if 0
+#if 1 /* BUg here this piece of code is required for VFS, not for LUSTRE and POSIX */
      if ((to_remove_entry->type != DIRECTORY) &&
          (to_remove_entry->obj_handle->attributes.numlinks > 1)) {
           if ((*status = cache_inode_refresh_attrs(to_remove_entry))
