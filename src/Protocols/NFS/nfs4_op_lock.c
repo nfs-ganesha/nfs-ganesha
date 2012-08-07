@@ -158,7 +158,20 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                              &state_open,
                              data,
                              STATEID_SPECIAL_FOR_LOCK,
+                             arg_LOCK4->locker.locker4_u.open_owner.open_seqid,
+                             data->minorversion == 0,
                              lock_tag)) != NFS4_OK) {
+                        if ((nfs_status == NFS4ERR_REPLAY) &&
+                            (state_open != NULL) &&
+                            (state_open->state_owner != NULL)) {
+                                open_owner = state_open->state_owner;
+                                resp_owner = open_owner;
+                                inc_state_owner_ref(open_owner);
+                                release_open_owner = TRUE;
+                                seqid = arg_LOCK4->locker.locker4_u.open_owner
+                                        .open_seqid;
+                                goto check_seqid;
+                        }
                         res_LOCK4->status = nfs_status;
                         LogDebug(COMPONENT_NFS_V4_LOCK,
                                  "LOCK failed nfs4_Check_Stateid for"
@@ -245,7 +258,23 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                                                      &lock_state,
                                                      data,
                                                      STATEID_SPECIAL_FOR_LOCK,
+                                                     arg_LOCK4->locker.locker4_u
+                                                     .lock_owner.lock_seqid,
+                                                     data->minorversion == 0,
                                                      lock_tag)) != NFS4_OK) {
+                        if ((nfs_status == NFS4ERR_REPLAY) &&
+                            (lock_state != NULL) &&
+                            (lock_state->state_owner != NULL)) {
+                                lock_owner = lock_state->state_owner;
+                                open_owner = lock_owner->so_owner.so_nfs4_owner
+                                             .so_related_owner;
+                                resp_owner = lock_owner;
+                                inc_state_owner_ref(lock_owner);
+                                release_lock_owner = TRUE;
+                                seqid = arg_LOCK4->locker.locker4_u.lock_owner
+                                        .lock_seqid;
+                                goto check_seqid;
+                        }
                         res_LOCK4->status = nfs_status;
                         LogDebug(COMPONENT_NFS_V4_LOCK,
                                  "LOCK failed nfs4_Check_Stateid for existing "
@@ -299,6 +328,8 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 clientid = open_owner->so_owner.so_nfs4_owner.so_clientrec;
                 inc_client_id_ref(clientid);
         }
+
+check_seqid:
 
         /* Check seqid (lock_seqid or open_seqid) */
         if (data->minorversion == 0) {

@@ -126,6 +126,8 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
                                      &layout_state,
                                      data,
                                      STATEID_SPECIAL_CURRENT,
+                                     0,
+                                     FALSE,
                                      tag)) != NFS4_OK) {
                                 res_LAYOUTRETURN4->lorr_status = nfs_status;
                                 return res_LAYOUTRETURN4->lorr_status;

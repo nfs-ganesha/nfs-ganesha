@@ -125,6 +125,8 @@ nfs4_op_read(struct nfs_argop4 *op,
                                               &state_found,
                                               data,
                                               STATEID_SPECIAL_ANY,
+                                              0,
+                                              FALSE,
                                               "READ");
         if (res_READ4.status != NFS4_OK) {
                 return res_READ4.status;

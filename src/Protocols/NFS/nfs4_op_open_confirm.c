@@ -103,15 +103,28 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
                               &state_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
+                              arg_OPEN_CONFIRM4.seqid,
+                              data->minorversion == 0,
                               tag)) != NFS4_OK)
     {
+      if ((rc == NFS4ERR_REPLAY) &&
+          (state_found != NULL) &&
+          (state_found->state_owner != NULL))
+      {
+        open_owner = state_found->state_owner;
+        inc_state_owner_ref(open_owner);
+        goto check_seqid;
+      }
       res_OPEN_CONFIRM4.status = rc;
       return res_OPEN_CONFIRM4.status;
     }
 
   open_owner = state_found->state_owner;
+  inc_state_owner_ref(open_owner);
 
   P(open_owner->so_mutex);
+
+check_seqid:
 
   /* Check seqid */
   if(!Check_nfs4_seqid(open_owner, arg_OPEN_CONFIRM4.seqid, op, data,
@@ -119,6 +132,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
     {
       /* Response is all setup for us and LogDebug told what was wrong */
       V(open_owner->so_mutex);
+      dec_state_owner_ref(open_owner);
       return res_OPEN_CONFIRM4.status;
     }
 
@@ -126,6 +140,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   if(open_owner->so_owner.so_nfs4_owner.so_confirmed)
     {
       V(open_owner->so_mutex);
+      dec_state_owner_ref(open_owner);
       res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID;
       return res_OPEN_CONFIRM4.status;
     }
@@ -143,6 +158,8 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   /* Save the response in the open owner */
   Copy_nfs4_state_req(open_owner, arg_OPEN_CONFIRM4.seqid, op, data,
                       resp, tag);
+
+  dec_state_owner_ref(open_owner);
 
   return res_OPEN_CONFIRM4.status;
 } /* nfs4_op_open_confirm */

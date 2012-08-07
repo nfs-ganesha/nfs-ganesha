@@ -137,6 +137,8 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
+                              0,
+                              FALSE,
                               tag)) != NFS4_OK)
     {
       res_DELEGRETURN4.status = rc;

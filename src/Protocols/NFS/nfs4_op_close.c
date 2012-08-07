@@ -99,6 +99,8 @@ int nfs4_op_close(struct nfs_argop4 *op,
                                     &state_found,
                                     data,
                                     STATEID_SPECIAL_FOR_LOCK,
+                                    0,
+                                    FALSE,
                                     close_tag)) != NFS4_OK) {
                 res_CLOSE4->status = nfs_status;
                 LogDebug(COMPONENT_STATE,

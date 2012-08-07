@@ -128,6 +128,8 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                                              &state_found,
                                              data,
                                              STATEID_SPECIAL_ANY,
+                                             0,
+                                             FALSE,
                                              tag);
                 if (res_SETATTR4.status != NFS4_OK) {
                         return res_SETATTR4.status;

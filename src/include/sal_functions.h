@@ -313,6 +313,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
 			    state_t **state,
 			    compound_data_t *data,
 			    char flags,
+			    seqid4 owner_seqid,
+			    bool check_seqid,
 			    const char *tag);
 
 void update_stateid(state_t *state,

@@ -189,6 +189,7 @@ char *nfsstat4_to_str(nfsstat4 code)
     case NFS4ERR_REJECT_DELEG:              return "NFS4ERR_REJECT_DELEG";
     case NFS4ERR_RETURNCONFLICT:            return "NFS4ERR_RETURNCONFLICT";
     case NFS4ERR_DELEG_REVOKED:             return "NFS4ERR_DELEG_REVOKED";
+    case NFS4ERR_REPLAY:                    return "NFS4ERR_REPLAY";
     }
   return "UNKNOWN NFSv4 ERROR CODE";
 }
