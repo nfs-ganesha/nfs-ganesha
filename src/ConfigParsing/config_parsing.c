@@ -309,6 +309,8 @@ config_item_type config_ItemType(config_item_t item)
 /* Retrieves a key-value peer from a CONFIG_ITEM_VAR */
 int config_GetKeyValue(config_item_t item, char **var_name, char **var_value)
 {
+  int i;
+
   generic_item *var = (generic_item *) item;
 
   if(!var || (var->type != TYPE_AFFECT))
@@ -316,6 +318,28 @@ int config_GetKeyValue(config_item_t item, char **var_name, char **var_value)
 
   *var_name = var->item.affect.varname;
   *var_value = var->item.affect.varvalue;
+
+  for(i = MAXSTRLEN - 1; i >= 0; i--)
+    if(var->item.affect.varname[i] == '\0')
+      break;
+
+  if(i < 0)
+    {
+      /* Terminate string and return error that allows parsing to report problem */
+      var->item.affect.varname[MAXSTRLEN - 1] = '\0';
+      return -2;
+    }
+
+  for(i = MAXSTRLEN - 1; i >= 0; i--)
+    if(var->item.affect.varvalue[i] == '\0')
+      break;
+
+  if(i < 0)
+    {
+      /* Terminate string and return error that allows parsing to report problem */
+      var->item.affect.varvalue[MAXSTRLEN - 1] = '\0';
+      return -3;
+    }
 
   return 0;
 }
