@@ -54,8 +54,7 @@
  *         struct fsal_obj_handle *pub;
  * }
  *
- * fsal_getattr(struct fsal_obj_handle handle_pub,
- *              struct attrlist *attrs)
+ * fsal_getattr(struct fsal_obj_handle handle_pub)
  * {
  *         struct private_obj_handle *handle;
  *
@@ -1139,20 +1138,15 @@ struct fsal_obj_ops {
 /**
  * @brief Get attributes
  *
- * This function freshens the cached attributes stored on the handle
- * and copies them out to the caller.
- *
- * @deprecated Since attributes are stored on the object handle and
- * available to be directly accessed by the caller, this function will
- * be changed not to copy them out and may be renamed.
+ * This function freshens the cached attributes stored on the handle.
+ * Since the caller can take the attribute lock and read them off the
+ * public filehandle, they are not copied out.
  *
  * @param[in]  obj_hdl  Object to query
- * @param[out] obj_attr Object attributes
  *
  * @return FSAL status.
  */
-        fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl,
-                                  struct attrlist *obj_attr);
+        fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl);
 
 /**
  * @brief Set attributes on an object

@@ -34,6 +34,7 @@
 #include <arpa/inet.h>
 #include <sys/poll.h>
 #include "nlm_list.h"
+#include "fsal_types.h"
 #include "FSAL/fsal_commonlib.h"
 #include "pxy_fsal_methods.h"
 #include "fsal_nfsv4_macros.h"
@@ -1593,19 +1594,19 @@ pxy_getattrs_impl(struct fsal_export *exp,
 }
 
 static fsal_status_t
-pxy_getattrs(struct fsal_obj_handle *obj_hdl,
-	     struct attrlist *obj_attr)
+pxy_getattrs(struct fsal_obj_handle *obj_hdl)
 {
         struct pxy_obj_handle *ph;
         fsal_status_t st;
+        struct attrlist obj_attr;
 
-        if(!obj_hdl || !obj_attr)
+        if(!obj_hdl)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
         ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-        st = pxy_getattrs_impl(obj_hdl->export, &ph->fh4, obj_attr);
+        st = pxy_getattrs_impl(obj_hdl->export, &ph->fh4, &obj_attr);
         if(!FSAL_IS_ERROR(st)) {
-                obj_hdl->attributes = *obj_attr;
+                obj_hdl->attributes = obj_attr;
         }
         return st;
 }

@@ -61,21 +61,15 @@
  *
  * @param[in]  entry   The file to be truncated
  * @param[in]  length  New length for the file
- * @param[out] attr    Attrtibutes for the file after the operation.
  * @param[in]  context FSAL credentials
  * @param[out] status  Returned status
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
  */
 
-/** @TODO Do we even need these functions given that 
- *  cache_inode_setattr also does a truncate????
- */
-
 cache_inode_status_t
 cache_inode_truncate_impl(cache_entry_t *entry,
                           uint64_t length,
-                          struct attrlist *attr,
                           struct req_op_context *req_ctx,
                           cache_inode_status_t *status)
 {
@@ -96,14 +90,16 @@ cache_inode_truncate_impl(cache_entry_t *entry,
    */
   fsal_status = obj_hdl->ops->test_access(obj_hdl, req_ctx, FSAL_W_OK);
   if(FSAL_IS_ERROR(fsal_status)) {
-	  *status = cache_inode_error_convert(fsal_status);
-	  return *status;
+    *status = cache_inode_error_convert(fsal_status);
+    return *status;
   }
 
   /* Call FSAL to actually truncate */
   fsal_status = obj_hdl->ops->truncate(obj_hdl, length);
-  if( !FSAL_IS_ERROR(fsal_status))
-    fsal_status = obj_hdl->ops->getattrs(obj_hdl, attr);
+  if( !FSAL_IS_ERROR(fsal_status)) {
+    fsal_status = obj_hdl->ops->getattrs(obj_hdl);
+  }
+
 
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -113,11 +109,6 @@ cache_inode_truncate_impl(cache_entry_t *entry,
       }
       return *status;
     }
-
-/** @TODO  cleanup with purging of attribute copying 
- */
-  /* Returns the attributes */
-  *attr = obj_hdl->attributes;
 
   return *status;
 }                               /* cache_inode_truncate_sw */
@@ -148,8 +139,8 @@ cache_inode_truncate(cache_entry_t *entry,
 
   pthread_rwlock_wrlock(&entry->attr_lock);
   pthread_rwlock_wrlock(&entry->content_lock);
-  ret = cache_inode_truncate_impl(entry,
-                                  length, attr, req_ctx, status);
+  ret = cache_inode_truncate_impl(entry, length, req_ctx, status);
+  *attr = entry->obj_handle->attributes;
   pthread_rwlock_unlock(&entry->attr_lock);
   pthread_rwlock_unlock(&entry->content_lock);
   return ret;

@@ -243,8 +243,6 @@ cache_inode_remove_impl(cache_entry_t *entry,
                         uint32_t flags)
 {
      cache_entry_t *to_remove_entry = NULL;
-     struct attrlist to_remove_attrs;
-     struct attrlist entry_attrs;
      fsal_status_t fsal_status = {0, 0};
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
@@ -295,8 +293,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
           /* Is this actually necessary?  We don't actually want the
              attributes copied, but the memcpy used by the
              FSAL shouldn't overlap. */
-          fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
-                                                         &entry_attrs);
+             fsal_status
+                     = entry->obj_handle->ops->getattrs(entry->obj_handle);
      }
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
@@ -330,8 +328,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
 
      /* Update the attributes for the removed entry */
      fsal_status
-          = to_remove_entry->obj_handle->ops->getattrs(to_remove_entry->obj_handle,
-                                                       &to_remove_attrs);
+          = to_remove_entry->obj_handle->ops
+             ->getattrs(to_remove_entry->obj_handle);
      if(FSAL_IS_ERROR(fsal_status)) {
           if(fsal_status.major == ERR_FSAL_STALE)
                to_remove_entry->obj_handle->attributes.numlinks = 0;

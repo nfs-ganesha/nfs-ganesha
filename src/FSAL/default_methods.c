@@ -630,8 +630,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
  * default case not supported
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-                              struct attrlist *obj_attr)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }

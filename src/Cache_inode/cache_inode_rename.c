@@ -397,21 +397,18 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 					    phandle_dirdest,
 					    newname);
   if( !FSAL_IS_ERROR(fsal_status))
-	  fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, attr_src);
+	  fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc);
   if( !FSAL_IS_ERROR(fsal_status))
-	  fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest, attr_dest);
+	  fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest);
   if(FSAL_IS_ERROR(fsal_status))
     {
       *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
-           struct attrlist attrs;
-
-           fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, &attrs);
+           fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc);
            if (fsal_status.major == ERR_FSAL_STALE) {
                 cache_inode_kill_entry(dir_src);
            }
-           fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest,
-                                                        &attrs);
+           fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest);
            if (fsal_status.major == ERR_FSAL_STALE) {
                 cache_inode_kill_entry(dir_dest);
            }

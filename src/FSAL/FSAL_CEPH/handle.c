@@ -420,8 +420,7 @@ fsal_readlink(struct fsal_obj_handle *link_pub,
  */
 
 static fsal_status_t
-getattrs(struct fsal_obj_handle *handle_pub,
-         struct attrlist *attr)
+getattrs(struct fsal_obj_handle *handle_pub)
 {
         /* Generic status return */
         int rc = 0;
@@ -442,7 +441,6 @@ getattrs(struct fsal_obj_handle *handle_pub,
         }
 
         ceph2fsal_attributes(&st, &handle->handle.attributes);
-        *attr = handle->handle.attributes;
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

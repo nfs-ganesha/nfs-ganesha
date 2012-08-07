@@ -704,7 +704,6 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
 cache_inode_status_t
 cache_inode_truncate_impl(cache_entry_t *entry,
                           uint64_t length,
-                          struct attrlist *attr,
                           struct req_op_context *req_ctx,
                           cache_inode_status_t *status);
 cache_inode_status_t cache_inode_truncate(
@@ -901,7 +900,6 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 {
      fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-     struct attrlist attributes;
 
 #ifdef _USE_NFS4_ACL
      if (entry->obj_handle->attributes.acl) {
@@ -917,9 +915,7 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
      }
 #endif /* _USE_NFS4_ACL */
 
-     memset(&attributes, 0, sizeof(struct attrlist));
-     fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
-                                                    &attributes);
+     fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           cache_inode_kill_entry(entry);
           cache_status
