@@ -153,7 +153,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
       LogFullDebug(COMPONENT_NFS_V4_XATTR,
                    "Flag for Operation (Pseudo) = %d|%d is ON,  name  = %s  reply_size = %d",
-                   attrmasklist[i], fattr4tab[attribute_to_set].val,
+                   attrmasklist[i], attribute_to_set,
                    fattr4tab[attribute_to_set].name,
                    fattr4tab[attribute_to_set].size_fattr4);
 

@@ -535,6 +535,414 @@ void nfs_SetFailedStatus(exportlist_t *pexport,
     }
 }
 
+/* NFSv4 Attribute management
+ */
+
+/* NFS V4.0+ attributes
+ * This array reflects the tables on page 39-46 of RFC3530
+ * indexed by attribute number
+ */
+
+const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
+	[FATTR4_SUPPORTED_ATTRS] = {
+		"FATTR4_SUPPORTED_ATTRS",       /* name for logging etc. */
+		1,                              /* supported == 1 not supported == 0 */
+		sizeof(fattr4_supported_attrs), /* size in stream */
+		FATTR4_ATTR_READ},              /* access flag(s) */
+	[FATTR4_TYPE] = {
+		"FATTR4_TYPE",
+		1,
+		sizeof(fattr4_type),
+		FATTR4_ATTR_READ},
+	[FATTR4_FH_EXPIRE_TYPE] = {
+		"FATTR4_FH_EXPIRE_TYPE",
+		1,
+		sizeof(fattr4_fh_expire_type),
+		FATTR4_ATTR_READ},
+	[FATTR4_CHANGE] = {
+		"FATTR4_CHANGE",
+		1,
+		sizeof(fattr4_change),
+		FATTR4_ATTR_READ},
+	[FATTR4_SIZE] = {
+		"FATTR4_SIZE",
+		1,
+		sizeof(fattr4_size),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_LINK_SUPPORT] = {
+		"FATTR4_LINK_SUPPORT",
+		1,
+		sizeof(fattr4_link_support),
+		FATTR4_ATTR_READ},
+	[FATTR4_SYMLINK_SUPPORT] = {
+		"FATTR4_SYMLINK_SUPPORT",
+		1,
+		sizeof(fattr4_symlink_support),
+		FATTR4_ATTR_READ},
+	[FATTR4_NAMED_ATTR] = {
+		"FATTR4_NAMED_ATTR",
+		1,
+		sizeof(fattr4_named_attr),
+		FATTR4_ATTR_READ},
+	[FATTR4_FSID] = {
+		"FATTR4_FSID",
+		1,
+		sizeof(fattr4_fsid),
+		FATTR4_ATTR_READ},
+	[FATTR4_UNIQUE_HANDLES] = {
+		"FATTR4_UNIQUE_HANDLES",
+		1,
+		sizeof(fattr4_unique_handles), FATTR4_ATTR_READ},
+	[FATTR4_LEASE_TIME] = {
+		"FATTR4_LEASE_TIME",
+		1,
+		sizeof(fattr4_lease_time),
+		FATTR4_ATTR_READ},
+	[FATTR4_RDATTR_ERROR] = {
+		"FATTR4_RDATTR_ERROR",
+		1,
+		sizeof(fattr4_rdattr_error),
+		FATTR4_ATTR_READ},
+	[FATTR4_ACL] = {
+		"FATTR4_ACL",
+#ifdef _USE_NFS4_ACL
+		1,
+#else
+		0,
+#endif
+		sizeof(fattr4_acl),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_ACLSUPPORT] = {
+		"FATTR4_ACLSUPPORT",
+		1,
+		sizeof(fattr4_aclsupport),
+		FATTR4_ATTR_READ},
+	[FATTR4_ARCHIVE] = {
+		"FATTR4_ARCHIVE",
+		1,
+		sizeof(fattr4_archive),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_CANSETTIME] = {
+		"FATTR4_CANSETTIME",
+		1,
+		sizeof(fattr4_cansettime),
+		FATTR4_ATTR_READ},
+	[FATTR4_CASE_INSENSITIVE] = {
+		"FATTR4_CASE_INSENSITIVE",
+		1,
+		sizeof(fattr4_case_insensitive),
+		FATTR4_ATTR_READ},
+	[FATTR4_CASE_PRESERVING] = {
+		"FATTR4_CASE_PRESERVING",
+		1,
+		sizeof(fattr4_case_preserving),
+		FATTR4_ATTR_READ},
+	[FATTR4_CHOWN_RESTRICTED] = {
+		"FATTR4_CHOWN_RESTRICTED",
+		1,
+		sizeof(fattr4_chown_restricted),
+		FATTR4_ATTR_READ},
+	[FATTR4_FILEHANDLE] = {
+		"FATTR4_FILEHANDLE",
+		1,
+		sizeof(fattr4_filehandle),
+		FATTR4_ATTR_READ},
+	[FATTR4_FILEID] = {
+		"FATTR4_FILEID",
+		1,
+		sizeof(fattr4_fileid),
+		FATTR4_ATTR_READ},
+	[FATTR4_FILES_AVAIL] = {
+		"FATTR4_FILES_AVAIL",
+		1,
+		sizeof(fattr4_files_avail),
+		FATTR4_ATTR_READ},
+	[FATTR4_FILES_FREE] = {
+		"FATTR4_FILES_FREE",
+		1,
+		sizeof(fattr4_files_free),
+		FATTR4_ATTR_READ},
+	[FATTR4_FILES_TOTAL] = {
+		"FATTR4_FILES_TOTAL",
+		1,
+		sizeof(fattr4_files_total),
+		FATTR4_ATTR_READ},
+	[FATTR4_FS_LOCATIONS] = {
+		"FATTR4_FS_LOCATIONS",
+		0,
+		sizeof(fattr4_fs_locations),
+		FATTR4_ATTR_READ},
+	[FATTR4_HIDDEN] = {
+		"FATTR4_HIDDEN",
+		1,
+		sizeof(fattr4_hidden),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_HOMOGENEOUS] = {
+		"FATTR4_HOMOGENEOUS",
+		1,
+		sizeof(fattr4_homogeneous),
+		FATTR4_ATTR_READ},
+	[FATTR4_MAXFILESIZE] = {
+		"FATTR4_MAXFILESIZE",
+		1,
+		sizeof(fattr4_maxfilesize),
+		FATTR4_ATTR_READ},
+	[FATTR4_MAXLINK] = {
+		"FATTR4_MAXLINK",
+		1,
+		sizeof(fattr4_maxlink),
+		FATTR4_ATTR_READ},
+	[FATTR4_MAXNAME] = {
+		"FATTR4_MAXNAME",
+		1,
+		sizeof(fattr4_maxname),
+		FATTR4_ATTR_READ},
+	[FATTR4_MAXREAD] = {
+		"FATTR4_MAXREAD",
+		1,
+		sizeof(fattr4_maxread),
+		FATTR4_ATTR_READ},
+	[FATTR4_MAXWRITE] = {
+		"FATTR4_MAXWRITE",
+		1,
+		sizeof(fattr4_maxwrite),
+		FATTR4_ATTR_READ},
+	[FATTR4_MIMETYPE] = {
+		"FATTR4_MIMETYPE",
+		0,
+		sizeof(fattr4_mimetype),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_MODE] = {
+		"FATTR4_MODE",
+		1,
+		sizeof(fattr4_mode),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_NO_TRUNC] = {
+		"FATTR4_NO_TRUNC",
+		1,
+		sizeof(fattr4_no_trunc),
+		FATTR4_ATTR_READ},
+	[FATTR4_NUMLINKS] = {
+		"FATTR4_NUMLINKS",
+		1,
+		sizeof(fattr4_numlinks),
+		FATTR4_ATTR_READ},
+	[FATTR4_OWNER] = {
+		"FATTR4_OWNER",
+		1,
+		sizeof(fattr4_owner),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_OWNER_GROUP] = {
+		"FATTR4_OWNER_GROUP",
+		1,
+		sizeof(fattr4_owner_group),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_QUOTA_AVAIL_HARD] = {
+		"FATTR4_QUOTA_AVAIL_HARD",
+		0,
+		sizeof(fattr4_quota_avail_hard),
+		FATTR4_ATTR_READ},
+	[FATTR4_QUOTA_AVAIL_SOFT] = {
+		"FATTR4_QUOTA_AVAIL_SOFT",
+		0,
+		sizeof(fattr4_quota_avail_soft),
+		FATTR4_ATTR_READ},
+	[FATTR4_QUOTA_USED] = {
+		"FATTR4_QUOTA_USED",
+		0,
+		sizeof(fattr4_quota_used),
+		FATTR4_ATTR_READ},
+	[FATTR4_RAWDEV] = {
+		"FATTR4_RAWDEV",
+		1,
+		sizeof(fattr4_rawdev), /** @todo BUGAZOMEU : use FSAL attrs instead */
+		FATTR4_ATTR_READ},
+	[FATTR4_SPACE_AVAIL] = {
+		"FATTR4_SPACE_AVAIL",
+		1,
+		sizeof(fattr4_space_avail),
+		FATTR4_ATTR_READ},
+	[FATTR4_SPACE_FREE] = {
+		"FATTR4_SPACE_FREE",
+		1,
+		sizeof(fattr4_space_used),
+		FATTR4_ATTR_READ},
+	[FATTR4_SPACE_TOTAL] = {
+		"FATTR4_SPACE_TOTAL",
+		1,
+		sizeof(fattr4_space_total),
+		FATTR4_ATTR_READ},
+	[FATTR4_SPACE_USED] = {
+		"FATTR4_SPACE_USED",
+		1,
+		sizeof(fattr4_space_used),
+		FATTR4_ATTR_READ},
+	[FATTR4_SYSTEM] = {
+		"FATTR4_SYSTEM",
+		1,
+		sizeof(fattr4_system),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_TIME_ACCESS] = {
+		"FATTR4_TIME_ACCESS",
+		1,
+		12, /*sizeof( fattr4_time_access )  not aligned on 32 bits */
+		FATTR4_ATTR_READ},
+	[FATTR4_TIME_ACCESS_SET] = {
+		"FATTR4_TIME_ACCESS_SET",
+		1,
+		sizeof(fattr4_time_access_set),
+		FATTR4_ATTR_WRITE},
+	[FATTR4_TIME_BACKUP] = {
+		"FATTR4_TIME_BACKUP",
+		0,
+		12, /* sizeof( fattr4_time_backup ) not aligned on 32 bits */
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_TIME_CREATE] = {
+		"FATTR4_TIME_CREATE",
+		0,
+		12, /* sizeof( fattr4_time_create ) not aligned on 32 bits */
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_TIME_DELTA] = {
+		"FATTR4_TIME_DELTA",
+		1,
+		12, /*  sizeof( fattr4_time_delta ) not aligned on 32 bits */
+		FATTR4_ATTR_READ},
+	[FATTR4_TIME_METADATA] = {
+		"FATTR4_TIME_METADATA",
+		1,
+		12, /* sizeof( fattr4_time_metadata ) not aligned on 32 bits */
+		FATTR4_ATTR_READ},
+	[FATTR4_TIME_MODIFY] = {
+		"FATTR4_TIME_MODIFY",
+		1,
+		12, /* sizeof( fattr4_time_modify ) not aligned on 32 bits */
+		FATTR4_ATTR_READ},
+	[FATTR4_TIME_MODIFY_SET] = {
+		"FATTR4_TIME_MODIFY_SET",
+		1,
+		sizeof(fattr4_time_modify_set),
+		FATTR4_ATTR_WRITE},
+	[FATTR4_MOUNTED_ON_FILEID] = {
+		"FATTR4_MOUNTED_ON_FILEID",
+		1,
+		sizeof(fattr4_mounted_on_fileid),
+		FATTR4_ATTR_READ},
+	[FATTR4_DIR_NOTIF_DELAY] = {
+		"FATTR4_DIR_NOTIF_DELAY",
+		0,
+		sizeof(fattr4_dir_notif_delay),
+		FATTR4_ATTR_READ},
+	[FATTR4_DIRENT_NOTIF_DELAY] = {
+		"FATTR4_DIRENT_NOTIF_DELAY",
+		0,
+		sizeof(fattr4_dirent_notif_delay),
+		FATTR4_ATTR_READ},
+	[FATTR4_DACL] = {
+		"FATTR4_DACL",
+		0,
+		sizeof(fattr4_dacl),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_SACL] = {
+		"FATTR4_SACL",
+		0,
+		sizeof(fattr4_sacl),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_CHANGE_POLICY] = {
+		"FATTR4_CHANGE_POLICY",
+		0,
+		sizeof(fattr4_change_policy),
+		FATTR4_ATTR_READ},
+	[FATTR4_FS_STATUS] = {
+		"FATTR4_FS_STATUS",
+		0,
+		sizeof(fattr4_fs_status),
+		FATTR4_ATTR_READ},
+	[FATTR4_FS_LAYOUT_TYPES] = {
+		"FATTR4_FS_LAYOUT_TYPES",
+#ifdef _PNFS_MDS
+		1,
+#else
+		0,
+#endif /* _PNFS_MDS */
+		sizeof(fattr4_fs_layout_types),
+		FATTR4_ATTR_READ},
+	[FATTR4_LAYOUT_HINT] = {
+		"FATTR4_LAYOUT_HINT",
+		0,
+		sizeof(fattr4_layout_hint),
+		FATTR4_ATTR_WRITE},
+	[FATTR4_LAYOUT_TYPES] = {
+		"FATTR4_LAYOUT_TYPES",
+		0,
+		sizeof(fattr4_layout_types),
+		FATTR4_ATTR_READ},
+	[FATTR4_LAYOUT_BLKSIZE] = {
+		"FATTR4_LAYOUT_BLKSIZE",
+#ifdef _PNFS_MDS
+		1,
+#else
+		0,
+#endif /* _PNFS_MDS */
+		sizeof(fattr4_layout_blksize),
+		FATTR4_ATTR_READ},
+	[FATTR4_LAYOUT_ALIGNMENT] = {
+		"FATTR4_LAYOUT_ALIGNMENT",
+		0,
+		sizeof(fattr4_layout_alignment),
+		FATTR4_ATTR_READ},
+	[FATTR4_FS_LOCATIONS_INFO] = {
+		"FATTR4_FS_LOCATIONS_INFO",
+		0,
+		sizeof(fattr4_fs_locations_info),
+		FATTR4_ATTR_READ},
+	[FATTR4_MDSTHRESHOLD] = {
+		"FATTR4_MDSTHRESHOLD",
+		0,
+		sizeof(fattr4_mdsthreshold),
+		FATTR4_ATTR_READ},
+	[FATTR4_RETENTION_GET] = {
+		"FATTR4_RETENTION_GET",
+		0,
+		sizeof(fattr4_retention_get),
+		FATTR4_ATTR_READ},
+	[FATTR4_RETENTION_SET] = {
+		"FATTR4_RETENTION_SET",
+		0,
+		sizeof(fattr4_retention_set),
+		FATTR4_ATTR_WRITE},
+	[FATTR4_RETENTEVT_GET] = {
+		"FATTR4_RETENTEVT_GET",
+		0,
+		sizeof(fattr4_retentevt_get),
+		FATTR4_ATTR_READ},
+	[FATTR4_RETENTEVT_SET] = {
+		"FATTR4_RETENTEVT_SET",
+		0,
+		sizeof(fattr4_retentevt_set),
+		FATTR4_ATTR_WRITE},
+	[FATTR4_RETENTION_HOLD] = {
+		"FATTR4_RETENTION_HOLD",
+		0,
+		sizeof(fattr4_retention_hold),
+		FATTR4_ATTR_READ_WRITE},
+	[FATTR4_MODE_SET_MASKED] = {
+		"FATTR4_MODE_SET_MASKED",
+		0,
+		sizeof(fattr4_mode_set_masked),
+		FATTR4_ATTR_WRITE},
+	[FATTR4_SUPPATTR_EXCLCREAT] = {
+		"FATTR4_SUPPATTR_EXCLCREAT",
+		1,
+		sizeof(fattr4_suppattr_exclcreat),
+		FATTR4_ATTR_READ},
+	[FATTR4_FS_CHARSET_CAP] = {
+		"FATTR4_FS_CHARSET_CAP",
+		0,
+		sizeof(fattr4_fs_charset_cap),
+		FATTR4_ATTR_READ}
+};
+
+
 /* goes in a more global header?
  */
 
@@ -1101,7 +1509,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
       LogFullDebug(COMPONENT_NFS_V4,
                    "Flag for Operation (Regular) = %d|%d is ON,  name  = %s  reply_size = %d",
                    attrmasklist[i],
-                   fattr4tab[attribute_to_set].val,
+                   attribute_to_set,
                    fattr4tab[attribute_to_set].name,
                    fattr4tab[attribute_to_set].size_fattr4);
 
@@ -3499,7 +3907,7 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
                    attrmasklist[i]);
       LogFullDebug(COMPONENT_NFS_V4,
                    "Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d",
-                   attrmasklist[i], fattr4tab[attribute_to_set].val,
+                   attrmasklist[i], attribute_to_set,
                    fattr4tab[attribute_to_set].name,
                    fattr4tab[attribute_to_set].size_fattr4);
 

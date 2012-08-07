@@ -399,7 +399,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
       LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                    "Flag for Operation (Pseudo) = %d|%d is ON,  name  = %s  reply_size = %d supported = %d",
-                   attrmasklist[i], fattr4tab[attribute_to_set].val,
+                   attrmasklist[i], attribute_to_set,
                    fattr4tab[attribute_to_set].name,
                    fattr4tab[attribute_to_set].size_fattr4,
                    fattr4tab[attribute_to_set].supported);
