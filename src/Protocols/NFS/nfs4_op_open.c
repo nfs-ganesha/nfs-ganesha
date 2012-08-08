@@ -160,7 +160,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       return res_OPEN4.status;
     }
 
-  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+  if (nfs_export_check_security(data->reqp, &data->pexport->export_perms, data->pexport) == FALSE)
     {
       res_OPEN4.status = NFS4ERR_PERM;
       return res_OPEN4.status;

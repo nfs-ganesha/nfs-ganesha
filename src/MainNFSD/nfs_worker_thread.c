@@ -1141,7 +1141,7 @@ static void nfs_rpc_execute(request_data_t *preq,
   if(pworker_data->pfuncdesc->dispatch_behaviour & SUPPORTS_GSS)
     {
       /* Test if export allows the authentication provided */
-      if (nfs_export_check_security(req, pexport) == FALSE)
+      if (nfs_export_check_security(req, &pexport->export_perms, pexport) == FALSE)
         {
           svc_dplx_lock_x(xprt, &pworker_data->sigmask);
           svcerr_auth2(xprt, req, AUTH_TOOWEAK);

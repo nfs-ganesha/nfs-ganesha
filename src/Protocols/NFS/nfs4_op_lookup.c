@@ -120,7 +120,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     return nfs4_op_lookup_pseudo(op, data, resp);
 
-  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+  if (nfs_export_check_security(data->reqp, &data->pexport->export_perms, data->pexport) == FALSE)
     {
       res_LOOKUP4.status = NFS4ERR_PERM;
       return res_LOOKUP4.status;

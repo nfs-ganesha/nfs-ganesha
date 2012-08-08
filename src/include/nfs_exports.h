@@ -439,7 +439,9 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                              exportlist_t   * pexport,
                              export_perms_t * pexport_perms);
 
-int nfs_export_check_security(struct svc_req *ptr_req, exportlist_t * pexport);
+int nfs_export_check_security(struct svc_req * ptr_req,
+                              export_perms_t * p_export_perms,
+                              exportlist_t   * pexport);
 
 int nfs_export_tag2path(struct glist_head * pexportlist,
                         char *tag, int taglen,

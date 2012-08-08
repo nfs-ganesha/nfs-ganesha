@@ -98,7 +98,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
       return res_OPEN_CONFIRM4.status;
     }
 
-  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+  if (nfs_export_check_security(data->reqp, &data->pexport->export_perms, data->pexport) == FALSE)
     {
       res_OPEN_CONFIRM4.status = NFS4ERR_PERM;
       return res_OPEN_CONFIRM4.status;

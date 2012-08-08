@@ -121,7 +121,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_LOCK4.status;
     }
 
-  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+  if (nfs_export_check_security(data->reqp, &data->pexport->export_perms, data->pexport) == FALSE)
     {
       res_LOCK4.status = NFS4ERR_PERM;
       return res_LOCK4.status;

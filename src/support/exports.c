@@ -2826,84 +2826,86 @@ int export_client_match_any(sockaddr_t                * hostaddr,
  * FALSE otherwise
  *
  */
-int nfs_export_check_security(struct svc_req *req, exportlist_t * pexport)
+int nfs_export_check_security(struct svc_req * ptr_req,
+                              export_perms_t * p_export_perms,
+                              exportlist_t   * pexport)
 {
-  switch (req->rq_cred.oa_flavor)
+  switch (ptr_req->rq_cred.oa_flavor)
     {
       case AUTH_NONE:
-        if((pexport->export_perms.options & EXPORT_OPTION_AUTH_NONE) == 0)
+        if((p_export_perms->options & EXPORT_OPTION_AUTH_NONE) == 0)
           {
             LogInfo(COMPONENT_DISPATCH,
                     "Export %s does not support AUTH_NONE",
-                    pexport->dirname);
+                    pexport->fullpath);
             return FALSE;
           }
         break;
 
       case AUTH_UNIX:
-        if((pexport->export_perms.options & EXPORT_OPTION_AUTH_UNIX) == 0)
+        if((p_export_perms->options & EXPORT_OPTION_AUTH_UNIX) == 0)
           {
             LogInfo(COMPONENT_DISPATCH,
                     "Export %s does not support AUTH_UNIX",
-                    pexport->dirname);
+                    pexport->fullpath);
             return FALSE;
           }
         break;
 
 #ifdef _HAVE_GSSAPI
       case RPCSEC_GSS:
-        if((pexport->export_perms.options &
+        if((p_export_perms->options &
            (EXPORT_OPTION_RPCSEC_GSS_NONE |
             EXPORT_OPTION_RPCSEC_GSS_INTG |
             EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
           {
             LogInfo(COMPONENT_DISPATCH,
                     "Export %s does not support RPCSEC_GSS",
-                    pexport->dirname);
+                    pexport->fullpath);
             return FALSE;
           }
         else
           {
             struct svc_rpc_gss_data *gd;
             rpc_gss_svc_t svc;
-            gd = SVCAUTH_PRIVATE(req->rq_xprt->xp_auth);
+            gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
             svc = gd->sec.svc;
             LogFullDebug(COMPONENT_DISPATCH,
                          "Testing svc %d", (int) svc);
             switch(svc)
               {
                 case RPCSEC_GSS_SVC_NONE:
-                  if((pexport->export_perms.options &
+                  if((p_export_perms->options &
                       EXPORT_OPTION_RPCSEC_GSS_NONE) == 0)
                     {
                       LogInfo(COMPONENT_DISPATCH,
                               "Export %s does not support "
                               "RPCSEC_GSS_SVC_NONE",
-                              pexport->dirname);
+                              pexport->fullpath);
                       return FALSE;
                     }
                   break;
 
                 case RPCSEC_GSS_SVC_INTEGRITY:
-                  if((pexport->export_perms.options &
+                  if((p_export_perms->options &
                       EXPORT_OPTION_RPCSEC_GSS_INTG) == 0)
                     {
                       LogInfo(COMPONENT_DISPATCH,
                               "Export %s does not support "
                               "RPCSEC_GSS_SVC_INTEGRITY",
-                              pexport->dirname);
+                              pexport->fullpath);
                       return FALSE;
                     }
                   break;
 
                 case RPCSEC_GSS_SVC_PRIVACY:
-                  if((pexport->export_perms.options &
+                  if((p_export_perms->options &
                       EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0)
                     {
                       LogInfo(COMPONENT_DISPATCH,
                               "Export %s does not support "
                               "RPCSEC_GSS_SVC_PRIVACY",
-                              pexport->dirname);
+                              pexport->fullpath);
                       return FALSE;
                     }
                   break;
@@ -2912,7 +2914,7 @@ int nfs_export_check_security(struct svc_req *req, exportlist_t * pexport)
                     LogInfo(COMPONENT_DISPATCH,
                             "Export %s does not support unknown "
                             "RPCSEC_GSS_SVC %d",
-                            pexport->dirname, (int) svc);
+                            pexport->fullpath, (int) svc);
                     return FALSE;
               }
           }
@@ -2921,7 +2923,7 @@ int nfs_export_check_security(struct svc_req *req, exportlist_t * pexport)
       default:
         LogInfo(COMPONENT_DISPATCH,
                 "Export %s does not support unknown oa_flavor %d",
-                pexport->dirname, (int) req->rq_cred.oa_flavor);
+                pexport->fullpath, (int) ptr_req->rq_cred.oa_flavor);
         return FALSE;
     }
 
