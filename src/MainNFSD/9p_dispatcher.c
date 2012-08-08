@@ -331,7 +331,7 @@ void * _9p_socket_thread( void * Arg )
                           "Received 9P/TCP message of size %u from client %s on socket %lu",
                           *p_9pmsglen, strcaller, tcp_sock ) ;
 
-            if( *p_9pmsglen < _9P_HDR_SIZE ) 
+            if( readlen < _9P_HDR_SIZE ) 
               {
 		LogEvent( COMPONENT_9P, 
 			  "Badly formed 9P/TCP message: Header is too small for client %s on socket %lu: readlen=%u expected=%u", 
