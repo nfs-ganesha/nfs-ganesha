@@ -745,6 +745,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
   int                          do_dupreq_cache;
   dupreq_status_t              dpq_status;
   export_perms_t               export_perms;
+  int                          protocol_options = 0;
   struct user_cred             user_credentials;
   int                          update_per_share_stats;
   fsal_op_context_t          * pfsal_op_ctx = NULL;
@@ -755,6 +756,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
   nfs_request_latency_stat_t   latency_stat;
   char                         addrbuf[SOCK_NAME_MAX];
   enum auth_stat               auth_rc;
+  const char                 * progname = "unknown";
+  xprt_type_t                  xprt_type = svc_get_xprt_type(xprt);
 
   /* Initialize permissions to allow nothing */
   export_perms.options       = 0;
@@ -796,6 +799,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
   port = get_port(&hostaddr);
 
   sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+
+  pworker_data->hostaddr = hostaddr;
 
   LogDebug(COMPONENT_DISPATCH,
            "Request from %s for Program %d, Version %d, Function %d has xid=%u",
@@ -921,17 +926,20 @@ static void nfs_rpc_execute(request_data_t    * preq,
       char *reason = NULL;
       char addrbuf[SOCK_NAME_MAX];
 
+      progname = "NFS";
+
       switch (req->rq_vers)
         {
         case NFS_V2:
+          protocol_options |= EXPORT_OPTION_NFSV2;
+
           if(req->rq_proc != NFSPROC_NULL)
             {
               exportid = nfs2_FhandleToExportId((fhandle2 *) parg_nfs);
 
               if(exportid < 0 ||
                  (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                                 exportid)) == NULL ||
-                 (pexport->export_perms.options & EXPORT_OPTION_NFSV2) == 0)
+                                                 exportid)) == NULL)
                 {
                   /* Reject the request for authentication reason (incompatible
                    * file handle) */
@@ -939,15 +947,15 @@ static void nfs_rpc_execute(request_data_t    * preq,
                     {
                       if(exportid < 0)
                         reason = "has badly formed handle";
-                      else if(pexport == NULL)
-                        reason = "has invalid export";
                       else
-                        reason = "V2 not allowed on this export";
+                        reason = "has invalid export";
+
                       sprint_fhandle2(dumpfh, (fhandle2 *) parg_nfs);
-                      LogMajor(COMPONENT_DISPATCH,
-                               "NFS2 Request from host %s %s, proc=%d, FH=%s",
-                               addrbuf, reason,
-                               (int)req->rq_proc, dumpfh);
+
+                      LogInfo(COMPONENT_DISPATCH,
+                              "NFS2 Request from client %s %s, proc=%d, FH=%s",
+                              addrbuf, reason,
+                              (int)req->rq_proc, dumpfh);
                     }
 
                   /* Bad argument */
@@ -956,8 +964,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
                 }
 
               LogFullDebug(COMPONENT_DISPATCH,
-                           "Found export entry for dirname=%s as exportid=%d",
-                           pexport->dirname, pexport->id);
+                           "Found export entry for Export_Id %d %s for client %s",
+                           pexport->id, pexport->fullpath, addrbuf);
             }
           else
             pexport = NULL;
@@ -965,69 +973,69 @@ static void nfs_rpc_execute(request_data_t    * preq,
           break;
 
         case NFS_V3:
+          protocol_options |= EXPORT_OPTION_NFSV3;
+
           if(req->rq_proc != NFSPROC_NULL)
             {
               exportid = nfs3_FhandleToExportId((nfs_fh3 *) parg_nfs);
 
               if(exportid < 0 ||
                  (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                                 exportid)) == NULL ||
-                 (pexport->export_perms.options & EXPORT_OPTION_NFSV3) == 0)
+                                                 exportid)) == NULL)
                 {
-                  if(exportid < 0)
-                      reason = "has badly formed handle";
-                  else if(pexport == NULL)
-                    reason = "has invalid export";
-                  else
-                    reason = "V3 not allowed on this export";
+                  if(isInfo(COMPONENT_DISPATCH))
+                    {
+                      if(exportid < 0)
+                        reason = "has badly formed handle";
+                      else
+                        reason = "has invalid export";
+
+                      sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
+
+                      LogInfo(COMPONENT_DISPATCH,
+                              "NFS3 Request from client %s %s, proc=%d, FH=%s",
+                              addrbuf, reason,
+                              (int)req->rq_proc, dumpfh);
+                    }
+
+                  /* Bad argument */
+                  auth_rc = AUTH_FAILED;
+                  goto auth_failure;
                 }
-              else
-                {
-                  LogFullDebug(COMPONENT_DISPATCH,
-                               "Found export entry for dirname=%s as exportid=%d",
-                                pexport->dirname, pexport->id);
-                  break;
-                }
-            }
-          else if (!glist_empty(nfs_param.pexportlist))
-            {
-              pexport = NULL;
-              break;
+
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "Found export entry for Export_Id %d %s for client %s",
+                           pexport->id, pexport->fullpath, addrbuf);
             }
           else
-            reason = "has invalid export";
             pexport = NULL;
 
-          /* Reject the request for authentication reason (incompatible
-           * file handle) */
-          if(isInfo(COMPONENT_DISPATCH))
-            {
-              sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
-              LogMajor(COMPONENT_DISPATCH,
-                      "NFS3 Request from host %s %s, proc=%d, FH=%s",
-                       addrbuf, reason,
-                       (int)req->rq_proc, dumpfh);
-            }
-
-          /* Bad argument */
-          auth_rc = AUTH_FAILED;
-          goto auth_failure;
+          break;
 
         case NFS_V4:
+          protocol_options |= EXPORT_OPTION_NFSV4;
           /* NFSv4 requires entire export list */
           pexport = NULL;
           break;
 
         default:
           /* Invalid version (which should never get here) */
-          pexport = NULL;
-          break;
+          LogCrit(COMPONENT_DISPATCH,
+                  "Invalid NFS version %d from client %s",
+                  (int)req->rq_vers, addrbuf);
+
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
         }                       /* switch( ptr_req->rq_vers ) */
     }
 #ifdef _USE_NLM
   else if(req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       netobj *pfh3 = NULL;
+
+      protocol_options |= EXPORT_OPTION_NFSV3;
+
+      progname = "NLM";
 
       switch(req->rq_proc)
         {
@@ -1069,14 +1077,14 @@ static void nfs_rpc_execute(request_data_t    * preq,
             pfh3 = &parg_nfs->arg_nlm4_share.share.fh;
             break;
         }
+
       if(pfh3 != NULL)
         {
           exportid = nlm4_FhandleToExportId(pfh3);
 
           if(exportid < 0 ||
              (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                             exportid)) == NULL ||
-             (pexport->export_perms.options & EXPORT_OPTION_NFSV3) == 0)
+                                             exportid)) == NULL)
             {
               /* Reject the request for authentication reason (incompatible 
                * file handle) */
@@ -1087,15 +1095,15 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
                   if(exportid < 0)
                     reason = "has badly formed handle";
-                  else if(pexport == NULL)
-                    reason = "has invalid export";
                   else
-                    reason = "V3 not allowed on this export";
+                    reason = "has invalid export";
+
                   sprint_fhandle_nlm(dumpfh, pfh3);
-                  LogMajor(COMPONENT_DISPATCH,
-                           "NLM4 Request from host %s %s, proc=%d, FH=%s",
-                           addrbuf, reason,
-                           (int)req->rq_proc, dumpfh);
+
+                  LogCrit(COMPONENT_DISPATCH,
+                          "NLM4 Request from client %s %s, proc=%d, FH=%s",
+                          addrbuf, reason,
+                          (int)req->rq_proc, dumpfh);
                 }
 
               /* Bad argument */
@@ -1104,8 +1112,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
             }
 
           LogFullDebug(COMPONENT_DISPATCH,
-                       "Found export entry for dirname=%s as exportid=%d",
-                       pexport->dirname, pexport->id);
+                       "Found export entry for Export_Id %d %s for client %s",
+                       pexport->id, pexport->fullpath, addrbuf);
         }
       else
         pexport = NULL;
@@ -1121,7 +1129,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
   if((pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_EXPORT) != 0)
     {
       LogFullDebug(COMPONENT_DISPATCH,
-                   "nfs_rpc_execute about to call nfs_export_check_access");
+                   "nfs_rpc_execute about to call nfs_export_check_access for client %s",
+                   addrbuf);
 
       nfs_export_check_access(&pworker_data->hostaddr,
                               pexport,
@@ -1130,20 +1139,73 @@ static void nfs_rpc_execute(request_data_t    * preq,
       if(export_perms.options == 0)
         {
           LogInfo(COMPONENT_DISPATCH,
-                  "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
-                  addrbuf,
+                  "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
+                  addrbuf, pexport->id, pexport->fullpath,
                   (int)req->rq_vers, (int)req->rq_proc);
 
           auth_rc = AUTH_TOOWEAK;
           goto auth_failure;
         }
-    }
 
-  if(pworker_data->pfuncdesc->dispatch_behaviour & SUPPORTS_GSS)
-    {
-      /* Test if export allows the authentication provided */
-      if (nfs_export_check_security(req, &pexport->export_perms, pexport) == FALSE)
+      /* Check protocol version */
+      if((protocol_options & EXPORT_OPTION_PROTOCOLS)== 0)
         {
+          LogCrit(COMPONENT_DISPATCH,
+                  "Problem, request requires export but does not have a protocol version");
+
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
+        }
+
+      if((protocol_options & export_perms.options) == 0)
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "%s Version %d not allowed on Export_Id %d %s for client %s",
+                  progname, req->rq_vers,
+                  pexport->id, pexport->fullpath, addrbuf);
+
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
+        }
+
+      /* Check transport type */
+      if(((xprt_type == XPRT_UDP) &&
+          ((export_perms.options & EXPORT_OPTION_UDP) == 0)) ||
+         ((xprt_type == XPRT_TCP) &&
+          ((export_perms.options & EXPORT_OPTION_TCP) == 0)))
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "%s Version %d over %s not allowed on Export_Id %d %s for client %s",
+                  progname, req->rq_vers, xprt_type_to_str(xprt_type),
+                  pexport->id, pexport->fullpath,
+                  addrbuf);
+
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
+        }
+
+      /* Test if export allows the authentication provided */
+      if (nfs_export_check_security(req, &export_perms, pexport) == FALSE)
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "%s Version %d auth not allowed on Export_Id %d %s for client %s",
+                  progname, req->rq_vers,
+                  pexport->id, pexport->fullpath, addrbuf);
+
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
+        }
+
+
+      /* Check if client is using a privileged port, but only for NFS protocol */
+      if((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
+         ((export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) != 0) &&
+         (port >= IPPORT_RESERVED))
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
+                  port, pexport->id, pexport->fullpath, addrbuf);
+
           auth_rc = AUTH_TOOWEAK;
           goto auth_failure;
         }
@@ -1154,34 +1216,14 @@ static void nfs_rpc_execute(request_data_t    * preq,
   memset(&timer_diff, 0, sizeof(struct timeval));
   memset(&queue_timer_diff, 0, sizeof(struct timeval));
 
-  /*
-   * It is now time for checking if export list allows the machine to perform
-   * the request
-   */
-  pworker_data->hostaddr = hostaddr;
-
-  /* Check if client is using a privileged port, but only for NFS protocol */
-  if ((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
-      (pexport != NULL))
-    {
-      if ((pexport->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) &&
-         (port >= IPPORT_RESERVED))
-        {
-          LogInfo(COMPONENT_DISPATCH,
-                  "Port %d is too high for this export entry, rejecting client",
-                  port);
-
-          auth_rc = AUTH_TOOWEAK;
-          goto auth_failure;
-        }
-    }
-
+  /* Get user credentials */
   if (pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
     {
       if (get_req_uid_gid(req, &user_credentials) == FALSE)
         {
           LogInfo(COMPONENT_DISPATCH,
-                  "could not get uid and gid, rejecting client");
+                  "could not get uid and gid, rejecting client %s",
+                  addrbuf);
 
           auth_rc = AUTH_TOOWEAK;
           goto auth_failure;
@@ -1219,6 +1261,10 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
   V(pworker_data->request_pool_mutex);
 
+  /*
+   * It is now time for checking if export list allows the machine to perform
+   * the request
+   */
   if((pworker_data->pfuncdesc->dispatch_behaviour & MAKES_IO) != 0 &&
      (export_perms.options & EXPORT_OPTION_RW_ACCESS) == 0)
     {
@@ -1279,14 +1325,14 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
           default:
             LogDebug(COMPONENT_DISPATCH,
-                     "Dropping request o an Read Only export");
+                     "Dropping request on a Read Only export");
             rc = NFS_REQ_DROP;
             break;
           }
       else
         {
           LogDebug(COMPONENT_DISPATCH,
-                   "Dropping request o an Read Only export");
+                   "Dropping request on a Read Only export");
           rc = NFS_REQ_DROP;
         }
     }
@@ -1295,9 +1341,12 @@ static void nfs_rpc_execute(request_data_t    * preq,
                                    EXPORT_OPTION_MD_READ_ACCESS)) == 0)
     {
       LogInfo(COMPONENT_DISPATCH,
-              "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
-              addrbuf,
+              "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
+              addrbuf, pexport->id, pexport->fullpath,
               (int)req->rq_vers, (int)req->rq_proc);
+
+      /* this thread is done, reset the timer start to avoid long processing */
+      memset(timer_start, 0, sizeof(struct timeval));
 
       auth_rc = AUTH_TOOWEAK;
       goto auth_failure;
@@ -1305,7 +1354,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
   else
     {
       /* Do the authentication stuff, if needed */
-      if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
+      if((pworker_data->pfuncdesc->dispatch_behaviour &
+          (NEEDS_CRED | NEEDS_EXPORT)) == (NEEDS_CRED | NEEDS_EXPORT))
         {
           /* Swap the anonymous uid/gid if the user should be anonymous */
           nfs_check_anon(&export_perms, pexport, &user_credentials);
@@ -1316,7 +1366,11 @@ static void nfs_rpc_execute(request_data_t    * preq,
                                     &user_credentials) == FALSE)
             {
               LogInfo(COMPONENT_DISPATCH,
-                      "authentication failed, rejecting client");
+                      "authentication failed, rejecting client %s",
+                      addrbuf);
+
+              /* this thread is done, reset the timer start to avoid long processing */
+              memset(timer_start, 0, sizeof(struct timeval));
 
               auth_rc = AUTH_TOOWEAK;
               goto auth_failure;
@@ -1473,6 +1527,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
           goto exe_exit;
         }
 
+      /* XXX we must hold xprt lock across SVC_FREEARGS */
+
       LogFullDebug(COMPONENT_DISPATCH,
                    "After svc_sendreply on socket %d",
                    xprt->xp_fd);
@@ -1486,17 +1542,15 @@ static void nfs_rpc_execute(request_data_t    * preq,
     } /* rc == NFS_REQ_DROP */
 
   /* Free the allocated resources once the work is done */
-  /* Free the arguments */
-  if((preqnfs->req.rq_vers == 2) ||
-     (preqnfs->req.rq_vers == 3) ||
-     (preqnfs->req.rq_vers == 4))
-      if(!SVC_FREEARGS(xprt, pworker_data->pfuncdesc->xdr_decode_func,
-                       (caddr_t) parg_nfs))
-      {
-        LogCrit(COMPONENT_DISPATCH,
-                "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-                pworker_data->pfuncdesc->funcname);
-      }
+  /* Free the arguments */  
+  if(!SVC_FREEARGS(xprt,
+                   pworker_data->pfuncdesc->xdr_decode_func,
+                   (caddr_t) parg_nfs))
+    {
+      LogCrit(COMPONENT_DISPATCH,
+              "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
+              pworker_data->pfuncdesc->funcname);
+    }
 
   /* XXX we must hold xprt lock across SVC_FREEARGS */
   svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
