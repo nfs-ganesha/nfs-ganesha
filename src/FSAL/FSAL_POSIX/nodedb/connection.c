@@ -194,7 +194,7 @@ static void *connection_run (void *arg)
     c = (struct connection *) arg;
 
     while (!(r = demarshal (c))) {
-/*        _nodedb_print(c->marshal->db); */
+/*         _nodedb_print(c->marshal->db); */
         encode_flush (c);
     }
 

@@ -1,14 +1,43 @@
-/* POSIX methods for handles
+/*
+ * Copyright (C) Paul Sheer, 2012
+ * Author: Paul Sheer paulsheer@gmail.com
+ *
+ * contributeur : Jim Lieb          jlieb@panasas.com
+ *                Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * ------------- 
  */
 
-/* private helpers from export
- */
 
 
-/* method proto linkage to handle.c for export
- */
 
-struct file_handle;
+struct posix_fsal_export {
+    struct fsal_export export;
+#define POSIX_FSAL_EXPORT_MAGIC         0xbc0a2a76U
+    unsigned int magic;
+    char *mntdir;
+#ifdef SUPPORT_LINUX_QUOTAS
+    char *fs_spec;
+    char *fstype;
+    dev_t root_dev;
+#endif
+};
 
 
 fsal_status_t posix_lookup_path (struct fsal_export *exp_hdl, const char *path, struct fsal_obj_handle **handle);
@@ -16,18 +45,9 @@ fsal_status_t posix_lookup_path (struct fsal_export *exp_hdl, const char *path, 
 fsal_status_t posix_create_handle (struct fsal_export *exp_hdl,
                                    struct gsh_buffdesc *hdl_desc, struct fsal_obj_handle **handle);
 
-/*
- * POSIX internal object handle
- * handle is a pointer because
- *  a) the last element of file_handle is a char[] meaning variable len...
- *  b) we cannot depend on it *always* being last or being the only
- *     variable sized struct here...  a pointer is safer.
- * wrt locks, should this be a lock counter??
- */
-
 struct posix_fsal_obj_handle {
     struct fsal_obj_handle obj_handle;
-    struct file_handle *handle;
+    struct handle_data *handle;         /* actually, it points to ... */
     union {
         struct {
             int fd;
@@ -38,6 +58,7 @@ struct posix_fsal_obj_handle {
             int link_size;
         } symlink;
     } u;
+    /* ... here <=== */
 };
 
 

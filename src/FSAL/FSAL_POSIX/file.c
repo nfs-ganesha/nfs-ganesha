@@ -58,16 +58,15 @@ fsal_status_t posix_open (struct fsal_obj_handle *obj_hdl, fsal_openflags_t open
     int fd;
     fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
     int retval = 0;
+    struct stat st_;
 
     myself = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);
 
     assert (myself->u.file.fd == -1 && myself->u.file.openflags == FSAL_O_CLOSED);
 
-    child = MARSHAL_nodedb_get_first_path_from_handle (connpool, (struct handle_data *) myself->handle->f_handle, &p);
-
+    child = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &p, NULL, &retval, &st_);
     if (!child) {
-        fsal_error = ERR_FSAL_STALE;
-        retval = ENOENT;
+        fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
         goto out;
     }
 

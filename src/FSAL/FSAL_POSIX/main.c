@@ -38,6 +38,7 @@
 #include "fsal_internal.h"
 #include "FSAL/fsal_init.h"
 
+#include "scanmount.h"
 
 #include "redblack.h"
 #include "sockbuf.h"
@@ -177,13 +178,15 @@ MODULE_INIT void posix_init (void)
     posix_handle_ops_init (myself->obj_ops);
     init_fsal_parameters (&POSIX.fsal_info);
 
+    read_mounts ();
+
 #if 0
     marshal_create_thread ();
 #else
     marshal_create_process ();
 #endif
 
-    printf ("Initializing connection pool -\n");
+    printf ("Scanned %d mounts. Initializing connection pool -\n", get_mount_count ());
     connpool = connection_pool_new ();
     printf ("done.\n");
 }

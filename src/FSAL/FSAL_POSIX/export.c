@@ -45,24 +45,14 @@
 #include <FSAL/FSAL_POSIX/fsal_handle_syscalls.h>
 #include "posix_methods.h"
 
+#include "scanmount.h"
 
-struct posix_fsal_export {
-    struct fsal_export export;
-    char *mntdir;
-    char *fs_spec;
-    char *fstype;
-    dev_t root_dev;
-};
+#include "redblack.h"
+#include "sockbuf.h"
+#include "nodedb.h"
+
 
 struct fsal_staticfsinfo_t *posix_staticinfo (struct fsal_module *hdl);
-
-int __open_at_root (const char *file, const char *function, int line, struct fsal_export *exp_hdl,
-                    struct file_handle *fh, int flags)
-{
-    printf ("%s:%d:%s: open_at_root()\n", file, line, function);
-
-    assert (!"not allowed to call this");
-}
 
 /* export object methods
  */
@@ -83,12 +73,14 @@ static fsal_status_t release (struct fsal_export *exp_hdl)
         goto errout;
     }
     fsal_detach_export (exp_hdl->fsal, &exp_hdl->exports);
-    if (myself->fstype != NULL)
-        free (myself->fstype);
     if (myself->mntdir != NULL)
         free (myself->mntdir);
+#ifdef SUPPORT_LINUX_QUOTAS
+    if (myself->fstype != NULL)
+        free (myself->fstype);
     if (myself->fs_spec != NULL)
         free (myself->fs_spec);
+#endif
     myself->export.ops = NULL;  /* poison myself */
     pthread_mutex_unlock (&exp_hdl->lock);
 
@@ -237,6 +229,7 @@ static uint32_t fs_xattr_access_rights (struct fsal_export *exp_hdl)
     return fsal_xattr_access_rights (info);
 }
 
+#ifdef SUPPORT_LINUX_QUOTAS
 /* get_quota
  * return quotas for this export.
  * path could cross a lower mount boundary which could
@@ -362,6 +355,7 @@ static fsal_status_t set_quota (struct fsal_export *exp_hdl,
   err:
     return fsalstat (fsal_error, retval);
 }
+#endif
 
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
@@ -372,15 +366,13 @@ static fsal_status_t set_quota (struct fsal_export *exp_hdl,
 
 static fsal_status_t extract_handle (struct fsal_export *exp_hdl, fsal_digesttype_t in_type, struct netbuf *fh_desc)
 {
-    struct file_handle *hdl;
     size_t fh_size;
 
     /* sanity checks */
     if (!fh_desc || !fh_desc->buf)
         return fsalstat (ERR_FSAL_FAULT, 0);
 
-    hdl = (struct file_handle *) fh_desc->buf;
-    fh_size = posix_sizeof_handle (hdl);
+    fh_size = sizeof (struct handle_data);
     if (in_type == FSAL_DIGEST_NFSV2) {
         if (fh_desc->len < fh_size) {
             LogMajor (COMPONENT_FSAL, "V2 size too small for handle.  should be %lu, got %u", fh_size, fh_desc->len);
@@ -418,8 +410,10 @@ void posix_export_ops_init (struct export_ops *ops)
     ops->fs_supported_attrs = fs_supported_attrs;
     ops->fs_umask = fs_umask;
     ops->fs_xattr_access_rights = fs_xattr_access_rights;
+#ifdef SUPPORT_LINUX_QUOTAS
     ops->get_quota = get_quota;
     ops->set_quota = set_quota;
+#endif
 }
 
 /* create_export
@@ -436,12 +430,14 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
                                    struct fsal_module *next_fsal, struct fsal_export **export)
 {
     struct posix_fsal_export *myself;
+#ifdef SUPPORT_LINUX_QUOTAS
     FILE *fp;
     struct mntent *p_mnt;
     size_t pathlen, outlen = 0;
     char mntdir[MAXPATHLEN];    /* there has got to be a better way... */
     char fs_spec[MAXPATHLEN];
     char type[MAXNAMLEN];
+#endif
     int retval = 0;
     fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -461,6 +457,7 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
         return fsalstat (posix2fsal_error (errno), errno);
     }
     memset (myself, 0, sizeof (struct posix_fsal_export));
+    myself->magic = POSIX_FSAL_EXPORT_MAGIC;
 
     fsal_export_init (&myself->export, fsal_hdl->exp_ops, exp_entry);
 
@@ -474,6 +471,7 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
         goto errout;            /* seriously bad */
     myself->export.fsal = fsal_hdl;
 
+#ifdef SUPPORT_LINUX_QUOTAS
     /* start looking for the mount point */
     fp = setmntent (MOUNTED, "r");
     if (fp == NULL) {
@@ -495,10 +493,6 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
                                      p_mnt->mnt_dir,
                                      pathlen) == 0) &&
                            ((export_path[pathlen] == '/') || (export_path[pathlen] == '\0'))) {
-                    if (strcasecmp (p_mnt->mnt_type, "xfs") == 0) {
-                        LogDebug (COMPONENT_FSAL, "Mount (%s) is XFS, skipping", p_mnt->mnt_dir);
-                        continue;
-                    }
                     outlen = pathlen;
                     strncpy (mntdir, p_mnt->mnt_dir, MAXPATHLEN);
                     strncpy (type, p_mnt->mnt_type, MAXNAMLEN);
@@ -533,18 +527,26 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
     }
     myself->fstype = strdup (type);
     myself->fs_spec = strdup (fs_spec);
+#endif
+
+#ifdef SUPPORT_LINUX_QUOTAS
     myself->mntdir = strdup (mntdir);
+#else
+    myself->mntdir = strdup (export_path);
+#endif
     *export = &myself->export;
     pthread_mutex_unlock (&myself->export.lock);
     return fsalstat (ERR_FSAL_NO_ERROR, 0);
 
   errout:
-    if (myself->fstype != NULL)
-        free (myself->fstype);
     if (myself->mntdir != NULL)
         free (myself->mntdir);
+#ifdef SUPPORT_LINUX_QUOTAS
+    if (myself->fstype != NULL)
+        free (myself->fstype);
     if (myself->fs_spec != NULL)
         free (myself->fs_spec);
+#endif
     myself->export.ops = NULL;  /* poison myself */
     pthread_mutex_unlock (&myself->export.lock);
     pthread_mutex_destroy (&myself->export.lock);

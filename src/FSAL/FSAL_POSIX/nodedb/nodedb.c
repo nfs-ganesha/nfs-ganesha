@@ -213,8 +213,9 @@ static enum object_file_type_enum type_convert (unsigned long posix_type_in)
     }
 }
 
-void nodedb_stat_to_file_data (const struct stat *st, struct file_data *file_data)
+void nodedb_stat_to_file_data (unsigned long long fsid, const struct stat *st, struct file_data *file_data)
 {
+    file_data->fsid = fsid;
     file_data->devid = st->st_dev;
     file_data->inode = st->st_ino;
     file_data->extra.nlinks = st->st_nlink;
@@ -284,6 +285,11 @@ static int rb_inode_cmp (const void *a_, const void *b_, void *not_used)
     struct inode_entry *a, *b;
     a = (struct inode_entry *) a_;
     b = (struct inode_entry *) b_;
+
+    if (a->file_data->fsid < b->file_data->fsid)
+        return -1;
+    if (a->file_data->fsid > b->file_data->fsid)
+        return 1;
 
     if (a->file_data->devid < b->file_data->devid)
         return -1;
@@ -388,6 +394,7 @@ struct nodedb *nodedb_new (void)
 /* add a dummy entry for the root node: */
 
     memset (&the_root, '\0', sizeof (the_root));
+
     c = inode_entry_new (nodedb_new_file_data (&the_root));
     redblack_tree_add (&db->rb_handle, c);
     redblack_tree_add (&db->rb_inode, c);
@@ -451,8 +458,9 @@ struct file_data *nodedb_new_file_data (const struct file_data *old_file_data)
     struct file_data *r;
     r = (struct file_data *) malloc (sizeof (*r));
 
-    if (old_file_data)
-        *r = *old_file_data;
+    assert (old_file_data);
+
+    *r = *old_file_data;
 
     r->handle.handleid = global_handle++;
     r->handle.timestamp = nodedb_current_time ();
@@ -571,12 +579,14 @@ static struct dir_entry *_nodedb_first_dir_entry_from_handle (struct nodedb *db,
 }
 
 
-MARSHALATOMIC struct file_data *nodedb_clean_stale_paths (struct nodedb *db, const struct handle_data *f_handle, char **path_, struct stat *st_)
+MARSHALATOMIC struct file_data *nodedb_clean_stale_paths (struct nodedb *db, const struct handle_data *f_handle, char **path_, unsigned long long *fsid, int *return_errno, struct stat *st_)
 {
     struct inode_entry *p;
     struct dir_entry *hardlink, *next;
     struct file_data f;
     const struct file_data *file_data_;
+
+    *return_errno = 0;
 
     file_data_ = (const struct file_data *) f_handle;
 
@@ -590,12 +600,26 @@ MARSHALATOMIC struct file_data *nodedb_clean_stale_paths (struct nodedb *db, con
         next = hardlink->next;
         path = _nodedb_build_path (db, hardlink);
         if (!lstat (path, &st)) {
-            nodedb_stat_to_file_data (&st, &f);
-            if (FILE_DATA_EQUAL (&f, p->file_data)) {
-                *path_ = path;
-                *st_ = st;
-                break;
+            if (fsid) {
+                nodedb_stat_to_file_data (*fsid, &st, &f);
+                if (FILE_DATA_EQUAL (&f, p->file_data)) {
+                    *path_ = path;
+                    if (st_)
+                        *st_ = st;
+                    break;
+                }
+            } else {
+/* wing it -- */
+                nodedb_stat_to_file_data (0ULL, &st, &f);
+                if (FILE_DATA_EQUAL_ (&f, p->file_data)) {
+                    *path_ = path;
+                    if (st_)
+                        *st_ = st;
+                    break;
+                }
             }
+        } else {
+            *return_errno = errno;
         }
         _nodedb_recursive_free (db, hardlink->parent, hardlink, &p);
         free (path);
@@ -935,6 +959,7 @@ MARSHALATOMIC int nodedb_link (struct nodedb *db, const struct handle_data *f_ha
 
 #include <stdio.h>
 
+#ifdef UNIT_TEST
 static int find_direntry_in_inode (struct inode_entry *n, struct dir_entry *e)
 {
     struct dir_entry *hardlink;
@@ -955,6 +980,7 @@ static void _nodedb_recursive_check (struct nodedb *db, struct dir_entry *parent
         _nodedb_recursive_check (db, child);
     }
 }
+#endif
 
 static void _nodedb_recursive_print (struct nodedb *db, const char *path, struct dir_entry *parent)
 {

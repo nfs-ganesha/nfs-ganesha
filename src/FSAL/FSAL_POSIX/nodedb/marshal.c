@@ -63,6 +63,7 @@ enum {
     VOID,
     CONST,
     STRUCT,
+    UNSIGNED,
     LONG_LONG,
     LONG,
     INT,
@@ -90,6 +91,7 @@ static void init_tokens (void)
     tokens[VOID] = "void";
     tokens[CONST] = "const";
     tokens[STRUCT] = "struct";
+    tokens[UNSIGNED] = "unsigned";
     tokens[LONG_LONG] = "long long";
     tokens[LONG] = "long";
     tokens[INT] = "int";
@@ -237,6 +239,8 @@ struct phrase phrase[100] = {
     {INOUT, {STRUCT, STAT, '*', IDENTIFIER, 0}, 3, 1, "encode_stat(conn, %s)", "decode_stat(conn, &%s)", NULL},
     {IN, {CONST, STRUCT, STAT, '*', IDENTIFIER, 0}, 4, 1, "encode_stat(conn, %s)", "decode_stat(conn, &%s)", NULL},
     {IN, {INT, IDENTIFIER, 0}, 1, 0, "encode_int(conn, &%s)", "decode_int(conn, &%s)", NULL},
+    {INOUT, {INT, '*', IDENTIFIER, 0}, 2, 1, "encode_int_p(conn, &%s)", "decode_int_p(conn, &%s)", NULL},
+    {INOUT, {UNSIGNED, LONG_LONG, '*', IDENTIFIER, 0}, 3, 1, "encode_ulonglong_p(conn, &%s)", "decode_ulonglong_p(conn, &%s)", NULL},
     {ENCAPSULATE, {STRUCT, NODEDB, '*', IDENTIFIER, 0}, 3, 0, NULL, NULL, NULL},
     {IGNORE, {VOID, IDENTIFIER, 0}, 1, 0, NULL, NULL, NULL},
     {IGNORE, {VOID, 0}, 0, 0, NULL, NULL, NULL},

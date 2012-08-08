@@ -36,29 +36,5 @@
 #include <string.h>
 #include <stddef.h>             /* For having offsetof defined */
 
-
-#define HANDLE_SIZE 32
-
-#ifdef LINUX
-#ifndef MAX_HANDLE_SZ
-
-/* syscalls introduced in 2.6.39 and enabled in glibc 2.14
- * if we are not building against 2.14, create our own versions
- * as inlines. Glibc versions are externs to glibc...
- */
-struct file_handle {
-    unsigned int handle_bytes;
-    int handle_type;
-    /* file identifier */
-    unsigned char f_handle[0];
-};
-#endif
-#endif
-
-static inline size_t posix_sizeof_handle (struct file_handle *hdl)
-{
-    return offsetof (struct file_handle, f_handle) +hdl->handle_bytes;
-}
-
 #endif
 

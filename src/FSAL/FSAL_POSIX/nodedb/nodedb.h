@@ -24,6 +24,12 @@ struct nodedb;
 struct stat;
 
 #define FILE_DATA_EQUAL(a, b) \
+        ((a)->fsid  == (b)->fsid && \
+         (a)->devid == (b)->devid && \
+         (a)->inode == (b)->inode && \
+         (a)->extra.type == (b)->extra.type)
+
+#define FILE_DATA_EQUAL_(a, b) \
         ((a)->devid == (b)->devid && \
          (a)->inode == (b)->inode && \
          (a)->extra.type == (b)->extra.type)
@@ -42,6 +48,7 @@ struct handle_data {
 
 struct file_data {
     struct handle_data handle;
+    unsigned long long fsid;
     unsigned long long devid;
     unsigned long long inode;
     struct extra extra;
@@ -57,9 +64,10 @@ struct nodedb *nodedb_new (void);
 
 char **strsplit (const char *s, char c, int max_split);
 char *dir_entry_name_cat (const char *name1, const char *name2);
-void nodedb_stat_to_file_data(const struct stat *st, struct file_data *file_data);
+void nodedb_stat_to_file_data (unsigned long long fsid, const struct stat *st, struct file_data *file_data);
 void nodedb_lock (struct nodedb *);
 void nodedb_unlock (struct nodedb *);
+void _nodedb_print (struct nodedb *db);
 
 
 

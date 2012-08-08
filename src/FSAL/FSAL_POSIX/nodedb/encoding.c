@@ -192,6 +192,84 @@ void encode_int (struct connection *conn, const int *p)
     sockbuf_send (&conn->output, p, sizeof (*p));
 }
 
+void decode_int_p (struct connection *conn, int **p)
+{
+    int dummy = 0;
+    if (conn->decode_error)
+        return;
+    if (decode_null (conn)) {
+        *p = NULL;
+        return;
+    }
+    if (decode_magic (conn, PARAM_MAGIC_INT)) {
+        conn->decode_error = MARSHAL_ERROR_MISMATCH_PARAM_TYPE;
+        conn->decode_errortext = conn->progress;
+        return;
+    }
+    sockbuf_recv (&conn->input, *p ? *p : &dummy, sizeof (**p));
+}
+
+void encode_int_p (struct connection *conn, int **p)
+{
+    if (conn->encode_error)
+        return;
+    if (!*p) {
+        encode_null (conn);
+    } else {
+        encode_magic (conn, PARAM_MAGIC_INT);
+        sockbuf_send (&conn->output, *p, sizeof (**p));
+    }
+}
+
+void decode_ulonglong (struct connection *conn, unsigned long long *p)
+{
+    if (conn->decode_error)
+        return;
+    if (decode_magic (conn, PARAM_MAGIC_ULONGLONG)) {
+        conn->decode_error = MARSHAL_ERROR_MISMATCH_PARAM_TYPE;
+        conn->decode_errortext = conn->progress;
+        return;
+    }
+    sockbuf_recv (&conn->input, p, sizeof (*p));
+}
+
+void encode_ulonglong (struct connection *conn, const unsigned long long *p)
+{
+    if (conn->encode_error)
+        return;
+    encode_magic (conn, PARAM_MAGIC_ULONGLONG);
+    sockbuf_send (&conn->output, p, sizeof (*p));
+}
+
+void decode_ulonglong_p (struct connection *conn, unsigned long long **p)
+{
+    unsigned long long dummy = 0;
+    if (conn->decode_error)
+        return;
+    if (decode_null (conn)) {
+        *p = NULL;
+        return;
+    }
+    if (decode_magic (conn, PARAM_MAGIC_INT)) {
+        conn->decode_error = MARSHAL_ERROR_MISMATCH_PARAM_TYPE;
+        conn->decode_errortext = conn->progress;
+        return;
+    }
+    sockbuf_recv (&conn->input, *p ? *p : &dummy, sizeof (**p));
+}
+
+void encode_ulonglong_p (struct connection *conn, unsigned long long **p)
+{
+    if (conn->encode_error)
+        return;
+    if (!*p) {
+        encode_null (conn);
+    } else {
+        encode_magic (conn, PARAM_MAGIC_INT);
+        sockbuf_send (&conn->output, *p, sizeof (**p));
+    }
+}
+
 void decode_op (struct connection *conn, enum ops *p)
 {
     int op;

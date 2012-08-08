@@ -31,6 +31,7 @@ enum param_magic {
     PARAM_MAGIC_UKNOWN_OP,
     PARAM_MAGIC_STRUCT,
     PARAM_MAGIC_INT,
+    PARAM_MAGIC_ULONGLONG,
     PARAM_MAGIC_STRING,
 
 
@@ -52,6 +53,12 @@ void decode_char_p (struct connection *conn, char **p);
 void encode_char_p (struct connection *conn, const char *p);
 void decode_int (struct connection *conn, int *p);
 void encode_int (struct connection *conn, const int *p);
+void decode_int_p (struct connection *conn, int **p);
+void encode_int_p (struct connection *conn, int **p);
+void decode_ulonglong (struct connection *conn, unsigned long long *p);
+void encode_ulonglong (struct connection *conn, const unsigned long long *p);
+void decode_ulonglong_p (struct connection *conn, unsigned long long **p);
+void encode_ulonglong_p (struct connection *conn, unsigned long long **p);
 
 
 void decode_op (struct connection *conn, enum ops *p);
