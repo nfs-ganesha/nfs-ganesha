@@ -323,7 +323,7 @@ void * _9p_socket_thread( void * Arg )
 
         /* An incoming 9P request: the msg has a 4 bytes header
            showing the size of the msg including the header */
-        if( (readlen = recv( fds[0].fd, _9pmsg ,_9P_HDR_SIZE, 0)) == _9P_HDR_SIZE ) 
+        if( (readlen = recv( fds[0].fd, _9pmsg ,_9P_HDR_SIZE, MSG_WAITALL)) == _9P_HDR_SIZE ) 
          {
            p_9pmsglen = (uint32_t *)_9pmsg ;
 
