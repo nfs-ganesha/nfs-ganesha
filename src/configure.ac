@@ -692,9 +692,6 @@ case $FSAL in
 
 		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE,
                                 OPENHANDLE_OPEN_BY_HANDLE,
-                                OPENHANDLE_LINK_BY_FD,
-		                OPENHANDLE_READLINK_BY_FD,
-                                OPENHANDLE_STAT_BY_HANDLE,
                                 OPENHANDLE_GET_LOCK,
                                 OPENHANDLE_SET_LOCK,
                                 XATTR_STAT,
