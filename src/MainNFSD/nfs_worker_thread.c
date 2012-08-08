@@ -739,7 +739,6 @@ static void nfs_rpc_execute(request_data_t    * preq,
   struct svc_req             * req = &preqnfs->req;
   SVCXPRT                    * xprt = preqnfs->xprt;
   nfs_stat_type_t              stat_type;
-  sockaddr_t                   hostaddr;
   int                          port;
   int                          rc;
   int                          do_dupreq_cache;
@@ -754,7 +753,6 @@ static void nfs_rpc_execute(request_data_t    * preq,
   struct timeval               timer_diff;
   struct timeval               queue_timer_diff;
   nfs_request_latency_stat_t   latency_stat;
-  char                         addrbuf[SOCK_NAME_MAX];
   enum auth_stat               auth_rc;
   const char                 * progname = "unknown";
   xprt_type_t                  xprt_type = svc_get_xprt_type(xprt);
@@ -782,7 +780,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
   /* XXX must hold lock when calling any TI-RPC channel function,
    * including svc_sendreply2 and the svcerr_* calls */
 
-  if(copy_xprt_addr(&hostaddr, xprt) == 0)
+  if(copy_xprt_addr(&pworker_data->hostaddr, xprt) == 0)
     {
       LogFullDebug(COMPONENT_DISPATCH,
                    "copy_xprt_addr failed for Program %d, Version %d, "
@@ -796,15 +794,15 @@ static void nfs_rpc_execute(request_data_t    * preq,
       return;
     }
 
-  port = get_port(&hostaddr);
+  port = get_port(&pworker_data->hostaddr);
 
-  sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
-
-  pworker_data->hostaddr = hostaddr;
+  sprint_sockaddr(&pworker_data->hostaddr,
+                  pworker_data->hostaddr_str,
+                  sizeof(pworker_data->hostaddr_str));
 
   LogDebug(COMPONENT_DISPATCH,
            "Request from %s for Program %d, Version %d, Function %d has xid=%u",
-           addrbuf,
+           pworker_data->hostaddr_str,
            (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
            req->rq_xid);
 
@@ -924,7 +922,6 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
       char dumpfh[1024];
       char *reason = NULL;
-      char addrbuf[SOCK_NAME_MAX];
 
       progname = "NFS";
 
@@ -954,7 +951,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
                       LogInfo(COMPONENT_DISPATCH,
                               "NFS2 Request from client %s %s, proc=%d, FH=%s",
-                              addrbuf, reason,
+                              pworker_data->hostaddr_str, reason,
                               (int)req->rq_proc, dumpfh);
                     }
 
@@ -965,7 +962,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for Export_Id %d %s for client %s",
-                           pexport->id, pexport->fullpath, addrbuf);
+                           pexport->id, pexport->fullpath,
+                           pworker_data->hostaddr_str);
             }
           else
             pexport = NULL;
@@ -994,7 +992,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
                       LogInfo(COMPONENT_DISPATCH,
                               "NFS3 Request from client %s %s, proc=%d, FH=%s",
-                              addrbuf, reason,
+                              pworker_data->hostaddr_str, reason,
                               (int)req->rq_proc, dumpfh);
                     }
 
@@ -1005,7 +1003,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for Export_Id %d %s for client %s",
-                           pexport->id, pexport->fullpath, addrbuf);
+                           pexport->id, pexport->fullpath,
+                           pworker_data->hostaddr_str);
             }
           else
             pexport = NULL;
@@ -1022,7 +1021,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
           /* Invalid version (which should never get here) */
           LogCrit(COMPONENT_DISPATCH,
                   "Invalid NFS version %d from client %s",
-                  (int)req->rq_vers, addrbuf);
+                  (int)req->rq_vers, pworker_data->hostaddr_str);
 
           auth_rc = AUTH_FAILED;
           goto auth_failure;
@@ -1102,7 +1101,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
                   LogCrit(COMPONENT_DISPATCH,
                           "NLM4 Request from client %s %s, proc=%d, FH=%s",
-                          addrbuf, reason,
+                          pworker_data->hostaddr_str, reason,
                           (int)req->rq_proc, dumpfh);
                 }
 
@@ -1113,7 +1112,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
           LogFullDebug(COMPONENT_DISPATCH,
                        "Found export entry for Export_Id %d %s for client %s",
-                       pexport->id, pexport->fullpath, addrbuf);
+                       pexport->id, pexport->fullpath,
+                       pworker_data->hostaddr_str);
         }
       else
         pexport = NULL;
@@ -1130,7 +1130,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
     {
       LogFullDebug(COMPONENT_DISPATCH,
                    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
-                   addrbuf);
+                   pworker_data->hostaddr_str);
 
       nfs_export_check_access(&pworker_data->hostaddr,
                               pexport,
@@ -1140,7 +1140,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
         {
           LogInfo(COMPONENT_DISPATCH,
                   "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
-                  addrbuf, pexport->id, pexport->fullpath,
+                  pworker_data->hostaddr_str,
+                  pexport->id, pexport->fullpath,
                   (int)req->rq_vers, (int)req->rq_proc);
 
           auth_rc = AUTH_TOOWEAK;
@@ -1162,7 +1163,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d not allowed on Export_Id %d %s for client %s",
                   progname, req->rq_vers,
-                  pexport->id, pexport->fullpath, addrbuf);
+                  pexport->id, pexport->fullpath,
+                  pworker_data->hostaddr_str);
 
           auth_rc = AUTH_FAILED;
           goto auth_failure;
@@ -1178,7 +1180,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
                   "%s Version %d over %s not allowed on Export_Id %d %s for client %s",
                   progname, req->rq_vers, xprt_type_to_str(xprt_type),
                   pexport->id, pexport->fullpath,
-                  addrbuf);
+                  pworker_data->hostaddr_str);
 
           auth_rc = AUTH_FAILED;
           goto auth_failure;
@@ -1190,7 +1192,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d auth not allowed on Export_Id %d %s for client %s",
                   progname, req->rq_vers,
-                  pexport->id, pexport->fullpath, addrbuf);
+                  pexport->id, pexport->fullpath,
+                  pworker_data->hostaddr_str);
 
           auth_rc = AUTH_TOOWEAK;
           goto auth_failure;
@@ -1204,7 +1207,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
         {
           LogInfo(COMPONENT_DISPATCH,
                   "Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
-                  port, pexport->id, pexport->fullpath, addrbuf);
+                  port, pexport->id, pexport->fullpath,
+                  pworker_data->hostaddr_str);
 
           auth_rc = AUTH_TOOWEAK;
           goto auth_failure;
@@ -1223,7 +1227,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
         {
           LogInfo(COMPONENT_DISPATCH,
                   "could not get uid and gid, rejecting client %s",
-                  addrbuf);
+                  pworker_data->hostaddr_str);
 
           auth_rc = AUTH_TOOWEAK;
           goto auth_failure;
@@ -1342,7 +1346,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
     {
       LogInfo(COMPONENT_DISPATCH,
               "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
-              addrbuf, pexport->id, pexport->fullpath,
+              pworker_data->hostaddr_str,
+              pexport->id, pexport->fullpath,
               (int)req->rq_vers, (int)req->rq_proc);
 
       /* this thread is done, reset the timer start to avoid long processing */
@@ -1367,7 +1372,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
             {
               LogInfo(COMPONENT_DISPATCH,
                       "authentication failed, rejecting client %s",
-                      addrbuf);
+                      pworker_data->hostaddr_str);
 
               /* this thread is done, reset the timer start to avoid long processing */
               memset(timer_start, 0, sizeof(struct timeval));
@@ -1892,10 +1897,13 @@ again:
       sockaddr_t addr;
       char addrbuf[SOCK_NAME_MAX];
 
-      if(copy_xprt_addr(&addr, xprt) == 1)
-        sprint_sockaddr(&addr, addrbuf, sizeof(addrbuf));
-      else
-        sprintf(addrbuf, "<unresolved>");
+      if(isDebug(COMPONENT_DISPATCH))
+        {
+          if(copy_xprt_addr(&addr, xprt) == 1)
+            sprint_sockaddr(&addr, addrbuf, sizeof(addrbuf));
+          else
+            sprintf(addrbuf, "<unresolved>");
+        }
 
       stat = SVC_STAT(xprt);
       DISP_UNLOCK(xprt);

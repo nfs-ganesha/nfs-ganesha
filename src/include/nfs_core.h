@@ -543,6 +543,7 @@ struct nfs_worker_data__
   nfs_worker_stat_t stats;
   unsigned int passcounter;
   sockaddr_t hostaddr;
+  char       hostaddr_str[SOCK_NAME_MAX];
   sigset_t sigmask; /* masked signals */
   unsigned int gc_in_progress;
   unsigned int current_xid;

@@ -715,8 +715,12 @@ void process_blocked_lock_upcall(state_block_data_t   * block_data);
 void nfs4_init_grace();
 void nfs4_start_grace(nfs_grace_start_array_t *gsap);
 int nfs_in_grace();
-void nfs4_create_clid_name(nfs_client_record_t *, nfs_client_id_t *,
-    struct svc_req *);
+
+void
+nfs4_create_clid_name(nfs_client_record_t * cl_recp,
+                      nfs_client_id_t     * pclientid,
+                      compound_data_t     * data);
+
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(char *);
 void nfs4_chk_clid(nfs_client_id_t *);

@@ -151,12 +151,11 @@ nfs_in_grace()
  * will be allowed to do reclaims during grace period.
  */
 void
-nfs4_create_clid_name(nfs_client_record_t *cl_recp, nfs_client_id_t *pclientid,
-    struct svc_req *svcp)
+nfs4_create_clid_name(nfs_client_record_t * cl_recp,
+                      nfs_client_id_t     * pclientid,
+                      compound_data_t     * data)
 {
         int i;
-        sockaddr_t sa;
-        char buf[SOCK_NAME_MAX];
         longlong_t cl_val = 0;
 
         pclientid->cid_recov_dir = gsh_malloc(256);
@@ -164,16 +163,12 @@ nfs4_create_clid_name(nfs_client_record_t *cl_recp, nfs_client_id_t *pclientid,
                 LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
                 return;
         }
-        /* get the caller's IP addr */
-        if (copy_xprt_addr(&sa, svcp->rq_xprt))
-                sprint_sockip(&sa, buf, SOCK_NAME_MAX);
-        else
-                strncpy(buf, "Unknown", SOCK_NAME_MAX);
 
         for (i = 0; i < cl_recp->cr_client_val_len; i++)
                 cl_val += cl_recp->cr_client_val[i];
 
-        (void) snprintf(pclientid->cid_recov_dir, 256, "%s-%llx", buf, cl_val);
+        (void) snprintf(pclientid->cid_recov_dir, 256, "%s-%llx",
+                        data->pworker->hostaddr_str, cl_val);
 
         LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
             pclientid->cid_recov_dir);

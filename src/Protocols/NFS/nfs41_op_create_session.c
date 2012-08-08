@@ -74,8 +74,6 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   nfs_client_record_t * pclient_record;
   nfs41_session_t     * nfs41_session = NULL;
   clientid4             clientid = 0;
-  sockaddr_t            client_addr;
-  char                  str_client_addr[SOCK_NAME_MAX];
   char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
   int                   rc;
   log_components_t      component = COMPONENT_CLIENTID;
@@ -91,14 +89,9 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   res_CREATE_SESSION4.csr_status = NFS4_OK;
   clientid = arg_CREATE_SESSION4.csa_clientid;
 
-  copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
-
-  if(isDebug(component))
-    sprint_sockip(&client_addr, str_client_addr, sizeof(str_client_addr));
-
   LogDebug(component,
            "CREATE_SESSION client addr=%s clientid=%"PRIx64" -------------------",
-           str_client_addr,
+           data->pworker->hostaddr_str,
            clientid);
 
   /* First try to look up unconfirmed record */
@@ -202,7 +195,9 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
     {
       /* First must match principal */
       if(!nfs_compare_clientcred(&punconf->cid_credential, &data->credential) ||
-         !cmp_sockaddr(&punconf->cid_client_addr, &client_addr, IGNORE_PORT))
+         !cmp_sockaddr(&punconf->cid_client_addr,
+                       &data->pworker->hostaddr,
+                       IGNORE_PORT))
         {
           if(isDebug(component))
             {
@@ -212,7 +207,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
               LogDebug(component,
                        "Unconfirmed ClientId %"PRIx64"->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
-                       clientid, str_client_addr, unconfirmed_addr);
+                       clientid, data->pworker->hostaddr_str, unconfirmed_addr);
             }
 
           dec_client_id_ref(punconf);
@@ -230,7 +225,9 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
       /* First must match principal */
       if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
-         !cmp_sockaddr(&pconf->cid_client_addr, &client_addr, IGNORE_PORT))
+         !cmp_sockaddr(&pconf->cid_client_addr,
+                       &data->pworker->hostaddr,
+                       IGNORE_PORT))
         {
           if(isDebug(component))
             {
@@ -240,7 +237,8 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
               LogDebug(component,
                        "Confirmed ClientId %"PRIx64"->%s addr=%s: Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
-                       clientid, str_client, str_client_addr, confirmed_addr);
+                       clientid, str_client, data->pworker->hostaddr_str,
+                       confirmed_addr);
             }
 
           /* Release our reference to the confirmed clientid. */

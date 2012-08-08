@@ -80,11 +80,9 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 {
   char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
   char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-  char                  str_client_addr[SOCK_NAME_MAX];
   nfs_client_record_t * pclient_record;
   nfs_client_id_t     * pconf;
   nfs_client_id_t     * punconf;
-  sockaddr_t            client_addr;
   int                   rc;
   int                   len;
   char                * temp;
@@ -110,14 +108,10 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   resp->resop = NFS4_OP_EXCHANGE_ID;
 
-  copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
-
   update = (arg_EXCHANGE_ID4.eia_flags & EXCHGID4_FLAG_UPD_CONFIRMED_REC_A) != 0;
 
   if(isDebug(component))
     {
-      sprint_sockip(&client_addr, str_client_addr, sizeof(str_client_addr));
-
       DisplayOpaqueValue(arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
                          arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len,
                          str_client);
@@ -131,7 +125,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   LogDebug(component,
            "EXCHANGE_ID Client addr=%s id=%s verf=%s %s --------------------",
-           str_client_addr, str_client, str_verifier, update_str);
+           data->pworker->hostaddr_str,
+           str_client, str_verifier, update_str);
 
   /* Do we already have one or more records for client id (x)? */
   pclient_record = get_client_record(arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
@@ -179,7 +174,9 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       /* EXCHGID4_FLAG_UPD_CONFIRMED_REC_A not set */
       /** @todo FSF: old code ifdefed out nfs_compare_clientcred with _NFSV4_COMPARE_CRED_IN_EXCHANGE_ID */
       if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
-         !cmp_sockaddr(&pconf->cid_client_addr, &client_addr, IGNORE_PORT))
+         !cmp_sockaddr(&pconf->cid_client_addr,
+                       &data->pworker->hostaddr,
+                       IGNORE_PORT))
         {
           /** @todo FSF: should also check if there is no state */
           P(pconf->cid_mutex);
@@ -262,7 +259,9 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
         {
           /** @todo FSF: old code ifdefed out nfs_compare_clientcred with _NFSV4_COMPARE_CRED_IN_EXCHANGE_ID */
           if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
-             !cmp_sockaddr(&pconf->cid_client_addr, &client_addr, IGNORE_PORT))
+             !cmp_sockaddr(&pconf->cid_client_addr,
+                           &data->pworker->hostaddr,
+                           IGNORE_PORT))
             {
               /* CASE 9, Update but wrong principal */
               if(isDebug(component))
@@ -354,7 +353,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   punconf = create_client_id(0,
                              pclient_record,
-                             &client_addr,
+                             &data->pworker->hostaddr,
                              &data->credential);
 
   if(punconf == NULL)

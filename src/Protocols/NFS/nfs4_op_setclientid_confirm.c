@@ -71,9 +71,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
   nfs_client_id_t     * punconf = NULL;
   nfs_client_record_t * pclient_record;
   clientid4             clientid = 0;
-  sockaddr_t            client_addr;
   char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
-  char                  str_client_addr[SOCK_NAME_MAX];
   char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
   int                   rc;
 
@@ -84,12 +82,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
   res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
   clientid                        = arg_SETCLIENTID_CONFIRM4.clientid;
 
-  copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
-
   if(isDebug(COMPONENT_CLIENTID))
     {
-      sprint_sockip(&client_addr, str_client_addr, sizeof(str_client_addr));
-
       sprint_mem(str_verifier,
                  arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
                  NFS4_VERIFIER_SIZE);
@@ -97,7 +91,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
   LogDebug(COMPONENT_CLIENTID,
            "SETCLIENTID_CONFIRM client addr=%s clientid=%"PRIx64" setclientid_confirm=%s",
-           str_client_addr,
+           data->pworker->hostaddr_str,
            clientid,
            str_verifier);
 
@@ -169,7 +163,9 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
     {
       /* First must match principal */
       if(!nfs_compare_clientcred(&punconf->cid_credential, &data->credential) ||
-         !cmp_sockaddr(&punconf->cid_client_addr, &client_addr, IGNORE_PORT))
+         !cmp_sockaddr(&punconf->cid_client_addr,
+                       &data->pworker->hostaddr,
+                       IGNORE_PORT))
         {
           if(isDebug(COMPONENT_CLIENTID))
             {
@@ -179,7 +175,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
               LogDebug(COMPONENT_CLIENTID,
                        "Unconfirmed ClientId %"PRIx64"->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
-                       clientid, str_client_addr, unconfirmed_addr);
+                       clientid, data->pworker->hostaddr_str, unconfirmed_addr);
             }
 
           res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
@@ -241,7 +237,9 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
       /* First must match principal */
       if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
-         !cmp_sockaddr(&pconf->cid_client_addr, &client_addr, IGNORE_PORT))
+         !cmp_sockaddr(&pconf->cid_client_addr,
+                       &data->pworker->hostaddr,
+                       IGNORE_PORT))
         {
           if(isDebug(COMPONENT_CLIENTID))
             {
@@ -251,7 +249,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
               LogDebug(COMPONENT_CLIENTID,
                        "Confirmed ClientId %"PRIx64"->%s addr=%s: Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
-                       clientid, str_client, str_client_addr, confirmed_addr);
+                       clientid, str_client,
+                       data->pworker->hostaddr_str, confirmed_addr);
             }
 
           res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
@@ -427,7 +426,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
        * We have successfully added a new confirmed client id.  Now
        * add it to stable storage.
        */
-      nfs4_create_clid_name(pclient_record, punconf, data->reqp);
+      nfs4_create_clid_name(pclient_record, punconf, data);
       nfs4_add_clid(punconf);
 
       /* check if the client can perform reclaims */

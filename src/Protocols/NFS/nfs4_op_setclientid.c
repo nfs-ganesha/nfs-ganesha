@@ -69,13 +69,11 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 {
   char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
   char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-  char                  str_client_addr[SOCK_NAME_MAX];
   nfs_client_record_t * pclient_record;
   nfs_client_id_t     * pconf;
   nfs_client_id_t     * punconf;
   clientid4             clientid;
   verifier4             verifier;
-  sockaddr_t            client_addr;
   int                   rc;
 
 #define arg_SETCLIENTID4       op->nfs_argop4_u.opsetclientid
@@ -84,12 +82,8 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
   resp->resop = NFS4_OP_SETCLIENTID;
 
-  copy_xprt_addr(&client_addr, data->reqp->rq_xprt);
-
   if(isDebug(COMPONENT_CLIENTID))
     {
-      sprint_sockip(&client_addr, str_client_addr, sizeof(str_client_addr));
-
       DisplayOpaqueValue(arg_SETCLIENTID4.client.id.id_val,
                          arg_SETCLIENTID4.client.id.id_len,
                          str_client);
@@ -101,7 +95,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
   LogDebug(COMPONENT_CLIENTID,
            "SETCLIENTID Client addr=%s id=%s verf=%s callback={program=%u r_addr=%s r_netid=%s} ident=%u",
-           str_client_addr, str_client, str_verifier,
+           data->pworker->hostaddr_str, str_client, str_verifier,
            arg_SETCLIENTID4.callback.cb_program,
            arg_SETCLIENTID4.callback.cb_location.r_addr,
            arg_SETCLIENTID4.callback.cb_location.r_netid,
@@ -151,7 +145,9 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
       inc_client_id_ref(pconf);
 
       if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
-         !cmp_sockaddr(&pconf->cid_client_addr, &client_addr, IGNORE_PORT))
+         !cmp_sockaddr(&pconf->cid_client_addr,
+                       &data->pworker->hostaddr,
+                       IGNORE_PORT))
         {
           /* CASE 1:
            *
@@ -285,7 +281,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
   punconf = create_client_id(clientid,
                              pclient_record,
-                             &client_addr,
+                             &data->pworker->hostaddr,
                              &data->credential);
 
   if(punconf == NULL)
