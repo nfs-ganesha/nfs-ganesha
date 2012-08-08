@@ -1254,11 +1254,13 @@ static int BuildExportEntry(config_item_t        block,
 
           if(!STRCMP(var_value, "RW"))
             {
-              p_perms->options |= EXPORT_OPTION_RW_ACCESS;
+              p_perms->options |= EXPORT_OPTION_RW_ACCESS |
+                                  EXPORT_OPTION_MD_ACCESS;
             }
           else if(!STRCMP(var_value, "RO"))
             {
-              p_perms->options |= EXPORT_OPTION_READ_ACCESS;
+              p_perms->options |= EXPORT_OPTION_READ_ACCESS |
+                                  EXPORT_OPTION_MD_READ_ACCESS;
             }
           else if(!STRCMP(var_value, "MDONLY"))
             {
@@ -3498,7 +3500,8 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                    "Export %d Client %s matches RW_Access",
                    pexport->id, ipstring);
 
-      pexport_perms->options |= client_found.client_perms.options;
+      pexport_perms->options |= EXPORT_OPTION_RW_ACCESS |
+                                EXPORT_OPTION_MD_ACCESS;
 
       return;
     }
@@ -3514,7 +3517,8 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                    "Export %d Client %s matches R_Access",
                    pexport->id, ipstring);
 
-      pexport_perms->options |= client_found.client_perms.options;
+      pexport_perms->options |= EXPORT_OPTION_READ_ACCESS |
+                                EXPORT_OPTION_MD_READ_ACCESS;
 
       return;
     }
