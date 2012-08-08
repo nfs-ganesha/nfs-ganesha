@@ -754,6 +754,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
   struct timeval               queue_timer_diff;
   nfs_request_latency_stat_t   latency_stat;
   char                         addrbuf[SOCK_NAME_MAX];
+  enum auth_stat               auth_rc;
 
   /* Initialize permissions to allow nothing */
   export_perms.options       = 0;
@@ -948,17 +949,10 @@ static void nfs_rpc_execute(request_data_t    * preq,
                                addrbuf, reason,
                                (int)req->rq_proc, dumpfh);
                     }
+
                   /* Bad argument */
-                  svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-                  svcerr_auth2(xprt, req, AUTH_FAILED);
-                  svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-                  if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                    {
-                      LogCrit(COMPONENT_DISPATCH,
-                              "Attempt to delete duplicate request failed on "
-                              "line %d", __LINE__);
-                    }
-                  return;
+                  auth_rc = AUTH_FAILED;
+                  goto auth_failure;
                 }
 
               LogFullDebug(COMPONENT_DISPATCH,
@@ -1014,17 +1008,10 @@ static void nfs_rpc_execute(request_data_t    * preq,
                        addrbuf, reason,
                        (int)req->rq_proc, dumpfh);
             }
+
           /* Bad argument */
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-          svcerr_auth2(xprt, req, AUTH_FAILED);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "Attempt to delete duplicate request failed on "
-                      "line %d", __LINE__);
-             }
-          return;
+          auth_rc = AUTH_FAILED;
+          goto auth_failure;
 
         case NFS_V4:
           /* NFSv4 requires entire export list */
@@ -1110,17 +1097,10 @@ static void nfs_rpc_execute(request_data_t    * preq,
                            addrbuf, reason,
                            (int)req->rq_proc, dumpfh);
                 }
+
               /* Bad argument */
-              svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-              svcerr_auth2(xprt, req, AUTH_FAILED);
-              svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-              if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                {
-                  LogCrit(COMPONENT_DISPATCH,
-                          "Attempt to delete duplicate request failed on line "
-                          "%d", __LINE__);
-                }
-              return;
+              auth_rc = AUTH_FAILED;
+              goto auth_failure;
             }
 
           LogFullDebug(COMPONENT_DISPATCH,
@@ -1154,19 +1134,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
                   addrbuf,
                   (int)req->rq_vers, (int)req->rq_proc);
 
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-
-          pworker_data->current_xid = 0;        /* No more xid managed */
-
-          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "Attempt to delete duplicate request failed on line %d",
-                      __LINE__);
-            }
-          return;
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
         }
     }
 
@@ -1175,16 +1144,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
       /* Test if export allows the authentication provided */
       if (nfs_export_check_security(req, &pexport->export_perms, pexport) == FALSE)
         {
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "Attempt to delete duplicate request failed on "
-                      "line %d", __LINE__);
-            }
-          return;
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
         }
     }
 
@@ -1209,19 +1170,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
           LogInfo(COMPONENT_DISPATCH,
                   "Port %d is too high for this export entry, rejecting client",
                   port);
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-          /* XXX */
-          pworker_data->current_xid = 0;    /* No more xid managed */
 
-          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "Attempt to delete duplicate request failed on line %d",
-                      __LINE__);
-            }
-          return;
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
         }
     }
 
@@ -1231,19 +1182,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
         {
           LogInfo(COMPONENT_DISPATCH,
                   "could not get uid and gid, rejecting client");
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-          /* XXX */
-          pworker_data->current_xid = 0;    /* No more xid managed */
 
-          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "Attempt to delete duplicate request failed on line %d",
-                      __LINE__);
-            }
-          return;
+          auth_rc = AUTH_TOOWEAK;
+          goto auth_failure;
         }
     }
 
@@ -1357,19 +1298,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
               "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
               addrbuf,
               (int)req->rq_vers, (int)req->rq_proc);
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-      svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-      svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-      /* XXX */
-      pworker_data->current_xid = 0;        /* No more xid managed */
 
-      if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-        {
-          LogCrit(COMPONENT_DISPATCH,
-                  "Attempt to delete duplicate request failed on line %d",
-                  __LINE__);
-        }
-      goto exe_exit;
+      auth_rc = AUTH_TOOWEAK;
+      goto auth_failure;
     }
   else
     {
@@ -1386,19 +1317,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
             {
               LogInfo(COMPONENT_DISPATCH,
                       "authentication failed, rejecting client");
-              svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-              svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-              svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-              /* XXX */
-              pworker_data->current_xid = 0;    /* No more xid managed */
 
-              if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-                {
-                  LogCrit(COMPONENT_DISPATCH,
-                         "Attempt to delete duplicate request failed on line %d",
-                         __LINE__);
-                }
-              goto exe_exit;
+              auth_rc = AUTH_TOOWEAK;
+              goto auth_failure;
             }
         }
 
@@ -1604,6 +1525,23 @@ exe_exit:
   /* By now the dupreq cache entry should have been completed w/ a request
    * that is reusable or the dupreq cache entry should have been removed. */
   return;
+
+auth_failure:
+
+  svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+  svcerr_auth2(xprt, req, auth_rc);
+  svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+
+  clean_credentials(&user_credentials);
+
+  pworker_data->current_xid = 0;    /* No more xid managed */
+
+  if(nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
+    LogCrit(COMPONENT_DISPATCH,
+            "Attempt to delete duplicate request after auth failure");
+
+  return;
+
 }                               /* nfs_rpc_execute */
 
 /**
