@@ -69,7 +69,8 @@
 
 #define STRCMP strcasecmp
 
-#define CONF_LABEL_EXPORT "EXPORT"
+char * CONF_LABEL_EXPORT = "EXPORT";
+char * CONF_LABEL_EXPORT_CLIENT = "EXPORT_CLIENT";
 
 /* Labels in the export file */
 #define CONF_EXPORT_ID                 "Export_id"
@@ -202,7 +203,6 @@ int nfs_ParseConfLine(char *Argv[],
       /* je valide la lecture du token */
       *p2 = '\0';
       strncpy(Argv[output_value++], p1, MNTNAMLEN);
-                   
 
       /* Je me prepare pour la suite */
       if(!endLine)
@@ -583,19 +583,21 @@ int nfs_AddClientsToClientList(exportlist_client_t * clients,
   return 0;                     /* success !! */
 }                               /* nfs_AddClientsToClientList */
 
-#define DEFINED_TWICE_WARNING( _str_ ) \
+#define DEFINED_TWICE_WARNING( _lbl_ , _str_ ) \
   LogWarn(COMPONENT_CONFIG,            \
-          "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
+          "NFS READ %s: %s defined twice !!! (ignored)", \
+          _lbl_ , _str_ )
 
-#define DEFINED_CONFLICT_WARNING( _opt1_ , _opt2_ ) \
+#define DEFINED_CONFLICT_WARNING( _lbl_ , _opt1_ , _opt2_ ) \
   LogWarn(COMPONENT_CONFIG,            \
-          "NFS READ_EXPORT: WARNING: %s defined when %s was already defined (ignored)", _opt1_ , _opt2_ )
-
+          "NFS READ %s: %s defined when %s was already defined (ignored)", \
+          _lbl_ , _opt1_ , _opt2_ )
 
 int parseAccessParam(char                * var_name,
                      char                * var_value,
                      exportlist_client_t * clients,
-                     int                   access_option)
+                     int                   access_option,
+                     const char          * label)
 {
   int rc;
   char *expended_node_list;
@@ -616,16 +618,16 @@ int parseAccessParam(char                * var_name,
   if(count <= 0)
     {
       LogCrit(COMPONENT_CONFIG,
-	      "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s=\"%s\"",
-	      var_name, var_value);
+	      "NFS READ %s: Invalid format for client list in %s=\"%s\"",
+	      label, var_name, var_value);
 
       return -1;
     }
   else if(count > EXPORT_MAX_CLIENTS)
     {
       LogCrit(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: Client list too long (%d>%d) in EXPORT::%s=\"%s\"",
-	      count, EXPORT_MAX_CLIENTS, var_name, var_value);
+              "NFS READ %s: Client list too long (%d>%d) in %s=\"%s\"",
+	      label, count, EXPORT_MAX_CLIENTS, var_name, var_value);
       return -1;
     }
 
@@ -655,7 +657,8 @@ int parseAccessParam(char                * var_name,
   if(rc < 0)
     {
       LogCrit(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
+              "NFS READ %s: Client list too long (>%d)",
+              label, count);
 
       goto out;
     }
@@ -669,8 +672,8 @@ int parseAccessParam(char                * var_name,
   if(rc != 0)
     {
       LogCrit(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: Invalid client found in EXPORT::%s=\"%s\"",
-              var_name, var_value);
+              "NFS READ %s: Invalid client found in %s=\"%s\"",
+              label, var_name, var_value);
     }
 
  out:
@@ -710,10 +713,14 @@ bool_t fsal_specific_checks(exportlist_t *p_entry)
  * BuildExportEntry : builds an export entry from configutation file.
  * Don't stop immediately on error,
  * continue parsing the file, for listing other errors.
+ *
+ * If label == CONF_LABEL_EXPORT build a base export entry
+ * If label == CONF_LABEL_EXPORT_CLIENT add a client access list to export entry
  */
 static int BuildExportEntry(config_item_t        block,
                             exportlist_t      ** pp_export,
-                            struct glist_head  * pexportlist)
+                            struct glist_head  * pexportlist,
+                            const char         * label)
 {
   exportlist_t        * p_entry = NULL;
   exportlist_t        * p_found_entry;
@@ -722,94 +729,105 @@ static int BuildExportEntry(config_item_t        block,
   char                * var_name;
   char                * var_value;
   struct glist_head   * glist;
+  exportlist_client_t   access_list;
   exportlist_client_t * p_access_list;
+  export_perms_t        client_perms;
   export_perms_t      * p_perms;
   char                  temp_path[MAXPATHLEN+2];
   char                * ppath;
   unsigned int          mandatory_options;
   int                   err_flag = FALSE;
-
-  mandatory_options = FLAG_EXPORT_ID |
-                      FLAG_EXPORT_PATH |
-                      FLAG_EXPORT_ACCESS_LIST |
-                      FLAG_EXPORT_PSEUDO;
-
-  /* the given options */
-
-  unsigned int set_options = 0;
-
+  unsigned int          set_options = 0;
 
   /* allocates export entry */
-  p_entry = gsh_calloc(1, sizeof(exportlist_t));
+  if(label == CONF_LABEL_EXPORT)
+    {
+      p_entry = gsh_calloc(1, sizeof(exportlist_t));
 
-  if(p_entry == NULL)
-    return ENOMEM;
+      if(p_entry == NULL)
+        return ENOMEM;
 
-  p_entry->status = EXPORTLIST_OK;
-  p_entry->use_commit = TRUE;
-  p_entry->use_ganesha_write_buffer = FALSE;
-  p_entry->UseCookieVerifier = TRUE;
+      /* the mandatory options */
+      mandatory_options = FLAG_EXPORT_ID |
+                          FLAG_EXPORT_PATH |
+                          FLAG_EXPORT_ACCESS_LIST |
+                          FLAG_EXPORT_PSEUDO;
 
-  /* Defaults for FSAL_UP. It is ok to leave the filter list NULL
-   * even if we enable the FSAL_UP. */
+      p_entry->status = EXPORTLIST_OK;
+      p_entry->use_commit = TRUE;
+      p_entry->use_ganesha_write_buffer = FALSE;
+      p_entry->UseCookieVerifier = TRUE;
+
+      /* Defaults for FSAL_UP. It is ok to leave the filter list NULL
+       * even if we enable the FSAL_UP. */
 #ifdef _USE_FSAL_UP
-  p_entry->use_fsal_up = FALSE;
-  p_entry->fsal_up_filter_list = NULL;
-  p_entry->fsal_up_timeout.seconds = 30;
-  p_entry->fsal_up_timeout.nseconds = 0;
-  strncpy(p_entry->fsal_up_type,"DUMB", 4);
-  /* We don't create the thread until all exports are parsed. */
-  memset(&p_entry->fsal_up_thr, 0, sizeof(pthread_t));
+      p_entry->use_fsal_up = FALSE;
+      p_entry->fsal_up_filter_list = NULL;
+      p_entry->fsal_up_timeout.seconds = 30;
+      p_entry->fsal_up_timeout.nseconds = 0;
+      strncpy(p_entry->fsal_up_type,"DUMB", 4);
+      /* We don't create the thread until all exports are parsed. */
+      memset(&p_entry->fsal_up_thr, 0, sizeof(pthread_t));
 #endif /* _USE_FSAL_UP */
 
-  p_entry->worker_stats = gsh_calloc(nfs_param.core_param.nb_worker,
-                                     sizeof(nfs_worker_stat_t));
-  if(p_entry->worker_stats == NULL)
-    {
-      gsh_free(p_entry);
-      return ENOMEM;
-    }
+      p_entry->worker_stats = gsh_calloc(nfs_param.core_param.nb_worker,
+                                         sizeof(nfs_worker_stat_t));
+      if(p_entry->worker_stats == NULL)
+        {
+          gsh_free(p_entry);
+          return ENOMEM;
+        }
 
-  p_perms = &p_entry->export_perms;
+      p_perms = &p_entry->export_perms;
 
+      p_entry->filesystem_id.major = 666;
+      p_entry->filesystem_id.minor = 666;
 
-  p_entry->filesystem_id.major = 666;
-  p_entry->filesystem_id.minor = 666;
+      p_entry->MaxWrite = 16384;
+      p_entry->MaxRead = 16384;
+      p_entry->PrefWrite = 16384;
+      p_entry->PrefRead = 16384;
+      p_entry->PrefReaddir = 16384;
 
-  p_entry->MaxWrite = 16384;
-  p_entry->MaxRead = 16384;
-  p_entry->PrefWrite = 16384;
-  p_entry->PrefRead = 16384;
-  p_entry->PrefReaddir = 16384;
+      p_access_list = &p_entry->clients;
 
-  p_access_list = &p_entry->clients;
-
-  init_glist(&p_entry->exp_state_list);
+      init_glist(&p_entry->exp_state_list);
 #ifdef _USE_NLM
-  init_glist(&p_entry->exp_lock_list);
+      init_glist(&p_entry->exp_lock_list);
 #endif
 
-  if(pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1)
-    {
-      RemoveExportEntry(p_entry);
-      LogCrit(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: could not initialize exp_state_mutex");
-      /* free the entry before exiting */
-      return -1;
-    }
+      if(pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1)
+        {
+          RemoveExportEntry(p_entry);
+          LogCrit(COMPONENT_CONFIG,
+                  "NFS READ %s: could not initialize exp_state_mutex",
+                  label);
+          /* free the entry before exiting */
+          return -1;
+        }
 
-  strcpy(p_entry->FS_specific, "");
-  strcpy(p_entry->FS_tag, "");
-  strcpy(p_entry->fullpath, "/");
-  strcpy(p_entry->dirname, "/");
-  strcpy(p_entry->pseudopath, "/");
-  strcpy(p_entry->referral, "");
+      strcpy(p_entry->FS_specific, "");
+      strcpy(p_entry->FS_tag, "");
+      strcpy(p_entry->fullpath, "/");
+      strcpy(p_entry->dirname, "/");
+      strcpy(p_entry->pseudopath, "/");
+      strcpy(p_entry->referral, "");
+    }
+  else
+    {
+      /* the mandatory options */
+      mandatory_options = FLAG_EXPORT_ACCESS_LIST;
+
+      p_perms = &client_perms;
+      p_access_list = &access_list;
+    }
 
   /* Init the access list */
   init_glist(&p_access_list->client_list);
+  p_access_list->num_clients = 0;
 
   /* by default, we support auth_none and auth_sys */
-  p_perms->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
+  p_perms->options = EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
   /* Default anonymous uid and gid */
   p_perms->anonymous_uid = (uid_t) ANON_UID;
@@ -843,18 +861,23 @@ static int BuildExportEntry(config_item_t        block,
       if((rc != 0) || (var_value == NULL))
         {
           /* free the entry before exiting */
-          RemoveExportEntry(p_entry);
+          if(label == CONF_LABEL_EXPORT)
+            RemoveExportEntry(p_entry);
+          else
+            FreeClientList(p_access_list);
+
           if(rc == -2)
             LogCrit(COMPONENT_CONFIG,
-                    "NFS READ_EXPORT: ERROR: var name \"%s\" was truncated",
-                    var_name);
+                    "NFS READ %s: var name \"%s\" was truncated",
+                    label, var_name);
           else if(rc == -3)
             LogCrit(COMPONENT_CONFIG,
-                    "NFS READ_EXPORT: ERROR: var value for \"%s\"=\"%s\" was truncated",
-                    var_name, var_value);
+                    "NFS READ %s: var value for \"%s\"=\"%s\" was truncated",
+                    label, var_name, var_value);
           else
             LogCrit(COMPONENT_CONFIG,
-                    "NFS READ_EXPORT: ERROR: internal error %d", rc);
+                    "NFS READ %s: internal error %d",
+                    label, rc);
           return -1;
         }
 
@@ -867,7 +890,7 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_ID) == FLAG_EXPORT_ID)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ID);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_ID);
               continue;
             }
 
@@ -878,8 +901,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid export_id: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid export_id: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -887,27 +910,54 @@ static int BuildExportEntry(config_item_t        block,
           if(export_id <= 0 || export_id > USHRT_MAX)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Export_id out of range: \"%ld\"",
-                      export_id);
+                      "NFS READ %s: Export_id out of range: \"%ld\"",
+                      label, export_id);
               err_flag = TRUE;
               continue;
             }
 
           /* set export_id */
-
-          p_entry->id = (unsigned short)export_id;
+          
           set_options |= FLAG_EXPORT_ID;
 
-          if(nfs_Get_export_by_id(pexportlist,
-                                  p_entry->id) != NULL)
+          if((label == CONF_LABEL_EXPORT_CLIENT) &&
+             (p_entry != NULL) &&
+             (export_id != p_entry->id))
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Duplicate Export_id: \"%ld\"",
-                      export_id);
+                      "NFS READ %s: Export_id: \"%ld\" does not match export %s Export_Id %u",
+                      label, export_id,
+                      p_entry->fullpath, p_entry->id);
               err_flag = TRUE;
               continue;
             }
 
+          p_found_entry = nfs_Get_export_by_id(pexportlist,
+                                               export_id);
+          if(label == CONF_LABEL_EXPORT)
+            {
+              if(p_found_entry != NULL)
+                {
+                  LogCrit(COMPONENT_CONFIG,
+                          "NFS READ %s: Duplicate Export_id: \"%ld\"",
+                          label, export_id);
+                  err_flag = TRUE;
+                  continue;
+                }
+              p_entry->id = (unsigned short)export_id;
+            }
+          else if(p_entry == NULL)
+            {
+              if(p_found_entry == NULL)
+                {
+                  LogCrit(COMPONENT_CONFIG,
+                          "NFS READ %s: EXPORT for Export_id: \"%ld\" not found",
+                          label, export_id);
+                  err_flag = TRUE;
+                  continue;
+                }
+              p_entry = p_found_entry;
+            }
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PATH))
         {
@@ -916,14 +966,15 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PATH) == FLAG_EXPORT_PATH)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_PATH);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_PATH);
               continue;
             }
 
           if(*var_value == '\0')
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Empty export path");
+                      "NFS READ %s: Empty export path",
+                      label);
               err_flag = TRUE;
               continue;
             }
@@ -933,8 +984,8 @@ static int BuildExportEntry(config_item_t        block,
           if(pathlen > MAXPATHLEN)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: path \"%s\" too long",
-                      var_value);
+                      "NFS READ %s: path \"%s\" too long",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -951,124 +1002,222 @@ static int BuildExportEntry(config_item_t        block,
               ppath = var_value;
             }
 
-
-          p_found_entry = nfs_Get_export_by_path(pexportlist,
-                                                 ppath);
-          if(p_found_entry != NULL)
+          if((label == CONF_LABEL_EXPORT_CLIENT) &&
+             (p_entry != NULL) &&
+             (strcmp(ppath, p_entry->fullpath) != 0))
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: Duplicate Path: \"%s\"",
-                      ppath);
+                      "NFS READ %s: Path: \"%s\" does not match export Export_Id %u Path=\"%s\"",
+                      label, ppath,
+                      p_entry->id, p_entry->fullpath);
               err_flag = TRUE;
               continue;
             }
 
-          strcpy(p_entry->fullpath, ppath);
-          strcpy(p_entry->dirname, ppath);
+          p_found_entry = nfs_Get_export_by_path(pexportlist,
+                                                 ppath);
+          if(label == CONF_LABEL_EXPORT)
+            {
+              if(p_found_entry != NULL)
+                {
+                  LogCrit(COMPONENT_CONFIG,
+                          "NFS READ %s: Duplicate Path: \"%s\"",
+                          label, ppath);
+                  err_flag = TRUE;
+                  continue;
+                }
+
+              strcpy(p_entry->fullpath, ppath);
+              strcpy(p_entry->dirname, ppath);
+            }
+          else if(p_entry == NULL)
+            {
+              if(p_found_entry == NULL)
+                {
+                  LogCrit(COMPONENT_CONFIG,
+                          "NFS READ %s: EXPORT for Path: \"%s\" not found",
+                          label, ppath);
+                  err_flag = TRUE;
+                  continue;
+                }
+              p_entry = p_found_entry;
+            }
 
           set_options |= FLAG_EXPORT_PATH;
 
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ROOT))
         {
-          if(*var_value == '\0')
+          if(label == CONF_LABEL_EXPORT_CLIENT)
             {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
               continue;
             }
 
-	  parseAccessParam(var_name, var_value, p_access_list,
-			   EXPORT_OPTION_ROOT);
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
           set_options |= FLAG_EXPORT_ACCESS_LIST;
 
+          if(*var_value == '\0')
+            {
+              continue;
+            }
+
+	  parseAccessParam(var_name, var_value, p_access_list,
+			   EXPORT_OPTION_ROOT,
+			   label);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESS))
         {
+          int access_option;
+
+	  /* Notice that as least one of the three options
+	   * Root_Access, R_Access, or RW_Access has been specified.
+	   */
+	  set_options |= FLAG_EXPORT_ACCESS_LIST;
+
           if(*var_value == '\0')
             {
               continue;
+            }
+
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              access_option = EXPORT_OPTION_ACCESS_OPT_LIST;
+              p_perms->options |= EXPORT_OPTION_ACCESS_OPT_LIST;
+            }
+          else
+            {
+              access_option = EXPORT_OPTION_ACCESS_LIST;
             }
 
           parseAccessParam(var_name, var_value, p_access_list,
-                           EXPORT_OPTION_ACCESS_LIST);
-	  /* Notice that as least one of the three options
-	   * Root_Access, R_Access, or RW_Access has been specified.
-	   */
-	  set_options |= FLAG_EXPORT_ACCESS_LIST;
+                           access_option,
+			   label);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MD_ACCESS))
         {
-          if(*var_value == '\0')
-            {
-              continue;
-            }
-
-	  parseAccessParam(var_name, var_value, p_access_list,
-			   EXPORT_OPTION_MD_ACCESS);
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
 	  set_options |= FLAG_EXPORT_ACCESS_LIST;
+
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
+          if(*var_value == '\0')
+            {
+              continue;
+            }
+	  parseAccessParam(var_name, var_value, p_access_list,
+			   EXPORT_OPTION_MD_ACCESS,
+			   label);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MD_RO_ACCESS))
         {
-          if(*var_value == '\0')
-            {
-              continue;
-            }
-
-	  parseAccessParam(var_name, var_value, p_access_list,
-			   EXPORT_OPTION_MD_READ_ACCESS);
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
 	  set_options |= FLAG_EXPORT_ACCESS_LIST;
+
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
+          if(*var_value == '\0')
+            {
+              continue;
+            }
+	  parseAccessParam(var_name, var_value, p_access_list,
+			   EXPORT_OPTION_MD_READ_ACCESS,
+			   label);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_READ_ACCESS))
         {
-          if(*var_value == '\0')
-            {
-              continue;
-            }
-
-	  parseAccessParam(var_name, var_value, p_access_list,
-			   EXPORT_OPTION_READ_ACCESS);
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
 	  set_options |= FLAG_EXPORT_ACCESS_LIST;
+
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
+          if(*var_value == '\0')
+            {
+              continue;
+            }
+	  parseAccessParam(var_name, var_value, p_access_list,
+			   EXPORT_OPTION_READ_ACCESS,
+			   label);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_READWRITE_ACCESS))
         {
-          if(*var_value == '\0')
-            {
-              continue;
-            }
-
-	  parseAccessParam(var_name, var_value, p_access_list,
-			   EXPORT_OPTION_RW_ACCESS);
 	  /* Notice that as least one of the three options
 	   * Root_Access, R_Access, or RW_Access has been specified.
 	   */
 	  set_options |= FLAG_EXPORT_ACCESS_LIST;
+
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
+          if(*var_value == '\0')
+            {
+              continue;
+            }
+	  parseAccessParam(var_name, var_value, p_access_list,
+			   EXPORT_OPTION_RW_ACCESS,
+			   label);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
 
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PSEUDO) == FLAG_EXPORT_PSEUDO)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_PSEUDO);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_PSEUDO);
               continue;
             }
 
           if(*var_value != '/')
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Pseudo path must begin with a slash (invalid pseudo path: %s).",
-                      var_value);
+                      "NFS READ %s: Pseudo path must begin with a slash (invalid pseudo path: %s).",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1081,6 +1230,15 @@ static int BuildExportEntry(config_item_t        block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_REFERRAL))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           strncpy(p_entry->referral, var_value, MAXPATHLEN);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
@@ -1088,7 +1246,7 @@ static int BuildExportEntry(config_item_t        block,
           // check if it has not already been set
           if((set_options & FLAG_EXPORT_ACCESSTYPE) == FLAG_EXPORT_ACCESSTYPE)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ACCESSTYPE);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_ACCESSTYPE);
               continue;
             }
 
@@ -1118,8 +1276,8 @@ static int BuildExportEntry(config_item_t        block,
           else
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid access type \"%s\". Values can be: RW, RO, MDONLY, MDONLY_RO, NONE.",
-                      var_value);
+                      "NFS READ %s: Invalid access type \"%s\". Values can be: RW, RO, MDONLY, MDONLY_RO, NONE.",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1139,7 +1297,7 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_NFS_PROTO) == FLAG_EXPORT_NFS_PROTO)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_NFS_PROTO);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_NFS_PROTO);
               continue;
             }
 
@@ -1160,8 +1318,8 @@ static int BuildExportEntry(config_item_t        block,
             {
               err_flag = TRUE;
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: NFS protocols list too long (>%d)",
-                      MAX_NFSPROTO);
+                      "NFS READ %s: NFS protocols list too long (>%d)",
+                      label, MAX_NFSPROTO);
 
               /* free sec strings */
               for(idx = 0; idx < MAX_NFSPROTO; idx++)
@@ -1182,7 +1340,8 @@ static int BuildExportEntry(config_item_t        block,
                   else
                     {
                       LogInfo(COMPONENT_CONFIG,
-                              "NFS READ_EXPORT:NFS version 2 is disabled in NFS_Core_Param.");
+                              "NFS READ %s: NFS version 2 is disabled in NFS_Core_Param.",
+                              label);
                     }
                 }
               else if(!STRCMP(nfsvers_list[idx], "3"))
@@ -1192,7 +1351,8 @@ static int BuildExportEntry(config_item_t        block,
                   else
                     {
                       LogInfo(COMPONENT_CONFIG,
-                              "NFS READ_EXPORT:NFS version 3 is disabled in NFS_Core_Param.");
+                              "NFS READ %s: NFS version 3 is disabled in NFS_Core_Param.",
+                              label);
                     }
                 }
               else if(!STRCMP(nfsvers_list[idx], "4"))
@@ -1202,14 +1362,15 @@ static int BuildExportEntry(config_item_t        block,
                   else
                     {
                       LogInfo(COMPONENT_CONFIG,
-                              "NFS READ_EXPORT:NFS version 4 is disabled in NFS_Core_Param.");
+                              "NFS READ %s: NFS version 4 is disabled in NFS_Core_Param.",
+                              label);
                     }
                 }
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                          "NFS READ_EXPORT: ERROR: Invalid NFS version \"%s\". Values can be: 2, 3, 4.",
-                          nfsvers_list[idx]);
+                          "NFS READ %s: Invalid NFS version \"%s\". Values can be: 2, 3, 4.",
+                          label, nfsvers_list[idx]);
                   err_flag = TRUE;
                 }
             }
@@ -1223,7 +1384,8 @@ static int BuildExportEntry(config_item_t        block,
           if((p_perms->options & EXPORT_OPTION_PROTOCOLS) == 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Empty NFS_protocols list");
+                      "NFS READ %s: Empty NFS_protocols list",
+                      label);
               err_flag = TRUE;
             }
 
@@ -1242,7 +1404,7 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_TRANS_PROTO) == FLAG_EXPORT_TRANS_PROTO)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_TRANS_PROTO);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_TRANS_PROTO);
               continue;
             }
 
@@ -1263,8 +1425,8 @@ static int BuildExportEntry(config_item_t        block,
             {
               err_flag = TRUE;
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Protocol list too long (>%d)",
-                      MAX_TRANSPROTO);
+                      "NFS READ %s: Protocol list too long (>%d)",
+                      label, MAX_TRANSPROTO);
 
               /* free sec strings */
               for(idx = 0; idx < MAX_TRANSPROTO; idx++)
@@ -1289,8 +1451,8 @@ static int BuildExportEntry(config_item_t        block,
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                          "NFS READ_EXPORT: ERROR: Invalid transport \"%s\". Values can be: UDP, TCP.",
-                          transproto_list[idx]);
+                          "NFS READ %s: Invalid transport \"%s\". Values can be: UDP, TCP.",
+                          label, transproto_list[idx]);
                   err_flag = TRUE;
                 }
             }
@@ -1304,7 +1466,8 @@ static int BuildExportEntry(config_item_t        block,
           if((p_perms->options & EXPORT_OPTION_TRANSPORTS) == 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Empty transport list");
+                      "NFS READ %s: Empty transport list",
+                      label);
               err_flag = TRUE;
             }
 
@@ -1316,14 +1479,16 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_ALL_ANON) == FLAG_EXPORT_ALL_ANON)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ALL_ANON);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_ALL_ANON);
               continue;
             }
 
           /* Check for conflicts */
           if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
             {
-              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ALL_ANON, CONF_EXPORT_SQUASH);
+              DEFINED_CONFLICT_WARNING(label,
+                                       CONF_EXPORT_ALL_ANON,
+                                       CONF_EXPORT_SQUASH);
               continue;
             }
 
@@ -1340,14 +1505,16 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_ROOT);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_ANON_ROOT);
               continue;
             }
 
           /* Check for conflicts */
           if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
             {
-              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_ROOT, CONF_EXPORT_ANON_USER);
+              DEFINED_CONFLICT_WARNING(label,
+                                       CONF_EXPORT_ANON_ROOT,
+                                       CONF_EXPORT_ANON_USER);
               continue;
             }
 
@@ -1359,8 +1526,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid %s: \"%s\"",
-                      var_name, var_value);
+                      "NFS READ %s: Invalid %s: \"%s\"",
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1379,14 +1546,16 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_USER);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_ANON_USER);
               continue;
             }
 
           /* Check for conflicts */
           if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
             {
-              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_USER, CONF_EXPORT_ANON_ROOT);
+              DEFINED_CONFLICT_WARNING(label,
+                                       CONF_EXPORT_ANON_USER,
+                                       CONF_EXPORT_ANON_ROOT);
               continue;
             }
 
@@ -1398,8 +1567,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid %s: \"%s\"",
-                      var_name, var_value);
+                      "NFS READ %s: Invalid %s: \"%s\"",
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1420,7 +1589,7 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_ANON_GROUP) == FLAG_EXPORT_ANON_GROUP)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_ANON_GROUP);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_ANON_GROUP);
               continue;
             }
 
@@ -1432,8 +1601,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid %s: \"%s\"",
-                      var_name, var_value);
+                      "NFS READ %s: Invalid %s: \"%s\"",
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1456,7 +1625,7 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_SECTYPE) == FLAG_EXPORT_SECTYPE)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_SECTYPE);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_SECTYPE);
               continue;
             }
 
@@ -1477,8 +1646,8 @@ static int BuildExportEntry(config_item_t        block,
             {
               err_flag = TRUE;
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: SecType list too long (>%d)",
-                      MAX_SECTYPE);
+                      "NFS READ %s: SecType list too long (>%d)",
+                      label, MAX_SECTYPE);
 
               /* free sec strings */
               for(idx = 0; idx < MAX_SECTYPE; idx++)
@@ -1515,8 +1684,8 @@ static int BuildExportEntry(config_item_t        block,
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                          "NFS READ_EXPORT: ERROR: Invalid SecType \"%s\". Values can be: none, sys, krb5, krb5i, krb5p.",
-                          sec_list[idx]);
+                          "NFS READ %s: Invalid SecType \"%s\". Values can be: none, sys, krb5, krb5i, krb5p.",
+                          label, sec_list[idx]);
                   err_flag = TRUE;
                 }
             }
@@ -1529,7 +1698,8 @@ static int BuildExportEntry(config_item_t        block,
           /* check that at least one sectype has been specified */
           if((p_perms->options & EXPORT_OPTION_AUTH_TYPES) == 0)
             LogWarn(COMPONENT_CONFIG,
-                    "NFS READ_EXPORT: WARNING: Empty SecType");
+                    "NFS READ %s: Empty SecType",
+                    label);
 
           set_options |= FLAG_EXPORT_SECTYPE;
 
@@ -1539,10 +1709,19 @@ static int BuildExportEntry(config_item_t        block,
           long long int size;
           char *end_ptr;
 
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_MAX_READ) == FLAG_EXPORT_MAX_READ)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_MAX_READ);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_MAX_READ);
               continue;
             }
 
@@ -1552,8 +1731,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid MaxRead: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid MaxRead: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1561,8 +1740,8 @@ static int BuildExportEntry(config_item_t        block,
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: MaxRead out of range: %lld",
-                      size);
+                      "NFS READ %s: MaxRead out of range: %lld",
+                      label, size);
               err_flag = TRUE;
               continue;
             }
@@ -1579,10 +1758,19 @@ static int BuildExportEntry(config_item_t        block,
           long long int size;
           char *end_ptr;
 
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_MAX_WRITE) == FLAG_EXPORT_MAX_WRITE)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_MAX_WRITE);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_MAX_WRITE);
               continue;
             }
 
@@ -1592,8 +1780,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid MaxWrite: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid MaxWrite: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1601,8 +1789,8 @@ static int BuildExportEntry(config_item_t        block,
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: MaxWrite out of range: %lld",
-                      size);
+                      "NFS READ %s: MaxWrite out of range: %lld",
+                      label, size);
               err_flag = TRUE;
               continue;
             }
@@ -1619,10 +1807,19 @@ static int BuildExportEntry(config_item_t        block,
           long long int size;
           char *end_ptr;
 
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PREF_READ) == FLAG_EXPORT_PREF_READ)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_PREF_READ);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_PREF_READ);
               continue;
             }
 
@@ -1632,8 +1829,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid PrefRead: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid PrefRead: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1641,8 +1838,8 @@ static int BuildExportEntry(config_item_t        block,
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: PrefRead out of range: %lld",
-                      size);
+                      "NFS READ %s: PrefRead out of range: %lld",
+                      label, size);
               err_flag = TRUE;
               continue;
             }
@@ -1659,10 +1856,19 @@ static int BuildExportEntry(config_item_t        block,
           long long int size;
           char *end_ptr;
 
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PREF_WRITE) == FLAG_EXPORT_PREF_WRITE)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_PREF_WRITE);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_PREF_WRITE);
               continue;
             }
 
@@ -1672,8 +1878,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid PrefWrite: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1681,8 +1887,8 @@ static int BuildExportEntry(config_item_t        block,
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld",
-                      size);
+                      "NFS READ %s: PrefWrite out of range: %lld",
+                      label, size);
               err_flag = TRUE;
               continue;
             }
@@ -1699,10 +1905,19 @@ static int BuildExportEntry(config_item_t        block,
           long long int size;
           char *end_ptr;
 
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PREF_READDIR) == FLAG_EXPORT_PREF_READDIR)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_PREF_READDIR);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_PREF_READDIR);
               continue;
             }
 
@@ -1712,8 +1927,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid PrefReaddir: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid PrefReaddir: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1721,8 +1936,8 @@ static int BuildExportEntry(config_item_t        block,
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: PrefReaddir out of range: %lld",
-                      size);
+                      "NFS READ %s: PrefReaddir out of range: %lld",
+                      label, size);
               err_flag = TRUE;
               continue;
             }
@@ -1739,10 +1954,19 @@ static int BuildExportEntry(config_item_t        block,
           long long int size;
           char *end_ptr;
 
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PREF_WRITE) == FLAG_EXPORT_PREF_WRITE)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_PREF_WRITE);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_PREF_WRITE);
               continue;
             }
 
@@ -1752,8 +1976,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid PrefWrite: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1761,8 +1985,8 @@ static int BuildExportEntry(config_item_t        block,
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld",
-                      size);
+                      "NFS READ %s: PrefWrite out of range: %lld",
+                      label, size);
               err_flag = TRUE;
               continue;
             }
@@ -1780,10 +2004,19 @@ static int BuildExportEntry(config_item_t        block,
           long long int major, minor;
           char *end_ptr;
 
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_FSID) == FLAG_EXPORT_FSID)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_FSID);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_FSID);
               continue;
             }
 
@@ -1794,8 +2027,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '.' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid filesystem_id: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid filesystem_id: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1808,8 +2041,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid filesystem_id: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid filesystem_id: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1817,8 +2050,8 @@ static int BuildExportEntry(config_item_t        block,
           if(major < 0 || minor < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: filesystem_id out of range: %lld.%lld",
-                      major, minor);
+                      "NFS READ %s: Filesystem_id out of range: %lld.%lld",
+                      label, major, minor);
               err_flag = TRUE;
               continue;
             }
@@ -1836,7 +2069,7 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_NOSUID) == FLAG_EXPORT_NOSUID)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_NOSUID);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_NOSUID);
               continue;
             }
 
@@ -1853,8 +2086,8 @@ static int BuildExportEntry(config_item_t        block,
             default:           /* error */
               {
                 LogCrit(COMPONENT_CONFIG,
-                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
-                        var_name, var_value);
+                        "NFS READ %s: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        label, var_name, var_value);
                 err_flag = TRUE;
                 continue;
               }
@@ -1868,7 +2101,7 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_NOSGID) == FLAG_EXPORT_NOSGID)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_NOSGID);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_NOSGID);
               continue;
             }
 
@@ -1884,8 +2117,8 @@ static int BuildExportEntry(config_item_t        block,
 
             default:           /* error */
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
-                      var_name, var_value);
+                      "NFS READ %s: Invalid value for %s (%s): TRUE or FALSE expected.",
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1897,7 +2130,7 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_PRIVILEGED_PORT) == FLAG_EXPORT_PRIVILEGED_PORT)
             {
-              DEFINED_TWICE_WARNING("FLAG_EXPORT_PRIVILEGED_PORT");
+              DEFINED_TWICE_WARNING(label, "FLAG_EXPORT_PRIVILEGED_PORT");
               continue;
             }
 
@@ -1913,8 +2146,8 @@ static int BuildExportEntry(config_item_t        block,
 
             default:           /* error */
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
-                      var_name, var_value);
+                      "NFS READ %s: Invalid value for '%s' (%s): TRUE or FALSE expected.",
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1923,15 +2156,24 @@ static int BuildExportEntry(config_item_t        block,
       else if(!STRCMP(var_name, CONF_EXPORT_USE_DATACACHE))
         {
           LogInfo(COMPONENT_CONFIG,
-                  "Deprecated EXPORT option %s ignored",
-                  var_name);
+                  "NFS READ %s: Deprecated EXPORT option %s ignored",
+                  label, var_name);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PNFS))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_USE_PNFS) == FLAG_EXPORT_USE_PNFS)
             {
-              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_PNFS");
+              DEFINED_TWICE_WARNING(label, "FLAG_EXPORT_USE_PNFS");
               continue;
             }
 
@@ -1947,8 +2189,8 @@ static int BuildExportEntry(config_item_t        block,
 
             default:           /* error */
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
-                      var_name, var_value);
+                      "NFS READ %s: Invalid value for '%s' (%s): TRUE or FALSE expected.",
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1956,10 +2198,19 @@ static int BuildExportEntry(config_item_t        block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_UQUOTA ) )
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_USE_UQUOTA) == FLAG_EXPORT_USE_UQUOTA)
             {
-              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_UQUOTA");
+              DEFINED_TWICE_WARNING(label, "FLAG_EXPORT_USE_UQUOTA");
               continue;
             }
 
@@ -1975,8 +2226,8 @@ static int BuildExportEntry(config_item_t        block,
 
             default:           /* error */
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
-                      var_name, var_value);
+                      "NFS READ %s: Invalid value for '%s' (%s): TRUE or FALSE expected.",
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -1985,10 +2236,19 @@ static int BuildExportEntry(config_item_t        block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_FS_SPECIFIC) == FLAG_EXPORT_FS_SPECIFIC)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_FS_SPECIFIC);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_FS_SPECIFIC);
               continue;
             }
 
@@ -1999,10 +2259,19 @@ static int BuildExportEntry(config_item_t        block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_TAG))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_FS_TAG) == FLAG_EXPORT_FS_TAG)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_FS_TAG);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_FS_TAG);
               continue;
             }
 
@@ -2016,14 +2285,23 @@ static int BuildExportEntry(config_item_t        block,
           long long int offset;
           char *end_ptr;
 
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           errno = 0;
           offset = strtoll(var_value, &end_ptr, 10);
 
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid MaxOffsetWrite: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid MaxOffsetWrite: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -2039,13 +2317,22 @@ static int BuildExportEntry(config_item_t        block,
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_CACHE_SIZE))
         {
           LogInfo(COMPONENT_CONFIG,
-                  "Deprecated EXPORT option %s ignored",
-                  var_name);
+                  "NFS READ %s: Deprecated EXPORT option %s ignored",
+                  label, var_name);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_READ))
         {
           long long int offset;
           char *end_ptr;
+
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
 
           errno = 0;
           offset = strtoll(var_value, &end_ptr, 10);
@@ -2053,8 +2340,8 @@ static int BuildExportEntry(config_item_t        block,
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid MaxOffsetRead: \"%s\"",
-                      var_value);
+                      "NFS READ %s: Invalid MaxOffsetRead: \"%s\"",
+                      label, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -2069,6 +2356,15 @@ static int BuildExportEntry(config_item_t        block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_USE_COMMIT))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           switch (StrToBoolean(var_value))
             {
             case 1:
@@ -2082,8 +2378,8 @@ static int BuildExportEntry(config_item_t        block,
             default:           /* error */
               {
                 LogCrit(COMPONENT_CONFIG,
-                        "NFS READ_EXPORT: Invalid value for %s (%s): TRUE or FALSE expected.",
-                        var_name, var_value);
+                        "NFS READ %s: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        label, var_name, var_value);
                 err_flag = TRUE;
                 continue;
               }
@@ -2091,7 +2387,16 @@ static int BuildExportEntry(config_item_t        block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_USE_GANESHA_WRITE_BUFFER))
         {
-          switch (StrToBoolean(var_value))
+           if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
+         switch (StrToBoolean(var_value))
             {
             case 1:
               p_entry->use_ganesha_write_buffer = TRUE;
@@ -2104,8 +2409,8 @@ static int BuildExportEntry(config_item_t        block,
             default:           /* error */
               {
                 LogCrit(COMPONENT_CONFIG,
-                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
-                        var_name, var_value);
+                        "NFS READ %s: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        label, var_name, var_value);
                 err_flag = TRUE;
                 continue;
               }
@@ -2114,10 +2419,28 @@ static int BuildExportEntry(config_item_t        block,
 #ifdef _USE_FSAL_UP
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TYPE))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           strncpy(p_entry->fsal_up_type,var_value,sizeof(var_value));
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TIMEOUT))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* Right now we are expecting seconds ... we should support
 	   * nseconds as well! */
           p_entry->fsal_up_timeout.seconds = atoi(var_value);
@@ -2130,6 +2453,15 @@ static int BuildExportEntry(config_item_t        block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_FILTERS))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           /* TODO: Parse the strings and form a list.
            * Later each name will match a predefined filter
            * in the FSAL UP interface. */
@@ -2137,6 +2469,15 @@ static int BuildExportEntry(config_item_t        block,
         }
       else if(!STRCMP(var_name, CONF_EXPORT_USE_FSAL_UP))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           switch (StrToBoolean(var_value))
             {
             case 1:
@@ -2148,7 +2489,7 @@ static int BuildExportEntry(config_item_t        block,
             default:           /* error */
               {
                 LogCrit(COMPONENT_CONFIG,
-                        "USR_FSAL_UP: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        "USR_FSAL_UP: Invalid value for %s (%s): TRUE or FALSE expected.",
                         var_name, var_value);
                 err_flag = TRUE;
                 continue;
@@ -2158,6 +2499,15 @@ static int BuildExportEntry(config_item_t        block,
 #endif /* _USE_FSAL_UP */
       else if(!STRCMP(var_name, CONF_EXPORT_USE_COOKIE_VERIFIER))
         {
+          if(label == CONF_LABEL_EXPORT_CLIENT)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s not allowed",
+	              label, var_name);
+              err_flag = TRUE;
+              continue;
+            }
+
           switch (StrToBoolean(var_value))
             {
             case 1:
@@ -2171,8 +2521,8 @@ static int BuildExportEntry(config_item_t        block,
             default:           /* error */
               {
                 LogCrit(COMPONENT_CONFIG,
-                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
-                        var_name, var_value);
+                        "NFS READ %s: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        label, var_name, var_value);
                 err_flag = TRUE;
                 continue;
               }
@@ -2183,14 +2533,16 @@ static int BuildExportEntry(config_item_t        block,
           /* check if it has not already been set */
           if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
             {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_SQUASH);
+              DEFINED_TWICE_WARNING(label, CONF_EXPORT_SQUASH);
               continue;
             }
 
           /* Check for conflicts */
           if((set_options & FLAG_EXPORT_ALL_ANON) == FLAG_EXPORT_ALL_ANON)
             {
-              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_ROOT, CONF_EXPORT_ALL_ANON);
+              DEFINED_CONFLICT_WARNING(label,
+                                       CONF_EXPORT_ANON_ROOT,
+                                       CONF_EXPORT_ALL_ANON);
               continue;
             }
 
@@ -2217,11 +2569,11 @@ static int BuildExportEntry(config_item_t        block,
           else
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): "
+                      "NFS READ %s: Invalid value for %s (%s): "
                       "Root, Root_Squash, RootSquash,"
                       "All, All_Squash, AllSquash,"
                       "No_Root_Squash, NoIdSquash, or None expected.",
-                      var_name, var_value);
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
@@ -2231,8 +2583,8 @@ static int BuildExportEntry(config_item_t        block,
       else
         {
           LogWarn(COMPONENT_CONFIG,
-                  "NFS READ_EXPORT: WARNING: Unknown option: %s",
-                  var_name);
+                  "NFS READ %s: Unknown option: %s",
+                  label, var_name);
         }
 
     }
@@ -2240,37 +2592,55 @@ static int BuildExportEntry(config_item_t        block,
   /* check for mandatory options */
   if((set_options & mandatory_options) != mandatory_options)
     {
-      if((set_options & FLAG_EXPORT_ID) != FLAG_EXPORT_ID)
+      if((set_options & FLAG_EXPORT_ID) !=
+         (FLAG_EXPORT_ID & mandatory_options))
         LogCrit(COMPONENT_CONFIG,
-                "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
-                CONF_EXPORT_ID );
+                "NFS READ %s: Missing mandatory parameter %s",
+                label, CONF_EXPORT_ID );
 
-      if((set_options & FLAG_EXPORT_PATH) != FLAG_EXPORT_PATH)
+      if((set_options & FLAG_EXPORT_PATH) !=
+         (FLAG_EXPORT_PATH & mandatory_options))
         LogCrit(COMPONENT_CONFIG,
-                "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
-                CONF_EXPORT_PATH);
+                "NFS READ %s: Missing mandatory parameter %s",
+                label, CONF_EXPORT_PATH);
 
-      if((set_options & FLAG_EXPORT_ACCESS_LIST) != FLAG_EXPORT_ACCESS_LIST)
+      if((set_options & FLAG_EXPORT_ACCESS_LIST) !=
+         (FLAG_EXPORT_ACCESS_LIST & mandatory_options))
         LogCrit(COMPONENT_CONFIG,
-                "NFS READ_EXPORT: ERROR: Must have at least one of %s, %s, %s, %s, %s, or %s",
+                "NFS READ %s: Must have at least one of %s, %s, %s, %s, %s, or %s",
+                label,
                 CONF_EXPORT_ACCESS,      CONF_EXPORT_ROOT,
                 CONF_EXPORT_READ_ACCESS, CONF_EXPORT_READWRITE_ACCESS,
                 CONF_EXPORT_MD_ACCESS,   CONF_EXPORT_MD_RO_ACCESS);
 
-      if((set_options & FLAG_EXPORT_PSEUDO) != FLAG_EXPORT_PSEUDO)
+      if((set_options & FLAG_EXPORT_PSEUDO) !=
+         (FLAG_EXPORT_PSEUDO & mandatory_options))
         LogCrit(COMPONENT_CONFIG,
-                "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
-                CONF_EXPORT_PSEUDO);
+                "NFS READ %s: Missing mandatory parameter %s",
+                label, CONF_EXPORT_PSEUDO);
 
       err_flag = TRUE;
     }
 
-  /* Here we can make sure certain options are turned on for specific FSALs */
-  if(!fsal_specific_checks(p_entry))
+  if((label == CONF_LABEL_EXPORT_CLIENT) &&
+     (p_entry == NULL))
     {
       LogCrit(COMPONENT_CONFIG,
-               "NFS READ_EXPORT: Found conflicts in export entry.");
+              "NFS READ %s: Unable to find export, may be missing %s and/or %s",
+              label, CONF_EXPORT_ID, CONF_EXPORT_PATH);
+
       err_flag = TRUE;
+    }
+  else
+    {
+      /* Here we can make sure certain options are turned on for specific FSALs */
+      if(!fsal_specific_checks(p_entry))
+        {
+          LogCrit(COMPONENT_CONFIG,
+                   "NFS READ %s: Found conflicts in export entry.",
+                   label);
+          err_flag = TRUE;
+        }
     }
 
   /* check if there had any error.
@@ -2278,15 +2648,18 @@ static int BuildExportEntry(config_item_t        block,
    */
   if(err_flag)
     {
-      RemoveExportEntry(p_entry);
+      if(label == CONF_LABEL_EXPORT)
+        RemoveExportEntry(p_entry);
+      else
+        FreeClientList(p_access_list);
       return -1;
     }
 
   *pp_export = p_entry;
 
   LogEvent(COMPONENT_CONFIG,
-           "NFS READ_EXPORT: Export %d (%s) successfully parsed",
-           p_entry->id, p_entry->fullpath);
+           "NFS READ %s: Export %d (%s) successfully parsed",
+           label, p_entry->id, p_entry->fullpath);
 
   StrExportOptions(p_perms, perms);
   LogFullDebug(COMPONENT_CONFIG,
@@ -2297,7 +2670,23 @@ static int BuildExportEntry(config_item_t        block,
       exportlist_client_entry_t * p_client_entry;
       p_client_entry = glist_entry(glist, exportlist_client_entry_t, cle_list);
 
+      if(label == CONF_LABEL_EXPORT_CLIENT)
+        {
+          /* Copy the final EXPORT_CLIENT permissions into the client
+           * list entries.
+           */
+          p_client_entry->client_perms = *p_perms;
+        }
+
       LogClientListEntry(COMPONENT_CONFIG, p_client_entry);
+    }
+
+  /* Append the new EXPORT_CLIENT Access list to the export */
+  if(label == CONF_LABEL_EXPORT_CLIENT)
+    {
+      glist_add_list_tail(&p_entry->clients.client_list,
+                          &p_access_list->client_list);
+      p_entry->clients.num_clients += p_access_list->num_clients;
     }
 
   return 0;
@@ -2453,7 +2842,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
   if(nb_blk < 0)
     return -1;
 
-  /* Iteration on config file blocks. */
+  /* Iteration on config file blocks for EXPORTs. */
   for(i = 0; i < nb_blk; i++)
     {
       config_item_t block;
@@ -2472,7 +2861,10 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
       if(!STRCMP(blk_name, CONF_LABEL_EXPORT))
         {
 
-          rc = BuildExportEntry(block, &p_export_item, pexportlist);
+          rc = BuildExportEntry(block,
+                                &p_export_item,
+                                pexportlist,
+                                CONF_LABEL_EXPORT);
 
           /* If the entry is errorneous, ignore it
            * and continue checking syntax of other entries.
@@ -2487,6 +2879,42 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
 
           nb_entries++;
 
+        }
+
+    }
+
+  /* Iteration on config file blocks for EXPORT_CLIENTs. */
+  for(i = 0; i < nb_blk; i++)
+    {
+      config_item_t block;
+
+      block = config_GetBlockByIndex(in_config, i);
+
+      if(block == NULL)
+        return -1;
+
+      /* get the name of the block */
+      blk_name = config_GetBlockName(block);
+
+      if(blk_name == NULL)
+        return -1;
+
+      if(!STRCMP(blk_name, CONF_LABEL_EXPORT_CLIENT))
+        {
+
+          rc = BuildExportEntry(block,
+                                &p_export_item,
+                                pexportlist,
+                                CONF_LABEL_EXPORT_CLIENT);
+
+          /* If the entry is errorneous, ignore it
+           * and continue checking syntax of other entries.
+           */
+          if(rc != 0)
+            {
+              err_flag = TRUE;
+              continue;
+            }
         }
 
     }
@@ -2535,13 +2963,16 @@ int export_client_match(sockaddr_t *hostaddr,
         md_write_access = " MD-WRITE";
       if(export_option & EXPORT_OPTION_ACCESS_LIST)
         access_list = " ACCESS-LIST";
+      if(export_option & EXPORT_OPTION_ACCESS_OPT_LIST)
+        access_list = " EXPORT_CLIENT ACCESS-LIST";      
 
       if((export_option & (EXPORT_OPTION_ROOT            |
                            EXPORT_OPTION_READ_ACCESS     |
                            EXPORT_OPTION_WRITE_ACCESS    |
                            EXPORT_OPTION_MD_WRITE_ACCESS |
                            EXPORT_OPTION_MD_READ_ACCESS  |
-                           EXPORT_OPTION_ACCESS_LIST)) == 0)
+                           EXPORT_OPTION_ACCESS_LIST     |
+                           EXPORT_OPTION_ACCESS_OPT_LIST)) == 0)
         root_access = " NONE";
 
       LogFullDebug(COMPONENT_DISPATCH,
@@ -3015,6 +3446,22 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
     {
       LogCrit(COMPONENT_DISPATCH,
               "No export to check permission against");
+      return;
+    }
+
+  /* Test if client is in EXPORT_CLIENT Access list */
+  if(export_client_match_any(puse_hostaddr,
+                             ipstring,
+                             &(pexport->clients),
+                             &client_found,
+                             EXPORT_OPTION_ACCESS_OPT_LIST))
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Export %d Client %s matches EXPORT_CLIENT Access List",
+                   pexport->id, ipstring);
+
+      *pexport_perms = client_found.client_perms;
+
       return;
     }
 

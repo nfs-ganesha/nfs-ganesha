@@ -294,6 +294,7 @@ typedef struct exportlist__
 /* Maximum offset set for R/W */
 #define EXPORT_OPTION_MAXOFFSETWRITE  0x04000000        /* Maximum Offset for write is set  */
 #define EXPORT_OPTION_MAXOFFSETREAD   0x08000000        /* Maximum Offset for read is set   */
+#define EXPORT_OPTION_ACCESS_OPT_LIST 0x10000000        /* Access list from EXPORT_CLIENT stanza */
 #define EXPORT_OPTION_USE_PNFS        0x20000000        /* Using pNFS or not using pNFS ?   */
 #define EXPORT_OPTION_USE_UQUOTA      0x40000000        /* Using user quota for this export */
 
