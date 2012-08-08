@@ -221,7 +221,7 @@ void * _9p_socket_thread( void * Arg )
   int tag;
   unsigned long sequence = 0;
   unsigned int i = 0 ;
-  char * _9pmsg ;
+  char * _9pmsg  = NULL;
   uint32_t * p_9pmsglen = NULL ;
 
   _9p_conn_t _9p_conn ;
@@ -243,7 +243,7 @@ void * _9p_socket_thread( void * Arg )
 
 
   if( gettimeofday( &_9p_conn.birth, NULL ) == -1 )
-   LogFatal( COMPONENT_9P, "Can get connection's time of birth" ) ;
+   LogFatal( COMPONENT_9P, "Cannot get connection's time of birth" ) ;
 
   if( ( rc =  getpeername( tcp_sock, (struct sockaddr *)&addrpeer, &addrpeerlen) ) == -1 )
    {
@@ -281,78 +281,45 @@ void * _9p_socket_thread( void * Arg )
          LogCrit( COMPONENT_9P,
                   "Got error %u (%s) on fd %ld connect to %s while polling on socket", 
                   errno, strerror( errno ), tcp_sock, strcaller ) ;
-
       }
 
      if( fds[0].revents & POLLNVAL )
       {
         LogEvent( COMPONENT_9P, "Client %s on socket %lu produced POLLNVAL", strcaller, tcp_sock ) ;
-                  close( tcp_sock );
         goto end;
       }
 
      if( fds[0].revents & (POLLERR|POLLHUP|POLLRDHUP) )
       {
         LogEvent( COMPONENT_9P, "Client %s on socket %lu has shut down and closed", strcaller, tcp_sock ) ;
-                  close( tcp_sock );
         goto end;
       }
 
      if( fds[0].revents & (POLLIN|POLLRDNORM) )
       {
-        /* choose a worker depending on its queue length */
-        worker_index = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
-
-        /* Get a preq from the worker's pool */
-        P(workers_data[worker_index].request_pool_mutex);
-
-        preq = pool_alloc( request_pool, NULL ) ;
-
-        V(workers_data[worker_index].request_pool_mutex);
-
         /* Prepare to read the message */
-        if( ( preq->r_u._9p._9pmsg = gsh_malloc( _9P_MSG_SIZE ) ) == NULL )
+        if( ( _9pmsg = gsh_malloc( _9P_MSG_SIZE ) ) == NULL )
          {
             LogCrit( COMPONENT_9P, "Could not allocate 9pmsg buffer for client %s on socket %lu", strcaller, tcp_sock ) ;
-            close( tcp_sock ) ;
             goto end;
          }
-        preq->rtype = _9P_REQUEST ;
-        _9pmsg = preq->r_u._9p._9pmsg ;
-        preq->r_u._9p.pconn = &_9p_conn ;
 
         /* An incoming 9P request: the msg has a 4 bytes header
            showing the size of the msg including the header */
         if( (readlen = recv( fds[0].fd, _9pmsg ,_9P_HDR_SIZE, MSG_WAITALL)) == _9P_HDR_SIZE ) 
          {
-           p_9pmsglen = (uint32_t *)_9pmsg ;
+            p_9pmsglen = (uint32_t *)_9pmsg ;
 
             LogFullDebug( COMPONENT_9P,
                           "Received 9P/TCP message of size %u from client %s on socket %lu",
                           *p_9pmsglen, strcaller, tcp_sock ) ;
 
-            if( readlen < _9P_HDR_SIZE ) 
-              {
-		LogEvent( COMPONENT_9P, 
-			  "Badly formed 9P/TCP message: Header is too small for client %s on socket %lu: readlen=%u expected=%u", 
-                          strcaller, tcp_sock, readlen, *p_9pmsglen - _9P_HDR_SIZE ) ;
-
-                /* Release the entry */
-                P(workers_data[worker_index].request_pool_mutex);
-                pool_free(request_pool, preq ) ;
-
-                workers_data[worker_index].passcounter += 1;
-                V(workers_data[worker_index].request_pool_mutex);
-
-                continue ; /* Maybe, use something smarter here */
-              }
-
-            total_readlen = 0 ;
-            while( total_readlen < (*p_9pmsglen - _9P_HDR_SIZE) )
+            total_readlen = readlen;
+            while( total_readlen < *p_9pmsglen )
              {
 		 readlen = recv( fds[0].fd,
-				 (char *)(_9pmsg + _9P_HDR_SIZE + total_readlen),  
-                                 *p_9pmsglen - _9P_HDR_SIZE - total_readlen, 0 ) ;
+				 _9pmsg + total_readlen,  
+                                 *p_9pmsglen - total_readlen, 0 ) ;
                
                  /* Signal management */
                  if( readlen < 0 && errno == EINTR )
@@ -361,33 +328,59 @@ void * _9p_socket_thread( void * Arg )
                  /* Error management */
                  if( readlen < 0 )  
                   {
-	            LogEvent( COMPONENT_9P, "Badly formed 9P header for client %s on socket %lu", strcaller, tcp_sock ) ;
+	            LogEvent( COMPONENT_9P, 
+                              "Read error client %s on socket %lu errno=%d", 
+                              strcaller, tcp_sock, errno ) ;
+                    goto end;
+                  }
 
-                    /* Release the entry */
-                    P(workers_data[worker_index].request_pool_mutex);
-                    pool_free( request_pool, preq ) ;
-  	    	    workers_data[worker_index].passcounter += 1;
-                    V(workers_data[worker_index].request_pool_mutex);
-
-                    continue ;
+                 /* Client quit */
+                 if( readlen == 0 )  
+                  {
+	            LogEvent( COMPONENT_9P,
+                              "Client %s closed on socket %lu",
+                              strcaller, tcp_sock) ;
+                    goto end;
                   }
                  
                  /* After this point, read() is supposed to be OK */
                  total_readlen += readlen ;
              } /* while */
              
+             /* Message is good. Get a preq from the worker's pool */
+             /* Choose a worker depending on its queue length */
+             worker_index = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
+             P(workers_data[worker_index].request_pool_mutex);
+             preq = pool_alloc( request_pool, NULL ) ;
+             V(workers_data[worker_index].request_pool_mutex);
+
+             preq->rtype = _9P_REQUEST ;
+             preq->r_u._9p._9pmsg = _9pmsg;
+             preq->r_u._9p.pconn = &_9p_conn ;
+             
+             /* Add this request to the request list, should it be flushed later. */
              tag = *(u16*) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
              _9p_AddFlushHook(&preq->r_u._9p, tag, sequence++);
              LogFullDebug( COMPONENT_9P, "Request tag is %d\n", tag);
 
 	     /* Message was OK push it the request to the right worker */
              DispatchWork9P(preq, worker_index);
+
+             /* We are not responsible for this buffer anymore: */
+             _9pmsg = NULL;
          }
-        else if( readlen == 0 )
+        else /* readlen != _9P_HDR_SIZE */
          {
-           LogEvent( COMPONENT_9P, "Client %s on socket %lu has shut down", strcaller, tcp_sock ) ;
-           close( tcp_sock );
-           gsh_free( _9pmsg ) ;
+           if (readlen == 0)
+             LogEvent( COMPONENT_9P, "Client %s on socket %lu has shut down", strcaller, tcp_sock ) ;
+           else
+	     LogEvent( COMPONENT_9P, 
+	               "Badly formed 9P/TCP message: Header is too small for client %s on socket %lu: readlen=%u expected=%u", 
+                       strcaller, tcp_sock, readlen, _9P_HDR_SIZE ) ;
+           
+           /* Either way, we close the connection. It is not possible to survive
+            * once we get out of sync in the TCP stream with the client
+            */ 
            goto end;
          }
       } /* if( fds[0].revents & (POLLIN|POLLRDNORM) ) */
@@ -395,6 +388,13 @@ void * _9p_socket_thread( void * Arg )
  
 
 end:
+  LogEvent( COMPONENT_9P, "Closing connection on socket %lu", tcp_sock ) ;
+  close( tcp_sock ) ;
+
+  /* Free buffer if we encountered an error before we could give it to a worker */
+  if (_9pmsg)
+           gsh_free( _9pmsg ) ;
+
   while(atomic_fetch_uint32_t(&_9p_conn.refcount)) {
            LogEvent( COMPONENT_9P, "Waiting for workers to release pconn") ;
            sleep(1);
