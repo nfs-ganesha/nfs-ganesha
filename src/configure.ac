@@ -355,7 +355,7 @@ AC_ARG_ENABLE([fsal-shook],AS_HELP_STRING([--disable-shook],[USE_FSAL_SHOOK]),
 if test "$enable_fsal_shook" == "yes"; then
         # Lustre FSAL compiled with special compilation directives
 	AC_CHECK_HEADERS([attr/xattr.h], [], [enable_fsal_shook='no';
-                                              AC_MSG_ERROR(Missing xattr files.  Disabling SHOOK.)])
+                                              AC_MSG_WARN(Missing xattr files.  Disabling SHOOK.)])
         AC_CHECK_LIB([shooksvr], [shook_restore],,
         [AC_MSG_WARN([libshooksvr not found.  Disabling SHOOK.])
          enable_fsal_shook='no'])
