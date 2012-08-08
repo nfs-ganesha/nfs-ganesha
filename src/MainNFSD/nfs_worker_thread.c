@@ -727,34 +727,33 @@ int nfs_rpc_get_args(nfs_request_data_t *preqnfs, const nfs_function_desc_t *pfu
  * @param[in,out] preq NFS request
  *
  */
-static void nfs_rpc_execute(request_data_t *preq,
-                            nfs_worker_data_t *pworker_data)
+static void nfs_rpc_execute(request_data_t    * preq,
+                            nfs_worker_data_t * pworker_data)
 {
-  exportlist_t *pexport = NULL;
-  nfs_request_data_t *preqnfs = preq->r_u.nfs;
-  nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
-  nfs_res_t res_nfs;
-  short exportid;
-  LRU_list_t *lru_dupreq = NULL;
-  struct svc_req *req = &preqnfs->req;
-  SVCXPRT *xprt = preqnfs->xprt;
-  nfs_stat_type_t stat_type;
-  sockaddr_t hostaddr;
-  int port;
-  int rc;
-  int do_dupreq_cache;
-  dupreq_status_t dpq_status;
-  export_perms_t export_perms;
-  struct user_cred user_credentials;
-  int   update_per_share_stats;
-  fsal_op_context_t * pfsal_op_ctx = NULL ;
-
-  struct timeval *timer_start = &pworker_data->timer_start;
-  struct timeval timer_end;
-  struct timeval timer_diff;
-  struct timeval queue_timer_diff;
-  nfs_request_latency_stat_t latency_stat;
-  char addrbuf[SOCK_NAME_MAX];
+  exportlist_t               * pexport = NULL;
+  nfs_request_data_t         * preqnfs = preq->r_u.nfs;
+  nfs_arg_t                  * parg_nfs = &preqnfs->arg_nfs;
+  nfs_res_t                    res_nfs;
+  short                        exportid;
+  LRU_list_t                 * lru_dupreq = NULL;
+  struct svc_req             * req = &preqnfs->req;
+  SVCXPRT                    * xprt = preqnfs->xprt;
+  nfs_stat_type_t              stat_type;
+  sockaddr_t                   hostaddr;
+  int                          port;
+  int                          rc;
+  int                          do_dupreq_cache;
+  dupreq_status_t              dpq_status;
+  export_perms_t               export_perms;
+  struct user_cred             user_credentials;
+  int                          update_per_share_stats;
+  fsal_op_context_t          * pfsal_op_ctx = NULL;
+  struct timeval             * timer_start = &pworker_data->timer_start;
+  struct timeval               timer_end;
+  struct timeval               timer_diff;
+  struct timeval               queue_timer_diff;
+  nfs_request_latency_stat_t   latency_stat;
+  char                         addrbuf[SOCK_NAME_MAX];
 
   /* Initialize permissions to allow nothing */
   export_perms.options       = 0;
@@ -1138,6 +1137,39 @@ static void nfs_rpc_execute(request_data_t *preq,
       pexport = NULL;
     }
 
+  /* Only do access check if we have an export. */
+  if((pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_EXPORT) != 0)
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "nfs_rpc_execute about to call nfs_export_check_access");
+
+      nfs_export_check_access(&pworker_data->hostaddr,
+                              pexport,
+                              &export_perms);
+
+      if(export_perms.options == 0)
+        {
+          LogInfo(COMPONENT_DISPATCH,
+                  "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
+                  addrbuf,
+                  (int)req->rq_vers, (int)req->rq_proc);
+
+          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
+          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+
+          pworker_data->current_xid = 0;        /* No more xid managed */
+
+          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
+            {
+              LogCrit(COMPONENT_DISPATCH,
+                      "Attempt to delete duplicate request failed on line %d",
+                      __LINE__);
+            }
+          return;
+        }
+    }
+
   if(pworker_data->pfuncdesc->dispatch_behaviour & SUPPORTS_GSS)
     {
       /* Test if export allows the authentication provided */
@@ -1234,43 +1266,6 @@ static void nfs_rpc_execute(request_data_t *preq,
                               req);
           }
       }
-
-  /* Only do access check if we have an export. */
-  if((pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_EXPORT) != 0)
-    {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "nfs_rpc_execute about to call nfs_export_check_access");
-
-     nfs_export_check_access(&pworker_data->hostaddr,
-                             pexport,
-                             &export_perms);
-
-      if(export_perms.options == 0)
-        {
-          LogInfo(COMPONENT_DISPATCH,
-                  "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
-                  addrbuf,
-                  (int)req->rq_vers, (int)req->rq_proc);
-
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
-          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
-
-          pworker_data->current_xid = 0;        /* No more xid managed */
-
-          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "Attempt to delete duplicate request failed on line %d",
-                      __LINE__);
-            }
-          return;
-        }
-    }
-  else
-    {
-      pexport = NULL;
-    }
 
   P(pworker_data->request_pool_mutex);
   gettimeofday(timer_start, NULL);
