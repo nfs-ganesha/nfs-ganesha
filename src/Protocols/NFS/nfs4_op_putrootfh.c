@@ -30,9 +30,8 @@
  * \version $Revision: 1.13 $
  * \brief   Routines used for managing the NFS4_OP_PUTROOTFH operation. 
  *
- * nfs4_op_restorefh.c : Routines used for managing the NFS4_OP_PUTROOTFH operation.
+ * nfs4_op_putrootfh.c : Routines used for managing the NFS4_OP_PUTROOTFH operation.
  * 
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -61,13 +60,14 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "nfs_proto_tools.h"
 
 /**
  *
  * CreateROOTFH4: create the pseudo fs root filehandle .
  *
  * Creates the pseudo fs root filehandle .
- * 
+ *
  * @param fh   [OUT]   the file handle to be built.
  * @param data [INOUT] request compound data
  *
@@ -83,6 +83,10 @@ static int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
   int              status = 0;
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
+
+  /* If rootFH already set, return success */
+  if(data->rootFH.nfs_fh4_len != 0)
+    return NFS4_OK;
 
   if((status = nfs4_AllocateFH(&(data->rootFH))) != NFS4_OK)
     return status;
@@ -132,42 +136,34 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   if (data->current_entry) {
       cache_inode_put(data->current_entry);
   }
+
   data->current_entry = NULL;   /* No cache inode entry for the directory within pseudo fs */
   data->current_filetype = DIRECTORY;      /* Only directory in the pseudo fs */
 
-  /* I copy the root FH to the currentFH and, if not already done, to the publicFH */
-  /* For the moment, I choose to have rootFH = publicFH */
-  /* For initial mounted_on_FH, I'll use the rootFH, this will change at junction traversal */
+  /* I copy the root FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
     {
       res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->currentFH));
       if(res_PUTROOTFH4.status != NFS4_OK)
         return res_PUTROOTFH4.status;
     }
+
+  /* Copy the data from root FH to current FH */
   memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->rootFH.nfs_fh4_val),
          data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
+  /* For initial mounted_on_FH, I'll use the rootFH, this will change at junction traversal */
   if(data->mounted_on_FH.nfs_fh4_len == 0)
     {
       res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->mounted_on_FH));
       if(res_PUTROOTFH4.status != NFS4_OK)
         return res_PUTROOTFH4.status;
     }
+
   memcpy((char *)(data->mounted_on_FH.nfs_fh4_val), (char *)(data->rootFH.nfs_fh4_val),
          data->rootFH.nfs_fh4_len);
   data->mounted_on_FH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
-
-  if(data->publicFH.nfs_fh4_len == 0)
-    {
-      res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->publicFH));
-      if(res_PUTROOTFH4.status != NFS4_OK)
-        return res_PUTROOTFH4.status;
-    }
-  /* Copy the data where they are supposed to be */
-  memcpy((char *)(data->publicFH.nfs_fh4_val), (char *)(data->rootFH.nfs_fh4_val),
-         data->rootFH.nfs_fh4_len);
-  data->publicFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
   LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
   LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -30,7 +30,7 @@
  * \version $Revision: 1.11 $
  * \brief   Routines used for managing the NFS4_OP_PUTPUBFH operation.
  *
- * nfs4_op_getfh.c : Routines used for managing the NFS4_OP_PUTPUBFH operation.
+ * nfs4_op_putpubfh.c : Routines used for managing the NFS4_OP_PUTPUBFH operation.
  * 
  */
 #ifdef HAVE_CONFIG_H
@@ -58,6 +58,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 
@@ -79,9 +80,14 @@
 static int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
 {
   pseudofs_entry_t psfsentry;
-  int status = 0;
+  int              status = 0;
 
+  /* For the moment, I choose to have rootFH = publicFH */
   psfsentry = *(data->pseudofs->reverse_tab[0]);
+
+  /* If publicFH already set, return success */
+  if(data->publicFH.nfs_fh4_len != 0)
+    return NFS4_OK;
 
   if((status = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
     return status;
@@ -96,7 +102,7 @@ static int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
 
 /**
  *
- *	nfs4_op_putpubfh: The NFS4_OP_PUTFH operation
+ * nfs4_op_putpubfh: The NFS4_OP_PUTFH operation
  *
  * Sets the publicFH for the current compound requests as the current FH.
  *
@@ -119,39 +125,23 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putpubfh";
 
+  /* First of all, set the reply to zero to make sure it contains no parasite information */
+  memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_PUTPUBFH;
-  res_PUTPUBFH4.status =  NFS4_OK  ; 
 
   /* For now, GANESHA makes no difference betzeen PUBLICFH and ROOTFH */
   res_PUTPUBFH4.status = CreatePUBFH4(&(data->publicFH), data);
   if(res_PUTPUBFH4.status != NFS4_OK)
     return res_PUTPUBFH4.status;
 
-  /* If there is no currentFH, teh  return an error */
-  if(nfs4_Is_Fh_Empty(&(data->publicFH)))
-    {
-      /* There is no current FH, return NFS4ERR_NOFILEHANDLE */
-      res_PUTPUBFH4.status = NFS4ERR_NOFILEHANDLE;
-      return res_PUTPUBFH4.status;
-    }
+  if (data->current_entry) {
+      cache_inode_put(data->current_entry);
+  }
 
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->publicFH)))
-    {
-      res_PUTPUBFH4.status = NFS4ERR_BADHANDLE;
-      return res_PUTPUBFH4.status;
-    }
+  data->current_entry = NULL;   /* No cache inode entry for the directory within pseudo fs */
+  data->current_filetype = DIRECTORY;      /* Only directory in the pseudo fs */
 
-  /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->publicFH)))
-    {
-      res_PUTPUBFH4.status = NFS4ERR_FHEXPIRED;
-      return res_PUTPUBFH4.status;
-    }
-
-  /* I copy the root FH to the currentFH and, if not already done, to the publicFH */
-  /* For the moment, I choose to have rootFH = publicFH */
-  /* For initial mounted_on_FH, I'll use the rootFH, this will change at junction traversal */
+  /* I copy the public FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
     {
       res_PUTPUBFH4.status = nfs4_AllocateFH(&(data->currentFH));
@@ -159,11 +149,28 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
         return res_PUTPUBFH4.status;
     }
 
-  /* Copy the data from current FH to saved FH */
+  /* Copy the data from public FH to current FH */
   memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->publicFH.nfs_fh4_val),
          data->publicFH.nfs_fh4_len);
 
-  res_PUTPUBFH4.status = NFS4_OK ;
+  /* For initial mounted_on_FH, I'll use the publicFH, this will change at junction traversal */
+  if(data->mounted_on_FH.nfs_fh4_len == 0)
+    {
+      res_PUTPUBFH4.status = nfs4_AllocateFH(&(data->mounted_on_FH));
+      if(res_PUTPUBFH4.status != NFS4_OK)
+        return res_PUTPUBFH4.status;
+    }
+
+  memcpy((char *)(data->mounted_on_FH.nfs_fh4_val), (char *)(data->publicFH.nfs_fh4_val),
+         data->publicFH.nfs_fh4_len);
+  data->mounted_on_FH.nfs_fh4_len = data->publicFH.nfs_fh4_len;
+
+  LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->publicFH);
+  LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);
+
+  LogFullDebug(COMPONENT_NFS_V4,
+                    "NFS4 PUTPUBFH: Ending on status %d",
+                    res_PUTPUBFH4.status);
 
   return res_PUTPUBFH4.status;
 }                               /* nfs4_op_putpubfh */
