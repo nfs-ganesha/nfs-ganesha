@@ -86,6 +86,7 @@
 #define CONF_EXPORT_ANON_ROOT          "Anonymous_root_uid"
 #define CONF_EXPORT_ALL_ANON           "Make_All_Users_Anonymous"
 #define CONF_EXPORT_ANON_GROUP         "Anonymous_gid"
+#define CONF_EXPORT_SQUASH             "Squash"
 #define CONF_EXPORT_NFS_PROTO          "NFS_Protocols"
 #define CONF_EXPORT_TRANS_PROTO        "Transport_Protocols"
 #define CONF_EXPORT_SECTYPE            "SecType"
@@ -114,39 +115,38 @@
 #define CONF_EXPORT_FSAL_UP_TIMEOUT    "FSAL_UP_Timeout"
 #define CONF_EXPORT_FSAL_UP_TYPE       "FSAL_UP_Type"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
-#define CONF_EXPORT_SQUASH             "Squash"
 
 /** @todo : add encrypt handles option */
 
 /* Internal identifiers */
 #define FLAG_EXPORT_ID              0x000000001
 #define FLAG_EXPORT_PATH            0x000000002
-#define FLAG_EXPORT_PSEUDO          0x000000010
-#define FLAG_EXPORT_ACCESSTYPE      0x000000020
-#define FLAG_EXPORT_ANON_ROOT       0x000000040
-#define FLAG_EXPORT_NFS_PROTO       0x000000080
-#define FLAG_EXPORT_TRANS_PROTO     0x000000100
-#define FLAG_EXPORT_SECTYPE         0x000000200
-#define FLAG_EXPORT_MAX_READ        0x000000400
-#define FLAG_EXPORT_MAX_WRITE       0x000000800
-#define FLAG_EXPORT_PREF_READ       0x000001000
-#define FLAG_EXPORT_PREF_WRITE      0x000002000
-#define FLAG_EXPORT_PREF_READDIR    0x000004000
-#define FLAG_EXPORT_FSID            0x000008000
-#define FLAG_EXPORT_NOSUID          0x000010000
-#define FLAG_EXPORT_NOSGID          0x000020000
-#define FLAG_EXPORT_PRIVILEGED_PORT 0x000040000
-#define FLAG_EXPORT_FS_SPECIFIC     0x000100000
-#define FLAG_EXPORT_FS_TAG          0x000200000
-#define FLAG_EXPORT_MAX_OFF_WRITE   0x000400000
-#define FLAG_EXPORT_MAX_OFF_READ    0x000800000
+#define FLAG_EXPORT_PSEUDO          0x000000004
+#define FLAG_EXPORT_ACCESSTYPE      0x000000008
+#define FLAG_EXPORT_ANON_USER       0x000000010
+#define FLAG_EXPORT_ANON_ROOT       0x000000020
+#define FLAG_EXPORT_ALL_ANON        0x000000040
+#define FLAG_EXPORT_ANON_GROUP      0x000000080
+#define FLAG_EXPORT_SQUASH          0x000000100
+#define FLAG_EXPORT_NFS_PROTO       0x000000200
+#define FLAG_EXPORT_TRANS_PROTO     0x000000400
+#define FLAG_EXPORT_SECTYPE         0x000000800
+#define FLAG_EXPORT_MAX_READ        0x000001000
+#define FLAG_EXPORT_MAX_WRITE       0x000002000
+#define FLAG_EXPORT_PREF_READ       0x000004000
+#define FLAG_EXPORT_PREF_WRITE      0x000008000
+#define FLAG_EXPORT_PREF_READDIR    0x000010000
+#define FLAG_EXPORT_FSID            0x000020000
+#define FLAG_EXPORT_NOSUID          0x000040000
+#define FLAG_EXPORT_NOSGID          0x000080000
+#define FLAG_EXPORT_PRIVILEGED_PORT 0x000100000
+#define FLAG_EXPORT_FS_SPECIFIC     0x000200000
+#define FLAG_EXPORT_FS_TAG          0x000400000
+#define FLAG_EXPORT_MAX_OFF_WRITE   0x000800000
+#define FLAG_EXPORT_MAX_OFF_READ    0x001000000
 #define FLAG_EXPORT_USE_PNFS        0x002000000
 #define FLAG_EXPORT_ACCESS_LIST     0x004000000
-#define FLAG_EXPORT_ANON_GROUP      0x010000000
-#define FLAG_EXPORT_ALL_ANON        0x020000000
-#define FLAG_EXPORT_ANON_USER       0x040000000
-#define FLAG_EXPORT_SQUASH          0x080000000
-#define FLAG_EXPORT_USE_UQUOTA      0x100000000
+#define FLAG_EXPORT_USE_UQUOTA      0x008000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -1320,10 +1320,17 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
+          /* Check for conflicts */
+          if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
+            {
+              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ALL_ANON, CONF_EXPORT_SQUASH);
+              continue;
+            }
+
           if (StrToBoolean(var_value))
             p_perms->options |= EXPORT_OPTION_ALL_ANONYMOUS;
 
-          set_options |= FLAG_EXPORT_ANON_USER;
+          set_options |= FLAG_EXPORT_ALL_ANON;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ANON_ROOT))
         {
@@ -1341,12 +1348,6 @@ static int BuildExportEntry(config_item_t        block,
           if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
             {
               DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_ROOT, CONF_EXPORT_ANON_USER);
-              continue;
-            }
-
-          if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
-            {
-              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_ROOT, CONF_EXPORT_SQUASH);
               continue;
             }
 
@@ -1386,12 +1387,6 @@ static int BuildExportEntry(config_item_t        block,
           if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
             {
               DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_USER, CONF_EXPORT_ANON_ROOT);
-              continue;
-            }
-
-          if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
-            {
-              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_USER, CONF_EXPORT_SQUASH);
               continue;
             }
 
@@ -2193,15 +2188,9 @@ static int BuildExportEntry(config_item_t        block,
             }
 
           /* Check for conflicts */
-          if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
+          if((set_options & FLAG_EXPORT_ALL_ANON) == FLAG_EXPORT_ALL_ANON)
             {
-              DEFINED_CONFLICT_WARNING(CONF_EXPORT_SQUASH, CONF_EXPORT_ANON_ROOT);
-              continue;
-            }
-
-          if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
-            {
-              DEFINED_CONFLICT_WARNING(CONF_EXPORT_SQUASH, CONF_EXPORT_ANON_USER);
+              DEFINED_CONFLICT_WARNING(CONF_EXPORT_ANON_ROOT, CONF_EXPORT_ALL_ANON);
               continue;
             }
 
