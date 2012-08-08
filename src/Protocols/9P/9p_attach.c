@@ -135,13 +135,13 @@ int _9p_attach( _9p_request_data_t * preq9p,
   if( *uname_len != 0 )
    {
      /* Build the fid creds */
-    if( ( err = _9p_tools_get_fsal_op_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
+    if( ( err = _9p_tools_get_req_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
       return _9p_rerror( preq9p, pworker_data, msgtag, -err, plenout, preply ) ;
    }
   else
    {
     /* Build the fid creds */
-    if( ( err = _9p_tools_get_fsal_op_context_by_uid( *n_aname, pfid ) ) !=  0 )
+    if( ( err = _9p_tools_get_req_context_by_uid( *n_aname, pfid ) ) !=  0 )
       return _9p_rerror( preq9p, pworker_data, msgtag, -err, plenout, preply ) ;
    }
 

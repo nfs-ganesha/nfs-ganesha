@@ -95,10 +95,8 @@ int _9p_statfs( _9p_request_data_t * preq9p,
   pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Get the FS's stats */
-  if( cache_inode_statfs( pfid->pentry,
-                          &dynamicinfo,
-                          &pfid->fsal_op_context, 
-                          &cache_status ) != CACHE_INODE_SUCCESS )
+  if( ( cache_status = cache_inode_statfs( pfid->pentry,
+                                           &dynamicinfo ) ) != CACHE_INODE_SUCCESS )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
   blocks  = (u64 *)&dynamicinfo.total_bytes ;
