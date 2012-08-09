@@ -385,8 +385,10 @@ typedef struct compoud_data
                                    fileset (to handle different uid
                                    mapping) */
   struct user_cred user_credentials; /*< Extracted credentials for this request */
-  exportlist_t *pexport; /*< Export entry related to the request */
-  export_perms_t export_perms; /*< Permissions for export for this request */
+  exportlist_t *pexport; /*< Export entry related to the currentFH */
+  exportlist_t *saved_pexport; /*< Export entry related to the savedFH */
+  export_perms_t export_perms; /*< Permissions for export for currentFH */
+  export_perms_t saved_export_perms; /*< Permissions for export for savedFH */
   pseudofs_t *pseudofs; /*< Pointer to the pseudo filesystem tree */
   char MntPath[MAXPATHLEN]; /*< Path (in pseudofs) of the current entry */
   struct svc_req *reqp; /*< RPC Request related to the compound */
