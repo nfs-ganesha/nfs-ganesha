@@ -223,7 +223,7 @@ int name2uid(char *name, uid_t * puid)
   struct passwd passwd;
   struct passwd *res;
   char buff[NFS4_MAX_DOMAIN_LEN];
-  uid_t uid;
+  unsigned long uid;
 #ifdef _USE_NFSIDMAP
 #ifdef _HAVE_GSSAPI
   gid_t gss_gid;
@@ -233,7 +233,7 @@ int name2uid(char *name, uid_t * puid)
   int rc;
 #endif
 
-  /* NFsv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
+  /* NFSv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
    * choice is made to map them to root */
   if(!strncmp(name, "nfs/", 4))
     {
@@ -246,10 +246,10 @@ int name2uid(char *name, uid_t * puid)
       return 1;
     }
 
-  if(uidmap_get(name, (unsigned long *)&uid) == ID_MAPPER_SUCCESS)
+  if(uidmap_get(name, &uid) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "name2uid: uidmap_get mapped %s to uid= %d",
+                   "name2uid: uidmap_get mapped %s to uid=%ld",
                    name, uid);
       *puid = uid;
     }
@@ -299,7 +299,7 @@ int name2uid(char *name, uid_t * puid)
             {
               /* Failure to update the in-core table is not fatal */
               LogMajor(COMPONENT_IDMAPPER,
-                      "name2uid: uidmap_add %s %d failed",
+                      "name2uid: uidmap_add %s %ld failed",
                       name, uid);
             }
           *puid = uid;
@@ -627,12 +627,12 @@ int gid2name(char *name, gid_t * pgid)
  */
 int name2gid(char *name, gid_t * pgid)
 {
-  gid_t gid;
+  unsigned long gid;
 
-  if(gidmap_get(name, (unsigned long *)&gid) == ID_MAPPER_SUCCESS)
+  if(gidmap_get(name, &gid) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "name2gid: gidmap_get mapped %s to gid= %d",
+                   "name2gid: gidmap_get mapped %s to gid= %ld",
                    name, gid);
       *pgid = gid;
     }
@@ -711,7 +711,7 @@ int name2gid(char *name, gid_t * pgid)
             {
               /* Failure to update the in-core table is not fatal */
               LogMajor(COMPONENT_IDMAPPER,
-                      "name2gid: gidmap_add %s %d failed",
+                      "name2gid: gidmap_add %s %ld failed",
                       name, gid);
             }
 
