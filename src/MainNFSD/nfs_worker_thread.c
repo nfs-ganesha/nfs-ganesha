@@ -1724,11 +1724,30 @@ static void _9p_execute( _9p_request_data_t * preq9p,
      _9p_rdma_process_request( preq9p, pworker_data ) ;
 #endif
 
-  /* decrease connection refcount */
-  atomic_dec_uint32_t(&preq9p->pconn->refcount);
-
   return ;
 } /* _9p_execute */
+
+
+/**
+ * _9p_free_reqdata: free resources allocated for a 9p request,
+ *                   but NOT the request itself
+ *
+ * Free resources allocated for a 9p request
+ *
+ * @param nfsreq      [INOUT] pointer to 9p request
+ *
+ * @return nothing (void function)
+ *
+ */
+static void _9p_free_reqdata(_9p_request_data_t * preq9p)
+{
+  if( preq9p->pconn->trans_type == _9P_TCP )
+          gsh_free( preq9p->_9pmsg );
+
+  /* decrease connection refcount */
+  atomic_dec_uint32_t(&preq9p->pconn->refcount);
+}
+
 #endif
 
 static inline enum xprt_stat
@@ -2182,8 +2201,12 @@ void *worker_thread(void *IndexArg)
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");
-      if( nfsreq->rtype != _9P_REQUEST && nfsreq->r_u.nfs ) /** @todo : check if this does not produce memleak as 9P is used */
+   
+      if( nfsreq->rtype == _9P_REQUEST)
+              _9p_free_reqdata(&nfsreq->r_u._9p);
+      else if ( nfsreq->r_u.nfs )
         pool_free(request_data_pool, nfsreq->r_u.nfs);
+
       pool_free(request_pool, nfsreq);
 
       if(pmydata->passcounter > nfs_param.worker_param.nb_before_gc)
