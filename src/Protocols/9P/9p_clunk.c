@@ -79,6 +79,13 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   pfid =  &preq9p->pconn->fids[*fid] ;
 
+  /* Check that it is a valid fid */
+  if (pfid->pentry == NULL) 
+  {
+    LogDebug( COMPONENT_9P, "clunk request on invalid fid=%u", *fid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
+
   /* If the fid is related to a xattr, free the related memory */
   if( pfid->specdata.xattr.xattr_content != NULL )
     gsh_free( pfid->specdata.xattr.xattr_content ) ;
