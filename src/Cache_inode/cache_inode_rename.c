@@ -392,23 +392,24 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
    * Indeed, if the FSAL_rename fails unexpectly,
    * the cache would be inconsistent!
    */
-  fsal_status = phandle_dirsrc->ops->rename(phandle_dirsrc,
+  fsal_status = phandle_dirsrc->ops->rename(phandle_dirsrc, req_ctx,
 					    oldname,
 					    phandle_dirdest,
 					    newname);
   if( !FSAL_IS_ERROR(fsal_status))
-	  fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc);
+	  fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, req_ctx);
   if( !FSAL_IS_ERROR(fsal_status))
-	  fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest);
+	  fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest,                                                                req_ctx);
   if(FSAL_IS_ERROR(fsal_status))
     {
       *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
-           fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc);
+           fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, req_ctx);
            if (fsal_status.major == ERR_FSAL_STALE) {
                 cache_inode_kill_entry(dir_src);
            }
-           fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest);
+           fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest,
+                                                        req_ctx);
            if (fsal_status.major == ERR_FSAL_STALE) {
                 cache_inode_kill_entry(dir_dest);
            }

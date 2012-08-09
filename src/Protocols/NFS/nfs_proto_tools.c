@@ -274,7 +274,8 @@ void nfs_FhandleToStr(u_long     rq_vers,
  *
  */
 
-cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
+cache_entry_t *nfs_FhandleToCache(const struct req_op_context *req_ctx,
+                                  u_long rq_vers,
                                   fhandle2 * pfh2,
                                   nfs_fh3 * pfh3,
                                   nfs_fh4 * pfh4,
@@ -363,7 +364,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
     }
 
   if((pentry = cache_inode_get(&fsal_data, &attr,
-                               NULL, &cache_status)) == NULL)
+                               NULL, req_ctx, &cache_status)) == NULL)
     {
       switch (rq_vers)
         {
@@ -1877,7 +1878,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &dynamicinfo)) !=
+                                                    &dynamicinfo, data->req_ctx)) !=
                  CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
@@ -1897,7 +1898,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &dynamicinfo)) !=
+                                                    &dynamicinfo, data->req_ctx)) !=
                  CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
@@ -1917,7 +1918,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &dynamicinfo)) !=
+                                                    &dynamicinfo, data->req_ctx)) !=
                  CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
@@ -2118,7 +2119,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &dynamicinfo)) !=
+                                                    &dynamicinfo, data->req_ctx)) !=
                  CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
@@ -2138,7 +2139,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &dynamicinfo)) !=
+                                                    &dynamicinfo, data->req_ctx)) !=
                  CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;
@@ -2158,7 +2159,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &dynamicinfo)) !=
+                                                    &dynamicinfo,
+                                                    data->req_ctx)) !=
                  CACHE_INODE_SUCCESS)
                 {
                   op_attr_success = 0;

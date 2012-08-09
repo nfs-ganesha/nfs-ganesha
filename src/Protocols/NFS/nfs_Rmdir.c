@@ -130,7 +130,7 @@ int nfs_Rmdir(nfs_arg_t *parg,
     }
 
   /* Convert file handle into a pentry */
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          &(parg->arg_rmdir2.dir),
                                          &(parg->arg_rmdir3.object.dir),
                                          NULL,

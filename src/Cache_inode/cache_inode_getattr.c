@@ -65,7 +65,7 @@
  *
  * @param[in]  entry   Entry to be managed.
  * @param[out] attr    Pointer to the results
- * @param[in]  context FSAL credentials
+ * @param[in]  req_ctx Request context(user creds, client address etc)
  * @param[out] status  Returned status
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
@@ -76,6 +76,7 @@ cache_inode_getattr(cache_entry_t *entry,
                     struct attrlist *attr, /* XXX Change this so
                                             * we don't just copy
                                             * stuff on the stack. */
+                    const struct req_op_context *req_ctx,
                     cache_inode_status_t *status)
 {
 
@@ -95,7 +96,7 @@ cache_inode_getattr(cache_entry_t *entry,
    unlock. */
 
      if ((*status
-          = cache_inode_lock_trust_attrs(entry))
+          = cache_inode_lock_trust_attrs(entry, req_ctx))
          != CACHE_INODE_SUCCESS) {
           goto out;
      }

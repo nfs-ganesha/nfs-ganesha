@@ -182,7 +182,7 @@ int nfs_Read(nfs_arg_t *parg,
     }
 
   /* Convert file handle into a cache entry */
-  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                   &(parg->arg_read2.file),
                                   &(parg->arg_read3.file),
                                   NULL,
@@ -371,7 +371,7 @@ int nfs_Read(nfs_arg_t *parg,
                            req_ctx,
                            CACHE_INODE_SAFE_WRITE_TO_FS,
                            &cache_status) == CACHE_INODE_SUCCESS) &&
-         (cache_inode_getattr(pentry, &attr,
+         (cache_inode_getattr(pentry, &attr, req_ctx,
                               &cache_status)) == CACHE_INODE_SUCCESS)
 
         {

@@ -152,21 +152,21 @@ cache_inode_create(cache_entry_t *parent,
 
     switch (type) {
     case REGULAR_FILE:
-            fsal_status = dir_handle->ops->create(dir_handle,
+            fsal_status = dir_handle->ops->create(dir_handle, req_ctx,
                                                   name,
                                                   &object_attributes,
                                                   &object_handle);
             break;
 
     case DIRECTORY:
-            fsal_status = dir_handle->ops->mkdir(dir_handle,
+            fsal_status = dir_handle->ops->mkdir(dir_handle, req_ctx,
                                                  name,
                                                  &object_attributes,
                                                  &object_handle);
             break;
 
     case SYMBOLIC_LINK:
-            fsal_status = dir_handle->ops->symlink(dir_handle,
+            fsal_status = dir_handle->ops->symlink(dir_handle, req_ctx,
                                                    name,
                                                    create_arg->link_content,
                                                    &object_attributes,
@@ -175,7 +175,7 @@ cache_inode_create(cache_entry_t *parent,
 
         case SOCKET_FILE:
         case FIFO_FILE:
-            fsal_status = dir_handle->ops->mknode(dir_handle,
+            fsal_status = dir_handle->ops->mknode(dir_handle, req_ctx,
                                                   name,
                                                   type,
                                                   NULL, /* no dev_t needed */
@@ -185,7 +185,7 @@ cache_inode_create(cache_entry_t *parent,
 
         case BLOCK_FILE:
         case CHARACTER_FILE:
-            fsal_status = dir_handle->ops->mknode(dir_handle,
+            fsal_status = dir_handle->ops->mknode(dir_handle, req_ctx,
                                                   name,
                                                   type,
                                                   &create_arg->dev_spec,

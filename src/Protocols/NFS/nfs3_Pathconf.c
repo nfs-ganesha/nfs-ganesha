@@ -102,7 +102,8 @@ int nfs3_Pathconf(nfs_arg_t *parg,
   pres->res_pathconf3.PATHCONF3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
   /* Convert file handle into a fsal_handle */
-  pentry = nfs_FhandleToCache(preq->rq_vers, NULL, &parg->arg_pathconf3.object,
+  pentry = nfs_FhandleToCache(req_ctx,
+                              preq->rq_vers, NULL, &parg->arg_pathconf3.object,
                               NULL, NULL, &pres->res_pathconf3.status, NULL,
                               &attr, pexport, &rc);
   if(pentry == NULL)

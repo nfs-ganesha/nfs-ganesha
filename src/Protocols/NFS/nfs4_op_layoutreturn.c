@@ -202,6 +202,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
                 cache_status
                         = cache_inode_getattr(data->current_entry,
                                               &attrs,
+                                              data->req_ctx,
                                               &cache_status);
                 if (cache_status != CACHE_INODE_SUCCESS) {
                         res_LAYOUTRETURN4->lorr_status
@@ -246,6 +247,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
                                 attrs.mask |= ATTR_FSID;
                                 cache_inode_getattr(layout_state->state_pentry,
                                                     &attrs,
+                                                    data->req_ctx,
                                                     &cache_status);
                                 if (cache_status != CACHE_INODE_SUCCESS) {
                                         res_LAYOUTRETURN4->lorr_status

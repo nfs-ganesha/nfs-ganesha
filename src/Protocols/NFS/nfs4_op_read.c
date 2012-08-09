@@ -320,6 +320,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   }
   if(cache_inode_getattr(entry,
                          &attr,
+                         data->req_ctx,
                          &cache_status) != CACHE_INODE_SUCCESS) {
           res_READ4.status = nfs4_Errno(cache_status);
           goto done;

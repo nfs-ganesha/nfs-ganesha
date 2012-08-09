@@ -128,7 +128,7 @@ int nfs_Lookup(nfs_arg_t *parg,
       pres->res_lookup3.LOOKUP3res_u.resfail.dir_attributes.attributes_follow = FALSE;
     }
 
-  if((pentry_dir = nfs_FhandleToCache(preq->rq_vers,
+  if((pentry_dir = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                       &(parg->arg_lookup2.dir),
                                       &(parg->arg_lookup3.what.dir),
                                       NULL,

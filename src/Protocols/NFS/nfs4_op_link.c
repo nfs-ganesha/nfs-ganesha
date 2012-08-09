@@ -144,6 +144,7 @@ int nfs4_op_link(struct nfs_argop4 *op,
   if((cache_status
       = cache_inode_getattr(dir_pentry,
                             &attr,
+                            data->req_ctx,
                             &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);

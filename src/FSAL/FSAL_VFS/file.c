@@ -92,6 +92,7 @@ fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl)
  */
 
 fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
+                       const struct req_op_context *opctx,
 		       uint64_t offset,
                        size_t buffer_size,
                        void *buffer,
@@ -128,6 +129,7 @@ out:
  */
 
 fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
+                        const struct req_op_context *opctx,
 			uint64_t offset,
 			size_t buffer_size,
 			void *buffer,

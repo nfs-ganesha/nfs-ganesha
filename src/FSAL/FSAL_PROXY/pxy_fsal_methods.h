@@ -87,11 +87,14 @@ pxy_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 			   const char *xattr_name);
 
 fsal_status_t
-pxy_lookup_path(struct fsal_export *exp_hdl, const char *path,
+pxy_lookup_path(struct fsal_export *exp_hdl,
+                const struct req_op_context *opctx,
+                const char *path,
                 struct fsal_obj_handle **handle);
 
 fsal_status_t
 pxy_create_handle(struct fsal_export *exp_hdl,
+                  const struct req_op_context *opctx,
                   struct gsh_buffdesc *hdl_desc,
                   struct fsal_obj_handle **handle);
 
@@ -104,7 +107,8 @@ pxy_create_export(struct fsal_module *fsal_hdl,
                   struct fsal_export **export);
 
 fsal_status_t
-pxy_get_dynamic_info(struct fsal_export *, fsal_dynamicfsinfo_t *);
+pxy_get_dynamic_info(struct fsal_export *, const struct req_op_context *,
+                     fsal_dynamicfsinfo_t *);
 
 
 fsal_status_t

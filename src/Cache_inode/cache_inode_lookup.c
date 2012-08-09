@@ -185,8 +185,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
 
      dir_handle = parent->obj_handle;
      memset(&object_attributes, 0, sizeof(struct attrlist));
-     fsal_status = dir_handle->ops->lookup(dir_handle,
-                                           name,
+     fsal_status = dir_handle->ops->lookup(dir_handle, req_ctx, name,
                                            &object_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
@@ -273,7 +272,7 @@ cache_inode_lookup(cache_entry_t *parent,
      pthread_rwlock_unlock(&parent->content_lock);
 
      if (entry && attr) {
-          *status = cache_inode_lock_trust_attrs(entry);
+          *status = cache_inode_lock_trust_attrs(entry, req_ctx);
           if(*status == CACHE_INODE_SUCCESS)
             {
               *attr = entry->obj_handle->attributes;

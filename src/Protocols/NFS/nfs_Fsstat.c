@@ -113,7 +113,7 @@ int nfs_Fsstat(nfs_arg_t *parg,
     }
 
   /* convert file handle to vnode */
-  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                   &(parg->arg_statfs2),
                                   &(parg->arg_fsstat3.fsroot),
                                   NULL,
@@ -129,11 +129,13 @@ int nfs_Fsstat(nfs_arg_t *parg,
   /* Get statistics and convert from cache */
 
   if((cache_status = cache_inode_statfs(pentry,
-                                        &dynamicinfo)) == CACHE_INODE_SUCCESS)
+                                        &dynamicinfo,
+                                        req_ctx)) == CACHE_INODE_SUCCESS)
     {
       /* This call is costless, the pentry was cached during call to nfs_FhandleToCache */
       if((cache_status = cache_inode_getattr(pentry,
                                              &attr,
+                                             req_ctx,
                                              &cache_status)) == CACHE_INODE_SUCCESS)
         {
 

@@ -144,7 +144,7 @@ int nfs_Create(nfs_arg_t *parg,
       ppre_attr = NULL;
     }
 
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          &(parg->arg_create2.where.dir),
                                          &(parg->arg_create3.where.dir),
                                          NULL,
@@ -365,6 +365,7 @@ int nfs_Create(nfs_arg_t *parg,
                   /* Get the resulting attributes from the Cache Inode */
                   if(cache_inode_getattr(file_pentry,
                                          &attr_newfile,
+                                         req_ctx,
                                          &cache_status) != CACHE_INODE_SUCCESS)
                     {
                       /* If we are here, there was an error */

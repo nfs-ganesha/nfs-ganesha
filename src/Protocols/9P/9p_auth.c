@@ -155,6 +155,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
   pfid->pentry = cache_inode_get( &fsdata,
                                   &fsalattr,
                                   NULL,
+                                  &pfid->op_context,
                                   &cache_status ) ;
 
   if( pfid->pentry == NULL )

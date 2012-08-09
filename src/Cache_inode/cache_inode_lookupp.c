@@ -128,7 +128,8 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      if (!parent) {
 	  struct fsal_obj_handle *parent_handle;
 
-	  fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle, "..",
+	  fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle,
+                                                       req_ctx, "..",
 						       &parent_handle);
           if(FSAL_IS_ERROR(fsal_status)) {
                if (fsal_status.major == ERR_FSAL_STALE) {
@@ -146,6 +147,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           if((parent = cache_inode_get(&fsdata,
                                        &object_attributes,
                                        entry,
+                                       req_ctx,
                                        status)) == NULL) {
                return NULL;
           }

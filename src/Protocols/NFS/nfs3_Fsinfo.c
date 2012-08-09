@@ -99,7 +99,8 @@ int nfs3_Fsinfo(nfs_arg_t *parg,
   /* to avoid setting it on each error case */
   pres->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
-  pentry = nfs_FhandleToCache(preq->rq_vers, NULL, &parg->arg_fsinfo3.fsroot,
+  pentry = nfs_FhandleToCache(req_ctx,
+                              preq->rq_vers, NULL, &parg->arg_fsinfo3.fsroot,
                               NULL, NULL, &pres->res_fsinfo3.status, NULL,
                               &attr, pexport, &rc);
   if(pentry == NULL)

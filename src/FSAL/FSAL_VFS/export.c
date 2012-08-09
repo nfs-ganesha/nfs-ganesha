@@ -119,7 +119,8 @@ errout:
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
-					 fsal_dynamicfsinfo_t *infop)
+                                      const struct req_op_context *opctx,
+			              fsal_dynamicfsinfo_t *infop)
 {
 	struct vfs_fsal_export *myself;
 	struct statvfs buffstatvfs;

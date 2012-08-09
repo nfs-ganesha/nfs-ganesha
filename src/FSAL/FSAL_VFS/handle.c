@@ -144,6 +144,7 @@ spcerr:
  */
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
+                            const struct req_op_context *opctx,
 			    const char *path,
 			    struct fsal_obj_handle **handle)
 {
@@ -283,6 +284,7 @@ fileerr:
  */
 
 static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
+                            const struct req_op_context *opctx,
                             const char *name,
                             struct attrlist *attrib,
                             struct fsal_obj_handle **handle)
@@ -365,6 +367,7 @@ direrr:
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
+                             const struct req_op_context *opctx,
 			     const char *name,
 			     struct attrlist *attrib,
 			     struct fsal_obj_handle **handle)
@@ -444,6 +447,7 @@ direrr:
 }
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
+                              const struct req_op_context *opctx,
                               const char *name,
                               object_file_type_t nodetype,  /* IN */
                               fsal_dev_t *dev,  /* IN */
@@ -571,6 +575,7 @@ errout:
  */
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
+                                 const struct req_op_context *opctx,
                                  const char *name,
                                  const char *link_path,
                                  struct attrlist *attrib,
@@ -662,6 +667,7 @@ errout:
 }
 
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
+                                 const struct req_op_context *opctx,
                                  char *link_content,
                                  size_t *link_len,
                                  bool refresh)
@@ -725,6 +731,7 @@ out:
 }
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
+                              const struct req_op_context *opctx,
 			      struct fsal_obj_handle *destdir_hdl,
 			      const char *name)
 {
@@ -802,15 +809,11 @@ struct linux_dirent {
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
+                                  const struct req_op_context *opctx,
 				  uint32_t entry_cnt,
 				  struct fsal_cookie *whence,
 				  void *dir_state,
-				  fsal_status_t (*cb)(
-					  const char *name,
-					  unsigned int dtype,
-					  struct fsal_obj_handle *dir_hdl,
-					  void *dir_state,
-					  struct fsal_cookie *cookie),
+				  fsal_readdir_cb cb,
                                   bool *eof)
 {
 	struct vfs_fsal_obj_handle *myself;
@@ -868,7 +871,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
 
 			/* callback to cache inode */
-			status = cb(dentry->d_name,
+			status = cb(opctx, dentry->d_name,
 				    d_type,
 				    dir_hdl,
 				    dir_state, entry_cookie);
@@ -895,6 +898,7 @@ out:
 
 
 static fsal_status_t renamefile(struct fsal_obj_handle *olddir_hdl,
+                                const struct req_op_context *opctx,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
 				const char *new_name)
@@ -938,7 +942,8 @@ out:
  * cache entry.
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+                              const struct req_op_context *opctx)
 {
 	struct vfs_fsal_obj_handle *myself;
 	int fd = -1, mntfd;
@@ -1015,6 +1020,7 @@ out:
  */
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
+                              const struct req_op_context *opctx,
 			      struct attrlist *attrs)
 {
 	struct vfs_fsal_obj_handle *myself;
@@ -1188,6 +1194,7 @@ static bool compare(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
+                                   const struct req_op_context *opctx,
 				   uint64_t length)
 {
 	struct vfs_fsal_obj_handle *myself;
@@ -1226,6 +1233,7 @@ errout:
  */
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
+                                 const struct req_op_context *opctx,
 				 const char *name)
 {
 	struct vfs_fsal_obj_handle *myself;
@@ -1444,6 +1452,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
+                              const struct req_op_context *opctx,
 			      const char *path,
 			      struct fsal_obj_handle **handle)
 {
@@ -1576,6 +1585,7 @@ errout:
  */
 
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
+                                const struct req_op_context *opctx,
 				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **handle)
 {

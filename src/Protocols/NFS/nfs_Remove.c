@@ -131,7 +131,7 @@ int nfs_Remove(nfs_arg_t *parg,
     }
 
   /* Convert file handle into a pentry */
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          &(parg->arg_remove2.dir),
                                          &(parg->arg_remove3.object.dir),
                                          NULL,

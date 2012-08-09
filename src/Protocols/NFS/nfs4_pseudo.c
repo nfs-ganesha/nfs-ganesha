@@ -1487,7 +1487,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 
       /* Lookup the FSAL to build the fsal handle */
       exp_hdl = data->pexport->export_hdl;
-      fsal_status = exp_hdl->ops->lookup_path(exp_hdl, pathfsal, &fsal_handle);
+      fsal_status = exp_hdl->ops->lookup_path(exp_hdl, data->req_ctx,
+                                              pathfsal, &fsal_handle);
       if(FSAL_IS_ERROR(fsal_status))
         {
 	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1558,6 +1559,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Get the attributes (costless: the attributes wer cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
+                             data->req_ctx,
                              &cache_status) != CACHE_INODE_SUCCESS)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1749,7 +1751,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
       /* Lookup the FSAL to build the fsal handle */
       exp_hdl = data->pexport->export_hdl;
-      fsal_status = exp_hdl->ops->lookup_path(exp_hdl,
+      fsal_status = exp_hdl->ops->lookup_path(exp_hdl, data->req_ctx,
 					      data->pexport->fullpath,
 					      &fsal_handle);
       if(FSAL_IS_ERROR(fsal_status))
@@ -1816,6 +1818,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
+                             data->req_ctx,
                              &cache_status) != CACHE_INODE_SUCCESS)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1957,7 +1960,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
             }
           /* Do the look up. */
 	  exp_hdl = data->pexport->export_hdl;
-	  fsal_status = exp_hdl->ops->lookup_path(exp_hdl,
+	  fsal_status = exp_hdl->ops->lookup_path(exp_hdl, data->req_ctx,
 						  iter->junction_export->fullpath,
 						  &fsal_handle);
 	  if(FSAL_IS_ERROR(fsal_status))
@@ -1993,6 +1996,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           /* Finally, get the attributes */
           if(cache_inode_getattr(pentry,
                              &attr,
+                             data->req_ctx,
                              &cache_status) != CACHE_INODE_SUCCESS)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,

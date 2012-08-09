@@ -267,7 +267,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
   /* to avoid setting it on each error case */
   pres->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
-  if((pentry = nfs_FhandleToCache(NFS_V3,
+  if((pentry = nfs_FhandleToCache(req_ctx, NFS_V3,
                                   NULL,
                                   &(parg->arg_access3.object),
                                   NULL,
@@ -419,7 +419,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
   cache_entry_t *pentry_dir = NULL;
   int rc = NFS_REQ_OK;
 
-  if((pentry_dir = nfs_FhandleToCache(NFS_V3,
+  if((pentry_dir = nfs_FhandleToCache(req_ctx, NFS_V3,
                                       NULL,
                                       &(parg->arg_lookup3.what.dir),
                                       NULL,
@@ -563,7 +563,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
   estimated_num_entries = dircount / sizeof(entry3);
 
   /* BUGAZOMEU : rajouter acces direct au DIR_CONTINUE */
-  if((dir_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((dir_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                       NULL,
                                       &(parg->arg_readdir3.dir),
                                       NULL,
@@ -869,7 +869,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
   CREATE3resok *resok = &pres->res_create3.CREATE3res_u.resok;
   int rc = NFS_REQ_OK;
 
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          NULL,
                                          &(parg->arg_create3.where.dir),
                                          NULL,
@@ -993,7 +993,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
   pres->res_write3.WRITE3res_u.resfail.file_wcc.before.attributes_follow = FALSE;
   pres->res_write3.WRITE3res_u.resfail.file_wcc.after.attributes_follow = FALSE;
   /* Convert file handle into a cache entry */
-  if((pentry = nfs_FhandleToCache(NFS_V3,
+  if((pentry = nfs_FhandleToCache(req_ctx, NFS_V3,
                                   NULL,
                                   &(parg->arg_write3.file),
                                   NULL,
@@ -1109,7 +1109,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   int rc = NFS_REQ_OK;
 
   /* Convert file handle into a cache entry */
-  if((pentry = nfs_FhandleToCache(NFS_V3,
+  if((pentry = nfs_FhandleToCache(req_ctx, NFS_V3,
                                   NULL,
                                   &(parg->arg_read3.file),
                                   NULL,
@@ -1271,7 +1271,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
   estimated_num_entries = dircount / sizeof(entryplus3);
 
   /* BUGAZOMEU : rajouter acces direct au DIR_CONTINUE */
-  if((dir_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((dir_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                       NULL,
                                       &(parg->arg_readdirplus3.dir),
                                       NULL,
@@ -1650,7 +1650,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
   unsigned int xattr_id = 0;
   int rc = NFS_REQ_OK;
 
-  if((pentry = nfs_FhandleToCache(NFS_V3,
+  if((pentry = nfs_FhandleToCache(req_ctx, NFS_V3,
                                   NULL,
                                   &(parg->arg_getattr3.object),
                                   NULL,
@@ -1728,7 +1728,7 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
   struct attrlist attr;
   int rc = NFS_REQ_OK;
 
-  if((pentry = nfs_FhandleToCache(NFS_V3,
+  if((pentry = nfs_FhandleToCache(req_ctx, NFS_V3,
                                   NULL,
                                   &(parg->arg_remove3.object.dir),
                                   NULL,

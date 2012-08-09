@@ -120,7 +120,7 @@ int nfs_Readlink(nfs_arg_t *parg,
           FALSE;
     }
   /* Convert file handle into a vnode */
-  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                   &(parg->arg_readlink2),
                                   &(parg->arg_readlink3.symlink),
                                   NULL,
@@ -152,7 +152,7 @@ int nfs_Readlink(nfs_arg_t *parg,
   /* Perform readlink on the pentry */
   if(cache_inode_readlink(pentry,
                           &link_buffer,
-                          req_ctx->creds, &cache_status)
+                          req_ctx, &cache_status)
      == CACHE_INODE_SUCCESS)
     {
       if((ptr = gsh_malloc(link_buffer.len+1)) == NULL)

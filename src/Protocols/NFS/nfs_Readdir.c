@@ -190,7 +190,7 @@ nfs_Readdir(nfs_arg_t *arg,
 
      /* Look up cache entry for filehandle */
      if ((dir_entry
-          = nfs_FhandleToCache(req->rq_vers,
+          = nfs_FhandleToCache(req_ctx, req->rq_vers,
                                &(arg->arg_readdir2.dir),
                                &(arg->arg_readdir3.dir),
                                NULL,
@@ -344,6 +344,7 @@ nfs_Readdir(nfs_arg_t *arg,
           }
           if ((cache_inode_getattr(parent_dir_entry,
                                    &parent_dir_attr,
+                                   req_ctx,
                                    &cache_status_gethandle))
               != CACHE_INODE_SUCCESS) {
                if (req->rq_vers == NFS_V2) {

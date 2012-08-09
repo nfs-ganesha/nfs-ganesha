@@ -141,23 +141,24 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 #ifdef _USE_NFS4_ACL
      saved_acl = entry->attributes.acl;
 #endif /* _USE_NFS4_ACL */
-     fsal_status = entry->obj_handle->ops->link(entry->obj_handle,
-                                                dest_dir->obj_handle,
-                                                name);
+     fsal_status = entry->obj_handle->ops->link(entry->obj_handle, req_ctx,
+                                                dest_dir->obj_handle, name);
      if(!FSAL_IS_ERROR(fsal_status))
              fsal_status =
-                     entry->obj_handle->ops->getattrs(entry->obj_handle);
+                     entry->obj_handle->ops->getattrs(entry->obj_handle,
+                                                      req_ctx);
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
                fsal_status
-                       = entry->obj_handle->ops->getattrs(entry->obj_handle);
+                       = entry->obj_handle->ops->getattrs(entry->obj_handle,
+                                                          req_ctx);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);
                }
                fsal_status
                        = dest_dir->obj_handle->ops
-                       ->getattrs(dest_dir->obj_handle);
+                       ->getattrs(dest_dir->obj_handle, req_ctx);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(dest_dir);
                }
@@ -182,7 +183,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 
      /* Reload the destination directory's attributes so the caller
         will have an updated changeid. */
-     cache_inode_refresh_attrs(dest_dir);
+     cache_inode_refresh_attrs(dest_dir, req_ctx);
      pthread_rwlock_unlock(&dest_dir->attr_lock);
      destattrlock = false;
 

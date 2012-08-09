@@ -349,7 +349,8 @@ struct cache_inode_populate_cb_state {
  * into the api for all time.
  */
 
-static fsal_status_t populate(const char *name,
+static fsal_status_t populate(const struct req_op_context *opctx,
+                              const char *name,
                               unsigned int dtype,
                               struct fsal_obj_handle *dir_hdl,
                               void *dir_state,
@@ -362,7 +363,7 @@ static fsal_status_t populate(const char *name,
         cache_entry_t *pentry = NULL;
         fsal_status_t status;
 
-        status = dir_hdl->ops->lookup(dir_hdl, name, &entry_hdl);
+        status = dir_hdl->ops->lookup(dir_hdl, opctx, name, &entry_hdl);
         if(FSAL_IS_ERROR(status)) {
                 return status;
         }
@@ -414,13 +415,14 @@ error:
  * directory being read.
  *
  * @param[in]     directory  Entry for the parent directory to be read
- * @param[in]     context    FSAL credentials
+ * @param[in]     req_ctx    Request context (user creds, client address etc)
  * @param[out]    status     Returned status
  *
  */
 
 static cache_inode_status_t
-cache_inode_readdir_populate(cache_entry_t *directory,
+cache_inode_readdir_populate(const struct req_op_context *req_ctx,
+                             cache_entry_t *directory,
                              cache_inode_status_t *status)
 {
   fsal_status_t fsal_status;
@@ -455,6 +457,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
   state.offset_cookie = 0;
 
   fsal_status = directory->obj_handle->ops->readdir(directory->obj_handle,
+                                                    req_ctx,
 						    0, /* read the whole dir */
 						    NULL, /* starting at the beginning */
 						    (void *)&state,
@@ -537,7 +540,7 @@ cache_inode_readdir(cache_entry_t *directory,
 
      /* cache_inode_lock_trust_attrs can return an error, and no lock will be
         acquired */
-     *status = cache_inode_lock_trust_attrs(directory);
+     *status = cache_inode_lock_trust_attrs(directory, req_ctx);
      if (*status != CACHE_INODE_SUCCESS)
        return *status;
 
@@ -555,7 +558,7 @@ cache_inode_readdir(cache_entry_t *directory,
            (directory->flags & CACHE_INODE_DIR_POPULATED))) {
           pthread_rwlock_wrlock(&directory->content_lock);
           pthread_rwlock_unlock(&directory->attr_lock);
-          if (cache_inode_readdir_populate(directory,
+          if (cache_inode_readdir_populate(req_ctx, directory,
                                            status)
               != CACHE_INODE_SUCCESS) {
                goto unlock_dir;
@@ -653,7 +656,7 @@ cache_inode_readdir(cache_entry_t *directory,
                        dirent, dirent->name,
                        dirent->hk.k, dirent->hk.p);
 
-          *status = cache_inode_lock_trust_attrs(entry);
+          *status = cache_inode_lock_trust_attrs(entry, req_ctx);
           if (*status != CACHE_INODE_SUCCESS)
             {
               cache_inode_lru_unref(entry, 0);

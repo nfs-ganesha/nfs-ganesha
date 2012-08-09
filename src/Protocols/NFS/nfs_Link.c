@@ -143,7 +143,7 @@ int nfs_Link(nfs_arg_t *parg,
     }
 
   /* Get entry for parent directory */
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          &(parg->arg_link2.to.dir),
                                          &(parg->arg_link3.link.dir),
                                          NULL,
@@ -158,7 +158,7 @@ int nfs_Link(nfs_arg_t *parg,
     }
   ppre_attr = &parent_attr;
 
-  if((target_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((target_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          &(parg->arg_link2.from),
                                          &(parg->arg_link3.file),
                                          NULL,
@@ -240,6 +240,7 @@ int nfs_Link(nfs_arg_t *parg,
             {
               if(cache_inode_getattr(parent_pentry,
                                      &attr_parent_after,
+                                     req_ctx,
                                      &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   switch (preq->rq_vers)

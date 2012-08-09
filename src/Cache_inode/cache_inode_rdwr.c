@@ -198,14 +198,14 @@ cache_inode_rdwr(cache_entry_t *entry,
 
           /* Call FSAL_read or FSAL_write */
           if (io_direction == CACHE_INODE_READ) {
-               fsal_status = obj_hdl->ops->read(obj_hdl,
+               fsal_status = obj_hdl->ops->read(obj_hdl, req_ctx,
                                                 offset,
                                                 io_size,
                                                 buffer,
                                                 bytes_moved,
                                                 eof);
           } else {
-               fsal_status = obj_hdl->ops->write(obj_hdl,
+               fsal_status = obj_hdl->ops->write(obj_hdl, req_ctx,
                                                  offset,
                                                  io_size,
                                                  buffer,
@@ -299,7 +299,7 @@ cache_inode_rdwr(cache_entry_t *entry,
      pthread_rwlock_wrlock(&entry->attr_lock);
      attributes_locked = true;
      if (io_direction == CACHE_INODE_WRITE) {
-	  if ((*status = cache_inode_refresh_attrs(entry))
+	  if ((*status = cache_inode_refresh_attrs(entry, req_ctx))
               != CACHE_INODE_SUCCESS) {
                goto out;
           }

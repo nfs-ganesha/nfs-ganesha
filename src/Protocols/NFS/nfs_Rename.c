@@ -149,7 +149,7 @@ int nfs_Rename(nfs_arg_t *parg,
     }
 
   /* Convert fromdir file handle into a cache_entry */
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          &(parg->arg_rename2.from.dir),
                                          &(parg->arg_rename3.from.dir),
                                          NULL,
@@ -163,7 +163,7 @@ int nfs_Rename(nfs_arg_t *parg,
     }
 
   /* Convert todir file handle into a cache_entry */
-  if((new_parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((new_parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                              &(parg->arg_rename2.to.dir),
                                              &(parg->arg_rename3.to.dir),
                                              NULL,

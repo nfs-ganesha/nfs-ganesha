@@ -106,7 +106,7 @@ int nfs_Getattr(nfs_arg_t *parg,
                "REQUEST PROCESSING: Calling nfs_Getattr handle: %s", str);
     }
 
-  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                   &(parg->arg_getattr2),
                                   &(parg->arg_getattr3.object),
                                   NULL,
@@ -134,6 +134,7 @@ int nfs_Getattr(nfs_arg_t *parg,
    */
   if(cache_inode_getattr(pentry,
                          &attr,
+                         req_ctx,
                          &cache_status) == CACHE_INODE_SUCCESS)
     {
       /*

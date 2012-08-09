@@ -166,6 +166,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* For the change_info4, get the 'change' attributes for both directories */
   if((cache_status = cache_inode_getattr(src_entry,
                                          &attr_src,
+                                         data->req_ctx,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_RENAME4.status = nfs4_Errno(cache_status);

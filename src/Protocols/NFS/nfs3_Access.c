@@ -113,7 +113,8 @@ int nfs3_Access(nfs_arg_t *parg,
     = FALSE;
 
   /* Convert file handle into a vnode */
-  pentry = nfs_FhandleToCache(preq->rq_vers, NULL, &(parg->arg_access3.object),
+  pentry = nfs_FhandleToCache(req_ctx,
+                              preq->rq_vers, NULL, &(parg->arg_access3.object),
                               NULL, NULL, &(pres->res_access3.status),
                               NULL, &attr, pexport, &rc);
   if(pentry == NULL)

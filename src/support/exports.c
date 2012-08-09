@@ -2965,6 +2965,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
         {
           /* Lookup for the FSAL Path */
           fsal_status = pcurrent->export_hdl->ops->lookup_path(pcurrent->export_hdl,
+                                                               NULL,
 							       pcurrent->fullpath,
 							       &pcurrent->proot_handle);
           if(FSAL_IS_ERROR(fsal_status))

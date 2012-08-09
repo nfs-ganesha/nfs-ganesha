@@ -121,7 +121,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
 
   /* retrieve parent entry */
 
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          NULL,
                                          &(parg->arg_mknod3.where.dir),
                                          NULL,

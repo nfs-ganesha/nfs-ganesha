@@ -95,11 +95,10 @@ cache_inode_truncate_impl(cache_entry_t *entry,
   }
 
   /* Call FSAL to actually truncate */
-  fsal_status = obj_hdl->ops->truncate(obj_hdl, length);
+  fsal_status = obj_hdl->ops->truncate(obj_hdl, req_ctx, length);
   if( !FSAL_IS_ERROR(fsal_status)) {
-    fsal_status = obj_hdl->ops->getattrs(obj_hdl);
+    fsal_status = obj_hdl->ops->getattrs(obj_hdl, req_ctx);
   }
-
 
   if(FSAL_IS_ERROR(fsal_status))
     {

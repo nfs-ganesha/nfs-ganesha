@@ -105,7 +105,8 @@ int nfs3_Commit(nfs_arg_t *parg,
   pres->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow = FALSE;
   ppre_attr = NULL;
 
-  pentry = nfs_FhandleToCache(preq->rq_vers, NULL, &parg->arg_commit3.file,
+  pentry = nfs_FhandleToCache(req_ctx,
+                              preq->rq_vers, NULL, &parg->arg_commit3.file,
                               NULL, NULL, &pres->res_commit3.status, NULL,
                               &pre_attr, pexport, &rc);
   if(pentry == NULL)

@@ -139,7 +139,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
       ppre_attr = NULL;
     }
 
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          &(parg->arg_mkdir2.where.dir),
                                          &(parg->arg_mkdir3.where.dir),
                                          NULL,

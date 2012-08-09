@@ -92,7 +92,7 @@ int _9p_readlink( _9p_request_data_t * preq9p,
   /* let's do the job */
   if( cache_inode_readlink( pfid->pentry,
  		            &link_buffer,
-                            pfid->op_context.creds,
+                            &pfid->op_context,
                             &cache_status ) != CACHE_INODE_SUCCESS )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 

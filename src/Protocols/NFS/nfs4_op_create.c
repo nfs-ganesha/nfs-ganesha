@@ -182,6 +182,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   /* get attributes of parent directory, for 'change4' info replyed */
   if((cache_status = cache_inode_getattr(entry_parent,
                                          &attr_parent,
+                                         data->req_ctx,
                                          &cache_status))
      != CACHE_INODE_SUCCESS)
     {
@@ -448,6 +449,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   /* Get the change info on parent directory after the operation was successfull */
   if((cache_status = cache_inode_getattr(entry_parent,
                                          &attr_parent,
+                                         data->req_ctx,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_CREATE4.status = nfs4_Errno(cache_status);

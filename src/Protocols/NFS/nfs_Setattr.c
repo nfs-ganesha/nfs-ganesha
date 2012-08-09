@@ -118,7 +118,7 @@ int nfs_Setattr(nfs_arg_t *parg,
     }
 
   /* Convert file handle into a vnode */
-  if((pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                   &(parg->arg_setattr2.file),
                                   &(parg->arg_setattr3.object),
                                   NULL,

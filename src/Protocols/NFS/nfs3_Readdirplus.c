@@ -185,7 +185,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
      /* Convert file handle into a vnode */
      if ((dir_entry
-          = nfs_FhandleToCache(req->rq_vers,
+          = nfs_FhandleToCache(req_ctx, req->rq_vers,
                                NULL,
                                &(arg->arg_readdirplus3.dir),
                                NULL,
@@ -281,6 +281,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
           if ((cache_inode_getattr(parent_dir_entry,
                                    &parent_dir_attr,
+                                   req_ctx,
                                    &cache_status_gethandle))
               != CACHE_INODE_SUCCESS) {
                res->res_readdirplus3.status

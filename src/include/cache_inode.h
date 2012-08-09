@@ -580,6 +580,7 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
 cache_entry_t *cache_inode_get(cache_inode_fsal_data_t *fsdata,
                                struct attrlist *attr,
                                cache_entry_t *associated,
+                               const struct req_op_context *opctx,
                                cache_inode_status_t *status);
 void cache_inode_put(cache_entry_t *entry);
 
@@ -622,6 +623,7 @@ cache_entry_t *cache_inode_create(cache_entry_t *entry_parent,
 
 cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
                                          struct attrlist *attr,
+                                         const struct req_op_context *req_ctx,
                                          cache_inode_status_t *status);
 
 cache_entry_t *cache_inode_lookup_impl(cache_entry_t *entry_parent,
@@ -644,7 +646,7 @@ cache_entry_t *cache_inode_lookupp(cache_entry_t *entry,
 
 cache_inode_status_t cache_inode_readlink(cache_entry_t *entry,
                                           struct gsh_buffdesc *link_content,
-                                          struct user_cred *creds,
+                                          struct req_op_context *req_ctx,
                                           cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_link(cache_entry_t *entry_src,
@@ -785,7 +787,8 @@ cache_inode_status_t cache_inode_add_cached_dirent(
 cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
                                      cache_inode_status_t *status);
 
-cache_inode_status_t cache_inode_check_trust(cache_entry_t *entry);
+cache_inode_status_t cache_inode_check_trust(cache_entry_t *entry,
+                                             const struct req_op_context *);
 
 bool cache_inode_types_are_rename_compatible(cache_entry_t *src,
                                              cache_entry_t *dest);
@@ -793,7 +796,8 @@ bool cache_inode_types_are_rename_compatible(cache_entry_t *src,
 void cache_inode_print_dir(cache_entry_t *cache_entry_root);
 
 cache_inode_status_t cache_inode_statfs(cache_entry_t *entry,
-                                        fsal_dynamicfsinfo_t *dynamicinfo);
+                                        fsal_dynamicfsinfo_t *dynamicinfo,
+                                        const struct req_op_context *);
 
 cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t *entry);
 cache_inode_status_t cache_inode_is_dir_empty_WithLock(cache_entry_t *entry);
@@ -881,12 +885,13 @@ cache_inode_fixup_md(cache_entry_t *entry)
  * Note that the caller must hold the write lock on the attributes.
  *
  * @param[in,out] entry   The entry to be refreshed
- * @param[in]     contest FSAL operation context
+ * @param[in]     opctx   Request context (user creds, client address etc)
  */
 /** @TODO possibly not really necessary?
  */
 static inline cache_inode_status_t
-cache_inode_refresh_attrs(cache_entry_t *entry)
+cache_inode_refresh_attrs(cache_entry_t *entry,
+                          const struct req_op_context *opctx)
 {
      fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -905,7 +910,7 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
      }
 #endif /* _USE_NFS4_ACL */
 
-     fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle);
+     fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle, opctx);
      if (FSAL_IS_ERROR(fsal_status)) {
           cache_inode_kill_entry(entry);
           cache_status
@@ -955,7 +960,8 @@ cache_inode_get_changeid4(cache_entry_t *entry)
  */
 
 static inline cache_inode_status_t
-cache_inode_lock_trust_attrs(cache_entry_t *entry)
+cache_inode_lock_trust_attrs(cache_entry_t *entry,
+                             const struct req_op_context *opctx)
 {
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
@@ -972,9 +978,8 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry)
               FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
                              ATTR_RDATTR_ERR)) {
                /* Release the lock on error */
-               if ((cache_status =
-                    cache_inode_refresh_attrs(entry))
-                   != CACHE_INODE_SUCCESS) {
+               cache_status = cache_inode_refresh_attrs(entry, opctx);
+               if (cache_status != CACHE_INODE_SUCCESS) {
                     pthread_rwlock_unlock(&entry->attr_lock);
                }
           }

@@ -137,6 +137,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
    */
   if(cache_inode_getattr(data->current_entry,
                          &attr,
+                         data->req_ctx,
                          &cache_status) == CACHE_INODE_SUCCESS)
     {
       if(nfs4_FSALattr_To_Fattr(data->pexport,

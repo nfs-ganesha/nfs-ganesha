@@ -145,7 +145,7 @@ int nfs_Symlink(nfs_arg_t *parg,
     }
 
   /* Convert directory file handle into a vnode */
-  if((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
+  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
                                          &(parg->arg_symlink2.from.dir),
                                          &(parg->arg_symlink3.where.dir),
                                          NULL,
@@ -320,6 +320,7 @@ int nfs_Symlink(nfs_arg_t *parg,
             /* The the parent pentry attributes for building Wcc Data */
             if(cache_inode_getattr(parent_pentry,
                                    &attr_parent_after,
+                                   req_ctx,
                                    &cache_status_parent) != CACHE_INODE_SUCCESS)
               {
                 gsh_free(pres->res_symlink3.SYMLINK3res_u.resok.obj.

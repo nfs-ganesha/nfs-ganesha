@@ -62,7 +62,8 @@
 
 
 cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
-                                        fsal_dynamicfsinfo_t * dynamicinfo)
+                                        fsal_dynamicfsinfo_t * dynamicinfo,
+                                        const struct req_op_context *req_ctx)
 {
   fsal_status_t fsal_status;
   struct fsal_export *export;
@@ -77,7 +78,7 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
 
   export = pentry->obj_handle->export;
   /* Get FSAL to get dynamic info */
-  fsal_status = export->ops->get_fs_dynamic_info(export, dynamicinfo);
+  fsal_status = export->ops->get_fs_dynamic_info(export, req_ctx, dynamicinfo);
   if(FSAL_IS_ERROR(fsal_status))
     {
       status =  cache_inode_error_convert(fsal_status);

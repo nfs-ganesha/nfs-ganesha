@@ -182,7 +182,7 @@ nfs4_op_putfh(struct nfs_argop4 *op,
                 } else {
                         /* Build the pentry.  Refcount +1. */
                         if((data->current_entry
-                            = nfs_FhandleToCache(NFS_V4,
+                            = nfs_FhandleToCache(data->req_ctx, NFS_V4,
                                                  NULL,
                                                  NULL,
                                                  &(data->currentFH),

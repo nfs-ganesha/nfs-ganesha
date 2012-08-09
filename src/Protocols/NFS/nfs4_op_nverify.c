@@ -106,6 +106,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
   /* Get the cache inode attribute */
   if((cache_status = cache_inode_getattr(data->current_entry,
                                          &file_attr,
+                                         data->req_ctx,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_NVERIFY4.status = NFS4ERR_INVAL;
