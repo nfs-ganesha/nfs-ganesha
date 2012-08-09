@@ -239,12 +239,11 @@ cache_inode_create(cache_entry_t *parent,
      if (type == DIRECTORY) {
           ++(parent->obj_handle->attributes.numlinks);
      }
-     pthread_rwlock_unlock(&parent->attr_lock);
-
      /* Copy up the child attributes */
      if (attr) {
-          *attr = object_attributes;
+          *attr = entry->obj_handle->attributes;
      }
+     pthread_rwlock_unlock(&parent->attr_lock);
 
      *status = CACHE_INODE_SUCCESS;
 
