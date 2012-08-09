@@ -97,6 +97,8 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if(res_LINK4.status != NFS4_OK)
     return res_LINK4.status;
 
+  /* Do basic checks on saved filehandle */
+
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->savedFH)))
     {
@@ -119,18 +121,10 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     }
 
   /* Pseudo Fs is explictely a Read-Only File system */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->savedFH)))
     {
       res_LINK4.status = NFS4ERR_ROFS;
       return res_LINK4.status;
-    }
-
-  /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      res_LINK4.status = nfs4_SetCompoundExport(data);
-      if(res_LINK4.status != NFS4_OK)
-        return res_LINK4.status;
     }
 
   /*

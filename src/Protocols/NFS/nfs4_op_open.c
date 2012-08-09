@@ -151,21 +151,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   if(res_OPEN4.status != NFS4_OK)
     return res_OPEN4.status;
 
-  /* This can't be done on the pseudofs */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    {
-      res_OPEN4.status = NFS4ERR_ROFS;
-      LogDebug(COMPONENT_STATE,
-               "NFS4 OPEN returning NFS4ERR_ROFS");
-      return res_OPEN4.status;
-    }
-
-  if (nfs_export_check_security(data->reqp, &data->pexport->export_perms, data->pexport) == FALSE)
-    {
-      res_OPEN4.status = NFS4ERR_PERM;
-      return res_OPEN4.status;
-    }
-
   /*
    * If Filehandle points to a xattr object, manage it via the xattrs
    * specific functions
@@ -545,9 +530,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                       goto out;
                     }
 
-                  data->current_entry = pentry_lookup;
-                  data->current_filetype = REGULAR_FILE;
-
                   /* regular exit */
                   goto out_success;
                 }
@@ -629,9 +611,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                                         ->state_lock);
                                   goto out;
                                 }
-
-                              data->current_entry = pentry_lookup;
-                              data->current_filetype = REGULAR_FILE;
 
                               /* Avoid segfault during test OPEN4
                                  (pstate would be NULL) */
@@ -1298,6 +1277,10 @@ nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
         memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
             newfh4.nfs_fh4_len);
 
+        /* Update stuff on compound data, do not have to call nfs4_SetCompoundExport
+         * because the new file is on the same export, so data->pexport and
+         * data->export_perms will not change.
+         */
         data->current_entry = pentry;
         data->current_filetype = REGULAR_FILE;
 

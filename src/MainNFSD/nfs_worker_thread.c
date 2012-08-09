@@ -1199,7 +1199,6 @@ static void nfs_rpc_execute(request_data_t    * preq,
           goto auth_failure;
         }
 
-
       /* Check if client is using a privileged port, but only for NFS protocol */
       if((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
          ((export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) != 0) &&

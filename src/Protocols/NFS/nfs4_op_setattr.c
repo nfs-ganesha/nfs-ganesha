@@ -102,13 +102,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   if(res_SETATTR4.status != NFS4_OK)
     return res_SETATTR4.status;
 
-  /* Pseudo Fs is explictely a Read-Only File system */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    {
-      res_SETATTR4.status = NFS4ERR_ROFS;
-      return res_SETATTR4.status;
-    }
-
   /* Get only attributes that are allowed to be read */
   if(!nfs4_Fattr_Check_Access(&arg_SETATTR4.obj_attributes, FATTR4_ATTR_WRITE))
     {

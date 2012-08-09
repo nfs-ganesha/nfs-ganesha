@@ -88,7 +88,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   cache_entry_t        * file_pentry = NULL;
   fsal_attrib_list_t     attrlookup;
   cache_inode_status_t   cache_status;
-  int                    error = 0;
   fsal_handle_t        * pfsal_handle = NULL;
 
   resp->resop = NFS4_OP_LOOKUPP;
@@ -116,16 +115,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_lookupp_xattr(op, data, resp);
-
-  /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-        {
-          res_LOOKUPP4.status = error;
-          return res_LOOKUPP4.status;
-        }
-    }
 
   /* Preparying for cache_inode_lookup ".." */
   file_pentry = NULL;

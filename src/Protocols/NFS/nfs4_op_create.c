@@ -121,19 +121,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 #endif /* _USE_QUOTA */
 
-  /* Pseudo Fs is explictely a Read-Only File system */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
-    {
-      res_CREATE4.status = NFS4ERR_ROFS;
-      return res_CREATE4.status;
-    }
-
-  if (nfs_export_check_security(data->reqp, &data->pexport->export_perms, data->pexport) == FALSE)
-    {
-      res_CREATE4.status = NFS4ERR_PERM;
-      return res_CREATE4.status;
-    }
-
   /* Ask only for supported attributes */
   if(!nfs4_Fattr_Supported(&arg_CREATE4.createattrs))
     {
@@ -510,6 +497,11 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if (data->current_entry) {
       cache_inode_put(data->current_entry);
   }
+
+  /* Update stuff on compound data, do not have to call nfs4_SetCompoundExport
+   * because the new file is on the same export, so data->pexport and
+   * data->export_perms will not change.
+   */
   data->current_entry = pentry_new;
   data->current_filetype = pentry_new->type;
 

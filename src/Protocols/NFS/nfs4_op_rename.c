@@ -111,6 +111,8 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(res_RENAME4.status != NFS4_OK)
     return res_RENAME4.status;
 
+  /* Do basic checks on saved filehandle */
+
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->savedFH)))
     {
@@ -133,7 +135,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Pseudo Fs is explictely a Read-Only File system */
-  if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+  if(nfs4_Is_Fh_Pseudo(&(data->savedFH)))
     {
       res_RENAME4.status = NFS4ERR_ROFS;
       return res_RENAME4.status;
@@ -143,14 +145,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       res_RENAME4.status = NFS4ERR_GRACE;
       return res_RENAME4.status;
-    }
-
-  /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if(data->pexport == NULL)
-    {
-      res_RENAME4.status = nfs4_SetCompoundExport(data);
-      if(res_RENAME4.status != NFS4_OK)
-        return res_RENAME4.status;
     }
 
   /* Read oldname and newname from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
