@@ -134,20 +134,10 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
   else
     {
-      /* If data->exportp is null, a junction from pseudo fs was
-         traversed, credp and exportp have to be updated */
-      if(data->pexport == NULL)
-        {
-          res_PUTFH4.status = nfs4_SetCompoundExport(data);
-          if(res_PUTFH4.status != NFS4_OK)
-            return res_PUTFH4.status;
-        }
-
-      if (nfs_export_check_security(data->reqp, &data->pexport->export_perms, data->pexport) == FALSE)
-        {
-          res_PUTFH4.status = NFS4ERR_PERM;
-          return res_PUTFH4.status;
-        }
+      /* Set up the export (and nfs4_MakeCred) for the new currentFH */
+      res_PUTFH4.status = nfs4_SetCompoundExport(data);
+      if(res_PUTFH4.status != NFS4_OK)
+        return res_PUTFH4.status;
 
 #ifdef _PNFS_DS
       /* As usual, protect existing refcounts */
