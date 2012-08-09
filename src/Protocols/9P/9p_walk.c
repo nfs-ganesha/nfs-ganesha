@@ -105,7 +105,20 @@ int _9p_walk( _9p_request_data_t * preq9p,
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
+  /* Check that it is a valid fid */
+  if (pfid->pentry == NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
+
   pnewfid = &preq9p->pconn->fids[*newfid] ;
+  /* Check that it is a free fid */
+  if (pnewfid->pentry != NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid in-use fid=%u", *newfid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
 
   /* Is this a lookup or a fid cloning operation ? */
   if( *nwname == 0 )

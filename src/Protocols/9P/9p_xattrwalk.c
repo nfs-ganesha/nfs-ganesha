@@ -103,7 +103,20 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
     return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
  
   pfid = &preq9p->pconn->fids[*fid] ;
+  /* Check that it is a valid fid */
+  if (pfid->pentry == NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
+
   pxattrfid = &preq9p->pconn->fids[*attrfid] ;
+  /* Check that it is a free fid */
+  if (pxattrfid->pentry != NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid in-use fid=%u", *attrfid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
 
   /* Initiate xattr's fid by copying file's fid in it */
   memcpy( (char *)pxattrfid, (char *)pfid, sizeof( _9p_fid_t ) ) ;

@@ -112,6 +112,13 @@ int _9p_lock( _9p_request_data_t * preq9p,
     return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
   pfid = &preq9p->pconn->fids[*fid] ;
+
+  /* Check that it is a valid fid */
+  if (pfid->pentry == NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
 #if 0 /* Tmp hook to avoid lock issue when compiling kernels. This should not impact ONE client only */
   /* get the client's ip addr */
   snprintf( name, MAXNAMLEN, "%.*s",*client_id_len, client_id_str ) ;

@@ -85,6 +85,13 @@ int _9p_lopen( _9p_request_data_t * preq9p,
  
    pfid =  &preq9p->pconn->fids[*fid] ;
 
+  /* Check that it is a valid fid */
+  if (pfid->pentry == NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
+
   _9p_openflags2FSAL( flags, &openflags ) ; 
 
   if( pfid->pentry->type == REGULAR_FILE ) /** @todo: Maybe other types (FIFO, SOCKET,...) may require to be opened too */

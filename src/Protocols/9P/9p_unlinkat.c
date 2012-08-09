@@ -88,6 +88,13 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
 
   pdfid = &preq9p->pconn->fids[*dfid] ;
 
+  /* Check that it is a valid fid */
+  if (pdfid->pentry == NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *dfid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
+
   /* Let's do the job */
   snprintf( name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 

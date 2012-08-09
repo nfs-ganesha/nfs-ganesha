@@ -103,6 +103,13 @@ int _9p_getattr( _9p_request_data_t * preq9p,
 
   pfid = &preq9p->pconn->fids[*fid] ;
 
+  /* Check that it is a valid fid */
+  if (pfid->pentry == NULL) 
+  {
+    LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+  }
+
   /* Attach point is found, build the requested attributes */
   
   valid = _9P_GETATTR_BASIC ; /* FSAL covers all basic attributes */

@@ -90,11 +90,23 @@ int _9p_link( _9p_request_data_t * preq9p,
    return   _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
    pdfid = &preq9p->pconn->fids[*dfid] ;
+   /* Check that it is a valid fid */
+   if (pdfid->pentry == NULL) 
+   {
+     LogDebug( COMPONENT_9P, "request on invalid dfid=%u", *dfid ) ;
+     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+   }
 
   if( *targetfid >= _9P_FID_PER_CONN )
    return   _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
    ptargetfid = &preq9p->pconn->fids[*targetfid] ;
+   /* Check that it is a valid fid */
+   if (ptargetfid->pentry == NULL) 
+   {
+     LogDebug( COMPONENT_9P, "request on invalid targetfid=%u", *targetfid ) ;
+     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
+   }
 
    /* Let's do the job */
    snprintf( link_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
