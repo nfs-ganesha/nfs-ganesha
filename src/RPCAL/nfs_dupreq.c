@@ -55,7 +55,7 @@
 #include "gsh_intrinsic.h"
 
 #define DUPREQ_BAD_ADDR1 0x01 /* safe for marked pointers, etc */
-#define DUPREQ_V41       0x02
+#define DUPREQ_NOCACHE   0x02
 
 pool_t *dupreq_pool;
 pool_t *nfs_res_pool;
@@ -1019,13 +1019,20 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
                 /* for v41+ requests, we merely thread the request through
                  * for later cleanup--all caching is handled by the v41
                  * slot reply cache */
-                req->rq_u1 = (void*) DUPREQ_V41;
+                req->rq_u1 = (void*) DUPREQ_NOCACHE;
                 res = alloc_nfs_res();
                 goto out;
             }
         }
         break;
     default:
+        /* likewise for other protocol requests we may not or choose not
+         * to cache */
+        if (! (nfs_req->pfuncdesc->dispatch_behaviour & CAN_BE_DUP)) {
+            req->rq_u1 = (void*) DUPREQ_NOCACHE;
+            res = alloc_nfs_res();
+            goto out;
+        }
         break;
     }
 
@@ -1175,8 +1182,8 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
     struct rbtree_x_part *t;
     drc_t *drc = NULL;
 
-   /* do nothing if req is v41 */
-    if (dv == (void*) DUPREQ_V41)
+   /* do nothing if req is marked no-cache */
+    if (dv == (void*) DUPREQ_NOCACHE)
         goto out;
 
     /* do nothing if nfs_dupreq_start failed completely */
@@ -1255,8 +1262,8 @@ nfs_dupreq_delete(struct svc_req *req)
     struct rbtree_x_part *t;
     drc_t *drc;
 
-    /* do nothing if req is v41 */
-    if (dv == (void*) DUPREQ_V41)
+    /* do nothing if req is marked no-cache */
+    if (dv == (void*) DUPREQ_NOCACHE)
         goto out;
 
     /* do nothing if nfs_dupreq_start failed completely */
@@ -1315,10 +1322,10 @@ void nfs_dupreq_rele(struct svc_req *req)
 {
     dupreq_entry_t *dv = (dupreq_entry_t *) req->rq_u1;
 
-   /* do nothing if req is v41 */
-    if (dv == (void*) DUPREQ_V41) {
+   /* no-cache cleanup */
+    if (dv == (void*) DUPREQ_NOCACHE) {
         LogFullDebug(COMPONENT_DUPREQ,
-                     "releasing NFSv41 res %p", req->rq_u2);
+                     "releasing no-cache res %p", req->rq_u2);
         free_nfs_res(req->rq_u2);
         goto out;
     }
