@@ -1470,6 +1470,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
         }
+
+      /* No need to fill in compound data because it doesn't change. */
     }
   else
     {
@@ -1481,12 +1483,12 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       strncpy(data->MntPath, iter->fullname, NFS_MAXPATHLEN);
 
       /* Build credentials */
-      if(nfs4_MakeCred(data) != 0)
+      res_LOOKUP4.status = nfs4_MakeCred(data);
+      if(res_LOOKUP4.status != NFS4_OK)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
-          res_LOOKUP4.status = NFS4ERR_WRONGSEC;
           return res_LOOKUP4.status;
         }
 
@@ -1602,6 +1604,31 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 }                               /* nfs4_op_lookup_pseudo */
 
 /**
+ * set_compound_data_for_pseudo: fills in compound data for pseudo fs
+ * 
+ * Fills in:
+ *
+ * data->current_entry
+ * data->current_filetype
+ * data->pexport
+ * data->export_perms.options
+ *
+ * @param data  [INOUT] Pointer to the compound request's data
+ * 
+ */
+void set_compound_data_for_pseudo(compound_data_t * data)
+{
+  data->current_entry        = NULL; /* No cache inode entry */
+  data->current_filetype     = DIRECTORY; /* Always a directory */
+  data->pexport              = NULL; /* No exportlist is related to pseudo fs */
+  data->export_perms.options = EXPORT_OPTION_ROOT |
+                               EXPORT_OPTION_MD_READ_ACCESS |
+                               EXPORT_OPTION_AUTH_TYPES |
+                               EXPORT_OPTION_NFSV4 |
+                               EXPORT_OPTION_TRANSPORTS;
+}
+
+/**
  * nfs4_op_lookupp_pseudo: looks up into the pseudo fs for the parent directory
  * 
  * looks up into the pseudo fs for the parent directory of the current file handle. 
@@ -1656,11 +1683,10 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   if (data->current_entry) {
       cache_inode_put(data->current_entry);
   }
-  data->current_entry = NULL;
-/* pseudo file system is always a directory and we need to keep
- * nfs4_sanity_check_FH  happy.
- */
-  data->current_filetype = DIRECTORY;
+
+  /* Fill in compound data */
+  set_compound_data_for_pseudo(data);
+
   res_LOOKUPP4.status = NFS4_OK;
   return NFS4_OK;
 }                               /* nfs4_op_lookupp_pseudo */
@@ -1762,12 +1788,12 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       strncpy(data->MntPath, psfsentry.fullname, NFS_MAXPATHLEN);
 
       /* Build the credentials */
-      if(nfs4_MakeCred(data) != 0)
+      res_READDIR4.status = nfs4_MakeCred(data);
+      if(res_READDIR4.status != NFS4_OK)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
-          res_READDIR4.status = NFS4ERR_WRONGSEC;
           return res_READDIR4.status;
         }
       /* Build fsal data for creation of the first entry */
@@ -1940,7 +1966,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
        */ 
       if(entryFH.nfs_fh4_len == 0)
         {
-          if(nfs4_AllocateFH(&entryFH) != NFS4_OK)
+          res_READDIR4.status = nfs4_AllocateFH(&entryFH);
+          if(res_READDIR4.status != NFS4_OK)
             {
               return res_READDIR4.status;
             }
@@ -1980,13 +2007,13 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
            * getting attributes?
            * The logic is borrowed from the process invoked above in this code
            * when the target directory is a junction.
-           */ 
-          if(nfs4_MakeCred(data) != 0)
+           */
+          res_READDIR4.status = nfs4_MakeCred(data);
+          if(res_READDIR4.status != NFS4_OK)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get FSAL credentials for %s, id=%d",
                    data->pexport->fullpath, data->pexport->id);
-              res_READDIR4.status = NFS4ERR_WRONGSEC;
               return res_READDIR4.status;
             }
           /* Do the look up. */

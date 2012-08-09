@@ -137,8 +137,8 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
       cache_inode_put(data->current_entry);
   }
 
-  data->current_entry = NULL;   /* No cache inode entry for the directory within pseudo fs */
-  data->current_filetype = DIRECTORY;      /* Only directory in the pseudo fs */
+  /* Fill in compound data */
+  set_compound_data_for_pseudo(data);
 
   /* I copy the root FH to the currentFH */
   if(data->currentFH.nfs_fh4_len == 0)
@@ -149,7 +149,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
     }
 
   /* Copy the data from root FH to current FH */
-  memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->rootFH.nfs_fh4_val),
+  memcpy(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
          data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
@@ -161,7 +161,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
         return res_PUTROOTFH4.status;
     }
 
-  memcpy((char *)(data->mounted_on_FH.nfs_fh4_val), (char *)(data->rootFH.nfs_fh4_val),
+  memcpy(data->mounted_on_FH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
          data->rootFH.nfs_fh4_len);
   data->mounted_on_FH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
