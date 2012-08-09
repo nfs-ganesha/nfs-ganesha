@@ -772,8 +772,11 @@ lru_thread(void *arg __attribute__((unused)))
                               atomic_inc_int64_t(&lru->refcount);
                               pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
 
+                              /* Um, we'll need this */
+                              entry = container_of(lru, cache_entry_t, lru);
+
                               /* Acquire the content lock first; we may
-                               * need to look at fds and clsoe it.
+                               * need to look at fds and close it.
                                */
                               pthread_rwlock_wrlock(&entry->content_lock);
 
@@ -803,7 +806,6 @@ lru_thread(void *arg __attribute__((unused)))
                                    continue;
                               }
 
-                              entry = container_of(lru, cache_entry_t, lru);
                               if (is_open(entry)) {
                                    cache_inode_close(
                                         entry,
