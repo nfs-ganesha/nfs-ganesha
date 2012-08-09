@@ -146,6 +146,19 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   res_OPEN4.status = NFS4_OK;
   res_OPEN4.OPEN4res_u.resok4.rflags = 0 ;
 
+  /* Check export permissions if OPEN4_CREATE */
+  if((arg_OPEN4.openhow.opentype == OPEN4_CREATE) &&
+     ((data->export_perms.options & EXPORT_OPTION_MD_WRITE_ACCESS) == 0))
+    {
+      res_OPEN4.status = NFS4ERR_ROFS;
+
+      LogDebug(COMPONENT_NFS_V4,
+               "Status of OP_OPEN due to export permissions = %s",
+               nfsstat4_to_str(res_OPEN4.status));
+
+      return res_OPEN4.status;
+    }
+
   /* Do basic checks on a filehandle */
   res_OPEN4.status = nfs4_sanity_check_FH(data, 0LL);
   if(res_OPEN4.status != NFS4_OK)
