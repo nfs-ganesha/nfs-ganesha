@@ -399,6 +399,8 @@ typedef uint64_t attrmask_t;
 #define ATTR_GENERATION 0x0000000000080000
 /* Change attribute */
 #define ATTR_CHANGE 0x0000000000100000
+/* request readdir rdattr_error */
+#define ATTR_RDATTR_ERROR 0x0000000000200000
 
 
 /* "classic" attributes sets : */

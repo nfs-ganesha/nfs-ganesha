@@ -129,6 +129,93 @@ char *rquota_functions_names[] = {
 
 /**
  *
+ * Attribute decoders
+ */
+
+static inline int next_attr_from_bitmap(bitmap4 *bits, int last_attr)
+{
+	int offset, bit;
+
+	for(offset = (last_attr + 1) / 32;
+	    offset >= 0 && offset < bits->bitmap4_len;
+	    offset++) {
+		if((bits->bitmap4_val[offset] &
+		    (-1 << ((last_attr +1) % 32))) != 0) {
+			for(bit = (last_attr +1) % 32; bit < 32; bit++) {
+				if(bits->bitmap4_val[offset] & (1 << bit))
+					return offset * 32 + bit;
+			}
+		}
+		last_attr = -1;
+	}
+	return -1;
+}
+
+static inline uint32_t decode_uint32(const char *current)
+{
+	uint32_t buf;
+
+	memcpy(&buf, current, sizeof(uint32_t));
+	return ntohl(buf);
+}
+
+static inline uint64_t decode_uint64(const char *current)
+{
+	uint64_t buf;
+
+	memcpy(&buf, current, sizeof(uint64_t));
+	return nfs_ntohl64(buf);
+}
+
+static inline int sizeof_opaque(const char *current)
+{
+	uint32_t len;
+
+	memcpy(&len,  current, sizeof(len));
+	len = ntohl(len);
+	return sizeof(len) + len;
+}
+
+static inline int decode_opaque(const char *current,
+				unsigned char *buf,
+				int buflen)
+{
+	uint32_t len;
+
+	memcpy(&len,  current, sizeof(len));
+	len = ntohl(len);
+	if((len + sizeof(len)) > buflen)
+		return -1;
+	memcpy(buf, current, len);
+	return sizeof(len) + len;
+}
+
+static inline int sizeof_aligned_opaque(const char *current)
+{
+	uint32_t len;
+
+	memcpy(&len,  current, sizeof(len));
+	len = ntohl(len);
+	return sizeof(len) + ((len + 3) & ~0x3);
+}
+
+static inline int decode_aligned_opaque(const char *current,
+					unsigned char *buf,
+					int buflen)
+{
+	uint32_t len;
+
+	memcpy(&len,  current, sizeof(len));
+	len = ntohl(len);
+	if((len + 4) > buflen)
+		return -1;
+	memcpy(buf, current, len);
+	buf[len] = '\0';
+	return sizeof(len) + ((len + 3) & ~0x3);
+}
+
+/**
+ *
  * nfs_FhandleToStr: Converts a file handle to a string representation.
  *
  * Converts a file handle to a string representation.
@@ -545,401 +632,418 @@ void nfs_SetFailedStatus(exportlist_t *pexport,
 
 const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
 	[FATTR4_SUPPORTED_ATTRS] = {
-		"FATTR4_SUPPORTED_ATTRS",       /* name for logging etc. */
-		1,                              /* supported == 1 not supported == 0 */
-		sizeof(fattr4_supported_attrs), /* size in stream */
-		FATTR4_ATTR_READ},              /* access flag(s) */
+		.name = "FATTR4_SUPPORTED_ATTRS",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_supported_attrs),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_TYPE] = {
-		"FATTR4_TYPE",
-		1,
-		sizeof(fattr4_type),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_TYPE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_type),
+		.type = FATTR4_TYPE_UINT32,
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FH_EXPIRE_TYPE] = {
-		"FATTR4_FH_EXPIRE_TYPE",
-		1,
-		sizeof(fattr4_fh_expire_type),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FH_EXPIRE_TYPE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_fh_expire_type),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_CHANGE] = {
-		"FATTR4_CHANGE",
-		1,
-		sizeof(fattr4_change),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_CHANGE",
+		.supported = 1,
+		.type = FATTR4_TYPE_UINT64,
+		.size_fattr4 = sizeof(fattr4_change),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_SIZE] = {
-		"FATTR4_SIZE",
-		1,
-		sizeof(fattr4_size),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_SIZE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_size),
+		.type = FATTR4_TYPE_UINT64,
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_LINK_SUPPORT] = {
-		"FATTR4_LINK_SUPPORT",
-		1,
-		sizeof(fattr4_link_support),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_LINK_SUPPORT",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_link_support),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_SYMLINK_SUPPORT] = {
-		"FATTR4_SYMLINK_SUPPORT",
-		1,
-		sizeof(fattr4_symlink_support),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_SYMLINK_SUPPORT",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_symlink_support),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_NAMED_ATTR] = {
-		"FATTR4_NAMED_ATTR",
-		1,
-		sizeof(fattr4_named_attr),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_NAMED_ATTR",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_named_attr),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FSID] = {
-		"FATTR4_FSID",
-		1,
-		sizeof(fattr4_fsid),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FSID",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_fsid),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_UNIQUE_HANDLES] = {
-		"FATTR4_UNIQUE_HANDLES",
-		1,
-		sizeof(fattr4_unique_handles), FATTR4_ATTR_READ},
+		.name = "FATTR4_UNIQUE_HANDLES",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_unique_handles),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_LEASE_TIME] = {
-		"FATTR4_LEASE_TIME",
-		1,
-		sizeof(fattr4_lease_time),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_LEASE_TIME",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_lease_time),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_RDATTR_ERROR] = {
-		"FATTR4_RDATTR_ERROR",
-		1,
-		sizeof(fattr4_rdattr_error),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_RDATTR_ERROR",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_rdattr_error),
+		.type = FATTR4_TYPE_UINT32,
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_ACL] = {
-		"FATTR4_ACL",
+		.name = "FATTR4_ACL",
 #ifdef _USE_NFS4_ACL
-		1,
+		.supported = 1,
 #else
-		0,
+		.supported = 0,
 #endif
-		sizeof(fattr4_acl),
-		FATTR4_ATTR_READ_WRITE},
+		.size_fattr4 = sizeof(fattr4_acl),
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_ACLSUPPORT] = {
-		"FATTR4_ACLSUPPORT",
-		1,
-		sizeof(fattr4_aclsupport),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_ACLSUPPORT",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_aclsupport),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_ARCHIVE] = {
-		"FATTR4_ARCHIVE",
-		1,
-		sizeof(fattr4_archive),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_ARCHIVE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_archive),
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_CANSETTIME] = {
-		"FATTR4_CANSETTIME",
-		1,
-		sizeof(fattr4_cansettime),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_CANSETTIME",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_cansettime),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_CASE_INSENSITIVE] = {
-		"FATTR4_CASE_INSENSITIVE",
-		1,
-		sizeof(fattr4_case_insensitive),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_CASE_INSENSITIVE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_case_insensitive),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_CASE_PRESERVING] = {
-		"FATTR4_CASE_PRESERVING",
-		1,
-		sizeof(fattr4_case_preserving),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_CASE_PRESERVING",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_case_preserving),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_CHOWN_RESTRICTED] = {
-		"FATTR4_CHOWN_RESTRICTED",
-		1,
-		sizeof(fattr4_chown_restricted),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_CHOWN_RESTRICTED",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_chown_restricted),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FILEHANDLE] = {
-		"FATTR4_FILEHANDLE",
-		1,
-		sizeof(fattr4_filehandle),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FILEHANDLE",
+		.supported = 1,
+		.type = FATTR4_TYPE_OPAQUE,
+		.size_fattr4 = sizeof(fattr4_filehandle),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FILEID] = {
-		"FATTR4_FILEID",
-		1,
-		sizeof(fattr4_fileid),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FILEID",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_fileid),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FILES_AVAIL] = {
-		"FATTR4_FILES_AVAIL",
-		1,
-		sizeof(fattr4_files_avail),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FILES_AVAIL",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_files_avail),
+		.type = FATTR4_TYPE_UINT64,
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FILES_FREE] = {
-		"FATTR4_FILES_FREE",
-		1,
-		sizeof(fattr4_files_free),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FILES_FREE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_files_free),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FILES_TOTAL] = {
-		"FATTR4_FILES_TOTAL",
-		1,
-		sizeof(fattr4_files_total),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FILES_TOTAL",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_files_total),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FS_LOCATIONS] = {
-		"FATTR4_FS_LOCATIONS",
-		0,
-		sizeof(fattr4_fs_locations),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FS_LOCATIONS",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_fs_locations),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_HIDDEN] = {
-		"FATTR4_HIDDEN",
-		1,
-		sizeof(fattr4_hidden),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_HIDDEN",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_hidden),
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_HOMOGENEOUS] = {
-		"FATTR4_HOMOGENEOUS",
-		1,
-		sizeof(fattr4_homogeneous),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_HOMOGENEOUS",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_homogeneous),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_MAXFILESIZE] = {
-		"FATTR4_MAXFILESIZE",
-		1,
-		sizeof(fattr4_maxfilesize),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_MAXFILESIZE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_maxfilesize),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_MAXLINK] = {
-		"FATTR4_MAXLINK",
-		1,
-		sizeof(fattr4_maxlink),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_MAXLINK",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_maxlink),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_MAXNAME] = {
-		"FATTR4_MAXNAME",
-		1,
-		sizeof(fattr4_maxname),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_MAXNAME",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_maxname),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_MAXREAD] = {
-		"FATTR4_MAXREAD",
-		1,
-		sizeof(fattr4_maxread),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_MAXREAD",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_maxread),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_MAXWRITE] = {
-		"FATTR4_MAXWRITE",
-		1,
-		sizeof(fattr4_maxwrite),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_MAXWRITE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_maxwrite),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_MIMETYPE] = {
-		"FATTR4_MIMETYPE",
-		0,
-		sizeof(fattr4_mimetype),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_MIMETYPE",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_mimetype),
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_MODE] = {
-		"FATTR4_MODE",
-		1,
-		sizeof(fattr4_mode),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_MODE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_mode),
+		.type = FATTR4_TYPE_UINT32,
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_NO_TRUNC] = {
-		"FATTR4_NO_TRUNC",
-		1,
-		sizeof(fattr4_no_trunc),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_NO_TRUNC",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_no_trunc),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_NUMLINKS] = {
-		"FATTR4_NUMLINKS",
-		1,
-		sizeof(fattr4_numlinks),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_NUMLINKS",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_numlinks),
+		.type = FATTR4_TYPE_UINT32,
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_OWNER] = {
-		"FATTR4_OWNER",
-		1,
-		sizeof(fattr4_owner),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_OWNER",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_owner),
+		.type = FATTR4_TYPE_ALIGNED_OPAQUE,
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_OWNER_GROUP] = {
-		"FATTR4_OWNER_GROUP",
-		1,
-		sizeof(fattr4_owner_group),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_OWNER_GROUP",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_owner_group),
+		.type = FATTR4_TYPE_ALIGNED_OPAQUE,
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_QUOTA_AVAIL_HARD] = {
-		"FATTR4_QUOTA_AVAIL_HARD",
-		0,
-		sizeof(fattr4_quota_avail_hard),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_QUOTA_AVAIL_HARD",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_quota_avail_hard),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_QUOTA_AVAIL_SOFT] = {
-		"FATTR4_QUOTA_AVAIL_SOFT",
-		0,
-		sizeof(fattr4_quota_avail_soft),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_QUOTA_AVAIL_SOFT",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_quota_avail_soft),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_QUOTA_USED] = {
-		"FATTR4_QUOTA_USED",
-		0,
-		sizeof(fattr4_quota_used),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_QUOTA_USED",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_quota_used),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_RAWDEV] = {
-		"FATTR4_RAWDEV",
-		1,
-		sizeof(fattr4_rawdev), /** @todo BUGAZOMEU : use FSAL attrs instead */
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_RAWDEV",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_rawdev), /** @todo use FSAL attrs instead ??? */
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_SPACE_AVAIL] = {
-		"FATTR4_SPACE_AVAIL",
-		1,
-		sizeof(fattr4_space_avail),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_SPACE_AVAIL",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_space_avail),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_SPACE_FREE] = {
-		"FATTR4_SPACE_FREE",
-		1,
-		sizeof(fattr4_space_used),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_SPACE_FREE",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_space_used),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_SPACE_TOTAL] = {
-		"FATTR4_SPACE_TOTAL",
-		1,
-		sizeof(fattr4_space_total),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_SPACE_TOTAL",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_space_total),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_SPACE_USED] = {
-		"FATTR4_SPACE_USED",
-		1,
-		sizeof(fattr4_space_used),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_SPACE_USED",
+		.supported = 1,
+		.type = FATTR4_TYPE_UINT64,
+		.size_fattr4 = sizeof(fattr4_space_used),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_SYSTEM] = {
-		"FATTR4_SYSTEM",
-		1,
-		sizeof(fattr4_system),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_SYSTEM",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_system),
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_TIME_ACCESS] = {
-		"FATTR4_TIME_ACCESS",
-		1,
-		12, /*sizeof( fattr4_time_access )  not aligned on 32 bits */
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_TIME_ACCESS",
+		.supported = 1,
+		.type = FATTR4_TYPE_NFSTIME4,
+		.size_fattr4 = 12, /* ( fattr4_time_access )  not aligned on 32 bits */
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_TIME_ACCESS_SET] = {
-		"FATTR4_TIME_ACCESS_SET",
-		1,
-		sizeof(fattr4_time_access_set),
-		FATTR4_ATTR_WRITE},
+		.name = "FATTR4_TIME_ACCESS_SET",
+		.supported = 1,
+		.type = FATTR4_TYPE_SETTIME4,
+		.size_fattr4 = sizeof(fattr4_time_access_set),
+		.access = FATTR4_ATTR_WRITE},
 	[FATTR4_TIME_BACKUP] = {
-		"FATTR4_TIME_BACKUP",
-		0,
-		12, /* sizeof( fattr4_time_backup ) not aligned on 32 bits */
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_TIME_BACKUP",
+		.supported = 0,
+		.size_fattr4 = 12, /*( fattr4_time_backup ) not aligned on 32 bits */
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_TIME_CREATE] = {
-		"FATTR4_TIME_CREATE",
-		0,
-		12, /* sizeof( fattr4_time_create ) not aligned on 32 bits */
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_TIME_CREATE",
+		.supported = 0,
+		.size_fattr4 = 12, /*( fattr4_time_create ) not aligned on 32 bits */
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_TIME_DELTA] = {
-		"FATTR4_TIME_DELTA",
-		1,
-		12, /*  sizeof( fattr4_time_delta ) not aligned on 32 bits */
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_TIME_DELTA",
+		.supported = 1,
+		12, /*  .size_fattr4 = sizeof( fattr4_time_delta ) not aligned on 32 bits */
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_TIME_METADATA] = {
-		"FATTR4_TIME_METADATA",
-		1,
-		12, /* sizeof( fattr4_time_metadata ) not aligned on 32 bits */
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_TIME_METADATA",
+		.supported = 1,
+		.type = FATTR4_TYPE_NFSTIME4,
+		.size_fattr4 = 12, /*( fattr4_time_metadata ) not aligned on 32 bits */
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_TIME_MODIFY] = {
-		"FATTR4_TIME_MODIFY",
-		1,
-		12, /* sizeof( fattr4_time_modify ) not aligned on 32 bits */
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_TIME_MODIFY",
+		.supported = 1,
+		.type = FATTR4_TYPE_NFSTIME4,
+		.size_fattr4 = 12, /*( fattr4_time_modify ) not aligned on 32 bits */
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_TIME_MODIFY_SET] = {
-		"FATTR4_TIME_MODIFY_SET",
-		1,
-		sizeof(fattr4_time_modify_set),
-		FATTR4_ATTR_WRITE},
+		.name = "FATTR4_TIME_MODIFY_SET",
+		.supported = 1,
+		.type = FATTR4_TYPE_SETTIME4,
+		.size_fattr4 = sizeof(fattr4_time_modify_set),
+		.access = FATTR4_ATTR_WRITE},
 	[FATTR4_MOUNTED_ON_FILEID] = {
-		"FATTR4_MOUNTED_ON_FILEID",
-		1,
-		sizeof(fattr4_mounted_on_fileid),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_MOUNTED_ON_FILEID",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_mounted_on_fileid),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_DIR_NOTIF_DELAY] = {
-		"FATTR4_DIR_NOTIF_DELAY",
-		0,
-		sizeof(fattr4_dir_notif_delay),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_DIR_NOTIF_DELAY",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_dir_notif_delay),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_DIRENT_NOTIF_DELAY] = {
-		"FATTR4_DIRENT_NOTIF_DELAY",
-		0,
-		sizeof(fattr4_dirent_notif_delay),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_DIRENT_NOTIF_DELAY",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_dirent_notif_delay),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_DACL] = {
-		"FATTR4_DACL",
-		0,
-		sizeof(fattr4_dacl),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_DACL",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_dacl),
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_SACL] = {
-		"FATTR4_SACL",
-		0,
-		sizeof(fattr4_sacl),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_SACL",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_sacl),
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_CHANGE_POLICY] = {
-		"FATTR4_CHANGE_POLICY",
-		0,
-		sizeof(fattr4_change_policy),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_CHANGE_POLICY",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_change_policy),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FS_STATUS] = {
-		"FATTR4_FS_STATUS",
-		0,
-		sizeof(fattr4_fs_status),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FS_STATUS",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_fs_status),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FS_LAYOUT_TYPES] = {
-		"FATTR4_FS_LAYOUT_TYPES",
+		.name = "FATTR4_FS_LAYOUT_TYPES",
 #ifdef _PNFS_MDS
-		1,
+		.supported = 1,
 #else
-		0,
+		.supported = 0,
 #endif /* _PNFS_MDS */
-		sizeof(fattr4_fs_layout_types),
-		FATTR4_ATTR_READ},
+		.size_fattr4 = sizeof(fattr4_fs_layout_types),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_LAYOUT_HINT] = {
-		"FATTR4_LAYOUT_HINT",
-		0,
-		sizeof(fattr4_layout_hint),
-		FATTR4_ATTR_WRITE},
+		.name = "FATTR4_LAYOUT_HINT",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_layout_hint),
+		.access = FATTR4_ATTR_WRITE},
 	[FATTR4_LAYOUT_TYPES] = {
-		"FATTR4_LAYOUT_TYPES",
-		0,
-		sizeof(fattr4_layout_types),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_LAYOUT_TYPES",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_layout_types),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_LAYOUT_BLKSIZE] = {
-		"FATTR4_LAYOUT_BLKSIZE",
+		.name = "FATTR4_LAYOUT_BLKSIZE",
 #ifdef _PNFS_MDS
-		1,
+		.supported = 1,
 #else
-		0,
+		.supported = 0,
 #endif /* _PNFS_MDS */
-		sizeof(fattr4_layout_blksize),
-		FATTR4_ATTR_READ},
+		.size_fattr4 = sizeof(fattr4_layout_blksize),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_LAYOUT_ALIGNMENT] = {
-		"FATTR4_LAYOUT_ALIGNMENT",
-		0,
-		sizeof(fattr4_layout_alignment),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_LAYOUT_ALIGNMENT",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_layout_alignment),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FS_LOCATIONS_INFO] = {
-		"FATTR4_FS_LOCATIONS_INFO",
-		0,
-		sizeof(fattr4_fs_locations_info),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_FS_LOCATIONS_INFO",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_fs_locations_info),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_MDSTHRESHOLD] = {
-		"FATTR4_MDSTHRESHOLD",
-		0,
-		sizeof(fattr4_mdsthreshold),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_MDSTHRESHOLD",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_mdsthreshold),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_RETENTION_GET] = {
-		"FATTR4_RETENTION_GET",
-		0,
-		sizeof(fattr4_retention_get),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_RETENTION_GET",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_retention_get),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_RETENTION_SET] = {
-		"FATTR4_RETENTION_SET",
-		0,
-		sizeof(fattr4_retention_set),
-		FATTR4_ATTR_WRITE},
+		.name = "FATTR4_RETENTION_SET",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_retention_set),
+		.access = FATTR4_ATTR_WRITE},
 	[FATTR4_RETENTEVT_GET] = {
-		"FATTR4_RETENTEVT_GET",
-		0,
-		sizeof(fattr4_retentevt_get),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_RETENTEVT_GET",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_retentevt_get),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_RETENTEVT_SET] = {
-		"FATTR4_RETENTEVT_SET",
-		0,
-		sizeof(fattr4_retentevt_set),
-		FATTR4_ATTR_WRITE},
+		.name = "FATTR4_RETENTEVT_SET",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_retentevt_set),
+		.access = FATTR4_ATTR_WRITE},
 	[FATTR4_RETENTION_HOLD] = {
-		"FATTR4_RETENTION_HOLD",
-		0,
-		sizeof(fattr4_retention_hold),
-		FATTR4_ATTR_READ_WRITE},
+		.name = "FATTR4_RETENTION_HOLD",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_retention_hold),
+		.access = FATTR4_ATTR_READ_WRITE},
 	[FATTR4_MODE_SET_MASKED] = {
-		"FATTR4_MODE_SET_MASKED",
-		0,
-		sizeof(fattr4_mode_set_masked),
-		FATTR4_ATTR_WRITE},
+		.name = "FATTR4_MODE_SET_MASKED",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_mode_set_masked),
+		.access = FATTR4_ATTR_WRITE},
 	[FATTR4_SUPPATTR_EXCLCREAT] = {
-		"FATTR4_SUPPATTR_EXCLCREAT",
-		1,
-		sizeof(fattr4_suppattr_exclcreat),
-		FATTR4_ATTR_READ},
+		.name = "FATTR4_SUPPATTR_EXCLCREAT",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_suppattr_exclcreat),
+		.access = FATTR4_ATTR_READ},
 	[FATTR4_FS_CHARSET_CAP] = {
-		"FATTR4_FS_CHARSET_CAP",
-		0,
-		sizeof(fattr4_fs_charset_cap),
-		FATTR4_ATTR_READ}
+		.name = "FATTR4_FS_CHARSET_CAP",
+		.supported = 0,
+		.size_fattr4 = sizeof(fattr4_fs_charset_cap),
+		.access = FATTR4_ATTR_READ}
 };
 
 
@@ -3553,7 +3657,9 @@ static int nfs4_decode_acl_special_user(utf8string *utf8str, int *who)
   return -1;
 }
 
-static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_int *LastOffset)
+static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
+			   unsigned char *current_pos,
+			   u_int *attr_len)
 {
   fsal_acl_status_t status;
   fsal_acl_data_t acldata;
@@ -3563,14 +3669,20 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   char buffer[MAXNAMLEN];
   utf8string utf8buffer;
   int who;
+  u_int offset;
+  int nfs_status = NFS4_OK;
 
+  if(*attr_len < sizeof(u_int)) {
+	  nfs_status = NFS4ERR_BADXDR;
+	  goto out;
+  }
   /* Decode number of ACEs. */
-  memcpy(&(acldata.naces), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(u_int));
+  memcpy(&(acldata.naces), current_pos, sizeof(u_int));
   acldata.naces = ntohl(acldata.naces);
   LogFullDebug(COMPONENT_NFS_V4,
                "SATTR: Number of ACEs = %u",
                acldata.naces);
-  *LastOffset += sizeof(u_int);
+  offset = sizeof(u_int);
 
   /* Allocate memory for ACEs. */
   acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
@@ -3578,50 +3690,61 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
     {
       LogCrit(COMPONENT_NFS_V4,
               "SATTR: Failed to allocate ACEs");
-      return NFS4ERR_SERVERFAULT;
+      nfs_status = NFS4ERR_SERVERFAULT;
+      goto out;
     }
-  else
-    memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
+  memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
 
   /* Decode ACEs. */
   for(pace = acldata.aces; pace < acldata.aces + acldata.naces; pace++)
     {
-      memcpy(&(pace->type), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_acetype_t));
+      if(*attr_len < (sizeof(fsal_acetype_t) +
+		      sizeof(fsal_aceflag_t) +
+		      sizeof(fsal_aceperm_t) +
+		      sizeof(u_int))) {
+	nfs_status = NFS4ERR_BADXDR;
+	goto baderr;
+      }
+      memcpy(&(pace->type), (char*)(current_pos + offset), sizeof(fsal_acetype_t));
       pace->type = ntohl(pace->type);
       LogFullDebug(COMPONENT_NFS_V4,
                    "SATTR: ACE type = 0x%x",
                    pace->type);
-      *LastOffset += sizeof(fsal_acetype_t);
+      offset += sizeof(fsal_acetype_t);
 
-      memcpy(&(pace->flag), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceflag_t));
+      memcpy(&(pace->flag), (char*)(current_pos + offset), sizeof(fsal_aceflag_t));
       pace->flag = ntohl(pace->flag);
       LogFullDebug(COMPONENT_NFS_V4,
                    "SATTR: ACE flag = 0x%x",
                    pace->flag);
-      *LastOffset += sizeof(fsal_aceflag_t);
+      offset += sizeof(fsal_aceflag_t);
 
-      memcpy(&(pace->perm), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceperm_t));
+      memcpy(&(pace->perm), (char*)(current_pos + offset), sizeof(fsal_aceperm_t));
       pace->perm = ntohl(pace->perm);
       LogFullDebug(COMPONENT_NFS_V4,
                    "SATTR: ACE perm = 0x%x",
                    pace->perm);
-      *LastOffset += sizeof(fsal_aceperm_t);
+      offset += sizeof(fsal_aceperm_t);
 
       /* Find out who type */
 
       /* Convert name to uid or gid */
-      memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(u_int));
+      memcpy(&len, (char *)(current_pos + offset), sizeof(u_int));
       len = ntohl(len);        /* xdr marshalling on fattr4 */
-      *LastOffset += sizeof(u_int);
+      offset += sizeof(u_int);
 
-      memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + *LastOffset), len);
+      if(*attr_len < (offset + len)) {
+	nfs_status = NFS4ERR_BADXDR;
+	goto baderr;
+      }
+      memcpy(buffer, (char *)(current_pos + offset), len);
       buffer[len] = '\0';
 
       /* Do not forget that xdr_opaque are aligned on 32bit long words */
       while((len % 4) != 0)
         len += 1;
 
-      *LastOffset += len;
+      offset += len;
 
       /* Decode users. */
       LogFullDebug(COMPONENT_NFS_V4,
@@ -3667,7 +3790,8 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
           LogFullDebug(COMPONENT_NFS_V4,
                        "SATTR: bad owner");
           nfs4_ace_free(acldata.aces);
-          return NFS4ERR_BADOWNER;
+          nfs_status =  NFS4ERR_BADOWNER;
+	  goto baderr;
         }
     }
 
@@ -3677,7 +3801,8 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
     {
       LogCrit(COMPONENT_NFS_V4,
               "SATTR: Failed to create a new entry for ACL");
-      return NFS4ERR_SERVERFAULT;
+      nfs_status =  NFS4ERR_SERVERFAULT;
+      goto baderr;
     }
   else
      LogFullDebug(COMPONENT_NFS_V4,
@@ -3688,8 +3813,14 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   LogFullDebug(COMPONENT_NFS_V4,
                "SATTR: new acl = %p",
                pacl);
+  goto out;
 
-  return NFS4_OK;
+baderr:
+/* free memory or leak! or does new_entry release it? */
+
+out:
+  *attr_len = offset;
+  return nfs_status;
 }
 #endif                          /* _USE_NFS4_ACL */
 
@@ -3785,6 +3916,11 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap,
   return NFS4_OK;
 }                               /* nfs4_Fattr_To_FSAL_attr */
 
+static inline int sizeof_nfstime4(const char *current)
+{
+	return sizeof(uint64_t) + sizeof(uint32_t);
+}
+
 static int nfstime4_to_fsal_time(gsh_time_t *ts,
                                  const char *attrval)
 {
@@ -3802,6 +3938,17 @@ static int nfstime4_to_fsal_time(gsh_time_t *ts,
   ts->nseconds = (uint32_t) ntohl(nseconds);
 
   return LastOffset; 
+}
+
+static int sizeof_settime4(const char *current)
+{
+	uint32_t how;
+
+	memcpy(&how, current, sizeof(how));
+	if(ntohl(how) == SET_TO_SERVER_TIME4)
+		return sizeof(how);
+	else
+		return sizeof(how) + sizeof_nfstime4(current);
 }
 
 static int settime4_to_fsal_time(gsh_time_t *ts,
@@ -3855,26 +4002,21 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
                         fattr4 *Fattr, nfs_fh4 *hdl4)
 {
   u_int LastOffset = 0;
-  unsigned int i = 0;
-  uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
-  uint32_t attrmasklen = 0;
-  uint32_t attribute_to_set = 0;
-  int len;
+  int attribute_to_set = 0;
+  int attr_len;
+  unsigned char *current_pos;
+  uint32_t uint32_val;
+  uint64_t uint64_val;
   char buffer[MAXNAMLEN];
   utf8string utf8buffer;
 
-  fattr4_type attr_type;
   fattr4_fsid attr_fsid;
-  fattr4_fileid attr_fileid;
   fattr4_rdattr_error rdattr_error;
-  fattr4_size attr_size;
-  fattr4_change attr_change;
-  fattr4_numlinks attr_numlinks;
   fattr4_rawdev attr_rawdev;
-  fattr4_space_used attr_space_used;
 #ifdef _USE_NFS4_ACL
   int rc;
 #endif
+  int nfs_status = NFS4_OK;
 
   if(pFSAL_attr == NULL || Fattr == NULL)
     return NFS4ERR_BADXDR;
@@ -3884,41 +4026,78 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
      (Fattr->attr_vals.attrlist4_len == 0))
     return NFS4_OK;
 
-  /* Convert the attribute bitmap to an attribute list */
-  nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
-
-  LogFullDebug(COMPONENT_NFS_V4,
-               "   nfs4_bitmap4_to_list ====> attrmasklen = %d", attrmasklen);
-
   /* Init */
   FSAL_CLEAR_MASK(pFSAL_attr->mask);
 
-  for(i = 0; i < attrmasklen; i++)
+  for(attribute_to_set = next_attr_from_bitmap(&Fattr->attrmask, -1);
+      attribute_to_set != -1;
+      attribute_to_set = next_attr_from_bitmap(&Fattr->attrmask, attribute_to_set))
     {
-      attribute_to_set = attrmasklist[i];
+      if(attribute_to_set > FATTR4_FS_CHARSET_CAP) {
+	      nfs_status = NFS4ERR_BADXDR; /* undefined attr # is bad xdr */
+	      break;
+      }
 
-      if(attrmasklist[i] > FATTR4_FS_CHARSET_CAP)
-        {
-          /* Erroneous value... skip */
-          continue;
-        }
+      switch(fattr4tab[attribute_to_set].type) {
+      case FATTR4_TYPE_UINT32:
+	      attr_len = sizeof(uint32_t);
+	      break;
+      case FATTR4_TYPE_UINT64:
+	      attr_len = sizeof(uint64_t);
+	      break;
+      case FATTR4_TYPE_ALIGNED_OPAQUE:
+	      attr_len = sizeof_aligned_opaque(current_pos);
+	      break;
+      case FATTR4_TYPE_OPAQUE:
+	      attr_len = sizeof_opaque(current_pos);
+	      break;
+      case FATTR4_TYPE_NFSTIME4:
+	      attr_len = sizeof_nfstime4(current_pos);
+	      break;
+      case FATTR4_TYPE_SETTIME4:
+	      attr_len = sizeof_settime4(current_pos);
+	      break;
+      default:
+	      attr_len = fattr4tab[attribute_to_set].size_fattr4;
+      }
+      if((LastOffset + attr_len) > Fattr->attr_vals.attrlist4_len) {
+	      nfs_status = NFS4ERR_BADXDR;
+	      break;  /* don't overrun */
+      }
+      if( !fattr4tab[attribute_to_set].supported) {
+	      if(nfs_status == NFS4_OK)
+		      nfs_status = NFS4ERR_ATTRNOTSUPP;
+	      LastOffset += attr_len;
+	      continue;
+      }
+      current_pos = Fattr->attr_vals.attrlist4_val + LastOffset;
+      switch(fattr4tab[attribute_to_set].type) {
+      case FATTR4_TYPE_UINT32:
+	      uint32_val = decode_uint32(current_pos);
+	      break;
+      case FATTR4_TYPE_UINT64:
+	      uint64_val = decode_uint64(current_pos);
+	      break;
+      case FATTR4_TYPE_ALIGNED_OPAQUE:
+	      if(decode_aligned_opaque(current_pos, buffer, sizeof(buffer)) < 0)
+		      if(nfs_status == NFS4_OK)
+			      nfs_status = NFS4ERR_BADXDR;
+	      break;
+      default:
+	      break;  /* do the decode later */
+      }
+
       LogFullDebug(COMPONENT_NFS_V4,
-                   "=================> nfs4_Fattr_To_FSAL_attr: i=%u attr=%u", i,
-                   attrmasklist[i]);
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d",
-                   attrmasklist[i], attribute_to_set,
+                   "=================> nfs4_Fattr_To_FSAL_attr: "
+                   "Flag for Operation %d is ON, name = %s, reply_size = %d",
+                   attribute_to_set,
                    fattr4tab[attribute_to_set].name,
-                   fattr4tab[attribute_to_set].size_fattr4);
+                   attr_len);
 
       switch (attribute_to_set)
         {
         case FATTR4_TYPE:
-          memcpy((char *)&attr_type,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_type));
-
-          switch (ntohl(attr_type))
+          switch (uint32_val)
             {
             case NF4REG:
               pFSAL_attr->type = REGULAR_FILE;
@@ -3954,240 +4133,147 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
             }                   /* switch( pattr->type ) */
 
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_TYPE);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           break;
 
         case FATTR4_FILEID:
-          /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem"
-           * I use hpss_GetObjId to extract this information from the Name Server's handle */
-          memcpy(&attr_fileid,
-                 (Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_fileid));
-          pFSAL_attr->fileid = nfs_ntohl64(attr_fileid);
-
+          /* The analog to the inode number.
+	   * RFC3530 says "a number uniquely identifying the file within the filesystem"
+           * I use hpss_GetObjId to extract this information from the Name Server's handle
+	   */
+          pFSAL_attr->fileid = uint64_val;
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_FILEID);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_FSID:
-          memcpy(&attr_fsid,
-                 (Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_fsid));
+          memcpy(&attr_fsid, current_pos, attr_len);
           pFSAL_attr->fsid.major = nfs_ntohl64(attr_fsid.major);
           pFSAL_attr->fsid.minor = nfs_ntohl64(attr_fsid.minor);
 
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_FSID);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
 
         case FATTR4_NUMLINKS:
-          memcpy((char *)&attr_numlinks,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_numlinks));
-          pFSAL_attr->numlinks = ntohl(attr_numlinks);
-
+          pFSAL_attr->numlinks = uint32_val;
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_NUMLINKS);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_SIZE:
-          memcpy((char *)&attr_size,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_size));
-
-          /* Do not forget the XDR marshalling for the fattr4 stuff */
-          pFSAL_attr->filesize = nfs_ntohl64(attr_size);
-
+          pFSAL_attr->filesize = uint64_val;
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_SIZE);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: size seen %zu", (size_t)pFSAL_attr->filesize);
           break;
 
         case FATTR4_MODE:
-          memcpy(&(pFSAL_attr->mode),
-                 (Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_mode));
-
-          /* Do not forget the XDR marshalling for the fattr4 stuff */
-          pFSAL_attr->mode = ntohl(pFSAL_attr->mode);
-
+          pFSAL_attr->mode = uint32_val;
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MODE);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the mode 0%o", pFSAL_attr->mode);
           break;
 
         case FATTR4_OWNER:
-          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(u_int));
-          len = ntohl(len);     /* xdr marshalling on fattr4 */
-          LastOffset += sizeof(u_int);
-
-          memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset), len);
-          buffer[len] = '\0';
-
-          /* Do not forget that xdr_opaque are aligned on 32bit long words */
-          while((len % 4) != 0)
-            len += 1;
-
-          LastOffset += len;
-
           utf8buffer.utf8string_val = buffer;
           utf8buffer.utf8string_len = strlen(buffer);
 
           utf82uid(&utf8buffer, &(pFSAL_attr->owner));
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_OWNER);
-
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner %s len = %d", buffer, len);
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner %"PRIu64, pFSAL_attr->owner);
           break;
 
         case FATTR4_OWNER_GROUP:
-          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(u_int));
-          len = ntohl(len);
-          LastOffset += sizeof(u_int);
-
-          memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset), len);
-          buffer[len] = '\0';
-
-          /* Do not forget that xdr_opaque are aligned on 32bit long words */
-          while((len % 4) != 0)
-            len += 1;
-
-          LastOffset += len;
-
           utf8buffer.utf8string_val = buffer;
           utf8buffer.utf8string_len = strlen(buffer);
 
           utf82gid(&utf8buffer, &(pFSAL_attr->group));
-          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_GROUP);
-
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner_group %s len = %d", buffer, len);
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner_group %"PRIu64, pFSAL_attr->group);
           break;
 
         case FATTR4_CHANGE:
-          memcpy(&attr_change,
-                 (Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_change));
-          pFSAL_attr->chgtime.seconds = (uint32_t) nfs_ntohl64(attr_change);
+          pFSAL_attr->chgtime.seconds = (uint32_t) uint64_val;
           pFSAL_attr->chgtime.nseconds = 0;
 
-          pFSAL_attr->change =  nfs_ntohl64(attr_change);
-
+          pFSAL_attr->change =  uint64_val;
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_CHGTIME);
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_CHANGE);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_RAWDEV:
-          memcpy((char *)&attr_rawdev,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_rawdev));
+          memcpy((char *)&attr_rawdev, current_pos, attr_len);
           pFSAL_attr->rawdev.major = (uint32_t) nfs_ntohl64(attr_rawdev.specdata1);
           pFSAL_attr->rawdev.minor = (uint32_t) nfs_ntohl64(attr_rawdev.specdata2);
 
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_RAWDEV);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_SPACE_USED:
-          memcpy((char *)&attr_space_used,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_space_used));
-          pFSAL_attr->spaceused = (uint32_t) nfs_ntohl64(attr_space_used);
-
+          pFSAL_attr->spaceused = (uint32_t) uint64_val;
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_SPACEUSED);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_TIME_ACCESS:       /* Used only by FSAL_PROXY to reverse convert */
-          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->atime, 
-                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
+          attr_len = nfstime4_to_fsal_time(&pFSAL_attr->atime,  current_pos);
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_ATIME);
           break;
 
         case FATTR4_TIME_METADATA:     /* Used only by FSAL_PROXY to reverse convert */
-          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->ctime,
-                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
+          attr_len = nfstime4_to_fsal_time(&pFSAL_attr->ctime, current_pos);
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_CTIME);
           break;
 
         case FATTR4_TIME_MODIFY:       /* Used only by FSAL_PROXY to reverse convert */
-          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->mtime,
-                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
+          attr_len = nfstime4_to_fsal_time(&pFSAL_attr->mtime, current_pos);
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MTIME);
           break;
 
         case FATTR4_TIME_ACCESS_SET:
-          LastOffset += settime4_to_fsal_time(&pFSAL_attr->atime,
-                                              Fattr->attr_vals.attrlist4_val + LastOffset);
+          attr_len = settime4_to_fsal_time(&pFSAL_attr->atime, current_pos);
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_ATIME);
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-          LastOffset += settime4_to_fsal_time(&pFSAL_attr->mtime,
-                                              Fattr->attr_vals.attrlist4_val + LastOffset);
+          attr_len = settime4_to_fsal_time(&pFSAL_attr->mtime, current_pos);
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_MTIME);
 
           break;
 
         case FATTR4_FILEHANDLE:
-          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(u_int));
-          len = ntohl(len);
-          LastOffset += sizeof(u_int);
           if(hdl4)
             {
-               hdl4->nfs_fh4_len = len;
-               hdl4->nfs_fh4_val = Fattr->attr_vals.attrlist4_val + LastOffset;
+               hdl4->nfs_fh4_len = attr_len - sizeof(uint32_t); /* zero copy */
+               hdl4->nfs_fh4_val = current_pos + sizeof(uint32_t);
             }
-          LastOffset += len;
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "     SATTR: On a demande le filehandle len =%u", len);
           break;
 
+/** @TODO we don't really do anything with rdattr_error.  It is needed for full readdir
+ * error handling.  Check this to be correct when we do...
+ */
         case FATTR4_RDATTR_ERROR:
-          memcpy((char *)&rdattr_error,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_rdattr_error));
-          rdattr_error = ntohl(rdattr_error);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
+          rdattr_error = uint32_val;
+	  if(rdattr_error) {
+		  FSAL_SET_MASK(pFSAL_attr->mask, ATTR_RDATTR_ERROR);
+	  }
           break;
 
 #ifdef _USE_NFS4_ACL
         case FATTR4_ACL:
-          if((rc = nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset)) != NFS4_OK)
+		attr_len = Fattr->attr_vals.attrlist4_len - LastOffset; /* set limit */
+          if((rc = nfs4_decode_acl(pFSAL_attr, current_pos, &attr_len)) != NFS4_OK)
             return rc;
 
           pFSAL_attr->asked_attributes |= ATTR_ACL;
           break;
 #endif                          /* _USE_NFS4_ACL */
 
-        default:
+        default: /** @TODO ??? strange. why this? */
           LogFullDebug(COMPONENT_NFS_V4,
                        "      SATTR: Attribut no supporte %d name=%s",
                        attribute_to_set, fattr4tab[attribute_to_set].name);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          /* return NFS4ERR_ATTRNOTSUPP ; *//* Should not stop processing */
+	  if(nfs_status == NFS4_OK)
+		  nfs_status =  NFS4ERR_ATTRNOTSUPP;
           break;
         }                       /* switch */
+      LastOffset += attr_len;
     }                           /* for */
+  if(LastOffset < Fattr->attr_vals.attrlist4_len) {
+	  nfs_status = NFS4ERR_BADXDR;  /* underrun on attribute */
+  }
 
-  return NFS4_OK;
+  return nfs_status;
 }                               /* Fattr4_To_FSAL_attr */
 
 /**

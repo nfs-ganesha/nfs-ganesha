@@ -922,12 +922,45 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
 #define FATTR4_ATTR_WRITE      0x00010
 #define FATTR4_ATTR_READ_WRITE 0x00011
 
+typedef enum {
+	FATTR4_TYPE_UNKNOWN = 0,
+	FATTR4_TYPE_BITMAP4,
+	FATTR4_TYPE_NFS_FTYPE4,
+	FATTR4_TYPE_UINT32,
+	FATTR4_TYPE_UINT64,
+	FATTR4_TYPE_OPAQUE,
+	FATTR4_TYPE_ALIGNED_OPAQUE,
+	FATTR4_TYPE_BOOL,
+	FATTR4_TYPE_NFS_LEASE4,
+	FATTR4_TYPE_ENUM,
+	FATTR4_TYPE_NFS_FH4,
+	FATTR4_TYPE_NFSACE4,
+	FATTR4_TYPE_CHG_POLICY,
+	FATTR4_TYPE_NFSACL41,
+	FATTR4_TYPE_NFSTIME4,
+	FATTR4_TYPE_LAYOUTTYPE4,
+	FATTR4_TYPE_FS_LOCATIONS,
+	FATTR4_TYPE_FS4_STATUS,
+	FATTR4_TYPE_LAYOUTHINT4,
+	FATTR4_TYPE_MDSTHRESHOLD4,
+	FATTR4_TYPE_UTF8STR_CS,
+	FATTR4_TYPE_MODE4,
+	FATTR4_TYPE_MODE_MASKED4,
+	FATTR4_TYPE_UTF8STR_MIXED,
+	FATTR4_TYPE_SPECDATA4,
+	FATTR4_TYPE_RETENTION_GET4,
+	FATTR4_TYPE_RETENTION_SET4,
+	FATTR4_TYPE_SETTIME4
+} fattr4_attrtype_t;
+
+
 typedef struct fattr4_dent
 {
   char *name;                   /* The name of the operation              */
   unsigned int supported;       /* Is this action supported ?             */
   unsigned int size_fattr4;     /* The size of the dedicated attr subtype */
   unsigned int access;          /* The access type for this attributes    */
+  fattr4_attrtype_t type;       /* type for encode/decode purposes */
 } fattr4_dent_t;
 
 extern const struct fattr4_dent fattr4tab[];
@@ -1234,9 +1267,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(const bitmap4 * b, uint_t * plen, uint32_t * pval);
-
+uint64_t nfs_htonl64(uint64_t arg64);
+uint64_t nfs_ntohl64(uint64_t arg64);
 int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;
-
 
 /* Error conversion routines */
 nfsstat4 nfs4_Errno(cache_inode_status_t error);
@@ -1244,9 +1277,6 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error);
 nfsstat2 nfs2_Errno(cache_inode_status_t error);
 int nfs3_AllocateFH(nfs_fh3 * fh);
 int nfs4_AllocateFH(nfs_fh4 * fh);
-
-uint64_t nfs_htonl64(uint64_t arg64);
-uint64_t nfs_ntohl64(uint64_t arg64);
 
 int idmap_compute_hash_value(char *name, uint32_t * phashval);
 
