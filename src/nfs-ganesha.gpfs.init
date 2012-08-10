@@ -82,6 +82,12 @@ which sm-notify &> /dev/null
 HAVE_SMNOTIFY=`echo $?`
 
 start() {
+	# Start statd, rquotad and Ganesha daemon.
+	# If any of the three daemons are already running, then doesn't restart it.
+	start_statd=1
+	start_rquotad=1
+	start_ganesha=1
+
 	# Check if the user is root
         if [ $UID -ne 0 ]; then
 	        echo "GPFS Ganesha must be started by the root user."
@@ -101,20 +107,14 @@ start() {
 
 	# Make sure the rpc.statd is not already running.
 	if status rpc.statd > /dev/null ; then
-		echo "statd already running. Kill it."
-		RETVAL=1
-		failure
-		echo
-		return $RETVAL
+		echo "statd already running."
+		start_statd=0
 	fi
 
 	# Make sure the rpc.rquotad is not already running.
 	if status rpc.rquotad > /dev/null ; then
-		echo "rquotad already running. Kill it."
-		RETVAL=1
-		failure
-		echo
-		return $RETVAL
+		echo "rquotad already running."
+		start_rquotad=0
 	fi
 
 	# Check if a Ganesha configuration file is available
@@ -130,89 +130,92 @@ start() {
 	result=`pidof "$PATHPROG"`
 	if [ $result ]; then
 	        echo "GPFS Ganesha is already running."
-		RETVAL=1
-		failure
-	        echo
-	        return $RETVAL
+		start_ganesha=0
 	fi
 
-	# start the statd daemon
-	rm -f /var/lock/subsys/rpc.statd
+	# start the statd daemon only if it is not running
+	if [ $start_statd -eq 1 ]; then
+		rm -f /var/lock/subsys/rpc.statd
 
-	# Make sure locks are recovered
-	if [ $HAVE_SMNOTIFY -eq 0 ]; then
-		rm -f /var/run/sm-notify.pid
-	fi
+		# Make sure locks are recovered
+		if [ $HAVE_SMNOTIFY -eq 0 ]; then
+			rm -f /var/run/sm-notify.pid
+		fi
 
-	# Start daemons.
-	# See if the kernel lockd should start up 
-	# listening on a particular port
-	#
-	if [ -n "$LOCKD_TCPPORT" -o -n "$LOCKD_UDPPORT" ]; then 
-		[ -x /sbin/modprobe ] && /sbin/modprobe lockd $LOCKDARG
-		[ -n "$LOCKD_TCPPORT" ] && \
-			/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
-		[ -n "$LOCKD_UDPPORT" ] && \
-			/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
-	fi
+		# Start daemons.
+		# See if the kernel lockd should start up 
+		# listening on a particular port
+		#
+		if [ -n "$LOCKD_TCPPORT" -o -n "$LOCKD_UDPPORT" ]; then 
+			[ -x /sbin/modprobe ] && /sbin/modprobe lockd $LOCKDARG
+			[ -n "$LOCKD_TCPPORT" ] && \
+				/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
+			[ -n "$LOCKD_UDPPORT" ] && \
+				/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
+		fi
 
-	echo -n $"Starting NFS statd: "
-	# Set statd's local hostname if defined
-	[ -n "${STATD_HOSTNAME}" ] && STATDARG="$STATDARG -n ${STATD_HOSTNAME}"
+		echo -n $"Starting NFS statd: "
+		# Set statd's local hostname if defined
+		[ -n "${STATD_HOSTNAME}" ] && STATDARG="$STATDARG -n ${STATD_HOSTNAME}"
 
-	# See if a statd's ports has been defined
-	[ -n "$STATD_PORT" ] && STATDARG="$STATDARG -p $STATD_PORT"
-	[ -n "$STATD_OUTGOING_PORT" ] \
-		&& STATDARG="$STATDARG -o $STATD_OUTGOING_PORT"
+		# See if a statd's ports has been defined
+		[ -n "$STATD_PORT" ] && STATDARG="$STATDARG -p $STATD_PORT"
+		[ -n "$STATD_OUTGOING_PORT" ] \
+			&& STATDARG="$STATDARG -o $STATD_OUTGOING_PORT"
 
-	# See if we have an HA-callout program specified
-	[ -n "$STATD_HA_CALLOUT" ] \
-		&& STATDARG="$STATDARG -H $STATD_HA_CALLOUT"
-	daemon rpc.statd "$STATDARG"
-	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rpc.statd
-	if [ $RETVAL -ne 0 ]; then
-		failure
-		return $RETVAL
-	fi
-
-	# start the rquotad daemon
-	if [ -n "$RQUOTAD" ] ; then
-		echo -n $"Starting rquotad: "
-		[ -n "$RQUOTAD_PORT" ] \
-			&& RPCRQUOTADOPTS="$RPCRQUOTADOPTS -p $RQUOTAD_PORT"
-		daemon rpc.rquotad $RPCRQUOTADOPTS
+		# See if we have an HA-callout program specified
+		[ -n "$STATD_HA_CALLOUT" ] \
+			&& STATDARG="$STATDARG -H $STATD_HA_CALLOUT"
+		daemon rpc.statd "$STATDARG"
 		RETVAL=$?
 		echo
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rpc.statd
 		if [ $RETVAL -ne 0 ]; then
 			failure
 			return $RETVAL
 		fi
 	fi
 
-	# Start the Ganesha daemon
-        echo  -n $"Starting $prog: "
-	daemon numactl -i all $PATHPROG $OPTIONS
-	RETVAL=$?
-	if [ $HAVE_SMNOTIFY -eq 0 ]; then
-		sm-notify -f
+	# start the rquotad daemon only if it is not running
+	if [ $start_rquotad  -eq 1 ]; then
+		if [ -n "$RQUOTAD" ] ; then
+			echo -n $"Starting rquotad: "
+			[ -n "$RQUOTAD_PORT" ] \
+				&& RPCRQUOTADOPTS="$RPCRQUOTADOPTS -p $RQUOTAD_PORT"
+			daemon rpc.rquotad $RPCRQUOTADOPTS
+			RETVAL=$?
+			echo
+			if [ $RETVAL -ne 0 ]; then
+				failure
+				return $RETVAL
+			fi
+		fi
 	fi
 
-        # Sleeping here gives Ganesha an adequate amount of time to
-        # initialize the server and fail if anything goes wrong.
-        # Without this sleep and the server will be in the midst of
-        # initializing. It may fail immediately after this script runs.
-	sleep 2
+	# Start the Ganesha daemon only if it is not running
+	if [ $start_ganesha  -eq 1 ]; then
+		echo  -n $"Starting $prog: "
+		daemon numactl -i all $PATHPROG $OPTIONS
+		RETVAL=$?
+		if [ $HAVE_SMNOTIFY -eq 0 ]; then
+			sm-notify -f
+		fi
 
-	# Check if Ganesha is still running
-	result=`pidof "$PATHPROG"`
-	if [ ! $result ]; then
-	    failure
-	    echo
-	    return $RETVAL
+		# Sleeping here gives Ganesha an adequate amount of time to
+		# initialize the server and fail if anything goes wrong.
+		# Without this sleep and the server will be in the midst of
+		# initializing. It may fail immediately after this script runs.
+		sleep 2
+
+		# Check if Ganesha is still running
+		result=`pidof "$PATHPROG"`
+		if [ ! $result ]; then
+		    failure
+		    echo
+		    return $RETVAL
+		fi
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
 	fi
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/gpfs.ganesha.nfsd
 
         echo
         return $RETVAL
@@ -244,21 +247,24 @@ stop() {
 
 	# Kill the Ganesha process
 	echo -n $"Stopping $prog: "
-	killproc -d 30 $PATHPROG
-	RETVAL=$?
-	[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
+	org_pid=`pidof "$PATHPROG"`
+	if [ $org_pid ]; then
+		# Ganesha is running. Stop it.
+		killproc -d 30 $PATHPROG
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
 
-	# Give Ganesha time to quit
-	result=`pidof "$PATHPROG"`
-	while true; do
-	         if [ $result ]; then
-		         sleep .1
-			 result=`pidof "$PATHPROG"`
-	         else
-		         break
-		 fi
-	done
-
+		# Give Ganesha time to quit
+		result=`pidof "$PATHPROG"`
+		while true; do
+			 if [ $result ] && [ $result -eq $org_pid ]; then
+				 sleep .1
+				 result=`pidof "$PATHPROG"`
+			 else
+				 break
+			 fi
+		done
+        fi 
         echo
         return $RETVAL
 }
