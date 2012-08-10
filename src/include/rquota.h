@@ -152,15 +152,15 @@ extern "C"
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
-  extern bool_t xdr_sq_dqblk(XDR *, sq_dqblk *);
-  extern bool_t xdr_getquota_args(XDR *, getquota_args *);
-  extern bool_t xdr_setquota_args(XDR *, setquota_args *);
-  extern bool_t xdr_ext_getquota_args(XDR *, ext_getquota_args *);
-  extern bool_t xdr_ext_setquota_args(XDR *, ext_setquota_args *);
-  extern bool_t xdr_rquota(XDR *, rquota *);
-  extern bool_t xdr_qr_status(XDR *, qr_status *);
-  extern bool_t xdr_getquota_rslt(XDR *, getquota_rslt *);
-  extern bool_t xdr_setquota_rslt(XDR *, setquota_rslt *);
+  extern bool xdr_sq_dqblk(XDR *, sq_dqblk *);
+  extern bool xdr_getquota_args(XDR *, getquota_args *);
+  extern bool xdr_setquota_args(XDR *, setquota_args *);
+  extern bool xdr_ext_getquota_args(XDR *, ext_getquota_args *);
+  extern bool xdr_ext_setquota_args(XDR *, ext_setquota_args *);
+  extern bool xdr_rquota(XDR *, rquota *);
+  extern bool xdr_qr_status(XDR *, qr_status *);
+  extern bool xdr_getquota_rslt(XDR *, getquota_rslt *);
+  extern bool xdr_setquota_rslt(XDR *, setquota_rslt *);
 
 #else                           /* K&R C */
   extern bool_t xdr_sq_dqblk();

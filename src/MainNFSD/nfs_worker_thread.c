@@ -1651,7 +1651,7 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *nfsreq,
 static void _9p_execute( _9p_request_data_t *req9p, 
                           nfs_worker_data_t *worker_data)
 {
-  if( preq9p->pconn->trans_type == _9P_TCP )
+  if( req9p->pconn->trans_type == _9P_TCP )
     _9p_tcp_process_request( req9p, worker_data ) ;
 #ifdef _USE_9P_RDMA
   else if( preq9p->pconn->trans_type == _9P_RDMA )
@@ -2135,9 +2135,12 @@ void *worker_thread(void *IndexArg)
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");
    
+#ifdef _USE_9P
       if( nfsreq->rtype == _9P_REQUEST)
               _9p_free_reqdata(&nfsreq->r_u._9p);
-      else if ( nfsreq->r_u.nfs )
+      else
+#endif
+      if ( nfsreq->r_u.nfs )
         pool_free(request_data_pool, nfsreq->r_u.nfs);
 
       pool_free(request_pool, nfsreq);
