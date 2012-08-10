@@ -378,9 +378,8 @@ fi
 
 AM_CONDITIONAL([USE_FSAL_SHOOK], test "[$enable_fsal_shook]"  == "yes")
 
-GA_AM_COND_ON_UNLESS([fsal-posix],[do not build POSIX FSAL shared library],[USE_FSAL_POSIX])
-
 # FSALs whicha re disabled by default
+GA_ENABLE_AM_CONDITION([fsal-posix],[build POSIX FSAL],[USE_FSAL_POSIX])
 GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
 GA_ENABLE_AM_CONDITION([fsal-fuse],[build FUSE FSAL],[USE_FSAL_FUSE])
 GA_ENABLE_AM_CONDITION([fsal-xfs],[build XFS FSAL],[USE_FSAL_XFS])
