@@ -209,7 +209,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Close the file in FSAL through the cache inode */
   if(cache_inode_close(data->current_entry,
-                       0,
+                       CACHE_INODE_FLAG_REALLYCLOSE,
                        &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_CLOSE4.status = nfs4_Errno(cache_status);
