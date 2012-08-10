@@ -146,10 +146,10 @@ int compare_nfs4_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
                      "{%s} vs {%s}", str1, str2);
     }
 
-  if(pkey1 == NULL || pkey1 == NULL)
+  if(pkey1 == NULL || pkey2 == NULL)
     return 1;
 
-  if(pkey1->so_type != pkey1->so_type)
+  if(pkey1->so_type != pkey2->so_type)
     return 1;
 
   return compare_nfs4_owner(pkey1, pkey2);
