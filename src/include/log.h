@@ -70,11 +70,8 @@
 #define STR_LEN 256
 
 /*
- * 
- * Constantes qui definissent les niveaux de gravite des affichages de LOG 
- *
+ * Log message severity constants
  */
-
 typedef enum log_levels
 {
   NIV_NULL,
@@ -93,13 +90,17 @@ typedef enum log_levels
 /*
  * Log components used throughout the code.
  *
- * Note: changing the order of these may confuse SNMP users since SNMP OIDs are numeric.
+ * Note: changing the order of these may confuse SNMP users since SNMP OIDs
+ * are numeric.
  */
 typedef enum log_components
 {
-  COMPONENT_ALL = 0,               /* Used for changing logging for all components */
-  COMPONENT_LOG,                   /* Keep this first, some code depends on it being the first component */
-  COMPONENT_LOG_EMERG,             /* Component for logging emergency log messages - avoid infinite recursion */
+  COMPONENT_ALL = 0,               /* Used for changing logging for all
+                                    * components */
+  COMPONENT_LOG,                   /* Keep this first, some code depends on it
+                                    * being the first component */
+  COMPONENT_LOG_EMERG,             /* Component for logging emergency log
+                                    * messages - avoid infinite recursion */
   COMPONENT_MEMALLOC,
   COMPONENT_MEMLEAKS,
   COMPONENT_FSAL,
@@ -160,12 +161,7 @@ extern log_level_t tabLogLevel[NB_LOG_LEVEL];
 
 #define NIV_MAJOR NIV_MAJ
 
-/*
- *
- * La structure de definition des messages d'errors
- *
- */
-
+/* Limits on log messages */
 #define LOG_MAX_STRLEN 2048
 #define LOG_LABEL_LEN 50
 #define LOG_MSG_LEN   255
@@ -177,7 +173,7 @@ typedef struct
   char msg[LOG_MSG_LEN];
 } family_error_t;
 
-/* Le type family d'erreurs */
+/* Error family type */
 typedef struct
 {
   int num_family;
@@ -198,7 +194,7 @@ typedef struct
 
 #define ERR_NULL -1
 
-/* les code d'error */
+/* Error codes */
 #define ERR_SYS 0
 #define SUCCES                    0
 #define ERR_FAILURE               1
@@ -208,7 +204,7 @@ typedef struct
 #define ERR_MALLOC                4
 #define ERR_SIGACTION             5
 #define ERR_PTHREAD_ONCE          6
-#define ERR_FICHIER_LOG           7
+#define ERR_FILE_LOG              7
 #define ERR_GETHOSTBYNAME         8
 #define ERR_MMAP                  9
 #define ERR_SOCKET               10
@@ -378,7 +374,7 @@ typedef struct cleanup_list_element
  */
 char *get_debug_info(int *size);
 
-/* les prototypes des fonctions de la lib */
+/* Function prototypes */
 
 void SetNamePgm(char *nom);
 void SetNameHost(char *nom);
@@ -395,7 +391,7 @@ void InitLogging();        /* not thread safe */
 
 void SetLevelDebug(int level_to_set);    /* not thread safe */
 
-int ReturnLevelAscii(const char *LevelEnAscii);
+int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);
 
 int MakeLogError(char *buffer, int num_family, int num_error, int status,
