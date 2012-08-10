@@ -159,7 +159,7 @@ enum {
   ClientOpNotifyWatch,          // Do not expect calls to this - verify w/apps
   ClientOpChflags,              // Do not expect calls to this - verify w/apps
   ClientOpFileIdCreate,         // Do not expect calls to this - verify w/apps
-  ClientOpGetRealFilename,      // Do not expect calls to this - verify w/apps
+  ClientOpGetRealFilename,      // pt_get_real_filename
   ClientOpConnectpath,          // Do not expect calls to this - verify w/apps
   ClientOpBrlLockWindows,       // Do not expect calls to this - verify w/apps
   ClientOpBrlUnlockWindows,     // Do not expect calls to this - verify w/apps
@@ -644,6 +644,27 @@ struct ClientOpRmdirReqMsg {
 struct ClientOpRmdirReqMtext {
   struct CommonMsgHdr        hdr;      // common msg header
   struct ClientOpRmdirReqMsg data;     // custom message data
+};
+
+// ClientOpGetRealFileName Client Request Message
+struct ClientOpGetRealFileNameReqMsg {
+  char path[PATH_MAX];
+  char name[NAME_MAX];
+};
+
+struct ClientOpGetRealFileNameReqMtext {
+  struct CommonMsgHdr                  hdr;  // common msg header
+  struct ClientOpGetRealFileNameReqMsg data; // custom message data
+};
+
+// ClientOpGetRealFileName Server Response Message
+struct ClientOpGetRealFileNameRspMsg {
+  char foundName[NAME_MAX]; // real name found in fsi
+};
+
+struct ClientOpGetRealFileNameRspMtext {
+  struct CommonMsgHdr                  hdr;  // common msg header
+  struct ClientOpGetRealFileNameRspMsg data; // custom message data
 };
 
 // ClientOpRename Client Request Message

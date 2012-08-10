@@ -51,7 +51,6 @@ void *ptfsal_closeHandle_listener_thread(void *args)
   int i;
   int rc;
   struct msg_t msg;
-  int msg_rc;
   int msg_bytes;
   struct CommonMsgHdr         * p_hdr;
   int close_rc;
@@ -68,8 +67,7 @@ void *ptfsal_closeHandle_listener_thread(void *args)
     msg_bytes = rcv_msg_wait(g_closeHandle_req_msgq,
                              &msg,
                              sizeof(struct CommonMsgHdr),
-                             0,
-                             &msg_rc);
+                             0);
     if (msg_bytes != -1) {
       close_rc = -1;
       FSI_TRACE(FSI_NOTICE, "Finding oldest handles");
@@ -91,8 +89,7 @@ void *ptfsal_closeHandle_listener_thread(void *args)
       msgHdr->transactionRc = close_rc;
       msg_bytes = send_msg(g_closeHandle_rsp_msgq,
                            &msg,
-                           sizeof(struct CommonMsgHdr),
-                           &msg_rc);
+                           sizeof(struct CommonMsgHdr));
     }
   }
 }

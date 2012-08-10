@@ -132,9 +132,6 @@ extern int g_ptfsal_comp_level;     // ptfsal sets to NIV_INFO or NIV_DEBUG
             handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);       \
 }
 
-#define NONIO_MSG_TYPE                                                     \
-  ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid )
-
 #define WAIT_SHMEM_ATTACH()                                                \
 {                                                                          \
   while (g_shm_at == 0) {                                                  \
@@ -405,8 +402,8 @@ struct acl_handles_struct_t {
 // ----------------------------------------------------------------------------
 #define uint32 uint32_t
 
-#define NONIO_MSG_TYPE                                                     \
-  ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid )
+#define NONIO_MSG_TYPE \
+  ((g_multithreaded) ? (unsigned long)pthread_self() : g_client_pid)
 #define MULTITHREADED 1
 #define NON_MULTITHREADED 0
 
@@ -614,17 +611,21 @@ void load_shmem_hdr(struct CommonShmemDataHdr * p_shmem_hdr,
 int rcv_msg_nowait(int     msg_id,
                    void  * p_msg_buf,
                    size_t  msg_size,
-                   long    msg_type,
-                   int   * p_msg_error_code);
+                   long    msg_type);
 int rcv_msg_wait(int     msg_id,
                  void  * p_msg_buf,
                  size_t  msg_size,
-                 long    msg_type,
-                 int   * p_msg_error_code);
+                 long    msg_type);
+int wait_for_response(const int                   msg_id,
+                      void                      * p_msg_buf,
+                      const size_t                msg_size,
+                      const long                  msg_type,
+                      const struct CommonMsgHdr * p_hdr,
+                      const uint64_t              transaction_type,
+                      const int                   min_rsp_msg_bytes);
 int send_msg(int          msg_id,
              const void * p_msg_buf,
-             size_t       msg_size,
-             int        * p_msg_error_code);
+             size_t       msg_size);
 int ccl_chmod(ccl_context_t * handle,
                const char        * path,
                mode_t              mode);
@@ -641,6 +642,11 @@ int ccl_mkdir(ccl_context_t  * handle,
                mode_t              mode);
 int ccl_rmdir(ccl_context_t  * handle,
                const char        * path);
+int ccl_get_real_filename(ccl_context_t * handle,
+                          const char    * path,
+                          const char    * name,
+                          char          * found_name,
+                          const size_t    found_name_max_size);
 uint64_t ccl_disk_free(ccl_context_t * handle,
                        const char        * path,
                        int                 small_query,
