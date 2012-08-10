@@ -186,7 +186,7 @@ static inline int decode_opaque(const char *current,
 	len = ntohl(len);
 	if((len + sizeof(len)) > buflen)
 		return -1;
-	memcpy(buf, current, len);
+	memcpy(buf, current+sizeof(len), len);
 	return sizeof(len) + len;
 }
 
@@ -209,7 +209,7 @@ static inline int decode_aligned_opaque(const char *current,
 	len = ntohl(len);
 	if((len + 4) > buflen)
 		return -1;
-	memcpy(buf, current, len);
+	memcpy(buf, current+sizeof(len), len);
 	buf[len] = '\0';
 	return sizeof(len) + ((len + 3) & ~0x3);
 }
@@ -4038,6 +4038,7 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
 	      break;
       }
 
+      current_pos = Fattr->attr_vals.attrlist4_val + LastOffset;
       switch(fattr4tab[attribute_to_set].type) {
       case FATTR4_TYPE_UINT32:
 	      attr_len = sizeof(uint32_t);
@@ -4070,7 +4071,6 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
 	      LastOffset += attr_len;
 	      continue;
       }
-      current_pos = Fattr->attr_vals.attrlist4_val + LastOffset;
       switch(fattr4tab[attribute_to_set].type) {
       case FATTR4_TYPE_UINT32:
 	      uint32_val = decode_uint32(current_pos);
