@@ -1350,9 +1350,6 @@ static void nfs_rpc_execute(request_data_t *preq,
                 }
               goto freeargs;
             }
-#if 0 /* XXXX lieb: breakage? */
-          worker_data->user_credentials = user_credentials;
-#endif
         }
 
       /* set up the request context
