@@ -49,8 +49,8 @@ fsal_status_t dumb_fsal_up_invalidate_step1(fsal_up_event_data_t * pevdata)
 {
   cache_inode_status_t cache_status;
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_invalidate()");
+  LogFullDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: calling cache_inode_invalidate()");
 
   /* Lock the entry */
   cache_inode_invalidate(&pevdata->event_context.fsal_data,
@@ -64,8 +64,8 @@ fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t * pevdata)
 {
   cache_inode_status_t cache_status;
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_invalidate()");
+  LogFullDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: calling cache_inode_invalidate()");
 
   /* Lock the entry */
   cache_inode_invalidate(&pevdata->event_context.fsal_data,
@@ -84,7 +84,7 @@ fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
   if ((pevdata->type.update.upu_flags & FSAL_UP_NLINK) &&
       (pevdata->type.update.upu_stat_buf.st_nlink == 0) )
     {
-      LogFullDebug(COMPONENT_FSAL_UP,
+      LogDebug(COMPONENT_FSAL_UP,
                "FSAL_UP_DUMB: nlink has become zero; close fds");
       cache_inode_invalidate(&pevdata->event_context.fsal_data,
                              &cache_status,
@@ -140,8 +140,8 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
   cache_entry_t        * pentry = NULL;
   fsal_attrib_list_t     attr;
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_get()");
+  LogFullDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: calling cache_inode_get()");
   pentry = cache_inode_get(&pevdata->event_context.fsal_data,
                            &attr, NULL, NULL,
                            &cache_status);
@@ -179,8 +179,8 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
   cache_entry_t        * pentry = NULL;
   fsal_attrib_list_t     attr;
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_get()");
+  LogFullDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: calling cache_inode_get()");
   pentry = cache_inode_get(&pevdata->event_context.fsal_data,
                            &attr, NULL, NULL, &cache_status);
   if(pentry == NULL)
@@ -192,9 +192,9 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: Lock Available found entry %p",
-           pentry);
+  LogFullDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: Lock Available found entry %p",
+               pentry);
 
   available_blocked_lock_upcall(pentry,
                                 pevdata->type.lock_grant.lock_owner,
