@@ -893,6 +893,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_ID);
               continue;
             }
+          
+          set_options |= FLAG_EXPORT_ID;
 
           /* parse and check export_id */
           errno = 0;
@@ -917,8 +919,6 @@ static int BuildExportEntry(config_item_t        block,
             }
 
           /* set export_id */
-          
-          set_options |= FLAG_EXPORT_ID;
 
           if((label == CONF_LABEL_EXPORT_CLIENT) &&
              (p_entry != NULL) &&
@@ -969,6 +969,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_PATH);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_PATH;
 
           if(*var_value == '\0')
             {
@@ -1042,8 +1044,6 @@ static int BuildExportEntry(config_item_t        block,
                 }
               p_entry = p_found_entry;
             }
-
-          set_options |= FLAG_EXPORT_PATH;
 
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ROOT))
@@ -1213,6 +1213,8 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
+          set_options |= FLAG_EXPORT_PSEUDO;
+
           if(*var_value != '/')
             {
               LogCrit(COMPONENT_CONFIG,
@@ -1222,11 +1224,20 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
+          p_found_entry = nfs_Get_export_by_pseudo(pexportlist,
+                                                   var_value);
+          if(p_found_entry != NULL)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: Duplicate Pseudo: \"%s\"",
+                      label, var_value);
+              err_flag = TRUE;
+              continue;
+            }
+
           strncpy(p_entry->pseudopath, var_value, MAXPATHLEN);
 
-          set_options |= FLAG_EXPORT_PSEUDO;
           p_perms->options |= EXPORT_OPTION_PSEUDO;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_REFERRAL))
         {
@@ -1249,6 +1260,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_ACCESSTYPE);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_ACCESSTYPE;
 
           p_perms->options &= ~EXPORT_OPTION_ACCESS_TYPE;
 
@@ -1284,8 +1297,6 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          set_options |= FLAG_EXPORT_ACCESSTYPE;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_NFS_PROTO))
         {
@@ -1302,6 +1313,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_NFS_PROTO);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_NFS_PROTO;
 
           /* reset nfs proto flags (clean defaults) */
           p_perms->options &= ~EXPORT_OPTION_PROTOCOLS;
@@ -1390,9 +1403,6 @@ static int BuildExportEntry(config_item_t        block,
                       label);
               err_flag = TRUE;
             }
-
-          set_options |= FLAG_EXPORT_NFS_PROTO;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_TRANS_PROTO))
         {
@@ -1485,6 +1495,8 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
+          set_options |= FLAG_EXPORT_ALL_ANON;
+
           /* Check for conflicts */
           if((set_options & FLAG_EXPORT_SQUASH) == FLAG_EXPORT_SQUASH)
             {
@@ -1496,8 +1508,6 @@ static int BuildExportEntry(config_item_t        block,
 
           if (StrToBoolean(var_value))
             p_perms->options |= EXPORT_OPTION_ALL_ANONYMOUS;
-
-          set_options |= FLAG_EXPORT_ALL_ANON;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ANON_ROOT))
         {
@@ -1510,6 +1520,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_ANON_ROOT);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_ANON_ROOT;
 
           /* Check for conflicts */
           if((set_options & FLAG_EXPORT_ANON_USER) == FLAG_EXPORT_ANON_USER)
@@ -1536,9 +1548,6 @@ static int BuildExportEntry(config_item_t        block,
 
           /* set anon_uid */
           p_perms->anonymous_uid = (uid_t) anon_uid;
-
-          set_options |= FLAG_EXPORT_ANON_ROOT;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ANON_USER))
         {
@@ -1551,6 +1560,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_ANON_USER);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_ANON_USER;
 
           /* Check for conflicts */
           if((set_options & FLAG_EXPORT_ANON_ROOT) == FLAG_EXPORT_ANON_ROOT)
@@ -1578,9 +1589,6 @@ static int BuildExportEntry(config_item_t        block,
           /* set anon_uid */
 
           p_perms->anonymous_uid = (uid_t) anon_uid;
-
-          set_options |= FLAG_EXPORT_ANON_USER;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ANON_GROUP))
         {
@@ -1594,6 +1602,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_ANON_GROUP);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_ANON_GROUP;
 
           /* parse and check anon_uid */
           errno = 0;
@@ -1612,9 +1622,6 @@ static int BuildExportEntry(config_item_t        block,
           /* set anon_uid */
 
           p_perms->anonymous_gid = (gid_t) anon_gid;
-
-          set_options |= FLAG_EXPORT_ANON_GROUP;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_SECTYPE))
         {
@@ -1630,6 +1637,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_SECTYPE);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_SECTYPE;
 
           /* reset security flags (clean defaults) */
           p_perms->options &= ~EXPORT_OPTION_AUTH_TYPES;
@@ -1702,9 +1711,6 @@ static int BuildExportEntry(config_item_t        block,
             LogWarn(COMPONENT_CONFIG,
                     "NFS READ %s: Empty SecType",
                     label);
-
-          set_options |= FLAG_EXPORT_SECTYPE;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_READ))
         {
@@ -1726,6 +1732,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_MAX_READ);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_MAX_READ;
 
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
@@ -1752,8 +1760,6 @@ static int BuildExportEntry(config_item_t        block,
 
           p_entry->MaxRead = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_MAXREAD;
-
-          set_options |= FLAG_EXPORT_MAX_READ;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_WRITE))
         {
@@ -1775,6 +1781,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_MAX_WRITE);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_MAX_WRITE;
 
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
@@ -1801,8 +1809,6 @@ static int BuildExportEntry(config_item_t        block,
 
           p_entry->MaxWrite = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_MAXWRITE;
-
-          set_options |= FLAG_EXPORT_MAX_WRITE;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PREF_READ))
         {
@@ -1824,6 +1830,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_PREF_READ);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_PREF_READ;
 
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
@@ -1850,8 +1858,6 @@ static int BuildExportEntry(config_item_t        block,
 
           p_entry->PrefRead = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_PREFREAD;
-
-          set_options |= FLAG_EXPORT_PREF_READ;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
         {
@@ -1873,6 +1879,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_PREF_WRITE);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_PREF_WRITE;
 
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
@@ -1899,8 +1907,6 @@ static int BuildExportEntry(config_item_t        block,
 
           p_entry->PrefWrite = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_PREFWRITE;
-
-          set_options |= FLAG_EXPORT_PREF_WRITE;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PREF_READDIR))
         {
@@ -1922,6 +1928,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_PREF_READDIR);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_PREF_READDIR;
 
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
@@ -1948,8 +1956,6 @@ static int BuildExportEntry(config_item_t        block,
 
           p_entry->PrefReaddir = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_PREFRDDIR;
-
-          set_options |= FLAG_EXPORT_PREF_READDIR;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
         {
@@ -1971,6 +1977,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_PREF_WRITE);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_PREF_WRITE;
 
           errno = 0;
           size = strtoll(var_value, &end_ptr, 10);
@@ -1997,9 +2005,6 @@ static int BuildExportEntry(config_item_t        block,
 
           p_entry->PrefWrite = (fsal_size_t) size;
           p_perms->options |= EXPORT_OPTION_PREFWRITE;
-
-          set_options |= FLAG_EXPORT_PREF_WRITE;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FSID))
         {
@@ -2021,6 +2026,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_FSID);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_FSID;
 
           /* parse and check filesystem id */
           errno = 0;
@@ -2062,9 +2069,6 @@ static int BuildExportEntry(config_item_t        block,
 
           p_entry->filesystem_id.major = (fsal_u64_t) major;
           p_entry->filesystem_id.minor = (fsal_u64_t) minor;
-
-          set_options |= FLAG_EXPORT_FSID;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_NOSUID))
         {
@@ -2074,6 +2078,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_NOSUID);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_NOSUID;
 
           switch (StrToBoolean(var_value))
             {
@@ -2094,9 +2100,6 @@ static int BuildExportEntry(config_item_t        block,
                 continue;
               }
             }
-
-          set_options |= FLAG_EXPORT_NOSUID;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_NOSGID))
         {
@@ -2106,6 +2109,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, CONF_EXPORT_NOSGID);
               continue;
             }
+
+          set_options |= FLAG_EXPORT_NOSGID;
 
           switch (StrToBoolean(var_value))
             {
@@ -2124,8 +2129,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-
-          set_options |= FLAG_EXPORT_NOSGID;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT))
         {
@@ -2135,6 +2138,8 @@ static int BuildExportEntry(config_item_t        block,
               DEFINED_TWICE_WARNING(label, "FLAG_EXPORT_PRIVILEGED_PORT");
               continue;
             }
+
+          set_options |= FLAG_EXPORT_PRIVILEGED_PORT;
 
           switch (StrToBoolean(var_value))
             {
@@ -2153,7 +2158,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-          set_options |= FLAG_EXPORT_PRIVILEGED_PORT;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_USE_DATACACHE))
         {
@@ -2179,6 +2183,8 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
+          set_options |= EXPORT_OPTION_USE_PNFS;
+
           switch (StrToBoolean(var_value))
             {
             case 1:
@@ -2196,7 +2202,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-          set_options |= EXPORT_OPTION_USE_PNFS;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_UQUOTA ) )
         {
@@ -2216,6 +2221,8 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
+          set_options |= EXPORT_OPTION_USE_UQUOTA;
+
           switch (StrToBoolean(var_value))
             {
             case 1:
@@ -2233,8 +2240,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-          set_options |= EXPORT_OPTION_USE_UQUOTA;
-
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC))
         {
@@ -2254,10 +2259,9 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          strncpy(p_entry->FS_specific, var_value, MAXPATHLEN);
-
           set_options |= FLAG_EXPORT_FS_SPECIFIC;
 
+          strncpy(p_entry->FS_specific, var_value, MAXPATHLEN);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_TAG))
         {
@@ -2277,10 +2281,21 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          strncpy(p_entry->FS_tag, var_value, MAXPATHLEN);
-
           set_options |= FLAG_EXPORT_FS_TAG;
 
+          p_found_entry = nfs_Get_export_by_tag(pexportlist,
+                                                var_value);
+          if(p_found_entry != NULL)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: Duplicate Tag: \"%s\"",
+                      label, var_value);
+              err_flag = TRUE;
+              continue;
+            }
+
+
+          strncpy(p_entry->FS_tag, var_value, MAXPATHLEN);
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
@@ -2539,6 +2554,8 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
+          set_options |= FLAG_EXPORT_SQUASH;
+
           /* Check for conflicts */
           if((set_options & FLAG_EXPORT_ALL_ANON) == FLAG_EXPORT_ALL_ANON)
             {
@@ -2579,8 +2596,6 @@ static int BuildExportEntry(config_item_t        block,
               err_flag = TRUE;
               continue;
             }
-
-          set_options |= FLAG_EXPORT_SQUASH;
         }
       else
         {
@@ -2628,20 +2643,22 @@ static int BuildExportEntry(config_item_t        block,
      (p_entry == NULL))
     {
       LogCrit(COMPONENT_CONFIG,
-              "NFS READ %s: Unable to find export, may be missing %s and/or %s",
+              "NFS READ %s: Unable to find export, may be missing %s and/or %s, ignoring entry.",
               label, CONF_EXPORT_ID, CONF_EXPORT_PATH);
 
-      err_flag = TRUE;
+      FreeClientList(p_access_list);
+      return -1;
     }
-  else
+  else if(label == CONF_LABEL_EXPORT)
     {
       /* Here we can make sure certain options are turned on for specific FSALs */
       if(!fsal_specific_checks(p_entry))
         {
           LogCrit(COMPONENT_CONFIG,
-                   "NFS READ %s: Found conflicts in export entry.",
+                   "NFS READ %s: Found conflicts in export entry, ignoring entry.",
                    label);
-          err_flag = TRUE;
+          RemoveExportEntry(p_entry);
+          return -1;
         }
     }
 
@@ -2650,10 +2667,20 @@ static int BuildExportEntry(config_item_t        block,
    */
   if(err_flag)
     {
+      if(p_entry != NULL)
+        LogCrit(COMPONENT_CONFIG,
+                "NFS READ %s: Export %d (%s) had errors, ignoring entry",
+                label, p_entry->id, p_entry->fullpath);
+      else
+        LogCrit(COMPONENT_CONFIG,
+                "NFS READ %s: Export had errors, ignoring entry",
+                label);
+
       if(label == CONF_LABEL_EXPORT)
         RemoveExportEntry(p_entry);
       else
         FreeClientList(p_access_list);
+
       return -1;
     }
 

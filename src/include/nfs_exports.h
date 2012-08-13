@@ -416,6 +416,10 @@ exportlist_t *nfs_Get_export_by_id(struct glist_head * exportlist,
                                    unsigned short exportid);
 exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
                                      char * path);
+exportlist_t *nfs_Get_export_by_pseudo(struct glist_head * exportlist,
+                                       char * path);
+exportlist_t *nfs_Get_export_by_tag(struct glist_head * exportlist,
+                                    char * tag);
 void nfs_check_anon(export_perms_t * pexport_perms,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials);
