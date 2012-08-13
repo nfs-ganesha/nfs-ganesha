@@ -922,7 +922,7 @@ cache_inode_check_trust(cache_entry_t *entry,
                   entry, entry->type);
 
           status = CACHE_INODE_BAD_TYPE;
-          goto out;
+          return status;
         }
 
      pthread_rwlock_rdlock(&entry->attr_lock);
@@ -961,13 +961,13 @@ cache_inode_check_trust(cache_entry_t *entry,
           goto unlock;
      }
 
+     pthread_rwlock_wrlock(&entry->content_lock);
+     pthread_rwlock_unlock(&entry->attr_lock);
      if (entry->type == SYMBOLIC_LINK &&
          ((cache_inode_params.expire_type_link != CACHE_INODE_EXPIRE_NEVER &&
           ((current_time - entry->change_time >=
             cache_inode_params.grace_period_link))) ||
           !(entry->flags & CACHE_INODE_TRUST_CONTENT))) {
-          pthread_rwlock_wrlock(&entry->content_lock);
-          pthread_rwlock_unlock(&entry->attr_lock);
 
           assert(entry->object.symlink);
 
@@ -982,12 +982,8 @@ cache_inode_check_trust(cache_entry_t *entry,
                }
                status = cache_inode_error_convert(fsal_status);
           }
-          pthread_rwlock_unlock(&entry->content_lock);
-          goto out;
      } else if ((entry->type == DIRECTORY) &&
                 (oldmtime < entry->attributes.mtime.seconds)) {
-          pthread_rwlock_wrlock(&entry->content_lock);
-          pthread_rwlock_unlock(&entry->attr_lock);
 
           atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_TRUST_CONTENT |
                                      CACHE_INODE_DIR_POPULATED);
@@ -1000,14 +996,12 @@ cache_inode_check_trust(cache_entry_t *entry,
                        cache_inode_err_str(status));
           }
 
-          pthread_rwlock_unlock(&entry->content_lock);
-          goto out;
      }
+     pthread_rwlock_unlock(&entry->content_lock);
+     return status;
 
 unlock:
 
      pthread_rwlock_unlock(&entry->attr_lock);
-
-out:
      return status;
 }

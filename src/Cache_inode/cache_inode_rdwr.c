@@ -129,6 +129,8 @@ cache_inode_rdwr(cache_entry_t *entry,
 
      if (stable == CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER) {
           /* Write to memory */
+          pthread_rwlock_wrlock(&entry->attr_lock);
+          attributes_locked = TRUE;
           pthread_rwlock_wrlock(&entry->content_lock);
           content_locked = TRUE;
 
@@ -147,8 +149,6 @@ cache_inode_rdwr(cache_entry_t *entry,
                memcpy(entry->object.file.unstable_data.buffer,
                       buffer, io_size);
 
-               pthread_rwlock_wrlock(&entry->attr_lock);
-               attributes_locked = TRUE;
                cache_inode_set_time_current(&entry->attributes.mtime);
                *bytes_moved = io_size;
           } else {
@@ -159,8 +159,6 @@ cache_inode_rdwr(cache_entry_t *entry,
                     memcpy(entry->object.file.unstable_data.buffer +
                            offset, buffer, io_size);
 
-                    pthread_rwlock_wrlock(&entry->attr_lock);
-                    attributes_locked = TRUE;
                     cache_inode_set_time_current(&entry->attributes.mtime);
                     *bytes_moved = io_size;
                } else {

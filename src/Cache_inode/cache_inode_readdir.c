@@ -646,19 +646,18 @@ cache_inode_readdir(cache_entry_t *directory,
           goto unlock_attrs;
      }
 
+     pthread_rwlock_rdlock(&directory->content_lock);
+     pthread_rwlock_unlock(&directory->attr_lock);
      if (!((directory->flags & CACHE_INODE_TRUST_CONTENT) &&
            (directory->flags & CACHE_INODE_DIR_POPULATED))) {
+          pthread_rwlock_unlock(&directory->content_lock);
           pthread_rwlock_wrlock(&directory->content_lock);
-          pthread_rwlock_unlock(&directory->attr_lock);
           if (cache_inode_readdir_populate(directory,
                                            context,
                                            status)
               != CACHE_INODE_SUCCESS) {
                goto unlock_dir;
           }
-     } else {
-          pthread_rwlock_rdlock(&directory->content_lock);
-          pthread_rwlock_unlock(&directory->attr_lock);
      }
 
      /* deal with initial cookie value:
