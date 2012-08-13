@@ -44,11 +44,23 @@ struct vfs_fsal_obj_handle {
 			int link_size;
 		} symlink;
 		struct {
-			struct file_handle *sock_dir;
-			char *sock_name;
-		} sock;
+			struct file_handle *dir;
+			char *name;
+		} unopenable;
 	} u;
 };
+
+static inline bool_t
+vfs_unopenable_type(object_file_type_t type)
+{
+        if ((type == SOCKET_FILE) ||
+            (type == CHARACTER_FILE) ||
+            (type == BLOCK_FILE)) {
+                return TRUE;
+        } else {
+                return FALSE;
+        }
+}
 
 
 	/* I/O management */

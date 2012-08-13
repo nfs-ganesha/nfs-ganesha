@@ -59,7 +59,7 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
                                                 struct stat *stat,
                                                 const char *link_content,
                                                 struct file_handle *dir_fh,
-                                                const char *sock_name,
+                                                const char *unopenable_name,
                                                 struct fsal_export *exp_hdl)
 {
 	struct vfs_fsal_obj_handle *hdl;
@@ -90,20 +90,20 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 		}
 		memcpy(hdl->u.symlink.link_content, link_content, len);
 		hdl->u.symlink.link_size = len;
-	} else if(hdl->obj_handle.type == SOCKET_FILE
+	} else if(vfs_unopenable_type(hdl->obj_handle.type)
 		  && dir_fh != NULL
-		  && sock_name != NULL) {
-		hdl->u.sock.sock_dir = malloc(sizeof(struct file_handle)
-				       + dir_fh->handle_bytes);
-		if(hdl->u.sock.sock_dir == NULL)
+		  && unopenable_name != NULL) {
+		hdl->u.unopenable.dir = malloc(sizeof(struct file_handle)
+                                               + dir_fh->handle_bytes);
+		if(hdl->u.unopenable.dir == NULL)
 			goto spcerr;
-		memcpy(hdl->u.sock.sock_dir,
+		memcpy(hdl->u.unopenable.dir,
 		       dir_fh,
 		       sizeof(struct file_handle) + dir_fh->handle_bytes);
-		hdl->u.sock.sock_name = malloc(strlen(sock_name) + 1);
-		if(hdl->u.sock.sock_name == NULL)
+		hdl->u.unopenable.name = malloc(strlen(unopenable_name) + 1);
+		if(hdl->u.unopenable.name == NULL)
 			goto spcerr;
-		strcpy(hdl->u.sock.sock_name, sock_name);
+		strcpy(hdl->u.unopenable.name, unopenable_name);
 	}
 	hdl->obj_handle.export = exp_hdl;
 	hdl->obj_handle.attributes.mask
@@ -126,11 +126,11 @@ spcerr:
 	if(hdl->obj_handle.type == SYMBOLIC_LINK) {
 		if(hdl->u.symlink.link_content != NULL)
 			free(hdl->u.symlink.link_content);
-	} else if(hdl->obj_handle.type == SOCKET_FILE) {
-		if(hdl->u.sock.sock_name != NULL)
-			free(hdl->u.sock.sock_name);
-		if(hdl->u.sock.sock_dir != NULL)
-			free(hdl->u.sock.sock_dir);
+        } else if(vfs_unopenable_type(hdl->obj_handle.type)) {
+		if(hdl->u.unopenable.name != NULL)
+			free(hdl->u.unopenable.name);
+		if(hdl->u.unopenable.dir != NULL)
+			free(hdl->u.unopenable.dir);
 	}
 	free(hdl);  /* elvis has left the building */
 	return NULL;
@@ -155,7 +155,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	struct stat stat;
 	char *link_content = NULL;
 	struct file_handle *dir_hdl = NULL;
-	const char *sock_name = NULL;
+	const char *unopenable_name = NULL;
 	ssize_t retlink;
 	char link_buff[1024];
 	struct file_handle *fh
@@ -200,9 +200,11 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		}
 		link_buff[retlink] = '\0';
 		link_content = &link_buff[0];
-	} else if(S_ISSOCK(stat.st_mode)) {
+	} else if(S_ISSOCK(stat.st_mode) ||
+                  S_ISCHR(stat.st_mode) ||
+                  S_ISBLK(stat.st_mode)) {
 		dir_hdl = parent_hdl->handle;
-		sock_name = path;
+		unopenable_name = path;
 	}
 	close(dirfd);
 
@@ -210,7 +212,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	hdl = alloc_handle(fh, &stat,
 			   link_content,
 			   dir_hdl,
-			   sock_name,
+			   unopenable_name,
 			   parent->export);
 	if(hdl == NULL) {
 		retval = ENOMEM;
@@ -458,7 +460,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	gid_t group;
 	dev_t unix_dev = 0;
 	struct file_handle *dir_fh = NULL;
-	const char *sock_name = NULL;
+	const char *unopenable_name = NULL;
 	struct file_handle *fh
 		= alloca(sizeof(struct file_handle) + MAX_HANDLE_SZ);
 
@@ -480,39 +482,39 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 	switch (nodetype) {
-	case BLOCK_FILE:
-		if( !dev) {
-			fsal_error = ERR_FSAL_FAULT;
-			goto errout;
-		}
-		create_mode = S_IFBLK;
-		unix_dev = makedev(dev->major, dev->minor);
-		break;
-	case CHARACTER_FILE:
-		if( !dev) {
- 			fsal_error = ERR_FSAL_FAULT;
-			goto errout;
-
-
-		}
-		create_mode = S_IFCHR;
-		unix_dev = makedev(dev->major, dev->minor);
-		break;
-	case FIFO_FILE:
-		create_mode = S_IFIFO;
-		break;
-	case SOCKET_FILE:
-		create_mode = S_IFSOCK;
-		dir_fh = myself->handle;
-                sock_name = name;
-		break;
-	default:
-		LogMajor(COMPONENT_FSAL,
-			 "Invalid node type in FSAL_mknode: %d",
-			 nodetype);
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
+        case BLOCK_FILE:
+                if( !dev) {
+                        fsal_error = ERR_FSAL_FAULT;
+                        goto errout;
+                }
+                create_mode = S_IFBLK;
+                unix_dev = makedev(dev->major, dev->minor);
+                break;
+        case CHARACTER_FILE:
+                if( !dev) {
+                        fsal_error = ERR_FSAL_FAULT;
+                        goto errout;
+                }
+                create_mode = S_IFCHR;
+                unix_dev = makedev(dev->major, dev->minor);
+                break;
+        case FIFO_FILE:
+                create_mode = S_IFIFO;
+                break;
+        case SOCKET_FILE:
+                create_mode = S_IFSOCK;
+                break;
+        default:
+                LogMajor(COMPONENT_FSAL,
+                         "Invalid node type in FSAL_mknode: %d",
+                         nodetype);
+                fsal_error = ERR_FSAL_INVAL;
+                goto errout;
+        }
+        if (vfs_unopenable_type(nodetype)) {
+                dir_fh = myself->handle;
+                unopenable_name = name;
+        }
 	dir_fd = open_by_handle_at(mount_fd, myself->handle, O_PATH|O_NOACCESS);
 	if(dir_fd < 0) {
 		retval = errno;
@@ -542,7 +544,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, dir_fh, sock_name, dir_hdl->export);
+	hdl = alloc_handle(fh, &stat, NULL, dir_fh, unopenable_name, dir_hdl->export);
 	if(hdl == NULL) {
 		retval = ENOMEM;
 		goto nodeerr;
@@ -953,15 +955,15 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl)
 			goto open_file;  /* no file open at the moment */
 		}
 		fstat(myself->u.file.fd, &stat);
-	} else if(obj_hdl->type == SOCKET_FILE) {
+        } else if(vfs_unopenable_type(obj_hdl->type)) {
 		fd = open_by_handle_at(mntfd,
-				       myself->u.sock.sock_dir,
+				       myself->u.unopenable.dir,
 				       (O_PATH|O_NOACCESS));
 		if(fd < 0) {
 			goto errout;
 		}
 		retval = fstatat(fd,
-				 myself->u.sock.sock_name,
+				 myself->u.unopenable.name,
 				 &stat,
 				 AT_SYMLINK_NOFOLLOW);
 		if(retval < 0) {
@@ -1047,9 +1049,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		}
 		fd = myself->u.file.fd;
 		fstat(fd, &stat);
-	} else if(obj_hdl->type == SOCKET_FILE) {
+	} else if(vfs_unopenable_type(obj_hdl->type)) {
 		fd = open_by_handle_at(mntfd,
-				       myself->u.sock.sock_dir,
+				       myself->u.unopenable.dir,
 				       (O_PATH|O_NOACCESS));
 		if(fd < 0) {
 			retval = errno;
@@ -1060,14 +1062,15 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			goto out;
 		}
 		retval = fstatat(fd,
-				 myself->u.sock.sock_name,
+				 myself->u.unopenable.name,
 				 &stat,
 				 AT_SYMLINK_NOFOLLOW);
 	} else {
-		if(obj_hdl->type == SYMBOLIC_LINK)
+		if(obj_hdl->type == SYMBOLIC_LINK) {
 			open_flags |= O_PATH;
-		else if(obj_hdl->type == FIFO_FILE)
+		} else if(obj_hdl->type == FIFO_FILE) {
 			open_flags |= O_NONBLOCK;
+                }
 	open_file:
 		fd = open_by_handle_at(mntfd, myself->handle, open_flags);
 		if(fd < 0) {
@@ -1086,9 +1089,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		 * the entry it points to. So we must ignore it.
 		 */
 		if(!S_ISLNK(stat.st_mode)) {
-			if(obj_hdl->type == SOCKET_FILE)
+			if(vfs_unopenable_type(obj_hdl->type))
 				retval = fchmodat(fd,
-						  myself->u.sock.sock_name,
+						  myself->u.unopenable.name,
 						  fsal2unix_mode(attrs->mode), 0);
 			else
 				retval = fchmod(fd, fsal2unix_mode(attrs->mode));
@@ -1107,9 +1110,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 		gid_t group = FSAL_TEST_MASK(attrs->mask, ATTR_GROUP)
                         ? (int)attrs->group : -1;
 
-		if(obj_hdl->type == SOCKET_FILE)
+		if(vfs_unopenable_type(obj_hdl->type))
 			retval = fchownat(fd,
-					  myself->u.sock.sock_name,
+					  myself->u.unopenable.name,
 					  user,
 					  group,
 					  AT_SYMLINK_NOFOLLOW);
@@ -1136,9 +1139,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME) ?
 			 (time_t) attrs->mtime.seconds : stat.st_mtime);
 		timebuf[1].tv_usec = 0;
-		if(obj_hdl->type == SOCKET_FILE)
+		if(vfs_unopenable_type(obj_hdl->type))
 			retval = futimesat(fd,
-					   myself->u.sock.sock_name,
+					   myself->u.unopenable.name,
 					   timebuf);
 		else
 			retval = futimes(fd, timebuf);
@@ -1392,11 +1395,11 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	if(obj_hdl->type == SYMBOLIC_LINK) {
 		if(myself->u.symlink.link_content != NULL)
 			free(myself->u.symlink.link_content);
-	} else if(obj_hdl->type == SOCKET_FILE) {
-		if(myself->u.sock.sock_name != NULL)
-			free(myself->u.sock.sock_name);
-		if(myself->u.sock.sock_dir != NULL)
-			free(myself->u.sock.sock_dir);
+	} else if(vfs_unopenable_type(obj_hdl->type)) {
+		if(myself->u.unopenable.name != NULL)
+			free(myself->u.unopenable.name);
+		if(myself->u.unopenable.dir != NULL)
+			free(myself->u.unopenable.dir);
 	}
 	free(myself);
 	return fsalstat(fsal_error, 0);
@@ -1454,7 +1457,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	char *link_content = NULL;
 	ssize_t retlink;
 	struct file_handle *dir_fh = NULL;
-	char *sock_name = NULL;
+	char *unopenable_name = NULL;
 	struct file_handle *fh
 		= alloca(sizeof(struct file_handle) + MAX_HANDLE_SZ);
 
@@ -1512,7 +1515,11 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 			goto linkerr;
 		}
 		link_content[retlink] = '\0';
-	} else if(S_ISSOCK(stat.st_mode)) { /* AF_UNIX sockets require craziness */
+	} else if(S_ISSOCK(stat.st_mode) ||
+                  S_ISCHR(stat.st_mode) ||
+                  S_ISBLK(stat.st_mode)) {
+                /* AF_UNIX sockets, character special, and block
+                   special files  require craziness */
 		dir_fh = malloc(sizeof(struct file_handle) + MAX_HANDLE_SZ);
 		memset(dir_fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
 		dir_fh->handle_bytes = MAX_HANDLE_SZ;
@@ -1524,12 +1531,12 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 		if(retval < 0) {
 			goto fileerr;
 		}
-		sock_name = basepart;
+		unopenable_name = basepart;
 	}
 	close(dir_fd);
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, link_content, dir_fh, sock_name, exp_hdl);
+	hdl = alloc_handle(fh, &stat, link_content, dir_fh, unopenable_name, exp_hdl);
 	if(link_content != NULL)
 		free(link_content);
 	if(dir_fh != NULL)
@@ -1561,7 +1568,8 @@ errout:
  * returns a ref counted handle to be later used in cache_inode etc.
  * NOTE! you must release this thing when done with it!
  * BEWARE! Thanks to some holes in the *AT syscalls implementation,
- * we cannot get an fd on an AF_UNIX socket.  Sorry, it just doesn't...
+ * we cannot get an fd on an AF_UNIX socket, nor reliably on block or
+ * character special devices.  Sorry, it just doesn't...
  * we could if we had the handle of the dir it is in, but this method
  * is for getting handles off the wire for cache entries that have LRU'd.
  * Ideas and/or clever hacks are welcome...
