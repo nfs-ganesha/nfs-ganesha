@@ -923,44 +923,31 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
 #define FATTR4_ATTR_READ_WRITE 0x00011
 
 typedef enum {
-	FATTR4_TYPE_UNKNOWN = 0,
-	FATTR4_TYPE_BITMAP4,
-	FATTR4_TYPE_NFS_FTYPE4,
-	FATTR4_TYPE_UINT32,
-	FATTR4_TYPE_UINT64,
-	FATTR4_TYPE_OPAQUE,
-	FATTR4_TYPE_ALIGNED_OPAQUE,
-	FATTR4_TYPE_BOOL,
-	FATTR4_TYPE_NFS_LEASE4,
-	FATTR4_TYPE_ENUM,
-	FATTR4_TYPE_NFS_FH4,
-	FATTR4_TYPE_NFSACE4,
-	FATTR4_TYPE_CHG_POLICY,
-	FATTR4_TYPE_NFSACL41,
-	FATTR4_TYPE_NFSTIME4,
-	FATTR4_TYPE_LAYOUTTYPE4,
-	FATTR4_TYPE_FS_LOCATIONS,
-	FATTR4_TYPE_FS4_STATUS,
-	FATTR4_TYPE_LAYOUTHINT4,
-	FATTR4_TYPE_MDSTHRESHOLD4,
-	FATTR4_TYPE_UTF8STR_CS,
-	FATTR4_TYPE_MODE4,
-	FATTR4_TYPE_MODE_MASKED4,
-	FATTR4_TYPE_UTF8STR_MIXED,
-	FATTR4_TYPE_SPECDATA4,
-	FATTR4_TYPE_RETENTION_GET4,
-	FATTR4_TYPE_RETENTION_SET4,
-	FATTR4_TYPE_SETTIME4
-} fattr4_attrtype_t;
+	FATTR_XDR_NOOP,
+	FATTR_XDR_SUCCESS,
+	FATTR_XDR_FAILED
+} fattr_xdr_result;
 
+struct xdr_attrs_args {
+	struct attrlist *attrs;
+	nfs_fh4 *hdl4;
+	uint32_t rdattr_error;
+	int nfs_status;
+	compound_data_t *data;
+	int statfscalled;
+	fsal_dynamicfsinfo_t *dynamicinfo;
+};
 
-typedef struct fattr4_dent
-{
-  char *name;                   /* The name of the operation              */
-  unsigned int supported;       /* Is this action supported ?             */
-  unsigned int size_fattr4;     /* The size of the dedicated attr subtype */
-  unsigned int access;          /* The access type for this attributes    */
-  fattr4_attrtype_t type;       /* type for encode/decode purposes */
+typedef struct fattr4_dent {
+	char *name;                   /* The name of the operation              */
+	unsigned int supported;       /* Is this action supported ?             */
+	unsigned int size_fattr4;     /* The size of the dedicated attr subtype */
+	unsigned int access;          /* The access type for this attributes    */
+	attrmask_t attrmask;          /* attr bit for decoding to attrs */
+	fattr_xdr_result (*encode)(XDR *xdr, struct xdr_attrs_args *args);
+	fattr_xdr_result (*decode)(XDR *xdr, struct xdr_attrs_args *args);
+	fattr_xdr_result (*compare)(XDR *xdr1, XDR *xdr2);
+	
 } fattr4_dent_t;
 
 extern const struct fattr4_dent fattr4tab[];
@@ -1250,6 +1237,7 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 int Fattr4_To_FSAL_attr(struct attrlist* pFSAL_attr,    /* Out: File attributes  */
                         fattr4 * pFattr,   /* In: File attributes   */
                         nfs_fh4 *fh);
+                           
 int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr,    /* Out: File attributes  */
                             fattr4 * pFattr);   /* In: File attributes   */
 
@@ -1258,8 +1246,7 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, attrmask_t *attrmask);
 int nfs4_Fattr_Fill(fattr4 *Fattr, uint_t attrcnt, uint32_t *attrlist,
                     int valsiz, char *attrvals);
 int nfs4_supported_attrs_to_fattr(char *outbuf);
-int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
-                           const struct attrlist *pattr,
+int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            fattr4 *Fattr,
                            compound_data_t *data,
                            nfs_fh4 *objFH,
