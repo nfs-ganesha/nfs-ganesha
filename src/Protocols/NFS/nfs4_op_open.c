@@ -29,8 +29,6 @@
  * @brief   NFS4_OP_OPEN
  *
  * Function implementing the NFS4_OP_OPEN operation and support code.
- *
- * @todo ACE: Add support for EXCLUSIVE4 and EXCLUSIVE4_1
  */
 
 #ifdef HAVE_CONFIG_H
@@ -499,17 +497,25 @@ open4_create(OPEN4args           * arg,
         bool_t               sattr_provided = FALSE;
         /* Return from Cache Inode calls */
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+        /* True if a verifier has been specified and we are
+           performing exclusive creation semantics. */
+        bool_t               verf_provided = FALSE;
+        /* Client provided verifier, split into two piees */
+        uint32_t             verf_hi = 0, verf_lo = 0;
+        /* Attributes of existing file */
+        struct attrlist      exist_attr;
 
         *entry = NULL;
 
 #ifdef _USE_QUOTA
         /* if quota support is active, then we should check is
            the FSAL allows inode creation or not */
-	fsal_status
-		= data->pexport->export_hdl->ops->check_quota(data->pexport->export_hdl,
-							      data->pexport->fullpath,
-							      FSAL_QUOTA_INODES,
-							      data->req_ctx);
+        fsal_status
+                = data->pexport->export_hdl->ops->check_quota(
+                        data->pexport->export_hdl,
+                        data->pexport->fullpath,
+                        FSAL_QUOTA_INODES,
+                        data->req_ctx);
         if (FSAL_IS_ERROR(fsal_status)) {
                 return NFS4ERR_DQUOT;
         }
@@ -542,8 +548,75 @@ open4_create(OPEN4args           * arg,
                         }
                         sattr_provided = TRUE;
                 }
+        } else if (arg->openhow.openflag4_u.how.mode == EXCLUSIVE4_1) {
+                /**
+                 * @note EXCLUSIVE4_1 gets its own attribute check,
+                 * because they're stored in a different spot.
+                 *
+                 * @todo ACE: This can be refactored later.
+                 */
+                if (!nfs4_Fattr_Supported(
+                            &arg->openhow.openflag4_u
+                            .how.createhow4_u.ch_createboth
+                            .cva_attrs)) {
+                        return NFS4ERR_ATTRNOTSUPP;
+                }
+                if (!nfs4_Fattr_Check_Access(&arg->openhow.openflag4_u.how
+                                             .createhow4_u.ch_createboth
+                                             .cva_attrs,
+                                             FATTR4_ATTR_WRITE)) {
+                        return NFS4ERR_INVAL;
+                }
+                if (arg->openhow.openflag4_u.how.createhow4_u
+                    .ch_createboth.cva_attrs.attrmask.bitmap4_len != 0) {
+                        /* Convert fattr4 so nfs4_sattr */
+                        res->status
+                                = nfs4_Fattr_To_FSAL_attr(&sattr,
+                                                          &(arg->openhow
+                                                            .openflag4_u.how
+                                                            .createhow4_u
+                                                            .ch_createboth
+                                                            .cva_attrs));
+                        if (res->status != NFS4_OK) {
+                                return res->status;
+                        }
+                        sattr_provided = TRUE;
+                }
+                if ((FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) ||
+                    (FSAL_TEST_MASK(sattr.mask, ATTR_MTIME))) {
+                        res->status = NFS4ERR_INVAL;
+                        return res->status;
+                }
         }
 
+        if ((arg->openhow.openflag4_u.how.mode == EXCLUSIVE4_1) ||
+            (arg->openhow.openflag4_u.how.mode == EXCLUSIVE4)) {
+                char *verf
+                        = (char*) ((arg->openhow.openflag4_u.how.mode
+                                    == EXCLUSIVE4_1) ?
+                                   &(arg->openhow.openflag4_u.how.createhow4_u
+                                     .ch_createboth.cva_verf) :
+                                   &(arg->openhow.openflag4_u.how.createhow4_u
+                                     .createverf));
+                verf_provided = TRUE;
+                /* If we knew all our FSALs could store a 64 bit
+                   atime, we could just use that and there would be
+                   no need to split the verifier up. */
+                memcpy(&verf_hi, verf, sizeof(uint32_t));
+                memcpy(&verf_lo, verf + sizeof(uint32_t),
+                       sizeof(uint32_t));
+
+                if (!sattr_provided) {
+                        memset(&sattr, 0, sizeof(struct attrlist));
+                        sattr_provided = TRUE;
+                }
+                sattr.atime.seconds = verf_hi;
+                sattr.atime.nseconds = 0;
+                FSAL_SET_MASK(sattr.mask, ATTR_ATIME);
+                sattr.mtime.seconds = verf_lo;
+                sattr.mtime.nseconds = 0;
+                FSAL_SET_MASK(sattr.mask, ATTR_MTIME);
+        }
 
         entry_newfile = cache_inode_create(parent,
                                            filename,
@@ -554,7 +627,7 @@ open4_create(OPEN4args           * arg,
                                               create step. */
                                            0600,
                                            NULL,
-                                           NULL,
+                                           &exist_attr,
                                            data->req_ctx,
                                            &cache_status);
 
@@ -564,11 +637,22 @@ open4_create(OPEN4args           * arg,
                 return nfs4_Errno(cache_status);
         }
 
-        if ((cache_status == CACHE_INODE_ENTRY_EXISTS) &&
-            (arg->openhow.openflag4_u.how.mode == GUARDED4)) {
-                cache_inode_put(entry_newfile);
-                entry_newfile = NULL;
-                return nfs4_Errno(cache_status);
+        if (cache_status == CACHE_INODE_ENTRY_EXISTS) {
+                if (arg->openhow.openflag4_u.how.mode == GUARDED4) {
+                        cache_inode_put(entry_newfile);
+                        entry_newfile = NULL;
+                        return nfs4_Errno(cache_status);
+                } else if (verf_provided &&
+                           ((!FSAL_TEST_MASK(exist_attr.mask,
+                                             ATTR_ATIME)) ||
+                            (!FSAL_TEST_MASK(exist_attr.mask,
+                                             ATTR_MTIME)) ||
+                            (exist_attr.atime.seconds != verf_hi) ||
+                            (exist_attr.mtime.seconds != verf_lo))) {
+                        cache_inode_put(entry_newfile);
+                        entry_newfile = NULL;
+                        return nfs4_Errno(cache_status);
+                }
         }
 
         /* If the object exists already size is the only attribute we
