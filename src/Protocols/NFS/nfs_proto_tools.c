@@ -2303,6 +2303,38 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           op_attr_success = 1;
           break;
 
+        case FATTR4_SUPPATTR_EXCLCREAT:
+          {
+            /**
+             * @todo ACE: This is kind of a nasty hack, revisit after
+             * nfs4_supported_attrs_to_fattr is rewritten to get rid
+             * of bitmap2list.
+             */
+
+            uint32_t *count = (uint32_t *)(attrvalsBuffer + LastOffset);
+            LastOffset += nfs4_supported_attrs_to_fattr(attrvalsBuffer + LastOffset);
+            if (*count >= ((FATTR4_TIME_ACCESS_SET / 32) + 1))
+              {
+                uint32_t *index = (count + *count -
+                                   (FATTR4_TIME_ACCESS_SET / 32));
+                uint32_t val = ntohl(*index) &
+                  ~(FATTR4_TIME_ACCESS_SET % 32);
+                *index = htonl(val);
+              }
+            if (*count >= ((FATTR4_TIME_MODIFY_SET / 32) + 1))
+              {
+                uint32_t *index = (count + *count -
+                                   (FATTR4_TIME_MODIFY_SET / 32));
+                uint32_t val = ntohl(*index) &
+                  ~(FATTR4_TIME_MODIFY_SET % 32);
+                *index = htonl(val);
+              }
+
+            /* This kind of operation is always a success */
+            op_attr_success = 1;
+          }
+          break;
+
         default:
           LogFullDebug(COMPONENT_NFS_V4,
                        " unsupported value for attributes bitmap = %u", attribute_to_set);
