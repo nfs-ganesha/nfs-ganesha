@@ -450,8 +450,6 @@ int nfs4_Check_Stateid(stateid4        * pstate,
 
           V(pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid->cid_mutex);
 
-          dec_client_id_ref(pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid);
-
           return NFS4ERR_EXPIRED;
         }
 
