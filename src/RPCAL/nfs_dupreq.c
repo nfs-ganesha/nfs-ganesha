@@ -282,8 +282,10 @@ drc_tcp_hash(drc_t *drc, nfs_request_data_t *nfs_req, dupreq_entry_t *v)
             MurmurHash3_x64_128(hbuf, size, 911, v->hin.tcp.checksum);
             MurmurHash3_x64_128(&v->hin, sizeof(v->hin), 911, v->hk);
             LogFullDebug(COMPONENT_DUPREQ,
-                         "hash={%"PRIx64",%"PRIx64"} req=%p",
-                         v->hk[0], v->hk[1], nfs_req);
+                         "hash={%"PRIx64",%"PRIx64"} xid=%u req=%p",
+                         v->hk[0], v->hk[1],
+                         v->hin.tcp.rq_xid,
+                         nfs_req);
         } else
             MurmurHash3_x64_128(&v->hin, sizeof(v->hin), 911, v->hk);
     } else
@@ -1084,7 +1086,8 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     dk->timestamp = time(NULL);
 
     LogFullDebug(COMPONENT_DUPREQ,
-                 "alloc new dupreq entry dk=%p, state=%s", dk,
+                 "alloc new dupreq entry dk=%p, dk xid=%u state=%s",
+                 dk, dk->hin.tcp.rq_xid,
                  dupreq_state_table[dk->state]);
 
     {
@@ -1129,9 +1132,11 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     }
 
     LogFullDebug(COMPONENT_DUPREQ,
-                 "starting dv=%p on DRC=%p state=%s, status=%s, refcnt=%d",
-                 dv, drc, dupreq_state_table[dv->state],
-                 dupreq_status_table[status], dv->refcnt);
+                 "starting dv=%p xid=%u on DRC=%p state=%s, status=%s, "
+                 "refcnt=%d",
+                 dv, dk->hin.tcp.rq_xid, drc, dupreq_state_table[dv->state],
+                 dupreq_status_table[status],
+                 dv->refcnt);
 
 release_dk:
     if (release_dk)
@@ -1201,8 +1206,12 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
     pthread_spin_lock(&drc->sp);
 
     LogFullDebug(COMPONENT_DUPREQ,
-                 "completing dv=%p on DRC=%p state=%s, refcnt=%d", dv, drc,
-                 dupreq_state_table[dv->state], dv->refcnt);
+                 "completing dv=%p xid=%u on DRC=%p state=%s, status=%s, "
+                 "refcnt=%d",
+                 dv, dv->hin.tcp.rq_xid, drc,
+                 dupreq_state_table[dv->state],
+                 dupreq_status_table[status],
+                 dv->refcnt);
 
     /* ok, do the new retwnd calculation here.  then, put drc only if
      * we retire an entry */
@@ -1219,6 +1228,15 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
             t = rbtx_partition_of_scalar(&drc->xt, ov->hk[0]);
             rbtree_x_cached_remove_wt(&drc->xt, t, &ov->rbt_k, ov->hk[0]);
             --(drc->size);
+
+            LogFullDebug(COMPONENT_DUPREQ,
+                         "retiring dv=%p xid=%u on DRC=%p state=%s, "
+                         "status=%s, refcnt=%d",
+                         ov, ov->hin.tcp.rq_xid, ov->hin.drc,
+                         dupreq_state_table[dv->state],
+                         dupreq_status_table[status],
+                         ov->refcnt);
+
             /* deep free ov */
             nfs_dupreq_free_dupreq(ov);
             drc_dec_retwnd(drc);
@@ -1276,8 +1294,12 @@ nfs_dupreq_delete(struct svc_req *req)
     pthread_spin_unlock(&dv->sp);
 
     LogFullDebug(COMPONENT_DUPREQ,
-                 "deleting dv=%p on DRC=%p state=%s, refcnt=%d", dv, drc,
-                 dupreq_state_table[dv->state], dv->refcnt);
+                 "deleting dv=%p xid=%u on DRC=%p state=%s, status=%s, "
+                 "refcnt=%d",
+                 dv, dv->hin.tcp.rq_xid, drc,
+                 dupreq_state_table[dv->state],
+                 dupreq_status_table[status],
+                 dv->refcnt);
 
     /* XXX dv holds a ref on drc */
     t = rbtx_partition_of_scalar(&drc->xt, dv->hk[0]);
@@ -1333,8 +1355,10 @@ void nfs_dupreq_rele(struct svc_req *req)
     pthread_spin_lock(&dv->sp);
 
     LogFullDebug(COMPONENT_DUPREQ,
-                 "releasing dv=%p on DRC=%p state=%s, refcnt=%d", dv,
-                 dv->hin.drc, dupreq_state_table[dv->state],
+                 "releasing dv=%p xid=%u on DRC=%p state=%s, "
+                 "refcnt=%d",
+                 dv, dv->hin.tcp.rq_xid, dv->hin.drc,
+                 dupreq_state_table[dv->state],
                  dv->refcnt);
 
     (dv->refcnt)--;
