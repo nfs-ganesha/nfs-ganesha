@@ -477,6 +477,7 @@ int nfs4_Compound(nfs_arg_t *parg,
       /* Save the result in the cache. */
       *data.pcached_res = pres->res_compound4_extended;
     }
+#endif
 
   /* If we have reserved a lease, update it and release it */
   if(data.preserved_clientid != NULL)
@@ -488,7 +489,6 @@ int nfs4_Compound(nfs_arg_t *parg,
 
       V(data.preserved_clientid->cid_mutex);
     }
-#endif
 
   if(status != NFS4_OK)
     LogDebug(COMPONENT_NFS_V4,
