@@ -776,7 +776,7 @@ lru_run(struct fridgethr_context *ctx)
 	  if (nfs_param.cache_param.use_fd_cache &&
 	      !lru_state.caching_fds) {
 	       lru_state.caching_fds = true;
-	       LogInfo(COMPONENT_CACHE_INODE_LRU,
+	       LogEvent(COMPONENT_CACHE_INODE_LRU,
 		       "Re-enabling FD cache.");
 	  }
      } else {

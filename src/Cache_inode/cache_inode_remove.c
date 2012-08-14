@@ -124,7 +124,6 @@ cache_inode_remove(cache_entry_t *entry,
 
      fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx,
                                                   name);
-
      status_ref_entry = cache_inode_refresh_attrs_locked(entry, req_ctx);
 
      if(FSAL_IS_ERROR(fsal_status)) {

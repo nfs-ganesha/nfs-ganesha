@@ -204,6 +204,8 @@ cache_inode_open(cache_entry_t *entry,
               (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
                status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
+		    LogEvent(COMPONENT_CACHE_INODE,
+			"FSAL returned STALE on close.");
                     cache_inode_kill_entry(entry);
                }
 
@@ -229,6 +231,8 @@ cache_inode_open(cache_entry_t *entry,
                         "cache_inode_open: returning %d(%s) from FSAL_open",
                         status, cache_inode_err_str(status));
                if (fsal_status.major == ERR_FSAL_STALE) {
+		    LogEvent(COMPONENT_CACHE_INODE,
+			"FSAL returned STALE on open.");
                     cache_inode_kill_entry(entry);
                }
                goto unlock;
@@ -325,6 +329,8 @@ cache_inode_close(cache_entry_t *entry,
               (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
                status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
+		    LogEvent(COMPONENT_CACHE_INODE,
+			"FSAL returned STALE on close.");
                     cache_inode_kill_entry(entry);
                }
                LogCrit(COMPONENT_CACHE_INODE,

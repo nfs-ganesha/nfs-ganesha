@@ -179,7 +179,11 @@ cache_inode_create(cache_entry_t *parent,
 
      /* Check for the result */
      if (FSAL_IS_ERROR(fsal_status)) {
-          if (fsal_status.major == ERR_FSAL_EXIST) {
+          if (fsal_status.major == ERR_FSAL_STALE) {
+               LogEvent(COMPONENT_CACHE_INODE,
+                        "FSAL returned STALE on create type %d", type);
+               cache_inode_kill_entry(parent);
+          } else if (fsal_status.major == ERR_FSAL_EXIST) {
                /* Already exists. Check if type if correct */
                status = cache_inode_lookup(parent,
                                            name,

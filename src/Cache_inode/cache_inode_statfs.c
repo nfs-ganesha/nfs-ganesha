@@ -74,6 +74,11 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
   if(FSAL_IS_ERROR(fsal_status))
     {
       status =  cache_inode_error_convert(fsal_status);
+      if (fsal_status.major == ERR_FSAL_STALE) {
+          LogEvent(COMPONENT_CACHE_INODE,
+             "FSAL returned STALE from fsinfo");
+          cache_inode_kill_entry(pentry);
+      }
     }
   LogFullDebug(COMPONENT_CACHE_INODE,
                "cache_inode_statfs: dynamicinfo: {total_bytes = %"PRIu64", "
