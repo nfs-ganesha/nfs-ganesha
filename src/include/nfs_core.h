@@ -69,8 +69,10 @@
 #include "err_inject.h"
 #endif
 
+#ifdef _USE_GPFS
 /* HACK for ease of testing, remove this - jw */
 #define SONAS
+#endif
 
 /* Maximum thread count */
 #define NB_MAX_WORKER_THREAD 4096
