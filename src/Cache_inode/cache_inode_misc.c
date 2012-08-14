@@ -978,6 +978,8 @@ cache_inode_check_trust(cache_entry_t *entry,
 
           if (FSAL_IS_ERROR(fsal_status)) {
                if (fsal_status.major == ERR_FSAL_STALE) {
+                    LogEvent(COMPONENT_CACHE_INODE,
+                       "FSAL returned STALE from readlink.");
                     cache_inode_kill_entry(entry);
                }
                status = cache_inode_error_convert(fsal_status);

@@ -319,7 +319,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
     {
       if(*status == CACHE_INODE_FSAL_ESTALE)
         {
-          LogDebug(COMPONENT_CACHE_INODE,
+          LogEvent(COMPONENT_CACHE_INODE,
                    "Rename : stale destnation");
 
           src_dest_unlock(dir_src, dir_dest);
@@ -363,6 +363,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                       &attrs);
           if (fsal_status.major == ERR_FSAL_STALE)
             {
+              LogEvent(COMPONENT_CACHE_INODE,
+                 "FSAL returned STALE on rename, source");
               cache_inode_kill_entry(dir_src);
             }
           attrs.asked_attributes = cache_inode_params.attrmask;
@@ -371,6 +373,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                       &attrs);
           if (fsal_status.major == ERR_FSAL_STALE)
             {
+              LogEvent(COMPONENT_CACHE_INODE,
+                 "FSAL returned STALE on rename, destination");
               cache_inode_kill_entry(dir_dest);
             }
         }

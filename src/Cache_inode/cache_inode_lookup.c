@@ -198,6 +198,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                       &object_attributes);
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
+               LogEvent(COMPONENT_CACHE_INODE,
+                  "FSAL returned STALE from a lookup.");
                cache_inode_kill_entry(parent);
           }
           *status = cache_inode_error_convert(fsal_status);

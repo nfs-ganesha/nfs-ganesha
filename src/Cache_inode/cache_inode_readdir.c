@@ -428,6 +428,8 @@ cache_inode_readdir_populate(cache_entry_t *directory,
     {
       *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
+           LogEvent(COMPONENT_CACHE_INODE,
+                "FSAL returned STALE from opendir");
            cache_inode_kill_entry(directory);
       }
       return *status;
@@ -487,6 +489,8 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                 {
                      *status = cache_inode_error_convert(fsal_status);
                      if (fsal_status.major == ERR_FSAL_STALE) {
+                          LogEvent(COMPONENT_CACHE_INODE,
+                                "FSAL returned STALE from readlink");
                           cache_inode_kill_entry(directory);
                      }
                      goto bail;

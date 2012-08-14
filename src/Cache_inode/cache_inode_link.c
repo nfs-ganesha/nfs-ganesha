@@ -163,6 +163,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                                            context,
                                            &attrs);
                if (fsal_status.major == ERR_FSAL_STALE) {
+                    LogEvent(COMPONENT_CACHE_INODE,
+                      "FSAL returned STALE from getattrs for entry.");
                     cache_inode_kill_entry(entry);
                }
                attrs.asked_attributes = cache_inode_params.attrmask;
@@ -170,6 +172,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                                            context,
                                            &attrs);
                if (fsal_status.major == ERR_FSAL_STALE) {
+                    LogEvent(COMPONENT_CACHE_INODE,
+                      "FSAL returned STALE from getattrs for dest_dir.");
                     cache_inode_kill_entry(dest_dir);
                }
           }

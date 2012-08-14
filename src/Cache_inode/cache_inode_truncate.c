@@ -103,6 +103,8 @@ cache_inode_truncate_impl(cache_entry_t *entry,
     {
       *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
+        LogEvent(COMPONENT_CACHE_INODE,
+           "FSAL returned STALE from truncate");
         cache_inode_kill_entry(entry);
       }
       return *status;

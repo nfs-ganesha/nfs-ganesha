@@ -87,6 +87,8 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t *entry,
     {
       *status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
+           LogEvent(COMPONENT_CACHE_INODE,
+              "FSAL returned STALE from fsinfo");
            cache_inode_kill_entry(entry);
       }
       return *status;

@@ -135,6 +135,8 @@ cache_inode_access_sw(cache_entry_t *entry,
           if(FSAL_IS_ERROR(fsal_status)) {
                *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
+                    LogEvent(COMPONENT_CACHE_INODE,
+                       "STALE returned by FSAL, calling kill_entry");
                     cache_inode_kill_entry(entry);
                }
           } else {

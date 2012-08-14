@@ -730,7 +730,7 @@ lru_thread(void *arg __attribute__((unused)))
                if (cache_inode_gc_policy.use_fd_cache &&
                    !lru_state.caching_fds) {
                     lru_state.caching_fds = TRUE;
-                    LogInfo(COMPONENT_CACHE_INODE_LRU,
+                    LogEvent(COMPONENT_CACHE_INODE_LRU,
                             "Re-enabling FD cache.");
                }
           } else {

@@ -140,6 +140,8 @@ cache_inode_rdwr(cache_entry_t *entry,
                if ((entry->object.file.unstable_data.buffer =
                     gsh_malloc(CACHE_INODE_UNSTABLE_BUFFERSIZE)) == NULL) {
                     *status = CACHE_INODE_MALLOC_ERROR;
+                    LogEvent(COMPONENT_CACHE_INODE,
+                             "cache_inode_rdwr: malloc failed");
                     goto out;
                }
 
@@ -253,6 +255,8 @@ cache_inode_rdwr(cache_entry_t *entry,
                *status = cache_inode_error_convert(fsal_status);
 
                if (fsal_status.major == ERR_FSAL_STALE) {
+                    LogEvent(COMPONENT_CACHE_INODE,
+                             "FSAL returned STALE, entry killed");
                     cache_inode_kill_entry(entry);
                     goto out;
                }
