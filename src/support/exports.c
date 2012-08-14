@@ -3436,7 +3436,8 @@ sockaddr_t * check_convert_ipv6_to_ipv4(sockaddr_t * ipv6, sockaddr_t *ipv4)
       return ipv6;
     }
 #else
-  return ipv4;
+  /* ipv6 is indeed ipv4 in this case */
+  return ipv6;
 #endif
 }
 
