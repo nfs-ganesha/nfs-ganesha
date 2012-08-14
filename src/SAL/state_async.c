@@ -187,8 +187,8 @@ state_status_t state_async_schedule(state_async_queue_t *arg)
 
   if(rc == -1)
     {
-      LogFullDebug(COMPONENT_STATE,
-                   "Unable to signal State Async Thread");
+      LogCrit(COMPONENT_STATE,
+              "Unable to signal State Async Thread");
       glist_del(&arg->state_async_glist);
     }
 

@@ -184,9 +184,11 @@ void dec_client_id_ref(nfs_client_id_t *pclientid)
   else
     {
       /* Clientid records should not be freed unless marked expired. */
-      LogDebug(COMPONENT_CLIENTID,
-               "Should not be here, try to remove last ref {%s}",
-               str);
+      display_client_id_rec(pclientid, str);
+
+      LogCrit(COMPONENT_CLIENTID,
+              "Should not be here, try to remove last ref {%s}",
+              str);
 
       assert(pclientid->cid_confirmed == EXPIRED_CLIENT_ID);
     }
@@ -302,24 +304,21 @@ nfs_client_id_t * create_client_id(clientid4              clientid,
 
   if(pclientid == NULL)
     {
-      LogDebug(COMPONENT_CLIENTID,
-               "Unable to allocate memory for clientid %"PRIx64,
-               clientid);
+      LogCrit(COMPONENT_CLIENTID,
+              "Unable to allocate memory for clientid %"PRIx64,
+              clientid);
       return NULL;
     }
 
   if(pthread_mutex_init(&pclientid->cid_mutex, NULL) == -1)
     {
-      if(isDebug(COMPONENT_CLIENTID))
-        {
-          char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
+      char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
 
-          display_clientid_name(pclientid, str_client);
+      display_clientid_name(pclientid, str_client);
 
-          LogDebug(COMPONENT_CLIENTID,
-                   "Could not init mutex for clientid %"PRIx64"->%s",
-                   clientid, str_client);
-        }
+      LogCrit(COMPONENT_CLIENTID,
+               "Could not init mutex for clientid %"PRIx64"->%s",
+               clientid, str_client);
 
       /* Directly free the clientid record since we failed to initialize it */
       pool_free(client_id_pool, pclientid);
@@ -461,10 +460,10 @@ int remove_unconfirmed_client_id(nfs_client_id_t * pclientid)
 
   if(rc != HASHTABLE_SUCCESS)
     {
-      LogDebug(COMPONENT_CLIENTID,
-               "Could not remove unconfirmed clientid %"PRIx64" error=%s",
-               pclientid->cid_clientid,
-               hash_table_err_to_str(rc));
+      LogCrit(COMPONENT_CLIENTID,
+              "Could not remove unconfirmed clientid %"PRIx64" error=%s",
+              pclientid->cid_clientid,
+              hash_table_err_to_str(rc));
       return rc;
     }
 
@@ -520,9 +519,9 @@ int nfs_client_id_confirm(nfs_client_id_t * pclientid,
 
           display_client_id_rec(pclientid, str);
 
-          LogDebug(COMPONENT_CLIENTID,
-                   "Unexpected problem %s, could not remove {%s}",
-                   hash_table_err_to_str(rc), str);
+          LogCrit(COMPONENT_CLIENTID,
+                  "Unexpected problem %s, could not remove {%s}",
+                  hash_table_err_to_str(rc), str);
         }
 
       return CLIENT_ID_INVALID_ARGUMENT;
@@ -543,9 +542,9 @@ int nfs_client_id_confirm(nfs_client_id_t * pclientid,
 
           display_client_id_rec(pclientid, str);
 
-          LogDebug(COMPONENT_CLIENTID,
-                   "Unexpected problem %s, could not insert {%s}",
-                   hash_table_err_to_str(rc), str);
+          LogCrit(COMPONENT_CLIENTID,
+                  "Unexpected problem %s, could not insert {%s}",
+                  hash_table_err_to_str(rc), str);
         }
 
       /* Set this up so this client id record will be freed. */
@@ -635,10 +634,10 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
 
   if(rc != HASHTABLE_SUCCESS)
     {
-      LogDebug(COMPONENT_CLIENTID,
-               "Could not remove expired clientid %"PRIx64" error=%s",
-               pclientid->cid_clientid,
-               hash_table_err_to_str(rc));
+      LogCrit(COMPONENT_CLIENTID,
+              "Could not remove expired clientid %"PRIx64" error=%s",
+              pclientid->cid_clientid,
+              hash_table_err_to_str(rc));
       assert(rc == HASHTABLE_SUCCESS);
     }
 
@@ -668,7 +667,7 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
           if(FSAL_IS_ERROR(fsal_status))
             {
               /* log error here , and continue? */
-              LogDebug(COMPONENT_CLIENTID,
+              LogCrit(COMPONENT_CLIENTID,
                       "FSAL_GetClientConext failed");
               continue;
             }
@@ -991,9 +990,9 @@ void inc_client_record_ref(nfs_client_record_t *precord)
 void free_client_record(nfs_client_record_t * precord)
 {
   if(pthread_mutex_destroy(&precord->cr_mutex) != 0)
-    LogDebug(COMPONENT_CLIENTID,
-             "pthread_mutex_destroy returned errno %d(%s)",
-             errno, strerror(errno));
+    LogCrit(COMPONENT_CLIENTID,
+            "pthread_mutex_destroy returned errno %d(%s)",
+            errno, strerror(errno));
 
   pool_free(client_record_pool, precord);
 }
@@ -1219,6 +1218,7 @@ nfs_client_record_t *get_client_record(char * value, int len)
   hash_buffer_t         buffval;
   struct hash_latch     latch;
   hash_error_t          rc;
+  char                  str[HASHTABLE_DISPLAY_STRLEN];
 
   precord = pool_alloc(client_record_pool, NULL);
 
@@ -1233,8 +1233,6 @@ nfs_client_record_t *get_client_record(char * value, int len)
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
       display_client_record(precord, str);
 
       LogFullDebug(COMPONENT_CLIENTID,
@@ -1263,8 +1261,6 @@ nfs_client_record_t *get_client_record(char * value, int len)
 
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
           display_client_record(precord, str);
           LogFullDebug(COMPONENT_CLIENTID,
                        "Found {%s}",
@@ -1283,13 +1279,11 @@ nfs_client_record_t *get_client_record(char * value, int len)
 
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
           display_client_record(precord, str);
 
-          LogDebug(COMPONENT_CLIENTID,
-                   "Error %s, failed to find {%s}",
-                   hash_table_err_to_str(rc), str);
+          LogCrit(COMPONENT_CLIENTID,
+                  "Error %s, failed to find {%s}",
+                  hash_table_err_to_str(rc), str);
         }
 
       pool_free(client_record_pool, precord);
@@ -1314,8 +1308,6 @@ nfs_client_record_t *get_client_record(char * value, int len)
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
       display_client_record(precord, str);
 
       LogFullDebug(COMPONENT_CLIENTID,
@@ -1334,8 +1326,6 @@ nfs_client_record_t *get_client_record(char * value, int len)
     {
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
-
           display_client_record(precord, str);
           LogFullDebug(COMPONENT_CLIENTID,
                        "Set Client Record {%s}",
@@ -1345,16 +1335,11 @@ nfs_client_record_t *get_client_record(char * value, int len)
       return precord;
     }
 
-  if(isFullDebug(COMPONENT_CLIENTID))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+  display_client_record(precord, str);
 
-      display_client_record(precord, str);
-
-      LogDebug(COMPONENT_CLIENTID,
-               "Error %s Failed to add {%s}",
-               hash_table_err_to_str(rc), str);
-    }
+  LogCrit(COMPONENT_CLIENTID,
+          "Error %s Failed to add {%s}",
+          hash_table_err_to_str(rc), str);
 
   free_client_record(precord);
 

@@ -543,9 +543,9 @@ void dec_nsm_client_ref(state_nsm_client_t *pclient)
 
       display_nsm_client(pclient, str);
 
-      LogDebug(COMPONENT_STATE,
-               "Error %s, could not find {%s}",
-               hash_table_err_to_str(rc), str);
+      LogCrit(COMPONENT_STATE,
+              "Error %s, could not find {%s}",
+              hash_table_err_to_str(rc), str);
 
       return;
     }
@@ -898,9 +898,9 @@ void dec_nlm_client_ref(state_nlm_client_t *pclient)
 
       display_nlm_client(pclient, str);
 
-      LogDebug(COMPONENT_STATE,
-               "Error %s, could not find {%s}",
-               hash_table_err_to_str(rc), str);
+      LogCrit(COMPONENT_STATE,
+              "Error %s, could not find {%s}",
+              hash_table_err_to_str(rc), str);
 
       return;
     }

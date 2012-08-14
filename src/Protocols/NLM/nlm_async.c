@@ -59,16 +59,16 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host,
       if(!copy_netobj(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4.cookie,
                       &pres->res_nlm4.cookie))
         {
-          LogFullDebug(COMPONENT_NLM,
-                       "Unable to copy async response file handle");
+          LogCrit(COMPONENT_NLM,
+                  "Unable to copy async response file handle");
           gsh_free(arg);
           return NFS_REQ_DROP;
         }
    }
  else
    {
-      LogFullDebug(COMPONENT_NLM,
-                   "Unable to allocate async response");
+      LogCrit(COMPONENT_NLM,
+              "Unable to allocate async response");
       return NFS_REQ_DROP;
    }
 
@@ -101,8 +101,8 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
       if(!copy_netobj(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie,
                       &pres->res_nlm4test.cookie))
         {
-          LogFullDebug(COMPONENT_NLM,
-                       "Unable to copy async response file handle");
+          LogCrit(COMPONENT_NLM,
+                  "Unable to copy async response file handle");
           gsh_free(arg);
           return NFS_REQ_DROP;
         }
@@ -111,8 +111,8 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
           if(!copy_netobj(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
                           &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh))
             {
-              LogFullDebug(COMPONENT_NLM,
-                           "Unable to copy async response oh");
+              LogCrit(COMPONENT_NLM,
+                      "Unable to copy async response oh");
               netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
               gsh_free(arg);
               return NFS_REQ_DROP;
@@ -121,8 +121,8 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
    }
  else
    {
-      LogFullDebug(COMPONENT_NLM,
-                   "Unable to allocate async response");
+      LogCrit(COMPONENT_NLM,
+              "Unable to allocate async response");
       return NFS_REQ_DROP;
    }
 
@@ -208,9 +208,9 @@ int nlm_send_async(int                  proc,
           break;
         }
 
-      LogDebug(COMPONENT_NLM,
-               "NLM async Client procedure call %d failed with return code %d %s",
-               proc, retval, clnt_sperror(host->slc_callback_clnt, ""));
+      LogCrit(COMPONENT_NLM,
+              "NLM async Client procedure call %d failed with return code %d %s",
+              proc, retval, clnt_sperror(host->slc_callback_clnt, ""));
 
       Clnt_destroy(host->slc_callback_clnt);
       host->slc_callback_clnt = NULL;
