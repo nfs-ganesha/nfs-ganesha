@@ -387,7 +387,7 @@ void LogClientListEntry(log_components_t            component,
             addr, INET_ADDRSTRLEN) == NULL)
           {
             strncpy(addr,
-                    "Invalid Network address", MAXHOSTNAMELEN);
+                    "Invalid Network address", INET_ADDRSTRLEN);
           }
         LogFullDebug(component,
                      "  %p NETWORK_CLIENT: %s(%s)",
