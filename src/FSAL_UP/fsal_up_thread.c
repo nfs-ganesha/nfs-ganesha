@@ -193,9 +193,25 @@ void create_fsal_up_threads()
   exportlist_t *pcurrent;
   struct glist_head * glist;
 
+  /* Make sure that the process thread is up and running before continueing.*/
+  while (1)
+    {
+      /* No need to hold lock to test it*/
+      if (fsal_up_process_tcb.tcb_state == STATE_AWAKE)
+        {
+          /* fsal_up_process thread is initialized.*/
+          break;
+        }
+      else
+        {
+          LogDebug(COMPONENT_INIT, "FSAL_UP_Process Thread is not yet "
+                   "initialized, delaying the start of fsal_up threads\n");
+          sleep(1); /*Process thread is yet to be initialized.*/
+        }
+    }
   memset(&attr_thr, 0, sizeof(attr_thr));
 
-  /* Initialization of thread attrinbutes borrowed from nfs_init.c */
+  /* Initialization of thread attributes borrowed from nfs_init.c */
   if(pthread_attr_init(&attr_thr) != 0)
     LogCrit(COMPONENT_THREAD, "can't init pthread's attributes");
 
