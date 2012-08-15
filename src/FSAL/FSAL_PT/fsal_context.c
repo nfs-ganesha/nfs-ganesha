@@ -159,7 +159,7 @@ PTFSAL_GetExportEntry(char          * p_fs_info,   /* IN */
               p_exportlist->FS_specific);
     if(strncmp(p_fs_info, p_exportlist->FS_specific, 
        sizeof(p_exportlist->FS_specific))) {
-      p_exportlist = p_exportlist->next;
+      p_exportlist = p_exportlist->exp_list.next;
       continue;
     } else {
       FSI_TRACE(FSI_DEBUG, "Equal\n");

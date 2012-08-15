@@ -69,9 +69,6 @@
 #include "err_inject.h"
 #endif
 
-/* HACK for ease of testing, remove this - jw */
-#define SONAS
-
 /* Maximum thread count */
 #define NB_MAX_WORKER_THREAD 4096
 #define NB_MAX_FLUSHER_THREAD 100
