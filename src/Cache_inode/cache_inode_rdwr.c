@@ -277,7 +277,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                                        &cstatus);
 
                     if (cstatus != CACHE_INODE_SUCCESS) {
-                        LogCrit(COMPONENT_CACHE_INODE_LRU,
+                        LogCrit(COMPONENT_CACHE_INODE,
                                 "Error closing file in cache_inode_rdwr: %d.",
                                 cstatus); 
                     }

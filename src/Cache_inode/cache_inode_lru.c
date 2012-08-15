@@ -644,8 +644,6 @@ lru_thread(void *arg __attribute__((unused)))
                break;
 
           extremis = (open_fd_count > lru_state.fds_hiwat);
-          LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                       "Reaper awakes.");
 
           if (!woke) {
                /* If we make it all the way through a timed sleep
@@ -678,28 +676,28 @@ lru_thread(void *arg __attribute__((unused)))
                pthread_mutex_unlock(&LRU_2[lane].lru_pinned.mtx);
           }
           LogDebug(COMPONENT_CACHE_INODE_LRU,
-                   "%zu non-pinned entries. %zu pinned entries.",
-                   t_count, pinned_t_count);
+                   "%zu non-pinned entries. %zu pinned entries. %zu open fds.",
+                   t_count, pinned_t_count, open_fd_count);
 
           t_count += pinned_t_count;
 
           LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                       "t_count: %zu   inode_has_size: %zu entries in cache.",
+                       "lru entries: %zu   cache entries: %zu",
                        t_count, HashTable_GetSize(fh_to_cache_entry_ht));
 
           if (tmpflags & LRU_STATE_RECLAIMING) {
               if (t_count < lru_state.entries_lowat) {
                   tmpflags &= ~LRU_STATE_RECLAIMING;
-                  LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                               "Entry count below low water mark.  "
-                               "Disabling reclaim.");
+                  LogDebug(COMPONENT_CACHE_INODE_LRU,
+                               "Entry count below low water mark. "
+                               "Disabling reclaim mode.");
                }
           } else {
               if (t_count > lru_state.entries_hiwat) {
                   tmpflags |= LRU_STATE_RECLAIMING;
-                  LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                               "Entry count above high water mark.  "
-                               "Enabling reclaim.");
+                  LogDebug(COMPONENT_CACHE_INODE_LRU,
+                               "Entry count above high water mark. "
+                               "Enabling reclaim mode.");
                }
           }
 
@@ -740,7 +738,7 @@ lru_thread(void *arg __attribute__((unused)))
                /* Work done in the most recent pass of all queues.  if
                   value is less than the work to do in a single queue,
                   don't spin through more passes. */
-               size_t workpass = 0;
+               size_t totalworkdone = 0;
                time_t curr_time = time(NULL);
 
                fdratepersec = (curr_time <= lru_state.prev_time) ?
@@ -748,40 +746,38 @@ lru_thread(void *arg __attribute__((unused)))
                  (curr_time - lru_state.prev_time);
 
                LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                            "fdrate:%u = fdcount:%zd - prev:%"PRIu64" / "
-                            "curr:%"PRIu64" prev:%lu", fdratepersec, formeropen,
-                            lru_state.prev_fd_count, curr_time,
-                            lru_state.prev_time);
+                            "fdrate:%u fdcount:%zd slept for %"PRIu64" sec",
+                            fdratepersec, formeropen,
+                            curr_time - lru_state.prev_time);
 
-               if (extremis) {
-                    LogDebug(COMPONENT_CACHE_INODE_LRU,
-                                 "Open FDs over high water mark, "
-                                 "reapring aggressively.");
-               }
+               if (extremis)
+                 LogDebug(COMPONENT_CACHE_INODE_LRU,
+                          "Open FDs over high water mark, "
+                          "reaping aggressively.");
 
                /* Total fds closed between all lanes and all current runs. */
                do {
-                    workpass = 0;
+                    totalworkdone = 0;
                     for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
                          /* The amount of work done on this lane on
                             this pass. */
-                         size_t workdone = 0;
+                         size_t laneworkdone = 0;
                          /* The current entry being examined. */
                          cache_inode_lru_t *lru = NULL;
                          /* Number of entries closed in this run. */
-                         size_t closed = 0;
+                         size_t laneclosed = 0;
 
                          LogDebug(COMPONENT_CACHE_INODE_LRU,
                                   "Reaping up to %d entries from lane %zd",
                                   lru_state.per_lane_work, lane);
                          LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                                      "formeropen=%zd workpass=%zd lowat=%d "
-                                      "workdone=%zd"
-                                      "closed:%zd totalclosed:%"PRIu64,
-                                      formeropen, workpass, lru_state.fds_lowat,
-                                      workdone, closed, totalclosed);
+                                      "formeropen=%zd totalworkdone=%zd "
+                                      "laneworkdone=%zd laneclosed:%zd "
+                                      "totalclosed:%"PRIu64,
+                                      formeropen, totalworkdone,
+                                      laneworkdone, laneclosed, totalclosed);
                          pthread_mutex_lock(&LRU_1[lane].lru.mtx);
-                         while ((workdone < lru_state.per_lane_work) &&
+                         while ((laneworkdone < lru_state.per_lane_work) &&
                                 (lru = glist_first_entry(&LRU_1[lane].lru.q,
                                                          cache_inode_lru_t,
                                                          q))) {
@@ -847,7 +843,7 @@ lru_thread(void *arg __attribute__((unused)))
                                                 "LRU thread.");
                                    } else {
                                      ++totalclosed;
-                                     ++closed;
+                                     ++laneclosed;
                                    }
                               }
                               pthread_rwlock_unlock(&entry->content_lock);
@@ -857,7 +853,7 @@ lru_thread(void *arg __attribute__((unused)))
                               lru_move_entry(lru, LRU_ENTRY_L2,
                                              lru->lane);
                               pthread_mutex_unlock(&lru->mtx);
-                              ++workdone;
+                              ++laneworkdone;
                               /* Reacquire the lock on the queue
                                  fragment for the next run through
                                  the loop. */
@@ -865,26 +861,19 @@ lru_thread(void *arg __attribute__((unused)))
                          }
                          pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
                          LogDebug(COMPONENT_CACHE_INODE_LRU,
-                                  "Actually processed %zd entries on lane %zd "
-                                  "closing %zd descriptors",
-                                  workdone,
+                                  "Processed %zd entries on lane %zd, "
+                                  "closed %zd descriptors",
+                                  laneworkdone,
                                   lane,
-                                  closed);
-                         workpass += workdone;
+                                  laneclosed);
+                         totalworkdone += laneworkdone;
                     }
-                    totalwork += workpass;
+                    totalwork += totalworkdone;
                } while (extremis &&
-                        (workpass >= lru_state.per_lane_work) &&
+                        (totalworkdone >= lru_state.per_lane_work) &&
                         (totalwork < lru_state.biggest_window));
 
                currentopen = open_fd_count;
-               LogFullDebug(COMPONENT_CACHE_INODE_LRU, "formeropen=%zd"
-                            " currentopen=%zd futility=%d totalwork=%zd"
-                            " biggest_window=%d extremis=%d lanes=%d"
-                            " lowat=%d",
-                            formeropen, currentopen, lru_state.futility,
-                            totalwork, lru_state.biggest_window, extremis,
-                            LRU_N_Q_LANES, lru_state.fds_lowat);
                if (extremis &&
                    ((currentopen > formeropen) ||
                     (formeropen - currentopen <
@@ -926,8 +915,18 @@ lru_thread(void *arg __attribute__((unused)))
           threadwait = lru_state.threadwait * fdwait_ratio;
 
           LogDebug(COMPONENT_CACHE_INODE_LRU,
-                  "open_fd_count: %zd  t_count:%"PRIu64" fdrate:%u threadwait=%"PRIu64"\n",
-                   open_fd_count, t_count - totalwork, fdratepersec, threadwait);
+                  "After work, open_fd_count:%zd  t_count:%"PRIu64" fdrate:%u "
+                   "threadwait=%"PRIu64"\n",
+                   open_fd_count, t_count - totalwork, fdratepersec,
+                   threadwait);
+          LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+                       "currentopen=%zd futility=%d totalwork=%zd "
+                       "biggest_window=%d extremis=%d lanes=%d "
+                       "fds_lowat=%d ",
+                       currentopen, lru_state.futility,
+                       totalwork, lru_state.biggest_window, extremis,
+                       LRU_N_Q_LANES, lru_state.fds_lowat);
+
           woke = lru_thread_delay_ms(threadwait);
      }
 
@@ -975,7 +974,7 @@ cache_inode_lru_pkginit(void)
           code = errno;
           LogCrit(COMPONENT_CACHE_INODE_LRU,
                   "Call to getrlimit failed with error %d.  "
-                  "This should not happen.  Assigning default of %d.",
+                  "Assigning default of %d.",
                   code, FD_FALLBACK_LIMIT);
           lru_state.fds_system_imposed = FD_FALLBACK_LIMIT;
      } else {

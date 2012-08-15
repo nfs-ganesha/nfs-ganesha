@@ -533,8 +533,11 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                           0)
                       != CACHE_INODE_SUCCESS)
                     {
-                      LogFatal(COMPONENT_CACHE_INODE_LRU,
-                               "Inconsistency found in LRU management.");
+                      LogMajor(COMPONENT_CACHE_INODE_LRU,
+                               "Inconsistency found in LRU management while "
+                               "getting a reference. open mode = UNCHECKED4");
+                      res_OPEN4.status = NFS4ERR_SERVERFAULT;
+                      goto out;
                     }
                   data->current_filetype = REGULAR_FILE;
 
@@ -604,9 +607,12 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                               if (cache_inode_lru_ref(data->current_entry, 0)
                                   != CACHE_INODE_SUCCESS)
                                 {
-                                  LogFatal(COMPONENT_CACHE_INODE_LRU,
+                                  LogMajor(COMPONENT_CACHE_INODE_LRU,
                                            "Inconsistency found in LRU "
-                                           "management.");
+                                           "management while getting a "
+                                           "reference. open mode = EXCLUSIVE4");
+                                  res_OPEN4.status = NFS4ERR_SERVERFAULT;
+                                  goto out;
                                 }
                               data->current_filetype = REGULAR_FILE;
 
@@ -996,8 +1002,11 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if (cache_inode_lru_ref(data->current_entry, 0)
       != CACHE_INODE_SUCCESS)
     {
-      LogFatal(COMPONENT_CACHE_INODE_LRU,
-               "Inconsistency found in LRU management.");
+      LogMajor(COMPONENT_CACHE_INODE_LRU,
+               "Inconsistency found in LRU management while getting a reference"
+               " on a new file.");
+      res_OPEN4.status = NFS4ERR_SERVERFAULT;
+      goto out;
     }
 
   data->current_filetype = REGULAR_FILE;

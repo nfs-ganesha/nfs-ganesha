@@ -194,8 +194,8 @@ cache_inode_lru_fds_available(void)
           return FALSE;
      }
      if (open_fd_count >= lru_state.fds_hiwat) {
-          LogInfo(COMPONENT_CACHE_INODE_LRU,
-                  "FDs above high water mark, waking LRU thread.");
+          LogEvent(COMPONENT_CACHE_INODE_LRU,
+                   "FDs above high water mark, waking LRU thread.");
           lru_wake_thread(LRU_FLAG_NONE);
      }
 
