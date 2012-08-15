@@ -1075,15 +1075,24 @@ void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context,
     (ptfsal_op_context_t *)p_context;
   ptfsal_export_context_t * fsi_export_context = 
     fsi_op_context->export_context;
+  unsigned char           * bytes;
 
   ccl_context->export_id = fsi_export_context->pt_export_id;
   ccl_context->uid       = fsi_op_context->credential.user;
   ccl_context->gid       = fsi_op_context->credential.group;
   ccl_context->export_path = fsi_export_context->mount_point;
-  FSI_TRACE(FSI_DEBUG, "Export ID = %ld, uid = %ld, gid = %ld, Export Path = \
-            %s\n", fsi_export_context->pt_export_id, 
+  memset(ccl_context->client_address, 0, sizeof(ccl_context->client_address));  
+  bytes = (unsigned char *)&((((struct sockaddr_in *)
+    (&(p_context->credential.caller_addr)))->sin_addr).s_addr);
+  if(bytes) {
+    snprintf(ccl_context->client_address, sizeof(ccl_context->client_address), 
+             "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3]);
+  }
+  FSI_TRACE(FSI_NOTICE, "Export ID = %ld, uid = %ld, gid = %ld, Export Path = " 
+            "%s, client ip = %s\n", fsi_export_context->pt_export_id, 
             fsi_op_context->credential.user,
             fsi_op_context->credential.group, 
-            fsi_export_context->mount_point);
+            fsi_export_context->mount_point,
+            ccl_context->client_address);
 }
 
