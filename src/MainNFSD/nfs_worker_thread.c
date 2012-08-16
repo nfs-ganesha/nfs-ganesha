@@ -590,9 +590,17 @@ static void nfs_rpc_execute(request_data_t *preq,
         if(svc_sendreply(xprt, req, preqnfs->funcdesc->xdr_encode_func,
             (caddr_t) res_nfs) == false)
           {
+              char addrbuf[SOCK_NAME_MAX];
+              sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
               LogDebug(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: FAILURE: Error while calling "
-                       "svc_sendreply");
+                       "svc_sendreply on a duplicate request. rpcxid=%u "
+                       "socket=%d function:%s client:%s program:%d "
+                       "nfs version:%d proc:%d xid:%u",
+                       req->rq_xid, xprt->xp_fd,
+                       preqnfs->funcdesc->funcname,
+                       addrbuf, (int)req->rq_prog,
+                       (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
               svcerr_systemerr(xprt, req);
           }
         nfs_req_timer_stop(&req_timer, worker_data, req, GANESHA_STAT_SUCCESS);
@@ -1164,9 +1172,17 @@ static void nfs_rpc_execute(request_data_t *preq,
       if(svc_sendreply(xprt, req, preqnfs->funcdesc->xdr_encode_func,
                        (caddr_t) res_nfs) == false)
         {
+          char addrbuf[SOCK_NAME_MAX];
+          sprint_sockaddr(&worker_data->hostaddr, addrbuf, sizeof(addrbuf));
           LogDebug(COMPONENT_DISPATCH,
-                   "NFS DISPATCHER: FAILURE: Error while calling "
-                   "svc_sendreply");
+                  "NFS DISPATCHER: FAILURE: Error while calling "
+                   "svc_sendreply on a new request. rpcxid=%u "
+                   "socket=%d function:%s client:%s program:%d "
+                   "nfs version:%d proc:%d xid:%u",
+                   req->rq_xid, xprt->xp_fd,
+                   preqnfs->funcdesc->funcname,
+                   addrbuf, (int)req->rq_prog,
+                   (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
           svcerr_systemerr(xprt, req);
           /* ibid */
           if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
