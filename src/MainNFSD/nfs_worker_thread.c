@@ -837,8 +837,14 @@ static void nfs_rpc_execute(request_data_t    * preq,
               (caddr_t) &res_nfs) == FALSE)
             {
               LogWarn(COMPONENT_DISPATCH,
-                       "NFS DISPATCHER: FAILURE: Error while calling "
-                       "svc_sendreply");
+                      "NFS DISPATCHER: FAILURE: Error while calling "
+                      "svc_sendreply on a duplicate request. rpcxid=%u "
+                      "socket=%d function:%s client:%s program:%d "
+                      "nfs version:%d proc:%d xid:%u",
+                      req->rq_xid, xprt->xp_fd,
+                      pworker_data->pfuncdesc->funcname,
+                      pworker_data->hostaddr_str, (int)req->rq_prog,
+                      (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
               svcerr_systemerr2(xprt, req);
             }
           svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
@@ -1517,8 +1523,15 @@ static void nfs_rpc_execute(request_data_t    * preq,
       if(svc_sendreply2(xprt, req, pworker_data->pfuncdesc->xdr_encode_func,
                         (caddr_t) &res_nfs) == FALSE)
         {
-          LogEvent(COMPONENT_DISPATCH,
-                   "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
+          LogWarn(COMPONENT_DISPATCH,
+                  "NFS DISPATCHER: FAILURE: Error while calling "
+                  "svc_sendreply on a new request. rpcxid=%u "
+                  "socket=%d function:%s client:%s program:%d "
+                  "nfs version:%d proc:%d xid:%u",
+                  req->rq_xid, xprt->xp_fd,
+                  pworker_data->pfuncdesc->funcname,
+                  pworker_data->hostaddr_str, (int)req->rq_prog,
+                  (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
           svcerr_systemerr2(xprt, req);
 
           if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
