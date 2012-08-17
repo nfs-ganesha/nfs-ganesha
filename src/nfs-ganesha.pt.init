@@ -125,9 +125,40 @@ stop() {
 
 	# Kill the Ganesha process
 	echo -n $"Stopping $prog: "
-	killproc -d 30 $PATHPROG
+	MAX_WAIT_TIME_IN_SEC=600
+	pid=`pidof "$PATHPROG"`
+	kill -TERM $pid >/dev/null 2>&1
 	RETVAL=$?
-	[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/pt.ganesha.nfsd
+	waitTimeInSec=0
+	result=`pidof "$PATHPROG"`
+	echo "PID is $result"
+	while true; do
+		if [ $result ]; then
+			sleep 1
+			result=`pidof "$PATHPROG"`
+			waitTimeInSec=$(( waitTimeInSec + 1 ))
+		else
+			success
+			break
+		fi
+
+		if [ $waitTimeInSec -gt $MAX_WAIT_TIME_IN_SEC ]; then 
+			echo "FSAL shutdown taking too long.  Killing it"
+			kill -KILL $pid >/dev/null 2>&1
+			RETVAL=$?
+			usleep 100000
+			if [ $RETVAL -ne 0 ]; then
+				failure
+			else
+				success
+			fi
+			break
+		fi
+	done
+
+	if [ $RETVAL -eq 0 ]; then
+		rm -f /var/lock/subsys/pt.ganesha.nfsd  
+	fi
 
 	# Give Ganesha time to quit
 	result=`pidof "$PATHPROG"`

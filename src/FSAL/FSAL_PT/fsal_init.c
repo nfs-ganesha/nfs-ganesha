@@ -51,7 +51,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <signal.h>
 #include "pt_ganesha.h"
 
 pthread_mutex_t g_dir_mutex; // dir handle mutex
@@ -239,5 +239,82 @@ ptfsal_polling_closeHandler_thread_init(void)
 
    FSI_TRACE(FSI_NOTICE, "Polling close handler created successfully");
    return 0;
+}
+
+fsal_status_t
+PTFSAL_terminate()
+{
+  int index;
+  int closureFailure = 0;
+  int minor = 0;
+  int major = ERR_FSAL_NO_ERROR;
+  int rc;
+
+  FSI_TRACE(FSI_NOTICE, "Terminating FSAL_PT");
+  rc = ccl_up_mutex_lock(&g_handle_mutex);
+  if (rc != 0) {
+    FSI_TRACE(FSI_ERR, "Failed to lock handle mutex");
+    minor = 1;
+    major = posix2fsal_error(EIO);
+    ReturnCode(major, minor);
+  }
+  
+  for (index = FSI_CIFS_RESERVED_STREAMS;
+       index < g_fsi_handles.m_count;
+       index++) {
+    if ((g_fsi_handles.m_handle[index].m_nfs_state == NFS_CLOSE) ||
+        (g_fsi_handles.m_handle[index].m_nfs_state == NFS_OPEN)) {
+
+      // ignore error code, just trying to clean up while going down
+      // and want to continue trying to close out other open files
+      ccl_up_mutex_unlock(&g_handle_mutex);
+      rc = ptfsal_implicit_close_for_nfs(index);
+      if (rc != FSI_IPC_EOK) {
+        FSI_TRACE(FSI_NOTICE, "Failed to close index: %d, close_rc = %d "
+                  "ignoring and moving on", index, rc);
+        closureFailure = TRUE;
+      }
+      rc = ccl_up_mutex_lock(&g_handle_mutex);
+      if (rc != 0) {
+        FSI_TRACE(FSI_ERR, "Failed to lock handle mutex");
+        minor = 2;
+        major = posix2fsal_error(EIO);
+        ReturnCode(major, minor);
+      }
+    }
+  }
+  ccl_up_mutex_unlock(&g_handle_mutex);
+
+  if (closureFailure) {
+    FSI_TRACE(FSI_NOTICE, "Terminating with failure to close file(s)");
+  } else {
+    FSI_TRACE(FSI_NOTICE, "Successful termination of FSAL_PT");
+  }
+
+  /* Terminate Close Handle Listener thread if it's not already dead */
+  int signal_send_rc = pthread_kill(g_pthread_closehandle_lisetner, SIGTERM);
+  if (signal_send_rc == 0) {
+    FSI_TRACE(FSI_NOTICE, "Close Handle Listener thread killed successfully");
+  } else if (signal_send_rc == ESRCH) {
+    FSI_TRACE(FSI_ERR, "Close Handle Listener already terminated");
+  } else if (signal_send_rc) {
+    FSI_TRACE(FSI_ERR, "Error from pthread_kill = %d", signal_send_rc);
+    minor = 3;
+    major = posix2fsal_error(signal_send_rc);
+  }
+
+  /* Terminate Polling Close Handle thread */
+  signal_send_rc = pthread_kill( g_pthread_polling_closehandler, SIGTERM);
+  if (signal_send_rc == 0) {
+    FSI_TRACE(FSI_NOTICE, "Polling close handle thread killed successfully");
+  } else if (signal_send_rc == ESRCH) {
+    FSI_TRACE(FSI_ERR, "Polling close handle thread already terminated");
+  } else if (signal_send_rc) {
+    FSI_TRACE(FSI_ERR, "Error from pthread_kill = %d", signal_send_rc);
+    minor = 4;
+    major = posix2fsal_error(signal_send_rc);
+  }
+
+  ReturnCode(major, minor);
 }
 

@@ -281,6 +281,7 @@ PTFSAL_dynamic_fsinfo(fsal_handle_t        * p_filehandle, /* IN */
                       fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
 
 fsal_status_t PTFSAL_Init(fsal_parameter_t * init_info /* IN */ );
+fsal_status_t PTFSAL_terminate();
 
 fsal_status_t 
 PTFSAL_test_access(fsal_op_context_t  * p_context,          /* IN */
