@@ -325,11 +325,17 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
           if(FSAL_IS_ERROR(status))
             ReturnStatus(status, INDEX_FSAL_setattrs);
 #endif
+        attr_valid |= XATTR_STAT;
+        attr_changed |= XATTR_UID;
 
-        }
+        buffxstat.buffstat.st_uid = (int)wanted_attrs.owner;
+        LogDebug(COMPONENT_FSAL,
+                 "current uid = %d, new uid = %d",
+                 current_attrs.owner, buffxstat.buffstat.st_uid);
+    }
 
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP))
-        {
+    {
 
     
           int in_grp = 0;
@@ -343,17 +349,15 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
                   break;
               }
     
-          /* For modifying group, user must be root, current owner, or in the target group 
+          /* For modifying group, user must be root or current owner and in the target group 
            *
            * Make the logic very explicit
            */
           while (1) 
             {
-               if ( in_grp )        /* member of the target group */
+               if ((p_context->credential.user == current_attrs.owner) && in_grp)        /* member of the target group and current owner*/
                   break;
                if ( p_context->credential.user == 0 )        /* root */
-                  break;
-               if ( p_context->credential.user == current_attrs.owner)  /* current owner */
                   break;
                /* If there ever was a LogAudit event */
                LogFullDebug(COMPONENT_FSAL,
@@ -378,38 +382,13 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
         ReturnStatus(status, INDEX_FSAL_setattrs);
 #endif
 
-    }
-
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
-    {
-      /*      LogFullDebug(COMPONENT_FSAL, "Performing chown(%s, %d,%d)",
-                        fsalpath.path, FSAL_TEST_MASK(wanted_attrs.asked_attributes,
-                                                      FSAL_ATTR_OWNER) ? (int)wanted_attrs.owner
-                        : -1, FSAL_TEST_MASK(wanted_attrs.asked_attributes,
-			FSAL_ATTR_GROUP) ? (int)wanted_attrs.group : -1);*/
-
       attr_valid |= XATTR_STAT;
-      attr_changed |= FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER) ?
-                      XATTR_UID : XATTR_GID;
+      attr_changed |= XATTR_GID;
 
-      /* Fill wanted owner. */
-      if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER))
-        {
-          buffxstat.buffstat.st_uid = (int)wanted_attrs.owner;
-          LogDebug(COMPONENT_FSAL,
-                   "current uid = %d, new uid = %d",
-                   current_attrs.owner, buffxstat.buffstat.st_uid);
-        }
-
-      /* Fill wanted group. */
-      if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP))
-        {
-          buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
-          LogDebug(COMPONENT_FSAL,
-                   "current gid = %d, new gid = %d",
-                   current_attrs.group, buffxstat.buffstat.st_gid);
-        }
-
+      buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
+      LogDebug(COMPONENT_FSAL,
+               "current gid = %d, new gid = %d",
+               current_attrs.group, buffxstat.buffstat.st_gid);
     }
 
   /***********
