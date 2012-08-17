@@ -550,6 +550,9 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
       /* Release block data if present */
       if(lock_entry->sle_block_data != NULL)
         {
+          /* need to remove from the state_blocked_locks list */
+          if (lock_entry->sle_block_data != NULL)
+            glist_del(&lock_entry->sle_block_data->sbd_list);
           memset(lock_entry->sle_block_data, 0, sizeof(*(lock_entry->sle_block_data)));
           gsh_free(lock_entry->sle_block_data);
         }
