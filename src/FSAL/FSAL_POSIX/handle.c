@@ -43,8 +43,6 @@
 #include "FSAL/fsal_commonlib.h"
 #include "posix_methods.h"
 
-#include "scanmount.h"
-
 #include "redblack.h"
 #include "sockbuf.h"
 #include "nodedb.h"
@@ -113,15 +111,14 @@ static struct file_data *nodedb_handle (unsigned long long fsid, struct stat *st
     return MARSHAL_nodedb_add (connpool, &child, f_handle_parent, (char *) name);       /* FIXME: try cleanly remove warning */
 }
 
-static struct file_data *get_dir_path (struct fsal_obj_handle *dir_hdl, char **p, int *retval, struct stat *st_, unsigned long long *fsid)
+static struct file_data *get_dir_path (struct fsal_obj_handle *dir_hdl, char **p, int *retval, unsigned long long *fsid, struct stat *st_)
 {
     struct file_data *parent;
     struct posix_fsal_obj_handle *myself;
     myself = container_of (dir_hdl, struct posix_fsal_obj_handle, obj_handle);
-    parent = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, p, NULL, retval, st_);
+    parent = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, p, retval, fsid, st_);
     if (!parent)
         return NULL;
-    *fsid = get_fsid (*p);
     return parent;
 }
 
@@ -144,7 +141,7 @@ static fsal_status_t lookup (struct fsal_obj_handle *dir_hdl, const char *name, 
         return fsalstat (ERR_FSAL_NOTDIR, 0);
     }
 
-    if (!(parent = get_dir_path (dir_hdl, &p, &retval, &st_, &fsid))) {
+    if (!(parent = get_dir_path (dir_hdl, &p, &retval, &fsid, &st_))) {
         fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
         goto out;
     }
@@ -205,8 +202,8 @@ static fsal_status_t lookup (struct fsal_obj_handle *dir_hdl, const char *name, 
 
 
 /* returns -1 on stale, errno on error, and 0 on success */
-static int posix_make_file_safe (unsigned long long fsid, const char *path, struct file_data *parent, const char *name, const mode_t * unix_mode,
-                                 uid_t user, gid_t group, struct handle_data *d, struct stat *stat)
+static int posix_make_file_safe (const char *path, struct file_data *parent, const char *name, const mode_t * unix_mode,
+                                 uid_t user, gid_t group, struct handle_data *d, unsigned long long fsid, struct stat *stat)
 {
     struct file_data *child;
 
@@ -254,7 +251,7 @@ static fsal_status_t make_thang (const char *thang, struct fsal_obj_handle *dir_
     group = attrib->group;
     unix_mode = fsal2unix_mode (attrib->mode) & ~dir_hdl->export->ops->fs_umask (dir_hdl->export);
 
-    if (!(parent = get_dir_path (dir_hdl, &p, &retval, &st_, &fsid))) {
+    if (!(parent = get_dir_path (dir_hdl, &p, &retval, &fsid, &st_))) {
         fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
         goto out;
     }
@@ -271,7 +268,7 @@ static fsal_status_t make_thang (const char *thang, struct fsal_obj_handle *dir_
     }
 
     memset (&st_, '\0', sizeof (st_));
-    retval = posix_make_file_safe (fsid, path, parent, name, link_path ? NULL : &unix_mode, user, group, &d, &st_);
+    retval = posix_make_file_safe (path, parent, name, link_path ? NULL : &unix_mode, user, group, &d, fsid, &st_);
     if (retval) {
         if (retval == -1) {
             fsal_error = ERR_FSAL_STALE;
@@ -460,7 +457,7 @@ static fsal_status_t readsymlink (struct fsal_obj_handle *obj_hdl,
         xfree (myself->u.symlink.link_content);
         myself->u.symlink.link_size = 0;
 
-        child = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, NULL, &retval, NULL);
+        child = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, &retval, NULL, NULL);
         if (!child) {
             fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
             goto out;
@@ -498,10 +495,11 @@ static fsal_status_t readsymlink (struct fsal_obj_handle *obj_hdl,
 
 struct dirlist {
     struct dirlist *next;
-    struct dirent_data ddata;
+    char *name;
+    int filetype;
 };
 
-static struct dirlist *new_dirent (unsigned long long fsid, const char *dirpath, const char *name)
+static struct dirlist *new_dirent (const char *dirpath, const char *name)
 {
     struct dirlist *n = NULL;
     char *path;
@@ -510,9 +508,9 @@ static struct dirlist *new_dirent (unsigned long long fsid, const char *dirpath,
     if (!lstat (path, &st)) {
         n = malloc (sizeof (*n));
         memset (n, '\0', sizeof (*n));
-        n->ddata.name = malloc (strlen (name) + 1);
-        strcpy (n->ddata.name, name);
-        nodedb_stat_to_file_data (fsid, &st, &n->ddata.fdata);
+        n->name = malloc (strlen (name) + 1);
+        strcpy (n->name, name);
+        n->filetype = nodedb_stat_to_file_type (&st);
     }
     free (path);
     return n;
@@ -533,9 +531,7 @@ static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl, uint32_t ent
     struct dirent *d = NULL, *dir_buf = NULL;
     struct dirlist *first = NULL, *last = NULL, *i, *next;
     struct fsal_cookie *entry_cookie = NULL;
-    struct stat st_;
     long offset = 0;
-    unsigned long long fsid;
 
     if (whence) {
         if (whence->size != sizeof(offset))
@@ -543,7 +539,7 @@ static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl, uint32_t ent
         memcpy(&offset, whence->cookie, sizeof(offset));
     }
 
-    if (!(parent = get_dir_path (dir_hdl, &p, &retval, &st_, &fsid))) {
+    if (!(parent = get_dir_path (dir_hdl, &p, &retval, NULL, NULL))) {
         fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
         goto out;
     }
@@ -568,7 +564,7 @@ static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl, uint32_t ent
         if (!strcmp (dir_buf->d_name, ".") || !strcmp (dir_buf->d_name, ".."))
             continue;
 
-        if ((n = new_dirent (fsid, p, dir_buf->d_name))) {
+        if ((n = new_dirent (p, dir_buf->d_name))) {
             if (!last) {
                 first = last = n;
             } else {
@@ -587,7 +583,7 @@ static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl, uint32_t ent
     memcpy(entry_cookie->cookie, &offset, sizeof(offset));
 
     for (i = first; i; i = i->next) {
-        status = cb (i->ddata.name, i->ddata.fdata.extra.type, dir_hdl, dir_state, entry_cookie);
+        status = cb (i->name, i->filetype, dir_hdl, dir_state, entry_cookie);
         if (FSAL_IS_ERROR (status)) {
             fsal_error = status.major;
             retval = status.minor;
@@ -606,7 +602,7 @@ static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl, uint32_t ent
 
     for (i = first; i; i = next) {
         next = i->next;
-        free (i->ddata.name);
+        free (i->name);
         free (i);
     }
 
@@ -653,7 +649,7 @@ static fsal_status_t linkfile (struct fsal_obj_handle *obj_hdl, struct fsal_obj_
 }
 
 
-static fsal_status_t getattrs (struct fsal_obj_handle *obj_hdl, struct attrlist *obj_attr)
+static fsal_status_t getattrs (struct fsal_obj_handle *obj_hdl)
 {
     struct file_data *parent = NULL;
     char *path = NULL;
@@ -668,7 +664,7 @@ static fsal_status_t getattrs (struct fsal_obj_handle *obj_hdl, struct attrlist 
     if (obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
         retval = fstat (myself->u.file.fd, &stat);
     } else {
-        parent = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, NULL, &retval, &stat);
+        parent = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, &retval, NULL, &stat);
         if (!parent) {
             fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
             goto out;
@@ -680,16 +676,14 @@ static fsal_status_t getattrs (struct fsal_obj_handle *obj_hdl, struct attrlist 
         goto errout;
 
     /* convert attributes */
-    obj_hdl->attributes.mask = obj_attr->mask;
     st = posix2fsal_attributes (&stat, &obj_hdl->attributes);
     if (FSAL_IS_ERROR (st)) {
-        FSAL_CLEAR_MASK (obj_attr->mask);
-        FSAL_SET_MASK (obj_attr->mask, ATTR_RDATTR_ERR);
+        FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
+        FSAL_SET_MASK(obj_hdl->attributes.mask, ATTR_RDATTR_ERR);
         fsal_error = st.major;
         retval = st.minor;
         goto out;
     }
-    memcpy (obj_attr, &obj_hdl->attributes, sizeof (struct attrlist));
     goto out;
 
   errout:
@@ -721,7 +715,7 @@ static fsal_status_t setattrs (struct fsal_obj_handle *obj_hdl, struct attrlist 
 
     myself = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);
 
-    parent = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, NULL, &retval, &stat);
+    parent = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, &retval, NULL, &stat);
     if (!parent) {
         fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
         goto out;
@@ -815,7 +809,7 @@ static fsal_status_t file_truncate (struct fsal_obj_handle *obj_hdl, uint64_t le
     }
     myself = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);
 
-    child = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, NULL, &retval, NULL);
+    child = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, &retval, NULL, NULL);
     if (!child) {
         fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
         goto errout;
@@ -1002,7 +996,7 @@ fsal_status_t posix_lookup_path (struct fsal_export *exp_hdl, const char *path, 
         goto out;
     }
 
-    s = strsplit (path, '/', 1024000);
+    s = nodedb_strsplit (path, '/', 1024000);
 
     for (i = 0; s[i]; i++) {
         unsigned long long fsid;
@@ -1017,7 +1011,7 @@ fsal_status_t posix_lookup_path (struct fsal_export *exp_hdl, const char *path, 
             retval = errno;
             goto posixerror;
         }
-        fsid = get_fsid (p);
+        MARSHAL_nodedb_get_fsid (connpool, p, &fsid);
         if (s[i + 1] && !S_ISDIR (stat.st_mode)) {
             retval = ENOTDIR;
             goto posixerror;
@@ -1103,7 +1097,7 @@ fsal_status_t posix_create_handle (struct fsal_export * exp_hdl,
         retval = 0;
         goto errout;
     }
-    fsid = get_fsid (p);
+    MARSHAL_nodedb_get_fsid (connpool, p, &fsid);
 
     retval = lstat (p, &stat);
     if (retval < 0) {

@@ -34,14 +34,26 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <dirent.h>
 
 #include "redblack.h"
 #include "sockbuf.h"
 #include "nodedb.h"
+#include "scanmount.h"
+#include "fastdb.h"
 #include "marshal.h"
 #include "connection.h"
 #include "connectionpool.h"
 #include "interface.h"
+
+
+
+#if defined(__STRICT_ANSI__) && defined(__GNUC__)
+int readdir_r();
+int usleep();
+int lstat();
+#endif
+
 
 
 #define MARSHALATOMIC                   
@@ -60,7 +72,7 @@ enum object_file_type_enum {
     EXTENDED_ATTR = 9
 };
 
-static long long global_handle = 1;
+static unsigned int global_handle = 1;
 
 struct hardlink_list {
     struct dir_entry *first;             /* must be first member */
@@ -69,12 +81,18 @@ struct hardlink_list {
 
 struct inode_entry {
     struct redblack_node rb_handle;
-    struct redblack_node rb_inode;
     struct redblack_node rb_accesstime;
     unsigned long long accesstime;
     struct file_data *file_data;
     struct hardlink_list links;
 };
+
+struct path_entry {
+    struct file_data self;
+    struct file_data parent;
+    unsigned long long accesstime;
+    unsigned char depth;
+} __attribute__((packed));
 
 struct dir_entry {
     struct dir_entry *next;             /* must be first member */
@@ -91,6 +109,11 @@ static void inode_entry_link(struct hardlink_list *l, struct dir_entry *d)
     l->first = d;
     l->count++;
 }
+
+struct handle_relationship {
+    unsigned long long child_inode;
+    struct handle_data parent;
+};
 
 static void inode_entry_unlink (struct hardlink_list *l, struct dir_entry *d)
 {
@@ -114,8 +137,9 @@ struct nodedb {
     pthread_mutex_t mutex;
     struct dir_entry *root;
     struct redblack_tree rb_handle;
-    struct redblack_tree rb_inode;
     struct redblack_tree rb_accesstime;
+    struct fastdb *fdb;
+    int fdb_index;
 };
 
 
@@ -131,7 +155,7 @@ void nodedb_unlock (struct nodedb *db)
 
 
 /* string number-limit multi-character seperator split */
-char **strsplit (const char *s, char c, int max_split)
+char **nodedb_strsplit (const char *s, char c, int max_split)
 {
     char **r, *buf, *_buf;
     int i = 0, n = 1, l;
@@ -213,14 +237,19 @@ static enum object_file_type_enum type_convert (unsigned long posix_type_in)
     }
 }
 
+int nodedb_stat_to_file_type (const struct stat *st)
+{
+    return (int) type_convert ((unsigned long) st->st_mode);
+}
+
 void nodedb_stat_to_file_data (unsigned long long fsid, const struct stat *st, struct file_data *file_data)
 {
-    file_data->fsid = fsid;
-    file_data->devid = st->st_dev;
-    file_data->inode = st->st_ino;
+    file_data->handle.fsid = fsid;
+    file_data->handle.devid = st->st_dev;
+    file_data->handle.inode = st->st_ino;
     file_data->extra.nlinks = st->st_nlink;
-    file_data->extra.type = type_convert ((unsigned long) st->st_mode);
     file_data->extra.ctime = st->st_ctime;
+    file_data->extra.type = type_convert ((unsigned long) st->st_mode);
 }
 
 static char *dir_entry_name_malloc (const char *name)
@@ -267,38 +296,19 @@ static int rb_handle_cmp (const void *a_, const void *b_, void *not_used)
     a = (struct inode_entry *) a_;
     b = (struct inode_entry *) b_;
 
-    if (a->file_data->handle.handleid < b->file_data->handle.handleid)
+    if (a->file_data->handle.inode < b->file_data->handle.inode)
         return -1;
-    if (a->file_data->handle.handleid > b->file_data->handle.handleid)
+    if (a->file_data->handle.inode > b->file_data->handle.inode)
         return 1;
 
-    if (a->file_data->handle.timestamp < b->file_data->handle.timestamp)
+    if (a->file_data->handle.devid < b->file_data->handle.devid)
         return -1;
-    if (a->file_data->handle.timestamp > b->file_data->handle.timestamp)
+    if (a->file_data->handle.devid > b->file_data->handle.devid)
         return 1;
 
-    return 0;
-}
-
-static int rb_inode_cmp (const void *a_, const void *b_, void *not_used)
-{
-    struct inode_entry *a, *b;
-    a = (struct inode_entry *) a_;
-    b = (struct inode_entry *) b_;
-
-    if (a->file_data->fsid < b->file_data->fsid)
+    if (a->file_data->handle.fsid < b->file_data->handle.fsid)
         return -1;
-    if (a->file_data->fsid > b->file_data->fsid)
-        return 1;
-
-    if (a->file_data->devid < b->file_data->devid)
-        return -1;
-    if (a->file_data->devid > b->file_data->devid)
-        return 1;
-
-    if (a->file_data->inode < b->file_data->inode)
-        return -1;
-    if (a->file_data->inode > b->file_data->inode)
+    if (a->file_data->handle.fsid > b->file_data->handle.fsid)
         return 1;
 
     return 0;
@@ -361,11 +371,10 @@ void _inode_entry_free (const char *function, struct inode_entry *n)
     assert (n->file_data);
 
 #if 0
-printf("%s: freeing %llu:%llu %llu:%llu\n", function,
-n->file_data->handle.handleid,
-n->file_data->handle.timestamp,
-n->file_data->devid,
-n->file_data->inode
+printf("%s: freeing %llu:%llu:%llu\n", function,
+n->file_data->handle.fsid,
+n->file_data->handle.devid,
+n->file_data->handle.inode
 );
 #endif
 
@@ -373,7 +382,17 @@ n->file_data->inode
     free (n);
 }
 
+static int relationship_cmp (const void *a, const void *b, void *hook)
+{
+    (void) hook;
+    return memcmp (a, b, sizeof (struct handle_relationship));
+}
+
 struct file_data *nodedb_new_file_data (const struct file_data *old_file_data);
+struct file_data *nodedb_add (struct nodedb *db, const struct file_data *child, const struct handle_data *f_handle_parent, const char *name);
+static struct file_data *nodedb_add_ (struct nodedb *db, const struct file_data *child, const struct handle_data *f_handle_parent, const char *name, int dont_double_dive);
+static int fill_directory (struct nodedb *db, struct inode_entry *v);
+static char *_nodedb_build_path (struct nodedb *db, struct dir_entry *child);
 
 struct nodedb *nodedb_new (void)
 {
@@ -381,14 +400,32 @@ struct nodedb *nodedb_new (void)
     struct dir_entry *d;
     struct nodedb *db;
     struct file_data the_root;
+    struct fastdb *fdb;
+    int fdb_index;
+    char err_msg[ERROR_MSG_SIZE];
+
+    assert (sizeof (struct handle_relationship) == 32);
+    fdb = fastdb_setup (err_msg, sizeof (struct handle_relationship));
+    if (!fdb) {
+        fprintf (stderr, "%s\n", err_msg);
+        return NULL;
+    }
+    fdb_index = fastdb_add_index (fdb, 1, relationship_cmp, NULL);
+    if (fastdb_load (fdb, "/var/tmp/nfs-ganesha-posix.fdb", err_msg)) {
+        fprintf (stderr, "%s\n", err_msg);
+        return NULL;
+    }
 
     db = (struct nodedb *) malloc (sizeof (*db));
     memset (db, '\0', sizeof (*db));
 
+    db->fdb = fdb;
+    db->fdb_index = fdb_index;
+
+
     pthread_mutex_init (&db->mutex, NULL);
 
     redblack_tree_new (&db->rb_handle, offsetof (struct inode_entry, rb_handle), 0, rb_handle_cmp, NULL);
-    redblack_tree_new (&db->rb_inode, offsetof (struct inode_entry, rb_inode), 0, rb_inode_cmp, NULL);
     redblack_tree_new (&db->rb_accesstime, offsetof (struct inode_entry, rb_accesstime), 1, rb_accesstime_cmp, NULL);
 
 /* add a dummy entry for the root node: */
@@ -397,7 +434,6 @@ struct nodedb *nodedb_new (void)
 
     c = inode_entry_new (nodedb_new_file_data (&the_root));
     redblack_tree_add (&db->rb_handle, c);
-    redblack_tree_add (&db->rb_inode, c);
     redblack_tree_add (&db->rb_accesstime, c);
     d = dir_entry_new (c);
     d->name = dir_entry_name_malloc ("");
@@ -408,28 +444,29 @@ struct nodedb *nodedb_new (void)
     return db;
 }
 
-struct inode_entry *_nodedb_inode_entry_by_inode (struct nodedb *db, const struct file_data *file_data)
+struct inode_entry *__nodedb_inode_entry_by_inode (struct nodedb *db, unsigned long long inode)
 {
-    struct inode_entry l, *r;
     struct file_data d;
+    struct inode_entry l, *r;
     memset (&l, '\0', sizeof (l));
-    d = *file_data;
+    memset (&d, '\0', sizeof (d));
+    d.handle.inode = inode;
     l.file_data = &d;
-    r = redblack_tree_find (&db->rb_inode, &l);
-    if (r) {
-        redblack_tree_delete (&db->rb_accesstime, r);
-        r->accesstime = nodedb_current_time ();
-        redblack_tree_add (&db->rb_accesstime, r);
-    }
+    r = redblack_tree_find_op (&db->rb_handle, &l, CMP_OP_GE, CMP_LEAN_LEFT);
+    if (!r)
+        return NULL;
+    if (r->file_data->handle.inode != inode)
+        return NULL;
     return r;
 }
 
-struct inode_entry *_nodedb_inode_entry_by_handle (struct nodedb *db, const struct file_data *file_data)
+struct inode_entry *__nodedb_inode_entry_by_handle (struct nodedb *db, const struct handle_data *handle_data)
 {
     struct file_data d;
     struct inode_entry l, *r;
     memset (&l, '\0', sizeof (l));
-    d = *file_data;
+    memset (&d, '\0', sizeof (d));
+    d.handle = *handle_data;
     l.file_data = &d;
     r = redblack_tree_find (&db->rb_handle, &l);
     if (r) {
@@ -440,9 +477,199 @@ struct inode_entry *_nodedb_inode_entry_by_handle (struct nodedb *db, const stru
     return r;
 }
 
+static struct handle_data *get_parents_from_fastdb (struct nodedb *db, long long inode, int *n_parents_)
+{
+    struct handle_relationship hpair;
+    struct handle_data *parents = NULL;
+    int n_parents = 0;
+
+    memset (&hpair, '\0', sizeof (hpair));
+    hpair.child_inode = inode;
+
+    if (fastdb_lookup_lock (db->fdb, db->fdb_index, (user_data_t *) & hpair, CMP_OP_GE, CMP_LEAN_LEFT))
+        return NULL;
+    for (;;) {
+        if (hpair.child_inode != inode)
+            break;
+        parents = realloc (parents, (n_parents + 1) * sizeof (*parents));
+        parents[n_parents++] = hpair.parent;
+        if (fastdb_next (db->fdb, db->fdb_index, (user_data_t *) & hpair))
+            break;
+    }
+    fastdb_unlock (db->fdb);
+
+    *n_parents_ = n_parents;
+    return parents;
+}
+
+static struct inode_entry *_nodedb_inode_entry_by_handle (struct nodedb *db, const struct handle_data *handle_data)
+{
+    struct inode_entry *r;
+    struct handle_data *parents = NULL;
+    int n_parents, i;
+    struct handle_relationship v;
+
+    if ((r = __nodedb_inode_entry_by_handle (db, handle_data)))
+        return r;
+
+    if (!(parents = get_parents_from_fastdb (db, handle_data->inode, &n_parents)))
+        return NULL;
+
+    v.child_inode = handle_data->inode;
+
+/* There will be FEW children with different parents and the same inode:
+There are unlikely to be two children with the same inode AND different
+(fsid,devid) AND the same parent. */
+
+    for (r = NULL, i = 0; i < n_parents; i++) {
+        struct inode_entry *parent;
+        if ((parent = _nodedb_inode_entry_by_handle (db, &parents[i])))
+            if (fill_directory (db, parent))
+                r = __nodedb_inode_entry_by_handle (db, handle_data);
+        if (r)
+            break;
+        v.parent = parents[i];
+        fastdb_delete (db->fdb, db->fdb_index, (user_data_t *) &v);
+    }
+
+    free (parents);
+
+    return r;
+}
+
+static struct inode_entry *_nodedb_possible_inode_entry_from_inode (struct nodedb *db, unsigned long long inode, int *remove_parent)
+{
+    struct inode_entry *r;
+    struct handle_data *parents = NULL;
+    int n_parents, i;
+    struct handle_relationship v;
+
+    if ((r = __nodedb_inode_entry_by_inode (db, inode)))
+        return r;
+
+    if (!(parents = get_parents_from_fastdb (db, inode, &n_parents)))
+        return NULL;
+
+    v.child_inode = inode;
+
+/* There will be FEW children with different parents and the same inode:
+There are unlikely to be two children with the same inode AND different
+(fsid,devid) AND the same parent. */
+
+    for (r = NULL, i = 0; i < n_parents; i++) {
+        struct inode_entry *parent;
+        if ((parent = _nodedb_inode_entry_by_handle (db, &parents[i])))
+            if (fill_directory (db, parent))
+                r = __nodedb_inode_entry_by_inode (db, inode);
+        if (r)
+            break;
+        v.parent = parents[i];
+        fastdb_delete (db->fdb, db->fdb_index, (user_data_t *) &v);
+        (*remove_parent)++;
+    }
+
+    free (parents);
+
+    return r;
+}
+
+struct handle_relationship_item {
+    struct handle_relationship_item *next;
+    struct handle_relationship i;
+};
+
+struct handle_relationship_list {
+    struct handle_relationship_item *first;
+    struct handle_relationship_item *last;
+};
+
+static void traverse_cb (user_data_t * d, void *l_, void *dummy)
+{
+    struct handle_relationship_list *l;
+    struct handle_relationship_item *n;
+
+    l = (struct handle_relationship_list *) l_;
+
+    n = malloc (sizeof (struct handle_relationship_item));
+    memset (n, '\0', sizeof (*n));
+    memcpy (&n->i, d, sizeof (n->i));
+
+    if (!l->first) {
+        l->first = l->last = n;
+    } else {
+        l->last->next = n;
+        l->last = n;
+    }
+}
+
+MARSHALATOMIC int nodedb_dump_fastdb_database (struct nodedb *db, const char *filename)
+{
+    struct handle_relationship_list list;
+    struct handle_relationship_item *i, *n;
+    FILE *f;
+    if (!strcmp (filename, "-"))
+        f = stdout;
+    else
+        f = fopen (filename, "w+");
+    if (!f)
+        return 1;
+    list.first = NULL;
+    list.last = NULL;
+    fastdb_traverse (db->fdb, db->fdb_index, traverse_cb, (void *) &list, NULL);
+
+    for (i = list.first; i; i = i->next) {
+        struct handle_relationship *d;
+        char *p = NULL, *q = NULL;
+        char *pf = NULL, *qf = NULL;
+        struct inode_entry *r;
+        int v = 0;
+
+        d = &i->i;
+
+        if ((r = _nodedb_possible_inode_entry_from_inode (db, d->child_inode, &v)))
+            pf = p = _nodedb_build_path (db, first_hardlink (r));
+        if (!p)
+            p = "?";
+
+        if ((r = _nodedb_inode_entry_by_handle (db, &d->parent)))
+            qf = q = _nodedb_build_path (db, first_hardlink (r));
+        if (!q)
+            q = "?";
+
+        fprintf (f, "child=% 10lld del=%d ", d->child_inode, v);
+        fprintf (f, "parent=(%016llx, % 8lld, % 10lld) -- ", d->parent.fsid, d->parent.devid, d->parent.inode);
+        fprintf (f, "%s", q);
+        while (*p == *q && *p && *q)
+            p++, q++;
+        fprintf (f, "[%s]", p);
+        fprintf (f, "\n");
+
+        if (pf)
+            free (pf);
+        if (qf)
+            free (qf);
+    }
+
+    for (i = list.first; i; i = n) {
+        n = i->next;
+        free (i);
+    }
+
+    if (fflush (f))
+        return 1;
+    fclose (f);
+    return 0;
+}
+
 static char *_nodedb_build_path (struct nodedb *db, struct dir_entry *child)
 {
     char *path, *new_path;
+
+    if (!child->parent) {
+        path = (char *) malloc (2);
+        strcpy (path, "/");
+        return path;
+    }
 
     for (path = dir_entry_name_malloc (child->name); child->parent; child = child->parent) {
         new_path = dir_entry_name_cat (child->parent->name, path);
@@ -451,6 +678,43 @@ static char *_nodedb_build_path (struct nodedb *db, struct dir_entry *child)
     }
 
     return path;
+}
+
+/* returns count of successfully stat'd dirent'ries */
+static int fill_directory (struct nodedb *db, struct inode_entry *v)
+{
+    int n = 0;
+    char *path;
+    DIR *dir;
+    path = _nodedb_build_path (db, first_hardlink (v));
+    if ((dir = opendir (path))) {
+        struct dirent *d, *dir_buf;
+        dir_buf = malloc (sizeof (*dir_buf) + 256);     /* more or less */
+        for (;;) {
+            char *fpath;
+            int r;
+            struct stat st;
+            struct file_data st_;
+            d = NULL;
+            memset (dir_buf, '\0', sizeof (sizeof (*dir_buf) + 256));
+            r = readdir_r (dir, dir_buf, &d);
+            if (r || !d)
+                break;
+            if (!strcmp (dir_buf->d_name, ".") || !strcmp (dir_buf->d_name, ".."))
+                continue;
+            fpath = dir_entry_name_cat (path, dir_buf->d_name);
+            if (!lstat (fpath, &st)) {
+                n++;
+                nodedb_stat_to_file_data (get_fsid (fpath), &st, &st_);
+                nodedb_add_ (db, &st_, &v->file_data->handle, dir_buf->d_name, 1);
+            }
+            free (fpath);
+        }
+        free (dir_buf);
+        closedir (dir);
+    }
+    free (path);
+    return n;
 }
 
 struct file_data *nodedb_new_file_data (const struct file_data *old_file_data)
@@ -462,8 +726,9 @@ struct file_data *nodedb_new_file_data (const struct file_data *old_file_data)
 
     *r = *old_file_data;
 
-    r->handle.handleid = global_handle++;
-    r->handle.timestamp = nodedb_current_time ();
+    r->handleid = global_handle++;
+/*     r->handle.timestamp = nodedb_current_time (); */
+
     r->p = r;
 
     return r;
@@ -479,22 +744,40 @@ static struct dir_entry *find_existing_dir_entry (struct inode_entry *n, struct 
     return NULL;
 }
 
-static void insert_dirlist (struct dir_entry *parent, struct dir_entry *child)
+static void insert_dirlist (struct nodedb *db, struct dir_entry *parent, struct dir_entry *child, int replace)
 {
+    struct handle_relationship hpair;
     int ok;
     assert (!child->parent);
     ok = redblack_tree_add (&parent->rb_dirlist, child);
     assert(ok);
     child->parent = parent;
+
+    memset (&hpair, '\0', sizeof (hpair));
+    hpair.child_inode = child->inode_entry->file_data->handle.inode;
+    hpair.parent = parent->inode_entry->file_data->handle;
+
+    if (replace)
+        fastdb_insert_or_replace (db->fdb, db->fdb_index, &hpair);
+    else
+        fastdb_insert (db->fdb, &hpair);
 }
 
-static void remove_dirlist (struct dir_entry *parent, struct dir_entry *child)
+static void remove_dirlist (struct nodedb *db, struct dir_entry *parent, struct dir_entry *child)
 {
+    struct handle_relationship hpair;
     if (parent->inode_entry->file_data->extra.nlinks > 0)
         parent->inode_entry->file_data->extra.nlinks--;
     assert (child->parent == parent);
     redblack_tree_delete (&parent->rb_dirlist, child);
     child->parent = NULL;
+
+    memset (&hpair, '\0', sizeof (hpair));
+    hpair.child_inode = child->inode_entry->file_data->handle.inode;
+    hpair.parent = parent->inode_entry->file_data->handle;
+
+    if (db->fdb)        /* this will be NULL on exit since we fastdb_free() before we recursively delete all nodes. */
+        fastdb_delete (db->fdb, db->fdb_index, &hpair);
 }
 
 #define _nodedb_recursive_free(a,b,c,d) __nodedb_recursive_free(__FUNCTION__,a,b,c,d)
@@ -512,14 +795,13 @@ static void _nodedb_recursive_delete (struct nodedb *db, struct dir_entry *child
 static void __nodedb_recursive_free (const char *function, struct nodedb *db, struct dir_entry *parent, struct dir_entry *child, struct inode_entry **check_free)
 {
     if (parent)                 /* so that this can be used to free the root node */
-        remove_dirlist (parent, child);
+        remove_dirlist (db, parent, child);
     _nodedb_recursive_delete (db, child, check_free);
     if (child->inode_entry) {
         inode_entry_unlink (&child->inode_entry->links, child);
 
         if (!child->inode_entry->links.count) {
             redblack_tree_delete (&db->rb_handle, child->inode_entry);
-            redblack_tree_delete (&db->rb_inode, child->inode_entry);
             redblack_tree_delete (&db->rb_accesstime, child->inode_entry);
             if (check_free && *check_free == child->inode_entry)
                 *check_free = NULL;
@@ -535,8 +817,20 @@ void nodedb_make_empty (struct nodedb *db)
     _nodedb_recursive_delete (db, db->root, NULL);
 }
 
+void nodedb_sync (struct nodedb *db)
+{
+    long long count, done_truncate;
+    char err_msg[ERROR_MSG_SIZE];
+    if (fastdb_flush (db->fdb, 32768, &count, &done_truncate, err_msg))
+        fprintf (stderr, "%s\n", err_msg);
+}
+
 void nodedb_free (struct nodedb *db)
 {
+    nodedb_sync (db);
+    fastdb_free (db->fdb);
+    db->fdb = NULL;
+
     _nodedb_recursive_free (db, NULL, db->root, NULL);
     pthread_mutex_destroy (&db->mutex);
     memset (db, '\0', sizeof (*db));
@@ -568,29 +862,40 @@ static int _nodedb_dir_entry_delete (struct nodedb *db, struct dir_entry *parent
     return 1;
 }
 
-static struct dir_entry *_nodedb_first_dir_entry_from_handle (struct nodedb *db, const struct file_data *file_data)
+static struct dir_entry *_nodedb_first_dir_entry_from_handle (struct nodedb *db, const struct handle_data *handle_data)
 {
     struct inode_entry *p;
-    if (!file_data)
+    if (!handle_data)
         return db->root;
-    if ((p = _nodedb_inode_entry_by_handle (db, file_data)))
+    if ((p = _nodedb_inode_entry_by_handle (db, handle_data)))
         return first_hardlink (p);
     return NULL;
 }
 
 
-MARSHALATOMIC struct file_data *nodedb_clean_stale_paths (struct nodedb *db, const struct handle_data *f_handle, char **path_, unsigned long long *fsid, int *return_errno, struct stat *st_)
+MARSHALATOMIC int nodedb_read_mounts (struct nodedb *db)
+{
+    read_mounts ();
+    return get_mount_count ();
+}
+
+
+MARSHALATOMIC void nodedb_get_fsid (struct nodedb *db, const char *path, unsigned long long *fsid)
+{
+    *fsid = get_fsid (path);
+}
+
+
+MARSHALATOMIC struct file_data *nodedb_clean_stale_paths (struct nodedb *db, const struct handle_data *f_handle, char **path_, int *return_errno, unsigned long long *fsid_, struct stat *st_)
 {
     struct inode_entry *p;
     struct dir_entry *hardlink, *next;
     struct file_data f;
-    const struct file_data *file_data_;
+    unsigned long long fsid = 0ULL;
 
     *return_errno = 0;
 
-    file_data_ = (const struct file_data *) f_handle;
-
-    p = _nodedb_inode_entry_by_handle (db, file_data_);
+    p = _nodedb_inode_entry_by_handle (db, f_handle);
     if (!p)
         return NULL;
 
@@ -600,23 +905,15 @@ MARSHALATOMIC struct file_data *nodedb_clean_stale_paths (struct nodedb *db, con
         next = hardlink->next;
         path = _nodedb_build_path (db, hardlink);
         if (!lstat (path, &st)) {
-            if (fsid) {
-                nodedb_stat_to_file_data (*fsid, &st, &f);
-                if (FILE_DATA_EQUAL (&f, p->file_data)) {
-                    *path_ = path;
-                    if (st_)
-                        *st_ = st;
-                    break;
-                }
-            } else {
-/* wing it -- */
-                nodedb_stat_to_file_data (0ULL, &st, &f);
-                if (FILE_DATA_EQUAL_ (&f, p->file_data)) {
-                    *path_ = path;
-                    if (st_)
-                        *st_ = st;
-                    break;
-                }
+            fsid = get_fsid (path);
+            nodedb_stat_to_file_data (fsid, &st, &f);
+            if (FILE_DATA_EQUAL (&f, p->file_data)) {
+                *path_ = path;
+                if (st_)
+                    *st_ = st;
+                if (fsid_)
+                    *fsid_ = fsid;
+                break;
             }
         } else {
             *return_errno = errno;
@@ -630,7 +927,7 @@ MARSHALATOMIC struct file_data *nodedb_clean_stale_paths (struct nodedb *db, con
 
 #if 0
 // printf("devid=%llu %llu\n", f.devid, p->file_data->devid);
-// printf("inode=%llu %llu\n", f.inode, p->file_data->inode);
+// printf("inode=%llu %llu\n", f.inode, p->file_data->handle.inode);
 // printf("type=%d %d\n", f.extra.type, p->file_data->extra.type);
 // printf("ctime=%llu %llu\n", f.extra.ctime, p->file_data->extra.ctime);
 // 
@@ -640,13 +937,10 @@ MARSHALATOMIC struct file_data *nodedb_clean_stale_paths (struct nodedb *db, con
 MARSHALATOMIC struct file_data *nodedb_get_first_path_from_handle (struct nodedb *db, const struct handle_data *f_handle, char **path)
 {
     struct dir_entry *c;
-    const struct file_data *child;
-
-    child = (const struct file_data *) f_handle;
 
     *path = NULL;
 
-    if (!(c = _nodedb_first_dir_entry_from_handle (db, child)))
+    if (!(c = _nodedb_first_dir_entry_from_handle (db, f_handle)))
         return NULL;
 
     *path = _nodedb_build_path (db, c);
@@ -654,16 +948,13 @@ MARSHALATOMIC struct file_data *nodedb_get_first_path_from_handle (struct nodedb
     return c->inode_entry->file_data;
 }
 
-MARSHALATOMIC struct file_data *nodedb_lookup_by_name (struct nodedb *db, const struct handle_data *f_handle, const char *name, char **path)
+struct file_data *nodedb_lookup_by_name (struct nodedb *db, const struct handle_data *f_handle, const char *name, char **path)
 {
     struct dir_entry *parent, *child;
-    const struct file_data *parent_;
-
-    parent_ = (const struct file_data *) f_handle;
 
     *path = NULL;
 
-    if (!(parent = _nodedb_first_dir_entry_from_handle (db, parent_)))
+    if (!(parent = _nodedb_first_dir_entry_from_handle (db, f_handle)))
         return NULL;
 
     if (!(child = _nodedb_dir_entry_by_name (db, parent, name)))
@@ -672,19 +963,6 @@ MARSHALATOMIC struct file_data *nodedb_lookup_by_name (struct nodedb *db, const 
     *path = _nodedb_build_path (db, child);
 
     return child->inode_entry->file_data;
-}
-
-MARSHALATOMIC struct file_data *nodedb_get_parent (struct nodedb *db, const struct handle_data *f_handle)
-{
-    struct dir_entry *child;
-    const struct file_data *child_;
-
-    child_ = (const struct file_data *) f_handle;
-
-    if (!(child = _nodedb_first_dir_entry_from_handle (db, child_)))
-        return NULL;
-
-    return child->parent->inode_entry->file_data;
 }
 
 static void nodedb_delete_inode_entry (struct nodedb *db, struct inode_entry *c)
@@ -706,14 +984,16 @@ below simply does a recursive delete in case of this type of inconsistency.
 So the parent-not-found is the only error that is possible. */ 
 MARSHALATOMIC struct file_data *nodedb_add (struct nodedb *db, const struct file_data *child, const struct handle_data *f_handle_parent, const char *name)
 {
+    return nodedb_add_ (db, child, f_handle_parent, name, 0);
+}
+
+static struct file_data *nodedb_add_ (struct nodedb *db, const struct file_data *child, const struct handle_data *f_handle_parent, const char *name, int replace_and_dont_double_dive)
+{
     struct inode_entry *c;
     struct dir_entry *parent_dir_entry, *child_dir_entry = NULL;
-    const struct file_data *parent_;
-
-    parent_ = (const struct file_data *) f_handle_parent;
 
 /* 1. obtain the parent directory entry */
-    if (!(parent_dir_entry = _nodedb_first_dir_entry_from_handle (db, parent_)))
+    if (!(parent_dir_entry = _nodedb_first_dir_entry_from_handle (db, f_handle_parent)))
         return NULL;
 
     if (!strcmp(name, "..")) {
@@ -726,7 +1006,11 @@ MARSHALATOMIC struct file_data *nodedb_add (struct nodedb *db, const struct file
         return parent_dir_entry->inode_entry->file_data;
 
 /* 2. try reuse an inode for the child */
-    if ((c = _nodedb_inode_entry_by_inode (db, child))) {
+    if (replace_and_dont_double_dive)
+        c = __nodedb_inode_entry_by_handle (db, &child->handle);
+    else
+        c = _nodedb_inode_entry_by_handle (db, &child->handle);
+    if (c) {
         if (c->file_data->extra.type == child->extra.type) {
             c->file_data->extra = child->extra;         /* set nlinks and ctime */
         } else {        /* we can't reuse if the type has changed */
@@ -739,7 +1023,6 @@ MARSHALATOMIC struct file_data *nodedb_add (struct nodedb *db, const struct file
     if (!c) {
         c = inode_entry_new (nodedb_new_file_data (child));
         redblack_tree_add (&db->rb_handle, c);
-        redblack_tree_add (&db->rb_inode, c);
         redblack_tree_add (&db->rb_accesstime, c);
     }
 
@@ -767,7 +1050,7 @@ MARSHALATOMIC struct file_data *nodedb_add (struct nodedb *db, const struct file
 
 /* 6.1 clean child and unlink from its parent. this will preserve grandchildren: */
         if (child_dir_entry->parent)
-            remove_dirlist (child_dir_entry->parent, child_dir_entry);
+            remove_dirlist (db, child_dir_entry->parent, child_dir_entry);
         if (child_dir_entry->name)
             free (child_dir_entry->name);
         child_dir_entry->name = dir_entry_name_malloc (name);
@@ -776,7 +1059,7 @@ MARSHALATOMIC struct file_data *nodedb_add (struct nodedb *db, const struct file
         _nodedb_dir_entry_delete (db, parent_dir_entry, name);
 
 /* 6.3 add to the directory list of the parent: */
-        insert_dirlist (parent_dir_entry, child_dir_entry);
+        insert_dirlist (db, parent_dir_entry, child_dir_entry, replace_and_dont_double_dive);
     }
 
     return c->file_data;
@@ -810,14 +1093,11 @@ MARSHALATOMIC struct file_data *nodedb_add (struct nodedb *db, const struct file
 
 
 /* returns 1 on parent or child not found */
-MARSHALATOMIC int nodedb_delete (struct nodedb *db, const struct handle_data *f_handle_parent, const char *name)
+static int nodedb_delete (struct nodedb *db, const struct handle_data *f_handle_parent, const char *name)
 {
     struct inode_entry *p;
-    const struct file_data *parent;
 
-    parent = (const struct file_data *) f_handle_parent;
-
-    p = _nodedb_inode_entry_by_handle (db, parent);
+    p = _nodedb_inode_entry_by_handle (db, f_handle_parent);
     if (!p)
         return 1;
 
@@ -825,7 +1105,7 @@ MARSHALATOMIC int nodedb_delete (struct nodedb *db, const struct handle_data *f_
 }
 
 /* ganesha-nfs only cares that the handle is gone, not whether it was there, so return is void */
-MARSHALATOMIC void nodedb_delete_by_handle (struct nodedb *db, const struct file_data *child)
+void nodedb_delete_by_handle (struct nodedb *db, const struct handle_data *child)
 {
     struct inode_entry *c;
     c = _nodedb_inode_entry_by_handle (db, child);
@@ -840,11 +1120,8 @@ MARSHALATOMIC int nodedb_unlink (struct nodedb *db, const struct handle_data *f_
     int r;
     char *path, *t;
     struct dir_entry *p, *child;
-    const struct file_data *parent;
 
-    parent = (const struct file_data *) f_handle_parent;
-
-    if (!(p = _nodedb_first_dir_entry_from_handle (db, parent)))
+    if (!(p = _nodedb_first_dir_entry_from_handle (db, f_handle_parent)))
         return 1;
 
     if (!(child = _nodedb_dir_entry_by_name (db, p, name)))
@@ -861,7 +1138,7 @@ MARSHALATOMIC int nodedb_unlink (struct nodedb *db, const struct handle_data *f_
         r = unlink (path);
     r = r ? -errno : 0;
     if (!r)
-        nodedb_delete (db, &parent->handle, name);
+        nodedb_delete (db, f_handle_parent, name);
     free (path);
     return r;
 }
@@ -873,19 +1150,14 @@ MARSHALATOMIC int nodedb_rename (struct nodedb *db, const struct handle_data *f_
     char *path_old, *path_new;
     char *t;
     struct dir_entry *p_old, *p_new, *child;
-    const struct file_data *parent_old;
-    const struct file_data *parent_new;
 
-    parent_old = (const struct file_data *) f_handle_parent_old;
-    parent_new = (const struct file_data *) f_handle_parent_new;
-
-    if (!(p_old = _nodedb_first_dir_entry_from_handle (db, parent_old)))
+    if (!(p_old = _nodedb_first_dir_entry_from_handle (db, f_handle_parent_old)))
         return 1;
 
     if (!(child = _nodedb_dir_entry_by_name (db, p_old, name_old)))
         return 1;
 
-    if (!(p_new = _nodedb_first_dir_entry_from_handle (db, parent_new)))
+    if (!(p_new = _nodedb_first_dir_entry_from_handle (db, f_handle_parent_new)))
         return 1;
 
 /* FIXME: check if file type changed under me */
@@ -905,8 +1177,8 @@ MARSHALATOMIC int nodedb_rename (struct nodedb *db, const struct handle_data *f_
 /* we add before we delete. if we delete first and the hardlink list is
 empty, then nodedb_delete will recursively delete children. not what you
 want for a rename of a directory: */
-        nodedb_add (db, &new_child, &parent_new->handle, name_new);
-        nodedb_delete (db, &parent_old->handle, name_old);
+        nodedb_add (db, &new_child, f_handle_parent_new, name_new);
+        nodedb_delete (db, f_handle_parent_old, name_old);
     }
     
     free (path_old);
@@ -922,17 +1194,14 @@ MARSHALATOMIC int nodedb_link (struct nodedb *db, const struct handle_data *f_ha
     char *path_old, *path_new;
     char *t;
     struct dir_entry *p_new;
-    const struct file_data *parent_new, *child_old, *child;
-
-    child_old = (const struct file_data *) f_handle_child_old;
-    parent_new = (const struct file_data *) f_handle_parent_new;
+    const struct file_data *child;
 
 /* FIXME: check if file type changed under me */
 
-    if (!(child = nodedb_get_first_path_from_handle (db, &child_old->handle, &path_old)))
+    if (!(child = nodedb_get_first_path_from_handle (db, f_handle_child_old, &path_old)))
         return 1;
 
-    if (!(p_new = _nodedb_first_dir_entry_from_handle (db, parent_new)))
+    if (!(p_new = _nodedb_first_dir_entry_from_handle (db, f_handle_parent_new)))
         return 1;
 
     path_new = dir_entry_name_cat (t = _nodedb_build_path (db, p_new), name_new);
@@ -944,7 +1213,7 @@ MARSHALATOMIC int nodedb_link (struct nodedb *db, const struct handle_data *f_ha
         struct file_data new_child;
         new_child = *child;
         new_child.extra.nlinks++;
-        nodedb_add (db, &new_child, &parent_new->handle, name_new);
+        nodedb_add (db, &new_child, f_handle_parent_new, name_new);
     }
 
     free (path_old);
@@ -957,7 +1226,6 @@ MARSHALATOMIC int nodedb_link (struct nodedb *db, const struct handle_data *f_ha
 
 
 
-#include <stdio.h>
 
 #ifdef UNIT_TEST
 static int find_direntry_in_inode (struct inode_entry *n, struct dir_entry *e)
@@ -993,7 +1261,7 @@ static void _nodedb_recursive_print (struct nodedb *db, const char *path, struct
     new_path = dir_entry_name_cat (path, parent->name);
 
     sprintf(lnk, "%d:%d", parent->inode_entry->file_data->extra.nlinks, parent->inode_entry->links.count);
-    sprintf(ino, "%llu", parent->inode_entry->file_data->inode);
+    sprintf(ino, "%llu", parent->inode_entry->file_data->handle.inode);
     if (parent->inode_entry->file_data->extra.type == DIRECTORY)
         sprintf(dir, "%ld", parent->rb_dirlist.count);
 
@@ -1054,9 +1322,27 @@ int main (int argc, char **argv)
     struct connection_pool *connpool;
     struct marshal *m;
 
+    db = nodedb_new ();
+    nodedb_read_mounts (db);
+
+    if (argc >= 3 && !strcmp(argv[1], "--dump-to")) {
+        int clean;
+        if (argc == 4 && !strcmp(argv[3], "--clean")) {
+            clean = 1;
+        }
+        if (nodedb_dump_fastdb_database (db, argv[2])) {
+            perror (argv[2]);
+            return 1;
+        }
+        if (clean)
+            nodedb_free (db);
+        return 0;
+    }
+
     printf("start\n");
 
-    db = nodedb_new ();
+    printf("sizeof(struct path_entry) = %d\n", (int) sizeof (struct path_entry));
+
 
     sleep (1);
 
@@ -1083,52 +1369,47 @@ int main (int argc, char **argv)
 
         memset(&child, '\0', sizeof(child));
 
-        child.devid = 100;
+        child.handle.devid = 100;
         child.extra.nlinks = 1;
         child.extra.type = 99;
         child.extra.ctime = 1234567890;
 
 
         assert(db->rb_handle.count == 1);
-        assert(db->rb_inode.count == 1);
         assert(db->rb_accesstime.count == 1);
 
 /* 1. insert a 3-deep tree */
-        child.inode = 123456;
+        child.handle.inode = 123456;
 
         f_usr = MARSHAL_nodedb_add (connpool, &child, NULL, "usr");
-        assert(f_usr->handle.handleid == global_handle - 1);
+        assert(f_usr->handleid == global_handle - 1);
         assert(global_handle == 2);
 
         assert(db->rb_handle.count == 1 + 1);
-        assert(db->rb_inode.count == 1 + 1);
         assert(db->rb_accesstime.count == 1 + 1);
 
-        child.inode = 123457;
+        child.handle.inode = 123457;
         f_local = MARSHAL_nodedb_add (connpool, &child, &f_usr->handle, "local");
-        assert(f_local->handle.handleid == global_handle - 1);
+        assert(f_local->handleid == global_handle - 1);
         assert(global_handle == 3);
 
         assert(db->rb_handle.count == 1 + 2);
-        assert(db->rb_inode.count == 1 + 2);
         assert(db->rb_accesstime.count == 1 + 2);
 
-        child.inode = 123458;
+        child.handle.inode = 123458;
         free (MARSHAL_nodedb_add (connpool, &child, &f_local->handle, "share"));
 
         assert(db->rb_handle.count == 1 + 3);
-        assert(db->rb_inode.count == 1 + 3);
         assert(db->rb_accesstime.count == 1 + 3);
 
-        child.inode = 123459;
+        child.handle.inode = 123459;
         child.extra.type = DIRECTORY;
         f_bin = MARSHAL_nodedb_add (connpool, &child, &f_local->handle, "bin");
-        assert(f_bin->handle.handleid == global_handle - 1);
+        assert(f_bin->handleid == global_handle - 1);
         assert(global_handle == 5);
         child.extra.type = 99;
         
         assert(db->rb_handle.count == 1 + 4);
-        assert(db->rb_inode.count == 1 + 4);
         assert(db->rb_accesstime.count == 1 + 4);
 
 
@@ -1136,19 +1417,16 @@ int main (int argc, char **argv)
         {
             struct file_data *v, w;
             char *path;
-            v = MARSHAL_nodedb_lookup_by_name (connpool, &f_local->handle, "bin", &path);
+            v = nodedb_lookup_by_name (db, &f_local->handle, "bin", &path);
             assert(!strcmp("/usr/local/bin", path));
-            assert(v->inode == 123459);
+            assert(v->handle.inode == 123459);
             free (path);
 
             memset (&w, '\0', sizeof(w));
-            w.handle.handleid = v->handle.handleid;
-            w.handle.timestamp = v->handle.timestamp;
-
-            free (v);
+            w.handle = v->handle;
 
             v = MARSHAL_nodedb_get_first_path_from_handle (connpool, &w.handle, &path);
-            assert(v->inode == 123459);
+            assert(v->handle.inode == 123459);
             assert(!strcmp("/usr/local/bin", path));
             free (path);
 
@@ -1171,26 +1449,26 @@ int main (int argc, char **argv)
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "usr"));
-        assert(e->inode_entry->file_data->inode == 123456);
+        assert(e->inode_entry->file_data->handle.inode == 123456);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "local"));
-        assert(e->inode_entry->file_data->inode == 123457);
+        assert(e->inode_entry->file_data->handle.inode == 123457);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
         assert(e->rb_dirlist.count == 2);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "bin") || !strcmp(e->name, "share"));
-        assert(e->inode_entry->file_data->inode == 123458 || e->inode_entry->file_data->inode == 123459);
+        assert(e->inode_entry->file_data->handle.inode == 123458 || e->inode_entry->file_data->handle.inode == 123459);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
 
 
 
 /* 3a. update extra data of a node half-way deep */
-        child.inode = 123457;
+        child.handle.inode = 123457;
         child.extra.ctime = 1234567891;
 
         g = MARSHAL_nodedb_add (connpool, &child, &f_usr->handle, "local");
@@ -1198,7 +1476,6 @@ int main (int argc, char **argv)
         assert(global_handle == 5);
 
         assert(db->rb_handle.count == 1 + 4);
-        assert(db->rb_inode.count == 1 + 4);
         assert(db->rb_accesstime.count == 1 + 4);
 
 
@@ -1211,19 +1488,19 @@ int main (int argc, char **argv)
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "usr"));
-        assert(e->inode_entry->file_data->inode == 123456);
+        assert(e->inode_entry->file_data->handle.inode == 123456);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "local"));
-        assert(e->inode_entry->file_data->inode == 123457);
+        assert(e->inode_entry->file_data->handle.inode == 123457);
         assert(e->inode_entry->file_data->extra.ctime == 1234567891);
 
         assert(e->rb_dirlist.count == 2);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "bin") || !strcmp(e->name, "share"));
-        assert(e->inode_entry->file_data->inode == 123458 || e->inode_entry->file_data->inode == 123459);
+        assert(e->inode_entry->file_data->handle.inode == 123458 || e->inode_entry->file_data->handle.inode == 123459);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
 
@@ -1233,7 +1510,7 @@ int main (int argc, char **argv)
         free (t);
 
 /* 3b. update name of a node half-way deep */
-        child.inode = 123457;
+        child.handle.inode = 123457;
         child.extra.ctime = 1234567891;
         free (g);
         g = MARSHAL_nodedb_add (connpool, &child, &f_usr->handle, "local-");
@@ -1241,7 +1518,6 @@ int main (int argc, char **argv)
         assert(global_handle == 5);
 
         assert(db->rb_handle.count == 1 + 4);
-        assert(db->rb_inode.count == 1 + 4);
         assert(db->rb_accesstime.count == 1 + 4);
 
         printf("[\n");
@@ -1257,19 +1533,19 @@ int main (int argc, char **argv)
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "usr"));
-        assert(e->inode_entry->file_data->inode == 123456);
+        assert(e->inode_entry->file_data->handle.inode == 123456);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "local-"));
-        assert(e->inode_entry->file_data->inode == 123457);
+        assert(e->inode_entry->file_data->handle.inode == 123457);
         assert(e->inode_entry->file_data->extra.ctime == 1234567891);
 
         assert(e->rb_dirlist.count == 2);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "bin") || !strcmp(e->name, "share"));
-        assert(e->inode_entry->file_data->inode == 123458 || e->inode_entry->file_data->inode == 123459);
+        assert(e->inode_entry->file_data->handle.inode == 123458 || e->inode_entry->file_data->handle.inode == 123459);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
 
@@ -1277,18 +1553,17 @@ int main (int argc, char **argv)
 
 
 /* 5. update half-way deep, changing the inode */
-        child.inode = 130001;
+        child.handle.inode = 130001;
         child.extra.ctime = 1234567891;
         free (g);
         g = MARSHAL_nodedb_add (connpool, &child, &f_usr->handle, "local-");
         assert(g != f_local);   /* FIXME: this check needs to be redone -- under marshalling it will always be true */
         free (f_local);
         f_local = g;
-        assert(f_local->handle.handleid == global_handle - 1);
+        assert(f_local->handleid == global_handle - 1);
         assert(global_handle == 6);
 
         assert(db->rb_handle.count == 1 + 2);
-        assert(db->rb_inode.count == 1 + 2);
         assert(db->rb_accesstime.count == 1 + 2);
 
 
@@ -1300,13 +1575,13 @@ int main (int argc, char **argv)
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "usr"));
-        assert(e->inode_entry->file_data->inode == 123456);
+        assert(e->inode_entry->file_data->handle.inode == 123456);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "local-"));
-        assert(e->inode_entry->file_data->inode == 130001);
+        assert(e->inode_entry->file_data->handle.inode == 130001);
         assert(e->inode_entry->file_data->extra.ctime == 1234567891);
 
         assert(e->rb_dirlist.count == 0);
@@ -1319,9 +1594,8 @@ int main (int argc, char **argv)
             v = nodedb_lookup_by_name (db, &f_usr->handle, "local-", &path);
             free (path);
 
-            w.handle.handleid = v->handle.handleid;
-            w.handle.timestamp = v->handle.timestamp;
-            nodedb_delete_by_handle(db, &w);
+            w.handle = v->handle;
+            nodedb_delete_by_handle(db, &w.handle);
 
             v = nodedb_lookup_by_name (db, &f_usr->handle, "local-", &path);
             assert(!v);
@@ -1345,40 +1619,37 @@ int main (int argc, char **argv)
 
         memset(&child, '\0', sizeof(child));
 
-        child.devid = 100;
+        child.handle.devid = 100;
         child.extra.nlinks = 1;
         child.extra.type = 99;
         child.extra.ctime = 1234567890;
 
 
 
-        child.inode = 123456;
+        child.handle.inode = 123456;
         f_usr = MARSHAL_nodedb_add (connpool, &child, NULL, "usr");
-        assert(f_usr->handle.handleid == global_handle - 1);
+        assert(f_usr->handleid == global_handle - 1);
         assert(global_handle == 2);
 
         assert(db->rb_handle.count == 1 + 1);
-        assert(db->rb_inode.count == 1 + 1);
         assert(db->rb_accesstime.count == 1 + 1);
 
-        child.inode = 123457;
+        child.handle.inode = 123457;
         f_local = MARSHAL_nodedb_add (connpool, &child, &f_usr->handle, "TMP");
-        assert(f_local->handle.handleid == global_handle - 1);
+        assert(f_local->handleid == global_handle - 1);
         assert(global_handle == 3);
 
         assert(db->rb_handle.count == 1 + 2);
-        assert(db->rb_inode.count == 1 + 2);
         assert(db->rb_accesstime.count == 1 + 2);
 
-        child.inode = 123457;
+        child.handle.inode = 123457;
         child.extra.nlinks = 2;
         free (f_local);
         f_local = MARSHAL_nodedb_add (connpool, &child, &f_usr->handle, "TMP-");
-        assert(f_local->handle.handleid == global_handle - 1);
+        assert(f_local->handleid == global_handle - 1);
         assert(global_handle == 3);
 
         assert(db->rb_handle.count == 1 + 2);
-        assert(db->rb_inode.count == 1 + 2);
         assert(db->rb_accesstime.count == 1 + 2);
 
 
@@ -1391,7 +1662,7 @@ int main (int argc, char **argv)
         assert(e->rb_dirlist.count == 1);
         e = ((struct dir_entry *) ((char *) e->rb_dirlist.node - e->rb_dirlist.ofs));
         assert(!strcmp(e->name, "usr"));
-        assert(e->inode_entry->file_data->inode == 123456);
+        assert(e->inode_entry->file_data->handle.inode == 123456);
         assert(e->inode_entry->file_data->extra.ctime == 1234567890);
 
         assert(e->rb_dirlist.count == 2);
@@ -1418,7 +1689,7 @@ int main (int argc, char **argv)
 
         memset(&child, '\0', sizeof(child));
 
-        child.devid = 100;
+        child.handle.devid = 100;
         child.extra.nlinks = 1;
         child.extra.type = 99;
         child.extra.ctime = 1234567890;
@@ -1426,23 +1697,21 @@ int main (int argc, char **argv)
 
 
 
-        child.inode = 123456;
+        child.handle.inode = 123456;
         f_usr = MARSHAL_nodedb_add (connpool, &child, NULL, "usr");
-        assert(f_usr->handle.handleid == global_handle - 1);
+        assert(f_usr->handleid == global_handle - 1);
         assert(global_handle == 2);
 
         assert(db->rb_handle.count == 1 + 1);
-        assert(db->rb_inode.count == 1 + 1);
         assert(db->rb_accesstime.count == 1 + 1);
 
-        child.inode = 123456;
+        child.handle.inode = 123456;
         child.extra.nlinks = 2;
         f_local = MARSHAL_nodedb_add (connpool, &child, NULL, "usr-");
-        assert(f_local->handle.handleid == global_handle - 1);
+        assert(f_local->handleid == global_handle - 1);
         assert(global_handle == 2);
 
         assert(db->rb_handle.count == 1 + 1);
-        assert(db->rb_inode.count == 1 + 1);
         assert(db->rb_accesstime.count == 1 + 1);
 
 
@@ -1474,15 +1743,15 @@ int main (int argc, char **argv)
 
         memset(&child, '\0', sizeof(child));
 
-        child.devid = 100;
+        child.handle.devid = 100;
         child.extra.nlinks = 1;
         child.extra.type = 99;
         child.extra.ctime = 1234567890;
 
 
-        child.inode = 123456;
+        child.handle.inode = 123456;
         f_usr = MARSHAL_nodedb_add (connpool, &child, NULL, "usr");
-        child.inode = 123457;
+        child.handle.inode = 123457;
         f_local = MARSHAL_nodedb_add (connpool, &child, &f_usr->handle, "local");
         
         unlink ("/usr/TMP");
@@ -1490,7 +1759,7 @@ int main (int argc, char **argv)
         unlink ("/usr/local/TMP3");
         unlink ("/usr/local/TMP4");
         fclose(fopen("/usr/TMP", "w"));
-        child.inode = 123458;
+        child.handle.inode = 123458;
         f_TMP = MARSHAL_nodedb_add (connpool, &child, &f_usr->handle, "TMP");
 
         r = MARSHAL_nodedb_rename (connpool, &f_usr->handle, "TMP", &f_local->handle, "TMP2");
@@ -1498,7 +1767,7 @@ int main (int argc, char **argv)
 
         v = nodedb_lookup_by_name (db, &f_local->handle, "TMP2", &path);
         assert (!strcmp (path, "/usr/local/TMP2"));
-        assert (v->inode == 123458);
+        assert (v->handle.inode == 123458);
 
         nodedb_link (db, &v->handle, &f_local->handle, "TMP3");
         nodedb_link (db, &v->handle, &f_local->handle, "TMP4");

@@ -52,6 +52,7 @@ and change into:
 6. For a generic build, do:
 
     ./configure --prefix=/opt/nfs-ganesha \
+            --enable-fsal-posix \
             --disable-fsal-proxy \
             --disable-fsal-lustre \
             --disable-fsal-shook \
@@ -131,7 +132,6 @@ addresses of the machines you wish to have access to the export.
            {
              Nb_Worker = 10;
              NFS_Port = 2049;
-             DupReq_Expiration = 2;
              Stats_File_Path = "/tmp/ganesha.stats";
              Stats_Update_Delay = 600;
            }
@@ -212,7 +212,7 @@ simpler!?
 11. If you need to re-install, you may meet certain dependency misery;
 so clean out old libs before using 'make install':
 
-    find . -name 'lib*.a' -o -name 'lib*.la' -o -name 'lib*.so.*' -o -name 'lib*.so' | xargs rm -f
+    find . -name 'lib*.a' -o -name 'lib*.la' -o -name 'lib*.so.*' -o -name 'lib*.so' | grep -v libgpfs.so | xargs rm -f
     rm -f ./MainNFSD/ganesha.nfsd
     make
     make install
