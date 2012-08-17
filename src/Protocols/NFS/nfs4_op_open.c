@@ -507,6 +507,8 @@ open4_create(OPEN4args           * arg,
 
         *entry = NULL;
 
+        memset(&sattr, 0, sizeof(struct attrlist));
+
 #ifdef _USE_QUOTA
         /* if quota support is active, then we should check is
            the FSAL allows inode creation or not */
@@ -582,7 +584,8 @@ open4_create(OPEN4args           * arg,
                         }
                         sattr_provided = TRUE;
                 }
-                if ((FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) ||
+                if (sattr_provided &&
+                    (FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) ||
                     (FSAL_TEST_MASK(sattr.mask, ATTR_MTIME))) {
                         res->status = NFS4ERR_INVAL;
                         return res->status;
