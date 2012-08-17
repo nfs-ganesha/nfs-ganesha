@@ -674,7 +674,7 @@ void nfs_Init_svc()
   /* Acquire RPCSEC_GSS basis if needed */
   if(nfs_param.krb5_param.active_krb5)
     {
-      if(!(Svcauth_gss_import_name(nfs_param.krb5_param.svc.principal)))
+      if(! svcauth_gss_import_name(nfs_param.krb5_param.svc.principal))
         {
           LogFatal(COMPONENT_DISPATCH,
                    "Could not import principal name %s into GSSAPI",
@@ -687,7 +687,7 @@ void nfs_Init_svc()
                   nfs_param.krb5_param.svc.principal);
 
           /* Trying to acquire a credentials for checking name's validity */
-          if(!Svcauth_gss_acquire_cred())
+          if(! svcauth_gss_acquire_cred())
             LogCrit(COMPONENT_DISPATCH,
                      "Cannot acquire credentials for principal %s",
                      nfs_param.krb5_param.svc.principal);
@@ -844,14 +844,14 @@ thr_stallq(void *arg)
                 xprt = xu->xprt;
                 /* lock ordering (cf. nfs_rpc_cond_stall_xprt) */
                 pthread_spin_unlock(&nfs_req_st.stallq.sp);
-                pthread_spin_lock(&xprt->sp);
+                pthread_spin_lock(&xprt->xp_lock);
                 pthread_spin_lock(&nfs_req_st.stallq.sp);
                 glist_del(&xu->stallq);
                 --(nfs_req_st.stallq.stalled);
                 xu->flags &= ~XPRT_PRIVATE_FLAG_STALLED;
                 /* drop stallq ref */
                 --(xu->refcnt);
-                pthread_spin_unlock(&xprt->sp);
+                pthread_spin_unlock(&xprt->xp_lock);
                 goto restart;
             }
         }
@@ -870,18 +870,18 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     bool activate = FALSE;
     uint32_t nreqs;
 
-    pthread_spin_lock(&xprt->sp);
+    pthread_spin_lock(&xprt->xp_lock);
     nreqs = xu->req_cnt;
 
     /* check per-xprt quota */
     if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
-        pthread_spin_unlock(&xprt->sp);
+        pthread_spin_unlock(&xprt->xp_lock);
         goto out;
     }
 
     /* XXX can't happen */
     if (unlikely(xu->flags & XPRT_PRIVATE_FLAG_STALLED)) {
-        pthread_spin_unlock(&xprt->sp);
+        pthread_spin_unlock(&xprt->xp_lock);
         LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
                  xprt);
         goto out;
@@ -896,7 +896,7 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     glist_add_tail(&nfs_req_st.stallq.q, &xu->stallq);
     ++(nfs_req_st.stallq.stalled);
     xu->flags |= XPRT_PRIVATE_FLAG_STALLED;
-    pthread_spin_unlock(&xprt->sp);
+    pthread_spin_unlock(&xprt->xp_lock);
 
     /* if no thread is servicing the stallq, start one */
     if (! nfs_req_st.stallq.active) {
@@ -1051,7 +1051,7 @@ nfs_rpc_consume_req(struct req_q_pair *qpair)
 
         pthread_spin_lock(&qpair->producer.we.sp);
         if (isFullDebug(COMPONENT_DISPATCH)) {
-            s = qpair->s;
+            s = (char*) qpair->s;
             csize = qpair->consumer.size;
             psize = qpair->producer.size;
         }
@@ -1162,7 +1162,6 @@ retry_deq:
         goto retry_deq;
     }
 
-out:
     return (nfsreq);
 }
 
@@ -1224,21 +1223,6 @@ free_nfs_request(request_data_t *nfsreq)
     pool_free(request_pool, nfsreq);
 }
 
-/* XXX mutating */
-#define DISP_LOCK(x) do { \
-    if (! locked) { \
-        svc_dplx_lock_x(xprt, sigmask, __FILE__, __LINE__); \
-        locked = TRUE; \
-      }\
-    } while (0);
-
-#define DISP_UNLOCK(x) do { \
-    if (locked) { \
-        svc_dplx_unlock_x(xprt, sigmask); \
-        locked = FALSE; \
-      }\
-    } while (0);
-
 static inline enum xprt_stat
 thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
 {
@@ -1248,7 +1232,7 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
     struct svc_req *req;
     enum xprt_stat stat = XPRT_IDLE;
     bool_t no_dispatch = TRUE;
-    bool locked = FALSE;
+    bool rlocked = FALSE;
     bool enqueued = FALSE;
     bool recv_status;
 
@@ -1258,7 +1242,7 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
     req = &(nfsreq->r_u.nfs->req);
     msg = &(nfsreq->r_u.nfs->msg);
 
-    DISP_LOCK(xprt);
+    DISP_RLOCK(xprt, &thr_ctx->sigmask);
     recv_status = SVC_RECV(xprt, msg);
 
     LogFullDebug(COMPONENT_DISPATCH,
@@ -1288,7 +1272,7 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
         }
 
         stat = SVC_STAT(xprt);
-        DISP_UNLOCK(xprt);
+        DISP_RUNLOCK(xprt, &thr_ctx->sigmask);
 
         if (stat == XPRT_IDLE) {
             /* typically, a new connection */
@@ -1348,7 +1332,7 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
 
 finish:
     stat = SVC_STAT(xprt);
-    DISP_UNLOCK(xprt);
+    DISP_RUNLOCK(xprt, &thr_ctx->sigmask);
 
 done:
     /* if recv failed, request is not enqueued */
@@ -1418,9 +1402,9 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
      *     client. But SVC_RECV on it creates a new SVCXPRT dedicated to the
      *     client. This specific SVXPRT is bound on TCPSocket
      *
-     * while receiving something on the Svc_fdset, I must know if this is a UDP
-     * request, an initial TCP request or a TCP socket from an already connected
-     * client.
+     * while receiving, I must know if this is a UDP request, an initial TCP
+     * request or a TCP socket from an already connected client.
+     *
      * This is how to distinguish the cases:
      * UDP connections are bound to socket NFS_UDPSocket
      * TCP initial connections are bound to socket NFS_TCPSocket

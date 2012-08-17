@@ -217,7 +217,7 @@ drc_fill_hbuf(nfs_request_data_t *nfs_req, char *hbuf, size_t *size)
 {
     XDR xdrs[1];
     xdrmem_create(xdrs, hbuf, *size, XDR_ENCODE);
-    nfs_req->pfuncdesc->xdr_decode_func(xdrs, (caddr_t) &nfs_req->arg_nfs);
+    nfs_req->funcdesc->xdr_decode_func(xdrs, (caddr_t) &nfs_req->arg_nfs);
     *size = XDR_GETPOS(xdrs);
     XDR_DESTROY(xdrs);
 }
@@ -324,7 +324,7 @@ init_shared_drc()
 
     /* init dict */
     code = rbtx_init(&drc->xt, dupreq_shared_cmpf, drc->npart,
-                     RBT_X_FLAG_ALLOC);
+                     RBT_X_FLAG_ALLOC|RBT_X_FLAG_CACHE_WT);
     assert(! code);
 
     /* completed requests */
@@ -494,7 +494,8 @@ alloc_tcp_drc(enum drc_type dtype)
     pthread_spin_init(&drc->sp, PTHREAD_PROCESS_PRIVATE);
 
     /* init dict */
-    code = rbtx_init(&drc->xt, dupreq_tcp_cmpf, drc->npart, RBT_X_FLAG_ALLOC);
+    code = rbtx_init(&drc->xt, dupreq_tcp_cmpf, drc->npart,
+                     RBT_X_FLAG_ALLOC|RBT_X_FLAG_CACHE_WT);
     assert(! code);
 
     /* completed requests */
@@ -629,7 +630,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
         break;
     case DRC_TCP_V4:
     case DRC_TCP_V3:
-        pthread_rwlock_wrlock(&req->rq_xprt->lock);
+        pthread_spin_lock(&req->rq_xprt->xp_lock);
         if (xu->drc) {
             drc = xu->drc;
             LogFullDebug(COMPONENT_DUPREQ,
@@ -692,7 +693,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
              * new connection arrivals */
             drc_free_expired();
         }
-        pthread_rwlock_unlock(&req->rq_xprt->lock);
+        pthread_spin_unlock(&req->rq_xprt->xp_lock);
         break;
     default:
         /* XXX error */
@@ -1015,7 +1016,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     /* NFSv4.1 or higher */
     switch (drc->type) {
     case DRC_TCP_V4:
-        if (nfs_req->pfuncdesc->service_function == nfs4_Compound) {
+        if (nfs_req->funcdesc->service_function == nfs4_Compound) {
             COMPOUND4args *arg_c4 = (COMPOUND4args *) &nfs_req->arg_nfs;
             if (arg_c4->minorversion > 0) {
                 /* for v41+ requests, we merely thread the request through
@@ -1030,7 +1031,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     default:
         /* likewise for other protocol requests we may not or choose not
          * to cache */
-        if (! (nfs_req->pfuncdesc->dispatch_behaviour & CAN_BE_DUP)) {
+        if (! (nfs_req->funcdesc->dispatch_behaviour & CAN_BE_DUP)) {
             req->rq_u1 = (void*) DUPREQ_NOCACHE;
             res = alloc_nfs_res();
             goto out;
@@ -1116,8 +1117,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
         } else {
             /* new request */
             res = req->rq_u2 = dk->res = alloc_nfs_res();
-            (void) rbtree_x_cached_insert_wt(&drc->xt, t, &dk->rbt_k,
-                                             dk->hk[0]);
+            (void) rbtree_x_cached_insert(&drc->xt, t, &dk->rbt_k, dk->hk[0]);
             (dk->refcnt)++;
             /* add to q tail */
             pthread_spin_lock(&drc->sp);
@@ -1226,7 +1226,7 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
             TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
             /* remove dict entry */
             t = rbtx_partition_of_scalar(&drc->xt, ov->hk[0]);
-            rbtree_x_cached_remove_wt(&drc->xt, t, &ov->rbt_k, ov->hk[0]);
+            rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk[0]);
             --(drc->size);
 
             LogFullDebug(COMPONENT_DUPREQ,
@@ -1305,7 +1305,7 @@ nfs_dupreq_delete(struct svc_req *req)
     t = rbtx_partition_of_scalar(&drc->xt, dv->hk[0]);
 
     pthread_mutex_lock(&t->mtx);
-    rbtree_x_cached_remove_wt(&drc->xt, t, &dv->rbt_k, dv->hk[0]);
+    rbtree_x_cached_remove(&drc->xt, t, &dv->rbt_k, dv->hk[0]);
 
     /* t->mtx also protects drc's fifo q, on which we assert dv is
      * enqueued */

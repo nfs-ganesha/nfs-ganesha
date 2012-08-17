@@ -139,14 +139,6 @@ nfs_parameter_t nfs_param =
   .krb5_param.keytab = DEFAULT_NFS_KEYTAB,
   .krb5_param.ccache_dir =  DEFAULT_NFS_CCACHE_DIR,
   .krb5_param.active_krb5 = true,
-  .krb5_param.hash_param.index_size = PRIME_ID_MAPPER,
-  .krb5_param.hash_param.alphabet_length = 10,      /* Not used for UID_MAPPER */
-  .krb5_param.hash_param.hash_func_key = gss_ctx_hash_func,
-  .krb5_param.hash_param.hash_func_rbt = gss_ctx_rbt_hash_func,
-  .krb5_param.hash_param.compare_key = compare_gss_ctx,
-  .krb5_param.hash_param.key_to_str = display_gss_ctx,
-  .krb5_param.hash_param.val_to_str = display_gss_svc_data,
-  .krb5_param.hash_param.flags = HT_FLAG_NONE,
 #endif
 
   /* NFSv4 parameter */
@@ -981,9 +973,6 @@ int nfs_check_param_consistency()
 
   // check for parameters which need to be primes
   if (!is_prime(nfs_param.dupreq_param.hash_param.index_size) ||
-#ifdef _HAVE_GSSAPI
-      !is_prime(nfs_param.krb5_param.hash_param.index_size) ||
-#endif
       !is_prime(nfs_param.ip_name_param.hash_param.index_size) ||
       !is_prime(nfs_param.uidmap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.unamemap_cache_param.hash_param.index_size) ||
@@ -1434,21 +1423,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
               nfs_param.krb5_param.svc.principal);
 
       /* Set the principal to GSSRPC */
-      if(!Svcauth_gss_set_svc_name(nfs_param.krb5_param.svc.gss_name))
+      if(! svcauth_gss_set_svc_name(nfs_param.krb5_param.svc.gss_name))
         {
           LogFatal(COMPONENT_INIT, "Impossible to set gss principal to GSSRPC");
         }
 
       /* Don't release name until shutdown, it will be used by the
        * backchannel. */
-
-      /* Init the HashTable */
-      if(Gss_ctx_Hash_Init(nfs_param.krb5_param) == -1)
-        {
-          LogFatal(COMPONENT_INIT, "Impossible to init GSS CTX cache");
-        }
-      else
-        LogInfo(COMPONENT_INIT, "Gss Context Cache successfully initialized");
 
 #ifdef HAVE_KRB5
     }                           /*  if( nfs_param.krb5_param.active_krb5 ) */

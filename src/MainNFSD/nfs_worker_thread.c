@@ -496,7 +496,7 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
                 }
               if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
                 hi_vers = NFS_V4;
-              svcerr_progvers2(xprt, req, lo_vers, hi_vers);  /* Bad NFS version */
+              svcerr_progvers(xprt, req, lo_vers, hi_vers);  /* Bad NFS version */
             }
           return false;
         }
@@ -505,7 +505,7 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
               ((req->rq_vers == NFS_V4) && (req->rq_proc > NFSPROC4_COMPOUND)))
         {
           if(xprt != NULL)
-            svcerr_noproc2(xprt, req);
+            svcerr_noproc(xprt, req);
           return false;
         }
       return true;
@@ -519,9 +519,10 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
       lo_vers = MOUNT_V1;
       hi_vers = MOUNT_V3;
 
-      /* Some clients may use the wrong mount version to umount, so always allow umount,
-       * otherwise only allow request if the appropriate mount version is enabled.
-       * also need to allow dump and export, so just disallow mount if version not supported
+      /* Some clients may use the wrong mount version to umount, so always
+       * allow umount, otherwise only allow request if the appropriate mount
+       * version is enabled.  Also need to allow dump and export, so just
+       * disallow mount if version not supported.
        */
       if((req->rq_vers == MOUNT_V1) &&
          (((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0) ||
@@ -530,7 +531,7 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
           if(req->rq_proc > MOUNTPROC2_EXPORT)
             {
               if(xprt != NULL)
-                svcerr_noproc2(xprt, req);
+                svcerr_noproc(xprt, req);
               return false;
             }
           return true;
@@ -542,7 +543,7 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
           if(req->rq_proc > MOUNTPROC3_EXPORT)
             {
               if(xprt != NULL)
-                  svcerr_noproc2(xprt, req);
+                  svcerr_noproc(xprt, req);
               return false;
             }
           return true;
@@ -559,7 +560,7 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
           LogFullDebug(COMPONENT_DISPATCH,
                        "Invalid Mount Version #%d",
                        (int)req->rq_vers);
-          svcerr_progvers2(xprt, req, lo_vers, hi_vers);
+          svcerr_progvers(xprt, req, lo_vers, hi_vers);
         }
       return false;
     }
@@ -576,13 +577,13 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
                        "Invalid NLM Version #%d",
                        (int)req->rq_vers);
           if(xprt != NULL)
-            svcerr_progvers2(xprt, req, NLM4_VERS, NLM4_VERS);
+            svcerr_progvers(xprt, req, NLM4_VERS, NLM4_VERS);
           return false;
         }
       if(req->rq_proc > NLMPROC4_FREE_ALL)
         {
           if(xprt != NULL)
-             svcerr_noproc2(xprt, req);
+             svcerr_noproc(xprt, req);
           return false;
         }
       return true;
@@ -602,7 +603,7 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
                LogFullDebug(COMPONENT_DISPATCH,
                             "Invalid RQUOTA Version #%d",
                             (int)req->rq_vers);
-               svcerr_progvers2(xprt, req, RQUOTAVERS, EXT_RQUOTAVERS);
+               svcerr_progvers(xprt, req, RQUOTAVERS, EXT_RQUOTAVERS);
              }
            return false;
          }
@@ -612,7 +613,7 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
             (req->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)))
         {
           if(xprt != NULL)
-            svcerr_noproc2(xprt, req);
+            svcerr_noproc(xprt, req);
           return false;
         }
       return true;
@@ -625,7 +626,7 @@ is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalid Program number #%d",
                    (int)req->rq_prog);
-      svcerr_noprog2(xprt, req);  /* This is no NFS, MOUNT program, exit... */
+      svcerr_noprog(xprt, req);  /* This is no NFS, MOUNT program, exit... */
     }
   return false;
 } /* is_rpc_call_valid */
@@ -685,7 +686,7 @@ nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 #endif                          /* _USE_RQUOTA */
 
   /* Oops, should never get here! */
-  svcerr_noprog2(preqnfs->xprt, req);
+  svcerr_noprog(preqnfs->xprt, req);
   LogFullDebug(COMPONENT_DISPATCH,
                "INVALID_FUNCDESC for Program %d, Version %d, Function %d",
                (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc);
@@ -716,27 +717,12 @@ nfs_rpc_get_args(nfs_request_data_t *preqnfs)
                "Function %d xid=%u",
                (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
                req->rq_xid);
-      svcerr_decode2(xprt, req);
+      svcerr_decode(xprt, req);
       return false;
     }
 
   return true;
 }
-
-/* XXX mutating */
-#define DISP_LOCK(x, m) do { \
-    if (! locked) { \
-        svc_dplx_lock_x((x), (m), __FILE__, __LINE__); \
-        locked = TRUE; \
-      }\
-    } while (0);
-
-#define DISP_UNLOCK(x, m) do { \
-    if (locked) { \
-        svc_dplx_unlock_x((x), (m)); \
-        locked = FALSE; \
-      }\
-    } while (0);
 
 /**
  * nfs_rpc_execute: main rpc dispatcher routine
@@ -824,13 +810,9 @@ static void nfs_rpc_execute(request_data_t *preq,
   bool update_per_share_stats = false;
   struct nfs_req_timer req_timer[1];
   int port, rc;
-  bool locked = false;
+  bool slocked = false;
 
   memset(&related_client, 0, sizeof(exportlist_client_entry_t));
-
-  worker_data->funcdesc = preqnfs->funcdesc;
-  if(worker_data->funcdesc == INVALID_FUNCDESC)
-      return;
 
   /* XXX must hold lock when calling any TI-RPC channel function,
    * including svc_sendreply2 and the svcerr_* calls */
@@ -848,9 +830,9 @@ static void nfs_rpc_execute(request_data_t *preq,
                    (int)req->rq_prog, (int)req->rq_vers,
                    (int)req->rq_proc);
       /* XXX move lock wrapper into RPC API */
-      DISP_LOCK(xprt, &worker_data->sigmask);
-      svcerr_systemerr2(xprt, req);
-      DISP_UNLOCK(xprt, &worker_data->sigmask);
+      DISP_SLOCK(xprt, &worker_data->sigmask);
+      svcerr_systemerr(xprt, req);
+      DISP_SUNLOCK(xprt, &worker_data->sigmask);
       return;
     }
 
@@ -891,15 +873,14 @@ static void nfs_rpc_execute(request_data_t *preq,
                      "Before svc_sendreply on socket %d (dup req)",
                      xprt->xp_fd);
 
-        DISP_LOCK(xprt, &worker_data->sigmask);
-        if(svc_sendreply2
-           (xprt, req, preqnfs->funcdesc->xdr_encode_func,
+        DISP_SLOCK(xprt, &worker_data->sigmask);
+        if(svc_sendreply(xprt, req, preqnfs->funcdesc->xdr_encode_func,
             (caddr_t) res_nfs) == false)
           {
               LogDebug(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: FAILURE: Error while calling "
                        "svc_sendreply");
-              svcerr_systemerr2(xprt, req);
+              svcerr_systemerr(xprt, req);
           }
         nfs_req_timer_stop(req_timer, worker_data, req, GANESHA_STAT_SUCCESS);
         goto dupreq_finish;
@@ -912,7 +893,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                    "active thread will reply",
                    req->rq_xid);
       /* Free the arguments */
-      DISP_LOCK(xprt, &worker_data->sigmask);
+      DISP_SLOCK(xprt, &worker_data->sigmask);
       /* Ignore the request, send no error */
       goto freeargs;
 
@@ -921,8 +902,8 @@ static void nfs_rpc_execute(request_data_t *preq,
       LogCrit(COMPONENT_DISPATCH,
               "DUP: Did not find the request in the duplicate request cache "
               "and couldn't add the request.");
-      DISP_LOCK(xprt, &worker_data->sigmask);
-      svcerr_systemerr2(xprt, req);
+      DISP_SLOCK(xprt, &worker_data->sigmask);
+      svcerr_systemerr(xprt, req);
       goto freeargs;
       break;
 
@@ -930,8 +911,8 @@ static void nfs_rpc_execute(request_data_t *preq,
     case DUPREQ_INSERT_MALLOC_ERROR:
       LogCrit(COMPONENT_DISPATCH,
               "DUP: Cannot process request, not enough memory available!");
-      DISP_LOCK(xprt, &worker_data->sigmask);
-      svcerr_systemerr2(xprt, req);
+      DISP_SLOCK(xprt, &worker_data->sigmask);
+      svcerr_systemerr(xprt, req);
       goto freeargs;
       break;
 
@@ -939,8 +920,8 @@ static void nfs_rpc_execute(request_data_t *preq,
       LogCrit(COMPONENT_DISPATCH,
               "DUP: Unknown duplicate request cache status. This should never "
               "be reached!");
-      DISP_LOCK(xprt, &worker_data->sigmask);
-      svcerr_systemerr2(xprt, req);
+      DISP_SLOCK(xprt, &worker_data->sigmask);
+      svcerr_systemerr(xprt, req);
       goto freeargs;
       break;
     }
@@ -987,8 +968,8 @@ static void nfs_rpc_execute(request_data_t *preq,
                                (int)req->rq_proc, dumpfh);
                     }
                   /* Bad argument */
-                  DISP_LOCK(xprt, &worker_data->sigmask);
-                  svcerr_auth2(xprt, req, AUTH_FAILED);
+                  DISP_SLOCK(xprt, &worker_data->sigmask);
+                  svcerr_auth(xprt, req, AUTH_FAILED);
                   /* nb, a no-op when req is uncacheable */
                   if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
                     {
@@ -1039,8 +1020,8 @@ static void nfs_rpc_execute(request_data_t *preq,
                                (int)req->rq_proc, dumpfh);
                     }
                   /* Bad argument */
-                  DISP_LOCK(xprt, &worker_data->sigmask);
-                  svcerr_auth2(xprt, req, AUTH_FAILED);
+                  DISP_SLOCK(xprt, &worker_data->sigmask);
+                  svcerr_auth(xprt, req, AUTH_FAILED);
                   /* ibid */
                   if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
                     {
@@ -1146,8 +1127,8 @@ static void nfs_rpc_execute(request_data_t *preq,
                            (int)req->rq_proc, dumpfh);
                 }
               /* Bad argument */
-              DISP_LOCK(xprt, &worker_data->sigmask);
-              svcerr_auth2(xprt, req, AUTH_FAILED);
+              DISP_SLOCK(xprt, &worker_data->sigmask);
+              svcerr_auth(xprt, req, AUTH_FAILED);
               /* ibid */
               if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
                 {
@@ -1177,8 +1158,8 @@ static void nfs_rpc_execute(request_data_t *preq,
       /* Test if export allows the authentication provided */
       if (nfs_export_check_security(req, pexport) == false)
         {
-            DISP_LOCK(xprt, &worker_data->sigmask);
-            svcerr_auth2(xprt, req, AUTH_TOOWEAK);
+            DISP_SLOCK(xprt, &worker_data->sigmask);
+            svcerr_auth(xprt, req, AUTH_TOOWEAK);
             /* ibid */
             if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
               {
@@ -1209,8 +1190,8 @@ static void nfs_rpc_execute(request_data_t *preq,
           LogInfo(COMPONENT_DISPATCH,
                   "Port %d is too high for this export entry, rejecting client",
                   port);
-          DISP_LOCK(xprt, &worker_data->sigmask);
-          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
+          DISP_SLOCK(xprt, &worker_data->sigmask);
+          svcerr_auth(xprt, req, AUTH_TOOWEAK);
           /* ibid */
           if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
             {
@@ -1235,8 +1216,8 @@ static void nfs_rpc_execute(request_data_t *preq,
         {
           LogInfo(COMPONENT_DISPATCH,
                   "could not get uid and gid, rejecting client");
-          DISP_LOCK(xprt, &worker_data->sigmask);
-          svcerr_auth2(xprt, req, AUTH_TOOWEAK);
+          DISP_SLOCK(xprt, &worker_data->sigmask);
+          svcerr_auth(xprt, req, AUTH_TOOWEAK);
           if(nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
             {
               LogCrit(COMPONENT_DISPATCH,
@@ -1283,8 +1264,8 @@ static void nfs_rpc_execute(request_data_t *preq,
               "proc=%d",
               addrbuf,
               (int)req->rq_vers, (int)req->rq_proc);
-      DISP_LOCK(xprt, &worker_data->sigmask);
-      svcerr_auth2(xprt, req, AUTH_TOOWEAK);
+      DISP_SLOCK(xprt, &worker_data->sigmask);
+      svcerr_auth(xprt, req, AUTH_TOOWEAK);
       if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
         {
           LogCrit(COMPONENT_DISPATCH,
@@ -1343,8 +1324,8 @@ static void nfs_rpc_execute(request_data_t *preq,
             {
               LogInfo(COMPONENT_DISPATCH,
                       "authentication failed, rejecting client");
-              DISP_LOCK(xprt, &worker_data->sigmask);
-              svcerr_auth2(xprt, req, AUTH_TOOWEAK);
+              DISP_SLOCK(xprt, &worker_data->sigmask);
+              svcerr_auth(xprt, req, AUTH_TOOWEAK);
               if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
                 {
                   LogCrit(COMPONENT_DISPATCH,
@@ -1482,16 +1463,16 @@ static void nfs_rpc_execute(request_data_t *preq,
                    "Before svc_sendreply on socket %d",
                    xprt->xp_fd);
 
-      DISP_LOCK(xprt, &worker_data->sigmask);
+      DISP_SLOCK(xprt, &worker_data->sigmask);
 
       /* encoding the result on xdr output */
-      if(svc_sendreply2(xprt, req, preqnfs->funcdesc->xdr_encode_func,
-                        (caddr_t) res_nfs) == false)
+      if(svc_sendreply(xprt, req, preqnfs->funcdesc->xdr_encode_func,
+                       (caddr_t) res_nfs) == false)
         {
           LogDebug(COMPONENT_DISPATCH,
                    "NFS DISPATCHER: FAILURE: Error while calling "
                    "svc_sendreply");
-          svcerr_systemerr2(xprt, req);
+          svcerr_systemerr(xprt, req);
           /* ibid */
           if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
             {
@@ -1533,7 +1514,7 @@ freeargs:
   }
 
   /* XXX we must hold xprt lock across SVC_FREEARGS */
-  DISP_UNLOCK(xprt, &worker_data->sigmask);
+  DISP_SUNLOCK(xprt, &worker_data->sigmask);
 
   /* Finalize the request. */
   if (res_nfs)
@@ -1559,13 +1540,14 @@ freeargs:
 int
 nfs_Init_worker_data(nfs_worker_data_t *data)
 {
-  char name[32];
+  char thr_name[32];
 
   if(pthread_mutex_init(&(data->request_pool_mutex), NULL) != 0)
     return -1;
 
-  snprintf(name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
-  if(tcb_new(&(data->wcb), name) != 0)
+  snprintf(
+      thr_name, sizeof(thr_name), "Worker Thread #%u", data->worker_index);
+  if(tcb_new(&(data->wcb), thr_name) != 0)
     return -1;
 
   /* init thr waitq */
@@ -1611,22 +1593,14 @@ AuthenticateRequest(nfs_request_data_t *nfsreq, bool *no_dispatch)
                (int)req->rq_prog, (int)req->rq_vers,
                (int)req->rq_proc, req->rq_xid, req->rq_xprt);
 
-  /* XXX Restore previously saved GssData.
-   * I'm not clear what we're restoring here.  Operating on xprt means that
-   * we do (did) not share buffers with xprt_copy.
-   */
-#ifdef _HAVE_GSSAPI
-  if((why = Rpcsecgss__authenticate(req, msg, no_dispatch)) != AUTH_OK)
-#else
-  if((why = _authenticate(req, msg)) != AUTH_OK)
-#endif
+  if((why = svc_auth_authenticate(req, msg, no_dispatch)) != AUTH_OK)
     {
       char auth_str[AUTH_STR_LEN];
       auth_stat2str(why, auth_str);
       LogInfo(COMPONENT_DISPATCH,
               "Could not authenticate request... rejecting with AUTH_STAT=%s",
               auth_str);
-      svcerr_auth2(xprt, req, why);
+      svcerr_auth(xprt, req, why);
       *no_dispatch = true;
       return why;
     }
@@ -1635,7 +1609,7 @@ AuthenticateRequest(nfs_request_data_t *nfsreq, bool *no_dispatch)
 #ifdef _HAVE_GSSAPI
       struct rpc_gss_cred *gc;
 
-      if(req->rq_xprt->xp_verf.oa_flavor == RPCSEC_GSS)
+      if(req->rq_verf.oa_flavor == RPCSEC_GSS)
         {
           gc = (struct rpc_gss_cred *) req->rq_clntcred;
           LogFullDebug(COMPONENT_DISPATCH,
@@ -1643,7 +1617,7 @@ AuthenticateRequest(nfs_request_data_t *nfsreq, bool *no_dispatch)
                        *no_dispatch, gc->gc_proc, str_gc_proc(gc->gc_proc));
         }
 #endif
-    }             /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
+    } /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
   return AUTH_OK;
 }
 
@@ -1811,6 +1785,7 @@ worker_thread(void *IndexArg)
 
       switch(nfsreq->rtype)
        {
+       case NFS_REQUEST:
            /* check for destroyed xprts */
            xu = (gsh_xprt_private_t *) nfsreq->r_u.nfs->xprt->xp_u1;
            pthread_spin_lock(&nfsreq->r_u.nfs->xprt->xp_lock);
@@ -1833,14 +1808,11 @@ worker_thread(void *IndexArg)
            nfs_rpc_dispatch_call(nfsreq->r_u.call, 0 /* XXX flags */);
            break;
 
-       case _9P_REQUEST:
 #ifdef _USE_9P
+       case _9P_REQUEST:
            _9p_execute(&nfsreq->r_u._9p, worker_data);
-#else
-           LogCrit(COMPONENT_DISPATCH, "Implementation error, 9P message "
-                     "when 9P support is disabled" ) ;
-#endif
            break;
+#endif
        }
 
       finalize_req:
