@@ -35,6 +35,8 @@ interface.lo: interface.c
 sockbuf.lo: sockbuf.c
 encoding.lo: encoding.c
 nodedb.lo: nodedb.c
+fastdb.lo: fastdb.c
+scanmount.lo: scanmount.c
 redblack.lo: redblack.c
 connection.lo: connection.c
 connectionpool.lo: connectionpool.c
