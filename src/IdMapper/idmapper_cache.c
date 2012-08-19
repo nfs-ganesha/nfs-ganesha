@@ -553,13 +553,14 @@ int namemap_clear()
 }
 
 
-int uidmap_add(char *key, unsigned int val)
+int uidmap_add(char *key, unsigned int val, int propagate)
 {
-  int rc1 = 0;
-  int rc2 = 0;
+  int rc1 = ID_MAPPER_SUCCESS;
+  int rc2 = ID_MAPPER_SUCCESS;
 
   rc1 = idmap_add(ht_pwnam, key, val);
-  rc2 = namemap_add(ht_pwuid, val, key);
+  if(propagate)
+    rc2 = namemap_add(ht_pwuid, val, key);
 
   if(rc1 != ID_MAPPER_SUCCESS)
     return rc1;
@@ -569,13 +570,14 @@ int uidmap_add(char *key, unsigned int val)
   return ID_MAPPER_SUCCESS;
 }                               /* uidmap_add */
 
-int unamemap_add(unsigned int key, char *val)
+int unamemap_add(unsigned int key, char *val, int propagate)
 {
-  int rc1 = 0;
-  int rc2 = 0;
+  int rc1 = ID_MAPPER_SUCCESS;
+  int rc2 = ID_MAPPER_SUCCESS;
 
   rc1 = namemap_add(ht_pwuid, key, val);
-  rc2 = idmap_add(ht_pwnam, val, key);
+  if(propagate)
+    rc2 = idmap_add(ht_pwnam, val, key);
 
   if(rc1 != ID_MAPPER_SUCCESS)
     return rc1;

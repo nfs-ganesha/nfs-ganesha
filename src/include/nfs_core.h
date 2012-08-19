@@ -791,11 +791,11 @@ int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
 int idmap_compute_hash_value(char *name, uint32_t * phashval);
 int idmap_add(hash_table_t * ht, char *key, unsigned int val);
-int uidmap_add(char *key, unsigned int val);
+int uidmap_add(char *key, unsigned int val, int propagate);
 int gidmap_add(char *key, unsigned int val);
 
 int namemap_add(hash_table_t * ht, unsigned int key, char *val);
-int unamemap_add(unsigned int key, char *val);
+int unamemap_add(unsigned int key, char *val, int propagate);
 int gnamemap_add(unsigned int key, char *val);
 int uidgidmap_add(unsigned int key, unsigned int value);
 

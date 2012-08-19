@@ -150,7 +150,7 @@ int uid2name(char *name, uid_t * puid)
                    "uid2name: nfs4_uid_to_name uid %d returned %s",
                    *puid, name);
 
-      if(uidmap_add(fqname, *puid) != ID_MAPPER_SUCCESS)
+      if(unamemap_add(*puid, fqname, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
                   "uid2name: uidmap_add %s %d failed",
@@ -193,7 +193,7 @@ int uid2name(char *name, uid_t * puid)
                    "uid2name: getpwuid_r uid %d returned %s",
                    *puid, name);
 
-      if(uidmap_add(name, *puid) != ID_MAPPER_SUCCESS)
+      if(unamemap_add(*puid, name, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
                   "uid2name: uidmap_add %s %d failed",
@@ -281,7 +281,7 @@ int name2uid(char *name, uid_t * puid)
               return 0;
             }
 #endif                          /* _HAVE_GSSAPI */
-          if(uidmap_add(name, res->pw_uid) != ID_MAPPER_SUCCESS)
+          if(uidmap_add(name, res->pw_uid, 1) != ID_MAPPER_SUCCESS)
             {
               LogCrit(COMPONENT_IDMAPPER,
                       "name2uid: uidmap_add %s %d failed",
@@ -319,7 +319,7 @@ int name2uid(char *name, uid_t * puid)
                    "name2uid: nfs4_name_to_uid %s returned %d",
                    fqname, *puid);
 
-      if(uidmap_add(fqname, *puid) != ID_MAPPER_SUCCESS)
+      if(uidmap_add(fqname, *puid, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
                   "name2uid: uidmap_add %s %d failed",
@@ -465,7 +465,7 @@ int principal2uid(char *principal, uid_t * puid)
 #ifdef _MSPAC_SUPPORT
 principal_found:
 #endif
-      if(uidmap_add(principal, gss_uid) != ID_MAPPER_SUCCESS)
+      if(uidmap_add(principal, gss_uid, 0) != ID_MAPPER_SUCCESS)
 	{
 	  LogCrit(COMPONENT_IDMAPPER,
 		  "principal2uid: uidmap_add %s %d failed",
