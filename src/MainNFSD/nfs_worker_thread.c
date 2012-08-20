@@ -1193,7 +1193,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
         }
 
       /* Test if export allows the authentication provided */
-      if (nfs_export_check_security(req, &export_perms, pexport) == FALSE)
+      if(((pworker_data->pfuncdesc->dispatch_behaviour & SUPPORTS_GSS) != 0) &&
+         (nfs_export_check_security(req, &export_perms, pexport) == FALSE))
         {
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d auth not allowed on Export_Id %d %s for client %s",
