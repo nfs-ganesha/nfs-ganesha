@@ -1424,32 +1424,6 @@ void SetComponentLogBuffer(log_components_t component, char *buffer)
   LogComponents[component].comp_buffer   = buffer;
 }
 
-/* Enable/disable logging for tirpc */
-int get_tirpc_debug_bitmask(snmp_adm_type_union *param, void *opt)
-{
-  unsigned int mask;
-  char out[10];
-
-  if (!tirpc_control(TIRPC_GET_DEBUG_FLAGS, (void *)&mask))
-    LogCrit(COMPONENT_INIT, "Failed get debug mask for TI-RPC __warnx");
-  sprintf(out, "%d", mask);
-  strcpy(param->string, out);
-  return 0;
-}
-
-int set_tirpc_debug_bitmask(const snmp_adm_type_union *param, void *opt)
-{
-  set_tirpc_debug_mask(atoi(param->string));
-  return 0;
-}
-
-void set_tirpc_debug_mask(int mask)
-{
-  if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &mask))
-    LogCrit(COMPONENT_INIT, "Failed setting debug mask for TI-RPC __warnx"
-            " with mask %d", mask);
-}
-
 /*
  *  Re-export component logging to TI-RPC internal logging
  */
@@ -1500,6 +1474,33 @@ out:
  */
 
 #ifdef _SNMP_ADM_ACTIVE
+
+
+/* Enable/disable logging for tirpc */
+int get_tirpc_debug_bitmask(snmp_adm_type_union *param, void *opt)
+{
+  unsigned int mask;
+  char out[10];
+
+  if (!tirpc_control(TIRPC_GET_DEBUG_FLAGS, (void *)&mask))
+    LogCrit(COMPONENT_INIT, "Failed get debug mask for TI-RPC __warnx");
+  sprintf(out, "%d", mask);
+  strcpy(param->string, out);
+  return 0;
+}
+
+int set_tirpc_debug_bitmask(const snmp_adm_type_union *param, void *opt)
+{
+  set_tirpc_debug_mask(atoi(param->string));
+  return 0;
+}
+
+void set_tirpc_debug_mask(int mask)
+{
+  if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &mask))
+    LogCrit(COMPONENT_INIT, "Failed setting debug mask for TI-RPC __warnx"
+            " with mask %d", mask);
+}
 
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt)
 {

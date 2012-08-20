@@ -495,7 +495,9 @@ void nfs_Init_svc()
   /* Redirect TI-RPC allocators, log channel */
   if (!tirpc_control(TIRPC_SET_WARNX, (warnx_t) rpc_warnx))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC __warnx");
+#ifdef _SNMP_ADM_ACTIVE
   set_tirpc_debug_mask(0);
+#endif
 
 #define TIRPC_SET_ALLOCATORS 0
 #if TIRPC_SET_ALLOCATORS
