@@ -895,13 +895,11 @@ chkconfig --add nfs-ganesha-zfs
 
 * Thu Dec  4 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.47-1
 - Two unprecisions in NFSv3 coding were found with Spec NFS bench, they were fixed
-- Code cleanup : removed structure related to deprecated way of making datacache's GC
 - Added a new module name MFSL (will provide additionnal features like md writeback in later versions)
 
 * Thu Nov 18 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.46-1
 - Bug Fix in tcp dispatcher
 - use of RW_lock inside md cache
-- use external command to perform datacache gc
 
 * Mon Nov  5 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.45-1
 - Add IPv6 support via TIRPC

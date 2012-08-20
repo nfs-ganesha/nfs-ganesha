@@ -531,9 +531,6 @@ typedef enum cache_inode_status_t
   CACHE_INODE_IS_A_DIRECTORY        = 19,
   CACHE_INODE_FSAL_EPERM            = 20,
   CACHE_INODE_NO_SPACE_LEFT         = 21,
-  CACHE_INODE_CACHE_CONTENT_ERROR   = 22,
-  CACHE_INODE_CACHE_CONTENT_EXISTS  = 23,
-  CACHE_INODE_CACHE_CONTENT_EMPTY   = 24,
   CACHE_INODE_READ_ONLY_FS          = 25,
   CACHE_INODE_IO_ERROR              = 26,
   CACHE_INODE_FSAL_ESTALE           = 27,
@@ -718,14 +715,6 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
 cache_entry_t *cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                                      uint32_t flags,
                                      cache_inode_status_t *status);
-
-cache_inode_status_t cache_inode_add_data_cache(cache_entry_t *entry,
-                                                struct user_cred *creds,
-                                                cache_inode_status_t *status);
-cache_inode_status_t cache_inode_release_data_cache(
-     cache_entry_t *entry,
-     struct user_cred *creds,
-     cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
                                       cache_inode_io_direction_t io_direction,

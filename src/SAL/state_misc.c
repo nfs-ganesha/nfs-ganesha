@@ -86,9 +86,6 @@ const char *state_err_str(state_status_t err)
       case STATE_IS_A_DIRECTORY:        return "STATE_IS_A_DIRECTORY";
       case STATE_FSAL_EPERM:            return "STATE_FSAL_EPERM";
       case STATE_NO_SPACE_LEFT:         return "STATE_NO_SPACE_LEFT";
-      case STATE_CACHE_CONTENT_ERROR:   return "STATE_CACHE_CONTENT_ERROR";
-      case STATE_CACHE_CONTENT_EXISTS:  return "STATE_CACHE_CONTENT_EXISTS";
-      case STATE_CACHE_CONTENT_EMPTY:   return "STATE_CACHE_CONTENT_EMPTY";
       case STATE_READ_ONLY_FS:          return "STATE_READ_ONLY_FS";
       case STATE_IO_ERROR:              return "STATE_IO_ERROR";
       case STATE_FSAL_ESTALE:           return "STATE_FSAL_ESTALE";
@@ -141,9 +138,6 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_IS_A_DIRECTORY:        return STATE_IS_A_DIRECTORY;
       case CACHE_INODE_FSAL_EPERM:            return STATE_FSAL_EPERM;
       case CACHE_INODE_NO_SPACE_LEFT:         return STATE_NO_SPACE_LEFT;
-      case CACHE_INODE_CACHE_CONTENT_ERROR:   return STATE_CACHE_CONTENT_ERROR;
-      case CACHE_INODE_CACHE_CONTENT_EXISTS:  return STATE_CACHE_CONTENT_EXISTS;
-      case CACHE_INODE_CACHE_CONTENT_EMPTY:   return STATE_CACHE_CONTENT_EMPTY;
       case CACHE_INODE_READ_ONLY_FS:          return STATE_READ_ONLY_FS;
       case CACHE_INODE_IO_ERROR:              return STATE_IO_ERROR;
       case CACHE_INODE_FSAL_ESTALE:           return STATE_FSAL_ESTALE;
@@ -306,8 +300,6 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
     case STATE_POOL_MUTEX_INIT_ERROR:
     case STATE_GET_NEW_LRU_ENTRY:
     case STATE_INIT_ENTRY_FAILED:
-    case STATE_CACHE_CONTENT_EXISTS:
-    case STATE_CACHE_CONTENT_EMPTY:
       nfserror = NFS4ERR_SERVERFAULT;
       break;
 
@@ -426,7 +418,6 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
     case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
     case STATE_HASH_TABLE_ERROR:
-    case STATE_CACHE_CONTENT_ERROR:
     case STATE_ASYNC_POST_ERROR:
     case STATE_SIGNAL_ERROR:
       /* Should not occur */
@@ -461,8 +452,6 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
     case STATE_GET_NEW_LRU_ENTRY:
     case STATE_UNAPPROPRIATED_KEY:
     case STATE_INIT_ENTRY_FAILED:
-    case STATE_CACHE_CONTENT_EXISTS:
-    case STATE_CACHE_CONTENT_EMPTY:
     case STATE_INSERT_ERROR:
     case STATE_LRU_ERROR:
     case STATE_HASH_SET_ERROR:
@@ -478,7 +467,6 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
       break;
 
     case STATE_FSAL_ERROR:
-    case STATE_CACHE_CONTENT_ERROR:
                                          /** @todo: Check if this works by making stress tests */
       LogCrit(COMPONENT_NFSPROTO,
               "Error STATE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
@@ -609,8 +597,6 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
     case STATE_UNAPPROPRIATED_KEY:
     case STATE_INIT_ENTRY_FAILED:
     case STATE_BAD_TYPE:
-    case STATE_CACHE_CONTENT_EXISTS:
-    case STATE_CACHE_CONTENT_EMPTY:
     case STATE_INSERT_ERROR:
     case STATE_LRU_ERROR:
     case STATE_HASH_SET_ERROR:
@@ -630,7 +616,6 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
       break;
 
     case STATE_FSAL_ERROR:
-    case STATE_CACHE_CONTENT_ERROR:
       LogCrit(COMPONENT_NFSPROTO,
               "Error STATE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;

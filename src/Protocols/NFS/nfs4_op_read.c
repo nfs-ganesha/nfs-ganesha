@@ -304,8 +304,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       res_READ4.status = NFS4ERR_SERVERFAULT;
       goto done;
     }
-  if(data->pexport->options & EXPORT_OPTION_USE_DATACACHE)
-    memset(bufferdata, 0, size);
 
   if(cache_inode_rdwr(entry,
                       CACHE_INODE_READ,

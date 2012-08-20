@@ -536,17 +536,6 @@ void clean_path(char *str, int len)
 
   /* if the path ends with /., we add a slash at the end,
      so '/./' will be detected in the next loop. */
-#ifdef _TOTO
-  length = strlen(str);
-  if(length >= 2)
-    {
-      if((str[length - 1] == '.') && (str[length - 2] == '/'))
-        {
-          str[length] = '/';
-          str[length + 1] = '\0';
-        }
-    }
-#endif
 
   /* detects and removes '/./' */
 

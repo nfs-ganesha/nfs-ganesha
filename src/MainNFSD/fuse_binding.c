@@ -24,11 +24,10 @@
  */
 
 /**
- * \file    nfs_main.c
- * \author  $Author: deniel $
- * \brief   The file that contain the 'main' routine for the nfsd.
+ * @file    nfs_main.c
+ * @brief   The file that contain the 'main' routine for the nfsd.
  *
- * nfs_main.c : The file that contain the 'main' routine for the nfsd.
+ * The file that contain the 'main' routine for the nfsd.
  *
  *
  */
@@ -49,14 +48,6 @@
 #include <pthread.h>
 #include <signal.h>             /* for sigaction */
 #include <errno.h>
-
-/* parameters for NFSd startup and default values */
-
-static nfs_start_info_t nfs_start_info = {
-  .flush_datacache_mode = FALSE,
-  .nb_flush_threads = 1,
-  .flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE,
-};
 
 char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "ganesha-nfsd";
@@ -190,26 +181,6 @@ int ganefuse_main(int argc, char *argv[],
           fprintf(stderr, "}\n\n\n");
           exit(1);
 
-          break;
-
-        case 'F':
-          /* Flushes the data cache to the FSAL and purges the cache */
-          nfs_start_info.flush_datacache_mode = TRUE;
-          nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
-          nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
-
-          if(nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-            nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
-          break;
-
-        case 'S':
-          /* Flushes the data cache to the FSAL, without purging the cache */
-          nfs_start_info.flush_datacache_mode = TRUE;
-          nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_SYNC_ONLY;
-          nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
-
-          if(nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-            nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
           break;
 
         case 'h':

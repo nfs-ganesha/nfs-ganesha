@@ -234,7 +234,6 @@ typedef struct exportlist__
 #define EXPORT_OPTION_PREFWRITE       0x00001000        /* Pref write is provided              */
 #define EXPORT_OPTION_PREFRDDIR       0x00002000        /* Pref readdir size is provided       */
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000        /* clients use only privileged port    */
-#define EXPORT_OPTION_USE_DATACACHE   0x00008000        /* Is export entry data cached ?       */
 #define EXPORT_OPTION_WRITE_ACCESS    0x00010000        /* RW_Access= option specified         */
 #define EXPORT_OPTION_MD_WRITE_ACCESS 0x00020000        /* MDONLY_Access= option specified     */
 #define EXPORT_OPTION_MD_READ_ACCESS  0x00040000        /* MDONLY_RO_Access= option specified  */

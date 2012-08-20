@@ -555,9 +555,6 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_IS_A_DIRECTORY:
     case CACHE_INODE_FSAL_EPERM:
     case CACHE_INODE_NO_SPACE_LEFT:
-    case CACHE_INODE_CACHE_CONTENT_ERROR:
-    case CACHE_INODE_CACHE_CONTENT_EXISTS:
-    case CACHE_INODE_CACHE_CONTENT_EMPTY:
     case CACHE_INODE_READ_ONLY_FS:
     case CACHE_INODE_KILLED:
     case CACHE_INODE_FSAL_ESTALE:
@@ -4351,8 +4348,6 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
-    case CACHE_INODE_CACHE_CONTENT_EXISTS:
-    case CACHE_INODE_CACHE_CONTENT_EMPTY:
       nfserror = NFS4ERR_SERVERFAULT;
       break;
 
@@ -4457,7 +4452,6 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
 
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
-    case CACHE_INODE_CACHE_CONTENT_ERROR:
     case CACHE_INODE_ASYNC_POST_ERROR:
       /* Should not occur */
       nfserror = NFS4ERR_INVAL;
@@ -4493,8 +4487,6 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_GET_NEW_LRU_ENTRY:
     case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
-    case CACHE_INODE_CACHE_CONTENT_EXISTS:
-    case CACHE_INODE_CACHE_CONTENT_EMPTY:
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
@@ -4510,7 +4502,6 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_ERROR:
-    case CACHE_INODE_CACHE_CONTENT_ERROR:
                                          /** @todo: Check if this works by making stress tests */
       LogCrit(COMPONENT_NFSPROTO,
               "Error CACHE_INODE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
@@ -4637,8 +4628,6 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_UNAPPROPRIATED_KEY:
     case CACHE_INODE_INIT_ENTRY_FAILED:
     case CACHE_INODE_BAD_TYPE:
-    case CACHE_INODE_CACHE_CONTENT_EXISTS:
-    case CACHE_INODE_CACHE_CONTENT_EMPTY:
     case CACHE_INODE_INSERT_ERROR:
     case CACHE_INODE_LRU_ERROR:
     case CACHE_INODE_HASH_SET_ERROR:
@@ -4659,7 +4648,6 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_ERROR:
-    case CACHE_INODE_CACHE_CONTENT_ERROR:
       LogCrit(COMPONENT_NFSPROTO,
               "Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;

@@ -48,10 +48,8 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   shell_utils.h                       \
                                   shell_vars.h                        \
                                   ../include/avltree.h                \
-                                  ../include/cache_content.h          \
                                   ../include/cache_inode.h            \
                                   ../include/config_parsing.h         \
-                                  ../include/err_cache_content.h      \
                                   ../include/err_cache_inode.h        \
                                   ../include/err_fsal.h               \
                                   ../include/err_ghost_fs.h           \
@@ -70,8 +68,6 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
 
 shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../Cache_inode/libcache_inode.la                   \
-                  ../File_Content/libcache_content.la                \
-                  ../File_Content_Policy/libcache_content_policy.la  \
                   ../IdMapper/libidmap.la                            \
                   ../support/libsupport.la                           \
 		  ../RPCAL/librpcal.la				     \

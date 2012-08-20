@@ -24,7 +24,7 @@ my @cache_inode_fn_names =
   ( "access", "getattr", "mkdir", "remove", "statfs", "link",
     "readdir", "rename", "symlink", "create", "lookup", "lookupp", "readlink",
     "truncate", "get", "release", "setattr", "new_entry", "read_data",
-    "write_data", "add_data_cache", "rel_data_cache", "renew_entry","lock_create",
+    "write_data", "renew_entry","lock_create",
     "lock", "locku", "lockt", "add_state", "del_state", "get_state", "set_state", "update_state" );
 
 

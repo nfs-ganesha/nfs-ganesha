@@ -15,16 +15,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -114,10 +114,6 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_cache_inode[] =
   {
   ERR_CACHE_INODE_IS_A_DIRECTORY, "ERR_CACHE_INODE_IS_A_DIRECTORY",
         "Entry is a directory"},
-#define ERR_CACHE_INODE_CACHE_CONTENT_ERROR CACHE_INODE_CACHE_CONTENT_ERROR
-  {
-  ERR_CACHE_INODE_CACHE_CONTENT_ERROR, "ERR_CACHE_INODE_CACHE_CONTENT_ERROR",
-        "Unexpected cache content error"},
 #define ERR_CACHE_INODE_NO_PERMISSION CACHE_INODE_FSAL_EPERM
   {
   ERR_CACHE_INODE_NO_PERMISSION, "ERR_CACHE_INODE_NO_PERMISSION", "Permission denied"},
@@ -125,14 +121,6 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_cache_inode[] =
   {
   ERR_CACHE_INODE_NO_SPACE_LEFT, "ERR_CACHE_INODE_NO_SPACE_LEFT",
         "No space left on device"},
-#define ERR_CACHE_INODE_CACHE_CONTENT_EXISTS CACHE_INODE_CACHE_CONTENT_EXISTS
-  {
-  ERR_CACHE_INODE_CACHE_CONTENT_EXISTS, "ERR_CACHE_INODE_CACHE_CONTENT_EXISTS",
-        "Cache content entry already exists"},
-#define ERR_CACHE_INODE_CACHE_CONTENT_EMPTY CACHE_INODE_CACHE_CONTENT_EMPTY
-  {
-  ERR_CACHE_INODE_CACHE_CONTENT_EMPTY, "ERR_CACHE_INODE_CACHE_CONTENT_EMPTY",
-        "No cache content entry found"},
 #define ERR_CACHE_INODE_READ_ONLY_FS CACHE_INODE_READ_ONLY_FS
   {
   ERR_CACHE_INODE_READ_ONLY_FS, "ERR_CACHE_INODE_READ_ONLY_FS", "Read Only File System"},

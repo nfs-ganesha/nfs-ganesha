@@ -109,7 +109,6 @@ typedef enum log_components
   COMPONENT_FILEHANDLE,
   COMPONENT_NFS_SHELL,
   COMPONENT_DISPATCH,
-  COMPONENT_CACHE_CONTENT,
   COMPONENT_CACHE_INODE,
   COMPONENT_CACHE_INODE_GC,
   COMPONENT_CACHE_INODE_LRU,
@@ -361,7 +360,6 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 #define ERR_FSAL          13
 #define ERR_GHOSTFS       15
 #define ERR_CACHE_INODE   16
-#define ERR_CACHE_CONTENT 17
 
 /* previously at log_macros.h */
 typedef void (*cleanup_function)(void);

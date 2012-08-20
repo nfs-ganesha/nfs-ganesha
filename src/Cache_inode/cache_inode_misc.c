@@ -156,12 +156,6 @@ const char *cache_inode_err_str(cache_inode_status_t err)
         return "CACHE_INODE_FSAL_EPERM";
       case CACHE_INODE_NO_SPACE_LEFT:
         return "CACHE_INODE_NO_SPACE_LEFT";
-      case CACHE_INODE_CACHE_CONTENT_ERROR:
-        return "CACHE_INODE_CACHE_CONTENT_ERROR";
-      case CACHE_INODE_CACHE_CONTENT_EXISTS:
-        return "CACHE_INODE_CACHE_CONTENT_EXISTS";
-      case CACHE_INODE_CACHE_CONTENT_EMPTY:
-        return "CACHE_INODE_CACHE_CONTENT_EMPTY";
       case CACHE_INODE_READ_ONLY_FS:
         return "CACHE_INODE_READ_ONLY_FS";
       case CACHE_INODE_IO_ERROR:

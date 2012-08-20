@@ -203,7 +203,6 @@ static void set_nfs_fh3(nfs_fh3 * p_nfshdl, shell_fh3_t * p_int_fh3)
 extern hash_table_t *fh_to_cache_entry_ht;
 
 extern cache_inode_client_parameter_t cache_client_param;
-extern cache_content_client_parameter_t datacache_client_param;
 
 /* NFS layer initialization status*/
 static int is_nfs_layer_initialized = FALSE;
@@ -233,9 +232,6 @@ typedef struct cmdnfs_thr_info__
 
   /* AuthUnix_params for this thread */
   struct authunix_parms authunix_struct;
-
-  /** Thread specific variable : the client for the cache */
-  cache_content_client_t dc_client;
 
   /* info for advanced commands (pwd, ls, cd, ...) */
   int is_mounted_path;
@@ -372,10 +368,6 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   p_thr_info->authunix_struct.aup_gid = getgid();
   p_thr_info->authunix_struct.aup_len = 0; /** @todo No secondary groups support. */
 
-  /* Init the cache content client */
-  if(cache_content_client_init(&p_thr_info->dc_client, datacache_client_param, "") != 0)
-    return 1;
-
   p_thr_info->is_thread_init = TRUE;
 
   return 0;
@@ -403,14 +395,6 @@ int nfs_init(char *filename, int flag_v, FILE * output)
   config_file_t config_file;
   int rc;
 
-  nfs_param.cache_layers_param.cache_content_client_param.nb_prealloc_entry = 100;
-  nfs_param.cache_layers_param.cache_content_client_param.flush_force_fsal = 1;
-  nfs_param.cache_layers_param.cache_content_client_param.max_fd = 20;
-  nfs_param.cache_layers_param.cache_content_client_param.use_fd_cache = 0;
-  nfs_param.cache_layers_param.cache_content_client_param.retention = 60;
-  strcpy(nfs_param.cache_layers_param.cache_content_client_param.cache_dir,
-         "/tmp/ganesha.datacache");
-
   /* Parse config file */
 
   config_file = config_ParseFile(filename);
@@ -418,16 +402,6 @@ int nfs_init(char *filename, int flag_v, FILE * output)
   if(!config_file)
     {
       fprintf(output, "nfs_init: Error parsing %s: %s\n", filename, config_GetErrorMsg());
-      return -1;
-    }
-
-  if((rc =
-      cache_content_read_conf_client_parameter(config_file,
-                                               &nfs_param.cache_layers_param.
-                                               cache_content_client_param)) !=
-     CACHE_CONTENT_SUCCESS)
-    {
-      fprintf(output, "nfs_init: Error %d reading cache content parameters.\n", -rc);
       return -1;
     }
 

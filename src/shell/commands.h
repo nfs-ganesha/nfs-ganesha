@@ -299,31 +299,6 @@ int fn_Cache_inode_callstat(int argc,   /* IN : number of args in argv */
                             char **argv,        /* IN : arg list               */
                             FILE * output /* IN : output stream          */ );
 
-/** cache en entry (REGULAR_FILE) in the data cache */
-int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
-                              char **argv,      /* IN : arg list               */
-                              FILE * output /* IN : output stream          */ );
-
-/** recover the data cache */
-int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv */
-                                 char **argv,   /* IN : arg list               */
-                                 FILE * output /* IN : output stream          */ );
-
-/** refresh en entry (REGULAR_FILE) in the data cache */
-int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv */
-                                 char **argv,   /* IN : arg list               */
-                                 FILE * output /* IN : output stream          */ );
-
-/** flush en entry (REGULAR_FILE) in the data cache */
-int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv */
-                               char **argv,     /* IN : arg list               */
-                               FILE * output /* IN : output stream          */ );
-
-/** cache en entry (REGULAR_FILE) in the data cache */
-int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv */
-                                 char **argv,   /* IN : arg list               */
-                                 FILE * output /* IN : output stream          */ );
-
 /** Reads the content of a cached regular file */
 int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
                         char **argv,    /* IN : arg list               */
@@ -689,12 +664,6 @@ static command_def_t __attribute__ ((__unused__)) commands_Cache_inode[] =
   {
   "create", fn_Cache_inode_create, "create regular file"},
   {
-  "data_cache", fn_Cache_inode_data_cache, "cache a file in the Data Cache"},
-  {
-  "flush_cache", fn_Cache_inode_flush_cache, "flushes a previously Data cached entry"},
-  {
-  "gc", fn_Cache_inode_gc, "run the garbagge collector on the cache inode"},
-  {
   "hardlink", fn_Cache_inode_link, "create hard link"},
   {
   "init_cache", fn_Cache_inode_cache_init, "initialize filesystem"},
@@ -709,16 +678,6 @@ static command_def_t __attribute__ ((__unused__)) commands_Cache_inode[] =
   {
   "open_byname", fn_Cache_inode_open_by_name, "open an existing file by name"},
   {
-  "read", fn_Cache_inode_read, "reads the content of a data cached file"},
-  {
-  "recover_cache", fn_Cache_inode_recover_cache, "recover the data cache after a crash"},
-  {
-  "refresh_cache", fn_Cache_inode_refresh_cache,
-        "refreshes a previously Data cached entry"},
-  {
-  "release_cache", fn_Cache_inode_release_cache,
-        "releases a previously Data cached entry"},
-  {
   "rename", fn_Cache_inode_rename, "rename/move an object"},
   {
   "setattr", fn_Cache_inode_setattr, "change attributes of an object"},
@@ -730,8 +689,6 @@ static command_def_t __attribute__ ((__unused__)) commands_Cache_inode[] =
   "su", fn_Cache_inode_su, "change current user"},
   {
   "unlink", fn_Cache_inode_unlink, "unlink an entry in a directory"},
-  {
-  "write", fn_Cache_inode_write, "writes the content of a data cached file"},
   {
   NULL, NULL, NULL}             /* End of command list */
 };

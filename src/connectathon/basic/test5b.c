@@ -263,18 +263,6 @@ int main(int argc, char *argv[])
       printf("Enable to open the file '%s'\n", log_file);
       complete();
     }
-#ifdef _TOTO
-  if(etime != 0.0)
-    {
-      fprintf(log, "b5b\t%d\t%d\t%ld.%02ld\t%ld\n", (long)size, count, (long)time.tv_sec,
-              (long)time.tv_usec / 10000, (long)((double)size * ((double)count / etime)));
-    }
-  else
-    {
-      fprintf(log, "b5b\t%d\t%d\t%ld.%02ld\t%ld\n", (long)size, count, (long)time.tv_sec,
-              (long)time.tv_usec / 10000, (long)size * count);
-    }
-#endif
   fclose(log);
 
   complete();

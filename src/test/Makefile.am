@@ -19,8 +19,6 @@ COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
 	       ../RPCAL/librpcal.la				 \
                  ../NodeList/libNodeList.la                      \
                ../Cache_inode/libcache_inode.la                  \
-               ../File_Content/libcache_content.la               \
-               ../File_Content_Policy/libcache_content_policy.la \
                ../HashTable/libhashtable.la                      \
                ../LRU/liblru.la                                  \
                ../FSAL/libfsalcommon.la                          \

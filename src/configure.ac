@@ -903,7 +903,6 @@ AC_CONFIG_FILES([include/Makefile
                  RPCAL/gssd/Makefile
                  MainNFSD/Makefile
                  test/Makefile
-                 cmdline_tools/Makefile
                  snmp_adm/Makefile
                  example-fuse/Makefile
                  Docs/Makefile

@@ -35,11 +35,6 @@
 #include "log.h"
 #include "nfs_core.h"
 
-/* setting this variable to TRUE causes datacache
- * to be flushed by garbage collector.
- */
-extern unsigned int force_flush_by_signal;
-
 typedef struct __nfs_start_info
 {
   int dump_default_config;

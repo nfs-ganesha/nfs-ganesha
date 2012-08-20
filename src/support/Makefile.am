@@ -34,7 +34,6 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/HashData.h              \
                          ../include/HashTable.h             \
                          ../include/SemN.h                  \
-                         ../include/cache_content.h         \
                          ../include/cache_inode.h           \
                          ../include/common_utils.h          \
                          ../include/config_parsing.h        \

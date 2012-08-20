@@ -224,7 +224,7 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
           if(DebugLevel == -1)
             {
               LogMajor(COMPONENT_MFSL,
-                  "cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
+                  "ERROR: Invalid debug level name: \"%s\".",
                    key_value);
               MFSL_return(ERR_FSAL_INVAL, 0);
             }

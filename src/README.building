@@ -101,16 +101,6 @@ addresses of the machines you wish to have access to the export.
              Alphabet_Length = 10;
            }
            
-           FileContent_Client
-           {
-             Max_Fd = 100;
-             Use_OpenClose_cache = NO;
-           }
-           
-           FileContent_GC_Policy
-           {
-           }
-           
            CacheInode_Client
            {
              Attr_Expiration_Time = 2;
@@ -191,7 +181,6 @@ addresses of the machines you wish to have access to the export.
              MaxRead = 32768;
              MaxWrite = 32768;
              Filesystem_id = 10.1;
-             Cache_Data =  FALSE;
              Tag = "fs0";
              Use_NFS_Commit = TRUE;
              Use_Ganesha_Write_Buffer = FALSE;

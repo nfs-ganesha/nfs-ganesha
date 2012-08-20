@@ -167,11 +167,8 @@ int _9p_tools_errno( cache_inode_status_t cache_status )
 
      case CACHE_INODE_QUOTA_EXCEEDED:
 	rc = EDQUOT ;
-        break ; 
+        break ;
 
-     case CACHE_INODE_CACHE_CONTENT_ERROR:
-     case CACHE_INODE_CACHE_CONTENT_EXISTS:
-     case CACHE_INODE_CACHE_CONTENT_EMPTY:
      case CACHE_INODE_IO_ERROR:
      case CACHE_INODE_ASYNC_POST_ERROR:
      case CACHE_INODE_GET_NEW_LRU_ENTRY:

@@ -37,7 +37,6 @@ SUBDIRS = include             \
 
 # disable shell and command line tools.  broken wrt new api
 #          shell
-#          cmdline_tools
 
 if USE_FSAL_FUSE
 SUBDIRS += example-fuse

@@ -98,7 +98,6 @@
 #define CONF_EXPORT_NOSUID             "NOSUID"
 #define CONF_EXPORT_NOSGID             "NOSGID"
 #define CONF_EXPORT_PRIVILEGED_PORT    "PrivilegedPort"
-#define CONF_EXPORT_USE_DATACACHE      "Cache_Data"
 #define CONF_EXPORT_FS_SPECIFIC        "FS_Specific"
 #define CONF_EXPORT_FS_TAG             "Tag"
 #define CONF_EXPORT_MAX_OFF_WRITE      "MaxOffsetWrite"
@@ -139,7 +138,6 @@
 #define FLAG_EXPORT_NOSUID          0x000010000
 #define FLAG_EXPORT_NOSGID          0x000020000
 #define FLAG_EXPORT_PRIVILEGED_PORT 0x000040000
-#define FLAG_EXPORT_USE_DATACACHE   0x000080000
 #define FLAG_EXPORT_FS_SPECIFIC     0x000100000
 #define FLAG_EXPORT_FS_TAG          0x000200000
 #define FLAG_EXPORT_MAX_OFF_WRITE   0x000400000
@@ -1744,34 +1742,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
           set_options |= FLAG_EXPORT_PRIVILEGED_PORT;
         }
-      else if(!STRCMP(var_name, CONF_EXPORT_USE_DATACACHE))
-        {
-          /* check if it has not already been set */
-          if((set_options & FLAG_EXPORT_USE_DATACACHE) == FLAG_EXPORT_USE_DATACACHE)
-            {
-              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_DATACACHE");
-              continue;
-            }
-
-          switch (StrToBoolean(var_value))
-            {
-            case 1:
-              p_entry->options |= EXPORT_OPTION_USE_DATACACHE;
-              break;
-
-            case 0:
-              /*default (false) */
-              break;
-
-            default:           /* error */
-              LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
-                      var_name, var_value);
-              err_flag = TRUE;
-              continue;
-            }
-          set_options |= FLAG_EXPORT_USE_DATACACHE;
-        }
       else if(!STRCMP(var_name, CONF_EXPORT_PNFS))
         {
           /* check if it has not already been set */
@@ -2986,9 +2956,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
 {
       exportlist_t *pcurrent = NULL;
       cache_inode_status_t cache_status;
-#ifdef _CRASH_RECOVERY_AT_STARTUP
-      cache_content_status_t cache_content_status;
-#endif
       fsal_status_t fsal_status;
       cache_entry_t *pentry = NULL;
 

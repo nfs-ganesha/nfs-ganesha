@@ -695,8 +695,6 @@ void *admin_thread(void *UnusedArg);
 void *stats_thread(void *UnusedArg);
 void *long_processing_thread(void *UnusedArg);
 void *stat_exporter_thread(void *UnusedArg);
-void *file_content_gc_thread(void *UnusedArg);
-void *nfs_file_content_flush_thread(void *flush_data_arg);
 void *reaper_thread(void *UnusedArg);
 void *rpc_tcp_socket_manager_thread(void *Arg);
 void *sigmgr_thread( void * UnusedArg );
