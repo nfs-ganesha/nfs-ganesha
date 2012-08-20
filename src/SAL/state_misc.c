@@ -1210,9 +1210,9 @@ void state_wipe_file(cache_entry_t        * pentry)
          if it's a write lock. */
       had_lock = TRUE;
       pthread_rwlock_unlock(&pentry->state_lock);
-    }
 
-  pthread_rwlock_wrlock(&pentry->state_lock);
+      pthread_rwlock_wrlock(&pentry->state_lock);
+    }
 
   state_lock_wipe(pentry);
 
