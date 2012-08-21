@@ -2020,11 +2020,6 @@ void *worker_thread(void *IndexArg)
   char thr_name[32];
   gsh_xprt_private_t *xu = NULL;
 
-#ifdef _USE_SHARED_FSAL
-  unsigned int i = 0 ;
-  unsigned int fsalid = 0 ;
-#endif
-
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
 

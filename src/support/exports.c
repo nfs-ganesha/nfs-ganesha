@@ -755,7 +755,6 @@ static int BuildExportEntry(config_item_t        block,
                           FLAG_EXPORT_ACCESS_LIST |
                           FLAG_EXPORT_PSEUDO;
 
-      p_entry->status = EXPORTLIST_OK;
       p_entry->use_commit = TRUE;
       p_entry->use_ganesha_write_buffer = FALSE;
       p_entry->UseCookieVerifier = TRUE;
@@ -2743,7 +2742,6 @@ exportlist_t *BuildDefaultExport()
 
   /** @todo set default values here */
 
-  p_entry->status = EXPORTLIST_OK;
   p_entry->export_perms.anonymous_uid = (uid_t) ANON_UID;
 
   /* By default, export is RW */
@@ -3762,12 +3760,7 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
           /* Add this entry to the Cache Inode as a "root" entry */
           fsdata.fh_desc.start = (caddr_t) &fsal_handle;
           fsdata.fh_desc.len = 0;
-	  (void) FSAL_ExpandHandle(
-#ifdef _USE_SHARED_FSAL
-		                   context[pcurrent->fsalid].export_context,
-#else
-				   context.export_context,
-#endif
+	  (void) FSAL_ExpandHandle(context.export_context,
 				   FSAL_DIGEST_SIZEOF,
 				   &fsdata.fh_desc);
 

@@ -155,7 +155,6 @@ typedef struct exportlist__
 {
   struct glist_head exp_list;
   unsigned short id;            /* entry identifier   */
-  exportlist_status_t status;   /* entry's status     */
   char dirname[MAXPATHLEN+2];   /* path relative to fs root */
   char fullpath[MAXPATHLEN+2];  /* the path from the root */
   char pseudopath[MAXPATHLEN+2];/* nfsv4 pseudo-filesystem 'virtual' path */
@@ -170,8 +169,6 @@ typedef struct exportlist__
 
   export_perms_t export_perms;  /* avail. mnt options */
 
-  unsigned char seckey[EXPORT_KEY_SIZE];        /* Checksum for FH validity */
-
   bool_t use_ganesha_write_buffer;
   bool_t use_commit;
 
@@ -184,7 +181,6 @@ typedef struct exportlist__
   fsal_off_t MaxOffsetRead;     /* Maximum Offset allowed for read                   */
   unsigned int UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
-  unsigned int fsalid ;
 
   pthread_mutex_t   exp_state_mutex; /* Mutex to protect the following two lists */
   struct glist_head exp_state_list;  /* List of NFS v4 state belonging to this export */
