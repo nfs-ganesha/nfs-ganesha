@@ -169,7 +169,7 @@ exportlist_t *nfs_Get_export_by_path(struct glist_head * exportlist,
   /*
    * Find the export for the path
    */
-  glist_for_each(glist, nfs_param.pexportlist)
+  glist_for_each(glist, exportlist)
     {
       p_current_item = glist_entry(glist, exportlist_t, exp_list);
 
@@ -206,7 +206,7 @@ exportlist_t *nfs_Get_export_by_pseudo(struct glist_head * exportlist,
   /*
    * Find the export for the path
    */
-  glist_for_each(glist, nfs_param.pexportlist)
+  glist_for_each(glist, exportlist)
     {
       p_current_item = glist_entry(glist, exportlist_t, exp_list);
 
@@ -243,7 +243,7 @@ exportlist_t *nfs_Get_export_by_tag(struct glist_head * exportlist,
   /*
    * Find the export for the path
    */
-  glist_for_each(glist, nfs_param.pexportlist)
+  glist_for_each(glist, exportlist)
     {
       p_current_item = glist_entry(glist, exportlist_t, exp_list);
 
