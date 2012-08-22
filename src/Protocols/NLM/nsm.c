@@ -88,7 +88,7 @@ bool_t nsm_monitor(state_nsm_client_t *host)
   enum clnt_stat     ret;
   struct mon         nsm_mon;
   struct sm_stat_res res;
-  struct timeval     tout = { 5, 0 };
+  struct timeval     tout = { 25, 0 };
 
   if(host == NULL)
     return TRUE;
@@ -171,7 +171,7 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
   enum clnt_stat ret;
   struct sm_stat res;
   struct mon_id  nsm_mon_id;
-  struct timeval tout = { 5, 0 };
+  struct timeval tout = { 25, 0 };
 
   if(host == NULL)
     return TRUE;
@@ -242,7 +242,7 @@ void nsm_unmonitor_all(void)
   enum clnt_stat ret;
   struct sm_stat res;
   struct my_id   nsm_id;
-  struct timeval tout = { 5, 0 };
+  struct timeval tout = { 25, 0 };
 
   nsm_id.my_prog = NLMPROG;
   nsm_id.my_vers = NLM4_VERS;
