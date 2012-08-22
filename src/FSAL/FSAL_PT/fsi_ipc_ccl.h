@@ -351,7 +351,8 @@ struct file_handles_struct_t {
 // ----------------------------------------------------------------------------
 struct fsi_struct_dir_t {
   uint64_t m_dir_handle_index;
-  uint64_t m_last_ino;  // last inode we responded with
+  uint64_t m_last_ino;       // last inode we responded with
+  uint64_t m_exportId;
   char     dname[PATH_MAX];
   struct dirent dbuf;        // generic DIRENT buffer
 };
@@ -578,8 +579,10 @@ int delete_dir_handle(int dir_handle_index);
 int delete_fsi_handle(int handle_index);
 int ccl_cache_name_and_handle(char *handle, char *name);
 int ccl_check_handle_index (int handle_index);
-int ccl_find_handle_by_name(const char * filename);
-int ccl_find_dir_handle_by_name(const char * filename);
+int ccl_find_handle_by_name_and_export(const char * filename,
+                                       ccl_context_t * handle);
+int ccl_find_dir_handle_by_name_and_export(const char * filename,
+                                          ccl_context_t * handle);
 int ccl_get_name_from_handle(char *handle, char *name);
 int ccl_stat(ccl_context_t * handle,
              const char        * filename,

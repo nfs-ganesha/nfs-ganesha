@@ -318,7 +318,9 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
       } else {
         st_mode_in_cache = (buffxstat.buffstat.st_mode 
                             | fsal_type2unix(current_attrs.type));
-        fsi_update_cache_stat(fsi_name, st_mode_in_cache);
+        fsi_update_cache_stat(fsi_name, 
+                              st_mode_in_cache, 
+                              p_context->export_context->pt_export_id);
         FSI_TRACE(FSI_INFO, 
                   "Chmod SUCCEED with st_mode in cache being %o",
                   st_mode_in_cache);

@@ -1012,13 +1012,17 @@ void ptfsal_print_handle(char * handle)
 // -----------------------------------------------------------------------------
 int
 fsi_update_cache_stat(const char * p_filename,
-                      uint64_t     newMode)
+                      uint64_t     newMode,
+                      uint64_t     export_id)
 {
   int index;
   int rc;
+  ccl_context_t ccl_context;
 
+  memset (&ccl_context, 0, sizeof(ccl_context_t));
+  ccl_context.export_id = export_id;
   pthread_mutex_lock(&g_non_io_mutex);
-  index = ccl_find_handle_by_name(p_filename);
+  index = ccl_find_handle_by_name_and_export(p_filename,&ccl_context);
   if (index != -1) {
     g_fsi_handles.m_handle[index].m_stat.st_mode = newMode;
     rc = 0;

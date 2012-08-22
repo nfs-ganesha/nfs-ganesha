@@ -64,7 +64,8 @@ int  fsi_get_name_from_handle(fsal_op_context_t * p_context,
 int  fsi_update_cache_name(char * oldname,
                            char * newname);
 int  fsi_update_cache_stat(const char * p_filename,
-                           uint64_t     newMode);
+                           uint64_t     newMode,
+                           uint64_t     export_id);
 void fsi_remove_cache_by_fullpath(char * path);
 
 void fsi_remove_cache_by_handle(char * handle);
