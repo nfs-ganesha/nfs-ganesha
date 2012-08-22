@@ -38,13 +38,6 @@
 #ifndef _FSAL_TYPES__SPECIFIC_H
 #define _FSAL_TYPES__SPECIFIC_H
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 /*
  * FS relative includes
  */
@@ -188,7 +181,7 @@ typedef struct
   char keytab[MAXPATHLEN];
   unsigned int cred_lifetime;
   unsigned int sec_type;
-  bool_t active_krb5;
+  bool active_krb5;
 
   /* initialization info for handle mapping */
 

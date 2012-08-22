@@ -127,7 +127,7 @@ fsal_status_t ZFSFSAL_readdir(fsal_dir_t * p_dir_descriptor, /* IN */
                               fsal_dirent_t * p_pdirent,        /* OUT */
                               fsal_cookie_t * p_end_position,        /* OUT */
                               fsal_count_t * p_nb_entries,      /* OUT */
-                              fsal_boolean_t * p_end_of_dir /* OUT */ );
+                              bool * p_end_of_dir /* OUT */ );
 
 fsal_status_t ZFSFSAL_closedir(fsal_dir_t * p_dir_descriptor /* IN */ );
 
@@ -150,7 +150,7 @@ fsal_status_t ZFSFSAL_read(fsal_file_t * p_file_descriptor,  /* IN */
                            fsal_size_t buffer_size,     /* IN */
                            caddr_t buffer,      /* OUT */
                            fsal_size_t * p_read_amount, /* OUT */
-                           fsal_boolean_t * p_end_of_file /* OUT */ );
+                           bool * p_end_of_file /* OUT */ );
 
 fsal_status_t ZFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
                             fsal_op_context_t * p_context,   /* IN */
@@ -205,7 +205,7 @@ fsal_status_t ZFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
                              fsal_attrib_list_t * p_tgt_dir_attributes /* [ IN/OUT ] */ );
 
 void ZFSFSAL_get_stats(fsal_statistics_t * stats,       /* OUT */
-                       fsal_boolean_t reset /* IN */ );
+                       bool reset /* IN */ );
 
 fsal_status_t ZFSFSAL_readlink(fsal_handle_t * p_linkhandle, /* IN */
                                fsal_op_context_t * p_context,        /* IN */

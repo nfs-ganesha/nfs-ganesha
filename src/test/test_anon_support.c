@@ -90,12 +90,12 @@ struct user_cred test_access(char *addr, char *hostname,
   sockaddr_t *pssaddr = &ssaddr;
   int errcode;
   int export_check_result;
-  bool_t proc_makes_write;
+  bool proc_makes_write;
 
   if (operation == OP_WRITE || operation == OP_MDONLY_WRITE)
-    proc_makes_write = TRUE;
+    proc_makes_write = true;
   else
-    proc_makes_write = FALSE;
+    proc_makes_write = false;
 
   user_credentials.caller_uid = INVALID_UID;
   user_credentials.caller_gid = INVALID_GID;

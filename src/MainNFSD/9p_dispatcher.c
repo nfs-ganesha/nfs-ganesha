@@ -66,6 +66,7 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 #include "9p.h"
+#include <stdbool.h>
 
 #ifndef _USE_TIRPC_IPV6
   #define P_FAMILY AF_INET
@@ -542,7 +543,7 @@ void _9p_dispatcher_svc_run( long int sock )
 
 
   LogEvent( COMPONENT_9P_DISPATCH, "9P dispatcher started" ) ;
-  while(TRUE)
+  while(true)
     {
       if( ( newsock = accept( sock, (struct sockaddr *)&addr, &addrlen ) ) < 0 )
        {

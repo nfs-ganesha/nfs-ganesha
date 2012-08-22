@@ -93,7 +93,7 @@ fsal_status_t FUSEFSAL_unlink(fsal_handle_t * parent,     /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_unlink);
+    Return(fuse2fsal_error(rc, false), rc, INDEX_FSAL_unlink);
 
   /* check type */
 
@@ -132,7 +132,7 @@ fsal_status_t FUSEFSAL_unlink(fsal_handle_t * parent,     /* IN */
     }
 
   if(rc)
-    Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_unlink);
+    Return(fuse2fsal_error(rc, false), rc, INDEX_FSAL_unlink);
 
   if(parentdir_attributes)
     {

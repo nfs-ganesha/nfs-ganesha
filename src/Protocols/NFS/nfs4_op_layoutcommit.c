@@ -118,7 +118,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
 
         if ((nfs_status = nfs4_sanity_check_FH(data,
                                                REGULAR_FILE,
-                                               FALSE))
+                                               false))
             != NFS4_OK) {
                 goto out;
         }
@@ -128,12 +128,12 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
 
         /* Suggest a new size, if we have it */
         if (arg_LAYOUTCOMMIT4->loca_last_write_offset.no_newoffset) {
-                arg.new_offset = TRUE;
+                arg.new_offset = true;
                 arg.last_write =
                         arg_LAYOUTCOMMIT4->loca_last_write_offset
                         .newoffset4_u.no_offset;
         } else {
-                arg.new_offset = FALSE;
+                arg.new_offset = false;
         }
 
         arg.reclaim = arg_LAYOUTCOMMIT4->loca_reclaim;
@@ -149,7 +149,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
 
         /* Suggest a new modification time if we have it */
         if (arg_LAYOUTCOMMIT4->loca_time_modify.nt_timechanged) {
-                arg.time_changed = TRUE;
+                arg.time_changed = true;
                 arg.new_time.seconds =
                         arg_LAYOUTCOMMIT4->loca_time_modify
                         .newtime4_u.nt_time.seconds;

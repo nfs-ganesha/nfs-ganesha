@@ -101,7 +101,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
   res_CREATE4.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_CREATE4.status = nfs4_sanity_check_FH(data, DIRECTORY, FALSE);
+  res_CREATE4.status = nfs4_sanity_check_FH(data, DIRECTORY, false);
   if(res_CREATE4.status != NFS4_OK)
     goto out;
 
@@ -127,7 +127,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
       goto out;
     }
 
-  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+  if (!(nfs_export_check_security(data->reqp, data->pexport)))
     {
       res_CREATE4.status = NFS4ERR_PERM;
       goto out;
@@ -246,7 +246,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
       /* The create_arg structure contains the information "newly created directory"
        * to be passed to cache_inode_new_entry from cache_inode_create */
-      create_arg.newly_created_dir = TRUE ;
+      create_arg.newly_created_dir = true;
 
       if((entry_new = cache_inode_create(entry_parent,
                                          name,

@@ -253,14 +253,14 @@ fsal_status_t XFSFSAL_read(fsal_file_t * p_file_descriptor,  /* IN */
                            fsal_size_t buffer_size,     /* IN */
                            caddr_t buffer,      /* OUT */
                            fsal_size_t * p_read_amount, /* OUT */
-                           fsal_boolean_t * p_end_of_file       /* OUT */
+                           bool * p_end_of_file       /* OUT */
     )
 {
 
   size_t i_size;
   ssize_t nb_read;
   int rc, errsv;
-  int pcall = FALSE;
+  int pcall = false;
 
   /* sanity checks. */
 
@@ -279,7 +279,7 @@ fsal_status_t XFSFSAL_read(fsal_file_t * p_file_descriptor,  /* IN */
         {
         case FSAL_SEEK_CUR:
           /* set position plus offset */
-          pcall = FALSE;
+          pcall = false;
           TakeTokenFSCall();
           rc = lseek(((xfsfsal_file_t *)p_file_descriptor)->fd,
 		     p_seek_descriptor->offset, SEEK_CUR);
@@ -289,14 +289,14 @@ fsal_status_t XFSFSAL_read(fsal_file_t * p_file_descriptor,  /* IN */
 
         case FSAL_SEEK_SET:
           /* use pread/pwrite call */
-          pcall = TRUE;
+          pcall = true;
           rc = 0;
 	  errsv = 0;
           break;
 
         case FSAL_SEEK_END:
           /* set end of file plus offset */
-          pcall = FALSE;
+          pcall = false;
 
           TakeTokenFSCall();
           rc = lseek(((xfsfsal_file_t *)p_file_descriptor)->fd,
@@ -386,7 +386,7 @@ fsal_status_t XFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
   ssize_t nb_written;
   size_t i_size;
   int rc, errsv;
-  int pcall = FALSE;
+  int pcall = false;
 
   /* sanity checks. */
   if(!p_file_descriptor || !buffer || !p_write_amount)
@@ -409,7 +409,7 @@ fsal_status_t XFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
         {
         case FSAL_SEEK_CUR:
           /* set position plus offset */
-          pcall = FALSE;
+          pcall = false;
 
           TakeTokenFSCall();
           rc = lseek(((xfsfsal_file_t *)p_file_descriptor)->fd, p_seek_descriptor->offset, SEEK_CUR);
@@ -419,14 +419,14 @@ fsal_status_t XFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
 
         case FSAL_SEEK_SET:
           /* set absolute position to offset */
-          pcall = TRUE;
+          pcall = true;
           rc = 0;
 	  errsv = 0;
           break;
 
         case FSAL_SEEK_END:
           /* set end of file plus offset */
-          pcall = FALSE;
+          pcall = false;
 
           TakeTokenFSCall();
           rc = lseek(((xfsfsal_file_t *)p_file_descriptor)->fd, p_seek_descriptor->offset, SEEK_END);

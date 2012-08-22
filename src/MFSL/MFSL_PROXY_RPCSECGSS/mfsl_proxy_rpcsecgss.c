@@ -254,7 +254,7 @@ fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                            fsal_dirent_t * pdirent,     /* OUT */
                            fsal_cookie_t * end_position,        /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
-                           fsal_boolean_t * end_of_dir, /* OUT */
+                           bool * end_of_dir, /* OUT */
                            mfsl_context_t * p_mfsl_context      /* IN */
     )
 {
@@ -315,7 +315,7 @@ fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
                         fsal_size_t * read_amount,      /* OUT  */
-                        fsal_boolean_t * end_of_file,   /* OUT  */
+                        bool * end_of_file,   /* OUT  */
                         mfsl_context_t * p_mfsl_context /* IN */
     )
 {

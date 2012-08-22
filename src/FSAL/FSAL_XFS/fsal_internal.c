@@ -68,22 +68,22 @@ static fsal_staticfsinfo_t default_posix_info = {
   _POSIX_LINK_MAX,              /* max links */
   FSAL_MAX_NAME_LEN,            /* max filename */
   FSAL_MAX_PATH_LEN,            /* max pathlen */
-  TRUE,                         /* no_trunc */
-  TRUE,                         /* chown restricted */
-  FALSE,                        /* case insensitivity */
-  TRUE,                         /* case preserving */
+  true,                         /* no_trunc */
+  true,                         /* chown restricted */
+  false,                        /* case insensitivity */
+  true,                         /* case preserving */
   FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
-  TRUE,                         /* hard link support */
-  TRUE,                         /* symlink support */
-  FALSE,                        /* lock management */
-  FALSE,                        /* lock owners */
-  FALSE,                        /* async blocking locks */
-  TRUE,                         /* named attributes */
-  TRUE,                         /* handles are unique and persistent */
+  true,                         /* hard link support */
+  true,                         /* symlink support */
+  false,                        /* lock management */
+  false,                        /* lock owners */
+  false,                        /* async blocking locks */
+  true,                         /* named attributes */
+  true,                         /* handles are unique and persistent */
   {10, 0},                      /* Duration of lease at FS in seconds */
   FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
-  TRUE,                         /* can change times */
-  TRUE,                         /* homogenous */
+  true,                         /* can change times */
+  true,                         /* homogenous */
   POSIX_SUPPORTED_ATTRIBUTES,   /* supported attributes */
   0,                            /* maxread size */
   0,                            /* maxwrite size */
@@ -96,7 +96,7 @@ static fsal_staticfsinfo_t default_posix_info = {
 };
 
 /* variables for limiting the calls to the filesystem */
-static int limit_calls = FALSE;
+static int limit_calls = false;
 semaphore_t sem_fs_calls;
 
 /* threads keys for stats */
@@ -251,7 +251,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 void TakeTokenFSCall()
 {
   /* no limits */
-  if(limit_calls == FALSE)
+  if(limit_calls == false)
     return;
 
   /* there is a limit */
@@ -262,7 +262,7 @@ void TakeTokenFSCall()
 void ReleaseTokenFSCall()
 {
   /* no limits */
-  if(limit_calls == FALSE)
+  if(limit_calls == false)
     return;
 
   /* there is a limit */
@@ -287,7 +287,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
     {
       int rc;
 
-      limit_calls = TRUE;
+      limit_calls = true;
 
       rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 

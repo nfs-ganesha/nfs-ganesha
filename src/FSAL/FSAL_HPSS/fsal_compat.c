@@ -146,7 +146,7 @@ fsal_status_t WRAP_HPSSFSAL_readdir(fsal_dir_t * p_dir_descriptor,      /* IN */
                                     fsal_dirent_t * p_pdirent,  /* OUT */
                                     fsal_cookie_t * p_end_position,     /* OUT */
                                     fsal_count_t * p_nb_entries,        /* OUT */
-                                    fsal_boolean_t * p_end_of_dir /* OUT */ )
+                                    bool * p_end_of_dir /* OUT */ )
 {
   hpssfsal_cookie_t hpsscookie;
 
@@ -196,7 +196,7 @@ fsal_status_t WRAP_HPSSFSAL_read(fsal_file_t * p_file_descriptor,       /* IN */
                                  fsal_size_t buffer_size,       /* IN */
                                  caddr_t buffer,        /* OUT */
                                  fsal_size_t * p_read_amount,   /* OUT */
-                                 fsal_boolean_t * p_end_of_file /* OUT */ )
+                                 bool * p_end_of_file /* OUT */ )
 {
   return HPSSFSAL_read((hpssfsal_file_t *) p_file_descriptor, p_seek_descriptor,
                        buffer_size, buffer, p_read_amount, p_end_of_file);
@@ -393,7 +393,7 @@ fsal_status_t WRAP_HPSSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,      
 }
 
 void WRAP_HPSSFSAL_get_stats(fsal_statistics_t * stats, /* OUT */
-                             fsal_boolean_t reset /* IN */ )
+                             bool reset /* IN */ )
 {
   return HPSSFSAL_get_stats(stats, reset);
 }

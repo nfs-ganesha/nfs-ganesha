@@ -241,7 +241,7 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
   direntbuf.DirEntry.DirEntry_len = 0;
   direntbuf.DirEntry.DirEntry_val = NULL;
 
-  if(GetAttributes == TRUE)
+  if(GetAttributes)
     {
       /*
        * Ask for all the attributes that are managed by the

@@ -221,7 +221,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
     case NFS_V3:
       dir_name = parg->arg_mkdir3.where.name;
 
-      if(parg->arg_mkdir3.attributes.mode.set_it == TRUE)
+      if(parg->arg_mkdir3.attributes.mode.set_it)
         mode = parg->arg_mkdir3.attributes.mode.set_mode3_u.mode;
       else
         mode = 0;
@@ -251,7 +251,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
         {
           /* The create_arg structure contains the information "newly created directory"
            * to be passed to cache_inode_new_entry from cache_inode_create */
-          create_arg.newly_created_dir = TRUE;
+          create_arg.newly_created_dir = true;
 
           /* Create the directory */
           if((dir_pentry = cache_inode_create(parent_pentry,
@@ -424,7 +424,7 @@ out:
 void nfs_Mkdir_Free(nfs_res_t * resp)
 {
   if((resp->res_mkdir3.status == NFS3_OK) &&
-     (resp->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows == TRUE))
+     (resp->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows))
     gsh_free(resp->res_mkdir3.MKDIR3res_u.resok.obj
              .post_op_fh3_u.handle.data.data_val);
 }                               /* nfs_Mkdir_Free */

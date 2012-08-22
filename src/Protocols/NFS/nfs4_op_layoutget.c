@@ -137,7 +137,7 @@ acquire_layout_state(compound_data_t *data,
                 if (state_status == STATE_SUCCESS) {
                         /* Flag indicating whether all layouts were returned
                            and the state was deleted */
-                        bool_t deleted = FALSE;
+                        bool deleted = false;
                         struct pnfs_segment entire = {
                                 .io_mode = LAYOUTIOMODE4_ANY,
                                 .offset = 0,
@@ -147,8 +147,8 @@ acquire_layout_state(compound_data_t *data,
                         if ((nfs_status
                              = nfs4_return_one_state(data->current_entry,
                                                      data->req_ctx,
-                                                     TRUE,
-                                                     FALSE,
+                                                     true,
+                                                     false,
                                                      0,
                                                      condemned_state,
                                                      entire,
@@ -168,7 +168,7 @@ acquire_layout_state(compound_data_t *data,
                 }
 
                 layout_data.layout.state_layout_type = layout_type;
-                layout_data.layout.state_return_on_close = FALSE;
+                layout_data.layout.state_return_on_close = false;
 
                 if (state_add(data->current_entry,
                               STATE_TYPE_LAYOUT,
@@ -346,7 +346,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op,
 
         if ((nfs_status = nfs4_sanity_check_FH(data,
                                                REGULAR_FILE,
-                                               FALSE))
+                                               false))
             != NFS4_OK) {
                 goto out;
         }
@@ -407,7 +407,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op,
          * sense to pass the client-supplied value to the FSAL.  When
          * we get callbacks, it will.
          */
-        res.signal_available = FALSE;
+        res.signal_available = false;
 
         do {
                 /* Since the FSAL writes to tis structure with every

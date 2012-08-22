@@ -41,8 +41,8 @@
 
 #include "rpcal.h"
 
-bool_t Svcauth_none_destroy(SVCAUTH *);
-bool_t Svcauth_none_wrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
+bool Svcauth_none_destroy(SVCAUTH *);
+bool Svcauth_none_wrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
 
 struct svc_auth_ops Svc_auth_none_ops = {
   Svcauth_none_wrap,
@@ -55,18 +55,18 @@ SVCAUTH Svc_auth_none = {
   NULL,
 };
 
-bool_t Svcauth_none_destroy(SVCAUTH * auth)
+bool Svcauth_none_destroy(SVCAUTH * auth)
 {
-  return (TRUE);
+  return (true);
 }
 
-bool_t Svcauth_none_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr)
+bool Svcauth_none_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr)
 {
   return ((*xdr_func) (xdrs, xdr_ptr));
 }
 
 enum auth_stat
-Gssrpc__svcauth_none(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispatch)
+Gssrpc__svcauth_none(struct svc_req *rqst, struct rpc_msg *msg, bool * no_dispatch)
 {
   rqst->rq_xprt->xp_auth = &Svc_auth_none;
 

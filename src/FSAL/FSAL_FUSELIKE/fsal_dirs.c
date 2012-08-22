@@ -81,7 +81,7 @@ fsal_status_t FUSEFSAL_opendir(fsal_handle_t * dir_hdl,  /* IN */
       ReleaseTokenFSCall();
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_opendir);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_opendir);
     }
   else
     {
@@ -136,7 +136,7 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
 {
   fsal_status_t status;
   struct stat tmp_statbuff;
-  int err = FALSE;
+  int err = false;
   fusefsal_handle_t *fill_handle = (fusefsal_handle_t *) &to_be_filled->handle;
 
   if(stbuf)
@@ -171,7 +171,7 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
           FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
           /* set getattr error bit in attr mask */
           FSAL_SET_MASK(to_be_filled->attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
-          err = TRUE;
+          err = true;
         }
     }
 
@@ -312,7 +312,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
                                fsal_dirent_t * pdirent, /* OUT */
                                fsal_cookie_t * end_position,        /* OUT */
                                fsal_count_t * nb_entries,       /* OUT */
-                               fsal_boolean_t * end_of_dir      /* OUT */
+                               bool * end_of_dir      /* OUT */
     )
 {
   int rc;
@@ -362,7 +362,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_readdir);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_readdir);
   else if(FSAL_IS_ERROR(reqbuff.status))
     Return(reqbuff.status.major, reqbuff.status.minor, INDEX_FSAL_readdir);
 
@@ -371,7 +371,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
   if(reqbuff.nb_entries == 0)
     {
       *end_position = start_position;
-      *end_of_dir = TRUE;
+      *end_of_dir = true;
       *nb_entries = 0;
 
       LogFullDebug(COMPONENT_FSAL, "No entries found");
@@ -503,7 +503,7 @@ fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_desc     /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_closedir);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_closedir);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 

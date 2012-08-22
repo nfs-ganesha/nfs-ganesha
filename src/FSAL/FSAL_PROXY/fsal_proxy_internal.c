@@ -380,7 +380,7 @@ fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfun
  * @param fileid       [IN]  the file id for this entry
  * @param pfsal_handle [OUT] the resulting FSAL Handle
  *
- * @return TRUE if OK, FALSE otherwise
+ * @return true if OK, false otherwise
  *
  */
 int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
@@ -390,7 +390,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
   proxyfsal_handle_t * pfsal_handle = (proxyfsal_handle_t *) fsal_handle;
 
   if(pnfs4_handle == NULL || pfsal_handle == NULL)
-    return FALSE;
+    return false;
 
   if(isFullDebug(COMPONENT_FSAL))
     {
@@ -429,7 +429,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
                      "CRITICAL ERROR: ==========> Filehandle mismatch n ifsal_internal_proxy_create");
     }
 
-  return TRUE;
+  return true;
 }                               /* fsal_internal_proxy_create_fh */
 
 /**
@@ -440,7 +440,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
  * @param pnfs4_handle [OUT] the NFSv4 Handle
  * @param pfsal_handle [IN]  the resulting FSAL Handle
  *
- * @return TRUE if OK, FALSE otherwise
+ * @return true if OK, false otherwise
  *
  */
 int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle,
@@ -449,7 +449,7 @@ int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle,
   proxyfsal_handle_t * pfsal_handle = (proxyfsal_handle_t *) fsal_handle;
 
   if(pnfs4_handle == NULL || pfsal_handle == NULL)
-    return FALSE;
+    return false;
 
   pnfs4_handle->nfs_fh4_len = pfsal_handle->data.srv_handle_len;
   pnfs4_handle->nfs_fh4_val = pfsal_handle->data.srv_handle_val;
@@ -461,7 +461,7 @@ int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle,
       LogFullDebug(COMPONENT_FSAL, "fsal_internal_proxy_extract_fh: input nfsv4 server handle=%s\n", outstr);
     }
 
-  return TRUE;
+  return true;
 }                               /* fsal_internal_proxy_extract_fh */
 
 /**
@@ -472,7 +472,7 @@ int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle,
  * @param pname   [IN]  the fsal name
  * @param utf8str [OUT] the resulting UTF8 str
  *
- * @return TRUE if OK, FALSE otherwise
+ * @return true if OK, false otherwise
  *
  */
 
@@ -482,23 +482,23 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
   fsal_status_t fsal_status;
 
   if(pname == NULL || utf8str == NULL)
-    return FALSE;
+    return false;
 
   fsal_status = FSAL_name2str(pname, tmpstr, FSAL_MAX_NAME_LEN);
   if(fsal_status.major != ERR_FSAL_NO_ERROR)
-    return FALSE;
+    return false;
 
   if(utf8str->utf8string_len == 0)
     {
       if((utf8str->utf8string_val = gsh_malloc(pname->len)) == NULL)
-        return FALSE;
+        return false;
       else
         utf8str->utf8string_len = pname->len;
     }
 
   if(str2utf8(tmpstr, utf8str) == -1)
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }                               /* fsal_internal_proxy_fsal_name_2_utf8 */
 
 /**
@@ -509,7 +509,7 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
  * @param ppath   [IN]  the fsal path
  * @param utf8str [OUT] the resulting UTF8 str
  *
- * @return TRUE if OK, FALSE otherwise
+ * @return true if OK, false otherwise
  *
  */
 
@@ -519,24 +519,24 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
   fsal_status_t fsal_status;
 
   if(ppath == NULL || utf8str == NULL)
-    return FALSE;
+    return false;
 
   fsal_status = FSAL_path2str(ppath, tmpstr, FSAL_MAX_NAME_LEN);
   if(fsal_status.major != ERR_FSAL_NO_ERROR)
-    return FALSE;
+    return false;
 
   if(utf8str->utf8string_len == 0)
     {
       if((utf8str->utf8string_val = gsh_malloc(ppath->len)) == NULL)
-        return FALSE;
+        return false;
       else
         utf8str->utf8string_len = ppath->len;
     }
 
   if(str2utf8(tmpstr, utf8str) == -1)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }                               /* fsal_internal_proxy_fsal_path_2_utf8 */
 
 /**
@@ -547,7 +547,7 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
  * @param ppath   [IN]  the fsal path
  * @param utf8str [OUT] the resulting UTF8 str
  *
- * @return TRUE if OK, FALSE otherwise
+ * @return true if OK, false otherwise
  *
  */
 
@@ -557,16 +557,16 @@ int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8s
   fsal_status_t fsal_status;
 
   if(ppath == NULL || utf8str == NULL)
-    return FALSE;
+    return false;
 
   if(utf82str(tmpstr, sizeof(tmpstr), utf8str) == -1)
-    return FALSE;
+    return false;
 
   fsal_status = FSAL_str2path(tmpstr, FSAL_MAX_PATH_LEN, ppath);
   if(fsal_status.major != ERR_FSAL_NO_ERROR)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }                               /* fsal_internal_proxy_fsal_utf8_2_path */
 
 /**
@@ -577,7 +577,7 @@ int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8s
  * @param pname   [IN]  the fsal name
  * @param utf8str [OUT] the resulting UTF8 str
  *
- * @return TRUE if OK, FALSE otherwise
+ * @return true if OK, false otherwise
  *
  */
 
@@ -587,16 +587,16 @@ int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8s
   fsal_status_t fsal_status;
 
   if(pname == NULL || utf8str == NULL)
-    return FALSE;
+    return false;
 
   if(utf82str(tmpstr, sizeof(tmpstr), utf8str) == -1)
-    return FALSE;
+    return false;
 
   fsal_status = FSAL_str2name(tmpstr, FSAL_MAX_NAME_LEN, pname);
   if(fsal_status.major != ERR_FSAL_NO_ERROR)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }                               /* fsal_internal_proxy_fsal_utf8_2_name */
 
 /**
@@ -828,7 +828,7 @@ fsal_proxy_create_rpc_clnt(proxyfsal_op_context_t * ctx)
     }
   else if(!strcmp(ctx->srv_proto, "tcp"))
     {
-      if( ctx->use_privileged_client_port  == TRUE )
+      if( ctx->use_privileged_client_port  == true )
         {
 	  if( (sock = rresvport( &priv_port ) )< 0 )
            {
@@ -879,7 +879,7 @@ fsal_proxy_create_rpc_clnt(proxyfsal_op_context_t * ctx)
   ctx->socket = sock;
 
 #ifdef _USE_GSSRPC
-  if(global_fsal_proxy_specific_info.active_krb5 == TRUE)
+  if(global_fsal_proxy_specific_info.active_krb5 == true)
     {
       fsal_status = fsal_internal_set_auth_gss(ctx);
       if(FSAL_IS_ERROR(fsal_status))
@@ -993,7 +993,7 @@ fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd)
       return fsal_status;
     }
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &pfd->fhandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &pfd->fhandle) == false)
     {
       fsal_status.major = ERR_FSAL_FAULT;
       fsal_status.minor = 0;
@@ -1061,7 +1061,7 @@ fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd)
 void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
 {
   static char hostname[MAXNAMLEN];
-  static bool_t done = FALSE;
+  static bool done = false;
 
   P(p_thr_context->lock);
   switch (p_thr_context->rpc_client->cl_auth->ah_cred.oa_flavor)
@@ -1076,7 +1076,7 @@ void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
           if(gethostname(hostname, MAXNAMLEN) == -1)
             strncpy(hostname, "NFS-GANESHA/Proxy", MAXNAMLEN);
 
-          done = TRUE;
+          done = true;
         }
       auth_destroy(p_thr_context->rpc_client->cl_auth);
 

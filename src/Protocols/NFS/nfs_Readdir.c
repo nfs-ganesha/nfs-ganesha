@@ -67,14 +67,14 @@
    difficult to refactor since the differences between NFSv2 and
    NFSv3 are more a matter of data types than functionality. */
 
-static bool_t nfs2_readdir_callback(void* opaque,
-                                    char *name,
-                                    struct fsal_obj_handle *obj_hdl,
-                                    uint64_t cookie);
-static bool_t nfs3_readdir_callback(void* opaque,
-                                    char *name,
-                                    struct fsal_obj_handle *obj_hdl,
-                                    uint64_t cookie);
+static bool nfs2_readdir_callback(void* opaque,
+                                  char *name,
+                                  struct fsal_obj_handle *obj_hdl,
+                                  uint64_t cookie);
+static bool nfs3_readdir_callback(void* opaque,
+                                  char *name,
+                                  struct fsal_obj_handle *obj_hdl,
+                                  uint64_t cookie);
 static void free_entry2s(entry2 *entry2s);
 static void free_entry3s(entry3 *entry3s);
 
@@ -155,7 +155,7 @@ nfs_Readdir(nfs_arg_t *arg,
      unsigned int num_entries;
      unsigned long estimated_num_entries = 0;
      object_file_type_t dir_filetype = 0;
-     bool_t eod_met = FALSE;
+     bool eod_met = false;
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
      cache_inode_status_t cache_status_gethandle = CACHE_INODE_SUCCESS;
      int rc = NFS_REQ_OK;
@@ -403,10 +403,20 @@ nfs_Readdir(nfs_arg_t *arg,
 
      if (req->rq_vers == NFS_V2) {
           RES_READDIR2_OK.entries = cb2.entries;
-          RES_READDIR2_OK.eof = eod_met;
+          /* This bit of weirdness is due to XDR structures using the
+             older bool_t type rather than the C99 bool. */
+          if (eod_met) {
+              RES_READDIR2_OK.eof = TRUE;
+          } else {
+              RES_READDIR2_OK.eof = FALSE;
+          }
      } else if (req->rq_vers == NFS_V3) {
           RES_READDIR3_OK.reply.entries = cb3.entries;
-          RES_READDIR3_OK.reply.eof = eod_met;
+          if (eod_met) {
+              RES_READDIR3_OK.reply.eof = TRUE;
+          } else {
+              RES_READDIR3_OK.reply.eof = FALSE;
+          }
           nfs_SetPostOpAttr(export,
                             &dir_attr,
                             &(RES_READDIR3_OK.dir_attributes));
@@ -507,7 +517,7 @@ void nfs3_Readdir_Free(nfs_res_t * resp)
  * @param cookie [in] The readdir cookie for the current entry
  */
 
-static bool_t
+static bool
 nfs2_readdir_callback(void* opaque,
                       char *name,
 		      struct fsal_obj_handle *obj_hdl,
@@ -528,13 +538,13 @@ nfs2_readdir_callback(void* opaque,
      size_t need = sizeof(entry2) + ((namelen + 3) & ~3) + 4;
 
      if (tracker->count == tracker->total_entries) {
-          return FALSE;
+          return false;
      }
      if (tracker->mem_left < (sizeof(entry2) + namelen)) {
           if (tracker->count == 0) {
                tracker->error = NFSERR_IO;
           }
-          return FALSE;
+          return false;
      }
      obj_hdl->ops->handle_digest(obj_hdl,
                                  FSAL_DIGEST_FILEID2,
@@ -542,7 +552,7 @@ nfs2_readdir_callback(void* opaque,
      e2->name = gsh_malloc(namelen + 1);
      if (e2->name == NULL) {
           tracker->error = NFSERR_IO;
-          return FALSE;
+          return false;
      }
      strcpy(e2->name, name);
      memcpy(e2->cookie, &truncookie, NFS2_COOKIESIZE);
@@ -551,7 +561,7 @@ nfs2_readdir_callback(void* opaque,
      }
      tracker->mem_left -= need;
      ++(tracker->count);
-     return TRUE;
+     return true;
 } /* nfs2_readdir_callback */
 
 /**
@@ -570,10 +580,10 @@ nfs2_readdir_callback(void* opaque,
  * @param cookie [in] The readdir cookie for the current entry
  */
 
-static bool_t
+static bool
 nfs3_readdir_callback(void* opaque,
                       char *name,
-		      struct fsal_obj_handle *obj_hdl,
+                      struct fsal_obj_handle *obj_hdl,
                       uint64_t cookie)
 {
      /* Not-so-opaque pointer to callback data`*/
@@ -589,13 +599,13 @@ nfs3_readdir_callback(void* opaque,
      size_t need = sizeof(entry3) + ((namelen + 3) & ~3) + 4;
 
      if (tracker->count == tracker->total_entries) {
-          return FALSE;
+          return false;
      }
      if ((tracker->mem_left < need)) {
           if (tracker->count == 0) {
                tracker->error = NFS3ERR_TOOSMALL;
           }
-          return FALSE;
+          return false;
      }
      (void)obj_hdl->ops->handle_digest(obj_hdl,
 				       FSAL_DIGEST_FILEID3,
@@ -604,7 +614,7 @@ nfs3_readdir_callback(void* opaque,
      e3->name = gsh_malloc(namelen + 1);
      if (e3->name == NULL) {
           tracker->error = NFS3ERR_IO;
-          return FALSE;
+          return false;
      }
      strcpy(e3->name, name);
      e3->cookie = cookie;
@@ -614,7 +624,7 @@ nfs3_readdir_callback(void* opaque,
      }
      tracker->mem_left -= need;
      ++(tracker->count);
-     return TRUE;
+     return true;
 } /* */
 
 /**

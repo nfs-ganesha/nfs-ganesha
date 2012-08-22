@@ -77,7 +77,7 @@ static int FS_Specific_Init(proxyfs_specific_initinfo_t * fs_init_info)
       param.hashtable_size = fs_init_info->hdlmap_hashsize;
       param.nb_handles_prealloc = fs_init_info->hdlmap_nb_entry_prealloc;
       param.nb_db_op_prealloc = fs_init_info->hdlmap_nb_db_op_prealloc;
-      param.synchronous_insert = FALSE;
+      param.synchronous_insert = false;
 
       rc = HandleMap_Init(&param);
 

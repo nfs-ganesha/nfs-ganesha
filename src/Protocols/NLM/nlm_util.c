@@ -99,7 +99,7 @@ inline uint64_t lock_end(uint64_t start, uint64_t len)
     return start + len - 1;
 }
 
-bool_t fill_netobj(netobj * dst, char *data, int len)
+bool fill_netobj(netobj * dst, char *data, int len)
 {
   dst->n_len   = 0;
   dst->n_bytes = NULL;
@@ -112,9 +112,9 @@ bool_t fill_netobj(netobj * dst, char *data, int len)
           memcpy(dst->n_bytes, data, len);
         }
       else
-        return FALSE;
+        return false;
     }
-  return TRUE;
+  return true;
 }
 
 netobj *copy_netobj(netobj * dst, netobj * src)
@@ -260,7 +260,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 }
 
 int nlm_process_parameters(struct svc_req        * preq,
-                           bool_t                  exclusive,
+                           bool                    exclusive,
                            nlm4_lock             * alock,
                            fsal_lock_param_t     * plock,
                            cache_entry_t        ** ppentry,
@@ -506,7 +506,7 @@ void nlm_process_conflict(nlm4_holder          * nlm_holder,
        * just make it exclusive over the whole file
        * (which would conflict with any lock requested).
        */
-      nlm_holder->exclusive = TRUE;
+      nlm_holder->exclusive = true;
       nlm_holder->l_offset  = 0;
       nlm_holder->l_len     = 0;
     }
@@ -554,8 +554,8 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
     }
 }
 
-bool_t nlm_block_data_to_export(state_block_data_t * block_data,
-				exportlist_t  **ppexport)
+bool nlm_block_data_to_export(state_block_data_t * block_data,
+                              exportlist_t  **ppexport)
 {
   exportlist_t           * pexport = NULL;
   short                    exportid;
@@ -590,13 +590,13 @@ bool_t nlm_block_data_to_export(state_block_data_t * block_data,
                    addrbuf, reason, dumpfh);
         }
 
-      return FALSE;
+      return false;
     }
   *ppexport = pexport;
   LogFullDebug(COMPONENT_NLM,
                "Found export entry for dirname=%s as exportid=%d",
                pexport->dirname, pexport->id);
-  return TRUE;
+  return true;
 }
 
 state_status_t nlm_granted_callback(cache_entry_t        * pentry,
@@ -614,7 +614,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   granted_cookie_t         nlm_grant_cookie;
   state_status_t           dummy_status;
 
-  if(nlm_block_data_to_export(block_data, &pexport) != TRUE)
+  if(nlm_block_data_to_export(block_data, &pexport) != true)
     {
       *pstatus = STATE_INCONSISTENT_ENTRY;
       return *pstatus;

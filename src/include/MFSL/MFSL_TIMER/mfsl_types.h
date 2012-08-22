@@ -30,13 +30,6 @@
 #ifndef _MFSL_NULL_TYPES_H
 #define _MFSL_NULL_TYPES_H
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 /*
  * labels in the config file
  */

@@ -92,7 +92,7 @@ open4_do_open(struct nfs_argop4  * op,
               compound_data_t    * data,
               state_owner_t      * owner,
               state_t           ** state,
-              bool_t             * new_state,
+              bool               * new_state,
               fsal_openflags_t     openflags)
 {
         /* The arguments to the open operation */
@@ -113,7 +113,7 @@ open4_do_open(struct nfs_argop4  * op,
         state_t              * file_state = NULL;
 
         *state = NULL;
-        *new_state = TRUE;
+        *new_state = true;
 
         if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) ||
             (args->share_access & OPEN4_SHARE_ACCESS_WRITE)) {
@@ -166,7 +166,7 @@ open4_do_open(struct nfs_argop4  * op,
                 if (state_iterate->state_powner == owner) {
                         /* We'll be re-using the found state */
                         file_state = state_iterate;
-                        *new_state = FALSE;
+                        *new_state = false;
                         /* If we are re-using stateid, then release
                            extra reference to open owner */
                         break;
@@ -420,7 +420,7 @@ open4_open_owner(struct nfs_argop4 * op,
                                          "used with seqid=0, ask the client "
                                          "to confirm it again");
                                 (*owner)->so_owner.so_nfs4_owner.so_confirmed
-                                        = FALSE;
+                                        = false;
                         } else {
                                 /* Check for replay */
                                 if (!Check_nfs4_seqid(*owner,
@@ -494,12 +494,12 @@ open4_create(OPEN4args           * arg,
         /* Convertedattributes to set */
         struct attrlist      sattr;
         /* Whether the client supplied any attributes */
-        bool_t               sattr_provided = FALSE;
+        bool                 sattr_provided = false;
         /* Return from Cache Inode calls */
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         /* True if a verifier has been specified and we are
            performing exclusive creation semantics. */
-        bool_t               verf_provided = FALSE;
+        bool                 verf_provided = false;
         /* Client provided verifier, split into two piees */
         uint32_t             verf_hi = 0, verf_lo = 0;
         /* Attributes of existing file */
@@ -548,7 +548,7 @@ open4_create(OPEN4args           * arg,
                         if (res->status != NFS4_OK) {
                                 return res->status;
                         }
-                        sattr_provided = TRUE;
+                        sattr_provided = true;
                 }
         } else if (arg->openhow.openflag4_u.how.mode == EXCLUSIVE4_1) {
                 /**
@@ -582,7 +582,7 @@ open4_create(OPEN4args           * arg,
                         if (res->status != NFS4_OK) {
                                 return res->status;
                         }
-                        sattr_provided = TRUE;
+                        sattr_provided = true;
                 }
                 if (sattr_provided &&
                     (FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) ||
@@ -601,7 +601,7 @@ open4_create(OPEN4args           * arg,
                                      .ch_createboth.cva_verf) :
                                    &(arg->openhow.openflag4_u.how.createhow4_u
                                      .createverf));
-                verf_provided = TRUE;
+                verf_provided = true;
                 /* If we knew all our FSALs could store a 64 bit
                    atime, we could just use that and there would be
                    no need to split the verifier up. */
@@ -611,7 +611,7 @@ open4_create(OPEN4args           * arg,
 
                 if (!sattr_provided) {
                         memset(&sattr, 0, sizeof(struct attrlist));
-                        sattr_provided = TRUE;
+                        sattr_provided = true;
                 }
                 sattr.atime.seconds = verf_hi;
                 sattr.atime.nseconds = 0;
@@ -669,7 +669,7 @@ open4_create(OPEN4args           * arg,
                         FSAL_SET_MASK(sattr.mask,
                                       ATTR_SIZE);
                 } else {
-                        sattr_provided = FALSE;
+                        sattr_provided = false;
                 }
         }
 
@@ -821,7 +821,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
         /* The open state for the file */
         state_t           * file_state = NULL;
         /* True if the state was newly created */
-        bool_t              new_state = FALSE;
+        bool                new_state = false;
 
         LogDebug(COMPONENT_STATE,
                  "Entering NFS v4 OPEN handler -----------------------------");
@@ -841,7 +841,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
         /* Do basic checks on a filehandle */
         res_OPEN4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
-                                                 FALSE);
+                                                 false);
         if (res_OPEN4->status != NFS4_OK) {
                 return res_OPEN4->status;
         }
@@ -986,7 +986,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
 
                 /* Both of these just use the current filehandle. */
         case CLAIM_PREVIOUS:
-                owner->so_owner.so_nfs4_owner.so_confirmed = TRUE;
+                owner->so_owner.so_nfs4_owner.so_confirmed = true;
         case CLAIM_FH:
                 break;
 
@@ -1052,7 +1052,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
         }
 
         /* If server use OPEN_CONFIRM4, set the correct flag */
-        if (owner->so_owner.so_nfs4_owner.so_confirmed == FALSE) {
+        if (owner->so_owner.so_nfs4_owner.so_confirmed == false) {
                 res_OPEN4->OPEN4res_u.resok4.rflags |=
                         OPEN4_RESULT_CONFIRM;
         }

@@ -37,13 +37,6 @@
 #include <string.h>
 #include "log.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 #define ERR_DUMMY 3
 static family_error_t tab_test_err[] = {
 #define ERR_DUMMY_1  0
@@ -279,65 +272,65 @@ void Test1(char *str, char *file)
       LogTest("FAILURE");
       exit(1);
     }
-    TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-    TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-    TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-    TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-    TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-    TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
-    TestAlways    (TRUE,  tempstr, COMPONENT_INIT, "LogAlways (should print)");
-    TestMajor     (TRUE,  tempstr, COMPONENT_INIT, "LogMajor (should print)");
-    TestCrit      (TRUE,  tempstr, COMPONENT_INIT, "LogCrit (should print)");
-    TestEvent     (TRUE,  tempstr, COMPONENT_INIT, "LogEvent (should print)");
-    TestDebug     (TRUE,  tempstr, COMPONENT_INIT, "LogDebug (should print)");
-    TestFullDebug (FALSE, tempstr, COMPONENT_INIT, "LogFullDebug (shouldn't print)");
+    TestAlways    (true,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+    TestMajor     (true,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+    TestCrit      (true,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+    TestEvent     (true,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
+    TestDebug     (false, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+    TestFullDebug (false, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+    TestAlways    (true,  tempstr, COMPONENT_INIT, "LogAlways (should print)");
+    TestMajor     (true,  tempstr, COMPONENT_INIT, "LogMajor (should print)");
+    TestCrit      (true,  tempstr, COMPONENT_INIT, "LogCrit (should print)");
+    TestEvent     (true,  tempstr, COMPONENT_INIT, "LogEvent (should print)");
+    TestDebug     (true,  tempstr, COMPONENT_INIT, "LogDebug (should print)");
+    TestFullDebug (false, tempstr, COMPONENT_INIT, "LogFullDebug (shouldn't print)");
   }
 #endif /* _SNMP_ADM_ACTIVE */
 
   LogTest("------------------------------------------------------");
   LogTest("Test all levels of log filtering");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_NULL);
-  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (FALSE, tempstr, COMPONENT_MAIN, "LogMajor (shouldn't print)");
-  TestCrit      (FALSE, tempstr, COMPONENT_MAIN, "LogCrit (shouldn't print)");
-  TestEvent     (FALSE, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
-  TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (true,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (false, tempstr, COMPONENT_MAIN, "LogMajor (shouldn't print)");
+  TestCrit      (false, tempstr, COMPONENT_MAIN, "LogCrit (shouldn't print)");
+  TestEvent     (false, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
+  TestDebug     (false, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+  TestFullDebug (false, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_MAJOR);
-  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (FALSE, tempstr, COMPONENT_MAIN, "LogCrit (shouldn't print)");
-  TestEvent     (FALSE, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
-  TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (true,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (true,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (false, tempstr, COMPONENT_MAIN, "LogCrit (shouldn't print)");
+  TestEvent     (false, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
+  TestDebug     (false, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+  TestFullDebug (false, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_CRIT);
-  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-  TestEvent     (FALSE, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
-  TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (true,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (true,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (true,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+  TestEvent     (false, tempstr, COMPONENT_MAIN, "LogEvent (shouldn't print)");
+  TestDebug     (false, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+  TestFullDebug (false, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_EVENT);
-  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-  TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-  TestDebug     (FALSE, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
-  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (true,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (true,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (true,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+  TestEvent     (true,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
+  TestDebug     (false, tempstr, COMPONENT_MAIN, "LogDebug (shouldn't print)");
+  TestFullDebug (false, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_DEBUG);
-  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-  TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-  TestDebug     (TRUE,  tempstr, COMPONENT_MAIN, "LogDebug (should print)");
-  TestFullDebug (FALSE, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
+  TestAlways    (true,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (true,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (true,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+  TestEvent     (true,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
+  TestDebug     (true,  tempstr, COMPONENT_MAIN, "LogDebug (should print)");
+  TestFullDebug (false, tempstr, COMPONENT_MAIN, "LogFullDebug (shouldn't print)");
   SetComponentLogLevel(COMPONENT_MAIN, NIV_FULL_DEBUG);
-  TestAlways    (TRUE,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
-  TestMajor     (TRUE,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
-  TestCrit      (TRUE,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
-  TestEvent     (TRUE,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
-  TestDebug     (TRUE,  tempstr, COMPONENT_MAIN, "LogDebug (should print)");
-  TestFullDebug (TRUE,  tempstr, COMPONENT_MAIN, "LogFullDebug (should print)");
+  TestAlways    (true,  tempstr, COMPONENT_MAIN, "LogAlways (should print)");
+  TestMajor     (true,  tempstr, COMPONENT_MAIN, "LogMajor (should print)");
+  TestCrit      (true,  tempstr, COMPONENT_MAIN, "LogCrit (should print)");
+  TestEvent     (true,  tempstr, COMPONENT_MAIN, "LogEvent (should print)");
+  TestDebug     (true,  tempstr, COMPONENT_MAIN, "LogDebug (should print)");
+  TestFullDebug (true,  tempstr, COMPONENT_MAIN, "LogFullDebug (should print)");
 }
 
 void Test2()
@@ -458,7 +451,7 @@ void run_Tests(int all, char *arg, char *str, char *file)
 
 void *run_MT_Tests(void *arg)
 {
-  run_Tests(FALSE, (char *)arg, "none", NULL);
+  run_Tests(false, (char *)arg, "none", NULL);
 
   return NULL ;
 }
@@ -496,7 +489,7 @@ int main(int argc, char *argv[])
           LogTest("The family which was added is %s",
                   ReturnNameFamilyError(ERR_DUMMY));
 
-          run_Tests(TRUE,  "monothread", str, file);
+          run_Tests(true,  "monothread", str, file);
         }
 
       /* TEST 1 multithread */

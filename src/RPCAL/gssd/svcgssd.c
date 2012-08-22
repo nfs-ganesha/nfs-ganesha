@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 		else
 			status = gssd_acquire_cred(GSSD_SERVICE_NAME, 
 				(const gss_OID)GSS_C_NT_HOSTBASED_SERVICE);
-		if (status == FALSE) {
+		if (!status) {
 			printerr(0, "unable to obtain root (machine) credentials\n");
 			printerr(0, "do you have a keytab entry for "
 				"nfs/<your.host>@<YOUR.REALM> in "
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
 	} else {
 		status = gssd_acquire_cred(NULL,
 			(const gss_OID)GSS_C_NT_HOSTBASED_SERVICE);
-		if (status == FALSE) {
+		if (!status) {
 			printerr(0, "unable to obtain nameless credentials\n");
 			exit(1);
 		}

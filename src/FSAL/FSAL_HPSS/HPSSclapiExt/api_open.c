@@ -615,7 +615,7 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
   TYPE_TOKEN_HPSS ta, create_ta;        /* security tokens */
   filetable_t *ftptr;           /* file table entry pointer */
   api_dmap_attrs_t dmap_attrs;  /* DMAP attibutes for the file */
-  int called_create = FALSE;    /* called common create */
+  int called_create = false;    /* called common create */
   unsigned32 fileset_cos;       /* Fileset COS */
 
   /*
@@ -812,7 +812,7 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
            */
 
           Oflag &= (~O_TRUNC);  /* just creating, don't need to truncate */
-          called_create = TRUE; /* set a flag to indicate file creation */
+          called_create = true; /* set a flag to indicate file creation */
 
           create_ta = ta;
           memset(&dmap_attrs, 0, sizeof(api_dmap_attrs_t));
@@ -940,7 +940,7 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
    *  Make sure 0 length files get invalidated on close, if necessary
    */
 
-  if((called_create != FALSE) || (Oflag & O_TRUNC))
+  if((called_create != false) || (Oflag & O_TRUNC))
     {
       ftptr->OpenDesc[fildes].descunion_u.OpenBF.Updates++;
     }

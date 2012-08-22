@@ -66,15 +66,15 @@
  *
  * @param[in] entry Entry for the file on which to operate
  *
- * @return TRUE/FALSE
+ * @return true/false
  */
 
-bool_t
+bool
 is_open(cache_entry_t *entry)
 {
      if (entry == NULL
-	 || entry->type != REGULAR_FILE) {
-          return FALSE;
+         || entry->type != REGULAR_FILE) {
+          return false ;
      }
      return entry->obj_handle->ops->status(entry->obj_handle) != FSAL_O_CLOSED;
 }
@@ -87,17 +87,17 @@ is_open(cache_entry_t *entry)
  *
  * @param[in] entry Entry for the file to check
  *
- * @return TRUE if the file is open for writes
+ * @return true if the file is open for writes
  */
 
-bool_t
+bool
 is_open_for_write(cache_entry_t *entry)
 {
      fsal_openflags_t openflags;
 
      if (entry == NULL ||
          entry->type != REGULAR_FILE) {
-          return FALSE;
+          return false;
      }
      openflags = entry->obj_handle->ops->status(entry->obj_handle);
      return (openflags == FSAL_O_RDWR) || (openflags == FSAL_O_WRITE);
@@ -111,17 +111,17 @@ is_open_for_write(cache_entry_t *entry)
  *
  * @param[in] entry Entry for the file to check
  *
- * @return TRUE if the file is opened for reads
+ * @return true if the file is opened for reads
  */
 
-bool_t
+bool
 is_open_for_read(cache_entry_t *entry)
 {
      fsal_openflags_t openflags;
 
      if (entry == NULL
          || entry->type != REGULAR_FILE) {
-          return FALSE;
+          return false;
      }
      openflags = entry->obj_handle->ops->status(entry->obj_handle);
      return (openflags == FSAL_O_RDWR) || (openflags == FSAL_O_READ);

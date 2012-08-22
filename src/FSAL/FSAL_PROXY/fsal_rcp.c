@@ -63,10 +63,10 @@ fsal_status_t PROXYFSAL_rcp(fsal_handle_t * filehandle,    /* IN */
 
   caddr_t IObuffer;
 
-  int to_local = FALSE;
-  int to_fs = FALSE;
+  int to_local = false;
+  int to_fs = false;
 
-  int eof = FALSE;
+  int eof = false;
 
   ssize_t local_size = 0;
   fsal_size_t fs_size;

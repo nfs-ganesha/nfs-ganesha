@@ -205,7 +205,7 @@ extern hash_table_t *fh_to_cache_entry_ht;
 extern cache_inode_client_parameter_t cache_client_param;
 
 /* NFS layer initialization status*/
-static int is_nfs_layer_initialized = FALSE;
+static int is_nfs_layer_initialized = false;
 
 /* Global variable: export list */
 exportlist_t exportlist[128];
@@ -297,8 +297,8 @@ cmdnfs_thr_info_t *GetNFSClient()
 
       memset(p_thr_info, 0, sizeof(cmdnfs_thr_info_t));
 
-      p_thr_info->is_thread_init = FALSE;
-      p_thr_info->is_mounted_path = FALSE;
+      p_thr_info->is_thread_init = false;
+      p_thr_info->is_mounted_path = false;
 
       /* set the specific value */
       pthread_setspecific(thread_key, (void *)p_thr_info);
@@ -318,7 +318,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   if(p_thr_info == NULL)
     return -1;
 
-  if(p_thr_info->is_thread_init == TRUE)
+  if(p_thr_info->is_thread_init == true)
     return 0;
 
   /* for the moment, create export context for root fileset */
@@ -368,7 +368,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   p_thr_info->authunix_struct.aup_gid = getgid();
   p_thr_info->authunix_struct.aup_len = 0; /** @todo No secondary groups support. */
 
-  p_thr_info->is_thread_init = TRUE;
+  p_thr_info->is_thread_init = true;
 
   return 0;
 
@@ -416,7 +416,7 @@ int nfs_init(char *filename, int flag_v, FILE * output)
     }
 
   /* initalize export entries */
-  if((rc = nfs_export_create_root_entry(pexportlist)) != TRUE)
+  if((rc = nfs_export_create_root_entry(pexportlist)) != true)
     {
       fprintf(output, "nfs_init: Error %d initializing root entries, exiting...", -rc);
       return -1;
@@ -432,7 +432,7 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   /** @todo Are there other things to initialize ? */
 
-  is_nfs_layer_initialized = TRUE;
+  is_nfs_layer_initialized = true;
 
   if(flag_v)
     fprintf(output, "\tNFS layer successfully initialized.\n");
@@ -460,7 +460,7 @@ int fn_nfs_init(int argc,       /* IN : number of args in argv */
       "usage: nfs_init [options] <ganesha_config_file>\n"
       "options :\n" "\t-h print this help\n" "\t-v verbose mode\n";
 
-  if(is_nfs_layer_initialized != FALSE)
+  if(is_nfs_layer_initialized != false)
     {
       fprintf(output, "\tNFS layer is already initialized.\n");
       return 0;
@@ -537,7 +537,7 @@ int fn_MNT1_command(int argc,   /* IN : number of args in argv */
   int rc;
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -545,7 +545,7 @@ int fn_MNT1_command(int argc,   /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if(p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != true)
     {
       if((rc = InitNFSClient(p_thr_info)))
         {
@@ -563,7 +563,7 @@ int fn_MNT1_command(int argc,   /* IN : number of args in argv */
 
           if(funcdesc->func_encode(CMDNFS_ENCODE,
                                    argc - 1, argv + 1,
-                                   0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                                   0, NULL, (caddr_t) & nfs_arg) == false)
             {
               fprintf(output, "%s: bad arguments.\n", argv[0]);
               fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -627,7 +627,7 @@ int fn_MNT3_command(int argc,   /* IN : number of args in argv */
   int rc;
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -635,7 +635,7 @@ int fn_MNT3_command(int argc,   /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if(p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != true)
     {
       if((rc = InitNFSClient(p_thr_info)))
         {
@@ -653,7 +653,7 @@ int fn_MNT3_command(int argc,   /* IN : number of args in argv */
 
           if(funcdesc->func_encode(CMDNFS_ENCODE,
                                    argc - 1, argv + 1,
-                                   0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                                   0, NULL, (caddr_t) & nfs_arg) == false)
             {
               fprintf(output, "%s: bad arguments.\n", argv[0]);
               fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -719,7 +719,7 @@ int fn_NFS2_command(int argc,   /* IN : number of args in argv */
   short exportid;
   exportlist_t *pexport;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -727,7 +727,7 @@ int fn_NFS2_command(int argc,   /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if(p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != true)
     {
       if((rc = InitNFSClient(p_thr_info)))
         {
@@ -745,7 +745,7 @@ int fn_NFS2_command(int argc,   /* IN : number of args in argv */
 
           if(funcdesc->func_encode(CMDNFS_ENCODE,
                                    argc - 1, argv + 1,
-                                   0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                                   0, NULL, (caddr_t) & nfs_arg) == false)
             {
               fprintf(output, "%s: bad arguments.\n", argv[0]);
               fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -826,7 +826,7 @@ int fn_NFS3_command(int argc,   /* IN : number of args in argv */
   short exportid;
   exportlist_t *pexport;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -834,7 +834,7 @@ int fn_NFS3_command(int argc,   /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if(p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != true)
     {
       if((rc = InitNFSClient(p_thr_info)))
         {
@@ -852,7 +852,7 @@ int fn_NFS3_command(int argc,   /* IN : number of args in argv */
 
           if(funcdesc->func_encode(CMDNFS_ENCODE,
                                    argc - 1, argv + 1,
-                                   0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                                   0, NULL, (caddr_t) & nfs_arg) == false)
             {
               fprintf(output, "%s: bad arguments.\n", argv[0]);
               fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -954,7 +954,7 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
 
       rc = cmdnfs_fhandle3(CMDNFS_ENCODE, 1, &pstr_path, 0, NULL, (caddr_t) & hdl_param);
 
-      if(rc != TRUE)
+      if(rc != true)
         {
           fprintf(output, "Invalid FileHandle: %s\n", str_path);
           return -1;
@@ -1355,7 +1355,7 @@ static int nfs_create(cmdnfs_thr_info_t * p_thr_info,
 
   /* empty sattr3 list */
   if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-                   (caddr_t) & (arg.how.createhow3_u.obj_attributes)) == FALSE)
+                   (caddr_t) & (arg.how.createhow3_u.obj_attributes)) == false)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -1363,7 +1363,7 @@ static int nfs_create(cmdnfs_thr_info_t * p_thr_info,
     }
 
   /* only setting mode */
-  arg.how.createhow3_u.obj_attributes.mode.set_it = TRUE;
+  arg.how.createhow3_u.obj_attributes.mode.set_it = true;
   arg.how.createhow3_u.obj_attributes.mode.set_mode3_u.mode = posix_mode;
 
   rc = nfs_Create((nfs_arg_t *) & arg,
@@ -1429,7 +1429,7 @@ static int nfs_mkdir(cmdnfs_thr_info_t * p_thr_info,
 
   /* empty sattr3 list */
   if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-                   (caddr_t) & (arg.attributes)) == FALSE)
+                   (caddr_t) & (arg.attributes)) == false)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -1437,7 +1437,7 @@ static int nfs_mkdir(cmdnfs_thr_info_t * p_thr_info,
     }
 
   /* only setting mode */
-  arg.attributes.mode.set_it = TRUE;
+  arg.attributes.mode.set_it = true;
   arg.attributes.mode.set_mode3_u.mode = posix_mode;
 
   rc = nfs_Mkdir((nfs_arg_t *) & arg,
@@ -1600,7 +1600,7 @@ static int nfs_setattr(cmdnfs_thr_info_t * p_thr_info,
 
   set_nfs_fh3(&arg.object, p_obj_hdl);
   arg.new_attributes = *p_attributes;
-  arg.guard.check = FALSE;
+  arg.guard.check = false;
 
   /* extract export id */
   exportid = nfs3_FhandleToExportId(&arg.object);
@@ -1836,7 +1836,7 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -1845,7 +1845,7 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
   p_thr_info = GetNFSClient();
 
   /* We only need to init thread in mount command. */
-  if(p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != true)
     {
       if((rc = InitNFSClient(p_thr_info)))
         {
@@ -1856,7 +1856,7 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
 
   /* check if a path has already been mounted */
 
-  if(p_thr_info->is_mounted_path != FALSE)
+  if(p_thr_info->is_mounted_path != false)
     {
       fprintf(output, "%s: a path is already mounted. Use \"umount\" command first.\n",
               argv[0]);
@@ -1864,7 +1864,7 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
     }
 
   if(cmdnfs_dirpath(CMDNFS_ENCODE,
-                    argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                    argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == false)
     {
       fprintf(output, "%s: bad arguments.\n", argv[0]);
       fprintf(output, "Usage: mount <path>.\n");
@@ -1910,7 +1910,7 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
   p_thr_info->current_path_hdl = p_thr_info->mounted_path_hdl;
   strcpy(p_thr_info->current_path, "/");
 
-  p_thr_info->is_mounted_path = TRUE;
+  p_thr_info->is_mounted_path = true;
 
   fprintf(output, "Current directory is \"%s\" \n", p_thr_info->current_path);
   snprintmem(buff, 2 * NFS3_FHSIZE + 1,
@@ -1933,7 +1933,7 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -1942,7 +1942,7 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
   p_thr_info = GetNFSClient();
 
   /* We only need to init thread in mount command. */
-  if(p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != true)
     {
       if((rc = InitNFSClient(p_thr_info)))
         {
@@ -1953,14 +1953,14 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
 
   /* check if a path has already been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
     }
 
   if(cmdnfs_dirpath(CMDNFS_ENCODE,
-                    argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                    argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == false)
     {
       fprintf(output, "%s: bad arguments.\n", argv[0]);
       fprintf(output, "Usage: umount <path>.\n");
@@ -1997,7 +1997,7 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
 
   mnt_Umnt_Free(&nfs_res);
 
-  p_thr_info->is_mounted_path = FALSE;
+  p_thr_info->is_mounted_path = false;
 
   return 0;
 }
@@ -2010,7 +2010,7 @@ int fn_nfs_pwd(int argc,        /* IN : number of args in argv */
   char buff[2 * NFS3_FHSIZE + 1];
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2020,7 +2020,7 @@ int fn_nfs_pwd(int argc,        /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2048,7 +2048,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
   shell_fh3_t handle_tmp;
   fattr3 attrs;
   cookie3 begin_cookie;
-  bool_t eod_met;
+  bool eod_met;
   cookieverf3 cookieverf;
   dirlistplus3 dirlist;
   entryplus3 *p_entry;
@@ -2084,7 +2084,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2094,7 +2094,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2269,7 +2269,7 @@ int fn_nfs_ls(int argc,         /* IN : number of args in argv */
   /* If this point is reached, then the current element is a directory */
 
   begin_cookie = 0LL;
-  eod_met = FALSE;
+  eod_met = false;
   memset(&cookieverf, 0, sizeof(cookieverf3));
 
   while(!eod_met)
@@ -2375,7 +2375,7 @@ int fn_nfs_cd(int argc,         /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2385,7 +2385,7 @@ int fn_nfs_cd(int argc,         /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2473,7 +2473,7 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2483,7 +2483,7 @@ int fn_nfs_create(int argc,     /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2600,7 +2600,7 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2610,7 +2610,7 @@ int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2726,7 +2726,7 @@ int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2736,7 +2736,7 @@ int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2867,7 +2867,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -2877,7 +2877,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2949,7 +2949,7 @@ int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
 
   /* Convert the peer (attr_name,attr_val) to an sattr3 structure. */
   if(cmdnfs_sattr3(CMDNFS_ENCODE,
-                   1, &attr_string, 0, NULL, (caddr_t) & set_attrs) == FALSE)
+                   1, &attr_string, 0, NULL, (caddr_t) & set_attrs) == false)
     {
       fprintf(output, "Invalid nfs arguments.\n");
       fprintf(output, help_setattr);
@@ -2996,7 +2996,7 @@ int fn_nfs_rename(int argc,     /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3006,7 +3006,7 @@ int fn_nfs_rename(int argc,     /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3136,7 +3136,7 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3146,7 +3146,7 @@ int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3269,7 +3269,7 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3279,7 +3279,7 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3351,7 +3351,7 @@ int fn_nfs_ln(int argc,         /* IN : number of args in argv */
 
   /* Prepare link attributes : empty sattr3 list */
 
-  if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL, (caddr_t) & set_attrs) == FALSE)
+  if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL, (caddr_t) & set_attrs) == false)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -3410,7 +3410,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3420,7 +3420,7 @@ int fn_nfs_stat(int argc,       /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(p_thr_info->is_mounted_path != TRUE)
+  if(p_thr_info->is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3555,7 +3555,7 @@ int fn_nfs_su(int argc,         /* IN : number of args in argv */
 
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3574,7 +3574,7 @@ int fn_nfs_su(int argc,         /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if(p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != true)
     {
       if((rc = InitNFSClient(p_thr_info)))
         {
@@ -3645,7 +3645,7 @@ int fn_nfs_id(int argc,         /* IN : number of args in argv */
   int rc;
   cmdnfs_thr_info_t *p_thr_info = NULL;
 
-  if(is_nfs_layer_initialized != TRUE)
+  if(is_nfs_layer_initialized != true)
     {
       fprintf(output, "\tNFS layer not initialized.\n");
       return -1;
@@ -3653,7 +3653,7 @@ int fn_nfs_id(int argc,         /* IN : number of args in argv */
 
   p_thr_info = GetNFSClient();
 
-  if(p_thr_info->is_thread_init != TRUE)
+  if(p_thr_info->is_thread_init != true)
     {
       if((rc = InitNFSClient(p_thr_info)))
         {

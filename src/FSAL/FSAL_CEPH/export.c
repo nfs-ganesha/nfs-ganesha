@@ -232,7 +232,7 @@ create_ds_handle(struct fsal_export *const export_pub,
         /* Connect lazily when a FILE_SYNC4 write forces us to, not
            here. */
 
-        ds->connected = FALSE;
+        ds->connected = false;
 
 
         memcpy(&ds->wire, desc->addr, desc->len);
@@ -376,78 +376,78 @@ get_fs_dynamic_info(struct fsal_export *export_pub,
  * @param[in] export_pub The public export handle
  * @param[in] option     The option to check
  *
- * @retval TRUE if the option is supported.
- * @retval FALSE if the option is unsupported (or unknown).
+ * @retval true if the option is supported.
+ * @retval false if the option is unsupported (or unknown).
  */
 
-static bool_t
+static bool
 fs_supports(struct fsal_export *export_pub,
             fsal_fsinfo_options_t option)
 {
         switch (option) {
         case no_trunc:
-                return TRUE;
+                return true;
 
         case chown_restricted:
-                return TRUE;
+                return true;
 
         case case_insensitive:
-                return FALSE;
+                return false;
 
 
         case case_preserving:
-                return TRUE;
+                return true;
 
         case link_support:
-                return TRUE;
+                return true;
 
         case symlink_support:
-                return TRUE;
+                return true;
 
         case lock_support:
-                return FALSE;
+                return false;
 
         case lock_support_owner:
-                return FALSE;
+                return false;
 
         case lock_support_async_block:
-                return FALSE;
+                return false;
 
         case named_attr:
-                return FALSE;
+                return false;
 
         case unique_handles:
-                return TRUE;
+                return true;
 
         case cansettime:
-                return TRUE;
+                return true;
 
         case homogenous:
-                return TRUE;
+                return true;
 
         case auth_exportpath_xdev:
-                return FALSE;
+                return false;
 
         case dirs_have_sticky_bit:
-                return TRUE;
+                return true;
 
         case accesscheck_support:
-                return FALSE;
+                return false;
 
         case share_support:
-                return FALSE;
+                return false;
 
         case share_support_owner:
-                return FALSE;
+                return false;
 
         case pnfs_mds_supported:
-                return TRUE;
+                return true;
 
         case pnfs_ds_supported:
-                return FALSE;
+                return false;
         }
 
-        return FALSE;
+        return false;
 }
 
 /**
@@ -797,11 +797,11 @@ static nfsstat4
 getdevicelist(struct fsal_export *export_pub,
               layouttype4 type,
               void *opaque,
-              bool_t (*cb)(void *opaque,
-                           const uint64_t id),
+              bool (*cb)(void *opaque,
+                         const uint64_t id),
               struct fsal_getdevicelist_res *res)
 {
-        res->eof = TRUE;
+        res->eof = true;
         return NFS4_OK;
 }
 

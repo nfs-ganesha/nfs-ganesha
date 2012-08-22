@@ -595,7 +595,7 @@ int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen)
     return ENOMEM;
 
   /* allocate the root entry */
-  root = h_insert_new_node(root_inode, root_dev, *p_root_gen, TRUE);
+  root = h_insert_new_node(root_inode, root_dev, *p_root_gen, true);
 
   if(!root)
     return ENOMEM;
@@ -654,7 +654,7 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
             /* create and add new peer to hash table */
             p_lpeer =
                 h_insert_new_lookup(parent_ino, parent_dev, parent_gen, name, p_node,
-                                    FALSE);
+                                    false);
             if(!p_lpeer)
               return EFAULT;
 
@@ -697,7 +697,7 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
       {
 
         /* allocate new node entry */
-        p_node = h_insert_new_node(entry_ino, entry_dev, *p_new_gen, FALSE);
+        p_node = h_insert_new_node(entry_ino, entry_dev, *p_new_gen, false);
 
         if(!p_node)
           return ENOMEM;
@@ -705,7 +705,7 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
         /* now, create the associated lookup peer */
 
         p_lpeer =
-            h_insert_new_lookup(parent_ino, parent_dev, parent_gen, name, p_node, FALSE);
+            h_insert_new_lookup(parent_ino, parent_dev, parent_gen, name, p_node, false);
 
         if(!p_lpeer)
           return ENOMEM;

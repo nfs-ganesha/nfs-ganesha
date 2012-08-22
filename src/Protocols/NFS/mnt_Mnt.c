@@ -94,7 +94,7 @@ int mnt_Mnt(nfs_arg_t *parg,
   char tmplist_path[MAXPATHLEN];
   char tmpexport_path[MAXPATHLEN];
   char *hostname;
-  unsigned int bytag = FALSE;
+  bool bytag = false;
 
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Mnt path=%s",
            parg->arg_mnt);
@@ -124,7 +124,7 @@ int mnt_Mnt(nfs_arg_t *parg,
           if(!strcmp(exportPath, p_current_item->FS_tag))
             {
               strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
-              bytag = TRUE;
+              bytag = true;
               break;
             }
         }
@@ -203,7 +203,7 @@ int mnt_Mnt(nfs_arg_t *parg,
   /*
    * retrieve the associated NFS handle
    */
-  if(!(bytag == TRUE || !strncmp(tmpexport_path, tmplist_path, MAXPATHLEN)))
+  if(!(bytag || !strncmp(tmpexport_path, tmplist_path, MAXPATHLEN)))
     {
       exp_hdl = p_current_item->export_hdl;
       LogEvent(COMPONENT_NFSPROTO,
@@ -277,7 +277,7 @@ int mnt_Mnt(nfs_arg_t *parg,
       if(p_current_item->options & EXPORT_OPTION_AUTH_UNIX)
         auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _HAVE_GSSAPI
-      if(nfs_param.krb5_param.active_krb5 == TRUE)
+      if(nfs_param.krb5_param.active_krb5)
         {
 	  if(p_current_item->options & EXPORT_OPTION_RPCSEC_GSS_NONE)
 	    auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;

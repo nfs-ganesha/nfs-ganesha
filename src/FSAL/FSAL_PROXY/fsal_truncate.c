@@ -144,7 +144,7 @@ fsal_status_t PROXYFSAL_truncate(fsal_handle_t * file_hdl,       /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, file_hdl) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, file_hdl) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* Get prepared for truncate */

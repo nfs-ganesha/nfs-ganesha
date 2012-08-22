@@ -80,7 +80,7 @@ struct fsal_layoutget_res {
         /** Whether the layout should be returned on last close.  Note
          *  that this flag being set on one segment makes all layout
          *  segments associated with the same stateid return_on_close. */
-        bool_t return_on_close;
+        bool return_on_close;
         /** This pointer is NULL on the first call FSAL_layoutget.  The
          *  FSAL may store a pointer to any data it wishes, and this
          *  pointer will be supplied to future calls to FSAL_layoutget
@@ -93,14 +93,14 @@ struct fsal_layoutget_res {
          *  clients support multiple segments granted by a single
          *  LAYOUTGET operation, so FSALs should grant a single segment
          *  and set this value on the first call. */
-        bool_t last_segment;
+        bool last_segment;
         /** On input, this field signifies a request by the client to be
             signaled when a requested but unavailable layout becomes
             available.  In output, it signifies the FSAL's willingness to
             make a callback when the layout becomes available.  We do not
             yet implement callbacks, so it should always be set to
             false. */
-        bool_t signal_available;
+        bool signal_available;
 };
 
 /**
@@ -112,7 +112,7 @@ struct fsal_layoutreturn_arg {
             it held prior to a server reboot.  As such, cur_segment is
             meaningless (no record of the layout having been granted
             exists). */
-        bool_t reclaim;
+        bool reclaim;
         /** The type of layout being returned */
         layouttype4 lo_type;
         /** The return type of the LAYOUTRETURN call.  Meaningless if
@@ -133,14 +133,14 @@ struct fsal_layoutreturn_arg {
         void *fsal_seg_data;
         /** Whether this return was synthesized a result of
          *  return_on_close or lease expiration. */
-        bool_t synthetic;
+        bool synthetic;
         /** If true, the FSAL must free all resources associated with
          *  res.segment. */
-        bool_t dispose;
+        bool dispose;
         /** After this return, there will be no more layouts associated
          *  with this layout state (that is, there will be no more
          *  layouts for this (clientid, handle, layout type) triple. */
-        bool_t last_segment;
+        bool last_segment;
 };
 
 /**
@@ -155,14 +155,14 @@ struct fsal_layoutcommit_arg {
         /** Pointer to layout specific data supplied by LAYOUTGET. */
         void *fsal_seg_data;
         /** True if this is a reclaim commit */
-        bool_t reclaim;
+        bool reclaim;
         /** True if the client has suggested a new offset */
-        bool_t new_offset;
+        bool new_offset;
         /** The offset of the last byte written, if new_offset if set,
          *  otherwise undefined. */
         offset4 last_write;
         /** True if the client provided a new value for mtime */
-        bool_t time_changed;
+        bool time_changed;
         /** If new_time is true, the client-supplied modification tiem
          *  for the file.  otherwise, undefined. */
         gsh_time_t new_time;
@@ -180,13 +180,13 @@ struct fsal_layoutcommit_res {
          *  commit_done is set. */
         void *context;
         /** True if the FSAL is returning a new file size */
-        bool_t size_supplied;
+        bool size_supplied;
         /** The new file size returned by the FSAL */
         length4 new_size;
         /** The FSAL has completed the LAYOUTCOMMIT operation and
          *  FSAL_layoutcommit need not be called again, even if more
          *  segments are left in the layout. */
-        bool_t commit_done;
+        bool commit_done;
 };
 
 /**
@@ -205,7 +205,7 @@ struct fsal_getdevicelist_res {
          *  verifier may be supplied by the FSAL on output. */
         verifier4 cookieverf;
         /** True if the last deviceid has been returned. */
-        bool_t eof;
+        bool eof;
 };
 
 #endif /* !FSAL_PNFS_H_ */

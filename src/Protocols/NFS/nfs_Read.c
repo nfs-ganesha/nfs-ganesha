@@ -134,7 +134,7 @@ int nfs_Read(nfs_arg_t *parg,
   size_t read_size = 0;
   uint64_t offset = 0;
   void *data = NULL;
-  bool_t eof_met=FALSE;
+  bool   eof_met = false;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))

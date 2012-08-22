@@ -1264,7 +1264,7 @@ int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned in
   char *key_name;
   char *key_value;
   config_item_t block;
-  unsigned int found = FALSE;
+  unsigned int found = false;
   config_file_t config_struct;
   unsigned int index = 0 ;
 
@@ -1317,7 +1317,7 @@ int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned in
           strncpy(PathLib[index], key_value, MAXPATHLEN);
           index += 1 ;
 
-          found = TRUE;
+          found = true;
 
           /* Do not exceed array size */
           if( index == *plen )

@@ -74,18 +74,18 @@ typedef struct _9p_cb_data
    unsigned int max ;
 } _9p_cb_data_t ;
 
-static bool_t _9p_readdir_callback( void                   * opaque,
-                                    char                   * name,
-                                    struct fsal_obj_handle * handle,
-                                    uint64_t                 cookie)
+static bool _9p_readdir_callback( void                   * opaque,
+                                  char                   * name,
+                                  struct fsal_obj_handle * handle,
+                                  uint64_t                 cookie)
 {
    _9p_cb_data_t * cb_data = opaque ;
 
   if( cb_data == NULL )
-   return FALSE ;
+   return false ;
 
   if( cb_data->count >= cb_data->max )
-   return FALSE ;
+   return false ;
 
   cb_data->entries[cb_data->count].qid_path = handle->attributes.fileid ;
   cb_data->entries[cb_data->count].name_str = name ;
@@ -131,11 +131,11 @@ static bool_t _9p_readdir_callback( void                   * opaque,
         break ;
     
       default:
-        return FALSE;  
+        return false;  
    }
  
   cb_data->count += 1 ; 
-  return TRUE ;
+  return true ;
 
 }
 
@@ -168,7 +168,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   char * dcount_pos = NULL ;
 
   cache_inode_status_t cache_status;
-  bool_t eod_met;
+  bool eod_met;
   cache_entry_t * pentry_dot_dot = NULL ;
 
   uint64_t cookie = 0LL ;
@@ -355,7 +355,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RREADDIR: tag=%u fid=%u dcount=%u",
             (u32)*msgtag, *fid , dcount ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

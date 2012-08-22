@@ -194,13 +194,13 @@ fsal_status_t PROXYFSAL_lookup(fsal_handle_t * parent_directory_handle,    /* IN
         }
 
       /* >> Call your filesystem lookup function here << */
-      if(fsal_internal_proxy_extract_fh(&nfs4fh, parent_directory_handle) == FALSE)
+      if(fsal_internal_proxy_extract_fh(&nfs4fh, parent_directory_handle) == false)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       memset((char *)&name, 0, sizeof(component4));
       name.utf8string_val = nameval;
       name.utf8string_len = sizeof(nameval);
-      if(fsal_internal_proxy_fsal_name_2_utf8(p_filename, &name) == FALSE)
+      if(fsal_internal_proxy_fsal_name_2_utf8(p_filename, &name) == false)
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       if(!FSAL_namecmp(p_filename, (fsal_name_t *) & FSAL_DOT))
@@ -347,7 +347,7 @@ fsal_status_t PROXYFSAL_lookup(fsal_handle_t * parent_directory_handle,    /* IN
   /* Build the handle */
   if(fsal_internal_proxy_create_fh
      (&resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.GETFH4res_u.
-      resok4.object, attributes.type, attributes.fileid, object_handle) == FALSE)
+      resok4.object, attributes.type, attributes.fileid, object_handle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
   PRINT_HANDLE("PROXYFSAL_lookup object found", object_handle);
@@ -472,7 +472,7 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
   char *ptr_str;
   proxyfsal_handle_t out_hdl;
   fsal_status_t status;
-  int b_is_last = FALSE;        /* is it the last lookup ? */
+  int b_is_last = false;        /* is it the last lookup ? */
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  *  this function may be adapted to most FSALs
@@ -501,7 +501,7 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
   /* is the next name empty ? */
 
   if(ptr_str[0] == '\0')
-    b_is_last = TRUE;
+    b_is_last = true;
 
   /* retrieves root directory */
 
@@ -554,7 +554,7 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
 
       /* is the next name empty ? */
       if(ptr_str[0] == '\0')
-        b_is_last = TRUE;
+        b_is_last = true;
 
       /*call to PROXYFSAL_lookup */
       status = PROXYFSAL_lookup((fsal_handle_t *) &in_hdl,        /* parent directory handle */

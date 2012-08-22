@@ -20,7 +20,7 @@ typedef struct
   char keytab[MAXPATHLEN];
   unsigned int cred_lifetime;
   unsigned int sec_type;
-  bool_t active_krb5;
+  bool active_krb5;
 
   /* initialization info for handle mapping */
   int enable_handle_mapping;

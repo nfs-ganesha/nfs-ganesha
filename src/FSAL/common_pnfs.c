@@ -72,20 +72,20 @@
  * @param[in,out] xdrs     The XDR stream
  * @param[in,out] deviceid The deviceid to encode/decode
  *
- * @retval TRUE on success.
- * @retval FALSE on failure.
+ * @retval true on success.
+ * @retval false on failure.
  */
 
-bool_t
+bool
 xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid)
 {
         if(!xdr_uint64_t(xdrs, &deviceid->export_id)) {
-                return FALSE;
+                return false;
         }
         if(!xdr_uint64_t(xdrs, &deviceid->devid)) {
-                return FALSE;
+                return false;
         }
-        return TRUE;
+        return true;
 }
 
 /**

@@ -74,7 +74,7 @@ int nfs4_gss_princ_to_grouplist(char *secname, char *princ, gid_t * groups, int 
 void nfs4_set_debug(int dbg_level, nfs4_idmap_log_function_t dbg_logfunc);
 
 char idmap_domain[NFS4_MAX_DOMAIN_LEN];
-static int nfsidmap_conf_read = FALSE;
+static int nfsidmap_conf_read = false;
 
 int nfsidmap_set_conf()
 {
@@ -86,7 +86,7 @@ int nfsidmap_set_conf()
       if(nfs4_get_default_domain(NULL, idmap_domain, sizeof(idmap_domain)))
         return 0;
 
-      nfsidmap_conf_read = TRUE;
+      nfsidmap_conf_read = true;
     }
   return 1;
 }

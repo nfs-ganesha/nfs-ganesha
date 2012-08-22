@@ -83,7 +83,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
   res_GETATTR4.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_GETATTR4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, FALSE);
+  res_GETATTR4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
   if(res_GETATTR4.status != NFS4_OK)
     return res_GETATTR4.status;
 
@@ -91,7 +91,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     return nfs4_op_getattr_pseudo(op, data, resp);
 
-  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+  if (!(nfs_export_check_security(data->reqp, data->pexport)))
     {
       res_GETATTR4.status = NFS4ERR_PERM;
       return res_GETATTR4.status;

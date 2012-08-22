@@ -66,10 +66,10 @@
 #include "nfs_proto_tools.h"
 #include <assert.h>
 
-static bool_t nfs3_readdirplus_callback(void* opaque,
-                                        char *name,
-                                        struct fsal_obj_handle *obj_hdl,
-                                        uint64_t cookie);
+static bool nfs3_readdirplus_callback(void* opaque,
+                                      char *name,
+                                      struct fsal_obj_handle *obj_hdl,
+                                      uint64_t cookie);
 static void free_entryplus3s(entryplus3 *entryplus3s);
 
 /**
@@ -126,7 +126,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
      unsigned int num_entries = 0;
      unsigned long estimated_num_entries = 0;
      object_file_type_t dir_filetype = 0;
-     bool_t eod_met = FALSE;
+     bool eod_met = false;
      cache_inode_status_t cache_status = 0;
      cache_inode_status_t cache_status_gethandle = 0;
      int rc = NFS_REQ_OK;
@@ -414,7 +414,7 @@ void nfs3_Readdirplus_Free(nfs_res_t *resp)
  * @param cookie [in] The readdir cookie for the current entry
  */
 
-static bool_t
+static bool
 nfs3_readdirplus_callback(void* opaque,
                           char *name,
                           struct fsal_obj_handle *obj_hdl,
@@ -432,27 +432,27 @@ nfs3_readdirplus_callback(void* opaque,
              .addr = &ep3->fileid};
 
      if (tracker->count == tracker->total_entries) {
-          return FALSE;
+          return false;
      }
      /* This is a pessimistic check, which assumes that we're going
-      * to send attributes and full size handle - if it fails then 
-      * we're close enough to the buffer size limit and t's time to 
+      * to send attributes and full size handle - if it fails then
+      * we're close enough to the buffer size limit and t's time to
       * stop anyway */
      if ((tracker->mem_left < (sizeof(entryplus3) + namelen + NFS3_FHSIZE))) {
           if (tracker->count == 0) {
                tracker->error = NFS3ERR_TOOSMALL;
           }
-          return FALSE;
+          return false;
      }
 
      (void)obj_hdl->ops->handle_digest(obj_hdl,
-				       FSAL_DIGEST_FILEID3,
-				       &id_descriptor);
+                                       FSAL_DIGEST_FILEID3,
+                                       &id_descriptor);
 
      ep3->name = gsh_malloc(namelen + 1);
      if (ep3->name == NULL) {
           tracker->error = NFS3ERR_IO;
-          return FALSE;
+          return false;
      }
      strcpy(ep3->name, name);
      ep3->cookie = cookie;
@@ -466,7 +466,7 @@ nfs3_readdirplus_callback(void* opaque,
      if (ep3->name_handle.post_op_fh3_u .handle.data.data_val == NULL) {
           tracker->error = NFS3ERR_SERVERFAULT;
           gsh_free(ep3->name);
-          return FALSE;
+          return false;
      }
 
      if (nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
@@ -475,7 +475,7 @@ nfs3_readdirplus_callback(void* opaque,
           tracker->error = NFS3ERR_BADHANDLE;
           gsh_free(ep3->name);
           gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.data_val);
-          return FALSE;
+          return false;
      }
 
      /* Account for filehande + length + follows + nextentry */
@@ -483,7 +483,7 @@ nfs3_readdirplus_callback(void* opaque,
      if (tracker->count > 0) {
           tracker->entries[tracker->count - 1].nextentry = ep3;
      }
-     ep3->name_attributes.attributes_follow = FALSE;
+     ep3->name_attributes.attributes_follow = false;
 
      nfs_SetPostOpAttr(tracker->export,
                        &obj_hdl->attributes,
@@ -494,7 +494,7 @@ nfs3_readdirplus_callback(void* opaque,
 	  tracker->mem_left -= sizeof(ep3->name_attributes.attributes_follow);
      }
      ++(tracker->count);
-     return TRUE;
+     return true;
 } /* nfs3_readdirplus_callback */
 
 /**

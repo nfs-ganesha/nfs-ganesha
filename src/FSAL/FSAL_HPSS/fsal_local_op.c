@@ -253,8 +253,8 @@ fsal_status_t HPSSFSAL_setattr_access(hpssfsal_op_context_t * p_context,        
     )
 {
   fsal_status_t fsal_status;
-  int same_owner = FALSE;
-  int root_access = FALSE;
+  int same_owner = false;
+  int root_access = false;
 
   /* sanity check */
   if(p_context == NULL || pcandidate_attributes == NULL || pobject_attributes == NULL)
@@ -276,7 +276,7 @@ fsal_status_t HPSSFSAL_setattr_access(hpssfsal_op_context_t * p_context,        
   if(p_context->credential.hpss_usercred.Uid == pobject_attributes->owner)
 #endif
     {
-      same_owner = TRUE;
+      same_owner = true;
     }
 
   if(!same_owner)

@@ -153,7 +153,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *name_len, name_str, *major, *minor,
             qid_newobj.type, qid_newobj.version, (unsigned long long)qid_newobj.path ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

@@ -118,7 +118,7 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
       ReleaseTokenFSCall();
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_create);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_create);
 
       if(p_fs_ops->release)
         {
@@ -140,7 +140,7 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
       ReleaseTokenFSCall();
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_create);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_create);
 
     }
   else
@@ -161,7 +161,7 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
       LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_create);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_create);
     }
 
   /* lookup for the newly created entry */
@@ -171,7 +171,7 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_create);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_create);
 
   object_handle->data.validator = buffstat.st_ctime;
 
@@ -290,7 +290,7 @@ fsal_status_t FUSEFSAL_mkdir(fsal_handle_t * parent_handle,       /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_mkdir);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_mkdir);
 
   /* set the owner for the newly created entry */
 
@@ -304,7 +304,7 @@ fsal_status_t FUSEFSAL_mkdir(fsal_handle_t * parent_handle,       /* IN */
       LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_mkdir);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_mkdir);
     }
 
   TakeTokenFSCall();
@@ -312,7 +312,7 @@ fsal_status_t FUSEFSAL_mkdir(fsal_handle_t * parent_handle,       /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_mkdir);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_mkdir);
 
   object_handle->data.validator = buffstat.st_ctime;
 
@@ -434,7 +434,7 @@ fsal_status_t FUSEFSAL_link(fsal_handle_t * target,  /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_link);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_link);
 
   new_validator = target_handle->data.validator;
 

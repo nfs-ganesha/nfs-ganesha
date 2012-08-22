@@ -75,13 +75,13 @@ struct netbuf *__rpcb_findaddr_timed(rpcprog_t, rpcvers_t,
                                      const struct netconfig *, const char *host,
                                      CLIENT ** clpp, struct timeval *tp);
 
-bool_t __rpc_control(int, void *);
+bool __rpc_control(int, void *);
 
 char *_get_next_token(char *, int);
 
-bool_t Svc_clean_idle(int, bool_t);
-bool_t __xdrrec_setnonblock(XDR *, int);
-bool_t __xdrrec_getrec(XDR *, enum xprt_stat *, bool_t);
+bool Svc_clean_idle(int, bool);
+bool __xdrrec_setnonblock(XDR *, int);
+bool __xdrrec_getrec(XDR *, enum xprt_stat *, bool);
 void __Xprt_unregister_unlocked(SVCXPRT *);
 
 SVCXPRT **__svc_xports;

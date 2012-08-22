@@ -84,13 +84,13 @@
 #define DRC_TCP_HIWAT 64 /* 1/2(size) */
 #define DRC_TCP_RECYCLE_NPART 7
 #define DRC_TCP_RECYCLE_EXPIRE_S 600 /* 10m */
-#define DRC_TCP_CHECKSUM TRUE
+#define DRC_TCP_CHECKSUM true
 
 #define DRC_UDP_NPART 7
 #define DRC_UDP_SIZE 32768
 #define DRC_UDP_CACHESZ  599 /* make prime */
 #define DRC_UDP_HIWAT 16384 /* 1/2(size) */
-#define DRC_UDP_CHECKSUM TRUE
+#define DRC_UDP_CHECKSUM true
 
 #define PRIME_CACHE_INODE 37    /* has to be a prime number */
 
@@ -238,14 +238,14 @@ typedef struct nfs_core_param__
           uint32_t hiwat;
           uint32_t recycle_npart;
           uint32_t recycle_expire_s;
-          bool_t checksum;
+          bool checksum;
       } tcp;
       struct {
           uint32_t npart;
           uint32_t size;
           uint32_t cachesz;
           uint32_t hiwat;
-          bool_t checksum;
+          bool checksum;
       } udp;
   } drc;
   unsigned int stats_update_delay;
@@ -258,9 +258,9 @@ typedef struct nfs_core_param__
   unsigned int max_send_buffer_size; /* Size of RPC send buffer */
   unsigned int max_recv_buffer_size; /* Size of RPC recv buffer */
 #ifdef _USE_NLM
-  bool_t nsm_use_caller_name;
+  bool nsm_use_caller_name;
 #endif
-  bool_t clustered;
+  bool clustered;
 } nfs_core_parameter_t;
 
 typedef struct nfs_ip_name_param__
@@ -675,7 +675,7 @@ extern pool_t *nfs_clientid_pool;
  *functions prototypes
  */
 enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
-                                   bool_t *dispatch);
+                                   bool *dispatch);
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();

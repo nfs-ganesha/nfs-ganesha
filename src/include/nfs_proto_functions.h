@@ -128,7 +128,7 @@ typedef union nfs_arg__
 struct COMPOUND4res_extended
 {
   COMPOUND4res res_compound4;
-  bool_t       res_cached;
+  bool         res_cached;
 };
 
 typedef union nfs_res__

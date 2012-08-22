@@ -71,22 +71,22 @@ static struct fsal_staticfsinfo_t proxy_info = {
 	.maxlink = _POSIX_LINK_MAX,
         .maxnamelen = 1024,
         .maxpathlen = 1024,
-	.no_trunc = TRUE,
-	.chown_restricted = TRUE,
-	.case_preserving = TRUE,
+	.no_trunc = true,
+	.chown_restricted = true,
+	.case_preserving = true,
 	.fh_expire_type = FSAL_EXPTYPE_PERSISTENT,
-	.link_support = TRUE,
-	.symlink_support = TRUE,
-	.lock_support = TRUE,
-	.named_attr = TRUE,
-	.unique_handles = TRUE,
+	.link_support = true,
+	.symlink_support = true,
+	.lock_support = true,
+	.named_attr = true,
+	.unique_handles = true,
 	.lease_time = {10, 0},
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,
-	.cansettime = TRUE,
-	.homogenous = TRUE,
+	.cansettime = true,
+	.homogenous = true,
 	.supported_attrs = SUPPORTED_ATTRIBUTES,
 	.xattr_access_rights = 0400,
-	.dirs_have_sticky_bit = TRUE
+	.dirs_have_sticky_bit = true
 };
 
 static int

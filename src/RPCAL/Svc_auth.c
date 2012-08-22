@@ -52,25 +52,29 @@
  * 
  *	enum auth_stat
  *	flavorx_auth(rqst, msg)
- *		register struct svc_req *rqst; 
+ *		register struct svc_req *rqst;
  *		register struct rpc_msg *msg;
  *
  */
 enum auth_stat Gssrpc__svcauth_none(register struct svc_req *rqst,
-                                    register struct rpc_msg *msg, bool_t * no_dispatch);
+                                    register struct rpc_msg *msg,
+                                    bool * no_dispatch);
 
 enum auth_stat Gssrpc__svcauth_unix(register struct svc_req *rqst,
-                                    register struct rpc_msg *msg, bool_t * no_dispatch);
+                                    register struct rpc_msg *msg,
+                                    bool * no_dispatch);
 
 enum auth_stat Gssrpc__svcauth_gss(register struct svc_req *rqst,
-                                   register struct rpc_msg *msg, bool_t * no_dispatch);
+                                   register struct rpc_msg *msg,
+                                   bool * no_dispatch);
 
 #define Gssrpc__svcauth_short Gssrpc__svcauth_unix
 
 static struct svcauthsw_type
 {
   u_int flavor;
-  enum auth_stat (*authenticator) (struct svc_req *, struct rpc_msg *, bool_t *);
+  enum auth_stat (*authenticator) (struct svc_req *, struct rpc_msg *,
+                                   bool *);
 } svcauthsw[] =
 {
 #ifdef AUTH_GSSAPI
@@ -110,7 +114,8 @@ static int svcauthnum = sizeof(svcauthsw) / sizeof(struct svcauthsw_type);
  */
 enum auth_stat
 Rpcsecgss__authenticate(register struct svc_req *rqst,
-                        struct rpc_msg *msg, bool_t * no_dispatch)
+                        struct rpc_msg *msg,
+                        bool * no_dispatch)
 {
   register int cred_flavor, i;
 
@@ -118,7 +123,7 @@ Rpcsecgss__authenticate(register struct svc_req *rqst,
   rqst->rq_xprt->xp_verf.oa_flavor = 0;
   rqst->rq_xprt->xp_verf.oa_length = 0;
   cred_flavor = rqst->rq_cred.oa_flavor;
-  *no_dispatch = FALSE;
+  *no_dispatch = false;
   for(i = 0; i < svcauthnum; i++)
     {
       if((cred_flavor == svcauthsw[i].flavor) &&

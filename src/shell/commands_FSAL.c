@@ -245,7 +245,7 @@ static desc_log_stream_t voie;
 static log_t log_desc = LOG_INITIALIZER;
 #endif
 
-static int is_loaded = FALSE;   /* filsystem initialization status */
+static int is_loaded = false;   /* filsystem initialization status */
 
 /* thread specific configuration variables */
 
@@ -321,9 +321,9 @@ cmdfsal_thr_info_t *GetFSALCmdContext()
 
       memset(p_current_thread_vars, 0, sizeof(cmdfsal_thr_info_t));
 
-      p_current_thread_vars->is_thread_ok = FALSE;
+      p_current_thread_vars->is_thread_ok = false;
       strcpy(p_current_thread_vars->current_path, "");
-      p_current_thread_vars->opened = FALSE;
+      p_current_thread_vars->opened = false;
 
       /* set the specific value */
       pthread_setspecific(thread_key, (void *)p_current_thread_vars);
@@ -419,7 +419,7 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
   /* save root handle */
 
   context->current_dir = hdl_dir;
-  context->is_thread_ok = TRUE;
+  context->is_thread_ok = true;
 
   strcpy(context->current_path, "/");
 
@@ -603,13 +603,13 @@ int fsal_init(char *filename, int flag_v, FILE * output)
 
     }
 
-  is_loaded = TRUE;
+  is_loaded = true;
 
   /* initialize current thread */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, flag_v);
@@ -716,7 +716,7 @@ int fn_fsal_pwd(int argc,       /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -750,7 +750,7 @@ int solvepath(char *io_global_path, int size_global_path,       /* [IN-OUT] glob
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -935,7 +935,7 @@ int fn_fsal_cd(int argc,        /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -1037,7 +1037,7 @@ int fn_fsal_stat(int argc,      /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -1180,7 +1180,7 @@ int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -1249,7 +1249,7 @@ int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
   /* list extended attributes */
 
   cookie = XATTRS_READLIST_FROM_BEGINNING;
-  eol = FALSE;
+  eol = false;
 
   while(!eol)
     {
@@ -1334,7 +1334,7 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -1464,13 +1464,13 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
         {
           unsigned int i;
           char *str = buffer;
-          int is_ascii = TRUE;
+          int is_ascii = true;
 
           for(i = 0; i < strlen(str); i++)
             {
               if(!isprint(str[i]) && !isspace(str[i]))
                 {
-                  is_ascii = FALSE;
+                  is_ascii = false;
                   break;
                 }
             }
@@ -1573,9 +1573,9 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
   fsal_cookie_t from, to;
   fsal_dirent_t entries[READDIR_SIZE];
   fsal_count_t number;
-  fsal_boolean_t eod = FALSE;
+  bool eod = false;
   fsal_path_t symlink_path;
-  int error = FALSE;
+  int error = false;
   int rc;
 
   cmdfsal_thr_info_t *context;
@@ -1658,7 +1658,7 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -1882,7 +1882,7 @@ int fn_fsal_callstat(int argc,  /* IN : number of args in argv */
     }
 
   /* retrieving current thread stats */
-/*   FSAL_get_stats(&call_stat, FALSE); */
+/*   FSAL_get_stats(&call_stat, false); */
 
   /* displaying stats */
   /* header: */
@@ -1932,7 +1932,7 @@ int fn_fsal_su(int argc,        /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -2044,7 +2044,7 @@ int fn_fsal_unlink(int argc,    /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -2180,7 +2180,7 @@ int fn_fsal_mkdir(int argc,     /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -2363,7 +2363,7 @@ int fn_fsal_rename(int argc,    /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -2542,7 +2542,7 @@ int fn_fsal_ln(int argc,        /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -2712,7 +2712,7 @@ int fn_fsal_hardlink(int argc,  /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -2872,7 +2872,7 @@ int fn_fsal_create(int argc,    /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -3063,7 +3063,7 @@ int fn_fsal_setattr(int argc,   /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -3277,7 +3277,7 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -3521,7 +3521,7 @@ int fn_fsal_truncate(int argc,  /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -3667,7 +3667,7 @@ int fn_fsal_open_byname(int argc,       /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -3813,7 +3813,7 @@ int fn_fsal_open_byname(int argc,       /* IN : number of args in argv */
     }
 
   /* note that a file is opened. */
-  context->opened = TRUE;
+  context->opened = true;
 
 /*   if(flag_v) */
 /*     fprintf(output, "Open operation completed sucessfully : fd = %d.\n", */
@@ -3873,7 +3873,7 @@ int fn_fsal_open(int argc,      /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -4018,7 +4018,7 @@ int fn_fsal_open(int argc,      /* IN : number of args in argv */
     }
 
   /* note that a file is opened. */
-  context->opened = TRUE;
+  context->opened = true;
 
 /*   if(flag_v) */
 /*     fprintf(output, "Open operation completed sucessfully : fd = %d.\n", */
@@ -4080,7 +4080,7 @@ int fn_fsal_open_byfileid(int argc,     /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -4228,7 +4228,7 @@ int fn_fsal_open_byfileid(int argc,     /* IN : number of args in argv */
     }
 
   /* note that a file is opened. */
-  context->opened = TRUE;
+  context->opened = true;
 
 /*   if(flag_v) */
 /*     fprintf(output, "Open operation completed sucessfully : fd = %d.\n", */
@@ -4296,7 +4296,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
 
   /* fsal arguments */
 
-  fsal_boolean_t is_eof = 0;
+  bool is_eof = 0;
   fsal_size_t total_nb_read = 0;
   fsal_size_t once_nb_read = 0;
   fsal_size_t nb_block_read = 0;
@@ -4320,7 +4320,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -4776,7 +4776,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -5157,7 +5157,7 @@ int fn_fsal_close(int argc,     /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -5189,7 +5189,7 @@ int fn_fsal_close(int argc,     /* IN : number of args in argv */
     }
 
   /* note that a file is closed. */
-  context->opened = FALSE;
+  context->opened = false;
 
   return 0;
 
@@ -5222,7 +5222,7 @@ int fn_fsal_close_byfileid(int argc,    /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -5254,7 +5254,7 @@ int fn_fsal_close_byfileid(int argc,    /* IN : number of args in argv */
     }
 
   /* note that a file is closed. */
-  context->opened = FALSE;
+  context->opened = false;
 
   return 0;
 
@@ -5312,7 +5312,7 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -5484,7 +5484,7 @@ int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -5669,7 +5669,7 @@ int fn_fsal_cross(int argc,     /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -5758,7 +5758,7 @@ int fn_fsal_handle(int argc,     /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);
@@ -5903,7 +5903,7 @@ int fn_fsal_handlecmp(int argc, /* IN : number of args in argv */
 
   context = GetFSALCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_Context(output, context, 0);

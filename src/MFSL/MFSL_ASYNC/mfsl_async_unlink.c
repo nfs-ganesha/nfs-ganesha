@@ -202,7 +202,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
      && (obj_pasyncdata->async_attr.type == FSAL_TYPE_FILE))
     obj_pasyncdata->async_attr.numlinks -= 1;
   else
-    obj_pasyncdata->deleted = TRUE;
+    obj_pasyncdata->deleted = true;
 
   if(!mfsl_async_set_specdata(object_handle, obj_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);

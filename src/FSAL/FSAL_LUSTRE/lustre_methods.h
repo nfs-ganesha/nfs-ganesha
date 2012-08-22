@@ -59,7 +59,7 @@ fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
 		       size_t buffer_size,
 		       void *buffer,
 		       size_t *read_amount,
-		       bool_t *end_of_file);
+		       bool *end_of_file);
 fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
                         uint64_t offset,
 			size_t buffer_size,

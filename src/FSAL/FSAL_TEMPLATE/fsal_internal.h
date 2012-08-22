@@ -49,4 +49,4 @@ void ReleaseTokenFSCall();
  * (in the other cases, return codes are only logged
  * in the NIV_FULL_DEBUG logging lovel).
  */
-fsal_boolean_t fsal_do_log(fsal_status_t status);
+bool fsal_do_log(fsal_status_t status);

@@ -85,7 +85,7 @@ create_export(struct fsal_module *module,
         /* The status code to return */
         fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
         /* True if we have called fsal_export_init */
-        bool_t initialized = FALSE;
+        bool initialized = false;
         /* The internal export object */
         struct export *export = NULL;
         /* A fake argument list for Ceph */
@@ -122,7 +122,7 @@ create_export(struct fsal_module *module,
                          module->exp_ops,
                          list_entry);
 
-        initialized = TRUE;
+        initialized = true;
 
         /* allocates ceph_mount_info */
         ceph_status = ceph_create(&export->cmount, NULL);
@@ -176,7 +176,7 @@ error:
 
         if (initialized) {
                 pthread_mutex_destroy(&export->export.lock);
-                initialized = FALSE;
+                initialized = false;
         }
 
         if (export != NULL) {

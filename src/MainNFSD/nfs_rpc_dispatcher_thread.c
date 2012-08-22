@@ -97,7 +97,7 @@ static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
 
 static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
                           void *u_data);
-static bool_t nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
+static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
 static void nfs_rpc_free_xprt(SVCXPRT *xprt);
 
 /**
@@ -651,9 +651,9 @@ void nfs_Init_svc()
 
 #ifdef _HAVE_GSSAPI
   /* Acquire RPCSEC_GSS basis if needed */
-  if(nfs_param.krb5_param.active_krb5 == TRUE)
+  if(nfs_param.krb5_param.active_krb5)
     {
-      if(Svcauth_gss_import_name(nfs_param.krb5_param.svc.principal) != TRUE)
+      if(!(Svcauth_gss_import_name(nfs_param.krb5_param.svc.principal)))
         {
           LogFatal(COMPONENT_DISPATCH,
                    "Could not import principal name %s into GSSAPI",
@@ -781,7 +781,7 @@ worker_available(unsigned long worker_index, unsigned int avg_number_pending)
       case STATE_AWAKE:
       case STATE_AWAKEN:
         /* Choose only fully initialized workers and that does not gc. */
-        if(workers_data[worker_index].wcb.tcb_ready == FALSE)
+        if(!(workers_data[worker_index].wcb.tcb_ready))
           {
             LogFullDebug(COMPONENT_THREAD,
                          "worker thread #%lu is not ready", worker_index);
@@ -1036,7 +1036,7 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
   return (rc);
 }
 
-static bool_t
+static bool
 nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 {
     /* Ok, in the new world, TI-RPC's job is merely to tell us there is activity
@@ -1135,7 +1135,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 
     dispatch_rpc_request(xprt);
 
-    return (TRUE);
+    return (true);
 }
 
 /**

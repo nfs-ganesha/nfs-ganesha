@@ -397,7 +397,7 @@ void *stats_thread(void *UnusedArg)
   char strdate[1024];
   char strbootdate[1024];
   unsigned int j = 0;
-  int reopen_stats = FALSE;
+  int reopen_stats = false;
 
   ganesha_stats_t        ganesha_stats;
   nfs_worker_stat_t      *global_worker_stat = &ganesha_stats.global_worker_stat;
@@ -453,16 +453,16 @@ void *stats_thread(void *UnusedArg)
       if(stat(nfs_param.core_param.stats_file_path, &stattest) == 0)
         {
           if(stattest.st_ino != statref.st_ino)
-            reopen_stats = TRUE;
+            reopen_stats = true;
         }
       else
         {
           if(errno == ENOENT)
-            reopen_stats = TRUE;
+            reopen_stats = true;
         }
 
       /* Check is file has changed (the inode number will be different) */
-      if(reopen_stats == TRUE)
+      if(reopen_stats == true)
         {
           /* Stats file has changed */
           LogEvent(COMPONENT_MAIN,
@@ -477,7 +477,7 @@ void *stats_thread(void *UnusedArg)
               return NULL;
             }
           statref = stattest;
-          reopen_stats = FALSE;
+          reopen_stats = false;
         }
 
       /* Get the current epoch time */

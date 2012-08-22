@@ -664,7 +664,7 @@ errout:
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  char *link_content,
                                  size_t *link_len,
-                                 bool_t refresh)
+                                 bool refresh)
 {
 	struct vfs_fsal_obj_handle *myself = NULL;
 	int fd, mntfd;
@@ -798,7 +798,7 @@ struct linux_dirent {
  * @param whence [IN] where to start (next)
  * @param dir_state [IN] pass thru of state to callback
  * @param cb [IN] callback function
- * @param eof [OUT] eof marker TRUE == end of dir
+ * @param eof [OUT] eof marker true == end of dir
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
@@ -811,7 +811,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 					  struct fsal_obj_handle *dir_hdl,
 					  void *dir_state,
 					  struct fsal_cookie *cookie),
-                                  bool_t *eof)
+                                  bool *eof)
 {
 	struct vfs_fsal_obj_handle *myself;
 	int dirfd, mntfd;
@@ -885,7 +885,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		}
 	} while(nread > 0);
 
-	*eof = nread == 0 ? TRUE : FALSE;
+	*eof = nread == 0 ? true : false;
 done:
 	close(dirfd);
 	
@@ -1157,29 +1157,29 @@ fileerr:
 out:
 	if( !(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0))
 		close(fd);
-	return fsalstat(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);
 }
 
 /* compare
  * compare two handles.
- * return TRUE for equal, FALSE for anything else
+ * return true for equal, false for anything else
  */
-static bool_t compare(struct fsal_obj_handle *obj_hdl,
+static bool compare(struct fsal_obj_handle *obj_hdl,
                       struct fsal_obj_handle *other_hdl)
 {
 	struct vfs_fsal_obj_handle *myself, *other;
 
 	if( !other_hdl)
-		return FALSE;
+		return false;
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	other = container_of(other_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	if((obj_hdl->type != other_hdl->type) ||
 	   (myself->handle->handle_type != other->handle->handle_type) ||
 	   (myself->handle->handle_bytes != other->handle->handle_bytes))
-		return FALSE;
+		return false;
 	return memcmp(myself->handle->f_handle,
 		      other->handle->f_handle,
-		      myself->handle->handle_bytes) ? FALSE : TRUE;
+		      myself->handle->handle_bytes) ? false : true;
 }
 
 /* file_truncate

@@ -153,7 +153,7 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
   if(pfh4->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle) ||
      pfile_handle->fhversion != GANESHA_FH_VERSION ||
      pfile_handle->pseudofs_id != 0 ||
-     pfile_handle->pseudofs_flag != FALSE)
+     pfile_handle->pseudofs_flag != false)
     return 0;                   /* Bad FH */
 
   /* Fill in the fs opaque part */
@@ -295,7 +295,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4,
   file_handle->exportid = data->pexport->id;
 
   /* if FH expires, set it there */
-  if(nfs_param.nfsv4_param.fh_expire == TRUE)
+  if(nfs_param.nfsv4_param.fh_expire)
     {
       LogFullDebug(COMPONENT_NFS_V4, "An expireable file handle was created.");
       file_handle->srvboot_time = ServerBootTime;
@@ -508,7 +508,7 @@ short nfs2_FhandleToExportId(fhandle2 * pfh2)
  *
  * @param pfh [IN] file handle to test.
  * 
- * @return TRUE if in pseudo fh, FALSE otherwise 
+ * @return true if in pseudo fh, false otherwise 
  *
  */
 int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh)
@@ -553,7 +553,7 @@ int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
  *
  * @param pfh [IN] file handle to test.
  * 
- * @return TRUE if in pseudo fh, FALSE otherwise 
+ * @return true if in pseudo fh, false otherwise 
  *
  */
 int nfs4_Is_Fh_Xattr(nfs_fh4 * pfh)
@@ -576,7 +576,7 @@ int nfs4_Is_Fh_Xattr(nfs_fh4 * pfh)
  *
  * @param pfh [IN] file handle to test.
  * 
- * @return TRUE if in pseudo fh, FALSE otherwise 
+ * @return true if in pseudo fh, false otherwise 
  *
  */
 int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh)
@@ -599,7 +599,7 @@ int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh)
  *
  * @param pfh [IN] file handle to test.
  *
- * @return TRUE if DS fh, FALSE otherwise
+ * @return true if DS fh, false otherwise
  *
  */
 int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh)
@@ -634,10 +634,10 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
 
   pfilehandle4 = (file_handle_v4_t *) pfh;
 
-  if((nfs_param.nfsv4_param.fh_expire == TRUE)
+  if((nfs_param.nfsv4_param.fh_expire)
      && (pfilehandle4->srvboot_time != (unsigned int)ServerBootTime))
     {
-      if(nfs_param.nfsv4_param.returns_err_fh_expired == TRUE)
+      if(nfs_param.nfsv4_param.returns_err_fh_expired)
         return NFS4ERR_FHEXPIRED;
     }
 
@@ -728,7 +728,7 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3)
  *
  * @param pfh [IN] file handle to test.
  *
- * @return TRUE is fh is a referral, FALSE otherwise
+ * @return true is fh is a referral, false otherwise
  *
  */
 int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
@@ -743,10 +743,10 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
   /* Referrals are fh whose pseudofs_id is set without pseudofs_flag set */
   if(pfhandle4->refid > 0)
     {
-      return TRUE;
+      return true;
     }
 
-  return FALSE;
+  return false;
 }                               /* nfs4_Is_Fh_Referral */
 
 /**

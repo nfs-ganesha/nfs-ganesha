@@ -267,7 +267,7 @@ void mark_thread_asleep(nfs_tcb_t *wcb)
     {
       wcb->tcb_state = STATE_PAUSED;
       num_active_threads--;
-      wcb->tcb_ready = FALSE;
+      wcb->tcb_ready = false;
     }
 
   pthread_cond_signal(&active_threads_cond);
@@ -290,7 +290,7 @@ void mark_thread_done(nfs_tcb_t *wcb)
   if(wcb->tcb_ready)
   {
     num_active_threads--;
-    wcb->tcb_ready = FALSE;
+    wcb->tcb_ready = false;
   }
 
   num_existing_threads--;
@@ -345,7 +345,7 @@ void mark_thread_awake(nfs_tcb_t *wcb)
     {
       wcb->tcb_state = STATE_AWAKE;
       num_active_threads++;
-      wcb->tcb_ready = TRUE;
+      wcb->tcb_ready = true;
     }
 
   pthread_cond_signal(&active_threads_cond);
@@ -387,8 +387,8 @@ void notify_threads_of_new_state()
 pause_rc pause_threads(pause_reason_t reason)
 {
   pause_rc rc = PAUSE_OK;
-  bool_t new_state = FALSE;
-  bool_t wait = TRUE;
+  bool new_state = false;
+  bool wait = true;
 
   P(gtcb_mutex);
   LogDebug(COMPONENT_THREAD,
@@ -419,13 +419,13 @@ pause_rc pause_threads(pause_reason_t reason)
             case STATE_AWAKEN:
             case STATE_AWAKE:
               pause_state = STATE_PAUSE;
-              new_state = TRUE;
+              new_state = true;
               break;
             case STATE_PAUSE:
               break;
             case STATE_PAUSED:
               /* Already paused, nothing to do. */
-              wait = FALSE;
+              wait = false;
               break;
 
             case STATE_EXIT:
@@ -439,14 +439,14 @@ pause_rc pause_threads(pause_reason_t reason)
         if(pause_state == STATE_EXIT)
           {
             /* Already paused, nothing more to do. */
-            wait = FALSE;
+            wait = false;
             rc = PAUSE_EXIT;
           }
         else
           {
             /* Otherwise don't care about current state, startup will handle need to exit. */
             pause_state = STATE_EXIT;
-            new_state = TRUE;
+            new_state = true;
           }
         break;
     }
@@ -479,8 +479,8 @@ pause_rc pause_threads(pause_reason_t reason)
 pause_rc wake_threads(awaken_reason_t reason)
 {
   pause_rc rc;
-  bool_t new_state = FALSE;
-  bool_t wait = TRUE;
+  bool new_state = false;
+  bool wait = true;
 
   P(gtcb_mutex);
 
@@ -512,12 +512,12 @@ pause_rc wake_threads(awaken_reason_t reason)
                   return PAUSE_PAUSE;
                 }
               pause_state = STATE_AWAKEN;
-              new_state = TRUE;
+              new_state = true;
               break;
 
             case STATE_AWAKE:
               /* Already awake, nothing to do. */
-              wait = FALSE;
+              wait = false;
               rc = PAUSE_OK;
               break;
 

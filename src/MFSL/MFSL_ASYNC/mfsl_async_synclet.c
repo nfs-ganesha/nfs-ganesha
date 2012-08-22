@@ -235,7 +235,7 @@ void *mfsl_async_synclet_thread(void *Arg)
   int rc = 0;
   fsal_status_t fsal_status;
   fsal_export_context_t fsal_export_context;
-  int found = FALSE;
+  int found = false;
   LRU_entry_t *pentry;
   mfsl_async_op_desc_t *pasyncopdesc = NULL;
 
@@ -301,13 +301,13 @@ void *mfsl_async_synclet_thread(void *Arg)
                           &(synclet_data[index].mutex_op_condvar));
       V(synclet_data[index].mutex_op_condvar);
 
-      found = FALSE;
+      found = false;
       P(synclet_data[index].mutex_op_lru);
       for(pentry = synclet_data[index].op_lru->LRU; pentry != NULL; pentry = pentry->next)
         {
           if(pentry->valid_state == LRU_ENTRY_VALID)
             {
-              found = TRUE;
+              found = true;
               break;
             }
         }

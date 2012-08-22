@@ -115,14 +115,14 @@ fsal_status_t FUSEFSAL_rename(fsal_handle_t * old_parent, /* IN */
 
   ReleaseTokenFSCall();
 
-  /* Regarding FALSE parameter of function fuse2fsal_error:
+  /* Regarding false parameter of function fuse2fsal_error:
    * here, if error is ENOENT, we don't know weither the father handle is STALE
    * or if the source entry does not exist.
    * We choose returning ENOENT since the parent exists in the namespace,
    * so it it more likely to exist than the children.
    */
   if(rc)
-    Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_rename);
+    Return(fuse2fsal_error(rc, false), rc, INDEX_FSAL_rename);
 
   /* If operation succeeded, impact the namespace */
   NamespaceRename(old_parentdir_handle->data.inode, old_parentdir_handle->data.device,

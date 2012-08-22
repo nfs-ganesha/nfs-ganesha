@@ -85,7 +85,8 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
    * Commit is done only on a file
    */
   res_OPEN_DOWNGRADE4.status = nfs4_sanity_check_FH(data,
-                                                    NO_FILE_TYPE, FALSE);
+                                                    NO_FILE_TYPE,
+                                                    false);
   if(res_OPEN_DOWNGRADE4.status != NFS4_OK)
     return res_OPEN_DOWNGRADE4.status;
 

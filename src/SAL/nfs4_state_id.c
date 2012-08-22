@@ -327,7 +327,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
   int32_t           diff;
 
   *ppstate = NULL;
-  data->current_stateid_valid = FALSE;
+  data->current_stateid_valid = false;
 
   if(pstate == NULL)
     return NFS4ERR_SERVERFAULT;
@@ -409,7 +409,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
       /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
       LogDebug(COMPONENT_STATE,
                "Check %s stateid could not find state %s", tag, str);
-      if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)      /* Dirty work-around for HPC environment */
+      if(nfs_param.nfsv4_param.return_bad_stateid)      /* Dirty work-around for HPC environment */
         return NFS4ERR_BAD_STATEID;
       else
         return NFS4_OK;
@@ -495,7 +495,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
   /* Copy stateid into current for later use */
   data->current_stateid       = *pstate;
   data->current_stateid.seqid = pstate2->state_seqid;
-  data->current_stateid_valid = TRUE;
+  data->current_stateid_valid = true;
 
   *ppstate = pstate2;
   return NFS4_OK;
@@ -529,7 +529,7 @@ void update_stateid(state_t         * pstate,
   /* Copy stateid into current for later use */
   data->current_stateid.seqid = pstate->state_seqid;
   memcpy(data->current_stateid.other, pstate->stateid_other, OTHERSIZE);
-  data->current_stateid_valid = TRUE;
+  data->current_stateid_valid = true;
 
   /* Copy stateid into response */
   presp->seqid = pstate->state_seqid;

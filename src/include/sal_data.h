@@ -159,7 +159,7 @@ typedef struct state_deleg__
 typedef struct state_layout__
 {
   layouttype4            state_layout_type;
-  bool_t                 state_return_on_close;
+  bool                   state_return_on_close;
   struct glist_head      state_segments;
 } state_layout_t;
 
@@ -202,7 +202,7 @@ typedef struct state_nfs4_owner_name_t
   clientid4    son_clientid;
   unsigned int son_owner_len;
   char         son_owner_val[MAXNAMLEN];
-  bool_t       son_islock;
+  bool         son_islock;
 } state_nfs4_owner_name_t;
 
 typedef enum state_owner_type_t
@@ -470,8 +470,8 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
 
 #ifdef _USE_BLOCKING_LOCKS
 
-typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
-					       exportlist_t  **ppexport);
+typedef bool   (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
+                                               exportlist_t  **ppexport);
 
 typedef struct state_nlm_block_data_t
 {

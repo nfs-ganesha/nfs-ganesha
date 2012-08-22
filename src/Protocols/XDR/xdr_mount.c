@@ -28,8 +28,8 @@ mountstat3 *objp;
 #endif
 
   if(!inline_xdr_enum(xdrs, (enum_t *) objp))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_fhandle3(xdrs, objp)
@@ -45,8 +45,8 @@ fhandle3 *objp;
 
   if(!inline_xdr_bytes
      (xdrs, (char **)&objp->fhandle3_val, (u_int *) & objp->fhandle3_len, NFS3_FHSIZE))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_dirpath(xdrs, objp)
@@ -61,8 +61,8 @@ dirpath *objp;
 #endif
 
   if(!inline_xdr_string(xdrs, objp, MNTPATHLEN))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_name(xdrs, objp)
@@ -77,8 +77,8 @@ name *objp;
 #endif
 
   if(!inline_xdr_string(xdrs, objp, MNTNAMLEN))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_groups(xdrs, objp)
@@ -94,8 +94,8 @@ groups *objp;
 
   if(!xdr_pointer
      (xdrs, (char **)objp, sizeof(struct groupnode), (xdrproc_t) xdr_groupnode))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_groupnode(xdrs, objp)
@@ -110,10 +110,10 @@ groupnode *objp;
 #endif
 
   if(!xdr_name(xdrs, &objp->gr_name))
-    return (FALSE);
+    return (false);
   if(!xdr_groups(xdrs, &objp->gr_next))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_exports(xdrs, objp)
@@ -129,8 +129,8 @@ exports *objp;
 
   if(!xdr_pointer
      (xdrs, (char **)objp, sizeof(struct exportnode), (xdrproc_t) xdr_exportnode))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_exportnode(xdrs, objp)
@@ -145,12 +145,12 @@ exportnode *objp;
 #endif
 
   if(!xdr_dirpath(xdrs, &objp->ex_dir))
-    return (FALSE);
+    return (false);
   if(!xdr_groups(xdrs, &objp->ex_groups))
-    return (FALSE);
+    return (false);
   if(!xdr_exports(xdrs, &objp->ex_next))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_mountlist(xdrs, objp)
@@ -166,8 +166,8 @@ mountlist *objp;
 
   if(!xdr_pointer
      (xdrs, (char **)objp, sizeof(struct mountbody), (xdrproc_t) xdr_mountbody))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_mountbody(xdrs, objp)
@@ -182,12 +182,12 @@ mountbody *objp;
 #endif
 
   if(!xdr_name(xdrs, &objp->ml_hostname))
-    return (FALSE);
+    return (false);
   if(!xdr_dirpath(xdrs, &objp->ml_directory))
-    return (FALSE);
+    return (false);
   if(!xdr_mountlist(xdrs, &objp->ml_next))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_mountres3_ok(xdrs, objp)
@@ -202,13 +202,13 @@ mountres3_ok *objp;
 #endif
 
   if(!xdr_fhandle3(xdrs, &objp->fhandle))
-    return (FALSE);
+    return (false);
   if(!xdr_array
      (xdrs, (char **)&objp->auth_flavors.auth_flavors_val,
       (u_int *) & objp->auth_flavors.auth_flavors_len, ~0, sizeof(int),
       (xdrproc_t) xdr_int))
-    return (FALSE);
-  return (TRUE);
+    return (false);
+  return (true);
 }
 
 bool xdr_mountres3(xdrs, objp)
@@ -223,16 +223,16 @@ mountres3 *objp;
 #endif
 
   if(!xdr_mountstat3(xdrs, &objp->fhs_status))
-    return (FALSE);
+    return (false);
   switch (objp->fhs_status)
     {
     case MNT3_OK:
       if(!xdr_mountres3_ok(xdrs, &objp->mountres3_u.mountinfo))
-        return (FALSE);
+        return (false);
       break;
     default:
-      return (TRUE);
+      return (true);
       break;
     }
-  return (TRUE);
+  return (true);
 }

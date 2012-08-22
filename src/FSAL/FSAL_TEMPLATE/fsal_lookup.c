@@ -268,7 +268,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   char *ptr_str;
   fsal_handle_t out_hdl;
   fsal_status_t status;
-  int b_is_last = FALSE;        /* is it the last lookup ? */
+  int b_is_last = false;        /* is it the last lookup ? */
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  *  this function may be adapted to most FSALs
@@ -297,7 +297,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   /* is the next name empty ? */
 
   if(ptr_str[0] == '\0')
-    b_is_last = TRUE;
+    b_is_last = true;
 
   /* retrieves root directory */
 
@@ -350,7 +350,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 
       /* is the next name empty ? */
       if(ptr_str[0] == '\0')
-        b_is_last = TRUE;
+        b_is_last = true;
 
       /*call to FSAL_lookup */
       status = FSAL_lookup(&in_hdl,     /* parent directory handle */

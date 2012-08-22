@@ -19,21 +19,21 @@ bool xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
       if(buf == NULL)
         {
           if(!xdr_u_int(xdrs, &objp->rq_bhardlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_bsoftlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_curblocks))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_fhardlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_fsoftlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_curfiles))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_btimeleft))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_ftimeleft))
-            return FALSE;
+            return false;
         }
       else
         {
@@ -46,7 +46,7 @@ bool xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
           IXDR_PUT_U_LONG(buf, objp->rq_btimeleft);
           IXDR_PUT_U_LONG(buf, objp->rq_ftimeleft);
         }
-      return TRUE;
+      return true;
     }
   else if(xdrs->x_op == XDR_DECODE)
     {
@@ -54,21 +54,21 @@ bool xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
       if(buf == NULL)
         {
           if(!xdr_u_int(xdrs, &objp->rq_bhardlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_bsoftlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_curblocks))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_fhardlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_fsoftlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_curfiles))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_btimeleft))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_ftimeleft))
-            return FALSE;
+            return false;
         }
       else
         {
@@ -81,26 +81,26 @@ bool xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
           objp->rq_btimeleft = IXDR_GET_U_LONG(buf);
           objp->rq_ftimeleft = IXDR_GET_U_LONG(buf);
         }
-      return TRUE;
+      return true;
     }
 
   if(!xdr_u_int(xdrs, &objp->rq_bhardlimit))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_bsoftlimit))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_curblocks))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_fhardlimit))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_fsoftlimit))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_curfiles))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_btimeleft))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_ftimeleft))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_getquota_args(XDR * xdrs, getquota_args * objp)
@@ -108,10 +108,10 @@ bool xdr_getquota_args(XDR * xdrs, getquota_args * objp)
   register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_string(xdrs, &objp->gqa_pathp, RQ_PATHLEN))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->gqa_uid))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_setquota_args(XDR * xdrs, setquota_args * objp)
@@ -119,14 +119,14 @@ bool xdr_setquota_args(XDR * xdrs, setquota_args * objp)
   register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_int(xdrs, &objp->sqa_qcmd))
-    return FALSE;
+    return false;
   if(!xdr_string(xdrs, &objp->sqa_pathp, RQ_PATHLEN))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->sqa_id))
-    return FALSE;
+    return false;
   if(!xdr_sq_dqblk(xdrs, &objp->sqa_dqblk))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_ext_getquota_args(XDR * xdrs, ext_getquota_args * objp)
@@ -134,12 +134,12 @@ bool xdr_ext_getquota_args(XDR * xdrs, ext_getquota_args * objp)
   register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_string(xdrs, &objp->gqa_pathp, RQ_PATHLEN))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->gqa_type))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->gqa_id))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_ext_setquota_args(XDR * xdrs, ext_setquota_args * objp)
@@ -147,16 +147,16 @@ bool xdr_ext_setquota_args(XDR * xdrs, ext_setquota_args * objp)
   register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_int(xdrs, &objp->sqa_qcmd))
-    return FALSE;
+    return false;
   if(!xdr_string(xdrs, &objp->sqa_pathp, RQ_PATHLEN))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->sqa_id))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->sqa_type))
-    return FALSE;
+    return false;
   if(!xdr_sq_dqblk(xdrs, &objp->sqa_dqblk))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_rquota(XDR * xdrs, rquota * objp)
@@ -169,25 +169,25 @@ bool xdr_rquota(XDR * xdrs, rquota * objp)
       if(buf == NULL)
         {
           if(!xdr_int(xdrs, &objp->rq_bsize))
-            return FALSE;
+            return false;
           if(!xdr_bool(xdrs, &objp->rq_active))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_bhardlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_bsoftlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_curblocks))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_fhardlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_fsoftlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_curfiles))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_btimeleft))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_ftimeleft))
-            return FALSE;
+            return false;
         }
       else
         {
@@ -202,7 +202,7 @@ bool xdr_rquota(XDR * xdrs, rquota * objp)
           IXDR_PUT_U_LONG(buf, objp->rq_btimeleft);
           IXDR_PUT_U_LONG(buf, objp->rq_ftimeleft);
         }
-      return TRUE;
+      return true;
     }
   else if(xdrs->x_op == XDR_DECODE)
     {
@@ -210,25 +210,25 @@ bool xdr_rquota(XDR * xdrs, rquota * objp)
       if(buf == NULL)
         {
           if(!xdr_int(xdrs, &objp->rq_bsize))
-            return FALSE;
+            return false;
           if(!xdr_bool(xdrs, &objp->rq_active))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_bhardlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_bsoftlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_curblocks))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_fhardlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_fsoftlimit))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_curfiles))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_btimeleft))
-            return FALSE;
+            return false;
           if(!xdr_u_int(xdrs, &objp->rq_ftimeleft))
-            return FALSE;
+            return false;
         }
       else
         {
@@ -243,30 +243,30 @@ bool xdr_rquota(XDR * xdrs, rquota * objp)
           objp->rq_btimeleft = IXDR_GET_U_LONG(buf);
           objp->rq_ftimeleft = IXDR_GET_U_LONG(buf);
         }
-      return TRUE;
+      return true;
     }
 
   if(!xdr_int(xdrs, &objp->rq_bsize))
-    return FALSE;
+    return false;
   if(!xdr_bool(xdrs, &objp->rq_active))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_bhardlimit))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_bsoftlimit))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_curblocks))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_fhardlimit))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_fsoftlimit))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_curfiles))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_btimeleft))
-    return FALSE;
+    return false;
   if(!xdr_u_int(xdrs, &objp->rq_ftimeleft))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_qr_status(XDR * xdrs, qr_status * objp)
@@ -274,8 +274,8 @@ bool xdr_qr_status(XDR * xdrs, qr_status * objp)
   register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_enum(xdrs, (enum_t *) objp))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_getquota_rslt(XDR * xdrs, getquota_rslt * objp)
@@ -283,21 +283,21 @@ bool xdr_getquota_rslt(XDR * xdrs, getquota_rslt * objp)
   register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_qr_status(xdrs, &objp->status))
-    return FALSE;
+    return false;
   switch (objp->status)
     {
     case Q_OK:
       if(!xdr_rquota(xdrs, &objp->getquota_rslt_u.gqr_rquota))
-        return FALSE;
+        return false;
       break;
     case Q_NOQUOTA:
       break;
     case Q_EPERM:
       break;
     default:
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }
 
 bool xdr_setquota_rslt(XDR * xdrs, setquota_rslt * objp)
@@ -305,19 +305,19 @@ bool xdr_setquota_rslt(XDR * xdrs, setquota_rslt * objp)
   register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_qr_status(xdrs, &objp->status))
-    return FALSE;
+    return false;
   switch (objp->status)
     {
     case Q_OK:
       if(!xdr_rquota(xdrs, &objp->setquota_rslt_u.sqr_rquota))
-        return FALSE;
+        return false;
       break;
     case Q_NOQUOTA:
       break;
     case Q_EPERM:
       break;
     default:
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }

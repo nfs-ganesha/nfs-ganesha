@@ -78,7 +78,7 @@ fsal_status_t MFSL_lookup(mfsl_object_t * parent_directory_handle,      /* IN */
   if(mfsl_async_get_specdata(object_handle, &pasyncdata))
     {
       /* if object is asynchronous and deleted, then return ENOENT */
-      if(pasyncdata->deleted == TRUE)
+      if(pasyncdata->deleted == true)
         MFSL_return(ERR_FSAL_NOENT, ENOENT);
     }
 

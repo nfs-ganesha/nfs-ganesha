@@ -327,16 +327,16 @@ out:
 
 /* end refactorable RPC code */
 
-static inline bool_t
+static inline bool
 supported_auth_flavor(int flavor)
 {
-    bool_t code = FALSE;
+    bool code = false;
 
     switch (flavor) {
     case RPCSEC_GSS:
     case AUTH_SYS:
     case AUTH_NONE:
-        code = TRUE;
+        code = true;
         break;
     default:        
         break;
@@ -445,11 +445,11 @@ out:
     return;
 }
 
-static inline bool_t
+static inline bool
 nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
 {
     nfs_client_cred_t *credential = NULL;
-    bool_t code = TRUE;
+    bool code = true;
     AUTH *auth = NULL;
 
     switch (chan->type) {

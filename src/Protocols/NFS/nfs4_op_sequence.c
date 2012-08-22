@@ -121,17 +121,17 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
     }
 
   /* By default, no DRC replay */
-  data->use_drc = FALSE;
+  data->use_drc = false;
 
   P(session->slots[arg_SEQUENCE4.sa_slotid].lock);
   if(session->slots[arg_SEQUENCE4.sa_slotid].sequence + 1 != arg_SEQUENCE4.sa_sequenceid)
     {
       if(session->slots[arg_SEQUENCE4.sa_slotid].sequence == arg_SEQUENCE4.sa_sequenceid)
         {
-          if(session->slots[arg_SEQUENCE4.sa_slotid].cache_used == TRUE)
+          if(session->slots[arg_SEQUENCE4.sa_slotid].cache_used)
             {
               /* Replay operation through the DRC */
-              data->use_drc = TRUE;
+              data->use_drc = true;
               data->pcached_res = &session->slots[arg_SEQUENCE4.sa_slotid].cached_result;
 
               LogFullDebug(COMPONENT_SESSIONS,
@@ -171,10 +171,10 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags
        = 0;   /* What is to be set here ? */
 
-  if(arg_SEQUENCE4.sa_cachethis == TRUE)
+  if(arg_SEQUENCE4.sa_cachethis)
     {
       data->pcached_res = &session->slots[arg_SEQUENCE4.sa_slotid].cached_result;
-      session->slots[arg_SEQUENCE4.sa_slotid].cache_used = TRUE;
+      session->slots[arg_SEQUENCE4.sa_slotid].cache_used = true;
 
       LogFullDebug(COMPONENT_SESSIONS,
                    "Use sesson slot %"PRIu32"=%p for DRC",
@@ -183,7 +183,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
   else
     {
       data->pcached_res = NULL;
-      session->slots[arg_SEQUENCE4.sa_slotid].cache_used = FALSE;
+      session->slots[arg_SEQUENCE4.sa_slotid].cache_used = false;
 
       LogFullDebug(COMPONENT_SESSIONS,
                    "Don't use sesson slot %"PRIu32"=NULL for DRC",

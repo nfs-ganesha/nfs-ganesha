@@ -84,7 +84,7 @@ struct nfs4_readdir_cb_data
  * @param[in]     cookie The readdir cookie for the current entry
  */
 
-static bool_t
+static bool
 nfs4_readdir_callback(void* opaque,
                       char *name,
                       struct fsal_obj_handle *handle,
@@ -100,7 +100,7 @@ nfs4_readdir_callback(void* opaque,
      };
 
      if (tracker->total_entries == tracker->count) {
-          return FALSE;
+          return false;
      }
      memset(val_fh, 0, NFS4_FHSIZE);
      /* Bits that don't require allocation */
@@ -108,7 +108,7 @@ nfs4_readdir_callback(void* opaque,
           if (tracker->count == 0) {
                tracker->error = NFS4ERR_TOOSMALL;
           }
-          return FALSE;
+          return false;
      }
      tracker->mem_left -= sizeof(entry4);
      tracker->entries[tracker->count].cookie = cookie;
@@ -123,7 +123,7 @@ nfs4_readdir_callback(void* opaque,
           if (tracker->count == 0) {
                tracker->error = NFS4ERR_TOOSMALL;
           }
-          return FALSE;
+          return false;
      }
      tracker->mem_left -= (namelen + 1);
      tracker->entries[tracker->count].name.utf8string_len = namelen;
@@ -137,7 +137,7 @@ nfs4_readdir_callback(void* opaque,
           if (!nfs4_FSALToFhandle(&entryFH, handle, tracker->data)) {
                tracker->error = NFS4ERR_SERVERFAULT;
                gsh_free(tracker->entries[tracker->count].name.utf8string_val);
-               return FALSE;
+               return false;
           }
      }
 
@@ -168,7 +168,7 @@ nfs4_readdir_callback(void* opaque,
           if (tracker->count == 0) {
                tracker->error = NFS4ERR_TOOSMALL;
           }
-          return FALSE;
+          return false;
      }
      tracker->mem_left -=
           (tracker->entries[tracker->count].attrs.attrmask.bitmap4_len *
@@ -182,7 +182,7 @@ nfs4_readdir_callback(void* opaque,
      }
 
      ++(tracker->count);
-     return TRUE;
+     return true;
 }
 
 /**
@@ -215,6 +215,7 @@ free_entries(entry4 *entries)
 
      return;
 } /* free_entries */
+
 /**
  * @brief NFS4_OP_READDIR
  *
@@ -234,7 +235,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
                 struct nfs_resop4 *resp)
 {
      cache_entry_t *dir_entry = NULL;
-     bool_t eod_met = FALSE;
+     bool eod_met = false;
      unsigned long dircount = 0;
      unsigned long maxcount = 0;
      entry4 *entries = NULL;
@@ -249,7 +250,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      res_READDIR4.status = NFS4_OK;
 
      if ((res_READDIR4.status
-          = nfs4_sanity_check_FH(data, DIRECTORY, FALSE)) != NFS4_OK) {
+          = nfs4_sanity_check_FH(data, DIRECTORY, false)) != NFS4_OK) {
           goto out;
      }
 
@@ -369,7 +370,16 @@ nfs4_op_readdir(struct nfs_argop4 *op,
                = entries = NULL;
      }
 
-     res_READDIR4.READDIR4res_u.resok4.reply.eof = eod_met;
+     /* This slight bit of oddness is caused by most booleans
+        throughout Ganesha being of C99's bool type (taking the values
+        true and false), but fields in XDR being of the older bool_t
+        type i(taking the values TRUE and FALSE) */
+
+     if (eod_met) {
+             res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
+     } else {
+             res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;
+     }
 
      /* Do not forget to set the verifier */
      memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf,

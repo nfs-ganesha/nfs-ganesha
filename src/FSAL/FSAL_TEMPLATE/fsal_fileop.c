@@ -191,7 +191,7 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
                         fsal_size_t * read_amount,      /* OUT */
-                        fsal_boolean_t * end_of_file    /* OUT */
+                        bool * end_of_file    /* OUT */
     )
 {
 

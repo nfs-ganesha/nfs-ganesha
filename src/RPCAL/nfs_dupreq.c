@@ -959,24 +959,24 @@ nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
  *
  * @param drc [IN] The duplicate request cache
  *
- * @return TRUE if a request may be retired, else FALSE.
+ * @return true if a request may be retired, else false.
  */
 static inline bool
 drc_should_retire(drc_t *drc)
 {
     /* do not exeed the hard bound on cache size */
     if (unlikely(drc->size > drc->maxsize))
-        return (TRUE);
+        return (true);
 
     /* otherwise, are we permitted to retire requests */
     if (unlikely(drc->retwnd > 0))
-        return (FALSE);
+        return (false);
 
     /* finally, retire if drc->size is above intended high water mark */
     if (unlikely((drc)->size > drc->hiwat))
-        return (TRUE);
+        return (true);
 
-    return (FALSE);
+    return (false);
 }
 
 /**
@@ -1001,7 +1001,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     dupreq_status_t status = DUPREQ_SUCCESS;
     drc_t *drc = nfs_dupreq_get_drc(req);
     dupreq_entry_t *dv, *dk = NULL;
-    bool release_dk = TRUE;
+    bool release_dk = true;
     nfs_res_t *res = NULL;
 
     req->rq_u1 = (void*) DUPREQ_BAD_ADDR1;
@@ -1125,7 +1125,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
             ++(drc->size);
             pthread_spin_unlock(&drc->sp);
             req->rq_u1 = dk;
-            release_dk = FALSE;
+            release_dk = false;
             dv = dk;
         }
         pthread_mutex_unlock(&t->mtx);

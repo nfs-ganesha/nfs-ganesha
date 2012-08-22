@@ -132,7 +132,7 @@ fsal_status_t PROXYFSAL_access(fsal_handle_t * object_handle,      /* IN */
   /* >> convert your fsal access type to your FS access type << */
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, object_handle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, object_handle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
 #define FSAL_ACCESS_IDX_OP_PUTFH    0

@@ -44,6 +44,7 @@
 #include "FSAL/fsal_config.h"
 #include <FSAL/FSAL_POSIX/fsal_handle_syscalls.h>
 #include "posix_methods.h"
+#include <stdbool.h>
 
 #include "scanmount.h"
 
@@ -125,7 +126,7 @@ static fsal_status_t get_dynamic_info (struct fsal_export *exp_hdl, fsal_dynamic
     return fsalstat (fsal_error, retval);
 }
 
-static bool_t fs_supports (struct fsal_export *exp_hdl, fsal_fsinfo_options_t option)
+static bool fs_supports (struct fsal_export *exp_hdl, fsal_fsinfo_options_t option)
 {
     struct fsal_staticfsinfo_t *info;
 

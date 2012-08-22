@@ -50,7 +50,7 @@ typedef struct pnfs_ds_parameter__
   char rootpath[MAXPATHLEN];
   char ipaddr_ascii[MAXNAMLEN];
   unsigned int id;
-  bool_t is_ganesha;
+  bool is_ganesha;
 } pnfs_ds_parameter_t;
 
 typedef struct pnfs_layoutfile_parameter__

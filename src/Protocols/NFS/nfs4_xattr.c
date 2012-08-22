@@ -1168,7 +1168,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   unsigned long maxcount = 0;
   unsigned long estimated_num_entries = 0;
   unsigned long i = 0;
-  int eod_met = FALSE;
+  bool eod_met = false;
   unsigned int nb_xattrs_read = 0;
   fsal_xattrent_t xattrs_tab[255];
   nfs_cookie4 cookie;
@@ -1286,7 +1286,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
       return res_READDIR4.status;
     }
 
-  if(eod_met == TRUE)
+  if(eod_met)
     {
       /* This is the end of the directory */
       res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
@@ -1416,7 +1416,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
                                                    name,
                                                    empty_buff,
                                                    sizeof(empty_buff),
-                                                   TRUE);
+                                                   true);
 
       if(FSAL_IS_ERROR(fsal_status))
         {

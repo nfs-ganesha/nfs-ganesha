@@ -50,15 +50,15 @@ struct vfs_fsal_obj_handle {
 	} u;
 };
 
-static inline bool_t
+static inline bool
 vfs_unopenable_type(object_file_type_t type)
 {
         if ((type == SOCKET_FILE) ||
             (type == CHARACTER_FILE) ||
             (type == BLOCK_FILE)) {
-                return TRUE;
+                return true;
         } else {
-                return FALSE;
+                return false;
         }
 }
 
@@ -72,7 +72,7 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 		       size_t buffer_size,
 		       void *buffer,
 		       size_t *read_amount,
-		       bool_t *end_of_file);
+		       bool *end_of_file);
 fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
                         uint64_t offset,
 			size_t buffer_size,

@@ -107,7 +107,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                            fsal_dirent_t * pdirent,     /* OUT */
                            fsal_cookie_t * end_position,        /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
-                           fsal_boolean_t * end_of_dir  /* OUT */
+                           bool * end_of_dir  /* OUT */
     )
 {
 

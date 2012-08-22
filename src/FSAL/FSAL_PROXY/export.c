@@ -52,7 +52,7 @@ pxy_release(struct fsal_export *exp_hdl)
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static bool_t
+static bool
 pxy_get_supports(struct fsal_export *exp_hdl,
                  fsal_fsinfo_options_t option)
 {

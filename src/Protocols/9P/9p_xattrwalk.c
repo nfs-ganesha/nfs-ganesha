@@ -72,7 +72,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   fsal_status_t fsal_status ; 
   char name[MAXNAMLEN];
   fsal_xattrent_t xattrs_tab[255];
-  int eod_met = FALSE;
+  int eod_met = false;
   unsigned int nb_xattrs_read = 0;
   unsigned int i = 0 ; 
   char * xattr_cursor = NULL ;
@@ -140,7 +140,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ), plenout, preply ) ;
 
       /* if all xattrent are not read, returns ERANGE as listxattr does */
-      if( eod_met != TRUE )
+      if(!eod_met)
         return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
      
       xattr_cursor = pxattrfid->specdata.xattr.xattr_content ; 
@@ -197,7 +197,7 @@ int _9p_xattrwalk( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RXATTRWALK: tag=%u fid=%u attrfid=%u name=%.*s size=%llu",
             (u32)*msgtag, *fid, *attrfid,  *name_len, name_str, (unsigned long long)attrsize ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 } /* _9p_xattrwalk */
 

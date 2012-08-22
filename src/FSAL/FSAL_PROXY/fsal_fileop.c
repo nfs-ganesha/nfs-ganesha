@@ -145,12 +145,12 @@ fsal_status_t PROXYFSAL_open_by_name(fsal_handle_t * dirhandle,    /* IN */
   memset(&name, 0, sizeof(component4));
   name.utf8string_val = nameval;
   name.utf8string_len = sizeof(nameval);
-  if(fsal_internal_proxy_fsal_name_2_utf8(filename, &name) == FALSE)
+  if(fsal_internal_proxy_fsal_name_2_utf8(filename, &name) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, dirhandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, dirhandle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   bitmap.bitmap4_val = bitmap_open;
@@ -242,7 +242,7 @@ fsal_status_t PROXYFSAL_open_by_name(fsal_handle_t * dirhandle,    /* IN */
   if(fsal_internal_proxy_create_fh
      (&resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
       GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
-      (fsal_handle_t *) &file_descriptor->fhandle) == FALSE)
+      (fsal_handle_t *) &file_descriptor->fhandle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   file_descriptor->openflags = openflags;
@@ -356,7 +356,7 @@ fsal_status_t PROXYFSAL_open(fsal_handle_t * filehandle,  /* IN */
   fsal_internal_proxy_setup_fattr(&fattr_internal);
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
 
   bitmap.bitmap4_val = bitmap_open;
@@ -461,7 +461,7 @@ fsal_status_t PROXYFSAL_read(fsal_file_t * file_desc,        /* IN */
                              fsal_size_t buffer_size,   /* IN */
                              caddr_t buffer,    /* OUT */
                              fsal_size_t * read_amount, /* OUT */
-                             fsal_boolean_t * end_of_file       /* OUT */
+                             bool * end_of_file       /* OUT */
     )
 {
   int rc;
@@ -513,7 +513,7 @@ fsal_status_t PROXYFSAL_read(fsal_file_t * file_desc,        /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &(file_descriptor->fhandle)) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
 #define FSAL_READ_IDX_OP_PUTFH   0
@@ -644,7 +644,7 @@ fsal_status_t PROXYFSAL_write(fsal_file_t * file_desc,       /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &(file_descriptor->fhandle)) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
 #define FSAL_READ_IDX_OP_PUTFH    0
@@ -732,7 +732,7 @@ fsal_status_t PROXYFSAL_close(fsal_file_t * file_desc        /* IN */
    }
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *)&(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *)&(file_descriptor->fhandle)) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
 #define FSAL_CLOSE_IDX_OP_PUTFH 0
@@ -812,7 +812,7 @@ fsal_status_t PROXYFSAL_close_by_fileid(fsal_file_t * file_desc /* IN */ ,
   /* Get NFSv4 File handle */
 
   if(fsal_internal_proxy_extract_fh
-     (&nfs4fh_hldir, (fsal_handle_t *) &(file_descriptor->pcontext->openfh_wd_handle)) == FALSE)
+     (&nfs4fh_hldir, (fsal_handle_t *) &(file_descriptor->pcontext->openfh_wd_handle)) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close_by_fileid);
 
   snprintf(filename, MAXNAMLEN, ".ganesha.open_by_fid.%llu", fileid);
@@ -958,13 +958,13 @@ fsal_status_t PROXYFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == false)
     {
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
     }
 
   if(fsal_internal_proxy_extract_fh(&nfs4fh_hldir, (fsal_handle_t *) &(p_context->openfh_wd_handle)) ==
-     FALSE)
+     false)
     {
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
     }
@@ -1073,7 +1073,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
   if(fsal_internal_proxy_create_fh
      (&resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
       GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
-      (fsal_handle_t *) &file_descriptor->fhandle) == FALSE)
+      (fsal_handle_t *) &file_descriptor->fhandle) == false)
     {
       gsh_free(name.utf8string_val);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);

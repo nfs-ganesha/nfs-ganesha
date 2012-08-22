@@ -69,21 +69,21 @@ struct cb_data {
         uint64_t swexport;
 };
 
-static bool_t
+static bool
 cb(void *opaque,
    uint64_t id)
 {
         struct cb_data *data = (struct cb_data *)opaque;
 
         if (data->count > data->max) {
-                return FALSE;
+                return false;
         }
 
         *((uint64_t*) data->buffer[data->count]) = data->swexport;
         *((uint64_t*) (data->buffer[data->count] + sizeof(uint64_t)))
                 = nfs_htonl64(id);
         ++data->count;
-        return TRUE;
+        return true;
 }
 
 /**
@@ -127,7 +127,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op,
         }
 
         if ((nfs_status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
-                                               FALSE))
+                                               false))
             != NFS4_OK) {
                 goto out;
         }

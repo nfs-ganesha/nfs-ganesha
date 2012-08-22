@@ -40,14 +40,14 @@ bool nsm_connect()
   struct utsname utsname;
 
   if(nsm_clnt != NULL)
-    return TRUE;
+    return true;
 
   if(uname(&utsname) == -1)
     {
       LogCrit(COMPONENT_NLM,
               "uname failed with errno %d (%s)",
               errno, strerror(errno));
-      return FALSE;
+      return false;
     }
 
   nodename = gsh_malloc(strlen(utsname.nodename)+1);
@@ -55,7 +55,7 @@ bool nsm_connect()
     {
       LogCrit(COMPONENT_NLM,
               "failed to allocate memory for nodename");
-      return FALSE;
+      return false;
     }
 
   strcpy(nodename, utsname.nodename);
@@ -92,14 +92,14 @@ bool nsm_monitor(state_nsm_client_t *host)
   struct timeval     tout = { 5, 0 };
 
   if(host == NULL)
-    return TRUE;
+    return true;
 
   P(host->ssc_mutex);
 
   if(atomic_fetch_int32_t(&host->ssc_monitored))
     {
       V(host->ssc_mutex);
-      return TRUE;
+      return true;
     }
 
   nsm_mon.mon_id.mon_name      = host->ssc_nlm_caller_name;
@@ -121,7 +121,7 @@ bool nsm_monitor(state_nsm_client_t *host)
               nsm_mon.mon_id.mon_name);
       V(nsm_mutex);
       V(host->ssc_mutex);
-      return FALSE;
+      return false;
     }
 
   /* Set this after we call nsm_connect() */
@@ -143,7 +143,7 @@ bool nsm_monitor(state_nsm_client_t *host)
       nsm_disconnect();
       V(nsm_mutex);
       V(host->ssc_mutex);
-      return FALSE;
+      return false;
     }
 
   if(res.res_stat != STAT_SUCC)
@@ -154,17 +154,17 @@ bool nsm_monitor(state_nsm_client_t *host)
       nsm_disconnect();
       V(nsm_mutex);
       V(host->ssc_mutex);
-      return FALSE;
+      return false;
     }
 
   nsm_count++;
-  atomic_store_int32_t(&host->ssc_monitored, TRUE);
+  atomic_store_int32_t(&host->ssc_monitored, true);
   LogDebug(COMPONENT_NLM,
            "Monitored %s for nodename %s", nsm_mon.mon_id.mon_name, nodename);
 
   V(nsm_mutex);
   V(host->ssc_mutex);
-  return TRUE;
+  return true;
 }
 
 bool nsm_unmonitor(state_nsm_client_t *host)
@@ -175,14 +175,14 @@ bool nsm_unmonitor(state_nsm_client_t *host)
   struct timeval tout = { 5, 0 };
 
   if(host == NULL)
-    return TRUE;
+    return true;
 
   P(host->ssc_mutex);
 
   if(!atomic_fetch_int32_t(&host->ssc_monitored))
     {
       V(host->ssc_mutex);
-      return TRUE;
+      return true;
     }
 
   nsm_mon_id.mon_name      = host->ssc_nlm_caller_name;
@@ -200,7 +200,7 @@ bool nsm_unmonitor(state_nsm_client_t *host)
               nsm_mon_id.mon_name);
       V(nsm_mutex);
       V(host->ssc_mutex);
-      return FALSE;
+      return false;
     }
 
   /* Set this after we call nsm_connect() */
@@ -222,10 +222,10 @@ bool nsm_unmonitor(state_nsm_client_t *host)
       nsm_disconnect();
       V(nsm_mutex);
       V(host->ssc_mutex);
-      return FALSE;
+      return false;
     }
 
-  atomic_store_int32_t(&host->ssc_monitored, FALSE);
+  atomic_store_int32_t(&host->ssc_monitored, false);
   nsm_count--;
 
   LogDebug(COMPONENT_NLM,
@@ -235,7 +235,7 @@ bool nsm_unmonitor(state_nsm_client_t *host)
 
   V(nsm_mutex);
   V(host->ssc_mutex);
-  return TRUE;
+  return true;
 }
 
 void nsm_unmonitor_all(void)

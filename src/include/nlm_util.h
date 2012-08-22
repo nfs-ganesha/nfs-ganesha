@@ -29,8 +29,8 @@
 #include "nlm4.h"
 #include "sal_functions.h"
 
-bool_t nlm_block_data_to_export(state_block_data_t * block_data,
-				exportlist_t  **ppexport);
+bool nlm_block_data_to_export(state_block_data_t * block_data,
+                              exportlist_t  **ppexport);
 
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
@@ -55,7 +55,7 @@ extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
  * ppblock_data: Data required to make a call back to the client to grant a blocked lock
  */
 int nlm_process_parameters(struct svc_req        * preq,
-                           bool_t                  exclusive,
+                           bool                    exclusive,
                            nlm4_lock             * alock,
                            fsal_lock_param_t     * plock,
                            cache_entry_t        ** ppentry,

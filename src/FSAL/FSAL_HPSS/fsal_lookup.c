@@ -144,7 +144,7 @@ fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      
 
       TakeTokenFSCall();
 
-      rc = HPSSFSAL_GetRawAttrHandle(&(parent_directory_handle->data.ns_handle), p_filename->name, &p_context->credential.hpss_usercred, FALSE,      /* don't traverse junctions */
+      rc = HPSSFSAL_GetRawAttrHandle(&(parent_directory_handle->data.ns_handle), p_filename->name, &p_context->credential.hpss_usercred, false,      /* don't traverse junctions */
                                      &obj_hdl, NULL, &obj_attr);
 
       ReleaseTokenFSCall();
@@ -241,7 +241,7 @@ fsal_status_t HPSSFSAL_lookupJunction(hpssfsal_handle_t * p_junction_handle,    
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_GetRawAttrHandle(&(p_junction_handle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, TRUE,     /* do traverse junctions !!! */
+  rc = HPSSFSAL_GetRawAttrHandle(&(p_junction_handle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, true,     /* do traverse junctions !!! */
                                  NULL, NULL, &root_attr);
 
   ReleaseTokenFSCall();
@@ -314,7 +314,7 @@ fsal_status_t HPSSFSAL_lookupPath(fsal_path_t * p_path, /* IN */
   char *ptr_str;
   hpssfsal_handle_t out_hdl;
   fsal_status_t status;
-  int b_is_last = FALSE;        /* is it the last lookup ? */
+  int b_is_last = false;        /* is it the last lookup ? */
 
   /* sanity checks
    * note : object_attributes is optionnal.
@@ -339,7 +339,7 @@ fsal_status_t HPSSFSAL_lookupPath(fsal_path_t * p_path, /* IN */
   /* is the next name empty ? */
 
   if(ptr_str[0] == '\0')
-    b_is_last = TRUE;
+    b_is_last = true;
 
   /* retrieves root directory */
 
@@ -394,7 +394,7 @@ fsal_status_t HPSSFSAL_lookupPath(fsal_path_t * p_path, /* IN */
 
       /* is the next name empty ? */
       if(ptr_str[0] == '\0')
-        b_is_last = TRUE;
+        b_is_last = true;
 
       /*call to FSAL_lookup */
       status = HPSSFSAL_lookup(&in_hdl, /* parent directory handle */

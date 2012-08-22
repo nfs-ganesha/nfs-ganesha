@@ -132,8 +132,8 @@ nfs4_op_putfh(struct nfs_argop4 *op,
                                 return res_PUTFH4->status;
                         }
                 }
-                if (nfs_export_check_security(data->reqp,
-                                              data->pexport) == FALSE) {
+                if (!(nfs_export_check_security(data->reqp,
+                                                data->pexport))) {
                         res_PUTFH4->status = NFS4ERR_PERM;
                         return res_PUTFH4->status;
                 }

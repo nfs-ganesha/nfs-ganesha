@@ -43,6 +43,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "lustre_methods.h"
 #include "FSAL/FSAL_LUSTRE/fsal_handle.h"
+#include <stdbool.h>
 
 /** lustre_open
  * called with appropriate locks taken at the cache inode level
@@ -95,7 +96,7 @@ fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
                        size_t buffer_size,
                        void *buffer,
 		       size_t *read_amount,
-		       bool_t *end_of_file)
+		       bool *end_of_file)
 {
 	struct lustre_fsal_obj_handle *myself;
 	ssize_t nb_read;
@@ -116,7 +117,7 @@ fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
                 fsal_error = posix2fsal_error(retval);
                 goto out;
         }
-        *end_of_file = nb_read == 0 ? TRUE : FALSE;
+        *end_of_file = nb_read == 0 ? true : false;
         *read_amount = nb_read;
 out:
 	return fsalstat(fsal_error, retval);	

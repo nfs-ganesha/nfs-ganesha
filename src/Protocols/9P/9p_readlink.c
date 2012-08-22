@@ -107,7 +107,7 @@ int _9p_readlink( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "RREADLINK: tag=%u fid=%u link=%s", *msgtag, (u32)*fid, symlink_path ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

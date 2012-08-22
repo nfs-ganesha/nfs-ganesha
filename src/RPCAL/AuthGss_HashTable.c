@@ -38,7 +38,7 @@
 
 struct svc_rpc_gss_data_stored
 {
-  bool_t established;
+  bool established;
   gss_buffer_desc ctx_exported;
   struct rpc_gss_sec sec;
   char cname_val[GSS_CNAMELEN];
@@ -109,8 +109,8 @@ static const char *gss_data2stored(struct svc_rpc_gss_data *gd,
                 .length = sizeof(URN_MSPAC)-1
   };
   int more = -1;
-  int authenticated = TRUE;
-  int complete = FALSE;
+  int authenticated = true;
+  int complete = false;
 
   major = gss_get_name_attribute(
                 &minor, gd->client_name, &pac_name,
@@ -468,7 +468,7 @@ int Gss_ctx_Hash_Set(gss_union_ctx_id_desc *pgss_ctx, struct svc_rpc_gss_data *g
  */
 int Gss_ctx_Hash_Get(gss_union_ctx_id_desc *pgss_ctx,
 		     struct svc_rpc_gss_data *gd,
-		     bool_t **established,
+		     bool **established,
 		     u_int **seqlast,
 		     uint32_t **seqmask)
 {

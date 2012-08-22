@@ -133,7 +133,7 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
             "RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
             (u32)*msgtag, *fid, *name_len, name_str, qid_newdir.type, qid_newdir.version, (unsigned long long)qid_newdir.path ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

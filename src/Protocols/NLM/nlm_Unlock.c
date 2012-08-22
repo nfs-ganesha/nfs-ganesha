@@ -93,7 +93,7 @@ int nlm4_Unlock(nfs_arg_t *parg,
     }
 
   rc = nlm_process_parameters(preq,
-                              FALSE, /* exlcusive doesn't matter */
+                              false, /* exlcusive doesn't matter */
                               &arg->alock,
                               &lock,
                               &pentry,

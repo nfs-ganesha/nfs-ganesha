@@ -1208,14 +1208,14 @@ int nfs4_FhandleToPseudo(nfs_fh4 * fh4p, pseudofs_t * psfstree,
   pfhandle4 = (file_handle_v4_t *) (fh4p->nfs_fh4_val);
 
   /* The function must be called with a fh pointed to a pseudofs entry */
-  if(pfhandle4->pseudofs_flag == FALSE)
-    return FALSE;
+  if(!(pfhandle4->pseudofs_flag))
+    return false;
 
   /* Get the object pointer by using the reverse tab in the pseudofs structure */
   memcpy(psfsentry, psfstree->reverse_tab[pfhandle4->pseudofs_id],
          sizeof(pseudofs_entry_t));
 
-  return TRUE;
+  return true;
 }                               /* nfs4_FhandleToPseudo */
 
 /**
@@ -1237,7 +1237,7 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
   memset(fh4p->nfs_fh4_val, 0, sizeof(struct alloc_file_handle_v4)); /* clean whole thing */
   fhandle4 = (file_handle_v4_t *)fh4p->nfs_fh4_val;
   fhandle4->fhversion = GANESHA_FH_VERSION;
-  fhandle4->pseudofs_flag = TRUE;
+  fhandle4->pseudofs_flag = true;
   fhandle4->pseudofs_id = psfsentry->pseudo_id;
 
   LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "PSEUDO_TO_FH: Pseudo id = %d -> %d",
@@ -1245,7 +1245,7 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
 
   fh4p->nfs_fh4_len = sizeof(file_handle_v4_t); /* no handle in opaque */
 
-  return TRUE;
+  return true;
 }                               /* nfs4_PseudoToFhandle */
 
 /**
@@ -1393,8 +1393,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   char name[MAXNAMLEN];
   pseudofs_entry_t psfsentry;
   pseudofs_entry_t *iter = NULL;
-  int found = FALSE;
-  int pseudo_is_slash = FALSE ;
+  bool found = false;
+  bool pseudo_is_slash = false;
   int error = 0;
   cache_inode_status_t cache_status = 0;
   fsal_status_t fsal_status;
@@ -1423,17 +1423,17 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   if( ( gPseudoFs.root.junction_export != NULL ) && ( gPseudoFs.root.sons == NULL )  )
    {
 	iter = &gPseudoFs.root ;
-        pseudo_is_slash = TRUE ;
-        found = TRUE ;
+        pseudo_is_slash = true ;
+        found = true ;
    }
   else
    {
-     found = FALSE;
+     found = false;
      for(iter = psfsentry.sons; iter != NULL; iter = iter->next)
        {
          if(!strcmp(iter->name, name))
            {
-             found = TRUE;
+             found = true;
              break;
            } 
        } /* for */
@@ -1475,7 +1475,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build fsal data for creation of the first entry */
-      if( pseudo_is_slash != TRUE )
+      if( !pseudo_is_slash )
         {
           strncpy( pathfsal, data->pexport->fullpath, MAXPATHLEN ) ;
 	}

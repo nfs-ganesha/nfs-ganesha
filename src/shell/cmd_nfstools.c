@@ -149,9 +149,9 @@ int cmdnfs_void(cmdnfs_encodetype_t encodeflag,
                 int indent, FILE * out_stream, caddr_t p_nfs_struct)
 {
   if((encodeflag == CMDNFS_ENCODE) && (argc != 0))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 int cmdnfs_dirpath(cmdnfs_encodetype_t encodeflag,
@@ -163,14 +163,14 @@ int cmdnfs_dirpath(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_dirpath == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 1)
-        return FALSE;
+        return false;
 
       len = strlen(argv[0]);
       *p_dirpath = gsh_malloc(len + 1);
@@ -178,18 +178,18 @@ int cmdnfs_dirpath(cmdnfs_encodetype_t encodeflag,
       if(*p_dirpath == NULL)
         {
           fprintf(stderr, "Not enough memory.\n");
-          return FALSE;
+          return false;
         }
 
       strcpy(*p_dirpath, argv[0]);
 
-      return TRUE;
+      return true;
 
       break;
     case CMDNFS_DECODE:
 
       fprintf(out_stream, "%*sdirpath = %s\n", indent, " ", *p_dirpath);
-      return TRUE;
+      return true;
 
       break;
 
@@ -199,9 +199,9 @@ int cmdnfs_dirpath(cmdnfs_encodetype_t encodeflag,
       break;
 
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 int cmdnfs_fhandle2(cmdnfs_encodetype_t encodeflag,
@@ -216,20 +216,20 @@ int cmdnfs_fhandle2(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_fhandle == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 1)
-        return FALSE;
+        return false;
 
       str_handle = argv[0];
 
       /* check that it begins with an @ */
       if(str_handle[0] != '@')
-        return FALSE;
+        return false;
 
       /* escaping the first char @ */
       str_handle++;
@@ -238,9 +238,9 @@ int cmdnfs_fhandle2(cmdnfs_encodetype_t encodeflag,
 
       /* we must have read at least the handle size */
       if(rc < 2 * (int)sizeof(file_handle_v2_t))
-        return FALSE;
+        return false;
 
-      return TRUE;
+      return true;
 
       break;
     case CMDNFS_DECODE:
@@ -248,24 +248,24 @@ int cmdnfs_fhandle2(cmdnfs_encodetype_t encodeflag,
       if(snprintmem
          (str_printhandle, SIZE_STR_NFSHANDLE2, (caddr_t) p_fhandle, NFS2_FHSIZE) < 0)
         {
-          return FALSE;
+          return false;
         }
 
       fprintf(out_stream, "%*sfhandle2 = @%s\n", indent, " ", str_printhandle);
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       /* nothing to do */
-      return TRUE;
+      return true;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -278,14 +278,14 @@ int cmdnfs_fhstatus2(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_fhstatus == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       /* it is never an input */
-      return FALSE;
+      return false;
 
       break;
     case CMDNFS_DECODE:
@@ -295,34 +295,34 @@ int cmdnfs_fhstatus2(cmdnfs_encodetype_t encodeflag,
 
       /* Convert status to error code */
       if(cmdnfs_nfsstat2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_fhstatus->status) == FALSE)
+                         (caddr_t) & p_fhstatus->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_fhstatus->status == NFS_OK)
         {
           if(cmdnfs_fhandle2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                             (caddr_t) & p_fhstatus->fhstatus2_u.directory) == FALSE)
+                             (caddr_t) & p_fhstatus->fhstatus2_u.directory) == false)
             {
-              return FALSE;
+              return false;
             }
         }
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       /* it is never an input (never encoded, never allocated) */
-      return FALSE;
+      return false;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -335,14 +335,14 @@ int cmdnfs_STATFS2res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_statres == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       /* it is never an input */
-      return FALSE;
+      return false;
 
       break;
     case CMDNFS_DECODE:
@@ -352,9 +352,9 @@ int cmdnfs_STATFS2res(cmdnfs_encodetype_t encodeflag,
 
       /* Convert status to error code */
       if(cmdnfs_nfsstat2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_statres->status) == FALSE)
+                         (caddr_t) & p_statres->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_statres->status == NFS_OK)
@@ -377,19 +377,19 @@ int cmdnfs_STATFS2res(cmdnfs_encodetype_t encodeflag,
         }
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       /* it is never an input (never encoded, never allocated) */
-      return FALSE;
+      return false;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -402,18 +402,18 @@ int cmdnfs_mountlist(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_mountlist == NULL)
-    return FALSE;
+    return false;
 
   /* empty list */
   if(*p_mountlist == NULL)
-    return TRUE;
+    return true;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       /* it is never an input */
-      return FALSE;
+      return false;
 
       break;
     case CMDNFS_DECODE:
@@ -426,24 +426,24 @@ int cmdnfs_mountlist(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s}\n", indent, " ");
 
       if(cmdnfs_mountlist(CMDNFS_DECODE, 0, NULL, indent, out_stream,
-                          (caddr_t) & ((*p_mountlist)->ml_next)) == FALSE)
+                          (caddr_t) & ((*p_mountlist)->ml_next)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       /* it is never an input (never encoded, never allocated) */
-      return FALSE;
+      return false;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -458,18 +458,18 @@ int cmdnfs_exports(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_exports == NULL)
-    return FALSE;
+    return false;
 
   /* empty list */
   if(*p_exports == NULL)
-    return TRUE;
+    return true;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       /* it is never an input */
-      return FALSE;
+      return false;
 
       break;
     case CMDNFS_DECODE:
@@ -488,24 +488,24 @@ int cmdnfs_exports(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s}\n", indent, " ");
 
       if(cmdnfs_exports(CMDNFS_DECODE, 0, NULL, indent, out_stream,
-                        (caddr_t) & ((*p_exports)->ex_next)) == FALSE)
+                        (caddr_t) & ((*p_exports)->ex_next)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       /* it is never an input (never encoded, never allocated) */
-      return FALSE;
+      return false;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -522,20 +522,20 @@ int cmdnfs_fhandle3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_fhandle == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 1)
-        return FALSE;
+        return false;
 
       str_handle = argv[0];
 
       /* check that it begins with an @ */
       if(str_handle[0] != '@')
-        return FALSE;
+        return false;
 
       /* escaping the first char @ */
       str_handle++;
@@ -546,7 +546,7 @@ int cmdnfs_fhandle3(cmdnfs_encodetype_t encodeflag,
       if(p_fhandle->fhandle3_val == NULL)
         {
           fprintf(stderr, "Not enough memory.\n");
-          return FALSE;
+          return false;
         }
 
       p_fhandle->fhandle3_len = (unsigned int)sizeof(struct alloc_file_handle_v3);
@@ -556,9 +556,9 @@ int cmdnfs_fhandle3(cmdnfs_encodetype_t encodeflag,
                     str_handle);
 
       if(rc < 2 * (int)sizeof(file_handle_v3_t))
-        return FALSE;
+        return false;
 
-      return TRUE;
+      return true;
 
       break;
     case CMDNFS_DECODE:
@@ -567,24 +567,24 @@ int cmdnfs_fhandle3(cmdnfs_encodetype_t encodeflag,
          (str_printhandle, SIZE_STR_NFSHANDLE3, (caddr_t) (p_fhandle->fhandle3_val),
           p_fhandle->fhandle3_len) < 0)
         {
-          return FALSE;
+          return false;
         }
 
       fprintf(out_stream, "%*sfhandle3 = @%s\n", indent, " ", str_printhandle);
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       gsh_free(p_fhandle->fhandle3_val);
-      return TRUE;
+      return true;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -601,7 +601,7 @@ int cmdnfs_mountres3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_mountres == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -620,9 +620,9 @@ int cmdnfs_mountres3(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*s{\n", indent + 2, " ");
 
           if(cmdnfs_fhandle3(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                             (caddr_t) & MNT_HANDLE(p_mountres)) == FALSE)
+                             (caddr_t) & MNT_HANDLE(p_mountres)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           for(i = 0; i < AUTH_FLAVORS(p_mountres).auth_flavors_len; i++)
@@ -636,7 +636,7 @@ int cmdnfs_mountres3(cmdnfs_encodetype_t encodeflag,
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -645,7 +645,7 @@ int cmdnfs_mountres3(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -662,7 +662,7 @@ int cmdnfs_nfsstat2(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_stat2 == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -670,7 +670,7 @@ int cmdnfs_nfsstat2(cmdnfs_encodetype_t encodeflag,
 
       fprintf(out_stream, "%*sstatus = %d (%s)\n", indent, " ", (int)(*p_stat2),
               nfsstat2_to_str(*p_stat2));
-      return TRUE;
+      return true;
 
       break;
 
@@ -678,7 +678,7 @@ int cmdnfs_nfsstat2(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* never encoded */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -694,14 +694,14 @@ int cmdnfs_fattr2(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_fattr == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       /** @todo */
-      return FALSE;
+      return false;
 
       break;
     case CMDNFS_DECODE:
@@ -740,19 +740,19 @@ int cmdnfs_fattr2(cmdnfs_encodetype_t encodeflag,
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       /** @todo */
-      return FALSE;
+      return false;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -767,7 +767,7 @@ int cmdnfs_ATTR2res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_attr2res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -777,24 +777,24 @@ int cmdnfs_ATTR2res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_attr2res->status) == FALSE)
+                         (caddr_t) & p_attr2res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_attr2res->status == NFS_OK)
         {
           if(cmdnfs_fattr2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                           (caddr_t) & ATTR2_ATTRIBUTES(p_attr2res)) == FALSE)
+                           (caddr_t) & ATTR2_ATTRIBUTES(p_attr2res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -803,7 +803,7 @@ int cmdnfs_ATTR2res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -821,7 +821,7 @@ int cmdnfs_DIROP2res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_dirop2res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -831,29 +831,29 @@ int cmdnfs_DIROP2res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_dirop2res->status) == FALSE)
+                         (caddr_t) & p_dirop2res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_dirop2res->status == NFS_OK)
         {
           if(cmdnfs_fhandle2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                             (caddr_t) & DIROP2_HANDLE(p_dirop2res)) == FALSE)
+                             (caddr_t) & DIROP2_HANDLE(p_dirop2res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           if(cmdnfs_fattr2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                           (caddr_t) & DIROP2_ATTRIBUTES(p_dirop2res)) == FALSE)
+                           (caddr_t) & DIROP2_ATTRIBUTES(p_dirop2res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -862,7 +862,7 @@ int cmdnfs_DIROP2res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -878,28 +878,28 @@ int cmdnfs_diropargs2(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_diropargs == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 2)
-        return FALSE;
+        return false;
 
       if(cmdnfs_fhandle2(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_diropargs->dir)) == FALSE)
+                         (caddr_t) & (p_diropargs->dir)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(cmdnfs_dirpath(CMDNFS_ENCODE, 1, argv + 1, 0, NULL,
-                        (caddr_t) & (p_diropargs->name)) == FALSE)
+                        (caddr_t) & (p_diropargs->name)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_fhandle2(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_diropargs->dir));
@@ -909,9 +909,9 @@ int cmdnfs_diropargs2(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 #define READLINKRES_PATH( _p_rl2res ) ( (_p_rl2res)->READLINK2res_u.data )
@@ -925,7 +925,7 @@ int cmdnfs_READLINK2res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_rl2res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -935,9 +935,9 @@ int cmdnfs_READLINK2res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_rl2res->status) == FALSE)
+                         (caddr_t) & p_rl2res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_rl2res->status == NFS_OK)
@@ -948,7 +948,7 @@ int cmdnfs_READLINK2res(cmdnfs_encodetype_t encodeflag,
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -957,7 +957,7 @@ int cmdnfs_READLINK2res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -986,7 +986,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_sattr2 == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -1004,11 +1004,11 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
       p_sattr2->mtime.useconds = (unsigned int)-1;
 
       if(argc == 0)
-        return TRUE;
+        return true;
 
       /* at this point it must not be more than one string */
       if(argc != 1)
-        return FALSE;
+        return false;
 
       /* the attributes are:
        * mode, uid, gid, size, atime, mtime
@@ -1022,7 +1022,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
           printf("Unexpected parsing error.\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       while(attrib_str != NULL)
@@ -1037,7 +1037,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
               printf
                   ("Syntax error for sattr2.\nExpected syntax: <attr>=<value>,<attr>=<value>,...\n");
 #endif
-              return FALSE;
+              return false;
             }
 #ifdef _DEBUG_NFS_SHELL
           printf("Attribute: \"%s\", Value: \"%s\"\n", attrib_str, value_str);
@@ -1047,7 +1047,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
             {
               mode = atomode(value_str);
               if(mode < 0)
-                return FALSE;
+                return false;
               p_sattr2->mode = (unsigned int)mode;
 #ifdef _DEBUG_NFS_SHELL
               printf("  mode = 0%o\n", p_sattr2->mode);
@@ -1057,7 +1057,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
             {
               userid = my_atoi(value_str);
               if(userid < 0)
-                return FALSE;
+                return false;
               p_sattr2->uid = (unsigned int)userid;
 #ifdef _DEBUG_NFS_SHELL
               printf("  uid = %u\n", p_sattr2->uid);
@@ -1067,7 +1067,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
             {
               groupid = my_atoi(value_str);
               if(groupid < 0)
-                return FALSE;
+                return false;
               p_sattr2->gid = (unsigned int)groupid;
 #ifdef _DEBUG_NFS_SHELL
               printf("  gid = %u\n", p_sattr2->gid);
@@ -1077,9 +1077,9 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
             {
               rc = ato64(value_str, &size);
               if(rc)
-                return FALSE;
+                return false;
               if(size > (unsigned long long)UINT_MAX)
-                return FALSE;
+                return false;
               p_sattr2->size = (unsigned int)size;
 #ifdef _DEBUG_NFS_SHELL
               printf("  size = %u\n", p_sattr2->size);
@@ -1091,7 +1091,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 
               a_sec = atotime(time_str);
               if(a_sec == ((time_t) - 1))
-                return FALSE;
+                return false;
 
               if(usec_str == NULL)
                 {
@@ -1101,7 +1101,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
                 {
                   a_usec = my_atoi(usec_str);
                   if((a_usec < 0) || (a_usec > 1000000))
-                    return FALSE;
+                    return false;
                 }
               p_sattr2->atime.seconds = (unsigned int)a_sec;
               p_sattr2->atime.useconds = (unsigned int)a_usec;
@@ -1117,7 +1117,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 
               m_sec = atotime(time_str);
               if(m_sec == ((time_t) - 1))
-                return FALSE;
+                return false;
 
               if(usec_str == NULL)
                 {
@@ -1127,7 +1127,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
                 {
                   m_usec = my_atoi(usec_str);
                   if((m_usec < 0) || (m_usec > 1000000))
-                    return FALSE;
+                    return false;
                 }
               p_sattr2->mtime.seconds = (unsigned int)m_sec;
               p_sattr2->mtime.useconds = (unsigned int)m_usec;
@@ -1143,7 +1143,7 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
               printf
                   ("Syntax error for sattr2.\n<attr> must be one of the following: mode, uid, gid, size, atime, mtime.\n");
 #endif
-              return FALSE;
+              return false;
             }
 
           attrib_str = next_str;
@@ -1156,17 +1156,17 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       /* nothing to do */
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -1179,26 +1179,26 @@ int cmdnfs_CREATE2args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_create2args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(cmdnfs_diropargs2(CMDNFS_ENCODE, 2, argv, 0, NULL,
-                           (caddr_t) & (p_create2args->where)) == FALSE)
+                           (caddr_t) & (p_create2args->where)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* optional sattr2 parameters */
       if(cmdnfs_sattr2(CMDNFS_ENCODE, argc - 2, argv + 2, 0, NULL,
-                       (caddr_t) & (p_create2args->attributes)) == FALSE)
+                       (caddr_t) & (p_create2args->attributes)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_diropargs2(CMDNFS_FREE, 0, NULL, 0, NULL,
@@ -1210,9 +1210,9 @@ int cmdnfs_CREATE2args(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 int cmdnfs_SETATTR2args(cmdnfs_encodetype_t encodeflag,
@@ -1223,29 +1223,29 @@ int cmdnfs_SETATTR2args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_SETATTR2args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 2)
-        return FALSE;
+        return false;
 
       if(cmdnfs_fhandle2(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_SETATTR2args->file)) == FALSE)
+                         (caddr_t) & (p_SETATTR2args->file)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* mandatory sattr2 parameter */
       if(cmdnfs_sattr2(CMDNFS_ENCODE, argc - 1, argv + 1, 0, NULL,
-                       (caddr_t) & (p_SETATTR2args->attributes)) == FALSE)
+                       (caddr_t) & (p_SETATTR2args->attributes)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_fhandle2(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_SETATTR2args->file));
@@ -1256,9 +1256,9 @@ int cmdnfs_SETATTR2args(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 int cmdnfs_READDIR2args(cmdnfs_encodetype_t encodeflag,
@@ -1272,26 +1272,26 @@ int cmdnfs_READDIR2args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_READDIR2args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 3)
-        return FALSE;
+        return false;
 
       if(cmdnfs_fhandle2(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_READDIR2args->dir)) == FALSE)
+                         (caddr_t) & (p_READDIR2args->dir)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* cookie = 4 octets */
 
       cookie = my_atoi(argv[1]);
       if(cookie < 0)
-        return FALSE;
+        return false;
       p_cookie = (caddr_t) & (p_READDIR2args->cookie);
 
       memcpy(p_cookie, &cookie, 4);
@@ -1300,10 +1300,10 @@ int cmdnfs_READDIR2args(cmdnfs_encodetype_t encodeflag,
 
       count = my_atoi(argv[2]);
       if(count < 0)
-        return FALSE;
+        return false;
       p_READDIR2args->count = (unsigned int)count;
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_fhandle2(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_READDIR2args->dir));
@@ -1313,9 +1313,9 @@ int cmdnfs_READDIR2args(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 static int cmdnfs_READDIR2resok(cmdnfs_encodetype_t encodeflag,
@@ -1349,11 +1349,11 @@ static int cmdnfs_READDIR2resok(cmdnfs_encodetype_t encodeflag,
       /* prinf the eof boolean */
 
       if(p_READDIR2resok->eof)
-        fprintf(out_stream, "%*seof = TRUE\n", indent, " ");
+        fprintf(out_stream, "%*seof = true\n", indent, " ");
       else
-        fprintf(out_stream, "%*seof = FALSE\n", indent, " ");
+        fprintf(out_stream, "%*seof = false\n", indent, " ");
 
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_ENCODE:
@@ -1361,7 +1361,7 @@ static int cmdnfs_READDIR2resok(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -1373,14 +1373,14 @@ int cmdnfs_READDIR2res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_READDIR2res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       /* it is never an input */
-      return FALSE;
+      return false;
 
       break;
     case CMDNFS_DECODE:
@@ -1390,35 +1390,35 @@ int cmdnfs_READDIR2res(cmdnfs_encodetype_t encodeflag,
 
       /* Convert status to error code */
       if(cmdnfs_nfsstat2(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_READDIR2res->status) == FALSE)
+                         (caddr_t) & p_READDIR2res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_READDIR2res->status == NFS_OK)
         {
           if(cmdnfs_READDIR2resok(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
                                   (caddr_t) & p_READDIR2res->READDIR2res_u.readdirok) ==
-             FALSE)
+             false)
             {
-              return FALSE;
+              return false;
             }
         }
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       /* it is never an input (never encoded, never allocated) */
-      return FALSE;
+      return false;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -1430,41 +1430,41 @@ int cmdnfs_RENAME2args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_RENAME2args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 4)
-        return FALSE;
+        return false;
 
       /* The first 2 args */
       if(cmdnfs_diropargs2(CMDNFS_ENCODE, 2, argv, 0, NULL,
-                           (caddr_t) & (p_RENAME2args->from)) == FALSE)
+                           (caddr_t) & (p_RENAME2args->from)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* The last 2 args */
       if(cmdnfs_diropargs2(CMDNFS_ENCODE, argc - 2, argv + 2, 0, NULL,
-                           (caddr_t) & (p_RENAME2args->to)) == FALSE)
+                           (caddr_t) & (p_RENAME2args->to)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_diropargs2(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_RENAME2args->from));
       cmdnfs_diropargs2(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_RENAME2args->to));
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -1476,7 +1476,7 @@ int cmdnfs_nfsstat3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_stat3 == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -1484,7 +1484,7 @@ int cmdnfs_nfsstat3(cmdnfs_encodetype_t encodeflag,
 
       fprintf(out_stream, "%*sstatus = %d (%s)\n", indent, " ", (int)(*p_stat3),
               nfsstat3_to_str(*p_stat3));
-      return TRUE;
+      return true;
 
       break;
 
@@ -1492,7 +1492,7 @@ int cmdnfs_nfsstat3(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* never encoded */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -1507,14 +1507,14 @@ int cmdnfs_fattr3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_fattr == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       /** @todo */
-      return FALSE;
+      return false;
 
       break;
     case CMDNFS_DECODE:
@@ -1552,19 +1552,19 @@ int cmdnfs_fattr3(cmdnfs_encodetype_t encodeflag,
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
     case CMDNFS_FREE:
 
       /** @todo */
-      return FALSE;
+      return false;
 
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -1591,7 +1591,7 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_sattr == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -1600,19 +1600,19 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
       /* inits structure */
       memset((caddr_t) p_sattr, 0, sizeof(sattr3));
 
-      p_sattr->mode.set_it = FALSE;
-      p_sattr->uid.set_it = FALSE;
-      p_sattr->gid.set_it = FALSE;
-      p_sattr->size.set_it = FALSE;
+      p_sattr->mode.set_it = false;
+      p_sattr->uid.set_it = false;
+      p_sattr->gid.set_it = false;
+      p_sattr->size.set_it = false;
       p_sattr->atime.set_it = DONT_CHANGE;
       p_sattr->mtime.set_it = DONT_CHANGE;
 
       if(argc == 0)
-        return TRUE;
+        return true;
 
       /* at this point it must not be more than one string */
       if(argc != 1)
-        return FALSE;
+        return false;
 
       /* the attributes are:
        * mode, uid, gid, size, atime, mtime
@@ -1626,7 +1626,7 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
           printf("Unexpected parsing error.\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       while(attrib_str != NULL)
@@ -1641,7 +1641,7 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
               printf
                   ("Syntax error for sattr3.\nExpected syntax: <attr>=<value>,<attr>=<value>,...\n");
 #endif
-              return FALSE;
+              return false;
             }
 #ifdef _DEBUG_NFS_SHELL
           printf("Attribute: \"%s\", Value: \"%s\"\n", attrib_str, value_str);
@@ -1651,8 +1651,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
             {
               mode = atomode(value_str);
               if(mode < 0)
-                return FALSE;
-              p_sattr->mode.set_it = TRUE;
+                return false;
+              p_sattr->mode.set_it = true;
               p_sattr->mode.set_mode3_u.mode = (unsigned int)mode;
 #ifdef _DEBUG_NFS_SHELL
               printf("  mode = 0%o\n", p_sattr->mode.set_mode3_u.mode);
@@ -1662,8 +1662,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
             {
               userid = my_atoi(value_str);
               if(userid < 0)
-                return FALSE;
-              p_sattr->uid.set_it = TRUE;
+                return false;
+              p_sattr->uid.set_it = true;
               p_sattr->uid.set_uid3_u.uid = (unsigned int)userid;
 #ifdef _DEBUG_NFS_SHELL
               printf("  uid = %u\n", p_sattr->uid.set_uid3_u.uid);
@@ -1673,8 +1673,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
             {
               groupid = my_atoi(value_str);
               if(groupid < 0)
-                return FALSE;
-              p_sattr->gid.set_it = TRUE;
+                return false;
+              p_sattr->gid.set_it = true;
               p_sattr->gid.set_gid3_u.gid = (unsigned int)groupid;
 #ifdef _DEBUG_NFS_SHELL
               printf("  gid = %u\n", p_sattr->gid.set_gid3_u.gid);
@@ -1684,8 +1684,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
             {
               rc = ato64(value_str, &size);
               if(rc)
-                return FALSE;
-              p_sattr->size.set_it = TRUE;
+                return false;
+              p_sattr->size.set_it = true;
               p_sattr->size.set_size3_u.size = (size3) size;
 #ifdef _DEBUG_NFS_SHELL
               printf("  size = %llu\n", p_sattr->size.set_size3_u.size);
@@ -1697,7 +1697,7 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 
               a_sec = atotime(time_str);
               if(a_sec == ((time_t) - 1))
-                return FALSE;
+                return false;
 
               if(nsec_str == NULL)
                 {
@@ -1707,7 +1707,7 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
                 {
                   a_nsec = my_atoi(nsec_str);
                   if((a_nsec < 0) || (a_nsec > 999999999))
-                    return FALSE;
+                    return false;
                 }
 
               p_sattr->atime.set_it = SET_TO_CLIENT_TIME;
@@ -1725,7 +1725,7 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 
               m_sec = atotime(time_str);
               if(m_sec == ((time_t) - 1))
-                return FALSE;
+                return false;
 
               if(nsec_str == NULL)
                 {
@@ -1735,7 +1735,7 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
                 {
                   m_nsec = my_atoi(nsec_str);
                   if((m_nsec < 0) || (m_nsec > 999999999))
-                    return FALSE;
+                    return false;
                 }
 
               p_sattr->mtime.set_it = SET_TO_CLIENT_TIME;
@@ -1752,7 +1752,7 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
               printf
                   ("Syntax error for sattr3.\n<attr> must be one of the following: mode, uid, gid, size, atime, mtime.\n");
 #endif
-              return FALSE;
+              return false;
             }
 
           attrib_str = next_str;
@@ -1765,18 +1765,18 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 
         }
 
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_FREE:
       /* nothing to do */
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 
 }                               /* cmdnfs_sattr3 */
@@ -1791,7 +1791,7 @@ int cmdnfs_GETATTR3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_gattr3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -1801,24 +1801,24 @@ int cmdnfs_GETATTR3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_gattr3res->status) == FALSE)
+                         (caddr_t) & p_gattr3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_gattr3res->status == NFS3_OK)
         {
           if(cmdnfs_fattr3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                           (caddr_t) & GETATTR3_ATTRIBUTES(p_gattr3res)) == FALSE)
+                           (caddr_t) & GETATTR3_ATTRIBUTES(p_gattr3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -1827,7 +1827,7 @@ int cmdnfs_GETATTR3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -1842,25 +1842,25 @@ int cmdnfs_diropargs3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_dirop3 == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(cmdnfs_fhandle3(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_dirop3->dir)) == FALSE)
+                         (caddr_t) & (p_dirop3->dir)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(cmdnfs_dirpath(CMDNFS_ENCODE, argc - 1, argv + 1, 0, NULL,
-                        (caddr_t) & (p_dirop3->name)) == FALSE)
+                        (caddr_t) & (p_dirop3->name)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_fhandle3(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_dirop3->dir));
@@ -1870,9 +1870,9 @@ int cmdnfs_diropargs3(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 int cmdnfs_postopattr(cmdnfs_encodetype_t encodeflag,
@@ -1883,7 +1883,7 @@ int cmdnfs_postopattr(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_opattr == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -1897,7 +1897,7 @@ int cmdnfs_postopattr(cmdnfs_encodetype_t encodeflag,
       else
         {
           fprintf(out_stream, "%*sN/A\n", indent, " ");
-          return TRUE;
+          return true;
         }
 
       break;
@@ -1907,7 +1907,7 @@ int cmdnfs_postopattr(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -1919,7 +1919,7 @@ int cmdnfs_postopfh3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_opfh3 == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -1933,7 +1933,7 @@ int cmdnfs_postopfh3(cmdnfs_encodetype_t encodeflag,
       else
         {
           fprintf(out_stream, "%*sN/A\n", indent, " ");
-          return TRUE;
+          return true;
         }
 
       break;
@@ -1943,7 +1943,7 @@ int cmdnfs_postopfh3(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -1960,7 +1960,7 @@ int cmdnfs_LOOKUP3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_lkup3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -1970,9 +1970,9 @@ int cmdnfs_LOOKUP3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_lkup3res->status) == FALSE)
+                         (caddr_t) & p_lkup3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_lkup3res->status == NFS3_OK)
@@ -1980,23 +1980,23 @@ int cmdnfs_LOOKUP3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sObject Handle:\n", indent + 2, " ");
           if(cmdnfs_fhandle3(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                             (caddr_t) & LOOKUP3_OK_HANDLE(p_lkup3res)) == FALSE)
+                             (caddr_t) & LOOKUP3_OK_HANDLE(p_lkup3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & LOOKUP3_OK_OBJATTR(p_lkup3res)) == FALSE)
+                               (caddr_t) & LOOKUP3_OK_OBJATTR(p_lkup3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & LOOKUP3_OK_DIRATTR(p_lkup3res)) == FALSE)
+                               (caddr_t) & LOOKUP3_OK_DIRATTR(p_lkup3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -2004,15 +2004,15 @@ int cmdnfs_LOOKUP3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & LOOKUP3_FAIL_DIRATTR(p_lkup3res)) == FALSE)
+                               (caddr_t) & LOOKUP3_FAIL_DIRATTR(p_lkup3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -2021,7 +2021,7 @@ int cmdnfs_LOOKUP3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -2043,14 +2043,14 @@ static int cmdnfs_verf3(cmdnfs_encodetype_t encodeflag, int argc, char **argv, i
 
   /* sanity check */
   if(p_verf == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 1)
-        return FALSE;
+        return false;
 
       str_verf = argv[0];
 
@@ -2069,30 +2069,30 @@ static int cmdnfs_verf3(cmdnfs_encodetype_t encodeflag, int argc, char **argv, i
 
       /* we must have read at least the verf size */
       if(rc < 0)
-        return FALSE;
+        return false;
 
-      return TRUE;
+      return true;
 
       break;
     case CMDNFS_DECODE:
 
       if(snprintmem(str_printverf, 17, p_verf, 8) < 0)
         {
-          return FALSE;
+          return false;
         }
 
       fprintf(out_stream, "%*s%s = %s\n", indent, " ", verfname, str_printverf);
 
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_FREE:
       /* nothing to do */
-      return TRUE;
+      return true;
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2106,7 +2106,7 @@ static int cmdnfs_dirlist3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_dirlist3 == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -2130,11 +2130,11 @@ static int cmdnfs_dirlist3(cmdnfs_encodetype_t encodeflag,
       /* prinf the eof boolean */
 
       if(p_dirlist3->eof)
-        fprintf(out_stream, "%*seof = TRUE\n", indent, " ");
+        fprintf(out_stream, "%*seof = true\n", indent, " ");
       else
-        fprintf(out_stream, "%*seof = FALSE\n", indent, " ");
+        fprintf(out_stream, "%*seof = false\n", indent, " ");
 
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_ENCODE:
@@ -2142,7 +2142,7 @@ static int cmdnfs_dirlist3(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2156,22 +2156,22 @@ int cmdnfs_READDIR3args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_rd3arg == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 4)
-        return FALSE;
+        return false;
 
       if(cmdnfs_fhandle3(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_rd3arg->dir)) == FALSE)
+                         (caddr_t) & (p_rd3arg->dir)) == false)
         {
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "dir_handle error.\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       rc = ato64(argv[1], &tmp64);
@@ -2180,7 +2180,7 @@ int cmdnfs_READDIR3args(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "cookie error.\n");
 #endif
-          return FALSE;
+          return false;
         }
       p_rd3arg->cookie = tmp64;
 
@@ -2189,12 +2189,12 @@ int cmdnfs_READDIR3args(cmdnfs_encodetype_t encodeflag,
 #endif
 
       if(cmdnfs_verf3(CMDNFS_ENCODE, 1, argv + 2, 0, NULL,
-                      (caddr_t) & (p_rd3arg->cookieverf), NULL) == FALSE)
+                      (caddr_t) & (p_rd3arg->cookieverf), NULL) == false)
         {
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "cookieverf error.\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       rc = ato64(argv[3], &tmp64);
@@ -2203,14 +2203,14 @@ int cmdnfs_READDIR3args(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "count error (not a number).\n");
 #endif
-          return FALSE;
+          return false;
         }
       if(tmp64 > (unsigned long long)UINT_MAX)
         {
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "count error (number too big).\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       p_rd3arg->count = (unsigned int)tmp64;
@@ -2218,7 +2218,7 @@ int cmdnfs_READDIR3args(cmdnfs_encodetype_t encodeflag,
       fprintf(stderr, "count = %u\n", p_rd3arg->count);
 #endif
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
 
@@ -2229,9 +2229,9 @@ int cmdnfs_READDIR3args(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 #define READDIR3_OK( _p_READDIR3res ) ( (_p_READDIR3res)->READDIR3res_u.resok )
@@ -2245,7 +2245,7 @@ int cmdnfs_READDIR3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_rd3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -2255,9 +2255,9 @@ int cmdnfs_READDIR3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_rd3res->status) == FALSE)
+                         (caddr_t) & p_rd3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_rd3res->status == NFS3_OK)
@@ -2265,21 +2265,21 @@ int cmdnfs_READDIR3res(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
                                (caddr_t) & (READDIR3_OK(p_rd3res).dir_attributes)) ==
-             FALSE)
+             false)
             {
-              return FALSE;
+              return false;
             }
           if(cmdnfs_verf3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
                           (caddr_t) & (READDIR3_OK(p_rd3res).cookieverf),
-                          "cookieverf") == FALSE)
+                          "cookieverf") == false)
             {
-              return FALSE;
+              return false;
             }
 
           if(cmdnfs_dirlist3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                             (caddr_t) & (READDIR3_OK(p_rd3res).reply)) == FALSE)
+                             (caddr_t) & (READDIR3_OK(p_rd3res).reply)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -2288,15 +2288,15 @@ int cmdnfs_READDIR3res(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
                                (caddr_t) & (READDIR3_FAIL(p_rd3res).dir_attributes)) ==
-             FALSE)
+             false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -2305,7 +2305,7 @@ int cmdnfs_READDIR3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2322,22 +2322,22 @@ int cmdnfs_READDIRPLUS3args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_rdp3arg == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 5)
-        return FALSE;
+        return false;
 
       if(cmdnfs_fhandle3(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_rdp3arg->dir)) == FALSE)
+                         (caddr_t) & (p_rdp3arg->dir)) == false)
         {
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "dir_handle error.\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       rc = ato64(argv[1], &tmp64);
@@ -2346,7 +2346,7 @@ int cmdnfs_READDIRPLUS3args(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "cookie error.\n");
 #endif
-          return FALSE;
+          return false;
         }
       p_rdp3arg->cookie = tmp64;
 
@@ -2355,12 +2355,12 @@ int cmdnfs_READDIRPLUS3args(cmdnfs_encodetype_t encodeflag,
 #endif
 
       if(cmdnfs_verf3(CMDNFS_ENCODE, 1, argv + 2, 0, NULL,
-                      (caddr_t) & (p_rdp3arg->cookieverf), NULL) == FALSE)
+                      (caddr_t) & (p_rdp3arg->cookieverf), NULL) == false)
         {
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "cookieverf error.\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       rc = ato64(argv[3], &tmp64);
@@ -2369,14 +2369,14 @@ int cmdnfs_READDIRPLUS3args(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "dircount error (not a number).\n");
 #endif
-          return FALSE;
+          return false;
         }
       if(tmp64 > (unsigned long long)UINT_MAX)
         {
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "dircount error (number too big).\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       p_rdp3arg->dircount = (unsigned int)tmp64;
@@ -2390,14 +2390,14 @@ int cmdnfs_READDIRPLUS3args(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "maxcount error (not a number).\n");
 #endif
-          return FALSE;
+          return false;
         }
       if(tmp64 > (unsigned long long)UINT_MAX)
         {
 #ifdef _DEBUG_NFS_SHELL
           fprintf(stderr, "maxcount error (number too big).\n");
 #endif
-          return FALSE;
+          return false;
         }
 
       p_rdp3arg->maxcount = (unsigned int)tmp64;
@@ -2405,7 +2405,7 @@ int cmdnfs_READDIRPLUS3args(cmdnfs_encodetype_t encodeflag,
       fprintf(stderr, "maxcount = %u\n", p_rdp3arg->maxcount);
 #endif
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
 
@@ -2416,9 +2416,9 @@ int cmdnfs_READDIRPLUS3args(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 static int cmdnfs_dirlistplus3(cmdnfs_encodetype_t encodeflag,
@@ -2431,7 +2431,7 @@ static int cmdnfs_dirlistplus3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_dirlistplus3 == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -2450,16 +2450,16 @@ static int cmdnfs_dirlistplus3(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sPost-op attributes:\n", indent + 4, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 6, out_stream,
-                               (caddr_t) & (p_entry->name_attributes)) == FALSE)
+                               (caddr_t) & (p_entry->name_attributes)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sPost-op handle:\n", indent + 4, " ");
           if(cmdnfs_postopfh3(CMDNFS_DECODE, 0, NULL, indent + 6, out_stream,
-                              (caddr_t) & (p_entry->name_handle)) == FALSE)
+                              (caddr_t) & (p_entry->name_handle)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*s}\n", indent + 2, " ");
@@ -2470,11 +2470,11 @@ static int cmdnfs_dirlistplus3(cmdnfs_encodetype_t encodeflag,
       /* prinf the eof boolean */
 
       if(p_dirlistplus3->eof)
-        fprintf(out_stream, "%*seof = TRUE\n", indent, " ");
+        fprintf(out_stream, "%*seof = true\n", indent, " ");
       else
-        fprintf(out_stream, "%*seof = FALSE\n", indent, " ");
+        fprintf(out_stream, "%*seof = false\n", indent, " ");
 
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_ENCODE:
@@ -2482,7 +2482,7 @@ static int cmdnfs_dirlistplus3(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2497,7 +2497,7 @@ int cmdnfs_READDIRPLUS3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_rdp3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -2507,9 +2507,9 @@ int cmdnfs_READDIRPLUS3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_rdp3res->status) == FALSE)
+                         (caddr_t) & p_rdp3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_rdp3res->status == NFS3_OK)
@@ -2517,21 +2517,21 @@ int cmdnfs_READDIRPLUS3res(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
                                (caddr_t) & (READDIRPLUS3_OK(p_rdp3res).dir_attributes))
-             == FALSE)
+             == false)
             {
-              return FALSE;
+              return false;
             }
           if(cmdnfs_verf3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
                           (caddr_t) & (READDIRPLUS3_OK(p_rdp3res).cookieverf),
-                          "cookieverf") == FALSE)
+                          "cookieverf") == false)
             {
-              return FALSE;
+              return false;
             }
 
           if(cmdnfs_dirlistplus3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                                 (caddr_t) & (READDIRPLUS3_OK(p_rdp3res).reply)) == FALSE)
+                                 (caddr_t) & (READDIRPLUS3_OK(p_rdp3res).reply)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -2540,15 +2540,15 @@ int cmdnfs_READDIRPLUS3res(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
                                (caddr_t) & (READDIRPLUS3_FAIL(p_rdp3res).dir_attributes))
-             == FALSE)
+             == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -2557,7 +2557,7 @@ int cmdnfs_READDIRPLUS3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2576,7 +2576,7 @@ int cmdnfs_READLINK3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_readlnk3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -2586,9 +2586,9 @@ int cmdnfs_READLINK3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_readlnk3res->status) == FALSE)
+                         (caddr_t) & p_readlnk3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_readlnk3res->status == NFS3_OK)
@@ -2596,9 +2596,9 @@ int cmdnfs_READLINK3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sPost-op attributes (symlink):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & READLINK3_OK_ATTRS(p_readlnk3res)) == FALSE)
+                               (caddr_t) & READLINK3_OK_ATTRS(p_readlnk3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sdata = \"%s\"\n", indent + 2, " ",
@@ -2608,15 +2608,15 @@ int cmdnfs_READLINK3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sPost-op attributes (symlink):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & READLINK3_FAIL_ATTRS(p_readlnk3res)) == FALSE)
+                               (caddr_t) & READLINK3_FAIL_ATTRS(p_readlnk3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -2625,7 +2625,7 @@ int cmdnfs_READLINK3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2644,7 +2644,7 @@ int cmdnfs_FSSTAT3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_fsstat3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -2654,9 +2654,9 @@ int cmdnfs_FSSTAT3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_fsstat3res->status) == FALSE)
+                         (caddr_t) & p_fsstat3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_fsstat3res->status == NFS3_OK)
@@ -2665,9 +2665,9 @@ int cmdnfs_FSSTAT3res(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*sPost-op attributes (symlink):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
                                (caddr_t) & (FSSTAT3_OK(p_fsstat3res).obj_attributes)) ==
-             FALSE)
+             false)
             {
-              return FALSE;
+              return false;
             }
           fprintf(out_stream, "%*stotal_bytes = %llu\n", indent + 2, " ",
                   FSSTAT3_OK(p_fsstat3res).tbytes);
@@ -2689,15 +2689,15 @@ int cmdnfs_FSSTAT3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & FSSTAT3_FAIL_ATTRS(p_fsstat3res)) == FALSE)
+                               (caddr_t) & FSSTAT3_FAIL_ATTRS(p_fsstat3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -2706,7 +2706,7 @@ int cmdnfs_FSSTAT3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2722,19 +2722,19 @@ int cmdnfs_ACCESS3args(cmdnfs_encodetype_t encodeflag,
   char *str_access;
   /* sanity check */
   if(p_access3args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 2)
-        return FALSE;
+        return false;
 
       if(cmdnfs_fhandle3(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_access3args->object)) == FALSE)
+                         (caddr_t) & (p_access3args->object)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* access 2e arg: R(ead) L(ookup) M(odify) E(xtend) D(elete) (e)X(ecute) */
@@ -2762,23 +2762,23 @@ int cmdnfs_ACCESS3args(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               fprintf(stderr, "access flag error: unknown flag \"%c\".\n", str_access[0]);
 #endif
-              return FALSE;
+              return false;
             }
 
           str_access++;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_fhandle3(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_access3args->object));
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2794,7 +2794,7 @@ int cmdnfs_ACCESS3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_access3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -2804,9 +2804,9 @@ int cmdnfs_ACCESS3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_access3res->status) == FALSE)
+                         (caddr_t) & p_access3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_access3res->status == NFS3_OK)
@@ -2814,9 +2814,9 @@ int cmdnfs_ACCESS3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & ACCESS3_OK_ATTRS(p_access3res)) == FALSE)
+                               (caddr_t) & ACCESS3_OK_ATTRS(p_access3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           /* print acces rights */
@@ -2840,15 +2840,15 @@ int cmdnfs_ACCESS3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & ACCESS3_FAIL_ATTRS(p_access3res)) == FALSE)
+                               (caddr_t) & ACCESS3_FAIL_ATTRS(p_access3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -2857,7 +2857,7 @@ int cmdnfs_ACCESS3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2874,20 +2874,20 @@ int cmdnfs_CREATE3args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_CREATE3args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if((argc != 3) && (argc != 4))
-        return FALSE;
+        return false;
 
       /* The first two args */
       if(cmdnfs_diropargs3(CMDNFS_ENCODE, 2, argv, 0, NULL,
-                           (caddr_t) & (p_CREATE3args->where)) == FALSE)
+                           (caddr_t) & (p_CREATE3args->where)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* CREATE 3e arg: UNCHECKED, GUARDED or EXCLUSIVE */
@@ -2900,7 +2900,7 @@ int cmdnfs_CREATE3args(cmdnfs_encodetype_t encodeflag,
       else if(!strcasecmp(str_mode, "EXCLUSIVE"))
         p_CREATE3args->how.mode = EXCLUSIVE;
       else
-        return FALSE;
+        return false;
 
       /* CREATE 4th arg: sattr3 list or a create verifier */
 
@@ -2912,9 +2912,9 @@ int cmdnfs_CREATE3args(cmdnfs_encodetype_t encodeflag,
           /* The optional 4th arg is a sattr3 list */
           if(cmdnfs_sattr3(CMDNFS_ENCODE, argc - 3, argv + 3, 0, NULL,
                            (caddr_t) & (p_CREATE3args->how.createhow3_u.obj_attributes))
-             == FALSE)
+             == false)
             {
-              return FALSE;
+              return false;
             }
 
           break;
@@ -2923,15 +2923,15 @@ int cmdnfs_CREATE3args(cmdnfs_encodetype_t encodeflag,
           /* The mandatory 4rd arg is a create verifier */
           if(cmdnfs_verf3(CMDNFS_ENCODE, argc - 3, argv + 3, 0, NULL,
                           (caddr_t) & (p_CREATE3args->how.createhow3_u.verf),
-                          NULL) == FALSE)
+                          NULL) == false)
             {
-              return FALSE;
+              return false;
             }
 
           break;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
 
@@ -2952,13 +2952,13 @@ int cmdnfs_CREATE3args(cmdnfs_encodetype_t encodeflag,
           break;
         }
 
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -2972,7 +2972,7 @@ int cmdnfs_preopattr(cmdnfs_encodetype_t encodeflag,
   struct tm paramtm;
   /* sanity check */
   if(p_opattr == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3001,7 +3001,7 @@ int cmdnfs_preopattr(cmdnfs_encodetype_t encodeflag,
       else
         {
           fprintf(out_stream, "%*sN/A\n", indent, " ");
-          return TRUE;
+          return true;
         }
 
       break;
@@ -3011,9 +3011,9 @@ int cmdnfs_preopattr(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
-  return FALSE;
+  return false;
 }
 
 int cmdnfs_wccdata(cmdnfs_encodetype_t encodeflag,
@@ -3024,7 +3024,7 @@ int cmdnfs_wccdata(cmdnfs_encodetype_t encodeflag,
   /* sanity check */
 
   if(p_wccdata == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3032,15 +3032,15 @@ int cmdnfs_wccdata(cmdnfs_encodetype_t encodeflag,
 
       fprintf(out_stream, "%*swcc_before:\n", indent, " ");
       if(cmdnfs_preopattr(CMDNFS_DECODE, 0, NULL, indent, out_stream,
-                          (caddr_t) & (p_wccdata->before)) == FALSE)
-        return FALSE;
+                          (caddr_t) & (p_wccdata->before)) == false)
+        return false;
 
       fprintf(out_stream, "%*swcc_after:\n", indent, " ");
       if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent, out_stream,
-                           (caddr_t) & (p_wccdata->after)) == FALSE)
-        return FALSE;
+                           (caddr_t) & (p_wccdata->after)) == false)
+        return false;
 
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_ENCODE:
@@ -3048,7 +3048,7 @@ int cmdnfs_wccdata(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -3066,7 +3066,7 @@ int cmdnfs_CREATE3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_CREATE3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3076,32 +3076,32 @@ int cmdnfs_CREATE3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_CREATE3res->status) == FALSE)
+                         (caddr_t) & p_CREATE3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_CREATE3res->status == NFS3_OK)
         {
 
           if(cmdnfs_postopfh3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                              (caddr_t) & CREATE3_OK_FH(p_CREATE3res)) == FALSE)
+                              (caddr_t) & CREATE3_OK_FH(p_CREATE3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & CREATE3_OK_ATTRS(p_CREATE3res)) == FALSE)
+                               (caddr_t) & CREATE3_OK_ATTRS(p_CREATE3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sWcc_data (directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & CREATE3_OK_WCC(p_CREATE3res)) == FALSE)
+                            (caddr_t) & CREATE3_OK_WCC(p_CREATE3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -3109,15 +3109,15 @@ int cmdnfs_CREATE3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sWcc_data (directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & CREATE3_FAIL_WCC(p_CREATE3res)) == FALSE)
+                            (caddr_t) & CREATE3_FAIL_WCC(p_CREATE3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -3126,7 +3126,7 @@ int cmdnfs_CREATE3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -3144,20 +3144,20 @@ int cmdnfs_MKDIR3args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_MKDIR3args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if((argc != 2) && (argc != 3))
-        return FALSE;
+        return false;
 
       /* The first two args */
       if(cmdnfs_diropargs3(CMDNFS_ENCODE, 2, argv, 0, NULL,
-                           (caddr_t) & (p_MKDIR3args->where)) == FALSE)
+                           (caddr_t) & (p_MKDIR3args->where)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* MKDIR 3th arg: sattr3 list or a MKDIR verifier */
@@ -3166,34 +3166,34 @@ int cmdnfs_MKDIR3args(cmdnfs_encodetype_t encodeflag,
         {
           /* The 3th arg is a sattr3 list */
           if(cmdnfs_sattr3(CMDNFS_ENCODE, 1, argv + 2, 0, NULL,
-                           (caddr_t) & (p_MKDIR3args->attributes)) == FALSE)
+                           (caddr_t) & (p_MKDIR3args->attributes)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
       else
         {
           /* the sattr3 strucure is empty */
           if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-                           (caddr_t) & (p_MKDIR3args->attributes)) == FALSE)
+                           (caddr_t) & (p_MKDIR3args->attributes)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_diropargs3(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_MKDIR3args->where));
       cmdnfs_sattr3(CMDNFS_FREE, 0, NULL, 0, NULL,
                     (caddr_t) & (p_MKDIR3args->attributes));
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -3211,7 +3211,7 @@ int cmdnfs_MKDIR3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_MKDIR3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3221,32 +3221,32 @@ int cmdnfs_MKDIR3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_MKDIR3res->status) == FALSE)
+                         (caddr_t) & p_MKDIR3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_MKDIR3res->status == NFS3_OK)
         {
 
           if(cmdnfs_postopfh3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                              (caddr_t) & MKDIR3_OK_FH(p_MKDIR3res)) == FALSE)
+                              (caddr_t) & MKDIR3_OK_FH(p_MKDIR3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sPost-op attributes (new dir):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & MKDIR3_OK_ATTRS(p_MKDIR3res)) == FALSE)
+                               (caddr_t) & MKDIR3_OK_ATTRS(p_MKDIR3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & MKDIR3_OK_WCC(p_MKDIR3res)) == FALSE)
+                            (caddr_t) & MKDIR3_OK_WCC(p_MKDIR3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -3254,15 +3254,15 @@ int cmdnfs_MKDIR3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & MKDIR3_FAIL_WCC(p_MKDIR3res)) == FALSE)
+                            (caddr_t) & MKDIR3_FAIL_WCC(p_MKDIR3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -3271,7 +3271,7 @@ int cmdnfs_MKDIR3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -3293,7 +3293,7 @@ int cmdnfs_REMOVE3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_REMOVE3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3303,9 +3303,9 @@ int cmdnfs_REMOVE3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_REMOVE3res->status) == FALSE)
+                         (caddr_t) & p_REMOVE3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_REMOVE3res->status == NFS3_OK)
@@ -3313,9 +3313,9 @@ int cmdnfs_REMOVE3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & REMOVE3_OK_WCC(p_REMOVE3res)) == FALSE)
+                            (caddr_t) & REMOVE3_OK_WCC(p_REMOVE3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -3323,15 +3323,15 @@ int cmdnfs_REMOVE3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & REMOVE3_FAIL_WCC(p_REMOVE3res)) == FALSE)
+                            (caddr_t) & REMOVE3_FAIL_WCC(p_REMOVE3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -3340,7 +3340,7 @@ int cmdnfs_REMOVE3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -3360,7 +3360,7 @@ int cmdnfs_RMDIR3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_RMDIR3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3370,9 +3370,9 @@ int cmdnfs_RMDIR3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_RMDIR3res->status) == FALSE)
+                         (caddr_t) & p_RMDIR3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_RMDIR3res->status == NFS3_OK)
@@ -3380,9 +3380,9 @@ int cmdnfs_RMDIR3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & RMDIR3_OK_WCC(p_RMDIR3res)) == FALSE)
+                            (caddr_t) & RMDIR3_OK_WCC(p_RMDIR3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -3390,15 +3390,15 @@ int cmdnfs_RMDIR3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & RMDIR3_FAIL_WCC(p_RMDIR3res)) == FALSE)
+                            (caddr_t) & RMDIR3_FAIL_WCC(p_RMDIR3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -3407,7 +3407,7 @@ int cmdnfs_RMDIR3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -3428,7 +3428,7 @@ int cmdnfs_sattrguard3(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_sattr == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3440,19 +3440,19 @@ int cmdnfs_sattrguard3(cmdnfs_encodetype_t encodeflag,
       if(argc == 0)
         {
           /* empty structure */
-          p_sattr->check = FALSE;
-          return TRUE;
+          p_sattr->check = false;
+          return true;
         }
 
       /* at this point it must not be more than one string */
       if(argc != 1)
-        return FALSE;
+        return false;
 
       time_str = strtok_r(argv[0], ".", &nsec_str);
 
       c_sec = atotime(time_str);
       if(c_sec == ((time_t) - 1))
-        return FALSE;
+        return false;
 
       if(nsec_str == NULL)
         {
@@ -3462,10 +3462,10 @@ int cmdnfs_sattrguard3(cmdnfs_encodetype_t encodeflag,
         {
           c_nsec = my_atoi(nsec_str);
           if((c_nsec < 0) || (c_nsec > 999999999))
-            return FALSE;
+            return false;
         }
 
-      p_sattr->check = TRUE;
+      p_sattr->check = true;
       p_sattr->sattrguard3_u.obj_ctime.seconds = c_sec;
       p_sattr->sattrguard3_u.obj_ctime.nseconds = c_nsec;
 
@@ -3474,17 +3474,17 @@ int cmdnfs_sattrguard3(cmdnfs_encodetype_t encodeflag,
              p_sattr->sattrguard3_u.obj_ctime.nseconds);
 #endif
 
-      return TRUE;
+      return true;
       break;
     case CMDNFS_FREE:
       /* nothing to do */
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 
 }                               /* cmdnfs_sattrguard3 */
@@ -3497,52 +3497,52 @@ int cmdnfs_SETATTR3args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_SETATTR3args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if((argc != 2) && (argc != 3))
-        return FALSE;
+        return false;
 
       /* The first arg */
       if(cmdnfs_fhandle3(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_SETATTR3args->object)) == FALSE)
+                         (caddr_t) & (p_SETATTR3args->object)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* SETATTR 2th arg: sattr3 list */
 
       if(cmdnfs_sattr3(CMDNFS_ENCODE, 1, argv + 1, 0, NULL,
-                       (caddr_t) & (p_SETATTR3args->new_attributes)) == FALSE)
+                       (caddr_t) & (p_SETATTR3args->new_attributes)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* SETATTR optionnal 3th arg: sattrguard3 */
 
       if(cmdnfs_sattrguard3(CMDNFS_ENCODE, argc - 2, argv + 2, 0, NULL,
-                            (caddr_t) & (p_SETATTR3args->guard)) == FALSE)
+                            (caddr_t) & (p_SETATTR3args->guard)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_fhandle3(CMDNFS_FREE, 0, NULL, 0, NULL,
                       (caddr_t) & (p_SETATTR3args->object));
       cmdnfs_sattr3(CMDNFS_FREE, 0, NULL, 0, NULL,
                     (caddr_t) & (p_SETATTR3args->new_attributes));
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -3558,7 +3558,7 @@ int cmdnfs_SETATTR3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_SETATTR3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3568,9 +3568,9 @@ int cmdnfs_SETATTR3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_SETATTR3res->status) == FALSE)
+                         (caddr_t) & p_SETATTR3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_SETATTR3res->status == NFS3_OK)
@@ -3578,9 +3578,9 @@ int cmdnfs_SETATTR3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sWcc_data (object):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & SETATTR3_OK_WCC(p_SETATTR3res)) == FALSE)
+                            (caddr_t) & SETATTR3_OK_WCC(p_SETATTR3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -3588,15 +3588,15 @@ int cmdnfs_SETATTR3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sWcc_data (object):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & SETATTR3_FAIL_WCC(p_SETATTR3res)) == FALSE)
+                            (caddr_t) & SETATTR3_FAIL_WCC(p_SETATTR3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -3605,7 +3605,7 @@ int cmdnfs_SETATTR3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -3621,41 +3621,41 @@ int cmdnfs_RENAME3args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_RENAME3args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 4)
-        return FALSE;
+        return false;
 
       /* The first 2 args */
       if(cmdnfs_diropargs3(CMDNFS_ENCODE, 2, argv, 0, NULL,
-                           (caddr_t) & (p_RENAME3args->from)) == FALSE)
+                           (caddr_t) & (p_RENAME3args->from)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* The last 2 args */
       if(cmdnfs_diropargs3(CMDNFS_ENCODE, argc - 2, argv + 2, 0, NULL,
-                           (caddr_t) & (p_RENAME3args->to)) == FALSE)
+                           (caddr_t) & (p_RENAME3args->to)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_diropargs3(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_RENAME3args->from));
       cmdnfs_diropargs3(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_RENAME3args->to));
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -3673,7 +3673,7 @@ int cmdnfs_RENAME3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_RENAME3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3683,9 +3683,9 @@ int cmdnfs_RENAME3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_RENAME3res->status) == FALSE)
+                         (caddr_t) & p_RENAME3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_RENAME3res->status == NFS3_OK)
@@ -3693,15 +3693,15 @@ int cmdnfs_RENAME3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sWcc_data (source directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & RENAME3_OK_FROMWCC(p_RENAME3res)) == FALSE)
+                            (caddr_t) & RENAME3_OK_FROMWCC(p_RENAME3res)) == false)
             {
-              return FALSE;
+              return false;
             }
           fprintf(out_stream, "%*sWcc_data (target directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & RENAME3_OK_TOWCC(p_RENAME3res)) == FALSE)
+                            (caddr_t) & RENAME3_OK_TOWCC(p_RENAME3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -3709,21 +3709,21 @@ int cmdnfs_RENAME3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sWcc_data (source directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & RENAME3_FAIL_FROMWCC(p_RENAME3res)) == FALSE)
+                            (caddr_t) & RENAME3_FAIL_FROMWCC(p_RENAME3res)) == false)
             {
-              return FALSE;
+              return false;
             }
           fprintf(out_stream, "%*sWcc_data (target directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & RENAME3_FAIL_TOWCC(p_RENAME3res)) == FALSE)
+                            (caddr_t) & RENAME3_FAIL_TOWCC(p_RENAME3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -3732,7 +3732,7 @@ int cmdnfs_RENAME3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -3750,41 +3750,41 @@ int cmdnfs_LINK3args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_LINK3args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if(argc != 3)
-        return FALSE;
+        return false;
 
       /* The first arg */
       if(cmdnfs_fhandle3(CMDNFS_ENCODE, 1, argv, 0, NULL,
-                         (caddr_t) & (p_LINK3args->file)) == FALSE)
+                         (caddr_t) & (p_LINK3args->file)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* The last 2 args */
       if(cmdnfs_diropargs3(CMDNFS_ENCODE, argc - 1, argv + 1, 0, NULL,
-                           (caddr_t) & (p_LINK3args->link)) == FALSE)
+                           (caddr_t) & (p_LINK3args->link)) == false)
         {
-          return FALSE;
+          return false;
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_fhandle3(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_LINK3args->file));
       cmdnfs_diropargs3(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & (p_LINK3args->link));
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -3802,7 +3802,7 @@ int cmdnfs_LINK3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_LINK3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3812,9 +3812,9 @@ int cmdnfs_LINK3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_LINK3res->status) == FALSE)
+                         (caddr_t) & p_LINK3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_LINK3res->status == NFS3_OK)
@@ -3822,16 +3822,16 @@ int cmdnfs_LINK3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sPost-op attributes (file):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & LINK3_OK_ATTRS(p_LINK3res)) == FALSE)
+                               (caddr_t) & LINK3_OK_ATTRS(p_LINK3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sWcc_data (link directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & LINK3_OK_WCC(p_LINK3res)) == FALSE)
+                            (caddr_t) & LINK3_OK_WCC(p_LINK3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -3839,22 +3839,22 @@ int cmdnfs_LINK3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sPost-op attributes (file):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & LINK3_FAIL_ATTRS(p_LINK3res)) == FALSE)
+                               (caddr_t) & LINK3_FAIL_ATTRS(p_LINK3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sWcc_data (link directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & LINK3_FAIL_WCC(p_LINK3res)) == FALSE)
+                            (caddr_t) & LINK3_FAIL_WCC(p_LINK3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -3863,7 +3863,7 @@ int cmdnfs_LINK3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -3881,20 +3881,20 @@ int cmdnfs_SYMLINK3args(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_SYMLINK3args == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
     case CMDNFS_ENCODE:
 
       if((argc != 3) && (argc != 4))
-        return FALSE;
+        return false;
 
       /* The first 2 args */
       if(cmdnfs_diropargs3(CMDNFS_ENCODE, 2, argv, 0, NULL,
-                           (caddr_t) & (p_SYMLINK3args->where)) == FALSE)
+                           (caddr_t) & (p_SYMLINK3args->where)) == false)
         {
-          return FALSE;
+          return false;
         }
 
       /* optional 3rd arg */
@@ -3902,15 +3902,15 @@ int cmdnfs_SYMLINK3args(cmdnfs_encodetype_t encodeflag,
         {
           if(cmdnfs_sattr3(CMDNFS_ENCODE, 1, argv + 2, 0, NULL,
                            (caddr_t) & (p_SYMLINK3args->symlink.symlink_attributes)) ==
-             FALSE)
+             false)
             {
-              return FALSE;
+              return false;
             }
           /* 4th arg */
           if(cmdnfs_dirpath(CMDNFS_ENCODE, argc - 3, argv + 3, 0, NULL,
-                            (caddr_t) & (p_SYMLINK3args->symlink.symlink_data)) == FALSE)
+                            (caddr_t) & (p_SYMLINK3args->symlink.symlink_data)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -3919,18 +3919,18 @@ int cmdnfs_SYMLINK3args(cmdnfs_encodetype_t encodeflag,
           /* empty attr set */
           if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
                            (caddr_t) & (p_SYMLINK3args->symlink.symlink_attributes)) ==
-             FALSE)
+             false)
             {
-              return FALSE;
+              return false;
             }
           if(cmdnfs_dirpath(CMDNFS_ENCODE, argc - 2, argv + 2, 0, NULL,
-                            (caddr_t) & (p_SYMLINK3args->symlink.symlink_data)) == FALSE)
+                            (caddr_t) & (p_SYMLINK3args->symlink.symlink_data)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
-      return TRUE;
+      return true;
 
     case CMDNFS_FREE:
       cmdnfs_diropargs3(CMDNFS_FREE, 0, NULL, 0, NULL,
@@ -3939,13 +3939,13 @@ int cmdnfs_SYMLINK3args(cmdnfs_encodetype_t encodeflag,
                     (caddr_t) & (p_SYMLINK3args->symlink.symlink_attributes));
       cmdnfs_dirpath(CMDNFS_FREE, 0, NULL, 0, NULL,
                      (caddr_t) & (p_SYMLINK3args->symlink.symlink_data));
-      return TRUE;
+      return true;
       break;
 
     case CMDNFS_DECODE:
       /* never decoded */
     default:
-      return FALSE;
+      return false;
     }
 }                               /* cmdnfs_SYMLINK3args */
 
@@ -3963,7 +3963,7 @@ int cmdnfs_SYMLINK3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_SYMLINK3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -3973,32 +3973,32 @@ int cmdnfs_SYMLINK3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_SYMLINK3res->status) == FALSE)
+                         (caddr_t) & p_SYMLINK3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_SYMLINK3res->status == NFS3_OK)
         {
 
           if(cmdnfs_postopfh3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                              (caddr_t) & SYMLINK3_OK_FH(p_SYMLINK3res)) == FALSE)
+                              (caddr_t) & SYMLINK3_OK_FH(p_SYMLINK3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sPost-op attributes (symlink):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & SYMLINK3_OK_ATTRS(p_SYMLINK3res)) == FALSE)
+                               (caddr_t) & SYMLINK3_OK_ATTRS(p_SYMLINK3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*sWcc_data (directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & SYMLINK3_OK_WCC(p_SYMLINK3res)) == FALSE)
+                            (caddr_t) & SYMLINK3_OK_WCC(p_SYMLINK3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
         }
@@ -4006,15 +4006,15 @@ int cmdnfs_SYMLINK3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sWcc_data (directory):\n", indent + 2, " ");
           if(cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                            (caddr_t) & SYMLINK3_FAIL_WCC(p_SYMLINK3res)) == FALSE)
+                            (caddr_t) & SYMLINK3_FAIL_WCC(p_SYMLINK3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -4023,7 +4023,7 @@ int cmdnfs_SYMLINK3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }
@@ -4046,7 +4046,7 @@ int cmdnfs_FSINFO3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_FSINFO3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -4056,9 +4056,9 @@ int cmdnfs_FSINFO3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_FSINFO3res->status) == FALSE)
+                         (caddr_t) & p_FSINFO3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_FSINFO3res->status == NFS3_OK)
@@ -4066,9 +4066,9 @@ int cmdnfs_FSINFO3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sPost-op attributes (root):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & FSINFO3_OK_ATTRS(p_FSINFO3res)) == FALSE)
+                               (caddr_t) & FSINFO3_OK_ATTRS(p_FSINFO3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*srtmax = %u\n", indent + 2, " ",
@@ -4110,15 +4110,15 @@ int cmdnfs_FSINFO3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sPost-op attributes (root):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & FSINFO3_FAIL_ATTRS(p_FSINFO3res)) == FALSE)
+                               (caddr_t) & FSINFO3_FAIL_ATTRS(p_FSINFO3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -4127,7 +4127,7 @@ int cmdnfs_FSINFO3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }                               /* cmdnfs_FSINFO3res */
@@ -4149,7 +4149,7 @@ int cmdnfs_PATHCONF3res(cmdnfs_encodetype_t encodeflag,
 
   /* sanity check */
   if(p_PATHCONF3res == NULL)
-    return FALSE;
+    return false;
 
   switch (encodeflag)
     {
@@ -4159,9 +4159,9 @@ int cmdnfs_PATHCONF3res(cmdnfs_encodetype_t encodeflag,
       fprintf(out_stream, "%*s{\n", indent, " ");
 
       if(cmdnfs_nfsstat3(CMDNFS_DECODE, 0, NULL, indent + 2, out_stream,
-                         (caddr_t) & p_PATHCONF3res->status) == FALSE)
+                         (caddr_t) & p_PATHCONF3res->status) == false)
         {
-          return FALSE;
+          return false;
         }
 
       if(p_PATHCONF3res->status == NFS3_OK)
@@ -4169,9 +4169,9 @@ int cmdnfs_PATHCONF3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & PATHCONF3_OK_ATTRS(p_PATHCONF3res)) == FALSE)
+                               (caddr_t) & PATHCONF3_OK_ATTRS(p_PATHCONF3res)) == false)
             {
-              return FALSE;
+              return false;
             }
 
           fprintf(out_stream, "%*slinkmax = %u\n", indent + 2, " ",
@@ -4192,15 +4192,15 @@ int cmdnfs_PATHCONF3res(cmdnfs_encodetype_t encodeflag,
         {
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if(cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
-                               (caddr_t) & PATHCONF3_FAIL_ATTRS(p_PATHCONF3res)) == FALSE)
+                               (caddr_t) & PATHCONF3_FAIL_ATTRS(p_PATHCONF3res)) == false)
             {
-              return FALSE;
+              return false;
             }
         }
 
       fprintf(out_stream, "%*s}\n", indent, " ");
 
-      return TRUE;
+      return true;
 
       break;
 
@@ -4209,7 +4209,7 @@ int cmdnfs_PATHCONF3res(cmdnfs_encodetype_t encodeflag,
     case CMDNFS_FREE:
       /* it is never an input (never encoded, never allocated) */
     default:
-      return FALSE;
+      return false;
     }
 
 }                               /* cmdnfs_PATHCONF3res */

@@ -75,7 +75,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
   uint32_t                 size, check_size;
   size_t                   written_size;
   uint64_t                 offset;
-  bool_t                   eof_met;
+  bool                     eof_met;
   cache_inode_stability_t  stability = CACHE_INODE_SAFE_WRITE_TO_FS;
   void                   * bufferdata;
   stable_how4              stable_how;
@@ -90,7 +90,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
      we know to release the state lock afterward.  The state lock does
      not need to be held during a non-anonymous read, since the open
      state itself prevents a conflict. */
-  bool_t                   anonymous = FALSE;
+  bool                     anonymous = false;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_WRITE;
@@ -100,7 +100,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
    * Do basic checks on a filehandle
    * Only files can be written
    */
-  res_WRITE4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, TRUE);
+  res_WRITE4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
   if(res_WRITE4.status != NFS4_OK)
     return res_WRITE4.status;
 
@@ -214,7 +214,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
       state_open = NULL;
 
       pthread_rwlock_rdlock(&entry->state_lock);
-      anonymous = TRUE;
+      anonymous = true;
 
       /*
        * Special stateid, no open state, check to see if any share conflicts

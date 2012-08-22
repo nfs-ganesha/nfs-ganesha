@@ -65,7 +65,7 @@
  * @param state_type  [IN] type of candidate state
  * @param pstate_data [IN] data for the candidate state
  *
- * @return TRUE if there is a conflict, FALSE if no conflict has been found
+ * @return true if there is a conflict, false if no conflict has been found
  *
  */
 int state_conflict(state_t      * pstate,
@@ -73,34 +73,34 @@ int state_conflict(state_t      * pstate,
                    state_data_t * pstate_data)
 {
   if(pstate == NULL || pstate_data == NULL)
-    return TRUE;
+    return true;
 
   switch (state_type)
     {
     case STATE_TYPE_NONE:
-      return FALSE;               /* STATE_NONE conflicts with nobody */
+      return false;               /* STATE_NONE conflicts with nobody */
 
     case STATE_TYPE_SHARE:
       if(pstate->state_type == STATE_TYPE_SHARE)
         {
           if((pstate->state_data.share.share_access & pstate_data->share.share_deny) ||
              (pstate->state_data.share.share_deny & pstate_data->share.share_access))
-            return TRUE;
+            return true;
         }
-      return FALSE;
+      return false;
 
     case STATE_TYPE_LOCK:
-      return FALSE;              /* lock conflict is managed in the NFS request */
+      return false;              /* lock conflict is managed in the NFS request */
 
     case STATE_TYPE_LAYOUT:
-      return FALSE;              /** layout conflict is managed by the FSAL */
+      return false;              /** layout conflict is managed by the FSAL */
 
     case STATE_TYPE_DELEG:
-      /* Not yet implemented for now, answer TRUE to avoid weird behavior */
-      return TRUE;
+      /* Not yet implemented for now, answer true to avoid weird behavior */
+      return true;
     }
 
-  return TRUE;
+  return true;
 }                               /* state_conflict */
 
 /**
@@ -133,7 +133,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
   char                   debug_str[OTHERSIZE * 2 + 1];
   struct glist_head    * glist;
   cache_inode_status_t   cache_status;
-  bool_t                 got_pinned = FALSE;
+  bool                 got_pinned = false;
 
   if(glist_empty(&pentry->state_list))
     {
@@ -147,7 +147,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
           return *pstatus;
         }
 
-      got_pinned = TRUE;
+      got_pinned = true;
     }
 
   pnew_state = pool_alloc(state_v4_pool, NULL);

@@ -172,16 +172,16 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
                    str);
     }
 
-  data->use_drc = FALSE;
+  data->use_drc = false;
 
   if(data->oppos == 0)
     {
       /* Special case : the request is used without use of OP_SEQUENCE */
       if((arg_CREATE_SESSION4.csa_sequence + 1
           == found->cid_create_session_sequence)
-         && (found->cid_create_session_slot.cache_used == TRUE))
+         && (found->cid_create_session_slot.cache_used))
         {
-          data->use_drc = TRUE;
+          data->use_drc = true;
           data->pcached_res = &found->cid_create_session_slot.cached_result;
 
           res_CREATE_SESSION4.csr_status = NFS4_OK;
@@ -336,7 +336,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
   /* Create Session replay cache */
   data->pcached_res = &found->cid_create_session_slot.cached_result;
-  found->cid_create_session_slot.cache_used = TRUE;
+  found->cid_create_session_slot.cache_used = true;
 
   LogDebug(component, "CREATE_SESSION replay=%p", data->pcached_res);
 

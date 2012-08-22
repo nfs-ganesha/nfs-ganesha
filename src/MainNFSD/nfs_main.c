@@ -52,8 +52,8 @@
 /* parameters for NFSd startup and default values */
 
 nfs_start_info_t my_nfs_start_info = {
-  .dump_default_config = FALSE,
-  .lw_mark_trigger = FALSE
+  .dump_default_config = false,
+  .lw_mark_trigger = false
 };
 
 char *my_config_path = "/etc/ganesha/ganesha.conf";
@@ -63,7 +63,7 @@ char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
 int debug_level = -1;
-int detach_flag = FALSE;
+int detach_flag = false;
 char ganesha_exec_path[MAXPATHLEN];
 
 /* command line syntax */
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
         case 'd':
           /* Detach or not detach ? */
-          detach_flag = TRUE;
+          detach_flag = true;
           break;
 
         case 'R':
@@ -191,14 +191,14 @@ int main(int argc, char *argv[])
           fprintf(stderr, "{\n");
           fprintf(stderr, "\tPrincipalName = nfs@<your_host> ;\n");
           fprintf(stderr, "\tKeytabPath = /etc/krb5.keytab ;\n");
-          fprintf(stderr, "\tActive_krb5 = TRUE ;\n");
+          fprintf(stderr, "\tActive_krb5 = true ;\n");
           fprintf(stderr, "}\n\n\n");
           exit(1);
           break;
 
         case 'T':
           /* Dump the default configuration on stdout */
-          my_nfs_start_info.dump_default_config = TRUE;
+          my_nfs_start_info.dump_default_config = true;
           break;
 
         case 'E':

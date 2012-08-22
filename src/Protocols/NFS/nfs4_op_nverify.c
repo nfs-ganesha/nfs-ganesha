@@ -78,7 +78,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
   res_NVERIFY4.status = NFS4_OK;
 
   /* Do basic checks on a filehandle */
-  res_NVERIFY4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, FALSE);
+  res_NVERIFY4.status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
   if(res_NVERIFY4.status != NFS4_OK)
     return res_NVERIFY4.status;
 
@@ -123,7 +123,8 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
       return res_NVERIFY4.status;
     }
 
-  if((rc = nfs4_Fattr_cmp(&(arg_NVERIFY4.obj_attributes), &file_attr4)) == FALSE)
+  if((rc = nfs4_Fattr_cmp(&(arg_NVERIFY4.obj_attributes),
+                          &file_attr4)) == false)
     res_NVERIFY4.status = NFS4_OK;
   else
     {

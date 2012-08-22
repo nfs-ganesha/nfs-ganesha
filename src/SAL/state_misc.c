@@ -857,7 +857,7 @@ void inc_state_owner_ref(state_owner_t *powner)
 
 void dec_state_owner_ref_locked(state_owner_t        * powner)
 {
-  bool_t remove = FALSE;
+  bool remove = false;
   char   str[HASHTABLE_DISPLAY_STRLEN];
 
   if(isDebug(COMPONENT_STATE))
@@ -876,7 +876,7 @@ void dec_state_owner_ref_locked(state_owner_t        * powner)
       LogFullDebug(COMPONENT_STATE,
                    "Refcount for {%s} is 1",
                    str);
-      remove = TRUE;
+      remove = true;
     }
 
   V(powner->so_mutex);
@@ -918,7 +918,7 @@ void dec_state_owner_ref(state_owner_t        * powner)
 
 void state_wipe_file(cache_entry_t        * pentry)
 {
-  bool_t had_lock = FALSE;
+  bool had_lock = false;
 
   /*
    * currently, only REGULAR files can have state; byte range locks and
@@ -934,7 +934,7 @@ void state_wipe_file(cache_entry_t        * pentry)
     {
       /* This thread already has some kind of lock, but we don't know
          if it's a write lock. */
-      had_lock = TRUE;
+      had_lock = true;
       pthread_rwlock_unlock(&pentry->state_lock);
     }
   pthread_rwlock_wrlock(&pentry->state_lock);

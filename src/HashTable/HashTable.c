@@ -48,14 +48,6 @@
 #include "log.h"
 #include <assert.h>
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 /**
  * @brief Total size of the cache page configured for a table
  *
@@ -169,8 +161,8 @@ Key_Locate(struct hash_table *ht,
      /* The node in the red-black tree currently being traversed */
      struct rbt_node *cursor = NULL;
 
-     /* TRUE if we have located the key */
-     int found = FALSE;
+     /* true if we have located the key */
+     int found = false;
 
      *node = NULL;
 
@@ -211,7 +203,7 @@ Key_Locate(struct hash_table *ht,
                if (partition->cache) {
                    partition->cache[cache_offsetof(ht, rbthash)] = cursor;
                }
-               found = TRUE;
+               found = true;
                break;
           }
           RBT_INCREMENT(cursor);
@@ -447,7 +439,7 @@ out:
  * @brief[in]  ht        The hash table to search
  * @brief[in]  key       The key for which to search
  * @brief[out] val       The value found
- * @brief[in]  may_write This must be TRUE if the followup call might
+ * @brief[in]  may_write This must be true if the followup call might
  *                       mutate the hash table (set or delete)
  * @brief[out] latch     Opaque structure holding information on the
  *                       table.
@@ -1140,7 +1132,7 @@ HashTable_GetRef(hash_table_t *ht,
      /* Stored return code */
      hash_error_t rc = 0;
 
-     rc = HashTable_GetLatch(ht, key, val, FALSE, &latch);
+     rc = HashTable_GetLatch(ht, key, val, false, &latch);
 
      switch (rc) {
      case HASHTABLE_SUCCESS:
@@ -1184,7 +1176,7 @@ HashTable_Get_and_Del(hash_table_t  *ht,
      hash_error_t rc = 0;
 
      rc = HashTable_GetLatch(ht, key, NULL,
-                             TRUE, &latch);
+                             true, &latch);
 
      switch (rc) {
      case HASHTABLE_SUCCESS:
@@ -1240,7 +1232,7 @@ HashTable_DelRef(hash_table_t *ht,
      struct hash_buff temp_val;
 
      rc = HashTable_GetLatch(ht, key, &temp_val,
-                             TRUE, &latch);
+                             true, &latch);
 
      switch (rc) {
      case HASHTABLE_ERROR_NO_SUCH_KEY:
@@ -1302,7 +1294,7 @@ HashTable_DelSafe(hash_table_t *ht,
      struct hash_buff found_val;
 
      rc = HashTable_GetLatch(ht, key, &found_val,
-                             TRUE, &latch);
+                             true, &latch);
 
      switch (rc) {
      case HASHTABLE_ERROR_NO_SUCH_KEY:

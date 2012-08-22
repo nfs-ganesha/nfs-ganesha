@@ -62,23 +62,23 @@ fsal_staticfsinfo_t default_proxy_info = {
   1024,                         /* max links for an object of your filesystem */
   FSAL_MAX_NAME_LEN,            /* max filename */
   FSAL_MAX_PATH_LEN,            /* min filename */
-  TRUE,                         /* no_trunc */
-  TRUE,                         /* chown restricted */
-  FALSE,                        /* case insensitivity */
-  TRUE,                         /* case preserving */
+  true,                         /* no_trunc */
+  true,                         /* chown restricted */
+  false,                        /* case insensitivity */
+  true,                         /* case preserving */
   FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
-  TRUE,                         /* hard link support */
-  TRUE,                         /* symlink support */
-  FALSE,                        /* lock support */
-  FALSE,                        /* lock owners */
-  FALSE,                        /* async blocking locks */
-  TRUE,                         /* named attributes */
-  TRUE,                         /* handles are unique and persistent */
+  true,                         /* hard link support */
+  true,                         /* symlink support */
+  false,                        /* lock support */
+  false,                        /* lock owners */
+  false,                        /* async blocking locks */
+  true,                         /* named attributes */
+  true,                         /* handles are unique and persistent */
   {10, 0}
   ,                             /* Duration of lease at FS in seconds */
   FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
-  TRUE,                         /* can change times */
-  TRUE,                         /* homogenous */
+  true,                         /* can change times */
+  true,                         /* homogenous */
   PROXY_SUPPORTED_ATTRIBUTES,   /* supported attributes */
   (1024 * 1024),                /* maxread size */
   (1024 * 1024),                /* maxwrite size */
@@ -91,7 +91,7 @@ fsal_staticfsinfo_t default_proxy_info = {
 };
 
 /* variables for limiting the calls to the filesystem */
-static int limit_calls = FALSE;
+static int limit_calls = false;
 semaphore_t sem_fs_calls;
 
 /* threads keys for stats */
@@ -246,7 +246,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 void TakeTokenFSCall()
 {
   /* no limits */
-  if(limit_calls == FALSE)
+  if(limit_calls == false)
     return;
 
   /* there is a limit */
@@ -257,7 +257,7 @@ void TakeTokenFSCall()
 void ReleaseTokenFSCall()
 {
   /* no limits */
-  if(limit_calls == FALSE)
+  if(limit_calls == false)
     return;
 
   /* there is a limit */
@@ -281,7 +281,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
     {
       int rc;
 
-      limit_calls = TRUE;
+      limit_calls = true;
 
       rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 
@@ -347,11 +347,11 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
  *
  * \param status(input): The fsal status that is to be tested.
  *
- * \return - TRUE if the error is to be traced.
- *         - FALSE if the error must not be traced except
+ * \return - true if the error is to be traced.
+ *         - false if the error must not be traced except
  *          in NIV_FULL_DEBUG level.
  */
-fsal_boolean_t fsal_do_log(fsal_status_t status)
+bool fsal_do_log(fsal_status_t status)
 {
 
   switch (status.major)
@@ -373,10 +373,10 @@ fsal_boolean_t fsal_do_log(fsal_status_t status)
     case ERR_FSAL_NAMETOOLONG:
     case ERR_FSAL_SEC:
     case ERR_FSAL_SERVERFAULT:
-      return TRUE;
+      return true;
 
     default:
-      return FALSE;
+      return false;
     }
 
 }

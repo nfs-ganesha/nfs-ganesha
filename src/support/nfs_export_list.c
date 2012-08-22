@@ -163,7 +163,7 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
  * @param pexport [IN]  related export entry
  * @param user_credentials [OUT] Filled in structure with uid and gids
  * 
- * @return TRUE if successful, FALSE otherwise 
+ * @return true if successful, false otherwise 
  *
  */
 int get_req_uid_gid(struct svc_req *req,
@@ -177,7 +177,7 @@ int get_req_uid_gid(struct svc_req *req,
 #endif
 
   if (user_credentials == NULL)
-    return FALSE;
+    return false;
 
   switch (req->rq_cred.oa_flavor)
     {
@@ -284,7 +284,7 @@ int get_req_uid_gid(struct svc_req *req,
 	  user_credentials->caller_glen = 0 ;
 	  user_credentials->caller_garray = NULL ;
 
-	  return TRUE;
+	  return true;
 	}
 
       if(uidgidmap_get(user_credentials->caller_uid,
@@ -309,11 +309,11 @@ int get_req_uid_gid(struct svc_req *req,
                    "FAILURE: Request xid=%u, has unsupported authentication %d",
                    req->rq_xid, req->rq_cred.oa_flavor);
       /* Reject the request for weak authentication and return to worker */
-      return FALSE;
+      return false;
 
       break;
     }                           /* switch( req->rq_cred.oa_flavor ) */
-  return TRUE;
+  return true;
 }
 
 int nfs_check_anon(exportlist_client_entry_t * pexport_client,
@@ -321,13 +321,13 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
                    struct user_cred *user_credentials)
 {
   if (user_credentials == NULL)
-    return FALSE;
+    return false;
 
   /* Do we have root access ? */
   /* Are we squashing _all_ users to the anonymous uid/gid ? */
   if( ((user_credentials->caller_uid == 0)
        && !(pexport_client->options & EXPORT_OPTION_ROOT))
-      || pexport->all_anonymous == TRUE)
+      || pexport->all_anonymous == true)
     {
       user_credentials->caller_uid = pexport->anonymous_uid;
       user_credentials->caller_gid = pexport->anonymous_gid;
@@ -337,7 +337,7 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
       user_credentials->caller_garray = NULL ;
     }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -348,45 +348,45 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
  * @param pcred1 [IN] first RPC cred
  * @param pcred2 [IN] second RPC cred
  * 
- * @return TRUE if same, FALSE otherwise
+ * @return true if same, false otherwise
  *
  */
 int nfs_compare_clientcred(nfs_client_cred_t * pcred1,
                            nfs_client_cred_t *pcred2)
 {
   if(pcred1 == NULL)
-    return FALSE;
+    return false;
   if(pcred2 == NULL)
-    return FALSE;
+    return false;
 
   if(pcred1->flavor != pcred2->flavor)
-    return FALSE;
+    return false;
 
   if(pcred1->length != pcred2->length)
-    return FALSE;
+    return false;
 
   switch (pcred1->flavor)
     {
     case AUTH_UNIX:
       if(pcred1->auth_union.auth_unix.aup_uid !=
          pcred2->auth_union.auth_unix.aup_uid)
-        return FALSE;
+        return false;
       if(pcred1->auth_union.auth_unix.aup_gid !=
          pcred2->auth_union.auth_unix.aup_gid)
-        return FALSE;
+        return false;
       if(pcred1->auth_union.auth_unix.aup_time !=
          pcred2->auth_union.auth_unix.aup_time)
-        return FALSE;
+        return false;
       break;
 
     default:
       if(memcmp(&pcred1->auth_union, &pcred2->auth_union, pcred1->length))
-        return FALSE;
+        return false;
       break;
     }
 
   /* If this point is reach, structures are the same */
-  return TRUE;
+  return true;
 }                               /* nfs_compare_clientcred */
 
 int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)

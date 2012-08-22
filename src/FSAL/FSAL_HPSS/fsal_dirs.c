@@ -118,7 +118,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
                                fsal_dirent_t * pdirent, /* OUT */
                                hpssfsal_cookie_t * end_position,        /* OUT */
                                fsal_count_t * nb_entries,       /* OUT */
-                               fsal_boolean_t * end_of_dir      /* OUT */ )
+                               bool * end_of_dir      /* OUT */ )
 {
   int rc, returned, i;
   fsal_status_t st;
@@ -153,9 +153,9 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
    * we have to retrieve file attributes. */
 
   if(get_attr_mask & (~handle_attr_mask))
-    bool_getattr_in = TRUE;
+    bool_getattr_in = true;
   else
-    bool_getattr_in = FALSE;
+    bool_getattr_in = false;
 
   /* init values */
 
@@ -285,7 +285,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
   end_position->data = (current_nb_entries == 0 ? start_position.data : last_offset_out);
 
   *nb_entries = current_nb_entries;
-  *end_of_dir = (bool_eod_out ? TRUE : FALSE);
+  *end_of_dir = (bool_eod_out ? true : false);
 
   LogDebug(COMPONENT_FSAL, "%s() returned %u entries, end_of_dir=%d", __func__, *nb_entries, *end_of_dir);
 

@@ -78,7 +78,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   size_t                   size = 0, check_size = 0;
   size_t                   read_size = 0;
   uint64_t                 offset = 0;
-  bool_t                   eof_met = FALSE;
+  bool                     eof_met = false;
   void                   * bufferdata = NULL;
   cache_inode_status_t     cache_status = CACHE_INODE_SUCCESS;
   state_t                * state_found = NULL;
@@ -89,7 +89,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
      we know to release the state lock afterward.  The state lock does
      not need to be held during a non-anonymous read, since the open
      state itself prevents a conflict. */
-  bool_t                   anonymous = FALSE;
+  bool                     anonymous = false;
 
   /* Say we are managing NFS4_OP_READ */
   resp->resop = NFS4_OP_READ;
@@ -99,7 +99,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
    * Do basic checks on a filehandle
    * Only files can be read
    */
-  res_READ4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, TRUE);
+  res_READ4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
   if(res_READ4.status != NFS4_OK)
     return res_READ4.status;
 
@@ -201,8 +201,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         {
           case STATE_TYPE_SHARE:
             if ((data->minorversion == 0) &&
-                ((state_found->state_powner->so_owner.so_nfs4_owner
-                  .so_confirmed) == FALSE))
+                (!(state_found->state_powner->so_owner.so_nfs4_owner
+                  .so_confirmed)))
               {
                  res_READ4.status = NFS4ERR_BAD_STATEID;
                  return res_READ4.status;
@@ -228,7 +228,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       state_open = NULL;
 
       pthread_rwlock_rdlock(&entry->state_lock);
-      anonymous = TRUE;
+      anonymous = true;
 
       /*
        * Special stateid, no open state, check to see if any share conflicts
@@ -332,7 +332,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                offset, read_size, eof_met);
 
   /* Is EOF met or not ? */
-  if( ( eof_met == TRUE ) ||
+  if( ( eof_met == true ) ||
       ( (offset + read_size) >= attr.filesize) )
     res_READ4.READ4res_u.resok4.eof = TRUE;
   else
@@ -390,7 +390,7 @@ static int op_dsread(struct nfs_argop4 *op,
         /* Buffer into which data is to be read */
         void *buffer = NULL;
         /* End of file flag */
-        bool_t eof = FALSE;
+        bool eof = false;
 
         /* Don't bother calling the FSAL if the read length is 0. */
 
@@ -427,7 +427,11 @@ static int op_dsread(struct nfs_argop4 *op,
                 buffer = NULL;
         }
 
-        res_READ4.READ4res_u.resok4.eof = eof;
+        if (eof) {
+                res_READ4.READ4res_u.resok4.eof = TRUE;
+        } else {
+                res_READ4.READ4res_u.resok4.eof = FALSE;
+        }
 
         res_READ4.status = nfs_status;
 

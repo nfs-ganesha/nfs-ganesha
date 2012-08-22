@@ -396,7 +396,7 @@ out:
 void nfs_Symlink_Free(nfs_res_t * resp)
 {
   if((resp->res_symlink3.status == NFS3_OK) &&
-     (resp->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows == TRUE))
+     (resp->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows))
     gsh_free(resp->res_symlink3.SYMLINK3res_u.resok.obj
              .post_op_fh3_u.handle.data.data_val);
 }                               /* nfs_Symlink_Free */

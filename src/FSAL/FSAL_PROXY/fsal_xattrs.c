@@ -603,7 +603,7 @@ fsal_status_t PROXYFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,   /* IN
     )
 {
   unsigned int index;
-  int found = FALSE;
+  int found = false;
 
   /* sanity checks */
   if(!p_objecthandle || !xattr_name)
@@ -614,7 +614,7 @@ fsal_status_t PROXYFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,   /* IN
       if(do_match_type(xattr_list[index].flags, ((proxyfsal_handle_t *)p_objecthandle)->data.object_type_reminder)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
-          found = TRUE;
+          found = true;
           break;
         }
     }

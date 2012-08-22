@@ -71,22 +71,22 @@ static fsal_staticfsinfo_t default_gpfs_info = {
   _POSIX_LINK_MAX,              /* max links */
   FSAL_MAX_NAME_LEN,            /* max filename */
   FSAL_MAX_PATH_LEN,            /* max pathlen */
-  TRUE,                         /* no_trunc */
-  TRUE,                         /* chown restricted */
-  FALSE,                        /* case insensitivity */
-  TRUE,                         /* case preserving */
+  true,                         /* no_trunc */
+  true,                         /* chown restricted */
+  false,                        /* case insensitivity */
+  true,                         /* case preserving */
   FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
-  TRUE,                         /* hard link support */
-  TRUE,                         /* symlink support */
-  TRUE,                         /* lock management */
-  TRUE,                         /* lock owners */
-  TRUE,                         /* async blocking locks */
-  TRUE,                         /* named attributes */
-  TRUE,                         /* handles are unique and persistent */
+  true,                         /* hard link support */
+  true,                         /* symlink support */
+  true,                         /* lock management */
+  true,                         /* lock owners */
+  true,                         /* async blocking locks */
+  true,                         /* named attributes */
+  true,                         /* handles are unique and persistent */
   {10, 0},                      /* Duration of lease at FS in seconds */
   FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
-  TRUE,                         /* can change times */
-  TRUE,                         /* homogenous */
+  true,                         /* can change times */
+  true,                         /* homogenous */
   GPFS_SUPPORTED_ATTRIBUTES,    /* supported attributes */
   1048576,                      /* maxread size DONT USE 0 */
   1048576,                      /* maxwrite size DONT USE 0 */
@@ -99,7 +99,7 @@ static fsal_staticfsinfo_t default_gpfs_info = {
 };
 
 /* variables for limiting the calls to the filesystem */
-static int limit_calls = FALSE;
+static int limit_calls = false;
 semaphore_t sem_fs_calls;
 
 /* threads keys for stats */
@@ -123,7 +123,7 @@ extern fsal_status_t fsal_cred_2_gpfs_cred(struct user_credentials *p_fsalcred,
 extern fsal_status_t fsal_mode_2_gpfs_mode(fsal_accessmode_t fsal_mode,
                                            fsal_accessflags_t v4mask,
                                            unsigned int *p_gpfsmode,
-                                           fsal_boolean_t is_dir);
+                                           bool is_dir);
 #endif                          /* _USE_NFS4_ACL */
 
 static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_context,   /* IN */
@@ -314,7 +314,7 @@ void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
 void TakeTokenFSCall()
 {
   /* no limits */
-  if(limit_calls == FALSE)
+  if(limit_calls == false)
     return;
 
   /* there is a limit */
@@ -325,7 +325,7 @@ void TakeTokenFSCall()
 void ReleaseTokenFSCall()
 {
   /* no limits */
-  if(limit_calls == FALSE)
+  if(limit_calls == false)
     return;
 
   /* there is a limit */
@@ -350,7 +350,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
     {
       int rc;
 
-      limit_calls = TRUE;
+      limit_calls = true;
 
       rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 
@@ -1258,33 +1258,33 @@ fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN *
 }
 
 #ifdef _USE_NFS4_ACL
-static fsal_boolean_t fsal_check_ace_owner(fsal_uid_t uid, fsal_op_context_t *p_context)
+static bool fsal_check_ace_owner(fsal_uid_t uid, fsal_op_context_t *p_context)
 {
   return (p_context->credential.user == uid);
 }
 
-static fsal_boolean_t fsal_check_ace_group(fsal_gid_t gid, fsal_op_context_t *p_context)
+static bool fsal_check_ace_group(fsal_gid_t gid, fsal_op_context_t *p_context)
 {
   int i;
 
   if(p_context->credential.group == gid)
-    return TRUE;
+    return true;
 
   for(i = 0; i < p_context->credential.nbgroups; i++)
     {
       if(p_context->credential.alt_groups[i] == gid)
-        return TRUE;
+        return true;
     }
 
-  return FALSE;
+  return false;
 }
 
-static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
+static bool fsal_check_ace_matches(fsal_ace_t *pace,
                                              fsal_op_context_t *p_context,
-                                             fsal_boolean_t is_owner,
-                                             fsal_boolean_t is_group)
+                                             bool is_owner,
+                                             bool is_group)
 {
-  fsal_boolean_t result = FALSE;
+  bool result = false;
   char *cause = "";
 
   if (IS_FSAL_ACE_SPECIAL_ID(*pace))
@@ -1293,7 +1293,7 @@ static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
         case FSAL_ACE_SPECIAL_OWNER:
           if(is_owner)
             {
-              result = TRUE;
+              result = true;
               cause = "special owner";
             }
         break;
@@ -1301,13 +1301,13 @@ static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
         case FSAL_ACE_SPECIAL_GROUP:
           if(is_group)
             {
-              result = TRUE;
+              result = true;
               cause = "special group";
             }
         break;
 
         case FSAL_ACE_SPECIAL_EVERYONE:
-          result = TRUE;
+          result = true;
           cause = "special everyone";
         break;
 
@@ -1318,7 +1318,7 @@ static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
     {
       if(fsal_check_ace_group(pace->who.gid, p_context))
         {
-          result = TRUE;
+          result = true;
           cause = "group";
         }
     }
@@ -1326,7 +1326,7 @@ static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
     {
       if(fsal_check_ace_owner(pace->who.uid, p_context))
         {
-          result = TRUE;
+          result = true;
           cause = "owner";
         }
     }
@@ -1338,21 +1338,21 @@ static fsal_boolean_t fsal_check_ace_matches(fsal_ace_t *pace,
   return result;
 }
 
-static fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
+static bool fsal_check_ace_applicable(fsal_ace_t *pace,
                                                 fsal_op_context_t *p_context,
-                                                fsal_boolean_t is_dir,
-                                                fsal_boolean_t is_owner,
-                                                fsal_boolean_t is_group)
+                                                bool is_dir,
+                                                bool is_owner,
+                                                bool is_group)
 {
-  fsal_boolean_t is_applicable = FALSE;
-  fsal_boolean_t is_file = !is_dir;
+  bool is_applicable = false;
+  bool is_file = !is_dir;
 
   /* To be applicable, the entry should not be INHERIT_ONLY. */
   if (IS_FSAL_ACE_INHERIT_ONLY(*pace))
     {
       LogDebug(COMPONENT_FSAL, "Not applicable, "
                "inherit only");
-      return FALSE;
+      return false;
     }
 
   /* Use GPFS internal flag to further check the entry is applicable to this
@@ -1362,7 +1362,7 @@ static fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
       if(!IS_FSAL_FILE_APPLICABLE(*pace))
         {
           LogDebug(COMPONENT_FSAL, "Not applicable to file");
-          return FALSE;
+          return false;
         }
     }
   else  /* directory */
@@ -1370,7 +1370,7 @@ static fsal_boolean_t fsal_check_ace_applicable(fsal_ace_t *pace,
       if(!IS_FSAL_DIR_APPLICABLE(*pace))
         {
           LogDebug(COMPONENT_FSAL, "Not applicable to dir");
-          return FALSE;
+          return false;
         }
     }
 
@@ -1484,9 +1484,9 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
   fsal_acl_t *pacl = NULL;
   fsal_ace_t *pace = NULL;
   int ace_number = 0;
-  fsal_boolean_t is_dir = FALSE;
-  fsal_boolean_t is_owner = FALSE;
-  fsal_boolean_t is_group = FALSE;
+  bool is_dir = false;
+  bool is_owner = false;
+  bool is_group = false;
 
   /* unsatisfied flags */
   missing_access = v4mask;
@@ -1608,7 +1608,7 @@ static fsal_status_t fsal_check_access_by_handle(fsal_op_context_t * p_context, 
   struct xstat_access_arg accessarg;
   unsigned int supported;
   unsigned int gpfs_mode = 0;
-  fsal_boolean_t is_dir = FALSE;
+  bool is_dir = false;
 
   if(!p_handle || !p_context || !p_context->export_context)
     ReturnCode(ERR_FSAL_FAULT, 0);

@@ -69,7 +69,7 @@ static log_t log_desc_cache = LOG_INITIALIZER;
 /** Global variable: root pentry */
 static cache_entry_t *pentry_root;
 
-static int cache_init = FALSE;
+static int cache_init = false;
 
 /** Global variable : the garbagge policy to be used */
 static cache_inode_gc_policy_t gcpol;
@@ -162,8 +162,8 @@ static cmdCacheInode_thr_info_t *GetCacheInodeContext()
 
       memset(p_current_thread_vars, 0, sizeof(cmdCacheInode_thr_info_t));
 
-      p_current_thread_vars->is_thread_init = FALSE;
-      p_current_thread_vars->is_client_init = FALSE;
+      p_current_thread_vars->is_thread_init = false;
+      p_current_thread_vars->is_client_init = false;
       strcpy(p_current_thread_vars->current_path, "");
       p_current_thread_vars->pentry = NULL;
       p_current_thread_vars->cache_status = CACHE_INODE_SUCCESS;
@@ -220,7 +220,7 @@ static int InitThread(cmdCacheInode_thr_info_t * thr_info)
       return 1;
     }
 
-  thr_info->is_thread_init = TRUE;
+  thr_info->is_thread_init = true;
 
   return 0;
 
@@ -236,7 +236,7 @@ static int InitClient(cmdCacheInode_thr_info_t * thr_info)
   if(cache_inode_client_init(&thr_info->client, &cache_client_param, 0, NULL) != 0)
     return 1;
 
-  thr_info->is_client_init = TRUE;
+  thr_info->is_client_init = true;
 
   return 0;
 
@@ -249,14 +249,14 @@ cmdCacheInode_thr_info_t *RetrieveInitializedContext()
 
   context = GetCacheInodeContext();
 
-  if(context->is_thread_init != TRUE)
+  if(context->is_thread_init != true)
     if(InitThread(context))
       {
         printf("Error occured during thread initialization.\n");
         return NULL;
       }
 
-  if(context->is_client_init != TRUE)
+  if(context->is_client_init != true)
     if(InitClient(context))
       {
         printf("Error occured during client initialization.\n");
@@ -550,7 +550,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   context = GetCacheInodeContext();
 
-  if(context->is_thread_init != TRUE)
+  if(context->is_thread_init != true)
     if(InitThread(context))
       {
         fprintf(output, "Error ossured during thread initialization.\n");
@@ -750,14 +750,14 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/xfs", FSAL_MAX_PATH_LEN, &pathroot)))
 
   strcpy(context->current_path, "/");
 
-  context->is_client_init = TRUE;
+  context->is_client_init = true;
 
   pentry_root = context->pentry;
 
   if(flag_v)
     fprintf(output, "\tCache_inode successfully initialized.\n");
 
-  cache_init = TRUE;
+  cache_init = true;
 
   /* Free config struct */
   config_Free(config_file);
@@ -3095,7 +3095,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 
   /* fsal arguments */
 
-  fsal_boolean_t is_eof = 0;
+  bool is_eof = 0;
   fsal_size_t total_nb_read = 0;
   fsal_size_t once_nb_read = 0;
   fsal_size_t nb_block_read = 0;
@@ -3401,7 +3401,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
                           &is_eof,
                           &context->client,
                           &context->context,
-                          TRUE, &context->cache_status) != CACHE_INODE_SUCCESS)
+                          true, &context->cache_status) != CACHE_INODE_SUCCESS)
         {
           log_fprintf(output, "Error executing cache_inode_read : %J%r\n",
                       ERR_CACHE_INODE, context->cache_status);
@@ -3420,7 +3420,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 /*                           ht, */
 /*                           &context->client, */
 /*                           &context->context, */
-/*                           TRUE, &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*                           true, &context->cache_status) != CACHE_INODE_SUCCESS) */
 /*         { */
 /*           log_fprintf(output, "Error executing cache_inode_read : %J%r\n", */
 /*                       ERR_CACHE_INODE, context->cache_status); */
@@ -3537,7 +3537,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
   fsal_attrib_list_t fsal_attr;
 
-  fsal_boolean_t fsal_eof;
+  bool fsal_eof;
 
   struct timeval timer_start;
   struct timeval timer_stop;
@@ -3874,7 +3874,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
                           &fsal_eof,
                           &context->client,
                           &context->context,
-                          TRUE, &context->cache_status) != CACHE_INODE_SUCCESS)
+                          true, &context->cache_status) != CACHE_INODE_SUCCESS)
         {
           log_fprintf(output, "Error executing cache_inode_write : %J%r\n",
                       ERR_CACHE_INODE, context->cache_status);
@@ -3893,7 +3893,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 /*                           ht, */
 /*                           &context->client, */
 /*                           &context->context, */
-/*                           TRUE, &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*                           true, &context->cache_status) != CACHE_INODE_SUCCESS) */
 /*         { */
 /*           log_fprintf(output, "Error executing cache_inode_write : %J%r\n", */
 /*                       ERR_CACHE_INODE, context->cache_status); */

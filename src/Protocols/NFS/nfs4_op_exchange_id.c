@@ -77,7 +77,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
   int                   rc;
   int                   len;
   char                * temp;
-  bool_t                update;
+  bool                  update;
   const char          * update_str;
   log_components_t      component = COMPONENT_CLIENTID;
 

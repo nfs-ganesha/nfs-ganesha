@@ -65,7 +65,7 @@ static void state_share_update_counter(cache_entry_t * pentry,
                                        int old_deny,
                                        int new_access,
                                        int new_deny,
-                                       bool_t v4);
+                                       bool v4);
 
 /* Calculate the union of share access of given file. */
 static unsigned int state_share_get_share_access(cache_entry_t * pentry);
@@ -143,7 +143,7 @@ state_status_t state_share_add(cache_entry_t         * pentry,
                              OPEN4_SHARE_DENY_NONE,
                              new_share_access,
                              new_share_deny,
-                             TRUE);
+                             true);
 
   /* Get the updated union of share states of this file. */
   new_pentry_share_access = state_share_get_share_access(pentry);
@@ -168,7 +168,7 @@ state_status_t state_share_add(cache_entry_t         * pentry,
                                      new_share_deny,
                                      OPEN4_SHARE_ACCESS_NONE,
                                      OPEN4_SHARE_DENY_NONE,
-                                     TRUE);
+                                     true);
           LogDebug(COMPONENT_STATE, "do_share_op failed");
           *pstatus = status;
           return *pstatus;
@@ -215,7 +215,7 @@ state_status_t state_share_remove(cache_entry_t         * pentry,
                              removed_share_deny,
                              OPEN4_SHARE_ACCESS_NONE,
                              OPEN4_SHARE_DENY_NONE,
-                             TRUE);
+                             true);
 
   /* Get the updated union of share states of this file. */
   new_pentry_share_access = state_share_get_share_access(pentry);
@@ -240,7 +240,7 @@ state_status_t state_share_remove(cache_entry_t         * pentry,
                                      OPEN4_SHARE_DENY_NONE,
                                      removed_share_access,
                                      removed_share_deny,
-                                     TRUE);
+                                     true);
           LogDebug(COMPONENT_STATE, "do_share_op failed");
           *pstatus = status;
           return *pstatus;
@@ -305,7 +305,7 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
                              old_share_deny,
                              new_share_access,
                              new_share_deny,
-                             TRUE);
+                             true);
 
   /* Get the updated union of share states of this file. */
   new_pentry_share_access = state_share_get_share_access(pentry);
@@ -330,7 +330,7 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
                                      new_share_deny,
                                      old_share_access,
                                      old_share_deny,
-                                     TRUE);
+                                     true);
           LogDebug(COMPONENT_STATE, "do_share_op failed");
           *pstatus = status;
           return *pstatus;
@@ -388,7 +388,7 @@ state_status_t state_share_downgrade(cache_entry_t         * pentry,
                              old_share_deny,
                              new_share_access,
                              new_share_deny,
-                             TRUE);
+                             true);
 
   /* Get the updated union of share states of this file. */
   new_pentry_share_access = state_share_get_share_access(pentry);
@@ -413,7 +413,7 @@ state_status_t state_share_downgrade(cache_entry_t         * pentry,
                                      new_share_deny,
                                      old_share_access,
                                      old_share_deny,
-                                     TRUE);
+                                     true);
           LogDebug(COMPONENT_STATE, "do_share_op failed");
           *pstatus = status;
           return *pstatus;
@@ -523,7 +523,7 @@ static void state_share_update_counter(cache_entry_t * pentry,
                                        int old_deny,
                                        int new_access,
                                        int new_deny,
-                                       bool_t v4)
+                                       bool v4)
 {
   int access_read_inc  = ((new_access & OPEN4_SHARE_ACCESS_READ) != 0) - ((old_access & OPEN4_SHARE_ACCESS_READ) != 0);
   int access_write_inc = ((new_access & OPEN4_SHARE_ACCESS_WRITE) != 0) - ((old_access & OPEN4_SHARE_ACCESS_WRITE) != 0);
@@ -601,7 +601,7 @@ state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
                                  OPEN4_SHARE_DENY_NONE,
                                  share_access,
                                  OPEN4_SHARE_DENY_NONE,
-                                 FALSE);
+                                 false);
     }
 
   pthread_rwlock_unlock(&pentry->state_lock);
@@ -622,7 +622,7 @@ void state_share_anonymous_io_done(cache_entry_t  * pentry,
                              OPEN4_SHARE_DENY_NONE,
                              OPEN4_SHARE_ACCESS_NONE,
                              OPEN4_SHARE_DENY_NONE,
-                             FALSE);
+                             false);
 
   pthread_rwlock_unlock(&pentry->state_lock);
 }
@@ -745,7 +745,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                              OPEN4_SHARE_DENY_NONE,
                              share_access,
                              share_deny,
-                             TRUE);
+                             true);
 
   /* Get the updated union of share states of this file. */
   new_pentry_share_access = state_share_get_share_access(pentry);
@@ -771,7 +771,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                                      share_deny,
                                      OPEN4_SHARE_ACCESS_NONE,
                                      OPEN4_SHARE_DENY_NONE,
-                                     TRUE);
+                                     true);
 
           /* Remove the share from the list for the file. If the list is now
            * empty also remove the extra pin ref.
@@ -880,7 +880,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
                                  removed_share_deny,
                                  OPEN4_SHARE_ACCESS_NONE,
                                  OPEN4_SHARE_DENY_NONE,
-                                 TRUE);
+                                 true);
 
       /* Get the updated union of share states of this file. */
       new_pentry_share_access = state_share_get_share_access(pentry);
@@ -906,7 +906,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
                                          OPEN4_SHARE_DENY_NONE,
                                          removed_share_access,
                                          removed_share_deny,
-                                         TRUE);
+                                         true);
 
               pthread_rwlock_unlock(&pentry->state_lock);
 

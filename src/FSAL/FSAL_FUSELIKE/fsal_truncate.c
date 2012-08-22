@@ -81,7 +81,7 @@ fsal_status_t FUSEFSAL_truncate(fsal_handle_t *handle, /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_truncate);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_truncate);
 
   if(object_attributes)
     {

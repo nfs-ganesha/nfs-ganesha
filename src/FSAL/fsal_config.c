@@ -53,12 +53,12 @@ typedef enum fsal_initflag__
   FSAL_INIT_FORCE_VALUE,        /**< force a value */
   FSAL_INIT_MAX_LIMIT,          /**< force a value if default is greater */
   FSAL_INIT_MIN_LIMIT           /**< force a value if default is smaller */
-      /* Note : for booleans, we considerate that TRUE > FALSE */
+      /* Note : for booleans, we considerate that true > false */
 } fsal_initflag_t;
 
 struct fsal_settable_bool {
         fsal_initflag_t how;
-        bool_t val;
+        bool val;
 };
 
 struct fsal_settable_int32 {
@@ -102,7 +102,7 @@ struct fsal_fs_params {
  *  SET_INIT_INFO( parameter.fs_common_info ,
  *                      linksupport              ,
  *                      FSAL_INIT_FORCEVALUE     ,
- *                      FALSE                   );
+ *                      false);
  *
  */
 
@@ -493,8 +493,8 @@ load_FS_common_parameters_from_conf(config_file_t in_config,
  * common functions for fsal info methods
  */
 
-bool_t fsal_supports(struct fsal_staticfsinfo_t *info,
-			     fsal_fsinfo_options_t option)
+bool fsal_supports(struct fsal_staticfsinfo_t *info,
+                   fsal_fsinfo_options_t option)
 {
 	switch(option) {
 	case no_trunc:
@@ -532,8 +532,8 @@ bool_t fsal_supports(struct fsal_staticfsinfo_t *info,
 	case share_support_owner:
 		return !!info->share_support_owner;
 	default:
-		return FALSE; /* whatever I don't know about,
-			       * you can't do
+		return false; /* whatever I don't know about,
+                               * you can't do
 			       */
 	}
 }

@@ -450,7 +450,7 @@ fsal_status_t GPFSFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* I
 {
 #if 0
   unsigned int index;
-  int found = FALSE;
+  int found = false;
 
   /* sanity checks */
   if(!p_objecthandle || !xattr_name)
@@ -461,7 +461,7 @@ fsal_status_t GPFSFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* I
       if(do_match_type(xattr_list[index].flags, p_objecthandle->handle.handle_type)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
-          found = TRUE;
+          found = true;
           break;
         }
     }

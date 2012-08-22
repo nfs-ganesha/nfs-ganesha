@@ -35,6 +35,7 @@
 #ifndef _HASHTABLE_H
 #define _HASHTABLE_H
 
+#include <stdbool.h>
 #include <rbt_node.h>
 #include <rbt_tree.h>
 #include <pthread.h>
@@ -42,14 +43,6 @@
 #include "log.h"
 #include "lookup3.h"
 #include "abstract_mem.h"
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
 
 /**
  * @defgroup HTStructs Structures used by the hash table code
@@ -245,7 +238,7 @@ HashTable_Get(struct hash_table *ht,
               struct hash_buff *key,
               struct hash_buff *val)
 {
-     return HashTable_GetLatch(ht, key, val, FALSE, NULL);
+     return HashTable_GetLatch(ht, key, val, false, NULL);
 } /* HashTable_Get */
 
 /**
@@ -276,7 +269,7 @@ HashTable_Set(struct hash_table *ht,
      hash_error_t rc = HASHTABLE_SUCCESS;
 
      rc = HashTable_GetLatch(ht, key, NULL,
-                             TRUE,
+                             true,
                              &latch);
 
      if ((rc != HASHTABLE_SUCCESS) &&
@@ -288,7 +281,7 @@ HashTable_Set(struct hash_table *ht,
                                key,
                                val,
                                &latch,
-                               FALSE,
+                               false,
                                NULL,
                                NULL);
 
@@ -322,7 +315,7 @@ HashTable_Del(struct hash_table *ht,
      hash_error_t rc = HASHTABLE_SUCCESS;
 
      rc = HashTable_GetLatch(ht, key, NULL,
-                             TRUE, &latch);
+                             true, &latch);
 
      switch (rc) {
      case HASHTABLE_SUCCESS:

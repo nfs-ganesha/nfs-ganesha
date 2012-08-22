@@ -78,7 +78,7 @@ fsal_status_t FUSEFSAL_dynamic_fsinfo(fsal_handle_t *handle,   /* IN */
       ReleaseTokenFSCall();
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_dynamic_fsinfo);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_dynamic_fsinfo);
 
       dynamicinfo->total_bytes = stbuff.f_frsize * stbuff.f_blocks;
       dynamicinfo->free_bytes = stbuff.f_frsize * stbuff.f_bfree;

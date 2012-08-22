@@ -85,7 +85,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
    * Should not operate on non-file objects
    */
   res_OPEN_CONFIRM4.status = nfs4_sanity_check_FH(data, REGULAR_FILE,
-                                                  FALSE);
+                                                  false);
   if(res_OPEN_CONFIRM4.status != NFS4_OK)
     return res_OPEN_CONFIRM4.status;
 
@@ -98,7 +98,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
       return res_OPEN_CONFIRM4.status;
     }
 
-  if (nfs_export_check_security(data->reqp, data->pexport) == FALSE)
+  if (!(nfs_export_check_security(data->reqp, data->pexport)))
     {
       res_OPEN_CONFIRM4.status = NFS4ERR_PERM;
       return res_OPEN_CONFIRM4.status;
@@ -130,7 +130,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
     }
 
   /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
-  if(open_owner->so_owner.so_nfs4_owner.so_confirmed == TRUE)
+  if(open_owner->so_owner.so_nfs4_owner.so_confirmed)
     {
       V(open_owner->so_mutex);
       res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID;
@@ -138,7 +138,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
     }
 
   /* Set the state as confirmed */
-  open_owner->so_owner.so_nfs4_owner.so_confirmed = TRUE;
+  open_owner->so_owner.so_nfs4_owner.so_confirmed = true;
   V(open_owner->so_mutex);
 
   /* Handle stateid/seqid for success */

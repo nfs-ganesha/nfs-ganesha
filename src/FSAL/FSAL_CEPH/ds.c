@@ -93,7 +93,7 @@ release(struct fsal_ds_handle *const ds_pub)
  * @param[in]  requested_length Length of read requested (and size of buffer)
  * @param[out] buffer           The buffer to which to store read data
  * @param[out] supplied_length  Length of data read
- * @param[out] eof              TRUE on end of file
+ * @param[out] eof              True on end of file
  *
  * @return An NFSv4.1 status code.
  */
@@ -105,7 +105,7 @@ ds_read(struct fsal_ds_handle *const ds_pub,
         const count4 requested_length,
         void *const buffer,
         count4 *const supplied_length,
-        bool_t *const end_of_file)
+        bool *const end_of_file)
 {
         /* The private 'full' export */
         struct export *export
@@ -166,7 +166,7 @@ ds_read(struct fsal_ds_handle *const ds_pub,
 
         *supplied_length = amount_read;
 
-        *end_of_file = FALSE;
+        *end_of_file = false;
 
         return NFS4_OK;
 }
@@ -274,7 +274,7 @@ ds_write(struct fsal_ds_handle *const ds_pub,
                                          ceph_status);
                                 return posix2nfs4_error(-ceph_status);
                         }
-                        ds->connected = TRUE;
+                        ds->connected = true;
                 }
                 if ((ceph_status
                      = ceph_ll_open(export->cmount,

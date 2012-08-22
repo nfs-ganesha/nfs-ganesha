@@ -181,7 +181,7 @@ typedef struct nfs_worker_stat__
 
 #ifdef _USE_9P
 void _9p_stat_update( uint8_t type,
-                      bool_t success,
+                      bool success,
                        _9p_request_stat_t * pstat_req ) ;
 #endif
 void nfs_stat_update(nfs_stat_type_t type,

@@ -41,6 +41,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
+#include <stdbool.h>
 #include "posix_methods.h"
 
 #include "scanmount.h"
@@ -440,7 +441,7 @@ static fsal_status_t makesymlink (struct fsal_obj_handle *dir_hdl, const char *n
 }
 
 static fsal_status_t readsymlink (struct fsal_obj_handle *obj_hdl,
-                                  char *link_content, size_t * link_len, bool_t refresh)
+                                  char *link_content, size_t * link_len, bool refresh)
 {
     struct posix_fsal_obj_handle *myself = NULL;
     int retval = 0;
@@ -522,7 +523,7 @@ static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl, uint32_t ent
                                    void *dir_state, fsal_status_t (*cb) (const char *name, unsigned int dtype,
                                                                          struct fsal_obj_handle * dir_hdl,
                                                                          void *dir_state, struct fsal_cookie * cookie),
-                                   bool_t * eof)
+                                   bool * eof)
 {
     struct file_data *parent = NULL;
     fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -787,17 +788,17 @@ static fsal_status_t setattrs (struct fsal_obj_handle *obj_hdl, struct attrlist 
 }
 
 
-static bool_t compare (struct fsal_obj_handle *obj_hdl, struct fsal_obj_handle *other_hdl)
+static bool compare (struct fsal_obj_handle *obj_hdl, struct fsal_obj_handle *other_hdl)
 {
     struct posix_fsal_obj_handle *myself, *other;
 
     if (!other_hdl)
-        return FALSE;
+        return false;
     myself = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);
     other = container_of (other_hdl, struct posix_fsal_obj_handle, obj_handle);
     if ((obj_hdl->type != other_hdl->type))
-        return FALSE;
-    return memcmp (myself->handle, other->handle, sizeof (struct handle_data)) ? FALSE : TRUE;
+        return false;
+    return memcmp (myself->handle, other->handle, sizeof (struct handle_data)) ? false : true;
 }
 
 

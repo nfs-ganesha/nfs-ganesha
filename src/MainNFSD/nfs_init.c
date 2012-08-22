@@ -115,8 +115,8 @@ nfs_parameter_t nfs_param =
   .core_param.program[P_RQUOTA] = RQUOTAPROG,
   .core_param.port[P_RQUOTA] = RQUOTA_PORT,
 #endif
-  .core_param.drop_io_errors = TRUE,
-  .core_param.drop_delay_errors = TRUE,
+  .core_param.drop_io_errors = true,
+  .core_param.drop_delay_errors = true,
   .core_param.core_dump_size = -1,
   .core_param.nb_max_fd = 1024,
   .core_param.stats_update_delay = 60,
@@ -134,7 +134,7 @@ nfs_parameter_t nfs_param =
   .krb5_param.svc.principal = DEFAULT_NFS_PRINCIPAL,
   .krb5_param.keytab = DEFAULT_NFS_KEYTAB,
   .krb5_param.ccache_dir =  DEFAULT_NFS_CCACHE_DIR,
-  .krb5_param.active_krb5 = TRUE,
+  .krb5_param.active_krb5 = true,
   .krb5_param.hash_param.index_size = PRIME_ID_MAPPER,
   .krb5_param.hash_param.alphabet_length = 10,      /* Not used for UID_MAPPER */
   .krb5_param.hash_param.hash_func_key = gss_ctx_hash_func,
@@ -147,8 +147,8 @@ nfs_parameter_t nfs_param =
 
   /* NFSv4 parameter */
   .nfsv4_param.lease_lifetime = NFS4_LEASE_LIFETIME,
-  .nfsv4_param.returns_err_fh_expired = TRUE,
-  .nfsv4_param.return_bad_stateid = TRUE,
+  .nfsv4_param.returns_err_fh_expired = true,
+  .nfsv4_param.return_bad_stateid = true,
   .nfsv4_param.domainname = DEFAULT_DOMAIN,
   .nfsv4_param.idmapconf = DEFAULT_IDMAPCONF,
 
@@ -350,7 +350,7 @@ nfs_parameter_t nfs_param =
   /* Cache inode parameters : Garbage collection policy */
   .cache_layers_param.gcpol.entries_hwmark = 100000,
   .cache_layers_param.gcpol.entries_lwmark = 50000,
-  .cache_layers_param.gcpol.use_fd_cache = TRUE,
+  .cache_layers_param.gcpol.use_fd_cache = true,
   .cache_layers_param.gcpol.lru_run_interval = 600,
   .cache_layers_param.gcpol.fd_limit_percent = 99,
   .cache_layers_param.gcpol.fd_hwmark_percent = 90,
@@ -363,8 +363,8 @@ nfs_parameter_t nfs_param =
   /* SNMP ADM parameters */
 #ifdef _SNMP_ADM_ACTIVE
   .extern_param.snmp_adm.product_id = 1,
-  .extern_param.snmp_adm.export_cache_stats = TRUE,
-  .extern_param.snmp_adm.export_requests_stats = TRUE,
+  .extern_param.snmp_adm.export_cache_stats = true,
+  .extern_param.snmp_adm.export_requests_stats = true,
 #endif
 };
 
@@ -537,24 +537,24 @@ void nfs_print_param_config()
          nfs_param.core_param.stats_per_client_directory);
 
   if(nfs_param.core_param.dump_stats_per_client)
-    printf("\tDump_Stats_Per_Client = TRUE ; \n");
+    printf("\tDump_Stats_Per_Client = true ; \n");
   else
-    printf("\tDump_Stats_Per_Client = FALSE ;\n");
+    printf("\tDump_Stats_Per_Client = false ;\n");
 
   if(nfs_param.core_param.drop_io_errors)
-    printf("\tDrop_IO_Errors = TRUE ; \n");
+    printf("\tDrop_IO_Errors = true ; \n");
   else
-    printf("\tDrop_IO_Errors = FALSE ;\n");
+    printf("\tDrop_IO_Errors = false ;\n");
 
   if(nfs_param.core_param.drop_inval_errors)
-    printf("\tDrop_Inval_Errors = TRUE ; \n");
+    printf("\tDrop_Inval_Errors = true ; \n");
   else
-    printf("\tDrop_Inval_Errors = FALSE ;\n");
+    printf("\tDrop_Inval_Errors = false ;\n");
 
   if(nfs_param.core_param.drop_delay_errors)
-    printf("\tDrop_Delay_Errors = TRUE ; \n");
+    printf("\tDrop_Delay_Errors = true ; \n");
   else
-    printf("\tDrop_Delay_Errors = FALSE ;\n");
+    printf("\tDrop_Delay_Errors = false ;\n");
 
   printf("}\n\n");
 
@@ -910,11 +910,11 @@ static int is_prime (int  v)
     int    i, m;
 
     if (v <= 1)
-	return FALSE;
+	return false;
     if (v == 2)
-	return TRUE;
+	return true;
     if (v % 2 == 0)
-	return FALSE;
+	return false;
     // dont link with libm just for this
 #ifdef LINK_LIBM
     m = (int)sqrt(v);
@@ -923,9 +923,9 @@ static int is_prime (int  v)
 #endif
     for (i = 2 ; i <= m; i +=2) {
 	if (v % i == 0)
-	    return FALSE;
+	    return false;
     }
-    return TRUE;
+    return true;
 }
 
 /**
@@ -1637,7 +1637,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif /* _USE_9P */
 
   /* Create the root entries for each exported FS */
-  if((rc = nfs_export_create_root_entry(nfs_param.pexportlist)) != TRUE)
+  if((rc = nfs_export_create_root_entry(nfs_param.pexportlist)) != true)
     {
       LogFatal(COMPONENT_INIT,
                "Error initializing Cache Inode root entries");
@@ -1683,7 +1683,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* store the start info so it is available for all layers */
   nfs_start_info = *p_start_info;
 
-  if(p_start_info->dump_default_config == TRUE)
+  if(p_start_info->dump_default_config == true)
     {
       nfs_print_param_config();
       exit(0);

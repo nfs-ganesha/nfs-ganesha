@@ -72,10 +72,10 @@ fsal_status_t HPSSFSAL_rcp(hpssfsal_handle_t * filehandle,      /* IN */
 #define RCP_BUFFER_SIZE 1048576
   caddr_t IObuffer;
 
-  int to_local = FALSE;
-  int to_fs = FALSE;
+  int to_local = false;
+  int to_fs = false;
 
-  int eof = FALSE;
+  int eof = false;
 
   ssize_t local_size = 0;
   fsal_size_t fs_size;

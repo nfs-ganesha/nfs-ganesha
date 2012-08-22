@@ -477,7 +477,7 @@ void nfs_SetWccData(exportlist_t *pexport,
  *
  * @param cache_status [IN] input Cache Inode Status value, to be tested.
  *
- * @return TRUE if retryable, FALSE otherwise.
+ * @return true if retryable, false otherwise.
  *
  * @todo: Not implemented for NOW BUGAZEOMEU
  *
@@ -490,12 +490,12 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
       if(nfs_param.core_param.drop_io_errors)
         {
           /* Drop the request */
-          return TRUE;
+          return true;
         }
       else
         {
           /* Propagate error to the client */
-          return FALSE;
+          return false;
         }
       break;
 
@@ -503,12 +503,12 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
       if(nfs_param.core_param.drop_inval_errors)
         {
           /* Drop the request */
-          return TRUE;
+          return true;
         }
       else
         {
           /* Propagate error to the client */
-          return FALSE;
+          return false;
         }
       break;
 
@@ -516,19 +516,19 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
       if(nfs_param.core_param.drop_delay_errors)
         {
           /* Drop the request */
-          return TRUE;
+          return true;
         }
       else
         {
           /* Propagate error to the client */
-          return FALSE;
+          return false;
         }
       break;
 
     case CACHE_INODE_SUCCESS:
       LogCrit(COMPONENT_NFSPROTO,
               "Possible implementation error: CACHE_INODE_SUCCESS managed as an error");
-      return FALSE;
+      return false;
       break;
 
     case CACHE_INODE_MALLOC_ERROR:
@@ -543,7 +543,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_INSERT_ERROR:
       /* Internal error, should be dropped and retryed */
-      return TRUE;
+      return true;
       break;
 
     case CACHE_INODE_NOT_A_DIRECTORY:
@@ -570,7 +570,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_FILE_BIG:
     case CACHE_INODE_FILE_OPEN:
       /* Non retryable error, return error to client */
-      return FALSE;
+      return false;
       break;
     }
 
@@ -578,7 +578,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
   LogDebug(COMPONENT_NFSPROTO,
            "cache_inode_status=%u not managed properly in nfs_RetryableError, line %u should never be reached",
            cache_status, __LINE__);
-  return FALSE;
+  return false;
 }
 
 void nfs_SetFailedStatus(exportlist_t *pexport,
@@ -1674,7 +1674,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 
         case FATTR4_FH_EXPIRE_TYPE:
           /* For the moment, we handle only the persistent filehandle */
-          if(nfs_param.nfsv4_param.fh_expire == TRUE)
+          if(nfs_param.nfsv4_param.fh_expire)
             expire_type = htonl(FH4_VOLATILE_ANY);
           else
             expire_type = htonl(FH4_PERSISTENT);
@@ -1705,7 +1705,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
         case FATTR4_LINK_SUPPORT:
           /* HPSS NameSpace support hard link */
           link_support = htonl(TRUE);
-          memcpy((char *)(attrvalsBuffer + LastOffset), &link_support,
+          memcpy((attrvalsBuffer + LastOffset), &link_support,
                  sizeof(fattr4_link_support));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
@@ -2379,7 +2379,7 @@ int nfs3_Sattr_To_FSALattr(struct attrlist *pFSAL_attr,
 
   pFSAL_attr->mask = 0;
 
-  if(psattr->mode.set_it == TRUE)
+  if(psattr->mode.set_it)
     {
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs3_Sattr_To_FSALattr: mode = %o",
@@ -2388,7 +2388,7 @@ int nfs3_Sattr_To_FSALattr(struct attrlist *pFSAL_attr,
       pFSAL_attr->mask |= ATTR_MODE;
     }
 
-  if(psattr->uid.set_it == TRUE)
+  if(psattr->uid.set_it)
     {
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs3_Sattr_To_FSALattr: uid = %d",
@@ -2397,7 +2397,7 @@ int nfs3_Sattr_To_FSALattr(struct attrlist *pFSAL_attr,
       pFSAL_attr->mask |= ATTR_OWNER;
     }
 
-  if(psattr->gid.set_it == TRUE)
+  if(psattr->gid.set_it)
     {
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs3_Sattr_To_FSALattr: gid = %d",
@@ -2406,7 +2406,7 @@ int nfs3_Sattr_To_FSALattr(struct attrlist *pFSAL_attr,
       pFSAL_attr->mask |= ATTR_GROUP;
     }
 
-  if(psattr->size.set_it == TRUE)
+  if(psattr->size.set_it)
     {
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs3_Sattr_To_FSALattr: size = %lld",
@@ -2618,8 +2618,8 @@ int nfs4_SetCompoundExport(compound_data_t * data)
  *
  * @param fh4p  [IN]  pointer to file handle to be used.
  * @param ExIdp [OUT] pointer to buffer in which found export id will be stored. 
- * 
- * @return TRUE is successful, FALSE otherwise. 
+ *
+ * @return true if successful, false otherwise.
  *
  */
 int nfs4_FhandleToExId(nfs_fh4 * fh4p, unsigned short *ExIdp)
@@ -2630,11 +2630,11 @@ int nfs4_FhandleToExId(nfs_fh4 * fh4p, unsigned short *ExIdp)
   pfhandle4 = (file_handle_v4_t *) (fh4p->nfs_fh4_val);
 
   /* The function should not be used on a pseudo fhandle */
-  if(pfhandle4->pseudofs_flag == TRUE)
-    return FALSE;
+  if(pfhandle4->pseudofs_flag)
+    return false;
 
   *ExIdp = pfhandle4->exportid;
-  return TRUE;
+  return true;
 }                               /* nfs4_FhandleToExId */
 
 /**** Glue related functions ****/
@@ -3507,7 +3507,7 @@ int nfs4_Fattr_Supported_Bitmap(bitmap4 * pbitmap)
  * @param Fattr1      [IN] pointer to NFSv4 attributes.
  * @param Fattr2      [IN] pointer to NFSv4 attributes.
  *
- * @return TRUE if attributes are the same, FALSE otherwise, but -1 if RDATTR_ERROR is set
+ * @return true if attributes are the same, false otherwise, but -1 if RDATTR_ERROR is set
  *
  */
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
@@ -3524,13 +3524,13 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   uint32_t attribute_to_set = 0;
 
   if(Fattr1 == NULL)
-    return FALSE;
+    return false;
 
   if(Fattr2 == NULL)
-    return FALSE;
+    return false;
 
   if(Fattr1->attrmask.bitmap4_len != Fattr2->attrmask.bitmap4_len)      /* different mask */
-    return FALSE;
+    return false;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr1->attrmask), &attrmasklen1, attrmasklist1);
@@ -3538,7 +3538,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
 
   /* Should not occur, bu this is a sanity check */
   if(attrmasklen1 != attrmasklen2)
-    return FALSE;
+    return false;
 
   for(i = 0; i < attrmasklen1; i++)
     {
@@ -3664,9 +3664,9 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
         }
     }
   if(cmp == 0)
-    return TRUE;
+    return true;
   else
-    return FALSE;
+    return false;
 }
 
 #ifdef _USE_NFS4_ACL
@@ -4795,26 +4795,27 @@ int nfs4_MakeCred(compound_data_t * data)
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
 
-  if (get_req_uid_gid(data->reqp,
+  if (!(get_req_uid_gid(data->reqp,
                       data->pexport,
-                      &user_credentials) == FALSE)
+                        &user_credentials)))
     return NFS4ERR_WRONGSEC;
 
   LogFullDebug(COMPONENT_DISPATCH,
                "nfs4_MakeCred about to call nfs_export_check_access");
-  if(nfs_export_check_access(&data->pworker->hostaddr,
-                             data->reqp,
-                             data->pexport,
-                             nfs_param.core_param.program[P_NFS],
-                             nfs_param.core_param.program[P_MNT],
-                             data->pworker->ht_ip_stats,
-                             ip_stats_pool,
-                             &related_client,
-                             data->req_ctx->creds,
-                             FALSE) /* So check_access() doesn't deny based on whether this is a RO export. */
-     == FALSE)
+  if(!(nfs_export_check_access(&data->pworker->hostaddr,
+                               data->reqp,
+                               data->pexport,
+                               nfs_param.core_param.program[P_NFS],
+                               nfs_param.core_param.program[P_MNT],
+                               data->pworker->ht_ip_stats,
+                               ip_stats_pool,
+                               &related_client,
+                               data->req_ctx->creds,
+                               false) /* So check_access() doesn't deny based on whether this is a RO export. */
+             ))
     return NFS4ERR_WRONGSEC;
-  if(nfs_check_anon(&related_client, data->pexport, data->req_ctx->creds) == FALSE)
+  if(!(nfs_check_anon(&related_client, data->pexport,
+                      data->req_ctx->creds)))
     return NFS4ERR_WRONGSEC;
 
   return NFS4_OK;
@@ -4929,7 +4930,7 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
  * @param data          [IN] Compound_data_t for the operation to check
  * @param required_type [IN] The file type this operation requires.
  *                           Set to 0 to allow any type.
- * @param ds_allowed    [IN] TRUE if DS handles are allowed.
+ * @param ds_allowed    [IN] true if DS handles are allowed.
  *
  * @return NFSv4.1 status codes
  */
@@ -4937,7 +4938,7 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 nfsstat4
 nfs4_sanity_check_FH(compound_data_t *data,
                      object_file_type_t required_type,
-                     bool_t ds_allowed)
+                     bool ds_allowed)
 {
         /* If there is no FH */
         if (nfs4_Is_Fh_Empty(&(data->currentFH))) {
@@ -5035,7 +5036,7 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
  * @param data          [IN] Compound_data_t for the operation to check
  * @param required_type [IN] The file type this operation requires.
  *                           Set to 0 to allow any type.
- * @param ds_allowed    [IN] TRUE if DS handles are allowed.
+ * @param ds_allowed    [IN] true if DS handles are allowed.
  *
  * @return NFSv4.1 status codes
  */
@@ -5043,7 +5044,7 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 nfsstat4
 nfs4_sanity_check_saved_FH(compound_data_t *data,
                            object_file_type_t required_type,
-                           bool_t ds_allowed)
+                           bool ds_allowed)
 {
         /* If there is no FH */
         if (nfs4_Is_Fh_Empty(&(data->savedFH))) {

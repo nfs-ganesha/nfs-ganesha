@@ -89,32 +89,32 @@ struct pnfs_deviceid {
  * @return True if there is one or more byte contained in both both
  *         segments and the io_modes are compatible.
  */
-static inline bool_t pnfs_segments_overlap(struct pnfs_segment segment1,
-                                           struct pnfs_segment segmenta)
+static inline bool pnfs_segments_overlap(struct pnfs_segment segment1,
+                                         struct pnfs_segment segmenta)
 {
      if (!(segment1.io_mode & segmenta.io_mode)) {
-          return FALSE;
+          return false;
      } else if ((segment1.length == 0) || (segmenta.length == 0)) {
-          return FALSE;
+          return false;
      } else if (segment1.offset < segmenta.offset) {
           if (segment1.length == NFS4_UINT64_MAX) {
-               return TRUE;
+               return true;
           } else if (segment1.offset + segment1.length < segmenta.offset) {
-               return FALSE;
+               return false;
           } else {
-               return TRUE;
+               return true;
           }
      } else if (segmenta.offset < segment1.offset) {
           if (segmenta.length == NFS4_UINT64_MAX) {
-               return TRUE;
+               return true;
           } else if ((segmenta.offset + segmenta.length)
                      < segment1.offset) {
-               return FALSE;
+               return false;
           } else {
-               return TRUE;
+               return true;
           }
      } else {
-          return TRUE;
+          return true;
      }
 }
 
@@ -129,26 +129,26 @@ static inline bool_t pnfs_segments_overlap(struct pnfs_segment segment1,
  *
  * @return True if segment2 is completely contained within segment1
  */
-static inline bool_t pnfs_segment_contains(struct pnfs_segment segment1,
-                                           struct pnfs_segment segment2)
+static inline bool pnfs_segment_contains(struct pnfs_segment segment1,
+                                         struct pnfs_segment segment2)
 {
      if (!(segment1.io_mode & segment2.io_mode)) {
-          return FALSE;
+          return false;
      } else if (segment1.length == 0) {
-          return FALSE;
+          return false;
      } else if (segment1.offset <= segment2.offset) {
           if (segment1.length == NFS4_UINT64_MAX) {
-               return TRUE;
+               return true;
           } else if (segment2.length == NFS4_UINT64_MAX) {
-               return FALSE;
+               return false;
           } else if ((segment2.offset + segment2.length) <=
                      (segment1.offset + segment1.length)) {
-               return TRUE;
+               return true;
           } else {
-               return FALSE;
+               return false;
           }
      } else {
-          return FALSE;
+          return false;
      }
 }
 
@@ -228,7 +228,7 @@ pnfs_segment_difference(struct pnfs_segment minuend,
  *            Convenience XDR functions
  ******************************************************/
 
-bool_t xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid);
+bool xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid);
 
 nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
                                   uint16_t proto,

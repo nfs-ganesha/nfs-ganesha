@@ -123,10 +123,10 @@ static int attr_is_read_only(unsigned int attr_index)
   if(attr_index < XATTR_COUNT)
     {
       if(xattr_list[attr_index].flags & XATTR_RO)
-        return TRUE;
+        return true;
     }
   /* else : standard xattr */
-  return FALSE;
+  return false;
 }
 
 static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
@@ -407,7 +407,7 @@ fsal_status_t ZFSFSAL_ListXAttrs(fsal_handle_t * obj_handle,   /* IN */
   /* Save a call if the output array is full */
   if(out_index == xattrs_tabsize)
   {
-    *end_of_list = FALSE;
+    *end_of_list = false;
     *p_nb_returned = out_index;
     ZFSFSAL_VFS_Unlock();
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_ListXAttrs);
@@ -468,12 +468,12 @@ fsal_status_t ZFSFSAL_ListXAttrs(fsal_handle_t * obj_handle,   /* IN */
 
     /* Every xattrs are in the output array */
     if(ptr >= psz_buffer + i_size)
-      *end_of_list = TRUE;
+      *end_of_list = true;
     else
-      *end_of_list = FALSE;
+      *end_of_list = false;
   }
   else
-    *end_of_list = TRUE;
+    *end_of_list = true;
   free(psz_buffer);
 
   *p_nb_returned = out_index;
@@ -667,7 +667,7 @@ fsal_status_t ZFSFSAL_GetXAttrIdByName(fsal_handle_t * obj_handle,     /* IN */
 {
   unsigned int index;
   int rc;
-  int found = FALSE;
+  int found = false;
   zfsfsal_handle_t *p_objecthandle = (zfsfsal_handle_t *)obj_handle;
   zfsfsal_op_context_t *p_context = (zfsfsal_op_context_t *)context;
 
@@ -679,7 +679,7 @@ fsal_status_t ZFSFSAL_GetXAttrIdByName(fsal_handle_t * obj_handle,     /* IN */
     {
       if(!strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
-          found = TRUE;
+          found = true;
           break;
         }
     }
@@ -701,7 +701,7 @@ fsal_status_t ZFSFSAL_GetXAttrIdByName(fsal_handle_t * obj_handle,     /* IN */
       ZFSFSAL_VFS_Unlock();
       Return(rc, 0, INDEX_FSAL_GetXAttrValue);
     }
-    found = TRUE;
+    found = true;
   }
 
   if(found)
@@ -859,7 +859,7 @@ fsal_status_t ZFSFSAL_SetXAttrValueById(fsal_handle_t * obj_handle,    /* IN */
   FSAL_str2name(psz_name, FSAL_MAX_NAME_LEN, &attr_name);
 
   return ZFSFSAL_SetXAttrValue(obj_handle, &attr_name, context,
-                               buffer_addr, buffer_size, FALSE);
+                               buffer_addr, buffer_size, false);
 }
 
 /**

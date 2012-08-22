@@ -53,7 +53,7 @@ extern mfsl_parameter_t mfsl_param;
 
 fsal_handle_t dir_handle_precreate;
 unsigned int dir_handle_set = 0;
-unsigned int end_of_mfsl = FALSE;
+unsigned int end_of_mfsl = false;
 
 void constructor_preacreated_entries(void *ptr, void *parameters)
 {
@@ -129,8 +129,8 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
   fsal_count_t subnb_entries;
   fsal_count_t nb_count;
   fsal_count_t subnb_count;
-  fsal_boolean_t eod = FALSE;
-  fsal_boolean_t subeod = FALSE;
+  bool eod = false;
+  bool subeod = false;
   fsal_status.major = ERR_FSAL_NO_ERROR;
   fsal_status.minor = 0;
   fsal_cookie_t fsal_cookie_beginning ;
@@ -151,7 +151,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
       exit(1);
     }
 
-  while(eod == FALSE)
+  while(eod == false)
     {
       fsal_status = FSAL_opendir(&dir_handle, pcontext, &dir_descriptor, &dir_attr);
       if(FSAL_IS_ERROR(fsal_status))
@@ -204,7 +204,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                 }
               else
                 {
-                  while(subeod == FALSE)
+                  while(subeod == false)
                     {
                       /* non empty directory, cleanup it too.. */
                       fsal_status = FSAL_opendir(&dirent[nb_count].handle,
@@ -267,7 +267,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                             }
                         }       /* for */
                     }           /* while (subeod ) */
-                  subeod = FALSE;
+                  subeod = false;
                 }               /* else */
             }                   /* if */
         }                       /* for */
@@ -621,25 +621,25 @@ fsal_status_t MFSL_ASYNC_RefreshSyncletContext(mfsl_synclet_context_t * pcontext
 
 /**
  * 
- * MFSL_ASYNC_is_synced: returns TRUE if the object is synced, FALSE is asynchronous.
+ * MFSL_ASYNC_is_synced: returns true if the object is synced, false is asynchronous.
  *
- * Returns TRUE if the object is synced, FALSE is asynchronous.
+ * Returns true if the object is synced, false is asynchronous.
  *
  * @param mobject      [IN] pointer to MFSL object to be tested
  *
- * @return  TRUE if the object is synced, FALSE is asynchronous. 
+ * @return  true if the object is synced, false is asynchronous. 
  *
  */
 int MFSL_ASYNC_is_synced(mfsl_object_t * mobject)
 {
   if(mobject == NULL)
-    return FALSE;
+    return false;
 
   if(mobject->health == MFSL_ASYNC_SYNCHRONOUS)
-    return TRUE;
+    return true;
 
-  /* in all other case, returns FALSE */
-  return FALSE;
+  /* in all other case, returns false */
+  return false;
 }                               /*  MFSL_ASYNC_is_synced */
 
 #endif                          /* ! _USE_SWIG */
@@ -714,7 +714,7 @@ fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                            fsal_dirent_t * pdirent,     /* OUT */
                            fsal_cookie_t * end_position,        /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
-                           fsal_boolean_t * end_of_dir, /* OUT */
+                           bool * end_of_dir, /* OUT */
                            mfsl_context_t * p_mfsl_context      /* IN */
     )
 {
@@ -769,7 +769,7 @@ fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
                         fsal_size_t * read_amount,      /* OUT  */
-                        fsal_boolean_t * end_of_file,   /* OUT  */
+                        bool * end_of_file,   /* OUT  */
                         mfsl_context_t * p_mfsl_context /* IN */
     )
 {
@@ -863,7 +863,7 @@ fsal_status_t MFSL_terminate(void)
 {
   fsal_status_t status;
 
-  end_of_mfsl = TRUE;
+  end_of_mfsl = true;
 
   status.major = ERR_FSAL_NO_ERROR;
   status.minor = 0;

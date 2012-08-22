@@ -102,7 +102,7 @@ cache_inode_readlink(cache_entry_t *entry,
                fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
                                                               link_content->addr,
                                                               &link_content->len,
-                                                              TRUE);
+                                                              true);
                if (!(FSAL_IS_ERROR(fsal_status))) {
                     atomic_set_uint32_t_bits(&entry->flags,
                                              CACHE_INODE_TRUST_CONTENT);
@@ -112,7 +112,7 @@ cache_inode_readlink(cache_entry_t *entry,
              fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
                                                          link_content->addr,
                                                          &link_content->len,
-                                                         FALSE);
+                                                         false);
      }
      pthread_rwlock_unlock(&entry->content_lock);
 

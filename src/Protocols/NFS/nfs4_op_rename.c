@@ -98,11 +98,12 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   }
 
   /* Do basic checks on a filehandle */
-  res_RENAME4.status = nfs4_sanity_check_FH(data, DIRECTORY, FALSE);
+  res_RENAME4.status = nfs4_sanity_check_FH(data, DIRECTORY, false);
   if(res_RENAME4.status != NFS4_OK)
     goto out;
 
-  res_RENAME4.status = nfs4_sanity_check_saved_FH(data, DIRECTORY, FALSE);
+  res_RENAME4.status = nfs4_sanity_check_saved_FH(data, DIRECTORY,
+                                                  false);
   if(res_RENAME4.status != NFS4_OK)
     goto out;
 

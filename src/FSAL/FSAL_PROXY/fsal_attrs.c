@@ -105,7 +105,7 @@ fsal_status_t PROXYFSAL_getattrs(fsal_handle_t * filehandle,       /* IN */
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
 #define FSAL_GETATTR_IDX_OP_PUTFH     0
@@ -278,7 +278,7 @@ fsal_status_t PROXYFSAL_setattrs(fsal_handle_t * filehandle,       /* IN */
     }
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
   fsal_interval_proxy_fsalattr2bitmap4(attrib_set, &convert_bitmap);

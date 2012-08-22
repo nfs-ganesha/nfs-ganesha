@@ -189,7 +189,7 @@ cache_inode_remove(cache_entry_t *entry,
                                  access_mask,
                                  req_ctx,
                                  &cache_status,
-                                 FALSE))
+                                 false))
         != CACHE_INODE_SUCCESS) {
           goto unlock_attr;
      }
@@ -223,7 +223,7 @@ unlock_attr:
  *
  * Actually remove an entry from the directory.  Assume that the
  * directory contents and attributes are locked for writes.  The
- * attribute lock is released unless keep_md_lock is TRUE.
+ * attribute lock is released unless keep_md_lock is true.
  *
  * @param[in] entry   Entry for the parent directory to be managed.
  * @param[in] name    Name of the entry that we are looking for in the cache.

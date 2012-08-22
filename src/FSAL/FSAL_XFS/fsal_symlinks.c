@@ -165,7 +165,7 @@ fsal_status_t XFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,     /* 
   fsal_status_t status;
   int fd;
   struct stat buffstat, lbuffstat;
-  int setgid_bit = FALSE;
+  int setgid_bit = false;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -204,7 +204,7 @@ fsal_status_t XFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,     /* 
     }
 
   if(buffstat.st_mode & S_ISGID)
-    setgid_bit = TRUE;
+    setgid_bit = true;
 
   status = fsal_check_access(p_context, FSAL_W_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))

@@ -96,7 +96,7 @@ nfs4_op_lookup(struct nfs_argop4 *op,
 
         /* Do basic checks on a filehandle */
         res_LOOKUP4->status = nfs4_sanity_check_FH(data, DIRECTORY,
-                                                   FALSE);
+                                                   false);
         if (res_LOOKUP4->status != NFS4_OK) {
 		/* for some reason lookup is picky.  Just not being
 		 * dir is not enough.  We want to know it is a symlink
@@ -121,7 +121,7 @@ nfs4_op_lookup(struct nfs_argop4 *op,
                 goto out;
         }
 
-        if (nfs_export_check_security(data->reqp, data->pexport) == FALSE) {
+        if (!(nfs_export_check_security(data->reqp, data->pexport))) {
                 res_LOOKUP4->status = NFS4ERR_PERM;
                 goto out;
         }

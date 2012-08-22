@@ -86,15 +86,15 @@ cache_inode_commit(cache_entry_t *entry,
      /* Error return from FSAL operations*/
      fsal_status_t fsal_status = {0, 0};
      /* True if the content_lock is held */
-     bool_t content_locked = FALSE;
+     bool content_locked = false;
      /* True if we opened our own file descriptor */
-     bool_t opened = FALSE;
+     bool opened = false;
 
      if ((uint64_t)count > ~(uint64_t)offset)
          return NFS4ERR_INVAL;
 
      pthread_rwlock_rdlock(&entry->content_lock);
-     content_locked = TRUE;
+     content_locked = true;
 
      /* Just in case the variable holds something funny when we're
         called. */
@@ -116,13 +116,13 @@ cache_inode_commit(cache_entry_t *entry,
                                          status) != CACHE_INODE_SUCCESS) {
                          goto out;
                     }
-                    opened = TRUE;
+                    opened = true;
                }
           }
 
-	  fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,
-						       offset,
-						       count);
+          fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,
+                                                       offset,
+                                                       count);
           if (FSAL_IS_ERROR(fsal_status)) {
                LogMajor(COMPONENT_CACHE_INODE,
                         "cache_inode_rdwr: fsal_commit() failed: "
@@ -140,7 +140,7 @@ cache_inode_commit(cache_entry_t *entry,
                                       CACHE_INODE_FLAG_CONTENT_HAVE |
                                       CACHE_INODE_FLAG_CONTENT_HOLD,
                                       status);
-                    opened = FALSE;
+                    opened = false;
                }
                goto out;
           }
@@ -169,7 +169,7 @@ cache_inode_commit(cache_entry_t *entry,
           if (count == 0 || count == 0xFFFFFFFFL) {
                /* Count = 0 means "flush all data to permanent storage */
                pthread_rwlock_unlock(&entry->content_lock);
-               content_locked = FALSE;
+               content_locked = false;
                *status = cache_inode_rdwr(entry,
                                          CACHE_INODE_WRITE,
                                          offset,

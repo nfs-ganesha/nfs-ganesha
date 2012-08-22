@@ -80,19 +80,19 @@ cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
 
 /** this used to be get but we get passed a handle so now new_entry */
   if((entry = cache_inode_new_entry(root_hdl,
-				    CACHE_INODE_FLAG_NONE,
-				    status)) != NULL)
+                                    CACHE_INODE_FLAG_NONE,
+                                    status)) != NULL)
     {
       /* The root directory is its own parent.  (Even though this is a
          weakref, it shouldn't be broken in practice.) */
       pthread_rwlock_wrlock(&entry->content_lock);
       entry->object.dir.parent = entry->weakref;
-      entry->object.dir.root = TRUE;
+      entry->object.dir.root = true;
       pthread_rwlock_unlock(&entry->content_lock);
     } else {
       LogCrit(COMPONENT_CACHE_INODE,
-	      "Unable to add root entry to cache, status = %s",
-	      cache_inode_err_str(*status));
+              "Unable to add root entry to cache, status = %s",
+              cache_inode_err_str(*status));
     }
 
   return entry;

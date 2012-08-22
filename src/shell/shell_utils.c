@@ -312,14 +312,14 @@ int util_cmp(int argc,          /* IN : number of args in argv */
   char *str2 = NULL;            /* arg2 */
 
   /* the value to been returned, according to argv[0] */
-  int value_if_equal = FALSE;
+  int value_if_equal = false;
 
   if(!strcmp(argv[0], "eq"))
-    value_if_equal = TRUE;
+    value_if_equal = true;
   else if(!strcmp(argv[0], "ne"))
-    value_if_equal = FALSE;
+    value_if_equal = false;
   else if(!strcmp(argv[0], "cmp"))
-    value_if_equal = FALSE;
+    value_if_equal = false;
   /* unexpected !!! */
   else
     exit(1);

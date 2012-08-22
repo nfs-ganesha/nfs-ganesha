@@ -594,7 +594,7 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
         }
 
       V(pclientid->cid_mutex);
-      return FALSE;
+      return false;
     }
 
   if(isDebug(COMPONENT_CLIENTID))
@@ -724,7 +724,7 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
   /* Release the hash table reference to the clientid. */
   dec_client_id_ref(pclientid);
 
-  return TRUE;
+  return true;
 }
 
 int nfs_client_id_get(hash_table_t     * ht,
@@ -997,7 +997,7 @@ void dec_client_record_ref(nfs_client_record_t *precord)
   rc = HashTable_GetLatch(ht_client_record,
                           &buffkey,
                           &old_value,
-                          TRUE,
+                          true,
                           &latch);
 
   if(rc != HASHTABLE_SUCCESS)
@@ -1201,7 +1201,7 @@ nfs_client_record_t *get_client_record(char * value, int len)
   rc = HashTable_GetLatch(ht_client_record,
                           &buffkey,
                           &buffval,
-                          TRUE,
+                          true,
                           &latch);
 
   if(rc == HASHTABLE_SUCCESS)

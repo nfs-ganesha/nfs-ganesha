@@ -111,11 +111,11 @@ int nfs3_Commit(nfs_arg_t *parg,
   if(pentry == NULL)
     goto out;
 
-  if((pexport->use_commit == TRUE) &&
-     (pexport->use_ganesha_write_buffer == FALSE))
+  if((pexport->use_commit) &&
+     (!pexport->use_ganesha_write_buffer))
     typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
-  else if((pexport->use_commit == TRUE) &&
-          (pexport->use_ganesha_write_buffer == TRUE))
+  else if((pexport->use_commit) &&
+          (pexport->use_ganesha_write_buffer))
     typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;
   else
     {

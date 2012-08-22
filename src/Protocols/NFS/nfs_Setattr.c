@@ -94,7 +94,7 @@ int nfs_Setattr(nfs_arg_t *parg,
   struct attrlist trunc_attr;
   struct attrlist *ppre_attr;
   cache_inode_status_t cache_status;
-  int do_trunc = FALSE;
+  bool do_trunc = false;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -176,14 +176,14 @@ int nfs_Setattr(nfs_arg_t *parg,
         }
 
       if(new_attributes2.size != (u_int) - 1)
-        do_trunc = TRUE;
+        do_trunc = true;
 
       break;
 
     case NFS_V3:
       new_attributes3 = parg->arg_setattr3.new_attributes;
 
-      if(parg->arg_setattr3.guard.check == TRUE)
+      if(parg->arg_setattr3.guard.check)
         {
           /* This pack of lines implements the "guard check" setattr.
            * This feature of nfsv3 is used to avoid several setattr 
@@ -228,7 +228,7 @@ int nfs_Setattr(nfs_arg_t *parg,
 
       if(new_attributes3.size.set_it)
         {
-          do_trunc = TRUE;
+          do_trunc = true;
         }
 
       break;

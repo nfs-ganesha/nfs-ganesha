@@ -98,7 +98,7 @@ cache_inode_invalidate(struct fsal_obj_handle * obj_hdl,
      if ((rc = HashTable_GetLatch(fh_to_cache_entry_ht,
                                   &key,
                                   &value,
-                                  FALSE,
+                                  false,
                                   &latch)) == HASHTABLE_ERROR_NO_SUCH_KEY) {
           /* Entry is not cached */
           HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);

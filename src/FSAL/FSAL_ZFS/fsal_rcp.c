@@ -84,10 +84,10 @@ fsal_status_t ZFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 #define RCP_BUFFER_SIZE 1048576
   caddr_t IObuffer;
 
-  int to_local = FALSE;
-  int to_fs = FALSE;
+  int to_local = false;
+  int to_fs = false;
 
-  int eof = FALSE;
+  int eof = false;
 
   ssize_t local_size;
   fsal_size_t fs_size;

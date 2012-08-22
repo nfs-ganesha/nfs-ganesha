@@ -98,7 +98,7 @@ int nfs4_op_commit(struct nfs_argop4 *op,
   /*
    * Do basic checks on a filehandle Commit is done only on a file
    */
-  res_COMMIT4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, TRUE);
+  res_COMMIT4.status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
   if(res_COMMIT4.status != NFS4_OK)
     return res_COMMIT4.status;
 

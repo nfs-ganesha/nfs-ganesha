@@ -85,7 +85,7 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
 
   fsal_status_t status;
   struct stat buffstat;
-  int src_equal_tgt = FALSE;
+  int src_equal_tgt = false;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t src_dir_attrs, tgt_dir_attrs;
 
@@ -108,7 +108,7 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
   /* optimisation : don't do the job twice if source dir = dest dir  */
   if(!FSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
     {
-      src_equal_tgt = TRUE;
+      src_equal_tgt = true;
       tgt_dir_attrs = src_dir_attrs;
     }
   else

@@ -211,7 +211,7 @@ void create_fsal_up_threads()
       pcurrent != NULL;
       pcurrent = pcurrent->next)
     {
-      if (pcurrent->use_fsal_up == FALSE)
+      if (pcurrent->use_fsal_up == false)
         continue;
 
       /* Make sure there are not multiple fsal_up_threads handling multiple
@@ -380,7 +380,7 @@ static int fsal_up_thread_exists(exportlist_t *entry)
   /* Loop through all export entries and if any have the same
    * filesystem id, assume they really do export a directory
    * from the same filesystem. In this case, check if there is
-   * already an FSAL UP thread running. If there is, return TRUE
+   * already an FSAL UP thread running. If there is, return true
    * so we don't create multiple threads. */
   for(pcurrent = nfs_param.pexportlist;
       pcurrent != NULL;
@@ -389,7 +389,7 @@ static int fsal_up_thread_exists(exportlist_t *entry)
       if (pcurrent == entry)
         continue;
 
-      if (pcurrent->use_fsal_up == FALSE)
+      if (pcurrent->use_fsal_up == false)
         continue;
 
       /* Only check if major is different */

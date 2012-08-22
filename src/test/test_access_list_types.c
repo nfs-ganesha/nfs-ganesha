@@ -74,12 +74,12 @@ int test_access(char *addr, char *hostname,
   sockaddr_t *pssaddr = &ssaddr;
   int errcode;
   int export_check_result;
-  bool_t proc_makes_write;
+  bool proc_makes_write;
 
   if (operation == TEST_WRITE || operation == MDONLY_WRITE)
-    proc_makes_write = TRUE;
+    proc_makes_write = true;
   else
-    proc_makes_write = FALSE;
+    proc_makes_write = false;
 
   /*pssaddr*/
   errcode = ipstring_to_sockaddr(addr, pssaddr);

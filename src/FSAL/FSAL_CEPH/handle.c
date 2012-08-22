@@ -153,7 +153,7 @@ fsal_readdir(struct fsal_obj_handle *dir_pub,
                      struct fsal_obj_handle *dir_hdl,
                      void *dir_state,
                      struct fsal_cookie *cookie),
-             bool_t *eof)
+             bool *eof)
 {
         /* Generic status return */
         int rc = 0;
@@ -218,7 +218,7 @@ fsal_readdir(struct fsal_obj_handle *dir_pub,
                                 goto closedir;
                         }
                 } else if (rc == 0) {
-                        *eof = TRUE;
+                        *eof = true;
                 } else {
                         /* Can't happen */
                         abort();
@@ -403,7 +403,7 @@ fsal_symlink(struct fsal_obj_handle *dir_pub,
  * @param[out]    content_buf The buffer to which the content are copied
  * @param[in,out] link_len    Length of buffer/length of content
  *                            (including NUL)
- * @param[in]     refresh     TRUE if the underlying content should be
+ * @param[in]     refresh     true if the underlying content should be
  *                             refreshed.
  *
  * @return FSAL status.
@@ -413,7 +413,7 @@ static fsal_status_t
 fsal_readlink(struct fsal_obj_handle *link_pub,
               char *content_buf,
               size_t *link_len,
-              bool_t refresh)
+              bool refresh)
 {
         /* Generic status return */
         int rc = 0;
@@ -807,7 +807,7 @@ status(struct fsal_obj_handle *handle_pub)
  * @param[in]  buffer_size Maximum number of bytes to read
  * @param[out] buffer      Buffer to store data read
  * @param[out] read_amount Count of bytes read
- * @param[out] end_of_file TRUE if the end of file is reached
+ * @param[out] end_of_file true if the end of file is reached
  *
  * @return FSAL status.
  */
@@ -818,7 +818,7 @@ fsal_read(struct fsal_obj_handle *handle_pub,
           size_t buffer_size,
           void *buffer,
           size_t *read_amount,
-          bool_t *end_of_file)
+          bool *end_of_file)
 {
         /* The private 'full' export */
         struct export *export
@@ -837,7 +837,7 @@ fsal_read(struct fsal_obj_handle *handle_pub,
         }
 
         if ((uint64_t) nb_read < buffer_size) {
-                *end_of_file = TRUE;
+                *end_of_file = true;
         }
 
         *read_amount = nb_read;
@@ -919,7 +919,7 @@ commit(struct fsal_obj_handle *handle_pub,
         struct handle *handle
                 = container_of(handle_pub, struct handle, handle);
 
-        rc = ceph_ll_fsync(export->cmount, handle->fd, FALSE);
+        rc = ceph_ll_fsync(export->cmount, handle->fd, false);
 
         if (rc < 0) {
                 return ceph2fsal_error(rc);
@@ -1192,8 +1192,8 @@ layoutget(struct fsal_obj_handle *obj_pub,
         /* We grant only one segment, and we want it back when the file
            is closed. */
 
-        res->return_on_close = TRUE;
-        res->last_segment = TRUE;
+        res->return_on_close = true;
+        res->last_segment = true;
 
         return NFS4_OK;
 }
@@ -1298,7 +1298,7 @@ nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
                 if (stold.st_size < arg->last_write + 1) {
                         attrmask |= CEPH_SETATTR_SIZE;
                         stnew.st_size = arg->last_write + 1;
-                        res->size_supplied = TRUE;
+                        res->size_supplied = true;
                         res->new_size = arg->last_write + 1;
                 }
         }
@@ -1324,7 +1324,7 @@ nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 
         /* This is likely universal for files. */
 
-        res->commit_done = TRUE;
+        res->commit_done = true;
 
         return NFS4_OK;
 }

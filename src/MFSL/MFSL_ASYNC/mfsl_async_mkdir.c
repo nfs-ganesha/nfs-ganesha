@@ -244,7 +244,7 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
   newdir_pasyncdata->async_attr.ctime.seconds = pasyncopdesc->op_time.tv_sec;
   newdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;  /** @todo: there may be a coefficient to be applied here */
 
-  newdir_pasyncdata->deleted = FALSE;
+  newdir_pasyncdata->deleted = false;
 
   if(!mfsl_async_set_specdata(pnewdir_handle, newdir_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);

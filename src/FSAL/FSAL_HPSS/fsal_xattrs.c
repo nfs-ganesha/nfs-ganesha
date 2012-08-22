@@ -84,7 +84,7 @@ int get_file_cos(hpssfsal_handle_t * p_objecthandle,    /* IN */
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_GetRawAttrHandle(&(p_objecthandle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, FALSE,       /* don't solve junctions */
+  rc = HPSSFSAL_GetRawAttrHandle(&(p_objecthandle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, false,       /* don't solve junctions */
                                  &hpss_hdl, NULL, &hpss_attr);
 
   ReleaseTokenFSCall();
@@ -294,7 +294,7 @@ int get_bfid(hpssfsal_handle_t * p_objecthandle,        /* IN */
   if((rc = HPSSFSAL_GetRawAttrHandle(&(p_objecthandle->data.ns_handle),
                                      NULL,
                                      &(p_context->credential.hpss_usercred),
-                                     FALSE, &hpss_hdl, NULL, &hpss_attr)) != 0)
+                                     false, &hpss_hdl, NULL, &hpss_attr)) != 0)
     {
       return hpss2fsal_error(rc);
     }
@@ -359,10 +359,10 @@ static int attr_is_read_only(unsigned int attr_index)
   if(attr_index < XATTR_COUNT)
     {
       if(xattr_list[attr_index].flags & XATTR_RO)
-        return TRUE;
+        return true;
     }
   /* else : UDA */
-  return FALSE;
+  return false;
 }
 
 static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
@@ -687,7 +687,7 @@ fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
     /* save a call if output array is full */
     if(out_index == xattrs_tabsize)
       {
-        *end_of_list = FALSE;
+        *end_of_list = false;
         *p_nb_returned = out_index;
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_ListXAttrs);
       }
@@ -759,9 +759,9 @@ fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
           }
         /* not end of list if there is more UDAs */
         if(i < attr_list.len)
-          *end_of_list = FALSE;
+          *end_of_list = false;
         else
-          *end_of_list = TRUE;
+          *end_of_list = true;
       }
   }
 
@@ -883,7 +883,7 @@ fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     
     )
 {
   unsigned int index, i;
-  int found = FALSE;
+  int found = false;
 
   /* sanity checks */
   if(!p_objecthandle || !xattr_name)
@@ -894,7 +894,7 @@ fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     
       if(do_match_type(xattr_list[index].flags, p_objecthandle->data.obj_type)
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
-          found = TRUE;
+          found = true;
           break;
         }
     }
@@ -937,7 +937,7 @@ fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     
                     {
                       /* xattr index is XATTR_COUNT + UDA index */
                       index = XATTR_COUNT + i;
-                      found = TRUE;
+                      found = true;
                       break;
                     }
                 }

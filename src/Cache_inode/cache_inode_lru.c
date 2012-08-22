@@ -45,6 +45,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -542,11 +544,11 @@ static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
  *
  * @param[in] ms The time to sleep, in milliseconds.
  *
- * @retval FALSE if the thread wakes by timeout.
- * @retval TRUE if the thread wakes by signal.
+ * @retval false if the thread wakes by timeout.
+ * @retval true if the thread wakes by signal.
  */
 
-static bool_t
+static bool
 lru_thread_delay_ms(unsigned long ms)
 {
      time_t now = time(NULL);
@@ -555,7 +557,7 @@ lru_thread_delay_ms(unsigned long ms)
           .tv_sec = nsecs / S_NSECS,
           .tv_nsec = nsecs % S_NSECS
      };
-     bool_t woke = FALSE;
+     bool woke = false;
 
      pthread_mutex_lock(&lru_mtx);
      lru_thread_state.flags |= LRU_SLEEPING;
@@ -622,9 +624,9 @@ lru_thread(void *arg __attribute__((unused)))
      /* Temporary holder for flags */
      uint32_t tmpflags = lru_state.flags;
      /* True if we are taking extreme measures to reclaim FDs. */
-     bool_t extremis = FALSE;
+     bool extremis = false;
      /* True if we were explicitly woke. */
-     bool_t woke = FALSE;
+     bool woke = false;
 
      SetNameFunction("lru_thread");
 
@@ -708,7 +710,7 @@ lru_thread(void *arg __attribute__((unused)))
                         lru_state.fds_lowat);
                if (cache_inode_gc_policy.use_fd_cache &&
                    !lru_state.caching_fds) {
-                    lru_state.caching_fds = TRUE;
+                    lru_state.caching_fds = true;
                     LogInfo(COMPONENT_CACHE_INODE_LRU,
                             "Re-enabling FD cache.");
                }
@@ -861,7 +863,7 @@ lru_thread(void *arg __attribute__((unused)))
                                  "Futility count exceeded.  The LRU thread is "
                                  "unable to make progress in reclaiming FDs."
                                  "Disabling FD cache.");
-                         lru_state.caching_fds = FALSE;
+                         lru_state.caching_fds = false;
                     }
                }
           }
@@ -1249,11 +1251,11 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
  *
  * @param[in] entry The file to be checked
  *
- * @return TRUE if pinned, FALSE otherwise.
+ * @return true if pinned, false otherwise.
  */
-bool_t cache_inode_is_pinned(cache_entry_t *entry)
+bool cache_inode_is_pinned(cache_entry_t *entry)
 {
-     bool_t rc;
+     bool rc;
 
      pthread_mutex_lock(&entry->lru.mtx);
 

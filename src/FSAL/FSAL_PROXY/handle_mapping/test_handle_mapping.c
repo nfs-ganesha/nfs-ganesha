@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   param.hashtable_size = 27;
   param.nb_handles_prealloc = 1024;
   param.nb_db_op_prealloc = 1024;
-  param.synchronous_insert = FALSE;
+  param.synchronous_insert = false;
 
   rc = HandleMap_Init(&param);
 

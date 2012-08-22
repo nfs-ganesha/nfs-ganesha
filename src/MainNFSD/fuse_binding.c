@@ -53,8 +53,8 @@ char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "ganesha-nfsd";
 char host_name[MAXHOSTNAMELEN] = "localhost";
 int debug_level = -1;
-int detach_flag = FALSE;
-int single_threaded = FALSE;
+int detach_flag = false;
+int single_threaded = false;
 struct ganefuse_operations ops;
 
 char ganesha_exec_path[MAXPATHLEN];
@@ -161,12 +161,12 @@ int ganefuse_main(int argc, char *argv[],
 
         case 's':
           /* single threaded */
-          single_threaded = TRUE;
+          single_threaded = true;
           break;
 
         case 'd':
           /* Detach or not detach ? */
-          detach_flag = TRUE;
+          detach_flag = true;
           break;
 
         case 'R':
@@ -177,7 +177,7 @@ int ganefuse_main(int argc, char *argv[],
           fprintf(stderr, "{\n");
           fprintf(stderr, "\tPrincipalName = nfs@<your_host> ;\n");
           fprintf(stderr, "\tKeytabPath = /etc/krb5.keytab ;\n");
-          fprintf(stderr, "\tActive_krb5 = TRUE ;\n");
+          fprintf(stderr, "\tActive_krb5 = true ;\n");
           fprintf(stderr, "}\n\n\n");
           exit(1);
 
@@ -247,9 +247,9 @@ int ganefuse_main(int argc, char *argv[],
            FSAL_GetFSName());
 
   /* return all errors */
-  nfs_param.core_param.drop_io_errors = FALSE;
-  nfs_param.core_param.drop_inval_errors = FALSE;
-  nfs_param.core_param.drop_delay_errors = FALSE;
+  nfs_param.core_param.drop_io_errors = false;
+  nfs_param.core_param.drop_inval_errors = false;
+  nfs_param.core_param.drop_delay_errors = false;
 
   /* parse configuration file (if specified) */
 

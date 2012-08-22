@@ -84,7 +84,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   /* If there is no currentFH, then return an error */
   res_RESTOREFH.status = nfs4_sanity_check_saved_FH(data,
                                                     NO_FILE_TYPE,
-                                                    TRUE);
+                                                    true);
   if (res_RESTOREFH.status != NFS4_OK)
     return res_RESTOREFH.status;
 

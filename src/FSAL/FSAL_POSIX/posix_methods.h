@@ -67,7 +67,7 @@ fsal_status_t posix_open (struct fsal_obj_handle *obj_hdl, fsal_openflags_t open
 fsal_openflags_t posix_status (struct fsal_obj_handle *obj_hdl);
 fsal_status_t posix_read (struct fsal_obj_handle *obj_hdl,
                           uint64_t offset,
-                          size_t buffer_size, void *buffer, size_t * read_amount, bool_t * end_of_file);
+                          size_t buffer_size, void *buffer, size_t * read_amount, bool * end_of_file);
 fsal_status_t posix_write (struct fsal_obj_handle *obj_hdl,
                            uint64_t offset, size_t buffer_size, void *buffer, size_t * write_amount);
 fsal_status_t posix_commit (struct fsal_obj_handle *obj_hdl,    /* sync */

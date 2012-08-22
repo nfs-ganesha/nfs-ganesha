@@ -83,9 +83,9 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                                       cache_inode_status_t *status)
 {
      fsal_status_t fsal_status = {0, 0};
-     bool_t srcattrlock = FALSE;
-     bool_t destattrlock = FALSE;
-     bool_t destdirlock = FALSE;
+     bool srcattrlock = false;
+     bool destattrlock = false;
+     bool destdirlock = false;
      fsal_accessflags_t access_mask = 0;
 #ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
@@ -112,7 +112,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 
      /* Acquire the attribute lock */
      pthread_rwlock_wrlock(&dest_dir->attr_lock);
-     destattrlock = TRUE;
+     destattrlock = true;
 
      /* Check if caller is allowed to perform the operation */
      access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
@@ -122,7 +122,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                                           access_mask,
                                           req_ctx,
                                           status,
-                                          FALSE))
+                                          false))
          != CACHE_INODE_SUCCESS) {
           goto out;
      }
@@ -131,11 +131,11 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
         link and return the FSAL's error if it fails. */
 
      pthread_rwlock_wrlock(&entry->attr_lock);
-     srcattrlock = TRUE;
+     srcattrlock = true;
 
      /* Acquire the directory entry lock */
      pthread_rwlock_wrlock(&dest_dir->content_lock);
-     destdirlock = TRUE;
+     destdirlock = true;
 
      /* Do the link at FSAL level */
 #ifdef _USE_NFS4_ACL
@@ -178,13 +178,13 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      cache_inode_fixup_md(entry);
      *attr = entry->obj_handle->attributes;
      pthread_rwlock_unlock(&entry->attr_lock);
-     srcattrlock = FALSE;
+     srcattrlock = false;
 
      /* Reload the destination directory's attributes so the caller
         will have an updated changeid. */
      cache_inode_refresh_attrs(dest_dir);
      pthread_rwlock_unlock(&dest_dir->attr_lock);
-     destattrlock = FALSE;
+     destattrlock = false;
 
      /* Add the new entry in the destination directory */
      if (cache_inode_add_cached_dirent(dest_dir,
@@ -196,7 +196,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      }
 
      pthread_rwlock_unlock(&dest_dir->content_lock);
-     destdirlock = FALSE;
+     destdirlock = false;
 
 out:
 

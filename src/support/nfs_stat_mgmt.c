@@ -91,7 +91,7 @@
  */
 extern int _9ptabindex [] ;
 void _9p_stat_update( uint8_t type,
-                      bool_t success,
+                      bool success,
                        _9p_request_stat_t * pstat_req ) 
 {
    pstat_req->nb_9p_req += 1 ;

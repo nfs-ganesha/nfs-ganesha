@@ -12,53 +12,53 @@
 bool xdr_res(XDR * xdrs, res * objp)
 {
   if(!xdr_enum(xdrs, (enum_t *) objp))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_sm_stat_res(XDR * xdrs, sm_stat_res * objp)
 {
   if(!xdr_res(xdrs, &objp->res_stat))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->state))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_sm_stat(XDR * xdrs, sm_stat * objp)
 {
   if(!xdr_int(xdrs, &objp->state))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_my_id(XDR * xdrs, my_id * objp)
 {
   if(!xdr_string(xdrs, &objp->my_name, SM_MAXSTRLEN))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->my_prog))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->my_vers))
-    return FALSE;
+    return false;
   if(!xdr_int(xdrs, &objp->my_proc))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_mon_id(XDR * xdrs, mon_id * objp)
 {
   if(!xdr_string(xdrs, &objp->mon_name, SM_MAXSTRLEN))
-    return FALSE;
+    return false;
   if(!xdr_my_id(xdrs, &objp->my_id))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 bool xdr_mon(XDR * xdrs, mon * objp)
 {
   if(!xdr_mon_id(xdrs, &objp->mon_id))
-    return FALSE;
+    return false;
   if(!xdr_opaque(xdrs, objp->priv, 16))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }

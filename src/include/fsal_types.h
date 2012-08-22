@@ -585,23 +585,23 @@ struct fsal_staticfsinfo_t
         uint32_t maxlink; /*< maximum hard links on a file */
         uint32_t maxnamelen; /*< maximum name length */
         uint32_t maxpathlen; /*< maximum path length */
-        bool_t no_trunc; /*< is it errorneous when name>maxnamelen? */
-        bool_t chown_restricted; /*< is chown limited to super-user.*/
-        bool_t case_insensitive;  /*< case insensitive FS? */
-        bool_t case_preserving;  /*< FS preserves case? */
-        bool_t fh_expire_type; /*< handle persistency indicator */
-        bool_t link_support; /*< FS supports hardlinks? */
-        bool_t symlink_support;  /*< FS supports symlinks? */
-        bool_t lock_support; /*< FS supports file locking? */
-        bool_t lock_support_owner; /*< FS supports lock owners? */
-        bool_t lock_support_async_block; /*< FS supports blocking locks? */
-        bool_t named_attr; /*< FS supports named attributes. */
-        bool_t unique_handles; /*< Handles are unique and persistent.*/
+        bool no_trunc; /*< is it errorneous when name>maxnamelen? */
+        bool chown_restricted; /*< is chown limited to super-user.*/
+        bool case_insensitive;  /*< case insensitive FS? */
+        bool case_preserving;  /*< FS preserves case? */
+        bool fh_expire_type; /*< handle persistency indicator */
+        bool link_support; /*< FS supports hardlinks? */
+        bool symlink_support;  /*< FS supports symlinks? */
+        bool lock_support; /*< FS supports file locking? */
+        bool lock_support_owner; /*< FS supports lock owners? */
+        bool lock_support_async_block; /*< FS supports blocking locks? */
+        bool named_attr; /*< FS supports named attributes. */
+        bool unique_handles; /*< Handles are unique and persistent.*/
         gsh_time_t lease_time; /*< Duration of lease at FS in seconds */
         fsal_aclsupp_t acl_support; /*< what type of ACLs are supported */
-        bool_t cansettime; /*< Is it possible to change file times
-                               using SETATTR. */
-        bool_t homogenous; /*< Are supported attributes the same
+        bool cansettime; /*< Is it possible to change file times
+                             using SETATTR. */
+        bool homogenous; /*< Are supported attributes the same
                              for all objects of this filesystem. */
         attrmask_t supported_attrs;  /*< If the FS is homogenous, this
                                          indicates the set of
@@ -610,18 +610,18 @@ struct fsal_staticfsinfo_t
         uint32_t maxwrite; /*< Max write size */
         uint32_t umask;/*< This mask is applied to the mode of created
                            objects */
-        bool_t auth_exportpath_xdev;  /*< This flag indicates weither
-                                          it is possible to cross junctions
-                                          for resolving an NFS export path. */
+        bool auth_exportpath_xdev;  /*< This flag indicates weither
+                                        it is possible to cross junctions
+                                        for resolving an NFS export path. */
 
         uint32_t xattr_access_rights; /*< This indicates who is allowed
                                           to read/modify xattrs value. */
-        bool_t accesscheck_support; /*< This indicates whether access check
-                                        will be done in FSAL. */
-        bool_t share_support; /*< FS supports share reservation? */
-        bool_t share_support_owner;  /*< FS supports share reservation
-                                         with open owners ? */
-        bool_t dirs_have_sticky_bit; /*< fsal does bsd/posix "sticky bit" */
+        bool accesscheck_support; /*< This indicates whether access check
+                                      will be done in FSAL. */
+        bool share_support; /*< FS supports share reservation? */
+        bool share_support_owner;  /*< FS supports share reservation
+                                       with open owners ? */
+        bool dirs_have_sticky_bit; /*< fsal does bsd/posix "sticky bit" */
 };
 
 /**

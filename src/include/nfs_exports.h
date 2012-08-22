@@ -167,8 +167,8 @@ typedef struct exportlist__
   exportlist_access_type_t access_type; /* allowed operations for this export. Used by the older Access
                                          * list Access_Type export permissions scheme as well as the newer
                                          * R_Access, RW_Access, MDONLY_Access, MDONLY_R_Access lists.*/
-  bool_t new_access_list_version;   /* the new access list version (TRUE) is teh *_Access lists.
-                                     * The old (FALSE) is Access and Access_Type. */
+  bool new_access_list_version;   /* the new access list version (true) is the *_Access lists.
+                                     * The old (false) is Access and Access_Type. */
 
   fsal_fsid_t filesystem_id;    /* fileset id         */
   struct fsal_obj_handle *proot_handle;  /* FSAL handle for the root of the file system */
@@ -177,13 +177,13 @@ typedef struct exportlist__
                                 /* uid when access is available but all users are being squashed. */
   gid_t anonymous_gid;          /* root gid when no root access is available   */
                                 /* gid when access is available but all users are being squashed. */
-  bool_t all_anonymous;         /* When set to true, all users including root will be given the anon uid/gid */
+  bool all_anonymous;         /* When set to true, all users including root will be given the anon uid/gid */
   unsigned int options;         /* avail. mnt options */
 
   unsigned char seckey[EXPORT_KEY_SIZE];        /* Checksum for FH validity */
 
-  bool_t use_ganesha_write_buffer;
-  bool_t use_commit;
+  bool use_ganesha_write_buffer;
+  bool use_commit;
 
   uint32_t MaxRead;          /* Max Read for this entry                           */
   uint32_t MaxWrite;         /* Max Write for this entry                          */
@@ -193,7 +193,7 @@ typedef struct exportlist__
   uint64_t MaxOffsetWrite;    /* Maximum Offset allowed for write                  */
   uint64_t MaxOffsetRead;     /* Maximum Offset allowed for read                   */
   uint64_t MaxCacheSize;      /* Maximum Cache Size allowed                        */
-  bool_t UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
+  bool UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
   struct exportlist__ *next;    /* next entry                                        */
   struct fsal_export *export_hdl;	/* handle into our FSAL */
@@ -208,7 +208,7 @@ typedef struct exportlist__
 #endif
 
 #ifdef _USE_FSAL_UP
-  bool_t use_fsal_up;
+  bool use_fsal_up;
   char fsal_up_type[MAXPATHLEN];
   fsal_time_t fsal_up_timeout;
   pthread_t fsal_up_thr; /* This value may be modified later to point to an FSAL CB thread. */
@@ -344,7 +344,7 @@ typedef struct compoud_data
   nfs_fh4 publicFH; /*< Public filehandle */
   nfs_fh4 mounted_on_FH; /*< File handle to "mounted on" File System */
   stateid4 current_stateid; /*< Current stateid */
-  bool_t current_stateid_valid; /*< Current stateid is valid */
+  bool current_stateid_valid; /*< Current stateid is valid */
   unsigned int minorversion; /*< NFSv4 minor version */
   cache_entry_t *current_entry; /*< Cache entry for current filehandle */
   cache_entry_t *saved_entry; /*< Cache entry for saved filehandle */
@@ -364,7 +364,7 @@ typedef struct compoud_data
                                            reserved, if any */
   COMPOUND4res_extended *pcached_res; /*< NFv41: pointer to cached RPC res in
                                           a session's slot */
-  bool_t use_drc; /*< Set to TRUE if session DRC is to be used */
+  bool use_drc; /*< Set to true if session DRC is to be used */
   uint32_t oppos; /*< Position of the operation within the request
                       processed  */
   nfs41_session_t *psession; /*< Related session (found by OP_SEQUENCE) */
@@ -393,7 +393,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                             pool_t *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found,
                             struct user_cred *user_credentials,
-                            bool_t proc_makes_write);
+                            bool proc_makes_write);
 
 int nfs_export_check_security(struct svc_req *ptr_req, exportlist_t * pexport);
 

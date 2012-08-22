@@ -84,7 +84,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
         struct glist_head    * glist = NULL;
         /* Secondary safe iterator to continue traversal on delete*/
         struct glist_head    * glistn = NULL;
-        bool_t                 last_close = TRUE;
+        bool                   last_close = true;
 
         LogDebug(COMPONENT_STATE,
                  "Entering NFS v4 CLOSE handler ----------------------------");
@@ -95,7 +95,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
 
         /* Do basic checks on a filehandle Object should be a file */
         res_CLOSE4->status = nfs4_sanity_check_FH(data, REGULAR_FILE,
-                                                  FALSE);
+                                                  false);
         if (res_CLOSE4->status != NFS4_OK) {
                 return res_CLOSE4->status;
         }
@@ -220,7 +220,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
                             (state->state_powner->so_owner.so_nfs4_owner
                              .so_clientid ==
                              data->psession->clientid)) {
-                                last_close = FALSE;
+                                last_close = false;
                                 break;
                         }
                 }
@@ -231,7 +231,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
                                 &data->current_entry->state_list) {
                                 state_t *state = glist_entry(glist, state_t,
                                                              state_list);
-                                bool_t deleted = FALSE;
+                                bool deleted = false;
                                 struct pnfs_segment entire = {
                                         .io_mode = LAYOUTIOMODE4_ANY,
                                         .offset = 0,
@@ -248,8 +248,8 @@ int nfs4_op_close(struct nfs_argop4 *op,
                                         nfs4_return_one_state(
                                                 data->current_entry,
                                                 data->req_ctx,
-                                                TRUE,
-                                                FALSE,
+                                                true,
+                                                false,
                                                 0,
                                                 state,
                                                 entire,

@@ -1360,7 +1360,7 @@ static fsal_status_t
 pxy_readlink(struct fsal_obj_handle *obj_hdl,
              char *link_content,
              size_t *link_len,
-             bool_t refresh)
+             bool refresh)
 {
         int rc;
         int opcnt = 0;
@@ -1429,7 +1429,7 @@ typedef fsal_status_t (*fsal_readdir_cb)(const char *name,
                                          void *dir_state,
                                          struct fsal_cookie *cookie);
 
-static bool_t
+static bool
 xdr_readdirres(XDR *x, nfs_resop4 *rdres)
 {
         return xdr_nfs_resop4(x, rdres) && xdr_nfs_resop4(x, rdres + 1);
@@ -1444,7 +1444,7 @@ xdr_readdirres(XDR *x, nfs_resop4 *rdres)
  */
 static fsal_status_t
 pxy_do_readdir(struct pxy_obj_handle *ph, nfs_cookie4 *cookie,
-               fsal_readdir_cb cb, void *cbarg, bool_t *eof)
+               fsal_readdir_cb cb, void *cbarg, bool *eof)
 {
         uint32_t bitmap_val[2];
         uint32_t opcnt = 0;
@@ -1502,7 +1502,7 @@ pxy_readdir(struct fsal_obj_handle *dir_hdl,
 	    struct fsal_cookie *whence,
             void *cbarg,
             fsal_readdir_cb cb,
-            bool_t *eof)
+            bool *eof)
 {
         nfs_cookie4 cookie = 0;
         struct pxy_obj_handle *ph;
@@ -1524,7 +1524,7 @@ pxy_readdir(struct fsal_obj_handle *dir_hdl,
                 if(FSAL_IS_ERROR(st)) {
                         return st;
                 }
-        } while (*eof == FALSE);
+        } while (*eof == false);
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1680,27 +1680,27 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static bool_t
+static bool
 pxy_handle_is(struct fsal_obj_handle *obj_hdl,
               object_file_type_t type)
 {
         return obj_hdl->type == type;
 }
 
-static bool_t
+static bool
 pxy_compare_hdl(struct fsal_obj_handle *a,
                 struct fsal_obj_handle *b)
 {
         struct pxy_obj_handle *pa, *pb;
 
         if(!b)
-                return FALSE;
+                return false;
 
         pa = container_of(a, struct pxy_obj_handle, obj);
         pb = container_of(b, struct pxy_obj_handle, obj);
 
         if(pa->fh4.nfs_fh4_len != pb->fh4.nfs_fh4_len)
-                return FALSE;
+                return false;
 
 	return memcmp(pa->fh4.nfs_fh4_val, pb->fh4.nfs_fh4_val,
                       pa->fh4.nfs_fh4_len);
@@ -1873,11 +1873,11 @@ pxy_read(struct fsal_obj_handle *obj_hdl,
 	 size_t buffer_size,
 	 void *buffer,
 	 size_t *read_amount,
-	 bool_t * end_of_file)
+	 bool * end_of_file)
 {
         int rc;
         int opcnt = 0;
-        struct pxy_obj_handle *ph; 
+        struct pxy_obj_handle *ph;
 #define FSAL_READ_NB_OP_ALLOC 2
         nfs_argop4 argoparray[FSAL_READ_NB_OP_ALLOC];
         nfs_resop4 resoparray[FSAL_READ_NB_OP_ALLOC];
@@ -1888,7 +1888,7 @@ pxy_read(struct fsal_obj_handle *obj_hdl,
 
         if(!buffer_size) {
                 *read_amount = 0;
-                *end_of_file = FALSE;
+                *end_of_file = false;
                 return fsalstat(ERR_FSAL_NO_ERROR, 0);
         }
 

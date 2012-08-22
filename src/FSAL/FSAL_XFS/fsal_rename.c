@@ -88,7 +88,7 @@ fsal_status_t XFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
   fsal_status_t status;
   struct stat old_parent_buffstat, new_parent_buffstat, buffstat;
   int old_parent_fd, new_parent_fd;
-  int src_equal_tgt = FALSE;
+  int src_equal_tgt = false;
   uid_t userid = ((xfsfsal_op_context_t*)p_context)->credential.user;
 
   /* sanity checks.
@@ -129,7 +129,7 @@ fsal_status_t XFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
   if(!XFSFSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
     {
       new_parent_fd = old_parent_fd;
-      src_equal_tgt = TRUE;
+      src_equal_tgt = true;
       new_parent_buffstat = old_parent_buffstat;
     }
   else

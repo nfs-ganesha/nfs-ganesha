@@ -382,7 +382,7 @@ out:
 void nfs3_Mknod_Free(nfs_res_t * pres)
 {
   if((pres->res_mknod3.status == NFS3_OK) &&
-     (pres->res_mknod3.MKNOD3res_u.resok.obj.handle_follows == TRUE))
+     (pres->res_mknod3.MKNOD3res_u.resok.obj.handle_follows))
     gsh_free(pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u
              .handle.data.data_val);
 

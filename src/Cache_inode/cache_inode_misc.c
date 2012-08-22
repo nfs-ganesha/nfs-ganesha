@@ -59,12 +59,13 @@
 #include <pthread.h>
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 cache_inode_gc_policy_t cache_inode_gc_policy = {
         /* Cache inode parameters: Garbage collection policy */
         .entries_hwmark = 100000,
         .entries_lwmark = 50000,
-        .use_fd_cache = TRUE,
+        .use_fd_cache = true,
         .lru_run_interval = 600,
         .fd_limit_percent = 99,
         .fd_hwmark_percent = 90,
@@ -280,10 +281,10 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      cache_entry_t *new_entry = NULL;
      hash_buffer_t key, value;
      int rc = 0;
-     bool_t lrurefed = FALSE;
-     bool_t weakrefed = FALSE;
-     bool_t locksinited = FALSE;
-     bool_t latched = FALSE;
+     bool lrurefed = false;
+     bool weakrefed = false;
+     bool locksinited = false;
+     bool latched = false;
      struct hash_latch latch;
      hash_error_t hrc = 0;
      struct gsh_buffdesc fh_desc;
@@ -297,7 +298,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      /* This is slightly ugly, since we make two tries in the event
         that the lru reference fails. */
      hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
-                              TRUE, &latch);
+                              true, &latch);
      if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
           *status = CACHE_INODE_HASH_TABLE_ERROR;
           LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
@@ -340,7 +341,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      assert(new_entry->lru.refcount > 1);
      /* Now we got the entry; get the latch and see if someone raced us. */
      hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
-                              TRUE, &latch);
+                              true, &latch);
      if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
           *status = CACHE_INODE_HASH_TABLE_ERROR;
           LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
@@ -371,10 +372,10 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           }
      }
      entry = new_entry;
-     latched = TRUE;
+     latched = true;
      /* This should be the sentinel, plus one to use the entry we
         just returned. */
-     lrurefed = TRUE;
+     lrurefed = true;
 
      /* Enroll the object in the weakref table */
 
@@ -385,7 +386,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                                          error, such as an old entry
                                          not being unenrolled from
                                          the table. */
-     weakrefed = TRUE;
+     weakrefed = true;
 
      /* Initialize the entry locks */
      if (((rc = pthread_rwlock_init(&entry->attr_lock, NULL)) != 0) ||
@@ -398,7 +399,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           *status = CACHE_INODE_INIT_ENTRY_FAILED;
           goto out;
      }
-     locksinited = TRUE;
+     locksinited = true;
 
      /* Initialize common fields */
 
@@ -446,7 +447,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           entry->object.dir.referral = NULL;
           entry->object.dir.parent.ptr = NULL;
           entry->object.dir.parent.gen = 0;
-          entry->object.dir.root = FALSE;
+          entry->object.dir.root = false;
           /* init avl tree */
           cache_inode_avl_init(entry);
           break;
@@ -484,16 +485,16 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      value.len = sizeof(cache_entry_t);
 
      rc = HashTable_SetLatched(fh_to_cache_entry_ht, &key, &value,
-                               &latch, TRUE, NULL, NULL);
+                               &latch, true, NULL, NULL);
      /* HashTable_SetLatched release the latch irrespective
       * of success/failure. */
-     latched = FALSE;
+     latched = false;
      if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_OVERWRITTEN)) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: entry could not be added to hash, "
                   "rc=%d", rc);
-	  new_obj = entry->obj_handle;
-	  entry->obj_handle = NULL;  /* give it back and poison the entry */
+          new_obj = entry->obj_handle;
+          entry->obj_handle = NULL;  /* give it back and poison the entry */
           *status = CACHE_INODE_HASH_SET_ERROR;
           goto out;
      }
@@ -684,33 +685,33 @@ cache_inode_error_convert(fsal_status_t fsal_status)
  * @param[in] src  The source file
  * @param[in] dest The destination file
  *
- * @return TRUE if the rename is allowed, FALSE if not.
+ * @return true if the rename is allowed, false if not.
  */
-bool_t
+bool
 cache_inode_types_are_rename_compatible(cache_entry_t *src,
                                         cache_entry_t *dest)
 {
-  /* TRUE is both entries are non directories or if both are
+  /* True is both entries are non directories or if both are
      directories and the second is empty */
   if(src->type == DIRECTORY)
     {
       if(dest->type == DIRECTORY)
         {
           if(cache_inode_is_dir_empty(dest) == CACHE_INODE_SUCCESS)
-            return TRUE;
+            return true;
           else
-            return FALSE;
+            return false;
         }
       else
-        return FALSE;
+        return false;
     }
   else
     {
       /* pentry_src is not a directory */
       if(dest->type == DIRECTORY)
-        return FALSE;
+        return false;
       else
-        return TRUE;
+        return false;
     }
 } /* cache_inode_types_are_rename_compatible */
 

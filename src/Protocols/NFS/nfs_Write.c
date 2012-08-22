@@ -98,7 +98,7 @@ int nfs_Write(nfs_arg_t *parg,
   size_t written_size;
   uint64_t offset = 0;
   void *data = NULL;
-  bool_t eof_met;
+  bool eof_met;
   cache_inode_stability_t stability = CACHE_INODE_SAFE_WRITE_TO_FS;
   int rc = NFS_REQ_OK;
 #ifdef _USE_QUOTA
@@ -334,7 +334,7 @@ int nfs_Write(nfs_arg_t *parg,
       offset = parg->arg_write2.offset; /* beginoffset is obsolete */
       size = parg->arg_write2.data.nfsdata2_len;        /* totalcount is obsolete  */
       data = parg->arg_write2.data.nfsdata2_val;
-      if (pexport->use_commit == TRUE)
+      if (pexport->use_commit)
         stability = CACHE_INODE_SAFE_WRITE_TO_FS;
       break;
 
@@ -350,14 +350,14 @@ int nfs_Write(nfs_arg_t *parg,
           goto out;
         }
 
-      if((pexport->use_commit == TRUE) &&
-         (pexport->use_ganesha_write_buffer == FALSE) &&
+      if((pexport->use_commit) &&
+         !pexport->use_ganesha_write_buffer &&
          (parg->arg_write3.stable == UNSTABLE))
         {
           stability = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
         }
-      else if((pexport->use_commit == TRUE) &&
-              (pexport->use_ganesha_write_buffer == TRUE) &&
+      else if((pexport->use_commit) &&
+              (pexport->use_ganesha_write_buffer) &&
               (parg->arg_write3.stable == UNSTABLE))
         {
           stability = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;

@@ -221,7 +221,7 @@ fsal_status_t PROXYFSAL_setattr_access(fsal_op_context_t * p_context,      /* IN
                                        fsal_attrib_list_t * pobject_attributes  /* IN */
     )
 {
-  int same_owner = FALSE;
+  int same_owner = false;
 
   /* sanity check */
   if(p_context == NULL || pcandidate_attributes == NULL || pobject_attributes == NULL)
@@ -234,7 +234,7 @@ fsal_status_t PROXYFSAL_setattr_access(fsal_op_context_t * p_context,      /* IN
   /* Check for owner access */
   if(p_context->credential.user == pobject_attributes->owner)
     {
-      same_owner = TRUE;
+      same_owner = true;
     }
 
   if(!same_owner)

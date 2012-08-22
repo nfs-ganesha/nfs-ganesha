@@ -633,11 +633,11 @@ struct export_ops {
  * @param[in] exp_hdl The export to interrogate
  * @param[in] option  The feature to query
  *
- * @retval TRUE if the feature is supported.
- * @retval FALSE if the feature is unsupported or unknown.
+ * @retval true if the feature is supported.
+ * @retval false if the feature is unsupported or unknown.
  */
-        bool_t (*fs_supports)(struct fsal_export *exp_hdl,
-                              fsal_fsinfo_options_t option);
+        bool (*fs_supports)(struct fsal_export *exp_hdl,
+                            fsal_fsinfo_options_t option);
 /**
  * @brief Get the greatest file size supported
  *
@@ -876,13 +876,13 @@ struct export_ops {
  *
  * This function should populate calls @c cb @c values representing the
  * low quad of deviceids it wishes to make the available to the
- * caller.  it should continue calling @c cb until @c cb returns FALSE
+ * caller.  it should continue calling @c cb until @c cb returns false
  * or it runs out of deviceids to make available.  If @c cb returns
- * FALSE, it should assume that @c cb has not stored the most recent
+ * false, it should assume that @c cb has not stored the most recent
  * deviceid and set @c res->cookie to a value that will begin witht he
  * most recently provided.
  *
- * If it wishes to return no deviceids, it may set @c res->eof to TRUE
+ * If it wishes to return no deviceids, it may set @c res->eof to true
  * without calling @c cb at all.
  *
  * @param[in]     exp_hdl Export handle
@@ -896,8 +896,8 @@ struct export_ops {
                 struct fsal_export *exp_hdl,
                 layouttype4 type,
                 void *opaque,
-                bool_t (*cb)(void *opaque,
-                             const uint64_t id),
+                bool (*cb)(void *opaque,
+                           const uint64_t id),
                 struct fsal_getdevicelist_res *res);
 
 
@@ -1098,7 +1098,7 @@ struct fsal_obj_ops {
  *                       start at beginning.
  * @param[in]  dir_state Opaque pointer to be passed to callback
  * @param[in]  cb        Callback to receive names
- * @param[out] eof       TRUE if the last entry was reached
+ * @param[out] eof       true if the last entry was reached
  *
  * @note I think we would be better to follow the Cache inode practice
  * of changing the return value of the callback to be true or false
@@ -1121,7 +1121,7 @@ struct fsal_obj_ops {
                                          struct fsal_obj_handle *dir_hdl,
                                          void *dir_state,
                                          struct fsal_cookie *cookie),
-                                 bool_t *eof);
+                                 bool *eof);
 /*@}*/
 
 /*@{*/
@@ -1238,7 +1238,7 @@ struct fsal_obj_ops {
  * @param[out]    link_content Buffer to which the contents are copied
  * @param[in,out] link_len     Total buffer size/Size of content
  *                             copied
- * @param[out]    refresh      TRUE if the content are to be retrieved
+ * @param[out]    refresh      true if the content are to be retrieved
  *                             from the underlying filesystem rather
  *                             than cache
  *
@@ -1252,7 +1252,7 @@ struct fsal_obj_ops {
         fsal_status_t (*readlink)(struct fsal_obj_handle *obj_hdl,
                                   char *link_content,
                                   size_t *link_len,
-                                  bool_t refresh);
+                                  bool refresh);
 
 /**
  * @brief Check access for a given user against a given object
@@ -1409,7 +1409,7 @@ struct fsal_obj_ops {
  * @param[in]  buffer_size Amount of data to read
  * @param[out] buffer      Buffer to which data are to be copied
  * @param[out] read_amount Amount of data read
- * @param[out] end_of_file TRUE if the end of file has been reached
+ * @param[out] end_of_file true if the end of file has been reached
  *
  * @return FSAL status.
  */
@@ -1418,7 +1418,7 @@ struct fsal_obj_ops {
                               size_t buffer_size,
                               void *buffer,
                               size_t *read_amount,
-                              bool_t *end_of_file); /* needed? */
+                              bool *end_of_file); /* needed? */
 
 /**
  * @brief Write data to a file
@@ -1593,7 +1593,7 @@ struct fsal_obj_ops {
  * @param[in] xattr_name  Name of attribute
  * @param[in] buffer_addr Content to set
  * @param[in] buffer_size Content size
- * @param[in] create      TRUE if attribute is to be created
+ * @param[in] create      true if attribute is to be created
  *
  * @return FSAL status.
  */
@@ -1672,11 +1672,11 @@ struct fsal_obj_ops {
  *
  * This function tests that a handle is of the specified type.
  *
- * @retval TRUE if it is.
- * @retval FALSE if it isn't.
+ * @retval true if it is.
+ * @retval false if it isn't.
  */
-        bool_t (*handle_is)(struct fsal_obj_handle *obj_hdl,
-                            object_file_type_t type);
+        bool (*handle_is)(struct fsal_obj_handle *obj_hdl,
+                          object_file_type_t type);
 
 /**
  * @brief Perform cleanup as requested by the LRU
@@ -1702,11 +1702,11 @@ struct fsal_obj_ops {
  * @param[in] obj1_hdl A handle
  * @param[in] obj2_hdl Another handle
  *
- * @retval TRUE if they are the same file.
- * @retval FALSE if they aren't.
+ * @retval true if they are the same file.
+ * @retval false if they aren't.
  */
-        bool_t (*compare)(struct fsal_obj_handle *obj1_hdl,
-                          struct fsal_obj_handle *obj2_hdl);
+        bool (*compare)(struct fsal_obj_handle *obj1_hdl,
+                        struct fsal_obj_handle *obj2_hdl);
 
 /**
  * @brief Write wire handle
@@ -1812,7 +1812,7 @@ struct fsal_obj_ops {
  *
  * This function is called once on every segment of a layout.  The
  * FSAL may avoid being called again after it has finished all tasks
- * necessary for the commit by setting res->commit_done to TRUE.
+ * necessary for the commit by setting res->commit_done to true.
  *
  * The calling function does not inspect or act on the value of
  * size_supplied or new_size until after the last call to
@@ -1925,7 +1925,7 @@ struct fsal_ds_ops {
  * @param[in]  requested_length Length of read requested (and size of buffer)
  * @param[out] buffer           The buffer to which to store read data
  * @param[out] supplied_length  Length of data read
- * @param[out] eof              TRUE on end of file
+ * @param[out] eof              true on end of file
  *
  * @return An NFSv4.1 status code.
  */
@@ -1937,7 +1937,7 @@ struct fsal_ds_ops {
                 const count4 requested_length,
                 void *const buffer,
                 count4 *const supplied_length,
-                bool_t *const end_of_file);
+                bool *const end_of_file);
 
 /**
  *

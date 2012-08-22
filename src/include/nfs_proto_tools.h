@@ -127,18 +127,18 @@ void nfs4_Fattr_Free(fattr4 *fattr);
 
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                                struct req_op_context *req_ctx,
-                               bool_t synthetic,
-                               bool_t reclaim,
+                               bool synthetic,
+                               bool reclaim,
                                layoutreturn_type4 return_type,
                                state_t *layout_state,
                                struct pnfs_segment spec_segment,
                                size_t body_len,
                                const void* body_val,
-                               bool_t* deleted);
-bool_t nfs4_pnfs_supported(const exportlist_t *export);
+                               bool *deleted);
+bool nfs4_pnfs_supported(const exportlist_t *export);
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
                               object_file_type_t required_type,
-                              bool_t ds_allowed);
+                              bool ds_allowed);
 
 typedef enum {
         UTF8_SCAN_NONE = 0,    /* do no validation other than size */
@@ -158,6 +158,6 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 
 nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data,
                                     object_file_type_t required_type,
-                                    bool_t ds_allowed);
+                                    bool ds_allowed);
 #endif                          /* _NFS_PROTO_TOOLS_H */
 

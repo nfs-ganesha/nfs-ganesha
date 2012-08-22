@@ -65,7 +65,7 @@ fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
 
   int rc = 0;
   char object_path[FSAL_MAX_PATH_LEN];
-  int file_info_provided = FALSE;
+  int file_info_provided = false;
   fusefsal_handle_t * filehandle = (fusefsal_handle_t *)file_hdl;
   fusefsal_file_t * file_descriptor = (fusefsal_file_t *)file_desc;
 
@@ -108,9 +108,9 @@ fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
       ReleaseTokenFSCall();
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_open);
 
-      file_info_provided = TRUE;
+      file_info_provided = true;
 
     }
   else
@@ -135,7 +135,7 @@ fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
           ReleaseTokenFSCall();
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_open);
         }
       else if(p_fs_ops->truncate)
         {
@@ -147,7 +147,7 @@ fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
           ReleaseTokenFSCall();
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_open);
         }
       /* else: ignoring flag */
     }
@@ -168,7 +168,7 @@ fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
         }
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_open);
 
       file_descriptor->current_offset = stbuf.st_size;
     }
@@ -299,7 +299,7 @@ fsal_status_t FUSEFSAL_read(fsal_file_t * file_desc,  /* IN */
                             fsal_size_t buffer_size,    /* IN */
                             caddr_t buffer,     /* OUT */
                             fsal_size_t * read_amount,  /* OUT */
-                            fsal_boolean_t * end_of_file        /* OUT */
+                            bool * end_of_file        /* OUT */
     )
 {
   size_t req_size;
@@ -365,7 +365,7 @@ fsal_status_t FUSEFSAL_read(fsal_file_t * file_desc,  /* IN */
             }
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_read);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_read);
 
           seekoffset = (off_t) stbuf.st_size + seek_descriptor->offset;
 
@@ -392,7 +392,7 @@ fsal_status_t FUSEFSAL_read(fsal_file_t * file_desc,  /* IN */
   ReleaseTokenFSCall();
 
   if(rc < 0)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_read);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_read);
 
   /* rc >= 0 */
 
@@ -500,7 +500,7 @@ fsal_status_t FUSEFSAL_write(fsal_file_t * file_desc, /* IN */
             }
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_write);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_write);
 
           seekoffset = (off_t) stbuf.st_size + seek_descriptor->offset;
 
@@ -523,7 +523,7 @@ fsal_status_t FUSEFSAL_write(fsal_file_t * file_desc, /* IN */
   ReleaseTokenFSCall();
 
   if(rc < 0)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_write);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_write);
 
   file_descriptor->current_offset = seekoffset + (off_t) rc;
 
@@ -581,7 +581,7 @@ fsal_status_t FUSEFSAL_close(fsal_file_t * file_desc  /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_close);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_close);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 

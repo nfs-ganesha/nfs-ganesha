@@ -66,7 +66,7 @@ fsal_status_t HPSSFSAL_getattrs(hpssfsal_handle_t * filehandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_GetRawAttrHandle(&(filehandle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, FALSE,   /* don't solve junctions */
+  rc = HPSSFSAL_GetRawAttrHandle(&(filehandle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, false,   /* don't solve junctions */
                                  &hpss_hdl, NULL, &hpss_attr);
 
   ReleaseTokenFSCall();

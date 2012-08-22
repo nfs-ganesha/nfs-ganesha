@@ -53,7 +53,7 @@ struct wbc_Blob {
 
 struct svc_rpc_gss_data
 {
-  bool_t established;           /* context established */
+  bool established;           /* context established */
   gss_ctx_id_t ctx;             /* context id */
   struct rpc_gss_sec sec;       /* security triple */
   gss_buffer_desc cname;        /* GSS client name */
@@ -80,20 +80,20 @@ typedef struct nfs_krb5_param__
       char principal[MAXPATHLEN];
       gss_name_t gss_name;
   } svc;
-  bool_t active_krb5;
+  bool active_krb5;
   hash_parameter_t hash_param;
 } nfs_krb5_parameter_t;
 
 #define SVCAUTH_PRIVATE(auth) \
   ((struct svc_rpc_gss_data *)(auth)->svc_ah_private)
 
-bool_t Svcauth_gss_import_name(char *service);
-bool_t Svcauth_gss_acquire_cred(void);
-bool_t Svcauth_gss_set_svc_name(gss_name_t name);
+bool Svcauth_gss_import_name(char *service);
+bool Svcauth_gss_acquire_cred(void);
+bool Svcauth_gss_set_svc_name(gss_name_t name);
 int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param);
 enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst,
                                        struct rpc_msg *msg,
-                                       bool_t * no_dispatch);
+                                       bool * no_dispatch);
 
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
 uint32_t gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);

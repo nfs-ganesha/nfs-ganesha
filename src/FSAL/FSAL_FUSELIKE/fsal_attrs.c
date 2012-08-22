@@ -79,7 +79,7 @@ fsal_status_t FUSEFSAL_getattrs(fsal_handle_t *handle, /* IN */
       ReleaseTokenFSCall();
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_getattrs);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_getattrs);
     }
   else
     {
@@ -237,7 +237,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
           LogFullDebug(COMPONENT_FSAL, "chmod: status = %d", rc);
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_setattrs);
         }
       /* else : ignored */
 
@@ -258,7 +258,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
           LogFullDebug(COMPONENT_FSAL, "truncate: status = %d", rc);
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_setattrs);
         }
       /* else : ignored */
 
@@ -307,7 +307,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
           LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_setattrs);
         }
       /* else : ignored */
     }
@@ -358,7 +358,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
           LogFullDebug(COMPONENT_FSAL, "utimens: status = %d", rc);
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_setattrs);
         }
       else if(p_fs_ops->utime)
         {
@@ -379,7 +379,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
           LogFullDebug(COMPONENT_FSAL, "utime: status = %d", rc);
 
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_setattrs);
         }
       /* else : ignored */
 

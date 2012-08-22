@@ -74,7 +74,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
 
   exportlist_t * pexport = NULL;
-  unsigned int found = FALSE;
+  unsigned int found = false;
   cache_inode_status_t cache_status ;
   cache_inode_fsal_data_t fsdata ;
   char fkey_data[NFS4_FHSIZE];
@@ -103,7 +103,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
           /* The input value may be a "Tag" */
           if(!strncmp(aname_str, pexport->FS_tag, strlen( pexport->FS_tag ) ) )
             {
-	      found = TRUE ;
+	      found = true ;
               break;
             }
         }
@@ -111,14 +111,14 @@ int _9p_auth( _9p_request_data_t * preq9p,
         {
           if(!strncmp(aname_str, pexport->fullpath, strlen( pexport->fullpath ) ) )
            {
-	      found = TRUE ;
+	      found = true ;
               break;
            }
         }
     } /* for */
 
   /* Did we find something ? */
-  if( found == FALSE )
+  if( found == false )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOENT, plenout, preply ) ;
 
   if( *afid >= _9P_FID_PER_CONN )
@@ -177,7 +177,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RAUTH: tag=%u afid=%u qid=(type=%u,version=%u,path=%llu)", 
             *msgtag, *afid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

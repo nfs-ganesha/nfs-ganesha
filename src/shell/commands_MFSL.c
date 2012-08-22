@@ -57,7 +57,7 @@
 
 static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
 
-static int is_loaded = FALSE;   /* filsystem initialization status */
+static int is_loaded = false;   /* filsystem initialization status */
 
 typedef struct cmdmfsl_thr_info__
 {
@@ -133,9 +133,9 @@ cmdmfsl_thr_info_t *GetMFSLCmdContext()
 
       memset(p_current_thread_vars, 0, sizeof(cmdmfsl_thr_info_t));
 
-      p_current_thread_vars->is_thread_ok = FALSE;
+      p_current_thread_vars->is_thread_ok = false;
       strcpy(p_current_thread_vars->current_path, "");
-      p_current_thread_vars->opened = FALSE;
+      p_current_thread_vars->opened = false;
 
       /* set the specific value */
       pthread_setspecific(thread_key, (void *)p_current_thread_vars);
@@ -231,7 +231,7 @@ int Init_Thread_MFSL(FILE * output, cmdmfsl_thr_info_t * context, int flag_v)
   /* save root handle */
 
   context->current_dir = hdl_dir;
-  context->is_thread_ok = TRUE;
+  context->is_thread_ok = true;
 
   strcpy(context->current_path, "/");
 
@@ -336,13 +336,13 @@ int mfsl_init(char *filename, int flag_v, FILE * output)
 
     }
 
-  is_loaded = TRUE;
+  is_loaded = true;
 
   /* initialize current thread */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, flag_v);
@@ -449,7 +449,7 @@ int fn_mfsl_pwd(int argc,       /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -483,7 +483,7 @@ int msfl_solvepath(char *io_global_path, int size_global_path,  /* [IN-OUT] glob
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -672,7 +672,7 @@ int fn_mfsl_cd(int argc,        /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -775,7 +775,7 @@ int fn_mfsl_stat(int argc,      /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -917,9 +917,9 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
   fsal_cookie_t from, to;
   fsal_dirent_t entries[READDIR_SIZE];
   fsal_count_t number;
-  fsal_boolean_t eod = FALSE;
+  bool eod = false;
   fsal_path_t symlink_path;
-  int error = FALSE;
+  int error = false;
   int rc;
 
   cmdmfsl_thr_info_t *context;
@@ -1002,7 +1002,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -1240,7 +1240,7 @@ int fn_mfsl_su(int argc,        /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -1352,7 +1352,7 @@ int fn_mfsl_unlink(int argc,    /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -1489,7 +1489,7 @@ int fn_mfsl_mkdir(int argc,     /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -1675,7 +1675,7 @@ int fn_mfsl_rename(int argc,    /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -1855,7 +1855,7 @@ int fn_mfsl_ln(int argc,        /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -2026,7 +2026,7 @@ int fn_mfsl_hardlink(int argc,  /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -2187,7 +2187,7 @@ int fn_mfsl_create(int argc,    /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -2380,7 +2380,7 @@ int fn_mfsl_setattr(int argc,   /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -2592,7 +2592,7 @@ int fn_mfsl_access(int argc,    /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -2836,7 +2836,7 @@ int fn_mfsl_truncate(int argc,  /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -2982,7 +2982,7 @@ int fn_mfsl_open(int argc,      /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -3129,7 +3129,7 @@ int fn_mfsl_open(int argc,      /* IN : number of args in argv */
     }
 
   /* note that a file is opened. */
-  context->opened = TRUE;
+  context->opened = true;
 
   if(flag_v)
     fprintf(output, "Open operation completed sucessfully : fd = %d.\n",
@@ -3197,7 +3197,7 @@ int fn_mfsl_read(int argc,      /* IN : number of args in argv */
 
   /* fsal arguments */
 
-  fsal_boolean_t is_eof = 0;
+  bool is_eof = 0;
   fsal_size_t total_nb_read = 0;
   fsal_size_t once_nb_read = 0;
   fsal_size_t nb_block_read = 0;
@@ -3221,7 +3221,7 @@ int fn_mfsl_read(int argc,      /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -3679,7 +3679,7 @@ int fn_mfsl_write(int argc,     /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -4064,7 +4064,7 @@ int fn_mfsl_close(int argc,     /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -4096,7 +4096,7 @@ int fn_mfsl_close(int argc,     /* IN : number of args in argv */
     }
 
   /* note that a file is closed. */
-  context->opened = FALSE;
+  context->opened = false;
 
   return 0;
 
@@ -4154,7 +4154,7 @@ int fn_mfsl_cat(int argc,       /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
@@ -4305,7 +4305,7 @@ int fn_mfsl_handlecmp(int argc, /* IN : number of args in argv */
 
   context = GetMFSLCmdContext();
 
-  if(context->is_thread_ok != TRUE)
+  if(context->is_thread_ok != true)
     {
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);

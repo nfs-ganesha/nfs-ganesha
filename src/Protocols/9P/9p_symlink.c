@@ -149,7 +149,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
   /* Clean allocated buffer */
   if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

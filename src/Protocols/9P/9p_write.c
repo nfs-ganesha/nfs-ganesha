@@ -70,7 +70,7 @@ int _9p_write( _9p_request_data_t * preq9p,
 
   size_t size;
   size_t written_size = 0;
-  bool_t eof_met;
+  bool eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   //uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
   uint64_t stable_flag = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
@@ -151,7 +151,7 @@ int _9p_write( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RWRITE: tag=%u fid=%u offset=%llu input count=%u output count=%u",
             (u32)*msgtag, *fid , (unsigned long long)*offset, *count, outcount ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

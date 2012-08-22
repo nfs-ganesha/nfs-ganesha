@@ -237,7 +237,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
   rc =  HashTable_GetLatch(fsal_acl_hash,
                            &buffkey,
                            &buffvalue,
-                           TRUE,
+                           true,
                            &latch);
   if(rc == HASHTABLE_SUCCESS)
     {
@@ -366,7 +366,7 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
   rc = HashTable_GetLatch(fsal_acl_hash,
                           &key,
                           &old_value,
-                          TRUE,
+                          true,
                           &latch);
 
   switch(rc)

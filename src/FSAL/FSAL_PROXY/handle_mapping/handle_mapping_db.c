@@ -151,7 +151,7 @@ static unsigned int nb_db_threads;
 static int synchronous;
 
 /* used for clean shutdown */
-static int do_terminate = FALSE;
+static int do_terminate = false;
 
 /* all information and context for threads */
 static db_thread_info_t db_thread[MAX_DB];
@@ -640,7 +640,7 @@ int handlemap_db_count(const char *dir)
   char db_pattern[MAXPATHLEN];
 
   unsigned int count = 0;
-  int end_of_dir = FALSE;
+  int end_of_dir = false;
 
   snprintf(db_pattern, MAXPATHLEN, "%s.*[0-9]", DB_FILE_PREFIX);
 
@@ -671,7 +671,7 @@ int handlemap_db_count(const char *dir)
       else if(rc == 0 && cookie == NULL)
         {
           /* end of dir */
-          end_of_dir = TRUE;
+          end_of_dir = true;
         }
       else if(errno != 0)
         {
@@ -685,7 +685,7 @@ int handlemap_db_count(const char *dir)
       else
         {
           /* end of dir */
-          end_of_dir = TRUE;
+          end_of_dir = true;
         }
 
     }

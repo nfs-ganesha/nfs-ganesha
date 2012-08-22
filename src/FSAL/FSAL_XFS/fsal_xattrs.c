@@ -114,10 +114,10 @@ static int attr_is_read_only(unsigned int attr_index)
   if(attr_index < XATTR_COUNT)
     {
       if(xattr_list[attr_index].flags & XATTR_RO)
-        return TRUE;
+        return true;
     }
   /* else : standard xattr */
-  return FALSE;
+  return false;
 }
 
 static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
@@ -390,7 +390,7 @@ fsal_status_t XFSFSAL_ListXAttrs(fsal_handle_t * p_objecthandle,     /* IN */
   /* save a call if output array is full */
   if(out_index == xattrs_tabsize)
     {
-      *end_of_list = FALSE;
+      *end_of_list = false;
       *p_nb_returned = out_index;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_ListXAttrs);
     }
@@ -446,12 +446,12 @@ fsal_status_t XFSFSAL_ListXAttrs(fsal_handle_t * p_objecthandle,     /* IN */
         }
       /* all xattrs are in the output array */
       if(ptr >= names + namesize)
-        *end_of_list = TRUE;
+        *end_of_list = true;
       else
-        *end_of_list = FALSE;
+        *end_of_list = false;
     }
   else                          /* no xattrs */
-    *end_of_list = TRUE;
+    *end_of_list = true;
 
   *p_nb_returned = out_index;
 
@@ -531,7 +531,7 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
 
   if(len == size_in - 1 || len == size_in)
     {
-      int ascii = TRUE;
+      int ascii = true;
       char *str = buffer;
       int i;
 
@@ -539,7 +539,7 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
         {
           if(!isprint(str[i]) && !isspace(str[i]))
             {
-              ascii = FALSE;
+              ascii = false;
               break;
             }
         }
@@ -719,7 +719,7 @@ fsal_status_t XFSFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,       /* 
   fsal_status_t st;
   unsigned int index;
   int rc;
-  int found = FALSE;
+  int found = false;
   int fd;
 
   /* sanity checks */
@@ -730,7 +730,7 @@ fsal_status_t XFSFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,       /* 
     {
       if(!strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
-          found = TRUE;
+          found = true;
           break;
         }
     }
@@ -755,7 +755,7 @@ fsal_status_t XFSFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,       /* 
       else
         {
           index = rc;
-          found = TRUE;
+          found = true;
         }
     }
 
@@ -932,7 +932,7 @@ fsal_status_t XFSFSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,      /* 
   FSAL_str2name(name, FSAL_MAX_NAME_LEN, &attr_name);
 
   return XFSFSAL_SetXAttrValue(p_objecthandle, &attr_name,
-                               p_context, buffer_addr, buffer_size, FALSE);
+                               p_context, buffer_addr, buffer_size, false);
 }
 
 /**

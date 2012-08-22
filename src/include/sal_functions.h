@@ -398,12 +398,12 @@ void Copy_nfs4_state_req(state_owner_t   * powner,
                          nfs_resop4      * resp,
                          const char      * tag);
 
-bool_t Check_nfs4_seqid(state_owner_t   * powner,
-                        seqid4            seqid,
-                        nfs_argop4      * args,
-                        compound_data_t * data,
-                        nfs_resop4      * resp,
-                        const char      * tag);
+bool Check_nfs4_seqid(state_owner_t   * powner,
+                      seqid4            seqid,
+                      nfs_argop4      * args,
+                      compound_data_t * data,
+                      nfs_resop4      * resp,
+                      const char      * tag);
 
 /******************************************************************************
  *
@@ -575,7 +575,7 @@ uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
 state_status_t state_add_segment(state_t             * pstate,
                                  struct pnfs_segment * segment,
                                  void                * fsal_data,
-                                 bool_t                return_on_close);
+                                 bool                  return_on_close);
 
 state_status_t state_delete_segment(state_layout_segment_t *segment);
 state_status_t state_lookup_layout_state(cache_entry_t * pentry,

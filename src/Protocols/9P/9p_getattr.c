@@ -189,7 +189,7 @@ int _9p_getattr( _9p_request_data_t * preq9p,
             (unsigned long long)*btime_sec, (unsigned long long)*btime_nsec, 
             (unsigned long long)*gen, (unsigned long long)*data_version )  ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

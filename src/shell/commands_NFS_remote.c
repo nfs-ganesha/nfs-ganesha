@@ -682,7 +682,7 @@ int fn_MNT1_remote_command(int argc,    /* IN : number of args in argv */
 
               if(funcdesc->func_encode(CMDNFS_ENCODE,
                                        argc - 1, argv + 1,
-                                       0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                                       0, NULL, (caddr_t) & nfs_arg) == false)
                 {
                   fprintf(output, "%s: bad arguments.\n", argv[0]);
                   fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -759,7 +759,7 @@ int fn_MNT3_remote_command(int argc,    /* IN : number of args in argv */
 
               if(funcdesc->func_encode(CMDNFS_ENCODE,
                                        argc - 1, argv + 1,
-                                       0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                                       0, NULL, (caddr_t) & nfs_arg) == false)
                 {
                   fprintf(output, "%s: bad arguments.\n", argv[0]);
                   fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -836,7 +836,7 @@ int fn_NFS2_remote_command(int argc,    /* IN : number of args in argv */
 
               if(funcdesc->func_encode(CMDNFS_ENCODE,
                                        argc - 1, argv + 1,
-                                       0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                                       0, NULL, (caddr_t) & nfs_arg) == false)
                 {
                   fprintf(output, "%s: bad arguments.\n", argv[0]);
                   fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -914,7 +914,7 @@ int fn_NFS3_remote_command(int argc,    /* IN : number of args in argv */
 
               if(funcdesc->func_encode(CMDNFS_ENCODE,
                                        argc - 1, argv + 1,
-                                       0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                                       0, NULL, (caddr_t) & nfs_arg) == false)
                 {
                   fprintf(output, "%s: bad arguments.\n", argv[0]);
                   fprintf(output, "Usage: %s\n", funcdesc->func_help);
@@ -1001,7 +1001,7 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,      /* IN - handle o
 
       rc = cmdnfs_fhandle3(CMDNFS_ENCODE, 1, &pstr_path, 0, NULL, (caddr_t) & hdl_param);
 
-      if(rc != TRUE)
+      if(rc != true)
         {
           fprintf(output, "Invalid FileHandle: %s\n", str_path);
           return -1;
@@ -1435,7 +1435,7 @@ int nfs_remote_create(shell_fh3_t * p_dir_hdl,  /* IN */
 
   /* empty sattr3 list */
   if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-                   (caddr_t) & (arg.how.createhow3_u.obj_attributes)) == FALSE)
+                   (caddr_t) & (arg.how.createhow3_u.obj_attributes)) == false)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -1443,7 +1443,7 @@ int nfs_remote_create(shell_fh3_t * p_dir_hdl,  /* IN */
     }
 
   /* only setting mode */
-  arg.how.createhow3_u.obj_attributes.mode.set_it = TRUE;
+  arg.how.createhow3_u.obj_attributes.mode.set_it = true;
   arg.how.createhow3_u.obj_attributes.mode.set_mode3_u.mode = posix_mode;
 
   do
@@ -1509,7 +1509,7 @@ int nfs_remote_mkdir(shell_fh3_t * p_dir_hdl,   /* IN */
 
   /* empty sattr3 list */
   if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-                   (caddr_t) & (arg.attributes)) == FALSE)
+                   (caddr_t) & (arg.attributes)) == false)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -1517,7 +1517,7 @@ int nfs_remote_mkdir(shell_fh3_t * p_dir_hdl,   /* IN */
     }
 
   /* only setting mode */
-  arg.attributes.mode.set_it = TRUE;
+  arg.attributes.mode.set_it = true;
   arg.attributes.mode.set_mode3_u.mode = posix_mode;
 
   do
@@ -1671,7 +1671,7 @@ int nfs_remote_setattr(shell_fh3_t * p_obj_hdl, /* IN */
 
   set_nfs_fh3(&arg.object, p_obj_hdl);
   arg.new_attributes = *p_attributes;
-  arg.guard.check = FALSE;
+  arg.guard.check = false;
 
   do
     {
@@ -1886,7 +1886,7 @@ int nfs_remote_mount(char *str_path,    /* IN */
   CLIENT *clnt;
 
   rc = cmdnfs_dirpath(CMDNFS_ENCODE, 1, &str_path, 0, NULL, (caddr_t) & nfs_arg);
-  if(rc == FALSE)
+  if(rc == false)
     {
       fprintf(output, "nfs_remote_mount : Error during encoding args\n");
       return -1;
@@ -1943,7 +1943,7 @@ int fn_nfs_remote_mount(int argc,       /* IN : number of args in argv */
 
   /* check if a path has already been mounted */
 
-  if(is_mounted_path != FALSE)
+  if(is_mounted_path != false)
     {
       fprintf(output, "%s: a path is already mounted. Use \"umount\" command first.\n",
               argv[0]);
@@ -1968,7 +1968,7 @@ int fn_nfs_remote_mount(int argc,       /* IN : number of args in argv */
   current_path_hdl = mounted_path_hdl;
   strcpy(current_path, "/");
 
-  is_mounted_path = TRUE;
+  is_mounted_path = true;
 
   fprintf(output, "Current directory is \"%s\" \n", current_path);
   snprintmem(buff, 2 * NFS3_FHSIZE + 1,
@@ -1991,14 +1991,14 @@ int fn_nfs_remote_umount(int argc,      /* IN : number of args in argv */
 
   /* check if a path has already been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
     }
 
   if(cmdnfs_dirpath(CMDNFS_ENCODE,
-                    argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                    argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == false)
     {
       fprintf(output, "%s: bad arguments.\n", argv[0]);
       fprintf(output, "Usage: umount <path>.\n");
@@ -2044,7 +2044,7 @@ int fn_nfs_remote_umount(int argc,      /* IN : number of args in argv */
 
   mnt3_remote_Umnt_Free(&res);
 
-  is_mounted_path = FALSE;
+  is_mounted_path = false;
 
   return 0;
 }
@@ -2055,7 +2055,7 @@ int fn_nfs_remote_pwd(int argc, /* IN : number of args in argv */
                       FILE * output)    /* IN : output stream          */
 {
   char buff[2 * NFS3_FHSIZE + 1];
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2082,7 +2082,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
   shell_fh3_t handle_tmp;
   fattr3 attrs;
   cookie3 begin_cookie;
-  bool_t eod_met;
+  bool eod_met;
   cookieverf3 cookieverf;
   dirlistplus3 dirlist;
   entryplus3 *p_entry;
@@ -2118,7 +2118,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2293,7 +2293,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
   /* If this point is reached, then the current element is a directory */
 
   begin_cookie = 0LL;
-  eod_met = FALSE;
+  eod_met = false;
   memset(&cookieverf, 0, sizeof(cookieverf3));
 
   while(!eod_met)
@@ -2399,7 +2399,7 @@ int fn_nfs_remote_cd(int argc,  /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2486,7 +2486,7 @@ int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2602,7 +2602,7 @@ int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2718,7 +2718,7 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2849,7 +2849,7 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -2921,7 +2921,7 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
 
   /* Convert the peer (attr_name,attr_val) to an sattr3 structure. */
   if((rc = cmdnfs_sattr3(CMDNFS_ENCODE,
-                         1, &attr_string, 0, NULL, (caddr_t) & set_attrs)) == FALSE)
+                         1, &attr_string, 0, NULL, (caddr_t) & set_attrs)) == false)
     return rc;
 
   /* executes set attrs */
@@ -2964,7 +2964,7 @@ int fn_nfs_remote_rename(int argc,      /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3094,7 +3094,7 @@ int fn_nfs_remote_hardlink(int argc,    /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3217,7 +3217,7 @@ int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;
@@ -3289,7 +3289,7 @@ int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
 
   /* Prepare link attributes : empty sattr3 list */
 
-  if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL, (caddr_t) & set_attrs) == FALSE)
+  if(cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL, (caddr_t) & set_attrs) == false)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -3347,7 +3347,7 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
 
   /* check if a path has been mounted */
 
-  if(is_mounted_path != TRUE)
+  if(is_mounted_path != true)
     {
       fprintf(output, "\t%s: no mounted path. Use \"mount\" command first.\n", argv[0]);
       return -1;

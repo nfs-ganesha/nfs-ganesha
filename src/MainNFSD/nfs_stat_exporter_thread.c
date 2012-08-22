@@ -100,7 +100,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 #endif                          /* _USE_TIRPC_IPV6 */
       if(export_client_match(psockaddr_in, clients, pclient_found,
                  EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
-        return TRUE;
+        return true;
 #ifdef _USE_TIRPC_IPV6
     }
   else
@@ -133,7 +133,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
             {
               LogCrit(COMPONENT_MAIN,
                       "Error: Could not convert the IPv6 address to a character string.");
-              return FALSE;
+              return false;
             }
           /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
           memcpy((char *)&addr, (char *)(psockaddr_in6->sin6_addr.s6_addr + 12), 4);
@@ -142,22 +142,22 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
           /* else, check if any access only export matches this client */
           if(export_client_match
              (addr, ip6string, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
-            return TRUE;
+            return true;
         }
       if(export_client_matchv6
          (&(psockaddr_in6->sin6_addr), clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
-        return TRUE;
+        return true;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
   /* If this point is reached, no matching entry was found */
-  return FALSE;
+  return false;
 
 }                               /* stat_export_check_access */
 
 static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
                                              exportlist_client_t *clients)
 {
-  int rc = 0, err_flag __attribute__((unused)) = FALSE;
+  int rc = 0, err_flag __attribute__((unused)) = false;
   char *expended_node_list;
 
   /* temp array of clients */
@@ -171,7 +171,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 
   if(count <= 0)
     {
-      err_flag = TRUE;
+      err_flag = true;
       LogCrit(COMPONENT_CONFIG,
               "STAT_EXPORT_ACCESS: ERROR: Invalid format for client list in EXPORT::%s definition",
               var_name);
@@ -180,7 +180,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
     }
   else if(count > EXPORT_MAX_CLIENTS)
     {
-      err_flag = TRUE;
+      err_flag = true;
       LogCrit(COMPONENT_CONFIG,
               "STAT_EXPORT_ACCESS: ERROR: Client list too long (%d>%d)",
               count, EXPORT_MAX_CLIENTS);
@@ -205,7 +205,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 
   if(rc < 0)
     {
-      err_flag = TRUE;
+      err_flag = true;
       LogCrit(COMPONENT_CONFIG,
               "STAT_EXPORT_ACCESS: ERROR: Client list too long (>%d)", count);
 
@@ -220,7 +220,7 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
                                     (char **)client_list, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
   if(rc != 0)
     {
-      err_flag = TRUE;
+      err_flag = true;
       LogCrit(COMPONENT_CONFIG,
               "STAT_EXPORT_ACCESS: ERROR: Invalid client found in \"%s\"",
               var_value);

@@ -685,7 +685,7 @@ fsal_status_t fsal_cred_2_gpfs_cred(struct user_credentials *p_fsalcred,
 fsal_status_t fsal_mode_2_gpfs_mode(fsal_accessmode_t fsal_mode,
                                     fsal_accessflags_t v4mask,
                                     unsigned int *p_gpfsmode,
-                                    fsal_boolean_t is_dir)
+                                    bool is_dir)
 {
   int gpfs_mode = 0;
 

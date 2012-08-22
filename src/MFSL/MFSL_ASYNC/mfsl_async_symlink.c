@@ -223,7 +223,7 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
 
   /* Update the asynchronous metadata */
   symlink_pasyncdata->async_attr = *link_attributes;
-  symlink_pasyncdata->deleted = FALSE;
+  symlink_pasyncdata->deleted = false;
 
   if(!mfsl_async_set_specdata(link_handle, symlink_pasyncdata))
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);

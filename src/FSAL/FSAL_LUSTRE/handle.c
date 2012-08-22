@@ -48,6 +48,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include <FSAL/FSAL_LUSTRE/fsal_handle.h>
 #include "lustre_methods.h"
+#include <stdbool.h>
 
 
 #include <lustre/liblustreapi.h>
@@ -637,13 +638,13 @@ errout:
 		fsal_error = ERR_FSAL_STALE;
 	else
 		fsal_error = posix2fsal_error(retval);
-	return fsalstat(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);
 }
 
 static fsal_status_t lustre_readsymlink(struct fsal_obj_handle *obj_hdl,
                                  char *link_content,
                                  size_t *link_len,
-                                 bool_t refresh)
+                                 bool refresh)
 {
 	struct lustre_fsal_obj_handle *myself = NULL;
         char mypath[MAXPATHLEN] ;
@@ -755,7 +756,7 @@ struct linux_dirent {
  * @param whence [IN] where to start (next)
  * @param dir_state [IN] pass thru of state to callback
  * @param cb [IN] callback function
- * @param eof [OUT] eof marker TRUE == end of dir
+ * @param eof [OUT] eof marker true == end of dir
  */
 
 static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
@@ -768,7 +769,7 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 					  struct fsal_obj_handle *dir_hdl,
 					  void *dir_state,
 					  struct fsal_cookie *cookie),
-                                  bool_t *eof)
+                                  bool *eof)
 {
 	struct lustre_fsal_obj_handle *myself;
 	int dirfd ;
@@ -841,12 +842,12 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 		}
 	} while(nread > 0);
 
-	*eof = nread == 0 ? TRUE : FALSE;
+        *eof = (nread == 0);
 done:
 	close(dirfd);
 	
 out:
-	return fsalstat(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);
 }
 
 
@@ -1067,20 +1068,20 @@ fileerr:
         retval = errno;
         fsal_error = posix2fsal_error(retval);
 out:
-	return fsalstat(fsal_error, retval);	
+	return fsalstat(fsal_error, retval);
 }
 
 /* compare
  * compare two handles.
- * return TRUE for equal, FALSE for anything else
+ * return true for equal, false for anything else
  */
-static bool_t compare(struct fsal_obj_handle *obj_hdl,
-                      struct fsal_obj_handle *other_hdl)
+static bool compare(struct fsal_obj_handle *obj_hdl,
+                    struct fsal_obj_handle *other_hdl)
 {
 	struct lustre_fsal_obj_handle *myself, *other;
 
 	if( !other_hdl)
-		return FALSE;
+		return false;
 
 	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
 	other = container_of(other_hdl, struct lustre_fsal_obj_handle, obj_handle);
@@ -1089,9 +1090,9 @@ static bool_t compare(struct fsal_obj_handle *obj_hdl,
 	    (myself->handle->fid.f_oid != other->handle->fid.f_oid) ||
 	    (myself->handle->fid.f_ver != other->handle->fid.f_ver) ||
 	    (myself->handle->inode     != other->handle->inode) )
-		return FALSE;
+		return false;
 
-        return TRUE ;
+        return true;
 }
 
 /* file_truncate

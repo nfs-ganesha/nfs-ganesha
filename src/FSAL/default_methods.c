@@ -318,10 +318,10 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
  * default case is supports nothing
  */
 
-static bool_t fs_supports(struct fsal_export *exp_hdl,
+static bool fs_supports(struct fsal_export *exp_hdl,
                           fsal_fsinfo_options_t option)
 {
-	return FALSE;
+	return false;
 }
 
 /* fs_maxfilesize
@@ -494,8 +494,8 @@ static nfsstat4
 getdevicelist(struct fsal_export *exp_hdl,
               layouttype4 type,
               void *opaque,
-              bool_t (*cb)(void *opaque,
-                           const uint64_t id),
+              bool (*cb)(void *opaque,
+                         const uint64_t id),
               struct fsal_getdevicelist_res *res)
 {
         return NFS4ERR_NOTSUPP;
@@ -623,7 +623,7 @@ static int handle_put(struct fsal_obj_handle *obj_hdl)
  * test the type of this handle
  */
 
-static bool_t handle_is(struct fsal_obj_handle *obj_hdl,
+static bool handle_is(struct fsal_obj_handle *obj_hdl,
                         object_file_type_t type)
 {
         return obj_hdl->type == type;
@@ -664,7 +664,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 					  struct fsal_obj_handle *dir_hdl,
 					  void *dir_state,
 					  struct fsal_cookie *cookie),
-                                  bool_t *eof)
+                                  bool *eof)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -727,7 +727,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  char *link_content,
                                  size_t *link_len,
-                                 bool_t refresh)
+                                 bool refresh)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -822,7 +822,7 @@ static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
                                size_t buffer_size,
                                void *buffer,
                                size_t *read_amount,
-                               bool_t *end_of_file)
+                               bool *end_of_file)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -1005,10 +1005,10 @@ fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
  * default case never equal
  */
 
-static bool_t compare(struct fsal_obj_handle *obj_hdl,
-                              struct fsal_obj_handle *other_hdl)
+static bool compare(struct fsal_obj_handle *obj_hdl,
+                    struct fsal_obj_handle *other_hdl)
 {
-        return FALSE;
+        return false;
 }
 
 /* handle_digest
@@ -1233,7 +1233,7 @@ ds_release(struct fsal_ds_handle *const ds_hdl)
  * @param[in]  requested_length Length of read requested (and size of buffer)
  * @param[out] buffer           The buffer to which to store read data
  * @param[out] supplied_length  Length of data read
- * @param[out] eof              TRUE on end of file
+ * @param[out] eof              true on end of file
  *
  * @return NFS4ERR_NOTSUPP.
  */
@@ -1245,7 +1245,7 @@ ds_read(struct fsal_ds_handle *const ds_hdl,
         const count4 requested_length,
         void *const buffer,
         count4 *const supplied_length,
-        bool_t *const end_of_file)
+        bool *const end_of_file)
 {
         return NFS4ERR_NOTSUPP;
 }

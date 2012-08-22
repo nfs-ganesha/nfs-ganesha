@@ -200,7 +200,7 @@ fsal_status_t FUSEFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
       LogFullDebug(COMPONENT_FSAL, "%s: gettattr status=%d", child_path, rc);
 
       if(rc)
-        Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_lookup);
+        Return(fuse2fsal_error(rc, false), rc, INDEX_FSAL_lookup);
 
       /* no '.' nor '..' in namespace */
       if(strcmp(p_filename->name, ".") && strcmp(p_filename->name, ".."))
@@ -246,7 +246,7 @@ fsal_status_t FUSEFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
                    (int)stbuff.st_ino, (int)stbuff.st_dev,
                    (int)object_handle->data.validator);
           if(rc)
-            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_lookup);
+            Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_lookup);
         }
 
       /* output handle */
@@ -355,7 +355,7 @@ fsal_status_t FUSEFSAL_lookupPath(fsal_path_t * p_path, /* IN */
   char *ptr_str;
   fsal_handle_t out_hdl;
   fsal_status_t status;
-  int b_is_last = FALSE;        /* is it the last lookup ? */
+  int b_is_last = false;        /* is it the last lookup ? */
 
   /* sanity checks
    * note : object_attributes is optionnal.
@@ -380,7 +380,7 @@ fsal_status_t FUSEFSAL_lookupPath(fsal_path_t * p_path, /* IN */
   /* is the next name empty ? */
 
   if(ptr_str[0] == '\0')
-    b_is_last = TRUE;
+    b_is_last = true;
 
   /* retrieves root directory */
 
@@ -433,7 +433,7 @@ fsal_status_t FUSEFSAL_lookupPath(fsal_path_t * p_path, /* IN */
 
       /* is the next name empty ? */
       if(ptr_str[0] == '\0')
-        b_is_last = TRUE;
+        b_is_last = true;
 
       /*call to FSAL_lookup */
       status = FUSEFSAL_lookup(&in_hdl, /* parent directory handle */

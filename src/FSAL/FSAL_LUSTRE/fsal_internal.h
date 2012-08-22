@@ -138,7 +138,7 @@ fsal_status_t LUSTREFSAL_rename(fsal_handle_t * p_old_parentdir_handle,   /* IN 
                                 p_tgt_dir_attributes /* [ IN/OUT ] */ );
 
 void LUSTREFSAL_get_stats(fsal_statistics_t * stats,    /* OUT */
-                          fsal_boolean_t reset /* IN */ );
+                          bool reset /* IN */ );
 
 fsal_status_t LUSTREFSAL_readlink(fsal_handle_t * p_linkhandle,   /* IN */
                                   fsal_op_context_t * p_context,  /* IN */
@@ -316,7 +316,7 @@ nfsstat4 LUSTREFSAL_DS_read(fsal_handle_t *handle,
                           count4 requested_length,
                           caddr_t buffer,
                           count4 *supplied_length,
-                          fsal_boolean_t *end_of_file);
+                          bool *end_of_file);
 
 nfsstat4 LUSTREFSAL_DS_write(fsal_handle_t *handle,
                            fsal_op_context_t *context,

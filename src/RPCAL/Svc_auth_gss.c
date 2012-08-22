@@ -42,6 +42,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include "ganesha_rpc.h"
 #include "rpcal.h"
@@ -77,19 +78,12 @@ extern const gss_OID_desc *const gss_mech_spkm3;
 
 extern SVCAUTH Svc_auth_none;
 
-#ifdef _USE_TIRPC
-static bool_t Svcauth_gss_destroy();
-static bool_t Svcauth_gss_destroy_copy();
-static bool_t Svcauth_gss_wrap();
-static bool_t Svcauth_gss_unwrap();
-#else
-static bool_t Svcauth_gss_destroy(SVCAUTH *);
-static bool_t Svcauth_gss_destroy_copy(SVCAUTH *);
-static bool_t Svcauth_gss_wrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
-static bool_t Svcauth_gss_unwrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
-#endif
+static bool Svcauth_gss_destroy();
+static bool Svcauth_gss_destroy_copy();
+static bool Svcauth_gss_wrap();
+static bool Svcauth_gss_unwrap();
 
-static bool_t Svcauth_gss_nextverf(struct svc_req *, u_int);
+static bool Svcauth_gss_nextverf(struct svc_req *, u_int);
 
 struct svc_auth_ops Svc_auth_gss_ops = {
   Svcauth_gss_wrap,
@@ -125,7 +119,7 @@ const char *str_gc_proc(rpc_gss_proc_t gc_proc)
  * @param maj_stat  [IN]  GSSAPI major status
  * @param min_stat  [IN]  GSSAPI minor status
  *
- * @return TRUE is successfull, false otherwise.
+ * @return true is successfull, false otherwise.
  * 
  */
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
@@ -163,7 +157,7 @@ void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 gss_cred_id_t svcauth_gss_creds;
 static gss_name_t svcauth_gss_name = NULL;
 
-bool_t Svcauth_gss_set_svc_name(gss_name_t name)
+bool Svcauth_gss_set_svc_name(gss_name_t name)
 {
   OM_uint32 maj_stat, min_stat;
 
@@ -173,25 +167,25 @@ bool_t Svcauth_gss_set_svc_name(gss_name_t name)
 
       if(maj_stat != GSS_S_COMPLETE)
         {
-          return (FALSE);
+          return (false);
         }
       svcauth_gss_name = NULL;
     }
 
   if(svcauth_gss_name == GSS_C_NO_NAME)
-    return (TRUE);
+    return (true);
 
   maj_stat = gss_duplicate_name(&min_stat, name, &svcauth_gss_name);
 
   if(maj_stat != GSS_S_COMPLETE)
     {
-      return (FALSE);
+      return (false);
     }
 
-  return (TRUE);
+  return (true);
 }
 
-bool_t Svcauth_gss_import_name(char *service)
+bool Svcauth_gss_import_name(char *service)
 {
   gss_name_t name;
   gss_buffer_desc namebuf;
@@ -204,21 +198,21 @@ bool_t Svcauth_gss_import_name(char *service)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
-      return (FALSE);
+      return (false);
     }
-  if(Svcauth_gss_set_svc_name(name) != TRUE)
+  if(!(Svcauth_gss_set_svc_name(name)))
     {
       gss_release_name(&min_stat, &name);
-      return (FALSE);
+      return (false);
     }
 
   /* set_svc_name() creates a duplicate, we don't need this copy */
   gss_release_name(&min_stat, &name);
 
-  return (TRUE);
+  return (true);
 }
 
-bool_t Svcauth_gss_acquire_cred(void)
+bool Svcauth_gss_acquire_cred(void)
 {
   OM_uint32 maj_stat, min_stat;
 
@@ -228,12 +222,12 @@ bool_t Svcauth_gss_acquire_cred(void)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
-      return (FALSE);
+      return (false);
     }
-  return (TRUE);
+  return (true);
 }
 
-static bool_t Svcauth_gss_release_cred(void)
+static bool Svcauth_gss_release_cred(void)
 {
   OM_uint32 maj_stat, min_stat;
 
@@ -241,15 +235,15 @@ static bool_t Svcauth_gss_release_cred(void)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
-      return (FALSE);
+      return (false);
     }
 
   svcauth_gss_creds = NULL;
 
-  return (TRUE);
+  return (true);
 }
 
-static bool_t
+static bool
 Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr)
 {
   struct svc_rpc_gss_data *gd;
@@ -266,7 +260,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
   memset(&recv_tok, 0, sizeof(recv_tok));
 
   if(!svc_getargs(rqst->rq_xprt, (xdrproc_t)xdr_rpc_gss_init_args, (caddr_t) & recv_tok))
-    return (FALSE);
+    return (false);
 
   gr->gr_major = gss_accept_sec_context(&gr->gr_minor,
                                         &gd->ctx,
@@ -361,10 +355,10 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
       rqst->rq_xprt->xp_verf.oa_base = gd->checksum.value;
       rqst->rq_xprt->xp_verf.oa_length = gd->checksum.length;
     }
-  return (TRUE);
+  return (true);
  errout:
   gss_release_buffer(&min_stat, &gr->gr_token);
-  return (FALSE);
+  return (false);
 }
 
 int sprint_ctx(char *buff, unsigned char *ctx, int len)
@@ -386,7 +380,7 @@ int sprint_ctx(char *buff, unsigned char *ctx, int len)
   return len * 2;
 }
 
-static bool_t
+static bool
 Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
                      struct rpc_msg *msg)
 {
@@ -423,7 +417,7 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
       LogCrit(COMPONENT_RPCSEC_GSS,
               "Svcauth_gss_validate oa->oa_length (%u) > MAX_AUTH_BYTES (%u)",
               oa->oa_length, MAX_AUTH_BYTES);
-      return (FALSE);
+      return (false);
     }
   
   /* 8 XDR units from the IXDR macro calls. */
@@ -437,7 +431,7 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
               (int) (8 * BYTES_PER_XDR_UNIT),
               oa->oa_length,
               (int) (8 * BYTES_PER_XDR_UNIT + RNDUP(oa->oa_length)));
-      return (FALSE);
+      return (false);
     }
 
   buf = (int32_t *) (void *)rpchdr;
@@ -478,19 +472,19 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
     {
       log_sperror_gss(GssError, maj_stat, min_stat);
       LogCrit(COMPONENT_RPCSEC_GSS, "Error in gss_verify_mic: %s", GssError);
-      return (FALSE);
+      return (false);
     }
-  return (TRUE);
+  return (true);
 }
 
-static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
+static bool Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
 {
   struct svc_rpc_gss_data *gd;
   gss_buffer_desc signbuf;
   OM_uint32 maj_stat, min_stat;
 
   if(rqst->rq_xprt->xp_auth == NULL)
-    return (FALSE);
+    return (false);
 
   gd = SVCAUTH_PRIVATE(rqst->rq_xprt->xp_auth);
 
@@ -504,20 +498,20 @@ static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
-      return (FALSE);
+      return (false);
     }
   rqst->rq_xprt->xp_verf.oa_flavor = RPCSEC_GSS;
   rqst->rq_xprt->xp_verf.oa_base = (caddr_t) gd->checksum.value;
   rqst->rq_xprt->xp_verf.oa_length = (u_int) gd->checksum.length;
 
-  return (TRUE);
+  return (true);
 }
 
 #define ret_freegc(code) do { retstat = code; goto freegc; } while (0)
 
 enum auth_stat
 Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
-                    bool_t *no_dispatch)
+                    bool *no_dispatch)
 {
   enum auth_stat retstat;
   XDR xdrs;
@@ -533,7 +527,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
   /* Used to update the hashtable entries. 
    * These should not be used for purposes other than updating
    * hashtable entries. */
-  bool_t *p_established = NULL;
+  bool *p_established = NULL;
   u_int *p_seqlast = NULL;
   uint32_t *p_seqmask = NULL;
 
@@ -710,7 +704,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
             LogDebug(COMPONENT_RPCSEC_GSS,
                      "BAD AUTH: the current seqnum has already been used.");
 
-          *no_dispatch = TRUE;
+          *no_dispatch = true;
           ret_freegc(RPCSEC_GSS_CTXPROBLEM);
         }
       gd->seq = gc->gc_seq;
@@ -764,7 +758,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
                        "failed");
           ret_freegc(AUTH_FAILED);
         }
-      *no_dispatch = TRUE;
+      *no_dispatch = true;
 
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
@@ -802,7 +796,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
           gss_union_ctx_id_desc *gss_ctx_data2 =
               (gss_union_ctx_id_desc *)gd->ctx;
 
-          gd->established = TRUE;
+          gd->established = true;
 
           /* Keep the gss context in a hash, gr.gr_ctx.value is used as key */
           (void) Gss_ctx_Hash_Set(gss_ctx_data2, gd);
@@ -851,7 +845,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
 	  ret_freegc(AUTH_FAILED);
 	}
 
-      *no_dispatch = TRUE;
+      *no_dispatch = true;
 
       call_stat = svc_sendreply2(rqst->rq_xprt, rqst,
                                  (xdrproc_t)xdr_void,
@@ -910,7 +904,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
   return (retstat);
 }
 
-static bool_t Svcauth_gss_destroy(SVCAUTH * auth)
+static bool Svcauth_gss_destroy(SVCAUTH * auth)
 {
   struct svc_rpc_gss_data *gd;
   OM_uint32 min_stat;
@@ -928,10 +922,10 @@ static bool_t Svcauth_gss_destroy(SVCAUTH * auth)
   gsh_free(gd);
   gsh_free(auth);
 
-  return (TRUE);
+  return (true);
 }
 
-static bool_t Svcauth_gss_destroy_copy(SVCAUTH * auth)
+static bool Svcauth_gss_destroy_copy(SVCAUTH * auth)
 {
   /* svc_ah_private aka gd points to the same gd as the original, so no need
    * to free or destroy.
@@ -939,21 +933,21 @@ static bool_t Svcauth_gss_destroy_copy(SVCAUTH * auth)
    */
   gsh_free(auth);
 
-  return (TRUE);
+  return (true);
 }
 
 #ifndef DONT_USE_WRAPUNWRAP
 #define RPC_SLACK_SPACE 1024
 
-bool_t
+bool
 Xdr_rpc_gss_buf(XDR *xdrs, gss_buffer_t buf, u_int maxsize)
 {
-	bool_t xdr_stat;
+	bool xdr_stat;
 	u_int tmplen;
 
 	if (xdrs->x_op != XDR_DECODE) {
 		if (buf->length > UINT_MAX)
-			return FALSE;
+			return false;
 		else
 			tmplen = buf->length;
 	}
@@ -965,13 +959,13 @@ Xdr_rpc_gss_buf(XDR *xdrs, gss_buffer_t buf, u_int maxsize)
 	LogFullDebug(COMPONENT_RPCSEC_GSS,
 	             "Xdr_rpc_gss_buf: %s %s (%p:%d)",
 		  (xdrs->x_op == XDR_ENCODE) ? "encode" : "decode",
-		  (xdr_stat == TRUE) ? "success" : "failure",
+		  xdr_stat ? "success" : "failure",
 		  buf->value, (int)buf->length);
 
 	return xdr_stat;
 }
 
-bool_t
+bool
 Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		      gss_ctx_id_t ctx, gss_qop_t qop,
 		      rpc_gss_svc_t svc, u_int seq)
@@ -979,7 +973,7 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	gss_buffer_desc	databuf, wrapbuf;
 	OM_uint32	maj_stat, min_stat;
 	int		start, end, conf_state;
-	bool_t		xdr_stat = FALSE;
+	bool		xdr_stat = false;
 	u_int		databuflen, maxwrapsz;
 
 	/* Skip databody length. */
@@ -991,7 +985,7 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 
 	/* Marshal rpc_gss_data_t (sequence number + arguments). */
 	if (!xdr_u_int(xdrs, &seq) || !(*xdr_func)(xdrs, xdr_ptr))
-		return (FALSE);
+		return (false);
 	end = XDR_GETPOS(xdrs);
 
 	/* Set databuf to marshalled rpc_gss_data_t. */
@@ -1000,20 +994,20 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	databuf.value = XDR_INLINE(xdrs, databuflen);
 	databuf.length = databuflen;
 
-	xdr_stat = FALSE;
+	xdr_stat = false;
 
 	if (svc == RPCSEC_GSS_SVC_INTEGRITY) {
 		/* Marshal databody_integ length. */
 		XDR_SETPOS(xdrs, start);
 		if (!xdr_u_int(xdrs, (u_int *)&databuflen))
-			return (FALSE);
+			return (false);
 
 		/* Checksum rpc_gss_data_t. */
 		maj_stat = gss_get_mic(&min_stat, ctx, qop,
 				       &databuf, &wrapbuf);
 		if (maj_stat != GSS_S_COMPLETE) {
 			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_get_mic failed");
-			return (FALSE);
+			return (false);
 		}
 		/* Marshal checksum. */
 		XDR_SETPOS(xdrs, end);
@@ -1023,12 +1017,12 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	}
 	else if (svc == RPCSEC_GSS_SVC_PRIVACY) {
 		/* Encrypt rpc_gss_data_t. */
-		maj_stat = gss_wrap(&min_stat, ctx, TRUE, qop, &databuf,
+		maj_stat = gss_wrap(&min_stat, ctx, true, qop, &databuf,
 				    &conf_state, &wrapbuf);
 		if (maj_stat != GSS_S_COMPLETE) {
 			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_wrap %d %d",
                                      maj_stat, min_stat);
-			return (FALSE);
+			return (false);
 		}
 		/* Marshal databody_priv. */
 		XDR_SETPOS(xdrs, start);
@@ -1039,7 +1033,7 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	return (xdr_stat);
 }
 
-bool_t
+bool
 Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 			gss_ctx_id_t ctx, gss_qop_t qop,
 			rpc_gss_svc_t svc, u_int seq)
@@ -1049,10 +1043,10 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	OM_uint32	maj_stat, min_stat;
 	u_int		seq_num, qop_state;
 	int			conf_state;
-	bool_t		xdr_stat;
+	bool		xdr_stat;
 
 	if (xdr_func == (xdrproc_t)xdr_void || xdr_ptr == NULL)
-		return (TRUE);
+		return (true);
 
 	memset(&databuf, 0, sizeof(databuf));
 	memset(&wrapbuf, 0, sizeof(wrapbuf));
@@ -1062,7 +1056,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		if (!Xdr_rpc_gss_buf(xdrs, &databuf, (u_int)-1)) {
 			LogFullDebug(COMPONENT_RPCSEC_GSS,"xdr decode "
                                      "databody_integ failed");
-			return (FALSE);
+			return (false);
 		}
 		/* Decode checksum. */
 		if (!Xdr_rpc_gss_buf(xdrs, &wrapbuf, (u_int)-1)) {
@@ -1073,7 +1067,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 #endif
 			LogFullDebug(COMPONENT_RPCSEC_GSS,
                                      "xdr decode checksum failed");
-			return (FALSE);
+			return (false);
 		}
 		/* Verify checksum and QOP. */
 		maj_stat = gss_verify_mic(&min_stat, ctx, &databuf,
@@ -1093,7 +1087,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 			LogFullDebug(COMPONENT_RPCSEC_GSS,
                                      "gss_verify_mic %d %d", maj_stat,
                                      min_stat);
-			return (FALSE);
+			return (false);
 		}
 	}
 	else if (svc == RPCSEC_GSS_SVC_PRIVACY) {
@@ -1101,7 +1095,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		if (!Xdr_rpc_gss_buf(xdrs, &wrapbuf, (u_int)-1)) {
 			LogFullDebug(COMPONENT_RPCSEC_GSS,
                                      "xdr decode databody_priv failed");
-			return (FALSE);
+			return (false);
 		}
 		/* Decrypt databody. */
 		maj_stat = gss_unwrap(&min_stat, ctx, &wrapbuf, &databuf,
@@ -1111,11 +1105,11 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 
 		/* Verify encryption and QOP. */
 		if (maj_stat != GSS_S_COMPLETE || qop_state != qop ||
-			conf_state != TRUE) {
+			conf_state != true) {
 			gss_release_buffer(&min_stat, &databuf);
 			LogFullDebug(COMPONENT_RPCSEC_GSS,
                                      "gss_unwrap %d %d", maj_stat, min_stat);
-			return (FALSE);
+			return (false);
 		}
 	}
 	/* Decode rpc_gss_data_t (sequence number + arguments). */
@@ -1130,20 +1124,20 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 #endif
 
 	/* Verify sequence number. */
-	if (xdr_stat == TRUE && seq_num != seq) {
+	if (xdr_stat && seq_num != seq) {
 		LogFullDebug(COMPONENT_RPCSEC_GSS,
                              "wrong sequence number in databody");
-		return (FALSE);
+		return (false);
 	}
 	return (xdr_stat);
 }
 
-bool_t
+bool
 Xdr_rpc_gss_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		 gss_ctx_id_t ctx, gss_qop_t qop,
 		 rpc_gss_svc_t svc, u_int seq)
 {
-	bool_t rc;
+	bool rc;
 	switch (xdrs->x_op) {
 
 	case XDR_ENCODE:
@@ -1161,13 +1155,13 @@ Xdr_rpc_gss_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		             rc);
 		return rc;
 	case XDR_FREE:
-		return (TRUE);
+		return (true);
 	}
-	return (FALSE);
+	return (false);
 }
 #endif
 
-static bool_t
+static bool
 Svcauth_gss_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func,
                  caddr_t xdr_ptr)
 {
@@ -1188,7 +1182,7 @@ Svcauth_gss_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func,
 #endif
 }
 
-static bool_t
+static bool
 Svcauth_gss_unwrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func,
                    caddr_t xdr_ptr)
 {

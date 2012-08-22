@@ -78,7 +78,7 @@ void ReleaseTokenFSCall();
  * (in the other cases, return codes are only logged
  * in the NIV_FULL_DEBUG logging lovel).
  */
-fsal_boolean_t fsal_do_log(fsal_status_t status);
+bool fsal_do_log(fsal_status_t status);
 
 /* All the call to FSAL to be wrapped */
 fsal_status_t HPSSFSAL_access(hpssfsal_handle_t * p_object_handle,      /* IN */
@@ -152,7 +152,7 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * p_dir_descriptor,       /* IN */
                                fsal_dirent_t * p_pdirent,       /* OUT */
                                hpssfsal_cookie_t * p_end_position,      /* OUT */
                                fsal_count_t * p_nb_entries,     /* OUT */
-                               fsal_boolean_t * p_end_of_dir /* OUT */ );
+                               bool * p_end_of_dir /* OUT */ );
 
 fsal_status_t HPSSFSAL_closedir(hpssfsal_dir_t * p_dir_descriptor /* IN */ );
 
@@ -175,7 +175,7 @@ fsal_status_t HPSSFSAL_read(hpssfsal_file_t * p_file_descriptor,        /* IN */
                             fsal_size_t buffer_size,    /* IN */
                             caddr_t buffer,     /* OUT */
                             fsal_size_t * p_read_amount,        /* OUT */
-                            fsal_boolean_t * p_end_of_file /* OUT */ );
+                            bool * p_end_of_file /* OUT */ );
 
 fsal_status_t HPSSFSAL_write(hpssfsal_file_t * p_file_descriptor,       /* IN */
                              fsal_op_context_t * p_context,             /* IN */
@@ -280,7 +280,7 @@ fsal_status_t HPSSFSAL_rename(hpssfsal_handle_t * p_old_parentdir_handle,       
                               p_tgt_dir_attributes /* [ IN/OUT ] */ );
 
 void HPSSFSAL_get_stats(fsal_statistics_t * stats,      /* OUT */
-                        fsal_boolean_t reset /* IN */ );
+                        bool reset /* IN */ );
 
 fsal_status_t HPSSFSAL_readlink(hpssfsal_handle_t * p_linkhandle,       /* IN */
                                 hpssfsal_op_context_t * p_context,      /* IN */

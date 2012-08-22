@@ -142,7 +142,7 @@ void gsh_dbus_pkginit(void)
         goto out;
     }
 
-    thread_state.initialized = TRUE;
+    thread_state.initialized = true;
 
 out:
     return;

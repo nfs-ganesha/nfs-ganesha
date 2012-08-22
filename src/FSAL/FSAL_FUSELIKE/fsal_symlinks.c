@@ -84,7 +84,7 @@ fsal_status_t FUSEFSAL_readlink(fsal_handle_t * link_hdl, /* IN */
       ReleaseTokenFSCall();
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_readlink);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_readlink);
 
     }
   else
@@ -204,7 +204,7 @@ fsal_status_t FUSEFSAL_symlink(fsal_handle_t * parent,     /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_symlink);
 
   /* set the owner for the newly created entry */
 
@@ -218,7 +218,7 @@ fsal_status_t FUSEFSAL_symlink(fsal_handle_t * parent,     /* IN */
       LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
 
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_symlink);
     }
 
   /* get info about this symlink */
@@ -228,7 +228,7 @@ fsal_status_t FUSEFSAL_symlink(fsal_handle_t * parent,     /* IN */
   ReleaseTokenFSCall();
 
   if(rc)
-    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
+    Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_symlink);
 
   link_handle->data.validator = buffstat.st_ctime;
 

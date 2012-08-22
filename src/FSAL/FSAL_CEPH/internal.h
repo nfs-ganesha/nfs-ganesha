@@ -38,6 +38,7 @@
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"
+#include <stdbool.h>
 
 /**
  * Ceph private export object
@@ -92,8 +93,8 @@ struct ds
 {
         struct ds_wire wire; /*< Wire data */
         struct fsal_ds_handle ds; /*< Public DS handle */
-        bool_t connected; /*< True if the handle has been connected
-                              (in Ceph) */
+        bool connected; /*< True if the handle has been connected
+                            (in Ceph) */
 };
 
 #ifndef CEPH_INTERNAL_C

@@ -160,7 +160,7 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
   int rc, errsv;
   fsal_status_t status;
   int fd;
-  int setgid_bit = FALSE;
+  int setgid_bit = false;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
 
@@ -195,7 +195,7 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
     }
 
   if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
-    setgid_bit = TRUE;
+    setgid_bit = true;
 
   /* Set both mode and ace4 mask */
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |

@@ -115,7 +115,7 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RUNLINKAT: tag=%u dfid=%u name=%.*s",
             (u32)*msgtag, *dfid, *name_len, name_str ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

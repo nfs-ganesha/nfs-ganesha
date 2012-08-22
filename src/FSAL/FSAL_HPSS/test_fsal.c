@@ -434,8 +434,8 @@ int main(int argc, char **argv)
       hpssfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
-      fsal_boolean_t eod = FALSE;
-      int error = FALSE;
+      bool eod = false;
+      int error = false;
 
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
@@ -461,7 +461,7 @@ int main(int argc, char **argv)
                                              entries, &to, &number, &eod)))
             {
               LogError(COMPONENT_STDOUT, ERR_FSAL, st.major, st.minor);
-              error = TRUE;
+              error = true;
             }
 
           for(i = 0; (!error) && (i < number); i++)
@@ -491,8 +491,8 @@ int main(int argc, char **argv)
       hpssfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
-      fsal_boolean_t eod = FALSE;
-      int error = FALSE;
+      bool eod = false;
+      int error = false;
 
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
@@ -521,7 +521,7 @@ int main(int argc, char **argv)
                                              entries, &to, &number, &eod)))
             {
               LogError(COMPONENT_STDOUT, ERR_FSAL, st.major, st.minor);
-              error = TRUE;
+              error = true;
             }
 
           if(number > 0)
@@ -555,8 +555,8 @@ int main(int argc, char **argv)
       hpssfsal_cookie_t from, to;
       fsal_dirent_t entries[READDIR_SIZE];
       fsal_count_t number;
-      fsal_boolean_t eod = FALSE;
-      int error = FALSE;
+      bool eod = false;
+      int error = false;
 
       attribs.asked_attributes = mask;
       if(FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
@@ -584,7 +584,7 @@ int main(int argc, char **argv)
           if(FSAL_IS_ERROR(st))
             {
               LogError(COMPONENT_STDOUT, ERR_FSAL, st.major, st.minor);
-              error = TRUE;
+              error = true;
             }
 
           /* for each entry, we compare the result of FSAL_access

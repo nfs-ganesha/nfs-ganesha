@@ -59,7 +59,7 @@ extern SVCAUTH Svc_auth_none;
  */
 enum auth_stat
 Gssrpc__svcauth_unix(register struct svc_req *rqst,
-                     register struct rpc_msg *msg, bool_t * dispatch)
+                     register struct rpc_msg *msg, bool * dispatch)
 {
   register enum auth_stat stat;
   XDR xdrs;
@@ -143,7 +143,7 @@ Gssrpc__svcauth_unix(register struct svc_req *rqst,
  */
  /*ARGSUSED*/
     enum auth_stat
-Gssrpc__svcauth_short(struct svc_req *rqst, struct rpc_msg *msg, bool_t * dispatch)
+Gssrpc__svcauth_short(struct svc_req *rqst, struct rpc_msg *msg, bool * dispatch)
 {
   rqst->rq_xprt->xp_auth = &Svc_auth_none;
   return (AUTH_REJECTEDCRED);

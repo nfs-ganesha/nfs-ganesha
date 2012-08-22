@@ -890,7 +890,8 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
   fsal_status = obj_hdl->ops->setextattr_value(obj_hdl,
                                                attr_name,
                                                empty_buff,
-                                               sizeof(empty_buff), TRUE);
+                                               sizeof(empty_buff),
+                                               true);
 
   if(FSAL_IS_ERROR(fsal_status))
     {

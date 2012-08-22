@@ -220,7 +220,7 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                               fsal_dirent_t * p_pdirent,        /* OUT */
                               fsal_cookie_t * end_position,        /* OUT */
                               fsal_count_t * p_nb_entries,      /* OUT */
-                              fsal_boolean_t * p_end_of_dir     /* OUT */
+                              bool * p_end_of_dir     /* OUT */
     )
 {
   xfsfsal_dir_t * p_dir_descriptor = (xfsfsal_dir_t * ) dir_descriptor;

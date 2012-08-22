@@ -211,7 +211,7 @@ int nfs_Create(nfs_arg_t *parg,
 
           mode = 0;
         }
-      else if(parg->arg_create3.how.createhow3_u.obj_attributes.mode.set_it == TRUE)
+      else if(parg->arg_create3.how.createhow3_u.obj_attributes.mode.set_it)
         mode =
             unix2fsal_mode(parg->arg_create3.how.createhow3_u.obj_attributes.mode.
                            set_mode3_u.mode);
@@ -559,7 +559,7 @@ out:
 void nfs_Create_Free(nfs_res_t * resp)
 {
   if((resp->res_create3.status == NFS3_OK) &&
-     (resp->res_create3.CREATE3res_u.resok.obj.handle_follows == TRUE))
+     (resp->res_create3.CREATE3res_u.resok.obj.handle_follows))
     gsh_free(resp->res_create3.CREATE3res_u.resok.obj
              .post_op_fh3_u.handle.data.data_val);
 }

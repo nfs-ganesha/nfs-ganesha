@@ -105,7 +105,7 @@ fsal_status_t MFSL_getattrs(mfsl_object_t * filehandle, /* IN */
         return fsal_status;
 
       /* Is the object deleted ? */
-      if(pasyncdata->deleted == TRUE)
+      if(pasyncdata->deleted == true)
         MFSL_return(ERR_FSAL_NOENT, ENOENT);
 
       /* merge the attributes to the asynchronous attributes */

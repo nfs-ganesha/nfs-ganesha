@@ -95,7 +95,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
         /* FSID of candidate file to return */
         fsal_fsid_t fsid = {0, 0};
         /* True if the supplied layout state was deleted */
-        bool_t deleted = FALSE;
+        bool deleted = false;
         /* State specified in the case of LAYOUTRETURN4_FILE */
         state_t *layout_state = NULL;
         /* State owner associated with this clientid, for bulk returns */
@@ -118,7 +118,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
         case LAYOUTRETURN4_FILE:
                 if ((nfs_status = nfs4_sanity_check_FH(data,
                                                        REGULAR_FILE,
-                                                       FALSE))
+                                                       false))
                     != NFS4_OK) {
                         res_LAYOUTRETURN4->lorr_status = nfs_status;
                         return res_LAYOUTRETURN4->lorr_status;
@@ -152,7 +152,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
                         nfs4_return_one_state(
                                 data->current_entry,
                                 data->req_ctx,
-                                FALSE,
+                                false,
                                 arg_LAYOUTRETURN4->lora_reclaim,
                                 arg_LAYOUTRETURN4->lora_layoutreturn
                                 .lr_returntype,
@@ -189,7 +189,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
 
         case LAYOUTRETURN4_FSID:
                 if ((nfs_status
-                     = nfs4_sanity_check_FH(data, NO_FILE_TYPE, FALSE))
+                     = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false))
                     != NFS4_OK) {
                         res_LAYOUTRETURN4->lorr_status = nfs_status;
                         return res_LAYOUTRETURN4->lorr_status;
@@ -264,7 +264,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
                                 nfs4_return_one_state(
                                         layout_state->state_pentry,
                                         data->req_ctx,
-                                        TRUE,
+                                        true,
                                         arg_LAYOUTRETURN4->lora_reclaim,
                                         (arg_LAYOUTRETURN4->lora_layoutreturn
                                          .lr_returntype),
@@ -334,14 +334,14 @@ void nfs4_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
 nfsstat4
 nfs4_return_one_state(cache_entry_t *entry,
                       struct req_op_context *req_ctx,
-                      bool_t synthetic,
-                      bool_t reclaim,
+                      bool synthetic,
+                      bool reclaim,
                       layoutreturn_type4 return_type,
                       state_t *layout_state,
                       struct pnfs_segment spec_segment,
                       size_t body_len,
                       const void *body_val,
-                      bool_t *deleted)
+                      bool *deleted)
 {
         /* Return from SAL calls */
         state_status_t state_status = 0;
@@ -360,7 +360,7 @@ nfs4_return_one_state(cache_entry_t *entry,
         /* The current segment in iteration */
         state_layout_segment_t *segment = NULL;
         /* If we have a lock on the segment */
-        bool_t seg_locked = FALSE;
+        bool seg_locked = false;
 
         if (body_val) {
                 xdrmem_create(&lrf_body,
@@ -390,7 +390,7 @@ nfs4_return_one_state(cache_entry_t *entry,
                                               sls_state_segments);
 
                         pthread_mutex_lock(&segment->sls_mutex);
-                        seg_locked = TRUE;
+                        seg_locked = true;
 
                         arg.cur_segment = segment->sls_segment;
                         arg.fsal_seg_data = segment->sls_fsal_data;
@@ -398,10 +398,10 @@ nfs4_return_one_state(cache_entry_t *entry,
 
                         if (pnfs_segment_contains(spec_segment,
                                                   segment->sls_segment)) {
-                                arg.dispose = TRUE;
+                                arg.dispose = true;
                         } else if (pnfs_segments_overlap(spec_segment,
                                                 segment->sls_segment)) {
-                                arg.dispose = FALSE;
+                                arg.dispose = false;
                         } else {
                                 pthread_mutex_unlock(&segment->sls_mutex);
                                 continue;
@@ -433,7 +433,7 @@ nfs4_return_one_state(cache_entry_t *entry,
                                 pthread_mutex_unlock(&segment->sls_mutex);
                         }
                 }
-                seg_locked = FALSE;
+                seg_locked = false;
 
                 if (body_val) {
                         /* This really should work in all cases for an
@@ -442,9 +442,9 @@ nfs4_return_one_state(cache_entry_t *entry,
                 }
                 if (glist_empty(&layout_state->state_data.layout.state_segments)) {
                         state_del(layout_state, &state_status);
-                        *deleted = TRUE;
+                        *deleted = true;
                 } else {
-                        *deleted = FALSE;
+                        *deleted = false;
                 }
         } else {
                 /* For a reclaim return, there are no recorded segments in
@@ -453,8 +453,8 @@ nfs4_return_one_state(cache_entry_t *entry,
                 arg.cur_segment.offset = 0;
                 arg.cur_segment.length = 0;
                 arg.fsal_seg_data = NULL;
-                arg.last_segment = FALSE;
-                arg.dispose = FALSE;
+                arg.last_segment = false;
+                arg.dispose = false;
 
 
                 nfs_status =
@@ -467,7 +467,7 @@ nfs4_return_one_state(cache_entry_t *entry,
                 if (nfs_status != NFS4_OK) {
                         goto out;
                 }
-                *deleted = TRUE;
+                *deleted = true;
         }
 
         nfs_status = NFS4_OK;
@@ -492,12 +492,12 @@ out:
  *
  * @param[in] export The export to check.
  *
- * @return TRUE or FALSE.
+ * @return true or false.
  */
-bool_t nfs4_pnfs_supported(const exportlist_t *export)
+bool nfs4_pnfs_supported(const exportlist_t *export)
 {
         if (!export) {
-                return FALSE;
+                return false;
         } else {
                 return (export->export_hdl->ops
                         ->fs_supports(export->export_hdl,

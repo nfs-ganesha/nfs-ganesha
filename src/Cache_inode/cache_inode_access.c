@@ -72,7 +72,7 @@ cache_inode_access_sw(cache_entry_t *entry,
                       fsal_accessflags_t access_type,
                       struct req_op_context *req_ctx,
                       cache_inode_status_t *status,
-                      int use_mutex)
+                      bool use_mutex)
 {
      fsal_status_t fsal_status;
      fsal_accessflags_t used_access_type;
@@ -149,7 +149,7 @@ cache_inode_access_no_mutex(cache_entry_t *entry,
                             cache_inode_status_t * status)
 {
     return cache_inode_access_sw(entry, access_type,
-                                 req_ctx, status, FALSE);
+                                 req_ctx, status, false);
 }
 
 /**
@@ -174,5 +174,5 @@ cache_inode_access(cache_entry_t *entry,
                    cache_inode_status_t * status)
 {
     return cache_inode_access_sw(entry, access_type,
-                                 req_ctx, status, TRUE);
+                                 req_ctx, status, true);
 }

@@ -55,7 +55,7 @@ void ReleaseTokenFSCall();
  * (in the other cases, return codes are only logged
  * in the NIV_FULL_DEBUG logging lovel).
  */
-fsal_boolean_t fsal_do_log(fsal_status_t status);
+bool fsal_do_log(fsal_status_t status);
 
 void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
                                           bitmap4 * pbitmap);
@@ -149,7 +149,7 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * p_dir_descriptor,     /* IN */
                                 fsal_dirent_t * p_pdirent,      /* OUT */
                                 fsal_cookie_t * p_end_position,    /* OUT */
                                 fsal_count_t * p_nb_entries,    /* OUT */
-                                fsal_boolean_t * p_end_of_dir /* OUT */ );
+                                bool * p_end_of_dir /* OUT */ );
 
 fsal_status_t PROXYFSAL_closedir(fsal_dir_t * p_dir_descriptor /* IN */ );
 
@@ -172,7 +172,7 @@ fsal_status_t PROXYFSAL_read(fsal_file_t * p_file_descriptor,      /* IN */
                              fsal_size_t buffer_size,   /* IN */
                              caddr_t buffer,    /* OUT */
                              fsal_size_t * p_read_amount,       /* OUT */
-                             fsal_boolean_t * p_end_of_file /* OUT */ );
+                             bool * p_end_of_file /* OUT */ );
 
 fsal_status_t PROXYFSAL_write(fsal_file_t * p_file_descriptor,     /* IN */
                               fsal_op_context_t * p_context,       /* IN */
@@ -239,7 +239,7 @@ fsal_status_t PROXYFSAL_rcp(fsal_handle_t * filehandle,    /* IN */
                             fsal_rcpflag_t transfer_opt /* IN */ );
 
 void PROXYFSAL_get_stats(fsal_statistics_t * stats,     /* OUT */
-                         fsal_boolean_t reset /* IN */ );
+                         bool reset /* IN */ );
 
 int PROXYFSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
                         fsal_status_t * status);

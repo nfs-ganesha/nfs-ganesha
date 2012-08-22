@@ -103,7 +103,7 @@ fsal_openflags_t posix_status (struct fsal_obj_handle * obj_hdl)
  */
 
 fsal_status_t posix_read (struct fsal_obj_handle * obj_hdl,
-                          uint64_t offset, size_t buffer_size, void *buffer, size_t * read_amount, bool_t * end_of_file)
+                          uint64_t offset, size_t buffer_size, void *buffer, size_t * read_amount, bool * end_of_file)
 {
     struct posix_fsal_obj_handle *myself;
     ssize_t nb_read;
@@ -121,7 +121,7 @@ fsal_status_t posix_read (struct fsal_obj_handle * obj_hdl,
         fsal_error = posix2fsal_error (retval);
         goto out;
     }
-    *end_of_file = nb_read == 0 ? TRUE : FALSE;
+    *end_of_file = nb_read == 0 ? true : false;
     *read_amount = nb_read;
   out:
     return fsalstat (fsal_error, retval);

@@ -209,7 +209,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p",
             (u32)*msgtag, *fid, *newfid, *nwqid,  (unsigned long long)pnewfid->qid.path, pnewfid->pentry ) ;
 
-  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

@@ -531,7 +531,7 @@ void dec_nsm_client_ref(state_nsm_client_t *pclient)
   rc = HashTable_GetLatch(ht_nsm_client,
                           &buffkey,
                           &old_value,
-                          TRUE,
+                          true,
                           &latch);
 
   if(rc != HASHTABLE_SUCCESS)
@@ -681,7 +681,7 @@ state_nsm_client_t *get_nsm_client(care_t    care,
   rc = HashTable_GetLatch(ht_nsm_client,
                           &buffkey,
                           &buffval,
-                          TRUE,
+                          true,
                           &latch);
 
   /* If we found it, return it */
@@ -800,7 +800,7 @@ state_nsm_client_t *get_nsm_client(care_t    care,
                             &buffval,
                             &buffval,
                             &latch,
-                            FALSE,
+                            false,
                             NULL,
                             NULL);
 
@@ -886,7 +886,7 @@ void dec_nlm_client_ref(state_nlm_client_t *pclient)
   rc = HashTable_GetLatch(ht_nlm_client,
                           &buffkey,
                           &old_value,
-                          TRUE,
+                          true,
                           &latch);
 
   if(rc != HASHTABLE_SUCCESS)
@@ -984,7 +984,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   rc = HashTable_GetLatch(ht_nlm_client,
                           &buffkey,
                           &buffval,
-                          TRUE,
+                          true,
                           &latch);
 
   /* If we found it, return it */
@@ -1092,7 +1092,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
                             &buffval,
                             &buffval,
                             &latch,
-                            FALSE,
+                            false,
                             NULL,
                             NULL);
 

@@ -424,7 +424,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
                              cache_inode_status_t *status)
 {
   fsal_status_t fsal_status;
-  bool_t eod = FALSE;
+  bool eod = false;
 
   struct cache_inode_populate_cb_state state;
 
@@ -506,7 +506,7 @@ cache_inode_status_t
 cache_inode_readdir(cache_entry_t *directory,
                     uint64_t cookie,
                     unsigned int *nbfound,
-                    bool_t *eod_met,
+                    bool *eod_met,
                     struct req_op_context *req_ctx,
                     cache_inode_readdir_cb_t cb,
                     void *cb_opaque,
@@ -523,7 +523,7 @@ cache_inode_readdir(cache_entry_t *directory,
              FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
      /* True if the most recently traversed directory entry has been
         added to the caller's result. */
-     bool_t in_result = TRUE;
+     bool in_result = true;
 
      /* Set the return default to CACHE_INODE_SUCCESS */
      *status = CACHE_INODE_SUCCESS;
@@ -610,7 +610,7 @@ cache_inode_readdir(cache_entry_t *directory,
      /* Now satisfy the request from the cached readdir--stop when either
       * the requested sequence or dirent sequence is exhausted */
      *nbfound = 0;
-     *eod_met = FALSE;
+     *eod_met = false;
 
      while (in_result && dirent_node) {
           cache_entry_t *entry = NULL;
@@ -677,9 +677,9 @@ cache_inode_readdir(cache_entry_t *directory,
         added to the result */;
 
      if (!dirent_node && in_result) {
-          *eod_met = TRUE;
+          *eod_met = true;
      } else {
-          *eod_met = FALSE;
+          *eod_met = false;
      }
 
 unlock_dir:

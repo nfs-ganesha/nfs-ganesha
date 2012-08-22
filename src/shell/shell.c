@@ -315,7 +315,7 @@ static shell_state_t *GetShellContext()
       /* setting default values */
 
       p_current_thread_vars->input_stream = stdin;
-      p_current_thread_vars->interactive = TRUE;
+      p_current_thread_vars->interactive = true;
       p_current_thread_vars->layer = NULL;
       p_current_thread_vars->status = 0;
       p_current_thread_vars->verbose = 0;
@@ -783,7 +783,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
   for(i = 0; i < argc; i++)
     {
 
-      out_allocated[i] = FALSE;
+      out_allocated[i] = false;
 
       /* double quotes */
 
@@ -993,7 +993,7 @@ int shell_SolveArgs(int argc, char **in_out_argv, int *out_allocated)
 
               memcpy(in_out_argv[i], output_string, rc);
 
-              out_allocated[i] = TRUE;
+              out_allocated[i] = true;
 
               in_out_argv[i][rc] = '\0';
 
@@ -1053,7 +1053,7 @@ void shell_CleanArgs(int argc, char **in_out_argv, int *in_allocated)
         {
           gsh_free(in_out_argv[i]);
           in_out_argv[i] = NULL;
-          in_allocated[i] = FALSE;
+          in_allocated[i] = false;
         }
 
     }
@@ -1361,10 +1361,10 @@ int shell_SetVerbose(shell_state_t * context, char *str_verbose)
   char tracebuff[TRACEBUFFSIZE];
 
   if(!strcasecmp(str_verbose, "ON") ||
-     !strcasecmp(str_verbose, "TRUE") ||
+     !strcasecmp(str_verbose, "true") ||
      !strcasecmp(str_verbose, "YES") || !strcmp(str_verbose, "1"))
     {
-      context->verbose = TRUE;
+      context->verbose = true;
 
       rc = set_var_value("VERBOSE", "1");
 
@@ -1379,10 +1379,10 @@ int shell_SetVerbose(shell_state_t * context, char *str_verbose)
 
     }
   else if(!strcasecmp(str_verbose, "OFF") ||
-          !strcasecmp(str_verbose, "FALSE") ||
+          !strcasecmp(str_verbose, "false") ||
           !strcasecmp(str_verbose, "NO") || !strcmp(str_verbose, "0"))
     {
-      context->verbose = FALSE;
+      context->verbose = false;
 
       rc = set_var_value("VERBOSE", "0");
 
@@ -1526,9 +1526,9 @@ int shell_SetInput(shell_state_t * context, char *file_name)
           shell_PrintError(context, tracebuff);
         }
 
-      /* set interative mode to FALSE */
+      /* set interative mode to false */
 
-      context->interactive = FALSE;
+      context->interactive = false;
 
       rc = set_var_value("INTERACTIVE", "0");
 
@@ -1570,9 +1570,9 @@ int shell_SetInput(shell_state_t * context, char *file_name)
           shell_PrintError(context, tracebuff);
         }
 
-      /* set interative mode to TRUE */
+      /* set interative mode to true */
 
-      context->interactive = TRUE;
+      context->interactive = true;
 
       rc = set_var_value("INTERACTIVE", "1");
 

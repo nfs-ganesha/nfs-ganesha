@@ -100,7 +100,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      key.len = fsdata->fh_desc.len;
 
      hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
-                              FALSE,
+                              false,
                               &latch);
 
      if ((hrc != HASHTABLE_SUCCESS) &&

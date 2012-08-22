@@ -110,7 +110,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
         res_LOCK4->status = NFS4_OK;
 
         res_LOCK4->status = nfs4_sanity_check_FH(data, REGULAR_FILE,
-                                                 FALSE);
+                                                 false);
         if (res_LOCK4->status != NFS4_OK) {
                 return res_LOCK4->status;
         }

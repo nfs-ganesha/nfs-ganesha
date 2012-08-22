@@ -9,8 +9,7 @@
 #include  "fsal.h"
 #include <sys/stat.h>
 #include "FSAL/access_check.h"
-
-
+#include <stdbool.h>
 
 static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
                                  fsal_aceperm_t v4mask,  /* IN */
@@ -21,31 +20,31 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 				    struct attrlist * p_object_attributes /* IN */ );
 
 
-static bool_t fsal_check_ace_owner(uint64_t uid, struct user_cred *creds)
+static bool fsal_check_ace_owner(uint64_t uid, struct user_cred *creds)
 {
   return (creds->caller_uid == uid);
 }
 
-static bool_t fsal_check_ace_group(uint64_t gid, struct user_cred *creds)
+static bool fsal_check_ace_group(uint64_t gid, struct user_cred *creds)
 {
   int i;
 
   if(creds->caller_gid == gid)
-    return TRUE;
+    return true;
 
   for(i = 0; i < creds->caller_glen; i++)
     {
       if(creds->caller_garray[i] == gid)
-        return TRUE;
+        return true;
     }
 
-  return FALSE;
+  return false;
 }
 
-static bool_t fsal_check_ace_matches(fsal_ace_t *pace,
+static bool fsal_check_ace_matches(fsal_ace_t *pace,
                                      struct user_cred *creds,
-                                     bool_t is_owner,
-                                     bool_t is_group)
+                                     bool is_owner,
+                                     bool is_group)
 {
   int matches = 0;
 
@@ -87,21 +86,21 @@ static bool_t fsal_check_ace_matches(fsal_ace_t *pace,
   return (matches != 0);
 }
 
-static bool_t fsal_check_ace_applicable(fsal_ace_t *pace,
+static bool fsal_check_ace_applicable(fsal_ace_t *pace,
                                         struct user_cred *creds,
-                                        bool_t is_dir,
-                                        bool_t is_owner,
-                                        bool_t is_group)
+                                        bool is_dir,
+                                        bool is_owner,
+                                        bool is_group)
 {
-  bool_t is_applicable = FALSE;
-  bool_t is_file = !is_dir;
+  bool is_applicable = false;
+  bool is_file = !is_dir;
 
   /* To be applicable, the entry should not be INHERIT_ONLY. */
   if (IS_FSAL_ACE_INHERIT_ONLY(*pace))
     {
       LogDebug(COMPONENT_FSAL, "fsal_check_ace_applicable: Not applicable, "
                "inherit only");
-      return FALSE;
+      return false;
     }
 
   /* Use GPFS internal flag to further check the entry is applicable to this
@@ -111,7 +110,7 @@ static bool_t fsal_check_ace_applicable(fsal_ace_t *pace,
       if(!IS_FSAL_FILE_APPLICABLE(*pace))
         {
           LogDebug(COMPONENT_FSAL, "fsal_check_ace_applicable: Not applicable to file");
-          return FALSE;
+          return false;
         }
     }
   else  /* directory */
@@ -119,7 +118,7 @@ static bool_t fsal_check_ace_applicable(fsal_ace_t *pace,
       if(!IS_FSAL_DIR_APPLICABLE(*pace))
         {
           LogDebug(COMPONENT_FSAL, "fsal_check_ace_applicable: Not applicable to dir");
-          return FALSE;
+          return false;
         }
     }
 
@@ -191,13 +190,13 @@ static void fsal_print_ace(int ace_number, fsal_ace_t *pace, char *p_acebuf)
 static void fsal_print_access_by_acl(int naces, int ace_number,
                                      fsal_ace_t *pace, fsal_aceperm_t perm,
                                      unsigned int access_result,
-                                     bool_t is_dir,
+                                     bool is_dir,
                                      struct user_cred *creds)
 {
   char ace_data[ACL_DEBUG_BUF_SIZE];
   char access_data[2 * ACL_DEBUG_BUF_SIZE];
   uint64_t user = creds->caller_uid;
-  bool_t is_last_ace = (naces == ace_number);
+  bool is_last_ace = (naces == ace_number);
 
   if(!is_last_ace)
     fsal_print_ace(ace_number, pace, ace_data);
@@ -236,16 +235,16 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   fsal_acl_t *pacl = NULL;
   fsal_ace_t *pace = NULL;
   int ace_number = 0;
-  bool_t is_dir = FALSE;
-  bool_t is_owner = FALSE;
-  bool_t is_group = FALSE;
+  bool is_dir = false;
+  bool is_owner = false;
+  bool is_group = false;
 
   /* unsatisfied flags */
   missing_access = v4mask;
   if(!missing_access)
     {
       LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: Nothing was requested");
-      return TRUE;
+      return true;
     }
 
   /* Get file ownership information. */
@@ -277,7 +276,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
       if(!missing_access)
         {
           LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: Met owner privileges");
-          return TRUE;
+          return true;
         }
     }
 
@@ -311,7 +310,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
                       LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: access granted");
                       fsal_print_access_by_acl(pacl->naces, ace_number, pace,
                                                      v4mask, ERR_FSAL_NO_ERROR, is_dir, creds);
-                      return TRUE;
+                      return true;
                     }
                 }
              else if(pace->perm & missing_access)
@@ -319,7 +318,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
                  LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: access denied");
                  fsal_print_access_by_acl(pacl->naces, ace_number, pace, v4mask,
                                                 ERR_FSAL_ACCESS, is_dir, creds);
-                 return FALSE;
+                 return false;
                }
             }
         }
@@ -330,12 +329,12 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   if(missing_access)
     {
       LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: access denied");
-      return FALSE;
+      return false;
     }
   else
     {
       LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: access granted");
-      return TRUE;
+      return true;
     }
 }
 
@@ -349,7 +348,7 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 
 	if( !access_type) {
 		LogDebug(COMPONENT_FSAL, "fsal_check_access_no_acl: Nothing was requested");
-		return TRUE;
+		return true;
 	}
 
 	uid = p_object_attributes->owner;
@@ -375,7 +374,7 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 			LogDebug(COMPONENT_FSAL,
 				 "fsal_check_access_no_acl: File owner ok user %"PRIu64,
 				 uid);
-			return TRUE;
+			return true;
 		}
 		mode >>= 6;
 	} else { /* followed by group(s) */
@@ -395,9 +394,9 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 	}
 	/* others fall out the bottom... */
 	if((mask & ~mode & S_IRWXO) == 0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
 /* test_access

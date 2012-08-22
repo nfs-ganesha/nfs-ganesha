@@ -95,7 +95,7 @@ fsal_status_t FUSEFSAL_access(fsal_handle_t * obj_handle,        /* IN */
 
       /* TODO : remove entry from namespace if entry is stale */
       if(rc)
-        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_access);
+        Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_access);
     }
   else if(p_fs_ops->getattr)
     {

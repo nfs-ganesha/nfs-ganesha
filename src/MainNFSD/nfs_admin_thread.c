@@ -54,7 +54,7 @@
 exportlist_t *temp_pexportlist;
 pthread_cond_t admin_condvar = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex_admin_condvar = PTHREAD_MUTEX_INITIALIZER;
-bool_t reload_exports;
+bool reload_exports;
 
 void nfs_Init_admin_data(void)
 {
@@ -64,7 +64,7 @@ void nfs_Init_admin_data(void)
 void admin_replace_exports()
 {
   P(mutex_admin_condvar);
-  reload_exports = TRUE;
+  reload_exports = true;
   if(pthread_cond_signal(&(admin_condvar)) == -1)
       LogCrit(COMPONENT_MAIN,
               "admin_replace_exports - admin cond signal failed , errno = %d (%s)",
@@ -114,7 +114,7 @@ int rebuild_export_list()
 
   /* At least one worker thread should exist. Each worker thread has a pointer to
    * the same hash table. */
-  if(nfs_export_create_root_entry(temp_pexportlist) != TRUE)
+  if(!nfs_export_create_root_entry(temp_pexportlist))
     {
       LogCrit(COMPONENT_MAIN,
               "replace_exports: Error initializing Cache Inode root entries");
@@ -173,9 +173,9 @@ void *admin_thread(void *UnusedArg)
   while(1)
     {
       P(mutex_admin_condvar);
-      while(reload_exports == FALSE)
+      while(reload_exports == false)
             pthread_cond_wait(&(admin_condvar), &(mutex_admin_condvar));
-      reload_exports = FALSE;
+      reload_exports = false;
       V(mutex_admin_condvar);
 
       if (rebuild_export_list() <= 0)

@@ -290,7 +290,7 @@ gssd_acquire_cred(char *server_name, const gss_OID oid)
 
 		if (maj_stat != GSS_S_COMPLETE) {
 			pgsserr("gss_import_name", maj_stat, min_stat, g_mechOid);
-			return (FALSE);
+			return (false);
 		}
 	}
 

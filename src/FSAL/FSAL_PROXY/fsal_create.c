@@ -145,11 +145,11 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
   memset((char *)&name, 0, sizeof(component4));
   name.utf8string_val = nameval;
   name.utf8string_len = sizeof(nameval);
-  if(fsal_internal_proxy_fsal_name_2_utf8(p_filename, &name) == FALSE)
+  if(fsal_internal_proxy_fsal_name_2_utf8(p_filename, &name) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, parent_directory_handle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, parent_directory_handle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
   if(isFullDebug(COMPONENT_FSAL))
@@ -257,7 +257,7 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
      (&
       (resnfs4.resarray.resarray_val[FSAL_CREATE_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
        GETFH4res_u.resok4.object), FSAL_TYPE_FILE, attributes.fileid,
-      object_handle) == FALSE)
+      object_handle) == false)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
   /* Keep the information into the file descriptor as well */

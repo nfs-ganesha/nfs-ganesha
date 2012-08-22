@@ -404,7 +404,7 @@ int nfs4_Compound(nfs_arg_t *arg,
       /* If the cache is already in use, free it. */
       if(data.pcached_res->res_cached)
         {
-          data.pcached_res->res_cached = FALSE;
+          data.pcached_res->res_cached = false;
           nfs4_Compound_Free((nfs_res_t *)data.pcached_res);
         }
 
