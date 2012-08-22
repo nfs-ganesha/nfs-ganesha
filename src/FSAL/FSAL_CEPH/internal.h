@@ -122,5 +122,7 @@ void ceph2fsal_attributes(const struct stat *buffstat,
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
 void ds_ops_init(struct fsal_ds_ops *ops);
+void export_ops_pnfs(struct export_ops *ops);
+void handle_ops_pnfs(struct fsal_obj_ops *ops);
 
 #endif /* !FSAL_CEPH_INTERNAL_INTERNAL__ */
