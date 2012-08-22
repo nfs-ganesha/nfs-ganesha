@@ -2025,7 +2025,7 @@ atomic_store_size_t(size_t *var, size_t val)
 static inline void
 atomic_store_size_t(size_t *var, size_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2074,7 +2074,7 @@ atomic_store_ptrdiff_t(ptrdiff_t *var, ptrdiff_t val)
 static inline void
 atomic_store_ptrdiff_t(ptrdiff_t *var, ptrdiff_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2123,7 +2123,7 @@ atomic_store_int64_t(int64_t *var, int64_t val)
 static inline void
 atomic_store_int64_t(int64_t *var, int64_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2172,7 +2172,7 @@ atomic_store_uint64_t(uint64_t *var, uint64_t val)
 static inline void
 atomic_store_uint64_t(uint64_t *var, uint64_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2221,7 +2221,7 @@ atomic_store_int32_t(int32_t *var, int32_t val)
 static inline void
 atomic_store_int32_t(int32_t *var, int32_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2270,7 +2270,7 @@ atomic_store_uint32_t(uint32_t *var, uint32_t val)
 static inline void
 atomic_store_uint32_t(uint32_t *var, uint32_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2319,7 +2319,7 @@ atomic_store_int16_t(int16_t *var, int16_t val)
 static inline void
 atomic_store_int16_t(int16_t *var, int16_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2368,7 +2368,7 @@ atomic_store_uint16_t(uint16_t *var, uint16_t val)
 static inline void
 atomic_store_uint16_t(uint16_t *var, uint16_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2417,7 +2417,7 @@ atomic_store_int8_t(int8_t *var, int8_t val)
 static inline void
 atomic_store_int8_t(int8_t *var, int8_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 
@@ -2466,7 +2466,7 @@ atomic_store_uint8_t(uint8_t *var, uint8_t val)
 static inline void
 atomic_store_uint8_t(uint8_t *var, uint8_t val)
 {
-     __sync_lock_test_and_set(var, 0);
+     __sync_lock_test_and_set(var, val);
 }
 #endif
 #endif /* !_ABSTRACT_ATOMIC_H */
