@@ -94,7 +94,8 @@ int mnt_Mnt(nfs_arg_t *parg,
   char                   MountPath[MAXPATHLEN+2];
   char                 * hostname;
   fsal_path_t            fsal_path;
-  unsigned int           bytag = FALSE;
+  bool_t                 bytag = FALSE;
+  bool_t                 found = FALSE;
   fsal_op_context_t      context;
   char                 * ListPath;
   char                   dumpfh[1024];
@@ -128,8 +129,8 @@ int mnt_Mnt(nfs_arg_t *parg,
 
       if(MountPath[0] != '/')
         {
-          /* The input value may be a "Tag" */
-          if(!strcmp(MountPath, p_current_item->FS_tag))
+          /* The input value may be a "Tag", don't use "/" terminated MountPath */
+          if(!strcmp(parg->arg_mnt, p_current_item->FS_tag))
             {
               LogDebug(COMPONENT_NFSPROTO,
                        "MOUNT: Mount matched Tag %s for Path %s, export_id=%u",
@@ -138,6 +139,7 @@ int mnt_Mnt(nfs_arg_t *parg,
                        p_current_item->id);
               ListPath = p_current_item->fullpath;
               bytag = TRUE;
+              found = TRUE;
               break;
             }
         }
@@ -152,21 +154,18 @@ int mnt_Mnt(nfs_arg_t *parg,
                        "MOUNT: Mount matched Path %s, export_id=%u",
                        p_current_item->fullpath,
                        p_current_item->id);
+              found = TRUE;
               break;
             }
         }
     }
 
-  /* if p_current_item is not null,
-   * it points to the asked export entry.
-   */
-
-  if(!p_current_item)
+  if(!found)
     {
       /* No export found, return ACCESS error. */
       LogEvent(COMPONENT_NFSPROTO,
-               "MOUNT: Export entry for path %s not found",
-               MountPath);
+               "MOUNT: Export entry for %s not found",
+               parg->arg_mnt);
 
       /* entry not found. */
       /* @todo : not MNT3ERR_NOENT => ok */
@@ -385,7 +384,7 @@ int mnt_Mnt(nfs_arg_t *parg,
     {
       LogInfo(COMPONENT_NFSPROTO,
               "MOUNT: Error when adding entry (%s,%s) to the mount list, Mount command will be successfull anyway",
-              hostname, MountPath);
+              hostname, ListPath);
     }
 
   return NFS_REQ_OK;
