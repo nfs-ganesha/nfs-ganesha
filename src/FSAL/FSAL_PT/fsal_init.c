@@ -65,10 +65,7 @@ pthread_mutex_t g_close_mutex;
 pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
 
-/* Following are for FSI_TRACE control and mapping to Ganesha Trace Facility */
-int g_ptfsal_debug_level;    
-int g_ptfsal_comp_num;
-int g_ptfsal_comp_level;
+
 
 static int ptfsal_closeHandle_listener_thread_init(void);
 static int ptfsal_polling_closeHandler_thread_init(void);
@@ -102,15 +99,6 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   /* sanity check.  */
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
-
-  /* These are initial values until we get our own Ganesha component */
-  g_ptfsal_debug_level = FSI_NOTICE;   // TODO get our own mechanism to set
-                                      //  or have these settable by Ganesha
-                                      //  debug control
-  g_ptfsal_comp_num = (int) COMPONENT_FSAL;  // till we get our own comp
-  g_ptfsal_comp_level = (int) NIV_INFO;      // only has meaning if syslog
-                                             // used,using g_ptfsal_debug_level
-                                             // to control instead, 
 
   /* proceeds FSAL internal initialization */
   status = fsal_internal_init_global(&(init_info->fsal_info),

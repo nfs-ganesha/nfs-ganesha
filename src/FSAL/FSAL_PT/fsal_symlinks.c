@@ -46,7 +46,6 @@
 #include "config.h"
 #endif
 
-#include "fsi_ipc_ccl.h"
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"

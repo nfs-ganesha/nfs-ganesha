@@ -24,7 +24,6 @@
 #include "config.h"
 #endif
 
-#include "fsi_ipc_ccl.h"
 #include "pt_ganesha.h"
 #include "fsal.h"
 #include "fsal_internal.h"

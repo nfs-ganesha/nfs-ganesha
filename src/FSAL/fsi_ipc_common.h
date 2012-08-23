@@ -336,6 +336,8 @@ struct CommonMsgHdr {
   uint64_t       dbgMsgCrc;       // debug only - if calculating CRC
                                   // invert 0 CRC. Use != 0 as indicator
                                   // we are using CRC
+  char           client_ip_addr[FSI_IPC_OPEN_IP_ADDR_STR_SIZE];
+                                  // client's IP address
 };
 
 struct ClientOpLogReqMsg {
@@ -357,7 +359,6 @@ struct ClientOpLogReqMtext {
 // ClientOpOpen Client Request Message
 struct ClientOpOpenReqMsg {
   char     fileName[PATH_MAX]; // filename
-  char     clientIPAddress[FSI_IPC_OPEN_IP_ADDR_STR_SIZE];
   uint64_t fileFlags;          // flags
   uint64_t fileMode;           // mode
   uint64_t uid;                // user ID
@@ -992,9 +993,9 @@ struct ClientOpSysAclDeletePermReqMtext {
 
 // ClientOpSysAclDeleteDefFile Server Request Message
 struct ClientOpSysAclDeleteDefFileReqMsg {
-  char       path[PATH_MAX];
-  uint64_t   uid;
-  uint64_t   gid;
+  char     path[PATH_MAX];
+  uint64_t uid;
+  uint64_t gid;
 };
 
 struct ClientOpSysAclDeleteDefFileReqMtext {
@@ -1114,7 +1115,7 @@ struct shmbuf_layout_t {
 // ---------------------------------------------------------------------------
 
 // TODO - Find a better way to size this depending on the biggest request or
-// response message among all messages. For now, we set the size to rename
+// response message among all messages. For now, we set the size to symlink
 // which is the current the biggest message.
 #define FSI_IPC_MSG_SIZE sizeof(struct ClientOpSymLinkReqMtext)
 

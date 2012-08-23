@@ -24,6 +24,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "pt_ganesha.h"
 #include "fsal_convert.h"
 #include "fsal_internal.h"
 #include "nfs4_acls.h"
@@ -32,9 +34,6 @@
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
-
-// PTFSAL
-#include "pt_ganesha.h"
 
 #define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
 #define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )

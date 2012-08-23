@@ -39,6 +39,10 @@
 #define FSI_BLOCK_ALIGN(x, blocksize) \
 (((x) % (blocksize)) ? (((x) / (blocksize)) * (blocksize)) : (x))
 
+#define FSI_COMMAND_TIMEOUT_SEC  300     // When polling for results, number
+                                         // of seconds to try before timingout
+#define USLEEP_INTERVAL        10000     // Parameter to usleep 
+
 // FSI IPC getlock constants
 #define FSI_IPC_GETLOCK_PTYPE                  2
 #define FSI_IPC_GETLOCK_PPID                   0
@@ -46,12 +50,106 @@
 #define PTFSAL_FILESYSTEM_NUMBER              77
 #define FUSE_EXPORT_ID           281474976710656
 #define FSI_IPC_FUSE_MSGID_BASE          5000000
+#define FSI_IPC_MSGID_BASE               5000000
+
+#ifndef   __GNUC__
+#define __attribute__(x) /*nothing*/
+#endif // __GNUC__
+
+// The following functions enable compile-time check with a cost of a function
+// call. Ths function is empty, but due to its  __attribute__ declaration
+// the compiler checks the format string which is passed to it by the
+// FSI_TRACE...() mechanism.
+extern void
+compile_time_check_func(const char * fmt, ...)
+__attribute__((format(printf, 1, 2)));  // 1=format 2=params
+
+// --------  Begin conditional compile for Ganesha/Samba -----------------
+#ifdef GANESHA_CCL
+
+// The following defines are CCL versions of Ganesha environment defines
+// that PTFSAL at init can check against the ganesha version as an automated
+// check against header change in Ganesha environment not matched in this
+// copy
+#define GANESHA_MAXPATHLEN      4096          // Compare to Ganesha MAXPATHLEN
+#define GANESHA_COMPONENT_COUNT   48          // Compare to Ganesha COMPONENT_COUNT
+
+// ----------------------------------------------------------------------------
+// Defines from src/include/log.h
+//    These are needed by CCL code when compiled for Ganessha (GANESHA_CCL)
+//    so that they can use LogComponents in CCL_DEBUG below
+//
+//    When this file is included by FSAL_PT code in Ganesha build environment
+//    it needs to include src/include/log.h before including this file and will
+//    use the definitions in there.
+// ----------------------------------------------------------------------------
+#ifndef _LOGS_H
+
+// these macros gain a few percent of speed on gcc, especially with so many
+// log entries (for ganesah core)
+#if (__GNUC__ >= 3)
+// the strange !! is to ensure that __builtin_expect() takes either 0 or 1 as
+// its first argument
+#ifndef likely
+#define likely(x)   __builtin_expect(!!(x), 1)
+#endif
+#ifndef unlikely
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#endif
+#else
+#ifndef likely
+#define likely(x) (x)
+#endif
+#ifndef unlikely
+#define unlikely(x) (x)
+#endif
+#endif
+
+// CCL environment definition of Ganesha log_component_info
+typedef struct log_component_info {
+  int    comp_value;
+  char * comp_name;
+  char * comp_str;
+  int    comp_log_level;
+  int    comp_log_type;
+  char   comp_log_file[GANESHA_MAXPATHLEN];
+  char * comp_buffer;
+} log_component_info;
+
+extern log_component_info __attribute__ ((unused))
+  LogComponents[GANESHA_COMPONENT_COUNT];
+
+#endif  // _LOGS_H
+// ----------------------------------------------------------------------------
+// End of defines from src/include/log.h
+// ----------------------------------------------------------------------------
+
+// Following definitions map to NIV_* trace levels in Ganesha log.h
+#define FSI_FATAL          1   // NIV_FATAL
+#define FSI_ERR            2   // NIV_MAJOR
+#define FSI_NOTICE         4   // NIV_WARN
+#define FSI_STAT           5   // NIV_EVENT
+#define FSI_INFO           6   // NIV_INFO
+#define FSI_DEBUG          7   // NIV_DEBUG
+
+#define COMPONENT_FSAL_PT  5   // COMPONENT_FSAL
+
+// Similar to Ganesha LogAtLevel macro in log.h
+#define CCL_DEBUG( level, format, func, ... )                                \
+{                                                                            \
+  if (unlikely(LogComponents[COMPONENT_FSAL_PT].comp_log_level >= level)) {  \
+    DisplayLogComponentLevel(COMPONENT_FSAL_PT, "FSAL_PT",                   \
+                             level, format, func, ## __VA_ARGS__ );          \
+  }                                                                          \
+}
+
+#else    // not GANESHA_CCL so Samba
 
 // FSI Trace Level defines for Samba DEBUG level parm
 // Samba default runtime level is 2, all trace <= level are logged
 // Note: Though these defines map to Samba debug levels we are
 // using the level settings differently than Samba proper
-#define FSI_FATAL                              1  // TRC_FATAL - A fatal 
+#define FSI_FATAL                              1  // TRC_FATAL - A fatal
                                                   // condition that prevents
                                                   // the system continuing
                                                   // normal ops
@@ -70,37 +168,6 @@
                                                   // frequency, can affect
                                                   // performance, user for
                                                   // debugging a component
-
-
-#ifndef   __GNUC__
-#define __attribute__(x) /*nothing*/
-#endif // __GNUC__
-
-// The following functions enable compile-time check with a cost of a function
-// call. Ths function is empty, but due to its  __attribute__ declaration
-// the compiler checks the format string which is passed to it by the
-// FSI_TRACE...() mechanism.
-extern void
-compile_time_check_func(const char * fmt, ...)
-__attribute__((format(printf, 1, 2)));  // 1=format 2=params
-
-// --------  Begin conditional compile for Ganesha/Samba -----------------
-#ifdef GANESHA_CCL
-
-extern int g_ptfsal_debug_level;    // ptfsal sets to control 
-extern int g_ptfsal_comp_num;       // ptfsal sets to COMPONENT_FSAL (5)
-extern int g_ptfsal_comp_level;     // ptfsal sets to NIV_INFO or NIV_DEBUG
-
-#define CCL_DEBUG( level, format, func, ... )                              \
-{                                                                          \
-  if (level <= g_ptfsal_debug_level) {                                     \
-    DisplayLogComponentLevel( g_ptfsal_comp_num, "FSAL_PT",                \
-                         g_ptfsal_comp_level, format,                      \
-                         func, ## __VA_ARGS__ );                           \
-  }                                                                        \
-}
- 
-#else    // not GANESHA_CCL so Samba
 
 #define CCL_DEBUG( x, y, z, ... )  DEBUG( x, (y "\n", z, ## __VA_ARGS__  ))
 
@@ -200,7 +267,7 @@ extern pthread_mutex_t g_transid_mutex; // only one thread can change global
 enum e_buf_rc_state {
   BUF_RC_STATE_UNKNOWN = 0,             // default
   BUF_RC_STATE_PENDING,                 // waiting on server Rc
-  BUF_RC_STATE_FILLING,                 // filling with write data 
+  BUF_RC_STATE_FILLING,                 // filling with write data
   BUF_RC_STATE_RC_NOT_PROCESSED,        // received Rc, not processed by client
   BUF_RC_STATE_RC_PROCESSED             // client processed received Rc
 };
@@ -211,7 +278,7 @@ enum e_fsi_name_enum {
 };
 
 enum e_ccl_write_mode {
-  CCL_WRITE_IMMEDIATE = 0,              // write should be immediately issued  
+  CCL_WRITE_IMMEDIATE = 0,              // write should be immediately issued
   CCL_WRITE_BUFFERED                    // pwrite does not need to issue write
 };
 
@@ -467,7 +534,7 @@ struct ipc_client_stats_t {
 // ----------------------------------------------------------------------------
 // Defines for CCL Internal Statistics
 //
-// Defines for IO Idle time statistic collection,  this is time we are 
+// Defines for IO Idle time statistic collection,  this is time we are
 // idle waiting for user to send a read or write or doing other operations
 // ----------------------------------------------------------------------------
 
@@ -597,10 +664,11 @@ void ld_common_msghdr(struct CommonMsgHdr * p_msg_hdr,
                       uint64_t             transaction_type,
                       uint64_t             data_length,
                       uint64_t             export_id,
-                      int            handle_index,
-                      int            fs_handle,
-                      int            use_crc,
-                      int            is_IO_q);
+                      int                  handle_index,
+                      int                  fs_handle,
+                      int                  use_crc,
+                      int                  is_IO_q,
+                      const char         * client_ip_addr);
 void ld_uid_gid(uint64_t                * uid,
                 uint64_t                * gid,
                 ccl_context_t   * handle);
@@ -673,7 +741,7 @@ int ccl_readdir(ccl_context_t * handle,
 void ccl_seekdir(ccl_context_t * handle,
                  struct fsi_struct_dir_t * dirp,
                  long                offset);
-long ccl_telldir(ccl_context_t * handle, 
+long ccl_telldir(ccl_context_t * handle,
                  struct fsi_struct_dir_t * dirp);
 int ccl_fsync(ccl_context_t * handle,
                int handle_index);
@@ -697,18 +765,16 @@ int ccl_close(ccl_context_t * handle,
                int handle_index);
 int merge_errno_rc(int rc_a,
                    int rc_b);
-int get_all_io_responses(int     handle_index,
-                         int   * combined_rc,
-                         struct msg_t* p_msg);
 int get_any_io_responses(int     handle_index,
                          int   * p_combined_rc,
                          struct msg_t* p_msg);
-void issue_read_ahead(struct file_handle_t * p_pread_hndl,
-                      int                    handle_index,
-                      uint64_t               offset,
-                      struct msg_t                * p_msg,
-                      struct CommonMsgHdr         * p_pread_hdr,
-                      struct ClientOpPreadReqMsg  * p_pread_req);
+void issue_read_ahead(struct file_handle_t       * p_pread_hndl,
+                      int                          handle_index,
+                      uint64_t                     offset,
+                      struct msg_t               * p_msg,
+                      struct CommonMsgHdr        * p_pread_hdr,
+                      struct ClientOpPreadReqMsg * p_pread_req,
+                      ccl_context_t              * handle);
 void load_deferred_io_rc(int handle_index,
                          int cur_error);
 int merge_errno_rc(int rc_a,
@@ -722,14 +788,15 @@ int read_existing_data(struct file_handle_t * p_pread_hndl,
                        int                  * p_pread_rc,
                        int                  * p_pread_incomplete,
                        int                    handle_index);
-int update_read_status(struct file_handle_t * p_pread_hndl,
-                       int                    handle_index,
-                       uint64_t               cur_offset,
-                       char                 * data,
-                       uint64_t               cur_length,
+int update_read_status(struct file_handle_t        * p_pread_hndl,
+                       int                           handle_index,
+                       uint64_t                      cur_offset,
+                       char                        * data,
+                       uint64_t                      cur_length,
                        struct msg_t                * p_msg,
                        struct CommonMsgHdr         * p_pread_hdr,
-                       struct ClientOpPreadReqMsg  * p_pread_req);
+                       struct ClientOpPreadReqMsg  * p_pread_req,
+                       ccl_context_t               * handle);
 int verify_io_response(int                      transaction_type,
                        int                      cur_index,
                        struct CommonMsgHdr           * p_msg_hdr,
@@ -739,6 +806,8 @@ int wait_free_write_buf(int     handle_index,
                         int   * p_combined_rc,
                         struct msg_t* p_msg);
 int flush_write_buffer(int handle_index, ccl_context_t * handle);
+int wait_for_io_results(int handle_index);
+int synchronous_flush_write_buffer(int handle_index, ccl_context_t * handle);
 void ccl_ipc_stats_init();
 void ccl_ipc_stats_logger();
 void ccl_ipc_stats_on_io_complete(struct timeval * done_time);
@@ -747,7 +816,7 @@ void ccl_ipc_stats_on_read(uint64_t bytes);
 void ccl_ipc_stats_on_write(uint64_t bytes);
 uint64_t update_stats(struct ipc_client_stats_t * stat, uint64_t value);
 
-// ACL function prototypes 
+// ACL function prototypes
 int ccl_sys_acl_get_entry(ccl_context_t * handle,
                           acl_t           theacl,
                           int             entry_id,
@@ -794,9 +863,9 @@ int ccl_sys_acl_get_perm(ccl_context_t * handle,
 int ccl_sys_acl_free_acl(ccl_context_t * handle,
                          acl_t           posix_acl);
 
-// Prototypes - new for Ganesha 
+// Prototypes - new for Ganesha
 int ccl_name_to_handle(ccl_context_t           * pvfs_handle,
-                       char                    * path, 
+                       char                    * path,
                        struct PersistentHandle * phandle);
 int ccl_handle_to_name(ccl_context_t           * pvfs_handle,
                        struct PersistentHandle * phandle,
@@ -814,7 +883,7 @@ void ccl_update_handle_last_io_timestamp(int handle_index);
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
 //     Layer provide a copy of these functions and CCL call them (up calls)
-//     for the functions.  
+//     for the functions.
 // ---------------------------------------------------------------------------
 extern int ccl_up_mutex_lock(pthread_mutex_t *mutex);
 extern int ccl_up_mutex_unlock(pthread_mutex_t *mutex);
