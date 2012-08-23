@@ -40,6 +40,13 @@
 #include <fcntl.h>
 
 
+
+#if defined(__STRICT_ANSI__) && defined(__GNUC__)
+int usleep();
+int setpgrp();
+#endif
+
+
 #ifndef SOL_TCP
 #define SOL_TCP         6
 #endif
@@ -243,8 +250,29 @@ void marshal_free (struct marshal *m)
     free (m);
 }
 
+static void *fastdb_background_sync_thread (void *arg)
+{
+    struct marshal *m;
+    m = (struct marshal *) arg;
+    while (!m->kill) {
+        sleep (2);
+        nodedb_sync (m->db);
+    }
+    return NULL;
+}
+
+static void start_fastdb_background_sync_thread (struct marshal *m)
+{
+    pthread_t thread;
+    pthread_attr_t attr;
+    pthread_attr_init (&attr);
+    pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED);
+    pthread_create (&thread, &attr, fastdb_background_sync_thread, m);
+}
+
 void marshal_run (struct marshal *m)
 {
+    start_fastdb_background_sync_thread (m);
     while (!m->kill) {
         int sock, yes = 1;
         struct sockaddr_in addr;

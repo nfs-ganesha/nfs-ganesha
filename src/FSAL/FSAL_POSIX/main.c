@@ -38,8 +38,6 @@
 #include "fsal_internal.h"
 #include "FSAL/fsal_init.h"
 
-#include "scanmount.h"
-
 #include "redblack.h"
 #include "sockbuf.h"
 #include "nodedb.h"
@@ -165,6 +163,7 @@ void marshal_create_process (void);
 MODULE_INIT void posix_init (void)
 {
     int retval;
+    int mount_count;
     struct fsal_module *myself = &POSIX.fsal;
 
     retval = register_fsal (myself, myname, FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION);
@@ -178,16 +177,20 @@ MODULE_INIT void posix_init (void)
     posix_handle_ops_init (myself->obj_ops);
     init_fsal_parameters (&POSIX.fsal_info);
 
-    read_mounts ();
-
+/* #warning change to 0 */
 #if 0
     marshal_create_thread ();
 #else
     marshal_create_process ();
 #endif
 
-    printf ("Scanned %d mounts. Initializing connection pool -\n", get_mount_count ());
+    usleep (200000);
+
+    printf ("Connecting to nodedb\n");
     connpool = connection_pool_new ();
+
+    mount_count = MARSHAL_nodedb_read_mounts (connpool);
+    printf ("Scanned %d mounts.Initializing connection pool -\n", mount_count);
     printf ("done.\n");
 }
 

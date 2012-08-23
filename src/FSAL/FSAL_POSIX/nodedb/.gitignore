@@ -4,3 +4,4 @@ ops.h
 interface.c
 interface.h
 nodedb
+fastdb

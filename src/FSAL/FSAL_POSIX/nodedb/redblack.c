@@ -54,6 +54,7 @@
 
 
 static struct redblack_node *node_lookup (struct redblack_tree * tree, void *record);
+static struct redblack_node *node_lookup_op (struct redblack_tree *tree, void *record, enum cmp_op op, enum cmp_lean lean);
 static struct redblack_node *list_next (struct redblack_node * node);
 static struct redblack_node *list_prev (struct redblack_node * node);
 static void insert_color (struct redblack_node * node, struct redblack_tree * root);
@@ -186,6 +187,28 @@ void *redblack_tree_find (struct redblack_tree * tree, void *record)
     UNLOCK_RETURN (tree, ret);
 }
 
+void *redblack_tree_find_op (struct redblack_tree *tree, void *record, enum cmp_op op, enum cmp_lean lean)
+{
+    void *ret = NULL;
+
+    LOCK (tree);
+    {
+	struct redblack_node *node;
+
+	node = node_lookup_op (tree, record, op, lean);
+	if (!node)
+	    goto done;
+
+	tree->next_access = list_next (node);
+	tree->prev_access = list_prev (node);
+
+	ret = ((void *) (((char *) node) - tree->ofs));
+    }
+
+  done:
+    UNLOCK_RETURN (tree, ret);
+}
+
 void *redblack_tree_delete (struct redblack_tree * tree, void *record)
 {
     void *ret = NULL;
@@ -268,7 +291,6 @@ void *redblack_to_array (struct redblack_tree * tree, int member_size, int *n_me
     }
     UNLOCK_RETURN (tree, ret);
 }
-
 
 void *redblack_tree_last (struct redblack_tree * tree)
 {
@@ -354,6 +376,54 @@ static struct redblack_node *node_lookup (struct redblack_tree * tree, void *rec
             return n;
     }
     return NULL;
+}
+
+static struct redblack_node *node_lookup_op (struct redblack_tree *tree, void *record, enum cmp_op op, enum cmp_lean lean)
+{
+    int cmp = 0;
+    struct redblack_node *n = tree->node, *r = NULL;
+    void *user_data = tree->user_data;
+    void *i;
+
+    while (n) {
+        assert (n->color == redblack_TREE_RED || n->color == redblack_TREE_BLACK);
+
+        i = (void *) (((char *) n) - tree->ofs);
+
+        cmp = (*tree->cmp_cb) (i, record, user_data);
+
+        r = n;
+
+        if (cmp > 0 || ((cmp == 0 && lean == CMP_LEAN_LEFT)))
+            n = n->left;
+        else if (cmp < 0 || (cmp == 0 && lean >= CMP_LEAN_RIGHT))
+            n = n->right;
+    }
+
+    if (!r)
+        return NULL;
+
+    while (cmp == 0 && op == CMP_OP_LT && (n = list_prev (r))) {
+        r = n;
+        i = (void *) (((char *) r) - tree->ofs);
+        cmp = (*tree->cmp_cb) (i, record, user_data);
+    }
+    while (cmp > 0 && op == CMP_OP_LE && (n = list_prev (r))) {
+        r = n;
+        i = (void *) (((char *) r) - tree->ofs);
+        cmp = (*tree->cmp_cb) (i, record, user_data);
+    }
+    while (cmp < 0 && op == CMP_OP_GE && (n = list_next (r))) {
+        r = n;
+        i = (void *) (((char *) r) - tree->ofs);
+        cmp = (*tree->cmp_cb) (i, record, user_data);
+    }
+    while (cmp == 0 && op == CMP_OP_GT && (n = list_next (r))) {
+        r = n;
+        i = (void *) (((char *) r) - tree->ofs);
+        cmp = (*tree->cmp_cb) (i, record, user_data);
+    }
+    return r;
 }
 
 static struct redblack_node *list_next (struct redblack_node * node)

@@ -24,14 +24,14 @@ struct nodedb;
 struct stat;
 
 #define FILE_DATA_EQUAL(a, b) \
-        ((a)->fsid  == (b)->fsid && \
-         (a)->devid == (b)->devid && \
-         (a)->inode == (b)->inode && \
+        ((a)->handle.fsid  == (b)->handle.fsid && \
+         (a)->handle.devid == (b)->handle.devid && \
+         (a)->handle.inode == (b)->handle.inode && \
          (a)->extra.type == (b)->extra.type)
 
 #define FILE_DATA_EQUAL_(a, b) \
-        ((a)->devid == (b)->devid && \
-         (a)->inode == (b)->inode && \
+        ((a)->handle.devid == (b)->handle.devid && \
+         (a)->handle.inode == (b)->handle.inode && \
          (a)->extra.type == (b)->extra.type)
 
 struct extra {
@@ -40,34 +40,37 @@ struct extra {
     unsigned long long ctime;
 };
 
-
 struct handle_data {
-    unsigned long long handleid;
-    unsigned long long timestamp;
+    unsigned long long fsid;
+    unsigned long long devid;
+    unsigned long long inode;
 };
 
 struct file_data {
     struct handle_data handle;
-    unsigned long long fsid;
-    unsigned long long devid;
-    unsigned long long inode;
     struct extra extra;
     struct file_data *p;        /* pointer to self for testing */
+    unsigned int handleid;
 };
 
+#if 0
 struct dirent_data {
     char *name;
     struct file_data fdata;
 };
+#endif
 
 struct nodedb *nodedb_new (void);
 
-char **strsplit (const char *s, char c, int max_split);
+char **nodedb_strsplit (const char *s, char c, int max_split);
 char *dir_entry_name_cat (const char *name1, const char *name2);
 void nodedb_stat_to_file_data (unsigned long long fsid, const struct stat *st, struct file_data *file_data);
+int nodedb_stat_to_file_type (const struct stat *st);
 void nodedb_lock (struct nodedb *);
 void nodedb_unlock (struct nodedb *);
 void _nodedb_print (struct nodedb *db);
+void nodedb_sync (struct nodedb *db);
+
 
 
 

@@ -6,8 +6,8 @@ all: ../interface.c nodedb
 .PHONY: all
 
 
-CDEPS = sockbuf.c encoding.c nodedb.c redblack.c connection.c connectionpool.c
-HDEPS = connection.h connectionpool.h encoding.h marshal.h nodedb.h redblack.h sockbuf.h
+CDEPS = sockbuf.c encoding.c nodedb.c redblack.c connection.c connectionpool.c scanmount.c fastdb.c
+HDEPS = connection.h connectionpool.h encoding.h marshal.h nodedb.h redblack.h sockbuf.h scanmount.h fastdb.h
 
 CFILES = interface.c $(CDEPS)
 HFILES = interface.h ops.h $(HDEPS)
@@ -23,7 +23,10 @@ HFILES = interface.h ops.h $(HDEPS)
 	
 	for i in $(CFILES) $(HFILES) ; do cp $$i ../ ; done
 	
-	gcc  -DUNIT_TEST  -pthread -O0 -g -Wall -o nodedb -ansi -pedantic -pthread interface.c sockbuf.c  encoding.c nodedb.c redblack.c connection.c connectionpool.c -lpthread -Wno-long-long
+	if test x`hostname` = xdesktop ; then \
+	    gcc  -DUNIT_TEST  -pthread -O0 -g -Wall -o nodedb -ansi -pedantic -pthread interface.c sockbuf.c  encoding.c nodedb.c redblack.c connection.c connectionpool.c scanmount.c fastdb.c -lpthread -Wno-long-long ; \
+	    gcc  -DUNITTEST  -pthread -O0 -g -Wall -o fastdb -ansi -pedantic -pthread fastdb.c redblack.c -lpthread -Wno-long-long ; \
+	fi
 
 
 clean:

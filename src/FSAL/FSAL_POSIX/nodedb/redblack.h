@@ -23,6 +23,18 @@
 
 struct redblack_node;
 
+enum cmp_op {
+    CMP_OP_LT,
+    CMP_OP_LE,
+    CMP_OP_GE,
+    CMP_OP_GT
+};
+
+enum cmp_lean {
+    CMP_LEAN_LEFT,
+    CMP_LEAN_RIGHT
+};
+
 enum rbt_color_t {
     redblack_TREE_RED = 0x562EAB4C,
     redblack_TREE_BLACK = 0x0B5EEEBF
@@ -55,6 +67,7 @@ void redblack_tree_new (struct redblack_tree * tree, int ofs, int duplicates, re
 int redblack_tree_free (struct redblack_tree * tree, void (*free_cb) (void *));
 int redblack_tree_add (struct redblack_tree * tree, void *record);
 void *redblack_tree_find (struct redblack_tree * tree, void *record);
+void *redblack_tree_find_op (struct redblack_tree *tree, void *record, enum cmp_op op, enum cmp_lean lean);
 void *redblack_tree_delete (struct redblack_tree * tree, void *record);
 void *redblack_tree_first (struct redblack_tree * tree);
 void *redblack_tree_last (struct redblack_tree * tree);

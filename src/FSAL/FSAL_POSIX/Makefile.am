@@ -12,6 +12,7 @@ libfsalposix_la_SOURCES = interface.c fsal_convert.c   \
 			file.c		 \
 			xattrs.c         \
 			scanmount.c      \
+			fastdb.c         \
 	                sockbuf.c encoding.c nodedb.c redblack.c connection.c connectionpool.c \
 	                ../../include/fsal.h                     \
                         ../../include/fsal_types.h	         \
@@ -34,6 +35,8 @@ interface.lo: interface.c
 sockbuf.lo: sockbuf.c
 encoding.lo: encoding.c
 nodedb.lo: nodedb.c
+fastdb.lo: fastdb.c
+scanmount.lo: scanmount.c
 redblack.lo: redblack.c
 connection.lo: connection.c
 connectionpool.lo: connectionpool.c
