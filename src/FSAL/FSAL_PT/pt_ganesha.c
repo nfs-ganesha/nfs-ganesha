@@ -517,6 +517,7 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
   int  rc;
   char fsi_name[PATH_MAX];
   char fsi_parent_dir_name[PATH_MAX];
+  int handleOpened;
 
   ptfsal_handle_t         * p_fsi_handle        = 
     (ptfsal_handle_t *)p_object_handle;
@@ -544,14 +545,17 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
   memset(&fsi_name, 0, sizeof(fsi_name));
   fsi_get_whole_path(fsi_parent_dir_name, p_filename->name, fsi_name);
 
-  rc = ccl_open(&ccl_context, fsi_name, O_CREAT, mode);
+  handleOpened = ccl_open(&ccl_context, fsi_name, O_CREAT, mode);
 
-  if (rc >=0) {
+  if (handleOpened >=0) {
     fsal_path_t fsal_path;
     memset(&fsal_path, 0, sizeof(fsal_path_t));
     memcpy(&fsal_path.path, &fsi_name, sizeof(fsi_name));
     ptfsal_name_to_handle(p_context, &fsal_path, p_object_handle);
-    ccl_close(&ccl_context, rc);
+    rc = ccl_close(&ccl_context, handleOpened);
+    if (rc == -1) {
+      FSI_TRACE(FSI_ERR, "Failed to close handle %d", handleOpened);
+    }
     fsi_cache_name_and_handle(p_context, 
                               (char *)&p_fsi_handle->data.handle.f_handle, 
                               fsi_name);
