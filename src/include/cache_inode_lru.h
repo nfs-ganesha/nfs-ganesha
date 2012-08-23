@@ -139,6 +139,11 @@ static const uint32_t LRU_REQ_SCAN = 0x0040;
  */
 static const uint32_t LRU_FLAG_LOCKED = 0x0080;
 
+/**
+ * The entry is not initialized completely.
+ */
+static const uint32_t LRU_ENTRY_UNINIT = 0x0100;
+
 /* The minimum reference count for a cache entry not being recycled. */
 
 static const int32_t LRU_SENTINEL_REFCOUNT = 1;
