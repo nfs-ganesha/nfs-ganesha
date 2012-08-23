@@ -585,8 +585,8 @@ open4_create(OPEN4args           * arg,
                         sattr_provided = true;
                 }
                 if (sattr_provided &&
-                    (FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) ||
-                    (FSAL_TEST_MASK(sattr.mask, ATTR_MTIME))) {
+                    ((FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) ||
+                    (FSAL_TEST_MASK(sattr.mask, ATTR_MTIME)))) {
                         res->status = NFS4ERR_INVAL;
                         return res->status;
                 }

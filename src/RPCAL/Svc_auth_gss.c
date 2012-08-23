@@ -78,10 +78,12 @@ extern const gss_OID_desc *const gss_mech_spkm3;
 
 extern SVCAUTH Svc_auth_none;
 
-static bool Svcauth_gss_destroy();
-static bool Svcauth_gss_destroy_copy();
-static bool Svcauth_gss_wrap();
-static bool Svcauth_gss_unwrap();
+static bool Svcauth_gss_destroy(struct SVCAUTH *);
+static bool Svcauth_gss_destroy_copy(struct SVCAUTH *);
+static bool Svcauth_gss_wrap(struct SVCAUTH *, XDR *, xdrproc_t,
+				       caddr_t);
+static bool Svcauth_gss_unwrap(struct SVCAUTH *, XDR *, xdrproc_t,
+				       caddr_t);
 
 static bool Svcauth_gss_nextverf(struct svc_req *, u_int);
 

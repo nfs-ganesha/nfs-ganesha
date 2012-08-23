@@ -7,11 +7,11 @@
 /* Here is what we should pick up from  /usr/include/tirpc/rpc/svc_auth.h */
 typedef struct SVCAUTH {
 	struct svc_auth_ops {
-		int	(*svc_ah_wrap)(struct SVCAUTH *, XDR *, xdrproc_t,
+		bool	(*svc_ah_wrap)(struct SVCAUTH *, XDR *, xdrproc_t,
 				       caddr_t);
-		int	(*svc_ah_unwrap)(struct SVCAUTH *, XDR *, xdrproc_t,
+		bool	(*svc_ah_unwrap)(struct SVCAUTH *, XDR *, xdrproc_t,
 					 caddr_t);
-		int	(*svc_ah_destroy)(struct SVCAUTH *);
+		bool	(*svc_ah_destroy)(struct SVCAUTH *);
 	} *svc_ah_ops;
 	void * svc_ah_private;
 } SVCAUTH;

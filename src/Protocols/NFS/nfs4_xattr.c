@@ -1279,7 +1279,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
   /* Used FSAL extended attributes functions */
   fsal_status = obj_hdl->ops->list_ext_attrs(obj_hdl, cookie, xattrs_tab,
-					     estimated_num_entries, &nb_xattrs_read, &eod_met);
+					     estimated_num_entries, &nb_xattrs_read, (int *)&eod_met);
   if(FSAL_IS_ERROR(fsal_status))
     {
       res_READDIR4.status = NFS4ERR_SERVERFAULT;

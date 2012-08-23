@@ -124,7 +124,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
                                                                     name,
                                                                     pfid->specdata.xattr.xattr_content, 
                                                                     *size,
-                                                                    (*flag == XATTR_REPLACE)  ;
+                                                                    (*flag == XATTR_REPLACE))  ;
 
      if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
