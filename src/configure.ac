@@ -290,6 +290,7 @@ AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 # during the build
 GA_AM_COND_ON_UNLESS([fsal-proxy],[do not build PROXY FSAL shared library],[USE_FSAL_PROXY])
 GA_AM_COND_ON_UNLESS([fsal-vfs],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
+GA_AM_COND_ON_UNLESS([fsal-posix],[do not build POSIX FSAL shared library],[USE_FSAL_POSIX])
 
 # We only want to turn Ceph on if we have the right library
 
@@ -379,7 +380,6 @@ fi
 AM_CONDITIONAL([USE_FSAL_SHOOK], test "[$enable_fsal_shook]"  == "yes")
 
 # FSALs whicha re disabled by default
-GA_ENABLE_AM_CONDITION([fsal-posix],[build POSIX FSAL],[USE_FSAL_POSIX])
 GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
 GA_ENABLE_AM_CONDITION([fsal-fuse],[build FUSE FSAL],[USE_FSAL_FUSE])
 GA_ENABLE_AM_CONDITION([fsal-xfs],[build XFS FSAL],[USE_FSAL_XFS])
