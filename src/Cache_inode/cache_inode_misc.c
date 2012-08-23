@@ -332,6 +332,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           status = CACHE_INODE_MALLOC_ERROR;
           goto out;
      }
+     locksinited = true;
      assert(new_entry->lru.refcount > 1);
      /* Now we got the entry; get the latch and see if someone raced us. */
      hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
@@ -381,19 +382,6 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 					    not being unenrolled from
 					    the table. */
      weakrefed = true;
-
-     /* Initialize the entry locks */
-     if (((rc = pthread_rwlock_init(&(*entry)->attr_lock, NULL)) != 0) ||
-         ((rc = pthread_rwlock_init(&(*entry)->content_lock, NULL)) != 0) ||
-         ((rc = pthread_rwlock_init(&(*entry)->state_lock, NULL)) != 0)) {
-          /* Recycle */
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_new_entry: pthread_rwlock_init "
-                  "returned %d (%s)", rc, strerror(rc));
-          status = CACHE_INODE_INIT_ENTRY_FAILED;
-          goto out;
-     }
-     locksinited = true;
 
      /* Initialize common fields */
 
@@ -472,6 +460,11 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      (*entry)->obj_handle = new_obj;
      new_obj = NULL; /* mark it as having a home */
      cache_inode_fixup_md(*entry);
+
+     /* Everything ready and we are reaty to insert into hash table.
+      * change the lru state from LRU_ENTRY_UNINIT to LRU_FLAG_NONE
+      */
+     (*entry)->flags = LRU_FLAG_NONE;
 
      /* Adding the entry in the hash table using the key we started with */
 

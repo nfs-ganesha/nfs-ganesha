@@ -935,8 +935,8 @@ lru_thread(void *arg __attribute__((unused)))
                               /* Sorry for the extra barrier. */
                               atomic_dec_int64_t(&lru->refcount);
 
-                              if ((lru->flags &
-                                   (LRU_ENTRY_L2|LRU_ENTRY_POISON)) ||
+                              if ((lru->flags & (LRU_ENTRY_L2 |
+                                       LRU_ENTRY_POISON | LRU_ENTRY_UNINIT)) ||
                                   (lru->lane == LRU_NO_LANE)) {
                                    /* Drop the entry lock, then
                                       reacquire the queue lock so we
@@ -1255,6 +1255,7 @@ cache_inode_status_t
 cache_inode_lru_get(cache_entry_t **entry,
                     uint32_t flags)
 {
+     int rc;
      /* The lane from which we harvest (or into which we store) the
         new entry.  Usually the lane assigned to this thread. */
      uint32_t lane = 0;
@@ -1325,7 +1326,21 @@ cache_inode_lru_get(cache_entry_t **entry,
         nobody can bump the refcount yet. */
      (*entry)->lru.refcount = 2;
      (*entry)->lru.pin_refcnt = 0;
-     (*entry)->lru.flags = 0;
+     (*entry)->flags = LRU_ENTRY_UNINIT;
+     /* Initialize the entry locks */
+     if (((rc = pthread_rwlock_init(&(*entry)->attr_lock, NULL)) != 0) ||
+         ((rc = pthread_rwlock_init(&(*entry)->content_lock, NULL)) != 0) ||
+         ((rc = pthread_rwlock_init(&(*entry)->state_lock, NULL)) != 0)) {
+          /* Recycle */
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "pthread_rwlock_init returned %d (%s)",
+                  rc, strerror(rc));
+          status = CACHE_INODE_INIT_ENTRY_FAILED;
+          pool_free(cache_inode_entry_pool, entry);
+          entry = NULL;
+          goto out;
+     }
+
      pthread_mutex_lock(&(*entry)->lru.mtx);
      lru_insert_entry(&(*entry)->lru, 0,
                       lru_lane_of_entry(*entry));

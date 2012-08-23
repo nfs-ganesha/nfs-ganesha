@@ -144,6 +144,12 @@ extern struct lru_state lru_state;
 #define LRU_FLAG_LOCKED  0x0100
 
 /**
+ * The entry is not initialized completely.
+ */
+static const uint32_t LRU_ENTRY_UNINIT = 0x0200;
+
+
+/**
  * No further refs or state permitted.
  */
 #define LRU_ENTRY_POISON \
