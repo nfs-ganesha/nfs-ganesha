@@ -667,7 +667,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                       0,
                       &cache_status) != CACHE_INODE_SUCCESS)
     {
-      cache_inode_dec_pin_ref(pentry);
+      cache_inode_dec_pin_ref(pentry, TRUE);
 
       *pstatus = cache_inode_status_to_state_status(cache_status);
 
@@ -687,7 +687,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
     {
       pthread_rwlock_unlock(&pentry->state_lock);
 
-      cache_inode_dec_pin_ref(pentry);
+      cache_inode_dec_pin_ref(pentry, TRUE);
 
       LogEvent(COMPONENT_STATE, "Share conflicts detected during add");
 
@@ -701,7 +701,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
     {
       pthread_rwlock_unlock(&pentry->state_lock);
 
-      cache_inode_dec_pin_ref(pentry);
+      cache_inode_dec_pin_ref(pentry, TRUE);
 
       LogEvent(COMPONENT_STATE, "Can not allocate memory for share");
 
@@ -787,7 +787,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
           glist_del(&nlm_share->sns_share_per_file);
 
           if(glist_empty(&pentry->object.file.nlm_share_list))
-            cache_inode_dec_pin_ref(pentry);
+            cache_inode_dec_pin_ref(pentry, TRUE);
 
           /* Remove the share from the NSM Client list */
           P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
@@ -812,7 +812,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
           pthread_rwlock_unlock(&pentry->state_lock);
 
-          cache_inode_dec_pin_ref(pentry);
+          cache_inode_dec_pin_ref(pentry, TRUE);
 
           LogDebug(COMPONENT_STATE, "do_share_op failed");
 
@@ -826,7 +826,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
   pthread_rwlock_unlock(&pentry->state_lock);
 
-  cache_inode_dec_pin_ref(pentry);
+  cache_inode_dec_pin_ref(pentry, TRUE);
 
   return *pstatus;
 }
@@ -920,7 +920,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
 
               pthread_rwlock_unlock(&pentry->state_lock);
 
-              cache_inode_dec_pin_ref(pentry);
+              cache_inode_dec_pin_ref(pentry, TRUE);
 
               LogDebug(COMPONENT_STATE, "do_share_op failed");
 
@@ -939,7 +939,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
       glist_del(&nlm_share->sns_share_per_file);
 
       if(glist_empty(&pentry->object.file.nlm_share_list))
-        cache_inode_dec_pin_ref(pentry);
+        cache_inode_dec_pin_ref(pentry, TRUE);
 
       /* Remove the share from the NSM Client list */
       P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
@@ -965,7 +965,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
 
   pthread_rwlock_unlock(&pentry->state_lock);
 
-  cache_inode_dec_pin_ref(pentry);
+  cache_inode_dec_pin_ref(pentry, TRUE);
 
   return *pstatus;
 }
@@ -989,7 +989,7 @@ void state_share_wipe(cache_entry_t * pentry)
       glist_del(&nlm_share->sns_share_per_file);
 
       if(glist_empty(&pentry->object.file.nlm_share_list))
-        cache_inode_dec_pin_ref(pentry);
+        cache_inode_dec_pin_ref(pentry, FALSE);
 
       /* Remove the share from the NSM Client list */
       P(powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_mutex);
