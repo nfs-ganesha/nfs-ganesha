@@ -171,7 +171,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
       *pstatus = STATE_MALLOC_ERROR;
 
       if(got_pinned)
-        cache_inode_dec_pin_ref(pentry);
+        cache_inode_dec_pin_ref(pentry, FALSE);
 
       return *pstatus;
     }
@@ -195,7 +195,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
           *pstatus = STATE_STATE_CONFLICT;
 
           if(got_pinned)
-            cache_inode_dec_pin_ref(pentry);
+            cache_inode_dec_pin_ref(pentry, FALSE);
 
           return *pstatus;
         }
@@ -234,7 +234,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
       *pstatus = STATE_MALLOC_ERROR;
 
       if(got_pinned)
-        cache_inode_dec_pin_ref(pentry);
+        cache_inode_dec_pin_ref(pentry, FALSE);
 
       return *pstatus;
     }
@@ -372,7 +372,7 @@ state_status_t state_del_locked(state_t              * pstate,
   LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
 
   if(glist_empty(&pentry->state_list))
-    cache_inode_dec_pin_ref(pentry);
+    cache_inode_dec_pin_ref(pentry, FALSE);
 
   return STATE_SUCCESS;
 }
