@@ -319,7 +319,7 @@ fsal_status_t PTFSAL_read(fsal_file_t * file_desc,            /* IN */
   /* read operation */
   nb_read = ptfsal_read(p_file_descriptor, buffer, buffer_size, offset, 
                         handle_index);
-
+  errsv = errno;
   if(nb_read == -1)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
   else if(nb_read == 0)
@@ -448,7 +448,11 @@ fsal_status_t PTFSAL_write(fsal_file_t * file_desc,           /* IN */
   nb_written = ptfsal_write(file_desc, buffer, buffer_size, offset, 
                             handle_index);
 
+  FSI_TRACE(FSI_INFO, "Number of bytes written %d and errno %d", nb_written, errno);
+  errsv = errno;
+
   if(nb_written <= 0) {
+    FSI_TRACE(FSI_ERR, "Failed to write data, nb_written %d errno %d", nb_written, errsv);
     if (p_seek_descriptor)
       LogDebug(COMPONENT_FSAL,
                "Write operation of size %llu at offset %lld failed. fd=%d, "  
