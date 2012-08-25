@@ -113,8 +113,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
       return res_NVERIFY4.status;
     }
 
-  if(nfs4_FSALattr_To_Fattr(data->pexport,
-                            &file_attr,
+  if(nfs4_FSALattr_To_Fattr(&file_attr,
                             &file_attr4,
                             data,
                             &(data->currentFH),

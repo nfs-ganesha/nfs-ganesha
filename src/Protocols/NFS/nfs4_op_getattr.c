@@ -140,8 +140,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
                          data->req_ctx,
                          &cache_status) == CACHE_INODE_SUCCESS)
     {
-      if(nfs4_FSALattr_To_Fattr(data->pexport,
-                                &attr,
+      if(nfs4_FSALattr_To_Fattr(&attr,
                                 &(res_GETATTR4.GETATTR4res_u.resok4
                                   .obj_attributes),
                                 data,

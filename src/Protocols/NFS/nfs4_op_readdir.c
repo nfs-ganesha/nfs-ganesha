@@ -141,8 +141,7 @@ nfs4_readdir_callback(void* opaque,
           }
      }
 
-     if (nfs4_FSALattr_To_Fattr(tracker->data->pexport,
-                                &handle->attributes,
+     if (nfs4_FSALattr_To_Fattr(&handle->attributes,
                                 &tracker->entries[tracker->count].attrs,
                                 tracker->data,
                                 &entryFH,
