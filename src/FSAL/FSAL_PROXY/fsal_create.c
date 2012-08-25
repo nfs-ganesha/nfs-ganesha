@@ -169,8 +169,7 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
   create_mode_attr.mode = accessmode;
   fsal_interval_proxy_fsalattr2bitmap4(&create_mode_attr, &convert_bitmap);
 
-  if(nfs4_FSALattr_To_Fattr(NULL,       /* no exportlist required here */
-                            &create_mode_attr, &input_attr, NULL,       /* no compound data required here */
+  if(nfs4_FSALattr_To_Fattr(&create_mode_attr, &input_attr, NULL,       /* no compound data required here */
                             NULL,       /* No fh here, filehandle is not a settable attribute */
                             &convert_bitmap) == -1)
     Return(ERR_FSAL_INVAL, -1, INDEX_FSAL_create);

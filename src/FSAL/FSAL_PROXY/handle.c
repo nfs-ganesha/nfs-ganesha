@@ -1170,7 +1170,7 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
 
         attrib->mask &= ATTR_MODE|ATTR_OWNER|ATTR_GROUP;
         pxy_create_settable_bitmap(attrib, &bmap);
-        if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
+        if(nfs4_FSALattr_To_Fattr(attrib, &input_attr, NULL,
                                   NULL, &bmap) == -1)
                 return fsalstat(ERR_FSAL_INVAL, -1);
 
@@ -1257,7 +1257,7 @@ pxy_mkdir(struct fsal_obj_handle *dir_hdl,
         attrib->mask &= ATTR_MODE|ATTR_OWNER|ATTR_GROUP;
         pxy_create_settable_bitmap(attrib, &bmap);
 
-        if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
+        if(nfs4_FSALattr_To_Fattr(attrib, &input_attr, NULL,
                                   NULL, &bmap) == -1)
                 return fsalstat(ERR_FSAL_INVAL, -1);
 
@@ -1424,7 +1424,7 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
 
         attrib->mask = ATTR_MODE;
         pxy_create_settable_bitmap(attrib, &bmap);
-        if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
+        if(nfs4_FSALattr_To_Fattr(attrib, &input_attr, NULL,
                                   NULL, &bmap) == -1)
                 return fsalstat(ERR_FSAL_INVAL, -1);
 
@@ -1758,7 +1758,7 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 
         pxy_create_settable_bitmap(attrs, &bmap);
 
-        if(nfs4_FSALattr_To_Fattr(NULL, attrs, &input_attr, NULL,
+        if(nfs4_FSALattr_To_Fattr(attrs, &input_attr, NULL,
                                   NULL, &bmap) == -1)
                 return fsalstat(ERR_FSAL_INVAL, EINVAL);
 

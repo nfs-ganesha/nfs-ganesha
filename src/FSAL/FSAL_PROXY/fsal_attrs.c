@@ -285,8 +285,7 @@ fsal_status_t PROXYFSAL_setattrs(fsal_handle_t * filehandle,       /* IN */
 
   /* Create the fattr4 for the request */
   /* We use the function that is used to convert NFSv4 read attributes, only a subset of it will be used */
-  if(nfs4_FSALattr_To_Fattr(NULL,       /* no exportlist required here */
-                            attrib_set, &input_attr, NULL,      /* no compound data required here */
+  if(nfs4_FSALattr_To_Fattr(attrib_set, &input_attr, NULL,      /* no compound data required here */
                             NULL,       /* No fh here, filehandle is not a settable attribute */
                             &convert_bitmap) == -1)
     Return(ERR_FSAL_INVAL, -1, INDEX_FSAL_setattrs);

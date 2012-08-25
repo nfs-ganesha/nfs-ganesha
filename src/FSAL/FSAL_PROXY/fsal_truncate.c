@@ -156,8 +156,7 @@ fsal_status_t PROXYFSAL_truncate(fsal_handle_t * file_hdl,       /* IN */
 
   fsal_interval_proxy_fsalattr2bitmap4(&fsal_attr_set, &convert_bitmap);
 
-  if(nfs4_FSALattr_To_Fattr(NULL,       /* no exportlist required here */
-                            &fsal_attr_set, &fattr_set, NULL,   /* no compound data required here */
+  if(nfs4_FSALattr_To_Fattr(&fsal_attr_set, &fattr_set, NULL,   /* no compound data required here */
                             NULL,       /* No fh here, filehandle is not a settable attribute */
                             &convert_bitmap) == -1)
     Return(ERR_FSAL_INVAL, -1, INDEX_FSAL_truncate);

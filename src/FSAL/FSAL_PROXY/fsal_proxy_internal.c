@@ -742,8 +742,11 @@ int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
 int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
                              proxyfsal_handle_t * phandle, fattr4 * Fattr)
 {
+  unsigned char fh[NFS4_FHSIZE];
   nfs_fh4 hdl4;
 
+  hdl4.nfs_fh4_val = fh;
+  hdl4.nfs_fh4_len = NFS4_FHSIZE;
   if (Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, &hdl4) != NFS4_OK)
       return -1;
 
