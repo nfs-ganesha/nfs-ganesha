@@ -1,6 +1,6 @@
 DLOPEN_FLAGS = -rdynamic
 
-AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)  \
+AM_CFLAGS                     = -Wimplicit -lrt $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)  \
                                 ../FSAL/access_check.lo \
                                 ../FSAL/common_functions.lo \
                                 ../FSAL/fsal_commonlib.lo \
