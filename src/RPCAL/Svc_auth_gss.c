@@ -173,6 +173,9 @@ bool_t Svcauth_gss_set_svc_name(gss_name_t name)
 
       if(maj_stat != GSS_S_COMPLETE)
         {
+          char GssError[256];
+          log_sperror_gss(GssError, maj_stat, min_stat);
+          LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_release_name: %s", GssError);
           return (FALSE);
         }
       svcauth_gss_name = NULL;
@@ -185,6 +188,9 @@ bool_t Svcauth_gss_set_svc_name(gss_name_t name)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
+      char GssError[256];
+      log_sperror_gss(GssError, maj_stat, min_stat);
+      LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_duplicate_name: %s", GssError);
       return (FALSE);
     }
 
@@ -204,10 +210,14 @@ bool_t Svcauth_gss_import_name(char *service)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
+      char GssError[256];
+      log_sperror_gss(GssError, maj_stat, min_stat);
+      LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_import_name: %s", GssError);
       return (FALSE);
     }
   if(Svcauth_gss_set_svc_name(name) != TRUE)
     {
+      LogCrit(COMPONENT_RPCSEC_GSS,"Error in Svcauth_gss_set_svc_name(%s)", name);
       gss_release_name(&min_stat, &name);
       return (FALSE);
     }
@@ -228,6 +238,9 @@ bool_t Svcauth_gss_acquire_cred(void)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
+      char GssError[256];
+      log_sperror_gss(GssError, maj_stat, min_stat);
+      LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_acquire_cred: %s", GssError);
       return (FALSE);
     }
   return (TRUE);
@@ -241,6 +254,9 @@ static bool_t Svcauth_gss_release_cred(void)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
+      char GssError[256];
+      log_sperror_gss(GssError, maj_stat, min_stat);
+      LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_release_cred: %s", GssError);
       return (FALSE);
     }
 
@@ -266,7 +282,10 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
   memset(&recv_tok, 0, sizeof(recv_tok));
 
   if(!svc_getargs(rqst->rq_xprt, (xdrproc_t)xdr_rpc_gss_init_args, (caddr_t) & recv_tok))
-    return (FALSE);
+    {
+      LogCrit(COMPONENT_RPCSEC_GSS,"svc_getargs failed");
+      return (FALSE);
+    }
 
   gr->gr_major = gss_accept_sec_context(&gr->gr_minor,
                                         &gd->ctx,
@@ -331,6 +350,9 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
 #endif
       if(maj_stat != GSS_S_COMPLETE)
         {
+          char GssError[256];
+          log_sperror_gss(GssError, maj_stat, min_stat);
+          LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_display_name: %s", GssError);
         }
 #ifdef HAVE_HEIMDAL
 #else
@@ -354,6 +376,9 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
 
       if(maj_stat != GSS_S_COMPLETE)
         {
+          char GssError[256];
+          log_sperror_gss(GssError, maj_stat, min_stat);
+          LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_sign: %s", GssError);
           goto errout;
         }
 
@@ -395,7 +420,6 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
   OM_uint32 maj_stat, min_stat, qop_state;
   u_char rpchdr[128];
   int32_t *buf;
-  char GssError[256];
 
   memset(rpchdr, 0, sizeof(rpchdr));
 
@@ -476,6 +500,7 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
 
   if(maj_stat != GSS_S_COMPLETE)
     {
+      char GssError[256];
       log_sperror_gss(GssError, maj_stat, min_stat);
       LogCrit(COMPONENT_RPCSEC_GSS, "Error in gss_verify_mic: %s", GssError);
       return (FALSE);
@@ -504,6 +529,9 @@ static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
 
   if(maj_stat != GSS_S_COMPLETE)
     {
+      char GssError[256];
+      log_sperror_gss(GssError, maj_stat, min_stat);
+      LogCrit(COMPONENT_RPCSEC_GSS, "Error in gss_get_mic: %s", GssError);
       return (FALSE);
     }
   rqst->rq_xprt->xp_verf.oa_flavor = RPCSEC_GSS;
@@ -995,7 +1023,11 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 
 	/* Marshal rpc_gss_data_t (sequence number + arguments). */
 	if (!xdr_u_int(xdrs, &seq) || !(*xdr_func)(xdrs, xdr_ptr))
-		return (FALSE);
+          {
+            LogCrit(COMPONENT_RPCSEC_GSS,"Couldn't parse unsigned int \"seq\"or"
+                    " xdr_func failed.");
+            return (FALSE);
+          }
 	end = XDR_GETPOS(xdrs);
 
 	/* Set databuf to marshalled rpc_gss_data_t. */
@@ -1010,14 +1042,20 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		/* Marshal databody_integ length. */
 		XDR_SETPOS(xdrs, start);
 		if (!xdr_u_int(xdrs, (u_int *)&databuflen))
-			return (FALSE);
+                  {
+                    LogCrit(COMPONENT_RPCSEC_GSS,"Couldn't parse unsigned int"
+                            "from RPCSEC_GSS_SVC_INTEGRITY reply.");
+                    return (FALSE);
+                  }
 
 		/* Checksum rpc_gss_data_t. */
 		maj_stat = gss_get_mic(&min_stat, ctx, qop,
 				       &databuf, &wrapbuf);
 		if (maj_stat != GSS_S_COMPLETE) {
-			LogCrit(COMPONENT_RPCSEC_GSS,"gss_get_mic failed");
-			return (FALSE);
+                  char GssError[256];
+                  log_sperror_gss(GssError, maj_stat, min_stat);
+                  LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_get_mic: %s", GssError);
+                  return (FALSE);
 		}
 		/* Marshal checksum. */
 		XDR_SETPOS(xdrs, end);
@@ -1030,9 +1068,11 @@ Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		maj_stat = gss_wrap(&min_stat, ctx, TRUE, qop, &databuf,
 				    &conf_state, &wrapbuf);
 		if (maj_stat != GSS_S_COMPLETE) {
-			LogCrit(COMPONENT_RPCSEC_GSS,"gss_wrap %d %d",
-                                     maj_stat, min_stat);
-			return (FALSE);
+                  char GssError[256];
+                  log_sperror_gss(GssError, maj_stat, min_stat);
+                  LogCrit(COMPONENT_RPCSEC_GSS,"Error in gss_wrap: %s",
+                          GssError);
+                  return (FALSE);
 		}
 		/* Marshal databody_priv. */
 		XDR_SETPOS(xdrs, start);
@@ -1089,15 +1129,16 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 #endif
 
 		if (maj_stat != GSS_S_COMPLETE || qop_state != qop) {
+                  char GssError[256];
+                  log_sperror_gss(GssError, maj_stat, min_stat);
 #if 0
-			gss_release_buffer(&min_stat, &databuf);
+                  gss_release_buffer(&min_stat, &databuf);
 #else
-			gsh_free(databuf.value);
+                  gsh_free(databuf.value);
 #endif
-			LogCrit(COMPONENT_RPCSEC_GSS,
-                                     "gss_verify_mic %d %d", maj_stat,
-                                     min_stat);
-			return (FALSE);
+                  LogCrit(COMPONENT_RPCSEC_GSS,
+                          "Error in gss_verify_mic: %s", GssError);
+                  return (FALSE);
 		}
 	}
 	else if (svc == RPCSEC_GSS_SVC_PRIVACY) {
@@ -1115,11 +1156,13 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 
 		/* Verify encryption and QOP. */
 		if (maj_stat != GSS_S_COMPLETE || qop_state != qop ||
-			conf_state != TRUE) {
-			gss_release_buffer(&min_stat, &databuf);
-			LogCrit(COMPONENT_RPCSEC_GSS,
-                                     "gss_unwrap %d %d", maj_stat, min_stat);
-			return (FALSE);
+                    conf_state != TRUE) {
+                  char GssError[256];
+                  log_sperror_gss(GssError, maj_stat, min_stat);
+                  gss_release_buffer(&min_stat, &databuf);
+                  LogCrit(COMPONENT_RPCSEC_GSS,
+                          "Error in gss_unwrap %s", GssError);
+                  return (FALSE);
 		}
 	}
 	/* Decode rpc_gss_data_t (sequence number + arguments). */
