@@ -111,7 +111,7 @@ static const nfs4_op_desc_t optab4v0[] = {
   {"OP_SETCLIENTID_CONFIRM", NFS4_OP_SETCLIENTID_CONFIRM, nfs4_op_setclientid_confirm, 0},
   {"OP_VERIFY", NFS4_OP_VERIFY, nfs4_op_verify, EXPORT_OPTION_MD_READ_ACCESS},
   {"OP_WRITE", NFS4_OP_WRITE, nfs4_op_write, EXPORT_OPTION_WRITE_ACCESS},
-  {"OP_RELEASE_LOCKOWNER", NFS4_OP_RELEASE_LOCKOWNER, nfs4_op_release_lockowner, EXPORT_OPTION_MD_READ_ACCESS},
+  {"OP_RELEASE_LOCKOWNER", NFS4_OP_RELEASE_LOCKOWNER, nfs4_op_release_lockowner, 0},
   {"OP_ILLEGAL", NFS4_OP_ILLEGAL, nfs4_op_illegal, 0}
 };
 
@@ -153,7 +153,7 @@ static const nfs4_op_desc_t optab4v1[] = {
   {"OP_SETCLIENTID_CONFIRM", NFS4_OP_SETCLIENTID_CONFIRM, nfs4_op_setclientid_confirm, 0},
   {"OP_VERIFY", NFS4_OP_VERIFY, nfs4_op_verify, EXPORT_OPTION_MD_READ_ACCESS},
   {"OP_WRITE", NFS4_OP_WRITE, nfs4_op_write, EXPORT_OPTION_WRITE_ACCESS},
-  {"OP_RELEASE_LOCKOWNER", NFS4_OP_RELEASE_LOCKOWNER, nfs4_op_release_lockowner, EXPORT_OPTION_MD_READ_ACCESS},
+  {"OP_RELEASE_LOCKOWNER", NFS4_OP_RELEASE_LOCKOWNER, nfs4_op_release_lockowner, 0},
   {"OP_BACKCHANNEL_CTL", NFS4_OP_BACKCHANNEL_CTL, nfs4_op_illegal, 0},     /* tbd */
   {"OP_BIND_CONN_TO_SESSION", NFS4_OP_BIND_CONN_TO_SESSION, nfs4_op_illegal, 0},   /* tbd */
   {"OP_EXCHANGE_ID", NFS4_OP_EXCHANGE_ID, nfs41_op_exchange_id, 0},
