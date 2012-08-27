@@ -217,7 +217,7 @@ bool_t Svcauth_gss_import_name(char *service)
     }
   if(Svcauth_gss_set_svc_name(name) != TRUE)
     {
-      LogCrit(COMPONENT_RPCSEC_GSS,"Error in Svcauth_gss_set_svc_name(%s)", name);
+      LogCrit(COMPONENT_RPCSEC_GSS,"Error in Svcauth_gss_set_svc_name");
       gss_release_name(&min_stat, &name);
       return (FALSE);
     }

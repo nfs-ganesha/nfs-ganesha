@@ -1037,7 +1037,7 @@ static void create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_c
   (*p_dyn_gs)[j].label = gsh_calloc(25, sizeof(char));
   snprintf((*p_dyn_gs)[j].label, 25, "TIRPC debug bit mask");
   (*p_dyn_gs)[j].desc = "Set COMPONENT_RPC to NIV_DEBUG and set this bitmask to debug TIRPC layer.";
-  (*p_dyn_gs)[j].type = SNMP_ADM_STRING;
+  (*p_dyn_gs)[j].type = SNMP_ADM_INTEGER;
   (*p_dyn_gs)[j].access = SNMP_ADM_ACCESS_RW;
   (*p_dyn_gs)[j].getter = get_tirpc_debug_bitmask;
   (*p_dyn_gs)[j].setter = set_tirpc_debug_bitmask;
