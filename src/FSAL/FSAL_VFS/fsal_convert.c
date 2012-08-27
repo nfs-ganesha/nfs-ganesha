@@ -15,7 +15,6 @@
 #include "config.h"
 #endif
 #include "fsal_convert.h"
-#include "fsal_internal.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

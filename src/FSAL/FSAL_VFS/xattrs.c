@@ -40,7 +40,6 @@
 #include <sys/types.h>
 #include <mntent.h>
 #include "nlm_list.h"
-#include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"

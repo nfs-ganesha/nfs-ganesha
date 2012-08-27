@@ -35,14 +35,13 @@
 
 #include <assert.h>
 #include "fsal.h"
-#include "fsal_internal.h"
 #include "FSAL/access_check.h"
 #include "fsal_convert.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"
-#include "FSAL/FSAL_VFS/fsal_handle_syscalls.h"
+#include "fsal_handle_syscalls.h"
 
 /** vfs_open
  * called with appropriate locks taken at the cache inode level

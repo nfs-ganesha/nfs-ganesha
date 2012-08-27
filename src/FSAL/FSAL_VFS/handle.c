@@ -34,7 +34,7 @@
 #endif
 
 #include "fsal.h"
-#include <FSAL/FSAL_VFS/fsal_handle_syscalls.h>
+#include "fsal_handle_syscalls.h"
 #include <libgen.h>             /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
@@ -42,7 +42,6 @@
 #include <sys/syscall.h>
 #include <mntent.h>
 #include "nlm_list.h"
-#include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "vfs_methods.h"

@@ -39,11 +39,19 @@
 #include <string.h>
 #include <sys/types.h>
 #include "nlm_list.h"
-#include "fsal_internal.h"
 #include "FSAL/fsal_init.h"
 
 /* VFS FSAL module private storage
  */
+
+/* defined the set of attributes supported with POSIX */
+#define VFS_SUPPORTED_ATTRIBUTES (                                       \
+          ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
+          ATTR_FSID     | ATTR_FILEID  | \
+          ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
+          ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
+          ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
+          ATTR_CHGTIME  )
 
 struct vfs_fsal_module {	
 	struct fsal_module fsal;

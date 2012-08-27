@@ -4,9 +4,8 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 lib_LTLIBRARIES          = libfsalvfs.la
 
 libfsalvfs_la_SOURCES = fsal_convert.c   \
-                        fsal_internal.c	 \
-                        fsal_internal.h  \
                         vfs_methods.h    \
+	                fsal_handle_syscalls.h \
                         main.c		 \
 			export.c	 \
 			handle.c	 \
@@ -14,9 +13,7 @@ libfsalvfs_la_SOURCES = fsal_convert.c   \
 			xattrs.c         \
 	                ../../include/fsal.h                     \
                         ../../include/fsal_types.h	         \
-	                ../../include/err_fsal.h	         \
-	                ../../include/FSAL/FSAL_VFS/fsal_types.h \
-	                ../../include/FSAL/FSAL_VFS/fsal_handle_syscalls.h
+	                ../../include/err_fsal.h
 
 new: clean all
 
