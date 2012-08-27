@@ -304,7 +304,6 @@ typedef struct exportlist__
 typedef struct pseudofs_entry
 {
   char name[MAXNAMLEN];                         /**< The entry name          */
-  char fullname[MAXPATHLEN];                    /**< The full path in the pseudo fs */
   unsigned int pseudo_id;                       /**< ID within the pseudoFS  */
   exportlist_t *junction_export;                /**< Export list related to the junction, NULL if entry is no junction*/
   struct pseudofs_entry *sons;                  /**< pointer to a linked list of sons */
@@ -313,7 +312,7 @@ typedef struct pseudofs_entry
   struct pseudofs_entry *last;                  /**< pointer to the last entry in a list of sons */
 } pseudofs_entry_t;
 
-#define MAX_PSEUDO_ENTRY 100
+#define MAX_PSEUDO_ENTRY 2048
 typedef struct pseudofs
 {
   pseudofs_entry_t root;
@@ -386,7 +385,6 @@ typedef struct compoud_data
   export_perms_t export_perms; /*< Permissions for export for currentFH */
   export_perms_t saved_export_perms; /*< Permissions for export for savedFH */
   pseudofs_t *pseudofs; /*< Pointer to the pseudo filesystem tree */
-  char MntPath[MAXPATHLEN]; /*< Path (in pseudofs) of the current entry */
   struct svc_req *reqp; /*< RPC Request related to the compound */
   struct nfs_worker_data__ *pworker; /*< Worker thread data */
   nfs_client_cred_t credential; /*< Raw RPC credentials */

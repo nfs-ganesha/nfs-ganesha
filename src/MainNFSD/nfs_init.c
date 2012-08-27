@@ -1705,15 +1705,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* Set the stats to zero */
   nfs_reset_stats();
 
-  /* Creates the pseudo fs */
-  LogDebug(COMPONENT_INIT, "Now building pseudo fs");
-  if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
-    LogFatal(COMPONENT_INIT,
-             "Error %d while initializing NFSv4 pseudo file system", rc);
-
-  LogInfo(COMPONENT_INIT,
-          "NFSv4 pseudo file system successfully initialized");
-
   /* Init duplicate request cache */
   LogDebug(COMPONENT_INIT, "Now building duplicate request hash table cache");
   if((rc = nfs_Init_dupreq(nfs_param.dupreq_param)) != DUPREQ_SUCCESS)
@@ -1874,6 +1865,15 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #ifdef _USE_FSAL_UP
   nfs_Init_FSAL_UP(); /* initalizes an event pool */
 #endif /* _USE_FSAL_UP */
+
+  /* Creates the pseudo fs */
+  LogDebug(COMPONENT_INIT, "Now building pseudo fs");
+  if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
+    LogFatal(COMPONENT_INIT,
+             "Error %d while initializing NFSv4 pseudo file system", rc);
+
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 pseudo file system successfully initialized");
 
   /* Create stable storage directory, this needs to be done before
    * starting the recovery thread.

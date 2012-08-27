@@ -280,8 +280,6 @@ int nfs4_Compound(nfs_arg_t *parg,
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = preq;
 
-  strcpy(data.MntPath, "/");
-
   /* Building the client credential field */
   if(nfs_rpc_req2client_cred(preq, &(data.credential)) == -1)
     return NFS_REQ_DROP;        /* Malformed credential */
