@@ -14,12 +14,11 @@ fi
 
 git clone ${CEPH_REPO} linuxbox-ceph
 cd linuxbox-ceph
-git checkout tweaks-f17-matt
+git checkout master
+git submodule update --init
 ./autogen.sh
 env CFLAGS="-O0 -g3" CXXFLAGS="-O0 -g3" ./configure --prefix=/usr/local
 make
 sudo make install
 
 cd ${OPWD}
-
-
