@@ -68,15 +68,35 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
     if(p_mnt->mnt_dir != NULL  && p_mnt->mnt_type != NULL)
       /* There is probably a macro for "gpfs" type ... not sure where it is. */
       if (strncmp(p_mnt->mnt_type, "gpfs", 4) == 0)
-        if (strncmp(p_mnt->mnt_dir, p_export_path->path, strlen(p_mnt->mnt_dir)) == 0)
-          mntexists = 1;
+        {
+          LogFullDebug(COMPONENT_FSAL,
+                       "Checking Export Path %s against GPFS fs %s",
+                       p_export_path->path, p_mnt->mnt_dir);
+
+          /* If export path is shorter than fs path, then this isn't a match */
+          if(strlen(p_export_path->path) < strlen(p_mnt->mnt_dir))
+            continue;
+
+          /* If export path doesn't have a path separator after mnt_dir, then it
+           * isn't a proper sub-directory of mnt_dir.
+           */
+          if((p_export_path->path[strlen(p_mnt->mnt_dir)] != '/') &&
+             (p_export_path->path[strlen(p_mnt->mnt_dir)] != '\0'))
+            continue;
+
+          if (strncmp(p_mnt->mnt_dir, p_export_path->path, strlen(p_mnt->mnt_dir)) == 0)
+            {
+              mntexists = 1;
+              break;
+            }
+        }
   
   endmntent(fp);
 
   if (mntexists == 0)
     {
       LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s does not exist.",
+               "GPFS mount point %s does not exist.",
                p_export_path->path);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
@@ -85,9 +105,18 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
   fd = open(p_export_path->path, O_RDONLY | O_DIRECTORY);
   if(fd < 0)
     {
-      LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d",
-               p_export_path->path, errno);
+      if(errno == ENOENT)
+        LogMajor(COMPONENT_FSAL,
+                 "GPFS export path %s does not exist.",
+                 p_export_path->path);
+      else if (errno == ENOTDIR)
+        LogMajor(COMPONENT_FSAL,
+                 "GPFS export path %s is not a directory.",
+                 p_export_path->path);
+      else
+        LogMajor(COMPONENT_FSAL,
+                 "Could not open GPFS export path %s: rc = %d(%s)",
+                 p_export_path->path, errno, strerror(errno));
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->mount_root_fd = fd;
