@@ -440,4 +440,22 @@ void *GPFSFSAL_UP_Thread(void *Arg)
   return NULL;
 }                               /* GPFSFSAL_UP_Thread */
 
+gpfs_fsal_up_ctx_t * gpfsfsal_find_fsal_up_context(gpfsfsal_export_context_t * export_ctx)
+{
+  struct glist_head * glist;
+
+  glist_for_each(glist, &gpfs_fsal_up_ctx_list)
+    {
+      gpfs_fsal_up_ctx_t * gpfs_fsal_up_ctx;
+
+      gpfs_fsal_up_ctx = glist_entry(glist, gpfs_fsal_up_ctx_t, gf_list);
+
+      if((gpfs_fsal_up_ctx->gf_fsid[0] == export_ctx->fsid[0]) &&
+         (gpfs_fsal_up_ctx->gf_fsid[1] == export_ctx->fsid[1]))
+        return gpfs_fsal_up_ctx;
+    }
+
+  return NULL;
+}
+
 #endif /* _USE_FSAL_UP */

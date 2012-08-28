@@ -51,6 +51,7 @@ struct gpfs_fsal_up_ctx_t
   struct glist_head   gf_exports; /* List of GPFS Export Contexts on this FSAL UP context */
   char              * gf_fs;      /* GPFS File System Directory */
   unsigned int        gf_fsid[2];
+  pthread_t           gf_thread;
 };
 #else
 #error FSAL_GPFS requires --enable-fsal-up
@@ -514,5 +515,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,
 void *GPFSFSAL_UP_Thread(void *Arg);
 
 struct glist_head gpfs_fsal_up_ctx_list;
+
+gpfs_fsal_up_ctx_t * gpfsfsal_find_fsal_up_context(gpfsfsal_export_context_t * export_ctx);
 
 #endif /* _USE_FSAL_UP */
