@@ -92,6 +92,11 @@ static inline int glist_empty(struct glist_head *head)
   return head->next == head;
 }
 
+static inline int glist_null(struct glist_head *head)
+{
+  return (head->next == NULL) && (head->prev == NULL);
+}
+
 static inline void glist_add_list_tail(struct glist_head *list, struct glist_head *new)
 {
   struct glist_head *first = new->next;

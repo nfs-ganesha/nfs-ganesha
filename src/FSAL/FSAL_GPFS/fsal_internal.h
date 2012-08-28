@@ -32,15 +32,29 @@
  * 
  */
 
-#include  "fsal.h"
 #include <sys/stat.h>
+#include "fsal.h"
 #include "fsal_up.h"
 #include "FSAL/common_functions.h"
+#include "nlm_list.h"
 
 /*
  * Tests whether an error code should be raised as an event.
  */
 fsal_boolean_t fsal_error_is_event(fsal_status_t status);
+
+#ifdef _USE_FSAL_UP
+struct gpfs_fsal_up_ctx_t
+{
+  /* There is one GPFS FSAL UP Context per GPFS file system */
+  struct glist_head   gf_list;    /* List of GPFS FSAL UP Contexts */
+  struct glist_head   gf_exports; /* List of GPFS Export Contexts on this FSAL UP context */
+  char              * gf_fs;      /* GPFS File System Directory */
+  unsigned int        gf_fsid[2];
+};
+#else
+#error FSAL_GPFS requires --enable-fsal-up
+#endif
 
 #undef Return
 #define Return( _code_, _minor_ , _f_ ) do {                                   \
@@ -496,4 +510,9 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,
 				     fsal_time_t timeout,                         /* IN */
 				     fsal_count_t * peventfound,                  /* OUT */
 				     fsal_up_event_bus_context_t * pupebcontext   /* IN */ );
+
+void *GPFSFSAL_UP_Thread(void *Arg);
+
+struct glist_head gpfs_fsal_up_ctx_list;
+
 #endif /* _USE_FSAL_UP */

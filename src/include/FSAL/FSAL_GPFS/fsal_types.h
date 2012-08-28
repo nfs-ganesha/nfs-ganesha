@@ -64,8 +64,8 @@
 #include <gpfs_nfs.h>
 #include <stddef.h> /* For offsetof */
 
-
 #include "fsal_glue_const.h"
+#include "nlm_list.h"
 
 #define fsal_handle_t gpfsfsal_handle_t
 #define fsal_op_context_t gpfsfsal_op_context_t
@@ -144,9 +144,14 @@ typedef struct
 
 /** Authentification context.    */
 
+typedef struct gpfs_fsal_up_ctx_t gpfs_fsal_up_ctx_t;
+
 typedef struct
 {
   fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
+  struct glist_head     fe_list;               /* List of export context per GPFS file system */
+  gpfs_fsal_up_ctx_t  * fe_fsal_up_ctx;        /* FSAL UP context for this export */
 
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
