@@ -276,12 +276,6 @@ typedef struct nfs_session_id_param__
 } nfs_session_id_parameter_t;
 #endif
 
-typedef struct nfs_fsal_up_param__
-{
-  pthread_mutex_t event_pool_lock;
-  pool_t *event_pool;
-} nfs_fsal_up_parameter_t;
-
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
 
 typedef struct nfs_version4_parameter__
@@ -308,9 +302,6 @@ typedef struct nfs_param__
   nfs_ip_stats_parameter_t ip_stats_param;
 #ifdef _USE_9P
   _9p_parameter_t _9p_param ;
-#endif
-#ifdef _USE_FSAL_UP
-  nfs_fsal_up_parameter_t fsal_up_param;
 #endif
 #ifdef _HAVE_GSSAPI
   nfs_krb5_parameter_t krb5_param;

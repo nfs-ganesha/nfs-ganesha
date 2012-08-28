@@ -40,8 +40,9 @@
 extern fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t *);
 
 static int fsal_up_thread_exists(exportlist_t *entry);
-static struct glist_head       *fsal_up_process_queue;
+static struct glist_head       fsal_up_process_queue;
 nfs_tcb_t                      fsal_up_process_tcb;
+pool_t                       * fsal_up_event_pool;
 
 fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
 {
@@ -56,9 +57,7 @@ fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
       arg->event_process_func(&arg->event_data);
 
       gsh_free(arg->event_data.event_context.fsal_data.fh_desc.start);
-      pthread_mutex_lock(&nfs_param.fsal_up_param.event_pool_lock);
-      pool_free(nfs_param.fsal_up_param.event_pool, arg);
-      pthread_mutex_unlock(&nfs_param.fsal_up_param.event_pool_lock);
+      pool_free(fsal_up_event_pool, arg);
       return ret;
     }
 
@@ -74,7 +73,7 @@ fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
   LogFullDebug(COMPONENT_FSAL_UP, "Schedule %p", arg);
 
   P(fsal_up_process_tcb.tcb_mutex);
-  glist_add_tail(fsal_up_process_queue, &arg->event_list);
+  glist_add_tail(&fsal_up_process_queue, &arg->event_list);
   rc = pthread_cond_signal(&fsal_up_process_tcb.tcb_condvar);
   LogFullDebug(COMPONENT_FSAL_UP,"Signaling tcb_condvar");
   if (rc == -1)
@@ -98,16 +97,6 @@ void *fsal_up_process_thread(void *UnUsedArg)
 
   SetNameFunction("fsal_up_process_thread");
 
-  if ((fsal_up_process_queue =
-       gsh_calloc(1, sizeof (struct glist_head))) == NULL)
-    {
-       LogFatal(COMPONENT_INIT,
-                "Error while allocating FSAL UP process queue.");
-    }
-
-  init_glist(fsal_up_process_queue);
-  tcb_new(&fsal_up_process_tcb, "FSAL_UP Process Thread");
-
   if (mark_thread_existing(&fsal_up_process_tcb) == PAUSE_EXIT)
     {
       /* Oops, that didn't last long... exit. */
@@ -125,13 +114,13 @@ void *fsal_up_process_thread(void *UnUsedArg)
     {
       /* Check without tcb lock*/
       if ((fsal_up_process_tcb.tcb_state != STATE_AWAKE) ||
-          glist_empty(fsal_up_process_queue))
+          glist_empty(&fsal_up_process_queue))
         {
           while(1)
             {
               P(fsal_up_process_tcb.tcb_mutex);
               if ((fsal_up_process_tcb.tcb_state == STATE_AWAKE) &&
-                  !glist_empty(fsal_up_process_queue))
+                  !glist_empty(&fsal_up_process_queue))
                 {
                   V(fsal_up_process_tcb.tcb_mutex);
                   break;
@@ -143,7 +132,7 @@ void *fsal_up_process_thread(void *UnUsedArg)
                   continue;
 
                   case THREAD_SM_BREAK:
-                  if (glist_empty(fsal_up_process_queue))
+                  if (glist_empty(&fsal_up_process_queue))
                     {
                       gettimeofday(&now, NULL);
                       timeout.tv_sec = 10 + now.tv_sec;
@@ -162,7 +151,7 @@ void *fsal_up_process_thread(void *UnUsedArg)
              }
           }
         P(fsal_up_process_tcb.tcb_mutex);
-        fupevent = glist_first_entry(fsal_up_process_queue,
+        fupevent = glist_first_entry(&fsal_up_process_queue,
                                      fsal_up_event_t,
                                      event_list);
         if(fupevent != NULL)
@@ -174,9 +163,7 @@ void *fsal_up_process_thread(void *UnUsedArg)
             V(fsal_up_process_tcb.tcb_mutex);
             fupevent->event_process_func(&fupevent->event_data);
             gsh_free(fupevent->event_data.event_context.fsal_data.fh_desc.start);
-            pthread_mutex_lock(&nfs_param.fsal_up_param.event_pool_lock);
-            pool_free(nfs_param.fsal_up_param.event_pool, fupevent);
-            pthread_mutex_unlock(&nfs_param.fsal_up_param.event_pool_lock);
+            pool_free(fsal_up_event_pool, fupevent);
 
             continue;
           }
@@ -293,26 +280,24 @@ void constructor_fsal_up_event_t(void *ptr,
 /* One pool can be used for all FSAL_UP used for exports. */
 void nfs_Init_FSAL_UP()
 {
-  memset(&nfs_param.fsal_up_param, 0, sizeof(nfs_param.fsal_up_param));
-
   /* DEBUGGING */
   LogFullDebug(COMPONENT_INIT,
                "FSAL_UP: Initializing FSAL UP data pool");
   /* Allocation of the FSAL UP pool */
-  nfs_param.fsal_up_param.event_pool
-       = pool_init("FSAL UP Data Pool", sizeof(fsal_up_event_t),
-                   pool_basic_substrate, NULL,
-                   constructor_fsal_up_event_t, NULL);
-  if(!(nfs_param.fsal_up_param.event_pool))
+  fsal_up_event_pool = pool_init("FSAL UP Data Pool",
+                                 sizeof(fsal_up_event_t),
+                                 pool_basic_substrate,
+                                 NULL,
+                                 constructor_fsal_up_event_t,
+                                 NULL);
+  if(fsal_up_event_pool == NULL)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while allocating FSAL UP event pool");
-      Fatal();
+      LogFatal(COMPONENT_INIT,
+               "Error while allocating FSAL UP event pool");
     }
 
-  if(pthread_mutex_init(&nfs_param.fsal_up_param.event_pool_lock, NULL) != 0)
-      LogCrit(COMPONENT_FSAL_UP, "FSAL_UP: Could not initialize event pool"
-              " mutex.");
+  init_glist(&fsal_up_process_queue);
+  tcb_new(&fsal_up_process_tcb, "FSAL_UP Process Thread");
 
   return;
 }
@@ -380,9 +365,7 @@ fsal_status_t process_event(fsal_up_event_t *myevent, fsal_up_event_functions_t 
               myevent->event_type);
       gsh_free(myevent->event_data.event_context.fsal_data.fh_desc.start);
 
-      pthread_mutex_lock(&nfs_param.fsal_up_param.event_pool_lock);
-      pool_free(nfs_param.fsal_up_param.event_pool, myevent);
-      pthread_mutex_unlock(&nfs_param.fsal_up_param.event_pool_lock);
+      pool_free(fsal_up_event_pool, myevent);
 
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
@@ -485,9 +468,6 @@ void *fsal_up_thread(void *Arg)
   memcpy(&fsal_up_context.FS_export_context,
          &fsal_up_args->export_entry->FS_export_context,
          sizeof(fsal_export_context_t));
-
-  fsal_up_context.event_pool = nfs_param.fsal_up_param.event_pool;
-  fsal_up_context.event_pool_lock = &nfs_param.fsal_up_param.event_pool_lock;
 
   LogFullDebug(COMPONENT_FSAL_UP, "Initializing FSAL Callback context.");
   status = FSAL_UP_Init(&fsal_up_bus_param, &fsal_up_context);

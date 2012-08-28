@@ -148,9 +148,7 @@ retryit:
 
   /* Here is where we decide what type of event this is
    * ... open,close,read,...,invalidate? */
-  pthread_mutex_lock(pupebcontext->event_pool_lock);
-  pevent = pool_alloc(pupebcontext->event_pool, NULL);
-  pthread_mutex_unlock(pupebcontext->event_pool_lock);
+  pevent = pool_alloc(fsal_up_event_pool, NULL);
 
   event_fsal_data = &pevent->event_data.event_context.fsal_data;
   event_fsal_data->fh_desc.start = (caddr_t)tmp_handlep;
@@ -193,9 +191,7 @@ retryit:
       case THREAD_STOP: /* GPFS export no longer available */
         LogWarn(COMPONENT_FSAL, "Export is no longer available");
         gsh_free(tmp_handlep);
-        pthread_mutex_lock(pupebcontext->event_pool_lock);
-        pool_free(pupebcontext->event_pool, pevent);
-        pthread_mutex_unlock(pupebcontext->event_pool_lock);
+        pool_free(fsal_up_event_pool, pevent);
         Return(ERR_FSAL_BAD_INIT, 0, INDEX_FSAL_UP_getevents);
       default: /* Invalidate Event - Default */
         pevent->event_type = FSAL_UP_EVENT_INVALIDATE;
