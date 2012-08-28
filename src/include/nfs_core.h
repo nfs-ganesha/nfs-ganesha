@@ -307,17 +307,6 @@ typedef struct nfs_session_id_param__
   hash_parameter_t hash_param;
 } nfs_session_id_parameter_t;
 
-typedef struct nfs_fsal_up_param__
-{
-  pthread_mutex_t event_pool_lock;
-  pool_t *event_pool;
-} nfs_fsal_up_parameter_t;
-
-/**
- * @todo ACE: delendum est
- */
-typedef char entry_name_array_item_t[1024];
-
 typedef struct nfs_version4_parameter__
 {
   unsigned int lease_lifetime;
@@ -342,10 +331,7 @@ typedef struct nfs_param__
   nfs_ip_stats_parameter_t ip_stats_param;
 #ifdef _USE_9P
   _9p_parameter_t _9p_param ;
-#endif /* _USE_9P */
-#ifdef _USE_FSAL_UP
-  nfs_fsal_up_parameter_t fsal_up_param;
-#endif /* _USE_FSAL_UP */
+#endif
 #ifdef _HAVE_GSSAPI
   nfs_krb5_parameter_t krb5_param;
 #endif /* _HAVE_GSSAPI */
@@ -361,7 +347,7 @@ typedef struct nfs_param__
 #endif
 #ifdef _USE_9P
   hash_parameter_t _9p_owner_hash_param;
-#endif 
+#endif
   nfs_cache_layers_parameter_t cache_layers_param;
   external_tools_parameter_t extern_param;
 
