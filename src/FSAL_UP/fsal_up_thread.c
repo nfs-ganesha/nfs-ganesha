@@ -171,14 +171,6 @@ void *fsal_up_process_thread(void *UnUsedArg)
   tcb_remove(&fsal_up_process_tcb);
 }
 
-/* Given to pool_init() to be used as a constructor of
- * preallocated memory */
-void constructor_fsal_up_event_t(void *ptr,
-                                 void *parameter)
-{
-  return;
-}
-
 /* One pool can be used for all FSAL_UP used for exports. */
 void nfs_Init_FSAL_UP()
 {
@@ -190,7 +182,7 @@ void nfs_Init_FSAL_UP()
                                  sizeof(fsal_up_event_t),
                                  pool_basic_substrate,
                                  NULL,
-                                 constructor_fsal_up_event_t,
+                                 NULL,
                                  NULL);
   if(fsal_up_event_pool == NULL)
     {
@@ -274,23 +266,4 @@ fsal_status_t process_event(fsal_up_event_t *myevent, fsal_up_event_functions_t 
 
   status = schedule_fsal_up_event_process(myevent);
   return status;
-}
-
-fsal_up_event_functions_t *get_fsal_up_functions(char *fsal_up_type)
-{
-  if (strncmp(fsal_up_type, FSAL_UP_DUMB_TYPE, sizeof(FSAL_UP_DUMB_TYPE)) == 0)
-    {
-      LogEvent(COMPONENT_FSAL_UP, "Using the FSAL UP DUMB functions to handle"
-               " FSAL UP events.");
-      return get_fsal_up_dumb_functions();
-    }
-  else
-    {
-      return NULL;
-    }
-}
-
-fsal_up_event_bus_filter_t *find_filter(char filtername[MAX_FILTER_NAMELEN])
-{
-  return NULL;
 }
