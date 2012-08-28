@@ -628,7 +628,6 @@ void *stat_exporter_thread(void *UnusedArg);
 void *reaper_thread(void *UnusedArg);
 void *rpc_tcp_socket_manager_thread(void *Arg);
 void *sigmgr_thread( void * UnusedArg );
-void *fsal_up_thread(void *Arg);
 void *state_async_thread(void *UnusedArg);
 
 #ifdef _USE_UPCALL_SIMULATOR
@@ -784,12 +783,6 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
-
-#ifdef _USE_FSAL_UP
-void *fsal_up_process_thread( void *UnUsedArg );
-void create_fsal_up_threads();
-void nfs_Init_FSAL_UP();
-#endif /* _USE_FSAL_UP */
 
 void stats_collect (ganesha_stats_t *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
