@@ -17,7 +17,7 @@ cd linuxbox-ceph
 git checkout master
 git submodule update --init
 ./autogen.sh
-env CFLAGS="-O0 -g3" CXXFLAGS="-O0 -g3" ./configure --prefix=/usr/local
+./configure --prefix=/usr/local --without-tcmalloc
 make
 sudo make install
 
