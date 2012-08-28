@@ -59,12 +59,6 @@
 #define FSAL_UP_RENAME       0x00000100   /* this is a rename op */
 
 
-typedef struct fsal_up_filter_list_t_
-{
-  char name[MAX_FILTER_NAMELEN];
-  struct fsal_up_filter_list_t_ *next;
-} fsal_up_filter_list_t;
-
 typedef struct fsal_up_event_bus_parameter_t_
 {
 } fsal_up_event_bus_parameter_t;
@@ -78,11 +72,6 @@ typedef struct fsal_up_event_data_context_t_
 {
   cache_inode_fsal_data_t fsal_data;
 } fsal_up_event_data_context_t;
-
-typedef struct fsal_up_arg_t_
-{
-  struct exportlist__ *export_entry;
-} fsal_up_arg_t;
 
 typedef struct fsal_up_event_bus_filter_t_
 {
