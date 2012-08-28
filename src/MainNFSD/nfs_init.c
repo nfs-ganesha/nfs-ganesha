@@ -1455,8 +1455,6 @@ static void nfs_Start_threads(void)
    }
  LogEvent(COMPONENT_THREAD,
           "fsal_up_process_thread was started successfully");
-
-  create_fsal_up_threads();
 #endif /* _USE_FSAL_UP */
 
 }                               /* nfs_Start_threads */

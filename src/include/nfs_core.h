@@ -671,7 +671,6 @@ void *recovery_thread(void *UnusedArg);
 #endif
 void *rpc_tcp_socket_manager_thread(void *Arg);
 void *sigmgr_thread( void * UnusedArg );
-void *fsal_up_thread(void *Arg);
 void *state_async_thread(void *UnusedArg);
 
 #ifdef _USE_UPCALL_SIMULATOR
@@ -833,7 +832,6 @@ int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pf
 
 #ifdef _USE_FSAL_UP
 void *fsal_up_process_thread( void * UnUsedArg );
-void create_fsal_up_threads();
 void nfs_Init_FSAL_UP();
 #endif /* _USE_FSAL_UP */
 
