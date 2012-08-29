@@ -110,6 +110,7 @@ typedef struct state_layout_segment_t state_layout_segment_t;
 #define NFS41_NB_SLOTS           3
 #define NFS41_DRC_SIZE          32768
 
+#ifdef _USE_NFS4_1
 typedef struct nfs41_session_slot__
 {
   sequenceid4            sequence;
@@ -129,6 +130,7 @@ struct nfs41_session__
   channel_attrs4         back_channel_attrs;
   nfs41_session_slot_t   slots[NFS41_NB_SLOTS];
 };
+#endif
 
 /******************************************************************************
  *

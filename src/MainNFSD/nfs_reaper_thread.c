@@ -75,8 +75,11 @@ static int reap_hash_table(hash_table_t * ht_reap)
            * little hack: only want to reap v4 clients
            * 4.1 initializess this field to '1'
            */
+#ifdef _USE_NFS4_1
           v4 = (pclientid->cid_create_session_sequence == 0);
-
+#else
+          v4 = TRUE;
+#endif
           P(pclientid->cid_mutex);
 
           if(!valid_lease(pclientid) && v4)
