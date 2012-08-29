@@ -561,7 +561,7 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
                               fsi_name);
   }
 
-  return rc;
+  return handleOpened;
 }
 // -----------------------------------------------------------------------------
 int

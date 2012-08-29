@@ -250,24 +250,26 @@ PTFSAL_terminate()
   for (index = FSI_CIFS_RESERVED_STREAMS;
        index < g_fsi_handles.m_count;
        index++) {
-    if ((g_fsi_handles.m_handle[index].m_nfs_state == NFS_CLOSE) ||
-        (g_fsi_handles.m_handle[index].m_nfs_state == NFS_OPEN)) {
-
-      // ignore error code, just trying to clean up while going down
-      // and want to continue trying to close out other open files
-      ccl_up_mutex_unlock(&g_handle_mutex);
-      rc = ptfsal_implicit_close_for_nfs(index);
-      if (rc != FSI_IPC_EOK) {
-        FSI_TRACE(FSI_NOTICE, "Failed to close index: %d, close_rc = %d "
-                  "ignoring and moving on", index, rc);
-        closureFailure = TRUE;
-      }
-      rc = ccl_up_mutex_lock(&g_handle_mutex);
-      if (rc != 0) {
-        FSI_TRACE(FSI_ERR, "Failed to lock handle mutex");
-        minor = 2;
-        major = posix2fsal_error(EIO);
-        ReturnCode(major, minor);
+    if (g_fsi_handles.m_handle[index].m_hndl_in_use != 0) {
+      if ((g_fsi_handles.m_handle[index].m_nfs_state == NFS_CLOSE) ||
+          (g_fsi_handles.m_handle[index].m_nfs_state == NFS_OPEN)) {
+  
+        // ignore error code, just trying to clean up while going down
+        // and want to continue trying to close out other open files
+        ccl_up_mutex_unlock(&g_handle_mutex);
+        rc = ptfsal_implicit_close_for_nfs(index);
+        if (rc != FSI_IPC_EOK) {
+          FSI_TRACE(FSI_NOTICE, "Failed to close index: %d, close_rc = %d "
+                    "ignoring and moving on", index, rc);
+          closureFailure = TRUE;
+        }
+        rc = ccl_up_mutex_lock(&g_handle_mutex);
+        if (rc != 0) {
+          FSI_TRACE(FSI_ERR, "Failed to lock handle mutex");
+          minor = 2;
+          major = posix2fsal_error(EIO);
+          ReturnCode(major, minor);
+        }
       }
     }
   }
