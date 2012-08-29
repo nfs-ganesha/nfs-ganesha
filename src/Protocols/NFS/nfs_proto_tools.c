@@ -3130,50 +3130,32 @@ int nfs3_FSALattr_To_Fattr(exportlist_t *pexport,
                       ATTR_ATIME     | ATTR_MTIME  |
                       ATTR_CTIME);
 
-  if(FSAL_attr == NULL || Fattr == NULL)
-    {
-      LogFullDebug(COMPONENT_NFSPROTO,
-                   "nfs3_FSALattr_To_Fattr: FSAL_attr=%p, Fattr=%p",
-                   FSAL_attr, Fattr);
-      return 0;
-    }
+        if(FSAL_attr == NULL || Fattr == NULL) {
+                LogFullDebug(COMPONENT_NFSPROTO,
+                             "nfs3_FSALattr_To_Fattr: FSAL_attr=%p, Fattr=%p",
+                             FSAL_attr, Fattr);
+                return 0;
+        }
 
-  nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
-  if (want & ~got)
-    {
+        nfs3_FSALattr_To_PartialFattr(FSAL_attr, &got, Fattr);
+        if (want & ~got) {
+                LogCrit(COMPONENT_NFSPROTO,
+                        "Likely bug: FSAL did not fill in a standard NFSv3 "
+                        "attribute: missing %lx", want & ~ got);
+        }
 
-#if 0
-// FIXME: why are we getting here for certain ops???  - paulsheer@gmail.com
-// printf("ATTR_ATIME      = %d vs %d\n", (int) (want & ATTR_ATIME), (int) (got & ATTR_ATIME));
-// printf("ATTR_CTIME      = %d vs %d\n", (int) (want & ATTR_CTIME), (int) (got & ATTR_CTIME));
-// printf("ATTR_GROUP      = %d vs %d\n", (int) (want & ATTR_GROUP), (int) (got & ATTR_GROUP));
-// printf("ATTR_MODE       = %d vs %d\n", (int) (want & ATTR_MODE), (int) (got & ATTR_MODE));
-// printf("ATTR_MTIME      = %d vs %d\n", (int) (want & ATTR_MTIME), (int) (got & ATTR_MTIME));
-// printf("ATTR_NUMLINKS   = %d vs %d\n", (int) (want & ATTR_NUMLINKS), (int) (got & ATTR_NUMLINKS));
-// printf("ATTR_OWNER      = %d vs %d\n", (int) (want & ATTR_OWNER), (int) (got & ATTR_OWNER));
-// printf("ATTR_RAWDEV     = %d vs %d\n", (int) (want & ATTR_RAWDEV), (int) (got & ATTR_RAWDEV));
-// printf("ATTR_SIZE       = %d vs %d\n", (int) (want & ATTR_SIZE), (int) (got & ATTR_SIZE));
-// printf("ATTR_SPACEUSED  = %d vs %d\n", (int) (want & ATTR_SPACEUSED), (int) (got & ATTR_SPACEUSED));
-// printf("ATTR_TYPE       = %d vs %d\n", (int) (want & ATTR_TYPE), (int) (got & ATTR_TYPE));
-#endif
-
-
-      LogCrit(COMPONENT_NFSPROTO,
-              "Likely bug: FSAL did not fill in a standard NFSv3 attribute.");
-    }
-
-  /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
-  Fattr->fsid = (nfs3_uint64) pexport->filesystem_id.major;
-  LogFullDebug(COMPONENT_NFSPROTO,
-               "fsid.major = %#"PRIX64" (%"PRIu64
-               "), fsid.minor = %#"PRIX64" (%"PRIu64
-               "), nfs3_fsid = %#"PRIX64" (%"PRIu64")",
-               pexport->filesystem_id.major, pexport->filesystem_id.major,
-               pexport->filesystem_id.minor,
-               pexport->filesystem_id.minor,
-               (uint64_t) Fattr->fsid,
-               (uint64_t) Fattr->fsid);
-  return 1;
+        /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
+        Fattr->fsid = (nfs3_uint64) pexport->filesystem_id.major;
+        LogFullDebug(COMPONENT_NFSPROTO,
+                     "fsid.major = %#"PRIX64" (%"PRIu64
+                     "), fsid.minor = %#"PRIX64" (%"PRIu64
+                     "), nfs3_fsid = %#"PRIX64" (%"PRIu64")",
+                     pexport->filesystem_id.major, pexport->filesystem_id.major,
+                     pexport->filesystem_id.minor,
+                     pexport->filesystem_id.minor,
+                     (uint64_t) Fattr->fsid,
+                     (uint64_t) Fattr->fsid);
+        return 1;
 }
 
 /**
@@ -4034,8 +4016,8 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
   int attribute_to_set = 0;
   int attr_len;
   unsigned char *current_pos;
-  uint32_t uint32_val;
-  uint64_t uint64_val;
+  uint32_t uint32_val = 0;
+  uint64_t uint64_val = 0;
   char buffer[MAXNAMLEN];
   utf8string utf8buffer;
 
@@ -4210,6 +4192,7 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
           utf8buffer.utf8string_len = strlen(buffer);
 
           utf82gid(&utf8buffer, &(pFSAL_attr->group));
+          FSAL_SET_MASK(pFSAL_attr->mask, ATTR_GROUP);
           break;
 
         case FATTR4_CHANGE:
