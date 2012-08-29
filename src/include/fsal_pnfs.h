@@ -165,7 +165,7 @@ struct fsal_layoutcommit_arg {
         bool time_changed;
         /** If new_time is true, the client-supplied modification tiem
          *  for the file.  otherwise, undefined. */
-        gsh_time_t new_time;
+        nfstime4 new_time;
 };
 
 /**
