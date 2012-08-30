@@ -125,8 +125,8 @@ extern log_component_info __attribute__ ((unused))
 // ----------------------------------------------------------------------------
 
 // Following definitions map to NIV_* trace levels in Ganesha log.h
-#define FSI_FATAL          1   // NIV_FATAL
-#define FSI_ERR            2   // NIV_MAJOR
+#define FSI_FATAL          2   // NIV_MAJOR
+#define FSI_ERR            3   // NIV_CRIT
 #define FSI_NOTICE         4   // NIV_WARN
 #define FSI_STAT           5   // NIV_EVENT
 #define FSI_INFO           6   // NIV_INFO
