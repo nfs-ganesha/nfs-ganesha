@@ -146,6 +146,7 @@ cache_inode_create(cache_entry_t *parent,
 
     dir_handle = parent->obj_handle;
 /* we pass in attributes to the create.  We will get them back below */
+    FSAL_SET_MASK(object_attributes.mask, ATTR_MODE|ATTR_OWNER|ATTR_GROUP);
     object_attributes.owner = req_ctx->creds->caller_uid;
     object_attributes.group = req_ctx->creds->caller_gid; /* be more selective? */
     object_attributes.mode = mode;

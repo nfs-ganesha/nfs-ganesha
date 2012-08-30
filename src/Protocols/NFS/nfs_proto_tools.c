@@ -4208,9 +4208,8 @@ int Fattr4_To_FSAL_attr(struct attrlist *pFSAL_attr,
 
         case FATTR4_RAWDEV:
           memcpy((char *)&attr_rawdev, current_pos, attr_len);
-          pFSAL_attr->rawdev.major = (uint32_t) nfs_ntohl64(attr_rawdev.specdata1);
-          pFSAL_attr->rawdev.minor = (uint32_t) nfs_ntohl64(attr_rawdev.specdata2);
-
+          pFSAL_attr->rawdev.major = ntohl(attr_rawdev.specdata1);
+          pFSAL_attr->rawdev.minor = ntohl(attr_rawdev.specdata2);
           FSAL_SET_MASK(pFSAL_attr->mask, ATTR_RAWDEV);
           break;
 
