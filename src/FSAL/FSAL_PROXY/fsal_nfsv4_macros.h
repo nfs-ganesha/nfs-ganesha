@@ -199,6 +199,17 @@ do {                                                                        \
   op->nfs_argop4_u.opcreate.createattrs = inattrs ;                         \
 } while ( 0 )
 
+#define COMPOUNDV4_ARG_ADD_OP_CREATE(opcnt, arg, inname, nf4typ, inattrs, specd )      \
+do {                                                                        \
+  nfs_argop4 *op = arg + opcnt; opcnt++;                                    \
+  op->argop = NFS4_OP_CREATE ;                                              \
+  op->nfs_argop4_u.opcreate.objtype.type = nf4typ;                          \
+  op->nfs_argop4_u.opcreate.objtype.createtype4_u.devdata = specd;          \
+  op->nfs_argop4_u.opcreate.objname.utf8string_val = inname ;               \
+  op->nfs_argop4_u.opcreate.objname.utf8string_len = strlen(inname) ;       \
+  op->nfs_argop4_u.opcreate.createattrs = inattrs ;                         \
+} while ( 0 )
+
 #define COMPOUNDV4_ARG_ADD_OP_SYMLINK(opcnt, args, inname, incontent, inattrs)\
 do {                                                                          \
   nfs_argop4 *op = args + opcnt; opcnt++;                                 \

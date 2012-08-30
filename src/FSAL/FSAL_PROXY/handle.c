@@ -1247,7 +1247,7 @@ pxy_mkdir(struct fsal_obj_handle *dir_hdl,
         nfs_argop4 argoparray[FSAL_MKDIR_NB_OP_ALLOC];
         nfs_resop4 resoparray[FSAL_MKDIR_NB_OP_ALLOC];
 
-        if(!dir_hdl || !name || !name || !handle || !attrib || !opctx)
+        if(!dir_hdl || !name || !handle || !attrib || !opctx)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
         /*
@@ -1300,7 +1300,92 @@ pxy_mknod(struct fsal_obj_handle *dir_hdl,
           struct attrlist *attrib,
           struct fsal_obj_handle **handle)
 {
-        return fsalstat(ERR_FSAL_PERM, EPERM);
+        int rc;
+        int opcnt = 0;
+        uint32_t bitmap_res[2];
+        uint32_t bitmap_mknod[2];
+        uint32_t bitmap_val[2];
+        fattr4 input_attr;
+        bitmap4 bmap = {.bitmap4_val = bitmap_val, .bitmap4_len = 2};
+        char padfilehandle[NFS4_FHSIZE];
+        struct pxy_obj_handle *ph;
+        char fattr_blob[FATTR_BLOB_SZ];
+        GETATTR4resok *atok;
+        GETFH4resok *fhok;
+        fsal_status_t st;
+        enum nfs_ftype4 nf4type;
+        specdata4 specdata = {0, 0};
+
+        nfs_argop4 argoparray[4];
+        nfs_resop4 resoparray[4];
+
+        if(!dir_hdl || !name || !name || !handle || !attrib || !opctx)
+                return fsalstat(ERR_FSAL_FAULT, EINVAL);
+
+        switch(nodetype) {
+        case CHARACTER_FILE:
+                if(!dev)
+                        return fsalstat(ERR_FSAL_FAULT, EINVAL);
+                specdata.specdata1 = dev->major;
+                specdata.specdata2 = dev->minor;
+                nf4type = NF4CHR;
+                break;
+        case BLOCK_FILE:
+                if(!dev)
+                        return fsalstat(ERR_FSAL_FAULT, EINVAL);
+                specdata.specdata1 = dev->major;
+                specdata.specdata2 = dev->minor;
+                nf4type = NF4BLK;
+                break;
+        case SOCKET_FILE:
+                nf4type = NF4SOCK;
+                break;
+        case FIFO_FILE:
+                nf4type = NF4FIFO;
+                break;
+        default:
+                return fsalstat(ERR_FSAL_FAULT, EINVAL);
+        }
+
+        /*
+         * The caller gives us partial attributes which include mode and owner
+         * and expects the full attributes back at the end of the call.
+         */
+        attrib->mask &= ATTR_MODE|ATTR_OWNER|ATTR_GROUP;
+        pxy_create_settable_bitmap(attrib, &bmap);
+        if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
+                                  NULL, &bmap) == -1)
+                return fsalstat(ERR_FSAL_INVAL, -1);
+
+        ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
+        COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
+        resoparray[opcnt].nfs_resop4_u.opcreate.CREATE4res_u.resok4.attrset.bitmap4_val = bitmap_mknod;
+        resoparray[opcnt].nfs_resop4_u.opcreate.CREATE4res_u.resok4.attrset.bitmap4_len = 2;
+        COMPOUNDV4_ARG_ADD_OP_CREATE(opcnt, argoparray, (char*)name, 
+                                     nf4type, input_attr, specdata);
+
+        fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
+        fhok->object.nfs_fh4_val = padfilehandle;
+        fhok->object.nfs_fh4_len = sizeof(padfilehandle);
+        COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
+
+        pxy_create_getattr_bitmap(bitmap_val);
+        atok = pxy_fill_getattr_reply(resoparray + opcnt, bitmap_res,
+                                      fattr_blob, sizeof(fattr_blob));
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+
+        rc = pxy_nfsv4_call(dir_hdl->export, opctx->creds, opcnt,
+                            argoparray, resoparray);
+        nfs4_Fattr_Free(&input_attr);
+        if(rc != NFS4_OK)
+                return nfsstat4_to_fsal(rc);
+
+        st = pxy_make_object(dir_hdl->export, &atok->obj_attributes,
+                             &fhok->object, handle);
+        if(!FSAL_IS_ERROR(st))
+                *attrib = (*handle)->attributes;
+        return st;
 }
 
 static fsal_status_t
