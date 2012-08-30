@@ -498,10 +498,17 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
                                 (char *)&fsi_filename);
   if(rc < 0)
   {
-    FSI_TRACE(FSI_DEBUG, "Handle to name failed rc=%d", rc);
+    FSI_TRACE(FSI_ERR, "Handle to name failed rc=%d", rc);
+    return rc;
   }
   FSI_TRACE(FSI_DEBUG, "handle to name %s for handle:", fsi_filename);
-  ptfsal_print_handle(p_fsi_handle->data.handle.f_handle);
+  // The file name should not be empty "". In case it is empty, we
+  // return error.
+  if(strnlen(fsi_filename, PATH_MAX) == 0)
+  {
+    FSI_TRACE(FSI_ERR, "The file name is empty string.");
+    return -1;
+  }
   open_rc = ccl_open(&ccl_context, fsi_filename, oflags, mode);
 
   return open_rc;
@@ -546,6 +553,15 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
   fsi_get_whole_path(fsi_parent_dir_name, p_filename->name, fsi_name);
 
   handleOpened = ccl_open(&ccl_context, fsi_name, O_CREAT, mode);
+
+  // The file name should not be empty "". In case it is empty, we
+  // return error.
+  if(strnlen(fsi_name, PATH_MAX) == 0)
+  {
+    FSI_TRACE(FSI_ERR, "The file name is empty string.");
+    return -1;
+  }
+  rc = ccl_open(&ccl_context, fsi_name, O_CREAT, mode);
 
   if (handleOpened >=0) {
     fsal_path_t fsal_path;
@@ -1096,7 +1112,7 @@ void ptfsal_set_fsi_handle_data(fsal_op_context_t * p_context,
     snprintf(ccl_context->client_address, sizeof(ccl_context->client_address), 
              "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3]);
   }
-  FSI_TRACE(FSI_NOTICE, "Export ID = %ld, uid = %ld, gid = %ld, Export Path = " 
+  FSI_TRACE(FSI_DEBUG, "Export ID = %ld, uid = %ld, gid = %ld, Export Path = " 
             "%s, client ip = %s\n", fsi_export_context->pt_export_id, 
             fsi_op_context->credential.user,
             fsi_op_context->credential.group, 
