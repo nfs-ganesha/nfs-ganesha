@@ -129,7 +129,7 @@ set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
 include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
 
-# Now create a useable specfile²
+# Now create a useable specfile
 configure_file(
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"
@@ -231,6 +231,9 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 
 # CUnit
 option(USE_CUNIT "Use Cunit test framework" OFF)
+
+# NFS RDMA
+option(USE_NFS_MSK "enable NFS/MSK support" OFF)
 
 # Enable 9P Support
 option(USE_9P "enable 9P support" ON)
@@ -830,13 +833,13 @@ endif(USE_DBUS)
 
 set(GANESHA_CORE ${GANESHA_CORE} NodeList)
 
-if(USE_9P_RDMA)
+if(USE_9P_RDMA OR USE_NFS_MSK)
   find_package(PkgConfig)
   pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.6)
   set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
   include_directories(${MOOSHIKA_INCLUDE_DIRS})
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
-endif(USE_9P_RDMA)
+endif(USE_9P_RDMA OR USE_NFS_MSK)
 
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
@@ -1065,7 +1068,6 @@ set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA}
   "Distribution package's name carries git data"
   FORCE)
 
-
 set(USE_9P ${USE_9P}
   CACHE BOOL
    "enable 9P support"
@@ -1094,6 +1096,16 @@ set(USE_TSAN ${USE_TSAN}
 set(USE_LTTNG ${USE_LTTNG}
   CACHE BOOL
   "Enable LTTng tracing"
+  FORCE)
+
+set(USE_NFS_MSK ${USE_NFS_MSK}
+  CACHE BOOL
+  "enable nfs Mooshika"
+  FORCE)
+
+set(_USE_NFS_MSK ${USE_NFS_MSK}
+  CACHE BOOL
+  "enable nfs Mooshika in config"
   FORCE)
 
 # Now create a useable config.h

@@ -26,6 +26,7 @@
 #cmakedefine PROXY_HANDLE_MAPPING 1
 #cmakedefine _USE_9P 1
 #cmakedefine _USE_9P_RDMA 1
+#cmakedefine _USE_NFS_MSK 1
 #cmakedefine USE_FSAL_SHOOK 1
 #cmakedefine USE_FSAL_LUSTRE_UP 1
 #cmakedefine DEBUG_SAL 1

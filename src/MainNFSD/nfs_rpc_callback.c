@@ -646,6 +646,12 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 
 	assert(session->xprt);
 
+	if (svc_get_xprt_type(session->xprt) == XPRT_RDMA) {
+		LogWarn(COMPONENT_NFS_CB,
+			"refusing to create back channel over RDMA for now");
+		return EINVAL;
+	}
+
 	/* connect an RPC client
 	 * Use version 1 per errata ID 2291 for RFC 5661
 	 */
