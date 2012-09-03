@@ -720,7 +720,7 @@ case $FSAL in
 		;;
 	VFS)
 		AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem (kernel is >= 2.6.39])
-		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+		AC_CHECK_HEADERS([sys/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
 		FSAL_CFLAGS=
                 FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
