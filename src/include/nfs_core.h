@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -814,10 +815,6 @@ int namemap_clear();
 
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
                      hash_stat_t * phstat_reverse);
-
-int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
-void * fridgethr_freeze( ) ;
-int fridgethr_init() ;
 
 #define WORKER_INDEX_ANY INT_MAX
 unsigned int nfs_core_select_worker_queue(unsigned int avoid_index) ;
