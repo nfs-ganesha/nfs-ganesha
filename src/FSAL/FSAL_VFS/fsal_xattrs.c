@@ -20,7 +20,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 
 /* generic definitions for extended attributes */
 
