@@ -119,6 +119,21 @@ static inline void glist_add_list_tail(struct glist_head *list, struct glist_hea
   list->prev = last;
 }
 
+/* Move all of src onto the tail of tgt.  Clears src. */
+static inline void glist_splice_tail(struct glist_head *tgt,
+                                     struct glist_head *src)
+{
+    if (glist_empty(src))
+        return;
+
+    src->next->prev = tgt->prev;
+    tgt->prev->next = src->next;
+    src->prev->next = tgt;
+    tgt->prev = src->prev;
+
+    init_glist(src);
+}
+
 #define glist_for_each(node, head) \
 	for(node = (head)->next; node != head; node = node->next)
 
