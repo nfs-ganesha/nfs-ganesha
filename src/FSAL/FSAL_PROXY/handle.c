@@ -1353,7 +1353,7 @@ pxy_mknod(struct fsal_obj_handle *dir_hdl,
          */
         attrib->mask &= ATTR_MODE|ATTR_OWNER|ATTR_GROUP;
         pxy_create_settable_bitmap(attrib, &bmap);
-        if(nfs4_FSALattr_To_Fattr(NULL, attrib, &input_attr, NULL,
+        if(nfs4_FSALattr_To_Fattr(attrib, &input_attr, NULL,
                                   NULL, &bmap) == -1)
                 return fsalstat(ERR_FSAL_INVAL, -1);
 
