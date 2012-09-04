@@ -3098,6 +3098,64 @@ cache_entry_To_Fattr(cache_entry_t *entry,
 	return 0;
 }
 
+int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
+{
+	u_int LastOffset;
+	XDR attr_body;
+	struct xdr_attrs_args args;
+	fattr_xdr_result xdr_res;
+
+	/* basic init */
+	memset(&Fattr->attrmask, 0, sizeof(Fattr->attrmask));
+	Fattr->attr_vals.attrlist4_val =
+			gsh_malloc(fattr4tab[FATTR4_RDATTR_ERROR].size_fattr4);
+	if(Fattr->attr_vals.attrlist4_val == NULL) {
+		return -1;
+	}
+
+	LastOffset = 0;
+	memset(&attr_body, 0, sizeof(attr_body));
+	xdrmem_create(&attr_body,
+		      Fattr->attr_vals.attrlist4_val,
+		      fattr4tab[FATTR4_RDATTR_ERROR].size_fattr4,
+		      XDR_ENCODE);
+	memset(&args, 0, sizeof(args));
+	args.rdattr_error = rdattr_error;
+
+	xdr_res = fattr4tab[FATTR4_RDATTR_ERROR].encode(&attr_body, &args);
+	if(xdr_res == FATTR_XDR_SUCCESS) {
+		bool res = set_attribute_in_bitmap(&Fattr->attrmask,
+					           FATTR4_RDATTR_ERROR);
+		assert(res);
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Encoded attribute %d, name = %s",
+			     FATTR4_RDATTR_ERROR,
+			     fattr4tab[FATTR4_RDATTR_ERROR].name);
+
+		/* mark the attribute in the bitmap should be new bitmap btw */
+
+		LastOffset = xdr_getpos(&attr_body);  /* dumb but for now */
+		xdr_destroy(&attr_body);
+
+		if(LastOffset == 0) {  /* no supported attrs so we can free */
+			assert(Fattr->attrmask.bitmap4_len == 0);
+			gsh_free(Fattr->attr_vals.attrlist4_val);
+			Fattr->attr_vals.attrlist4_val = NULL;
+		}
+		Fattr->attr_vals.attrlist4_len = LastOffset;
+		return 0;
+	} else {
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "Encode FAILED for attribute %d, name = %s",
+			     FATTR4_RDATTR_ERROR,
+			     fattr4tab[FATTR4_RDATTR_ERROR].name);
+		/* signal fail so if(LastOffset > 0) works right */
+
+		gsh_free(Fattr->attr_vals.attrlist4_val);
+		Fattr->attr_vals.attrlist4_val = NULL;
+		return -1;
+	}
+}
 
 /**
  * @brief Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -3160,6 +3218,7 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 		if(attribute_to_set > FATTR4_FS_CHARSET_CAP) {
 			break;  /* skip out of bounds */
 		}
+
 		xdr_res = fattr4tab[attribute_to_set].encode(&attr_body, &args);
 		if(xdr_res == FATTR_XDR_SUCCESS) {
 			bool res = set_attribute_in_bitmap(&Fattr->attrmask,

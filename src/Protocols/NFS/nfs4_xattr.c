@@ -302,14 +302,6 @@ int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
  * 
  */
 
-static const struct bitmap4 RdAttrErrorBitmap = {
-	.bitmap4_len = 1,
-	.map[0] = (1<<FATTR4_RDATTR_ERROR),
-	.map[1] = 0,
-	.map[2] = 0
-};
-static const  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
-
 int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
@@ -486,9 +478,8 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
           if(nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
                                data, &nfsfh, &(arg_READDIR4->attr_request)) != 0)
             {
-              /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
-              entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
-              entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
+              LogFatal(COMPONENT_NFS_V4,
+                       "nfs4_FSALattr_To_Fattr failed to convert attr");
             }
 
           /* Chain the entries together */

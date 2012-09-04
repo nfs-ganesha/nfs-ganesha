@@ -791,14 +791,6 @@ int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
  * @return NFS4_OK if successfull, other values show an error.
  */
 
-static const struct bitmap4 RdAttrErrorBitmap = {
-	.bitmap4_len = 1,
-	.map = {[0] = (1<<FATTR4_RDATTR_ERROR),
-		[1] = 0,
-		[2] = 0}
-};
-static attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
-
 int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
@@ -815,6 +807,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   pseudofs_entry_t *iter = NULL;
   entry4 *entry_nfs_array = NULL;
   exportlist_t *save_pexport;
+  export_perms_t save_export_perms;
   struct gsh_export *saved_gsh_export;
   nfs_fh4 entryFH;
   cache_inode_status_t cache_status;
@@ -1018,18 +1011,18 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
           if(nfs4_PseudoToFattr(iter,
                             &(entry_nfs_array[i].attrs),
-                            data, &entryFH, &(arg_READDIR4->attr_request)) != 0)
+                            data, &entryFH,
+                            &(arg_READDIR4->attr_request)) != 0)
             {
-              /* Should never occured, but the is no reason for leaving the section without any information */
-              entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
-              entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
+              LogFatal(COMPONENT_NFS_V4_PSEUDO,
+                       "nfs4_PseudoToFattr failed to convert pseudo fs attr");
             }
       } else {
-      /* This is a junction. Code used to not recognize this which resulted
-       * in readdir giving different attributes ( including FH, FSid, etc... )
-       * to clients from a lookup. AIX refused to list the directory because of
-       * this. Now we go to the junction to get the attributes.
-       */
+          /* This is a junction. Code used to not recognize this which resulted
+           * in readdir giving different attributes ( including FH, FSid, etc... )
+           * to clients from a lookup. AIX refused to list the directory because of
+           * this. Now we go to the junction to get the attributes.
+           */
           LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
                  "Offspring DIR %s pseudo_id %d is a junction Export_id %d Path %s", 
                   iter->name,
@@ -1038,8 +1031,10 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                   iter->junction_export->fullpath); 
           /* Save the compound data context */
           save_pexport = data->pexport;
-          data->pexport = iter->junction_export;
+          save_export_perms = data->export_perms;
 	  saved_gsh_export = data->req_ctx->export;
+
+          data->pexport = iter->junction_export;
 	  data->req_ctx->export = get_gsh_export(iter->junction_export->id,
 						 true);
           /* Build the credentials */
@@ -1052,43 +1047,107 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
 
           if(res_READDIR4->status == NFS4ERR_ACCESS)
             {
-              LogMajor(COMPONENT_NFS_V4_PSEUDO,
-		       "PSEUDO FS JUNCTION TRAVERSAL:"
-		       " Failed to get FSAL credentials for %s, id=%d",
-		       iter->junction_export->fullpath,
-		       iter->junction_export->id);
-              return res_READDIR4->status;
+              /* If return is NFS4ERR_ACCESS then this client doesn't have
+               * access to this export, quietly skip the export.
+               */
+              LogDebug(COMPONENT_NFS_V4_PSEUDO,
+                       "NFS4ERR_ACCESS Skipping Export_Id %d Path %s",
+                       data->pexport->id, data->pexport->fullpath);
+              put_gsh_export(data->req_ctx->export);
+              data->pexport = save_pexport;
+              data->export_perms = save_export_perms;
+              data->req_ctx->export = saved_gsh_export;
+              continue;
             }
-	  cache_status = nfs_export_get_root_entry(iter->junction_export, &entry);
-	  if(cache_status != CACHE_INODE_SUCCESS)
+
+          if(res_READDIR4->status == NFS4ERR_WRONGSEC)
             {
-              LogMajor(COMPONENT_NFS_V4_PSEUDO,
-		       "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s ,"
-		       " id=%d, status = %d",
-		       iter->junction_export->fullpath,
-		       iter->junction_export->id, cache_status);
-              res_READDIR4->status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4->status;
+              /* Client isn't using the right SecType for this export,
+               * we will report NFS4ERR_WRONGSEC in FATTR4_RDATTR_ERROR.
+               *
+               * If the ONLY attributes requested are FATTR4_RDATTR_ERROR and
+               * FATTR4_MOUNTED_ON_FILEID we will not return an error and
+               * instead will return success with FATTR4_MOUNTED_ON_FILEID.
+               * AIX clients make this request and expect it to succeed.
+               */
+              LogDebug(COMPONENT_NFS_V4_PSEUDO,
+                       "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Path %s",
+                       data->pexport->id, data->pexport->fullpath);
+
+              if(check_for_wrongsec_ok_attr(&arg_READDIR4.attr_request))
+                {
+                  /* Client is requesting attr that are allowed when
+                   * NFS4ERR_WRONGSEC occurs.
+                   *
+                   * Because we are not asking for any attributes
+                   * which are a property of the exported file system's
+                   * root, really just asking for MOUNTED_ON_FILEID,
+                   * we can just get the attr for this pseudo fs node
+                   * since it will result in the correct value for
+                   * MOUNTED_ON_FILEID since pseudo fs FILEID and
+                   * MOUNTED_ON_FILEID are always the same. FILEID
+                   * of pseudo fs node is what we actually want here...
+                   */
+                  if(nfs4_PseudoToFattr(iter,
+                                        &(entry_nfs_array[i].attrs),
+                                        data,
+                                        NULL, /* don't need the file handle */
+                                        &(arg_READDIR4.attr_request)) != 0)
+                    {
+                      LogFatal(COMPONENT_NFS_V4_PSEUDO,
+                               "nfs4_PseudoToFattr failed to convert pseudo fs attr");
+                    }
+                  // next step
+                }
+              else if(check_for_rdattr_error(&arg_READDIR4.attr_request))
+                {
+                  // report NFS4ERR_WRONGSEC
+                  if(nfs4_Fattr_Fill_Error(&(entry_nfs_array[i].attrs),
+                                           NFS4ERR_WRONGSEC) != 0)
+                    {
+                      LogFatal(COMPONENT_NFS_V4_PSEUDO,
+                               "nfs4_Fattr_Fill_Error failed to fill in RDATTR_ERROR");
+                    }
+                }
+              else
+                {
+                  return res_READDIR4->status;
+                }
             }
-          /* Build the nfs4 handle. Again, we do this unconditionally. */
-          if(!nfs4_FSALToFhandle(&entryFH, entry->obj_handle))
+          else
             {
-              LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: Failed to build the first file handle");
-              res_READDIR4->status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4->status;
+	      cache_status = nfs_export_get_root_entry(iter->junction_export, &entry);
+	      if(cache_status != CACHE_INODE_SUCCESS)
+                {
+                  LogMajor(COMPONENT_NFS_V4_PSEUDO,
+		           "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s ,"
+		           " id=%d, status = %d",
+		           iter->junction_export->fullpath,
+		           iter->junction_export->id, cache_status);
+                  res_READDIR4->status = NFS4ERR_SERVERFAULT;
+                  return res_READDIR4->status;
+                }
+              /* Build the nfs4 handle. Again, we do this unconditionally. */
+              if(!nfs4_FSALToFhandle(&entryFH, entry->obj_handle))
+                {
+                  LogMajor(COMPONENT_NFS_V4_PSEUDO,
+                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to build the first file handle");
+                  res_READDIR4->status = NFS4ERR_SERVERFAULT;
+                  return res_READDIR4->status;
+                }
+              if(cache_entry_To_Fattr(entry,
+                                      &(entry_nfs_array[i].attrs),
+                                      data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
+                {
+                  LogFatal(COMPONENT_NFS_V4_PSEUDO,
+                           "nfs4_FSALattr_To_Fattr failed to convert attr");
+                }
             }
-          if(cache_entry_To_Fattr(entry,
-                                  &(entry_nfs_array[i].attrs),
-                                  data, &entryFH, &(arg_READDIR4->attr_request)) != 0)
-            {
-              /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
-              entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
-              entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
-            }
+
 	  put_gsh_export(data->req_ctx->export);
 	  data->req_ctx->export = saved_gsh_export;
 	  data->pexport = save_pexport;
+	  data->export_perms = save_export_perms;
       }
       /* Chain the entry together */
       entry_nfs_array[i].nextentry = NULL;

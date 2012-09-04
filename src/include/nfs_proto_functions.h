@@ -903,6 +903,35 @@ typedef struct fattr4_dent {
 
 extern const struct fattr4_dent fattr4tab[];
 
+#define WORD0_FATTR4_RDATTR_ERROR (1 << FATTR4_RDATTR_ERROR)
+#define WORD1_FATTR4_MOUNTED_ON_FILEID (1 << (FATTR4_MOUNTED_ON_FILEID - 32))
+
+static inline int check_for_wrongsec_ok_attr(struct bitmap4 * attr_request)
+{
+  if(attr_request->bitmap4_len < 1)
+    return true;
+  if((attr_request->map[0] & ~WORD0_FATTR4_RDATTR_ERROR) != 0)
+    return false;
+  if(attr_request->bitmap4_len < 2)
+    return true;
+  if((attr_request->map[1] & ~WORD1_FATTR4_MOUNTED_ON_FILEID) != 0)
+    return false;
+  if(attr_request->bitmap4_len < 3)
+    return true;
+  if(attr_request->map[2] != 0)
+    return false;
+  return true;
+}
+
+static inline int check_for_rdattr_error(struct bitmap4 * attr_request)
+{
+  if(attr_request->bitmap4_len < 1)
+    return false;
+  if((attr_request->map[0] & WORD0_FATTR4_RDATTR_ERROR) != 0)
+    return true;
+  return false;
+}
+
 /* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be used instead */
 #define FSINFO_MAX_FILESIZE  0xFFFFFFFFFFFFFFFFll
 #define MAX_HARD_LINK_VALUE           (0xffff)
@@ -1130,6 +1159,8 @@ int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *,
 			    compound_data_t *);
 
 int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
+
+int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 error);
 
 int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            fattr4 *Fattr,
