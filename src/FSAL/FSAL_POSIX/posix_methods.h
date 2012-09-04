@@ -40,10 +40,15 @@ struct posix_fsal_export {
 };
 
 
-fsal_status_t posix_lookup_path (struct fsal_export *exp_hdl, const char *path, struct fsal_obj_handle **handle);
+fsal_status_t posix_lookup_path (struct fsal_export *exp_hdl,
+				 const struct req_op_context *opctx,
+				 const char *path,
+				 struct fsal_obj_handle **handle);
 
 fsal_status_t posix_create_handle (struct fsal_export *exp_hdl,
-                                   struct gsh_buffdesc *hdl_desc, struct fsal_obj_handle **handle);
+				   const struct req_op_context *opctx,
+                                   struct gsh_buffdesc *hdl_desc,
+				   struct fsal_obj_handle **handle);
 
 struct posix_fsal_obj_handle {
     struct fsal_obj_handle obj_handle;
@@ -66,10 +71,17 @@ struct posix_fsal_obj_handle {
 fsal_status_t posix_open (struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags);
 fsal_openflags_t posix_status (struct fsal_obj_handle *obj_hdl);
 fsal_status_t posix_read (struct fsal_obj_handle *obj_hdl,
+			  const struct req_op_context *opctx,
                           uint64_t offset,
-                          size_t buffer_size, void *buffer, size_t * read_amount, bool * end_of_file);
+                          size_t buffer_size, void *buffer,
+			  size_t * read_amount,
+			  bool * end_of_file);
 fsal_status_t posix_write (struct fsal_obj_handle *obj_hdl,
-                           uint64_t offset, size_t buffer_size, void *buffer, size_t * write_amount);
+			   const struct req_op_context *opctx,
+                           uint64_t offset,
+			   size_t buffer_size,
+			   void *buffer,
+			   size_t * write_amount);
 fsal_status_t posix_commit (struct fsal_obj_handle *obj_hdl,    /* sync */
                             off_t offset, size_t len);
 fsal_status_t posix_lock_op (struct fsal_obj_handle *obj_hdl,
