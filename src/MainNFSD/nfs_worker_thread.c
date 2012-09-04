@@ -748,7 +748,9 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 /*
  * Extract RPC argument.
  */
-int nfs_rpc_get_args(nfs_request_data_t *preqnfs, const nfs_function_desc_t *pfuncdesc)
+int
+nfs_rpc_get_args(nfs_request_data_t *preqnfs,
+                 const nfs_function_desc_t *pfuncdesc)
 {
   SVCXPRT *xprt = preqnfs->xprt;
   nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
@@ -759,7 +761,8 @@ int nfs_rpc_get_args(nfs_request_data_t *preqnfs, const nfs_function_desc_t *pfu
                "Before svc_getargs on socket %d, xprt=%p",
                xprt->xp_fd, xprt);
 
-  if(svc_getargs(xprt, pfuncdesc->xdr_decode_func, (caddr_t) parg_nfs) == FALSE)
+  if(svc_getargs(xprt, pfuncdesc->xdr_decode_func, (caddr_t) parg_nfs,
+         &preqnfs->lookahead) == FALSE)
     {
       struct svc_req *req = &preqnfs->req;
       LogMajor(COMPONENT_DISPATCH,

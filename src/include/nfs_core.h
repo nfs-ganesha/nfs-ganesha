@@ -329,16 +329,17 @@ typedef struct nfs_param__
   struct glist_head *pexportlist;
 } nfs_parameter_t;
 
-typedef struct nfs_dupreq_stat__
+typedef struct nfs_dupreq_stat
 {
   hash_stat_t htstat;
 } nfs_dupreq_stat_t;
 
-typedef struct nfs_request_data__
+typedef struct nfs_request_data
 {
   SVCXPRT *xprt;
   struct svc_req req;
   struct rpc_msg msg;
+  struct nfs_request_lookahead lookahead;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
   nfs_res_t res_nfs;
   nfs_arg_t arg_nfs;
