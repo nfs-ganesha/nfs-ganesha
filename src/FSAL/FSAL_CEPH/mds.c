@@ -25,6 +25,7 @@
 #include "fsal_types.h"
 #include "fsal_api.h"
 #include "fsal_pnfs_files.h"
+#include "pnfs_common.h"
 #include "internal.h"
 #include "nfs_exports.h"
 #include "FSAL/fsal_commonlib.h"

@@ -54,7 +54,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "fsal.h"
-#include "fsal_pnfs.h"
+#include "pnfs_common.h"
 #include "sal_data.h"
 #include "sal_functions.h"
 

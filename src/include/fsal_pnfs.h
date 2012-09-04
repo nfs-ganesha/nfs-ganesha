@@ -31,15 +31,41 @@
 #ifndef FSAL_PNFS_H_
 #define FSAL_PNFS_H_
 
-/* The next 3 line are mandatory for proper autotools based management */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif                          /* HAVE_CONFIG_H */
-
-#include <stdint.h>
-#include "pnfs_common.h"
-
 #include "nfs4.h"
+
+/******************************************************
+ *               Basic in-memory types
+ ******************************************************/
+
+/**
+ * @brief Represent a layout segment
+ *
+ * This structure not only represents segments granted by the FSAL or
+ * being committed or returned, but also selectors as used in
+ * LAYOUTRETURN4_FILE.
+ */
+
+struct pnfs_segment {
+     /** The IO mode (must be read or write) */
+     layoutiomode4 io_mode;
+     /** The offset of the segment */
+     offset4 offset;
+     /** The length of the segment */
+     length4 length;
+};
+
+/**
+ * @brief FSAL view of the NFSv4.1 deviceid4.
+ */
+
+struct pnfs_deviceid {
+     /** Identifier for the given export.  Currently ganesha uses an
+      *  unsigned short as the export identifier, but we want room for
+      *  whatever the multi-FSAL work ends up needing. */
+     uint64_t export_id;
+     /** Low quad of the deviceid, must be unique within a given export. */
+     uint64_t devid;
+};
 
 /******************************************************
  *         FSAL MDS function argument structs
@@ -60,7 +86,7 @@ struct fsal_layoutget_arg {
         uint64_t export_id;
         /** The maximum number of bytes the client is willing to accept
          in the response, including XDR overhead. */
-     count4 maxcount;
+        count4 maxcount;
 };
 
 /**
