@@ -20,6 +20,24 @@
 
 #include "HashTable.h"
 
+#define NFS_LOOKAHEAD_NONE      0x0000
+#define NFS_LOOKAHEAD_OPEN      0x0001
+#define NFS_LOOKAHEAD_CLOSE     0x0002
+#define NFS_LOOKAHEAD_READ      0x0004
+#define NFS_LOOKAHEAD_WRITE     0x0008
+#define NFS_LOOKAHEAD_COMMIT    0x0010
+#define NFS_LOOKAHEAD_CREATE    0x0020
+#define NFS_LOOKAHEAD_REMOVE    0x0040
+#define NFS_LOOKAHEAD_RENAME    0x0080
+#define NFS_LOOKAHEAD_LOCK      0x0100 /* !_U types */
+#define NFS_LOOKAHEAD_READDIR   0x0200
+
+struct nfs_request_lookahead {
+    uint32_t flags;
+    uint16_t read;
+    uint16_t write;
+};
+
 void socket_setoptions(int socketFd);
 
 #ifdef _APPLE
