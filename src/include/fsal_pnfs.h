@@ -131,6 +131,10 @@ struct fsal_layoutreturn_arg {
          *  dispose is true, any memory allocated for this value must be
          *  freed. */
         void *fsal_seg_data;
+        /** Pointer to layout specific data supplied by LAYOUTRECALL.  If
+         *  this LAYOUTRETURN completly satisfies an invoked LAYOUTRECALL, this
+         *  will be the fsal_recall_data supplied there. Else NULL */
+        void *fsal_recall_data;
         /** Whether this return was synthesized a result of
          *  return_on_close or lease expiration. */
         bool synthetic;
