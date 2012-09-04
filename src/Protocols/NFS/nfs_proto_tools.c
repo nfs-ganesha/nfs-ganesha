@@ -1342,7 +1342,8 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 
 	if(args->data != NULL && args->data->current_entry != NULL) {
 		   cache_status = cache_inode_statfs(args->data->current_entry,
-						     args->dynamicinfo);
+						     args->dynamicinfo,
+						     args->data->req_ctx);
 	} else {
 		args->dynamicinfo->avail_files = 512;
 		args->dynamicinfo->free_files = 512;
