@@ -263,7 +263,8 @@ int nlm_process_parameters(struct svc_req        * preq,
                            bool                    exclusive,
                            nlm4_lock             * alock,
                            fsal_lock_param_t     * plock,
-                           cache_entry_t        ** ppentry,
+                           struct req_op_context *req_ctx,
+			   cache_entry_t        ** ppentry,
                            exportlist_t          * pexport,
                            care_t                  care,
                            state_nsm_client_t   ** ppnsm_client,
@@ -281,7 +282,8 @@ int nlm_process_parameters(struct svc_req        * preq,
   *ppowner      = NULL;
 
   /* Convert file handle into a cache entry */
-  *ppentry = nfs_FhandleToCache(preq->rq_vers,
+  *ppentry = nfs_FhandleToCache(req_ctx,
+				preq->rq_vers,
 				NULL, (struct nfs_fh3 *)&alock->fh, NULL,
 				NULL, &nfsstat3, NULL,
 				&attr, pexport, &rc);
@@ -396,6 +398,7 @@ int nlm_process_parameters(struct svc_req        * preq,
 int nlm_process_share_parms(struct svc_req        * preq,
                             nlm4_share            * share,
 			    struct fsal_export    *exp_hdl,
+			    struct req_op_context *req_ctx,
                             cache_entry_t        ** ppentry,
                             care_t                  care,
                             state_nsm_client_t   ** ppnsm_client,
@@ -412,7 +415,8 @@ int nlm_process_share_parms(struct svc_req        * preq,
   *ppowner      = NULL;
 
   /* Convert file handle into a cache entry */
-  *ppentry = nfs_FhandleToCache(preq->rq_vers,
+  *ppentry = nfs_FhandleToCache(req_ctx,
+				preq->rq_vers,
 				NULL, (struct nfs_fh3 *)&share->fh, NULL,
 				NULL, &nfsstat3, NULL,
 				&attr, exp_hdl->exp_entry, &rc);

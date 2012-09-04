@@ -97,6 +97,7 @@ int nlm4_Cancel(nfs_arg_t *parg,
                               arg->exclusive,
                               &arg->alock,
                               &lock,
+			      req_ctx,
                               &pentry,
                               pexport,
                               CARE_NOT, /* cancel doesn't care if owner is found */

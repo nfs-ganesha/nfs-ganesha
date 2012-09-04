@@ -96,6 +96,7 @@ int nlm4_Unlock(nfs_arg_t *parg,
                               false, /* exlcusive doesn't matter */
                               &arg->alock,
                               &lock,
+			      req_ctx,
                               &pentry,
                               pexport,
                               CARE_NOT, /* unlock doesn't care if owner is found */
