@@ -169,7 +169,6 @@ int uid2name(char *name, uid_t * puid)
     }
   else
     {
-  
       struct passwd p;
       struct passwd *pp;
       char buff[NFS4_MAX_DOMAIN_LEN];
@@ -184,9 +183,9 @@ int uid2name(char *name, uid_t * puid)
       else
         {
 #ifdef _SOLARIS
-          if(getpwuid_r(*puid, &p, buff, MAXPATHLEN) != 0)
+          if(getpwuid_r(*puid, &p, buff, NFS4_MAX_DOMAIN_LEN) != 0)
 #else
-          if((getpwuid_r(*puid, &p, buff, MAXPATHLEN, &pp) != 0) ||
+          if((getpwuid_r(*puid, &p, buff, NFS4_MAX_DOMAIN_LEN, &pp) != 0) ||
     	 (pp == NULL))
 #endif                          /* _SOLARIS */
             {
