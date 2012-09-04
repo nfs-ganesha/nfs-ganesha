@@ -1211,6 +1211,28 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
 #endif                          /* _USE_NFS4_1 */
 };
 
+#define WORD0_FATTR4_RDATTR_ERROR (1 << FATTR4_RDATTR_ERROR)
+#define WORD1_FATTR4_MOUNTED_ON_FILEID (1 << (FATTR4_MOUNTED_ON_FILEID - 32))
+
+static inline int check_for_wrongsec_ok_attr(bitmap4 * attr_request)
+{
+  if(attr_request->bitmap4_len < 1)
+    return TRUE;
+  if((attr_request->bitmap4_val[0] & ~WORD0_FATTR4_RDATTR_ERROR) != 0)
+    return FALSE;
+  if(attr_request->bitmap4_len < 2)
+    return TRUE;
+  if((attr_request->bitmap4_val[1] & ~WORD1_FATTR4_MOUNTED_ON_FILEID) != 0)
+    return FALSE;
+#ifdef _USE_NFS4_1
+  if(attr_request->bitmap4_len < 3)
+    return TRUE;
+  if(attr_request->bitmap4_val[2] != 0)
+    return FALSE;
+#endif
+  return TRUE;
+}
+
 /* BUGAZOMEU: Some definitions to be removed. FSAL parameters to be used instead */
 #define NFS4_LEASE_LIFETIME 120
 #define FSINFO_MAX_FILESIZE  0xFFFFFFFFFFFFFFFFll
@@ -1515,6 +1537,7 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
 
 int nfs4_Fattr_Fill(fattr4 *Fattr, int attrcnt, uint32_t *attrlist,
                     int valsiz, char *attrvals);
+int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 error);
 int nfs4_supported_attrs_to_fattr(char *outbuf);
 int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
                            fsal_attrib_list_t *pattr,

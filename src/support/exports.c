@@ -3620,6 +3620,8 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                "export %d permission denied - no matching entry",
                pexport->id);
 
+  pexport_perms->options = 0;
+
   return;
 }                               /* nfs_export_check_access */
 

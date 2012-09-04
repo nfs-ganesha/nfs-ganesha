@@ -1218,9 +1218,6 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_readdir_xattr";
 
-  bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
-  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
-
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;
 
@@ -1377,9 +1374,8 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
           if(nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
                                data, &nfsfh, &(arg_READDIR4.attr_request)) != 0)
             {
-              /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
-              entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
-              entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
+              LogFatal(COMPONENT_NFS_V4,
+                       "nfs4_FSALattr_To_Fattr failed to convert attr");
             }
 
           /* Chain the entries together */

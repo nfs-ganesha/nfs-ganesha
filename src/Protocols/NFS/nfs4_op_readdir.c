@@ -57,9 +57,6 @@ static bool_t nfs4_readdir_callback(void* opaque,
                                     uint64_t cookie);
 static void free_entries(entry4 *entries);
 
-static const bitmap4 RdAttrErrorBitmap = {1, (uint32_t *) "\0\0\0\b"};
-static const attrlist4 RdAttrErrorVals = {0, NULL};
-
 /**
  * @brief Opaque bookkeeping structure for NFSv4 readdir
  *
@@ -352,12 +349,8 @@ nfs4_readdir_callback(void* opaque,
                                 tracker->data,
                                 &entryFH,
                                 &tracker->req_attr) != 0) {
-          /* Return the fattr4_rdattr_error, see RFC 3530, p. 192/RFC
-             5661 p. 112. */
-          tracker->entries[tracker->count]
-               .attrs.attrmask = RdAttrErrorBitmap;
-          tracker->entries[tracker->count]
-               .attrs.attr_vals = RdAttrErrorVals;
+          LogFatal(COMPONENT_NFS_V4,
+                   "nfs4_FSALattr_To_Fattr failed to convert attr");
      }
 
      if (tracker->mem_left <
@@ -398,12 +391,10 @@ free_entries(entry4 *entries)
      for (entry = entries;
           entry != NULL;
           entry = entry->nextentry) {
-          if (entry->attrs.attrmask.bitmap4_val !=
-              RdAttrErrorBitmap.bitmap4_val) {
+          if (entry->attrs.attrmask.bitmap4_val != NULL) {
                gsh_free(entry->attrs.attrmask.bitmap4_val);
           }
-          if (entry->attrs.attr_vals.attrlist4_val !=
-              RdAttrErrorVals.attrlist4_val) {
+          if (entry->attrs.attr_vals.attrlist4_val != NULL) {
                gsh_free(entry->attrs.attr_vals.attrlist4_val);
           }
           gsh_free(entry->name.utf8string_val);
