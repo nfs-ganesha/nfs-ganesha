@@ -55,6 +55,8 @@
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_proto_functions.h"
+#include "nfs_tcb.h"
+#include "wait_queue.h"
 #include "nfs_dupreq.h"
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
@@ -218,14 +220,14 @@ typedef struct nfs_core_param__
   unsigned int drop_delay_errors;
   unsigned int use_nfs_commit;
   time_t expiration_dupreq;
-  unsigned int dispatch_multi_xprt_max;
-  unsigned int dispatch_multi_worker_hiwat;
+  unsigned int dispatch_max_reqs;
+  unsigned int dispatch_max_reqs_xprt;
   unsigned int stats_update_delay;
   unsigned int long_processing_threshold;
   unsigned int dump_stats_per_client;
   char stats_file_path[MAXPATHLEN];
   char stats_per_client_directory[MAXPATHLEN];
-  int tcp_fridge_expiration_delay ;
+  int decoder_fridge_expiration_delay ;
   unsigned int core_options;
   unsigned int max_send_buffer_size; /* Size of RPC send buffer */
   unsigned int max_recv_buffer_size; /* Size of RPC recv buffer */
@@ -340,29 +342,13 @@ typedef struct nfs_request_data
   struct svc_req req;
   struct rpc_msg msg;
   struct nfs_request_lookahead lookahead;
+  const nfs_function_desc_t *funcdesc;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
   nfs_res_t res_nfs;
   nfs_arg_t arg_nfs;
   struct timeval time_queued; /* The time at which a request was added
                                * to the worker thread queue. */
 } nfs_request_data_t;
-
-typedef struct wait_entry
-{
-    pthread_mutex_t mtx;
-    pthread_cond_t cv;
-} wait_entry_t;
-
-/* thread wait queue */
-typedef struct wait_q_entry
-{
-    uint32_t lflags;
-    uint32_t rflags;
-    wait_entry_t lwe; /* initial waiter */
-    wait_entry_t rwe; /* reciprocal waiter */
-    struct wait_q_entry *tail;
-    struct wait_q_entry *next;
-} wait_queue_entry_t;
 
 enum rpc_chan_type {
     RPC_CHAN_V40,
@@ -420,25 +406,26 @@ struct _rpc_call
     void *u_data[2];
 };
 
-typedef enum request_type__
+typedef enum request_type
 {
   NFS_CALL,
   NFS_REQUEST,
-  NFS_REQUEST_LEADER,
-  _9P_REQUEST
-} request_type_t ;
-
-typedef struct request_data__
-{
-    struct glist_head pending_req_queue;  // chaining of pending requests
-    request_type_t rtype ;
-    pthread_cond_t   req_done_condvar;
-    pthread_mutex_t  req_done_mutex;
-    union request_content__ {
-        rpc_call_t *call ;
-        nfs_request_data_t *nfs ;
 #ifdef _USE_9P
-        _9p_request_data_t _9p ;
+  _9P_REQUEST
+#endif
+} request_type_t;
+
+typedef struct request_data
+{
+    struct glist_head req_q; /* chaining of pending requests */
+    request_type_t rtype;
+    pthread_mutex_t mtx;
+    pthread_cond_t cv;
+    union request_content {
+        rpc_call_t *call;
+        nfs_request_data_t *nfs;
+#ifdef _USE_9P
+        _9p_request_data_t _9p;
 #endif
     } r_u ;
 } request_data_t ;
@@ -499,26 +486,6 @@ typedef enum idmap_type__
   GIDMAP_TYPE = 2
 } idmap_type_t;
 
-typedef enum pause_state
-{
-  STATE_STARTUP,
-  STATE_AWAKEN,
-  STATE_AWAKE,
-  STATE_PAUSE,
-  STATE_PAUSED,
-  STATE_EXIT
-} pause_state_t;
-
-typedef struct nfs_thread_control_block__
-{
-  pthread_cond_t tcb_condvar;
-  pthread_mutex_t tcb_mutex;
-  int tcb_ready;
-  pause_state_t tcb_state;
-  char tcb_name[256];
-  struct glist_head tcb_list;
-} nfs_tcb_t;
-
 extern pool_t *request_pool;
 extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool;
@@ -527,10 +494,11 @@ extern pool_t *ip_stats_pool;
 struct nfs_worker_data__
 {
   unsigned int worker_index;
-  int  pending_request_len;
-  struct glist_head pending_request;
   LRU_list_t *duplicate_request;
   hash_table_t *ht_ip_stats;
+
+  wait_q_entry_t wqe;
+
   pthread_mutex_t request_pool_mutex;
   nfs_tcb_t wcb; /* Worker control block */
 
@@ -543,7 +511,7 @@ struct nfs_worker_data__
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
   /* Description of current or most recent function processed and start time (or 0) */
-  const nfs_function_desc_t *pfuncdesc;
+  const nfs_function_desc_t *funcdesc;
   struct timeval timer_start;
 };
 
@@ -574,11 +542,6 @@ typedef struct ganesha_stats__ {
     hash_stat_t             drc_udp;
     hash_stat_t             drc_tcp;
     fsal_statistics_t       global_fsal;
-    unsigned int min_pending_request;
-    unsigned int max_pending_request;
-    unsigned int total_pending_request;
-    unsigned int average_pending_request;
-    unsigned int len_pending_request;
     unsigned int avg_latency;
     unsigned long long     total_fsal_calls;
 } ganesha_stats_t;
@@ -603,27 +566,6 @@ typedef enum process_status
   PROCESS_LOST_CONN,
   PROCESS_DONE
 } process_status_t;
-
-typedef enum pause_reason
-{
-  PAUSE_RELOAD_EXPORTS,
-  PAUSE_SHUTDOWN,
-} pause_reason_t;
-
-typedef enum awaken_reason
-{
-  AWAKEN_STARTUP,
-  AWAKEN_RELOAD_EXPORTS,
-} awaken_reason_t;
-
-typedef enum pause_rc
-{
-  PAUSE_OK,
-  PAUSE_PAUSE, /* Calling thread should pause - most callers can ignore this return code */
-  PAUSE_EXIT,  /* Calling thread should exit */
-} pause_rc;
-
-extern const char *pause_rc_str[];
 
 typedef enum worker_available_rc
 {
@@ -651,7 +593,7 @@ pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();
 void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
-request_data_t *nfs_rpc_get_nfsreq(nfs_worker_data_t *worker, uint32_t flags);
+request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 
 process_status_t dispatch_rpc_subrequest(nfs_worker_data_t *mydata,
@@ -825,15 +767,16 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);
-int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pfuncdesc);
+int is_rpc_call_valid(SVCXPRT *, struct svc_req *);
+const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *);
+int nfs_rpc_get_args(nfs_request_data_t *);
 
 #ifdef _USE_FSAL_UP
 void *fsal_up_process_thread( void * UnUsedArg );
 void nfs_Init_FSAL_UP();
 #endif /* _USE_FSAL_UP */
 
-void stats_collect (ganesha_stats_t                 *ganesha_stats);
+void stats_collect (ganesha_stats_t *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 #endif                          /* _NFS_CORE_H */

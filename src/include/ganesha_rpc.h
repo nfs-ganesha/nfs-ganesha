@@ -4,6 +4,7 @@
 #ifndef GANESHA_RPC_H
 #define GANESHA_RPC_H
 
+#include <stdbool.h>
 #include <rpc/xdr_inline.h>
 #include <rpc/rpc.h>
 #include <rpc/svc.h>
@@ -18,25 +19,37 @@
 #include <rpc/svc_rqst.h>
 #include  <rpc/svc_dplx.h>
 
+#include "nfs_req_queue.h"
 #include "HashTable.h"
+#include "log.h"
 
 #define NFS_LOOKAHEAD_NONE      0x0000
-#define NFS_LOOKAHEAD_OPEN      0x0001
-#define NFS_LOOKAHEAD_CLOSE     0x0002
-#define NFS_LOOKAHEAD_READ      0x0004
-#define NFS_LOOKAHEAD_WRITE     0x0008
-#define NFS_LOOKAHEAD_COMMIT    0x0010
-#define NFS_LOOKAHEAD_CREATE    0x0020
-#define NFS_LOOKAHEAD_REMOVE    0x0040
-#define NFS_LOOKAHEAD_RENAME    0x0080
-#define NFS_LOOKAHEAD_LOCK      0x0100 /* !_U types */
-#define NFS_LOOKAHEAD_READDIR   0x0200
+#define NFS_LOOKAHEAD_MOUNT     0x0001
+#define NFS_LOOKAHEAD_OPEN      0x0002
+#define NFS_LOOKAHEAD_CLOSE     0x0004
+#define NFS_LOOKAHEAD_READ      0x0008
+#define NFS_LOOKAHEAD_WRITE     0x0010
+#define NFS_LOOKAHEAD_COMMIT    0x0020
+#define NFS_LOOKAHEAD_CREATE    0x0040
+#define NFS_LOOKAHEAD_REMOVE    0x0080
+#define NFS_LOOKAHEAD_RENAME    0x0100
+#define NFS_LOOKAHEAD_LOCK      0x0200 /* !_U types */
+#define NFS_LOOKAHEAD_READDIR       0x0400
+#define NFS_LOOKAHEAD_LAYOUTCOMMIT  0x0040
+/* ... */
 
 struct nfs_request_lookahead {
     uint32_t flags;
     uint16_t read;
     uint16_t write;
 };
+
+#define NFS_LOOKAHEAD_HIGH_LATENCY(lkhd) \
+    (((lkhd).flags & (NFS_LOOKAHEAD_READ | \
+                      NFS_LOOKAHEAD_WRITE | \
+                      NFS_LOOKAHEAD_COMMIT | \
+                      NFS_LOOKAHEAD_LAYOUTCOMMIT | \
+                      NFS_LOOKAHEAD_READDIR)))
 
 void socket_setoptions(int socketFd);
 
@@ -129,21 +142,27 @@ const char *str_gc_proc(rpc_gss_proc_t gc_proc);
 #define XPRT_PRIVATE_FLAG_DESTROYED  0x0001 /* forward destroy */
 #define XPRT_PRIVATE_FLAG_LOCKED     0x0002
 #define XPRT_PRIVATE_FLAG_REF        0x0004
+#define XPRT_PRIVATE_FLAG_INCREQ     0x0008
+#define XPRT_PRIVATE_FLAG_DECODING   0x0010
+#define XPRT_PRIVATE_FLAG_STALLED    0x0020 /* ie, -on stallq- */
 
 typedef struct gsh_xprt_private
 {
+    SVCXPRT *xprt;
     uint32_t flags;
     uint32_t refcnt;
-    uint32_t multi_cnt; /* multi-dispatch counter */
+    uint32_t req_cnt; /* outstanding requests counter */
+    struct glist_head stallq;
 } gsh_xprt_private_t;
 
 static inline gsh_xprt_private_t *
-alloc_gsh_xprt_private(uint32_t flags)
+alloc_gsh_xprt_private(SVCXPRT *xprt, uint32_t flags)
 {
     gsh_xprt_private_t *xu = gsh_malloc(sizeof(gsh_xprt_private_t));
 
-    xu->flags = 0;
-    xu->multi_cnt = 0;
+    xu->xprt = xprt;
+    xu->flags = XPRT_PRIVATE_FLAG_NONE;
+    xu->req_cnt = 0;
 
     if (flags & XPRT_PRIVATE_FLAG_REF)
         xu->refcnt = 1;
@@ -165,12 +184,46 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_rwlock_wrlock(&xprt->lock);
+        pthread_spin_lock(&xprt->sp);
 
     ++(xu->refcnt);
+    if (flags & XPRT_PRIVATE_FLAG_INCREQ)
+        ++(xu->req_cnt);
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_rwlock_unlock(&xprt->lock);
+        pthread_spin_unlock(&xprt->sp);
+}
+
+static inline bool
+gsh_xprt_decoder_guard_ref(SVCXPRT *xprt, uint32_t flags)
+{
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    bool rslt = FALSE;
+
+    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
+        pthread_spin_lock(&xprt->sp);
+
+    if (xu->flags & XPRT_PRIVATE_FLAG_DECODING) {
+        LogDebug(COMPONENT_DISPATCH,
+                 "guard failed: flag %s", "XPRT_PRIVATE_FLAG_DECODING");
+        goto unlock;
+    }
+
+    if (xu->flags & XPRT_PRIVATE_FLAG_STALLED) {
+        LogDebug(COMPONENT_DISPATCH,
+                 "guard failed: flag %s", "XPRT_PRIVATE_FLAG_STALLED");
+        goto unlock;
+    }
+    
+    xu->flags |= XPRT_PRIVATE_FLAG_DECODING;
+    ++(xu->refcnt);
+    rslt = TRUE;
+
+unlock:
+    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
+        pthread_spin_unlock(&xprt->sp);
+
+    return (rslt);
 }
 
 static inline void
@@ -180,18 +233,28 @@ gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
     uint32_t refcnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_rwlock_wrlock(&xprt->lock);
+        pthread_spin_lock(&xprt->sp);
 
     refcnt = --(xu->refcnt);
 
-    pthread_rwlock_unlock(&xprt->lock);
+    if (flags & XPRT_PRIVATE_FLAG_DECODING)
+        if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
+            xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
 
     /* finalize */
     if (refcnt == 0) {
         if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
+            pthread_spin_unlock(&xprt->sp);
             SVC_DESTROY(xprt);
+            goto out;
         }
     }
+
+    /* unconditional */
+    pthread_spin_unlock(&xprt->sp);
+
+out:
+    return;
 }
 
 static inline void
@@ -199,7 +262,7 @@ gsh_xprt_destroy(SVCXPRT *xprt)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
 
-    pthread_rwlock_wrlock(&xprt->lock);
+    pthread_spin_lock(&xprt->sp);
     xu->flags |= XPRT_PRIVATE_FLAG_DESTROYED;
 
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED);

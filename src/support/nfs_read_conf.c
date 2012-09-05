@@ -17,7 +17,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -247,13 +248,13 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->expiration_dupreq = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Dispatch_Multi_Xprt_Max"))
+      else if(!strcasecmp(key_name, "Dispatch_Max_Reqs"))
         {
-          pparam->dispatch_multi_xprt_max = atoi(key_value);
+          pparam->dispatch_max_reqs = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Dispatch_Multi_Worker_Hiwat"))
+      else if(!strcasecmp(key_name, "Dispatch_Max_Reqs_Xprt"))
         {
-          pparam->dispatch_multi_worker_hiwat = atoi(key_value);
+          pparam->dispatch_max_reqs_xprt = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Drop_IO_Errors"))
         {
@@ -409,9 +410,9 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->long_processing_threshold = atoi(key_value);
         }
-      else if(!strcasecmp( key_name, "TCP_Fridge_Expiration_Delay" ) )
+      else if(!strcasecmp( key_name, "Decoder_Fridge_Expiration_Delay" ) )
         {
-          pparam->tcp_fridge_expiration_delay = atoi(key_value);
+          pparam->decoder_fridge_expiration_delay = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Dump_Stats_Per_Client"))
         {

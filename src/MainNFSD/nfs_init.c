@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -240,7 +241,7 @@ void nfs_print_param_config()
   printf("\tStats_File_Path = %s ; \n", nfs_param.core_param.stats_file_path);
   printf("\tStats_Update_Delay = %d ; \n", nfs_param.core_param.stats_update_delay);
   printf("\tLong_Processing_Threshold = %d ; \n", nfs_param.core_param.long_processing_threshold);
-  printf("\tTCP_Fridge_Expiration_Delay = %d ; \n", nfs_param.core_param.tcp_fridge_expiration_delay);
+  printf("\tDecoder_Fridge_Expiration_Delay = %d ; \n", nfs_param.core_param.decoder_fridge_expiration_delay);
   printf("\tStats_Per_Client_Directory = %s ; \n",
          nfs_param.core_param.stats_per_client_directory);
 
@@ -305,7 +306,7 @@ void nfs_set_param_default()
   nfs_param.core_param.nb_max_fd = 1024;
   nfs_param.core_param.stats_update_delay = 60;
   nfs_param.core_param.long_processing_threshold = 10; /* seconds */
-  nfs_param.core_param.tcp_fridge_expiration_delay = -1;
+  nfs_param.core_param.decoder_fridge_expiration_delay = -1;
 /* only NFSv4 is supported for the FSAL_PROXY */
 #if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )
   nfs_param.core_param.core_options = CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4;
@@ -1145,6 +1146,10 @@ int nfs_check_param_consistency()
       return 1;
     }
 
+  /* Dispatch quotas */
+  nfs_param.core_param.dispatch_max_reqs =  1024;
+  nfs_param.core_param.dispatch_max_reqs_xprt =  50;  
+
 #if 0
 /* XXXX this seems somewhat the obvious of what I would have reasoned.
  * Where we had a thread for every connection (but sharing a single
@@ -1290,12 +1295,6 @@ static void nfs_Start_threads(void)
 
   if(pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE) != 0)
     LogDebug(COMPONENT_THREAD, "can't set pthread's stack size");
-
-  /* Initialisation of Threads's fridge */
-  if( fridgethr_init() != 0 )
-   {
-     LogFatal(COMPONENT_THREAD, "can't run fridgethr_init");
-   }
 
   /* Starting the thread dedicated to signal handling */
   if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, NULL ) ) != 0 )

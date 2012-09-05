@@ -21,7 +21,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
@@ -39,6 +40,7 @@
 
 #include "log.h"
 #include "cache_inode.h"
+#include "wait_queue.h"
 
 /**
  *
@@ -82,12 +84,6 @@ enum nfs_cb_call_states{
     NFS_CB_CALL_ABORTED,
     NFS_CB_CALL_TIMEDOUT
 };
-
-static inline void init_wait_entry(wait_entry_t *we)
-{
-   pthread_mutex_init(&we->mtx, NULL);
-   pthread_cond_init(&we->cv, NULL);
-}
 
 rpc_call_t *alloc_rpc_call();
 void free_rpc_call(rpc_call_t *call);

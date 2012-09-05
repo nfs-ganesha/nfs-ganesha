@@ -32,30 +32,41 @@
 #include <stdbool.h>
 #include "nfs_core.h"
 
-typedef struct fridge_entry
+struct thr_fridge;
+
+struct fridge_thr_entry
 {
-    pthread_t id;
-    pthread_mutex_t mtx;
-    pthread_cond_t cv;
+    struct fridge_thr_context
+    {
+        uint32_t uflags;
+        pthread_t id;
+        pthread_mutex_t mtx;
+        pthread_cond_t cv;
+        sigset_t sigmask;
+        void *(*func)(void*);
+        void *arg;
+    } ctx;
+    uint32_t flags;
     bool frozen;
-    void *arg;
     struct timespec timeout;
     struct timeval tp;
-    /* XXX */
-    struct fridge_entry *prev;
-    struct fridge_entry *next;
-} fridge_entry_t;
+    struct glist_head q;
+    struct thr_fridge *fr;
+};
+
+typedef struct fridge_thr_entry fridge_entry_t;
+typedef struct fridge_thr_context fridge_thr_contex_t;
 
 typedef struct thr_fridge
 {
     pthread_mutex_t mtx;
-    fridge_entry_t *entry;
     uint32_t thr_max;
-    uint32_t thr_hiwat;
     uint32_t stacksize;
     uint32_t expiration_delay_s;
     pthread_attr_t attr;
     uint32_t nthreads;
+    struct glist_head idle_q;
+    uint32_t nidle;
     uint32_t flags;
 } thr_fridge_t;
 
@@ -63,9 +74,8 @@ typedef struct thr_fridge
 
 int fridgethr_init(thr_fridge_t *);
 
-int fridgethr_get(thr_fridge_t *, pthread_t *,
-                  void *(*func)(void*), void *arg);
-
-void *fridgethr_freeze(thr_fridge_t *fr);
+struct fridge_thr_context *
+fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
+              void *arg);
 
 #endif /* FRIDGETHR_H */
