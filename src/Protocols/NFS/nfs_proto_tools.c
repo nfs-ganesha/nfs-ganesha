@@ -129,7 +129,47 @@ char *rquota_functions_names[] = {
 
 /**
  *
- * Attribute decoders
+ * Attribute bitmap decoders
+ */
+
+/* bitmap is up to 3 x uint32_t.
+ *
+ * Structure of the bitmap is as follows
+ *
+ *                  0         1          2
+ *    +-------+---------+----------+----------+
+ *    | count | 31 .. 0 | 63 .. 32 | 64 .. 95 |
+ *    +-------+---------+----------+----------+
+ *
+ * One bit is set for every possible attributes. The bits are packed together
+ * in a uint32_T (XDR alignment reason probably)
+ * As said in the RFC3530, the n-th bit is with the uint32_t #(n/32),
+ * and its position with the uint32_t is n % 32
+ *
+ * Example
+ *     1st bit = FATTR4_TYPE            = 1
+ *     2nd bit = FATTR4_LINK_SUPPORT    = 5
+ *     3rd bit = FATTR4_SYMLINK_SUPPORT = 6
+ *
+ *     Juste one uint32_t is necessay: 2**1 + 2**5 + 2**6 = 2 + 32 + 64 = 98
+ *   +---+----+
+ *   | 1 | 98 |
+ *   +---+----+
+ *
+ * Other Example
+ *
+ *     1st bit = FATTR4_LINK_SUPPORT    = 5
+ *     2nd bit = FATTR4_SYMLINK_SUPPORT = 6
+ *     3rd bit = FATTR4_MODE            = 33
+ *     4th bit = FATTR4_OWNER           = 36
+ *
+ *     Two uint32_t will be necessary there:
+ *            #1 = 2**5 + 2**6 = 32 + 64 = 96
+ #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18
+ *   +---+----+----+
+ *   | 2 | 98 | 18 |
+ *   +---+----+----+
+ *
  */
 
 static inline int next_attr_from_bitmap(bitmap4 *bits, int last_attr)
@@ -3427,85 +3467,6 @@ void nfs4_Fattr_Free(fattr4 *fattr)
     }
 }
 
-int nfs4_supported_attrs_to_fattr(char *attrvalsBuffer)
-{
-  int lastbit = FATTR4_FS_CHARSET_CAP;
-  unsigned int attrvalslist_supported[FATTR4_FS_CHARSET_CAP];
-  uint32_t bitmap_val[3];
-  int LastOffset = 0;
-  fattr4_supported_attrs supported_attrs;
-  uint32_t supported_attrs_len;
-  uint32_t supported_attrs_val;
-
-  /* The supported attributes have field ',supported' set in tab fattr4tab, I will proceed in 2 pass 
-   * 1st: compute the number of supported attributes
-   * 2nd: allocate the replyed bitmap and fill it
-   *
-   * I do not set a #define to keep the number of supported attributes because I want this parameter
-   * to be a consequence of fattr4tab and avoid incoherency */
-
-  /* How many supported attributes ? Compute the result in variable named c */
-  uint_t k, c = 0;
-  for(k = FATTR4_SUPPORTED_ATTRS; k <= lastbit; k++)
-    {
-      if(fattr4tab[k].supported)
-        attrvalslist_supported[c++] = k;
-    }
-
-  supported_attrs.bitmap4_val = bitmap_val;
-  supported_attrs.bitmap4_len = sizeof(bitmap_val)/sizeof(bitmap_val[0]);
-  nfs4_list_to_bitmap4(&supported_attrs, c, attrvalslist_supported);
-
-  LogFullDebug(COMPONENT_NFS_V4,
-               "Fattr (regular) supported_attrs(len)=%u -> %u|%u",
-               supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
-               supported_attrs.bitmap4_val[1]);
-
-  /* we store the index */
-  supported_attrs_len = htonl(supported_attrs.bitmap4_len);
-  memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_len,
-         sizeof(uint32_t));
-  LastOffset += sizeof(uint32_t);
-
-  /* And then the data */
-  for(k = 0; k < supported_attrs.bitmap4_len; k++)
-    {
-      supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
-      memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
-             sizeof(uint32_t));
-      LastOffset += sizeof(uint32_t);
-    }
-
-  return LastOffset;
-}
-
-int nfs4_Fattr_Fill(fattr4 *Fattr, uint_t cnt, uint32_t *attrvalslist,
-                    int LastOffset, char *attrvalsBuffer)
-{
-  /* Set the bitmap for result */
-  memset(Fattr, 0, sizeof(*Fattr));
-  if((Fattr->attrmask.bitmap4_val = gsh_calloc(3, sizeof(uint32_t))) == NULL)
-    return -1;
-  Fattr->attrmask.bitmap4_len = 3;
-  nfs4_list_to_bitmap4(&(Fattr->attrmask), cnt, attrvalslist);
-
-  /* Set the attrlist4 */
-  /* LastOffset contains the length of the attrvalsBuffer usefull data */
-  Fattr->attr_vals.attrlist4_len = LastOffset;
-  if(LastOffset != 0)           /* No need to allocate an empty buffer */
-    {
-      Fattr->attr_vals.attrlist4_val = gsh_malloc(LastOffset);
-      if(Fattr->attr_vals.attrlist4_val == NULL)
-        {
-          gsh_free(Fattr->attrmask.bitmap4_val);
-          return -1;
-        }
-      memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer,
-             Fattr->attr_vals.attrlist4_len);
-    }
-  return 0;
-}
-
 /**
  *
  * nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -4076,43 +4037,7 @@ seqid4 nfs4_NextSeqId(seqid4 seqid)
  * @return nothing (void function)
  *
  */
-
-/*
- * bitmap is usually 2 x uint32_t which makes a uint64_t
- *
- * Structure of the bitmap is as follow
- *
- *                  0         1
- *    +-------+---------+----------+-
- *    | count | 31 .. 0 | 63 .. 32 |
- *    +-------+---------+----------+-
- *
- * One bit is set for every possible attributes. The bits are packed together in a uint32_T (XDR alignment reason probably)
- * As said in the RFC3530, the n-th bit is with the uint32_t #(n/32), and its position with the uint32_t is n % 32
- * Example
- *     1st bit = FATTR4_TYPE            = 1
- *     2nd bit = FATTR4_LINK_SUPPORT    = 5
- *     3rd bit = FATTR4_SYMLINK_SUPPORT = 6
- *
- *     Juste one uint32_t is necessay: 2**1 + 2**5 + 2**6 = 2 + 32 + 64 = 98
- *   +---+----+
- *   | 1 | 98 |
- *   +---+----+
- *
- * Other Example
- *
- *     1st bit = FATTR4_LINK_SUPPORT    = 5
- *     2nd bit = FATTR4_SYMLINK_SUPPORT = 6
- *     3rd bit = FATTR4_MODE            = 33
- *     4th bit = FATTR4_OWNER           = 36
- *
- *     Two uint32_t will be necessary there:
- *            #1 = 2**5 + 2**6 = 32 + 64 = 96
- #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18
- *   +---+----+----+
- *   | 2 | 98 | 18 |
- *   +---+----+----+
- *
+/** @TODO deprecate both of these.  some use remains in PROXY fasl
  */
 
 void nfs4_bitmap4_to_list(const bitmap4 * b, uint_t * plen, uint32_t * pval)
@@ -4157,44 +4082,6 @@ exit:
  * @param pval [IN] list's array
  *
  * @return nothing (void function).
- *
- */
-
-/* bitmap is usually 2 x uint32_t which makes a uint64_t 
- * bitmap4_len is the number of uint32_t required to keep the bitmap value 
- *
- * Structure of the bitmap is as follow
- *
- *                  0         1
- *    +-------+---------+----------+-
- *    | count | 31 .. 0 | 63 .. 32 |
- *    +-------+---------+----------+-
- *
- * One bit is set for every possible attributes. The bits are packed together in a uint32_T (XDR alignment reason probably)
- * As said in the RFC3530, the n-th bit is with the uint32_t #(n/32), and its position with the uint32_t is n % 32
- * Example
- *     1st bit = FATTR4_TYPE            = 1
- *     2nd bit = FATTR4_LINK_SUPPORT    = 5
- *     3rd bit = FATTR4_SYMLINK_SUPPORT = 6
- *
- *     Juste one uint32_t is necessay: 2**1 + 2**5 + 2**6 = 2 + 32 + 64 = 98
- *   +---+----+
- *   | 1 | 98 |
- *   +---+----+
- *
- * Other Example
- *
- *     1st bit = FATTR4_LINK_SUPPORT    = 5
- *     2nd bit = FATTR4_SYMLINK_SUPPORT = 6
- *     3rd bit = FATTR4_MODE            = 33
- *     4th bit = FATTR4_OWNER           = 36
- *
- *     Two uint32_t will be necessary there:
- *            #1 = 2**5 + 2**6 = 32 + 64 = 96
- #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18
- *   +---+----+----+
- *   | 2 | 98 | 18 |
- *   +---+----+----+
  *
  */
 
@@ -4995,98 +4882,6 @@ out:
   return nfs_status;
 }
 #endif                          /* _USE_NFS4_ACL */
-
-/**
- * 
- * nfs4_attrmap_To_FSAL_attrmask: Converts NFSv4 attribute bitmap to
- * FSAL attribute mask.
- * 
- * Converts NFSv4 attributes buffer to a FSAL attributes structure.
- *
- * @param attrmap  [IN]   pointer to NFSv4 attribute bitmap. 
- * @param attrmask [OUT]  pointer to FSAL attribute mask.
- * 
- * @return NFS4_OK if successful, NFS4ERR codes if not.
- *
- */
-int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap,
-                                  attrmask_t *attrmask)
-{
-  unsigned int offset = 0;
-  unsigned int i = 0;
-
-  for(offset = 0; offset < attrmap.bitmap4_len; offset++)
-    {
-      for(i = 0; i < 32; i++)
-        {
-          if(attrmap.bitmap4_val[offset] & (1 << i)) {
-            uint32_t val = i + 32 * offset;
-            switch (val)
-              {
-              case FATTR4_TYPE:
-                *attrmask |= ATTR_TYPE;
-                break;
-              case FATTR4_FILEID:
-                *attrmask |= ATTR_FILEID;
-                break;
-              case FATTR4_FSID:
-                *attrmask |= ATTR_FSID;
-                break;
-              case FATTR4_NUMLINKS:
-                *attrmask |= ATTR_NUMLINKS;
-                break;
-              case FATTR4_SIZE:
-                *attrmask |= ATTR_SIZE;
-                break;
-              case FATTR4_MODE:
-                *attrmask |= ATTR_MODE;
-                break;
-              case FATTR4_OWNER:
-                *attrmask |= ATTR_OWNER;
-                break;
-              case FATTR4_OWNER_GROUP:
-                *attrmask |= ATTR_GROUP;
-                break;
-              case FATTR4_CHANGE:
-                *attrmask |= ATTR_CHGTIME;
-                break;
-              case FATTR4_RAWDEV:
-                *attrmask |= ATTR_RAWDEV;
-                break;
-              case FATTR4_SPACE_USED:
-                *attrmask |= ATTR_SPACEUSED;
-                break;
-              case FATTR4_TIME_ACCESS:
-                *attrmask |= ATTR_ATIME;
-                break;
-              case FATTR4_TIME_METADATA:
-                *attrmask |= ATTR_CTIME;
-                break;
-              case FATTR4_TIME_MODIFY:
-                *attrmask |= ATTR_MTIME;
-                break;
-              case FATTR4_TIME_ACCESS_SET:
-                *attrmask |= ATTR_ATIME;
-                break;
-              case FATTR4_TIME_MODIFY_SET:
-                *attrmask |= ATTR_MTIME;
-                break;
-              case FATTR4_FILEHANDLE:
-                LogFullDebug(COMPONENT_NFS_V4,
-                             "Filehandle attribute requested on readdir!");
-                /* pFSAL_attr->asked_attributes |= ATTR_FILEHANDLE; */
-                break;
-#ifdef _USE_NFS4_ACL
-              case FATTR4_ACL:
-                *attrmask |= ATTR_ACL;
-                break;
-#endif                          /* _USE_NFS4_ACL */
-              }
-          }
-        }
-    }
-  return NFS4_OK;
-}                               /* nfs4_Fattr_To_FSAL_attr */
 
 /**
  *

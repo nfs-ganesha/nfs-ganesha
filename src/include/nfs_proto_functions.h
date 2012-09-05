@@ -1241,11 +1241,6 @@ int Fattr4_To_FSAL_attr(struct attrlist* pFSAL_attr,    /* Out: File attributes 
 int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr,    /* Out: File attributes  */
                             fattr4 * pFattr);   /* In: File attributes   */
 
-int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, attrmask_t *attrmask);
-
-int nfs4_Fattr_Fill(fattr4 *Fattr, uint_t attrcnt, uint32_t *attrlist,
-                    int valsiz, char *attrvals);
-int nfs4_supported_attrs_to_fattr(char *outbuf);
 int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            fattr4 *Fattr,
                            compound_data_t *data,
