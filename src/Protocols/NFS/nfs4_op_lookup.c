@@ -190,11 +190,6 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           return res_LOOKUP4.status;
         }
 
-      /* Copy this to the mounted on FH (if no junction is traversed */
-      memcpy((char *)(data->mounted_on_FH.nfs_fh4_val),
-             (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
-      data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-
 #if 0
       print_buff((char *)cache_inode_get_fsal_handle(file_pentry, &cache_status),
                  sizeof(fsal_handle_t));

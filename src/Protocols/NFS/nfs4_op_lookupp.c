@@ -139,11 +139,6 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
           return res_LOOKUPP4.status;
         }
 
-      /* Copy this to the mounted on FH (if no junction is traversed */
-      memcpy((char *)(data->mounted_on_FH.nfs_fh4_val),
-             (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
-      data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-
       /* Release dir_pentry, as it is not reachable from anywhere in
          compound after this function returns.  Count on later
          operations or nfs4_Compound to clean up current_entry. */

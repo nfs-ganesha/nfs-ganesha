@@ -153,18 +153,6 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   memcpy(data->currentFH.nfs_fh4_val, data->publicFH.nfs_fh4_val,
          data->publicFH.nfs_fh4_len);
 
-  /* For initial mounted_on_FH, I'll use the publicFH, this will change at junction traversal */
-  if(data->mounted_on_FH.nfs_fh4_len == 0)
-    {
-      res_PUTPUBFH4.status = nfs4_AllocateFH(&(data->mounted_on_FH));
-      if(res_PUTPUBFH4.status != NFS4_OK)
-        return res_PUTPUBFH4.status;
-    }
-
-  memcpy(data->mounted_on_FH.nfs_fh4_val, data->publicFH.nfs_fh4_val,
-         data->publicFH.nfs_fh4_len);
-  data->mounted_on_FH.nfs_fh4_len = data->publicFH.nfs_fh4_len;
-
   LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->publicFH);
   LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);
 

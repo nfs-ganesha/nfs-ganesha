@@ -832,9 +832,6 @@ void compound_data_Free(compound_data_t * data)
   if(data->savedFH.nfs_fh4_val != NULL)
     gsh_free(data->savedFH.nfs_fh4_val);
 
-  if(data->mounted_on_FH.nfs_fh4_val != NULL)
-    gsh_free(data->mounted_on_FH.nfs_fh4_val);
-
 }                               /* compound_data_Free */
 
 /**

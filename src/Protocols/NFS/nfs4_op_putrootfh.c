@@ -153,18 +153,6 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
          data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
-  /* For initial mounted_on_FH, I'll use the rootFH, this will change at junction traversal */
-  if(data->mounted_on_FH.nfs_fh4_len == 0)
-    {
-      res_PUTROOTFH4.status = nfs4_AllocateFH(&(data->mounted_on_FH));
-      if(res_PUTROOTFH4.status != NFS4_OK)
-        return res_PUTROOTFH4.status;
-    }
-
-  memcpy(data->mounted_on_FH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-         data->rootFH.nfs_fh4_len);
-  data->mounted_on_FH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
-
   LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
   LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
 

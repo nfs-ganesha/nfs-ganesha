@@ -101,22 +101,11 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         return res_PUTFH4.status;
     }
 
-  /* The same is to be done with mounted_on_FH */
-  if(data->mounted_on_FH.nfs_fh4_len == 0)
-    {
-      res_PUTFH4.status = nfs4_AllocateFH(&(data->mounted_on_FH));
-      if(res_PUTFH4.status != NFS4_OK)
-        return res_PUTFH4.status;
-    }
-
   /* Copy the filehandle from the reply structure */
   data->currentFH.nfs_fh4_len = arg_PUTFH4.object.nfs_fh4_len;
-  data->mounted_on_FH.nfs_fh4_len = arg_PUTFH4.object.nfs_fh4_len;
 
   /* Put the data in place */
   memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
-         arg_PUTFH4.object.nfs_fh4_len);
-  memcpy(data->mounted_on_FH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
          arg_PUTFH4.object.nfs_fh4_len);
 
   LogHandleNFS4("NFS4_OP_PUTFH CURRENT FH: ", &arg_PUTFH4.object);
