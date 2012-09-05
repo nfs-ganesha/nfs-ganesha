@@ -7455,6 +7455,7 @@ static inline bool_t xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
     case NFS4_OP_LAYOUTCOMMIT:
       if(!xdr_LAYOUTCOMMIT4args(xdrs, &objp->nfs_argop4_u.oplayoutcommit))
         return FALSE;
+      lkhd->flags |= NFS_LOOKAHEAD_LAYOUTCOMMIT;
       break;
     case NFS4_OP_LAYOUTGET:
       if(!xdr_LAYOUTGET4args(xdrs, &objp->nfs_argop4_u.oplayoutget))

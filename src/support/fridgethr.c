@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/signal.h>
 
 #include "fridgethr.h"
 
@@ -49,7 +50,7 @@ int
 fridgethr_init(thr_fridge_t *fr)
 {
     fr->nthreads = 0;
-    fr->entry = NULL;
+    fr->thr_max = 0; /* XXX implement */
     fr->flags = FRIDGETHR_FLAG_NONE;
 
     pthread_attr_init(&fr->attr); 
@@ -60,123 +61,115 @@ fridgethr_init(thr_fridge_t *fr)
     if( pthread_mutex_init( &fr->mtx, NULL ) != 0 )
         return (-1);
 
+    /* idle threads q */
+    init_glist(&fr->idle_q);
+
     return (0);
 } /* fridgethr_init */
 
+static bool
+fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx);
 
-static void
-fridgethr_remove(thr_fridge_t *fr, fridge_entry_t *pfe) 
+static void *
+fridgethr_start_routine(void *arg)
 {
-    /* XXX why would pfe be NULL? */
-    if (pfe == NULL)
-        return;
+    fridge_entry_t *pfe = (fridge_entry_t *) arg;
+    bool reschedule;
 
-    pthread_mutex_lock(&fr->mtx);
- 
-    if (pfe->prev != NULL)
-        pfe->prev->next = pfe->next;
-    if (pfe->next != NULL)
-        pfe->next->prev = pfe->prev;
+    (void) pthread_sigmask(SIG_SETMASK, (sigset_t *) NULL,
+                           &pfe->ctx.sigmask);
+    do {
+        (void) pfe->ctx.func(&pfe->ctx);
+        reschedule = fridgethr_freeze(pfe->fr, &pfe->ctx);
+    } while (reschedule);
+    return (NULL);
+}
 
-    /* Is the fridge empty? */
-    if ((pfe->next == NULL) &&
-        (pfe->prev == NULL))
-        fr->entry = NULL ;
-
-    pthread_mutex_unlock(&fr->mtx);
-
-    gsh_free(pfe) ;
-
-    return;
-} /* fridgethr_remove */
-
-int
-fridgethr_get(thr_fridge_t *fr, pthread_t *id, void *(*func)(void*),
+struct fridge_thr_context *
+fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
               void *arg)
 {
-
-    fridge_entry_t *pfe = NULL ;
+    fridge_entry_t *pfe;
 
     pthread_mutex_lock(&fr->mtx);
 
-    if ( fr->entry == NULL ) {
+    if (fr->nidle == 0) {
+
+        /* fr accting */
+        ++(fr->nthreads);
         pthread_mutex_unlock(&fr->mtx);
-        return (pthread_create (id, &fr->attr, func, arg));
+
+        /* new thread */
+        pfe = (fridge_entry_t *) gsh_calloc(sizeof(fridge_entry_t), 1);
+        if (! pfe)
+            Fatal();
+
+        pfe->fr = fr;
+        pfe->ctx.id = pthread_self();
+        pthread_mutex_init(&pfe->ctx.mtx, NULL);
+        pthread_cond_init(&pfe->ctx.cv, NULL);
+        pfe->ctx.func = func;
+        pfe->ctx.arg = arg;
+        pfe->frozen = FALSE;
+
+        (void) pthread_create(&pfe->ctx.id, &fr->attr, fridgethr_start_routine,
+                              pfe);
+
+        goto out;
     }
 
-    pfe = fr->entry;
+    pfe = glist_first_entry(&fr->idle_q, fridge_entry_t, q);
+    glist_del(&pfe->q);
+    --(fr->nidle);
+
+    pfe->ctx.func = func;
+    pfe->ctx.arg = arg;
     pfe->frozen = FALSE;
 
-    /* XXX we should be using a TAILQ or whatever here */
-    if(pfe->prev != NULL)
-        pfe->prev->next = pfe->next;
-    if (pfe->next != NULL)
-        pfe->next->prev = pfe->prev;
-
-    fr->entry = fr->entry->prev;
-
-    pfe->arg = arg ;
-    if (pthread_cond_signal(&pfe->cv)) {
+    if (pthread_cond_signal(&pfe->ctx.cv)) {
         pthread_mutex_unlock(&fr->mtx);
-        return (-1);
+        /* XXX this is questionable--perhaps fatal */
+        return (NULL);
     }
-
-    *id = pfe->id ;
  
     pthread_mutex_unlock(&fr->mtx);
 
-    return (0);
+out:
+    return (&(pfe->ctx));
 } /* fridgethr_get */
 
-void *
-fridgethr_freeze(thr_fridge_t *fr)
+bool
+fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 {
-  fridge_entry_t *pfe = NULL;
-  int rc = 0;
-  void *arg = NULL;
+    fridge_entry_t *pfe = container_of(thr_ctx, fridge_entry_t, ctx);
+    void *arg = NULL;
+    int rc;
 
-  if ((pfe = gsh_malloc(sizeof(fridge_entry_t))) == NULL)
-      return (NULL);
+    if ((rc = gettimeofday(&pfe->tp, NULL)) != 0)
+        return (FALSE);
 
-  if ((rc = gettimeofday(&pfe->tp, NULL)) != 0)
-      return (NULL);
+    /* Be careful : pthread_cond_timedwait take an *absolute* time as time
+     * specification, not a duration */ 
+    pfe->timeout.tv_sec = pfe->tp.tv_sec + fr->expiration_delay_s;
+    pfe->timeout.tv_nsec = 0; 
+    pfe->frozen = TRUE;
 
-  /* Be careful : pthread_cond_timedwait take an *absolute* time as time
-   * specification, not a duration */ 
-  pfe->timeout.tv_sec = pfe->tp.tv_sec + fr->expiration_delay_s;
-  pfe->timeout.tv_nsec = 0; 
+    pthread_mutex_lock(&fr->mtx);
+    glist_add_tail(&fr->idle_q, &pfe->q);
+    ++(fr->nidle);
+    while ((pfe->frozen == TRUE) &&
+           (rc == 0)) { 
+        if (fr->expiration_delay_s > 0 )
+            rc = pthread_cond_timedwait(&pfe->ctx.cv, &fr->mtx,
+                                        &pfe->timeout );
+        else
+            rc = pthread_cond_wait(&pfe->ctx.cv, &fr->mtx);
+    }
+    pthread_mutex_unlock(&fr->mtx);
 
-  pfe->id = pthread_self();
-  pthread_mutex_init(&pfe->mtx, NULL);
-  pthread_cond_init(&pfe->cv, NULL);
-  pfe->prev = NULL;
-  pfe->next = NULL;
-  pfe->frozen = TRUE;
+    /* rescheduled */
+    if (rc != ETIMEDOUT)
+        return (TRUE);
 
-  pthread_mutex_lock(&fr->mtx);
-  if (fr->entry == NULL) {
-      pfe->prev = NULL ;
-      pfe->next = NULL ;
-  } else {
-      pfe->prev = fr->entry;
-      pfe->next = NULL ;
-      fr->entry->next = pfe ;
-  }
-  fr->entry = pfe ;
-  pthread_mutex_unlock(&fr->mtx);
-
-  pthread_mutex_lock(&pfe->mtx);
-  while ((pfe->frozen == TRUE) &&
-         (rc == 0)) { 
-      if (fr->expiration_delay_s > 0 )
-          rc = pthread_cond_timedwait(&pfe->cv, &pfe->mtx, &pfe->timeout );
-      else
-          rc = pthread_cond_wait(&pfe->cv, &pfe->mtx);
-  }
-
-  if( rc != ETIMEDOUT )
-      arg = pfe->arg;
-
-  fridgethr_remove(fr, pfe);  
-  return (arg);
+    return (FALSE);
 } /* fridgethr_freeze */
