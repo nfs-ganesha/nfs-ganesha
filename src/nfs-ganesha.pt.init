@@ -130,12 +130,12 @@ stop() {
 	kill -TERM $pid >/dev/null 2>&1
 	RETVAL=$?
 	waitTimeInSec=0
-	result=`pidof "$PATHPROG"`
-	echo "PID is $result"
+	result=`ps ax |grep ^"$pid" |awk '{print $1}'`
+	echo "PID is $pid"
 	while true; do
 		if [ $result ]; then
 			sleep 1
-			result=`pidof "$PATHPROG"`
+			result=`ps ax |grep ^"$pid" |awk '{print $1}'`
 			waitTimeInSec=$(( waitTimeInSec + 1 ))
 		else
 			success
@@ -161,11 +161,11 @@ stop() {
 	fi
 
 	# Give Ganesha time to quit
-	result=`pidof "$PATHPROG"`
+	result=`ps ax |grep ^"$pid" |awk '{print $1}'`
 	while true; do
 	         if [ $result ]; then
 		         sleep .1
-			 result=`pidof "$PATHPROG"`
+			 result=`ps ax |grep ^"$pid" |awk '{print $1}'`
 	         else
 		         break
 		 fi
