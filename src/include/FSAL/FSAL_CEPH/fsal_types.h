@@ -78,6 +78,8 @@ typedef union {
 typedef struct fsal_export_context__
 {
   fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+  exportlist_t        * fe_export;
+
   char mount[FSAL_MAX_PATH_LEN];
   struct ceph_mount_info *cmount;
 } cephfsal_export_context_t;

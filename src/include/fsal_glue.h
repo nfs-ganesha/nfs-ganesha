@@ -33,7 +33,6 @@
 #ifndef _FSAL_GLUE_H
 #define _FSAL_GLUE_H
 
-#include "fsal_types.h"
 #include "fsal_glue_const.h"
 
 /* In the "static" case, original types are used, this is safer */
@@ -63,6 +62,7 @@ typedef fsal_handle_t fsal_handle_storage_t ;
 typedef struct
 {
   fsal_staticfsinfo_t * fe_static_fs_info;
+  exportlist_t        * fe_export;
 
   char                  fe_data[FSAL_EXPORT_CONTEXT_T_SIZE];
 } fsal_export_context_t;

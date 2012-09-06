@@ -75,6 +75,7 @@ typedef union {
 typedef struct
 {
   fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+  exportlist_t        * fe_export;
 
   fusefsal_handle_t root_handle;
   fsal_path_t root_full_path;   /* not expected to change when filesystem is mounted ! */

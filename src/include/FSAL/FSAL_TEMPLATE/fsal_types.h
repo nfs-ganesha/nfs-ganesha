@@ -81,6 +81,7 @@ typedef struct fsal_handle__
 typedef struct fsal_export_context__
 {
   fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+  exportlist_t        * fe_export;
 
   int filesystem_id;
   fsal_handle_t root_handle;

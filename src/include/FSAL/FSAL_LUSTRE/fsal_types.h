@@ -114,6 +114,7 @@ typedef struct lustrefsal_cred__
 typedef struct lustrefsal_export_context_t
 {
   fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+  exportlist_t        * fe_export;
 
   char mount_point[FSAL_MAX_PATH_LEN];
   unsigned int mnt_len;         /* for optimizing concatenation */

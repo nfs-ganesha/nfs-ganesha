@@ -149,6 +149,7 @@ typedef struct gpfs_fsal_up_ctx_t gpfs_fsal_up_ctx_t;
 typedef struct
 {
   fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+  exportlist_t        * fe_export;
 
   struct glist_head     fe_list;               /* List of export context per GPFS file system */
   gpfs_fsal_up_ctx_t  * fe_fsal_up_ctx;        /* FSAL UP context for this export */

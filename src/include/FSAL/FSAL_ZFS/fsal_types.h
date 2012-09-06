@@ -84,6 +84,7 @@ typedef union
 typedef struct
 {
   fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+  exportlist_t        * fe_export;
 
   zfsfsal_handle_t root_handle;
   libzfswrap_vfs_t *p_vfs;

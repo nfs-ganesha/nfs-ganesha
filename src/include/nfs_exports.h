@@ -151,7 +151,7 @@ typedef struct exportlist_client__
 struct fsal_up_filter_list_t_;
 #endif
 
-typedef struct exportlist__
+struct exportlist__
 {
   struct glist_head exp_list;
   unsigned short id;            /* entry identifier   */
@@ -200,7 +200,7 @@ typedef struct exportlist__
 #endif /* _USE_FSAL_UP */
 
   nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
-} exportlist_t;
+};
 
 /* Constant for options masks */
 #define EXPORT_OPTION_NOSUID          0x00000001        /* mask off setuid mode bit            */

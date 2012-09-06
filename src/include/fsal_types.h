@@ -76,6 +76,8 @@ typedef unsigned long long int u_int64_t;
 
 /* Forward declarations */
 typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
+typedef struct exportlist__        exportlist_t;
+
 
 /* FSAL function indexes, and names */
 

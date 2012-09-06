@@ -3696,6 +3696,8 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
               continue;
             }
 
+          pcurrent->FS_export_context.fe_export = pcurrent;
+
           /* get the related client context */
           fsal_status = FSAL_GetClientContext(&context, &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
 
