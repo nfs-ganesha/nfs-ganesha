@@ -66,8 +66,6 @@
 #include "sal_data.h"
 #include "sal_functions.h"
 #include "fsal.h"
-#include "fsal_pnfs.h"
-#include "pnfs_common.h"
 
 /* Define mapping of NFS4 who name and type. */
 static struct {

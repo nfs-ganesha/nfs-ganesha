@@ -21,10 +21,10 @@
  */
 
 /**
- * \file    pnfs_common.h
+ * \file    pnfs_utils.h
  * \brief   Common utility functions for pNFS
  *
- * fsal_pnfs.h: pNFS utility functions
+ * pnfs_utils.h: pNFS utility functions
  *
  *
  */
@@ -199,6 +199,34 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
                                   uint16_t proto,
                                   uint32_t addr,
                                   uint16_t port);
+
+/**
+ * This type exists soleley so arrays of hosts can be passed to
+ * FSAL_encode_multipath_list.
+ *
+ */
+
+typedef struct fsal_multipath_member
+{
+     uint16_t proto;
+     uint32_t addr;
+     uint16_t port;
+} fsal_multipath_member_t;
+
+nfsstat4
+FSAL_encode_file_layout(XDR *xdrs,
+                        const struct pnfs_deviceid *deviceid,
+                        nfl_util4 util,
+                        const uint32_t first_idx,
+                        const offset4 ptrn_ofst,
+                        const unsigned int export_id,
+                        const uint32_t num_fhs,
+                        const struct gsh_buffdesc *fhs);
+
+
+nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs,
+                                  const uint32_t num_hosts,
+                                  const fsal_multipath_member_t *hosts);
 
 nfsstat4 posix2nfs4_error(int posix_errorcode);
 

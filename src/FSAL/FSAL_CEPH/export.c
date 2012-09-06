@@ -41,7 +41,6 @@
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
 #include "internal.h"
-#include "fsal_pnfs_files.h"
 
 /**
  * @brief Clean up an export

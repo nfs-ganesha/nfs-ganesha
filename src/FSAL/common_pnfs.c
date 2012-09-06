@@ -37,8 +37,7 @@
 #include "log.h"
 #include "fsal.h"
 #include "fsal_pnfs.h"
-#include "pnfs_common.h"
-#include "fsal_pnfs_files.h"
+#include "pnfs_utils.h"
 #include "nfs4.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -444,4 +443,23 @@ posix2nfs4_error(const int posix_errorcode)
         default:
                 return NFS4ERR_SERVERFAULT;
         }
+}
+
+/**
+ * @brief Dummy function
+ *
+ * This function exists so there can be something in common_pnfs.c to
+ * be called from Ganesha core.
+ */
+
+uint64_t pnfs_common_dummy(void)
+{
+        uint64_t accumulator = (uint64_t) xdr_fsal_deviceid;
+
+        accumulator += (uint64_t) FSAL_encode_ipv4_netaddr;
+        accumulator += (uint64_t) FSAL_encode_file_layout;
+        accumulator += (uint64_t) FSAL_encode_v4_multipath;
+        accumulator += (uint64_t) posix2nfs4_error;
+
+        return accumulator;
 }
