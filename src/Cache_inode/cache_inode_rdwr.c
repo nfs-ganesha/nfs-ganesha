@@ -227,7 +227,8 @@ cache_inode_rdwr(cache_entry_t *entry,
                   supposed to be a stable write we can sync to the hard
                   drive. */
 
-               if (stable == CACHE_INODE_SAFE_WRITE_TO_FS &&
+               if (!FSAL_IS_ERROR(fsal_status) &&
+                   stable == CACHE_INODE_SAFE_WRITE_TO_FS &&
                    !(entry->object.file.open_fd.openflags & FSAL_O_SYNC)) {
                     fsal_status
                          = FSAL_commit(&(entry->object.file.open_fd.fd),
