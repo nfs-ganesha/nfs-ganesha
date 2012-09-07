@@ -219,7 +219,8 @@ cache_inode_rdwr(cache_entry_t *entry,
                   supposed to be a stable write we can sync to the hard
                   drive. */
 
-            if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS &&
+            if (!FSAL_IS_ERROR(fsal_status) &&
+                    *stable == CACHE_INODE_SAFE_WRITE_TO_FS &&
                     !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC) &&
                     !fsal_stable) {
                 fsal_status = obj_hdl->ops->commit(obj_hdl,
