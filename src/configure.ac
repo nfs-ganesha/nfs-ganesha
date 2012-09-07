@@ -4,7 +4,7 @@
 AC_PREREQ(2.59)
 AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
-AC_SUBST(RELEASE, [1])
+AC_SUBST(RELEASE)
 
 AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
 
@@ -202,6 +202,9 @@ GA_PROG_NETSNMP_CONFIG
 # processing compilation options
 
 # Features options
+
+# Release
+AC_ARG_WITH([release], AS_HELP_STRING([--with-release=release], [specify the release]), RELEASE="$withval", RELEASE="1")
 
 # Cofigure the allocator
 AC_ARG_WITH([allocator], AS_HELP_STRING([--with-allocator=jemalloc|tcmalloc|libc],
