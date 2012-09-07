@@ -160,18 +160,6 @@ stop() {
 		rm -f /var/lock/subsys/pt.ganesha.nfsd  
 	fi
 
-	# Give Ganesha time to quit
-	result=`ps ax |grep ^"$pid" |awk '{print $1}'`
-	while true; do
-	         if [ $result ]; then
-		         sleep .1
-			 result=`ps ax |grep ^"$pid" |awk '{print $1}'`
-	         else
-		         break
-		 fi
-	done
-
-        echo
         return $RETVAL
 }
 
