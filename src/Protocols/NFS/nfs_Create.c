@@ -458,7 +458,30 @@ int nfs_Create(nfs_arg_t *parg,
 
                       /* Get the attributes of the parent after the
                          operation */
-                      attr_parent_after = parent_pentry->attributes;
+                      if(cache_inode_getattr(parent_pentry,
+                                             &attr_parent_after,
+                                             pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                        {
+                          nfs_SetFailedStatus(pcontext, pexport,
+                                              preq->rq_vers,
+                                              cache_status,
+                                              &pres->res_dirop2.status,
+                                              &pres->res_create3.status,
+                                              NULL, NULL,
+                                              parent_pentry,
+                                              ppre_attr,
+                                              &(pres->res_create3.CREATE3res_u.resfail.
+                                                dir_wcc), NULL, NULL, NULL);
+
+                          if(nfs_RetryableError(cache_status)) {
+                            rc = NFS_REQ_DROP;
+                            goto out;
+                          }
+
+                          rc = NFS_REQ_OK;
+                          goto out;
+                        }
+
 
                       /* Build entry attributes */
                       nfs_SetPostOpAttr(pexport,

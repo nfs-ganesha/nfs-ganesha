@@ -116,7 +116,13 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Get the attributes for the object */
-  attr = data->current_entry->attributes;
+  if(cache_inode_getattr(data->current_entry,
+                         &attr,
+                         data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      res_ACCESS4.status = nfs4_Errno(cache_status);
+      return res_ACCESS4.status;
+    }
 
   /* determine the rights to be tested in FSAL */
 

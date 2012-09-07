@@ -329,7 +329,15 @@ int nfs_Mkdir(nfs_arg_t *parg,
                       nfs_SetPostOpAttr(pexport, &attr, &d3ok->obj_attributes);
 
                       /* Get the attributes of the parent after the operation */
-                      attr_parent_after = parent_pentry->attributes;
+                      if(cache_inode_getattr(parent_pentry,
+                                             &attr_parent_after,
+                                             pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                        {
+                          pres->res_mkdir3.status = nfs3_Errno(cache_status);
+                          rc = NFS_REQ_OK;
+                          goto out;
+                        }
+
 
                       /*
                        * Build Weak Cache Coherency data 

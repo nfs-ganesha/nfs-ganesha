@@ -113,6 +113,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   fattr4_rdattr_error rdattr_error;
   file_handle_v4_t *pfile_handle = NULL;
   fsal_attrib_list_t fsalattr;
+  cache_inode_status_t cache_status;
 
   u_int fhandle_len = 0;
   unsigned int LastOffset;
@@ -425,7 +426,13 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
           /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem" 
            * In the case of a pseudofs entry, the entry's unique id is used */
-	  fsalattr = data->current_entry->attributes;
+          if(cache_inode_getattr(data->current_entry,
+                         &fsalattr,
+                         data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+          {
+            return -1;
+          }
+
 
 #ifndef _XATTR_D_USE_SAME_INUM  /* I wrapped off this part of the code... Not sure it would be useful */
           file_id = nfs_htonl64(~(fsalattr.fileid));
@@ -900,7 +907,12 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           LogFullDebug(COMPONENT_NFS_V4_XATTR,
                        "-----> Wanting FATTR4_MOUNTED_ON_FILEID");
 
-	  fsalattr = data->current_entry->attributes;
+          if(cache_inode_getattr(data->current_entry,
+                         &fsalattr,
+                         data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+          {
+            return -1;
+          }
 
 #ifndef _XATTR_D_USE_SAME_INUM  /* I wrapped off this part of the code... Not sure it would be useful */
           file_id = nfs_htonl64(~(fsalattr.fileid));
