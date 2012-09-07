@@ -9,11 +9,9 @@ src directory:
 1. ./tirpc.sh (should fetch a libtirpc tree in to contrib/libtirpc,
 and run autogen.sh
 
-2. run configure with TI-RPC options, such as:
-
-   ./configure --prefix=/opt/ganesha --with-nfs4-minorversion=1 \
-        --enable-nlm --enable-nfs4-locks --with-fsal=VFS --enable-tirpc \
-      	--with-rpcal=TIRPC CFLAGS='-g3 -O0'
+2. run ./configure_env.sh
+   Please inspect configure_env.sh to make sure it fits your
+   build
 
 3. make 
 
