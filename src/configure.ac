@@ -429,6 +429,9 @@ GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6]
 
 if test "$enable_ipv6" == "yes"; then
 	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
+	if test "$RPCAL" != "TIRPC" ; then
+		AC_MSG_ERROR([IPv6 support is available only when --with-rpcal=TIRPC is used])
+	fi
 fi
 
 # libnfsidmap
@@ -573,15 +576,6 @@ if test "$enable_9p_rdma" == "yes"; then
         fi
 fi
 
-
-# IPv6
-GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
-if test "$enable_ipv6" == "yes"; then
-	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
-	if test "$RPCAL" != "TIRPC" ; then
-		AC_MSG_ERROR([IPv6 support is available only when --with-rpcal=TIRPC is used])
-	fi
-fi
 
 # Database switch (for POSIX FSAL)
 AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
