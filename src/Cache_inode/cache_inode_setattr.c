@@ -189,7 +189,7 @@ cache_inode_setattr(cache_entry_t *entry,
      }
 
 #ifdef _USE_NFS4_ACL
-     saved_acl = entry->attributes.acl;
+     saved_acl = obj_handle->attributes.acl;
 #endif /* _USE_NFS4_ACL */
      fsal_status = obj_handle->ops->setattrs(obj_handle, req_ctx, attr);
      if (FSAL_IS_ERROR(fsal_status)) {

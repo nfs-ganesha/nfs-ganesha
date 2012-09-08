@@ -906,7 +906,7 @@ cache_inode_refresh_attrs(cache_entry_t *entry,
                        "Failed to release old acl, status=%d",
                        acl_status);
          }
-         entry->attributes.acl = NULL;
+         entry->obj_handle->attributes.acl = NULL;
      }
 #endif /* _USE_NFS4_ACL */
 

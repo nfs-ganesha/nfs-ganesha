@@ -1009,7 +1009,7 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		char buff[MAXNAMLEN];
 		char *name;
 
-		if( !xdr_u_int32_t(xdr, &args->attrs->acl->naces))
+		if( !xdr_u_int32_t(xdr, &(args->attrs->acl->naces)))
 			return FATTR_XDR_FAILED;
 		for(pace = args->attrs->acl->aces;
 		    pace < args->attrs->acl->aces + args->attrs->acl->naces;
@@ -1080,8 +1080,9 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	fsal_acl_data_t acldata;
 	fsal_ace_t *pace;
 	char buffer[MAXNAMLEN];
+	char *buffp = buffer;
 	utf8string utf8buffer;
-	int who;
+	int who = 0; /* not ASE_SPECIAL anything */
 
 	if( !xdr_u_int32_t(xdr, &acldata.naces))
 		return FATTR_XDR_FAILED;
@@ -1096,17 +1097,25 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	}
 	memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
 	for(pace = acldata.aces; pace < acldata.aces + acldata.naces; pace++) {
-		if( !xdr_u_uint32_t(xdr, &pace->type))
+		int i;
+
+		if( !xdr_uint32_t(xdr, &pace->type))
 			goto baderr;
-		if( !xdr_u_uint32_t(xdr, &pace->flag))
+		if( !xdr_uint32_t(xdr, &pace->flag))
 			goto baderr;
-		if( !xdr_u_uint32_t(xdr, &pace->perm))
+		if( !xdr_uint32_t(xdr, &pace->perm))
 			goto baderr;
-		if( !xdr_string(xdr, buffer, MAXNAMLEN))
+		if( !xdr_string(xdr, &buffp, MAXNAMLEN))
 			goto baderr;
-		utf8buffer.utf8string_val = buffer;
-		utf8buffer.utf8string_len = strlen(buffer);
-		if(nfs4_decode_acl_special_user(&utf8buffer, &who) == 0) {
+		for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++) {
+			if(strncmp(buffer,
+				   whostr_2_type_map[i].string,
+				   strlen(buffer)) == 0) {
+				who = whostr_2_type_map[i].type;
+				break;
+			}
+		}
+		if(who != 0) {
 			/* Clear group flag for special users */
 			pace->flag &= ~(FSAL_ACE_FLAG_GROUP_ID);
 			pace->iflag |= FSAL_ACE_IFLAG_SPECIAL_ID;
@@ -1115,6 +1124,8 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				     "ACE special who.uid = 0x%x",
 				     pace->who.uid);
 		} else {
+			utf8buffer.utf8string_val = buffer;
+			utf8buffer.utf8string_len = strlen(buffer);
 			if(pace->flag == FSAL_ACE_FLAG_GROUP_ID) { /* Decode group. */
 				utf82gid(&utf8buffer, &(pace->who.gid));
 				LogFullDebug(COMPONENT_NFS_V4,
@@ -3242,216 +3253,6 @@ error:
 	return status;
 }
 
-#ifdef _USE_NFS4_ACL
-/* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
-static int nfs4_encode_acl_special_user(int who, char *attrvalsBuffer,
-                                        u_int *LastOffset)
-{
-  int rc = 0;
-  int i;
-  u_int utf8len = 0;
-  u_int deltalen = 0;
-
-  for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++)
-    {
-      if (whostr_2_type_map[i].type == who)
-        {
-          if(whostr_2_type_map[i].stringlen % 4 == 0)
-            deltalen = 0;
-          else
-            deltalen = 4 - whostr_2_type_map[i].stringlen % 4;
-
-          utf8len = htonl(whostr_2_type_map[i].stringlen + deltalen);
-          memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
-          *LastOffset += sizeof(int);
-
-          memcpy((char *)(attrvalsBuffer + *LastOffset), whostr_2_type_map[i].string,
-                 whostr_2_type_map[i].stringlen);
-          *LastOffset += whostr_2_type_map[i].stringlen;
-
-          /* Pad with zero to keep xdr alignement */
-          if(deltalen != 0)
-            memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
-          *LastOffset += deltalen;
-
-          /* Found a matched one. */
-          rc = 1;
-          break;
-        }
-    }
-
-  return rc;
-}
-
-/* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
-static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
-                                      u_int *LastOffset)
-{
-  int rc = 0;
-  char name[MAXNAMLEN];
-  u_int utf8len = 0;
-  u_int stringlen = 0;
-  u_int deltalen = 0;
-
-  rc = gid2name(name, &gid);
-  LogFullDebug(COMPONENT_NFS_V4,
-               "encode gid2name = %s, strlen = %llu",
-               name, (long long unsigned int)strlen(name));
-  if(rc == 0)  /* Failure. */
-    {
-      /* Encode gid itself without @. */
-      sprintf(name, "%u", gid);
-    }
-
-  stringlen = strlen(name);
-  if(stringlen % 4 == 0)
-    deltalen = 0;
-  else
-    deltalen = 4 - (stringlen % 4);
-
-  utf8len = htonl(stringlen + deltalen);
-  memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
-  *LastOffset += sizeof(int);
-
-  memcpy((char *)(attrvalsBuffer + *LastOffset), name, stringlen);
-  *LastOffset += stringlen;
-
-  /* Pad with zero to keep xdr alignement */
-  if(deltalen != 0)
-    memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
-  *LastOffset += deltalen;
-
-  return rc;
-}
-
-/* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
-static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
-                                     char *attrvalsBuffer, u_int *LastOffset)
-{
-  int rc = 0;
-  char name[MAXNAMLEN];
-  u_int utf8len = 0;
-  u_int stringlen = 0;
-  u_int deltalen = 0;
-
-  /* Encode special user first. */
-  if (whotype != FSAL_ACE_NORMAL_WHO)
-    {
-      rc = nfs4_encode_acl_special_user(uid, attrvalsBuffer, LastOffset);
-      if(rc == 1)  /* Success. */
-        return rc;
-    }
-
-  /* Encode normal user or previous user we failed to encode as special user. */
-  rc = uid2name(name, &uid);
-  LogFullDebug(COMPONENT_NFS_V4,
-               "econde uid2name = %s, strlen = %llu",
-               name, (long long unsigned int)strlen(name));
-  if(rc == 0)  /* Failure. */
-    {
-      /* Encode uid itself without @. */
-      sprintf(name, "%u", uid);
-    }
-
-  stringlen = strlen(name);
-  if(stringlen % 4 == 0)
-    deltalen = 0;
-  else
-    deltalen = 4 - (stringlen % 4);
-
-  utf8len = htonl(stringlen + deltalen);
-  memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
-  *LastOffset += sizeof(int);
-
-  memcpy((char *)(attrvalsBuffer + *LastOffset), name, stringlen);
-  *LastOffset += stringlen;
-
-  /* Pad with zero to keep xdr alignement */
-  if(deltalen != 0)
-    memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
-  *LastOffset += deltalen;
-
-  return rc;
-}
-
-/* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
-static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_int *LastOffset)
-{
-  int rc = 0;
-  uint32_t naces, type, flag, access_mask, whotype;
-  fsal_ace_t *pace;
-
-  if(pattr->acl)
-    {
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "GATTR: Number of ACEs = %u",
-                   pattr->acl->naces);
-
-      /* Encode number of ACEs. */
-      naces = htonl(pattr->acl->naces);
-      memcpy((char *)(attrvalsBuffer + *LastOffset), &naces, sizeof(uint32_t));
-      *LastOffset += sizeof(uint32_t);
-
-      /* Encode ACEs. */
-      for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
-        {
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "GATTR: type=0X%x, flag=0X%x, perm=0X%x",
-                       pace->type, pace->flag, pace->perm);
-
-          type = htonl(pace->type);
-          flag = htonl(pace->flag);
-          access_mask = htonl(pace->perm);
-
-          memcpy((char *)(attrvalsBuffer + *LastOffset), &type, sizeof(uint32_t));
-          *LastOffset += sizeof(uint32_t);
-
-          memcpy((char *)(attrvalsBuffer + *LastOffset), &flag, sizeof(uint32_t));
-          *LastOffset += sizeof(uint32_t);
-
-          memcpy((char *)(attrvalsBuffer + *LastOffset), &access_mask, sizeof(uint32_t));
-          *LastOffset += sizeof(uint32_t);
-
-          if(IS_FSAL_ACE_GROUP_ID(*pace))  /* Encode group name. */
-            {
-              rc = nfs4_encode_acl_group_name(pace->who.gid, attrvalsBuffer, LastOffset);
-            }
-          else
-            {
-              if(!IS_FSAL_ACE_SPECIAL_ID(*pace))
-                {
-                  whotype = FSAL_ACE_NORMAL_WHO;
-                }
-              else
-                whotype = pace->who.uid;
-
-              /* Encode special or normal user name. */
-              rc = nfs4_encode_acl_user_name(whotype, pace->who.uid, attrvalsBuffer, LastOffset);
-            }
-
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "GATTR: special = %u, %s = %u",
-                       IS_FSAL_ACE_SPECIAL_ID(*pace),
-                       IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
-                       IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid);
-
-        }
-    }
-  else
-    {
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "nfs4_encode_acl: no acl available");
-
-      fattr4_acl acl;
-      acl.fattr4_acl_len = htonl(0);
-      memcpy((char *)(attrvalsBuffer + *LastOffset), &acl, sizeof(fattr4_acl));
-      *LastOffset += fattr4tab[FATTR4_ACL].size_fattr4;
-    }
-
-  return rc;
-}
-#endif                          /* _USE_NFS4_ACL */
-
 void nfs4_Fattr_Free(fattr4 *fattr)
 {
   if(fattr->attrmask.bitmap4_val != NULL)
@@ -4698,190 +4499,6 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
   else
     return false;
 }
-
-#ifdef _USE_NFS4_ACL
-static int nfs4_decode_acl_special_user(utf8string *utf8str, int *who)
-{
-  int i;
-
-  for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++)
-    {
-      if(strncmp(utf8str->utf8string_val, whostr_2_type_map[i].string, utf8str->utf8string_len) == 0)
-        {
-          *who = whostr_2_type_map[i].type;
-          return 0;
-        }
-    }
-
-  return -1;
-}
-
-static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
-			   unsigned char *current_pos,
-			   u_int *attr_len)
-{
-  fsal_acl_status_t status;
-  fsal_acl_data_t acldata;
-  fsal_ace_t *pace;
-  fsal_acl_t *pacl;
-  int len;
-  char buffer[MAXNAMLEN];
-  utf8string utf8buffer;
-  int who;
-  u_int offset;
-  int nfs_status = NFS4_OK;
-
-  if(*attr_len < sizeof(u_int)) {
-	  nfs_status = NFS4ERR_BADXDR;
-	  goto out;
-  }
-  /* Decode number of ACEs. */
-  memcpy(&(acldata.naces), current_pos, sizeof(u_int));
-  acldata.naces = ntohl(acldata.naces);
-  LogFullDebug(COMPONENT_NFS_V4,
-               "SATTR: Number of ACEs = %u",
-               acldata.naces);
-  offset = sizeof(u_int);
-
-  /* Allocate memory for ACEs. */
-  acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
-  if(acldata.aces == NULL)
-    {
-      LogCrit(COMPONENT_NFS_V4,
-              "SATTR: Failed to allocate ACEs");
-      nfs_status = NFS4ERR_SERVERFAULT;
-      goto out;
-    }
-  memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
-
-  /* Decode ACEs. */
-  for(pace = acldata.aces; pace < acldata.aces + acldata.naces; pace++)
-    {
-      if(*attr_len < (sizeof(fsal_acetype_t) +
-		      sizeof(fsal_aceflag_t) +
-		      sizeof(fsal_aceperm_t) +
-		      sizeof(u_int))) {
-	nfs_status = NFS4ERR_BADXDR;
-	goto baderr;
-      }
-      memcpy(&(pace->type), (char*)(current_pos + offset), sizeof(fsal_acetype_t));
-      pace->type = ntohl(pace->type);
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "SATTR: ACE type = 0x%x",
-                   pace->type);
-      offset += sizeof(fsal_acetype_t);
-
-      memcpy(&(pace->flag), (char*)(current_pos + offset), sizeof(fsal_aceflag_t));
-      pace->flag = ntohl(pace->flag);
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "SATTR: ACE flag = 0x%x",
-                   pace->flag);
-      offset += sizeof(fsal_aceflag_t);
-
-      memcpy(&(pace->perm), (char*)(current_pos + offset), sizeof(fsal_aceperm_t));
-      pace->perm = ntohl(pace->perm);
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "SATTR: ACE perm = 0x%x",
-                   pace->perm);
-      offset += sizeof(fsal_aceperm_t);
-
-      /* Find out who type */
-
-      /* Convert name to uid or gid */
-      memcpy(&len, (char *)(current_pos + offset), sizeof(u_int));
-      len = ntohl(len);        /* xdr marshalling on fattr4 */
-      offset += sizeof(u_int);
-
-      if(*attr_len < (offset + len)) {
-	nfs_status = NFS4ERR_BADXDR;
-	goto baderr;
-      }
-      memcpy(buffer, (char *)(current_pos + offset), len);
-      buffer[len] = '\0';
-
-      /* Do not forget that xdr_opaque are aligned on 32bit long words */
-      while((len % 4) != 0)
-        len += 1;
-
-      offset += len;
-
-      /* Decode users. */
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "SATTR: owner = %s, len = %d, type = %s",
-                   buffer, len,
-                   GET_FSAL_ACE_WHO_TYPE(*pace));
-
-      utf8buffer.utf8string_val = buffer;
-      utf8buffer.utf8string_len = strlen(buffer);
-
-      if(nfs4_decode_acl_special_user(&utf8buffer, &who) == 0)  /* Decode special user. */
-        {
-          /* Clear group flag for special users */
-          pace->flag &= ~(FSAL_ACE_FLAG_GROUP_ID);
-          pace->iflag |= FSAL_ACE_IFLAG_SPECIAL_ID;
-          pace->who.uid = who;
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "SATTR: ACE special who.uid = 0x%x",
-                       pace->who.uid);
-        }
-      else
-        {
-          if(pace->flag == FSAL_ACE_FLAG_GROUP_ID)  /* Decode group. */
-            {
-              utf82gid(&utf8buffer, &(pace->who.gid));
-              LogFullDebug(COMPONENT_NFS_V4,
-                           "SATTR: ACE who.gid = 0x%x",
-                           pace->who.gid);
-            }
-          else  /* Decode user. */
-            {
-              utf82uid(&utf8buffer, &(pace->who.uid));
-              LogFullDebug(COMPONENT_NFS_V4,
-                           "SATTR: ACE who.uid = 0x%x",
-                           pace->who.uid);
-            }
-        }
-
-      /* Check if we can map a name string to uid or gid. If we can't, do cleanup
-       * and bubble up NFS4ERR_BADOWNER. */
-      if((pace->flag == FSAL_ACE_FLAG_GROUP_ID ? pace->who.gid : pace->who.uid) == -1)
-        {
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "SATTR: bad owner");
-          nfs4_ace_free(acldata.aces);
-          nfs_status =  NFS4ERR_BADOWNER;
-	  goto baderr;
-        }
-    }
-
-  pacl = nfs4_acl_new_entry(&acldata, &status);
-  pFSAL_attr->acl = pacl;
-  if(pacl == NULL)
-    {
-      LogCrit(COMPONENT_NFS_V4,
-              "SATTR: Failed to create a new entry for ACL");
-      nfs_status =  NFS4ERR_SERVERFAULT;
-      goto baderr;
-    }
-  else
-     LogFullDebug(COMPONENT_NFS_V4,
-                  "SATTR: Successfully created a new entry for ACL, status = %u",
-                  status);
-
-  /* Set new ACL */
-  LogFullDebug(COMPONENT_NFS_V4,
-               "SATTR: new acl = %p",
-               pacl);
-  goto out;
-
-baderr:
-/* free memory or leak! or does new_entry release it? */
-
-out:
-  *attr_len = offset;
-  return nfs_status;
-}
-#endif                          /* _USE_NFS4_ACL */
 
 /**
  *

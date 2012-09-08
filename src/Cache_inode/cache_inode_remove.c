@@ -286,7 +286,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
 
 
 #ifdef _USE_NFS4_ACL
-     saved_acl = entry->attributes.acl;
+     saved_acl = entry->obj_handle->attributes.acl;
 #endif /* _USE_NFS4_ACL */
      fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx,
                                                   name);

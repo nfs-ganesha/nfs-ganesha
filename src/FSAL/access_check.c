@@ -80,7 +80,7 @@ static bool fsal_check_ace_matches(fsal_ace_t *pace,
     }
 
   LogDebug(COMPONENT_FSAL,
-           "fsal_check_ace_matches: matches %d flag 0x%X who %"PRIu64,
+           "fsal_check_ace_matches: matches %d flag 0x%X who %u",
            matches, pace->flag, GET_FSAL_ACE_WHO(*pace));
 
   return (matches != 0);
@@ -155,7 +155,7 @@ static void fsal_print_ace(int ace_number, fsal_ace_t *pace, char *p_acebuf)
           IS_FSAL_ACE_NO_PROPAGATE(*pace)? 'n': '-');
 
   /* Print the entire ACE. */
-  sprintf(p_acebuf, "ACE %d %s %s %"PRIu64" %c%c%c%c%c%c%c%c%c%c%c%c%c%c %s",
+  sprintf(p_acebuf, "ACE %d %s %s %u %c%c%c%c%c%c%c%c%c%c%c%c%c%c %s",
           ace_number,
           /* ACE type. */
           IS_FSAL_ACE_ALLOW(*pace)? "allow":
@@ -287,7 +287,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
     {
       LogDebug(COMPONENT_FSAL,
                "fsal_check_access_acl: ace type 0x%X perm 0x%X "
-               "flag 0x%X who %"PRIu64,
+               "flag 0x%X who %u",
                pace->type, pace->perm, pace->flag, GET_FSAL_ACE_WHO(*pace));
 
       /* Process Allow and Deny entries. */

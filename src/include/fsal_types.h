@@ -252,14 +252,14 @@ typedef struct fsal_ace__
   fsal_aceflag_t iflag;  /* Internal flags. */
   union
   {
-    uint64_t uid;
-    uint64_t gid;
+    uid_t uid;
+    gid_t gid;
   } who;
 } fsal_ace_t;
 
 typedef struct fsal_acl__
 {
-  size_t naces;
+  uint32_t naces;
   fsal_ace_t *aces;
   rw_lock_t lock;
   uint32_t ref;
@@ -267,11 +267,11 @@ typedef struct fsal_acl__
 
 typedef struct fsal_acl_data__
 {
-  size_t naces;
+  uint32_t naces;
   fsal_ace_t *aces;
 } fsal_acl_data_t;
 
-#ifndef _USE_NFS4_ACL
+#ifndef MD5_DIGEST_LENGTH
 #define MD5_DIGEST_LENGTH  16
 #endif
 

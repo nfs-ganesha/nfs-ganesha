@@ -1148,7 +1148,7 @@ int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
 
 int uid2utf8(uid_t uid, utf8string * utf8str);
-int utf82uid(utf8string * utf8str, uint64_t *Uid);
+int utf82uid(utf8string * utf8str, uid_t *Uid);
 
 int uid2str(uid_t uid, char *str);
 int str2uid(char *str, uid_t * Uid);
@@ -1157,7 +1157,7 @@ int gid2str(gid_t gid, char *str);
 int str2gid(char *str, gid_t * Gid);
 
 int gid2utf8(gid_t gid, utf8string * utf8str);
-int utf82gid(utf8string * utf8str, uint64_t *Gid);
+int utf82gid(utf8string * utf8str, gid_t *Gid);
 
 void nfs4_stringid_split(char *buff, char *uidname, char *domainname);
 
