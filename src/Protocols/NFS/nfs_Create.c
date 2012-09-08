@@ -316,7 +316,6 @@ int nfs_Create(nfs_arg_t *parg,
                       break;
 
                     case NFS_V3:
-
                       if(nfs3_Sattr_To_FSALattr(&attributes_create,
                                                 &parg->arg_create3.how.createhow3_u.
                                                 obj_attributes) == 0)
@@ -340,6 +339,11 @@ int nfs_Create(nfs_arg_t *parg,
 
                   if(attributes_create.asked_attributes & FSAL_ATTR_SPACEUSED)
                     attributes_create.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
+                  /* Some clients like Solaris and AIX tries to set uid/gid
+ *                 * for non root users or when root squashed.
+ *                 */
+                   if (pcontext->credential.user != 0)
+                     attributes_create.asked_attributes &= ~(FSAL_ATTR_OWNER |FSAL_ATTR_GROUP);
 
                   /* Are there attributes to be set (additional to the mode) ? */
                   if(attributes_create.asked_attributes != 0ULL &&
