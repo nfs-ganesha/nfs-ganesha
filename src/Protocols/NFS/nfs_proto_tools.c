@@ -1791,12 +1791,15 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	char buff[MAXNAMLEN];
 	char *owner = buff;
 	uid_t uid;
+	utf8string u8;
 
 	if( !xdr_string(xdr, &owner, MAXNAMLEN))
 		return FATTR_XDR_FAILED;
-	if(name2uid(owner, &uid) == 0)
+	u8.utf8string_len = strlen(owner);
+	u8.utf8string_val = owner;
+	if(utf82uid(&u8, &uid) < 0)
 		return FATTR_XDR_FAILED;
-	args->attrs->owner = uid; /* uint64_t = uid_t ??? */
+	args->attrs->owner = uid;
 	return FATTR_XDR_SUCCESS;
 }
 
@@ -1823,10 +1826,13 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 	char buff[MAXNAMLEN];
 	char *group = buff;
 	gid_t gid;
+	utf8string u8;
 
 	if( !xdr_string(xdr, &group, MAXNAMLEN))
 		return FATTR_XDR_FAILED;
-	if(name2gid(group, &gid) == 0)
+	u8.utf8string_len = strlen(group);
+	u8.utf8string_val = group;
+	if(utf82gid(&u8, &gid) < 0)
 		return FATTR_XDR_FAILED;
 	args->attrs->group = gid;
 	return FATTR_XDR_SUCCESS;
