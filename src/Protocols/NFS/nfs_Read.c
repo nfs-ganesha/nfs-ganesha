@@ -24,13 +24,10 @@
  */
 
 /**
- * \file    nfs_Read.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:53 $
- * \version $Revision: 1.17 $
- * \brief   Routines used for managing the NFS READ request.
+ * @file    nfs_Read.c
+ * @brief   Routines used for managing the NFS READ request.
  *
- * nfs_Read.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Everything you need to read.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -62,42 +59,47 @@
 #include "nfs_tools.h"
 
 static void
-nfs_read_ok(exportlist_t * pexport,
-            struct svc_req *preq, 
-            nfs_res_t * pres,
+nfs_read_ok(exportlist_t *export,
+            struct svc_req *req,
+            struct req_op_context *req_ctx,
+            nfs_res_t *res,
             char *data,
             uint32_t read_size,
-            struct attrlist *attr,
+            cache_entry_t *entry,
             int eof)
 {
-    if((read_size == 0) && (data != NULL)) {
-        gsh_free(data);
-        data = NULL;
-    }
-    switch (preq->rq_vers) {
-    case NFS_V2:
-        pres->res_read2.READ2res_u.readok.data.nfsdata2_val = data;
-        pres->res_read2.READ2res_u.readok.data.nfsdata2_len = read_size;
+        if ((read_size == 0) &&
+            (data != NULL)) {
+                gsh_free(data);
+                data = NULL;
+        }
+        switch (req->rq_vers) {
+        case NFS_V2:
+                res->res_read2.READ2res_u.readok.data.nfsdata2_val = data;
+                res->res_read2.READ2res_u.readok.data.nfsdata2_len = read_size;
 
-        nfs2_FSALattr_To_Fattr(pexport, attr,
-                               &(pres->res_read2.READ2res_u.readok.attributes));
+                cache_entry_to_nfs2_Fattr(entry,
+                                          req_ctx,
+                                          &(res->res_read2.READ2res_u
+                                            .readok.attributes));
 
-        pres->res_attr2.status = NFS_OK;
-        break;
+                res->res_attr2.status = NFS_OK;
+                break;
 
     case NFS_V3:
-        /* Build Post Op Attributes */
-        nfs_SetPostOpAttr(pexport, attr,
-                          &(pres->res_read3.READ3res_u.resok.file_attributes));
+            /* Build Post Op Attributes */
+            nfs_SetPostOpAttr(entry, req_ctx,
+                              &res->res_read3.READ3res_u.resok
+                              .file_attributes);
 
-        pres->res_read3.READ3res_u.resok.eof = eof;
-        pres->res_read3.READ3res_u.resok.count = read_size;
-        pres->res_read3.READ3res_u.resok.data.data_val = data;
-        pres->res_read3.READ3res_u.resok.data.data_len = read_size;
+            res->res_read3.READ3res_u.resok.eof = eof;
+            res->res_read3.READ3res_u.resok.count = read_size;
+            res->res_read3.READ3res_u.resok.data.data_val = data;
+            res->res_read3.READ3res_u.resok.data.data_len = read_size;
 
-        pres->res_read3.status = NFS3_OK;
-        break;
-    }                   /* switch */
+            res->res_read3.status = NFS3_OK;
+            break;
+        }
 }
 
 /**
@@ -106,12 +108,12 @@ nfs_read_ok(exportlist_t * pexport,
  *
  * Implements the NFS PROC READ function (for V2 and V3).
  *
- * @param[in]  parg     NFS arguments union
- * @param[in]  pexport  NFS export list
- * @param[in]  pcontext Credentials to be used for this request
- * @param[in]  pworker  Worker thread data
- * @param[in]  preq     SVC request related to this call
- * @param[out] pres     Structure to contain the result of the call
+ * @param[in]  arg     NFS arguments union
+ * @param[in]  export  NFS export list
+ * @param[in]  req_ctx Request context
+ * @param[in]  worker  Worker thread data
+ * @param[in]  req     SVC request related to this call
+ * @param[out] res     Structure to contain the result of the call
  *
  * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
@@ -119,323 +121,297 @@ nfs_read_ok(exportlist_t * pexport,
  *
  */
 
-int nfs_Read(nfs_arg_t *parg,
-             exportlist_t *pexport,
-	     struct req_op_context *req_ctx,
-             nfs_worker_data_t *pworker,
-             struct svc_req *preq,
-             nfs_res_t *pres)
+int
+nfs_Read(nfs_arg_t *arg,
+         exportlist_t *export,
+         struct req_op_context *req_ctx,
+         nfs_worker_data_t *worker,
+         struct svc_req *req,
+         nfs_res_t *res)
 {
-  cache_entry_t *pentry;
-  struct attrlist attr;
-  struct attrlist pre_attr;
-  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  size_t size = 0;
-  size_t read_size = 0;
-  uint64_t offset = 0;
-  void *data = NULL;
-  bool   eof_met = false;
-  int rc = NFS_REQ_OK;
+        cache_entry_t *entry;
+        pre_op_attr pre_attr;
+        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+        size_t size = 0;
+        size_t read_size = 0;
+        uint64_t offset = 0;
+        void *data = NULL;
+        bool  eof_met = false;
+        int rc = NFS_REQ_OK;
 
-  if(isDebug(COMPONENT_NFSPROTO))
-    {
-      char str[LEN_FH_STR];
+        if (isDebug(COMPONENT_NFSPROTO)) {
+                char str[LEN_FH_STR];
 
-      switch (preq->rq_vers)
-        {
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        offset = arg->arg_read2.offset;
+                        size = arg->arg_read2.count;
+                        break;
+                case NFS_V3:
+                        offset = arg->arg_read3.offset;
+                        size = arg->arg_read3.count;
+                }
+
+                nfs_FhandleToStr(req->rq_vers,
+                                 &arg->arg_read2.file,
+                                 &arg->arg_read3.file,
+                                 NULL,
+                                 str);
+                LogDebug(COMPONENT_NFSPROTO,
+                         "REQUEST PROCESSING: Calling nfs_Read handle: %s "
+                         "start: %"PRIu64" len: %"PRIu64,
+                         str, offset, size);
+        }
+
+        if (req->rq_vers == NFS_V3) {
+                /* to avoid setting it on each error case */
+                res->res_read3.READ3res_u.resfail.file_attributes
+                        .attributes_follow = FALSE;
+                /* initialize for read of size 0 */
+                res->res_read3.READ3res_u.resok.eof = FALSE;
+                res->res_read3.READ3res_u.resok.count = 0;
+                res->res_read3.READ3res_u.resok.data.data_val = NULL;
+                res->res_read3.READ3res_u.resok.data.data_len = 0;
+                res->res_read3.status = NFS3_OK;
+        } else if(req->rq_vers == NFS_V2) {
+                /* initialize for read of size 0 */
+                res->res_read2.READ2res_u.readok.data.nfsdata2_val = NULL;
+                res->res_read2.READ2res_u.readok.data.nfsdata2_len = 0;
+                res->res_attr2.status = NFS_OK;
+        }
+
+        /* Convert file handle into a cache entry */
+        if((entry = nfs_FhandleToCache(req_ctx,
+                                       req->rq_vers,
+                                       &arg->arg_read2.file,
+                                       &arg->arg_read3.file,
+                                       NULL,
+                                       &res->res_read2.status,
+                                       &res->res_read3.status,
+                                       NULL,
+                                       export,
+                                       &rc)) == NULL) {
+                goto out;
+        }
+
+        nfs_SetPreOpAttr(entry,
+                         req_ctx,
+                         &pre_attr);
+
+        if ((req->rq_vers == NFS_V3) &&
+            (nfs3_Is_Fh_Xattr(&arg->arg_read3.file))) {
+                rc = nfs3_Read_Xattr(arg, export, req_ctx, req, res);
+                goto out;
+        }
+
+        if (cache_inode_access(entry,
+                               FSAL_READ_ACCESS,
+                               req_ctx,
+                               &cache_status)
+            != CACHE_INODE_SUCCESS) {
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        res->res_attr2.status = nfs2_Errno(cache_status);
+                        break;
+
+                case NFS_V3:
+                        res->res_read3.status = nfs3_Errno(cache_status);
+                        break;
+                }
+                rc = NFS_REQ_OK;
+                goto out;
+        }
+
+        /* Sanity check: read only from a regular file */
+        if (entry->type != REGULAR_FILE) {
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        /* In the RFC tell it not good but it does *
+                           not tell what to do ... */
+                        res->res_attr2.status = NFSERR_ISDIR;
+                        break;
+
+                case NFS_V3:
+                        if (entry->type == DIRECTORY) {
+                                res->res_read3.status = NFS3ERR_ISDIR;
+                        } else {
+                                res->res_read3.status = NFS3ERR_INVAL;
+                                break;
+                        }
+
+                        rc = NFS_REQ_OK;
+                        goto out;
+                }
+        }
+
+        /* For MDONLY export, reject write operation This is done by
+           replying EDQUOT (this error is known for not disturbing the
+           client's requests cache */
+        if (export->access_type == ACCESSTYPE_MDONLY ||
+            export->access_type == ACCESSTYPE_MDONLY_RO) {
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        res->res_read2.status = NFSERR_DQUOT;
+                        break;
+
+                case NFS_V3:
+                        res->res_read3.status = NFS3ERR_DQUOT;
+                        nfs_SetPostOpAttr(entry,
+                                          req_ctx,
+                                          &res->res_read3.READ3res_u.resfail
+                                          .file_attributes);
+                        break;
+                }
+
+                rc = NFS_REQ_OK;
+                goto out;
+        }
+
+        /* Extract the argument from the request */
+        switch (req->rq_vers) {
         case NFS_V2:
-          offset = parg->arg_read2.offset;
-          size = parg->arg_read2.count;
-          break;
+                offset = arg->arg_read2.offset;  /* beginoffset is obsolete */
+                size = arg->arg_read2.count;     /* totalcount is obsolete  */
+                break;
+
         case NFS_V3:
-          offset = parg->arg_read3.offset;
-          size = parg->arg_read3.count;
+                offset = arg->arg_read3.offset;
+                size = arg->arg_read3.count;
+                break;
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_read2.file),
-                       &(parg->arg_read3.file),
-                       NULL,
-                       str);
-      LogDebug(COMPONENT_NFSPROTO,
-               "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %llx len: %llx",
-               str, (unsigned long long) offset, (unsigned long long) size);
-    }
+        /* do not exceed maxium READ offset if set */
+        if (export->options & EXPORT_OPTION_MAXOFFSETREAD) {
+                LogFullDebug(COMPONENT_NFSPROTO,
+                             "-----> Read offset=%"PRIu64" count=%zd "
+                             "MaxOffSet=%"PRIu64,
+                             offset,
+                             size,
+                             export->MaxOffsetRead);
 
-  if(preq->rq_vers == NFS_V3)
-    {
-      /* to avoid setting it on each error case */
-      pres->res_read3.READ3res_u.resfail.file_attributes.attributes_follow = FALSE;
-      /* initialize for read of size 0 */
-      pres->res_read3.READ3res_u.resok.eof = FALSE;
-      pres->res_read3.READ3res_u.resok.count = 0;
-      pres->res_read3.READ3res_u.resok.data.data_val = NULL;
-      pres->res_read3.READ3res_u.resok.data.data_len = 0;
-      pres->res_read3.status = NFS3_OK;
-    }
-  else if(preq->rq_vers == NFS_V2)
-    {
-      /* initialize for read of size 0 */
-      pres->res_read2.READ2res_u.readok.data.nfsdata2_val = NULL;
-      pres->res_read2.READ2res_u.readok.data.nfsdata2_len = 0;
-      pres->res_attr2.status = NFS_OK;
-    }
+                if ((offset + size) > export->MaxOffsetRead) {
+                        LogEvent(COMPONENT_NFSPROTO,
+                                 "NFS READ: A client tryed to violate max "
+                                 "file size %"PRIu64" for exportid #%hu",
+                                 export->MaxOffsetRead,
+                                 export->id);
 
-  /* Convert file handle into a cache entry */
-  if((pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
-                                  &(parg->arg_read2.file),
-                                  &(parg->arg_read3.file),
-                                  NULL,
-                                  &(pres->res_read2.status),
-                                  &(pres->res_read3.status),
-                                  NULL, &pre_attr, pexport, &rc)) == NULL)
-    {
-      /* Stale NFS FH ? */
-      goto out;
-    }
+                        switch (req->rq_vers) {
+                        case NFS_V2:
+                                res->res_read2.status = NFSERR_DQUOT;
+                                break;
 
-  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_read3.file))))
-  {
-    rc = nfs3_Read_Xattr(parg, pexport, req_ctx, preq, pres);
-    goto out;
-  }
+                        case NFS_V3:
+                                res->res_read3.status = NFS3ERR_INVAL;
+                                break;
+                                nfs_SetPostOpAttr(entry,
+                                                  req_ctx,
+                                                  &res->res_read3.READ3res_u
+                                                  .resfail.file_attributes);
+                        }
 
-  if(cache_inode_access(pentry,
-                        FSAL_READ_ACCESS,
-                        req_ctx,
-                        &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      switch (preq->rq_vers)
-        {
+                        rc = NFS_REQ_OK;
+                        goto out;
+                }
+        }
+
+        /* We should not exceed the FSINFO rtmax field for the size */
+        if (((export->options & EXPORT_OPTION_MAXREAD)) &&
+            size > export->MaxRead) {
+                /* The client asked for too much, normally this should
+                   not happen because the client is calling nfs_Fsinfo
+                   at mount time and so is aware of the server maximum
+                   write size */
+                size = export->MaxRead;
+        }
+
+        if (size == 0) {
+                nfs_read_ok(export, req, req_ctx, res, NULL, 0, entry, 0);
+                rc = NFS_REQ_OK;
+                goto out;
+        } else {
+                data = gsh_malloc(size);
+                if (data == NULL) {
+                        rc = NFS_REQ_DROP;
+                        goto out;
+                }
+
+                if ((cache_inode_rdwr(entry,
+                                      CACHE_INODE_READ,
+                                      offset,
+                                      size,
+                                      &read_size,
+                                      data,
+                                      &eof_met,
+                                      req_ctx,
+                                      CACHE_INODE_SAFE_WRITE_TO_FS,
+                                      &cache_status)
+                     == CACHE_INODE_SUCCESS)) {
+                        nfs_read_ok(export, req, req_ctx, res, data,
+                                    read_size, entry,
+                                    eof_met);
+                        rc = NFS_REQ_OK;
+                        goto out;
+                }
+                gsh_free(data);
+        }
+
+        /* If we are here, there was an error */
+        if (nfs_RetryableError(cache_status)) {
+                rc = NFS_REQ_DROP;
+                goto out;
+        }
+
+        switch (req->rq_vers) {
         case NFS_V2:
-          pres->res_attr2.status = nfs2_Errno(cache_status);
-          break;
-
+                res->res_read2.status = nfs2_Errno(cache_status);
         case NFS_V3:
-          pres->res_read3.status = nfs3_Errno(cache_status);
-          break;
-        }
-      rc = NFS_REQ_OK;
-      goto out;
-    }
-
-  /* Sanity check: read only from a regular file */
-  if(pre_attr.type != REGULAR_FILE)
-    {
-      switch (preq->rq_vers)
-        {
-        case NFS_V2:
-          /*
-           * In the RFC tell it not good but it does
-           * not tell what to do ... 
-           */
-          pres->res_attr2.status = NFSERR_ISDIR;
-          break;
-
-        case NFS_V3:
-          if(pre_attr.type == DIRECTORY)
-            pres->res_read3.status = NFS3ERR_ISDIR;
-          else
-            pres->res_read3.status = NFS3ERR_INVAL;
-          break;
+                res->res_read3.status = nfs3_Errno(cache_status);
+                nfs_SetPostOpAttr(entry,
+                                  req_ctx,
+                                  &res->res_read3.READ3res_u.resfail
+                                  .file_attributes);
         }
 
-      rc = NFS_REQ_OK;
-      goto out;
-    }
-
-  /* For MDONLY export, reject write operation */
-  /* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level */
-  /* This is done by replying EDQUOT (this error is known for not disturbing the client's requests cache */
-  if(pexport->access_type == ACCESSTYPE_MDONLY
-     || pexport->access_type == ACCESSTYPE_MDONLY_RO)
-    {
-      switch (preq->rq_vers)
-        {
-        case NFS_V2:
-          pres->res_attr2.status = NFSERR_DQUOT;
-          break;
-
-        case NFS_V3:
-          pres->res_read3.status = NFS3ERR_DQUOT;
-          break;
-        }
-
-      nfs_SetFailedStatus(pexport,
-                          preq->rq_vers,
-                          cache_status,
-                          &pres->res_read2.status,
-                          &pres->res_read3.status,
-                          pentry,
-                          &(pres->res_read3.READ3res_u.resfail.file_attributes),
-                          NULL, NULL, NULL, NULL, NULL, NULL);
-
-      rc = NFS_REQ_OK;
-      goto out;
-    }
-
-  /* Extract the argument from the request */
-  switch (preq->rq_vers)
-    {
-    case NFS_V2:
-      offset = parg->arg_read2.offset;  /* beginoffset is obsolete */
-      size = parg->arg_read2.count;     /* totalcount is obsolete  */
-      break;
-
-    case NFS_V3:
-      offset = parg->arg_read3.offset;
-      size = parg->arg_read3.count;
-      break;
-    }
-
-  /* 
-   * do not exceed maxium READ offset if set 
-   */
-  if((pexport->options & EXPORT_OPTION_MAXOFFSETREAD) == EXPORT_OPTION_MAXOFFSETREAD)
-    {
-      LogFullDebug(COMPONENT_NFSPROTO,
-                   "-----> Read offset=%"PRIu64" count=%zd MaxOffSet=%"PRIu64,
-                   offset,
-                   size,
-                   pexport->MaxOffsetRead);
-
-      if((offset + size) > pexport->MaxOffsetRead)
-        {
-          LogEvent(COMPONENT_NFSPROTO,
-                   "NFS READ: A client tryed to violate max file size %llu for exportid #%hu",
-                   (unsigned long long) pexport->MaxOffsetRead, pexport->id);
-
-          switch (preq->rq_vers)
-            {
-            case NFS_V2:
-              pres->res_attr2.status = NFSERR_DQUOT;
-              break;
-
-            case NFS_V3:
-              pres->res_read3.status = NFS3ERR_INVAL;
-              break;
-            }
-
-          nfs_SetFailedStatus(pexport,
-                              preq->rq_vers,
-                              cache_status,
-                              &pres->res_read2.status,
-                              &pres->res_read3.status,
-                              pentry,
-                              &(pres->res_read3.READ3res_u.resfail.file_attributes),
-                              NULL, NULL, NULL, NULL, NULL, NULL);
-
-          rc = NFS_REQ_OK;
-          goto out;
-        }
-    }
-
-  /*
-   * We should not exceed the FSINFO rtmax field for
-   * the size 
-   */
-  if(((pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
-     size > pexport->MaxRead)
-    {
-      /*
-       * The client asked for too much, normally
-       * this should not happen because the client
-       * is calling nfs_Fsinfo at mount time and so
-       * is aware of the server maximum write size 
-       */
-      size = pexport->MaxRead;
-    }
-
-  if(size == 0)
-    {
-      nfs_read_ok(pexport, preq, pres, NULL, 0, &pre_attr, 0);
-      rc = NFS_REQ_OK;
-      goto out;
-    }
-  else
-    {
-      data = gsh_malloc(size);
-      if(data == NULL)
-        {
-          rc = NFS_REQ_DROP;
-          goto out;
-        }
-
-      if((cache_inode_rdwr(pentry,
-                           CACHE_INODE_READ,
-                           offset,
-                           size,
-                           &read_size,
-                           data,
-                           &eof_met,
-                           req_ctx,
-                           CACHE_INODE_SAFE_WRITE_TO_FS,
-                           &cache_status) == CACHE_INODE_SUCCESS) &&
-         (cache_inode_getattr(pentry, &attr, req_ctx,
-                              &cache_status)) == CACHE_INODE_SUCCESS)
-
-        {
-          nfs_read_ok(pexport, preq, pres, data, read_size, &attr, 
-                      ((offset + read_size) >= attr.filesize));
-          rc = NFS_REQ_OK;
-          goto out;
-        }
-      gsh_free(data);
-    }
-
-  /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  nfs_SetFailedStatus(pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_read2.status,
-                      &pres->res_read3.status,
-                      pentry,
-                      &(pres->res_read3.READ3res_u.resfail.file_attributes),
-                      NULL, NULL, NULL, NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
+        rc = NFS_REQ_OK;
 
 out:
-  /* return references */
-  if (pentry)
-      cache_inode_put(pentry);
+        /* return references */
+        if (entry) {
+                cache_inode_put(entry);
+        }
 
-  return (rc);
-
-}                               /* nfs_Read */
-
-/**
- * nfs2_Read_Free: Frees the result structure allocated for nfs2_Read.
- * 
- * Frees the result structure allocated for nfs2_Read.
- * 
- * @param pres        [INOUT]   Pointer to the result structure.
- *
- */
-void nfs2_Read_Free(nfs_res_t * resp)
-{
-  if((resp->res_read2.status == NFS_OK) &&
-     (resp->res_read2.READ2res_u.readok.data.nfsdata2_len != 0))
-    gsh_free(resp->res_read2.READ2res_u.readok.data.nfsdata2_val);
-}                               /* nfs2_Read_Free */
+        return rc;
+} /* nfs_Read */
 
 /**
- * nfs3_Read_Free: Frees the result structure allocated for nfs3_Read.
- * 
- * Frees the result structure allocated for nfs3_Read.
- * 
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @brief Free the result structure allocated for nfs2_Read.
+ *
+ * This function frees the result structure allocated for nfs2_Read.
+ *
+ * @param[in,out] res Result structure
  *
  */
-void nfs3_Read_Free(nfs_res_t * resp)
+void nfs2_Read_Free(nfs_res_t *res)
 {
-  if((resp->res_read3.status == NFS3_OK) &&
-     (resp->res_read3.READ3res_u.resok.data.data_len != 0))
-    gsh_free(resp->res_read3.READ3res_u.resok.data.data_val);
-}                               /* nfs3_Read_Free */
+        if((res->res_read2.status == NFS_OK) &&
+           (res->res_read2.READ2res_u.readok.data.nfsdata2_len
+            != 0)) {
+                gsh_free(res->res_read2.READ2res_u.readok.data.nfsdata2_val);
+        }
+} /* nfs2_Read_Free */
+
+/**
+ * @brief Free the result structure allocated for nfs3_Read.
+ *
+ * This function frees the result structure allocated for nfs3_Read.
+ *
+ * @param[in,out] res Result structure
+ */
+void nfs3_Read_Free(nfs_res_t *res)
+{
+        if ((res->res_read3.status == NFS3_OK) &&
+            (res->res_read3.READ3res_u.resok.data.data_len != 0)) {
+                gsh_free(res->res_read3.READ3res_u.resok.data.data_val);
+        }
+} /* nfs3_Read_Free */

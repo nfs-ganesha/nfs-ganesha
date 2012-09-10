@@ -1,9 +1,7 @@
 /**
  *
- * \file    cache_inode_remove.c
- * \date    $Date: 2006/01/31 10:18:58 $
- * \version $Revision: 1.32 $
- * \brief   Removes an entry of any type.
+ * @file    cache_inode_remove.c
+ * @brief   Removes an entry of any type.
  */
 
 /*
@@ -160,7 +158,6 @@ cache_inode_clean_internal(cache_entry_t *entry)
  *
  * @param[in]  entry   Entry for the parent directory to be managed
  * @param[in]  name    Name to be removed
- * @param[out] attr    Attributes of the directory on success
  * @param[in]  context FSAL credentials
  * @param[out] status  Returned status
  *
@@ -170,7 +167,6 @@ cache_inode_clean_internal(cache_entry_t *entry)
 cache_inode_status_t
 cache_inode_remove(cache_entry_t *entry,
                    const char *name,
-                   struct attrlist *attr,
                    struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
@@ -208,8 +204,6 @@ cache_inode_remove(cache_entry_t *entry,
                              CACHE_INODE_FLAG_ATTR_HAVE |
                              CACHE_INODE_FLAG_ATTR_HOLD |
                              CACHE_INODE_FLAG_CONTENT_HAVE);
-
-     *attr = entry->obj_handle->attributes;
 
 unlock_attr:
 
@@ -329,37 +323,10 @@ cache_inode_remove_impl(cache_entry_t *entry,
                to_remove_entry->obj_handle->attributes.numlinks = 0;
      }
 
-     /** @TODO this logic is a bit bogus in the new api.
-      * First, we have the attributes already in hdl->attributes but
-      * we copy them somewhere else just for giggles.  There are times when
-      * we should get a copy but we should do to that up here under the attribute
-      * lock and leave the poor fsal alone.  The logic of being a DIR and
-      * its link count always being > 0 does make sense but the getattrs
-      * method above will return ERR_FSAL_STALE if it is gone so hacking
-      * numlinks to 0 is a hack.  We should just take the word of getattrs
-      * and when it says the object is stale, it is stale as in dead, buried
-      * and it's 401k eaten up by the relatives.  For now, until the whole
-      * thing actually passes things like pynfs, leave this and fake the
-      * numlinks.  Eventually, get rid of the whole attributes pointer
-      * stuff, particularly the "do we support this attribute?" stuff
-      * entirely and replace it with a static "this attr is valid and
-      * no VFAT isn's suddenly going to sprout wings and fly". bits
-      * for those cases where someone is really interested.  It's like
-      * walking up to Grant's Tomb every day and asking who's inside...
-      */
-#if 1 /* BUg here this piece of code is required for VFS, not for LUSTRE and POSIX */
-     if ((to_remove_entry->type != DIRECTORY) &&
-         (to_remove_entry->obj_handle->attributes.numlinks > 1)) {
-          if ((*status = cache_inode_refresh_attrs(to_remove_entry, req_ctx))
-              != CACHE_INODE_SUCCESS) {
-               goto unlock;
-          }
-     } else {
-          /* Otherwise our count is zero, or it was an empty
-             directory. */
-          to_remove_entry->obj_handle->attributes.numlinks = 0;
+     if (cache_inode_refresh_attrs(to_remove_entry, req_ctx)
+         != CACHE_INODE_SUCCESS) {
+             goto unlock;
      }
-#endif
 
      /* Now, delete "to_remove_entry" from the cache inode and free
         its associated resources, but only if numlinks == 0 */
@@ -383,10 +350,9 @@ out:
      }
 
      /* This is for the reference taken by lookup */
-     if (to_remove_entry)
-       {
+     if (to_remove_entry) {
          cache_inode_put(to_remove_entry);
-       }
+     }
 
      return *status;
 }

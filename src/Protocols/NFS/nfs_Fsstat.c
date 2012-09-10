@@ -7,30 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs_Fsstat.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:53 $
- * \version $Revision: 1.14 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file  nfs_Fsstat.c
+ * @brief Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs_Fsstat.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  *
  */
@@ -68,12 +66,12 @@
  *
  * Implements the NFS PROC2 and PROC3 FSSTAT.
  *
- * @param[in]  parg     NFS argument union
- * @param[in]  pexport  NFS export list
- * @param[in]  pcontext Credentials to be used for this request
- * @param[in]  pworker  Worker thread data
- * @param[in]  preq     SVC request related to this call
- * @param[out] pres     Structure to contain the result of the call
+ * @param[in]  arg     NFS argument union
+ * @param[in]  export  NFS export list
+ * @param[in]  req_ctx Credentials to be used for this request
+ * @param[in]  worker  Worker thread data
+ * @param[in]  req     SVC request related to this call
+ * @param[out] res     Structure to contain the result of the call
  *
  * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
@@ -81,161 +79,168 @@
  *
  */
 
-int nfs_Fsstat(nfs_arg_t *parg,
-               exportlist_t *pexport,
-	       struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t * pres)
+int nfs_Fsstat(nfs_arg_t *arg,
+               exportlist_t *export,
+               struct req_op_context *req_ctx,
+               nfs_worker_data_t *worker,
+               struct svc_req *req,
+               nfs_res_t *res)
 {
-  fsal_dynamicfsinfo_t dynamicinfo;
-  cache_inode_status_t cache_status;
-  cache_entry_t *pentry = NULL;
-  struct attrlist attr;
-  int rc = NFS_REQ_OK;
+        fsal_dynamicfsinfo_t dynamicinfo;
+        cache_inode_status_t cache_status;
+        cache_entry_t *entry = NULL;
+        int rc = NFS_REQ_OK;
 
-  if(isDebug(COMPONENT_NFSPROTO))
-    {
-      char str[LEN_FH_STR];
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_statfs2),
-                       &(parg->arg_fsstat3.fsroot),
-                       NULL,
-                       str);
-      LogDebug(COMPONENT_NFSPROTO,
-               "REQUEST PROCESSING: Calling nfs_Fsstat handle: %s", str);
-    }
-
-  if(preq->rq_vers == NFS_V3)
-    {
-      /* to avoid setting it on each error case */
-      pres->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes.attributes_follow = FALSE;
-    }
-
-  /* convert file handle to vnode */
-  if((pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
-                                  &(parg->arg_statfs2),
-                                  &(parg->arg_fsstat3.fsroot),
-                                  NULL,
-                                  &(pres->res_statfs2.status),
-                                  &(pres->res_fsstat3.status),
-                                  NULL, NULL, pexport, &rc)) == NULL)
-    {
-      /* Stale NFS FH ? */
-      /* return NFS_REQ_DROP ; */
-      goto out;
-    }
-
-  /* Get statistics and convert from cache */
-
-  if((cache_status = cache_inode_statfs(pentry,
-                                        &dynamicinfo,
-                                        req_ctx)) == CACHE_INODE_SUCCESS)
-    {
-      /* This call is costless, the pentry was cached during call to nfs_FhandleToCache */
-      if((cache_status = cache_inode_getattr(pentry,
-                                             &attr,
-                                             req_ctx,
-                                             &cache_status)) == CACHE_INODE_SUCCESS)
-        {
-
-          LogFullDebug(COMPONENT_NFSPROTO,
-                       "nfs_Fsstat --> dynamicinfo.total_bytes = %zu dynamicinfo.free_bytes = %zu dynamicinfo.avail_bytes = %zu",
-                       dynamicinfo.total_bytes,
-                       dynamicinfo.free_bytes,
-                       dynamicinfo.avail_bytes);
-          LogFullDebug(COMPONENT_NFSPROTO, 
-                       "nfs_Fsstat --> "
-                       "dynamicinfo.total_files = %"PRIu64
-                       " dynamicinfo.free_files = %"PRIu64
-                       " dynamicinfo.avail_files = %"PRIu64,
-                       dynamicinfo.total_files,
-                       dynamicinfo.free_files,
-                       dynamicinfo.avail_files);
-
-          switch (preq->rq_vers)
-            {
-            case NFS_V2:
-              pres->res_statfs2.STATFS2res_u.info.tsize = NFS2_MAXDATA;
-              pres->res_statfs2.STATFS2res_u.info.bsize = DEV_BSIZE;
-              pres->res_statfs2.STATFS2res_u.info.blocks =
-                  dynamicinfo.total_bytes / DEV_BSIZE;
-              pres->res_statfs2.STATFS2res_u.info.bfree =
-                  dynamicinfo.free_bytes / DEV_BSIZE;
-              pres->res_statfs2.STATFS2res_u.info.bavail =
-                  dynamicinfo.avail_bytes / DEV_BSIZE;
-              pres->res_statfs2.status = NFS_OK;
-              break;
-
-            case NFS_V3:
-              nfs_SetPostOpAttr(pexport,
-                                &attr,
-                                &(pres->res_fsstat3.FSSTAT3res_u
-                                  .resok.obj_attributes));
-
-              pres->res_fsstat3.FSSTAT3res_u.resok.tbytes = dynamicinfo.total_bytes;
-              pres->res_fsstat3.FSSTAT3res_u.resok.fbytes = dynamicinfo.free_bytes;
-              pres->res_fsstat3.FSSTAT3res_u.resok.abytes = dynamicinfo.avail_bytes;
-              pres->res_fsstat3.FSSTAT3res_u.resok.tfiles = dynamicinfo.total_files;
-              pres->res_fsstat3.FSSTAT3res_u.resok.ffiles = dynamicinfo.free_files;
-              pres->res_fsstat3.FSSTAT3res_u.resok.afiles = dynamicinfo.avail_files;
-              pres->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;        /* volatile FS */
-              pres->res_fsstat3.status = NFS3_OK;
-
-              LogFullDebug(COMPONENT_NFSPROTO,
-                           "nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu",
-                           pres->res_fsstat3.FSSTAT3res_u.resok.tbytes,
-                           pres->res_fsstat3.FSSTAT3res_u.resok.fbytes,
-                           pres->res_fsstat3.FSSTAT3res_u.resok.abytes);
-
-	      LogFullDebug(COMPONENT_NFSPROTO,
-	                   "nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu",
-                           pres->res_fsstat3.FSSTAT3res_u.resok.tfiles,
-                           pres->res_fsstat3.FSSTAT3res_u.resok.ffiles,
-                           pres->res_fsstat3.FSSTAT3res_u.resok.afiles);
-
-              break;
-
-            }
-          rc = NFS_REQ_OK;
-          goto out;
+        if (isDebug(COMPONENT_NFSPROTO)) {
+                char str[LEN_FH_STR];
+                nfs_FhandleToStr(req->rq_vers,
+                                 &(arg->arg_statfs2),
+                                 &(arg->arg_fsstat3.fsroot),
+                                 NULL,
+                                 str);
+                LogDebug(COMPONENT_NFSPROTO,
+                         "REQUEST PROCESSING: Calling nfs_Fsstat handle: %s",
+                         str);
         }
-    }
 
-  /* At this point we met an error */
-  if(nfs_RetryableError(cache_status)) {
-    rc = NFS_REQ_DROP;
-    goto out;
-  }
+        if (req->rq_vers == NFS_V3) {
+                /* to avoid setting it on each error case */
+                res->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes
+                        .attributes_follow = FALSE;
+        }
 
-  nfs_SetFailedStatus(pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_statfs2.status,
-                      &pres->res_fsstat3.status,
-                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        if((entry = nfs_FhandleToCache(req_ctx, req->rq_vers,
+                                       &(arg->arg_statfs2),
+                                       &(arg->arg_fsstat3.fsroot),
+                                       NULL,
+                                       &(res->res_statfs2.status),
+                                       &(res->res_fsstat3.status),
+                                       NULL,
+                                       export,
+                                       &rc)) == NULL) {
+                goto out;
+        }
 
-  rc = NFS_REQ_OK;
+        /* Get statistics and convert from cache */
+
+        if ((cache_status = cache_inode_statfs(entry,
+                                               &dynamicinfo,
+                                               req_ctx))
+            == CACHE_INODE_SUCCESS) {
+                LogFullDebug(COMPONENT_NFSPROTO,
+                             "nfs_Fsstat --> dynamicinfo.total_bytes "
+                             "= %zu dynamicinfo.free_bytes = %zu "
+                             "dynamicinfo.avail_bytes = %zu",
+                             dynamicinfo.total_bytes,
+                             dynamicinfo.free_bytes,
+                             dynamicinfo.avail_bytes);
+                LogFullDebug(COMPONENT_NFSPROTO,
+                             "nfs_Fsstat --> "
+                             "dynamicinfo.total_files = %"PRIu64
+                             " dynamicinfo.free_files = %"PRIu64
+                             " dynamicinfo.avail_files = %"PRIu64,
+                             dynamicinfo.total_files,
+                             dynamicinfo.free_files,
+                             dynamicinfo.avail_files);
+
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        res->res_statfs2.STATFS2res_u.info.tsize
+                                = NFS2_MAXDATA;
+                        res->res_statfs2.STATFS2res_u.info.bsize
+                                = DEV_BSIZE;
+                        res->res_statfs2.STATFS2res_u.info.blocks =
+                                dynamicinfo.total_bytes / DEV_BSIZE;
+                        res->res_statfs2.STATFS2res_u.info.bfree =
+                                dynamicinfo.free_bytes / DEV_BSIZE;
+                        res->res_statfs2.STATFS2res_u.info.bavail =
+                                dynamicinfo.avail_bytes / DEV_BSIZE;
+                        res->res_statfs2.status = NFS_OK;
+                        break;
+
+                case NFS_V3:
+                        nfs_SetPostOpAttr(entry,
+                                          req_ctx,
+                                          &(res->res_fsstat3
+                                            .FSSTAT3res_u.resok
+                                            .obj_attributes));
+
+                        res->res_fsstat3.FSSTAT3res_u.resok.tbytes
+                                = dynamicinfo.total_bytes;
+                        res->res_fsstat3.FSSTAT3res_u.resok.fbytes
+                                = dynamicinfo.free_bytes;
+                        res->res_fsstat3.FSSTAT3res_u.resok.abytes
+                                = dynamicinfo.avail_bytes;
+                        res->res_fsstat3.FSSTAT3res_u.resok.tfiles
+                                = dynamicinfo.total_files;
+                        res->res_fsstat3.FSSTAT3res_u.resok.ffiles
+                                = dynamicinfo.free_files;
+                        res->res_fsstat3.FSSTAT3res_u.resok.afiles
+                                = dynamicinfo.avail_files;
+                        res->res_fsstat3.FSSTAT3res_u.resok.invarsec
+                                = 0;        /* volatile FS */
+                        res->res_fsstat3.status = NFS3_OK;
+
+                        LogFullDebug(COMPONENT_NFSPROTO,
+                                     "nfs_Fsstat --> tbytes=%llu "
+                                     "fbytes=%llu abytes=%llu",
+                                     res->res_fsstat3.FSSTAT3res_u
+                                     .resok.tbytes,
+                                     res->res_fsstat3.FSSTAT3res_u
+                                     .resok.fbytes,
+                                     res->res_fsstat3.FSSTAT3res_u
+                                     .resok.abytes);
+
+                        LogFullDebug(COMPONENT_NFSPROTO,
+                                     "nfs_Fsstat --> tfiles=%llu "
+                                     "fffiles=%llu afiles=%llu",
+                                     res->res_fsstat3.FSSTAT3res_u
+                                     .resok.tfiles,
+                                     res->res_fsstat3.FSSTAT3res_u
+                                     .resok.ffiles,
+                                     res->res_fsstat3.FSSTAT3res_u
+                                     .resok.afiles);
+                        break;
+                }
+                rc = NFS_REQ_OK;
+                goto out;
+        }
+
+        /* At this point we met an error */
+        if (nfs_RetryableError(cache_status)) {
+                rc = NFS_REQ_DROP;
+                goto out;
+        }
+
+        switch (req->rq_vers) {
+        case NFS_V2:
+                res->res_statfs2.status = nfs2_Errno(cache_status);
+        case NFS_V3:
+                res->res_fsstat3.status = nfs3_Errno(cache_status);
+        }
+
+        rc = NFS_REQ_OK;
 
 out:
-  /* return references */
-  if (pentry)
-      cache_inode_put(pentry);
+        /* return references */
+        if (entry) {
+                cache_inode_put(entry);
+        }
 
-  return (rc);
-
+        return rc;
 }                               /* nfs_Fsstat */
 
 /**
- * nfs_Fsstat_Free: Frees the result structure allocated for nfs_Fsstat.
- * 
- * Frees the result structure allocated for nfs_Fsstat.
- * 
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @brief Free the result structure allocated for nfs_Fsstat
+ *
+ * This function frees the result structure allocated for nfs_Fsstat.
+ *
+ * @param[in] res Result structure
  *
  */
-void nfs_Fsstat_Free(nfs_res_t * resp)
+void
+nfs_Fsstat_Free(nfs_res_t *res)
 {
-  /* Nothing to do here */
-  return;
-}                               /* nfs_Fsstat_Free */
+        /* Nothing to do here */
+        return;
+} /* nfs_Fsstat_Free */

@@ -78,8 +78,6 @@ nfs4_op_putfh(struct nfs_argop4 *op,
         PUTFH4res *const res_PUTFH4 = &resp->nfs_resop4_u.opputfh;
         /* Return code */
         int rc = 0;
-        /* Handle attributes */
-        struct attrlist attr;
 
         resp->resop = NFS4_OP_PUTFH;
         res_PUTFH4->status = NFS4_OK;
@@ -189,13 +187,12 @@ nfs4_op_putfh(struct nfs_argop4 *op,
                                                  NULL,
                                                  NULL,
                                                  &(res_PUTFH4->status),
-                                                 &attr,
                                                  data->pexport,
                                                  &rc)) == NULL) {
                                 return res_PUTFH4->status;
                         }
                         /* Extract the filetype */
-                        data->current_filetype = attr.type;
+                        data->current_filetype = data->current_entry->type;
                 }
         }
 

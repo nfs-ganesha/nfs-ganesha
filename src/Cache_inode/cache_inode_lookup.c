@@ -237,8 +237,7 @@ out:
  *
  * @param[in]  parent  Entry for the parent directory to be managed.
  * @param[in]  name    Name of the entry that we are looking up.
- * @param[out] attr    Attributes of the found entry.
- * @param[in]  context FSAL credentials
+ * @param[in]  req_ctx Request context
  * @param[out] pstatus Returned status
  *
  * @return The found entry or NUL.
@@ -247,7 +246,6 @@ out:
 cache_entry_t *
 cache_inode_lookup(cache_entry_t *parent,
                    const char *name,
-                   struct attrlist *attr,
                    struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
@@ -271,13 +269,5 @@ cache_inode_lookup(cache_entry_t *parent,
                                      status);
      pthread_rwlock_unlock(&parent->content_lock);
 
-     if (entry && attr) {
-          *status = cache_inode_lock_trust_attrs(entry, req_ctx);
-          if(*status == CACHE_INODE_SUCCESS)
-            {
-              *attr = entry->obj_handle->attributes;
-              pthread_rwlock_unlock(&entry->attr_lock);
-            }
-     }
      return entry;
 } /* cache_inode_lookup */

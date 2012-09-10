@@ -64,8 +64,7 @@
  * @param[in]  type       Type of the object to create
  * @param[in]  mode       Mode to be used at file creation
  * @param[in]  create_arg Additional argument for object creation
- * @param[out] attr       Attributes of the new object
- * @param[in]  context    FSAL credentials
+ * @param[in]  req_ctx    Request context
  * @param[out] status     Returned status
  *
  * @return Cache entry for the file created or found.
@@ -77,7 +76,6 @@ cache_inode_create(cache_entry_t *parent,
                    object_file_type_t type,
                    uint32_t mode,
                    cache_inode_create_arg_t *create_arg,
-                   struct attrlist *attr,
                    struct req_op_context *req_ctx,
                    cache_inode_status_t *status)
 {
@@ -127,7 +125,6 @@ cache_inode_create(cache_entry_t *parent,
      /* Check if an entry of the same name exists */
      entry = cache_inode_lookup(parent,
                                 name,
-                                &object_attributes,
                                 req_ctx,
                                 status);
      if (entry != NULL) {
@@ -234,15 +231,12 @@ cache_inode_create(cache_entry_t *parent,
      pthread_rwlock_wrlock(&parent->attr_lock);
      /* Update the parent cached attributes */
      cache_inode_set_time_current(&parent->obj_handle->attributes.mtime);
-     parent->obj_handle->attributes.ctime = parent->obj_handle->attributes.mtime;
+     parent->obj_handle->attributes.ctime
+             = parent->obj_handle->attributes.mtime;
      /* if the created object is a directory, it contains a link
         to its parent : '..'. Thus the numlink attr must be increased. */
      if (type == DIRECTORY) {
           ++(parent->obj_handle->attributes.numlinks);
-     }
-     /* Copy up the child attributes */
-     if (attr) {
-          *attr = entry->obj_handle->attributes;
      }
      pthread_rwlock_unlock(&parent->attr_lock);
 

@@ -1102,6 +1102,10 @@ pseudofs_t *nfs4_GetPseudoFs(void);
 int nfs4_SetCompoundExport(compound_data_t * data);
 int nfs4_MakeCred(compound_data_t * data);
 
+int cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
+                         compound_data_t *data, nfs_fh4 *objFH,
+                         bitmap4 *Bitmap);
+
 int nfs4_fsal_attr_To_Fattr(const struct attrlist *pattr, fattr4 * Fattr,
                             compound_data_t * data, bitmap4 * Bitmap);
 int nfs4_Fattr_To_fsal_attr(struct attrlist *pattr, fattr4 * Fattr,
@@ -1167,18 +1171,27 @@ seqid4 nfs4_NextSeqId(seqid4 seqid);
 int nfs2_Sattr_To_FSALattr(struct attrlist*pFSAL_attr,
                            sattr2 * pFattr);
 
-int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,
-                           const struct attrlist *pFSAL_attr,
-                           fattr2 * pFattr);
+bool cache_entry_to_nfs2_Fattr(cache_entry_t *entry,
+                               struct req_op_context *ctx,
+                               fattr2 *Fattr);
 
-int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,
-                           const struct attrlist *pFSAL_attr,
-                           fattr3 * pFattr);
+bool nfs2_FSALattr_To_Fattr(exportlist_t *export,
+                            const struct attrlist *FSAL_attr,
+                            fattr2 *Fattr);
+
+bool nfs3_FSALattr_To_Fattr(exportlist_t * pexport,
+                            const struct attrlist *pFSAL_attr,
+                            fattr3 * pFattr);
+
+bool cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
+                               struct req_op_context *ctx,
+                               fattr3 *Fattr);
+
 void nfs3_FSALattr_To_PartialFattr(const struct attrlist *FSAL_attr,
                                    attrmask_t *mask,
                                    fattr3 *Fattr);
-int nfs3_Sattr_To_FSALattr(struct attrlist * pFSAL_attr,
-                           sattr3 * pFattr);
+bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
+                            sattr3 *Fattr);
 
 nfsstat3 nfs3_fh_to_xattrfh(nfs_fh3 * pfhin, nfs_fh3 * pfhout);
 
