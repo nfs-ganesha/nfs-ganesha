@@ -182,7 +182,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op,
         res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
                 = res.cookie;
         memcpy(res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4
-               .gdlr_cookieverf, res.cookieverf, NFS4_VERIFIER_SIZE);
+               .gdlr_cookieverf, &res.cookieverf, NFS4_VERIFIER_SIZE);
 
 
         res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4
