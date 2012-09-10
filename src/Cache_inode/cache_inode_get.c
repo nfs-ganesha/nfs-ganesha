@@ -238,7 +238,9 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
        {
          goto out_put;
        }
-     *attr = entry->attributes;
+     if(attr != NULL) {
+          *attr = entry->attributes;
+     }
      PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
 
      return entry;

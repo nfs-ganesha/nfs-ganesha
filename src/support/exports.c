@@ -3764,18 +3764,19 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
 				   FSAL_DIGEST_SIZEOF,
 				   &fsdata.fh_desc);
 
-          /* cache_inode_make_root returns a cache_entry with
+          /* cache_inode_get returns a cache_entry with
              reference count of 2, where 1 is the sentinel value of
              a cache entry in the hash table.  The export list in
-             this case owns the extra reference, but other users of
-             cache_inode_make_root MUST put the entry.  In the future
+             this case owns the extra reference.  In the future
              if functionality is added to dynamically add and remove
              export entries, then the function to remove an export
              entry MUST put the extra reference. */
 
-          if((pentry = cache_inode_make_root(&fsdata,
-                                             &context,
-                                             &cache_status)) == NULL)
+          if((pentry = cache_inode_get(&fsdata,
+                                       NULL, /* Don't need the attr */
+                                       &context,
+                                       NULL,
+                                       &cache_status)) == NULL)
             {
               LogCrit(COMPONENT_INIT,
                       "Error %s when creating root cached entry for %s, removing export id %u",
@@ -3783,10 +3784,13 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
               RemoveExportEntry(pcurrent);
               continue;
             }
-          else
-            LogInfo(COMPONENT_INIT,
-                    "Added root entry for path %s on export_id=%d",
-                    pcurrent->fullpath, pcurrent->id);
+
+          /* Save away the root entry */
+          pcurrent->exp_root_cache_inode = pentry;
+
+          LogInfo(COMPONENT_INIT,
+                  "Added root entry for path %s on export_id=%d",
+                  pcurrent->fullpath, pcurrent->id);
 
           /* Set the pentry as a referral if needed */
           if(strcmp(pcurrent->referral, ""))

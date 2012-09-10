@@ -200,6 +200,8 @@ struct exportlist__
 #endif /* _USE_FSAL_UP */
 
   nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
+
+  cache_entry_t * exp_root_cache_inode;   /* cache inode entry for the root of this export  */
 };
 
 /* Constant for options masks */
