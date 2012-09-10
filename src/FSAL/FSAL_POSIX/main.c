@@ -152,9 +152,6 @@ static struct posix_fsal_module POSIX;
 /* linkage to the exports and handle ops initializers
  */
 
-void posix_export_ops_init (struct export_ops *ops);
-void posix_handle_ops_init (struct fsal_obj_ops *ops);
-
 struct connection_pool *connpool = NULL;
 
 void marshal_create_thread (void);
@@ -173,8 +170,6 @@ MODULE_INIT void posix_init (void)
     }
     myself->ops->create_export = posix_create_export;
     myself->ops->init_config = init_config;
-    posix_export_ops_init (myself->exp_ops);
-    posix_handle_ops_init (myself->obj_ops);
     init_fsal_parameters (&POSIX.fsal_info);
 
 /* #warning change to 0 */

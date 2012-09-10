@@ -74,6 +74,7 @@ static fsal_status_t release (struct fsal_export *exp_hdl)
         goto errout;
     }
     fsal_detach_export (exp_hdl->fsal, &exp_hdl->exports);
+    free_export_ops(exp_hdl);
     if (myself->mntdir != NULL)
         free (myself->mntdir);
 #ifdef SUPPORT_LINUX_QUOTAS
@@ -82,7 +83,6 @@ static fsal_status_t release (struct fsal_export *exp_hdl)
     if (myself->fs_spec != NULL)
         free (myself->fs_spec);
 #endif
-    myself->export.ops = NULL;  /* poison myself */
     pthread_mutex_unlock (&exp_hdl->lock);
 
     pthread_mutex_destroy (&exp_hdl->lock);
@@ -426,6 +426,9 @@ void posix_export_ops_init (struct export_ops *ops)
  * returns the export with one reference taken.
  */
 
+void posix_export_ops_init (struct export_ops *ops);
+void posix_handle_ops_init (struct fsal_obj_ops *ops);
+
 fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
                                    const char *export_path,
                                    const char *fs_options,
@@ -462,7 +465,11 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
     memset (myself, 0, sizeof (struct posix_fsal_export));
     myself->magic = POSIX_FSAL_EXPORT_MAGIC;
 
-    fsal_export_init (&myself->export, fsal_hdl->exp_ops, exp_entry);
+    retval = fsal_export_init (&myself->export, exp_entry);
+    if (retval != 0)
+        goto errout;            /* seriously bad */
+    posix_export_ops_init (myself->export.ops);
+    posix_handle_ops_init (myself->export.obj_ops);
 
     /* lock myself before attaching to the fsal.
      * keep myself locked until done with creating myself.
@@ -550,7 +557,7 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
     if (myself->fs_spec != NULL)
         free (myself->fs_spec);
 #endif
-    myself->export.ops = NULL;  /* poison myself */
+    free_export_ops(&myself->export);
     pthread_mutex_unlock (&myself->export.lock);
     pthread_mutex_destroy (&myself->export.lock);
     free (myself);              /* elvis has left the building */

@@ -90,7 +90,7 @@ static struct posix_fsal_obj_handle *alloc_handle_ (struct handle_data *d, const
     st = posix2fsal_attributes (stat, &hdl->obj_handle.attributes);
     if (FSAL_IS_ERROR (st))
         goto spcerr;
-    if (!fsal_obj_handle_init (&hdl->obj_handle, exp_hdl->fsal->obj_ops, exp_hdl, posix2fsal_type (stat->st_mode)))
+    if (!fsal_obj_handle_init (&hdl->obj_handle, exp_hdl, posix2fsal_type (stat->st_mode)))
         return hdl;
 
     hdl->obj_handle.ops = NULL;
