@@ -1502,40 +1502,31 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           return res_LOOKUP4.status;
         }
 
-      /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
+      /* Get the cache inode entry on the other side of the junction */
       fsdata.fh_desc.start = (caddr_t)&fsal_handle;
       fsdata.fh_desc.len = 0;
       FSAL_ExpandHandle(data->pcontext->export_context,
                         FSAL_DIGEST_SIZEOF,
                         &fsdata.fh_desc);
 
-      if((pentry = cache_inode_make_root(&fsdata,
-                                         data->pcontext,
-                                         &cache_status)) == NULL)
-        {
-          LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: Allocate root entry in cache inode failed, for %s, id=%d",
-                   data->pexport->fullpath, data->pexport->id);
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUP4.status;
-        }
-
-      /* Get the attributes (costless: the attributes was cached when the root pentry was created */
-      if(cache_inode_getattr(pentry,
-                             &attr,
-                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+      if((pentry = cache_inode_get(&fsdata,
+                                   &attr,
+                                   data->pcontext,
+                                   NULL,
+                                   &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry");
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(pentry);
           return res_LOOKUP4.status;
         }
 
-      /* Keep the pentry within the compound data */
+      /* Return the reference to the old current entry */
       if (data->current_entry) {
           cache_inode_put(data->current_entry);
       }
+
+      /* Make the cache inode entry the current entry */
       data->current_entry = pentry;
       data->current_filetype = cache_inode_fsal_type_convert(attr.type);
 
@@ -1771,40 +1762,31 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4.status;
         }
 
-      /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
+      /* Get the cache inode entry on the other side of the junction */
       fsdata.fh_desc.start = (caddr_t) &fsal_handle;
       fsdata.fh_desc.len = 0;
       FSAL_ExpandHandle(data->pcontext->export_context,
                         FSAL_DIGEST_SIZEOF,
                         &fsdata.fh_desc);
 
-      if((pentry = cache_inode_make_root(&fsdata,
-                                         data->pcontext,
-                                         &cache_status)) == NULL)
-        {
-          LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: Allocate root entry in cache inode failed, for %s, id=%d",
-                   data->pexport->fullpath, data->pexport->id);
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          return res_READDIR4.status;
-        }
-
-      /* Get the attributes (costless: the attributes was cached when the root pentry was created */
-      if(cache_inode_getattr(pentry,
-                             &attr,
-                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+      if((pentry = cache_inode_get(&fsdata,
+                                   &attr,
+                                   data->pcontext,
+                                   NULL,
+                                   &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry");
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(pentry);
-          return res_READDIR4.status;
+          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+          return res_LOOKUP4.status;
         }
 
-      /* Keep the pentry within the compound data */
+      /* Return the reference to the old current entry */
       if (data->current_entry) {
           cache_inode_put(data->current_entry);
       }
+
+      /* Make the cache inode entry the current entry */
       data->current_entry = pentry;
       data->current_filetype = cache_inode_fsal_type_convert(attr.type);
 
@@ -2039,7 +2021,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                   return res_READDIR4.status;
                 }
 
-              /* Add the entry to the cache as a root. There has to be a better way. */
+              /* Get the cache inode entry on the other side of the junction
+               * and it's attributes.
+               */
               fsdata.fh_desc.start = (caddr_t) &fsal_handle;
               fsdata.fh_desc.len = 0;
 
@@ -2047,30 +2031,20 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                                 FSAL_DIGEST_SIZEOF,
                                 &fsdata.fh_desc);
 
-              pentry = cache_inode_make_root(&fsdata,
-                                             data->pcontext,
-                                             &cache_status);
-
-              if(pentry == NULL)
+              if((pentry = cache_inode_get(&fsdata,
+                                           &attr,
+                                           data->pcontext,
+                                           NULL,
+                                           &cache_status)) == NULL)
                 {
                   LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: Allocate root entry in cache inode failed, for %s, id=%d",
-                       data->pexport->fullpath, data->pexport->id);
-                  res_READDIR4.status = NFS4ERR_SERVERFAULT;
-                  return res_READDIR4.status;
+                           "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry");
+                  res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+                  return res_LOOKUP4.status;
                 }
 
-              /* Finally, get the attributes */
-              if(cache_inode_getattr(pentry,
-                                     &attr,
-                                     data->pcontext,
-                                     &cache_status) != CACHE_INODE_SUCCESS)
-                {
-                  LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                       "PSEUDO FS JUNCTION TRAVERSAL: Failed to get attributes for root pentry");
-                  res_READDIR4.status = NFS4ERR_SERVERFAULT;
-                  return res_READDIR4.status;
-                }
+              /* Release the reference we just got. */
+              cache_inode_put(pentry);
 
               if(nfs4_FSALattr_To_Fattr(data->pexport,
                                         &attr,
