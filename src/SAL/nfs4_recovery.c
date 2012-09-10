@@ -517,6 +517,12 @@ nfs4_clean_old_recov_dir()
                             path, errno);
                 }
         }
+        rc = closedir(dp);
+        if (rc == -1) {
+          LogEvent(COMPONENT_CLIENTID,
+                   "Failed to close v4 recovery dir (%s), errno=%d",
+                   v4_old_dir, errno);
+        }
 }
 
 /*
