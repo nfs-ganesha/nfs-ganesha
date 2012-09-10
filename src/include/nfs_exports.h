@@ -201,6 +201,7 @@ struct exportlist__
 
   nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
 
+  fsal_u64_t      exp_mounted_on_file_id; /* Id of the node this export is mounted on */
   cache_entry_t * exp_root_cache_inode;   /* cache inode entry for the root of this export  */
 };
 
@@ -453,5 +454,9 @@ void LogClientListEntry(log_components_t            component,
 
 void FreeClientList(exportlist_client_t * clients);
 void RemoveExportEntry(exportlist_t * p_entry);
+
+void set_mounted_on_fileid(cache_entry_t      * entry,
+                           fsal_attrib_list_t * attr,
+                           exportlist_t       * exp);
 
 #endif                          /* _NFS_EXPORTS_H */

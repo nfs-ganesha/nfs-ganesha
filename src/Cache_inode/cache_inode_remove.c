@@ -25,6 +25,7 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
+#include "nfs_exports.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -204,6 +205,7 @@ cache_inode_remove(cache_entry_t *entry,
                              CACHE_INODE_FLAG_CONTENT_HAVE);
 
      *attr = entry->attributes;
+     set_mounted_on_fileid(entry, attr, context->export_context->fe_export);
 
 unlock_attr:
 

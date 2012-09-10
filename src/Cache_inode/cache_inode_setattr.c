@@ -49,6 +49,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "nfs4_acls.h"
+#include "nfs_exports.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -145,6 +146,7 @@ cache_inode_setattr(cache_entry_t *entry,
      /* Copy the complete set of new attributes out. */
 
      *attr = entry->attributes;
+     set_mounted_on_fileid(entry, attr, context->export_context->fe_export);
 
      *status = CACHE_INODE_SUCCESS;
 

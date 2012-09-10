@@ -233,21 +233,24 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
           /* Now that all entries are added to pseudofs tree, add the junction to the pseudofs */
           PseudoFsCurrent->junction_export = entry;
 
+          /* And fill in our part of the export root data */
+          entry->exp_mounted_on_file_id = PseudoFsCurrent->pseudo_id;
         }
       /* if( entry->export_perms.options & EXPORT_OPTION_PSEUDO ) */
     }                           /* while( entry ) */
 
-  if(isFullDebug(COMPONENT_NFS_V4_PSEUDO))
+  if(isMidDebug(COMPONENT_NFS_V4_PSEUDO))
     {
       for(i = 0; i <= PseudoFs->last_pseudo_id; i++)
         {
           if(PseudoFs->reverse_tab[i]->junction_export != NULL)
             LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
-                        "pseudo_id %d is %s junction_export %p Export_id %d Path %s",
+                        "pseudo_id %d is %s junction_export %p Export_id %d Path %s mounted_on_fileid %"PRIu64,
                         i, PseudoFs->reverse_tab[i]->name,
                         PseudoFs->reverse_tab[i]->junction_export,
                         PseudoFs->reverse_tab[i]->junction_export->id,
-                        PseudoFs->reverse_tab[i]->junction_export->fullpath);
+                        PseudoFs->reverse_tab[i]->junction_export->fullpath,
+                        (uint64_t) PseudoFs->reverse_tab[i]->junction_export->exp_mounted_on_file_id);
           else
             LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
                         "pseudo_id %d is %s (not a junction)",

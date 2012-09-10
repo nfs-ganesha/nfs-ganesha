@@ -49,6 +49,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
+#include "nfs_exports.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -240,6 +241,10 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
        }
      if(attr != NULL) {
           *attr = entry->attributes;
+
+          set_mounted_on_fileid(entry,
+                                attr,
+                                context->export_context->fe_export);
      }
      PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
 

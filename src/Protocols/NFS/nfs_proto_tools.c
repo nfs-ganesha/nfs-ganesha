@@ -1688,7 +1688,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_MOUNTED_ON_FILEID:
-          file_id = nfs_htonl64(pattr->fileid);
+          file_id = nfs_htonl64(pattr->mounted_on_fileid);
           memcpy((char *)(attrvalsBuffer + LastOffset), &file_id, sizeof(fattr4_fileid));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;

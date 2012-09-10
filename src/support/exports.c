@@ -3870,3 +3870,31 @@ exportlist_t *GetExportEntry(char *exportPath)
       return NULL;
     }
 }
+
+void set_mounted_on_fileid(cache_entry_t      * entry,
+                           fsal_attrib_list_t * attr,
+                           exportlist_t       * exp)
+{
+  if(entry == exp->exp_root_cache_inode)
+    {
+      attr->mounted_on_fileid = exp->exp_mounted_on_file_id;
+
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Setting mounted_on_file_id to %"PRIu64
+                   " from Export_Id %d Pseudo %s",
+                   (uint64_t) attr->mounted_on_fileid,
+                   exp->id,
+                   exp->pseudopath);
+    }
+  else
+    {
+      attr->mounted_on_fileid = attr->fileid;
+
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Setting mounted_on_file_id to %"PRIu64
+                   " (same as fileid) because entry is not root of Export_Id %d Pseudo %s",
+                   (uint64_t) attr->mounted_on_fileid,
+                   exp->id,
+                   exp->pseudopath);
+    }
+}

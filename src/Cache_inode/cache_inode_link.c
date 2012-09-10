@@ -49,6 +49,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
+#include "nfs_exports.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -193,6 +194,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 
      cache_inode_fixup_md(entry);
      *attr = entry->attributes;
+     set_mounted_on_fileid(entry, attr, context->export_context->fe_export);
      PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
      srcattrlock = FALSE;
 

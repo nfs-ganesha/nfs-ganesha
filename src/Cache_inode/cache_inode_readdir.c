@@ -52,6 +52,7 @@
 #include "cache_inode_lru.h"
 #include "cache_inode_avl.h"
 #include "cache_inode_weakref.h"
+#include "nfs_exports.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -758,6 +759,10 @@ cache_inode_readdir(cache_entry_t *directory,
               cache_inode_lru_unref(entry, 0);
               goto unlock_dir;
             }
+
+          set_mounted_on_fileid(entry,
+                                &entry->attributes,
+                                context->export_context->fe_export);
 
           in_result = cb(cb_opaque,
                          dirent->name.name,
