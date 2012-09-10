@@ -45,6 +45,7 @@ pxy_release(struct fsal_export *exp_hdl)
                 return fsalstat(ERR_FSAL_INVAL, EBUSY);
         }
         fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
+	free_export_ops(exp_hdl);
         pthread_mutex_unlock(&exp_hdl->lock);
 
         pthread_mutex_destroy(&exp_hdl->lock);
@@ -165,6 +166,8 @@ pxy_get_xattr_access_rights(struct fsal_export *exp_hdl)
         return fsal_xattr_access_rights(&pm->fsinfo);
 }
 
+void pxy_handle_ops_init(struct fsal_obj_ops *ops);
+
 void pxy_export_ops_init(struct export_ops *ops)
 {
 	ops->release = pxy_release;
@@ -205,7 +208,12 @@ pxy_create_export(struct fsal_module *fsal_hdl,
 
         if (!exp)
                 return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-        fsal_export_init(&exp->exp, fsal_hdl->exp_ops, exp_entry);
+        if(fsal_export_init(&exp->exp, exp_entry) != 0) {
+		free(exp);
+                return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+	}
+	pxy_export_ops_init(exp->exp.ops);
+	pxy_handle_ops_init(exp->exp.obj_ops);
         exp->info = &pxy->special;
         exp->exp.fsal = fsal_hdl;
         *export = &exp->exp;

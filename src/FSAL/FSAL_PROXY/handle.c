@@ -2191,7 +2191,7 @@ pxy_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
                         return NULL;
                 }
 #endif
-                if(fsal_obj_handle_init(&n->obj, exp->fsal->obj_ops, exp,
+                if(fsal_obj_handle_init(&n->obj, exp,
                                         attr->type)) {
                         free(n);
                         n = NULL;

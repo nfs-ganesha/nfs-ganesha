@@ -263,9 +263,6 @@ pxy_init_config(struct fsal_module *fsal_hdl,
 
 static struct pxy_fsal_module PROXY;
 
-void pxy_export_ops_init(struct export_ops *ops);
-void pxy_handle_ops_init(struct fsal_obj_ops *ops);
-
 
 MODULE_INIT void 
 pxy_init(void)
@@ -276,8 +273,6 @@ pxy_init(void)
 		return;
 	PROXY.module.ops->init_config = pxy_init_config;
 	PROXY.module.ops->create_export = pxy_create_export;
-	pxy_export_ops_init(PROXY.module.exp_ops);
-	pxy_handle_ops_init(PROXY.module.obj_ops);
 }
 
 MODULE_FINI void 
