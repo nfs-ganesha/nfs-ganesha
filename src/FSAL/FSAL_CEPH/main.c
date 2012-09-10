@@ -118,9 +118,17 @@ create_export(struct fsal_module *module,
         }
 
 
-        fsal_export_init(&export->export,
-                         module->exp_ops,
-                         list_entry);
+        if(fsal_export_init(&export->export,
+			    list_entry) != 0) {
+		status.major =  ERR_FSAL_NOMEM;
+                LogCrit(COMPONENT_FSAL,
+                        "Unable to allocate export ops vectors for %s.",
+                        path);
+                goto error;
+        }
+        export_ops_init(export->export.ops);
+        handle_ops_init(export->export.obj_ops);
+        ds_ops_init(export->export.ds_ops);
 
         initialized = true;
 
@@ -220,9 +228,6 @@ init(void)
         /* Set up module operations */
         module->ops->create_export = create_export;
 
-        export_ops_init(module->exp_ops);
-        handle_ops_init(module->obj_ops);
-        ds_ops_init(module->ds_ops);
 }
 
 /**

@@ -72,6 +72,7 @@ release(struct fsal_export *export_pub)
                 return status;
         }
         fsal_detach_export(export->export.fsal, &export->export.exports);
+	free_export_ops(&export->export);
         pthread_mutex_unlock(&export->export.lock);
 
         export->export.ops = NULL;
@@ -244,7 +245,7 @@ create_ds_handle(struct fsal_export *const export_pub,
         }
 
         if (fsal_ds_handle_init(&ds->ds,
-                                export->export.fsal->ds_ops,
+                                export->export.ds_ops,
                                 &export->export)) {
                 gsh_free(ds);
                 return NFS4ERR_SERVERFAULT;

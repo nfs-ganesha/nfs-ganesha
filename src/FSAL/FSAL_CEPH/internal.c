@@ -306,7 +306,6 @@ construct_handle(const struct stat *st,
         ceph2fsal_attributes(st, &constructing->handle.attributes);
 
         rc = -(fsal_obj_handle_init(&constructing->handle,
-                                    export->export.fsal->obj_ops,
                                     &export->export,
                                     constructing->handle.attributes.type));
 
