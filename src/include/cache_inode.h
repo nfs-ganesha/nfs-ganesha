@@ -844,9 +844,6 @@ cache_inode_status_t cache_inode_add_cached_dirent(
      cache_entry_t *entry,
      cache_inode_dir_entry_t **dir_entry,
      cache_inode_status_t *status);
-cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t *fsdata,
-                                     fsal_op_context_t *context,
-                                     cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_check_trust(cache_entry_t *entry,
                                              fsal_op_context_t *context);
