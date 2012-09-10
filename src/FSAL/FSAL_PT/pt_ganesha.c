@@ -367,7 +367,9 @@ ptfsal_stat_by_handle(fsal_handle_t     * p_filehandle,
   }
   FSI_TRACE(FSI_DEBUG, "FSI - name = %s\n", fsi_name);
 
-  stat_rc = ccl_stat(&ccl_context, fsi_name, p_stat);
+  stat_rc = ccl_stat_by_handle(&ccl_context,
+			       p_fsi_handle->data.handle.f_handle, p_stat);
+
   ptfsal_print_handle(p_stat->st_persistentHandle.handle);
 
   return stat_rc;
