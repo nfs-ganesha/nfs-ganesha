@@ -74,10 +74,8 @@ cache_inode_setattr(cache_entry_t *entry,
      struct fsal_obj_handle *obj_handle = entry->obj_handle;
      struct user_cred *creds = req_ctx->creds;
      fsal_status_t fsal_status = {0, 0};
-#ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
-#endif /* _USE_NFS4_ACL */
 
      if ((attr->mask & ATTR_SIZE) &&
          (entry->type != REGULAR_FILE)) {
@@ -188,9 +186,7 @@ cache_inode_setattr(cache_entry_t *entry,
              attr->mask &= ~ATTR_SIZE;
      }
 
-#ifdef _USE_NFS4_ACL
      saved_acl = obj_handle->attributes.acl;
-#endif /* _USE_NFS4_ACL */
      fsal_status = obj_handle->ops->setattrs(obj_handle, req_ctx, attr);
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
@@ -208,7 +204,6 @@ cache_inode_setattr(cache_entry_t *entry,
           }
           goto unlock;
      }
-#ifdef _USE_NFS4_ACL
      /* Decrement refcount on saved ACL */
      nfs4_acl_release_entry(saved_acl, &acl_status);
      if (acl_status != NFS_V4_ACL_SUCCESS) {
@@ -216,7 +211,6 @@ cache_inode_setattr(cache_entry_t *entry,
 		     "Failed to release old acl, status=%d",
 		     acl_status);
      }
-#endif /* _USE_NFS4_ACL */
 
      cache_inode_fixup_md(entry);
 

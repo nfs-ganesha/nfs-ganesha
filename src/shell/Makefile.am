@@ -8,11 +8,7 @@ else
 NFSIDMAP_LIB_FLAGS = 
 endif
 
-if USE_NFS4_ACL
 NFS4_ACL_LIB_FLAGS = -lssl -lcrypto
-else
-NFS4_ACL_LIB_FLAGS = 
-endif
 
 TIRPC_LIB = @TIRPCPATH@/src/libntirpc.la
 

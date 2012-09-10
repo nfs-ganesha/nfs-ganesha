@@ -58,9 +58,7 @@
 #include "nlm4.h"
 #endif
 #include "nlm_list.h"
-#ifdef _USE_NFS4_ACL
 #include "nfs4_acls.h"
-#endif /* _USE_NFS4_ACL */
 
 extern hash_table_t *fh_to_cache_entry_ht; /*< Global hash table for
                                                servicing lookups by
@@ -896,7 +894,6 @@ cache_inode_refresh_attrs(cache_entry_t *entry,
      fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-#ifdef _USE_NFS4_ACL
      if (entry->obj_handle->attributes.acl) {
          fsal_acl_status_t acl_status = 0;
 
@@ -908,7 +905,6 @@ cache_inode_refresh_attrs(cache_entry_t *entry,
          }
          entry->obj_handle->attributes.acl = NULL;
      }
-#endif /* _USE_NFS4_ACL */
 
      fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle, opctx);
      if (FSAL_IS_ERROR(fsal_status)) {

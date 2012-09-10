@@ -87,10 +87,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      bool destattrlock = false;
      bool destdirlock = false;
      fsal_accessflags_t access_mask = 0;
-#ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
-#endif /* _USE_NFS4_ACL */
 
 
      /* Set the return default to CACHE_INODE_SUCCESS */
@@ -138,9 +136,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      destdirlock = true;
 
      /* Do the link at FSAL level */
-#ifdef _USE_NFS4_ACL
      saved_acl = entry->obj_handle->attributes.acl;
-#endif /* _USE_NFS4_ACL */
      fsal_status = entry->obj_handle->ops->link(entry->obj_handle, req_ctx,
                                                 dest_dir->obj_handle, name);
      if(!FSAL_IS_ERROR(fsal_status))
@@ -165,7 +161,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
           }
           goto out;
      } else {
-#ifdef _USE_NFS4_ACL
           /* Decrement refcount on saved ACL */
          nfs4_acl_release_entry(saved_acl, &acl_status);
          if (acl_status != NFS_V4_ACL_SUCCESS) {
@@ -173,7 +168,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                       "Failed to release old acl, status=%d",
                       acl_status);
          }
-#endif /* _USE_NFS4_ACL */
      }
 
      cache_inode_fixup_md(entry);

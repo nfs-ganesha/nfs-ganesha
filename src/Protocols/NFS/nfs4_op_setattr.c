@@ -213,12 +213,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
      FSAL_TEST_MASK(sattr.mask, ATTR_OWNER) ||
      FSAL_TEST_MASK(sattr.mask, ATTR_GROUP) ||
      FSAL_TEST_MASK(sattr.mask, ATTR_MTIME) ||
-#ifdef _USE_NFS4_ACL
      FSAL_TEST_MASK(sattr.mask, ATTR_ATIME) ||
      FSAL_TEST_MASK(sattr.mask, ATTR_ACL))
-#else
-     FSAL_TEST_MASK(sattr.mask, ATTR_ATIME))
-#endif
     {
       /* Check for root access when using chmod */
       if(FSAL_TEST_MASK(sattr.mask, ATTR_MODE))

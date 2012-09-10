@@ -1612,7 +1612,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogInfo(COMPONENT_INIT,
           "NFSv4 Session Id cache successfully initialized");
 
-#ifdef _USE_NFS4_ACL
   LogDebug(COMPONENT_INIT, "Now building NFSv4 ACL cache");
   if(nfs4_acls_init() != 0)
     {
@@ -1622,7 +1621,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 ACL cache successfully initialized");
-#endif                          /* _USE_NFS4_ACL */
 
 #ifdef _USE_9P
   LogDebug(COMPONENT_INIT, "Now building 9P resources");

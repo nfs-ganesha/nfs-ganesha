@@ -30,9 +30,7 @@ endif # IS_LINUX
 endif # USE_TIRPC
 
 if IS_LINUX
-if USE_NFS4_ACL
 fusexmp_LDADD += -lssl -lcrypto
-endif
 endif
 
 if USE_NFSIDMAP

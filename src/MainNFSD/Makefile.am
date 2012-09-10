@@ -28,11 +28,7 @@ else
 NFSIDMAP_LIB_FLAGS =
 endif
 
-if USE_NFS4_ACL
 NFS4_ACL_LIB_FLAGS = -lssl -lcrypto
-else
-NFS4_ACL_LIB_FLAGS = 
-endif
 
 if USE_SNMP_ADM
 STAT_SNMP_FILES = nfs_stats_snmp.c

@@ -527,14 +527,8 @@ GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 # enable code profiling
 GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Wall -Werror -Wimplicit -Wformat -Wmissing-braces -Wreturn-type -Wunused-variable -Wuninitialized -Wno-pointer-sign] )
 
-# NFSv4 ACL
-GA_ENABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
-
-if test "$enable_nfs4_acl" == "yes"; then
-        AC_CHECK_LIB([ssl],[MD5_Init])
-        AC_DEFINE(_USE_NFS4_ACL,1,[enable NFSv4 ACL support])
-fi
-AM_CONDITIONAL(USE_NFS4_ACL, test "$enable_nfs4_acl" == "yes" )
+# NFSv4 ACL needs ssl
+AC_CHECK_LIB([ssl],[MD5_Init])
 
 # MSPAC support
 GA_ENABLE_FLAG([mspac],[enable mspac support],[-D_MSPAC_SUPPORT -lwbclient])

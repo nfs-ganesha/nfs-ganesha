@@ -14,7 +14,8 @@ TESTS = test_nfs_ip_stats test_nfs_ip_name $(check_SCRIPTS)
 
 noinst_LTLIBRARIES            = libsupport.la
 
-libsupport_la_SOURCES =  nfs_export_list.c                  \
+libsupport_la_SOURCES = nfs4_acls.c                         \
+                         nfs_export_list.c                  \
                          nfs_filehandle_mgmt.c              \
                          nfs_mnt_list.c                     \
                          nfs_read_conf.c                    \
@@ -54,10 +55,6 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/err_inject.h
 
 libsupport_la_LIBADD = ../cidr/libcidr.la
-
-if USE_NFS4_ACL
-libsupport_la_SOURCES += nfs4_acls.c
-endif
 
 if ERROR_INJECTION
 libsupport_la_SOURCES += err_inject.c

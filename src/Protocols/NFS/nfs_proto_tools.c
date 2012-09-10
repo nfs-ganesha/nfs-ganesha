@@ -69,7 +69,6 @@
 #include "fsal_pnfs.h"
 #include "pnfs_common.h"
 
-#ifdef _USE_NFS4_ACL
 /* Define mapping of NFS4 who name and type. */
 static struct {
   char *string;
@@ -92,7 +91,6 @@ static struct {
     .type      = FSAL_ACE_SPECIAL_EVERYONE,
   },
 };
-#endif                          /* _USE_NFS4_ACL */
 
 /*
  * String representations of NFS protocol operations.
@@ -998,7 +996,6 @@ static fattr_xdr_result decode_rdattr_error(XDR *xdr, struct xdr_attrs_args *arg
 
 static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 {
-#ifdef _USE_NFS4_ACL
 	fsal_ace_t *pace;
 
       LogFullDebug(COMPONENT_NFS_V4,
@@ -1063,19 +1060,11 @@ static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		if( !xdr_u_int32_t(xdr, &noacls))
 			return FATTR_XDR_FAILED;
 	}
-#else
-	{
-		uint32_t noacls = 0;
-		if( !xdr_u_int32_t(xdr, &noacls))
-			return FATTR_XDR_FAILED;
-	}		
-#endif                          /* _USE_NFS4_ACL */
 	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 {
-#ifdef _USE_NFS4_ACL
 	fsal_acl_status_t status;
 	fsal_acl_data_t acldata;
 	fsal_ace_t *pace;
@@ -1165,7 +1154,6 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 
 baderr:
 	nfs4_ace_free(acldata.aces);
-#endif                          /* _USE_NFS4_ACL */
 	return FATTR_XDR_FAILED;
 }
 
@@ -2686,11 +2674,7 @@ const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
 		.access = FATTR4_ATTR_READ},
 	[FATTR4_ACL] = {
 		.name = "FATTR4_ACL",
-#ifdef _USE_NFS4_ACL
 		.supported = 1,
-#else
-		.supported = 0,
-#endif
 		.size_fattr4 = sizeof(fattr4_acl),
 		.encode = encode_acl,
 		.decode = decode_acl,

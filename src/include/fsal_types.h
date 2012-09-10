@@ -32,9 +32,7 @@
 #ifndef _FSAL_TYPES_H
 #define _FSAL_TYPES_H
 
-#ifdef _USE_NFS4_ACL
 #include <openssl/md5.h>
-#endif                          /* _USE_NFS4_ACL */
 
 /*
  * labels in the config file

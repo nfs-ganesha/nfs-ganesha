@@ -37,6 +37,7 @@ noinst_HEADERS = abstract_atomic.h               \
                  nfs23.h                         \
                  nfs4.h                          \
                  nfsv41.h                        \
+                 nfs4_acls.h                     \
                  nfs_core.h                      \
                  err_inject.h                    \
                  nfs_creds.h                     \
@@ -60,10 +61,6 @@ noinst_HEADERS = abstract_atomic.h               \
 
 if USE_NLM
 noinst_HEADERS += nlm4.h nlm_util.h nlm_list.h
-endif
-
-if USE_NFS4_ACL
-noinst_HEADERS += nfs4_acls.h
 endif
 
 if USE_9P

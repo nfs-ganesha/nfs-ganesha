@@ -244,10 +244,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
 {
      cache_entry_t *to_remove_entry = NULL;
      fsal_status_t fsal_status = {0, 0};
-#ifdef _USE_NFS4_ACL
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
-#endif /* _USE_NFS4_ACL */
 
      if(entry->type != DIRECTORY) {
           *status = CACHE_INODE_BAD_TYPE;
@@ -285,9 +283,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
               "---> Cache_inode_remove : %s", name);
 
 
-#ifdef _USE_NFS4_ACL
      saved_acl = entry->obj_handle->attributes.acl;
-#endif /* _USE_NFS4_ACL */
      fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, req_ctx,
                                                   name);
      if(!FSAL_IS_ERROR(fsal_status)) {
@@ -303,7 +299,6 @@ cache_inode_remove_impl(cache_entry_t *entry,
           }
           goto unlock;
      } else {
-#ifdef _USE_NFS4_ACL
           /* Decrement refcount on saved ACL */
           nfs4_acl_release_entry(saved_acl, &acl_status);
           if (acl_status != NFS_V4_ACL_SUCCESS) {
@@ -311,7 +306,6 @@ cache_inode_remove_impl(cache_entry_t *entry,
                        "Failed to release old acl, status=%d",
                        acl_status);
           }
-#endif /* _USE_NFS4_ACL */
      }
      cache_inode_fixup_md(entry);
 
