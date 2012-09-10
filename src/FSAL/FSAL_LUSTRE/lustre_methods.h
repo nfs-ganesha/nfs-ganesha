@@ -9,12 +9,14 @@ char * lustre_get_root_path(struct fsal_export *exp_hdl) ;
  */
 
 fsal_status_t lustre_lookup_path(struct fsal_export *exp_hdl,
-			      const char *path,
-			      struct fsal_obj_handle **handle);
+				 const struct req_op_context *opctx,
+				 const char *path,
+				 struct fsal_obj_handle **handle);
 
 fsal_status_t lustre_create_handle(struct fsal_export *exp_hdl,
-				struct gsh_buffdesc *hdl_desc,
-				struct fsal_obj_handle **handle);
+				   const struct req_op_context *opctx,
+				   struct gsh_buffdesc *hdl_desc,
+				   struct fsal_obj_handle **handle);
 
 /*
  * VFS internal object handle
@@ -55,12 +57,14 @@ fsal_status_t lustre_open(struct fsal_obj_handle *obj_hdl,
 		       fsal_openflags_t openflags);
 fsal_openflags_t lustre_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t lustre_read(struct fsal_obj_handle *obj_hdl,
+		       const struct req_op_context *opctx,
 		       uint64_t offset,
 		       size_t buffer_size,
 		       void *buffer,
 		       size_t *read_amount,
 		       bool *end_of_file);
 fsal_status_t lustre_write(struct fsal_obj_handle *obj_hdl,
+			const struct req_op_context *opctx,
                         uint64_t offset,
 			size_t buffer_size,
 			void *buffer,
