@@ -114,10 +114,31 @@ void fsal_detach_handle(struct fsal_export *exp_hdl,
 	pthread_mutex_unlock(&exp_hdl->lock);
 }
 
-void fsal_export_init(struct fsal_export *exp, struct export_ops *exp_ops,
-                      struct exportlist__ *exp_entry)
+int fsal_export_init(struct fsal_export *exp,
+		     struct exportlist__ *exp_entry)
 {
+	extern struct export_ops def_export_ops;
+	extern struct fsal_obj_ops def_handle_ops;
+	extern struct fsal_ds_ops def_ds_ops;
 	pthread_mutexattr_t attrs;
+
+	exp->ops = malloc(sizeof(struct export_ops));
+	if(exp->ops == NULL) {
+		goto errout;
+	}
+	memcpy(exp->ops, &def_export_ops, sizeof(struct export_ops));
+
+	exp->obj_ops = malloc(sizeof(struct fsal_obj_ops));
+	if(exp->obj_ops == NULL) {
+		goto errout;
+	}
+	memcpy(exp->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
+
+        exp->ds_ops = malloc(sizeof(struct fsal_obj_ops));
+        if(exp->ds_ops == NULL) {
+                goto errout;
+        }
+        memcpy(exp->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
 
 	init_glist(&exp->handles);
 	init_glist(&exp->exports);
@@ -125,13 +146,43 @@ void fsal_export_init(struct fsal_export *exp, struct export_ops *exp_ops,
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
 	pthread_mutex_init(&exp->lock, &attrs);
 
-	exp->ops = exp_ops;
 	exp->refs = 1;  /* we exit with a reference held */
 	exp->exp_entry = exp_entry;
+	return 0;
+
+errout:
+	if(exp->ops)
+		free(exp->ops);
+	if(exp->obj_ops)
+		free(exp->obj_ops);
+	return ENOMEM;
 }
 
+/**
+ * @brief Free export ops vectors
+ *
+ * Free the memory allocated by init_export_ops. Poison pointers.
+ *
+ * @param[0] exp_hdl
+ *
+ */
+
+void free_export_ops(struct fsal_export *exp_hdl)
+{
+	if(exp_hdl->ops) {
+		free(exp_hdl->ops);
+		exp_hdl->ops = NULL;
+	}
+	if(exp_hdl->obj_ops) {
+		free(exp_hdl->obj_ops);
+		exp_hdl->obj_ops = NULL;
+	}
+	if(exp_hdl->ds_ops) {
+		free(exp_hdl->ds_ops);
+		exp_hdl->ds_ops = NULL;
+	}
+}
 int fsal_obj_handle_init(struct fsal_obj_handle *obj,
-                         struct fsal_obj_ops *ops,
                          struct fsal_export *exp,
                          object_file_type_t type)
 {
@@ -139,7 +190,7 @@ int fsal_obj_handle_init(struct fsal_obj_handle *obj,
 	pthread_mutexattr_t attrs;
 
 	obj->refs = 1;  /* we start out with a reference */
-	obj->ops = ops;
+	obj->ops = exp->obj_ops;
 	obj->export = exp;
         obj->type = type;
 	init_glist(&obj->handles);

@@ -203,9 +203,6 @@ struct fsal_module {
         void *dl_handle; /*< Handle to the dlopen()d shared
                              library. NULL if statically linked */
         struct fsal_ops *ops; /*< FSAL module methods vector */
-        struct export_ops *exp_ops; /*< Shared export object methods vector */
-        struct fsal_obj_ops *obj_ops;   /*< Shared handle methods vector */
-        struct fsal_ds_ops *ds_ops;   /*< Shared handle methods vector */
 };
 
 /**
@@ -440,6 +437,8 @@ struct fsal_export {
         struct exportlist__ *exp_entry; /*< Pointer to the export
                                             list. */
         struct export_ops *ops; /*< Vector of operations */
+        struct fsal_obj_ops *obj_ops;   /*< Shared handle methods vector */
+        struct fsal_ds_ops *ds_ops;   /*< Shared handle methods vector */
 };
 
 /**
@@ -504,8 +503,8 @@ struct export_ops {
  * This function looks up a path within the export, it is typically
  * used to get a handle for the root directory of the export.
  *
- * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  exp_hdl The export in which to look up
+ * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  path    The path to look up
  * @param[out] handle  The object found
  *
@@ -579,8 +578,8 @@ struct export_ops {
  * "wire" handle (when an object is no longer in cache but the client
  * still remembers the nandle).
  *
- * @param[in]  opctx    Request context (user creds, client address)
  * @param[in]  exp_hdl  The export in which to create the handle
+ * @param[in]  opctx    Request context (user creds, client address)
  * @param[in]  hdl_desc Buffer descriptor for the "wire" handle
  * @param[out] handle   FSAL object handle
  *
@@ -620,8 +619,8 @@ struct export_ops {
  * for a filesystem.  See @c fsal_dynamicinfo_t for details of what to
  * fill out.
  *
- * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  exp_hdl Export handle to interrogate
+ * @param[in]  opctx   Request context (user creds, client address)
  * @param[out] info    Buffer to fill with information
  *
  * @retval FSAL status.
@@ -1088,8 +1087,8 @@ struct fsal_obj_ops {
  * NULL, a handle to the root of the export was returned.  This
  * special case is no longer supported and should not be implemented.
  *
- * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  dir_hdl Directory to search
+ * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  path    Name to look up
  * @param[out] handle  Object found
  *
@@ -1106,8 +1105,8 @@ struct fsal_obj_ops {
  * This function reads directory entries from the FSAL and supplies
  * them to a callback.
  *
- * @param[in]  opctx     Request context (user creds, client address etc)
  * @param[in]  dir_hdl   Directory to read
+ * @param[in]  opctx     Request context (user creds, client address etc)
  * @param[in]  entry_cnt Number of entries to return
  * @param[in]  whence    Point at which to start reading.  NULL to
  *                       start at beginning.
@@ -1146,8 +1145,8 @@ struct fsal_obj_ops {
  *
  * This function creates a new regular file.
  *
- * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  dir_hdl Directory in which to create the file
+ * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  name    Name of file to create
  * @param[out] attrib  Attributes of newly created file
  * @param[out] new_obj Newly created object
@@ -1170,8 +1169,8 @@ struct fsal_obj_ops {
  *
  * This function creates a new directory.
  *
- * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  dir_hdl Directory in which to create the directory
+ * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  name    Name of directory to create
  * @param[out] attrib  Attributes of newly created directory
  * @param[out] new_obj Newly created object
@@ -1193,8 +1192,8 @@ struct fsal_obj_ops {
  *
  * This function creates a new special file.
  *
- * @param[in]  opctx    Request context (user creds, client address etc)
  * @param[in]  dir_hdl  Directory in which to create the object
+ * @param[in]  opctx    Request context (user creds, client address etc)
  * @param[in]  name     Name of object to create
  * @param[in]  nodetype Type of special file to create
  * @param[in]  dev      Major and minor device numbers for block or
@@ -1221,8 +1220,8 @@ struct fsal_obj_ops {
  *
  * This function creates a new symbolic link.
  *
- * @param[in]  opctx     Request context (user creds, client address etc)
  * @param[in]  dir_hdl   Directory in which to create the object
+ * @param[in]  opctx     Request context (user creds, client address etc)
  * @param[in]  name      Name of object to create
  * @param[in]  link_path Content of symbolic link
  * @param[out] attrib    Attributes of newly created object
@@ -1253,8 +1252,8 @@ struct fsal_obj_ops {
  *
  * This function reads the content of a symbolic link.
  *
- * @param[in]     opctx        Request context (user creds, client address etc)
  * @param[in]     obj_hdl      Link to read
+ * @param[in]     opctx        Request context (user creds, client address etc)
  * @param[out]    link_content Buffer to which the contents are copied
  * @param[in,out] link_len     Total buffer size/Size of content
  *                             copied
@@ -1300,8 +1299,8 @@ struct fsal_obj_ops {
  * Since the caller can take the attribute lock and read them off the
  * public filehandle, they are not copied out.
  *
- * @param[in]  opctx    Request context, includes credentials
  * @param[in]  obj_hdl  Object to query
+ * @param[in]  opctx    Request context, includes credentials
  *
  * @return FSAL status.
  */
@@ -1314,8 +1313,8 @@ struct fsal_obj_ops {
  * This function sets attributes on an object.  Which attributes are
  * set is determined by @c attrib_set->mask.
  *
- * @param[in] opctx      Request context, includes credentials
  * @param[in] obj_hdl    The object to modify
+ * @param[in] opctx      Request context, includes credentials
  * @param[in] attrib_set Attributes to set
  *
  * @return FSAL status.
@@ -1329,8 +1328,8 @@ struct fsal_obj_ops {
  *
  * This function creates a new name for an existing object.
  *
- * @param[in] opctx       Request context, includes credentials
  * @param[in] obj_hdl     Object to be linked to
+ * @param[in] opctx       Request context, includes credentials
  * @param[in] destdir_hdl Directory in which to create the link
  * @param[in] name        Name for link
  *
@@ -1347,8 +1346,8 @@ struct fsal_obj_ops {
  * This function renames a file (technically it changes the name of
  * one link, which may be the only link to the file.)
  *
- * @param[in] opctx      Request context, includes credentials
  * @param[in] olddir_hdl Old parent directory
+ * @param[in] opctx      Request context, includes credentials
  * @param[in] old_name   Old name
  * @param[in] newdir_hdl New parent directory
  * @param[in] new_name   New name
@@ -1366,8 +1365,8 @@ struct fsal_obj_ops {
  * This function removes a name from a directory and possibly deletes
  * the file so named.
  *
- * @param[in] opctx   Request context, includes credentials
  * @param[in] obj_hdl The directory from which to remove the name
+ * @param[in] opctx   Request context, includes credentials
  * @param[in] name    The name to remove
  *
  * @return FSAL status.
@@ -1382,8 +1381,8 @@ struct fsal_obj_ops {
  * This function truncates a regular file to the given length (which
  * must be less than or equal to the current length.)
  *
- * @param[in] opctx   Request context, includes credentials
  * @param[in] obj_hdl File to truncate
+ * @param[in] opctx   Request context, includes credentials
  * @param[in] length  New length
  *
  * @return FSAL status
@@ -1437,8 +1436,8 @@ struct fsal_obj_ops {
  * (FSAL_PROXY, for example, might do this depending on the will of
  * the remote server.) -- ACE
  *
- * @param[in]  opctx       Request context, includes credentials
  * @param[in]  obj_hdl     File to read
+ * @param[in]  opctx       Request context, includes credentials
  * @param[in]  offset      Position from which to read
  * @param[in]  buffer_size Amount of data to read
  * @param[out] buffer      Buffer to which data are to be copied
@@ -1462,8 +1461,8 @@ struct fsal_obj_ops {
  *
  * @note Should buffer be const? -- ACE
  *
- * @param[in]  opctx        Request context, includes credentials
  * @param[in]  obj_hdl      File to be written
+ * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer       Data to be written
  * @param[out] wrote_amount Number of bytes written

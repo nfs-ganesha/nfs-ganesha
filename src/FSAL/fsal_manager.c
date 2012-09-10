@@ -413,9 +413,6 @@ int register_fsal(struct fsal_module *fsal_hdl,
 {
 	pthread_mutexattr_t attrs;
 	extern struct fsal_ops def_fsal_ops;
-	extern struct export_ops def_export_ops;
-	extern struct fsal_obj_ops def_handle_ops;
-	extern struct fsal_ds_ops def_ds_ops;
 
 	if((major_version != FSAL_MAJOR_VERSION) ||
 	   (minor_version > FSAL_MINOR_VERSION)) {
@@ -445,7 +442,7 @@ int register_fsal(struct fsal_module *fsal_hdl,
 			goto errout;
 		}
 	}
-/* allocate and init ops vectors to system wide defaults
+/* allocate and init ops vector to system wide defaults
  * from FSAL/default_methods.c
  */
 	fsal_hdl->ops = malloc(sizeof(struct fsal_ops));
@@ -455,26 +452,6 @@ int register_fsal(struct fsal_module *fsal_hdl,
 	}
 	memcpy(fsal_hdl->ops, &def_fsal_ops, sizeof(struct fsal_ops));
 
-	fsal_hdl->exp_ops = malloc(sizeof(struct export_ops));
-	if(fsal_hdl->exp_ops == NULL) {
-		so_error = ENOMEM;
-		goto errout;
-	}
-	memcpy(fsal_hdl->exp_ops, &def_export_ops, sizeof(struct export_ops));
-
-	fsal_hdl->obj_ops = malloc(sizeof(struct fsal_obj_ops));
-	if(fsal_hdl->obj_ops == NULL) {
-		so_error = ENOMEM;
-		goto errout;
-	}
-	memcpy(fsal_hdl->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
-
-        fsal_hdl->ds_ops = malloc(sizeof(struct fsal_obj_ops));
-        if(fsal_hdl->ds_ops == NULL) {
-                so_error = ENOMEM;
-                goto errout;
-        }
-        memcpy(fsal_hdl->ds_ops, &def_ds_ops, sizeof(struct fsal_ds_ops));
 
 	pthread_mutexattr_init(&attrs);
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
@@ -494,10 +471,6 @@ errout:
 		free(fsal_hdl->name);
 	if(fsal_hdl->ops)
 		free(fsal_hdl->ops);
-	if(fsal_hdl->exp_ops)
-		free(fsal_hdl->exp_ops);
-	if(fsal_hdl->obj_ops)
-		free(fsal_hdl->obj_ops);
 	load_state = error;
 	pthread_mutex_unlock(&fsal_lock);
 	LogCrit(COMPONENT_INIT,
@@ -525,10 +498,6 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
 		free(fsal_hdl->name);
 	if(fsal_hdl->ops)
 		free(fsal_hdl->ops);
-	if(fsal_hdl->exp_ops)
-		free(fsal_hdl->exp_ops);
-	if(fsal_hdl->obj_ops)
-		free(fsal_hdl->obj_ops);
 	retval = 0;
 out:
 	return retval;

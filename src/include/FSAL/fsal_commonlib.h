@@ -22,13 +22,17 @@ void fsal_detach_handle(struct fsal_export *exp_hdl,
  */
 
 struct exportlist__;
-void fsal_export_init(struct fsal_export *, struct export_ops *,
-                      struct exportlist__ *);
+
+int fsal_export_init(struct fsal_export *,
+		     struct exportlist__ *);
+
+void free_export_ops(struct fsal_export *exp_hdl);
+
 
 /* fsal_obj_handle common methods
  */
 
-int fsal_obj_handle_init(struct fsal_obj_handle *, struct fsal_obj_ops *,
+int fsal_obj_handle_init(struct fsal_obj_handle *,
                          struct fsal_export *, object_file_type_t);
 
 
