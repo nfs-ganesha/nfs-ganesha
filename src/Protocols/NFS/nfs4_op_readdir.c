@@ -75,7 +75,8 @@ struct nfs4_readdir_cb_data
 
 cache_inode_status_t
 nfs4_readdir_callback(void *opaque,
-                      const struct attrlist *attr)
+                      const struct attrlist *attr,
+                      uint64_t mounted_on_fileid)
 {
      struct cache_inode_readdir_cb_parms *cb_parms = opaque;
      struct nfs4_readdir_cb_data *tracker = cb_parms->opaque;
@@ -85,6 +86,7 @@ nfs4_readdir_callback(void *opaque,
           .nfs_fh4_len = 0,
           .nfs_fh4_val = val_fh
      };
+     struct xdr_attrs_args args;
 
      if (tracker->total_entries == tracker->count) {
           cb_parms->in_result = false;
@@ -131,11 +133,14 @@ nfs4_readdir_callback(void *opaque,
           }
      }
 
-     if (nfs4_FSALattr_To_Fattr(attr,
-                                &tracker->entries[tracker->count].attrs,
-                                tracker->data,
-                                &entryFH,
-                                tracker->req_attr) != 0) {
+     memset(&args, 0, sizeof(args));
+     args.attrs = (struct attrlist *) attr;
+     args.data = tracker->data;
+     args.hdl4 = &entryFH;
+     args.mounted_on_fileid = mounted_on_fileid;
+     if (nfs4_FSALattr_To_Fattr(&args,
+                                tracker->req_attr,
+                                &tracker->entries[tracker->count].attrs) != 0) {
           LogFatal(COMPONENT_NFS_V4,
                    "nfs4_FSALattr_To_Fattr failed to convert attr");
      }

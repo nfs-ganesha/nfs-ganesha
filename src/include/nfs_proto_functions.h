@@ -882,9 +882,13 @@ struct xdr_attrs_args {
 	struct attrlist *attrs;
 	nfs_fh4 *hdl4;
 	uint32_t rdattr_error;
+        uint64_t mounted_on_fileid; /*< If this is the root directory
+                                        of a filesystem, the fileid of
+                                        the directory on which the
+                                        filesystem is mounted. */
 	int nfs_status;
 	compound_data_t *data;
-	int statfscalled;
+	bool statfscalled;
 	fsal_dynamicfsinfo_t *dynamicinfo;
 };
 
@@ -1162,11 +1166,9 @@ int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
 
 int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 error);
 
-int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
-                           fattr4 *Fattr,
-                           compound_data_t *data,
-                           nfs_fh4 *objFH,
-                           struct bitmap4 *Bitmap);
+int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args,
+                           struct bitmap4 *Bitmap,
+                           fattr4 *Fattr);
 
 uint64_t nfs_htonl64(uint64_t arg64);
 uint64_t nfs_ntohl64(uint64_t arg64);

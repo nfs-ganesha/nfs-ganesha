@@ -290,6 +290,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t *psfsp,
 		       struct bitmap4 *Bitmap)
 {
 	struct attrlist attrs;
+	struct xdr_attrs_args args;
 
 	/* cobble up an inode (attributes) for this pseudo */
 	memset(&attrs, 0, sizeof(attrs));
@@ -312,8 +313,14 @@ int nfs4_PseudoToFattr(pseudofs_entry_t *psfsp,
 	attrs.chgtime = ServerBootTime;
 	attrs.change = ServerBootTime.tv_sec;
 	attrs.spaceused = DEV_BSIZE;
-	attrs.mounted_on_fileid = psfsp->pseudo_id;
-	return nfs4_FSALattr_To_Fattr(&attrs, Fattr, data, objFH, Bitmap);
+
+	memset(&args, 0, sizeof(args));
+	args.attrs = &attrs;
+	args.data = data;
+	args.hdl4 = objFH;
+	args.mounted_on_fileid = psfsp->pseudo_id;
+
+	return nfs4_FSALattr_To_Fattr(&args, Bitmap, Fattr);
 }
 
 /**

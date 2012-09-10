@@ -121,8 +121,7 @@ static cache_inode_status_t update(
 	if (FSAL_TEST_MASK(attr->mask,
 			   ATTR_TYPE	    | ATTR_FSID       |
 			   ATTR_FILEID      | ATTR_RAWDEV     |
-			   ATTR_MOUNTFILEID | ATTR_RDATTR_ERR |
-			   ATTR_GENERATION)) {
+			   ATTR_RDATTR_ERR  | ATTR_GENERATION)) {
 		return CACHE_INODE_INVALID_ARGUMENT;
 	}
 

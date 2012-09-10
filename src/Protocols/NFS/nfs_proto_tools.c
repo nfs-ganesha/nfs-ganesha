@@ -1109,7 +1109,7 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 		args->dynamicinfo->avail_bytes = 512000;
 	}
 	if (cache_status == CACHE_INODE_SUCCESS) {
-                args->statfscalled = 1;
+                args->statfscalled = true;
 		return TRUE;
 	} else {
 		return FATTR_XDR_FAILED;
@@ -1988,9 +1988,7 @@ static fattr_xdr_result decode_modifytimeset(XDR *xdr, struct xdr_attrs_args *ar
 
 static fattr_xdr_result encode_mounted_on_fileid(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint64_t file_id = args->attrs->fileid;
-
-	if (! inline_xdr_u_int64_t(xdr, &file_id))
+	if (! inline_xdr_u_int64_t(xdr, &args->mounted_on_fileid))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -3037,16 +3035,22 @@ struct Fattr_filler_opaque
 
 static cache_inode_status_t
 Fattr_filler(void *opaque,
-             const struct attrlist *attr)
+             const struct attrlist *attr,
+             uint64_t mounted_on_fileid)
 {
+	struct xdr_attrs_args args;
         struct Fattr_filler_opaque *f =
                 (struct Fattr_filler_opaque *)opaque;
 
-        if (nfs4_FSALattr_To_Fattr(attr,
-                                   f->Fattr,
-                                   f->data,
-                                   f->objFH,
-                                   f->Bitmap) != 0) {
+	memset(&args, 0, sizeof(args));
+	args.attrs = (struct attrlist *) attr;
+	args.data = f->data;
+	args.hdl4 = f->objFH;
+	args.mounted_on_fileid = mounted_on_fileid;
+
+        if (nfs4_FSALattr_To_Fattr(&args,
+                                   f->Bitmap,
+                                   f->Fattr) != 0) {
                 return CACHE_INODE_IO_ERROR;
         }
         return CACHE_INODE_SUCCESS;
@@ -3154,31 +3158,25 @@ int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
  *
  * Converts FSAL Attributes to NFSv4 Fattr buffer.
  *
- * @param[in]  attrs   FSAL attributes.
+ * @param[in]  args    XDR attribute arguments
+ * @param[in]  Bitmap  Bitmap of attributes being requested
  * @param[out] Fattr   NFSv4 Fattr buffer
  *		       Memory for bitmap_val and attr_val is
  *                     dynamically allocated,
  *		       caller is responsible for freeing it.
- * @param[in]  data    NFSv4 compoud request's data.
- * @param[in]  objFH   The NFSv4 filehandle of the object whose
- *                     attributes are requested
- * @param[in]  Bitmap  Bitmap of attributes being requested
  *
  * @return -1 if failed, 0 if successful.
  *
  */
 
-int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
-                           fattr4 *Fattr,
-                           compound_data_t *data,
-                           nfs_fh4 *objFH,
-                           struct bitmap4 *Bitmap)
+int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args,
+                           struct bitmap4 *Bitmap,
+                           fattr4 *Fattr)
 {
 	int attribute_to_set = 0;
 	u_int LastOffset;
 	fsal_dynamicfsinfo_t dynamicinfo;
 	XDR attr_body;
-	struct xdr_attrs_args args;
 	fattr_xdr_result xdr_res;
 
 	/* basic init */
@@ -3197,12 +3195,10 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 		      Fattr->attr_vals.attrlist4_val,
 		      NFS4_ATTRVALS_BUFFLEN,
 		      XDR_ENCODE);
-	memset(&args, 0, sizeof(args));
-	args.attrs = (struct attrlist *)attrs; /* overriding const */
-	args.hdl4 = objFH;
-	args.data = data;
-	args.rdattr_error = NFS4_OK;
-	args.dynamicinfo = &dynamicinfo;
+
+	if(args->dynamicinfo == NULL) {
+		args->dynamicinfo = &dynamicinfo;
+	}
 
 	for(attribute_to_set = next_attr_from_bitmap(Bitmap, -1);
 	    attribute_to_set != -1;
@@ -3211,7 +3207,7 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 			break;  /* skip out of bounds */
 		}
 
-		xdr_res = fattr4tab[attribute_to_set].encode(&attr_body, &args);
+		xdr_res = fattr4tab[attribute_to_set].encode(&attr_body, args);
 		if(xdr_res == FATTR_XDR_SUCCESS) {
 			bool res = set_attribute_in_bitmap(&Fattr->attrmask,
 						       attribute_to_set);

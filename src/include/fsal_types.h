@@ -391,8 +391,6 @@ typedef uint64_t attrmask_t;
 #define ATTR_MTIME 0x0000000000008000
 /* space used by this file. */
 #define ATTR_SPACEUSED 0x0000000000010000
-/* Mounted on fileid */
-#define ATTR_MOUNTFILEID 0x0000000000020000
 /* NFS4 change_time like attribute */
 #define ATTR_CHGTIME 0x0000000000040000
 /* This bit indicates that an error occured during getting object attributes */
@@ -455,10 +453,6 @@ struct attrlist {
         struct timespec chgtime; /*< Time of last 'change' */
         uint64_t spaceused; /*< Space used on underlying filesystem */
         uint64_t change; /*< A 'change id' */
-        uint64_t mounted_on_fileid; /*< If this is the root directory
-                                        of a filesystem, the fileid of
-                                        the directory on which the
-                                        filesystem is mounted. */
         uint64_t generation; /*< Generation number for this file */
 	uint32_t grace_period_attr; /*< Expiration time interval in seconds
 					for attributes. Settable by FSAL. */

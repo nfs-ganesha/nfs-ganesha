@@ -518,7 +518,8 @@ struct cache_inode_readdir_cb_parms
 
 typedef cache_inode_status_t(*cache_inode_getattr_cb_t)(
 	void *opaque,
-	const struct attrlist *attr);
+	const struct attrlist *attr,
+	uint64_t mounted_on_fileid);
 
 
 const char *cache_inode_err_str(cache_inode_status_t err);

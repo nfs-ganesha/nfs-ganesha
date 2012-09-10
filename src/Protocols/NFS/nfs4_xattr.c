@@ -55,6 +55,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
                       compound_data_t * data, nfs_fh4 * objFH,struct bitmap4 * Bitmap)
 {
 	struct attrlist attrs;
+	struct xdr_attrs_args args;
 	file_handle_v4_t *pfile_handle = (file_handle_v4_t *) (objFH->nfs_fh4_val);
 
 	/* cobble up an inode (attributes) for this pseudo */
@@ -83,8 +84,14 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 	attrs.chgtime.tv_sec = attrs.atime.tv_sec;
 	attrs.change = attrs.atime.tv_sec;
 	attrs.spaceused = DEV_BSIZE;
-	attrs.mounted_on_fileid = attrs.fileid;
-	return nfs4_FSALattr_To_Fattr(&attrs, Fattr, data, objFH, Bitmap);
+
+	memset(&args, 0, sizeof(args));
+	args.attrs = &attrs;
+	args.data = data;
+	args.hdl4 = objFH;
+	args.mounted_on_fileid = attrs.fileid;
+
+	return nfs4_FSALattr_To_Fattr(&args, Bitmap, Fattr);
 }                               /* nfs4_XattrToFattr */
 
 /** 

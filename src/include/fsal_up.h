@@ -156,8 +156,7 @@ struct fsal_up_vector {
 		struct attrlist *attr, /*< List of attributes to
 					   update.  Note that the @c
 					   type, @c fsid, @c fileid,
-					   @c rawdev, @c
-					   mounted_on_fileid, and @c
+					   @c rawdev, and @c
 					   generation fields must not
 					   be updated and the
 					   corresponding bits in the

@@ -297,6 +297,7 @@ pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
 {
         int i;
         struct bitmap4 bmap = empty_bitmap;
+	struct xdr_attrs_args args;
 
         for(i=0; i < ARRAY_SIZE(fsal_mask2bit); i++) {
                 if(FSAL_TEST_MASK(attrs->mask, fsal_mask2bit[i].mask)) {
@@ -309,7 +310,12 @@ pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
                 }
         }
 
-        return nfs4_FSALattr_To_Fattr(attrs, data, NULL, NULL, &bmap);
+	memset(&args, 0, sizeof(args));
+	args.attrs = (struct attrlist *) attrs;
+	args.data = NULL;
+	args.mounted_on_fileid = attrs->fileid;
+
+        return nfs4_FSALattr_To_Fattr(&args, &bmap, data);
 }
 
 static GETATTR4resok *
