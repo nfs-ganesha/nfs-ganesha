@@ -107,6 +107,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 		goto errout;
 	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
+	free_export_ops(exp_hdl);
 	if(myself->root_fd >= 0)
 		close(myself->root_fd);
 	if(myself->root_handle != NULL)
@@ -470,6 +471,8 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+void lustre_handle_ops_init(struct fsal_obj_ops *ops);
+
 /* lustre_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -545,8 +548,12 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 	memset(myself, 0, sizeof(struct lustre_fsal_export));
 	myself->root_fd = -1;
 
-        fsal_export_init(&myself->export, fsal_hdl->exp_ops, exp_entry);
+        retval = fsal_export_init(&myself->export, exp_entry);
+	if(retval != 0)
+		goto errout;
 
+	lustre_export_ops_init(myself->export.ops);
+	lustre_handle_ops_init(myself->export.obj_ops);
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
 	 */

@@ -34,7 +34,6 @@
 
 #include "fsal.h"
 #include <sys/stat.h>
-#include "FSAL/common_functions.h"
 #include "fsal_pnfs.h"
 
 /* defined the set of attributes supported with POSIX */
@@ -334,3 +333,4 @@ nfsstat4 LUSTREFSAL_DS_commit(fsal_handle_t *handle,
                             offset4 offset,
                             count4 count,
                             verifier4 writeverf);
+#endif
