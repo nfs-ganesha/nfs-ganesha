@@ -96,6 +96,7 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 		goto errout;
 	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
+	free_export_ops(exp_hdl);
 	if(myself->root_fd >= 0)
 		close(myself->root_fd);
 	if(myself->root_handle != NULL)
@@ -106,7 +107,6 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 		free(myself->mntdir);
 	if(myself->fs_spec != NULL)
 		free(myself->fs_spec);
-	myself->export.ops = NULL; /* poison myself */
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
@@ -460,6 +460,8 @@ void vfs_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 }
 
+void vfs_handle_ops_init(struct fsal_obj_ops *ops);
+
 /* create_export
  * Create an export point and return a handle to it to be kept
  * in the export list.
@@ -507,7 +509,15 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	memset(myself, 0, sizeof(struct vfs_fsal_export));
 	myself->root_fd = -1;
 
-        fsal_export_init(&myself->export, fsal_hdl->exp_ops, exp_entry);
+        retval = fsal_export_init(&myself->export,
+				  exp_entry);
+        if(retval != 0) {
+		LogMajor(COMPONENT_FSAL,
+			 "vfs_fsal_create: out of memory for object");
+		return fsalstat(posix2fsal_error(retval), retval);
+	}
+	vfs_export_ops_init(myself->export.ops);
+	vfs_handle_ops_init(myself->export.obj_ops);
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
@@ -636,7 +646,7 @@ errout:
 		free(myself->mntdir);
 	if(myself->fs_spec != NULL)
 		free(myself->fs_spec);
-	myself->export.ops = NULL; /* poison myself */
+	free_export_ops(&myself->export);
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
 	free(myself);  /* elvis has left the building */

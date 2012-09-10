@@ -114,7 +114,6 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	if(FSAL_IS_ERROR(st))
 		goto spcerr;
 	if(!fsal_obj_handle_init(&hdl->obj_handle,
-				 exp_hdl->fsal->obj_ops,
 				 exp_hdl,
 	                         posix2fsal_type(stat->st_mode)))
                 return hdl;

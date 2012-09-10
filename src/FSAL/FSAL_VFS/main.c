@@ -161,9 +161,6 @@ static struct vfs_fsal_module VFS;
 /* linkage to the exports and handle ops initializers
  */
 
-void vfs_export_ops_init(struct export_ops *ops);
-void vfs_handle_ops_init(struct fsal_obj_ops *ops);
-
 MODULE_INIT void vfs_init(void) {
 	int retval;
 	struct fsal_module *myself = &VFS.fsal;
@@ -177,8 +174,6 @@ MODULE_INIT void vfs_init(void) {
 	}
 	myself->ops->create_export = vfs_create_export;
 	myself->ops->init_config = init_config;
-	vfs_export_ops_init(myself->exp_ops);
-	vfs_handle_ops_init(myself->obj_ops);
         init_fsal_parameters(&VFS.fsal_info);
 }
 
