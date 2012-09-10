@@ -87,7 +87,7 @@ cache_inode_setattr(cache_entry_t *entry,
 
      /* Is it allowed to change times ? */
      if(!obj_handle->export->ops->fs_supports(obj_handle->export,
-                                               cansettime) &&
+                                              fso_cansettime) &&
         (FSAL_TEST_MASK(attr->mask, (ATTR_ATIME | ATTR_CREATION |
                                      ATTR_CTIME | ATTR_MTIME)))) {
              *status = CACHE_INODE_INVALID_ARGUMENT;

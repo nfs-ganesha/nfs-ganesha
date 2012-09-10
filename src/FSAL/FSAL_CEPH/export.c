@@ -389,65 +389,65 @@ fs_supports(struct fsal_export *export_pub,
             fsal_fsinfo_options_t option)
 {
         switch (option) {
-        case no_trunc:
+        case fso_no_trunc:
                 return true;
 
-        case chown_restricted:
+        case fso_chown_restricted:
                 return true;
 
-        case case_insensitive:
+        case fso_case_insensitive:
                 return false;
 
 
-        case case_preserving:
+        case fso_case_preserving:
                 return true;
 
-        case link_support:
+        case fso_link_support:
                 return true;
 
-        case symlink_support:
+        case fso_symlink_support:
                 return true;
 
-        case lock_support:
+        case fso_lock_support:
                 return false;
 
-        case lock_support_owner:
+        case fso_lock_support_owner:
                 return false;
 
-        case lock_support_async_block:
+        case fso_lock_support_async_block:
                 return false;
 
-        case named_attr:
+        case fso_named_attr:
                 return false;
 
-        case unique_handles:
+        case fso_unique_handles:
                 return true;
 
-        case cansettime:
+        case fso_cansettime:
                 return true;
 
-        case homogenous:
+        case fso_homogenous:
                 return true;
 
-        case auth_exportpath_xdev:
+        case fso_auth_exportpath_xdev:
                 return false;
 
-        case dirs_have_sticky_bit:
+        case fso_dirs_have_sticky_bit:
                 return true;
 
-        case accesscheck_support:
+        case fso_accesscheck_support:
                 return false;
 
-        case share_support:
+        case fso_share_support:
                 return false;
 
-        case share_support_owner:
+        case fso_share_support_owner:
                 return false;
 
-        case pnfs_mds_supported:
+        case fso_pnfs_mds_supported:
                 return true;
 
-        case pnfs_ds_supported:
+        case fso_pnfs_ds_supported:
                 return false;
         }
 

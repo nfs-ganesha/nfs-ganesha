@@ -820,7 +820,8 @@ static fattr_xdr_result encode_linksupport(XDR *xdr, struct xdr_attrs_args *args
 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		linksupport = export->ops->fs_supports(export, link_support);
+		linksupport = export->ops->fs_supports(export,
+						       fso_link_support);
 	} else {
 		linksupport = TRUE;
 	}
@@ -845,7 +846,8 @@ static fattr_xdr_result encode_symlinksupport(XDR *xdr, struct xdr_attrs_args *a
 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		symlinksupport = export->ops->fs_supports(export, symlink_support);
+		symlinksupport = export->ops->fs_supports(export,
+							  fso_symlink_support);
 	} else {
 		symlinksupport = TRUE;
 	}
@@ -872,7 +874,8 @@ static fattr_xdr_result encode_namedattrsupport(XDR *xdr, struct xdr_attrs_args 
 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		namedattrsupport = export->ops->fs_supports(export, named_attr);
+		namedattrsupport = export->ops->fs_supports(export,
+							    fso_named_attr);
 	} else {
 		namedattrsupport = FALSE;
 	}
@@ -938,7 +941,8 @@ static fattr_xdr_result encode_uniquehandles(XDR *xdr, struct xdr_attrs_args *ar
 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		uniquehandles = export->ops->fs_supports(export, unique_handles);
+		uniquehandles = export->ops->fs_supports(export,
+							 fso_unique_handles);
 	} else {
 		uniquehandles = TRUE;
 	}
@@ -1216,7 +1220,7 @@ static fattr_xdr_result encode_cansettime(XDR *xdr, struct xdr_attrs_args *args)
 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		cansettime = export->ops->fs_supports(export, cansettime);;
+		cansettime = export->ops->fs_supports(export, fso_cansettime);
 	} else {
 		cansettime = TRUE;
 	}
@@ -1243,7 +1247,7 @@ static fattr_xdr_result encode_case_insensitive(XDR *xdr, struct xdr_attrs_args 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
 		caseinsensitive = export->ops->fs_supports(export,
-							    case_insensitive);
+							  fso_case_insensitive);
 	} else {
 		caseinsensitive = FALSE;
 	}
@@ -1270,7 +1274,8 @@ static fattr_xdr_result encode_case_preserving(XDR *xdr, struct xdr_attrs_args *
 	
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		casepreserving = export->ops->fs_supports(export, case_preserving);
+		casepreserving = export->ops->fs_supports(export,
+							  fso_case_preserving);
 	} else {
 		casepreserving = TRUE;
 	}
@@ -1296,7 +1301,8 @@ static fattr_xdr_result encode_chown_restricted(XDR *xdr, struct xdr_attrs_args 
 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		chownrestricted = export->ops->fs_supports(export, chown_restricted);
+		chownrestricted = export->ops->fs_supports(export,
+							  fso_chown_restricted);
 	} else {
 		chownrestricted = TRUE;
 	}
@@ -1518,7 +1524,7 @@ static fattr_xdr_result encode_homogeneous(XDR *xdr, struct xdr_attrs_args *args
 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		homogeneous = export->ops->fs_supports(export, homogenous);
+		homogeneous = export->ops->fs_supports(export, fso_homogenous);
 	} else {
 		homogeneous = TRUE;
 	}
@@ -1729,7 +1735,7 @@ static fattr_xdr_result encode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 
 	if(args->data != NULL && args->data->pexport != NULL) {
 		export = args->data->pexport->export_hdl;
-		no_trunc = export->ops->fs_supports(export, no_trunc);
+		no_trunc = export->ops->fs_supports(export, fso_no_trunc);
 	} else {
 		no_trunc = TRUE;
 	}

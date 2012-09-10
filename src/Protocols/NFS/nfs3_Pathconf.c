@@ -120,13 +120,13 @@ int nfs3_Pathconf(nfs_arg_t *parg,
   pres->res_pathconf3.PATHCONF3res_u.resok.name_max
 	  = exp_hdl->ops->fs_maxnamelen(exp_hdl);
   pres->res_pathconf3.PATHCONF3res_u.resok.no_trunc
-	  = exp_hdl->ops->fs_supports(exp_hdl, no_trunc);
+	  = exp_hdl->ops->fs_supports(exp_hdl, fso_no_trunc);
   pres->res_pathconf3.PATHCONF3res_u.resok.chown_restricted
-	  = exp_hdl->ops->fs_supports(exp_hdl, chown_restricted);
+	  = exp_hdl->ops->fs_supports(exp_hdl, fso_chown_restricted);
   pres->res_pathconf3.PATHCONF3res_u.resok.case_insensitive
-	  = exp_hdl->ops->fs_supports(exp_hdl, case_insensitive);
+	  = exp_hdl->ops->fs_supports(exp_hdl, fso_case_insensitive);
   pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving
-	  = exp_hdl->ops->fs_supports(exp_hdl, case_preserving);
+	  = exp_hdl->ops->fs_supports(exp_hdl, fso_case_preserving);
 
  out:
 

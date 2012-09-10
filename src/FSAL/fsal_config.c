@@ -497,39 +497,39 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
                    fsal_fsinfo_options_t option)
 {
 	switch(option) {
-	case no_trunc:
+	case fso_no_trunc:
 		return !!info->no_trunc;
-	case chown_restricted:
+	case fso_chown_restricted:
 		return !!info->chown_restricted;
-	case case_insensitive:
+	case fso_case_insensitive:
 		return !!info->case_insensitive;
-	case case_preserving:
+	case fso_case_preserving:
 		return !!info->case_preserving;
-	case link_support:
+	case fso_link_support:
 		return !!info->link_support;
-	case symlink_support:
+	case fso_symlink_support:
 		return !!info->symlink_support;
-	case lock_support:
+	case fso_lock_support:
 		return !!info->lock_support;
-	case lock_support_owner:
+	case fso_lock_support_owner:
 		return !!info->lock_support_owner;
-	case lock_support_async_block:
+	case fso_lock_support_async_block:
 		return !!info->lock_support_async_block;
-	case named_attr:
+	case fso_named_attr:
 		return !!info->named_attr;
-	case unique_handles:
+	case fso_unique_handles:
 		return !!info->unique_handles;
-	case cansettime:
+	case fso_cansettime:
 		return !!info->cansettime;
-	case homogenous:
+	case fso_homogenous:
 		return !!info->homogenous;
-	case auth_exportpath_xdev:
+	case fso_auth_exportpath_xdev:
 		return !!info->auth_exportpath_xdev;
-	case dirs_have_sticky_bit:
+	case fso_dirs_have_sticky_bit:
 		return !!info->dirs_have_sticky_bit;
-	case share_support:
+	case fso_share_support:
 		return !!info->share_support;
-	case share_support_owner:
+	case fso_share_support_owner:
 		return !!info->share_support_owner;
 	default:
 		return false; /* whatever I don't know about,

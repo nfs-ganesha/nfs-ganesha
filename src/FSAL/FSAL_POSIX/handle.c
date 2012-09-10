@@ -662,7 +662,7 @@ static fsal_status_t linkfile (struct fsal_obj_handle *obj_hdl,
     struct posix_fsal_obj_handle *newdir_handle;
     int retval = 0;
 
-    if (!obj_hdl->export->ops->fs_supports (obj_hdl->export, link_support))
+    if (!obj_hdl->export->ops->fs_supports (obj_hdl->export, fso_link_support))
         return fsalstat (ERR_FSAL_NOTSUPP, 0);
 
     child_handle = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);

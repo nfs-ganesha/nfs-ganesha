@@ -31,7 +31,7 @@ static inline bool sticky_dir_allows(struct fsal_obj_handle *dir_hdl,
 
 	if(obj_hdl)
 		obj_attr = &obj_hdl->attributes;
-	if(exp_hdl->ops->fs_supports(exp_hdl, dirs_have_sticky_bit) &&
+	if(exp_hdl->ops->fs_supports(exp_hdl, fso_dirs_have_sticky_bit) &&
 	   dir_attr->mode & S_ISVTX &&
 	   dir_attr->owner != creds->caller_uid &&
 	   (obj_attr && (obj_attr->owner != creds->caller_uid)) &&

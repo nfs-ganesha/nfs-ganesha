@@ -503,6 +503,6 @@ bool nfs4_pnfs_supported(const exportlist_t *export)
         } else {
                 return (export->export_hdl->ops
                         ->fs_supports(export->export_hdl,
-                                      pnfs_mds_supported));
+                                      fso_pnfs_mds_supported));
         }
 }

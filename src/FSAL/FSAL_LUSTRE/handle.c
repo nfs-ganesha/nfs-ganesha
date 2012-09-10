@@ -713,7 +713,8 @@ static fsal_status_t lustre_linkfile(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
-	if( !obj_hdl->export->ops->fs_supports(obj_hdl->export, link_support)) {
+	if( !obj_hdl->export->ops->fs_supports(obj_hdl->export,
+					       fso_link_support)) {
 		fsal_error = ERR_FSAL_NOTSUPP;
 		goto out;
 	}

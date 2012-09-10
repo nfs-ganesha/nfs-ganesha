@@ -85,7 +85,7 @@ static state_status_t do_share_op(cache_entry_t        * pentry,
   struct fsal_obj_handle *obj_hdl = pentry->obj_handle;
 
   /* Quick exit if share reservation is not supported by FSAL */
-  if( !obj_hdl->export->ops->fs_supports(obj_hdl->export, share_support))
+  if( !obj_hdl->export->ops->fs_supports(obj_hdl->export, fso_share_support))
     return STATE_SUCCESS;
 
   fsal_status = pentry->obj_handle->ops->share_op(pentry->obj_handle,

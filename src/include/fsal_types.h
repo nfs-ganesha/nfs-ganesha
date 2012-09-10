@@ -552,27 +552,27 @@ typedef uint16_t fsal_fhexptype_t;
 /* enums for accessing
  * boolean fields of staticfsinfo
  */
-typedef enum {
-        no_trunc,
-        chown_restricted,
-        case_insensitive,
-        case_preserving,
-        link_support,
-        symlink_support,
-        lock_support,
-        lock_support_owner,
-        lock_support_async_block,
-        named_attr,
-        unique_handles,
-        cansettime,
-        homogenous,
-        auth_exportpath_xdev,
-        dirs_have_sticky_bit,
-        accesscheck_support,
-        share_support,
-        share_support_owner,
-        pnfs_mds_supported,
-        pnfs_ds_supported
+typedef enum enum_fsal_fsinfo_options {
+        fso_no_trunc,
+        fso_chown_restricted,
+        fso_case_insensitive,
+        fso_case_preserving,
+        fso_link_support,
+        fso_symlink_support,
+        fso_lock_support,
+        fso_lock_support_owner,
+        fso_lock_support_async_block,
+        fso_named_attr,
+        fso_unique_handles,
+        fso_cansettime,
+        fso_homogenous,
+        fso_auth_exportpath_xdev,
+        fso_dirs_have_sticky_bit,
+        fso_accesscheck_support,
+        fso_share_support,
+        fso_share_support_owner,
+        fso_pnfs_mds_supported,
+        fso_pnfs_ds_supported
 } fsal_fsinfo_options_t;
 
 struct fsal_staticfsinfo_t

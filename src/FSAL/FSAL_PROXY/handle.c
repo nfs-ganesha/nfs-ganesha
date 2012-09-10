@@ -1419,7 +1419,7 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
 
         /* Tests if symlinking is allowed by configuration. */
         if( !dir_hdl->export->ops->fs_supports(dir_hdl->export,
-                                               symlink_support))
+                                               fso_symlink_support))
                 return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 
         attrib->mask = ATTR_MODE;
@@ -1514,7 +1514,7 @@ pxy_link(struct fsal_obj_handle *obj_hdl,
 
         /* Tests if hardlinking is allowed by configuration. */
         if( !destdir_hdl->export->ops->fs_supports(destdir_hdl->export,
-                                                   link_support))
+                                                   fso_link_support))
                 return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 
         tgt = container_of(obj_hdl, struct pxy_obj_handle, obj);

@@ -1491,7 +1491,7 @@ static void grant_blocked_locks(cache_entry_t        * pentry)
   struct fsal_export *export = pentry->obj_handle->export;
 
   /* If FSAL supports async blocking locks, allow it to grant blocked locks. */
-  if(export->ops->fs_supports(export, lock_support_async_block))
+  if(export->ops->fs_supports(export, fso_lock_support_async_block))
     return;
 
   glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
@@ -1847,12 +1847,12 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
    * Lock owners are not supported and hint tells us that lock fully overlaps a
    *   lock we already have (no need to make another FSAL call in that case)
    */
-  if( !export->ops->fs_supports(export, lock_support) ||
-     ( !export->ops->fs_supports(export, lock_support_async_block) &&
+  if( !export->ops->fs_supports(export, fso_lock_support) ||
+     ( !export->ops->fs_supports(export, fso_lock_support_async_block) &&
        lock_op == FSAL_OP_CANCEL) ||
-     ( !export->ops->fs_supports(export, lock_support_async_block) &&
+     ( !export->ops->fs_supports(export, fso_lock_support_async_block) &&
        overlap) ||
-     ( !export->ops->fs_supports(export, lock_support_owner) &&
+     ( !export->ops->fs_supports(export, fso_lock_support_owner) &&
        overlap))
     return STATE_SUCCESS;
 
@@ -1861,16 +1861,16 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
 
   memset(&conflicting_lock, 0, sizeof(conflicting_lock));
 
-  if(export->ops->fs_supports(export, lock_support_owner) ||
+  if(export->ops->fs_supports(export, fso_lock_support_owner) ||
      lock_op != FSAL_OP_UNLOCK)
     {
       if(lock_op == FSAL_OP_LOCKB &&
-	 !export->ops->fs_supports(export, lock_support_async_block))
+	 !export->ops->fs_supports(export, fso_lock_support_async_block))
         lock_op = FSAL_OP_LOCK;
 
       fsal_status = pentry->obj_handle->ops->lock_op(pentry->obj_handle,
 						     export->ops->fs_supports(export,
-									      lock_support_owner) ?
+									      fso_lock_support_owner) ?
 						     powner : NULL,
 						     lock_op,
 						     plock,
@@ -2236,7 +2236,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
     }
 
   /* Decide how to proceed */
-  if(export->ops->fs_supports(export, lock_support_async_block) && blocking == STATE_NLM_BLOCKING)
+  if(export->ops->fs_supports(export, fso_lock_support_async_block) && blocking == STATE_NLM_BLOCKING)
     {
       /* FSAL supports blocking locks, and this is an NLM blocking lock request,
        * request blocking lock from FSAL.
@@ -2328,7 +2328,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
   /* If no conflict in lock list, or FSAL supports async blocking locks,
    * make FSAL call. Don't ask for conflict if we know about a conflict.
    */
-  if(allow || export->ops->fs_supports(export, lock_support_async_block))
+  if(allow || export->ops->fs_supports(export, fso_lock_support_async_block))
     {
       /* Prepare to make call to FSAL for this lock */
       *pstatus = do_lock_op(pentry,
