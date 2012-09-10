@@ -874,6 +874,10 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
 int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp);
 
+int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
+                                  compound_data_t    * data,
+                                  struct nfs_resop4  * resp);
+
 int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp);
 

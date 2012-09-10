@@ -387,7 +387,6 @@ struct cache_entry_t
 
     struct cache_inode_dir__
     {
-      bool_t root; /*< Marks this as the root directory of an export */
       uint32_t nbactive; /*< Number of known active children */
       char *referral; /*< NULL is not a referral.  If not, this a
                           'referral string' */

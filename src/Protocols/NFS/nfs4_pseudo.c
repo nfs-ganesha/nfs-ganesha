@@ -1610,7 +1610,7 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
       return res_LOOKUPP4.status;
     }
 
-  /* Keep the vnode pointer within the data compound */
+  /* Return the reference to the old current entry */
   if (data->current_entry) {
       cache_inode_put(data->current_entry);
   }
@@ -1621,6 +1621,71 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   res_LOOKUPP4.status = NFS4_OK;
   return NFS4_OK;
 }                               /* nfs4_op_lookupp_pseudo */
+
+/**
+ * nfs4_op_lookupp_pseudo_by_exp: looks up into the pseudo fs for the parent directory
+ * 
+ * looks up into the pseudo fs for the parent directory of the export. 
+ *
+ * @param op             [IN]    pointer to nfs4_op arguments
+ * @param data           [INOUT] Pointer to the compound request's data
+ * @paranm exp_root_data [IN]    Pointer to the export root data
+ * @param resp           [IN]    Pointer to nfs4_op results
+ * 
+ * @return NFS4_OK if successfull, other values show an error. 
+ * 
+ */
+int nfs4_op_lookupp_pseudo_by_exp(struct nfs_argop4  * op,
+                                  compound_data_t    * data,
+                                  struct nfs_resop4  * resp)
+{
+  pseudofs_entry_t * psfsentry;
+
+  resp->resop = NFS4_OP_LOOKUPP;
+
+  /* Get the pseudo fs entry related to the export */
+  psfsentry = data->pseudofs->reverse_tab[data->pcontext->export_context->
+                                          fe_export->exp_mounted_on_file_id];
+
+  LogDebug(COMPONENT_NFS_V4_PSEUDO,
+           "LOOKUPP Traversing junction from Export_Id %d Pseudo %s back to pseudo fs id %"PRIu64,
+           data->pcontext->export_context->fe_export->id,
+           data->pcontext->export_context->fe_export->pseudopath,
+           (uint64_t) data->pcontext->export_context->fe_export->exp_mounted_on_file_id);
+
+  /* lookupp on the root on the pseudofs should return NFS4ERR_NOENT (RFC3530, page 166) */
+  if(psfsentry->pseudo_id == 0)
+    {
+      LogDebug(COMPONENT_NFS_V4_PSEUDO,
+               "Returning NFS4ERR_NOENT because pseudo_id == 0");
+      res_LOOKUPP4.status = NFS4ERR_NOENT;
+      return res_LOOKUPP4.status;
+    }
+
+  /* A matching entry was found */
+  if(!nfs4_PseudoToFhandle(&(data->currentFH), psfsentry->parent))
+    {
+      LogEvent(COMPONENT_NFS_V4_PSEUDO,
+               "LOOKUPP Traversing junction from Export_Id %d Pseudo %s back to pseudo fs id %"PRIu64" returning NFS4ERR_SERVERFAULT",
+               data->pcontext->export_context->fe_export->id,
+               data->pcontext->export_context->fe_export->pseudopath,
+               (uint64_t) data->pcontext->export_context->fe_export->exp_mounted_on_file_id);
+      res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
+      return res_LOOKUPP4.status;
+    }
+
+  /* Return the reference to the old current entry */
+  if (data->current_entry)
+    {
+      cache_inode_put(data->current_entry);
+    }
+
+  /* Fill in compound data */
+  set_compound_data_for_pseudo(data);
+
+  res_LOOKUPP4.status = NFS4_OK;
+  return NFS4_OK;
+}
 
 /**
  * nfs4_op_readdir_pseudo: Reads a directory in the pseudo fs 

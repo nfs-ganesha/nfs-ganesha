@@ -116,12 +116,21 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_lookupp_xattr(op, data, resp);
 
+  /* If Filehandle points to the root of the current export, then backup
+   * through junction into the pseudo file system.
+   *
+   * @todo FSF: eventually we need to support junctions between exports
+   *            and that will require different code here.
+   */
+  if(data->current_entry ==
+     data->pcontext->export_context->fe_export->exp_root_cache_inode)
+    return nfs4_op_lookupp_pseudo_by_exp(op, data, resp);
+
   /* Preparying for cache_inode_lookup ".." */
   file_pentry = NULL;
   dir_pentry = data->current_entry;
   name = FSAL_DOT_DOT;
 
-  /* BUGAZOMEU: Faire la gestion des cross junction traverse */
   if((file_pentry
       = cache_inode_lookup(dir_pentry,
                            &name,

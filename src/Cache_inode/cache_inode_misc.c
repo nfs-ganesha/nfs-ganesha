@@ -417,7 +417,6 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
           entry->object.dir.referral = NULL;
           entry->object.dir.parent.ptr = NULL;
           entry->object.dir.parent.gen = 0;
-          entry->object.dir.root = FALSE;
           /* init avl tree */
           cache_inode_avl_init(entry);
           break;
