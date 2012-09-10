@@ -2322,12 +2322,12 @@ static fattr_xdr_result decode_fs_layout_types(XDR *xdr, struct xdr_attrs_args *
 
 static fattr_xdr_result encode_layout_hint(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+        return FATTR_XDR_NOOP;
 }
 
 static fattr_xdr_result decode_layout_hint(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+        return FATTR_XDR_NOOP;
 }
 
 /*
@@ -2336,7 +2336,7 @@ static fattr_xdr_result decode_layout_hint(XDR *xdr, struct xdr_attrs_args *args
 
 static fattr_xdr_result encode_layout_types(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+        return FATTR_XDR_NOOP;
 }
 
 static fattr_xdr_result decode_layout_types(XDR *xdr, struct xdr_attrs_args *args)
@@ -2348,22 +2348,26 @@ static fattr_xdr_result decode_layout_types(XDR *xdr, struct xdr_attrs_args *arg
  * FATTR4_LAYOUT_BLKSIZE
  */
 
-static fattr_xdr_result encode_layout_blocksize(XDR *xdr, struct xdr_attrs_args *args)
+static fattr_xdr_result encode_layout_blocksize(XDR *xdr,
+                                                struct xdr_attrs_args *args)
 {
-	struct fsal_export *export = args->data->pexport->export_hdl;
-	uint32_t blocksize = export->ops->fs_layout_blocksize(export);
 
-	if(args->data == NULL || args->data->pexport == NULL)
-		return FATTR_XDR_NOOP;
-	export = args->data->pexport->export_hdl;
-	if( !xdr_u_int32_t(xdr, &blocksize))
-		return FATTR_XDR_FAILED;
-	return FATTR_XDR_SUCCESS;
+        if (args->data == NULL || args->data->pexport == NULL) {
+                return FATTR_XDR_NOOP;
+        } else {
+                struct fsal_export *export = args->data->pexport->export_hdl;
+                uint32_t blocksize = export->ops->fs_layout_blocksize(export);
+
+                if (!xdr_u_int32_t(xdr, &blocksize)) {
+                        return FATTR_XDR_FAILED;
+                }
+        }
+        return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_layout_blocksize(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+        return FATTR_XDR_NOOP;
 }
 
 
