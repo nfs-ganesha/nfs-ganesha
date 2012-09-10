@@ -3043,11 +3043,7 @@ const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
 		.access = FATTR4_ATTR_READ},
 	[FATTR4_FS_LAYOUT_TYPES] = {
 		.name = "FATTR4_FS_LAYOUT_TYPES",
-#ifdef _PNFS_MDS
 		.supported = 1,
-#else
-		.supported = 0,
-#endif /* _PNFS_MDS */
 		.size_fattr4 = sizeof(fattr4_fs_layout_types),
 		.encode = encode_fs_layout_types,
 		.decode = decode_fs_layout_types,
@@ -3068,11 +3064,7 @@ const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
 		.access = FATTR4_ATTR_READ},
 	[FATTR4_LAYOUT_BLKSIZE] = {
 		.name = "FATTR4_LAYOUT_BLKSIZE",
-#ifdef _PNFS_MDS
 		.supported = 1,
-#else
-		.supported = 0,
-#endif /* _PNFS_MDS */
 		.size_fattr4 = sizeof(fattr4_layout_blksize),
 		.encode = encode_layout_blocksize,
 		.decode = decode_layout_blocksize,
