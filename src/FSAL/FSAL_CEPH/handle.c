@@ -84,6 +84,7 @@ release(struct fsal_obj_handle *obj_pub)
  * This function looks up an object by name in a directory.
  *
  * @param[in]  dir_pub The directory in which to look up the object.
+ * @param[in]  opctx   Request context (user creds, client address)
  * @param[in]  path    The name to look up.
  * @param[out] obj_pub The looked up object.
  *
@@ -91,6 +92,7 @@ release(struct fsal_obj_handle *obj_pub)
  */
 static fsal_status_t
 lookup(struct fsal_obj_handle *dir_pub,
+       const struct req_op_context *opctx,
        const char *path,
        struct fsal_obj_handle **obj_pub)
 {
@@ -132,6 +134,7 @@ lookup(struct fsal_obj_handle *dir_pub,
  * callback.
  *
  * @param[in]  dir_pub     The directory to read
+ * @param[in]  opctx        Request context (user creds, client address etc)
  * @param[in]  entries_req Number of entries to return
  * @param[in]  whence      The cookie indicating resumption, NULL to start
  * @param[in]  dir_state   Opaque, passed to cb
@@ -143,10 +146,12 @@ lookup(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t
 fsal_readdir(struct fsal_obj_handle *dir_pub,
+	     const struct req_op_context *opctx,
              uint32_t entries_req,
              struct fsal_cookie *whence,
              void *dir_state,
              fsal_status_t (*cb)(
+		     const struct req_op_context *opctx,
                      const char *name,
                      unsigned int dtype,
                      struct fsal_obj_handle *dir_hdl,
@@ -208,7 +213,8 @@ fsal_readdir(struct fsal_obj_handle *dir_pub,
                         cookie.size = sizeof(uint64_t);
                         memcpy(cookie.cookie, &de.d_off,
                                sizeof(uint64_t));
-                        fsal_status = cb(de.d_name,
+                        fsal_status = cb(opctx,
+					 de.d_name,
                                          de.d_type,
                                          dir_pub,
                                          dir_state,
@@ -242,6 +248,7 @@ closedir:
  * This function creates an empty, regular file.
  *
  * @param[in]  dir_pub Directory in which to create the file
+ * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  name    Name of file to create
  * @param[out] attrib  Attributes of newly created file
  * @param[out] obj_pub Handle for newly created file
@@ -251,6 +258,7 @@ closedir:
 
 static fsal_status_t
 fsal_create(struct fsal_obj_handle *dir_pub,
+	    const struct req_op_context *opctx,
             const char *name,
             struct attrlist *attrib,
             struct fsal_obj_handle **obj_pub)
@@ -296,6 +304,7 @@ fsal_create(struct fsal_obj_handle *dir_pub,
  * This funcion creates a new directory.
  *
  * @param[in]  dir_pub The parent in which to create
+ * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  name    Name of the directory to create
  * @param[out] attrib  Attributes of the newly created directory
  * @param[out] obj_pub Handle of the newly created directory
@@ -305,6 +314,7 @@ fsal_create(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t
 fsal_mkdir(struct fsal_obj_handle *dir_pub,
+	   const struct req_op_context *opctx,
            const char *name,
            struct attrlist *attrib,
            struct fsal_obj_handle **obj_pub)
@@ -347,6 +357,7 @@ fsal_mkdir(struct fsal_obj_handle *dir_pub,
  * This function creates a new symlink with the given content.
  *
  * @param[in]  dir_pub   Parent directory
+ * @param[in]  opctx   Request context (user creds, client address etc)
  * @param[in]  name      Name of the link
  * @param[in]  link_path Path linked to
  * @param[out] attrib    Attributes of the new symlink
@@ -357,6 +368,7 @@ fsal_mkdir(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t
 fsal_symlink(struct fsal_obj_handle *dir_pub,
+	     const struct req_op_context *opctx,
              const char *name,
              const char *link_path,
              struct attrlist *attrib,
@@ -399,6 +411,7 @@ fsal_symlink(struct fsal_obj_handle *dir_pub,
  * user specified buffer.
  *
  * @param[in]     link_pub    The handle for the link
+ * @param[in]     opctx        Request context (user creds, client address etc)
  * @param[out]    content_buf The buffer to which the content are copied
  * @param[in,out] link_len    Length of buffer/length of content
  *                            (including NUL)
@@ -410,6 +423,7 @@ fsal_symlink(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t
 fsal_readlink(struct fsal_obj_handle *link_pub,
+	      const struct req_op_context *opctx,
               char *content_buf,
               size_t *link_len,
               bool refresh)
@@ -453,13 +467,14 @@ fsal_readlink(struct fsal_obj_handle *link_pub,
  * file.
  *
  * @param[in]  handle_pub Object to interrogate
- * @param[out] attr       Attributes returned
+ * @param[in]  opctx     Request context (user creds, client address etc)
  *
  * @return FSAL status.
  */
 
 static fsal_status_t
-getattrs(struct fsal_obj_handle *handle_pub)
+getattrs(struct fsal_obj_handle *handle_pub,
+	 const struct req_op_context *opctx)
 {
         /* Generic status return */
         int rc = 0;
@@ -490,6 +505,7 @@ getattrs(struct fsal_obj_handle *handle_pub)
  * This function sets attributes on a file.
  *
  * @param[in] handle_pub File to modify.
+ * @param[in] opctx      Request context, includes credentials
  * @param[in] attrs      Attributes to set.
  *
  * @return FSAL status.
@@ -497,6 +513,7 @@ getattrs(struct fsal_obj_handle *handle_pub)
 
 static fsal_status_t
 setattrs(struct fsal_obj_handle *handle_pub,
+	 const struct req_op_context *opctx,
          struct attrlist *attrs)
 {
         /* Generic status return */
@@ -566,6 +583,7 @@ setattrs(struct fsal_obj_handle *handle_pub,
  * in a new directory.
  *
  * @param[in] handle_pub  File to link
+ * @param[in] opctx      Request context, includes credentials
  * @param[in] destdir_pub Directory in which to create link
  * @param[in] name        Name of link
  *
@@ -574,6 +592,7 @@ setattrs(struct fsal_obj_handle *handle_pub,
 
 static fsal_status_t
 fsal_link(struct fsal_obj_handle *handle_pub,
+	  const struct req_op_context *opctx,
           struct fsal_obj_handle *destdir_pub,
           const char *name)
 {
@@ -607,6 +626,7 @@ fsal_link(struct fsal_obj_handle *handle_pub,
  * directory.  We assume most checks are done by the caller.
  *
  * @param[in] olddir_pub Source directory
+ * @param[in] opctx      Request context, includes credentials
  * @param[in] old_name   Original name
  * @param[in] newdir_pub Destination directory
  * @param[in] new_name   New name
@@ -616,6 +636,7 @@ fsal_link(struct fsal_obj_handle *handle_pub,
 
 static fsal_status_t
 fsal_rename(struct fsal_obj_handle *olddir_pub,
+	    const struct req_op_context *opctx,
             const char *old_name,
             struct fsal_obj_handle *newdir_pub,
             const char *new_name)
@@ -652,6 +673,7 @@ fsal_rename(struct fsal_obj_handle *olddir_pub,
  * removed.
  *
  * @param[in] dir_pub Parent directory
+ * @param[in] opctx      Request context, includes credentials
  * @param[in] name    Name to remove
  *
  * @return FSAL status.
@@ -659,6 +681,7 @@ fsal_rename(struct fsal_obj_handle *olddir_pub,
 
 static fsal_status_t
 fsal_unlink(struct fsal_obj_handle *dir_pub,
+	    const struct req_op_context *opctx,
             const char *name)
 {
         /* Generic status return */
@@ -689,6 +712,7 @@ fsal_unlink(struct fsal_obj_handle *dir_pub,
  * This function shortens a file to the given length.
  *
  * @param[in] handle_pub File to truncate
+ * @param[in] opctx      Request context, includes credentials
  * @param[in] length     New file size
  *
  * @return FSAL status.
@@ -696,6 +720,7 @@ fsal_unlink(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t
 fsal_truncate(struct fsal_obj_handle *handle_pub,
+	      const struct req_op_context *opctx,
               uint64_t length)
 {
         /* Generic status return */
@@ -802,6 +827,7 @@ status(struct fsal_obj_handle *handle_pub)
  * Cache inode content lock.
  *
  * @param[in]  handle_pub  File to read
+ * @param[in]  opctx       Request context, includes credentials
  * @param[in]  offset      Point at which to begin read
  * @param[in]  buffer_size Maximum number of bytes to read
  * @param[out] buffer      Buffer to store data read
@@ -813,6 +839,7 @@ status(struct fsal_obj_handle *handle_pub)
 
 static fsal_status_t
 fsal_read(struct fsal_obj_handle *handle_pub,
+	  const struct req_op_context *opctx,
           uint64_t offset,
           size_t buffer_size,
           void *buffer,
@@ -853,6 +880,7 @@ fsal_read(struct fsal_obj_handle *handle_pub,
  * inode content lock.
  *
  * @param[in]  handle_pub   File to write
+ * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer_size  Number of bytes to write
  * @param[in]  buffer       Data to write
@@ -863,6 +891,7 @@ fsal_read(struct fsal_obj_handle *handle_pub,
 
 static fsal_status_t
 fsal_write(struct fsal_obj_handle *handle_pub,
+	   const struct req_op_context *opctx,
            uint64_t offset,
            size_t buffer_size,
            void *buffer,

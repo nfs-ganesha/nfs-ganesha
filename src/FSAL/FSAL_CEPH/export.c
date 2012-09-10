@@ -102,6 +102,7 @@ release(struct fsal_export *export_pub)
 
 static fsal_status_t
 lookup_path(struct fsal_export *export_pub,
+	    const struct req_op_context *opctx,
             const char *path,
             struct fsal_obj_handle **pub_handle)
 {
@@ -268,6 +269,7 @@ create_ds_handle(struct fsal_export *const export_pub,
  */
 static fsal_status_t
 create_handle(struct fsal_export *export_pub,
+	      const struct req_op_context *opctx,
               struct gsh_buffdesc *desc,
               struct fsal_obj_handle **pub_handle)
 {
@@ -334,6 +336,7 @@ out:
 
 static fsal_status_t
 get_fs_dynamic_info(struct fsal_export *export_pub,
+		    const struct req_op_context *opctx,
                     fsal_dynamicfsinfo_t *info)
 {
         /* Full 'private' export */
