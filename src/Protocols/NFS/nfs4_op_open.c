@@ -113,8 +113,7 @@ open4_do_open(struct nfs_argop4  * op,
 		refer.slot = data->slot;
 	}
 
-        if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) ||
-            (args->share_access & OPEN4_SHARE_ACCESS_WRITE)) {
+        if (args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
                 cache_status = cache_inode_access(data->current_entry,
 						  FSAL_WRITE_ACCESS,
 						  data->req_ctx);
