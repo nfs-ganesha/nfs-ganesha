@@ -11,7 +11,6 @@ CONFIG_ON="
 
 # Broken
 # --enable-fsal_up
-# --enable-nfs4_acl
 
 # ON in a list
 # --enable-strict-compile
@@ -63,7 +62,6 @@ CONFIG_ON="
 # --enable-debug-symbols
 # --enable-profiling
 # --enable-strict-compile
-# --enable-nfs4-acl
 # --enable-mspac
 # --enable-9p
 # --enable-9p-rdma
