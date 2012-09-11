@@ -564,7 +564,7 @@ static int nfs4_encode_acl_special_user(int who, char *attrvalsBuffer,
           else
             deltalen = 4 - whostr_2_type_map[i].stringlen % 4;
 
-          utf8len = htonl(whostr_2_type_map[i].stringlen + deltalen);
+          utf8len = htonl(whostr_2_type_map[i].stringlen);
           memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
           *LastOffset += sizeof(int);
 
@@ -612,7 +612,7 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
   else
     deltalen = 4 - (stringlen % 4);
 
-  utf8len = htonl(stringlen + deltalen);
+  utf8len = htonl(stringlen);
   memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
   *LastOffset += sizeof(int);
 
@@ -662,7 +662,7 @@ static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
   else
     deltalen = 4 - (stringlen % 4);
 
-  utf8len = htonl(stringlen + deltalen);
+  utf8len = htonl(stringlen);
   memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
   *LastOffset += sizeof(int);
 
