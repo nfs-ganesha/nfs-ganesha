@@ -1030,7 +1030,8 @@ nfs_rpc_enqueue_req(request_data_t *req)
                 pthread_cond_signal(&wqe->lwe.cv);
             }
             pthread_mutex_unlock(&wqe->lwe.mtx);
-        }
+        } else
+            pthread_spin_unlock(&nfs_req_st.reqs.sp); /* ! SPIN LOCKED */
     }
 
 out:
