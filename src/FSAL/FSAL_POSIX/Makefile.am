@@ -1,6 +1,3 @@
-AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
-
-#noinst_LTLIBRARIES          = libfsalposix.la
 lib_LTLIBRARIES          = libfsalposix.la
 
 libfsalposix_la_SOURCES = interface.c fsal_convert.c   \
@@ -19,6 +16,9 @@ libfsalposix_la_SOURCES = interface.c fsal_convert.c   \
 	                ../../include/err_fsal.h	         \
 	                ../../include/FSAL/FSAL_POSIX/fsal_handle_syscalls.h
 
+libfsalposix_la_CFLAGS   = $(FSAL_CFLAGS) $(SEC_CFLAGS) @POSIX_CFLAGS@
+libfsalposix_la_LDFLAGS  = @POSIX_LDFLAGS@
+libfsalposix_la_LIBADD   = @POSIX_LIB@
 
 new: clean all
 

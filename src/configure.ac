@@ -514,7 +514,6 @@ GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and file
 GA_ENABLE_FLAG(  [debug-memleaks],       [enable allocator features for tracking memory usage],           [-D_DEBUG_MEMLEAKS] )
 GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],            [-D_DEBUG_NFS_SHELL] )
 
-GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		          [-D_WITH_PLPGSQL])
 GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                  [-D_ENABLE_CACHE_PATH])
 GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	          [-D_HANDLE_MAPPING])
 
@@ -575,14 +574,6 @@ if test "$enable_9p_rdma" == "yes"; then
 	    AC_DEFINE(_USE_9P_RDMA, 1, [enable 9P_RDMA support])
         fi
 fi
-
-
-# Database switch (for POSIX FSAL)
-AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
-	     DBTYPE="$withval", DBTYPE="MYSQL" )
-
-AM_CONDITIONAL(USE_PGSQL, test "$DBTYPE" = "PGSQL")
-AM_CONDITIONAL(USE_MYSQL, test "$DBTYPE" = "MYSQL")
 
 
 # kerberos5 location
@@ -753,65 +744,15 @@ if test "$enable_fsal_zfs" == "yes"; then
 fi
 
 if test "$enable_fsal_posix" == "yes"; then
-	case "$DBTYPE" in
-	"PGSQL")
-		# define PG_CONFIG program name and PGSQL_VERSION
-		GA_PGSQL_INFO
-
-		DBEXT_INC_PATH=`$PG_CONFIG --includedir`
-		DBEXT_LIB_PATH=`$PG_CONFIG --libdir`
-		DBEXT_FLAGS="-I$DBEXT_INC_PATH"
-
-		DEBIAN_DB_DEP="postgresql"
-		DEBIAN_DB_VERSION="7.1"
-
-		case "$MYOS" in
-			"LINUX")
-				DBEXT_LDADD="-L$DBEXT_LIB_PATH -lcrypt -lpq"
-				;;
-			"MACOS")
-				DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
-				;;
-			"FREEBSD")
-				DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
-				;;
-			"SOLARIS")
-				DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
-				;;
-		esac
-
-		case "$PGSQL_VERSION" in
-			"7."*)
-				AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
-				;;
-			"8."*|"9."*)
-				AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
-				AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version >= 8.x])
-				;;
-			*)
-				AC_MSG_ERROR("Unsupported PostgreSQL version: $PGSQL_VERSION")
-		esac
-		;;
-
-	"MYSQL")
-		# define MYSQL_CONFIG program name and MYSQL_VERSION
-		GA_MYSQL_INFO
-
-		DBEXT_LDADD=`$MYSQL_CONFIG --libs_r`
-		DBEXT_FLAGS=`$MYSQL_CONFIG --include`
-
-		DEBIAN_DB_DEP="mysql"
-		DEBIAN_DB_VERSION="5.0"
-
-		AC_DEFINE([_USE_MYSQL], 1, [Using MySQL database])
-		;;
-	esac
-
 	AC_DEFINE([_USE_POSIX], 1, [GANESHA is compiled with POSIX FSAL])
-	FSAL_CFLAGS="$DBEXT_FLAGS"
-	FSAL_LDFLAGS="$DBEXT_LDADD"
-	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_POSIX/libfsalposix.la"
+	POSIX_CFLAGS=
+	POSIX_LDFLAGS=
+	POSIX_LIB=
 fi
+
+AC_SUBST(POSIX_CFLAGS)
+AC_SUBST(POSIX_LDFLAGS)
+AC_SUBST(POSIX_LIB)
 
 case $RPCAL in
 	"TIRPC")
