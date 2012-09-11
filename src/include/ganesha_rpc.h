@@ -61,7 +61,7 @@ typedef struct sockaddr_storage sockaddr_t;
 
 #define SOCK_NAME_MAX 128
 
-extern void Svc_dg_soft_destroy(SVCXPRT * xport);
+extern void Svc_dg_soft_destroy(SVCXPRT * xprt);
 extern struct netconfig *getnetconfigent(const char *netid);
 extern void freenetconfigent(struct netconfig *);
 extern SVCXPRT *Svc_vc_create(int, u_int, u_int);
@@ -182,16 +182,23 @@ static inline void
 gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    uint32_t refcnt, req_cnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
         pthread_spin_lock(&xprt->sp);
 
-    ++(xu->refcnt);
+    refcnt = ++(xu->refcnt);
     if (flags & XPRT_PRIVATE_FLAG_INCREQ)
-        ++(xu->req_cnt);
+        req_cnt = ++(xu->req_cnt);
+    else
+        req_cnt = xu->req_cnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
         pthread_spin_unlock(&xprt->sp);
+
+    LogFullDebug(COMPONENT_DISPATCH,
+                 "xprt %p refcnt=%u req_cnt=%u",
+                 xprt, refcnt, req_cnt);
 }
 
 static inline bool

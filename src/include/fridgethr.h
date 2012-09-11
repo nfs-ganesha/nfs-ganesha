@@ -59,6 +59,7 @@ typedef struct fridge_thr_context fridge_thr_contex_t;
 
 typedef struct thr_fridge
 {
+    char *s;
     pthread_mutex_t mtx;
     uint32_t thr_max;
     uint32_t stacksize;
@@ -72,7 +73,7 @@ typedef struct thr_fridge
 
 #define FRIDGETHR_FLAG_NONE  0x0000
 
-int fridgethr_init(thr_fridge_t *);
+int fridgethr_init(thr_fridge_t *, const char *s);
 
 struct fridge_thr_context *
 fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),

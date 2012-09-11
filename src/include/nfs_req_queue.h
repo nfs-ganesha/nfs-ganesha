@@ -109,7 +109,7 @@ static inline void nfs_rpc_q_init(struct req_q *q)
 }
 
 static inline uint32_t
-nfs_rpc_q_next_ix(void)
+nfs_rpc_q_next_slot(void)
 {
     uint32_t ix;
     pthread_spin_lock(&nfs_req_st.reqs.sp);
