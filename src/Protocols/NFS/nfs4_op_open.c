@@ -1081,18 +1081,7 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         OPEN4res *resp = &resop->nfs_resop4_u.opopen;
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-        /* If the file is opened for write, OPEN4 while deny share
-         * write access, in this case, check caller has write access
-         * to the file */
-        if(args->share_deny & OPEN4_SHARE_DENY_WRITE) {
-                if(cache_inode_access(pentry, wr_acc,
-                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
-                        return NFS4ERR_ACCESS;
-                }
-        }
-
-        /* Same check on read: check for readability of a file before opening
-         * it for read */
+        /* If access includes read, check for read permission on file */
         if(args->share_access & OPEN4_SHARE_ACCESS_READ) {
                 if(cache_inode_access(pentry, rd_acc,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
@@ -1113,7 +1102,7 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         else
                 resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
 
-        /* Same check on write */
+        /* If access includes write, check for write permission on file */
         if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
                 if(cache_inode_access(pentry, wr_acc,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
