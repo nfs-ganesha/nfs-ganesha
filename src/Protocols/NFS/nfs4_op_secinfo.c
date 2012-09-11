@@ -66,125 +66,139 @@
 
 extern gss_OID_desc krb5oid;
 
-int nfs4_op_secinfo(struct nfs_argop4 *op,
-                    compound_data_t *data,
-                    struct nfs_resop4 *resp)
+/**
+ * @brief NFSv4 SECINFO operation
+ *
+ * This function impelments the NFSv4 SECINFO operation.
+ *
+ * @param[in]     op   Operation reqest
+ * @param[in,out] data Compound data
+ * @param[out]    resp Response
+ *
+ * @return NFS status codes.
+ */
+
+int
+nfs4_op_secinfo(struct nfs_argop4 *op,
+                compound_data_t *data,
+                struct nfs_resop4 *resp)
 {
-  char *secinfo_fh_name = NULL;
-  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  cache_entry_t *entry_src = NULL;
-  struct attrlist attr_secinfo;
-  sec_oid4 v5oid = {krb5oid.length, (char *)krb5oid.elements};
-  int num_entry = 0;
+        char *secinfo_fh_name = NULL;
+        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+        cache_entry_t *entry_src = NULL;
+        sec_oid4 v5oid = {krb5oid.length, (char *)krb5oid.elements};
+        int num_entry = 0;
 
-  resp->resop = NFS4_OP_SECINFO;
-  res_SECINFO4.status = NFS4_OK;
+        resp->resop = NFS4_OP_SECINFO;
+        res_SECINFO4.status = NFS4_OK;
 
-  /* Read name from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
-  res_SECINFO4.status = nfs4_utf8string2dynamic(&arg_SECINFO4.name,
-						UTF8_SCAN_ALL,
-						&secinfo_fh_name);
-  if (res_SECINFO4.status != NFS4_OK) {
-      goto out;
-  }
+        /* Read name from uft8 strings, if one is empty then returns
+           NFS4ERR_INVAL */
+        res_SECINFO4.status = nfs4_utf8string2dynamic(&arg_SECINFO4.name,
+                                                      UTF8_SCAN_ALL,
+                                                      &secinfo_fh_name);
+        if (res_SECINFO4.status != NFS4_OK) {
+                goto out;
+        }
 
-  /*
-   * Do basic checks on a filehandle
-   * SecInfo is done only on a directory
-   */
-  res_SECINFO4.status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-  if(res_SECINFO4.status != NFS4_OK)
-    goto out;
+        /* Do basic checks on a filehandle SecInfo is done only on a
+           directory */
+        res_SECINFO4.status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+        if (res_SECINFO4.status != NFS4_OK) {
+                goto out;
+        }
 
-  if (nfs_in_grace())
-    {
-      res_SECINFO4.status = NFS4ERR_GRACE;
-      goto out;
-    }
+        if ((entry_src
+             = cache_inode_lookup(data->current_entry,
+                                  secinfo_fh_name,
+                                  data->req_ctx,
+                                  &cache_status)) == NULL) {
+                res_SECINFO4.status = nfs4_Errno(cache_status);
+                goto out;
+        }
 
-  if((entry_src = cache_inode_lookup(data->current_entry,
-                                         secinfo_fh_name,
-                                         &attr_secinfo,
-                                         data->req_ctx, &cache_status)) == NULL)
-    {
-      res_SECINFO4.status = nfs4_Errno(cache_status);
-      goto out;
-    }
+        /* Get the number of entries */
+        if (data->pexport->options & EXPORT_OPTION_AUTH_NONE) {
+                num_entry++;
+        }
+        if (data->pexport->options & EXPORT_OPTION_AUTH_UNIX) {
+                num_entry++;
+        }
+        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
+                num_entry++;
+        }
+        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
+                num_entry++;
+        }
+        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+                num_entry++;
+        }
 
-  /* get the number of entries */
-  if (data->pexport->options & EXPORT_OPTION_AUTH_NONE)
-    num_entry++;
-  if (data->pexport->options & EXPORT_OPTION_AUTH_UNIX)
-    num_entry++;
-  if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_NONE)
-    num_entry++;
-  if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_INTG)
-    num_entry++;
-  if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
-    num_entry++;
+        if ((res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val =
+             gsh_calloc(num_entry, sizeof(secinfo4))) == NULL) {
+                res_SECINFO4.status = NFS4ERR_SERVERFAULT;
+                cache_inode_put(entry_src);
+                goto out;
+        }
 
-  if((res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val =
-      gsh_calloc(num_entry, sizeof(secinfo4))) == NULL)
-    {
-      res_SECINFO4.status = NFS4ERR_SERVERFAULT;
-      cache_inode_put(entry_src);
-      goto out;
-    }
+        /**
+         * @todo We have the opportunity to associate a preferred
+         * security triple with a specific fs/export.  For now, list
+         * all implemented.
+         */
+        int idx = 0;
+        if (data->pexport->options & EXPORT_OPTION_AUTH_NONE) {
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                        .flavor = AUTH_NONE;
+        }
+        if (data->pexport->options & EXPORT_OPTION_AUTH_UNIX) {
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                        .flavor = AUTH_UNIX;
+        }
+        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
+                        = RPCSEC_GSS;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                        .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                        .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                        .secinfo4_u.flavor_info.oid = v5oid;
+        }
+        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
+                        = RPCSEC_GSS;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                        .secinfo4_u.flavor_info.service
+                        = RPCSEC_GSS_SVC_INTEGRITY;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                        .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                        .secinfo4_u.flavor_info.oid = v5oid;
+        }
+        if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                        .flavor = RPCSEC_GSS;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                        .secinfo4_u.flavor_info.service
+                        = RPCSEC_GSS_SVC_PRIVACY;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+                        .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+                res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+                        .secinfo4_u.flavor_info.oid = v5oid;
+        }
+        res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
-  /* XXX we have the opportunity to associate a preferred security triple
-   * with a specific fs/export.  For now, list all implemented. */
-  int idx = 0;
-  if (data->pexport->options & EXPORT_OPTION_AUTH_NONE)
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].flavor
-           = AUTH_NONE;
-  if (data->pexport->options & EXPORT_OPTION_AUTH_UNIX)
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].flavor
-           = AUTH_UNIX;
-  if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_NONE)
-    {
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
-           = RPCSEC_GSS;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-           .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-           .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-           .secinfo4_u.flavor_info.oid = v5oid;
-    }
-  if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_INTG)
-    {
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor
-           = RPCSEC_GSS;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].secinfo4_u
-           .flavor_info.service = RPCSEC_GSS_SVC_INTEGRITY;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].secinfo4_u.
-           flavor_info.qop = GSS_C_QOP_DEFAULT;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].secinfo4_u
-           .flavor_info.oid = v5oid;
-    }
-  if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
-    {
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-           .flavor = RPCSEC_GSS;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-           .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-           .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-           .secinfo4_u.flavor_info.oid = v5oid;
-    }
-  res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = idx;
+        cache_inode_put(entry_src);
 
-  cache_inode_put(entry_src);
+out:
 
- out:
+        if (secinfo_fh_name) {
+                gsh_free(secinfo_fh_name);
+                secinfo_fh_name = NULL;
+        }
 
-  if (secinfo_fh_name) {
-    gsh_free(secinfo_fh_name);
-    secinfo_fh_name = NULL;
-  }
-
-  return res_SECINFO4.status;
+        return res_SECINFO4.status;
 } /* nfs4_op_secinfo */
 
 /**
@@ -197,6 +211,10 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
  */
 void nfs4_op_secinfo_Free(SECINFO4res *resp)
 {
-  /* Nothing to be done */
-  return;
+        if ((resp->status = NFS4_OK) &&
+            (resp->SECINFO4res_u.resok4.SECINFO4resok_val)) {
+                gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
+                resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
+        }
+        return;
 } /* nfs4_op_secinfo_Free */

@@ -70,7 +70,6 @@
  * pointed to by attr is NOT filled in.
  *
  * @param[in]     fsdata     File system data
- * @param[out]    attr       The attributes of the got entry
  * @param[in]     associated Entry that may be equal to the got entry
  * @param[in]     req_ctx    Request context (user creds, client address etc)
  * @param[out]    status     Returned status
@@ -80,7 +79,6 @@
  */
 cache_entry_t *
 cache_inode_get(cache_inode_fsal_data_t *fsdata,
-                struct attrlist *attr,
                 cache_entry_t *associated,
                 const struct req_op_context *req_ctx,
                 cache_inode_status_t *status)
@@ -129,9 +127,6 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                     /* Take a quick exit so we don't invert lock
                        ordering. */
                     HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-/** @TODO bad code, bad code. for now, NULL kills this. later, zip from args */
-		    if(attr != NULL)
-			*attr = entry->obj_handle->attributes;
                     return entry;
                }
           }
@@ -140,16 +135,16 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
      if (!entry) {
           /* Cache miss, allocate a new entry */
-	  exp_hdl = fsdata->export;
-	  fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
-						    &fsdata->fh_desc,
-						    &new_hdl);
-	  if( FSAL_IS_ERROR( fsal_status )) {
-		  *status = cache_inode_error_convert(fsal_status);
-		  LogDebug(COMPONENT_CACHE_INODE,
-			   "could not get create_handle object");
-		  return NULL;
-	  }
+          exp_hdl = fsdata->export;
+          fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
+                                                    &fsdata->fh_desc,
+                                                    &new_hdl);
+          if (FSAL_IS_ERROR( fsal_status )) {
+               *status = cache_inode_error_convert(fsal_status);
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "could not get create_handle object");
+               return NULL;
+          }
 
           if ((entry
                = cache_inode_new_entry(new_hdl,
@@ -186,22 +181,6 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
          != CACHE_INODE_SUCCESS) {
        goto out_put;
      }
-
-     /* Set the returned attributes */
-     *status = cache_inode_lock_trust_attrs(entry, req_ctx);
-
-     /* cache_inode_lock_trust_attrs may fail, in that case, the
-        attributes are wrong and pthread_rwlock_unlock can't be called
-        again */
-     if(*status != CACHE_INODE_SUCCESS)
-       {
-         goto out_put;
-       }
-/** @TODO bad code, bad code. for now, NULL kills this. later, zip from args */
-      if(attr != NULL)
-	      *attr = entry->obj_handle->attributes;
-
-     pthread_rwlock_unlock(&entry->attr_lock);
 
      return entry;
 

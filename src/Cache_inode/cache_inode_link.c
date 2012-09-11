@@ -24,12 +24,10 @@
  */
 
 /**
- * \file    cache_inode_link.c
- * \date    $Date: 2005/11/28 17:02:26 $
- * \version $Revision: 1.16 $
- * \brief   Creation of an hardlink.
+ * @file    cache_inode_link.c
+ * @brief   Creation of an hardlink.
  *
- * cache_inode_link.c : Creation of an hardlink.
+ * Creation of a hardlink.
  *
  *
  */
@@ -65,7 +63,6 @@
  *                      not be a directory.
  * @param[in]  dest_dir The directory in which to create the new name
  * @param[in]  name     The new name to add to the file
- * @param[out] attr     The attributes on entry after the operation
  * @param[in]  context  FSAL credentials
  * @param[out] status   returned status.
  *
@@ -78,7 +75,6 @@
 cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                                       cache_entry_t *dest_dir,
                                       const char *name,
-                                      struct attrlist *attr,
                                       struct req_op_context *req_ctx,
                                       cache_inode_status_t *status)
 {
@@ -171,7 +167,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      }
 
      cache_inode_fixup_md(entry);
-     *attr = entry->obj_handle->attributes;
      pthread_rwlock_unlock(&entry->attr_lock);
      srcattrlock = false;
 

@@ -512,16 +512,16 @@ int nfs4_op_access_pseudo(struct nfs_argop4 *op,
 }                               /* nfs4_op_access_pseudo */
 
 /**
- * nfs4_op_lookup_pseudo: looks up into the pseudo fs.
- * 
- * looks up into the pseudo fs. If a junction traversal is detected, does the necessary stuff for correcting traverse.
+ * @brief Looks up into the pseudo fs.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * Looks up into the pseudo fs. If a junction traversal is detected,
+ * does the necessary stuff for correcting traverse.
  *
- * @return NFS4_OK if successfull, other values show an error.  
- * 
+ * @param[in]     op    nfs4_op arguments
+ * @param[in,out] data  Compound request's data
+ * @param[in]     resp  nfs4_op results
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  */
 
 /* Shorter notation to avoid typos */
@@ -541,7 +541,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   fsal_status_t fsal_status;
 /*   cache_inode_fsal_data_t fsdata; */
   char pathfsal[MAXPATHLEN] ;
-  struct attrlist attr;
   struct fsal_export *exp_hdl;
   struct fsal_obj_handle *fsal_handle;
   cache_entry_t *pentry = NULL;
@@ -697,25 +696,12 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           return res_LOOKUP4.status;
         }
 
-      /* Get the attributes (costless: the attributes wer cached when the root pentry was created */
-      if(cache_inode_getattr(pentry,
-                             &attr,
-                             data->req_ctx,
-                             &cache_status) != CACHE_INODE_SUCCESS)
-        {
-          LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(pentry);
-          return res_LOOKUP4.status;
-        }
-
       /* Keep the pentry within the compound data */
       if (data->current_entry) {
           cache_inode_put(data->current_entry);
       }
       data->current_entry = pentry;
-      data->current_filetype = attr.type;
+      data->current_filetype = pentry->type;
 
     }                           /* else */
 
@@ -788,16 +774,15 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
 }                               /* nfs4_op_lookupp_pseudo */
 
 /**
- * nfs4_op_readdir_pseudo: Reads a directory in the pseudo fs 
- * 
+ * @brief Reads a directory in the pseudo fs
+ *
  * Reads a directory in the pseudo fs.
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
- * 
+ * @param[in]     op    nfs4_op arguments
+ * @param[in,out] data  Compound request's data
+ * @param[out]    resp  nfs4_op results
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  */
 
 /* shorter notation to avoid typo */
@@ -820,7 +805,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   exportlist_t *save_pexport;
   nfs_fh4 entryFH;
   cache_inode_fsal_data_t fsdata;
-  struct attrlist attr;
   struct fsal_export *exp_hdl;
   struct fsal_obj_handle *fsal_handle;
   fsal_status_t fsal_status;
@@ -956,25 +940,12 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4.status;
         }
 
-      /* Get the attributes (costless: the attributes was cached when the root pentry was created */
-      if(cache_inode_getattr(pentry,
-                             &attr,
-                             data->req_ctx,
-                             &cache_status) != CACHE_INODE_SUCCESS)
-        {
-          LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(pentry);
-          return res_READDIR4.status;
-        }
-
       /* Keep the pentry within the compound data */
       if (data->current_entry) {
           cache_inode_put(data->current_entry);
       }
       data->current_entry = pentry;
-      data->current_filetype = attr.type;
+      data->current_filetype = pentry->type;
 
       /* redo the call on the other side of the junction */
       return nfs4_op_readdir(op, data, resp);
@@ -1124,9 +1095,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               return res_READDIR4.status;
             }
           /* Add the entry to the cache as a root. There has to be a better way. */
-	  fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
+          fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
           if((pentry = cache_inode_make_root(fsal_handle,
-					     &cache_status)) == NULL)
+                                             &cache_status)) == NULL)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
@@ -1134,27 +1105,16 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
             }
-          /* Finally, get the attributes */
-          if(cache_inode_getattr(pentry,
-                             &attr,
-                             data->req_ctx,
-                             &cache_status) != CACHE_INODE_SUCCESS)
-            {
-              LogMajor(COMPONENT_NFS_V4_PSEUDO,
-                   "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
-            }
-          if(nfs4_FSALattr_To_Fattr(&attr,
-				    &(entry_nfs_array[i].attrs),
-				    data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
+          if(cache_entry_To_Fattr(pentry,
+                                  &(entry_nfs_array[i].attrs),
+                                  data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
             {
               /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
               entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
               entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
             }
            data->pexport = save_pexport;
-      }        
+      }
       /* Chain the entry together */
       entry_nfs_array[i].nextentry = NULL;
       if(i != 0)

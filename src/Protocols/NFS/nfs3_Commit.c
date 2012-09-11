@@ -65,12 +65,12 @@
  *
  * Implements NFSPROC3_COMMIT.
  *
- * @param[in]  parg     NFS arguments union
- * @param[in]  pexport  NFS export list
- * @param[in]  pcontext Credentials to be used for this request
- * @param[in]  pworker  Worker thread data
- * @param[in]  preq     SVC request related to this call
- * @param[out] pres     Structure to contain the result of the call
+ * @param[in]  arg     NFS arguments union
+ * @param[in]  export  NFS export list
+ * @param[in]  req_ctx Request context
+ * @param[in]  worker  Worker thread data
+ * @param[in]  req     SVC request related to this call
+ * @param[out] res     Structure to contain the result of the call
  *
  * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
@@ -78,102 +78,107 @@
  *
  */
 
-int nfs3_Commit(nfs_arg_t *parg,
-                exportlist_t *pexport,
-		struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres)
+int
+nfs3_Commit(nfs_arg_t *arg,
+            exportlist_t *export,
+            struct req_op_context *req_ctx,
+            nfs_worker_data_t *worker,
+            struct svc_req *req,
+            nfs_res_t *res)
 {
-  cache_inode_status_t cache_status;
-  cache_entry_t *pentry = NULL;
-  struct attrlist pre_attr;
-  struct attrlist *ppre_attr;
-  uint64_t typeofcommit;
-  int rc = NFS_REQ_OK;
+        cache_inode_status_t cache_status;
+        cache_entry_t *entry = NULL;
+        pre_op_attr pre_attr;
+        uint64_t typeofcommit;
+        int rc = NFS_REQ_OK;
 
-  if(isDebug(COMPONENT_NFSPROTO))
-    {
-      char str[LEN_FH_STR];
-      sprint_fhandle3(str, &(parg->arg_commit3.file));
-      LogDebug(COMPONENT_NFSPROTO,
-               "REQUEST PROCESSING: Calling nfs3_Commit handle: %s", str);
-    }
+        if (isDebug(COMPONENT_NFSPROTO)) {
+                char str[LEN_FH_STR];
+                sprint_fhandle3(str, &(arg->arg_commit3.file));
+                LogDebug(COMPONENT_NFSPROTO,
+                         "REQUEST PROCESSING: Calling nfs3_Commit handle: %s",
+                         str);
+        }
 
-  /* to avoid setting it on each error case */
-  pres->res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow = FALSE;
-  pres->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow = FALSE;
-  ppre_attr = NULL;
+        /* To avoid setting it on each error case */
+        res->res_commit3.COMMIT3res_u.resfail.file_wcc.before
+                .attributes_follow = FALSE;
+        res->res_commit3.COMMIT3res_u.resfail.file_wcc.after
+                .attributes_follow = FALSE;
 
-  pentry = nfs_FhandleToCache(req_ctx,
-                              preq->rq_vers, NULL, &parg->arg_commit3.file,
-                              NULL, NULL, &pres->res_commit3.status, NULL,
-                              &pre_attr, pexport, &rc);
-  if(pentry == NULL)
-    goto out;
+        entry = nfs_FhandleToCache(req_ctx,
+                                   req->rq_vers, NULL, &arg->arg_commit3.file,
+                                   NULL, NULL, &res->res_commit3.status, NULL,
+                                   export, &rc);
+        if (entry == NULL) {
+                goto out;
+        }
 
-  if((pexport->use_commit) &&
-     (!pexport->use_ganesha_write_buffer))
-    typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
-  else if((pexport->use_commit) &&
-          (pexport->use_ganesha_write_buffer))
-    typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;
-  else
-    {
-      /* We only do stable writes with this export so no need to execute a commit */
-      rc = NFS_REQ_OK;
-      goto out;
-    }
+        nfs_SetPreOpAttr(entry,
+                         req_ctx,
+                         &pre_attr);
 
-  /* Do not use DC if data cache is enabled, the data is kept synchronous is the DC */
-  if(cache_inode_commit(pentry,
-                        parg->arg_commit3.offset,
-                        parg->arg_commit3.count,
-                        typeofcommit,
-                        req_ctx,
-                        &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      pres->res_commit3.status = NFS3ERR_IO;;
+        if ((export->use_commit) &&
+            (!export->use_ganesha_write_buffer)) {
+                typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
+        } else if((export->use_commit) &&
+                  (export->use_ganesha_write_buffer)) {
+                typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;
+        } else {
+                /* We only do stable writes with this export so no
+                   need to execute a commit */
+                rc = NFS_REQ_OK;
+                goto out;
+        }
 
-      nfs_SetWccData(pexport,
-                     ppre_attr,
-                     ppre_attr, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
+        if (cache_inode_commit(entry,
+                               arg->arg_commit3.offset,
+                               arg->arg_commit3.count,
+                               typeofcommit,
+                               req_ctx,
+                               &cache_status) != CACHE_INODE_SUCCESS) {
+                res->res_commit3.status = NFS3ERR_IO;;
 
-      rc = NFS_REQ_OK;
-      goto out;
-    }
+                nfs_SetWccData(&pre_attr,
+                               entry,
+                               req_ctx,
+                               &(res->res_commit3.COMMIT3res_u.resfail
+                                 .file_wcc));
 
-  /* Set the pre_attr */
-  ppre_attr = &pre_attr;
+                rc = NFS_REQ_OK;
+                goto out;
+        }
 
-  nfs_SetWccData(pexport,
-                 ppre_attr, ppre_attr, &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
+        nfs_SetWccData(&pre_attr,
+                       entry,
+                       req_ctx,
+                       &(res->res_commit3.COMMIT3res_u.resok
+                         .file_wcc));
 
-  /* Set the write verifier */
-  memcpy(pres->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
-         sizeof(writeverf3));
-  pres->res_commit3.status = NFS3_OK;
+        /* Set the write verifier */
+        memcpy(res->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
+               sizeof(writeverf3));
+        res->res_commit3.status = NFS3_OK;
 
- out:
+out:
 
-  if (pentry)
-    {
-      cache_inode_put(pentry);
-    }
+        if (entry) {
+                cache_inode_put(entry);
+        }
 
-  return rc;
+        return rc;
 }                               /* nfs3_Commit */
 
 /**
- * nfs3_Commit_Free: Frees the result structure allocated for nfs3_Commit.
- * 
- * Frees the result structure allocated for nfs3_Commit.
- * 
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @brief Frees the result structure allocated for nfs3_Commit.
+ *
+ * This function frees the result structure allocated for nfs3_Commit.
+ *
+ * @param[in,out] res Result structure
  *
  */
-void nfs3_Commit_Free(nfs_res_t * pres)
+void
+nfs3_Commit_Free(nfs_res_t * pres)
 {
-  /* Nothing to do */
-  return;
-}                               /* nfs3_Commit_Free */
+        return;
+} /* nfs3_Commit_Free */

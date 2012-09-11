@@ -21,10 +21,10 @@
  */
 
 /**
- * \file    pnfs_common.h
+ * \file    pnfs_utils.h
  * \brief   Common utility functions for pNFS
  *
- * fsal_pnfs.h: pNFS utility functions
+ * pnfs_utils.h: pNFS utility functions
  *
  *
  */
@@ -34,47 +34,12 @@
 
 #include <stdint.h>
 #include "nfs4.h"
+#include "fsal_pnfs.h"
 
 /* The next 3 line are mandatory for proper autotools based management */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif                          /* HAVE_CONFIG_H */
-
-/******************************************************
- *               Basic in-memory types
- ******************************************************/
-
-/**
- * @brief Represent a layout segment
- *
- * This structure not only represents segments granted by the FSAL or
- * being committed or returned, but also selectors as used in
- * LAYOUTRETURN4_FILE.
- */
-
-struct pnfs_segment {
-     /** The IO mode (must be read or write) */
-     layoutiomode4 io_mode;
-     /** The offset of the segment */
-     offset4 offset;
-     /** The length of the segment */
-     length4 length;
-};
-
-/**
- * @brief FSAL view of the NFSv4.1 deviceid4.
- */
-
-struct pnfs_deviceid {
-     /** Identifier for the given export.  Currently ganesha uses an
-      *  unsigned short as the export identifier, but we want room for
-      *  whatever the multi-FSAL work ends up needing. */
-     uint64_t export_id;
-     /** Low quad of the deviceid, must be unique within a given export. */
-     uint64_t devid;
-};
-
-
 
 /******************************************************
  *               Utility functions for ranges
@@ -234,6 +199,34 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
                                   uint16_t proto,
                                   uint32_t addr,
                                   uint16_t port);
+
+/**
+ * This type exists soleley so arrays of hosts can be passed to
+ * FSAL_encode_multipath_list.
+ *
+ */
+
+typedef struct fsal_multipath_member
+{
+     uint16_t proto;
+     uint32_t addr;
+     uint16_t port;
+} fsal_multipath_member_t;
+
+nfsstat4
+FSAL_encode_file_layout(XDR *xdrs,
+                        const struct pnfs_deviceid *deviceid,
+                        nfl_util4 util,
+                        const uint32_t first_idx,
+                        const offset4 ptrn_ofst,
+                        const unsigned int export_id,
+                        const uint32_t num_fhs,
+                        const struct gsh_buffdesc *fhs);
+
+
+nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs,
+                                  const uint32_t num_hosts,
+                                  const fsal_multipath_member_t *hosts);
 
 nfsstat4 posix2nfs4_error(int posix_errorcode);
 

@@ -502,8 +502,6 @@ open4_create(OPEN4args           * arg,
         bool                 verf_provided = false;
         /* Client provided verifier, split into two piees */
         uint32_t             verf_hi = 0, verf_lo = 0;
-        /* Attributes of existing file */
-        struct attrlist      exist_attr;
 
         *entry = NULL;
 
@@ -630,7 +628,6 @@ open4_create(OPEN4args           * arg,
                                               create step. */
                                            0600,
                                            NULL,
-                                           &exist_attr,
                                            data->req_ctx,
                                            &cache_status);
 
@@ -646,12 +643,10 @@ open4_create(OPEN4args           * arg,
                         entry_newfile = NULL;
                         return nfs4_Errno(cache_status);
                 } else if (verf_provided &&
-                           ((!FSAL_TEST_MASK(exist_attr.mask,
-                                             ATTR_ATIME)) ||
-                            (!FSAL_TEST_MASK(exist_attr.mask,
-                                             ATTR_MTIME)) ||
-                            (exist_attr.atime.seconds != verf_hi) ||
-                            (exist_attr.mtime.seconds != verf_lo))) {
+                           !cache_inode_create_verify(entry_newfile,
+                                                      data->req_ctx,
+                                                      verf_hi,
+                                                      verf_lo)) {
                         cache_inode_put(entry_newfile);
                         entry_newfile = NULL;
                         return nfs4_Errno(cache_status);
@@ -756,7 +751,6 @@ open4_claim_null(OPEN4args        * arg,
         case OPEN4_NOCREATE:
                 *entry = cache_inode_lookup(parent,
                                             filename,
-                                            NULL,
                                             data->req_ctx,
                                             &cache_status);
 

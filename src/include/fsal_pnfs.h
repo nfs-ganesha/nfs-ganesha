@@ -31,15 +31,41 @@
 #ifndef FSAL_PNFS_H_
 #define FSAL_PNFS_H_
 
-/* The next 3 line are mandatory for proper autotools based management */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif                          /* HAVE_CONFIG_H */
-
-#include <stdint.h>
-#include "pnfs_common.h"
-
 #include "nfs4.h"
+
+/******************************************************
+ *               Basic in-memory types
+ ******************************************************/
+
+/**
+ * @brief Represent a layout segment
+ *
+ * This structure not only represents segments granted by the FSAL or
+ * being committed or returned, but also selectors as used in
+ * LAYOUTRETURN4_FILE.
+ */
+
+struct pnfs_segment {
+     /** The IO mode (must be read or write) */
+     layoutiomode4 io_mode;
+     /** The offset of the segment */
+     uint64_t offset;
+     /** The length of the segment */
+     uint64_t length;
+};
+
+/**
+ * @brief FSAL view of the NFSv4.1 deviceid4.
+ */
+
+struct pnfs_deviceid {
+     /** Identifier for the given export.  Currently ganesha uses an
+      *  unsigned short as the export identifier, but we want room for
+      *  whatever the multi-FSAL work ends up needing. */
+     uint64_t export_id;
+     /** Low quad of the deviceid, must be unique within a given export. */
+     uint64_t devid;
+};
 
 /******************************************************
  *         FSAL MDS function argument structs
@@ -54,13 +80,13 @@ struct fsal_layoutget_arg {
         layouttype4 type;
         /** The minimum length that must be granted if a layout is to be
          *  granted at all. */
-        length4 minlength;
+        uint64_t minlength;
         /** Ths FSAL must use this value (in network byte order) as the
          *  high quad of any deviceid4 it returns in the loc_body. */
         uint64_t export_id;
         /** The maximum number of bytes the client is willing to accept
          in the response, including XDR overhead. */
-     count4 maxcount;
+        uint32_t maxcount;
 };
 
 /**
@@ -131,6 +157,10 @@ struct fsal_layoutreturn_arg {
          *  dispose is true, any memory allocated for this value must be
          *  freed. */
         void *fsal_seg_data;
+        /** Pointer to layout specific data supplied by LAYOUTRECALL.  If
+         *  this LAYOUTRETURN completly satisfies an invoked LAYOUTRECALL, this
+         *  will be the fsal_recall_data supplied there. Else NULL */
+        void *fsal_recall_data;
         /** Whether this return was synthesized a result of
          *  return_on_close or lease expiration. */
         bool synthetic;
@@ -160,7 +190,7 @@ struct fsal_layoutcommit_arg {
         bool new_offset;
         /** The offset of the last byte written, if new_offset if set,
          *  otherwise undefined. */
-        offset4 last_write;
+        uint64_t last_write;
         /** True if the client provided a new value for mtime */
         bool time_changed;
         /** If new_time is true, the client-supplied modification tiem
@@ -182,7 +212,7 @@ struct fsal_layoutcommit_res {
         /** True if the FSAL is returning a new file size */
         bool size_supplied;
         /** The new file size returned by the FSAL */
-        length4 new_size;
+        uint64_t new_size;
         /** The FSAL has completed the LAYOUTCOMMIT operation and
          *  FSAL_layoutcommit need not be called again, even if more
          *  segments are left in the layout. */
@@ -198,12 +228,12 @@ struct fsal_getdevicelist_res {
          *  to begin.  Output, cookie that may be supplied to get the
          *  entry after the alst one returned.  Undefined if EOF is
          *  set. */
-        nfs_cookie4 cookie;
+        uint64_t cookie;
         /** For any non-zero cookie, this must be the verifier returned
          *  from a previous call to getdevicelist.  The FSAL may use this
          *  value to verify that the cookie is not out of date. A cookie
          *  verifier may be supplied by the FSAL on output. */
-        verifier4 cookieverf;
+        uint64_t cookieverf;
         /** True if the last deviceid has been returned. */
         bool eof;
 };

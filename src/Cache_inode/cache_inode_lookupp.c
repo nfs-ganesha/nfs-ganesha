@@ -89,7 +89,6 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 {
      cache_entry_t *parent = NULL;
      fsal_status_t fsal_status;
-     struct attrlist object_attributes;
      cache_inode_fsal_data_t fsdata;
 
      /* Set the return default to CACHE_INODE_SUCCESS */
@@ -145,7 +144,6 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           fsdata.export = parent_handle->export;
 
           if((parent = cache_inode_get(&fsdata,
-                                       &object_attributes,
                                        entry,
                                        req_ctx,
                                        status)) == NULL) {

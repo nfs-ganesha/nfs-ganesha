@@ -168,8 +168,6 @@ static inline void src_dest_unlock(cache_entry_t *src,
  * @param[in]  oldname    The current name of the file
  * @param[in]  dir_dest   The destination directory
  * @param[in]  newname    The name to be assigned to the object
- * @param[out] attr_src   Source directory attributes after operation
- * @param[out] pattr_dest Destination directory attributes after operation
  * @param[in]  context    FSAL credentials
  * @param[out] status     Returned status
  *
@@ -184,8 +182,6 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                         const char *oldname,
                                         cache_entry_t *dir_dest,
                                         const char *newname,
-                                        struct attrlist *attr_src,
-                                        struct attrlist *attr_dest,
                                         struct req_op_context *req_ctx,
                                         cache_inode_status_t *status)
 {
@@ -371,7 +367,6 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
   if(dir_src->type == DIRECTORY)
     {
       phandle_dirsrc = dir_src->obj_handle;
-      attr_src = &dir_src->obj_handle->attributes;
     }
   else
     {
@@ -417,13 +412,6 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
       src_dest_unlock(dir_src, dir_dest);
       goto out;
     }
-
-  /* Manage the returned attributes */
-  if(attr_src != NULL)
-    *attr_src = dir_src->obj_handle->attributes;
-
-  if(attr_dest != NULL)
-    *attr_dest = dir_dest->obj_handle->attributes;
 
   if(dir_src == dir_dest)
     {

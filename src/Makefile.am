@@ -115,14 +115,8 @@ remove_hpss_bzip2: dist-bzip2
 	tar cjf $(distdir).tar.bz2 $(distdir)
 	rm -fr $(distdir)
 
-if USE_PGSQL
-RPM_DB_ARGS= --with postgresql
-else
-RPM_DB_ARGS= --without postgresql
-endif
-
 if USE_NFSIDMAP
-RPM_DB_ARGS += --with nfsidmap
+RPM_DB_ARGS = --with nfsidmap
 endif 
 
 #indent:

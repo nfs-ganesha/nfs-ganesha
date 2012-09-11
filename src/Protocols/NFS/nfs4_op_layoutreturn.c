@@ -54,7 +54,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "fsal.h"
-#include "fsal_pnfs.h"
+#include "pnfs_utils.h"
 #include "sal_data.h"
 #include "sal_functions.h"
 
@@ -90,8 +90,6 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
         state_status_t state_status = STATE_SUCCESS;
         /* NFS4 status code */
         nfsstat4 nfs_status = 0;
-        /* File attributes, used to compare FSID supplied to FSID of file. */
-        struct attrlist attrs;
         /* FSID of candidate file to return */
         fsal_fsid_t fsid = {0, 0};
         /* True if the supplied layout state was deleted */
@@ -198,18 +196,15 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
                         res_LAYOUTRETURN4->lorr_status = NFS4_OK;
                         return res_LAYOUTRETURN4->lorr_status;
                 }
-                memset(&attrs, 0, sizeof(struct attrlist));
                 cache_status
-                        = cache_inode_getattr(data->current_entry,
-                                              &attrs,
-                                              data->req_ctx,
-                                              &cache_status);
+                        = cache_inode_fsid(data->current_entry,
+                                           data->req_ctx,
+                                           &fsid);
                 if (cache_status != CACHE_INODE_SUCCESS) {
                         res_LAYOUTRETURN4->lorr_status
                                 = nfs4_Errno(cache_status);
                         return res_LAYOUTRETURN4->lorr_status;
                 }
-                fsid = attrs.fsid;
         case LAYOUTRETURN4_ALL:
                 spec.io_mode = arg_LAYOUTRETURN4->lora_iomode;
                 spec.offset = 0;
@@ -243,21 +238,19 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
 
                         if (arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype
                             == LAYOUTRETURN4_FSID) {
-                                memset(&attrs, 0, sizeof(struct attrlist));
-                                attrs.mask |= ATTR_FSID;
-                                cache_inode_getattr(layout_state->state_pentry,
-                                                    &attrs,
-                                                    data->req_ctx,
-                                                    &cache_status);
+                                fsal_fsid_t this_fsid;
+                                cache_status
+                                        = cache_inode_fsid(layout_state
+                                                           ->state_pentry,
+                                                           data->req_ctx,
+                                                           &this_fsid);
                                 if (cache_status != CACHE_INODE_SUCCESS) {
                                         res_LAYOUTRETURN4->lorr_status
                                                 = nfs4_Errno(cache_status);
                                         return res_LAYOUTRETURN4->lorr_status;
                                 }
 
-                                memset(&attrs, 0, sizeof(struct attrlist));
-
-                                if (memcmp(&fsid, &(attrs.fsid),
+                                if (memcmp(&fsid, &this_fsid,
                                            sizeof(fsal_fsid_t)))
                                         continue;
                         }

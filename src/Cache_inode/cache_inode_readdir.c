@@ -7,30 +7,29 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    cache_inode_readdir.c
- * \date    $Date: 2006/01/24 11:43:05 $
- * \version $Revision: 1.50 $
- * \brief   Reads the content of a directory.
+ * @file    cache_inode_readdir.c
+ * @brief   Reads the content of a directory.
  *
- * @brief Reads the content of a directory, also includes support
- *        functions for cached directories.
+ * Reads the content of a directory, also includes support functions
+ * for cached directories.
  *
  *
  */
@@ -335,26 +334,34 @@ cache_inode_remove_cached_dirent(cache_entry_t *directory,
  */
 
 struct cache_inode_populate_cb_state {
-	cache_entry_t *directory;
-	cache_inode_status_t *status;
-	uint64_t offset_cookie;
+        cache_entry_t *directory;
+        cache_inode_status_t *status;
+        uint64_t offset_cookie;
 };
 
 /**
- * populate
- * callback to populate a single dir entry from the readdir
- * we do not use things like cache_inode_fsal_type_convert
- * or fsal_path_t here for a reason, simplification of interface
- * and avoidance of redundant artifacts that could be "grandfathered"
- * into the api for all time.
+ * @brief Populate a single dir entry
+ *
+ * This callback serves to populate a single dir entry from the
+ * readdir.
+ *
+ * @param[in]     opctx     Request context
+ * @param[in]     name      Name of the directory entry
+ * @param[in]     dtype     File type
+ * @param[in]     dir_hdl   The directory handle
+ * @param[in,out] dir_state Callback state
+ * @param[in]     cookie    Directory cookie
+ *
+ * @return FSAL status.
  */
 
-static fsal_status_t populate(const struct req_op_context *opctx,
-                              const char *name,
-                              unsigned int dtype,
-                              struct fsal_obj_handle *dir_hdl,
-                              void *dir_state,
-                              struct fsal_cookie *cookie)
+static fsal_status_t
+populate(const struct req_op_context *opctx,
+         const char *name,
+         unsigned int dtype,
+         struct fsal_obj_handle *dir_hdl,
+         void *dir_state,
+         struct fsal_cookie *cookie)
 {
         struct cache_inode_populate_cb_state *state
                 = (struct cache_inode_populate_cb_state *)dir_state;
@@ -458,11 +465,11 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
 
   fsal_status = directory->obj_handle->ops->readdir(directory->obj_handle,
                                                     req_ctx,
-						    0, /* read the whole dir */
-						    NULL, /* starting at the beginning */
-						    (void *)&state,
-						    populate,
-						    &eod);
+                                                    0, /* read the whole dir */
+                                                    NULL, /* starting at the beginning */
+                                                    (void *)&state,
+                                                    populate,
+                                                    &eod);
   if(FSAL_IS_ERROR(fsal_status))
     {
       *status = cache_inode_error_convert(fsal_status);

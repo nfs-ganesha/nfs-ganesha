@@ -80,8 +80,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
 {
   cache_entry_t        * entry_parent = NULL;
   cache_entry_t        * entry_new = NULL;
-  struct attrlist        attr_parent;
-  struct attrlist        attr_new;
   struct attrlist        sattr;
   nfs_fh4                newfh4;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
@@ -179,17 +177,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
       goto out;
     }
 
-  /* get attributes of parent directory, for 'change4' info replyed */
-  if((cache_status = cache_inode_getattr(entry_parent,
-                                         &attr_parent,
-                                         data->req_ctx,
-                                         &cache_status))
-     != CACHE_INODE_SUCCESS)
-    {
-      res_CREATE4.status = nfs4_Errno(cache_status);
-      goto out;
-    }
-
   res_CREATE4.CREATE4res_u.resok4.cinfo.before
        = cache_inode_get_changeid4(entry_parent);
 
@@ -225,7 +212,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          SYMBOLIC_LINK,
                                          mode,
                                          &create_arg,
-                                         &attr_new,
                                          data->req_ctx,
                                          &cache_status)) == NULL)
         {
@@ -254,7 +240,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          DIRECTORY,
                                          mode,
                                          &create_arg,
-                                         &attr_new,
                                          data->req_ctx,
                                          &cache_status)) == NULL)
         {
@@ -279,7 +264,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          SOCKET_FILE,
                                          mode,
                                          NULL,
-                                         &attr_new,
                                          data->req_ctx,
                                          &cache_status)) == NULL)
         {
@@ -304,7 +288,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          FIFO_FILE,
                                          mode,
                                          NULL,
-                                         &attr_new,
                                          data->req_ctx,
                                          &cache_status)) == NULL)
         {
@@ -334,7 +317,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          CHARACTER_FILE,
                                          mode,
                                          &create_arg,
-                                         &attr_new,
                                          data->req_ctx,
                                          &cache_status))
          == NULL)
@@ -363,7 +345,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
                                          BLOCK_FILE,
                                          mode,
                                          &create_arg,
-                                         &attr_new,
                                          data->req_ctx,
                                          &cache_status)) == NULL)
         {
@@ -446,16 +427,6 @@ int nfs4_op_create(struct nfs_argop4 *op,
              * sizeof(uint32_t));
     }
 
-  /* Get the change info on parent directory after the operation was successfull */
-  if((cache_status = cache_inode_getattr(entry_parent,
-                                         &attr_parent,
-                                         data->req_ctx,
-                                         &cache_status)) != CACHE_INODE_SUCCESS)
-    {
-      res_CREATE4.status = nfs4_Errno(cache_status);
-      cache_inode_put(entry_new);
-      goto out;
-    }
   memset(&(res_CREATE4.CREATE4res_u.resok4.cinfo.after), 0, sizeof(changeid4));
   res_CREATE4.CREATE4res_u.resok4.cinfo.after
        = cache_inode_get_changeid4(entry_parent);

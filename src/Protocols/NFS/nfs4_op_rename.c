@@ -72,10 +72,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   cache_entry_t        * src_entry = NULL;
   cache_entry_t        * tst_entry_dst = NULL;
   cache_entry_t        * tst_entry_src = NULL;
-  struct attrlist        attr_dst;
-  struct attrlist        attr_src;
-  struct attrlist        attr_tst_dst;
-  struct attrlist        attr_tst_src;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
   char                 * oldname = NULL;
   char                 * newname = NULL;
@@ -163,16 +159,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       goto out;
     }
 
-  /* For the change_info4, get the 'change' attributes for both directories */
-  if((cache_status = cache_inode_getattr(src_entry,
-                                         &attr_src,
-                                         data->req_ctx,
-                                         &cache_status)) != CACHE_INODE_SUCCESS)
-    {
-      res_RENAME4.status = nfs4_Errno(cache_status);
-      goto out;
-    }
-
   /**
    * @todo ACE: Why are we doing things?  The cache_inode_rename
    * function already does this.
@@ -181,7 +167,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Lookup oldfile to see if it exists (refcount +1) */
   if ((tst_entry_src = cache_inode_lookup(src_entry,
                                           oldname,
-                                          &attr_tst_src,
                                           data->req_ctx,
                                           &cache_status)) == NULL)
     {
@@ -193,7 +178,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    * I expect to get NO_ERROR or ENOENT, anything else means an error */
   tst_entry_dst = cache_inode_lookup(dst_entry,
                                      newname,
-                                     &attr_tst_dst,
                                      data->req_ctx,
                                      &cache_status);
   if((cache_status != CACHE_INODE_SUCCESS) &&
@@ -293,8 +277,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                     oldname,
                                     dst_entry,
                                     newname,
-                                    &attr_src,
-                                    &attr_dst,
                                     data->req_ctx,
                                     &cache_status) != CACHE_INODE_SUCCESS)
                {
@@ -317,8 +299,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                             oldname,
                             dst_entry,
                             newname,
-                            &attr_src,
-                            &attr_dst,
                             data->req_ctx,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {

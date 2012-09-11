@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
@@ -25,12 +23,10 @@
  */
 
 /**
- * \file    cache_inode.h
- * \brief   Management of the cached inode layer.
+ * @file    cache_inode.h
+ * @brief   Management of the cached inode layer.
  *
  * Management of the cached inode layer
- *
- *
  */
 
 #ifndef _CACHE_INODE_H
@@ -42,7 +38,6 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
-
 
 #include "abstract_mem.h"
 #include "HashData.h"
@@ -223,7 +218,7 @@ typedef struct cache_inode_share__
 } cache_inode_share_t;
 
 /**
- * \brief Represents a cached directory entry
+ * @brief Represents a cached directory entry
  *
  * This is a cached directory entry that associates a name and cookie
  * with a cache entry.
@@ -549,7 +544,7 @@ typedef enum cache_inode_status_t
 } cache_inode_status_t;
 
 /**
- * \brief Type of callback for cache_inode_readdir
+ * @brief Type of callback for cache_inode_readdir
  *
  * This callback provides the upper level protocol handling function
  * with one directory entry at a time.  It may use the opaque to keep
@@ -566,6 +561,21 @@ typedef bool(*cache_inode_readdir_cb_t)(
      struct fsal_obj_handle *obj_handle,
      uint64_t cookie);
 
+/**
+ * @brief Type of callback for cache_inode_getattr
+ *
+ * This callback provides an easy way to read object attributes for
+ * callers that wish to avoid the details of cache_inode's locking and
+ * cache coherency.  This function is provided with a pointer to the
+ * object's attributes and an opaque void.  Whatever value it returns
+ * is returned as the result of the cache_inode_getattr call.
+ */
+
+typedef cache_inode_status_t(*cache_inode_getattr_cb_t)(
+        void *opaque,
+        const struct attrlist *attr);
+
+
 const char *cache_inode_err_str(cache_inode_status_t err);
 
 void cache_inode_clean_entry(cache_entry_t *entry);
@@ -576,7 +586,6 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
                                cache_inode_status_t * status);
 
 cache_entry_t *cache_inode_get(cache_inode_fsal_data_t *fsdata,
-                               struct attrlist *attr,
                                cache_entry_t *associated,
                                const struct req_op_context *opctx,
                                cache_inode_status_t *status);
@@ -615,14 +624,31 @@ cache_entry_t *cache_inode_create(cache_entry_t *entry_parent,
                                   object_file_type_t type,
                                   uint32_t mode,
                                   cache_inode_create_arg_t *create_arg,
-                                  struct attrlist *attr,
                                   struct req_op_context *req_ctx,
                                   cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
-                                         struct attrlist *attr,
                                          const struct req_op_context *req_ctx,
+                                         void *opaque,
+                                         cache_inode_getattr_cb_t cb,
                                          cache_inode_status_t *status);
+
+cache_inode_status_t cache_inode_fileid(cache_entry_t *entry,
+                                        const struct req_op_context *req_ctx,
+                                        uint64_t *fileid);
+
+cache_inode_status_t cache_inode_fsid(cache_entry_t *entry,
+                                      const struct req_op_context *req_ctx,
+                                      fsal_fsid_t *fsid);
+
+cache_inode_status_t cache_inode_size(cache_entry_t *entry,
+                                      const struct req_op_context *req_ctx,
+                                      uint64_t *size);
+
+bool cache_inode_create_verify(cache_entry_t *entry,
+                               const struct req_op_context *req_ctx,
+                               uint32_t verf_hi,
+                               uint32_t verf_lo);
 
 cache_entry_t *cache_inode_lookup_impl(cache_entry_t *entry_parent,
                                        const char *name,
@@ -630,7 +656,6 @@ cache_entry_t *cache_inode_lookup_impl(cache_entry_t *entry_parent,
                                        cache_inode_status_t *status);
 cache_entry_t *cache_inode_lookup(cache_entry_t *entry_parent,
                                   const char *name,
-                                  struct attrlist *attr,
                                   struct req_op_context *req_ctx,
                                   cache_inode_status_t *status);
 
@@ -650,13 +675,11 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t *entry,
 cache_inode_status_t cache_inode_link(cache_entry_t *entry_src,
                                       cache_entry_t *entry_dir_dest,
                                       const char *link_name,
-                                      struct attrlist *attr,
                                       struct req_op_context *req_ctx,
                                       cache_inode_status_t *status);
 
 cache_inode_status_t cache_inode_remove(cache_entry_t *entry,
                                         const char *node_name,
-                                        struct attrlist *attr,
                                         struct req_op_context *req_ctx,
                                         cache_inode_status_t *status);
 cache_inode_status_t cache_inode_remove_impl(cache_entry_t *entry,
@@ -689,8 +712,6 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *entry,
                                         const char *oldname,
                                         cache_entry_t *entry_dirdest,
                                         const char *newname,
-                                        struct attrlist *attr_src,
-                                        struct attrlist *attr_dst,
                                         struct req_op_context *req_ctx,
                                         cache_inode_status_t *status);
 
@@ -707,7 +728,6 @@ cache_inode_truncate_impl(cache_entry_t *entry,
 cache_inode_status_t cache_inode_truncate(
      cache_entry_t *entry,
      uint64_t length,
-     struct attrlist *attr,
      struct req_op_context *req_ctx,
      cache_inode_status_t *status);
 

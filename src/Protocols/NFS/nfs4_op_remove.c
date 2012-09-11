@@ -69,7 +69,6 @@ int nfs4_op_remove(struct nfs_argop4 *op,
                    struct nfs_resop4 *resp)
 {
   cache_entry_t        * parent_entry = NULL;
-  struct attrlist        attr_parent;
   char                 * name = NULL;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
 
@@ -124,7 +123,6 @@ int nfs4_op_remove(struct nfs_argop4 *op,
 
   if((cache_status = cache_inode_remove(parent_entry,
                                         name,
-                                        &attr_parent,
                                         data->req_ctx,
                                         &cache_status)) != CACHE_INODE_SUCCESS)
     {

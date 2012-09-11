@@ -86,8 +86,6 @@ nfs4_op_lookup(struct nfs_argop4 *op,
         cache_entry_t        * dir_entry = NULL;
         /* The name found */
         cache_entry_t        * file_entry = NULL;
-        /* Attributes of the looked up object */
-        struct attrlist        attrlookup;
         /* Status code from Cache inode */
         cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
 
@@ -135,7 +133,6 @@ nfs4_op_lookup(struct nfs_argop4 *op,
 
         file_entry = cache_inode_lookup(dir_entry,
                                         name,
-                                        &attrlookup,
                                         data->req_ctx,
                                         &cache_status);
         if (cache_status != CACHE_INODE_SUCCESS) {

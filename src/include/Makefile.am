@@ -3,8 +3,7 @@ noinst_HEADERS = abstract_atomic.h               \
 		 ganesha_types.h                 \
                  fsal.h                          \
                  fsal_pnfs.h                     \
-                 pnfs_common.h                   \
-                 fsal_pnfs_files.h               \
+                 pnfs_utils.h                   \
                  HashData.h                      \
                  HashTable.h                     \
                  MesureTemps.h                   \

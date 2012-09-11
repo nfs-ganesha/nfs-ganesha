@@ -24,14 +24,11 @@
  */
 
 /**
- * \file    nfs_Getattr.c
- * \author  $Author: deniel $
- * \data    $Date: 2005/11/28 17:02:53 $
- * \version $Revision: 1.15 $
- * \brief   Implements NFS PROC2 GETATTR and NFS PROC3 GETATTR.
+ * @file  nfs_Getattr.c
+ * @brief Implements NFS PROC2 GETATTR and NFS PROC3 GETATTR.
  *
- *  Implements the GETATTR function in V2 and V3. This function is used by
- *  the client to get attributes about a filehandle.
+ * Implements the GETATTR function in V2 and V3. This function is used
+ * by the client to get attributes about a filehandle.
  *
  *
  */
@@ -47,7 +44,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
@@ -70,150 +67,106 @@
  * Get attributes for a file. Implements NFS PROC2 GETATTR and NFS
  * PROC3 GETATTR.
  *
- * @param[in]  parg     Pointer to nfs arguments union
- * @param[in]  pexport  Pointer to nfs export list
- * @param[in]  pcontext Credentials to be used for this request
- * @param[in]  pworker  Data belonging to the worker thread
- * @param[in]  preq     SVC request related to this call
- * @param[out] pres     Structure to contain the result of the call
+ * @param[in]  arg     NFS arguments union
+ * @param[in]  export  NFS export list
+ * @param[in]  req_ctx Request context
+ * @param[in]  worker  Data belonging to the worker thread
+ * @param[in]  req     SVC request related to this call
+ * @param[out] res     Structure to contain the result of the call
  *
  * @retval NFS_REQ_OK if successfull
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs_Getattr(nfs_arg_t *parg,
-                exportlist_t *pexport,
-		struct req_op_context *req_ctx,
-                nfs_worker_data_t *pworker,
-                struct svc_req *preq,
-                nfs_res_t *pres)
+int
+nfs_Getattr(nfs_arg_t *arg,
+            exportlist_t *export,
+            struct req_op_context *req_ctx,
+            nfs_worker_data_t *worker,
+            struct svc_req *req,
+            nfs_res_t *res)
 {
-  struct attrlist attr;
-  cache_entry_t *pentry = NULL;
-  cache_inode_status_t cache_status;
-  int rc = NFS_REQ_OK;
+        cache_entry_t *entry = NULL;
+        int rc = NFS_REQ_OK;
 
-  if(isDebug(COMPONENT_NFSPROTO))
-    {
-      char str[LEN_FH_STR];
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_getattr2),
-                       &(parg->arg_getattr3.object),
-                       NULL,
-                       str);
-      LogDebug(COMPONENT_NFSPROTO,
-               "REQUEST PROCESSING: Calling nfs_Getattr handle: %s", str);
-    }
+        if (isDebug(COMPONENT_NFSPROTO)) {
+                char str[LEN_FH_STR];
+                nfs_FhandleToStr(req->rq_vers,
+                                 &(arg->arg_getattr2),
+                                 &(arg->arg_getattr3.object),
+                                 NULL,
+                                 str);
+                LogDebug(COMPONENT_NFSPROTO,
+                         "REQUEST PROCESSING: Calling nfs_Getattr handle: %s",
+                         str);
+        }
 
-  if((pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
-                                  &(parg->arg_getattr2),
-                                  &(parg->arg_getattr3.object),
-                                  NULL,
-                                  &(pres->res_attr2.status),
-                                  &(pres->res_getattr3.status),
-                                  NULL, &attr, pexport, &rc)) == NULL)
-    {
-      /* Stale NFS FH ? */
-      LogFullDebug(COMPONENT_NFSPROTO,
-                   "nfs_Getattr returning %d", rc);
-      goto out;
-    }
+        if ((entry = nfs_FhandleToCache(req_ctx, req->rq_vers,
+                                        &arg->arg_getattr2,
+                                        &arg->arg_getattr3.object,
+                                        NULL,
+                                        &res->res_attr2.status,
+                                        &res->res_getattr3.status,
+                                        NULL, export, &rc)) == NULL) {
+                LogFullDebug(COMPONENT_NFSPROTO,
+                             "nfs_Getattr returning %d", rc);
+                goto out;
+        }
 
-  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
-    {
-      rc = nfs3_Getattr_Xattr(parg, pexport, req_ctx, preq, pres);
-      LogFullDebug(COMPONENT_NFSPROTO,
-                   "nfs_Getattr returning %d from nfs3_Getattr_Xattr", rc);
-      goto out;
-    }
+        if ((req->rq_vers == NFS_V3) &&
+            (nfs3_Is_Fh_Xattr(&(arg->arg_getattr3.object)))) {
+                rc = nfs3_Getattr_Xattr(arg, export, req_ctx, req, res);
+                LogFullDebug(COMPONENT_NFSPROTO,
+                             "nfs_Getattr returning %d from "
+                             "nfs3_Getattr_Xattr", rc);
+                goto out;
+        }
 
-  /*
-   * Get attributes.  Use NULL for the file name since we have the
-   * vnode to define the file.
-   */
-  if(cache_inode_getattr(pentry,
-                         &attr,
-                         req_ctx,
-                         &cache_status) == CACHE_INODE_SUCCESS)
-    {
-      /*
-       * Client API should be keeping us from crossing junctions,
-       * but double check to be sure.
-       */
-
-      switch (preq->rq_vers)
-        {
-
+        switch (req->rq_vers) {
         case NFS_V2:
-          /* Copy data from vattr to Attributes */
-          if(nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                    &(pres->res_attr2.ATTR2res_u.attributes)) == 0)
-            {
-              nfs_SetFailedStatus(pexport,
-                                  preq->rq_vers,
-                                  CACHE_INODE_INVALID_ARGUMENT,
-                                  &pres->res_attr2.status,
-                                  &pres->res_getattr3.status,
-                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-              LogFullDebug(COMPONENT_NFSPROTO,
-                           "nfs_Getattr set failed status v2");
-              rc = NFS_REQ_OK;
-              goto out;
-            }
-          pres->res_attr2.status = NFS_OK;
-          break;
+                if (!(cache_entry_to_nfs2_Fattr(entry,
+                                                req_ctx,
+                                                &(res->res_attr2.ATTR2res_u
+                                                  .attributes)))) {
+                        res->res_attr2.status =
+                                nfs2_Errno(CACHE_INODE_INVALID_ARGUMENT);
+                        LogFullDebug(COMPONENT_NFSPROTO,
+                                     "nfs_Getattr set failed status v2");
+                        rc = NFS_REQ_OK;
+                        goto out;
+                }
+                res->res_attr2.status = NFS_OK;
+                break;
 
         case NFS_V3:
-          if(nfs3_FSALattr_To_Fattr(pexport, &attr,
-                                    &(pres->res_getattr3.GETATTR3res_u.resok.
-                                      obj_attributes)) == 0)
-            {
-              nfs_SetFailedStatus(pexport,
-                                  preq->rq_vers,
-                                  CACHE_INODE_INVALID_ARGUMENT,
-                                  &pres->res_attr2.status,
-                                  &pres->res_getattr3.status,
-                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                if (!(cache_entry_to_nfs3_Fattr(entry,
+                                                req_ctx,
+                                                &(res->res_getattr3
+                                                  .GETATTR3res_u.resok.
+                                                  obj_attributes)))) {
+                        res->res_getattr3.status
+                                = nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
 
-              LogFullDebug(COMPONENT_NFSPROTO,
-                           "nfs_Getattr set failed status v3");
-              rc = NFS_REQ_OK;
-              goto out;
-            }
-          pres->res_getattr3.status = NFS3_OK;
-          break;
-        }                       /* switch */
+                        LogFullDebug(COMPONENT_NFSPROTO,
+                                     "nfs_Getattr set failed status v3");
+                        rc = NFS_REQ_OK;
+                        goto out;
+                }
+                res->res_getattr3.status = NFS3_OK;
+                break;
+        }
 
-      LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
-      rc = NFS_REQ_OK;
-      goto out;
-    }
-
-  LogFullDebug(COMPONENT_CACHE_INODE,"nfs_Getattr: cache_inode_get() "
-               "returned cache status %d(%s)",
-               cache_status, cache_inode_err_str(cache_status));
-
-  if (cache_status != CACHE_INODE_FSAL_ESTALE)
-    cache_status = CACHE_INODE_INVALID_ARGUMENT;
-
-  nfs_SetFailedStatus(pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_attr2.status,
-                      &pres->res_getattr3.status,
-                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
-  LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr set failed status");
-
-  rc = NFS_REQ_OK;
+        LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
+        rc = NFS_REQ_OK;
 
 out:
-  /* return references */
-  if (pentry)
-      cache_inode_put(pentry);
+        /* return references */
+        if (entry) {
+                cache_inode_put(entry);
+        }
 
-  return (rc);
+        return rc;
 
 }                               /* nfs_Getattr */
 

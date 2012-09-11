@@ -7,31 +7,29 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file nfs_lookup.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:53 $
- * \version $Revision: 1.18 $
- * \brief   everything that is needed to handle NFS PROC2-3 LINK.
+ * @file  nfs_lookup.c
+ * @brief everything that is needed to handle NFS PROC2-3 LINK.
  *
- *  nfs_Lookup - everything that is needed to handle NFS PROC2-3 LOOKUP
- *      NFS V2-3 generic file browsing function
+ * everything that is needed to handle NFS PROC2-3 LOOKUP NFS V2-3
+ * generic file browsing function
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -68,12 +66,12 @@
  *
  * Implements the NFS PROC LOOKUP function (for V2 and V3).
  *
- * @param[in] parg     NFS arguments union
- * @param[in] pexport  NFS export list
- * @param[in] pcontext Credentials to be used for this request
- * @param[in] pworker  Worker thread data
- * @param[in] preq     SVC request related to this call
- * @param[out] pres    Structure to contain the result of the call
+ * @param[in]  arg     NFS arguments union
+ * @param[in]  export  NFS export list
+ * @param[in]  req_ctx Request context
+ * @param[in]  worker  Worker thread data
+ * @param[in]  req     SVC request related to this call
+ * @param[out] res     Structure to contain the result of the call
  *
  * @retval NFS_REQ_OK if successfull
  * @retval NFS_REQ_DROP if failed but retryable
@@ -81,204 +79,193 @@
  *
  */
 
-int nfs_Lookup(nfs_arg_t *parg,
-               exportlist_t *pexport,
-	       struct req_op_context *req_ctx,
-               nfs_worker_data_t *pworker,
-               struct svc_req *preq,
-               nfs_res_t * pres)
+int
+nfs_Lookup(nfs_arg_t *arg,
+           exportlist_t *export,
+           struct req_op_context *req_ctx,
+           nfs_worker_data_t *worker,
+           struct svc_req *req,
+           nfs_res_t *res)
 {
-  cache_entry_t *pentry_dir = NULL;
-  cache_entry_t *pentry_file = NULL;
-  cache_inode_status_t cache_status;
-  struct attrlist attr;
-  struct attrlist attrdir;
-  char *name = NULL;
-  struct fsal_obj_handle *pfsal_handle;
-  int rc = NFS_REQ_OK;
+        cache_entry_t *entry_dir = NULL;
+        cache_entry_t *entry_file = NULL;
+        cache_inode_status_t cache_status;
+        char *name = NULL;
+        int rc = NFS_REQ_OK;
 
-  if(isDebug(COMPONENT_NFSPROTO))
-    {
-      char str[LEN_FH_STR];
+        if (isDebug(COMPONENT_NFSPROTO)) {
+                char str[LEN_FH_STR];
 
-      switch (preq->rq_vers)
-        {
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        name = arg->arg_lookup2.name;
+                        break;
+
+                case NFS_V3:
+                        name = arg->arg_lookup3.what.name;
+                        break;
+                }
+
+                nfs_FhandleToStr(req->rq_vers,
+                                 &(arg->arg_lookup2.dir),
+                                 &(arg->arg_lookup3.what.dir),
+                                 NULL,
+                                 str);
+                LogDebug(COMPONENT_NFSPROTO,
+                         "REQUEST PROCESSING: Calling nfs_Lookup handle: %s "
+                         " name: %s", str, name);
+        }
+
+        if (req->rq_vers == NFS_V3) {
+                /* to avoid setting it on each error case */
+                res->res_lookup3.LOOKUP3res_u.resfail.dir_attributes
+                        .attributes_follow = FALSE;
+        }
+
+        if((entry_dir = nfs_FhandleToCache(req_ctx, req->rq_vers,
+                                           &(arg->arg_lookup2.dir),
+                                           &(arg->arg_lookup3.what.dir),
+                                           NULL,
+                                           &(res->res_dirop2.status),
+                                           &(res->res_lookup3.status),
+                                           NULL,
+                                           export, &rc)) == NULL) {
+                /* Stale NFS FH? */
+                goto out;
+        }
+
+        switch (req->rq_vers) {
         case NFS_V2:
-          name = parg->arg_lookup2.name;
-          break;
+                name = arg->arg_lookup2.name;
+                break;
 
         case NFS_V3:
-          name = parg->arg_lookup3.what.name;
-          break;
+                name = arg->arg_lookup3.what.name;
+                break;
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_lookup2.dir),
-                       &(parg->arg_lookup3.what.dir),
-                       NULL,
-                       str);
-      LogDebug(COMPONENT_NFSPROTO,
-               "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
-               str, name);
-    }
+        if ((req->rq_vers == NFS_V3) &&
+            (nfs3_Is_Fh_Xattr(&(arg->arg_lookup3.what.dir)))) {
+                rc = nfs3_Lookup_Xattr(arg, export, req_ctx, req, res);
+                goto out;
+        }
 
-  if(preq->rq_vers == NFS_V3)
-    {
-      /* to avoid setting it on each error case */
-      pres->res_lookup3.LOOKUP3res_u.resfail.dir_attributes.attributes_follow = FALSE;
-    }
+        if ((entry_file
+             = cache_inode_lookup(entry_dir,
+                                  name,
+                                  req_ctx,
+                                  &cache_status)) &&
+            (cache_status == CACHE_INODE_SUCCESS)) {
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        /* Build file handle */
+                        if (nfs2_FSALToFhandle(
+                                    &(res->res_dirop2.DIROP2res_u
+                                      .diropok.file),
+                                    entry_file->obj_handle,
+                                    export) &&
+                            cache_entry_to_nfs2_Fattr(
+                                    entry_file,
+                                    req_ctx,
+                                    &(res->res_dirop2.DIROP2res_u
+                                      .diropok.attributes))) {
+                                res->res_dirop2.status = NFS_OK;
+                        }
+                        break;
 
-  if((pentry_dir = nfs_FhandleToCache(req_ctx, preq->rq_vers,
-                                      &(parg->arg_lookup2.dir),
-                                      &(parg->arg_lookup3.what.dir),
-                                      NULL,
-                                      &(pres->res_dirop2.status),
-                                      &(pres->res_lookup3.status),
-                                      NULL,
-                                      &attrdir, pexport, &rc)) == NULL)
-    {
-      /* Stale NFS FH ? */
-      goto out;
-    }
+                case NFS_V3:
+                        /* Build FH */
+                        res->res_lookup3.LOOKUP3res_u.resok.object.data
+                                .data_val = gsh_malloc(
+                                        sizeof(struct alloc_file_handle_v3));
+                        if (res->res_lookup3.LOOKUP3res_u.resok.object
+                            .data.data_val == NULL) {
+                                res->res_lookup3.status = NFS3ERR_INVAL;
+                        } else {
+                                if (nfs3_FSALToFhandle(
+                                            &(res->res_lookup3.LOOKUP3res_u
+                                              .resok.object),
+                                            entry_file->obj_handle,
+                                            export)) {
+                                        /* Build entry attributes */
+                                        nfs_SetPostOpAttr(entry_file,
+                                                          req_ctx,
+                                                          &(res->res_lookup3
+                                                            .LOOKUP3res_u.resok
+                                                            .obj_attributes));
 
-  switch (preq->rq_vers)
-    {
-    case NFS_V2:
-      name = parg->arg_lookup2.name;
-      break;
-
-    case NFS_V3:
-      name = parg->arg_lookup3.what.name;
-      break;
-    }
-
-  /* Do the lookup */
-
-
-  if((preq->rq_vers == NFS_V3) &&
-     (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir)))) {
-      rc = nfs3_Lookup_Xattr(parg, pexport, req_ctx, preq, pres);
-      goto out;
-  }
-
-  if((pentry_file
-      = cache_inode_lookup(pentry_dir,
-                           name,
-                           &attr,
-                           req_ctx,
-                           &cache_status)) != NULL)
-    {
-      /* Do not forget cross junction management */
-      pfsal_handle = pentry_file->obj_handle;
-      if(cache_status == CACHE_INODE_SUCCESS)
-        {
-          switch (preq->rq_vers)
-            {
-            case NFS_V2:
-              /* Build file handle */
-              if(nfs2_FSALToFhandle
-                 (&(pres->res_dirop2.DIROP2res_u.diropok.file), pfsal_handle,
-                  pexport))
-                {
-                  if(nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                            &(pres->res_dirop2.DIROP2res_u.diropok.
-                                              attributes)))
-                    {
-                      pres->res_dirop2.status = NFS_OK;
-                    }
+                                        /* Build directory attributes */
+                                        nfs_SetPostOpAttr(entry_dir,
+                                                          req_ctx,
+                                                          &(res->res_lookup3
+                                                            .LOOKUP3res_u.resok
+                                                            .dir_attributes));
+                                        res->res_lookup3.status = NFS3_OK;
+                                }
+                        }
+                        break;
                 }
-              break;
+        } else {
+                /* If we are here, there was an error */
+                if (nfs_RetryableError(cache_status)) {
+                        rc = NFS_REQ_DROP;
+                        goto out;
+                }
 
-            case NFS_V3:
-              /* Build FH */
-              if((pres->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
-                  gsh_malloc(sizeof(struct alloc_file_handle_v3))) == NULL)
-                pres->res_lookup3.status = NFS3ERR_INVAL;
-              else
-                {
-                  if(nfs3_FSALToFhandle
-                     ((nfs_fh3 *) &
-                      (pres->res_lookup3.LOOKUP3res_u.resok.object.data),
-                      pfsal_handle, pexport))
-                    {
-                      /* Build entry attributes */
-                      nfs_SetPostOpAttr(pexport,
-                                        &attr,
-                                        &(pres->res_lookup3
-                                          .LOOKUP3res_u.resok
-                                          .obj_attributes));
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        res->res_dirop2.status = nfs2_Errno(cache_status);
+                case NFS_V3:
+                        res->res_lookup3.status
+                                = nfs3_Errno(cache_status);
+                        nfs_SetPostOpAttr(entry_dir,
+                                          req_ctx,
+                                          &res->res_lookup3.LOOKUP3res_u
+                                          .resfail.dir_attributes);
+                }
 
-                      /* Build directory attributes */
-                      nfs_SetPostOpAttr(pexport,
-                                        &attrdir,
-                                        &(pres->res_lookup3
-                                          .LOOKUP3res_u.resok
-                                          .dir_attributes));
-
-                      pres->res_lookup3.status = NFS3_OK;
-                    }       /* if */
-                }           /* else */
-              break;
-            }               /* case */
-        }                   /* if( cache_status == CACHE_INODE_SUCCESS ) */
-    }                       /* if( ( pentry_file = cache_inode_lookup... */
-
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      /* If we are here, there was an error */
-        if(nfs_RetryableError(cache_status)) {
-            rc =NFS_REQ_DROP;
-            goto out;
         }
 
-      nfs_SetFailedStatus(pexport,
-                          preq->rq_vers,
-                          cache_status,
-                          &pres->res_dirop2.status,
-                          &pres->res_lookup3.status,
-                          pentry_dir,
-                          &(pres->res_lookup3.LOOKUP3res_u.resfail.dir_attributes),
-                          NULL, NULL, NULL, NULL, NULL, NULL);
-    }
-
-  rc = NFS_REQ_OK;
+        rc = NFS_REQ_OK;
 
 out:
-  /* return references */
-  if (pentry_dir)
-      cache_inode_put(pentry_dir);
+        /* return references */
+        if (entry_dir) {
+                cache_inode_put(entry_dir);
+        }
 
-  if (pentry_file)
-      cache_inode_put(pentry_file);
+        if (entry_file) {
+                cache_inode_put(entry_file);
+        }
 
-  return (rc);
-
+        return (rc);
 }                               /* nfs_Lookup */
 
 /**
- * nfs_Lookup_Free: Frees the result structure allocated for nfs_Lookup.
+ * @brief Free the result structure allocated for nfs_Lookup.
  *
- * Frees the result structure allocated for nfs_Lookup.
+ * This function frees the result structure allocated for nfs_Lookup.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param[in,out] res Result structure
  *
  */
-void nfs3_Lookup_Free(nfs_res_t * resp)
+void
+nfs3_Lookup_Free(nfs_res_t *res)
 {
-  if(resp->res_lookup3.status == NFS3_OK)
-    gsh_free(resp->res_lookup3.LOOKUP3res_u.resok.object.data.data_val);
-}                               /* nfs_Lookup_Free */
+        if (res->res_lookup3.status == NFS3_OK) {
+                gsh_free(res->res_lookup3.LOOKUP3res_u.resok.object.data
+                         .data_val);
+        }
+} /* nfs3_Lookup_Free */
 
 /**
- * nfs_Lookup_Free: Frees the result structure allocated for nfs_Lookup.
+ * @brief Free the result structure allocated for nfs_Lookup.
  *
- * Frees the result structure allocated for nfs_Lookup.
+ * This function frees the result structure allocated for nfs_Lookup.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
- *
+ * @param[in,out] res Result structure
  */
-void nfs2_Lookup_Free(nfs_res_t * resp)
+void nfs2_Lookup_Free(nfs_res_t *res)
 {
-  /* nothing to do */
-  return;
-}                               /* nfs_Lookup_Free */
+        return;
+} /* nfs2_Lookup_Free */

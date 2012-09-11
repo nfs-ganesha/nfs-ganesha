@@ -24,13 +24,10 @@
  */
 
 /**
- * \file    nfs_Readdir.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/24 11:43:05 $
- * \version $Revision: 1.24 $
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
+ * @file    nfs_Readdir.c
+ * @brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs_Readdir.c : Routines used for managing the NFS4 COMPOUND functions.
+ * Routines used for managing the NFS4 COMPOUND functions.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -44,7 +41,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
@@ -64,8 +60,8 @@
 #include <assert.h>
 
 /* This has a tremendous amount of code duplication, but it's very
-   difficult to refactor since the differences between NFSv2 and
-   NFSv3 are more a matter of data types than functionality. */
+   difficult to refactor since the differences between NFSv2 and NFSv3
+   are more a matter of data types than functionality. */
 
 static bool nfs2_readdir_callback(void* opaque,
                                   char *name,
@@ -127,7 +123,7 @@ struct nfs3_readdir_cb_data
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  context Credentials to be used for this request
+ * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
@@ -141,14 +137,13 @@ struct nfs3_readdir_cb_data
 int
 nfs_Readdir(nfs_arg_t *arg,
             exportlist_t *export,
-	    struct req_op_context *req_ctx,
-	    nfs_worker_data_t *worker,
+            struct req_op_context *req_ctx,
+            nfs_worker_data_t *worker,
             struct svc_req *req,
             nfs_res_t *res)
 {
      cache_entry_t *dir_entry = NULL;
      unsigned long count = 0;
-     struct attrlist dir_attr;
      uint64_t cookie = 0;
      uint64_t cache_inode_cookie = 0;
      cookieverf3 cookie_verifier;
@@ -197,7 +192,6 @@ nfs_Readdir(nfs_arg_t *arg,
                                &(res->res_readdir2.status),
                                &(res->res_readdir3.status),
                                NULL,
-                               &dir_attr,
                                export,
                                &rc)) == NULL) {
           /* Stale NFS FH? */
@@ -211,7 +205,7 @@ nfs_Readdir(nfs_arg_t *arg,
      }
 
      /* Extract the filetype */
-     dir_filetype = dir_attr.type;
+     dir_filetype = dir_entry->type;
      /* Sanity checks -- must be a directory */
      if (dir_filetype != DIRECTORY) {
           if (req->rq_vers == NFS_V2) {
@@ -280,8 +274,8 @@ nfs_Readdir(nfs_arg_t *arg,
              is returned (trivial value). */
           if (export->UseCookieVerifier)
                memcpy(cookie_verifier,
-                      &(dir_attr.mtime.seconds),
-                      sizeof(dir_attr.mtime.seconds));
+                      &dir_entry->change_time,
+                      sizeof(dir_entry->change_time));
           /* Nothing to do if != 0 because the area is already full of
              zero */
           if ((cookie != 0) &&
@@ -326,7 +320,6 @@ nfs_Readdir(nfs_arg_t *arg,
 
      /* Fills ".." */
      if ((cookie <= 1) && (estimated_num_entries > 1)) {
-          struct attrlist parent_dir_attr;
           /* Get parent pentry */
           parent_dir_entry = cache_inode_lookupp(dir_entry,
                                                  req_ctx,
@@ -342,23 +335,11 @@ nfs_Readdir(nfs_arg_t *arg,
                rc = NFS_REQ_OK;
                goto out;
           }
-          if ((cache_inode_getattr(parent_dir_entry,
-                                   &parent_dir_attr,
-                                   req_ctx,
-                                   &cache_status_gethandle))
-              != CACHE_INODE_SUCCESS) {
-               if (req->rq_vers == NFS_V2) {
-                    res->res_readdir2.status
-                         = nfs2_Errno(cache_status_gethandle);
-               } else if (req->rq_vers == NFS_V3) {
-                    res->res_readdir3.status
-                         = nfs3_Errno(cache_status_gethandle);
-               }
-               rc = NFS_REQ_OK;
-               goto out;
+          if (!cbfunc(cbdata, "..",
+                      parent_dir_entry->obj_handle,
+                      2)) {
+               goto outerr;
           }
-          if (!cbfunc(cbdata, "..", parent_dir_entry->obj_handle, 2))
-                goto outerr;
           cache_inode_put(parent_dir_entry);
           parent_dir_entry = NULL;
      }
@@ -383,15 +364,16 @@ nfs_Readdir(nfs_arg_t *arg,
                goto out;
           }
 
-          nfs_SetFailedStatus(export,
-                              req->rq_vers,
-                              cache_status,
-                              &res->res_readdir2.status,
-                              &res->res_readdir3.status,
-                              dir_entry,
-                              &(res->res_readdir3.READDIR3res_u
-                                .resfail.dir_attributes),
-                              NULL, NULL, NULL, NULL, NULL, NULL);
+          switch (req->rq_vers) {
+          case NFS_V2:
+               res->res_readdir2.status = nfs2_Errno(cache_status);
+          case NFS_V3:
+               res->res_readdir3.status = nfs3_Errno(cache_status);
+               nfs_SetPostOpAttr(dir_entry,
+                                 req_ctx,
+                                 &res->res_readdir3.READDIR3res_u
+                                 .resfail.dir_attributes);
+          }
           goto out;
      }
 
@@ -404,23 +386,13 @@ nfs_Readdir(nfs_arg_t *arg,
 
      if (req->rq_vers == NFS_V2) {
           RES_READDIR2_OK.entries = cb2.entries;
-          /* This bit of weirdness is due to XDR structures using the
-             older bool_t type rather than the C99 bool. */
-          if (eod_met) {
-              RES_READDIR2_OK.eof = TRUE;
-          } else {
-              RES_READDIR2_OK.eof = FALSE;
-          }
+          RES_READDIR2_OK.eof = eod_met;
      } else if (req->rq_vers == NFS_V3) {
           RES_READDIR3_OK.reply.entries = cb3.entries;
-          if (eod_met) {
-              RES_READDIR3_OK.reply.eof = TRUE;
-          } else {
-              RES_READDIR3_OK.reply.eof = FALSE;
-          }
-          nfs_SetPostOpAttr(export,
-                            &dir_attr,
-                            &(RES_READDIR3_OK.dir_attributes));
+          RES_READDIR3_OK.reply.eof = eod_met;
+          nfs_SetPostOpAttr(dir_entry,
+                            req_ctx,
+                            &RES_READDIR3_OK.dir_attributes);
           memcpy(RES_READDIR3_OK.cookieverf,
                  cookie_verifier,
                  sizeof(cookieverf3));
@@ -521,7 +493,7 @@ void nfs3_Readdir_Free(nfs_res_t * resp)
 static bool
 nfs2_readdir_callback(void* opaque,
                       char *name,
-		      struct fsal_obj_handle *obj_hdl,
+                      struct fsal_obj_handle *obj_hdl,
                       uint64_t cookie)
 {
      /* Not-so-opaque pointer to callback data`*/
@@ -608,9 +580,9 @@ nfs3_readdir_callback(void* opaque,
           }
           return false;
      }
-     (void)obj_hdl->ops->handle_digest(obj_hdl,
-				       FSAL_DIGEST_FILEID3,
-				       &id_descriptor);
+     obj_hdl->ops->handle_digest(obj_hdl,
+                                 FSAL_DIGEST_FILEID3,
+                                 &id_descriptor);
 
      e3->name = gsh_malloc(namelen + 1);
      if (e3->name == NULL) {

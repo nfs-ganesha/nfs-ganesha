@@ -7,31 +7,29 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file nfs_Mkdir.c 
- * \author  $Author: deniel $
- * \data    $Date: 2005/11/28 17:02:53 $
- * \version $Revision: 1.21 $
- * \brief   evrythinhg you need to handle NFS PROC2-3 MKDIR.
+ * @file  nfs_Mkdir.c
+ * @brief evrythinhg you need to handle NFS PROC2-3 MKDIR.
  *
- * Evrythinhg you need to handle NFS PROC2-3 MKDIR. 
- * MKDIR is used to create new directories
+ * Evrythinhg you need to handle NFS PROC2-3 MKDIR.  MKDIR is used to
+ * create new directories
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -68,12 +66,12 @@
  *
  * Implements the NFS PROC MKDIR function (for V2 and V3).
  *
- * @param[in]  parg     NFS arguments union
- * @param[in]  pexport  NFS export list
- * @param[in]  pcontext Credentials to be used for this request
- * @param[in]  pworker  Worker thread data
- * @param[in]  preq     SVC request related to this call
- * @param[out] pres     Structure to contain the result of the call
+ * @param[in]  arg     NFS arguments union
+ * @param[in]  export  NFS export list
+ * @param[in]  req_ctx Request context
+ * @param[in]  worker  Worker thread data
+ * @param[in]  req     SVC request related to this call
+ * @param[out] res     Structure to contain the result of the call
  *
  * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
@@ -81,350 +79,318 @@
  *
  */
 
-int nfs_Mkdir(nfs_arg_t *parg,
-              exportlist_t *pexport,
-              struct req_op_context *req_ctx,
-              nfs_worker_data_t *pworker,
-              struct svc_req *preq,
-              nfs_res_t *pres)
+int
+nfs_Mkdir(nfs_arg_t *arg,
+          exportlist_t *export,
+          struct req_op_context *req_ctx,
+          nfs_worker_data_t *worker,
+          struct svc_req *req,
+          nfs_res_t *res)
 {
-  char *dir_name = NULL;
-  uint32_t mode = 0;
-  cache_entry_t *dir_pentry = NULL;
-  cache_entry_t *parent_pentry = NULL;
-  struct attrlist parent_attr;
-  struct attrlist attr;
-  struct attrlist *ppre_attr;
-  struct attrlist attr_parent_after;
-  struct fsal_obj_handle *pfsal_handle;
-  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  cache_inode_status_t cache_status_lookup;
-  cache_inode_create_arg_t create_arg;
-  int rc = NFS_REQ_OK;
+        char *dir_name = NULL;
+        uint32_t mode = 0;
+        cache_entry_t *dir_entry = NULL;
+        cache_entry_t *parent_entry = NULL;
+        pre_op_attr pre_parent = {
+                .attributes_follow = false
+        };
+        cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+        cache_inode_status_t cache_status_lookup;
+        cache_inode_create_arg_t create_arg;
+        int rc = NFS_REQ_OK;
 #ifdef _USE_QUOTA
-  fsal_status_t fsal_status ;
+        fsal_status_t fsal_status;
 #endif
 
-  memset(&create_arg, 0, sizeof(create_arg));
+        memset(&create_arg, 0, sizeof(create_arg));
 
-  if(isDebug(COMPONENT_NFSPROTO))
-    {
-      char str[LEN_FH_STR];
+        if (isDebug(COMPONENT_NFSPROTO)) {
+                char str[LEN_FH_STR];
 
-      switch (preq->rq_vers)
-        {
-        case NFS_V2:
-          dir_name = parg->arg_mkdir2.where.name;
-          break;
-        case NFS_V3:
-          dir_name = parg->arg_mkdir3.where.name;
-          break;
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        dir_name = arg->arg_mkdir2.where.name;
+                        break;
+                case NFS_V3:
+                        dir_name = arg->arg_mkdir3.where.name;
+                        break;
+                }
+
+                nfs_FhandleToStr(req->rq_vers,
+                                 &(arg->arg_mkdir2.where.dir),
+                                 &(arg->arg_mkdir3.where.dir),
+                                 NULL,
+                                 str);
+                LogDebug(COMPONENT_NFSPROTO,
+                         "REQUEST PROCESSING: Calling nfs_Mkdir handle: %s "
+                         "name: %s", str, dir_name);
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_mkdir2.where.dir),
-                       &(parg->arg_mkdir3.where.dir),
-                       NULL,
-                       str);
-      LogDebug(COMPONENT_NFSPROTO,
-               "REQUEST PROCESSING: Calling nfs_Mkdir handle: %s name: %s",
-               str, dir_name);
-    }
-
-  if(preq->rq_vers == NFS_V3)
-    {
-      /* to avoid setting it on each error case */
-      pres->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;
-      pres->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.after.attributes_follow = FALSE;
-      ppre_attr = NULL;
-    }
-
-  if((parent_pentry = nfs_FhandleToCache(req_ctx, preq->rq_vers,
-                                         &(parg->arg_mkdir2.where.dir),
-                                         &(parg->arg_mkdir3.where.dir),
-                                         NULL,
-                                         &(pres->res_dirop2.status),
-                                         &(pres->res_mkdir3.status),
-                                         NULL,
-                                         &parent_attr,
-                                         pexport, &rc)) == NULL)
-    {
-      /* Stale NFS FH ? */
-      goto out;
-    }
-
-  /* get directory attributes before action (for V3 reply) */
-  ppre_attr = &parent_attr;
-
-  /*
-   * Sanity checks: 
-   */
-  if(parent_attr.type != DIRECTORY)
-    {
-      switch (preq->rq_vers)
-        {
-        case NFS_V2:
-          pres->res_dirop2.status = NFSERR_NOTDIR;
-          break;
-
-        case NFS_V3:
-          pres->res_mkdir3.status = NFS3ERR_NOTDIR;
-          break;
+        if (req->rq_vers == NFS_V3) {
+                /* to avoid setting it on each error case */
+                res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.before
+                        .attributes_follow = FALSE;
+                res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.after
+                        .attributes_follow = FALSE;
         }
 
-      rc = NFS_REQ_OK;
-      goto out;
-    }
+        if ((parent_entry = nfs_FhandleToCache(req_ctx,
+                                               req->rq_vers,
+                                               &arg->arg_mkdir2.where.dir,
+                                               &arg->arg_mkdir3.where.dir,
+                                               NULL,
+                                               &res->res_dirop2.status,
+                                               &res->res_mkdir3.status,
+                                               NULL,
+                                               export,
+                                               &rc)) == NULL) {
+                /* Stale NFS FH? */
+                goto out;
+        }
+
+        /* Sanity checks */
+        if (parent_entry->type != DIRECTORY) {
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        res->res_dirop2.status = NFSERR_NOTDIR;
+                        break;
+
+                case NFS_V3:
+                        res->res_mkdir3.status = NFS3ERR_NOTDIR;
+                        break;
+                }
+
+                rc = NFS_REQ_OK;
+                goto out;
+        }
 
 
 #ifdef _USE_QUOTA
-    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-  fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
-						      pexport->fullpath, 
-						      FSAL_QUOTA_INODES,
-						      req_ctx) ;
-    if( FSAL_IS_ERROR( fsal_status ) )
-     {
+        /* if quota support is active, then we should check is the
+           FSAL allows inode creation or not */
+        fsal_status = export->export_hdl->ops->check_quota(export->export_hdl,
+                                                           export->fullpath,
+                                                           FSAL_QUOTA_INODES,
+                                                           req_ctx);
+        if (FSAL_IS_ERROR(fsal_status)) {
+                switch (req->rq_vers) {
+                case NFS_V2:
+                        res->res_dirop2.status = NFSERR_DQUOT;
+                        break;
 
-       switch (preq->rq_vers)
-         {
-           case NFS_V2:
-             pres->res_dirop2.status = NFSERR_DQUOT;
-             break;
+                case NFS_V3:
+                        res->res_mkdir3.status = NFS3ERR_DQUOT;
+                        break;
+                }
 
-           case NFS_V3:
-             pres->res_mkdir3.status = NFS3ERR_DQUOT;
-             break;
-         }
-
-       rc = NFS_REQ_OK ;
-       goto out;
-     }
+                rc = NFS_REQ_OK;
+                goto out;
+        }
 #endif /* _USE_QUOTA */
 
+        switch (req->rq_vers) {
+        case NFS_V2:
+                dir_name = arg->arg_mkdir2.where.name;
 
-  switch (preq->rq_vers)
-    {
-    case NFS_V2:
-      dir_name = parg->arg_mkdir2.where.name;
+                if (arg->arg_mkdir2.attributes.mode != (unsigned int)-1) {
+                        mode = arg->arg_mkdir2.attributes.mode;
+                } else {
+                        mode = 0;
+                }
+                break;
 
-      if(parg->arg_mkdir2.attributes.mode != (unsigned int)-1)
-        {
-          mode = parg->arg_mkdir2.attributes.mode;
+        case NFS_V3:
+                dir_name = arg->arg_mkdir3.where.name;
+
+                if (arg->arg_mkdir3.attributes.mode.set_it) {
+                        mode = arg->arg_mkdir3.attributes.mode
+                                .set_mode3_u.mode;
+                } else {
+                        mode = 0;
+                        break;
+                }
         }
-      else
-        {
-          mode = 0;
+
+        if (dir_name == NULL ||
+            *dir_name == '\0' ) {
+                if (req->rq_vers == NFS_V2) {
+                        res->res_dirop2.status = NFSERR_IO;
+                }
+                if (req->rq_vers == NFS_V3) {
+                        res->res_mkdir3.status = NFS3ERR_INVAL;
+                }
+        } else {
+                /* Lookup file to see if it exists.  If so, use it.
+                   Otherwise create a new one. */
+                dir_entry = cache_inode_lookup(parent_entry,
+                                               dir_name,
+                                               req_ctx,
+                                               &cache_status_lookup);
+
+                if (cache_status_lookup == CACHE_INODE_NOT_FOUND) {
+                        /* The create_arg structure contains the
+                         * information "newly created directory" to be
+                         * passed to cache_inode_new_entry from
+                         * cache_inode_create */
+                        create_arg.newly_created_dir = true;
+
+                        /* Create the directory */
+                        if ((dir_entry = cache_inode_create(parent_entry,
+                                                            dir_name,
+                                                            DIRECTORY,
+                                                            mode,
+                                                            &create_arg,
+                                                            req_ctx,
+                                                            &cache_status))
+                            != NULL) {
+                                if (req->rq_vers == NFS_V2) {
+                                        DIROP2resok *d2ok = &res->res_dirop2
+                                                .DIROP2res_u.diropok;
+
+                                        /* Build file handle */
+                                        if (!nfs2_FSALToFhandle(
+                                                   &d2ok->file,
+                                                   dir_entry->obj_handle,
+                                                   export)) {
+                                                res->res_dirop2.status
+                                                        = NFSERR_IO;
+                                        } else {
+                                                /* Build entry attributes */
+                                                if (!cache_entry_to_nfs2_Fattr(
+                                                            dir_entry,
+                                                            req_ctx,
+                                                            &d2ok
+                                                            ->attributes)) {
+                                                        res->res_dirop2.status
+                                                                = NFSERR_IO;
+                                                } else {
+                                                        res->res_dirop2.status
+                                                                = NFS_OK;
+                                                }
+                                        }
+                                } else {
+                                        MKDIR3resok *d3ok = &res->res_mkdir3
+                                                .MKDIR3res_u.resok;
+
+                                        /* Build file handle */
+                                        res->res_mkdir3.status =
+                                                nfs3_AllocateFH(&d3ok->obj
+                                                                .post_op_fh3_u
+                                                                .handle);
+                                        if (res->res_mkdir3.status
+                                            != NFS3_OK) {
+                                                rc = NFS_REQ_OK;
+                                                goto out;
+                                        }
+
+                                        if (nfs3_FSALToFhandle(
+                                                    &d3ok->obj.post_op_fh3_u
+                                                    .handle,
+                                                    dir_entry->obj_handle,
+                                                    export) == 0) {
+                                                gsh_free(d3ok->obj
+                                                         .post_op_fh3_u.handle
+                                                         .data.data_val);
+                                                res->res_mkdir3.status
+                                                        = NFS3ERR_INVAL;
+                                                rc = NFS_REQ_OK;
+                                                goto out;
+                                        }
+
+                                        /* Set Post Op Fh3 structure */
+                                        d3ok->obj.handle_follows
+                                                = true;
+
+                                        /* Build entry attributes */
+                                        nfs_SetPostOpAttr(dir_entry,
+                                                          req_ctx,
+                                                          &d3ok
+                                                          ->obj_attributes);
+
+                                        /* Build Weak Cache Coherency data */
+                                        nfs_SetWccData(&pre_parent,
+                                                       parent_entry,
+                                                       req_ctx,
+                                                       &d3ok->dir_wcc);
+
+                                        res->res_mkdir3.status = NFS3_OK;
+                                }
+                                rc = NFS_REQ_OK;
+                                goto out;
+                        }
+                } else {
+                        /* object already exists or failure during lookup */
+                        if (cache_status_lookup == CACHE_INODE_SUCCESS) {
+                                /* Trying to create a file that
+                                   already exists */
+                                cache_status = CACHE_INODE_ENTRY_EXISTS;
+
+                                switch (req->rq_vers) {
+                                case NFS_V2:
+                                        res->res_dirop2.status = NFSERR_EXIST;
+                                        break;
+
+                                case NFS_V3:
+                                        res->res_mkdir3.status = NFS3ERR_EXIST;
+                                        break;
+                                }
+                        } else {
+                                /* Server fault */
+                                cache_status = cache_status_lookup;
+                        }
+                }
         }
-      break;
 
-    case NFS_V3:
-      dir_name = parg->arg_mkdir3.where.name;
-
-      if(parg->arg_mkdir3.attributes.mode.set_it)
-        mode = parg->arg_mkdir3.attributes.mode.set_mode3_u.mode;
-      else
-        mode = 0;
-      break;
-    }
-
-  if(dir_name == NULL || *dir_name == '\0' )
-    {
-      if(preq->rq_vers == NFS_V2)
-        pres->res_dirop2.status = NFSERR_IO;
-      if(preq->rq_vers == NFS_V3)
-        pres->res_mkdir3.status = NFS3ERR_INVAL;
-    }
-  else
-    {
-      /*
-       * Lookup file to see if it exists.  If so, use it.  Otherwise
-       * create a new one.
-       */
-      dir_pentry = cache_inode_lookup(parent_pentry,
-                                      dir_name,
-                                      &attr,
-                                      req_ctx,
-                                      &cache_status_lookup);
-
-      if(cache_status_lookup == CACHE_INODE_NOT_FOUND)
-        {
-          /* The create_arg structure contains the information "newly created directory"
-           * to be passed to cache_inode_new_entry from cache_inode_create */
-          create_arg.newly_created_dir = true;
-
-          /* Create the directory */
-          if((dir_pentry = cache_inode_create(parent_pentry,
-                                              dir_name,
-                                              DIRECTORY,
-                                              mode,
-                                              &create_arg,
-                                              &attr,
-                                              req_ctx,
-                                              &cache_status)) != NULL)
-            {
-              /*
-               * Get the FSAL handle for this entry
-               */
-              pfsal_handle = dir_pentry->obj_handle;
-
-              if(preq->rq_vers == NFS_V2)
-                {
-                  DIROP2resok *d2ok = &pres->res_dirop2.DIROP2res_u.diropok;
-
-                  /* Build file handle */
-                  if(!nfs2_FSALToFhandle(&d2ok->file, pfsal_handle, pexport))
-                    pres->res_dirop2.status = NFSERR_IO;
-                  else
-                    {
-                      /*
-                       * Build entry attributes
-                       */
-                      if(nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                                &d2ok->attributes) == 0)
-                        pres->res_dirop2.status = NFSERR_IO;
-                      else
-                        pres->res_dirop2.status = NFS_OK;
-                    }
-                }
-              else
-                {
-                  MKDIR3resok *d3ok = &pres->res_mkdir3.MKDIR3res_u.resok;
-
-                  /* Build file handle */
-                  pres->res_mkdir3.status =
-                    nfs3_AllocateFH(&d3ok->obj.post_op_fh3_u.handle);
-                  if(pres->res_mkdir3.status !=  NFS3_OK)
-                    {
-                      rc = NFS_REQ_OK;
-                      goto out;
-                    }
-
-                  if(nfs3_FSALToFhandle(&d3ok->obj.post_op_fh3_u.handle,
-                                        pfsal_handle, pexport) == 0)
-                    {
-                      gsh_free(d3ok->obj.post_op_fh3_u.handle.data.data_val);
-                      pres->res_mkdir3.status = NFS3ERR_INVAL;
-                      rc = NFS_REQ_OK;
-                      goto out;
-                    }
-
-                  /* Set Post Op Fh3 structure */
-                  d3ok->obj.handle_follows = TRUE;
-
-                  /*
-                   * Build entry attributes
-                   */
-                  nfs_SetPostOpAttr(pexport, &attr, &d3ok->obj_attributes);
-
-                  /* Get the attributes of the parent after the operation */
-                  attr_parent_after = parent_pentry->obj_handle->attributes;
-
-                  /*
-                   * Build Weak Cache Coherency data
-                   */
-                  nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
-                                 &d3ok->dir_wcc);
-
-                  pres->res_mkdir3.status = NFS3_OK;
-                }
-              rc = NFS_REQ_OK;
-              goto out;
-            }
-        }                   /* If( cache_status_lookup == CACHE_INODE_NOT_FOUND ) */
-      else
-        {
-          /* object already exists or failure during lookup */
-          if(cache_status_lookup == CACHE_INODE_SUCCESS)
-            {
-              /* Trying to create a file that already exists */
-              cache_status = CACHE_INODE_ENTRY_EXISTS;
-
-              switch (preq->rq_vers)
-                {
-                case NFS_V2:
-                  pres->res_dirop2.status = NFSERR_EXIST;
-                  break;
-
-                case NFS_V3:
-                  pres->res_mkdir3.status = NFS3ERR_EXIST;
-                  break;
-                }
-            }
-          else
-            {
-              /* Server fault */
-              cache_status = cache_status_lookup;
-
-              switch (preq->rq_vers)
-                {
-                case NFS_V2:
-                  pres->res_dirop2.status = NFSERR_IO;
-                  break;
-
-                case NFS_V3:
-                  pres->res_mkdir3.status = NFS3ERR_INVAL;
-                  break;
-                }
-            }
-
-          nfs_SetFailedStatus(pexport,
-                              preq->rq_vers,
-                              cache_status,
-                              &pres->res_dirop2.status,
-                              &pres->res_mkdir3.status,
-                              NULL, NULL,
-                              parent_pentry,
-                              ppre_attr,
-                              &(pres->res_mkdir3.MKDIR3res_u.resfail.dir_wcc),
-                              NULL, NULL, NULL);
-
-          rc = NFS_REQ_OK;
-          goto out;
+        /* If we are here, there was an error */
+        if (nfs_RetryableError(cache_status)) {
+                rc = NFS_REQ_DROP;
+                goto out;
         }
-    }
 
-  /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-  nfs_SetFailedStatus(pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_dirop2.status,
-                      &pres->res_mkdir3.status,
-                      NULL, NULL,
-                      parent_pentry,
-                      ppre_attr,
-                      &(pres->res_mkdir3.MKDIR3res_u.resfail.dir_wcc), NULL, NULL, NULL);
+        switch (req->rq_vers) {
+        case NFS_V2:
+                res->res_dirop2.status = nfs2_Errno(cache_status);
+                break;
 
-  rc = NFS_REQ_OK;
+        case NFS_V3:
+                res->res_mkdir3.status = nfs3_Errno(cache_status);
+                nfs_SetWccData(&pre_parent,
+                               parent_entry,
+                               req_ctx,
+                               &res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc);
+                break;
+        }
+
+
+        rc = NFS_REQ_OK;
 
 out:
-  /* return references */
-  if (dir_pentry)
-      cache_inode_put(dir_pentry);
+        /* return references */
+        if (dir_entry) {
+                cache_inode_put(dir_entry);
+        }
 
-  if (parent_pentry)
-      cache_inode_put(parent_pentry);
+        if (parent_entry) {
+                cache_inode_put(parent_entry);
+        }
 
-  return (rc);
+        return rc;
 }
 
 /**
- * nfs_Mkdir_Free: Frees the result structure allocated for nfs_Mkdir.
+ * @brief Free the result structure allocated for nfs_Mkdir.
  *
- * Frees the result structure allocated for nfs_Mkdir.
+ * This function frees the result structure allocated for nfs_Mkdir.
  *
- * @param pres        [INOUT]   Pointer to the result structure.
+ * @param[in,out] res Result structure
  *
  */
-void nfs_Mkdir_Free(nfs_res_t * resp)
+void
+nfs_Mkdir_Free(nfs_res_t *res)
 {
-  if((resp->res_mkdir3.status == NFS3_OK) &&
-     (resp->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows))
-    gsh_free(resp->res_mkdir3.MKDIR3res_u.resok.obj
-             .post_op_fh3_u.handle.data.data_val);
-}                               /* nfs_Mkdir_Free */
+        if ((res->res_mkdir3.status == NFS3_OK) &&
+            (res->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows)) {
+                gsh_free(res->res_mkdir3.MKDIR3res_u.resok.obj
+                         .post_op_fh3_u.handle.data.data_val);
+        }
+} /* nfs_Mkdir_Free */

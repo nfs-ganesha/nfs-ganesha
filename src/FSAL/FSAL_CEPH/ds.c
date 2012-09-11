@@ -40,9 +40,8 @@
 #include "fsal.h"
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
-#include "pnfs_common.h"
-#include "fsal_pnfs_files.h"
 #include "internal.h"
+#include "pnfs_utils.h"
 
 #define min(a,b)          \
      ({ typeof (a) _a = (a);                    \

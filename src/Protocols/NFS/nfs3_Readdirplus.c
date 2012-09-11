@@ -101,7 +101,8 @@ struct nfs3_readdirplus_cb_data
  *
  * @param[in]  arg     NFS argument union
  * @param[in]  export  NFS export list
- * @param[in]  context Credentials to be used for this request
+ * @param[in]  req_ctx Request context
+ * @param[in]  worker  Worker thread
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
@@ -113,13 +114,12 @@ struct nfs3_readdirplus_cb_data
 int
 nfs3_Readdirplus(nfs_arg_t *arg,
                  exportlist_t *export,
-		 struct req_op_context *req_ctx,
-		 nfs_worker_data_t *pworker,
+                 struct req_op_context *req_ctx,
+                 nfs_worker_data_t *worker,
                  struct svc_req *req,
                  nfs_res_t *res)
 {
      cache_entry_t *dir_entry = NULL;
-     struct attrlist dir_attr;
      uint64_t begin_cookie = 0;
      uint64_t cache_inode_cookie = 0;
      cookieverf3 cookie_verifier;
@@ -192,13 +192,13 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                                NULL,
                                &(res->res_readdirplus3.status),
                                NULL,
-                               &dir_attr, export, &rc)) == NULL) {
+                               export, &rc)) == NULL) {
           rc = NFS_REQ_DROP;
           goto out;
      }
 
      /* Extract the filetype */
-     dir_filetype = dir_attr.type;
+     dir_filetype = dir_entry->type;
 
      /* Sanity checks -- must be a directory */
 
@@ -216,8 +216,8 @@ nfs3_Readdirplus(nfs_arg_t *arg,
         only a set of zeros is returned (trivial value) */
 
      if (export->UseCookieVerifier) {
-          memcpy(cookie_verifier, &(dir_attr.mtime.seconds),
-                 sizeof(dir_attr.mtime.seconds));
+          memcpy(cookie_verifier, &(dir_entry->change_time),
+                 sizeof(dir_entry->change_time));
      }
 
      if (export->UseCookieVerifier && (begin_cookie != 0)) {
@@ -267,7 +267,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
      /* Fill in ".." */
      if (begin_cookie <= 1) {
-          struct attrlist parent_dir_attr;
           cache_entry_t *parent_dir_entry
                = cache_inode_lookupp(dir_entry,
                                      req_ctx,
@@ -279,17 +278,6 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                goto out;
           }
 
-          if ((cache_inode_getattr(parent_dir_entry,
-                                   &parent_dir_attr,
-                                   req_ctx,
-                                   &cache_status_gethandle))
-              != CACHE_INODE_SUCCESS) {
-               res->res_readdirplus3.status
-                    = nfs3_Errno(cache_status_gethandle);
-               cache_inode_lru_unref(parent_dir_entry, 0);
-               rc = NFS_REQ_OK;
-               goto out;
-          }
           if (!(nfs3_readdirplus_callback(&cb_opaque,
                                           "..",
                                           parent_dir_entry->obj_handle,
@@ -317,16 +305,14 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                goto out;
           }
 
-          /* Set failed status */
-          nfs_SetFailedStatus(export,
-                              NFS_V3,
-                              cache_status,
-                              NULL,
-                              &res->res_readdirplus3.status,
-                              dir_entry,
-                              &(res->res_readdirplus3.READDIRPLUS3res_u
-                                .resfail.dir_attributes),
-                              NULL, NULL, NULL, NULL, NULL, NULL);
+
+          res->res_readdirplus3.status = nfs3_Errno(cache_status);
+          nfs_SetPostOpAttr(dir_entry,
+                            req_ctx,
+                            &res->res_readdirplus3
+                            .READDIRPLUS3res_u.resfail
+                            .dir_attributes);
+
           goto out;
      }
      LogFullDebug(COMPONENT_NFS_READDIR,
@@ -340,10 +326,10 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                .resok.reply.entries = NULL;
           res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = TRUE;
 
-          nfs_SetPostOpAttr(export,
-                            NULL,
-                            &(res->res_readdirplus3.READDIRPLUS3res_u
-                              .resok.dir_attributes));
+          nfs_SetPostOpAttr(dir_entry,
+                            req_ctx,
+                            &res->res_readdirplus3.READDIRPLUS3res_u
+                            .resok.dir_attributes);
 
           memcpy(res->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
                  cookie_verifier, sizeof(cookieverf3));
@@ -354,10 +340,10 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                = eod_met;
      }
 
-     nfs_SetPostOpAttr(export,
-                       &dir_attr,
-                       &(res->res_readdirplus3.READDIRPLUS3res_u
-                         .resok.dir_attributes));
+     nfs_SetPostOpAttr(dir_entry,
+                       req_ctx,
+                       &res->res_readdirplus3.READDIRPLUS3res_u
+                       .resok.dir_attributes);
 
      memcpy(res->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
             cookie_verifier, sizeof(cookieverf3));
@@ -446,9 +432,9 @@ nfs3_readdirplus_callback(void* opaque,
           return false;
      }
 
-     (void)obj_hdl->ops->handle_digest(obj_hdl,
-                                       FSAL_DIGEST_FILEID3,
-                                       &id_descriptor);
+     obj_hdl->ops->handle_digest(obj_hdl,
+                                 FSAL_DIGEST_FILEID3,
+                                 &id_descriptor);
 
      ep3->name = gsh_malloc(namelen + 1);
      if (ep3->name == NULL) {
@@ -486,13 +472,16 @@ nfs3_readdirplus_callback(void* opaque,
      }
      ep3->name_attributes.attributes_follow = false;
 
-     nfs_SetPostOpAttr(tracker->export,
-                       &obj_hdl->attributes,
-                       &ep3->name_attributes);
+     ep3->name_attributes.attributes_follow
+          = nfs3_FSALattr_To_Fattr(
+               obj_hdl->export->exp_entry,
+               &obj_hdl->attributes,
+               &(ep3->name_attributes.post_op_attr_u
+                 .attributes));
      if (ep3->name_attributes.attributes_follow) {
-	  tracker->mem_left -= sizeof(ep3->name_attributes);
+          tracker->mem_left -= sizeof(ep3->name_attributes);
      } else {
-	  tracker->mem_left -= sizeof(ep3->name_attributes.attributes_follow);
+          tracker->mem_left -= sizeof(ep3->name_attributes.attributes_follow);
      }
      ++(tracker->count);
      return true;

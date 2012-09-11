@@ -96,7 +96,7 @@ cache_inode_truncate_impl(cache_entry_t *entry,
 
   /* Call FSAL to actually truncate */
   fsal_status = obj_hdl->ops->truncate(obj_hdl, req_ctx, length);
-  if( !FSAL_IS_ERROR(fsal_status)) {
+  if (!FSAL_IS_ERROR(fsal_status)) {
     fsal_status = obj_hdl->ops->getattrs(obj_hdl, req_ctx);
   }
 
@@ -120,8 +120,7 @@ cache_inode_truncate_impl(cache_entry_t *entry,
  *
  * @param[in]  entry   The file to be truncated
  * @param[in]  length  New length for the file
- * @param[out] attr    Attrtibutes for the file after the operation
- * @param[in]  context FSAL credentials
+ * @param[in]  req_ctx Request context
  * @param[out] status  Returned status
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
@@ -130,7 +129,6 @@ cache_inode_truncate_impl(cache_entry_t *entry,
 cache_inode_status_t
 cache_inode_truncate(cache_entry_t *entry,
                      uint64_t length,
-                     struct attrlist *attr,
                      struct req_op_context *req_ctx,
                      cache_inode_status_t *status)
 {
@@ -139,7 +137,6 @@ cache_inode_truncate(cache_entry_t *entry,
   pthread_rwlock_wrlock(&entry->attr_lock);
   pthread_rwlock_wrlock(&entry->content_lock);
   ret = cache_inode_truncate_impl(entry, length, req_ctx, status);
-  *attr = entry->obj_handle->attributes;
   pthread_rwlock_unlock(&entry->attr_lock);
   pthread_rwlock_unlock(&entry->content_lock);
   return ret;
