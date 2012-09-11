@@ -67,7 +67,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
   char * aname_str = NULL ;
   u32 * n_aname = NULL ;
 
-  struct attrlist fsalattr ;
+  uint64_t fileid;
 
   u32 err = 0 ;
  
@@ -153,7 +153,6 @@ int _9p_auth( _9p_request_data_t * preq9p,
   pexport->proot_handle->ops->handle_to_key( pexport->proot_handle, &fsdata.fh_desc ) ;
 
   pfid->pentry = cache_inode_get( &fsdata,
-                                  &fsalattr,
                                   NULL,
                                   &pfid->op_context,
                                   &cache_status ) ;
@@ -161,10 +160,18 @@ int _9p_auth( _9p_request_data_t * preq9p,
   if( pfid->pentry == NULL )
     return  _9p_rerror( preq9p, pworker_data,  msgtag,  _9p_tools_errno( cache_status ),  plenout, preply ) ;
 
+   if(cache_inode_fileid(pfid->pentry,
+			 &pfid->op_context, &fileid) != CACHE_INODE_SUCCESS)
+      return _9p_rerror( preq9p, pworker_data, msgtag,
+			_9p_tools_errno( cache_status ), plenout, preply ) ;
+
+  /* refcount */
+  cache_inode_put(pfid->pentry);
+
   /* Compute the qid */
   pfid->qid.type = _9P_QTDIR ;
   pfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
-  pfid->qid.path = fsalattr.fileid ;
+  pfid->qid.path = fileid ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RATTACH ) ;

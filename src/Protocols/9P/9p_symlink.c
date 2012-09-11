@@ -71,8 +71,8 @@ int _9p_symlink( _9p_request_data_t * preq9p,
   _9p_qid_t qid_symlink ;
 
   cache_entry_t       * pentry_symlink = NULL ;
-  char                  symlink_name[MAXNAMLEN] ; 
-  struct attrlist       fsalattr ;
+  char                  symlink_name[MAXNAMLEN] ;
+  uint64_t              fileid;
   cache_inode_status_t  cache_status ;
   uint32_t mode = 0777;
   cache_inode_create_arg_t create_arg;
@@ -120,18 +120,25 @@ int _9p_symlink( _9p_request_data_t * preq9p,
                                               SYMBOLIC_LINK,
                                               mode,
                                               &create_arg,
-                                              &fsalattr,
                                               &pfid->op_context,
                                               &cache_status)) == NULL)
     {
       if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
       return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
+   cache_status = cache_inode_fileid(pentry_symlink, &pfid->op_context, &fileid);
+   if(cache_status != CACHE_INODE_SUCCESS) {
+      cache_inode_put(pentry_symlink);
+      return _9p_rerror( preq9p, pworker_data, msgtag,
+			_9p_tools_errno( cache_status ), plenout, preply ) ;
+   }
+   /* refcount */
+   cache_inode_put(pentry_symlink);
 
    /* Build the qid */
    qid_symlink.type    = _9P_QTSYMLINK ;
    qid_symlink.version = 0 ;
-   qid_symlink.path    = fsalattr.fileid ;
+   qid_symlink.path    = fileid ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RSYMLINK ) ;

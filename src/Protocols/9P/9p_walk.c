@@ -59,22 +59,14 @@ int _9p_walk( _9p_request_data_t * preq9p,
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
   nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  unsigned int i = 0 ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
   u32 * newfid = NULL ;
   u16 * nwname = NULL ;
-  u16 * wnames_len[_9P_MAXWELEM] ;
-  char * wnames_str[_9P_MAXWELEM] ;
 
   u16 * nwqid ;
-
-  unsigned int i = 0 ;
-
-  char name[MAXNAMLEN] ; 
-  struct attrlist        fsalattr ;
-  cache_inode_status_t   cache_status ;
-  cache_entry_t        * pentry = NULL ;
 
   _9p_fid_t * pfid = NULL ;
   _9p_fid_t * pnewfid = NULL ;
@@ -82,7 +74,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
-  /* Get data */
+  /* Now Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
   _9p_getptr( cursor, fid,    u32 ) ; 
   _9p_getptr( cursor, newfid, u32 ) ; 
@@ -90,13 +82,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "TWALK: tag=%u fid=%u newfid=%u nwname=%u",
             (u32)*msgtag, *fid, *newfid, *nwname ) ;
-
-  for( i = 0 ; i < *nwname ; i++ )
-   {
-     _9p_getstr( cursor, wnames_len[i], wnames_str[i] ) ;
-      LogDebug( COMPONENT_9P, "TWALK (component): tag=%u fid=%u newfid=%u nwnames=%.*s",
-                (u32)*msgtag, *fid, *newfid, *(wnames_len[i]), wnames_str[i] ) ;
-   }
 
   if( *fid >= _9P_FID_PER_CONN )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
@@ -131,33 +116,48 @@ int _9p_walk( _9p_request_data_t * preq9p,
    }
   else 
    {
+      u16 * wnames_len;
+      char * wnames_str;
+      uint64_t               fileid;
+      cache_inode_status_t   cache_status ;
+      cache_entry_t        * pentry = NULL ;
+      char name[MAXNAMLEN] ;
+
       pnewfid->fid = *newfid ;
       pnewfid->op_context = pfid->op_context ;
       pnewfid->pexport = pfid->pexport ;
 
       /* the walk is in fact a lookup */
       pentry = pfid->pentry ;
+
       for( i = 0 ; i <  *nwname ; i ++ )
         {
-           snprintf( name, MAXNAMLEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
+           _9p_getstr( cursor, wnames_len, wnames_str ) ;
+           snprintf( name, MAXNAMLEN, "%.*s", *wnames_len, wnames_str ) ;
 
            LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
             (u32)*msgtag, *fid, *newfid, i+1, *nwname, name ) ;
 
            /* refcount +1 */
-           if( ( pnewfid->pentry = cache_inode_lookup( pentry,
-                                                       name,
-                                                       &fsalattr,
-                                                       &pfid->op_context,
-                                                       &cache_status ) ) == NULL )
+           pnewfid->pentry = cache_inode_lookup( pentry,
+						 name,
+						 &pfid->op_context,
+						 &cache_status );
+	   cache_inode_put(pentry);
+	   if(pnewfid->pentry == NULL )
               return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
-
            pentry =  pnewfid->pentry ;
         }
 
+      cache_status = cache_inode_fileid(pnewfid->pentry, &pfid->op_context, &fileid);
+      cache_inode_put(pnewfid->pentry);
+      if(cache_status != CACHE_INODE_SUCCESS)
+          return _9p_rerror( preq9p, pworker_data, msgtag,
+			     _9p_tools_errno( cache_status ), plenout, preply ) ;
+
      /* Build the qid */
      pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
-     pnewfid->qid.path = (u64)pnewfid->pentry->obj_handle->attributes.fileid ;
+     pnewfid->qid.path = fileid ;
 
      pnewfid->specdata.xattr.xattr_id = 0 ;
      pnewfid->specdata.xattr.xattr_content = NULL ;

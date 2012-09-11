@@ -69,9 +69,6 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   _9p_fid_t * poldfid = NULL ;
   _9p_fid_t * pnewfid = NULL ;
 
-  struct attrlist    oldfsalattr ;
-  struct attrlist    newfsalattr ;
-
   cache_inode_status_t  cache_status ;
 
   char oldname[MAXNAMLEN] ;
@@ -123,8 +120,6 @@ int _9p_renameat( _9p_request_data_t * preq9p,
                           oldname,
                           pnewfid->pentry,
                           newname,
-                          &oldfsalattr,
-                          &newfsalattr,
                           &poldfid->op_context, 
                           &cache_status) != CACHE_INODE_SUCCESS )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

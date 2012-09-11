@@ -72,8 +72,8 @@ int _9p_mknod( _9p_request_data_t * preq9p,
   _9p_qid_t qid_newobj ;
 
   cache_entry_t            * pentry_newobj = NULL ;
-  char                       obj_name[MAXNAMLEN] ; 
-  struct attrlist            fsalattr ;
+  char                       obj_name[MAXNAMLEN] ;
+  uint64_t                   fileid;
   cache_inode_status_t       cache_status ;
   object_file_type_t    nodetype;
   cache_inode_create_arg_t   create_arg;
@@ -130,15 +130,23 @@ int _9p_mknod( _9p_request_data_t * preq9p,
                                              nodetype,
                                              *mode,
                                              &create_arg,
-                                             &fsalattr,
                                              &pfid->op_context,
                                              &cache_status)) == NULL)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
+   cache_status = cache_inode_fileid(pentry_newobj, &pfid->op_context, &fileid);
+   if(cache_status != CACHE_INODE_SUCCESS) {
+      cache_inode_put(pentry_newobj);
+      return _9p_rerror( preq9p, pworker_data, msgtag,
+			_9p_tools_errno( cache_status ), plenout, preply ) ;
+   }
+   /* refcount */
+   cache_inode_put(pentry_newobj);
+
    /* Build the qid */
    qid_newobj.type    = _9P_QTTMP ; /** @todo BUGAZOMEU For wanting of something better */
    qid_newobj.version = 0 ;
-   qid_newobj.path    = fsalattr.fileid ;
+   qid_newobj.path    = fileid ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RMKNOD ) ;

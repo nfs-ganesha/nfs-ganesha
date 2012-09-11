@@ -75,7 +75,6 @@ int _9p_setattr( _9p_request_data_t * preq9p,
 
   struct attrlist       fsalattr ;
   cache_inode_status_t  cache_status ;
-  struct attrlist       parent_attr;
 
   struct timeval t;
 
@@ -124,9 +123,6 @@ int _9p_setattr( _9p_request_data_t * preq9p,
    }
 
   /* Let's do the job */
-  memset( (char *)&fsalattr, 0, sizeof( fsalattr ) ) ;
-  memset(&parent_attr, 0, sizeof(parent_attr));
-
   if( *valid & _9P_SETATTR_MODE )
    {
       FSAL_SET_MASK(fsalattr.mask, ATTR_MODE);
@@ -192,7 +188,6 @@ int _9p_setattr( _9p_request_data_t * preq9p,
       FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
       if((cache_status = cache_inode_truncate( pfid->pentry,
                                                *size,
-                                               &parent_attr,
                                                &pfid->op_context,
                                                &cache_status)) != CACHE_INODE_SUCCESS)
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

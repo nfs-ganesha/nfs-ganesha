@@ -72,8 +72,8 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
   u32 iounit = _9P_IOUNIT ; ;
 
   cache_entry_t       * pentry_newfile = NULL ;
-  char                  file_name[MAXNAMLEN] ; 
-  struct attrlist       fsalattr ;
+  char                  file_name[MAXNAMLEN] ;
+  uint64_t              fileid;
   cache_inode_status_t  cache_status ;
   fsal_openflags_t      openflags = 0 ;
 
@@ -113,24 +113,30 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
                                               REGULAR_FILE,
                                               *mode,
                                               NULL,
-                                              &fsalattr,
                                               &pfid->op_context, 
      			 		      &cache_status)) == NULL)
      return   _9p_rerror( preq9p, pworker_data,  msgtag,  _9p_tools_errno( cache_status ) , plenout, preply ) ;
       
+   cache_status = cache_inode_fileid(pentry_newfile, &pfid->op_context, &fileid);
+   if(cache_status != CACHE_INODE_SUCCESS)
+	   goto err;
+
    _9p_openflags2FSAL( flags, &openflags ) ; 
 
    if(cache_inode_open( pentry_newfile, 
                         openflags, 
                         &pfid->op_context,
                         0, 
-                        &cache_status) != CACHE_INODE_SUCCESS) 
-     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+                        &cache_status) != CACHE_INODE_SUCCESS)
+	   goto err;
+
+   /* refcount */
+   cache_inode_put(pentry_newfile);
 
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;
    qid_newfile.version = 0 ;
-   qid_newfile.path    = fsalattr.fileid ;
+   qid_newfile.path    = fileid ;
 
    iounit = 0 ; /* default value */
 
@@ -157,5 +163,10 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 
   _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
+
+err:
+  cache_inode_put(pentry_newfile);
+  return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+
 }
 

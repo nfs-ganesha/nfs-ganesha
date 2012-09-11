@@ -68,7 +68,6 @@ int _9p_link( _9p_request_data_t * preq9p,
   _9p_fid_t * pdfid = NULL ;
   _9p_fid_t * ptargetfid = NULL ;
 
-  struct attrlist       fsalattr ;
   cache_inode_status_t  cache_status ;
   char                  link_name[MAXNAMLEN] ; ;
 
@@ -114,7 +113,6 @@ int _9p_link( _9p_request_data_t * preq9p,
    if( cache_inode_link( ptargetfid->pentry,
                          pdfid->pentry,
                          link_name,
-                         &fsalattr,
                          &pdfid->op_context,
                          &cache_status) != CACHE_INODE_SUCCESS )
      return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
