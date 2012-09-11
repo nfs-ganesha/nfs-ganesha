@@ -909,6 +909,9 @@ struct export_ops {
 /**
  * @brief Get layout types supported by export
  *
+ * This function is the handler of the NFS4.1 FATTR4_FS_LAYOUT_TYPES file
+ * attribute. (See RFC)
+ *
  * @param[in]  exp_hdl Filesystem to interrogate
  * @param[out] count   Number of layout types in array
  * @param[out] types   Static array of layout types that must not be
@@ -922,8 +925,13 @@ struct export_ops {
 /**
  * @brief Get layout block size for export
  *
+ * This function is the handler of the NFS4.1 FATTR4_LAYOUT_BLKSIZE f-attribute.
+ *
  * This is the preferred read/write block size.  Clients are requested
  * (but don't have to) read and write in multiples.
+ *
+ * NOTE: The linux client only asks for this in blocks-layout, where this is the
+ * filesystem wide block-size. (Minimum write size and alignment)
  *
  * @param[in] exp_hdl Filesystem to interrogate
  *
@@ -940,25 +948,35 @@ struct export_ops {
  *
  * @param[in] exp_hdl Filesystem to interrogate
  *
- * @return The preferred layout block size.
+ * @return The Maximum number of layout segments in a campound layoutget.
  */
         uint32_t (*fs_maximum_segments)(struct fsal_export *exp_hdl);
 
 /**
- * @brief Size of the buffer needed for a loc_body
+ * @brief Size of the buffer needed for loc_body at layoutget
+ *
+ * This function sets policy for XDR buffer allocation in layoutget vector
+ * below. If FSAL has a const size, just return it here. If it is dependent on
+ * what the client can take return ~0UL. In any case the buffer allocated will
+ * not be bigger than client's requested maximum.
  *
  * @param[in] exp_hdl Filesystem to interrogate
  *
- * @return Size of the buffer needed for a loc_body
+ * @return Max size of the buffer needed for a loc_body
  */
         size_t (*fs_loc_body_size)(struct fsal_export *exp_hdl);
 
 /**
- * @brief Size of the buffer needed for a ds_addr
+ * @brief Max Size of the buffer needed for da_addr_body in getdeviceinfo
+ *
+ * This function sets policy for XDR buffer allocation in getdeviceinfo.
+ * If FSAL has a const size, just return it here. If it is dependent on
+ * what the client can take return ~0UL. In any case the buffer allocated will
+ * not be bigger than client's requested maximum.
  *
  * @param[in] exp_hdl Filesystem to interrogate
  *
- * @return Size of the buffer needed for a ds_addr
+ * @return Max size of the buffer needed for a da_addr_body
  */
         size_t (*fs_da_addr_size)(struct fsal_export *exp_hdl);
 /*@}*/
