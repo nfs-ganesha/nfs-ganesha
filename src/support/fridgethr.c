@@ -47,19 +47,19 @@
 #include "fridgethr.h"
 
 int
-fridgethr_init(thr_fridge_t *fr)
+fridgethr_init(thr_fridge_t *fr, const char *s)
 {
     fr->nthreads = 0;
+    fr->nidle = 0;
     fr->thr_max = 0; /* XXX implement */
+    fr->s = strdup(s);
     fr->flags = FRIDGETHR_FLAG_NONE;
 
     pthread_attr_init(&fr->attr); 
     pthread_attr_setscope(&fr->attr, PTHREAD_SCOPE_SYSTEM);
     pthread_attr_setdetachstate(&fr->attr, PTHREAD_CREATE_DETACHED);
     pthread_attr_setstacksize(&fr->attr, fr->stacksize);
-
-    if( pthread_mutex_init( &fr->mtx, NULL ) != 0 )
-        return (-1);
+    pthread_mutex_init(&fr->mtx, NULL);
 
     /* idle threads q */
     init_glist(&fr->idle_q);
@@ -74,14 +74,28 @@ static void *
 fridgethr_start_routine(void *arg)
 {
     fridge_entry_t *pfe = (fridge_entry_t *) arg;
+    thr_fridge_t *fr = pfe->fr;
     bool reschedule;
+
+    SetNameFunction(fr->s);
 
     (void) pthread_sigmask(SIG_SETMASK, (sigset_t *) NULL,
                            &pfe->ctx.sigmask);
     do {
         (void) pfe->ctx.func(&pfe->ctx);
-        reschedule = fridgethr_freeze(pfe->fr, &pfe->ctx);
+        reschedule = fridgethr_freeze(fr, &pfe->ctx);
     } while (reschedule);
+
+    /* finalize this -- note that at present, pfe is not on any
+     * thread queue */
+    pthread_mutex_lock(&fr->mtx);
+    --(fr->nthreads);
+    pthread_mutex_unlock(&fr->mtx);
+
+    pthread_mutex_destroy(&pfe->ctx.mtx);
+    pthread_cond_destroy(&pfe->ctx.cv);
+    gsh_free(pfe);
+
     return (NULL);
 }
 
@@ -115,6 +129,10 @@ fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
         (void) pthread_create(&pfe->ctx.id, &fr->attr, fridgethr_start_routine,
                               pfe);
 
+        LogFullDebug(COMPONENT_THREAD,
+                "fr %p created thread %u (nthreads %u nidle %u)",
+                fr, pfe->ctx.id, fr->nthreads, fr->nidle);
+
         goto out;
     }
 
@@ -142,7 +160,6 @@ bool
 fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 {
     fridge_entry_t *pfe = container_of(thr_ctx, fridge_entry_t, ctx);
-    void *arg = NULL;
     int rc;
 
     if ((rc = gettimeofday(&pfe->tp, NULL)) != 0)
@@ -168,8 +185,16 @@ fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
     pthread_mutex_unlock(&fr->mtx);
 
     /* rescheduled */
-    if (rc != ETIMEDOUT)
+    if (rc != ETIMEDOUT) {
+        LogFullDebug(COMPONENT_THREAD,
+                "fr %p re-use idle thread %u (nthreads %u nidle %u)",
+                fr, pfe->ctx.id, fr->nthreads, fr->nidle);
         return (TRUE);
+    }
+
+    LogFullDebug(COMPONENT_THREAD,
+            "fr %p thread %u idle out (nthreads %u nidle %u)",
+            fr, pfe->ctx.id, fr->nthreads, fr->nidle);
 
     return (FALSE);
 } /* fridgethr_freeze */

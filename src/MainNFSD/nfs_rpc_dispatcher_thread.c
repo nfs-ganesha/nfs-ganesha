@@ -114,6 +114,13 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 static bool_t nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
 static void nfs_rpc_free_xprt(SVCXPRT *xprt);
 
+const char *xprt_stat_s[3] =
+{
+    "XPRT_DIED",
+    "XPRT_MOREREQS",
+    "XPRT_IDLE"
+};
+
 /**
  *
  * nfs_rpc_dispatch_dummy: Function never called, but the symbol is needed
@@ -808,7 +815,8 @@ nfs_rpc_outstanding_reqs_est(void)
 void *
 thr_stallq(void *arg)
 {
-    fridge_thr_contex_t *thr_ctx = (fridge_thr_contex_t *) arg;
+    fridge_thr_contex_t *thr_ctx  __attribute__((unused)) =
+        (fridge_thr_contex_t *) arg;
     gsh_xprt_private_t *xu;
     struct glist_head *l;
     SVCXPRT *xprt;
@@ -860,16 +868,16 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     nreqs = xu->req_cnt;
 
     /* check per-xprt quota */
-    if (! (nreqs > nfs_param.core_param.dispatch_max_reqs_xprt)) {
+    if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
         pthread_spin_unlock(&xprt->sp);
         goto out;
     }
 
-    /* can't happen */
-    if (xu->flags & XPRT_PRIVATE_FLAG_STALLED) {
+    /* XXX can't happen */
+    if (unlikely(xu->flags & XPRT_PRIVATE_FLAG_STALLED)) {
         pthread_spin_unlock(&xprt->sp);
         LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
-                 xprt, nreqs);
+                 xprt);
         goto out;
     }
 
@@ -911,7 +919,7 @@ nfs_rpc_queue_init(void)
     req_fridge->expiration_delay_s =
         (nfs_param.core_param.decoder_fridge_expiration_delay > 0) ?
         nfs_param.core_param.decoder_fridge_expiration_delay : 600;
-    (void) fridgethr_init(req_fridge);
+    (void) fridgethr_init(req_fridge, "decoder_thr");
 
     /* queues */
     pthread_spin_init(&nfs_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);
@@ -942,7 +950,10 @@ nfs_rpc_enqueue_req(request_data_t *req)
     struct req_q *q;
     bool mount_req = FALSE;
 
-    LogFullDebug(COMPONENT_DISPATCH, "enter");
+    LogFullDebug(COMPONENT_DISPATCH,
+                 "enter rq_xid=%u lookahead.flags=%u",
+                 req->r_u.nfs->req.rq_xid,
+                 req->r_u.nfs->lookahead.flags);
 
     nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
 
@@ -986,7 +997,7 @@ nfs_rpc_enqueue_req(request_data_t *req)
     /* potentially wakeup some thread */
 
     /* slot waitq */
-    if (mount_req) {
+    if (unlikely(mount_req)) {
         q = &qpair->consumer;
         pthread_mutex_lock(&q->we.mtx);
         LogFullDebug(COMPONENT_DISPATCH, "mount_req=TRUE, signalling mountq");
@@ -1002,15 +1013,22 @@ nfs_rpc_enqueue_req(request_data_t *req)
         if (nfs_req_st.reqs.waiters) {
             wqe = glist_first_entry(&nfs_req_st.reqs.wait_list, wait_q_entry_t,
                                     waitq);
-            LogFullDebug(COMPONENT_DISPATCH, "signal wqe %p (for q %p)", 
-                         wqe, q);
+
+            LogFullDebug(COMPONENT_DISPATCH,
+                         "nfs_req_st.reqs.waiters %u signal wqe %p (for q %p)", 
+                         nfs_req_st.reqs.waiters, wqe, q);
+
+            /* release 1 waiter */
             glist_del(&wqe->waitq);
             --(nfs_req_st.reqs.waiters);
             --(wqe->waiters);
             pthread_spin_unlock(&nfs_req_st.reqs.sp); /* ! SPIN LOCKED */
             pthread_mutex_lock(&wqe->lwe.mtx);
-            wqe->flags |= Wqe_LFlag_SyncDone;
-            pthread_cond_signal(&wqe->lwe.cv);
+            /* XXX reliable handoff */
+            if (wqe->flags & Wqe_LFlag_WaitSync) {
+                wqe->flags |= Wqe_LFlag_SyncDone;
+                pthread_cond_signal(&wqe->lwe.cv);
+            }
             pthread_mutex_unlock(&wqe->lwe.mtx);
         }
     }
@@ -1045,8 +1063,9 @@ nfs_rpc_consume_req(struct req_q_pair *qpair, uint32_t flags)
         if (! plocked)
             pthread_mutex_lock(&qpair->producer.we.mtx);
 
-        LogCrit(COMPONENT_DISPATCH, "try splice, q %s %p size is %d",
-                qpair->s, &qpair->consumer.q, qpair->consumer.size);
+        LogFullDebug(COMPONENT_DISPATCH,
+                     "try splice, qpair %s consumer qsize=%d producer qsize=%d",
+                     qpair->s, qpair->consumer.size, qpair->producer.size);
 
         if (qpair->producer.size > 0) {
             /* splice */
@@ -1059,15 +1078,17 @@ nfs_rpc_consume_req(struct req_q_pair *qpair, uint32_t flags)
                                        req_q);
             glist_del(&nfsreq->req_q);
             --(qpair->consumer.size);
+            goto cunlock;
         }
     }
 
     if ((! plocked) &&
-        (flags & NFS_RPC_REQ_FLAG_PUNLOCK))
+        likely(flags & NFS_RPC_REQ_FLAG_PUNLOCK))
         pthread_mutex_unlock(&qpair->producer.we.mtx);
 
+cunlock:
     if ((! clocked) &&
-        (flags & NFS_RPC_REQ_FLAG_CUNLOCK))
+        likely(flags & NFS_RPC_REQ_FLAG_CUNLOCK))
         pthread_mutex_unlock(&qpair->consumer.we.mtx);
 
     return (nfsreq);
@@ -1099,12 +1120,15 @@ nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
         }
     }
 
+    if (nfsreq)
+        goto out;
+
     /* XXX: the following stands in for a more robust/flexible
      * weighting function */
 
     /* slot in 1..4 */
 retry_deq:
-    slot = (nfs_rpc_q_next_ix() % 4);
+    slot = (nfs_rpc_q_next_slot() % 4);
     for (ix = 0; ix < 4; ++ix) {
         switch (slot+1) {
         case 1:
@@ -1134,7 +1158,8 @@ retry_deq:
         if (nfsreq)
             break;
 
-        slot = (++slot % 4);
+        ++slot; slot = slot % 4;
+
     } /* for */
 
     /* wait */
@@ -1152,9 +1177,11 @@ retry_deq:
         while (! (wqe->flags & Wqe_LFlag_SyncDone)) {
             /* XXX check for TCB event? */
             pthread_cond_wait(&wqe->lwe.cv, &wqe->lwe.mtx);
+            wqe->flags &= ~(Wqe_LFlag_WaitSync|Wqe_LFlag_SyncDone);
             pthread_mutex_unlock(&wqe->lwe.mtx);
             LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", 
                          wqe);
+            break;
         }
         /* XXX wqe was removed from nfs_req_st.waitq (by signalling thread) */
         goto retry_deq;
@@ -1206,9 +1233,6 @@ alloc_nfs_request(SVCXPRT *xprt)
     nfsreq->r_u.nfs->xprt = xprt;
     req->rq_xprt = xprt;
 
-    /* XXX */
-    gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_NONE);
-
     return (nfsreq);
 }
 
@@ -1243,7 +1267,6 @@ static inline enum xprt_stat
 thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
 {
     sigset_t *sigmask = &thr_ctx->sigmask;
-    gsh_xprt_private_t *xu;
     request_data_t *nfsreq;
     struct rpc_msg *msg;
     struct svc_req *req;
@@ -1263,12 +1286,12 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
     recv_status = SVC_RECV(xprt, msg);
 
     LogFullDebug(COMPONENT_DISPATCH,
-                 "Status for SVC_RECV on socket %d is %d, xid=%lu",
+                 "SVC_RECV on socket %d returned %s, xid=%u",
                  xprt->xp_fd,
-                 recv_status,
-                 (unsigned long) msg->rm_xid);
+                 (recv_status) ? "TRUE" : "FALSE",
+                 msg->rm_xid);
 
-    if (! recv_status) {
+    if (unlikely(! recv_status)) {
 
       /* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE,
        * because UDP is mostly a stateless protocol.  With RPC/TCP, they can be
@@ -1291,9 +1314,15 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
         stat = SVC_STAT(xprt);
         DISP_UNLOCK(xprt);
 
-        if (stat == XPRT_DIED) {
+        if (stat == XPRT_IDLE) {
+            /* typically, a new connection */
             LogDebug(COMPONENT_DISPATCH,
-                     "Client on socket=%d, addr=%s disappeared...",
+                     "Client on socket=%d, addr=%s has status XPRT_IDLE",
+                     xprt->xp_fd, addrbuf);
+        }
+        else if (stat == XPRT_DIED) {
+            LogDebug(COMPONENT_DISPATCH,
+                     "Client on socket=%d, addr=%s disappeared (XPRT_DIED)",
                      xprt->xp_fd, addrbuf);
             DISP_LOCK(xprt);
             gsh_xprt_destroy(xprt);
@@ -1304,15 +1333,10 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
                      "Client on socket=%d, addr=%s has status XPRT_MOREREQS",
                      xprt->xp_fd, addrbuf);
         }
-        else if (stat == XPRT_IDLE) {
-            LogDebug(COMPONENT_DISPATCH,
-                     "Client on socket=%d, addr=%s has status XPRT_IDLE",
-                     xprt->xp_fd, addrbuf);
-        }
         else {
             LogDebug(COMPONENT_DISPATCH,
-                     "Client on socket=%d, addr=%s has status unknown (%d)",
-                     xprt->xp_fd, addrbuf, (int)stat);
+                     "Client on socket=%d, addr=%s has unknown status (%d)",
+                     xprt->xp_fd, addrbuf, stat);
         }
         goto done;
     }
@@ -1366,21 +1390,19 @@ thr_decode_rpc_requests(void *arg)
     fridge_thr_contex_t *thr_ctx = (fridge_thr_contex_t *) arg;
     SVCXPRT *xprt = (SVCXPRT *) thr_ctx->arg;
 
-    LogDebug(COMPONENT_DISPATCH, "enter");
-
     /* continue receiving if data is already buffered--failure to do so
-     * will result in stalls (TCP). */
+     * will result in stalls (TCP) */
     do {
         stat = thr_decode_rpc_request(thr_ctx, xprt);
     } while (stat == XPRT_MOREREQS);
 
-    LogDebug(COMPONENT_DISPATCH, "exiting, stat=%d", stat);
+    LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
 
     /* done decoding, rearm */
-    if (stat != XPRT_DIED)
+    if (unlikely(stat != XPRT_DIED))
         (void) svc_rqst_unblock_events(xprt, SVC_RQST_FLAG_NONE);
 
-    /* update accounting, clear decoding flag. */
+    /* update accounting, clear decoding flag */
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
 
   return (NULL);
@@ -1474,9 +1496,9 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
                      rpc_fd);
 #endif                          /* _USE_QUOTA */
     else
-        LogDebug(COMPONENT_DISPATCH,
-                 "A NFS TCP request from an already connected client %d",
-                 rpc_fd);
+        LogFullDebug(COMPONENT_DISPATCH,
+                     "A NFS TCP request from an already connected client %d",
+                     rpc_fd);
 
     /* XXX
      * Decoder backpressure.  There are multiple considerations here.
@@ -1490,7 +1512,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 
     /* check max outstanding quota */
     nreqs = nfs_rpc_outstanding_reqs_est();
-    if (nreqs >  nfs_param.core_param.dispatch_max_reqs) {
+    if (unlikely(nreqs >  nfs_param.core_param.dispatch_max_reqs)) {
         /* request queue is flow controlled */
         LogDebug(COMPONENT_DISPATCH,
                  "global outstanding reqs quota exceeded (have %u, allowed %u)",
@@ -1499,19 +1521,19 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         goto out;
     }
 
-    LogDebug(COMPONENT_DISPATCH, "before guard_ref");
+    LogFullDebug(COMPONENT_DISPATCH, "before guard_ref");
 
     /* clock duplicate, queued+stalled wakeups, queued wakeups */
     if (! gsh_xprt_decoder_guard_ref(xprt, XPRT_PRIVATE_FLAG_NONE))
         goto out;
 
-    LogDebug(COMPONENT_DISPATCH, "before block events");
+    LogFullDebug(COMPONENT_DISPATCH, "before block events");
 
     /* block events in the interval from initial dispatch to the
      * completion of SVC_RECV */
     (void) svc_rqst_block_events(xprt, SVC_RQST_FLAG_NONE);
 
-    LogDebug(COMPONENT_DISPATCH, "before cond stall");
+    LogFullDebug(COMPONENT_DISPATCH, "before cond stall");
 
     /* Check per-xprt max outstanding quota */
     if (nfs_rpc_cond_stall_xprt(xprt)) {
@@ -1520,10 +1542,12 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         goto out;
     }
 
-    LogDebug(COMPONENT_DISPATCH, "before fridgethr_get");
+    LogFullDebug(COMPONENT_DISPATCH, "before fridgethr_get");
 
     /* schedule a thread to decode */
     (void) fridgethr_get(req_fridge, thr_decode_rpc_requests, xprt);
+
+    LogFullDebug(COMPONENT_DISPATCH, "after fridgethr_get");
 
 out:
     return (TRUE);
