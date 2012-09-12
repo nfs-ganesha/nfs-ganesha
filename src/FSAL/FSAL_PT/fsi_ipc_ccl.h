@@ -48,8 +48,6 @@
 #define FSI_IPC_GETLOCK_PPID                   0
 
 #define PTFSAL_FILESYSTEM_NUMBER              77
-#define FUSE_EXPORT_ID           281474976710656
-#define FSI_IPC_FUSE_MSGID_BASE          5000000
 #define FSI_IPC_MSGID_BASE               5000000
 
 #ifndef   __GNUC__
@@ -71,8 +69,8 @@ __attribute__((format(printf, 1, 2)));  // 1=format 2=params
 // that PTFSAL at init can check against the ganesha version as an automated
 // check against header change in Ganesha environment not matched in this
 // copy
-#define GANESHA_MAXPATHLEN      4096          // Compare to Ganesha MAXPATHLEN
-#define GANESHA_COMPONENT_COUNT   48          // Compare to Ganesha COMPONENT_COUNT
+#define GANESHA_MAXPATHLEN      4096 // Compare to Ganesha MAXPATHLEN
+#define GANESHA_COMPONENT_COUNT   48 // Compare to Ganesha COMPONENT_COUNT
 
 // ----------------------------------------------------------------------------
 // Defines from src/include/log.h
@@ -206,8 +204,8 @@ extern log_component_info __attribute__ ((unused))
     sleep(1);                                                              \
   }                                                                        \
 }
-
-
+#define CCL_CLOSE_STYLE_NORMAL             0
+#define CCL_CLOSE_STYLE_FIRE_AND_FORGET    1
 #define FSAL_MAX_PATH_LEN PATH_MAX
 
 extern int       g_shm_id;              // SHM ID
@@ -762,7 +760,8 @@ int ccl_open(ccl_context_t   * handle,
               int                   flags,
               mode_t                mode);
 int ccl_close(ccl_context_t * handle,
-               int handle_index);
+              int             handle_index,
+              int             close_style);
 int merge_errno_rc(int rc_a,
                    int rc_b);
 int get_any_io_responses(int     handle_index,
@@ -774,7 +773,7 @@ void issue_read_ahead(struct file_handle_t       * p_pread_hndl,
                       struct msg_t               * p_msg,
                       struct CommonMsgHdr        * p_pread_hdr,
                       struct ClientOpPreadReqMsg * p_pread_req,
-                      ccl_context_t              * handle);
+                      const ccl_context_t        * handle);
 void load_deferred_io_rc(int handle_index,
                          int cur_error);
 int merge_errno_rc(int rc_a,
@@ -796,7 +795,7 @@ int update_read_status(struct file_handle_t        * p_pread_hndl,
                        struct msg_t                * p_msg,
                        struct CommonMsgHdr         * p_pread_hdr,
                        struct ClientOpPreadReqMsg  * p_pread_req,
-                       ccl_context_t               * handle);
+                       const ccl_context_t         * handle);
 int verify_io_response(int                      transaction_type,
                        int                      cur_index,
                        struct CommonMsgHdr           * p_msg_hdr,
@@ -880,6 +879,7 @@ int ccl_symlink(ccl_context_t * pvfs_handle,
                 const char    * path,
                 const char    * link_content);
 void ccl_update_handle_last_io_timestamp(int handle_index);
+
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
 //     Layer provide a copy of these functions and CCL call them (up calls)

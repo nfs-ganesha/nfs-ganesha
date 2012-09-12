@@ -81,7 +81,8 @@ void *ptfsal_closeHandle_listener_thread(void *args)
       close_rc = ptfsal_find_oldest_handle();
       if (close_rc != -1) {
         ptfsal_update_handle_nfs_state (close_rc, CCL_CLOSE);
-        close_rc = ptfsal_implicit_close_for_nfs(close_rc);
+        close_rc = ptfsal_implicit_close_for_nfs(close_rc, 
+                                                 CCL_CLOSE_STYLE_NORMAL);
       }
       ccl_up_mutex_unlock(&g_close_handle_mutex);
       /* Send the response back */
@@ -130,7 +131,7 @@ void ptfsal_close_timedout_handle_bkg(void)
        *       allow other close_on_open logic to come in
        */
       FSI_TRACE(FSI_NOTICE, "Found timed-out handle[%d]",index);
-      close_rc = ptfsal_implicit_close_for_nfs(index);
+      close_rc = ptfsal_implicit_close_for_nfs(index, CCL_CLOSE_STYLE_NORMAL);
       ccl_up_mutex_unlock(&g_close_handle_mutex);
       if (close_rc == -1) {
         FSI_TRACE(FSI_ERR, "Failed to implicitly close handle[%d]",index);
@@ -200,7 +201,7 @@ void ptfsal_update_handle_nfs_state(int handle_index, enum e_nfs_state state)
   ccl_up_mutex_unlock(&g_handle_mutex);
 }
 
-int ptfsal_implicit_close_for_nfs(int handle_index_to_close)
+int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
 {
   ccl_context_t context;
 
@@ -215,7 +216,8 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close)
   context.uid       = geteuid();
   context.gid       = getegid();
   FSI_TRACE(FSI_NOTICE, "Closing handle [%d]", handle_index_to_close);
-  return (ccl_close(&context, handle_index_to_close));
+  return (ccl_close(&context, handle_index_to_close, close_style));
 
 }
+
 

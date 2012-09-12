@@ -570,7 +570,7 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
     memset(&fsal_path, 0, sizeof(fsal_path_t));
     memcpy(&fsal_path.path, &fsi_name, sizeof(fsi_name));
     ptfsal_name_to_handle(p_context, &fsal_path, p_object_handle);
-    rc = ccl_close(&ccl_context, handleOpened);
+    rc = ccl_close(&ccl_context, handleOpened, CCL_CLOSE_STYLE_NORMAL);
     if (rc == -1) {
       FSI_TRACE(FSI_ERR, "Failed to close handle %d", handleOpened);
     }

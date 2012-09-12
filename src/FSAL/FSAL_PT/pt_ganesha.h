@@ -214,7 +214,7 @@ int ptfsal_find_oldest_handle(void);
 
 void ptfsal_update_handle_nfs_state(int handle_index, enum e_nfs_state state);
 
-int ptfsal_implicit_close_for_nfs(int handle_index_to_close);
+int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style);
 
 void *ptfsal_polling_closeHandler_thread(void *args);
 #endif // ifndef __PT_GANESHA_H__
