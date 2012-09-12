@@ -4748,7 +4748,7 @@ int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr, fattr4 *Fattr)
  * @return the converted NFSv4 status.
  *
  */
-nfsstat4 nfs4_Errno(cache_inode_status_t error)
+nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
 {
   nfsstat4 nfserror= NFS4ERR_INVAL;
 
@@ -4868,6 +4868,10 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_ASYNC_POST_ERROR:
       /* Should not occur */
+      LogDebug(COMPONENT_NFSPROTO,
+	       "Line %u should never be reached in nfs4_Errno"
+	       " from %s for cache_status=%u",
+	       __LINE__, where, error);
       nfserror = NFS4ERR_INVAL;
       break;
     }
@@ -4886,7 +4890,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
  * @return the converted NFSv3 status.
  *
  */
-nfsstat3 nfs3_Errno(cache_inode_status_t error)
+nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 {
   nfsstat3 nfserror= NFS3ERR_INVAL;
 
@@ -4906,8 +4910,8 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_HASH_SET_ERROR:
     case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error %u converted to NFS3ERR_IO but was set non-retryable",
-              error);
+              "Error %u in %s converted to NFS3ERR_IO but was set non-retryable",
+              error, where);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -4918,7 +4922,8 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_FSAL_ERROR:
                                          /** @todo: Check if this works by making stress tests */
       LogCrit(COMPONENT_NFSPROTO,
-              "Error CACHE_INODE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
+              "Error CACHE_INODE_FSAL_ERROR in %s converted to NFS3ERR_IO"
+	      " but was set non-retryable", where);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -4983,7 +4988,8 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
 
     case CACHE_INODE_IO_ERROR:
         LogCrit(COMPONENT_NFSPROTO,
-                "Error CACHE_INODE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
+                "Error CACHE_INODE_IO_ERROR in %s converted to NFS3ERR_IO"
+		" but was set non-retryable", where);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -5006,8 +5012,9 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_STATE_ERROR:
         /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
-                 "Line %u should never be reached in nfs3_Errno for cache_status=%u",
-                 __LINE__, error);
+                 "Line %u should never be reached in nfs3_Errno"
+		 " from %s for cache_status=%u",
+                 __LINE__, where, error);
       nfserror = NFS3ERR_INVAL;
       break;
     }
@@ -5026,7 +5033,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
  * @return the converted NFSv2 status.
  *
  */
-nfsstat2 nfs2_Errno(cache_inode_status_t error)
+nfsstat2 nfs2_Errno_verbose(cache_inode_status_t error, const char *where)
 {
   nfsstat2 nfserror= NFSERR_IO;
 
@@ -5048,8 +5055,8 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_INVALID_ARGUMENT:
     case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error %u converted to NFSERR_IO but was set non-retryable",
-              error);
+              "Error %u in %s converted to NFSERR_IO but was set non-retryable",
+              error, where);
       nfserror = NFSERR_IO;
       break;
 
@@ -5063,7 +5070,8 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
 
     case CACHE_INODE_FSAL_ERROR:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
+              "Error CACHE_INODE_FSAL_ERROR in %s converted"
+	      " to NFSERR_IO but was set non-retryable", where);
       nfserror = NFSERR_IO;
       break;
 
@@ -5108,7 +5116,8 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
 
     case CACHE_INODE_IO_ERROR:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error CACHE_INODE_IO_ERROR converted to NFSERR_IO but was set non-retryable");
+              "Error CACHE_INODE_IO_ERROR in %s converted to NFSERR_IO"
+	      " but was set non-retryable", where);
       nfserror = NFSERR_IO;
       break;
 
@@ -5127,7 +5136,8 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_FILE_BIG:
         /* Should not occur */
       LogDebug(COMPONENT_NFSPROTO,
-               "Line %u should never be reached in nfs2_Errno", __LINE__);
+               "Line %u should never be reached"
+	       " in nfs2_Errno from %s with error %d", __LINE__, where, error);
       nfserror = NFSERR_IO;
       break;
     }

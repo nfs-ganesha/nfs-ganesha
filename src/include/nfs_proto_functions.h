@@ -1267,9 +1267,12 @@ uint64_t nfs_ntohl64(uint64_t arg64);
 int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;
 
 /* Error conversion routines */
-nfsstat4 nfs4_Errno(cache_inode_status_t error);
-nfsstat3 nfs3_Errno(cache_inode_status_t error);
-nfsstat2 nfs2_Errno(cache_inode_status_t error);
+nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *);
+nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *);
+nfsstat2 nfs2_Errno_verbose(cache_inode_status_t error, const char *);
+#define nfs4_Errno(e) nfs4_Errno_verbose(e, __func__)
+#define nfs3_Errno(e) nfs3_Errno_verbose(e, __func__)
+#define nfs2_Errno(e) nfs2_Errno_verbose(e, __func__)
 int nfs3_AllocateFH(nfs_fh3 * fh);
 int nfs4_AllocateFH(nfs_fh4 * fh);
 
