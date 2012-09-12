@@ -948,7 +948,6 @@ nfs_rpc_enqueue_req(request_data_t *req)
     struct req_q_set *nfs_request_q;
     struct req_q_pair *qpair;
     struct req_q *q;
-    bool mount_req = FALSE;
 
     LogFullDebug(COMPONENT_DISPATCH,
                  "enter rq_xid=%u lookahead.flags=%u",
@@ -961,7 +960,6 @@ nfs_rpc_enqueue_req(request_data_t *req)
     case NFS_REQUEST:
         if (req->r_u.nfs->lookahead.flags & NFS_LOOKAHEAD_MOUNT) {
             qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
-            mount_req = TRUE;
             break;
         }
         if (NFS_LOOKAHEAD_HIGH_LATENCY(req->r_u.nfs->lookahead))
@@ -995,16 +993,6 @@ nfs_rpc_enqueue_req(request_data_t *req)
                  q, qpair->s, &qpair->producer, &qpair->consumer, q->size);
 
     /* potentially wakeup some thread */
-
-    /* slot waitq */
-    if (unlikely(mount_req)) {
-        q = &qpair->consumer;
-        pthread_mutex_lock(&q->we.mtx);
-        LogFullDebug(COMPONENT_DISPATCH, "mount_req=TRUE, signalling mountq");
-        pthread_cond_signal(&q->we.cv);
-        pthread_mutex_unlock(&q->we.mtx);
-        goto out;
-    }
 
     /* global waitq */
     {
@@ -1103,35 +1091,17 @@ nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
     struct req_q_pair *qpair;
     uint32_t ix, slot;
 
-    /* MOUNT */
-    if (worker->worker_index == 0) {
-        qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
-    retry:
-        nfsreq = nfs_rpc_consume_req(
-            qpair, NFS_RPC_REQ_FLAG_CUNLOCK|NFS_RPC_REQ_FLAG_PUNLOCK);
-        if (! nfsreq) {
-            /* slot wait */
-            ++(qpair->consumer.waiters);
-            pthread_mutex_lock(&qpair->consumer.we.mtx);
-            pthread_cond_wait(&qpair->consumer.we.cv, &qpair->consumer.we.mtx);
-            --(qpair->consumer.waiters);
-            pthread_mutex_unlock(&qpair->consumer.we.mtx);
-            /* XXX check for TCB event? */
-            goto retry;
-        }
-    }
-
-    if (nfsreq)
-        goto out;
-
     /* XXX: the following stands in for a more robust/flexible
      * weighting function */
 
     /* slot in 1..4 */
 retry_deq:
-    slot = (nfs_rpc_q_next_slot() % 3);
-    for (ix = 0; ix < 3; ++ix) {
-        switch (slot+1) {
+    slot = (nfs_rpc_q_next_slot() % 4);
+    for (ix = 0; ix < 4; ++ix) {
+        switch (slot) {
+        case 0:
+            /* MOUNT */
+            qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
         case 1:
             /* NFS_CALL */
             qpair = &(nfs_request_q->qset[REQ_Q_CALL]);
@@ -1158,7 +1128,7 @@ retry_deq:
         if (nfsreq)
             break;
 
-        ++slot; slot = slot % 3;
+        ++slot; slot = slot % 4;
 
     } /* for */
 
