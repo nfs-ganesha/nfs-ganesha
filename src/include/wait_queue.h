@@ -42,6 +42,7 @@
 
 typedef struct wait_entry
 {
+    pthread_spinlock_t sp;
     pthread_mutex_t mtx;
     pthread_cond_t cv;
 } wait_entry_t;
@@ -63,6 +64,7 @@ typedef struct wait_q_entry
 static inline void
 init_wait_entry(wait_entry_t *we)
 {
+    pthread_spin_init(&we->sp, PTHREAD_PROCESS_PRIVATE);
     pthread_mutex_init(&we->mtx, NULL);
     pthread_cond_init(&we->cv, NULL);
 }

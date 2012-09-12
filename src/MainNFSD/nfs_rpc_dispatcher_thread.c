@@ -984,10 +984,10 @@ nfs_rpc_enqueue_req(request_data_t *req)
 
     /* always append to producer queue */
     q = &qpair->producer;
-    pthread_mutex_lock(&q->we.mtx);
+    pthread_spin_lock(&q->we.sp);
     glist_add(&q->q, &req->req_q);
     ++(q->size);
-    pthread_mutex_unlock(&q->we.mtx);
+    pthread_spin_unlock(&q->we.sp);
 
     LogFullDebug(COMPONENT_DISPATCH, "enqueued req, q %p (%s %p:%p) size is %d",
                  q, qpair->s, &qpair->producer, &qpair->consumer, q->size);
@@ -1039,46 +1039,47 @@ nfs_rpc_consume_req(struct req_q_pair *qpair, uint32_t flags)
     bool clocked = FALSE;
     bool plocked = FALSE;
 
-    clocked = flags & NFS_RPC_REQ_FLAG_CLOCKED;
-    if (! clocked) 
-        pthread_mutex_lock(&qpair->consumer.we.mtx);
-
+    pthread_spin_lock(&qpair->consumer.we.sp);
     if (qpair->consumer.size > 0) {
         nfsreq = glist_first_entry(&qpair->consumer.q, request_data_t, req_q);
         glist_del(&nfsreq->req_q);
         --(qpair->consumer.size);
+        pthread_spin_unlock(&qpair->consumer.we.sp);
+        goto out;
     } else {
-        plocked = flags & NFS_RPC_REQ_FLAG_PLOCKED;
-        if (! plocked)
-            pthread_mutex_lock(&qpair->producer.we.mtx);
+        char *s = NULL;
+        uint32_t csize;
+        uint32_t psize;
 
-        LogFullDebug(COMPONENT_DISPATCH,
-                     "try splice, qpair %s consumer qsize=%d producer qsize=%d",
-                     qpair->s, qpair->consumer.size, qpair->producer.size);
-
+        pthread_spin_lock(&qpair->producer.we.sp);
+        if (isFullDebug(COMPONENT_DISPATCH)) {
+            s = qpair->s;
+            csize = qpair->consumer.size;
+            psize = qpair->producer.size;
+        }
         if (qpair->producer.size > 0) {
             /* splice */
             glist_splice_tail(&qpair->consumer.q, &qpair->producer.q);
             qpair->consumer.size = qpair->producer.size;
             qpair->producer.size = 0;
             /* consumer.size > 0 */
-            pthread_mutex_unlock(&qpair->producer.we.mtx);
+            pthread_spin_unlock(&qpair->producer.we.sp);
             nfsreq = glist_first_entry(&qpair->consumer.q, request_data_t,
                                        req_q);
             glist_del(&nfsreq->req_q);
             --(qpair->consumer.size);
-            goto cunlock;
+            pthread_spin_unlock(&qpair->consumer.we.sp);
+            if (s)
+                LogFullDebug(COMPONENT_DISPATCH,
+                             "try splice, qpair %s consumer qsize=%u "
+                             "producer qsize=%u",
+                             s, csize, psize);
+            goto out;
         }
     }
 
-    if ((! plocked) &&
-        likely(flags & NFS_RPC_REQ_FLAG_PUNLOCK))
-        pthread_mutex_unlock(&qpair->producer.we.mtx);
-
-cunlock:
-    if ((! clocked) &&
-        likely(flags & NFS_RPC_REQ_FLAG_CUNLOCK))
-        pthread_mutex_unlock(&qpair->consumer.we.mtx);
+    pthread_spin_unlock(&qpair->producer.we.sp);
+    pthread_spin_unlock(&qpair->consumer.we.sp);
 
     return (nfsreq);
 }
