@@ -140,9 +140,14 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
                 goto out;
         }
 
+        mincount = sizeof(uint32_t) +/* Count for the empty bitmap */
+                sizeof(layouttype4) +/* Type in the device_addr4 */
+                sizeof(uint32_t);    /* Number of bytes in da_addr_body */
+
         da_addr_size
                 = export->export_hdl->ops
-                ->fs_da_addr_size(export->export_hdl);
+                ->fs_da_addr_size(export->export_hdl,
+                                  arg_GETDEVICEINFO4->gdia_maxcount - mincount);
 
         if (da_addr_size == 0) {
                 LogCrit(COMPONENT_PNFS,
@@ -151,13 +156,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
                 goto out;
         }
 
-        mincount = sizeof(uint32_t) /* Count for the empty bitmap */ +
-                sizeof(layouttype4) /* Type in the device_addr4 */ +
-                sizeof(uint32_t) /* Number of bytes in da_addr_body */ +
-                da_addr_size; /* The FSAL's requested size of the
-                                 da_addr_body opaque */
-
-        if (arg_GETDEVICEINFO4->gdia_maxcount < mincount) {
+        if (arg_GETDEVICEINFO4->gdia_maxcount < mincount + da_addr_size) {
                 nfs_status = NFS4ERR_TOOSMALL;
                 res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_mincount
                         = mincount;

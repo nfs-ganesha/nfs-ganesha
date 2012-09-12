@@ -17,7 +17,7 @@ cd linuxbox-ceph
 git checkout master
 git submodule update --init
 ./autogen.sh
-./configure --prefix=/usr/local --without-tcmalloc
+./configure --prefix=/usr/local
 make
 sudo make install
 

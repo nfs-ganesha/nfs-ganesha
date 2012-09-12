@@ -542,7 +542,7 @@ fs_maximum_segments(struct fsal_export *exp_hdl)
  */
 
 static size_t
-fs_loc_body_size(struct fsal_export *exp_hdl)
+fs_loc_body_size(struct fsal_export *exp_hdl, uint32_t client_max)
 {
         return 0;
 }
@@ -552,7 +552,7 @@ fs_loc_body_size(struct fsal_export *exp_hdl)
  */
 
 static size_t
-fs_da_addr_size(struct fsal_export *exp_hdl)
+fs_da_addr_size(struct fsal_export *exp_hdl, uint32_t client_max)
 {
         return 0;
 }

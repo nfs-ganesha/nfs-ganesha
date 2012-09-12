@@ -374,6 +374,8 @@ ds_commit(struct fsal_ds_handle *const ds_pub,
         rc = ceph_ll_commit_blocks(export->cmount,
                                    ds->wire.wire.vi,
                                    offset,
+                                   (count == 0) ?
+                                   UINT64_MAX :
                                    count);
         if (rc < 0) {
                 return posix2nfs4_error(rc);

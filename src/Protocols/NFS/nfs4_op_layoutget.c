@@ -234,8 +234,9 @@ one_segment(struct fsal_obj_handle *handle,
         /* Return from state calls */
         state_status_t state_status = 0;
         /* Size of a loc_body buffer */
-        size_t loc_body_size = (export->export_hdl->ops
-                                ->fs_loc_body_size(export->export_hdl));
+        size_t loc_body_size = export->export_hdl->ops
+                                ->fs_loc_body_size(export->export_hdl,
+                                                   arg->maxcount);
 
         if (loc_body_size == 0) {
                 LogCrit(COMPONENT_PNFS,
@@ -431,6 +432,8 @@ int nfs4_op_layoutget(struct nfs_argop4 *op,
                         goto out;
                 }
 
+                arg.maxcount -= layouts[numlayouts].
+                                        lo_content.loc_body.loc_body_len;
                 numlayouts++;
 
                 if ((numlayouts == max_segment_count) && !res.last_segment) {
