@@ -29,10 +29,10 @@
  * \author  $Author: leibovic $
  * \date    $Date: 2006/02/23 12:33:05 $
  * \version $Revision: 1.96 $
- * \brief   The file that contain the 'rpc_dispatcher_thread' routine for the nfsd.
+ * \brief   The file that contain the 'rpc_dispatcher_thread' routine for nfsd.
  *
- * nfs_rpc_dispatcher.c : The file that contain the 'rpc_dispatcher_thread' routine for the nfsd (and all
- * the related stuff).
+ * nfs_rpc_dispatcher.c : The file that contain the 'rpc_dispatcher_thread'
+ * routine for nfsd (and all the related stuff).
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -1129,19 +1129,18 @@ nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 
     /* slot in 1..4 */
 retry_deq:
-    slot = (nfs_rpc_q_next_slot() % 4);
-    for (ix = 0; ix < 4; ++ix) {
+    slot = (nfs_rpc_q_next_slot() % 3);
+    for (ix = 0; ix < 3; ++ix) {
         switch (slot+1) {
         case 1:
             /* NFS_CALL */
             qpair = &(nfs_request_q->qset[REQ_Q_CALL]);
             break;
         case 2:
-        case 3:
             /* LL */
             qpair = &(nfs_request_q->qset[REQ_Q_LOW_LATENCY]);
             break;
-        case 4:
+        case 3:
             /* HL */
             qpair = &(nfs_request_q->qset[REQ_Q_HIGH_LATENCY]);
             break;
@@ -1159,7 +1158,7 @@ retry_deq:
         if (nfsreq)
             break;
 
-        ++slot; slot = slot % 4;
+        ++slot; slot = slot % 3;
 
     } /* for */
 
@@ -1175,16 +1174,17 @@ retry_deq:
         glist_add_tail(&nfs_req_st.reqs.wait_list, &wqe->waitq);
         ++(nfs_req_st.reqs.waiters);
         pthread_spin_unlock(&nfs_req_st.reqs.sp);
-        while (! (wqe->flags & Wqe_LFlag_SyncDone)) {
-            /* XXX check for TCB event? */
+
+        do {
             pthread_cond_wait(&wqe->lwe.cv, &wqe->lwe.mtx);
-            wqe->flags &= ~(Wqe_LFlag_WaitSync|Wqe_LFlag_SyncDone);
-            pthread_mutex_unlock(&wqe->lwe.mtx);
-            LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", 
-                         wqe);
-            break;
-        }
+            /* XXX check for TCB event? */
+        } while (! (wqe->flags & Wqe_LFlag_SyncDone));
+
         /* XXX wqe was removed from nfs_req_st.waitq (by signalling thread) */
+        wqe->flags &= ~(Wqe_LFlag_WaitSync|Wqe_LFlag_SyncDone);
+        pthread_mutex_unlock(&wqe->lwe.mtx);
+        LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", 
+                     wqe);
         goto retry_deq;
     }
 
@@ -1518,7 +1518,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         LogDebug(COMPONENT_DISPATCH,
                  "global outstanding reqs quota exceeded (have %u, allowed %u)",
                  nreqs, nfs_param.core_param.dispatch_max_reqs);
-        thread_delay_ms(100); /* don't busy-wait */
+        thread_delay_ms(1); /* don't busy-wait */
         goto out;
     }
 
