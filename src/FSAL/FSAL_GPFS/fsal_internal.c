@@ -1482,7 +1482,6 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
     {
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_READ_ACL);
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
-      missing_access &= ~(FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_READ_DATA | FSAL_ACE_PERM_APPEND_DATA );
       if(!missing_access)
         {
           LogDebug(COMPONENT_FSAL, "Met owner privileges");

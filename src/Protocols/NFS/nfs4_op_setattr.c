@@ -200,7 +200,18 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           if(res_SETATTR4.status != NFS4_OK)
             return res_SETATTR4.status;
         }
-
+      if (pstate_open == NULL)
+        {
+          if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( data->pcontext )) 
+             && cache_inode_access(pentry, 
+                     FSAL_WRITE_ACCESS, 
+                     data->pcontext, 
+                     &cache_status) != CACHE_INODE_SUCCESS) 
+            {
+              res_SETATTR4.status = nfs4_Errno(cache_status);
+              return res_SETATTR4.status; 
+            }
+        }
       if((cache_status = cache_inode_truncate(data->current_entry,
                                               sattr.filesize,
                                               &parent_attr,

@@ -201,10 +201,11 @@ int nfs_Read(nfs_arg_t *parg,
     goto out;
   }
 
-  if(cache_inode_access(pentry,
-                        FSAL_READ_ACCESS,
-                        pcontext,
-                        &cache_status) != CACHE_INODE_SUCCESS)
+  if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( pcontext )) 
+       && cache_inode_access(pentry, 
+               FSAL_READ_ACCESS, 
+               pcontext, 
+               &cache_status) != CACHE_INODE_SUCCESS)
     {
       switch (preq->rq_vers)
         {

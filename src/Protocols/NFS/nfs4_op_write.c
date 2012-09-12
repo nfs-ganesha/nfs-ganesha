@@ -220,7 +220,8 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   if (pstate_open == NULL)
     {
-      if(cache_inode_access(pentry,
+      if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( data->pcontext )) 
+          && cache_inode_access(pentry,
                             FSAL_WRITE_ACCESS,
                             data->pcontext,
                             &cache_status) != CACHE_INODE_SUCCESS)
