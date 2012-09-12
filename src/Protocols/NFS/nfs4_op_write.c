@@ -223,7 +223,8 @@ int nfs4_op_write(struct nfs_argop4 *op,
         }
     }
 
-  if (state_open == NULL)
+  if (state_open == NULL &&
+      entry->obj_handle->attributes.owner != data->req_ctx->creds->caller_uid)
     {
       cache_status = cache_inode_access(entry,
 					FSAL_WRITE_ACCESS,

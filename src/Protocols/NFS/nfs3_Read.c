@@ -159,14 +159,17 @@ nfs_Read(nfs_arg_t *arg,
            goto out;
          }
 
-        cache_status = cache_inode_access(entry,
-					  FSAL_READ_ACCESS,
-					  req_ctx);
-        if (cache_status != CACHE_INODE_SUCCESS)
+        if(entry->obj_handle->attributes.owner != req_ctx->creds->caller_uid)
           {
-            res->res_read3.status = nfs3_Errno(cache_status);
-             rc = NFS_REQ_OK;
-             goto out;
+            cache_status = cache_inode_access(entry,
+                                              FSAL_READ_ACCESS,
+                                              req_ctx);
+            if (cache_status != CACHE_INODE_SUCCESS)
+              {
+                res->res_read3.status = nfs3_Errno(cache_status);
+                 rc = NFS_REQ_OK;
+                 goto out;
+              }
           }
 
         /* Sanity check: read only from a regular file */

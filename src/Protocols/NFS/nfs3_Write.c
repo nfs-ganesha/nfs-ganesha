@@ -135,14 +135,18 @@ int nfs_Write(nfs_arg_t *arg,
                 goto out;
         }
 
-	cache_status = cache_inode_access(entry,
-					  FSAL_WRITE_ACCESS,
-					  req_ctx);
-	if (cache_status != CACHE_INODE_SUCCESS) {
-		res->res_write3.status = nfs3_Errno(cache_status);
-		rc = NFS_REQ_OK;
-		goto out;
-	}
+        if(entry->obj_handle->attributes.owner != req_ctx->creds->caller_uid)
+          {
+            cache_status = cache_inode_access(entry,
+                                              FSAL_WRITE_ACCESS,
+                                              req_ctx);
+            if (cache_status != CACHE_INODE_SUCCESS)
+              {
+                res->res_write3.status = nfs3_Errno(cache_status);
+                 rc = NFS_REQ_OK;
+                 goto out;
+              }
+          }
 
         /* Sanity check: write only a regular file */
         if (entry->type != REGULAR_FILE)

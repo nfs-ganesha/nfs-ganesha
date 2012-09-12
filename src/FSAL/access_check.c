@@ -384,27 +384,7 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 		}
 	}
 	/* others fall out the bottom... */
-	if((mask & ~mode & S_IRWXO) == 0) {
-		return true;
-	} else {
-                /* NFSv3 exception : if user wants to write to a file
-                 * that is readonly but belongs to him, then allow it
-                 * to do it, push the permission check to the client
-                 * side */
-		if((req_ctx->req_type == NFS_CALL ||
-		    req_ctx->req_type == NFS_REQUEST) &&
-		   req_ctx->nfs_vers == NFS_V3 &&
-		   creds->caller_uid == uid &&
-		   access_type == FSAL_W_OK &&
-		   (mode & (S_IROTH|S_IXOTH))) {
-			LogDebug(COMPONENT_FSAL,
-				 "fsal_check_access_no_acl: File owner ok user %u",
-				 uid);
-			return true;
-		} else {
-			return false;
-		}
-	}
+	return ((mask & ~mode & S_IRWXO) == 0);
 }
 
 /* test_access
