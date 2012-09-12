@@ -237,6 +237,17 @@ int nfs_Setattr(nfs_arg_t *parg,
    */
   if(do_trunc)
     {
+      if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( pcontext )) 
+         && cache_inode_access(pentry,
+                    FSAL_WRITE_ACCESS, 
+                    pcontext,
+                    &cache_status) != CACHE_INODE_SUCCESS)
+        {
+          pres->res_setattr3.status = nfs3_Errno(cache_status);
+          rc = NFS_REQ_OK;
+          goto out; 
+        }
+
       /* Should not be done on a directory */
       if(pentry->type == DIRECTORY)
         cache_status = CACHE_INODE_IS_A_DIRECTORY;

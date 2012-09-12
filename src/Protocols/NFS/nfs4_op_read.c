@@ -251,7 +251,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   if (pstate_open == NULL)
     {
-      if(cache_inode_access(pentry,
+      if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( data->pcontext )) 
+         && cache_inode_access(pentry,
                             FSAL_READ_ACCESS,
                             data->pcontext,
                             &cache_status) != CACHE_INODE_SUCCESS)

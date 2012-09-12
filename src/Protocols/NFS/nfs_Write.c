@@ -168,37 +168,24 @@ int nfs_Write(nfs_arg_t *parg,
     goto out;
   }
 
-  if(cache_inode_access(pentry,
-                        FSAL_WRITE_ACCESS,
-                        pcontext,
-                        &cache_status) != CACHE_INODE_SUCCESS)
+  /* NFSv3 exception : if user wants to write to a file that is readonly 
+   * but belongs to him, then allow it to do it, push the permission check
+   * to the client side */
+  if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( pcontext )) 
+       && cache_inode_access(pentry, 
+               FSAL_WRITE_ACCESS, 
+               pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      /* NFSv3 exception : if user wants to write to a file that is readonly 
-       * but belongs to him, then allow it to do it, push the permission check
-       * to the client side */
-      if( ( cache_status == CACHE_INODE_FSAL_EACCESS  ) &&
-          ( pentry->attributes.owner ==  FSAL_OP_CONTEXT_TO_UID( pcontext ) ) )
-       {
-          LogDebug( COMPONENT_NFSPROTO,
-                    "Exception management: allowed user %u to write to read-only file belonging to him",
-                    pentry->attributes.owner ) ;
-       }
-      else
-       {
-         switch (preq->rq_vers)
-           {
-           case NFS_V2:
-             pres->res_attr2.status = nfs2_Errno(cache_status);
-             break;
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          pres->res_attr2.status = nfs2_Errno(cache_status);
+          break;
 
-           case NFS_V3:
-             pres->res_write3.status = nfs3_Errno(cache_status);
-             break;
-           }
-         rc = NFS_REQ_OK;
-         goto out;
-       }
-
+        case NFS_V3:
+          pres->res_write3.status = nfs3_Errno(cache_status);
+          break;
+        }
       rc = NFS_REQ_OK;
       goto out;
     }
