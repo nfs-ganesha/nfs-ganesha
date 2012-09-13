@@ -92,7 +92,7 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
   int i = 0;
   int j = 0;
   int found = 0;
-  char tmp_pseudopath[MAXPATHLEN];
+  char tmp_pseudopath[MAXPATHLEN+2];
   char *PathTok[NB_TOK_PATH];
   int NbTokPath;
   pseudofs_t *PseudoFs = NULL;
@@ -138,7 +138,7 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
                        entry->id, entry->fullpath, entry->pseudopath);
 
           /* Parsing the path */
-          strncpy(tmp_pseudopath, entry->pseudopath, MAXPATHLEN);
+          strcpy(tmp_pseudopath, entry->pseudopath);
           if((NbTokPath =
               nfs_ParseConfLine(PathTok, NB_TOK_PATH, tmp_pseudopath, find_slash,
                                 find_endLine)) < 0)
