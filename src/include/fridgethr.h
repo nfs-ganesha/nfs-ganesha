@@ -71,7 +71,10 @@ typedef struct thr_fridge
     uint32_t flags;
 } thr_fridge_t;
 
-#define FRIDGETHR_FLAG_NONE  0x0000
+
+#define FridgeThr_Flag_None          0x0000
+#define FridgeThr_Flag_WaitSync      0x0001
+#define FridgeThr_Flag_SyncDone      0x0002
 
 int fridgethr_init(thr_fridge_t *, const char *s);
 
