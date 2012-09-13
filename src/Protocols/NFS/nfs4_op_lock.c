@@ -119,13 +119,13 @@ int nfs4_op_lock(struct nfs_argop4 *op,
         /* Convert lock parameters to internal types */
         switch(arg_LOCK4->locktype) {
         case READW_LT:
-		blocking            = STATE_NFSV4_BLOCKING;
+                blocking            = STATE_NFSV4_BLOCKING;
         case READ_LT:
                 lock_desc.lock_type = FSAL_LOCK_R;
                 break;
 
         case WRITEW_LT:
-		blocking            = STATE_NFSV4_BLOCKING;
+                blocking            = STATE_NFSV4_BLOCKING;
         case WRITE_LT:
                 lock_desc.lock_type = FSAL_LOCK_W;
                 break;
@@ -481,6 +481,11 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                                &lock_state->state_data.lock.state_sharelist);
         }
 
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid =
+                        &lock_owner->so_owner.so_nfs4_owner.so_clientid;
+        }
+
         /* Now we have a lock owner and a stateid.  Go ahead and push
            lock into SAL (and FSAL). */
         if (state_lock(data->current_entry,
@@ -525,6 +530,10 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                                          state_err_str(state_status));
                 }
                 goto out2;
+        }
+
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid = NULL;
         }
 
         res_LOCK4->status = NFS4_OK;

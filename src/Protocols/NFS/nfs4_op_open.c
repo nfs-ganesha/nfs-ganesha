@@ -203,12 +203,25 @@ open4_do_open(struct nfs_argop4  * op,
                 }
         }
 
+        /* Fill in the clientid for NFSv4.0 */
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid =
+                        &owner->so_owner.so_nfs4_owner.so_clientid;
+        }
+
         if (cache_inode_open(data->current_entry, openflags,
                              data->req_ctx,
                              0, &cache_status)
             != CACHE_INODE_SUCCESS) {
                 return nfs4_Errno(cache_status);
         }
+
+        /* Clear the clientid for NFSv4.0 */
+
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid = NULL;
+        }
+
 
         /* Push share state to SAL (and FSAL) and update the union of
            file share state. */

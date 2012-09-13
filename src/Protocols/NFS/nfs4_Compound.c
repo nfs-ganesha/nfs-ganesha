@@ -146,7 +146,7 @@ static const nfs4_op_desc_t optabv4[] = {
 
 int nfs4_Compound(nfs_arg_t *arg,
                   exportlist_t *export,
-		  struct req_op_context *req_ctx,
+                  struct req_op_context *req_ctx,
                   nfs_worker_data_t *worker,
                   struct svc_req *req,
                   nfs_res_t *res)

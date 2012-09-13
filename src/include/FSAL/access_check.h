@@ -22,7 +22,7 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 
 static inline bool sticky_dir_allows(struct fsal_obj_handle *dir_hdl,
                                      struct fsal_obj_handle *obj_hdl,
-                                     struct user_cred *creds)
+                                     const struct user_cred *creds)
 {
 	struct fsal_export *exp_hdl = dir_hdl->export;
 	struct attrlist *dir_attr = &dir_hdl->attributes;

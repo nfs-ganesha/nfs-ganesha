@@ -305,6 +305,13 @@ nfs4_op_read(struct nfs_argop4 *op,
                 goto done;
         }
 
+        if (!anonymous &&
+            data->minorversion == 0) {
+                data->req_ctx->clientid
+                        = &state_found->state_powner->so_owner
+                        .so_nfs4_owner.so_clientid;
+        }
+
         if (cache_inode_rdwr(entry,
                              CACHE_INODE_READ,
                              offset,
@@ -324,6 +331,11 @@ nfs4_op_read(struct nfs_argop4 *op,
                              &file_size) != CACHE_INODE_SUCCESS) {
                 res_READ4.status = nfs4_Errno(cache_status);
                 goto done;
+        }
+
+        if (!anonymous &&
+            data->minorversion == 0) {
+                data->req_ctx = NULL;
         }
 
         res_READ4.READ4res_u.resok4.data.data_len = read_size;

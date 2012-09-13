@@ -322,6 +322,13 @@ int nfs4_op_write(struct nfs_argop4 *op,
       stability = CACHE_INODE_SAFE_WRITE_TO_FS;
     }
 
+  if (!anonymous &&
+      data->minorversion == 0) {
+          data->req_ctx->clientid
+                  = &state_found->state_powner->so_owner.
+                  so_nfs4_owner.so_clientid;
+  }
+
   if(cache_inode_rdwr(entry,
                       CACHE_INODE_WRITE,
                       offset,
@@ -343,6 +350,11 @@ int nfs4_op_write(struct nfs_argop4 *op,
         }
       return res_WRITE4.status;
     }
+
+  if (!anonymous &&
+      data->minorversion == 0) {
+          data->req_ctx = NULL;
+  }
 
   /* Set the returned value */
   if(stability == CACHE_INODE_SAFE_WRITE_TO_FS)

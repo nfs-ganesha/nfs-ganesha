@@ -199,6 +199,11 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
                 "LOCKT", data->current_entry,
                 lock_owner, &lock_desc);
 
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid =
+                        &lock_owner->so_owner.so_nfs4_owner.so_clientid;
+        }
+
         /* Now we have a lock owner and a stateid.  Go ahead and test
            the lock in SAL (and FSAL). */
 
@@ -215,6 +220,10 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
                 Process_nfs4_conflict(&res_LOCKT4->LOCKT4res_u.denied,
                                       conflict_owner,
                                       &conflict_desc);
+        }
+
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid = NULL;
         }
 
         /* Release NFS4 Open Owner reference */

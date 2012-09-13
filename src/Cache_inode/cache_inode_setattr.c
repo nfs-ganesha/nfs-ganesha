@@ -72,7 +72,7 @@ cache_inode_setattr(cache_entry_t *entry,
                     cache_inode_status_t *status)
 {
      struct fsal_obj_handle *obj_handle = entry->obj_handle;
-     struct user_cred *creds = req_ctx->creds;
+     const struct user_cred *creds = req_ctx->creds;
      fsal_status_t fsal_status = {0, 0};
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;

@@ -143,13 +143,11 @@ struct user_cred {
  *          module does not know and the code will still do the right thing.
  */
 
-/** @TODO this struct will replace struct user_cred *creds throughout
- *  protocol and fsal_api where creds replaced fsal_op_context.
- */
-
 struct req_op_context {
-        struct user_cred *creds; /* resolved user creds from request */
-        sockaddr_t *caller_addr; /* IP connection info */
+        struct user_cred *creds; /*< resolved user creds from request */
+        sockaddr_t *caller_addr; /*< IP connection info */
+        const uint64_t*clientid; /*< Client ID of caller, NULL if
+                                     unknown/not applicable. */
         /* add new context members here */
 };
 

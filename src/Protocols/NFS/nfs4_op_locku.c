@@ -172,6 +172,11 @@ int nfs4_op_locku(struct nfs_argop4 *op,
                 lock_owner,
                 &lock_desc);
 
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid =
+                        &lock_owner->so_owner.so_nfs4_owner.so_clientid;
+        }
+
         /* Now we have a lock owner and a stateid.  Go ahead and push
            unlock into SAL (and FSAL). */
         if (state_unlock(data->current_entry,
@@ -182,6 +187,10 @@ int nfs4_op_locku(struct nfs_argop4 *op,
                          &state_status) != STATE_SUCCESS) {
                 res_LOCKU4->status = nfs4_Errno_state(state_status);
                 goto out;
+        }
+
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid = NULL;
         }
 
         /* Successful exit */

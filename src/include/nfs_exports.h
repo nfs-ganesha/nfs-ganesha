@@ -374,8 +374,8 @@ typedef struct compoud_data
 exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot,
                                    unsigned short exportid);
 int nfs_check_anon(exportlist_client_entry_t * pexport_client,
-                    exportlist_t * pexport,
-                    struct user_cred *user_credentials);
+                   exportlist_t * pexport,
+                   struct user_cred *user_credentials);
 int get_req_uid_gid(struct svc_req *ptr_req,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials);
@@ -392,7 +392,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                             hash_table_t * ht_ip_stats,
                             pool_t *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found,
-                            struct user_cred *user_credentials,
+                            const struct user_cred *user_credentials,
                             bool proc_makes_write);
 
 int nfs_export_check_security(struct svc_req *ptr_req, exportlist_t * pexport);

@@ -191,6 +191,11 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
     }
   V(session->slots[arg_SEQUENCE4.sa_slotid].lock);
 
+  /* If we were successful, stash the clientid in the request
+     context. */
+
+  data->req_ctx->clientid = &data->psession->clientid;
+
   res_SEQUENCE4.sr_status = NFS4_OK;
   return res_SEQUENCE4.sr_status;
 } /* nfs41_op_sequence */

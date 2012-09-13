@@ -267,6 +267,12 @@ int nfs4_op_close(struct nfs_argop4 *op,
                 }
         }
 
+        /* Fill in the clientid for NFSv4.0 */
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid =
+                        &open_owner->so_owner.so_nfs4_owner.so_clientid;
+        }
+
         /* Close the file in FSAL through the cache inode */
         if (cache_inode_close(data->current_entry,
                               0, &cache_status)
@@ -274,6 +280,10 @@ int nfs4_op_close(struct nfs_argop4 *op,
                 res_CLOSE4->status = nfs4_Errno(cache_status);
                 pthread_rwlock_unlock(&data->current_entry->state_lock);
                 goto out;
+        }
+
+        if (data->minorversion == 0) {
+                data->req_ctx->clientid = NULL;
         }
 
         pthread_rwlock_unlock(&data->current_entry->state_lock);

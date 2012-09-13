@@ -337,7 +337,7 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
     {
       user_credentials->caller_uid = pexport->anonymous_uid;
       user_credentials->caller_gid = pexport->anonymous_gid;
-      
+
       /* No alternate groups for "nobody" */
       user_credentials->caller_glen = 0 ;
       user_credentials->caller_garray = NULL ;
