@@ -140,16 +140,20 @@ fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
     glist_del(&pfe->q);
     --(fr->nidle);
 
+    pthread_mutex_lock(&pfe->ctx.mtx);
+
     pfe->ctx.func = func;
     pfe->ctx.arg = arg;
     pfe->frozen = FALSE;
 
     if (pthread_cond_signal(&pfe->ctx.cv)) {
+        pthread_mutex_unlock(&pfe->ctx.mtx);
         pthread_mutex_unlock(&fr->mtx);
         /* XXX this is questionable--perhaps fatal */
         return (NULL);
     }
- 
+
+    pthread_mutex_unlock(&pfe->ctx.mtx);
     pthread_mutex_unlock(&fr->mtx);
 
 out:
@@ -174,17 +178,22 @@ fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
     pthread_mutex_lock(&fr->mtx);
     glist_add_tail(&fr->idle_q, &pfe->q);
     ++(fr->nidle);
+    pthread_mutex_lock(&pfe->ctx.mtx);
+    pthread_mutex_unlock(&fr->mtx);
     while ((pfe->frozen == TRUE) &&
            (rc == 0)) { 
         if (fr->expiration_delay_s > 0 )
-            rc = pthread_cond_timedwait(&pfe->ctx.cv, &fr->mtx,
+            rc = pthread_cond_timedwait(&pfe->ctx.cv, &pfe->ctx.mtx,
                                         &pfe->timeout );
         else
-            rc = pthread_cond_wait(&pfe->ctx.cv, &fr->mtx);
+            rc = pthread_cond_wait(&pfe->ctx.cv, &pfe->ctx.mtx);
     }
-    pthread_mutex_unlock(&fr->mtx);
+    pthread_mutex_unlock(&pfe->ctx.mtx);
 
     /* rescheduled */
+
+    /* prints unreliable, nb */
+
     if (rc != ETIMEDOUT) {
         LogFullDebug(COMPONENT_THREAD,
                 "fr %p re-use idle thread %u (nthreads %u nidle %u)",
