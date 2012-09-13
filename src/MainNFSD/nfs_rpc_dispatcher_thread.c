@@ -1013,8 +1013,8 @@ nfs_rpc_enqueue_req(request_data_t *req)
             pthread_spin_unlock(&nfs_req_st.reqs.sp); /* ! SPIN LOCKED */
             pthread_mutex_lock(&wqe->lwe.mtx);
             /* XXX reliable handoff */
+            wqe->flags |= Wqe_LFlag_SyncDone;
             if (wqe->flags & Wqe_LFlag_WaitSync) {
-                wqe->flags |= Wqe_LFlag_SyncDone;
                 pthread_cond_signal(&wqe->lwe.cv);
             }
             pthread_mutex_unlock(&wqe->lwe.mtx);
@@ -1025,12 +1025,6 @@ nfs_rpc_enqueue_req(request_data_t *req)
 out:
     return;
 }
-
-#define NFS_RPC_REQ_FLAG_NONE      0x0000
-#define NFS_RPC_REQ_FLAG_CLOCKED   0x0001
-#define NFS_RPC_REQ_FLAG_PLOCKED   0x0002
-#define NFS_RPC_REQ_FLAG_CUNLOCK   0x0004
-#define NFS_RPC_REQ_FLAG_PUNLOCK   0x0008
 
 static inline request_data_t *
 nfs_rpc_consume_req(struct req_q_pair *qpair, uint32_t flags)

@@ -53,7 +53,7 @@ fridgethr_init(thr_fridge_t *fr, const char *s)
     fr->nidle = 0;
     fr->thr_max = 0; /* XXX implement */
     fr->s = strdup(s);
-    fr->flags = FRIDGETHR_FLAG_NONE;
+    fr->flags = FridgeThr_Flag_None;
 
     pthread_attr_init(&fr->attr); 
     pthread_attr_setscope(&fr->attr, PTHREAD_SCOPE_SYSTEM);
@@ -131,7 +131,7 @@ fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
 
         LogFullDebug(COMPONENT_THREAD,
                 "fr %p created thread %u (nthreads %u nidle %u)",
-                fr, pfe->ctx.id, fr->nthreads, fr->nidle);
+                     fr, (unsigned int) pfe->ctx.id, fr->nthreads, fr->nidle);
 
         goto out;
     }
@@ -146,13 +146,11 @@ fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
     pfe->ctx.arg = arg;
     pfe->frozen = FALSE;
 
-    if (pthread_cond_signal(&pfe->ctx.cv)) {
-        pthread_mutex_unlock(&pfe->ctx.mtx);
-        pthread_mutex_unlock(&fr->mtx);
-        /* XXX this is questionable--perhaps fatal */
-        return (NULL);
+    /* XXX reliable handoff */
+    pfe->flags |= FridgeThr_Flag_SyncDone;
+    if (pfe->flags & FridgeThr_Flag_WaitSync) {
+        pthread_cond_signal(&pfe->ctx.cv);
     }
-
     pthread_mutex_unlock(&pfe->ctx.mtx);
     pthread_mutex_unlock(&fr->mtx);
 
@@ -178,16 +176,21 @@ fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
     pthread_mutex_lock(&fr->mtx);
     glist_add_tail(&fr->idle_q, &pfe->q);
     ++(fr->nidle);
+
     pthread_mutex_lock(&pfe->ctx.mtx);
+    /* syncflag here?? */
     pthread_mutex_unlock(&fr->mtx);
-    while ((pfe->frozen == TRUE) &&
-           (rc == 0)) { 
+
+    pfe->flags |= FridgeThr_Flag_WaitSync;
+    do {
         if (fr->expiration_delay_s > 0 )
             rc = pthread_cond_timedwait(&pfe->ctx.cv, &pfe->ctx.mtx,
                                         &pfe->timeout );
         else
             rc = pthread_cond_wait(&pfe->ctx.cv, &pfe->ctx.mtx);
-    }
+    } while (! (pfe->flags & FridgeThr_Flag_SyncDone));
+
+    pfe->flags &= ~(FridgeThr_Flag_WaitSync|FridgeThr_Flag_SyncDone);
     pthread_mutex_unlock(&pfe->ctx.mtx);
 
     /* rescheduled */
