@@ -864,7 +864,6 @@ struct export_ops {
  * @param[out] da_addr_body An XDR stream to which the FSAL is to
  *                          write the layout type-specific information
  *                          corresponding to the deviceid.
- *                          (Not including the opeque's count byte at beginning)
  * @param[in]  type         The type of layout that specified the
  *                          device
  * @param[in]  deviceid     The device to look up
@@ -910,9 +909,6 @@ struct export_ops {
 /**
  * @brief Get layout types supported by export
  *
- * This function is the handler of the NFS4.1 FATTR4_FS_LAYOUT_TYPES file
- * attribute. (See RFC)
- *
  * @param[in]  exp_hdl Filesystem to interrogate
  * @param[out] count   Number of layout types in array
  * @param[out] types   Static array of layout types that must not be
@@ -926,13 +922,8 @@ struct export_ops {
 /**
  * @brief Get layout block size for export
  *
- * This function is the handler of the NFS4.1 FATTR4_LAYOUT_BLKSIZE f-attribute.
- *
  * This is the preferred read/write block size.  Clients are requested
  * (but don't have to) read and write in multiples.
- *
- * NOTE: The linux client only asks for this in blocks-layout, where this is the
- * filesystem wide block-size. (Minimum write size and alignment)
  *
  * @param[in] exp_hdl Filesystem to interrogate
  *
@@ -949,39 +940,27 @@ struct export_ops {
  *
  * @param[in] exp_hdl Filesystem to interrogate
  *
- * @return The Maximum number of layout segments in a campound layoutget.
+ * @return The preferred layout block size.
  */
         uint32_t (*fs_maximum_segments)(struct fsal_export *exp_hdl);
 
 /**
- * @brief Size of the buffer needed for loc_body at layoutget
- *
- * This function sets policy for XDR buffer allocation in layoutget vector
- * below. If FSAL has a const size, just return it here. If it is dependent on
- * what the client can take return @client_max
+ * @brief Size of the buffer needed for a loc_body
  *
  * @param[in] exp_hdl Filesystem to interrogate
- * @param[in] uint32_t client's max count for da_addr_body
  *
- * @return Max size of the buffer needed for a loc_body
+ * @return Size of the buffer needed for a loc_body
  */
-        size_t (*fs_loc_body_size)(struct fsal_export *exp_hdl,
-                                   uint32_t client_max);
+        size_t (*fs_loc_body_size)(struct fsal_export *exp_hdl);
 
 /**
- * @brief Max Size of the buffer needed for da_addr_body in getdeviceinfo
- *
- * This function sets policy for XDR buffer allocation in getdeviceinfo.
- * If FSAL has a const size, just return it here. If it is dependent on what
- * the client can take return @client_max
+ * @brief Size of the buffer needed for a ds_addr
  *
  * @param[in] exp_hdl Filesystem to interrogate
- * @param[in] uint32_t client's max count for da_addr_body
  *
- * @return Max size of the buffer needed for a da_addr_body
+ * @return Size of the buffer needed for a ds_addr
  */
-        size_t (*fs_da_addr_size)(struct fsal_export *exp_hdl,
-                                  uint32_t client_max);
+        size_t (*fs_da_addr_size)(struct fsal_export *exp_hdl);
 /*@}*/
 };
 

@@ -257,7 +257,7 @@ fs_maximum_segments(struct fsal_export *export_pub)
  * @return Size of the buffer needed for a loc_body
  */
 static size_t
-fs_loc_body_size(struct fsal_export *export_pub, uint32_t client_max)
+fs_loc_body_size(struct fsal_export *export_pub)
 {
         return 0x100;
 }
@@ -271,8 +271,7 @@ fs_loc_body_size(struct fsal_export *export_pub, uint32_t client_max)
  *
  * @return Size of the buffer needed for a ds_addr
  */
-static size_t fs_da_addr_size(struct fsal_export *export_pub,
-                              uint32_t client_max)
+static size_t fs_da_addr_size(struct fsal_export *export_pub)
 {
         return 0x1400;
 }
