@@ -2959,8 +2959,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
 /**
  * function for matching a specific option in the client export list.
  */
-int export_client_match(sockaddr_t *hostaddr,
-			char *ipstring,
+static int export_client_match(sockaddr_t *hostaddr,
 			exportlist_client_t *clients,
 			exportlist_client_entry_t * pclient_found,
 			unsigned int export_option)
@@ -2970,6 +2969,8 @@ int export_client_match(sockaddr_t *hostaddr,
   char                hostname[MAXHOSTNAMELEN];
   in_addr_t           addr = get_in_addr(hostaddr);
   struct glist_head * glist;
+  char                ipstring[SOCK_NAME_MAX];
+  int                 ipvalid = -1; /* -1 need to print, 0 - invalid, 1 - ok */
 
   if(isFullDebug(COMPONENT_DISPATCH))
     {
@@ -3003,6 +3004,9 @@ int export_client_match(sockaddr_t *hostaddr,
                            EXPORT_OPTION_ACCESS_LIST     |
                            EXPORT_OPTION_ACCESS_OPT_LIST)) == 0)
         root_access = " NONE";
+
+      if(ipvalid < 0)
+        ipvalid = sprint_sockip(hostaddr, ipstring, sizeof(ipstring));
 
       LogFullDebug(COMPONENT_DISPATCH,
                    "Checking client %s for%s%s%s%s%s%s clients=%p",
@@ -3103,9 +3107,12 @@ int export_client_match(sockaddr_t *hostaddr,
 
         case WILDCARDHOST_CLIENT:
           /* Now checking for IP wildcards */
-          if(fnmatch
-             (p_client->client.wildcard.wildcard, ipstring,
-              FNM_PATHNAME) == 0)
+          if(ipvalid < 0)
+            ipvalid = sprint_sockip(hostaddr, ipstring, sizeof(ipstring));
+            
+          if(ipvalid && 
+             (fnmatch(p_client->client.wildcard.wildcard,
+                      ipstring, FNM_PATHNAME) == 0))
             {
               *pclient_found = *p_client;
               LogFullDebug(COMPONENT_DISPATCH,
@@ -3180,7 +3187,7 @@ int export_client_match(sockaddr_t *hostaddr,
 }                               /* export_client_match */
 
 #ifdef _USE_TIRPC_IPV6
-int export_client_matchv6(struct in6_addr *paddrv6,
+static int export_client_matchv6(struct in6_addr *paddrv6,
 			  exportlist_client_t *clients,
 			  exportlist_client_entry_t * pclient_found,
 			  unsigned int export_option)
@@ -3238,7 +3245,6 @@ int export_client_matchv6(struct in6_addr *paddrv6,
 #endif
 
 int export_client_match_any(sockaddr_t                * hostaddr,
-                            char                      * ipstring,
                             exportlist_client_t       * clients,
                             exportlist_client_entry_t * pclient_found,
                             unsigned int                export_option)
@@ -3256,7 +3262,6 @@ int export_client_match_any(sockaddr_t                * hostaddr,
 #endif
     {
       return export_client_match(hostaddr,
-                                 ipstring,
                                  clients,
                                  pclient_found,
                                  export_option);
@@ -3458,19 +3463,21 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 
   puse_hostaddr = check_convert_ipv6_to_ipv4(hostaddr, &alt_hostaddr);
 
-  ipstring[0] = '\0';
-  ipvalid = sprint_sockip(puse_hostaddr, ipstring, sizeof(ipstring));
-
-  /* Use IP address as a string for wild character access checks. */
-  if(!ipvalid)
+  if(isFullDebug(COMPONENT_DISPATCH))
     {
-      LogCrit(COMPONENT_DISPATCH,
-              "Could not convert the IP address to a character string.");
-      return;
-    }
+      ipstring[0] = '\0';
+      ipvalid = sprint_sockip(puse_hostaddr, ipstring, sizeof(ipstring));
 
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Check for address %s", ipstring);
+      /* Use IP address as a string for wild character access checks. */
+      if(!ipvalid)
+        {
+          LogCrit(COMPONENT_DISPATCH,
+                  "Could not convert the IP address to a character string.");
+          return;
+        }
+
+      LogFullDebug(COMPONENT_DISPATCH, "Check for address %s", ipstring);
+    }
 
   if(pexport == NULL)
     {
@@ -3481,7 +3488,6 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 
   /* Test if client is in EXPORT_CLIENT Access list */
   if(export_client_match_any(puse_hostaddr,
-                             ipstring,
                              &(pexport->clients),
                              &client_found,
                              EXPORT_OPTION_ACCESS_OPT_LIST))
@@ -3503,7 +3509,6 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                                  
   /* Test if client is in Root_Access list */
   if(export_client_match_any(puse_hostaddr,
-                             ipstring,
                              &(pexport->clients),
                              &client_found,
                              EXPORT_OPTION_ROOT))
@@ -3519,7 +3524,6 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 
   /* Test if client is in RW_Access list */
   if(export_client_match_any(puse_hostaddr,
-                             ipstring,
                              &(pexport->clients),
                              &client_found,
                              EXPORT_OPTION_WRITE_ACCESS))
@@ -3530,13 +3534,11 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 
       pexport_perms->options |= EXPORT_OPTION_RW_ACCESS |
                                 EXPORT_OPTION_MD_ACCESS;
-
       return;
     }
 
   /* Test if client is in R_Access list */
   if(export_client_match_any(puse_hostaddr,
-                             ipstring,
                              &(pexport->clients),
                              &client_found,
                              EXPORT_OPTION_READ_ACCESS))
@@ -3553,7 +3555,6 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 
   /* Test if client is in MDONLY_Access list */
   if(export_client_match_any(puse_hostaddr,
-                             ipstring,
                              &(pexport->clients),
                              &client_found,
                              EXPORT_OPTION_MD_WRITE_ACCESS))
@@ -3569,7 +3570,6 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 
   /* Test if client is in MDONLY_RO_Access list */
   if(export_client_match_any(puse_hostaddr,
-                             ipstring,
                              &(pexport->clients),
                              &client_found,
                              EXPORT_OPTION_MD_READ_ACCESS))
@@ -3585,7 +3585,6 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
 
   /* Test if client is in Access list */
   if(export_client_match_any(puse_hostaddr,
-                             ipstring,
                              &(pexport->clients),
                              &client_found,
                              EXPORT_OPTION_ACCESS_LIST))

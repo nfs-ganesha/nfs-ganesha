@@ -78,8 +78,6 @@ int stat_export_check_access(sockaddr_t                * hostaddr,
                              exportlist_client_t       * clients,
                              exportlist_client_entry_t * pclient_found)
 {
-  char ipstring[SOCK_NAME_MAX];
-  int ipvalid;
   sockaddr_t alt_hostaddr;
   sockaddr_t * puse_hostaddr;
 
@@ -88,22 +86,16 @@ int stat_export_check_access(sockaddr_t                * hostaddr,
 
   puse_hostaddr = check_convert_ipv6_to_ipv4(hostaddr, &alt_hostaddr);
 
-  ipstring[0] = '\0';
-  ipvalid = sprint_sockip(puse_hostaddr, ipstring, sizeof(ipstring));
-
-  /* Use IP address as a string for wild character access checks. */
-  if(!ipvalid)
+  if(isFullDebug(COMPONENT_MAIN))
     {
-      LogCrit(COMPONENT_MAIN,
-              "Could not convert the IP address to a character string.");
-      return FALSE;
+      char ipstring[SOCK_NAME_MAX];
+      int ipvalid = sprint_sockip(puse_hostaddr, ipstring, sizeof(ipstring));
+
+      if(ipvalid)
+        LogFullDebug(COMPONENT_MAIN, "Check for address %s", ipstring);
     }
 
-  LogFullDebug(COMPONENT_MAIN,
-               "Check for address %s", ipstring);
-
   return export_client_match_any(puse_hostaddr,
-                                 ipstring,
                                  clients,
                                  pclient_found,
                                  EXPORT_OPTION_RW_ACCESS);
