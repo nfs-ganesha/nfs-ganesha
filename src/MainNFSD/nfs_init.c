@@ -1538,7 +1538,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                            sizeof(request_data_t),
                            pool_basic_substrate,
                            NULL,
-                           constructor_request_data_t,
+                           NULL,
                            NULL);
   if(!request_pool)
     {
@@ -1552,7 +1552,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                                 sizeof(nfs_request_data_t),
                                 pool_basic_substrate,
                                 NULL,
-                                constructor_nfs_request_data_t,
+                                NULL,
                                 NULL);
   if(!request_data_pool)
     {
