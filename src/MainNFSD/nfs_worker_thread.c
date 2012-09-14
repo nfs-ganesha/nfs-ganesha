@@ -445,6 +445,59 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 #endif                          /* _USE_RQUOTA */
 
 extern const char *pause_state_str[];
+void drc_check(nfs_worker_data_t *pmydata)
+{
+  int rc;
+
+  if(pmydata->passcounter > nfs_param.worker_param.nb_before_gc)
+    {
+      /* Garbage collection on dup req cache */
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "before dupreq invalidation nb_entry=%d nb_invalid=%d",
+                   pmydata->duplicate_request->nb_entry,
+                   pmydata->duplicate_request->nb_invalid);
+      if((rc =
+          LRU_invalidate_by_function(pmydata->duplicate_request,
+                                     nfs_dupreq_gc_function,
+                                     NULL)) != LRU_LIST_SUCCESS)
+        {
+          LogCrit(COMPONENT_DISPATCH,
+                  "FAILURE: Impossible to invalidate entries for duplicate "
+                  "request cache (error %d)",
+                  rc);
+        }
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "after dupreq invalidation nb_entry=%d nb_invalid=%d",
+                   pmydata->duplicate_request->nb_entry,
+                   pmydata->duplicate_request->nb_invalid);
+      if((rc =
+          LRU_gc_invalid(pmydata->duplicate_request, NULL)
+          != LRU_LIST_SUCCESS))
+        LogCrit(COMPONENT_DISPATCH,
+                "FAILURE: Impossible to gc entries for duplicate request "
+                "cache (error %d)",
+                rc);
+      else
+        LogFullDebug(COMPONENT_DISPATCH,
+                     "gc entries for duplicate request cache OK");
+
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "after dupreq gc nb_entry=%d nb_invalid=%d",
+                   pmydata->duplicate_request->nb_entry,
+                   pmydata->duplicate_request->nb_invalid);
+
+      /* Performing garbabbge collection */
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Garbage collecting on pending request list");
+      pmydata->passcounter = 0;
+    }
+  else
+    LogFullDebug(COMPONENT_DISPATCH,
+                 "garbage collection isn't necessary count=%d, max=%d",
+                 pmydata->passcounter,
+                 nfs_param.worker_param.nb_before_gc);
+  pmydata->passcounter += 1;
+}
 
 struct timeval time_diff(struct timeval time_from, struct timeval time_to)
 {
@@ -1571,6 +1624,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
       }
     }
 
+  drc_check(pworker_data);
+
 exe_exit:
 
   clean_credentials(&user_credentials);
@@ -2231,54 +2286,6 @@ void *worker_thread(void *IndexArg)
         pool_free(request_data_pool, nfsreq->r_u.nfs);
       pool_free(request_pool, nfsreq);
 
-      if(pmydata->passcounter > nfs_param.worker_param.nb_before_gc)
-        {
-          /* Garbage collection on dup req cache */
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "before dupreq invalidation nb_entry=%d nb_invalid=%d",
-                       pmydata->duplicate_request->nb_entry,
-                       pmydata->duplicate_request->nb_invalid);
-          if((rc =
-              LRU_invalidate_by_function(pmydata->duplicate_request,
-                                         nfs_dupreq_gc_function,
-                                         NULL)) != LRU_LIST_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "FAILURE: Impossible to invalidate entries for duplicate "
-                      "request cache (error %d)",
-                      rc);
-            }
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "after dupreq invalidation nb_entry=%d nb_invalid=%d",
-                       pmydata->duplicate_request->nb_entry,
-                       pmydata->duplicate_request->nb_invalid);
-          if((rc =
-              LRU_gc_invalid(pmydata->duplicate_request, NULL)
-              != LRU_LIST_SUCCESS))
-            LogCrit(COMPONENT_DISPATCH,
-                    "FAILURE: Impossible to gc entries for duplicate request "
-                    "cache (error %d)",
-                    rc);
-          else
-            LogFullDebug(COMPONENT_DISPATCH,
-                         "gc entries for duplicate request cache OK");
-
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "after dupreq gc nb_entry=%d nb_invalid=%d",
-                       pmydata->duplicate_request->nb_entry,
-                       pmydata->duplicate_request->nb_invalid);
-
-          /* Performing garbabbge collection */
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Garbage collecting on pending request list");
-          pmydata->passcounter = 0;
-        }
-      else
-        LogFullDebug(COMPONENT_DISPATCH,
-                     "garbage collection isn't necessary count=%d, max=%d",
-                     pmydata->passcounter,
-                     nfs_param.worker_param.nb_before_gc);
-      pmydata->passcounter += 1;
 
     }                           /* while( 1 ) */
   tcb_remove(&pmydata->wcb);
