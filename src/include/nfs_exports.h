@@ -105,7 +105,8 @@ typedef enum exportlist_client_type__
   WILDCARDHOST_CLIENT = 4,
   GSSPRINCIPAL_CLIENT = 5,
   HOSTIF_CLIENT_V6    = 6,
-  BAD_CLIENT          = 7
+  MATCH_ANY_CLIENT    = 7,
+  BAD_CLIENT          = 8
 } exportlist_client_type_t;
 
 typedef enum exportlist_status__

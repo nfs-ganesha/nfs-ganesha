@@ -425,6 +425,12 @@ void LogClientListEntry(log_components_t            component,
                      entry, addr, perms);
         return;
 
+      case MATCH_ANY_CLIENT:
+        LogFullDebug(component,
+                     "  %p MATCH_ANY_CLIENT: *(%s)",
+                     entry, perms);
+        return;
+
       case BAD_CLIENT:
         LogCrit(component,
                 "  %p BAD_CLIENT: <unknown>(%s)",
@@ -472,7 +478,14 @@ int nfs_AddClientsToClientList(exportlist_client_t * clients,
       p_client->client_perms.options = option;
 
       /* using netdb to get information about the hostname */
-      if(client_hostname[0] == '@')
+      if((client_hostname[0] == '*') && (client_hostname[1] == '\0'))
+        {
+          p_client->type = MATCH_ANY_CLIENT;
+          LogDebug(COMPONENT_CONFIG,
+                   "entry %d %p: %s is match any client",
+                   i, p_client, var_name);
+        }
+      else if(client_hostname[0] == '@')
         {
           /* Entry is a netgroup definition */
           strncpy(p_client->client.netgroup.netgroupname,
@@ -3202,18 +3215,22 @@ static int export_client_match(sockaddr_t *hostaddr,
           /** @toto BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
           LogFullDebug(COMPONENT_DISPATCH,
                        "----------> Unsupported type GSS_PRINCIPAL_CLIENT");
-          return FALSE;
           break;
+
+       case HOSTIF_CLIENT_V6:
+          break;
+
+       case MATCH_ANY_CLIENT:
+          *pclient_found = *p_client;
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "This matches any client wildcard for entry %u",
+                       i);
+          return TRUE;
 
        case BAD_CLIENT:
           LogCrit(COMPONENT_DISPATCH,
                   "Bad client in position %u seen in export list", i );
-	  continue ;
-
-        default:
-           LogCrit(COMPONENT_DISPATCH,
-                   "Unsupported client in position %u in export list with type %u", i, p_client->type);
-	   continue ;
+	  break ;
         }                       /* switch */
     }                           /* for */
 
@@ -3258,6 +3275,7 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
         case NETGROUP_CLIENT:
         case WILDCARDHOST_CLIENT:
         case GSSPRINCIPAL_CLIENT:
+        case BAD_CLIENT:
           continue;
 
         case HOSTIF_CLIENT_V6:
@@ -3270,8 +3288,12 @@ static int export_client_matchv6(struct in6_addr *paddrv6,
             }
           break;
 
-        default:
-          break;
+        case MATCH_ANY_CLIENT:
+           *pclient_found = *p_client;
+           LogFullDebug(COMPONENT_DISPATCH,
+                        "This matches any client wildcard for entry %u",
+                        i);
+          return TRUE;
         }                       /* switch */
     }                           /* for */
 
