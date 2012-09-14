@@ -234,9 +234,9 @@ one_segment(struct fsal_obj_handle *handle,
         /* Return from state calls */
         state_status_t state_status = 0;
         /* Size of a loc_body buffer */
-        size_t loc_body_size = export->export_hdl->ops
-                                ->fs_loc_body_size(export->export_hdl,
-                                                   arg->maxcount);
+        size_t loc_body_size = MIN(
+                export->export_hdl->ops->fs_loc_body_size(export->export_hdl),
+                arg->maxcount);
 
         if (loc_body_size == 0) {
                 LogCrit(COMPONENT_PNFS,

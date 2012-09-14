@@ -864,7 +864,6 @@ struct export_ops {
  * @param[out] da_addr_body An XDR stream to which the FSAL is to
  *                          write the layout type-specific information
  *                          corresponding to the deviceid.
- *                          (Not including the opeque's count byte at beginning)
  * @param[in]  type         The type of layout that specified the
  *                          device
  * @param[in]  deviceid     The device to look up
@@ -958,30 +957,28 @@ struct export_ops {
  *
  * This function sets policy for XDR buffer allocation in layoutget vector
  * below. If FSAL has a const size, just return it here. If it is dependent on
- * what the client can take return @client_max
+ * what the client can take return ~0UL. In any case the buffer allocated will
+ * not be bigger than client's requested maximum.
  *
  * @param[in] exp_hdl Filesystem to interrogate
- * @param[in] uint32_t client's max count for da_addr_body
  *
  * @return Max size of the buffer needed for a loc_body
  */
-        size_t (*fs_loc_body_size)(struct fsal_export *exp_hdl,
-                                   uint32_t client_max);
+        size_t (*fs_loc_body_size)(struct fsal_export *exp_hdl);
 
 /**
  * @brief Max Size of the buffer needed for da_addr_body in getdeviceinfo
  *
  * This function sets policy for XDR buffer allocation in getdeviceinfo.
- * If FSAL has a const size, just return it here. If it is dependent on what
- * the client can take return @client_max
+ * If FSAL has a const size, just return it here. If it is dependent on
+ * what the client can take return ~0UL. In any case the buffer allocated will
+ * not be bigger than client's requested maximum.
  *
  * @param[in] exp_hdl Filesystem to interrogate
- * @param[in] uint32_t client's max count for da_addr_body
  *
  * @return Max size of the buffer needed for a da_addr_body
  */
-        size_t (*fs_da_addr_size)(struct fsal_export *exp_hdl,
-                                  uint32_t client_max);
+        size_t (*fs_da_addr_size)(struct fsal_export *exp_hdl);
 /*@}*/
 };
 
