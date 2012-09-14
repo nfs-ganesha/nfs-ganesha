@@ -433,7 +433,6 @@ int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred
 int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred);
 
 int export_client_match_any(sockaddr_t                * hostaddr,
-                            char                      * ipstring,
                             exportlist_client_t       * clients,
                             exportlist_client_entry_t * pclient_found,
                             unsigned int                export_option);
