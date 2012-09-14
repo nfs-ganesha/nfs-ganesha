@@ -34,7 +34,7 @@
 #endif
 
 #include "fsal.h"
-#include <FSAL/FSAL_VFS/fsal_handle_syscalls.h>
+#include <fsal_handle_syscalls.h>
 #include <libgen.h>             /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
