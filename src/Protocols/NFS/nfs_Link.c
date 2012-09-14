@@ -292,26 +292,15 @@ int nfs_Link(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_stat2,
-                      &pres->res_link3.status,
-                      target_pentry,
-                      &(pres->res_link3.LINK3res_u.resfail.file_attributes),
-                      parent_pentry,
-                      ppre_attr,
-                      &(pres->res_link3.LINK3res_u.resfail.linkdir_wcc),
-                      NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport,
+                           preq->rq_vers,
+                           cache_status,
+                           &pres->res_stat2,
+                           &pres->res_link3.status,
+                           &(pres->res_link3.LINK3res_u.resfail.file_attributes),
+                           ppre_attr,
+                           &(pres->res_link3.LINK3res_u.resfail.linkdir_wcc),
+                           NULL, NULL);
 out:
   /* return references */
   if (target_pentry)

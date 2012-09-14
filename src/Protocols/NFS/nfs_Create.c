@@ -249,7 +249,6 @@ int nfs_Create(nfs_arg_t *parg,
      }
 #endif /* _USE_QUOTA */
 
-  // if(str_file_name == NULL || strlen(str_file_name) == 0)
   if(str_file_name == NULL || *str_file_name == '\0' )
     {
       if(preq->rq_vers == NFS_V2)
@@ -354,55 +353,14 @@ int nfs_Create(nfs_arg_t *parg,
                                              &attributes_create,
                                              pcontext,
                                              &cache_status) != CACHE_INODE_SUCCESS)
-                        {
-                          /* If we are here, there was an error */
-                          nfs_SetFailedStatus(pcontext, pexport,
-                                              preq->rq_vers,
-                                              cache_status,
-                                              &pres->res_dirop2.status,
-                                              &pres->res_create3.status,
-                                              NULL, NULL,
-                                              parent_pentry,
-                                              ppre_attr,
-                                              &(pres->res_create3.CREATE3res_u.resfail.
-                                                dir_wcc), NULL, NULL, NULL);
-
-                          if(nfs_RetryableError(cache_status)) {
-                              rc = NFS_REQ_DROP;
-                              goto out;
-                          }
-
-                          rc = NFS_REQ_OK;
-                          goto out;
-                        }
+                        goto out_failed;
 
                       /* Get the resulting attributes from the Cache Inode */
                       if(cache_inode_getattr(file_pentry,
                                              &attr_newfile,
                                              pcontext,
                                              &cache_status) != CACHE_INODE_SUCCESS)
-                        {
-                          /* If we are here, there was an error */
-
-                          nfs_SetFailedStatus(pcontext, pexport,
-                                              preq->rq_vers,
-                                              cache_status,
-                                              &pres->res_dirop2.status,
-                                              &pres->res_create3.status,
-                                              NULL, NULL,
-                                              parent_pentry,
-                                              ppre_attr,
-                                              &(pres->res_create3.CREATE3res_u.resfail.
-                                                dir_wcc), NULL, NULL, NULL);
-
-                          if(nfs_RetryableError(cache_status)) {
-                            rc = NFS_REQ_DROP;
-                            goto out;
-                          }
-
-                          rc = NFS_REQ_OK;
-                          goto out;
-                        }
+                        goto out_failed;
 
                     }
 
@@ -457,31 +415,18 @@ int nfs_Create(nfs_arg_t *parg,
                         = TRUE;
 
                       /* Get the attributes of the parent after the
-                         operation */
+                       * operation, if it fails then return no wcc data
+                       * but don't fail the call - we already created
+                       * the damn thing and it's too much to undo the
+                       * act of creation */
                       if(cache_inode_getattr(parent_pentry,
                                              &attr_parent_after,
-                                             pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                                             pcontext, &cache_status) == CACHE_INODE_SUCCESS)
                         {
-                          nfs_SetFailedStatus(pcontext, pexport,
-                                              preq->rq_vers,
-                                              cache_status,
-                                              &pres->res_dirop2.status,
-                                              &pres->res_create3.status,
-                                              NULL, NULL,
-                                              parent_pentry,
-                                              ppre_attr,
-                                              &(pres->res_create3.CREATE3res_u.resfail.
-                                                dir_wcc), NULL, NULL, NULL);
-
-                          if(nfs_RetryableError(cache_status)) {
-                            rc = NFS_REQ_DROP;
-                            goto out;
-                          }
-
-                          rc = NFS_REQ_OK;
-                          goto out;
+                          /* Build Weak Cache Coherency data */
+                          nfs_SetWccData(pexport, ppre_attr, &attr_parent_after,
+                                         &(pres->res_create3.CREATE3res_u.resok.dir_wcc));
                         }
-
 
                       /* Build entry attributes */
                       nfs_SetPostOpAttr(pexport,
@@ -489,14 +434,6 @@ int nfs_Create(nfs_arg_t *parg,
                                         &(pres->res_create3.CREATE3res_u.resok.
                                           obj_attributes));
 
-                      /*
-                       * Build Weak Cache Coherency data
-                       */
-                      nfs_SetWccData(pexport,
-                                     ppre_attr,
-                                     &attr_parent_after,
-                                     &(pres->res_create3.CREATE3res_u
-                                       .resok.dir_wcc));
 
                       pres->res_create3.status = NFS3_OK;
                       break;
@@ -507,77 +444,37 @@ int nfs_Create(nfs_arg_t *parg,
             }
           else
             {
-              if(cache_status_lookup == CACHE_INODE_SUCCESS)
+              switch (preq->rq_vers)
                 {
-                  /* Trying to create a file that already exists */
-                  cache_status = CACHE_INODE_ENTRY_EXISTS;
+                case NFS_V2:
+                  if(cache_status_lookup == CACHE_INODE_SUCCESS)
+                    pres->res_dirop2.status = NFSERR_EXIST;
+                  else
+                    pres->res_dirop2.status = NFSERR_IO;
+                  break;
 
-                  switch (preq->rq_vers)
-                    {
-                    case NFS_V2:
-                      pres->res_dirop2.status = NFSERR_EXIST;
-                      break;
-
-                    case NFS_V3:
-                      pres->res_create3.status = NFS3ERR_EXIST;
-                      break;
-                    }
+                case NFS_V3:
+                  if(cache_status_lookup == CACHE_INODE_SUCCESS)
+                    pres->res_create3.status = NFS3ERR_EXIST;
+                  else
+                    pres->res_create3.status = NFS3ERR_INVAL;
+                  nfs_SetWccData(pexport, ppre_attr, NULL,
+                                 &(pres->res_create3.CREATE3res_u.resfail.dir_wcc));
+                  break;
                 }
-              else
-                {
-                  /* Server fault */
-                  cache_status = cache_status_lookup;
-
-                  switch (preq->rq_vers)
-                    {
-                    case NFS_V2:
-                      pres->res_dirop2.status = NFSERR_IO;
-                      break;
-
-                    case NFS_V3:
-                      pres->res_create3.status = NFS3ERR_INVAL;
-                      break;
-                    }
-                }
-
-              nfs_SetFailedStatus(pcontext, pexport,
-                                  preq->rq_vers,
-                                  cache_status,
-                                  &pres->res_dirop2.status,
-                                  &pres->res_create3.status,
-                                  NULL, NULL,
-                                  parent_pentry,
-                                  ppre_attr,
-                                  &(pres->res_create3.CREATE3res_u.resfail.dir_wcc),
-                                  NULL, NULL, NULL);
-
               rc = NFS_REQ_OK;
               goto out;
             } /* if( cache_status_lookup == CACHE_INODE_NOT_FOUND ) */
         }
     }
 
+out_failed:
   /* Set the exit status */
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_dirop2.status,
-                      &pres->res_create3.status,
-                      NULL, NULL,
-                      parent_pentry,
-                      ppre_attr,
-                      &(pres->res_create3.CREATE3res_u.resfail.dir_wcc),
-                      NULL, NULL, NULL);
-
-  /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_dirop2.status, &pres->res_create3.status,
+                           NULL, ppre_attr,
+                           &(pres->res_create3.CREATE3res_u.resfail.dir_wcc),
+                           NULL, NULL);
 out:
   /* return references */
   if (file_pentry)

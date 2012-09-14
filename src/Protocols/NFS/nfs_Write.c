@@ -339,20 +339,10 @@ int nfs_Write(nfs_arg_t *parg,
 
             case NFS_V3:
               pres->res_write3.status = NFS3ERR_INVAL;
+              nfs_SetWccData(pexport, ppre_attr, NULL, 
+                             &(pres->res_write3.WRITE3res_u.resfail.file_wcc));
               break;
             }
-
-          nfs_SetFailedStatus(pcontext, pexport,
-                              preq->rq_vers,
-                              cache_status,
-                              &pres->res_attr2.status,
-                              &pres->res_write3.status,
-                              NULL, NULL,
-                              pentry,
-                              ppre_attr,
-                              &(pres->res_write3.WRITE3res_u.resfail.file_wcc),
-                              NULL, NULL, NULL);
-
           rc = NFS_REQ_OK;
           goto out;
         }
@@ -439,24 +429,11 @@ int nfs_Write(nfs_arg_t *parg,
                "---> failed write: cache_status=%d", cache_status);
 
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_attr2.status,
-                      &pres->res_write3.status,
-                      NULL, NULL,
-                      pentry,
-                      ppre_attr,
-                      &(pres->res_write3.WRITE3res_u.resfail.file_wcc), NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_attr2.status, &pres->res_write3.status,
+                           NULL, ppre_attr,
+                           &(pres->res_write3.WRITE3res_u.resfail.file_wcc),
+                           NULL, NULL);
 out:
   /* return references */
   if (pentry)

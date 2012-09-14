@@ -287,18 +287,10 @@ int nfs_Read(nfs_arg_t *parg,
 
             case NFS_V3:
               pres->res_read3.status = NFS3ERR_INVAL;
+              nfs_SetPostOpAttr(pexport, NULL, 
+                                &(pres->res_read3.READ3res_u.resfail.file_attributes));
               break;
             }
-
-          nfs_SetFailedStatus(pcontext, pexport,
-                              preq->rq_vers,
-                              cache_status,
-                              &pres->res_read2.status,
-                              &pres->res_read3.status,
-                              pentry,
-                              &(pres->res_read3.READ3res_u.resfail.file_attributes),
-                              NULL, NULL, NULL, NULL, NULL, NULL);
-
           rc = NFS_REQ_OK;
           goto out;
         }
@@ -358,22 +350,10 @@ int nfs_Read(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_read2.status,
-                      &pres->res_read3.status,
-                      pentry,
-                      &(pres->res_read3.READ3res_u.resfail.file_attributes),
-                      NULL, NULL, NULL, NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_read2.status, &pres->res_read3.status,
+                           &(pres->res_read3.READ3res_u.resfail.file_attributes),
+                           NULL, NULL, NULL, NULL);
 
 out:
   /* return references */

@@ -353,51 +353,24 @@ int nfs_Mkdir(nfs_arg_t *parg,
             }                   /* If( cache_status_lookup == CACHE_INODE_NOT_FOUND ) */
           else
             {
-              /* object already exists or failure during lookup */
-              if(cache_status_lookup == CACHE_INODE_SUCCESS)
+              switch (preq->rq_vers)
                 {
-                  /* Trying to create a file that already exists */
-                  cache_status = CACHE_INODE_ENTRY_EXISTS;
-
-                  switch (preq->rq_vers)
-                    {
-                    case NFS_V2:
+                case NFS_V2:
+                  if(cache_status_lookup == CACHE_INODE_SUCCESS)
                       pres->res_dirop2.status = NFSERR_EXIST;
-                      break;
+                  else
+                     pres->res_dirop2.status = NFSERR_IO;
+                  break;
 
-                    case NFS_V3:
+                case NFS_V3:
+                  if(cache_status_lookup == CACHE_INODE_SUCCESS)
                       pres->res_mkdir3.status = NFS3ERR_EXIST;
-                      break;
-                    }
-                }
-              else
-                {
-                  /* Server fault */
-                  cache_status = cache_status_lookup;
-
-                  switch (preq->rq_vers)
-                    {
-                    case NFS_V2:
-                      pres->res_dirop2.status = NFSERR_IO;
-                      break;
-
-                    case NFS_V3:
+                  else
                       pres->res_mkdir3.status = NFS3ERR_INVAL;
-                      break;
-                    }
+                  nfs_SetWccData(pexport, ppre_attr, NULL,
+                                 &(pres->res_mkdir3.MKDIR3res_u.resfail.dir_wcc));
+                  break;
                 }
-
-              nfs_SetFailedStatus(pcontext, pexport,
-                                  preq->rq_vers,
-                                  cache_status,
-                                  &pres->res_dirop2.status,
-                                  &pres->res_mkdir3.status,
-                                  NULL, NULL,
-                                  parent_pentry,
-                                  ppre_attr,
-                                  &(pres->res_mkdir3.MKDIR3res_u.resfail.dir_wcc),
-                                  NULL, NULL, NULL);
-
               rc = NFS_REQ_OK;
               goto out;
             }
@@ -405,23 +378,11 @@ int nfs_Mkdir(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_dirop2.status,
-                      &pres->res_mkdir3.status,
-                      NULL, NULL,
-                      parent_pentry,
-                      ppre_attr,
-                      &(pres->res_mkdir3.MKDIR3res_u.resfail.dir_wcc), NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_dirop2.status, &pres->res_mkdir3.status,
+                           NULL, ppre_attr,
+                           &(pres->res_mkdir3.MKDIR3res_u.resfail.dir_wcc),
+                           NULL, NULL);
 out:
   /* return references */
   if (dir_pentry)

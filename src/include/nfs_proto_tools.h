@@ -102,23 +102,21 @@ int nfs_SetPostOpXAttrFile(fsal_op_context_t * pcontext,
 
 void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr);
 
-int nfs_RetryableError(cache_inode_status_t cache_status);
-
 int nfs3_Sattr_To_FSAL_attr(fsal_attrib_list_t * pFSALattr, sattr3 * psattr);
 
-void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
-                         exportlist_t * pexport,
-                         int version,
-                         cache_inode_status_t status,
-                         nfsstat2 * pstatus2,
-                         nfsstat3 * pstatus3,
-                         cache_entry_t * pentry0,
-                         post_op_attr * ppost_op_attr,
-                         cache_entry_t * pentry1,
-                         fsal_attrib_list_t * ppre_vattr1,
-                         wcc_data * pwcc_data1,
-                         cache_entry_t * pentry2,
-                         fsal_attrib_list_t * ppre_vattr2, wcc_data * pwcc_data2);
+int nfs_SetFailedStatus_verbose(const char *where,
+                                exportlist_t * pexport,
+                                int version,
+                                cache_inode_status_t status,
+                                nfsstat2 * pstatus2,
+                                nfsstat3 * pstatus3,
+                                post_op_attr * ppost_op_attr,
+                                fsal_attrib_list_t * ppre_vattr1,
+                                wcc_data * pwcc_data1,
+                                fsal_attrib_list_t * ppre_vattr2,
+                                wcc_data * pwcc_data2);
+#define nfs_SetFailedStatus(a, b, c, d, e, f, g, h, i, j) \
+        nfs_SetFailedStatus_verbose(__func__, a, b, c, d, e, f, g, h, i, j)
 
 fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr);
 

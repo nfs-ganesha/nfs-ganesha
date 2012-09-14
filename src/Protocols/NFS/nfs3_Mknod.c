@@ -324,51 +324,26 @@ int nfs3_Mknod(nfs_arg_t *parg,
           if(cache_status_lookup == CACHE_INODE_SUCCESS)
             {
               /* Trying to create an entry that already exists */
-              cache_status = CACHE_INODE_ENTRY_EXISTS;
               pres->res_mknod3.status = NFS3ERR_EXIST;
             }
           else
             {
               /* Server fault */
-              cache_status = cache_status_lookup;
               pres->res_mknod3.status = NFS3ERR_INVAL;
             }
 
-          nfs_SetFailedStatus(pcontext, pexport,
-                              preq->rq_vers,
-                              cache_status,
-                              NULL,
-                              &pres->res_mknod3.status,
-                              NULL, NULL,
-                              parent_pentry,
-                              ppre_attr,
-                              &(pres->res_mknod3.MKNOD3res_u.resfail.dir_wcc),
-                              NULL, NULL, NULL);
-
+          nfs_SetWccData(pexport, NULL, NULL, 
+                         &(pres->res_mknod3.MKNOD3res_u.resfail.dir_wcc));
           rc = NFS_REQ_OK;
           goto out;
         }
-
     }
 
-  /* convertion OK */
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      NULL,
-                      &pres->res_mknod3.status,
-                      NULL, NULL,
-                      parent_pentry,
-                      ppre_attr,
-                      &(pres->res_mknod3.MKNOD3res_u.resfail.dir_wcc), NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status, NULL,
+                           &pres->res_mknod3.status, NULL, ppre_attr,
+                           &(pres->res_mknod3.MKNOD3res_u.resfail.dir_wcc),
+                           NULL, NULL);
 
 out:
   /* return references */

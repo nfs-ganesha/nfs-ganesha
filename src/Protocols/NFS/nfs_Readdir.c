@@ -385,20 +385,11 @@ nfs_Readdir(nfs_arg_t *arg,
                              cbfunc,
                              cbdata,
                              &cache_status) != CACHE_INODE_SUCCESS) {
-          if (nfs_RetryableError(cache_status)) {
-               rc = NFS_REQ_DROP;
-               goto out;
-          }
-
-          nfs_SetFailedStatus(context, export,
-                              req->rq_vers,
-                              cache_status,
-                              &res->res_readdir2.status,
-                              &res->res_readdir3.status,
-                              dir_entry,
-                              &(res->res_readdir3.READDIR3res_u
-                                .resfail.dir_attributes),
-                              NULL, NULL, NULL, NULL, NULL, NULL);
+          rc = nfs_SetFailedStatus(export, req->rq_vers, cache_status,
+                                   &res->res_readdir2.status,
+                                   &res->res_readdir3.status,
+                                   &(res->res_readdir3.READDIR3res_u.resfail.dir_attributes),
+                                   NULL, NULL, NULL, NULL);
           goto out;
      }
 

@@ -262,24 +262,11 @@ int nfs_Rmdir(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_stat2,
-                      &pres->res_rmdir3.status,
-                      NULL, NULL,
-                      parent_pentry,
-                      ppre_attr,
-                      &(pres->res_rmdir3.RMDIR3res_u.resfail.dir_wcc), NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_stat2, &pres->res_rmdir3.status,
+                           NULL, ppre_attr,
+                           &(pres->res_rmdir3.RMDIR3res_u.resfail.dir_wcc),
+                           NULL, NULL);
 out:
   /* return references */
   if (pentry_child)

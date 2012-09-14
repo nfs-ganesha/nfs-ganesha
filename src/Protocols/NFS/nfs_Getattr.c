@@ -149,14 +149,9 @@ int nfs_Getattr(nfs_arg_t *parg,
           if(nfs2_FSALattr_To_Fattr(pexport, &attr,
                                     &(pres->res_attr2.ATTR2res_u.attributes)) == 0)
             {
-              nfs_SetFailedStatus(pcontext, pexport,
-                                  preq->rq_vers,
-                                  CACHE_INODE_INVALID_ARGUMENT,
-                                  &pres->res_attr2.status,
-                                  &pres->res_getattr3.status,
-                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
               LogFullDebug(COMPONENT_NFSPROTO,
                            "nfs_Getattr set failed status v2");
+              pres->res_attr2.status = nfs2_Errno(CACHE_INODE_INVALID_ARGUMENT);
               rc = NFS_REQ_OK;
               goto out;
             }
@@ -168,15 +163,9 @@ int nfs_Getattr(nfs_arg_t *parg,
                                     &(pres->res_getattr3.GETATTR3res_u.resok.
                                       obj_attributes)) == 0)
             {
-              nfs_SetFailedStatus(pcontext, pexport,
-                                  preq->rq_vers,
-                                  CACHE_INODE_INVALID_ARGUMENT,
-                                  &pres->res_attr2.status,
-                                  &pres->res_getattr3.status,
-                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
               LogFullDebug(COMPONENT_NFSPROTO,
                            "nfs_Getattr set failed status v3");
+              pres->res_getattr3.status = nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
               rc = NFS_REQ_OK;
               goto out;
             }
@@ -196,15 +185,14 @@ int nfs_Getattr(nfs_arg_t *parg,
   if (cache_status != CACHE_INODE_FSAL_ESTALE)
     cache_status = CACHE_INODE_INVALID_ARGUMENT;
 
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_attr2.status,
-                      &pres->res_getattr3.status,
-                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
-  LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr set failed status");
-
+  if(preq->rq_vers == NFS_V2)
+    {
+      pres->res_attr2.status = nfs2_Errno(cache_status);
+    }
+  else
+    {
+      pres->res_getattr3.status = nfs3_Errno(cache_status);
+    }
   rc = NFS_REQ_OK;
 
 out:
