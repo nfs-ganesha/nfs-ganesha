@@ -128,17 +128,7 @@ int nfs3_Access(nfs_arg_t *parg,
                                NULL,
                                &cache_status)) == NULL)
     {
-      if(nfs_RetryableError(cache_status))
-        {
-          rc = NFS_REQ_DROP;
-          goto out;
-        }
-      else
-        {
-          pres->res_access3.status = nfs3_Errno(cache_status);
-          rc = NFS_REQ_OK;
-          goto out;
-        }
+        goto out_error;
     }
 
   /* Get file type */
@@ -248,21 +238,15 @@ int nfs3_Access(nfs_arg_t *parg,
       goto out;
     }
 
+out_error:
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  nfs_SetFailedStatus(pcontext, pexport,
-                      NFS_V3,
-                      cache_status,
-                      NULL,
-                      &pres->res_access3.status,
-                      pentry,
-                      &(pres->res_access3.ACCESS3res_u.resfail.obj_attributes),
-                      NULL, NULL, NULL, NULL, NULL, NULL);
+  rc = nfs_SetFailedStatus(pexport,
+                           NFS_V3,
+                           cache_status,
+                           NULL,
+                           &pres->res_access3.status,
+                           &(pres->res_access3.ACCESS3res_u.resfail.obj_attributes),
+                           NULL, NULL, NULL, NULL);
 
 out:
 

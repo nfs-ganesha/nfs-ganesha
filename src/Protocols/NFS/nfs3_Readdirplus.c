@@ -315,23 +315,11 @@ nfs3_Readdirplus(nfs_arg_t *arg,
                              nfs3_readdirplus_callback,
                              &cb_opaque,
                              &cache_status) != CACHE_INODE_SUCCESS) {
-          /* Is this a retryable error */
-          if (nfs_RetryableError(cache_status)) {
-               rc = NFS_REQ_DROP;
-               goto out;
-          }
-
           /* Set failed status */
-          nfs_SetFailedStatus(context,
-                              export,
-                              NFS_V3,
-                              cache_status,
-                              NULL,
-                              &res->res_readdirplus3.status,
-                              dir_entry,
-                              &(res->res_readdirplus3.READDIRPLUS3res_u
-                                .resfail.dir_attributes),
-                              NULL, NULL, NULL, NULL, NULL, NULL);
+          rc = nfs_SetFailedStatus(export, NFS_V3, cache_status, NULL,
+                                   &res->res_readdirplus3.status,
+                                   &(res->res_readdirplus3.READDIRPLUS3res_u.resfail.dir_attributes),
+                                   NULL, NULL, NULL, NULL);
           goto out;
      }
      LogFullDebug(COMPONENT_NFS_READDIR,

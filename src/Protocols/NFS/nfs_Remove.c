@@ -270,25 +270,13 @@ int nfs_Remove(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_stat2,
-                      &pres->res_remove3.status,
-                      NULL, NULL,
-                      parent_pentry,
-                      pparent_attr,
-                      &(pres->res_remove3.REMOVE3res_u.resfail.dir_wcc),
-                      NULL, NULL, NULL);
-
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_stat2,
+                           &pres->res_remove3.status,
+                           NULL,
+                           pparent_attr,
+                           &(pres->res_remove3.REMOVE3res_u.resfail.dir_wcc),
+                           NULL, NULL);
 out:
   /* return references */
   if (pentry_child)

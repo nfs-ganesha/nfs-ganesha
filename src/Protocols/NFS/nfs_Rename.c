@@ -450,26 +450,12 @@ int nfs_Rename(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_stat2,
-                      &pres->res_rename3.status,
-                      NULL, NULL,
-                      parent_pentry,
-                      ppre_attr,
-                      &(pres->res_rename3.RENAME3res_u.resfail.fromdir_wcc),
-                      new_parent_pentry,
-                      pnew_pre_attr, &(pres->res_rename3.RENAME3res_u.resfail.todir_wcc));
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_stat2, &pres->res_rename3.status,
+                           NULL, ppre_attr,
+                           &(pres->res_rename3.RENAME3res_u.resfail.fromdir_wcc),
+                           pnew_pre_attr,
+                           &(pres->res_rename3.RENAME3res_u.resfail.todir_wcc));
 out:
   if (parent_pentry)
       cache_inode_put(parent_pentry);

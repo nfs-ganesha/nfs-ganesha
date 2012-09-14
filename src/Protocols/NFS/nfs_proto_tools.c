@@ -392,52 +392,24 @@ void nfs_SetWccData(exportlist_t * pexport,
  * @todo: Not implemented for NOW BUGAZEOMEU 
  *
  */
-int nfs_RetryableError(cache_inode_status_t cache_status)
+static int nfs_RetryableError(cache_inode_status_t cache_status,
+                              const char *where)
 {
   switch (cache_status)
     {
     case CACHE_INODE_IO_ERROR:
-      if(nfs_param.core_param.drop_io_errors)
-        {
-          /* Drop the request */
-          return TRUE;
-        }
-      else
-        {
-          /* Propagate error to the client */
-          return FALSE;
-        }
-      break;
+      return (nfs_param.core_param.drop_io_errors != 0);
 
     case CACHE_INODE_INVALID_ARGUMENT:
-      if(nfs_param.core_param.drop_inval_errors)
-        {
-          /* Drop the request */
-          return TRUE;
-        }
-      else
-        {
-          /* Propagate error to the client */
-          return FALSE;
-        }
+      return (nfs_param.core_param.drop_inval_errors != 0);
       break;
 
     case CACHE_INODE_DELAY:
-      if(nfs_param.core_param.drop_delay_errors)
-        {
-          /* Drop the request */
-          return TRUE;
-        }
-      else
-        {
-          /* Propagate error to the client */
-          return FALSE;
-        }
-      break;
+      return (nfs_param.core_param.drop_delay_errors != 0);
 
     case CACHE_INODE_SUCCESS:
       LogCrit(COMPONENT_NFSPROTO,
-              "Possible implementation error: CACHE_INODE_SUCCESS managed as an error");
+              "Possible implementation error: CACHE_INODE_SUCCESS managed as an error in %s", where);
       return FALSE;
       break;
 
@@ -489,35 +461,36 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
 
   /* Should never reach this */
   LogDebug(COMPONENT_NFSPROTO,
-           "cache_inode_status=%u not managed properly in nfs_RetryableError, line %u should never be reached",
-           cache_status, __LINE__);
+           "cache_inode_status=%u not managed properly in %s, line %u should never be reached",
+           cache_status, where, __LINE__);
   return FALSE;
 }
 
-void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
-                         exportlist_t * pexport,
-                         int version,
-                         cache_inode_status_t status,
-                         nfsstat2 * pstatus2,
-                         nfsstat3 * pstatus3,
-                         cache_entry_t * pentry0,
-                         post_op_attr * ppost_op_attr,
-                         cache_entry_t * pentry1,
-                         fsal_attrib_list_t * ppre_vattr1,
-                         wcc_data * pwcc_data1,
-                         cache_entry_t * pentry2,
-                         fsal_attrib_list_t * ppre_vattr2, wcc_data * pwcc_data2)
+int nfs_SetFailedStatus_verbose(const char *where,
+                                exportlist_t * pexport,
+                                int version,
+                                cache_inode_status_t status,
+                                nfsstat2 * pstatus2,
+                                nfsstat3 * pstatus3,
+                                post_op_attr * ppost_op_attr,
+                                fsal_attrib_list_t * ppre_vattr1,
+                                wcc_data * pwcc_data1,
+                                fsal_attrib_list_t * ppre_vattr2,
+                                wcc_data * pwcc_data2)
 {
+  if(nfs_RetryableError(status, where))
+    return NFS_REQ_DROP;
+
   switch (version)
     {
     case NFS_V2:
       if(status != CACHE_INODE_SUCCESS) /* Should not use success to address a failed status */
-        *pstatus2 = nfs2_Errno(status);
+        *pstatus2 = nfs2_Errno_verbose(status, where);
       break;
 
     case NFS_V3:
       if(status != CACHE_INODE_SUCCESS) /* Should not use success to address a failed status */
-        *pstatus3 = nfs3_Errno(status);
+        *pstatus3 = nfs3_Errno_verbose(status, where);
 
       if(ppost_op_attr != NULL)
         nfs_SetPostOpAttr(pexport, NULL, ppost_op_attr);
@@ -528,8 +501,9 @@ void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
       if(pwcc_data2 != NULL)
         nfs_SetWccData(pexport, ppre_vattr2, NULL, pwcc_data2);
       break;
-
     }
+
+    return NFS_REQ_OK;
 }
 
 #ifdef _USE_NFS4_ACL
@@ -3899,7 +3873,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
  * @return the converted NFSv3 status.
  *
  */
-nfsstat3 nfs3_Errno(cache_inode_status_t error)
+nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
 {
   nfsstat3 nfserror= NFS3ERR_INVAL;
 
@@ -3921,8 +3895,8 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_HASH_SET_ERROR:
     case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error %u converted to NFS3ERR_IO but was set non-retryable",
-              error);
+              "Error %u in %s converted to NFS3ERR_IO but was set non-retryable",
+              error, where);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -3934,7 +3908,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_CACHE_CONTENT_ERROR:
                                          /** @todo: Check if this works by making stress tests */
       LogCrit(COMPONENT_NFSPROTO,
-              "Error CACHE_INODE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
+              "Error CACHE_INODE_FSAL_ERROR in %s converted to NFS3ERR_IO but was set non-retryable", where);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -3999,7 +3973,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
 
     case CACHE_INODE_IO_ERROR:
         LogCrit(COMPONENT_NFSPROTO,
-                "Error CACHE_INODE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
+                "Error CACHE_INODE_IO_ERROR in %s converted to NFS3ERR_IO but was set non-retryable", where);
       nfserror = NFS3ERR_IO;
       break;
 
@@ -4022,8 +3996,8 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_STATE_ERROR:
         /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
-                 "Line %u should never be reached in nfs3_Errno for cache_status=%u",
-                 __LINE__, error);
+                 "Line %u should never be reached in nfs3_Errno from %s for cache_status=%u",
+                 __LINE__, where, error);
       nfserror = NFS3ERR_INVAL;
       break;
     }
@@ -4042,7 +4016,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
  * @return the converted NFSv2 status.
  *
  */
-nfsstat2 nfs2_Errno(cache_inode_status_t error)
+nfsstat2 nfs2_Errno_verbose(cache_inode_status_t error, const char *where)
 {
   nfsstat2 nfserror= NFSERR_IO;
 
@@ -4066,8 +4040,8 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_INVALID_ARGUMENT:
     case CACHE_INODE_FILE_OPEN:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error %u converted to NFSERR_IO but was set non-retryable",
-              error);
+              "Error %u in %s converted to NFSERR_IO but was set non-retryable",
+              error, where);
       nfserror = NFSERR_IO;
       break;
 
@@ -4082,7 +4056,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_FSAL_ERROR:
     case CACHE_INODE_CACHE_CONTENT_ERROR:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
+              "Error CACHE_INODE_FSAL_ERROR in %s converted to NFSERR_IO but was set non-retryable", where);
       nfserror = NFSERR_IO;
       break;
 
@@ -4127,7 +4101,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
 
     case CACHE_INODE_IO_ERROR:
       LogCrit(COMPONENT_NFSPROTO,
-              "Error CACHE_INODE_IO_ERROR converted to NFSERR_IO but was set non-retryable");
+              "Error CACHE_INODE_IO_ERROR in %s converted to NFSERR_IO but was set non-retryable", where);
       nfserror = NFSERR_IO;
       break;
 
@@ -4146,7 +4120,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_FILE_BIG:
         /* Should not occur */
       LogDebug(COMPONENT_NFSPROTO,
-               "Line %u should never be reached in nfs2_Errno", __LINE__);
+               "Line %u should never be reached in nfs2_Errno from %s with error %d", __LINE__, where, error);
       nfserror = NFSERR_IO;
       break;
     }

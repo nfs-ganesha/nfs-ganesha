@@ -200,20 +200,10 @@ int nfs_Fsstat(nfs_arg_t *parg,
     }
 
   /* At this point we met an error */
-  if(nfs_RetryableError(cache_status)) {
-    rc = NFS_REQ_DROP;
-    goto out;
-  }
-
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_statfs2.status,
-                      &pres->res_fsstat3.status,
-                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_statfs2.status,
+                           &pres->res_fsstat3.status,
+                           NULL, NULL, NULL, NULL, NULL);
 out:
   /* return references */
   if (pentry)

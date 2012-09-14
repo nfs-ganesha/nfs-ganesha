@@ -193,23 +193,11 @@ int nfs_Readlink(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
-  if(nfs_RetryableError(cache_status))
-    {
-      rc = NFS_REQ_DROP;
-      goto out;
-    }
-
-  nfs_SetFailedStatus(pcontext, pexport,
-                      preq->rq_vers,
-                      cache_status,
-                      &pres->res_readlink2.status,
-                      &pres->res_readlink3.status,
-                      pentry,
-                      &(pres->res_readlink3.READLINK3res_u.resfail.symlink_attributes),
-                      NULL, NULL, NULL, NULL, NULL, NULL);
-
-  rc = NFS_REQ_OK;
-
+  rc = nfs_SetFailedStatus(pexport, preq->rq_vers, cache_status,
+                           &pres->res_readlink2.status, 
+                           &pres->res_readlink3.status,
+                           &(pres->res_readlink3.READLINK3res_u.resfail.symlink_attributes),
+                            NULL, NULL, NULL, NULL);
 out:
   /* return references */
   if (pentry)

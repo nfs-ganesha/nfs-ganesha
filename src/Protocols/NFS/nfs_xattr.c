@@ -851,15 +851,13 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
   pres->res_readdir3.status = NFS3ERR_IO;
 
   /*  Set failed status */
-  nfs_SetFailedStatus(pcontext,
-                      pexport,
+  nfs_SetFailedStatus(pexport,
                       NFS_V3,
                       cache_status,
                       NULL,
                       &pres->res_readdir3.status,
-                      dir_pentry,
                       &(pres->res_readdir3.READDIR3res_u.resfail.dir_attributes),
-                      NULL, NULL, NULL, NULL, NULL, NULL);
+                      NULL, NULL, NULL, NULL);
 
   rc = NFS_REQ_OK;
 
@@ -1645,15 +1643,13 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
   pres->res_readdir3.status = NFS3ERR_IO;
 
   /*  Set failed status */
-  nfs_SetFailedStatus(pcontext,
-                      pexport,
+  nfs_SetFailedStatus(pexport,
                       NFS_V3,
                       cache_status,
                       NULL,
                       &pres->res_readdirplus3.status,
-                      dir_pentry,
                       &(pres->res_readdirplus3.READDIRPLUS3res_u.resfail.dir_attributes),
-                      NULL, NULL, NULL, NULL, NULL, NULL);
+                      NULL, NULL, NULL, NULL);
 
   rc = NFS_REQ_OK;
 

@@ -264,23 +264,18 @@ int nfs_Lookup(nfs_arg_t *parg,
 
   if(cache_status != CACHE_INODE_SUCCESS)
     {
-      /* If we are here, there was an error */
-        if(nfs_RetryableError(cache_status)) {
-            rc =NFS_REQ_DROP;
-            goto out;
-        }
-
-      nfs_SetFailedStatus(pcontext, pexport,
-                          preq->rq_vers,
-                          cache_status,
-                          &pres->res_dirop2.status,
-                          &pres->res_lookup3.status,
-                          pentry_dir,
-                          &(pres->res_lookup3.LOOKUP3res_u.resfail.dir_attributes),
-                          NULL, NULL, NULL, NULL, NULL, NULL);
+      rc = nfs_SetFailedStatus(pexport,
+                               preq->rq_vers,
+                               cache_status,
+                               &pres->res_dirop2.status,
+                               &pres->res_lookup3.status,
+                               &(pres->res_lookup3.LOOKUP3res_u.resfail.dir_attributes),
+                               NULL, NULL, NULL, NULL);
     }
-
-  rc = NFS_REQ_OK;
+  else
+    {
+      rc = NFS_REQ_OK;
+    }
 
 out:
   /* return references */
