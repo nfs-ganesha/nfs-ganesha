@@ -252,8 +252,6 @@ int name2uid(char *name, uid_t * puid)
                    "name2uid: uidmap_get mapped %s to uid= %d",
                    name, uid);
       *puid = uid;
-
-      return 1 ;
     }
   else
     {
@@ -266,7 +264,6 @@ int name2uid(char *name, uid_t * puid)
           LogCrit(COMPONENT_IDMAPPER,
                        "name2uid: getpwnam_r %s failed",
                        name);
-          *puid = -1;
           return 0;
         }
       else if (res != NULL)
@@ -275,24 +272,40 @@ int name2uid(char *name, uid_t * puid)
 #ifdef _HAVE_GSSAPI
           if(uidgidmap_add(res->pw_uid, res->pw_gid) != ID_MAPPER_SUCCESS)
             {
-              LogCrit(COMPONENT_IDMAPPER,
+              LogMajor(COMPONENT_IDMAPPER,
                       "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
                       res->pw_uid, res->pw_gid);
-              return 0;
             }
 #endif                          /* _HAVE_GSSAPI */
           if(uidmap_add(name, res->pw_uid, 1) != ID_MAPPER_SUCCESS)
             {
-              LogCrit(COMPONENT_IDMAPPER,
-                      "name2uid: uidmap_add %s %d failed",
-                      name, res->pw_uid);
-              return 0;
+              LogMajor(COMPONENT_IDMAPPER,
+                       "name2uid: uidmap_add %s %d failed",
+                       name, res->pw_uid);
             }
 
            return 1 ; /* Job is done */
         }
+#ifndef _USE_NFSIDMAP
+      else
+        {
+          char *end = NULL;
 
-#ifdef _USE_NFSIDMAP
+          uid = strtol(name, &end, 10);
+          if (end && *end != '\0')
+            return 0;
+           
+          if(uidmap_add(name, uid, 1) != ID_MAPPER_SUCCESS)
+            {
+              /* Failure to update the in-core table is not fatal */
+              LogMajor(COMPONENT_IDMAPPER,
+                      "name2uid: uidmap_add %s %d failed",
+                      name, uid);
+            }
+          *puid = uid;
+          return 1;
+        }
+#else /* _USE_NFSIDMAP */
       if(!nfsidmap_set_conf())
         {
           LogCrit(COMPONENT_IDMAPPER,
@@ -669,7 +682,6 @@ int name2gid(char *name, gid_t * pgid)
           LogCrit(COMPONENT_IDMAPPER,
                        "name2gid: getgrnam_r %s failed",
                        name);
-          *pgid = -1;
           return 0;
         }
       else if (pg != NULL)
@@ -678,19 +690,32 @@ int name2gid(char *name, gid_t * pgid)
 
           if(gidmap_add(name, pg->gr_gid) != ID_MAPPER_SUCCESS)
             {
-              LogCrit(COMPONENT_IDMAPPER,
-                      "name2gid: gidmap_add %s %d failed",
-                      name, pg->gr_gid);
-              return 0;
+              LogMajor(COMPONENT_IDMAPPER,
+                       "name2gid: gidmap_add %s %d failed",
+                       name, pg->gr_gid);
             }
         }
       else
         {
-          LogCrit(COMPONENT_IDMAPPER,
-                       "name2gid: %s is unknown",
-                       name);
-          *pgid = -1;
-          return 0;
+          char *end = NULL;
+
+          gid = strtol(name, &end, 10);
+          if(end && *end != '\0')
+            {
+              LogCrit(COMPONENT_IDMAPPER, "name2gid: %s is unknown", name);
+              *pgid = -1;
+              return 0;
+            }
+           
+          if(gidmap_add(name, gid) != ID_MAPPER_SUCCESS)
+            {
+              /* Failure to update the in-core table is not fatal */
+              LogMajor(COMPONENT_IDMAPPER,
+                      "name2gid: gidmap_add %s %d failed",
+                      name, gid);
+            }
+
+          *pgid = gid;
         }
 #endif                          /* _USE_NFSIDMAP */
     }
