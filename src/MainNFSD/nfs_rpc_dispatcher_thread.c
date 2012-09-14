@@ -1290,8 +1290,6 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
             LogDebug(COMPONENT_DISPATCH,
                      "Client on socket=%d, addr=%s disappeared (XPRT_DIED)",
                      xprt->xp_fd, addrbuf);
-            DISP_LOCK(xprt);
-            gsh_xprt_destroy(xprt);
         }
         else if (stat == XPRT_MOREREQS) {
             /* unexpected case */
@@ -1340,6 +1338,7 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
     }
 
 done:
+    stat = SVC_STAT(xprt);
     DISP_UNLOCK(xprt);
 
     /* if recv failed, request is not enqueued */
@@ -1365,11 +1364,14 @@ thr_decode_rpc_requests(void *arg)
     LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
 
     /* done decoding, rearm */
-    if (unlikely(stat != XPRT_DIED))
-        (void) svc_rqst_unblock_events(xprt, SVC_RQST_FLAG_NONE);
+    (void) svc_rqst_unblock_events(xprt, SVC_RQST_FLAG_NONE);
 
     /* update accounting, clear decoding flag */
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
+
+    /* XXX revisit */
+    if (stat == XPRT_DIED)
+        gsh_xprt_destroy(xprt);
 
   return (NULL);
 }
