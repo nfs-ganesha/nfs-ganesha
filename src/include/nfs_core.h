@@ -642,8 +642,6 @@ void nfs_Init_admin_data(void);
 int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
-void constructor_nfs_request_data_t(void *ptr, void *parameters);
-void constructor_request_data_t(void *ptr, void *parameters);
 
 /* Config parsing routines */
 int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter);
