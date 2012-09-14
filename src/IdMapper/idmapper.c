@@ -223,7 +223,7 @@ int name2uid(char *name, uid_t * puid)
   struct passwd passwd;
   struct passwd *res;
   char buff[NFS4_MAX_DOMAIN_LEN];
-  unsigned long uid;
+  uid_t uid;
 #ifdef _USE_NFSIDMAP
 #ifdef _HAVE_GSSAPI
   gid_t gss_gid;
@@ -627,12 +627,12 @@ int gid2name(char *name, gid_t * pgid)
  */
 int name2gid(char *name, gid_t * pgid)
 {
-  unsigned long gid;
+  gid_t gid;
 
   if(gidmap_get(name, &gid) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "name2gid: gidmap_get mapped %s to gid= %ld",
+                   "name2gid: gidmap_get mapped %s to gid= %d",
                    name, gid);
       *pgid = gid;
     }
