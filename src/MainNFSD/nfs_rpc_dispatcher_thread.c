@@ -1217,7 +1217,7 @@ free_nfs_request(request_data_t *nfsreq)
 
 #define DISP_LOCK(x) do { \
     if (! locked) { \
-        svc_dplx_lock_x(xprt, sigmask); \
+        svc_dplx_lock_x(xprt, sigmask, __FILE__, __LINE__); \
         locked = TRUE; \
       }\
     } while (0);
@@ -1315,16 +1315,15 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
          * function again, below */
         nfsreq->r_u.nfs->funcdesc = nfs_rpc_get_funcdesc(nfsreq->r_u.nfs);
         if (nfsreq->r_u.nfs->funcdesc == INVALID_FUNCDESC)
-            goto done;
+            goto finish;
 
-        DISP_LOCK(xprt);
         if (AuthenticateRequest(nfsreq->r_u.nfs,
                                 &no_dispatch) != AUTH_OK || no_dispatch) {
-            goto done;
+            goto finish;
         }
 
         if (!nfs_rpc_get_args(nfsreq->r_u.nfs))
-            goto done;
+            goto finish;
 
         req->rq_xprt = xprt;
 
@@ -1337,10 +1336,11 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
         enqueued = TRUE;
     }
 
-done:
+finish:
     stat = SVC_STAT(xprt);
     DISP_UNLOCK(xprt);
 
+done:
     /* if recv failed, request is not enqueued */
     if (! enqueued)
         free_nfs_request(nfsreq);
@@ -1364,12 +1364,13 @@ thr_decode_rpc_requests(void *arg)
     LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
 
     /* done decoding, rearm */
-    (void) svc_rqst_unblock_events(xprt, SVC_RQST_FLAG_NONE);
+    if (stat != XPRT_DIED)
+        (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
 
     /* update accounting, clear decoding flag */
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
 
-    /* XXX revisit */
+    /* XXX EPOLLONESHOT semantics -should- make this safe */
     if (stat == XPRT_DIED)
         gsh_xprt_destroy(xprt);
 
@@ -1495,12 +1496,6 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     if (! gsh_xprt_decoder_guard_ref(xprt, XPRT_PRIVATE_FLAG_NONE))
         goto out;
 
-    LogFullDebug(COMPONENT_DISPATCH, "before block events");
-
-    /* block events in the interval from initial dispatch to the
-     * completion of SVC_RECV */
-    (void) svc_rqst_block_events(xprt, SVC_RQST_FLAG_NONE);
-
     LogFullDebug(COMPONENT_DISPATCH, "before cond stall");
 
     /* Check per-xprt max outstanding quota */
@@ -1520,23 +1515,6 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 out:
     return (TRUE);
 }
-
-/**
- *
- * print_pending_request: prints an entry related to a pending request in the LRU list.
- *
- * prints an entry related to a pending request in the LRU list.
- *
- * @param data [IN] data stored in a LRU entry to be printed.
- * @param str [OUT] string used to store the result.
- *
- * @return 0 if ok, other values mean an error.
- *
- */
-int print_pending_request(LRU_data_t data, char *str)
-{
-  return snprintf(str, LRU_DISPLAY_STRLEN, "not implemented for now");
-}                               /* print_pending_request */
 
 /**
  * rpc_dispatcher_thread

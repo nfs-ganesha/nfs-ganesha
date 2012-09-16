@@ -779,6 +779,20 @@ nfs_rpc_get_args(nfs_request_data_t *preqnfs)
   return TRUE;
 }
 
+#define DISP_LOCK(x, m) do { \
+    if (! locked) { \
+        svc_dplx_lock_x((x), (m), __FILE__, __LINE__); \
+        locked = TRUE; \
+      }\
+    } while (0);
+
+#define DISP_UNLOCK(x, m) do { \
+    if (locked) { \
+        svc_dplx_unlock_x((x), (m)); \
+        locked = FALSE; \
+      }\
+    } while (0);
+
 /**
  * nfs_rpc_execute: main rpc dispatcher routine
  *
@@ -815,6 +829,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
   enum auth_stat               auth_rc;
   const char                 * progname = "unknown";
   xprt_type_t                  xprt_type = svc_get_xprt_type(xprt);
+  bool                         locked = FALSE;
 
   /* Initialize permissions to allow nothing */
   export_perms.options       = 0;
@@ -847,9 +862,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
                    (int)req->rq_prog, (int)req->rq_vers,
                    (int)req->rq_proc);
       /* XXX move lock wrapper into RPC API */
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      DISP_LOCK(xprt, &pworker_data->sigmask);
       svcerr_systemerr2(xprt, req);
-      svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+      DISP_UNLOCK(xprt, &pworker_data->sigmask);
       return;
     }
 
@@ -889,7 +904,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
                        "Before svc_sendreply on socket %d (dup req)",
                        xprt->xp_fd);
 
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          DISP_LOCK(xprt, &pworker_data->sigmask);
           if(svc_sendreply2
              (xprt, req, pworker_data->funcdesc->xdr_encode_func,
               (caddr_t) &res_nfs) == FALSE)
@@ -905,7 +920,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
                       (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
               svcerr_systemerr2(xprt, req);
             }
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+          DISP_UNLOCK(xprt, &pworker_data->sigmask);
 
           LogFullDebug(COMPONENT_DISPATCH,
                        "After svc_sendreply on socket %d (dup req)",
@@ -922,7 +937,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
                        "manage it, reject for avoiding threads starvation...",
                        req->rq_xid);
           /* Free the arguments */
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          DISP_LOCK(xprt, &pworker_data->sigmask);
           if((preqnfs->req.rq_vers == 2) ||
              (preqnfs->req.rq_vers == 3) ||
              (preqnfs->req.rq_vers == 4)) 
@@ -933,38 +948,90 @@ static void nfs_rpc_execute(request_data_t    * preq,
                         "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
                         pworker_data->pfuncdesc->funcname);
               }
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+          DISP_UNLOCK(xprt, &pworker_data->sigmask);
           /* Ignore the request, send no error */
           return;
 
           /* something is very wrong with the duplicate request cache */
         case DUPREQ_NOT_FOUND:
           LogCrit(COMPONENT_DISPATCH,
-                  "Did not find the request in the duplicate request cache and "
-                  "couldn't add the request.");
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+                  "Error: Duplicate request rejected because it was found "
+                  "in the cache but is not allowed to be cached.");
+          DISP_LOCK(xprt, &pworker_data->sigmask);
           svcerr_systemerr2(xprt, req);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+          DISP_UNLOCK(xprt, &pworker_data->sigmask);
           return;
 
           /* oom */
         case DUPREQ_INSERT_MALLOC_ERROR:
           LogCrit(COMPONENT_DISPATCH,
                   "Cannot process request, not enough memory available!");
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          DISP_LOCK(xprt, &pworker_data->sigmask);
           svcerr_systemerr2(xprt, req);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+          DISP_UNLOCK(xprt, &pworker_data->sigmask);
           return;
 
         default:
           LogCrit(COMPONENT_DISPATCH,
                   "Unknown duplicate request cache status. This should never be "
                   "reached!");
-          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+          DISP_LOCK(xprt, &pworker_data->sigmask);
           svcerr_systemerr2(xprt, req);
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+          DISP_UNLOCK(xprt, &pworker_data->sigmask);
           return;
         }
+      break;
+
+      /* Another thread owns the request */
+    case DUPREQ_BEING_PROCESSED:
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Dupreq xid=%u was asked for process since another thread "
+                   "manage it, reject for avoiding threads starvation...",
+                   req->rq_xid);
+      /* Free the arguments */
+      DISP_LOCK(xprt, &pworker_data->sigmask);
+      if((preqnfs->req.rq_vers == 2) ||
+         (preqnfs->req.rq_vers == 3) ||
+         (preqnfs->req.rq_vers == 4)) 
+        if(!SVC_FREEARGS(xprt, pworker_data->funcdesc->xdr_decode_func,
+                         (caddr_t) parg_nfs))
+          {
+            LogCrit(COMPONENT_DISPATCH,
+                    "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
+                    pworker_data->funcdesc->funcname);
+          }
+      DISP_UNLOCK(xprt, &pworker_data->sigmask);
+      /* Ignore the request, send no error */
+      return;
+
+      /* something is very wrong with the duplicate request cache */
+    case DUPREQ_NOT_FOUND:
+      LogCrit(COMPONENT_DISPATCH,
+              "Did not find the request in the duplicate request cache and "
+              "couldn't add the request.");
+      DISP_LOCK(xprt, &pworker_data->sigmask);
+      svcerr_systemerr2(xprt, req);
+      DISP_UNLOCK(xprt, &pworker_data->sigmask);
+      return;
+
+      /* oom */
+    case DUPREQ_INSERT_MALLOC_ERROR:
+      LogCrit(COMPONENT_DISPATCH,
+              "Cannot process request, not enough memory available!");
+      DISP_LOCK(xprt, &pworker_data->sigmask);
+      svcerr_systemerr2(xprt, req);
+      DISP_UNLOCK(xprt, &pworker_data->sigmask);
+      return;
+
+    default:
+      LogCrit(COMPONENT_DISPATCH,
+              "Unknown duplicate request cache status. This should never be "
+              "reached!");
+      DISP_LOCK(xprt, &pworker_data->sigmask);
+      svcerr_systemerr2(xprt, req);
+      DISP_UNLOCK(xprt, &pworker_data->sigmask);
+      return;
+>>>>>>> b476cae... Incremental dispatcher cleanup with some testing artifacts
     }
 
   /* Get the export entry */
@@ -1568,10 +1635,15 @@ static void nfs_rpc_execute(request_data_t    * preq,
   else
     {
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Before svc_sendreply on socket %d",
+                   "Before svc_sendreply on socket %d (want lock)",
                    xprt->xp_fd);
 
-      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+      DISP_LOCK(xprt, &pworker_data->sigmask);
+
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Before svc_sendreply on socket %d (have lock)",
+                   xprt->xp_fd);
+
 
       /* encoding the result on xdr output */
       if(svc_sendreply2(xprt, req, pworker_data->funcdesc->xdr_encode_func,
@@ -1594,7 +1666,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
                       "Attempt to delete duplicate request failed on line %d",
                       __LINE__);
             }
-          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+          DISP_UNLOCK(xprt, &pworker_data->sigmask);
           goto exe_exit;
         }
 
@@ -1624,7 +1696,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
     }
 
   /* XXX we must hold xprt lock across SVC_FREEARGS */
-  svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+  DISP_UNLOCK(xprt, &pworker_data->sigmask);
     
   /* Free the reply.
    * This should not be done if the request is dupreq cached because this will
@@ -1649,9 +1721,9 @@ exe_exit:
 
 auth_failure:
 
-  svc_dplx_lock_x(xprt, &pworker_data->sigmask);
+  DISP_LOCK(xprt, &pworker_data->sigmask);
   svcerr_auth2(xprt, req, auth_rc);
-  svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
+  DISP_UNLOCK(xprt, &pworker_data->sigmask);
 
   clean_credentials(&user_credentials);
 
