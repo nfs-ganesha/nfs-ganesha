@@ -372,6 +372,7 @@ nfs4_return_one_state(cache_entry_t *entry,
         arg.return_type = return_type;
         arg.spec_segment = spec_segment;
         arg.synthetic = synthetic;
+        arg.ntokens = 0;
 
         if (!reclaim) {
                 /* The _safe version of glist_for_each allows us to

@@ -547,6 +547,17 @@ struct state_layout_segment_t
   pthread_mutex_t        sls_mutex;
 };
 
+struct state_layout_recall_file
+{
+  struct glist_head entry_list; /*< List of recalls on a file */
+  cache_entry_t *entry; /*< Related cache entry */
+  uint64_t offset; /*< Beginning of the region to recall */
+  uint64_t length; /*< Length of region to recall */
+  layoutiomode4 iomode; /*< IO mode to recall */
+  struct state_layout_segment_t *segments[]; /*< List of layout segments
+                                                 affected by this recall. */
+};
+
 #ifdef _USE_NLM
 #define sle_client_locks sle_locks
 #endif /* _USE_NLM */

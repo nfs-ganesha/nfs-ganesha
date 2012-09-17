@@ -157,10 +157,6 @@ struct fsal_layoutreturn_arg {
          *  dispose is true, any memory allocated for this value must be
          *  freed. */
         void *fsal_seg_data;
-        /** Pointer to layout specific data supplied by LAYOUTRECALL.  If
-         *  this LAYOUTRETURN completly satisfies an invoked LAYOUTRECALL, this
-         *  will be the fsal_recall_data supplied there. Else NULL */
-        void *fsal_recall_data;
         /** Whether this return was synthesized a result of
          *  return_on_close or lease expiration. */
         bool synthetic;
@@ -171,6 +167,14 @@ struct fsal_layoutreturn_arg {
          *  with this layout state (that is, there will be no more
          *  layouts for this (clientid, handle, layout type) triple. */
         bool last_segment;
+        /** Count of recall tokens.  0 if no LAYOUTRECALLs are
+            satisfied. */
+        size_t ntokens;
+        /** Array of pointers to layout specific data supplied by
+         *  LAYOUTRECALL.  If this LAYOUTRETURN completly satisfies
+         *  one or more invoked LAYOUTRECALLs, the tokens of the
+         *  recalls will be supplied. */
+        const void *fsal_recall_data[];
 };
 
 /**
