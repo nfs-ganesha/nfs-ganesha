@@ -49,7 +49,6 @@
 
 #include "log.h"
 #include "rpc/rpc.h"
-//#include "nfs_core.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -452,12 +451,31 @@ int ReturnLevelAscii(const char *LevelInAscii)
   int i = 0;
 
   for(i = 0; i < ARRAY_SIZE(tabLogLevel); i++)
-    if(!strcmp(tabLogLevel[i].str, LevelInAscii))
+    if(!strcasecmp(tabLogLevel[i].str, LevelInAscii) ||
+       !strcasecmp(tabLogLevel[i].str + 4, LevelInAscii))
       return tabLogLevel[i].value;
 
   /* If nothing found, return -1 */
   return -1;
 }                               /* ReturnLevelAscii */
+
+int ReturnComponentAscii(const char *ComponentInAscii)
+{
+  log_components_t component;
+
+  for(component = COMPONENT_ALL; component < COMPONENT_COUNT; component++)
+    {
+      if(!strcasecmp(LogComponents[component].comp_name,
+                     ComponentInAscii) ||
+         !strcasecmp(LogComponents[component].comp_name + 10,
+                     ComponentInAscii))
+        {
+          return component;
+        }
+    }
+
+  return -1;
+}
 
 char *ReturnLevelInt(int level)
 {
@@ -539,6 +557,17 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 
   if(level_to_set >= NB_LOG_LEVEL)
     level_to_set = NB_LOG_LEVEL - 1;
+
+  if(LogComponents[component].comp_env_set)
+    {
+      LogWarn(COMPONENT_CONFIG,
+              "LOG %s level %s from config is ignored because %s"
+              " was set in environment",
+              LogComponents[component].comp_name,
+              ReturnLevelInt(level_to_set),
+              ReturnLevelInt(LogComponents[component].comp_log_level));
+      return;
+    }
 
   if (LogComponents[component].comp_log_level != level_to_set)
     {
@@ -629,6 +658,7 @@ void ReadLogEnvironment()
       }
       oldlevel = LogComponents[component].comp_log_level;
       LogComponents[component].comp_log_level = newlevel;
+      LogComponents[component].comp_env_set   = TRUE;
       LogChanges("Using environment variable to switch log level for %s from "
                  "%s to %s",
                  LogComponents[component].comp_name, ReturnLevelInt(oldlevel),
@@ -1385,13 +1415,13 @@ int SetComponentLogFile(log_components_t component, char *name)
 {
   int newtype, changed;
 
-  if (strcmp(name, "SYSLOG") == 0)
+  if (strcasecmp(name, "SYSLOG") == 0)
     newtype = SYSLOG;
-  else if (strcmp(name, "STDERR") == 0)
+  else if (strcasecmp(name, "STDERR") == 0)
     newtype = STDERRLOG;
-  else if (strcmp(name, "STDOUT") == 0)
+  else if (strcasecmp(name, "STDOUT") == 0)
     newtype = STDOUTLOG;
-  else if (strcmp(name, "TEST") == 0)
+  else if (strcasecmp(name, "TEST") == 0)
     newtype = TESTLOG;
   else
     newtype = FILELOG;
@@ -1407,7 +1437,8 @@ int SetComponentLogFile(log_components_t component, char *name)
       }
 
   changed = (newtype != LogComponents[component].comp_log_type) ||
-            (newtype == FILELOG && strcmp(name, LogComponents[component].comp_log_file) != 0);
+            (newtype == FILELOG &&
+             strcasecmp(name, LogComponents[component].comp_log_file) != 0);
 
   if (component != COMPONENT_LOG && changed)
     LogChanges("Changing log destination for %s from %s to %s",
@@ -1547,3 +1578,94 @@ int setComponentLogLevel(const snmp_adm_type_union * param, void *opt)
 }
 
 #endif /* _SNMP_ADM_ACTIVE */
+
+#define CONF_LABEL_LOG "LOG"
+
+/**
+ *
+ * read_log_config: Read the configuration ite; for the logging component.
+ *
+ * Read the configuration ite; for the logging component.
+ *
+ * @param in_config [IN] configuration file handle
+ * @param pparam [OUT] read parameters
+ *
+ * @return 0 if ok, -1 if failed, 1 is stanza is not there
+ *
+ */
+int read_log_config(config_file_t in_config)
+{
+  int var_max;
+  int var_index;
+  int err;
+  char *key_name;
+  char *key_value;
+  config_item_t block;
+  int component;
+  int level;
+
+  /* Is the config tree initialized ? */
+  if(in_config == NULL)
+    return -1;
+
+  /* Get the config BLOCK */
+  if((block = config_FindItemByName(in_config, CONF_LABEL_LOG)) == NULL)
+    {
+      LogDebug(COMPONENT_CONFIG,
+               "Cannot read item \"%s\" from configuration file",
+               CONF_LABEL_LOG);
+      return 1;
+    }
+  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    {
+      /* Expected to be a block */
+      LogCrit(COMPONENT_CONFIG,
+              "Item \"%s\" is expected to be a block",
+              CONF_LABEL_LOG);
+      return 1;
+    }
+
+  var_max = config_GetNbItems(block);
+
+  for(var_index = 0; var_index < var_max; var_index++)
+    {
+      config_item_t item;
+
+      item = config_GetItemByIndex(block, var_index);
+
+      /* Get key's name */
+      if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+        {
+          LogCrit(COMPONENT_CONFIG,
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
+                  var_index, CONF_LABEL_LOG);
+          return -1;
+        }
+
+      component = ReturnComponentAscii(key_name);
+
+      if(component == -1)
+        {
+          LogWarn(COMPONENT_CONFIG,
+                  "Error parsing section \"LOG\" of configuration file, \"%s\""
+                  " is not a valid LOG COMPONENT",
+                  key_name);
+          continue;
+        }
+
+      level = ReturnLevelAscii(key_value);
+
+      if(level == -1)
+        {
+          LogWarn(COMPONENT_CONFIG,
+                  "Error parsing section \"LOG\" of configuration file, \"%s\""
+                  " is not a valid LOG LEVEL for \"%s\"",
+                  key_value, key_name);
+          continue;
+        }
+
+      SetComponentLogLevel(component, level);
+    }
+
+  return 0;
+}                               /* read_log_config */
