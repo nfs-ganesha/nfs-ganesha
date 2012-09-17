@@ -144,6 +144,11 @@ typedef enum log_components
   COMPONENT_9P_DISPATCH,
   COMPONENT_FSAL_UP,
   COMPONENT_DBUS,
+  /* All real log components must be above this line.
+   * Components below are for special purposes and may
+   * only be manipulated individually.
+   */
+  COMPONENT_FAKE,
   LOG_MESSAGE_DEBUGINFO,
   LOG_MESSAGE_VERBOSITY,
   COMPONENT_COUNT
@@ -387,9 +392,9 @@ int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
 
 char *ReturnNameFamilyError(int num_family);
 
-void InitLogging();        /* not thread safe */
-
-void SetLevelDebug(int level_to_set);    /* not thread safe */
+void InitLogging();
+void ReadLogEnvironment();
+void SetLevelDebug(int level_to_set);
 
 int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);
@@ -413,9 +418,6 @@ void Fatal(void);
 int SetComponentLogFile(log_components_t component, char *name);
 void SetComponentLogBuffer(log_components_t component, char *buffer);
 void SetComponentLogLevel(log_components_t component, int level_to_set);
-
-#define SetLogLevel(level_to_set) \
-  SetComponentLogLevel(COMPONENT_ALL, level_to_set)
 
 int DisplayLogComponentLevel(log_components_t component,
                              char * function,

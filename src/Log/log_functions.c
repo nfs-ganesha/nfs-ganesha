@@ -564,7 +564,7 @@ void _SetLevelDebug(int level_to_set)
   if(level_to_set >= NB_LOG_LEVEL)
     level_to_set = NB_LOG_LEVEL - 1;
 
-  for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
+  for (i = COMPONENT_ALL; i < COMPONENT_FAKE; i++)
       LogComponents[i].comp_log_level = level_to_set;
 }                               /* _SetLevelDebug */
 
@@ -595,10 +595,8 @@ static void DecrementLevelDebug()
 void InitLogging()
 {
   int i;
-  char *env_value;
-  int newlevel, component, oldlevel;
 
-  /* Initialisation du tableau des familys */
+  /* Initialisation of tables of families */
   tab_family[0].num_family = 0;
   tab_family[0].tab_err = (family_error_t *) tab_system_err;
   strcpy(tab_family[0].name_family, "Errors Systeme UNIX");
@@ -608,6 +606,12 @@ void InitLogging()
 
   ArmSignal(SIGUSR1, IncrementLevelDebug);
   ArmSignal(SIGUSR2, DecrementLevelDebug);
+}
+
+void ReadLogEnvironment()
+{
+  char *env_value;
+  int newlevel, component, oldlevel;
 
   for(component = COMPONENT_ALL; component < COMPONENT_COUNT; component++)
     {
@@ -1219,6 +1223,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_FAKE,                "COMPONENT_FAKE", "FAKE",
+    NIV_NULL,
+    SYSLOG,
+    "SYSLOG"
+  },
   { LOG_MESSAGE_DEBUGINFO,        "LOG_MESSAGE_DEBUGINFO",
                                   "LOG MESSAGE DEBUGINFO",
     NIV_NULL,
@@ -1363,7 +1372,7 @@ void SetDefaultLogging(char *name)
   SetComponentLogFile(COMPONENT_LOG, name);
 
   LogChanges("Setting log destination for ALL components to %s", name);
-  for(component = COMPONENT_ALL; component < COMPONENT_COUNT; component++)
+  for(component = COMPONENT_ALL; component < COMPONENT_FAKE; component++)
     {
       if (component == COMPONENT_STDOUT)
         continue;
