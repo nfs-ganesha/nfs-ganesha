@@ -307,6 +307,7 @@ static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, in
  *          ERR_FSAL_IO, ...
  */
 fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
+                               fsal_op_context_t * p_context,       /* IN */
                                fsal_cookie_t start_position,        /* IN */
                                fsal_attrib_mask_t get_attr_mask,        /* IN */
                                fsal_mdsize_t buffersize,        /* IN */

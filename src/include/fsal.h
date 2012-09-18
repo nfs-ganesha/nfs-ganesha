@@ -611,6 +611,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
     );
 
 fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
                            fsal_cookie_t start_position,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
@@ -1107,6 +1108,7 @@ typedef struct fsal_functions__
 
   /* FSAL_readdir */
   fsal_status_t(*fsal_readdir) (fsal_dir_t * p_dir_descriptor,  /* IN */
+                                fsal_op_context_t * p_context,       /* IN */
                                 fsal_cookie_t start_position,   /* IN */
                                 fsal_attrib_mask_t get_attr_mask,       /* IN */
                                 fsal_mdsize_t buffersize,       /* IN */

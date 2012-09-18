@@ -152,6 +152,7 @@ fsal_status_t CEPHFSAL_opendir(fsal_handle_t * exthandle,
                                fsal_attrib_list_t * dir_attributes);
 
 fsal_status_t CEPHFSAL_readdir(fsal_dir_t * extdescriptor,
+                               fsal_op_context_t * p_context,       /* IN */
                                fsal_cookie_t extstart,
                                fsal_attrib_mask_t attrmask,
                                fsal_mdsize_t buffersize,

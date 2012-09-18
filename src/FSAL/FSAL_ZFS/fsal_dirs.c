@@ -143,6 +143,7 @@ fsal_status_t ZFSFSAL_opendir(fsal_handle_t * dir_hdl,  /* IN */
  *          ERR_FSAL_IO, ...
  */
 fsal_status_t ZFSFSAL_readdir(fsal_dir_t * dir_desc, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
                            fsal_cookie_t start_pos,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */

@@ -140,6 +140,7 @@ fsal_status_t WRAP_HPSSFSAL_opendir(fsal_handle_t * p_dir_handle,       /* IN */
 }
 
 fsal_status_t WRAP_HPSSFSAL_readdir(fsal_dir_t * p_dir_descriptor,      /* IN */
+                                    fsal_op_context_t * p_context,       /* IN */
                                     fsal_cookie_t start_position,       /* IN */
                                     fsal_attrib_mask_t get_attr_mask,   /* IN */
                                     fsal_mdsize_t buffersize,   /* IN */
@@ -153,6 +154,7 @@ fsal_status_t WRAP_HPSSFSAL_readdir(fsal_dir_t * p_dir_descriptor,      /* IN */
   memcpy((char *)&hpsscookie, (char *)&start_position, sizeof(hpssfsal_cookie_t));
 
   return HPSSFSAL_readdir((hpssfsal_dir_t *) p_dir_descriptor,
+                          p_context,
                           start_position,
                           get_attr_mask,
                           buffersize, 

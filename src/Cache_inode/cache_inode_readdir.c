@@ -445,6 +445,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
     {
       fsal_status
         = FSAL_readdir(&dir_handle,
+                       context,
                        begin_cookie,
                        cache_inode_params.attrmask,
                        FSAL_READDIR_SIZE * sizeof(fsal_dirent_t),

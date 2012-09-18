@@ -1776,7 +1776,7 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
 
       if(FSAL_IS_ERROR
          (st =
-          FSAL_readdir(&dir, from, attrs.supported_attributes & mask_needed,
+          FSAL_readdir(&dir, &context->context, from, attrs.supported_attributes & mask_needed,
                        READDIR_SIZE * sizeof(fsal_dirent_t), entries, &to, &number,
                        &eod)))
         {

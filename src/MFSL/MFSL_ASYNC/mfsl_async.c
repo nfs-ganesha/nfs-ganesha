@@ -165,6 +165,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
 
       FSAL_SET_COOKIE_BEGINNING(fsal_cookie_beginning);
       fsal_status = FSAL_readdir(&dir_descriptor,
+                                 pcontext,
                                  fsal_cookie_beginning,
                                  FSAL_ATTRS_MANDATORY,
                                  NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
@@ -222,6 +223,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
                         }
 
                       fsal_status = FSAL_readdir(&subdir_descriptor,
+                                                 pcontext,
                                                  fsal_cookie_beginning,
                                                  FSAL_ATTRS_MANDATORY,
                                                  NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
@@ -713,6 +715,7 @@ fsal_status_t MFSL_opendir(mfsl_object_t * dir_handle,  /* IN */
 }                               /* MFSL_opendir */
 
 fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
                            fsal_cookie_t start_position,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
@@ -726,6 +729,7 @@ fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   fsal_status_t fsal_status;
 
   return FSAL_readdir(dir_descriptor,
+                      p_context,
                       start_position,
                       get_attr_mask,
                       buffersize, pdirent, end_position, nb_entries, end_of_dir);

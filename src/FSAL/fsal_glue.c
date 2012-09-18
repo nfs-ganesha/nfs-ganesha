@@ -235,6 +235,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
 }
 
 fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
                            fsal_cookie_t start_position,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
@@ -243,7 +244,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
                            fsal_count_t * p_nb_entries, /* OUT */
                            fsal_boolean_t * p_end_of_dir /* OUT */ )
 {
-  return fsal_functions.fsal_readdir(p_dir_descriptor, start_position, get_attr_mask,
+  return fsal_functions.fsal_readdir(p_dir_descriptor, p_context, start_position, get_attr_mask,
                                      buffersize, p_pdirent, p_end_position, p_nb_entries,
                                      p_end_of_dir);
 }

@@ -215,6 +215,7 @@ struct linux_dirent
 #define BUF_SIZE 1024
 
 fsal_status_t XFSFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
+                              fsal_op_context_t * p_context,       /* IN */
                               fsal_cookie_t startposition,  /* IN */
                               fsal_attrib_mask_t get_attr_mask, /* IN */
                               fsal_mdsize_t buffersize, /* IN */
