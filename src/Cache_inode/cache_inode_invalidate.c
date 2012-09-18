@@ -73,51 +73,14 @@
  */
 
 cache_inode_status_t
-cache_inode_invalidate(struct fsal_obj_handle * obj_hdl,
+cache_inode_invalidate(cache_entry_t *entry,
                        cache_inode_status_t *status,
                        uint32_t flags)
 {
-     hash_buffer_t key, value;
-     struct gsh_buffdesc fh_desc;
-     int rc = 0 ;
-     cache_entry_t *entry;
-     struct hash_latch latch;
-
-     if (status == NULL || obj_hdl == NULL) {
+     if (status == NULL || entry == NULL) {
           *status = CACHE_INODE_INVALID_ARGUMENT;
           goto out;
      }
-
-     /* Locate the entry in the cache */
-     obj_hdl->ops->handle_to_key(obj_hdl, &fh_desc);
-
-     /* Turn the input to a hash key */
-     key.pdata = fh_desc.addr;
-     key.len = fh_desc.len;
-
-     if ((rc = HashTable_GetLatch(fh_to_cache_entry_ht,
-                                  &key,
-                                  &value,
-                                  false,
-                                  &latch)) == HASHTABLE_ERROR_NO_SUCH_KEY) {
-          /* Entry is not cached */
-          HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-          *status = CACHE_INODE_NOT_FOUND;
-          return *status;
-     } else if (rc != HASHTABLE_SUCCESS) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "Unexpected error %u while calling HashTable_GetLatch", rc) ;
-          *status = CACHE_INODE_INVALID_ARGUMENT;
-          goto out;
-     }
-
-     entry = value.pdata;
-     if (cache_inode_lru_ref(entry, 0) != CACHE_INODE_SUCCESS) {
-          HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-          *status = CACHE_INODE_NOT_FOUND;
-          return *status;
-     }
-     HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
      pthread_rwlock_wrlock(&entry->attr_lock);
      pthread_rwlock_wrlock(&entry->content_lock);

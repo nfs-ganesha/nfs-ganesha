@@ -830,9 +830,9 @@ void cache_inode_release_dirents(cache_entry_t *entry,
 void cache_inode_kill_entry(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_invalidate(
-     struct fsal_obj_handle * pfsal_handle,
-     cache_inode_status_t *status,
-     uint32_t flags);
+        cache_entry_t *entry,
+        cache_inode_status_t *status,
+        uint32_t flags);
 
 /* Parsing functions */
 cache_inode_status_t cache_inode_read_conf_hash_parameter(
