@@ -55,7 +55,7 @@ fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
     {
       arg->event_process_func(&arg->event_data);
 
-      gsh_free(arg->event_data.event_context.fsal_data.fh_desc.start);
+      gsh_free(arg->event_data.event_context.fsal_data.fh_desc.addr);
       pool_free(fsal_up_event_pool, arg);
       return ret;
     }
@@ -164,7 +164,8 @@ void *fsal_up_process_thread(void *UnUsedArg)
             /* Release the mutex */
             V(fsal_up_process_tcb.tcb_mutex);
             fupevent->event_process_func(&fupevent->event_data);
-            gsh_free(fupevent->event_data.event_context.fsal_data.fh_desc.start);
+            gsh_free(fupevent->event_data.event_context.fsal_data
+                     .fh_desc.addr);
             pool_free(fsal_up_event_pool, fupevent);
 
             continue;
@@ -260,11 +261,11 @@ fsal_status_t process_event(fsal_up_event_t *myevent, fsal_up_event_functions_t 
     default:
       LogDebug(COMPONENT_FSAL_UP, "Unknown FSAL UP event type found: %d",
               myevent->event_type);
-      gsh_free(myevent->event_data.event_context.fsal_data.fh_desc.start);
+      gsh_free(myevent->event_data.event_context.fsal_data.fh_desc.addr);
 
       pool_free(fsal_up_event_pool, myevent);
 
-      ReturnCode(ERR_FSAL_NO_ERROR, 0);
+      return fsalstat(ERR_FSAL_NO_ERROR, 0);
     }
 
   status = schedule_fsal_up_event_process(myevent);

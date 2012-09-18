@@ -323,7 +323,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   verifier4 cookie_verifier;
   unsigned long space_used = 0;
   entry4 *entry_nfs_array = NULL;
-  entry_name_array_item_t *entry_name_array = NULL;
+  char **entry_name_array = NULL;
   struct fsal_obj_handle *obj_hdl = NULL;
   fsal_status_t fsal_status;
   file_handle_v4_t *file_handle;

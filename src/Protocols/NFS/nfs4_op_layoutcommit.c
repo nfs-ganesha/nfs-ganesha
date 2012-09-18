@@ -209,7 +209,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
             arg_LAYOUTCOMMIT4->loca_last_write_offset.no_newoffset ||
             res.size_supplied) {
                 if (cache_inode_invalidate(
-                            data->current_entry->obj_handle,
+                            data->current_entry,
                             &cache_status,
                             CACHE_INODE_INVALIDATE_CLEARBITS)
                     != CACHE_INODE_SUCCESS) {

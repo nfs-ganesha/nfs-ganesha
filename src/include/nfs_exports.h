@@ -210,7 +210,7 @@ typedef struct exportlist__
 #ifdef _USE_FSAL_UP
   bool use_fsal_up;
   char fsal_up_type[MAXPATHLEN];
-  fsal_time_t fsal_up_timeout;
+  gsh_time_t fsal_up_timeout;
   pthread_t fsal_up_thr; /* This value may be modified later to point to an FSAL CB thread. */
   struct fsal_up_filter_list_t_ *fsal_up_filter_list; /* List of filters to apply through FSAL CB interface. */
 #endif /* _USE_FSAL_UP */

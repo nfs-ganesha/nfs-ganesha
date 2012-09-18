@@ -47,21 +47,30 @@
 
 fsal_status_t dumb_fsal_up_invalidate_step1(fsal_up_event_data_t * pevdata)
 {
+#if 0
   cache_inode_status_t cache_status;
 
   LogDebug(COMPONENT_FSAL_UP,
            "FSAL_UP_DUMB: calling cache_inode_invalidate()");
 
+  /**
+   * @todo ACE: Revisit this after we add lookup.
+   */
+
   /* Lock the entry */
   cache_inode_invalidate(&pevdata->event_context.fsal_data,
                          &cache_status,
                          CACHE_INODE_INVALIDATE_CLEARBITS);
+#else
+  abort();
+#endif
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t * pevdata)
 {
+#if 0
   cache_inode_status_t cache_status;
 
   LogDebug(COMPONENT_FSAL_UP,
@@ -71,11 +80,15 @@ fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t * pevdata)
   cache_inode_invalidate(&pevdata->event_context.fsal_data,
                          &cache_status,
                          CACHE_INODE_INVALIDATE_CLOSE);
+#else
+  abort();
+#endif
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
 {
+#if 0
   cache_inode_status_t cache_status;
 
   LogFullDebug(COMPONENT_FSAL_UP,
@@ -94,6 +107,9 @@ fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
     cache_inode_invalidate(&pevdata->event_context.fsal_data,
                            &cache_status,
                            CACHE_INODE_INVALIDATE_CLEARBITS);
+#else
+  abort();
+#endif
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

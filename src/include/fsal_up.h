@@ -65,7 +65,7 @@ typedef struct fsal_up_event_bus_parameter_t_
 
 typedef struct fsal_up_event_bus_context_t_
 {
-  fsal_export_context_t FS_export_context;
+  struct export_context *FS_export_context;
 } fsal_up_event_bus_context_t;
 
 typedef struct fsal_up_event_data_context_t_
