@@ -825,13 +825,15 @@ lru_thread(void *arg __attribute__((unused)))
                                       reacquire the queue lock so we
                                       can make another trip through
                                       the loop. */
-                                   pthread_mutex_unlock(&lru->mtx);
                                    pthread_rwlock_unlock(&entry->content_lock);
+                                   pthread_mutex_unlock(&lru->mtx);
                                    pthread_mutex_lock(&LRU_1[lane].lru.mtx);
                                    /* By definition, if any of these
                                       flags are set, the entry isn't
                                       in this queue fragment any more. */
-                                   continue;
+                                   /* Instead of repeating on the same entry of the same lane,
+                                      process the next lane */
+                                   break;
                               }
 
                               if (cache_inode_fd(entry)) {
