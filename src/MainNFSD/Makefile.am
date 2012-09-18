@@ -9,7 +9,6 @@ AM_CFLAGS                     = -Wimplicit -lrt $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) 
                                 ../FSAL/fsal_config.lo \
                                 ../FSAL/fsal_errors.lo
 
-
 if USE_FSAL_UP
 FSAL_UP_LIB_FLAGS = ../FSAL_UP/libfsalup.la
 else
@@ -141,13 +140,14 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/rbt_node.h                \
                              ../include/rbt_tree.h                \
                              ../include/avltree.h                 \
-                             ../include/log.h           \
+                             ../include/log.h                     \
                              ../include/nfs_core.h                \
                              ../include/err_rpc.h                 \
                              ../include/err_HashTable.h           \
                              ../include/nfs_dupreq.h              \
                              ../include/nfs_tools.h               \
                              ../include/nfs_exports.h             \
+                             ../include/nfs_req_queue.h           \
                              ../include/nfs_proto_functions.h     \
                              ../include/nfs_file_handle.h         \
                              ../include/RW_Lock.h                 \

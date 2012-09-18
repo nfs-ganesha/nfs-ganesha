@@ -21,7 +21,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
@@ -45,6 +46,7 @@
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
+#include "nfs_req_queue.h"
 #include "log.h"
 #include "nfs_rpc_callback.h"
 #include "nfs4.h"
@@ -664,7 +666,7 @@ int32_t
 nfs_rpc_submit_call(rpc_call_t *call, uint32_t flags)
 {
     int32_t code = 0;
-    request_data_t *pnfsreq = NULL;
+    request_data_t *nfsreq = NULL;
     rpc_call_channel_t *chan = call->chan;
 
     assert(chan);
@@ -673,25 +675,12 @@ nfs_rpc_submit_call(rpc_call_t *call, uint32_t flags)
         code = nfs_rpc_dispatch_call(call, NFS_RPC_CALL_NONE);
     }
     else {
-        /* select a thread from the general thread pool */
-        int32_t thrd_ix;
-        nfs_worker_data_t *worker;
-
-        thrd_ix = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
-        worker = &workers_data[thrd_ix];
-
-        LogFullDebug(COMPONENT_NFS_CB,
-                     "Use request from Worker Thread #%u's pool, thread has %d "
-                     "pending requests",
-                     thrd_ix,
-                     worker->pending_request_len);
-
-        pnfsreq = nfs_rpc_get_nfsreq(worker, 0 /* flags */);
+        nfsreq = nfs_rpc_get_nfsreq(0 /* flags */);
         pthread_mutex_lock(&call->we.mtx);
         call->states = NFS_CB_CALL_QUEUED;
-        pnfsreq->rtype = NFS_CALL;
-        pnfsreq->r_u.call = call;
-        DispatchWorkNFS(pnfsreq, thrd_ix);
+        nfsreq->rtype = NFS_CALL;
+        nfsreq->r_u.call = call;
+        nfs_rpc_enqueue_req(nfsreq);
         pthread_mutex_unlock(&call->we.mtx);
     }
 

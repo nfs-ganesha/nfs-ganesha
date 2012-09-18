@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -121,6 +122,9 @@ nfs_parameter_t nfs_param =
   .core_param.nb_max_fd = 1024,
   .core_param.stats_update_delay = 60,
   .core_param.long_processing_threshold = 10, /* seconds */
+  .core_param.decoder_fridge_expiration_delay = -1,
+  .core_param.dispatch_max_reqs =  1024,
+  .core_param.dispatch_max_reqs_xprt =  50,
   .core_param.core_options = CORE_OPTION_ALL_VERS,
   .core_param.stats_file_path = "/tmp/ganesha.stat",
   .core_param.stats_per_client_directory = "/tmp",
@@ -531,8 +535,12 @@ void nfs_print_param_config()
   printf("\tCore_Dump_Size = %ld ; \n", nfs_param.core_param.core_dump_size);
   printf("\tNb_Max_Fd = %d ; \n", nfs_param.core_param.nb_max_fd);
   printf("\tStats_File_Path = %s ; \n", nfs_param.core_param.stats_file_path);
-  printf("\tStats_Update_Delay = %d ; \n", nfs_param.core_param.stats_update_delay);
-  printf("\tLong_Processing_Threshold = %d ; \n", nfs_param.core_param.long_processing_threshold);
+  printf("\tStats_Update_Delay = %d ; \n",
+         nfs_param.core_param.stats_update_delay);
+  printf("\tLong_Processing_Threshold = %d ; \n",
+         nfs_param.core_param.long_processing_threshold);
+  printf("\tDecoder_Fridge_Expiration_Delay = %d ; \n",
+         nfs_param.core_param.decoder_fridge_expiration_delay);
   printf("\tStats_Per_Client_Directory = %s ; \n",
          nfs_param.core_param.stats_per_client_directory);
 

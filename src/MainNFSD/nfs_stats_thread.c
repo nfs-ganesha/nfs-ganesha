@@ -17,7 +17,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -106,13 +107,6 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
 #ifdef _USE_9P
     global_worker_stat->_9p_stat_req.nb_9p_req = 0 ;
 #endif
-
-    /* prepare for computing pending request stats */
-    ganesha_stats->min_pending_request = 10000000;
-    ganesha_stats->max_pending_request = 0;
-    ganesha_stats->total_pending_request = 0;
-    ganesha_stats->average_pending_request = 0;
-    ganesha_stats->len_pending_request = 0;
 
     for (i = 0; i < nfs_param.core_param.nb_worker; i++) {
         global_worker_stat->nb_total_req += workers_data[i].stats.nb_total_req;
@@ -355,19 +349,7 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
              }
         }
 #endif
-
-        ganesha_stats->len_pending_request = workers_data[i].pending_request_len;
-        if (ganesha_stats->len_pending_request < ganesha_stats->min_pending_request)
-            ganesha_stats->min_pending_request = ganesha_stats->len_pending_request;
-
-        if (ganesha_stats->len_pending_request > ganesha_stats->max_pending_request)
-            ganesha_stats->max_pending_request = ganesha_stats->len_pending_request;
-
-        ganesha_stats->total_pending_request += ganesha_stats->len_pending_request;
     }                       /* for( i = 0 ; i < nfs_param.core_param.nb_worker ; i++ ) */
-
-    /* Compute average pending request */
-    ganesha_stats->average_pending_request = ganesha_stats->total_pending_request / nfs_param.core_param.nb_worker;
 
     for (j = 0; j < NFS_V3_NB_COMMAND; j++) {
         if (global_worker_stat->stat_req.stat_req_nfs3[j].total > 0) {
@@ -519,7 +501,7 @@ void *stats_thread(void *UnusedArg)
               cache_inode_stat->max_rbt_num_node,
               cache_inode_stat->average_rbt_num_node);
 
-      fprintf(stats_file, "NFS/MOUNT STATISTICS,%s;%u,%u,%u|%u,%u,%u,%u,%u|%u,%u,%u,%u\n",
+      fprintf(stats_file, "NFS/MOUNT STATISTICS,%s;%u,%u,%u|%u,%u,%u,%u,%u\n",
               strdate,
               global_worker_stat->nb_total_req,
               global_worker_stat->nb_udp_req,
@@ -528,11 +510,7 @@ void *stats_thread(void *UnusedArg)
               global_worker_stat->stat_req.nb_mnt3_req,
               global_worker_stat->stat_req.nb_nfs2_req,
               global_worker_stat->stat_req.nb_nfs3_req,
-              global_worker_stat->stat_req.nb_nfs4_req,
-              ganesha_stats.total_pending_request,
-              ganesha_stats.min_pending_request,
-              ganesha_stats.max_pending_request,
-              ganesha_stats.average_pending_request);
+              global_worker_stat->stat_req.nb_nfs4_req);
 
       fprintf(stats_file, "MNT V1 REQUEST,%s;%u", strdate,
               global_worker_stat->stat_req.nb_mnt1_req);
