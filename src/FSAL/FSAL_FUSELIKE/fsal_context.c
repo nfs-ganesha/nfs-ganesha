@@ -128,6 +128,8 @@ fsal_status_t FUSEFSAL_GetClientContext(fsal_op_context_t *context,  /* IN/OUT  
 
   /* set the specific export context */
   p_thr_context->export_context = (fusefsal_export_context_t *) p_export_context;
+  p_thr_context->latency = 0;
+  p_thr_context->count = 0;
 
   /* set credential info */
   p_thr_context->credential.user = uid;

@@ -77,6 +77,8 @@ typedef struct
 {
   fsal_export_context_t *export_context;
   struct user_credentials credential;
+  msectimer_t latency;
+  unsigned int count;
   char data[FSAL_OP_CONTEXT_T_SIZE]; /* slightly bigger (for now) */
 } fsal_op_context_t;
 

@@ -168,6 +168,8 @@ typedef struct
 {
   gpfsfsal_export_context_t *export_context;        /* Must be the first entry in this structure */
   struct user_credentials credential;
+  msectimer_t latency;
+  unsigned int count;
 } gpfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )

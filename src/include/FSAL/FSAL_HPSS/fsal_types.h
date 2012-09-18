@@ -131,6 +131,8 @@ typedef struct
 {
   hpssfsal_export_context_t *export_context;    /* Must be the first entry in this structure */
   hpssfsal_cred_t credential;
+  msectimer_t latency;
+  unsigned int count;
 } hpssfsal_op_context_t;
 
 #if (HPSS_MAJOR_VERSION == 5)

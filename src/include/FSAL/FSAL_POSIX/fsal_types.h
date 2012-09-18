@@ -127,6 +127,8 @@ typedef struct
 {
   posixfsal_export_context_t *export_context;   /* Must be the first entry in this structure */
   struct user_credentials credential;
+  msectimer_t latency;
+  unsigned int count;
   fsal_posixdb_conn *p_conn;
 } posixfsal_op_context_t;
 

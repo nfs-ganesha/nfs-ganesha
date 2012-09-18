@@ -19,6 +19,7 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_up.h"
+#include "timers.h"
 
 int __thread my_fsalid = -1 ;
 
@@ -40,15 +41,39 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
                           fsal_accessflags_t access_type,       /* IN */
                           fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_access(object_handle, p_context, access_type,
-                                    object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_access(object_handle, p_context, access_type,
+                                  object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
                             fsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_object_attributes /* IN/OUT */ )
 {
-  return fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor,         /* IN */
@@ -56,18 +81,30 @@ fsal_status_t FSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor,         
                                        fsal_op_context_t * p_context,           /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN/OUT */ )
 {
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
    if(fsal_functions.fsal_getattrs_descriptor != NULL && p_file_descriptor != NULL)
     {
       LogFullDebug(COMPONENT_FSAL,
                    "FSAL_getattrs_descriptor calling fsal_getattrs_descriptor");
-      return fsal_functions.fsal_getattrs_descriptor(p_file_descriptor, p_filehandle, p_context, p_object_attributes);
+      rc = fsal_functions.fsal_getattrs_descriptor(p_file_descriptor, p_filehandle, p_context, p_object_attributes);
     }
   else
     {
       LogFullDebug(COMPONENT_FSAL,
                    "FSAL_getattrs_descriptor calling fsal_getattrs");
-      return fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
+      rc = fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
     }
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
@@ -75,8 +112,20 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
                             fsal_attrib_list_t * p_attrib_set,  /* IN */
                             fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_setattrs(p_filehandle, p_context, p_attrib_set,
-                                      p_object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_setattrs(p_filehandle, p_context, p_attrib_set,
+                                    p_object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
@@ -93,13 +142,18 @@ fsal_status_t FSAL_CleanUpExportContext(fsal_export_context_t * p_export_context
 }
 
 fsal_status_t FSAL_cookie_to_uint64(fsal_handle_t * handle,
-                                    fsal_op_context_t * context,
+                                    fsal_op_context_t * p_context,
                                     fsal_cookie_t * cookie,
                                     uint64_t *data)
 {
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
   if (fsal_functions.fsal_cookie_to_uint64)
     {
-      return fsal_functions.fsal_cookie_to_uint64(handle,
+      rc = fsal_functions.fsal_cookie_to_uint64(handle,
                                                   cookie,
                                                   data);
     }
@@ -109,18 +163,30 @@ fsal_status_t FSAL_cookie_to_uint64(fsal_handle_t * handle,
       memcpy(data, cookie, sizeof(uint64_t));
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_uint64_to_cookie(fsal_handle_t *handle,
-                                    fsal_op_context_t *context,
+                                    fsal_op_context_t *p_context,
                                     uint64_t *data,
                                     fsal_cookie_t *cookie)
 {
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
   if (fsal_functions.fsal_uint64_to_cookie)
     {
-      return fsal_functions.fsal_uint64_to_cookie(handle,
-                                                  data,
-                                                  cookie);
+      rc = fsal_functions.fsal_uint64_to_cookie(handle,
+                                                data,
+                                                cookie);
     }
   else
     {
@@ -128,56 +194,93 @@ fsal_status_t FSAL_uint64_to_cookie(fsal_handle_t *handle,
       memcpy(cookie, data, sizeof(uint64_t));
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_get_cookieverf(fsal_handle_t * handle,
-                                  fsal_op_context_t * context,
+                                  fsal_op_context_t * p_context,
                                   uint64_t * verf)
 {
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
   if (fsal_functions.fsal_get_cookieverf)
     {
-      return fsal_functions.fsal_get_cookieverf(handle,
+      rc = fsal_functions.fsal_get_cookieverf(handle,
                                                 verf);
     }
   else
     {
       fsal_attrib_list_t attributes;
-      fsal_status_t status;
 
       memset(&attributes, 0, sizeof(fsal_attrib_list_t));
       attributes.asked_attributes = FSAL_ATTR_MTIME;
-      status = FSAL_getattrs(handle,
-                             context,
-                             &attributes);
-      if (FSAL_IS_ERROR(status))
-        {
-          return status;
-        }
-      else
+      rc = FSAL_getattrs(handle,
+                         p_context,
+                         &attributes);
+      if (!FSAL_IS_ERROR(rc))
         {
           memcpy(verf, &attributes.mtime, sizeof(uint64_t));
           ReturnCode(ERR_FSAL_NO_ERROR, 0);
         }
     }
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 
-fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
+fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_context)
 {
-  return fsal_functions.fsal_initclientcontext(p_thr_context);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_initclientcontext(p_context);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
-fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
+fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_context,  /* IN/OUT  */
                                     fsal_export_context_t * p_export_context,   /* IN */
                                     fsal_uid_t uid,     /* IN */
                                     fsal_gid_t gid,     /* IN */
                                     fsal_gid_t * alt_groups,    /* IN */
                                     fsal_count_t nb_alt_groups /* IN */ )
 {
-  return fsal_functions.fsal_getclientcontext(p_thr_context, p_export_context,
-					      uid, gid,
-					      alt_groups, nb_alt_groups);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_getclientcontext(p_context, p_export_context,
+					    uid, gid,
+					    alt_groups, nb_alt_groups);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -187,8 +290,20 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
                           fsal_handle_t * p_object_handle,      /* OUT */
                           fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_create(p_parent_directory_handle, p_filename, p_context,
-                                    accessmode, p_object_handle, p_object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_create(p_parent_directory_handle, p_filename, p_context,
+                                  accessmode, p_object_handle, p_object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
@@ -198,8 +313,20 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
                          fsal_handle_t * p_object_handle,       /* OUT */
                          fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_mkdir(p_parent_directory_handle, p_dirname, p_context,
-                                   accessmode, p_object_handle, p_object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_mkdir(p_parent_directory_handle, p_dirname, p_context,
+                                 accessmode, p_object_handle, p_object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
@@ -208,8 +335,20 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
                         fsal_op_context_t * p_context,  /* IN */
                         fsal_attrib_list_t * p_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_link(p_target_handle, p_dir_handle, p_link_name, p_context,
-                                  p_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_link(p_target_handle, p_dir_handle, p_link_name, p_context,
+                                p_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
@@ -221,8 +360,20 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                           fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
                           fsal_attrib_list_t * node_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_mknode(parentdir_handle, p_node_name, p_context, accessmode,
-                                    nodetype, dev, p_object_handle, node_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_mknode(parentdir_handle, p_node_name, p_context, accessmode,
+                                  nodetype, dev, p_object_handle, node_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
@@ -230,8 +381,20 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
                            fsal_dir_t * p_dir_descriptor,       /* OUT */
                            fsal_attrib_list_t * p_dir_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_opendir(p_dir_handle, p_context, p_dir_descriptor,
-                                     p_dir_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_opendir(p_dir_handle, p_context, p_dir_descriptor,
+                                   p_dir_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
@@ -244,15 +407,39 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
                            fsal_count_t * p_nb_entries, /* OUT */
                            fsal_boolean_t * p_end_of_dir /* OUT */ )
 {
-  return fsal_functions.fsal_readdir(p_dir_descriptor, p_context, start_position, get_attr_mask,
-                                     buffersize, p_pdirent, p_end_position, p_nb_entries,
-                                     p_end_of_dir);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_readdir(p_dir_descriptor, p_context, start_position, get_attr_mask,
+                                   buffersize, p_pdirent, p_end_position, p_nb_entries,
+                                   p_end_of_dir);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_closedir(fsal_dir_t * p_dir_descriptor, /* IN */ 
                             fsal_op_context_t * p_context  /* IN */ )
 {
-  return fsal_functions.fsal_closedir(p_dir_descriptor, p_context);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_closedir(p_dir_descriptor, p_context);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
@@ -262,8 +449,20 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                 fsal_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_open_by_name(dirhandle, filename, p_context, openflags,
-                                          file_descriptor, file_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_open_by_name(dirhandle, filename, p_context, openflags,
+                                        file_descriptor, file_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
@@ -272,8 +471,20 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
                         fsal_file_t * p_file_descriptor,        /* OUT */
                         fsal_attrib_list_t * p_file_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_open(p_filehandle, p_context, openflags, p_file_descriptor,
-                                  p_file_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_open(p_filehandle, p_context, openflags, p_file_descriptor,
+                                p_file_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
@@ -284,8 +495,20 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
                         fsal_size_t * p_read_amount,    /* OUT */
                         fsal_boolean_t * p_end_of_file /* OUT */ )
 {
-  return fsal_functions.fsal_read(p_file_descriptor, p_context, p_seek_descriptor, buffer_size,
-                                  buffer, p_read_amount, p_end_of_file);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_read(p_file_descriptor, p_context, p_seek_descriptor, buffer_size,
+                                buffer, p_read_amount, p_end_of_file);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
@@ -295,9 +518,21 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
                          caddr_t buffer,        /* IN */
                          fsal_size_t * p_write_amount /* OUT */ )
 {
-  return fsal_functions.fsal_write(p_file_descriptor, p_context,
-                                   p_seek_descriptor, buffer_size,
-                                   buffer, p_write_amount);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_write(p_file_descriptor, p_context,
+                                 p_seek_descriptor, buffer_size,
+                                 buffer, p_write_amount);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_commit( fsal_file_t * p_file_descriptor, 
@@ -305,13 +540,41 @@ fsal_status_t FSAL_commit( fsal_file_t * p_file_descriptor,
                          fsal_off_t    offset,
                          fsal_size_t   length )
 {
-  return fsal_functions.fsal_commit(p_file_descriptor, p_context, offset, length );
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_commit(p_file_descriptor, p_context, offset, length );
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor, /* IN */
                          fsal_op_context_t * p_context  /* IN */ )
 {
-  return fsal_functions.fsal_close(p_file_descriptor, p_context);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  if(p_context != NULL)
+    timer_start = timer_get();
+
+  rc = fsal_functions.fsal_close(p_file_descriptor, p_context);
+
+  if(p_context != NULL)
+    {
+      timer_end = timer_get();
+
+      p_context->latency += timer_end - timer_start;
+      p_context->count++;
+    }
+
+  return rc;
 }
 
 fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
@@ -321,22 +584,58 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
                                   fsal_file_t * file_descriptor,        /* OUT */
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_open_by_fileid(filehandle, fileid, p_context, openflags,
-                                            file_descriptor, file_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_open_by_fileid(filehandle, fileid, p_context, openflags,
+                                          file_descriptor, file_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                    fsal_op_context_t * p_context,  /* IN */
                                    fsal_u64_t fileid)
 {
-  return fsal_functions.fsal_close_by_fileid(file_descriptor, p_context, fileid);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_close_by_fileid(file_descriptor, p_context, fileid);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ )
 {
-  return fsal_functions.fsal_dynamic_fsinfo(p_filehandle, p_context, p_dynamicinfo);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_dynamic_fsinfo(p_filehandle, p_context, p_dynamicinfo);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
@@ -353,40 +652,112 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
                                fsal_accessflags_t access_type,  /* IN */
                                fsal_attrib_list_t * p_object_attributes /* IN */ )
 {
-  return fsal_functions.fsal_test_access(p_context, access_type, p_object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_test_access(p_context, access_type, p_object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
                                   fsal_attrib_list_t * candidate_attributes,    /* IN */
                                   fsal_attrib_list_t * object_attributes /* IN */ )
 {
-  return fsal_functions.fsal_setattr_access(p_context, candidate_attributes,
-                                            object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_setattr_access(p_context, candidate_attributes,
+                                          object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
-fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
+fsal_status_t FSAL_rename_access(fsal_op_context_t * p_context,  /* IN */
                                  fsal_attrib_list_t * pattrsrc, /* IN */
                                  fsal_attrib_list_t * pattrdest)        /* IN */
 {
-  return fsal_functions.fsal_rename_access(pcontext, pattrsrc, pattrdest);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_rename_access(p_context, pattrsrc, pattrdest);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
-fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
+fsal_status_t FSAL_create_access(fsal_op_context_t * p_context,  /* IN */
                                  fsal_attrib_list_t * pattr)    /* IN */
 {
-  return fsal_functions.fsal_create_access(pcontext, pattr);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_create_access(p_context, pattr);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
-fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
+fsal_status_t FSAL_unlink_access(fsal_op_context_t * p_context,  /* IN */
                                  fsal_attrib_list_t * pattr)    /* IN */
 {
-  return fsal_functions.fsal_unlink_access(pcontext, pattr);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_unlink_access(p_context, pattr);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
-fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
+fsal_status_t FSAL_link_access(fsal_op_context_t * p_context,    /* IN */
                                fsal_attrib_list_t * pattr)      /* IN */
 {
-  return fsal_functions.fsal_link_access(pcontext, pattr);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_link_access(p_context, pattr);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
@@ -402,8 +773,20 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
                           fsal_handle_t * p_object_handle,      /* OUT */
                           fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_lookup(p_parent_directory_handle, p_filename, p_context,
-                                    p_object_handle, p_object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_lookup(p_parent_directory_handle, p_filename, p_context,
+                                  p_object_handle, p_object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
@@ -411,8 +794,20 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
                               fsal_handle_t * object_handle,    /* OUT */
                               fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_lookuppath(p_path, p_context, object_handle,
-                                        p_object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_lookuppath(p_path, p_context, object_handle,
+                                      p_object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
@@ -421,8 +816,20 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
                                   fsal_attrib_list_t *
                                   p_fsroot_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_lookupjunction(p_junction_handle, p_context, p_fsoot_handle,
-                                            p_fsroot_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_lookupjunction(p_junction_handle, p_context, p_fsoot_handle,
+                                          p_fsroot_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
@@ -460,7 +867,19 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
                        fsal_path_t * p_local_path,      /* IN */
                        fsal_rcpflag_t transfer_opt /* IN */ )
 {
-  return fsal_functions.fsal_rcp(filehandle, p_context, p_local_path, transfer_opt);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_rcp(filehandle, p_context, p_local_path, transfer_opt);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
@@ -471,9 +890,21 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
                           fsal_attrib_list_t * p_src_dir_attributes,    /* [ IN/OUT ] */
                           fsal_attrib_list_t * p_tgt_dir_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_rename(p_old_parentdir_handle, p_old_name,
-                                    p_new_parentdir_handle, p_new_name, p_context,
-                                    p_src_dir_attributes, p_tgt_dir_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_rename(p_old_parentdir_handle, p_old_name,
+                                  p_new_parentdir_handle, p_new_name, p_context,
+                                  p_src_dir_attributes, p_tgt_dir_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 void FSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
@@ -487,8 +918,20 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
                             fsal_attrib_list_t * p_link_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_readlink(p_linkhandle, p_context, p_link_content,
-                                      p_link_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_readlink(p_linkhandle, p_context, p_link_content,
+                                    p_link_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
@@ -499,9 +942,21 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
                            fsal_handle_t * p_link_handle,       /* OUT */
                            fsal_attrib_list_t * p_link_attributes /* [ IN/OUT ] */ )
 {
-  return fsal_functions.fsal_symlink(p_parent_directory_handle, p_linkname, p_linkcontent,
-                                     p_context, accessmode, p_link_handle,
-                                     p_link_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_symlink(p_parent_directory_handle, p_linkname, p_linkcontent,
+                                   p_context, accessmode, p_link_handle,
+                                   p_link_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
@@ -596,8 +1051,20 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,
                             fsal_file_t * file_descriptor,
                             fsal_attrib_list_t * p_object_attributes)
 {
-  return fsal_functions.fsal_truncate(p_filehandle, p_context, length, file_descriptor,
-                                      p_object_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_truncate(p_filehandle, p_context, length, file_descriptor,
+                                    p_object_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -606,8 +1073,20 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
                           fsal_attrib_list_t *
                           p_parent_directory_attributes /* [IN/OUT ] */ )
 {
-  return fsal_functions.fsal_unlink(p_parent_directory_handle, p_object_name, p_context,
-                                    p_parent_directory_attributes);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_unlink(p_parent_directory_handle, p_object_name, p_context,
+                                  p_parent_directory_attributes);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 char *FSAL_GetFSName()
@@ -620,7 +1099,19 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
                                  unsigned int xattr_id, /* IN */
                                  fsal_attrib_list_t * p_attrs)
 {
-  return fsal_functions.fsal_getxattrattrs(p_objecthandle, p_context, xattr_id, p_attrs);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_getxattrattrs(p_objecthandle, p_context, xattr_id, p_attrs);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
@@ -631,9 +1122,21 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
                               unsigned int *p_nb_returned,      /* OUT */
                               int *end_of_list /* OUT */ )
 {
-  return fsal_functions.fsal_listxattrs(p_objecthandle, cookie, p_context,
-                                        xattrs_tab, xattrs_tabsize, p_nb_returned,
-                                        end_of_list);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_listxattrs(p_objecthandle, cookie, p_context,
+                                      xattrs_tab, xattrs_tabsize, p_nb_returned,
+                                      end_of_list);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
@@ -643,8 +1146,20 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
                                      size_t buffer_size,        /* IN */
                                      size_t * p_output_size /* OUT */ )
 {
-  return fsal_functions.fsal_getxattrvaluebyid(p_objecthandle, xattr_id, p_context,
-                                               buffer_addr, buffer_size, p_output_size);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_getxattrvaluebyid(p_objecthandle, xattr_id, p_context,
+                                             buffer_addr, buffer_size, p_output_size);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
@@ -652,8 +1167,20 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
                                     fsal_op_context_t * p_context,      /* IN */
                                     unsigned int *pxattr_id /* OUT */ )
 {
-  return fsal_functions.fsal_getxattridbyname(p_objecthandle, xattr_name, p_context,
-                                              pxattr_id);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_getxattridbyname(p_objecthandle, xattr_name, p_context,
+                                            pxattr_id);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
@@ -663,8 +1190,20 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
                                        size_t buffer_size,      /* IN */
                                        size_t * p_output_size /* OUT */ )
 {
-  return fsal_functions.fsal_getxattrvaluebyname(p_objecthandle, xattr_name, p_context,
-                                                 buffer_addr, buffer_size, p_output_size);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_getxattrvaluebyname(p_objecthandle, xattr_name, p_context,
+                                               buffer_addr, buffer_size, p_output_size);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
@@ -674,8 +1213,20 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
                                  size_t buffer_size,    /* IN */
                                  int create /* IN */ )
 {
-  return fsal_functions.fsal_setxattrvalue(p_objecthandle, xattr_name, p_context,
-                                           buffer_addr, buffer_size, create);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_setxattrvalue(p_objecthandle, xattr_name, p_context,
+                                         buffer_addr, buffer_size, create);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
@@ -684,22 +1235,58 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
                                      caddr_t buffer_addr,       /* IN */
                                      size_t buffer_size /* IN */ )
 {
-  return fsal_functions.fsal_setxattrvaluebyid(p_objecthandle, xattr_id, p_context,
-                                               buffer_addr, buffer_size);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_setxattrvaluebyid(p_objecthandle, xattr_id, p_context,
+                                             buffer_addr, buffer_size);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
                                    fsal_op_context_t * p_context,       /* IN */
                                    unsigned int xattr_id)       /* IN */
 {
-  return fsal_functions.fsal_removexattrbyid(p_objecthandle, p_context, xattr_id);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_removexattrbyid(p_objecthandle, p_context, xattr_id);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
                                      fsal_op_context_t * p_context,     /* IN */
                                      const fsal_name_t * xattr_name)    /* IN */
 {
-  return fsal_functions.fsal_removexattrbyname(p_objecthandle, p_context, xattr_name);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_removexattrbyname(p_objecthandle, p_context, xattr_name);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 unsigned int FSAL_GetFileno(fsal_file_t * pfile)
@@ -711,7 +1298,19 @@ fsal_status_t FSAL_getextattrs( fsal_handle_t * p_filehandle, /* IN */
                                 fsal_op_context_t * p_context,        /* IN */
                                 fsal_extattrib_list_t * p_object_attributes /* OUT */)
 {
-   return fsal_functions.fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
+  rc = fsal_functions.fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
@@ -722,16 +1321,28 @@ fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
                             fsal_lock_param_t   request_lock,        /* IN */
                             fsal_lock_param_t * conflicting_lock)    /* OUT */
 {
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
+
+  timer_start = timer_get();
+
   if(fsal_functions.fsal_lock_op != NULL)
-    return fsal_functions.fsal_lock_op(p_file_descriptor,
+    rc = fsal_functions.fsal_lock_op(p_file_descriptor,
                                        p_filehandle,
                                        p_context,
                                        p_owner,
                                        lock_op,
                                        request_lock,
                                        conflicting_lock);
+  else
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
 
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 fsal_status_t FSAL_share_op( fsal_file_t       * p_file_descriptor,   /* IN */
@@ -740,14 +1351,26 @@ fsal_status_t FSAL_share_op( fsal_file_t       * p_file_descriptor,   /* IN */
                              void              * p_owner,             /* IN (opaque to FSAL) */
                              fsal_share_param_t  request_share)       /* IN */
 {
-  if(fsal_functions.fsal_share_op != NULL)
-    return fsal_functions.fsal_share_op(p_file_descriptor,
-                                        p_filehandle,
-                                        p_context,
-                                        p_owner,
-                                        request_share);
+  fsal_status_t  rc;
+  msectimer_t    timer_start, timer_end;
 
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_share_op);
+  timer_start = timer_get();
+
+  if(fsal_functions.fsal_share_op != NULL)
+    rc = fsal_functions.fsal_share_op(p_file_descriptor,
+                                      p_filehandle,
+                                      p_context,
+                                      p_owner,
+                                      request_share);
+  else
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_share_op);
+
+  timer_end = timer_get();
+
+  p_context->latency += timer_end - timer_start;
+  p_context->count++;
+
+  return rc;
 }
 
 /* FSAL_UP functions */

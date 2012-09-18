@@ -97,6 +97,8 @@ typedef struct
 {
   zfsfsal_export_context_t *export_context; /* Must be the first member of this structure */
   struct user_credentials credential;
+  msectimer_t latency;
+  unsigned int count;
   int thread_connect_array[32];
 
 } zfsfsal_op_context_t;

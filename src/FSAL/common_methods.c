@@ -74,6 +74,8 @@ fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/
 
   /* set the export specific context */
   p_thr_context->export_context = p_export_context;
+  p_thr_context->latency = 0;
+  p_thr_context->count = 0;
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
 

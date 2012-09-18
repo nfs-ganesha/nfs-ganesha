@@ -97,6 +97,8 @@ typedef struct fsal_op_context__
   fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
 
   struct user_credentials credential;
+  msectimer_t latency;
+  unsigned int count;
   int thread_connect_array[32];
 
 } fsal_op_context_t;

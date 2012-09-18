@@ -323,6 +323,8 @@ fsal_status_t HPSSFSAL_GetClientContext(hpssfsal_op_context_t * p_thr_context,  
 
   /* set the export specific context */
   p_thr_context->export_context = p_export_context;
+  p_thr_context->latency = 0;
+  p_thr_context->count = 0;
 
   /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
 

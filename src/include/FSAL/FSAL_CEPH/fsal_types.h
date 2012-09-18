@@ -88,6 +88,8 @@ typedef struct fsal_op_context__
 {
   cephfsal_export_context_t *export_context;
   struct user_credentials credential;
+  msectimer_t latency;
+  unsigned int count;
 } cephfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( (pcontext)->credential.user )
