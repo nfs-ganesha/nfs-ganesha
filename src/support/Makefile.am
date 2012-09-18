@@ -24,6 +24,7 @@ libsupport_la_SOURCES = nfs4_acls.c                         \
                          nfs_ip_name.c                      \
                          nfs_ip_stats.c                     \
                          exports.c                          \
+                         fridgethr.c                        \
                          lookup3.c                          \
                          murmur3.c                          \
                          generic_weakref.c                  \
