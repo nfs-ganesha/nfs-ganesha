@@ -178,6 +178,7 @@ fsal_status_t CEPHFSAL_open_by_name(fsal_handle_t * exthandle,
                                     fsal_attrib_list_t * file_attributes);
 
 fsal_status_t CEPHFSAL_read(fsal_file_t * extdescriptor,
+                            fsal_op_context_t * p_context,
                             fsal_seek_t * seek_descriptor,
                             fsal_size_t buffer_size,
                             caddr_t buffer,

@@ -192,23 +192,25 @@ fsal_status_t WRAP_HPSSFSAL_open(fsal_handle_t * p_filehandle,  /* IN */
 }
 
 fsal_status_t WRAP_HPSSFSAL_read(fsal_file_t * p_file_descriptor,       /* IN */
+                                 fsal_op_context_t * p_context,       /* IN */
                                  fsal_seek_t * p_seek_descriptor,       /* [IN] */
                                  fsal_size_t buffer_size,       /* IN */
                                  caddr_t buffer,        /* OUT */
                                  fsal_size_t * p_read_amount,   /* OUT */
                                  fsal_boolean_t * p_end_of_file /* OUT */ )
 {
-  return HPSSFSAL_read((hpssfsal_file_t *) p_file_descriptor, p_seek_descriptor,
+  return HPSSFSAL_read((hpssfsal_file_t *) p_file_descriptor, p_context, p_seek_descriptor,
                        buffer_size, buffer, p_read_amount, p_end_of_file);
 }
 
 fsal_status_t WRAP_HPSSFSAL_write(fsal_file_t * p_file_descriptor,      /* IN */
+                                  fsal_op_context_t * p_context,       /* IN */
                                   fsal_seek_t * p_seek_descriptor,      /* IN */
                                   fsal_size_t buffer_size,      /* IN */
                                   caddr_t buffer,       /* IN */
                                   fsal_size_t * p_write_amount /* OUT */ )
 {
-  return HPSSFSAL_write((hpssfsal_file_t *) p_file_descriptor, p_seek_descriptor,
+  return HPSSFSAL_write((hpssfsal_file_t *) p_file_descriptor, p_context, p_seek_descriptor,
                         buffer_size, buffer, p_write_amount);
 }
 

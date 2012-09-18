@@ -147,6 +147,7 @@ fsal_status_t ZFSFSAL_open(fsal_handle_t * p_filehandle,     /* IN */
                            fsal_attrib_list_t * p_file_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t ZFSFSAL_read(fsal_file_t * p_file_descriptor,  /* IN */
+                           fsal_op_context_t * p_context,   /* IN */
                            fsal_seek_t * p_seek_descriptor,     /* [IN] */
                            fsal_size_t buffer_size,     /* IN */
                            caddr_t buffer,      /* OUT */

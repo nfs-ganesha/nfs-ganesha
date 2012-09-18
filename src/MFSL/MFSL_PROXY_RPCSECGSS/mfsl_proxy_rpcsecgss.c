@@ -312,6 +312,7 @@ fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
 }                               /* MFSL_open_by_fileid */
 
 fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
+                        fsal_op_context_t * p_context,      /* IN */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
@@ -320,11 +321,12 @@ fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
                         mfsl_context_t * p_mfsl_context /* IN */
     )
 {
-  return FSAL_read(file_descriptor,
+  return FSAL_read(file_descriptor, p_context,
                    seek_descriptor, buffer_size, buffer, read_amount, end_of_file);
 }                               /* MFSL_read */
 
 fsal_status_t MFSL_write(fsal_file_t * file_descriptor, /* IN */
+                         fsal_op_context_t * p_context,      /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -332,7 +334,7 @@ fsal_status_t MFSL_write(fsal_file_t * file_descriptor, /* IN */
                          mfsl_context_t * p_mfsl_context        /* IN */
     )
 {
-  return FSAL_write(file_descriptor, seek_descriptor, buffer_size, buffer, write_amount);
+  return FSAL_write(file_descriptor, p_context, seek_descriptor, buffer_size, buffer, write_amount);
 }                               /* MFSL_write */
 
 fsal_status_t MFSL_close(fsal_file_t * file_descriptor, /* IN */

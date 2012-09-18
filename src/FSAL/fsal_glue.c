@@ -275,13 +275,14 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
 }
 
 fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
                         fsal_seek_t * p_seek_descriptor,        /* [IN] */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
                         fsal_size_t * p_read_amount,    /* OUT */
                         fsal_boolean_t * p_end_of_file /* OUT */ )
 {
-  return fsal_functions.fsal_read(p_file_descriptor, p_seek_descriptor, buffer_size,
+  return fsal_functions.fsal_read(p_file_descriptor, p_context, p_seek_descriptor, buffer_size,
                                   buffer, p_read_amount, p_end_of_file);
 }
 

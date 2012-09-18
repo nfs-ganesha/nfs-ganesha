@@ -261,7 +261,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
         }
       else                      /* from FSAL filesystem */
         {
-          st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
+          st = FSAL_read(&fs_fd, p_context, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */

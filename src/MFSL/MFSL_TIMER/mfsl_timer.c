@@ -485,6 +485,7 @@ fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
 }                               /* MFSL_open_by_fileid */
 
 fsal_status_t MFSL_read(mfsl_file_t * file_descriptor,  /*  IN  */
+                        fsal_op_context_t * p_context,      /* IN */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
@@ -498,7 +499,7 @@ fsal_status_t MFSL_read(mfsl_file_t * file_descriptor,  /*  IN  */
   fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 } ;
   
   gettimeofday( &start, 0 ) ; 
-  fsal_status = FSAL_read(&file_descriptor->fsal_file,
+  fsal_status = FSAL_read(&file_descriptor->fsal_file, p_context,
                    seek_descriptor, buffer_size, buffer, read_amount, end_of_file);
   gettimeofday( &stop, 0 ) ; 
   delta = mfsl_timer_diff( &stop, &start ) ;
@@ -507,6 +508,7 @@ fsal_status_t MFSL_read(mfsl_file_t * file_descriptor,  /*  IN  */
 }                               /* MFSL_read */
 
 fsal_status_t MFSL_write(mfsl_file_t * file_descriptor, /* IN */
+                         fsal_op_context_t * p_context,      /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -519,7 +521,7 @@ fsal_status_t MFSL_write(mfsl_file_t * file_descriptor, /* IN */
   fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 } ;
   
   gettimeofday( &start, 0 ) ; 
-  fsal_status = FSAL_write(&file_descriptor->fsal_file, seek_descriptor, buffer_size, buffer, write_amount);
+  fsal_status = FSAL_write(&file_descriptor->fsal_file, p_context, seek_descriptor, buffer_size, buffer, write_amount);
   gettimeofday( &stop, 0 ) ; 
   delta = mfsl_timer_diff( &stop, &start ) ;
   LogFullDebug( COMPONENT_MFSL, "%s: duration=%ld.%06ld", __FUNCTION__, delta.tv_sec, delta.tv_usec ) ;

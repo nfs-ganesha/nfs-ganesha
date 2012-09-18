@@ -238,6 +238,7 @@ fsal_status_t HPSSFSAL_open(hpssfsal_handle_t * filehandle,     /* IN */
  *        ERR_FSAL_IO, ...
  */
 fsal_status_t HPSSFSAL_read(hpssfsal_file_t * file_descriptor,  /* IN */
+                            fsal_op_context_t * p_context,     /* IN */
                             fsal_seek_t * seek_descriptor,      /* [IN] */
                             fsal_size_t buffer_size,    /* IN */
                             caddr_t buffer,     /* OUT */

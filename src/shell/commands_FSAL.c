@@ -4574,7 +4574,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
   while(!is_eof && !((total_bytes != 0) && (total_nb_read >= total_bytes)))
     {
 
-      st = FSAL_read(&context->current_fd, p_seek_desc,
+      st = FSAL_read(&context->current_fd, &context->context, p_seek_desc,
                      block_size, (caddr_t) p_read_buff, &once_nb_read, &is_eof);
 
       if(FSAL_IS_ERROR(st))
@@ -5392,7 +5392,7 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
     {
       fsal_size_t nb_read_once;
 
-      st = FSAL_read(&cat_fd, NULL, buffsize, (caddr_t) readbuff, &nb_read_once, &is_eof);
+      st = FSAL_read(&cat_fd, &context->context, NULL, buffsize, (caddr_t) readbuff, &nb_read_once, &is_eof);
 
       if(FSAL_IS_ERROR(st))
         {

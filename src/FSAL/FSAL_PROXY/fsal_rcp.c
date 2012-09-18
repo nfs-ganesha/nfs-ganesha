@@ -241,7 +241,7 @@ fsal_status_t PROXYFSAL_rcp(fsal_handle_t * filehandle,    /* IN */
       else                      /* from FSAL filesystem */
         {
           fs_size = 0;
-          st = FSAL_read((fsal_file_t *) &fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
+          st = FSAL_read((fsal_file_t *) &fs_fd, p_context, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */

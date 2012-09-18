@@ -645,6 +645,7 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /*  IN  */
+                        fsal_op_context_t * p_context,  /* IN */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
@@ -1135,6 +1136,7 @@ typedef struct fsal_functions__
 
   /* FSAL_read */
   fsal_status_t(*fsal_read) (fsal_file_t * p_file_descriptor,   /* IN */
+                             fsal_op_context_t * p_context,    /* IN */
                              fsal_seek_t * p_seek_descriptor,   /* [IN] */
                              fsal_size_t buffer_size,   /* IN */
                              caddr_t buffer,    /* OUT */

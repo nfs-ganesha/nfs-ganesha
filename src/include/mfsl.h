@@ -238,6 +238,7 @@ fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
 				  void * pextra );
 
 fsal_status_t MFSL_read(mfsl_file_t * file_descriptor,  /*  IN  */
+                        fsal_op_context_t * p_context,        /* IN */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /*  IN  */
                         caddr_t buffer, /* OUT  */
@@ -248,6 +249,7 @@ fsal_status_t MFSL_read(mfsl_file_t * file_descriptor,  /*  IN  */
     );
 
 fsal_status_t MFSL_write(mfsl_file_t * file_descriptor, /* IN */
+                         fsal_op_context_t * p_context,        /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */

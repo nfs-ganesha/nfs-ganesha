@@ -221,6 +221,7 @@ fsal_status_t POSIXFSAL_open(fsal_handle_t * filehandle, /* IN */
  */
 #ifdef _FSAL_POSIX_USE_STREAM
 fsal_status_t POSIXFSAL_read(fsal_file_t * file_descriptor,      /* IN */
+                             fsal_op_context_t * p_context,     /* IN */
                              fsal_seek_t * p_seek_descriptor,   /* [IN] */
                              fsal_size_t buffer_size,   /* IN */
                              caddr_t buffer,    /* OUT */
@@ -319,6 +320,7 @@ fsal_status_t POSIXFSAL_read(fsal_file_t * file_descriptor,      /* IN */
 }
 #else
 fsal_status_t POSIXFSAL_read(fsal_file_t * file_descriptor,      /* IN */
+                             fsal_op_context_t * p_context,     /* IN */
                              fsal_seek_t * p_seek_descriptor,   /* [IN] */
                              fsal_size_t buffer_size,   /* IN */
                              caddr_t buffer,    /* OUT */

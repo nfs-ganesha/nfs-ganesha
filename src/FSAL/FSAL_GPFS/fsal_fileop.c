@@ -217,6 +217,7 @@ fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
  *      - Another error code if an error occured during this call.
  */
 fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
+                        fsal_op_context_t * p_context,     /* IN */
                         fsal_seek_t * p_seek_descriptor,        /* [IN] */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */

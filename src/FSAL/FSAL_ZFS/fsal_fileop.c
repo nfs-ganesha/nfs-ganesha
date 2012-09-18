@@ -219,6 +219,7 @@ fsal_status_t ZFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
  *        ERR_FSAL_IO, ...
  */
 fsal_status_t ZFSFSAL_read(fsal_file_t * file_desc,  /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */

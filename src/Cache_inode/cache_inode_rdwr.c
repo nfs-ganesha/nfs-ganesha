@@ -209,6 +209,7 @@ cache_inode_rdwr(cache_entry_t *entry,
           if (io_direction == CACHE_INODE_READ) {
                fsal_status
                     = FSAL_read(&(entry->object.file.open_fd.fd),
+                                context,
                                 &seek_descriptor,
                                 io_size,
                                 buffer,
