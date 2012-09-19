@@ -1097,6 +1097,7 @@ retry_deq:
         case 0:
             /* MOUNT */
             qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
+            break;
         case 1:
             /* NFS_CALL */
             qpair = &(nfs_request_q->qset[REQ_Q_CALL]);
@@ -1308,7 +1309,7 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
         nfsreq->r_u.nfs->req.rq_vers = msg->rm_call.cb_vers;
         nfsreq->r_u.nfs->req.rq_proc = msg->rm_call.cb_proc;
         nfsreq->r_u.nfs->req.rq_xid = msg->rm_xid;
-        
+
         /* XXX so long as nfs_rpc_get_funcdesc calls is_rpc_call_valid
          * and fails if that call fails, there is no reason to call that
          * function again, below */
