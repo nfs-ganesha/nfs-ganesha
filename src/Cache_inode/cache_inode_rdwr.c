@@ -233,7 +233,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                    !(entry->object.file.open_fd.openflags & FSAL_O_SYNC)) {
                     fsal_status
                          = FSAL_commit(&(entry->object.file.open_fd.fd),
-                                  offset, io_size);
+                                  context, offset, io_size);
                }
           }
 

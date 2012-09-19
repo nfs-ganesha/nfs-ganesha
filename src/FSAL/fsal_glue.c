@@ -300,10 +300,11 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
 }
 
 fsal_status_t FSAL_commit( fsal_file_t * p_file_descriptor, 
+                         fsal_op_context_t * p_context,        /* IN */
                          fsal_off_t    offset,
                          fsal_size_t   length )
 {
-  return fsal_functions.fsal_commit(p_file_descriptor, offset, length );
+  return fsal_functions.fsal_commit(p_file_descriptor, p_context, offset, length );
 }
 
 fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor /* IN */ )

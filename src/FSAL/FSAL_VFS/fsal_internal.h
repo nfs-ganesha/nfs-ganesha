@@ -386,5 +386,6 @@ fsal_status_t VFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      /* 
 unsigned int VFSFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t VFSFSAL_commit( fsal_file_t * p_file_descriptor,
+                            fsal_op_context_t * p_context,        /* IN */
                             fsal_off_t    offset,
                             fsal_size_t   size ) ;

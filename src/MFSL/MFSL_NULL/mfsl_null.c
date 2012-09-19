@@ -377,11 +377,12 @@ fsal_status_t MFSL_close(mfsl_file_t * file_descriptor, /* IN */
 }                               /* MFSL_close */
 
 fsal_status_t MFSL_commit( mfsl_file_t * file_descriptor /* IN */,
+                         fsal_op_context_t * p_context,      /* IN */
                          fsal_off_t    offset,
                          fsal_size_t   length,
 			 void        * pextra)
 {
-   return FSAL_commit( &file_descriptor->fsal_file, offset, length ) ;
+   return FSAL_commit( &file_descriptor->fsal_file, p_context, offset, length ) ;
 }
 
 fsal_status_t MFSL_close_by_fileid(mfsl_file_t * file_descriptor /* IN */ ,

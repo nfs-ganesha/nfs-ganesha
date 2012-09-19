@@ -123,6 +123,7 @@ cache_inode_commit(cache_entry_t *entry,
           }
 
           fsal_status = FSAL_commit(&(entry->object.file.open_fd.fd),
+                                    context,
                                     offset,
                                     count);
           if (FSAL_IS_ERROR(fsal_status)) {

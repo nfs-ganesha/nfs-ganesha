@@ -565,6 +565,7 @@ unsigned int XFSFSAL_GetFileno(fsal_file_t * pfile)
  *      - Another error code if an error occured during this call.
  */
 fsal_status_t XFSFSAL_commit( fsal_file_t * p_file_descriptor,
+                            fsal_op_context_t * p_context,        /* IN */
                             fsal_off_t    offset, 
                             fsal_size_t   length )
 {

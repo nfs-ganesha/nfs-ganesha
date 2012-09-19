@@ -639,6 +639,7 @@ unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile)
  *      - Another error code if an error occured during this call.
  */
 fsal_status_t LUSTREFSAL_commit( fsal_file_t * pfile_desc, 
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_off_t    offset, 
                                fsal_size_t   length )
 {

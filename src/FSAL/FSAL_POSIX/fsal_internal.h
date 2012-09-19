@@ -234,6 +234,7 @@ fsal_status_t POSIXFSAL_write(fsal_file_t * p_file_descriptor,     /* IN */
                               fsal_size_t * p_write_amount /* OUT */ );
 
 fsal_status_t POSIXFSAL_commit( fsal_file_t * p_file_descriptor,
+                              fsal_op_context_t * p_context,        /* IN */
                               fsal_off_t    offset,
                               fsal_size_t   size ) ;
 

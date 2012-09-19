@@ -528,11 +528,12 @@ fsal_status_t WRAP_HPSSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,   
 }
 
 fsal_status_t WRAP_HPSSFSAL_commit( fsal_file_t * p_file_descriptor, 
+                                  fsal_op_context_t * p_context,        /* IN */
                                   fsal_off_t    offset, 
                                   fsal_size_t   length )
 
 {
-  return HPSSFSAL_commit((hpssfsal_file_t *) p_file_descriptor, offset, length );
+  return HPSSFSAL_commit((hpssfsal_file_t *) p_file_descriptor, p_context, offset, length );
 }
 
 

@@ -663,6 +663,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
     );
 
 fsal_status_t FSAL_commit( fsal_file_t * file_descriptor, /* INOUT */
+                         fsal_op_context_t * p_context,        /* IN */
                          fsal_off_t    offset,  /* IN */
                          fsal_size_t   size );
 
@@ -1453,6 +1454,7 @@ typedef struct fsal_functions__
   unsigned int (*fsal_getfileno) (fsal_file_t *);
 
   fsal_status_t(*fsal_commit) ( fsal_file_t * p_file_descriptor, 
+                              fsal_op_context_t * p_context,
                               fsal_off_t    offset, 
                               fsal_size_t   size );
 

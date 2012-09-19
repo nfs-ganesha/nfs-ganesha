@@ -356,6 +356,7 @@ int FUSEFSAL_GetXattrOffsetSetable( void ) ;
 unsigned int FUSEFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t FUSEFSAL_commit( fsal_file_t * p_file_descriptor,
+                             fsal_op_context_t * p_context,        /* IN */
                              fsal_off_t    offset,
                              fsal_size_t   size ) ;
 

@@ -547,6 +547,7 @@ fsal_status_t MFSL_close(mfsl_file_t * file_descriptor, /* IN */
 }                               /* MFSL_close */
 
 fsal_status_t MFSL_commit( mfsl_file_t * file_descriptor /* IN */,
+                         fsal_op_context_t * p_context,      /* IN */
                          fsal_off_t    offset,
                          fsal_size_t   length,
 			 void        * pextra)
@@ -555,7 +556,7 @@ fsal_status_t MFSL_commit( mfsl_file_t * file_descriptor /* IN */,
   fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 } ;
   
   gettimeofday( &start, 0 ) ; 
-  fsal_status = FSAL_commit( &file_descriptor->fsal_file, offset, length ) ;
+  fsal_status = FSAL_commit( &file_descriptor->fsal_file, p_context, offset, length ) ;
   gettimeofday( &stop, 0 ) ; 
   delta = mfsl_timer_diff( &stop, &start ) ;
   LogFullDebug( COMPONENT_MFSL, "%s: duration=%ld.%06ld", __FUNCTION__, delta.tv_sec, delta.tv_usec ) ;
