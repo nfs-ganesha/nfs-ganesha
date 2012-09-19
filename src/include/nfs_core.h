@@ -265,6 +265,7 @@ typedef struct nfs_core_param__
   bool nsm_use_caller_name;
 #endif
   bool clustered;
+  bool enable_FSAL_upcalls;
 } nfs_core_parameter_t;
 
 typedef struct nfs_ip_name_param__
@@ -630,10 +631,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg);
 void *sigmgr_thread( void * UnusedArg );
 void *state_async_thread(void *UnusedArg);
 
-#ifdef _USE_UPCALL_SIMULATOR
-void * upcall_simulator_thread( void * UnusedArg ) ;
-#endif
-
 #ifdef _USE_9P
 void * _9p_dispatcher_thread(void *arg);
 void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
@@ -783,7 +780,6 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
-
 void stats_collect (ganesha_stats_t *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);

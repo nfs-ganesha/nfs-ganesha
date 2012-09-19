@@ -1,17 +1,18 @@
 /*
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  *---------------------------------------
  */
@@ -23,177 +24,206 @@
 #ifndef _FSAL_UP_H
 #define _FSAL_UP_H
 
-#ifdef _USE_FSAL_UP
-
 #include "fsal_types.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
 
-/* In the "static" case, original types are used, this is safer */
-#define MAX_FILTER_NAMELEN 255
+/**
+ * @brief FSAL upcall thread state
+ *
+ * This structure encapsulate the data used by the FSAL upcall
+ * management thread.
+ */
 
-#define FSAL_UP_EVENT_CREATE     1
-#define FSAL_UP_EVENT_UNLINK     2
-#define FSAL_UP_EVENT_RENAME     3
-#define FSAL_UP_EVENT_COMMIT     4
-#define FSAL_UP_EVENT_WRITE      5
-#define FSAL_UP_EVENT_LINK       6
-#define FSAL_UP_EVENT_LOCK_GRANT 7
-#define FSAL_UP_EVENT_LOCK_AVAIL 8
-#define FSAL_UP_EVENT_OPEN       9
-#define FSAL_UP_EVENT_CLOSE      10
-#define FSAL_UP_EVENT_SETATTR    11
-#define FSAL_UP_EVENT_UPDATE     12
-#define FSAL_UP_EVENT_INVALIDATE 13
-
-/* Defines for the flags in callback_arg, keep up to date with CXIUP_xxx */
-#define FSAL_UP_NLINK        0x00000001   /* update nlink */
-#define FSAL_UP_MODE         0x00000002   /* update mode and ctime */
-#define FSAL_UP_OWN          0x00000004   /* update mode,uid,gid and ctime */
-#define FSAL_UP_SIZE         0x00000008   /* update fsize */
-#define FSAL_UP_SIZE_BIG     0x00000010   /* update fsize if bigger */
-#define FSAL_UP_TIMES        0x00000020   /* update all times */
-#define FSAL_UP_ATIME        0x00000040   /* update atime only */
-#define FSAL_UP_PERM         0x00000080   /* update fields needed for permission checking*/
-#define FSAL_UP_RENAME       0x00000100   /* this is a rename op */
-
-
-typedef struct fsal_up_event_bus_parameter_t_
+struct fsal_up_state
 {
-} fsal_up_event_bus_parameter_t;
+        bool stop; /*< Set to true to signal the thread that it
+                       should shut down. */
+        bool running; /*< Is true when the thread is running. */
+        bool shutdown; /*< Set to true to indicate that the thread is
+                           shut down.  running && shutdown indicates
+                           that the thread is in the process of
+                           shutting down. */
+        struct glist_head queue; /*< Event queue */
+        pool_t *pool; /*< Pool from which to allocate events */
+        pthread_t thread_id; /*< Thread ID of FSAL up thread */
+        pthread_mutex_t lock; /*< Lock governing access to this
+                                  structure. */
+        pthread_cond_t cond; /*< Condition variable for thread. */
+};
 
-typedef struct fsal_up_event_bus_context_t_
+/**
+ * @brief The actual state used to manage the thread
+ */
+
+struct fsal_up_state fsal_up_state;
+
+/**
+ * @brief An enumeration of supported events
+ */
+
+typedef enum {
+        FSAL_UP_EVENT_LOCK_GRANT = 1,
+        FSAL_UP_EVENT_INVALIDATE = 2,
+        FSAL_UP_EVENT_LAYOUTRECALL = 3
+} fsal_up_event_type_t;
+
+/**
+ * @brief A structure letting the FSAL identify a file
+ */
+
+struct fsal_up_file
 {
-  struct export_context *FS_export_context;
-} fsal_up_event_bus_context_t;
+        struct gsh_buffdesc key; /*< Hash key identifying the file.
+                                     This buffer must be allocated
+                                     with gsh_malloc and will be
+                                     freed after the event is
+                                     processed.  Maybe {NULL, 0}. */
+        struct fsal_export *export; /*< The FSAL export object.  A
+                                        reference will be taken on the
+                                        export when the event is
+                                        queued and released when it is
+                                        disposed. */
+};
 
-typedef struct fsal_up_event_data_context_t_
+/**
+ * @brief Structure identifying a lock grant
+ */
+
+struct fsal_up_event_lock_grant
 {
-  cache_inode_fsal_data_t fsal_data;
-} fsal_up_event_data_context_t;
+        void              * lock_owner; /*< The lock owner */
+        fsal_lock_param_t   lock_param; /*< A description of the lock */
+};
 
-typedef struct fsal_up_event_bus_filter_t_
+/**
+ * @brief A structure for cache invalidation
+ */
+
+struct fsal_up_event_invalidate
 {
-} fsal_up_event_bus_filter_t;
+        uint32_t flags; /*< Flags governing invalidate. */
+};
 
-typedef struct fsal_up_event_data_create_t_
+/**
+ * A structure for recalling a layout
+ */
+
+struct fsal_up_event_layoutrecall
 {
-} fsal_up_event_data_create_t;
+        layouttype4 layout_type; /*< The type of layout to recall */
+        layoutrecall_type4 recall_type; /*< Type of recall.
+                                            LAYOUTRECALL4_ALL is
+                                            disallowed, if you wish to
+                                            recall all layouts, use
+                                            LAYOUTRECALL4_FSID from
+                                            each export. */
+        uint64_t offset; /*< For LAYOUTRECALL4_FILE, the offset of
+                             the region to recall. */
+        uint64_t length; /*< For LAYOUTRECALL4_FILE, the length of
+                             the region to recall. */
+        void *cookie; /*< A cookie returned with the return that
+                          completely satisfies a recall. */
+};
 
-typedef struct fsal_up_event_data_unlink_t_
+/**
+ * @brief The vector for up-call operations
+ *
+ * This structure contains two functions for each operation.  One is
+ * immediate (for validation or quick dispatch.  It has the ability to
+ * signal failure to the FSAL when the event is queued) and the second
+ * is executed by the up-call thread when an event is de-queued.
+ * Either may be NULL.
+ *
+ * Stacked FSAL authors may override functions completely or cascade
+ * into them.  An FSAL should save the vector passed to it and pass a
+ * vector of its own functions down to FSALs it initializes.  To
+ * cascade, the FSAL must call the function in the supplied vector
+ * initially.  To disable a function completely (for example to do all
+ * processing in the immediate function and have no queued function at
+ * all) simply set it to NULL in your vector.
+ *
+ * If the _imm function for an operation returns non-zero, the event
+ * is not queued.
+ */
+
+struct fsal_up_vector
 {
-} fsal_up_event_data_unlink_t;
+        int (*lock_grant_imm)(struct fsal_up_event_lock_grant *,
+                              struct fsal_up_file *);
+        void (*lock_grant_queue)(struct fsal_up_event_lock_grant *,
+                                 struct fsal_up_file *);
 
-typedef struct fsal_up_event_data_rename_t_
+        int (*invalidate_imm)(struct fsal_up_event_invalidate *,
+                              struct fsal_up_file *);
+        void (*invalidate_queue)(struct fsal_up_event_invalidate *,
+                                 struct fsal_up_file *);
+
+        int (*layoutrecall_imm)(struct fsal_up_event_layoutrecall *,
+                                struct fsal_up_file *);
+        void (*layoutrecall_queue)(struct fsal_up_event_layoutrecall *,
+                                   struct fsal_up_file *);
+};
+
+struct fsal_up_vector fsal_up_top;
+
+/**
+ * @brief A single up-call event.
+ */
+
+struct fsal_up_event
 {
-} fsal_up_event_data_rename_t;
+        struct glist_head event_link; /*< Link in the event queue */
+        struct fsal_up_vector *functions; /*< Vector of upcall
+                                              functions.  Should be
+                                              filled in by the FSAL
+                                              with the vector
+                                              supplied. */
+        fsal_up_event_type_t type; /*< The type of event reported */
+        union {
+                struct fsal_up_event_lock_grant lock_grant;
+                struct fsal_up_event_invalidate invalidate;
+                struct fsal_up_event_layoutrecall layoutrecall;
+        } data; /*< Type specific event data */
+        struct fsal_up_file file; /*< File upon which the event takes
+                                      place.  Interpetation varies by
+                                      type and might not be used at
+                                      all. */
+};
 
-typedef struct fsal_up_event_data_commit_t_
+
+
+/****************************
+ * FSAL UP utility functions
+ ****************************/
+
+void init_FSAL_up(void);
+int shutdown_FSAL_up(void);
+int fsal_up_submit(struct fsal_up_event *event);
+
+
+int up_get(const struct gsh_buffdesc *key,
+           cache_entry_t **entry);
+
+
+
+static inline struct fsal_up_event *
+fsal_up_alloc_event(void)
 {
-} fsal_up_event_data_commit_t;
+        return pool_alloc(fsal_up_state.pool, NULL);
+}
 
-typedef struct fsal_up_event_data_write_t_
+static inline void
+fsal_up_free_event(struct fsal_up_event *event)
 {
-} fsal_up_event_data_write_t;
-
-typedef struct fsal_up_event_data_link_t_
-{
-} fsal_up_event_data_link_t;
-
-typedef struct fsal_up_event_data_lock_grant_t_
-{
-  void              * lock_owner;
-  fsal_lock_param_t   lock_param;
-} fsal_up_event_data_lock_grant_t;
-
-typedef struct fsal_up_event_data_open_t_
-{
-} fsal_up_event_data_open_t;
-
-typedef struct fsal_up_event_data_close_t_
-{
-} fsal_up_event_data_close_t;
-
-typedef struct fsal_up_event_data_setattr_
-{
-} fsal_up_event_data_setattr_t;
-
-typedef struct fsal_up_event_data_invalidate_
-{
-} fsal_up_event_data_invalidate_t;
-
-typedef struct fsal_up_event_data_update_
-{
-  struct stat upu_stat_buf;
-  int upu_flags;
-} fsal_up_event_data_update_t;
-
-typedef struct fsal_up_event_data__
-{
-  union {
-    fsal_up_event_data_create_t create;
-    fsal_up_event_data_unlink_t unlink;
-    fsal_up_event_data_rename_t rename;
-    fsal_up_event_data_commit_t commit;
-    fsal_up_event_data_write_t write;
-    fsal_up_event_data_link_t link;
-    fsal_up_event_data_lock_grant_t lock_grant;
-    fsal_up_event_data_open_t open;
-    fsal_up_event_data_close_t close;
-    fsal_up_event_data_setattr_t setattr;
-    fsal_up_event_data_update_t update;
-    fsal_up_event_data_invalidate_t invalidate;
-  } type;
-  /* Common data most functions will need. */
-  fsal_up_event_data_context_t event_context;
-} fsal_up_event_data_t;
-
-typedef fsal_status_t (fsal_up_event_process_func_t) (fsal_up_event_data_t * arg);
-
-typedef struct fsal_up_event_t_
-{
-  struct glist_head event_list;
-  fsal_up_event_process_func_t   * event_process_func;
-  unsigned int event_type;
-  fsal_up_event_data_t event_data;
-} fsal_up_event_t;
-
-typedef struct fsal_up_event_functions__
-{
-  fsal_status_t (*fsal_up_create) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_unlink) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_rename) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_commit) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_write) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_link) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_lock_grant) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_lock_avail) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_open) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_close) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_setattr) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_update) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_invalidate) (fsal_up_event_data_t * pevdata );
-} fsal_up_event_functions_t;
-
-/**************************
- * FSAL UP global variables
- **************************/
-
-extern pool_t * fsal_up_event_pool;
-
-/**************************
- * FSAL UP functions
- **************************/
-
-#define FSAL_UP_DUMB_TYPE "DUMB"
-fsal_up_event_functions_t *get_fsal_up_dumb_functions();
-
-fsal_status_t process_event(fsal_up_event_t          * myevent,
-                           fsal_up_event_functions_t * event_func);
-
-cache_inode_status_t up_get(const struct gsh_buffdesc *key,
-                            cache_entry_t **entry);
-void up_put(cache_entry_t *entry);
-
-#endif /* _USE_FSAL_UP */
+        if (event->file.key.addr) {
+                gsh_free(event->file.key.addr);
+                event->file.key.addr = NULL;
+        }
+        if (event->file.export) {
+                event->file.export->ops->put(event->file.export);
+                event->file.export = NULL;
+        }
+        pool_free(fsal_up_state.pool, event);
+}
 #endif /* _FSAL_UP_H */

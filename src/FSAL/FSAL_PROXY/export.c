@@ -200,6 +200,7 @@ pxy_create_export(struct fsal_module *fsal_hdl,
                   const char *fs_options,
                   struct exportlist__ *exp_entry,
                   struct fsal_module *next_fsal,
+                  const struct fsal_up_vector *up_ops,
                   struct fsal_export **export)
 {
         struct pxy_export *exp = calloc(1, sizeof(*exp));
@@ -209,11 +210,12 @@ pxy_create_export(struct fsal_module *fsal_hdl,
         if (!exp)
                 return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
         if(fsal_export_init(&exp->exp, exp_entry) != 0) {
-		free(exp);
+                free(exp);
                 return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
-	}
-	pxy_export_ops_init(exp->exp.ops);
-	pxy_handle_ops_init(exp->exp.obj_ops);
+        }
+        pxy_export_ops_init(exp->exp.ops);
+        pxy_handle_ops_init(exp->exp.obj_ops);
+        exp->exp.up_ops = up_ops;
         exp->info = &pxy->special;
         exp->exp.fsal = fsal_hdl;
         *export = &exp->exp;

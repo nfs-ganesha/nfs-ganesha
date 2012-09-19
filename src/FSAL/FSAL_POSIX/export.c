@@ -433,7 +433,9 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
                                    const char *export_path,
                                    const char *fs_options,
                                    struct exportlist__ *exp_entry,
-                                   struct fsal_module *next_fsal, struct fsal_export **export)
+                                   struct fsal_module *next_fsal,
+                                   const struct fsal_up_vector *up_ops,
+                                   struct fsal_export **export)
 {
     struct posix_fsal_export *myself;
 #ifdef SUPPORT_LINUX_QUOTAS
@@ -470,6 +472,7 @@ fsal_status_t posix_create_export (struct fsal_module *fsal_hdl,
         goto errout;            /* seriously bad */
     posix_export_ops_init (myself->export.ops);
     posix_handle_ops_init (myself->export.obj_ops);
+    myself->export.up_ops = up_ops;
 
     /* lock myself before attaching to the fsal.
      * keep myself locked until done with creating myself.

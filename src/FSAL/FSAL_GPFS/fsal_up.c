@@ -34,8 +34,6 @@
 #include <utime.h>
 #include <sys/time.h>
 
-#ifdef _USE_FSAL_UP
-
 struct glist_head gpfs_fsal_up_ctx_list;
 
 fsal_status_t GPFSFSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */
@@ -310,5 +308,3 @@ gpfs_fsal_up_ctx_t * gpfsfsal_find_fsal_up_context(gpfsfsal_export_context_t * e
 
   return NULL;
 }
-
-#endif /* _USE_FSAL_UP */

@@ -9,9 +9,6 @@ CONFIG_ON="
 
 ./configure $CONFIG_ON
 
-# Broken
-# --enable-fsal_up
-
 # ON in a list
 # --enable-strict-compile
 # --enable-nlm

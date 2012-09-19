@@ -509,11 +509,12 @@ void lustre_export_ops_init(struct export_ops *ops)
  */
 
 fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
-				const char *export_path,
-				const char *fs_options,
-				struct exportlist__ *exp_entry,
-				struct fsal_module *next_fsal,
-				struct fsal_export **export)
+                                   const char *export_path,
+                                   const char *fs_options,
+                                   struct exportlist__ *exp_entry,
+                                   struct fsal_module *next_fsal,
+                                   const struct fsal_up_vector *up_ops,
+                                   struct fsal_export **export)
 {
 	struct lustre_fsal_export *myself;
 	FILE *fp;
@@ -554,6 +555,7 @@ fsal_status_t lustre_create_export(struct fsal_module *fsal_hdl,
 
 	lustre_export_ops_init(myself->export.ops);
 	lustre_handle_ops_init(myself->export.obj_ops);
+        myself->export.up_ops = up_ops;
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
 	 */

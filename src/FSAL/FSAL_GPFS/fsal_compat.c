@@ -91,11 +91,9 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_removexattrbyname = GPFSFSAL_RemoveXAttrByName,
   .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = GPFSFSAL_GetFileno,
-#ifdef _USE_FSAL_UP
   .fsal_up_init = GPFSFSAL_UP_Init,
   .fsal_up_addfilter = GPFSFSAL_UP_AddFilter,
   .fsal_up_getevents = GPFSFSAL_UP_GetEvents,
-#endif /* _USE_FSAL_UP */
   .fsal_share_op = GPFSFSAL_share_op
 };
 

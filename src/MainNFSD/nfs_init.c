@@ -403,10 +403,6 @@ pthread_t _9p_dispatcher_thrid;
 pthread_t _9p_rdma_dispatcher_thrid ;
 #endif
 
-#ifdef _USE_UPCALL_SIMULATOR
-pthread_t upcall_simulator_thrid;
-#endif
-
 char config_path[MAXPATHLEN];
 
 char pidfile_path[MAXPATHLEN] ;
@@ -568,7 +564,7 @@ void nfs_print_param_config()
  * Load parameters from config file.
  */
 int nfs_set_param_from_conf(config_file_t config_struct,
-			    nfs_start_info_t * p_start_info)
+                            nfs_start_info_t * p_start_info)
 {
   int rc;
   cache_inode_status_t cache_inode_status;
@@ -1228,44 +1224,14 @@ static void nfs_Start_threads(void)
     }
   LogEvent(COMPONENT_THREAD,
            "reaper thread was started successfully");
-
-#ifdef _USE_UPCALL_SIMULATOR
-  /* Starts the thread that mimics upcalls from the FSAL */
-   /* Starting the stats thread */
-  if((rc =
-      pthread_create(&upcall_simulator_thrid, &attr_thr, upcall_simulator_thread, NULL)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create upcall_simulator_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD, "upcall_simulator thread was started successfully");
-#endif
-
-#ifdef _USE_FSAL_UP
-  /* Starting the fsal_up_process thread */
- if((rc =
-     pthread_create(&upp_thrid, &attr_thr, fsal_up_process_thread, NULL)) != 0)
-   {
-     LogFatal(COMPONENT_THREAD,
-              "Could not create fsal_up_process_thread, error = %d (%s)",
-              errno, strerror(errno));
-   }
- LogEvent(COMPONENT_THREAD,
-          "fsal_up_process_thread was started successfully");
-#endif /* _USE_FSAL_UP */
-
 }                               /* nfs_Start_threads */
 
 /**
- * nfs_Init: Init the nfs daemon 
+ * @brief Init the nfs daemon
  *
  * Init the nfs daemon by making all the init operation at all levels of the daemon. 
- * 
- * @param emergency_flush_flag [INPUT] tell if the daemon is started for forcing a data cache flush (in this case, init will be done partially).
- * 
- * @return nothing (void function) but function exists if error is found.
  *
+ * @param[in] p_start_info Unused
  */
 
 static void nfs_Init(const nfs_start_info_t * p_start_info)
@@ -1284,6 +1250,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* DBUS init */
   gsh_dbus_pkginit();
 #endif
+
+  if (nfs_param.core_param.enable_FSAL_upcalls)
+    {
+      init_FSAL_up();
+    }
 
   /* Cache Inode Initialisation */
   if((fh_to_cache_entry_ht =
@@ -1621,11 +1592,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogInfo(COMPONENT_INIT,
           "9P resources successfully initialized");
 #endif /* _USE_9P */
-
-#ifdef _USE_FSAL_UP
-  /* Initialize FSAL UP queue and event pool */
-  nfs_Init_FSAL_UP();
-#endif /* _USE_FSAL_UP */
 
   /* Create the root entries for each exported FS */
   if((rc = nfs_export_create_root_entry(nfs_param.pexportlist)) != true)

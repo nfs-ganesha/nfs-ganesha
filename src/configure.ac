@@ -269,14 +269,6 @@ if test "$enable_dbus" == "yes"; then
 fi
 AM_CONDITIONAL(USE_DBUS, test "$enable_dbus" = "yes")
 
-# Invalidation simulator (to be removed when FSAL_UP will be completed)
-GA_ENABLE_AM_CONDITION([upcall-simulator],[enable FSAL upcalls simulator thread],[USE_UPCALL_SIMULATOR])
-
-if test "$enable_upcall_simulator" == "yes"; then
-        AC_DEFINE(_USE_UPCALL_SIMULATOR,1,[enable Upcall simulator thread])
-fi
-AM_CONDITIONAL(USE_UPCALL_SIMULATOR, test "$enable_upcall_simulator" = "yes")
-
 # Callback simulator                                                                                         
 GA_ENABLE_AM_CONDITION([cb-simulator],[enable callback simulator thread],[USE_CB_SIMULATOR])
 
@@ -387,14 +379,6 @@ GA_ENABLE_AM_CONDITION([fsal-gpfs],[build GPFS FSAL],[USE_FSAL_GPFS])
 GA_ENABLE_AM_CONDITION([fsal-zfs],[build ZFS FSAL],[USE_FSAL_ZFS])
 # SHOOK is a variant of Lustre FSAL
 GA_ENABLE_AM_CONDITION([fsal-shook],[build SHOOKFSAL],[USE_FSAL_SHOOK])
-
-# FSAL_UP
-GA_ENABLE_AM_CONDITION([fsal-up],[enable FSAL Upcall Interface support],[USE_FSAL_UP])
-
-if test "$enable_fsal_up" == "yes"; then
-        AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
-fi
-AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
 
 # TI-RPC
 AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
@@ -657,8 +641,6 @@ AC_SUBST(SHOOK_LIB)
 
 if test "$enable_fsal_gpfs" == "yes"; then
 	AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
-	AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
-
 	AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h gpfs_lweTypes.h],
 			 [],
 			 [AC_MSG_ERROR(Missing RPMS. You may run ./install_files_gpfs.sh as root from src/FSAL/FSAL_GPFS)],
@@ -805,7 +787,6 @@ AC_CONFIG_FILES([include/Makefile
                  Cache_inode/Makefile
                  SAL/Makefile
 		 FSAL_UP/Makefile
-		 FSAL_UP/DUMB/Makefile
 		 Protocols/Makefile
                  Protocols/9P/Makefile
 		 Protocols/DBUS/Makefile

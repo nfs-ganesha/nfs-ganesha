@@ -189,7 +189,8 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
  * @return 0 if ok, -1 if failed, 1 is stanza is not there.
  *
  */
-int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
+int nfs_read_core_conf(config_file_t in_config,
+                       nfs_core_parameter_t * pparam)
 {
   int var_max;
   int var_index;
@@ -220,6 +221,9 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
     }
 
   var_max = config_GetNbItems(block);
+
+  /* Set the default */
+  pparam->enable_FSAL_upcalls = true;
 
   for(var_index = 0; var_index < var_max; var_index++)
     {
@@ -495,6 +499,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
       else if(!strcasecmp(key_name, "Clustered"))
         {
           pparam->clustered = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "Enable_FSAL_Upcalls"))
+        {
+          pparam->enable_FSAL_upcalls = StrToBoolean(key_value);
         }
       else
         {

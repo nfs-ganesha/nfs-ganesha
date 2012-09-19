@@ -104,15 +104,11 @@
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
 #define CONF_EXPORT_REFERRAL           "Referral"
-#define CONF_EXPORT_FSAL	       "FSAL"
+#define CONF_EXPORT_FSAL               "FSAL"
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_UQUOTA             "User_Quota"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
 #define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
-#define CONF_EXPORT_USE_FSAL_UP        "Use_FSAL_UP"
-#define CONF_EXPORT_FSAL_UP_FILTERS    "FSAL_UP_Filters"
-#define CONF_EXPORT_FSAL_UP_TIMEOUT    "FSAL_UP_Timeout"
-#define CONF_EXPORT_FSAL_UP_TYPE       "FSAL_UP_Type"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
 
 /** @todo : add encrypt handles option */
@@ -663,18 +659,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->use_commit = true;
   p_entry->use_ganesha_write_buffer = false;
   p_entry->UseCookieVerifier = true;
-
-  /* Defaults for FSAL_UP. It is ok to leave the filter list NULL
-   * even if we enable the FSAL_UP. */
-  #ifdef _USE_FSAL_UP
-  p_entry->use_fsal_up = false;
-  p_entry->fsal_up_filter_list = NULL;
-  p_entry->fsal_up_timeout.seconds = 30;
-  p_entry->fsal_up_timeout.nseconds = 0;
-  strncpy(p_entry->fsal_up_type,"DUMB", 4);
-  /* We don't create the thread until all exports are parsed. */
-  memset(&p_entry->fsal_up_thr, 0, sizeof(pthread_t));
-#endif /* _USE_FSAL_UP */
 
   p_entry->worker_stats = gsh_calloc(nfs_param.core_param.nb_worker,
                                      sizeof(nfs_worker_stat_t));
@@ -1946,51 +1930,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               }
             }
         }
-#ifdef _USE_FSAL_UP
-      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TYPE))
-        {
-          strncpy(p_entry->fsal_up_type,var_value,sizeof(var_value));
-        }
-      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TIMEOUT))
-        {
-          /* Right now we are expecting seconds ... we should support
-	   * nseconds as well! */
-          p_entry->fsal_up_timeout.seconds = atoi(var_value);
-          if (p_entry->fsal_up_timeout.seconds < 0
-              || p_entry->fsal_up_timeout.nseconds < 0)
-            {
-              p_entry->fsal_up_timeout.seconds = 0;
-              p_entry->fsal_up_timeout.nseconds = 0;
-            }
-        }
-      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_FILTERS))
-        {
-          /* TODO: Parse the strings and form a list.
-           * Later each name will match a predefined filter
-           * in the FSAL UP interface. */
-          p_entry->fsal_up_filter_list = NULL;
-        }
-      else if(!STRCMP(var_name, CONF_EXPORT_USE_FSAL_UP))
-        {
-          switch (StrToBoolean(var_value))
-            {
-            case 1:
-              p_entry->use_fsal_up = true;
-              break;
-            case 0:
-              p_entry->use_fsal_up = false;
-              break;
-            default:           /* error */
-              {
-                LogCrit(COMPONENT_CONFIG,
-                        "USR_FSAL_UP: ERROR: Invalid value for %s (%s): true or false expected.",
-                        var_name, var_value);
-                err_flag = true;
-                continue;
-              }
-            }
-        }
-#endif /* _USE_FSAL_UP */
       else if(!STRCMP(var_name, CONF_EXPORT_USE_COOKIE_VERIFIER))
         {
           switch (StrToBoolean(var_value))
@@ -2031,6 +1970,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 								  p_entry->FS_specific,
 								  p_entry,
 								  NULL, /* no stacked fsals for now */
+                                                                  &fsal_up_top,
 								  &p_entry->export_hdl);
               if(FSAL_IS_ERROR(expres))
  	        {
@@ -2070,6 +2010,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 							      p_entry->FS_specific,
 							      p_entry,
 							      NULL, /* no stacked fsals for now */
+                                                              &fsal_up_top,
 							      &p_entry->export_hdl);
           if(FSAL_IS_ERROR(expres))
             {

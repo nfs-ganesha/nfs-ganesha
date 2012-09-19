@@ -38,7 +38,6 @@
 
 bool fsal_error_is_event(fsal_status_t status);
 
-#ifdef _USE_FSAL_UP
 struct gpfs_fsal_up_ctx_t
 {
   /* There is one GPFS FSAL UP Context per GPFS file system */
@@ -48,9 +47,6 @@ struct gpfs_fsal_up_ctx_t
   unsigned int        gf_fsid[2];
   pthread_t           gf_thread;
 };
-#else
-#error FSAL_GPFS requires --enable-fsal-up
-#endif
 
 #undef Return
 #define Return( _code_, _minor_ , _f_ ) do {                                   \
@@ -502,7 +498,6 @@ fsal_status_t GPFSFSAL_commit( fsal_file_t * p_file_descriptor,
                              fsal_size_t   size ) ;
 
 
-#ifdef _USE_FSAL_UP
 fsal_status_t GPFSFSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */
 				fsal_up_event_bus_context_t * pupebcontext     /* OUT */);
 fsal_status_t GPFSFSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* IN */
@@ -518,5 +513,3 @@ void *GPFSFSAL_UP_Thread(void *Arg);
 struct glist_head gpfs_fsal_up_ctx_list;
 
 gpfs_fsal_up_ctx_t * gpfsfsal_find_fsal_up_context(gpfsfsal_export_context_t * export_ctx);
-
-#endif /* _USE_FSAL_UP */

@@ -128,29 +128,6 @@ fsalstat(fsal_errors_t major, uint32_t minor)
         ( ! ( ( _status_ ).major == ERR_FSAL_NO_ERROR ) )
 
 
-/* FSAL_UP functions */
-/* These structs are defined here because including fsal_up.h causes
- * preprocessor issues. */
-#ifdef _USE_FSAL_UP
-struct fsal_up_event_bus_filter_t_;
-struct fsal_up_event_t_;
-struct fsal_up_event_bus_parameter_t_;
-struct fsal_up_event_bus_context_t_;
-fsal_status_t FSAL_UP_Init(struct fsal_up_event_bus_parameter_t_ * pebparam,      /* IN */
-                           struct fsal_up_event_bus_context_t_ * pupebcontext     /* OUT */
-                           );
-
-fsal_status_t FSAL_UP_AddFilter(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /* IN */
-                                struct fsal_up_event_bus_context_t_ * pupebcontext /* INOUT */
-                                   );
-fsal_status_t FSAL_UP_GetEvents(
-        struct glist_head * event_head, /* OUT */
-        uint32_t* event_nb, /* IN,OUT */
-        gsh_time_t timeout, /* IN */
-        struct fsal_up_event_bus_context_t_ *upebcontext /* IN */
-        );
-#endif /* _USE_FSAL_UP */
-
 /* To be called before exiting */
 fsal_status_t FSAL_terminate();
 

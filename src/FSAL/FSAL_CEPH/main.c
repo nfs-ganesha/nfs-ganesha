@@ -80,6 +80,7 @@ create_export(struct fsal_module *module,
               const char *options,
               struct exportlist__ *list_entry,
               struct fsal_module *next_fsal,
+              const struct fsal_up_vector *up_ops,
               struct fsal_export **pub_export)
 {
         /* The status code to return */
@@ -119,8 +120,8 @@ create_export(struct fsal_module *module,
 
 
         if(fsal_export_init(&export->export,
-			    list_entry) != 0) {
-		status.major =  ERR_FSAL_NOMEM;
+                            list_entry) != 0) {
+                status.major =  ERR_FSAL_NOMEM;
                 LogCrit(COMPONENT_FSAL,
                         "Unable to allocate export ops vectors for %s.",
                         path);
@@ -129,6 +130,7 @@ create_export(struct fsal_module *module,
         export_ops_init(export->export.ops);
         handle_ops_init(export->export.obj_ops);
         ds_ops_init(export->export.ds_ops);
+        export->export.up_ops = up_ops;
 
         initialized = true;
 

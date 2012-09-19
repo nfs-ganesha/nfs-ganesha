@@ -182,6 +182,8 @@ struct exportlist__; /* We just need a pointer, not all of
 struct fsal_ds_handle;
 struct fsal_ds_ops;
 
+struct fsal_up_vector; /* From fsal_up.h */
+
 /**
  * @brief FSAL object definition
  *
@@ -349,7 +351,7 @@ struct fsal_ops {
                                        const char *fs_options,
                                        struct exportlist__ *exp_entry,
                                        struct fsal_module *next_fsal,
-                                       /* upcall vector */
+                                       const struct fsal_up_vector *up_ops,
                                        struct fsal_export **export);
 /*@}*/
 };
@@ -439,6 +441,7 @@ struct fsal_export {
         struct export_ops *ops; /*< Vector of operations */
         struct fsal_obj_ops *obj_ops;   /*< Shared handle methods vector */
         struct fsal_ds_ops *ds_ops;   /*< Shared handle methods vector */
+        const struct fsal_up_vector *up_ops; /*< Upcall operations */
 };
 
 /**

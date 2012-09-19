@@ -1,17 +1,18 @@
 /*
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -38,296 +39,273 @@
 #include "nfs_tcb.h"
 #include "cache_inode_lru.h"
 
-extern fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t *);
+struct fsal_up_state fsal_up_state = {
+        .stop = false,
+        .running = false,
+        .lock = PTHREAD_MUTEX_INITIALIZER,
+        .cond = PTHREAD_COND_INITIALIZER
+};
 
-static struct glist_head       fsal_up_process_queue;
-nfs_tcb_t                      fsal_up_process_tcb;
-pool_t                       * fsal_up_event_pool;
+/**
+ * @brief Submit an upcall event
+ *
+ * This function submits an upcall event.  The event type, event data,
+ * and file must be filled out as appropriate, and the upcall function
+ * vector must be set to upcall vector supplied to create_export.
+ *
+ * @parm[in] event The event to submit
+ *
+ * @retval 0 Operation submitted successfully.
+ * @retval EINVAL Operation malformed.
+ * @retval EPIPE Upcall thread not running/shutting down.
+ * @retval Other codes as specified by _imm call.
+ */
 
-fsal_status_t  schedule_fsal_up_event_process(fsal_up_event_t *arg)
+int
+fsal_up_submit(struct fsal_up_event *event)
 {
-  int rc;
-  fsal_status_t ret = {0, 0};
+        int rc = 0;
 
-  /* Events which needs quick response, and locking events wich
-     has its own queue gets processed here, rest will be queued. */
-  if (arg->event_type == FSAL_UP_EVENT_LOCK_GRANT ||
-      arg->event_type == FSAL_UP_EVENT_LOCK_AVAIL)
-    {
-      arg->event_process_func(&arg->event_data);
+        if (!event->functions ||
+            !event->file.export) {
+                return EINVAL;
+        }
 
-      gsh_free(arg->event_data.event_context.fsal_data.fh_desc.addr);
-      pool_free(fsal_up_event_pool, arg);
-      return ret;
-    }
+        pthread_mutex_lock(&fsal_up_state.lock);
+        if (!fsal_up_state.running ||
+            fsal_up_state.shutdown) {
+                pthread_mutex_unlock(&fsal_up_state.lock);
+                return EPIPE;
+        }
 
-  if(arg->event_type == FSAL_UP_EVENT_INVALIDATE)
-    {
-      arg->event_process_func(&arg->event_data);
-      /* Step2 where we perform close; which could be expensive operation
-         so deffer it to the separate thread. */
-      arg->event_process_func = dumb_fsal_up_invalidate_step2;
-    }
-
-  /* Now queue them for further process. */
-  LogFullDebug(COMPONENT_FSAL_UP, "Schedule %p", arg);
-
-  P(fsal_up_process_tcb.tcb_mutex);
-  glist_add_tail(&fsal_up_process_queue, &arg->event_list);
-  rc = pthread_cond_signal(&fsal_up_process_tcb.tcb_condvar);
-  LogFullDebug(COMPONENT_FSAL_UP,"Signaling tcb_condvar\n");
-  if (rc == -1)
-    {
-      LogDebug(COMPONENT_FSAL_UP,
-                   "Unable to signal FSAL_UP Process Thread");
-      glist_del(&arg->event_list);
-      ret.major = ERR_FSAL_FAULT;
-    }
-  V(fsal_up_process_tcb.tcb_mutex);
-  return ret;
-}
-
-/* This thread processes FSAL UP events. */
-void *fsal_up_process_thread(void *UnUsedArg)
-{
-  struct timeval             now;
-  struct timespec            timeout;
-  fsal_up_event_t          * fupevent;
-  int                        rc;
-
-  SetNameFunction("fsal_up_process_thread");
-
-  if (mark_thread_existing(&fsal_up_process_tcb) == PAUSE_EXIT)
-    {
-      /* Oops, that didn't last long... exit. */
-      mark_thread_done(&fsal_up_process_tcb);
-      LogDebug(COMPONENT_INIT,
-               "FSAL_UP Process Thread: Exiting before initialization");
-      return NULL;
-    }
-
-  LogFullDebug(COMPONENT_FSAL_UP,
-          "FSAL_UP Process Thread: my pthread id is %p",
-          (caddr_t) pthread_self());
-
-  while(1)
-    {
-      /* Check without tcb lock*/
-      if ((fsal_up_process_tcb.tcb_state != STATE_AWAKE) ||
-          glist_empty(&fsal_up_process_queue))
-        {
-          while(1)
-            {
-              P(fsal_up_process_tcb.tcb_mutex);
-              if ((fsal_up_process_tcb.tcb_state == STATE_AWAKE) &&
-                  !glist_empty(&fsal_up_process_queue))
-                {
-                  V(fsal_up_process_tcb.tcb_mutex);
-                  LogDebug(COMPONENT_INIT, "FSAL_UP Process Thread: breaking..1");
-                  break;
+        switch (event->type) {
+        case FSAL_UP_EVENT_LOCK_GRANT:
+                if (event->functions->lock_grant_imm) {
+                        rc = event->functions->lock_grant_imm(
+                                &event->data.lock_grant, &event->file);
                 }
-              switch(thread_sm_locked(&fsal_up_process_tcb))
-                {
-                  case THREAD_SM_RECHECK:
-                  V(fsal_up_process_tcb.tcb_mutex);
-                  continue;
+                break;
 
-                  case THREAD_SM_BREAK:
-                  if (glist_empty(&fsal_up_process_queue))
-                    {
-                      gettimeofday(&now, NULL);
-                      timeout.tv_sec = 10 + now.tv_sec;
-                      timeout.tv_nsec = 0;
-                      rc = pthread_cond_timedwait(&fsal_up_process_tcb.tcb_condvar,
-                                                  &fsal_up_process_tcb.tcb_mutex,
-                                                  &timeout);
-                      LogFullDebug(COMPONENT_INIT,
-                                   "FSAL_UP Process Thread: wokeup:%d", rc);
-                    }
-                  V(fsal_up_process_tcb.tcb_mutex);
-                  continue;
-
-                  case THREAD_SM_EXIT:
-                  V(fsal_up_process_tcb.tcb_mutex);
-                  return NULL;
+        case FSAL_UP_EVENT_INVALIDATE:
+                if (event->functions->invalidate_imm) {
+                        rc = event->functions->invalidate_imm(
+                                &event->data.invalidate, &event->file);
                 }
-             }
-          }
-        P(fsal_up_process_tcb.tcb_mutex);
-        fupevent = glist_first_entry(&fsal_up_process_queue,
-                                     fsal_up_event_t,
-                                     event_list);
-        if(fupevent != NULL)
-          {
-            /* Pull the event off of the list */
-            glist_del(&fupevent->event_list);
+                break;
 
-            /* Release the mutex */
-            V(fsal_up_process_tcb.tcb_mutex);
-            fupevent->event_process_func(&fupevent->event_data);
-            gsh_free(fupevent->event_data.event_context.fsal_data
-                     .fh_desc.addr);
-            pool_free(fsal_up_event_pool, fupevent);
+        case FSAL_UP_EVENT_LAYOUTRECALL:
+                if (event->functions->layoutrecall_imm) {
+                        rc = event->functions->layoutrecall_imm(
+                                &event->data.layoutrecall, &event->file);
+                }
+                break;
+        }
 
-            continue;
-          }
-        V(fsal_up_process_tcb.tcb_mutex);
-    }
-  tcb_remove(&fsal_up_process_tcb);
-}
+        if (rc != 0) {
+                pthread_mutex_unlock(&fsal_up_state.lock);
+                return EPIPE;
+        }
 
-/* One pool can be used for all FSAL_UP used for exports. */
-void nfs_Init_FSAL_UP()
-{
-  /* DEBUGGING */
-  LogDebug(COMPONENT_INIT,
-           "FSAL_UP: Initializing FSAL UP data pool");
-  /* Allocation of the FSAL UP pool */
-  fsal_up_event_pool = pool_init("FSAL UP Data Pool",
-                                 sizeof(fsal_up_event_t),
-                                 pool_basic_substrate,
-                                 NULL,
-                                 NULL,
-                                 NULL);
-  if(fsal_up_event_pool == NULL)
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error while allocating FSAL UP event pool");
-    }
-
-  init_glist(&fsal_up_process_queue);
-  tcb_new(&fsal_up_process_tcb, "FSAL_UP Process Thread");
-
-  return;
-}
-
-fsal_status_t process_event(fsal_up_event_t *myevent, fsal_up_event_functions_t *event_func)
-{
-  fsal_status_t status = {0, 0};
-
-  switch(myevent->event_type)
-    {
-    case FSAL_UP_EVENT_CREATE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process CREATE event");
-      myevent->event_process_func = event_func->fsal_up_create;
-      break;
-    case FSAL_UP_EVENT_UNLINK:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process UNLINK event");
-      myevent->event_process_func = event_func->fsal_up_unlink;
-      break;
-    case FSAL_UP_EVENT_RENAME:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process RENAME event");
-      myevent->event_process_func = event_func->fsal_up_rename;
-      break;
-    case FSAL_UP_EVENT_COMMIT:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process COMMIT event");
-      myevent->event_process_func = event_func->fsal_up_commit;
-      break;
-    case FSAL_UP_EVENT_WRITE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process WRITE event");
-      myevent->event_process_func = event_func->fsal_up_write;
-      break;
-    case FSAL_UP_EVENT_LINK:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LINK event");
-      myevent->event_process_func = event_func->fsal_up_link;
-      break;
-    case FSAL_UP_EVENT_LOCK_GRANT:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK GRANT event");
-      myevent->event_process_func = event_func->fsal_up_lock_grant;
-      break;
-    case FSAL_UP_EVENT_LOCK_AVAIL:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK AVAIL event");
-      myevent->event_process_func = event_func->fsal_up_lock_avail;
-      break;
-    case FSAL_UP_EVENT_OPEN:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process OPEN event");
-      myevent->event_process_func = event_func->fsal_up_open;
-      break;
-    case FSAL_UP_EVENT_CLOSE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process CLOSE event");
-      myevent->event_process_func = event_func->fsal_up_close;
-      break;
-    case FSAL_UP_EVENT_SETATTR:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process SETATTR event");
-      myevent->event_process_func = event_func->fsal_up_setattr;
-      break;
-    case FSAL_UP_EVENT_UPDATE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process UPDATE event");
-      myevent->event_process_func = event_func->fsal_up_update;
-      break;
-    case FSAL_UP_EVENT_INVALIDATE:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process INVALIDATE event");
-      myevent->event_process_func = event_func->fsal_up_invalidate;
-      break;
-    default:
-      LogDebug(COMPONENT_FSAL_UP, "Unknown FSAL UP event type found: %d",
-              myevent->event_type);
-      gsh_free(myevent->event_data.event_context.fsal_data.fh_desc.addr);
-
-      pool_free(fsal_up_event_pool, myevent);
-
-      return fsalstat(ERR_FSAL_NO_ERROR, 0);
-    }
-
-  status = schedule_fsal_up_event_process(myevent);
-  return status;
+        glist_add_tail(&fsal_up_state.queue,
+                       &event->event_link);
+        pthread_cond_signal(&fsal_up_state.cond);
+        pthread_mutex_unlock(&fsal_up_state.lock);
+        return 0;
 }
 
 /**
- * @brief Look up a cache entry by a key
+ * @brief Run function for the FSAL UP thread
  *
- * This function retrieves a cache entry from a key generated by the
- * FSAL.  It does no attribute refresh, since this is for upcalls.  It
- * does, however, get a reference on the cache_entry that must be
- * returned with up_put.
+ * This function pulls each event off the event queue and dispatches
+ * to its delayed action function.  When instructed to, it shuts
+ * itself down in an orderly fashion.
  *
- * @param[in]  key   The key identifying the inode
- * @param[out] entry The entry looked up.
+ * @param[in] dummy Ignored
  *
- * @retval CACHE_INODE_SUCCESS on success.
- * @retval CACHE_INODE_NOT_FOUND if the inode could not be found or
- *         referenced.
- * @retval CACHE_INODE_HASH_TABLE_ERROR on some inexplicable failure.
+ * @returns NULL.
  */
-cache_inode_status_t
-up_get(const struct gsh_buffdesc *key,
-       cache_entry_t **entry)
+
+static void *
+fsal_up_process_thread(void *dummy __attribute__((unused)))
 {
-        hash_buffer_t hashkey = {
-                .pdata = key->addr,
-                .len = key->len
-        };
-        hash_buffer_t hashval;
-        hash_error_t hrc = 0;
-        struct hash_latch latch;
-        cache_entry_t *entry_found = NULL;
+        struct fsal_up_event *event;
 
-        *entry = NULL;
+        pthread_mutex_lock(&fsal_up_state.lock);
 
-        hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &hashkey, &hashval,
-                                 false,
-                                 &latch);
+        fsal_up_state.running = true;
 
-        if (hrc == HASHTABLE_SUCCESS) {
-                /* Entry exists in the cache and was found */
-                entry_found = hashval.pdata;
-                if (cache_inode_lru_ref(entry_found, LRU_REQ_INITIAL) !=
-                    CACHE_INODE_SUCCESS) {
-                        HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-                        return CACHE_INODE_NOT_FOUND;
-                } else {
-                        *entry = entry_found;
-                }
-        } else if (hrc == HASHTABLE_ERROR_NO_SUCH_KEY) {
-                HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-                return CACHE_INODE_NOT_FOUND;
-        } else {
-                /* This should not happen */
-                LogCrit(COMPONENT_CACHE_INODE,
-                        "Hash access failed with code %d"
-                        " - this should not have happened",
-                        hrc);
-                return CACHE_INODE_HASH_TABLE_ERROR;
+        SetNameFunction("fsal_up_process_thread");
+
+next_event:
+
+        /* We expect to have the fsal_up_state.lock at this point. */
+
+        /* If we've been asked to stop, set shutdown so we can finish
+           off pending events and not accept any more. */
+        if (fsal_up_state.stop) {
+                fsal_up_state.shutdown = true;
         }
-        return CACHE_INODE_SUCCESS;
-} /* up_get */
+
+        event = glist_first_entry(&fsal_up_state.queue,
+                                  struct fsal_up_event,
+                                  event_link);
+        if (event != NULL) {
+                glist_del(&event->event_link);
+                pthread_mutex_unlock(&fsal_up_state.lock);
+                /* Process the event */
+                switch (event->type) {
+                case FSAL_UP_EVENT_LOCK_GRANT:
+                        if (event->functions->lock_grant_queue) {
+                                event->functions->lock_grant_queue(
+                                        &event->data.lock_grant,
+                                        &event->file);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_INVALIDATE:
+                        if (event->functions->invalidate_queue) {
+                                event->functions->invalidate_queue(
+                                        &event->data.invalidate,
+                                        &event->file);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_LAYOUTRECALL:
+                        if (event->functions->layoutrecall_queue) {
+                                event->functions->layoutrecall_queue(
+                                        &event->data.layoutrecall,
+                                        &event->file);
+                        }
+                        break;
+                }
+
+                fsal_up_free_event(event);
+                pthread_mutex_lock(&fsal_up_state.lock);
+                goto next_event;
+        } else if (!fsal_up_state.shutdown) {
+                /* Wait for more */
+                pthread_cond_wait(&fsal_up_state.cond,
+                                  &fsal_up_state.lock);
+                goto next_event;
+        } else {
+                pool_destroy(fsal_up_state.pool);
+                fsal_up_state.running = false;
+                pthread_mutex_unlock(&fsal_up_state.lock);
+                pthread_exit(NULL);
+        }
+
+        return NULL;
+}
+
+/**
+ * @brief Initialize the FSAL up-call system
+ *
+ * This function initializes the FSAL up-call state and starts the
+ * thread.
+ */
+
+void
+init_FSAL_up(void)
+{
+        /* The attributes governing the FSAL upcall thread */
+        pthread_attr_t attr_thr;
+        /* Return code from pthread operations */
+        int code = 0;
+
+        pthread_mutex_lock(&fsal_up_state.lock);
+        /* Allocation of the FSAL UP pool */
+        fsal_up_state.pool = pool_init("FSAL UP Data Pool",
+                                       sizeof(struct fsal_up_event),
+                                       pool_basic_substrate,
+                                       NULL,
+                                       NULL,
+                                       NULL);
+
+        if (fsal_up_state.pool == NULL) {
+                LogFatal(COMPONENT_INIT,
+                         "Error while initializing FSAL UP event pool");
+        }
+
+        init_glist(&fsal_up_state.queue);
+
+        if (pthread_attr_init(&attr_thr) != 0) {
+                LogCrit(COMPONENT_INIT,
+                        "can't init FSAL UP thread's attributes");
+        }
+
+        if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM)
+            != 0) {
+                LogCrit(COMPONENT_INIT,
+                        "can't set FSAL UP thread's scope");
+        }
+
+        if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE)
+            != 0) {
+                LogCrit(COMPONENT_INIT,
+                        "can't set FSAL UP thread's join state");
+        }
+
+        if (pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE)
+            != 0) {
+                LogCrit(COMPONENT_INIT,
+                        "can't set FSAL UP thread's stack size");
+        }
+
+        /* spawn LRU background thread */
+        code = pthread_create(&fsal_up_state.thread_id,
+                              &attr_thr,
+                              fsal_up_process_thread,
+                              NULL);
+        if (code != 0) {
+                code = errno;
+                LogFatal(COMPONENT_CACHE_INODE_LRU,
+                         "Unable to start FSAL UP thread, error code %d.",
+                         code);
+        }
+
+        return;
+}
+
+/**
+ * @brief Shut down the FSAL upcall thread
+ *
+ * This function shuts down the FSAL upcall thread, returning when it
+ * has exited.  The thread is shut down in an orderly fashion and
+ * allowed to queued tasks.
+ *
+ * @retval 0 if the thread is shut down successfully.
+ * @retval EBUSY if someone else has already signalled for the thread
+ *         to shut down.
+ * @retval EPIPE if the thread is not running.
+ * @retval Errors from pthread_join.
+ */
+
+int
+shutdown_FSAL_up(void)
+{
+        int rc = 0;
+
+        pthread_mutex_lock(&fsal_up_state.lock);
+        if (fsal_up_state.stop) {
+                /* Someone else has already requested shutdown */
+                pthread_mutex_unlock(&fsal_up_state.lock);
+                return EBUSY;
+        }
+        if (!fsal_up_state.running) {
+                /* Thread isn't running */
+                pthread_mutex_unlock(&fsal_up_state.lock);
+                return EPIPE;
+        }
+        fsal_up_state.stop = true;
+        pthread_cond_signal(&fsal_up_state.cond);
+        fsal_up_state.stop = false;
+        pthread_mutex_unlock(&fsal_up_state.lock);
+        rc = pthread_join(fsal_up_state.thread_id, NULL);
+        if (rc) {
+                LogCrit(COMPONENT_FSAL_UP,
+                        "pthread_join failed with %d.",
+                        rc);
+                return rc;
+        }
+        return 0;
+}

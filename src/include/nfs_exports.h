@@ -145,12 +145,6 @@ typedef struct exportlist_client__
   exportlist_client_entry_t clientarray[EXPORTS_NB_MAX_CLIENTS];        /* allowed clients    */
 } exportlist_client_t;
 
-/* fsal up filter list is needed in exportlist.
- * Inluding fsal_up.h would cause header file issues however. */
-#ifdef _USE_FSAL_UP
-struct fsal_up_filter_list_t_;
-#endif
-
 typedef struct exportlist__
 {
   unsigned short id;            /* entry identifier   */
@@ -206,14 +200,6 @@ typedef struct exportlist__
                                       * state list is sufficient
                                       */
 #endif
-
-#ifdef _USE_FSAL_UP
-  bool use_fsal_up;
-  char fsal_up_type[MAXPATHLEN];
-  gsh_time_t fsal_up_timeout;
-  pthread_t fsal_up_thr; /* This value may be modified later to point to an FSAL CB thread. */
-  struct fsal_up_filter_list_t_ *fsal_up_filter_list; /* List of filters to apply through FSAL CB interface. */
-#endif /* _USE_FSAL_UP */
 
   nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
 } exportlist_t;

@@ -9,11 +9,7 @@ AM_CFLAGS                     = -Wimplicit -lrt $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) 
                                 ../FSAL/fsal_config.lo \
                                 ../FSAL/fsal_errors.lo
 
-if USE_FSAL_UP
 FSAL_UP_LIB_FLAGS = ../FSAL_UP/libfsalup.la
-else
-FSAL_UP_LIB_FLAGS =
-endif
 
 GSSD_LIB = ../RPCAL/gssd/libgssd.la
 
@@ -47,12 +43,6 @@ if USE_DBUS
 DBUS_SERVER = ../Protocols/DBUS/dbus_server.c
 else
 DBUS_SERVER =
-endif
-
-if USE_UPCALL_SIMULATOR
-UPCALL_SIMULATOR_FILE = fsal_upcall_simulator_thread.c
-else
-UPCALL_SIMULATOR_FILE =
 endif
 
 if USE_CB_SIMULATOR
@@ -123,7 +113,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
 			     nfs_rpc_callback.c 		  \
 			     $(DBUS_SERVER)                       \
                              $(STAT_EXPORTER_FILE)                \
-                             $(UPCALL_SIMULATOR_FILE)             \
                              $(CB_SIMULATOR_FILE)             	  \
                              nfs_worker_thread.c                  \
                              nfs_tcb.c                  \

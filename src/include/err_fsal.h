@@ -23,12 +23,8 @@
  */
 
 /**
- * \file    err_fsal.h
- * \date    $Date: 2006/01/17 14:22:57 $
- * \version $Revision: 1.30 $
- * \brief   FSAL error codes.
- *
- *
+ * @file    err_fsal.h
+ * @brief   FSAL error codes.
  */
 
 #ifndef _ERR_FSAL_H
