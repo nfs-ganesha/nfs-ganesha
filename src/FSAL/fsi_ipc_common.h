@@ -230,12 +230,6 @@ enum {
   FsiRcNotUsed                  // End of enum
 };
 
-enum e_nfs_state {
-  NFS_OPEN = 0,
-  NFS_CLOSE,
-  CCL_CLOSE
-};
-
 // *****************************************************************************
 // * SHARED MEMORY TYPEDEFS and typedef specific enumerations                  *
 // *****************************************************************************
