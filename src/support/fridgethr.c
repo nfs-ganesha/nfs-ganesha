@@ -200,13 +200,13 @@ fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
     if (rc != ETIMEDOUT) {
         LogFullDebug(COMPONENT_THREAD,
                 "fr %p re-use idle thread %u (nthreads %u nidle %u)",
-                fr, pfe->ctx.id, fr->nthreads, fr->nidle);
+                fr, (unsigned int)pfe->ctx.id, fr->nthreads, fr->nidle);
         return (TRUE);
     }
 
     LogFullDebug(COMPONENT_THREAD,
             "fr %p thread %u idle out (nthreads %u nidle %u)",
-            fr, pfe->ctx.id, fr->nthreads, fr->nidle);
+            fr, (unsigned int)pfe->ctx.id, fr->nthreads, fr->nidle);
 
     return (FALSE);
 } /* fridgethr_freeze */

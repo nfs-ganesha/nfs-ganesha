@@ -1047,7 +1047,7 @@ nfs_rpc_consume_req(struct req_q_pair *qpair, uint32_t flags)
 
         pthread_spin_lock(&qpair->producer.we.sp);
         if (isFullDebug(COMPONENT_DISPATCH)) {
-            s = qpair->s;
+            s = (char *)qpair->s;
             csize = qpair->consumer.size;
             psize = qpair->producer.size;
         }
@@ -1153,7 +1153,6 @@ retry_deq:
         goto retry_deq;
     }
 
-out:
     return (nfsreq);
 }
 

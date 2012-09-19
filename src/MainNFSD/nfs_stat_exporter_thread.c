@@ -743,7 +743,7 @@ void *long_processing_thread(void *UnusedArg)
              timer_diff.tv_sec == nfs_param.core_param.long_processing_threshold * 10)
             LogEvent(COMPONENT_DISPATCH,
                      "Worker#%d: Function %s has been running for %llu.%.6llu seconds",
-                     i, workers_data[i].pfuncdesc->funcname,
+                     i, workers_data[i].funcdesc->funcname,
                      (unsigned long long)timer_diff.tv_sec,
                      (unsigned long long)timer_diff.tv_usec);
         }
