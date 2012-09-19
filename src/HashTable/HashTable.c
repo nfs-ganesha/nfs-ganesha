@@ -454,7 +454,7 @@ hash_error_t
 HashTable_GetLatch(struct hash_table *ht,
                    struct hash_buff *key,
                    struct hash_buff *val,
-                   int may_write,
+                   bool may_write,
                    struct hash_latch *latch)
 {
      /* The index specifying the partition to search */

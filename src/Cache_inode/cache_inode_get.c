@@ -7,29 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    cache_inode_get.c
- * \date    $Date: 2005/11/28 17:02:26 $
- * \version $Revision: 1.26 $
- * \brief   Get and eventually cache an entry.
+ * @file    cache_inode_get.c
+ * @brief   Get and eventually cache an entry.
  *
- * cache_inode_get.c : Get and eventually cache an entry.
+ * Get and eventually cache an entry.
  *
  *
  */
@@ -192,20 +191,19 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
 /**
  *
- * cache_inode_put:  release logical reference to a cache entry conferred by
- * a previous call to cache_inode_get (cache_inode_get_located).
+ * @brief Release logical reference to a cache entry
  *
- * The result is typically to decrement the reference count on entry, but
- * additional side effects include LRU adjustment, movement to/from the
- * protected LRU partition, or recyling if the caller has raced an operation
- * which made entry unreachable (and this current caller has the last
- * reference).  Caller MUST NOT make further accesses to the memory pointed
- * to by entry.
+ * This function releases a logical reference to a cache entry
+ * acquired by a previous call to cache_inode_get.
+ *
+ * The result is typically to decrement the reference count on entry,
+ * but additional side effects include LRU adjustment, movement
+ * to/from the protected LRU partition, or recyling if the caller has
+ * raced an operation which made entry unreachable (and this current
+ * caller has the last reference).  Caller MUST NOT make further
+ * accesses to the memory pointed to by entry.
  *
  * @param[in] entry Cache entry being returned
- *
- * @return CACHE_INDOE_STATUS or error codes
- *
  */
 void cache_inode_put(cache_entry_t *entry)
 {

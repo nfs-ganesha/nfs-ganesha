@@ -831,7 +831,6 @@ void cache_inode_kill_entry(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_invalidate(
         cache_entry_t *entry,
-        cache_inode_status_t *status,
         uint32_t flags);
 
 /* Parsing functions */

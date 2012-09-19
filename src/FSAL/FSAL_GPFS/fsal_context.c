@@ -39,7 +39,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
   char               * mnt_dir = NULL;
   struct statfs        stat_buf;
   gpfs_fsal_up_ctx_t * gpfs_fsal_up_ctx;
-  bool_t               start_fsal_up_thread = FALSE;
+  bool                 start_fsal_up_thread = FALSE;
 
   fsal_status_t status;
   fsal_op_context_t op_context;

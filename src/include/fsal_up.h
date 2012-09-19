@@ -17,8 +17,7 @@
  */
 
 /**
- * \file    fsal_up.h
- * \date    $Date: 2011/09/29 $
+ * @file    fsal_up.h
  */
 
 #ifndef _FSAL_UP_H
@@ -191,6 +190,10 @@ fsal_up_event_functions_t *get_fsal_up_dumb_functions();
 
 fsal_status_t process_event(fsal_up_event_t          * myevent,
                            fsal_up_event_functions_t * event_func);
+
+cache_inode_status_t up_get(const struct gsh_buffdesc *key,
+                            cache_entry_t **entry);
+void up_put(cache_entry_t *entry);
 
 #endif /* _USE_FSAL_UP */
 #endif /* _FSAL_UP_H */

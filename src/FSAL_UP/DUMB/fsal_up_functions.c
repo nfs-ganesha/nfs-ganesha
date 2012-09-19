@@ -1,23 +1,24 @@
 /*
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    fsal_up_thread.c
+ * @file fsal_up_thread.c
  */
 
 #ifdef HAVE_CONFIG_H
@@ -45,217 +46,201 @@
  * entires ... inode entries are not updated or refreshed through this
  * interface. */
 
-fsal_status_t dumb_fsal_up_invalidate_step1(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_invalidate_step1(fsal_up_event_data_t *evdata)
 {
-#if 0
-  cache_inode_status_t cache_status;
+        cache_entry_t *entry = NULL;
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_invalidate()");
+        LogDebug(COMPONENT_FSAL_UP,
+                 "FSAL_UP_DUMB: calling cache_inode_invalidate()");
 
-  /**
-   * @todo ACE: Revisit this after we add lookup.
-   */
-
-  /* Lock the entry */
-  cache_inode_invalidate(&pevdata->event_context.fsal_data,
-                         &cache_status,
-                         CACHE_INODE_INVALIDATE_CLEARBITS);
-#else
-  abort();
-#endif
-
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        if (up_get(&evdata->event_context.fsal_data.fh_desc,
+                   &entry) == CACHE_INODE_SUCCESS) {
+                cache_inode_invalidate(entry,
+                                       CACHE_INODE_INVALIDATE_CLEARBITS);
+                cache_inode_put(entry);
+        }
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t dumb_fsal_up_invalidate_step2(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_invalidate_step2(fsal_up_event_data_t *evdata)
 {
-#if 0
-  cache_inode_status_t cache_status;
+        cache_entry_t *entry = NULL;
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_invalidate()");
+        LogDebug(COMPONENT_FSAL_UP,
+                 "FSAL_UP_DUMB: calling cache_inode_invalidate()");
 
-  /* Lock the entry */
-  cache_inode_invalidate(&pevdata->event_context.fsal_data,
-                         &cache_status,
-                         CACHE_INODE_INVALIDATE_CLOSE);
-#else
-  abort();
-#endif
-
-  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        if (up_get(&evdata->event_context.fsal_data.fh_desc,
+                   &entry) == CACHE_INODE_SUCCESS) {
+                cache_inode_invalidate(entry,
+                                       CACHE_INODE_INVALIDATE_CLEARBITS);
+                cache_inode_put(entry);
+        }
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-fsal_status_t dumb_fsal_up_update(fsal_up_event_data_t * pevdata)
+
+fsal_status_t
+dumb_fsal_up_update(fsal_up_event_data_t *evdata)
 {
-#if 0
-  cache_inode_status_t cache_status;
+        cache_entry_t *entry = NULL;
 
-  LogFullDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: Entered dumb_fsal_up_update\n");
-  if ((pevdata->type.update.upu_flags & FSAL_UP_NLINK) &&
-      (pevdata->type.update.upu_stat_buf.st_nlink == 0) )
-    {
-      LogFullDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: nlink has become zero; close fds\n");
-      cache_inode_invalidate(&pevdata->event_context.fsal_data,
-                             &cache_status,
-                             (CACHE_INODE_INVALIDATE_CLEARBITS |
-                              CACHE_INODE_INVALIDATE_CLOSE));
-    }
-  else
-    cache_inode_invalidate(&pevdata->event_context.fsal_data,
-                           &cache_status,
-                           CACHE_INODE_INVALIDATE_CLEARBITS);
-#else
-  abort();
-#endif
+        LogDebug(COMPONENT_FSAL_UP,
+                 "FSAL_UP_DUMB: calling cache_inode_invalidate()");
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        if (up_get(&evdata->event_context.fsal_data.fh_desc,
+                   &entry) == CACHE_INODE_SUCCESS) {
+                cache_inode_invalidate(entry,
+                                       CACHE_INODE_INVALIDATE_CLEARBITS);
+                cache_inode_put(entry);
+        }
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 #define INVALIDATE_STUB {                     \
-    return dumb_fsal_up_invalidate_step1(pevdata);  \
+    return dumb_fsal_up_invalidate_step1(evdata);  \
   } while(0);
 
-fsal_status_t dumb_fsal_up_create(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_create(fsal_up_event_data_t *evdata)
 {
   INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_unlink(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_unlink(fsal_up_event_data_t *evdata)
 {
   INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_rename(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_rename(fsal_up_event_data_t *evdata)
 {
   INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_commit(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_commit(fsal_up_event_data_t *evdata)
 {
   INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_write(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_write(fsal_up_event_data_t *evdata)
 {
   INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_link(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_link(fsal_up_event_data_t *evdata)
 {
   INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_lock_grant(fsal_up_event_data_t *evdata)
 {
 #ifdef _USE_BLOCKING_LOCKS
-  cache_inode_status_t   cache_status;
-  cache_entry_t        * pentry = NULL;
-  fsal_attrib_list_t     attr;
+        cache_entry_t        * entry = NULL;
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_get()");
-  pentry = cache_inode_get(&pevdata->event_context.fsal_data,
-                           &attr, NULL, NULL,
-                           &cache_status);
-  if(pentry == NULL)
-    {
-      LogDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: cache inode get failed.");
-      /* Not an error. Expecting some nodes will not have it in cache in
-       * a cluster. */
-      ReturnCode(ERR_FSAL_NO_ERROR, 0);
-    }
+        LogDebug(COMPONENT_FSAL_UP,
+                 "FSAL_UP_DUMB: calling cache_inode_get()");
+        up_get(&evdata->event_context.fsal_data.fh_desc,
+               &entry);
+        if (entry == NULL) {
+                LogDebug(COMPONENT_FSAL_UP,
+                         "FSAL_UP_DUMB: cache inode get failed.");
+                return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        }
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: Lock Grant found entry %p",
-           pentry);
+        LogDebug(COMPONENT_FSAL_UP,
+                 "FSAL_UP_DUMB: Lock Grant found entry %p",
+                 entry);
 
-  grant_blocked_lock_upcall(pentry,
-                            pevdata->type.lock_grant.lock_owner,
-                            &pevdata->type.lock_grant.lock_param);
+        grant_blocked_lock_upcall(entry,
+                                  evdata->type.lock_grant.lock_owner,
+                                  &evdata->type.lock_grant.lock_param);
 
+        if (entry) {
+                cache_inode_put(entry);
+        }
 
-  if(pentry)
-    cache_inode_put(pentry);
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
 #else
-  INVALIDATE_STUB;
+        INVALIDATE_STUB;
 #endif
 }
 
-fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_lock_avail(fsal_up_event_data_t *evdata)
 {
 #ifdef _USE_BLOCKING_LOCKS
-  cache_inode_status_t   cache_status;
-  cache_entry_t        * pentry = NULL;
-  fsal_attrib_list_t     attr;
+        cache_entry_t *entry = NULL;
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: calling cache_inode_get()");
-  pentry = cache_inode_get(&pevdata->event_context.fsal_data,
-                           &attr, NULL, NULL, &cache_status);
-  if(pentry == NULL)
-    {
-      LogDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: cache inode get failed.");
-      /* Not an error. Expecting some nodes will not have it in cache in
-       * a cluster. */
-      ReturnCode(ERR_FSAL_NO_ERROR, 0);
-    }
+        LogDebug(COMPONENT_FSAL_UP,
+                 "FSAL_UP_DUMB: calling cache_inode_get()");
+        up_get(&evdata->event_context.fsal_data.fh_desc,
+               &entry);
+        if (entry == NULL) {
+                LogDebug(COMPONENT_FSAL_UP,
+                         "FSAL_UP_DUMB: cache inode get failed.");
+                return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        }
 
-  LogDebug(COMPONENT_FSAL_UP,
-           "FSAL_UP_DUMB: Lock Available found entry %p",
-           pentry);
+        LogDebug(COMPONENT_FSAL_UP,
+                 "FSAL_UP_DUMB: Lock Available found entry %p",
+                 entry);
 
-  available_blocked_lock_upcall(pentry,
-                                pevdata->type.lock_grant.lock_owner,
-                                &pevdata->type.lock_grant.lock_param);
+        available_blocked_lock_upcall(entry,
+                                      evdata->type.lock_grant.lock_owner,
+                                      &evdata->type.lock_grant.lock_param);
 
-  if(pentry)
-    cache_inode_put(pentry);
+        if (entry) {
+                cache_inode_put(entry);
+        }
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
 #else
-  INVALIDATE_STUB;
+        INVALIDATE_STUB;
 #endif
 }
 
-fsal_status_t dumb_fsal_up_open(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_open(fsal_up_event_data_t *evdata)
 {
-  INVALIDATE_STUB;
+        INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_close(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_close(fsal_up_event_data_t *evdata)
 {
-  INVALIDATE_STUB;
+        INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_setattr(fsal_up_event_data_t * pevdata)
+fsal_status_t
+dumb_fsal_up_setattr(fsal_up_event_data_t *evdata)
 {
-  INVALIDATE_STUB;
+        INVALIDATE_STUB;
 }
 
 fsal_up_event_functions_t dumb_event_func = {
-  .fsal_up_create = dumb_fsal_up_create,
-  .fsal_up_unlink = dumb_fsal_up_unlink,
-  .fsal_up_rename = dumb_fsal_up_rename,
-  .fsal_up_commit = dumb_fsal_up_commit,
-  .fsal_up_write = dumb_fsal_up_write,
-  .fsal_up_link = dumb_fsal_up_link,
-  .fsal_up_lock_grant = dumb_fsal_up_lock_grant,
-  .fsal_up_lock_avail = dumb_fsal_up_lock_avail,
-  .fsal_up_open = dumb_fsal_up_open,
-  .fsal_up_close = dumb_fsal_up_close,
-  .fsal_up_setattr = dumb_fsal_up_setattr,
-  .fsal_up_update = dumb_fsal_up_update,
-  .fsal_up_invalidate = dumb_fsal_up_invalidate_step1
+        .fsal_up_create = dumb_fsal_up_create,
+        .fsal_up_unlink = dumb_fsal_up_unlink,
+        .fsal_up_rename = dumb_fsal_up_rename,
+        .fsal_up_commit = dumb_fsal_up_commit,
+        .fsal_up_write = dumb_fsal_up_write,
+        .fsal_up_link = dumb_fsal_up_link,
+        .fsal_up_lock_grant = dumb_fsal_up_lock_grant,
+        .fsal_up_lock_avail = dumb_fsal_up_lock_avail,
+        .fsal_up_open = dumb_fsal_up_open,
+        .fsal_up_close = dumb_fsal_up_close,
+        .fsal_up_setattr = dumb_fsal_up_setattr,
+        .fsal_up_update = dumb_fsal_up_update,
+        .fsal_up_invalidate = dumb_fsal_up_invalidate_step1
 };
 
-fsal_up_event_functions_t *get_fsal_up_dumb_functions()
+fsal_up_event_functions_t *
+get_fsal_up_dumb_functions()
 {
-  return &dumb_event_func;
+        return &dumb_event_func;
 }

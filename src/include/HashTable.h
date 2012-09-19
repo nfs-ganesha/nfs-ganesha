@@ -192,7 +192,7 @@ hash_error_t HashTable_Destroy(struct hash_table *ht,
 hash_error_t HashTable_GetLatch(struct hash_table *ht,
                                 struct hash_buff *key,
                                 struct hash_buff *val,
-                                int may_write,
+                                bool may_write,
                                 struct hash_latch *latch);
 void HashTable_ReleaseLatched(struct hash_table *ht,
                               struct hash_latch *latch);
