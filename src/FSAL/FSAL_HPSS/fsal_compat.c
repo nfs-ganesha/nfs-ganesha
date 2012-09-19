@@ -164,9 +164,10 @@ fsal_status_t WRAP_HPSSFSAL_readdir(fsal_dir_t * p_dir_descriptor,      /* IN */
                           p_end_of_dir);
 }
 
-fsal_status_t WRAP_HPSSFSAL_closedir(fsal_dir_t * p_dir_descriptor /* IN */ )
+fsal_status_t WRAP_HPSSFSAL_closedir(fsal_dir_t * p_dir_descriptor, /* IN */
+                                     fsal_op_context_t * p_context  /* IN */ )
 {
-  return HPSSFSAL_closedir((hpssfsal_dir_t *) p_dir_descriptor);
+  return HPSSFSAL_closedir((hpssfsal_dir_t *) p_dir_descriptor, p_context);
 }
 
 fsal_status_t WRAP_HPSSFSAL_open_by_name(fsal_handle_t * dirhandle,     /* IN */
@@ -216,9 +217,10 @@ fsal_status_t WRAP_HPSSFSAL_write(fsal_file_t * p_file_descriptor,      /* IN */
                         buffer_size, buffer, p_write_amount);
 }
 
-fsal_status_t WRAP_HPSSFSAL_close(fsal_file_t * p_file_descriptor /* IN */ )
+fsal_status_t WRAP_HPSSFSAL_close(fsal_file_t * p_file_descriptor, /* IN */
+                                  fsal_op_context_t * p_context  /* IN */ )
 {
-  return HPSSFSAL_close((hpssfsal_file_t *) p_file_descriptor);
+  return HPSSFSAL_close((hpssfsal_file_t *) p_file_descriptor, p_context);
 }
 
 fsal_status_t WRAP_HPSSFSAL_open_by_fileid(fsal_handle_t * filehandle,  /* IN */
@@ -235,9 +237,10 @@ fsal_status_t WRAP_HPSSFSAL_open_by_fileid(fsal_handle_t * filehandle,  /* IN */
 }
 
 fsal_status_t WRAP_HPSSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+                                            fsal_op_context_t * p_context,  /* IN */
                                             fsal_u64_t fileid)
 {
-  return HPSSFSAL_close_by_fileid((hpssfsal_file_t *) file_descriptor, fileid);
+  return HPSSFSAL_close_by_fileid((hpssfsal_file_t *) file_descriptor, p_context, fileid);
 }
 
 fsal_status_t WRAP_HPSSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,        /* IN */

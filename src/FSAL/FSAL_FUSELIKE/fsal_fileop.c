@@ -548,7 +548,8 @@ fsal_status_t FUSEFSAL_write(fsal_file_t * file_desc, /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FUSEFSAL_close(fsal_file_t * file_desc  /* IN */
+fsal_status_t FUSEFSAL_close(fsal_file_t * file_desc,  /* IN */
+                             fsal_op_context_t * p_context  /* IN */
     )
 {
 

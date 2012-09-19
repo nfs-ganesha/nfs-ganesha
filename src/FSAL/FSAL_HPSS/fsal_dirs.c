@@ -308,7 +308,8 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t HPSSFSAL_closedir(hpssfsal_dir_t * dir_descriptor /* IN */
+fsal_status_t HPSSFSAL_closedir(hpssfsal_dir_t * dir_descriptor, /* IN */
+                                fsal_op_context_t * p_context    /* IN */
     )
 {
 

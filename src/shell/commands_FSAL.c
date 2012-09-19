@@ -1846,7 +1846,7 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
 
     }
 
-  FSAL_closedir(&dir);
+  FSAL_closedir(&dir, &context->context);
 
   return error;
 
@@ -5175,7 +5175,7 @@ int fn_fsal_close(int argc,     /* IN : number of args in argv */
       return -1;
     }
 
-  st = FSAL_close(&context->current_fd);
+  st = FSAL_close(&context->current_fd, &context->context);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -5240,7 +5240,7 @@ int fn_fsal_close_byfileid(int argc,    /* IN : number of args in argv */
       return -1;
     }
 
-  st = FSAL_close(&context->current_fd);
+  st = FSAL_close(&context->current_fd, &context->context);
 
   if(FSAL_IS_ERROR(st))
     {
@@ -5417,7 +5417,7 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
 
     }
 
-  FSAL_close(&cat_fd);
+  FSAL_close(&cat_fd, &context->context);
 
   if(!is_eof)
     {

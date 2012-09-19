@@ -621,7 +621,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                            fsal_boolean_t * end_of_dir  /* OUT */
     );
 
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
+fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor, /* IN */
+                            fsal_op_context_t * p_context  /* IN */
     );
 
 fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
@@ -667,10 +668,12 @@ fsal_status_t FSAL_commit( fsal_file_t * file_descriptor, /* INOUT */
                          fsal_off_t    offset,  /* IN */
                          fsal_size_t   size );
 
-fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
+fsal_status_t FSAL_close(fsal_file_t * file_descriptor,  /* IN */
+                         fsal_op_context_t * p_context  /* IN */
     );
 
 fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+                                fsal_op_context_t * p_context,  /* IN */
                                    fsal_u64_t fileid);
 
 fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
@@ -1119,7 +1122,8 @@ typedef struct fsal_functions__
                                 fsal_boolean_t * p_end_of_dir /* OUT */ );
 
   /* FSAL_closedir */
-  fsal_status_t(*fsal_closedir) (fsal_dir_t * p_dir_descriptor /* IN */ );
+  fsal_status_t(*fsal_closedir) (fsal_dir_t * p_dir_descriptor, /* IN */
+                                 fsal_op_context_t * p_context  /* IN */ );
 
   /* FSAL_open_by_name */
   fsal_status_t(*fsal_open_by_name) (fsal_handle_t * dirhandle, /* IN */
@@ -1155,7 +1159,8 @@ typedef struct fsal_functions__
                               fsal_size_t * p_write_amount /* OUT */ );
 
   /* FSAL_close */
-  fsal_status_t(*fsal_close) (fsal_file_t * p_file_descriptor /* IN */ );
+  fsal_status_t(*fsal_close) (fsal_file_t * p_file_descriptor, /* IN */
+                              fsal_op_context_t * p_context    /* IN */ );
 
   /* FSAL_open_by_fileid */
   fsal_status_t(*fsal_open_by_fileid) (fsal_handle_t * filehandle,      /* IN */
@@ -1168,6 +1173,7 @@ typedef struct fsal_functions__
 
   /* FSAL_close_by_fileid */
   fsal_status_t(*fsal_close_by_fileid) (fsal_file_t * file_descriptor /* IN */ ,
+                                        fsal_op_context_t * p_context,  /* IN */
                                         fsal_u64_t fileid);
 
   /* FSAL_dynamic_fsinfo */

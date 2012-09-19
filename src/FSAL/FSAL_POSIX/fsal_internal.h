@@ -202,7 +202,8 @@ fsal_status_t POSIXFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
                                 fsal_count_t * p_nb_entries,    /* OUT */
                                 fsal_boolean_t * p_end_of_dir /* OUT */ );
 
-fsal_status_t POSIXFSAL_closedir(fsal_dir_t * p_dir_descriptor /* IN */ );
+fsal_status_t POSIXFSAL_closedir(fsal_dir_t * p_dir_descriptor, /* IN */
+                                 fsal_op_context_t * p_context  /* IN */ );
 
 fsal_status_t POSIXFSAL_open_by_name(fsal_handle_t * dirhandle,    /* IN */
                                      fsal_name_t * filename,    /* IN */
@@ -238,7 +239,8 @@ fsal_status_t POSIXFSAL_commit( fsal_file_t * p_file_descriptor,
                               fsal_off_t    offset,
                               fsal_size_t   size ) ;
 
-fsal_status_t POSIXFSAL_close(fsal_file_t * p_file_descriptor /* IN */ );
+fsal_status_t POSIXFSAL_close(fsal_file_t * p_file_descriptor, /* IN */
+                              fsal_op_context_t * p_context    /* IN */ );
 
 fsal_status_t POSIXFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,       /* IN */
                                        fsal_op_context_t * p_context,      /* IN */

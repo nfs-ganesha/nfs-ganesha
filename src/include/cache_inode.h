@@ -653,6 +653,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t *entry,
                                       uint32_t flags,
                                       cache_inode_status_t *status);
 cache_inode_status_t cache_inode_close(cache_entry_t *entry,
+                                       fsal_op_context_t *context,
                                        uint32_t flags,
                                        cache_inode_status_t *status);
 

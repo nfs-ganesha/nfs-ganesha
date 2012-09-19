@@ -530,6 +530,7 @@ void release_openstate(state_owner_t * popen_owner)
 
       /* Close the file in FSAL through the cache inode */
       cache_inode_close(pentry,
+                        NULL,
                         0,
                         &cache_status);
 

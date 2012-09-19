@@ -391,7 +391,8 @@ fsal_status_t ZFSFSAL_write(fsal_file_t * file_desc, /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t ZFSFSAL_close(fsal_file_t * file_desc  /* IN */
+fsal_status_t ZFSFSAL_close(fsal_file_t * file_desc,  /* IN */
+                            fsal_op_context_t * p_context  /* IN */
     )
 {
   int rc = 0;

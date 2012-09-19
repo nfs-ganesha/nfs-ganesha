@@ -161,7 +161,8 @@ fsal_status_t CEPHFSAL_readdir(fsal_dir_t * extdescriptor,
                                fsal_count_t * count,
                                fsal_boolean_t * end_of_dir);
 
-fsal_status_t CEPHFSAL_closedir(fsal_dir_t * extdescriptor);
+fsal_status_t CEPHFSAL_closedir(fsal_dir_t * extdescriptor,
+                                fsal_op_context_t * p_context);
 
 fsal_boolean_t fsal_is_retryable(fsal_status_t status);
 
@@ -193,7 +194,8 @@ fsal_status_t CEPHFSAL_write(fsal_file_t * extdescriptor,
                              caddr_t buffer,
                              fsal_size_t * write_amount);
 
-fsal_status_t CEPHFSAL_close(fsal_file_t * extdescriptor);
+fsal_status_t CEPHFSAL_close(fsal_file_t * extdescriptor,
+                             fsal_op_context_t * p_context);
 
 fsal_status_t CEPHFSAL_open_by_fileid(fsal_handle_t * filehandle,
                                       fsal_u64_t fileid,
@@ -203,6 +205,7 @@ fsal_status_t CEPHFSAL_open_by_fileid(fsal_handle_t * filehandle,
                                       fsal_attrib_list_t * file_attributes);
 
 fsal_status_t CEPHFSAL_close_by_fileid(fsal_file_t * file_descriptor,
+                                       fsal_op_context_t * p_context,
                                        fsal_u64_t fileid);
 
 unsigned int CEPHFSAL_GetFileno(fsal_file_t * pfile);

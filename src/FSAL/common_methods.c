@@ -571,6 +571,7 @@ fsal_status_t COMMON_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
 }
 
 fsal_status_t COMMON_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+                                   fsal_op_context_t * p_context,        /* IN */
                                    fsal_u64_t fileid)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);

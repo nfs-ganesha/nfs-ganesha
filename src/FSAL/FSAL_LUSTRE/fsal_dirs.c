@@ -284,7 +284,8 @@ fsal_status_t LUSTREFSAL_readdir(fsal_dir_t *dir_desc,   /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_closedir(fsal_dir_t * p_dir_descriptor   /* IN */
+fsal_status_t LUSTREFSAL_closedir(fsal_dir_t * p_dir_descriptor,   /* IN */
+                                  fsal_op_context_t * p_context  /* IN */
     )
 {
 

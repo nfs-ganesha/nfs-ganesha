@@ -469,7 +469,8 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
  *      - Another error code if an error occured during this call.
  */
 
-fsal_status_t GPFSFSAL_close(fsal_file_t * p_file_descriptor        /* IN */
+fsal_status_t GPFSFSAL_close(fsal_file_t * p_file_descriptor,        /* IN */
+                             fsal_op_context_t * p_context  /* IN */
     )
 {
 

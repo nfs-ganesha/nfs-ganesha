@@ -320,7 +320,8 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_closedir(fsal_dir_t * p_dir_desc /* IN */
+fsal_status_t VFSFSAL_closedir(fsal_dir_t * p_dir_desc, /* IN */
+                               fsal_op_context_t * p_context  /* IN */
     )
 {
   vfsfsal_dir_t * p_dir_descriptor = (vfsfsal_dir_t *)p_dir_desc;

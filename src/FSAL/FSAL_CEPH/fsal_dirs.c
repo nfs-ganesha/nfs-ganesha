@@ -252,7 +252,8 @@ fsal_status_t CEPHFSAL_readdir(fsal_dir_t *extdescriptor,
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t CEPHFSAL_closedir(fsal_dir_t * extdescriptor)
+fsal_status_t CEPHFSAL_closedir(fsal_dir_t * extdescriptor,
+                                fsal_op_context_t * p_context  /* IN */ )
 {
   cephfsal_dir_t* descriptor = (cephfsal_dir_t*) extdescriptor;
   struct ceph_mount_info *cmount = descriptor->ctx.export_context->cmount;

@@ -665,7 +665,8 @@ fsal_status_t POSIXFSAL_write(fsal_file_t * file_descriptor,     /* IN */
  *      - Another error code if an error occured during this call.
  */
 
-fsal_status_t POSIXFSAL_close(fsal_file_t * file_descriptor      /* IN */
+fsal_status_t POSIXFSAL_close(fsal_file_t * file_descriptor,      /* IN */
+                              fsal_op_context_t * p_context       /* IN */
     )
 {
   posixfsal_file_t * p_file_descriptor = (posixfsal_file_t *) file_descriptor;

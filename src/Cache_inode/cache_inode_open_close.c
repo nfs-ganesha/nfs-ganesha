@@ -180,7 +180,7 @@ cache_inode_open(cache_entry_t *entry,
      if ((entry->object.file.open_fd.openflags != FSAL_O_RDWR) &&
          (entry->object.file.open_fd.openflags != 0) &&
          (entry->object.file.open_fd.openflags != openflags)) {
-          fsal_status = FSAL_close(&(entry->object.file.open_fd.fd));
+          fsal_status = FSAL_close(&(entry->object.file.open_fd.fd), context);
           if (FSAL_IS_ERROR(fsal_status) &&
               (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
                *status = cache_inode_error_convert(fsal_status);
@@ -263,6 +263,7 @@ out:
 
 cache_inode_status_t
 cache_inode_close(cache_entry_t *entry,
+                  fsal_op_context_t *context,
                   uint32_t flags,
                   cache_inode_status_t *status)
 {
@@ -311,7 +312,7 @@ cache_inode_close(cache_entry_t *entry,
          (flags & CACHE_INODE_FLAG_REALLYCLOSE)) {
           LogFullDebug(COMPONENT_CACHE_INODE,
                        "Closing entry %p", entry);
-          fsal_status = FSAL_close(&(entry->object.file.open_fd.fd));
+          fsal_status = FSAL_close(&(entry->object.file.open_fd.fd), context);
 
           entry->object.file.open_fd.openflags = FSAL_O_CLOSED;
           if (FSAL_IS_ERROR(fsal_status) &&

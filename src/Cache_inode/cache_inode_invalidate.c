@@ -145,6 +145,7 @@ cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
      if (((flags & CACHE_INODE_INVALIDATE_CLOSE) != 0) &&
          (entry->type == REGULAR_FILE)) {
           cache_inode_close(entry,
+                            NULL,
                             (CACHE_INODE_FLAG_REALLYCLOSE |
                              CACHE_INODE_FLAG_CONTENT_HAVE |
                              CACHE_INODE_FLAG_CONTENT_HOLD),

@@ -76,6 +76,7 @@ fsal_status_t COMMON_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
                                     fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t COMMON_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+                                     fsal_op_context_t * p_context,        /* IN */
                                      fsal_u64_t fileid);
 
 fsal_status_t COMMON_getextattrs_notsupp(

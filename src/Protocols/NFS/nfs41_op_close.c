@@ -226,6 +226,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
   /* Close the file in FSAL through the cache inode */
   if(cache_inode_close(data->current_entry,
+                       data->pcontext,
                        0,
                        &cache_status) != CACHE_INODE_SUCCESS)
     {

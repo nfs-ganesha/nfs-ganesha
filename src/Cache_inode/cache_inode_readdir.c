@@ -559,7 +559,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
   while(eod != TRUE);
 
   /* Close the directory */
-  fsal_status = FSAL_closedir(&dir_handle);
+  fsal_status = FSAL_closedir(&dir_handle, context);
   if(FSAL_IS_ERROR(fsal_status))
     {
       *status = cache_inode_error_convert(fsal_status);
@@ -575,7 +575,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
 
 bail:
   /* Close the directory */
-  FSAL_closedir(&dir_handle);
+  FSAL_closedir(&dir_handle, context);
   return *status;
 
 }                               /* cache_inode_readdir_populate */

@@ -287,7 +287,7 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
     }
 
   /* The created file is still opened, to preserve the correct seqid for later use, we close it */
-  fsal_status = FSAL_close((fsal_file_t *) &fd);
+  fsal_status = FSAL_close((fsal_file_t *) &fd, context);
   if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_create);
 

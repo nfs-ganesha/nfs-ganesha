@@ -435,7 +435,7 @@ cache_inode_lru_clean(cache_entry_t *entry)
             (entry->lru.refcount == (LRU_SENTINEL_REFCOUNT - 1)));
 
      if (cache_inode_fd(entry)) {
-          cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE |
+          cache_inode_close(entry, NULL, CACHE_INODE_FLAG_REALLYCLOSE |
                                    CACHE_INODE_FLAG_NOT_PINNED,
                             &cache_status);
           if (cache_status != CACHE_INODE_SUCCESS) {
@@ -835,6 +835,7 @@ lru_thread(void *arg __attribute__((unused)))
                               if (cache_inode_fd(entry)) {
                                    cache_inode_close(
                                         entry,
+                                        NULL,
                                         CACHE_INODE_FLAG_REALLYCLOSE |
                                         CACHE_INODE_FLAG_NOT_PINNED |
                                         CACHE_INODE_FLAG_CONTENT_HAVE |
@@ -1316,6 +1317,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry, unsigned char closefile)
           if (closefile == TRUE)
           {
               cache_inode_close(entry,
+                       NULL,
                        CACHE_INODE_FLAG_REALLYCLOSE|CACHE_INODE_FLAG_NOT_PINNED,
                        &cache_status);
           }

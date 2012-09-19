@@ -140,6 +140,7 @@ cache_inode_commit(cache_entry_t *entry,
                   additional error form a close? */
                if (opened) {
                     cache_inode_close(entry,
+                                      context,
                                       CACHE_INODE_FLAG_CONTENT_HAVE |
                                       CACHE_INODE_FLAG_CONTENT_HOLD,
                                       status);
@@ -150,6 +151,7 @@ cache_inode_commit(cache_entry_t *entry,
           /* Close the FD if we opened it. */
           if (opened) {
                if (cache_inode_close(entry,
+                                     context,
                                      CACHE_INODE_FLAG_CONTENT_HAVE |
                                      CACHE_INODE_FLAG_CONTENT_HOLD,
                                      status) !=

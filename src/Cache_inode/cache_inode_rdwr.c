@@ -273,6 +273,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                     PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
                     PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
                     cache_inode_close(entry,
+                                      context,
                                       (CACHE_INODE_FLAG_REALLYCLOSE |
                                        CACHE_INODE_FLAG_CONTENT_HAVE |
                                        CACHE_INODE_FLAG_CONTENT_HOLD),
@@ -295,6 +296,7 @@ cache_inode_rdwr(cache_entry_t *entry,
 
           if (opened) {
                if (cache_inode_close(entry,
+                                     context,
                                      CACHE_INODE_FLAG_CONTENT_HAVE |
                                      CACHE_INODE_FLAG_CONTENT_HOLD,
                                      status) != CACHE_INODE_SUCCESS) {

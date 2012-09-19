@@ -249,9 +249,10 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
                                      p_end_of_dir);
 }
 
-fsal_status_t FSAL_closedir(fsal_dir_t * p_dir_descriptor /* IN */ )
+fsal_status_t FSAL_closedir(fsal_dir_t * p_dir_descriptor, /* IN */ 
+                            fsal_op_context_t * p_context  /* IN */ )
 {
-  return fsal_functions.fsal_closedir(p_dir_descriptor);
+  return fsal_functions.fsal_closedir(p_dir_descriptor, p_context);
 }
 
 fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
@@ -307,9 +308,10 @@ fsal_status_t FSAL_commit( fsal_file_t * p_file_descriptor,
   return fsal_functions.fsal_commit(p_file_descriptor, p_context, offset, length );
 }
 
-fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor /* IN */ )
+fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor, /* IN */
+                         fsal_op_context_t * p_context  /* IN */ )
 {
-  return fsal_functions.fsal_close(p_file_descriptor);
+  return fsal_functions.fsal_close(p_file_descriptor, p_context);
 }
 
 fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
@@ -324,9 +326,10 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
 }
 
 fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+                                   fsal_op_context_t * p_context,  /* IN */
                                    fsal_u64_t fileid)
 {
-  return fsal_functions.fsal_close_by_fileid(file_descriptor, fileid);
+  return fsal_functions.fsal_close_by_fileid(file_descriptor, p_context, fileid);
 }
 
 fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */

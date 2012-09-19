@@ -470,7 +470,8 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_desc     /* IN */
+fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_desc,     /* IN */
+                                fsal_op_context_t * p_context  /* IN */
     )
 {
 

@@ -209,7 +209,7 @@ fsal_status_t GPFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
     {
       /* clean & return */
       close(local_fd);
-      FSAL_close(&fs_fd);
+      FSAL_close(&fs_fd, p_context);
       Return(ERR_FSAL_NOMEM, ENOMEM, INDEX_FSAL_rcp);
     }
 
@@ -299,7 +299,7 @@ fsal_status_t GPFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
   gsh_free(IObuffer);
   close(local_fd);
-  FSAL_close(&fs_fd);
+  FSAL_close(&fs_fd, p_context);
 
   /* return status. */
 

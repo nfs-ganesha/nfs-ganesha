@@ -702,7 +702,8 @@ fsal_status_t PROXYFSAL_write(fsal_file_t * file_desc,       /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t PROXYFSAL_close(fsal_file_t * file_desc        /* IN */
+fsal_status_t PROXYFSAL_close(fsal_file_t * file_desc,        /* IN */
+                                fsal_op_context_t * p_context  /* IN */
     )
 {
 #define FSAL_CLOSE_NB_OP_ALLOC 2
@@ -782,6 +783,7 @@ fsal_status_t PROXYFSAL_close(fsal_file_t * file_desc        /* IN */
  */
 
 fsal_status_t PROXYFSAL_close_by_fileid(fsal_file_t * file_desc /* IN */ ,
+                                        fsal_op_context_t * p_context,  /* IN */
                                         fsal_u64_t fileid)
 #ifndef _USE_PROXY
 {
@@ -849,7 +851,7 @@ fsal_status_t PROXYFSAL_close_by_fileid(fsal_file_t * file_desc /* IN */ ,
 
   ReleaseTokenFSCall();
 
-  fsal_status = FSAL_close((fsal_file_t *)file_descriptor);
+  fsal_status = FSAL_close((fsal_file_t *)file_descriptor, p_context);
 
   Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_close_by_fileid);
 }

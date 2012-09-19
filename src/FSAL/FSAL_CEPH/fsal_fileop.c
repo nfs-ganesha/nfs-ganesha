@@ -363,7 +363,8 @@ fsal_status_t CEPHFSAL_write(fsal_file_t * extdescriptor,
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t CEPHFSAL_close(fsal_file_t * extdescriptor)
+fsal_status_t CEPHFSAL_close(fsal_file_t * extdescriptor,
+                             fsal_op_context_t * p_context)
 {
   cephfsal_file_t* descriptor = (cephfsal_file_t*) extdescriptor;
   struct ceph_mount_info *cmount = descriptor->ctx.export_context->cmount;

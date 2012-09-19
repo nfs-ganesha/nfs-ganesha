@@ -156,7 +156,8 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * p_dir_descriptor,       /* IN */
                                fsal_count_t * p_nb_entries,     /* OUT */
                                fsal_boolean_t * p_end_of_dir /* OUT */ );
 
-fsal_status_t HPSSFSAL_closedir(hpssfsal_dir_t * p_dir_descriptor /* IN */ );
+fsal_status_t HPSSFSAL_closedir(hpssfsal_dir_t * p_dir_descriptor, /* IN */
+                                fsal_op_context_t * p_context      /* IN */ );
 
 fsal_status_t HPSSFSAL_open_by_name(hpssfsal_handle_t * dirhandle,      /* IN */
                                     fsal_name_t * filename,     /* IN */
@@ -187,7 +188,8 @@ fsal_status_t HPSSFSAL_write(hpssfsal_file_t * p_file_descriptor,       /* IN */
                              caddr_t buffer,    /* IN */
                              fsal_size_t * p_write_amount /* OUT */ );
 
-fsal_status_t HPSSFSAL_close(hpssfsal_file_t * p_file_descriptor /* IN */ );
+fsal_status_t HPSSFSAL_close(hpssfsal_file_t * p_file_descriptor, /* IN */
+                             fsal_op_context_t * p_context        /* IN */ );
 
 fsal_status_t HPSSFSAL_open_by_fileid(hpssfsal_handle_t * filehandle,   /* IN */
                                       fsal_u64_t fileid,        /* IN */
@@ -198,6 +200,7 @@ fsal_status_t HPSSFSAL_open_by_fileid(hpssfsal_handle_t * filehandle,   /* IN */
                                       file_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t HPSSFSAL_close_by_fileid(hpssfsal_file_t * file_descriptor /* IN */ ,
+                                       fsal_op_context_t * p_context,  /* IN */
                                        fsal_u64_t fileid);
 
 fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * p_filehandle, /* IN */

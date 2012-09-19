@@ -582,7 +582,8 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
  *      - Another error code if an error occured during this call.
  */
 
-fsal_status_t LUSTREFSAL_close(fsal_file_t * pfile_desc    /* IN */
+fsal_status_t LUSTREFSAL_close(fsal_file_t * pfile_desc,    /* IN */
+                               fsal_op_context_t * p_context  /* IN */
     )
 {
 

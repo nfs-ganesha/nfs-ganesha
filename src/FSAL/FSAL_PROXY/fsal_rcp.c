@@ -209,7 +209,7 @@ fsal_status_t PROXYFSAL_rcp(fsal_handle_t * filehandle,    /* IN */
     {
       /* clean & return */
       close(local_fd);
-      FSAL_close((fsal_file_t *) &fs_fd);
+      FSAL_close((fsal_file_t *) &fs_fd, p_context);
       Return(ERR_FSAL_NOMEM, ENOMEM, INDEX_FSAL_rcp);
     }
 
@@ -288,7 +288,7 @@ fsal_status_t PROXYFSAL_rcp(fsal_handle_t * filehandle,    /* IN */
 
   gsh_free(IObuffer);
   close(local_fd);
-  FSAL_close((fsal_file_t *) &fs_fd);
+  FSAL_close((fsal_file_t *) &fs_fd, p_context);
 
   /* return status. */
   Return(st.major, st.minor, INDEX_FSAL_rcp);

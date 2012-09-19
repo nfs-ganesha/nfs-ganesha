@@ -1202,7 +1202,7 @@ int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
 
     }
 
-  FSAL_closedir(&dir);
+  FSAL_closedir(&dir, &context->context);
 
   return error;
 
