@@ -662,6 +662,8 @@ static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
         (void) call->call_hook(call, hook, arg, flags);
 }
 
+extern void nfs_rpc_enqueue_req(request_data_t *);
+
 int32_t
 nfs_rpc_submit_call(rpc_call_t *call, uint32_t flags)
 {
