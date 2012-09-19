@@ -1311,6 +1311,10 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
         if (nfsreq->r_u.nfs->funcdesc == INVALID_FUNCDESC)
             goto finish;
 
+        /* auth code may/will need these */
+        req->rq_msg = msg;
+        req->rq_xprt = xprt;
+
         if (AuthenticateRequest(nfsreq->r_u.nfs,
                                 &no_dispatch) != AUTH_OK || no_dispatch) {
             goto finish;
@@ -1318,8 +1322,6 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
 
         if (!nfs_rpc_get_args(nfsreq->r_u.nfs))
             goto finish;
-
-        req->rq_xprt = xprt;
 
         /* update accounting */
         gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_NONE|XPRT_PRIVATE_FLAG_INCREQ);

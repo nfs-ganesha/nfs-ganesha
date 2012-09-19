@@ -701,6 +701,7 @@ nfs_rpc_get_args(nfs_request_data_t *preqnfs)
 {
   SVCXPRT *xprt = preqnfs->xprt;
   nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
+  struct svc_req *req = &preqnfs->req;
 
   memset(arg_nfs, 0, sizeof(nfs_arg_t));
 
@@ -708,10 +709,9 @@ nfs_rpc_get_args(nfs_request_data_t *preqnfs)
                "Before svc_getargs on socket %d, xprt=%p",
                xprt->xp_fd, xprt);
 
-  if (svc_getargs2(xprt, preqnfs->funcdesc->xdr_decode_func, (caddr_t) arg_nfs,
-                   &preqnfs->lookahead) == false)
+  if (svc_getargs2(xprt, req, preqnfs->funcdesc->xdr_decode_func,
+                   (caddr_t) arg_nfs, &preqnfs->lookahead) == false)
     {
-      struct svc_req *req = &preqnfs->req;
       LogMajor(COMPONENT_DISPATCH,
                "svc_getargs failed for Program %d, Version %d, "
                "Function %d xid=%u",
