@@ -7263,8 +7263,14 @@ static inline bool_t xdr_nfs_opnum4(XDR * xdrs, nfs_opnum4 * objp)
 
 static inline bool_t xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
 {
+  static struct nfs_request_lookahead slhd = {
+    .flags = 0,
+    .read = 0,
+    .write = 0
+  };
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &slhd;
 
   if(!xdr_nfs_opnum4(xdrs, &objp->argop))
     return FALSE;
