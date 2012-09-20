@@ -780,10 +780,16 @@ nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags, void *u_data)
     return (0);
 }
 
-static void nfs_rpc_free_xprt(SVCXPRT *xprt)
+/**
+ * nfs_rpc_free_xprt:  xprt destructor callout
+ */
+static void
+nfs_rpc_free_xprt(SVCXPRT *xprt)
 {
-    if (xprt->xp_u1)
+    if (xprt->xp_u1) {
         free_gsh_xprt_private(xprt->xp_u1);
+        xprt->xp_p1 = NULL;
+    }
 }
 
 /**
@@ -1393,7 +1399,7 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
             goto finish;
 
         /* update accounting */
-        gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_NONE|XPRT_PRIVATE_FLAG_INCREQ);
+        gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ);
 
         /* XXX as above, the call has already passed is_rpc_call_valid,
          * the former check here is removed. */
