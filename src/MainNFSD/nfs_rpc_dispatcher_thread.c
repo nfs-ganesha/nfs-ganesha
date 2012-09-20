@@ -1486,15 +1486,17 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         LogDebug(COMPONENT_DISPATCH,
                  "global outstanding reqs quota exceeded (have %u, allowed %u)",
                  nreqs, nfs_param.core_param.dispatch_max_reqs);
-        thread_delay_ms(1); /* don't busy-wait */
+        thread_delay_ms(5); /* don't busy-wait */
         goto out;
     }
 
     LogFullDebug(COMPONENT_DISPATCH, "before guard_ref");
 
     /* clock duplicate, queued+stalled wakeups, queued wakeups */
-    if (! gsh_xprt_decoder_guard_ref(xprt, XPRT_PRIVATE_FLAG_NONE))
+    if (! gsh_xprt_decoder_guard_ref(xprt, XPRT_PRIVATE_FLAG_NONE)) {
+        thread_delay_ms(5);
         goto out;
+    }
 
     LogFullDebug(COMPONENT_DISPATCH, "before cond stall");
 
