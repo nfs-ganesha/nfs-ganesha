@@ -10,15 +10,7 @@ libfsalcommon_la_SOURCES = fsal_errors.c           \
 			   common_functions.c      \
 			   fsal_config.c	   \
 			   default_methods.c       \
-                           common_pnfs.c           \
-			   ../include/FSAL/access_check.h \
-			   ../include/FSAL/common_functions.h \
-			   ../include/FSAL/fsal_commonlib.h \
-			   ../include/FSAL/fsal_init.h \
-                           ../include/fsal.h       \
-                           ../include/fsal_types.h \
-                           ../include/err_fsal.h   \
-                           ../include/fsal_convert.h 
+                           common_pnfs.c
 
 
 # What's next is required to allow dynamic FSAL to compile

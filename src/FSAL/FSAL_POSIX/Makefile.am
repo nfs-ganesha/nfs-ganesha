@@ -11,9 +11,6 @@ libfsalposix_la_SOURCES = interface.c fsal_convert.c   \
 			scanmount.c      \
 			fastdb.c         \
 	                sockbuf.c encoding.c nodedb.c redblack.c connection.c connectionpool.c \
-	                ../../include/fsal.h                     \
-                        ../../include/fsal_types.h	         \
-	                ../../include/err_fsal.h	         \
 	                ../../include/FSAL/FSAL_POSIX/fsal_handle_syscalls.h
 
 libfsalposix_la_CFLAGS   = $(FSAL_CFLAGS) $(SEC_CFLAGS) @POSIX_CFLAGS@

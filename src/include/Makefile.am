@@ -3,7 +3,7 @@ noinst_HEADERS = abstract_atomic.h               \
 		 ganesha_types.h                 \
                  fsal.h                          \
                  fsal_pnfs.h                     \
-                 pnfs_utils.h                   \
+                 pnfs_utils.h                    \
                  HashData.h                      \
                  HashTable.h                     \
                  MesureTemps.h                   \
@@ -18,6 +18,10 @@ noinst_HEADERS = abstract_atomic.h               \
                  RW_Lock.h                       \
                  SemN.h                          \
                  nodelist.h                      \
+                 fsal.h                          \
+                 fsal_api.h                      \
+                 fsal_convert.h                  \
+                 fsal_handle_syscalls.h          \
                  fsal_types.h                    \
                  fsal_glue.h                     \
                  fsal_glue_const.h               \

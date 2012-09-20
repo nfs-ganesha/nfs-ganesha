@@ -11,9 +11,6 @@ libfsallustre_la_SOURCES = fsal_convert.c   \
                            handle.c         \
                            file.c           \
                            xattrs.c         \
-                          ../../include/fsal.h       \
-                          ../../include/fsal_types.h \
-                          ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_handle.h
 
@@ -36,9 +33,6 @@ libfsalshook_la_SOURCES = fsal_convert.c   \
                           handle.c         \
                           file.c           \
                           xattrs.c         \
-                          ../../include/fsal.h       \
-                          ../../include/fsal_types.h \
-                          ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
 
 libfsalshook_la_CFLAGS                = $(FSAL_CFLAGS) $(SEC_CFLAGS) @SHOOK_CFLAGS@

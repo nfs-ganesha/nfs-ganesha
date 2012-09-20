@@ -5,7 +5,7 @@ noinst_LTLIBRARIES            = libnfs_mnt_xdr.la
 
 libnfs_mnt_xdr_la_SOURCES = xdr_mount.c                    \
                             xdr_nfs23.c                    \
-                            xdr_nfsv41c                    \
+                            xdr_nfsv41.c                   \
                             ../../include/nfs23.h          \
                             ../../include/nfsv41.h         \
                             ../../include/mount.h          \
