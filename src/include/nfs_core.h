@@ -623,8 +623,6 @@ extern pool_t *nfs_clientid_pool;
 /*
  *functions prototypes
  */
-enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
-                                   bool *dispatch);
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();

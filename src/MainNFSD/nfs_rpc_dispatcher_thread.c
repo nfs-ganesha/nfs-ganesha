@@ -1224,6 +1224,71 @@ free_nfs_request(request_data_t *nfsreq)
     pool_free(request_pool, nfsreq);
 }
 
+static inline enum auth_stat
+AuthenticateRequest(nfs_request_data_t *nfsreq, bool *no_dispatch)
+{
+  struct rpc_msg *msg;
+  struct svc_req *req;
+  SVCXPRT *xprt;
+  enum auth_stat why;
+
+  /* A few words of explanation are required here:
+   * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch
+   * remains false and the request is proceeded normally.
+   * If authentication is RPCSEC_GSS, no_dispatch may have value true, this
+   * means that gc->gc_proc != RPCSEC_GSS_DATA and that the message is in fact
+   * an internal negociation message from RPCSEC_GSS using GSSAPI. It then
+   * should not be proceed by the worker and SVC_STAT should be returned to
+   * the dispatcher.
+   */
+
+  *no_dispatch = false;
+
+  /* Set pointers */
+  msg = &(nfsreq->msg);
+  req = &(nfsreq->req);
+  xprt = nfsreq->xprt;
+
+  req->rq_xprt = nfsreq->xprt;
+  req->rq_prog = msg->rm_call.cb_prog;
+  req->rq_vers = msg->rm_call.cb_vers;
+  req->rq_proc = msg->rm_call.cb_proc;
+  req->rq_xid = msg->rm_xid;
+  req->rq_msg = msg;
+
+  LogFullDebug(COMPONENT_DISPATCH,
+               "About to authenticate Prog=%d, vers=%d, proc=%d xid=%u xprt=%p",
+               (int)req->rq_prog, (int)req->rq_vers,
+               (int)req->rq_proc, req->rq_xid, req->rq_xprt);
+
+  if((why = svc_auth_authenticate(req, msg, no_dispatch)) != AUTH_OK)
+    {
+      char auth_str[AUTH_STR_LEN];
+      auth_stat2str(why, auth_str);
+      LogInfo(COMPONENT_DISPATCH,
+              "Could not authenticate request... rejecting with AUTH_STAT=%s",
+              auth_str);
+      svcerr_auth(xprt, req, why);
+      *no_dispatch = true;
+      return why;
+    }
+  else
+    {
+#ifdef _HAVE_GSSAPI
+      struct rpc_gss_cred *gc;
+
+      if(req->rq_verf.oa_flavor == RPCSEC_GSS)
+        {
+          gc = (struct rpc_gss_cred *) req->rq_clntcred;
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "AuthenticateRequest no_dispatch=%d gc->gc_proc=(%u) %s",
+                       *no_dispatch, gc->gc_proc, str_gc_proc(gc->gc_proc));
+        }
+#endif
+    } /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
+  return AUTH_OK;
+}
+
 static inline enum xprt_stat
 thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
 {
@@ -1311,10 +1376,6 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
         nfsreq->r_u.nfs->funcdesc = nfs_rpc_get_funcdesc(nfsreq->r_u.nfs);
         if (nfsreq->r_u.nfs->funcdesc == INVALID_FUNCDESC)
             goto finish;
-
-        /* auth code may/will need these */
-        req->rq_msg = msg;
-        req->rq_xprt = xprt;
 
         if (AuthenticateRequest(nfsreq->r_u.nfs,
                                 &no_dispatch) != AUTH_OK || no_dispatch) {
