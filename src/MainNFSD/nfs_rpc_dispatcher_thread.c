@@ -1107,6 +1107,7 @@ retry_deq:
         case 0:
             /* MOUNT */
             qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
+            break;
         case 1:
             /* NFS_CALL */
             qpair = &(nfs_request_q->qset[REQ_Q_CALL]);
