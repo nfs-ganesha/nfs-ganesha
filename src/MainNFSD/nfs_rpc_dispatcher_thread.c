@@ -931,6 +931,9 @@ nfs_rpc_queue_init(void)
         nfs_rpc_q_init(&qpair->consumer);
     }
 
+    /* rollover safe counter */
+    pthread_spin_init(&nfs_req_st.reqs.slot_sp, PTHREAD_PROCESS_PRIVATE);
+
     /* waitq */
     init_glist(&nfs_req_st.reqs.wait_list);
     nfs_req_st.reqs.waiters = 0;
