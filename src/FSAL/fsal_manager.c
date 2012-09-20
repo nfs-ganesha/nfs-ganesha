@@ -296,7 +296,7 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 			oldname = NULL;
 		}
 		if(oldname != NULL)
-			free(oldname);
+			gsh_free(oldname);
 	}
 	*fsal_hdl_p = fsal;
 	load_state = idle;
@@ -444,13 +444,12 @@ int register_fsal(struct fsal_module *fsal_hdl,
 /* allocate and init ops vector to system wide defaults
  * from FSAL/default_methods.c
  */
-	fsal_hdl->ops = malloc(sizeof(struct fsal_ops));
+	fsal_hdl->ops = gsh_malloc(sizeof(struct fsal_ops));
 	if(fsal_hdl->ops == NULL) {
 		so_error = ENOMEM;
 		goto errout;
 	}
 	memcpy(fsal_hdl->ops, &def_fsal_ops, sizeof(struct fsal_ops));
-
 
 	pthread_mutexattr_init(&attrs);
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
@@ -465,11 +464,11 @@ int register_fsal(struct fsal_module *fsal_hdl,
 
 errout:
 	if(fsal_hdl->path)
-		free(fsal_hdl->path);
+		gsh_free(fsal_hdl->path);
 	if(fsal_hdl->name)
-		free(fsal_hdl->name);
+		gsh_free(fsal_hdl->name);
 	if(fsal_hdl->ops)
-		free(fsal_hdl->ops);
+		gsh_free(fsal_hdl->ops);
 	load_state = error;
 	pthread_mutex_unlock(&fsal_lock);
 	LogCrit(COMPONENT_INIT,
@@ -492,11 +491,11 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
 		goto out;
 	}
 	if(fsal_hdl->path)
-		free(fsal_hdl->path);
+		gsh_free(fsal_hdl->path);
 	if(fsal_hdl->name)
-		free(fsal_hdl->name);
+		gsh_free(fsal_hdl->name);
 	if(fsal_hdl->ops)
-		free(fsal_hdl->ops);
+		gsh_free(fsal_hdl->ops);
 	retval = 0;
 out:
 	return retval;

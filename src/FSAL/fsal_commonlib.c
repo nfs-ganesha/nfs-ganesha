@@ -122,19 +122,19 @@ int fsal_export_init(struct fsal_export *exp,
 	extern struct fsal_ds_ops def_ds_ops;
 	pthread_mutexattr_t attrs;
 
-	exp->ops = malloc(sizeof(struct export_ops));
+	exp->ops = gsh_malloc(sizeof(struct export_ops));
 	if(exp->ops == NULL) {
 		goto errout;
 	}
 	memcpy(exp->ops, &def_export_ops, sizeof(struct export_ops));
 
-	exp->obj_ops = malloc(sizeof(struct fsal_obj_ops));
+	exp->obj_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
 	if(exp->obj_ops == NULL) {
 		goto errout;
 	}
 	memcpy(exp->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 
-        exp->ds_ops = malloc(sizeof(struct fsal_obj_ops));
+        exp->ds_ops = gsh_malloc(sizeof(struct fsal_obj_ops));
         if(exp->ds_ops == NULL) {
                 goto errout;
         }
@@ -152,9 +152,9 @@ int fsal_export_init(struct fsal_export *exp,
 
 errout:
 	if(exp->ops)
-		free(exp->ops);
+		gsh_free(exp->ops);
 	if(exp->obj_ops)
-		free(exp->obj_ops);
+		gsh_free(exp->obj_ops);
 	return ENOMEM;
 }
 
@@ -170,15 +170,15 @@ errout:
 void free_export_ops(struct fsal_export *exp_hdl)
 {
 	if(exp_hdl->ops) {
-		free(exp_hdl->ops);
+		gsh_free(exp_hdl->ops);
 		exp_hdl->ops = NULL;
 	}
 	if(exp_hdl->obj_ops) {
-		free(exp_hdl->obj_ops);
+		gsh_free(exp_hdl->obj_ops);
 		exp_hdl->obj_ops = NULL;
 	}
 	if(exp_hdl->ds_ops) {
-		free(exp_hdl->ds_ops);
+		gsh_free(exp_hdl->ds_ops);
 		exp_hdl->ds_ops = NULL;
 	}
 }
