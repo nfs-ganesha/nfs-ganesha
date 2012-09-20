@@ -84,6 +84,7 @@ struct nfs_req_st
         struct req_q_set nfs_request_q;
         uint64_t size;
         pthread_spinlock_t sp;
+        pthread_spinlock_t slot_sp;
         struct glist_head wait_list;
         uint32_t waiters;
     } reqs;
@@ -112,11 +113,11 @@ static inline uint32_t
 nfs_rpc_q_next_slot(void)
 {
     uint32_t ix;
-    pthread_spin_lock(&nfs_req_st.reqs.sp);
+    pthread_spin_lock(&nfs_req_st.reqs.slot_sp);
     ix = ++(nfs_req_st.reqs.ctr);
     if (! ix)
         ix = ++(nfs_req_st.reqs.ctr);
-    pthread_spin_unlock(&nfs_req_st.reqs.sp);
+    pthread_spin_unlock(&nfs_req_st.reqs.slot_sp);
     return (ix);
 }
 
