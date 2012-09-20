@@ -51,7 +51,6 @@
 
 /* alloc_handle
  * allocate and fill in a handle
- * this uses malloc/free for the time being.
  */
 
 static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
@@ -64,14 +63,11 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	struct vfs_fsal_obj_handle *hdl;
 	fsal_status_t st;
 
-	hdl = malloc(sizeof(struct vfs_fsal_obj_handle) +
-		     sizeof(struct file_handle) +
-		     fh->handle_bytes);
+	hdl = gsh_calloc(1, (sizeof(struct vfs_fsal_obj_handle) +
+			     sizeof(struct file_handle) +
+			     fh->handle_bytes));
 	if(hdl == NULL)
 		return NULL;
-	memset(hdl, 0, (sizeof(struct vfs_fsal_obj_handle) +
-			sizeof(struct file_handle) +
-			fh->handle_bytes));
 	hdl->handle = (struct file_handle *)&hdl[1];
 	memcpy(hdl->handle, fh,
 	       sizeof(struct file_handle) + fh->handle_bytes);
@@ -83,7 +79,7 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	   && link_content != NULL) {
 		size_t len = strlen(link_content) + 1;
 
-		hdl->u.symlink.link_content = malloc(len);
+		hdl->u.symlink.link_content = gsh_malloc(len);
 		if(hdl->u.symlink.link_content == NULL) {
 			goto spcerr;
 		}
@@ -92,14 +88,14 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	} else if(vfs_unopenable_type(hdl->obj_handle.type)
 		  && dir_fh != NULL
 		  && unopenable_name != NULL) {
-		hdl->u.unopenable.dir = malloc(sizeof(struct file_handle)
+		hdl->u.unopenable.dir = gsh_malloc(sizeof(struct file_handle)
                                                + dir_fh->handle_bytes);
 		if(hdl->u.unopenable.dir == NULL)
 			goto spcerr;
 		memcpy(hdl->u.unopenable.dir,
 		       dir_fh,
 		       sizeof(struct file_handle) + dir_fh->handle_bytes);
-		hdl->u.unopenable.name = malloc(strlen(unopenable_name) + 1);
+		hdl->u.unopenable.name = gsh_malloc(strlen(unopenable_name) + 1);
 		if(hdl->u.unopenable.name == NULL)
 			goto spcerr;
 		strcpy(hdl->u.unopenable.name, unopenable_name);
@@ -123,14 +119,14 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 spcerr:
 	if(hdl->obj_handle.type == SYMBOLIC_LINK) {
 		if(hdl->u.symlink.link_content != NULL)
-			free(hdl->u.symlink.link_content);
+			gsh_free(hdl->u.symlink.link_content);
         } else if(vfs_unopenable_type(hdl->obj_handle.type)) {
 		if(hdl->u.unopenable.name != NULL)
-			free(hdl->u.unopenable.name);
+			gsh_free(hdl->u.unopenable.name);
 		if(hdl->u.unopenable.dir != NULL)
-			free(hdl->u.unopenable.dir);
+			gsh_free(hdl->u.unopenable.dir);
 	}
-	free(hdl);  /* elvis has left the building */
+	gsh_free(hdl);  /* elvis has left the building */
 	return NULL;
 }
 
@@ -685,7 +681,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		char link_buff[1024];
 
 		if(myself->u.symlink.link_content != NULL) {
-			free(myself->u.symlink.link_content);
+			gsh_free(myself->u.symlink.link_content);
 			myself->u.symlink.link_content = NULL;
 			myself->u.symlink.link_size = 0;
 		}
@@ -705,7 +701,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		}
 		close(fd);
 
-		myself->u.symlink.link_content = malloc(retlink + 1);
+		myself->u.symlink.link_content = gsh_malloc(retlink + 1);
 		if(myself->u.symlink.link_content == NULL) {
 			fsal_error = ERR_FSAL_NOMEM;
 			goto out;
@@ -1401,14 +1397,14 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	myself->obj_handle.export = NULL;
 	if(obj_hdl->type == SYMBOLIC_LINK) {
 		if(myself->u.symlink.link_content != NULL)
-			free(myself->u.symlink.link_content);
+			gsh_free(myself->u.symlink.link_content);
 	} else if(vfs_unopenable_type(obj_hdl->type)) {
 		if(myself->u.unopenable.name != NULL)
-			free(myself->u.unopenable.name);
+			gsh_free(myself->u.unopenable.name);
 		if(myself->u.unopenable.dir != NULL)
-			free(myself->u.unopenable.dir);
+			gsh_free(myself->u.unopenable.dir);
 	}
-	free(myself);
+	gsh_free(myself);
 	return fsalstat(fsal_error, 0);
 }
 
@@ -1513,7 +1509,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 	}
 	if(S_ISLNK(stat.st_mode)) {
-		link_content = malloc(PATH_MAX);
+		link_content = gsh_malloc(PATH_MAX);
 		retlink = readlinkat(dir_fd, basepart,
 				     link_content, PATH_MAX);
 		if(retlink < 0 || retlink == PATH_MAX) {
@@ -1528,8 +1524,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
                   S_ISBLK(stat.st_mode)) {
                 /* AF_UNIX sockets, character special, and block
                    special files  require craziness */
-		dir_fh = malloc(sizeof(struct file_handle) + MAX_HANDLE_SZ);
-		memset(dir_fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
+		dir_fh = gsh_calloc(1, (sizeof(struct file_handle) + MAX_HANDLE_SZ));
 		dir_fh->handle_bytes = MAX_HANDLE_SZ;
 		retval = name_to_handle_at(dir_fd,
 					   "",
@@ -1546,9 +1541,9 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(fh, &stat, link_content, dir_fh, unopenable_name, exp_hdl);
 	if(link_content != NULL)
-		free(link_content);
+		gsh_free(link_content);
 	if(dir_fh != NULL)
-		free(dir_fh);
+		gsh_free(dir_fh);
 	if(hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 		*handle = NULL; /* poison it */
@@ -1561,9 +1556,9 @@ fileerr:
 	retval = errno;
 linkerr:
 	if(link_content != NULL)
-		free(link_content);
+		gsh_free(link_content);
 	if(dir_fh != NULL)
-		free(dir_fh);
+		gsh_free(dir_fh);
 	close(dir_fd);
 	fsal_error = posix2fsal_error(retval);
 

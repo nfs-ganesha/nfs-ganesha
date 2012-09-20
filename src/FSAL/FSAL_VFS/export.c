@@ -99,17 +99,17 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	if(myself->root_fd >= 0)
 		close(myself->root_fd);
 	if(myself->root_handle != NULL)
-		free(myself->root_handle);
+		gsh_free(myself->root_handle);
 	if(myself->fstype != NULL)
-		free(myself->fstype);
+		gsh_free(myself->fstype);
 	if(myself->mntdir != NULL)
-		free(myself->mntdir);
+		gsh_free(myself->mntdir);
 	if(myself->fs_spec != NULL)
-		free(myself->fs_spec);
+		gsh_free(myself->fs_spec);
 	pthread_mutex_unlock(&exp_hdl->lock);
 
 	pthread_mutex_destroy(&exp_hdl->lock);
-	free(myself);  /* elvis has left the building */
+	gsh_free(myself);  /* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 
 errout:
@@ -500,13 +500,12 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	myself = malloc(sizeof(struct vfs_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct vfs_fsal_export));
 	if(myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
 			 "vfs_fsal_create: out of memory for object");
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
-	memset(myself, 0, sizeof(struct vfs_fsal_export));
 	myself->root_fd = -1;
 
         retval = fsal_export_init(&myself->export,
@@ -618,7 +617,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			retval = errno;
 			goto errout;
 		}
-		myself->root_handle = malloc(sizeof(struct file_handle) + fh->handle_bytes);
+		myself->root_handle = gsh_malloc(sizeof(struct file_handle)
+						 + fh->handle_bytes);
 		if(myself->root_handle == NULL) {
 			LogMajor(COMPONENT_FSAL,
 				 "memory for root handle, errno=(%d) %s",
@@ -627,7 +627,9 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			retval = errno;
 			goto errout;
 		}
-		memcpy(myself->root_handle, fh, sizeof(struct file_handle) + fh->handle_bytes);
+		memcpy(myself->root_handle,
+		       fh,
+		       sizeof(struct file_handle) + fh->handle_bytes);
 	}
 	myself->fstype = strdup(type);
 	myself->fs_spec = strdup(fs_spec);
@@ -640,17 +642,17 @@ errout:
 	if(myself->root_fd >= 0)
 		close(myself->root_fd);
 	if(myself->root_handle != NULL)
-		free(myself->root_handle);
+		gsh_free(myself->root_handle);
 	if(myself->fstype != NULL)
-		free(myself->fstype);
+		gsh_free(myself->fstype);
 	if(myself->mntdir != NULL)
-		free(myself->mntdir);
+		gsh_free(myself->mntdir);
 	if(myself->fs_spec != NULL)
-		free(myself->fs_spec);
+		gsh_free(myself->fs_spec);
 	free_export_ops(&myself->export);
 	pthread_mutex_unlock(&myself->export.lock);
 	pthread_mutex_destroy(&myself->export.lock);
-	free(myself);  /* elvis has left the building */
+	gsh_free(myself);  /* elvis has left the building */
 	return fsalstat(fsal_error, retval);
 }
 
