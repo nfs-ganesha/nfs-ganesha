@@ -19,14 +19,13 @@ libfsalposix_la_LIBADD   = @POSIX_LIB@
 
 new: clean all
 
-.PHONY: nodedb
-
 all: nodedb all-am
 
 nodedb:
 	cd nodedb && make all
 
 interface.c: nodedb
+	cd nodedb && make all
 
 interface.lo: interface.c
 sockbuf.lo: sockbuf.c
