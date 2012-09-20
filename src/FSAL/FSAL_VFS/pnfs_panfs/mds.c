@@ -22,6 +22,8 @@
 #include "mds.h"
 #include "panfs_um_pnfs.h"
 
+#include "../vfs_methods.h"
+
 /**
  * @file   mds.c
  * @author Boaz Harrosh <bharrosh@panasas.com>
@@ -90,7 +92,7 @@ static void _XDR_2_ioctlxdr_write(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 static inline
 int _get_root_fd(struct fsal_export *exp_hdl)
 {
-	return -1;
+	return vfs_get_root_fd(exp_hdl);
 }
 
 /*
@@ -101,7 +103,13 @@ int _get_root_fd(struct fsal_export *exp_hdl)
 static inline
 int _get_obj_fd(struct fsal_obj_handle *obj_hdl)
 {
-	return -1;
+	struct vfs_fsal_obj_handle *myself;
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	if(myself->u.file.fd >= 0 && myself->u.file.openflags != FSAL_O_CLOSED)
+		return myself->u.file.fd;
+	else
+		return -1;
 }
 
 /*================================= export ops ===============================*/
