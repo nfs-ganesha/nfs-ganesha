@@ -49,6 +49,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "timers.h"
 
 #define NFS_V2_NB_COMMAND 18
 extern char *nfsv2_function_names[];
@@ -92,10 +93,12 @@ typedef struct nfs_request_stat_item__
   unsigned int total;
   unsigned int success;
   unsigned int dropped;
-  unsigned int tot_latency;
-  unsigned int min_latency;
-  unsigned int max_latency;
-  unsigned int tot_await_time;
+  msectimer_t  tot_latency;
+  msectimer_t  min_latency;
+  msectimer_t  max_latency;
+#ifdef _USE_QUEUE_TIMER
+  msectimer_t  tot_await_time;
+#endif
 } nfs_request_stat_item_t;
 
 typedef struct nfs_request_stat__
@@ -121,18 +124,6 @@ typedef struct nfs_request_stat__
   nfs_request_stat_item_t stat_req_rquota1[RQUOTA_NB_COMMAND];
   nfs_request_stat_item_t stat_req_rquota2[RQUOTA_NB_COMMAND];
 } nfs_request_stat_t;
-
-typedef enum
-{
-  SVC_TIME = 0,
-  AWAIT_TIME
-} nfs_stat_latency_type_t;
-
-typedef struct nfs_request_latency_stat__
-{
-  nfs_stat_latency_type_t type;
-  unsigned int latency;
-} nfs_request_latency_stat_t;
 
 typedef enum
 {
@@ -163,14 +154,25 @@ typedef struct nfs_worker_stat__
   fsal_statistics_t fsal_stats;
 } nfs_worker_stat_t;
 
-void nfs_stat_update(nfs_stat_type_t type,
-                     nfs_request_stat_t * pstat_req, struct svc_req *preq,
-                     nfs_request_latency_stat_t * lstat_req);
+void nfs_stat_update(nfs_stat_type_t      type,
+                     nfs_request_stat_t * pstat_req,
+                     struct svc_req     * preq,
+#ifdef _USE_QUEUE_TIMER
+                     msectimer_t          await_time,
+#endif
+                     msectimer_t          latency
+                     );
 
-void set_min_latency(nfs_request_stat_item_t *cur_stat, unsigned int val);
+static inline void set_min_latency(msectimer_t *cur_val, msectimer_t val)
+{
+  if(val < *cur_val)
+      *cur_val = val;
+}
 
-void set_max_latency(nfs_request_stat_item_t *cur_stat, unsigned int val);
-
-struct timeval time_diff(struct timeval time_from, struct timeval time_to);
+static inline void set_max_latency(msectimer_t *cur_val, msectimer_t val)
+{
+  if(val > *cur_val)
+      *cur_val = val;
+}
 
 #endif                          /* _NFS_STAT_H */
