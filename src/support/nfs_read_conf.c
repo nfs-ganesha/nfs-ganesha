@@ -409,6 +409,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
       else if(!strcasecmp(key_name, "Long_Processing_Threshold"))
         {
           pparam->long_processing_threshold = atoi(key_value);
+          pparam->long_processing_threshold_msec = pparam->long_processing_threshold * MSEC_PER_SEC;
         }
       else if(!strcasecmp( key_name, "Decoder_Fridge_Expiration_Delay" ) )
         {

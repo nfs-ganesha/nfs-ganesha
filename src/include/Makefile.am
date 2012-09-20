@@ -59,6 +59,7 @@ noinst_HEADERS = abstract_atomic.h               \
                  ganesha_rpc.h                   \
                  Rpc_com_tirpc.h                 \
                  solaris_port.h                  \
+                 timers.h                        \
                  nfs_req_queue.h                 \
                  wait_queue.h                    \
                  fridgethr.h                     \

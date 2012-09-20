@@ -63,6 +63,7 @@
 
 #include "cache_inode.h"
 #include "fsal_up.h"
+#include "timers.h"
 
 #ifdef _USE_9P
 #include "9p.h"
@@ -220,6 +221,7 @@ typedef struct nfs_core_param__
   unsigned int dispatch_max_reqs_xprt;
   unsigned int stats_update_delay;
   unsigned int long_processing_threshold;
+  unsigned int long_processing_threshold_msec;
   unsigned int dump_stats_per_client;
   char stats_file_path[MAXPATHLEN];
   char stats_per_client_directory[MAXPATHLEN];
@@ -517,7 +519,9 @@ struct nfs_worker_data__
   fsal_op_context_t thread_fsal_context;
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *funcdesc;
-  struct timeval timer_start;
+#ifdef _USE_STAT_EXPORTER
+  msectimer_t timer_start;
+#endif
 };
 
 /* flush thread data */
@@ -547,7 +551,7 @@ typedef struct ganesha_stats__ {
     hash_stat_t             drc_udp;
     hash_stat_t             drc_tcp;
     fsal_statistics_t       global_fsal;
-    unsigned int avg_latency;
+    msectimer_t             avg_latency;
     unsigned long long     total_fsal_calls;
 } ganesha_stats_t;
 

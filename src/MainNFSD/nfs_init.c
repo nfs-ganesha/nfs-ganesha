@@ -310,6 +310,7 @@ void nfs_set_param_default()
   nfs_param.core_param.nb_max_fd = 1024;
   nfs_param.core_param.stats_update_delay = 60;
   nfs_param.core_param.long_processing_threshold = 10; /* seconds */
+  nfs_param.core_param.long_processing_threshold_msec = 10 * MSEC_PER_SEC; /* miliseconds */
   nfs_param.core_param.decoder_fridge_expiration_delay = -1;
 /* only NFSv4 is supported for the FSAL_PROXY */
 #if ! defined( _USE_PROXY ) || defined ( _HANDLE_MAPPING )

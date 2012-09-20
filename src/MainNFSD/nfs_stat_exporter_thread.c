@@ -267,11 +267,13 @@ int merge_stats(nfs_request_stat_item_t *global_stat_items,
               workers_stat_items[i][function_index].min_latency;
           global_stat_items[function_index].max_latency =
               workers_stat_items[i][function_index].max_latency;
+#ifdef _USE_QUEUE_TIMER
           if(detail_flag)
             {
               global_stat_items[function_index].tot_await_time =
                   workers_stat_items[i][function_index].tot_await_time;
             }
+#endif
         }
       else
         {
@@ -283,15 +285,17 @@ int merge_stats(nfs_request_stat_item_t *global_stat_items,
               workers_stat_items[i][function_index].dropped;
           global_stat_items[function_index].tot_latency +=
               workers_stat_items[i][function_index].tot_latency;
-          set_min_latency(&(global_stat_items[function_index]),
+          set_min_latency(&(global_stat_items[function_index].min_latency),
               workers_stat_items[i][function_index].min_latency);
-          set_max_latency(&(global_stat_items[function_index]),
+          set_max_latency(&(global_stat_items[function_index].max_latency),
               workers_stat_items[i][function_index].max_latency);
+#ifdef _USE_QUEUE_TIMER
           if(detail_flag)
             {
               global_stat_items[function_index].tot_await_time +=
                   workers_stat_items[i][function_index].tot_await_time;
             }
+#endif
         }
     }
 
@@ -304,10 +308,6 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
 
   char *offset = NULL;
   unsigned int i = 0;
-  unsigned int tot_calls =0, tot_latency = 0;
-  unsigned int tot_await_time = 0;
-  float tot_latency_ms = 0;
-  float tot_await_time_ms = 0;
   char *name = NULL;
   char *ver __attribute__((unused)) = NULL;
   char *call = NULL;
@@ -316,32 +316,32 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
   offset = stat_buf;
   for(i = 0; i < num_cmds; i++)
     {
-      tot_calls = global_stat_items[i].total;
-      tot_latency = global_stat_items[i].tot_latency;
-      tot_latency_ms = (float)((float)tot_latency / (float)1000);
-      if(detail_flag)
-        {
-          tot_await_time = global_stat_items[i].tot_await_time;
-          tot_await_time_ms = (float)((float)tot_await_time / (float)1000);
-        }
-
       /* Extract call name from function name. */
-      name = strdup(function_names[i]);
+      name = gsh_strdup(function_names[i]);
       ver = strtok_r(name, "_", &saveptr);
       call = strtok_r(NULL, "_", &saveptr);
 
+#ifdef _USE_QUEUE_TIMER
       if(detail_flag)
-        sprintf(offset, "_%s_ %u %.2f %.2f", call, tot_calls, tot_latency_ms, tot_await_time_ms);
+        offset += sprintf(offset, "_%s_ %u %"PRIu64" %"PRIu64,
+                          call,
+                          global_stat_items[i].total,
+                          global_stat_items[i].tot_latency,
+                          global_stat_items[i].tot_await_time);
       else
-        sprintf(offset, "_%s_ %u %.2f", call, tot_calls, tot_latency_ms);
-      offset += strlen(stat_buf);
+#endif
+        offset += sprintf(offset, "_%s_ %u %"PRIu64,
+                          call,
+                          global_stat_items[i].total,
+                          global_stat_items[i].tot_latency);
+
       if(i != num_cmds - 1)
         {
           sprintf(offset, "%s", " ");
           offset += 1;
         }
 
-      free(name);
+      gsh_free(name);
     }
 
   return rc;
@@ -718,8 +718,9 @@ void *stat_exporter_thread(void *UnusedArg)
 
 void *long_processing_thread(void *UnusedArg)
 {
-  struct timeval timer_end;
-  struct timeval timer_diff;
+  msectimer_t timer_end;
+  msectimer_t timer_diff;
+  msectimer_t timer_diff_sec;
   int i;
 
   SetNameFunction("long_processing");
@@ -727,25 +728,21 @@ void *long_processing_thread(void *UnusedArg)
   while(1)
     {
       sleep(1);
-      gettimeofday(&timer_end, NULL);
+
+      timer_end = timer_get();
 
       for(i = 0; i < nfs_param.core_param.nb_worker; i++)
         {
-          P(workers_data[i].request_pool_mutex);
-          if(workers_data[i].timer_start.tv_sec == 0)
-            {
-              V(workers_data[i].request_pool_mutex);
-              continue;
-            }
-          timer_diff = time_diff(workers_data[i].timer_start, timer_end);
-          V(workers_data[i].request_pool_mutex);
-          if(timer_diff.tv_sec == nfs_param.core_param.long_processing_threshold ||
-             timer_diff.tv_sec == nfs_param.core_param.long_processing_threshold * 10)
+          timer_diff = timer_end - atomic_fetch_msectimer_t(&workers_data[i].timer_start);
+          timer_diff_sec = timer_diff / MSEC_PER_SEC;
+
+          if(timer_diff_sec == nfs_param.core_param.long_processing_threshold ||
+             timer_diff_sec == nfs_param.core_param.long_processing_threshold * 10)
             LogEvent(COMPONENT_DISPATCH,
-                     "Worker#%d: Function %s has been running for %llu.%.6llu seconds",
+                     "Worker#%d: Function %s has been running for %lu.%03lu seconds",
                      i, workers_data[i].funcdesc->funcname,
-                     (unsigned long long)timer_diff.tv_sec,
-                     (unsigned long long)timer_diff.tv_usec);
+                     timer_diff / MSEC_PER_SEC,
+                     timer_diff % MSEC_PER_SEC);
         }
     }
 
