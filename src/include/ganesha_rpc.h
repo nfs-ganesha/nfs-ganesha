@@ -108,6 +108,7 @@ alloc_gsh_xprt_private(SVCXPRT *xprt, uint32_t flags)
     xu->xprt = xprt;
     xu->flags = XPRT_PRIVATE_FLAG_NONE;
     xu->req_cnt = 0;
+    xu->drc = NULL;
 
     if (flags & XPRT_PRIVATE_FLAG_REF)
         xu->refcnt = 1;
