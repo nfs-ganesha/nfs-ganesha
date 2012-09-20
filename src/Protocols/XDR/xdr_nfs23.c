@@ -13,6 +13,12 @@
 #include "ganesha_rpc.h"
 #include "nfs23.h"
 
+static struct nfs_request_lookahead dummy_lookahead = {
+  .flags = 0,
+  .read = 0,
+  .write = 0
+  };
+
 bool_t xdr_nfspath2(xdrs, objp)
 register XDR *xdrs;
 nfspath2 *objp;
@@ -596,7 +602,8 @@ READDIR2args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_fhandle2(xdrs, objp->dir))
     return (FALSE);
@@ -723,7 +730,8 @@ RENAME2args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_diropargs2(xdrs, &objp->from))
     return (FALSE);
@@ -743,7 +751,8 @@ CREATE2args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_diropargs2(xdrs, &objp->where))
     return (FALSE);
@@ -763,7 +772,8 @@ WRITE2args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_fhandle2(xdrs, objp->file))
     return (FALSE);
@@ -833,7 +843,8 @@ READ2args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_fhandle2(xdrs, objp->file))
     return (FALSE);
@@ -2020,7 +2031,8 @@ READ3args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_nfs_fh3(xdrs, &objp->file))
     return (FALSE);
@@ -2124,7 +2136,8 @@ WRITE3args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_nfs_fh3(xdrs, &objp->file))
     return (FALSE);
@@ -2262,7 +2275,8 @@ CREATE3args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_diropargs3(xdrs, &objp->where))
     return (FALSE);
@@ -2656,7 +2670,8 @@ REMOVE3args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_diropargs3(xdrs, &objp->object))
     return (FALSE);
@@ -2808,7 +2823,8 @@ RENAME3args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_diropargs3(xdrs, &objp->from))
     return (FALSE);
@@ -2972,7 +2988,8 @@ READDIR3args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_nfs_fh3(xdrs, &objp->dir))
     return (FALSE);
@@ -3100,7 +3117,8 @@ READDIRPLUS3args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_nfs_fh3(xdrs, &objp->dir))
     return (FALSE);
@@ -3506,7 +3524,8 @@ COMMIT3args *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
   struct nfs_request_lookahead *lkhd =
-      (struct nfs_request_lookahead *) xdrs->x_public;
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &dummy_lookahead;
 
   if(!xdr_nfs_fh3(xdrs, &objp->file))
     return (FALSE);
