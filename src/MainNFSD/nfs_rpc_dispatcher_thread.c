@@ -509,6 +509,10 @@ void nfs_Init_svc()
     svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
     svc_params.max_connections = nfs_param.core_param.nb_max_fd;
     svc_params.max_events = 1024; /* length of epoll event queue */
+    svc_params.gss_ctx_hash_partitions = 0;
+    svc_params.gss_max_idle_gen = 0;
+    svc_params.gss_max_gc = 0;
+    svc_params.warnx = NULL;
 
     svc_init(&svc_params);
 
@@ -1372,7 +1376,7 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
         nfsreq->r_u.nfs->req.rq_vers = msg->rm_call.cb_vers;
         nfsreq->r_u.nfs->req.rq_proc = msg->rm_call.cb_proc;
         nfsreq->r_u.nfs->req.rq_xid = msg->rm_xid;
-        
+
         /* XXX so long as nfs_rpc_get_funcdesc calls is_rpc_call_valid
          * and fails if that call fails, there is no reason to call that
          * function again, below */

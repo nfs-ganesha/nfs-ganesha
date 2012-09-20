@@ -215,11 +215,18 @@ drc_recycle_cmpf(const struct opr_rbtree_node *lhs,
 static inline void
 drc_fill_hbuf(nfs_request_data_t *nfs_req, char *hbuf, size_t *size)
 {
-    XDR xdrs[1];
-    xdrmem_create(xdrs, hbuf, *size, XDR_ENCODE);
-    nfs_req->funcdesc->xdr_decode_func(xdrs, (caddr_t) &nfs_req->arg_nfs);
-    *size = XDR_GETPOS(xdrs);
-    XDR_DESTROY(xdrs);
+    struct nfs_request_lookahead dummy_lookahead = {
+        .flags = 0,
+        .read = 0,
+        .write = 0
+    };
+    XDR xdrs = {
+        .x_public = &dummy_lookahead
+    };
+    xdrmem_create(&xdrs, hbuf, *size, XDR_ENCODE);
+    nfs_req->funcdesc->xdr_decode_func(&xdrs, (caddr_t) &nfs_req->arg_nfs);
+    *size = XDR_GETPOS(&xdrs);
+    XDR_DESTROY(&xdrs);
 }
 
 /**
