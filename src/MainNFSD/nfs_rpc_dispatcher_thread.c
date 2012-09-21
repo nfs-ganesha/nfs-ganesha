@@ -799,24 +799,24 @@ nfs_rpc_get_nfsreq(uint32_t __attribute__((unused)) flags)
 uint32_t
 nfs_rpc_outstanding_reqs_est(void)
 {
-    static unsigned int ctr = 0;
+    static uint32_t ctr = 0;
     static uint32_t nreqs = 0;
     struct req_q_pair *qpair;
     int ix;
 
-    if ((++ctr % 10) != 0)
+    if ((atomic_inc_uint32_t(&ctr) % 10) != 0)
         return (nreqs);
 
-    nreqs = 0;
+    atomic_store_uint32_t(&nreqs, 0);
     for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
         qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
-        nreqs +=
-            atomic_postadd_int32_t(&qpair->producer.size, 0); /* atomic read */
-        nreqs +=
-            atomic_postadd_int32_t(&qpair->consumer.size, 0);
+        atomic_add_uint32_t(&nreqs,
+                            atomic_fetch_int32_t(&qpair->producer.size));
+        atomic_add_uint32_t(&nreqs,
+                            atomic_fetch_int32_t(&qpair->consumer.size));
     }
 
-    return (nreqs);
+    return (atomic_fetch_uint32_t(&nreqs));
 }
 
 void *
