@@ -44,7 +44,7 @@ static void print_glist(struct glist_head *head)
   }
 }
 
-int main(int argc, char *argv[])
+void basic_test()
 {
   struct myteststruct node1;
   struct myteststruct node2;
@@ -81,5 +81,43 @@ int main(int argc, char *argv[])
   glist_add_list_tail(&mytestglist, &mytestglist_new);
   printf("combined list\n");
   print_glist(&mytestglist);
-  return 0;
+}
+
+void splice_tail_test()
+{
+  struct myteststruct nodes[10];
+  int ix;
+
+  init_glist(&mytestglist);
+  init_glist(&mytestglist_new);
+
+  for (ix = 0; ix < 10; ++ix) {
+      struct myteststruct *node = &nodes[ix];
+      node->value = ix+1;
+      /* add nodes 1-5 to mytestglist */
+      if (ix < 5) {
+          glist_add_tail(&mytestglist, &node->glist);
+      } else {
+          /* and 6-10 to mytestglist_new */
+          glist_add_tail(&mytestglist_new, &node->glist);
+      }
+
+  }
+
+  printf("List mytestglist should have nodes 1..5\n");
+  print_glist(&mytestglist);
+  printf("List mytestglist_new should have nodes 6..10\n");
+  print_glist(&mytestglist_new);
+  printf("Now after glist_splice_tail mytestglist should have all 10 nodes:\n");
+  glist_splice_tail(&mytestglist, &mytestglist_new);
+  print_glist(&mytestglist);
+  printf("And mytestglist_new no nodes:\n");
+  print_glist(&mytestglist_new);
+}
+
+int main(int argc, char *argv[])
+{
+    basic_test();
+    splice_tail_test();
+    return 0;
 }
