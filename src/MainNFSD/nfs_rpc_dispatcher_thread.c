@@ -1316,6 +1316,39 @@ AuthenticateRequest(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *nfsreq,
 }
 
 static inline enum xprt_stat
+nfs_rpc_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
+{
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    uint32_t nreqs;
+
+    pthread_spin_lock(&xprt->xp_lock);
+    nreqs = xu->req_cnt;
+    pthread_spin_unlock(&xprt->xp_lock);
+
+    /* check per-xprt quota */
+    if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
+        goto out;
+
+    switch (stat) {
+    case XPRT_IDLE:
+    {
+        struct pollfd fd;
+        fd.fd = xprt->xp_fd;
+        fd.events = POLLIN;
+        if (poll(&fd, 1, 0 /* ms, ie, now */) > 0) {
+            stat = XPRT_MOREREQS;
+        }
+    }
+    break;
+    default:
+        break;
+    } /* switch */
+
+out:
+    return (stat);
+}
+
+static inline enum xprt_stat
 thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
 {
     request_data_t *nfsreq;
@@ -1426,6 +1459,14 @@ done:
     /* if recv failed, request is not enqueued */
     if (! enqueued)
         free_nfs_request(nfsreq);
+
+#if 0
+    /* XXX dont bother re-arming epoll for xprt if there is data 
+     * waiting.  this is logically harmless, since the predicate observes
+     * request quotas.  however, empirically, the function is infrequently
+     * effective. */
+    stat = nfs_rpc_continue_decoding(xprt, stat);
+#endif
 
     return (stat);
 }
