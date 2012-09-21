@@ -95,7 +95,9 @@ void nfs_stat_update(nfs_stat_type_t      type,
 #ifdef _USE_QUEUE_TIMER
                      msectimer_t          await_time,
 #endif
-                     msectimer_t          latency
+                     msectimer_t          latency,
+                     msectimer_t          fsal_latency,
+                     unsigned int         fsal_count
                      )
 {
   nfs_request_stat_item_t *pitem = NULL;
@@ -203,13 +205,20 @@ void nfs_stat_update(nfs_stat_type_t      type,
   if(pitem->total == 0)
     {
       /* Set the initial value of latencies */
-      pitem->max_latency = latency;
-      pitem->min_latency = latency;
+      pitem->max_latency  = latency;
+      pitem->min_latency  = latency;
+      pitem->min_fsal     = fsal_latency;
+      pitem->max_fsal     = fsal_latency;
+      pitem->min_fsal_cnt = fsal_count;
+      pitem->max_fsal_cnt = fsal_count;
     }
 
-  /* Update total, min and max latency */
+  /* Update totals */
   pitem->tot_latency += latency;
+  pitem->tot_fsal    += fsal_latency;
+  pitem->cnt_fsal    += fsal_count;
 
+  /* update min and max latency */
   if(latency > pitem->max_latency)
     {
       pitem->max_latency = latency;
@@ -217,6 +226,26 @@ void nfs_stat_update(nfs_stat_type_t      type,
   else if(latency < pitem->min_latency)
     {
       pitem->min_latency = latency;
+    }
+
+  /* update min and max fsal latency */
+  if(fsal_latency > pitem->max_fsal)
+    {
+      pitem->max_fsal = fsal_latency;
+    }
+  else if(fsal_latency < pitem->min_fsal)
+    {
+      pitem->min_fsal = fsal_latency;
+    }
+
+  /* update min and max fsal count */
+  if(fsal_count > pitem->max_fsal_cnt)
+    {
+      pitem->max_fsal_cnt = fsal_count;
+    }
+  else if(fsal_count < pitem->min_fsal_cnt)
+    {
+      pitem->min_fsal_cnt = fsal_count;
     }
 
 #ifdef _USE_QUEUE_TIMER

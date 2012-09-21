@@ -1485,7 +1485,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
 #ifdef _USE_QUEUE_TIMER
                   queue_timer_diff,
 #endif
-                  timer_diff);
+                  timer_diff,
+                  pfsal_op_ctx->latency,
+                  pfsal_op_ctx->count);
 
   /* Update total counters */
   pworker_data->stats.nb_total_req += 1;
@@ -1500,7 +1502,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
 #ifdef _USE_QUEUE_TIMER
                       queue_timer_diff,
 #endif
-		      timer_diff);
+		      timer_diff,
+		      pfsal_op_ctx->latency,
+		      pfsal_op_ctx->count);
 
       /* Update per-share total counters */
       pexport->worker_stats[pworker_data->worker_index].nb_total_req += 1;

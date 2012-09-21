@@ -143,6 +143,16 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].min_latency;
                   global_worker_stat->stat_req.stat_req_nfs3[j].max_latency =
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].max_latency;
+
+                  global_worker_stat->stat_req.stat_req_nfs3[j].min_fsal =
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].min_fsal;
+                  global_worker_stat->stat_req.stat_req_nfs3[j].max_fsal =
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].max_fsal;
+
+                  global_worker_stat->stat_req.stat_req_nfs3[j].min_fsal_cnt =
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].min_fsal_cnt;
+                  global_worker_stat->stat_req.stat_req_nfs3[j].max_fsal_cnt =
+                      workers_data[i].stats.stat_req.stat_req_nfs3[j].max_fsal_cnt;
                 }
               else
                 {
@@ -151,6 +161,21 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
                                 workers_data[i].stats.stat_req.stat_req_nfs3[j].min_latency);
                 set_max_latency(&(global_worker_stat->stat_req.stat_req_nfs3[j].max_latency),
                                 workers_data[i].stats.stat_req.stat_req_nfs3[j].max_latency);
+
+                set_min_latency(&(global_worker_stat->stat_req.stat_req_nfs3[j].min_fsal),
+                                workers_data[i].stats.stat_req.stat_req_nfs3[j].min_fsal);
+                set_max_latency(&(global_worker_stat->stat_req.stat_req_nfs3[j].max_fsal),
+                                workers_data[i].stats.stat_req.stat_req_nfs3[j].max_fsal);
+
+                if(workers_data[i].stats.stat_req.stat_req_nfs3[j].min_fsal_cnt <
+                   global_worker_stat->stat_req.stat_req_nfs3[j].min_fsal_cnt)
+                  global_worker_stat->stat_req.stat_req_nfs3[j].min_fsal_cnt =
+                    workers_data[i].stats.stat_req.stat_req_nfs3[j].min_fsal_cnt;
+
+                if(workers_data[i].stats.stat_req.stat_req_nfs3[j].max_fsal_cnt >
+                   global_worker_stat->stat_req.stat_req_nfs3[j].max_fsal_cnt)
+                  global_worker_stat->stat_req.stat_req_nfs3[j].max_fsal_cnt =
+                    workers_data[i].stats.stat_req.stat_req_nfs3[j].max_fsal_cnt;
                 }
             }
 
@@ -161,8 +186,19 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
                     workers_data[i].stats.stat_req.stat_req_nfs3[j].success;
                 global_worker_stat->stat_req.stat_req_nfs3[j].dropped +=
                     workers_data[i].stats.stat_req.stat_req_nfs3[j].dropped;
+
                 global_worker_stat->stat_req.stat_req_nfs3[j].tot_latency +=
                     workers_data[i].stats.stat_req.stat_req_nfs3[j].tot_latency;
+
+#ifdef _USE_QUEUE_TIMER
+                global_worker_stat->stat_req.stat_req_nfs3[j].tot_await_time +=
+                    workers_data[i].stats.stat_req.stat_req_nfs3[j].tot_await_time;
+#endif
+                global_worker_stat->stat_req.stat_req_nfs3[j].tot_fsal +=
+                    workers_data[i].stats.stat_req.stat_req_nfs3[j].tot_fsal;
+
+                global_worker_stat->stat_req.stat_req_nfs3[j].cnt_fsal +=
+                    workers_data[i].stats.stat_req.stat_req_nfs3[j].cnt_fsal;
             }
 
         for (j = 0; j < NFS_V4_NB_COMMAND; j++) {
@@ -424,13 +460,19 @@ void *stats_thread(void *UnusedArg)
               global_worker_stat->stat_req.nb_nfs3_req);
       for (j = 0; j < NFS_V3_NB_COMMAND; j++)
 	{
-          fprintf(stats_file, "|%u,%u,%u,%"PRIu64",%"PRIu64",%"PRIu64"",
+          fprintf(stats_file, "|%u,%u,%u,%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%u,%u,%u",
                   global_worker_stat->stat_req.stat_req_nfs3[j].total,
                   global_worker_stat->stat_req.stat_req_nfs3[j].success,
                   global_worker_stat->stat_req.stat_req_nfs3[j].dropped,
                   global_worker_stat->stat_req.stat_req_nfs3[j].tot_latency,
                   global_worker_stat->stat_req.stat_req_nfs3[j].min_latency,
-                  global_worker_stat->stat_req.stat_req_nfs3[j].max_latency);
+                  global_worker_stat->stat_req.stat_req_nfs3[j].max_latency,
+                  global_worker_stat->stat_req.stat_req_nfs3[j].tot_fsal,
+                  global_worker_stat->stat_req.stat_req_nfs3[j].min_fsal,
+                  global_worker_stat->stat_req.stat_req_nfs3[j].max_fsal,
+                  global_worker_stat->stat_req.stat_req_nfs3[j].cnt_fsal,
+                  global_worker_stat->stat_req.stat_req_nfs3[j].min_fsal_cnt,
+                  global_worker_stat->stat_req.stat_req_nfs3[j].max_fsal_cnt);
         }
       fprintf(stats_file, "\n");
 

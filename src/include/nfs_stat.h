@@ -99,6 +99,12 @@ typedef struct nfs_request_stat_item__
 #ifdef _USE_QUEUE_TIMER
   msectimer_t  tot_await_time;
 #endif
+  msectimer_t  tot_fsal;
+  msectimer_t  min_fsal;
+  msectimer_t  max_fsal;
+  unsigned int cnt_fsal;
+  unsigned int min_fsal_cnt;
+  unsigned int max_fsal_cnt;
 } nfs_request_stat_item_t;
 
 typedef struct nfs_request_stat__
@@ -160,7 +166,9 @@ void nfs_stat_update(nfs_stat_type_t      type,
 #ifdef _USE_QUEUE_TIMER
                      msectimer_t          await_time,
 #endif
-                     msectimer_t          latency
+                     msectimer_t          latency,
+                     msectimer_t          fsal_latency,
+                     unsigned int         fsal_count
                      );
 
 static inline void set_min_latency(msectimer_t *cur_val, msectimer_t val)

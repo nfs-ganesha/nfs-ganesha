@@ -489,7 +489,7 @@ while (my $ligne=<STATS>)
             
       my $fn_index = 0;
       
-      while (  $reste =~ m/\|([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^|]+)(.*)/ )
+      while (  $reste =~ m/\|([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^|]+)(.*)/ )
       {
         my $nb_tot = $1;
         my $nb_ok = $2;
@@ -499,21 +499,39 @@ while (my $ligne=<STATS>)
         my $avg_latency;
         my $min_latency;
         my $max_latency;
+        my $tot_fsal;
+        my $avg_fsal;
+        my $min_fsal;
+        my $max_fsal;
+        my $cnt_fsal;
+        my $avg_fsal_cnt;
+        my $min_fsal_cnt;
+        my $max_fsal_cnt;
 
         if ( $vers == 3 )
         {
-          $tot_latency = $4;
-          $min_latency = $5;
-          $max_latency = $6;
+          $tot_latency  = $4;
+          $min_latency  = $5;
+          $max_latency  = $6;
+          $tot_fsal     = $7;
+          $min_fsal     = $8;
+          $max_fsal     = $9;
+          $cnt_fsal     = $10;
+          $min_fsal_cnt = $11;
+          $max_fsal_cnt = $12;
           if ( $nb_tot == 0 )
           {
-            $avg_latency = 0;
+            $avg_latency  = 0;
+            $avg_fsal     = 0;
+            $avg_fsal_cnt = 0;
           }
           else
           {
-            $avg_latency = $tot_latency / $nb_tot;
+            $avg_latency  = $tot_latency / $nb_tot;
+            $avg_fsal     = $tot_fsal    / $nb_tot;
+            $avg_fsal_cnt = $cnt_fsal    / $nb_tot;
           }
-          $reste = $7;
+          $reste = $13;
         }
         else
         {
@@ -525,8 +543,8 @@ while (my $ligne=<STATS>)
           # print header the first time
           if ( $vers == 3 )
           {
-            printf( "%20s | %10s | %10s | %10s | %10s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED",
-                    "TOT_LAT", "AVG", "MIN", "MAX" );
+            printf( "%20s | %10s | %10s | %10s | %10s | %10s | %10s | %10s | %10s | %10s | %10s | %10s | %10s | %10s | %10s | %10s\n", "FUNCTION", "NB_CALLS", "OK", "DROPPED",
+                    "TOT_LAT", "AVG", "MIN", "MAX", "TOT_FSAL", "AVG", "MIN", "MAX", "COUNT_FSAL", "AVG", "MIN", "MAX" );
           }
           else
           {
@@ -541,8 +559,10 @@ while (my $ligne=<STATS>)
         }
         elsif ( $vers == 3 )
         {
-          printf( "%20s | %10d | %10d | %10d | %10d | %10d | %10d | %10d \n", $nfs3_fn_names[$fn_index],
-                   $nb_tot, $nb_ok, $nb_dropp, $tot_latency, $avg_latency, $min_latency, $max_latency );
+          printf( "%20s | %10d | %10d | %10d | %10d | %10d | %10d | %10d | %10d | %10d | %10d | %10d | %10d | %10d | %10d | %10d \n", $nfs3_fn_names[$fn_index],
+                   $nb_tot, $nb_ok, $nb_dropp, $tot_latency, $avg_latency, $min_latency, $max_latency,
+                   $tot_fsal, $avg_fsal, $min_fsal, $max_fsal,
+                   $cnt_fsal, $avg_fsal_cnt, $min_fsal_cnt, $max_fsal_cnt);
         }
         elsif ( $vers == 4 )
         {
