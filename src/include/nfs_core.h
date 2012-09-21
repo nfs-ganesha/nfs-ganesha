@@ -797,9 +797,6 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
-int is_rpc_call_valid(SVCXPRT *, struct svc_req *);
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *);
-int nfs_rpc_get_args(nfs_request_data_t *);
 
 #ifdef _USE_FSAL_UP
 void *fsal_up_process_thread( void *UnUsedArg );

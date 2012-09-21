@@ -73,6 +73,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
 #include "nfs_tcb.h"
+#include "fridgethr.h"
 #include "SemN.h"
 
 extern nfs_worker_data_t *workers_data;
@@ -463,184 +464,24 @@ struct timeval time_diff(struct timeval time_from, struct timeval time_to)
   return result;
 }
 
-/**
- * is_rpc_call_valid: helper function to validate rpc calls.
- *
- */
 int
-is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *req)
-{
-  int lo_vers, hi_vers;
-
-  if(req->rq_prog == nfs_param.core_param.program[P_NFS])
-    {
-      /* If we go there, req->rq_prog ==  nfs_param.core_param.program[P_NFS] */
-      if(((req->rq_vers != NFS_V2) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) == 0)) &&
-         ((req->rq_vers != NFS_V3) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)) &&
-         ((req->rq_vers != NFS_V4) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) == 0)))
-        {
-          if(xprt != NULL)
-            {
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "Invalid NFS Version #%d",
-                           (int)req->rq_vers);
-              lo_vers = NFS_V4;
-              hi_vers = NFS_V2;
-              if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
-                lo_vers = NFS_V2;
-              if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
-                {
-                  if(lo_vers == NFS_V4)
-                    lo_vers = NFS_V3;
-                  hi_vers = NFS_V3;
-                }
-              if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
-                hi_vers = NFS_V4;
-              svcerr_progvers(xprt, req, lo_vers, hi_vers);  /* Bad NFS version */
-            }
-          return false;
-        }
-      else if(((req->rq_vers == NFS_V2) && (req->rq_proc > NFSPROC_STATFS)) ||
-              ((req->rq_vers == NFS_V3) && (req->rq_proc > NFSPROC3_COMMIT)) ||
-              ((req->rq_vers == NFS_V4) && (req->rq_proc > NFSPROC4_COMPOUND)))
-        {
-          if(xprt != NULL)
-            svcerr_noproc(xprt, req);
-          return false;
-        }
-      return true;
-    }
-
-  if(req->rq_prog == nfs_param.core_param.program[P_MNT] &&
-     ((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0))
-    {
-      /* Call is with MOUNTPROG */
-      /* Verify mount version and report error if invalid */
-      lo_vers = MOUNT_V1;
-      hi_vers = MOUNT_V3;
-
-      /* Some clients may use the wrong mount version to umount, so always
-       * allow umount, otherwise only allow request if the appropriate mount
-       * version is enabled.  Also need to allow dump and export, so just
-       * disallow mount if version not supported.
-       */
-      if((req->rq_vers == MOUNT_V1) &&
-         (((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0) ||
-          (req->rq_proc != MOUNTPROC2_MNT)))
-        {
-          if(req->rq_proc > MOUNTPROC2_EXPORT)
-            {
-              if(xprt != NULL)
-                svcerr_noproc(xprt, req);
-              return false;
-            }
-          return true;
-        }
-      else if((req->rq_vers == MOUNT_V3) &&
-              (((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0) ||
-               (req->rq_proc != MOUNTPROC2_MNT)))
-        {
-          if(req->rq_proc > MOUNTPROC3_EXPORT)
-            {
-              if(xprt != NULL)
-                  svcerr_noproc(xprt, req);
-              return false;
-            }
-          return true;
-        }
-
-      if(xprt != NULL)
-        {
-          /* Bad MOUNT version - set the hi and lo versions and report error */
-          if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) == 0)
-            lo_vers = MOUNT_V3;
-          if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)
-            hi_vers = MOUNT_V1;
-
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Invalid Mount Version #%d",
-                       (int)req->rq_vers);
-          svcerr_progvers(xprt, req, lo_vers, hi_vers);
-        }
-      return false;
-    }
-
-#ifdef _USE_NLM
-  if(req->rq_prog == nfs_param.core_param.program[P_NLM] &&
-          ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0))
-    {
-      /* Call is with NLMPROG */
-      if(req->rq_vers != NLM4_VERS)
-        {
-          /* Bad NLM version */
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Invalid NLM Version #%d",
-                       (int)req->rq_vers);
-          if(xprt != NULL)
-            svcerr_progvers(xprt, req, NLM4_VERS, NLM4_VERS);
-          return false;
-        }
-      if(req->rq_proc > NLMPROC4_FREE_ALL)
-        {
-          if(xprt != NULL)
-             svcerr_noproc(xprt, req);
-          return false;
-        }
-      return true;
-    }
-#endif                          /* _USE_NLM */
-
-#ifdef _USE_RQUOTA
-   if(req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
-     {
-       /* Call is with NLMPROG */
-       if((req->rq_vers != RQUOTAVERS) &&
-          (req->rq_vers != EXT_RQUOTAVERS))
-         {
-           /* Bad NLM version */
-           if(xprt != NULL)
-             {
-               LogFullDebug(COMPONENT_DISPATCH,
-                            "Invalid RQUOTA Version #%d",
-                            (int)req->rq_vers);
-               svcerr_progvers(xprt, req, RQUOTAVERS, EXT_RQUOTAVERS);
-             }
-           return false;
-         }
-       if (((req->rq_vers == RQUOTAVERS) &&
-            (req->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)) ||
-           ((req->rq_vers == EXT_RQUOTAVERS) &&
-            (req->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)))
-        {
-          if(xprt != NULL)
-            svcerr_noproc(xprt, req);
-          return false;
-        }
-      return true;
-     }
-#endif                          /* _USE_QUOTA */
-
-  /* No such program */
-  if(xprt != NULL)
-    {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Invalid Program number #%d",
-                   (int)req->rq_prog);
-      svcerr_noprog(xprt, req);  /* This is no NFS, MOUNT program, exit... */
-    }
-  return false;
-} /* is_rpc_call_valid */
+is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
+                  struct svc_req *req);
 
 /*
  * Extract nfs function descriptor from nfs request.
+ *
+ * XXX This function calls is_rpc_call_valid, which one might not expect to
+ * be sending RPC replies.  Fix this, and remove thr_ctx argument.
  */
 const nfs_function_desc_t *
-nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
+nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
 {
   struct svc_req *req = &preqnfs->req;
+  bool slocked = FALSE;
 
   /* Validate rpc call, but don't report any errors here */
-  if(is_rpc_call_valid(preqnfs->xprt, req) == false)
+  if(is_rpc_call_valid(thr_ctx, preqnfs->xprt, req) == false)
     {
       LogFullDebug(COMPONENT_DISPATCH,
                    "INVALID_FUNCDESC for Program %d, Version %d, "
@@ -686,42 +527,14 @@ nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 #endif                          /* _USE_RQUOTA */
 
   /* Oops, should never get here! */
+  DISP_SLOCK(preqnfs->xprt, &thr_ctx->sigmask);
   svcerr_noprog(preqnfs->xprt, req);
+  DISP_SUNLOCK(preqnfs->xprt, &thr_ctx->sigmask);
+
   LogFullDebug(COMPONENT_DISPATCH,
                "INVALID_FUNCDESC for Program %d, Version %d, Function %d",
                (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc);
   return INVALID_FUNCDESC;
-}
-
-/*
- * Extract RPC argument.
- */
-int
-nfs_rpc_get_args(nfs_request_data_t *preqnfs)
-{
-  SVCXPRT *xprt = preqnfs->xprt;
-  nfs_arg_t *arg_nfs = &preqnfs->arg_nfs;
-  struct svc_req *req = &preqnfs->req;
-
-  memset(arg_nfs, 0, sizeof(nfs_arg_t));
-
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Before svc_getargs on socket %d, xprt=%p",
-               xprt->xp_fd, xprt);
-
-  if (svc_getargs2(xprt, req, preqnfs->funcdesc->xdr_decode_func,
-                   (caddr_t) arg_nfs, &preqnfs->lookahead) == false)
-    {
-      LogMajor(COMPONENT_DISPATCH,
-               "svc_getargs failed for Program %d, Version %d, "
-               "Function %d xid=%u",
-               (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
-               req->rq_xid);
-      svcerr_decode(xprt, req);
-      return false;
-    }
-
-  return true;
 }
 
 /**
@@ -1716,7 +1529,8 @@ worker_thread(void *IndexArg)
       nfsreq = nfs_rpc_dequeue_req(worker_data);
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Processing a new request, pause_state: %s",
+                   "Processing a new request %p, pause_state: %s",
+                   nfsreq,
                    pause_state_str[worker_data->wcb.tcb_state]);
 
       switch(nfsreq->rtype)
