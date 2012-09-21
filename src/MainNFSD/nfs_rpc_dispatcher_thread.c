@@ -1494,6 +1494,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
                  "global outstanding reqs quota exceeded (have %u, allowed %u)",
                  nreqs, nfs_param.core_param.dispatch_max_reqs);
         thread_delay_ms(5); /* don't busy-wait */
+        (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
         goto out;
     }
 
@@ -1502,6 +1503,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     /* clock duplicate, queued+stalled wakeups, queued wakeups */
     if (! gsh_xprt_decoder_guard_ref(xprt, XPRT_PRIVATE_FLAG_NONE)) {
         thread_delay_ms(5);
+        (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
         goto out;
     }
 
@@ -1511,6 +1513,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     if (nfs_rpc_cond_stall_xprt(xprt)) {
         /* Xprt stalled--bail.  Stall queue owns xprt ref and state. */
         LogDebug(COMPONENT_DISPATCH, "stalled, bail");
+        (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
         goto out;
     }
 
