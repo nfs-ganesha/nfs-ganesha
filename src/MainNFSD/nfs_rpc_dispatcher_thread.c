@@ -995,7 +995,7 @@ nfs_rpc_enqueue_req(request_data_t *req)
     /* always append to producer queue */
     q = &qpair->producer;
     pthread_spin_lock(&q->we.sp);
-    glist_add(&q->q, &req->req_q);
+    glist_add_tail(&q->q, &req->req_q);
     ++(q->size);
     pthread_spin_unlock(&q->we.sp);
 
