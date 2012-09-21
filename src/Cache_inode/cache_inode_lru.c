@@ -1261,17 +1261,20 @@ cache_inode_lru_get(cache_entry_t **entry,
      uint32_t lane = 0;
      /* The LRU entry */
      cache_inode_lru_t *lru = NULL;
+     static unsigned int lru_seed = 0;
      /* The Cache entry being created */
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* If we are in reclaim state, try to find an entry to recycle. */
      pthread_mutex_lock(&lru_mtx);
      if (lru_state.flags & LRU_STATE_RECLAIMING) {
+          int start_lane;
           pthread_mutex_unlock(&lru_mtx);
 
+          start_lane = (lru_seed++ % LRU_N_Q_LANES);
           /* Search through logical L2 entry. */
-          for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-               lru = lru_try_reap_entry(&LRU_2[lane].lru);
+          for (lane = start_lane; lane < (start_lane + LRU_N_Q_LANES); ++lane) {
+               lru = lru_try_reap_entry(&LRU_2[lane % LRU_N_Q_LANES].lru);
                if (lru)
                     break;
           }
@@ -1279,8 +1282,8 @@ cache_inode_lru_get(cache_entry_t **entry,
           /* Search through logical L1 if nothing was found in L2
              (fall through, otherwise.) */
           if (!lru) {
-               for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-                    lru = lru_try_reap_entry(&LRU_1[lane].lru);
+               for (lane = start_lane; lane < (start_lane + LRU_N_Q_LANES); ++lane) {
+                    lru = lru_try_reap_entry(&LRU_1[lane % LRU_N_Q_LANES].lru);
                     if (lru)
                          break;
                }
