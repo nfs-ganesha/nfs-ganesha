@@ -771,6 +771,7 @@ static int BuildExportEntry(config_item_t        block,
       memset(&p_entry->fsal_up_thr, 0, sizeof(pthread_t));
 #endif /* _USE_FSAL_UP */
 
+#ifdef _USE_STAT_EXPORTER
       p_entry->worker_stats = gsh_calloc(nfs_param.core_param.nb_worker,
                                          sizeof(nfs_worker_stat_t));
       if(p_entry->worker_stats == NULL)
@@ -778,6 +779,7 @@ static int BuildExportEntry(config_item_t        block,
           gsh_free(p_entry);
           return ENOMEM;
         }
+#endif
 
       p_perms = &p_entry->export_perms;
 
@@ -2834,10 +2836,12 @@ void RemoveExportEntry(exportlist_t * p_entry)
       gsh_free(p_entry->proot_handle);
     }
 
+#ifdef _USE_STAT_EXPORTER
   if(p_entry->worker_stats != NULL)
     {
       gsh_free(p_entry->worker_stats);
     }
+#endif
 
   glist_del(&p_entry->exp_list);
  

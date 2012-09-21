@@ -199,7 +199,10 @@ typedef struct exportlist__
   struct fsal_up_filter_list_t_ *fsal_up_filter_list; /* List of filters to apply through FSAL CB interface. */
 #endif /* _USE_FSAL_UP */
 
+#ifdef _USE_STAT_EXPORTER
   nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
+#endif
+
 } exportlist_t;
 
 /* Constant for options masks */
