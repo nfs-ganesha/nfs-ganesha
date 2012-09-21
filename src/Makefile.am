@@ -15,6 +15,7 @@ SUBDIRS = include             \
           HashTable           \
 	  NodeList	      \
           Cache_inode         \
+          NodeDB              \
           SAL                 \
           $(TIRPCDIR)         \
           RPCAL               \

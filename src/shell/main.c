@@ -62,6 +62,8 @@
 #include <readline/history.h>
 #endif
 
+#include "../NodeDB/marshal.h"
+
 #define NBTHRMAX 64
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
@@ -137,6 +139,8 @@ int main(int argc, char **argv)
   char *progname = basename(argv[0]);
 
   int nb_threads = 0;
+
+  nodedb_library_pre_init();
 
   /* Set the server's boot time and epoch */
   ServerBootTime = time(NULL);

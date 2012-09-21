@@ -21,6 +21,7 @@
 
 
 struct marshal;
+struct nodedb;
 
 struct marshal *marshal_new (struct nodedb *db);
 void marshal_run (struct marshal *m);
@@ -28,3 +29,6 @@ void marshal_free (struct marshal *m);
 
 void marshal_log_msg (const char *fmt, ...);
 void marshal_log_err (int err, const char *fmt, ...);
+
+void nodedb_library_pre_init (void);
+

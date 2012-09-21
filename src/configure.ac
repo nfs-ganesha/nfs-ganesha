@@ -785,6 +785,7 @@ AC_CONFIG_FILES([include/Makefile
                  avl/Makefile
                  HashTable/Makefile
                  Cache_inode/Makefile
+                 NodeDB/Makefile
                  SAL/Makefile
 		 FSAL_UP/Makefile
 		 Protocols/Makefile

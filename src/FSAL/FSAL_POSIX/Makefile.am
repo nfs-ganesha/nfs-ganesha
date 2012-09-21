@@ -1,6 +1,6 @@
 lib_LTLIBRARIES          = libfsalposix.la
 
-libfsalposix_la_SOURCES = interface.c fsal_convert.c   \
+libfsalposix_la_SOURCES = fsal_convert.c   \
                         fsal_internal.c	 \
                         fsal_internal.h  \
                         main.c		 \
@@ -8,32 +8,11 @@ libfsalposix_la_SOURCES = interface.c fsal_convert.c   \
 			handle.c	 \
 			file.c		 \
 			xattrs.c         \
-			scanmount.c      \
-			fastdb.c         \
-	                sockbuf.c encoding.c nodedb.c redblack.c connection.c connectionpool.c \
 	                ../../include/FSAL/FSAL_POSIX/fsal_handle_syscalls.h
 
-libfsalposix_la_CFLAGS   = $(FSAL_CFLAGS) $(SEC_CFLAGS) @POSIX_CFLAGS@
+libfsalposix_la_CFLAGS   = $(FSAL_CFLAGS) $(SEC_CFLAGS) @POSIX_CFLAGS@ -I../../NodeDB
 libfsalposix_la_LDFLAGS  = @POSIX_LDFLAGS@
 libfsalposix_la_LIBADD   = @POSIX_LIB@
 
 new: clean all
-
-all: nodedb all-am
-
-nodedb:
-	cd nodedb && make all
-
-interface.c: nodedb
-	cd nodedb && make all
-
-interface.lo: interface.c
-sockbuf.lo: sockbuf.c
-encoding.lo: encoding.c
-nodedb.lo: nodedb.c
-fastdb.lo: fastdb.c
-scanmount.lo: scanmount.c
-redblack.lo: redblack.c
-connection.lo: connection.c
-connectionpool.lo: connectionpool.c
 

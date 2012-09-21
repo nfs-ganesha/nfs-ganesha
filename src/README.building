@@ -30,14 +30,7 @@ unworkable, you need this before you continue:
     export LDFLAGS=-L/opt/nfs-ganesha/lib/
 
 
-4. If you are compiling from a git dump, then you need to do a whole lot
-of stuff first. Fortunately a lot of this is packed into to scripts:
-
-   ./tirpc.sh
-   ./autogen.sh
-
-
-5. Because the "configure" and "autoconf" tools are broken and
+4. Because the "configure" and "autoconf" tools are broken and
 unworkable, you need edit this line in MainNFSD/Makefile.am:
 
 Find the line,
@@ -47,6 +40,13 @@ Find the line,
 and change into:
 
     libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES)
+
+
+5. If you are compiling from a git dump, then you need to do a whole lot
+of stuff first. Fortunately a lot of this is packed into to scripts:
+
+   ./tirpc.sh
+   ./autogen.sh
 
 
 6. For a generic build, do:
@@ -65,7 +65,7 @@ and change into:
 
 8.1 Create a directory /posix_fs which will contain the files you wish to export.
 
-8.2 Create a file /etc/ganesha/vfs.ganesha.nfsd.conf containing the text
+8.2 Create a file /etc/ganesha/ganesha.conf containing the text
 as follows. You will need to edit the 10.1.x.x network to match the IP
 addresses of the machines you wish to have access to the export.
 
@@ -191,7 +191,7 @@ addresses of the machines you wish to have access to the export.
 
 9. Run nfsd as follows:
 
-    /opt/nfs-ganesha/bin/ganesha.nfsd -L /tmp/nfs-ganesha.log -f /etc/ganesha/vfs.ganesha.nfsd.conf -N NIV_CRIT
+    /opt/nfs-ganesha/bin/ganesha.nfsd -L /tmp/nfs-ganesha.log -f /etc/ganesha/ganesha.conf -N NIV_CRIT
 
 
 10. That should have taken you quite a few hours at least. What could be
@@ -201,7 +201,7 @@ simpler!?
 11. If you need to re-install, you may meet certain dependency misery;
 so clean out old libs before using 'make install':
 
-    find . -name 'lib*.a' -o -name 'lib*.la' -o -name 'lib*.so.*' -o -name 'lib*.so' | grep -v libgpfs.so | xargs rm -f
+    find . -name 'lib*.a' -o -name 'lib*.la' -o -name 'lib*.so.*' -o -name 'lib*.so' | grep -v libgpfs.so | grep -v libnfs_mnt_xdr.a | xargs rm -f
     rm -f ./MainNFSD/ganesha.nfsd
     make
     make install

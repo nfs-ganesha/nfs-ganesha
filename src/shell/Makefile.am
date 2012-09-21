@@ -64,6 +64,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
 
 shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../Cache_inode/libcache_inode.la                   \
+                  ../NodeDB/libnodedb.la                             \
                   ../IdMapper/libidmap.la                            \
                   ../support/libsupport.la                           \
 		  ../RPCAL/librpcal.la				     \
