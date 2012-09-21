@@ -574,8 +574,8 @@ int ccl_stat(ccl_context_t * handle,
 int ccl_fstat(int                 handle_index,
               fsi_stat_struct   * sbuf);
 int ccl_stat_by_handle(ccl_context_t           * context,
-                       struct PersistentHandle * handle,
-                       fsi_stat_struct         * sbuf);
+		       struct PersistentHandle * handle,
+		       fsi_stat_struct         * sbuf);
 uint64_t get_acl_resource_handle(uint64_t aclHandle);
 int have_pending_io_response(int handle_index);
 int io_msgid_from_index (int index);
