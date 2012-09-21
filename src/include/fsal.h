@@ -128,8 +128,6 @@ fsalstat(fsal_errors_t major, uint32_t minor)
         ( ! ( ( _status_ ).major == ERR_FSAL_NO_ERROR ) )
 
 
-/* To be called before exiting */
-fsal_status_t FSAL_terminate();
 
 /******************************************************
  *          FSAL extended attributes management.

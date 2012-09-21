@@ -23,8 +23,6 @@ noinst_HEADERS = abstract_atomic.h               \
                  fsal_convert.h                  \
                  fsal_handle_syscalls.h          \
                  fsal_types.h                    \
-                 fsal_glue.h                     \
-                 fsal_glue_const.h               \
                  cache_inode.h                   \
                  common_utils.h                  \
                  config_parsing.h                \
@@ -52,7 +50,6 @@ noinst_HEADERS = abstract_atomic.h               \
                  nfs_rpc_callback.h              \
                  nfs_stat.h                      \
                  nfs_tools.h                     \
-                 posixdb_consistency.h           \
                  rbt_node.h                      \
                  rbt_tree.h                      \
                  nfs_ip_stats.h                  \
