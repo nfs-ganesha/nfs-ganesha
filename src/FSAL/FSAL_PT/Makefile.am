@@ -15,7 +15,7 @@ libfsalpt_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c	\
 	fsal_xattrs.c fsal_local_op.c		                        \
 	fsal_xattrs.c pt_ganesha.c fsal_close_listener.c
 
-libfsalpt_la_LIBADD = -lccl4ganesha                                     \
+libfsalpt_la_LIBADD = -lfsi_ipc_ccl                                     \
 			../../support/libsupport.la                  
 
 new: clean all

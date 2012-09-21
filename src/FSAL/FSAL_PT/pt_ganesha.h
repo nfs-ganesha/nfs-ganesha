@@ -96,8 +96,7 @@ int ptfsal_stat_by_parent_name(fsal_op_context_t * p_context,
 
 void ptfsal_convert_fsi_name(ccl_context_t       * context,
                              const char          * filename,
-                             char                * sv_filename,
-                             enum e_fsi_name_enum  fsi_name_type);
+                             char                * sv_filename);
 
 int ptfsal_opendir(fsal_op_context_t * p_context,
                    const char        * filename,

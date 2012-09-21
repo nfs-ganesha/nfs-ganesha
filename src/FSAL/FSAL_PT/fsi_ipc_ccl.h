@@ -31,9 +31,16 @@
 #include <sys/param.h>
 #include <sys/acl.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "../fsi_ipc_common.h"
 
 // FSI IPC defines
+
+#define UNUSED_ARG(arg) do { (void)(arg); } while (0)
+
 #define FSI_CIFS_RESERVED_STREAMS   4   // CIFS does not allow handles 0-2
 
 #define FSI_BLOCK_ALIGN(x, blocksize) \
@@ -41,7 +48,7 @@
 
 #define FSI_COMMAND_TIMEOUT_SEC  300     // When polling for results, number
                                          // of seconds to try before timingout
-#define USLEEP_INTERVAL        10000     // Parameter to usleep 
+#define USLEEP_INTERVAL        10000     // Parameter to usleep
 
 // FSI IPC getlock constants
 #define FSI_IPC_GETLOCK_PTYPE                  2
@@ -50,144 +57,65 @@
 #define PTFSAL_FILESYSTEM_NUMBER              77
 #define FSI_IPC_MSGID_BASE               5000000
 
+typedef enum fsi_ipc_trace_level {
+  FSI_NO_LEVEL = 0,
+  FSI_FATAL,
+  FSI_ERR,
+  FSI_WARNING,
+  FSI_NOTICE,
+  FSI_STAT,
+  FSI_INFO,
+  FSI_DEBUG,
+
+  // this one must be last
+  FSI_NUM_TRACE_LEVELS
+} fsi_ipc_trace_level;
+
 #ifndef   __GNUC__
 #define __attribute__(x) /*nothing*/
 #endif // __GNUC__
+
+// Log-related functions and declarations
+
+#define MAX_LOG_LINE_LEN 512
+
+typedef int (*log_function_t) (int level, const char * message);
+typedef int (*log_level_check_function_t) (int level);
+int ccl_log(const fsi_ipc_trace_level   level,
+            const char                * func,
+            const char                * format,
+            ...);
 
 // The following functions enable compile-time check with a cost of a function
 // call. Ths function is empty, but due to its  __attribute__ declaration
 // the compiler checks the format string which is passed to it by the
 // FSI_TRACE...() mechanism.
-extern void
+static void
 compile_time_check_func(const char * fmt, ...)
 __attribute__((format(printf, 1, 2)));  // 1=format 2=params
 
-// --------  Begin conditional compile for Ganesha/Samba -----------------
-#ifdef GANESHA_CCL
-
-// The following defines are CCL versions of Ganesha environment defines
-// that PTFSAL at init can check against the ganesha version as an automated
-// check against header change in Ganesha environment not matched in this
-// copy
-#define GANESHA_MAXPATHLEN      4096 // Compare to Ganesha MAXPATHLEN
-#define GANESHA_COMPONENT_COUNT   48 // Compare to Ganesha COMPONENT_COUNT
-
 // ----------------------------------------------------------------------------
-// Defines from src/include/log.h
-//    These are needed by CCL code when compiled for Ganessha (GANESHA_CCL)
-//    so that they can use LogComponents in CCL_DEBUG below
-//
-//    When this file is included by FSAL_PT code in Ganesha build environment
-//    it needs to include src/include/log.h before including this file and will
-//    use the definitions in there.
-// ----------------------------------------------------------------------------
-#ifndef _LOGS_H
-
-// these macros gain a few percent of speed on gcc, especially with so many
-// log entries (for ganesah core)
-#if (__GNUC__ >= 3)
-// the strange !! is to ensure that __builtin_expect() takes either 0 or 1 as
-// its first argument
-#ifndef likely
-#define likely(x)   __builtin_expect(!!(x), 1)
-#endif
-#ifndef unlikely
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#endif
-#else
-#ifndef likely
-#define likely(x) (x)
-#endif
-#ifndef unlikely
-#define unlikely(x) (x)
-#endif
-#endif
-
-// CCL environment definition of Ganesha log_component_info
-typedef struct log_component_info {
-  int    comp_value;
-  char * comp_name;
-  char * comp_str;
-  int    comp_log_level;
-  int    comp_log_type;
-  char   comp_log_file[GANESHA_MAXPATHLEN];
-  char * comp_buffer;
-} log_component_info;
-
-extern log_component_info __attribute__ ((unused))
-  LogComponents[GANESHA_COMPONENT_COUNT];
-
-#endif  // _LOGS_H
-// ----------------------------------------------------------------------------
-// End of defines from src/include/log.h
-// ----------------------------------------------------------------------------
-
-// Following definitions map to NIV_* trace levels in Ganesha log.h
-#define FSI_FATAL          2   // NIV_MAJOR
-#define FSI_ERR            3   // NIV_CRIT
-#define FSI_NOTICE         4   // NIV_WARN
-#define FSI_STAT           5   // NIV_EVENT
-#define FSI_INFO           6   // NIV_INFO
-#define FSI_DEBUG          7   // NIV_DEBUG
-
-#define COMPONENT_FSAL_PT  5   // COMPONENT_FSAL
-
-// Similar to Ganesha LogAtLevel macro in log.h
-#define CCL_DEBUG( level, format, func, ... )                                \
-{                                                                            \
-  if (unlikely(LogComponents[COMPONENT_FSAL_PT].comp_log_level >= level)) {  \
-    DisplayLogComponentLevel(COMPONENT_FSAL_PT, "FSAL_PT",                   \
-                             level, format, func, ## __VA_ARGS__ );          \
-  }                                                                          \
+// This is needed to make FSI_TRACE macro work
+// Part of the magic of __attribute__ is this function needs to be defined,
+// though it's a noop
+static inline void
+compile_time_check_func(const char * fmt, ...)
+{
+  UNUSED_ARG(fmt);
+  // do nothing
 }
 
-#else    // not GANESHA_CCL so Samba
-
-// FSI Trace Level defines for Samba DEBUG level parm
-// Samba default runtime level is 2, all trace <= level are logged
-// Note: Though these defines map to Samba debug levels we are
-// using the level settings differently than Samba proper
-#define FSI_FATAL                              1  // TRC_FATAL - A fatal
-                                                  // condition that prevents
-                                                  // the system continuing
-                                                  // normal ops
-#define FSI_ERR                                2  // TRC_ERR - Warnings and
-                                                  // error conditions
-#define FSI_NOTICE                             2  // TRC_NOTICE - meaningful
-                                                  // events in system
-#define FSI_STAT                               2  // TRC_STAT - Can't really
-                                                  // match separate trace
-                                                  // class but but use this for
-                                                  // stats only
-#define FSI_INFO                               3  // TRC_INFO Detailed tracing
-                                                  // of normal flow, yet not
-                                                  // as intensive as TRC_DEBUG
-#define FSI_DEBUG                              5  // TRC_DBUG - Very high
-                                                  // frequency, can affect
-                                                  // performance, user for
-                                                  // debugging a component
-
-#define CCL_DEBUG( x, y, z, ... )  DEBUG( x, (y "\n", z, ## __VA_ARGS__  ))
-
-#endif
-// ----------- End of conditional compile for Ganesha/Samba ----------------
-
 // Our own trace macro that adds standard prefix to statements that includes
-// the level and function name
-#define FSI_TRACE( level, format, ... )                                    \
+// the level and function name (by calling the wrapper ccl_log)
+#define FSI_TRACE(level, ... )                                             \
 {                                                                          \
-  compile_time_check_func( format, ## __VA_ARGS__ );                       \
-  CCL_DEBUG( (level), "[" #level "]: "   "%s: "  format, __func__,         \
-                   ## __VA_ARGS__);                                        \
+  compile_time_check_func( __VA_ARGS__ );                                  \
+  ccl_log(level, __func__, __VA_ARGS__);                                   \
 }
 
 #define FSI_TRACE_COND_RC(rc, errVal, ... )                                \
 {                                                                          \
-  if ((errVal) == rc) {                                                    \
-    FSI_TRACE(FSI_INFO, ## __VA_ARGS__);                                   \
-  } else {                                                                 \
-    FSI_TRACE(FSI_ERR, ## __VA_ARGS__);                                    \
-  }                                                                        \
+  FSI_TRACE((errVal) == (rc) ? FSI_INFO : FSI_ERR, ## __VA_ARGS__);        \
 }
 
 #define FSI_TRACE_HANDLE( handle)                                          \
@@ -245,16 +173,6 @@ extern uint64_t                  g_num_writes_in_progress;
 extern uint64_t                  g_stat_log_interval;
 extern char                      g_client_address[];
 
-// BRUTAL HACK - must be fixed later - global non-io mutex
-extern pthread_mutex_t g_non_io_mutex;
-extern pthread_mutex_t g_dir_mutex; // dir handle mutex
-extern pthread_mutex_t g_acl_mutex; // acl handle mutex
-extern pthread_mutex_t g_handle_mutex; // file handle Processing mutex
-extern pthread_mutex_t g_parseio_mutex; // only one thread can parse an io
-                                        // at a time
-extern pthread_mutex_t g_transid_mutex; // only one thread can change global
-                                        // transid at a time
-
 
 #define SAMBA_FSI_IPC_PARAM_NAME      "fsiparam"  // To designate as our parms
 #define SAMBA_EXPORT_ID_PARAM_NAME    "exportid"  // For ExportID
@@ -268,11 +186,6 @@ enum e_buf_rc_state {
   BUF_RC_STATE_FILLING,                 // filling with write data
   BUF_RC_STATE_RC_NOT_PROCESSED,        // received Rc, not processed by client
   BUF_RC_STATE_RC_PROCESSED             // client processed received Rc
-};
-
-enum e_fsi_name_enum {
-  FSI_NAME_DEFAULT = 0,                 // default (normal file)
-  FSI_NAME_DIR                          // name is a directory
 };
 
 enum e_ccl_write_mode {
@@ -631,14 +544,17 @@ struct ipc_client_stats_t {
 // ---------------------------------------------------------------------------
 // Function Prototypes
 // ---------------------------------------------------------------------------
-int ccl_init(int multi_threaded);
+int ccl_init(int                        multi_threaded,
+             log_function_t             log_fn,
+             log_level_check_function_t log_level_check_fn,
+             int                        ipc_ccl_to_component_trc_level_map
+                                        [FSI_NUM_TRACE_LEVELS]);
 int add_acl_handle(uint64_t fs_acl_handle);
 int add_dir_handle(uint64_t fs_dir_handle);
 int add_fsi_handle(struct file_handle_t * p_new_handle);
 void convert_fsi_name(ccl_context_t   * handle,
                       const char          * filename,
-                      char                * sv_filename,
-                      enum e_fsi_name_enum  fsi_name_type);
+                      char                * sv_filename);
 int delete_acl_handle(uint64_t aclHandle);
 int delete_dir_handle(int dir_handle_index);
 int delete_fsi_handle(int handle_index);
@@ -648,13 +564,17 @@ int ccl_find_handle_by_name_and_export(const char * filename,
                                        ccl_context_t * handle);
 int ccl_find_dir_handle_by_name_and_export(const char * filename,
                                           ccl_context_t * handle);
+int ccl_set_stat_buf(fsi_stat_struct              * dest,
+                     const struct ClientOpStatRsp * src);
 int ccl_get_name_from_handle(char *handle, char *name);
 int ccl_stat(ccl_context_t * handle,
              const char        * filename,
              fsi_stat_struct       * sbuf);
-int ccl_fstat(ccl_context_t * handle,
-              int                 handle_index,  // PTFSAL change
+int ccl_fstat(int                 handle_index,
               fsi_stat_struct   * sbuf);
+int ccl_stat_by_handle(ccl_context_t           * context,
+		       struct PersistentHandle * handle,
+		       fsi_stat_struct         * sbuf);
 uint64_t get_acl_resource_handle(uint64_t aclHandle);
 int have_pending_io_response(int handle_index);
 int io_msgid_from_index (int index);
@@ -717,11 +637,10 @@ int ccl_get_real_filename(ccl_context_t * handle,
                           char          * found_name,
                           const size_t    found_name_max_size);
 uint64_t ccl_disk_free(ccl_context_t * handle,
-                       const char        * path,
-                       int                 small_query,
-                       uint64_t          * bsize,
-                       uint64_t          * dfree,
-                       uint64_t          * dsize);
+                       const char    * path,
+                       uint64_t      * bsize,
+                       uint64_t      * dfree,
+                       uint64_t      * dsize);
 int ccl_unlink(ccl_context_t  * handle,
                 char               * path);
 int ccl_rename(ccl_context_t * handle,
@@ -741,6 +660,8 @@ void ccl_seekdir(ccl_context_t * handle,
                  long                offset);
 long ccl_telldir(ccl_context_t * handle,
                  struct fsi_struct_dir_t * dirp);
+int ccl_chdir(ccl_context_t * handle,
+              const char    * path);
 int ccl_fsync(ccl_context_t * handle,
                int handle_index);
 int ccl_ftruncate(ccl_context_t * handle,
@@ -790,8 +711,6 @@ int read_existing_data(struct file_handle_t * p_pread_hndl,
 int update_read_status(struct file_handle_t        * p_pread_hndl,
                        int                           handle_index,
                        uint64_t                      cur_offset,
-                       char                        * data,
-                       uint64_t                      cur_length,
                        struct msg_t                * p_msg,
                        struct CommonMsgHdr         * p_pread_hdr,
                        struct ClientOpPreadReqMsg  * p_pread_req,
@@ -903,3 +822,7 @@ extern pthread_mutex_t g_transid_mutex;
 extern pthread_mutex_t g_non_io_mutex;
 extern pthread_mutex_t g_close_mutex;
 #endif // ifndef __FSI_IPC_CCL_H__
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

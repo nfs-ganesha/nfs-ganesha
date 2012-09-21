@@ -65,7 +65,19 @@ pthread_mutex_t g_close_mutex;
 pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
 
+#define COMPONENT_FSAL_PT  5   // COMPONENT_FSAL
 
+int PTFSAL_log(int level, const char * message)
+{
+  DisplayLogComponentLevel(COMPONENT_FSAL_PT, "FSAL_PT", level,
+                           (char *)message);
+  return 0;
+}
+
+int PTFSAL_log_level_check(int level)
+{
+  return (unlikely(LogComponents[COMPONENT_FSAL_PT].comp_log_level >= level));
+}
 
 static int ptfsal_closeHandle_listener_thread_init(void);
 static int ptfsal_polling_closeHandler_thread_init(void);
@@ -115,13 +127,28 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   pthread_mutex_init(&g_non_io_mutex,NULL);
   pthread_mutex_init(&g_parseio_mutex,NULL);
   pthread_mutex_init(&g_transid_mutex,NULL);
+  pthread_mutex_init(&g_close_mutex,NULL);
   pthread_mutex_init(&g_fsi_name_handle_mutex, NULL);
 
   g_fsi_name_handle_cache.m_count = 0;
  
+  // fsi_ipc_trace_level allows using the level settings differently than
+  // Ganesha proper.
+  // We map FSI Trace Level to Ganesha debug levels through this array.
+  int ipc_ccl_to_component_trc_level_map[FSI_NUM_TRACE_LEVELS];
+  ipc_ccl_to_component_trc_level_map[FSI_NO_LEVEL] = NIV_NULL;
+  ipc_ccl_to_component_trc_level_map[FSI_FATAL]    = NIV_MAJ;
+  ipc_ccl_to_component_trc_level_map[FSI_ERR]      = NIV_CRIT;
+  ipc_ccl_to_component_trc_level_map[FSI_WARNING]  = NIV_WARN;
+  ipc_ccl_to_component_trc_level_map[FSI_NOTICE]   = NIV_WARN;
+  ipc_ccl_to_component_trc_level_map[FSI_STAT]     = NIV_EVENT;
+  ipc_ccl_to_component_trc_level_map[FSI_INFO]     = NIV_INFO;
+  ipc_ccl_to_component_trc_level_map[FSI_DEBUG]    = NIV_DEBUG;
 
   /* FSI CCL Layer INIT */
-  int rc = ccl_init(MULTITHREADED);
+  int rc = ccl_init(MULTITHREADED, PTFSAL_log, PTFSAL_log_level_check,
+                    ipc_ccl_to_component_trc_level_map);
+
   if (rc == -1) {
     FSI_TRACE(FSI_ERR, "ccl_init returned rc = -1, errno = %d", errno);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
@@ -145,41 +172,6 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
 
   /* Regular exit */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
-}
-
-// ----------------------------------------------------------------------------
-//   CCL Up Call defintions
-// ----------------------------------------------------------------------------
-
-int ccl_up_mutex_lock( pthread_mutex_t * pmutex)
-{
-  FSI_TRACE(FSI_DEBUG, "requesting lock on 0x%lx", (unsigned int) pmutex);
-  int rc = pthread_mutex_lock( pmutex);
-  if (rc) {
-    FSI_TRACE(FSI_ERR, "error code from pthread_mutex_lock = %d", rc);
-  } else {
-    FSI_TRACE(FSI_DEBUG, "lock 0x%lx acuired", (unsigned int) pmutex);
-  }
-}
-
-int ccl_up_mutex_unlock( pthread_mutex_t * pmutex)
-{
-  FSI_TRACE(FSI_DEBUG, "unlocking 0x%lx", (unsigned int) pmutex);
-  int rc = pthread_mutex_unlock( pmutex);
-  if (rc) {
-    FSI_TRACE(FSI_ERR, "error code from pthread_mutex_unlock = %d "
-              "probably did not own lock", rc);
-  } else {
-    FSI_TRACE(FSI_DEBUG, "successfully unlocked 0x%lx ", 
-              (unsigned int) pmutex);
-  }
-}
-
-unsigned long ccl_up_self()
-{
-   unsigned long my_tid = pthread_self();
-   FSI_TRACE(FSI_DEBUG, "tid = %ld ", my_tid);
-   return my_tid;
 }
 
 static int

@@ -215,7 +215,7 @@ int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)
   context.export_id = g_fsi_handles.m_handle[handle_index_to_close].m_exportId;
   context.uid       = geteuid();
   context.gid       = getegid();
-  FSI_TRACE(FSI_NOTICE, "Closing handle [%d]", handle_index_to_close);
+  FSI_TRACE(FSI_NOTICE, "Closing handle [%d] close_style[%d]", handle_index_to_close, close_style);
   return (ccl_close(&context, handle_index_to_close, close_style));
 
 }
