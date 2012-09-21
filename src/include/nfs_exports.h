@@ -200,7 +200,9 @@ struct exportlist__
   struct fsal_up_filter_list_t_ *fsal_up_filter_list; /* List of filters to apply through FSAL CB interface. */
 #endif /* _USE_FSAL_UP */
 
+#ifdef _USE_STAT_EXPORTER
   nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
+#endif
 
   fsal_u64_t      exp_mounted_on_file_id; /* Id of the node this export is mounted on */
   cache_entry_t * exp_root_cache_inode;   /* cache inode entry for the root of this export  */

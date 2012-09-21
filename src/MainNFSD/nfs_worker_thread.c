@@ -1490,6 +1490,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
   /* Update total counters */
   pworker_data->stats.nb_total_req += 1;
 
+#ifdef _USE_STAT_EXPORTER
   /* Update the stats for the export */
   if (pexport != NULL)
     {
@@ -1504,6 +1505,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
       /* Update per-share total counters */
       pexport->worker_stats[pworker_data->worker_index].nb_total_req += 1;
     }
+#endif
 
   if(timer_diff >= nfs_param.core_param.long_processing_threshold_msec)
     LogEvent(COMPONENT_DISPATCH,

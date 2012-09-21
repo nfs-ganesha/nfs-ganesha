@@ -609,8 +609,10 @@ int stats_snmp(void);
 void *rpc_dispatcher_thread(void *UnusedArg);
 void *admin_thread(void *UnusedArg);
 void *stats_thread(void *UnusedArg);
+#ifdef _USE_STAT_EXPORTER
 void *long_processing_thread(void *UnusedArg);
 void *stat_exporter_thread(void *UnusedArg);
+#endif
 void *file_content_gc_thread(void *UnusedArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
 void *reaper_thread(void *UnusedArg);
