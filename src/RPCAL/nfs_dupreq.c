@@ -1007,14 +1007,22 @@ dupreq_status_t
 nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
 {
     dupreq_status_t status = DUPREQ_SUCCESS;
-    drc_t *drc = nfs_dupreq_get_drc(req);
     dupreq_entry_t *dv, *dk = NULL;
     bool release_dk = true;
     nfs_res_t *res = NULL;
+    drc_t *drc;
+
+    /* Disabled? */
+    if (nfs_param.core_param.drc.disabled) {
+        req->rq_u1 = (void*) DUPREQ_NOCACHE;
+        res = alloc_nfs_res();
+        goto out;
+    }
 
     req->rq_u1 = (void*) DUPREQ_BAD_ADDR1;
     req->rq_u2 = (void*) DUPREQ_BAD_ADDR1;
 
+    drc = nfs_dupreq_get_drc(req);
     if (! drc) {
         status = DUPREQ_INSERT_MALLOC_ERROR;
         goto out;
@@ -1031,7 +1039,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
                  * slot reply cache */
                 req->rq_u1 = (void*) DUPREQ_NOCACHE;
                 res = alloc_nfs_res();
-                goto out;
+                goto put_drc;
             }
         }
         break;
@@ -1041,7 +1049,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
         if (! (nfs_req->funcdesc->dispatch_behaviour & CAN_BE_DUP)) {
             req->rq_u1 = (void*) DUPREQ_NOCACHE;
             res = alloc_nfs_res();
-            goto out;
+            goto put_drc;
         }
         break;
     }
@@ -1149,11 +1157,12 @@ release_dk:
     if (release_dk)
         nfs_dupreq_free_dupreq(dk);
 
+put_drc:
+    nfs_dupreq_put_drc(req->rq_xprt, drc, DRC_FLAG_NONE); /* dk ref */
+
 out:
     if (res)
         nfs_req->res_nfs = req->rq_u2 = res;
-
-    nfs_dupreq_put_drc(req->rq_xprt, drc, DRC_FLAG_NONE); /* dk ref */
 
     return (status);
 }

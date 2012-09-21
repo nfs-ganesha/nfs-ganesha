@@ -88,6 +88,7 @@ nfs_parameter_t nfs_param =
   .core_param.nb_worker = NB_WORKER_THREAD_DEFAULT,
   .core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG,
   .core_param.nb_max_concurrent_gc = NB_MAX_CONCURRENT_GC,
+  .core_param.drc.disabled = false,
   .core_param.drc.tcp.npart = DRC_TCP_NPART,
   .core_param.drc.tcp.size = DRC_TCP_SIZE,
   .core_param.drc.tcp.cachesz = DRC_TCP_CACHESZ,

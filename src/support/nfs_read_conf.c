@@ -248,6 +248,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->nb_max_concurrent_gc = atoi(key_value);
         }
+      else if(!strcasecmp(key_name, "DRC_Disabled"))
+        {
+            pparam->drc.disabled = StrToBoolean(key_value);
+        }
       else if(!strcasecmp(key_name, "DRC_TCP_Npart"))
         {
           pparam->drc.tcp.npart = atoi(key_value);

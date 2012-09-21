@@ -233,6 +233,7 @@ typedef struct nfs_core_param__
   unsigned int dispatch_max_reqs;
   unsigned int dispatch_max_reqs_xprt;
   struct {
+      bool disabled;
       struct {
           uint32_t npart;
           uint32_t size;
