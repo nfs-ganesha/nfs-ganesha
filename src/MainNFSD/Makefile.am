@@ -182,8 +182,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       $(FSAL_UP_LIB_FLAGS)                              \
                                       ../Common/libcommon_utils.la
 
-libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) 
-#$(libMainServices_la_LIBADD)
+libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
 
 if USE_FSAL_FUSE
 
