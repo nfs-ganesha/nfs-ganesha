@@ -248,7 +248,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
             pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
             pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
             pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
-            pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
+            pevent->event_type = FSAL_UP_EVENT_LOCK_AVAIL;
             break;
 
           case INODE_UPDATE: /* Update Event */
