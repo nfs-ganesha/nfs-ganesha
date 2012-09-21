@@ -285,10 +285,13 @@ int merge_stats(nfs_request_stat_item_t *global_stat_items,
               workers_stat_items[i][function_index].dropped;
           global_stat_items[function_index].tot_latency +=
               workers_stat_items[i][function_index].tot_latency;
-          set_min_latency(&(global_stat_items[function_index].min_latency),
-              workers_stat_items[i][function_index].min_latency);
-          set_max_latency(&(global_stat_items[function_index].max_latency),
-              workers_stat_items[i][function_index].max_latency);
+          if(workers_stat_items[i][function_index].total != 0)
+            {
+              set_min_latency(&(global_stat_items[function_index].min_latency),
+                  workers_stat_items[i][function_index].min_latency);
+              set_max_latency(&(global_stat_items[function_index].max_latency),
+                  workers_stat_items[i][function_index].max_latency);
+            }
 #ifdef _USE_QUEUE_TIMER
           if(detail_flag)
             {

@@ -546,7 +546,6 @@ typedef struct ganesha_stats__ {
     hash_stat_t             drc_udp;
     hash_stat_t             drc_tcp;
     fsal_statistics_t       global_fsal;
-    msectimer_t             avg_latency;
     unsigned long long     total_fsal_calls;
 } ganesha_stats_t;
 

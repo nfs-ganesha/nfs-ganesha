@@ -489,7 +489,7 @@ while (my $ligne=<STATS>)
             
       my $fn_index = 0;
       
-      while (  $reste =~ m/\|([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^|]+)(.*)/ )
+      while (  $reste =~ m/\|([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^|]+)(.*)/ )
       {
         my $nb_tot = $1;
         my $nb_ok = $2;
@@ -503,10 +503,17 @@ while (my $ligne=<STATS>)
         if ( $vers == 3 )
         {
           $tot_latency = $4;
-          $avg_latency = $5;
-          $min_latency = $6;
-          $max_latency = $7;
-          $reste = $8;
+          $min_latency = $5;
+          $max_latency = $6;
+          if ( $nb_tot == 0 )
+          {
+            $avg_latency = 0;
+          }
+          else
+          {
+            $avg_latency = $tot_latency / $nb_tot;
+          }
+          $reste = $7;
         }
         else
         {
