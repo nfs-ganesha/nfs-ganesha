@@ -310,6 +310,11 @@ void marshal_run (struct marshal *m)
 
 
 
+void nodedb_library_pre_init (void)
+{
+    /* just here to ensure that libnodedb is not optimized out of the linking process */
+}
+
 
 
 void marshal_create_process (void)
