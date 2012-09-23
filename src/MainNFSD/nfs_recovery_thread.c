@@ -46,6 +46,10 @@
 time_t t_after; /* Careful here. */
 
 extern hash_table_t *ht_nsm_client;
+uint64_t rpc_in;
+uint64_t rpc_out;
+uint64_t rpc_in_old;
+uint64_t rpc_out_old;
 
 static void
 nfs_release_nlm_state()
@@ -275,6 +279,64 @@ char workpath[PATH_MAX];
                 *cp2 = '\0';
                 return( (time_t) atol(cp));
 }
+void do_state()
+{
+int ientry, ientry2;
+time_t new_entry;
+char workpath[PATH_MAX];
+char status[12];
+struct dirent **state_namelist;
+
+#define RECORD_HISTORY 13 /* We keep 12 state records including the one we are
+                           * about to write.
+                           */
+
+        ientry = scandir(NFS_V4_RECOV_LOCAL, &state_namelist, 0, alphasort);
+        if (ientry < 0) {
+                LogEvent(COMPONENT_THREAD, "scandir of %s failed errno = %d", NFS_RECOV_EVENTS, errno);
+        }
+        if ( ientry > RECORD_HISTORY ) {
+                ientry2 = 2;
+                while(ientry >= RECORD_HISTORY) {              
+                        sprintf( workpath,"%s/%s",NFS_V4_RECOV_LOCAL,state_namelist[ientry2]->d_name);
+                        (void) remove(workpath);
+                        ientry--;
+                        ientry2++;
+                }
+        }
+        /* Make the restart recommendation evaluation here */
+        while(1) {
+        /* Here are the current rules:
+         * We keep 12 state records = 2 minutes worth.
+         * two reds in that period then CTDB restarts us
+         * No new state record in 2 minutes then CTDB restarts us
+         */
+                if ( (rpc_in > rpc_in_old ) &&  (rpc_out > rpc_out_old) ) {
+                        strcpy(status,"green");
+                        break;
+                }
+                if ( (rpc_in > rpc_in_old ) &&  (rpc_out <= rpc_out_old) ) {
+                        strcpy(status,"red");
+                        break;
+                }
+                strcpy(status,"yellow");
+                break;
+        }
+        new_entry = time(NULL);
+        snprintf(workpath, PATH_MAX, "%s/%lu_%s_%lu_%lu",
+                NFS_V4_RECOV_LOCAL, (ulong) new_entry,status,rpc_in, rpc_out);
+
+        ientry = creat(workpath, 0755);
+        if (ientry == -1) {
+                LogEvent(COMPONENT_THREAD,
+                    "Failed to create state file (%s), errno=%d",
+                    workpath, errno);
+        } else
+                close(ientry);
+        rpc_in_old = rpc_in;
+        rpc_out_old = rpc_out;
+        return;
+}
 void rec_gc( int inum, struct dirent **namelist)
 {
 int ientry;
@@ -456,7 +518,18 @@ nfs_grace_start_array_t *nfs_grace_start_array;
         SetNameFunction("recovery_thr");
         t_after = 0;
 
+        uerr = mkdir(NFS_V4_RECOV_LOCAL, 0755);
+        if (uerr == -1 && errno != EEXIST) {
+                LogEvent(COMPONENT_THREAD,
+                    "Failed to create v4 recovery dir (%s), errno=%d",
+                    NFS_V4_RECOV_LOCAL, errno);
+        }
+        rpc_in =  rpc_out = 0;
+        rpc_in_old =  rpc_out_old = 0;
+        uerr = 0;
+
         while(1) {
+                do_state();
                 if ( ucnt == 0 ) { /* We are just coming up. Should be in grace for us. */
                         sleep(NFS_RECOV_GC); /* let things clear out */
                         ucnt++;
@@ -467,10 +540,10 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                         /* Don't flood the log */
                         if ( uerr < 3 ) {
                                 LogEvent(COMPONENT_THREAD, "scandir of %s failed errno = %d", NFS_RECOV_EVENTS, errno);
-                                sleep(NFS_RECOV_CYCLE);
                                 uerr++;
-                                continue;
                         }
+                        sleep(NFS_RECOV_CYCLE);
+                        continue;
                 } 
                 uerr = 0;
                 while(1) {
@@ -529,7 +602,7 @@ nfs_grace_start_array_t *nfs_grace_start_array;
                 }
                 rec_gc( n, namelist);
                 free_dirent(n, namelist);
-                sleep(10);
+                sleep(NFS_RECOV_CYCLE);
         } /* while ( 1 ) */
 #endif /* SONAS */
 

@@ -1,6 +1,7 @@
 #ifndef _NFSRECV_H
 #define _NFSRECV_H
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
+#define NFS_V4_RECOV_LOCAL "/var/lib/nfs/ganesha_local"
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
 #define NFS_RECOV_EVENTS "/var/lib/nfs/ganesha/recevents" /* Not just v4 */

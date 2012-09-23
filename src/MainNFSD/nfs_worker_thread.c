@@ -73,7 +73,8 @@
 #include "SemN.h"
 
 extern nfs_worker_data_t *workers_data;
-
+extern uint64_t rpc_in;
+extern uint64_t rpc_out;
 pool_t *request_pool;
 pool_t *request_data_pool;
 pool_t *dupreq_pool;
@@ -858,6 +859,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
            (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
            req->rq_xid);
 
+  rpc_in++;
+
   do_dupreq_cache = pworker_data->pfuncdesc->dispatch_behaviour & CAN_BE_DUP;
   LogFullDebug(COMPONENT_DISPATCH, "do_dupreq_cache = %d", do_dupreq_cache);
   if(do_dupreq_cache) 
@@ -903,6 +906,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
           LogFullDebug(COMPONENT_DISPATCH,
                        "After svc_sendreply on socket %d (dup req)",
                        xprt->xp_fd);
+
+          rpc_out++;
+
           return;
 
           /* Another thread owns the request */
@@ -1467,6 +1473,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
   nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), req,
                   &latency_stat);
 
+  rpc_out++;
+
+
   if ((req->rq_prog == nfs_param.core_param.program[P_MNT]) ||
       ((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
        (req->rq_proc == 0 /*NULL RPC*/ ))) {
@@ -1647,6 +1656,9 @@ auth_failure:
   if(do_dupreq_cache && nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
     LogCrit(COMPONENT_DISPATCH,
             "Attempt to delete duplicate request after auth failure");
+  
+/* XXX */
+  rpc_out++;
 
   return;
 
