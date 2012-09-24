@@ -1147,8 +1147,8 @@ int nfs_check_param_consistency()
     }
 
   /* Dispatch quotas */
-  nfs_param.core_param.dispatch_max_reqs =  1024;
-  nfs_param.core_param.dispatch_max_reqs_xprt =  50;  
+  nfs_param.core_param.dispatch_max_reqs =  5000;
+  nfs_param.core_param.dispatch_max_reqs_xprt =  512;  
 
 #if 0
 /* XXXX this seems somewhat the obvious of what I would have reasoned.
