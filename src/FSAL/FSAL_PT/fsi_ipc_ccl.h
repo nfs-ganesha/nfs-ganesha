@@ -306,8 +306,8 @@ struct file_handle_t {
                                               // if m_dir_not_file_flag is
                                               // set
   uint64_t               m_resourceHandle;    // handle for resource management
-  pthread_mutex_t        m_io_mutex;          // used to manage multithread
-                                              // NFS io operations
+//  pthread_mutex_t        m_io_mutex;          // used to manage multithread
+//                                              // NFS io operations
   struct timeval         m_perf_pwrite_start[MAX_FSI_PERF_COUNT];
   struct timeval         m_perf_pwrite_end[MAX_FSI_PERF_COUNT];
   struct timeval         m_perf_aio_start[MAX_FSI_PERF_COUNT];
@@ -319,6 +319,7 @@ struct file_handle_t {
   uint64_t               m_perf_fstat_count;  // number of fstat while open
   enum e_nfs_state       m_nfs_state;
   time_t                 m_last_io_time;      // Last time I/O was performed.
+  int                    m_ftrunc_rsp_rcvd;
 };
 
 // ----------------------------------------------------------------------------
@@ -834,6 +835,8 @@ extern pthread_mutex_t g_parseio_mutex;
 extern pthread_mutex_t g_transid_mutex;
 extern pthread_mutex_t g_non_io_mutex;
 extern pthread_mutex_t g_close_mutex;
+// Global I/O mutex
+extern pthread_mutex_t g_io_mutex;
 #endif // ifndef __FSI_IPC_CCL_H__
 
 #ifdef __cplusplus

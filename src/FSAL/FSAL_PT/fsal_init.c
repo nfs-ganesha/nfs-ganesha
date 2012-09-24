@@ -62,6 +62,7 @@ pthread_mutex_t g_parseio_mutex; // only one thread can parse an io at a time
 pthread_mutex_t g_transid_mutex; 
 pthread_mutex_t g_non_io_mutex;
 pthread_mutex_t g_close_mutex;
+pthread_mutex_t g_io_mutex;
 pthread_t g_pthread_closehandle_lisetner;
 pthread_t g_pthread_polling_closehandler;
 
@@ -129,7 +130,7 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   pthread_mutex_init(&g_transid_mutex,NULL);
   pthread_mutex_init(&g_close_mutex,NULL);
   pthread_mutex_init(&g_fsi_name_handle_mutex, NULL);
-
+  pthread_mutex_init(&g_io_mutex, NULL);
   g_fsi_name_handle_cache.m_count = 0;
  
   // fsi_ipc_trace_level allows using the level settings differently than

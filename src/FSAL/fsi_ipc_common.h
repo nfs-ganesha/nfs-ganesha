@@ -216,7 +216,8 @@ enum {
   IoOpWrite,                    // file is being written
   IoOpRead,                     // file is neither being read or written
   IoOpClose,                    // file is being closed
-  IoOpFsync                     // file is being synced
+  IoOpFsync,                    // file is being synced
+  IoOpFtrunc                    // file is being truncated
 };
 
 // FSI Operation return codes
