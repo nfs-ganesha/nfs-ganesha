@@ -3071,7 +3071,11 @@ static int nfs4_decode_acl_special_user(utf8string *utf8str, int *who)
   return -1;
 }
 
-static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_int *LastOffset)
+static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
+                           fattr4             * Fattr,
+                           u_int              * LastOffset,
+                           uid_t                anon_uid,
+                           gid_t                anon_gid)
 {
   fsal_acl_status_t status;
   fsal_acl_data_t acldata;
@@ -3157,23 +3161,23 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
           pace->iflag |= FSAL_ACE_IFLAG_SPECIAL_ID;
           pace->who.uid = who;
           LogFullDebug(COMPONENT_NFS_V4,
-                       "SATTR: ACE special who.uid = 0x%x",
+                       "SATTR: ACE special who.uid = %u",
                        pace->who.uid);
         }
       else
         {
           if(pace->flag == FSAL_ACE_FLAG_GROUP_ID)  /* Decode group. */
             {
-              utf82gid(&utf8buffer, &(pace->who.gid));
+              utf82gid(&utf8buffer, &(pace->who.gid), anon_gid);
               LogFullDebug(COMPONENT_NFS_V4,
-                           "SATTR: ACE who.gid = 0x%x",
+                           "SATTR: ACE who.gid = %u",
                            pace->who.gid);
             }
           else  /* Decode user. */
             {
-              utf82uid(&utf8buffer, &(pace->who.uid));
+              utf82uid(&utf8buffer, &(pace->who.uid), anon_uid);
               LogFullDebug(COMPONENT_NFS_V4,
-                           "SATTR: ACE who.uid = 0x%x",
+                           "SATTR: ACE who.uid =%u",
                            pace->who.uid);
             }
         }
@@ -3357,11 +3361,17 @@ static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
  * @param Fattr      [IN] pointer to NFSv4 attributes. 
  * @param hdl4       [OUT] optional pointer to return NFSv4 file handle
+ * @param anon_uid   [IN] uid to use if user name doesn't map to a uid
+ * @param anon_gid   [IN] gid to use if user name doesn't map to a gid
  * 
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4 *hdl4)
+int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
+                        fattr4 * Fattr,
+                        nfs_fh4 *hdl4,
+                        uid_t anon_uid,
+                        gid_t anon_gid)
 {
   u_int LastOffset = 0;
   unsigned int i = 0;
@@ -3552,7 +3562,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
           utf8buffer.utf8string_val = buffer;
           utf8buffer.utf8string_len = strlen(buffer);
 
-          utf82uid(&utf8buffer, &(pFSAL_attr->owner));
+          utf82uid(&utf8buffer, &(pFSAL_attr->owner), anon_uid);
           pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
 
           LogFullDebug(COMPONENT_NFS_V4,
@@ -3579,7 +3589,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
           utf8buffer.utf8string_val = buffer;
           utf8buffer.utf8string_len = strlen(buffer);
 
-          utf82gid(&utf8buffer, &(pFSAL_attr->group));
+          utf82gid(&utf8buffer, &(pFSAL_attr->group), anon_gid);
           pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
 
           LogFullDebug(COMPONENT_NFS_V4,
@@ -3683,7 +3693,11 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
 
 #ifdef _USE_NFS4_ACL
         case FATTR4_ACL:
-          if((rc = nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset)) != NFS4_OK)
+          if((rc = nfs4_decode_acl(pFSAL_attr,
+                                   Fattr,
+                                   &LastOffset,
+                                   anon_uid,
+                                   anon_gid)) != NFS4_OK)
             return rc;
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_ACL;
@@ -3711,13 +3725,18 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
  *
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
  * @param Fattr      [IN] pointer to NFSv4 attributes. 
+ * @param anon_uid   [IN] uid to use if user name doesn't map to a uid
+ * @param anon_gid   [IN] gid to use if user name doesn't map to a gid
  * 
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
+int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
+                            fattr4 * Fattr,
+                            uid_t anon_uid,
+                            gid_t anon_gid)
 {
-  return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL);
+  return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL, anon_uid, anon_gid);
 }
 
 /* Error conversion routines */

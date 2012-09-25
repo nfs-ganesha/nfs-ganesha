@@ -230,7 +230,8 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
   if(nfs4_Fattr_To_FSAL_attr(&attributes,
                              &resnfs4.resarray.resarray_val[FSAL_CREATE_IDX_OP_GETATTR].
                              nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                             obj_attributes) != NFS4_OK)
+                             obj_attributes,
+                             ANON_UID, ANON_GID) != NFS4_OK)
     {
       FSAL_CLEAR_MASK(attributes.asked_attributes);
       FSAL_SET_MASK(attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -468,7 +469,8 @@ fsal_status_t PROXYFSAL_mkdir(fsal_handle_t * parent_directory_handle,     /* IN
   if(nfs4_Fattr_To_FSAL_attr(&attributes,
                              &resnfs4.resarray.resarray_val[FSAL_MKDIR_IDX_OP_GETATTR].
                              nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                             obj_attributes) != NFS4_OK)
+                             obj_attributes,
+                             ANON_UID, ANON_GID) != NFS4_OK)
     {
       FSAL_CLEAR_MASK(attributes.asked_attributes);
       FSAL_SET_MASK(attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -645,7 +647,8 @@ fsal_status_t PROXYFSAL_link(fsal_handle_t * target_handle,        /* IN */
       if(nfs4_Fattr_To_FSAL_attr(attributes,
                                  &resnfs4.resarray.
                                  resarray_val[FSAL_LINK_IDX_OP_GETATTR].nfs_resop4_u.
-                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != NFS4_OK)
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes,
+                                 ANON_UID, ANON_GID) != NFS4_OK)
         {
           FSAL_CLEAR_MASK(attributes->asked_attributes);
           FSAL_SET_MASK(attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

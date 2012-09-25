@@ -748,7 +748,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 {
   nfs_fh4 hdl4;
 
-  if (Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, &hdl4) != NFS4_OK)
+  if (Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, &hdl4, ANON_UID, ANON_GID) != NFS4_OK)
       return -1;
 
   return fsal_internal_proxy_create_fh(&hdl4, pFSAL_attr->type, pFSAL_attr->fileid,

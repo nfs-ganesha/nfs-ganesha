@@ -225,7 +225,8 @@ fsal_status_t PROXYFSAL_rename(fsal_handle_t * old_parent,       /* IN */
       if(nfs4_Fattr_To_FSAL_attr(src_dir_attributes,
                                  &resnfs4.resarray.resarray_val
                                  [FSAL_RENAME_IDX_OP_GETATTR_OLD].nfs_resop4_u.
-                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != NFS4_OK)
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes,
+                                 ANON_UID, ANON_GID) != NFS4_OK)
         {
           FSAL_CLEAR_MASK(src_dir_attributes->asked_attributes);
           FSAL_SET_MASK(src_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -243,7 +244,8 @@ fsal_status_t PROXYFSAL_rename(fsal_handle_t * old_parent,       /* IN */
       if(nfs4_Fattr_To_FSAL_attr(tgt_dir_attributes,
                                  &resnfs4.resarray.resarray_val
                                  [FSAL_RENAME_IDX_OP_GETATTR_NEW].nfs_resop4_u.
-                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != NFS4_OK)
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes,
+                                 ANON_UID, ANON_GID) != NFS4_OK)
         {
           FSAL_CLEAR_MASK(tgt_dir_attributes->asked_attributes);
           FSAL_SET_MASK(tgt_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

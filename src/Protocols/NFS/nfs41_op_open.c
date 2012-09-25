@@ -329,7 +329,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               res_OPEN4.status =
                   nfs4_Fattr_To_FSAL_attr(&sattr,
                                           &(arg_OPEN4.openhow.openflag4_u.how.
-                                            createhow4_u.createattrs));
+                                            createhow4_u.createattrs),
+                                          data->export_perms.anonymous_uid,
+                                          data->export_perms.anonymous_gid);
 
               if(res_OPEN4.status != NFS4_OK)
                 {

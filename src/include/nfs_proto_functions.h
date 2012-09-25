@@ -1417,16 +1417,14 @@ int utf82str(char *str, int size, utf8string * utf8str);
 int str2utf8(char *str, utf8string * utf8str);
 
 int uid2utf8(uid_t uid, utf8string * utf8str);
-int utf82uid(utf8string * utf8str, uid_t * Uid);
+void utf82uid(utf8string * utf8str, uid_t * Uid, uid_t anon_uid);
 
 int uid2str(uid_t uid, char *str);
-int str2uid(char *str, uid_t * Uid);
 
 int gid2str(gid_t gid, char *str);
-int str2gid(char *str, gid_t * Gid);
 
 int gid2utf8(gid_t gid, utf8string * utf8str);
-int utf82gid(utf8string * utf8str, gid_t * Gid);
+void utf82gid(utf8string * utf8str, gid_t * Gid, gid_t anon_gid);
 
 void nfs4_stringid_split(char *buff, char *uidname, char *domainname);
 
@@ -1504,10 +1502,14 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
 int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File attributes  */
-                        fattr4 * pFattr,   /* In: File attributes   */
-                        nfs_fh4 *fh);
+                        fattr4 * Fattr,   /* In: File attributes   */
+                        nfs_fh4 *fh,
+                        uid_t anon_uid,
+                        gid_t anon_gid);
 int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File attributes  */
-                            fattr4 * pFattr);   /* In: File attributes   */
+                            fattr4 * Fattr,    /* In: File attributes   */
+                            uid_t anon_uid,
+                            gid_t anon_gid);
 
 int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask);
 

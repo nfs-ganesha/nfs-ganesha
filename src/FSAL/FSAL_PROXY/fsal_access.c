@@ -183,7 +183,8 @@ fsal_status_t PROXYFSAL_access(fsal_handle_t * object_handle,      /* IN */
       if(nfs4_Fattr_To_FSAL_attr(object_attributes,
                                  &resnfs4.resarray.
                                  resarray_val[FSAL_ACCESS_IDX_OP_GETATTR].nfs_resop4_u.
-                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != NFS4_OK)
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes,
+                                 ANON_UID, ANON_GID) != NFS4_OK)
         {
           FSAL_CLEAR_MASK(object_attributes->asked_attributes);
           FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

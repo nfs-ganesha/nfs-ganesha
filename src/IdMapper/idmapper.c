@@ -865,7 +865,7 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
  *
  * @return 0 if successful, -1 otherwise.
  */
-int utf82uid(utf8string * utf8str, uid_t * Uid)
+void utf82uid(utf8string * utf8str, uid_t * Uid, uid_t anon_uid)
 {
   char buff[2 * NFS4_MAX_DOMAIN_LEN];
   char uidname[NFS4_MAX_DOMAIN_LEN];
@@ -876,10 +876,9 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
 
   if(utf8str->utf8string_len == 0)
     {
-      *Uid = -1;                /* Nobody */
+      *Uid = anon_uid;                /* Nobody */
       LogCrit(COMPONENT_IDMAPPER,
-              "utf82uid: empty user name");
-      return -1;
+              "utf82uid: empty user name mapped to uid %u", anon_uid);
     }
 
   utf82str(buff, sizeof(buff), utf8str);
@@ -895,15 +894,18 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
 
   if(rc == 0)
     {
-      *Uid = -1;                /* Nobody */
-      return -1;
+      *Uid = anon_uid;                /* Nobody */
+      LogDebug(COMPONENT_IDMAPPER,
+               "utf82uid: Mapped %s to anonymous uid = %u",
+               buff, *Uid);
+    }
+  else
+    {
+      LogDebug(COMPONENT_IDMAPPER,
+               "utf82uid: Mapped %s to uid = %u",
+               buff, *Uid);
     }
 
-  LogDebug(COMPONENT_IDMAPPER,
-           "utf82uid: Mapped %s to uid = %u",
-           buff, *Uid);
-
-  return 0;
 }                               /* utf82uid */
 
 /**
@@ -917,7 +919,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
  *
  * @return 0 in all cases
  */
-int utf82gid(utf8string * utf8str, gid_t * Gid)
+void utf82gid(utf8string * utf8str, gid_t * Gid, gid_t anon_gid)
 {
   char buff[2 * NFS4_MAX_DOMAIN_LEN];
   char gidname[NFS4_MAX_DOMAIN_LEN];
@@ -928,10 +930,9 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
 
   if(utf8str->utf8string_len == 0)
     {
-      *Gid = -1;                /* Nobody */
+      *Gid = anon_gid;                /* Nobody */
       LogCrit(COMPONENT_IDMAPPER,
-              "utf82gid: empty group name");
-      return 0;
+              "utf82gid: empty group name mapped to gid %u", anon_gid);
     }
 
   utf82str(buff, sizeof(buff), utf8str);
@@ -947,13 +948,16 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
 
   if(rc == 0)
     {
-      *Gid = -1;                /* Nobody */
-      return 0;
+      *Gid = anon_gid;                /* Nobody */
+      LogDebug(COMPONENT_IDMAPPER,
+               "utf82gid: Mapped %s to anonymous gid = %u",
+               buff, *Gid);
+    }
+  else
+    {
+      LogDebug(COMPONENT_IDMAPPER,
+               "utf82gid: Mapped %s to gid = %u",
+               buff, *Gid);
     }
 
-  LogDebug(COMPONENT_IDMAPPER,
-           "utf82gid: Mapped %s to gid = %u",
-           buff, *Gid);
-
-  return 0;
 }                               /* utf82gid */
