@@ -128,7 +128,7 @@ cache_inode_access_sw(cache_entry_t *entry,
                     *attrs = entry->attributes;
                }
                if (use_mutex) {
-                    pthread_rwlock_unlock(&entry->attr_lock);
+                    PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
                }
           } else {
                /* There is no reason to hold the mutex here, since we

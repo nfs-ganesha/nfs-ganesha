@@ -232,21 +232,21 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
       return;
     }
 
-  pthread_rwlock_wrlock(&cookie_entry->sce_pentry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&cookie_entry->sce_pentry->state_lock);
 
   if(cookie_entry->sce_lock_entry->sle_block_data == NULL ||
      !nlm_block_data_to_fsal_context(cookie_entry->sce_lock_entry->sle_block_data,
                                      pcontext))
     {
       /* Wow, we're not doing well... */
-      pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&cookie_entry->sce_pentry->state_lock);
       LogFullDebug(COMPONENT_NLM,
                    "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
       return;
     }
 
-  pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&cookie_entry->sce_pentry->state_lock);
 
   if(state_release_grant(pcontext,
                          cookie_entry,

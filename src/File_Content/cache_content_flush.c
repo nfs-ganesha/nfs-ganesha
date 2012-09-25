@@ -94,7 +94,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
   pfsal_handle = &pentry->pentry_inode->handle;
 
   /* Lock related Cache Inode pentry to avoid concurrency while read/write operation */
-  pthread_rwlock_wrlock(&pentry->pentry_inode->content_lock);
+  PTHREAD_RWLOCK_WRLOCK(&pentry->pentry_inode->content_lock);
 
   /* Convert the path to FSAL path */
   fsal_status =
@@ -105,7 +105,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
       /* Unlock related Cache Inode pentry */
-      pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry->pentry_inode->content_lock);
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
@@ -121,7 +121,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
                         fsal_status.minor);
 
       /* Unlock related Cache Inode pentry */
-      pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry->pentry_inode->content_lock);
 
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
@@ -138,7 +138,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
       if(unlink(pentry->local_fs_entry.cache_path_index))
         {
           /* Unlock related Cache Inode pentry */
-          pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry->pentry_inode->content_lock);
 
           LogCrit(COMPONENT_CACHE_CONTENT, "Can't unlink flushed index %s, errno=%u(%s)",
                      pentry->local_fs_entry.cache_path_index, errno, strerror(errno));
@@ -150,7 +150,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
       if(unlink(pentry->local_fs_entry.cache_path_data))
         {
           /* Unlock related Cache Inode pentry */
-          pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry->pentry_inode->content_lock);
 
           LogCrit(COMPONENT_CACHE_CONTENT, "Can't unlink flushed index %s, errno=%u(%s)",
                      pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
@@ -160,7 +160,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
     }
 
   /* Unlock related Cache Inode pentry */
-  pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
+  PTHREAD_RWLOCK_UNLOCK(&pentry->pentry_inode->content_lock);
 
   /* Exit the function with no error */
   pclient->stat.func_stats.nb_success[CACHE_CONTENT_FLUSH] += 1;

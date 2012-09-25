@@ -113,7 +113,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      }
 
      /* Acquire the attribute lock */
-     pthread_rwlock_wrlock(&dest_dir->attr_lock);
+     PTHREAD_RWLOCK_WRLOCK(&dest_dir->attr_lock);
      destattrlock = TRUE;
 
      /* Check if caller is allowed to perform the operation */
@@ -133,7 +133,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      /* Rather than performing a lookup first, just try to make the
         link and return the FSAL's error if it fails. */
 
-     pthread_rwlock_wrlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
      srcattrlock = TRUE;
 
      if ((entry->type == UNASSIGNED) ||
@@ -145,7 +145,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      }
 
      /* Acquire the directory entry lock */
-     pthread_rwlock_wrlock(&dest_dir->content_lock);
+     PTHREAD_RWLOCK_WRLOCK(&dest_dir->content_lock);
      destdirlock = TRUE;
 
      /* Do the link at FSAL level */
@@ -193,13 +193,13 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
 
      cache_inode_fixup_md(entry);
      *attr = entry->attributes;
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
      srcattrlock = FALSE;
 
      /* Reload the destination directory's attributes so the caller
         will have an updated changeid. */
      cache_inode_refresh_attrs(dest_dir, context);
-     pthread_rwlock_unlock(&dest_dir->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&dest_dir->attr_lock);
      destattrlock = FALSE;
 
      /* Add the new entry in the destination directory */
@@ -211,21 +211,21 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
           goto out;
      }
 
-     pthread_rwlock_unlock(&dest_dir->content_lock);
+     PTHREAD_RWLOCK_UNLOCK(&dest_dir->content_lock);
      destdirlock = FALSE;
 
 out:
 
      if (srcattrlock) {
-          pthread_rwlock_unlock(&entry->attr_lock);
+          PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
      }
 
      if (destattrlock) {
-          pthread_rwlock_unlock(&dest_dir->attr_lock);
+          PTHREAD_RWLOCK_UNLOCK(&dest_dir->attr_lock);
      }
 
      if (destdirlock) {
-          pthread_rwlock_unlock(&dest_dir->content_lock);
+          PTHREAD_RWLOCK_UNLOCK(&dest_dir->content_lock);
      }
 
      return *status;

@@ -917,6 +917,18 @@ int display_not_implemented(hash_buffer_t *pbuff,
                             char *str);
 int display_value(hash_buffer_t *pbuff, char *str);
 
+#define PTHREAD_RWLOCK_RDLOCK(_rwlock_) \
+  pthread_rwlock_rdlock(_rwlock_)
+
+#define PTHREAD_RWLOCK_WRLOCK(_rwlock_) \
+  pthread_rwlock_wrlock(_rwlock_)
+
+#define PTHREAD_RWLOCK_UNLOCK(_rwlock_) \
+  assert(((_rwlock_)->__data.__nr_readers > 0) || \
+         ((_rwlock_)->__data.__writer != 0)); \
+  pthread_rwlock_unlock(_rwlock_)
+
+
 /**
  * @brief Update cache_entry metadata from its attributes
  *
@@ -1043,13 +1055,13 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
 
-     pthread_rwlock_rdlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_RDLOCK(&entry->attr_lock);
      /* Do we need to refresh? */
      if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
          FSAL_TEST_MASK(entry->attributes.asked_attributes,
                         FSAL_ATTR_RDATTR_ERR)) {
-          pthread_rwlock_unlock(&entry->attr_lock);
-          pthread_rwlock_wrlock(&entry->attr_lock);
+          PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
+          PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
           /* Has someone else done it for us? */
           if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
               FSAL_TEST_MASK(entry->attributes.asked_attributes,
@@ -1059,7 +1071,7 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
                     cache_inode_refresh_attrs(entry,
                                               context))
                    != CACHE_INODE_SUCCESS) {
-                    pthread_rwlock_unlock(&entry->attr_lock);
+                    PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
                }
           }
      }

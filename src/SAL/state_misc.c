@@ -1209,9 +1209,8 @@ void state_wipe_file(cache_entry_t        * pentry)
       /* This thread already has some kind of lock, but we don't know
          if it's a write lock. */
       had_lock = TRUE;
-      pthread_rwlock_unlock(&pentry->state_lock);
-
-      pthread_rwlock_wrlock(&pentry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
+      PTHREAD_RWLOCK_WRLOCK(&pentry->state_lock);
     }
 
   state_lock_wipe(pentry);
@@ -1224,7 +1223,7 @@ void state_wipe_file(cache_entry_t        * pentry)
 
   if (!had_lock)
     {
-      pthread_rwlock_unlock(&pentry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
     }
 
 #ifdef _DEBUG_MEMLEAKS

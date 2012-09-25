@@ -104,7 +104,7 @@ cache_inode_getattr(cache_entry_t *entry,
 
      *attr = entry->attributes;
 
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
 
 out:
 

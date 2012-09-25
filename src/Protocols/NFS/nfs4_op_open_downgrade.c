@@ -225,14 +225,14 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
   candidate_data.share.share_access = args->share_access;
   candidate_data.share.share_deny = args->share_deny;
 
-  pthread_rwlock_wrlock(&data->current_entry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&data->current_entry->state_lock);
   /* Check if given share access is subset of current share access */
   if(((*statep)->state_data.share.share_access & args->share_access) !=
      (args->share_access))
     {
       /* Open share access is not a superset of downgrade share access */
       *cause = " (invalid share access for downgrade)";
-      pthread_rwlock_unlock(&data->current_entry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&data->current_entry->state_lock);
       return NFS4ERR_INVAL;
     }
 
@@ -242,7 +242,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
     {
       /* Open share deny is not a superset of downgrade share deny */
       *cause = " (invalid share deny for downgrade)";
-      pthread_rwlock_unlock(&data->current_entry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&data->current_entry->state_lock);
       return NFS4ERR_INVAL;
     }
 
@@ -250,7 +250,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
   if(state_share_check_prev(*statep, &candidate_data) != STATE_SUCCESS)
     {
       *cause = " (share access or deny never seen before)";
-      pthread_rwlock_unlock(&data->current_entry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&data->current_entry->state_lock);
       return NFS4ERR_INVAL;
     }
 
@@ -259,10 +259,10 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
                            &state_status) != STATE_SUCCESS)
     {
       *cause = " (state_share_downgrade failed)";
-      pthread_rwlock_unlock(&data->current_entry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&data->current_entry->state_lock);
       return NFS4ERR_SERVERFAULT;
     }
 
-  pthread_rwlock_unlock(&data->current_entry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&data->current_entry->state_lock);
   return NFS4_OK;
 }

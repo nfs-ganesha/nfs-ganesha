@@ -650,12 +650,12 @@ cache_inode_readdir(cache_entry_t *directory,
           goto unlock_attrs;
      }
 
-     pthread_rwlock_rdlock(&directory->content_lock);
-     pthread_rwlock_unlock(&directory->attr_lock);
+     PTHREAD_RWLOCK_RDLOCK(&directory->content_lock);
+     PTHREAD_RWLOCK_UNLOCK(&directory->attr_lock);
      if (!((directory->flags & CACHE_INODE_TRUST_CONTENT) &&
            (directory->flags & CACHE_INODE_DIR_POPULATED))) {
-          pthread_rwlock_unlock(&directory->content_lock);
-          pthread_rwlock_wrlock(&directory->content_lock);
+          PTHREAD_RWLOCK_UNLOCK(&directory->content_lock);
+          PTHREAD_RWLOCK_WRLOCK(&directory->content_lock);
           if (cache_inode_readdir_populate(directory,
                                            context,
                                            status)
@@ -765,7 +765,7 @@ cache_inode_readdir(cache_entry_t *directory,
                          &entry->attributes,
                          dirent->hk.k);
           (*nbfound)++;
-          pthread_rwlock_unlock(&entry->attr_lock);
+          PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
           cache_inode_lru_unref(entry, 0);
           if (!in_result) {
                break;
@@ -784,11 +784,11 @@ cache_inode_readdir(cache_entry_t *directory,
 
 unlock_dir:
 
-     pthread_rwlock_unlock(&directory->content_lock);
+     PTHREAD_RWLOCK_UNLOCK(&directory->content_lock);
      return *status;
 
 unlock_attrs:
 
-     pthread_rwlock_unlock(&directory->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&directory->attr_lock);
      return *status;
 } /* cache_inode_readdir */

@@ -221,20 +221,20 @@ cache_inode_create(cache_entry_t *parent,
           return NULL;
      }
 
-     pthread_rwlock_wrlock(&parent->content_lock);
+     PTHREAD_RWLOCK_WRLOCK(&parent->content_lock);
      /* Add this entry to the directory (also takes an internal ref) */
      cache_inode_add_cached_dirent(parent,
                                    name, entry,
                                    NULL,
                                    status);
-     pthread_rwlock_unlock(&parent->content_lock);
+     PTHREAD_RWLOCK_UNLOCK(&parent->content_lock);
      if (*status != CACHE_INODE_SUCCESS) {
           cache_inode_lru_unref(entry, LRU_FLAG_NONE);
           entry = NULL;
           goto out;
      }
 
-     pthread_rwlock_wrlock(&parent->attr_lock);
+     PTHREAD_RWLOCK_WRLOCK(&parent->attr_lock);
      /* Update the parent cached attributes */
      cache_inode_set_time_current(&parent->attributes.mtime);
      parent->attributes.ctime = parent->attributes.mtime;
@@ -243,7 +243,7 @@ cache_inode_create(cache_entry_t *parent,
      if (type == DIRECTORY) {
           ++(parent->attributes.numlinks);
      }
-     pthread_rwlock_unlock(&parent->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&parent->attr_lock);
 
      /* Copy up the child attributes */
      *attr = object_attributes;

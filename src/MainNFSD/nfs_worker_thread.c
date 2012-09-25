@@ -1860,7 +1860,7 @@ cond_multi_dispatch(nfs_worker_data_t *pmydata, request_data_t *nfsreq,
     if (try_multi) {
         process_status_t rc_multi __attribute__((unused));
         gsh_xprt_private_t *xu;
-        pthread_rwlock_wrlock(&xprt->lock);
+        PTHREAD_RWLOCK_WRLOCK(&xprt->lock);
         xu = (gsh_xprt_private_t *) xprt->xp_u1;
 
         LogDebug(COMPONENT_DISPATCH, "xprt=%p try_multi=TRUE multi_cnt=%u "
@@ -1876,7 +1876,7 @@ cond_multi_dispatch(nfs_worker_data_t *pmydata, request_data_t *nfsreq,
             rc_multi = dispatch_rpc_subrequest(pmydata, nfsreq);
             dispatched = TRUE;
         }
-        pthread_rwlock_unlock(&xprt->lock);
+        PTHREAD_RWLOCK_UNLOCK(&xprt->lock);
     }
 
     if (! dispatched) {
@@ -2205,12 +2205,12 @@ void *worker_thread(void *IndexArg)
       case NFS_REQUEST_LEADER:
       case NFS_REQUEST:
           xu = (gsh_xprt_private_t *) nfsreq->r_u.nfs->xprt->xp_u1;
-          pthread_rwlock_rdlock(&nfsreq->r_u.nfs->xprt->lock);
+          PTHREAD_RWLOCK_RDLOCK(&nfsreq->r_u.nfs->xprt->lock);
           if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
-              pthread_rwlock_unlock(&nfsreq->r_u.nfs->xprt->lock);
+              PTHREAD_RWLOCK_UNLOCK(&nfsreq->r_u.nfs->xprt->lock);
               goto finalize_req;
           }
-          pthread_rwlock_unlock(&nfsreq->r_u.nfs->xprt->lock);
+          PTHREAD_RWLOCK_UNLOCK(&nfsreq->r_u.nfs->xprt->lock);
           break;
       default:
           break;
@@ -2280,7 +2280,7 @@ void *worker_thread(void *IndexArg)
                nfsreq->r_u.nfs->xprt, XPRT_PRIVATE_FLAG_NONE);
            break;
        case NFS_REQUEST:
-           pthread_rwlock_wrlock(&nfsreq->r_u.nfs->xprt->lock);
+           PTHREAD_RWLOCK_WRLOCK(&nfsreq->r_u.nfs->xprt->lock);
            --(xu->multi_cnt);
            gsh_xprt_unref(
                nfsreq->r_u.nfs->xprt, XPRT_PRIVATE_FLAG_LOCKED);

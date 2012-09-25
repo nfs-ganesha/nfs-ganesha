@@ -81,7 +81,7 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
       return NFS_REQ_OK;
     }
 
-  pthread_rwlock_wrlock(&cookie_entry->sce_pentry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&cookie_entry->sce_pentry->state_lock);
 
   if(cookie_entry->sce_lock_entry == NULL ||
      cookie_entry->sce_lock_entry->sle_block_data == NULL ||
@@ -89,14 +89,14 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
                                      pcontext))
     {
       /* This must be an old NLM_GRANTED_RES */
-      pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&cookie_entry->sce_pentry->state_lock);
       LogFullDebug(COMPONENT_NLM,
                    "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
       return NFS_REQ_OK;
     }
 
-  pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&cookie_entry->sce_pentry->state_lock);
 
   if(arg->stat.stat != NLM4_GRANTED)
     {

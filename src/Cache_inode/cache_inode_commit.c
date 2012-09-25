@@ -95,7 +95,7 @@ cache_inode_commit(cache_entry_t *entry,
      if ((uint64_t)count > ~(uint64_t)offset)
          return NFS4ERR_INVAL;
 
-     pthread_rwlock_rdlock(&entry->content_lock);
+     PTHREAD_RWLOCK_RDLOCK(&entry->content_lock);
      content_locked = TRUE;
 
      /* Just in case the variable holds something funny when we're
@@ -107,8 +107,8 @@ cache_inode_commit(cache_entry_t *entry,
         call. */
      if (stability == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
           if (!is_open_for_write(entry)) {
-               pthread_rwlock_unlock(&entry->content_lock);
-               pthread_rwlock_wrlock(&entry->content_lock);
+               PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
+               PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
                if (!is_open_for_write(entry)) {
                     if (cache_inode_open(entry,
                                          FSAL_O_WRONLY,
@@ -170,7 +170,7 @@ cache_inode_commit(cache_entry_t *entry,
           }
           if (count == 0 || count == 0xFFFFFFFFL) {
                /* Count = 0 means "flush all data to permanent storage */
-               pthread_rwlock_unlock(&entry->content_lock);
+               PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
                content_locked = FALSE;
                *status = cache_inode_rdwr(entry,
                                          CACHE_INODE_WRITE,
@@ -210,7 +210,7 @@ cache_inode_commit(cache_entry_t *entry,
 out:
 
      if (content_locked) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
      }
 
      return *status;

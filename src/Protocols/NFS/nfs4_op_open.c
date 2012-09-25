@@ -473,13 +473,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                     {
                       AttrProvided = FALSE;
                     }
-                  pthread_rwlock_wrlock(&pentry_lookup->state_lock);
+                  PTHREAD_RWLOCK_WRLOCK(&pentry_lookup->state_lock);
                   status4 = nfs4_chk_shrdny(op, data, pentry_lookup,
                       read_access, write_access, &openflags, AttrProvided,
                       &sattr, resp);
                   if (status4 != NFS4_OK)
                     {
-                      pthread_rwlock_unlock(&pentry_lookup->state_lock);
+                      PTHREAD_RWLOCK_UNLOCK(&pentry_lookup->state_lock);
                       cause2 = " cache_inode_access";
                       res_OPEN4.status = status4;
                       cache_inode_put(pentry_lookup);
@@ -488,7 +488,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
                   status4 = nfs4_do_open(op, data, pentry_lookup, pentry_parent,
                       powner, &pfile_state, &filename, openflags, &text);
-                  pthread_rwlock_unlock(&pentry_lookup->state_lock);
+                  PTHREAD_RWLOCK_UNLOCK(&pentry_lookup->state_lock);
                   if (status4 != NFS4_OK)
                     {
                       cause2 = (const char *)text;
@@ -556,7 +556,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                     {
                       /* Acquire lock to enter critical section on
                          this entry */
-                      pthread_rwlock_rdlock(&pentry_lookup->state_lock);
+                      PTHREAD_RWLOCK_RDLOCK(&pentry_lookup->state_lock);
                       glist_for_each(glist,
                                      &pentry_lookup->state_list)
                         {
@@ -620,7 +620,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                 {
                                   cause2 = text;
                                   res_OPEN4.status = status4;
-                                  pthread_rwlock_unlock(&pentry_lookup
+                                  PTHREAD_RWLOCK_UNLOCK(&pentry_lookup
                                                         ->state_lock);
                                   goto out;
                                 }
@@ -630,12 +630,12 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                               pfile_state = pstate_iterate;
 
                               /* regular exit */
-                              pthread_rwlock_unlock(&pentry_lookup
+                              PTHREAD_RWLOCK_UNLOCK(&pentry_lookup
                                                     ->state_lock);
                               goto out_success;
                             }
                         }
-                      pthread_rwlock_unlock(&pentry_lookup->state_lock);
+                      PTHREAD_RWLOCK_UNLOCK(&pentry_lookup->state_lock);
                     }
                 }
 
@@ -703,10 +703,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 }
             }
 
-          pthread_rwlock_wrlock(&pentry_newfile->state_lock);
+          PTHREAD_RWLOCK_WRLOCK(&pentry_newfile->state_lock);
           status4 = nfs4_do_open(op, data, pentry_newfile, pentry_parent,
               powner, &pfile_state, &filename, openflags, &text);
-          pthread_rwlock_unlock(&pentry_newfile->state_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
           if (status4 != NFS4_OK)
             {
               cause2 = text;
@@ -771,7 +771,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
             }
 #endif
 
-          pthread_rwlock_wrlock(&pentry_newfile->state_lock);
+          PTHREAD_RWLOCK_WRLOCK(&pentry_newfile->state_lock);
           /* Try to find if the same open_owner already has acquired a
              stateid for this file */
           glist_for_each(glist, &pentry_newfile->state_list)
@@ -804,7 +804,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                     {
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       cause2 = " (OPEN4_SHARE_DENY_WRITE)";
-                      pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                      PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
                       cache_inode_put(pentry_newfile);
                       goto out;
                     }
@@ -823,7 +823,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 {
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   cause2 = " (OPEN4_SHARE_ACCESS_READ)";
-                  pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                  PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
                   cache_inode_put(pentry_newfile);
                   goto out;
                 }
@@ -835,7 +835,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                 {
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   cause2 = " (OPEN4_SHARE_ACCESS_WRITE)";
-                  pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                  PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
                   cache_inode_put(pentry_newfile);
                   goto out;
                 }
@@ -843,7 +843,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
           status4 = nfs4_do_open(op, data, pentry_newfile, pentry_parent,
               powner, &pfile_state, &filename, openflags, &text);
-          pthread_rwlock_unlock(&pentry_newfile->state_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
           if (status4 != NFS4_OK)
             {
               cause2 = text;
@@ -866,10 +866,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
       /* pentry_parent is actually the file to be reclaimed, not the parent */
       pentry_newfile = pentry_parent;
-      pthread_rwlock_wrlock(&pentry_newfile->state_lock);
+      PTHREAD_RWLOCK_WRLOCK(&pentry_newfile->state_lock);
       status4 = nfs4_do_open(op, data, pentry_newfile, NULL, powner,
           &pfile_state, NULL, openflags, &text);
-      pthread_rwlock_unlock(&pentry_newfile->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
       if (status4 != NFS4_OK)
         {
           cause2 = text;

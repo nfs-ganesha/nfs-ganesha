@@ -115,7 +115,7 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
     head_rbt = &(ht->partitions[i].rbt);
     
     /* acquire mutex */
-    pthread_rwlock_wrlock(&(ht->partitions[i].lock));
+    PTHREAD_RWLOCK_WRLOCK(&(ht->partitions[i].lock));
     
     /* go through all entries in the red-black-tree*/
     RBT_LOOP(head_rbt, pn) {
@@ -126,7 +126,7 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
       dbus_message_iter_append_basic(&sub_iter, DBUS_TYPE_UINT64, &clientid);
       RBT_INCREMENT(pn);      
     }
-    pthread_rwlock_unlock(&(ht->partitions[i].lock));
+    PTHREAD_RWLOCK_UNLOCK(&(ht->partitions[i].lock));
   }
   dbus_message_iter_close_container(&iter, &sub_iter);
   /* send the reply && flush the connection */

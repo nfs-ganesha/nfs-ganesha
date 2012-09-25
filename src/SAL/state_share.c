@@ -593,7 +593,7 @@ state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
                                               int              share_access,
                                               state_status_t * pstatus)
 {
-  pthread_rwlock_wrlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&pentry->state_lock);
 
   if(state_share_check_conflict(pentry,
                                 share_access,
@@ -611,7 +611,7 @@ state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
                                  FALSE);
     }
 
-  pthread_rwlock_unlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
   return *pstatus;
 }
@@ -619,7 +619,7 @@ state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
 void state_share_anonymous_io_done(cache_entry_t  * pentry,
                                    int              share_access)
 {
-  pthread_rwlock_wrlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&pentry->state_lock);
 
   /* Undo the temporary bump to the access counters, v4 mode doesn't
    * matter since there is no deny mode associated with anonymous I/O.
@@ -631,7 +631,7 @@ void state_share_anonymous_io_done(cache_entry_t  * pentry,
                              OPEN4_SHARE_DENY_NONE,
                              FALSE);
 
-  pthread_rwlock_unlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 }
 
 #ifdef _USE_NLM
@@ -677,7 +677,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
       return *pstatus;
     }
 
-  pthread_rwlock_wrlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&pentry->state_lock);
 
   /* Check if new share state has conflicts. */
   if(state_share_check_conflict(pentry,
@@ -685,7 +685,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                                 share_deny,
                                 pstatus) != STATE_SUCCESS)
     {
-      pthread_rwlock_unlock(&pentry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
       cache_inode_dec_pin_ref(pentry, TRUE);
 
@@ -699,7 +699,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
   if(nlm_share == NULL)
     {
-      pthread_rwlock_unlock(&pentry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
       cache_inode_dec_pin_ref(pentry, TRUE);
 
@@ -810,7 +810,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
           /* Free the NLM Share and exit */
           gsh_free(nlm_share);
 
-          pthread_rwlock_unlock(&pentry->state_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
           cache_inode_dec_pin_ref(pentry, TRUE);
 
@@ -824,7 +824,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                "share_deny %u",
                share_access, share_deny);
 
-  pthread_rwlock_unlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
   cache_inode_dec_pin_ref(pentry, TRUE);
 
@@ -859,7 +859,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
       return *pstatus;
     }
 
-  pthread_rwlock_wrlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&pentry->state_lock);
 
   glist_for_each_safe(glist, glistn, &pentry->object.file.nlm_share_list)
     {
@@ -918,7 +918,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
                                          removed_share_deny,
                                          TRUE);
 
-              pthread_rwlock_unlock(&pentry->state_lock);
+              PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
               cache_inode_dec_pin_ref(pentry, TRUE);
 
@@ -963,7 +963,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
       gsh_free(nlm_share);
     }
 
-  pthread_rwlock_unlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
   cache_inode_dec_pin_ref(pentry, TRUE);
 

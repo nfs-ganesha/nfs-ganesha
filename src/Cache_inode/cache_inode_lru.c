@@ -801,7 +801,7 @@ lru_thread(void *arg __attribute__((unused)))
                               /* Acquire the content lock first; we may
                                * need to look at fds and clsoe it.
                                */
-                              pthread_rwlock_wrlock(&entry->content_lock);
+                              PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
 
                               /* Acquire the entry mutex.  If the entry
                                  is condemned, removed, pinned, or in
@@ -821,7 +821,7 @@ lru_thread(void *arg __attribute__((unused)))
                                       reacquire the queue lock so we
                                       can make another trip through
                                       the loop. */
-                                   pthread_rwlock_unlock(&entry->content_lock);
+                                   PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
                                    pthread_mutex_unlock(&lru->mtx);
                                    pthread_mutex_lock(&LRU_1[lane].lru.mtx);
                                    /* By definition, if any of these
@@ -849,7 +849,7 @@ lru_thread(void *arg __attribute__((unused)))
                                      ++laneclosed;
                                    }
                               }
-                              pthread_rwlock_unlock(&entry->content_lock);
+                              PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
 
                               /* Move the entry to L2 whatever the
                                  result of examining it.*/

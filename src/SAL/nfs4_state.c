@@ -308,10 +308,10 @@ state_status_t state_add(cache_entry_t         * pentry,
       return (*pstatus = STATE_BAD_TYPE);
     }
 
-  pthread_rwlock_wrlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&pentry->state_lock);
   state_add_impl(pentry, state_type, pstate_data, powner_input,
                  pcontext, ppstate, pstatus);
-  pthread_rwlock_unlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
   return *pstatus;
 }                               /* state_add */
@@ -394,11 +394,11 @@ state_status_t state_del(state_t              * pstate,
 {
   cache_entry_t *entry = pstate->state_pentry;
 
-  pthread_rwlock_wrlock(&entry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&entry->state_lock);
 
   *pstatus = state_del_locked(pstate, pstate->state_pentry);
 
-  pthread_rwlock_unlock(&entry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&entry->state_lock);
 
   return *pstatus;
 }                               /* state_del */
@@ -490,7 +490,7 @@ void release_openstate(state_owner_t * popen_owner)
         LogCrit(COMPONENT_CLIENTID,
                 "Ugliness - cache_inode_lru_ref has returned non-success");
 
-      pthread_rwlock_wrlock(&pentry->state_lock);
+      PTHREAD_RWLOCK_WRLOCK(&pentry->state_lock);
       /* Construct the fsal context based on the export and root credential */
       fsal_status = FSAL_GetClientContext(&fsal_context,
                                           &pstate_found->state_pexport->FS_export_context,
@@ -533,7 +533,7 @@ void release_openstate(state_owner_t * popen_owner)
                         0,
                         &cache_status);
 
-      pthread_rwlock_unlock(&pentry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
 
       /* Release the lru ref to the cache inode we held while calling state_del */
       cache_inode_lru_unref(pentry,

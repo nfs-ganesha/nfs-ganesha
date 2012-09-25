@@ -202,7 +202,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* Special stateid, no open state, check to see if any share conflicts */
       pstate_open = NULL;
 
-      pthread_rwlock_rdlock(&pentry->state_lock);
+      PTHREAD_RWLOCK_RDLOCK(&pentry->state_lock);
       anonymous = TRUE;
 
       /*
@@ -213,7 +213,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                                      FATTR4_ATTR_WRITE);
       if(res_WRITE4.status != NFS4_OK)
         {
-          pthread_rwlock_unlock(&pentry->state_lock); 
+          PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock); 
           return res_WRITE4.status;
         }
     }
@@ -227,7 +227,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_WRITE4.status = nfs4_Errno(cache_status);;
-          pthread_rwlock_unlock(&pentry->state_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
           return res_WRITE4.status;
         }
     }
@@ -247,7 +247,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         res_WRITE4.status = NFS4ERR_DQUOT;
         if (anonymous)
           {
-            pthread_rwlock_unlock(&pentry->state_lock);
+            PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
           }
         return res_WRITE4.status;
       }
@@ -288,7 +288,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       res_WRITE4.status = NFS4_OK;
       if (anonymous)
         {
-          pthread_rwlock_unlock(&pentry->state_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
         }
       return res_WRITE4.status;
     }
@@ -319,7 +319,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       res_WRITE4.status = nfs4_Errno(cache_status);
       if (anonymous)
         {
-          pthread_rwlock_unlock(&pentry->state_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
         }
       return res_WRITE4.status;
     }
@@ -337,7 +337,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   if (anonymous)
     {
-      pthread_rwlock_unlock(&pentry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&pentry->state_lock);
     }
 
   return res_WRITE4.status;

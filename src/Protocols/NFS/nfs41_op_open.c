@@ -551,7 +551,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   if((pentry_lookup != NULL)
                      && (pentry_lookup->type == REGULAR_FILE))
                     {
-                      pthread_rwlock_rdlock(&pentry_lookup->state_lock);
+                      PTHREAD_RWLOCK_RDLOCK(&pentry_lookup->state_lock);
                       glist_for_each(glist, &pentry_lookup->state_list)
                         {
                           pstate_iterate = glist_entry(glist, state_t, state_list);
@@ -589,7 +589,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                 {
                                   res_OPEN4.status = NFS4ERR_SERVERFAULT;
                                   cause2 = " nfs4_FSALToFhandle failed";
-                                  pthread_rwlock_unlock(&pentry_lookup
+                                  PTHREAD_RWLOCK_UNLOCK(&pentry_lookup
                                                         ->state_lock);
                                   goto out;
                                 }
@@ -616,7 +616,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                 }
                               data->current_filetype = REGULAR_FILE;
 
-                              pthread_rwlock_unlock(&pentry_lookup
+                              PTHREAD_RWLOCK_UNLOCK(&pentry_lookup
                                                     ->state_lock);
                               /* regular exit */
                               goto out_success;
@@ -835,7 +835,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
           /* Try to find if the same open_owner already has acquired a
              stateid for this file */
-          pthread_rwlock_wrlock(&pentry_newfile->state_lock);
+          PTHREAD_RWLOCK_WRLOCK(&pentry_newfile->state_lock);
           glist_for_each(glist, &pentry_newfile->state_list)
             {
               pstate_iterate = glist_entry(glist, state_t, state_list);
@@ -863,7 +863,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                     {
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       cause2 = " (OPEN4_SHARE_DENY_WRITE)";
-                      pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                      PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
                       goto out;
                     }
                 }
@@ -878,7 +878,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 {
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   cause2 = " (OPEN4_SHARE_ACCESS_READ)";
-                  pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                  PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
                   goto out;
                 }
 
@@ -888,7 +888,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 {
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   cause2 = " (OPEN4_SHARE_ACCESS_WRITE)";
-                  pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                  PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
                   goto out;
                 }
             }
@@ -911,7 +911,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 {
                   res_OPEN4.status = nfs4_Errno_state(state_status);
                   cause2 = " (state_add failed)";
-                  pthread_rwlock_unlock(&pentry_newfile->state_lock);
+                  PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
                   goto out;
                 }
 
@@ -943,7 +943,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   return STATE_INVALID_ARGUMENT;
                 }
             }
-          pthread_rwlock_unlock(&pentry_newfile->state_lock);
+          PTHREAD_RWLOCK_UNLOCK(&pentry_newfile->state_lock);
 
           /* Open the file */
           if(cache_inode_open(pentry_newfile,

@@ -100,7 +100,7 @@ cache_inode_setattr(cache_entry_t *entry,
           *status = CACHE_INODE_BAD_TYPE;
      }
 
-     pthread_rwlock_wrlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
      if (attr->asked_attributes & FSAL_ATTR_SIZE) {
           fsal_status = FSAL_truncate(&entry->handle,
                                       context, attr->filesize,
@@ -149,7 +149,7 @@ cache_inode_setattr(cache_entry_t *entry,
      *status = CACHE_INODE_SUCCESS;
 
 unlock:
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
 
 out:
 

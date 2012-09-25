@@ -114,8 +114,8 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      if (!parent) {
           /* If we didn't find it, drop the read lock, get a write
              lock, and make sure nobody filled it in while we waited. */
-          pthread_rwlock_unlock(&entry->content_lock);
-          pthread_rwlock_wrlock(&entry->content_lock);
+          PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
+          PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
           parent = cache_inode_weakref_get(&entry->object.dir.parent,
                                            LRU_REQ_INITIAL);
      }
@@ -187,8 +187,8 @@ cache_inode_lookupp(cache_entry_t *entry,
                     cache_inode_status_t *status)
 {
      cache_entry_t *parent = NULL;
-     pthread_rwlock_rdlock(&entry->content_lock);
+     PTHREAD_RWLOCK_RDLOCK(&entry->content_lock);
      parent = cache_inode_lookupp_impl(entry, context, status);
-     pthread_rwlock_unlock(&entry->content_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
      return parent;
 } /* cache_inode_lookupp */

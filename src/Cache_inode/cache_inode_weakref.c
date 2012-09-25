@@ -124,10 +124,10 @@ cache_entry_t *cache_inode_weakref_get(gweakref_t *ref,
     if (entry) {
         if (cache_inode_lru_ref(entry, flags)
             != CACHE_INODE_SUCCESS) {
-            pthread_rwlock_unlock(lock);
+            PTHREAD_RWLOCK_UNLOCK(lock);
             return NULL;
         }
-        pthread_rwlock_unlock(lock);
+        PTHREAD_RWLOCK_UNLOCK(lock);
     }
 
     return (entry);

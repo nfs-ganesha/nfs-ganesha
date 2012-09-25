@@ -58,7 +58,6 @@
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
 
-#include "cache_inode.h"
 #include "fsal_up.h"
 
 #ifdef _USE_9P

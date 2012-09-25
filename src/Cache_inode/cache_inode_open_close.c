@@ -173,7 +173,7 @@ cache_inode_open(cache_entry_t *entry,
      }
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          pthread_rwlock_wrlock(&entry->content_lock);
+          PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
      }
 
      /* Open file need to be closed, unless it is already open as read/write */
@@ -240,7 +240,7 @@ cache_inode_open(cache_entry_t *entry,
 unlock:
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
      }
 
 out:
@@ -282,13 +282,13 @@ cache_inode_close(cache_entry_t *entry,
      }
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          pthread_rwlock_wrlock(&entry->content_lock);
+          PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
      }
 
      /* If nothing is opened, do nothing */
      if (entry->object.file.open_fd.openflags == FSAL_O_CLOSED) {
           if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-               pthread_rwlock_unlock(&entry->content_lock);
+               PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
           }
           LogFullDebug(COMPONENT_CACHE_INODE,
                        "Entry %p File not open", entry);
@@ -334,7 +334,7 @@ cache_inode_close(cache_entry_t *entry,
 unlock:
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
      }
 
 out:

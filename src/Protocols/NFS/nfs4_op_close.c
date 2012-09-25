@@ -130,7 +130,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   inc_state_owner_ref(popen_owner);
 
-  pthread_rwlock_wrlock(&data->current_entry->state_lock);
+  PTHREAD_RWLOCK_WRLOCK(&data->current_entry->state_lock);
   /* Check is held locks remain */
   glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)
     {
@@ -142,7 +142,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         {
           res_CLOSE4.status = NFS4ERR_LOCKS_HELD;
 
-          pthread_rwlock_unlock(&data->current_entry->state_lock);
+          PTHREAD_RWLOCK_UNLOCK(&data->current_entry->state_lock);
           LogDebug(COMPONENT_STATE,
                    "NFS4 Close with existing locks");
 
@@ -213,7 +213,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                        &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_CLOSE4.status = nfs4_Errno(cache_status);
-      pthread_rwlock_unlock(&data->current_entry->state_lock);
+      PTHREAD_RWLOCK_UNLOCK(&data->current_entry->state_lock);
 
       /* Save the response in the open owner */
       Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
@@ -223,7 +223,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_CLOSE4.status;
     }
 
-  pthread_rwlock_unlock(&data->current_entry->state_lock);
+  PTHREAD_RWLOCK_UNLOCK(&data->current_entry->state_lock);
   res_CLOSE4.status = NFS4_OK;
 
   if(isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))

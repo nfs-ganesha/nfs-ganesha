@@ -920,7 +920,7 @@ cache_inode_check_trust(cache_entry_t *entry,
           return status;
         }
 
-     pthread_rwlock_rdlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_RDLOCK(&entry->attr_lock);
      current_time = time(NULL);
 
      oldmtime = entry->attributes.mtime.seconds;
@@ -935,10 +935,10 @@ cache_inode_check_trust(cache_entry_t *entry,
           goto unlock;
      }
 
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
 
      /* Update the atributes */
-     pthread_rwlock_wrlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
      current_time = time(NULL);
 
      /* Make sure no one else has first */
@@ -956,8 +956,8 @@ cache_inode_check_trust(cache_entry_t *entry,
           goto unlock;
      }
 
-     pthread_rwlock_wrlock(&entry->content_lock);
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
      if (entry->type == SYMBOLIC_LINK &&
          ((cache_inode_params.expire_type_link != CACHE_INODE_EXPIRE_NEVER &&
           ((current_time - entry->change_time >=
@@ -994,11 +994,11 @@ cache_inode_check_trust(cache_entry_t *entry,
           }
 
      }
-     pthread_rwlock_unlock(&entry->content_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
      return status;
 
 unlock:
 
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
      return status;
 }

@@ -254,7 +254,7 @@ gweakref_t gweakref_insert(gweakref_table_t *wt, void *obj)
     /* XXX initially wt had a single atomic counter, but for any address,
      * partition is fixed, and we must take the partition lock exclusive
      * in any case */
-    pthread_rwlock_wrlock(&wp->lock);
+    PTHREAD_RWLOCK_WRLOCK(&wp->lock);
 
     ref->k.gen = ++(wp->genctr);
 
@@ -267,7 +267,7 @@ gweakref_t gweakref_insert(gweakref_table_t *wt, void *obj)
         ret.ptr = NULL;
         ret.gen = 0;
     }
-    pthread_rwlock_unlock(&wp->lock);
+    PTHREAD_RWLOCK_UNLOCK(&wp->lock);
 
     return (ret);
 }
@@ -300,7 +300,7 @@ void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,
 
     refk.k = *ref;
     wp = gwt_partition_of_addr_k(wt, refk.k.ptr);
-    pthread_rwlock_rdlock(&wp->lock);
+    PTHREAD_RWLOCK_RDLOCK(&wp->lock);
 
     /* check cache */
     if (wp->cache)
@@ -322,7 +322,7 @@ void *gweakref_lookupex(gweakref_table_t *wt, gweakref_t *ref,
     if (ret) {
         *lock = &wp->lock;
     } else {
-        pthread_rwlock_unlock(&wp->lock);
+        PTHREAD_RWLOCK_UNLOCK(&wp->lock);
     }
 
     return (ret);
@@ -348,7 +348,7 @@ void *gweakref_lookup(gweakref_table_t *wt, gweakref_t *ref)
     result = gweakref_lookupex(wt, ref, &treelock);
 
     if (result) {
-        pthread_rwlock_unlock(treelock);
+        PTHREAD_RWLOCK_UNLOCK(treelock);
     }
 
     return result;
@@ -384,7 +384,7 @@ static inline void gweakref_delete_impl(gweakref_table_t *wt, gweakref_t *ref,
     refk.k = *ref;
     wp = gwt_partition_of_addr_k(wt, refk.k.ptr);
     if (!(flags & GWR_FLAG_WLOCKED))
-        pthread_rwlock_wrlock(&wp->lock);
+        PTHREAD_RWLOCK_WRLOCK(&wp->lock);
     node = avltree_lookup(&refk.node_k, &wp->t);
     if (node) {
         /* found it, maybe */
@@ -399,7 +399,7 @@ static inline void gweakref_delete_impl(gweakref_table_t *wt, gweakref_t *ref,
         }
     }
     if (!(flags & GWR_FLAG_WLOCKED))
-        pthread_rwlock_unlock(&wp->lock);
+        PTHREAD_RWLOCK_UNLOCK(&wp->lock);
 }
 
 /**

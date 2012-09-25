@@ -90,10 +90,10 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t *fsdata,
     {
       /* The root directory is its own parent.  (Even though this is a
          weakref, it shouldn't be broken in practice.) */
-      pthread_rwlock_wrlock(&entry->content_lock);
+      PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
       entry->object.dir.parent = entry->weakref;
       entry->object.dir.root = TRUE;
-      pthread_rwlock_unlock(&entry->content_lock);
+      PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
     }
 
   return entry;

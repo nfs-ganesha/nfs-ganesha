@@ -119,8 +119,8 @@ cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
      }
      HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
-     pthread_rwlock_wrlock(&entry->attr_lock);
-     pthread_rwlock_wrlock(&entry->content_lock);
+     PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
+     PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
 
      /* We can invalidate entries with state just fine.  We force
         Cache_inode to contact the FSAL for any use of content or
@@ -151,8 +151,8 @@ cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
                             status);
      }
 
-     pthread_rwlock_unlock(&entry->attr_lock);
-     pthread_rwlock_unlock(&entry->content_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
+     PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
 
      cache_inode_lru_unref(entry, 0);
 
