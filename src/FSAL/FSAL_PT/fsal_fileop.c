@@ -497,12 +497,16 @@ fsal_status_t PTFSAL_close(fsal_file_t * p_file_descriptor   /* IN */ )
 
   int rc, errsv;
 
+  FSI_TRACE(FSI_DEBUG, "FSI - Begin PTFSAL close---------------\n");
+
   /* sanity checks. */
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   /* call to close */
   ptfsal_update_handle_nfs_state(p_file_descriptor->fd, NFS_CLOSE);
+
+  FSI_TRACE(FSI_DEBUG, "FSI - End PTFSAL close-----------------\n");
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
 }

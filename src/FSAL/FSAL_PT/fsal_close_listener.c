@@ -64,10 +64,10 @@ void *ptfsal_closeHandle_listener_thread(void *args)
 
   pthread_mutex_init(&g_close_handle_mutex, NULL);
   while (1) {
-    msg_bytes = rcv_msg_wait(g_closeHandle_req_msgq,
-                             &msg,
-                             sizeof(struct CommonMsgHdr),
-                             0);
+    msg_bytes = rcv_msg_wait_block(g_closeHandle_req_msgq,
+                                   &msg,
+                                   sizeof(struct CommonMsgHdr),
+                                   0);
     if (msg_bytes != -1) {
       close_rc = -1;
       FSI_TRACE(FSI_NOTICE, "Finding oldest handles");

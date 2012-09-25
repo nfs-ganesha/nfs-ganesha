@@ -241,13 +241,6 @@ typedef struct fsi_stat_struct__ {
 } fsi_stat_struct;
 
 
-enum e_nfs_state {
-  NFS_OPEN = 0,
-  NFS_CLOSE,
-  CCL_CLOSING,
-  CCL_CLOSE
-};
-
 // ----------------------------------------------------------------------------
 /// @struct file_handle_t
 /// @brief  client file handle
@@ -549,12 +542,6 @@ struct ipc_client_stats_t {
 // End of ACL definitions
 // ---------------------------------------------------------------------------
 
-// This determines how many times to poll when an existing opened handle
-// that we are trying to reopen, but we are already closing that handle.
-// Open processing will poll until that handle is completely closed before
-// opening it again.
-#define CCL_MAX_CLOSING_TO_CLOSE_POLLING_COUNT 30
-
 // ---------------------------------------------------------------------------
 // Function Prototypes
 // ---------------------------------------------------------------------------
@@ -587,8 +574,8 @@ int ccl_stat(ccl_context_t * handle,
 int ccl_fstat(int                 handle_index,
               fsi_stat_struct   * sbuf);
 int ccl_stat_by_handle(ccl_context_t           * context,
-		       struct PersistentHandle * handle,
-		       fsi_stat_struct         * sbuf);
+                       struct PersistentHandle * handle,
+                       fsi_stat_struct         * sbuf);
 uint64_t get_acl_resource_handle(uint64_t aclHandle);
 int have_pending_io_response(int handle_index);
 int io_msgid_from_index (int index);
@@ -611,6 +598,7 @@ void load_shmem_hdr(struct CommonShmemDataHdr * p_shmem_hdr,
                     int                  handle_index,
                     uint64_t             transaction_id,
                     int                  use_crc);
+void perform_msg_delay(struct timeval * pdiff_time);
 int rcv_msg_nowait(int     msg_id,
                    void  * p_msg_buf,
                    size_t  msg_size,
@@ -619,6 +607,10 @@ int rcv_msg_wait(int     msg_id,
                  void  * p_msg_buf,
                  size_t  msg_size,
                  long    msg_type);
+int rcv_msg_wait_block(int     msg_id,
+                       void  * p_msg_buf,
+                       size_t  msg_size,
+                       long    msg_type);
 int wait_for_response(const int                   msg_id,
                       void                      * p_msg_buf,
                       const size_t                msg_size,
