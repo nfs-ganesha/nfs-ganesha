@@ -249,7 +249,7 @@ int name2uid(char *name, uid_t * puid)
   if(uidmap_get(name, &uid) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "name2uid: uidmap_get mapped %s to uid=%ld",
+                   "name2uid: uidmap_get mapped %s to uid=%u",
                    name, uid);
       *puid = uid;
     }
@@ -273,14 +273,14 @@ int name2uid(char *name, uid_t * puid)
           if(uidgidmap_add(res->pw_uid, res->pw_gid) != ID_MAPPER_SUCCESS)
             {
               LogMajor(COMPONENT_IDMAPPER,
-                      "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
+                      "name2uid: uidgidmap_add gss_uid %u gss_gid %u failed",
                       res->pw_uid, res->pw_gid);
             }
 #endif                          /* _HAVE_GSSAPI */
           if(uidmap_add(name, res->pw_uid, 1) != ID_MAPPER_SUCCESS)
             {
               LogMajor(COMPONENT_IDMAPPER,
-                       "name2uid: uidmap_add %s %d failed",
+                       "name2uid: uidmap_add %s %u failed",
                        name, res->pw_uid);
             }
 
@@ -392,7 +392,7 @@ int principal2uid(char *principal, uid_t * puid)
   uid_t gss_uid;
   int rc;
 
-  if(uidmap_get(principal, (unsigned long *)&gss_uid) != ID_MAPPER_SUCCESS)
+  if(uidmap_get(principal, &gss_uid) != ID_MAPPER_SUCCESS)
     {
       if(!nfsidmap_set_conf())
         {
@@ -632,7 +632,7 @@ int name2gid(char *name, gid_t * pgid)
   if(gidmap_get(name, &gid) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "name2gid: gidmap_get mapped %s to gid= %d",
+                   "name2gid: gidmap_get mapped %s to gid= %u",
                    name, gid);
       *pgid = gid;
     }
@@ -691,7 +691,7 @@ int name2gid(char *name, gid_t * pgid)
           if(gidmap_add(name, pg->gr_gid) != ID_MAPPER_SUCCESS)
             {
               LogMajor(COMPONENT_IDMAPPER,
-                       "name2gid: gidmap_add %s %d failed",
+                       "name2gid: gidmap_add %s %u failed",
                        name, pg->gr_gid);
             }
         }
@@ -711,7 +711,7 @@ int name2gid(char *name, gid_t * pgid)
             {
               /* Failure to update the in-core table is not fatal */
               LogMajor(COMPONENT_IDMAPPER,
-                      "name2gid: gidmap_add %s %ld failed",
+                      "name2gid: gidmap_add %s %u failed",
                       name, gid);
             }
 
