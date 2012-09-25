@@ -1037,11 +1037,9 @@ out:
 }
 
 static inline request_data_t *
-nfs_rpc_consume_req(struct req_q_pair *qpair, uint32_t flags)
+nfs_rpc_consume_req(struct req_q_pair *qpair)
 {
     request_data_t * nfsreq = NULL;
-    bool clocked = FALSE;
-    bool plocked = FALSE;
 
     pthread_spin_lock(&qpair->consumer.we.sp);
     if (qpair->consumer.size > 0) {
@@ -1057,7 +1055,7 @@ nfs_rpc_consume_req(struct req_q_pair *qpair, uint32_t flags)
 
         pthread_spin_lock(&qpair->producer.we.sp);
         if (isFullDebug(COMPONENT_DISPATCH)) {
-            s = (char *)qpair->s;
+            s = (char*) qpair->s;
             csize = qpair->consumer.size;
             psize = qpair->producer.size;
         }
@@ -1080,11 +1078,17 @@ nfs_rpc_consume_req(struct req_q_pair *qpair, uint32_t flags)
                              s, csize, psize);
             goto out;
         }
+
+        pthread_spin_unlock(&qpair->producer.we.sp);
+        pthread_spin_unlock(&qpair->consumer.we.sp);
+
+        if (s)
+            LogFullDebug(COMPONENT_DISPATCH,
+                         "try splice, qpair %s consumer qsize=%u "
+                         "producer qsize=%u",
+                         s, csize, psize);
     }
-
-    pthread_spin_unlock(&qpair->producer.we.sp);
-    pthread_spin_unlock(&qpair->consumer.we.sp);
-
+out:
     return (nfsreq);
 }
 
@@ -1122,6 +1126,7 @@ retry_deq:
             break;
         default:
             /* not here */
+            abort();
             break;
         }
 
@@ -1129,8 +1134,7 @@ retry_deq:
                      qpair->s, &qpair->producer, &qpair->consumer);
 
         /* anything? */
-        nfsreq = nfs_rpc_consume_req(
-            qpair, NFS_RPC_REQ_FLAG_CUNLOCK|NFS_RPC_REQ_FLAG_PUNLOCK);
+        nfsreq = nfs_rpc_consume_req(qpair);
         if (nfsreq)
             break;
 

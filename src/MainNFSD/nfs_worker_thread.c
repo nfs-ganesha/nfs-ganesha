@@ -941,12 +941,12 @@ static void nfs_rpc_execute(request_data_t    * preq,
           if((preqnfs->req.rq_vers == 2) ||
              (preqnfs->req.rq_vers == 3) ||
              (preqnfs->req.rq_vers == 4)) 
-            if(!SVC_FREEARGS(xprt, pworker_data->pfuncdesc->xdr_decode_func,
+            if(!SVC_FREEARGS(xprt, pworker_data->funcdesc->xdr_decode_func,
                              (caddr_t) parg_nfs))
               {
                 LogCrit(COMPONENT_DISPATCH,
                         "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-                        pworker_data->pfuncdesc->funcname);
+                        pworker_data->funcdesc->funcname);
               }
           DISP_UNLOCK(xprt, &pworker_data->sigmask);
           /* Ignore the request, send no error */
@@ -980,58 +980,6 @@ static void nfs_rpc_execute(request_data_t    * preq,
           DISP_UNLOCK(xprt, &pworker_data->sigmask);
           return;
         }
-      break;
-
-      /* Another thread owns the request */
-    case DUPREQ_BEING_PROCESSED:
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Dupreq xid=%u was asked for process since another thread "
-                   "manage it, reject for avoiding threads starvation...",
-                   req->rq_xid);
-      /* Free the arguments */
-      DISP_LOCK(xprt, &pworker_data->sigmask);
-      if((preqnfs->req.rq_vers == 2) ||
-         (preqnfs->req.rq_vers == 3) ||
-         (preqnfs->req.rq_vers == 4)) 
-        if(!SVC_FREEARGS(xprt, pworker_data->funcdesc->xdr_decode_func,
-                         (caddr_t) parg_nfs))
-          {
-            LogCrit(COMPONENT_DISPATCH,
-                    "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-                    pworker_data->funcdesc->funcname);
-          }
-      DISP_UNLOCK(xprt, &pworker_data->sigmask);
-      /* Ignore the request, send no error */
-      return;
-
-      /* something is very wrong with the duplicate request cache */
-    case DUPREQ_NOT_FOUND:
-      LogCrit(COMPONENT_DISPATCH,
-              "Did not find the request in the duplicate request cache and "
-              "couldn't add the request.");
-      DISP_LOCK(xprt, &pworker_data->sigmask);
-      svcerr_systemerr2(xprt, req);
-      DISP_UNLOCK(xprt, &pworker_data->sigmask);
-      return;
-
-      /* oom */
-    case DUPREQ_INSERT_MALLOC_ERROR:
-      LogCrit(COMPONENT_DISPATCH,
-              "Cannot process request, not enough memory available!");
-      DISP_LOCK(xprt, &pworker_data->sigmask);
-      svcerr_systemerr2(xprt, req);
-      DISP_UNLOCK(xprt, &pworker_data->sigmask);
-      return;
-
-    default:
-      LogCrit(COMPONENT_DISPATCH,
-              "Unknown duplicate request cache status. This should never be "
-              "reached!");
-      DISP_LOCK(xprt, &pworker_data->sigmask);
-      svcerr_systemerr2(xprt, req);
-      DISP_UNLOCK(xprt, &pworker_data->sigmask);
-      return;
->>>>>>> b476cae... Incremental dispatcher cleanup with some testing artifacts
     }
 
   /* Get the export entry */
