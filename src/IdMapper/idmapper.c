@@ -121,7 +121,7 @@ int uid2name(char *name, uid_t * puid)
   if(unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "uid2name: unamemap_get uid %d returned %s",
+                   "uid2name: unamemap_get uid %u returned %s",
                    *puid, name);
       return 1;
     }
@@ -131,7 +131,7 @@ int uid2name(char *name, uid_t * puid)
       if(rc != 0)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                   "uid2name: nfs4_uid_to_name %d returned %d (%s)",
+                   "uid2name: nfs4_uid_to_name %u returned %d (%s)",
                    *puid, -rc, strerror(-rc));
           return 0;
         }
@@ -147,13 +147,13 @@ int uid2name(char *name, uid_t * puid)
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "uid2name: nfs4_uid_to_name uid %d returned %s",
+                   "uid2name: nfs4_uid_to_name uid %u returned %s",
                    *puid, name);
 
       if(unamemap_add(*puid, fqname, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                  "uid2name: uidmap_add %s %d failed",
+                  "uid2name: uidmap_add %s %u failed",
                   fqname, *puid);
           return 0;
         }
@@ -168,7 +168,7 @@ int uid2name(char *name, uid_t * puid)
   if(unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "uid2name: unamemap_get uid %d returned %s",
+                   "uid2name: unamemap_get uid %u returned %s",
                    *puid, name);
       return 1;
     }
@@ -182,7 +182,7 @@ int uid2name(char *name, uid_t * puid)
 #endif                          /* _SOLARIS */
         {
           LogCrit(COMPONENT_IDMAPPER,
-                       "uid2name: getpwuid_r %d failed",
+                       "uid2name: getpwuid_r %u failed",
                        *puid);
           return 0;
         }
@@ -190,13 +190,13 @@ int uid2name(char *name, uid_t * puid)
       strncpy(name, p.pw_name, NFS4_MAX_DOMAIN_LEN);
 
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "uid2name: getpwuid_r uid %d returned %s",
+                   "uid2name: getpwuid_r uid %u returned %s",
                    *puid, name);
 
       if(unamemap_add(*puid, name, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                  "uid2name: uidmap_add %s %d failed",
+                  "uid2name: uidmap_add %s %u failed",
                   name, *puid);
           return 0;
         }
@@ -299,7 +299,7 @@ int name2uid(char *name, uid_t * puid)
             {
               /* Failure to update the in-core table is not fatal */
               LogMajor(COMPONENT_IDMAPPER,
-                      "name2uid: uidmap_add %s %ld failed",
+                      "name2uid: uidmap_add %s %u failed",
                       name, uid);
             }
           *puid = uid;
@@ -329,13 +329,13 @@ int name2uid(char *name, uid_t * puid)
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "name2uid: nfs4_name_to_uid %s returned %d",
+                   "name2uid: nfs4_name_to_uid %s returned %u",
                    fqname, *puid);
 
       if(uidmap_add(fqname, *puid, 1) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                  "name2uid: uidmap_add %s %d failed",
+                  "name2uid: uidmap_add %s %u failed",
                   fqname, *puid);
           return 0;
         }
@@ -355,7 +355,7 @@ int name2uid(char *name, uid_t * puid)
       if(uidgidmap_add(gss_uid, gss_gid) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                  "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
+                  "name2uid: uidgidmap_add gss_uid %u gss_gid %u failed",
                   gss_uid, gss_gid);
           return 0;
         }
@@ -481,21 +481,21 @@ principal_found:
       if(uidmap_add(principal, gss_uid, 0) != ID_MAPPER_SUCCESS)
 	{
 	  LogCrit(COMPONENT_IDMAPPER,
-		  "principal2uid: uidmap_add %s %d failed",
+		  "principal2uid: uidmap_add %s %u failed",
 		  principal, gss_uid);
 	  return 0;
 	}
       if(uidgidmap_add(gss_uid, gss_gid) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                  "principal2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
+                  "principal2uid: uidgidmap_add gss_uid %u gss_gid %u failed",
                   gss_uid, gss_gid);
           return 0;
         }
     }
 
   LogFullDebug(COMPONENT_IDMAPPER,
-               "principal2uid: uidmap_get mapped %s to uid= %d",
+               "principal2uid: uidmap_get mapped %s to uid= %u",
                principal, gss_uid);
   *puid = gss_uid;
 
@@ -534,7 +534,7 @@ int gid2name(char *name, gid_t * pgid)
   if(gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "gid2name: unamemap_get gid %d returned %s",
+                   "gid2name: unamemap_get gid %u returned %s",
                    *pgid, name);
       return 1;
     }
@@ -551,19 +551,19 @@ int gid2name(char *name, gid_t * pgid)
       if(rc != 0)
         {
           LogInfo(COMPONENT_IDMAPPER,
-                   "gid2name: nfs4_gid_to_name %d returned %d (%s)",
+                   "gid2name: nfs4_gid_to_name %u returned %d (%s)",
                    *pgid, -rc, strerror(-rc));
           return 0;
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "gid2name: nfs4_gid_to_name gid %d returned %s",
+                   "gid2name: nfs4_gid_to_name gid %u returned %s",
                    *pgid, name);
 
       if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                  "gid2name: gidmap_add %s %d failed",
+                  "gid2name: gidmap_add %s %u failed",
                   name, *pgid);
           return 0;
         }
@@ -575,7 +575,7 @@ int gid2name(char *name, gid_t * pgid)
   if(gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
     {
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "gid2name: gnamemap_get gid %d returned %s",
+                   "gid2name: gnamemap_get gid %u returned %s",
                    *pgid, name);
       return 1;
     }
@@ -589,7 +589,7 @@ int gid2name(char *name, gid_t * pgid)
 #endif                          /* _SOLARIS */
         {
           LogCrit(COMPONENT_IDMAPPER,
-                       "gid2name: getgrgid_r %d failed",
+                       "gid2name: getgrgid_r %u failed",
                        *pgid);
           return 0;
         }
@@ -597,13 +597,13 @@ int gid2name(char *name, gid_t * pgid)
       strncpy(name, g.gr_name, NFS4_MAX_DOMAIN_LEN);
 
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "gid2name: getgrgid_r gid %d returned %s",
+                   "gid2name: getgrgid_r gid %u returned %s",
                    *pgid, name);
 
       if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                  "gid2name: gidmap_add %s %d failed",
+                  "gid2name: gidmap_add %s %u failed",
                   name, *pgid);
           return 0;
         }
@@ -657,13 +657,13 @@ int name2gid(char *name, gid_t * pgid)
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
-                   "name2gid: nfs4_name_to_gid %s returned %d",
+                   "name2gid: nfs4_name_to_gid %s returned %u",
                    name, *pgid);
 
       if(gidmap_add(name, *pgid) != ID_MAPPER_SUCCESS)
         {
           LogCrit(COMPONENT_IDMAPPER,
-                  "name2gid: gidmap_add %s %d failed",
+                  "name2gid: gidmap_add %s %u failed",
                   name, *pgid);
           return 0;
         }
@@ -750,7 +750,7 @@ int uid2str(uid_t uid, char *str)
 #endif
 
   LogDebug(COMPONENT_IDMAPPER,
-           "uid2str %d returning %s",
+           "uid2str %u returning %s",
            uid, str);
 
   return rc;
@@ -784,7 +784,7 @@ int gid2str(gid_t gid, char *str)
 #endif
 
   LogDebug(COMPONENT_IDMAPPER,
-           "gid2str %d returning %s",
+           "gid2str %u returning %s",
            gid, str);
 
   return rc;
@@ -900,7 +900,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
     }
 
   LogDebug(COMPONENT_IDMAPPER,
-           "utf82uid: Mapped %s to uid = %d",
+           "utf82uid: Mapped %s to uid = %u",
            buff, *Uid);
 
   return 0;
@@ -952,7 +952,7 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
     }
 
   LogDebug(COMPONENT_IDMAPPER,
-           "utf82gid: Mapped %s to gid = %d",
+           "utf82gid: Mapped %s to gid = %u",
            buff, *Gid);
 
   return 0;
