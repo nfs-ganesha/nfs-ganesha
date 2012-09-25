@@ -54,6 +54,7 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
+#include "cache_inode_lru.h"
 
 static nfsstat4 nfs4_chk_shrdny(struct nfs_argop4 *, compound_data_t *,
     cache_entry_t *, fsal_accessflags_t, fsal_accessflags_t, fsal_openflags_t *,
@@ -202,6 +203,17 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   /* Set parent */
   /* for CLAIM_PREVIOUS, currentFH is the file being reclaimed, not a dir */
   pentry_parent = data->current_entry;
+  /* take an additional refcount for the local variable pentry_parent */
+  if (cache_inode_lru_ref(pentry_parent, 0)
+      != CACHE_INODE_SUCCESS)
+    {
+      LogMajor(COMPONENT_CACHE_INODE_LRU,
+               "Inconsistency found in LRU management while getting a reference"
+               " on a new file.");
+      res_OPEN4.status = NFS4ERR_SERVERFAULT;
+      goto out3;
+    }
+
 
   /* It this a known client id ? */
   LogDebug(COMPONENT_STATE,
@@ -371,9 +383,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           goto out;
         }
 
-      /* Check parent */
-      pentry_parent = data->current_entry;
-
       /* Parent must be a directory */
       if((pentry_parent->type != DIRECTORY))
         {
@@ -530,11 +539,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                     }
                   V(powner->so_mutex);
 
-                  if (data->current_entry) {
-                    cache_inode_put(data->current_entry);
-                    data->current_entry = NULL;
-                  }
-
                   status4 = nfs4_create_fh(data, pentry_lookup, &text);
                   if(status4 != NFS4_OK)
                     {
@@ -607,11 +611,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                     OPEN4_RESULT_LOCKTYPE_POSIX;
                                 }
                               V(powner->so_mutex);
-
-                              if (data->current_entry) {
-                                  cache_inode_put(data->current_entry);
-                                  data->current_entry = NULL;
-                              }
 
                               status4 = nfs4_create_fh(data,
                                                        pentry_lookup,
@@ -914,12 +913,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       goto out;
     }                           /*  switch(  arg_OPEN4.claim.claim ) */
 
-  /* Decrement the current entry here, because nfs4_create_fh
-     replaces the current fh. */
-  if (data->current_entry) {
-      cache_inode_put(data->current_entry);
-      data->current_entry = NULL;
-  }
   status4 = nfs4_create_fh(data, pentry_newfile, &text);
   if(status4 != NFS4_OK)
     {
@@ -1013,6 +1006,8 @@ out_prev:
   dec_client_id_ref(pclientid);
 
  out3:
+  if (pentry_parent)
+    cache_inode_put(pentry_parent);
 
   if(res_OPEN4.status != NFS4_OK)
     {
@@ -1289,6 +1284,12 @@ nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
         data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
         memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
             newfh4.nfs_fh4_len);
+
+        /* Decrement the current entry here, because nfs4_create_fh
+           replaces the current fh. */
+        if (data->current_entry) {
+            cache_inode_put(data->current_entry);
+        }
 
         /* Update stuff on compound data, do not have to call nfs4_SetCompoundExport
          * because the new file is on the same export, so data->pexport and
