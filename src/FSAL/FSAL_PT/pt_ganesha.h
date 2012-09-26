@@ -45,7 +45,7 @@
                                                // polling for handle to 
                                                // close in the
                                                // background
-#define PTFSAL_OLDEST_HANDLE_TIMEOUT_SEC  30   // Timeout for opened handle 
+#define PTFSAL_OLDEST_HANDLE_TIMEOUT_SEC  5    // Timeout for opened handle 
                                                // to be considered old in
                                                // close_on_open path
 extern int             debug_flag;
