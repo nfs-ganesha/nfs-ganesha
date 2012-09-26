@@ -374,8 +374,8 @@ layoutget(struct fsal_obj_handle *obj_pub,
                         .offset = last_possible_byte + 1,
                         .length = NFS4_UINT64_MAX
                 };
-                if (pnfs_segments_overlap(smallest_acceptable,
-                                          forbidden_area)) {
+                if (pnfs_segments_overlap(&smallest_acceptable,
+                                          &forbidden_area)) {
                         LogCrit(COMPONENT_PNFS,
                                 "Required layout extends beyond allowed "
                                 "region. offset: %"PRIu64

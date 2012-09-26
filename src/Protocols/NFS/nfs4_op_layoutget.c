@@ -144,6 +144,11 @@ acquire_layout_state(compound_data_t *data,
                                 .length = NFS4_UINT64_MAX
                         };
 
+                        if (condemned_state->state_data.layout.granting) {
+                                nfs_status = NFS4ERR_DELAY;
+				goto out;
+			}
+
                         if ((nfs_status
                              = nfs4_return_one_state(data->current_entry,
                                                      data->req_ctx,
@@ -216,7 +221,7 @@ out:
  */
 
 static nfsstat4
-one_segment(struct fsal_obj_handle *handle,
+one_segment(cache_entry_t *entry,
             exportlist_t *export,
             struct req_op_context *req_ctx,
             state_t *layout_state,
@@ -260,18 +265,26 @@ one_segment(struct fsal_obj_handle *handle,
 
         start_position = xdr_getpos(&loc_body);
 
-        nfs_status
-                = handle->ops->layoutget(handle,
-                                         req_ctx,
-                                         &loc_body,
-                                         arg,
-                                         res);
+	pthread_rwlock_wrlock(&entry->state_lock);
+	++layout_state->state_data.layout.granting;
+	pthread_rwlock_unlock(&entry->state_lock);
+
+        nfs_status = entry->obj_handle
+		->ops->layoutget(entry->obj_handle,
+				 req_ctx,
+				 &loc_body,
+				 arg,
+				 res);
+
+	pthread_rwlock_wrlock(&entry->state_lock);
+	--layout_state->state_data.layout.granting;
 
         current->lo_content.loc_body.loc_body_len
                 = xdr_getpos(&loc_body) - start_position;
         xdr_destroy(&loc_body);
 
         if (nfs_status != NFS4_OK) {
+		pthread_rwlock_unlock(&entry->state_lock);
                 goto out;
         }
 
@@ -279,11 +292,15 @@ one_segment(struct fsal_obj_handle *handle,
         current->lo_length = res->segment.length;
         current->lo_iomode = res->segment.io_mode;
 
-        if ((state_status = state_add_segment(layout_state,
-                                              &res->segment,
-                                              res->fsal_seg_data,
-                                              res->return_on_close))
-            != STATE_SUCCESS) {
+
+        state_status = state_add_segment(layout_state,
+					 &res->segment,
+				 res->fsal_seg_data,
+					 res->return_on_close);
+
+	pthread_rwlock_unlock(&entry->state_lock);
+
+        if (state_status != STATE_SUCCESS) {
                 nfs_status = nfs4_Errno_state(state_status);
                 goto out;
         }
@@ -421,7 +438,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op,
                 /* Clear anything from a previous segment */
                 res.fsal_seg_data = NULL;
 
-                if ((nfs_status = one_segment(data->current_entry->obj_handle,
+                if ((nfs_status = one_segment(data->current_entry,
                                               data->pexport,
                                               data->req_ctx,
                                               layout_state,

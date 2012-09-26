@@ -324,7 +324,8 @@ struct cache_entry_t
                                    may be released and reacquired
                                    several times in an operation that
                                    should not see changes i state. */
-  struct glist_head state_list; /*< Pointers for state list */
+  struct glist_head state_list; /*< States on this cache entry */
+  struct glist_head layoutrecall_list; /*< Layout recalls on this entry */
   pthread_rwlock_t content_lock; /*< Lock on type-specific cached
                                      content.  See locking discipline
                                      for details. */

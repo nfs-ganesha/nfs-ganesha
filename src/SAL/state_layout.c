@@ -53,20 +53,20 @@
 #include "nfs_core.h"
 
 /**
- * \brief Add a segment to an existing layout state
+ * @brief Add a segment to an existing layout state
  *
  * This function is intended to be used in nfs41_op_layoutget to add
  * each segment returned by FSAL_layoutget to an existing state of
  * type STATE_TYPE_LAYOUT.
  *
- * \param state     [IN] Pointer to the layout state.
- * \param segment   [IN] The layout segment itself (as a layout4,
- *                       specified by RFC5661) granted by the FSAL.
- * \param fsal_data [IN] Pointer to FSAL-specific data for this segment.
- * \param segid     [IN] The FSAL-specific, opaque segment ID provided
- *                       by the FSAL.
+ * @param[in] state     Pointer to the layout state.
+ * @param[in] segment   The layout segment itself (as a layout4,
+ *                      specified by RFC5661) granted by the FSAL.
+ * @param[in] fsal_data Pointer to FSAL-specific data for this segment.
+ * @param[in] segid     The FSAL-specific, opaque segment ID provided
+ *                      by the FSAL.
  *
- * \return STATE_SUCCESS on completion, other values of state_status_t
+ * @return STATE_SUCCESS on completion, other values of state_status_t
  *         on failure.
  */
 
@@ -79,6 +79,7 @@ state_add_segment(state_t *state,
 {
      /* Pointer to the new segment being added to the state */
      state_layout_segment_t *new_segment = NULL;
+     pthread_mutexattr_t mattr;
 
      if (state->state_type != STATE_TYPE_LAYOUT) {
           LogCrit(COMPONENT_PNFS, "Attempt to add layout segment to "
@@ -91,10 +92,20 @@ state_add_segment(state_t *state,
           return STATE_MALLOC_ERROR;
      }
 
-     if(pthread_mutex_init(&new_segment->sls_mutex, NULL) == -1) {
-          gsh_free(new_segment);
-          return STATE_POOL_MUTEX_INIT_ERROR;
+     if (pthread_mutexattr_init(&mattr) != 0) {
+          return STATE_INIT_ENTRY_FAILED;
      }
+
+     if (pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE_NP) != 0) {
+          return STATE_INIT_ENTRY_FAILED;
+     }
+
+     if (pthread_mutex_init(&new_segment->sls_mutex,
+			    &mattr) != 0) {
+	  return STATE_INIT_ENTRY_FAILED;
+     }
+
+     pthread_mutexattr_destroy(&mattr);
 
      new_segment->sls_fsal_data = fsal_data;
      new_segment->sls_state     = state;

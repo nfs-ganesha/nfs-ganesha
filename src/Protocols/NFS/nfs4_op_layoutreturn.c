@@ -73,10 +73,10 @@
  * @see nfs4_Compound
  */
 
-
-int nfs4_op_layoutreturn(struct nfs_argop4 *op,
-                         compound_data_t *data,
-                         struct nfs_resop4 *resp)
+int
+nfs4_op_layoutreturn(struct nfs_argop4 *op,
+		     compound_data_t *data,
+		     struct nfs_resop4 *resp)
 {
         /* Convenience alias for arguments */
         LAYOUTRETURN4args *const arg_LAYOUTRETURN4
@@ -297,10 +297,92 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op,
  * @param[in] resp nfs4_op results
  *
  */
-void nfs4_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
+
+void
+nfs4_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
 {
         return;
 } /* nfs41_op_layoutreturn_Free */
+
+static void
+handle_recalls(struct fsal_layoutreturn_arg *arg,
+	       state_t *state,
+	       const struct pnfs_segment *segment)
+{
+	/* Iterator over the recall list */
+	struct glist_head *recall_iter = NULL;
+	/* Next recall for safe iteration */
+	struct glist_head *recall_next = NULL;
+
+	glist_for_each_safe(recall_iter,
+			    recall_next,
+			    &state->state_pentry->layoutrecall_list) {
+		/* The current recall state */
+		struct state_layout_recall_file *r
+			= glist_entry(recall_iter,
+				      struct state_layout_recall_file,
+				      entry_link);
+		/* If the recall thread hasn't run yet */
+		bool raced = false;
+		/* Iteration on states */
+		struct glist_head *state_iter = NULL;
+		/* Next entry in state list */
+		struct glist_head *state_next = NULL;
+
+		glist_for_each_safe(state_iter,
+				    state_next,
+				    r->state_list) {
+			struct recall_work_queue *s
+				= glist_entry(state_iter,
+					      struct recall_work_queue,
+					      link);
+			/* Iteration on segments */
+			struct glist_head *seg_iter = NULL;
+			/* We found a segment that satisfies the
+			   recall */
+			bool satisfaction = false;
+
+			if (!s->recalled) {
+				raced = true;
+			}
+			if (s->state != state) {
+				continue;
+			}
+			glist_for_each(seg_iter,
+				       &s->state->state_data.layout.state_segments) {
+			}
+			struct state_layout_segment *g
+				= glist_entry(seg_iter,
+					      struct state_layout_segment,
+					      sls_state_segments);
+			if (!pnfs_segments_overlap(&g->sls_segment,
+						   segment)) {
+				/* We don't even touch this */
+				break;
+			} else if (!pnfs_segment_contains(segment,
+							  &g->sls_segment)) {
+				/* Not satisfied completely */
+			} else {
+				satisfaction = true;
+			}
+			if (satisfaction &&
+			    glist_length(&s->state->state_data.layout.state_segments)
+			    == 1) {
+				glist_del(&s->link);
+				arg->recall_cookies[arg->ncookies++]
+					= r->recall_cookie;
+				gsh_free(s);
+			}
+		}
+		if (glist_empty(r->state_list)) {
+			if (!raced) {
+				gsh_free(r->state_list);
+			}
+			glist_del(&r->entry_link);
+			gsh_free(r);
+		}
+	}
+}
 
 /**
  * @brief Return layouts corresponding to one stateid
@@ -314,6 +396,8 @@ void nfs4_op_layoutreturn_Free(LAYOUTRETURN4res *resp)
  * @param[in]     req_ctx      Request context
  * @param[in]     synthetic    True if this is a bulk or synthesized
  *                             (e.g. last close or lease expiry) return
+ * @param[in]     reclaim      True if the client is returning a state
+ *                             from a previous instance of the server
  * @param[in,out] layout_state State whose segments we return
  * @param[in]     iomode       I/O mode specifying which segments to
  *                             return
@@ -342,20 +426,24 @@ nfs4_return_one_state(cache_entry_t *entry,
         state_status_t state_status = 0;
         /* Return from this function */
         nfsstat4 nfs_status = 0;
-        /* Iterator along linked list */
-        struct glist_head *glist = NULL;
-        /* Saved 'next' pointer for glist_for_each_safe */
-        struct glist_head *glistn = NULL;
+        /* Iterator along segment list */
+        struct glist_head *seg_iter = NULL;
+        /* Saved 'next' pointer for iterating over segment list */
+        struct glist_head *seg_next = NULL;
         /* Input arguments to FSAL_layoutreturn */
-        struct fsal_layoutreturn_arg arg;
+        struct fsal_layoutreturn_arg *arg;
         /* XDR stream holding the lrf_body opaque */
         XDR lrf_body;
         /* The beginning of the stream */
         unsigned int beginning = 0;
-        /* The current segment in iteration */
-        state_layout_segment_t *segment = NULL;
         /* If we have a lock on the segment */
         bool seg_locked = false;
+	/* Number of recalls currently on the entry */
+	size_t recalls = 0;
+	/* The current segment in iteration */
+	state_layout_segment_t *g = NULL;
+
+	recalls = glist_length(&entry->layoutrecall_list);
 
         if (body_val) {
                 xdrmem_create(&lrf_body,
@@ -365,68 +453,78 @@ nfs4_return_one_state(cache_entry_t *entry,
                 beginning = xdr_getpos(&lrf_body);
         }
 
-        memset(&arg, 0, sizeof(struct fsal_layoutreturn_arg));
+        arg = alloca(sizeof(struct fsal_layoutreturn_arg) +
+                     sizeof(void *) * recalls);
 
-        arg.reclaim = reclaim;
-        arg.lo_type = layout_state->state_data.layout.state_layout_type;
-        arg.return_type = return_type;
-        arg.spec_segment = spec_segment;
-        arg.synthetic = synthetic;
-        arg.ntokens = 0;
+        memset(arg, 0, sizeof(struct fsal_layoutreturn_arg));
+
+        arg->reclaim = reclaim;
+        arg->lo_type = layout_state->state_data.layout.state_layout_type;
+        arg->return_type = return_type;
+        arg->spec_segment = spec_segment;
+        arg->synthetic = synthetic;
+        arg->ncookies = 0;
 
         if (!reclaim) {
                 /* The _safe version of glist_for_each allows us to
                    delete segments while we iterate. */
-                glist_for_each_safe(glist,
-                                    glistn,
+                glist_for_each_safe(seg_iter,
+                                    seg_next,
                                     &layout_state->state_data.layout
                                     .state_segments) {
-                        segment = glist_entry(glist,
-                                              state_layout_segment_t,
-                                              sls_state_segments);
+			/* The current segment in iteration */
+			g = glist_entry(seg_iter,
+					state_layout_segment_t,
+					sls_state_segments);
 
-                        pthread_mutex_lock(&segment->sls_mutex);
+                        pthread_mutex_lock(&g->sls_mutex);
                         seg_locked = true;
 
-                        arg.cur_segment = segment->sls_segment;
-                        arg.fsal_seg_data = segment->sls_fsal_data;
-                        arg.last_segment = (glistn->next == glistn);
+                        arg->cur_segment = g->sls_segment;
+                        arg->fsal_seg_data = g->sls_fsal_data;
+                        arg->last_segment = (seg_next->next ==
+					     seg_next);
 
-                        if (pnfs_segment_contains(spec_segment,
-                                                  segment->sls_segment)) {
-                                arg.dispose = true;
-                        } else if (pnfs_segments_overlap(spec_segment,
-                                                segment->sls_segment)) {
-                                arg.dispose = false;
+                        if (pnfs_segment_contains(&spec_segment,
+                                                  &g->sls_segment)) {
+                                arg->dispose = true;
+                        } else if (pnfs_segments_overlap(&spec_segment,
+							 &g->sls_segment)) {
+                                arg->dispose = false;
                         } else {
-                                pthread_mutex_unlock(&segment->sls_mutex);
+                                pthread_mutex_unlock(&g->sls_mutex);
                                 continue;
                         }
 
-                        nfs_status =
-                                entry->obj_handle->ops
-                                ->layoutreturn(entry->obj_handle,
-                                              req_ctx,
-                                              (body_val ? &lrf_body : NULL),
-                                              &arg);
+			handle_recalls(arg,
+				       layout_state,
+				       &g->sls_segment);
+			
+
+                        nfs_status
+				= entry->obj_handle->ops
+				->layoutreturn(entry->obj_handle,
+					       req_ctx,
+					       (body_val ? &lrf_body : NULL),
+					       arg);
 
                         if (nfs_status != NFS4_OK) {
                                 goto out;
                         }
 
-                        if (arg.dispose) {
-                                if (state_delete_segment(segment)
+                        if (arg->dispose) {
+                                if (state_delete_segment(g)
                                     != STATE_SUCCESS) {
                                         nfs_status = nfs4_Errno_state(
                                                 state_status);
                                         goto out;
                                 }
                         } else {
-                                segment->sls_segment
+                                g->sls_segment
                                         = pnfs_segment_difference(
-                                                spec_segment,
-                                                segment->sls_segment);
-                                pthread_mutex_unlock(&segment->sls_mutex);
+                                                &spec_segment,
+                                                &g->sls_segment);
+                                pthread_mutex_unlock(&g->sls_mutex);
                         }
                 }
                 seg_locked = false;
@@ -445,12 +543,12 @@ nfs4_return_one_state(cache_entry_t *entry,
         } else {
                 /* For a reclaim return, there are no recorded segments in
                    state. */
-                arg.cur_segment.io_mode = 0;
-                arg.cur_segment.offset = 0;
-                arg.cur_segment.length = 0;
-                arg.fsal_seg_data = NULL;
-                arg.last_segment = false;
-                arg.dispose = false;
+                arg->cur_segment.io_mode = 0;
+                arg->cur_segment.offset = 0;
+                arg->cur_segment.length = 0;
+                arg->fsal_seg_data = NULL;
+                arg->last_segment = false;
+                arg->dispose = false;
 
 
                 nfs_status =
@@ -458,7 +556,7 @@ nfs4_return_one_state(cache_entry_t *entry,
                         ->layoutreturn(entry->obj_handle,
                                        req_ctx,
                                        (body_val ? &lrf_body : NULL),
-                                       &arg);
+                                       arg);
 
                 if (nfs_status != NFS4_OK) {
                         goto out;
@@ -473,7 +571,7 @@ out:
                 xdr_destroy(&lrf_body);
         }
         if (seg_locked) {
-                pthread_mutex_unlock(&segment->sls_mutex);
+                pthread_mutex_unlock(&g->sls_mutex);
         }
 
         return nfs_status;

@@ -169,12 +169,12 @@ struct fsal_layoutreturn_arg {
         bool last_segment;
         /** Count of recall tokens.  0 if no LAYOUTRECALLs are
             satisfied. */
-        size_t ntokens;
+        size_t ncookies;
         /** Array of pointers to layout specific data supplied by
          *  LAYOUTRECALL.  If this LAYOUTRETURN completly satisfies
          *  one or more invoked LAYOUTRECALLs, the tokens of the
          *  recalls will be supplied. */
-        const void *fsal_recall_data[];
+        const void *recall_cookies[];
 };
 
 /**

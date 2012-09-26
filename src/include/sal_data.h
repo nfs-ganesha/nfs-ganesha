@@ -75,7 +75,7 @@ typedef struct state_nlm_client_t   state_nlm_client_t;
 typedef struct state_nlm_share_t    state_nlm_share_t;
 typedef struct state_cookie_entry_t state_cookie_entry_t;
 typedef struct state_block_data_t   state_block_data_t;
-typedef struct state_layout_segment_t state_layout_segment_t;
+typedef struct state_layout_segment state_layout_segment_t;
 
 /******************************************************************************
  *
@@ -124,18 +124,18 @@ typedef enum state_type_t
 
 typedef struct state_share__
 {
-  unsigned int      share_access;            /*< The NFSv4 Share Access state                            */
-  unsigned int      share_deny;              /*< The NFSv4 Share Deny state                              */
-  struct glist_head share_lockstates;        /*< The list of lock states associated with this open state */
-  unsigned int      share_access_prev;       /*< The bitmap to keep track of previous share access state */
-  unsigned int      share_deny_prev;         /*< The bitmap to keep track of previous share deny state   */
+  unsigned int      share_access; /*< The NFSv4 Share Access state */
+  unsigned int      share_deny; /*< The NFSv4 Share Deny state */
+  struct glist_head share_lockstates; /*< Lock states for this open state */
+  unsigned int      share_access_prev; /*< Previous share access state */
+  unsigned int      share_deny_prev; /*< Previous share deny state   */
 } state_share_t;
 
 typedef struct state_lock_t
 {
-  state_t           * popenstate;      /*< The related open-stateid            */
-  struct glist_head   state_locklist;  /*< List of locks owned by this stateid */
-  struct glist_head   state_sharelist; /*< List of states related to a share          */
+  state_t         * popenstate; /*< The related open-stateid */
+  struct glist_head state_locklist; /*< List of locks owned by this stateid */
+  struct glist_head state_sharelist; /*< List of states related to a share */
 } state_lock_t;
 
 typedef struct state_deleg__
@@ -145,9 +145,12 @@ typedef struct state_deleg__
 
 typedef struct state_layout__
 {
-  layouttype4            state_layout_type;
-  bool                   state_return_on_close;
-  struct glist_head      state_segments;
+  layouttype4 state_layout_type; /*< The type of layout this state
+                                     represents */
+  bool state_return_on_close; /*< Whether this layout should be
+                                  returned on last close. */
+  uint32_t granting; /*< Number of LAYOUTGETs in progress */
+  struct glist_head state_segments;
 } state_layout_t;
 
 typedef union state_data_t
@@ -166,23 +169,25 @@ extern char all_one[OTHERSIZE];
 
 struct state_t
 {
-  struct glist_head   state_list;                /*< List of states on a file                   */
-  struct glist_head   state_owner_list;          /*< List of states for an owner                */
-  struct glist_head   state_export_list;         /*< List of states on the same export          */
-  exportlist_t      * state_pexport;             /*< Export this entry belongs to               */
-  state_owner_t     * state_powner;              /*< State Owner related to this state          */
-  cache_entry_t     * state_pentry;              /*< Related pentry                             */
+  struct glist_head   state_list; /*< List of states on a file */
+  struct glist_head   state_owner_list; /*< List of states for an owner */
+  struct glist_head   state_export_list; /*< List of states on the same
+                                             export */
+  exportlist_t      * state_pexport; /*< Export this entry belongs to */
+  state_owner_t     * state_powner; /*< State Owner related to this state */
+  cache_entry_t     * state_pentry; /*< Related entry */
   state_type_t        state_type;
   state_data_t        state_data;
-  u_int32_t           state_seqid;               /*< The NFSv4 Sequence id                      */
-  char                stateid_other[OTHERSIZE];  /*< "Other" part of state id, used as hash key */
+  u_int32_t           state_seqid; /*< The NFSv4 Sequence id */
+  char                stateid_other[OTHERSIZE];  /*< "Other" part of state id,
+                                                      used as hash key */
 };
 
-/******************************************************************************
+/*****************************************************************************
  *
  * NFS Owner data
  *
- ******************************************************************************/
+ *****************************************************************************/
 
 typedef struct state_nfs4_owner_name_t
 {
@@ -511,7 +516,7 @@ struct state_lock_entry_t
   pthread_mutex_t        sle_mutex;
 };
 
-struct state_layout_segment_t
+struct state_layout_segment
 {
   struct glist_head      sls_state_segments;
   state_t              * sls_state;
@@ -520,15 +525,26 @@ struct state_layout_segment_t
   pthread_mutex_t        sls_mutex;
 };
 
+struct recall_work_queue {
+        struct glist_head link; /*< Link to the next layout state in the
+                                    queue */
+        state_t *state; /*< State on which to recall. */
+        bool recalled; /*< Whether the CB_LAYOUTRECALL has been sent */
+};
+
 struct state_layout_recall_file
 {
-  struct glist_head entry_list; /*< List of recalls on a file */
+  struct glist_head entry_link; /*< List of recalls on a file */
   cache_entry_t *entry; /*< Related cache entry */
-  uint64_t offset; /*< Beginning of the region to recall */
-  uint64_t length; /*< Length of region to recall */
-  layoutiomode4 iomode; /*< IO mode to recall */
-  struct state_layout_segment_t *segments[]; /*< List of layout segments
-                                                 affected by this recall. */
+  layouttype4 type; /*< Type of layout being recalled */
+  struct pnfs_segment segment; /*< Segment to recall */
+  struct glist_head *state_list; /*< List of states affected by this
+				     layout, used both for the work
+				     queue of recalls to send and for
+				     finding when a recall has been
+				     satisfied by return. */
+  void *recall_cookie; /*< Cookie returned to FSAL on return of last
+			   segment satisfying the layout */
 };
 
 #define sle_client_locks sle_locks

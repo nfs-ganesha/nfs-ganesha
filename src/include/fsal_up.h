@@ -267,10 +267,9 @@ struct fsal_up_event_layoutrecall
                                             recall all layouts, use
                                             LAYOUTRECALL4_FSID from
                                             each export. */
-        uint64_t offset; /*< For LAYOUTRECALL4_FILE, the offset of
-                             the region to recall. */
-        uint64_t length; /*< For LAYOUTRECALL4_FILE, the length of
-                             the region to recall. */
+        bool changed; /*< Whether the layout has changed and the
+                          client ought to finish writes through MDS. */
+        struct pnfs_segment segment; /*< Segment to recall */
         void *cookie; /*< A cookie returned with the return that
                           completely satisfies a recall. */
 };
@@ -304,7 +303,6 @@ struct fsal_up_vector
         void (*lock_grant_queue)(struct fsal_up_event_lock_grant *,
                                  struct fsal_up_file *,
                                  void *);
-
         int (*lock_avail_imm)(struct fsal_up_event_lock_avail *,
                               struct fsal_up_file *,
                               void **);
@@ -318,7 +316,6 @@ struct fsal_up_vector
         void (*invalidate_queue)(struct fsal_up_event_invalidate *,
                                  struct fsal_up_file *,
                                  void *);
-
         int (*update_imm)(struct fsal_up_event_update *,
                           struct fsal_up_file *,
                           void **);
@@ -360,7 +357,6 @@ struct fsal_up_vector
         void (*rename_queue)(struct fsal_up_event_rename *,
                              struct fsal_up_file *,
                              void *);
-
         int (*layoutrecall_imm)(struct fsal_up_event_layoutrecall *,
                                 struct fsal_up_file *,
                                 void **);

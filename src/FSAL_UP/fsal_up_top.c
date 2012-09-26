@@ -19,6 +19,8 @@
 
 /**
  * @file fsal_up_thread.c
+ *
+ * @brief Top level FSAL Upcall handlers
  */
 
 #ifdef HAVE_CONFIG_H
@@ -43,6 +45,7 @@
 #include "HashTable.h"
 #include "fsal_up.h"
 #include "sal_functions.h"
+#include "pnfs_utils.h"
 
 /**
  * @brief Invalidate cached attributes and content
@@ -292,19 +295,19 @@ update_queue(struct fsal_up_event_update *update,
 }
 
 /**
- * @brief Signal a lock grant
+ * @brief Initiate a lock grant
  *
- * Since the SAL has its own queue for such operations, we simply
- * queue there.
+ * This function calls out to the SAL to grant a lock.  This is
+ * handled in the immediate phase, because NSM operations have their
+ * own queue.
  *
- * @param[in]  grant   Details of the granted lock
- * @param[in]  file    File on which the lock is granted
+ * @param[in]  grant   Event data
+ * @param[in]  file    File on which to grant the lock
  * @param[out] private Unused
  *
- * @retval 0 on success.
- * @retval ENOENT if the file isn't in the cache (this shouldn't
- *         happen, since the SAL should have files awaiting locks
- *         pinned.)
+ * @retval 0 if successfully queued.
+ * @retval ENOENT if the entry is not in the cache (probably can't
+ *         happen).
  */
 
 static int
@@ -659,6 +662,275 @@ rename_queue(struct fsal_up_event_rename *rename,
         gsh_free(rename->new);
 }
 
+/**
+ * @brief Create layout recall state
+ *
+ * This function creates the layout recall state and work queue for a
+ * LAYOUTRECALL operation on a file.  The state lock on the entry must
+ * be held for write when this function is called.
+ *
+ * This is made somewhat more problematic by the fact that every
+ * layout state that has some number of matching segments should
+ * receive a single LAYOUTRECALL for the entire range, while each
+ * segment matching a recall should be returned individually to the
+ * FSAL.
+ *
+ * LAYOUTRECALL event MUST NOT be initiated from the layoutreturn or
+ * layoutcommit functions.
+ *
+ * @param[in,out] entry   The entry on which to send the recall
+ * @param[in]     type    The layout type
+ * @param[in]     offset  The offset of the interval to recall
+ * @param[in]     length  The length of the interval to recall
+ * @param[in]     cookie  The recall cookie (to be returned to the FSAL
+ *                        on the final return satisfying this recall.)
+ * @param[out]    private The work queue
+ *
+ * @retval 0 if successfully queued.
+ * @retval EINVAL if the range is zero or overflows.
+ * @retval ENOENT if no layouts satisfying the range exist.
+ * @retval ENOMEM if there was insufficient memory to construct the
+ *         recall state.
+ */
+
+static int
+create_file_recall(cache_entry_t *entry,
+                   layouttype4 type,
+                   const struct pnfs_segment *segment,
+                   void *cookie,
+                   void **private)
+{
+        /* True if no layouts matching the request have been found */
+        bool none = true;
+        /* Head of the work queue */
+        struct glist_head *queue
+                = gsh_malloc(sizeof(struct glist_head));
+        /* Iterator over all states on the cache entry */
+        struct glist_head *state_iter = NULL;
+        /* Error return code */
+        int rc = 0;
+
+        if (!queue) {
+                rc = ENOMEM;
+                goto out;
+        }
+
+        if ((segment->length == 0) ||
+            ((segment->length != UINT64_MAX) &&
+             (segment->offset <= UINT64_MAX - segment->length))) {
+                rc = EINVAL;
+                goto out;
+        }
+
+        glist_for_each(state_iter,
+                       &entry->state_list) {
+                struct recall_work_queue *work_entry = NULL;;
+                /* Iterator over segments on this state */
+                struct glist_head *seg_iter = NULL;
+                /* The state under examination */
+                state_t *s = glist_entry(state_iter,
+                                         state_t,
+                                         state_list);
+                bool match = false;
+
+                if ((s->state_type != STATE_TYPE_LAYOUT) ||
+                    (s->state_data.layout.state_layout_type !=
+                     type)) {
+                        continue;
+                }
+                glist_for_each(seg_iter,
+                               &entry->state_list) {
+                        state_layout_segment_t *g
+                                = glist_entry(seg_iter,
+                                              state_layout_segment_t,
+                                              sls_state_segments);
+                        pthread_mutex_lock(&g->sls_mutex);
+                        if (pnfs_segments_overlap(segment,
+                                                  &g->sls_segment)) {
+                                match = true;
+                                pthread_mutex_unlock(&g->sls_mutex);
+                        }
+                }
+                if (match) {
+                        work_entry = gsh_malloc(
+                                sizeof(struct recall_work_queue));
+                        if (!work_entry) {
+                                rc = ENOMEM;
+                                goto out;
+                        }
+                        init_glist(&work_entry->link);
+                        work_entry->state = s;
+                        work_entry->recalled = false;
+                        glist_add_tail(queue, &work_entry->link);
+                        none = false;
+                }
+        }
+
+        if (none) {
+                rc = ENOENT;
+        }
+
+out:
+
+        if (rc != 0) {
+                if (queue) {
+                        /* Entry in the queue we're disposing */
+                        struct glist_head *queue_iter = NULL;
+                        /* Placeholder so we can delete entries without
+                           facing untold misery */
+                        struct glist_head *holder = NULL;
+                        glist_for_each_safe(queue_iter,
+                                            holder,
+                                            queue) {
+                                struct recall_work_queue *g
+                                        = glist_entry(queue_iter,
+                                                      struct recall_work_queue,
+                                                      link);
+                                glist_del(queue_iter);
+                                gsh_free(g);
+                        }
+                        gsh_free(queue);
+                }
+        } else {
+                struct state_layout_recall_file *recall = gsh_malloc(
+                        sizeof(struct state_layout_recall_file));
+
+                if (!recall) {
+                        rc = ENOMEM;
+                        goto out;
+                }
+                init_glist(&recall->entry_link);
+                recall->entry = entry;
+                recall->type = type;
+                recall->segment = *segment;
+                recall->state_list = queue;
+                recall->recall_cookie = cookie;
+                glist_add_tail(&entry->layoutrecall_list,
+                               &recall->entry_link);
+                *private = queue;
+        }
+
+        return rc;
+}
+
+/**
+ * @brief Initiate layout recall
+ *
+ * This function validates the recall, creates the recall object, and
+ * produces a work queue of layout states to which to send a
+ * CB_LAYOUTRECALL.
+ *
+ * @param[in]  layoutrecall Event data
+ * @param[in]  file         File on which to issue the recall
+ * @param[out] private      Layout recall work queue
+ *
+ * @retval 0 if scheduled.
+ * @retval ENOENT if no matching layouts exist.
+ * @retval ENOTSUP if an unsupported recall type has been provided.
+ * @retval EINVAL if a nonsensical layout recall has been specified.
+ */
+
+static int
+layoutrecall_imm(struct fsal_up_event_layoutrecall *layoutrecall,
+                 struct fsal_up_file *file,
+                 void **private)
+{
+        cache_entry_t *entry = NULL;
+        int rc = 0;
+
+        if (!file->export) {
+                return EINVAL;
+        }
+
+        switch (layoutrecall->recall_type) {
+        case LAYOUTRECALL4_ALL:
+                LogCrit(COMPONENT_FSAL_UP,
+                        "LAYOUTRECALL4_ALL is not supported as a "
+                        "recall type and never will be.  Called from "
+                        "export %d.", file->export->exp_entry->id);
+                return ENOTSUP;
+
+        case LAYOUTRECALL4_FSID:
+                LogCrit(COMPONENT_FSAL_UP,
+                        "LAYOUTRECALL4_FSID is not currently supported.  "
+                        "Called from export %d.", file->export->exp_entry->id);
+                return ENOTSUP;
+
+        case LAYOUTRECALL4_FILE:
+                rc = up_get(&file->key,
+                            &entry);
+                if (rc != 0) {
+                        return rc;
+                }
+                pthread_rwlock_wrlock(&entry->state_lock);
+                /* We create the file recall state here and link it
+                   to the cache entry, but actually send out the
+                   messages from the queued function.  We do the
+                   build here so that the FSAL can be notified if no
+                   layouts matching the recall exist. */
+                rc = create_file_recall(entry,
+                                        layoutrecall->layout_type,
+                                        &layoutrecall->segment,
+                                        layoutrecall->cookie,
+                                        private);
+                pthread_rwlock_unlock(&entry->state_lock);
+                cache_inode_put(entry);
+                break;
+
+        default:
+                LogCrit(COMPONENT_FSAL_UP,
+                        "Invalid recall type %d. Called from export %d.",
+                        layoutrecall->recall_type,
+                        file->export->exp_entry->id);
+                return EINVAL;
+        }
+
+        return rc;
+}
+
+static void
+layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
+                   struct fsal_up_file *file,
+                   void *private)
+{
+        struct glist_head *queue
+                = (struct glist_head *)private;
+        /* Entry in the queue we're disposing */
+        struct glist_head *queue_iter = NULL;
+
+        if (glist_empty(queue)) {
+                /* One or more LAYOUTRETURNs raced us and emptied out
+                   the queue */
+                gsh_free(queue);
+                return;
+        }
+
+        glist_for_each(queue_iter,
+                       queue) {
+                /* The current entry in the queue */
+                struct recall_work_queue *g
+                        = glist_entry(queue_iter,
+                                      struct recall_work_queue,
+                                      link);
+                struct state_t *s = g->state;
+                cache_entry_t  *entry = s->state_pentry;
+                pthread_rwlock_wrlock(&entry->state_lock);
+                /* Do something or other to recall the layout.  We
+                   might want some specialty code in the lease timer
+                   to treat a clientid with layouts that has had the
+                   back channel down for more than the lease timer as
+                   having gone dead, so that if the back channel goes
+                   out to lunch we'll synthesize returns and free up
+                   both the layout and the recall state. */
+                /**
+                 * @todo ACE: Hook into backchannel.  Don't forget to
+                 * bump the seqid.
+                 */
+                g->recalled = true;
+                pthread_rwlock_unlock(&entry->state_lock);
+        }
+};
+
 struct fsal_up_vector fsal_up_top = {
         .lock_grant_imm = lock_grant_imm,
         .lock_grant_queue = NULL,
@@ -687,6 +959,6 @@ struct fsal_up_vector fsal_up_top = {
         .rename_imm = NULL,
         .rename_queue = rename_queue,
 
-        .layoutrecall_imm = NULL,
-        .layoutrecall_queue = NULL
+        .layoutrecall_imm = layoutrecall_imm,
+        .layoutrecall_queue = layoutrecall_queue
 };

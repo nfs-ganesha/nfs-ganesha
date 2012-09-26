@@ -129,6 +129,16 @@ static inline void glist_splice_tail(struct glist_head *tgt,
 #define glist_for_each(node, head) \
 	for(node = (head)->next; node != head; node = node->next)
 
+static inline size_t glist_length(struct glist_head *head)
+{
+    size_t length = 0;
+    struct glist_head *dummy = NULL;
+    glist_for_each(dummy, head) {
+	++length;
+    }
+    return length;
+}
+
 #define container_of(addr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (addr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})

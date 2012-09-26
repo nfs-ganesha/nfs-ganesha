@@ -405,6 +405,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      entry->type = new_obj->type;
      entry->flags = 0;
      init_glist(&entry->state_list);
+     init_glist(&entry->layoutrecall_list);
 
      switch (entry->type) {
      case REGULAR_FILE:

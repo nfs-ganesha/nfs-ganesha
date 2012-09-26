@@ -21,16 +21,16 @@
  */
 
 /**
- * \file    pnfs_utils.h
- * \brief   Common utility functions for pNFS
+ * @file    pnfs_utils.h
+ * @brief   Common utility functions for pNFS
  *
- * pnfs_utils.h: pNFS utility functions
+ * pNFS utility functions used all over Ganesha.
  *
  *
  */
 
-#ifndef _FSAL_PNFS_COMMON_H
-#define _FSAL_PNFS_COMMON_H
+#ifndef PNFS_UTILS_H
+#define PNFS_UTILS_H
 
 #include <stdint.h>
 #include "nfs4.h"
@@ -39,7 +39,7 @@
 /* The next 3 line are mandatory for proper autotools based management */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif                          /* HAVE_CONFIG_H */
+#endif /* HAVE_CONFIG_H */
 
 /******************************************************
  *               Utility functions for ranges
@@ -54,26 +54,27 @@
  * @return True if there is one or more byte contained in both both
  *         segments and the io_modes are compatible.
  */
-static inline bool pnfs_segments_overlap(struct pnfs_segment segment1,
-                                         struct pnfs_segment segmenta)
+static inline bool
+pnfs_segments_overlap(const struct pnfs_segment *segment1,
+                      const struct pnfs_segment *segmenta)
 {
-     if (!(segment1.io_mode & segmenta.io_mode)) {
+     if (!(segment1->io_mode & segmenta->io_mode)) {
           return false;
-     } else if ((segment1.length == 0) || (segmenta.length == 0)) {
+     } else if ((segment1->length == 0) || (segmenta->length == 0)) {
           return false;
-     } else if (segment1.offset < segmenta.offset) {
-          if (segment1.length == NFS4_UINT64_MAX) {
+     } else if (segment1->offset < segmenta->offset) {
+          if (segment1->length == NFS4_UINT64_MAX) {
                return true;
-          } else if (segment1.offset + segment1.length < segmenta.offset) {
+          } else if (segment1->offset + segment1->length < segmenta->offset) {
                return false;
           } else {
                return true;
           }
-     } else if (segmenta.offset < segment1.offset) {
-          if (segmenta.length == NFS4_UINT64_MAX) {
+     } else if (segmenta->offset < segment1->offset) {
+          if (segmenta->length == NFS4_UINT64_MAX) {
                return true;
-          } else if ((segmenta.offset + segmenta.length)
-                     < segment1.offset) {
+          } else if ((segmenta->offset + segmenta->length)
+                     < segment1->offset) {
                return false;
           } else {
                return true;
@@ -94,20 +95,21 @@ static inline bool pnfs_segments_overlap(struct pnfs_segment segment1,
  *
  * @return True if segment2 is completely contained within segment1
  */
-static inline bool pnfs_segment_contains(struct pnfs_segment segment1,
-                                         struct pnfs_segment segment2)
+static inline bool
+pnfs_segment_contains(const struct pnfs_segment *segment1,
+                      const struct pnfs_segment *segment2)
 {
-     if (!(segment1.io_mode & segment2.io_mode)) {
+     if (!(segment1->io_mode & segment2->io_mode)) {
           return false;
-     } else if (segment1.length == 0) {
+     } else if (segment1->length == 0) {
           return false;
-     } else if (segment1.offset <= segment2.offset) {
-          if (segment1.length == NFS4_UINT64_MAX) {
+     } else if (segment1->offset <= segment2->offset) {
+          if (segment1->length == NFS4_UINT64_MAX) {
                return true;
-          } else if (segment2.length == NFS4_UINT64_MAX) {
+          } else if (segment2->length == NFS4_UINT64_MAX) {
                return false;
-          } else if ((segment2.offset + segment2.length) <=
-                     (segment1.offset + segment1.length)) {
+          } else if ((segment2->offset + segment2->length) <=
+                     (segment1->offset + segment1->length)) {
                return true;
           } else {
                return false;
@@ -118,7 +120,7 @@ static inline bool pnfs_segment_contains(struct pnfs_segment segment1,
 }
 
 /**
- * \brief Subtract the second segment from the first
+ * @brief Subtract the second segment from the first
  *
  * In the case that the subtrahend completely contains the minuend,
  * the return value has a length and offset of 0.  If the IO modes of
@@ -136,50 +138,50 @@ static inline bool pnfs_segment_contains(struct pnfs_segment segment1,
  */
 
 static inline struct pnfs_segment
-pnfs_segment_difference(struct pnfs_segment minuend,
-                        struct pnfs_segment subtrahend)
+pnfs_segment_difference(const struct pnfs_segment *minuend,
+                        const struct pnfs_segment *subtrahend)
 {
-     if (!(minuend.io_mode & subtrahend.io_mode)) {
-          return minuend;
+     if (!(minuend->io_mode & subtrahend->io_mode)) {
+          return *minuend;
      } else if (pnfs_segment_contains(subtrahend, minuend)) {
           struct pnfs_segment null = {
-               .io_mode = minuend.io_mode,
+               .io_mode = minuend->io_mode,
                .offset = 0,
                .length = 0
           };
           return null;
      } else if (!(pnfs_segments_overlap(minuend, subtrahend))) {
-          return minuend;
-     } else if (minuend.offset <= subtrahend.offset) {
-          if (minuend.length == NFS4_UINT64_MAX) {
-               if (subtrahend.length == NFS4_UINT64_MAX) {
+          return *minuend;
+     } else if (minuend->offset <= subtrahend->offset) {
+          if (minuend->length == NFS4_UINT64_MAX) {
+               if (subtrahend->length == NFS4_UINT64_MAX) {
                     struct pnfs_segment difference = {
-                         .io_mode = minuend.io_mode,
-                         .offset = minuend.offset,
-                         .length = subtrahend.offset - minuend.offset
+                         .io_mode = minuend->io_mode,
+                         .offset = minuend->offset,
+                         .length = subtrahend->offset - minuend->offset
                     };
                     return difference;
                } else {
-                    return minuend;
+                    return *minuend;
                }
           } else {
-               if ((minuend.length + minuend.offset) >
-                   (subtrahend.length + subtrahend.offset)) {
-                    return minuend;
+               if ((minuend->length + minuend->offset) >
+                   (subtrahend->length + subtrahend->offset)) {
+                    return *minuend;
                } else {
                     struct pnfs_segment difference = {
-                         .io_mode = minuend.io_mode,
-                         .offset = minuend.offset,
-                         .length = minuend.offset - subtrahend.offset
+                         .io_mode = minuend->io_mode,
+                         .offset = minuend->offset,
+                         .length = minuend->offset - subtrahend->offset
                     };
                     return difference;
                }
           }
      } else {
           struct pnfs_segment difference = {
-               .io_mode = minuend.io_mode,
-               .offset = subtrahend.offset + subtrahend.length - 1,
-               .length = minuend.length
+               .io_mode = minuend->io_mode,
+               .offset = subtrahend->offset + subtrahend->length - 1,
+               .length = minuend->length
           };
           return difference;
      }
@@ -232,4 +234,4 @@ nfsstat4 posix2nfs4_error(int posix_errorcode);
 
 uint64_t pnfs_common_dummy(void);
 
-#endif /* _FSAL_PNFS_COMMON_H */
+#endif /* PNFS_UTILS_H */
