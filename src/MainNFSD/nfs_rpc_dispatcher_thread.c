@@ -1167,9 +1167,7 @@ static inline request_data_t *
 alloc_nfs_request(SVCXPRT *xprt)
 {
     request_data_t *nfsreq;
-    struct rpc_msg *msg;
     struct svc_req *req;
-    char *cred_area;
 
     nfsreq = pool_alloc(request_pool, NULL);
     if (! nfsreq) {
@@ -1178,7 +1176,7 @@ alloc_nfs_request(SVCXPRT *xprt)
         Fatal();
     }
 
-    /* Set the request as NFS already-read */
+    /* set the request as NFS already-read */
     nfsreq->rtype = NFS_REQUEST;
 
     nfsreq->r_u.nfs = pool_alloc(request_data_pool, NULL);
@@ -1188,16 +1186,10 @@ alloc_nfs_request(SVCXPRT *xprt)
         Fatal();
     }
 
-    /* Set up cred area */
-    cred_area = nfsreq->r_u.nfs->cred_area;
+    /* set up req */
     req = &(nfsreq->r_u.nfs->req);
-    msg = &(nfsreq->r_u.nfs->msg);
 
-    msg->rm_call.cb_cred.oa_base = cred_area;
-    msg->rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
-    req->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
-
-    /* Set up xprt */
+    /* set up xprt */
     nfsreq->r_u.nfs->xprt = xprt;
     req->rq_xprt = xprt;
 
@@ -1229,9 +1221,9 @@ static inline enum auth_stat
 AuthenticateRequest(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *nfsreq,
                     bool *no_dispatch)
 {
-  struct rpc_msg *msg;
-  struct svc_req *req;
-  SVCXPRT *xprt;
+  struct svc_req *req = &(nfsreq->req);
+  struct rpc_msg *msg = req->rq_msg;
+  SVCXPRT *xprt = nfsreq->xprt;
   enum auth_stat why;
   bool slocked = FALSE;
 
@@ -1247,17 +1239,11 @@ AuthenticateRequest(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *nfsreq,
 
   *no_dispatch = false;
 
-  /* Set pointers */
-  msg = &(nfsreq->msg);
-  req = &(nfsreq->req);
-  xprt = nfsreq->xprt;
-
   req->rq_xprt = nfsreq->xprt;
   req->rq_prog = msg->rm_call.cb_prog;
   req->rq_vers = msg->rm_call.cb_vers;
   req->rq_proc = msg->rm_call.cb_proc;
   req->rq_xid = msg->rm_xid;
-  req->rq_msg = msg;
 
   LogFullDebug(COMPONENT_DISPATCH,
                "About to authenticate Prog=%d, vers=%d, proc=%d xid=%u xprt=%p",
@@ -1331,7 +1317,6 @@ static inline enum xprt_stat
 thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
 {
     request_data_t *nfsreq;
-    struct rpc_msg *msg;
     enum xprt_stat stat = XPRT_IDLE;
     bool no_dispatch = TRUE;
     bool rlocked = FALSE;
@@ -1341,16 +1326,16 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
     LogDebug(COMPONENT_DISPATCH, "enter");
 
     nfsreq = alloc_nfs_request(xprt); /* ! NULL */
-    msg = &(nfsreq->r_u.nfs->msg);
 
     DISP_RLOCK(xprt, &thr_ctx->sigmask);
-    recv_status = SVC_RECV(xprt, msg);
+    recv_status = SVC_RECV(xprt, &nfsreq->r_u.nfs->req);
 
     LogFullDebug(COMPONENT_DISPATCH,
                  "SVC_RECV on socket %d returned %s, xid=%u",
                  xprt->xp_fd,
                  (recv_status) ? "TRUE" : "FALSE",
-                 msg->rm_xid);
+                 (nfsreq->r_u.nfs->req.rq_msg) ?
+                 nfsreq->r_u.nfs->req.rq_msg->rm_xid : 0);
 
     if (unlikely(! recv_status)) {
 
@@ -1400,16 +1385,11 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
         goto done;
     }
     else {
-        nfsreq->r_u.nfs->req.rq_prog = msg->rm_call.cb_prog;
-        nfsreq->r_u.nfs->req.rq_vers = msg->rm_call.cb_vers;
-        nfsreq->r_u.nfs->req.rq_proc = msg->rm_call.cb_proc;
-        nfsreq->r_u.nfs->req.rq_xid = msg->rm_xid;
-
         /* XXX so long as nfs_rpc_get_funcdesc calls is_rpc_call_valid
          * and fails if that call fails, there is no reason to call that
          * function again, below */
-        nfsreq->r_u.nfs->funcdesc = nfs_rpc_get_funcdesc(
-            thr_ctx, nfsreq->r_u.nfs);
+        nfsreq->r_u.nfs->funcdesc =
+            nfs_rpc_get_funcdesc(thr_ctx, nfsreq->r_u.nfs);
         if (nfsreq->r_u.nfs->funcdesc == INVALID_FUNCDESC)
             goto finish;
 

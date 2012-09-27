@@ -1238,13 +1238,13 @@ freeargs:
   if((preqnfs->req.rq_vers == 2) ||
      (preqnfs->req.rq_vers == 3) ||
      (preqnfs->req.rq_vers == 4)) {
-      if(!SVC_FREEARGS(xprt, preqnfs->funcdesc->xdr_decode_func,
-                       (caddr_t) arg_nfs))
+      if(! SVC_FREEARGS(xprt, preqnfs->funcdesc->xdr_decode_func,
+                        (caddr_t) arg_nfs))
       {
         LogCrit(COMPONENT_DISPATCH,
                 "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
                 preqnfs->funcdesc->funcname);
-      }
+      }   
   }
 
   /* XXX we must hold xprt lock across SVC_FREEARGS */
@@ -1469,8 +1469,8 @@ worker_thread(void *IndexArg)
            /* execute */
            LogDebug(COMPONENT_DISPATCH,
                     "NFS protocol request, nfsreq=%p xid=%u xprt=%p refcnt=%u",
-                    nfsreq, nfsreq->r_u.nfs->msg.rm_xid, nfsreq->r_u.nfs->xprt,
-                    refcnt);
+                    nfsreq, nfsreq->r_u.nfs->req.rq_msg->rm_xid,
+                    nfsreq->r_u.nfs->xprt, refcnt);
            nfs_rpc_execute(nfsreq, worker_data);
            break;
 
