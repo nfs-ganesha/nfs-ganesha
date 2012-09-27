@@ -17,27 +17,7 @@ libsal_la_SOURCES = state_async.c                    \
                     nfs4_owner.c                     \
                     nfs4_lease.c                     \
                     nfs4_recovery.c                  \
-                    nfs41_session_id.c               \
-                    ../include/HashData.h            \
-                    ../include/HashTable.h           \
-                    ../include/cache_inode.h         \
-                    ../include/config.h              \
-                    ../include/err_cache_inode.h     \
-                    ../include/fsal.h                \
-                    ../include/fsal_types.h          \
-                    ../include/log.h                 \
-                    ../include/nfs4.h                \
-                    ../include/nfs_core.h            \
-                    ../include/nfs_exports.h         \
-                    ../include/nfs_file_handle.h     \
-                    ../include/nfs_proto_functions.h \
-                    ../include/nfs_tools.h           \
-                    ../include/nlm4.h                \
-                    ../include/nlm_util.h            \
-                    ../include/nsm.h                 \
-                    ../include/ganesha_rpc.h         \
-                    ../include/sal_data.h            \
-                    ../include/sal_functions.h
+                    nfs41_session_id.c
 
 if USE_NLM
 libsal_la_SOURCES += nlm_owner.c

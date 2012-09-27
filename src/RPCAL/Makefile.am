@@ -13,8 +13,7 @@ test_rpctools_LDADD = librpcal.la ../HashTable/libhashtable.la ../RW_Lock/librwl
 SUBDIRS = gssd
 
 librpcal_la_SOURCES = nfs_dupreq.c \
-                      rpc_tools.c \
-                      ../include/nfs_dupreq.h
+                      rpc_tools.c
 
 if HAVE_GSSAPI
 librpcal_la_SOURCES += gss_extra.c

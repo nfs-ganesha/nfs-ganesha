@@ -42,24 +42,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   shell.h                             \
                                   shell_types.h                       \
                                   shell_utils.h                       \
-                                  shell_vars.h                        \
-                                  ../include/avltree.h                \
-                                  ../include/cache_inode.h            \
-                                  ../include/config_parsing.h         \
-                                  ../include/err_cache_inode.h        \
-                                  ../include/err_fsal.h               \
-                                  ../include/err_ghost_fs.h           \
-                                  ../include/fsal.h                   \
-                                  ../include/log.h                    \
-                                  ../include/mount.h                  \
-                                  ../include/nfs23.h                  \
-                                  ../include/nfs4.h                   \
-                                  ../include/nfs_core.h               \
-                                  ../include/err_inject.h             \
-                                  ../include/nfs_file_handle.h        \
-                                  ../include/nfs_proto_functions.h    \
-                                  ../include/nfs_proto_tools.h        \
-                                  ../include/nfs_tools.h
+                                  shell_vars.h
 
 
 shell_libs =      ../Protocols/NFS/libnfsproto.la                    \

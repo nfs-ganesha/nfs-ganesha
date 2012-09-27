@@ -123,34 +123,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_tools.c                          \
                              nfs_reaper_thread.c                  \
                              nfs_init.h                           \
-                             ../include/nfs_tcb.h                 \
-                             ../include/HashTable.h               \
-                             ../include/HashData.h                \
-                             ../include/rbt_node.h                \
-                             ../include/rbt_tree.h                \
-                             ../include/avltree.h                 \
-                             ../include/log.h                     \
-                             ../include/nfs_core.h                \
-                             ../include/err_rpc.h                 \
-                             ../include/err_HashTable.h           \
-                             ../include/nfs_dupreq.h              \
-                             ../include/nfs_tools.h               \
-                             ../include/nfs_exports.h             \
-                             ../include/nfs_req_queue.h           \
-                             ../include/nfs_proto_functions.h     \
-                             ../include/nfs_file_handle.h         \
-                             ../include/RW_Lock.h                 \
-                             ../include/SemN.h                    \
-                             ../include/fsal.h                    \
-                             ../include/nfs23.h                   \
-                             ../include/nfs4.h                    \
-                             ../include/mount.h                   \
-                             ../include/cache_inode.h             \
-                             ../include/config_parsing.h          \
-                             ../include/fsal_up.h                 \
-                             ../include/SemN.h                    \
-                             ../include/external_tools.h          \
-                             ../include/err_inject.h              \
                              $(STAT_SNMP_FILES)
 
 libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \

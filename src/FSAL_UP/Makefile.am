@@ -3,8 +3,8 @@ noinst_LTLIBRARIES = libfsalup.la
 
 libfsalup_la_SOURCES = fsal_up_thread.c \
                        fsal_up_top.c \
-                       fsal_up_utils.c \
-                      ../include/fsal_up.h
+                       fsal_up_utils.c
+
 libfsalup_la_DEPENDENCIES = $(libfsalup_la_SOURCES)
 
 new: clean all

@@ -1,7 +1,6 @@
 noinst_LTLIBRARIES    = libSemN.la
 
-libSemN_la_SOURCES  = SemN.c              \
-                      ../include/SemN.h
+libSemN_la_SOURCES  = SemN.c
 
 TESTS = test_sem1 test_sem2
 

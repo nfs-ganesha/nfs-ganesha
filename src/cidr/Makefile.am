@@ -10,8 +10,7 @@ libcidr_la_SOURCES  = cidr_addr.c        \
                       cidr_net.c         \
                       cidr_num.c         \
                       cidr_to_str.c      \
-	              cidr_pow2_p.h      \
-                       ../include/cidr.h
+	              cidr_pow2_p.h
 
 EXTRA_DIST = LICENSE
 

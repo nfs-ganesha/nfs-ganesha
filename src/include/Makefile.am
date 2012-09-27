@@ -1,5 +1,6 @@
 noinst_HEADERS = abstract_atomic.h               \
                  abstract_mem.h                  \
+	         ganesha_dbus.h                  \
 		 ganesha_types.h                 \
                  fsal.h                          \
                  fsal_pnfs.h                     \
@@ -12,6 +13,9 @@ noinst_HEADERS = abstract_atomic.h               \
                  HashTable.h                     \
                  avltree.h                       \
                  cache_inode_avl.h               \
+                 generic_weakref.h               \
+                 cache_inode_lru.h               \
+                 cache_inode_weakref.h           \
                  murmur3.h                       \
                  cidr.h                          \
                  MesureTemps.h                   \
@@ -23,6 +27,7 @@ noinst_HEADERS = abstract_atomic.h               \
                  fsal_convert.h                  \
                  fsal_handle_syscalls.h          \
                  fsal_types.h                    \
+                 fsal_up.h                       \
                  cache_inode.h                   \
                  common_utils.h                  \
                  config_parsing.h                \
@@ -30,6 +35,7 @@ noinst_HEADERS = abstract_atomic.h               \
                  err_cache_inode.h               \
                  err_fsal.h                      \
                  err_ghost_fs.h                  \
+                 err_inject.h                    \
                  err_rpc.h                       \
                  extended_types.h                \
                  external_tools.h                \
@@ -49,18 +55,29 @@ noinst_HEADERS = abstract_atomic.h               \
                  nfs_proto_tools.h               \
                  nfs_rpc_callback.h              \
                  nfs_stat.h                      \
+                 nfs_tcb.h                       \
                  nfs_tools.h                     \
                  rbt_node.h                      \
                  rbt_tree.h                      \
                  nfs_ip_stats.h                  \
                  Connectathon_config_parsing.h   \
-		 ganesha_rpc.h 	\
+		 ganesha_rpc.h                   \
                  Rpc_com_tirpc.h                 \
-                 solaris_port.h \
-		 rpc/svc_auth.h
+                 solaris_port.h                  \
+		 rpc/svc_auth.h                  \
+                 SemN.h                          \
+                 lookup3.h                       \
+                 config.h                        \
+                 sal_data.h                      \
+                 sal_functions.h                 \
+                 snmp_adm.h
 
 if USE_NLM
-noinst_HEADERS += nlm4.h nlm_util.h nlm_list.h
+noinst_HEADERS += nlm4.h                         \
+                  nlm_util.h                     \
+                  nlm_list.h                     \
+                  nsm.h                          \
+                  nlm_async.h
 endif
 
 if USE_9P
@@ -71,6 +88,9 @@ if USE_FSAL_FUSE
 include_HEADERS = ganesha_fuse_wrap.h
 endif
 
+if USE_RQUOTA
+noinst_HEADERS += rquota.h
+endif
 
 SUBDIRS = FSAL
 

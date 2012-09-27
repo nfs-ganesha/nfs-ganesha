@@ -9,7 +9,7 @@ conf_yacc.h: conf_yacc.c
 CLEANFILES = conf_yacc.h conf_yacc.c conf_lex.c
 
 noinst_LTLIBRARIES          = libConfigParsing.la
-libConfigParsing_la_SOURCES = conf_yacc.y conf_yacc.h conf_lex.l analyse.c config_parsing.c analyse.h ../include/config_parsing.h
+libConfigParsing_la_SOURCES = conf_yacc.y conf_yacc.h conf_lex.l analyse.c config_parsing.c analyse.h
 
 
 check_PROGRAMS		    = verif_syntax test_parsing

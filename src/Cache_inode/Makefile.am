@@ -29,17 +29,7 @@ libcache_inode_la_SOURCES = cache_inode_access.c             \
 			    cache_inode_kill_entry.c         \
 			    cache_inode_avl.c                \
 			    cache_inode_lru.c                \
-			    cache_inode_weakref.c            \
-                            ../include/cache_inode.h         \
-			    ../include/fsal.h                \
-                            ../include/fsal_types.h          \
-                            ../include/log.h       \
-                            ../include/HashData.h            \
-                            ../include/HashTable.h           \
-                            ../include/err_cache_inode.h     \
-                            ../include/generic_weakref.h     \
-                            ../include/cache_inode_lru.h     \
-                            ../include/cache_inode_weakref.h
+			    cache_inode_weakref.c
 
 
 new: clean all

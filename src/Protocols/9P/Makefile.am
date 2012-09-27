@@ -34,8 +34,7 @@ lib9p_la_SOURCES = 9p_interpreter.c  \
                    9p_xattrcreate.c  \
                    9p_xattrwalk.c    \
                    9p_write.c        \
-                   9p_rerror.c       \
-                  ../../include/9p.h
+                   9p_rerror.c
 
 EXTRA_DIST = 9P_Structures.txt 
 

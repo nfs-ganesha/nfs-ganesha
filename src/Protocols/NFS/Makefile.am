@@ -94,18 +94,7 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          nfs4_cb_Compound.c                  \
                          nfs4_cb_illegal.c                   \
                          nfs4_cb_getattr.c                   \
-                         nfs4_cb_recall.c                    \
-                         ../../include/nfs_proto_functions.h \
-                         ../../include/nfs_core.h            \
-                         ../../include/nfs23.h               \
-                         ../../include/nfs4.h                \
-                         ../../include/mount.h               \
-                         ../../include/cache_inode.h         \
-                         ../../include/nfs_exports.h         \
-                         ../../include/nfs_creds.h           \
-                         ../../include/nfs_tools.h           \
-                         ../../include/err_inject.h          \
-                         ../../include/nfs_file_handle.h
+                         nfs4_cb_recall.c
 
 
 

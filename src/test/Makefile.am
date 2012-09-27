@@ -7,7 +7,7 @@ check_PROGRAMS                = test_avl \
 				test_mesure_temps \
 				test_glist
 
-liboutils_profiling_la_SOURCES = MesureTemps.c ../include/MesureTemps.h
+liboutils_profiling_la_SOURCES = MesureTemps.c
 
 COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
                $(SEC_LIB_FLAGS)                                  \

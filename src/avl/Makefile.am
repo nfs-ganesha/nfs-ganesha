@@ -3,8 +3,7 @@ noinst_LTLIBRARIES    = libavltree.la
 libavltree_la_SOURCES  = avl.c   \
                          bst.c   \
                          rb.c    \
-                         splay.c \
-                         ../include/avltree.h    
+                         splay.c
 new: clean all
 
 

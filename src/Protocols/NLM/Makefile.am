@@ -14,13 +14,7 @@ libnlm_la_SOURCES = nlm_Cancel.c                        \
                     nlm_Unshare.c                       \
                     nlm_async.c                         \
                     nlm_util.c                          \
-                    nsm.c                               \
-                    ../../include/nlm4.h                \
-                    ../../include/nlm_async.h           \
-                    ../../include/nlm_list.h            \
-                    ../../include/nlm_util.h            \
-                    ../../include/cache_inode.h         \
-                    ../../include/nfs_proto_functions.h
+                    nsm.c
 
 
 new: clean all

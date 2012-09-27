@@ -29,31 +29,7 @@ libsupport_la_SOURCES = nfs4_acls.c                         \
                          murmur3.c                          \
                          generic_weakref.c                  \
                          strlcat.c                          \
-                         strlcpy.c                          \
-                         ../include/nfs_file_handle.h       \
-                         ../include/nfs_core.h              \
-                         ../include/nfs_tools.h             \
-                         ../include/HashData.h              \
-                         ../include/HashTable.h             \
-                         ../include/SemN.h                  \
-                         ../include/cache_inode.h           \
-                         ../include/common_utils.h          \
-                         ../include/config_parsing.h        \
-                         ../include/fsal.h                  \
-                         ../include/log.h         \
-                         ../include/lookup3.h               \
-                         ../include/mount.h                 \
-                         ../include/nfs23.h                 \
-                         ../include/nfs4.h                  \
-                         ../include/nfs_core.h              \
-                         ../include/err_inject.h            \
-                         ../include/nfs_creds.h             \
-                         ../include/nfs_dupreq.h            \
-                         ../include/nfs_exports.h           \
-                         ../include/nfs_proto_functions.h   \
-                         ../include/nfs_proto_tools.h       \
-                         ../include/nfs_stat.h              \
-                         ../include/err_inject.h
+                         strlcpy.c
 
 libsupport_la_LIBADD = ../cidr/libcidr.la
 
