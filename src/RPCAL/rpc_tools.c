@@ -17,7 +17,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -134,7 +135,6 @@ const char *xprt_type_to_str(xprt_type_t type)
  *
  */
 int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
-#ifdef _USE_TIRPC
 {
   struct netbuf *phostaddr = svc_getcaller_netbuf(xprt);
   if(phostaddr->len > sizeof(sockaddr_t) || phostaddr->buf == NULL)
@@ -142,14 +142,6 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
   memcpy(addr, phostaddr->buf, phostaddr->len);
   return 1;
 }
-#else
-{
-  struct sockaddr_in *phostaddr = svc_getcaller(xprt);
-
-  memcpy(addr, phostaddr, sizeof(sockaddr_t));
-  return 1;
-}
-#endif
 
 
 /**
@@ -170,7 +162,7 @@ unsigned long hash_sockaddr(sockaddr_t *addr, ignore_port_t ignore_port)
 {
   unsigned long addr_hash = 0;
   int port;
-#ifdef _USE_TIRPC
+
   switch(addr->ss_family)
     {
       case AF_INET:
@@ -202,14 +194,6 @@ unsigned long hash_sockaddr(sockaddr_t *addr, ignore_port_t ignore_port)
       default:
         break;
     }
-#else
-  addr_hash = addr->sin_addr.s_addr;
-  if(ignore_port == CHECK_PORT)
-    {
-      port = addr->sin_port;
-      addr_hash ^= (port<<16);
-    }
-#endif
 
   return addr_hash;
 }
@@ -221,15 +205,16 @@ int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
 
   buf[0] = '\0';
 
-#ifdef _USE_TIRPC
   switch(addr->ss_family)
     {
       case AF_INET:
-        name = inet_ntop(addr->ss_family, &(((struct sockaddr_in *)addr)->sin_addr), buf, len);
+        name = inet_ntop(addr->ss_family,
+                         &(((struct sockaddr_in *)addr)->sin_addr), buf, len);
         port = ntohs(((struct sockaddr_in *)addr)->sin_port);
         break;
       case AF_INET6:
-        name = inet_ntop(addr->ss_family, &(((struct sockaddr_in6 *)addr)->sin6_addr), buf, len);
+        name = inet_ntop(addr->ss_family,
+                         &(((struct sockaddr_in6 *)addr)->sin6_addr), buf, len);
         port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
         break;
       case AF_LOCAL:
@@ -240,10 +225,6 @@ int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
       default:
         port = -1;
     }
-#else
-  name = inet_ntop(addr->sin_family, &addr->sin_addr, buf, len);
-  port = ntohs(addr->sin_port);
-#endif
 
   alen = strlen(buf);
 
@@ -264,28 +245,27 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
 
   memset(buf, 0, len);
 
-#ifdef _USE_TIRPC
   switch(addr->ss_family)
     {
       case AF_INET:
-        name = inet_ntop(addr->ss_family, &(((struct sockaddr_in *)addr)->sin_addr), buf, len);
+        name = inet_ntop(addr->ss_family,
+                         &(((struct sockaddr_in *)addr)->sin_addr), buf, len);
         break;
       case AF_INET6:
-        name = inet_ntop(addr->ss_family, &(((struct sockaddr_in6 *)addr)->sin6_addr), buf, len);
+        name = inet_ntop(addr->ss_family,
+                         &(((struct sockaddr_in6 *)addr)->sin6_addr), buf, len);
         break;
       case AF_LOCAL:
         strncpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
         name = buf;
     }
-#else
-  name = inet_ntop(addr->sin_family, &addr->sin_addr, buf, len);
-#endif
 
   if(name == NULL)
     {
       strncpy(buf, "<unknown>", len);
       return 0;
     }
+
   return 1;
 }
 
@@ -305,19 +285,10 @@ int cmp_sockaddr(sockaddr_t *addr_1,
                  sockaddr_t *addr_2,
                  ignore_port_t ignore_port)
 {
-#ifdef _USE_TIRPC
   if(addr_1->ss_family != addr_2->ss_family)
     return 0;
-#else
-  if(addr_1->sin_family != addr_2->sin_family)
-    return 0;
-#endif
 
-#ifdef _USE_TIRPC
   switch (addr_1->ss_family)
-#else
-  switch (addr_1->sin_family)
-#endif
     {
       case AF_INET:
         {
@@ -327,7 +298,6 @@ int cmp_sockaddr(sockaddr_t *addr_1,
           return (paddr1->sin_addr.s_addr == paddr2->sin_addr.s_addr
                   && (ignore_port == IGNORE_PORT || paddr1->sin_port == paddr2->sin_port));
         }
-#ifdef _USE_TIRPC
       case AF_INET6:
         {
           struct sockaddr_in6 *paddr1 = (struct sockaddr_in6 *)addr_1;
@@ -339,7 +309,6 @@ int cmp_sockaddr(sockaddr_t *addr_1,
                          sizeof(paddr2->sin6_addr.s6_addr)) == 0)
                   && (ignore_port == IGNORE_PORT || paddr1->sin6_port == paddr2->sin6_port);
         }
-#endif
       default:
         return 0;
     }
@@ -347,19 +316,14 @@ int cmp_sockaddr(sockaddr_t *addr_1,
 
 in_addr_t get_in_addr(sockaddr_t *addr)
 {
-#ifdef _USE_TIRPC
   if(addr->ss_family == AF_INET)
     return ((struct sockaddr_in *)addr)->sin_addr.s_addr;
   else
     return 0;
-#else
-  return addr->sin_addr.s_addr;
-#endif
 }
 
 int get_port(sockaddr_t *addr)
 {
-#ifdef _USE_TIRPC
   switch(addr->ss_family)
     {
       case AF_INET:
@@ -369,9 +333,6 @@ int get_port(sockaddr_t *addr)
       default:
         return -1;
     }
-#else
-  return ntohs(addr->sin_port);
-#endif
 }
 
 void socket_setoptions(int socketFd)
@@ -379,10 +340,11 @@ void socket_setoptions(int socketFd)
   unsigned int SbMax = (1 << 30);       /* 1GB */
 
   while(SbMax > 1048576)
-    {
-      if((setsockopt(socketFd, SOL_SOCKET, SO_SNDBUF, (char *)&SbMax, sizeof(SbMax)) < 0)
-         || (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, (char *)&SbMax, sizeof(SbMax)) <
-             0))
+  {
+      if((setsockopt(socketFd, SOL_SOCKET, SO_SNDBUF,
+                     (char *)&SbMax, sizeof(SbMax)) < 0) ||
+         (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF,
+                     (char *)&SbMax, sizeof(SbMax)) < 0))
         {
           SbMax >>= 1;          /* SbMax = SbMax/2 */
           continue;
@@ -394,11 +356,7 @@ void socket_setoptions(int socketFd)
   return;
 }                               /* socket_setoptions_ctrl */
 
-#ifdef _USE_TIRPC
 #define SIZE_AI_ADDR sizeof(struct sockaddr)
-#else
-#define SIZE_AI_ADDR sizeof(struct sockaddr_in)
-#endif
 
 int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 {
@@ -408,11 +366,7 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICHOST;
-#ifdef _USE_TIRPC
   hints.ai_family = AF_UNSPEC;
-#else
-  hints.ai_family = AF_INET;
-#endif
   hints.ai_socktype = SOCK_RAW;
   hints.ai_protocol = 0;
   rc = getaddrinfo(str, NULL, &hints, &info);
@@ -425,7 +379,8 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
             {
               sprint_sockaddr((sockaddr_t *)p->ai_addr, ipname, sizeof(ipname));
               LogFullDebug(COMPONENT_RPC,
-                           "getaddrinfo %s returned %s family=%s socktype=%s protocol=%s",
+                           "getaddrinfo %s returned %s family=%s socktype=%s "
+                           "protocol=%s",
                            str, ipname,
                            str_af(p->ai_family),
                            str_sock_type(p->ai_socktype),
@@ -455,10 +410,14 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 
 pthread_mutex_t clnt_create_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-CLIENT *Clnt_create(char *host,
-                    unsigned long prog,
-                    unsigned long vers,
-                    char *proto)
+/*
+ * TI-RPC's clnt_create hierarchy probably isn't re-entrant.  While we
+ * -will- make it so, serialize these for now.
+ */
+CLIENT *gsh_clnt_create(char *host,
+                        unsigned long prog,
+                        unsigned long vers,
+                        char *proto)
 {
   CLIENT *clnt;
   pthread_mutex_lock(&clnt_create_mutex);
@@ -472,32 +431,10 @@ CLIENT *Clnt_create(char *host,
   return clnt;
 }
 
-void Clnt_destroy(CLIENT *clnt)
+void gsh_clnt_destroy(CLIENT *clnt)
 {
   pthread_mutex_lock(&clnt_create_mutex);
   clnt_destroy(clnt);
   pthread_mutex_unlock(&clnt_create_mutex);
 }
 
-void InitRPC(int num_sock)
-{
-
-#if 0 /* XXXX todo:  pkginit new style */
-  /* Allocate resources that are based on the maximum number of open file descriptors */
-  Xports = gsh_calloc(num_sock, sizeof(SVCXPRT *));
-  if(Xports == NULL)
-    LogFatal(COMPONENT_RPC,
-             "Xports array allocation failed");
-
-  mutex_cond_xprt = gsh_calloc(num_sock, sizeof(pthread_mutex_t));
-  condvar_xprt = gsh_calloc(num_sock, sizeof(pthread_cond_t));
-
-  FD_ZERO(&Svc_fdset);
-
-#ifdef _USE_TIRPC
-  /* RW_lock need to be initialized */
-  rw_lock_init(&Svc_fd_lock);
-#endif
-#endif /* 0 */
-
-}

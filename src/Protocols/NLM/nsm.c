@@ -60,7 +60,7 @@ bool nsm_connect()
 
   strcpy(nodename, utsname.nodename);
 
-  nsm_clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
+  nsm_clnt = gsh_clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
 
   if(nsm_clnt == NULL)
     {
@@ -77,7 +77,7 @@ void nsm_disconnect()
 {
   if(nsm_count == 0 && nsm_clnt != NULL)
     {
-      Clnt_destroy(nsm_clnt);
+      gsh_clnt_destroy(nsm_clnt);
       nsm_clnt = NULL;
       gsh_free(nodename);
       nodename = NULL;

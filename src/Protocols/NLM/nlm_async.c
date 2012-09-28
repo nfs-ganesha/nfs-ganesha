@@ -170,13 +170,14 @@ int nlm_send_async(int                  proc,
       if(host->slc_callback_clnt == NULL)
         {
           LogFullDebug(COMPONENT_NLM,
-                       "Clnt_create %s",
+                       "gsh_clnt_create %s",
                        host->slc_nsm_client->ssc_nlm_caller_name);
 
-          host->slc_callback_clnt = Clnt_create(host->slc_nsm_client->ssc_nlm_caller_name,
-                                                NLMPROG,
-                                                NLM4_VERS,
-                                                (char *)xprt_type_to_str(host->slc_client_type));
+          host->slc_callback_clnt =
+              gsh_clnt_create(host->slc_nsm_client->ssc_nlm_caller_name,
+                              NLMPROG,
+                              NLM4_VERS,
+                              (char *)xprt_type_to_str(host->slc_client_type));
 
           if(host->slc_callback_clnt == NULL)
             {
@@ -212,7 +213,7 @@ int nlm_send_async(int                  proc,
                "NLM async Client procedure call %d failed with return code %d %s",
                proc, retval, clnt_sperror(host->slc_callback_clnt, ""));
 
-      Clnt_destroy(host->slc_callback_clnt);
+      gsh_clnt_destroy(host->slc_callback_clnt);
       host->slc_callback_clnt = NULL;
 
       if(retry == MAX_ASYNC_RETRY)

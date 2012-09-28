@@ -277,4 +277,8 @@ extern int get_port(sockaddr_t *addr);
 /* Returns an EAI value, accepts only numeric strings */
 extern int ipstring_to_sockaddr(const char *str, sockaddr_t *addr);
 
+/* Serialized clnt_create and clnt_destroy */
+CLIENT *gsh_clnt_create(char *, unsigned long, unsigned long, char *);
+void gsh_clnt_destroy(CLIENT *);
+
 #endif /* GANESHA_RPC_H */
