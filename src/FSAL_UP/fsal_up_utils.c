@@ -86,4 +86,4 @@ up_get(const struct gsh_buffdesc *key,
                 return EFAULT;
         }
         return CACHE_INODE_SUCCESS;
-} /* up_get */
+}

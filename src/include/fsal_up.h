@@ -52,11 +52,13 @@ struct fsal_up_state
         pthread_cond_t cond; /*< Condition variable for thread. */
 };
 
+#ifndef FSAL_UP_THREAD_C
+extern struct fsal_up_state fsal_up_state;
+#endif /* FSAL_UP_THREAD_C */
+
 /**
  * @brief The actual state used to manage the thread
  */
-
-struct fsal_up_state fsal_up_state;
 
 /**
  * @brief An enumeration of supported events
@@ -207,23 +209,8 @@ int up_get(const struct gsh_buffdesc *key,
 
 
 
-static inline struct fsal_up_event *
-fsal_up_alloc_event(void)
-{
-        return pool_alloc(fsal_up_state.pool, NULL);
-}
 
-static inline void
-fsal_up_free_event(struct fsal_up_event *event)
-{
-        if (event->file.key.addr) {
-                gsh_free(event->file.key.addr);
-                event->file.key.addr = NULL;
-        }
-        if (event->file.export) {
-                event->file.export->ops->put(event->file.export);
-                event->file.export = NULL;
-        }
-        pool_free(fsal_up_state.pool, event);
-}
+struct fsal_up_event *fsal_up_alloc_event(void);
+
+void fsal_up_free_event(struct fsal_up_event *event);
 #endif /* _FSAL_UP_H */

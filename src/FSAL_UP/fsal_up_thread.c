@@ -29,6 +29,8 @@
 #include "solaris_port.h"
 #endif
 
+#define FSAL_UP_THREAD_C
+
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -263,6 +265,7 @@ init_FSAL_up(void)
                          code);
         }
 
+        pthread_mutex_unlock(&fsal_up_state.lock);
         return;
 }
 
@@ -308,4 +311,24 @@ shutdown_FSAL_up(void)
                 return rc;
         }
         return 0;
+}
+
+struct fsal_up_event *
+fsal_up_alloc_event(void)
+{
+        return pool_alloc(fsal_up_state.pool, NULL);
+}
+
+void
+fsal_up_free_event(struct fsal_up_event *event)
+{
+        if (event->file.key.addr) {
+                gsh_free(event->file.key.addr);
+                event->file.key.addr = NULL;
+        }
+        if (event->file.export) {
+                event->file.export->ops->put(event->file.export);
+                event->file.export = NULL;
+        }
+        pool_free(fsal_up_state.pool, event);
 }
