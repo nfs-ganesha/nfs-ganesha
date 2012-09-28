@@ -609,7 +609,7 @@ typedef enum worker_available_rc
 extern pool_t *nfs_clientid_pool;
 
 /*
- *functions prototypes
+ *function prototypes
  */
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
@@ -617,6 +617,7 @@ pause_rc wait_for_workers_to_awaken();
 void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
+void nfs_rpc_enqueue_req(request_data_t *req);
 int stats_snmp(void);
 /*
  * Thread entry functions
