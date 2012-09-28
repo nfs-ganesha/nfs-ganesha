@@ -1442,7 +1442,6 @@ void nfs_dupreq_rele(struct svc_req *req)
 
     /* dispose RPC header */
     (void) free_rpc_msg(req->rq_msg);
-    req->rq_msg = NULL;
 
 out:
     return;

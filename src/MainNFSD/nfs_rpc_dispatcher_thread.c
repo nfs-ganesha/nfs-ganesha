@@ -1201,6 +1201,9 @@ free_nfs_request(request_data_t *nfsreq)
 {
     switch(nfsreq->rtype) {
     case NFS_REQUEST:
+        /* dispose RPC header */
+        if (nfsreq->r_u.nfs->req.rq_msg)
+            (void) free_rpc_msg(nfsreq->r_u.nfs->req.rq_msg);
         pool_free(request_data_pool, nfsreq->r_u.nfs);
         break;
     default:
