@@ -614,7 +614,6 @@ extern pool_t *nfs_clientid_pool;
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();
-void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 request_data_t *nfs_rpc_get_nfsreq(uint32_t flags);
 void nfs_rpc_enqueue_req(request_data_t *req);
@@ -634,7 +633,6 @@ void *state_async_thread(void *UnusedArg);
 
 #ifdef _USE_9P
 void * _9p_dispatcher_thread(void *arg);
-void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
 void _9p_tcp_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) ;
 int _9p_process_buffer(  _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data,
                         char * replydata, u32 * poutlen ) ;

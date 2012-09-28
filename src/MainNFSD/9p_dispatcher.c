@@ -18,7 +18,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -74,7 +75,7 @@
   #define P_FAMILY AF_INET6
 #endif
 
-void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
+void DispatchWork9P( request_data_t *preq )
 {
   switch( preq->rtype )
    {
@@ -83,14 +84,14 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
            {
 	      case _9P_TCP:
 	        LogDebug(COMPONENT_DISPATCH,
-        	         "Awaking Worker Thread #%u for 9P/TCP request %p, tcpsock=%lu",
-           	         worker_index, preq, preq->r_u._9p.pconn->trans_data.sockfd);
+        	         "Dispatching 9P/TCP request %p, tcpsock=%lu",
+           	         preq, preq->r_u._9p.pconn->trans_data.sockfd);
 		break ;
 
               case _9P_RDMA:
 	        LogDebug(COMPONENT_DISPATCH,
-        	         "Awaking Worker Thread #%u for 9P/RDMA",
-           	         worker_index );
+        	         "Dispatching 9P/RDMA request %p",
+           	         preq);
 	        break ;
                  
               default:
@@ -110,23 +111,8 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
   /* increase connection refcount */
   atomic_inc_uint32_t(&preq->r_u._9p.pconn->refcount);
 
-  P(workers_data[worker_index].wcb.tcb_mutex);
-  P(workers_data[worker_index].request_pool_mutex);
-
-  glist_add_tail(&workers_data[worker_index].pending_request, &preq->pending_req_queue);
-  workers_data[worker_index].pending_request_len++;
-
-  if(pthread_cond_signal(&(workers_data[worker_index].wcb.tcb_condvar)) == -1)
-    {
-      V(workers_data[worker_index].request_pool_mutex);
-      V(workers_data[worker_index].wcb.tcb_mutex);
-      LogMajor(COMPONENT_THREAD,
-               "Error %d (%s) while signalling Worker Thread #%u... Exiting",
-               errno, strerror(errno), worker_index);
-      Fatal();
-    }
-  V(workers_data[worker_index].request_pool_mutex);
-  V(workers_data[worker_index].wcb.tcb_mutex);
+  /* new-style dispatch */
+  nfs_rpc_enqueue_req(preq);
 }
 
 void _9p_AddFlushHook(_9p_request_data_t *req, int tag, unsigned long sequence)
@@ -217,7 +203,6 @@ void * _9p_socket_thread( void * Arg )
   socklen_t addrpeerlen = sizeof( addrpeer ) ;
   char strcaller[MAXNAMLEN] ;
   request_data_t *preq = NULL;
-  unsigned int worker_index;
   int tag;
   unsigned long sequence = 0;
   unsigned int i = 0 ;
@@ -347,13 +332,9 @@ void * _9p_socket_thread( void * Arg )
                  total_readlen += readlen ;
              } /* while */
              
-             /* Message is good. Get a preq from the worker's pool */
-             /* Choose a worker depending on its queue length */
-             worker_index = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
-             P(workers_data[worker_index].request_pool_mutex);
+             /* Message is good. */
              preq = pool_alloc( request_pool, NULL ) ;
-             V(workers_data[worker_index].request_pool_mutex);
-
+ 
              preq->rtype = _9P_REQUEST ;
              preq->r_u._9p._9pmsg = _9pmsg;
              preq->r_u._9p.pconn = &_9p_conn ;
@@ -363,8 +344,8 @@ void * _9p_socket_thread( void * Arg )
              _9p_AddFlushHook(&preq->r_u._9p, tag, sequence++);
              LogFullDebug( COMPONENT_9P, "Request tag is %d\n", tag);
 
-	     /* Message was OK push it the request to the right worker */
-             DispatchWork9P(preq, worker_index);
+	     /* Message was OK push it */
+             DispatchWork9P(preq);
 
              /* We are not responsible for this buffer anymore: */
              _9pmsg = NULL;
