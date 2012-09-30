@@ -279,9 +279,19 @@ char workpath[PATH_MAX];
                 *cp2 = '\0';
                 return( (time_t) atol(cp));
 }
+void free_dirent( int inum, struct dirent **namelist)
+{
+int ientry;
+
+        for( ientry = 0; ientry < inum; ientry++ ) {
+                free(namelist[ientry]);
+        }
+        free(namelist);
+        return;
+}
 void do_state()
 {
-int ientry, ientry2;
+int ientry, ientry2, n;
 time_t new_entry;
 char workpath[PATH_MAX];
 char status[12];
@@ -291,7 +301,8 @@ struct dirent **state_namelist;
                            * about to write.
                            */
 
-        ientry = scandir(NFS_V4_RECOV_LOCAL, &state_namelist, 0, alphasort);
+        n = scandir(NFS_V4_RECOV_LOCAL, &state_namelist, 0, alphasort);
+        ientry = n;
         if (ientry < 0) {
                 LogEvent(COMPONENT_THREAD, "scandir of %s failed errno = %d", NFS_RECOV_EVENTS, errno);
         }
@@ -335,6 +346,7 @@ struct dirent **state_namelist;
                 close(ientry);
         rpc_in_old = rpc_in;
         rpc_out_old = rpc_out;
+        free_dirent(n, state_namelist);
         return;
 }
 void rec_gc( int inum, struct dirent **namelist)
@@ -491,16 +503,6 @@ time_t t_time, r_time, t_done;
                 LogEvent(COMPONENT_THREAD, "code should not be reached found = %d searching for %d addresses", ifound, array->num_elements);
                 return(-1);
         }
-}
-void free_dirent( int inum, struct dirent **namelist)
-{
-int ientry;
-
-        for( ientry = 0; ientry < inum; ientry++ ) {
-                free(namelist[ientry]);
-        }
-        free(namelist);
-        return;
 }
 
 #endif /* SONAS */
