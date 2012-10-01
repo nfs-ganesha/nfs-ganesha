@@ -405,6 +405,7 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %{_includedir}/tirpc/getpeereid.h
 %ghost %{_includedir}/tirpc/misc/event.h
 %ghost %{_includedir}/tirpc/misc/opr_queue.h
+%ghost %{_includedir}/tirpc/misc/opr.h
 %ghost %{_includedir}/tirpc/misc/queue.h
 %ghost %{_includedir}/tirpc/misc/rbtree.h
 %ghost %{_includedir}/tirpc/misc/rbtree_x.h

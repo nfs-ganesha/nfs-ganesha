@@ -494,8 +494,8 @@ PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
         }
       else if(!STRCMP(key_name, "Use_Kernel_Module_Interface"))
         {
-          int bool = StrToBoolean(key_value);
-          if (bool == -1)
+          int val = StrToBoolean(key_value);
+          if (val == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value " 
@@ -503,7 +503,7 @@ PTFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          initinfo->use_kernel_module_interface = bool;
+          initinfo->use_kernel_module_interface = val;
         }
       else
         {
