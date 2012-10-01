@@ -142,7 +142,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
 			_9p_tools_errno( cache_status ), plenout, preply ) ;
    }
    /* refcount */
-   cache_inode_put(pentry_newobj);
+   //cache_inode_put(pentry_newobj);
 
    /* Build the qid */
    qid_newobj.type    = _9P_QTTMP ; /** @todo BUGAZOMEU For wanting of something better */

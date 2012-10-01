@@ -166,7 +166,7 @@ int _9p_auth( _9p_request_data_t * preq9p,
 			_9p_tools_errno( cache_status ), plenout, preply ) ;
 
   /* refcount */
-  cache_inode_put(pfid->pentry);
+  //cache_inode_put(pfid->pentry);
 
   /* Compute the qid */
   pfid->qid.type = _9P_QTDIR ;

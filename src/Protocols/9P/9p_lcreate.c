@@ -132,7 +132,7 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 	   goto err;
 
    /* refcount */
-   cache_inode_put(pentry_newfile);
+   //cache_inode_put(pentry_newfile);
 
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;
@@ -166,7 +166,7 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
   return 1 ;
 
 err:
-  cache_inode_put(pentry_newfile);
+  //cache_inode_put(pentry_newfile);
   return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
 }

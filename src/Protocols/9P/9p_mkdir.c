@@ -120,7 +120,7 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
 	   goto err;
 
    /* refcount */
-   cache_inode_put(pentry_newdir);
+   // cache_inode_put(pentry_newdir);
 
    /* Build the qid */
    qid_newdir.type    = _9P_QTDIR ;

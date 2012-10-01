@@ -100,6 +100,9 @@ int _9p_clunk( _9p_request_data_t * preq9p,
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
    }
 
+  /* The only place where cache_inode_put() should be called to decrease references */
+  cache_inode_put( pfid->pentry ) ;
+
   /* Clean the fid */
   memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;
 

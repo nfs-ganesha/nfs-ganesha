@@ -143,14 +143,14 @@ int _9p_walk( _9p_request_data_t * preq9p,
 						name,
 						&pfid->op_context,
 						&pnewfid->pentry);
-	   cache_inode_put(pentry);
+
 	   if(pnewfid->pentry == NULL )
               return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
            pentry =  pnewfid->pentry ;
         }
 
       cache_status = cache_inode_fileid(pnewfid->pentry, &pfid->op_context, &fileid);
-      cache_inode_put(pnewfid->pentry);
+      //cache_inode_put(pnewfid->pentry);
       if(cache_status != CACHE_INODE_SUCCESS)
           return _9p_rerror( preq9p, pworker_data, msgtag,
 			     _9p_tools_errno( cache_status ), plenout, preply ) ;
