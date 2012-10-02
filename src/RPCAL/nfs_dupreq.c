@@ -53,6 +53,7 @@
 #include "murmur3.h"
 #include "abstract_mem.h"
 #include "gsh_intrinsic.h"
+#include "wait_queue.h"
 
 #define DUPREQ_BAD_ADDR1 0x01 /* safe for marked pointers, etc */
 #define DUPREQ_NOCACHE   0x02
@@ -77,7 +78,6 @@ const char *dupreq_state_table[] = {
 
 struct drc_st
 {
-    pthread_spinlock_t sp;
     pthread_mutex_t mtx;
     drc_t udp_drc; /* shared DRC */
     struct rbtree_x tcp_drc_recycle_t;
@@ -328,7 +328,7 @@ init_shared_drc()
     drc->npart = nfs_param.core_param.drc.udp.npart;
     drc->flags = DRC_FLAG_HASH|DRC_FLAG_CKSUM; /* XXX parameterize? */
 
-    pthread_spin_init(&drc->sp, PTHREAD_PROCESS_PRIVATE);
+    gsh_mutex_init(&drc->mtx, NULL);
 
     /* init dict */
     code = rbtx_init(&drc->xt, dupreq_shared_cmpf, drc->npart,
@@ -399,8 +399,7 @@ void dupreq2_pkginit(void)
     drc_st = gsh_calloc(1, sizeof(struct drc_st));
 
     /* init shared statics */
-    pthread_spin_init(&drc_st->sp, PTHREAD_PROCESS_PRIVATE);
-    pthread_mutex_init(&drc_st->mtx, NULL);
+    gsh_mutex_init(&drc_st->mtx, NULL);
 
     /* recycle_t */
     code = rbtx_init(&drc_st->tcp_drc_recycle_t,
@@ -500,7 +499,7 @@ alloc_tcp_drc(enum drc_type dtype)
     drc->npart = nfs_param.core_param.drc.tcp.npart;
     drc->flags = DRC_FLAG_HASH|DRC_FLAG_CKSUM; /* XXX parameterize */
 
-    pthread_spin_init(&drc->sp, PTHREAD_PROCESS_PRIVATE);
+    pthread_mutex_init(&drc->mtx, NULL);
 
     /* init dict */
     code = rbtx_init(&drc->xt, dupreq_tcp_cmpf, drc->npart,
@@ -543,8 +542,8 @@ static inline void
 free_tcp_drc(drc_t *drc) {
     if (drc->xt.tree[0].cache)
         gsh_free(drc->xt.tree[0].cache);
-    pthread_spin_destroy(&drc->sp);
-    LogFullDebug(COMPONENT_DUPREQ, "free TCP drc %", drc);
+    pthread_mutex_destroy(&drc->mtx);
+    LogFullDebug(COMPONENT_DUPREQ, "free TCP drc %p", drc);
     pool_free(tcp_drc_pool, drc);
 }
 
@@ -574,18 +573,11 @@ nfs_dupreq_unref_drc(drc_t *drc)
     return (--(drc->refcnt)); /* locked */
 }
 
-#if 1
-#define DRC_ST_LOCK() \
-    pthread_spin_lock(&drc_st->sp)
-#define DRC_ST_UNLOCK() \
-    pthread_spin_unlock(&drc_st->sp)
-#else
 #define DRC_ST_LOCK() \
     pthread_mutex_lock(&drc_st->mtx);
+
 #define DRC_ST_UNLOCK() \
     pthread_mutex_unlock(&drc_st->mtx);
-#endif
-
 
 /**
  * @brief Check for expired TCP DRCs.
@@ -622,7 +614,6 @@ drc_free_expired(void)
             if (! odrc) {
                 LogCrit(COMPONENT_DUPREQ, "BUG: asked to dequeue DRC not on "
                         " queue");
-                int stop_here = 1;
             } else {
                 (void) opr_rbtree_remove(&t->t, &drc->d_u.tcp.recycle_k);
             }
@@ -668,12 +659,12 @@ nfs_dupreq_get_drc(struct svc_req *req)
         break;
     case DRC_TCP_V4:
     case DRC_TCP_V3:
-        pthread_spin_lock(&req->rq_xprt->xp_lock);
+        pthread_mutex_lock(&req->rq_xprt->xp_lock);
         if (xu->drc) {
             drc = xu->drc;
             LogFullDebug(COMPONENT_DUPREQ,
                          "ref DRC=%p for xprt=%p", drc, req->rq_xprt);
-            pthread_spin_lock(&drc->sp); /* LOCKED */
+            pthread_mutex_lock(&drc->mtx); /* LOCKED */
         } else {
             drc_t drc_k;
             struct rbtree_x_part *t = NULL;
@@ -693,7 +684,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
             if (ndrc) {
                 /* reuse old DRC */
                 tdrc = opr_containerof(ndrc, drc_t, d_u.tcp.recycle_k);
-                pthread_spin_lock(&tdrc->sp); /* LOCKED */
+                pthread_mutex_lock(&tdrc->mtx); /* LOCKED */
                 (void) opr_rbtree_remove(&t->t, &tdrc->d_u.tcp.recycle_k);
 
                 TAILQ_REMOVE(&drc_st->tcp_drc_recycle_q, tdrc,
@@ -716,7 +707,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
                 /* assign already-computed hash */
                 memcpy(drc->d_u.tcp.hk, drc_k.d_u.tcp.hk,
                        sizeof(uint64_t) * 2);
-                pthread_spin_lock(&drc->sp); /* LOCKED */
+                pthread_mutex_lock(&drc->mtx); /* LOCKED */
             }
             drc->d_u.tcp.recycle_time = 0;
             /* xprt drc */
@@ -734,7 +725,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
              * new connection arrivals */
             drc_free_expired();
         }
-        pthread_spin_unlock(&req->rq_xprt->xp_lock);
+        pthread_mutex_unlock(&req->rq_xprt->xp_lock);
         break;
     default:
         /* XXX error */
@@ -743,7 +734,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
 
     /* call path ref */
     (void) nfs_dupreq_ref_drc(drc);
-    pthread_spin_unlock(&drc->sp);
+    pthread_mutex_unlock(&drc->mtx);
 
 out:
     return (drc);
@@ -766,7 +757,7 @@ nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
 
     if (! (flags & DRC_FLAG_LOCKED))
-        pthread_spin_lock(&drc->sp);
+        pthread_mutex_lock(&drc->mtx);
     /* drc LOCKED */
 
     if (drc->refcnt == 0) {
@@ -796,7 +787,7 @@ nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
 
             drc->d_u.tcp.recycle_time = time(NULL);
 
-            /* note t's lock order wrt drc->sp is the opposite
+            /* note t's lock order wrt drc->mtx is the opposite
              * of drc->xt[*].lock */
             DRC_ST_LOCK();
             t = rbtx_partition_of_scalar(&drc_st->tcp_drc_recycle_t,
@@ -817,7 +808,7 @@ nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
                 LogFullDebug(COMPONENT_DUPREQ, "drc %p not needed for recycle",
                              drc);
                 DRC_ST_UNLOCK();
-                pthread_spin_unlock(&drc->sp); /* !LOCKED */
+                pthread_mutex_unlock(&drc->mtx); /* !LOCKED */
                 if (odrc != &drc->d_u.tcp.recycle_k)
                     free_tcp_drc(drc);
                 goto out;
@@ -828,7 +819,7 @@ nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
         break;
     };
 
-    pthread_spin_unlock(&drc->sp); /* !LOCKED */
+    pthread_mutex_unlock(&drc->mtx); /* !LOCKED */
 
 out:
     return;
@@ -931,7 +922,7 @@ alloc_dupreq(void)
         goto out;
     }
     memset(dv, 0, sizeof(dupreq_entry_t)); /* XXX pool_zalloc */
-    pthread_spin_init(&dv->sp, PTHREAD_PROCESS_PRIVATE);
+    gsh_mutex_init(&dv->mtx, NULL);
     TAILQ_INIT_ENTRY(dv, fifo_q)
 out:
     return (dv);
@@ -956,7 +947,7 @@ nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
         func->free_function(dv->res);
         free_nfs_res(dv->res);
     }
-    pthread_spin_destroy(&dv->sp);
+    pthread_mutex_destroy(&dv->mtx);
     pool_free(dupreq_pool, dv);
 }
 
@@ -1191,30 +1182,30 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
         if (nv) {
             /* cached request */
             dv = opr_containerof(nv, dupreq_entry_t, rbt_k);
-            pthread_spin_lock(&dv->sp);
+            pthread_mutex_lock(&dv->mtx);
             if (unlikely(dv->state == DUPREQ_START)) {
                 status = DUPREQ_BEING_PROCESSED;
             } else {
                 /* satisfy req from the DRC, incref, extend window */
                 res = dv->res;
-                pthread_spin_lock(&drc->sp);
+                pthread_mutex_lock(&drc->mtx);
                 drc_inc_retwnd(drc);
-                pthread_spin_unlock(&drc->sp);
+                pthread_mutex_unlock(&drc->mtx);
                 status = DUPREQ_EXISTS;
             }
             req->rq_u1 = dv;
             (dv->refcnt)++;
-            pthread_spin_unlock(&dv->sp);
+            pthread_mutex_unlock(&dv->mtx);
         } else {
             /* new request */
             res = req->rq_u2 = dk->res = alloc_nfs_res();
             (void) rbtree_x_cached_insert(&drc->xt, t, &dk->rbt_k, dk->hk[0]);
             (dk->refcnt)++;
             /* add to q tail */
-            pthread_spin_lock(&drc->sp);
+            pthread_mutex_lock(&drc->mtx);
             TAILQ_INSERT_TAIL(&drc->dupreq_q, dk, fifo_q);
             ++(drc->size);
-            pthread_spin_unlock(&drc->sp);
+            pthread_mutex_unlock(&drc->mtx);
             req->rq_u1 = dk;
             release_dk = false;
             dv = dk;
@@ -1286,15 +1277,15 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
     if (dv == (void*) DUPREQ_BAD_ADDR1)
         goto out;
 
-    pthread_spin_lock(&dv->sp);
+    pthread_mutex_lock(&dv->mtx);
     dv->res = res_nfs;
     dv->timestamp = time(NULL);
     dv->state = DUPREQ_COMPLETE;
     drc = dv->hin.drc;
-    pthread_spin_unlock(&dv->sp);
+    pthread_mutex_unlock(&dv->mtx);
 
     /* cond. remove from q head */
-    pthread_spin_lock(&drc->sp);
+    pthread_mutex_lock(&drc->mtx);
 
     LogFullDebug(COMPONENT_DUPREQ,
                  "completing dv=%p xid=%u on DRC=%p state=%s, status=%s, "
@@ -1339,7 +1330,7 @@ adjust_retwnd:
     drc_dec_retwnd(drc);
 
 unlock:
-    pthread_spin_unlock(&drc->sp);
+    pthread_mutex_unlock(&drc->mtx);
 
 out:
     return (status);
@@ -1377,10 +1368,10 @@ nfs_dupreq_delete(struct svc_req *req)
     if (dv == (void*) DUPREQ_BAD_ADDR1)
         goto out;
 
-    pthread_spin_lock(&dv->sp);
+    pthread_mutex_lock(&dv->mtx);
     drc = dv->hin.drc;
     dv->state = DUPREQ_DELETED;
-    pthread_spin_unlock(&dv->sp);
+    pthread_mutex_unlock(&dv->mtx);
 
     LogFullDebug(COMPONENT_DUPREQ,
                  "deleting dv=%p xid=%u on DRC=%p state=%s, status=%s, "
@@ -1402,7 +1393,7 @@ nfs_dupreq_delete(struct svc_req *req)
         TAILQ_REMOVE(&drc->dupreq_q, dv, fifo_q);
 
     pthread_mutex_unlock(&t->mtx);
-    pthread_spin_lock(&drc->sp);
+    pthread_mutex_lock(&drc->mtx);
     --(drc->size);
 
     /* release dv's ref and unlock */
@@ -1441,7 +1432,7 @@ void nfs_dupreq_rele(struct svc_req *req)
         goto out;
     }
 
-    pthread_spin_lock(&dv->sp);
+    pthread_mutex_lock(&dv->mtx);
 
     LogFullDebug(COMPONENT_DUPREQ,
                  "releasing dv=%p xid=%u on DRC=%p state=%s, "
@@ -1453,13 +1444,13 @@ void nfs_dupreq_rele(struct svc_req *req)
     (dv->refcnt)--;
     if (dv->refcnt == 0) {
         if (dv->state == DUPREQ_DELETED) {
-            pthread_spin_unlock(&dv->sp);
+            pthread_mutex_unlock(&dv->mtx);
             /* deep free */
             nfs_dupreq_free_dupreq(dv);
             return;
         }
     }
-    pthread_spin_unlock(&dv->sp);
+    pthread_mutex_unlock(&dv->mtx);
 
 out:
     return;

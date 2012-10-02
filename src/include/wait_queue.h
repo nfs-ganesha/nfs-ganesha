@@ -42,7 +42,6 @@
 
 typedef struct wait_entry
 {
-    pthread_spinlock_t sp;
     pthread_mutex_t mtx;
     pthread_cond_t cv;
 } wait_entry_t;
@@ -61,11 +60,31 @@ typedef struct wait_q_entry
     struct glist_head waitq;
 } wait_q_entry_t;
 
+static inline int
+gsh_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a
+               __attribute__((unused)))
+{
+    pthread_mutexattr_t attr;
+    int rslt;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr,
+#if defined(__linux__)
+                              PTHREAD_MUTEX_ADAPTIVE_NP
+#else
+                              PTHREAD_MUTEX_DEFAULT
+#endif
+        );
+    rslt = pthread_mutex_init(m, &attr);
+    pthread_mutexattr_destroy(&attr);
+
+    return (rslt);
+}
+
 static inline void
 init_wait_entry(wait_entry_t *we)
 {
-    pthread_spin_init(&we->sp, PTHREAD_PROCESS_PRIVATE);
-    pthread_mutex_init(&we->mtx, NULL);
+    gsh_mutex_init(&we->mtx, NULL);
     pthread_cond_init(&we->cv, NULL);
 }
 

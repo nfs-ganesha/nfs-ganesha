@@ -72,7 +72,7 @@ typedef struct drc
     enum drc_type type;
     struct rbtree_x xt;
     TAILQ_HEAD(drc_tailq, dupreq_entry) dupreq_q;
-    pthread_spinlock_t sp;
+    pthread_mutex_t mtx;
     uint32_t npart;
     uint32_t cachesz;
     uint32_t size;
@@ -104,7 +104,7 @@ struct dupreq_entry
 {
     struct opr_rbtree_node rbt_k;
     TAILQ_ENTRY(dupreq_entry) fifo_q;
-    pthread_spinlock_t sp;
+    pthread_mutex_t mtx;
     struct {
         drc_t *drc;
         sockaddr_t addr;
