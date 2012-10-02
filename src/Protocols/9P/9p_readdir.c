@@ -167,7 +167,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   char * dcount_pos = NULL ;
 
   cache_inode_status_t cache_status;
-  bool_t eod_met;
+  bool eod_met;
   cache_entry_t * pentry_dot_dot = NULL ;
 
   uint64_t cookie = 0LL ;

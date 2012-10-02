@@ -73,7 +73,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
 
   cache_entry_t            * pentry_newobj = NULL ;
   char                       obj_name[MAXNAMLEN] ;
-  uint64_t                   fileid;
+  uint64_t                   fileid = 0LL;
   cache_inode_status_t       cache_status ;
   object_file_type_t         nodetype;
   cache_inode_create_arg_t   create_arg;
@@ -138,7 +138,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
   /* Build the qid */
   qid_newobj.type    = _9P_QTTMP ; /** @todo BUGAZOMEU For wanting of something better */
   qid_newobj.version = 0 ;
-  qid_newobj.path    = fileid ;
+  qid_newobj.path  = fileid ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RMKNOD ) ;

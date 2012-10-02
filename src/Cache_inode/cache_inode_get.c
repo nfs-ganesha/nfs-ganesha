@@ -209,6 +209,5 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 void cache_inode_put(cache_entry_t *entry)
 {
   cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-  printf( "After cache_inode_put: entry=%p refcount=%u\n", entry, entry->lru.refcount ) ;
 }
 /** @} */

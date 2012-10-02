@@ -92,7 +92,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   /* If object is an opened file, close it */
   if( ( pfid->pentry->type == REGULAR_FILE ) && 
-      ( is_open( pfid->pentry ) != NULL ) )
+      is_open( pfid->pentry )  )
    {
      cache_status = cache_inode_close(pfid->pentry,
 				      CACHE_INODE_FLAG_REALLYCLOSE);
