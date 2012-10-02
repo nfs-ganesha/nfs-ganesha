@@ -65,7 +65,6 @@ gsh_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a
                __attribute__((unused)))
 {
     pthread_mutexattr_t attr;
-    int rslt;
 
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr,
@@ -75,10 +74,7 @@ gsh_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a
                               PTHREAD_MUTEX_DEFAULT
 #endif
         );
-    rslt = pthread_mutex_init(m, &attr);
-    pthread_mutexattr_destroy(&attr);
-
-    return (rslt);
+    return (pthread_mutex_init(m, &attr));
 }
 
 static inline void
