@@ -11,6 +11,7 @@ lib9p_la_SOURCES = 9p_interpreter.c  \
                    9p_auth.c         \
                    9p_clunk.c        \
                    9p_flush.c        \
+                   9p_flush_hook.c   \
                    9p_getattr.c      \
                    9p_getlock.c      \
                    9p_lcreate.c      \
