@@ -70,12 +70,12 @@ int _9p_symlink( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
   _9p_qid_t qid_symlink ;
 
-  cache_entry_t       * pentry_symlink = NULL ;
-  fsal_name_t           symlink_name ; 
-  fsal_attrib_list_t    fsalattr ;
-  cache_inode_status_t  cache_status ;
-  fsal_accessmode_t mode = 0777;
-  cache_inode_create_arg_t create_arg;
+  cache_entry_t            * pentry_symlink = NULL ;
+  char                       symlink_name[MAXNAMLEN] ;
+  uint64_t                   fileid;
+  cache_inode_status_t       cache_status ;
+  uint32_t                   mode = 0777;
+  cache_inode_create_arg_t   create_arg;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -105,10 +105,13 @@ int _9p_symlink( _9p_request_data_t * preq9p,
      return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
    }
  
-   snprintf( symlink_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-   symlink_name.len = *name_len + 1 ;
-   snprintf( create_arg.link_content.path, FSAL_MAX_PATH_LEN, "%.*s", *linkcontent_len, linkcontent_str ) ;
-   create_arg.link_content.len =  *linkcontent_len + 1 ;
+snprintf( symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
+
+   if( ( create_arg.link_content = gsh_malloc( MAXPATHLEN ) ) == NULL )
+    return _9p_rerror( preq9p, pworker_data, msgtag, EFAULT, plenout, preply ) ;
+   
+   
+   snprintf( create_arg.link_content, MAXPATHLEN, "%.*s", *linkcontent_len, linkcontent_str ) ;
  
    /* Let's do the job */
    /* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */

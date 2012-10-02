@@ -70,8 +70,8 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
   _9p_qid_t qid_newdir ;
 
   cache_entry_t       * pentry_newdir = NULL ;
-  fsal_name_t           dir_name ; 
-  fsal_attrib_list_t    fsalattr ;
+  char                  dir_name[MAXNAMLEN] ; 
+  uint64_t              fileid;
   cache_inode_status_t  cache_status ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -99,12 +99,10 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
     LogDebug( COMPONENT_9P, "request on invalid fid=%u", *fid ) ;
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
   }
-
-  snprintf( dir_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-  dir_name.len = *name_len + 1 ;
+  
+  snprintf( dir_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
    /* Create the directory */
-
    /* BUGAZOMEU: @todo : the gid parameter is not used yet */
    cache_status = cache_inode_create(pfid->pentry,
 				     dir_name,
@@ -116,10 +114,14 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
    if (pentry_newdir == NULL)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
+   cache_status = cache_inode_fileid(pentry_newdir, &pfid->op_context, &fileid);
+   if(cache_status != CACHE_INODE_SUCCESS)
+    return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+
    /* Build the qid */
    qid_newdir.type    = _9P_QTDIR ;
    qid_newdir.version = 0 ;
-   qid_newdir.path    = fsalattr.fileid ;
+   qid_newdir.path    = fileid ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RMKDIR ) ;

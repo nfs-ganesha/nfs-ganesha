@@ -68,9 +68,8 @@ int _9p_link( _9p_request_data_t * preq9p,
   _9p_fid_t * pdfid = NULL ;
   _9p_fid_t * ptargetfid = NULL ;
 
-  fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
-  fsal_name_t           link_name ;
+  char                  link_name[MAXNAMLEN] ; ;
 
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -109,8 +108,7 @@ int _9p_link( _9p_request_data_t * preq9p,
    }
 
    /* Let's do the job */
-   snprintf( link_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-   link_name.len = *name_len +1 ;
+   snprintf( link_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
    cache_status = cache_inode_link(ptargetfid->pentry,
 				   pdfid->pentry,
@@ -120,7 +118,6 @@ int _9p_link( _9p_request_data_t * preq9p,
    if(cache_status != CACHE_INODE_SUCCESS )
      return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
- 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RLINK ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;

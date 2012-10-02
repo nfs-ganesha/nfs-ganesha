@@ -71,12 +71,12 @@ int _9p_mknod( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
   _9p_qid_t qid_newobj ;
 
-  cache_entry_t       * pentry_newobj = NULL ;
-  fsal_name_t           obj_name ; 
-  fsal_attrib_list_t    fsalattr ;
-  cache_inode_status_t  cache_status ;
-  cache_inode_file_type_t nodetype;
-  cache_inode_create_arg_t create_arg;
+  cache_entry_t            * pentry_newobj = NULL ;
+  char                       obj_name[MAXNAMLEN] ;
+  uint64_t                   fileid;
+  cache_inode_status_t       cache_status ;
+  object_file_type_t         nodetype;
+  cache_inode_create_arg_t   create_arg;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -108,8 +108,7 @@ int _9p_mknod( _9p_request_data_t * preq9p,
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
   }
 
-  snprintf( obj_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-  obj_name.len = *name_len + 1 ;
+  snprintf( obj_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
   /* Check for bad type */
   if( !( *mode & (S_IFCHR|S_IFBLK|S_IFIFO|S_IFSOCK) ) )
@@ -136,12 +135,12 @@ int _9p_mknod( _9p_request_data_t * preq9p,
    if(pentry_newobj == NULL)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
-   /* Build the qid */
-   qid_newobj.type    = _9P_QTTMP ; /** @todo BUGAZOMEU For wanting of something better */
-   qid_newobj.version = 0 ;
-   qid_newobj.path    = fsalattr.fileid ;
+  /* Build the qid */
+  qid_newobj.type    = _9P_QTTMP ; /** @todo BUGAZOMEU For wanting of something better */
+  qid_newobj.version = 0 ;
+  qid_newobj.path    = fileid ;
 
-   /* Build the reply */
+  /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RMKNOD ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
