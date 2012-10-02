@@ -137,6 +137,17 @@ int _9p_not_2000L( _9p_request_data_t * preq9p,
   return -1 ;
 } /* _9p_not_2000L */
 
+static ssize_t tcp_conn_send(_9p_conn_t *conn, const void *buf, size_t len, int flags)
+{
+        ssize_t ret;
+        
+        pthread_mutex_lock(&conn->sock_lock);
+        ret = send(conn->trans_data.sockfd, buf, len, flags);
+        pthread_mutex_unlock(&conn->sock_lock);
+        return ret;
+}
+
+
 void _9p_tcp_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data)
 {
   u32 outdatalen = 0 ;
@@ -146,19 +157,14 @@ void _9p_tcp_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * p
   if ( ( rc = _9p_process_buffer( preq9p, pworker_data, replydata, &outdatalen ) ) != 1 )
    {
     LogMajor( COMPONENT_9P, "Could not process 9P buffer on socket #%lu", preq9p->pconn->trans_data.sockfd ) ;
-    _9p_DiscardFlushHook(preq9p);
    } 
   else
    {
-    /* Send reply only if no TFLUSH was received */
-    if (!_9p_LockAndTestFlushHook(preq9p))
-     {
-      if( send( preq9p->pconn->trans_data.sockfd, replydata, outdatalen, 0 ) != outdatalen ) 
+    if( tcp_conn_send( preq9p->pconn, replydata, outdatalen, 0 ) != outdatalen ) 
         LogMajor( COMPONENT_9P, "Could not send 9P/TCP reply correclty on socket #%lu", 
                                        preq9p->pconn->trans_data.sockfd ) ;
-      }
-      _9p_ReleaseFlushHook(preq9p);
    }
+  _9p_DiscardFlushHook(preq9p);
   return ;
 } /* _9p_process_request */
 

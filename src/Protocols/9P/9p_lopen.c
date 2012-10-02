@@ -120,7 +120,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RLOPEN: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu) iounit=%u", 
             *msgtag, *fid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path, pfid->specdata.iounit ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

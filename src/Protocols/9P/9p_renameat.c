@@ -69,10 +69,13 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   _9p_fid_t * poldfid = NULL ;
   _9p_fid_t * pnewfid = NULL ;
 
+  fsal_attrib_list_t    oldfsalattr ;
+  fsal_attrib_list_t    newfsalattr ;
+
   cache_inode_status_t  cache_status ;
 
-  char oldname[MAXNAMLEN] ;
-  char newname[MAXNAMLEN] ;
+  fsal_name_t           oldname ;
+  fsal_name_t           newname ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -113,8 +116,10 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   }
 
   /* Let's do the job */
-  snprintf( oldname, MAXNAMLEN, "%.*s", *oldname_len, oldname_str ) ;
-  snprintf( newname, MAXNAMLEN, "%.*s", *newname_len, newname_str ) ;
+  snprintf( oldname.name, FSAL_MAX_NAME_LEN, "%.*s", *oldname_len, oldname_str ) ;
+  oldname.len = *oldname_len + 1 ;
+  snprintf( newname.name, FSAL_MAX_NAME_LEN, "%.*s", *newname_len, newname_str ) ;
+  newname.len = *newname_len + 1 ;
 
   cache_status = cache_inode_rename(poldfid->pentry,
 				    oldname,
@@ -134,7 +139,7 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
             (u32)*msgtag, *oldfid, *oldname_len, oldname_str, *newfid, *newname_len, newname_str ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

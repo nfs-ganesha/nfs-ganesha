@@ -66,8 +66,9 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pdfid = NULL ;
 
+  fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
-  char name[MAXNAMLEN] ;
+  fsal_name_t           name ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -95,7 +96,8 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   }
 
   /* Let's do the job */
-  snprintf( name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
+  snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+  name.len = *name_len + 1 ;
 
   cache_status = cache_inode_remove(pdfid->pentry,
 				    name,
@@ -110,10 +112,10 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RUNLINKAT: tag=%u dfid=%u name=%.*s",
+  LogDebug( COMPONENT_9P, "TUNLINKAT: tag=%u dfid=%u name=%.*s",
             (u32)*msgtag, *dfid, *name_len, name_str ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

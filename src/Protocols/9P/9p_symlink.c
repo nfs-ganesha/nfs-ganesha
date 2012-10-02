@@ -71,10 +71,10 @@ int _9p_symlink( _9p_request_data_t * preq9p,
   _9p_qid_t qid_symlink ;
 
   cache_entry_t       * pentry_symlink = NULL ;
-  char                  symlink_name[MAXNAMLEN] ;
-  uint64_t              fileid;
+  fsal_name_t           symlink_name ; 
+  fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
-  uint32_t mode = 0777;
+  fsal_accessmode_t mode = 0777;
   cache_inode_create_arg_t create_arg;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -105,13 +105,10 @@ int _9p_symlink( _9p_request_data_t * preq9p,
      return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
    }
  
-   snprintf( symlink_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
-
-   if( ( create_arg.link_content = gsh_malloc( MAXPATHLEN ) ) == NULL )
-    return _9p_rerror( preq9p, pworker_data, msgtag, EFAULT, plenout, preply ) ;
-   
-   
-   snprintf( create_arg.link_content, MAXPATHLEN, "%.*s", *linkcontent_len, linkcontent_str ) ;
+   snprintf( symlink_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+   symlink_name.len = *name_len + 1 ;
+   snprintf( create_arg.link_content.path, FSAL_MAX_PATH_LEN, "%.*s", *linkcontent_len, linkcontent_str ) ;
+   create_arg.link_content.len =  *linkcontent_len + 1 ;
  
    /* Let's do the job */
    /* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
@@ -127,14 +124,13 @@ int _9p_symlink( _9p_request_data_t * preq9p,
       if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
       return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
+
    cache_status = cache_inode_fileid(pentry_symlink, &pfid->op_context, &fileid);
    if(cache_status != CACHE_INODE_SUCCESS) {
       cache_inode_put(pentry_symlink);
       return _9p_rerror( preq9p, pworker_data, msgtag,
 			_9p_tools_errno( cache_status ), plenout, preply ) ;
    }
-   /* refcount */
-   //cache_inode_put(pentry_symlink);
 
    /* Build the qid */
    qid_symlink.type    = _9P_QTSYMLINK ;
@@ -154,10 +150,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
             "RSYMLINK: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
             (u32)*msgtag, *fid, *name_len, name_str, qid_symlink.type, qid_symlink.version, (unsigned long long)qid_symlink.path ) ;
 
-  /* Clean allocated buffer */
-  if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
-
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

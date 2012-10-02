@@ -5,6 +5,7 @@ noinst_LTLIBRARIES            = lib9p.la
 
 lib9p_la_SOURCES = 9p_interpreter.c  \
                    9p_proto_tools.c  \
+                   9p_flush_hook.c   \
                    9p_read_conf.c    \
                    9p_attach.c       \
                    9p_auth.c         \

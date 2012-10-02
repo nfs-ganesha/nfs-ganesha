@@ -83,7 +83,7 @@ int _9p_flush( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "RFLUSH: tag=%u oldtag=%u", (u32)*msgtag, (u32)*oldtag ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

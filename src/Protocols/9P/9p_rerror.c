@@ -77,7 +77,7 @@ int _9p_rerror( _9p_request_data_t * preq9p,
             _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname,
             *msgtag, err, strerror( err ) ) ;
 
-  _9p_stat_update( *pmsgtype, false, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, FALSE, &pwkrdata->stats._9p_stat_req ) ;
 
   return 1 ;
 }

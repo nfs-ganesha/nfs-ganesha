@@ -18,8 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
  */
@@ -46,7 +45,7 @@
 #include <pthread.h>
 #include <sys/stat.h> 
 #include <sys/types.h>
-#include <sys/xattr.h>
+#include <attr/xattr.h>
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
@@ -73,7 +72,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
 
   fsal_status_t fsal_status ; 
-  char name[MAXNAMLEN];
+  fsal_name_t name;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -100,15 +99,18 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
   }
   
-  snprintf( name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
+  snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+  name.len = *name_len + 1 ;
 
   if( *size == 0LL ) 
    {
      /* Size == 0 : this is in fact a call to removexattr */
       LogDebug( COMPONENT_9P, "TXATTRCREATE: tag=%u fid=%u : will remove xattr %s",
-                 (u32)*msgtag, *fid,  name ) ;
+                 (u32)*msgtag, *fid,  name.name ) ;
     
-     fsal_status = pfid->pentry->obj_handle->ops->remove_extattr_by_name( pfid->pentry->obj_handle, name ) ;
+     fsal_status = FSAL_RemoveXAttrByName( &pfid->pentry->handle,
+                                           &pfid->fsal_op_context,
+                                           &name ) ;
 
      if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
@@ -121,18 +123,20 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
      if( ( pfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL ) 
        return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOMEM, plenout, preply ) ;
 
-     fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,
-                                                                    name,
-                                                                    pfid->specdata.xattr.xattr_content, 
-                                                                    *size,
-                                                                    (*flag == XATTR_REPLACE))  ;
+     fsal_status = FSAL_SetXAttrValue( &pfid->pentry->handle,
+                                       &name,
+                                       &pfid->fsal_op_context,
+                                       pfid->specdata.xattr.xattr_content, 
+                                       *size, 
+                                        (*flag == XATTR_REPLACE) ? FALSE : TRUE ) ;
 
      if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
 
-     fsal_status = pfid->pentry->obj_handle->ops->getextattr_id_by_name( pfid->pentry->obj_handle,
-                                                                         name, 
-                                                                         &pfid->specdata.xattr.xattr_id);
+     fsal_status = FSAL_GetXAttrIdByName( &pfid->pentry->handle,
+                                          &name, 
+                                          &pfid->fsal_op_context,
+                                          &pfid->specdata.xattr.xattr_id);
       if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
    }
@@ -147,7 +151,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RXATTRCREATE: tag=%u fid=%u name=%.*s size=%llu flag=%u",
             (u32)*msgtag, *fid, *name_len, name_str, (unsigned long long)*size, *flag ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 } /* _9p_xattrcreate */
 

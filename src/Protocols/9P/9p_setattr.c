@@ -73,8 +73,9 @@ int _9p_setattr( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
 
-  struct attrlist       fsalattr ;
+  fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
+  fsal_attrib_list_t     parent_attr;
 
   struct timeval t;
 
@@ -123,61 +124,64 @@ int _9p_setattr( _9p_request_data_t * preq9p,
    }
 
   /* Let's do the job */
+  memset( (char *)&fsalattr, 0, sizeof( fsalattr ) ) ;
+  memset(&parent_attr, 0, sizeof(parent_attr));
+
   if( *valid & _9P_SETATTR_MODE )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_MODE);
+      fsalattr.asked_attributes |= FSAL_ATTR_MODE ;
       fsalattr.mode = *mode ;
    }
 
   if( *valid & _9P_SETATTR_UID )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_OWNER);
+      fsalattr.asked_attributes |= FSAL_ATTR_OWNER ;
       fsalattr.owner = *uid ;
    }
 
   if( *valid & _9P_SETATTR_GID )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_GROUP);
+      fsalattr.asked_attributes |= FSAL_ATTR_GROUP ;
       fsalattr.group = *gid ;
    }
 
   if( *valid & _9P_SETATTR_SIZE )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_SIZE);
+      fsalattr.asked_attributes |= FSAL_ATTR_SIZE ;
       fsalattr.filesize = *size ;
    }
 
   if( *valid & _9P_SETATTR_ATIME )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
+      fsalattr.asked_attributes |= FSAL_ATTR_ATIME ;
       fsalattr.atime.seconds  = t.tv_sec ;
       fsalattr.atime.nseconds = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_MTIME )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_MTIME);
+      fsalattr.asked_attributes |= FSAL_ATTR_MTIME ;
       fsalattr.mtime.seconds  = t.tv_sec ;
       fsalattr.mtime.nseconds = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_CTIME )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_CTIME);
+      fsalattr.asked_attributes |= FSAL_ATTR_CTIME ;
       fsalattr.ctime.seconds  = t.tv_sec ;
       fsalattr.ctime.nseconds = t.tv_usec * 1000 ;
    }
 
   if( *valid & _9P_SETATTR_ATIME_SET )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
+      fsalattr.asked_attributes |= FSAL_ATTR_ATIME ;
       fsalattr.atime.seconds  = *atime_sec ;
       fsalattr.atime.nseconds = *atime_nsec ;
    }
 
   if( *valid & _9P_SETATTR_MTIME_SET )
    {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_MTIME);
+      fsalattr.asked_attributes |= FSAL_ATTR_MTIME ;
       fsalattr.mtime.seconds  = *mtime_sec ;
       fsalattr.mtime.nseconds = *mtime_nsec ;
    }
@@ -207,7 +211,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

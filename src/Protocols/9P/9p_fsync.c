@@ -86,6 +86,7 @@ int _9p_fsync( _9p_request_data_t * preq9p,
 				    0LL, // start at beginning of file
 				    0LL, // Mimic sync_file_range's behavior : count=0 means "whole file"
 				    &pfid->op_context);
+
   if (cache_status != CACHE_INODE_SUCCESS )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 
@@ -98,7 +99,7 @@ int _9p_fsync( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid ) ; 
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

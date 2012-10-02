@@ -148,8 +148,8 @@ int _9p_lock( _9p_request_data_t * preq9p,
          }
 
         if( state_lock( pfid->pentry,
+                        &pfid->fsal_op_context,
                         pfid->pexport,
-                        &pfid->op_context,
                         powner,
                         &state,
                         STATE_NON_BLOCKING,
@@ -171,6 +171,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
 
       case _9P_LOCK_TYPE_UNLCK:
          if(state_unlock( pfid->pentry,
+                          &pfid->fsal_op_context,
                           pfid->pexport,
                           powner,
                           NULL,
@@ -200,7 +201,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, *type, *flags, (unsigned long long)*start, (unsigned long long)*length, 
             *proc_id, *client_id_len, client_id_str, status ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

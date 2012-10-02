@@ -75,7 +75,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   _9p_fid_t * pfid = NULL ;
 
   exportlist_t * pexport = NULL;
-  unsigned int found = false;
+  unsigned int found = FALSE;
   cache_inode_status_t cache_status ;
   cache_inode_fsal_data_t fsdata ;
   char fkey_data[NFS4_FHSIZE];
@@ -105,7 +105,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
           /* The input value may be a "Tag" */
           if(!strncmp(aname_str, pexport->FS_tag, strlen( pexport->FS_tag ) ) )
             {
-	      found = true ;
+	      found = TRUE ;
               break;
             }
         }
@@ -113,14 +113,14 @@ int _9p_attach( _9p_request_data_t * preq9p,
         {
           if(!strncmp(aname_str, pexport->fullpath, strlen( pexport->fullpath ) ) )
            {
-	      found = true ;
+	      found = TRUE ;
               break;
            }
         }
     } /* for */
 
   /* Did we find something ? */
-  if( found == false )
+  if( found == FALSE )
     return _9p_rerror( preq9p, pworker_data, msgtag, ENOENT, plenout, preply ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
@@ -160,16 +160,12 @@ int _9p_attach( _9p_request_data_t * preq9p,
 				  &pfid->pentry) ;
 
   if( pfid->pentry == NULL )
-     return _9p_rerror( preq9p, pworker_data, msgtag,
-			_9p_tools_errno( cache_status ), plenout, preply ) ;
+     return _9p_rerror( preq9p, pworker_data,msgtag, err, plenout, preply ) ;
 
-   if(cache_inode_fileid(pfid->pentry,
+  if(cache_inode_fileid(pfid->pentry,
 			 &pfid->op_context, &fileid) != CACHE_INODE_SUCCESS)
       return _9p_rerror( preq9p, pworker_data, msgtag,
 			_9p_tools_errno( cache_status ), plenout, preply ) ;
-
-  /* refcount */
-  //cache_inode_put(pfid->pentry);
 
   /* Compute the qid */
   pfid->qid.type = _9P_QTDIR ;
@@ -188,7 +184,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "RATTACH: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu)", 
             *msgtag, *fid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

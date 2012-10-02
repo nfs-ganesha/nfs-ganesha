@@ -91,8 +91,8 @@ int _9p_clunk( _9p_request_data_t * preq9p,
     gsh_free( pfid->specdata.xattr.xattr_content ) ;
 
   /* If object is an opened file, close it */
-  /* BUGAZOMEU : Verifier que le fichier est bien ouvert avant de le fermer (ex cache_inode_fd ) */
-  if( pfid->pentry->type == REGULAR_FILE )  
+  if( ( pfid->pentry->type == REGULAR_FILE ) && 
+      ( cache_inode_fd( pfid->pentry ) != NULL ) )
    {
      cache_status = cache_inode_close(pfid->pentry,
 				      CACHE_INODE_FLAG_REALLYCLOSE);
@@ -100,8 +100,9 @@ int _9p_clunk( _9p_request_data_t * preq9p,
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
    }
 
-  /* The only place where cache_inode_put() should be called to decrease references */
-  cache_inode_put( pfid->pentry ) ;
+  /* Tell the cache the fid that used this entry is not used by this set of messages */
+  if( pfid->pentry->lru.refcount > 1 ) 
+    cache_inode_put( pfid->pentry ) ; 
 
   /* Clean the fid */
   memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;
@@ -115,7 +116,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

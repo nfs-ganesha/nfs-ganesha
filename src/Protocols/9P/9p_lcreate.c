@@ -73,7 +73,7 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 
   cache_entry_t       * pentry_newfile = NULL ;
   char                  file_name[MAXNAMLEN] ;
-  uint64_t              fileid;
+  int64_t              fileid;
   cache_inode_status_t  cache_status ;
   fsal_openflags_t      openflags = 0 ;
 
@@ -104,7 +104,6 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
    }
    snprintf( file_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
-
    /* Create the file */
 
    /* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
@@ -117,11 +116,11 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 				     &pentry_newfile);
    if (pentry_newfile == NULL)
      return   _9p_rerror( preq9p, pworker_data,  msgtag,  _9p_tools_errno( cache_status ) , plenout, preply ) ;
-      
+
    cache_status = cache_inode_fileid(pentry_newfile, &pfid->op_context, &fileid);
    if(cache_status != CACHE_INODE_SUCCESS)
-	   goto err;
-
+     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+      
    _9p_openflags2FSAL( flags, &openflags ) ; 
 
    cache_status = cache_inode_open(pentry_newfile,
@@ -129,10 +128,7 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 				   &pfid->op_context,
 				   0);
    if(cache_status != CACHE_INODE_SUCCESS)
-	   goto err;
-
-   /* refcount */
-   //cache_inode_put(pentry_newfile);
+     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;
@@ -162,12 +158,7 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
             "RLCREATE: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu) iounit=%u",
             (u32)*msgtag, *fid, *name_len, name_str, qid_newfile.type, qid_newfile.version, (unsigned long long)qid_newfile.path, iounit ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
-
-err:
-  //cache_inode_put(pentry_newfile);
-  return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
-
 }
 

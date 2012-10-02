@@ -38,17 +38,7 @@
 #ifdef _USE_9P_RDMA
 #include <infiniband/arch.h>
 #include <rdma/rdma_cma.h>
-#include "trans_rdma.h"
-
-typedef struct _9p_datamr
-{
-  msk_data_t *data;
-  struct ibv_mr *mr;
-  msk_data_t *ackdata;
-  pthread_mutex_t *lock;
-  pthread_cond_t *cond;
-} _9p_datamr_t ;
-
+#include "mooshika.h"
 #endif
 
 typedef uint8_t   u8;
@@ -79,8 +69,10 @@ typedef uint64_t u64;
 
 //#define _9P_RDMA_CHUNK_SIZE 8*1024
 #define _9P_RDMA_CHUNK_SIZE 65*1024
-#define _9P_RDMA_RECV_NUM 1
+#define _9P_RDMA_BUFF_NUM 100 
 #define _9P_RDMA_BACKLOG 10 
+
+#define _9P_RDMA_OUT _9P_RDMA_BUFF_NUM/2
 
 /**
  * enum _9p_msg_t - 9P message types
@@ -323,21 +315,23 @@ typedef enum _9p_trans_type__
   _9P_RDMA
 } _9p_trans_type_t ;
 
-#ifdef _USE_9P_RDMA
-typedef struct _9p_rdma_ep__
-{
-  _9p_datamr_t * datamr ;
-  msk_trans_t  * trans ;
-} _9p_rdma_ep_t ;
-#endif
+struct flush_condition;
 
-
-
-
+/* flush hook : 
+ * 
+ * We use this to insert the request in a list
+ * so it can be found later during a TFLUSH.
+ * The goal is to wait until a request has been fully
+ * processed and the reply sent before we send a RFLUSH.
+ *
+ * When a TFLUSH arrives, its thread will fill `condition'
+ * so we can wake it up later, after we have sent the reply 
+ * to the original request.
+ */
 typedef struct _9p_flush_hook__
 {
   int tag;
-  int flushed;
+  struct flush_condition *condition;
   unsigned long sequence;
   struct glist_head list;
 } _9p_flush_hook_t;
@@ -349,6 +343,25 @@ typedef struct _9p_flush_bucket__
 } _9p_flush_bucket_t;
 
 #define FLUSH_BUCKETS 64
+
+#ifdef _USE_9P_RDMA
+typedef struct _9p_datamr
+{
+  msk_data_t *data;
+  struct ibv_mr *mr;
+  msk_data_t *ackdata;
+  pthread_mutex_t *lock;
+  pthread_cond_t *cond;
+  struct _9p_datamr * sender ;
+  void * pconn ;
+} _9p_datamr_t ;
+
+typedef struct _9p_rdma_ep__
+{
+  _9p_datamr_t * datamr ;
+  msk_trans_t  * trans ;
+} _9p_rdma_ep_t ;
+#endif
 
 typedef struct _9p_conn__
 {
@@ -364,6 +377,8 @@ typedef struct _9p_conn__
   struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
   _9p_fid_t       fids[_9P_FID_PER_CONN] ;
   _9p_flush_bucket_t flush_buckets[FLUSH_BUCKETS];
+  unsigned long sequence ;
+  pthread_mutex_t sock_lock;
 } _9p_conn_t ;
 
 typedef struct _9p_request_data__
@@ -372,6 +387,7 @@ typedef struct _9p_request_data__
   _9p_conn_t  *  pconn ;
   _9p_flush_hook_t flush_hook;
 } _9p_request_data_t ;
+
 
 
 typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
@@ -390,7 +406,7 @@ do                                             \
 {                                              \
   __pvar=(__type *)__cursor ;                  \
   __cursor += sizeof( __type ) ;               \
-} while( 0 )
+} while( 0 ) 
 
 #define _9p_getstr( __cursor, __len, __str ) \
 do                                           \
@@ -399,7 +415,7 @@ do                                           \
   __cursor += sizeof( u16 ) ;                \
   __str = __cursor ;                         \
   __cursor += *__len ;                       \
-} while( 0 )
+} while( 0 )                           
 
 #define _9p_setptr( __cursor, __pvar, __type ) \
 do                                             \

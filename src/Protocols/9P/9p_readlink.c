@@ -64,10 +64,8 @@ int _9p_readlink( _9p_request_data_t * preq9p,
 
   _9p_fid_t * pfid = NULL ;
 
+  fsal_path_t symlink_data;
   cache_inode_status_t cache_status ;
-  char                 symlink_path[MAXPATHLEN];
-  struct gsh_buffdesc  link_buffer = { .addr = symlink_path,
-                                       .len  = MAXPATHLEN};
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -93,6 +91,7 @@ int _9p_readlink( _9p_request_data_t * preq9p,
   cache_status = cache_inode_readlink( pfid->pentry,
 				       &link_buffer,
 				       &pfid->op_context);
+
   if (cache_status != CACHE_INODE_SUCCESS)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
@@ -100,14 +99,14 @@ int _9p_readlink( _9p_request_data_t * preq9p,
   _9p_setinitptr( cursor, preply, _9P_RREADLINK ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  _9p_setstr( cursor, strlen( symlink_path ), symlink_path ) ;
+  _9p_setstr( cursor, strlen( symlink_data.path ), symlink_data.path ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RREADLINK: tag=%u fid=%u link=%s", *msgtag, (u32)*fid, symlink_path ) ;
+  LogDebug( COMPONENT_9P, "RREADLINK: tag=%u fid=%u link=%s", *msgtag, (u32)*fid, symlink_data.path ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
 }
 

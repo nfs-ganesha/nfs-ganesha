@@ -70,8 +70,8 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
   _9p_qid_t qid_newdir ;
 
   cache_entry_t       * pentry_newdir = NULL ;
-  char                  dir_name[MAXNAMLEN] ; 
-  uint64_t              fileid;
+  fsal_name_t           dir_name ; 
+  fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -100,7 +100,8 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
   }
 
-  snprintf( dir_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
+  snprintf( dir_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+  dir_name.len = *name_len + 1 ;
 
    /* Create the directory */
 
@@ -115,17 +116,10 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
    if (pentry_newdir == NULL)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
-   cache_status = cache_inode_fileid(pentry_newdir, &pfid->op_context, &fileid);
-   if(cache_status != CACHE_INODE_SUCCESS)
-	   goto err;
-
-   /* refcount */
-   // cache_inode_put(pentry_newdir);
-
    /* Build the qid */
    qid_newdir.type    = _9P_QTDIR ;
    qid_newdir.version = 0 ;
-   qid_newdir.path    = fileid ;
+   qid_newdir.path    = fsalattr.fileid ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RMKDIR ) ;
@@ -140,12 +134,7 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
             "RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
             (u32)*msgtag, *fid, *name_len, name_str, qid_newdir.type, qid_newdir.version, (unsigned long long)qid_newdir.path ) ;
 
-  _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
+  _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
-
-err:
-  cache_inode_put(pentry_newdir);
-  return _9p_rerror( preq9p, pworker_data, msgtag,
-		     _9p_tools_errno( cache_status ), plenout, preply ) ;
 }
 
