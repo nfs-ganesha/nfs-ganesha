@@ -1,0 +1,96 @@
+#! /bin/bash
+#
+# Usage:
+# /sbin/mount.9P spec dir [-sfnv] [-o options]
+#
+
+case $1 in
+  -h|--help|-?)
+      echo "mount.9P is a private mount(8) wrapper for 9P."
+      echo "Don't use it directly!"
+      exit 1
+      ;;
+esac
+
+restricted=1
+
+if [ $UID -eq 0 ] && [ $UID -eq $EUID ]; then
+  restricted=0
+fi
+
+# mount(8) in restricted mode (for non-root users) does not allow to use any
+# mount options, types or so on command line. We have to call mount(8) with
+# mountpoint only.  All necessary options have to be defined in /etc/fstab.
+#
+if [ $restricted -eq 1 ]; then
+  exec /bin/mount -i "$2"
+fi
+
+
+IP_ADDR_PATTERN='^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
+HOSTNAME_PATTERN='^[a-z]+[a-z0-9]*'
+
+# First argument is looking "hostname_or_ip:/remotepath
+if ! echo $1 | grep -q ":" ; then
+  echo "Bad Syntax"
+  exit 1
+fi
+
+# Get mountpoint
+MNT=$2
+
+# Get serverid and remotepath
+SERVERID=`echo $1 | awk -F ':' '{print $1}'`
+REMOTEPATH=`echo $1 | awk -F ':' '{print $2}'`
+
+# check for correctness of argument 
+if ! echo  $SERVERID | egrep -q $HOSTNAME_PATTERN ; then
+  if ! echo $SERVERID | egrep -q $IP_ADDR_PATTERN ; then
+     echo "Bad server id"
+     exit 1
+  else
+    IPADDR=$SERVERID 
+  fi
+else
+  if ! IPADDR=`resolveip -s $SERVERID 2>&1` ; then
+    echo "Hostname could not be resolved" 
+    exit 1
+  fi
+fi
+
+#Default value 
+aname=$REMOTEPATH
+version="9p2000.L"
+debug="0x0"
+user="access"
+uname="root"
+msize="65560"
+misc="rw"
+
+# Now manage options
+IN_OPTIONS=`echo $4 | tr "," "\n"`
+
+for OPT in $IN_OPTIONS; do
+  for OPT_TYPE in "version=" "user=" "debug=" "uname=" "msize=" ; do
+    if echo $OPT | grep -q $OPT_TYPE ; then
+      eval $OPT
+    fi
+  done
+
+  if echo $OPT | egrep -q "^ro$" ; then
+    misc="ro" 
+  fi
+
+  if echo $OPT  | egrep -q "^rw$" ; then
+    misc="rw" 
+  fi
+
+  if echo $OPT | egrep -q "^remount$" ; then
+    misc="remount,$misc"
+  fi
+
+done
+
+# the "-i" is mandatory to avoid looping on this helper
+#echo "/bin/mount -i -t 9p $IPADDR $MNT -o $misc,uname=$uname,aname=$aname,msize=$msize,version=$version,debug=$debug,user=$user"
+exec /bin/mount -i -t 9p $IPADDR $MNT -o $misc,uname=$uname,aname=$aname,msize=$msize,version=$version,debug=$debug,user=$user
