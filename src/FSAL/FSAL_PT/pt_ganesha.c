@@ -366,8 +366,25 @@ ptfsal_stat_by_handle(fsal_handle_t     * p_filehandle,
   }
   FSI_TRACE(FSI_DEBUG, "FSI - name = %s\n", fsi_name);
 
-  stat_rc = ccl_stat_by_handle(&ccl_context,
-			       p_fsi_handle->data.handle.f_handle, p_stat);
+  int fsihandle = ccl_find_handle_by_name_and_export(fsi_name, &ccl_context);
+
+  if (fsihandle != -1)
+  {
+    // If we have cached stat information, then we call regular stat
+    stat_rc = ccl_stat(&ccl_context,
+                       fsi_name,
+                       p_stat);
+  } else {
+    stat_rc = ccl_stat_by_handle(&ccl_context,
+                                 p_fsi_handle->data.handle.f_handle,
+                                 p_stat);
+
+  }
+
+  if (stat_rc == -1)
+  {
+  	FSI_TRACE(FSI_ERR, "FSI - stat failed. fsi_name[%s]", fsi_name);
+  }
 
   ptfsal_print_handle(p_stat->st_persistentHandle.handle);
 

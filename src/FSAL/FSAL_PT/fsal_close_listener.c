@@ -48,11 +48,9 @@ int ptfsal_closeHandle_attach_to_queues(void)
 
 void *ptfsal_closeHandle_listener_thread(void *args)
 {
-  int i;
   int rc;
   struct msg_t msg;
   int msg_bytes;
-  struct CommonMsgHdr         * p_hdr;
   int close_rc;
   struct CommonMsgHdr *msgHdr;
   SetNameFunction("PT FSAL CloseOnOpen Handler");
@@ -167,11 +165,6 @@ int ptfsal_find_oldest_handle(void)
   for (index = FSI_CIFS_RESERVED_STREAMS;
        index < g_fsi_handles.m_count;
        index++) {
-    FSI_TRACE(FSI_INFO, "Last IO time[%ld] handle index [%d]"
-              "oldest_time[%ld] handle state[%d] m_hndl_in_use[%d]",
-              g_fsi_handles.m_handle[index].m_last_io_time, index,
-              oldest_time, g_fsi_handles.m_handle[index].m_nfs_state,
-              g_fsi_handles.m_handle[index].m_hndl_in_use);
     if ((g_fsi_handles.m_handle[index].m_last_io_time < oldest_time) &&
         (g_fsi_handles.m_handle[index].m_hndl_in_use) &&
         (g_fsi_handles.m_handle[index].m_nfs_state == NFS_CLOSE) &&
@@ -181,6 +174,21 @@ int ptfsal_find_oldest_handle(void)
         fsihandle = index;
     }
   }
+
+  /* Just in case we did not find an handle.  Dump the handle table out
+     and let us examine why. */
+  if (fsihandle == -1) {
+    for (index = FSI_CIFS_RESERVED_STREAMS;
+         index < g_fsi_handles.m_count;
+         index++) {
+      FSI_TRACE(FSI_NOTICE, "Last IO time[%ld] handle index [%d]"
+                "oldest_time[%ld] handle state[%d] m_hndl_in_use[%d]",
+                g_fsi_handles.m_handle[index].m_last_io_time, index,
+                oldest_time, g_fsi_handles.m_handle[index].m_nfs_state,
+                g_fsi_handles.m_handle[index].m_hndl_in_use);
+    }
+  }
+
   ccl_up_mutex_unlock(&g_handle_mutex);
   FSI_TRACE(FSI_NOTICE, "fsi file handle = %d", fsihandle);
 
