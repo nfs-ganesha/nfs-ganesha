@@ -85,6 +85,12 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
       name[sizeof(handle_entry.m_name)-1] = '\0';
       FSI_TRACE(FSI_DEBUG, "FSI - name = %s \n", name);
       pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+ 
+      // Check whether the name from cache is empty 
+      if (strnlen(name, 1) == 0) {
+        FSI_TRACE(FSI_INFO, "The name is empty string for handle: "
+                  "%p", handle);
+      }
       return 0;
     }
   }
