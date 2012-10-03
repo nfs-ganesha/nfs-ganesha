@@ -131,7 +131,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
 
 /* Create a channel for a new clientid (v4) or session, optionally
  * connecting it */
-int nfs_rpc_create_chan_v41(nfs41_session_t *session,
+int nfs_rpc_create_chan_v41(nfs_client_id_t *pclientid,
                             uint32_t flags);
 
 /* Dispose a channel. */

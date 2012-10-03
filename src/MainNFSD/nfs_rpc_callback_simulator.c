@@ -90,9 +90,11 @@ static const char* introspection_xml =
 
 extern hash_table_t *ht_confirmed_client_id;
 
+/* For all NFSv4 clients, a clientid reliably indicates a callback
+ * channel */
 static DBusHandlerResult
-nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
-                      void *user_data)
+nfs_rpc_cbsim_get_v40_client_ids(DBusConnection *conn, DBusMessage *msg,
+                                 void *user_data)
 {
   DBusMessage* reply;
   static uint32_t i, serial = 1;
@@ -123,6 +125,57 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
       pclientid = pdata->val.addr;
       clientid = pclientid->cid_clientid;
       dbus_message_iter_append_basic(&sub_iter, DBUS_TYPE_UINT64, &clientid);
+      RBT_INCREMENT(pn);      
+    }
+    pthread_rwlock_unlock(&(ht->partitions[i].lock));
+  }
+  dbus_message_iter_close_container(&iter, &sub_iter);
+  /* send the reply && flush the connection */
+  if (!dbus_connection_send(conn, reply, &serial)) {
+      LogCrit(COMPONENT_DBUS, "reply failed");
+  }
+  dbus_connection_flush(conn);
+  dbus_message_unref(reply);
+  serial++;
+  return (DBUS_HANDLER_RESULT_HANDLED);
+}
+
+static DBusHandlerResult
+nfs_rpc_cbsim_get_session_ids(DBusConnection *conn, DBusMessage *msg,
+                              void *user_data)
+{
+  DBusMessage* reply;
+  static uint32_t i, serial = 1;
+  hash_table_t *ht = ht_session_id;
+  struct rbt_head *head_rbt;
+  hash_data_t *pdata = NULL;
+  struct rbt_node *pn;
+  char session_id[2*NFS4_SESSIONID_SIZE]; /* guaranteed to fit */
+  nfs41_session_t *session_data;
+  DBusMessageIter iter, sub_iter;
+
+  /* create a reply from the message */
+  reply = dbus_message_new_method_return(msg);
+  dbus_message_iter_init_append(reply, &iter);
+
+  dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+                                   DBUS_TYPE_UINT64_AS_STRING, &sub_iter);
+  /* For each bucket of the hashtable */
+  for(i = 0; i < ht->parameter.index_size; i++) {
+    head_rbt = &(ht->partitions[i].rbt);
+    
+    /* acquire mutex */
+    pthread_rwlock_wrlock(&(ht->partitions[i].lock));
+    
+    /* go through all entries in the red-black-tree*/
+    RBT_LOOP(head_rbt, pn) {
+      pdata = RBT_OPAQ(pn);
+      session_data =
+          (nfs41_session_t *)pdata->buffval.pdata;
+      /* format */
+      b64_ntop((unsigned_char *) session_data->session_id, NFS4_SESSIONID_SIZE,
+               session_id, (2*NFS4_SESSIONID_SIZE));
+      dbus_message_iter_append_basic(&sub_iter, DBUS_TYPE_STRING, &session_id);
       RBT_INCREMENT(pn);      
     }
     pthread_rwlock_unlock(&(ht->partitions[i].lock));

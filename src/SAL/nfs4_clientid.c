@@ -92,9 +92,9 @@ int display_client_id_rec(nfs_client_id_t * pclientid, char * str)
     delta = time(NULL) - pclientid->cid_last_renew;
 
   tmpstr += sprintf(tmpstr, "} cb_prog=%u r_addr=%s r_netid=%s t_delta=%d reservations=%d refcount=%"PRId32,
-                    pclientid->cid_cb.cid_program,
-                    pclientid->cid_cb.cid_client_r_addr,
-                    netid_nc_table[pclientid->cid_cb.cid_addr.nc].netid,
+                    pclientid->cid_cb.cb_program,
+                    pclientid->cid_cb.cb_client_r_addr,
+                    netid_nc_table[pclientid->cid_cb.cb_addr.nc].netid,
                     delta,
                     pclientid->cid_lease_reservations,
                     atomic_fetch_int32_t(&pclientid->cid_refcount));
@@ -292,7 +292,8 @@ int display_client_id_val(struct gsh_buffdesc * pbuff, char *str)
 nfs_client_id_t * create_client_id(clientid4              clientid,
                                    nfs_client_record_t  * pclient_record,
                                    sockaddr_t           * pclient_addr,
-                                   nfs_client_cred_t    * pcredential)
+                                   nfs_client_cred_t    * pcredential,
+                                   uint32_t               minorversion)
 {
   nfs_client_id_t * pclientid = pool_alloc(client_id_pool, NULL);
   state_owner_t   * powner;
@@ -347,6 +348,7 @@ nfs_client_id_t * create_client_id(clientid4              clientid,
   pclientid->cid_client_record = pclient_record;
   pclientid->cid_client_addr   = *pclient_addr;
   pclientid->cid_credential    = *pcredential;
+  pclientid->cid_minorversion  = minorversion;
 
   /* need to init the list_head */
   init_glist(&pclientid->cid_openowners);

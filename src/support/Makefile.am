@@ -28,6 +28,7 @@ libsupport_la_SOURCES = nfs4_acls.c                         \
                          lookup3.c                          \
                          murmur3.c                          \
                          generic_weakref.c                  \
+                         bsd-base64.c                       \
                          strlcat.c                          \
                          strlcpy.c
 

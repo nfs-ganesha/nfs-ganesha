@@ -376,11 +376,7 @@ typedef struct rpc_call_channel
     enum rpc_chan_type type;
     pthread_mutex_t mtx;
     uint32_t states;
-    union {
-        struct {
-            nfs_client_id_t *pclientid;
-        } v40;
-    } nvu;
+    nfs_client_id_t *clientid;
     time_t last_called;
     CLIENT *clnt;
     struct rpc_gss_sec gss_sec;
@@ -762,7 +758,11 @@ int namemap_clear();
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t *phstat,
                      hash_stat_t * phstat_reverse);
 
-#define WORKER_INDEX_ANY INT_MAX
+/* used in DBUS-api diagnostic functions (e.g., serialize sessionid) */
+int b64_ntop(u_char const *src, size_t srclength, char *target,
+             size_t targsize);
+int b64_pton(char const *src, u_char *target, size_t targsize);
+
 unsigned int nfs_core_select_worker_queue(unsigned int avoid_index) ;
 
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);

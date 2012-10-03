@@ -98,12 +98,14 @@ struct nfs41_session__
 {
   clientid4              clientid;
   nfs_client_id_t      * pclientid_record;
+  struct glist_head      session_list;
   uint32_t               sequence;
   uint32_t               session_flags;
   char                   session_id[NFS4_SESSIONID_SIZE];
   channel_attrs4         fore_channel_attrs;
   channel_attrs4         back_channel_attrs;
   nfs41_session_slot_t   slots[NFS41_NB_SLOTS];
+  SVCXPRT              * xprt; /* ref'd pointer to xprt */
 };
 
 /******************************************************************************
@@ -339,14 +341,18 @@ struct nfs_client_id_t
   pthread_mutex_t                cid_mutex;
         /* supplied univ. address */
   struct {
-      char                       cid_client_r_addr[SOCK_NAME_MAX];
-      gsh_addr_t                 cid_addr;
-      uint32_t                   cid_program;
+      char                       cb_client_r_addr[SOCK_NAME_MAX];
+      gsh_addr_t                 cb_addr;
+      uint32_t                   cb_program;
+      struct rpc_call_channel    cb_chan;
       union {
           struct {
-              struct rpc_call_channel cb_chan;
-              uint32_t                cb_callback_ident;
+              uint32_t            cb_callback_ident;
           } v40;
+          struct {
+              nfs41_session_t   * cb_session;
+              struct glist_head   cb_session_list;
+          } v41;
       } cb_u;
   } cid_cb;
   char                           cid_server_owner[MAXNAMLEN];

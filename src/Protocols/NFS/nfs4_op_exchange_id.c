@@ -347,7 +347,8 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
   unconf = create_client_id(0,
                             client_record,
                             &client_addr,
-                            &data->credential);
+                            &data->credential,
+                            data->minorversion);
 
   if(unconf == NULL)
     {

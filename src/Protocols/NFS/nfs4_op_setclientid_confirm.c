@@ -369,17 +369,17 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
         }
 
       /* Copy callback information into confirmed clientid record */
-      memcpy(conf->cid_cb.cid_client_r_addr,
-             unconf->cid_cb.cid_client_r_addr,
-             sizeof(conf->cid_cb.cid_client_r_addr));
+      memcpy(conf->cid_cb.cb_client_r_addr,
+             unconf->cid_cb.cb_client_r_addr,
+             sizeof(conf->cid_cb.cb_client_r_addr));
 
-      conf->cid_cb.cid_addr    = unconf->cid_cb.cid_addr;
-      conf->cid_cb.cid_program = unconf->cid_cb.cid_program;
+      conf->cid_cb.cb_addr    = unconf->cid_cb.cb_addr;
+      conf->cid_cb.cb_program = unconf->cid_cb.cb_program;
 
       conf->cid_cb.cb_u.v40.cb_callback_ident =
         unconf->cid_cb.cb_u.v40.cb_callback_ident;
 
-      nfs_rpc_destroy_chan(&conf->cid_cb.cb_u.v40.cb_chan);
+      nfs_rpc_destroy_chan(&conf->cid_cb.cb_chan);
 
       memcpy(conf->cid_verifier, unconf->cid_verifier, NFS4_VERIFIER_SIZE);
 

@@ -68,7 +68,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
                            compound_data_t *data,
                            struct nfs_resop4 *resp)
 {
-  nfs_client_id_t     * conf   = NULL;
+  nfs_client_id_t     * conf   = NULL; /* XXX these are not good names */
   nfs_client_id_t     * unconf = NULL;
   nfs_client_id_t     * found  = NULL;
   nfs_client_record_t * client_record;
@@ -310,13 +310,19 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
   nfs41_session->session_flags      = CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
   nfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs;
   nfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs;
+  nfs41_session->xprt = data->reqp->rq_xprt;
 
   /* Take reference to clientid record */
   inc_client_id_ref(found);
 
+  /* add to head of session list (encapsulate?) */
+  glist_add(&found->cid_cb.cb_u.v41.cb_session_list,
+            &nfs41_session->session_list);
+
   /* Set ca_maxrequests */
   nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
   nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+  /* XXXX ^^^BUG? back? */
 
   nfs41_Build_sessionid(&clientid, nfs41_session->session_id);
 
@@ -402,7 +408,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
                str_client,
                arg_CREATE_SESSION4.csa_cb_program);
 
-      conf->cid_cb.cid_program = arg_CREATE_SESSION4.csa_cb_program;
+      conf->cid_cb.cb_program = arg_CREATE_SESSION4.csa_cb_program;
 
       if(unconf != NULL)
         {
@@ -441,7 +447,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
                        str);
         }
 
-      unconf->cid_cb.cid_program = arg_CREATE_SESSION4.csa_cb_program;
+      unconf->cid_cb.cb_program = arg_CREATE_SESSION4.csa_cb_program;
 
       rc = nfs_client_id_confirm(unconf, component);
 

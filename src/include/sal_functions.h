@@ -36,6 +36,7 @@
 #ifndef _SAL_FUNCTIONS_H
 #define _SAL_FUNCTIONS_H
 
+#include <stdint.h>
 #include "sal_data.h"
 #include "nfs_exports.h"
 #include "nfs_core.h"
@@ -199,7 +200,8 @@ int nfs_client_id_get_confirmed(clientid4          clientid,
 nfs_client_id_t * create_client_id(clientid4              clientid,
                                    nfs_client_record_t  * pclient_record,
                                    sockaddr_t           * pclient_addr,
-                                   nfs_client_cred_t    * pcredential);
+                                   nfs_client_cred_t    * pcredential,
+                                   uint32_t               minorversion);
 
 int nfs_client_id_insert(nfs_client_id_t * pclientid);
 

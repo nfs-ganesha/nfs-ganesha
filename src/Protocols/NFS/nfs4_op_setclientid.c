@@ -178,9 +178,9 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
           res_SETCLIENTID4.status = NFS4ERR_CLID_INUSE;
           res_SETCLIENTID4_INUSE.r_netid
-               = (char *) netid_nc_table[conf->cid_cb.cid_addr.nc].netid;
+               = (char *) netid_nc_table[conf->cid_cb.cb_addr.nc].netid;
           res_SETCLIENTID4_INUSE.r_addr
-               = gsh_strdup(conf->cid_cb.cid_client_r_addr);
+               = gsh_strdup(conf->cid_cb.cb_client_r_addr);
 
           /* Release our reference to the confirmed clientid. */
           dec_client_id_ref(conf);
@@ -294,7 +294,8 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
   unconf = create_client_id(clientid,
                             client_record,
                             &client_addr,
-                            &data->credential);
+                            &data->credential,
+                            0);
 
   if(unconf == NULL)
     {
@@ -304,7 +305,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
       goto out;
     }
 
-  strncpy(unconf->cid_cb.cid_client_r_addr,
+  strncpy(unconf->cid_cb.cb_client_r_addr,
           arg_SETCLIENTID4.callback.cb_location.r_addr,
           SOCK_NAME_MAX);
 
@@ -316,7 +317,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
          NFS4_VERIFIER_SIZE);
   memcpy(unconf->cid_verifier, verifier, sizeof(NFS4_write_verifier));
 
-  unconf->cid_cb.cid_program = arg_SETCLIENTID4.callback.cb_program;
+  unconf->cid_cb.cb_program = arg_SETCLIENTID4.callback.cb_program;
   unconf->cid_cb.cb_u.v40.cb_callback_ident = arg_SETCLIENTID4.callback_ident;
 
   rc = nfs_client_id_insert(unconf);
