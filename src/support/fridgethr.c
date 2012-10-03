@@ -164,31 +164,27 @@ fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
     fridge_entry_t *pfe = container_of(thr_ctx, fridge_entry_t, ctx);
     int rc;
 
-    if ((rc = gettimeofday(&pfe->tp, NULL)) != 0)
-        return (FALSE);
-
-    /* Be careful : pthread_cond_timedwait take an *absolute* time as time
-     * specification, not a duration */ 
-    pfe->timeout.tv_sec = pfe->tp.tv_sec + fr->expiration_delay_s;
-    pfe->timeout.tv_nsec = 0; 
-    pfe->frozen = TRUE;
-
     pthread_mutex_lock(&fr->mtx);
     glist_add_tail(&fr->idle_q, &pfe->q);
     ++(fr->nidle);
 
     pthread_mutex_lock(&pfe->ctx.mtx);
-    /* syncflag here?? */
     pthread_mutex_unlock(&fr->mtx);
 
+    pfe->frozen = TRUE;
     pfe->flags |= FridgeThr_Flag_WaitSync;
-    do {
-        if (fr->expiration_delay_s > 0 )
+
+    while (! (pfe->flags & FridgeThr_Flag_SyncDone)) {
+        if (fr->expiration_delay_s > 0 ) {
+            (void) gettimeofday(&pfe->tp, NULL);
+            pfe->timeout.tv_sec = pfe->tp.tv_sec + fr->expiration_delay_s;
+            pfe->timeout.tv_nsec = 0; 
             rc = pthread_cond_timedwait(&pfe->ctx.cv, &pfe->ctx.mtx,
-                                        &pfe->timeout );
+                                        &pfe->timeout);
+        }
         else
             rc = pthread_cond_wait(&pfe->ctx.cv, &pfe->ctx.mtx);
-    } while (! (pfe->flags & FridgeThr_Flag_SyncDone));
+    }
 
     pfe->flags &= ~(FridgeThr_Flag_WaitSync|FridgeThr_Flag_SyncDone);
     pthread_mutex_unlock(&pfe->ctx.mtx);

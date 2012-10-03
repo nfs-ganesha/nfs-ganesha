@@ -1154,12 +1154,10 @@ retry_deq:
         glist_add_tail(&nfs_req_st.reqs.wait_list, &wqe->waitq);
         ++(nfs_req_st.reqs.waiters);
         pthread_spin_unlock(&nfs_req_st.reqs.sp);
-
-        do {
+        /* XXX check for TCB event? */
+        while (! (wqe->flags & Wqe_LFlag_SyncDone)) {
             pthread_cond_wait(&wqe->lwe.cv, &wqe->lwe.mtx);
-            /* XXX check for TCB event? */
-        } while (! (wqe->flags & Wqe_LFlag_SyncDone));
-
+        };
         /* XXX wqe was removed from nfs_req_st.waitq (by signalling thread) */
         wqe->flags &= ~(Wqe_LFlag_WaitSync|Wqe_LFlag_SyncDone);
         pthread_mutex_unlock(&wqe->lwe.mtx);
