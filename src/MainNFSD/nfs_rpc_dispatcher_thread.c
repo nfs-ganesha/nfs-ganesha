@@ -1144,14 +1144,14 @@ retry_deq:
         pthread_mutex_lock(&nfs_req_st.reqs.mtx);
         glist_add_tail(&nfs_req_st.reqs.wait_list, &wqe->waitq);
         ++(nfs_req_st.reqs.waiters);
-        pthread_spin_unlock(&nfs_req_st.reqs.sp);
+        pthread_mutex_unlock(&nfs_req_st.reqs.mtx);
         while (! (wqe->flags & Wqe_LFlag_SyncDone)) {
             timeout.tv_sec  = time(NULL) + 1;
             timeout.tv_nsec = 0;
             pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx, &timeout);
             if ((worker->wcb.tcb_state) == STATE_EXIT) {
                 /* We are returning; so take us out of the waitq */
-                pthread_spin_lock(&nfs_req_st.reqs.sp);
+                pthread_mutex_lock(&nfs_req_st.reqs.mtx);
                 if (wqe->waitq.next != NULL || wqe->waitq.prev != NULL) {
                     /* Element is still in wqitq, remove it */
                     glist_del(&wqe->waitq);
@@ -1159,7 +1159,7 @@ retry_deq:
                     --(wqe->waiters);
                     wqe->flags &= ~(Wqe_LFlag_WaitSync|Wqe_LFlag_SyncDone);
                 }
-                pthread_spin_unlock(&nfs_req_st.reqs.sp);
+                pthread_mutex_unlock(&nfs_req_st.reqs.mtx);
                 pthread_mutex_unlock(&wqe->lwe.mtx);
                 return NULL;
             }
