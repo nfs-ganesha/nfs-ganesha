@@ -1449,6 +1449,9 @@ worker_thread(void *IndexArg)
     wbreak:
       nfsreq = nfs_rpc_dequeue_req(worker_data);
 
+      if(!nfsreq)
+          continue;
+
       LogFullDebug(COMPONENT_DISPATCH,
                    "Processing a new request %p, pause_state: %s",
                    nfsreq,
