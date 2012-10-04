@@ -58,7 +58,6 @@ fridgethr_init(thr_fridge_t *fr, const char *s)
     pthread_attr_init(&fr->attr); 
     pthread_attr_setscope(&fr->attr, PTHREAD_SCOPE_SYSTEM);
     pthread_attr_setdetachstate(&fr->attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setstacksize(&fr->attr, fr->stacksize);
     pthread_mutex_init(&fr->mtx, NULL);
 
     /* idle threads q */
@@ -104,6 +103,7 @@ fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
               void *arg)
 {
     fridge_entry_t *pfe;
+    int retval = 0;
 
     pthread_mutex_lock(&fr->mtx);
 
@@ -126,8 +126,13 @@ fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
         pfe->ctx.arg = arg;
         pfe->frozen = FALSE;
 
-        (void) pthread_create(&pfe->ctx.id, &fr->attr, fridgethr_start_routine,
-                              pfe);
+        retval = pthread_create(&pfe->ctx.id, &fr->attr/*  NULL */, fridgethr_start_routine,
+				pfe);
+	if(retval) {
+		LogCrit(COMPONENT_THREAD,
+			"pthread_create bogus: %d", errno);
+		assert(errno == 0);
+	}
 
         LogFullDebug(COMPONENT_THREAD,
                 "fr %p created thread %u (nthreads %u nidle %u)",
