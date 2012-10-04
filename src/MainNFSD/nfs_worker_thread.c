@@ -770,7 +770,9 @@ nfs_rpc_get_args(nfs_request_data_t *preqnfs)
                    "svc_getargs failed for Program %d, Version %d, Function %d xid=%u",
                (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
                req->rq_xid);
-      svcerr_decode2(xprt, req);
+      /* XXX: We don't need to send GARBAGE_ARGS on failure; let the client 
+       * retry. Per Matt we need to revisit this.*/
+      /*svcerr_decode2(xprt, req);*/
       return FALSE;
     }
 
