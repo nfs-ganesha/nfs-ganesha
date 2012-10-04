@@ -522,6 +522,7 @@ fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
   int rc;
   fsi_stat_struct buffstat;
   ptfsal_handle_t *p_fsi_handle = (ptfsal_handle_t *)p_handle;
+  uint64_t * handlePtr;
 
   FSI_TRACE(FSI_NOTICE, "FSI - get_handle for path %s\n", p_fsalpath->path);
 
@@ -541,11 +542,11 @@ fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
          &buffstat.st_persistentHandle.handle, FSI_PERSISTENT_HANDLE_N_BYTES);
   p_fsi_handle->data.handle.handle_size = FSI_PERSISTENT_HANDLE_N_BYTES;
   p_fsi_handle->data.handle.handle_version = OPENHANDLE_VERSION;
-  FSI_TRACE(FSI_DEBUG, "Handle=%s", p_fsi_handle->data.handle.f_handle);
   p_fsi_handle->data.handle.handle_type = posix2fsal_type(buffstat.st_mode);
 
-  FSI_TRACE(FSI_NOTICE,"FSI - fsal_internal_get_handle[%s] type %x\n", 
-            p_fsi_handle->data.handle.f_handle, 
+  handlePtr = (uint64_t *) p_fsi_handle->data.handle.f_handle; 
+  FSI_TRACE(FSI_NOTICE,"FSI - fsal_internal_get_handle[0x%lx %lx %lx %lx] type %x\n", 
+            handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3],
             p_fsi_handle->data.handle.handle_type);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);

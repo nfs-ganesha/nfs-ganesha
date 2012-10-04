@@ -70,6 +70,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   struct PersistentHandle pt_handler;
   char                  * client_ip;
   struct fsi_handle_cache_entry_t handle_entry;
+  uint64_t * handlePtr;
 
   FSI_TRACE(FSI_DEBUG, "Get name from handle: \n");
   ptfsal_print_handle(handle);
@@ -102,8 +103,9 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   FSI_TRACE(FSI_DEBUG, "Handle: \n");
   ptfsal_print_handle(handle);
   rc = ccl_handle_to_name(&ccl_context, &pt_handler, name); 
-
-  FSI_TRACE(FSI_DEBUG, "The rc %d, handle %s, name %s", rc, handle, name);
+  handlePtr = (uint64_t *) handle;
+  FSI_TRACE(FSI_DEBUG, "The rc %d, handle 0x%lx %lx %lx %lx, name %s", rc, 
+            handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3], name);
   
   if (rc == 0) {
     pthread_mutex_lock(&g_fsi_name_handle_mutex);
