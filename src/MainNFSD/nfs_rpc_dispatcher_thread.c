@@ -1099,6 +1099,7 @@ nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
     struct req_q_set *nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
     struct req_q_pair *qpair;
     uint32_t ix, slot;
+    struct timespec timeout;
 
     /* XXX: the following stands in for a more robust/flexible
      * weighting function */
@@ -1154,15 +1155,31 @@ retry_deq:
         glist_add_tail(&nfs_req_st.reqs.wait_list, &wqe->waitq);
         ++(nfs_req_st.reqs.waiters);
         pthread_spin_unlock(&nfs_req_st.reqs.sp);
-        /* XXX check for TCB event? */
+
         while (! (wqe->flags & Wqe_LFlag_SyncDone)) {
-            pthread_cond_wait(&wqe->lwe.cv, &wqe->lwe.mtx);
-        };
+            timeout.tv_sec  = time(NULL) + 1;
+            timeout.tv_nsec = 0;
+            pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx, &timeout);
+            if ((worker->wcb.tcb_state) == STATE_EXIT) {
+                /* We are returning; so take us out of the waitq */
+                pthread_spin_lock(&nfs_req_st.reqs.sp);
+                if (wqe->waitq.next != NULL || wqe->waitq.prev != NULL) {
+                    /* Element is still in wqitq, remove it */
+                    glist_del(&wqe->waitq);
+                    --(nfs_req_st.reqs.waiters);
+                    --(wqe->waiters);
+                    wqe->flags &= ~(Wqe_LFlag_WaitSync|Wqe_LFlag_SyncDone);
+                }
+                pthread_spin_unlock(&nfs_req_st.reqs.sp);
+                pthread_mutex_unlock(&wqe->lwe.mtx);
+                return NULL;
+            }
+        }
+
         /* XXX wqe was removed from nfs_req_st.waitq (by signalling thread) */
         wqe->flags &= ~(Wqe_LFlag_WaitSync|Wqe_LFlag_SyncDone);
         pthread_mutex_unlock(&wqe->lwe.mtx);
-        LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", 
-                     wqe);
+        LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", wqe);
         goto retry_deq;
     }
 
