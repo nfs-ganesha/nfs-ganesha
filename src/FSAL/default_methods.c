@@ -811,6 +811,7 @@ static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
+			       const struct req_op_context *opctx,
 			       fsal_openflags_t openflags)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

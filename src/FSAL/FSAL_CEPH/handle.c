@@ -757,7 +757,8 @@ fsal_truncate(struct fsal_obj_handle *handle_pub,
 
 static fsal_status_t
 fsal_open(struct fsal_obj_handle *handle_pub,
-          fsal_openflags_t openflags)
+          const struct req_op_context *opctx,
+	  fsal_openflags_t openflags)
 {
         /* Generic status return */
         int rc = 0;

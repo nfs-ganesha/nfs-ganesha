@@ -1965,7 +1965,8 @@ pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
  */
 static fsal_status_t
 pxy_open(struct fsal_obj_handle *obj_hdl,
-         fsal_openflags_t openflags)
+	 const struct req_op_context *opctx,
+	 fsal_openflags_t openflags)
 {
         struct pxy_obj_handle *ph; 
 

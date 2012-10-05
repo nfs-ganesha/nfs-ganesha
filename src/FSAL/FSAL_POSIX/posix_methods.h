@@ -68,7 +68,9 @@ struct posix_fsal_obj_handle {
 
 
         /* I/O management */
-fsal_status_t posix_open (struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags);
+fsal_status_t posix_open (struct fsal_obj_handle *obj_hdl,
+			  const struct req_op_context *opctx,
+			  fsal_openflags_t openflags);
 fsal_openflags_t posix_status (struct fsal_obj_handle *obj_hdl);
 fsal_status_t posix_read (struct fsal_obj_handle *obj_hdl,
 			  const struct req_op_context *opctx,
