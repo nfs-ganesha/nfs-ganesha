@@ -67,6 +67,7 @@ vfs_unopenable_type(object_file_type_t type)
 
 	/* I/O management */
 fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
+		       const struct req_op_context *opctx,
 		       fsal_openflags_t openflags);
 fsal_openflags_t vfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,

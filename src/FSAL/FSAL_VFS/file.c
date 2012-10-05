@@ -48,6 +48,7 @@
  */
 
 fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
+		       const struct req_op_context *opctx,
 		       fsal_openflags_t openflags)
 {
 	struct vfs_fsal_obj_handle *myself;

@@ -1433,7 +1433,8 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*open)(struct fsal_obj_handle *obj_hdl,
-                              fsal_openflags_t openflags);
+                              const struct req_op_context *opctx,
+			      fsal_openflags_t openflags);
 
 /**
  * @brief Return open status

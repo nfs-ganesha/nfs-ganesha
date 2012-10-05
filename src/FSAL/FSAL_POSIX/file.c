@@ -50,7 +50,9 @@
 
 extern struct connection_pool *connpool;
 
-fsal_status_t posix_open (struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags)
+fsal_status_t posix_open (struct fsal_obj_handle *obj_hdl,
+			  const struct req_op_context *opctx,
+			  fsal_openflags_t openflags)
 {
     char *p = NULL;
     struct file_data *child = NULL;
