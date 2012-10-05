@@ -114,36 +114,52 @@ int posix2fsal_error(int posix_errorcode)
 
     case ENOMEM:
     case ENOLCK:
+         LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_NOMEM",
+                        __FUNCTION__, posix_errorcode);
       return ERR_FSAL_NOMEM;
 
     case EACCES:
       return ERR_FSAL_ACCESS;
 
     case EFAULT:
+         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_FAULT",
+                        __FUNCTION__);
       return ERR_FSAL_FAULT;
 
     case EEXIST:
+         LogCrit(COMPONENT_FSAL, "%s mapping ERR_FSAL_EXIST",
+                        __FUNCTION__);
       return ERR_FSAL_EXIST;
 
     case EXDEV:
       return ERR_FSAL_XDEV;
 
     case ENOTDIR:
+         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_NOTDIR",
+                        __FUNCTION__);
       return ERR_FSAL_NOTDIR;
 
     case EISDIR:
+         LogCrit(COMPONENT_FSAL, "%s mapping ERR_FSAL_ISDIR",
+                        __FUNCTION__);
       return ERR_FSAL_ISDIR;
 
     case EINVAL:
+         LogCrit(COMPONENT_FSAL, "%s mapping ERR_FSAL_INVAL",
+                        __FUNCTION__);
       return ERR_FSAL_INVAL;
 
     case EFBIG:
+         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_FBIG",
+                        __FUNCTION__);
       return ERR_FSAL_FBIG;
 
     case ETXTBSY:
       return ERR_FSAL_FILE_OPEN;
 
     case ENOSPC:
+         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_NOSPC",
+                        __FUNCTION__);
       return ERR_FSAL_NOSPC;
 
     case EMLINK:
@@ -153,6 +169,8 @@ int posix2fsal_error(int posix_errorcode)
       return ERR_FSAL_DQUOT;
 
     case ENAMETOOLONG:
+         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_NAMETOOLONG",
+                        __FUNCTION__);
       return ERR_FSAL_NAMETOOLONG;
 
 /**
