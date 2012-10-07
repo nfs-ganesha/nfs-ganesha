@@ -33,38 +33,20 @@
 /**
  * GPFSFSAL_share_op:
  */
-fsal_status_t GPFSFSAL_share_op( fsal_file_t        * p_file_descriptor, /* IN */
-                                 fsal_handle_t      * p_filehandle,      /* IN */
-                                 fsal_op_context_t  * p_context,         /* IN */
-                                 void               * p_owner,           /* IN */
-                                 fsal_share_param_t   request_share)     /* IN */
+fsal_status_t GPFSFSAL_share_op(int mntfd,                        /* IN */
+                                int fd,                           /* IN */
+                                void *p_owner,                     /* IN */
+                                fsal_share_param_t request_share) /* IN */
 {
   int rc = 0;
-  int dirfd = 0;
   struct share_reserve_arg share_arg;
-  gpfsfsal_file_t * pfd = NULL;
-
-  if(p_file_descriptor == NULL)
-    {
-      LogDebug(COMPONENT_FSAL, "p_file_descriptor arg is NULL.");
-      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_share_op);
-    }
-
-  if(p_context == NULL)
-    {
-      LogDebug(COMPONENT_FSAL, "p_context arg is NULL.");
-      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_share_op);
-    }
 
   LogFullDebug(COMPONENT_FSAL,
                "Share reservation: access:%u deny:%u owner:%p",
                request_share.share_access, request_share.share_deny, p_owner);
 
-  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
-  pfd = (gpfsfsal_file_t *) p_file_descriptor;
-
-  share_arg.mountdirfd = dirfd;
-  share_arg.openfd = pfd->fd;
+  share_arg.mountdirfd = mntfd;
+  share_arg.openfd = fd;
   share_arg.share_access = request_share.share_access;
   share_arg.share_deny = request_share.share_deny;
 
@@ -75,8 +57,8 @@ fsal_status_t GPFSFSAL_share_op( fsal_file_t        * p_file_descriptor, /* IN *
       LogDebug(COMPONENT_FSAL,
                "gpfs_ganesha: OPENHANDLE_SHARE_RESERVE returned error, rc=%d, errno=%d",
                rc, errno);
-      ReturnCode(posix2fsal_error(errno), errno);
+      return fsalstat(posix2fsal_error(errno), errno);
     }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_share_op);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

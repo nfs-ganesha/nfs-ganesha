@@ -29,78 +29,61 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "gpfs_methods.h"
 
 /**
  * GPFSFSAL_lock_op:
  * Lock/unlock/test an owner independent (anonymous) lock for a region in a file.
  *
- * \param p_file_descriptor (input):
- *        File descriptor of the file to lock.
- * \param p_filehandle (input):
+ * \param obj_hdl (input):
  *        File handle of the file to lock.
- * \param p_context (input):
- *        Context
  * \param p_owner (input):
  *        Owner for the requested lock; Opaque to FSAL.
  * \param lock_op (input):
  *        Can be either FSAL_OP_LOCKT, FSAL_OP_LOCK, FSAL_OP_UNLOCK.
  *        The operations are test if a file region is locked, lock a
  *        file region, unlock a file region.
- * \param lock_type (input):
- *        Can be either FSAL_LOCK_R, FSAL_LOCK_W.
- *        Either a read lock or write lock.
- * \param lock_start (input):
- *        Start of lock region measured as offset of bytes from start of file.
- * \param lock_length (input):
- *        Number of bytes to lock.
+ * \param request_lock (input):
+ *        Lock information, type, byte range....
+ * \param conflicting_lock (output):
+ *        Conflicting lock information, type, byte range....
  *
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - ERR_FSAL_FAULT: One of the in put parameters is NULL.
  *      - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was that the operation would not be possible.
  */
-fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
-                                fsal_handle_t     * p_filehandle,      /* IN */
-                                fsal_op_context_t * p_context,         /* IN */
-                                void              * p_owner,           /* IN */
-                                fsal_lock_op_t      lock_op,           /* IN */
-                                fsal_lock_param_t   request_lock,      /* IN */
-                                fsal_lock_param_t * conflicting_lock)  /* OUT */
+fsal_status_t GPFSFSAL_lock_op(struct fsal_obj_handle *obj_hdl,      /* IN */
+                                void                  *p_owner,      /* IN */
+                                fsal_lock_op_t         lock_op,      /* IN */
+                                fsal_lock_param_t      request_lock, /* IN */
+                                fsal_lock_param_t *conflicting_lock) /* OUT */
 {
   int retval;
   struct glock glock_args;
   struct set_get_lock_arg gpfs_sg_arg;
-  glock_args.lfd = ((gpfsfsal_file_t *)p_file_descriptor)->fd;
-  gpfsfsal_op_context_t *gpfs_op_cxt = (gpfsfsal_op_context_t *)p_context;
-  gpfsfsal_file_t * pfd = (gpfsfsal_file_t *) p_file_descriptor;
+  struct gpfs_fsal_obj_handle *myself;
 
-  if(p_file_descriptor == NULL)
+  if(obj_hdl == NULL)
     {
-      LogDebug(COMPONENT_FSAL, "p_file_descriptor arg is NULL.");
-      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
-    }
-  if(p_filehandle == NULL)
-    {
-      LogDebug(COMPONENT_FSAL, "p_filehandle arg is NULL.");
-      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
-    }
-  if(p_context == NULL)
-    {
-        LogDebug(COMPONENT_FSAL, "p_context arg is NULL.");
-        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
+      LogDebug(COMPONENT_FSAL, "obj_hdl arg is NULL.");
+      return fsalstat(ERR_FSAL_FAULT, 0);
     }
   if(p_owner == NULL)
     {
         LogDebug(COMPONENT_FSAL, "p_owner arg is NULL.");
-        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
+        return fsalstat(ERR_FSAL_FAULT, 0);
     }
 
   if(conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT)
     {
       LogDebug(COMPONENT_FSAL,
                "Conflicting_lock argument can't be NULL with lock_op  = LOCKT");
-      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
+      return fsalstat(ERR_FSAL_FAULT, 0);
     }
+
+  myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+  glock_args.lfd = myself->u.file.fd;
 
   LogFullDebug(COMPONENT_FSAL,
                "Locking: op:%d type:%d start:%llu length:%llu owner:%p",
@@ -120,7 +103,7 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
     {
       LogDebug(COMPONENT_FSAL,
                "ERROR: Lock operation requested was not TEST, GET, or SET.");
-      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);      
+      return fsalstat(ERR_FSAL_NOTSUPP, 0);
     }
 
   if(request_lock.lock_type == FSAL_LOCK_R)
@@ -131,7 +114,7 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
     {
       LogDebug(COMPONENT_FSAL,
                "ERROR: The requested lock type was not read or write.");
-      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
+      return fsalstat(ERR_FSAL_NOTSUPP, 0);
     }
 
   if(lock_op == FSAL_OP_UNLOCK)
@@ -141,9 +124,9 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
   glock_args.flock.l_start = request_lock.lock_start;
   glock_args.flock.l_whence = SEEK_SET;
 
-  glock_args.lfd = pfd->fd;
+  glock_args.lfd = myself->u.file.fd;
   glock_args.lock_owner = p_owner;
-  gpfs_sg_arg.mountdirfd = gpfs_op_cxt->export_context->mount_root_fd;
+  gpfs_sg_arg.mountdirfd = gpfs_get_root_fd(obj_hdl->export);
   gpfs_sg_arg.lock = &glock_args;
 
   errno = 0;
@@ -177,14 +160,14 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
         {
           LogFullDebug(COMPONENT_FSAL,
                        "GPFS queued blocked lock");
-          Return(ERR_FSAL_BLOCKED, 0, INDEX_FSAL_lock_op);
+          return fsalstat(ERR_FSAL_BLOCKED, 0);
         }
       else
         {
           LogFullDebug(COMPONENT_FSAL,
                        "GPFS lock operation failed error %d %d (%s)",
                        retval, errsv, strerror(errsv));
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lock_op);
+          return fsalstat(posix2fsal_error(errsv), errsv);
         }
     }
 
@@ -205,5 +188,5 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
         }
     }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock_op);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

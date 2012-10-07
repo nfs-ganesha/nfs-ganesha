@@ -38,6 +38,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "gpfs_methods.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -47,13 +48,15 @@
  * FSAL_truncate:
  * Modify the data length of a regular file.
  *
- * \param filehandle (input):
+ * \param export (input):
+ *        For use of mount fd
+ * \param p_filehandle (input):
  *        Handle of the file is to be truncated.
- * \param cred (input):
+ * \param p_contexd (input):
  *        Authentication context for the operation (user,...).
  * \param length (input):
  *        The new data length for the file.
- * \param object_attributes (optionnal input/output): 
+ * \param p_object_attributes (optionnal input/output):
  *        The post operation attributes of the file.
  *        As input, it defines the attributes that the caller
  *        wants to retrieve (by positioning flags into this structure)
@@ -66,49 +69,49 @@
  *        - Another error code if an error occurred.
  */
 
-fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_size_t length, /* IN */
-                            fsal_file_t * file_descriptor,      /* NOT USED */
-                            fsal_attrib_list_t * p_object_attributes) /* [ IN/OUT ] */
+fsal_status_t GPFSFSAL_truncate(struct fsal_export *export,            /* IN */
+                           struct gpfs_file_handle * p_filehandle,     /* IN */
+                           const struct req_op_context * p_context,    /* IN */
+                           size_t length,                             /* IN */
+                           struct attrlist * p_object_attributes)  /* IN/OUT */
 {
   int fsuid, fsgid;
   fsal_status_t st;
+  int mount_fd;
 
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if(!p_filehandle || !p_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
+  if(!p_filehandle || !p_context || !export)
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
-  fsuid = setfsuid(p_context->credential.user);
-  fsgid = setfsgid(p_context->credential.group);
+  mount_fd = gpfs_get_root_fd(export);
 
-  TakeTokenFSCall();
-  st = fsal_trucate_by_handle(p_context, p_filehandle, length);
-  ReleaseTokenFSCall();
+  fsuid = setfsuid(p_context->creds->caller_uid);
+  fsgid = setfsgid(p_context->creds->caller_gid);
+
+  st = fsal_trucate_by_handle(mount_fd, p_context, p_filehandle, length);
   if (FSAL_IS_ERROR(st)) {
     setfsuid(fsuid);
     setfsgid(fsgid);
-    ReturnStatus(st, INDEX_FSAL_truncate);
+    return(st);
   }
   /* Optionally retrieve attributes */
   if(p_object_attributes)
     {
       fsal_status_t st;
 
-      st = GPFSFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
+      st = GPFSFSAL_getattrs(export, p_context, p_filehandle, p_object_attributes);
 
       if(FSAL_IS_ERROR(st))
         {
-          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+          FSAL_CLEAR_MASK(p_object_attributes->mask);
+          FSAL_SET_MASK(p_object_attributes->mask, ATTR_RDATTR_ERR);
         }
     }
+  fsuid = setfsuid(fsuid);
+  fsgid = setfsgid(fsgid);
 
-  fsuid =setfsuid(fsuid);
-  fsgid =setfsgid(fsgid);
-  /* No error occurred */
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }

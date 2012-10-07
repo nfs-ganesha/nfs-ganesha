@@ -599,7 +599,7 @@ int parseAccessParam(char *var_name, char *var_value,
 
 bool fsal_specific_checks(exportlist_t *p_entry)
 {
-  #ifdef _USE_GPFS
+#if 0 //??? need up call
   p_entry->use_fsal_up = true;
 
   if (strncmp(p_entry->fsal_up_type, "DUMB", 4) != 0)
@@ -616,8 +616,7 @@ bool fsal_specific_checks(exportlist_t *p_entry)
               "Setting it to false.", CONF_EXPORT_USE_GANESHA_WRITE_BUFFER);
       p_entry->use_ganesha_write_buffer = false;
     }
-  #endif
-
+#endif
   return true;
 }
 

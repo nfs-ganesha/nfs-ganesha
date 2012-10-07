@@ -1,21 +1,36 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-noinst_LTLIBRARIES          = libfsalgpfs.la
+lib_LTLIBRARIES          = libfsalgpfs.la
 
-noinst_HEADERS = fsal_convert.h fsal_internal.h
+libfsalgpfs_la_SOURCES = main.c				\
+			 export.c			\	
+			 handle.c			\
+			 file.c				\
+			 fsal_unlink.c			\
+			 fsal_truncate.c		\
+			 fsal_symlinks.c		\
+			 fsal_rename.c			\
+			 fsal_create.c			\
+			 fsal_fileop.c			\
+			 fsal_attrs.c			\
+			 fsal_lock.c			\
+			 fsal_share.c			\
+			 fsal_lookup.c			\
+			 fsal_convert.c			\
+			 fsal_convert.h			\
+			 fsal_internal.c		\
+			 fsal_internal.h		\
+	                 ../../include/fsal.h		\
+                         ../../include/fsal_types.h	\
+	                 ../../include/err_fsal.h
+	
 
-libfsalgpfs_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c	\
-	fsal_dirs.c fsal_fsinfo.c fsal_lock.c fsal_rcp.c		\
-	fsal_truncate.c fsal_attrs.c fsal_init.c		\
-	fsal_lookup.c fsal_convert.c fsal_rename.c fsal_symlinks.c	\
-	fsal_unlink.c fsal_create.c fsal_fileop.c fsal_internal.c	\
-	fsal_stats.c fsal_tools.c fsal_create.c	\
-	fsal_fileop.c fsal_internal.c fsal_stats.c	\
-	fsal_xattrs.c fsal_local_op.c		\
-	fsal_xattrs.c fsal_up.c fsal_share.c
-
-libfsalgpfs_la_LIBADD = -lgpfs                                          \
-			../../support/libsupport.la
+# ??? for now unused files
+#
+#libfsalgpfs_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c
+#	fsal_dirs.c fsal_fsinfo.c fsal_rcp.c fsal_init.c
+#	fsal_stats.c fsal_tools.c fsal_local_op.c
+#	fsal_xattrs.c fsal_up.c
 
 new: clean all
 

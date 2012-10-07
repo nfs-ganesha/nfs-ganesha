@@ -38,6 +38,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "gpfs_methods.h"
 
 /**
  * FSAL_lookup :
@@ -66,103 +67,65 @@
  *         - Another error code else.
  *          
  */
-fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
-                          fsal_name_t * p_filename,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_handle_t * object_handle,      /* OUT */
-                          fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
-    )
+fsal_status_t GPFSFSAL_lookup(const struct req_op_context *p_context,
+                              struct fsal_obj_handle *parent,
+			      const char *p_filename,
+			      struct attrlist *p_object_attr,
+			      struct gpfs_file_handle *fh)
 {
   fsal_status_t status;
-  int parentfd;
+  int parent_fd;
+  int mnt_fd;
   fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
-  gpfsfsal_handle_t *p_object_handle = (gpfsfsal_handle_t *)object_handle;
+  struct attrlist parent_dir_attrs;
+  struct gpfs_fsal_obj_handle *parent_hdl;
+//  struct gpfs_file_handle obj_handle;
 
-  /* sanity checks
-   * note : object_attributes is optional
-   *        parent_directory_handle may be null for getting FS root.
-   */
-  if(!p_object_handle || !p_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
+  if(!parent || !p_filename)
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
-  /* filename AND parent handle are NULL => lookup "/" */
-  if((p_parent_directory_handle && !p_filename)
-     || (!p_parent_directory_handle && p_filename))
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
-
-  /* get information about root */
-  if(!p_parent_directory_handle)
-    {
-      gpfsfsal_handle_t *root_handle = &((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_handle;
-
-      /* get handle for the mount point  */
-      memcpy(p_object_handle->data.handle.f_handle,
-	     root_handle->data.handle.f_handle,
-             sizeof(root_handle->data.handle.handle_size));
-      p_object_handle->data.handle.handle_size = root_handle->data.handle.handle_size;
-      p_object_handle->data.handle.handle_key_size = root_handle->data.handle.handle_key_size;
-
-      /* get attributes, if asked */
-      if(p_object_attributes)
-        {
-          status = GPFSFSAL_getattrs(object_handle, p_context, p_object_attributes);
-          if(FSAL_IS_ERROR(status))
-            {
-              FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-              FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-            }
-        }
-      /* Done */
-      Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookup);
-    }
+  mnt_fd = gpfs_get_root_fd(parent->export);
+  parent_hdl = container_of(parent, struct gpfs_fsal_obj_handle, obj_handle);
 
   /* retrieve directory attributes */
-  TakeTokenFSCall();
-  status =
-      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &parentfd, O_RDONLY);
-  ReleaseTokenFSCall();
+  status = fsal_internal_handle2fd_at(mnt_fd, parent_hdl->handle, &parent_fd, O_RDONLY);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
+    return status;
 
   /* get directory metadata */
 
-  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
+  parent_dir_attrs.mask =
+                      parent->export->ops->fs_supported_attrs(parent->export);
+  status = GPFSFSAL_getattrs(parent->export, p_context, parent_hdl->handle,
+                             &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     {
-      close(parentfd);
-      ReturnStatus(status, INDEX_FSAL_lookup);
+      close(parent_fd);
+      return status;
     }
 
   /* Be careful about junction crossing, symlinks, hardlinks,... */
   switch (parent_dir_attrs.type)
     {
-    case FSAL_TYPE_DIR:
+    case DIRECTORY:
       // OK
       break;
 
-    case FSAL_TYPE_JUNCTION:
+    case FS_JUNCTION:
       // This is a junction
-      close(parentfd);
-      Return(ERR_FSAL_XDEV, 0, INDEX_FSAL_lookup);
+      close(parent_fd);
+      return fsalstat(ERR_FSAL_XDEV, 0);
 
-    case FSAL_TYPE_FILE:
-    case FSAL_TYPE_LNK:
-    case FSAL_TYPE_XATTR:
-      // not a directory 
-      close(parentfd);
-      Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_lookup);
+    case REGULAR_FILE:
+    case SYMBOLIC_LINK:
+      // not a directory
+      close(parent_fd);
+      return fsalstat(ERR_FSAL_NOTDIR, 0);
 
     default:
-      close(parentfd);
-      Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
+      close(parent_fd);
+      return fsalstat(ERR_FSAL_SERVERFAULT, 0);
     }
-
-  //  LogFullDebug(COMPONENT_FSAL,
-  //               "lookup of %#llx:%#x:%#x/%s", p_parent_directory_handle->seq,
-  //               p_parent_directory_handle->oid, p_parent_directory_handle->ver,
-  //               p_filename->name);
 
   /* check rights to enter into the directory */
 
@@ -170,39 +133,44 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
   access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK | FSAL_X_OK) |
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
 
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
+  if(!parent->export->ops->fs_supports(parent->export,
+                                       fso_accesscheck_support))
+    status = fsal_internal_testAccess(p_context, access_mask,
+                                      &parent_dir_attrs);
   else
-    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
-                                  &parent_dir_attrs);
+    status = fsal_internal_access(parent_fd, p_context, parent_hdl->handle,
+                                  access_mask, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     {
-      close(parentfd);
-      ReturnStatus(status, INDEX_FSAL_lookup);
+      close(parent_fd);
+      return(status);
     }
 
-  /* get file handle, it it exists */
-  /* This might be a race, but it's the best we can currently do */
-  status = fsal_internal_get_handle_at(parentfd, p_filename, object_handle);
-  close(parentfd);
-
+  status = fsal_internal_get_handle_at(parent_fd, p_filename, fh);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
-
+  {
+    close(parent_fd);
+    return(status);
+  }
   /* get object attributes */
-  if(p_object_attributes)
+  if(p_object_attr)
     {
-      status = GPFSFSAL_getattrs(object_handle, p_context, p_object_attributes);
+      p_object_attr->mask =
+                       parent->export->ops->fs_supported_attrs(parent->export);
+      status = GPFSFSAL_getattrs(parent->export, p_context, fh, p_object_attr);
       if(FSAL_IS_ERROR(status))
         {
-          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+          FSAL_CLEAR_MASK(p_object_attr->mask);
+          FSAL_SET_MASK(p_object_attr->mask, ATTR_RDATTR_ERR);
         }
     }
+  close(parent_fd);
 
   /* lookup complete ! */
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookup);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
+
+#if 0 //???  not needed for now
 
 /**
  * FSAL_lookupPath :
@@ -239,31 +207,32 @@ fsal_status_t GPFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
    */
 
   if(!object_handle || !p_context || !p_path)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupPath);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   /* test whether the path begins with a slash */
 
   if(p_path->path[0] != '/')
-    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupPath);
+    return fsalstat(ERR_FSAL_INVAL, 0);
 
   /* directly call the lookup function */
 
   status = fsal_internal_get_handle(p_context, p_path, object_handle);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookupPath);
+    ReturnStatus(statusPath);
 
   /* get object attributes */
   if(p_object_attributes)
     {
-      status = GPFSFSAL_getattrs(object_handle, p_context, p_object_attributes);
+      status = GPFSFSAL_getattrs(parent->export, object_handle, p_context,
+                                 p_object_attributes);
       if(FSAL_IS_ERROR(status))
         {
-          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+          FSAL_CLEAR_MASK(p_object_attributes->mask);
+          FSAL_SET_MASK(p_object_attributes->mask, FSAL_ATTR_RDATTR_ERR);
         }
     }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupPath);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -296,5 +265,6 @@ fsal_status_t GPFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* I
                                   fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupJunction);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
+#endif

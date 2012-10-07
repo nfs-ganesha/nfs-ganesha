@@ -70,11 +70,16 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
+fsal_status_t fsal_test_access(struct fsal_obj_handle *p_object_handle,
+                                struct req_op_context *p_context,
+                                fsal_accessflags_t access_type)
+#if 0 //???
 fsal_status_t GPFSFSAL_access(fsal_handle_t * p_object_handle,      /* IN */
                           fsal_op_context_t * p_context,        /* IN */
                           fsal_accessflags_t access_type,       /* IN */
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
+#endif
 {
 
   fsal_status_t status;
@@ -83,13 +88,14 @@ fsal_status_t GPFSFSAL_access(fsal_handle_t * p_object_handle,      /* IN */
    * note : object_attributes is optionnal in GPFSFSAL_getattrs.
    */
   if(!p_object_handle || !p_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   /* 
    * If an error occures during getattr operation,
    * it is returned, even though the access operation succeeded.
    */
 
+#if 0 //???
   if(p_object_attributes)
     {
 
@@ -109,21 +115,22 @@ fsal_status_t GPFSFSAL_access(fsal_handle_t * p_object_handle,      /* IN */
 
     }
   else
+#endif //???
     {                           /* p_object_attributes is NULL */
-      fsal_attrib_list_t attrs;
+      struct attrlist attrs;
 
-      FSAL_CLEAR_MASK(attrs.asked_attributes);
-      attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+//      FSAL_CLEAR_MASK(attrs.asked_attributes);
+//      attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
 
       status = GPFSFSAL_getattrs(p_object_handle, p_context, &attrs);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
-        Return(status.major, status.minor, INDEX_FSAL_access);
+        return fsalstat(status.major, status.minor);
 
-      status = fsal_internal_access(p_context, p_object_handle, access_type, &attrs);
+      status = fsal_internal_access(p_object_handle, p_context, access_type, &attrs);
     }
 
-  Return(status.major, status.minor, INDEX_FSAL_access);
+  return fsalstat(status.major, status.minor);
 
 }

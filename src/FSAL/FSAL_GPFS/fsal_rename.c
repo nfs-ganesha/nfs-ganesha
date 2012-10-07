@@ -38,75 +38,63 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "gpfs_methods.h"
 
 /**
  * FSAL_rename:
  * Change name and/or parent dir of a filesystem object.
  *
- * \param old_parentdir_handle (input):
+ * \param old_hdl (input):
  *        Source parent directory of the object is to be moved/renamed.
  * \param p_old_name (input):
  *        Pointer to the current name of the object to be moved/renamed.
- * \param new_parentdir_handle (input):
+ * \param new_hdl (input):
  *        Target parent directory for the object.
  * \param p_new_name (input):
  *        Pointer to the new name for the object.
- * \param cred (input):
+ * \param p_context (input):
  *        Authentication context for the operation (user,...).
- * \param src_dir_attributes (optionnal input/output): 
- *        Post operation attributes for the source directory.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *        May be NULL.
- * \param tgt_dir_attributes (optionnal input/output): 
- *        Post operation attributes for the target directory.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *        May be NULL.
  *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
 
-fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
-                          fsal_name_t * p_old_name,     /* IN */
-                          fsal_handle_t * p_new_parentdir_handle,       /* IN */
-                          fsal_name_t * p_new_name,     /* IN */
-                          fsal_op_context_t * p_context,        /* IN */
-                          fsal_attrib_list_t * p_src_dir_attributes,    /* [ IN/OUT ] */
-                          fsal_attrib_list_t * p_tgt_dir_attributes     /* [ IN/OUT ] */
-    )
+fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,    /* IN */
+                          const char * p_old_name,                /* IN */
+                          struct fsal_obj_handle *new_hdl,        /* IN */
+                          const char * p_new_name,                /* IN */
+                          const struct req_op_context * p_context) /* IN */
 {
 
   fsal_status_t status;
   struct stat buffstat;
   int src_equal_tgt = false;
   fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t src_dir_attrs, tgt_dir_attrs;
+  struct attrlist src_dir_attrs, tgt_dir_attrs;
+  int mount_fd;
+  struct gpfs_fsal_obj_handle *old_gpfs_hdl, *new_gpfs_hdl;
 
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
    */
-  if(!p_old_parentdir_handle || !p_new_parentdir_handle
-     || !p_old_name || !p_new_name || !p_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
+  if(!old_hdl || !new_hdl || !p_old_name || !p_new_name || !p_context)
+    return fsalstat(ERR_FSAL_FAULT, 0);
+
+  old_gpfs_hdl = container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+  new_gpfs_hdl = container_of(new_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+  mount_fd = gpfs_get_root_fd(old_hdl->export);
 
   /* retrieve directory metadata for checking access rights */
 
-  src_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_old_parentdir_handle, p_context, &src_dir_attrs);
+  src_dir_attrs.mask = old_hdl->export->ops->fs_supported_attrs(old_hdl->export);
+  status = GPFSFSAL_getattrs(old_hdl->export, p_context, old_gpfs_hdl->handle,
+                             &src_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    {
-      ReturnStatus(status, INDEX_FSAL_rename);
-    }
+    return(status);
 
   /* optimisation : don't do the job twice if source dir = dest dir  */
-  if(!FSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
+    if(old_hdl->ops->compare(old_hdl, new_hdl))
     {
       src_equal_tgt = true;
       tgt_dir_attrs = src_dir_attrs;
@@ -114,12 +102,11 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
   else
     {
       /* retrieve destination attrs */
-      tgt_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-      status = GPFSFSAL_getattrs(p_new_parentdir_handle, p_context, &tgt_dir_attrs);
+      tgt_dir_attrs.mask = new_hdl->export->ops->fs_supported_attrs(new_hdl->export);
+      status = GPFSFSAL_getattrs(old_hdl->export, p_context, new_gpfs_hdl->handle,
+                                 &tgt_dir_attrs);
       if(FSAL_IS_ERROR(status))
-        {
-          ReturnStatus(status, INDEX_FSAL_rename);
-        }
+        return(status);
     }
 
   /* check access rights */
@@ -128,13 +115,13 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
 
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_internal_testAccess(p_context, access_mask, NULL, &src_dir_attrs);
+  if(!old_hdl->export->ops->fs_supports(old_hdl->export, fso_accesscheck_support))
+    status = fsal_internal_testAccess(p_context, access_mask, &src_dir_attrs);
   else
-    status = fsal_internal_access(p_context, p_old_parentdir_handle, access_mask,
-                                  &src_dir_attrs);
+    status = fsal_internal_access(mount_fd, p_context, old_gpfs_hdl->handle,
+                                  access_mask, &src_dir_attrs);
   if(FSAL_IS_ERROR(status)) {
-    ReturnStatus(status, INDEX_FSAL_rename);
+    return(status);
   }
 
   if(!src_equal_tgt)
@@ -143,54 +130,51 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
                                    FSAL_ACE_PERM_ADD_SUBDIRECTORY);
 
-	  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-            status = fsal_internal_testAccess(p_context, access_mask, NULL, &tgt_dir_attrs);
+          if(!old_hdl->export->ops->fs_supports(old_hdl->export,
+                                                       fso_accesscheck_support))
+            status = fsal_internal_testAccess(p_context, access_mask, &tgt_dir_attrs);
 	  else
-	    status = fsal_internal_access(p_context, p_new_parentdir_handle, access_mask,
-	                                  &tgt_dir_attrs);
+	    status = fsal_internal_access(mount_fd, p_context,
+	                     new_gpfs_hdl->handle, access_mask, &tgt_dir_attrs);
       if(FSAL_IS_ERROR(status)) {
-        ReturnStatus(status, INDEX_FSAL_rename);
+        return(status);
       }
     }
 
   /* build file paths */
-  TakeTokenFSCall();
-  status = fsal_internal_stat_name(p_context, p_old_parentdir_handle, p_old_name, &buffstat);
-  ReleaseTokenFSCall();
+  status = fsal_internal_stat_name(mount_fd, old_gpfs_hdl->handle, p_old_name, &buffstat);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_rename);
+    return(status);
 
   /* Check sticky bits */
 
   /* Sticky bit on the source directory => the user who wants to delete the file must own it or its parent dir */
   if((fsal2unix_mode(src_dir_attrs.mode) & S_ISVTX) &&
-     src_dir_attrs.owner != p_context->credential.user &&
-     buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0) {
-    Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
+     src_dir_attrs.owner != p_context->creds->caller_uid &&
+     buffstat.st_uid != p_context->creds->caller_uid && p_context->creds->caller_uid != 0) {
+    return fsalstat(ERR_FSAL_ACCESS, 0);
   }
 
   /* Sticky bit on the target directory => the user who wants to create the file must own it or its parent dir */
   if(fsal2unix_mode(tgt_dir_attrs.mode) & S_ISVTX)
     {
-      TakeTokenFSCall();
-      status = fsal_internal_stat_name(p_context, p_new_parentdir_handle, p_new_name, &buffstat);
-      ReleaseTokenFSCall();
+      status = fsal_internal_stat_name(mount_fd, new_gpfs_hdl->handle, p_new_name, &buffstat);
 
       if(FSAL_IS_ERROR(status))
         {
           if(status.major != ERR_FSAL_NOENT)
             {
-              ReturnStatus(status, INDEX_FSAL_rename);
+              return(status);
             }
         }
       else
         {
 
-          if(tgt_dir_attrs.owner != p_context->credential.user
-             && buffstat.st_uid != p_context->credential.user
-             && p_context->credential.user != 0)
+          if(tgt_dir_attrs.owner != p_context->creds->caller_uid
+             && buffstat.st_uid != p_context->creds->caller_uid
+             && p_context->creds->caller_uid != 0)
             {
-              Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
+              return fsalstat(ERR_FSAL_ACCESS, 0);
             }
         }
     }
@@ -198,46 +182,14 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
   /*************************************
    * Rename the file on the filesystem *
    *************************************/
-  TakeTokenFSCall();
-  status = fsal_internal_rename_fh(p_context, p_old_parentdir_handle,
-                                   p_new_parentdir_handle, p_old_name,
+  status = fsal_internal_rename_fh(mount_fd, old_gpfs_hdl->handle,
+                                   new_gpfs_hdl->handle, p_old_name,
                                    p_new_name);
-  ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_rename);
-
-  /***********************
-   * Fill the attributes *
-   ***********************/
-
-  if(p_src_dir_attributes)
-    {
-
-      status = GPFSFSAL_getattrs(p_old_parentdir_handle, p_context, p_src_dir_attributes);
-
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_src_dir_attributes->asked_attributes);
-          FSAL_SET_MASK(p_src_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-        }
-
-    }
-
-  if(p_tgt_dir_attributes)
-    {
-
-      status = GPFSFSAL_getattrs(p_new_parentdir_handle, p_context, p_tgt_dir_attributes);
-
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_tgt_dir_attributes->asked_attributes);
-          FSAL_SET_MASK(p_tgt_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-        }
-
-    }
+    return(status);
 
   /* OK */
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_rename);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }

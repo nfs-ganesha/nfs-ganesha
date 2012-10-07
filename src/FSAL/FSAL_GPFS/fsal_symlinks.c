@@ -37,6 +37,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "gpfs_methods.h"
 #include <string.h>
 #include <unistd.h>
 
@@ -44,14 +45,17 @@
  * FSAL_readlink:
  * Read the content of a symbolic link.
  *
- * \param linkhandle (input):
+ * \param dir_hdl (input):
  *        Handle of the link to be read.
- * \param cred (input):
+ * \param p_context (input):
  *        Authentication context for the operation (user,...).
  * \param p_link_content (output):
  *        Pointer to an fsal path structure where
  *        the link content is to be stored..
- * \param link_attributes (optionnal input/output): 
+ * \param link_len (input/output):
+ *        In pointer to len of content buff.
+ .        Out actual len of content.
+ * \param link_attributes (optionnal input/output):
  *        The post operation attributes of the symlink link.
  *        As input, it defines the attributes that the caller
  *        wants to retrieve (by positioning flags into this structure)
@@ -63,77 +67,69 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
-                            fsal_op_context_t * p_context,      /* IN */
-                            fsal_path_t * p_link_content,       /* OUT */
-                            fsal_attrib_list_t * p_link_attributes      /* [ IN/OUT ] */
-    )
+fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,        /* IN */
+                                const struct req_op_context *p_context,  /* IN */
+                                char * p_link_content,                 /* OUT */
+                                size_t  *link_len,                  /* IN/OUT */
+                                struct attrlist * p_link_attributes) /* IN/OUT */
 {
 
 /*   int errsv; */
   fsal_status_t status;
-  char link_content_out[FSAL_MAX_PATH_LEN];
+  struct gpfs_fsal_obj_handle *gpfs_hdl;
+  int mount_fd;
 
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if(!p_linkhandle || !p_context || !p_link_content)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
+  if(!dir_hdl || !p_context || !p_link_content)
+    return fsalstat(ERR_FSAL_FAULT, 0);
+
+  gpfs_hdl = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+  mount_fd = gpfs_get_root_fd(dir_hdl->export);
 
   /* Read the link on the filesystem */
-  TakeTokenFSCall();
   status =
-      fsal_readlink_by_handle(p_context, p_linkhandle, link_content_out,
-                              FSAL_MAX_PATH_LEN);
-/*   errsv = errno; */
-  ReleaseTokenFSCall();
-
+      fsal_readlink_by_handle(mount_fd, gpfs_hdl->handle, p_link_content,
+                              link_len);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_readlink);
-
-  /* convert char * to fsal_path_t */
-  status = FSAL_str2path(link_content_out, FSAL_MAX_PATH_LEN, p_link_content);
-
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_readlink);
+    return(status);
 
   /* retrieves object attributes, if asked */
 
   if(p_link_attributes)
     {
 
-      status = GPFSFSAL_getattrs(p_linkhandle, p_context, p_link_attributes);
+      status = GPFSFSAL_getattrs(dir_hdl->export, p_context, gpfs_hdl->handle,
+                                 p_link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
       if(FSAL_IS_ERROR(status))
         {
-          FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
-          FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+          FSAL_CLEAR_MASK(p_link_attributes->mask);
+          FSAL_SET_MASK(p_link_attributes->mask, ATTR_RDATTR_ERR);
         }
-
     }
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readlink);
-
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
  * FSAL_symlink:
  * Create a symbolic link.
  *
- * \param parent_directory_handle (input):
+ * \param dir_hdl (input):
  *        Handle of the parent directory where the link is to be created.
  * \param p_linkname (input):
  *        Name of the link to be created.
  * \param p_linkcontent (input):
  *        Content of the link to be created.
- * \param cred (input):
+ * \param p_context (input):
  *        Authentication context for the operation (user,...).
  * \param accessmode (ignored input):
  *        Mode of the link to be created.
  *        It has no sense in HPSS nor UNIX filesystems.
- * \param link_handle (output):
+ * \param p_link_handle (output):
  *        Pointer to the handle of the created symlink.
  * \param link_attributes (optionnal input/output): 
  *        Attributes of the newly created symlink.
@@ -147,51 +143,53 @@ fsal_status_t GPFSFSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
-                           fsal_name_t * p_linkname,    /* IN */
-                           fsal_path_t * p_linkcontent, /* IN */
-                           fsal_op_context_t * p_context,       /* IN */
-                           fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           fsal_handle_t * p_link_handle,       /* OUT */
-                           fsal_attrib_list_t * p_link_attributes       /* [ IN/OUT ] */
-    )
+fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,       /* IN */
+                           const char * p_linkname,                   /* IN */
+                           const char * p_linkcontent,                /* IN */
+                           const struct req_op_context *p_context,     /* IN */
+                           uint32_t accessmode,              /* IN (ignored) */
+                           struct gpfs_file_handle * p_link_handle,   /* OUT */
+                           struct attrlist * p_link_attributes)    /* IN/OUT */
 {
 
   int rc, errsv;
   fsal_status_t status;
-  int fd;
+  int mount_fd, fd;
   int setgid_bit = false;
   fsal_accessflags_t access_mask = 0;
-  fsal_attrib_list_t parent_dir_attrs;
+  struct attrlist parent_dir_attrs;
+  struct gpfs_fsal_obj_handle *gpfs_hdl;
 
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if(!p_parent_directory_handle || !p_context ||
-     !p_link_handle || !p_linkname || !p_linkcontent)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_symlink);
+  if(!dir_hdl || !p_context || !p_link_handle || !p_linkname || !p_linkcontent)
+    return fsalstat(ERR_FSAL_FAULT, 0);
+
+  gpfs_hdl = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+
+  mount_fd = gpfs_get_root_fd(dir_hdl->export);
 
   /* Tests if symlinking is allowed by configuration. */
 
-  if(!global_fs_info.symlink_support)
-    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
+  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_symlink_support))
+    return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
-  TakeTokenFSCall();
   status =
-      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd,
+      fsal_internal_handle2fd(mount_fd, gpfs_hdl->handle, &fd,
                               O_RDONLY | O_DIRECTORY);
-  ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_symlink);
+    return(status);
 
   /* retrieve directory metadata, for checking access */
-  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
+  parent_dir_attrs.mask = dir_hdl->export->ops->fs_supported_attrs(dir_hdl->export);
+  status = GPFSFSAL_getattrs(dir_hdl->export, p_context, gpfs_hdl->handle,
+                             &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     {
       close(fd);
-      ReturnStatus(status, INDEX_FSAL_symlink);
+      return(status);
     }
 
   if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
@@ -201,30 +199,28 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
 
-  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
+  if(!dir_hdl->export->ops->fs_supports(dir_hdl->export, fso_accesscheck_support))
+    status = fsal_internal_testAccess(p_context, access_mask, &parent_dir_attrs);
   else
-    status = fsal_internal_access(p_context, p_parent_directory_handle,access_mask,
-                                  &parent_dir_attrs);
+    status = fsal_internal_access(mount_fd, p_context, gpfs_hdl->handle,
+                                  access_mask, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     {
       close(fd);
-      ReturnStatus(status, INDEX_FSAL_symlink);
+      return(status);
     }
 
   /* build symlink path */
 
   /* create the symlink on the filesystem. */
 
-  TakeTokenFSCall();
-  rc = symlinkat(p_linkcontent->path, fd, p_linkname->name);
+  rc = symlinkat(p_linkcontent, fd, p_linkname);
   errsv = errno;
-  ReleaseTokenFSCall();
 
   if(rc)
     {
       close(fd);
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
+      return fsalstat(posix2fsal_error(errsv), errsv);
     }
 
   /* now get the associated handle, while there is a race, there is
@@ -234,38 +230,37 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
   if(FSAL_IS_ERROR(status))
     {
       close(fd);
-      ReturnStatus(status, INDEX_FSAL_symlink);
+      return(status);
     }
 
   /* chown the symlink to the current user/group */
-  TakeTokenFSCall();
-  rc = fchownat(fd, p_linkname->name, p_context->credential.user,
-                setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW);
+  rc = fchownat(fd, p_linkname, p_context->creds->caller_uid,
+                setgid_bit ? -1 : p_context->creds->caller_gid, AT_SYMLINK_NOFOLLOW);
   errsv = errno;
-  ReleaseTokenFSCall();
 
   close(fd);
 
   if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
+    return fsalstat(posix2fsal_error(errsv), errsv);
 
   /* get attributes if asked */
 
   if(p_link_attributes)
     {
 
-      status = GPFSFSAL_getattrs(p_link_handle, p_context, p_link_attributes);
+      status = GPFSFSAL_getattrs(dir_hdl->export, p_context, p_link_handle,
+                                 p_link_attributes);
 
       /* On error, we set a flag in the returned attributes */
 
       if(FSAL_IS_ERROR(status))
         {
-          FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
-          FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+          FSAL_CLEAR_MASK(p_link_attributes->mask);
+          FSAL_SET_MASK(p_link_attributes->mask, ATTR_RDATTR_ERR);
         }
 
     }
 
   /* OK */
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_symlink);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

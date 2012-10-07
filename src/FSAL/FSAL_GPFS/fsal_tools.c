@@ -206,13 +206,11 @@ unsigned int GPFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int co
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t GPFSFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
+fsal_status_t GPFSFSAL_DigestHandle(fsal_digesttype_t output_type,  /* IN */
                                 fsal_handle_t * in_fsal_handle,       /* IN */
                                 struct fsal_handle_desc *fh_desc /* IN/OUT */
     )
 {
-  gpfsfsal_export_context_t * p_expcontext = (gpfsfsal_export_context_t *)exp_context;
   gpfsfsal_handle_t * p_in_fsal_handle = (gpfsfsal_handle_t *)in_fsal_handle;
   size_t fh_size;
 

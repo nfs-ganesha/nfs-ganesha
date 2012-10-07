@@ -37,6 +37,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "gpfs_methods.h"
 #include <sys/fsuid.h>
 
 /**
@@ -78,7 +79,8 @@
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t GPFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
+#if 0 //??? not needed for now
+fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle * dirhandle,      /* IN */
                                 fsal_name_t * filename, /* IN */
                                 fsal_op_context_t * p_context,  /* IN */
                                 fsal_openflags_t openflags,     /* IN */
@@ -86,10 +88,10 @@ fsal_status_t GPFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
-  fsal_handle_t filehandle;
+  struct gpfs_file_handle filehandle;
 
   if(!dirhandle || !filename || !p_context || !file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
   if(FSAL_IS_ERROR(fsal_status))
@@ -97,14 +99,15 @@ fsal_status_t GPFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
 
   return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
 }
+#endif
 
 /**
  * FSAL_open:
  * Open a regular file for reading/writing its data content.
  *
- * \param filehandle (input):
+ * \param noj_hdl (input):
  *        Handle of the file to be read/modified.
- * \param cred (input):
+ * \param p_context (input):
  *        Authentication context for the operation (user,...).
  * \param openflags (input):
  *        Flags that indicates behavior for file opening and access.
@@ -128,66 +131,64 @@ fsal_status_t GPFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        fsal_openflags_t openflags,     /* IN */
-                        fsal_file_t * file_desc,        /* OUT */
-                        fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */
+fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,   /* IN */
+//???                          const struct req_op_context *p_context, /* IN */
+                            fsal_openflags_t openflags,        /* IN */
+                            int * file_desc,                   /* OUT */
+                            struct attrlist *p_file_attributes  /* IN/OUT */
     )
 {
 
   int rc;
   fsal_status_t status;
-
-  int fd;
   int posix_flags = 0;
-  gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
+  struct gpfs_fsal_obj_handle *myself;
+  int mntfd;
 
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if(!p_filehandle || !p_context || !p_file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
+  if(!obj_hdl || !file_desc)
+    return fsalstat(ERR_FSAL_FAULT, 0);
+
+  myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+  mntfd = gpfs_get_root_fd(obj_hdl->export);
+
 
   /* convert fsal open flags to posix open flags */
   rc = fsal2posix_openflags(openflags, &posix_flags);
-
   /* flags conflicts. */
   if(rc)
     {
       LogWarn(COMPONENT_FSAL, "Invalid/conflicting flags : %#X", openflags);
-      Return(rc, 0, INDEX_FSAL_open);
+      return fsalstat(rc, 0);
     }
 
-  TakeTokenFSCall();
-  status = fsal_internal_handle2fd(p_context, p_filehandle, &fd, posix_flags);
-  p_file_descriptor->fd = fd;
-  ReleaseTokenFSCall();
+  status = fsal_internal_handle2fd(mntfd, myself->handle, file_desc,
+                                   posix_flags);
 
   if(FSAL_IS_ERROR(status))
     {
-      p_file_descriptor->fd = 0;
-      ReturnStatus(status, INDEX_FSAL_open);
+      *file_desc = 0;
+      return(status);
     }
 
   /* output attributes */
   if(p_file_attributes)
     {
 
-      p_file_attributes->asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-      status = GPFSFSAL_getattrs(p_filehandle, p_context, p_file_attributes);
+      p_file_attributes->mask = GPFS_SUPPORTED_ATTRIBUTES;
+      status = GPFSFSAL_getattrs(obj_hdl->export, NULL/*p_context???*/, myself->handle,
+                                 p_file_attributes);
       if(FSAL_IS_ERROR(status))
         {
-          p_file_descriptor->fd = 0;
-          close(fd);
-          ReturnStatus(status, INDEX_FSAL_open);
+          *file_desc = 0;
+          close(*file_desc);
+          return(status);
         }
     }
 
-  /* set the read-only flag of the file descriptor */
-  p_file_descriptor->ro = openflags & FSAL_O_RDONLY;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -215,29 +216,29 @@ fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
-                        fsal_seek_t * p_seek_descriptor,        /* [IN] */
-                        fsal_size_t buffer_size,        /* IN */
+fsal_status_t GPFSFSAL_read(int fd,        /* IN */
+                        uint64_t offset,        /* [IN] */
+                        size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
-                        fsal_size_t * p_read_amount,    /* OUT */
+                        size_t * p_read_amount,    /* OUT */
                         bool * p_end_of_file  /* OUT */
     )
 {
 
   size_t i_size;
   ssize_t nb_read;
-  int rc = 0, errsv = 0;
-  int pcall = false;
-  gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
+  int errsv = 0;
+  int pcall = true;
 
   /* sanity checks. */
 
-  if(!p_file_descriptor || !buffer || !p_read_amount || !p_end_of_file)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
+  if(!buffer || !p_read_amount || !p_end_of_file)
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   /** @todo: manage fsal_size_t to size_t convertion */
   i_size = (size_t) buffer_size;
 
+#if 0 //???
   /* positioning */
 
   if(p_seek_descriptor)
@@ -248,10 +249,8 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
         case FSAL_SEEK_CUR:
           /* set position plus offset */
           pcall = false;
-          TakeTokenFSCall();
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_CUR);
           errsv = errno;
-          ReleaseTokenFSCall();
           break;
 
         case FSAL_SEEK_SET:
@@ -263,11 +262,8 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
         case FSAL_SEEK_END:
           /* set end of file plus offset */
           pcall = false;
-
-          TakeTokenFSCall();
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
-          ReleaseTokenFSCall();
 
           break;
         }
@@ -279,34 +275,32 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
 		       format_seek_whence(p_seek_descriptor->whence),
                        (long long) p_seek_descriptor->offset);
 
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
+          return fsalstat(posix2fsal_error(errsv), errsv);
         }
 
     }
-
+#endif
   /* read operation */
 
-  TakeTokenFSCall();
-
   if(pcall)
-    nb_read = pread(p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset);
+    nb_read = pread(fd, buffer, i_size, offset);
   else
-    nb_read = read(p_file_descriptor->fd, buffer, i_size);
+    nb_read = read(fd, buffer, i_size);
   errsv = errno;
-  ReleaseTokenFSCall();
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
 
   if(nb_read == -1)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
+    return fsalstat(posix2fsal_error(errsv), errsv);
   else if(nb_read == 0)
     *p_end_of_file = 1;
 
   *p_read_amount = nb_read;
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_read);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
+#if 0 //???  done in file.c
 
 /**
  * FSAL_write:
@@ -348,10 +342,10 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
 
   /* sanity checks. */
   if(!p_file_descriptor || !buffer || !p_write_amount)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   if(p_file_descriptor->ro)
-    Return(ERR_FSAL_PERM, 0, INDEX_FSAL_write);
+    return fsalstat(ERR_FSAL_PERM, 0);
 
   /** @todo: manage fsal_size_t to size_t convertion */
   i_size = (size_t) buffer_size;
@@ -369,10 +363,8 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
           /* set position plus offset */
           pcall = false;
 
-          TakeTokenFSCall();
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_CUR);
           errsv = errno;
-          ReleaseTokenFSCall();
           break;
 
         case FSAL_SEEK_SET:
@@ -385,10 +377,8 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
           /* set end of file plus offset */
           pcall = false;
 
-          TakeTokenFSCall();
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
-          ReleaseTokenFSCall();
 
           break;
         }
@@ -400,7 +390,7 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
 		       format_seek_whence(p_seek_descriptor->whence),
                        (long long) p_seek_descriptor->offset);
 
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
+          return fsalstat(posix2fsal_error(errsv), errsv);
 
         }
 
@@ -413,8 +403,6 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
 
   /* write operation */
 
-  TakeTokenFSCall();
-
   fsuid = setfsuid(p_context->credential.user);
   fsgid = setfsgid(p_context->credential.group);
   if(pcall)
@@ -425,7 +413,6 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
 
   setfsuid(fsuid);
   setfsgid(fsgid);
-  ReleaseTokenFSCall();
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
   if(nb_written <= 0)
@@ -444,14 +431,14 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
                  p_file_descriptor->fd,
                  errsv);
 
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
+      return fsalstat(posix2fsal_error(errsv), errsv);
     }
 
   /* set output vars */
 
   *p_write_amount = (fsal_size_t) nb_written;
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_write);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -475,21 +462,17 @@ fsal_status_t GPFSFSAL_close(fsal_file_t * p_file_descriptor        /* IN */
 
   /* sanity checks. */
   if(!p_file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   /* call to close */
-
-  TakeTokenFSCall();
 
   rc = close(((gpfsfsal_file_t *)p_file_descriptor)->fd);
   errsv = errno;
 
-  ReleaseTokenFSCall();
-
   if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_close);
+    return fsalstat(posix2fsal_error(errsv), errsv);
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 }
 
@@ -523,16 +506,15 @@ fsal_status_t GPFSFSAL_commit( fsal_file_t * p_file_descriptor,
 
   /* sanity checks. */
   if(!p_file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_commit);
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
   /* Flush data. */
-  TakeTokenFSCall();
   rc = fsync(((gpfsfsal_file_t *)p_file_descriptor)->fd);
   errsv = errno;
-  ReleaseTokenFSCall();
 
   if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_commit);
+    return fsalstat(posix2fsal_error(errsv), errsv);
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit);
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
+#endif

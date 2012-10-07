@@ -111,10 +111,11 @@
 #ifndef H_GPFS_NFS
 struct gpfs_file_handle
 {
-   u_int32_t handle_size;
-   u_int32_t handle_type;
-   u_int16_t handle_version;
-   u_int16_t handle_key_size;
+  u_int16_t handle_size;
+  u_int16_t handle_type;
+  u_int16_t handle_version;
+  u_int16_t handle_key_size;
+  u_int32_t handle_fsid[2];
   /* file identifier */
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };
