@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 noinst_HEADERS = access_check.h \
                  fsal_commonlib.h \
                  fsal_init.h \
