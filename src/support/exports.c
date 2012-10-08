@@ -2759,7 +2759,8 @@ static int BuildExportEntry(config_item_t        block,
           p_client_entry->client_perms = *p_perms;
         }
 
-      LogClientListEntry(COMPONENT_CONFIG, p_client_entry);
+      if(isFullDebug(COMPONENT_CONFIG))
+        LogClientListEntry(COMPONENT_CONFIG, p_client_entry);
     }
 
   /* Append the new EXPORT_CLIENT Access list to the export */
@@ -3554,10 +3555,14 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                              &client_found,
                              EXPORT_OPTION_ACCESS_OPT_LIST))
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Export %d Client %s matches EXPORT_CLIENT Access List",
-                   pexport->id, ipstring);
-      LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+      if(isFullDebug(COMPONENT_DISPATCH))
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Export %d Client %s matches EXPORT_CLIENT Access List",
+                       pexport->id, ipstring);
+
+          LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+        }
 
       *pexport_perms = client_found.client_perms;
 
@@ -3576,10 +3581,14 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                              &client_found,
                              EXPORT_OPTION_ROOT))
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Export %d Client %s matches Root_Access",
-                   pexport->id, ipstring);
-      LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+      if(isFullDebug(COMPONENT_DISPATCH))
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Export %d Client %s matches Root_Access",
+                       pexport->id, ipstring);
+
+          LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+        }
 
       pexport_perms->options |= client_found.client_perms.options;
     }
@@ -3592,10 +3601,14 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                              &client_found,
                              EXPORT_OPTION_WRITE_ACCESS))
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Export %d Client %s matches RW_Access",
-                   pexport->id, ipstring);
-      LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+      if(isFullDebug(COMPONENT_DISPATCH))
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Export %d Client %s matches RW_Access",
+                       pexport->id, ipstring);
+
+          LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+        }
 
       pexport_perms->options |= EXPORT_OPTION_RW_ACCESS |
                                 EXPORT_OPTION_MD_ACCESS;
@@ -3608,10 +3621,14 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                              &client_found,
                              EXPORT_OPTION_READ_ACCESS))
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Export %d Client %s matches R_Access",
-                   pexport->id, ipstring);
-      LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+      if(isFullDebug(COMPONENT_DISPATCH))
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Export %d Client %s matches R_Access",
+                       pexport->id, ipstring);
+
+          LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+        }
 
       pexport_perms->options |= EXPORT_OPTION_READ_ACCESS |
                                 EXPORT_OPTION_MD_READ_ACCESS;
@@ -3625,10 +3642,14 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                              &client_found,
                              EXPORT_OPTION_MD_WRITE_ACCESS))
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Export %d Client %s matches MDONLY_Access",
-                   pexport->id, ipstring);
-      LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+      if(isFullDebug(COMPONENT_DISPATCH))
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Export %d Client %s matches MDONLY_Access",
+                       pexport->id, ipstring);
+
+          LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+        }
 
       pexport_perms->options |= EXPORT_OPTION_MD_ACCESS;
 
@@ -3641,10 +3662,14 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                              &client_found,
                              EXPORT_OPTION_MD_READ_ACCESS))
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Export %d Client %s matches MDONLY_RO_Access",
-                   pexport->id, ipstring);
-      LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+      if(isFullDebug(COMPONENT_DISPATCH))
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Export %d Client %s matches MDONLY_RO_Access",
+                       pexport->id, ipstring);
+
+          LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+        }
 
       pexport_perms->options |= EXPORT_OPTION_MD_READ_ACCESS;
 
@@ -3657,10 +3682,14 @@ void nfs_export_check_access(sockaddr_t     * hostaddr,
                              &client_found,
                              EXPORT_OPTION_ACCESS_LIST))
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Export %d Client %s matches Access",
-                   pexport->id, ipstring);
-      LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+      if(isFullDebug(COMPONENT_DISPATCH))
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Export %d Client %s matches Access",
+                       pexport->id, ipstring);
+
+          LogClientListEntry(COMPONENT_DISPATCH, &client_found);
+        }
 
       /* Grab the root access and rw/ro/mdonly/mdonly ro access from export */
       pexport_perms->options |= pexport->export_perms.options &
