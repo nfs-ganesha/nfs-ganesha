@@ -246,6 +246,18 @@ int mnt_Export(nfs_arg_t *parg,
                     }
                   break;
 
+                case MATCH_ANY_CLIENT:
+                  new_expnode->ex_groups[i].gr_name
+                       = gsh_strdup("*");
+
+                  if(new_expnode->ex_groups[i].gr_name == NULL)
+                    {
+                      LogCrit(COMPONENT_NFSPROTO,
+                              "Could not allocate memory for response");
+                      break;
+                    }
+                  break;
+
                 default:
 
                   /* @todo : free allocated resources */
