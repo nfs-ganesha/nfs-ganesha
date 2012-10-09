@@ -403,27 +403,27 @@ err:
 
 static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
-				    struct netbuf *fh_desc)
+				    struct gsh_buffdesc *fh_desc)
 {
 	struct file_handle *hdl;
 	size_t fh_size;
 
 	/* sanity checks */
-	if( !fh_desc || !fh_desc->buf)
+	if( !fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	hdl = (struct file_handle *)fh_desc->buf;
+	hdl = (struct file_handle *)fh_desc->addr;
 	fh_size = vfs_sizeof_handle(hdl);
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
-				 "V2 size too small for handle.  should be %lu, got %u",
+				 "V2 size too small for handle.  should be %lu, got %lu",
 				 fh_size, fh_desc->len);
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
 	} else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be %lu, got %u",
+			 "Size mismatch for handle.  should be %lu, got %lu",
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}

@@ -2418,15 +2418,15 @@ pxy_get_dynamic_info(struct fsal_export *exp_hdl,
 fsal_status_t
 pxy_extract_handle(struct fsal_export *exp_hdl,
 		   fsal_digesttype_t in_type,
-		   struct netbuf *fh_desc)
+		   struct gsh_buffdesc *fh_desc)
 {
         struct pxy_handle_blob *pxyblob;
         size_t fh_size;
 
-        if( !fh_desc || !fh_desc->buf)
+        if( !fh_desc || !fh_desc->addr)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
-        pxyblob = (struct pxy_handle_blob *)fh_desc->buf;
+        pxyblob = (struct pxy_handle_blob *)fh_desc->addr;
         fh_size = pxyblob->len;
 #ifdef _HANDLE_MAPPING
         if((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3))
@@ -2435,13 +2435,13 @@ pxy_extract_handle(struct fsal_export *exp_hdl,
         if(in_type == FSAL_DIGEST_NFSV2) {
                 if(fh_desc->len < fh_size) {
                         LogMajor(COMPONENT_FSAL,
-                                 "V2 size too small for handle.  should be %zd, got %d",
+                                 "V2 size too small for handle.  should be %lu, got %lu",
                                  fh_size, fh_desc->len);
                         return fsalstat(ERR_FSAL_SERVERFAULT, 0);
                 }
         } else if(fh_desc->len != fh_size) {
                 LogMajor(COMPONENT_FSAL,
-                         "Size mismatch for handle.  should be %zd, got %d",
+                         "Size mismatch for handle.  should be %lu, got %lu",
                          fh_size, fh_desc->len);
                 return fsalstat(ERR_FSAL_SERVERFAULT, 0);
         }

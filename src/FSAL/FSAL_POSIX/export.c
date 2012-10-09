@@ -367,22 +367,22 @@ static fsal_status_t set_quota (struct fsal_export *exp_hdl,
  * is the option to also adjust the start pointer.
  */
 
-static fsal_status_t extract_handle (struct fsal_export *exp_hdl, fsal_digesttype_t in_type, struct netbuf *fh_desc)
+static fsal_status_t extract_handle (struct fsal_export *exp_hdl, fsal_digesttype_t in_type, struct gsh_buffdesc *fh_desc)
 {
     size_t fh_size;
 
     /* sanity checks */
-    if (!fh_desc || !fh_desc->buf)
+    if (!fh_desc || !fh_desc->addr)
         return fsalstat (ERR_FSAL_FAULT, 0);
 
     fh_size = sizeof (struct handle_data);
     if (in_type == FSAL_DIGEST_NFSV2) {
         if (fh_desc->len < fh_size) {
-            LogMajor (COMPONENT_FSAL, "V2 size too small for handle.  should be %lu, got %u", fh_size, fh_desc->len);
+            LogMajor (COMPONENT_FSAL, "V2 size too small for handle.  should be %lu, got %lu", fh_size, fh_desc->len);
             return fsalstat (ERR_FSAL_SERVERFAULT, 0);
         }
     } else if (in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
-        LogMajor (COMPONENT_FSAL, "Size mismatch for handle.  should be %lu, got %u", fh_size, fh_desc->len);
+        LogMajor (COMPONENT_FSAL, "Size mismatch for handle.  should be %lu, got %lu", fh_size, fh_desc->len);
         return fsalstat (ERR_FSAL_SERVERFAULT, 0);
     }
     fh_desc->len = fh_size;     /* pass back the actual size */

@@ -100,7 +100,8 @@ int HandleMap_Init(const handle_map_param_t * p_param);
  * \return HANDLEMAP_SUCCESS if the handle is available,
  *         HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
  */
-int HandleMap_GetFH(const nfs23_map_handle_t * p_in_nfs23_digest, struct netbuf * p_out_fsal_handle);
+int HandleMap_GetFH(const nfs23_map_handle_t * p_in_nfs23_digest,
+		    struct gsh_buffdesc * p_out_fsal_handle);
 
 /**
  * Save the handle association if it was unknown.

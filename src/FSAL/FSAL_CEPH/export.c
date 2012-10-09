@@ -180,7 +180,7 @@ out:
 static fsal_status_t
 extract_handle(struct fsal_export *export_pub,
                fsal_digesttype_t type,
-               struct netbuf *fh_desc)
+               struct gsh_buffdesc *fh_desc)
 {
         if (type == FSAL_DIGEST_SIZEOF) {
                 fh_desc->len = sizeof(struct wire_handle);

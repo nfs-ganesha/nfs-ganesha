@@ -314,7 +314,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
  *         HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
  */
 int HandleMap_GetFH(const nfs23_map_handle_t * p_in_nfs23_digest,
-                    struct netbuf * p_out_fsal_handle)
+                    struct gsh_buffdesc * p_out_fsal_handle)
 {
 
   int rc;
@@ -336,7 +336,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t * p_in_nfs23_digest,
       if(h->fh_len < p_out_fsal_handle->maxlen)
         {
           p_out_fsal_handle->len = h->fh_len;
-          memcpy(p_out_fsal_handle->buf, h->fh_data,  h->fh_len);
+          memcpy(p_out_fsal_handle->addr, h->fh_data,  h->fh_len);
           rc = HANDLEMAP_SUCCESS;
         }
       else

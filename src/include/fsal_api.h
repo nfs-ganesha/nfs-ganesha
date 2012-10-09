@@ -539,15 +539,10 @@ struct export_ops {
                                          struct fsal_obj_handle *junction,
                                          struct fsal_obj_handle **handle);
 /**
- * @brief Extract an opque handle
+ * @brief Extract an opaque handle
  *
  * This function extracts a "wire" handle from a buffer that may then
  * be passed to create_handle.
- *
- * @deprecated The signature of the function is likely to change.  We
- * currently use a netbuf to allow handle mapping for the Proxy FSAL.
- * This will likely be integrated more cleanly and this function may
- * disappear entirely.
  *
  * @note The extracted handle can obviously be used with
  * create_handle, but is it used as a key in the hash table?  If so we
@@ -573,7 +568,7 @@ struct export_ops {
  */
         fsal_status_t (*extract_handle)(struct fsal_export *exp_hdl,
                                         fsal_digesttype_t in_type,
-                                        struct netbuf *fh_desc);
+                                        struct gsh_buffdesc *fh_desc);
 /**
  * @brief Create a FSAL object handle from a wire handle
  *
