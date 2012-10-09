@@ -132,18 +132,20 @@ nfs_Mkdir(nfs_arg_t *arg,
                         .attributes_follow = FALSE;
                 res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.after
                         .attributes_follow = FALSE;
-        }
+		parent_entry = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
+						   req_ctx,
+						   export,
+						   &res->res_mkdir3.status,
+						   &rc);
+        } else {
+		parent_entry = nfs2_FhandleToCache(&arg->arg_mkdir2.where.dir,
+						   req_ctx,
+						   export,
+						   &res->res_dirop2.status,
+						   &rc);
+	}
 
-        if ((parent_entry = nfs_FhandleToCache(req_ctx,
-                                               req->rq_vers,
-                                               &arg->arg_mkdir2.where.dir,
-                                               &arg->arg_mkdir3.where.dir,
-                                               NULL,
-                                               &res->res_dirop2.status,
-                                               &res->res_mkdir3.status,
-                                               NULL,
-                                               export,
-                                               &rc)) == NULL) {
+        if(parent_entry == NULL) {
                 /* Stale NFS FH? */
                 goto out;
         }

@@ -281,11 +281,11 @@ int nlm_process_parameters(struct svc_req        * preq,
   *ppowner      = NULL;
 
   /* Convert file handle into a cache entry */
-  *ppentry = nfs_FhandleToCache(req_ctx,
-                                preq->rq_vers,
-                                NULL, (struct nfs_fh3 *)&alock->fh, NULL,
-                                NULL, &nfsstat3, NULL,
-                                pexport, &rc);
+  *ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&alock->fh,
+				 req_ctx,
+				 pexport,
+				 &nfsstat3,
+				 &rc);
   if(*ppentry == NULL || nfsstat3 == NFS3ERR_STALE)
     {
       /* handle is not valid */
@@ -413,11 +413,11 @@ int nlm_process_share_parms(struct svc_req        * preq,
   *ppowner      = NULL;
 
   /* Convert file handle into a cache entry */
-  *ppentry = nfs_FhandleToCache(req_ctx,
-                                preq->rq_vers,
-                                NULL, (struct nfs_fh3 *)&share->fh, NULL,
-                                NULL, &nfsstat3, NULL,
-                                exp_hdl->exp_entry, &rc);
+  *ppentry = nfs3_FhandleToCache((struct nfs_fh3 *)&share->fh,
+				 req_ctx,
+				 exp_hdl->exp_entry,
+				 &nfsstat3,
+				 &rc);
   if(*ppentry == NULL || nfsstat3 == NFS3ERR_STALE)
     {
       /* handle is not valid */

@@ -173,24 +173,24 @@ nfs_Read(nfs_arg_t *arg,
                 res->res_read3.READ3res_u.resok.data.data_val = NULL;
                 res->res_read3.READ3res_u.resok.data.data_len = 0;
                 res->res_read3.status = NFS3_OK;
+		entry = nfs3_FhandleToCache(&arg->arg_read3.file,
+					    req_ctx,
+					    export,
+					    &res->res_read3.status,
+					    &rc);
         } else if(req->rq_vers == NFS_V2) {
                 /* initialize for read of size 0 */
                 res->res_read2.READ2res_u.readok.data.nfsdata2_val = NULL;
                 res->res_read2.READ2res_u.readok.data.nfsdata2_len = 0;
                 res->res_attr2.status = NFS_OK;
+		entry = nfs2_FhandleToCache(&arg->arg_read2.file,
+					    req_ctx,
+					    export,
+					    &res->res_read2.status,
+					    &rc);
         }
 
-        /* Convert file handle into a cache entry */
-        if((entry = nfs_FhandleToCache(req_ctx,
-                                       req->rq_vers,
-                                       &arg->arg_read2.file,
-                                       &arg->arg_read3.file,
-                                       NULL,
-                                       &res->res_read2.status,
-                                       &res->res_read3.status,
-                                       NULL,
-                                       export,
-                                       &rc)) == NULL) {
+        if(entry == NULL) {
                 goto out;
         }
 

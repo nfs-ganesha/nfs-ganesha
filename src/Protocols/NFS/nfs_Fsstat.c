@@ -72,7 +72,16 @@
  * @param[in]  worker  Worker thread data
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
- *
+ *= nfs_FhandleToCache(req_ctx,
+                                        req->rq_vers,
+                                        &arg->arg_readlink2,
+                                        &arg->arg_readlink3.symlink,
+                                        NULL,
+                                        &res->res_readlink2.status,
+                                        &res->res_readlink3.status,
+                                        NULL,
+                                        export,
+                                        &rc)) 
  * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
@@ -107,17 +116,19 @@ int nfs_Fsstat(nfs_arg_t *arg,
                 /* to avoid setting it on each error case */
                 res->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes
                         .attributes_follow = FALSE;
-        }
-
-        if((entry = nfs_FhandleToCache(req_ctx, req->rq_vers,
-                                       &(arg->arg_statfs2),
-                                       &(arg->arg_fsstat3.fsroot),
-                                       NULL,
-                                       &(res->res_statfs2.status),
-                                       &(res->res_fsstat3.status),
-                                       NULL,
-                                       export,
-                                       &rc)) == NULL) {
+		entry = nfs3_FhandleToCache(&(arg->arg_fsstat3.fsroot),
+					    req_ctx,
+					    export,
+					    &(res->res_fsstat3.status),
+					    &rc);
+        } else {
+		entry = nfs2_FhandleToCache(&(arg->arg_statfs2),
+					    req_ctx,
+					    export,
+					    &(res->res_statfs2.status),
+					    &rc);
+	}
+        if(entry == NULL) {
                 goto out;
         }
 

@@ -66,7 +66,12 @@
  *
  * Revision 1.1  2005/08/03 06:57:54  deniel
  * Added a libsupport for miscellaneous service functions
- *
+ *        entry = nfs_FhandleToCache(req_ctx,
+                                   req->rq_vers, NULL,
+                                   &(arg->arg_access3.object),
+                                   NULL, NULL, &(res->res_access3.status),
+                                   NULL, export, &rc);
+
  * Revision 1.4  2005/07/28 12:26:57  deniel
  * NFSv3 PROTOCOL Ok
  *
@@ -114,144 +119,240 @@
 #include "nfs_file_handle.h"
 
 
-static void opaque_to_netbuf(struct netbuf *nb, const void *data,
-                             unsigned int len)
+/**
+ *
+ *  nfs4_FhandleToCache: gets the cache entry from the NFSv4 file handle.
+ *
+ * Validates and Converts a nfs4 file handle and then gets the cache entry.
+ *
+ * @param fh4 [IN] pointer to the file handle to be converted
+ * @param req_ctx [IN] request context
+ * @param exp_list [IN] export fsal to use
+ * @param status [OUT] protocol status
+ * @param rc [OUT] operation status
+ *
+ * @return cache entry or NULL on failure
+ */
+
+cache_entry_t *nfs4_FhandleToCache(nfs_fh4 * fh4,
+				   const struct req_op_context *req_ctx,
+				   exportlist_t *exp_list,
+				   nfsstat4 * status,
+				   int *rc)
 {
-        if(len <= nb->maxlen) {
-                memcpy(nb->buf, data, len);
-                nb->len = len;
-        }
-}
+	fsal_status_t fsal_status;
+	file_handle_v4_t *v4_handle;
+	exportlist_t *exp_list_ent;
+	struct fsal_export *export;
+	cache_entry_t *entry = NULL;
+	cache_inode_fsal_data_t fsal_data;
+	cache_inode_status_t cache_status;
+
+	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v4) != NFS4_FHSIZE);
+
+	/* Default behaviour */
+	*rc = NFS_REQ_OK;
+
+	print_fhandle4(COMPONENT_FILEHANDLE, fh4);
+
+	/* Cast the fh as a non opaque structure */
+	v4_handle = (file_handle_v4_t *) (fh4->nfs_fh4_val);
+
+	/* validate the filehandle  */
+	if(nfs4_Is_Fh_Invalid(fh4) != NFS4_OK) {
+		*status = NFS4ERR_BADHANDLE;
+		goto badhdl;
+	}
+	exp_list_ent = nfs_Get_export_by_id(exp_list,
+				      nfs4_FhandleToExportId(fh4));
+	if(exp_list_ent == NULL) {
+		*status = NFS4ERR_STALE;
+		*rc = NFS_REQ_DROP;
+		goto badhdl;
+	}
+	/* Give the export a crack at it */
+	export = exp_list_ent->export_hdl;
+	fsal_data.export = export;
+	fsal_data.fh_desc.len = v4_handle->fs_len;
+	fsal_data.fh_desc.addr = &v4_handle->fsopaque;
+
+	/* adjust the handle opaque into a cache key */
+	fsal_status = export->ops->extract_handle(export,
+						  FSAL_DIGEST_NFSV4,
+						  &fsal_data.fh_desc);
+	if(FSAL_IS_ERROR(fsal_status)) {
+		*status = NFS4ERR_BADHANDLE;
+		goto badhdl;
+	}
+	entry = cache_inode_get(&fsal_data,
+				NULL,
+				req_ctx,
+				&cache_status);
+	if(entry == NULL){
+		/* is there a more appropriate error based on cache_status? */
+		*status = NFS4ERR_STALE;
+	}
+
+badhdl:
+	return entry;
+}                               /* nfs4_FhandleToCache */
 
 /**
  *
- *  nfs4_FhandleToFSAL: converts a nfs4 file handle to a FSAL file handle.
+ *  nfs3_FhandleToCache: gets the cache entry from the NFSv3 file handle.
  *
- * Validates and Converts a nfs4 file handle to a FSAL file handle.
+ * Validates and Converts a V3 file handle and then gets the cache entry.
  *
- * @param pfh4 [IN] pointer to the file handle to be converted
- * @param fh_desc [OUT] extracted handle descriptor
- * @param export [IN] export fsal to use
+ * @param fh3 [IN] pointer to the file handle to be converted
+ * @param req_ctx [IN] request context
+ * @param exp_list [IN] export fsal to use
+ * @param status [OUT] protocol status
+ * @param rc [OUT] operation status
  *
- * @return 1 if successful, 0 otherwise
+ * @return cache entry or NULL on failure
+ *
  */
-
-int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
-		       struct netbuf *fh_desc,
-                       struct fsal_export *export)
+cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
+				   const struct req_op_context *req_ctx,
+				   exportlist_t *exp_list,
+				   nfsstat3 * status,
+				   int *rc)
 {
-  fsal_status_t fsal_status;
-  file_handle_v4_t *pfile_handle;
+	fsal_status_t fsal_status;
+	file_handle_v3_t *v3_handle;
+	exportlist_t *exp_list_ent;
+	struct fsal_export *export;
+	cache_entry_t *entry = NULL;
+	cache_inode_fsal_data_t fsal_data;
+	cache_inode_status_t cache_status;
 
-  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v4) != NFS4_FHSIZE);
-  print_fhandle4(COMPONENT_FILEHANDLE, pfh4);
+	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v3) != NFS3_FHSIZE);
 
-  /* Cast the fh as a non opaque structure */
-  pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
+	/* Default behaviour */
+	*rc = NFS_REQ_OK;
 
-  /* validate the filehandle  */
-  if(pfh4->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle) ||
-     pfile_handle->fhversion != GANESHA_FH_VERSION ||
-     pfile_handle->pseudofs_id != 0 ||
-     pfile_handle->pseudofs_flag != false)
-    return 0;                   /* Bad FH */
+	print_fhandle3(COMPONENT_FILEHANDLE, fh3);
 
-  /* Fill in the fs opaque part */
-  opaque_to_netbuf(fh_desc, &pfile_handle->fsopaque, pfile_handle->fs_len);
+	/* Cast the fh as a non opaque structure */
+	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
 
-  fsal_status = export->ops->extract_handle(export,
-					     FSAL_DIGEST_NFSV4,
-					     fh_desc);
-  if(FSAL_IS_ERROR(fsal_status))
-    return 0;                   /* Corrupted (or stale) FH */
-  return 1;
-}                               /* nfs4_FhandleToFSAL */
+	/* validate the filehandle  */
+	if(nfs3_Is_Fh_Invalid(fh3) != NFS3_OK) {
+		*status = NFS3ERR_BADHANDLE;
+		goto badhdl;
+	}
+	exp_list_ent = nfs_Get_export_by_id(exp_list,
+				      nfs3_FhandleToExportId(fh3));
+	if(exp_list_ent == NULL) {
+		*status = NFS3ERR_STALE;
+		*rc = NFS_REQ_DROP;
+		goto badhdl;
+	}
+
+	/* Give the export a crack at it */
+	export = exp_list_ent->export_hdl;
+	fsal_data.export = export;
+	fsal_data.fh_desc.len = v3_handle->fs_len;
+	fsal_data.fh_desc.addr = &v3_handle->fsopaque;
+
+	/* adjust the handle opaque into a cache key */
+	fsal_status = export->ops->extract_handle(export,
+						  FSAL_DIGEST_NFSV3,
+						  &fsal_data.fh_desc);
+	if(FSAL_IS_ERROR(fsal_status)) {
+		*status = NFS3ERR_BADHANDLE;
+		goto badhdl;
+	}
+	entry = cache_inode_get(&fsal_data,
+				NULL,
+				req_ctx,
+				&cache_status);
+	if(entry == NULL){
+		/* is there a more appropriate error based on cache_status? */
+		*status = NFS3ERR_STALE;
+	}
+
+badhdl:
+	return entry;
+}                               /* nfs3_FhandleToCache */
 
 /**
  *
- *  nfs3_FhandleToFSAL: converts a nfs3 file handle to a FSAL file handle.
+ *  nfs2_FhandleToCache: gets the cache entry from the NFSv2 file handle.
  *
- * Converts a nfs3 file handle to a FSAL file handle.
+ * Validates and Converts a V2 file handle and then gets the cache entry.
  *
- * @param pfh3 [IN] pointer to the file handle to be converted
- * @param pfsalhandle [OUT] pointer to the extracted FSAL handle
- * @param fh_desc [OUT] extracted handle descriptor
- * @param export [IN] export fsal to use
+ * @param fh2 [IN] pointer to the file handle to be converted
+ * @param req_ctx [IN] request context
+ * @param exp_list [IN] export fsal to use
+ * @param status [OUT] protocol status
+ * @param rc [OUT] operation status
  *
- * @return 1 if successful, 0 otherwise
- *
- */
-int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
-		       struct netbuf *fh_desc,
-                       struct fsal_export *export)
-{
-  fsal_status_t fsal_status;
-  file_handle_v3_t *pfile_handle;
-
-  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v3) != NFS3_FHSIZE);
-  print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
-
-  /* Cast the fh as a non opaque structure */
-  pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
-
-  /* validate the filehandle  */
-  if(nfs3_Is_Fh_Invalid(pfh3) != NFS3_OK)
-    return 0;                   /* Bad FH */
-
-  /* Fill in the fs opaque part */
-  opaque_to_netbuf(fh_desc, &pfile_handle->fsopaque, pfile_handle->fs_len);
-
-  fsal_status = export->ops->extract_handle(export,
-					     FSAL_DIGEST_NFSV3,
-					     fh_desc);
-  if(FSAL_IS_ERROR(fsal_status))
-    return 0;                   /* Corrupted FH */
-
-  return 1;
-}                               /* nfs3_FhandleToFSAL */
-
-/**
- *
- *  nfs2_FhandleToFSAL: converts a nfs2 file handle to a FSAL file handle.
- *
- * Converts a nfs2 file handle to a FSAL file handle.
- *
- * @param pfh2 [IN] pointer to the file handle to be converted
- * @param fh_desc [OUT] extracted handle descriptor
- * @param export [IN] export fsal to use
- *
- * @return 1 if successful, 0 otherwise
+ * @return cache entry or NULL on failure
  *
  */
-int nfs2_FhandleToFSAL(fhandle2 * pfh2,
-		       struct netbuf *fh_desc,
-                       struct fsal_export *export)
+cache_entry_t *nfs2_FhandleToCache(fhandle2 * fh2,
+				   const struct req_op_context *req_ctx,
+				   exportlist_t *exp_list,
+				   nfsstat2 * status,
+				   int *rc)
 {
-  fsal_status_t fsal_status;
-  file_handle_v2_t *pfile_handle;
+	fsal_status_t fsal_status;
+	file_handle_v2_t *v2_handle;
+	exportlist_t *exp_list_ent;
+	struct fsal_export *export;
+	cache_entry_t *entry = NULL;
+	cache_inode_fsal_data_t fsal_data;
+	cache_inode_status_t cache_status;
 
-  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v2) != NFS2_FHSIZE);
-  /* Cast the fh as a non opaque structure */
-  pfile_handle = (file_handle_v2_t *) pfh2;
-  print_fhandle2(COMPONENT_FILEHANDLE, pfh2);
+	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v2) != NFS2_FHSIZE);
 
-  /* validate the filehandle  */
-  if(pfile_handle->fhversion != GANESHA_FH_VERSION)
-    return 0;                   /* Bad FH */
+	/* Default behaviour */
+	*rc = NFS_REQ_OK;
 
-  /* Fill in the fs opaque part */
-  opaque_to_netbuf(fh_desc, &pfile_handle->fsopaque, 
-                   sizeof(pfile_handle->fsopaque)); 
-  fsal_status = export->ops->extract_handle(export,
-					     FSAL_DIGEST_NFSV2,
-					     fh_desc);
-  if(FSAL_IS_ERROR(fsal_status))
-    return 0;                   /* Corrupted FH */
+	print_fhandle2(COMPONENT_FILEHANDLE, fh2);
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)fh_desc->buf, fh_desc->len);
+	/* Cast the fh as a non opaque structure */
+	v2_handle = (file_handle_v2_t *) fh2;
 
-  return 1;
-}                               /* nfs2_FhandleToFSAL */
+	/* validate the filehandle  */
+	if(v2_handle->fhversion != GANESHA_FH_VERSION) {
+		goto badhdl;
+	}
+
+	exp_list_ent = nfs_Get_export_by_id(exp_list,
+				      nfs2_FhandleToExportId(fh2));
+	if(exp_list_ent == NULL) {
+		*rc = NFS_REQ_DROP;
+		goto badhdl;
+	}
+
+	/* Give the export a crack at it */
+	export = exp_list_ent->export_hdl;
+	fsal_data.export = export;
+	fsal_data.fh_desc.len = sizeof(v2_handle->fsopaque);
+	fsal_data.fh_desc.addr = &v2_handle->fsopaque;
+
+	/* adjust the handle opaque into a cache key */
+	fsal_status = export->ops->extract_handle(export,
+						  FSAL_DIGEST_NFSV2,
+						  &fsal_data.fh_desc);
+	if(FSAL_IS_ERROR(fsal_status)) {
+		goto badhdl;
+	}
+	entry = cache_inode_get(&fsal_data,
+				NULL,
+				req_ctx,
+				&cache_status);
+	if(entry == NULL){
+		goto badhdl;
+	}
+	return entry;
+
+badhdl:
+	*status = NFSERR_STALE;
+	return NULL;
+}                               /* nfs2_FhandleToCache */
 
 /**
  *

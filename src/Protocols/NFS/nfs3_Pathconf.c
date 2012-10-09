@@ -99,12 +99,11 @@ nfs3_Pathconf(nfs_arg_t *arg,
                 .attributes_follow = FALSE;
 
         /* Convert file handle into a fsal_handle */
-        entry = nfs_FhandleToCache(req_ctx,
-                                   req->rq_vers, NULL,
-                                   &arg->arg_pathconf3.object,
-                                   NULL, NULL,
-                                   &res->res_pathconf3.status, NULL,
-                                   export, &rc);
+        entry = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
+				    req_ctx,
+				    export,
+				    &res->res_pathconf3.status,
+				    &rc);
         if (entry == NULL) {
                 goto out;
         }

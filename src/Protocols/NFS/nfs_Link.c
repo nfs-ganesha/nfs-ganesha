@@ -135,37 +135,45 @@ nfs_Link(nfs_arg_t *arg,
                         .attributes_follow = FALSE;
                 res->res_link3.LINK3res_u.resfail.linkdir_wcc.after
                         .attributes_follow = FALSE;
-        }
+		parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
+						   req_ctx,
+						   export,
+						   &res->res_link3.status,
+						   &rc);
+		if(parent_entry != NULL)
+			nfs_SetPreOpAttr(parent_entry,
+					 req_ctx,
+					 &pre_parent);
+		else
+			goto out;
+		target_entry = nfs3_FhandleToCache(&arg->arg_link3.file,
+						   req_ctx,
+						   export,
+						   &res->res_link3.status,
+						   &rc);
+		if(target_entry == NULL)
+			goto out;
+        } else {
+		/* Get entry for parent directory */
+		parent_entry = nfs2_FhandleToCache(&arg->arg_link2.to.dir,
+						   req_ctx,
+						   export,
+						   &res->res_stat2,
+						   &rc);
+		if(parent_entry == NULL)
+			nfs_SetPreOpAttr(parent_entry,
+					 req_ctx,
+					 &pre_parent);
+		else
+			goto out;
 
-        /* Get entry for parent directory */
-        if ((parent_entry
-             = nfs_FhandleToCache(req_ctx, req->rq_vers,
-                                  &arg->arg_link2.to.dir,
-                                  &arg->arg_link3.link.dir,
-                                  NULL,
-                                  &res->res_stat2,
-                                  &res->res_link3.status,
-                                  NULL,
-                                  export,
-                                  &rc)) == NULL) {
-                goto out;
-        }
-
-        nfs_SetPreOpAttr(parent_entry,
-                         req_ctx,
-                         &pre_parent);
-
-        if ((target_entry = nfs_FhandleToCache(req_ctx,
-                                               req->rq_vers,
-                                               &arg->arg_link2.from,
-                                               &arg->arg_link3.file,
-                                               NULL,
-                                               &res->res_stat2,
-                                               &res->res_link3.status,
-                                               NULL,
-                                               export,
-                                               &rc)) == NULL) {
-                goto out;;
+		target_entry = nfs2_FhandleToCache(&arg->arg_link2.from,
+						   req_ctx,
+						   export,
+						   &res->res_stat2,
+						   &rc);
+		if(target_entry == NULL)
+			goto out;
         }
 
         /* Sanity checks: */

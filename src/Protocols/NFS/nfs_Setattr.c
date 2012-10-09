@@ -112,20 +112,19 @@ nfs_Setattr(nfs_arg_t *arg,
                         .attributes_follow = FALSE;
                 res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after
                         .attributes_follow = FALSE;
-        }
+		entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
+					    req_ctx,
+					    export,
+					    &res->res_setattr3.status,
+					    &rc);
+        } else
+		entry = nfs2_FhandleToCache(&arg->arg_setattr2.file,
+					    req_ctx,
+					    export,
+					    &res->res_attr2.status,
+					    &rc);
 
-        /* Convert file handle into a vnode */
-        if ((entry = nfs_FhandleToCache(req_ctx,
-                                        req->rq_vers,
-                                        &arg->arg_setattr2.file,
-                                        &arg->arg_setattr3.object,
-                                        NULL,
-                                        &res->res_attr2.status,
-                                        &res->res_setattr3.status,
-                                        NULL,
-                                        export,
-                                        &rc))
-            == NULL) {
+        if(entry == NULL) {
                 goto out;
         }
 

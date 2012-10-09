@@ -112,18 +112,19 @@ nfs_Readlink(nfs_arg_t *arg,
                 /* to avoid setting it on each error case */
                 res->res_readlink3.READLINK3res_u.resfail.symlink_attributes
                         .attributes_follow = false;
-        }
-        /* Convert file handle into a vnode */
-        if ((entry = nfs_FhandleToCache(req_ctx,
-                                        req->rq_vers,
-                                        &arg->arg_readlink2,
-                                        &arg->arg_readlink3.symlink,
-                                        NULL,
-                                        &res->res_readlink2.status,
-                                        &res->res_readlink3.status,
-                                        NULL,
-                                        export,
-                                        &rc)) == NULL) {
+		entry = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
+					    req_ctx,
+					    export,
+					    &res->res_readlink3.status,
+					    &rc);
+	} else {
+		entry = nfs2_FhandleToCache(&arg->arg_readlink2,
+					    req_ctx,
+					    export,
+					    &res->res_readlink2.status,
+					    &rc);
+	}
+        if(entry == NULL) {
                 goto out;
         }
 

@@ -67,7 +67,16 @@
  * @param[in]  export  NFS export list
  * @param[in]  req_ctx Request context
  * @param[in]  worker  Worker thread data
- * @param[in]  req     SVC request related to this call
+ * @param[in]  req     SVC request related to this call= nfs_FhandleToCache(req_ctx,
+                                               req->rq_vers,
+                                               &arg->arg_create2.where.dir,
+                                               &arg->arg_create3.where.dir,
+                                               NULL,
+                                               &res->res_dirop2.status,
+                                               &res->res_create3.status,
+                                               NULL,
+                                               export,
+                                               &rc)) 
  * @param[out] res     Structure to contain the result of the call
  *
  * @retval NFS_REQ_OK if successful
@@ -115,26 +124,26 @@ nfs_Remove(nfs_arg_t *arg,
                          "name: %s", str, name);
         }
 
+        /* Convert file handle into a pentry */
         if (req->rq_vers == NFS_V3) {
                 /* to avoid setting it on each error case */
                 res->res_remove3.REMOVE3res_u.resfail.dir_wcc.before
                         .attributes_follow = FALSE;
                 res->res_remove3.REMOVE3res_u.resfail.dir_wcc.after
                         .attributes_follow = FALSE;
-        }
-
-        /* Convert file handle into a pentry */
-        if ((parent_entry = nfs_FhandleToCache(req_ctx,
-                                               req->rq_vers,
-                                               &arg->arg_remove2.dir,
-                                               &arg->arg_remove3.object.dir,
-                                               NULL,
-                                               &res->res_dirop2.status,
-                                               &res->res_remove3.status,
-                                               NULL,
-                                               export,
-                                               &rc))
-            == NULL) {
+		parent_entry = nfs3_FhandleToCache(&arg->arg_remove3.object.dir,
+						   req_ctx,
+						   export,
+						   &res->res_remove3.status,
+						   &rc);
+        } else {
+		parent_entry = nfs2_FhandleToCache(&arg->arg_remove2.dir,
+						   req_ctx,
+						   export,
+						   &res->res_dirop2.status,
+						   &rc);
+	}
+        if(parent_entry == NULL) {
                 /* Stale NFS FH ? */
                 goto out;
         }

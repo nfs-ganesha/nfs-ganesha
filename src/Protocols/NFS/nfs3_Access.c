@@ -107,11 +107,11 @@ nfs3_Access(nfs_arg_t *arg,
                 = FALSE;
 
         /* Convert file handle into a vnode */
-        entry = nfs_FhandleToCache(req_ctx,
-                                   req->rq_vers, NULL,
-                                   &(arg->arg_access3.object),
-                                   NULL, NULL, &(res->res_access3.status),
-                                   NULL, export, &rc);
+        entry = nfs3_FhandleToCache(&(arg->arg_access3.object),
+                                   req_ctx,
+				   export,
+				   &(res->res_access3.status),
+                                   &rc);
         if (entry == NULL) {
                 goto out;
         }

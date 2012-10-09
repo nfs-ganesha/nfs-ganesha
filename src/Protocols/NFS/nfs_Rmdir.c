@@ -118,25 +118,26 @@ nfs_Rmdir(nfs_arg_t *arg,
                          "name: %s", str, name);
         }
 
+        /* Convert file handle into a pentry */
         if (req->rq_vers == NFS_V3) {
                 /* to avoid setting it on each error case */
                 res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc.before
                         .attributes_follow = FALSE;
                 res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc.after
                         .attributes_follow = FALSE;
-        }
-
-        /* Convert file handle into a pentry */
-        if ((parent_entry = nfs_FhandleToCache(req_ctx,
-                                               req->rq_vers,
-                                               &arg->arg_rmdir2.dir,
-                                               &arg->arg_rmdir3.object.dir,
-                                               NULL,
-                                               &res->res_stat2,
-                                               &res->res_rmdir3.status,
-                                               NULL,
-                                               export,
-                                               &rc)) == NULL) {
+		parent_entry = nfs3_FhandleToCache(&arg->arg_rmdir3.object.dir,
+						  req_ctx,
+						  export,
+						  &res->res_rmdir3.status,
+						  &rc);
+        } else {
+		parent_entry = nfs2_FhandleToCache(&arg->arg_rmdir2.dir,
+						  req_ctx,
+						  export,
+						  &res->res_stat2,
+						  &rc);
+	}
+        if(parent_entry == NULL) {
                 goto out;
         }
 

@@ -98,11 +98,11 @@ nfs3_Fsinfo(nfs_arg_t *arg,
         res->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow
                 = FALSE;
 
-        entry = nfs_FhandleToCache(req_ctx,
-                                   req->rq_vers, NULL,
-                                   &arg->arg_fsinfo3.fsroot,
-                                   NULL, NULL, &res->res_fsinfo3.status, NULL,
-                                   export, &rc);
+        entry = nfs3_FhandleToCache(&arg->arg_fsinfo3.fsroot,
+				    req_ctx,
+				    export,
+				    &res->res_fsinfo3.status,
+				    &rc);
         if (entry == NULL) {
                 goto out;
         }

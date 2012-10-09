@@ -133,18 +133,20 @@ nfs_Symlink(nfs_arg_t *arg,
                         .attributes_follow = false;
                 res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc.after
                         .attributes_follow = false;
+		parent_entry = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
+						   req_ctx,
+						   export,
+						   &res->res_symlink3.status,
+						   &rc);
+        } else {
+		parent_entry = nfs2_FhandleToCache(&arg->arg_symlink2.from.dir,
+						   req_ctx,
+						   export,
+						   &res->res_stat2,
+						   &rc);
         }
 
-        if ((parent_entry = nfs_FhandleToCache(req_ctx,
-                                               req->rq_vers,
-                                               &arg->arg_symlink2.from.dir,
-                                               &arg->arg_symlink3.where.dir,
-                                               NULL,
-                                               &res->res_stat2,
-                                               &res->res_symlink3.status,
-                                               NULL,
-                                               export,
-                                               &rc)) == NULL) {
+        if(parent_entry == NULL) {
                 goto out;;
         }
 

@@ -131,6 +131,7 @@ nfs_Rename(nfs_arg_t *arg,
                          strfrom, entry_name, strto, new_entry_name);
         }
 
+        /* Convert fromdir file handle into a cache_entry */
         if (req->rq_vers == NFS_V3) {
                 /* to avoid setting it on each error case */
                 res->res_rename3.RENAME3res_u.resfail.fromdir_wcc.before
@@ -141,37 +142,43 @@ nfs_Rename(nfs_arg_t *arg,
                         .attributes_follow = FALSE;
                 res->res_rename3.RENAME3res_u.resfail.todir_wcc.after
                         .attributes_follow = FALSE;
-        }
-
-        /* Convert fromdir file handle into a cache_entry */
-        if ((parent_entry = nfs_FhandleToCache(req_ctx,
-                                               req->rq_vers,
-                                               &arg->arg_rename2.from.dir,
-                                               &arg->arg_rename3.from.dir,
-                                               NULL,
-                                               &res->res_dirop2.status,
-                                               &res->res_create3.status,
-                                               NULL,
-                                               export,
-                                               &rc)) == NULL) {
-                goto out;
-        }
-
+		parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
+						   req_ctx,
+						   export,
+						   &res->res_create3.status,
+						   &rc);
+        } else {
+		parent_entry = nfs2_FhandleToCache(&arg->arg_rename2.from.dir,
+						   req_ctx,
+						   export,
+						   &res->res_dirop2.status,
+						   &rc);
+	}
+	if(parent_entry != NULL)
+		nfs_SetPreOpAttr(parent_entry,
+				 req_ctx,
+				 &pre_parent);
+	else
+		goto out;
         nfs_SetPreOpAttr(parent_entry,
                          req_ctx,
                          &pre_parent);
 
         /* Convert todir file handle into a cache_entry */
-        if ((new_parent_entry = nfs_FhandleToCache(req_ctx,
-                                                   req->rq_vers,
-                                                   &arg->arg_rename2.to.dir,
-                                                   &arg->arg_rename3.to.dir,
-                                                   NULL,
-                                                   &res->res_dirop2.status,
-                                                   &res->res_create3.status,
-                                                   NULL,
-                                                   export,
-                                                   &rc)) == NULL) {
+        if (req->rq_vers == NFS_V3) {
+		new_parent_entry = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
+						       req_ctx,
+						       export,
+						       &res->res_create3.status,
+						       &rc);
+	} else {
+		new_parent_entry = nfs2_FhandleToCache(&arg->arg_rename2.to.dir,
+						       req_ctx,
+						       export,
+						       &res->res_dirop2.status,
+						       &rc);
+	}
+        if(new_parent_entry == NULL) {
                 goto out;
         }
 

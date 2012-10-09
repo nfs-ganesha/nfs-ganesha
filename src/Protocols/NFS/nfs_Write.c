@@ -137,19 +137,18 @@ int nfs_Write(nfs_arg_t *arg,
                         .attributes_follow = false;
                 res->res_write3.WRITE3res_u.resfail.file_wcc.after
                         .attributes_follow = false;
-        }
-
-        /* Convert file handle into a cache entry */
-        if ((entry = nfs_FhandleToCache(req_ctx,
-                                        req->rq_vers,
-                                        &arg->arg_write2.file,
-                                        &arg->arg_write3.file,
-                                        NULL,
-                                        &res->res_attr2.status,
-                                        &res->res_write3.status,
-                                        NULL,
-                                        export,
-                                        &rc)) == NULL) {
+		entry = nfs3_FhandleToCache(&arg->arg_write3.file,
+					    req_ctx,
+					    export,
+					    &res->res_write3.status,
+					    &rc);
+        } else
+		entry = nfs2_FhandleToCache(&arg->arg_write2.file,
+					    req_ctx,
+					    export,
+					    &res->res_attr2.status,
+					    &rc);
+        if(entry == NULL) {
                 /* Stale NFS FH ? */
                 goto out;
         }

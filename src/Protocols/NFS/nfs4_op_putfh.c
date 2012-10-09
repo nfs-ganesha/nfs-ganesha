@@ -179,16 +179,12 @@ nfs4_op_putfh(struct nfs_argop4 *op,
                         }
                 } else {
                         /* Build the pentry.  Refcount +1. */
-                        if((data->current_entry
-                            = nfs_FhandleToCache(data->req_ctx, NFS_V4,
-                                                 NULL,
-                                                 NULL,
-                                                 &(data->currentFH),
-                                                 NULL,
-                                                 NULL,
-                                                 &(res_PUTFH4->status),
-                                                 data->pexport,
-                                                 &rc)) == NULL) {
+			data->current_entry = nfs4_FhandleToCache(&(data->currentFH),
+								  data->req_ctx,
+								  data->pexport,
+								  &(res_PUTFH4->status),
+								  &rc);
+                        if(data->current_entry == NULL) {
                                 return res_PUTFH4->status;
                         }
                         /* Extract the filetype */

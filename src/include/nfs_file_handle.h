@@ -140,15 +140,21 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 
 
 /* File handle translation utility */
-int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
-		       struct netbuf *fh_desc,
-                       struct fsal_export *export);
-int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
-		       struct netbuf *fh_desc,
-                       struct fsal_export *export);
-int nfs2_FhandleToFSAL(fhandle2 * pfh2,
-		       struct netbuf *fh_desc,
-                       struct fsal_export *export);
+cache_entry_t *nfs4_FhandleToCache(nfs_fh4 * pfh4,
+				   const struct req_op_context *req_ctx,
+				   exportlist_t *exp_list,
+				   nfsstat4 * status,
+				   int *rc);
+cache_entry_t * nfs3_FhandleToCache(nfs_fh3 * pfh3,
+				   const struct req_op_context *req_ctx,
+				   exportlist_t *exp_list,
+				   nfsstat3 * status,
+				   int *rc);
+cache_entry_t *nfs2_FhandleToCache(fhandle2 * pfh2,
+				   const struct req_op_context *req_ctx,
+				   exportlist_t *exp_list,
+				   nfsstat2 * status,
+				   int *rc);
 
 int nfs4_FSALToFhandle(nfs_fh4 *fh4,
                        struct fsal_obj_handle *fsalhandle,

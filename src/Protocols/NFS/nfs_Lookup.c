@@ -120,16 +120,19 @@ nfs_Lookup(nfs_arg_t *arg,
                 /* to avoid setting it on each error case */
                 res->res_lookup3.LOOKUP3res_u.resfail.dir_attributes
                         .attributes_follow = FALSE;
-        }
+		entry_dir = nfs3_FhandleToCache(&(arg->arg_lookup3.what.dir),
+						req_ctx,
+						export,
+						&(res->res_lookup3.status),
+						&rc);
+        } else
+		entry_dir = nfs2_FhandleToCache(&(arg->arg_lookup2.dir),
+						req_ctx,
+						export,
+						&(res->res_dirop2.status),
+						&rc);
 
-        if((entry_dir = nfs_FhandleToCache(req_ctx, req->rq_vers,
-                                           &(arg->arg_lookup2.dir),
-                                           &(arg->arg_lookup3.what.dir),
-                                           NULL,
-                                           &(res->res_dirop2.status),
-                                           &(res->res_lookup3.status),
-                                           NULL,
-                                           export, &rc)) == NULL) {
+        if(entry_dir == NULL) {
                 /* Stale NFS FH? */
                 goto out;
         }

@@ -71,17 +71,6 @@ void nfs_FhandleToStr(u_long     rq_vers,
                       nfs_fh4   *pfh4,
                       char      *str);
 
-cache_entry_t *nfs_FhandleToCache(const struct req_op_context *req_ctx,
-                                  u_long rq_vers,
-                                  fhandle2 * fh2,
-                                  nfs_fh3 * fh3,
-                                  nfs_fh4 * fh4,
-                                  nfsstat2 * status2,
-                                  nfsstat3 * status3,
-                                  nfsstat4 * status4,
-                                  exportlist_t *export,
-                                  int *rc);
-
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
                     cache_entry_t *entry,
                     struct req_op_context *ctx,
