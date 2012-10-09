@@ -1260,7 +1260,6 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            nfs_fh4 *objFH,
                            bitmap4 *Bitmap);
 
-void nfs4_list_to_bitmap4(bitmap4 * b, uint_t plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(const bitmap4 * b, uint_t * plen, uint32_t * pval);
 uint64_t nfs_htonl64(uint64_t arg64);
 uint64_t nfs_ntohl64(uint64_t arg64);

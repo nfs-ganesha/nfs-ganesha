@@ -224,45 +224,51 @@ static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
         }
 }
 
-static void pxy_create_getattr_bitmap(uint32_t *pbitmap)
-{
-        bitmap4 bm = {.bitmap4_val = pbitmap, .bitmap4_len = 2};
-        uint32_t tmpattrlist[] = {
-                FATTR4_TYPE,
-                FATTR4_CHANGE,
-                FATTR4_SIZE,
-                FATTR4_FSID,
-                FATTR4_FILEID,
-                FATTR4_MODE,
-                FATTR4_NUMLINKS,
-                FATTR4_OWNER,
-                FATTR4_OWNER_GROUP,
-                FATTR4_SPACE_USED,
-                FATTR4_TIME_ACCESS,
-                FATTR4_TIME_METADATA,
-                FATTR4_TIME_MODIFY,
-                FATTR4_RAWDEV
-        };
-        nfs4_list_to_bitmap4(&bm, ARRAY_SIZE(tmpattrlist), tmpattrlist);
-}
+#define PXY_ATTR_BIT(b) (1U << b)
+#define PXY_ATTR_BIT2(b) (1U << (b - 32))
+
+static uint32_t pxy_bitmap_getattr[2] = {
+        PXY_ATTR_BIT(FATTR4_TYPE) |
+        PXY_ATTR_BIT(FATTR4_CHANGE) |
+        PXY_ATTR_BIT(FATTR4_SIZE) |
+        PXY_ATTR_BIT(FATTR4_FSID) |
+        PXY_ATTR_BIT(FATTR4_FILEID),
+
+        PXY_ATTR_BIT2(FATTR4_MODE) |
+        PXY_ATTR_BIT2(FATTR4_NUMLINKS) |
+        PXY_ATTR_BIT2(FATTR4_OWNER) |
+        PXY_ATTR_BIT2(FATTR4_OWNER_GROUP) | 
+        PXY_ATTR_BIT2(FATTR4_SPACE_USED) | 
+        PXY_ATTR_BIT2(FATTR4_TIME_ACCESS) |
+        PXY_ATTR_BIT2(FATTR4_TIME_METADATA) |
+        PXY_ATTR_BIT2(FATTR4_TIME_MODIFY) |
+        PXY_ATTR_BIT2(FATTR4_RAWDEV)
+};
 
 /* Until readdir callback can take more information do not ask for more then
  * just type */
-static void pxy_create_readdir_bitmap(uint32_t *pbitmap)
-{
-        bitmap4 bm = {.bitmap4_val = pbitmap, .bitmap4_len = 2};
-        uint32_t tmpattrlist[] = {
-                FATTR4_TYPE,
-        };
-        nfs4_list_to_bitmap4(&bm, ARRAY_SIZE(tmpattrlist), tmpattrlist);
-}
+static uint32_t pxy_bitmap_readdir[1] = {
+        PXY_ATTR_BIT(FATTR4_TYPE)
+};
+
+static uint32_t pxy_bitmap_fsinfo[2] = {
+        PXY_ATTR_BIT(FATTR4_FILES_AVAIL) |
+        PXY_ATTR_BIT(FATTR4_FILES_FREE) |
+        PXY_ATTR_BIT(FATTR4_FILES_TOTAL),
+
+        PXY_ATTR_BIT2(FATTR4_SPACE_AVAIL) |
+        PXY_ATTR_BIT2(FATTR4_SPACE_FREE) |
+        PXY_ATTR_BIT2(FATTR4_SPACE_TOTAL)
+};
+
+#undef PXY_ATTR_BIT
+#undef PXY_ATTR_BIT2
 
 static struct
 {
         attrmask_t mask;
         int fattr_bit;
-} fsal_mask2bit[] =
-{
+} fsal_mask2bit[] = {
         {ATTR_SIZE, FATTR4_SIZE},
         {ATTR_MODE, FATTR4_MODE},
         {ATTR_OWNER, FATTR4_OWNER},
@@ -272,22 +278,25 @@ static struct
         {ATTR_CTIME, FATTR4_TIME_METADATA}
 };
 
-/*
- * Create bitmap which list attributes which are both specified by
- * the attrs and considered as 'settable'.
- */
-static void
-pxy_create_settable_bitmap(const struct attrlist * attrs, bitmap4 *bm)
+static int
+pxy_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
 {
-        uint32_t tmpattrlist[ARRAY_SIZE(fsal_mask2bit)];
-        uint32_t attrlen = 0;
         int i;
+        uint32_t bmv[2] = {0, 0};
+        bitmap4 bmap = {.bitmap4_val = bmv, .bitmap4_len = 1};
 
         for(i=0; i < ARRAY_SIZE(fsal_mask2bit); i++) {
-                if(FSAL_TEST_MASK(attrs->mask, fsal_mask2bit[i].mask))
-                        tmpattrlist[attrlen++] = fsal_mask2bit[i].fattr_bit;
+                if(FSAL_TEST_MASK(attrs->mask, fsal_mask2bit[i].mask)) {
+                        if (fsal_mask2bit[i].mask > 31) {
+                                bmv[1] = 1U << (fsal_mask2bit[i].mask - 32);
+                                bmap.bitmap4_len = 2;
+                        } else {
+                                bmv[0] = 1U << fsal_mask2bit[i].mask;
+                        }
+                }
         }
-        nfs4_list_to_bitmap4(bm, attrlen, tmpattrlist);
+
+        return nfs4_FSALattr_To_Fattr(attrs, data, NULL, NULL, &bmap);
 }
 
 static GETATTR4resok *
@@ -991,7 +1000,6 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
 {
         int rc;
         uint32_t opcnt = 0;
-        uint32_t bitmap_val[2];
         GETATTR4resok *atok;
         GETFH4resok *fhok;
 #define FSAL_LOOKUP_NB_OP_ALLOC 4
@@ -1036,15 +1044,13 @@ pxy_lookup_impl(struct fsal_obj_handle *parent,
                 }
         }
 
-        pxy_create_getattr_bitmap(bitmap_val);
-
         fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
         COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
         atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
 
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
         fhok->object.nfs_fh4_val = (char *)padfilehandle;
         fhok->object.nfs_fh4_len = sizeof(padfilehandle);
@@ -1142,8 +1148,6 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
         int rc;
         int opcnt = 0;
         uint32_t bitmap_res[2];
-        uint32_t bitmap_val[2];
-        bitmap4 bmap = {.bitmap4_val = bitmap_val, .bitmap4_len = 2};
         uint32_t bitmap_create[2];
         fattr4 input_attr;
         char padfilehandle[NFS4_FHSIZE];
@@ -1169,9 +1173,7 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
         owner_len = strnlen(owner_val, sizeof(owner_val));
 
         attrib->mask &= ATTR_MODE|ATTR_OWNER|ATTR_GROUP;
-        pxy_create_settable_bitmap(attrib, &bmap);
-        if(nfs4_FSALattr_To_Fattr(attrib, &input_attr, NULL,
-                                  NULL, &bmap) == -1)
+        if(pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
                 return fsalstat(ERR_FSAL_INVAL, -1);
 
         ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
@@ -1189,10 +1191,9 @@ pxy_create(struct fsal_obj_handle *dir_hdl,
         fhok->object.nfs_fh4_len = sizeof(padfilehandle);
         COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-        pxy_create_getattr_bitmap(bitmap_val);
         atok = pxy_fill_getattr_reply(resoparray + opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
         rc = pxy_nfsv4_call(dir_hdl->export, opctx->creds, opcnt,
                             argoparray, resoparray);
@@ -1233,9 +1234,7 @@ pxy_mkdir(struct fsal_obj_handle *dir_hdl,
         int opcnt = 0;
         uint32_t bitmap_res[2];
         uint32_t bitmap_mkdir[2];
-        uint32_t bitmap_val[2];
         fattr4 input_attr;
-        bitmap4 bmap = {.bitmap4_val = bitmap_val, .bitmap4_len = 2};
         char padfilehandle[NFS4_FHSIZE];
         struct pxy_obj_handle *ph;
         char fattr_blob[FATTR_BLOB_SZ];
@@ -1255,10 +1254,7 @@ pxy_mkdir(struct fsal_obj_handle *dir_hdl,
          * and expects the full attributes back at the end of the call.
          */
         attrib->mask &= ATTR_MODE|ATTR_OWNER|ATTR_GROUP;
-        pxy_create_settable_bitmap(attrib, &bmap);
-
-        if(nfs4_FSALattr_To_Fattr(attrib, &input_attr, NULL,
-                                  NULL, &bmap) == -1)
+        if(pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
                 return fsalstat(ERR_FSAL_INVAL, -1);
 
         ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
@@ -1273,10 +1269,9 @@ pxy_mkdir(struct fsal_obj_handle *dir_hdl,
         fhok->object.nfs_fh4_len = sizeof(padfilehandle);
         COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-        pxy_create_getattr_bitmap(bitmap_val);
         atok = pxy_fill_getattr_reply(resoparray + opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
         rc = pxy_nfsv4_call(dir_hdl->export, opctx->creds, opcnt,
                             argoparray, resoparray);
@@ -1304,9 +1299,7 @@ pxy_mknod(struct fsal_obj_handle *dir_hdl,
         int opcnt = 0;
         uint32_t bitmap_res[2];
         uint32_t bitmap_mknod[2];
-        uint32_t bitmap_val[2];
         fattr4 input_attr;
-        bitmap4 bmap = {.bitmap4_val = bitmap_val, .bitmap4_len = 2};
         char padfilehandle[NFS4_FHSIZE];
         struct pxy_obj_handle *ph;
         char fattr_blob[FATTR_BLOB_SZ];
@@ -1352,9 +1345,7 @@ pxy_mknod(struct fsal_obj_handle *dir_hdl,
          * and expects the full attributes back at the end of the call.
          */
         attrib->mask &= ATTR_MODE|ATTR_OWNER|ATTR_GROUP;
-        pxy_create_settable_bitmap(attrib, &bmap);
-        if(nfs4_FSALattr_To_Fattr(attrib, &input_attr, NULL,
-                                  NULL, &bmap) == -1)
+        if(pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
                 return fsalstat(ERR_FSAL_INVAL, -1);
 
         ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
@@ -1370,10 +1361,9 @@ pxy_mknod(struct fsal_obj_handle *dir_hdl,
         fhok->object.nfs_fh4_len = sizeof(padfilehandle);
         COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-        pxy_create_getattr_bitmap(bitmap_val);
         atok = pxy_fill_getattr_reply(resoparray + opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
         rc = pxy_nfsv4_call(dir_hdl->export, opctx->creds, opcnt,
                             argoparray, resoparray);
@@ -1399,10 +1389,8 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
         int rc;
         int opcnt = 0;
         uint32_t bitmap_res[2];
-        uint32_t bitmap_val[2];
         uint32_t bitmap_create[2];
         fattr4 input_attr;
-        bitmap4 bmap = { .bitmap4_val = bitmap_val, .bitmap4_len = 2 };
         char padfilehandle[NFS4_FHSIZE];
         char fattr_blob[FATTR_BLOB_SZ];
 #define FSAL_SYMLINK_NB_OP_ALLOC 4
@@ -1423,9 +1411,7 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
                 return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 
         attrib->mask = ATTR_MODE;
-        pxy_create_settable_bitmap(attrib, &bmap);
-        if(nfs4_FSALattr_To_Fattr(attrib, &input_attr, NULL,
-                                  NULL, &bmap) == -1)
+        if(pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
                 return fsalstat(ERR_FSAL_INVAL, -1);
 
         ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
@@ -1441,10 +1427,9 @@ pxy_symlink(struct fsal_obj_handle *dir_hdl,
         fhok->object.nfs_fh4_len = sizeof(padfilehandle);
         COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-        pxy_create_getattr_bitmap(bitmap_val);
         atok = pxy_fill_getattr_reply(resoparray + opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
         rc = pxy_nfsv4_call(dir_hdl->export, opctx->creds, opcnt,
                             argoparray, resoparray);
@@ -1549,7 +1534,6 @@ pxy_do_readdir(const struct req_op_context *opctx,
                struct pxy_obj_handle *ph, nfs_cookie4 *cookie,
                fsal_readdir_cb cb, void *cbarg, bool *eof)
 {
-        uint32_t bitmap_val[2];
         uint32_t opcnt = 0;
         int rc;
         entry4 *e4;
@@ -1559,12 +1543,11 @@ pxy_do_readdir(const struct req_op_context *opctx,
         READDIR4resok *rdok;
         fsal_status_t st = {ERR_FSAL_NO_ERROR, 0};
 
-        pxy_create_readdir_bitmap(bitmap_val);
-
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
         rdok = &resoparray[opcnt].nfs_resop4_u.opreaddir.READDIR4res_u.resok4;
         rdok->reply.entries = NULL;
-        COMPOUNDV4_ARG_ADD_OP_READDIR(opcnt, argoparray, *cookie, bitmap_val);
+        COMPOUNDV4_ARG_ADD_OP_READDIR(opcnt, argoparray, *cookie,
+                                      pxy_bitmap_readdir);
 
         rc = pxy_nfsv4_call(ph->obj.export, opctx->creds, opcnt,
                             argoparray, resoparray);
@@ -1674,7 +1657,6 @@ pxy_getattrs_impl(const struct user_cred *creds,
 {
         int rc;
         uint32_t opcnt = 0;
-        uint32_t bitmap_val[2];
         uint32_t bitmap_res[2];
 #define FSAL_GETATTR_NB_OP_ALLOC 2
         nfs_argop4 argoparray[FSAL_GETATTR_NB_OP_ALLOC];
@@ -1682,13 +1664,11 @@ pxy_getattrs_impl(const struct user_cred *creds,
         GETATTR4resok *atok;
         char fattr_blob[FATTR_BLOB_SZ]; 
 
-        pxy_create_getattr_bitmap(bitmap_val);
-
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, *filehandle);
 
         atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
         rc = pxy_nfsv4_call(exp, creds, opcnt, argoparray, resoparray);
         if(rc != NFS4_OK)
@@ -1735,8 +1715,6 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 {
         int rc;
         fattr4 input_attr;
-        uint32_t bm_val[2];
-        bitmap4 bmap = {.bitmap4_val = bm_val, .bitmap4_len = 2};
         uint32_t bitmap_res[2];
         uint32_t opcnt = 0;
         struct pxy_obj_handle *ph;
@@ -1756,10 +1734,7 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
 
         ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
 
-        pxy_create_settable_bitmap(attrs, &bmap);
-
-        if(nfs4_FSALattr_To_Fattr(attrs, &input_attr, NULL,
-                                  NULL, &bmap) == -1)
+        if(pxy_fsalattr_to_fattr4(attrs, &input_attr) == -1)
                 return fsalstat(ERR_FSAL_INVAL, EINVAL);
 
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
@@ -1768,11 +1743,9 @@ pxy_setattrs(struct fsal_obj_handle *obj_hdl,
         resoparray[opcnt].nfs_resop4_u.opsetattr.attrsset.bitmap4_len = 2;
         COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argoparray, input_attr);
 
-        pxy_create_getattr_bitmap(bm_val);
-
         atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bm_val);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
         rc = pxy_nfsv4_call(obj_hdl->export, opctx->creds, opcnt,
                             argoparray, resoparray);
@@ -1841,7 +1814,6 @@ pxy_unlink(struct fsal_obj_handle *dir_hdl,
 {
         int opcnt = 0;
         int rc;
-        uint32_t bitmap[2];
         struct pxy_obj_handle *ph;
 #define FSAL_UNLINK_NB_OP_ALLOC 3
         nfs_argop4 argoparray[FSAL_UNLINK_NB_OP_ALLOC];
@@ -1854,15 +1826,13 @@ pxy_unlink(struct fsal_obj_handle *dir_hdl,
         if(!dir_hdl|| !name || !opctx)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
-        pxy_create_getattr_bitmap(bitmap);
-
         ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
         COMPOUNDV4_ARG_ADD_OP_REMOVE(opcnt, argoparray, (char*) name);
 
         atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
 
         rc = pxy_nfsv4_call(dir_hdl->export, opctx->creds, opcnt,
                             argoparray, resoparray);
@@ -2284,21 +2254,6 @@ pxy_create_handle(struct fsal_export *exp_hdl,
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static void
-pxy_create_fsinfo_bitmap(uint32_t *pbitmap)
-{
-        bitmap4 bm = {.bitmap4_val = pbitmap, .bitmap4_len = 2};
-        uint32_t tmpattrlist[] = {
-                FATTR4_FILES_AVAIL,
-                FATTR4_FILES_FREE,
-                FATTR4_FILES_TOTAL,
-                FATTR4_SPACE_AVAIL,
-                FATTR4_SPACE_FREE,
-                FATTR4_SPACE_TOTAL
-        };
-        nfs4_list_to_bitmap4(&bm, ARRAY_SIZE(tmpattrlist), tmpattrlist);
-}
-
 static int
 pxy_fattr_to_dynamicfsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
                            const fattr4 * Fattr)
@@ -2378,7 +2333,6 @@ pxy_get_dynamic_info(struct fsal_export *exp_hdl,
 {
         int rc;
         int opcnt = 0;
-        uint32_t bitmap_val[2];
         uint32_t bitmap_res[2];
 
 #define FSAL_FSINFO_NB_OP_ALLOC 2
@@ -2392,14 +2346,13 @@ pxy_get_dynamic_info(struct fsal_export *exp_hdl,
         if(!exp_hdl || !infop || !opctx)
                 return fsalstat(ERR_FSAL_FAULT, EINVAL);
 
-        pxy_create_fsinfo_bitmap(bitmap_val);
         obj = exp_hdl->exp_entry->proot_handle;
         ph = container_of(obj, struct pxy_obj_handle, obj);
 
         COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
         atok = pxy_fill_getattr_reply(resoparray+opcnt, bitmap_res,
                                       fattr_blob, sizeof(fattr_blob));
-        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, bitmap_val);
+        COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_fsinfo);
 
         rc = pxy_nfsv4_call(exp_hdl, opctx->creds, opcnt, 
                             argoparray, resoparray);

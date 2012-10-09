@@ -3836,55 +3836,6 @@ exit:
 
 }                               /* nfs4_bitmap4_to_list */
 
-/**
- *
- * nfs4_list_to_bitmap4: convert a list of attributes to an attributes's bitmap.
- *
- * Convert a list of attributes to an attributes's bitmap.
- *
- * @param b [OUT] computed bitmap
- * @param plen [IN] list's length 
- * @param pval [IN] list's array
- *
- * @return nothing (void function).
- *
- */
-
-/* This function converts a list of attributes to a bitmap4 structure */
-void nfs4_list_to_bitmap4(bitmap4 * b, uint_t plen, uint32_t * pval)
-{
-  uint_t i;
-  int maxpos =  -1;
-
-  memset(b->bitmap4_val, 0, sizeof(uint32_t)*b->bitmap4_len);
-
-  for(i = 0; i < plen; i++)
-    {
-      int intpos = pval[i] / 32;
-      int bitpos = pval[i] % 32;
-
-      if(intpos >= b->bitmap4_len)
-        {
-          LogCrit(COMPONENT_NFS_V4,
-                  "Mismatch between bitmap len and the list: "
-                  "got %d, need %d to accomodate attribute %d",
-                  b->bitmap4_len, intpos+1, pval[i]);
-        assert(intpos < b->bitmap4_len);
-          continue;
-        }
-      b->bitmap4_val[intpos] |= (1U << bitpos);
-      if(intpos > maxpos)
-        maxpos = intpos;
-    }
-
-  b->bitmap4_len = maxpos + 1;
-  LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u   Val = %u|%u|%u",
-               b->bitmap4_len,
-               b->bitmap4_len >= 1 ? b->bitmap4_val[0] : 0,
-               b->bitmap4_len >= 2 ? b->bitmap4_val[1] : 0,
-               b->bitmap4_len >= 3 ? b->bitmap4_val[2] : 0);
-}                               /* nfs4_list_to_bitmap4 */
-
 /*
  * Conversion of attributes
  */
