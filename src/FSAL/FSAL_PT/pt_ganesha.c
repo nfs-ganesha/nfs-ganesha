@@ -208,13 +208,12 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
     .m_name[sizeof(handle_entry.m_name)-1] = '\0';
     FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
               name,g_fsi_name_handle_cache.m_count);
-    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
-
     if (g_ptfsal_context_flag) {
       // store current index in context cache
       p_cur_context->cur_namecache_handle_index =
         g_fsi_name_handle_cache.m_count;
     }
+    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
   }  
 
   return rc;
@@ -662,9 +661,11 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
   open_rc = ccl_open(&ccl_context, fsi_filename, oflags, mode);
 
   if (g_ptfsal_context_flag) {
-    // update our context
-    if (p_cur_context->cur_fsi_handle_index != open_rc) {
-      p_cur_context->cur_fsi_handle_index = open_rc;
+    if (p_cur_context != NULL) {
+      // update our context
+      if (p_cur_context->cur_fsi_handle_index != open_rc) {
+        p_cur_context->cur_fsi_handle_index = open_rc;
+      }
     }
   }
 
