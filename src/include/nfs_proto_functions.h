@@ -1247,12 +1247,10 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
 int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
-int Fattr4_To_FSAL_attr(struct attrlist* pFSAL_attr,    /* Out: File attributes  */
-                        fattr4 * pFattr,   /* In: File attributes   */
-                        nfs_fh4 *fh);
-                           
 int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr,    /* Out: File attributes  */
                             fattr4 * pFattr);   /* In: File attributes   */
+
+int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *dinfo, fattr4 * pFattr);
 
 int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            fattr4 *Fattr,
@@ -1260,7 +1258,6 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            nfs_fh4 *objFH,
                            bitmap4 *Bitmap);
 
-void nfs4_bitmap4_to_list(const bitmap4 * b, uint_t * plen, uint32_t * pval);
 uint64_t nfs_htonl64(uint64_t arg64);
 uint64_t nfs_ntohl64(uint64_t arg64);
 int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;

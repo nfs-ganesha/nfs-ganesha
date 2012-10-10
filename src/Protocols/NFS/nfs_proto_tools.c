@@ -1247,7 +1247,8 @@ static fattr_xdr_result encode_files_avail(XDR *xdr, struct xdr_attrs_args *args
 
 static fattr_xdr_result decode_files_avail(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	return xdr_u_int64_t(xdr, &args->dynamicinfo->avail_files) ? 
+	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
 /*
@@ -1266,7 +1267,8 @@ static fattr_xdr_result encode_files_free(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_files_free(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	return xdr_u_int64_t(xdr, &args->dynamicinfo->free_files) ? 
+	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
 /*
@@ -1285,7 +1287,8 @@ static fattr_xdr_result encode_files_total(XDR *xdr, struct xdr_attrs_args *args
 
 static fattr_xdr_result decode_files_total(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	return xdr_u_int64_t(xdr, &args->dynamicinfo->total_files) ? 
+	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
 /*
@@ -1764,7 +1767,8 @@ static fattr_xdr_result encode_space_avail(XDR *xdr, struct xdr_attrs_args *args
 
 static fattr_xdr_result decode_space_avail(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	return xdr_u_int64_t(xdr, &args->dynamicinfo->avail_bytes) ? 
+	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
 /*
@@ -1783,7 +1787,8 @@ static fattr_xdr_result encode_space_free(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_space_free(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	return xdr_u_int64_t(xdr, &args->dynamicinfo->free_bytes) ? 
+	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
 /*
@@ -1802,7 +1807,8 @@ static fattr_xdr_result encode_space_total(XDR *xdr, struct xdr_attrs_args *args
 
 static fattr_xdr_result decode_space_total(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	return xdr_u_int64_t(xdr, &args->dynamicinfo->total_bytes) ? 
+	        FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
 /*
@@ -3789,53 +3795,6 @@ seqid4 nfs4_NextSeqId(seqid4 seqid)
   return ((seqid + 1) % 0xFFFFFFFF);
 }                               /* nfs4_NextSeqId */
 
-/**
- *
- * nfs_bitmap4_to_list: convert an attribute's bitmap to a list of attributes.
- *
- * Convert an attribute's bitmap to a list of attributes.
- *
- * @param b     [IN] bitmap to convert.
- * @param plen  [OUT] list's length.
- * @param plval [OUT] list's values.
- *
- * @return nothing (void function)
- *
- */
-/** @TODO deprecate both of these.  some use remains in PROXY fasl
- */
-
-void nfs4_bitmap4_to_list(const bitmap4 * b, uint_t * plen, uint32_t * pval)
-{
-  uint_t i = 0;
-  uint_t val = 0;
-  uint_t index = 0;
-  uint_t offset = 0;
-  uint_t fattr4tabidx=0;
-  if(b->bitmap4_len > 0)
-    LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u Val = %u|%u",
-                 b->bitmap4_len, b->bitmap4_val[0], b->bitmap4_val[1]);
-  else
-    LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u ... ", b->bitmap4_len);
-
-  for(offset = 0; offset < b->bitmap4_len; offset++)
-    {
-      for(i = 0; i < 32; i++)
-        {
-          fattr4tabidx = i+32*offset;
-          if (fattr4tabidx > FATTR4_FS_CHARSET_CAP)
-             goto exit;
-
-          val = 1 << i;         /* Compute 2**i */
-          if(b->bitmap4_val[offset] & val)
-            pval[index++] = fattr4tabidx;
-        }
-    }
-exit:
-  *plen = index;
-
-}                               /* nfs4_bitmap4_to_list */
-
 /*
  * Conversion of attributes
  */
@@ -4462,13 +4421,16 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
  * @param Fattr      [IN] pointer to NFSv4 attributes.
  * @param hdl4       [OUT] optional pointer to return NFSv4 file handle
+ * @param dinfo      [OUT] optional pointer to return 'dynamic info' about FS
  *
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
 
-int Fattr4_To_FSAL_attr(struct attrlist *attrs,
-                        fattr4 *Fattr, nfs_fh4 *hdl4)
+static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
+                               fattr4 *Fattr,
+                               nfs_fh4 *hdl4,
+                               fsal_dynamicfsinfo_t *dinfo)
 {
 	int attribute_to_set = 0;
 	int nfs_status = NFS4_OK;
@@ -4476,7 +4438,7 @@ int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 	struct xdr_attrs_args args;
 	fattr_xdr_result xdr_res;
 
-	if(attrs == NULL || Fattr == NULL)
+	if(Fattr == NULL)
 		return NFS4ERR_BADXDR;
 
 	/* Check attributes data */
@@ -4489,32 +4451,37 @@ int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 		      Fattr->attr_vals.attrlist4_val,
 		      Fattr->attr_vals.attrlist4_len,
 		      XDR_DECODE);
-	FSAL_CLEAR_MASK(attrs->mask);
+	if(attrs)
+		FSAL_CLEAR_MASK(attrs->mask);
 	memset(&args, 0, sizeof(args));
 	args.attrs = attrs;
 	args.hdl4 = hdl4;
+	args.dynamicinfo = dinfo;
 	args.nfs_status = NFS4_OK;
 
 	for(attribute_to_set = next_attr_from_bitmap(&Fattr->attrmask, -1);
 	    attribute_to_set != -1;
 	    attribute_to_set = next_attr_from_bitmap(&Fattr->attrmask,
 						     attribute_to_set)) {
+		const struct fattr4_dent *f4e = fattr4tab + attribute_to_set;
+
 		if(attribute_to_set > FATTR4_FS_CHARSET_CAP) {
 			nfs_status = NFS4ERR_BADXDR; /* undefined attr */
 			break;
 		}
-		xdr_res = fattr4tab[attribute_to_set].decode(&attr_body, &args);
+		xdr_res = f4e->decode(&attr_body, &args);
 		if(xdr_res == FATTR_XDR_SUCCESS) {
-			FSAL_SET_MASK(attrs->mask, fattr4tab[attribute_to_set].attrmask);
+			if(attrs)
+				FSAL_SET_MASK(attrs->mask, f4e->attrmask);
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Decode attribute %d, name = %s",
 				     attribute_to_set,
-				     fattr4tab[attribute_to_set].name);
+				     f4e->name);
 		} else if(xdr_res == FATTR_XDR_NOOP) {
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Attribute not supported %d name=%s",
 				     attribute_to_set,
-				     fattr4tab[attribute_to_set].name);
+				     f4e->name);
 			if(nfs_status == NFS4_OK) /* preserve previous error */
 				nfs_status = NFS4ERR_ATTRNOTSUPP;
 			break;
@@ -4522,7 +4489,7 @@ int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Decode attribute FAILED: %d, name = %s",
 				     attribute_to_set,
-				     fattr4tab[attribute_to_set].name);
+				     f4e->name);
 			if(args.nfs_status == NFS4_OK)
 				nfs_status = NFS4ERR_BADXDR;
 			else
@@ -4530,9 +4497,8 @@ int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 			break;
 		}
 	}
-	if(xdr_getpos(&attr_body) < Fattr->attr_vals.attrlist4_len) {
+	if(xdr_getpos(&attr_body) < Fattr->attr_vals.attrlist4_len)
 		nfs_status = NFS4ERR_BADXDR;  /* underrun on attribute */
-	}
 	xdr_destroy(&attr_body);
 	return nfs_status;
 }                               /* Fattr4_To_FSAL_attr */
@@ -4551,7 +4517,29 @@ int Fattr4_To_FSAL_attr(struct attrlist *attrs,
  */
 int nfs4_Fattr_To_FSAL_attr(struct attrlist *pFSAL_attr, fattr4 *Fattr)
 {
-  return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL);
+  return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL, NULL);
+}
+
+/**
+ *
+ * nfs4_Fattr_To_fsinfo: Decode filesystem info out of NFSv4 attributes.
+ *
+ * Converts information encoded in NFSv4 attributes buffer to 'dynamic info'
+ * about an exported filesystem. 
+ *
+ * It is assumed and expected that the fattr4 blob is not
+ * going to have any other attributes expect those necessary 
+ * to fill in details about space and inode utilization.
+ *
+ * @param dinfo [OUT] pointer to dynamic info
+ * @param Fattr [IN]  pointer to NFSv4 attributes.
+ *
+ * @return NFS4_OK if successful, NFS4ERR codes if not.
+ *
+ */
+int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *dinfo, fattr4 *Fattr)
+{
+        return Fattr4_To_FSAL_attr(NULL, Fattr, NULL, dinfo);
 }
 
 /* Error conversion routines */

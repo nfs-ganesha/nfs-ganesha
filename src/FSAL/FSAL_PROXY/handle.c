@@ -2254,78 +2254,6 @@ pxy_create_handle(struct fsal_export *exp_hdl,
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static int
-pxy_fattr_to_dynamicfsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
-                           const fattr4 * Fattr)
-{
-        int i;
-        /* For NFSv4.0 list cannot be longer than FATTR4_MOUNTED_ON_FILEID */
-        uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];
-        uint32_t attrmasklen = 0;
-        const char *attrval = Fattr->attr_vals.attrlist4_val;
-
-        nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
-
-        memset((char *)pdynamicinfo, 0, sizeof(fsal_dynamicfsinfo_t));
-
-        for(i = 0; i < attrmasklen; i++) {
-                uint32_t atidx = attrmasklist[i];
-                uint64_t val;
-
-                switch (atidx) {
-                case FATTR4_FILES_AVAIL:
-                        memcpy((char *)&val, attrval, sizeof(val));
-                        attrval += sizeof(val);
-
-                        pdynamicinfo->avail_files = nfs_ntohl64(val);
-                        break;
-
-                case FATTR4_FILES_FREE:
-                        memcpy((char *)&val, attrval, sizeof(val));
-                        attrval += sizeof(val);
-
-                        pdynamicinfo->free_files = nfs_ntohl64(val);
-                        break;
-
-                case FATTR4_FILES_TOTAL:
-                        memcpy((char *)&val, attrval, sizeof(val));
-                        attrval += sizeof(val);
-
-                        pdynamicinfo->total_files = nfs_ntohl64(val);
-                        break;
-
-               case FATTR4_SPACE_AVAIL:
-                        memcpy((char *)&val, attrval, sizeof(val));
-                        attrval += sizeof(val);
-
-                        pdynamicinfo->avail_bytes = nfs_ntohl64(val);
-                        break;
-
-               case FATTR4_SPACE_FREE:
-                        memcpy((char *)&val, attrval, sizeof(val));
-                        attrval += sizeof(val);
-
-                        pdynamicinfo->free_bytes = nfs_ntohl64(val);
-                        break;
-
-               case FATTR4_SPACE_TOTAL:
-                        memcpy((char *)&val, attrval, sizeof(val));
-                        attrval += sizeof(val);
-
-                        pdynamicinfo->total_bytes = nfs_ntohl64(val);
-                        break;
-
-               default:
-                        LogWarn(COMPONENT_FSAL, 
-                                "Unexpected attribute %s(%d)",
-                                fattr4tab[atidx].name, atidx);
-                        return 0;
-               }
-        }
-
-        return 1;
-}
-
 fsal_status_t
 pxy_get_dynamic_info(struct fsal_export *exp_hdl,
                      const struct req_op_context *opctx,
@@ -2359,8 +2287,7 @@ pxy_get_dynamic_info(struct fsal_export *exp_hdl,
         if(rc != NFS4_OK)
                 return nfsstat4_to_fsal(rc);
 
-        /* Use NFSv4 service function to build the FSAL_attr */
-        if(pxy_fattr_to_dynamicfsinfo(infop, &atok->obj_attributes) != 1)
+        if(nfs4_Fattr_To_fsinfo(infop, &atok->obj_attributes) != NFS4_OK)
                 return fsalstat(ERR_FSAL_INVAL, 0);
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);

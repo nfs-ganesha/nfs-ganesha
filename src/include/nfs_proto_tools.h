@@ -62,9 +62,6 @@
 #define NFS2_MODE_NFLNK 0120000
 #define NFS2_MODE_NFNON 0140000
 
-uint64_t nfs_htonl64(uint64_t arg64);
-uint64_t nfs_ntohl64(uint64_t arg64);
-
 void nfs_FhandleToStr(u_long     rq_vers,
                       fhandle2  *pfh2,
                       nfs_fh3   *pfh3,
