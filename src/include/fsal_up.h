@@ -427,14 +427,11 @@ void init_FSAL_up(void);
 int shutdown_FSAL_up(void);
 int fsal_up_submit(struct fsal_up_event *event);
 
-
 int up_get(const struct gsh_buffdesc *key,
            cache_entry_t **entry);
 
 
-
-
 struct fsal_up_event *fsal_up_alloc_event(void);
-
 void fsal_up_free_event(struct fsal_up_event *event);
+
 #endif /* _FSAL_UP_H */

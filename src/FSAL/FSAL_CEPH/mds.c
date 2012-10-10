@@ -24,6 +24,7 @@
 #include "fsal.h"
 #include "fsal_types.h"
 #include "fsal_api.h"
+#include "fsal_up.h"
 #include "pnfs_utils.h"
 #include "internal.h"
 #include "nfs_exports.h"
@@ -40,6 +41,39 @@
  * getdeviceinfo, and getdevicelist operations and export query
  * support for the Ceph FSAL.
  */
+
+static void
+initiate_recall(vinodeno_t vi, bool write, void *opaque)
+{
+        /* The private 'full' object handle */
+        struct handle *handle = (struct handle *)opaque;
+        /* The private 'full' export */
+        struct export *export
+                = container_of(handle->handle.export, struct export, export);
+        /* Event to trigger */
+        struct fsal_up_event *event = fsal_up_alloc_event();
+
+        event->functions = export->export.up_ops;
+        event->type = FSAL_UP_EVENT_LAYOUTRECALL;
+        event->data.layoutrecall.layout_type = LAYOUT4_NFSV4_1_FILES;
+        event->data.layoutrecall.recall_type = LAYOUTRECALL4_FILE;
+        event->data.layoutrecall.changed = false;
+        event->data.layoutrecall.segment.offset = 0;
+        event->data.layoutrecall.segment.length = UINT64_MAX;
+        event->data.layoutrecall.segment.io_mode
+                = (write ?
+                   LAYOUTIOMODE4_READ :
+                   LAYOUTIOMODE4_RW);
+        event->data.layoutrecall.cookie = NULL;
+        event->file.key.addr = gsh_malloc(sizeof(struct wire_handle));
+        event->file.key.len = sizeof(struct wire_handle);
+        memcpy(event->file.key.addr, &handle->wire,
+               sizeof(struct wire_handle));
+        event->file.export = &export->export;
+
+        fsal_up_submit(event);
+}
+
 
 /**
  * @brief Describe a Ceph striping pattern
@@ -337,6 +371,16 @@ layoutget(struct fsal_obj_handle *obj_pub,
         /* Descriptor for DS handle */
         struct gsh_buffdesc ds_desc = {.addr = &ds_wire,
                                        .len = sizeof(struct ds_wire)};
+        /* The smallest layout the client will accept */
+        struct pnfs_segment smallest_acceptable = {
+                .io_mode = res->segment.io_mode,
+                .offset = res->segment.offset,
+                .length = arg->minlength
+        };
+        struct pnfs_segment forbidden_area = {
+                .io_mode = res->segment.io_mode,
+                .length = NFS4_UINT64_MAX
+        };
 
         /* We support only LAYOUT4_NFSV4_1_FILES layouts */
 
@@ -355,25 +399,17 @@ layoutget(struct fsal_obj_handle *obj_pub,
         ceph_ll_file_layout(export->cmount, handle->wire.vi, &file_layout);
         stripe_width = file_layout.fl_stripe_unit;
         last_possible_byte = (BIGGEST_PATTERN * stripe_width) - 1;
+        forbidden_area.offset = last_possible_byte + 1;
 
         /* Since the Linux kernel refuses to work with any layout that
            doesn't cover the whole file, if a whole file layout is
            requested, lie.
 
            Otherwise, make sure the required layout doesn't go beyond
-           what can be accessed through pNFS. */
+           what can be accessed through pNFS. This is a preliminary
+           check before even talking to Ceph. */
         if (!((res->segment.offset == 0) &&
               (res->segment.length == NFS4_UINT64_MAX))) {
-                struct pnfs_segment smallest_acceptable = {
-                        .io_mode = res->segment.io_mode,
-                        .offset = res->segment.offset,
-                        .length = arg->minlength
-                };
-                struct pnfs_segment forbidden_area = {
-                        .io_mode = res->segment.io_mode,
-                        .offset = last_possible_byte + 1,
-                        .length = NFS4_UINT64_MAX
-                };
                 if (pnfs_segments_overlap(&smallest_acceptable,
                                           &forbidden_area)) {
                         LogCrit(COMPONENT_PNFS,
@@ -386,8 +422,67 @@ layoutget(struct fsal_obj_handle *obj_pub,
                 }
                 res->segment.offset = 0;
                 res->segment.length = stripe_width * BIGGEST_PATTERN;
-                res->segment.io_mode = LAYOUTIOMODE4_RW;
         }
+
+        /* We are using sparse layouts with commit-through-DS, so our
+           utility word contains only the stripe width, our first
+           stripe is always at the beginning of the layout, and there
+           is no pattern offset. */
+
+        if ((stripe_width & ~NFL4_UFLG_STRIPE_UNIT_SIZE_MASK) != 0) {
+                LogCrit(COMPONENT_PNFS,
+                        "Ceph returned stripe width that is disallowed by "
+                        "NFS: %"PRIu32".", stripe_width);
+                return NFS4ERR_SERVERFAULT;
+        }
+        util = stripe_width;
+
+        /* If we have a cached capbility, use that.  Otherwise, call
+           in to Ceph. */
+
+        pthread_mutex_lock(&handle->handle.lock);
+        if (res->segment.io_mode == LAYOUTIOMODE4_READ) {
+                uint32_t r = 0;
+                if (handle->rd_issued == 0) {
+                        r = ceph_ll_hold_rw(export->cmount,
+                                            handle->wire.vi,
+                                            false,
+                                            initiate_recall,
+                                            handle,
+                                            &handle->rd_serial,
+                                            NULL);
+                        if (r < 0) {
+                                pthread_mutex_unlock(&handle->handle.lock);
+                                return posix2nfs4_error(-r);
+                        }
+                }
+                ++handle->rd_issued;
+        } else {
+                uint32_t r = 0;
+                if (handle->rw_issued == 0) {
+                        r = ceph_ll_hold_rw(export->cmount,
+                                            handle->wire.vi,
+                                            true,
+                                            initiate_recall,
+                                            handle,
+                                            &handle->rw_serial,
+                                            &handle->rw_max_len);
+                        if (r < 0) {
+                                pthread_mutex_unlock(&handle->handle.lock);
+                                return posix2nfs4_error(-r);
+                        }
+                }
+                forbidden_area.offset = handle->rw_max_len;
+                if (pnfs_segments_overlap(&smallest_acceptable,
+                                          &forbidden_area)) {
+                        pthread_mutex_unlock(&handle->handle.lock);
+                        return NFS4ERR_BADLAYOUT;
+                }
+                res->segment.length = (handle->rw_max_len
+                                       - res->segment.offset);
+                ++handle->rw_issued;
+        }
+        pthread_mutex_unlock(&handle->handle.lock);
 
         /* For now, just make the low quad of the deviceid be the
            inode number.  With the span of the layouts constrained
@@ -406,19 +501,6 @@ layoutget(struct fsal_obj_handle *obj_pub,
         ds_wire.snapseq = ceph_ll_snap_seq(export->cmount,
                                            handle->wire.vi);
 
-        /* We are using sparse layouts with commit-through-DS, so our
-           utility word contains only the stripe width, our first
-           stripe is always at the beginning of the layout, and there
-           is no pattern offset. */
-
-        if ((stripe_width & ~NFL4_UFLG_STRIPE_UNIT_SIZE_MASK) != 0) {
-                LogCrit(COMPONENT_PNFS,
-                        "Ceph returned stripe width that is disallowed by "
-                        "NFS: %"PRIu32".", stripe_width);
-                return NFS4ERR_SERVERFAULT;
-        }
-        util = stripe_width;
-
         if ((nfs_status
              = FSAL_encode_file_layout(loc_body,
                                        &deviceid,
@@ -430,7 +512,7 @@ layoutget(struct fsal_obj_handle *obj_pub,
                                        &ds_desc))) {
                 LogCrit(COMPONENT_PNFS,
                         "Failed to encode nfsv4_1_file_layout.");
-                return nfs_status;
+                goto relinquish;
         }
 
         /* We grant only one segment, and we want it back when the file
@@ -440,6 +522,35 @@ layoutget(struct fsal_obj_handle *obj_pub,
         res->last_segment = true;
 
         return NFS4_OK;
+
+relinquish:
+
+        /* If we failed in encoding the lo_content, relinquish what we
+           reserved for it. */
+
+        pthread_mutex_lock(&handle->handle.lock);
+        if (res->segment.io_mode == LAYOUTIOMODE4_READ) {
+                if (--handle->rd_issued != 0) {
+                        pthread_mutex_unlock(&handle->handle.lock);
+                        return nfs_status;
+                }
+        } else {
+                if (--handle->rd_issued != 0) {
+                        pthread_mutex_unlock(&handle->handle.lock);
+                        return nfs_status;
+                }
+        }
+
+        ceph_ll_return_rw(export->cmount,
+                          handle->wire.vi,
+                          res->segment.io_mode ==
+                          LAYOUTIOMODE4_READ ?
+                          handle->rd_serial :
+                          handle->rw_serial);
+
+        pthread_mutex_unlock(&handle->handle.lock);
+
+        return nfs_status;
 }
 
 /**
@@ -462,6 +573,13 @@ layoutreturn(struct fsal_obj_handle *obj_pub,
              XDR *lrf_body,
              const struct fsal_layoutreturn_arg *arg)
 {
+        /* The private 'full' export */
+        struct export *export
+                = container_of(obj_pub->export, struct export, export);
+        /* The private 'full' object handle */
+        struct handle *handle
+                = container_of(obj_pub, struct handle, handle);
+
         /* Sanity check on type */
         if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
                 LogCrit(COMPONENT_PNFS,
@@ -470,11 +588,29 @@ layoutreturn(struct fsal_obj_handle *obj_pub,
                 return NFS4ERR_UNKNOWN_LAYOUTTYPE;
         }
 
-        /* Since we no longer store DS addresses, we no longer have
-           anything to free.  Later on we should unravel the Ceph
-           client a bit more and coordinate with the Ceph MDS's notion
-           of read and write pins, but that isn't germane until we
-           have LAYOUTRECALL. */
+        if (arg->dispose) {
+                pthread_mutex_lock(&handle->handle.lock);
+                if (arg->cur_segment.io_mode == LAYOUTIOMODE4_READ) {
+                        if (--handle->rd_issued != 0) {
+                                pthread_mutex_unlock(&handle->handle.lock);
+                                return NFS4_OK;
+                        }
+                } else {
+                        if (--handle->rd_issued != 0) {
+                                pthread_mutex_unlock(&handle->handle.lock);
+                                return NFS4_OK;
+                        }
+                }
+
+                ceph_ll_return_rw(export->cmount,
+                                  handle->wire.vi,
+                                  arg->cur_segment.io_mode ==
+                                  LAYOUTIOMODE4_READ ?
+                                  handle->rd_serial :
+                                  handle->rw_serial);
+
+                pthread_mutex_unlock(&handle->handle.lock);
+        }
 
         return NFS4_OK;
 }

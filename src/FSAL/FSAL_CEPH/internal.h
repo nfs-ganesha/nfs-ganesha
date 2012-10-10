@@ -71,6 +71,11 @@ struct handle {
         struct fsal_obj_handle handle; /*< The public handle */
         Fh *fd;
         fsal_openflags_t openflags;
+        uint64_t rd_issued;
+        uint64_t rd_serial;
+        uint64_t rw_issued;
+        uint64_t rw_serial;
+        uint64_t rw_max_len;
 };
 
 /**
