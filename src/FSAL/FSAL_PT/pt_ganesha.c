@@ -9,6 +9,55 @@
 // ----------------------------------------------------------------------------
 #include "pt_ganesha.h"
 
+int                   g_ptfsal_context_flag=1;   // global context caching
+                                                 // flag. Allows turning off
+                                                 // caching for debugging
+
+static pthread_key_t  ptfsal_thread_key;
+static pthread_once_t ptfsal_once_key = PTHREAD_ONCE_INIT;
+
+typedef struct ptfsal_threadcontext_t
+{
+  int cur_namecache_handle_index;
+  int cur_fsi_handle_index;
+} ptfsal_threadcontext_t;
+
+// ----------------------------------------------------------------------------
+static void ptfsal_create_key()
+{
+  if(pthread_key_create(&ptfsal_thread_key, NULL) < 0) {
+    FSI_TRACE(FSI_FATAL, "cannot create fsal pthread key errno=%d",errno);
+  }
+}
+
+// ----------------------------------------------------------------------------
+ptfsal_threadcontext_t *ptfsal_get_thread_context()
+{
+  ptfsal_threadcontext_t *p_cur_context;
+
+  // init keys if first time
+  if (pthread_once(&ptfsal_once_key, &ptfsal_create_key) < 0) {
+    FSI_TRACE(FSI_FATAL, "cannot init fsal pthread specific vars");
+  }
+
+  p_cur_context = (ptfsal_threadcontext_t *) pthread_getspecific(ptfsal_thread_key);
+
+  if (p_cur_context == NULL) {
+    p_cur_context = malloc(sizeof(ptfsal_threadcontext_t));
+    FSI_TRACE(FSI_NOTICE, "malloc %d bytes fsal specific data", sizeof(ptfsal_threadcontext_t));
+    if (p_cur_context != NULL) {
+      // we init our stuff for the first time
+      p_cur_context->cur_namecache_handle_index = -1;
+      p_cur_context->cur_fsi_handle_index = -1;
+      // now set the thread context
+      pthread_setspecific(ptfsal_thread_key, (void *)p_cur_context);
+    } else {
+      FSI_TRACE(FSI_FATAL, "cannot malloc fsal pthread key errno=%d",errno);
+    }
+  }
+  return p_cur_context;
+}
+
 struct  fsi_handle_cache_t  g_fsi_name_handle_cache;
 pthread_mutex_t g_fsi_name_handle_mutex;
 
@@ -71,9 +120,37 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   char                  * client_ip;
   struct fsi_handle_cache_entry_t handle_entry;
   uint64_t * handlePtr;
+  ptfsal_threadcontext_t *p_cur_context;
 
   FSI_TRACE(FSI_DEBUG, "Get name from handle: \n");
   ptfsal_print_handle(handle);
+
+  if (g_ptfsal_context_flag) {
+    p_cur_context = ptfsal_get_thread_context();
+    if (p_cur_context != NULL) {
+      // look for context cache match
+      FSI_TRACE(FSI_DEBUG, "cur namecache index %d",
+                p_cur_context->cur_namecache_handle_index);
+      // try and get a direct hit, else drop through code as exists now
+      index = p_cur_context->cur_namecache_handle_index;
+      pthread_mutex_lock(&g_fsi_name_handle_mutex);
+      if (memcmp(&handle[0],
+          &g_fsi_name_handle_cache.m_entry[index].m_handle,
+          FSI_PERSISTENT_HANDLE_N_BYTES) == 0) {
+        strncpy(name, g_fsi_name_handle_cache.m_entry[index].m_name,
+                sizeof(handle_entry.m_name));
+        name[sizeof(handle_entry.m_name)-1] = '\0';
+        FSI_TRACE(FSI_DEBUG,
+                  "FSI - name = %s cache index %d DIRECT HIT\n",
+                  name, index);
+        pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+        return 0;
+      }
+      pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+    } else {
+      FSI_TRACE(FSI_DEBUG, "context is null");
+    }
+  }
   
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
@@ -84,6 +161,14 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
       strncpy(name, g_fsi_name_handle_cache.m_entry[index].m_name, 
               sizeof(handle_entry.m_name));
       name[sizeof(handle_entry.m_name)-1] = '\0';
+
+      if (g_ptfsal_context_flag) {
+        // store current index in context cache
+        FSI_TRACE(FSI_DEBUG, "FSI - name = %s cache index %d\n",
+                  name, index);
+        p_cur_context->cur_namecache_handle_index = index;
+      }
+
       FSI_TRACE(FSI_DEBUG, "FSI - name = %s \n", name);
       pthread_mutex_unlock(&g_fsi_name_handle_mutex);
  
@@ -124,6 +209,12 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
     FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
               name,g_fsi_name_handle_cache.m_count);
     pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+
+    if (g_ptfsal_context_flag) {
+      // store current index in context cache
+      p_cur_context->cur_namecache_handle_index =
+        g_fsi_name_handle_cache.m_count;
+    }
   }  
 
   return rc;
@@ -368,6 +459,26 @@ ptfsal_stat_by_handle(fsal_handle_t     * p_filehandle,
   }
   FSI_TRACE(FSI_DEBUG, "FSI - name = %s\n", fsi_name);
 
+
+  if (g_ptfsal_context_flag) {
+    ptfsal_threadcontext_t *p_cur_context;
+    p_cur_context = ptfsal_get_thread_context();
+    if (p_cur_context != NULL) {
+      // attempt a direct stat based on the stored index,
+      // if it fails, get stat by calling normal ccl routines
+      FSI_TRACE(FSI_DEBUG, "FSI - faststat handle [%d] name [%s]\n",
+                p_cur_context->cur_fsi_handle_index, fsi_name);
+      if (ccl_fsal_try_stat_by_index(&ccl_context,
+                                     p_cur_context->cur_fsi_handle_index,
+                                     fsi_name,
+                                     p_stat) == 0) {
+        return 0;
+      }
+    } else {
+      FSI_TRACE(FSI_DEBUG, "context is null");
+    }
+  }
+
   int fsihandle = ccl_find_handle_by_name_and_export(fsi_name, &ccl_context);
 
   if (fsihandle != -1)
@@ -523,10 +634,57 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
     FSI_TRACE(FSI_ERR, "The file name is empty string.");
     return -1;
   }
+
+  // since we called fsi_get_name_from_handle, we know the pthread specific
+  // is initialized, so we can just check it
+  ptfsal_threadcontext_t *p_cur_context;
+  if (g_ptfsal_context_flag) {
+   int existing_handle_index;
+    p_cur_context = ptfsal_get_thread_context();
+    if (p_cur_context != NULL) {
+      // try and get a direct hit from context cache,
+      // else drop through to normal search code
+      FSI_TRACE(FSI_DEBUG,
+                "cur handle index %d",
+                p_cur_context->cur_fsi_handle_index);
+      existing_handle_index =
+        ccl_fsal_try_fastopen_by_index(&ccl_context,
+                                       p_cur_context->cur_fsi_handle_index,
+                                       fsi_filename);
+      if (existing_handle_index >= 0) {
+        return existing_handle_index;
+      }
+    } else {
+      FSI_TRACE(FSI_DEBUG, "context is null");
+    }
+  }
+
   open_rc = ccl_open(&ccl_context, fsi_filename, oflags, mode);
+
+  if (g_ptfsal_context_flag) {
+    // update our context
+    if (p_cur_context->cur_fsi_handle_index != open_rc) {
+      p_cur_context->cur_fsi_handle_index = open_rc;
+    }
+  }
 
   return open_rc;
 }
+// -----------------------------------------------------------------------------
+void ptfsal_close(int handle_index)
+{
+
+  if (g_ptfsal_context_flag) {
+    ptfsal_threadcontext_t *p_cur_context;
+    p_cur_context = ptfsal_get_thread_context();
+    if (p_cur_context != NULL) {
+      // update context cache
+      p_cur_context->cur_fsi_handle_index = handle_index;
+    }
+  }
+
+}
+
 // -----------------------------------------------------------------------------
 int
 ptfsal_open(fsal_handle_t     * p_parent_directory_handle,

@@ -506,6 +506,9 @@ fsal_status_t PTFSAL_close(fsal_file_t * p_file_descriptor   /* IN */ )
   /* call to close */
   ptfsal_update_handle_nfs_state(p_file_descriptor->fd, NFS_CLOSE);
 
+  /* call ptfsal */
+  ptfsal_close(p_file_descriptor->fd);
+
   FSI_TRACE(FSI_DEBUG, "FSI - End PTFSAL close-----------------\n");
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
