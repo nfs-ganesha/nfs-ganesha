@@ -378,11 +378,12 @@ struct fsal_up_vector fsal_up_top;
 struct fsal_up_event
 {
         struct glist_head event_link; /*< Link in the event queue */
-        struct fsal_up_vector *functions; /*< Vector of upcall
-                                              functions.  Should be
-                                              filled in by the FSAL
-                                              with the vector
-                                              supplied. */
+        const struct fsal_up_vector *functions; /*< Vector of upcall
+                                                    functions.  Should
+                                                    be filled in by
+                                                    the FSAL with the
+                                                    vector
+                                                    supplied. */
         fsal_up_event_type_t type; /*< The type of event reported */
         union {
                 struct fsal_up_event_lock_grant lock_grant;
