@@ -244,20 +244,36 @@ stop() {
 		rm -f /var/run/sm-notify.pid
 	fi
 	echo
-
 	# Kill the Ganesha process
 	echo -n $"Stopping $prog: "
-	org_pid=`pidof "$PATHPROG"`
-	if [ $org_pid ]; then
+	pid=`pidof "$PATHPROG"`
+	if [ $pid ]; then
 		# Ganesha is running. Stop it.
-		killproc -d 30 $PATHPROG
-		RETVAL=$?
-		[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
+                kill -TERM $pid >/dev/null 2>&1
+                usleep 100000
+                # Unconditionally delete this file; if the process is still
+                # there it means, it is hung
+                rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
+                if checkpid $pid && sleep 1 &&
+                   checkpid $pid && sleep 10 &&
+                   checkpid $pid ; then
+                   # It must be hung; get the dump
+                   kill -ABRT $pid >/dev/null 2>&1
+                   usleep 100000
+                fi
+
+                if checkpid $pid && sleep 1 &&
+                   checkpid $pid && sleep 30 &&
+                   checkpid $pid ; then
+                   # Still there? Send a Kill.
+                   kill -KILL $pid >/dev/null 2>&1
+                   usleep 100000
+                fi
 
 		# Give Ganesha time to quit
 		result=`pidof "$PATHPROG"`
 		while true; do
-			 if [ $result ] && [ $result -eq $org_pid ]; then
+			 if [ $result ] && [ $result -eq $pid ]; then
 				 sleep .1
 				 result=`pidof "$PATHPROG"`
 			 else
