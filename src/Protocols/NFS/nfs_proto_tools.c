@@ -3228,6 +3228,7 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 	}
 
 	LastOffset = 0;
+	memset(&attr_body, 0, sizeof(attr_body));
 	xdrmem_create(&attr_body,
 		      Fattr->attr_vals.attrlist4_val,
 		      NFS4_ATTRVALS_BUFFLEN,
@@ -4447,6 +4448,7 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 		return NFS4_OK;
 
 	/* Init */
+	memset(&attr_body, 0, sizeof(attr_body));
 	xdrmem_create(&attr_body,
 		      Fattr->attr_vals.attrlist4_val,
 		      Fattr->attr_vals.attrlist4_len,

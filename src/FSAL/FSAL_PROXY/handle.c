@@ -570,6 +570,7 @@ pxy_process_reply(struct pxy_rpc_io_context * ctx, COMPOUND4res *res)
                 reply.acpted_rply.ar_results.proc = (xdrproc_t)xdr_COMPOUND4res;
                 reply.acpted_rply.ar_results.where = (caddr_t)res;
 
+		memset(&x, 0, sizeof(x));
                 xdrmem_create(&x, ctx->recvbuf, ctx->ioresult, XDR_DECODE);
 
                 if(xdr_replymsg(&x, &reply)) {
@@ -662,6 +663,7 @@ pxy_compoundv4_call(struct pxy_rpc_io_context * pcontext,
         rmsg.rm_call.cb_cred = au->ah_cred;
         rmsg.rm_call.cb_verf = au->ah_verf;
 
+	memset(&x, 0, sizeof(x));
         xdrmem_create(&x, pcontext->sendbuf + 4, pcontext->sendbuf_sz,
                       XDR_ENCODE);
         if(xdr_callmsg(&x, &rmsg) && xdr_COMPOUND4args(&x, args)) {
