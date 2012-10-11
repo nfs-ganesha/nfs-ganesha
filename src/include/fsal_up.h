@@ -65,9 +65,10 @@ extern struct fsal_up_state fsal_up_state;
  */
 
 typedef enum {
-        FSAL_UP_EVENT_LOCK_GRANT = 1,
-        FSAL_UP_EVENT_INVALIDATE = 2,
-        FSAL_UP_EVENT_LAYOUTRECALL = 3
+        FSAL_UP_EVENT_LOCK_GRANT,
+        FSAL_UP_EVENT_LOCK_AVAIL,
+        FSAL_UP_EVENT_INVALIDATE,
+        FSAL_UP_EVENT_LAYOUTRECALL
 } fsal_up_event_type_t;
 
 /**
@@ -93,6 +94,16 @@ struct fsal_up_file
  */
 
 struct fsal_up_event_lock_grant
+{
+        void              * lock_owner; /*< The lock owner */
+        fsal_lock_param_t   lock_param; /*< A description of the lock */
+};
+
+/**
+ * @brief Structure identifying a newly available lock
+ */
+
+struct fsal_up_event_lock_avail
 {
         void              * lock_owner; /*< The lock owner */
         fsal_lock_param_t   lock_param; /*< A description of the lock */
@@ -156,6 +167,11 @@ struct fsal_up_vector
         void (*lock_grant_queue)(struct fsal_up_event_lock_grant *,
                                  struct fsal_up_file *);
 
+        int (*lock_avail_imm)(struct fsal_up_event_lock_avail *,
+                              struct fsal_up_file *);
+        void (*lock_avail_queue)(struct fsal_up_event_lock_avail *,
+                                 struct fsal_up_file *);
+
         int (*invalidate_imm)(struct fsal_up_event_invalidate *,
                               struct fsal_up_file *);
         void (*invalidate_queue)(struct fsal_up_event_invalidate *,
@@ -184,6 +200,7 @@ struct fsal_up_event
         fsal_up_event_type_t type; /*< The type of event reported */
         union {
                 struct fsal_up_event_lock_grant lock_grant;
+                struct fsal_up_event_lock_avail lock_avail;
                 struct fsal_up_event_invalidate invalidate;
                 struct fsal_up_event_layoutrecall layoutrecall;
         } data; /*< Type specific event data */

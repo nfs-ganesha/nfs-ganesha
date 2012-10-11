@@ -41,15 +41,29 @@
 #include "fsal_up.h"
 #include "sal_functions.h"
 
-int
-fsal_up_invalidate_imm(struct fsal_up_event_invalidate *invalidate,
-                       struct fsal_up_file *file)
+/**
+ * @brief Invalidate cached attributes and content
+ *
+ * We call into the cache and invalidate at once, since the operation
+ * is inexpensive by design.
+ *
+ * @param[in] invalidate Invalidation parameters
+ * @param[in] file       The file to invalidate
+ *
+ * @retval 0 on success.
+ * @retval ENOENT if the entry is not in the cache.  (Harmless, since
+ *         if it's not cached, there's nothing to invalidate.)
+ */
+
+static int
+invalidate_imm(struct fsal_up_event_invalidate *invalidate,
+               struct fsal_up_file *file)
 {
         cache_entry_t *entry = NULL;
         int rc = 0;
 
         LogDebug(COMPONENT_FSAL_UP,
-                 "FSAL_UP_DUMB: calling cache_inode_invalidate()");
+                 "Calling cache_inode_invalidate()");
 
         rc = up_get(&file->key,
                     &entry);
@@ -62,21 +76,36 @@ fsal_up_invalidate_imm(struct fsal_up_event_invalidate *invalidate,
         return rc;
 }
 
-int
-fsal_up_lock_grant_imm(struct fsal_up_event_lock_grant *grant,
-                       struct fsal_up_file *file)
+/**
+ * @brief Signal a lock grant
+ *
+ * Since the SAL has its own queue for such operations, we simply
+ * queue there.
+ *
+ * @param[in] grant Details of the granted lock
+ * @param[in] file  File on which the lock is granted
+ *
+ * @retval 0 on success.
+ * @retval ENOENT if the file isn't in the cache (this shouldn't
+ *         happen, since the SAL should have files awaiting locks
+ *         pinned.)
+ */
+
+static int
+lock_grant_imm(struct fsal_up_event_lock_grant *grant,
+               struct fsal_up_file *file)
 {
         cache_entry_t *entry = NULL;
         int rc = 0;
 
         LogDebug(COMPONENT_FSAL_UP,
-                 "FSAL_UP_DUMB: calling cache_inode_get()");
+                 "calling cache_inode_get()");
 
         rc = up_get(&file->key,
                     &entry);
         if (rc == 0) {
                 LogDebug(COMPONENT_FSAL_UP,
-                         "FSAL_UP_DUMB: Lock Grant found entry %p",
+                         "Lock Grant found entry %p",
                          entry);
 
                 grant_blocked_lock_upcall(entry,
@@ -91,11 +120,56 @@ fsal_up_lock_grant_imm(struct fsal_up_event_lock_grant *grant,
         return rc;
 }
 
+/**
+ * @brief Signal lock availability
+ *
+ * Since the SAL has its own queue for such operations, we simply
+ * queue there.
+ *
+ * @param[in] avail Details of the available lock
+ * @param[in] file  File on which the lock has become available
+ *
+ * @retval 0 on success.
+ * @retval ENOENT if the file isn't in the cache (this shouldn't
+ *         happen, since the SAL should have files awaiting locks
+ *         pinned.)
+ */
+
+static int
+lock_avail_imm(struct fsal_up_event_lock_avail *avail,
+               struct fsal_up_file *file)
+{
+        cache_entry_t *entry = NULL;
+        int rc = 0;
+
+        rc = up_get(&file->key,
+                    &entry);
+        if (rc == 0) {
+                LogDebug(COMPONENT_FSAL_UP,
+                         "Lock Grant found entry %p",
+                         entry);
+
+                available_blocked_lock_upcall(entry,
+                                              avail->lock_owner,
+                                              &avail->lock_param);
+
+                if (entry) {
+                        cache_inode_put(entry);
+                }
+        }
+
+        return rc;
+}
+
+
 struct fsal_up_vector fsal_up_top = {
-        .lock_grant_imm = fsal_up_lock_grant_imm,
+        .lock_grant_imm = lock_grant_imm,
         .lock_grant_queue = NULL,
 
-        .invalidate_imm = fsal_up_invalidate_imm,
+        .lock_avail_imm = lock_avail_imm,
+        .lock_avail_queue = NULL,
+
+        .invalidate_imm = invalidate_imm,
         .invalidate_queue = NULL,
 
         .layoutrecall_imm = NULL,

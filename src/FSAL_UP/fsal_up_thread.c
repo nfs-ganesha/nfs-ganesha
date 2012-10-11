@@ -88,6 +88,13 @@ fsal_up_submit(struct fsal_up_event *event)
                 }
                 break;
 
+        case FSAL_UP_EVENT_LOCK_AVAIL:
+                if (event->functions->lock_avail_imm) {
+                        rc = event->functions->lock_avail_imm(
+                                &event->data.lock_avail, &event->file);
+                }
+                break;
+
         case FSAL_UP_EVENT_INVALIDATE:
                 if (event->functions->invalidate_imm) {
                         rc = event->functions->invalidate_imm(
@@ -160,6 +167,14 @@ next_event:
                         if (event->functions->lock_grant_queue) {
                                 event->functions->lock_grant_queue(
                                         &event->data.lock_grant,
+                                        &event->file);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_LOCK_AVAIL:
+                        if (event->functions->lock_avail_queue) {
+                                event->functions->lock_avail_queue(
+                                        &event->data.lock_avail,
                                         &event->file);
                         }
                         break;
