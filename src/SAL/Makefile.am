@@ -19,9 +19,7 @@ libsal_la_SOURCES = state_async.c                    \
                     nfs4_recovery.c                  \
                     nfs41_session_id.c
 
-if USE_NLM
 libsal_la_SOURCES += nlm_owner.c
-endif
 
 if USE_9P
 libsal_la_SOURCES += 9p_owner.c

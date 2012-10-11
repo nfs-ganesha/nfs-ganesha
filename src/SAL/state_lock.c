@@ -54,9 +54,7 @@
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
-#ifdef _USE_NLM
 #include "nlm_util.h"
-#endif
 #include "cache_inode_lru.h"
 
 /*
@@ -85,8 +83,6 @@ static struct glist_head state_all_locks;
 pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-#ifdef _USE_BLOCKING_LOCKS
-
 /* List of all locks blocked in FSAL */
 struct glist_head state_blocked_locks;
 
@@ -96,18 +92,12 @@ struct glist_head state_notified_locks;
 /* Mutex to protect above lists */
 pthread_mutex_t blocked_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#endif
-
 state_owner_t unknown_owner;
 
-#ifdef _USE_BLOCKING_LOCKS
 hash_table_t *ht_lock_cookies;
 
 state_status_t state_lock_init(state_status_t   * pstatus,
                                hash_parameter_t   cookie_param)
-#else
-state_status_t state_lock_init(state_status_t * pstatus)
-#endif
 {
   *pstatus = STATE_SUCCESS;
 
@@ -125,7 +115,6 @@ state_status_t state_lock_init(state_status_t * pstatus)
       return *pstatus;
     }
 
-#ifdef _USE_BLOCKING_LOCKS
   ht_lock_cookies = HashTable_Init(&cookie_param);
   if(ht_lock_cookies == NULL)
     {
@@ -134,18 +123,15 @@ state_status_t state_lock_init(state_status_t * pstatus)
       *pstatus = STATE_INIT_ENTRY_FAILED;
       return *pstatus;
     }
-#endif
 
 #ifdef _DEBUG_MEMLEAKS
   init_glist(&state_all_locks);
 #endif
- 
-#ifdef _USE_BLOCKING_LOCKS
+
   init_glist(&state_blocked_locks);
   init_glist(&state_notified_locks);
 
   *pstatus = state_async_init();
-#endif
 
   state_owner_pool = pool_init("NFSv4 state owners",
                                sizeof(state_owner_t),
@@ -164,11 +150,7 @@ state_status_t state_lock_init(state_status_t * pstatus)
 
 bool lock_owner_is_nlm(state_lock_entry_t * lock_entry)
 {
-#ifdef _USE_NLM
   return lock_entry->sle_owner->so_type == STATE_LOCK_OWNER_NLM;
-#else
-  return false;
-#endif
 }
 
 state_status_t do_lock_op(cache_entry_t        * pentry,
@@ -311,7 +293,6 @@ static bool LogList(const char        * reason,
   return false;
 }
 
-#ifdef _USE_BLOCKING_LOCKS
 static bool LogBlockedList(const char        * reason,
                            cache_entry_t     * pentry,
                            struct glist_head * list)
@@ -348,7 +329,6 @@ static bool LogBlockedList(const char        * reason,
 
   return false;
 }
-#endif /* _USE_BLOCKING_LOCKS */
 
 void LogLock(log_components_t     component,
              log_levels_t         debug,
@@ -455,7 +435,6 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   new_entry->sle_lock       = *plock;
   new_entry->sle_pexport    = pexport;
 
-#ifdef _USE_NLM
   if(powner->so_type == STATE_LOCK_OWNER_NLM)
     {
       /* Add to list of locks owned by client that powner belongs to */
@@ -474,7 +453,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                      &new_entry->sle_export_locks);
       V(pexport->exp_state_mutex);
     }
-#endif
+
   /* Add to list of locks owned by powner */
   P(powner->so_mutex);
 
@@ -542,14 +521,13 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
     {
       LogEntry("Freeing", lock_entry);
 
-#ifdef _USE_BLOCKING_LOCKS
       /* Release block data if present */
       if(lock_entry->sle_block_data != NULL)
         {
           memset(lock_entry->sle_block_data, 0, sizeof(*(lock_entry->sle_block_data)));
           gsh_free(lock_entry->sle_block_data);
         }
-#endif
+
 #ifdef _DEBUG_MEMLEAKS
       P(all_locks_mutex);
       glist_del(&lock_entry->sle_all_locks);
@@ -573,7 +551,6 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry)
    */
   if(powner != NULL)
     {
-#ifdef _USE_NLM
       if(powner->so_type == STATE_LOCK_OWNER_NLM)
         {
           /* Remove from list of locks owned by client that powner belongs to */
@@ -590,7 +567,6 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry)
           glist_del(&lock_entry->sle_export_locks);
           V(lock_entry->sle_pexport->exp_state_mutex);
         }
-#endif
 
       /* Remove from list of locks owned by powner */
       P(powner->so_mutex);
@@ -878,7 +854,6 @@ static bool subtract_lock_from_list(cache_entry_t        * pentry,
         continue;
 
 
-#ifdef _USE_NLM
       /* Skip locks owned by this NLM state.
        * This protects NLM locks from the current iteration of an NLM
        * client from being released by SM_NOTIFY.
@@ -887,7 +862,6 @@ static bool subtract_lock_from_list(cache_entry_t        * pentry,
          lock_owner_is_nlm(found_entry) &&
          found_entry->sle_state == pstate)
         continue;
-#endif
 
       /*
        * We have matched owner.
@@ -971,7 +945,6 @@ static state_status_t subtract_list_from_list(cache_entry_t        * pentry,
  *
  ******************************************************************************/
 
-#ifdef _USE_BLOCKING_LOCKS
 static void grant_blocked_locks(cache_entry_t        * pentry);
 
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str)
@@ -1711,7 +1684,6 @@ state_status_t state_release_grant(state_cookie_entry_t  * cookie_entry,
 
   return *pstatus;
 }
-#endif
 
 /******************************************************************************
  *
@@ -2077,8 +2049,6 @@ state_status_t state_lock(cache_entry_t         * pentry,
 
   pthread_rwlock_wrlock(&pentry->state_lock);
 
-#ifdef _USE_BLOCKING_LOCKS
-
   if(blocking != STATE_NON_BLOCKING)
     {
       /*
@@ -2132,7 +2102,6 @@ state_status_t state_lock(cache_entry_t         * pentry,
           return *pstatus;
         }
     }
-#endif
 
   glist_for_each(glist, &pentry->object.file.lock_list)
     {
@@ -2200,7 +2169,6 @@ state_status_t state_lock(cache_entry_t         * pentry,
            */
           if(!different_owners(found_entry->sle_owner, powner))
             {
- #ifdef _USE_BLOCKING_LOCKS
              /* The lock actually has the same owner, we're done,
               * other than dealing with a lock in GRANTING state.
               */
@@ -2216,7 +2184,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
                   grant_blocked_lock_immediate(pentry,
                                                found_entry);
                 }
-#endif
+
               pthread_rwlock_unlock(&pentry->state_lock);
 
               cache_inode_dec_pin_ref(pentry);
@@ -2361,10 +2329,8 @@ state_status_t state_lock(cache_entry_t         * pentry,
 
       glist_add_tail(&pentry->object.file.lock_list, &found_entry->sle_list);
 
-#ifdef _USE_BLOCKING_LOCKS
       /* A lock downgrade could unblock blocked locks */
       grant_blocked_locks(pentry);
-#endif
       /* Don't need to unpin, we know there is state on file. */
     }
   else if(*pstatus == STATE_LOCK_CONFLICT)
@@ -2374,7 +2340,6 @@ state_status_t state_lock(cache_entry_t         * pentry,
       /* Discard lock entry */
       remove_from_locklist(found_entry);
     }
-#ifdef _USE_BLOCKING_LOCKS
   else if(*pstatus == STATE_LOCK_BLOCKED)
     {
       /* Mark entry as blocking and attach block_data */
@@ -2405,7 +2370,6 @@ state_status_t state_lock(cache_entry_t         * pentry,
 
       return *pstatus;
     }
-#endif /* _USE_BLOCKING_LOCKS */
   else
     {
       LogMajor(COMPONENT_STATE,
@@ -2484,13 +2448,11 @@ state_status_t state_unlock(cache_entry_t        * pentry,
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
 
-#ifdef _USE_BLOCKING_LOCKS
   /* First cancel any blocking locks that might overlap the unlocked range. */
   cancel_blocked_locks_range(pentry,
                              powner,
                              pstate,
                              plock);
-#endif
 
   /* Release the lock from cache inode lock list for pentry */
   subtract_lock_from_list(pentry,
@@ -2551,9 +2513,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
      plock->lock_start == 0 && plock->lock_length == 0)
     empty = LogList("Lock List", pentry, &pentry->object.file.lock_list);
 
-#ifdef _USE_BLOCKING_LOCKS
   grant_blocked_locks(pentry);
-#endif
 
   pthread_rwlock_unlock(&pentry->state_lock);
 
@@ -2567,8 +2527,6 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 
   return *pstatus;
 }
-
-#ifdef _USE_BLOCKING_LOCKS
 
 /**
  *
@@ -2654,9 +2612,6 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 
   return *pstatus;
 }
-#endif
-
-#ifdef _USE_NLM
 
 /**
  *
@@ -2666,7 +2621,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
  *
  */
 state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
-				struct user_cred     * creds,
+                                struct user_cred     * creds,
                                 state_t              * pstate,
                                 state_status_t       * pstatus)
 {
@@ -2834,7 +2789,6 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
 
   return *pstatus;
 }
-#endif
 
 /**
  *
@@ -2918,8 +2872,6 @@ state_status_t state_owner_unlock_all(state_owner_t        * powner,
     }
   return *pstatus;
 }
-
-#ifdef _USE_BLOCKING_LOCKS
 
 void find_blocked_lock_upcall(cache_entry_t        * pentry,
                               void                 * powner,
@@ -3015,8 +2967,6 @@ void available_blocked_lock_upcall(cache_entry_t        * pentry,
 
   find_blocked_lock_upcall(pentry, powner, plock, STATE_GRANT_FSAL_AVAILABLE);
 }
-
-#endif
 
 void state_lock_wipe(cache_entry_t        * pentry)
 {

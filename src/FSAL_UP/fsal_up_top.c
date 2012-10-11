@@ -66,7 +66,6 @@ int
 fsal_up_lock_grant_imm(struct fsal_up_event_lock_grant *grant,
                        struct fsal_up_file *file)
 {
-#ifdef _USE_BLOCKING_LOCKS
         cache_entry_t *entry = NULL;
         int rc = 0;
 
@@ -90,9 +89,6 @@ fsal_up_lock_grant_imm(struct fsal_up_event_lock_grant *grant,
         }
 
         return rc;
-#else
-        return EINVAL;
-#endif
 }
 
 struct fsal_up_vector fsal_up_top = {

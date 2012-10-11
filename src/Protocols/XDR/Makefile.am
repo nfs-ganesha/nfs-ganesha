@@ -11,9 +11,7 @@ if USE_RQUOTA
 libnfs_mnt_xdr_la_SOURCES += xdr_rquota.c
 endif
 
-if USE_NLM
 libnfs_mnt_xdr_la_SOURCES += xdr_nlm4.c           \
                              xdr_nsm.c
-endif
 
 new: clean all

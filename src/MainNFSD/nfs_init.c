@@ -73,10 +73,8 @@
 #include <string.h>
 #include <signal.h>
 #include <math.h>
-#ifdef _USE_NLM
 #include "nlm_util.h"
 #include "nsm.h"
-#endif
 #include "sal_functions.h"
 #include "nfs_tcb.h"
 #include "nfs_tcb.h"
@@ -104,9 +102,7 @@ nfs_parameter_t nfs_param =
   .core_param.bind_addr.sin_family = AF_INET,       /* IPv4 only right now */
   .core_param.program[P_NFS] = NFS_PROGRAM,
   .core_param.program[P_MNT] = MOUNTPROG,
-#ifdef _USE_NLM
   .core_param.program[P_NLM] = NLMPROG,
-#endif
 #ifdef _USE_9P
   ._9p_param._9p_tcp_port = _9P_TCP_PORT ,
 #endif
@@ -290,7 +286,6 @@ nfs_parameter_t nfs_param =
   .nfs4_owner_param.hash_param.val_to_str = display_nfs4_owner_val,
   .nfs4_owner_param.hash_param.flags = HT_FLAG_CACHE,
 
-#ifdef _USE_NLM
   /* NSM Client hash */
   .nsm_client_hash_param.index_size = PRIME_STATE_ID,
   .nsm_client_hash_param.alphabet_length = 10,        /* ipaddr is a numerical decimal value */
@@ -320,7 +315,6 @@ nfs_parameter_t nfs_param =
   .nlm_owner_hash_param.key_to_str = display_nlm_owner_key,
   .nlm_owner_hash_param.val_to_str = display_nlm_owner_val,
   .nlm_owner_hash_param.flags = HT_FLAG_NONE,
-#endif
 
   /* Cache inode parameters : hash table */
   .cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE,
@@ -332,7 +326,6 @@ nfs_parameter_t nfs_param =
   .cache_layers_param.cache_param.hparam.val_to_str = display_cache,
   .cache_layers_param.cache_param.hparam.flags = HT_FLAG_CACHE,
 
-#ifdef _USE_NLM
   /* Cache inode parameters : cookie hash table */
   .cache_layers_param.cache_param.cookie_param.index_size = PRIME_STATE_ID,
   .cache_layers_param.cache_param.cookie_param.alphabet_length = 10,      /* Buffer seen as a decimal polynom */
@@ -342,7 +335,6 @@ nfs_parameter_t nfs_param =
   .cache_layers_param.cache_param.cookie_param.key_to_str = display_lock_cookie_key,
   .cache_layers_param.cache_param.cookie_param.val_to_str = display_lock_cookie_val,
   .cache_layers_param.cache_param.cookie_param.flags = HT_FLAG_NONE,
-#endif
 
   /* Cache inode parameters : Garbage collection policy */
   .cache_layers_param.gcpol.entries_hwmark = 100000,
@@ -983,12 +975,10 @@ int nfs_check_param_consistency()
       !is_prime(nfs_param.state_id_param.hash_param.index_size) ||
       !is_prime(nfs_param.session_id_param.hash_param.index_size) ||
       !is_prime(nfs_param.nfs4_owner_param.hash_param.index_size) ||
-#ifdef _USE_NLM
       !is_prime(nfs_param.nsm_client_hash_param.index_size) ||
       !is_prime(nfs_param.nlm_client_hash_param.index_size) ||
       !is_prime(nfs_param.nlm_owner_hash_param.index_size) ||
       !is_prime(cache_inode_params.cookie_param.index_size) ||
-#endif
       !is_prime(cache_inode_params.hparam.index_size))
   {
       LogCrit(COMPONENT_INIT, "BAD PARAMETER(s) : expected primes");
@@ -1115,10 +1105,8 @@ static void nfs_Start_threads(void)
            "%d worker threads were started successfully",
            nfs_param.core_param.nb_worker);
 
-#ifdef _USE_BLOCKING_LOCKS
   /* Start State Async threads */
   state_async_thread_start();
-#endif
 
   /*
    * Now that all TCB controlled threads (workers, NLM,
@@ -1268,14 +1256,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* Initialize thread control block */
   tcb_head_init();
 
-#ifdef _USE_BLOCKING_LOCKS
   if(state_lock_init(&state_status,
                      cache_inode_params.cookie_param)
      != STATE_SUCCESS)
-#else
-  if(state_lock_init(&state_status)
-     != STATE_SUCCESS)
-#endif
     {
       LogFatal(COMPONENT_INIT,
                "Cache Inode Layer could not be initialized, status=%s",
@@ -1537,18 +1520,19 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogInfo(COMPONENT_INIT,
           "NFSv4 Open Owner cache successfully initialized");
 
-#ifdef _USE_NLM
-  /* Init The NLM Owner cache */
-  LogDebug(COMPONENT_INIT, "Now building NLM Owner cache");
-  if(Init_nlm_hash() != 0)
+  if (nfs_param.core_param.enable_NLM)
     {
-      LogFatal(COMPONENT_INIT,
-               "Error while initializing NLM Owner cache");
+      /* Init The NLM Owner cache */
+      LogDebug(COMPONENT_INIT, "Now building NLM Owner cache");
+      if(Init_nlm_hash() != 0)
+        {
+          LogFatal(COMPONENT_INIT,
+                   "Error while initializing NLM Owner cache");
+        }
+      LogInfo(COMPONENT_INIT,
+              "NLM Owner cache successfully initialized");
+      nlm_init();
     }
-  LogInfo(COMPONENT_INIT,
-          "NLM Owner cache successfully initialized");
-  nlm_init();
-#endif
 
 #ifdef _USE_9P
   /* Init the 9P lock owner cache */
@@ -1692,10 +1676,11 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* Spawns service threads */
   nfs_Start_threads();
 
-#ifdef _USE_NLM
-  /* NSM Unmonitor all */
-  nsm_unmonitor_all();
-#endif
+  if (nfs_param.core_param.enable_NLM)
+    {
+      /* NSM Unmonitor all */
+      nsm_unmonitor_all();
+    }
 
   /* Populate the ID_MAPPER file with mapping file if needed */
   if(nfs_param.uidmap_cache_param.mapfile[0] == '\0')

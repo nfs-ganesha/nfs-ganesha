@@ -142,9 +142,7 @@ void nfs_rpc_dispatch_dummy(struct svc_req *ptr_req, SVCXPRT * ptr_svc)
 const char *tags[] = {
   "NFS",
   "MNT",
-#ifdef _USE_NLM
   "NLM",
-#endif
 #ifdef _USE_RQUOTA
   "RQUOTA",
 #endif
@@ -203,23 +201,18 @@ static void unregister_rpc(void)
 {
   unregister(nfs_param.core_param.program[P_NFS], NFS_V2, NFS_V4);
   unregister(nfs_param.core_param.program[P_MNT], MOUNT_V1, MOUNT_V3);
-#ifdef _USE_NLM
-  unregister(nfs_param.core_param.program[P_NLM], 1, NLM4_VERS);
-#endif
+  if (nfs_param.core_param.enable_NLM)
+    {
+      unregister(nfs_param.core_param.program[P_NLM], 1, NLM4_VERS);
+    }
 #ifdef _USE_RQUOTA
   unregister(nfs_param.core_param.program[P_RQUOTA], RQUOTAVERS, EXT_RQUOTAVERS);
 #endif
 }
 
-#ifdef _USE_NLM
 #define test_for_additional_nfs_protocols(p) \
   ((p != P_MNT && p != P_NLM) || \
   (nfs_param.core_param.core_options &  CORE_OPTION_NFSV3) != 0)
-#else
-#define test_for_additional_nfs_protocols(p) \
-  (p != P_MNT || \
-  (nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
-#endif
 
 /**
  * close_rpc_fd - close file descriptors used for RPC services so that restarting
@@ -628,7 +621,6 @@ void nfs_Init_svc()
 
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
-#ifdef _USE_NLM
      /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
      LogDebug(COMPONENT_DISPATCH, "Socket numbers are: nfs_udp=%u  nfs_tcp=%u "
               "mnt_udp=%u  mnt_tcp=%u nlm_tcp=%u nlm_udp=%u",
@@ -638,15 +630,6 @@ void nfs_Init_svc()
               tcp_socket[P_MNT],
               udp_socket[P_NLM],
               tcp_socket[P_NLM]);
-#else
-      /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
-      LogDebug(COMPONENT_DISPATCH, "Socket numbers are: nfs_udp=%u  nfs_tcp=%u "
-               "mnt_udp=%u  mnt_tcp=%u",
-               udp_socket[P_NFS],
-               tcp_socket[P_NFS],
-               udp_socket[P_MNT],
-               tcp_socket[P_MNT]);
-#endif                          /* USE_NLM */
     }
   else
     {
@@ -709,9 +692,10 @@ void nfs_Init_svc()
   Register_program(P_NFS, CORE_OPTION_NFSV4, NFS_V4);
   Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V1);
   Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V3);
-#ifdef _USE_NLM
-  Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
-#endif                          /* USE_NLM */
+  if (nfs_param.core_param.enable_NLM)
+    {
+      Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
+    }
 #ifdef _USE_RQUOTA
   Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
   Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, EXT_RQUOTAVERS);
@@ -1549,11 +1533,9 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     else if(udp_socket[P_MNT] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A MOUNT UDP request %d",
                      rpc_fd);
-#ifdef _USE_NLM
     else if(udp_socket[P_NLM] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A NLM UDP request %d",
                      rpc_fd);
-#endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
     else if(udp_socket[P_RQUOTA] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A RQUOTA UDP request %d",
@@ -1570,12 +1552,10 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         LogFullDebug(COMPONENT_DISPATCH,
                      "An initial MOUNT TCP request from a new client %d",
                      rpc_fd);
-#ifdef _USE_NLM
     else if(tcp_socket[P_NLM] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH,
                      "An initial NLM request from a new client %d",
                      rpc_fd);
-#endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
     else if(tcp_socket[P_RQUOTA] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH,
@@ -1785,7 +1765,6 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
       return false;
     }
 
-#ifdef _USE_NLM
   if(req->rq_prog == nfs_param.core_param.program[P_NLM] &&
           ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0))
     {
@@ -1816,7 +1795,6 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
         }
       return true;
     }
-#endif                          /* _USE_NLM */
 
 #ifdef _USE_RQUOTA
    if(req->rq_prog == nfs_param.core_param.program[P_RQUOTA])

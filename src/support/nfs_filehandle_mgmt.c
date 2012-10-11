@@ -484,7 +484,6 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
   return pfile_handle->exportid;
 }                               /* nfs3_FhandleToExportId */
 
-#ifdef _USE_NLM
 short nlm4_FhandleToExportId(netobj * pfh3)
 {
   file_handle_v3_t *pfile_handle;
@@ -498,7 +497,6 @@ short nlm4_FhandleToExportId(netobj * pfh3)
 
   return pfile_handle->exportid;
 }
-#endif
 
 /**
  *

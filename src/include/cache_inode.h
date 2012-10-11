@@ -49,9 +49,7 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
-#ifdef _USE_NLM
 #include "nlm4.h"
-#endif
 #include "nlm_list.h"
 #include "nfs4_acls.h"
 
@@ -123,10 +121,8 @@ typedef struct cache_inode_lru__
 typedef struct cache_inode_parameter__
 {
   hash_parameter_t hparam; /*< Parameter used for hashtable initialization */
-#ifdef _USE_NLM
   hash_parameter_t cookie_param; /*< Parameters used for lock cookie hash table
                                      initialization */
-#endif
   cache_inode_expire_type_t expire_type_attr; /*< Cache inode expiration type
                                                   for attributes */
   cache_inode_expire_type_t expire_type_link; /*< Cache inode expiration type
@@ -337,9 +333,7 @@ struct cache_entry_t
     struct cache_inode_file__
     {
       struct glist_head lock_list; /*< Pointers for lock list */
-#ifdef _USE_NLM
       struct glist_head nlm_share_list; /**< Pointers for NLM share list */
-#endif
       cache_inode_unstable_data_t
         unstable_data; /*< Unstable data, for use with WRITE/COMMIT */
       cache_inode_share_t share_state; /*< Share reservation state for

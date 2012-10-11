@@ -580,9 +580,7 @@ const char * state_owner_type_to_str(state_owner_type_t type)
   switch(type)
     {
       case STATE_LOCK_OWNER_UNKNOWN:     return "STATE_LOCK_OWNER_UNKNOWN";
-#ifdef _USE_NLM
       case STATE_LOCK_OWNER_NLM:         return "STATE_LOCK_OWNER_NLM";
-#endif
 #ifdef _USE_9P
       case STATE_LOCK_OWNER_9P:          return "STALE_LOCK_OWNER_9P";
 #endif
@@ -607,12 +605,10 @@ int different_owners(state_owner_t *powner1, state_owner_t *powner2)
 
   switch(powner1->so_type)
     {
-#ifdef _USE_NLM
       case STATE_LOCK_OWNER_NLM:
         if(powner2->so_type != STATE_LOCK_OWNER_NLM)
            return 1;
         return compare_nlm_owner(powner1, powner2);
-#endif
 #ifdef _USE_9P
       case STATE_LOCK_OWNER_9P:
         if(powner2->so_type != STATE_LOCK_OWNER_9P)
@@ -638,10 +634,8 @@ int DisplayOwner(state_owner_t *powner, char *buf)
   if(powner != NULL)
     switch(powner->so_type)
       {
-#ifdef _USE_NLM
         case STATE_LOCK_OWNER_NLM:
           return display_nlm_owner(powner, buf);
-#endif
 #ifdef _USE_9P
         case STATE_LOCK_OWNER_9P:
           return display_9p_owner(powner, buf);
@@ -761,11 +755,9 @@ void dec_state_owner_ref_locked(state_owner_t        * powner)
     {
       switch(powner->so_type)
         {
-#ifdef _USE_NLM
           case STATE_LOCK_OWNER_NLM:
             remove_nlm_owner(powner, str);
             break;
-#endif
 #ifdef _USE_9P
           case STATE_LOCK_OWNER_9P:
             remove_9p_owner( powner, str);
@@ -817,9 +809,7 @@ void state_wipe_file(cache_entry_t        * pentry)
 
   state_lock_wipe(pentry);
 
-#ifdef _USE_NLM
   state_share_wipe(pentry);
-#endif
 
   state_nfs4_state_wipe(pentry);
 

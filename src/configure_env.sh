@@ -3,7 +3,7 @@
 #if making code changes please run with these at minimum
 
 CONFIG_ON="
-	--enable-strict-compile --enable-nlm --enable-quota --enable-rquota
+	--enable-strict-compile --enable-quota --enable-rquota
 	--enable-dbus --enable-debug-symbols
 "
 
@@ -11,7 +11,6 @@ CONFIG_ON="
 
 # ON in a list
 # --enable-strict-compile
-# --enable-nlm
 # --enable-quota
 # --enable-rquota
 # --enable-dbus
@@ -23,7 +22,6 @@ CONFIG_ON="
 #
 # --disable-libtool-lock
 # --disable-largefile
-# --enable-nlm
 # --enable-quota
 # --enable-rquota
 # --enable-dbus

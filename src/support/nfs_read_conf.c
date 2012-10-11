@@ -224,6 +224,7 @@ int nfs_read_core_conf(config_file_t in_config,
 
   /* Set the default */
   pparam->enable_FSAL_upcalls = true;
+  pparam->enable_NLM = true;
 
   for(var_index = 0; var_index < var_max; var_index++)
     {
@@ -334,9 +335,7 @@ int nfs_read_core_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "NLM_Port"))
         {
-#ifdef _USE_NLM
           pparam->port[P_NLM] = (unsigned short)atoi(key_value);
-#endif
         }
       else if(!strcasecmp(key_name, "Rquota_Port"))
         {
@@ -354,9 +353,7 @@ int nfs_read_core_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "NLM_Program"))
         {
-#ifdef _USE_NLM
           pparam->program[P_NLM] = atoi(key_value);
-#endif
         }
       else if(!strcasecmp(key_name, "Rquota_Program"))
         {
@@ -486,12 +483,10 @@ int nfs_read_core_conf(config_file_t in_config,
         {
           pparam->max_recv_buffer_size = atoi(key_value);
         }
-#ifdef _USE_NLM
       else if(!strcasecmp( key_name, "NSM_Use_Caller_Name" ) )
         {
           pparam->nsm_use_caller_name = StrToBoolean(key_value);
         }
-#endif
       else if(!strcasecmp(key_name, "Clustered"))
         {
           pparam->clustered = StrToBoolean(key_value);
@@ -499,6 +494,10 @@ int nfs_read_core_conf(config_file_t in_config,
       else if(!strcasecmp(key_name, "Enable_FSAL_Upcalls"))
         {
           pparam->enable_FSAL_upcalls = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "Enable_NLM"))
+        {
+          pparam->enable_NLM = StrToBoolean(key_value);
         }
       else
         {

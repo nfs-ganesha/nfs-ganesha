@@ -684,9 +684,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->PrefReaddir = 16384;
 
   init_glist(&p_entry->exp_state_list);
-#ifdef _USE_NLM
   init_glist(&p_entry->exp_lock_list);
-#endif
 
   if(pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1)
     {

@@ -88,7 +88,6 @@ cache_inode_parameter_t cache_inode_params = {
         .hparam.flags = HT_FLAG_CACHE,
         .hparam.ht_log_component = COMPONENT_CACHE_INODE,
 
-#ifdef _USE_NLM
         /* Cache inode parameters : cookie hash table */
         .cookie_param.index_size = PRIME_STATE_ID,
         .cookie_param.alphabet_length = 10,
@@ -100,7 +99,7 @@ cache_inode_parameter_t cache_inode_params = {
         .cookie_param.ht_name = "Lock Cookie",
         .cookie_param.flags = HT_FLAG_NONE,
         .cookie_param.ht_log_component = COMPONENT_STATE,
-#endif
+
         .expire_type_attr    = CACHE_INODE_EXPIRE_NEVER,
         .expire_type_link    = CACHE_INODE_EXPIRE_NEVER,
         .expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER,
@@ -415,9 +414,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
           /* No locks, yet. */
           init_glist(&entry->object.file.lock_list);
-#ifdef _USE_NLM
           init_glist(&entry->object.file.nlm_share_list);   /* No associated NLM shares yet */
-#endif
 
           memset(&(entry->object.file.unstable_data), 0,
                  sizeof(cache_inode_unstable_data_t));

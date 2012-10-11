@@ -54,9 +54,7 @@
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
-#ifdef _USE_NLM
 #include "nlm_util.h"
-#endif
 #include "cache_inode_lru.h"
 
 /* Update the ref counter of share state of given file. */
@@ -627,7 +625,6 @@ void state_share_anonymous_io_done(cache_entry_t  * pentry,
   pthread_rwlock_unlock(&pentry->state_lock);
 }
 
-#ifdef _USE_NLM
 state_status_t state_nlm_share(cache_entry_t        * pentry,
                                struct req_op_context *req_ctx,
                                exportlist_t         * pexport,
@@ -1002,5 +999,3 @@ void state_share_wipe(cache_entry_t * pentry)
       gsh_free(nlm_share);
     }
 }
-
-#endif /* _USE_NLM */

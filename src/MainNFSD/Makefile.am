@@ -51,11 +51,7 @@ else
 CB_SIMULATOR_FILE =
 endif
 
-if USE_NLM
 NLM_LIB = ../Protocols/NLM/libnlm.la
-else
-NLM_LIB =
-endif
 
 if USE_RQUOTA
 RQUOTA_LIB = ../Protocols/RQUOTA/librquota.la

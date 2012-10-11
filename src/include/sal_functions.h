@@ -109,7 +109,6 @@ int Init_9p_hash(void) ;
  *
  ******************************************************************************/
 
-#ifdef _USE_NLM
 /* These refcount functions must not be called holding the ssc_mutex */
 void inc_nsm_client_ref(state_nsm_client_t * pclient);
 void dec_nsm_client_ref(state_nsm_client_t * pclient);
@@ -179,7 +178,6 @@ state_owner_t *get_nlm_owner(care_t               care,
 void nlm_owner_PrintAll(void);
 
 int Init_nlm_hash(void);
-#endif
 
 /******************************************************************************
  *
@@ -410,7 +408,6 @@ bool Check_nfs4_seqid(state_owner_t   * powner,
  *
  ******************************************************************************/
 
-#ifdef _USE_BLOCKING_LOCKS
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
@@ -420,14 +417,8 @@ uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
 
 uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t    * buffclef);
-#endif
-
-#ifdef _USE_NLM
 state_status_t state_lock_init(state_status_t   * pstatus,
                                hash_parameter_t   cookie_param);
-#else
-state_status_t state_lock_init(state_status_t * pstatus);
-#endif
 
 void LogLock(log_components_t     component,
              log_levels_t         debug,
@@ -438,7 +429,6 @@ void LogLock(log_components_t     component,
 
 void dump_all_locks(const char * label);
 
-#ifdef _USE_BLOCKING_LOCKS
 /**
  *
  * state_add_grant_cookie: Add a grant cookie to a blocked lock that is
@@ -479,8 +469,6 @@ state_status_t state_cancel_grant(state_cookie_entry_t * cookie_entry,
 
 state_status_t state_release_grant(state_cookie_entry_t * cookie_entry,
                                    state_status_t       * pstatus);
-#endif
-
 state_status_t state_test(cache_entry_t        * pentry,
                           exportlist_t         * pexport,
                           struct req_op_context *req_ctx,
@@ -509,20 +497,16 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_lock_param_t    * plock,
                             state_status_t       * pstatus);
 
-#ifdef _USE_BLOCKING_LOCKS
 state_status_t state_cancel(cache_entry_t        * pentry,
                             exportlist_t         * pexport,
                             state_owner_t        * powner,
                             fsal_lock_param_t    * plock,
                             state_status_t       * pstatus);
-#endif
 
-#ifdef _USE_NLM
 state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
-				struct user_cred     * creds,
+                                struct user_cred     * creds,
                                 state_t              * pstate,
                                 state_status_t       * pstatus);
-#endif
 
 state_status_t state_owner_unlock_all(state_owner_t        * powner,
                                       state_t              * pstate,
@@ -634,9 +618,8 @@ state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
 void state_share_anonymous_io_done(cache_entry_t  * pentry,
                                    int              share_access);
 
-#ifdef _USE_NLM
 state_status_t state_nlm_share(cache_entry_t        * pentry,
-			       struct req_op_context *req_ctx,
+                               struct req_op_context *req_ctx,
                                exportlist_t         * pexport,
                                int                    share_access,
                                int                    share_deny,
@@ -644,21 +627,18 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                                state_status_t       * pstatus);
 
 state_status_t state_nlm_unshare(cache_entry_t        * pentry,
-				 int                    share_access,
+                                 int                    share_access,
                                  int                    share_deny,
                                  state_owner_t        * powner,
                                  state_status_t       * pstatus);
 
 void state_share_wipe(cache_entry_t * pentry);
-#endif
 
 /******************************************************************************
  *
  * Async functions
  *
  ******************************************************************************/
-
-#ifdef _USE_BLOCKING_LOCKS
 
 /* Schedule Async Work */
 state_status_t state_async_schedule(state_async_queue_t *arg);
@@ -678,7 +658,6 @@ void available_blocked_lock_upcall(cache_entry_t        * pentry,
                                    fsal_lock_param_t    * plock);
 
 void process_blocked_lock_upcall(state_block_data_t   * block_data);
-#endif
 
 /******************************************************************************
  *

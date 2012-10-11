@@ -233,15 +233,6 @@ elif test "x$ALLOCATOR" = "xtcmalloc"; then
 fi
 
 
-# NLMv4
-GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
-
-if test "$enable_nlm" == "yes"; then
-	AC_DEFINE(_USE_NLM,1,[enable NLMv4 support])
-fi
-AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
-
-
 # QUOTA
 GA_ENABLE_AM_CONDITION([quota],[enable quota support],[USE_QUOTA])
 

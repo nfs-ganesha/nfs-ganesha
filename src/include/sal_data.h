@@ -54,22 +54,12 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_proto_functions.h"
-#ifdef _USE_NLM
 #include "nlm4.h"
-#endif /* _USE_NLM */
 #ifdef _USE_9P
 #include "9p.h"
 #endif /* _USE_9P*/
 #include "nlm_list.h"
 #include "fsal_pnfs.h"
-
-/* Indicate if state code must support blocking locks
- * NLM supports blocking locks
- * Eventually NFS v4.1 will support blocking locks
- */
-#ifdef _USE_NLM
-#define _USE_BLOCKING_LOCKS
-#endif /* _USE_NLM */
 
 #define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
@@ -81,14 +71,10 @@ typedef struct nfs_argop4_state     nfs_argop4_state;
 typedef struct state_lock_entry_t   state_lock_entry_t;
 typedef struct state_async_queue_t  state_async_queue_t;
 typedef struct nfs_client_record_t  nfs_client_record_t;
-#ifdef _USE_NLM
 typedef struct state_nlm_client_t   state_nlm_client_t;
 typedef struct state_nlm_share_t    state_nlm_share_t;
-#endif /*  _USE_NLM */
-#ifdef _USE_BLOCKING_LOCKS
 typedef struct state_cookie_entry_t state_cookie_entry_t;
 typedef struct state_block_data_t   state_block_data_t;
-#endif /* _USE_BLOCKING_LOCKS */
 typedef struct state_layout_segment_t state_layout_segment_t;
 
 /******************************************************************************
@@ -209,9 +195,7 @@ typedef struct state_nfs4_owner_name_t
 typedef enum state_owner_type_t
 {
   STATE_LOCK_OWNER_UNKNOWN,
-#ifdef _USE_NLM
   STATE_LOCK_OWNER_NLM,
-#endif /* _USE_NLM */
 #ifdef _USE_9P
   STATE_LOCK_OWNER_9P,
 #endif /* _USE_9P */
@@ -220,7 +204,6 @@ typedef enum state_owner_type_t
   STATE_CLIENTID_OWNER_NFSV4
 } state_owner_type_t;
 
-#ifdef _USE_NLM
 typedef enum care_t
 {
   CARE_NOT,
@@ -256,7 +239,6 @@ typedef struct state_nlm_owner_t
   int32_t              so_nlm_svid;
   struct glist_head    so_nlm_shares;
 } state_nlm_owner_t;
-#endif /* _USE_NLM */
 
 #ifdef _USE_9P
 typedef struct state_9p_owner_t
@@ -307,9 +289,7 @@ struct state_owner_t
   union
   {
     state_nfs4_owner_t    so_nfs4_owner;
-#ifdef _USE_NLM
     state_nlm_owner_t     so_nlm_owner;
-#endif /* _USE_NLM */
 #ifdef _USE_9P
     state_9p_owner_t     so_9p_owner;
 #endif
@@ -469,8 +449,6 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              state_lock_entry_t   * lock_entry,
                                              state_status_t       * pstatus);
 
-#ifdef _USE_BLOCKING_LOCKS
-
 typedef bool   (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
                                                exportlist_t  **ppexport);
 
@@ -508,15 +486,10 @@ struct state_block_data_t
   block_data_to_fsal_context_t   sbd_block_data_to_fsal_context;
   union
     {
-#ifdef _USE_NLM
       state_nlm_block_data_t     sbd_nlm_block_data;
-#endif /* _USE_NLM */
       void                     * sbd_v4_block_data;
     } sbd_block_data;
 };
-#else /* !_USE_BLOCKING_LOCKS */
-typedef void state_block_data_t;
-#endif /* !_USE_BLOCKING_LOCKS */
 
 struct state_lock_entry_t
 {
@@ -558,12 +531,9 @@ struct state_layout_recall_file
                                                  affected by this recall. */
 };
 
-#ifdef _USE_NLM
 #define sle_client_locks sle_locks
-#endif /* _USE_NLM */
 #define sle_state_locks  sle_locks
 
-#ifdef _USE_BLOCKING_LOCKS
 /*
  * Management of lce_refcount:
  *
@@ -595,7 +565,6 @@ struct state_cookie_entry_t
  */
 typedef void (state_async_func_t) (state_async_queue_t * arg);
 
-#ifdef _USE_NLM
 typedef struct state_nlm_async_data_t
 {
   state_nlm_client_t       * nlm_async_host;
@@ -606,7 +575,6 @@ typedef struct state_nlm_async_data_t
       nlm4_testargs          nlm_async_grant;
     } nlm_async_args;
 } state_nlm_async_data_t;
-#endif /* _USE_NLM */
 
 typedef struct state_async_block_data_t
 {
@@ -619,13 +587,10 @@ struct state_async_queue_t
   state_async_func_t           * state_async_func;
   union
     {
-#ifdef _USE_NLM
       state_nlm_async_data_t     state_nlm_async_data;
-#endif /* _USE_NLM */
       void                     * state_no_data;
     } state_async_data;
 };
-#endif /* _USE_BLOCKING_LOCKS */
 
 typedef struct nfs_grace_start
 {

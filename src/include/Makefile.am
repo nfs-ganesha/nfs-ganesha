@@ -70,15 +70,13 @@ noinst_HEADERS = abstract_atomic.h               \
                  config.h                        \
                  sal_data.h                      \
                  sal_functions.h                 \
-                 snmp_adm.h
-
-if USE_NLM
-noinst_HEADERS += nlm4.h                         \
-                  nlm_util.h                     \
-                  nlm_list.h                     \
-                  nsm.h                          \
-                  nlm_async.h
-endif
+                 snmp_adm.h                      \
+                 nlm4.h                          \
+                 nlm_util.h                      \
+                 nlm_list.h                      \
+                 nsm.h                           \
+                 nlm_async.h                     \
+                 rquota.h
 
 if USE_9P
 noinst_HEADERS +=  9p.h
@@ -88,10 +86,4 @@ if USE_FSAL_FUSE
 include_HEADERS = ganesha_fuse_wrap.h
 endif
 
-if USE_RQUOTA
-noinst_HEADERS += rquota.h
-endif
-
 SUBDIRS = FSAL
-
-

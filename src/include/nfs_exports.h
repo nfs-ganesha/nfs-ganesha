@@ -190,17 +190,14 @@ typedef struct exportlist__
   bool UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
   struct exportlist__ *next;    /* next entry                                        */
-  struct fsal_export *export_hdl;	/* handle into our FSAL */
+  struct fsal_export *export_hdl; /* handle into our FSAL */
 
   pthread_mutex_t   exp_state_mutex; /* Mutex to protect the following two lists */
   struct glist_head exp_state_list;  /* List of NFS v4 state belonging to this export */
-#ifdef _USE_NLM
   struct glist_head exp_lock_list;   /* List of locks belonging to this export
                                       * Only need this list if NLM, otherwise
                                       * state list is sufficient
                                       */
-#endif
-
   nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
 } exportlist_t;
 

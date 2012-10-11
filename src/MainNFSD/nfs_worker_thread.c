@@ -213,7 +213,6 @@ const nfs_function_desc_t mnt3_func_desc[] = {
 #define nlm4_Unsupported nlm_Null
 #define nlm4_Unsupported_Free nlm_Null_Free
 
-#ifdef _USE_NLM
 const nfs_function_desc_t nlm4_func_desc[] = {
   [NLMPROC4_NULL] = {
       nlm_Null, nlm_Null_Free, (xdrproc_t) xdr_void,
@@ -324,7 +323,6 @@ const nfs_function_desc_t nlm4_func_desc[] = {
                          "nlm4_Free_all",
                          NOTHING_SPECIAL},
 };
-#endif                          /* _USE_NLM */
 
 #ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
@@ -451,12 +449,10 @@ nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
         return &mnt3_func_desc[req->rq_proc];
     }
 
-#ifdef _USE_NLM
   if(req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       return &nlm4_func_desc[req->rq_proc];
     }
-#endif                          /* _USE_NLM */
 
 #ifdef _USE_RQUOTA
   if(req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
@@ -807,7 +803,6 @@ static void nfs_rpc_execute(request_data_t *preq,
           break;
         }                       /* switch( ptr_req->rq_vers ) */
     }
-#ifdef _USE_NLM
   else if(req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       netobj *pfh3 = NULL;
@@ -901,7 +896,6 @@ static void nfs_rpc_execute(request_data_t *preq,
       else
         pexport = nfs_param.pexportlist;
     }
-#endif                          /* _USE_NLM */
   else
     {
       /* All other protocols use the whole export list */

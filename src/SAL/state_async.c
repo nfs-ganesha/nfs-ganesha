@@ -54,7 +54,6 @@
 #include "sal_functions.h"
 #include "nfs_tcb.h"
 
-#ifdef _USE_BLOCKING_LOCKS
 static pthread_t               state_async_thread_id;
 static struct glist_head       state_async_queue;
 nfs_tcb_t                      state_async_tcb;
@@ -212,23 +211,16 @@ void signal_async_work()
 
   V(state_async_tcb.tcb_mutex);
 }
-#endif
 
 state_status_t state_async_init()
 {
-#ifdef _USE_BLOCKING_LOCKS
   init_glist(&state_async_queue);
   tcb_new(&state_async_tcb, "State Async Thread");
-#endif
   return STATE_SUCCESS;
 }
 
 void state_async_thread_start()
 {
-#ifdef _USE_BLOCKING_LOCKS
   if(pthread_create(&state_async_thread_id, NULL, state_async_thread, NULL) != 0)
     LogFatal(COMPONENT_STATE, "Could not start State Async Thread");
-#else
-  return;
-#endif
 }
