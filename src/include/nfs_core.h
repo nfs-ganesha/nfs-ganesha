@@ -207,9 +207,7 @@ typedef enum protos
   P_NFS,
   P_MNT,
   P_NLM,
-#ifdef _USE_RQUOTA
   P_RQUOTA,
-#endif
   P_COUNT
 } protos;
 
@@ -262,6 +260,7 @@ typedef struct nfs_core_param__
   bool clustered;
   bool enable_FSAL_upcalls;
   bool enable_NLM;
+  bool enable_RQUOTA;
 } nfs_core_parameter_t;
 
 typedef struct nfs_ip_name_param__

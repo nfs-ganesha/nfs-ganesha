@@ -53,11 +53,7 @@ endif
 
 NLM_LIB = ../Protocols/NLM/libnlm.la
 
-if USE_RQUOTA
 RQUOTA_LIB = ../Protocols/RQUOTA/librquota.la
-else
-RQUOTA_LIB = 
-endif
 
 TIRPC_LIB = @TIRPCPATH@/src/libntirpc.la
 TIRPC_STATIC_LIB = @TIRPCPATH@/src/.libs/libntirpc.a

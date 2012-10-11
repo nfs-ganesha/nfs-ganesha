@@ -225,6 +225,7 @@ int nfs_read_core_conf(config_file_t in_config,
   /* Set the default */
   pparam->enable_FSAL_upcalls = true;
   pparam->enable_NLM = true;
+  pparam->enable_RQUOTA = true;
 
   for(var_index = 0; var_index < var_max; var_index++)
     {
@@ -498,6 +499,10 @@ int nfs_read_core_conf(config_file_t in_config,
       else if(!strcasecmp(key_name, "Enable_NLM"))
         {
           pparam->enable_NLM = StrToBoolean(key_value);
+        }
+      else if(!strcasecmp(key_name, "Enable_RQUOTA"))
+        {
+          pparam->enable_RQUOTA = StrToBoolean(key_value);
         }
       else
         {

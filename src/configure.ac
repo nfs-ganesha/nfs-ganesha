@@ -233,22 +233,6 @@ elif test "x$ALLOCATOR" = "xtcmalloc"; then
 fi
 
 
-# QUOTA
-GA_ENABLE_AM_CONDITION([quota],[enable quota support],[USE_QUOTA])
-
-if test "$enable_quota" == "yes"; then
-        AC_DEFINE(_USE_QUOTA,1,[enable quota support])
-fi
-AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
-
-# RQUOTA 
-GA_ENABLE_AM_CONDITION([rquota],[enable RQUOTA protocol support],[USE_QUOTA])
-
-if test "$enable_rquota" == "yes"; then
-        AC_DEFINE(_USE_RQUOTA,1,[enable RQUOTA protocol support])
-fi
-AM_CONDITIONAL(USE_RQUOTA, test "$enable_rquota" = "yes")
-
 # DBUS
 GA_ENABLE_AM_CONDITION([dbus],[enable DBUS protocol support],[USE_DBUS])
 

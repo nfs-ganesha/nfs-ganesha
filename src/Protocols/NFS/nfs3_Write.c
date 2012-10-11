@@ -97,9 +97,7 @@ int nfs_Write(nfs_arg_t *arg,
         bool eof_met = false;
         cache_inode_stability_t stability = CACHE_INODE_SAFE_WRITE_TO_FS;
         int rc = NFS_REQ_OK;
-#ifdef _USE_QUOTA
         fsal_status_t fsal_status ;
-#endif
 
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR], *stables = "";
@@ -218,7 +216,6 @@ int nfs_Write(nfs_arg_t *arg,
              goto out;
         }
 
-#ifdef _USE_QUOTA
         /* if quota support is active, then we should check is the
            FSAL allows inode creation or not */
         fsal_status = export->export_hdl->ops->check_quota(export->export_hdl,
@@ -232,8 +229,6 @@ int nfs_Write(nfs_arg_t *arg,
             rc = NFS_REQ_OK ;
             goto out;
          }
-#endif /* _USE_QUOTA */
-
 
          offset = arg->arg_write3.offset;
          size = arg->arg_write3.count;

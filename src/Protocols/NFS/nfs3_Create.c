@@ -96,26 +96,22 @@ nfs_Create(nfs_arg_t *arg,
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         cache_inode_status_t cache_status_lookup;
         int rc = NFS_REQ_OK;
-#ifdef _USE_QUOTA
         fsal_status_t fsal_status;
-#endif
-        char str[MAXPATHLEN] ;
 
-        if (isDebug(COMPONENT_NFSPROTO))
-         {
-             file_name = arg->arg_create3.where.name;
-         }
+        if (isDebug(COMPONENT_NFSPROTO)) {
+                char str[LEN_FH_STR];
 
-         nfs_FhandleToStr(req->rq_vers,
-                           &(arg->arg_create3.where.dir),
-                           NULL,
-                           str);
-         LogDebug(COMPONENT_NFSPROTO,
-                  "REQUEST PROCESSING: Calling nfs_Create handle: "
-                  "%s name: %s", str, file_name);
-        
+		file_name = arg->arg_create3.where.name;
+                nfs_FhandleToStr(req->rq_vers,
+				 &(arg->arg_create3.where.dir),
+				 NULL,
+				 str);
+                LogDebug(COMPONENT_NFSPROTO,
+                         "REQUEST PROCESSING: Calling nfs_Create handle: "
+                         "%s name: %s", str, file_name);
+        }
 
-        if(nfs3_Is_Fh_Xattr(&(arg->arg_create3.where.dir)) ) {
+        if(nfs3_Is_Fh_Xattr(&(arg->arg_create3.where.dir))) {
                 rc = nfs3_Create_Xattr(arg, export, req_ctx, req, res);
                 goto out;
         }
@@ -166,7 +162,6 @@ nfs_Create(nfs_arg_t *arg,
        else 
          mode = 0 ;
 
-#ifdef _USE_QUOTA
         /* if quota support is active, then we should check is the
            FSAL allows inode creation or not */
         fsal_status = export->export_hdl->ops
@@ -179,7 +174,6 @@ nfs_Create(nfs_arg_t *arg,
                 rc = NFS_REQ_OK;
                 goto out;
         }
-#endif /* _USE_QUOTA */
 
         if (file_name == NULL ||
             *file_name == '\0' ) {

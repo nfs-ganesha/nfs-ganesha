@@ -324,7 +324,6 @@ const nfs_function_desc_t nlm4_func_desc[] = {
                          NOTHING_SPECIAL},
 };
 
-#ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
   [0] = {
          rquota_Null, rquota_Null_Free, (xdrproc_t) xdr_void,
@@ -380,8 +379,6 @@ const nfs_function_desc_t rquota2_func_desc[] = {
         "rquota_Ext_Getactivequota",
         NEEDS_CRED}
 };
-
-#endif                          /* _USE_RQUOTA */
 
 extern const char *pause_state_str[];
 
@@ -454,7 +451,6 @@ nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
       return &nlm4_func_desc[req->rq_proc];
     }
 
-#ifdef _USE_RQUOTA
   if(req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
       if(req->rq_vers == RQUOTAVERS)
@@ -462,7 +458,6 @@ nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
       else
         return &rquota2_func_desc[req->rq_proc];
     }
-#endif                          /* _USE_RQUOTA */
 
   /* Oops, should never get here! */
   DISP_SLOCK(preqnfs->xprt, &thr_ctx->sigmask);

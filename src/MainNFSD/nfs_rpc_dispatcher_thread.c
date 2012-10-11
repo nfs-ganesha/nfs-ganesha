@@ -143,9 +143,7 @@ const char *tags[] = {
   "NFS",
   "MNT",
   "NLM",
-#ifdef _USE_RQUOTA
   "RQUOTA",
-#endif
 };
 
 typedef struct proto_data
@@ -205,9 +203,11 @@ static void unregister_rpc(void)
     {
       unregister(nfs_param.core_param.program[P_NLM], 1, NLM4_VERS);
     }
-#ifdef _USE_RQUOTA
-  unregister(nfs_param.core_param.program[P_RQUOTA], RQUOTAVERS, EXT_RQUOTAVERS);
-#endif
+  if (nfs_param.core_param.enable_RQUOTA)
+    {
+      unregister(nfs_param.core_param.program[P_RQUOTA], RQUOTAVERS,
+                 EXT_RQUOTAVERS);
+    }
 }
 
 #define test_for_additional_nfs_protocols(p) \
@@ -639,13 +639,11 @@ void nfs_Init_svc()
                tcp_socket[P_NFS]);
     }
 
-#ifdef _USE_RQUOTA
   /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
   LogDebug(COMPONENT_DISPATCH,
            "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
            udp_socket[P_RQUOTA],
            tcp_socket[P_RQUOTA]) ;
-#endif
 
   /* Bind the tcp and udp sockets */
   Bind_sockets();
@@ -696,10 +694,11 @@ void nfs_Init_svc()
     {
       Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
     }
-#ifdef _USE_RQUOTA
-  Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
-  Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, EXT_RQUOTAVERS);
-#endif                          /* USE_QUOTA */
+  if (nfs_param.core_param.enable_RQUOTA)
+    {
+      Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
+      Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, EXT_RQUOTAVERS);
+    }
 #endif                          /* _NO_PORTMAPPER */
 
 }                               /* nfs_Init_svc */
@@ -1536,11 +1535,9 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     else if(udp_socket[P_NLM] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A NLM UDP request %d",
                      rpc_fd);
-#ifdef _USE_QUOTA
     else if(udp_socket[P_RQUOTA] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A RQUOTA UDP request %d",
                      rpc_fd);
-#endif                        /* _USE_QUOTA */
     else if(tcp_socket[P_NFS] == rpc_fd) {
          /* In this case, the SVC_RECV only produces a new connected socket (it
           * does just a call to accept) */
@@ -1556,12 +1553,10 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         LogFullDebug(COMPONENT_DISPATCH,
                      "An initial NLM request from a new client %d",
                      rpc_fd);
-#ifdef _USE_QUOTA
     else if(tcp_socket[P_RQUOTA] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH,
                      "An initial RQUOTA request from a new client %d",
                      rpc_fd);
-#endif                          /* _USE_QUOTA */
     else
         LogFullDebug(COMPONENT_DISPATCH,
                      "An NFS TCP request from an already connected client %d",
@@ -1796,7 +1791,6 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
       return true;
     }
 
-#ifdef _USE_RQUOTA
    if(req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
      {
        /* Call is with NLMPROG */
@@ -1831,7 +1825,6 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
         }
       return true;
      }
-#endif                          /* _USE_QUOTA */
 
   /* No such program */
    /* xprt == NULL??? */

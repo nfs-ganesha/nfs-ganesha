@@ -83,9 +83,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
   state_t                * state_open = NULL;
   cache_inode_status_t     cache_status = CACHE_INODE_SUCCESS;
   cache_entry_t          * entry = NULL;
-#ifdef _USE_QUOTA
   fsal_status_t            fsal_status;
-#endif
   /* This flag is set to true in the case of an anonymous read so that
      we know to release the state lock afterward.  The state lock does
      not need to be held during a non-anonymous read, since the open
@@ -104,18 +102,18 @@ int nfs4_op_write(struct nfs_argop4 *op,
   if(res_WRITE4.status != NFS4_OK)
     return res_WRITE4.status;
 
-#ifdef _USE_QUOTA
-    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-  fsal_status = data->pexport->export_hdl->ops->check_quota(data->pexport->export_hdl,
-							    data->pexport->fullpath,
-							    FSAL_QUOTA_INODES,
-							    data->req_ctx);
-  if( FSAL_IS_ERROR( fsal_status ) )
+    /* if quota support is active, then we should check is the FSAL
+       allows inode creation or not */
+  fsal_status = data->pexport->export_hdl->ops->check_quota(
+          data->pexport->export_hdl,
+          data->pexport->fullpath,
+          FSAL_QUOTA_INODES,
+          data->req_ctx);
+  if (FSAL_IS_ERROR( fsal_status))
     {
       res_WRITE4.status = NFS4ERR_DQUOT ;
       return res_WRITE4.status;
     }
-#endif /* _USE_QUOTA */
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))

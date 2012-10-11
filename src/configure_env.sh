@@ -3,16 +3,13 @@
 #if making code changes please run with these at minimum
 
 CONFIG_ON="
-	--enable-strict-compile --enable-quota --enable-rquota
-	--enable-dbus --enable-debug-symbols
+	--enable-strict-compile --enable-dbus --enable-debug-symbols
 "
 
 ./configure $CONFIG_ON
 
 # ON in a list
 # --enable-strict-compile
-# --enable-quota
-# --enable-rquota
 # --enable-dbus
 # --enable-debug-symbols
 
@@ -22,8 +19,6 @@ CONFIG_ON="
 #
 # --disable-libtool-lock
 # --disable-largefile
-# --enable-quota
-# --enable-rquota
 # --enable-dbus
 # --enable-upcall-simulato
 # --enable-cb-simulator

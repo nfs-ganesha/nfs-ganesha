@@ -109,10 +109,8 @@ nfs_parameter_t nfs_param =
 #ifdef _USE_9P_RDMA
   nfs_param._9p_param._9p_rdma_port = _9P_RDMA_PORT ;
 #endif
-#ifdef _USE_RQUOTA
   .core_param.program[P_RQUOTA] = RQUOTAPROG,
   .core_param.port[P_RQUOTA] = RQUOTA_PORT,
-#endif
   .core_param.drop_io_errors = true,
   .core_param.drop_delay_errors = true,
   .core_param.core_dump_size = -1,

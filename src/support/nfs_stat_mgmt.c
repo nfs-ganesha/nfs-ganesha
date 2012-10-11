@@ -208,7 +208,6 @@ void nfs_stat_update(nfs_stat_type_t type,
           return;
         }
     }
-#ifdef _USE_RQUOTA
   else if(preq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
       switch (preq->rq_vers)
@@ -232,7 +231,6 @@ void nfs_stat_update(nfs_stat_type_t type,
         }
 
     }
-#endif
   else
     {
       /* Bad program ? */

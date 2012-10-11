@@ -500,10 +500,8 @@ open4_create(OPEN4args           * arg,
 {
         /* Newly created file */
         cache_entry_t      * entry_newfile = NULL;
-#ifdef _USE_QUOTA
         /* Return code from calls made directly to the FSAL. */
         fsal_status_t        fsal_status = {0, 0};
-#endif /* _USE_QUOTA */
         /* Convertedattributes to set */
         struct attrlist      sattr;
         /* Whether the client supplied any attributes */
@@ -520,7 +518,6 @@ open4_create(OPEN4args           * arg,
 
         memset(&sattr, 0, sizeof(struct attrlist));
 
-#ifdef _USE_QUOTA
         /* if quota support is active, then we should check is
            the FSAL allows inode creation or not */
         fsal_status
@@ -532,7 +529,6 @@ open4_create(OPEN4args           * arg,
         if (FSAL_IS_ERROR(fsal_status)) {
                 return NFS4ERR_DQUOT;
         }
-#endif /* _USE_QUOTA */
 
         /* Check if asked attributes are correct */
         if (arg->openhow.openflag4_u.how.mode == GUARDED4 ||

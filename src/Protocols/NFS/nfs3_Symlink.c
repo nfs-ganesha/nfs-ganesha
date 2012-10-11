@@ -96,9 +96,7 @@ nfs_Symlink(nfs_arg_t *arg,
         pre_op_attr pre_parent;
         cache_inode_status_t cache_status;
         int rc = NFS_REQ_OK;
-#ifdef _USE_QUOTA
-        fsal_status_t fsal_status ;
-#endif
+        fsal_status_t fsal_status;
 
         memset(&create_arg, 0, sizeof(create_arg));
 
@@ -146,7 +144,6 @@ nfs_Symlink(nfs_arg_t *arg,
                 goto out;
           }
 
-#ifdef _USE_QUOTA
         /* if quota support is active, then we should check is the
            FSAL allows inode creation or not */
         fsal_status = export->export_hdl->ops->check_quota(export->export_hdl,
@@ -159,8 +156,6 @@ nfs_Symlink(nfs_arg_t *arg,
                 rc = NFS_REQ_OK;
                 goto out;
         }
-#endif /* _USE_QUOTA */
-
         symlink_name = arg->arg_symlink3.where.name;
         target_path = arg->arg_symlink3.symlink.symlink_data;
 

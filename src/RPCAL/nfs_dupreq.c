@@ -423,10 +423,8 @@ extern nfs_function_desc_t nfs4_func_desc[];
 extern nfs_function_desc_t mnt1_func_desc[];
 extern nfs_function_desc_t mnt3_func_desc[];
 extern nfs_function_desc_t nlm4_func_desc[];
-#ifdef _USE_RQUOTA
 extern nfs_function_desc_t rquota1_func_desc[];
 extern nfs_function_desc_t rquota2_func_desc[];
-#endif                          /* _USE_QUOTA */
 
 /**
  * @brief Determine the protocol of the supplied TI-RPC SVCXPRT*
@@ -872,7 +870,6 @@ nfs_dupreq_func(dupreq_entry_t *dv)
             break;
         }
     }
-#ifdef _USE_RQUOTA
     else if(dv->hin.rq_prog == nfs_param.core_param.program[P_RQUOTA]) {
         switch (dv->hin.rq_vers) {
         case RQUOTAVERS:
@@ -883,7 +880,6 @@ nfs_dupreq_func(dupreq_entry_t *dv)
           break;
         }
     }
-#endif
     else {
         /* not reached */
         LogMajor(COMPONENT_DUPREQ,

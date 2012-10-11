@@ -93,9 +93,7 @@ nfs3_Mknod(nfs_arg_t *arg,
         cache_entry_t *node_entry = NULL;
         cache_inode_create_arg_t create_arg;
         int rc = NFS_REQ_OK;
-#ifdef _USE_QUOTA
-        fsal_status_t fsal_status ;
-#endif
+        fsal_status_t fsal_status;
 
         memset(&create_arg, 0, sizeof(create_arg));
         if (isDebug(COMPONENT_NFSPROTO)) {
@@ -204,7 +202,6 @@ nfs3_Mknod(nfs_arg_t *arg,
                 goto out;
         }
 
-#ifdef _USE_QUOTA
         /* if quota support is active, then we should check is the
            FSAL allows inode creation or not */
         fsal_status = export->export_hdl->ops
@@ -216,7 +213,6 @@ nfs3_Mknod(nfs_arg_t *arg,
                 res->res_mknod3.status = NFS3ERR_DQUOT;
                 return NFS_REQ_OK;
         }
-#endif /* _USE_QUOTA */
 
 
         /* convert node name */
