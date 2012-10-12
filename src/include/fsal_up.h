@@ -69,6 +69,11 @@ typedef enum {
         FSAL_UP_EVENT_LOCK_AVAIL,
         FSAL_UP_EVENT_INVALIDATE,
         FSAL_UP_EVENT_UPDATE,
+        FSAL_UP_EVENT_LINK,
+        FSAL_UP_EVENT_UNLINK,
+        FSAL_UP_EVENT_MOVE_FROM,
+        FSAL_UP_EVENT_MOVE_TO,
+        FSAL_UP_EVENT_RENAME,
         FSAL_UP_EVENT_LAYOUTRECALL
 } fsal_up_event_type_t;
 
@@ -185,6 +190,71 @@ static const uint32_t fsal_up_update_chgtime_inc = 0x0020;
 static const uint32_t fsal_up_update_spaceused_inc = 0x0040;
 
 /**
+ * @brief A structure for representing the creation of a new name in a
+ * directory.
+ */
+
+struct fsal_up_event_link
+{
+        char *name; /*< The name of the newly created link.  This is
+                        allocated by the FSAL and freed by the FSAL
+                        upcall thread. */
+        struct fsal_up_file target; /*< The target of the link, may
+                                        be {{0, 0}, 0} if unknown. */
+};
+
+/**
+ * @brief A structure for representing the deletion of a name from a
+ * directory.
+ */
+
+struct fsal_up_event_unlink
+{
+        char *name; /*< The name of the newly created link.  This is
+                        allocated by the FSAL and freed by the FSAL
+                        upcall thread. */
+};
+
+/**
+ * @brief A structure for representing a move of a name out of a
+ * directory. (This does not decrement the cached link count.)
+ */
+
+struct fsal_up_event_move_from
+{
+        char *name; /*< The name of the newly created link.  This is
+                        allocated by the FSAL and freed by the FSAL
+                        upcall thread. */
+};
+
+/**
+ * @brief A structure for representing the movement of a name into a
+ * directory (this does not change the cached link count.)
+ */
+
+struct fsal_up_event_move_to
+{
+        char *name; /*< The name of the newly created link.  This is
+                        allocated by the FSAL and freed by the FSAL
+                        upcall thread. */
+        struct fsal_up_file target; /*< The target of the link, may
+                                        be {{0, 0}, 0} if unknown. */
+};
+
+/**
+ * @brief A structure for representing a rename of a file within a
+ * directory
+ */
+
+struct fsal_up_event_rename
+{
+        char *old; /*< The original name.  This is allocated by the
+                       FSAL and freed by the upcall thread. */
+        char *new; /*< The new name.  This is allocated by the FSAL
+                       and freed by the upcall thread. */
+};
+
+/**
  * A structure for recalling a layout
  */
 
@@ -256,6 +326,41 @@ struct fsal_up_vector
                              struct fsal_up_file *,
                              void *);
 
+        int (*link_imm)(struct fsal_up_event_link *,
+                        struct fsal_up_file *,
+                        void **);
+        void (*link_queue)(struct fsal_up_event_link *,
+                           struct fsal_up_file *,
+                           void *);
+
+        int (*unlink_imm)(struct fsal_up_event_unlink *,
+                          struct fsal_up_file *,
+                          void **);
+        void (*unlink_queue)(struct fsal_up_event_unlink *,
+                             struct fsal_up_file *,
+                             void *);
+
+        int (*move_from_imm)(struct fsal_up_event_move_from *,
+                             struct fsal_up_file *,
+                             void **);
+        void (*move_from_queue)(struct fsal_up_event_move_from *,
+                                struct fsal_up_file *,
+                                void *);
+
+        int (*move_to_imm)(struct fsal_up_event_move_to *,
+                           struct fsal_up_file *,
+                           void **);
+        void (*move_to_queue)(struct fsal_up_event_move_to *,
+                              struct fsal_up_file *,
+                              void *);
+
+        int (*rename_imm)(struct fsal_up_event_rename *,
+                          struct fsal_up_file *,
+                          void **);
+        void (*rename_queue)(struct fsal_up_event_rename *,
+                             struct fsal_up_file *,
+                             void *);
+
         int (*layoutrecall_imm)(struct fsal_up_event_layoutrecall *,
                                 struct fsal_up_file *,
                                 void **);
@@ -284,6 +389,11 @@ struct fsal_up_event
                 struct fsal_up_event_lock_avail lock_avail;
                 struct fsal_up_event_invalidate invalidate;
                 struct fsal_up_event_update update;
+                struct fsal_up_event_link link;
+                struct fsal_up_event_unlink unlink;
+                struct fsal_up_event_move_from move_from;
+                struct fsal_up_event_move_to move_to;
+                struct fsal_up_event_rename rename;
                 struct fsal_up_event_layoutrecall layoutrecall;
         } data; /*< Type specific event data */
         struct fsal_up_file file; /*< File upon which the event takes

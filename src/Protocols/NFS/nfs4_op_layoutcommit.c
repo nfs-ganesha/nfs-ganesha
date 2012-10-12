@@ -210,7 +210,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op,
             res.size_supplied) {
                 if ((cache_status = cache_inode_invalidate(
                              data->current_entry,
-                             CACHE_INODE_INVALIDATE_CLEARBITS))
+                             CACHE_INODE_INVALIDATE_ATTRS))
                     != CACHE_INODE_SUCCESS) {
                         nfs_status = nfs4_Errno(cache_status);
                         goto out;

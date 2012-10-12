@@ -117,6 +117,51 @@ fsal_up_submit(struct fsal_up_event *event)
                 }
                 break;
 
+        case FSAL_UP_EVENT_LINK:
+                if (event->functions->link_imm) {
+                        rc = event->functions->link_imm(
+                                &event->data.link,
+                                &event->file,
+                                &event->private);
+                }
+                break;
+
+        case FSAL_UP_EVENT_UNLINK:
+                if (event->functions->unlink_imm) {
+                        rc = event->functions->unlink_imm(
+                                &event->data.unlink,
+                                &event->file,
+                                &event->private);
+                }
+                break;
+
+        case FSAL_UP_EVENT_MOVE_FROM:
+                if (event->functions->move_from_imm) {
+                        rc = event->functions->move_from_imm(
+                                &event->data.move_from,
+                                &event->file,
+                                &event->private);
+                }
+                break;
+
+        case FSAL_UP_EVENT_MOVE_TO:
+                if (event->functions->move_to_imm) {
+                        rc = event->functions->move_to_imm(
+                                &event->data.move_to,
+                                &event->file,
+                                &event->private);
+                }
+                break;
+
+        case FSAL_UP_EVENT_RENAME:
+                if (event->functions->rename_imm) {
+                        rc = event->functions->rename_imm(
+                                &event->data.rename,
+                                &event->file,
+                                &event->private);
+                }
+                break;
+
         case FSAL_UP_EVENT_LAYOUTRECALL:
                 if (event->functions->layoutrecall_imm) {
                         rc = event->functions->layoutrecall_imm(
@@ -211,6 +256,51 @@ next_event:
                         if (event->functions->update_queue) {
                                 event->functions->update_queue(
                                         &event->data.update,
+                                        &event->file,
+                                        event->private);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_LINK:
+                        if (event->functions->link_queue) {
+                                event->functions->link_queue(
+                                        &event->data.link,
+                                        &event->file,
+                                        event->private);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_UNLINK:
+                        if (event->functions->unlink_queue) {
+                                event->functions->unlink_queue(
+                                        &event->data.unlink,
+                                        &event->file,
+                                        event->private);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_MOVE_FROM:
+                        if (event->functions->move_from_queue) {
+                                event->functions->move_from_queue(
+                                        &event->data.move_from,
+                                        &event->file,
+                                        event->private);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_MOVE_TO:
+                        if (event->functions->move_to_queue) {
+                                event->functions->move_to_queue(
+                                        &event->data.move_to,
+                                        &event->file,
+                                        event->private);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_RENAME:
+                        if (event->functions->rename_queue) {
+                                event->functions->rename_queue(
+                                        &event->data.rename,
                                         &event->file,
                                         event->private);
                         }

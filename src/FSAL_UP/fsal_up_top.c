@@ -37,6 +37,9 @@
 #include "log.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "cache_inode_avl.h"
+#include "cache_inode_weakref.h"
+#include "cache_inode_lru.h"
 #include "HashTable.h"
 #include "fsal_up.h"
 #include "sal_functions.h"
@@ -71,7 +74,8 @@ invalidate_imm(struct fsal_up_event_invalidate *invalidate,
                     &entry);
         if (rc == 0) {
                 cache_inode_invalidate(entry,
-                                       CACHE_INODE_INVALIDATE_CLEARBITS);
+                                       CACHE_INODE_INVALIDATE_ATTRS |
+                                       CACHE_INODE_INVALIDATE_CONTENT);
                 cache_inode_put(entry);
         }
 
@@ -376,6 +380,284 @@ lock_avail_imm(struct fsal_up_event_lock_avail *avail,
         return rc;
 }
 
+/**
+ * @brief Execute delayed link
+ *
+ * Add a link to a directory and, if the entry's attributes are valid,
+ * increment the link count by one.
+ *
+ * @param[in] link    Link parameters
+ * @param[in] file    Directory in which the link was created
+ * @param[in] private Unused
+ */
+
+static void
+link_queue(struct fsal_up_event_link *link,
+           struct fsal_up_file *file,
+           void *private)
+{
+        /* The cache entry for the parent directory */
+        cache_entry_t *parent = NULL;
+        /* Fake root credentials for caching lookup */
+        struct user_cred synthetic_creds = {
+                .caller_uid = 0,
+                .caller_gid = 0,
+                .caller_glen = 0,
+                .caller_garray = NULL
+        };
+
+        /* Synthetic request context */
+        struct req_op_context synthetic_context = {
+                .creds = &synthetic_creds,
+                .caller_addr = NULL,
+                .clientid = NULL
+        };
+
+
+        if (up_get(&file->key, &parent) == 0) {
+                /* The entry to look up */
+                cache_entry_t *entry = NULL;
+                /* Cache inode status */
+                cache_inode_status_t status = CACHE_INODE_SUCCESS;
+
+                if (!link->target.key.addr) {
+                        /* If the FSAL didn't specify a target, just
+                           do a lookup and let it cache. */
+                        if ((entry = cache_inode_lookup(parent,
+                                                        link->name,
+                                                        &synthetic_context,
+                                                        &status)) == NULL) {
+                                cache_inode_invalidate(
+                                        parent,
+                                        CACHE_INODE_INVALIDATE_CONTENT);
+                        } else {
+                                cache_inode_put(entry);
+                        }
+                } else {
+                        if (up_get(&link->target.key, &entry) == 0) {
+                                cache_inode_add_cached_dirent(parent,
+                                                              link->name,
+                                                              entry,
+                                                              NULL,
+                                                              &status);
+                                pthread_rwlock_wrlock(&entry->attr_lock);
+                                if (entry->flags &
+                                    CACHE_INODE_TRUST_ATTRS) {
+                                        ++entry->obj_handle
+                                                ->attributes.numlinks;
+                                }
+                                pthread_rwlock_unlock(&entry->attr_lock);
+                                cache_inode_put(entry);
+                        } else {
+                                cache_inode_invalidate(
+                                        parent,
+                                        CACHE_INODE_INVALIDATE_CONTENT);
+                        }
+                }
+        }
+        gsh_free(link->name);
+}
+
+/**
+ * @brief Delayed unlink action
+ *
+ * Remove the name from the directory, and if the entry is cached,
+ * decrement its link count.
+ *
+ * @param[in] unlink  Unlink parameters
+ * @param[in] file    Directory from we unlinked
+ * @param[in] private Unused
+ */
+
+static void
+unlink_queue(struct fsal_up_event_unlink *unlink,
+             struct fsal_up_file *file,
+             void *private)
+{
+        /* The cache entry for the parent directory */
+        cache_entry_t *parent = NULL;
+
+        if (up_get(&file->key, &parent) == 0) {
+                /* Cache inode status */
+                cache_inode_status_t status = CACHE_INODE_SUCCESS;
+                /* The looked up directory entry */
+                cache_inode_dir_entry_t *dirent;
+
+                pthread_rwlock_wrlock(&parent->content_lock);
+                dirent = cache_inode_avl_qp_lookup_s(parent, unlink->name, 1);
+                if (dirent &&
+                    ~(dirent->flags & DIR_ENTRY_FLAG_DELETED)) {
+                        /* The entry to ding */
+                        cache_entry_t *entry = NULL;
+                        if ((entry = cache_inode_weakref_get(&dirent->entry,
+                                                             0))) {
+                                pthread_rwlock_wrlock(&entry->attr_lock);
+                                if (entry->flags &
+                                    CACHE_INODE_TRUST_ATTRS) {
+                                        if (--entry->obj_handle
+                                            ->attributes.numlinks
+                                            == 0) {
+                                                pthread_rwlock_unlock(
+                                                        &entry->attr_lock);
+                                                cache_inode_lru_kill(
+                                                        entry);
+                                        } else {
+                                                pthread_rwlock_unlock(
+                                                        &entry->attr_lock);
+                                        }
+                                }
+                                cache_inode_put(entry);
+                        }
+                        cache_inode_remove_cached_dirent(parent,
+                                                         unlink->name,
+                                                         &status);
+                }
+                pthread_rwlock_unlock(&parent->content_lock);
+                cache_inode_put(parent);
+        }
+        gsh_free(unlink->name);
+}
+
+/**
+ * @brief Delayed move-from action
+ *
+ * Remove the name from the directory, do not modify the link count.
+ *
+ * @param[in] move_from move-from parameters
+ * @param[in] file      Directory from we unlinked
+ * @param[in] private   Unused
+ */
+
+static void
+move_from_queue(struct fsal_up_event_move_from *move_from,
+                struct fsal_up_file *file,
+                void *private)
+{
+        /* The cache entry for the parent directory */
+        cache_entry_t *parent = NULL;
+
+        if (up_get(&file->key, &parent) == 0) {
+                /* Cache inode status */
+                cache_inode_status_t status = CACHE_INODE_SUCCESS;
+
+                pthread_rwlock_wrlock(&parent->content_lock);
+                cache_inode_remove_cached_dirent(parent,
+                                                 move_from->name,
+                                                 &status);
+                pthread_rwlock_unlock(&parent->content_lock);
+                cache_inode_put(parent);
+        }
+        gsh_free(move_from->name);
+}
+
+/**
+ * @brief Execute delayed move-to
+ *
+ * Add a link to a directory, do not touch the number of links.
+ *
+ * @param[in] move_to move-to parameters
+ * @param[in] file    Directory in which the link was created
+ * @param[in] private Unused
+ */
+
+static void
+move_to_queue(struct fsal_up_event_move_to *move_to,
+              struct fsal_up_file *file,
+              void *private)
+{
+        /* The cache entry for the parent directory */
+        cache_entry_t *parent = NULL;
+        /* Fake root credentials for caching lookup */
+        struct user_cred synthetic_creds = {
+                .caller_uid = 0,
+                .caller_gid = 0,
+                .caller_glen = 0,
+                .caller_garray = NULL
+        };
+
+        /* Synthetic request context */
+        struct req_op_context synthetic_context = {
+                .creds = &synthetic_creds,
+                .caller_addr = NULL,
+                .clientid = NULL
+        };
+
+        if (up_get(&file->key, &parent) == 0) {
+                /* The entry to look up */
+                cache_entry_t *entry = NULL;
+                /* Cache inode status */
+                cache_inode_status_t status = CACHE_INODE_SUCCESS;
+
+                if (!move_to->target.key.addr) {
+                        /* If the FSAL didn't specify a target, just
+                           do a lookup and let it cache. */
+                        if ((entry = cache_inode_lookup(parent,
+                                                        move_to->name,
+                                                        &synthetic_context,
+                                                        &status)) == NULL) {
+                                cache_inode_invalidate(
+                                        parent,
+                                        CACHE_INODE_INVALIDATE_CONTENT);
+                        } else {
+                                cache_inode_put(entry);
+                        }
+                } else {
+                        if (up_get(&move_to->target.key, &entry) == 0) {
+                                cache_inode_add_cached_dirent(parent,
+                                                              move_to->name,
+                                                              entry,
+                                                              NULL,
+                                                              &status);
+                                cache_inode_put(entry);
+                        } else {
+                                cache_inode_invalidate(
+                                        parent,
+                                        CACHE_INODE_INVALIDATE_CONTENT);
+                        }
+                }
+                cache_inode_put(parent);
+        }
+        gsh_free(move_to->name);
+}
+
+/**
+ * @brief Delayed rename operation
+ *
+ * If a parent directory is in the queue, rename the given entry.  On
+ * error, invalidate the whole thing.
+ *
+ * @param[in] rename  Rename parameters
+ * @param[in] file    The parent directory
+ * @param[in] private Unused
+ */
+
+static void
+rename_queue(struct fsal_up_event_rename *rename,
+             struct fsal_up_file *file,
+             void *private)
+{
+        /* The cache entry for the parent directory */
+        cache_entry_t *parent = NULL;
+
+        if (up_get(&file->key, &parent) == 0) {
+                /* Cache inode status */
+                cache_inode_status_t status = CACHE_INODE_SUCCESS;
+
+                pthread_rwlock_wrlock(&parent->content_lock);
+                if (cache_inode_rename_cached_dirent(parent,
+                                                     rename->old,
+                                                     rename->new,
+                                                     &status)
+                    != CACHE_INODE_SUCCESS) {
+                        cache_inode_invalidate(parent,
+                                               CACHE_INODE_INVALIDATE_CONTENT);
+                }
+                pthread_rwlock_unlock(&parent->content_lock);
+                cache_inode_put(parent);
+        }
+        gsh_free(rename->old);
+        gsh_free(rename->new);
+}
 
 struct fsal_up_vector fsal_up_top = {
         .lock_grant_imm = lock_grant_imm,
@@ -389,6 +671,21 @@ struct fsal_up_vector fsal_up_top = {
 
         .update_imm = update_imm,
         .update_queue = update_queue,
+
+        .link_imm = NULL,
+        .link_queue = link_queue,
+
+        .unlink_imm = NULL,
+        .unlink_queue = unlink_queue,
+
+        .move_from_imm = NULL,
+        .move_from_queue = move_from_queue,
+
+        .move_to_imm = NULL,
+        .move_to_queue = move_to_queue,
+
+        .rename_imm = NULL,
+        .rename_queue = rename_queue,
 
         .layoutrecall_imm = NULL,
         .layoutrecall_queue = NULL

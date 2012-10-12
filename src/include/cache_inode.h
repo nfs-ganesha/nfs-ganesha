@@ -485,8 +485,8 @@ static const uint32_t CACHE_INODE_FLAG_NOT_PINNED = 0x100; /*< File can't be
 /*
  * Flags to cache_inode_invalidate
  */
-static const uint32_t CACHE_INODE_INVALIDATE_CLEARBITS = 0x01;
-static const uint32_t CACHE_INODE_INVALIDATE_CLOSE = 0x02;
+static const uint32_t CACHE_INODE_INVALIDATE_ATTRS = 0x01;
+static const uint32_t CACHE_INODE_INVALIDATE_CONTENT = 0x02;
 
 /*
  * Prototypes for the functions

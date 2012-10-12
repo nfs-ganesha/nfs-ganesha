@@ -24,12 +24,10 @@
  */
 
 /**
- * \file    cache_inode_rename.c
- * \date    $Date: 2005/11/28 17:02:27 $
- * \version $Revision: 1.20 $
- * \brief   Renames an entry.
+ * @file    cache_inode_rename.c
+ * @brief   Renames an entry.
  *
- * cache_inode_rename.c : Renames an entry.
+ * Renames an entry.
  *
  */
 #ifdef HAVE_CONFIG_H
