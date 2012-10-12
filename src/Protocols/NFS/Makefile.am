@@ -88,7 +88,7 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          nfs_Readdir.c                       \
                          nfs3_Readdirplus.c                  \
                          nfs_Write.c                         \
-                         nfs_Read.c                          \
+                         nfs3_Read.c                         \
                          nfs4_cb_Compound.c                  \
                          nfs4_cb_illegal.c                   \
                          nfs4_cb_getattr.c                   \
