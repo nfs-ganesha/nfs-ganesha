@@ -10,7 +10,7 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          mnt_Dump.c                          \
                          mnt_Umnt.c                          \
                          mnt_UmntAll.c                       \
-                         nfs_Null.c                          \
+                         nfs3_Null.c                         \
                          nfs_proto_tools.c                   \
                          nfs4_pseudo.c                       \
                          nfs4_referral.c                     \
