@@ -102,6 +102,13 @@ fsal_up_submit(struct fsal_up_event *event)
                 }
                 break;
 
+        case FSAL_UP_EVENT_UPDATE:
+                if (event->functions->update_imm) {
+                        rc = event->functions->update_imm(
+                                &event->data.update, &event->file);
+                }
+                break;
+
         case FSAL_UP_EVENT_LAYOUTRECALL:
                 if (event->functions->layoutrecall_imm) {
                         rc = event->functions->layoutrecall_imm(
@@ -183,6 +190,14 @@ next_event:
                         if (event->functions->invalidate_queue) {
                                 event->functions->invalidate_queue(
                                         &event->data.invalidate,
+                                        &event->file);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_UPDATE:
+                        if (event->functions->update_queue) {
+                                event->functions->update_queue(
+                                        &event->data.update,
                                         &event->file);
                         }
                         break;

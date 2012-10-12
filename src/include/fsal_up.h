@@ -68,6 +68,7 @@ typedef enum {
         FSAL_UP_EVENT_LOCK_GRANT,
         FSAL_UP_EVENT_LOCK_AVAIL,
         FSAL_UP_EVENT_INVALIDATE,
+        FSAL_UP_EVENT_UPDATE,
         FSAL_UP_EVENT_LAYOUTRECALL
 } fsal_up_event_type_t;
 
@@ -117,6 +118,71 @@ struct fsal_up_event_invalidate
 {
         uint32_t flags; /*< Flags governing invalidate. */
 };
+
+/**
+ * @brief A structure for updating the attributes of a file
+ */
+
+struct fsal_up_event_update
+{
+        struct attrlist attr; /*< List of attributes to update.  Note
+                                  that the @c supported_attributes, @c
+                                  type, @c fsid, @c fileid, @c rawdev,
+                                  @c mounted_on_fileid, and @c
+                                  generation fields must not be
+                                  updated and the corresponding bits
+                                  in the mask must not be set, nor may
+                                  the ATTR_RDATA_ERR bit be set. */
+        uint32_t flags; /*< Flags indicating special handling for
+                            some attributes. */
+};
+
+/**
+ * Empty flags.
+ */
+static const uint32_t fsal_up_update_null = 0x0000;
+
+/**
+ * Update the filesize only if the new size is greater than that
+ * currently set.
+ */
+static const uint32_t fsal_up_update_filesize_inc = 0x0001;
+
+/**
+ * Update the atime only if the new time is later than the currently
+ * set time.
+ */
+static const uint32_t fsal_up_update_atime_inc = 0x0002;
+
+/**
+ * Update the creation time only if the new time is later than the
+ * currently set time.
+ */
+static const uint32_t fsal_up_update_creation_inc = 0x0004;
+
+/**
+ * Update the ctime only if the new time is later than that currently
+ * set.
+ */
+static const uint32_t fsal_up_update_ctime_inc = 0x0008;
+
+/**
+ * Update the mtime only if the new time is later than that currently
+ * set.
+ */
+static const uint32_t fsal_up_update_mtime_inc = 0x0010;
+
+/**
+ * Update the chgtime only if the new time is later than that
+ * currently set.
+ */
+static const uint32_t fsal_up_update_chgtime_inc = 0x0020;
+
+/**
+ * Update the spaceused only if the new size is greater than that
+ * currently set.
+ */
+static const uint32_t fsal_up_update_spaceused_inc = 0x0040;
 
 /**
  * A structure for recalling a layout
@@ -177,6 +243,11 @@ struct fsal_up_vector
         void (*invalidate_queue)(struct fsal_up_event_invalidate *,
                                  struct fsal_up_file *);
 
+        int (*update_imm)(struct fsal_up_event_update *,
+                          struct fsal_up_file *);
+        void (*update_queue)(struct fsal_up_event_update *,
+                             struct fsal_up_file *);
+
         int (*layoutrecall_imm)(struct fsal_up_event_layoutrecall *,
                                 struct fsal_up_file *);
         void (*layoutrecall_queue)(struct fsal_up_event_layoutrecall *,
@@ -202,6 +273,7 @@ struct fsal_up_event
                 struct fsal_up_event_lock_grant lock_grant;
                 struct fsal_up_event_lock_avail lock_avail;
                 struct fsal_up_event_invalidate invalidate;
+                struct fsal_up_event_update update;
                 struct fsal_up_event_layoutrecall layoutrecall;
         } data; /*< Type specific event data */
         struct fsal_up_file file; /*< File upon which the event takes

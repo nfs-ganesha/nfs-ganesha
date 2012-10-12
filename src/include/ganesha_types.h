@@ -47,6 +47,38 @@ typedef struct gsh_time__
 } gsh_time_t;
 
 /**
+ * @brief Compare two times
+ *
+ * Determine if @c t1 is less-than, equal-to, or greater-than @c t2.
+ *
+ * @param[in] t1 First time
+ * @param[in] t2 Second time
+ *
+ * @retval -1 @c t1 is less-than @c t2
+ * @retval 0 @c t1 is equal-to @c t2
+ * @retval 1 @c t1 is greater-than @c t2
+ */
+
+static inline int
+gsh_time_cmp(gsh_time_t t1,
+             gsh_time_t t2)
+{
+        if (t1.seconds < t2.seconds) {
+                return -1;
+        } else if (t1.seconds > t2.seconds) {
+                return 1;
+        } else {
+                if (t1.nseconds < t2.nseconds) {
+                        return -1;
+                } else if (t1.nseconds > t2.nseconds) {
+                        return 1;
+                }
+        }
+
+        return 0;
+}
+
+/**
  * @brief Buffer descriptor
  *
  * This structure is used to describe a counted buffer as an
