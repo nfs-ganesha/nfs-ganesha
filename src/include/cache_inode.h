@@ -755,6 +755,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *entry,
 cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
                                          fsal_attrib_list_t *attr,
                                          fsal_op_context_t *context,
+                                         int is_open_write,
                                          cache_inode_status_t *status);
 
 cache_inode_status_t

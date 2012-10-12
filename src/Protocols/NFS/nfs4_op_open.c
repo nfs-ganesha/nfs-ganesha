@@ -695,6 +695,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   = cache_inode_setattr(pentry_newfile,
                                         &sattr,
                                         data->pcontext,
+                                        (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE) != 0,
                                         &cache_status)) !=
                  CACHE_INODE_SUCCESS)
                 {
@@ -1110,7 +1111,9 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
 
         if(AttrProvided == TRUE) {      /* Set the attribute if provided */
                 if(cache_inode_setattr(pentry, sattr,
-                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
+                    data->pcontext,
+                    (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE) != 0,
+                    &cache_status) != CACHE_INODE_SUCCESS) {
                         return nfs4_Errno(cache_status);
                 }
                 rc = copy_bitmap4(&args->openhow.openflag4_u.how.createhow4_u.createattrs.attrmask,

@@ -352,6 +352,7 @@ int nfs_Create(nfs_arg_t *parg,
                       if(cache_inode_setattr(file_pentry,
                                              &attributes_create,
                                              pcontext,
+                                             FALSE,
                                              &cache_status) != CACHE_INODE_SUCCESS)
                         goto out_failed;
 

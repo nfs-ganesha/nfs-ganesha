@@ -450,6 +450,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((cache_status = cache_inode_setattr(pentry_new,
                                              &sattr,
                                              data->pcontext,
+                                             FALSE,
                                              &cache_status)) != CACHE_INODE_SUCCESS)
 
         {

@@ -286,7 +286,9 @@ int nfs_Symlink(nfs_arg_t *parg,
                   /* A call to cache_inode_setattr is required */
                   if(cache_inode_setattr(symlink_pentry,
                                          &attributes_symlink,
-                                         pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                                         pcontext,
+                                         FALSE,
+                                         &cache_status) != CACHE_INODE_SUCCESS)
                     {
                       goto out_error;
                     }

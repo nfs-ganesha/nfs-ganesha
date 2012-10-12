@@ -273,7 +273,9 @@ int nfs_Setattr(nfs_arg_t *parg,
             {
               cache_status = cache_inode_setattr(pentry,
                                                  &setattr,
-                                                 pcontext, &cache_status);
+                                                 pcontext,
+                                                 FALSE,
+                                                 &cache_status);
             }
           else
             {
@@ -285,7 +287,9 @@ int nfs_Setattr(nfs_arg_t *parg,
       else
         cache_status = cache_inode_setattr(pentry,
                                            &setattr,
-                                           pcontext, &cache_status);
+                                           pcontext,
+                                           FALSE,
+                                           &cache_status);
     }
 
   if(cache_status == CACHE_INODE_SUCCESS)

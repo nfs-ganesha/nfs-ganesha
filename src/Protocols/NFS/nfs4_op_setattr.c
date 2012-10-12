@@ -298,7 +298,9 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
       if(cache_inode_setattr(data->current_entry,
                              &sattr,
-                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                             data->pcontext,
+                             pstate_open != NULL,
+                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_SETATTR4.status = nfs4_Errno(cache_status);
           return res_SETATTR4.status;
