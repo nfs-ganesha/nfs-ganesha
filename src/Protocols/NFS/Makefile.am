@@ -76,7 +76,7 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          nfs_Lookup.c                        \
                          nfs3_Fsstat.c                       \
                          nfs_Getattr.c                       \
-                         nfs_Link.c                          \
+                         nfs3_Link.c                         \
                          nfs_Mkdir.c                         \
                          nfs3_Create.c                       \
                          nfs_Readlink.c                      \
