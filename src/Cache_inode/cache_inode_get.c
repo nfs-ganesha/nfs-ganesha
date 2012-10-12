@@ -230,7 +230,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      }
 
      /* Set the returned attributes */
-     *status = cache_inode_lock_trust_attrs(entry, context);
+     *status = cache_inode_lock_trust_attrs(entry, context, FALSE);
 
      /* cache_inode_lock_trust_attrs may fail, in that case, the
         attributes are wrong and pthread_rwlock_unlock can't be called

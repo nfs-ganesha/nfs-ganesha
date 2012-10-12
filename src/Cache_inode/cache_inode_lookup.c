@@ -311,7 +311,8 @@ cache_inode_lookup(cache_entry_t *parent,
 
      if (entry) {
           *status = cache_inode_lock_trust_attrs(entry,
-                                                 context);
+                                                 context,
+                                                 FALSE);
           if(*status == CACHE_INODE_SUCCESS)
             {
               *attr = entry->attributes;

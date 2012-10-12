@@ -98,7 +98,8 @@ cache_inode_getattr(cache_entry_t *entry,
 
      if ((*status
           = cache_inode_lock_trust_attrs(entry,
-                                         context))
+                                         context,
+                                         FALSE))
          != CACHE_INODE_SUCCESS) {
           goto out;
      }

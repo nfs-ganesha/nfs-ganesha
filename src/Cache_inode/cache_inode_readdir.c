@@ -638,7 +638,7 @@ cache_inode_readdir(cache_entry_t *directory,
 
      /* cache_inode_lock_trust_attrs can return an error, and no lock will be
         acquired */
-     *status = cache_inode_lock_trust_attrs(directory, context);
+     *status = cache_inode_lock_trust_attrs(directory, context, FALSE);
      if (*status != CACHE_INODE_SUCCESS)
        return *status;
 
@@ -754,7 +754,7 @@ cache_inode_readdir(cache_entry_t *directory,
                        dirent, dirent->name.name,
                        dirent->hk.k, dirent->hk.p);
 
-          *status = cache_inode_lock_trust_attrs(entry, context);
+          *status = cache_inode_lock_trust_attrs(entry, context, FALSE);
           if (*status != CACHE_INODE_SUCCESS)
             {
               cache_inode_lru_unref(entry, 0);

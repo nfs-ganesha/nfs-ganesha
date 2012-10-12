@@ -115,7 +115,8 @@ cache_inode_access_sw(cache_entry_t *entry,
                if(use_mutex) {
                     if ((*status
                          = cache_inode_lock_trust_attrs(entry,
-                                                        context))
+                                                        context,
+                                                        FALSE))
                         != CACHE_INODE_SUCCESS) {
                          goto out;
                     }
@@ -228,4 +229,283 @@ cache_inode_access2(cache_entry_t * pentry,
 {
   return cache_inode_access_sw(pentry, access_type,
                                pcontext, pstatus, attr, TRUE);
+}
+
+int not_in_group_list(gid_t gid, fsal_op_context_t * context)
+{
+     int i;
+
+#ifdef _USE_HPSS
+     if(context->credential.hpss_usercred.Gid == gid) {
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "User %d is has active group %d",
+                   (int) context->credential.hpss_usercred.Uid,
+                   (int) gid);
+          return FALSE;
+     }
+
+     for(i = 0; i < context->credential.hpss_usercred.NumGroups; i++)
+          if(context->credential.hpss_usercred.AltGroups[i] == gid) {
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "User %d is member of group %d",
+                        (int) context->credential.hpss_usercred.Uid,
+                        (int) gid);
+               return FALSE;
+          }
+
+     LogDebug(COMPONENT_CACHE_INODE,
+              "User %d IS NOT member of group %d",
+              (int) context->credential.hpss_usercred.Uid,
+              (int) gid);
+
+#else
+     if(context->credential.group == gid) {
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "User %d is member of group %d",
+                   (int) context->credential.user,
+                   (int) gid);
+          return FALSE;
+     }
+
+     for(i = 0; i < context->credential.nbgroups; i++)
+          if(context->credential.alt_groups[i] == gid) {
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "User %d is member of group %d",
+                        (int) context->credential.user,
+                        (int) gid);
+               return FALSE;
+          }
+
+     LogDebug(COMPONENT_CACHE_INODE,
+              "User %d IS NOT member of group %d",
+              (int) context->credential.user,
+              (int) gid);
+#endif
+
+     return TRUE;
+}
+
+cache_inode_status_t
+cache_inode_check_setattr_perms(cache_entry_t        * entry,
+                                fsal_attrib_list_t   * sattr,
+                                fsal_op_context_t    * context,
+                                int                    is_open_write,
+                                cache_inode_status_t * status)
+{
+     fsal_accessflags_t access_check = 0;
+     int                not_owner;
+     char *             note = "";
+
+     *status = CACHE_INODE_SUCCESS;
+
+     if(isDebug(COMPONENT_CACHE_INODE)) {
+          char * setattr_size        = "";
+          char * setattr_owner       = "";
+          char * setattr_owner_group = "";
+          char * setattr_mode        = "";
+          char * setattr_acl         = "";
+          char * setattr_mtime       = "";
+          char * setattr_atime       = "";
+
+          if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_SIZE))
+               setattr_size = " SIZE";
+
+          if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_OWNER))
+               setattr_owner = " OWNER";
+
+          if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_GROUP))
+               setattr_owner_group = " GROUP";
+
+          if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_MODE))
+               setattr_mode = " MODE";
+
+          if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_ACL))
+               setattr_acl = " ACL";
+
+          if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_ATIME))
+               setattr_atime = " ATIME";
+          else if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_ATIME_SERVER))
+               setattr_atime = " ATIME_SERVER";
+
+          if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_MTIME))
+               setattr_mtime = " MTIME";
+          else if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_MTIME_SERVER))
+               setattr_mtime = " MTIME_SERVER";
+
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "SETATTR %s%s%s%s%s%s%s",
+                   setattr_size,
+                   setattr_owner,
+                   setattr_owner_group,
+                   setattr_mode,
+                   setattr_acl,
+                   setattr_mtime,
+                   setattr_atime);
+     }
+
+     /* Shortcut, if current user is root, then we can just bail out with success. */
+     if(FSAL_OP_CONTEXT_TO_UID(context) == 0) {
+          note = " (Ok for root user)";
+          goto out;
+     }
+
+     not_owner = FSAL_OP_CONTEXT_TO_UID(context) != entry->attributes.owner;
+
+     if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_OWNER)) {
+          /* non-root is only allowed to "take ownership of file" */
+          if(sattr->owner != FSAL_OP_CONTEXT_TO_UID(context)) {
+               *status = CACHE_INODE_FSAL_EPERM;
+               note = " (new OWNER was not user)";
+               goto out;
+          }
+
+          /* Owner of file will always be able to "change" the owner to himself. */
+          if(not_owner) {
+               access_check |= FSAL_ACE_PERM_WRITE_OWNER;
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "Change OWNER requires FSAL_ACE_PERM_WRITE_OWNER");
+          }
+     }
+
+     if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_GROUP)) {
+          /* non-root is only allowed to change group_owner to a group user is a
+           * member of.
+           */
+          if(not_in_group_list(sattr->group, context)) {
+               *status = CACHE_INODE_FSAL_EPERM;
+               note = " (user is not member of new GROUP)";
+               goto out;
+          }
+
+          /* Owner is always allowed to change the group_owner of a file to a group
+           * they are a member of.
+           */
+          if(not_owner) {
+               access_check |= FSAL_ACE_PERM_WRITE_OWNER;
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "Change GROUP requires FSAL_ACE_PERM_WRITE_OWNER");
+          }
+     }
+
+     if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_MODE) ||
+        FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_ACL)) {
+          /* Changing mode or ACL requires ACE4_WRITE_ACL */
+          if(not_owner) {
+               access_check |= FSAL_ACE_PERM_WRITE_ACL;
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
+          }
+     }
+
+     if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_SIZE)) {
+          /* Changing size requires owner or write permission */
+          /** @todo: does FSAL_ACE_PERM_APPEND_DATA allow enlarging the file? */
+          if(not_owner && !is_open_write) {
+               access_check |= FSAL_ACE_PERM_WRITE_DATA;
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "Change SIZE requires FSAL_ACE_PERM_WRITE_DATA");
+          }
+     }
+
+     /* Check if just setting atime and mtime to "now" */
+     if((FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_MTIME_SERVER) ||
+        FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_ATIME_SERVER)) &&
+        !FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_MTIME) &&
+        !FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_ATIME)) {
+          /* If either atime and/or mtime are set to "now" then need only have
+           * write permission.
+           *
+           * Technically, client should not send atime updates, but if they
+           * really do, we'll let them to make the perm check a bit simpler.
+           */
+          if(not_owner) {
+               access_check |= FSAL_ACE_PERM_WRITE_DATA;
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "Change ATIME and MTIME to NOW requires FSAL_ACE_PERM_WRITE_DATA");
+          }
+     } else if(FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_MTIME_SERVER) ||
+               FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_ATIME_SERVER) ||
+               FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_MTIME) ||
+               FSAL_TEST_MASK(sattr->asked_attributes, FSAL_ATTR_ATIME)) {
+          /* Any other changes to atime or mtime require owner, root, or
+           * ACES4_WRITE_ATTRIBUTES.
+           *
+           * NOTE: we explicity do NOT check for update of atime only to "now".
+           * Section 10.6 of both RFC 3530 and RFC 5661 document the reasons
+           * clients should not do atime updates.
+           */
+          if(not_owner) {
+               access_check |= FSAL_ACE_PERM_WRITE_ATTR;
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "Change ATIME and/or MTIME requires FSAL_ACE_PERM_WRITE_ATTR");
+          }
+     }
+
+     if(isDebug(COMPONENT_CACHE_INODE)) {
+          char * need_write_owner = "";
+          char * need_write_acl   = "";
+          char * need_write_data  = "";
+          char * need_write_attr  = "";
+
+          if(access_check & FSAL_ACE_PERM_WRITE_OWNER)
+            need_write_owner = " WRITE_OWNER";
+
+          if(access_check & FSAL_ACE_PERM_WRITE_ACL)
+            need_write_acl = " WRITE_ACL";
+
+          if(access_check & FSAL_ACE_PERM_WRITE_DATA)
+            need_write_data = " WRITE_DATA";
+
+          if(access_check & FSAL_ACE_PERM_WRITE_ATTR)
+            need_write_attr = " WRITE_ATTR";
+
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "Requires %s%s%s%s",
+                   need_write_owner,
+                   need_write_acl,
+                   need_write_data,
+                   need_write_attr);
+     }
+
+     /* Now, if all of the changes we are doing are allowed for owner and the
+      * credentials represent the owner, then access check is successful.
+      */
+     if(access_check == 0) {
+          note = " (Ok for owner)";
+          goto out;
+     }
+
+#ifdef _USE_NFS4_ACL
+     if(entry->attributes.acl) {
+          cache_inode_access_no_mutex(entry,
+                                      access_check | FSAL_ACE4_MASK_FLAG,
+                                      context,
+                                      status);
+
+          note = " (checked ACL)";
+          goto out;
+     }
+#endif
+     if(access_check != FSAL_ACE_PERM_WRITE_DATA) {
+          /* Without an ACL, this user is not allowed some operation */
+          *status = CACHE_INODE_FSAL_EPERM;
+          note = " (no ACL to check)";
+          goto out;
+     }
+
+     cache_inode_access_no_mutex(entry,
+                                 FSAL_W_OK,
+                                 context,
+                                 status);
+
+     note = " (checked mode)";
+
+out:
+
+     LogDebug(COMPONENT_CACHE_INODE,
+              "Access check returned %s%s",
+              cache_inode_err_str(*status),
+              note);
+
+     return *status;
 }
