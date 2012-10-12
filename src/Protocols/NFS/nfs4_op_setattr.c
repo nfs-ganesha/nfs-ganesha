@@ -228,8 +228,14 @@ nfs4_op_setattr(struct nfs_argop4 *op,
          */
         squash_setattr(&data->export_perms, data->req_ctx->creds, &sattr);
 
+        /* If a SETATTR comes with an open stateid, and size is being
+         * set, then the open MUST be for write (checked above), so
+         * is_open_write is simple at this stage, it's just a check that
+         * we have an open owner.
+         */
         cache_status = cache_inode_setattr(data->current_entry,
 					   &sattr,
+					   state_open != NULL,
 					   data->req_ctx);
 	if (cache_status != CACHE_INODE_SUCCESS) {
                 res_SETATTR4->status = nfs4_Errno(cache_status);

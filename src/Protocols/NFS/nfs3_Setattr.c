@@ -164,6 +164,7 @@ nfs_Setattr(nfs_arg_t *arg,
             squash_setattr(&export->export_perms, req_ctx->creds, &setattr);
             cache_status = cache_inode_setattr(entry,
                                                &setattr,
+                                               false,
                                                req_ctx);
 
             if (cache_status != CACHE_INODE_SUCCESS) {

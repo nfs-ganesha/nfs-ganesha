@@ -555,6 +555,7 @@ cache_inode_status_t cache_inode_access(cache_entry_t *entry,
 cache_inode_status_t
 cache_inode_check_setattr_perms(cache_entry_t        * entry,
                                 struct attrlist *attr,
+                                bool is_open_write,
                                 struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_check_sticky(cache_entry_t *parent,
@@ -661,6 +662,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *entry,
 
 cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
 					 struct attrlist *attr,
+					 bool is_open_write,
 					 struct req_op_context *req_ctx);
 
 

@@ -231,6 +231,7 @@ nfs_Create(nfs_arg_t *arg,
                 /* A call to cache_inode_setattr is required */
                 cache_status = cache_inode_setattr(file_entry,
                         &sattr,
+                        false,
                         req_ctx);
                 if (cache_status != CACHE_INODE_SUCCESS) {
                     goto out_fail;

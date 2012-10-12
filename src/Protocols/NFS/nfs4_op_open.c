@@ -717,6 +717,7 @@ open4_create(OPEN4args           * arg,
 
             cache_status = cache_inode_setattr(entry_newfile,
                     &sattr,
+                    (arg->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0,
                     data->req_ctx);
             if (cache_status != CACHE_INODE_SUCCESS) {
                 return nfs4_Errno(cache_status);

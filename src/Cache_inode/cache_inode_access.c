@@ -218,6 +218,7 @@ bool not_in_group_list(gid_t gid, struct req_op_context *req_ctx)
 cache_inode_status_t
 cache_inode_check_setattr_perms(cache_entry_t        * entry,
                                 struct attrlist *attr,
+                                bool is_open_write,
                                 struct req_op_context *req_ctx)
 {
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
@@ -316,6 +317,13 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
                      "Change GROUP requires FSAL_ACE_PERM_WRITE_OWNER");
          }
      }
+
+     /* Any attribute after this is always changeable by the owner.
+      * And the above attributes have already been validated as a valid change
+      * for the file owner to make. Note that the owner may be setting
+      * ATTR_OWNER but at this point it MUST be to himself, and thus is a
+      * no-op and does not need FSAL_ACE_PERM_WRITE_OWNER.
+      */
      if (!not_owner)
      {
          note = " (Ok for owner)";
@@ -324,15 +332,13 @@ cache_inode_check_setattr_perms(cache_entry_t        * entry,
 
      if(FSAL_TEST_MASK(attr->mask, ATTR_MODE) ||
         FSAL_TEST_MASK(attr->mask, ATTR_ACL)) {
-          /* Changing mode or ACL requires ACE4_WRITE_ACL */
-	 if(not_owner) {
-	    access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
-	    LogDebug(COMPONENT_CACHE_INODE,
-		     "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
-	 }
+        /* Changing mode or ACL requires ACE4_WRITE_ACL */
+	  access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
+	  LogDebug(COMPONENT_CACHE_INODE,
+		   "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
      }
 
-     if(FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
+     if(FSAL_TEST_MASK(attr->mask, ATTR_SIZE) && !is_open_write) {
           /* Changing size requires owner or write permission */
           /** @todo: does FSAL_ACE_PERM_APPEND_DATA allow enlarging the file? */
          access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);

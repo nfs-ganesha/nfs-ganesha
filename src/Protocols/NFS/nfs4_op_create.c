@@ -385,6 +385,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
       cache_status = cache_inode_setattr(entry_new,
 					 &sattr,
+					 false,
 					 data->req_ctx);
 
       if (cache_status != CACHE_INODE_SUCCESS)

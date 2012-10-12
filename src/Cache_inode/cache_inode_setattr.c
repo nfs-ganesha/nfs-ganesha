@@ -58,6 +58,7 @@
 cache_inode_status_t
 cache_inode_setattr(cache_entry_t *entry,
 		    struct attrlist *attr,
+		    bool is_open_write,
 		    struct req_op_context *req_ctx)
 {
      struct fsal_obj_handle *obj_handle = entry->obj_handle;
@@ -96,6 +97,7 @@ cache_inode_setattr(cache_entry_t *entry,
      /* Do permission checks */
      status = cache_inode_check_setattr_perms(entry,
              attr,
+             is_open_write,
              req_ctx);
      if (status != CACHE_INODE_SUCCESS)
      {

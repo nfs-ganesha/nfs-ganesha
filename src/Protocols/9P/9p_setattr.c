@@ -183,6 +183,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   /* Now set the attr */ 
   cache_status = cache_inode_setattr(pfid->pentry,
 				     &fsalattr,
+				     false,
 				     &pfid->op_context);
   if (cache_status != CACHE_INODE_SUCCESS )
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
