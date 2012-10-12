@@ -83,7 +83,7 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          nfs_Remove.c                        \
                          nfs3_Rmdir.c                        \
                          nfs_Setattr.c                       \
-                         nfs_Symlink.c                       \
+                         nfs3_Symlink.c                      \
                          nfs_Rename.c                        \
                          nfs_Readdir.c                       \
                          nfs3_Readdirplus.c                  \

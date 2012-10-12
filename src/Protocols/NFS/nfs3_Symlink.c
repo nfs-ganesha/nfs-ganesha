@@ -105,16 +105,8 @@ nfs_Symlink(nfs_arg_t *arg,
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
 
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        symlink_name = arg->arg_symlink2.from.name;
-                        target_path = arg->arg_symlink2.to;
-                        break;
-                case NFS_V3:
-                        symlink_name = arg->arg_symlink3.where.name;
-                        target_path = arg->arg_symlink3.symlink.symlink_data;
-                        break;
-                }
+                symlink_name = arg->arg_symlink3.where.name;
+                target_path = arg->arg_symlink3.symlink.symlink_data;
 
                 nfs_FhandleToStr(req->rq_vers,
                                  &arg->arg_symlink2.from.dir,
@@ -127,25 +119,16 @@ nfs_Symlink(nfs_arg_t *arg,
                          target_path);
         }
 
-        if (req->rq_vers == NFS_V3) {
-                /* to avoid setting it on each error case */
-                res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc.before
-                        .attributes_follow = false;
-                res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc.after
-                        .attributes_follow = false;
-		parent_entry = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
-						   req_ctx,
-						   export,
-						   &res->res_symlink3.status,
-						   &rc);
-        } else {
-		parent_entry = nfs2_FhandleToCache(&arg->arg_symlink2.from.dir,
-						   req_ctx,
-						   export,
-						   &res->res_stat2,
-						   &rc);
-        }
-
+	/* to avoid setting it on each error case */
+	res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc.before
+		.attributes_follow = false;
+	res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc.after
+		.attributes_follow = false;
+	parent_entry = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
+					   req_ctx,
+					   export,
+					   &res->res_symlink3.status,
+					   &rc);
         if(parent_entry == NULL) {
                 goto out;;
         }
@@ -156,20 +139,13 @@ nfs_Symlink(nfs_arg_t *arg,
 
         /* Sanity checks: new directory name must be non-null; parent
            must be a directory. */
-        if (parent_entry->type != DIRECTORY) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        res->res_stat2 = NFSERR_NOTDIR;
-                        break;
-
-                case NFS_V3:
-                        res->res_symlink3.status = NFS3ERR_NOTDIR;
-                        break;
-                }
+        if (parent_entry->type != DIRECTORY)
+          {
+                res->res_symlink3.status = NFS3ERR_NOTDIR;
 
                 rc = NFS_REQ_OK;
                 goto out;
-        }
+          }
 
 #ifdef _USE_QUOTA
         /* if quota support is active, then we should check is the
@@ -179,33 +155,15 @@ nfs_Symlink(nfs_arg_t *arg,
                                                            FSAL_QUOTA_INODES,
                                                            req_ctx);
         if (FSAL_IS_ERROR(fsal_status)) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        res->res_stat2 = NFSERR_DQUOT ;
-                        break;
-
-                case NFS_V3:
-                        res->res_symlink3.status = NFS3ERR_DQUOT;
-                        break;
-                }
+                res->res_symlink3.status = NFS3ERR_DQUOT;
 
                 rc = NFS_REQ_OK;
                 goto out;
         }
 #endif /* _USE_QUOTA */
 
-
-        switch (req->rq_vers) {
-        case NFS_V2:
-                symlink_name = arg->arg_symlink2.from.name;
-                target_path = arg->arg_symlink2.to;
-                break;
-
-        case NFS_V3:
-                symlink_name = arg->arg_symlink3.where.name;
-                target_path = arg->arg_symlink3.symlink.symlink_data;
-                break;
-        }
+        symlink_name = arg->arg_symlink3.where.name;
+        target_path = arg->arg_symlink3.symlink.symlink_data;
 
         create_arg.link_content = target_path;
 
@@ -230,124 +188,101 @@ nfs_Symlink(nfs_arg_t *arg,
             == NULL) {
                 goto out_fail;
         }
-        switch (req->rq_vers) {
-        case NFS_V2:
-                res->res_stat2 = NFS_OK;
-                break;
 
-        case NFS_V3: {
-                struct attrlist sattr;
-                /* Some clients (like the Spec NFS benchmark) set
-                   attributes with the NFSPROC3_SYMLINK request */
-                if (!nfs3_Sattr_To_FSALattr(&sattr,
-                                            &arg->arg_symlink3.symlink
-                                            .symlink_attributes)) {
-                        res->res_create3.status = NFS3ERR_INVAL;
-                        rc = NFS_REQ_OK;
-                        goto out;
+        struct attrlist sattr;
+        /* Some clients (like the Spec NFS benchmark) set
+           attributes with the NFSPROC3_SYMLINK request */
+        if (!nfs3_Sattr_To_FSALattr(&sattr,
+                                    &arg->arg_symlink3.symlink.symlink_attributes)) 
+         {
+                res->res_create3.status = NFS3ERR_INVAL;
+                rc = NFS_REQ_OK;
+                goto out;
+         }
+
+        FSAL_UNSET_MASK(sattr.mask,
+                        (ATTR_MODE | ATTR_SIZE |
+                         ATTR_SPACEUSED));
+
+        /* Are there any attributes left to set? */
+        if (sattr.mask) {
+                /* A call to cache_inode_setattr is required */
+                if (cache_inode_setattr(symlink_entry,
+                                        &sattr,
+                                        req_ctx,
+                                        &cache_status)
+                    != CACHE_INODE_SUCCESS) {
+                        goto out_fail;
                 }
-
-                FSAL_UNSET_MASK(sattr.mask,
-                                (ATTR_MODE | ATTR_SIZE |
-                                 ATTR_SPACEUSED));
-
-                /* Are there any attributes left to set? */
-                if (sattr.mask) {
-                        /* A call to cache_inode_setattr is required */
-                        if (cache_inode_setattr(symlink_entry,
-                                                &sattr,
-                                                req_ctx,
-                                                &cache_status)
-                            != CACHE_INODE_SUCCESS) {
-                                goto out_fail;
-                        }
-                }
-
-                if ((res->res_symlink3.status =
-                     (nfs3_AllocateFH(&res->res_symlink3.SYMLINK3res_u
-                                      .resok.obj.post_op_fh3_u
-                                      .handle))) != NFS3_OK) {
-                        res->res_symlink3.status = NFS3ERR_IO;
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
-
-                if (!nfs3_FSALToFhandle(&res->res_symlink3.SYMLINK3res_u.resok
-                                        .obj.post_op_fh3_u.handle,
-                                        symlink_entry->obj_handle,
-                                        export)) {
-                        gsh_free(res->res_symlink3.SYMLINK3res_u
-                                 .resok.obj.post_op_fh3_u.handle.data
-                                 .data_val);
-                        res->res_symlink3.status = NFS3ERR_BADHANDLE;
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
-
-                res->res_symlink3.SYMLINK3res_u.resok.obj
-                        .handle_follows = TRUE;
-
-                /* Build entry attributes */
-                nfs_SetPostOpAttr(symlink_entry,
-                                  req_ctx,
-                                  &res->res_symlink3.SYMLINK3res_u.resok
-                                  .obj_attributes);
-
-                /* Build Weak Cache Coherency data */
-                nfs_SetWccData(&pre_parent,
-                               parent_entry,
-                               req_ctx,
-                               &res->res_symlink3.SYMLINK3res_u.resok.dir_wcc);
-
-                res->res_symlink3.status = NFS3_OK;
-                break;
-        }
         }
 
+        if ((res->res_symlink3.status =
+             (nfs3_AllocateFH(&res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle))) != NFS3_OK) {
+                res->res_symlink3.status = NFS3ERR_IO;
+                rc = NFS_REQ_OK;
+                goto out;
+        }
+
+        if (!nfs3_FSALToFhandle(&res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
+                                symlink_entry->obj_handle,
+                                export))
+             {
+                gsh_free(res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.data.data_val);
+                res->res_symlink3.status = NFS3ERR_BADHANDLE;
+                rc = NFS_REQ_OK;
+                goto out;
+             }
+
+        res->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows = TRUE;
+
+        /* Build entry attributes */
+        nfs_SetPostOpAttr(symlink_entry,
+                          req_ctx,
+                          &res->res_symlink3.SYMLINK3res_u.resok.obj_attributes);
+
+        /* Build Weak Cache Coherency data */
+        nfs_SetWccData(&pre_parent,Protocols/NFS/nfs3_Symlink.c
+                       parent_entry,
+                       req_ctx,
+                       &res->res_symlink3.SYMLINK3res_u.resok.dir_wcc);
+
+        res->res_symlink3.status = NFS3_OK;
         rc = NFS_REQ_OK;
 
 
 out:
         /* return references */
-        if (parent_entry) {
+        if (parent_entry) 
                 cache_inode_put(parent_entry);
-        }
+        
 
-        if (symlink_entry) {
+        if (symlink_entry) 
                 cache_inode_put(symlink_entry);
-        }
+        
 
         return rc;
 
 out_fail:
 
-        switch (req->rq_vers) {
-        case NFS_V2:
-                res->res_stat2 = nfs2_Errno(cache_status);
-
-        case NFS_V3:
-                res->res_symlink3.status = nfs3_Errno(cache_status);
-                nfs_SetWccData(&pre_parent,
-                               parent_entry,
-                               req_ctx,
-                               &res->res_symlink3.SYMLINK3res_u
-                               .resfail.dir_wcc);
+        res->res_symlink3.status = nfs3_Errno(cache_status);
+        nfs_SetWccData(&pre_parent,
+                       parent_entry,
+                       req_ctx,
+                       &res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc);
 
 
-        }
-
-        if (nfs_RetryableError(cache_status)) {
+        if (nfs_RetryableError(cache_status)) 
                 rc = NFS_REQ_DROP;
-        }
+        
 
         /* return references */
-        if (parent_entry) {
+        if (parent_entry) 
                 cache_inode_put(parent_entry);
-        }
+        
 
-        if (symlink_entry) {
+        if (symlink_entry) 
                 cache_inode_put(symlink_entry);
-        }
+        
 
         return rc;
 }                               /* nfs_Symlink */
