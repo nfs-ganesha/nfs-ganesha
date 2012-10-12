@@ -99,53 +99,38 @@ nfs_Create(nfs_arg_t *arg,
 #ifdef _USE_QUOTA
         fsal_status_t fsal_status;
 #endif
+        char str[MAXPATHLEN] ;
 
-        if (isDebug(COMPONENT_NFSPROTO)) {
-                char str[LEN_FH_STR];
+        if (isDebug(COMPONENT_NFSPROTO))
+         {
+             file_name = arg->arg_create2.where.name;
+         }
 
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        file_name = arg->arg_create2.where.name;
-                        break;
-                case NFS_V3:
-                        file_name = arg->arg_create3.where.name;
-                        break;
-                }
+         nfs_FhandleToStr(req->rq_vers,
+                           &(arg->arg_create2.where.dir),
+                           &(arg->arg_create3.where.dir),
+                           NULL,
+                           str);
+         LogDebug(COMPONENT_NFSPROTO,
+                  "REQUEST PROCESSING: Calling nfs_Create handle: "
+                  "%s name: %s", str, file_name);
+        
 
-                nfs_FhandleToStr(req->rq_vers,
-                                 &(arg->arg_create2.where.dir),
-                                 &(arg->arg_create3.where.dir),
-                                 NULL,
-                                 str);
-                LogDebug(COMPONENT_NFSPROTO,
-                         "REQUEST PROCESSING: Calling nfs_Create handle: "
-                         "%s name: %s", str, file_name);
-        }
-
-        if ((req->rq_vers == NFS_V3) &&
-            (nfs3_Is_Fh_Xattr(&(arg->arg_create3.where.dir)))) {
+        if(nfs3_Is_Fh_Xattr(&(arg->arg_create3.where.dir)) ) {
                 rc = nfs3_Create_Xattr(arg, export, req_ctx, req, res);
                 goto out;
         }
 
-        if (req->rq_vers == NFS_V3) {
-                /* to avoid setting it on each error case */
-                res->res_create3.CREATE3res_u.resfail.dir_wcc
+        /* to avoid setting it on each error case */
+        res->res_create3.CREATE3res_u.resfail.dir_wcc
                         .before.attributes_follow = FALSE;
-                res->res_create3.CREATE3res_u.resfail.dir_wcc.after
+        res->res_create3.CREATE3res_u.resfail.dir_wcc.after
                         .attributes_follow = FALSE;
-		parent_entry = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
-						   req_ctx,
-						   export,
-						   &res->res_create3.status,
-						   &rc);
-        } else {
-		parent_entry = nfs2_FhandleToCache(&arg->arg_create2.where.dir,
-						   req_ctx,
-						   export,
-						   &res->res_dirop2.status,
-						   &rc);
-	}
+	parent_entry = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
+					   req_ctx,
+					   export,
+					   &res->res_create3.status,
+					   &rc);
         if(parent_entry == NULL) {
                 /* Stale NFS FH ? */
                 goto out;
@@ -158,52 +143,29 @@ nfs_Create(nfs_arg_t *arg,
 
         /* Sanity checks: new file name must be non-null; parent must
            be a directory. */
-        if (parent_entry->type != DIRECTORY) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        res->res_dirop2.status = NFSERR_NOTDIR;
-                        break;
-
-                case NFS_V3:
-                        res->res_create3.status = NFS3ERR_NOTDIR;
-                        break;
-                }
-
+        if (parent_entry->type != DIRECTORY)
+          {
+                res->res_create3.status = NFS3ERR_NOTDIR;
                 rc = NFS_REQ_OK;
                 goto out;
-        }
+          }
 
-        switch (req->rq_vers) {
-        case NFS_V2:
-                file_name = arg->arg_create2.where.name;
-
-                if (arg->arg_create2.attributes.mode != (unsigned int)-1) {
-                        mode = unix2fsal_mode(arg->arg_create2
-                                              .attributes.mode);
-                } else {
-                        mode = 0;
-                }
-                break;
-
-        case NFS_V3:
-                file_name = arg->arg_create3.where.name;
-                if (arg->arg_create3.how.mode == EXCLUSIVE) {
+        file_name = arg->arg_create3.where.name;
+        if (arg->arg_create3.how.mode == EXCLUSIVE)
+          {
                         /* Client has not provided mode
                            information. If the create works, the
                            client will issue a separate setattr
                            request to fix up the file's mode, so pick
                            arbitrary value for now. */
                         mode = 0;
-                } else if(arg->arg_create3.how.createhow3_u.obj_attributes
-                          .mode.set_it) {
-                        mode = unix2fsal_mode(arg->arg_create3.how
-                                              .createhow3_u.obj_attributes
-                                              .mode.set_mode3_u.mode);
-                } else {
-                        mode = 0;
-                }
-                break;
-        }
+          }
+        else if(arg->arg_create3.how.createhow3_u.obj_attributes.mode.set_it)
+         {
+           mode = unix2fsal_mode(arg->arg_create3.how.createhow3_u.obj_attributes.mode.set_mode3_u.mode);
+         } 
+       else 
+         mode = 0 ;
 
 #ifdef _USE_QUOTA
         /* if quota support is active, then we should check is the
@@ -272,29 +234,13 @@ nfs_Create(nfs_arg_t *arg,
                    set at creation time */
                 FSAL_CLEAR_MASK(sattr.mask);
 
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        if (nfs2_Sattr_To_FSALattr(&sattr,
-                                                   &arg->arg_create2
-                                                   .attributes) == 0) {
-                                res->res_dirop2.status = NFSERR_IO;
-                                rc = NFS_REQ_OK;
-                                goto out;
-                                break;
-                        }
-                        break;
-
-                case NFS_V3:
-                        if (nfs3_Sattr_To_FSALattr(&sattr,
-                                                   &arg->arg_create3.how
-                                                   .createhow3_u
-                                                   .obj_attributes) == 0) {
-                                res->res_create3.status = NFS3ERR_INVAL;
-                                rc = NFS_REQ_OK;
-                                goto out;
-                        }
-                        break;
-                }
+                if (nfs3_Sattr_To_FSALattr(&sattr,
+                                           &arg->arg_create3.how.createhow3_u.obj_attributes) == 0) 
+                  {
+                     res->res_create3.status = NFS3ERR_INVAL;
+                     rc = NFS_REQ_OK;
+                     goto out;
+                  }
 
                 /* Mode is managed above (in cache_inode_create),
                    there is no need to manage it */
@@ -319,69 +265,43 @@ nfs_Create(nfs_arg_t *arg,
                 }
         }
 
-        switch (req->rq_vers) {
-        case NFS_V2:
-                /* Build file handle */
-                if (nfs2_FSALToFhandle(&(res->res_dirop2.DIROP2res_u
-                                         .diropok.file),
-                                       file_entry->obj_handle,
-                                       export) == 0) {
-                    res->res_dirop2.status = NFSERR_IO;
-                    goto out;
-                } else {
-                        if (!cache_entry_to_nfs2_Fattr(
-                                    file_entry,
-                                    req_ctx,
-                                    &(res->res_dirop2.DIROP2res_u.
-                                      diropok.attributes))) {
-                                res->res_dirop2.status = NFSERR_IO;
-                        } else {
-                                res->res_dirop2.status = NFS_OK;
-                        }
-                }
-                break;
-
-        case NFS_V3:
-                /* Build file handle */
-                res->res_create3.status =
-                        nfs3_AllocateFH(&res->res_create3.CREATE3res_u
-                                        .resok.obj.post_op_fh3_u.handle);
-                if (res->res_create3.status != NFS3_OK) {
-                        rc = NFS_REQ_OK;
-                        goto out;
+        /* Build file handle */
+        res->res_create3.status =
+                        nfs3_AllocateFH(&res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle);
+        if (res->res_create3.status != NFS3_OK)
+          {
+             rc = NFS_REQ_OK;
+             goto out;
                 }
 
-                /* Set Post Op Fh3 structure */
-                if (nfs3_FSALToFhandle(&(res->res_create3.CREATE3res_u.resok
-                                         .obj.post_op_fh3_u.handle),
-                                       file_entry->obj_handle,
-                                       export) == 0) {
-                        gsh_free(res->res_create3.CREATE3res_u.resok.obj.
-                                 post_op_fh3_u.handle.data.data_val);
+        /* Set Post Op Fh3 structure */
+        if (nfs3_FSALToFhandle( &(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle),
+                                file_entry->obj_handle,
+                                export) == 0) 
+           {
+               gsh_free(res->res_create3.CREATE3res_u.resok.obj.
+                        post_op_fh3_u.handle.data.data_val);
 
-                        res->res_create3.status = NFS3ERR_BADHANDLE;
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
+               res->res_create3.status = NFS3ERR_BADHANDLE;
+               rc = NFS_REQ_OK;
+               goto out;
+           }
 
-                /* Set Post Op Fh3 structure */
-                res->res_create3.CREATE3res_u.resok.obj.handle_follows
-                        = TRUE;
+        /* Set Post Op Fh3 structure */
+        res->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE ;
 
-                /* Build entry attributes */
-                nfs_SetPostOpAttr(file_entry,
-                                  req_ctx,
-                                  &res->res_create3.CREATE3res_u.resok.
-                                  obj_attributes);
+        /* Build entry attributes */
+        nfs_SetPostOpAttr( file_entry,
+                           req_ctx,
+                           &res->res_create3.CREATE3res_u.resok.
+                           obj_attributes);
 
-                nfs_SetWccData(&pre_parent,
-                               parent_entry,
-                               req_ctx,
-                               &res->res_create3.CREATE3res_u.resok.dir_wcc);
+        nfs_SetWccData( &pre_parent,
+                        parent_entry,
+                        req_ctx,
+                        &res->res_create3.CREATE3res_u.resok.dir_wcc);
 
-                res->res_create3.status = NFS3_OK;
-                break;
-        }
+        res->res_create3.status = NFS3_OK;
 
         rc = NFS_REQ_OK;
 
@@ -399,21 +319,13 @@ out:
 
 out_fail:
 
-        switch (req->rq_vers) {
-        case NFS_V2:
-                res->res_dirop2.status = nfs2_Errno(cache_status);
-                break;
+        /* Build file handle */
+        res->res_create3.status = nfs3_Errno(cache_status);
 
-        case NFS_V3:
-                /* Build file handle */
-                res->res_create3.status = nfs3_Errno(cache_status);
-
-                nfs_SetWccData(&pre_parent,
-                               parent_entry,
-                               req_ctx,
-                               &res->res_create3.CREATE3res_u.resfail.dir_wcc);
-                break;
-        }
+        nfs_SetWccData( &pre_parent,
+                        parent_entry,
+                       req_ctx,
+                       &res->res_create3.CREATE3res_u.resfail.dir_wcc);
 
         /* If we are here, there was an error */
         if (nfs_RetryableError(cache_status)) {
