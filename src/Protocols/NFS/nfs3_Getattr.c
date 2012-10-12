@@ -121,8 +121,8 @@ nfs_Getattr(nfs_arg_t *arg,
                 goto out;
         }
 
-        if ((req->rq_vers == NFS_V3) &&
-            (nfs3_Is_Fh_Xattr(&(arg->arg_getattr3.object)))) {
+        if(nfs3_Is_Fh_Xattr(&(arg->arg_getattr3.object))) 
+        {
                 rc = nfs3_Getattr_Xattr(arg, export, req_ctx, req, res);
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "nfs_Getattr returning %d from "
@@ -130,48 +130,28 @@ nfs_Getattr(nfs_arg_t *arg,
                 goto out;
         }
 
-        switch (req->rq_vers) {
-        case NFS_V2:
-                if (!(cache_entry_to_nfs2_Fattr(entry,
-                                                req_ctx,
-                                                &(res->res_attr2.ATTR2res_u
-                                                  .attributes)))) {
-                        res->res_attr2.status =
-                                nfs2_Errno(CACHE_INODE_INVALID_ARGUMENT);
-                        LogFullDebug(COMPONENT_NFSPROTO,
-                                     "nfs_Getattr set failed status v2");
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
-                res->res_attr2.status = NFS_OK;
-                break;
+        if (!(cache_entry_to_nfs3_Fattr(entry,
+                                        req_ctx,
+                                        &(res->res_getattr3.GETATTR3res_u.resok.obj_attributes))))
+         {
+            res->res_getattr3.status = nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
 
-        case NFS_V3:
-                if (!(cache_entry_to_nfs3_Fattr(entry,
-                                                req_ctx,
-                                                &(res->res_getattr3
-                                                  .GETATTR3res_u.resok.
-                                                  obj_attributes)))) {
-                        res->res_getattr3.status
-                                = nfs3_Errno(CACHE_INODE_INVALID_ARGUMENT);
+            LogFullDebug(COMPONENT_NFSPROTO,
+                         "nfs_Getattr set failed status v3");
 
-                        LogFullDebug(COMPONENT_NFSPROTO,
-                                     "nfs_Getattr set failed status v3");
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
-                res->res_getattr3.status = NFS3_OK;
-                break;
-        }
+            rc = NFS_REQ_OK;
+            goto out;
+         }
+       res->res_getattr3.status = NFS3_OK;
 
-        LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
-        rc = NFS_REQ_OK;
+       LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
+       rc = NFS_REQ_OK;
 
 out:
         /* return references */
-        if (entry) {
+        if (entry) 
                 cache_inode_put(entry);
-        }
+        
 
         return rc;
 
