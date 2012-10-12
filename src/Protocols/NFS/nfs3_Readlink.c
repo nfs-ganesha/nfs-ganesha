@@ -130,34 +130,21 @@ nfs_Readlink(nfs_arg_t *arg,
 
         /* Sanity Check: the entry must be a link */
         if (entry->type != SYMBOLIC_LINK) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        res->res_readlink2.status = NFSERR_IO;
-                        break;
-
-                case NFS_V3:
-                        res->res_readlink3.status = NFS3ERR_INVAL;
-                }
+                res->res_readlink3.status = NFS3ERR_INVAL;
+                
                 rc = NFS_REQ_OK;
                 goto out;
         }
 
         if (cache_inode_readlink(entry,
                                  &link_buffer,
-                                 req_ctx, &cache_status)
-            != CACHE_INODE_SUCCESS) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        res->res_readlink2.status =
-                                nfs2_Errno(cache_status);
-                case NFS_V3:
-                        res->res_readlink3.status =
+                                 req_ctx, &cache_status)  != CACHE_INODE_SUCCESS) 
+         {
+                res->res_readlink3.status =
                                 nfs3_Errno(cache_status);
-                        nfs_SetPostOpAttr(entry,
-                                          req_ctx,
-                                          &res->res_readlink3.READLINK3res_u
-                                          .resfail.symlink_attributes);
-                }
+                nfs_SetPostOpAttr(entry,
+                                  req_ctx,
+                                  &res->res_readlink3.READLINK3res_u.resfail.symlink_attributes);
 
                 if (nfs_RetryableError(cache_status)) {
                         rc = NFS_REQ_DROP;
@@ -167,14 +154,8 @@ nfs_Readlink(nfs_arg_t *arg,
         }
 
         if ((ptr = gsh_malloc(link_buffer.len+1)) == NULL) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        res->res_readlink2.status = NFSERR_NXIO;
-                        break;
-
-                case NFS_V3:
-                        res->res_readlink3.status = NFS3ERR_IO;
-                }
+                res->res_readlink3.status = NFS3ERR_IO;
+                
                 rc = NFS_REQ_OK;
                 goto out;
         }
@@ -183,21 +164,12 @@ nfs_Readlink(nfs_arg_t *arg,
         ptr[link_buffer.len] = '\0';
 
         /* Reply to the client */
-        switch (req->rq_vers) {
-        case NFS_V2:
-                res->res_readlink2.READLINK2res_u.data = ptr;
-                res->res_readlink2.status = NFS_OK;
-                break;
-
-        case NFS_V3:
-                res->res_readlink3.READLINK3res_u.resok.data = ptr;
-                nfs_SetPostOpAttr(entry,
-                                  req_ctx,
-                                  &res->res_readlink3.READLINK3res_u.resok.
-                                  symlink_attributes);
-                res->res_readlink3.status = NFS3_OK;
-                break;
-        }
+        res->res_readlink3.READLINK3res_u.resok.data = ptr;
+        nfs_SetPostOpAttr(entry,
+                          req_ctx,
+                          &res->res_readlink3.READLINK3res_u.resok.
+                          symlink_attributes);
+        res->res_readlink3.status = NFS3_OK;
 
         rc = NFS_REQ_OK;
 
@@ -209,22 +181,6 @@ out:
 
         return rc;
 }                               /* nfs_Readlink */
-
-/**
- * @brief Free the result structure allocated for nfs2_Readlink.
- *
- * This function frees the result structure allocated for
- * nfs2_Readlink.
- *
- * @param[in,out] res Result structure
- *
- */
-void nfs2_Readlink_Free(nfs_res_t *res)
-{
-        if (res->res_readlink2.status == NFS_OK) {
-                gsh_free(res->res_readlink2.READLINK2res_u.data);
-        }
-} /* nfs2_Readlink_Free */
 
 /**
  * @brief Free the result structure allocated for nfs3_Readlink.

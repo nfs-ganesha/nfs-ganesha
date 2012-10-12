@@ -132,8 +132,8 @@ nfs_Setattr(nfs_arg_t *arg,
                          req_ctx,
                          &pre_attr);
 
-        if ((req->rq_vers == NFS_V3) &&
-            (nfs3_Is_Fh_Xattr(&arg->arg_setattr3.object))) {
+        if(nfs3_Is_Fh_Xattr(&arg->arg_setattr3.object)) 
+         {
                 /* do nothing */
                 nfs_SetWccData(&pre_attr,
                                entry,
@@ -142,87 +142,49 @@ nfs_Setattr(nfs_arg_t *arg,
                 res->res_setattr3.status = NFS3_OK;
                 rc = NFS_REQ_OK;
                 goto out;
-        }
+         }
 
-        switch (req->rq_vers) {
-        case NFS_V2:
-                /* Check for 2Gb limit in V2 */
-                if ((arg->arg_setattr2.attributes.size != (u_int) - 1) &&
-                    (pre_attr.pre_op_attr_u.attributes.size
-                     > NFS2_MAX_FILESIZE)) {
-                        /* They are trying to set the size, the
-                           file is >= 2GB and V2 clients don't
-                           understand filesizes >= 2GB, so we
-                           don't allow them to alter them in any
-                           way. */
-                        res->res_attr2.status = NFSERR_FBIG;
+
+        if (arg->arg_setattr3.guard.check)
+          {
+                /* This pack of lines implements the "guard
+                 * check" setattr.  This feature of nfsv3 is
+                 * used to avoid several setattr to occur
+                 * concurently on the same object, from
+                 * different clients */
+                LogFullDebug(COMPONENT_NFSPROTO,
+                             "css=%d acs=%d csn=%d acn=%d",
+                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds,
+                             pre_attr.pre_op_attr_u.attributes.ctime.seconds,
+                             arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds,
+                             pre_attr.pre_op_attr_u.attributes.ctime.nseconds);
+
+                if ((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds !=
+                     pre_attr.pre_op_attr_u.attributes.ctime.seconds) ||
+                    (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds !=
+                     pre_attr.pre_op_attr_u.attributes.ctime.nseconds)) {
+                        res->res_setattr3.status = NFS3ERR_NOT_SYNC;
                         rc = NFS_REQ_OK;
                         goto out;
                 }
+          }
 
-                if (nfs2_Sattr_To_FSALattr(&setattr,
-                                           &arg->arg_setattr2.attributes)
-                    == 0) {
-                        res->res_attr2.status = NFSERR_IO;
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
+        /* Conversion to FSAL attributes */
+        if (!nfs3_Sattr_To_FSALattr( &setattr,
+                                     &arg->arg_setattr3.new_attributes))
+          {
+             res->res_setattr3.status = NFS3ERR_INVAL;
+             rc = NFS_REQ_OK;
+             goto out;
+          }
 
-                if (arg->arg_setattr2.attributes.size != (u_int) -1) {
-                        do_trunc = true;
-                }
-                break;
+        if (arg->arg_setattr3.new_attributes.size.set_it) 
+           do_trunc = true;
+                
 
-        case NFS_V3:
-                if (arg->arg_setattr3.guard.check) {
-                        /* This pack of lines implements the "guard
-                         * check" setattr.  This feature of nfsv3 is
-                         * used to avoid several setattr to occur
-                         * concurently on the same object, from
-                         * different clients */
-                        LogFullDebug(COMPONENT_NFSPROTO,
-                                     "css=%d acs=%d csn=%d acn=%d",
-                                     arg->arg_setattr3.guard.sattrguard3_u
-                                     .obj_ctime.seconds,
-                                     pre_attr.pre_op_attr_u.attributes.ctime
-                                     .seconds,
-                                     arg->arg_setattr3.guard.sattrguard3_u
-                                     .obj_ctime.nseconds,
-                                     pre_attr.pre_op_attr_u.attributes.ctime
-                                     .nseconds);
 
-                        if ((arg->arg_setattr3.guard.sattrguard3_u
-                             .obj_ctime.seconds !=
-                             pre_attr.pre_op_attr_u.attributes.ctime
-                             .seconds) ||
-                            (arg->arg_setattr3.guard.sattrguard3_u
-                             .obj_ctime.nseconds !=
-                             pre_attr.pre_op_attr_u.attributes.ctime
-                             .nseconds)) {
-                                res->res_setattr3.status = NFS3ERR_NOT_SYNC;
-                                rc = NFS_REQ_OK;
-                                goto out;
-                        }
-                }
-
-                /* Conversion to FSAL attributes */
-                if (!nfs3_Sattr_To_FSALattr(
-                            &setattr,
-                            &arg->arg_setattr3.new_attributes)) {
-                        res->res_setattr3.status = NFS3ERR_INVAL;
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
-
-                if (arg->arg_setattr3.new_attributes.size.set_it) {
-                        do_trunc = true;
-                }
-
-                break;
-        }
-
-  /* trunc may change Xtime so we have to start with trunc and finish
-     by the mtime and atime */
+        /* trunc may change Xtime so we have to start with trunc and finish
+         by the mtime and atime */
 
         if (do_trunc) {
                 /* Should not be done on a directory */
@@ -258,37 +220,19 @@ nfs_Setattr(nfs_arg_t *arg,
         }
 
         /* Set the NFS return */
-        switch (req->rq_vers) {
-        case NFS_V2:
-                /* Copy data from vattr to Attributes */
-                if (!cache_entry_to_nfs2_Fattr(entry,
-                                               req_ctx,
-                                               &res->res_attr2.ATTR2res_u
-                                               .attributes)) {
-                        res->res_attr2.status = NFSERR_IO;
-                } else {
-                        res->res_attr2.status = NFS_OK;
-                }
-                break;
-
-        case NFS_V3:
-                /* Build Weak Cache Coherency data */
-                res->res_setattr3.status = NFS3_OK;
-                nfs_SetWccData(&pre_attr,
-                               entry,
-                               req_ctx,
-                               &res->res_setattr3.SETATTR3res_u
-                               .resok.obj_wcc);
-
-                break;
-        }
+        /* Build Weak Cache Coherency data */
+        res->res_setattr3.status = NFS3_OK;
+        nfs_SetWccData(&pre_attr,
+                       entry,
+                       req_ctx,
+                       &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
 
         rc = NFS_REQ_OK;
 out:
         /* return references */
-        if (entry) {
+        if (entry) 
                 cache_inode_put(entry);
-        }
+        
 
         return rc;
 
@@ -298,20 +242,12 @@ out_fail:
         LogFullDebug(COMPONENT_NFSPROTO, "nfs_Setattr: failed");
 
         /* Set the NFS return */
-        switch (req->rq_vers) {
-        case NFS_V2:
-                res->res_attr2.status = nfs2_Errno(cache_status);
-                break;
-
-        case NFS_V3:
                 res->res_setattr3.status = nfs3_Errno(cache_status);
                 nfs_SetWccData(&pre_attr,
                                entry,
                                req_ctx,
                                &res->res_setattr3.SETATTR3res_u.resfail
                                .obj_wcc);
-                break;
-        }
 
 
         if (nfs_RetryableError(cache_status)) {
@@ -320,9 +256,9 @@ out_fail:
         }
 
         /* return references */
-        if (entry) {
+        if (entry) 
                 cache_inode_put(entry);
-        }
+        
 
         return rc;
 }                               /* nfs_Setattr */
