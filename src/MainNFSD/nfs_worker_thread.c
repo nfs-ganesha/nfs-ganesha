@@ -89,64 +89,6 @@ const nfs_function_desc_t invalid_funcdesc =
 
   const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
 
-/* Static array : all the function pointer per nfs v2 functions */
-const nfs_function_desc_t nfs2_func_desc[] = {
-  {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void,
-   (xdrproc_t) xdr_void, "nfs_Null",
-   NOTHING_SPECIAL},
-  {nfs_Getattr, nfs_Getattr_Free, (xdrproc_t) xdr_fhandle2,
-   (xdrproc_t) xdr_ATTR2res, "nfs_Getattr",
-   NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Setattr, nfs_Setattr_Free, (xdrproc_t) xdr_SETATTR2args,
-   (xdrproc_t) xdr_ATTR2res, "nfs_Setattr",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs2_Root, nfs2_Root_Free, (xdrproc_t) xdr_void,
-   (xdrproc_t) xdr_void, "nfs2_Root",
-   NOTHING_SPECIAL},
-  {nfs_Lookup, nfs2_Lookup_Free, (xdrproc_t) xdr_diropargs2,
-   (xdrproc_t) xdr_DIROP2res, "nfs_Lookup",
-   NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Readlink, nfs2_Readlink_Free, (xdrproc_t) xdr_fhandle2,
-   (xdrproc_t) xdr_READLINK2res, "nfs_Readlink",
-   NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Read, nfs2_Read_Free, (xdrproc_t) xdr_READ2args,
-   (xdrproc_t) xdr_READ2res, "nfs_Read",
-   NEEDS_CRED | SUPPORTS_GSS},
-  {nfs2_Writecache, nfs2_Writecache_Free, (xdrproc_t) xdr_void,
-   (xdrproc_t) xdr_void, "nfs_Writecache",
-   NOTHING_SPECIAL},
-  {nfs_Write, nfs_Write_Free, (xdrproc_t) xdr_WRITE2args,
-   (xdrproc_t) xdr_ATTR2res, "nfs_Write",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Create, nfs_Create_Free, (xdrproc_t) xdr_CREATE2args,
-   (xdrproc_t) xdr_DIROP2res, "nfs_Create",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Remove, nfs_Remove_Free, (xdrproc_t) xdr_diropargs2,
-   (xdrproc_t) xdr_nfsstat2, "nfs_Remove",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Rename, nfs_Rename_Free, (xdrproc_t) xdr_RENAME2args,
-   (xdrproc_t) xdr_nfsstat2, "nfs_Rename",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Link, nfs_Link_Free, (xdrproc_t) xdr_LINK2args,
-   (xdrproc_t) xdr_nfsstat2, "nfs_Link",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Symlink, nfs_Symlink_Free, (xdrproc_t) xdr_SYMLINK2args,
-   (xdrproc_t) xdr_nfsstat2, "nfs_Symlink",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Mkdir, nfs_Mkdir_Free, (xdrproc_t) xdr_CREATE2args,
-   (xdrproc_t) xdr_DIROP2res, "nfs_Mkdir",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Rmdir, nfs_Rmdir_Free, (xdrproc_t) xdr_diropargs2,
-   (xdrproc_t) xdr_nfsstat2, "nfs_Rmdir",
-   MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
-  {nfs_Readdir, nfs2_Readdir_Free, (xdrproc_t) xdr_READDIR2args,
-   (xdrproc_t) xdr_READDIR2res, "nfs_Readdir",
-   NEEDS_CRED | SUPPORTS_GSS},
-  {nfs_Fsstat, nfs_Fsstat_Free, (xdrproc_t) xdr_fhandle2,
-   (xdrproc_t) xdr_STATFS2res, "nfs_Fsstat",
-   NEEDS_CRED | SUPPORTS_GSS}
-};
-
 const nfs_function_desc_t nfs3_func_desc[] = {
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void,
    (xdrproc_t) xdr_void,
@@ -493,7 +435,7 @@ nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
   if(req->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       if(req->rq_vers == NFS_V2)
-        return &nfs2_func_desc[req->rq_proc];
+        return INVALID_FUNCDESC;
       else if(req->rq_vers == NFS_V3)
         return &nfs3_func_desc[req->rq_proc];
       else

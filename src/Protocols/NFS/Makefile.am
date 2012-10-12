@@ -68,8 +68,6 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          nfs4_op_sequence.c                  \
                          nfs4_op_set_ssv.c                   \
                          nfs4_op_test_stateid.c              \
-                         nfs2_Root.c                         \
-                         nfs2_Writecache.c                   \
                          nfs3_Access.c                       \
                          nfs3_Commit.c                       \
                          nfs3_Mknod.c                        \

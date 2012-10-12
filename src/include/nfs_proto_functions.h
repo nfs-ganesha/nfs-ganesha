@@ -446,13 +446,6 @@ int nfs_Setattr(nfs_arg_t *parg,
                 struct svc_req *preq,
                 nfs_res_t *pres);
 
-int nfs2_Root(nfs_arg_t *parg,
-              exportlist_t *pexport,
-              struct req_op_context *req_ctx,
-              nfs_worker_data_t *pworker,
-              struct svc_req *preq,
-              nfs_res_t *pres);
-
 int nfs_Lookup(nfs_arg_t *parg,
                exportlist_t *pexport,
                struct req_op_context *req_ctx,
@@ -473,13 +466,6 @@ int nfs_Read(nfs_arg_t *parg,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t *pres);
-
-int nfs2_Writecache(nfs_arg_t *parg,
-                    exportlist_t *pexport,
-                    struct req_op_context *req_ctx,
-                    nfs_worker_data_t *pworker,
-                    struct svc_req *preq,
-                    nfs_res_t *pres);
 
 int nfs_Write(nfs_arg_t *parg,
               exportlist_t *pexport,
@@ -1018,8 +1004,6 @@ void nfs_Fsstat_Free(nfs_res_t * resp);
 void nfs3_Fsinfo_Free(nfs_res_t * pres);
 void nfs3_Pathconf_Free(nfs_res_t * pres);
 void nfs3_Commit_Free(nfs_res_t * pres);
-void nfs2_Root_Free(nfs_res_t * pres);
-void nfs2_Writecache_Free(nfs_res_t * pres);
 void nfs2_Readdir_Free(nfs_res_t * resp);
 void nfs3_Read_Free(nfs_res_t * resp);
 void nfs2_Readlink_Free(nfs_res_t * resp);
