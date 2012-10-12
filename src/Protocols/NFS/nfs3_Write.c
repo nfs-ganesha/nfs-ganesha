@@ -104,20 +104,12 @@ int nfs_Write(nfs_arg_t *arg,
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR], *stables = "";
 
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        offset = arg->arg_write2.offset;
-                        size = arg->arg_write2.data.nfsdata2_len;
-                        stables = "FILE_SYNC";
-                        break;
-                case NFS_V3:
-                        offset = arg->arg_write3.offset;
-                        size = arg->arg_write3.count;
-                        switch (arg->arg_write3.stable) {
-                        case UNSTABLE:  stables = "UNSTABLE"; break;
-                        case DATA_SYNC: stables = "DATA_SYNC"; break;
-                        case FILE_SYNC: stables = "FILE_SYNC"; break;
-                        }
+                offset = arg->arg_write3.offset;
+                size = arg->arg_write3.count;
+                switch (arg->arg_write3.stable) {
+                     case UNSTABLE:  stables = "UNSTABLE"; break;
+                     case DATA_SYNC: stables = "DATA_SYNC"; break;
+                     case FILE_SYNC: stables = "FILE_SYNC"; break;
                 }
 
                 nfs_FhandleToStr(req->rq_vers,
@@ -131,23 +123,16 @@ int nfs_Write(nfs_arg_t *arg,
                          str, offset, size, stables);
         }
 
-        if (req->rq_vers == NFS_V3) {
-                /* to avoid setting it on each error case */
-                res->res_write3.WRITE3res_u.resfail.file_wcc.before
-                        .attributes_follow = false;
-                res->res_write3.WRITE3res_u.resfail.file_wcc.after
-                        .attributes_follow = false;
-		entry = nfs3_FhandleToCache(&arg->arg_write3.file,
-					    req_ctx,
-					    export,
-					    &res->res_write3.status,
-					    &rc);
-        } else
-		entry = nfs2_FhandleToCache(&arg->arg_write2.file,
-					    req_ctx,
-					    export,
-					    &res->res_attr2.status,
-					    &rc);
+	/* to avoid setting it on each error case */
+	res->res_write3.WRITE3res_u.resfail.file_wcc.before
+		.attributes_follow = false;
+	res->res_write3.WRITE3res_u.resfail.file_wcc.after
+		.attributes_follow = false;
+	entry = nfs3_FhandleToCache(&arg->arg_write3.file,
+				    req_ctx,
+				    export,
+				    &res->res_write3.status,
+				    &rc);
         if(entry == NULL) {
                 /* Stale NFS FH ? */
                 goto out;
@@ -157,9 +142,8 @@ int nfs_Write(nfs_arg_t *arg,
                          req_ctx,
                          &pre_attr);
 
-        if ((req->rq_vers == NFS_V3) &&
-            (nfs3_Is_Fh_Xattr(&arg->arg_write3.file))) {
-                rc = nfs3_Write_Xattr(arg, export, req_ctx, req, res);
+        if (nfs3_Is_Fh_Xattr(&arg->arg_write3.file)) {
+               rc = nfs3_Write_Xattr(arg, export, req_ctx, req, res);
                 goto out;
         }
 
@@ -183,16 +167,7 @@ int nfs_Write(nfs_arg_t *arg,
                                  entry->obj_handle->attributes.owner);
                 } else {
                         pthread_rwlock_unlock(&entry->attr_lock);
-                        switch (req->rq_vers) {
-                        case NFS_V2:
-                                res->res_attr2.status
-                                        = nfs2_Errno(cache_status);
-                                break;
-                        case NFS_V3:
-                                res->res_write3.status
-                                        = nfs3_Errno(cache_status);
-                                break;
-                        }
+                        res->res_write3.status = nfs3_Errno(cache_status);
 
                         rc = NFS_REQ_OK;
                         goto out;
@@ -201,78 +176,47 @@ int nfs_Write(nfs_arg_t *arg,
         }
 
         /* Sanity check: write only a regular file */
-        if (entry->type != REGULAR_FILE) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        /* In the RFC tell it not good but it does not
-                           tell what to do ...  We use NFSERR_ISDIR
-                           for lack of better */
-                        res->res_attr2.status = NFSERR_ISDIR;
-                        break;
-
-                case NFS_V3:
-                        if (entry->type == DIRECTORY) {
-                                res->res_write3.status = NFS3ERR_ISDIR;
-                        } else {
-                                res->res_write3.status = NFS3ERR_INVAL;
-                        }
-                        break;
-                }
-                rc = NFS_REQ_OK;
-                goto out;
-        }
+        if (entry->type != REGULAR_FILE)
+         {
+           if (entry->type == DIRECTORY) 
+              res->res_write3.status = NFS3ERR_ISDIR;
+           else 
+              res->res_write3.status = NFS3ERR_INVAL;
+                        
+           rc = NFS_REQ_OK;
+           goto out;
+         }
 
         /* For MDONLY export, reject write operation. This is done by
            replying EDQUOT (this error is known for not disturbing the
            client's requests cache */
-        if (export->access_type != ACCESSTYPE_RW) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        switch (export->access_type) {
-                        case ACCESSTYPE_MDONLY:
-                        case ACCESSTYPE_MDONLY_RO:
-                                res->res_attr2.status = NFSERR_DQUOT;
-                                break;
+        if (export->access_type != ACCESSTYPE_RW)
+         {
+            switch (export->access_type)
+              {
+                case ACCESSTYPE_MDONLY:
+                case ACCESSTYPE_MDONLY_RO:
+                    res->res_write3.status = NFS3ERR_DQUOT;
+                    break;
 
-                        case ACCESSTYPE_RO:
-                                res->res_attr2.status = NFSERR_ROFS;
-                                break;
+                case ACCESSTYPE_RO:
+                    res->res_write3.status = NFS3ERR_ROFS;
+                    break;
 
-                        default:
-                                /* if we get here than the value is an
-                                   invalid enum - corruption */
-                                abort();
-                                break;
-                        }
-                        break;
+                default:
+                   /* if we get here than the value is an
+                      invalid enum - corruption */
+                   abort();
+                   break;
+               }
 
-                case NFS_V3:
-                        switch (export->access_type) {
-                        case ACCESSTYPE_MDONLY:
-                        case ACCESSTYPE_MDONLY_RO:
-                                res->res_write3.status = NFS3ERR_DQUOT;
-                                break;
+             nfs_SetWccData(&pre_attr,
+                            entry,
+                            req_ctx,
+                            &res->res_write3.WRITE3res_u.resfail.file_wcc);
 
-                        case ACCESSTYPE_RO:
-                                res->res_write3.status = NFS3ERR_ROFS;
-                                break;
-
-                        default:
-                                /* if we get here than the value is an
-                                   invalid enum - corruption */
-                                abort();
-                                break;
-                        }
-                        nfs_SetWccData(&pre_attr,
-                                       entry,
-                                       req_ctx,
-                                       &res->res_write3.WRITE3res_u
-                                       .resfail.file_wcc);
-                        break;
-                }
-
-                rc = NFS_REQ_OK;
-                goto out;
+             rc = NFS_REQ_OK;
+             goto out;
         }
 
 #ifdef _USE_QUOTA
@@ -282,71 +226,37 @@ int nfs_Write(nfs_arg_t *arg,
                                                            export->fullpath,
                                                            FSAL_QUOTA_BLOCKS,
                                                            req_ctx);
-        if (FSAL_IS_ERROR(fsal_status)) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        res->res_attr2.status = NFSERR_DQUOT;
-                        break;
+        if (FSAL_IS_ERROR(fsal_status))
+         {
+            res->res_write3.status = NFS3ERR_DQUOT;
 
-                case NFS_V3:
-                        res->res_write3.status = NFS3ERR_DQUOT;
-                        break;
-                }
-
-                rc = NFS_REQ_OK ;
-                goto out;
-        }
+            rc = NFS_REQ_OK ;
+            goto out;
+         }
 #endif /* _USE_QUOTA */
 
 
-        /* Extract the argument from the request */
-        switch (req->rq_vers) {
-        case NFS_V2:
-                if (pre_attr.attributes_follow &&
-                    pre_attr.pre_op_attr_u.attributes.size
-                    > NFS2_MAX_FILESIZE) {
-                        /* V2 clients don't understand filesizes >
-                           2GB, so we don't allow them to alter them
-                           in any way. BJP 6/26/2001 */
-                        res->res_attr2.status = NFSERR_FBIG;
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
+         offset = arg->arg_write3.offset;
+         size = arg->arg_write3.count;
+         if (size > arg->arg_write3.data.data_len) {
+                 /* should never happen */
+                 res->res_write3.status = NFS3ERR_INVAL;
+                 rc = NFS_REQ_OK;
+                 goto out;
+         }
 
-                /* beginoffset is obsolete */
-                offset = arg->arg_write2.offset;
-                /* totalcount is obsolete  */
-                size = arg->arg_write2.data.nfsdata2_len;
-                data = arg->arg_write2.data.nfsdata2_val;
-                if (export->use_commit) {
-                        stability = CACHE_INODE_SAFE_WRITE_TO_FS;
-                }
-                break;
-
-        case NFS_V3:
-                offset = arg->arg_write3.offset;
-                size = arg->arg_write3.count;
-                if (size > arg->arg_write3.data.data_len) {
-                        /* should never happen */
-                        res->res_write3.status = NFS3ERR_INVAL;
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
-
-                if ((export->use_commit) &&
-                    !export->use_ganesha_write_buffer &&
-                    (arg->arg_write3.stable == UNSTABLE)) {
+         if ((export->use_commit) &&
+             !export->use_ganesha_write_buffer &&
+             (arg->arg_write3.stable == UNSTABLE)) 
                         stability = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
-                } else if ((export->use_commit) &&
-                           (export->use_ganesha_write_buffer) &&
-                           (arg->arg_write3.stable == UNSTABLE)) {
-                        stability = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;
-                } else {
-                        stability = CACHE_INODE_SAFE_WRITE_TO_FS;
-                }
-                data = arg->arg_write3.data.data_val;
-                break;
-        }
+         else if ((export->use_commit) &&
+                    (export->use_ganesha_write_buffer) &&
+                    (arg->arg_write3.stable == UNSTABLE)) 
+                 stability = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;
+         else 
+                 stability = CACHE_INODE_SAFE_WRITE_TO_FS;
+                
+         data = arg->arg_write3.data.data_val;
 
         /* Do not exceed maxium WRITE offset if set */
         if ((export->options & EXPORT_OPTION_MAXOFFSETWRITE)) {
@@ -365,33 +275,17 @@ int nfs_Write(nfs_arg_t *arg,
                                  export->MaxOffsetWrite,
                                  export->id);
 
-                        switch (req->rq_vers) {
-                        case NFS_V2:
-                                res->res_attr2.status = NFSERR_DQUOT;
-                                break;
+                res->res_write3.status = NFS3ERR_INVAL;
 
-                        case NFS_V3:
-                                res->res_write3.status = NFS3ERR_INVAL;
-                                break;
-                        }
+                res->res_write3.status = nfs3_Errno(cache_status);
+                nfs_SetWccData( &pre_attr,
+                                entry,
+                                req_ctx,
+                                &res->res_write3.WRITE3res_u.resfail.file_wcc);
 
-                        switch (req->rq_vers) {
-                        case NFS_V2:
-                                res->res_attr2.status
-                                        = nfs2_Errno(cache_status);
-                        case NFS_V3:
-                                res->res_write3.status
-                                        = nfs3_Errno(cache_status);
-                                nfs_SetWccData(&pre_attr,
-                                               entry,
-                                               req_ctx,
-                                               &res->res_write3.WRITE3res_u
-                                               .resfail.file_wcc);
-                        }
-
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
+                rc = NFS_REQ_OK;
+                goto out;
+             }
         }
 
         /* We should take care not to exceed FSINFO wtmax field for
@@ -403,10 +297,13 @@ int nfs_Write(nfs_arg_t *arg,
                 size = export->MaxWrite;
         }
 
-        if (size == 0) {
+        if (size == 0) 
+        {
                 cache_status = CACHE_INODE_SUCCESS;
                 written_size = 0;
-        } else {
+        } 
+       else 
+        {
                 /* An actual write is to be made, prepare it */
                 if ((cache_inode_rdwr(entry,
                                       CACHE_INODE_WRITE,
@@ -419,17 +316,6 @@ int nfs_Write(nfs_arg_t *arg,
                                       stability,
                                       &cache_status)
                      == CACHE_INODE_SUCCESS)) {
-                        switch (req->rq_vers) {
-                        case NFS_V2:
-                                cache_entry_to_nfs2_Fattr(
-                                        entry,
-                                        req_ctx,
-                                        &res->res_attr2.ATTR2res_u
-                                        .attributes);
-                                res->res_attr2.status = NFS_OK;
-                                break;
-
-                        case NFS_V3:
                                 /* Build Weak Cache Coherency data */
                                 nfs_SetWccData(&pre_attr,
                                                entry,
@@ -456,8 +342,6 @@ int nfs_Write(nfs_arg_t *arg,
                                        sizeof(writeverf3));
 
                                 res->res_write3.status = NFS3_OK;
-                                break;
-                        }
 
                         rc = NFS_REQ_OK;
                         goto out;
@@ -473,25 +357,19 @@ int nfs_Write(nfs_arg_t *arg,
                 goto out;
         }
 
-        switch (req->rq_vers) {
-        case NFS_V2:
-                res->res_attr2.status = nfs2_Errno(cache_status);
-        case NFS_V3:
-                res->res_write3.status = nfs3_Errno(cache_status);
-                nfs_SetWccData(&pre_attr,
-                               entry,
-                               req_ctx,
-                               &res->res_write3.WRITE3res_u.resfail.file_wcc);
-
-        }
+        res->res_write3.status = nfs3_Errno(cache_status);
+        nfs_SetWccData(&pre_attr,
+                       entry,
+                       req_ctx,
+                       &res->res_write3.WRITE3res_u.resfail.file_wcc);
 
         rc = NFS_REQ_OK;
 
 out:
         /* return references */
-        if (entry) {
+        if (entry) 
                 cache_inode_put(entry);
-        }
+        
 
         return rc;
 
