@@ -80,6 +80,8 @@ else
   AC_DEFINE_UNQUOTED( [_GIT_DESCRIBE], "$git_describe", [Result of git-describe --long])
 fi
 
+AC_SEARCH_LIBS([clock_gettime], [rt])
+
 # plateform relative flags
 case $build in
 	*-linux*)
