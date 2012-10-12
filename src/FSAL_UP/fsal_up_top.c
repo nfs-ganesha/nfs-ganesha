@@ -47,8 +47,9 @@
  * We call into the cache and invalidate at once, since the operation
  * is inexpensive by design.
  *
- * @param[in] invalidate Invalidation parameters
- * @param[in] file       The file to invalidate
+ * @param[in]  invalidate Invalidation parameters
+ * @param[in]  file       The file to invalidate
+ * @param[out] private    Unused
  *
  * @retval 0 on success.
  * @retval ENOENT if the entry is not in the cache.  (Harmless, since
@@ -57,7 +58,8 @@
 
 static int
 invalidate_imm(struct fsal_up_event_invalidate *invalidate,
-               struct fsal_up_file *file)
+               struct fsal_up_file *file,
+               void **private)
 {
         cache_entry_t *entry = NULL;
         int rc = 0;
@@ -81,8 +83,9 @@ invalidate_imm(struct fsal_up_event_invalidate *invalidate,
  *
  * This function just performs basic validation of the parameters.
  *
- * @param[in] update Update parameters
- * @param[in] file   File to update (unused)
+ * @param[in]  update  Update parameters
+ * @param[in]  file    File to update (unused)
+ * @param[out] private Unused
  *
  * @retval 0 on success.
  * @retval EINVAL if the update data are invalid.
@@ -90,7 +93,8 @@ invalidate_imm(struct fsal_up_event_invalidate *invalidate,
 
 static int
 update_imm(struct fsal_up_event_update *update,
-           struct fsal_up_file *file)
+           struct fsal_up_file *file,
+           void **private)
 {
         /* These cannot be updated, changing any of them is
            tantamount to destroying and recreating the file. */
@@ -123,13 +127,15 @@ update_imm(struct fsal_up_event_update *update,
  * Update the entry attributes in accord with the supplied attributes
  * and control flags.
  *
- * @param[in] update Update data
- * @param[in] file   File to update
+ * @param[in] update  Update data
+ * @param[in] file    File to update
+ * @param[in] private Unused
  */
 
 static void
 update_queue(struct fsal_up_event_update *update,
-             struct fsal_up_file *file)
+             struct fsal_up_file *file,
+             void *private)
 {
         /* The cache entry upon which to operate */
         cache_entry_t *entry = NULL;
@@ -287,8 +293,9 @@ update_queue(struct fsal_up_event_update *update,
  * Since the SAL has its own queue for such operations, we simply
  * queue there.
  *
- * @param[in] grant Details of the granted lock
- * @param[in] file  File on which the lock is granted
+ * @param[in]  grant   Details of the granted lock
+ * @param[in]  file    File on which the lock is granted
+ * @param[out] private Unused
  *
  * @retval 0 on success.
  * @retval ENOENT if the file isn't in the cache (this shouldn't
@@ -298,7 +305,8 @@ update_queue(struct fsal_up_event_update *update,
 
 static int
 lock_grant_imm(struct fsal_up_event_lock_grant *grant,
-               struct fsal_up_file *file)
+               struct fsal_up_file *file,
+               void **private)
 {
         cache_entry_t *entry = NULL;
         int rc = 0;
@@ -331,8 +339,9 @@ lock_grant_imm(struct fsal_up_event_lock_grant *grant,
  * Since the SAL has its own queue for such operations, we simply
  * queue there.
  *
- * @param[in] avail Details of the available lock
- * @param[in] file  File on which the lock has become available
+ * @param[in]  avail   Details of the available lock
+ * @param[in]  file    File on which the lock has become available
+ * @param[out] private Unused
  *
  * @retval 0 on success.
  * @retval ENOENT if the file isn't in the cache (this shouldn't
@@ -342,7 +351,8 @@ lock_grant_imm(struct fsal_up_event_lock_grant *grant,
 
 static int
 lock_avail_imm(struct fsal_up_event_lock_avail *avail,
-               struct fsal_up_file *file)
+               struct fsal_up_file *file,
+               void **private)
 {
         cache_entry_t *entry = NULL;
         int rc = 0;

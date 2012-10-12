@@ -229,29 +229,39 @@ struct fsal_up_event_layoutrecall
 struct fsal_up_vector
 {
         int (*lock_grant_imm)(struct fsal_up_event_lock_grant *,
-                              struct fsal_up_file *);
+                              struct fsal_up_file *,
+                              void **);
         void (*lock_grant_queue)(struct fsal_up_event_lock_grant *,
-                                 struct fsal_up_file *);
+                                 struct fsal_up_file *,
+                                 void *);
 
         int (*lock_avail_imm)(struct fsal_up_event_lock_avail *,
-                              struct fsal_up_file *);
+                              struct fsal_up_file *,
+                              void **);
         void (*lock_avail_queue)(struct fsal_up_event_lock_avail *,
-                                 struct fsal_up_file *);
+                                 struct fsal_up_file *,
+                                 void *);
 
         int (*invalidate_imm)(struct fsal_up_event_invalidate *,
-                              struct fsal_up_file *);
+                              struct fsal_up_file *,
+                              void **);
         void (*invalidate_queue)(struct fsal_up_event_invalidate *,
-                                 struct fsal_up_file *);
+                                 struct fsal_up_file *,
+                                 void *);
 
         int (*update_imm)(struct fsal_up_event_update *,
-                          struct fsal_up_file *);
+                          struct fsal_up_file *,
+                          void **);
         void (*update_queue)(struct fsal_up_event_update *,
-                             struct fsal_up_file *);
+                             struct fsal_up_file *,
+                             void *);
 
         int (*layoutrecall_imm)(struct fsal_up_event_layoutrecall *,
-                                struct fsal_up_file *);
+                                struct fsal_up_file *,
+                                void **);
         void (*layoutrecall_queue)(struct fsal_up_event_layoutrecall *,
-                                   struct fsal_up_file *);
+                                   struct fsal_up_file *,
+                                   void *);
 };
 
 struct fsal_up_vector fsal_up_top;
@@ -280,6 +290,24 @@ struct fsal_up_event
                                       place.  Interpetation varies by
                                       type and might not be used at
                                       all. */
+        void *private; /*< This is private event data shared between
+                           the immediate and queued function.  If you
+                           override one function, you should override
+                           the other, too, so this is neither left
+                           dangling nor expected.  If you pass on to
+                           one function, you should pass on to the
+                           other and ensure this pointer is not
+                           damaged.  If you want your own
+                           event-private data, store whatever pointer
+                           you find here in it so you can pass it
+                           on.  This is NOT private data for the
+                           producer of the event.  Producers of
+                           events should initialize it to NULL (but
+                           the immediate functions for events
+                           shouldn't really care if they don't.)  The
+                           queue function is responsible for freeing
+                           anything allocated by the immediate
+                           function. */
 };
 
 

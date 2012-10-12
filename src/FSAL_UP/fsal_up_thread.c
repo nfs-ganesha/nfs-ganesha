@@ -84,35 +84,45 @@ fsal_up_submit(struct fsal_up_event *event)
         case FSAL_UP_EVENT_LOCK_GRANT:
                 if (event->functions->lock_grant_imm) {
                         rc = event->functions->lock_grant_imm(
-                                &event->data.lock_grant, &event->file);
+                                &event->data.lock_grant,
+                                &event->file,
+                                &event->private);
                 }
                 break;
 
         case FSAL_UP_EVENT_LOCK_AVAIL:
                 if (event->functions->lock_avail_imm) {
                         rc = event->functions->lock_avail_imm(
-                                &event->data.lock_avail, &event->file);
+                                &event->data.lock_avail,
+                                &event->file,
+                                &event->private);
                 }
                 break;
 
         case FSAL_UP_EVENT_INVALIDATE:
                 if (event->functions->invalidate_imm) {
                         rc = event->functions->invalidate_imm(
-                                &event->data.invalidate, &event->file);
+                                &event->data.invalidate,
+                                &event->file,
+                                &event->private);
                 }
                 break;
 
         case FSAL_UP_EVENT_UPDATE:
                 if (event->functions->update_imm) {
                         rc = event->functions->update_imm(
-                                &event->data.update, &event->file);
+                                &event->data.update,
+                                &event->file,
+                                &event->private);
                 }
                 break;
 
         case FSAL_UP_EVENT_LAYOUTRECALL:
                 if (event->functions->layoutrecall_imm) {
                         rc = event->functions->layoutrecall_imm(
-                                &event->data.layoutrecall, &event->file);
+                                &event->data.layoutrecall,
+                                &event->file,
+                                &event->private);
                 }
                 break;
         }
@@ -174,7 +184,8 @@ next_event:
                         if (event->functions->lock_grant_queue) {
                                 event->functions->lock_grant_queue(
                                         &event->data.lock_grant,
-                                        &event->file);
+                                        &event->file,
+                                        event->private);
                         }
                         break;
 
@@ -182,7 +193,8 @@ next_event:
                         if (event->functions->lock_avail_queue) {
                                 event->functions->lock_avail_queue(
                                         &event->data.lock_avail,
-                                        &event->file);
+                                        &event->file,
+                                        event->private);
                         }
                         break;
 
@@ -190,7 +202,8 @@ next_event:
                         if (event->functions->invalidate_queue) {
                                 event->functions->invalidate_queue(
                                         &event->data.invalidate,
-                                        &event->file);
+                                        &event->file,
+                                        event->private);
                         }
                         break;
 
@@ -198,7 +211,8 @@ next_event:
                         if (event->functions->update_queue) {
                                 event->functions->update_queue(
                                         &event->data.update,
-                                        &event->file);
+                                        &event->file,
+                                        event->private);
                         }
                         break;
 
@@ -206,7 +220,8 @@ next_event:
                         if (event->functions->layoutrecall_queue) {
                                 event->functions->layoutrecall_queue(
                                         &event->data.layoutrecall,
-                                        &event->file);
+                                        &event->file,
+                                        event->private);
                         }
                         break;
                 }
