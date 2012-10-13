@@ -1070,13 +1070,31 @@ void nfs4_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src)
         }
     }
 }
-
+int copy_bitmap4(bitmap4 *src, bitmap4 *dst)
+{
+        if ( dst->bitmap4_val != NULL ) {
+       /* With multiple mallocs this is possible.
+        * Should check everywhere but definitely in this multipurpose routine.
+        * &ing maybe the proper response but fail it for now.
+        */
+                return(-1);    /* XXX */
+        }
+        if (( dst->bitmap4_val = gsh_calloc(src->bitmap4_len, sizeof(uint32_t)))
+ == NULL) {
+                return(-2);
+        }
+        memcpy((void *) dst->bitmap4_val, (void *) src->bitmap4_val,
+                ((size_t) (src->bitmap4_len * sizeof(uint32_t))));
+        dst->bitmap4_len = src->bitmap4_len;
+        return(0);
+}
 static nfsstat4
 nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
     cache_entry_t *pentry, fsal_accessflags_t rd_acc,
     fsal_accessflags_t wr_acc, fsal_openflags_t *openflags,
     bool_t AttrProvided, fsal_attrib_list_t *sattr, struct nfs_resop4 *resop)
 {
+        int rc = 0;
         OPEN4args *args = &op->nfs_argop4_u.opopen;
         OPEN4res *resp = &resop->nfs_resop4_u.opopen;
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -1094,10 +1112,13 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
                         return nfs4_Errno(cache_status);
                 }
-
-                resp->OPEN4res_u.resok4.attrset =
-                    args->openhow.openflag4_u.how.createhow4_u.createattrs.
-                    attrmask;
+                rc = copy_bitmap4(&args->openhow.openflag4_u.how.createhow4_u.createattrs.attrmask,
+                        &resp->OPEN4res_u.resok4.attrset);
+                if ( rc != 0 ) {
+                        LogEvent(COMPONENT_STATE,
+                                "copy_bitmap4 returned %d", rc);
+                        return NFS4ERR_SERVERFAULT;
+                }
         }
         else
                 resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
