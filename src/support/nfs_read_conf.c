@@ -407,10 +407,6 @@ int nfs_read_core_conf(config_file_t in_config,
                 {
                   pparam->core_options |= CORE_OPTION_NFSV4;
                 }
-              else if(!strcmp(nfsvers_list[idx], "2"))
-                {
-                  pparam->core_options |= CORE_OPTION_NFSV2;
-                }
               else if(!strcmp(nfsvers_list[idx], "3"))
                 {
                   pparam->core_options |= CORE_OPTION_NFSV3;
@@ -418,7 +414,7 @@ int nfs_read_core_conf(config_file_t in_config,
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                          "Invalid NFS Protocol \"%s\". Values can be: 2, 3, 4.",
+                          "Invalid NFS Protocol \"%s\". Values can be: 3, 4.",
                           nfsvers_list[idx]);
                   return -1;
                 }

@@ -159,7 +159,6 @@
 #define NFS_V4_MAX_QUOTA      34359738368LL     /* 32 GB */
 
 /* protocol flags */
-#define CORE_OPTION_NFSV2           0x00000002        /* NFSv2 operations are supported      */
 #define CORE_OPTION_NFSV3           0x00000004        /* NFSv3 operations are supported      */
 #define CORE_OPTION_NFSV4           0x00000008        /* NFSv4 operations are supported      */
 #define CORE_OPTION_ALL_VERS        0x0000000E

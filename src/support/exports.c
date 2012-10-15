@@ -668,8 +668,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   /* by default, we support all NFS versions supported by the core and
      both transport protocols */
-  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
-    p_entry->options |= EXPORT_OPTION_NFSV2;
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     p_entry->options |= EXPORT_OPTION_NFSV3;
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)
@@ -989,17 +987,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           for(idx = 0; idx < count; idx++)
             {
-              if(!STRCMP(nfsvers_list[idx], "2"))
-                {
-                  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
-                    p_entry->options |= EXPORT_OPTION_NFSV2;
-                  else
-                    {
-                      LogInfo(COMPONENT_CONFIG,
-                              "NFS READ_EXPORT:NFS version 2 is disabled in NFS_Core_Param.");
-                    }
-                }
-              else if(!STRCMP(nfsvers_list[idx], "3"))
+              if(!STRCMP(nfsvers_list[idx], "3"))
                 {
                   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
                     p_entry->options |= EXPORT_OPTION_NFSV3;
@@ -1022,7 +1010,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                          "NFS READ_EXPORT: ERROR: Invalid NFS version \"%s\". Values can be: 2, 3, 4.",
+                          "NFS READ_EXPORT: ERROR: Invalid NFS version \"%s\". Values can be: 3, 4.",
                           nfsvers_list[idx]);
                   err_flag = true;
                 }
@@ -2131,8 +2119,6 @@ exportlist_t *BuildDefaultExport()
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
   /* by default, we support all NFS versions supported by the core and both transport protocols */
-  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
-    p_entry->options |= EXPORT_OPTION_NFSV2;
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     p_entry->options |= EXPORT_OPTION_NFSV3;
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) != 0)

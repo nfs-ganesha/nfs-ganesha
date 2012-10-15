@@ -214,11 +214,11 @@ static void unregister_rpc(void)
 #ifdef _USE_NLM
 #define test_for_additional_nfs_protocols(p) \
   ((p != P_MNT && p != P_NLM) || \
-  (nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
+  (nfs_param.core_param.core_options &  CORE_OPTION_NFSV3) != 0)
 #else
 #define test_for_additional_nfs_protocols(p) \
   (p != P_MNT || \
-  (nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
+  (nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
 #endif
 
 /**
@@ -626,7 +626,7 @@ void nfs_Init_svc()
 
   socket_setoptions(tcp_socket[P_NFS]);
 
-  if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
+  if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
     {
 #ifdef _USE_NLM
      /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
@@ -705,10 +705,9 @@ void nfs_Init_svc()
 
 #ifndef _NO_PORTMAPPER
   /* Perform all the RPC registration, for UDP and TCP, for NFS_V2, NFS_V3 and NFS_V4 */
-  Register_program(P_NFS, CORE_OPTION_NFSV2, NFS_V2);
   Register_program(P_NFS, CORE_OPTION_NFSV3, NFS_V3);
   Register_program(P_NFS, CORE_OPTION_NFSV4, NFS_V4);
-  Register_program(P_MNT, (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3), MOUNT_V1);
+  Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V1);
   Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V3);
 #ifdef _USE_NLM
   Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
@@ -1684,8 +1683,7 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
   if(req->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       /* If we go there, req->rq_prog ==  nfs_param.core_param.program[P_NFS] */
-      if(((req->rq_vers != NFS_V2) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) == 0)) &&
-         ((req->rq_vers != NFS_V3) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)) &&
+      if(((req->rq_vers != NFS_V3) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)) &&
          ((req->rq_vers != NFS_V4) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) == 0)))
         {
           if(xprt != NULL)
@@ -1694,9 +1692,7 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
                            "Invalid NFS Version #%d",
                            (int)req->rq_vers);
               lo_vers = NFS_V4;
-              hi_vers = NFS_V2;
-              if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
-                lo_vers = NFS_V2;
+              hi_vers = NFS_V3;
               if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
                 {
                   if(lo_vers == NFS_V4)
@@ -1712,8 +1708,7 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
             }
           return false;
         }
-      else if(((req->rq_vers == NFS_V2) && (req->rq_proc > NFSPROC_STATFS)) ||
-              ((req->rq_vers == NFS_V3) && (req->rq_proc > NFSPROC3_COMMIT)) ||
+      else if(((req->rq_vers == NFS_V3) && (req->rq_proc > NFSPROC3_COMMIT)) ||
               ((req->rq_vers == NFS_V4) && (req->rq_proc > NFSPROC4_COMPOUND)))
         {
           /* xprt == NULL??? */
@@ -1729,7 +1724,7 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
     }
 
   if(req->rq_prog == nfs_param.core_param.program[P_MNT] &&
-     ((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0))
+     ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0))
     {
       /* Call is with MOUNTPROG */
       /* Verify mount version and report error if invalid */
@@ -1742,8 +1737,7 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
        * disallow mount if version not supported.
        */
       if((req->rq_vers == MOUNT_V1) &&
-         (((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0) ||
-          (req->rq_proc != MOUNTPROC2_MNT)))
+         (req->rq_proc != MOUNTPROC2_MNT))
         {
           if(req->rq_proc > MOUNTPROC2_EXPORT)
             {
@@ -1778,8 +1772,6 @@ is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
       if(xprt != NULL)
         {
           /* Bad MOUNT version - set the hi and lo versions and report error */
-          if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) == 0)
-            lo_vers = MOUNT_V3;
           if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)
             hi_vers = MOUNT_V1;
 
