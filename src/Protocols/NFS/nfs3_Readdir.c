@@ -139,7 +139,6 @@ nfs_Readdir(nfs_arg_t *arg,
           char str[LEN_FH_STR];
           log_components_t component;
           nfs_FhandleToStr(req->rq_vers,
-                           &(arg->arg_readdir2.dir),
                            &(arg->arg_readdir3.dir),
                            NULL,
                            str);

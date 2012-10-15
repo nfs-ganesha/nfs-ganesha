@@ -97,7 +97,6 @@ nfs_Setattr(nfs_arg_t *arg,
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
                 nfs_FhandleToStr(req->rq_vers,
-                                 &arg->arg_setattr2.file,
                                  &arg->arg_setattr3.object,
                                  NULL,
                                  str);

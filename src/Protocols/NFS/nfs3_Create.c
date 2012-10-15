@@ -107,7 +107,6 @@ nfs_Create(nfs_arg_t *arg,
          }
 
          nfs_FhandleToStr(req->rq_vers,
-                           &(arg->arg_create2.where.dir),
                            &(arg->arg_create3.where.dir),
                            NULL,
                            str);

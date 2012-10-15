@@ -63,7 +63,6 @@
 #define NFS2_MODE_NFNON 0140000
 
 void nfs_FhandleToStr(u_long     rq_vers,
-                      fhandle2  *pfh2,
                       nfs_fh3   *pfh3,
                       nfs_fh4   *pfh4,
                       char      *str);

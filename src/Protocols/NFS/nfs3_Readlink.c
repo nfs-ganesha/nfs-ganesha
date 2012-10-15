@@ -99,7 +99,6 @@ nfs_Readlink(nfs_arg_t *arg,
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
                 nfs_FhandleToStr(req->rq_vers,
-                                 &(arg->arg_readlink2),
                                  &(arg->arg_readlink3.symlink),
                                  NULL,
                                  str);

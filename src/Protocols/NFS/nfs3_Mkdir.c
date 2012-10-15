@@ -111,7 +111,6 @@ nfs_Mkdir(nfs_arg_t *arg,
            dir_name = arg->arg_mkdir3.where.name;
 
            nfs_FhandleToStr(req->rq_vers,
-                             NULL,
                              &(arg->arg_mkdir3.where.dir),
                              NULL,
                              str);

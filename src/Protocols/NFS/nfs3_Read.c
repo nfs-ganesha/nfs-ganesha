@@ -131,7 +131,6 @@ nfs_Read(nfs_arg_t *arg,
                 size = arg->arg_read3.count;
 
                 nfs_FhandleToStr(req->rq_vers,
-                                 NULL,
                                  &arg->arg_read3.file,
                                  NULL,
                                  str);

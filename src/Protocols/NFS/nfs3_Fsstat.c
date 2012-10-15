@@ -103,7 +103,6 @@ int nfs_Fsstat(nfs_arg_t *arg,
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
                 nfs_FhandleToStr(req->rq_vers,
-                                 &(arg->arg_statfs2),
                                  &(arg->arg_fsstat3.fsroot),
                                  NULL,
                                  str);

@@ -104,13 +104,11 @@ nfs_Link(nfs_arg_t *arg,
            link_name = arg->arg_link3.link.name;
 
            nfs_FhandleToStr( req->rq_vers,
-                             NULL,
                              &(arg->arg_link3.file),
                              NULL,
                              strfrom);
 
            nfs_FhandleToStr( req->rq_vers,
-                             NULL,
                              &(arg->arg_link3.link.dir),
                              NULL,
                              strto);

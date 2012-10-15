@@ -113,7 +113,6 @@ int nfs_Write(nfs_arg_t *arg,
                 }
 
                 nfs_FhandleToStr(req->rq_vers,
-                                 &arg->arg_write2.file,
                                  &arg->arg_write3.file,
                                  NULL,
                                  str);

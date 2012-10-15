@@ -100,7 +100,6 @@ nfs_Lookup(nfs_arg_t *arg,
                         name = arg->arg_lookup3.what.name;
 
                 nfs_FhandleToStr(req->rq_vers,
-                                 NULL, 
                                  &(arg->arg_lookup3.what.dir),
                                  NULL,
                                  str);

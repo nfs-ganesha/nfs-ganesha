@@ -102,7 +102,6 @@ nfs_Rmdir(nfs_arg_t *arg,
                 name = arg->arg_rmdir3.object.name;
 
                 nfs_FhandleToStr(req->rq_vers,
-                                 &arg->arg_rmdir2.dir,
                                  &arg->arg_rmdir3.object.dir,
                                  NULL,
                                  str);

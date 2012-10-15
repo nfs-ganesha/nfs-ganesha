@@ -106,13 +106,11 @@ nfs_Rename(nfs_arg_t *arg,
                 new_entry_name = arg->arg_rename3.to.name;
 
                 nfs_FhandleToStr(req->rq_vers,
-                                 &arg->arg_rename2.from.dir,
                                  &arg->arg_rename3.from.dir,
                                  NULL,
                                  strfrom);
 
                 nfs_FhandleToStr(req->rq_vers,
-                                 &arg->arg_rename2.to.dir,
                                  &arg->arg_rename3.to.dir,
                                  NULL,
                                  strto);

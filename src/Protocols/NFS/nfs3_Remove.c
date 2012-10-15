@@ -108,7 +108,6 @@ nfs_Remove(nfs_arg_t *arg,
                 name = arg->arg_remove3.object.name;
 
                 nfs_FhandleToStr(req->rq_vers,
-                                 &arg->arg_create2.where.dir,
                                  &arg->arg_create3.where.dir,
                                  NULL,
                                  str);

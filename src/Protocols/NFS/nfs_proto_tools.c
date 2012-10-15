@@ -93,13 +93,6 @@ static struct {
 /*
  * String representations of NFS protocol operations.
  */
-char *nfsv2_function_names[] = {
-  "NFSv2_null", "NFSv2_getattr", "NFSv2_setattr", "NFSv2_root",
-  "NFSv2_lookup", "NFSv2_readlink", "NFSv2_read", "NFSv2_writecache",
-  "NFSv2_write", "NFSv2_create", "NFSv2_remove", "NFSv2_rename",
-  "NFSv2_link", "NFSv2_symlink", "NFSv2_mkdir", "NFSv2_rmdir",
-  "NFSv2_readdir", "NFSv2_statfs"
-};
 
 char *nfsv3_function_names[] = {
   "NFSv3_null", "NFSv3_getattr", "NFSv3_setattr", "NFSv3_lookup",
@@ -232,7 +225,6 @@ static inline bool clear_attribute_in_bitmap(bitmap4 *bits, int attr)
  *
  */
 void nfs_FhandleToStr(u_long     rq_vers,
-                      fhandle2  *pfh2,
                       nfs_fh3   *pfh3,
                       nfs_fh4   *pfh4,
                       char      *str)
@@ -246,10 +238,6 @@ void nfs_FhandleToStr(u_long     rq_vers,
 
     case NFS_V3:
       sprint_fhandle3(str, pfh3);
-      break;
-
-    case NFS_V2:
-      sprint_fhandle2(str, pfh2);
       break;
     }
 }                               /* nfs_FhandleToStr */
