@@ -86,7 +86,7 @@ cache_inode_commit(cache_entry_t *entry,
         called. */
      status = CACHE_INODE_SUCCESS;
 
-     if (!is_open_for_write(entry)) {
+     while (!is_open_for_write(entry)) {
 	     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 	     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 	     if (!is_open_for_write(entry)) {
@@ -100,6 +100,8 @@ cache_inode_commit(cache_entry_t *entry,
 		     }
 		     opened = true;
 	     }
+             PTHREAD_RWLOCK_unlock(&entry->content_lock);
+             PTHREAD_RWLOCK_rdlock(&entry->content_lock);
      }
      
      fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,

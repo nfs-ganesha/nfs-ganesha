@@ -189,9 +189,10 @@ cache_inode_rdwr(cache_entry_t *entry,
                     goto out;
                 }
                 opened = true;
-                PTHREAD_RWLOCK_unlock(&entry->content_lock);
-                PTHREAD_RWLOCK_rdlock(&entry->content_lock);
             }
+            PTHREAD_RWLOCK_unlock(&entry->content_lock);
+            PTHREAD_RWLOCK_rdlock(&entry->content_lock);
+            loflags = obj_hdl->ops->status(obj_hdl);
         }
 
         /* Call FSAL_read or FSAL_write */
