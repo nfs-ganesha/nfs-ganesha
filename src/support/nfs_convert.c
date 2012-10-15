@@ -56,35 +56,6 @@
 OM_uint32 Gss_release_buffer(OM_uint32 * minor_status, gss_buffer_t buffer);
 #endif
 
-char *nfsstat2_to_str(nfsstat2 code)
-{
-  switch (code)
-    {
-      /* no nead for break statments,
-       * because we "return".
-       */
-    case NFS_OK:             return "NFS_OK";
-    case NFSERR_PERM:        return "NFSERR_PERM";
-    case NFSERR_NOENT:       return "NFSERR_NOENT";
-    case NFSERR_IO:          return "NFSERR_IO";
-    case NFSERR_NXIO:        return "NFSERR_NXIO";
-    case NFSERR_ACCES:       return "NFSERR_ACCES";
-    case NFSERR_EXIST:       return "NFSERR_EXIST";
-    case NFSERR_NODEV:       return "NFSERR_NODEV";
-    case NFSERR_NOTDIR:      return "NFSERR_NOTDIR";
-    case NFSERR_ISDIR:       return "NFSERR_ISDIR";
-    case NFSERR_FBIG:        return "NFSERR_FBIG";
-    case NFSERR_NOSPC:       return "NFSERR_NOSPC";
-    case NFSERR_ROFS:        return "NFSERR_ROFS";
-    case NFSERR_NAMETOOLONG: return "NFSERR_NAMETOOLONG";
-    case NFSERR_NOTEMPTY:    return "NFSERR_NOTEMPTY";
-    case NFSERR_DQUOT:       return "NFSERR_DQUOT";
-    case NFSERR_STALE:       return "NFSERR_STALE";
-    case NFSERR_WFLUSH:      return "NFSERR_WFLUSH";
-    }
-  return "UNKNOWN NFSv2 ERROR CODE";
-}
-
 char *nfsstat3_to_str(nfsstat3 code)
 {
   switch (code)
@@ -235,26 +206,6 @@ char *nfsstat4_to_str(nfsstat4 code)
     case NFS4ERR_DELEG_REVOKED:             return "NFS4ERR_DELEG_REVOKED";
     }
   return "UNKNOWN NFSv4 ERROR CODE";
-}
-
-char *nfstype2_to_str(ftype2 code)
-{
-  switch (code)
-    {
-      /* no nead for break statments,
-       * because we "return".
-       */
-    case NFNON:  return "NFNON";
-    case NFREG:  return "NFREG";
-    case NFDIR:  return "NFDIR";
-    case NFBLK:  return "NFBLK";
-    case NFCHR:  return "NFCHR";
-    case NFLNK:  return "NFLNK";
-    case NFSOCK: return "NFSOCK";
-    case NFBAD:  return "NFBAD";
-    case NFFIFO: return "NFFIFO";
-    }
-  return "UNKNOWN NFSv2 TYPE";
 }
 
 char *nfstype3_to_str(ftype3 code)

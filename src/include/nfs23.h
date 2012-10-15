@@ -32,19 +32,27 @@
 
 #define NFS2_MAX_FILESIZE   (2147483647)        /* 0x7fffffff */
 
+typedef char fhandle2[NFS2_FHSIZE];
+
+struct fhstatus2
+{
+  u_int status;
+  union
+  {
+    fhandle2 directory;
+  } fhstatus2_u;
+};
+typedef struct fhstatus2 fhstatus2;
+
 typedef char *nfspath2;
 
 typedef char *filename2;
-
-typedef char fhandle2[NFS2_FHSIZE];
 
 typedef struct
 {
   u_int nfsdata2_len;
   char *nfsdata2_val;
 } nfsdata2;
-
-typedef char nfscookie2[NFS2_COOKIESIZE];
 
 enum nfsstat2
 {
@@ -67,244 +75,12 @@ enum nfsstat2
   NFSERR_STALE = 70,
   NFSERR_WFLUSH = 99
 };
-typedef enum nfsstat2 nfsstat2;
 
-enum ftype2
-{
-  NFNON = 0,
-  NFREG = 1,
-  NFDIR = 2,
-  NFBLK = 3,
-  NFCHR = 4,
-  NFLNK = 5,
-  NFSOCK = 6,
-  NFBAD = 7,
-  NFFIFO = 8
-};
-typedef enum ftype2 ftype2;
-
-struct nfstime2
-{
-  u_int seconds;
-  u_int useconds;
-};
-typedef struct nfstime2 nfstime2;
-
-struct fattr2
-{
-  ftype2 type;
-  u_int mode;
-  u_int nlink;
-  u_int uid;
-  u_int gid;
-  u_int size;
-  u_int blocksize;
-  u_int rdev;
-  u_int blocks;
-  u_int fsid;
-  u_int fileid;
-  nfstime2 atime;
-  nfstime2 mtime;
-  nfstime2 ctime;
-};
-typedef struct fattr2 fattr2;
-
-struct fhstatus2
-{
-  u_int status;
-  union
-  {
-    fhandle2 directory;
-  } fhstatus2_u;
-};
-typedef struct fhstatus2 fhstatus2;
-
-struct diropargs2
-{
-  fhandle2 dir;
-  filename2 name;
-};
-typedef struct diropargs2 diropargs2;
-
-struct DIROP2resok
-{
-  fhandle2 file;
-  fattr2 attributes;
-};
-typedef struct DIROP2resok DIROP2resok;
-
-struct DIROP2res
-{
-  nfsstat2 status;
-  union
-  {
-    DIROP2resok diropok;
-  } DIROP2res_u;
-};
-typedef struct DIROP2res DIROP2res;
-
-struct ATTR2res
-{
-  nfsstat2 status;
-  union
-  {
-    fattr2 attributes;
-  } ATTR2res_u;
-};
-typedef struct ATTR2res ATTR2res;
-
-struct sattr2
-{
-  u_int mode;
-  u_int uid;
-  u_int gid;
-  u_int size;
-  nfstime2 atime;
-  nfstime2 mtime;
-};
-typedef struct sattr2 sattr2;
-
-struct statinfo2
-{
-  u_int tsize;
-  u_int bsize;
-  u_int blocks;
-  u_int bfree;
-  u_int bavail;
-};
-typedef struct statinfo2 statinfo2;
-
-struct STATFS2res
-{
-  nfsstat2 status;
-  union
-  {
-    statinfo2 info;
-  } STATFS2res_u;
-};
-typedef struct STATFS2res STATFS2res;
-
-struct READDIR2args
-{
-  fhandle2 dir;
-  nfscookie2 cookie;
-  u_int count;
-};
-typedef struct READDIR2args READDIR2args;
-
-struct entry2
-{
-  u_int fileid;
-  filename2 name;
-  nfscookie2 cookie;
-  struct entry2 *nextentry;
-};
-typedef struct entry2 entry2;
-
-struct READDIR2resok
-{
-  entry2 *entries;
-  bool_t eof;
-};
-typedef struct READDIR2resok READDIR2resok;
-
-struct READDIR2res
-{
-  nfsstat2 status;
-  union
-  {
-    READDIR2resok readdirok;
-  } READDIR2res_u;
-};
-typedef struct READDIR2res READDIR2res;
-
-struct SYMLINK2args
-{
-  diropargs2 from;
-  nfspath2 to;
-  sattr2 attributes;
-};
-typedef struct SYMLINK2args SYMLINK2args;
-
-struct LINK2args
-{
-  fhandle2 from;
-  diropargs2 to;
-};
-typedef struct LINK2args LINK2args;
-
-struct RENAME2args
-{
-  diropargs2 from;
-  diropargs2 to;
-};
-typedef struct RENAME2args RENAME2args;
-
-struct CREATE2args
-{
-  diropargs2 where;
-  sattr2 attributes;
-};
-typedef struct CREATE2args CREATE2args;
-
-struct WRITE2args
-{
-  fhandle2 file;
-  u_int beginoffset;
-  u_int offset;
-  u_int totalcount;
-  nfsdata2 data;
-};
-typedef struct WRITE2args WRITE2args;
-
-struct READ2resok
-{
-  fattr2 attributes;
-  nfsdata2 data;
-};
-typedef struct READ2resok READ2resok;
-
-struct READ2res
-{
-  nfsstat2 status;
-  union
-  {
-    READ2resok readok;
-  } READ2res_u;
-};
-typedef struct READ2res READ2res;
-
-struct READ2args
-{
-  fhandle2 file;
-  u_int offset;
-  u_int count;
-  u_int totalcount;
-};
-typedef struct READ2args READ2args;
-
-struct READLINK2res
-{
-  nfsstat2 status;
-  union
-  {
-    nfspath2 data;
-  } READLINK2res_u;
-};
-typedef struct READLINK2res READLINK2res;
-
-struct SETATTR2args
-{
-  fhandle2 file;
-  sattr2 attributes;
-};
-typedef struct SETATTR2args SETATTR2args;
+typedef char nfscookie2[NFS2_COOKIESIZE];
 
 typedef u_longlong_t nfs3_uint64;
 
 typedef longlong_t nfs3_int64;
-
-/* BUGAZOMEU: long changed to int, for beeing really 32 bits */
 
 typedef u_int nfs3_uint32;
 
@@ -1398,37 +1174,6 @@ typedef struct COMMIT3res COMMIT3res;
 
 /* the xdr functions */
 
-extern bool xdr_nfspath2(XDR *, nfspath2 *);
-extern bool xdr_filename2(XDR *, filename2 *);
-extern bool xdr_fhandle2(XDR *, fhandle2);
-extern bool xdr_nfsdata2(XDR *, nfsdata2 *);
-extern bool xdr_nfscookie2(XDR *, nfscookie2);
-extern bool xdr_nfsstat2(XDR *, nfsstat2 *);
-extern bool xdr_ftype2(XDR *, ftype2 *);
-extern bool xdr_nfstime2(XDR *, nfstime2 *);
-extern bool xdr_fattr2(XDR *, fattr2 *);
-extern bool xdr_fhstatus2(XDR *, fhstatus2 *);
-extern bool xdr_diropargs2(XDR *, diropargs2 *);
-extern bool xdr_DIROP2resok(XDR *, DIROP2resok *);
-extern bool xdr_DIROP2res(XDR *, DIROP2res *);
-extern bool xdr_ATTR2res(XDR *, ATTR2res *);
-extern bool xdr_sattr2(XDR *, sattr2 *);
-extern bool xdr_statinfo2(XDR *, statinfo2 *);
-extern bool xdr_STATFS2res(XDR *, STATFS2res *);
-extern bool xdr_READDIR2args(XDR *, READDIR2args *);
-extern bool xdr_entry2(XDR *, entry2 *);
-extern bool xdr_READDIR2resok(XDR *, READDIR2resok *);
-extern bool xdr_READDIR2res(XDR *, READDIR2res *);
-extern bool xdr_SYMLINK2args(XDR *, SYMLINK2args *);
-extern bool xdr_LINK2args(XDR *, LINK2args *);
-extern bool xdr_RENAME2args(XDR *, RENAME2args *);
-extern bool xdr_CREATE2args(XDR *, CREATE2args *);
-extern bool xdr_WRITE2args(XDR *, WRITE2args *);
-extern bool xdr_READ2resok(XDR *, READ2resok *);
-extern bool xdr_READ2res(XDR *, READ2res *);
-extern bool xdr_READ2args(XDR *, READ2args *);
-extern bool xdr_READLINK2res(XDR *, READLINK2res *);
-extern bool xdr_SETATTR2args(XDR *, SETATTR2args *);
 extern bool xdr_nfs3_uint64(XDR *, nfs3_uint64 *);
 extern bool xdr_nfs3_int64(XDR *, nfs3_int64 *);
 extern bool xdr_nfs3_uint32(XDR *, nfs3_uint32 *);
@@ -1562,6 +1307,10 @@ extern bool xdr_COMMIT3args(XDR *, COMMIT3args *);
 extern bool xdr_COMMIT3resok(XDR *, COMMIT3resok *);
 extern bool xdr_COMMIT3resfail(XDR *, COMMIT3resfail *);
 extern bool xdr_COMMIT3res(XDR *, COMMIT3res *);
+
+extern bool xdr_fhandle2(XDR *, fhandle2);
+extern bool xdr_fhstatus2(XDR *, fhstatus2 *);
+
 
 #endif                          /* ifndef _USE_SWIG */
 

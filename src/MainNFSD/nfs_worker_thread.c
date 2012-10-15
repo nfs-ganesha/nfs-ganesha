@@ -1037,21 +1037,11 @@ static void nfs_rpc_execute(request_data_t *preq,
                "this is a RO filesystem.");
       if(req->rq_prog == nfs_param.core_param.program[P_NFS])
         {
-          if(req->rq_vers == NFS_V2)
-            {
-              /* All the nfs_res structure in V2 have the status at the same
-               * place (because it is a union) */
-              res_nfs->res_attr2.status = NFSERR_ROFS;
-              rc = NFS_REQ_OK;  /* Processing of the request is done */
-            }
-          else
-            {
               /* V3 request */
               /* All the nfs_res structure in V2 have the status at the same
                * place, and so does V3 ones */
-              res_nfs->res_attr2.status = (nfsstat2) NFS3ERR_ROFS;
+              res_nfs->res_getattr3.status = NFS3ERR_ROFS;
               rc = NFS_REQ_OK;  /* Processing of the request is done */
-            }
         }
       else                 /* unexpected protocol (mount doesn't make write) */
         rc = NFS_REQ_DROP;

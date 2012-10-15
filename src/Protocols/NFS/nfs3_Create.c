@@ -103,7 +103,7 @@ nfs_Create(nfs_arg_t *arg,
 
         if (isDebug(COMPONENT_NFSPROTO))
          {
-             file_name = arg->arg_create2.where.name;
+             file_name = arg->arg_create3.where.name;
          }
 
          nfs_FhandleToStr(req->rq_vers,
@@ -192,12 +192,8 @@ nfs_Create(nfs_arg_t *arg,
 
         if (file_name == NULL ||
             *file_name == '\0' ) {
-                if (req->rq_vers == NFS_V2) {
-                        res->res_dirop2.status = NFSERR_IO;
-                }
-                if (req->rq_vers == NFS_V3) {
-                        res->res_create3.status = NFS3ERR_INVAL;
-                }
+                res->res_create3.status = NFS3ERR_INVAL;
+                
                 goto out_fail;
         }
         /* Lookup file to see if it exists.  If so, use it.  Otherwise

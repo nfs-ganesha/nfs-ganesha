@@ -61,21 +61,6 @@
 
 typedef union nfs_arg__
 {
-  fhandle2 arg_getattr2;
-  SETATTR2args arg_setattr2;
-  diropargs2 arg_lookup2;
-  fhandle2 arg_readlink2;
-  READ2args arg_read2;
-  WRITE2args arg_write2;
-  CREATE2args arg_create2;
-  diropargs2 arg_remove2;
-  RENAME2args arg_rename2;
-  LINK2args arg_link2;
-  SYMLINK2args arg_symlink2;
-  CREATE2args arg_mkdir2;
-  diropargs2 arg_rmdir2;
-  READDIR2args arg_readdir2;
-  fhandle2 arg_statfs2;
   GETATTR3args arg_getattr3;
   SETATTR3args arg_setattr3;
   LOOKUP3args arg_lookup3;
@@ -133,13 +118,6 @@ struct COMPOUND4res_extended
 
 typedef union nfs_res__
 {
-  ATTR2res res_attr2;
-  DIROP2res res_dirop2;
-  READLINK2res res_readlink2;
-  READ2res res_read2;
-  nfsstat2 res_stat2;
-  READDIR2res res_readdir2;
-  STATFS2res res_statfs2;
   GETATTR3res res_getattr3;
   SETATTR3res res_setattr3;
   LOOKUP3res res_lookup3;
@@ -1151,18 +1129,6 @@ void nfs4_stringid_split(char *buff, char *uidname, char *domainname);
 
 seqid4 nfs4_NextSeqId(seqid4 seqid);
 
-/* Attributes conversion */
-int nfs2_Sattr_To_FSALattr(struct attrlist*pFSAL_attr,
-                           sattr2 * pFattr);
-
-bool cache_entry_to_nfs2_Fattr(cache_entry_t *entry,
-                               struct req_op_context *ctx,
-                               fattr2 *Fattr);
-
-bool nfs2_FSALattr_To_Fattr(exportlist_t *export,
-                            const struct attrlist *FSAL_attr,
-                            fattr2 *Fattr);
-
 bool nfs3_FSALattr_To_Fattr(exportlist_t * pexport,
                             const struct attrlist *pFSAL_attr,
                             fattr3 * pFattr);
@@ -1249,10 +1215,8 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;
 /* Error conversion routines */
 nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *);
 nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *);
-nfsstat2 nfs2_Errno_verbose(cache_inode_status_t error, const char *);
 #define nfs4_Errno(e) nfs4_Errno_verbose(e, __func__)
 #define nfs3_Errno(e) nfs3_Errno_verbose(e, __func__)
-#define nfs2_Errno(e) nfs2_Errno_verbose(e, __func__)
 int nfs3_AllocateFH(nfs_fh3 * fh);
 int nfs4_AllocateFH(nfs_fh4 * fh);
 

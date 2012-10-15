@@ -56,7 +56,6 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status);
 
 nfsstat4 nfs4_Errno_state(state_status_t error);
 nfsstat3 nfs3_Errno_state(state_status_t error);
-nfsstat2 nfs2_Errno_state(state_status_t error);
 
 const char * state_owner_type_to_str(state_owner_type_t type);
 int different_owners(state_owner_t *powner1, state_owner_t *powner2);
