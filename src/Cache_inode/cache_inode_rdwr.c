@@ -185,8 +185,8 @@ cache_inode_rdwr(cache_entry_t *entry,
           PTHREAD_RWLOCK_RDLOCK(&entry->content_lock);
           content_locked = TRUE;
           loflags = entry->object.file.open_fd.openflags;
-          if ((!cache_inode_fd(entry)) ||
-              (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
+          while ((!cache_inode_fd(entry)) ||
+                 (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
                PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
                PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
                loflags = entry->object.file.open_fd.openflags;
@@ -203,6 +203,8 @@ cache_inode_rdwr(cache_entry_t *entry,
                     }
                     opened = TRUE;
                }
+               PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
+               PTHREAD_RWLOCK_RDLOCK(&entry->content_lock);
           }
 
           /* Call FSAL_read or FSAL_write */
