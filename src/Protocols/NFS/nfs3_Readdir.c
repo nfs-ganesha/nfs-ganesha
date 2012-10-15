@@ -156,19 +156,11 @@ nfs_Readdir(nfs_arg_t *arg,
      
 
      /* Look up cache entry for filehandle */
-     if (req->rq_vers == NFS_V3) {
-	     dir_entry = nfs3_FhandleToCache(&(arg->arg_readdir3.dir),
-					     req_ctx,
-					     export,
-					     &(res->res_readdir3.status),
-					     &rc);
-     } else {
-	     dir_entry = nfs2_FhandleToCache(&(arg->arg_readdir2.dir),
-					     req_ctx,
-					     export,
-					     &(res->res_readdir2.status),
-					     &rc);
-     }
+     dir_entry = nfs3_FhandleToCache(&(arg->arg_readdir3.dir),
+				     req_ctx,
+				     export,
+				     &(res->res_readdir3.status),
+				     &rc);
      if(dir_entry == NULL) {
           /* Stale NFS FH? */
           goto out;

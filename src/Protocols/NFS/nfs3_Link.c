@@ -125,12 +125,11 @@ nfs_Link(nfs_arg_t *arg,
         res->res_link3.LINK3res_u.resfail.linkdir_wcc.after.attributes_follow = FALSE;
 
         /* Get entry for parent directory */
-        if ((parent_entry
-             = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
-				   req_ctx,
-				   export,
-				   &res->res_link3.status,
-				   &rc)) == NULL) {
+        if ((parent_entry = nfs3_FhandleToCache(&arg->arg_link3.link.dir,
+						req_ctx,
+						export,
+						&res->res_link3.status,
+						&rc)) == NULL) {
                 goto out;
         }
 

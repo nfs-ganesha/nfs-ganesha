@@ -105,24 +105,16 @@ nfs_Setattr(nfs_arg_t *arg,
                          str);
         }
 
-        if (req->rq_vers == NFS_V3) {
-                /* to avoid setting it on each error case */
-                res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before
-                        .attributes_follow = FALSE;
-                res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after
-                        .attributes_follow = FALSE;
-		entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
-					    req_ctx,
-					    export,
-					    &res->res_setattr3.status,
-					    &rc);
-        } else
-		entry = nfs2_FhandleToCache(&arg->arg_setattr2.file,
-					    req_ctx,
-					    export,
-					    &res->res_attr2.status,
-					    &rc);
-
+	/* to avoid setting it on each error case */
+	res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before
+		.attributes_follow = FALSE;
+	res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after
+		.attributes_follow = FALSE;
+	entry = nfs3_FhandleToCache(&arg->arg_setattr3.object,
+				    req_ctx,
+				    export,
+				    &res->res_setattr3.status,
+				    &rc);
         if(entry == NULL) {
                 goto out;
         }

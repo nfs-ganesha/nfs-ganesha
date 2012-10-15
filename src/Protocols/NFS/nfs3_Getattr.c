@@ -101,19 +101,11 @@ nfs_Getattr(nfs_arg_t *arg,
                          str);
         }
 
-        if (req->rq_vers == NFS_V3) {
-		entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
-					    req_ctx,
-					    export,
-					    &res->res_getattr3.status,
-					    &rc);
-	} else {
-		entry = nfs2_FhandleToCache(&arg->arg_getattr2,
-					    req_ctx,
-					    export,
-					    &res->res_attr2.status,
-					    &rc);
-	}
+	entry = nfs3_FhandleToCache(&arg->arg_getattr3.object,
+				    req_ctx,
+				    export,
+				    &res->res_getattr3.status,
+				    &rc);
         if(entry == NULL) {
                 LogFullDebug(COMPONENT_NFSPROTO,
                              "nfs_Getattr returning %d", rc);
