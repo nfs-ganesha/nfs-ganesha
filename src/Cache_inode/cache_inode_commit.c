@@ -106,7 +106,7 @@ cache_inode_commit(cache_entry_t *entry,
         the filesystem write buffer so execute a normal fsal_commit()
         call. */
      if (stability == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
-          if (!is_open_for_write(entry)) {
+          while (!is_open_for_write(entry)) {
                pthread_rwlock_unlock(&entry->content_lock);
                pthread_rwlock_wrlock(&entry->content_lock);
                if (!is_open_for_write(entry)) {
@@ -120,6 +120,8 @@ cache_inode_commit(cache_entry_t *entry,
                     }
                     opened = TRUE;
                }
+               pthread_rwlock_unlock(&entry->content_lock);
+               pthread_rwlock_rdlock(&entry->content_lock);
           }
 
           fsal_status = FSAL_commit(&(entry->object.file.open_fd.fd),
