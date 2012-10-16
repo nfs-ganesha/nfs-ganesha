@@ -175,16 +175,7 @@ nfs_Create(nfs_arg_t *arg,
                               FSAL_QUOTA_INODES,
                               req_ctx);
         if (FSAL_IS_ERROR(fsal_status)) {
-                switch (req->rq_vers) {
-                case NFS_V2:
-                        res->res_dirop2.status = NFSERR_DQUOT;
-                        break;
-
-                case NFS_V3:
-                        res->res_create3.status = NFS3ERR_DQUOT;
-                        break;
-                }
-
+		res->res_create3.status = NFS3ERR_DQUOT;
                 rc = NFS_REQ_OK;
                 goto out;
         }
