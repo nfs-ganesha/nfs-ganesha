@@ -64,6 +64,7 @@ struct vfs_fsal_export {
 	int root_fd;
 	dev_t root_dev;
 	struct file_handle *root_handle;
+	bool pnfs_panfs_enabled;
 };
 
 /* helpers to/from other VFS objects
@@ -465,6 +466,42 @@ void vfs_export_ops_init(struct export_ops *ops)
 
 void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
+/* fs_specific_has() parses the fs_specific string for a particular key, 
+   returns true if found, and optionally returns a val if the string is
+   of the form key=val.
+ *
+ * The fs_specific string is a comma (,) separated options where each option
+ * can be of the form key=value or just key. Example:
+ *	FS_specific = "foo=baz,enable_A";
+ */
+static bool fs_specific_has(const char *fs_specific, const char* key,
+			   char *val, int max_val_bytes)
+{
+	char *fso_copy = strdup(fs_specific); /* enable multiple searches */
+	char *next_comma, *option;
+	bool ret;
+
+	for (option = strtok_r(fso_copy, ",", &next_comma);
+	     option; 
+	     option=strtok_r(NULL, ",", &next_comma)) {
+		char *k = option;
+		char *v = k;
+
+		strsep(&v, "=");
+		if (0 == strcmp(k, key)) {
+			if(val)
+				strncpy(val, v, max_val_bytes);
+			ret = true;
+			goto out;
+		}
+	}
+
+	ret = false;
+out:
+	free(fso_copy);
+	return ret;
+}
+
 /* create_export
  * Create an export point and return a handle to it to be kept
  * in the export list.
@@ -474,7 +511,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				const char *export_path,
-				const char *fs_options,
+				const char *fs_specific,
 				struct exportlist__ *exp_entry,
 				struct fsal_module *next_fsal,
                                 const struct fsal_up_vector *up_ops,
@@ -526,9 +563,16 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
         myself->export.validation_flags = FSAL_VALIDATE_ALL;
 
 #ifdef _USE_PANFS_PNFS
-	export_ops_pnfs(myself->export.ops);
-	handle_ops_pnfs(myself->export.obj_ops);
-#endif
+	myself->pnfs_panfs_enabled = fs_specific_has(fs_specific, "pnfs_panfs",
+						     NULL, 0);
+	if (myself->pnfs_panfs_enabled) {
+		LogInfo(COMPONENT_FSAL,
+			"vfs_fsal_create: pnfs_panfs was enabled for [%s]",
+			export_path);
+		export_ops_pnfs(myself->export.ops);
+		handle_ops_pnfs(myself->export.obj_ops);
+	}
+#endif /* def _USE_PANFS_PNFS */
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
