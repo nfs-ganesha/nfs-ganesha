@@ -150,11 +150,6 @@ cache_entry_t * nfs3_FhandleToCache(nfs_fh3 * pfh3,
 				   exportlist_t *exp_list,
 				   nfsstat3 * status,
 				   int *rc);
-cache_entry_t *nfs2_FhandleToCache(fhandle2 * pfh2,
-				   const struct req_op_context *req_ctx,
-				   exportlist_t *exp_list,
-				   nfsstat2 * status,
-				   int *rc);
 
 int nfs4_FSALToFhandle(nfs_fh4 *fh4,
                        struct fsal_obj_handle *fsalhandle,
