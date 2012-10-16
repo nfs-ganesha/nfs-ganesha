@@ -810,6 +810,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
 #ifdef _USE_QUEUE_TIMER
   msectimer_t                  queue_timer_diff;
 #endif
+  msectimer_t                  fsal_latency = 0;
+  unsigned int                 fsal_count   = 0;
   enum auth_stat               auth_rc;
   const char                 * progname = "unknown";
   xprt_type_t                  xprt_type = svc_get_xprt_type(xprt);
@@ -1459,6 +1461,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
                                                      pworker_data,
                                                      req,
                                                      &res_nfs);
+      fsal_latency = pfsal_op_ctx->latency;
+      fsal_count   = pfsal_op_ctx->count;
     }
 
 #ifdef _USE_STAT_EXPORTER
@@ -1489,8 +1493,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
                   queue_timer_diff,
 #endif
                   timer_diff,
-                  pfsal_op_ctx->latency,
-                  pfsal_op_ctx->count);
+                  fsal_latency,
+                  fsal_count);
 
   /* Update total counters */
   pworker_data->stats.nb_total_req += 1;
@@ -1506,8 +1510,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
                       queue_timer_diff,
 #endif
 		      timer_diff,
-		      pfsal_op_ctx->latency,
-		      pfsal_op_ctx->count);
+		      fsal_latency,
+		      fsal_count);
 
       /* Update per-share total counters */
       pexport->worker_stats[pworker_data->worker_index].nb_total_req += 1;
