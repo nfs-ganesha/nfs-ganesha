@@ -173,6 +173,9 @@ create_export(struct fsal_module *module,
         }
 
         export->export.fsal = module;
+        export->export.fsal = module;
+        /* For now, until we add in upcalls. */
+        export->export.validation_flags = FSAL_VALIDATE_ALL;
 
         *pub_export = &export->export;
         return status;

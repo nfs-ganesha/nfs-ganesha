@@ -1036,7 +1036,8 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
         return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 }
 
-/* handle_digest
+/**
+ * handle_digest
  * default case return a safe empty key
  */
 
@@ -1046,6 +1047,27 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
         fh_desc->addr = obj_hdl;
         fh_desc->len = 0;
 }
+
+/**
+ * @brief Nothing is valid
+ *
+ * Indicate that nothing cached is valid.
+ *
+ * @param[in] obj_hdl ignored
+ * @param[in] last    ignored
+ * @param[in] check   ignored
+ *
+ * @return false
+ */
+
+static bool
+validate(struct fsal_obj_handle *obj_hdl,
+         gsh_time_t last,
+         uint32_t check)
+{
+        return false;
+}
+
 
 /**
  * @brief Fail to grant a layout segment.
@@ -1123,45 +1145,46 @@ layoutcommit(struct fsal_obj_handle *obj_hdl,
  */
 
 struct fsal_obj_ops def_handle_ops = {
-	.get = handle_get,
-	.put = handle_put,
-	.release = handle_release,
-	.lookup = lookup,
-	.readdir = read_dirents,
-	.create = create,
-	.mkdir = makedir,
-	.mknode = makenode,
-	.symlink = makesymlink,
-	.readlink = readsymlink,
-	.test_access = fsal_test_access, /* default is use common test */
-	.getattrs = getattrs,
-	.setattrs = setattrs,
-	.link = linkfile,
-	.rename = renamefile,
-	.unlink = file_unlink,
-	.truncate = file_truncate,
-	.open = file_open,
-	.status = file_status,
-	.read = file_read,
-	.write = file_write,
-	.commit = commit,
-	.lock_op = lock_op,
-	.share_op = share_op,
-	.close = file_close,
-	.list_ext_attrs = list_ext_attrs,
-	.getextattr_id_by_name = getextattr_id_by_name,
-	.getextattr_value_by_name = getextattr_value_by_name,
-	.getextattr_value_by_id = getextattr_value_by_id,
-	.setextattr_value = setextattr_value,
-	.setextattr_value_by_id = setextattr_value_by_id,
-	.getextattr_attrs = getextattr_attrs,
-	.remove_extattr_by_id = remove_extattr_by_id,
-	.remove_extattr_by_name = remove_extattr_by_name,
-	.handle_is = handle_is,
-	.lru_cleanup = lru_cleanup,
-	.compare = compare,
-	.handle_digest = handle_digest,
+        .get = handle_get,
+        .put = handle_put,
+        .release = handle_release,
+        .lookup = lookup,
+        .readdir = read_dirents,
+        .create = create,
+        .mkdir = makedir,
+        .mknode = makenode,
+        .symlink = makesymlink,
+        .readlink = readsymlink,
+        .test_access = fsal_test_access, /* default is use common test */
+        .getattrs = getattrs,
+        .setattrs = setattrs,
+        .link = linkfile,
+        .rename = renamefile,
+        .unlink = file_unlink,
+        .truncate = file_truncate,
+        .open = file_open,
+        .status = file_status,
+        .read = file_read,
+        .write = file_write,
+        .commit = commit,
+        .lock_op = lock_op,
+        .share_op = share_op,
+        .close = file_close,
+        .list_ext_attrs = list_ext_attrs,
+        .getextattr_id_by_name = getextattr_id_by_name,
+        .getextattr_value_by_name = getextattr_value_by_name,
+        .getextattr_value_by_id = getextattr_value_by_id,
+        .setextattr_value = setextattr_value,
+        .setextattr_value_by_id = setextattr_value_by_id,
+        .getextattr_attrs = getextattr_attrs,
+        .remove_extattr_by_id = remove_extattr_by_id,
+        .remove_extattr_by_name = remove_extattr_by_name,
+        .handle_is = handle_is,
+        .lru_cleanup = lru_cleanup,
+        .compare = compare,
+        .handle_digest = handle_digest,
         .handle_to_key = handle_to_key,
+        .validate = validate,
         .layoutget = layoutget,
         .layoutreturn = layoutreturn,
         .layoutcommit = layoutcommit

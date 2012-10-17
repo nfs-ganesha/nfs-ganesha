@@ -71,7 +71,7 @@ release(struct fsal_export *export_pub)
                 return status;
         }
         fsal_detach_export(export->export.fsal, &export->export.exports);
-	free_export_ops(&export->export);
+        free_export_ops(&export->export);
         pthread_mutex_unlock(&export->export.lock);
 
         export->export.ops = NULL;
@@ -102,7 +102,7 @@ release(struct fsal_export *export_pub)
 
 static fsal_status_t
 lookup_path(struct fsal_export *export_pub,
-	    const struct req_op_context *opctx,
+            const struct req_op_context *opctx,
             const char *path,
             struct fsal_obj_handle **pub_handle)
 {
