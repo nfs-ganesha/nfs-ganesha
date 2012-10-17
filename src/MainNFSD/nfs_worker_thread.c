@@ -766,7 +766,7 @@ nfs_rpc_get_args(nfs_request_data_t *preqnfs)
          &preqnfs->lookahead) == FALSE)
     {
       struct svc_req *req = &preqnfs->req;
-      LogMajor(COMPONENT_DISPATCH,
+      LogInfo(COMPONENT_DISPATCH,
                    "svc_getargs failed for Program %d, Version %d, Function %d xid=%u",
                (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
                req->rq_xid);
