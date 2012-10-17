@@ -41,6 +41,7 @@
 #define fsi_dirent                 dirent
 #define FSI_MAX_HANDLE_CACHE_ENTRY 2500
 #define IO_BUFFER_SIZE             262144 //256k
+#define PTFSAL_USE_READSIZE_THRESHOLD     524288 // 512K.
 #define PTFSAL_POLLING_HANDLE_TIMEOUT_SEC 300  // Time interval between 
                                                // polling for handle to 
                                                // close in the
@@ -93,10 +94,6 @@ int ptfsal_stat_by_parent_name(fsal_op_context_t * p_context,
                                fsal_handle_t     * p_parentdir_handle,
                                char              * p_filename,
                                fsi_stat_struct   * p_stat);
-
-void ptfsal_convert_fsi_name(ccl_context_t       * context,
-                             const char          * filename,
-                             char                * sv_filename);
 
 int ptfsal_opendir(fsal_op_context_t * p_context,
                    const char        * filename,

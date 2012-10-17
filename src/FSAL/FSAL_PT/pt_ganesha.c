@@ -362,14 +362,6 @@ ptfsal_rename(fsal_op_context_t * p_context,
 
   return rc;
 }
-// -----------------------------------------------------------------------------
-void
-ptfsal_convert_fsi_name(ccl_context_t      * ccl_context,
-                        const char         * filename,
-                        char               * sv_filename)
-{
-  convert_fsi_name(ccl_context, filename, sv_filename);
-}
 
 // -----------------------------------------------------------------------------
 int
@@ -948,6 +940,7 @@ ptfsal_read(ptfsal_file_t * p_file_descriptor,
   int    rc;
 
   ccl_context_t ccl_context;
+  uint64_t      max_readahead_offset = UINT64_MAX;
 
   ccl_context.handle_index = p_file_descriptor->fd;
   ccl_context.export_id    = p_file_descriptor->export_id;
@@ -957,10 +950,17 @@ ptfsal_read(ptfsal_file_t * p_file_descriptor,
   // we will use 256K i/o with vtl but allow larger i/o from NFS
   FSI_TRACE(FSI_DEBUG, "FSI - [%4d] xmp_read off %ld size %ld\n", 
             in_handle, offset, size);
+
+  if (size > PTFSAL_USE_READSIZE_THRESHOLD) {
+    // this is an optimized linux mount
+    // probably 1M rsize
+    max_readahead_offset = offset + size;
+  }
   while (cur_size > IO_BUFFER_SIZE) {
     FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pread - split %d\n", 
               in_handle, split_count);
-    rc = ccl_pread(&ccl_context, &buf[buf_offset], IO_BUFFER_SIZE, cur_offset);
+    rc = ccl_pread(&ccl_context, &buf[buf_offset], IO_BUFFER_SIZE, cur_offset, 
+                   max_readahead_offset);
     if (rc == -1) {
       return rc;
     }
@@ -974,7 +974,8 @@ ptfsal_read(ptfsal_file_t * p_file_descriptor,
   if (cur_size > 0) {
     FSI_TRACE(FSI_DEBUG, "FSI - [%4d] pread - split %d\n", in_handle, 
               split_count);
-    rc = ccl_pread(&ccl_context, &buf[buf_offset], cur_size, cur_offset);
+    rc = ccl_pread(&ccl_context, &buf[buf_offset], cur_size, cur_offset,
+                   max_readahead_offset);
     if (rc == -1) {
       return rc;
     }

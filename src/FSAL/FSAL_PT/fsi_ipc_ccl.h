@@ -166,7 +166,6 @@ extern struct timeval            g_begin_io_idle_time;
 extern struct ipc_client_stats_t g_client_bytes_read;
 extern struct ipc_client_stats_t g_client_bytes_written;
 extern struct ipc_client_stats_t g_ipc_vfs_xfr_time;    // usecs
-extern struct ipc_client_stats_t g_client_io_wait_time;  // usecs
 extern struct ipc_client_stats_t g_client_io_idle_time;  // usecs
 extern uint64_t                  g_num_reads_in_progress;
 extern uint64_t                  g_num_writes_in_progress;
@@ -431,9 +430,10 @@ typedef struct {
 #define FSI_IPC_CLIENT_STATS_LOG_INTERVAL 2
 #endif // UNIT_TEST
 
-#define FSI_RETURN(x)          \
-{                              \
-  return x;                    \
+#define FSI_RETURN(result, handle)     \
+{                                      \
+  ccl_ipc_stats_logger(handle);        \
+  return result;                       \
 }
 
 struct ipc_client_stats_t {
@@ -491,15 +491,18 @@ struct ipc_client_stats_t {
 
 #define IDLE_STAT_READ_START()                                                \
 {                                                                             \
+  ccl_up_mutex_lock(&g_statistics_mutex);                                     \
   g_num_reads_in_progress++;                                                  \
   if (((g_num_reads_in_progress + g_num_writes_in_progress) == 1) &&          \
       (g_begin_io_idle_time.tv_sec != 0)) {                                   \
     END_IO_IDLE_CLOCK();                                                      \
   }                                                                           \
+  ccl_up_mutex_unlock(&g_statistics_mutex);                                   \
 }
 
 #define IDLE_STAT_READ_END()                                                  \
 {                                                                             \
+  ccl_up_mutex_lock(&g_statistics_mutex);                                     \
   if (g_num_reads_in_progress == 0) {                                         \
     FSI_TRACE(FSI_ERR, "IO Idle read count off, distrust IDLE stat ");        \
   }                                                                           \
@@ -507,19 +510,23 @@ struct ipc_client_stats_t {
   if ((g_num_reads_in_progress + g_num_writes_in_progress) == 0) {            \
     START_IO_IDLE_CLOCK();                                                    \
   }                                                                           \
+  ccl_up_mutex_unlock(&g_statistics_mutex);                                   \
 }
 
 #define IDLE_STAT_WRITE_START()                                               \
 {                                                                             \
+  ccl_up_mutex_lock(&g_statistics_mutex);                                     \
   g_num_writes_in_progress++;                                                 \
   if (((g_num_reads_in_progress + g_num_writes_in_progress) == 1) &&          \
       (g_begin_io_idle_time.tv_sec != 0)) {                                   \
     END_IO_IDLE_CLOCK();                                                      \
   }                                                                           \
+  ccl_up_mutex_unlock(&g_statistics_mutex);                                   \
 }
 
 #define IDLE_STAT_WRITE_END()                                                 \
 {                                                                             \
+  ccl_up_mutex_lock(&g_statistics_mutex);                                     \
   if (g_num_writes_in_progress == 0) {                                        \
     FSI_TRACE(FSI_DEBUG, "IO Idle write count off, distrust IDLE stat ");     \
   }                                                                           \
@@ -527,6 +534,7 @@ struct ipc_client_stats_t {
   if ((g_num_reads_in_progress + g_num_writes_in_progress) == 0) {            \
     START_IO_IDLE_CLOCK();                                                    \
   }                                                                           \
+  ccl_up_mutex_unlock(&g_statistics_mutex);                                   \
 }
 
 // ---------------------------------------------------------------------------
@@ -551,9 +559,9 @@ struct ipc_client_stats_t {
 // ---------------------------------------------------------------------------
 
 // This determines how many times to poll when an existing opened handle
-// that we are trying to reopen, but we are already closing that handle.
+// that we are trying to reopen, but we are already closing that handle. 
 // Open processing will poll until that handle is completely closed before
-// opening it again.
+// opening it again. 
 #define CCL_MAX_CLOSING_TO_CLOSE_POLLING_COUNT 30
 
 // ---------------------------------------------------------------------------
@@ -588,8 +596,8 @@ int ccl_stat(ccl_context_t * handle,
 int ccl_fstat(int                 handle_index,
               fsi_stat_struct   * sbuf);
 int ccl_stat_by_handle(ccl_context_t           * context,
-		       struct PersistentHandle * handle,
-		       fsi_stat_struct         * sbuf);
+                       struct PersistentHandle * handle,
+                       fsi_stat_struct         * sbuf);
 uint64_t get_acl_resource_handle(uint64_t aclHandle);
 int have_pending_io_response(int handle_index);
 int io_msgid_from_index (int index);
@@ -690,7 +698,8 @@ int ccl_ftruncate(ccl_context_t * handle,
 ssize_t ccl_pread(ccl_context_t * handle,
                    void              * data,
                    size_t              n,
-                   uint64_t            offset);
+                   uint64_t            offset,
+                   uint64_t            max_readahead_offset);
 ssize_t ccl_pwrite(ccl_context_t         * handle,
                     int                    handle_index,
                     const void           * data,
@@ -714,7 +723,8 @@ void issue_read_ahead(struct file_handle_t       * p_pread_hndl,
                       struct msg_t               * p_msg,
                       struct CommonMsgHdr        * p_pread_hdr,
                       struct ClientOpPreadReqMsg * p_pread_req,
-                      const ccl_context_t        * handle);
+                      const ccl_context_t        * handle,
+                      uint64_t                     max_readahead_offset);
 void load_deferred_io_rc(int handle_index,
                          int cur_error);
 int merge_errno_rc(int rc_a,
@@ -734,7 +744,8 @@ int update_read_status(struct file_handle_t        * p_pread_hndl,
                        struct msg_t                * p_msg,
                        struct CommonMsgHdr         * p_pread_hdr,
                        struct ClientOpPreadReqMsg  * p_pread_req,
-                       const ccl_context_t         * handle);
+                       const ccl_context_t         * handle,
+                       uint64_t                      max_readahead_offset);
 int verify_io_response(int                      transaction_type,
                        int                      cur_index,
                        struct CommonMsgHdr           * p_msg_hdr,
@@ -746,8 +757,9 @@ int wait_free_write_buf(int     handle_index,
 int flush_write_buffer(int handle_index, ccl_context_t * handle);
 int wait_for_io_results(int handle_index);
 int synchronous_flush_write_buffer(int handle_index, ccl_context_t * handle);
-void ccl_ipc_stats_init();
-void ccl_ipc_stats_logger();
+int ccl_ipc_stats_init();
+void ccl_ipc_stats_set_log_interval(uint64_t interval);
+void ccl_ipc_stats_logger(ccl_context_t * handle);
 void ccl_ipc_stats_on_io_complete(struct timeval * done_time);
 void ccl_ipc_stats_on_io_start(uint64_t delay);
 void ccl_ipc_stats_on_read(uint64_t bytes);
@@ -818,6 +830,15 @@ int ccl_symlink(ccl_context_t * pvfs_handle,
                 const char    * path,
                 const char    * link_content);
 void ccl_update_handle_last_io_timestamp(int handle_index);
+int ccl_fsal_try_stat_by_index(ccl_context_t           * handle,
+                               int                       handle_index,
+                               char                    * fsal_name,
+                               fsi_stat_struct         * sbuf);
+int ccl_fsal_try_fastopen_by_index(ccl_context_t       * handle,   
+                                   int                   handle_index,
+                                   char                * fsal_name);
+
+
 
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
@@ -840,6 +861,7 @@ extern pthread_mutex_t g_parseio_mutex;
 // only one thread can change global transid at a time
 extern pthread_mutex_t g_transid_mutex;
 extern pthread_mutex_t g_non_io_mutex;
+extern pthread_mutex_t g_statistics_mutex;
 extern pthread_mutex_t g_close_mutex;
 // Global I/O mutex
 extern pthread_mutex_t g_io_mutex;
