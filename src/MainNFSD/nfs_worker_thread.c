@@ -75,7 +75,10 @@
 #include "SemN.h"
 
 extern nfs_worker_data_t *workers_data;
+#ifdef SONAS
 extern uint64_t rpc_out;
+#endif
+
 pool_t *request_pool;
 pool_t *request_data_pool;
 pool_t *dupreq_pool;
@@ -906,9 +909,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
           LogFullDebug(COMPONENT_DISPATCH,
                        "After svc_sendreply on socket %d (dup req)",
                        xprt->xp_fd);
-
+#ifdef SONAS
           rpc_out++;
-
+#endif
           return;
 
           /* Another thread owns the request */
@@ -1468,9 +1471,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
   /* process time */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
-
+#ifdef SONAS
   rpc_out++;
-
+#endif
   timer_diff = timer_end - timer_start;
 
 #ifdef _USE_QUEUE_TIMER
@@ -1663,8 +1666,9 @@ auth_failure:
             "Attempt to delete duplicate request after auth failure");
   
 /* XXX */
+#ifdef SONAS
   rpc_out++;
-
+#endif
   return;
 
 }                               /* nfs_rpc_execute */
