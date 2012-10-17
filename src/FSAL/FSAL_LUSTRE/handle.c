@@ -759,7 +759,6 @@ struct linux_dirent {
  * read the directory and call through the callback function for
  * each entry.
  * @param dir_hdl [IN] the directory to read
- * @param entry_cnt [IN] limit of entries. 0 implies no limit
  * @param whence [IN] where to start (next)
  * @param dir_state [IN] pass thru of state to callback
  * @param cb [IN] callback function
@@ -768,10 +767,9 @@ struct linux_dirent {
 
 static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
-				  uint32_t entry_cnt,
 				  struct fsal_cookie *whence,
 				  void *dir_state,
-				  fsal_status_t (*cb)(
+				  bool (*cb)(
 					  const struct req_op_context *opctx,
 					  const char *name,
 					  unsigned int dtype,
@@ -834,21 +832,15 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
 
 			/* callback to cache inode */
-			status = cb(opctx,
-				    dentry->d_name,
-				    d_type,
-				    dir_hdl,
-				    dir_state, entry_cookie);
-			if(FSAL_IS_ERROR(status)) {
-				fsal_error = status.major;
-				retval = status.minor;
+			if (!cb(opctx,
+                                dentry->d_name,
+                                dir_state,
+                                entry_cookie)) {
 				goto done;
 			}
 		skip:
 			bpos += dentry->d_reclen;
 			cnt++;
-			if(entry_cnt > 0 && cnt >= entry_cnt)
-				goto done;
 		}
 	} while(nread > 0);
 

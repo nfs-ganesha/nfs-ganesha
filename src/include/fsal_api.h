@@ -1031,12 +1031,10 @@ struct fsal_cookie {
         unsigned char cookie[FSAL_READDIR_COOKIE_MAX];
 };
 
-typedef fsal_status_t (*fsal_readdir_cb)(const struct req_op_context *opctx,
-                                         const char *name,
-                                         unsigned int dtype,
-                                         struct fsal_obj_handle *dir_hdl,
-                                         void *dir_state,
-                                         struct fsal_cookie *cookie);
+typedef bool (*fsal_readdir_cb)(const struct req_op_context *opctx,
+                                const char *name,
+                                void *dir_state,
+                                struct fsal_cookie *cookie);
 /**
  * @brief FSAL objectoperations vector
  */
@@ -1123,27 +1121,18 @@ struct fsal_obj_ops {
  *
  * @param[in]  dir_hdl   Directory to read
  * @param[in]  opctx     Request context (user creds, client address etc)
- * @param[in]  entry_cnt Number of entries to return
  * @param[in]  whence    Point at which to start reading.  NULL to
  *                       start at beginning.
  * @param[in]  dir_state Opaque pointer to be passed to callback
  * @param[in]  cb        Callback to receive names
  * @param[out] eof       true if the last entry was reached
  *
- * @note I think we would be better to follow the Cache inode practice
- * of changing the return value of the callback to be true or false
- * (to request more entries) rather than take a number.  Further,
- * since even in readdir(3), @c d_type is specified as not being
- * meaningful on all filesystems and our current callback just does a
- * lookup without inspecting @c d_type, it's probably worth removing.
- * We might also want to remove @c dir_hdl from the callback, since
- * the caller can stash it in @c dir_state, to save stack. -- ACE
- *
- * @return FSAL status.
+ * @retval true if more entries are required
+ * @retval false if no more entries are required (and the current one
+ *               has not been consumed)
  */
         fsal_status_t (*readdir)(struct fsal_obj_handle *dir_hdl,
                                  const struct req_op_context *opctx,
-                                 uint32_t entry_cnt,
                                  struct fsal_cookie *whence,
                                  void *dir_state,
                                  fsal_readdir_cb cb,

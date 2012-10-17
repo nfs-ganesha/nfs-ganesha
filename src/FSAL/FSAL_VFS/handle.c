@@ -805,32 +805,29 @@ struct linux_dirent {
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
                                   const struct req_op_context *opctx,
-				  uint32_t entry_cnt,
-				  struct fsal_cookie *whence,
-				  void *dir_state,
-				  fsal_readdir_cb cb,
+                                  struct fsal_cookie *whence,
+                                  void *dir_state,
+                                  fsal_readdir_cb cb,
                                   bool *eof)
 {
-	struct vfs_fsal_obj_handle *myself;
-	int dirfd, mntfd;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t status;
-	int retval = 0;
-	off_t seekloc = 0;
-	int bpos, cnt, nread;
-	unsigned char d_type;
-	struct linux_dirent *dentry;
-	struct fsal_cookie *entry_cookie;
-	char buf[BUF_SIZE];
+        struct vfs_fsal_obj_handle *myself;
+        int dirfd, mntfd;
+        fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+        int retval = 0;
+        off_t seekloc = 0;
+        int bpos, cnt, nread;
+        struct linux_dirent *dentry;
+        struct fsal_cookie *entry_cookie;
+        char buf[BUF_SIZE];
 
-	if(whence != NULL) {
-		if(whence->size != sizeof(off_t)) {
-			fsal_error = posix2fsal_error(EINVAL);
-			retval = errno;
-			goto out;
-		}
-		memcpy(&seekloc, whence->cookie, sizeof(off_t));
-	}
+        if(whence != NULL) {
+                if(whence->size != sizeof(off_t)) {
+                        fsal_error = posix2fsal_error(EINVAL);
+                        retval = errno;
+                        goto out;
+                }
+                memcpy(&seekloc, whence->cookie, sizeof(off_t));
+        }
 	entry_cookie = alloca(sizeof(struct fsal_cookie) + sizeof(off_t));
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mntfd = vfs_get_root_fd(dir_hdl->export);
@@ -861,25 +858,19 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			if(strcmp(dentry->d_name, ".") == 0 ||
 			   strcmp(dentry->d_name, "..") == 0)
 				goto skip; /* must skip '.' and '..' */
-			d_type = *(buf + bpos + dentry->d_reclen - 1);
 			entry_cookie->size = sizeof(off_t);
 			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
 
-			/* callback to cache inode */
-			status = cb(opctx, dentry->d_name,
-				    d_type,
-				    dir_hdl,
-				    dir_state, entry_cookie);
-			if(FSAL_IS_ERROR(status)) {
-				fsal_error = status.major;
-				retval = status.minor;
-				goto done;
-			}
+                        /* callback to cache inode */
+                        if (!cb(opctx,
+                                dentry->d_name,
+                                dir_state,
+                                entry_cookie)) {
+                                goto done;
+                        }
 		skip:
 			bpos += dentry->d_reclen;
 			cnt++;
-			if(entry_cnt > 0 && cnt >= entry_cnt)
-				goto done;
 		}
 	} while(nread > 0);
 

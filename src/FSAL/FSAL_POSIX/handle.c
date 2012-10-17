@@ -534,18 +534,15 @@ static struct dirlist *new_dirent (const char *dirpath, const char *name)
     return n;
 }
 
-static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl,
-				   const struct req_op_context *opctx,
-				   uint32_t entry_cnt,
-				   struct fsal_cookie *whence,
-                                   void *dir_state,
-				   fsal_status_t (*cb) (const struct req_op_context *opctx,
-							const char *name,
-							unsigned int dtype,
-							struct fsal_obj_handle * dir_hdl,
-							void *dir_state,
-							struct fsal_cookie * cookie),
-                                   bool * eof)
+static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
+                                  const struct req_op_context *opctx,
+                                  struct fsal_cookie *whence,
+                                  void *dir_state,
+                                  bool (*cb)(const struct req_op_context *opctx,
+                                             const char *name,
+                                             void *dir_state,
+                                             struct fsal_cookie * cookie),
+                                   bool *eof)
 {
     struct file_data *parent = NULL;
     fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -608,10 +605,10 @@ static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl,
     memcpy(entry_cookie->cookie, &offset, sizeof(offset));
 
     for (i = first; i; i = i->next) {
-	status = cb (opctx, i->name, i->filetype, dir_hdl, dir_state, entry_cookie);
+        if (!cb(opctx, i->name, dir_state, entry_cookie))
         if (FSAL_IS_ERROR (status)) {
-            fsal_error = status.major;
-            retval = status.minor;
+            fsal_error = 0;
+            retval = 0;
             goto out;
         }
     }
@@ -636,7 +633,7 @@ static fsal_status_t read_dirents (struct fsal_obj_handle *dir_hdl,
 
 
 static fsal_status_t renamefile (struct fsal_obj_handle *olddir_hdl,
-				 const struct req_op_context *opctx,
+                                 const struct req_op_context *opctx,
                                  const char *old_name, struct fsal_obj_handle *newdir_hdl, const char *new_name)
 {
     struct posix_fsal_obj_handle *olddir_handle;

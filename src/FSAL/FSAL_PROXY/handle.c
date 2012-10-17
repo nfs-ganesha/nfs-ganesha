@@ -1571,10 +1571,10 @@ pxy_do_readdir(const struct req_op_context *opctx,
                 fc.size = sizeof(e4->cookie),
                 memcpy(fc.cookie, &e4->cookie, sizeof(e4->cookie));
                 *cookie = e4->cookie;
-                
-                st = cb(opctx, name, attr.type, &ph->obj, cbarg, &fc);
-                if(FSAL_IS_ERROR(st))
+
+                if(!cb(opctx, name, cbarg, &fc)) {
                         break;
+                }
         }
         xdr_free((xdrproc_t)xdr_readdirres, resoparray);
         return st;
@@ -1584,8 +1584,7 @@ pxy_do_readdir(const struct req_op_context *opctx,
 static fsal_status_t
 pxy_readdir(struct fsal_obj_handle *dir_hdl,
             const struct req_op_context *opctx,
-	    uint32_t entry_cnt,
-	    struct fsal_cookie *whence,
+            struct fsal_cookie *whence,
             void *cbarg,
             fsal_readdir_cb cb,
             bool *eof)

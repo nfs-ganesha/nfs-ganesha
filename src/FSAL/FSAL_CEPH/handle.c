@@ -135,7 +135,6 @@ lookup(struct fsal_obj_handle *dir_pub,
  *
  * @param[in]  dir_pub     The directory to read
  * @param[in]  opctx        Request context (user creds, client address etc)
- * @param[in]  entries_req Number of entries to return
  * @param[in]  whence      The cookie indicating resumption, NULL to start
  * @param[in]  dir_state   Opaque, passed to cb
  * @param[in]  cb          Callback that receives directory entries
@@ -146,15 +145,12 @@ lookup(struct fsal_obj_handle *dir_pub,
 
 static fsal_status_t
 fsal_readdir(struct fsal_obj_handle *dir_pub,
-	     const struct req_op_context *opctx,
-             uint32_t entries_req,
+             const struct req_op_context *opctx,
              struct fsal_cookie *whence,
              void *dir_state,
-             fsal_status_t (*cb)(
-		     const struct req_op_context *opctx,
+             bool (*cb)(
+                     const struct req_op_context *opctx,
                      const char *name,
-                     unsigned int dtype,
-                     struct fsal_obj_handle *dir_hdl,
                      void *dir_state,
                      struct fsal_cookie *cookie),
              bool *eof)
@@ -171,8 +167,6 @@ fsal_readdir(struct fsal_obj_handle *dir_pub,
         struct ceph_dir_result *dir_desc = NULL;
         /* Cookie marking the start of the readdir */
         uint64_t start = 0;
-        /* Count of entries processed */
-        uint32_t count = 0;
         /* Return status */
         fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
 
@@ -192,7 +186,7 @@ fsal_readdir(struct fsal_obj_handle *dir_pub,
 
         ceph_seekdir(export->cmount, dir_desc, start);
 
-        while ((count <= entries_req) && !(*eof)) {
+        while (!(*eof)) {
                 struct stat st;
                 struct dirent de;
                 struct fsal_cookie cookie;
@@ -213,13 +207,10 @@ fsal_readdir(struct fsal_obj_handle *dir_pub,
                         cookie.size = sizeof(uint64_t);
                         memcpy(cookie.cookie, &de.d_off,
                                sizeof(uint64_t));
-                        fsal_status = cb(opctx,
-					 de.d_name,
-                                         de.d_type,
-                                         dir_pub,
-                                         dir_state,
-                                         &cookie);
-                        if (FSAL_IS_ERROR(fsal_status)) {
+                        if (!cb(opctx,
+                                de.d_name,
+                                dir_state,
+                                &cookie)) {
                                 goto closedir;
                         }
                 } else if (rc == 0) {

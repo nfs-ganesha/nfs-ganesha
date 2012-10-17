@@ -347,19 +347,16 @@ struct cache_inode_populate_cb_state {
  *
  * @param[in]     opctx     Request context
  * @param[in]     name      Name of the directory entry
- * @param[in]     dtype     File type
- * @param[in]     dir_hdl   The directory handle
  * @param[in,out] dir_state Callback state
  * @param[in]     cookie    Directory cookie
  *
- * @return FSAL status.
+ * @retval true if more entries are requested
+ * @retval false if no more should be sent and the last was not processed
  */
 
-static fsal_status_t
+static bool
 populate(const struct req_op_context *opctx,
          const char *name,
-         unsigned int dtype,
-         struct fsal_obj_handle *dir_hdl,
          void *dir_state,
          struct fsal_cookie *cookie)
 {
@@ -368,20 +365,22 @@ populate(const struct req_op_context *opctx,
         struct fsal_obj_handle *entry_hdl;
         cache_inode_dir_entry_t *new_dir_entry = NULL;
         cache_entry_t *pentry = NULL;
-        fsal_status_t status;
+        fsal_status_t fsal_status = {0, 0};
+        struct fsal_obj_handle *dir_hdl = state->directory->obj_handle;
 
-        status = dir_hdl->ops->lookup(dir_hdl, opctx, name, &entry_hdl);
-        if(FSAL_IS_ERROR(status)) {
-                return status;
+        fsal_status = dir_hdl->ops->lookup(dir_hdl, opctx, name, &entry_hdl);
+        if(FSAL_IS_ERROR(fsal_status)) {
+                *state->status = cache_inode_error_convert(fsal_status);
+                goto error;
         }
         pentry = cache_inode_new_entry(entry_hdl,
                                        CACHE_INODE_FLAG_NONE,
                                        state->status);
         if(pentry == NULL) {
-                status.major = ERR_FSAL_NOENT; /* error for signalling cache inode errors */
-                status.minor = *state->status;
-                /* we do not free entry_hdl because it is consumed by cache_inode_new_entry */
-                return status;
+                *state->status = CACHE_INODE_NOT_FOUND;
+                /* we do not free entry_hdl because it is consumed by
+                   cache_inode_new_entry */
+                return false;
         }
         *state->status = cache_inode_add_cached_dirent(state->directory,
                                                        name,
@@ -390,8 +389,6 @@ populate(const struct req_op_context *opctx,
                                                        state->status);
         if (*state->status != CACHE_INODE_SUCCESS &&
             *state->status != CACHE_INODE_ENTRY_EXISTS) {
-                status.major = ERR_FSAL_NOENT;
-                status.minor = *state->status;
                 goto error;
         }
         if(*state->status != CACHE_INODE_ENTRY_EXISTS) {
@@ -407,10 +404,10 @@ populate(const struct req_op_context *opctx,
 
                 memcpy(&new_dir_entry->fsal_cookie, cookie, sizeof(uint64_t));
         }
-        return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        return true;
 
 error:
-        return fsalstat(status.major, status.minor);
+        return false;
 }
 
 /**
@@ -463,9 +460,9 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
   state.status = status;
   state.offset_cookie = 0;
 
+  *status = CACHE_INODE_SUCCESS;
   fsal_status = directory->obj_handle->ops->readdir(directory->obj_handle,
                                                     req_ctx,
-                                                    0, /* read the whole dir */
                                                     NULL, /* starting at the beginning */
                                                     (void *)&state,
                                                     populate,
@@ -478,6 +475,9 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
       }
       return *status;
     }
+  if (*status != CACHE_INODE_SUCCESS) {
+    return *status;
+  }
 
   assert(eod);  /* we were supposed to read to the end.... */
   /* End of work */
