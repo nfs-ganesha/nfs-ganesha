@@ -211,7 +211,7 @@ int cache_inode_avl_qp_insert(
     memcpy(&v->hk.k, hk, 8);
 #ifdef _USE_9P
     // tmp hook : it seems like client running v9fs dislike "negative" cookies
-    if( ((int64_t)v->hk.k) < 0LL ) v->hk.k = - v->hk.k ;
+    v->hk.k &= ~(1L<<63);  /* just kill the sign bit, making cookies 63 bits... */
 #endif
 
 
@@ -235,6 +235,10 @@ int cache_inode_avl_qp_insert(
             j, v->name);
 
     memcpy(&v->hk.k, hk, 8);
+#ifdef _USE_9P
+    // tmp hook : it seems like client running v9fs dislike "negative" cookies
+    v->hk.k &= ~(1L<<63);
+#endif
     for (j2 = 1 /* tried j=0 */; j2 < UINT64_MAX; j2++) {
         v->hk.k = v->hk.k + j2;
         code = cache_inode_avl_insert_impl(entry, v, j, j2);
@@ -313,7 +317,7 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry,
     memcpy(&v.hk.k, hashbuff, 8);
 #ifdef _USE_9P
     // tmp hook : it seems like client running v9fs dislike "negative" cookies
-    if( ((int64_t)v.hk.k) < 0LL ) v.hk.k = - v.hk.k ;
+    v.hk.k &= ~(1L<<63);
 #endif
 
     for (j = 0; j < maxj; j++) {
