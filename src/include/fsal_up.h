@@ -30,9 +30,6 @@
 #include "cache_inode.h"
 #include "nfs_exports.h"
 
-/* In the "static" case, original types are used, this is safer */
-#define MAX_FILTER_NAMELEN 255
-
 #define FSAL_UP_EVENT_CREATE     1
 #define FSAL_UP_EVENT_UNLINK     2
 #define FSAL_UP_EVENT_RENAME     3

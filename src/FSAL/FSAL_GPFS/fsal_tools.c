@@ -345,25 +345,6 @@ fsal_status_t GPFSFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_p
 
   /* set default values for all parameters of fs_specific_info */
 
-#ifdef _USE_PGSQL
-
-  /* pgsql db */
-  strcpy(out_parameter->fs_specific_info.dbparams.host, "localhost");
-  strcpy(out_parameter->fs_specific_info.dbparams.port, "5432");
-  out_parameter->fs_specific_info.dbparams.dbname[0] = '\0';
-  out_parameter->fs_specific_info.dbparams.login[0] = '\0';
-  out_parameter->fs_specific_info.dbparams.passwdfile[0] = '\0';
-
-#elif defined(_USE_MYSQL)
-
-  strcpy(out_parameter->fs_specific_info.dbparams.host, "localhost");
-  strcpy(out_parameter->fs_specific_info.dbparams.port, "");
-  out_parameter->fs_specific_info.dbparams.dbname[0] = '\0';
-  out_parameter->fs_specific_info.dbparams.login[0] = '\0';
-  out_parameter->fs_specific_info.dbparams.passwdfile[0] = '\0';
-
-#endif
-
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
 }

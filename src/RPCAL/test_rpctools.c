@@ -34,10 +34,6 @@ int DisplayLogComponentLevel(log_components_t component,
     return 0;
 }
 
-void GetNameFunction(char *name, int len)
-{
-}
-
 #define EQUALS(a, b, msg) do {                    \
   if (a != b) {                             \
       printf(msg "\n");                           \
