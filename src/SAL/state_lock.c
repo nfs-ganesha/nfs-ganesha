@@ -48,7 +48,6 @@
 #include <string.h>
 
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -952,9 +951,9 @@ static state_status_t subtract_list_from_list(cache_entry_t        * pentry,
 
 static void grant_blocked_locks(cache_entry_t        * pentry);
 
-int display_lock_cookie_key(hash_buffer_t * pbuff, char *str)
+int display_lock_cookie_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  return DisplayOpaqueValue((char *)pbuff->pdata, pbuff->len, str);
+  return DisplayOpaqueValue((char *)pbuff->addr, pbuff->len, str);
 }
 
 int display_lock_cookie_entry(state_cookie_entry_t * he, char * str)
@@ -986,12 +985,12 @@ int display_lock_cookie_entry(state_cookie_entry_t * he, char * str)
   return tmp - str;
 }
 
-int display_lock_cookie_val(hash_buffer_t * pbuff, char *str)
+int display_lock_cookie_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_lock_cookie_entry((state_cookie_entry_t *)pbuff->pdata, str);
+  return display_lock_cookie_entry((state_cookie_entry_t *)pbuff->addr, str);
 }
 
-int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_lock_cookie_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
@@ -1004,29 +1003,29 @@ int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
                    "{%s} vs {%s}", str1, str2);
     }
 
-  if(buff1->pdata == buff2->pdata)
+  if(buff1->addr == buff2->addr)
     return 0;
 
   if(buff1->len != buff2->len)
     return 1;
 
-  if(buff1->pdata == NULL || buff2->pdata == NULL)
+  if(buff1->addr == NULL || buff2->addr == NULL)
     return 1;
 
-  return memcmp(buff1->pdata, buff2->pdata, buff1->len);
+  return memcmp(buff1->addr, buff2->addr, buff1->len);
 }
 
 uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
-                                     hash_buffer_t * buffclef)
+                                     struct gsh_buffdesc * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  unsigned char *pdata = (unsigned char *) buffclef->pdata;
+  unsigned char *addr = (unsigned char *) buffclef->addr;
 
   /* Compute the sum of all the characters */
   for(i = 0; i < buffclef->len; i++)
-    sum +=(unsigned char) pdata[i];
+    sum +=(unsigned char) addr[i];
 
   res = (unsigned long) sum +
         (unsigned long) buffclef->len;
@@ -1039,16 +1038,16 @@ uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
 }
 
 uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t * buffclef)
+                                   struct gsh_buffdesc * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  unsigned char *pdata = (unsigned char *) buffclef->pdata;
+  unsigned char *addr = (unsigned char *) buffclef->addr;
 
   /* Compute the sum of all the characters */
   for(i = 0; i < buffclef->len; i++)
-    sum +=(unsigned char) pdata[i];
+    sum +=(unsigned char) addr[i];
 
   res = (unsigned long) sum +
         (unsigned long) buffclef->len;
@@ -1097,7 +1096,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                                       state_cookie_entry_t ** ppcookie_entry,
                                       state_status_t        * pstatus)
 {
-  hash_buffer_t          buffkey, buffval;
+  struct gsh_buffdesc          buffkey, buffval;
   state_cookie_entry_t * hash_entry;
   char                   str[HASHTABLE_DISPLAY_STRLEN];
 
@@ -1125,8 +1124,8 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
 
   memset(hash_entry, 0, sizeof(*hash_entry));
 
-  buffkey.pdata = gsh_malloc(cookie_size);
-  if(buffkey.pdata == NULL)
+  buffkey.addr = gsh_malloc(cookie_size);
+  if(buffkey.addr == NULL)
     {
       LogFullDebug(COMPONENT_STATE,
                    "KEY {%s} NO MEMORY",
@@ -1138,12 +1137,12 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
 
   hash_entry->sce_pentry      = pentry;
   hash_entry->sce_lock_entry  = lock_entry;
-  hash_entry->sce_pcookie     = buffkey.pdata;
+  hash_entry->sce_pcookie     = buffkey.addr;
   hash_entry->sce_cookie_size = cookie_size;
 
-  memcpy(buffkey.pdata, pcookie, cookie_size);
+  memcpy(buffkey.addr, pcookie, cookie_size);
   buffkey.len   = cookie_size;
-  buffval.pdata = (void *)hash_entry;
+  buffval.addr = (void *)hash_entry;
   buffval.len   = sizeof(*hash_entry);
 
   if(isFullDebug(COMPONENT_STATE))
@@ -1271,12 +1270,12 @@ state_status_t state_find_grant(void                  * pcookie,
                                 state_cookie_entry_t ** ppcookie_entry,
                                 state_status_t        * pstatus)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-  hash_buffer_t buffused_key;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
+  struct gsh_buffdesc buffused_key;
   char          str[HASHTABLE_DISPLAY_STRLEN];
 
-  buffkey.pdata = (caddr_t) pcookie;
+  buffkey.addr = (caddr_t) pcookie;
   buffkey.len   = cookie_size;
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
@@ -1294,7 +1293,7 @@ state_status_t state_find_grant(void                  * pcookie,
       return *pstatus;
     }
 
-  *ppcookie_entry = (state_cookie_entry_t *) buffval.pdata;
+  *ppcookie_entry = (state_cookie_entry_t *) buffval.addr;
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {

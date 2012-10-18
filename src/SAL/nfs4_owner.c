@@ -37,7 +37,6 @@
 #include <pthread.h>
 #include <ctype.h>
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "nfs4.h"
 #include "sal_functions.h"
@@ -51,11 +50,11 @@ hash_table_t *ht_nfs4_owner;
 uint32_t nfs4_owner_counter = 0;
 pthread_mutex_t nfs4_owner_counter_lock = PTHREAD_MUTEX_INITIALIZER;
 
-int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str)
+int display_nfs4_owner_key(struct gsh_buffdesc * pbuff, char *str)
 {
   char                    * type;
   char                    * strtmp = str;
-  state_nfs4_owner_name_t * pname = (state_nfs4_owner_name_t *) pbuff->pdata;
+  state_nfs4_owner_name_t * pname = (state_nfs4_owner_name_t *) pbuff->addr;
 
   if(pname->son_islock)
     type = "lock";
@@ -104,9 +103,9 @@ int display_nfs4_owner(state_owner_t *powner, char *str)
   return strtmp - str;
 }
 
-int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str)
+int display_nfs4_owner_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_nfs4_owner((state_owner_t *) (pbuff->pdata), str);
+  return display_nfs4_owner((state_owner_t *) (pbuff->addr), str);
 }
 
 int compare_nfs4_owner(state_owner_t * powner1,
@@ -155,7 +154,7 @@ int compare_nfs4_owner(state_owner_t * powner1,
                 powner1->so_owner_len);
 }
 
-int compare_nfs4_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_nfs4_owner_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
@@ -169,8 +168,8 @@ int compare_nfs4_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
                      "{%s} vs {%s}", str1, str2);
     }
 
-  state_nfs4_owner_name_t *pname1 = (state_nfs4_owner_name_t *) buff1->pdata;
-  state_nfs4_owner_name_t *pname2 = (state_nfs4_owner_name_t *) buff2->pdata;
+  state_nfs4_owner_name_t *pname1 = (state_nfs4_owner_name_t *) buff1->addr;
+  state_nfs4_owner_name_t *pname2 = (state_nfs4_owner_name_t *) buff2->addr;
 
   if(pname1 == NULL || pname2 == NULL)
     return 1;
@@ -188,14 +187,14 @@ int compare_nfs4_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 }                               /* compare_nfs4_owner */
 
 uint32_t nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                    hash_buffer_t * buffclef)
+                                    struct gsh_buffdesc * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i = 0;
   unsigned char c = 0;
   unsigned long res = 0;
 
-  state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) buffclef->pdata;
+  state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) buffclef->addr;
 
   /* Compute the sum of all the characters */
   for(i = 0; i < pname->son_owner_len; i++)
@@ -215,9 +214,9 @@ uint32_t nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
 }                               /* nfs4_owner_value_hash_func */
 
 uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef)
+                                  struct gsh_buffdesc * buffclef)
 {
-  state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) buffclef->pdata;
+  state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) buffclef->addr;
 
   unsigned int sum = 0;
   unsigned int i = 0;
@@ -242,7 +241,7 @@ uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
 void remove_nfs4_owner(state_owner_t        * powner,
                        const char           * str)
 {
-  hash_buffer_t           buffkey, old_key, old_value;
+  struct gsh_buffdesc           buffkey, old_key, old_value;
   state_nfs4_owner_name_t oname;
   int                     rc;
 
@@ -253,7 +252,7 @@ void remove_nfs4_owner(state_owner_t        * powner,
   oname.son_islock    = powner->so_type == STATE_LOCK_OWNER_NFSV4;
   memcpy(oname.son_owner_val, powner->so_owner_val, powner->so_owner_len);
 
-  buffkey.pdata = (caddr_t) &oname;
+  buffkey.addr = (caddr_t) &oname;
   buffkey.len   = sizeof(*powner);
 
   rc = HashTable_DelRef(ht_nfs4_owner,
@@ -282,8 +281,8 @@ void remove_nfs4_owner(state_owner_t        * powner,
 
         dec_client_id_ref(powner->so_owner.so_nfs4_owner.so_pclientid);
 
-        pool_free(state_owner_pool, old_value.pdata);
-        pool_free(state_nfs4_owner_name_pool, old_key.pdata);
+        pool_free(state_owner_pool, old_value.addr);
+        pool_free(state_nfs4_owner_name_pool, old_key.addr);
         break;
 
       case HASHTABLE_NOT_DELETED:
@@ -338,11 +337,11 @@ int Init_nfs4_owner(nfs4_owner_parameter_t param)
 int nfs4_owner_Set(state_nfs4_owner_name_t * pname,
                    state_owner_t           * powner)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   int rc;
 
-  buffkey.pdata = (caddr_t) pname;
+  buffkey.addr = (caddr_t) pname;
   buffkey.len = sizeof(state_nfs4_owner_name_t);
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
@@ -354,7 +353,7 @@ int nfs4_owner_Set(state_nfs4_owner_name_t * pname,
                    "KEY {%s}", str);
     }
 
-  buffval.pdata = (caddr_t) powner;
+  buffval.addr = (caddr_t) powner;
   buffval.len = sizeof(state_owner_t);
 
   P(nfs4_owner_counter_lock);
@@ -390,10 +389,10 @@ int nfs4_owner_Set(state_nfs4_owner_name_t * pname,
 int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
                            state_owner_t           ** powner)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
 
-  buffkey.pdata = (caddr_t) pname;
+  buffkey.addr = (caddr_t) pname;
   buffkey.len = sizeof(state_nfs4_owner_name_t);
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
@@ -416,7 +415,7 @@ int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
       return 0;
     }
 
-  *powner = (state_owner_t *) buffval.pdata;
+  *powner = (state_owner_t *) buffval.addr;
 
   LogFullDebug(COMPONENT_STATE,
                "FOUND");

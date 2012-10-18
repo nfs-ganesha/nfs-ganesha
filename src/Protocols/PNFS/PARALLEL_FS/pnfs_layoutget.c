@@ -21,7 +21,6 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
 #include <gssrpc/types.h>

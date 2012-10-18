@@ -49,11 +49,11 @@ int
 up_get(const struct gsh_buffdesc *key,
        cache_entry_t **entry)
 {
-        hash_buffer_t hashkey = {
-                .pdata = key->addr,
+        struct gsh_buffdesc hashkey = {
+                .addr = key->addr,
                 .len = key->len
         };
-        hash_buffer_t hashval;
+        struct gsh_buffdesc hashval;
         hash_error_t hrc = 0;
         struct hash_latch latch;
         cache_entry_t *entry_found = NULL;
@@ -66,7 +66,7 @@ up_get(const struct gsh_buffdesc *key,
 
         if (hrc == HASHTABLE_SUCCESS) {
                 /* Entry exists in the cache and was found */
-                entry_found = hashval.pdata;
+                entry_found = hashval.addr;
                 if (cache_inode_lru_ref(entry_found, LRU_REQ_INITIAL) !=
                     CACHE_INODE_SUCCESS) {
                         HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);

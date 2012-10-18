@@ -5,11 +5,9 @@ noinst_HEADERS = abstract_atomic.h               \
                  fsal.h                          \
                  fsal_pnfs.h                     \
                  pnfs_utils.h                    \
-                 HashData.h                      \
                  HashTable.h                     \
                  MesureTemps.h                   \
                  RW_Lock.h                       \
-                 HashData.h                      \
                  HashTable.h                     \
                  avltree.h                       \
                  cache_inode_avl.h               \

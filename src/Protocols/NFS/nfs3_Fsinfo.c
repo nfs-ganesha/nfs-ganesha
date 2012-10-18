@@ -41,7 +41,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "nfs23.h"

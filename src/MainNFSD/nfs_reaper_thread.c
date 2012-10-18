@@ -46,7 +46,7 @@ unsigned int reaper_delay = REAPER_DELAY;
 static int reap_hash_table(hash_table_t * ht_reap)
 {
   struct rbt_head     * head_rbt;
-  hash_data_t         * pdata = NULL;
+  struct hash_data    * addr = NULL;
   uint32_t              i;
   int                   v4, rc;
   struct rbt_node     * pn;
@@ -66,9 +66,9 @@ static int reap_hash_table(hash_table_t * ht_reap)
       /* go through all entries in the red-black-tree*/
       RBT_LOOP(head_rbt, pn)
         {
-          pdata = RBT_OPAQ(pn);
+          addr = RBT_OPAQ(pn);
 
-          pclientid = (nfs_client_id_t *)pdata->buffval.pdata;
+          pclientid = addr->val.addr;
           count++;
 
           /*

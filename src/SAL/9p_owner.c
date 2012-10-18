@@ -41,7 +41,6 @@
 #include <ctype.h>
 #include <pthread.h>
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -69,14 +68,14 @@ int display_9p_owner(state_owner_t *pkey, char *str)
   return strtmp - str;
 }
 
-int display_9p_owner_key(hash_buffer_t * pbuff, char *str)
+int display_9p_owner_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_9p_owner((state_owner_t *)pbuff->pdata, str);
+  return display_9p_owner((state_owner_t *)pbuff->addr, str);
 }
 
-int display_9p_owner_val(hash_buffer_t * pbuff, char *str)
+int display_9p_owner_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_9p_owner((state_owner_t *)pbuff->pdata, str);
+  return display_9p_owner((state_owner_t *)pbuff->addr, str);
 }
 
 int compare_9p_owner(state_owner_t *powner1,
@@ -118,20 +117,20 @@ int compare_9p_owner(state_owner_t *powner1,
                 powner1->so_owner_len);
 }
 
-int compare_9p_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_9p_owner_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  return compare_9p_owner((state_owner_t *)buff1->pdata,
-                          (state_owner_t *)buff2->pdata);
+  return compare_9p_owner((state_owner_t *)buff1->addr,
+                          (state_owner_t *)buff2->addr);
 
 }                               /* compare_9p_owner */
 
 uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t * buffclef)
+                                   struct gsh_buffdesc * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
+  state_owner_t *pkey = (state_owner_t *)buffclef->addr;
 
   struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr ;
 
@@ -153,12 +152,12 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
 }                               
 
 uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                 hash_buffer_t * buffclef)
+                                 struct gsh_buffdesc * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
+  state_owner_t *pkey = (state_owner_t *)buffclef->addr;
 
   struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr ;
 
@@ -212,14 +211,14 @@ int Init_9p_hash(void)
 int _9p_owner_Set(state_owner_t * pkey,
                   state_owner_t * powner)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      buffkey.pdata = (caddr_t) pkey;
+      buffkey.addr = (caddr_t) pkey;
       buffkey.len = sizeof(*pkey);
 
       display_9p_owner_key(&buffkey, str);
@@ -227,10 +226,10 @@ int _9p_owner_Set(state_owner_t * pkey,
                    "KEY {%s}", str);
     }
 
-  buffkey.pdata = (caddr_t) pkey;
+  buffkey.addr = (caddr_t) pkey;
   buffkey.len = sizeof(*pkey);
 
-  buffval.pdata = (caddr_t) powner;
+  buffval.addr = (caddr_t) powner;
   buffval.len = sizeof(*powner);
 
   if(HashTable_Test_And_Set
@@ -244,9 +243,9 @@ int _9p_owner_Set(state_owner_t * pkey,
 void remove_9p_owner( state_owner_t        * powner,
                       const char           * str)
 {
-  hash_buffer_t buffkey, old_key, old_value;
+  struct gsh_buffdesc buffkey, old_key, old_value;
 
-  buffkey.pdata = (caddr_t) powner;
+  buffkey.addr = (caddr_t) powner;
   buffkey.len = sizeof(*powner);
 
   switch(HashTable_DelRef(ht_9p_owner, &buffkey, &old_key, &old_value, Hash_dec_state_owner_ref))
@@ -257,11 +256,11 @@ void remove_9p_owner( state_owner_t        * powner,
                      str, (unsigned long long) old_value.len);
         if(isFullDebug(COMPONENT_MEMLEAKS))
           {
-            memset(old_key.pdata, 0, old_key.len);
-            memset(old_value.pdata, 0, old_value.len);
+            memset(old_key.addr, 0, old_key.len);
+            memset(old_value.addr, 0, old_value.len);
           }
-        gsh_free(old_key.pdata);
-        gsh_free(old_value.pdata);
+        gsh_free(old_key.addr);
+        gsh_free(old_value.addr);
         break;
 
       case HASHTABLE_NOT_DELETED:
@@ -295,11 +294,11 @@ void remove_9p_owner( state_owner_t        * powner,
 static int _9p_owner_Get_Pointer(state_owner_t  * pkey,
                                  state_owner_t ** powner)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
 
   *powner = NULL; // in case we dont find it, return NULL
-  buffkey.pdata = (caddr_t) pkey;
+  buffkey.addr = (caddr_t) pkey;
   buffkey.len = sizeof(*pkey);
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
@@ -321,7 +320,7 @@ static int _9p_owner_Get_Pointer(state_owner_t  * pkey,
       return 0;
     }
 
-  *powner = (state_owner_t *) buffval.pdata;
+  *powner = (state_owner_t *) buffval.addr;
 
   LogFullDebug(COMPONENT_STATE,
                "FOUND");

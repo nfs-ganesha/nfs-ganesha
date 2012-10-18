@@ -38,7 +38,6 @@
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
 #include <stdint.h>
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"

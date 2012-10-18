@@ -16,7 +16,6 @@
 #endif                          /* _SOLARIS */
 
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
@@ -102,7 +101,7 @@ cache_inode_is_dir_empty_WithLock(cache_entry_t *entry)
 cache_inode_status_t
 cache_inode_clean_internal(cache_entry_t *entry)
 {
-     hash_buffer_t key, val;
+     struct gsh_buffdesc val;
      struct gsh_buffdesc fh_desc;
      fsal_status_t fsal_status = {0, 0};
      hash_error_t rc = 0;
@@ -111,15 +110,13 @@ cache_inode_clean_internal(cache_entry_t *entry)
        goto unref;
 
      entry->obj_handle->ops->handle_to_key(entry->obj_handle,
-                                           &fh_desc);
-     key.pdata = fh_desc.addr;
-     key.len = fh_desc.len;
-     val.pdata = entry;
+					   &fh_desc);
+     val.addr = entry;
      val.len = sizeof(cache_entry_t);
 
      rc = HashTable_DelSafe(fh_to_cache_entry_ht,
-                            &key,
-                            &val);
+			    &fh_desc,
+			    &val);
 
      /* Nonexistence is as good as success. */
      if ((rc != HASHTABLE_SUCCESS) &&

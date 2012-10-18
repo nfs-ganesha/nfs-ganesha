@@ -40,7 +40,6 @@
 
 #include "abstract_atomic.h"
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
@@ -208,19 +207,19 @@ const char *cache_inode_err_str(cache_inode_status_t err)
  * @see FSAL_handlecmp
  *
  */
-int cache_inode_compare_key_fsal(hash_buffer_t *buff1,
-                                 hash_buffer_t *buff2)
+int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
+                                 struct gsh_buffdesc *buff2)
 {
   /* Test if one of the entries is NULL */
-  if(buff1->pdata == NULL)
-    return (buff2->pdata == NULL) ? 0 : 1;
+  if(buff1->addr == NULL)
+    return (buff2->addr == NULL) ? 0 : 1;
   else
     {
-      if(buff2->pdata == NULL) {
+      if(buff2->addr == NULL) {
         return -1;              /* left member is the greater one */
       }
       if(buff1->len == buff2->len)
-	      return memcmp(buff1->pdata, buff2->pdata, buff1->len);
+	      return memcmp(buff1->addr, buff2->addr, buff1->len);
       else
 	      return (buff1->len > buff2->len) ? -1 : 1;
     }
@@ -278,7 +277,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 {
      cache_entry_t *entry = NULL;
      cache_entry_t *new_entry = NULL;
-     hash_buffer_t key, value;
+     struct gsh_buffdesc key, value;
      int rc = 0;
      bool lrurefed = false;
      bool weakrefed = false;
@@ -290,7 +289,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      fsal_status_t fsal_status;
 
      new_obj->ops->handle_to_key(new_obj, &fh_desc);
-     key.pdata = fh_desc.addr;
+     key.addr = fh_desc.addr;
      key.len = fh_desc.len;
 
      /* Check if the entry doesn't already exists */
@@ -306,7 +305,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      }
      if (hrc == HASHTABLE_SUCCESS) {
           /* Entry is already in the cache, do not add it */
-          entry = value.pdata;
+          entry = value.addr;
           *status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
@@ -353,7 +352,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      }
      if (hrc == HASHTABLE_SUCCESS) {
           /* Entry is already in the cache, do not add it */
-          entry = value.pdata;
+          entry = value.addr;
           *status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
@@ -479,7 +478,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
      /* Adding the entry in the hash table using the key we started with */
 
-     value.pdata = entry;
+     value.addr = entry;
      value.len = sizeof(cache_entry_t);
 
      rc = HashTable_SetLatched(fh_to_cache_entry_ht, &key, &value,

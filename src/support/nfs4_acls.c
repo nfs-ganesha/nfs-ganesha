@@ -21,12 +21,12 @@ pool_t *fsal_acl_key_pool;
 static pthread_mutex_t fsal_acl_key_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int fsal_acl_hash_both(hash_parameter_t * p_hparam,
-                              hash_buffer_t * buffclef,
+                              struct gsh_buffdesc * buffclef,
                               uint32_t * phashval,
                               uint64_t * prbtval);
-static int compare_fsal_acl(hash_buffer_t * p_key1, hash_buffer_t * p_key2);
-static int display_fsal_acl_key(hash_buffer_t * p_val, char *outbuff);
-static int display_fsal_acl_val(hash_buffer_t * p_val, char *outbuff);
+static int compare_fsal_acl(struct gsh_buffdesc * p_key1, struct gsh_buffdesc * p_key2);
+static int display_fsal_acl_key(struct gsh_buffdesc * p_val, char *outbuff);
+static int display_fsal_acl_val(struct gsh_buffdesc * p_val, char *outbuff);
 
 /* DEFAULT PARAMETERS for hash table */
 
@@ -49,7 +49,7 @@ static hash_table_t *fsal_acl_hash = NULL;
 /* hash table functions */
 
 static int fsal_acl_hash_both(hash_parameter_t *p_hparam,
-                              hash_buffer_t *buffclef,
+                              struct gsh_buffdesc *buffclef,
                               uint32_t *phashval,
                               uint64_t *prbtval)
 {
@@ -57,7 +57,7 @@ static int fsal_acl_hash_both(hash_parameter_t *p_hparam,
   uint32_t h1 = 0 ;
   uint32_t h2 = 0 ;
 
-  char *p_aclkey = (buffclef->pdata);
+  char *p_aclkey = (buffclef->addr);
 
   Lookup3_hash_buff_dual(p_aclkey, MD5_DIGEST_LENGTH, &h1, &h2);
 
@@ -76,22 +76,22 @@ static int fsal_acl_hash_both(hash_parameter_t *p_hparam,
   return 1 ;
 } /*  fsal_acl_hash_both */
 
-static int compare_fsal_acl(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
+static int compare_fsal_acl(struct gsh_buffdesc * p_key1, struct gsh_buffdesc * p_key2)
 {
-  return memcmp((char *)p_key1->pdata, (char *)p_key2->pdata, MD5_DIGEST_LENGTH);
+  return memcmp((char *)p_key1->addr, (char *)p_key2->addr, MD5_DIGEST_LENGTH);
 }
 
-static int display_fsal_acl_key(hash_buffer_t * p_val, char *outbuff)
+static int display_fsal_acl_key(struct gsh_buffdesc * p_val, char *outbuff)
 {
   char printbuf[2 * MD5_DIGEST_LENGTH];
-  char *p_aclkey = (char *) p_val->pdata;
+  char *p_aclkey = (char *) p_val->addr;
 
   snprintmem(printbuf, 2 * MD5_DIGEST_LENGTH, p_aclkey, MD5_DIGEST_LENGTH);
 
   return sprintf(outbuff, "%s", printbuf);
 }
 
-static int display_fsal_acl_val(hash_buffer_t * p_val, char *outbuff)
+static int display_fsal_acl_val(struct gsh_buffdesc * p_val, char *outbuff)
 {
   return sprintf(outbuff, "not implemented");
 }
@@ -144,7 +144,7 @@ static void nfs4_acl_free(fsal_acl_t *pacl)
   V(fsal_acl_pool_mutex);
  }
 
-static int nfs4_acldata_2_key(hash_buffer_t * pkey, fsal_acl_data_t *pacldata)
+static int nfs4_acldata_2_key(struct gsh_buffdesc * pkey, fsal_acl_data_t *pacldata)
 {
   MD5_CTX c;
   fsal_acl_key_t *pacl_key = NULL;
@@ -162,20 +162,20 @@ static int nfs4_acldata_2_key(hash_buffer_t * pkey, fsal_acl_data_t *pacldata)
   MD5_Update(&c, (char *)pacldata->aces, pacldata->naces * sizeof(fsal_ace_t));
   MD5_Final(pacl_key->digest, &c);
 
-  pkey->pdata = (caddr_t) pacl_key;
+  pkey->addr = (caddr_t) pacl_key;
   pkey->len = sizeof(fsal_acl_key_t);
 
   return NFS_V4_ACL_SUCCESS;
 }
 
-static void nfs4_release_acldata_key(hash_buffer_t *pkey)
+static void nfs4_release_acldata_key(struct gsh_buffdesc *pkey)
 {
   fsal_acl_key_t *pacl_key = NULL;
 
   if(!pkey)
     return;
 
-  pacl_key = (fsal_acl_key_t *)pkey->pdata;
+  pacl_key = (fsal_acl_key_t *)pkey->addr;
 
   if(!pacl_key)
     return;
@@ -209,8 +209,8 @@ static void nfs4_acl_entry_dec_ref(fsal_acl_t *pacl)
 fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pstatus)
 {
   fsal_acl_t        * pacl = NULL;
-  hash_buffer_t       buffkey;
-  hash_buffer_t       buffvalue;
+  struct gsh_buffdesc       buffkey;
+  struct gsh_buffdesc       buffvalue;
   int                 rc;
   struct hash_latch   latch;
 
@@ -242,7 +242,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
   if(rc == HASHTABLE_SUCCESS)
     {
       /* Entry is already in the cache, do not add it */
-      pacl = (fsal_acl_t *) buffvalue.pdata;
+      pacl = (fsal_acl_t *) buffvalue.addr;
       *pstatus = NFS_V4_ACL_EXISTS;
 
       nfs4_release_acldata_key(&buffkey);
@@ -292,7 +292,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
   pacl->ref   = 1;               /* We give out one reference */
 
   /* Build the value */
-  buffvalue.pdata = (caddr_t) pacl;
+  buffvalue.addr = (caddr_t) pacl;
   buffvalue.len = sizeof(fsal_acl_t);
 
   rc = HashTable_SetLatched(fsal_acl_hash,
@@ -324,8 +324,8 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
 void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
 {
   fsal_acl_data_t   acldata;
-  hash_buffer_t     key, old_key;
-  hash_buffer_t     old_value;
+  struct gsh_buffdesc     key, old_key;
+  struct gsh_buffdesc     old_value;
   int               rc;
   struct hash_latch latch;
 
@@ -407,13 +407,13 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
   /* Release the hash key data */
   nfs4_release_acldata_key(&old_key);
 
-  /* Sanity check: old_value.pdata is expected to be equal to pacl,
+  /* Sanity check: old_value.addr is expected to be equal to pacl,
    * and is released later in this function */
-  if((fsal_acl_t *) old_value.pdata != pacl)
+  if((fsal_acl_t *) old_value.addr != pacl)
     {
       LogCrit(COMPONENT_NFS_V4_ACL,
               "Unexpected ACL %p from hash table (pacl=%p)",
-              old_value.pdata, pacl);
+              old_value.addr, pacl);
     }
 
   /* Release the current key */

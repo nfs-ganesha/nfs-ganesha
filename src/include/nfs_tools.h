@@ -72,11 +72,11 @@ void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr) ;
 
 /* Hash and LRU functions */
 unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef);
+                                       struct gsh_buffdesc * buffclef);
 unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam,
-                                    hash_buffer_t * buffclef);
+                                    struct gsh_buffdesc * buffclef);
 
-int display_cache(hash_buffer_t * pbuff, char *str);
-int compare_cache(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int display_cache(struct gsh_buffdesc * pbuff, char *str);
+int compare_cache(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
 #endif                          /* _NFS_TOOLS_H */

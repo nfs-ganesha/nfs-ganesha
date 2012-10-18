@@ -126,21 +126,27 @@ static void peer_free(lookup_peer_t * p_peer)
 
 /* functions for hashing/comparing lookup peers */
 
-static unsigned long hash_peer_idx(hash_parameter_t * p_conf, hash_buffer_t * p_key);
-static unsigned long hash_peer_rbt(hash_parameter_t * p_conf, hash_buffer_t * p_key);
-static int cmp_peers(hash_buffer_t * p_key1, hash_buffer_t * p_key2);
+static unsigned long hash_peer_idx(hash_parameter_t * p_conf,
+				   struct gsh_buffdesc *key);
+static unsigned long hash_peer_rbt(hash_parameter_t *p_conf,
+				   struct gsh_buffdesc *key);
+static int cmp_peers(struct gsh_buffdesc *key1,
+		     struct gsh_buffdesc *key2);
 
 /* functions for hashing/comparing inode numbers */
 
-static unsigned long hash_ino_idx(hash_parameter_t * p_conf, hash_buffer_t * p_key);
-static unsigned long hash_ino_rbt(hash_parameter_t * p_conf, hash_buffer_t * p_key);
-static int cmp_inodes(hash_buffer_t * p_key1, hash_buffer_t * p_key2);
+static unsigned long hash_ino_idx(hash_parameter_t * p_conf,
+				  struct gsh_buffdesc *key);
+static unsigned long hash_ino_rbt(hash_parameter_t * p_conf,
+				  struct gsh_buffdesc *key);
+static int cmp_inodes(struct gsh_buffdesc *key1,
+		      struct gsh_buffdesc *key2);
 
 /* display functions */
 
-static int print_lookup_peer(hash_buffer_t * p_val, char *outbuff);
-static int print_inode(hash_buffer_t * p_val, char *outbuff);
-static int print_fsnode(hash_buffer_t * p_val, char *outbuff);
+static int print_lookup_peer(struct gsh_buffdesc *val, char *outbuff);
+static int print_inode(struct gsh_buffdesc *val, char *outbuff);
+static int print_fsnode(struct gsh_buffdesc *val, char *outbuff);
 
 /* configuration for lookup hashtable
  * TODO: externize those parameters
@@ -188,10 +194,10 @@ static hash_table_t *nodes_hash = NULL;
 
 /* functions for hashing/comparing lookup peers */
 
-static unsigned long hash_peer_idx(hash_parameter_t * p_conf, hash_buffer_t * p_key)
+static unsigned long hash_peer_idx(hash_parameter_t * p_conf, struct gsh_buffdesc * p_key)
 {
   unsigned long hash;
-  lookup_peer_t *p_peer = (lookup_peer_t *) p_key->pdata;
+  lookup_peer_t *p_peer = (lookup_peer_t *) p_key->addr;
   char *name;
 
   hash = 1;
@@ -206,10 +212,10 @@ static unsigned long hash_peer_idx(hash_parameter_t * p_conf, hash_buffer_t * p_
   return hash;
 }
 
-static unsigned long hash_peer_rbt(hash_parameter_t * p_conf, hash_buffer_t * p_key)
+static unsigned long hash_peer_rbt(hash_parameter_t * p_conf, struct gsh_buffdesc * p_key)
 {
   unsigned long hash;
-  lookup_peer_t *p_peer = (lookup_peer_t *) p_key->pdata;
+  lookup_peer_t *p_peer = (lookup_peer_t *) p_key->addr;
   char *name;
 
   hash = 1;
@@ -220,10 +226,10 @@ static unsigned long hash_peer_rbt(hash_parameter_t * p_conf, hash_buffer_t * p_
   return (hash ^ (unsigned long)p_peer->parent.inum ^ (unsigned long)p_peer->parent.dev);
 }
 
-static int cmp_peers(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
+static int cmp_peers(struct gsh_buffdesc * p_key1, struct gsh_buffdesc * p_key2)
 {
-  lookup_peer_t *p_peer1 = (lookup_peer_t *) p_key1->pdata;
-  lookup_peer_t *p_peer2 = (lookup_peer_t *) p_key2->pdata;
+  lookup_peer_t *p_peer1 = (lookup_peer_t *) p_key1->addr;
+  lookup_peer_t *p_peer2 = (lookup_peer_t *) p_key2->addr;
 
   /* compare parent inode, then name */
 
@@ -240,10 +246,10 @@ static int cmp_peers(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
 
 /* functions for hashing/comparing inode numbers */
 
-static unsigned long hash_ino_idx(hash_parameter_t * p_conf, hash_buffer_t * p_key)
+static unsigned long hash_ino_idx(hash_parameter_t * p_conf, struct gsh_buffdesc * p_key)
 {
   unsigned long hash;
-  inode_t *p_ino = (inode_t *) p_key->pdata;
+  inode_t *p_ino = (inode_t *) p_key->addr;
 
   hash =
       (p_conf->alphabet_length + ((unsigned long)p_ino->inum ^ (unsigned int)p_ino->dev));
@@ -251,17 +257,17 @@ static unsigned long hash_ino_idx(hash_parameter_t * p_conf, hash_buffer_t * p_k
 
 }
 
-static unsigned long hash_ino_rbt(hash_parameter_t * p_conf, hash_buffer_t * p_key)
+static unsigned long hash_ino_rbt(hash_parameter_t * p_conf, struct gsh_buffdesc * p_key)
 {
-  inode_t *p_ino = (inode_t *) p_key->pdata;
+  inode_t *p_ino = (inode_t *) p_key->addr;
 
   return (unsigned long)(p_ino->inum ^ (3 * (p_ino->dev + 1)));
 }
 
-static int cmp_inodes(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
+static int cmp_inodes(struct gsh_buffdesc * p_key1, struct gsh_buffdesc * p_key2)
 {
-  inode_t *p_ino1 = (inode_t *) p_key1->pdata;
-  inode_t *p_ino2 = (inode_t *) p_key2->pdata;
+  inode_t *p_ino1 = (inode_t *) p_key1->addr;
+  inode_t *p_ino2 = (inode_t *) p_key2->addr;
 
   if((p_ino1->inum > p_ino2->inum) || (p_ino1->dev > p_ino2->dev))
     return 1;
@@ -273,25 +279,25 @@ static int cmp_inodes(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
 
 /* display functions */
 
-static int print_lookup_peer(hash_buffer_t * p_val, char *outbuff)
+static int print_lookup_peer(struct gsh_buffdesc * p_val, char *outbuff)
 {
-  lookup_peer_t *p_peer = (lookup_peer_t *) p_val->pdata;
+  lookup_peer_t *p_peer = (lookup_peer_t *) p_val->addr;
   return sprintf(outbuff, "parent:%lX.%lu, name:%s",
                  (unsigned long int)p_peer->parent.dev,
                  (unsigned long int)p_peer->parent.inum, p_peer->name);
 }
 
-static int print_inode(hash_buffer_t * p_val, char *outbuff)
+static int print_inode(struct gsh_buffdesc * p_val, char *outbuff)
 {
-  inode_t *p_ino = (inode_t *) p_val->pdata;
+  inode_t *p_ino = (inode_t *) p_val->addr;
   return sprintf(outbuff, "device:%lX inode:%lu (gen:%u)",
                  (unsigned long int)p_ino->dev, (unsigned long int)p_ino->inum,
                  p_ino->generation);
 }
 
-static int print_fsnode(hash_buffer_t * p_val, char *outbuff)
+static int print_fsnode(struct gsh_buffdesc * p_val, char *outbuff)
 {
-  fsnode_t *p_node = (fsnode_t *) p_val->pdata;
+  fsnode_t *p_node = (fsnode_t *) p_val->addr;
 
   if(p_node->parent_list)
     return sprintf(outbuff,
@@ -319,8 +325,8 @@ lookup_peer_t *h_insert_new_lookup(ino_t parent_inode,
                                    unsigned int parent_gen,
                                    char *name, fsnode_t * p_entry, int overwrite)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
 
   lookup_peer_t *p_lpeer;
   int flag;
@@ -335,10 +341,10 @@ lookup_peer_t *h_insert_new_lookup(ino_t parent_inode,
   p_lpeer->parent.generation = parent_gen;
   strncpy(p_lpeer->name, name, FSAL_MAX_NAME_LEN);
 
-  buffkey.pdata = (caddr_t) p_lpeer;
+  buffkey.addr = (caddr_t) p_lpeer;
   buffkey.len = sizeof(*p_lpeer);
 
-  buffval.pdata = (caddr_t) p_entry;
+  buffval.addr = (caddr_t) p_entry;
   buffval.len = sizeof(*p_entry);
 
   if(overwrite)
@@ -365,8 +371,8 @@ lookup_peer_t *h_insert_new_lookup(ino_t parent_inode,
 fsnode_t *h_get_lookup(ino_t parent_inode, dev_t parent_dev, char *name, int *p_rc)
 {
   lookup_peer_t lpeer;
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   int rc;
 
   /* test if lookup peer is referenced in lookup hashtable */
@@ -375,7 +381,7 @@ fsnode_t *h_get_lookup(ino_t parent_inode, dev_t parent_dev, char *name, int *p_
 
   strncpy(lpeer.name, name, FSAL_MAX_NAME_LEN);
 
-  buffkey.pdata = (caddr_t) & lpeer;
+  buffkey.addr = (caddr_t) & lpeer;
   buffkey.len = sizeof(lpeer);
 
   rc = HashTable_Get(lookup_hash, &buffkey, &buffval);
@@ -384,7 +390,7 @@ fsnode_t *h_get_lookup(ino_t parent_inode, dev_t parent_dev, char *name, int *p_
     *p_rc = rc;
 
   if(rc == HASHTABLE_SUCCESS)
-    return (fsnode_t *) (buffval.pdata);
+    return (fsnode_t *) (buffval.addr);
   else
     return NULL;
 }                               /* h_get_lookup */
@@ -396,8 +402,8 @@ fsnode_t *h_del_lookup(ino_t parent_inode, dev_t parent_dev, unsigned int parent
   lookup_peer_t lpeer;
   lookup_peer_t *p_lpeer;
   lookup_peer_t *p_lpeer_last;
-  hash_buffer_t buffkey_in, buffkey_out;
-  hash_buffer_t buffdata;
+  struct gsh_buffdesc buffkey_in, buffkey_out;
+  struct gsh_buffdesc buffdata;
   fsnode_t *p_node;
   int rc;
 
@@ -408,7 +414,7 @@ fsnode_t *h_del_lookup(ino_t parent_inode, dev_t parent_dev, unsigned int parent
 
   strncpy(lpeer.name, name, FSAL_MAX_NAME_LEN);
 
-  buffkey_in.pdata = (caddr_t) & lpeer;
+  buffkey_in.addr = (caddr_t) & lpeer;
   buffkey_in.len = sizeof(lpeer);
 
   rc = HashTable_Del(lookup_hash, &buffkey_in, &buffkey_out, &buffdata);
@@ -419,7 +425,7 @@ fsnode_t *h_del_lookup(ino_t parent_inode, dev_t parent_dev, unsigned int parent
   if(rc == HASHTABLE_SUCCESS)
     {
       /* Remove lookup from node and decrease n_lookup count */
-      p_node = (fsnode_t *) buffdata.pdata;
+      p_node = (fsnode_t *) buffdata.addr;
 
       assert(p_node->n_lookup > 0);
       p_node->n_lookup--;
@@ -429,7 +435,7 @@ fsnode_t *h_del_lookup(ino_t parent_inode, dev_t parent_dev, unsigned int parent
 
       for(p_lpeer = p_node->parent_list; p_lpeer != NULL; p_lpeer = p_lpeer->p_next)
         {
-          if(p_lpeer == (lookup_peer_t *) buffkey_out.pdata)
+          if(p_lpeer == (lookup_peer_t *) buffkey_out.addr)
             {
               /* check parent inode and entry name */
               if((p_lpeer->parent.inum != parent_inode)
@@ -474,8 +480,8 @@ fsnode_t *h_del_lookup(ino_t parent_inode, dev_t parent_dev, unsigned int parent
 
 fsnode_t *h_insert_new_node(ino_t inode, dev_t device, unsigned int gen, int overwrite)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
 
   fsnode_t *p_node;
   int flag;
@@ -496,10 +502,10 @@ fsnode_t *h_insert_new_node(ino_t inode, dev_t device, unsigned int gen, int ove
 
   /* insert it to hash table */
 
-  buffkey.pdata = (caddr_t) & p_node->inode;
+  buffkey.addr = (caddr_t) & p_node->inode;
   buffkey.len = sizeof(p_node->inode);
 
-  buffval.pdata = (caddr_t) p_node;
+  buffval.addr = (caddr_t) p_node;
   buffval.len = sizeof(*p_node);
 
   if(overwrite)
@@ -520,8 +526,8 @@ fsnode_t *h_insert_new_node(ino_t inode, dev_t device, unsigned int gen, int ove
 /* get the node corresponding to an inode number */
 fsnode_t *h_get_node(ino_t inode, dev_t device, int *p_rc)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   inode_t key;
   int rc;
 
@@ -531,7 +537,7 @@ fsnode_t *h_get_node(ino_t inode, dev_t device, int *p_rc)
   key.dev = device;
   /* note: generation not needed for Hashtable_Get */
 
-  buffkey.pdata = (caddr_t) & key;
+  buffkey.addr = (caddr_t) & key;
   buffkey.len = sizeof(key);
 
   rc = HashTable_Get(nodes_hash, &buffkey, &buffval);
@@ -540,7 +546,7 @@ fsnode_t *h_get_node(ino_t inode, dev_t device, int *p_rc)
     *p_rc = rc;
 
   if(rc == HASHTABLE_SUCCESS)
-    return (fsnode_t *) (buffval.pdata);
+    return (fsnode_t *) (buffval.addr);
   else
     return NULL;
 }                               /* h_get_node */
@@ -548,7 +554,7 @@ fsnode_t *h_get_node(ino_t inode, dev_t device, int *p_rc)
 /* remove the node corresponding to an inode number */
 int h_del_node(ino_t inode, dev_t device)
 {
-  hash_buffer_t buffkey;
+  struct gsh_buffdesc buffkey;
   inode_t key;
 
   /* test if inode is referenced in nodes hashtable */
@@ -557,7 +563,7 @@ int h_del_node(ino_t inode, dev_t device)
 
   /* note: generation not needed for Hashtable_Get/Del */
 
-  buffkey.pdata = (caddr_t) & key;
+  buffkey.addr = (caddr_t) & key;
   buffkey.len = sizeof(key);
 
   return HashTable_Del(nodes_hash, &buffkey, NULL, NULL);

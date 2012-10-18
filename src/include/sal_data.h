@@ -44,7 +44,6 @@
 #include "abstract_atomic.h"
 #include "abstract_mem.h"
 #include "RW_Lock.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "fsal_types.h"

@@ -83,25 +83,25 @@ struct tcp_conn
 };
 
 unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef)
+                                       struct gsh_buffdesc * buffclef)
 {
   LogMajor(COMPONENT_MAIN, "ATTENTION: CALLING A DUMMY FUNCTION");
   return 0;
 }
 
-unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
+unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam, struct gsh_buffdesc * buffclef)
 {
   LogMajor(COMPONENT_MAIN, "ATTENTION: CALLING A DUMMY FUNCTION");
   return 0;
 }
 
-int display_cache(hash_buffer_t * pbuff, char *str)
+int display_cache(struct gsh_buffdesc * pbuff, char *str)
 {
     *str = '\0';
   return 0;
 }
 
-int compare_cache(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_cache(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
   return 0;
 }

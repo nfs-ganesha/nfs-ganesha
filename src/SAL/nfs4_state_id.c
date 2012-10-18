@@ -54,7 +54,6 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
 #include "nfs4.h"
@@ -83,14 +82,14 @@ int display_stateid_other(char * other, char * str)
                  (unsigned int) epoch, (unsigned long long) count);
 }
 
-int display_state_id_key(hash_buffer_t * pbuff, char *str)
+int display_state_id_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_stateid_other(pbuff->pdata, str);
+  return display_stateid_other(pbuff->addr, str);
 }                               /* display_state_id_val */
 
-int display_state_id_val(hash_buffer_t * pbuff, char *str)
+int display_state_id_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  state_t *pstate = (state_t *) (pbuff->pdata);
+  state_t *pstate = (state_t *) (pbuff->addr);
 
   return sprintf(str,
                  "state %p is associated with pentry=%p type=%u seqid=%u",
@@ -100,14 +99,14 @@ int display_state_id_val(hash_buffer_t * pbuff, char *str)
                  pstate->state_seqid);
 }                               /* display_state_id_val */
 
-int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_state_id(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
   if(isFullDebug(COMPONENT_STATE))
     {
       char str1[OTHERSIZE * 2 + 32], str2[OTHERSIZE * 2 + 32];
 
-      display_stateid_other(buff1->pdata, str1);
-      display_stateid_other(buff2->pdata, str2);
+      display_stateid_other(buff1->addr, str1);
+      display_stateid_other(buff2->addr, str2);
 
       if(isDebug(COMPONENT_HASHTABLE))
         LogFullDebug(COMPONENT_STATE,
@@ -115,7 +114,7 @@ int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
                      str1, str2);
     }
 
-  return memcmp(buff1->pdata, buff2->pdata, OTHERSIZE);
+  return memcmp(buff1->addr, buff2->addr, OTHERSIZE);
 }                               /* compare_state_id */
 
 inline uint32_t compute_stateid_hash_value(uint32_t * pstate)
@@ -124,9 +123,9 @@ inline uint32_t compute_stateid_hash_value(uint32_t * pstate)
 }
 
 uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t    * buffclef)
+                                  struct gsh_buffdesc    * buffclef)
 {
-  uint32_t val = compute_stateid_hash_value((uint32_t *) buffclef->pdata) %
+  uint32_t val = compute_stateid_hash_value((uint32_t *) buffclef->addr) %
                       p_hparam->index_size;
 
   if(isDebug(COMPONENT_HASHTABLE))
@@ -136,9 +135,9 @@ uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
 }
 
 uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                hash_buffer_t    * buffclef)
+                                struct gsh_buffdesc    * buffclef)
 {
-  uint64_t val = compute_stateid_hash_value((uint32_t *) buffclef->pdata);
+  uint64_t val = compute_stateid_hash_value((uint32_t *) buffclef->addr);
 
   if(isDebug(COMPONENT_HASHTABLE))
     LogFullDebug(COMPONENT_STATE, "rbt = %"PRIu64, val);
@@ -206,19 +205,19 @@ void nfs4_BuildStateId_Other(char * other)
  */
 int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
 
-  if((buffkey.pdata = gsh_malloc(OTHERSIZE)) == NULL)
+  if((buffkey.addr = gsh_malloc(OTHERSIZE)) == NULL)
     return 0;
 
   LogFullDebug(COMPONENT_STATE,
-               "Allocating stateid key %p", buffkey.pdata);
+               "Allocating stateid key %p", buffkey.addr);
 
-  memcpy(buffkey.pdata, other, OTHERSIZE);
+  memcpy(buffkey.addr, other, OTHERSIZE);
   buffkey.len = OTHERSIZE;
 
-  buffval.pdata = (caddr_t) pstate_data;
+  buffval.addr = (caddr_t) pstate_data;
   buffval.len = sizeof(state_t);
 
   if(HashTable_Test_And_Set(ht_state_id,
@@ -228,8 +227,8 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
     {
       LogDebug(COMPONENT_STATE,
                "HashTable_Test_And_Set failed for key %p",
-               buffkey.pdata);
-      gsh_free(buffkey.pdata);
+               buffkey.addr);
+      gsh_free(buffkey.addr);
       return 0;
     }
 
@@ -250,11 +249,11 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
  */
 int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   int           rc;
 
-  buffkey.pdata = (caddr_t) other;
+  buffkey.addr = (caddr_t) other;
   buffkey.len = OTHERSIZE;
 
   rc = HashTable_Get(ht_state_id, &buffkey, &buffval);
@@ -265,7 +264,7 @@ int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data)
       return 0;
     }
 
-  *pstate_data = (state_t *) buffval.pdata;
+  *pstate_data = (state_t *) buffval.addr;
 
   return 1;
 }                               /* nfs4_State_Get_Pointer */
@@ -283,19 +282,19 @@ int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data)
  */
 int nfs4_State_Del(char other[OTHERSIZE])
 {
-  hash_buffer_t buffkey, old_key, old_value;
+  struct gsh_buffdesc buffkey, old_key, old_value;
 
-  buffkey.pdata = (caddr_t) other;
+  buffkey.addr = (caddr_t) other;
   buffkey.len = OTHERSIZE;
 
   if(HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
       /* free the key that was stored in hash table */
       LogFullDebug(COMPONENT_STATE,
-                   "Freeing stateid key %p", old_key.pdata);
-      gsh_free(old_key.pdata);
+                   "Freeing stateid key %p", old_key.addr);
+      gsh_free(old_key.addr);
 
-      /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
+      /* State is managed in stuff alloc, no fre is needed for old_value.addr */
 
       return 1;
     }

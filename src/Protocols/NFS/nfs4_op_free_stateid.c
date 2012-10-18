@@ -43,7 +43,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"

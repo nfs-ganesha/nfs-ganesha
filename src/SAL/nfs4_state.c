@@ -47,7 +47,6 @@
 #include <string.h>
 
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
 #include "nfs4.h"

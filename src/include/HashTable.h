@@ -44,28 +44,41 @@
 #include <rbt_node.h>
 #include <rbt_tree.h>
 #include <pthread.h>
-#include "HashData.h"
 #include "log.h"
 #include "lookup3.h"
 #include "abstract_mem.h"
+#include "ganesha_types.h"
+
+/**
+ * @brief A pair of buffer descriptors
+ *
+ * This is used internally to represent a single hash datum within the
+ * table.
+ */
+
+struct hash_data {
+	struct gsh_buffdesc key; /*< The lookup key */
+	struct gsh_buffdesc val; /*< The stored value */
+};
+
 
 /* Forward declaration */
 
 typedef struct hash_param hash_parameter_t;
 
 typedef uint32_t (*index_function_t)(struct hash_param *,
-				     struct hash_buff *);
+				     struct gsh_buffdesc *);
 typedef uint64_t (*rbthash_function_t)(struct hash_param *,
-				       struct hash_buff *);
+				       struct gsh_buffdesc *);
 typedef int (*both_function_t)(struct hash_param *,
-			       struct hash_buff *,
+			       struct gsh_buffdesc *,
 			       uint32_t *,
 			       uint64_t *);
-typedef int (*hash_buff_comparator_t)(struct hash_buff *,
-				      struct hash_buff *);
-typedef int (*key_display_function_t)(struct hash_buff *,
+typedef int (*hash_comparator_t)(struct gsh_buffdesc *,
+				 struct gsh_buffdesc *);
+typedef int (*key_display_function_t)(struct gsh_buffdesc *,
 				      char *);
-typedef int (*val_display_function_t)(struct hash_buff*,
+typedef int (*val_display_function_t)(struct gsh_buffdesc *,
 				      char *);
 
 #define HT_FLAG_NONE 0x0000 /*< Null hash table flags */
@@ -107,10 +120,9 @@ struct hash_param {
 					    function may replace the
 					    partition and hash
 					    funcions. */
-	hash_buff_comparator_t compare_key; /*< Function to compare
-					        two keys.  This
-					        function returns 0 on
-					        equality. */
+	hash_comparator_t compare_key; /*< Function to compare two
+					   keys.  This function
+					   returns 0 on equality. */
 	key_display_function_t key_to_str; /*< Function to convert a key
                                                to a string. */
 	val_display_function_t val_to_str; /*< Function to convert a
@@ -209,30 +221,30 @@ const char *hash_table_err_to_str(hash_error_t err);
 
 struct hash_table *HashTable_Init(struct hash_param *hparam);
 hash_error_t HashTable_Destroy(struct hash_table *ht,
-			       int (*free_func)(struct hash_buff,
-						struct hash_buff));
+			       int (*free_func)(struct gsh_buffdesc,
+						struct gsh_buffdesc));
 hash_error_t HashTable_GetLatch(struct hash_table *ht,
-				struct hash_buff *key,
-				struct hash_buff *val,
+				struct gsh_buffdesc *key,
+				struct gsh_buffdesc *val,
 				bool may_write,
 				struct hash_latch *latch);
 void HashTable_ReleaseLatched(struct hash_table *ht,
 			      struct hash_latch *latch);
 hash_error_t HashTable_SetLatched(struct hash_table *ht,
-				  struct hash_buff *key,
-				  struct hash_buff *val,
+				  struct gsh_buffdesc *key,
+				  struct gsh_buffdesc *val,
 				  struct hash_latch *latch,
 				  int overwrite,
-				  struct hash_buff *stored_key,
-				  struct hash_buff *stored_val);
+				  struct gsh_buffdesc *stored_key,
+				  struct gsh_buffdesc *stored_val);
 hash_error_t HashTable_DeleteLatched(struct hash_table *ht,
-				     struct hash_buff *key,
+				     struct gsh_buffdesc *key,
 				     struct hash_latch *latch,
-				     struct hash_buff *stored_key,
-				     struct hash_buff *stored_val);
+				     struct gsh_buffdesc *stored_key,
+				     struct gsh_buffdesc *stored_val);
 hash_error_t HashTable_Delall(struct hash_table *ht,
-			      int (*free_func)(struct hash_buff,
-					       struct hash_buff));
+			      int (*free_func)(struct gsh_buffdesc,
+					       struct gsh_buffdesc));
 
 void HashTable_GetStats(struct hash_table *ht,
 			struct hash_stat *hstat);
@@ -256,11 +268,11 @@ void HashTable_Log(log_components_t component, struct hash_table *ht);
  */
 
 static inline hash_error_t HashTable_Get(struct hash_table *ht,
-					 struct hash_buff *key,
-					 struct hash_buff *val)
+					 struct gsh_buffdesc *key,
+					 struct gsh_buffdesc *val)
 {
-     return HashTable_GetLatch(ht, key, val, false, NULL);
-} /* HashTable_Get */
+	return HashTable_GetLatch(ht, key, val, false, NULL);
+}
 
 /**
  * @brief Set a pair (key,value) into the Hash Table
@@ -280,8 +292,8 @@ static inline hash_error_t HashTable_Get(struct hash_table *ht,
  */
 
 static inline hash_error_t HashTable_Set(struct hash_table *ht,
-					 struct hash_buff *key,
-					 struct hash_buff *val)
+					 struct gsh_buffdesc *key,
+					 struct gsh_buffdesc *val)
 {
 	/* structure to hold retained state */
 	struct hash_latch latch;
@@ -323,9 +335,9 @@ static inline hash_error_t HashTable_Set(struct hash_table *ht,
  * @retval HASHTABLE_SUCCESS on deletion
  */
 static inline hash_error_t HashTable_Del(struct hash_table *ht,
-					 struct hash_buff *key,
-					 struct hash_buff *stored_key,
-					 struct hash_buff *stored_val)
+					 struct gsh_buffdesc *key,
+					 struct gsh_buffdesc *stored_key,
+					 struct gsh_buffdesc *stored_val)
 {
 	/* Structure to hold retained state */
 	struct hash_latch latch;
@@ -354,26 +366,26 @@ static inline hash_error_t HashTable_Del(struct hash_table *ht,
    complex semantics on top of the primitives. */
 
 hash_error_t HashTable_Test_And_Set(struct hash_table *ht,
-				    struct hash_buff *key,
-				    struct hash_buff *val,
+				    struct gsh_buffdesc *key,
+				    struct gsh_buffdesc *val,
 				    enum hash_set_how how);
 hash_error_t HashTable_GetRef(struct hash_table *ht,
-			      struct hash_buff *key,
-			      struct hash_buff *val,
-			      void (*get_ref)(struct hash_buff *));
+			      struct gsh_buffdesc *key,
+			      struct gsh_buffdesc *val,
+			      void (*get_ref)(struct gsh_buffdesc *));
 
 hash_error_t HashTable_Get_and_Del(struct hash_table  *ht,
-				   struct hash_buff *key,
-				   struct hash_buff *val,
-				   struct hash_buff *stored_key);
+				   struct gsh_buffdesc *key,
+				   struct gsh_buffdesc *val,
+				   struct gsh_buffdesc *stored_key);
 hash_error_t HashTable_DelRef(struct hash_table *ht,
-			      struct hash_buff *key,
-			      struct hash_buff *stored_key,
-			      struct hash_buff *stored_val,
-			      int (*put_ref)(struct hash_buff *));
+			      struct gsh_buffdesc *key,
+			      struct gsh_buffdesc *stored_key,
+			      struct gsh_buffdesc *stored_val,
+			      int (*put_ref)(struct gsh_buffdesc *));
 hash_error_t HashTable_DelSafe(hash_table_t *ht,
-			       hash_buffer_t *key,
-			       hash_buffer_t *val);
+			       struct gsh_buffdesc *key,
+			       struct gsh_buffdesc *val);
 
 /** @} */
 

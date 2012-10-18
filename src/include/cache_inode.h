@@ -38,7 +38,6 @@
 #include <time.h>
 #include <pthread.h>
 #include "abstract_mem.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "avltree.h"
 #include "generic_weakref.h"
@@ -565,7 +564,7 @@ typedef cache_inode_status_t(*cache_inode_getattr_cb_t)(
 const char *cache_inode_err_str(cache_inode_status_t err);
 
 void cache_inode_clean_entry(cache_entry_t *entry);
-int cache_inode_compare_key_fsal(hash_buffer_t *buff1, hash_buffer_t *buff2);
+int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 void cache_inode_release_symlink(cache_entry_t *entry);
 
 hash_table_t *cache_inode_init(cache_inode_parameter_t param,
@@ -844,17 +843,17 @@ inline int cache_inode_set_time_current(gsh_time_t *time);
 
 /* Hash functions for hashtables and RBT */
 uint32_t cache_inode_fsal_hash_func(hash_parameter_t *hparam,
-				    hash_buffer_t *buff);
+				    struct gsh_buffdesc *buff);
 uint64_t cache_inode_fsal_rbt_func(hash_parameter_t *hparam,
-				   hash_buffer_t *buff);
+				   struct gsh_buffdesc *buff);
 int cache_inode_fsal_rbt_both(hash_parameter_t *hparam,
-			      hash_buffer_t *buffclef,
+			      struct gsh_buffdesc *buffclef,
 			      uint32_t *hashval,
 			      uint64_t *rbtval);
-int display_key(hash_buffer_t *buff, char *str);
-int display_not_implemented(hash_buffer_t *buff,
+int display_key(struct gsh_buffdesc *buff, char *str);
+int display_not_implemented(struct gsh_buffdesc *buff,
 			    char *str);
-int display_value(hash_buffer_t *buff, char *str);
+int display_value(struct gsh_buffdesc *buff, char *str);
 
 /**
  * @brief Update cache_entry metadata from its attributes

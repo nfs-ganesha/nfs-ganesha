@@ -50,7 +50,6 @@
 #include <assert.h>
 
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "sal_functions.h"
@@ -655,10 +654,10 @@ int DisplayOwner(state_owner_t *powner, char *buf)
   return sprintf(buf, "%s", invalid_state_owner_type);
 }
 
-int Hash_dec_state_owner_ref(hash_buffer_t *buffval)
+int Hash_dec_state_owner_ref(struct gsh_buffdesc *buffval)
 {
   int rc;
-  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
+  state_owner_t *powner = (state_owner_t *)(buffval->addr);
 
   P(powner->so_mutex);
 
@@ -681,9 +680,9 @@ int Hash_dec_state_owner_ref(hash_buffer_t *buffval)
   return rc;
 }
 
-void Hash_inc_state_owner_ref(hash_buffer_t *buffval)
+void Hash_inc_state_owner_ref(struct gsh_buffdesc *buffval)
 {
-  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
+  state_owner_t *powner = (state_owner_t *)(buffval->addr);
 
   P(powner->so_mutex);
   powner->so_refcount++;

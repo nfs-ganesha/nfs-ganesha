@@ -47,7 +47,6 @@
 #include <grp.h>
 #include <stdint.h>
 #include <assert.h>
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"

@@ -78,14 +78,14 @@ int display_nsm_client(state_nsm_client_t *pkey, char *str)
   return strtmp - str;
 }
 
-int display_nsm_client_key(hash_buffer_t * pbuff, char *str)
+int display_nsm_client_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_nsm_client((state_nsm_client_t *)pbuff->pdata, str);
+  return display_nsm_client((state_nsm_client_t *)pbuff->addr, str);
 }
 
-int display_nsm_client_val(hash_buffer_t * pbuff, char *str)
+int display_nsm_client_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_nsm_client((state_nsm_client_t *)pbuff->pdata, str);
+  return display_nsm_client((state_nsm_client_t *)pbuff->addr, str);
 }
 
 int compare_nsm_client(state_nsm_client_t *pclient1,
@@ -123,18 +123,18 @@ int compare_nsm_client(state_nsm_client_t *pclient1,
                 pclient1->ssc_nlm_caller_name_len);
 }
 
-int compare_nsm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_nsm_client_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  return compare_nsm_client((state_nsm_client_t *)buff1->pdata,
-                            (state_nsm_client_t *)buff2->pdata);
+  return compare_nsm_client((state_nsm_client_t *)buff1->addr,
+                            (state_nsm_client_t *)buff2->addr);
 
 }                               /* compare_nsm_client */
 
 uint32_t nsm_client_value_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef)
+                                        struct gsh_buffdesc * buffclef)
 {
   unsigned long        res;
-  state_nsm_client_t * pkey = (state_nsm_client_t *)buffclef->pdata;
+  state_nsm_client_t * pkey = (state_nsm_client_t *)buffclef->addr;
 
   if(nfs_param.core_param.nsm_use_caller_name)
     {
@@ -161,10 +161,10 @@ uint32_t nsm_client_value_hash_func(hash_parameter_t * p_hparam,
 }                               /* nsm_client_value_hash_func */
 
 uint64_t nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                      hash_buffer_t * buffclef)
+                                      struct gsh_buffdesc * buffclef)
 {
   unsigned long        res;
-  state_nsm_client_t * pkey = (state_nsm_client_t *)buffclef->pdata;
+  state_nsm_client_t * pkey = (state_nsm_client_t *)buffclef->addr;
 
   if(nfs_param.core_param.nsm_use_caller_name)
     {
@@ -215,14 +215,14 @@ int display_nlm_client(state_nlm_client_t *pkey, char *str)
   return strtmp - str;
 }
 
-int display_nlm_client_key(hash_buffer_t * pbuff, char *str)
+int display_nlm_client_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_nlm_client(pbuff->pdata, str);
+  return display_nlm_client(pbuff->addr, str);
 }
 
-int display_nlm_client_val(hash_buffer_t * pbuff, char *str)
+int display_nlm_client_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_nlm_client(pbuff->pdata, str);
+  return display_nlm_client(pbuff->addr, str);
 }
 
 int compare_nlm_client(state_nlm_client_t *pclient1,
@@ -259,19 +259,19 @@ int compare_nlm_client(state_nlm_client_t *pclient1,
                 pclient1->slc_nlm_caller_name_len);
 }
 
-int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_nlm_client_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  return compare_nlm_client(buff1->pdata, buff2->pdata);
+  return compare_nlm_client(buff1->addr, buff2->addr);
 
 }                               /* compare_nlm_client */
 
 uint32_t nlm_client_value_hash_func(hash_parameter_t * p_hparam,
-                                    hash_buffer_t    * buffclef)
+                                    struct gsh_buffdesc    * buffclef)
 {
   uint32_t sum = 0;
   unsigned int i;
   unsigned long res;
-  state_nlm_client_t *pkey = buffclef->pdata;
+  state_nlm_client_t *pkey = buffclef->addr;
 
   /* Compute the sum of all the characters */
   for(i = 0; i < pkey->slc_nlm_caller_name_len; i++)
@@ -288,12 +288,12 @@ uint32_t nlm_client_value_hash_func(hash_parameter_t * p_hparam,
 }                               /* nlm_client_value_hash_func */
 
 uint64_t nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t    * buffclef)
+                                  struct gsh_buffdesc    * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_nlm_client_t *pkey = buffclef->pdata;
+  state_nlm_client_t *pkey = buffclef->addr;
 
   /* Compute the sum of all the characters */
   for(i = 0; i < pkey->slc_nlm_caller_name_len; i++)
@@ -335,14 +335,14 @@ int display_nlm_owner(state_owner_t *pkey, char *str)
   return strtmp - str;
 }
 
-int display_nlm_owner_key(hash_buffer_t * pbuff, char *str)
+int display_nlm_owner_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_nlm_owner((state_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner((state_owner_t *)pbuff->addr, str);
 }
 
-int display_nlm_owner_val(hash_buffer_t * pbuff, char *str)
+int display_nlm_owner_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_nlm_owner((state_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner((state_owner_t *)pbuff->addr, str);
 }
 
 int compare_nlm_owner(state_owner_t *powner1,
@@ -382,20 +382,20 @@ int compare_nlm_owner(state_owner_t *powner1,
                 powner1->so_owner_len);
 }
 
-int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_nlm_owner_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  return compare_nlm_owner((state_owner_t *)buff1->pdata,
-                           (state_owner_t *)buff2->pdata);
+  return compare_nlm_owner((state_owner_t *)buff1->addr,
+                           (state_owner_t *)buff2->addr);
 
 }                               /* compare_nlm_owner */
 
 uint32_t nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t * buffclef)
+                                   struct gsh_buffdesc * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
+  state_owner_t *pkey = (state_owner_t *)buffclef->addr;
 
   /* Compute the sum of all the characters */
   for(i = 0; i < pkey->so_owner_len; i++)
@@ -414,12 +414,12 @@ uint32_t nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
 }                               /* nlm_so_nlm_ohue_hash_func */
 
 uint64_t nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                 hash_buffer_t * buffclef)
+                                 struct gsh_buffdesc * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
+  state_owner_t *pkey = (state_owner_t *)buffclef->addr;
 
   /* Compute the sum of all the characters */
   for(i = 0; i < pkey->so_owner_len; i++)
@@ -501,9 +501,9 @@ void dec_nsm_client_ref(state_nsm_client_t *pclient)
   char              str[HASHTABLE_DISPLAY_STRLEN];
   struct hash_latch latch;
   hash_error_t      rc;
-  hash_buffer_t     buffkey;
-  hash_buffer_t     old_value;
-  hash_buffer_t     old_key;
+  struct gsh_buffdesc     buffkey;
+  struct gsh_buffdesc     old_value;
+  struct gsh_buffdesc     old_key;
   int32_t           refcount;
 
   if(isDebug(COMPONENT_STATE))
@@ -524,7 +524,7 @@ void dec_nsm_client_ref(state_nsm_client_t *pclient)
                "Try to remove {%s}",
                str);
 
-  buffkey.pdata = pclient;
+  buffkey.addr = pclient;
   buffkey.len   = sizeof(*pclient);
 
   /* Get the hash table entry and hold latch */
@@ -586,8 +586,8 @@ void dec_nsm_client_ref(state_nsm_client_t *pclient)
                "Free {%s}",
                str);
 
-  nsm_unmonitor(old_value.pdata);
-  free_nsm_client(old_value.pdata);
+  nsm_unmonitor(old_value.addr);
+  free_nsm_client(old_value.addr);
 }
 
 state_nsm_client_t *get_nsm_client(care_t    care,
@@ -600,8 +600,8 @@ state_nsm_client_t *get_nsm_client(care_t    care,
   char                 str[HASHTABLE_DISPLAY_STRLEN];
   struct hash_latch    latch;
   hash_error_t         rc;
-  hash_buffer_t        buffkey;
-  hash_buffer_t        buffval;
+  struct gsh_buffdesc        buffkey;
+  struct gsh_buffdesc        buffval;
 
   if(caller_name == NULL)
     return NULL;
@@ -675,7 +675,7 @@ state_nsm_client_t *get_nsm_client(care_t    care,
                    "Find {%s}", str);
     }
 
-  buffkey.pdata = &key;
+  buffkey.addr = &key;
   buffkey.len   = sizeof(key);
 
   rc = HashTable_GetLatch(ht_nsm_client,
@@ -687,7 +687,7 @@ state_nsm_client_t *get_nsm_client(care_t    care,
   /* If we found it, return it */
   if(rc == HASHTABLE_SUCCESS)
     {
-      pclient = buffval.pdata;
+      pclient = buffval.addr;
 
       /* Return the found NSM Client */
       if(isFullDebug(COMPONENT_STATE))
@@ -791,9 +791,9 @@ state_nsm_client_t *get_nsm_client(care_t    care,
                    "New {%s}", str);
     }
 
-  buffkey.pdata = pclient;
+  buffkey.addr = pclient;
   buffkey.len   = sizeof(*pclient);
-  buffval.pdata = pclient;
+  buffval.addr = pclient;
   buffval.len   = sizeof(*pclient);
 
   rc = HashTable_SetLatched(ht_nsm_client,
@@ -856,9 +856,9 @@ void dec_nlm_client_ref(state_nlm_client_t *pclient)
   char              str[HASHTABLE_DISPLAY_STRLEN];
   struct hash_latch latch;
   hash_error_t      rc;
-  hash_buffer_t     buffkey;
-  hash_buffer_t     old_value;
-  hash_buffer_t     old_key;
+  struct gsh_buffdesc     buffkey;
+  struct gsh_buffdesc     old_value;
+  struct gsh_buffdesc     old_key;
   int32_t           refcount;
 
   if(isDebug(COMPONENT_STATE))
@@ -879,7 +879,7 @@ void dec_nlm_client_ref(state_nlm_client_t *pclient)
                "Try to remove {%s}",
                str);
 
-  buffkey.pdata = pclient;
+  buffkey.addr = pclient;
   buffkey.len   = sizeof(*pclient);
 
   /* Get the hash table entry and hold latch */
@@ -941,7 +941,7 @@ void dec_nlm_client_ref(state_nlm_client_t *pclient)
                "Free {%s}",
                str);
 
-  free_nlm_client(old_value.pdata);
+  free_nlm_client(old_value.addr);
 }
 
 state_nlm_client_t *get_nlm_client(care_t               care,
@@ -954,8 +954,8 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   char                 str[HASHTABLE_DISPLAY_STRLEN];
   struct hash_latch    latch;
   hash_error_t         rc;
-  hash_buffer_t        buffkey;
-  hash_buffer_t        buffval;
+  struct gsh_buffdesc        buffkey;
+  struct gsh_buffdesc        buffval;
 
   if(caller_name == NULL)
     return NULL;
@@ -978,7 +978,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
                    "Find {%s}", str);
     }
 
-  buffkey.pdata = &key;
+  buffkey.addr = &key;
   buffkey.len   = sizeof(key);
 
   rc = HashTable_GetLatch(ht_nlm_client,
@@ -990,7 +990,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   /* If we found it, return it */
   if(rc == HASHTABLE_SUCCESS)
     {
-      pclient = buffval.pdata;
+      pclient = buffval.addr;
 
       /* Return the found NLM Client */
       if(isFullDebug(COMPONENT_STATE))
@@ -1083,9 +1083,9 @@ state_nlm_client_t *get_nlm_client(care_t               care,
                    "New {%s}", str);
     }
 
-  buffkey.pdata = pclient;
+  buffkey.addr = pclient;
   buffkey.len   = sizeof(*pclient);
-  buffval.pdata = pclient;
+  buffval.addr = pclient;
   buffval.len   = sizeof(*pclient);
 
   rc = HashTable_SetLatched(ht_nlm_client,
@@ -1133,14 +1133,14 @@ state_nlm_client_t *get_nlm_client(care_t               care,
 int nlm_owner_Set(state_owner_t * pkey,
                   state_owner_t * powner)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      buffkey.pdata = (caddr_t) pkey;
+      buffkey.addr = (caddr_t) pkey;
       buffkey.len = sizeof(*pkey);
 
       display_nlm_owner_key(&buffkey, str);
@@ -1148,10 +1148,10 @@ int nlm_owner_Set(state_owner_t * pkey,
                    "KEY {%s}", str);
     }
 
-  buffkey.pdata = (caddr_t) pkey;
+  buffkey.addr = (caddr_t) pkey;
   buffkey.len = sizeof(*pkey);
 
-  buffval.pdata = (caddr_t) powner;
+  buffval.addr = (caddr_t) powner;
   buffval.len = sizeof(*powner);
 
   if(HashTable_Test_And_Set
@@ -1165,9 +1165,9 @@ int nlm_owner_Set(state_owner_t * pkey,
 void remove_nlm_owner(state_owner_t        * powner,
                       const char           * str)
 {
-  hash_buffer_t buffkey, old_key, old_value;
+  struct gsh_buffdesc buffkey, old_key, old_value;
 
-  buffkey.pdata = (caddr_t) powner;
+  buffkey.addr = (caddr_t) powner;
   buffkey.len = sizeof(*powner);
 
   switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_dec_state_owner_ref))
@@ -1179,11 +1179,11 @@ void remove_nlm_owner(state_owner_t        * powner,
         dec_nlm_client_ref(powner->so_owner.so_nlm_owner.so_client);
         if(isFullDebug(COMPONENT_MEMLEAKS))
           {
-            memset(old_key.pdata, 0, old_key.len);
-            memset(old_value.pdata, 0, old_value.len);
+            memset(old_key.addr, 0, old_key.len);
+            memset(old_value.addr, 0, old_value.len);
           }
-        gsh_free(old_key.pdata);
-        gsh_free(old_value.pdata);
+        gsh_free(old_key.addr);
+        gsh_free(old_value.addr);
         break;
 
       case HASHTABLE_NOT_DELETED:
@@ -1217,11 +1217,11 @@ void remove_nlm_owner(state_owner_t        * powner,
 static int nlm_owner_Get_Pointer(state_owner_t  * pkey,
                           state_owner_t ** powner)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
 
   *powner = NULL; // in case we dont find it, return NULL
-  buffkey.pdata = (caddr_t) pkey;
+  buffkey.addr = (caddr_t) pkey;
   buffkey.len = sizeof(*pkey);
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
@@ -1243,7 +1243,7 @@ static int nlm_owner_Get_Pointer(state_owner_t  * pkey,
       return 0;
     }
 
-  *powner = (state_owner_t *) buffval.pdata;
+  *powner = (state_owner_t *) buffval.addr;
 
   LogFullDebug(COMPONENT_STATE,
                "FOUND");

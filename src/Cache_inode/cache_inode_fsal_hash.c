@@ -55,7 +55,7 @@
  * functions would get defined here as static functions.  The callers
  * in this file would then use the index from the configuration to call
  * the function.  For now, the VFS version, the most common is used.
- * Note that the hash_buffer_t, including the use of len rather than a
+ * Note that the struct gsh_buffdesc, including the use of len rather than a
  * fixed sizeof is also used.  It is the responsibility of the fsal
  * in its expand_handle and handle_to_key methods to define what these
  * keys are.
@@ -75,11 +75,11 @@
  *
  * \return The hash value
  */
-static unsigned int Handle_to_HashIndex(hash_buffer_t *buffclef,
+static unsigned int Handle_to_HashIndex(struct gsh_buffdesc *buffclef,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
-  unsigned char *hashkey = buffclef->pdata;
+  unsigned char *hashkey = buffclef->addr;
   unsigned int cpt = 0;
   unsigned int sum = 0;
   unsigned int extract = 0;
@@ -128,9 +128,9 @@ static unsigned int Handle_to_HashIndex(hash_buffer_t *buffclef,
 /** @TODO this is suspicious.  returns uint32_t but called for uint64_t
  */
 
-static unsigned int Handle_to_RBTIndex(hash_buffer_t *buffclef, unsigned int cookie)
+static unsigned int Handle_to_RBTIndex(struct gsh_buffdesc *buffclef, unsigned int cookie)
 {
-  unsigned char *hashkey = buffclef->pdata;
+  unsigned char *hashkey = buffclef->addr;
   unsigned int h = 0;
   unsigned int cpt = 0;
   unsigned int extract = 0;
@@ -178,7 +178,7 @@ static unsigned int Handle_to_RBTIndex(hash_buffer_t *buffclef, unsigned int coo
  *
  */
 uint32_t cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
-                                    hash_buffer_t * buffclef)
+                                    struct gsh_buffdesc * buffclef)
 {
     unsigned long h = 0;
 
@@ -191,7 +191,7 @@ uint32_t cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
 	  char printbuf[512];
 
           snprintmem(printbuf, 512,
-		     buffclef->pdata, buffclef->len);
+		     buffclef->addr, buffclef->len);
 	  LogFullDebug(COMPONENT_HASHTABLE,
 		       "buff = (Handle=%s, Cookie=%"PRIu64"), hash value=%lu",
 		       printbuf, 0UL, h);
@@ -213,7 +213,7 @@ uint32_t cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
  *
  */
 uint64_t cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t * buffclef)
+                                   struct gsh_buffdesc * buffclef)
 {
     /*
      * A polynomial function too, but reversed, to avoid
@@ -221,14 +221,14 @@ uint64_t cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
      */
     uint32_t h = 0;
 
-    h = Lookup3_hash_buff((char *)buffclef->pdata, buffclef->len );
+    h = Lookup3_hash_buff((char *)buffclef->addr, buffclef->len );
 
     if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_CACHE_INODE))
         {
 	  char printbuf[512];
 
           snprintmem(printbuf, 512,
-		     buffclef->pdata, buffclef->len);
+		     buffclef->addr, buffclef->len);
 	  LogFullDebug(COMPONENT_HASHTABLE,
 		       "buff = (Handle=%s, Cookie=%"PRIu64"), value=%u",
 		       printbuf, 0UL, h);
@@ -237,7 +237,7 @@ uint64_t cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
 }                               /* cache_inode_fsal_rbt_func */
 
 unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef)
+                                        struct gsh_buffdesc * buffclef)
 {
     /*
      * A polynomial function too, but reversed, to avoid
@@ -252,7 +252,7 @@ unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
 	  char printbuf[512];
 
           snprintmem(printbuf, 512,
-		     buffclef->pdata, buffclef->len);
+		     buffclef->addr, buffclef->len);
           LogFullDebug(COMPONENT_HASHTABLE,
 		       "buff = (Handle=%s, Cookie=%"PRIu64"), value=%lu",
 		       printbuf, 0UL, h);
@@ -276,7 +276,7 @@ unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
  */
 
 static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
-                                             hash_buffer_t    * buffclef,
+                                             struct gsh_buffdesc    * buffclef,
                                              uint32_t * phashval,
                                              uint64_t * prbtval)
 {
@@ -291,7 +291,7 @@ static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
 	  char printbuf[512];
 
           snprintmem(printbuf, 512,
-		     buffclef->pdata, buffclef->len);
+		     buffclef->addr, buffclef->len);
           LogFullDebug(COMPONENT_HASHTABLE,
                        "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), "
 		       "hashvalue=%u rbtvalue=%"PRIu64"",
@@ -304,14 +304,14 @@ static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
 } /*  cache_inode_fsal_rbt_both */
 
 static int cache_inode_fsal_rbt_both_locally(hash_parameter_t * p_hparam,
-                                             hash_buffer_t    * buffclef,
+                                             struct gsh_buffdesc    * buffclef,
                                              uint32_t * phashval,
                                              uint64_t * prbtval)
 {
     uint32_t h1 = 0 ;
     uint32_t h2 = 0 ;
 
-    Lookup3_hash_buff_dual(buffclef->pdata, buffclef->len,
+    Lookup3_hash_buff_dual(buffclef->addr, buffclef->len,
                            &h1, &h2  );
 
     h1 = h1 % p_hparam->index_size ;
@@ -324,7 +324,7 @@ static int cache_inode_fsal_rbt_both_locally(hash_parameter_t * p_hparam,
 	    char printbuf[512];
 
             snprintmem(printbuf, 512,
-		       buffclef->pdata, buffclef->len);
+		       buffclef->addr, buffclef->len);
             LogFullDebug(COMPONENT_HASHTABLE,
                          "buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
                          printbuf, 0UL, h1, h2 );
@@ -336,7 +336,7 @@ static int cache_inode_fsal_rbt_both_locally(hash_parameter_t * p_hparam,
 
 
 int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
-                               hash_buffer_t    * buffclef,
+                               struct gsh_buffdesc    * buffclef,
                                uint32_t * phashval, uint64_t * prbtval )
 {
   if(cache_inode_params.use_fsal_hash == false )
@@ -347,18 +347,18 @@ int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
 
 
 
-int display_key(hash_buffer_t * pbuff, char *str)
+int display_key(struct gsh_buffdesc * pbuff, char *str)
 {
     char buffer[512];
 
     snprintmem(buffer, 512,
-	       pbuff->pdata, pbuff->len);
+	       pbuff->addr, pbuff->len);
 
     return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
                     "(Handle=%s, Cookie=%"PRIu64")", buffer, 0UL);
 }
 
-int display_not_implemented(hash_buffer_t * pbuff, char *str)
+int display_not_implemented(struct gsh_buffdesc * pbuff, char *str)
 {
 
     return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
@@ -368,11 +368,11 @@ int display_not_implemented(hash_buffer_t * pbuff, char *str)
 /** @TODO this function is ???!!! It assumes a whole lot.
  *  leave for now but candidate for janitorial
  */
-int display_value(hash_buffer_t * pbuff, char *str)
+int display_value(struct gsh_buffdesc * pbuff, char *str)
 {
     cache_entry_t *pentry;
 
-    pentry = (cache_entry_t *) pbuff->pdata;
+    pentry = (cache_entry_t *) pbuff->addr;
 
     return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
                     "(Type=%d, Address=%p)",

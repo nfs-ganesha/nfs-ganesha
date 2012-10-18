@@ -41,7 +41,6 @@
 #include "solaris_port.h"
 #endif
 
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "nfs4.h"

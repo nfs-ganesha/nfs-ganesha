@@ -41,7 +41,6 @@
 #endif                          /* _SOLARIS */
 
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
@@ -82,7 +81,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                 const struct req_op_context *req_ctx,
                 cache_inode_status_t *status)
 {
-     hash_buffer_t key, value;
+     struct gsh_buffdesc key, value;
      cache_entry_t *entry = NULL;
      fsal_status_t fsal_status = {0, 0};
      hash_error_t hrc = 0;
@@ -95,8 +94,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
      /* Turn the input to a hash key on our own.
       */
-     key.pdata = fsdata->fh_desc.addr;
-     key.len = fsdata->fh_desc.len;
+     key = fsdata->fh_desc;
 
      hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
                               false,
@@ -115,7 +113,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
      if (hrc == HASHTABLE_SUCCESS) {
           /* Entry exists in the cache and was found */
-          entry = value.pdata;
+          entry = value.addr;
           /* take an extra reference within the critical section */
           if (cache_inode_lru_ref(entry, LRU_REQ_INITIAL) !=
               CACHE_INODE_SUCCESS) {

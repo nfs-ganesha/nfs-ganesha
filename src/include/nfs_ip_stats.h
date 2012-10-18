@@ -7,7 +7,6 @@
 #include "ganesha_rpc.h"
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
-#include "HashData.h"
 #include "HashTable.h"
 
 /* IP/name cache error */
@@ -68,20 +67,20 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
 void nfs_ip_name_get_stats(hash_stat_t * phstat);
 int nfs_ip_name_populate(char *path);
 
-int display_ip_name_key(hash_buffer_t * pbuff, char *str);
-int display_ip_name_val(hash_buffer_t * pbuff, char *str);
-int compare_ip_name(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int display_ip_name_key(struct gsh_buffdesc * pbuff, char *str);
+int display_ip_name_val(struct gsh_buffdesc * pbuff, char *str);
+int compare_ip_name(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 uint64_t ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
-                               hash_buffer_t * buffclef);
+                               struct gsh_buffdesc * buffclef);
 uint32_t ip_name_value_hash_func(hash_parameter_t * p_hparam,
-                                 hash_buffer_t * buffclef);
+                                 struct gsh_buffdesc * buffclef);
 
-int display_ip_stats_key(hash_buffer_t * pbuff, char *str);
-int display_ip_stats_val(hash_buffer_t * pbuff, char *str);
-int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int display_ip_stats_key(struct gsh_buffdesc * pbuff, char *str);
+int display_ip_stats_val(struct gsh_buffdesc * pbuff, char *str);
+int compare_ip_stats(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 uint64_t ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef);
+                                         struct gsh_buffdesc * buffclef);
 uint32_t ip_stats_value_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef);
+                                  struct gsh_buffdesc * buffclef);
 
 #endif

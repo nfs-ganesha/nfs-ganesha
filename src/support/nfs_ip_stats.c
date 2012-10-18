@@ -54,7 +54,6 @@
 #include "solaris_port.h"
 #endif
 
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "nfs_core.h"
@@ -80,9 +79,9 @@
  *
  */
 uint32_t ip_stats_value_hash_func(hash_parameter_t * p_hparam,
-                                           hash_buffer_t * buffclef)
+                                           struct gsh_buffdesc * buffclef)
 {
-  return hash_sockaddr((sockaddr_t *)buffclef->pdata, IGNORE_PORT) % p_hparam->index_size;
+  return hash_sockaddr((sockaddr_t *)buffclef->addr, IGNORE_PORT) % p_hparam->index_size;
 }
 
 /**
@@ -101,9 +100,9 @@ uint32_t ip_stats_value_hash_func(hash_parameter_t * p_hparam,
  *
  */
 uint64_t ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef)
+                                         struct gsh_buffdesc * buffclef)
 {
-  return hash_sockaddr((sockaddr_t *)buffclef->pdata, IGNORE_PORT);
+  return hash_sockaddr((sockaddr_t *)buffclef->addr, IGNORE_PORT);
 }
 
 /**
@@ -119,9 +118,9 @@ uint64_t ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
  * @return 0 if keys are identifical, 1 if they are different. 
  *
  */
-int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_ip_stats(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  return (cmp_sockaddr((sockaddr_t *)(buff1->pdata), (sockaddr_t *)(buff2->pdata), IGNORE_PORT) != 0) ? 0 : 1;
+  return (cmp_sockaddr((sockaddr_t *)(buff1->addr), (sockaddr_t *)(buff2->addr), IGNORE_PORT) != 0) ? 0 : 1;
 }
 
 /**
@@ -136,9 +135,9 @@ int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_ip_stats_key(hash_buffer_t * pbuff, char *str)
+int display_ip_stats_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  sockaddr_t *addr = (sockaddr_t *)(pbuff->pdata);
+  sockaddr_t *addr = (sockaddr_t *)(pbuff->addr);
 
   sprint_sockaddr(addr, str, HASHTABLE_DISPLAY_STRLEN);
   return strlen(str);
@@ -156,9 +155,9 @@ int display_ip_stats_key(hash_buffer_t * pbuff, char *str)
  * @return number of character written.
  *
  */
-int display_ip_stats_val(hash_buffer_t * pbuff, char *str)
+int display_ip_stats_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  nfs_ip_stats_t *ip_stats = (nfs_ip_stats_t *)(pbuff->pdata);
+  nfs_ip_stats_t *ip_stats = (nfs_ip_stats_t *)(pbuff->addr);
 
   return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
                   "calls %u nfs2 %u nfs3 %u nfs4 %u mnt1 %u mnt3 %u",
@@ -188,8 +187,8 @@ int display_ip_stats_val(hash_buffer_t * pbuff, char *str)
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
                      sockaddr_t * ipaddr, pool_t *ip_stats_pool)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffdata;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffdata;
   nfs_ip_stats_t *g = NULL;
   sockaddr_t *pipaddr = NULL;
 
@@ -210,11 +209,11 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
     }
 
   /* I have to keep an integer as key, I wil use the pointer
-   * buffkey->pdata for this, this also means that buffkey->len will
+   * buffkey->addr for this, this also means that buffkey->len will
    * be 0 */
   memcpy(pipaddr, ipaddr, sizeof(sockaddr_t));
 
-  buffkey.pdata = pipaddr;
+  buffkey.addr = pipaddr;
   buffkey.len = sizeof(sockaddr_t);
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
@@ -230,7 +229,7 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
   memset(g->req_nfs2, 0, NFS_V2_NB_COMMAND * sizeof(int));
   memset(g->req_nfs3, 0, NFS_V3_NB_COMMAND * sizeof(int));
 
-  buffdata.pdata = (caddr_t) g;
+  buffdata.addr = (caddr_t) g;
   buffdata.len = sizeof(nfs_ip_stats_t);
 
   if(HashTable_Set(ht_ip_stats, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
@@ -255,12 +254,12 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
                       unsigned int nfs_prog,
                       unsigned int mnt_prog, struct svc_req *ptr_req)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   int status;
   nfs_ip_stats_t *g;
 
-  buffkey.pdata = (caddr_t) ipaddr;
+  buffkey.addr = (caddr_t) ipaddr;
   buffkey.len = sizeof(sockaddr_t);
 
   /* Do nothing if configuration disables IP_Stats */
@@ -269,7 +268,7 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
 
   if(HashTable_Get(ht_ip_stats, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      g = (nfs_ip_stats_t *) buffval.pdata;
+      g = (nfs_ip_stats_t *) buffval.addr;
       g->nb_call += 1;
 
       status = IP_STATS_SUCCESS;
@@ -331,11 +330,11 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
 int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
                      sockaddr_t * ipaddr, nfs_ip_stats_t ** g)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   int status;
 
-  buffkey.pdata = (caddr_t) ipaddr;
+  buffkey.addr = (caddr_t) ipaddr;
   buffkey.len = sizeof(sockaddr_t);
 
   /* Do nothing if configuration disables IP_Stats */
@@ -344,7 +343,7 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
 
   if(HashTable_Get(ht_ip_stats, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      *g = (nfs_ip_stats_t *) buffval.pdata;
+      *g = (nfs_ip_stats_t *) buffval.addr;
 
       status = IP_STATS_SUCCESS;
     }
@@ -370,11 +369,11 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
                         sockaddr_t * ipaddr, pool_t *ip_stats_pool)
 {
-  hash_buffer_t buffkey, old_key, old_value;
+  struct gsh_buffdesc buffkey, old_key, old_value;
   int status = IP_STATS_SUCCESS;
   nfs_ip_stats_t *g = NULL;
 
-  buffkey.pdata = (caddr_t) ipaddr;
+  buffkey.addr = (caddr_t) ipaddr;
   buffkey.len = sizeof(sockaddr_t);
 
   /* Do nothing if configuration disables IP_Stats */
@@ -383,8 +382,8 @@ int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
 
   if(HashTable_Del(ht_ip_stats, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
-      gsh_free(old_key.pdata);
-      g = old_value.pdata;
+      gsh_free(old_key.addr);
+      g = old_value.addr;
       pool_free(ip_stats_pool, g);
     }
   else
@@ -434,7 +433,7 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
 {
   struct rbt_node *it;
   struct rbt_head *tete_rbt;
-  hash_data_t *pdata = NULL;
+  struct hash_data *addr = NULL;
   unsigned int i = 0;
   unsigned int j = 0;
   unsigned int k = 0;
@@ -471,9 +470,9 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
       tete_rbt = &ht_ip_stats[0]->partitions[i].rbt;
       RBT_LOOP(tete_rbt, it)
       {
-        pdata = (hash_data_t *) it->rbt_opaq;
+        addr = it->rbt_opaq;
 
-        ipaddr = (sockaddr_t *) pdata->buffkey.pdata;
+        ipaddr = (sockaddr_t *) addr->key.addr;
 
         sprint_sockaddr(ipaddr, ipaddrbuf, sizeof(ipaddrbuf));
 

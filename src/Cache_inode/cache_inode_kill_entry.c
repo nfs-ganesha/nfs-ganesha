@@ -53,7 +53,6 @@
 #include <assert.h>
 
 #include "log.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
@@ -80,8 +79,8 @@
 void
 cache_inode_kill_entry(cache_entry_t *entry)
 {
-     hash_buffer_t key;
-     hash_buffer_t val;
+     struct gsh_buffdesc key;
+     struct gsh_buffdesc val;
      struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
      struct gsh_buffdesc fh_desc;
      int rc = 0;
@@ -94,10 +93,10 @@ cache_inode_kill_entry(cache_entry_t *entry)
 
      /* Use the handle to build the key */
      pfsal_handle->ops->handle_to_key(pfsal_handle, &fh_desc);
-     key.pdata = fh_desc.addr;
+     key.addr = fh_desc.addr;
      key.len = fh_desc.len;
 
-     val.pdata = entry;
+     val.addr = entry;
      val.len = sizeof(cache_entry_t);
 
      if ((rc = HashTable_DelSafe(fh_to_cache_entry_ht,

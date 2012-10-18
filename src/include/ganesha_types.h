@@ -86,8 +86,8 @@ gsh_time_cmp(gsh_time_t t1,
  */
 
 struct gsh_buffdesc {
-        void *addr;  /*< First octet/byte of the buffer */
-        size_t len;  /*< Length of the buffer */
+	void *addr;  /*< First octet/byte of the buffer */
+	size_t len;  /*< Length of the buffer */
 };
 
 #endif /* !GANESHA_TYPES__ */

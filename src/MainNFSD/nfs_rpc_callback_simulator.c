@@ -98,7 +98,7 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
   static uint32_t i, serial = 1;
   hash_table_t *ht = ht_confirmed_client_id;
   struct rbt_head *head_rbt;
-  hash_data_t *pdata = NULL;
+  struct hash_data *pdata = NULL;
   struct rbt_node *pn;
   nfs_client_id_t *pclientid;
   uint64_t clientid;
@@ -120,8 +120,7 @@ nfs_rpc_cbsim_get_client_ids(DBusConnection *conn, DBusMessage *msg,
     /* go through all entries in the red-black-tree*/
     RBT_LOOP(head_rbt, pn) {
       pdata = RBT_OPAQ(pn);
-      pclientid =
-	(nfs_client_id_t *)pdata->buffval.pdata;
+      pclientid = pdata->val.addr;
       clientid = pclientid->cid_clientid;
       dbus_message_iter_append_basic(&sub_iter, DBUS_TYPE_UINT64, &clientid);
       RBT_INCREMENT(pn);      

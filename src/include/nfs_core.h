@@ -704,14 +704,14 @@ void nfs_reset_stats(void);
 void auth_stat2str(enum auth_stat, char *str);
 
 uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                hash_buffer_t * buffclef);
+                                struct gsh_buffdesc * buffclef);
 uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef);
+                                  struct gsh_buffdesc * buffclef);
 
 uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
-                                             hash_buffer_t * buffclef);
+                                             struct gsh_buffdesc * buffclef);
 uint32_t idmapper_value_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef);
+                                  struct gsh_buffdesc * buffclef);
 
 int idmap_populate(char *path, idmap_type_t maptype);
 
@@ -722,12 +722,12 @@ int idmap_uid_init(nfs_idmap_cache_parameter_t param);
 int idmap_uname_init(nfs_idmap_cache_parameter_t param);
 int uidgidmap_init(nfs_idmap_cache_parameter_t param);
 
-int display_idmapper_val(hash_buffer_t * pbuff, char *str);
-int display_idmapper_key(hash_buffer_t * pbuff, char *str);
+int display_idmapper_val(struct gsh_buffdesc * pbuff, char *str);
+int display_idmapper_key(struct gsh_buffdesc * pbuff, char *str);
 
-int compare_idmapper(hash_buffer_t * buff1, hash_buffer_t * buff2);
-int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2);
-int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int compare_idmapper(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
+int compare_namemapper(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
+int compare_state_id(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
 int idmap_compute_hash_value(char *name, uint32_t * phashval);
 int idmap_add(hash_table_t * ht, char *key, uint32_t val);

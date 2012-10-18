@@ -51,7 +51,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "nfs23.h"

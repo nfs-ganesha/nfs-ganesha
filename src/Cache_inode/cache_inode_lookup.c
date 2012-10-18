@@ -42,7 +42,6 @@
 
 #include "log.h"
 #include "abstract_atomic.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"

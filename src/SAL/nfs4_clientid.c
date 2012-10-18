@@ -36,7 +36,6 @@
 #endif
 
 #include <assert.h>
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "nfs_core.h"
@@ -113,9 +112,9 @@ int display_clientid_name(nfs_client_id_t * pclientid, char * str)
     return sprintf(str, "<NULL>");
 }
 
-static void Hash_inc_client_id_ref(hash_buffer_t *buffval)
+static void Hash_inc_client_id_ref(struct gsh_buffdesc *buffval)
 {
-  nfs_client_id_t *pclientid = buffval->pdata;
+  nfs_client_id_t *pclientid = buffval->addr;
 
   inc_client_id_ref(pclientid);
 }
@@ -208,11 +207,11 @@ void dec_client_id_ref(nfs_client_id_t *pclientid)
  *
  */
 uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t    * buffclef)
+                                   struct gsh_buffdesc    * buffclef)
 {
   clientid4 clientid;
 
-  memcpy(&clientid, buffclef->pdata, sizeof(clientid));
+  memcpy(&clientid, buffclef->addr, sizeof(clientid));
 
   return (uint32_t) clientid % p_hparam->index_size;
 }                               /*  client_id_value_hash_func */
@@ -234,11 +233,11 @@ uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
  *
  */
 uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                 hash_buffer_t    * buffclef)
+                                 struct gsh_buffdesc    * buffclef)
 {
   clientid4 clientid;
 
-  memcpy(&clientid, buffclef->pdata, sizeof(clientid));
+  memcpy(&clientid, buffclef->addr, sizeof(clientid));
 
   return clientid;
 }                               /* client_id_rbt_hash_func */
@@ -256,10 +255,10 @@ uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
  * @return 0 if keys are identifical, 1 if they are different.
  *
  */
-int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_client_id(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  clientid4 cl1 = *((clientid4 *) (buff1->pdata));
-  clientid4 cl2 = *((clientid4 *) (buff2->pdata));
+  clientid4 cl1 = *((clientid4 *) (buff1->addr));
+  clientid4 cl2 = *((clientid4 *) (buff2->addr));
   return (cl1 == cl2) ? 0 : 1;
 }
 
@@ -276,18 +275,18 @@ int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_client_id_key(hash_buffer_t * pbuff, char *str)
+int display_client_id_key(struct gsh_buffdesc * pbuff, char *str)
 {
   clientid4 clientid;
 
-  clientid = *((clientid4 *) (pbuff->pdata));
+  clientid = *((clientid4 *) (pbuff->addr));
 
   return sprintf(str, "%"PRIx64, clientid);
 }
 
-int display_client_id_val(hash_buffer_t * pbuff, char *str)
+int display_client_id_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_client_id_rec(pbuff->pdata, str);
+  return display_client_id_rec(pbuff->addr, str);
 }
 
 nfs_client_id_t * create_client_id(clientid4              clientid,
@@ -386,15 +385,15 @@ nfs_client_id_t * create_client_id(clientid4              clientid,
  */
 int nfs_client_id_insert(nfs_client_id_t * pclientid)
 {
-  hash_buffer_t             buffkey;
-  hash_buffer_t             buffdata;
+  struct gsh_buffdesc             buffkey;
+  struct gsh_buffdesc             buffdata;
   int                       rc;
 
   /* Create key from cid_clientid */
-  buffkey.pdata = &pclientid->cid_clientid;
+  buffkey.addr = &pclientid->cid_clientid;
   buffkey.len   = sizeof(pclientid->cid_clientid);
 
-  buffdata.pdata = (caddr_t) pclientid;
+  buffdata.addr = (caddr_t) pclientid;
   buffdata.len   = sizeof(nfs_client_id_t);
 
   rc = HashTable_Test_And_Set(ht_unconfirmed_client_id,
@@ -445,11 +444,11 @@ int nfs_client_id_insert(nfs_client_id_t * pclientid)
 int remove_unconfirmed_client_id(nfs_client_id_t * pclientid)
 {
   int                       rc;
-  hash_buffer_t             buffkey;
-  hash_buffer_t             old_key;
-  hash_buffer_t             old_value;
+  struct gsh_buffdesc             buffkey;
+  struct gsh_buffdesc             old_key;
+  struct gsh_buffdesc             old_value;
 
-  buffkey.pdata = (caddr_t) &pclientid->cid_clientid;
+  buffkey.addr = (caddr_t) &pclientid->cid_clientid;
   buffkey.len   = sizeof(pclientid->cid_clientid);
 
   rc = HashTable_Del(ht_unconfirmed_client_id,
@@ -495,11 +494,11 @@ int nfs_client_id_confirm(nfs_client_id_t * pclientid,
                           log_components_t  component)
 {
   int                       rc;
-  hash_buffer_t             buffkey;
-  hash_buffer_t             old_key;
-  hash_buffer_t             old_value;
+  struct gsh_buffdesc             buffkey;
+  struct gsh_buffdesc             old_key;
+  struct gsh_buffdesc             old_value;
 
-  buffkey.pdata = (caddr_t) &pclientid->cid_clientid;
+  buffkey.addr = (caddr_t) &pclientid->cid_clientid;
   buffkey.len   = sizeof(pclientid->cid_clientid);
 
   /* Remove the clientid as the unconfirmed entry for the client record */
@@ -576,9 +575,9 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
   struct glist_head    * glist2, * glistn2;
   state_status_t         pstatus;
   int                    rc;
-  hash_buffer_t          buffkey;
-  hash_buffer_t          old_key;
-  hash_buffer_t          old_value;
+  struct gsh_buffdesc          buffkey;
+  struct gsh_buffdesc          old_key;
+  struct gsh_buffdesc          old_value;
   hash_table_t         * ht_expire;
   nfs_client_record_t  * precord;
 
@@ -624,7 +623,7 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
   if(precord->cr_punconfirmed_id == pclientid)
     precord->cr_punconfirmed_id = NULL;
 
-  buffkey.pdata = (caddr_t) &pclientid->cid_clientid;
+  buffkey.addr = (caddr_t) &pclientid->cid_clientid;
   buffkey.len   = sizeof(pclientid->cid_clientid);
 
   rc = HashTable_Del(ht_expire,
@@ -731,14 +730,14 @@ int nfs_client_id_get(hash_table_t     * ht,
                       clientid4          clientid,
                       nfs_client_id_t ** p_pclientid)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   int           status;
 
   if(p_pclientid == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
-  buffkey.pdata = (caddr_t) &clientid;
+  buffkey.addr = (caddr_t) &clientid;
   buffkey.len = sizeof(clientid4);
 
   if(isFullDebug(COMPONENT_CLIENTID) && isDebug(COMPONENT_HASHTABLE))
@@ -763,7 +762,7 @@ int nfs_client_id_get(hash_table_t     * ht,
       if(isDebug(COMPONENT_HASHTABLE))
         LogFullDebug(COMPONENT_CLIENTID,
                      "%s FOUND", ht->parameter.ht_name);
-      *p_pclientid = buffval.pdata;
+      *p_pclientid = buffval.addr;
 
       status = CLIENT_ID_SUCCESS;
     }
@@ -967,9 +966,9 @@ void dec_client_record_ref(nfs_client_record_t *precord)
   char              str[HASHTABLE_DISPLAY_STRLEN];
   struct hash_latch latch;
   hash_error_t      rc;
-  hash_buffer_t     buffkey;
-  hash_buffer_t     old_value;
-  hash_buffer_t     old_key;
+  struct gsh_buffdesc     buffkey;
+  struct gsh_buffdesc     old_value;
+  struct gsh_buffdesc     old_key;
   int32_t           refcount;
 
   if(isDebug(COMPONENT_CLIENTID))
@@ -990,7 +989,7 @@ void dec_client_record_ref(nfs_client_record_t *precord)
                "Try to remove {%s}",
                str);
 
-  buffkey.pdata = (caddr_t) precord;
+  buffkey.addr = (caddr_t) precord;
   buffkey.len = sizeof(*precord);
 
   /* Get the hash table entry and hold latch */
@@ -1044,7 +1043,7 @@ void dec_client_record_ref(nfs_client_record_t *precord)
                "Free {%s}",
                str);
 
-  free_client_record(old_value.pdata);
+  free_client_record(old_value.addr);
 }
 
 uint64_t client_record_value_hash(nfs_client_record_t * pkey)
@@ -1076,11 +1075,11 @@ uint64_t client_record_value_hash(nfs_client_record_t * pkey)
  *
  */
 uint32_t client_record_value_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t    * buffclef)
+                                       struct gsh_buffdesc    * buffclef)
 {
   uint64_t res;
 
-  res = client_record_value_hash(buffclef->pdata) %
+  res = client_record_value_hash(buffclef->addr) %
         p_hparam->index_size;
 
   if(isDebug(COMPONENT_HASHTABLE))
@@ -1106,11 +1105,11 @@ uint32_t client_record_value_hash_func(hash_parameter_t * p_hparam,
  *
  */
 unsigned long client_record_rbt_hash_func(hash_parameter_t * p_hparam,
-                                          hash_buffer_t    * buffclef)
+                                          struct gsh_buffdesc    * buffclef)
 {
   uint64_t res;
 
-  res = client_record_value_hash(buffclef->pdata);
+  res = client_record_value_hash(buffclef->addr);
 
   if(isDebug(COMPONENT_HASHTABLE))
     LogFullDebug(COMPONENT_CLIENTID,
@@ -1132,10 +1131,10 @@ unsigned long client_record_rbt_hash_func(hash_parameter_t * p_hparam,
  * @return 0 if keys are identifical, 1 if they are different.
  *
  */
-int compare_client_record(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_client_record(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  nfs_client_record_t * pkey1 = buff1->pdata;
-  nfs_client_record_t * pkey2 = buff2->pdata;
+  nfs_client_record_t * pkey1 = buff1->addr;
+  nfs_client_record_t * pkey2 = buff2->addr;
 
   if(pkey1->cr_client_val_len != pkey2->cr_client_val_len)
     return 1;
@@ -1158,21 +1157,21 @@ int compare_client_record(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_client_record_key(hash_buffer_t * pbuff, char *str)
+int display_client_record_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_client_record(pbuff->pdata, str);
+  return display_client_record(pbuff->addr, str);
 }
 
-int display_client_record_val(hash_buffer_t * pbuff, char *str)
+int display_client_record_val(struct gsh_buffdesc * pbuff, char *str)
 {
-  return display_client_record(pbuff->pdata, str);
+  return display_client_record(pbuff->addr, str);
 }
 
 nfs_client_record_t *get_client_record(char * value, int len)
 {
   nfs_client_record_t * precord;
-  hash_buffer_t         buffkey;
-  hash_buffer_t         buffval;
+  struct gsh_buffdesc         buffkey;
+  struct gsh_buffdesc         buffval;
   struct hash_latch     latch;
   hash_error_t          rc;
 
@@ -1184,7 +1183,7 @@ nfs_client_record_t *get_client_record(char * value, int len)
   precord->cr_refcount       = 1;
   precord->cr_client_val_len = len;
   memcpy(precord->cr_client_val, value, len);
-  buffkey.pdata = (caddr_t) precord;
+  buffkey.addr = (caddr_t) precord;
   buffkey.len   = sizeof(*precord);
 
   if(isFullDebug(COMPONENT_CLIENTID))
@@ -1211,7 +1210,7 @@ nfs_client_record_t *get_client_record(char * value, int len)
        */
       pool_free(client_record_pool, precord);
 
-      precord = buffval.pdata;
+      precord = buffval.addr;
 
       inc_client_record_ref(precord);
 
@@ -1265,7 +1264,7 @@ nfs_client_record_t *get_client_record(char * value, int len)
     }
 
   /* Use same record for record and key */
-  buffval.pdata = (caddr_t) precord;
+  buffval.addr = (caddr_t) precord;
   buffval.len   = sizeof(*precord);
 
   if(isFullDebug(COMPONENT_CLIENTID))

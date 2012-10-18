@@ -53,7 +53,6 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include <sys/signal.h>
 #include <poll.h>
-#include "HashData.h"
 #include "HashTable.h"
 #include "abstract_atomic.h"
 #include "log.h"

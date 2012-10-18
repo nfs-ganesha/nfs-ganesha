@@ -44,7 +44,6 @@
 #include <time.h>
 #include <pthread.h>
 #include "ganesha_rpc.h"
-#include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"

@@ -108,10 +108,10 @@ static void handle_free(handle_pool_entry_t * p_handle)
 
 /* hash table functions */
 
-static uint32_t hash_digest_idx(hash_parameter_t * p_conf, hash_buffer_t * p_key)
+static uint32_t hash_digest_idx(hash_parameter_t * p_conf, struct gsh_buffdesc * p_key)
 {
   uint32_t hash;
-  digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_key->pdata;
+  digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_key->addr;
 
   hash =
       (p_conf->alphabet_length +
@@ -123,20 +123,20 @@ static uint32_t hash_digest_idx(hash_parameter_t * p_conf, hash_buffer_t * p_key
 
 }
 
-static unsigned long hash_digest_rbt(hash_parameter_t * p_conf, hash_buffer_t * p_key)
+static unsigned long hash_digest_rbt(hash_parameter_t * p_conf, struct gsh_buffdesc * p_key)
 {
   unsigned long hash;
-  digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_key->pdata;
+  digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_key->addr;
 
   hash = (257 * p_digest->nfs23_digest.object_id + 541);
 
   return hash;
 }
 
-static int cmp_digest(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
+static int cmp_digest(struct gsh_buffdesc * p_key1, struct gsh_buffdesc * p_key2)
 {
-  digest_pool_entry_t *p_digest1 = (digest_pool_entry_t *) p_key1->pdata;
-  digest_pool_entry_t *p_digest2 = (digest_pool_entry_t *) p_key2->pdata;
+  digest_pool_entry_t *p_digest1 = (digest_pool_entry_t *) p_key1->addr;
+  digest_pool_entry_t *p_digest2 = (digest_pool_entry_t *) p_key2->addr;
 
   /* compare object_id and handle_hash */
 
@@ -149,17 +149,17 @@ static int cmp_digest(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
     return 0;
 }
 
-static int print_digest(hash_buffer_t * p_val, char *outbuff)
+static int print_digest(struct gsh_buffdesc * p_val, char *outbuff)
 {
-  digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_val->pdata;
+  digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_val->addr;
 
   return sprintf(outbuff, "%llu, %u", (unsigned long long)p_digest->nfs23_digest.object_id,
                  p_digest->nfs23_digest.handle_hash);
 }
 
-static int print_handle(hash_buffer_t * p_val, char *outbuff)
+static int print_handle(struct gsh_buffdesc * p_val, char *outbuff)
 {
-  handle_pool_entry_t *p_handle = (handle_pool_entry_t *) p_val->pdata;
+  handle_pool_entry_t *p_handle = (handle_pool_entry_t *) p_val->addr;
 
   return snprintmem(outbuff, HASHTABLE_DISPLAY_STRLEN, p_handle->fh_data,
                     p_handle->fh_len);
@@ -171,8 +171,8 @@ int handle_mapping_hash_add(hash_table_t * p_hash,
                             const void *data, uint32_t datalen)
 {
   int rc;
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   digest_pool_entry_t *digest;
   handle_pool_entry_t *handle;
 
@@ -191,10 +191,10 @@ int handle_mapping_hash_add(hash_table_t * p_hash,
   memcpy(handle->fh_data, data, datalen);
   handle->fh_len = datalen;
 
-  buffkey.pdata = (caddr_t) digest;
+  buffkey.addr = (caddr_t) digest;
   buffkey.len = sizeof(digest_pool_entry_t);
 
-  buffval.pdata = (caddr_t) handle;
+  buffval.addr = (caddr_t) handle;
   buffval.len = sizeof(handle_pool_entry_t);
 
   rc = HashTable_Test_And_Set(handle_map_hash, &buffkey, &buffval,
@@ -318,21 +318,21 @@ int HandleMap_GetFH(const nfs23_map_handle_t * p_in_nfs23_digest,
 {
 
   int rc;
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
+  struct gsh_buffdesc buffkey;
+  struct gsh_buffdesc buffval;
   digest_pool_entry_t digest;
   struct hash_latch hl;
 
   digest.nfs23_digest = *p_in_nfs23_digest;
 
-  buffkey.pdata = (caddr_t) & digest;
+  buffkey.addr = (caddr_t) & digest;
   buffkey.len = sizeof(digest_pool_entry_t);
 
   rc = HashTable_GetLatch(handle_map_hash, &buffkey, &buffval, 0, &hl);
 
   if(rc == HASHTABLE_SUCCESS)
     {
-      handle_pool_entry_t *h = (handle_pool_entry_t *)buffval.pdata;
+      handle_pool_entry_t *h = (handle_pool_entry_t *)buffval.addr;
       if(h->fh_len < p_out_fsal_handle->maxlen)
         {
           p_out_fsal_handle->len = h->fh_len;
@@ -386,8 +386,8 @@ int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest,
 int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest)
 {
   int rc;
-  hash_buffer_t buffkey, stored_buffkey;
-  hash_buffer_t stored_buffval;
+  struct gsh_buffdesc buffkey, stored_buffkey;
+  struct gsh_buffdesc stored_buffval;
 
   digest_pool_entry_t digest;
 
@@ -398,7 +398,7 @@ int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest)
 
   digest.nfs23_digest = *p_in_nfs23_digest;
 
-  buffkey.pdata = (caddr_t) & digest;
+  buffkey.addr = (caddr_t) & digest;
   buffkey.len = sizeof(digest_pool_entry_t);
 
   rc = HashTable_Del(handle_map_hash, &buffkey, &stored_buffkey, &stored_buffval);
@@ -408,8 +408,8 @@ int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest)
       return HANDLEMAP_STALE;
     }
 
-  p_stored_digest = (digest_pool_entry_t *) stored_buffkey.pdata;
-  p_stored_handle = (handle_pool_entry_t *) stored_buffval.pdata;
+  p_stored_digest = (digest_pool_entry_t *) stored_buffkey.addr;
+  p_stored_handle = (handle_pool_entry_t *) stored_buffval.addr;
 
   digest_free(p_stored_digest);
   handle_free(p_stored_handle);
