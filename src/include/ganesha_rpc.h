@@ -226,30 +226,30 @@ gsh_xprt_destroy(SVCXPRT *xprt)
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED);
 }
 
-#define DISP_SLOCK(x, m) do { \
+#define DISP_SLOCK(x) do { \
     if (! slocked) { \
-        rpc_dplx_slx((x), (m)); \
+        rpc_dplx_slx((x)); \
         slocked = TRUE; \
       }\
     } while (0);
 
-#define DISP_SUNLOCK(x, m) do { \
+#define DISP_SUNLOCK(x) do { \
     if (slocked) { \
-        rpc_dplx_sux((x), (m)); \
+        rpc_dplx_sux((x)); \
         slocked = FALSE; \
       }\
     } while (0);
 
-#define DISP_RLOCK(x, m) do { \
+#define DISP_RLOCK(x) do { \
     if (! rlocked) { \
-        rpc_dplx_rlx((x), (m)); \
+        rpc_dplx_rlx((x)); \
         rlocked = TRUE; \
       }\
     } while (0);
 
-#define DISP_RUNLOCK(x, m) do { \
+#define DISP_RUNLOCK(x) do { \
     if (rlocked) { \
-        rpc_dplx_rux((x), (m)); \
+        rpc_dplx_rux((x)); \
         rlocked = FALSE; \
       }\
     } while (0);

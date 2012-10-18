@@ -32,6 +32,7 @@
 
 pthread_mutex_t nsm_mutex = PTHREAD_MUTEX_INITIALIZER;
 CLIENT *nsm_clnt;
+AUTH *nsm_auth;
 unsigned long nsm_count;
 char * nodename;
 
@@ -70,6 +71,9 @@ bool nsm_connect()
       nodename = NULL;
     }
 
+  /* split auth (for authnone, idempotent) */
+  nsm_auth = authnone_create();
+
   return nsm_clnt != NULL;
 }
 
@@ -79,6 +83,8 @@ void nsm_disconnect()
     {
       gsh_clnt_destroy(nsm_clnt);
       nsm_clnt = NULL;
+      AUTH_DESTROY(nsm_auth);
+      nsm_auth = NULL;
       gsh_free(nodename);
       nodename = NULL;
     }
@@ -128,6 +134,7 @@ bool nsm_monitor(state_nsm_client_t *host)
   nsm_mon.mon_id.my_id.my_name = nodename;
 
   ret = clnt_call(nsm_clnt,
+                  nsm_auth,
                   SM_MON,
                   (xdrproc_t) xdr_mon,
                   (caddr_t) & nsm_mon,
@@ -207,6 +214,7 @@ bool nsm_unmonitor(state_nsm_client_t *host)
   nsm_mon_id.my_id.my_name = nodename;
 
   ret = clnt_call(nsm_clnt,
+                  nsm_auth,
                   SM_UNMON,
                   (xdrproc_t) xdr_mon_id,
                   (caddr_t) & nsm_mon_id,
@@ -264,6 +272,7 @@ void nsm_unmonitor_all(void)
   nsm_id.my_name = nodename;
 
   ret = clnt_call(nsm_clnt,
+                  nsm_auth,
                   SM_UNMON_ALL,
                   (xdrproc_t) xdr_my_id,
                   (caddr_t) & nsm_id,

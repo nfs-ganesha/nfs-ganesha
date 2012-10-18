@@ -237,6 +237,7 @@ struct state_nlm_client_t
   int32_t                 slc_nlm_caller_name_len;
   char                  * slc_nlm_caller_name;
   CLIENT                * slc_callback_clnt;
+  AUTH                  * slc_callback_auth;
 };
 
 typedef struct state_nlm_owner_t

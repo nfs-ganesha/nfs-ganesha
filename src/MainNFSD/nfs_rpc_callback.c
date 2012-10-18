@@ -442,7 +442,7 @@ nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
         /* authgss_create and authgss_create_default return NULL on
          * failure, don't assign NULL to clnt->cl_auth */
         if (auth)
-            chan->clnt->cl_auth = auth;
+            chan->auth = auth;
     }
 
 out:
@@ -475,7 +475,7 @@ nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
         auth = authunix_create_default();
         /* XXX see above */
         if (auth)
-            chan->clnt->cl_auth = auth;
+            chan->auth = auth;
         break;
     case AUTH_NONE:
         break;
@@ -578,7 +578,7 @@ int nfs_rpc_create_chan_v41(nfs_client_id_t *pclientid,
 
     /* connect an RPC client */
     chan->clnt =
-        clnt_vc_create_svc(session->xprt, 100003, 4, SVC_VC_CREATE_FLAG_DPLX);
+        clnt_vc_create_svc(session->xprt, 100003, 4, SVC_VC_CREATE_BOTHWAYS);
 
     if (! chan->clnt) {
         code = EINVAL;
@@ -623,8 +623,10 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
         /* channel has a dedicated RPC client */
         if (chan->clnt) {
             /* clean up auth, if any */
-            if (chan->clnt->cl_auth)
-                AUTH_DESTROY(chan->clnt->cl_auth);
+            if (chan->auth) {
+                AUTH_DESTROY(chan->auth);
+                chan->auth = NULL;
+            }
             /* destroy it */
             clnt_destroy(chan->clnt);
             chan->clnt = NULL;
@@ -655,7 +657,7 @@ rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout)
         goto unlock;
     }
 
-    stat = clnt_call(chan->clnt, CB_NULL,
+    stat = clnt_call(chan->clnt, chan->auth, CB_NULL,
                      (xdrproc_t) xdr_void, NULL,
                      (xdrproc_t) xdr_void, NULL, timeout);
 
@@ -663,6 +665,10 @@ rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout)
      * error.  We may need back-off. */
     if (stat != RPC_SUCCESS) {
         if (chan->clnt) {
+            if (chan->auth) {
+                AUTH_DESTROY(chan->auth);
+                chan->auth = NULL;
+            }
             clnt_destroy(chan->clnt);
             chan->clnt = NULL;
         }
@@ -760,6 +766,7 @@ nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
     }
 
     call->stat = clnt_call(call->chan->clnt,
+                           call->chan->auth,
                            CB_COMPOUND,
                            (xdrproc_t) xdr_CB_COMPOUND4args,
                            &call->cbt.v_u.v4.args,
@@ -771,6 +778,10 @@ nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
      * error.  We may need back-off. */
     if (call->stat != RPC_SUCCESS) {
         if (call->chan->clnt) {
+            if (call->chan->auth) {
+                AUTH_DESTROY(call->chan->auth);
+                call->chan->auth = NULL;
+            }
             clnt_destroy(call->chan->clnt);
             call->chan->clnt = NULL;
         }
