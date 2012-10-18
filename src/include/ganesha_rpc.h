@@ -275,6 +275,34 @@ gsh_xprt_destroy(SVCXPRT *xprt)
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED);
 }
 
+#define DISP_SLOCK(x) do { \
+    if (! slocked) { \
+        rpc_dplx_slx((x)); \
+        slocked = TRUE; \
+      }\
+    } while (0);
+
+#define DISP_SUNLOCK(x) do { \
+    if (slocked) { \
+        rpc_dplx_sux((x)); \
+        slocked = FALSE; \
+      }\
+    } while (0);
+
+#define DISP_RLOCK(x) do { \
+    if (! rlocked) { \
+        rpc_dplx_rlx((x)); \
+        rlocked = TRUE; \
+      }\
+    } while (0);
+
+#define DISP_RUNLOCK(x) do { \
+    if (rlocked) { \
+        rpc_dplx_rux((x)); \
+        rlocked = FALSE; \
+      }\
+    } while (0);
+
 extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);

@@ -369,6 +369,7 @@ typedef struct rpc_call_channel
     } nvu;
     time_t last_called;
     CLIENT *clnt;
+    AUTH *auth;
     struct rpc_gss_sec gss_sec;
 } rpc_call_channel_t;
 

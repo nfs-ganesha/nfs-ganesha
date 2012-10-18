@@ -16,7 +16,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  *
  */
@@ -186,6 +187,9 @@ int nlm_send_async(int                  proc,
                        host->slc_nsm_client->ssc_nlm_caller_name);
               return -1;
             }
+
+            /* split auth (for authnone, idempotent) */
+            host->slc_callback_auth = authnone_create();
         }
 
       pthread_mutex_lock(&nlm_async_resp_mutex);
@@ -194,6 +198,7 @@ int nlm_send_async(int                  proc,
 
       LogFullDebug(COMPONENT_NLM, "About to make clnt_call");
       retval = clnt_call(host->slc_callback_clnt,
+                         host->slc_callback_auth,
                          proc,
                          nlm_reply_proc[proc],
                          inarg,
