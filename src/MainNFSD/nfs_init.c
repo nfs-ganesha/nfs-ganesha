@@ -1483,7 +1483,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #ifdef _HAVE_GSSAPI
   gss_buffer_desc gss_service_buf;
   OM_uint32 maj_stat, min_stat;
-  char GssError[MAXNAMLEN];
+  char GssError[MAXNAMLEN+1];
 #endif
 
   /* FSAL Initialisation */

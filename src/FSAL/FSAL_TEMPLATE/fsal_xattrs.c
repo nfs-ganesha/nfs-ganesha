@@ -46,7 +46,7 @@ typedef int (*xattr_printfunc_t) (caddr_t,      /* Input buffer */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[FSAL_MAX_NAME_LEN];
+  char xattr_name[FSAL_MAX_NAME_LEN+1];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   xattr_printfunc_t print_func;
@@ -249,7 +249,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
     )
 {
   int rc;
-  char buff[MAXNAMLEN];
+  char buff[MAXNAMLEN+1];
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
 

@@ -279,7 +279,7 @@ int get_req_uid_gid(struct svc_req *req,
   struct authunix_parms *punix_creds = NULL;
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
-  char principal[MAXNAMLEN];
+  char principal[MAXNAMLEN+1];
   int ret, num_grps = NGROUPS;
   struct passwd pwd;
   struct passwd *pp;

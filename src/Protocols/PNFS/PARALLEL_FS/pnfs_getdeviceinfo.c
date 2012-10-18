@@ -60,7 +60,7 @@ nfsstat4 PARALLEL_FS_pnfs_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoarg
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;
-  char tmpchar[MAXNAMLEN];
+  char tmpchar[MAXNAMLEN+1];
   unsigned int tmplen = 0;
   unsigned int padlen = 0;
   unsigned int i = 0;

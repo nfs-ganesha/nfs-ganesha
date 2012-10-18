@@ -262,7 +262,7 @@ struct user_credentials {
 
 typedef struct fsal_name__
 {
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
   unsigned int len;
 } fsal_name_t;
 

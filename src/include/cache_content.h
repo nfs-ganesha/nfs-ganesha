@@ -190,8 +190,8 @@ typedef struct cache_content_dirinfo__
   unsigned int level1_cnt;
 
   char level0_path[MAXPATHLEN];
-  char level1_name[MAXNAMLEN];
-  char level2_name[MAXNAMLEN];
+  char level1_name[MAXNAMLEN+1];
+  char level2_name[MAXNAMLEN+1];
 
   struct dirent *cookie0;
   struct dirent *cookie1;

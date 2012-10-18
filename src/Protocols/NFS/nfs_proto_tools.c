@@ -556,7 +556,7 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
                                       u_int *LastOffset)
 {
   int rc = 0;
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN+1];
   u_int utf8len = 0;
   u_int stringlen = 0;
   u_int deltalen = 0;
@@ -597,7 +597,7 @@ static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
                                      char *attrvalsBuffer, u_int *LastOffset)
 {
   int rc = 0;
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN+1];
   u_int utf8len = 0;
   u_int stringlen = 0;
   u_int deltalen = 0;
@@ -2206,7 +2206,7 @@ int utf82str(char *str, int size, utf8string * utf8str)
 int str2utf8(char *str, utf8string * utf8str)
 {
   uint_t len;
-  char buff[MAXNAMLEN];
+  char buff[MAXNAMLEN+1];
 
   /* The uft8 will probably be sent over XDR, for this reason, its size MUST be a multiple of 32 bits = 4 bytes */
   strcpy(buff, str);
@@ -3179,7 +3179,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
   fsal_ace_t *pace;
   fsal_acl_t *pacl;
   int len;
-  char buffer[MAXNAMLEN];
+  char buffer[MAXNAMLEN+1];
   utf8string utf8buffer;
   int who;
 
@@ -3469,7 +3469,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
   uint32_t attrmasklen = 0;
   uint32_t attribute_to_set = 0;
   int len;
-  char buffer[MAXNAMLEN];
+  char buffer[MAXNAMLEN+1];
   utf8string utf8buffer;
 
   time_how4   how;

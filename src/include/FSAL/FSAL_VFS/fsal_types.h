@@ -108,7 +108,7 @@ typedef struct
   fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
   exportlist_t        * fe_export;
 
-  char              fstype[MAXNAMLEN] ;
+  char              fstype[MAXNAMLEN+1] ;
   int               mount_root_fd ;
   vfs_file_handle_t root_handle ;
 } vfsfsal_export_context_t;

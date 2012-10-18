@@ -149,15 +149,15 @@ do                                                                       \
 
 typedef struct
 {
-  char psz_zpool[FSAL_MAX_NAME_LEN];
+  char psz_zpool[FSAL_MAX_NAME_LEN+1];
 
   int auto_snapshots;
 
-  char psz_snap_hourly_prefix[FSAL_MAX_NAME_LEN];
+  char psz_snap_hourly_prefix[FSAL_MAX_NAME_LEN+1];
   int snap_hourly_time;
   int snap_hourly_number;
 
-  char psz_snap_daily_prefix[FSAL_MAX_NAME_LEN];
+  char psz_snap_daily_prefix[FSAL_MAX_NAME_LEN+1];
   int snap_daily_time;
   int snap_daily_number;
 

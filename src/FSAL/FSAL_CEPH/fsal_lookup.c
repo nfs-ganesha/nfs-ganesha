@@ -86,7 +86,7 @@ fsal_status_t CEPHFSAL_lookup(fsal_handle_t * extparent,
   cephfsal_handle_t* parent = (cephfsal_handle_t*) extparent;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
   cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-  char str[FSAL_MAX_NAME_LEN];
+  char str[FSAL_MAX_NAME_LEN+1];
   struct ceph_mount_info *cmount = context->export_context->cmount;
 
   /* sanity checks

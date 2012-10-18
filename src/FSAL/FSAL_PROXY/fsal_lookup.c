@@ -87,7 +87,7 @@ fsal_status_t PROXYFSAL_lookup(fsal_handle_t * parent_directory_handle,    /* IN
   bitmap4 bitmap;
   uint32_t bitmap_val[2];
   component4 name;
-  char nameval[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
   fsal_attrib_list_t attributes;
   unsigned int index_getfh = 0;
   unsigned int index_getattr = 0;

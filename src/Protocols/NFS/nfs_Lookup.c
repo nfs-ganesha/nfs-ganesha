@@ -94,7 +94,7 @@ int nfs_Lookup(nfs_arg_t *parg,
   fsal_attrib_list_t attr;
   fsal_attrib_list_t attrdir;
   char *strpath = NULL;
-  char strname[MAXNAMLEN];
+  char strname[MAXNAMLEN+1];
   unsigned int xattr_found = FALSE;
   fsal_name_t name;
   fsal_handle_t *pfsal_handle;

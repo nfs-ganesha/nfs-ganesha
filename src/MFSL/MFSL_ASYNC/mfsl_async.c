@@ -300,7 +300,7 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t    *pcont
                                                      pool_t *pool_dirs)
 {
   unsigned int i = 0;
-  char newdirpath[MAXNAMLEN];
+  char newdirpath[MAXNAMLEN+1];
   pthread_t me = pthread_self();
   unsigned int pid = (unsigned int)getpid();
   fsal_status_t fsal_status;
@@ -358,7 +358,7 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t    *pcontext,
                                                pool_t *pool_files)
 {
   unsigned int i = 0;
-  char newdirpath[MAXNAMLEN];
+  char newdirpath[MAXNAMLEN+1];
   pthread_t me = pthread_self();
   unsigned int pid = (unsigned int)getpid();
   fsal_status_t fsal_status;

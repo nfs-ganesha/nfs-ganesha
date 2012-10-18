@@ -98,9 +98,9 @@ fsal_status_t PROXYFSAL_rename(fsal_handle_t * old_parent,       /* IN */
   bitmap4 bitmap_new;
   uint32_t bitmap_val_new[2];
   component4 oldname;
-  char oldnameval[MAXNAMLEN];
+  char oldnameval[MAXNAMLEN+1];
   component4 newname;
-  char newnameval[MAXNAMLEN];
+  char newnameval[MAXNAMLEN+1];
   proxyfsal_handle_t * old_parentdir_handle = (proxyfsal_handle_t *)old_parent;
   proxyfsal_handle_t * new_parentdir_handle = (proxyfsal_handle_t *)new_parent;
   proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;

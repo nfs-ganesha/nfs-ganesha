@@ -226,7 +226,7 @@ typedef struct
   api_config_t hpss_config;
 
   /* other configuration info */
-  char Principal[FSAL_MAX_NAME_LEN];
+  char Principal[FSAL_MAX_NAME_LEN+1];
   char KeytabPath[FSAL_MAX_PATH_LEN];
 
   fsal_uint_t CredentialLifetime;

@@ -87,7 +87,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   cache_content_status_t content_status;
   nfs_flush_thread_data_t *p_flush_data = NULL;
   exportlist_t *pexport;
-  char function_name[MAXNAMLEN];
+  char function_name[MAXNAMLEN+1];
 #ifdef _USE_XFS
   xfsfsal_export_context_t export_context ;
   fsal_path_t export_path ;

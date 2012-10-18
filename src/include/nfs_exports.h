@@ -309,7 +309,7 @@ struct exportlist__
  */
 typedef struct pseudofs_entry
 {
-  char name[MAXNAMLEN];                         /**< The entry name          */
+  char name[MAXNAMLEN+1];                       /**< The entry name          */
   unsigned int pseudo_id;                       /**< ID within the pseudoFS  */
   exportlist_t *junction_export;                /**< Export list related to the junction, NULL if entry is no junction*/
   struct pseudofs_entry *sons;                  /**< pointer to a linked list of sons */

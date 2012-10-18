@@ -121,7 +121,7 @@ typedef struct
   unsigned int srv_recvsize;
   unsigned short srv_port;
   unsigned int use_privileged_client_port ;
-  char srv_proto[MAXNAMLEN];
+  char srv_proto[MAXNAMLEN+1];
   clientid4 clientid;
   time_t    clientid_renewed ;
   CLIENT *rpc_client;
@@ -184,9 +184,9 @@ typedef struct
   unsigned int srv_timeout;
   unsigned short srv_port;
   unsigned int use_privileged_client_port ;
-  char srv_proto[MAXNAMLEN];
-  char local_principal[MAXNAMLEN];
-  char remote_principal[MAXNAMLEN];
+  char srv_proto[MAXNAMLEN+1];
+  char local_principal[MAXNAMLEN+1];
+  char remote_principal[MAXNAMLEN+1];
   char keytab[MAXPATHLEN];
   unsigned int cred_lifetime;
   unsigned int sec_type;

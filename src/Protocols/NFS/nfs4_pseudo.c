@@ -117,7 +117,7 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
 
   /* Allocation of the parsing table */
   for(i = 0; i < NB_TOK_PATH; i++)
-    if((PathTok[i] = gsh_malloc(MAXNAMLEN)) == NULL)
+    if((PathTok[i] = gsh_malloc(MAXNAMLEN + 1)) == NULL)
       return ENOMEM;
 
   glist_for_each(glist, pexportlist)
@@ -1370,7 +1370,7 @@ int nfs4_op_access_pseudo(struct nfs_argop4 *op,
 int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char name[MAXNAMLEN];
+  char name[MAXNAMLEN+1];
   pseudofs_entry_t *psfsentry;
   pseudofs_entry_t *iter = NULL;
   int found = FALSE;

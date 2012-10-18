@@ -216,7 +216,7 @@ int cache_content_get_export_id(char *dirname)
 u_int64_t cache_content_get_inum(char *filename)
 {
   unsigned long long inum;
-  char buff[MAXNAMLEN];
+  char buff[MAXNAMLEN+1];
   char *bname = NULL;
 
   /* splits the dirent->d_name into path and filename */
@@ -690,7 +690,7 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
 
           if(rc_readdir == 0 && directory->cookie2 != NULL)
             {
-              char d_name_save[MAXNAMLEN];
+              char d_name_save[MAXNAMLEN+1];
 
               /* go to the next loop if the entry is . or .. */
               if(!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))

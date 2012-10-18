@@ -143,7 +143,7 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   entry4 *piter_entry = NULL;
   struct proxy_entry4 {
         entry4 e4;
-        char name[MAXNAMLEN];
+        char name[MAXNAMLEN+1];
         fsal_proxy_internal_fattr_readdir_t attr;
         uint32_t bitmap[2];
   } *pxy_e4;

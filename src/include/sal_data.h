@@ -401,8 +401,8 @@ struct nfs_client_id_t
       } cb_u;
   } cid_cb;
 #ifdef _USE_NFS4_1
-  char                           cid_server_owner[MAXNAMLEN];
-  char                           cid_server_scope[MAXNAMLEN];
+  char                           cid_server_owner[MAXNAMLEN+1];
+  char                           cid_server_scope[MAXNAMLEN+1];
   unsigned int                   cid_nb_session;
   nfs41_session_slot_t           cid_create_session_slot;
   unsigned                       cid_create_session_sequence;

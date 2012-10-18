@@ -166,7 +166,7 @@ fsal_status_t CEPHFSAL_symlink(fsal_handle_t * extparent,
   int uid = FSAL_OP_CONTEXT_TO_UID(context);
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
   char strpath[FSAL_MAX_PATH_LEN];
-  char strname[FSAL_MAX_NAME_LEN];
+  char strname[FSAL_MAX_NAME_LEN+1];
   struct ceph_mount_info *cmount = context->export_context->cmount;
 
   /* sanity checks.

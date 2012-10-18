@@ -2617,7 +2617,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
   int flag_h = 0;
   int err_flag = 0;
 
-  char file[FSAL_MAX_NAME_LEN]; /* the relative path to the object */
+  char file[FSAL_MAX_NAME_LEN+1]; /* the relative path to the object */
   char *attr_list = NULL;       /* attribute name */
 
   cmdCacheInode_thr_info_t *context;

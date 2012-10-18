@@ -54,7 +54,7 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
   char fs_spec[MAXPATHLEN];
 
   char *first_vfs_dir = NULL;
-  char type[MAXNAMLEN];
+  char type[MAXNAMLEN+1];
 
   size_t pathlen, outlen;
   int rc;

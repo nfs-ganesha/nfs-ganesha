@@ -97,7 +97,7 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
   fattr4 input_attr;
   bitmap4 convert_bitmap;
   component4 name;
-  char nameval[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
   fsal_status_t fsal_status;
   proxyfsal_file_t fd;
@@ -354,7 +354,7 @@ fsal_status_t PROXYFSAL_mkdir(fsal_handle_t * parent_directory_handle,     /* IN
   fattr4 input_attr;
   bitmap4 convert_bitmap;
   component4 name;
-  char nameval[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
   proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
@@ -552,7 +552,7 @@ fsal_status_t PROXYFSAL_link(fsal_handle_t * target_handle,        /* IN */
   uint32_t bitmap_val[2];
   uint32_t bitmap_res[2];
   component4 name;
-  char nameval[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
   proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
   fsal_proxy_internal_fattr_t fattr_internal;

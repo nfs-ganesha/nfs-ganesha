@@ -47,7 +47,7 @@ typedef int (*xattr_printfunc_t) (caddr_t,      /* Input buffer */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[FSAL_MAX_NAME_LEN];
+  char xattr_name[FSAL_MAX_NAME_LEN+1];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   xattr_printfunc_t print_func;
@@ -579,7 +579,7 @@ fsal_status_t ZFSFSAL_GetXAttrValueById(fsal_handle_t * obj_handle,    /* IN */
     )
 {
   int rc;
-  char buff[MAXNAMLEN];
+  char buff[MAXNAMLEN+1];
   zfsfsal_handle_t *p_objecthandle = (zfsfsal_handle_t *)obj_handle;
   zfsfsal_op_context_t *p_context = (zfsfsal_op_context_t *)context;
 
@@ -876,7 +876,7 @@ fsal_status_t ZFSFSAL_RemoveXAttrById(fsal_handle_t * obj_handle,      /* IN */
 {
   int rc;
   creden_t cred;
-  char psz_name[FSAL_MAX_NAME_LEN];
+  char psz_name[FSAL_MAX_NAME_LEN+1];
   zfsfsal_handle_t * p_objecthandle = (zfsfsal_handle_t *)obj_handle;
   zfsfsal_op_context_t *p_context = (zfsfsal_op_context_t *)context;
 

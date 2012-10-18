@@ -36,7 +36,7 @@ typedef struct __inode__
 typedef struct __lookup_peer__
 {
   inode_t parent;
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
 
   /* used for pool chaining into parent list and pool allocation */
   struct __lookup_peer__ *p_next;

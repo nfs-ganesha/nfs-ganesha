@@ -268,7 +268,7 @@ fsal_status_t CEPHFSAL_GetXAttrIdByName(fsal_handle_t * exthandle,
   cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
   int index;
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
   int uid = FSAL_OP_CONTEXT_TO_UID(context);
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
 
@@ -312,7 +312,7 @@ fsal_status_t CEPHFSAL_GetXAttrValueByName(fsal_handle_t * exthandle,
   int len;
   int uid = FSAL_OP_CONTEXT_TO_UID(context);
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
 
   FSAL_name2str((fsal_name_t*) xattr_name, name, FSAL_MAX_NAME_LEN);
 
@@ -341,7 +341,7 @@ fsal_status_t CEPHFSAL_SetXAttrValue(fsal_handle_t * exthandle,
   cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
   int rc;
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
   int uid = FSAL_OP_CONTEXT_TO_UID(context);
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
 
@@ -419,7 +419,7 @@ fsal_status_t CEPHFSAL_RemoveXAttrByName(fsal_handle_t * exthandle,
   int rc;
   int uid = FSAL_OP_CONTEXT_TO_UID(context);
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
 
   FSAL_name2str((fsal_name_t *)xattr_name, name, FSAL_MAX_NAME_LEN);
 

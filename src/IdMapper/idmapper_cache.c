@@ -883,7 +883,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
   int err;
   char *key_name;
   char *key_value;
-  char label[MAXNAMLEN];
+  char label[MAXNAMLEN+1];
   hash_table_t *ht = NULL;
   hash_table_t *ht_reverse = NULL;
   int rc = 0;

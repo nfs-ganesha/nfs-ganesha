@@ -1101,7 +1101,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_name_t name;
-  char strname[MAXNAMLEN];
+  char strname[MAXNAMLEN+1];
   fsal_status_t fsal_status;
   cache_inode_status_t cache_status;
   fsal_handle_t *pfsal_handle = NULL;
@@ -1427,7 +1427,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
                        compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_name_t name;
-  char strname[MAXNAMLEN];
+  char strname[MAXNAMLEN+1];
   fsal_status_t fsal_status;
   cache_inode_status_t cache_status;
   fsal_handle_t *pfsal_handle = NULL;

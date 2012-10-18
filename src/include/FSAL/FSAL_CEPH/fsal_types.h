@@ -96,7 +96,7 @@ typedef struct fsal_op_context__
 
 typedef struct fs_specific_initinfo__
 {
-  char cephserver[FSAL_MAX_NAME_LEN];
+  char cephserver[FSAL_MAX_NAME_LEN+1];
 } cephfs_specific_initinfo_t;
 
 

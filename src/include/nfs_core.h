@@ -305,7 +305,7 @@ typedef struct nfs_session_id_param__
 } nfs_session_id_parameter_t;
 #endif
 
-typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
+typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN+1];
 
 typedef struct nfs_version4_parameter__
 {

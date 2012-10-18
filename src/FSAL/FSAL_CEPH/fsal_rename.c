@@ -93,8 +93,8 @@ fsal_status_t CEPHFSAL_rename(fsal_handle_t * extold_parent,
   cephfsal_handle_t* old_parent = (cephfsal_handle_t*) extold_parent;
   cephfsal_handle_t* new_parent = (cephfsal_handle_t*) extnew_parent;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
-  char oldstr[FSAL_MAX_NAME_LEN];
-  char newstr[FSAL_MAX_NAME_LEN];
+  char oldstr[FSAL_MAX_NAME_LEN+1];
+  char newstr[FSAL_MAX_NAME_LEN+1];
   int uid = FSAL_OP_CONTEXT_TO_UID(context);
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
 

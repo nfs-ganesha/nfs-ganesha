@@ -368,7 +368,7 @@ int nfs_ip_name_populate(char *path)
   int err;
   char *key_name;
   char *key_value;
-  char label[MAXNAMLEN];
+  char label[MAXNAMLEN+1];
   sockaddr_t ipaddr;
   nfs_ip_name_t *nfs_ip_name;
   sockaddr_t *pipaddr;

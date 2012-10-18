@@ -590,7 +590,7 @@ int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8s
 
 int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8str)
 {
-  char tmpstr[FSAL_MAX_NAME_LEN];
+  char tmpstr[FSAL_MAX_NAME_LEN+1];
   fsal_status_t fsal_status;
 
   if(pname == NULL || utf8str == NULL)
@@ -1068,7 +1068,7 @@ fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd)
 
 void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
 {
-  static char hostname[MAXNAMLEN];
+  static char hostname[MAXNAMLEN+1];
   static bool_t done = FALSE;
 
   P(p_thr_context->lock);

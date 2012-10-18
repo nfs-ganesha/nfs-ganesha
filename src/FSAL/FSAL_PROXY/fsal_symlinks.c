@@ -250,9 +250,9 @@ fsal_status_t PROXYFSAL_symlink(fsal_handle_t * parent_directory_handle,   /* IN
   fattr4 input_attr;
   bitmap4 convert_bitmap;
   component4 name;
-  char nameval[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
   component4 linkname;
-  char linknameval[MAXNAMLEN];
+  char linknameval[MAXNAMLEN+1];
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
 
   fsal_proxy_internal_fattr_t fattr_internal;

@@ -49,7 +49,7 @@ typedef int (*xattr_setfunc_t) (xfsfsal_handle_t *,     /* object handle */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[FSAL_MAX_NAME_LEN];
+  char xattr_name[FSAL_MAX_NAME_LEN+1];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   int flags;

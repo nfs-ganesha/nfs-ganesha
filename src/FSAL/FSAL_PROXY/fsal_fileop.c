@@ -96,7 +96,7 @@ fsal_status_t PROXYFSAL_open_by_name(fsal_handle_t * dirhandle,    /* IN */
   uint32_t bitmap_getattr_res[2];
   uint32_t share_access;
   component4 name;
-  char nameval[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
   proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
   proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
 
@@ -796,8 +796,8 @@ fsal_status_t PROXYFSAL_close_by_fileid(fsal_file_t * file_desc /* IN */ ,
   COMPOUND4res resnfs4;
   nfs_fh4 nfs4fh_hldir;
   component4 name;
-  char nameval[MAXNAMLEN];
-  char filename[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
+  char filename[MAXNAMLEN+1];
   fsal_status_t fsal_status;
   struct timeval timeout = TIMEOUTRPC;
   proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
@@ -919,8 +919,8 @@ fsal_status_t PROXYFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
   uint32_t bitmap_getattr_res[2];
   uint32_t share_access;
   component4 name;
-  char nameval[MAXNAMLEN];
-  char filename[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
+  char filename[MAXNAMLEN+1];
   fsal_status_t fsal_status;
   proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
   proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
