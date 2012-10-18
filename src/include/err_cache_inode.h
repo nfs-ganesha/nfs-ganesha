@@ -24,6 +24,11 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    err_cache_inode.h
  * @brief   Cache inode error definitions.
  *
@@ -152,3 +157,4 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_cache_inode[] =
 };
 
 #endif                          /* _ERR_CACHE_INODE_H */
+/** @} */

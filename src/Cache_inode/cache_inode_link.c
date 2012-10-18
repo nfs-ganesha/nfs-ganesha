@@ -24,12 +24,13 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_link.c
- * @brief   Creation of an hardlink.
- *
- * Creation of a hardlink.
- *
- *
+ * @brief   Creation of hard links
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -203,3 +204,4 @@ out:
 
      return *status;
 }
+/** @} */

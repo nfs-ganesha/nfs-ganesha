@@ -24,6 +24,11 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_getattr.c
  * @brief   Gets the attributes for an entry.
  */
@@ -280,3 +285,4 @@ cache_inode_create_verify(cache_entry_t *entry,
 
         return verified;
 }
+/** @} */

@@ -25,15 +25,15 @@
  */
 
 /**
- * \file    cache_inode_lookupp.c
- * \date    $Date: 2005/11/28 17:02:26 $
- * \version $Revision: 1.5 $
- * \brief   Perform lookup through the cache to get the parent entry for a directory.
- *
- * cache_inode_lookupp.c : Perform lookup through the cache to get the parent entry for a directory.
- *
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
  */
+
+/**
+ * @file cache_inode_lookupp.c
+ * @brief Parent lookups through cache
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -185,3 +185,4 @@ cache_inode_lookupp(cache_entry_t *entry,
      pthread_rwlock_unlock(&entry->content_lock);
      return parent;
 } /* cache_inode_lookupp */
+/** @} */

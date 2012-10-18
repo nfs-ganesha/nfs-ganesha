@@ -25,16 +25,14 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  *
- * \File    cache_inode_kill_entry.c
- * \date    $Date: 2006/01/05 15:14:51 $
- * \version $Revision: 1.63 $
- * \brief   Some routines for management of the cache_inode layer, shared by other calls.
- *
- * Some routines for management of the cache_inode layer, shared by
- * other calls.
- *
- *
+ * @File cache_inode_kill_entry.c
+ * @brief Destroy stale entries
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -117,3 +115,5 @@ cache_inode_kill_entry(cache_entry_t *entry)
         times it's called. */
      cache_inode_lru_kill(entry);
 } /* cache_inode_kill_entry */
+/** @} */
+

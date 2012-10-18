@@ -25,12 +25,13 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_lookup.c
- * @brief   Perform lookup through the cache.
- *
- * @brief Perform lookup through the cache.
- *
- *
+ * @brief   Lookups through the cache
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -270,3 +271,4 @@ cache_inode_lookup(cache_entry_t *parent,
 
      return entry;
 } /* cache_inode_lookup */
+/** @} */

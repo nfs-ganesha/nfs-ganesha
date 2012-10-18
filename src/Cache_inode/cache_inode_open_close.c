@@ -1,6 +1,4 @@
-/**
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
+/*
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
@@ -21,15 +19,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
- *
+ */
+
+/**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_open_close.c
- * @brief   Manage opening and closing files and caching file
- *          descriptors
+ * @brief   Opening and closing files
  *
  * This file manages the opening and closing files and the file
- * descriptor cache, in conjunction with the lru_thread in
- * cache_inode_lru.
+ * descriptor cache in conjunction with the lru_thread in
+ * cache_inode_lru.c
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -348,3 +353,4 @@ out:
 
      return *status;
 }
+/** @} */

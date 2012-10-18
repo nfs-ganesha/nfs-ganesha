@@ -24,13 +24,13 @@
  */
 
 /**
- * \file    cache_inode_commit.c
- * \date    $Date: 2005/11/28 17:02:27 $
- * \version $Revision: 1.20 $
- * \brief   Commits an IO on a REGULAR_FILE.
- *
- * cache_inode_commit.c : Commits an IO on a REGULAR_FILE.
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
+ * @file    cache_inode_commit.c
+ * @brief   Commits operations on regular files
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -212,3 +212,4 @@ out:
 
      return *status;
 }
+/** @} */

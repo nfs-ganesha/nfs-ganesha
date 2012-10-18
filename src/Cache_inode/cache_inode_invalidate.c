@@ -24,10 +24,16 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_invalidate.c
  * @brief   Invalidate the cached data on a cache entry
  *
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -123,3 +129,4 @@ out:
 
         return status;
 } /* cache_inode_invalidate */
+/** @} */

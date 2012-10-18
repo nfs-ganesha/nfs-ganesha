@@ -25,6 +25,11 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_get.c
  * @brief   Get and eventually cache an entry.
  *
@@ -207,3 +212,4 @@ void cache_inode_put(cache_entry_t *entry)
 {
   cache_inode_lru_unref(entry, LRU_FLAG_NONE);
 }
+/** @} */

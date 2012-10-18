@@ -25,8 +25,13 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_readdir.c
- * @brief   Reads the content of a directory.
+ * @brief   Reads the content of a directory
  *
  * Reads the content of a directory, also includes support functions
  * for cached directories.
@@ -701,3 +706,4 @@ unlock_attrs:
      pthread_rwlock_unlock(&directory->attr_lock);
      return *status;
 } /* cache_inode_readdir */
+/** @} */

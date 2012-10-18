@@ -24,14 +24,13 @@
  */
 
 /**
- * \file    cache_inode_read_conf.c
- * \date    $Date: 2006/02/16 08:21:47 $
- * \version $Revision: 1.11 $
- * \brief   Read the configuration file for the Cache inode initialization.
- *
- * cache_inode_read_conf.c : Read the configuration file for the Cache inode initialization.
- *
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
+ * @file cache_inode_read_conf.c
+ * @brief Read the configuration file for the Cache inode initialization.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -522,3 +521,4 @@ void cache_inode_print_conf_gc_policy(FILE *output,
              gcpolicy->required_progress,
              gcpolicy->futility_count);
 } /* cache_inode_print_gc_policy */
+/** @} */

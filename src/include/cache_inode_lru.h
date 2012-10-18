@@ -27,6 +27,11 @@
  * -------------
  */
 
+/**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
 #ifndef CACHE_INODE_LRU_H
 #define CACHE_INODE_LRU_H
 
@@ -214,3 +219,4 @@ static inline bool cache_inode_lru_caching_fds(void)
 	return lru_state.caching_fds;
 }
 #endif /* CACHE_INODE_LRU_H */
+/** @} */

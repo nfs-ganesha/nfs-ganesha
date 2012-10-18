@@ -24,15 +24,15 @@
  */
 
 /**
- * \file    cache_inode_statfs.c
- * \date    $Date: 2005/11/28 17:02:28 $
- * \version $Revision: 1.13 $
- * \brief   Get and eventually cache an entry.
- *
- * cache_inode_statfs.c : Get static and dynamic info on the cache inode layer. 
- *
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
  */
+
+/**
+ * @file cache_inode_statfs.c
+ * @brief Get and eventually cache an entry.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -92,3 +92,4 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
                dynamicinfo->free_files, dynamicinfo->avail_files);
   return status;
 } /* cache_inode_statfs */
+/** @} */

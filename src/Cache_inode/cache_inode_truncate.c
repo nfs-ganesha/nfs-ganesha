@@ -24,15 +24,15 @@
  */
 
 /**
- * \file    cache_inode_truncate.c
- * \date    $Date: 2005/11/28 17:02:28 $
- * \version $Revision: 1.19 $
- * \brief   Truncates a regular file.
- *
- * cache_inode_truncate.c : Truncates a regular file.
- *
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
  */
+
+/**
+ * @file    cache_inode_truncate.c
+ * @brief   Truncates a regular file.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -140,3 +140,4 @@ cache_inode_truncate(cache_entry_t *entry,
   pthread_rwlock_unlock(&entry->content_lock);
   return ret;
 } /* cache_inode_truncate */
+/** @} */

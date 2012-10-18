@@ -25,15 +25,15 @@
  */
 
 /**
- * \file    cache_inode_setattr.c
- * \date    $Date: 2006/02/14 11:47:40 $
- * \version $Revision: 1.19 $
- * \brief   Sets the attributes for an entry.
- *
- * cache_inode_setattr.c : Sets the attributes for an entry.
- *
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
  */
+
+/**
+ * @file    cache_inode_setattr.c
+ * @brief   Sets the attributes for an entry
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -226,3 +226,4 @@ out:
 
      return *status;
 } /* cache_inode_setattr */
+/** @} */

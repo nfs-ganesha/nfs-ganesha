@@ -26,6 +26,22 @@
  *
  * -------------
  */
+/**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
+ *
+ * @file cache_inode_weakref.c
+ * @author Matt Benjamin <matt@linuxbox.com>
+ * @author Adam C. Emerson <aemerson@linuxbox.com>
+ * @brief Cache inode weak reference package
+ *
+ * Manage weak references to cache inode objects (e.g., references
+ * from directory entries).
+ */
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -49,19 +65,6 @@
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
 #include "generic_weakref.h"
-
-/**
- *
- * \file cache_inode_weakref.c
- * \author Matt Benjamin
- * \author Adam C. Emerson
- * \brief Cache inode weak reference package
- *
- * \section DESCRIPTION
- *
- * Manage weak references to cache inode objects (e.g., references from
- * directory entries).
- */
 
 #define WEAKREF_PARTITIONS 17
 
@@ -158,3 +161,4 @@ void cache_inode_weakref_shutdown()
 {
     gweakref_destroy(cache_inode_wt);
 }
+/** @} */

@@ -28,6 +28,11 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file cache_inode_weakref.h
  * @author Matt Benjamin
  * @brief Generic weak reference package
@@ -62,3 +67,4 @@ void cache_inode_weakref_delete(gweakref_t *ref);
 void cache_inode_weakref_shutdown();
 
 #endif /* CACHE_INODE_WEAKREF_H */
+/** @} */

@@ -23,12 +23,13 @@
  */
 
 /**
- * @file    cache_inode_misc.c
- * @brief   routines for management of the cache_inode layer,
- *
- * Some routines for management of the cache_inode layer, shared by
- * other calls.
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
+ * @file  cache_inode_misc.c
+ * @brief Miscellaneous functions, especially new_entry
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -909,3 +910,4 @@ unlock:
 out:
      return status;
 }
+/** @} */

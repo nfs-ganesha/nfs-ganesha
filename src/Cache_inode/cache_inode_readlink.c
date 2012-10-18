@@ -1,6 +1,4 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
@@ -25,14 +23,15 @@
  */
 
 /**
- * \file    cache_inode_readlink.c
- * \date    $Date: 2005/12/05 09:02:36 $
- * \version $Revision: 1.16 $
- * \brief   Reads a symlink.
- *
- * cache_inode_readlink.c : Reads a symlink.
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
  */
+
+/**
+ * @file    cache_inode_readlink.c
+ * @brief   Reads a symlink.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -128,3 +127,4 @@ cache_inode_readlink(cache_entry_t *entry,
 
      return *status;
 } /* cache_inode_readlink */
+/** @} */

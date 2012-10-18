@@ -27,6 +27,11 @@
  * -------------
  */
 
+/**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -57,10 +62,12 @@
 /**
  *
  * @file cache_inode_lru.c
- * @author Matt Benjamin
+ * @author Matt Benjamin <matt@linuxbox.com>
  * @brief Constant-time cache inode cache management implementation
- *
- * @section DESCRIPTION
+ */
+
+/**
+ * @page LRUOverview LRU Overview
  *
  * This module implements a constant-time cache management strategy
  * based on LRU.  Some ideas are taken from 2Q [Johnson and Shasha 1994]
@@ -140,9 +147,9 @@ struct lru_q_base
 
 #define CACHE_LINE_SIZE 64 /* XXX arch-specific define */
 #define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
-#define ALIGNED_ALLOC(_s)                                       \
+#define ALIGNED_ALLOC(_s)					\
      ((void *)(((unsigned long)malloc((_s)+CACHE_LINE_SIZE*2) + \
-                CACHE_LINE_SIZE - 1) & ~(CACHE_LINE_SIZE-1)))
+		CACHE_LINE_SIZE - 1) & ~(CACHE_LINE_SIZE-1)))
 
 /**
  * A single queue lane, holding both movable and pinned entries.
@@ -1436,3 +1443,4 @@ void lru_wake_thread(uint32_t flags)
      if (lru_thread_state.flags & LRU_SLEEPING)
           pthread_cond_signal(&lru_cv);
 }
+/** @} */

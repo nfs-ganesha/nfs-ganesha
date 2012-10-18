@@ -24,6 +24,11 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_rename.c
  * @brief   Renames an entry.
  *
@@ -477,3 +482,4 @@ out:
 
   return *status;
 } /* cache_inode_rename */
+/** @} */

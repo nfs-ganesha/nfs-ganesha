@@ -26,13 +26,23 @@
  * -------------
  */
 
+/**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
+ * @file cache_inode_avl.c
+ * @brief AVL tree for caching directory entries
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include "log.h"
 #include "fsal.h"
@@ -339,3 +349,5 @@ cache_inode_avl_qp_lookup_s(cache_entry_t *entry,
 
     return (NULL);
 }
+
+/** @} */

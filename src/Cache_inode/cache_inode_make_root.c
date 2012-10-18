@@ -24,15 +24,15 @@
  */
 
 /**
- * \file    cache_inode_make_root.c
- * \date    $Date: 2005/11/28 17:02:26 $
- * \version $Revision: 1.12 $
- * \brief   Insert in the cache an entry that is the root of the FS cached.
- *
- * cache_inode_make_root.c : Inserts in the cache an entry that is the root of the FS cached.
- *
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
  */
+
+/**
+ * @file cache_inode_make_root.c
+ * @brief Insert the root of an export
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -96,3 +96,4 @@ cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
 
   return entry;
 }                               /* cache_inode_make_root */
+/** @} */

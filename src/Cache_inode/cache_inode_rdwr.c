@@ -24,15 +24,15 @@
  */
 
 /**
- * \file    cache_inode_rdwr.c
- * \date    $Date: 2005/11/28 17:02:27 $
- * \version $Revision: 1.20 $
- * \brief   Removes an entry of any type.
- *
- * cache_inode_rdwr.c : performs an IO on a REGULAR_FILE.
- *
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
  */
+
+/**
+ * @file cache_inode_rdwr.c
+ * @brief Performs I/O on regular files
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -324,3 +324,4 @@ out:
 
      return *status;
 } /* cache_inode_rdwr */
+/** @} */

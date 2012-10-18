@@ -24,12 +24,15 @@
  */
 
 /**
- * \file    cache_inode_access.c
- * \date    $Date: 2005/11/28 17:02:26 $
- * \version $Revision: 1.19 $
- * \brief   Check for object accessibility.
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
+ * @file    cache_inode_access.c
+ * @brief   Check for object accessibility.
  *
- * cache_inode_access.c : Check for object accessibility.
+ * Check for object accessibility.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -175,3 +178,4 @@ cache_inode_access(cache_entry_t *entry,
     return cache_inode_access_sw(entry, access_type,
                                  req_ctx, status, true);
 }
+/** @} */

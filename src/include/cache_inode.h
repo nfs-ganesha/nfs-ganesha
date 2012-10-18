@@ -22,8 +22,13 @@
  */
 
 /**
- * @file    cache_inode.h
- * @brief   Management of the cached inode layer.
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
+ * @file cache_inode.h
+ * @brief Cache inode main interface.
  *
  * Definitions and structures for public interface to Cache inode.
  */
@@ -284,19 +289,15 @@ typedef struct cache_inode_dir_entry__ {
  *
  * The attributes and symlink contents are stored in the handle for
  * api simplicity but these locks apply around their access methods.
- */
-
-/**
- * @note For cleanup:
- * handle gets moved out of the union
- * attributes gets moved to the fsal_obj_handle - simplifies apis
- * although (1) locking applies everywhere except handle object
- * creation time (nobody knows about it yet).
- * deprecate internal_md.type for fsal_obj_handle has type.
- * object.symlink->content moves to attributes to union with rawdev
- * cache_entry and fsal_obj_handle are two parts of the same thing,
- * a cached inode.  cache_entry holds the cache stuff and fsal_obj_handle
- * holds the stuff the the fsal has to manage, i.e. filesystem bits.
+ *
+ * @note As part of the transition to the new api, the handle was
+ * moved out of the union and made a pointer to a separately allocated
+ * object.  However, locking applies everywhere except handle object
+ * creation time (nobody knows about it yet).  The symlink content
+ * cache has moved into the handle as, well.  The cache_entry and
+ * fsal_obj_handle are two parts of the same thing, a cached inode.
+ * cache_entry holds the cache stuff and fsal_obj_handle holds the
+ * stuff the the fsal has to manage, i.e. filesystem bits.
  */
 
 struct cache_entry_t {
@@ -990,3 +991,4 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 }
 
 #endif /* CACHE_INODE_H */
+/** @} */

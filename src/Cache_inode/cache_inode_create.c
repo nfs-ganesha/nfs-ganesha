@@ -24,10 +24,13 @@
  */
 
 /**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
  * @file    cache_inode_create.c
- * @brief   Creation of a file through the cache layer.
- *
- * Creation of an entry through the cache layer
+ * @brief   Creation of a file through the cache layer
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -245,3 +248,4 @@ out:
 
      return entry;
 }
+/** @} */

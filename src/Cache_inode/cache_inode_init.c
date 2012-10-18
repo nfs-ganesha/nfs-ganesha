@@ -24,22 +24,22 @@
  */
 
 /**
- * \file    cache_inode_init.c
- * \date    $Date: 2006/01/24 13:44:40 $
- * \version $Revision: 1.21 $
- * \brief   Init the cache_inode.
- *
- * cache_inode_init.c : Initialization routines for the cache_inode.
- *
- *
+ * @defgroup Cache_inode Cache Inode
+ * @{
  */
+
+/**
+ * @file cache_inode_init.c
+ * @brief Init the cache_inode.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include "log.h"
 #include "HashTable.h"
@@ -97,3 +97,4 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
 
   return ht;
 }                               /* cache_inode_init */
+/** @} */

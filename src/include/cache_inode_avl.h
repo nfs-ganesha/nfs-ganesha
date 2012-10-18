@@ -22,13 +22,20 @@
  * -------------
  */
 
+/**
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
 
 /**
  * @file cache_inode_avl.h
  * @author Matt Benjamin
  * @brief Definitions supporting AVL dirent representation
  *
- * @section DESCRIPTION
+ */
+
+/**
+ * @page AVLOverview Overview
  *
  * Definitions supporting AVL dirent representation.  The current
  * design represents dirents as a single AVL tree ordered by a
@@ -99,3 +106,4 @@ static inline void cache_inode_avl_remove(cache_entry_t *entry,
 }
 
 #endif /* CACHE_INODE_AVL_H */
+/** @} */

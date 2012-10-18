@@ -24,12 +24,13 @@
  */
 
 /**
- * \file    cache_inode_fsal_hash.c
- * \date    $Date: 2006/01/20 07:39:23 $
- * \version $Revision: 1.9 $
- * \brief   Glue functions between the FSAL and the Cache inode layers.
- *
- * cache_inode_fsal_glue.c : Glue functions between the FSAL and the Cache inode layers.
+ * @defgroup Cache_inode Cache Inode
+ * @{
+ */
+
+/**
+ * @file    cache_inode_fsal_hash.c
+ * @brief   Glue functions between the FSAL and the Cache inode layers.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -378,3 +379,4 @@ int display_value(struct gsh_buffdesc * pbuff, char *str)
                     "(Type=%d, Address=%p)",
                     pentry->type, pentry);
 }
+/** @} */
