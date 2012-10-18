@@ -27,8 +27,13 @@
  *
  */
 
-#ifndef _HASH_DATA_H
-#define _HASH_DATA_H
+/**
+ * @defgroup HashTable A non-intrusive, partitioned hash-keyed tree
+ * @{
+ */
+
+#ifndef HASH_DATA_H
+#define HASH_DATA_H
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -49,4 +54,6 @@ typedef struct hash_data
      struct hash_buff buffval;
      struct hash_buff buffkey;
 } hash_data_t;
-#endif
+
+/** @} */
+#endif /* !HASH_DATA_H */

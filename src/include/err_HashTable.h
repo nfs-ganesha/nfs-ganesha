@@ -1,10 +1,15 @@
+/**
+ * @defgroup HashTable A non-intrusive, partitioned hash-keyed tree
+ * @{
+ */
+
 #ifndef _ERR_HASHTABLE_H
 #define _ERR_HASHTABLE_H
 
 #include "log.h"
 #include "HashTable.h"
 
-/**
+/*
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -15,32 +20,24 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
- /**/
 /**
- * \file    err_HashTable.h
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:03:22 $
- * \version $Revision: 1.20 $
- * \brief   Definition des erreur des tables de hachage.
- * 
- * err_HashTable.h : Definition des erreur des tables de hachage.
- *
- *
+ * @file    err_HashTable.h
+ * @brief   Hash table errors
  */
-    static family_error_t __attribute__ ((__unused__)) tab_errctx_hash[] =
+static family_error_t __attribute__ ((__unused__)) tab_errctx_hash[] =
 {
 #define ERR_HASHTABLE_NO_ERROR       0
   {
@@ -79,4 +76,6 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_hash[] =
   ERR_NULL, "ERR_NULL", ""}
 };
 
-#endif                          /* _ERR_HASHTABLE_H */
+#endif /* _ERR_HASHTABLE_H */
+
+/** @} */
