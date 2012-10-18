@@ -1,2 +1,0 @@
-LOGFILE=/var/log/ceph.ganesha.nfsd.log
-CONFFILE=/etc/ganesha/ceph.ganesha.nfsd.conf

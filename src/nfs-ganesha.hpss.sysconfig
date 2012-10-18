@@ -1,2 +1,0 @@
-LOGFILE=/var/log/hpss.ganesha.nfsd.log
-CONFFILE=/etc/ganesha/hpss.ganesha.nfsd.conf

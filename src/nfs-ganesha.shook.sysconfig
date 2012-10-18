@@ -1,2 +1,0 @@
-LOGFILE=/var/log/shook.ganesha.nfsd.log
-CONFFILE=/etc/ganesha/shook.ganesha.nfsd.conf

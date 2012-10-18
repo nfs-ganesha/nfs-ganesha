@@ -1,2 +1,0 @@
-LOGFILE=/var/log/zfs.ganesha.nfsd.log
-CONFFILE=/etc/ganesha/zfs.ganesha.nfsd.conf

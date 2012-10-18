@@ -1,2 +1,0 @@
-LOGFILE=/var/log/vfs.ganesha.nfsd.log
-CONFFILE=/etc/ganesha/vfs.ganesha.nfsd.conf
