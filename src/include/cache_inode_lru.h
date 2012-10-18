@@ -2,51 +2,51 @@
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) 2012, The Linux Box Corporation
- * Contributor : Matt Benjamin <matt@linuxbox.com>
+ * Contributor: Matt Benjamin <matt@linuxbox.com>
  *
  * Some portions Copyright CEA/DAM/DIF  (2008)
- * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
- *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ * contributeur: Philippe DENIEL   philippe.deniel@cea.fr
+ *               Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * -------------
  */
 
-#ifndef _CACHE_INODE_LRU_H
-#define _CACHE_INODE_LRU_H
+#ifndef CACHE_INODE_LRU_H
+#define CACHE_INODE_LRU_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif                          /* HAVE_CONFIG_H */
+#endif /* HAVE_CONFIG_H */
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include "log.h"
 #include "cache_inode.h"
 
 /**
+ * @file cache_inode_lru.h
+ * @author Matt Benjamin
+ * @brief Constant-time cache inode cache management implementation
  *
- * \file cache_inode_lru.h
- * \author Matt Benjamin
- * \brief Constant-time cache inode cache management implementation
- *
- * \section DESCRIPTION
+ * @section DESCRIPTION
  *
  * This module implements a constant-time cache management strategy
  * based on LRU.  Some ideas are taken from 2Q [Johnson and Shasha 1994]
@@ -66,29 +66,30 @@
  *
  */
 
-struct lru_state
-{
-     uint64_t entries_hiwat;
-     uint64_t entries_lowat;
-     uint32_t fds_system_imposed;
-     uint32_t fds_hard_limit;
-     uint32_t fds_hiwat;
-     uint32_t fds_lowat;
-     /* This is the actual counter of 'futile' attempts at reaping
-        made  in a given time period.  When it reaches the futility
-        count, we turn off caching of file descriptors. */
-     uint32_t futility;
-     uint32_t per_lane_work;
-     uint32_t biggest_window;
-     uint32_t flags;
-     uint64_t last_count;
-     uint64_t threadwait;
-     bool caching_fds;
+struct lru_state {
+	uint64_t entries_hiwat;
+	uint64_t entries_lowat;
+	uint32_t fds_system_imposed;
+	uint32_t fds_hard_limit;
+	uint32_t fds_hiwat;
+	uint32_t fds_lowat;
+	/** This is the actual counter of 'futile' attempts at reaping
+	    made  in a given time period.  When it reaches the futility
+	    count, we turn off caching of file descriptors. */
+	uint32_t futility;
+	uint32_t per_lane_work;
+	uint32_t biggest_window;
+	uint32_t flags;
+	uint64_t last_count;
+	uint64_t threadwait;
+	bool caching_fds;
 };
 
 extern struct lru_state lru_state;
 
-/* Flags for functions in the LRU package */
+/**
+ * Flags for functions in the LRU package
+ */
 
 /**
  * No flag at all.
@@ -138,7 +139,9 @@ static const uint32_t LRU_REQ_SCAN = 0x0040;
  */
 static const uint32_t LRU_FLAG_LOCKED = 0x0080;
 
-/* The minimum reference count for a cache entry not being recycled. */
+/**
+ * The minimum reference count for a cache entry not being recycled.
+ */
 
 static const int32_t LRU_SENTINEL_REFCOUNT = 1;
 
@@ -149,8 +152,10 @@ static const uint32_t LRU_SLEEPING = 0x00000001;
 static const uint32_t LRU_SHUTDOWN = 0x00000002;
 
 
-/* The number of lanes comprising a logical queue.  This must be
-   prime. */
+/**
+ * The number of lanes comprising a logical queue.  This must be
+ * prime.
+ */
 
 #define LRU_N_Q_LANES 7
 
@@ -162,13 +167,13 @@ extern void cache_inode_lru_pkgshutdown(void);
 extern size_t open_fd_count;
 
 extern struct cache_entry_t *cache_inode_lru_get(cache_inode_status_t *status,
-                                                 uint32_t flags);
+						 uint32_t flags);
 extern cache_inode_status_t cache_inode_lru_ref(
-     cache_entry_t *entry,
-     uint32_t flags) __attribute__((warn_unused_result));
+	cache_entry_t *entry,
+	uint32_t flags) __attribute__((warn_unused_result));
 extern void cache_inode_lru_kill(cache_entry_t *entry);
 extern void cache_inode_lru_unref(cache_entry_t *entry,
-                                  uint32_t flags);
+				  uint32_t flags);
 extern void lru_wake_thread(uint32_t flags);
 extern cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
 extern void cache_inode_unpinnable(cache_entry_t *entry);
@@ -181,33 +186,31 @@ extern bool cache_inode_is_pinned(cache_entry_t *entry);
  * current FD count is above the high water mark.
  */
 
-static inline bool
-cache_inode_lru_fds_available(void)
+static inline bool cache_inode_lru_fds_available(void)
 {
-     if (open_fd_count >= lru_state.fds_hard_limit) {
-          LogCrit(COMPONENT_CACHE_INODE_LRU,
-                  "FD Hard Limit Exceeded.  Disabling FD Cache and waking"
-                  " LRU thread.");
-          lru_state.caching_fds = false;
-          lru_wake_thread(LRU_FLAG_NONE);
-          return false;
-     }
-     if (open_fd_count >= lru_state.fds_hiwat) {
-          LogInfo(COMPONENT_CACHE_INODE_LRU,
-                  "FDs above high water mark, waking LRU thread.");
-          lru_wake_thread(LRU_FLAG_NONE);
-     }
+	if (open_fd_count >= lru_state.fds_hard_limit) {
+		LogCrit(COMPONENT_CACHE_INODE_LRU,
+			"FD Hard Limit Exceeded.  Disabling FD Cache and waking"
+			" LRU thread.");
+		lru_state.caching_fds = false;
+		lru_wake_thread(LRU_FLAG_NONE);
+		return false;
+	}
+	if (open_fd_count >= lru_state.fds_hiwat) {
+		LogInfo(COMPONENT_CACHE_INODE_LRU,
+			"FDs above high water mark, waking LRU thread.");
+		lru_wake_thread(LRU_FLAG_NONE);
+	}
 
-     return true;
+	return true;
 }
 
 /**
  * Return true if we are currently caching file descriptors.
  */
 
-static inline bool
-cache_inode_lru_caching_fds(void)
+static inline bool cache_inode_lru_caching_fds(void)
 {
-     return lru_state.caching_fds;
+	return lru_state.caching_fds;
 }
-#endif /* _CACHE_INODE_LRU_H */
+#endif /* CACHE_INODE_LRU_H */
