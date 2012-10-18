@@ -98,9 +98,7 @@ nfs_Mkdir(nfs_arg_t *arg,
         cache_inode_status_t cache_status_lookup;
         cache_inode_create_arg_t create_arg;
         int rc = NFS_REQ_OK;
-#ifdef _USE_QUOTA
         fsal_status_t fsal_status;
-#endif
 
         memset(&create_arg, 0, sizeof(create_arg));
 
@@ -144,7 +142,6 @@ nfs_Mkdir(nfs_arg_t *arg,
          }
 
 
-#ifdef _USE_QUOTA
         /* if quota support is active, then we should check is the
            FSAL allows inode creation or not */
         fsal_status = export->export_hdl->ops->check_quota(export->export_hdl,
@@ -158,7 +155,6 @@ nfs_Mkdir(nfs_arg_t *arg,
              rc = NFS_REQ_OK;
              goto out;
          }
-#endif /* _USE_QUOTA */
 
        dir_name = arg->arg_mkdir3.where.name;
 
