@@ -1193,9 +1193,9 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                 /* If file is opened under mode EXCLUSIVE4, open verifier
                  * should be kept to detect non vicious double open */
                 if(args->openhow.openflag4_u.how.mode == EXCLUSIVE4) {
-                        strncpy(candidate_data.share.share_oexcl_verifier,
-                          args->openhow.openflag4_u.how.createhow4_u.createverf,
-                          NFS4_VERIFIER_SIZE);
+                        memcpy(candidate_data.share.share_oexcl_verifier,
+                               args->openhow.openflag4_u.how.createhow4_u.createverf,
+                               NFS4_VERIFIER_SIZE);
                 }
 
                 if(state_add_impl(pentry_newfile, candidate_type, &candidate_data,

@@ -687,9 +687,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
              should be kept to detect non vicious double open */
           if(arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4)
             {
-              strncpy(candidate_data.share.share_oexcl_verifier,
-                      arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf,
-                      NFS4_VERIFIER_SIZE);
+              memcpy(candidate_data.share.share_oexcl_verifier,
+                     arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf,
+                     NFS4_VERIFIER_SIZE);
             }
 
           if(state_add(pentry_newfile,
