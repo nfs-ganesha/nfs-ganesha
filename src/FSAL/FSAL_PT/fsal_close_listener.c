@@ -78,9 +78,17 @@ void *ptfsal_closeHandle_listener_thread(void *args)
       ccl_up_mutex_lock(&g_close_handle_mutex);
       close_rc = ptfsal_find_oldest_handle();
       if (close_rc != -1) {
-        ptfsal_update_handle_nfs_state (close_rc, CCL_CLOSE);
-        close_rc = ptfsal_implicit_close_for_nfs(close_rc, 
-                                                 CCL_CLOSE_STYLE_NORMAL);
+	int state_rc = ccl_update_handle_nfs_state(close_rc, CCL_CLOSE,
+						   NFS_CLOSE);
+
+	// handle is already being closed by another thread
+	if (state_rc) {
+	  FSI_TRACE(FSI_WARNING, "Failed to set nfs state, state is %d",
+		    g_fsi_handles.m_handle[close_rc].m_nfs_state);
+	} else {
+	  close_rc = ptfsal_implicit_close_for_nfs(close_rc, 
+						   CCL_CLOSE_STYLE_NORMAL);
+	}
       }
       ccl_up_mutex_unlock(&g_close_handle_mutex);
       /* Send the response back */
@@ -193,20 +201,6 @@ int ptfsal_find_oldest_handle(void)
   FSI_TRACE(FSI_NOTICE, "fsi file handle = %d", fsihandle);
 
   return fsihandle;
-}
-
-void ptfsal_update_handle_nfs_state(int handle_index, enum e_nfs_state state)
-{
-  if (ccl_check_handle_index(handle_index) < 0) {
-    FSI_TRACE(FSI_ERR, "Invalid handle index to update nfs_state with = %d",
-              handle_index);
-    return;
-  }
-
-  FSI_TRACE(FSI_DEBUG, "Setting m_nfs_state[%d]", state);
-  ccl_up_mutex_lock(&g_handle_mutex);
-  g_fsi_handles.m_handle[handle_index].m_nfs_state = state;
-  ccl_up_mutex_unlock(&g_handle_mutex);
 }
 
 int ptfsal_implicit_close_for_nfs(int handle_index_to_close, int close_style)

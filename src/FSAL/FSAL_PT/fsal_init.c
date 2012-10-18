@@ -286,6 +286,7 @@ PTFSAL_terminate()
     }
   }
 
+  ccl_up_mutex_unlock(&g_handle_mutex);
   for (index = FSI_CIFS_RESERVED_STREAMS;
        index < FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS;
        index++) {
@@ -296,8 +297,6 @@ PTFSAL_terminate()
 
   FSI_TRACE(FSI_NOTICE, "All parallel close threads have exited");
   
-  ccl_up_mutex_unlock(&g_handle_mutex);
-
   if (closureFailure) {
     FSI_TRACE(FSI_NOTICE, "Terminating with failure to close file(s)");
   } else {

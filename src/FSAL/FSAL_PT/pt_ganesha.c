@@ -754,7 +754,9 @@ ptfsal_close_mount_root(fsal_export_context_t * p_export_context)
   ccl_context.uid       = 0;
   ccl_context.gid       = 0;
 
-  ptfsal_update_handle_nfs_state(fsi_export_context->mount_root_fd, NFS_CLOSE);
+  // don't check return code since using IGNORE_STATE
+  ccl_update_handle_nfs_state(fsi_export_context->mount_root_fd, NFS_CLOSE,
+			      IGNORE_STATE);
   return 0;
 }
 // -----------------------------------------------------------------------------
