@@ -68,9 +68,7 @@
 #include "SemN.h"
 #include "9p.h"
 
-#include <infiniband/arch.h>
-#include <rdma/rdma_cma.h>
-#include "mooshika.h"
+#include <mooshika.h>
 
 #ifndef _USE_TIRPC_IPV6
   #define P_FAMILY AF_INET

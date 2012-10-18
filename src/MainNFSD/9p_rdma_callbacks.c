@@ -62,9 +62,9 @@
 #include "SemN.h"
 #include "9p.h"
 
-#include <infiniband/arch.h>
-#include <rdma/rdma_cma.h>
-#include "mooshika.h"
+#include <mooshika.h>
+
+void DispatchWork9P( request_data_t *preq );
 
 void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) {
 
@@ -142,7 +142,6 @@ void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * 
 void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg) 
 {
   struct _9p_datamr *_9p_datamr = arg;
-  unsigned int worker_index;
   request_data_t *preq = NULL;
   u16 tag = 0 ;
   char * _9pmsg = NULL ;
@@ -153,28 +152,21 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg)
       return;
    }
 
-  /* choose a worker depending on its queue length */
-  worker_index = nfs_core_select_worker_queue( WORKER_INDEX_ANY );
-
-  /* Get a preq from the worker's pool */
-  P(workers_data[worker_index].request_pool_mutex);
-
   preq = pool_alloc( request_pool, NULL ) ;
+ 
+  preq->rtype = _9P_REQUEST ;
+  preq->r_u._9p._9pmsg = _9pmsg;
+  preq->r_u._9p.pconn = (_9p_conn_t *)_9p_datamr->pconn ;  
+  preq->r_u._9p.pconn->trans_type = _9P_RDMA ;
+  preq->r_u._9p.pconn->trans_data.rdma_ep.datamr = _9p_datamr ;
+  preq->r_u._9p.pconn->trans_data.rdma_ep.trans = trans ;
+  
 
-  V(workers_data[worker_index].request_pool_mutex);
+  /* Add this request to the request list, should it be flushed later. */
+  _9pmsg = _9p_datamr->data->data ;
+  tag = *(u16*) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
+  _9p_AddFlushHook(&preq->r_u._9p, tag, preq->r_u._9p.pconn->sequence++);
 
-   preq->rtype = _9P_REQUEST ;
-   preq->r_u._9p.pconn = (_9p_conn_t *)_9p_datamr->pconn ;  
-
-   preq->r_u._9p.pconn->trans_type = _9P_RDMA ;
-   preq->r_u._9p.pconn->trans_data.rdma_ep.datamr = _9p_datamr ;
-   preq->r_u._9p.pconn->trans_data.rdma_ep.trans = trans ;
-
-   /* Add this request to the request list, should it be flushed later. */
-   _9pmsg = _9p_datamr->data->data ;
-   tag = *(u16*) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
-   _9p_AddFlushHook(&preq->r_u._9p, tag, preq->r_u._9p.pconn->sequence++);
-
-   DispatchWork9P( preq, worker_index ) ;
+  DispatchWork9P( preq ) ;
 } /* _9p_rdma_callback_recv */
 

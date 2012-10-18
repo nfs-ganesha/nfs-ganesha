@@ -1310,7 +1310,7 @@ static void _9p_execute( _9p_request_data_t *req9p,
   if( req9p->pconn->trans_type == _9P_TCP )
     _9p_tcp_process_request( req9p, worker_data ) ;
 #ifdef _USE_9P_RDMA
-  else if( preq9p->pconn->trans_type == _9P_RDMA )
+  else if( req9p->pconn->trans_type == _9P_RDMA )
      _9p_rdma_process_request( req9p, worker_data ) ;
 #endif
 

@@ -73,7 +73,7 @@ _9P_LIB =
 endif # USE_9P
 
 if USE_9P_RDMA
-_9P_RDMA_LDADD = -lmsk -lrdmacm -libverbs
+_9P_RDMA_LDADD = -lmooshika -lrdmacm -libverbs
 else
 _9P_RDMA_LDADD = 
 endif
@@ -196,6 +196,7 @@ ganesha_nfsd_LDADD      =  ./libMainServices.la \
 			   $(FSAL_LDFLAGS) \
                            $(TIRPC_STATIC_LIB) \
 			   $(EXT_LDADD)  \
+                           $(_9P_RDMA_LDADD) \
                            $(SEC_LIB_FLAGS) \
                            @EFENCE@ \
 	                   @EXTRA_LIB@
