@@ -145,8 +145,7 @@ srpm: nfs-ganesha.spec remove_hpss rpmdirs
 endif
 
 doc:
-	doxygen ./doxygen.conf
-	cd ../share/doc/doxygen/nfs-ganesha/latex ; make -i pdf
+	doxygen ./Doxyfile
 
 
 EXTRA_DIST=nfs-ganesha.spec              \

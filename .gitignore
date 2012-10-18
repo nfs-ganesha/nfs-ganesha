@@ -10,7 +10,6 @@ src/pkg-deb/
 .libs/
 
 # files
-Doxyfile
 *.kdevelop*
 *.kdevses
 TAGS
