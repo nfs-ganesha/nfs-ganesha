@@ -271,7 +271,6 @@ int nfs_read_core_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "NFS_Protocols"))
         {
-
 #     define MAX_NFSPROTO      10       /* large enough !!! */
 #     define MAX_NFSPROTO_LEN  256      /* so is it !!! */
 
@@ -281,14 +280,14 @@ int nfs_read_core_conf(config_file_t in_config,
           /* reset nfs versions flags (clean defaults) */
           pparam->core_options &= ~(CORE_OPTION_ALL_VERS);
 
-          /* allocate nfs vers strings */
-          for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            nfsvers_list[idx] = gsh_malloc(MAX_NFSPROTO_LEN);
+          /* fill nfs vers list with NULL pointers */
+          memset(nfsvers_list, 0, sizeof(nfsvers_list));
 
           /*
            * Search for coma-separated list of nfsprotos
            */
           count = nfs_ParseConfLine(nfsvers_list, MAX_NFSPROTO,
+                                    MAX_NFSPROTO_LEN + 1,
                                     key_value, find_comma, find_endLine);
 
           if(count < 0)
@@ -299,7 +298,8 @@ int nfs_read_core_conf(config_file_t in_config,
 
               /* free sec strings */
               for(idx = 0; idx < MAX_NFSPROTO; idx++)
-                gsh_free(nfsvers_list[idx]);
+                if(nfsvers_list[idx] != NULL)
+                  gsh_free(nfsvers_list[idx]);
 
               return -1;
             }
@@ -319,7 +319,7 @@ int nfs_read_core_conf(config_file_t in_config,
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                          "Invalid NFS Protocol \"%s\". Values can be: 3, 4.",
+                          "Invalid NFS Protocol \"%s\". Values can be: 2, 3, 4.",
                           nfsvers_list[idx]);
                   return -1;
                 }
@@ -327,7 +327,8 @@ int nfs_read_core_conf(config_file_t in_config,
 
           /* free sec strings */
           for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            gsh_free(nfsvers_list[idx]);
+            if(nfsvers_list[idx] != NULL)
+              gsh_free(nfsvers_list[idx]);
 
           /* check that at least one nfs protocol has been specified */
           if((pparam->core_options & (CORE_OPTION_ALL_VERS)) == 0)

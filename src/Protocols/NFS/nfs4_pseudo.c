@@ -133,8 +133,9 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
   PseudoFs->root.parent = &(PseudoFs->root);    /* root is its own parent */
 
   /* Allocation of the parsing table */
+  #define PSEUDO_PATH_BUFFSIZE (MAXNAMLEN + 1)
   for(i = 0; i < NB_TOK_PATH; i++)
-    if((PathTok[i] = gsh_malloc(MAXNAMLEN)) == NULL)
+    if((PathTok[i] = gsh_malloc(PSEUDO_PATH_BUFFSIZE)) == NULL)
       return ENOMEM;
 
   while(entry)
@@ -177,7 +178,9 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
           /* Parsing the path */
           strncpy(tmp_pseudopath, entry->pseudopath, MAXPATHLEN);
           if((NbTokPath =
-              nfs_ParseConfLine(PathTok, NB_TOK_PATH, tmp_pseudopath, find_slash,
+              nfs_ParseConfLine(PathTok, NB_TOK_PATH,
+                                PSEUDO_PATH_BUFFSIZE,
+                                tmp_pseudopath, find_slash,
                                 find_endLine)) < 0)
             {
               /* Path is badly formed */
