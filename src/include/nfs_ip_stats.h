@@ -45,8 +45,8 @@ typedef struct nfs_ip_stats__
   unsigned int req_nfs3[NFS_V3_NB_COMMAND];
 } nfs_ip_stats_t;
 
-int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname);
-int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname);
+int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size);
+int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size);
 int nfs_ip_name_remove(sockaddr_t *ipaddr);
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,

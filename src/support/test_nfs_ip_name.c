@@ -82,7 +82,7 @@ void nfs_set_ip_name_param_default()
     nfs_param.ip_name_param.hash_param.name = "IP Name";
     nfs_param.ip_name_param.hash_param.flags = HASH_FLAG_NONE;
     nfs_param.ip_name_param.expiration_time = IP_NAME_EXPIRATION;
-    strncpy(nfs_param.ip_name_param.mapfile, "", MAXPATHLEN);
+    strcpy(nfs_param.ip_name_param.mapfile, "");
 
     nfs_param.core_param.dump_stats_per_client = 1;
 
@@ -107,28 +107,28 @@ void init()
 
 void test_not_found() 
 {
-    EQUALS(nfs_ip_name_get(&ipv4a, out), IP_NAME_NOT_FOUND, "There shouldn't be an ipv4a yet");
+    EQUALS(nfs_ip_name_get(&ipv4a, out, sizeof(out)), IP_NAME_NOT_FOUND, "There shouldn't be an ipv4a yet");
     // EQUALS(nfs_ip_name_get(ipname, &ipv4b, &out), IP_NAME_NOT_FOUND, "There shouldn't be an ipv4b yet");
     EQUALS(nfs_ip_name_get(&ipv4c, out), IP_NAME_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
 void test_not_found_bc() 
 {
-    EQUALS(nfs_ip_name_get(&ipv4a, out), IP_NAME_SUCCESS, "There should be an ipv4a");
+    EQUALS(nfs_ip_name_get(&ipv4a, out, sizeof(out), IP_NAME_SUCCESS, "There should be an ipv4a");
     // EQUALS(nfs_ip_name_get(ipname, &ipv4b, &out), IP_NAME_NOT_FOUND, "There shouldn't be an ipv4b yet");
     EQUALS(nfs_ip_name_get(&ipv4c, out), IP_NAME_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
 void test_not_found_c() 
 {
-    EQUALS(nfs_ip_name_get(&ipv4a, out), IP_NAME_SUCCESS, "There should be an ipv4a");
+    EQUALS(nfs_ip_name_get(&ipv4a, out, sizeof(out), IP_NAME_SUCCESS, "There should be an ipv4a");
     // EQUALS(nfs_ip_name_get(ipname, &ipv4b, &out), IP_NAME_SUCCESS, "There should be an ipv4b");
     EQUALS(nfs_ip_name_get(&ipv4c, out), IP_NAME_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
 void test_not_found_none() 
 {
-    EQUALS(nfs_ip_name_get(&ipv4a, out), IP_NAME_SUCCESS, "There should be an ipv4a");
+    EQUALS(nfs_ip_name_get(&ipv4a, out, sizeof(out), IP_NAME_SUCCESS, "There should be an ipv4a");
     // EQUALS(nfs_ip_name_get(ipname, &ipv4b, &out), IP_NAME_SUCCESS, "There should be an ipv4b");
     EQUALS(nfs_ip_name_get(&ipv4c, out), IP_NAME_SUCCESS, "There should be an ipv4c");
 }
@@ -136,7 +136,7 @@ void test_not_found_none()
 
 void test_add() 
 {
-    int rc = nfs_ip_name_add(&ipv4a, name4a);
+    int rc = nfs_ip_name_add(&ipv4a, name4a, sizeof(name4a));
     EQUALS(rc, IP_NAME_SUCCESS, "Can't add ipv4a, rc = %d", rc);
     test_not_found_bc();
 
@@ -144,7 +144,7 @@ void test_add()
     /* EQUALS(rc, IP_NAME_SUCCESS, "Can't add ipv4b"); */
     /* test_not_found_c(); */
 
-    rc = nfs_ip_name_add(&ipv4c, name4c);
+    rc = nfs_ip_name_add(&ipv4c, name4c, sizeof(name4c));
     EQUALS(rc, IP_NAME_SUCCESS, "Can't add ipv4c");
     test_not_found_none();
 }
@@ -168,7 +168,7 @@ void test_remove()
     test_not_found_c();
     EQUALS(rc, IP_NAME_NOT_FOUND, "Can't remove ipv4c");
 
-    rc = nfs_ip_name_add(&ipv4c, name4c);
+    rc = nfs_ip_name_add(&ipv4c, name4c, sizeof(name4c));
     EQUALS(rc, IP_NAME_SUCCESS, "Can't add ipv4c");
     test_not_found_none();
 }
@@ -208,7 +208,7 @@ void test_not_found_none_6()
 
 void test_add_6() 
 {
-    int rc = nfs_ip_name_add(&ipv6a, name6a);
+    int rc = nfs_ip_name_add(&ipv6a, name6a, sizeof(name6a));
     EQUALS(rc, IP_NAME_SUCCESS, "Can't add ipv6a, rc = %d", rc);
     test_not_found_bc_6();
 
@@ -216,7 +216,7 @@ void test_add_6()
     /* EQUALS(rc, IP_NAME_SUCCESS, "Can't add ipv6b"); */
     /* test_not_found_c_6(); */
 
-    rc = nfs_ip_name_add(&ipv6c, name6c);
+    rc = nfs_ip_name_add(&ipv6c, name6c, sizeof(name6c));
     EQUALS(rc, IP_NAME_SUCCESS, "Can't add ipv6c");
     test_not_found_none_6();
 }
@@ -240,7 +240,7 @@ void test_remove_6()
     test_not_found_c_6();
     EQUALS(rc, IP_NAME_NOT_FOUND, "Can't remove ipv6c");
 
-    rc = nfs_ip_name_add(&ipv6c, name6c);
+    rc = nfs_ip_name_add(&ipv6c, name6c, sizeof(name6c));
     EQUALS(rc, IP_NAME_SUCCESS, "Can't add ipv6c");
     test_not_found_none_6();
 }

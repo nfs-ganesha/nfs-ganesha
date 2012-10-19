@@ -171,7 +171,7 @@ int display_ip_name_val(hash_buffer_t * pbuff, char *str)
  *
  */
 
-int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
+int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -245,7 +245,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
     return IP_NAME_INSERT_MALLOC_ERROR;
 
   /* Copy the value for the caller */
-  strncpy(hostname, nfs_ip_name->hostname, MAXHOSTNAMELEN);
+  strmaxcpy(hostname, nfs_ip_name->hostname, size);
 
   return IP_NAME_SUCCESS;
 }                               /* nfs_ip_name_add */
@@ -262,7 +262,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
  * @return the result previously set if *pstatus == IP_NAME_SUCCESS
  *
  */
-int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname)
+int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -277,7 +277,7 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname)
   if(HashTable_Get(ht_ip_name, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
       nfs_ip_name = (nfs_ip_name_t *) buffval.pdata;
-      strncpy(hostname, nfs_ip_name->hostname, MAXHOSTNAMELEN);
+      strmaxcpy(hostname, nfs_ip_name->hostname, size);
 
       LogFullDebug(COMPONENT_DISPATCH,
                    "Cache get hit for %s->%s",
@@ -436,7 +436,7 @@ int nfs_ip_name_populate(char *path)
           return IP_NAME_INSERT_MALLOC_ERROR;
         }
 
-      strncpy(nfs_ip_name->hostname, key_name, MAXHOSTNAMELEN);
+      strmaxcpy(nfs_ip_name->hostname, key_name, sizeof(nfs_ip_name->hostname));
       nfs_ip_name->timestamp = time(NULL);
       memcpy(pipaddr, &ipaddr, sizeof(sockaddr_t));
 
