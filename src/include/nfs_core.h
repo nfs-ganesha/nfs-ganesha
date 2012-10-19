@@ -60,7 +60,6 @@
 #define RQCRED_SIZE 400 /* this size is excessive */
 
 /* Arbitrary string buffer lengths */
-#define AUTH_STR_LEN 30
 #define PWENT_MAX_LEN 81
 
 /* Hard and soft limit for nfsv4 quotas */
@@ -350,8 +349,7 @@ unsigned int get_rpc_xid(struct svc_req *reqp);
 
 void nfs_reset_stats(void);
 
-void auth_stat2str(enum auth_stat, char *str);
-
+const char * auth_stat2str(enum auth_stat);
 int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 
 /* used in DBUS-api diagnostic functions (e.g., serialize sessionid) */

@@ -1336,11 +1336,9 @@ AuthenticateRequest(struct fridgethr_context *thr_ctx,
 
   if((why = svc_auth_authenticate(req, msg, no_dispatch)) != AUTH_OK)
     {
-      char auth_str[AUTH_STR_LEN];
-      auth_stat2str(why, auth_str);
       LogInfo(COMPONENT_DISPATCH,
               "Could not authenticate request... rejecting with AUTH_STAT=%s",
-              auth_str);
+              auth_stat2str(why));
       DISP_SLOCK(xprt);
       svcerr_auth(xprt, req, why);
       DISP_SUNLOCK(xprt);
