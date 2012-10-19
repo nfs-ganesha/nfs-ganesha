@@ -1041,8 +1041,8 @@ nfs_rpc_consume_req(struct req_q_pair *qpair)
         goto out;
     } else {
         char *s = NULL;
-        uint32_t csize;
-        uint32_t psize;
+        uint32_t csize = ~0U;
+        uint32_t psize = ~0U;
 
         pthread_mutex_lock(&qpair->producer.we.mtx);
         if (isFullDebug(COMPONENT_DISPATCH)) {
