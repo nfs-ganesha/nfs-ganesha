@@ -69,11 +69,7 @@
  */
 static pool_t *rpc_call_pool;
 
-/**
- * Tried to re-use host_name in nfs_main.c, but linker became
- * confused.  this is a quick fix
- */
-static char host_name[MAXHOSTNAMELEN];
+extern char host_name[MAXHOSTNAMELEN];
 
 /**
  * @brief Initialize the callback credential cache
@@ -107,8 +103,6 @@ out:
 
 void nfs_rpc_cb_pkginit(void)
 {
-	char localmachine[MAXHOSTNAMELEN];
-
 	/* Create a pool of rpc_call_t */
 	rpc_call_pool = pool_init("RPC Call Pool",
 				  sizeof(rpc_call_t),
@@ -121,13 +115,6 @@ void nfs_rpc_cb_pkginit(void)
 			"Error while allocating rpc call pool");
 		LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
 		Fatal();
-	}
-
-	/* get host name */
-	if (gethostname(localmachine, sizeof(localmachine)) != 0) {
-		LogCrit(COMPONENT_INIT, "Failed to get local host name");
-	} else {
-		strlcpy(host_name, localmachine, MAXHOSTNAMELEN);
 	}
 
 	/* ccache */
