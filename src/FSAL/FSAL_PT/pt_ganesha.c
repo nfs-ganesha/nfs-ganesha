@@ -755,8 +755,13 @@ ptfsal_close_mount_root(fsal_export_context_t * p_export_context)
   ccl_context.gid       = 0;
 
   // don't check return code since using IGNORE_STATE
-  ccl_update_handle_nfs_state(fsi_export_context->mount_root_fd, NFS_CLOSE,
-			      IGNORE_STATE);
+  int state_rc = 
+    ccl_update_handle_nfs_state(fsi_export_context->mount_root_fd, NFS_CLOSE,
+				NFS_OPEN);
+  if (state_rc) {
+    FSI_TRACE(FSI_WARNING, "Unexpected state, not updating nfs state");
+  }
+
   return 0;
 }
 // -----------------------------------------------------------------------------
