@@ -24,7 +24,7 @@ libfsalgpfs_la_SOURCES = main.c				\
 	                 ../../include/fsal.h		\
                          ../../include/fsal_types.h	\
 	                 ../../include/err_fsal.h
-	
+
 
 # ??? for now unused files
 #
