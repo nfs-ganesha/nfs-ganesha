@@ -144,9 +144,6 @@
 #define GANESHA_RAW_DEV_MAJOR 168
 #define GANESHA_RAW_DEV_MINOR 168
 
-/* Other #define */
-#define AUTH_STR_LEN 30
-
 /* Id Mapper cache error */
 #define ID_MAPPER_SUCCESS             0
 #define ID_MAPPER_INSERT_MALLOC_ERROR 1
@@ -737,7 +734,7 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
 
 int print_pending_request(LRU_data_t data, char *str);
 
-void auth_stat2str(enum auth_stat, char *str);
+const char * auth_stat2str(enum auth_stat);
 
 uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
                                 hash_buffer_t * buffclef);
