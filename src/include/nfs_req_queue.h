@@ -23,16 +23,13 @@
  */
 
 /**
+ * @file nfs_req_queue.h
+ * @author Matt Benjamin <matt@linuxbox.com>
+ * @brief NFS request queue package
  *
- * \file nfs_req_queue.h
- * \author Matt Benjamin
- * \brief NFS request queue package
- *
- * \section DESCRIPTION
- *
- * This module defines an infrastructure for classification and dispatch
- * of incoming protocol requests using a forward queueing model, with priority
- * and isolation partitions.
+ * This module defines an infrastructure for classification and
+ * dispatch of incoming protocol requests using a forward queueing
+ * model, with priority and isolation partitions.
  */
 
 #ifndef NFS_REQ_QUEUE_H
@@ -45,80 +42,75 @@
 #define CACHE_LINE_SIZE 64 /* XXX arch-specific define */
 #define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
 
-struct req_q
-{
-    wait_entry_t we;
-    struct glist_head q; /* LIFO */
-    uint32_t size;
-    uint32_t max;
-    uint32_t waiters;
+struct req_q {
+	wait_entry_t we;
+	struct glist_head q; /* LIFO */
+	uint32_t size;
+	uint32_t max;
+	uint32_t waiters;
 };
 
-struct req_q_pair
-{
-    const char *s;
-    CACHE_PAD(0);
-    struct req_q producer; /* from decoder */
-    CACHE_PAD(1);
-    struct req_q consumer; /* to executor */
-    CACHE_PAD(2);
+struct req_q_pair {
+	const char *s;
+	CACHE_PAD(0);
+	struct req_q producer; /* from decoder */
+	CACHE_PAD(1);
+	struct req_q consumer; /* to executor */
+	CACHE_PAD(2);
 };
 
-#define REQ_Q_MOUNT          0
-#define REQ_Q_CALL           1
-#define REQ_Q_LOW_LATENCY    2 /* GETATTR, RENEW, etc */
-#define REQ_Q_HIGH_LATENCY   3 /* READ, WRITE, COMMIT, etc */
-#define N_REQ_QUEUES         4
+#define REQ_Q_MOUNT 0
+#define REQ_Q_CALL 1
+#define REQ_Q_LOW_LATENCY 2 /*< GETATTR, RENEW, etc */
+#define REQ_Q_HIGH_LATENCY 3 /*< READ, WRITE, COMMIT, etc */
+#define N_REQ_QUEUES 4
 
 extern const char *req_q_s[N_REQ_QUEUES]; /* for debug prints */
 
-struct req_q_set
-{
-    struct req_q_pair qset[N_REQ_QUEUES];
+struct req_q_set {
+	struct req_q_pair qset[N_REQ_QUEUES];
 };
 
-struct nfs_req_st
-{
-    struct {
-        uint32_t ctr;
-        struct req_q_set nfs_request_q;
-        uint64_t size;
-        pthread_mutex_t mtx;
-        pthread_mutex_t slot_mtx;
-        struct glist_head wait_list;
-        uint32_t waiters;
-    } reqs;
-    CACHE_PAD(1);
-    struct {
-        pthread_mutex_t mtx;
-        struct glist_head q;
-        uint32_t stalled;
-        bool active;
-    } stallq;
+struct nfs_req_st {
+	struct {
+		uint32_t ctr;
+		struct req_q_set nfs_request_q;
+		uint64_t size;
+		pthread_mutex_t mtx;
+		pthread_mutex_t slot_mtx;
+		struct glist_head wait_list;
+		uint32_t waiters;
+	} reqs;
+	CACHE_PAD(1);
+	struct {
+		pthread_mutex_t mtx;
+		struct glist_head q;
+		uint32_t stalled;
+		bool active;
+	} stallq;
 };
 
 extern struct nfs_req_st nfs_req_st;
 
 void nfs_rpc_queue_init(void);
 
-static inline void nfs_rpc_q_init(struct req_q *q)
-{
-    init_glist(&q->q);
-    init_wait_entry(&q->we);
-    q->size = 0;
-    q->waiters = 0;
+static inline void nfs_rpc_q_init(struct req_q *q) {
+	init_glist(&q->q);
+	init_wait_entry(&q->we);
+	q->size = 0;
+	q->waiters = 0;
 }
 
-static inline uint32_t
-nfs_rpc_q_next_slot(void)
+static inline uint32_t nfs_rpc_q_next_slot(void)
 {
-    uint32_t ix;
-    pthread_mutex_lock(&nfs_req_st.reqs.slot_mtx);
-    ix = ++(nfs_req_st.reqs.ctr);
-    if (! ix)
-        ix = ++(nfs_req_st.reqs.ctr);
-    pthread_mutex_unlock(&nfs_req_st.reqs.slot_mtx);
-    return (ix);
+	uint32_t ix;
+	pthread_mutex_lock(&nfs_req_st.reqs.slot_mtx);
+	ix = ++(nfs_req_st.reqs.ctr);
+	if (!ix) {
+		ix = ++(nfs_req_st.reqs.ctr);
+	}
+	pthread_mutex_unlock(&nfs_req_st.reqs.slot_mtx);
+	return (ix);
 }
 
 #endif /* NFS_REQ_QUEUE_H */
