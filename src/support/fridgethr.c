@@ -126,7 +126,7 @@ fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
         pfe->ctx.arg = arg;
         pfe->frozen = FALSE;
 
-        retval = pthread_create(&pfe->ctx.id, &fr->attr/*  NULL */, fridgethr_start_routine,
+        retval = pthread_create(&pfe->ctx.id, &fr->attr, fridgethr_start_routine,
 				pfe);
 	if(retval) {
 		LogCrit(COMPONENT_THREAD,
@@ -167,7 +167,7 @@ bool
 fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 {
     fridge_entry_t *pfe = container_of(thr_ctx, fridge_entry_t, ctx);
-    int rc;
+    int rc = ETIMEDOUT;  /* we eventually recycle thread on timeout.. */
 
     pthread_mutex_lock(&fr->mtx);
     glist_add_tail(&fr->idle_q, &pfe->q);
@@ -198,13 +198,13 @@ fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 
     /* prints unreliable, nb */
 
-    if (rc != ETIMEDOUT) {
+    if (rc == 0) {
         LogFullDebug(COMPONENT_THREAD,
                 "fr %p re-use idle thread %u (nthreads %u nidle %u)",
                      fr, (unsigned int) pfe->ctx.id, fr->nthreads, fr->nidle);
         return (TRUE);
     }
-
+    assert(rc == ETIMEDOUT); /* any other error is very bad */
     LogFullDebug(COMPONENT_THREAD,
             "fr %p thread %u idle out (nthreads %u nidle %u)",
                  fr, (unsigned int) pfe->ctx.id, fr->nthreads, fr->nidle);
