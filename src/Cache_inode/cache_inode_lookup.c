@@ -172,7 +172,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                          *status = CACHE_INODE_NOT_FOUND;
                          goto out;
                     }
-               } else if (write_locked) {
+               } 
+               if ((write_locked) && 
+                        !(parent->flags & CACHE_INODE_TRUST_CONTENT)) {
                     /* We have the write lock and the content is
                        still invalid.  Empty it out and mark it valid
                        in preparation for caching the result of this
@@ -181,8 +183,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                                                 CACHE_INODE_AVL_BOTH);
                     atomic_set_uint32_t_bits(&parent->flags,
                                              CACHE_INODE_TRUST_CONTENT);
-               } else {
-                    /* Get a write ock and do it again. */
+               } else if (!write_locked) {
+                    /* Get a write lock and try weakref_get again. */
                     PTHREAD_RWLOCK_UNLOCK(&parent->content_lock);
                     PTHREAD_RWLOCK_WRLOCK(&parent->content_lock);
                }
