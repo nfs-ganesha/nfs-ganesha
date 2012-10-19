@@ -135,17 +135,13 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
       return -1;
     }
 
-  /* allocate clients strings  */
-  for(idx = 0; idx < count; idx++)
-    {
-      client_list[idx] = gsh_malloc(MNTNAMLEN+1);
-      client_list[idx][0] = '\0';
-    }
+  /* fill clients list with NULL pointers */
+  memset(client_list, 0, sizeof(client_list));
 
   /*
    * Search for coma-separated list of hosts, networks and netgroups
    */
-  rc = nfs_ParseConfLine(client_list, count,
+  rc = nfs_ParseConfLine(client_list, count, MNTNAMLEN+1,
                          expended_node_list, find_comma, find_endLine);
 
   /* free the buffer the nodelist module has allocated */
@@ -174,7 +170,8 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 
   /* free client strings */
   for(idx = 0; idx < count; idx++)
-    gsh_free(client_list[idx]);
+    if(client_list[idx] != NULL)
+      gsh_free(client_list[idx]);
 
   return rc;
 }

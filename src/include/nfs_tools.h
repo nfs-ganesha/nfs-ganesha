@@ -49,8 +49,10 @@
 
 int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
+                      size_t size,
                       char *line,
-                      int (*separator_function) (char), int (*endLine_func) (char));
+                      int (*separator_function) (char),
+                      int (*endLine_func) (char));
 
 int ReadExports(config_file_t in_config, struct glist_head * pexportlist);
 

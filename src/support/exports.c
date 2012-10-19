@@ -171,8 +171,10 @@ struct glist_head exportlist;
  */
 int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
+                      size_t size,
                       char *line,
-                      int (*separator_function) (char), int (*endLine_func) (char))
+                      int (*separator_function) (char),
+                      int (*endLine_func) (char))
 {
   int output_value = 0;
   int endLine = FALSE;
@@ -183,9 +185,6 @@ int nfs_ParseConfLine(char *Argv[],
   /* iteration and checking for array bounds */
   for(; output_value < nbArgv;)
     {
-      if(Argv[output_value] == NULL)
-        return -1;
-
       if(*p1 == '\0')
         return output_value;
 
@@ -196,13 +195,31 @@ int nfs_ParseConfLine(char *Argv[],
       /* La fin est un blanc, une fin de chaine ou un CR    */
       for(p2 = p1; !separator_function(*p2) && !endLine_func(*p2); p2++) ;
 
-      /* Possible arret a cet endroit */
+      /* Test for end of line */
       if(endLine_func(*p2))
         endLine = TRUE;
 
-      /* je valide la lecture du token */
+      /* terminate the token */
       *p2 = '\0';
-      strncpy(Argv[output_value++], p1, MNTNAMLEN);
+
+      /* if the token is too large for buffer, return failure */
+      if((p2 - p1) >= size)
+        return -3;
+
+      if(Argv[output_value] == NULL)
+        {
+          /* Allocate and copy string */
+          Argv[output_value] = gsh_strdup(p1);
+          if(Argv[output_value] == NULL)
+            return -1;
+        }
+      else
+        {
+          /* Copy string into provided buffer */
+          memcpy(Argv[output_value], p1, p2 - p1 +1);
+        }
+
+      output_value++;
 
       /* Je me prepare pour la suite */
       if(!endLine)
@@ -219,6 +236,7 @@ int nfs_ParseConfLine(char *Argv[],
   if(output_value >= nbArgv)
     return -1;
 
+  /* no end of line detected */
   return -2;
 
 }                               /* nfs_ParseConfLine */
@@ -644,24 +662,13 @@ int parseAccessParam(char                * var_name,
       return -1;
     }
 
-  /* allocate clients strings  */
-  for(idx = 0; idx < count; idx++)
-    {
-      client_list[idx] = gsh_malloc(MNTNAMLEN+1);
-      if(client_list[idx] == NULL)
-        {
-          int i;
-          for(i = 0; i < idx; i++)
-            gsh_free(client_list[i]);
-          return -1;
-        }
-      client_list[idx][0] = '\0';
-    }
+  /* fill client list with NULL pointers */
+  memset(client_list, 0, sizeof(client_list));
 
   /*
    * Search for coma-separated list of hosts, networks and netgroups
    */
-  rc = nfs_ParseConfLine(client_list, count,
+  rc = nfs_ParseConfLine(client_list, count, MNTNAMLEN+1,
 			 expended_node_list, find_comma, find_endLine);
 
   /* free the buffer the nodelist module has allocated */
@@ -693,7 +700,8 @@ int parseAccessParam(char                * var_name,
 
   /* free client strings */
   for(idx = 0; idx < count; idx++)
-    gsh_free(client_list[idx]);
+    if(client_list[idx] != NULL)
+      gsh_free(client_list[idx]);
 
   return rc;
 }
@@ -1331,14 +1339,14 @@ static int BuildExportEntry(config_item_t        block,
           /* reset nfs proto flags (clean defaults) */
           p_perms->options &= ~EXPORT_OPTION_PROTOCOLS;
 
-          /* allocate nfs vers strings */
-          for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            nfsvers_list[idx] = gsh_malloc(MAX_NFSPROTO_LEN);
+          /* fill nfs vers list with NULL pointers */
+          memset(nfsvers_list, 0, sizeof(nfsvers_list));
 
           /*
            * Search for coma-separated list of nfsprotos
            */
           count = nfs_ParseConfLine(nfsvers_list, MAX_NFSPROTO,
+                                    MAX_NFSPROTO_LEN + 1,
                                     var_value, find_comma, find_endLine);
 
           if(count < 0)
@@ -1435,14 +1443,14 @@ static int BuildExportEntry(config_item_t        block,
           /* reset TRANS proto flags (clean defaults) */
           p_perms->options &= ~EXPORT_OPTION_TRANSPORTS;
 
-          /* allocate TRANS vers strings */
-          for(idx = 0; idx < MAX_TRANSPROTO; idx++)
-            transproto_list[idx] = gsh_malloc(MAX_TRANSPROTO_LEN);
+          /* fill TRANS vers list with NULL pointers */
+          memset(transproto_list, 0, sizeof(transproto_list));
 
           /*
            * Search for coma-separated list of TRANSprotos
            */
           count = nfs_ParseConfLine(transproto_list, MAX_TRANSPROTO,
+                                    MAX_TRANSPROTO_LEN,
                                     var_value, find_comma, find_endLine);
 
           if(count < 0)
@@ -1655,14 +1663,14 @@ static int BuildExportEntry(config_item_t        block,
           /* reset security flags (clean defaults) */
           p_perms->options &= ~EXPORT_OPTION_AUTH_TYPES;
 
-          /* allocate sec strings */
-          for(idx = 0; idx < MAX_SECTYPE; idx++)
-            sec_list[idx] = gsh_malloc(MAX_SECTYPE_LEN);
+          /* fill sec list with NULL pointers */
+          memset(sec_list, 0, sizeof(sec_list));
 
           /*
            * Search for coma-separated list of sectypes
            */
           count = nfs_ParseConfLine(sec_list, MAX_SECTYPE,
+                                    MAX_SECTYPE_LEN,
                                     var_value, find_comma, find_endLine);
 
           if(count < 0)

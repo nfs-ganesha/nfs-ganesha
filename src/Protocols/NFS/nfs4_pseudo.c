@@ -116,8 +116,9 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
   PseudoFs->reverse_tab[0] = &(PseudoFs->root);
 
   /* Allocation of the parsing table */
+  #define PSEUDO_PATH_BUFFSIZE (MAXNAMLEN + 1)
   for(i = 0; i < NB_TOK_PATH; i++)
-    if((PathTok[i] = gsh_malloc(MAXNAMLEN + 1)) == NULL)
+    if((PathTok[i] = gsh_malloc(PSEUDO_PATH_BUFFSIZE)) == NULL)
       return ENOMEM;
 
   glist_for_each(glist, pexportlist)
@@ -139,7 +140,9 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
           /* Parsing the path */
           strcpy(tmp_pseudopath, entry->pseudopath);
           if((NbTokPath =
-              nfs_ParseConfLine(PathTok, NB_TOK_PATH, tmp_pseudopath, find_slash,
+              nfs_ParseConfLine(PathTok, NB_TOK_PATH,
+                                PSEUDO_PATH_BUFFSIZE,
+                                tmp_pseudopath, find_slash,
                                 find_endLine)) < 0)
             {
               /* Path is badly formed */
