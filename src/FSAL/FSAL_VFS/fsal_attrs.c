@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
                                                    fsal_attrib_list_t * p_fsalattr_out);
@@ -221,7 +222,8 @@ fsal_status_t VFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   if(!global_fs_info.cansettime)
     {
       if(attrs.asked_attributes
-         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME |
+            FSAL_ATTR_ATIME_SERVER | FSAL_ATTR_MTIME_SERVER))
         {
           /* handled as an unsettable attribute. */
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
@@ -349,24 +351,48 @@ fsal_status_t VFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
    *  UTIME  *
    ***********/
 
-  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME |
+                                            FSAL_ATTR_ATIME_SERVER |
+                                            FSAL_ATTR_MTIME_SERVER))
     {
-      struct timeval timebuf[2];
+      struct timespec timebuf[2];
 
       /* Atime */
-      timebuf[0].tv_sec =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.
-           atime.seconds : buffstat.st_atime);
-      timebuf[0].tv_usec = 0;
+      if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME_SERVER))
+        {
+          timebuf[0].tv_sec  = 0;
+          timebuf[0].tv_nsec = UTIME_NOW;
+        }
+      else if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME))
+        {
+          timebuf[0].tv_sec  = attrs.atime.seconds;
+          timebuf[0].tv_nsec = attrs.atime.nseconds;
+        }
+      else
+        {
+          timebuf[0].tv_sec  = 0;
+          timebuf[0].tv_nsec = UTIME_OMIT;
+        }
 
       /* Mtime */
-      timebuf[1].tv_sec =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.
-           mtime.seconds : buffstat.st_mtime);
-      timebuf[1].tv_usec = 0;
+      if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME_SERVER))
+        {
+          timebuf[1].tv_sec  = 0;
+          timebuf[1].tv_nsec = UTIME_NOW;
+        }
+      else if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME))
+        {
+          timebuf[1].tv_sec  = attrs.mtime.seconds;
+          timebuf[1].tv_nsec = attrs.mtime.nseconds;
+        }
+      else
+        {
+          timebuf[1].tv_sec  = 0;
+          timebuf[1].tv_nsec = UTIME_OMIT;
+        }
 
       TakeTokenFSCall();
-      rc = futimes(fd, timebuf);
+      rc = futimens(fd, timebuf);
       errsv = errno;
       ReleaseTokenFSCall();
 

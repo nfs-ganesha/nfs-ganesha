@@ -131,7 +131,8 @@ fsal_status_t POSIXFSAL_setattrs(fsal_handle_t * filehandle,     /* IN */
   if(!global_fs_info.cansettime)
     {
       if(attrs.asked_attributes
-         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME |
+            FSAL_ATTR_ATIME_SERVER | FSAL_ATTR_MTIME_SERVER))
         {
           /* handled as an unsettable attribute. */
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
@@ -211,37 +212,79 @@ fsal_status_t POSIXFSAL_setattrs(fsal_handle_t * filehandle,     /* IN */
   /***********
    *  UTIME  *
    ***********/
-  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
-    {
-      struct utimbuf timebuf;
 
-      timebuf.actime =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.atime.
-           seconds : buffstat.st_atime);
-      timebuf.modtime =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.mtime.
-           seconds : buffstat.st_mtime);
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME |
+                                            FSAL_ATTR_ATIME_SERVER |
+                                            FSAL_ATTR_MTIME_SERVER))
+    {
+      struct timeval  timebuf[2];
+      struct timeval *ptimebuf = &timebuf;
+
+      if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME_SERVER) &&
+         FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME_SERVER))
+        {
+          /* If both times are set to server time, we can shortcut and
+           * use the utimes interface to set both times to current time.
+           */
+          ptimebuf = NULL;
+        }
+      else
+        {
+          /* Atime */
+          if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME_SERVER))
+            {
+              /* Since only one time is set to server time, we must
+               * get time of day to set it.
+               */
+              gettimeofday(&timebuf[0], NULL);
+            }
+          else if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME))
+            {
+              timebuf[0].tv_sec  = attrs.atime.seconds;
+              timebuf[0].tv_usec = attrs.atime.nseconds / 1000;
+            }
+          else
+            {
+              /* If we are not setting atime, must set from fetched attr. */
+              timebuf[0].tv_sec  = buffstat.st_atime;
+#ifdef __USE_MISC
+              timebuf[0].tv_usec = buffstat.st_atim.tv_nsec / 1000;
+#else
+              timebuf[0].tv_usec = 0;
+#endif
+            }
+
+          /* Mtime */
+          if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME_SERVER))
+            {
+              /* Since only one time is set to server time, we must
+               * get time of day to set it.
+               */
+              gettimeofday(&timebuf[1], NULL);
+            }
+          else if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME))
+            {
+              timebuf[1].tv_sec  = attrs.mtime.seconds;
+              timebuf[1].tv_usec = attrs.mtime.nseconds / 1000;
+            }
+          else
+            {
+              /* If we are not setting mtime, must set from fetched attr. */
+              timebuf[1].tv_sec  = buffstat.st_mtime;
+#ifdef __USE_MISC
+              timebuf[1].tv_usec = buffstat.st_mtim.tv_nsec / 1000;
+#else
+              timebuf[1].tv_usec = 0;
+#endif
+            }
+        }
 
       TakeTokenFSCall();
-      rc = utime(fsalpath.path, &timebuf);
+      rc = utimes(fsalpath.path, ptimebuf);
       errsv = errno;
       ReleaseTokenFSCall();
       if(rc)
         Return(posix2fsal_error(errno), errno, INDEX_FSAL_setattrs);
-    }
-
-  /* Optionaly fills output attributes. */
-
-  if(p_object_attributes)
-    {
-      status = POSIXFSAL_getattrs(p_filehandle, p_context, p_object_attributes);
-
-      /* on error, we set a special bit in the mask. */
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-        }
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);

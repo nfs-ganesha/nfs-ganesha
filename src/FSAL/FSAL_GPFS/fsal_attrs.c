@@ -218,7 +218,8 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
     {
 
       if(wanted_attrs.asked_attributes
-         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME |
+            FSAL_ATTR_ATIME_SERVER | FSAL_ATTR_MTIME_SERVER))
         {
           /* handled as an unsettable attribute. */
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
@@ -310,29 +311,50 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
    *  UTIME  *
    ***********/
 
-  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
+  /* Fill wanted atime. */
+  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME))
     {
       attr_valid |= XATTR_STAT;
+      attr_changed |= XATTR_ATIME;
+      buffxstat.buffstat.st_atime        = wanted_attrs.atime.seconds;
+      buffxstat.buffstat.st_atim.tv_nsec = wanted_attrs.atime.nseconds;
+      LogDebug(COMPONENT_FSAL,
+               "current atime = %lu, new atime = %lu",
+               (unsigned long)current_attrs.atime.seconds,
+               (unsigned long)buffxstat.buffstat.st_atime);
+    }
 
-      /* Fill wanted atime. */
-      if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME))
-        {
-          attr_changed |= XATTR_ATIME;
-          buffxstat.buffstat.st_atime = (time_t) wanted_attrs.atime.seconds;
-          LogDebug(COMPONENT_FSAL,
-                   "current atime = %lu, new atime = %lu",
-                   (unsigned long)current_attrs.atime.seconds, (unsigned long)buffxstat.buffstat.st_atime);
-        }
+  /* Fill wanted mtime. */
+  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME))
+    {
+      attr_valid |= XATTR_STAT;
+      attr_changed |= XATTR_MTIME;
+      buffxstat.buffstat.st_mtime        = wanted_attrs.mtime.seconds;
+      buffxstat.buffstat.st_mtim.tv_nsec = wanted_attrs.mtime.nseconds;
+      LogDebug(COMPONENT_FSAL,
+               "current mtime = %lu, new mtime = %lu",
+               (unsigned long)current_attrs.mtime.seconds,
+               (unsigned long)buffxstat.buffstat.st_mtime);
+    }
 
-      /* Fill wanted mtime. */
-      if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME))
-        {
-          attr_changed |= XATTR_MTIME;
-          buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
-          LogDebug(COMPONENT_FSAL,
-                   "current mtime = %lu, new mtime = %lu",
-                   (unsigned long)current_attrs.mtime.seconds, (unsigned long)buffxstat.buffstat.st_mtime);
-        }
+  /* Asking to set atime to NOW */
+  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME_SERVER))
+    {
+      attr_valid |= XATTR_STAT;
+      attr_changed |= XATTR_ATIME_NOW;
+      LogDebug(COMPONENT_FSAL,
+               "current atime = %lu, new atime = NOW",
+               (unsigned long)current_attrs.atime.seconds);
+    }
+
+  /* Asking to set mtime to NOW */
+  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME_SERVER))
+    {
+      attr_valid |= XATTR_STAT;
+      attr_changed |= XATTR_MTIME_NOW;
+      LogDebug(COMPONENT_FSAL,
+               "current mtime = %lu, new mtime = NOW",
+               (unsigned long)current_attrs.mtime.seconds);
     }
 
 #ifdef _USE_NFS4_ACL
