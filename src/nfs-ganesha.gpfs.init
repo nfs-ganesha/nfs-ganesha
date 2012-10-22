@@ -55,6 +55,7 @@ CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
 ## NIV_DEBUG
 ## NIV_MID_DEBUG
 ## NIV_FULL_DEBUG
+NIV_EVENT=NIV_INFO
 
 #Some common useful log components:
 #export COMPONENT_INIT=NIV_INFO
@@ -74,7 +75,7 @@ CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
 #export COMPONENT_STATE=NIV_FULL_DEBUG
 ###########################################################
 
-OPTIONS="-d -f $CONFFILE -L $LOGFILE"
+OPTIONS="-d -f $CONFFILE -L $LOGFILE -N $NIV_EVENT"
 RETVAL=0
 prog="gpfs.ganesha.nfsd"
 
