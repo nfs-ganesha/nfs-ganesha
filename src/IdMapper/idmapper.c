@@ -61,6 +61,8 @@
 
 #define _PATH_IDMAPDCONF     "/etc/idmapd.conf"
 
+extern pthread_mutex_t idmap_conf_mtx;
+
 typedef void (*nfs4_idmap_log_function_t) (const char *, ...);
 
 int nfs4_init_name_mapping(char *conffile);
@@ -78,15 +80,30 @@ static int nfsidmap_conf_read = FALSE;
 
 int nfsidmap_set_conf()
 {
+  /* check if idmap conf is read already, if not grab the mutex
+     and check again. If still not, process it */
   if(!nfsidmap_conf_read)
     {
+      pthread_mutex_lock(&idmap_conf_mtx);
+      if(nfsidmap_conf_read)
+        {
+          pthread_mutex_unlock(&idmap_conf_mtx);
+          return 1;
+        }
       if(nfs4_init_name_mapping(_PATH_IDMAPDCONF))
-        return 0;
+        {
+          pthread_mutex_unlock(&idmap_conf_mtx);
+          return 0;
+        }
 
       if(nfs4_get_default_domain(NULL, idmap_domain, sizeof(idmap_domain)))
-        return 0;
+        {
+          pthread_mutex_unlock(&idmap_conf_mtx);
+          return 0;
+        }
 
       nfsidmap_conf_read = TRUE;
+      pthread_mutex_unlock(&idmap_conf_mtx);
     }
   return 1;
 }

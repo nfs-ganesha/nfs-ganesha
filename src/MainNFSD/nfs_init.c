@@ -128,6 +128,10 @@ pthread_t _9p_dispatcher_thrid;
 pthread_t upcall_simulator_thrid;
 #endif
 
+#ifdef _USE_NFSIDMAP
+pthread_mutex_t idmap_conf_mtx;
+#endif
+
 char config_path[MAXPATHLEN];
 
 char pidfile_path[MAXPATHLEN] ;
@@ -2061,6 +2065,10 @@ void nfs_start(nfs_start_info_t * p_start_info)
 #ifdef _USE_NLM
   /* NSM Unmonitor all */
   nsm_unmonitor_all();
+#endif
+
+#ifdef _USE_NFSIDMAP
+  pthread_mutex_init(&idmap_conf_mtx, NULL);
 #endif
 
   /* Populate the ID_MAPPER file with mapping file if needed */
