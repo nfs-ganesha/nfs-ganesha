@@ -256,19 +256,7 @@ nfs4_op_setattr(struct nfs_argop4 *op,
         }
 
         /* Set the replyed structure */
-        res_SETATTR4.attrsset.bitmap4_len
-                = arg_SETATTR4.obj_attributes.attrmask.bitmap4_len;
-
-        if ((res_SETATTR4.attrsset.bitmap4_val =
-             gsh_calloc(res_SETATTR4.attrsset.bitmap4_len,
-                        sizeof(uint32_t))) == NULL) {
-                res_SETATTR4.status = NFS4ERR_SERVERFAULT;
-                return res_SETATTR4.status;
-        }
-
-        memcpy(res_SETATTR4.attrsset.bitmap4_val,
-               arg_SETATTR4.obj_attributes.attrmask.bitmap4_val,
-               res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int));
+        res_SETATTR4.attrsset = arg_SETATTR4.obj_attributes.attrmask;
 
         /* Exit with no error */
         res_SETATTR4.status = NFS4_OK;
@@ -286,8 +274,5 @@ nfs4_op_setattr(struct nfs_argop4 *op,
  */
 void nfs4_op_setattr_Free(SETATTR4res *resp)
 {
-        if (resp->status == NFS4_OK) {
-                gsh_free(resp->attrsset.bitmap4_val);
-        }
         return;
 } /* nfs4_op_setattr_Free */

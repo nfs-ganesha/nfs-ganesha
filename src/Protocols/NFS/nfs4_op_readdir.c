@@ -42,7 +42,12 @@
 #define arg_READDIR4 op->nfs_argop4_u.opreaddir
 #define res_READDIR4 resp->nfs_resop4_u.opreaddir
 
-static const bitmap4 RdAttrErrorBitmap = {1, (uint32_t *) "\0\0\0\b"};
+static const struct bitmap4 RdAttrErrorBitmap = {
+	.bitmap4_len = 1,
+	.map = {[0] = (1<<FATTR4_RDATTR_ERROR),
+		[1] = 0,
+		[2] = 0}
+};
 static const attrlist4 RdAttrErrorVals = {0, NULL};
 
 /**
@@ -63,7 +68,7 @@ struct nfs4_readdir_cb_data
                                in the array*/
      nfsstat4 error; /*< Set to a value other than NFS4_OK if the
                          callback function finds a fatal error. */
-     bitmap4 req_attr; /*< The requested attributes */
+     struct bitmap4 req_attr; /*< The requested attributes */
      compound_data_t *data; /*< The compound data, so we can produce
                                 nfs_fh4s. */
 };
@@ -132,9 +137,8 @@ nfs4_readdir_callback(void* opaque,
      strcpy(tracker->entries[tracker->count].name.utf8string_val,
             name);
 
-     if ((tracker->req_attr.bitmap4_val != NULL) &&
-         (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {
-          if (!nfs4_FSALToFhandle(&entryFH, handle, tracker->data)) {
+     if(attribute_is_set(&tracker->req_attr, FATTR4_FILEHANDLE)) {
+          if ( !nfs4_FSALToFhandle(&entryFH, handle, tracker->data)) {
                tracker->error = NFS4ERR_SERVERFAULT;
                gsh_free(tracker->entries[tracker->count].name.utf8string_val);
                return false;
@@ -159,8 +163,6 @@ nfs4_readdir_callback(void* opaque,
            sizeof(uint32_t)) +
           (tracker->entries[tracker->count]
            .attrs.attr_vals.attrlist4_len))) {
-          gsh_free(tracker->entries[tracker->count]
-                   .attrs.attrmask.bitmap4_val);
           gsh_free(tracker->entries[tracker->count]
                    .attrs.attr_vals.attrlist4_val);
           gsh_free(tracker->entries[tracker->count].name.utf8string_val);
@@ -200,12 +202,7 @@ free_entries(entry4 *entries)
      for (entry = entries;
           entry != NULL;
           entry = entry->nextentry) {
-          if (entry->attrs.attrmask.bitmap4_val !=
-              RdAttrErrorBitmap.bitmap4_val) {
-               gsh_free(entry->attrs.attrmask.bitmap4_val);
-          }
-          if (entry->attrs.attr_vals.attrlist4_val !=
-              RdAttrErrorVals.attrlist4_val) {
+          if (entry->attrs.attr_vals.attrlist4_val != NULL) {
                gsh_free(entry->attrs.attr_vals.attrlist4_val);
           }
           gsh_free(entry->name.utf8string_val);

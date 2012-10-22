@@ -118,101 +118,6 @@ char *rquota_functions_names[] = {
 
 /**
  *
- * Attribute bitmap decoders
- */
-
-/* bitmap is up to 3 x uint32_t.
- *
- * Structure of the bitmap is as follows
- *
- *                  0         1          2
- *    +-------+---------+----------+----------+
- *    | count | 31 .. 0 | 63 .. 32 | 64 .. 95 |
- *    +-------+---------+----------+----------+
- *
- * One bit is set for every possible attributes. The bits are packed together
- * in a uint32_T (XDR alignment reason probably)
- * As said in the RFC3530, the n-th bit is with the uint32_t #(n/32),
- * and its position with the uint32_t is n % 32
- *
- * Example
- *     1st bit = FATTR4_TYPE            = 1
- *     2nd bit = FATTR4_LINK_SUPPORT    = 5
- *     3rd bit = FATTR4_SYMLINK_SUPPORT = 6
- *
- *     Juste one uint32_t is necessay: 2**1 + 2**5 + 2**6 = 2 + 32 + 64 = 98
- *   +---+----+
- *   | 1 | 98 |
- *   +---+----+
- *
- * Other Example
- *
- *     1st bit = FATTR4_LINK_SUPPORT    = 5
- *     2nd bit = FATTR4_SYMLINK_SUPPORT = 6
- *     3rd bit = FATTR4_MODE            = 33
- *     4th bit = FATTR4_OWNER           = 36
- *
- *     Two uint32_t will be necessary there:
- *            #1 = 2**5 + 2**6 = 32 + 64 = 96
- #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18
- *   +---+----+----+
- *   | 2 | 98 | 18 |
- *   +---+----+----+
- *
- */
-
-static inline int next_attr_from_bitmap(bitmap4 *bits, int last_attr)
-{
-	int offset, bit;
-
-	for(offset = (last_attr + 1) / 32;
-	    offset >= 0 && offset < bits->bitmap4_len;
-	    offset++) {
-		if((bits->bitmap4_val[offset] &
-		    (-1 << ((last_attr +1) % 32))) != 0) {
-			for(bit = (last_attr +1) % 32; bit < 32; bit++) {
-				if(bits->bitmap4_val[offset] & (1 << bit))
-					return offset * 32 + bit;
-			}
-		}
-		last_attr = -1;
-	}
-	return -1;
-}
-
-static inline bool attribute_is_set(bitmap4 *bits, int attr)
-{
-	int offset = attr / 32;
-
-	if(offset >= bits->bitmap4_len)
-		return FALSE;
-	return !!(bits->bitmap4_val[offset] & (1 << (attr % 32)));
-}
-
-static inline bool set_attribute_in_bitmap(bitmap4 *bits, int attr)
-{
-	int offset = attr / 32;
-
-	if(offset >= 3)
-		return FALSE; /* over upper bound */
-	if(offset >= bits->bitmap4_len)
-		bits->bitmap4_len = offset + 1; /* roll into the next word */
-	bits->bitmap4_val[offset] |= (1 << (attr % 32));
-	return TRUE;
-}
-
-static inline bool clear_attribute_in_bitmap(bitmap4 *bits, int attr)
-{
-	int offset = attr / 32;
-
-	if(offset >= bits->bitmap4_len)
-		return FALSE;
-	bits->bitmap4_val[offset] &= ~(1 << (attr % 32));
-	return TRUE;
-}
-
-/**
- *
  * nfs_FhandleToStr: Converts a file handle to a string representation.
  *
  * Converts a file handle to a string representation.
@@ -458,13 +363,10 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
 
 static fattr_xdr_result encode_supported_attrs(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint32_t bitmap[3];
-	bitmap4 bits;
+	struct bitmap4 bits;
 	int attr, offset;
 
-	bits.bitmap4_len = 0;  /* start empty */
-	memset(bitmap, 0, sizeof(bitmap));
-	bits.bitmap4_val = bitmap;
+	memset(&bits, 0, sizeof(bits));
 	for(attr = FATTR4_SUPPORTED_ATTRS;
 	    attr <= FATTR4_FS_CHARSET_CAP;
 	    attr++) {
@@ -474,7 +376,7 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr, struct xdr_attrs_args *
 	if( !xdr_u_int32_t(xdr, &bits.bitmap4_len))
 		return FATTR_XDR_FAILED;
 	for(offset = 0; offset < bits.bitmap4_len; offset++) {
-		if( !xdr_u_int32_t(xdr, &bits.bitmap4_val[offset]))
+		if( !xdr_u_int32_t(xdr, &bits.map[offset]))
 			return FATTR_XDR_FAILED;
 	}
 	return FATTR_XDR_SUCCESS;
@@ -2370,13 +2272,10 @@ static fattr_xdr_result decode_mode_set_masked(XDR *xdr, struct xdr_attrs_args *
 
 static fattr_xdr_result encode_support_exclusive_create(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint32_t bitmap[3];
-	bitmap4 bits;
+	struct bitmap4 bits;
 	int attr, offset;
 
-	bits.bitmap4_len = 0;  /* start empty */
-	memset(bitmap, 0, sizeof(bitmap));
-	bits.bitmap4_val = bitmap;
+	memset(&bits, 0, sizeof(bits));
 	for(attr = FATTR4_SUPPORTED_ATTRS;
 	    attr <= FATTR4_FS_CHARSET_CAP;
 	    attr++) {
@@ -2388,7 +2287,7 @@ static fattr_xdr_result encode_support_exclusive_create(XDR *xdr, struct xdr_att
 	if( !xdr_u_int32_t(xdr, &bits.bitmap4_len))
 		return FATTR_XDR_FAILED;
 	for(offset = 0; offset < bits.bitmap4_len; offset++) {
-		if( !xdr_u_int32_t(xdr, &bits.bitmap4_val[offset]))
+		if( !xdr_u_int32_t(xdr, &bits.map[offset]))
 			return FATTR_XDR_FAILED;
 	}
 	return FATTR_XDR_SUCCESS;
@@ -3067,12 +2966,6 @@ error:
 
 void nfs4_Fattr_Free(fattr4 *fattr)
 {
-  if(fattr->attrmask.bitmap4_val != NULL)
-    {
-      gsh_free(fattr->attrmask.bitmap4_val);
-      fattr->attrmask.bitmap4_val = NULL;
-    }
-
   if(fattr->attr_vals.attrlist4_val != NULL)
     {
       gsh_free(fattr->attr_vals.attrlist4_val);
@@ -3089,7 +2982,7 @@ struct Fattr_filler_opaque
         fattr4 *Fattr; /*< Fattr to fill */
         compound_data_t *data; /*< Compound data */
         nfs_fh4 *objFH; /*< Object file handle */
-        bitmap4 *Bitmap; /*< Bitmap of entries to fill */
+        struct bitmap4 *Bitmap; /*< Bitmap of entries to fill */
 };
 
 /**
@@ -3145,7 +3038,7 @@ cache_entry_To_Fattr(cache_entry_t *entry,
                      fattr4 *Fattr,
                      compound_data_t *data,
                      nfs_fh4 *objFH,
-                     bitmap4 *Bitmap)
+                     struct bitmap4 *Bitmap)
 {
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
         struct Fattr_filler_opaque f = {
@@ -3191,7 +3084,7 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
                            fattr4 *Fattr,
                            compound_data_t *data,
                            nfs_fh4 *objFH,
-                           bitmap4 *Bitmap)
+                           struct bitmap4 *Bitmap)
 {
 	int attribute_to_set = 0;
 	u_int LastOffset;
@@ -3201,17 +3094,12 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 	fattr_xdr_result xdr_res;
 
 	/* basic init */
-	Fattr->attrmask.bitmap4_val = gsh_calloc(3, sizeof(uint32_t));
-	if(Fattr->attrmask.bitmap4_val == NULL)
-		return -1;
-	Fattr->attrmask.bitmap4_len = 0; /* bitmap starts off empty */
+	memset(&Fattr->attrmask, 0, sizeof(&Fattr->attrmask));
 	if(Bitmap->bitmap4_len == 0) {
 		return 0;  /* they ask for nothing, they get nothing */
 	}
 	Fattr->attr_vals.attrlist4_val = gsh_malloc(NFS4_ATTRVALS_BUFFLEN);
 	if(Fattr->attr_vals.attrlist4_val == NULL) {
-		gsh_free(Fattr->attrmask.bitmap4_val);
-		Fattr->attrmask.bitmap4_val = NULL;
 		return -1;
 	}
 
@@ -3262,14 +3150,14 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 
 	if(LastOffset == 0) {  /* no supported attrs so we can free */
 		assert(Fattr->attrmask.bitmap4_len == 0);
-		gsh_free(Fattr->attrmask.bitmap4_val);
+		gsh_free(Fattr->attr_vals.attrlist4_val);
 		Fattr->attr_vals.attrlist4_val = NULL;
 	}
 	Fattr->attr_vals.attrlist4_len = LastOffset;
 	return 0;
 
 err:
-	gsh_free(Fattr->attrmask.bitmap4_val);
+	gsh_free(Fattr->attr_vals.attrlist4_val);
 	Fattr->attr_vals.attrlist4_val = NULL;
 	return -1;
 }
@@ -3853,7 +3741,7 @@ nfs3_FSALattr_To_Fattr(exportlist_t *export,
  *
  */
 
-int nfs4_Fattr_Check_Access_Bitmap(bitmap4 * bitmap, int access)
+int nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * bitmap, int access)
 {
   int attribute;
 
@@ -3917,7 +3805,7 @@ int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access)
  *  export.
  */
 
-int nfs4_bitmap4_Remove_Unsupported(bitmap4 *bitmap )
+int nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap )
 {
 	int attribute;
 
@@ -3964,7 +3852,7 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
  *
  */
 
-int nfs4_Fattr_Supported_Bitmap(bitmap4 * bitmap)
+int nfs4_Fattr_Supported_Bitmap(struct bitmap4 * bitmap)
 {
   int attribute;
 
@@ -4018,7 +3906,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
     return false;
 
   for(i = 0; i < Fattr1->attrmask.bitmap4_len; i++)
-	  if(Fattr1->attrmask.bitmap4_val[i] != Fattr2->attrmask.bitmap4_val[i])
+	  if(Fattr1->attrmask.map[i] != Fattr2->attrmask.map[i])
 		  return FALSE;
   if(attribute_is_set(&Fattr1->attrmask, FATTR4_RDATTR_ERROR))
 	  return -1;

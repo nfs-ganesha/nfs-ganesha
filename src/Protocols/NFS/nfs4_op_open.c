@@ -60,14 +60,7 @@ static const char *open_tag = "OPEN";
 void nfs4_op_open_CopyRes(OPEN4res     * res_dst,
                           OPEN4res     * res_src)
 {
-        if (res_src->OPEN4res_u.resok4.attrset.bitmap4_val != NULL) {
-                res_dst->OPEN4res_u.resok4.attrset.bitmap4_val =
-                        gsh_calloc(res_dst->OPEN4res_u.resok4.attrset
-                                   .bitmap4_len, sizeof(uint32_t));
-                if (res_dst->OPEN4res_u.resok4.attrset.bitmap4_val == NULL) {
-                        res_dst->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-                }
-        }
+	res_dst->OPEN4res_u.resok4.attrset = res_src->OPEN4res_u.resok4.attrset;
 }
 
 /**
@@ -1186,17 +1179,8 @@ int nfs4_op_open(struct nfs_argop4 *op,
                 goto out;
         }
 
-
-        res_OPEN4->OPEN4res_u.resok4.attrset.bitmap4_len = 3;
-        if ((res_OPEN4->OPEN4res_u.resok4.attrset.bitmap4_val =
-             gsh_calloc(res_OPEN4->OPEN4res_u.resok4.attrset.bitmap4_len,
-                        sizeof(uint32_t))) == NULL) {
-                res_OPEN4->status = NFS4ERR_SERVERFAULT;
-                res_OPEN4->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-                LogCrit(COMPONENT_STATE,
-                        "Allocation of attr failed.");
-                goto out;
-        }
+        memset(&res_OPEN4->OPEN4res_u.resok4.attrset,
+	       0, sizeof(struct bitmap4));
 
         /* If server use OPEN_CONFIRM4, set the correct flag */
         if (owner->so_owner.so_nfs4_owner.so_confirmed == false) {
@@ -1293,9 +1277,5 @@ out3:
  */
 void nfs4_op_open_Free(OPEN4res *resp)
 {
-        if(resp->OPEN4res_u.resok4.attrset.bitmap4_val != NULL) {
-                gsh_free(resp->OPEN4res_u.resok4.attrset.bitmap4_val);
-        }
-        resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
 } /* nfs4_op_open_Free */
 

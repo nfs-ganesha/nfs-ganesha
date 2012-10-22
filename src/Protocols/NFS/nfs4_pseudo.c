@@ -300,7 +300,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
 
 int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,
-                       compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)
+                       compound_data_t * data, nfs_fh4 * objFH, struct bitmap4 * Bitmap)
 {
 	struct attrlist attrs;
 
@@ -789,6 +789,14 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
 #define arg_READDIR4 op->nfs_argop4_u.opreaddir
 #define res_READDIR4 resp->nfs_resop4_u.opreaddir
 
+static const struct bitmap4 RdAttrErrorBitmap = {
+	.bitmap4_len = 1,
+	.map = {[0] = (1<<FATTR4_RDATTR_ERROR),
+		[1] = 0,
+		[2] = 0}
+};
+static attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
+
 int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
@@ -812,9 +820,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   size_t namelen = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_entry_t *pentry = NULL;
-
-  bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
-  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;

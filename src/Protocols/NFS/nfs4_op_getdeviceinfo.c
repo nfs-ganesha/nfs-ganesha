@@ -185,10 +185,9 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
                 goto out;
         }
 
-        res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4
-                .gdir_notification.bitmap4_len = 0;
-        res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4
-                .gdir_notification.bitmap4_val = NULL;
+	memset(&res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4.gdir_notification,
+	       0,
+	       sizeof(res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4.gdir_notification));
 
         res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4
                 .gdir_device_addr.da_addr_body.da_addr_body_len

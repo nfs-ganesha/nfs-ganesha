@@ -59,7 +59,7 @@ t*
 #include "cache_inode.h"
 
 int nfs4_XattrToFattr(fattr4 * Fattr,
-                      compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)
+                      compound_data_t * data, nfs_fh4 * objFH,struct bitmap4 * Bitmap)
 {
 	struct attrlist attrs;
 	file_handle_v4_t *pfile_handle = (file_handle_v4_t *) (objFH->nfs_fh4_val);
@@ -309,6 +309,14 @@ int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
 #define arg_READDIR4 op->nfs_argop4_u.opreaddir
 #define res_READDIR4 resp->nfs_resop4_u.opreaddir
 
+static const struct bitmap4 RdAttrErrorBitmap = {
+	.bitmap4_len = 1,
+	.map[0] = (1<<FATTR4_RDATTR_ERROR),
+	.map[1] = 0,
+	.map[2] = 0
+};
+static const  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
+
 int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
                           compound_data_t * data, struct nfs_resop4 *resp)
 {
@@ -329,9 +337,6 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   file_handle_v4_t *file_handle;
   nfs_fh4 nfsfh;
   struct alloc_file_handle_v4 temp_handle;
-
-  bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
-  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;

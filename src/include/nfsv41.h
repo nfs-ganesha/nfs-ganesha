@@ -170,11 +170,11 @@ extern "C"
     char *attrlist4_val;
   } attrlist4;
 
-  typedef struct
+  struct bitmap4
   {
     u_int bitmap4_len;
-    uint32_t *bitmap4_val;
-  } bitmap4;
+    uint32_t map[3];
+  };
 
   typedef uint64_t changeid4;
 
@@ -573,7 +573,7 @@ extern "C"
   struct threshold_item4
   {
     layouttype4 thi_layout_type;
-    bitmap4 thi_hintset;
+    struct bitmap4 thi_hintset;
     struct
     {
       u_int thi_hintlist_len;
@@ -619,7 +619,7 @@ extern "C"
 
   typedef uint32_t fs_charset_cap4;
 
-  typedef bitmap4 fattr4_supported_attrs;
+  typedef struct bitmap4 fattr4_supported_attrs;
 
   typedef nfs_ftype4 fattr4_type;
 
@@ -737,7 +737,7 @@ extern "C"
 
   typedef settime4 fattr4_time_modify_set;
 
-  typedef bitmap4 fattr4_suppattr_exclcreat;
+  typedef struct bitmap4 fattr4_suppattr_exclcreat;
 
   typedef nfstime4 fattr4_dir_notif_delay;
 
@@ -872,7 +872,7 @@ extern "C"
 
   struct fattr4
   {
-    bitmap4 attrmask;
+    struct bitmap4 attrmask;
     attrlist4 attr_vals;
   };
   typedef struct fattr4 fattr4;
@@ -1264,7 +1264,7 @@ extern "C"
   struct CREATE4resok
   {
     change_info4 cinfo;
-    bitmap4 attrset;
+    struct bitmap4 attrset;
   };
   typedef struct CREATE4resok CREATE4resok;
 
@@ -1304,7 +1304,7 @@ extern "C"
 
   struct GETATTR4args
   {
-    bitmap4 attr_request;
+    struct bitmap4 attr_request;
   };
   typedef struct GETATTR4args GETATTR4args;
 
@@ -1696,7 +1696,7 @@ extern "C"
     stateid4 stateid;
     change_info4 cinfo;
     uint32_t rflags;
-    bitmap4 attrset;
+    struct bitmap4 attrset;
     open_delegation4 delegation;
   };
   typedef struct OPEN4resok OPEN4resok;
@@ -1830,7 +1830,7 @@ extern "C"
     verifier4 cookieverf;
     count4 dircount;
     count4 maxcount;
-    bitmap4 attr_request;
+    struct bitmap4 attr_request;
   };
   typedef struct READDIR4args READDIR4args;
 
@@ -2003,7 +2003,7 @@ extern "C"
   struct SETATTR4res
   {
     nfsstat4 status;
-    bitmap4 attrsset;
+    struct bitmap4 attrsset;
   };
   typedef struct SETATTR4res SETATTR4res;
 
@@ -2212,8 +2212,8 @@ extern "C"
 
   struct state_protect_ops4
   {
-    bitmap4 spo_must_enforce;
-    bitmap4 spo_must_allow;
+    struct bitmap4 spo_must_enforce;
+    struct bitmap4 spo_must_allow;
   };
   typedef struct state_protect_ops4 state_protect_ops4;
 
@@ -2407,11 +2407,11 @@ extern "C"
   struct GET_DIR_DELEGATION4args
   {
     bool_t gdda_signal_deleg_avail;
-    bitmap4 gdda_notification_types;
+    struct bitmap4 gdda_notification_types;
     attr_notice4 gdda_child_attr_delay;
     attr_notice4 gdda_dir_attr_delay;
-    bitmap4 gdda_child_attributes;
-    bitmap4 gdda_dir_attributes;
+    struct bitmap4 gdda_child_attributes;
+    struct bitmap4 gdda_dir_attributes;
   };
   typedef struct GET_DIR_DELEGATION4args GET_DIR_DELEGATION4args;
 
@@ -2419,9 +2419,9 @@ extern "C"
   {
     verifier4 gddr_cookieverf;
     stateid4 gddr_stateid;
-    bitmap4 gddr_notification;
-    bitmap4 gddr_child_attributes;
-    bitmap4 gddr_dir_attributes;
+    struct bitmap4 gddr_notification;
+    struct bitmap4 gddr_child_attributes;
+    struct bitmap4 gddr_dir_attributes;
   };
   typedef struct GET_DIR_DELEGATION4resok GET_DIR_DELEGATION4resok;
 
@@ -2458,14 +2458,14 @@ extern "C"
     deviceid4 gdia_device_id;
     layouttype4 gdia_layout_type;
     count4 gdia_maxcount;
-    bitmap4 gdia_notify_types;
+    struct bitmap4 gdia_notify_types;
   };
   typedef struct GETDEVICEINFO4args GETDEVICEINFO4args;
 
   struct GETDEVICEINFO4resok
   {
     device_addr4 gdir_device_addr;
-    bitmap4 gdir_notification;
+    struct bitmap4 gdir_notification;
   };
   typedef struct GETDEVICEINFO4resok GETDEVICEINFO4resok;
 
@@ -3033,7 +3033,7 @@ extern "C"
   struct CB_GETATTR4args
   {
     nfs_fh4 fh;
-    bitmap4 attr_request;
+    struct bitmap4 attr_request;
   };
   typedef struct CB_GETATTR4args CB_GETATTR4args;
 
@@ -3198,7 +3198,7 @@ extern "C"
 
   struct notify4
   {
-    bitmap4 notify_mask;
+    struct bitmap4 notify_mask;
     notifylist4 notify_vals;
   };
   typedef struct notify4 notify4;
@@ -3246,7 +3246,7 @@ extern "C"
   struct CB_RECALL_ANY4args
   {
     uint32_t craa_objects_to_keep;
-    bitmap4 craa_type_mask;
+    struct bitmap4 craa_type_mask;
   };
   typedef struct CB_RECALL_ANY4args CB_RECALL_ANY4args;
 
@@ -3551,10 +3551,18 @@ static inline bool xdr_attrlist4(XDR * xdrs, attrlist4 * objp)
   return true;
 }
 
-static inline bool xdr_bitmap4(XDR * xdrs, bitmap4 * objp)
+static inline bool xdr_bitmap4(XDR * xdrs, struct bitmap4 * objp)
 {
-  if(!xdr_array(xdrs, (char **)&objp->bitmap4_val,
-                (u_int *) & objp->bitmap4_len, ~0,
+  char *map = (char *)objp->map;
+
+/* short circuit the free pass (done at the end) because we don't
+ * allocate an array in the "conventional" sense here.  There is
+ * nothing to free so bail out now.
+ */
+  if (xdrs->x_op == XDR_FREE)
+    return true;
+  if(!xdr_array(xdrs, &map,
+                (u_int *) &objp->bitmap4_len, ~0,
                 sizeof(uint32_t), (xdrproc_t) xdr_uint32_t))
     return false;
   return true;
@@ -8404,7 +8412,7 @@ static inline bool xdr_CB_COMPOUND4res(XDR * xdrs, CB_COMPOUND4res * objp)
   static inline bool xdr_nfs_ftype4(XDR *, nfs_ftype4 *);
   static inline bool xdr_nfsstat4(XDR *, nfsstat4 *);
   static inline bool xdr_attrlist4(XDR *, attrlist4 *);
-  static inline bool xdr_bitmap4(XDR *, bitmap4 *);
+  static inline bool xdr_bitmap4(XDR *, struct bitmap4 *);
   static inline bool xdr_changeid4(XDR *, changeid4 *);
   static inline bool xdr_clientid4(XDR *, clientid4 *);
   static inline bool xdr_count4(XDR *, count4 *);

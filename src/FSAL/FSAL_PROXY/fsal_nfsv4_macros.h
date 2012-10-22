@@ -96,8 +96,7 @@ do {                                                                         \
 do {                                                                         \
   nfs_argop4 *op = argarray + opcnt; opcnt++;                                \
   op->argop = NFS4_OP_GETATTR ;                                              \
-  op->nfs_argop4_u.opgetattr.attr_request.bitmap4_val = bitmap ;             \
-  op->nfs_argop4_u.opgetattr.attr_request.bitmap4_len = ARRAY_SIZE(bitmap);  \
+  op->nfs_argop4_u.opgetattr.attr_request = bitmap;                          \
 } while( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argarray, inattr )              \
@@ -167,8 +166,7 @@ do {                                                                          \
   memset(&op->nfs_argop4_u.opreaddir.cookieverf, 0, NFS4_VERIFIER_SIZE);      \
   op->nfs_argop4_u.opreaddir.dircount = 2048 ;                                \
   op->nfs_argop4_u.opreaddir.maxcount = 4096 ;                                \
-  op->nfs_argop4_u.opreaddir.attr_request.bitmap4_val = inbitmap ;            \
-  op->nfs_argop4_u.opreaddir.attr_request.bitmap4_len = ARRAY_SIZE(inbitmap); \
+  op->nfs_argop4_u.opreaddir.attr_request = inbitmap ;                        \
 } while ( 0 )
 
 #define COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE(opcnt, args, inname, inattrs, inclientid, __owner_val, __owner_len) \

@@ -62,6 +62,101 @@
 #define NFS2_MODE_NFLNK 0120000
 #define NFS2_MODE_NFNON 0140000
 
+/**
+ *
+ * Attribute bitmap decoders
+ */
+
+/* bitmap is up to 3 x uint32_t.
+ *
+ * Structure of the bitmap is as follows
+ *
+ *                  0         1          2
+ *    +-------+---------+----------+----------+
+ *    | count | 31 .. 0 | 63 .. 32 | 95 .. 64 |
+ *    +-------+---------+----------+----------+
+ *
+ * One bit is set for every possible attributes. The bits are packed together
+ * in a uint32_T (XDR alignment reason probably)
+ * As said in the RFC3530, the n-th bit is with the uint32_t #(n/32),
+ * and its position with the uint32_t is n % 32
+ *
+ * Example
+ *     1st bit = FATTR4_TYPE            = 1
+ *     2nd bit = FATTR4_LINK_SUPPORT    = 5
+ *     3rd bit = FATTR4_SYMLINK_SUPPORT = 6
+ *
+ *     Juste one uint32_t is necessay: 2**1 + 2**5 + 2**6 = 2 + 32 + 64 = 98
+ *   +---+----+
+ *   | 1 | 98 |
+ *   +---+----+
+ *
+ * Other Example
+ *
+ *     1st bit = FATTR4_LINK_SUPPORT    = 5
+ *     2nd bit = FATTR4_SYMLINK_SUPPORT = 6
+ *     3rd bit = FATTR4_MODE            = 33
+ *     4th bit = FATTR4_OWNER           = 36
+ *
+ *     Two uint32_t will be necessary there:
+ *            #1 = 2**5 + 2**6 = 32 + 64 = 96
+ #            #2 = 2**(33-32) + 2**(36-32) = 2**1 + 2**4 = 2 + 16 = 18
+ *   +---+----+----+
+ *   | 2 | 98 | 18 |
+ *   +---+----+----+
+ *
+ */
+
+static inline int next_attr_from_bitmap(struct bitmap4 *bits, int last_attr)
+{
+	int offset, bit;
+
+	for(offset = (last_attr + 1) / 32;
+	    offset >= 0 && offset < bits->bitmap4_len;
+	    offset++) {
+		if((bits->map[offset] &
+		    (-1 << ((last_attr +1) % 32))) != 0) {
+			for(bit = (last_attr +1) % 32; bit < 32; bit++) {
+				if(bits->map[offset] & (1 << bit))
+					return offset * 32 + bit;
+			}
+		}
+		last_attr = -1;
+	}
+	return -1;
+}
+
+static inline bool attribute_is_set(struct bitmap4 *bits, int attr)
+{
+	int offset = attr / 32;
+
+	if(offset >= bits->bitmap4_len)
+		return FALSE;
+	return !!(bits->map[offset] & (1 << (attr % 32)));
+}
+
+static inline bool set_attribute_in_bitmap(struct bitmap4 *bits, int attr)
+{
+	int offset = attr / 32;
+
+	if(offset >= 3)
+		return FALSE; /* over upper bound */
+	if(offset >= bits->bitmap4_len)
+		bits->bitmap4_len = offset + 1; /* roll into the next word */
+	bits->map[offset] |= (1 << (attr % 32));
+	return TRUE;
+}
+
+static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
+{
+	int offset = attr / 32;
+
+	if(offset >= bits->bitmap4_len)
+		return FALSE;
+	bits->map[offset] &= ~(1 << (attr % 32));
+	return TRUE;
+}
+
 void nfs_FhandleToStr(u_long     rq_vers,
                       nfs_fh3   *pfh3,
                       nfs_fh4   *pfh4,

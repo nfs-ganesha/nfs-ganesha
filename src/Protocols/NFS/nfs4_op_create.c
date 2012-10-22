@@ -406,21 +406,8 @@ int nfs4_op_create(struct nfs_argop4 *op,
           goto out;
         }
 
-      /* Allocate a new bitmap */
-      res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val =
-        gsh_calloc(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_len,
-                   sizeof(uint32_t));
-
-      if(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val == NULL)
-        {
-          res_CREATE4.status = NFS4ERR_SERVERFAULT;
-          cache_inode_put(entry_new);
-          goto out;
-        }
-      memcpy(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val,
-             arg_CREATE4.createattrs.attrmask.bitmap4_val,
-             res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_len
-             * sizeof(uint32_t));
+      /* copy over bitmap */
+      res_CREATE4.CREATE4res_u.resok4.attrset = arg_CREATE4.createattrs.attrmask;
     }
 
   memset(&(res_CREATE4.CREATE4res_u.resok4.cinfo.after), 0, sizeof(changeid4));
@@ -476,8 +463,5 @@ int nfs4_op_create(struct nfs_argop4 *op,
  */
 void nfs4_op_create_Free(CREATE4res *resp)
 {
-  if(resp->status == NFS4_OK)
-    gsh_free(resp->CREATE4res_u.resok4.attrset.bitmap4_val);
-
   return;
 } /* nfs4_op_create_Free */

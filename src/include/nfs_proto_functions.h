@@ -857,7 +857,7 @@ int nfs4_op_remove_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp);
 
 int nfs4_XattrToFattr(fattr4 * Fattr,
-                      compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
+                      compound_data_t * data, nfs_fh4 * objFH, struct bitmap4 * Bitmap);
 
 /* NFSv4 CB calls */
 int nfs4_cb_getattr(struct nfs_cb_argop4 *op,
@@ -1067,16 +1067,16 @@ int nfs4_MakeCred(compound_data_t * data);
 
 int cache_entry_To_Fattr(cache_entry_t *entry, fattr4 *Fattr,
                          compound_data_t *data, nfs_fh4 *objFH,
-                         bitmap4 *Bitmap);
+                         struct bitmap4 *Bitmap);
 
 int nfs4_fsal_attr_To_Fattr(const struct attrlist *pattr, fattr4 * Fattr,
-                            compound_data_t * data, bitmap4 * Bitmap);
+                            compound_data_t * data, struct bitmap4 * Bitmap);
 int nfs4_Fattr_To_fsal_attr(struct attrlist *pattr, fattr4 * Fattr,
-                            compound_data_t * data, bitmap4 * Bitmap);
+                            compound_data_t * data, struct bitmap4 * Bitmap);
 int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access);
-int nfs4_Fattr_Check_Access_Bitmap(bitmap4 * pbitmap, int access);
+int nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 * pbitmap, int access);
 int nfs4_Fattr_Supported(fattr4 * Fattr);
-int nfs4_Fattr_Supported_Bitmap(bitmap4 * pbitmap);
+int nfs4_Fattr_Supported_Bitmap(struct bitmap4 * pbitmap);
 int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2);
 
 int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * plen);
@@ -1093,8 +1093,6 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
  *  str2gid  - convert a string to a gid
  *  uid2str  - convert a uid to a string
  *  str2uid  - convert a string to a uid
- *  nfs4_bitmap4_to_list  - convert an attribute's bitmap to a list of attributes
- *  nfs4_list_to_bitmap4  - convert a list of attributes to an attributes's bitmap
  */
 
 int uid2name(char *name, uid_t * puid);
@@ -1194,7 +1192,7 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
 
 int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
                        fattr4 * Fattr,
-                       compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
+                       compound_data_t * data, nfs_fh4 * objFH, struct bitmap4 * Bitmap);
 
 int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 
@@ -1207,11 +1205,11 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *pattr,
                            fattr4 *Fattr,
                            compound_data_t *data,
                            nfs_fh4 *objFH,
-                           bitmap4 *Bitmap);
+                           struct bitmap4 *Bitmap);
 
 uint64_t nfs_htonl64(uint64_t arg64);
 uint64_t nfs_ntohl64(uint64_t arg64);
-int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;
+int nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *pbitmap) ;
 
 /* Error conversion routines */
 nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *);
