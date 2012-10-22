@@ -163,6 +163,22 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_cache_inode[] =
   {
   ERR_CACHE_INODE_NOT_SUPPORTED, "ERR_CACHE_INODE_NOT_SUPPORTED",
         "Not supported operation in FSAL"},
+#define ERR_CACHE_INODE_MLINK CACHE_INODE_MLINK
+  {ERR_CACHE_INODE_MLINK, "ERR_CACHE_INODE_MLINK",
+   "Too many hard links."
+  },
+#define ERR_CACHE_INODE_SERVERFAULT CACHE_INODE_SERVERFAULT
+  {ERR_CACHE_INODE_SERVERFAULT, "ERR_CACHE_INODE_SERVERFAULT",
+   "The FSAL layer returned an error that can't be recovered."
+  },
+#define ERR_CACHE_INODE_TOOSMALL CACHE_INODE_TOOSMALL
+  {ERR_CACHE_INODE_TOOSMALL, "ERR_CACHE_INODE_TOOSMALL",
+   "Buffer or request is too small."
+  },
+#define ERR_CACHE_INODE_XDEV CACHE_INODE_XDEV
+  {ERR_CACHE_INODE_XDEV, "ERR_CACHE_INODE_XDEV",
+   "Attempt to do an operation between different fsids."
+  },
   {
   ERR_NULL, "ERR_NULL", ""}
 };
