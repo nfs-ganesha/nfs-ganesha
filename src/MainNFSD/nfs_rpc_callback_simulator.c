@@ -87,7 +87,11 @@ static const char* introspection_xml =
 "</node>\n"
 ;
 
+
+/* Pick these up from the SAL. */
+
 extern hash_table_t *ht_confirmed_client_id;
+extern hash_table_t *ht_session_id;
 
 /**
  * For all NFSv4 clients, a clientid reliably indicates a callback
@@ -153,7 +157,7 @@ nfs_rpc_cbsim_get_session_ids(DBusConnection *conn,
 	static uint32_t i, serial = 1;
 	hash_table_t *ht = ht_session_id;
 	struct rbt_head *head_rbt;
-	hash_data_t *pdata = NULL;
+	struct hash_data *pdata = NULL;
 	struct rbt_node *pn;
 	char session_id[2*NFS4_SESSIONID_SIZE]; /* guaranteed to fit */
 	nfs41_session_t *session_data;
@@ -176,10 +180,9 @@ nfs_rpc_cbsim_get_session_ids(DBusConnection *conn,
 		/* go through all entries in the red-black-tree*/
 		RBT_LOOP(head_rbt, pn) {
 			pdata = RBT_OPAQ(pn);
-			session_data =
-				(nfs41_session_t *)pdata->buffval.pdata;
+			session_data = pdata->val.addr;
 			/* format */
-			b64_ntop((unsigned_char *) session_data->session_id,
+			b64_ntop((unsigned char *) session_data->session_id,
 				 NFS4_SESSIONID_SIZE,
 				 session_id,
 				 (2*NFS4_SESSIONID_SIZE));
@@ -255,6 +258,7 @@ out:
 /**
  * Demonstration callback invocation.
  */
+static void cbsim_free_compound(nfs4_compound_t *cbt) __attribute__((unused));
 
 static void cbsim_free_compound(nfs4_compound_t *cbt)
 {
@@ -450,8 +454,12 @@ static DBusHandlerResult nfs_rpc_cbsim_entrypoint(
 
 	if (method) {
 		if (!strcmp(method, "get_client_ids"))
-			return nfs_rpc_cbsim_get_client_ids(conn, msg,
-							    user_data);
+			return nfs_rpc_cbsim_get_v40_client_ids(conn, msg,
+								user_data);
+
+		if (!strcmp(method, "get_session_ids"))
+			return nfs_rpc_cbsim_get_session_ids(conn, msg,
+							     user_data);
 
 		if (!strcmp(method, "fake_recall"))
 			return nfs_rpc_cbsim_fake_recall(conn, msg, user_data);
