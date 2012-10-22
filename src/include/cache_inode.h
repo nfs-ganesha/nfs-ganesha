@@ -584,6 +584,10 @@ typedef enum cache_inode_status_t
   CACHE_INODE_FILE_BIG              = 41,
   CACHE_INODE_KILLED                = 42,
   CACHE_INODE_FILE_OPEN             = 43,
+  CACHE_INODE_MLINK                 = 44,
+  CACHE_INODE_SERVERFAULT           = 45,
+  CACHE_INODE_TOOSMALL              = 46,
+  CACHE_INODE_XDEV                  = 47,
 } cache_inode_status_t;
 
 /**

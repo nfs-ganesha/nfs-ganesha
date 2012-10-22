@@ -150,6 +150,14 @@ const char *cache_inode_err_str(cache_inode_status_t err)
         return "CACHE_INODE_KILLED";
       case CACHE_INODE_FILE_OPEN:
         return "CACHE_INODE_FILE_OPEN";
+      case CACHE_INODE_MLINK:
+        return "CACHE_INODE_MLINK";
+      case CACHE_INODE_SERVERFAULT:
+        return "CACHE_INODE_SERVERFAULT";
+      case CACHE_INODE_TOOSMALL:
+        return "CACHE_INODE_TOOSMALL";
+      case CACHE_INODE_XDEV:
+        return "CACHE_INODE_XDEV";
     }
   return "unknown";
 }
@@ -604,6 +612,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
       return CACHE_INODE_INVALID_ARGUMENT;
 
     case ERR_FSAL_DQUOT:
+    case ERR_FSAL_NO_QUOTA:
       return CACHE_INODE_QUOTA_EXCEEDED;
 
     case ERR_FSAL_SEC:
@@ -641,19 +650,26 @@ cache_inode_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_FBIG:
       return CACHE_INODE_FILE_BIG;
 
+    case ERR_FSAL_FAULT:
+    case ERR_FSAL_SERVERFAULT:
     case ERR_FSAL_DEADLOCK:
+      return CACHE_INODE_SERVERFAULT;
+
+    case ERR_FSAL_MLINK:
+      return CACHE_INODE_MLINK;
+
+    case ERR_FSAL_TOOSMALL:
+      return CACHE_INODE_TOOSMALL;
+
+    case ERR_FSAL_XDEV:
+      return CACHE_INODE_XDEV;
+
     case ERR_FSAL_BLOCKED:
     case ERR_FSAL_INTERRUPT:
-    case ERR_FSAL_FAULT:
     case ERR_FSAL_NOT_INIT:
     case ERR_FSAL_ALREADY_INIT:
     case ERR_FSAL_BAD_INIT:
-    case ERR_FSAL_NO_QUOTA:
-    case ERR_FSAL_XDEV:
-    case ERR_FSAL_MLINK:
-    case ERR_FSAL_TOOSMALL:
     case ERR_FSAL_TIMEOUT:
-    case ERR_FSAL_SERVERFAULT:
       /* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
       LogDebug(COMPONENT_CACHE_INODE,
                "Conversion of FSAL error %d,%d to CACHE_INODE_FSAL_ERROR",

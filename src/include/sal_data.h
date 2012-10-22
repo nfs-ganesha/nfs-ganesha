@@ -476,6 +476,9 @@ typedef enum state_status_t
   STATE_SIGNAL_ERROR          = 44,
   STATE_KILLED                = 45,
   STATE_FILE_OPEN             = 46,
+  STATE_MLINK                 = 47,
+  STATE_SERVERFAULT           = 48,
+  STATE_TOOSMALL              = 49
 } state_status_t;
 
 /******************************************************************************

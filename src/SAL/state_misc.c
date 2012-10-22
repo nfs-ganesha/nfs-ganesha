@@ -103,6 +103,9 @@ const char *state_err_str(state_status_t err)
       case STATE_SIGNAL_ERROR:          return "STATE_SIGNAL_ERROR";
       case STATE_KILLED:                return "STATE_KILLED";
       case STATE_FILE_OPEN:             return "STATE_FILE_OPEN";
+      case STATE_MLINK:                 return "STATE_MLINK";
+      case STATE_SERVERFAULT:           return "STATE_SERVERFAULT";
+      case STATE_TOOSMALL:              return "STATE_TOOSMALL";
     }
   return "unknown";
 }
@@ -152,6 +155,9 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_FILE_BIG:              return STATE_FILE_BIG;
       case CACHE_INODE_KILLED:                return STATE_KILLED;
       case CACHE_INODE_FILE_OPEN:             return STATE_FILE_OPEN;
+      case CACHE_INODE_MLINK:                 return STATE_MLINK;
+      case CACHE_INODE_SERVERFAULT:           return STATE_SERVERFAULT;
+      case CACHE_INODE_TOOSMALL:              return STATE_TOOSMALL;
     }
   return STATE_CACHE_INODE_ERR;
 }
@@ -414,6 +420,18 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       nfserror = NFS4ERR_GRACE;
       break;
 
+    case STATE_SERVERFAULT:
+      nfserror = NFS4ERR_SERVERFAULT;
+      break;
+
+    case STATE_MLINK:
+      nfserror = NFS4ERR_MLINK;
+      break;
+
+    case STATE_TOOSMALL:
+      nfserror = NFS4ERR_TOOSMALL;
+      break;
+
     case STATE_INVALID_ARGUMENT:
     case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
@@ -554,6 +572,18 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
       nfserror = NFS3ERR_BAD_COOKIE;
       break;
 
+    case STATE_MLINK:
+      nfserror = NFS3ERR_MLINK;
+      break;
+
+    case STATE_SERVERFAULT:
+      nfserror = NFS3ERR_SERVERFAULT;
+      break;
+
+    case STATE_TOOSMALL:
+      nfserror = NFS3ERR_TOOSMALL;
+      break;
+
     case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
     case STATE_HASH_TABLE_ERROR:
@@ -677,6 +707,9 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
       nfserror = NFSERR_NAMETOOLONG;
       break;
 
+    case STATE_SERVERFAULT:
+    case STATE_TOOSMALL:
+    case STATE_MLINK:
     case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
     case STATE_HASH_TABLE_ERROR:
