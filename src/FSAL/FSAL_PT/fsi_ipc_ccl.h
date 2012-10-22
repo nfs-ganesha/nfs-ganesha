@@ -578,9 +578,10 @@ int ccl_init(int                        multi_threaded,
 int add_acl_handle(uint64_t fs_acl_handle);
 int add_dir_handle(uint64_t fs_dir_handle);
 int add_fsi_handle(struct file_handle_t * p_new_handle);
-void convert_fsi_name(ccl_context_t   * handle,
-                      const char          * filename,
-                      char                * sv_filename);
+void convert_fsi_name(ccl_context_t * handle,
+                      const char    * filename,
+                      char          * sv_filename,
+                      const size_t    sv_filename_size);
 int delete_acl_handle(uint64_t aclHandle);
 int delete_dir_handle(int dir_handle_index);
 int delete_fsi_handle(int handle_index);

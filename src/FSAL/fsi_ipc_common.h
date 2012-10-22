@@ -676,7 +676,7 @@ struct ClientOpRmdirReqMtext {
 // ClientOpGetRealFileName Client Request Message
 struct ClientOpGetRealFileNameReqMsg {
   char path[PATH_MAX];
-  char name[NAME_MAX];
+  char name[NAME_MAX + 1];
 };
 
 struct ClientOpGetRealFileNameReqMtext {
@@ -686,7 +686,7 @@ struct ClientOpGetRealFileNameReqMtext {
 
 // ClientOpGetRealFileName Server Response Message
 struct ClientOpGetRealFileNameRspMsg {
-  char foundName[NAME_MAX]; // real name found in fsi
+  char foundName[NAME_MAX + 1]; // real name found in fsi
 };
 
 struct ClientOpGetRealFileNameRspMtext {
