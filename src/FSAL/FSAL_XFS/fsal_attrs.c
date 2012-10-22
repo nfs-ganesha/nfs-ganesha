@@ -274,6 +274,27 @@ fsal_status_t XFSFSAL_setattrs(fsal_handle_t * p_filehandle, /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_setattrs);
     }
 
+  /**************
+   *  TRUNCATE  *
+   **************/
+
+  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_SIZE))
+    {
+      TakeTokenFSCall();
+      rc = ftruncate(fd, p_attrib_set->filesize);
+      errsv = errno;
+      ReleaseTokenFSCall();
+
+      if(rc)
+        {
+          close(fd);
+          if(errsv == ENOENT)
+            Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
+          else
+            Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
+        }
+    }
+ 
   /***********
    *  CHMOD  *
    ***********/

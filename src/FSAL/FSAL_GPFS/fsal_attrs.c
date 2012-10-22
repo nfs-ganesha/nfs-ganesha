@@ -241,6 +241,22 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       ReturnStatus(status, INDEX_FSAL_setattrs);
     }
 
+  /**************
+   *  TRUNCATE  *
+   **************/
+
+  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_SIZE))
+    {
+      attr_changed |= XATTR_SIZE;
+    
+      /* Fill wanted mode. */
+      buffxstat.buffstat.st_size = wanted_attrs.filesize;
+      LogDebug(COMPONENT_FSAL,
+               "current size = %llu, new size = %llu",
+               (unsigned long long) current_attrs.filesize,
+               (unsigned long long) buffxstat.buffstat.st_size);
+    }
+ 
   /***********
    *  CHMOD  *
    ***********/

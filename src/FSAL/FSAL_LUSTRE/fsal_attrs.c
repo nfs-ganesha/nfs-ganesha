@@ -123,7 +123,7 @@ fsal_status_t LUSTREFSAL_setattrs(fsal_handle_t * p_filehandle,   /* IN */
   unsigned int i;
   fsal_status_t status;
   fsal_attrib_list_t attrs;
-
+  int no_trunc = 0;
   fsal_path_t fsalpath;
   struct stat buffstat;
 
@@ -175,6 +175,125 @@ fsal_status_t LUSTREFSAL_setattrs(fsal_handle_t * p_filehandle,   /* IN */
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_setattrs);
     }
 
+  /**************
+   *  TRUNCATE  *
+   **************/
+
+  if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_SIZE))
+    {
+#ifdef _SHOOK
+      /* If the file is not online:
+       * - if truncate(0) => call tuncate(0), then "shook restore_trunc"
+       * - if truncate(>0) => call "shook restore", then truncate
+       */
+      shook_state state;
+      rc = shook_get_status(fsalpath.path, &state, FALSE);
+      if (rc)
+      {
+          LogEvent(COMPONENT_FSAL, "Error retrieving shook status of %s: %s",
+                   fsalpath.path, strerror(-rc));
+          if (rc)
+              Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
+      }
+      else if (state != SS_ONLINE)
+      {
+          if (p_attrib_set->filesize == 0)
+          {
+              LogInfo(COMPONENT_FSAL, "File is offline: calling shook restore_trunc");
+
+              /* first truncate the file, them call the shook_svr to clear
+               * the 'released' flag */
+
+              TakeTokenFSCall();
+              rc = truncate(fsalpath.path, 0);
+              errsv = errno;
+              ReleaseTokenFSCall();
+
+              if (rc == 0)
+              {
+                  /* use a short timeout of 2s */
+                  rc = shook_server_call(SA_RESTORE_TRUNC,
+                                         ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
+                                         &((lustrefsal_handle_t *)p_filehandle)->data.fid, 2);
+                  if (rc)
+                      Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
+                  else {
+                      /* check that file is online, else operation is still
+                       * in progress: return err jukebox */
+                      rc = shook_get_status(fsalpath.path, &state, FALSE);
+                      if (rc)
+                      {
+                          LogEvent(COMPONENT_FSAL, "Error retrieving shook status of %s: %s",
+                                   fsalpath.path, strerror(-rc));
+                          if (rc)
+                              Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
+                      }
+                      else if (state != SS_ONLINE)
+                          Return(ERR_FSAL_DELAY, -rc, INDEX_FSAL_truncate);
+                      /* OK */
+                  }
+                  /* file is already truncated, no need to truncate again */
+                  no_trunc = 1;
+              }
+              else
+              {
+                    if(errsv == ENOENT)
+                      Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
+                    else
+                      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
+              }
+          }
+          else /* p_attrib_set->filesize > 0 */
+          {
+              /* trigger restore. Give it a chance to retrieve the file in less than a second.
+               * Else, it returns ETIME that is converted in ERR_DELAY */
+              rc = shook_server_call(SA_RESTORE,
+                                     ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
+                                     &((lustrefsal_handle_t *)p_filehandle)->data.fid, 1);
+              if (rc)
+                  Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
+              else {
+                  /* check that file is online, else operation is still
+                   * in progress: return err jukebox */
+                  rc = shook_get_status(fsalpath.path, &state, FALSE);
+                  if (rc)
+                  {
+                      LogEvent(COMPONENT_FSAL, "Error retrieving shook status of %s: %s",
+                               fsalpath.path, strerror(-rc));
+                      if (rc)
+                          Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
+                  }
+                  else if (state != SS_ONLINE)
+                      Return(ERR_FSAL_DELAY, -rc, INDEX_FSAL_truncate);
+                  /* OK */
+              }
+
+              /* if rc = 0, file can be opened */
+          }
+      }
+      /* else file is on line */
+#endif
+
+      /* Executes the POSIX truncate operation */
+
+      if (!no_trunc)
+      {
+        TakeTokenFSCall();
+        rc = truncate(fsalpath.path, p_attrib_set->filesize);
+        errsv = errno;
+        ReleaseTokenFSCall();
+      }
+
+      /* convert return code */
+      if(rc)
+        {
+          if(errsv == ENOENT)
+            Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
+          else
+            Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
+        }
+    }
+ 
   /***********
    *  CHMOD  *
    ***********/
