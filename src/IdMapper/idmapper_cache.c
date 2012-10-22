@@ -67,6 +67,7 @@ hash_table_t *ht_uidgid;
  *
  * To save allocating space, uids and gids are overlayed into the value pointer
  * (.addr) of the hashbuffer_t.  This union accomplishes that mapping.
+ * When used, the length (.len) is expected to be zero: This is not a pointer.
  */
 
 union idmap_val {
@@ -183,7 +184,10 @@ int compare_namemapper(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
  */
 int display_idmapper_key(struct gsh_buffdesc * pbuff, char *str)
 {
-  return sprintf(str, "%s", (char *)(pbuff->addr));
+  if (pbuff->len == 0)
+    return sprintf(str, "%"PRIxPTR, (uintptr_t)(pbuff->addr));
+  else
+    return sprintf(str, "%s", (char *)(pbuff->addr));
 }                               /* display_idmapper */
 
 /**
