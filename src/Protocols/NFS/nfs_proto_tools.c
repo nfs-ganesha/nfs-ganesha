@@ -780,6 +780,14 @@ static int fsal_time_to_settime4(const fsal_time_t *ts, char *attrval)
   return LastOffset;
 }
 
+static int fsal_server_time_to_settime4(char *attrval)
+{
+  time_how4 how = htonl(SET_TO_SERVER_TIME4);
+
+  memcpy(attrval, &how, sizeof(how));
+  return sizeof(how);
+}
+
 int nfs4_supported_attrs_to_fattr(char *attrvalsBuffer)
 {
 #ifdef _USE_NFS4_1
@@ -1635,8 +1643,11 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_TIME_ACCESS_SET:
-          LastOffset += fsal_time_to_settime4(&pattr->atime,
-                                              attrvalsBuffer + LastOffset);
+          if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_ATIME_SERVER))
+            LastOffset += fsal_server_time_to_settime4(attrvalsBuffer + LastOffset);
+          else
+            LastOffset += fsal_time_to_settime4(&pattr->atime,
+                                                attrvalsBuffer + LastOffset);
           op_attr_success = 1;
           break;
 
@@ -1686,8 +1697,11 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-          LastOffset += fsal_time_to_settime4(&pattr->mtime,
-                                              attrvalsBuffer + LastOffset);
+          if(FSAL_TEST_MASK(pattr->asked_attributes, FSAL_ATTR_MTIME_SERVER))
+            LastOffset += fsal_server_time_to_settime4(attrvalsBuffer + LastOffset);
+          else
+            LastOffset += fsal_time_to_settime4(&pattr->mtime,
+                                                attrvalsBuffer + LastOffset);
           op_attr_success = 1;
           break;
 

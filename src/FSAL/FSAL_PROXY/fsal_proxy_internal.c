@@ -66,7 +66,11 @@ void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
     tmpattrlist[attrlen++] = FATTR4_OWNER_GROUP;
   if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_ATIME))
     tmpattrlist[attrlen++] = FATTR4_TIME_ACCESS_SET;
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_ATIME_SERVER))
+    tmpattrlist[attrlen++] = FATTR4_TIME_ACCESS_SET;
   if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_MTIME))
+    tmpattrlist[attrlen++] = FATTR4_TIME_MODIFY_SET;
+  if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_MTIME_SERVER))
     tmpattrlist[attrlen++] = FATTR4_TIME_MODIFY_SET;
   if(FSAL_TEST_MASK(pfsalattr->asked_attributes, FSAL_ATTR_CTIME))
     tmpattrlist[attrlen++] = FATTR4_TIME_METADATA;
