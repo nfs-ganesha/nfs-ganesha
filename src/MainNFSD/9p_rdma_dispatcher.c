@@ -88,34 +88,26 @@ static int _9p_rdma_register_buffer( msk_trans_t * trans, pthread_mutex_t * ploc
 {
   uint8_t       * rdmabuf = NULL ;
   struct ibv_mr * mr      = NULL ;
-  msk_data_t    * ackdata = NULL ;
   msk_data_t   ** rdata   = NULL ;
   struct _9p_datamr * datamr  = NULL ;
   unsigned int i = 0 ;
   int rc = 0 ;
 
   /* Alloc rdmabuf */
-  if( ( rdmabuf = gsh_malloc( (_9P_RDMA_BUFF_NUM+2)*_9P_RDMA_CHUNK_SIZE)) == NULL ) 
+  if( ( rdmabuf = gsh_malloc( (_9P_RDMA_BUFF_NUM)*_9P_RDMA_CHUNK_SIZE)) == NULL ) 
     LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc rdmabuf" ) ;
 
   /* Memset it to 0 (always useful) */
-  memset( rdmabuf, 0, (_9P_RDMA_BUFF_NUM+2)*_9P_RDMA_CHUNK_SIZE);
+  memset( rdmabuf, 0, (_9P_RDMA_BUFF_NUM)*_9P_RDMA_CHUNK_SIZE);
   
   /* Register rdmabuf */
   if( ( mr = msk_reg_mr( trans, 
                          rdmabuf, 
-                         (_9P_RDMA_BUFF_NUM+2)*_9P_RDMA_CHUNK_SIZE, 
+                         (_9P_RDMA_BUFF_NUM)*_9P_RDMA_CHUNK_SIZE, 
                          IBV_ACCESS_LOCAL_WRITE)) == NULL  )
     LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not register rdmabuf" ) ;
 
   /* Get prepared to recv data */
- if( ( ackdata = gsh_malloc( sizeof( msk_data_t ) ) ) == NULL )
-    LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc ackdata" ) ;
-
-  ackdata->data = rdmabuf+(_9P_RDMA_BUFF_NUM+1)*_9P_RDMA_CHUNK_SIZE;
-  ackdata->max_size = _9P_RDMA_CHUNK_SIZE;
-  ackdata->size = 1;
-  ackdata->data[0] = 0;
 
   if( ( rdata = gsh_malloc( _9P_RDMA_BUFF_NUM * sizeof(msk_data_t* ) ) ) == NULL )
     LogFatal( COMPONENT_9P, "9P/RDMA: trans handler could not malloc rdata" ) ;
@@ -132,7 +124,6 @@ static int _9p_rdma_register_buffer( msk_trans_t * trans, pthread_mutex_t * ploc
       rdata[i]->max_size=_9P_RDMA_CHUNK_SIZE ;
       datamr[i].data = rdata[i];
       datamr[i].mr = mr;
-      datamr[i].ackdata = ackdata;
       datamr[i].lock = plock;
       datamr[i].cond = pcond;
       datamr[i].pconn = pconn;
@@ -173,7 +164,6 @@ exit:
 
   if( !datamr ) gsh_free( datamr ) ;
   if( !rdata ) gsh_free( rdata ) ;
-  if( !ackdata ) gsh_free( ackdata ) ;
   if( !rdmabuf ) gsh_free( rdmabuf ) ;
   
   return 1 ;

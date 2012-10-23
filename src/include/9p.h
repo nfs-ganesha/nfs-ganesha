@@ -349,7 +349,6 @@ typedef struct _9p_datamr
 {
   msk_data_t *data;
   struct ibv_mr *mr;
-  msk_data_t *ackdata;
   pthread_mutex_t *lock;
   pthread_cond_t *cond;
   struct _9p_datamr * sender ;
