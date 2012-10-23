@@ -116,7 +116,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       return res_SETATTR4.status;
     }
 
-  /* Convert the fattr4 in the request to a nfs3_sattr structure */
+  /* Convert the fattr4 in the request to a FSAL attr structure */
   res_SETATTR4.status = nfs4_Fattr_To_FSAL_attr(&sattr,
                                                 &(arg_SETATTR4.obj_attributes),
                                                 data->export_perms.anonymous_uid,
@@ -203,36 +203,13 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           if(res_SETATTR4.status != NFS4_OK)
             return res_SETATTR4.status;
         }
-      if (pstate_open == NULL)
-        {
-          if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( data->pcontext )) 
-             && cache_inode_access(pentry, 
-                     FSAL_WRITE_ACCESS, 
-                     data->pcontext, 
-                     &cache_status) != CACHE_INODE_SUCCESS) 
-            {
-              res_SETATTR4.status = nfs4_Errno(cache_status);
-              return res_SETATTR4.status; 
-            }
-        }
-      if((cache_status = cache_inode_truncate(data->current_entry,
-                                              sattr.filesize,
-                                              &parent_attr,
-                                              data->pcontext,
-                                              &cache_status)) != CACHE_INODE_SUCCESS)
-        {
-          res_SETATTR4.status = nfs4_Errno(cache_status);
-          return res_SETATTR4.status;
-        }
-      /* we just did the truncate, turn off these attrs */
-      sattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-      sattr.asked_attributes &= ~FSAL_ATTR_SIZE;
     }
 
   /* Now, we set the mode */
   if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_OWNER) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_GROUP) ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_SIZE)  ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) ||
 #ifdef _USE_NFS4_ACL
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) ||
@@ -241,7 +218,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME))
 #endif
     {
-      /* Check for root access when using chmod */
+      /* Check for NOSUID/NOSGID when using chmod */
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE))
         {
           if(((sattr.mode & FSAL_MODE_SUID) &&
@@ -280,6 +257,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
             return res_SETATTR4.status;
           }
         }
+
       /* Should we use the time from the client handside or from the server handside ? */
       /** @todo : check correctness of this block... looks suspicious */
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
@@ -289,6 +267,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
         }
       else
         {
+          /* a carry into seconds considered invalid */
           if (sattr.mtime.nseconds >= S_NSECS)
           {
             res_SETATTR4.status = NFS4ERR_INVAL;

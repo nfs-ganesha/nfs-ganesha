@@ -180,12 +180,8 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   /* Set size if needed */
   if( *valid & _9P_SETATTR_SIZE )
     {
-      if((cache_status = cache_inode_truncate( pfid->pentry,
-                                               *size,
-                                               &parent_attr,
-                                               &pfid->fsal_op_context,
-                                               &cache_status)) != CACHE_INODE_SUCCESS)
-        return _9p_rerror( preq9p, msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+      fsalattr.asked_attributes |= FSAL_ATTR_SIZE ;
+      fsalattr.filesize  = *size ;
     }
 
   /* Now set the attr */ 

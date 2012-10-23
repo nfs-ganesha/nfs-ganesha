@@ -91,10 +91,8 @@ int nfs_Setattr(nfs_arg_t *parg,
   fsal_attrib_list_t setattr;
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t trunc_attr;
   fsal_attrib_list_t *ppre_attr;
   cache_inode_status_t cache_status;
-  int do_trunc = FALSE;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -175,9 +173,6 @@ int nfs_Setattr(nfs_arg_t *parg,
           goto out;
         }
 
-      if(new_attributes2.size != (u_int) - 1)
-        do_trunc = TRUE;
-
       break;
 
     case NFS_V3:
@@ -223,74 +218,14 @@ int nfs_Setattr(nfs_arg_t *parg,
           goto out;
         }
 
-      if(new_attributes3.size.set_it)
-        {
-          do_trunc = TRUE;
-        }
-
       break;
     }
 
-  /*
-   * trunc may change Xtime so we have to start with trunc and finish
-   * by the mtime and atime 
-   */
-  if(do_trunc)
-    {
-      if(( pentry->attributes.owner !=  FSAL_OP_CONTEXT_TO_UID( pcontext )) 
-         && cache_inode_access(pentry,
-                    FSAL_WRITE_ACCESS, 
-                    pcontext,
-                    &cache_status) != CACHE_INODE_SUCCESS)
-        {
-          pres->res_setattr3.status = nfs3_Errno(cache_status);
-          rc = NFS_REQ_OK;
-          goto out; 
-        }
-
-      /* Should not be done on a directory */
-      if(pentry->type == DIRECTORY)
-        cache_status = CACHE_INODE_IS_A_DIRECTORY;
-      else
-        {
-          cache_status = cache_inode_truncate(pentry,
-                                              setattr.filesize,
-                                              &trunc_attr,
-                                              pcontext, &cache_status);
-          setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-          setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
-        }
-    }
-  else
-    cache_status = CACHE_INODE_SUCCESS;
-
-  if(cache_status == CACHE_INODE_SUCCESS)
-    {
-      /* Add code to support partially completed setattr */
-      if(do_trunc)
-        {
-          if(setattr.asked_attributes != 0)
-            {
-              cache_status = cache_inode_setattr(pentry,
-                                                 &setattr,
-                                                 pcontext,
-                                                 FALSE,
-                                                 &cache_status);
-            }
-          else
-            {
-              cache_status = CACHE_INODE_SUCCESS;
-              setattr = trunc_attr;
-            }
-
-        }
-      else
-        cache_status = cache_inode_setattr(pentry,
-                                           &setattr,
-                                           pcontext,
-                                           FALSE,
-                                           &cache_status);
-    }
+  cache_status = cache_inode_setattr(pentry,
+                                     &setattr,
+                                     pcontext,
+                                     FALSE,
+                                     &cache_status);
 
   if(cache_status == CACHE_INODE_SUCCESS)
     {
@@ -308,7 +243,7 @@ int nfs_Setattr(nfs_arg_t *parg,
 
         case NFS_V3:
           /* Build Weak Cache Coherency data */
-          if(do_trunc && 
+          if(new_attributes3.size.set_it &&
              !(setattr.asked_attributes ^ (FSAL_ATTR_SPACEUSED|FSAL_ATTR_SIZE)))
             {
               pres->res_setattr3.SETATTR3res_u.resok.obj_wcc.after.attributes_follow = FALSE;
