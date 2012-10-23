@@ -42,6 +42,10 @@
  * Tests whether an error code should be raised as an event.
  */
 fsal_boolean_t fsal_error_is_event(fsal_status_t status);
+/*
+ * Tests whether an error code should be raised as an info debug.
+ */
+fsal_boolean_t fsal_error_is_info(fsal_status_t status);
 
 #ifdef _USE_FSAL_UP
 struct gpfs_fsal_up_ctx_t
@@ -66,6 +70,13 @@ struct gpfs_fsal_up_ctx_t
                if(fsal_error_is_event(_struct_status_))                        \
                  {                                                             \
                    LogEvent(COMPONENT_FSAL,                                    \
+                     "%s returns (%s, %s, %d)",fsal_function_names[_f_],       \
+                     label_fsal_err(_code_), msg_fsal_err(_code_), _minor_);   \
+                   return (_struct_status_);                                   \
+                 }                                                             \
+               if(fsal_error_is_info(_struct_status_))                        \
+                 {                                                             \
+                   LogInfo(COMPONENT_FSAL,                                    \
                      "%s returns (%s, %s, %d)",fsal_function_names[_f_],       \
                      label_fsal_err(_code_), msg_fsal_err(_code_), _minor_);   \
                    return (_struct_status_);                                   \

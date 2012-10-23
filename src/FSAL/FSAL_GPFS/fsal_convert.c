@@ -83,20 +83,19 @@ int posix2fsal_error(int posix_errorcode)
 
       /* all shown as IO errors */
       if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
-         LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_IO, open_fd_count=%d getrlimit failed",
-                        __FUNCTION__, posix_errorcode, open_fd_count);
+         LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_IO, open_fd_count=%d getrlimit failed",
+                        posix_errorcode, open_fd_count);
       }
       else {
-         LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_IO, open_fd_count=%d rlim_cur=%ld rlim_max=%ld",
-                        __FUNCTION__, posix_errorcode, open_fd_count, rlim.rlim_cur, rlim.rlim_max);
+         LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_IO, open_fd_count=%d rlim_cur=%ld rlim_max=%ld",
+                        posix_errorcode, open_fd_count, rlim.rlim_cur, rlim.rlim_max);
       }
       return ERR_FSAL_IO;
 
       /* no such device */
     case ENODEV:
     case ENXIO:
-      LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_NXIO",
-                        __FUNCTION__, posix_errorcode);
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NXIO", posix_errorcode);
       return ERR_FSAL_NXIO;
 
       /* invalid file descriptor : */
@@ -109,57 +108,41 @@ int posix2fsal_error(int posix_errorcode)
        *        In this case, we return ERR_FSAL_NOT_OPENED,
        *        but it doesn't seems to be a correct error translation.
        */
-
       return ERR_FSAL_NOT_OPENED;
 
     case ENOMEM:
     case ENOLCK:
-         LogCrit(COMPONENT_FSAL, "%s mapping %d to ERR_FSAL_NOMEM",
-                        __FUNCTION__, posix_errorcode);
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NOMEM", posix_errorcode);
       return ERR_FSAL_NOMEM;
 
     case EACCES:
       return ERR_FSAL_ACCESS;
 
     case EFAULT:
-         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_FAULT",
-                        __FUNCTION__);
       return ERR_FSAL_FAULT;
 
     case EEXIST:
-         LogCrit(COMPONENT_FSAL, "%s mapping ERR_FSAL_EXIST",
-                        __FUNCTION__);
       return ERR_FSAL_EXIST;
 
     case EXDEV:
       return ERR_FSAL_XDEV;
 
     case ENOTDIR:
-         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_NOTDIR",
-                        __FUNCTION__);
       return ERR_FSAL_NOTDIR;
 
     case EISDIR:
-         LogCrit(COMPONENT_FSAL, "%s mapping ERR_FSAL_ISDIR",
-                        __FUNCTION__);
       return ERR_FSAL_ISDIR;
 
     case EINVAL:
-         LogCrit(COMPONENT_FSAL, "%s mapping ERR_FSAL_INVAL",
-                        __FUNCTION__);
       return ERR_FSAL_INVAL;
 
     case EFBIG:
-         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_FBIG",
-                        __FUNCTION__);
       return ERR_FSAL_FBIG;
 
     case ETXTBSY:
       return ERR_FSAL_FILE_OPEN;
 
     case ENOSPC:
-         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_NOSPC",
-                        __FUNCTION__);
       return ERR_FSAL_NOSPC;
 
     case EMLINK:
@@ -169,8 +152,6 @@ int posix2fsal_error(int posix_errorcode)
       return ERR_FSAL_DQUOT;
 
     case ENAMETOOLONG:
-         LogCrit(COMPONENT_FSAL, "%s mapping to ERR_FSAL_NAMETOOLONG",
-                        __FUNCTION__);
       return ERR_FSAL_NAMETOOLONG;
 
 /**
@@ -185,6 +166,8 @@ int posix2fsal_error(int posix_errorcode)
     case ENOTEMPTY:
     case -ENOTEMPTY:
 #endif
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NOTEMPTY",
+              posix_errorcode);
       return ERR_FSAL_NOTEMPTY;
 
     case ESTALE:
@@ -193,7 +176,7 @@ int posix2fsal_error(int posix_errorcode)
       /* Error code that needs a retry */
     case EAGAIN:
     case EBUSY:
-
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_DELAY", posix_errorcode);
       return ERR_FSAL_DELAY;
 
     case ENOTSUP:
@@ -209,7 +192,8 @@ int posix2fsal_error(int posix_errorcode)
       return ERR_FSAL_INTERRUPT;
 
     default:
-
+      LogCrit(COMPONENT_FSAL, "Mapping %d(default) to ERR_FSAL_SERVERFAULT",
+                        posix_errorcode);
       /* other unexpected errors */
       return ERR_FSAL_SERVERFAULT;
 
