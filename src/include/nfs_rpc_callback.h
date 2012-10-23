@@ -119,16 +119,12 @@ static inline void nfs_rpc_init_call(void *ptr, void *parameters)
 
 void nfs_rpc_cb_pkginit(void);
 void nfs_rpc_cb_pkgshutdown(void);
-
-/* Create a channel for a new clientid (v4) or session, optionally
- * connecting it */
 int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
 			    uint32_t flags);
 
-/* Create a channel for a new clientid (v4) or session, optionally
- * connecting it */
-int nfs_rpc_create_chan_v41(nfs_client_id_t *pclientid,
-			    uint32_t flags);
+int nfs_rpc_create_chan_v41(nfs41_session_t *session,
+			    int num_sec_parms,
+			    callback_sec_parms4 *sec_parms);
 
 /* Dispose a channel. */
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);

@@ -72,99 +72,119 @@ const char *clientid_confirm_state_to_str(
 	return "UNKNOWN STATE";
 }
 
-int display_client_id_rec(nfs_client_id_t *pclientid, char *str)
+int display_client_id_rec(nfs_client_id_t *clientid, char *str)
 {
 	int delta;
 	char *tmpstr = str;
 
 	tmpstr += sprintf(tmpstr,
 			  "%p ClientID=%"PRIx64" %s Client={",
-			  pclientid,
-			  pclientid->cid_clientid,
+			  clientid,
+			  clientid->cid_clientid,
 			  clientid_confirm_state_to_str(
-				  pclientid->cid_confirmed));
+				  clientid->cid_confirmed));
 
-	if (pclientid->cid_client_record != NULL)
-		tmpstr += display_client_record(pclientid->cid_client_record,
+	if (clientid->cid_client_record != NULL)
+		tmpstr += display_client_record(clientid->cid_client_record,
 						tmpstr);
 	else
 		tmpstr += sprintf(tmpstr, "<NULL>");
 
-	if (pclientid->cid_lease_reservations > 0)
+	if (clientid->cid_lease_reservations > 0)
 		delta = 0;
 	else
-		delta = time(NULL) - pclientid->cid_last_renew;
+		delta = time(NULL) - clientid->cid_last_renew;
 
-	tmpstr += sprintf(tmpstr,
-			  "} cb_prog=%u r_addr=%s r_netid=%s t_delta=%d "
-			  "reservations=%d refcount=%"PRId32,
-			  pclientid->cid_cb.cb_program,
-			  pclientid->cid_cb.cb_client_r_addr,
-			  netid_nc_table[pclientid->cid_cb.cb_addr.nc].netid,
-			  delta,
-			  pclientid->cid_lease_reservations,
-			  atomic_fetch_int32_t(&pclientid->cid_refcount));
+	if (clientid->cid_minorversion == 0) {
+		tmpstr += sprintf(tmpstr,
+				  "} cb_prog=%u r_addr=%s r_netid=%s "
+				  "t_delta=%d reservations=%d "
+				  "refcount=%"PRId32,
+				  clientid->cid_cb.v40.cb_program,
+				  clientid->cid_cb.v40.cb_client_r_addr,
+				  (netid_nc_table[clientid->cid_cb.v40
+						  .cb_addr.nc].netid),
+				  delta,
+				  clientid->cid_lease_reservations,
+				  atomic_fetch_int32_t(&clientid->
+						       cid_refcount));
+	}
 
 	return tmpstr - str;
 }
 
-int display_clientid_name(nfs_client_id_t * pclientid, char * str)
+int display_clientid_name(nfs_client_id_t * clientid, char *str)
 {
-	if (pclientid->cid_client_record != NULL)
-		return DisplayOpaqueValue(pclientid->cid_client_record
+	if (clientid->cid_client_record != NULL)
+		return DisplayOpaqueValue(clientid->cid_client_record
 					  ->cr_client_val,
-					  pclientid->cid_client_record
+					  clientid->cid_client_record
 					  ->cr_client_val_len,
 					  str);
 	else
 		return sprintf(str, "<NULL>");
 }
 
-static void Hash_inc_client_id_ref(struct gsh_buffdesc *buffval)
+static void Hash_inc_client_id_ref(struct gsh_buffdesc *val)
 {
-	nfs_client_id_t *pclientid = buffval->addr;
+	nfs_client_id_t *clientid = val->addr;
 
-	inc_client_id_ref(pclientid);
+	inc_client_id_ref(clientid);
 }
 
-void inc_client_id_ref(nfs_client_id_t *pclientid)
+void inc_client_id_ref(nfs_client_id_t *clientid)
 {
-	int32_t cid_refcount = atomic_inc_int32_t(&pclientid->cid_refcount);
+	int32_t cid_refcount = atomic_inc_int32_t(&clientid->cid_refcount);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
 
-		display_client_id_rec(pclientid, str);
+		display_client_id_rec(clientid, str);
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Increment refcount Clientid {%s} to %"PRId32,
 			     str, cid_refcount);
 	}
 }
 
-void free_client_id(nfs_client_id_t *pclientid)
+void free_client_id(nfs_client_id_t *clientid)
 {
-	assert(atomic_fetch_int32_t(&pclientid->cid_refcount) == 0);
+	assert(atomic_fetch_int32_t(&clientid->cid_refcount) == 0);
 
-	if (pclientid->cid_client_record != NULL)
-		dec_client_record_ref(pclientid->cid_client_record);
+	if (clientid->cid_client_record != NULL)
+		dec_client_record_ref(clientid->cid_client_record);
 
-	if (pthread_mutex_destroy(&pclientid->cid_mutex) != 0)
+	if (pthread_mutex_destroy(&clientid->cid_mutex) != 0)
 		LogDebug(COMPONENT_CLIENTID,
 			 "pthread_mutex_destroy returned errno %d (%s)",
 			 errno, strerror(errno));
 
-	pool_free(client_id_pool, pclientid);
+	/* For NFSv4.1 clientids, destroy all associated sessions */
+	if (clientid->cid_minorversion > 0) {
+		struct glist_head *glist = NULL;
+		struct glist_head *glistn = NULL;
+
+		glist_for_each_safe(glist,
+				    glistn,
+				    &clientid->cid_cb.v41.cb_session_list) {
+			nfs41_session_t *session
+				= glist_entry(glist,
+					      nfs41_session_t,
+					      session_link);
+			nfs41_Session_Del(session->session_id);
+		}
+	}
+	pool_free(client_id_pool, clientid);
 }
 
-void dec_client_id_ref(nfs_client_id_t *pclientid)
+void dec_client_id_ref(nfs_client_id_t *clientid)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
 	int32_t cid_refcount;
 
 	if (isFullDebug(COMPONENT_CLIENTID))
-		display_client_id_rec(pclientid, str);
+		display_client_id_rec(clientid, str);
 
-	cid_refcount = atomic_dec_int32_t(&pclientid->cid_refcount);
+	cid_refcount = atomic_dec_int32_t(&clientid->cid_refcount);
 
 	LogFullDebug(COMPONENT_CLIENTID,
 		     "Decrement refcount Clientid {%s} refcount to %"PRId32,
@@ -177,20 +197,20 @@ void dec_client_id_ref(nfs_client_id_t *pclientid)
 	 * refcount has gone to 0, no other threads can have a pointer
 	 * to the clientid record.
 	 */
-	if (pclientid->cid_confirmed != EXPIRED_CLIENT_ID) {
+	if (clientid->cid_confirmed != EXPIRED_CLIENT_ID) {
 		/* Is not in any hash table, so we can just delete it */
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Free Clientid {%s} refcount now=0",
 			     str);
 
-		free_client_id(pclientid);
+		free_client_id(clientid);
 	} else {
 		/* Clientid records should not be freed unless marked expired. */
 		LogDebug(COMPONENT_CLIENTID,
 			 "Should not be here, try to remove last ref {%s}",
 			 str);
 
-		assert(pclientid->cid_confirmed == EXPIRED_CLIENT_ID);
+		assert(clientid->cid_confirmed == EXPIRED_CLIENT_ID);
 	}
 }
 
@@ -293,26 +313,26 @@ int display_client_id_val(struct gsh_buffdesc * pbuff, char *str)
 }
 
 nfs_client_id_t *create_client_id(clientid4 clientid,
-				  nfs_client_record_t *pclient_record,
-				  sockaddr_t *pclient_addr,
-				  nfs_client_cred_t *pcredential,
+				  nfs_client_record_t *client_record,
+				  sockaddr_t *client_addr,
+				  nfs_client_cred_t *credential,
 				  uint32_t minorversion)
 {
-	nfs_client_id_t * pclientid = pool_alloc(client_id_pool, NULL);
-	state_owner_t   * powner;
+	nfs_client_id_t *client_rec = pool_alloc(client_id_pool, NULL);
+	state_owner_t *owner;
 
-	if (pclientid == NULL) {
+	if (client_rec == NULL) {
 		LogDebug(COMPONENT_CLIENTID,
 			 "Unable to allocate memory for clientid %"PRIx64,
 			 clientid);
 		return NULL;
 	}
 
-	if (pthread_mutex_init(&pclientid->cid_mutex, NULL) == -1) {
+	if (pthread_mutex_init(&client_rec->cid_mutex, NULL) == -1) {
 		if (isDebug(COMPONENT_CLIENTID)) {
 			char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
 
-			display_clientid_name(pclientid,
+			display_clientid_name(client_rec,
 					      str_client);
 
 			LogDebug(COMPONENT_CLIENTID,
@@ -323,20 +343,20 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 
 		/* Directly free the clientid record since we failed
 		   to initialize it */
-		pool_free(client_id_pool, pclientid);
+		pool_free(client_id_pool, client_rec);
 
 		return NULL;
 	}
 
-	powner = &pclientid->cid_owner;
+	owner = &client_rec->cid_owner;
 
-	if (pthread_mutex_init(&powner->so_mutex, NULL) == -1) {
+	if (pthread_mutex_init(&owner->so_mutex, NULL) == -1) {
 		LogDebug(COMPONENT_CLIENTID,
 			 "Unable to create clientid owner for clientid %"
 			 PRIx64, clientid);
 
 		/* Directly free the clientid record since we failed to initialize it */
-		pool_free(client_id_pool, pclientid);
+		pool_free(client_id_pool, client_rec);
 
 		return NULL;
 	}
@@ -344,40 +364,40 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	if (clientid == 0)
 		clientid = new_clientid();
 
-	pclientid->cid_confirmed = UNCONFIRMED_CLIENT_ID;
-	pclientid->cid_clientid = clientid;
-	pclientid->cid_last_renew = time(NULL);
-	pclientid->cid_client_record = pclient_record;
-	pclientid->cid_client_addr = *pclient_addr;
-	pclientid->cid_credential = *pcredential;
-	pclientid->cid_minorversion = minorversion;
+	client_rec->cid_confirmed = UNCONFIRMED_CLIENT_ID;
+	client_rec->cid_clientid = clientid;
+	client_rec->cid_last_renew = time(NULL);
+	client_rec->cid_client_record = client_record;
+	client_rec->cid_client_addr = *client_addr;
+	client_rec->cid_credential = *credential;
+	client_rec->cid_minorversion = minorversion;
 
 	/* need to init the list_head */
-	init_glist(&pclientid->cid_openowners);
-	init_glist(&pclientid->cid_lockowners);
+	init_glist(&client_rec->cid_openowners);
+	init_glist(&client_rec->cid_lockowners);
 
 	/* set up the content of the clientid_owner */
-	powner->so_type = STATE_CLIENTID_OWNER_NFSV4;
-	powner->so_owner.so_nfs4_owner.so_clientid   = clientid;
-	powner->so_owner.so_nfs4_owner.so_pclientid  = pclientid;
-	powner->so_owner.so_nfs4_owner.so_resp.resop = NFS4_OP_ILLEGAL;
-	powner->so_owner.so_nfs4_owner.so_args.argop = NFS4_OP_ILLEGAL;
-	powner->so_refcount = 1;
+	owner->so_type = STATE_CLIENTID_OWNER_NFSV4;
+	owner->so_owner.so_nfs4_owner.so_clientid  = clientid;
+	owner->so_owner.so_nfs4_owner.so_pclientid = client_rec;
+	owner->so_owner.so_nfs4_owner.so_resp.resop = NFS4_OP_ILLEGAL;
+	owner->so_owner.so_nfs4_owner.so_args.argop = NFS4_OP_ILLEGAL;
+	owner->so_refcount = 1;
 
 	/* Init the lists for the clientid_owner */
-	init_glist(&powner->so_lock_list);
-	init_glist(&powner->so_owner.so_nfs4_owner.so_state_list);
+	init_glist(&owner->so_lock_list);
+	init_glist(&owner->so_owner.so_nfs4_owner.so_state_list);
 
 	/* Get a reference to the client record */
-	inc_client_record_ref(pclientid->cid_client_record);
+	inc_client_record_ref(client_rec->cid_client_record);
 
-	return pclientid;
+	return client_rec;
 }
 
 /**
  * @brief Inserts an entry describing a clientid4 into the cache.
  *
- * @param[in] pclientid the client id record
+ * @param[in] clientid the client id record
  *
  * @retval CLIENT_ID_SUCCESS if successfull.
  * @retval CLIENT_ID_INSERT_MALLOC_ERROR if an error occured during
@@ -386,17 +406,17 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
  *         query (via gethostbyaddr).
  */
 
-int nfs_client_id_insert(nfs_client_id_t * pclientid)
+int nfs_client_id_insert(nfs_client_id_t * clientid)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffdata;
 	int rc;
 
 	/* Create key from cid_clientid */
-	buffkey.addr = &pclientid->cid_clientid;
-	buffkey.len   = sizeof(pclientid->cid_clientid);
+	buffkey.addr = &clientid->cid_clientid;
+	buffkey.len   = sizeof(clientid->cid_clientid);
 
-	buffdata.addr = pclientid;
+	buffdata.addr = clientid;
 	buffdata.len   = sizeof(nfs_client_id_t);
 
 	rc = HashTable_Test_And_Set(ht_unconfirmed_client_id,
@@ -408,17 +428,17 @@ int nfs_client_id_insert(nfs_client_id_t * pclientid)
 		LogDebug(COMPONENT_CLIENTID,
 			 "Could not insert unconfirmed clientid %"
 			 PRIx64" error=%s",
-			 pclientid->cid_clientid,
+			 clientid->cid_clientid,
 			 hash_table_err_to_str(rc));
 
 		/* Free the clientid record and return */
-		free_client_id(pclientid);
+		free_client_id(clientid);
 
 		return CLIENT_ID_INSERT_MALLOC_ERROR;
 	}
 
 	/* Take a reference to the unconfirmed clientid for the hash table. */
-	inc_client_id_ref(pclientid);
+	inc_client_id_ref(clientid);
 
 	if (isFullDebug(COMPONENT_CLIENTID) &&
 	    isFullDebug(COMPONENT_HASHTABLE)) {
@@ -428,7 +448,7 @@ int nfs_client_id_insert(nfs_client_id_t * pclientid)
 	}
 
 	/* Attach new clientid to client record's cr_punconfirmed_id. */
-	pclientid->cid_client_record->cr_punconfirmed_id = pclientid;
+	clientid->cid_client_record->cr_punconfirmed_id = clientid;
 
 	return CLIENT_ID_SUCCESS;
 }
@@ -436,20 +456,20 @@ int nfs_client_id_insert(nfs_client_id_t * pclientid)
 /**
  * @brief Removes an unconfirmed client id record.
  *
- * @param[in] pclientid The client id record
+ * @param[in] clientid The client id record
  *
  * @return hash table error code
  */
 
-int remove_unconfirmed_client_id(nfs_client_id_t *pclientid)
+int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 {
 	int rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc old_key;
 	struct gsh_buffdesc old_value;
 
-	buffkey.addr = &pclientid->cid_clientid;
-	buffkey.len   = sizeof(pclientid->cid_clientid);
+	buffkey.addr = &clientid->cid_clientid;
+	buffkey.len   = sizeof(clientid->cid_clientid);
 
 	rc = HashTable_Del(ht_unconfirmed_client_id,
 			   &buffkey,
@@ -460,18 +480,18 @@ int remove_unconfirmed_client_id(nfs_client_id_t *pclientid)
 		LogDebug(COMPONENT_CLIENTID,
 			 "Could not remove unconfirmed clientid %"
 			 PRIx64" error=%s",
-			 pclientid->cid_clientid,
+			 clientid->cid_clientid,
 			 hash_table_err_to_str(rc));
 		return rc;
 	}
 
-	pclientid->cid_client_record->cr_punconfirmed_id = NULL;
+	clientid->cid_client_record->cr_punconfirmed_id = NULL;
 
 	/* Set this up so this client id record will be freed. */
-	pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
+	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
 
 	/* Release hash table reference to the unconfirmed record */
-	dec_client_id_ref(pclientid);
+	dec_client_id_ref(clientid);
 
 	return rc;
 }
@@ -479,7 +499,7 @@ int remove_unconfirmed_client_id(nfs_client_id_t *pclientid)
 /**
  * @brief Confirms a client id record.
  *
- * @param[in] pclientid the client id record
+ * @param[in] clientid the client id record
  *
  * @retval CLIENT_ID_SUCCESS if successfull.
  * @retval CLIENT_ID_INVALID_ARGUMENT if unable to find record in
@@ -490,7 +510,7 @@ int remove_unconfirmed_client_id(nfs_client_id_t *pclientid)
  *         query (via gethostbyaddr).
  */
 
-int nfs_client_id_confirm(nfs_client_id_t *pclientid,
+int nfs_client_id_confirm(nfs_client_id_t *clientid,
 			  log_components_t  component)
 {
 	int rc;
@@ -498,12 +518,12 @@ int nfs_client_id_confirm(nfs_client_id_t *pclientid,
 	struct gsh_buffdesc old_key;
 	struct gsh_buffdesc old_value;
 
-	buffkey.addr = &pclientid->cid_clientid;
-	buffkey.len = sizeof(pclientid->cid_clientid);
+	buffkey.addr = &clientid->cid_clientid;
+	buffkey.len = sizeof(clientid->cid_clientid);
 
 	/* Remove the clientid as the unconfirmed entry for the client
 	   record */
-	pclientid->cid_client_record->cr_punconfirmed_id = NULL;
+	clientid->cid_client_record->cr_punconfirmed_id = NULL;
 
 	rc = HashTable_Del(ht_unconfirmed_client_id,
 			   &buffkey,
@@ -514,7 +534,7 @@ int nfs_client_id_confirm(nfs_client_id_t *pclientid,
 		if (isDebug(COMPONENT_CLIENTID)) {
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
-			display_client_id_rec(pclientid, str);
+			display_client_id_rec(clientid, str);
 
 			LogDebug(COMPONENT_CLIENTID,
 				 "Unexpected problem %s, could not remove "
@@ -525,7 +545,7 @@ int nfs_client_id_confirm(nfs_client_id_t *pclientid,
 		return CLIENT_ID_INVALID_ARGUMENT;
 	}
 
-	pclientid->cid_confirmed  = CONFIRMED_CLIENT_ID;
+	clientid->cid_confirmed  = CONFIRMED_CLIENT_ID;
 
 	rc = HashTable_Test_And_Set(ht_confirmed_client_id,
 				    &old_key,
@@ -536,7 +556,7 @@ int nfs_client_id_confirm(nfs_client_id_t *pclientid,
 		if (isDebug(COMPONENT_CLIENTID)) {
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
-			display_client_id_rec(pclientid, str);
+			display_client_id_rec(clientid, str);
 
 			LogDebug(COMPONENT_CLIENTID,
 				 "Unexpected problem %s, could not "
@@ -546,18 +566,18 @@ int nfs_client_id_confirm(nfs_client_id_t *pclientid,
 
 		/* Set this up so this client id record will be
 		   freed. */
-		pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
+		clientid->cid_confirmed = EXPIRED_CLIENT_ID;
 
 		/* Release hash table reference to the unconfirmed
 		   record */
-		dec_client_id_ref(pclientid);
+		dec_client_id_ref(clientid);
 
 		return CLIENT_ID_INSERT_MALLOC_ERROR;
 	}
 
 	/* Add the clientid as the confirmed entry for the client
 	   record */
-	pclientid->cid_client_record->cr_pconfirmed_id = pclientid;
+	clientid->cid_client_record->cr_pconfirmed_id = clientid;
 
 	return CLIENT_ID_SUCCESS;
 }
@@ -568,12 +588,12 @@ int nfs_client_id_confirm(nfs_client_id_t *pclientid,
  * This function assumes caller holds precord->cr_mutex and holds a
  * reference to precord also.
  *
- * @param[in] pclientid The client id to expire
+ * @param[in] clientid The client id to expire
  *
  * @return true if the clientid is successfully expired.
  */
 
-int nfs_client_id_expire(nfs_client_id_t *pclientid)
+int nfs_client_id_expire(nfs_client_id_t *clientid)
 {
 	struct glist_head *glist, *glistn;
 	struct glist_head *glist2, *glistn2;
@@ -585,47 +605,47 @@ int nfs_client_id_expire(nfs_client_id_t *pclientid)
 	hash_table_t *ht_expire;
 	nfs_client_record_t *precord;
 
-	P(pclientid->cid_mutex);
-	if (pclientid->cid_confirmed == EXPIRED_CLIENT_ID) {
+	P(clientid->cid_mutex);
+	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[HASHTABLE_DISPLAY_STRLEN];
-			display_client_id_rec(pclientid, str);
+			display_client_id_rec(clientid, str);
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "Expired (skipped) {%s}", str);
 		}
 
-		V(pclientid->cid_mutex);
+		V(clientid->cid_mutex);
 		return false;
 	}
 
 	if (isDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
-		display_client_id_rec(pclientid, str);
+		display_client_id_rec(clientid, str);
 		LogDebug(COMPONENT_CLIENTID,
 			 "Expiring {%s}", str);
 	}
 
-	if(pclientid->cid_confirmed == CONFIRMED_CLIENT_ID)
+	if(clientid->cid_confirmed == CONFIRMED_CLIENT_ID)
 		ht_expire = ht_confirmed_client_id;
 	else
 		ht_expire = ht_unconfirmed_client_id;
 
-	pclientid->cid_confirmed = EXPIRED_CLIENT_ID;
+	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
 
 	/* Need to clean up the client record. */
-	precord = pclientid->cid_client_record;
+	precord = clientid->cid_client_record;
 
-	V(pclientid->cid_mutex);
+	V(clientid->cid_mutex);
 
 	/* Detach the clientid record from the client record */
-	if (precord->cr_pconfirmed_id == pclientid)
+	if (precord->cr_pconfirmed_id == clientid)
 		precord->cr_pconfirmed_id = NULL;
 
-	if (precord->cr_punconfirmed_id == pclientid)
+	if (precord->cr_punconfirmed_id == clientid)
 		precord->cr_punconfirmed_id = NULL;
 
-	buffkey.addr = &pclientid->cid_clientid;
-	buffkey.len = sizeof(pclientid->cid_clientid);
+	buffkey.addr = &clientid->cid_clientid;
+	buffkey.len = sizeof(clientid->cid_clientid);
 
 	rc = HashTable_Del(ht_expire,
 			   &buffkey,
@@ -636,14 +656,14 @@ int nfs_client_id_expire(nfs_client_id_t *pclientid)
 		LogDebug(COMPONENT_CLIENTID,
 			 "Could not remove expired clientid %"PRIx64
 			 " error=%s",
-			 pclientid->cid_clientid,
+			 clientid->cid_clientid,
 			 hash_table_err_to_str(rc));
 		assert(rc == HASHTABLE_SUCCESS);
 	}
 
 	/* traverse the client's lock owners, and release all locks */
 	glist_for_each_safe(glist, glistn,
-			    &pclientid->cid_lockowners) {
+			    &clientid->cid_lockowners) {
 		state_owner_t *plock_owner
 			= glist_entry(glist,
 				      state_owner_t,
@@ -665,7 +685,7 @@ int nfs_client_id_expire(nfs_client_id_t *pclientid)
 
 	/* traverse the client's lock owners, and release all locks
 	   states and owners */
-	glist_for_each_safe(glist, glistn, &pclientid->cid_lockowners) {
+	glist_for_each_safe(glist, glistn, &clientid->cid_lockowners) {
 		state_owner_t * plock_owner = glist_entry(
 			glist,
 			state_owner_t,
@@ -683,7 +703,7 @@ int nfs_client_id_expire(nfs_client_id_t *pclientid)
 	}
 
 	/* release the corresponding open states , close files*/
-	glist_for_each_safe(glist, glistn, &pclientid->cid_openowners) {
+	glist_for_each_safe(glist, glistn, &clientid->cid_openowners) {
 		state_owner_t * popen_owner
 			= glist_entry(glist,
 				      state_owner_t,
@@ -700,41 +720,41 @@ int nfs_client_id_expire(nfs_client_id_t *pclientid)
 		}
 	}
 
-	if (pclientid->cid_recov_dir != NULL) {
-		nfs4_rm_clid(pclientid->cid_recov_dir);
-		gsh_free(pclientid->cid_recov_dir);
-		pclientid->cid_recov_dir = NULL;
+	if (clientid->cid_recov_dir != NULL) {
+		nfs4_rm_clid(clientid->cid_recov_dir);
+		gsh_free(clientid->cid_recov_dir);
+		clientid->cid_recov_dir = NULL;
 	}
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
-		display_client_id_rec(pclientid, str);
+		display_client_id_rec(clientid, str);
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Expired (done) {%s}", str);
 	}
 
 	if (isDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
-		display_client_id_rec(pclientid, str);
+		display_client_id_rec(clientid, str);
 		LogDebug(COMPONENT_CLIENTID,
 			 "About to release last reference to {%s}", str);
 	}
 
 	/* Release the hash table reference to the clientid. */
-	dec_client_id_ref(pclientid);
+	dec_client_id_ref(clientid);
 
 	return true;
 }
 
 int nfs_client_id_get(hash_table_t * ht,
 		      clientid4 clientid,
-		      nfs_client_id_t **p_pclientid)
+		      nfs_client_id_t **p_clientid)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	int status;
 
-	if (p_pclientid == NULL)
+	if (p_clientid == NULL)
 		return CLIENT_ID_INVALID_ARGUMENT;
 
 	buffkey.addr = &clientid;
@@ -762,13 +782,13 @@ int nfs_client_id_get(hash_table_t * ht,
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "%s FOUND", ht->parameter.ht_name);
-		*p_pclientid = buffval.addr;
+		*p_clientid = buffval.addr;
 		status = CLIENT_ID_SUCCESS;
 	} else {
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "%s NOTFOUND", ht->parameter.ht_name);
-		*p_pclientid = NULL;
+		*p_clientid = NULL;
 		status = CLIENT_ID_NOT_FOUND;
 	}
 
@@ -779,32 +799,32 @@ int nfs_client_id_get(hash_table_t * ht,
  * @brief Tries to get a pointer to an unconfirmed entry for client_id cache.
  *
  * @param[in] clientid     the client id
- * @param[out] p_pclientid the found client id
+ * @param[out] p_clientid the found client id
  *
  * @return the result previously set if *pstatus == CLIENT_ID_SUCCESS
  */
 
 int nfs_client_id_get_unconfirmed(clientid4 clientid,
-				  nfs_client_id_t **p_pclientid)
+				  nfs_client_id_t **p_clientid)
 {
 	return nfs_client_id_get(ht_unconfirmed_client_id, clientid,
-				 p_pclientid);
+				 p_clientid);
 }
 
 /**
  * @brief Tries to get a pointer to an confirmed entry for client_id cache.
  *
- * @param[in]  clientid    The client id
- * @param[out] p_pclientid The found client id
+ * @param[in]  clientid   The client id
+ * @param[out] client_rec The found client id
  *
  * @return the result previously set if the return code CLIENT_ID_SUCCESS
  *
  */
 int nfs_client_id_get_confirmed(clientid4 clientid,
-				nfs_client_id_t **p_pclientid)
+				nfs_client_id_t **client_rec)
 {
 	return nfs_client_id_get(ht_confirmed_client_id, clientid,
-				 p_pclientid);
+				 client_rec);
 }
 
 /**

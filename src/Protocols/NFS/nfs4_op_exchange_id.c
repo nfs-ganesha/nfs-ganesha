@@ -25,11 +25,10 @@
  */
 
 /**
- * @file    nfs4_op_exchange_id.c
- * @brief   Routines used for managing the NFS4_OP_EXCHANGE_ID operation.
- *
- * Routines used for managing the EXCHANGE_ID operation.
+ * @file nfs4_op_exchange_id.c
+ * @brief The NFS4_OP_EXCHANGE_ID operation
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -338,12 +337,13 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 				  &data->credential,
 				  data->minorversion);
 
-	init_glist(&unconf->cid_cb.cb_u.v41.cb_session_list);
 	if (unconf == NULL) {
 		/* Error already logged, return */
 		res_EXCHANGE_ID4.eir_status = NFS4ERR_RESOURCE;
 		goto out;
 	}
+
+	init_glist(&unconf->cid_cb.v41.cb_session_list);
 
 	memcpy(unconf->cid_incoming_verifier,
 	       arg_EXCHANGE_ID4.eia_clientowner.co_verifier,

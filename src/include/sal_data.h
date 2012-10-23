@@ -27,8 +27,6 @@
 /**
  * @file    sal_data.h
  * @brief   Management of the state abstraction layer.
- *
- * Management of the state abstraction layer
  */
 
 #ifndef SAL_DATA_H
@@ -75,11 +73,11 @@ typedef struct state_cookie_entry_t state_cookie_entry_t;
 typedef struct state_block_data_t state_block_data_t;
 typedef struct state_layout_segment state_layout_segment_t;
 
-/******************************************************************************
+/*****************************************************************************
  *
  * NFSv4.1 Session data
  *
- ******************************************************************************/
+ *****************************************************************************/
 
 #define NFS41_SESSION_PER_CLIENT 3
 #define NFS41_NB_SLOTS 3
@@ -92,17 +90,25 @@ typedef struct nfs41_session_slot__ {
 	unsigned int cache_used;
 } nfs41_session_slot_t;
 
+/**
+ * @brief Structure representing an NFSv4.1 session
+ */
+
 struct nfs41_session__ {
-	clientid4 clientid;
-	nfs_client_id_t *pclientid_record;
-	struct glist_head session_list;
-	uint32_t sequence;
-	uint32_t session_flags;
-	char session_id[NFS4_SESSIONID_SIZE];
-	channel_attrs4 fore_channel_attrs;
-	channel_attrs4 back_channel_attrs;
-	nfs41_session_slot_t slots[NFS41_NB_SLOTS];
-	SVCXPRT *xprt; /* ref'd pointer to xprt */
+	clientid4 clientid; /*< Clientid owning this session */
+	nfs_client_id_t *pclientid_record; /*< Client record
+					       correspinding to ID */
+	struct glist_head session_link; /*< Link in the list of
+					    sessions for this
+					    clientid */
+	char session_id[NFS4_SESSIONID_SIZE]; /*< Session ID */
+	channel_attrs4 fore_channel_attrs; /*< Fore-channel attributes */
+	channel_attrs4 back_channel_attrs; /*< Back-channel attributes */
+	nfs41_session_slot_t slots[NFS41_NB_SLOTS]; /*< Slot table */
+	SVCXPRT *xprt; /*< Referenced pointer to transport */
+	uint32_t cb_program; /*< Callback program ID */
+	struct rpc_call_channel cb_chan; /*< Back channel */
+	bool cb_chan_up;
 };
 
 /******************************************************************************
@@ -316,26 +322,23 @@ struct nfs_client_id_t {
 	nfs_client_cred_t cid_credential;
 	sockaddr_t cid_client_addr;
 	int cid_allow_reclaim;
-	char * cid_recov_dir;
+	char *cid_recov_dir;
 	nfs_client_record_t *cid_client_record;
 	struct glist_head cid_openowners;
 	struct glist_head cid_lockowners;
 	pthread_mutex_t cid_mutex;
-	/* supplied univ. address */
-	struct {
-		char cb_client_r_addr[SOCK_NAME_MAX];
-		gsh_addr_t cb_addr;
-		uint32_t cb_program;
-		struct rpc_call_channel cb_chan;
-		union {
-			struct {
-				uint32_t cb_callback_ident;
-			} v40;
-			struct {
-				nfs41_session_t *cb_session;
-				struct glist_head cb_session_list;
-			} v41;
-		} cb_u;
+	union {
+		struct {
+			struct rpc_call_channel cb_chan;
+			/* supplied univ. address */
+			gsh_addr_t cb_addr;
+			uint32_t cb_callback_ident;
+			char cb_client_r_addr[SOCK_NAME_MAX];
+			uint32_t cb_program;
+		} v40;
+		struct {
+			struct glist_head cb_session_list;
+		} v41;
 	} cid_cb;
 	char cid_server_owner[MAXNAMLEN];
 	char cid_server_scope[MAXNAMLEN];

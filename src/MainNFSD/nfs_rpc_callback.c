@@ -29,6 +29,7 @@
  * @file nfs_rpc_callback.c
  * @author Matt Benjamin <matt@linuxbox.com>
  * @author Lee Dobryden <lee@linuxbox.com>
+ * @author Adam C. Emerson <aemerson@linuxbox.com>
  * @brief RPC callback dispatch package
  *
  * This module implements APIs for submission, and dispatch of NFSv4.0
@@ -186,17 +187,19 @@ nc_type nfs_netid_to_nc(const char *netid)
 	return _NC_ERR;
 }
 
-static inline void setup_client_saddr(nfs_client_id_t *pclientid,
+static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
 {
 	char addr_buf[SOCK_NAME_MAX];
 	uint32_t bytes[11];
 	int code;
 
-	memset(&pclientid->cid_cb.cb_addr.ss, 0,
+	assert(clientid->cid_minorversion == 0);
+
+	memset(&clientid->cid_cb.v40.cb_addr.ss, 0,
 	       sizeof(struct sockaddr_storage));
 
-	switch (pclientid->cid_cb.cb_addr.nc) {
+	switch (clientid->cid_cb.v40.cb_addr.nc) {
 	case _NC_TCP:
 	case _NC_RDMA:
 	case _NC_SCTP:
@@ -207,7 +210,7 @@ static inline void setup_client_saddr(nfs_client_id_t *pclientid,
 			   &bytes[5], &bytes[6]) == 6) {
 			struct sockaddr_in *sin =
 				((struct sockaddr_in *)
-				 &pclientid->cid_cb.cb_addr.ss);
+				 &clientid->cid_cb.v40.cb_addr.ss);
 			snprintf(addr_buf, SOCK_NAME_MAX, "%u.%u.%u.%u",
 				 bytes[1], bytes[2],
 				 bytes[3], bytes[4]);
@@ -237,7 +240,7 @@ static inline void setup_client_saddr(nfs_client_id_t *pclientid,
 			   &bytes[10]) == 10) {
 			struct sockaddr_in6 *sin6 =
 				((struct sockaddr_in6 *)
-				 &pclientid->cid_cb.cb_addr.ss);
+				 &clientid->cid_cb.v40.cb_addr.ss);
 			snprintf(addr_buf, SOCK_NAME_MAX,
 				 "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x",
 				 bytes[1], bytes[2], bytes[3],
@@ -263,29 +266,33 @@ static inline void setup_client_saddr(nfs_client_id_t *pclientid,
 	};
 }
 
-void nfs_set_client_location(nfs_client_id_t *pclientid,
+void nfs_set_client_location(nfs_client_id_t *clientid,
 			     const clientaddr4 *addr4)
 {
-	pclientid->cid_cb.cb_addr.nc = nfs_netid_to_nc(addr4->r_netid);
-	strlcpy(pclientid->cid_cb.cb_client_r_addr, addr4->r_addr,
+	assert(clientid->cid_minorversion == 0);
+	clientid->cid_cb.v40.cb_addr.nc = nfs_netid_to_nc(addr4->r_netid);
+	strlcpy(clientid->cid_cb.v40.cb_client_r_addr, addr4->r_addr,
 		SOCK_NAME_MAX);
-	setup_client_saddr(pclientid, pclientid->cid_cb.cb_client_r_addr);
+	setup_client_saddr(clientid,
+			   clientid->cid_cb.v40.cb_client_r_addr);
 }
 
 static inline int32_t
-nfs_clid_connected_socket(nfs_client_id_t *pclientid, int *fd, int *proto)
+nfs_clid_connected_socket(nfs_client_id_t *clientid, int *fd, int *proto)
 {
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
 	int nfd, code = 0;
 
+	assert(clientid->cid_minorversion == 0);
+
 	*fd = 0;
 	*proto = -1;
 
-	switch (pclientid->cid_cb.cb_addr.ss.ss_family) {
+	switch (clientid->cid_cb.v40.cb_addr.ss.ss_family) {
 	case AF_INET:
-		sin = (struct sockaddr_in *) &pclientid->cid_cb.cb_addr.ss;
-		switch (pclientid->cid_cb.cb_addr.nc) {
+		sin = (struct sockaddr_in *) &clientid->cid_cb.v40.cb_addr.ss;
+		switch (clientid->cid_cb.v40.cb_addr.nc) {
 		case _NC_TCP:
 			nfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 			*proto = IPPROTO_TCP;
@@ -311,8 +318,9 @@ nfs_clid_connected_socket(nfs_client_id_t *pclientid, int *fd, int *proto)
 		*fd = nfd;
 		break;
 	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *) &pclientid->cid_cb.cb_addr.ss;
-		switch (pclientid->cid_cb.cb_addr.nc) {
+		sin6 = (struct sockaddr_in6 *) &clientid->cid_cb
+			.v40.cb_addr.ss;
+		switch (clientid->cid_cb.v40.cb_addr.nc) {
 		case _NC_TCP6:
 			nfd = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
 			*proto = IPPROTO_TCP;
@@ -377,12 +385,12 @@ static inline char *format_host_principal(rpc_call_channel_t *chan,
 	switch (chan->type) {
 	case RPC_CHAN_V40:
 	{
-		nfs_client_id_t *pclientid = chan->clientid;
-		switch (pclientid->cid_cb.cb_addr.ss.ss_family) {
+		nfs_client_id_t *clientid = chan->source.clientid;
+		switch (clientid->cid_cb.v40.cb_addr.ss.ss_family) {
 		case AF_INET:
 		{
 			struct sockaddr_in *sin = (struct sockaddr_in *)
-				&pclientid->cid_cb.cb_addr.ss;
+				&clientid->cid_cb.v40.cb_addr.ss;
 			host = inet_ntop(AF_INET, &sin->sin_addr, addr_buf,
 					 INET_ADDRSTRLEN);
 			break;
@@ -390,7 +398,7 @@ static inline char *format_host_principal(rpc_call_channel_t *chan,
 		case AF_INET6:
 		{
 			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)
-				&pclientid->cid_cb.cb_addr.ss;
+				&clientid->cid_cb.v40.cb_addr.ss;
 			host = inet_ntop(AF_INET6, &sin6->sin6_addr, addr_buf,
 					 INET6_ADDRSTRLEN);
 			break;
@@ -465,89 +473,52 @@ out:
 	return;
 }
 
-static inline bool nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
-{
-	nfs_client_cred_t *credential = NULL;
-	bool code = true;
-	AUTH *auth = NULL;
-
-	switch (chan->type) {
-	case RPC_CHAN_V40:
-		assert(&chan->clientid);
-		credential = &chan->clientid->cid_credential;
-		break;
-	case RPC_CHAN_V41:
-		/* XXX implement */
-		goto out;
-		break;
-	}
-
-	switch (credential->flavor) {
-	case RPCSEC_GSS:
-		nfs_rpc_callback_setup_gss(chan, credential);
-		break;
-	case AUTH_SYS:
-		auth = authunix_create_default();
-		/* XXX see above */
-		if (auth)
-			chan->auth = auth;
-		break;
-	case AUTH_NONE:
-		break;
-	default:
-		/* XXX prevented by forward check */
-		break;
-	}
-
-out:
-	return code;
-}
-
 /**
  * @brief Create a channel for an NFSv4.0 client
  *
  * This function creates a new channel for clientid (v4.0), optionally
  * connecting it.
  *
- * @param[in] pclientid Client record
+ * @param[in] clientid Client record
  * @param[in] flags     Currently unused
  *
  * @return Status code.
  */
 
-int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
+int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid,
 			    uint32_t flags)
 {
 	struct netbuf raddr;
 	int fd, proto, code = 0;
-	rpc_call_channel_t *chan = &pclientid->cid_cb.cb_chan;
+	rpc_call_channel_t *chan = &clientid->cid_cb.v40.cb_chan;
 
 	assert(!chan->clnt);
+	assert(clientid->cid_minorversion == 0);
 
 	/* XXX we MUST error RFC 3530bis, sec. 3.3.3 */
-	if (!supported_auth_flavor(pclientid->cid_credential.flavor)) {
+	if (!supported_auth_flavor(clientid->cid_credential.flavor)) {
 		code = EINVAL;
 		goto out;
 	}
 
 	chan->type = RPC_CHAN_V40;
-	chan->clientid = pclientid;
+	chan->source.clientid = clientid;
 
-	code = nfs_clid_connected_socket(pclientid, &fd, &proto);
+	code = nfs_clid_connected_socket(clientid, &fd, &proto);
 	if (code) {
 		LogDebug(COMPONENT_NFS_CB,
 			 "Failed creating socket");
 		goto out;
 	}
 
-	raddr.buf = &pclientid->cid_cb.cb_addr.ss;
+	raddr.buf = &clientid->cid_cb.v40.cb_addr.ss;
 
 	switch (proto) {
 	case IPPROTO_TCP:
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in);
 		chan->clnt = clnt_vc_create(fd,
 					    &raddr,
-					    pclientid->cid_cb.cb_program,
+					    clientid->cid_cb.v40.cb_program,
 					    1 /* Errata ID: 2291 */,
 					    0, 0);
 		break;
@@ -555,7 +526,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in6);
 		chan->clnt = clnt_dg_create(fd,
 					    &raddr,
-					    pclientid->cid_cb.cb_program,
+					    clientid->cid_cb.v40.cb_program,
 					    1 /* Errata ID: 2291 */,
 					    0, 0);
 		break;
@@ -569,9 +540,22 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
 	}
 
 	/* channel protection */
-	if (!nfs_rpc_callback_seccreate(chan)) {
-		/* XXX */
+	switch (clientid->cid_credential.flavor) {
+	case RPCSEC_GSS:
+		nfs_rpc_callback_setup_gss(chan,
+					   &clientid->cid_credential);
+		break;
+	case AUTH_SYS:
+		if (!(chan->auth = authunix_create_default())) {
+			code = EINVAL;
+		}
+		code = 0;
+		break;
+	case AUTH_NONE:
+		break;
+	default:
 		code = EINVAL;
+		break;
 	}
 
 out:
@@ -581,33 +565,35 @@ out:
 /**
  * @brief Create a channel for an NFSv4.1 session
  *
- * Create a channel for a new NFSv4.1 session.  This currently uses
- * the first session associated with a clientid.
+ * @param[in,out] session   The session on which to create the back
+ *                          channel
+ * @param[in]     sec_parms Allowable security parameters
  */
-int nfs_rpc_create_chan_v41(nfs_client_id_t *pclientid,
-			    uint32_t flags)
+
+int nfs_rpc_create_chan_v41(nfs41_session_t *session,
+			    int num_sec_parms,
+			    callback_sec_parms4 *sec_parms)
+
 {
 	int code = 0;
-	rpc_call_channel_t *chan = &pclientid->cid_cb.cb_chan;
-	nfs41_session_t *session;
+	rpc_call_channel_t *chan = &session->cb_chan;
+	int i = 0;
+	bool authed = false;
+	struct timeval cb_timeout = {15, 0};
 
-	assert(!chan->clnt);
-
-	session = glist_first_entry(
-		&pclientid->cid_cb.cb_u.v41.cb_session_list,
-		nfs41_session_t, session_list);
-	if (!session) {
-		code = EINVAL;
-		goto out;
+	if (chan->clnt) {
+		/* Something better later. */
+		return EEXIST;
 	}
 
 	chan->type = RPC_CHAN_V41;
-	chan->clientid = pclientid;
+	chan->source.session = session;
 
 	assert(session->xprt);
 
 	/* connect an RPC client */
-	chan->clnt = clnt_vc_create_svc(session->xprt, 100003,
+	chan->clnt = clnt_vc_create_svc(session->xprt,
+					session->cb_program,
 					4, SVC_VC_CREATE_BOTHWAYS);
 
 	if (!chan->clnt) {
@@ -615,28 +601,89 @@ int nfs_rpc_create_chan_v41(nfs_client_id_t *pclientid,
 		goto out;
 	}
 
-	/**
-	 * @todo Channel protection?
-	 */
+
+	for (i = 0; i < num_sec_parms; ++i) {
+		if (sec_parms[i].cb_secflavor == AUTH_NONE) {
+			authed = true;
+			break;
+		} else if (sec_parms[i].cb_secflavor == AUTH_SYS) {
+			struct authunix_parms *sys_parms =
+				&sec_parms[i].callback_sec_parms4_u
+				.cbsp_sys_cred;
+			if (!(chan->auth
+			      = authunix_create(sys_parms->aup_machname,
+						sys_parms->aup_uid,
+						sys_parms->aup_gid,
+						sys_parms->aup_len,
+						sys_parms->aup_gids))) {
+				continue;
+			}
+			authed = true;
+			break;
+		} else if (sec_parms[i].cb_secflavor == RPCSEC_GSS) {
+
+			/**
+			 * @todo ACE: Come back later and implement
+			 * GSS.
+			 */
+			continue;
+		} else  {
+			LogMajor(COMPONENT_NFS_CB,
+				 "Client sent unknown auth type.");
+			continue;
+		}
+	}
+
+	if (!authed) {
+		code = EPERM;
+		LogMajor(COMPONENT_NFS_CB,
+			 "No working auth in sec_params.");
+		goto out;
+	}
+
+	if (rpc_cb_null(chan,
+			cb_timeout) != RPC_SUCCESS) {
+		code = EBADFD;
+		goto out;
+	}
+
+	session->cb_chan_up = true;
+	code = 0;
 
 out:
+	if ((code != 0) &&
+	    chan->clnt) {
+		nfs_rpc_destroy_chan(chan);
+	}
+
 	return code;
 }
 
-rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
+rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 				     uint32_t flags)
 {
-	rpc_call_channel_t *chan = &pclientid->cid_cb.cb_chan;
+	rpc_call_channel_t *chan = NULL;
 
-	if (!chan->clnt) {
-		switch(pclientid->cid_minorversion) {
-		case 0:
-			nfs_rpc_create_chan_v40(pclientid, flags);
-			break;
-		default:
-			/* XXX 1 or 2 */
-			nfs_rpc_create_chan_v41(pclientid, flags);
-			break;
+	if (clientid->cid_minorversion == 0) {
+		if (!chan->clnt) {
+			chan = &clientid->cid_cb.v40.cb_chan;
+			if (nfs_rpc_create_chan_v40(clientid,
+						    flags) == 0) {
+			}
+		}
+		} else { /* 1 and higher */
+		struct glist_head *glist = NULL;
+
+		/* Get the first working back channel we have */
+		glist_for_each(glist,
+			       &clientid->cid_cb.v41.cb_session_list) {
+			nfs41_session_t *session =
+				glist_entry(glist,
+					    nfs41_session_t,
+					    session_link);
+			if (session->cb_chan_up) {
+				chan = &session->cb_chan;
+			}
 		}
 	}
 
@@ -665,11 +712,15 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 			}
 			/* destroy it */
 			clnt_destroy(chan->clnt);
-			chan->clnt = NULL;
 		}
 		break;
 	case RPC_CHAN_V41:
-		/* XXX channel is shared */
+		if (chan->auth) {
+			AUTH_DESTROY(chan->auth);
+			chan->auth = NULL;
+		}
+		chan->clnt->cl_ops->cl_release(chan->clnt);
+
 		break;
 	}
 
@@ -850,4 +901,3 @@ int32_t nfs_rpc_abort_call(rpc_call_t *call)
 {
 	return 0;
 }
-
