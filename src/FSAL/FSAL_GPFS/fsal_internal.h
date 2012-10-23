@@ -42,6 +42,10 @@
 #include "fsal_up.h"
 
 bool fsal_error_is_event(fsal_status_t status);
+/*
+ * Tests whether an error code should be raised as an info debug.
+ */
+bool fsal_error_is_info(fsal_status_t status);
 
 void set_gpfs_verifier(verifier4 *verifier);
 
@@ -76,6 +80,13 @@ struct gpfs_ds
                if(fsal_error_is_event(_struct_status_))                        \
                  {                                                             \
                    LogEvent(COMPONENT_FSAL,                                    \
+                     "%s returns (%s, %s, %d)",fsal_function_names[_f_],       \
+                     label_fsal_err(_code_), msg_fsal_err(_code_), _minor_);   \
+                   return (_struct_status_);                                   \
+                 }                                                             \
+               if(fsal_error_is_info(_struct_status_))                         \
+                 {                                                             \
+                   LogInfo(COMPONENT_FSAL,                                     \
                      "%s returns (%s, %s, %d)",fsal_function_names[_f_],       \
                      label_fsal_err(_code_), msg_fsal_err(_code_), _minor_);   \
                    return (_struct_status_);                                   \
