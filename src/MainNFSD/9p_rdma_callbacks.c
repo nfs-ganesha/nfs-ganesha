@@ -73,11 +73,6 @@ void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) {
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) {
 	if (!trans->private_data)
 		return;
-
-	struct _9p_datamr *_9p_datamr = trans->private_data;
-	pthread_mutex_lock(_9p_datamr->lock);
-	pthread_cond_signal(_9p_datamr->cond);
-	pthread_mutex_unlock(_9p_datamr->lock);
 }
 
 void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) 
