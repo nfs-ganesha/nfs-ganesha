@@ -321,6 +321,7 @@ struct file_handle_t {
   enum e_nfs_state       m_nfs_state;
   time_t                 m_last_io_time;      // Last time I/O was performed.
   int                    m_ftrunc_rsp_rcvd;
+  uint64_t               m_eio_counter;       // number of EIOs encountered
   int                    m_sticky_rc;         // 'sticky' rc
 };
 
