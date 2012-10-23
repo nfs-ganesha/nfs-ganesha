@@ -73,7 +73,6 @@ fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
                             fsal_file_t * file_descriptor,      /* NOT USED */
                             fsal_attrib_list_t * p_object_attributes) /* [ IN/OUT ] */
 {
-  int fsuid, fsgid;
   fsal_status_t st;
 
   /* sanity checks.
@@ -82,15 +81,10 @@ fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
   if(!p_filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  fsuid = setfsuid(p_context->credential.user);
-  fsgid = setfsgid(p_context->credential.group);
-
   TakeTokenFSCall();
   st = fsal_trucate_by_handle(p_context, p_filehandle, length);
   ReleaseTokenFSCall();
   if (FSAL_IS_ERROR(st)) {
-    setfsuid(fsuid);
-    setfsgid(fsgid);
     ReturnStatus(st, INDEX_FSAL_truncate);
   }
   /* Optionally retrieve attributes */
@@ -107,8 +101,6 @@ fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
         }
     }
 
-  fsuid =setfsuid(fsuid);
-  fsgid =setfsgid(fsgid);
   /* No error occurred */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);
 
