@@ -921,9 +921,10 @@ fsal_status_t fsal_internal_testAccess(const struct req_op_context *p_context, /
 
 #ifdef _USE_NFS4_ACL
   /* If ACL exists and given access type is ace4 mask, use ACL to check access. */
-  LogDebug(COMPONENT_FSAL, "pattr=%p, pacl=%p, is_ace4_mask=%d",
+  LogDebug(COMPONENT_FSAL, "pattr=%p, pacl=%p, is_ace4_mask=%d, access_type=%x",
            p_object_attributes, p_object_attributes ? p_object_attributes->acl : 0,
-           IS_FSAL_ACE4_MASK_VALID(access_type));
+           IS_FSAL_ACE4_MASK_VALID(access_type),
+           access_type);
 
   if(p_object_attributes && p_object_attributes->acl &&
      IS_FSAL_ACE4_MASK_VALID(access_type))
@@ -1073,7 +1074,6 @@ fsal_status_t fsal_set_xstat_by_handle(int dirfd,
 {
   int rc, errsv;
   struct xstat_arg xstatarg;
-  int fsuid, fsgid;
 
   if(!p_handle || !p_buffxstat)
       return fsalstat(ERR_FSAL_FAULT, 0);
@@ -1085,12 +1085,12 @@ fsal_status_t fsal_set_xstat_by_handle(int dirfd,
   xstatarg.attr_changed = attr_changed;
   xstatarg.buf = &p_buffxstat->buffstat;
 
-  fsuid = setfsuid(p_context->creds->caller_uid);
-  fsgid = setfsuid(p_context->creds->caller_gid);
+  /* We explicitly do NOT do setfsuid/setfsgid here because truncate, even to
+   * enlarge a file, doesn't actually allocate blocks. GPFS implements sparse
+   * files, so blocks of all 0 will not actually be allocated.
+   */
   rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
   errsv = errno;
-  setfsuid(fsuid);
-  setfsgid(fsgid);
 
   LogDebug(COMPONENT_FSAL, "gpfs_ganesha: SET_XSTAT returned, rc = %d", rc);
 
