@@ -591,6 +591,11 @@ typedef fsal_u64_t fsal_attrib_mask_t;
 /* Change attribute */
 #define FSAL_ATTR_CHANGE    ((fsal_attrib_mask_t) 0x0000000000100000LL )
 
+/* Set atime to server time */
+#define FSAL_ATTR_ATIME_SERVER  ((fsal_attrib_mask_t) 0x0000000000200000LL )
+
+/* Set mtime to server time */
+#define FSAL_ATTR_MTIME_SERVER  ((fsal_attrib_mask_t) 0x0000000000400000LL )
 
 /* "classic" attributes sets : */
 
