@@ -612,8 +612,8 @@ int _9p_process_buffer(_9p_request_data_t *preq9p,
 
 #ifdef _USE_9P_RDMA
 void * _9p_rdma_dispatcher_thread(void *arg);
-void _9p_rdma_process_request(_9p_request_data_t *preq9p,
-			      nfs_worker_data_t *pworker_data);
+void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) ;
+void _9p_rdma_cleanup_conn(msk_trans_t *trans) ;
 #endif
 
 void nfs_operate_on_sigusr1(void);

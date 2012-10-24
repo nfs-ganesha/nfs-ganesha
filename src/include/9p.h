@@ -344,29 +344,13 @@ typedef struct _9p_flush_bucket__
 
 #define FLUSH_BUCKETS 64
 
-#ifdef _USE_9P_RDMA
-typedef struct _9p_datamr
-{
-  msk_data_t *data;
-  struct ibv_mr *mr;
-  struct _9p_datamr * sender ;
-  void * pconn ;
-} _9p_datamr_t ;
-
-typedef struct _9p_rdma_ep__
-{
-  _9p_datamr_t * datamr ;
-  msk_trans_t  * trans ;
-} _9p_rdma_ep_t ;
-#endif
-
 typedef struct _9p_conn__
 {
   union  trans_data
    {
      long int        sockfd ;
 #ifdef _USE_9P_RDMA
-      _9p_rdma_ep_t  rdma_ep ;
+      msk_trans_t   *rdma_trans ;
 #endif 
    } trans_data ;
   _9p_trans_type_t trans_type ;
@@ -378,10 +362,31 @@ typedef struct _9p_conn__
   pthread_mutex_t sock_lock;
 } _9p_conn_t ;
 
+#ifdef _USE_9P_RDMA
+typedef struct _9p_datamr
+{
+  msk_data_t *data;
+  struct ibv_mr *mr;
+  struct _9p_datamr * sender ;
+} _9p_datamr_t ;
+
+typedef struct _9p_rdma_priv
+{
+  _9p_conn_t    * pconn ;
+  uint8_t       * rdmabuf ;
+  msk_data_t   ** rdata ;
+  _9p_datamr_t  * datamr ;
+} _9p_rdma_priv ;
+#define _9p_rdma_priv_of(x) ((_9p_rdma_priv*)x->private_data)
+#endif
+
 typedef struct _9p_request_data__
 {
   char        * _9pmsg ;
   _9p_conn_t  *  pconn ;
+#ifdef _USE_9P_RDMA
+  _9p_datamr_t * datamr ;
+#endif
   _9p_flush_hook_t flush_hook;
 } _9p_request_data_t ;
 

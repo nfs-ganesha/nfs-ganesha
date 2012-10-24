@@ -71,19 +71,26 @@ void _9p_rdma_callback_send(msk_trans_t *trans, void *arg) {
 }
 
 void _9p_rdma_callback_disconnect(msk_trans_t *trans) {
-	if (!trans->private_data)
-		return;
+  /* This probably means this is the parent trans.
+     Ideally, cleanup anyway and the cleanup function should handle it */
+  if (!trans->private_data)
+    return;
+
+  _9p_rdma_cleanup_conn(trans);
+
 }
 
 void _9p_rdma_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) 
 {
-  msk_trans_t * trans =  preq9p->pconn->trans_data.rdma_ep.trans ;
+  msk_trans_t * trans =  preq9p->pconn->trans_data.rdma_trans ;
 
-  msk_data_t *pdata = preq9p->pconn->trans_data.rdma_ep.datamr->data ;
-  _9p_datamr_t * datamr =  preq9p->pconn->trans_data.rdma_ep.datamr ;
 
-  _9p_datamr_t * outdatamr =  preq9p->pconn->trans_data.rdma_ep.datamr->sender ;
-  msk_data_t *poutdata =   preq9p->pconn->trans_data.rdma_ep.datamr->sender->data ;
+  msk_data_t *pdata = preq9p->datamr->data ;
+  _9p_datamr_t * datamr =  preq9p->datamr ;
+
+  /** @todo: don't need another datamr for sender, only put data there */
+  _9p_datamr_t * outdatamr =  preq9p->datamr->sender ;
+  msk_data_t *poutdata =   outdatamr->data ;
 
 
 
@@ -144,11 +151,8 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg)
  
   preq->rtype = _9P_REQUEST ;
   preq->r_u._9p._9pmsg = _9pmsg;
-  preq->r_u._9p.pconn = (_9p_conn_t *)_9p_datamr->pconn ;  
-  preq->r_u._9p.pconn->trans_type = _9P_RDMA ;
-  preq->r_u._9p.pconn->trans_data.rdma_ep.datamr = _9p_datamr ;
-  preq->r_u._9p.pconn->trans_data.rdma_ep.trans = trans ;
-  
+  preq->r_u._9p.pconn = _9p_rdma_priv_of(trans)->pconn;
+  preq->r_u._9p.datamr = _9p_datamr ;
 
   /* Add this request to the request list, should it be flushed later. */
   _9pmsg = _9p_datamr->data->data ;
@@ -157,4 +161,3 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, void *arg)
 
   DispatchWork9P( preq ) ;
 } /* _9p_rdma_callback_recv */
-
