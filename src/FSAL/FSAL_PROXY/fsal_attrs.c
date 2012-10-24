@@ -263,7 +263,8 @@ fsal_status_t PROXYFSAL_setattrs(fsal_handle_t * filehandle,       /* IN */
     {
 
       if(attrs.asked_attributes
-         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+         & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME |
+            FSAL_ATTR_ATIME_SERVER | FSAL_ATTR_MTIME_SERVER))
         {
 
           /* handled as an unsettable attribute. */
