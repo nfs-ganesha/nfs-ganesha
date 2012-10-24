@@ -104,6 +104,21 @@ cache_inode_setattr(cache_entry_t *entry,
           goto out;
      }
 
+     /* Get wrlock on attr_lock and verify attrs */
+     *status = cache_inode_lock_trust_attrs(entry, context, TRUE);
+     if(*status != CACHE_INODE_SUCCESS)
+       return *status;
+
+     /* Do permission checks */
+     if(cache_inode_check_setattr_perms(entry,
+                                        attr,
+                                        context,
+                                        is_open_write,
+                                        status) != CACHE_INODE_SUCCESS)
+       {
+         goto unlock;
+       }
+
      if (attr->asked_attributes & FSAL_ATTR_SIZE) {
           PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
           got_content_lock = TRUE;
