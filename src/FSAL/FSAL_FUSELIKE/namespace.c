@@ -6,7 +6,6 @@
 #endif
 
 #include "namespace.h"
-#include "RW_Lock.h"
 #include "HashTable.h"
 
 #include <string.h>
@@ -183,7 +182,7 @@ static hash_parameter_t nodes_hash_config = {
 
 /* namespace structures */
 
-static rw_lock_t ns_lock = { 0 };
+static pthread_rwlock_t ns_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 static hash_table_t *lookup_hash = NULL;
 static hash_table_t *nodes_hash = NULL;
@@ -590,7 +589,7 @@ int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen)
                         NULL, NULL, NULL);
 
   /* initialize namespace lock */
-  if(rw_lock_init(&ns_lock))
+  if(pthread_rwlock_init(&ns_lock), NULL)
     return ENOMEM;
 
   /* init the lookup hash table */
@@ -805,10 +804,10 @@ int NamespaceAdd(ino_t parent_ino, dev_t parent_dev, unsigned int gen,
   int rc;
 
   /* lock the namespace for modification */
-  P_w(&ns_lock);
+  pthread_rwlock_wrlock(&ns_lock);
   rc = NamespaceAdd_nl(parent_ino, parent_dev, gen, name,
                        entry_ino, entry_dev, p_new_gen);
-  V_w(&ns_lock);
+  pthread_rwlock_unlock(&ns_lock);
 
   return rc;
 }
@@ -819,9 +818,9 @@ int NamespaceRemove(ino_t parent_ino, dev_t parent_dev, unsigned int gen, char *
   int rc;
 
   /* lock the namespace for modification */
-  P_w(&ns_lock);
+  pthread_rwlock_wrlock(&ns_lock);
   rc = NamespaceRemove_nl(parent_ino, parent_dev, gen, name);
-  V_w(&ns_lock);
+  pthread_rwlock_unlock(&ns_lock);
 
   return rc;
 }
@@ -837,14 +836,14 @@ int NamespaceRename(ino_t parent_entry_src, dev_t src_dev, unsigned int srcgen,
   unsigned int new_gen;
 
   /* lock the namespace for modification */
-  P_w(&ns_lock);
+  pthread_rwlock_wrlock(&ns_lock);
 
   /* get source node info */
   p_node = h_get_lookup(parent_entry_src, src_dev, name_src, &rc);
 
   if(!p_node || rc != 0)
     {
-      V_w(&ns_lock);
+      pthread_rwlock_unlock(&ns_lock);
       return rc;
     }
 
@@ -852,7 +851,7 @@ int NamespaceRename(ino_t parent_entry_src, dev_t src_dev, unsigned int srcgen,
   if((parent_entry_src == parent_entry_tgt)
      && (src_dev == tgt_dev) && !strcmp(name_src, name_tgt))
     {
-      V_w(&ns_lock);
+      pthread_rwlock_unlock(&ns_lock);
       return 0;
     }
 
@@ -868,7 +867,7 @@ int NamespaceRename(ino_t parent_entry_src, dev_t src_dev, unsigned int srcgen,
       rc = NamespaceRemove_nl(parent_entry_tgt, tgt_dev, tgtgen, name_tgt);
       if(rc)
         {
-          V_w(&ns_lock);
+          pthread_rwlock_unlock(&ns_lock);
           return rc;
         }
 
@@ -881,14 +880,14 @@ int NamespaceRename(ino_t parent_entry_src, dev_t src_dev, unsigned int srcgen,
 
   if(rc)
     {
-      V_w(&ns_lock);
+      pthread_rwlock_unlock(&ns_lock);
       return rc;
     }
 
   /* remove old path */
   rc = NamespaceRemove_nl(parent_entry_src, src_dev, srcgen, name_src);
 
-  V_w(&ns_lock);
+  pthread_rwlock_unlock(&ns_lock);
 
   return rc;
 
@@ -928,7 +927,7 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
   tmp_path[0] = '\0';
 
   /* lock the namespace read-only */
-  P_r(&ns_lock);
+  pthread_rwlock_rdlock(&ns_lock);
 
   curr_inode.inum = entry;
   curr_inode.dev = dev;
@@ -941,7 +940,7 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
 
       if(!p_node)
         {
-          V_r(&ns_lock);
+          pthread_rwlock_unlock(&ns_lock);
           if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
             {
               LogFullDebug(COMPONENT_FSAL, "namespace: %lX.%ld not found", (unsigned long)dev,
@@ -953,7 +952,7 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
         }
       else if(p_node->inode.generation != curr_inode.generation)
         {
-          V_r(&ns_lock);
+          pthread_rwlock_unlock(&ns_lock);
           return ESTALE;
         }
 
@@ -989,7 +988,7 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
                       "NAMESPACE MANAGER: loop detected in namespace: %lX.%ld/%s = %lX.%ld",
                       p_node->parent_list->parent.dev, p_node->parent_list->parent.inum,
                       p_node->parent_list->name, curr_inode.dev, curr_inode.inum);
-              V_r(&ns_lock);
+              pthread_rwlock_unlock(&ns_lock);
               return ELOOP;
             }
 
@@ -1005,7 +1004,7 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
   LogFullDebug(COMPONENT_FSAL, "inode=%lX.%ld (gen %u), path='%s'", dev, entry, gen, path);
 
   /* reverse lookup succeeded */
-  V_r(&ns_lock);
+  pthread_rwlock_unlock(&ns_lock);
   return 0;
 
 }
