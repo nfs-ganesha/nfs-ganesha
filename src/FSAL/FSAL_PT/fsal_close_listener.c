@@ -78,17 +78,8 @@ void *ptfsal_closeHandle_listener_thread(void *args)
       ccl_up_mutex_lock(&g_close_handle_mutex);
       close_rc = ptfsal_find_oldest_handle();
       if (close_rc != -1) {
-	int state_rc = ccl_update_handle_nfs_state(close_rc, CCL_CLOSE,
-						   NFS_CLOSE);
-
-	// handle is already being closed by another thread
-	if (state_rc) {
-	  FSI_TRACE(FSI_WARNING, "Failed to set nfs state, state is %d",
-		    g_fsi_handles.m_handle[close_rc].m_nfs_state);
-	} else {
-	  close_rc = ptfsal_implicit_close_for_nfs(close_rc, 
-						   CCL_CLOSE_STYLE_NORMAL);
-	}
+        close_rc = ptfsal_implicit_close_for_nfs(close_rc,
+                                                 CCL_CLOSE_STYLE_NORMAL);
       }
       ccl_up_mutex_unlock(&g_close_handle_mutex);
       /* Send the response back */
