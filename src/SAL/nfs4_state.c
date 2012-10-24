@@ -402,9 +402,11 @@ void release_lockstate(state_owner_t * plock_owner)
 
   glist_for_each_safe(glist, glistn, &plock_owner->so_owner.so_nfs4_owner.so_state_list)
     {
-      state_t * pstate_found = glist_entry(glist,
+      state_t *pstate_found = glist_entry(glist,
                                            state_t,
                                            state_owner_list);
+
+      cache_entry_t *entry = pstate_found->state_pentry;
 
       /* Make sure we hold an lru ref to the cache inode while calling state_del */
       if(cache_inode_lru_ref(pstate_found->state_pentry,
@@ -421,8 +423,7 @@ void release_lockstate(state_owner_t * plock_owner)
       }
 
       /* Release the lru ref to the cache inode we held while calling state_del */
-      cache_inode_lru_unref(pstate_found->state_pentry,
-                            0);
+      cache_inode_lru_unref(entry, 0);
     }
 
   /* Release the reference to the lock owner that keeps it in the hash table */

@@ -85,7 +85,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
         /* Owner of conflicting lock */
         state_owner_t           * conflict_owner = NULL;
         /* Description of lock to test */
-        fsal_lock_param_t         lock_desc;
+        fsal_lock_param_t         lock_desc = {FSAL_NO_LOCK, 0, 0};
         /* Description of conflicting lock */
         fsal_lock_param_t         conflict_desc;
 
@@ -125,7 +125,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
                 lock_desc.lock_type = FSAL_LOCK_W;
                 break;
         }
-
+	
         if(arg_LOCKT4->length != STATE_LOCK_OFFSET_EOF) {
                 lock_desc.lock_length = arg_LOCKT4->length;
         } else {
