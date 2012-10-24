@@ -748,7 +748,6 @@ AC_CONFIG_FILES([include/Makefile
                  NodeList/Makefile
                  ConfigParsing/Makefile
                  IdMapper/Makefile
-                 RW_Lock/Makefile
                  SemN/Makefile
                  cidr/Makefile
                  avl/Makefile

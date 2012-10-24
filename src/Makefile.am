@@ -8,7 +8,6 @@ SUBDIRS = include             \
           Common              \
           ConfigParsing       \
           cidr                \
-          RW_Lock             \
           SemN                \
           test                \
           avl                 \

@@ -4,7 +4,6 @@
 #include <rbt_node.h>
 #include <rbt_tree.h>
 #include <pthread.h>
-#include "RW_Lock.h"
 #include "log.h"
 
 uint32_t Lookup3_hash_buff( char * str, uint32_t len ) ;

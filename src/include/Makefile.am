@@ -7,7 +7,6 @@ noinst_HEADERS = abstract_atomic.h               \
                  pnfs_utils.h                    \
                  HashTable.h                     \
                  MesureTemps.h                   \
-                 RW_Lock.h                       \
                  HashTable.h                     \
                  avltree.h                       \
                  cache_inode_avl.h               \
@@ -17,7 +16,6 @@ noinst_HEADERS = abstract_atomic.h               \
                  murmur3.h                       \
                  cidr.h                          \
                  MesureTemps.h                   \
-                 RW_Lock.h                       \
                  SemN.h                          \
                  nodelist.h                      \
                  fsal.h                          \

@@ -130,7 +130,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/nfs_req_queue.h           \
                              ../include/nfs_proto_functions.h     \
                              ../include/nfs_file_handle.h         \
-                             ../include/RW_Lock.h                 \
                              ../include/SemN.h                    \
                              ../include/fsal.h                    \
                              ../include/nfs23.h                   \
@@ -169,7 +168,6 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Protocols/XDR/libnfs_mnt_xdr.la                \
                                       $(TIRPC_STATIC_LIB)                               \
                                       ../SemN/libSemN.la                                \
-                                      ../RW_Lock/librwlock.la                           \
                                       $(FSAL_UP_LIB_FLAGS)                              \
                                       ../Common/libcommon_utils.la
 

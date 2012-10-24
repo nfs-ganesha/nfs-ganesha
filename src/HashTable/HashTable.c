@@ -48,7 +48,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "RW_Lock.h"
 #include "HashTable.h"
 #include "log.h"
 #include <assert.h>
