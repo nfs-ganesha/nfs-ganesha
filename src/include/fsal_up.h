@@ -74,7 +74,8 @@ typedef enum {
         FSAL_UP_EVENT_MOVE_FROM,
         FSAL_UP_EVENT_MOVE_TO,
         FSAL_UP_EVENT_RENAME,
-        FSAL_UP_EVENT_LAYOUTRECALL
+        FSAL_UP_EVENT_LAYOUTRECALL,
+        FSAL_UP_EVENT_DELEGATION_RECALL
 } fsal_up_event_type_t;
 
 /**
@@ -190,6 +191,11 @@ static const uint32_t fsal_up_update_chgtime_inc = 0x0020;
 static const uint32_t fsal_up_update_spaceused_inc = 0x0040;
 
 /**
+ * The file link count is zero.
+ */
+static const uint32_t fsal_up_nlink = 0x0080;
+
+/**
  * @brief A structure for representing the creation of a new name in a
  * directory.
  */
@@ -272,6 +278,15 @@ struct fsal_up_event_layoutrecall
         struct pnfs_segment segment; /*< Segment to recall */
         void *cookie; /*< A cookie returned with the return that
                           completely satisfies a recall. */
+};
+
+/**
+ * A structure for delegation recall
+ */
+
+struct fsal_up_event_delegrecall
+{
+     int flags; // recall all ???
 };
 
 /**
@@ -363,6 +378,10 @@ struct fsal_up_vector
         void (*layoutrecall_queue)(struct fsal_up_event_layoutrecall *,
                                    struct fsal_up_file *,
                                    void *);
+        void (*delegrecall_queue)(struct fsal_up_event_delegrecall *,
+                                   struct fsal_up_file *);
+        void (*delegrecall_imm)(struct fsal_up_event_delegrecall *,
+                                   struct fsal_up_file *);
 };
 
 struct fsal_up_vector fsal_up_top;
@@ -392,6 +411,7 @@ struct fsal_up_event
                 struct fsal_up_event_move_to move_to;
                 struct fsal_up_event_rename rename;
                 struct fsal_up_event_layoutrecall layoutrecall;
+                struct fsal_up_event_delegrecall delegrecall;
         } data; /*< Type specific event data */
         struct fsal_up_file file; /*< File upon which the event takes
                                       place.  Interpetation varies by

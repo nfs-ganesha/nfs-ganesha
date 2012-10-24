@@ -36,28 +36,6 @@
 
 struct glist_head gpfs_fsal_up_ctx_list;
 
-fsal_status_t GPFSFSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */
-                                   fsal_up_event_bus_context_t * pupebcontext     /* OUT */)
-{
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_UP_init);
-}
-
-fsal_status_t GPFSFSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* IN */
-                                        fsal_up_event_bus_context_t * pupebcontext /* INOUT */ )
-{
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_UP_addfilter);
-}
-
-fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,             /* OUT */
-                                     fsal_count_t * event_nb,                     /* IN */
-                                     fsal_time_t timeout,                         /* IN */
-                                     fsal_count_t * peventfound,                  /* OUT */
-                                     fsal_up_event_bus_context_t * pupebcontext   /* IN */ )
-{
-  /* GPFS no longer uses the API for FSAL UP */
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_UP_getevents);
-}
-
 /** @todo FSF: there are lots of assumptions in here that must be fixed when we
  *             support unexport. The thread may go away when all exports are
  *             removed and must clean itself up. Also, it must make sure it gets
@@ -65,78 +43,75 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,           
  */
 void *GPFSFSAL_UP_Thread(void *Arg)
 {
-  fsal_status_t               status;
-  fsal_up_event_t           * pevent;
-  fsal_up_event_functions_t * event_func;
-  char                        thr_name[80];
-  gpfs_fsal_up_ctx_t        * gpfs_fsal_up_ctx = (gpfs_fsal_up_ctx_t *) Arg;
-  gpfsfsal_export_context_t * export_ctx;
+  struct fsal_up_event       * pevent;
+  const struct fsal_up_vector * event_func;
+  char                       thr_name[80];
+  struct gpfs_fsal_up_ctx   * gpfs_fsal_up_ctx = (struct gpfs_fsal_up_ctx *) Arg;
   int                         rc = 0;
   struct stat                 buf;
   struct glock                fl;
   struct callback_arg         callback;
-  gpfsfsal_handle_t         * phandle;
-  int                         reason = 0;
-  int                         flags = 0;
+  struct gpfs_file_handle   * phandle;
+  int                        reason = 0;
+  int                        flags = 0;
   unsigned int              * fhP;
-  cache_inode_fsal_data_t   * event_fsal_data;
-  int                         retry = 0;
+  int                        retry = 0;
+  fsal_status_t              st;
 
   snprintf(thr_name, sizeof(thr_name), "gpfs_fsal_up_%d.%d",
            gpfs_fsal_up_ctx->gf_fsid[0], gpfs_fsal_up_ctx->gf_fsid[1]);
   SetNameFunction(thr_name);
 
   /* Set the FSAL UP functions that will be used to process events. */
-  event_func = get_fsal_up_dumb_functions();
+  event_func = gpfs_fsal_up_ctx->gf_export->up_ops;
 
   if(event_func == NULL)
     {
       LogFatal(COMPONENT_FSAL_UP,
-               "FSAL UP TYPE: %s does not exist. Can not continue.",
-               FSAL_UP_DUMB_TYPE);
+               "FSAL up vector does not exist. Can not continue.");
       gsh_free(Arg);
       return NULL;
     }
 
   LogFullDebug(COMPONENT_FSAL_UP,
-               "Initializing FSAL Callback context for %s.",
-               gpfs_fsal_up_ctx->gf_fs);
+               "Initializing FSAL Callback context for %d.",
+               gpfs_fsal_up_ctx->gf_fd);
 
   /* Start querying for events and processing. */
   while(1)
     {
       /* Make sure we have at least one export. */
-      if(glist_empty(&gpfs_fsal_up_ctx->gf_exports))
+      if(glist_empty(&gpfs_fsal_up_ctx_list))
         {
           /** @todo FSF: should properly clean up if we have unexported all
            *             exports on this file system.
            */
           LogCrit(COMPONENT_FSAL_UP,
-                  "All exports for file system %s have gone away",
-                  gpfs_fsal_up_ctx->gf_fs);
+                  "All exports for file system %d have gone away",
+                  gpfs_fsal_up_ctx->gf_fd);
           gsh_free(Arg);
           return NULL;
         }
-
-      /* Use the mount_root_fd from the first export on this file system */
-      export_ctx = glist_first_entry(&gpfs_fsal_up_ctx->gf_exports,
-                                     gpfsfsal_export_context_t,
-                                     fe_list);
 
       /* pevent is passed in as a single empty node, it's expected the
        * FSAL will use the event_pool in the bus_context to populate
        * this array by adding to the pevent_head. */
 
       /* Get a new event structure */
-      pevent = pool_alloc(fsal_up_event_pool, NULL);
-
+      pevent = fsal_up_alloc_event();
       if(pevent == NULL)
         {
+          if(retry < 100)   /* pool not be initialized */
+            {
+              sleep(1);
+              retry++;
+              continue;
+            }
           LogFatal(COMPONENT_FSAL_UP,
                    "Out of memory, can not continue.");
         }
 
-      phandle = gsh_malloc(sizeof(fsal_handle_t));
+      phandle = gsh_malloc(sizeof(struct gpfs_file_handle));
 
       if(phandle == NULL)
         {
@@ -145,14 +120,14 @@ void *GPFSFSAL_UP_Thread(void *Arg)
         }
 
       LogFullDebug(COMPONENT_FSAL_UP,
-                   "Requesting event from FSAL Callback interface for %s.",
-                   gpfs_fsal_up_ctx->gf_fs);
+                   "Requesting event from FSAL Callback interface for %d.",
+                   gpfs_fsal_up_ctx->gf_fd);
 
-      phandle->data.handle.handle_size     = OPENHANDLE_HANDLE_LEN;
-      phandle->data.handle.handle_key_size = 0;
+      phandle->handle_size = OPENHANDLE_HANDLE_LEN;
+      phandle->handle_key_size = 0;
 
-      callback.mountdirfd = export_ctx->mount_root_fd;
-      callback.handle     = (struct gpfs_file_handle *) &phandle->data.handle;
+      callback.mountdirfd = gpfs_fsal_up_ctx->gf_fd;
+      callback.handle     = phandle;
       callback.reason     = &reason;
       callback.flags      = &flags;
       callback.buf        = &buf;
@@ -163,9 +138,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
       if(rc != 0)
         {
           LogCrit(COMPONENT_FSAL_UP,
-                  "OPENHANDLE_INODE_UPDATE failed for %s."
+                  "OPENHANDLE_INODE_UPDATE failed for %d."
                   " rc %d, errno %d (%s) reason %d",
-                  gpfs_fsal_up_ctx->gf_fs, rc, errno, strerror(errno), reason);
+                  gpfs_fsal_up_ctx->gf_fd, rc, errno, strerror(errno), reason);
 
           gsh_free(phandle);
 
@@ -177,8 +152,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
           if(errno == EUNATCH)
             LogFatal(COMPONENT_FSAL,
-                     "GPFS file system %s has gone away.",
-                     gpfs_fsal_up_ctx->gf_fs);
+                     "GPFS file system %d has gone away.",
+                     gpfs_fsal_up_ctx->gf_fd);
 
           continue;
         }
@@ -215,25 +190,25 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
       /* Here is where we decide what type of event this is
        * ... open,close,read,...,invalidate? */
-
-      event_fsal_data = &pevent->event_data.event_context.fsal_data;
-      event_fsal_data->fh_desc.start = (caddr_t)phandle;
-      event_fsal_data->fh_desc.len   = sizeof(*phandle);
-
-      GPFSFSAL_ExpandHandle(NULL, FSAL_DIGEST_SIZEOF, &(event_fsal_data->fh_desc));
+      pevent->file.export = gpfs_fsal_up_ctx->gf_export;
+      pevent->file.export->ops->get(pevent->file.export);
+      pevent->functions = event_func;
+      pevent->file.key.addr = phandle;
+//???      pevent->file.key.len = phandle->handle_key_size;
+      pevent->file.key.len = sizeof(*phandle) + (phandle->handle_key_size - OPENHANDLE_HANDLE_LEN);
 
       switch(reason)
-        {
+      {
           case INODE_LOCK_GRANTED: /* Lock Event */
             LogMidDebug(COMPONENT_FSAL_UP,
                         "inode lock granted: owner %p pid %d type %d start %lld len %lld",
                         fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
                         (long long) fl.flock.l_start, (long long) fl.flock.l_len);
-            pevent->event_data.type.lock_grant.lock_owner = fl.lock_owner;
-            pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
-            pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
-            pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
-            pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
+            pevent->data.lock_grant.lock_owner = fl.lock_owner;
+            pevent->data.lock_grant.lock_param.lock_length = fl.flock.l_len;
+            pevent->data.lock_grant.lock_param.lock_start = fl.flock.l_start;
+            pevent->data.lock_grant.lock_param.lock_type = fl.flock.l_type;
+            pevent->type = FSAL_UP_EVENT_LOCK_GRANT;
             break;
 
           case INODE_LOCK_AGAIN: /* Lock Event */
@@ -241,68 +216,109 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                         "inode lock again: owner %p pid %d type %d start %lld len %lld",
                         fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
                         (long long) fl.flock.l_start, (long long) fl.flock.l_len);
-            pevent->event_data.type.lock_grant.lock_owner = fl.lock_owner;
-            pevent->event_data.type.lock_grant.lock_param.lock_length = fl.flock.l_len;
-            pevent->event_data.type.lock_grant.lock_param.lock_start = fl.flock.l_start;
-            pevent->event_data.type.lock_grant.lock_param.lock_type = fl.flock.l_type;
-            pevent->event_type = FSAL_UP_EVENT_LOCK_GRANT;
+            pevent->data.lock_grant.lock_owner = fl.lock_owner;
+            pevent->data.lock_grant.lock_param.lock_length = fl.flock.l_len;
+            pevent->data.lock_grant.lock_param.lock_start = fl.flock.l_start;
+            pevent->data.lock_grant.lock_param.lock_type = fl.flock.l_type;
+            pevent->type = FSAL_UP_EVENT_LOCK_GRANT;
+            break;
+
+          case BREAK_DELEGATION: /* Delegation Event */
+            LogDebug(COMPONENT_FSAL,
+                     "delegation recall: flags:%x ino %ld",
+                     flags, callback.buf->st_ino);
+            pevent->data.delegrecall.flags = 0;
+            pevent->type = FSAL_UP_EVENT_DELEGATION_RECALL;
             break;
 
           case INODE_UPDATE: /* Update Event */
             LogMidDebug(COMPONENT_FSAL_UP,
                         "inode update: flags:%x update ino %ld n_link:%d",
                         flags, callback.buf->st_ino, (int)callback.buf->st_nlink);
-            pevent->event_data.type.update.upu_flags = 0;
-            pevent->event_data.type.update.upu_stat_buf = buf;
-            if (flags & UP_NLINK)
-              pevent->event_data.type.update.upu_flags |= FSAL_UP_NLINK;
-            pevent->event_type = FSAL_UP_EVENT_UPDATE;
+
+            pevent->data.update.flags = 0;
+            /* convert attributes */
+
+            pevent->data.update.attr.mask = 0;
+
+            /* Check for accepted flags, any other changes or errors just invalidate. */
+            if (!(flags & ~(UP_NLINK | UP_MODE | UP_OWN | UP_TIMES | UP_ATIME)))
+            {
+              if (flags & UP_NLINK)
+                pevent->data.update.flags |= fsal_up_nlink;
+              if (flags & UP_MODE)
+                pevent->data.update.attr.mask |= ATTR_MODE;
+              if (flags & UP_OWN)
+                pevent->data.update.attr.mask |= ATTR_OWNER;
+              if (flags & UP_TIMES)
+                pevent->data.update.attr.mask |= ATTR_ATIME|ATTR_CTIME|ATTR_MTIME;
+              if (flags & UP_ATIME)
+                pevent->data.update.attr.mask |= ATTR_ATIME;
+
+              st = posix2fsal_attributes(&buf, &pevent->data.update.attr);
+              if(FSAL_IS_ERROR(st))
+                pevent->type = FSAL_UP_EVENT_INVALIDATE;
+              else
+                pevent->type = FSAL_UP_EVENT_UPDATE;
+            }
+            else
+              pevent->type = FSAL_UP_EVENT_INVALIDATE;
+
             break;
 
           case THREAD_STOP: /* GPFS export no longer available */
             LogWarn(COMPONENT_FSAL,
-                    "GPFS file system %s is no longer available",
-                    gpfs_fsal_up_ctx->gf_fs);
+                    "GPFS file system %d is no longer available",
+                    gpfs_fsal_up_ctx->gf_fd);
             gsh_free(phandle);
             return NULL;
 
-          default: /* Invalidate Event - Default */
+          case INODE_INVALIDATE:
             LogMidDebug(COMPONENT_FSAL_UP,
                         "inode invalidate: flags:%x update ino %ld",
                         flags, callback.buf->st_ino);
-            pevent->event_type = FSAL_UP_EVENT_INVALIDATE;
-        }
+            pevent->type = FSAL_UP_EVENT_INVALIDATE;
+            break;
+
+          default:
+            LogWarn(COMPONENT_FSAL_UP,
+                        "Unknown event: %d", reason);
+            gsh_free(phandle);
+            fsal_up_free_event(pevent);
+            continue;
+      }
 
       LogDebug(COMPONENT_FSAL_UP,
-               "Received event to process for %s",
-               gpfs_fsal_up_ctx->gf_fs);
+               "Received event to process for %d",
+               gpfs_fsal_up_ctx->gf_fd);
 
       /* process the event */
-      status = process_event(pevent, event_func);
+      rc = fsal_up_submit(pevent);
 
-      if(FSAL_IS_ERROR(status))
+      if(rc)
         {
           LogWarn(COMPONENT_FSAL_UP,
-                  "Event could not be processed for %s.",
-                  gpfs_fsal_up_ctx->gf_fs);
+                  "Event could not be processed for %d rc %d.",
+                  gpfs_fsal_up_ctx->gf_fd, rc);
         }
     }
 
   return NULL;
 }                               /* GPFSFSAL_UP_Thread */
 
-gpfs_fsal_up_ctx_t * gpfsfsal_find_fsal_up_context(gpfsfsal_export_context_t * export_ctx)
+struct gpfs_fsal_up_ctx * gpfsfsal_find_fsal_up_context(
+                                            struct gpfs_fsal_up_ctx *export_ctx)
 {
   struct glist_head * glist;
 
   glist_for_each(glist, &gpfs_fsal_up_ctx_list)
     {
-      gpfs_fsal_up_ctx_t * gpfs_fsal_up_ctx;
+      struct gpfs_fsal_up_ctx * gpfs_fsal_up_ctx;
 
-      gpfs_fsal_up_ctx = glist_entry(glist, gpfs_fsal_up_ctx_t, gf_list);
+      gpfs_fsal_up_ctx = glist_entry(glist, struct gpfs_fsal_up_ctx, gf_list);
 
-      if((gpfs_fsal_up_ctx->gf_fsid[0] == export_ctx->fsid[0]) &&
-         (gpfs_fsal_up_ctx->gf_fsid[1] == export_ctx->fsid[1]))
+      if((gpfs_fsal_up_ctx->gf_fsid[0] == export_ctx->gf_fsid[0]) &&
+         (gpfs_fsal_up_ctx->gf_fsid[1] == export_ctx->gf_fsid[1]))
         return gpfs_fsal_up_ctx;
     }
 

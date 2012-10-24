@@ -402,33 +402,35 @@ err:
  * is the option to also adjust the start pointer.
  */
 
-static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
+static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
-				    struct netbuf *fh_desc)
+				    struct gsh_buffdesc *fh_desc)
 {
 	struct gpfs_file_handle *hdl;
 	size_t fh_size = 0;
 
 	/* sanity checks */
-	if( !fh_desc || !fh_desc->buf)
+	if( !fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	hdl = (struct gpfs_file_handle *)fh_desc->buf;
+	hdl = (struct gpfs_file_handle *)fh_desc->addr;
 	fh_size = gpfs_sizeof_handle(hdl);
+//???	fh_size = hdl->handle_key_size;
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
-				 "V2 size too small for handle.  should be %lu, got %u",
+				 "V2 size too small for handle.  should be %lu, got %lu",
 				 fh_size, fh_desc->len);
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
 	} else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be %lu, got %u",
+			 "Size mismatch for handle.  should be %lu, got %lu",
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 	fh_desc->len = fh_size;  /* pass back the actual size */
+//???	fh_desc->len = hdl->handle_key_size;  /* pass back the key size */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -440,7 +442,7 @@ void gpfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
 	ops->lookup_path = gpfs_lookup_path;
-	ops->extract_handle = extract_handle;
+	ops->extract_handle = gpfs_extract_handle;
 	ops->create_handle = gpfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;
@@ -487,6 +489,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	int retval = 0;
 	fsal_status_t status;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+        struct gpfs_fsal_up_ctx *gpfs_fsal_up_ctx;
+        struct gpfs_fsal_up_ctx up_ctx;
+        bool_t start_fsal_up_thread = FALSE;
 
 	*export = NULL; /* poison it first */
 	if(export_path == NULL
@@ -632,6 +637,72 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	myself->fs_spec = strdup(fs_spec);
 	myself->mntdir = strdup(mntdir);
 	*export = &myself->export;
+
+       /* Make sure the FSAL UP context list is initialized */
+       if(glist_null(&gpfs_fsal_up_ctx_list))
+         init_glist(&gpfs_fsal_up_ctx_list);
+
+       up_ctx.gf_fsid[0] = myself->root_handle->handle_fsid[0];
+       up_ctx.gf_fsid[1] = myself->root_handle->handle_fsid[1];
+       gpfs_fsal_up_ctx = gpfsfsal_find_fsal_up_context(&up_ctx);
+
+       if(gpfs_fsal_up_ctx == NULL)
+         {
+           gpfs_fsal_up_ctx = gsh_calloc(1, sizeof(struct gpfs_fsal_up_ctx));
+
+           if(gpfs_fsal_up_ctx == NULL)
+             {
+               LogFatal(COMPONENT_FSAL,
+                        "Out of memory can not continue.");
+             }
+
+           /* Initialize the gpfs_fsal_up_ctx */
+           init_glist(&gpfs_fsal_up_ctx->gf_exports);
+           gpfs_fsal_up_ctx->gf_export = &myself->export;
+           gpfs_fsal_up_ctx->gf_fd = myself->root_fd;
+           gpfs_fsal_up_ctx->gf_fsid[0] = myself->root_handle->handle_fsid[0];
+           gpfs_fsal_up_ctx->gf_fsid[1] = myself->root_handle->handle_fsid[1];
+
+           /* Add it to the list of contexts */
+           glist_add_tail(&gpfs_fsal_up_ctx_list, &gpfs_fsal_up_ctx->gf_list);
+
+           start_fsal_up_thread = TRUE;
+         }
+
+         if(start_fsal_up_thread)
+           {
+             pthread_attr_t attr_thr;
+
+             memset(&attr_thr, 0, sizeof(attr_thr));
+
+             /* Initialization of thread attributes borrowed from nfs_init.c */
+             if(pthread_attr_init(&attr_thr) != 0)
+               LogCrit(COMPONENT_THREAD, "can't init pthread's attributes");
+
+             if(pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
+               LogCrit(COMPONENT_THREAD, "can't set pthread's scope");
+
+             if(pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) != 0)
+               LogCrit(COMPONENT_THREAD, "can't set pthread's join state");
+
+             if(pthread_attr_setstacksize(&attr_thr, 2116488) != 0)
+               LogCrit(COMPONENT_THREAD, "can't set pthread's stack size");
+
+             retval = pthread_create(&gpfs_fsal_up_ctx->gf_thread,
+                                 &attr_thr,
+                                 GPFSFSAL_UP_Thread,
+                                 gpfs_fsal_up_ctx);
+
+             if(retval != 0)
+               {
+                 LogFatal(COMPONENT_THREAD,
+                          "Could not create GPFSFSAL_UP_Thread, error = %d (%s)",
+                          errno, strerror(errno));
+                       fsal_error = posix2fsal_error(errno);
+                       goto errout;
+               }
+           }
+
 	pthread_mutex_unlock(&myself->export.lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

@@ -1036,6 +1036,7 @@ void nfs4_op_locku_CopyRes(LOCKU4res * resp_dst, LOCKU4res * resp_src);
 void nfs4_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src);
 void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst, OPEN_CONFIRM4res * resp_src);
 void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst, OPEN_DOWNGRADE4res * resp_src);
+void nfs4_op_delegreturn_CopyRes(DELEGRETURN4res * resp_dst, DELEGRETURN4res * resp_src);
 
 void nfs4_op_exchange_id_Free(EXCHANGE_ID4res * resp);
 void nfs4_op_close_Free(CLOSE4res * resp);

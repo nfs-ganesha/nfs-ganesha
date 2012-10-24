@@ -567,6 +567,7 @@ typedef enum enum_fsal_fsinfo_options {
         fso_homogenous,
         fso_auth_exportpath_xdev,
         fso_dirs_have_sticky_bit,
+        fso_delegations,
         fso_accesscheck_support,
         fso_share_support,
         fso_share_support_owner,
@@ -617,6 +618,7 @@ struct fsal_staticfsinfo_t
         bool share_support_owner;  /*< FS supports share reservation
                                        with open owners ? */
         bool dirs_have_sticky_bit; /*< fsal does bsd/posix "sticky bit" */
+        bool delegations; /*< fsal supports delegations */
 };
 
 /**
@@ -709,8 +711,15 @@ typedef enum {
         FSAL_NO_LOCK
 } fsal_lock_t;
 
+typedef enum fsal_sle_type_t
+{
+  FSAL_POSIX_LOCK,
+  FSAL_LEASE_LOCK
+} fsal_sle_type_t;
+
 typedef struct fsal_lock_param_t
 {
+        fsal_sle_type_t lock_sle_type;
         fsal_lock_t lock_type;
         uint64_t lock_start;
         uint64_t lock_length;

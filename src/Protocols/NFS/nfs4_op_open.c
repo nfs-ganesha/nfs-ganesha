@@ -361,7 +361,6 @@ open4_validate_claim(compound_data_t   * data,
                 }
                 break;
 
-        case CLAIM_DELEGATE_CUR:
         case CLAIM_DELEGATE_PREV:
         case CLAIM_DELEG_CUR_FH:
         case CLAIM_DELEG_PREV_FH:
@@ -780,6 +779,52 @@ out:
         return nfs_status;
 }
 
+
+static void get_delegation(compound_data_t *data, state_t *file_state,
+                    state_owner_t *powner, OPEN4resok *resok)
+{
+  state_status_t            state_status;
+  fsal_lock_param_t         lock_desc;
+
+  lock_desc.lock_type = FSAL_LOCK_R;
+  lock_desc.lock_start = 0;
+  lock_desc.lock_length = 0;
+  lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
+
+  if(state_lock(data->current_entry,
+                data->pexport,
+                data->req_ctx,
+                powner,
+                file_state,
+                STATE_NON_BLOCKING,
+                NULL,     /* No block data */
+                &lock_desc,
+                NULL,
+                NULL,
+                &state_status,
+                LEASE_LOCK) != STATE_SUCCESS)
+    {
+
+      LogDebug(COMPONENT_NFS_V4_LOCK,
+               "get_delegation call failed with status %s",
+               state_err_str(state_status));
+    }
+  else
+    {
+      resok->delegation.delegation_type = OPEN_DELEGATE_READ;
+      resok->delegation.open_delegation4_u.read.stateid = resok->stateid;
+      resok->delegation.open_delegation4_u.read.recall = FALSE;
+      resok->delegation.open_delegation4_u.read.permissions.type = ACE4_ACCESS_ALLOWED_ACE_TYPE;
+      resok->delegation.open_delegation4_u.read.permissions.flag = 0;
+      resok->delegation.open_delegation4_u.read.permissions.access_mask = 0;
+      resok->delegation.open_delegation4_u.read.permissions.who.utf8string_len = 0;
+      resok->delegation.open_delegation4_u.read.permissions.who.utf8string_val = NULL;
+    }
+    LogDebug(COMPONENT_NFS_V4_LOCK,
+             "get_delegation powner %p status %s",
+              powner, state_err_str(state_status));
+}
+
 /**
  * @brief NFS4_OP_OPEN
  *
@@ -825,6 +870,13 @@ int nfs4_op_open(struct nfs_argop4 *op,
         state_t           * file_state = NULL;
         /* True if the state was newly created */
         bool                new_state = false;
+        cache_inode_status_t cache_status;
+        char                * filename;
+        cache_entry_t       * pentry_parent = NULL;
+        cache_entry_t       * pentry_lookup = NULL;
+        struct glist_head   * glist;
+        state_lock_entry_t  * found_entry = NULL;
+        state_t             * pfile_state = NULL;
 
         LogDebug(COMPONENT_STATE,
                  "Entering NFS v4 OPEN handler -----------------------------");
@@ -993,6 +1045,98 @@ int nfs4_op_open(struct nfs_argop4 *op,
         case CLAIM_FH:
                 break;
 
+        case CLAIM_DELEGATE_CUR:
+
+                if(!(data->pexport->export_hdl->ops->fs_supports(
+                                   data->pexport->export_hdl, fso_delegations)))
+	        {
+                  res_OPEN4->status = NFS4ERR_NOTSUPP;
+                  LogDebug(COMPONENT_STATE,
+                      "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
+                  return res_OPEN4->status;
+                }
+
+      /* Check for name length */
+      if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len > MAXNAMLEN)
+        {
+          res_OPEN4->status = NFS4ERR_NAMETOOLONG;
+          LogDebug(COMPONENT_STATE,
+                   "NFS4 OPEN returning NFS4ERR_NAMETOOLONG for CLAIM_DELEGATE");
+          return res_OPEN4->status;
+        }
+
+      /* get the filename from the argument, it should not be empty */
+      if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len == 0)
+        {
+          res_OPEN4->status = NFS4ERR_INVAL;
+          LogDebug(COMPONENT_STATE,
+                   "NFS4 OPEN returning NFS4ERR_INVAL for CLAIM_DELEGATE");
+          return res_OPEN4->status;
+        }
+
+      /* get the filename from the argument, it should not be empty */
+      if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len == 0)
+        {
+          res_OPEN4->status = NFS4ERR_INVAL;
+          goto out;
+        }
+      LogDebug(COMPONENT_NFS_CB,"name len %d %s\n",
+           arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len,
+           arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_val);
+
+      /* Check if filename is correct */
+      res_OPEN4->status = nfs4_utf8string2dynamic(&arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file,
+					   UTF8_SCAN_ALL,
+					   &filename);
+        if (res_OPEN4->status != NFS4_OK) {
+                goto out;
+        }
+
+      /* Does a file with this name already exist ? */
+      pentry_lookup = cache_inode_lookup(pentry_parent,
+                                         filename,
+                                         data->req_ctx,
+                                         &cache_status);
+      if(cache_status != CACHE_INODE_NOT_FOUND)
+        {
+          pthread_rwlock_wrlock(&pentry_lookup->state_lock);
+
+          glist_for_each(glist, &pentry_lookup->object.file.lock_list)
+          {
+              found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+
+              if (found_entry != NULL)
+              {
+                 LogDebug(COMPONENT_NFS_CB,"found_entry %p", found_entry);
+              }
+              else
+              {
+                  LogDebug(COMPONENT_NFS_CB,"list is empty %p", found_entry);
+                  pthread_rwlock_unlock(&pentry_lookup->state_lock);
+                  res_OPEN4->status = NFS4ERR_BAD_STATEID;
+                  return res_OPEN4->status;
+              }
+              break;
+          }
+          pthread_rwlock_unlock(&pentry_lookup->state_lock);
+
+          pfile_state = found_entry->sle_state;
+
+          res_OPEN4->OPEN4res_u.resok4.stateid.seqid = pfile_state->state_seqid;
+          memcpy(res_OPEN4->OPEN4res_u.resok4.stateid.other,
+                 pfile_state->stateid_other, OTHERSIZE);
+
+          res_OPEN4->status = open4_create_fh(data, pentry_lookup);
+          if(res_OPEN4->status != NFS4_OK)
+              goto out;
+
+          goto out;
+        }
+        else
+          LogDebug(COMPONENT_NFS_CB,"did not find entry %p", pentry_lookup);
+
+        break;
+
 
         default:
                 LogFatal(COMPONENT_STATE,
@@ -1086,7 +1230,15 @@ int nfs4_op_open(struct nfs_argop4 *op,
                        data,
                        open_tag);
 
- out:
+        if(data->pexport->export_hdl->ops->fs_supports(
+           data->pexport->export_hdl, fso_delegations) &&
+           owner->so_owner.so_nfs4_owner.so_confirmed == TRUE &&
+           claim != CLAIM_DELEGATE_CUR)
+
+            get_delegation(data, pfile_state, owner,
+                           &res_OPEN4->OPEN4res_u.resok4);
+
+out:
 
         /* Save the response in the lock or open owner */
         if (data->minorversion == 0) {

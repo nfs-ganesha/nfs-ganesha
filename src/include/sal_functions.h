@@ -488,14 +488,16 @@ state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_lock_param_t     * plock,
                           state_owner_t        ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t     * conflict, /* description of conflicting lock */
-                          state_status_t        * pstatus);
+                          state_status_t        * pstatus,
+                          lock_type_t             sle_type);
 
 state_status_t state_unlock(cache_entry_t        * pentry,
                             exportlist_t         * pexport,
                             state_owner_t        * powner,
                             state_t              * pstate,
                             fsal_lock_param_t    * plock,
-                            state_status_t       * pstatus);
+                            state_status_t       * pstatus,
+                            lock_type_t            sle_type);
 
 state_status_t state_cancel(cache_entry_t        * pentry,
                             exportlist_t         * pexport,

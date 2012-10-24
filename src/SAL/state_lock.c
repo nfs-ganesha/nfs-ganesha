@@ -160,7 +160,8 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t    * conflict, /* description of conflicting lock */
-                          bool                   overlap);  /* hint that lock overlaps */
+                          bool_t                 overlap,  /* hint that lock overlaps */
+                          lock_type_t            sle_type);
 
 /******************************************************************************
  *
@@ -242,7 +243,7 @@ static void LogEntry(const char         *reason,
       DisplayOwner(ple->sle_owner, owner);
 
       LogFullDebug(COMPONENT_STATE,
-                   "%s Entry: %p pentry=%p, fileid=%"PRIu64", export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, owner={%s}",
+                   "%s Entry: %p pentry=%p, fileid=%"PRIu64", export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, type %d owner={%s}",
                    reason, ple,
                    ple->sle_pentry,
 		   (uint64_t)ple->sle_pentry->obj_handle->attributes.fileid,
@@ -254,6 +255,7 @@ static void LogEntry(const char         *reason,
                    ple->sle_block_data,
                    ple->sle_state,
                    ple->sle_ref_count,
+                   ple->sle_type,
                    owner);
     }
 }
@@ -407,7 +409,8 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                                                    state_blocking_t     blocked,
                                                    state_owner_t      * powner,
                                                    state_t            * pstate,
-                                                   fsal_lock_param_t  * plock)
+                                                   fsal_lock_param_t  * plock,
+                                                   lock_type_t sle_type)
 {
   state_lock_entry_t *new_entry;
 
@@ -416,7 +419,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
       return NULL;
 
   LogFullDebug(COMPONENT_STATE,
-               "new_entry = %p", new_entry);
+               "new_entry = %p powner %p", new_entry, powner);
 
   memset(new_entry, 0, sizeof(*new_entry));
 
@@ -428,6 +431,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
 
   new_entry->sle_ref_count  = 1;
   new_entry->sle_pentry     = pentry;
+  new_entry->sle_type       = sle_type;
   new_entry->sle_blocked    = blocked;
   new_entry->sle_owner      = powner;
   new_entry->sle_state      = pstate;
@@ -485,7 +489,8 @@ inline state_lock_entry_t *state_lock_entry_t_dup(state_lock_entry_t * orig_entr
                                  orig_entry->sle_blocked,
                                  orig_entry->sle_owner,
                                  orig_entry->sle_state,
-                                 &orig_entry->sle_lock);
+                                 &orig_entry->sle_lock,
+                                 orig_entry->sle_type);
 }
 
 void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
@@ -1182,7 +1187,8 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                               &lock_entry->sle_lock,
                               NULL,
                               NULL,
-                              false);
+                              false,
+                              POSIX_LOCK);
         break;
 
       case STATE_GRANT_INTERNAL:
@@ -1195,7 +1201,8 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                               &lock_entry->sle_lock,
                               NULL,
                               NULL,
-                              false);
+                              false,
+                              POSIX_LOCK);
         break;
 
       case STATE_GRANT_FSAL:
@@ -1245,7 +1252,8 @@ state_status_t state_cancel_grant(state_cookie_entry_t * cookie_entry,
                         &cookie_entry->sce_lock_entry->sle_lock,
                         NULL,   /* no conflict expected */
                         NULL,
-                        false);
+                        false,
+                        POSIX_LOCK);
 
   if(*pstatus != STATE_SUCCESS)
     LogMajor(COMPONENT_STATE,
@@ -1538,7 +1546,8 @@ state_status_t cancel_blocked_lock(cache_entry_t        * pentry,
                                 &lock_entry->sle_lock,
                                 NULL,   /* no conflict expected */
                                 NULL,
-                                false); /* overlap not relevant */
+                                false,  /* overlap not relevant */
+                                POSIX_LOCK);
 
       if(state_status != STATE_SUCCESS)
         {
@@ -1659,7 +1668,8 @@ state_status_t state_release_grant(state_cookie_entry_t  * cookie_entry,
                             &lock_entry->sle_lock,
                             NULL,   /* no conflict expected */
                             NULL,
-                            false);
+                            false,
+                            POSIX_LOCK);
 
       if(*pstatus != STATE_SUCCESS)
         LogMajor(COMPONENT_STATE,
@@ -1724,7 +1734,8 @@ inline const char *fsal_lock_op_str(fsal_lock_op_t op)
  */
 state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
                                   exportlist_t         * pexport,
-                                  fsal_lock_param_t    * plock)
+                                  fsal_lock_param_t    * plock,
+                                  lock_type_t            sle_type)
 {
   state_lock_entry_t * unlock_entry;
   struct glist_head    fsal_unlock_list;
@@ -1739,7 +1750,8 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
                                          STATE_NON_BLOCKING,
                                          &unknown_owner, /* no real owner */
                                          NULL, /* no real state */
-                                         plock);
+                                         plock,
+                                         sle_type);
 
   if(unlock_entry == NULL)
     return STATE_MALLOC_ERROR;
@@ -1805,7 +1817,8 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t    * conflict, /* description of conflicting lock */
-                          bool                   overlap)  /* hint that lock overlaps */
+                          bool_t                 overlap,  /* hint that lock overlaps */
+                          lock_type_t            sle_type)
 {
   fsal_status_t         fsal_status;
   state_status_t        status = STATE_SUCCESS;
@@ -1864,7 +1877,7 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
     }
   else
     {
-      status = do_unlock_no_owner(pentry, pexport, plock);
+      status = do_unlock_no_owner(pentry, pexport, plock, sle_type);
     }
 
   if(status == STATE_LOCK_CONFLICT)
@@ -1972,7 +1985,8 @@ state_status_t state_test(cache_entry_t        * pentry,
                             plock,
                             holder,
                             conflict,
-                            false);
+                            false,
+                            POSIX_LOCK);
 
       if(*pstatus != STATE_SUCCESS &&
          *pstatus != STATE_LOCK_CONFLICT)
@@ -2017,7 +2031,8 @@ state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_lock_param_t     * plock,
                           state_owner_t        ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t     * conflict, /* description of conflicting lock */
-                          state_status_t        * pstatus)
+                          state_status_t        * pstatus,
+                          lock_type_t             sle_type)
 {
   bool                   allow = true, overlap = false;
   struct glist_head    * glist;
@@ -2038,7 +2053,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
       return *pstatus;
     }
 
-  if(cache_inode_open(pentry, FSAL_O_RDWR, req_ctx, 0, &cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_open(pentry, FSAL_O_READ, req_ctx, 0, &cache_status) != CACHE_INODE_SUCCESS)
     {
       cache_inode_dec_pin_ref(pentry);
       *pstatus = cache_inode_status_to_state_status(cache_status);
@@ -2282,7 +2297,8 @@ state_status_t state_lock(cache_entry_t         * pentry,
                                         STATE_NON_BLOCKING,
                                         powner,
                                         pstate,
-                                        plock);
+                                        plock,
+                                        sle_type);
   if(!found_entry)
     {
       pthread_rwlock_unlock(&pentry->state_lock);
@@ -2306,7 +2322,8 @@ state_status_t state_lock(cache_entry_t         * pentry,
                             plock,
                             allow ? holder : NULL,
                             allow ? conflict : NULL,
-                            overlap);
+                            overlap,
+                            POSIX_LOCK);
     }
   else
     *pstatus = STATE_LOCK_BLOCKED;
@@ -2397,7 +2414,8 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                             state_owner_t        * powner,
                             state_t              * pstate,
                             fsal_lock_param_t    * plock,
-                            state_status_t       * pstatus)
+                            state_status_t       * pstatus,
+                            lock_type_t            sle_type)
 {
   bool                   empty = false;
   cache_inode_status_t   cache_status;
@@ -2494,7 +2512,8 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                         plock,
                         NULL,   /* no conflict expected */
                         NULL,
-                        false);
+                        false,
+                        POSIX_LOCK);
 
   if(*pstatus != STATE_SUCCESS)
     LogMajor(COMPONENT_STATE,
@@ -2711,7 +2730,8 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
                       powner,
                       pstate,
                       &lock,
-                      pstatus) != STATE_SUCCESS)
+                      pstatus,
+                      found_entry->sle_type) != STATE_SUCCESS)
         {
           /* Increment the error count and try the next lock, with any luck
            * the memory pressure which is causing the problem will resolve itself.
@@ -2856,7 +2876,8 @@ state_status_t state_owner_unlock_all(state_owner_t        * powner,
                       powner,
                       pstate,
                       &lock,
-                      pstatus) != STATE_SUCCESS)
+                      pstatus,
+                      found_entry->sle_type) != STATE_SUCCESS)
         {
           /* Increment the error count and try the next lock, with any luck
            * the memory pressure which is causing the problem will resolve itself.

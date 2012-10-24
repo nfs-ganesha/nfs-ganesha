@@ -119,7 +119,8 @@ int nlm4_Unlock(nfs_arg_t *parg,
                   nlm_owner,
                   NULL,
                   &lock,
-                  &state_status) != STATE_SUCCESS)
+                  &state_status,
+                  POSIX_LOCK) != STATE_SUCCESS)
     {
       /* Unlock could fail in the FSAL and make a bit of a mess, especially if
        * we are in out of memory situation. Such an error is logged by

@@ -776,7 +776,6 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile
                  FSAL/FSAL_VFS/Makefile
-		 FSAL/FSAL_TEMPLATE/Makefile
                  RPCAL/Makefile
                  RPCAL/gssd/Makefile
                  MainNFSD/Makefile

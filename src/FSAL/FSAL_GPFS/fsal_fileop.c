@@ -131,10 +131,10 @@ fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle * dirhandle,      /*
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,   /* IN */
-//???                          const struct req_op_context *p_context, /* IN */
-                            fsal_openflags_t openflags,        /* IN */
-                            int * file_desc,                   /* OUT */
+fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,        /* IN */
+                            const struct req_op_context *p_context, /* IN */
+                            fsal_openflags_t openflags,            /* IN */
+                            int * file_desc,                      /* OUT */
                             struct attrlist *p_file_attributes  /* IN/OUT */
     )
 {
@@ -178,7 +178,7 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,   /* IN */
     {
 
       p_file_attributes->mask = GPFS_SUPPORTED_ATTRIBUTES;
-      status = GPFSFSAL_getattrs(obj_hdl->export, NULL/*p_context???*/, myself->handle,
+      status = GPFSFSAL_getattrs(obj_hdl->export, p_context, myself->handle,
                                  p_file_attributes);
       if(FSAL_IS_ERROR(status))
         {

@@ -103,6 +103,15 @@ cache_inode_invalidate(cache_entry_t *entry,
                                            CACHE_INODE_DIR_POPULATED);
         }
 
+        if (((flags & CACHE_INODE_INVALIDATE_CLOSE) != 0) &&
+                                  (entry->type == REGULAR_FILE)) {
+            cache_inode_close(entry,
+                              (CACHE_INODE_FLAG_REALLYCLOSE |
+                               CACHE_INODE_FLAG_CONTENT_HAVE |
+                               CACHE_INODE_FLAG_CONTENT_HOLD),
+                               &status);
+        }
+
         pthread_rwlock_unlock(&entry->attr_lock);
         pthread_rwlock_unlock(&entry->content_lock);
 

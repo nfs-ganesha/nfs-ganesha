@@ -3,9 +3,10 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 lib_LTLIBRARIES          = libfsalgpfs.la
 
 libfsalgpfs_la_SOURCES = main.c				\
-			 export.c			\	
+			 export.c			\
 			 handle.c			\
 			 file.c				\
+			 fsal_up.c			\
 			 fsal_unlink.c			\
 			 fsal_truncate.c		\
 			 fsal_symlinks.c		\
@@ -30,7 +31,7 @@ libfsalgpfs_la_SOURCES = main.c				\
 #libfsalgpfs_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c
 #	fsal_dirs.c fsal_fsinfo.c fsal_rcp.c fsal_init.c
 #	fsal_stats.c fsal_tools.c fsal_local_op.c
-#	fsal_xattrs.c fsal_up.c
+#	fsal_xattrs.c
 
 new: clean all
 

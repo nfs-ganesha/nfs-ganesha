@@ -214,7 +214,6 @@ int posix2fsal_error(int posix_errorcode)
  */
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
-  int cpt;
 
   if(!p_posix_flags)
     return ERR_FSAL_FAULT;
@@ -222,45 +221,19 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
   /* check that all used flags exist */
 
   if(fsal_flags &
-     ~(O_RDONLY | O_RDWR | O_WRONLY | O_APPEND |
-       O_TRUNC | O_SYNC))
-    return ERR_FSAL_INVAL;
-
-  /* Check for flags compatibility */
-
-  /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
-
-  cpt = 0;
-  if(fsal_flags & O_RDONLY)
-    cpt++;
-  if(fsal_flags & O_RDWR)
-    cpt++;
-  if(fsal_flags & O_WRONLY)
-    cpt++;
-
-  if(cpt > 1)
-    return ERR_FSAL_INVAL;
-
-  /* O_APPEND et O_TRUNC cannot be used together */
-
-  if((fsal_flags & O_APPEND) && (fsal_flags & O_TRUNC))
-    return ERR_FSAL_INVAL;
-
-  /* O_TRUNC without O_WRONLY or O_RDWR */
-
-  if((fsal_flags & O_TRUNC) && !(fsal_flags & (O_WRONLY | O_RDWR)))
+     ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
     return ERR_FSAL_INVAL;
 
   /* conversion */
   *p_posix_flags = 0;
 
-  if(fsal_flags & O_RDONLY)
+  if(fsal_flags & FSAL_O_READ)
     *p_posix_flags |= O_RDONLY;
-  if(fsal_flags & O_WRONLY)
+  if(fsal_flags & FSAL_O_WRITE)
     *p_posix_flags |= O_WRONLY;
-  if(fsal_flags & O_RDWR)
+  if(fsal_flags & FSAL_O_RDWR)
     *p_posix_flags |= O_RDWR;
-  if(fsal_flags & O_SYNC)
+  if(fsal_flags & FSAL_O_SYNC)
     *p_posix_flags |= O_SYNC;
 
   return ERR_FSAL_NO_ERROR;

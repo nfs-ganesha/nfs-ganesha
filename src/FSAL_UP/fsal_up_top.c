@@ -46,6 +46,31 @@
 #include "fsal_up.h"
 #include "sal_functions.h"
 #include "pnfs_utils.h"
+#include "nfs_rpc_callback.h"
+
+static int32_t cb_completion_func(rpc_call_t* call, rpc_call_hook hook,
+                                 void* arg, uint32_t flags)
+{
+  char *fh;
+
+  LogDebug(COMPONENT_NFS_CB, "%p %s", call,
+           (hook == RPC_CALL_ABORT) ?
+           "RPC_CALL_ABORT" :
+           "RPC_CALL_COMPLETE");
+  switch (hook) {
+    case RPC_CALL_COMPLETE:
+        /* potentially, do something more interesting here */
+        LogDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
+        fh = call->cbt.v_u.v4.args.argarray.argarray_val->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
+        gsh_free(fh);
+        cb_compound_free(&call->cbt);
+        break;
+    default:
+        LogDebug(COMPONENT_NFS_CB, "%p unknown hook %d", call, hook);
+        break;
+  }
+  return (0);
+}
 
 /**
  * @brief Invalidate cached attributes and content
@@ -103,6 +128,9 @@ update_imm(struct fsal_up_event_update *update,
            struct fsal_up_file *file,
            void **private)
 {
+        cache_entry_t *entry = NULL;
+        int rc = 0;
+
         /* These cannot be updated, changing any of them is
            tantamount to destroying and recreating the file. */
         if (FSAL_TEST_MASK(update->attr.mask,
@@ -125,6 +153,27 @@ update_imm(struct fsal_up_event_update *update,
                 return EINVAL;
         }
 
+        LogDebug(COMPONENT_FSAL_UP,
+                 "Calling cache_inode_invalidate()");
+
+        rc = up_get(&file->key, &entry);
+        if (rc == 0) {
+
+           if ((update->flags & fsal_up_nlink) &&
+               (update->attr.numlinks == 0) )
+           {
+              LogDebug(COMPONENT_FSAL_UP,
+                  "nlink has become zero; close fds");
+              cache_inode_invalidate(entry,
+                             (CACHE_INODE_INVALIDATE_ATTRS |
+                              CACHE_INODE_INVALIDATE_CLOSE));
+           }
+           else
+              cache_inode_invalidate(entry,
+                                     CACHE_INODE_INVALIDATE_ATTRS);
+
+           cache_inode_put(entry);
+        }
         return 0;
 }
 
@@ -931,6 +980,134 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
         }
 };
 
+static void
+delegrecall_one(state_lock_entry_t * found_entry, cache_entry_t *pentry)
+{
+  char *maxfh;
+  compound_data_t data;
+  int32_t code = 0;
+  rpc_call_channel_t *chan;
+  rpc_call_t *call;
+  nfs_client_id_t *clid = NULL;
+  nfs_cb_argop4 argop[1];
+
+  maxfh = gsh_malloc(NFS4_FHSIZE);     // free in cb_completion_func()
+  if(maxfh == NULL)
+  {
+      LogDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DELEG: no mem, failed.");
+      /* Not an error. Expecting some nodes will not have it in cache in
+       * a cluster. */
+      return;
+  }
+  code  = nfs_client_id_get_confirmed(found_entry->sle_owner->so_owner.so_nfs4_owner.so_clientid, &clid);
+  if (code != CLIENT_ID_SUCCESS) {
+      LogCrit(COMPONENT_NFS_CB,
+              "No clid record  code %d", code);
+      return;
+  }
+  chan = nfs_rpc_get_chan(clid, NFS_RPC_FLAG_NONE);
+  if (! chan) {
+      LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
+      return;
+  }
+  if (! chan->clnt) {
+      LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
+      return;
+  }
+  /* allocate a new call--freed in completion hook */
+  call = alloc_rpc_call();
+  call->chan = chan;
+
+  /* setup a compound */
+  cb_compound_init_v4(&call->cbt, 6, clid->cid_cb.cb_u.v40.cb_callback_ident,
+                      "brrring!!!", 10);
+
+  memset(argop, 0, sizeof(nfs_cb_argop4));
+  argop->argop = NFS4_OP_CB_RECALL;
+  argop->nfs_cb_argop4_u.opcbrecall.stateid.seqid = found_entry->sle_state->state_seqid;
+  memcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other,
+         found_entry->sle_state->stateid_other, OTHERSIZE);
+  argop->nfs_cb_argop4_u.opcbrecall.truncate = TRUE;
+
+  /* Convert it to a file handle */
+  argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 0;
+  argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = maxfh;
+
+  data.pexport = found_entry->sle_pexport;
+
+  /* Building a new fh */
+  if (!nfs4_FSALToFhandle(&argop->nfs_cb_argop4_u.opcbrecall.fh,
+                          pentry->obj_handle, &data))
+     return;
+
+  /* add ops, till finished (dont exceed count) */
+  cb_compound_add_op(&call->cbt, argop);
+
+  /* set completion hook */
+  call->call_hook = cb_completion_func;
+
+  /* call it (here, in current thread context) */
+  code = nfs_rpc_submit_call(call, NFS_RPC_FLAG_NONE /* NFS_RPC_CALL_INLINE */);
+
+  return;
+};
+
+static void
+delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
+                                struct fsal_up_file *file)
+{
+  cache_entry_t *pentry = NULL;
+  struct glist_head  *glist;
+  state_lock_entry_t *found_entry = NULL;
+  int rc = 0;
+
+  rc = up_get(&file->key, &pentry);
+  if (rc != 0 || pentry == NULL)
+  {
+      LogDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DELEG: cache inode get failed, rc %d", rc);
+      /* Not an error. Expecting some nodes will not have it in cache in
+       * a cluster. */
+      return;
+  }
+
+  LogDebug(COMPONENT_FSAL_UP,
+          "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
+          pentry, pentry->type);
+
+  pthread_rwlock_wrlock(&pentry->state_lock);
+
+  glist_for_each(glist, &pentry->object.file.lock_list)
+  {
+      found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+
+      if (found_entry != NULL)
+      {
+          LogDebug(COMPONENT_NFS_CB,"found_entry %p", found_entry);
+          delegrecall_one(found_entry, pentry);
+      }
+      else
+      {
+          LogDebug(COMPONENT_NFS_CB,"list is empty %p", found_entry);
+          break;
+      }
+  }
+  pthread_rwlock_unlock(&pentry->state_lock);
+
+  cache_inode_put(pentry);
+
+  return;
+
+};
+
+static void
+delegrecall_imm(struct fsal_up_event_delegrecall *deleg,
+                                   struct fsal_up_file *file)
+{
+    printf("xxx delegrecall_imm ???\n");
+};
+
 struct fsal_up_vector fsal_up_top = {
         .lock_grant_imm = lock_grant_imm,
         .lock_grant_queue = NULL,
@@ -960,5 +1137,8 @@ struct fsal_up_vector fsal_up_top = {
         .rename_queue = rename_queue,
 
         .layoutrecall_imm = layoutrecall_imm,
-        .layoutrecall_queue = layoutrecall_queue
+        .layoutrecall_queue = layoutrecall_queue,
+
+        .delegrecall_imm = delegrecall_imm,
+        .delegrecall_queue = delegrecall_queue
 };

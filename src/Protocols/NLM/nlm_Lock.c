@@ -144,7 +144,8 @@ int nlm4_Lock(nfs_arg_t            * parg,
                 &lock,
                 &holder,
                 &conflict,
-                &state_status) != STATE_SUCCESS)
+                &state_status,
+                POSIX_LOCK) != STATE_SUCCESS)
     {
       pres->res_nlm4test.test_stat.stat = nlm_convert_state_error(state_status);
 

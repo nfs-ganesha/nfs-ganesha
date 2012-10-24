@@ -184,7 +184,8 @@ int nfs4_op_locku(struct nfs_argop4 *op,
                          lock_owner,
                          state_found,
                          &lock_desc,
-                         &state_status) != STATE_SUCCESS) {
+                         &state_status,
+                         POSIX_LOCK) != STATE_SUCCESS) {
                 res_LOCKU4->status = nfs4_Errno_state(state_status);
                 goto out;
         }

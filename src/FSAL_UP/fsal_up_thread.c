@@ -44,6 +44,7 @@
 struct fsal_up_state fsal_up_state = {
         .stop = false,
         .running = false,
+        .pool = NULL,
         .lock = PTHREAD_MUTEX_INITIALIZER,
         .cond = PTHREAD_COND_INITIALIZER
 };
@@ -105,6 +106,8 @@ fsal_up_submit(struct fsal_up_event *event)
                                 &event->data.invalidate,
                                 &event->file,
                                 &event->private);
+                        if (rc == ENOENT)
+                          rc = 0;
                 }
                 break;
 
@@ -170,7 +173,10 @@ fsal_up_submit(struct fsal_up_event *event)
                                 &event->private);
                 }
                 break;
-        }
+        case FSAL_UP_EVENT_DELEGATION_RECALL:
+                rc = 0;
+                break;
+                }
 
         if (rc != 0) {
                 pthread_mutex_unlock(&fsal_up_state.lock);
@@ -314,6 +320,14 @@ next_event:
                                         event->private);
                         }
                         break;
+
+                case FSAL_UP_EVENT_DELEGATION_RECALL:
+                        if (event->functions->delegrecall_queue) {
+                                event->functions->delegrecall_queue(
+                                        &event->data.delegrecall,
+                                        &event->file);
+                        }
+                        break;
                 }
 
                 fsal_up_free_event(event);
@@ -451,7 +465,10 @@ shutdown_FSAL_up(void)
 struct fsal_up_event *
 fsal_up_alloc_event(void)
 {
-        return pool_alloc(fsal_up_state.pool, NULL);
+        if (fsal_up_state.pool)
+          return pool_alloc(fsal_up_state.pool, NULL);
+        else
+         return NULL;
 }
 
 void

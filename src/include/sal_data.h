@@ -496,6 +496,12 @@ struct state_block_data_t
     } sbd_block_data;
 };
 
+typedef enum lock_type_t
+{
+  POSIX_LOCK,
+  LEASE_LOCK
+} lock_type_t;
+
 struct state_lock_entry_t
 {
   struct glist_head      sle_list;
@@ -514,6 +520,7 @@ struct state_lock_entry_t
   int                    sle_ref_count;
   fsal_lock_param_t      sle_lock;
   pthread_mutex_t        sle_mutex;
+  lock_type_t            sle_type;
 };
 
 struct state_layout_segment

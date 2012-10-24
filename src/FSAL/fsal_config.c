@@ -527,6 +527,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->auth_exportpath_xdev;
 	case fso_dirs_have_sticky_bit:
 		return !!info->dirs_have_sticky_bit;
+	case fso_delegations:
+		return !!info->delegations;
 	case fso_accesscheck_support:
 		return !!info->accesscheck_support;
 	case fso_share_support:

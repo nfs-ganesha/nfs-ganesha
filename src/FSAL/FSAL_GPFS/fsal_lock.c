@@ -86,10 +86,10 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_obj_handle *obj_hdl,      /* IN */
   glock_args.lfd = myself->u.file.fd;
 
   LogFullDebug(COMPONENT_FSAL,
-               "Locking: op:%d type:%d start:%llu length:%llu owner:%p",
-               lock_op, request_lock.lock_type,
-               (unsigned long long)request_lock.lock_start,
-               (unsigned long long)request_lock.lock_length, p_owner);
+          "Locking: op:%d sle_type:%d type:%d start:%llu length:%llu owner:%p",
+           lock_op, request_lock.lock_sle_type, request_lock.lock_type,
+           (unsigned long long)request_lock.lock_start,
+           (unsigned long long)request_lock.lock_length, p_owner);
 
   if(lock_op == FSAL_OP_LOCKT)
     glock_args.cmd = F_GETLK;
@@ -131,8 +131,11 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_obj_handle *obj_hdl,      /* IN */
 
   errno = 0;
 
-  retval = gpfs_ganesha(lock_op == FSAL_OP_LOCKT ?
-      OPENHANDLE_GET_LOCK : OPENHANDLE_SET_LOCK, &gpfs_sg_arg);
+  if(request_lock.lock_sle_type == FSAL_LEASE_LOCK)
+    retval = gpfs_ganesha(OPENHANDLE_SET_DELEGATION, &gpfs_sg_arg);
+  else
+    retval = gpfs_ganesha(lock_op == FSAL_OP_LOCKT ?
+        OPENHANDLE_GET_LOCK : OPENHANDLE_SET_LOCK, &gpfs_sg_arg);
 
   if(retval)
     {

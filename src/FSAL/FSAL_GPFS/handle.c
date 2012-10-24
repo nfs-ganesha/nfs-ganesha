@@ -756,6 +756,7 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 	fh_desc->len = fh_size;
+//???	fh_desc->len = fh->handle_key_size;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 errout:
@@ -781,6 +782,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	fh_desc->addr = myself->handle;
 	fh_desc->len = gpfs_sizeof_handle(myself->handle);
+//???	fh_desc->len = myself->handle->handle_key_size;
 }
 
 /*

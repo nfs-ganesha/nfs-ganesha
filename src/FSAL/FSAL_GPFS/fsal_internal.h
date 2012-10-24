@@ -42,12 +42,13 @@
 
 bool fsal_error_is_event(fsal_status_t status);
 
-struct gpfs_fsal_up_ctx_t
+struct gpfs_fsal_up_ctx
 {
   /* There is one GPFS FSAL UP Context per GPFS file system */
   struct glist_head   gf_list;    /* List of GPFS FSAL UP Contexts */
   struct glist_head   gf_exports; /* List of GPFS Export Contexts on this FSAL UP context */
-  char             * gf_fs;      /* GPFS File System Directory */
+  struct fsal_export *gf_export;
+  int                gf_fd;      /* GPFS File System Directory fd */
   unsigned int        gf_fsid[2];
   pthread_t          gf_thread;
 };
@@ -295,9 +296,10 @@ fsal_status_t GPFSFSAL_open_by_name(struct gpfs_file_handle * dirhandle, /* IN *
                                    struct attrlist * file_attributes);/* IN/OUT */
 
 fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,         /* IN */
-                           fsal_openflags_t openflags,              /* IN */
-                           int * p_file_descriptor,                /* OUT */
-                           struct attrlist * p_file_attributes); /* IN/OUT */
+                            const struct req_op_context *p_context,  /* IN */
+                            fsal_openflags_t openflags,             /* IN */
+                            int * p_file_descriptor,                /* OUT */
+                            struct attrlist * p_file_attributes); /* IN/OUT */
 
 fsal_status_t GPFSFSAL_read(int fd,                /* IN */
                            uint64_t offset,        /* IN */
@@ -462,11 +464,10 @@ fsal_status_t GPFSFSAL_UP_GetEvents( struct glist_head * pevent_head,
 		         fsal_time_t timeout,                           /* IN */
 		         fsal_count_t * peventfound,                   /* OUT */
 		         fsal_up_event_bus_context_t * pupebcontext);   /* IN */
+#endif
+struct glist_head gpfs_fsal_up_ctx_list;
 
 void *GPFSFSAL_UP_Thread(void *Arg);
 
-struct glist_head gpfs_fsal_up_ctx_list;
-
-gpfs_fsal_up_ctx_t * gpfsfsal_find_fsal_up_context(
-                                        gpfsfsal_export_context_t * export_ctx);
-#endif
+struct gpfs_fsal_up_ctx * gpfsfsal_find_fsal_up_context(
+                                                  struct gpfs_fsal_up_ctx *ctx);
