@@ -10,9 +10,9 @@
 #include "fsal.h"
 #include "HashTable.h"
 #include "log.h"
-#include "RW_Lock.h"
 #include "nfs4_acls.h"
 #include <openssl/md5.h>
+#include <pthread.h>
 
 pool_t *fsal_acl_pool;
 static pthread_mutex_t fsal_acl_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -188,12 +188,12 @@ static void nfs4_release_acldata_key(struct gsh_buffdesc *pkey)
 void nfs4_acl_entry_inc_ref(fsal_acl_t *pacl)
 {
   /* Increase ref counter */
-  P_w(&pacl->lock);
+  pthread_rwlock_wrlock(&pacl->lock);
   pacl->ref++;
   LogDebug(COMPONENT_NFS_V4_ACL,
            "(acl, ref) = (%p, %u)",
            pacl, pacl->ref);
-  V_w(&pacl->lock);
+  pthread_rwlock_unlock(&pacl->lock);
 }
 
 /* Should be called with lock held. */
@@ -270,7 +270,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
 
   /* Adding the entry in the cache */
   pacl = nfs4_acl_alloc();
-  if(rw_lock_init(&(pacl->lock)) != 0)
+  if(pthread_rwlock_init(&(pacl->lock), NULL) != 0)
     {
       nfs4_acl_free(pacl);
       LogCrit(COMPONENT_NFS_V4_ACL,
@@ -335,11 +335,11 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
   if (pacl == NULL)
     return;
 
-  P_w(&pacl->lock);
+  pthread_rwlock_wrlock(&pacl->lock);
   if(pacl->ref > 1)
     {
       nfs4_acl_entry_dec_ref(pacl);
-      V_w(&pacl->lock);
+      pthread_rwlock_unlock(&pacl->lock);
       return;
     }
   else
@@ -355,12 +355,12 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
 
     nfs4_release_acldata_key(&key);
 
-    V_w(&pacl->lock);
+    pthread_rwlock_unlock(&pacl->lock);
 
     return;
   }
 
-  V_w(&pacl->lock);
+  pthread_rwlock_unlock(&pacl->lock);
 
   /* Get the hash table entry and hold latch */
   rc = HashTable_GetLatch(fsal_acl_hash,
@@ -376,13 +376,13 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
         return;
 
       case HASHTABLE_SUCCESS:
-        P_w(&pacl->lock);
+        pthread_rwlock_wrlock(&pacl->lock);
         nfs4_acl_entry_dec_ref(pacl);
         if(pacl->ref != 0)
           {
             /* Did not actually release last reference */
             HashTable_ReleaseLatched(fsal_acl_hash, &latch);
-            V_w(&pacl->lock);
+            pthread_rwlock_unlock(&pacl->lock);
             return;
           }
 
@@ -419,7 +419,7 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
   /* Release the current key */
   nfs4_release_acldata_key(&key);
 
-  V_w(&pacl->lock);
+  pthread_rwlock_unlock(&pacl->lock);
 
   /* Release acl */
   nfs4_acl_free(pacl);
@@ -449,9 +449,9 @@ static void nfs4_acls_test()
     }
 
   pacl = nfs4_acl_new_entry(&acldata, &status);
-  P_r(&pacl->lock);
+  pthread_rwlock_rdlock(&pacl->lock);
   LogDebug(COMPONENT_NFS_V4_ACL, "pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
-  V_r(&pacl->lock);
+  pthread_rwlock_unlock(&pacl->lock);
 
   acldata2.naces = 3;
   acldata2.aces = nfs4_ace_alloc(3);
@@ -470,14 +470,14 @@ static void nfs4_acls_test()
     }
 
   pacl = nfs4_acl_new_entry(&acldata2, &status);
-  P_r(&pacl->lock);
+  pthread_rwlock_rdlock(&pacl->lock);
   LogDebug(COMPONENT_NFS_V4_ACL, "re-access: pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
-  V_r(&pacl->lock);
+  pthread_rwlock_unlock(&pacl->lock);
 
   nfs4_acl_release_entry(pacl, &status);
-  P_r(&pacl->lock);
+  pthread_rwlock_rdlock(&pacl->lock);
   LogDebug(COMPONENT_NFS_V4_ACL, "release: pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
-  V_r(&pacl->lock);
+  pthread_rwlock_unlock(&pacl->lock);
 
   nfs4_acl_release_entry(pacl, &status);
 }
