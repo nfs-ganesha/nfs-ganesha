@@ -1786,8 +1786,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
 int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file attributes */
                            sattr3 * psattr)     /* In: file attributes  */
 {
-  struct timeval t;
-
   if(pFSAL_attr == NULL || psattr == NULL)
     return 0;
 
@@ -1834,44 +1832,56 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
   if(psattr->atime.set_it != DONT_CHANGE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO,
-                   "nfs3_Sattr_To_FSALattr: set=%d atime = %d,%d",
-                   psattr->atime.set_it, psattr->atime.set_atime_u.atime.seconds,
-                   psattr->atime.set_atime_u.atime.nseconds);
       if(psattr->atime.set_it == SET_TO_CLIENT_TIME)
         {
+          LogFullDebug(COMPONENT_NFSPROTO,
+                       "nfs3_Sattr_To_FSALattr: SET_TO_CLIENT_TIME atime = %d,%d",
+                       psattr->atime.set_atime_u.atime.seconds,
+                       psattr->atime.set_atime_u.atime.nseconds);
           pFSAL_attr->atime.seconds = psattr->atime.set_atime_u.atime.seconds;
           pFSAL_attr->atime.nseconds = psattr->atime.set_atime_u.atime.nseconds;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
+        }
+      else if(psattr->atime.set_it == SET_TO_SERVER_TIME)
+        {
+          /* Use the server's current time */
+          LogFullDebug(COMPONENT_NFSPROTO,
+                       "nfs3_Sattr_To_FSALattr: SET_TO_SERVER_TIME atime");
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME_SERVER;
         }
       else
         {
-          /* Use the server's current time */
-          gettimeofday(&t, NULL);
-
-          pFSAL_attr->atime.seconds = t.tv_sec;
-          pFSAL_attr->atime.nseconds = t.tv_usec * 1000;
+          LogCrit(COMPONENT_NFSPROTO,
+                  "Unexpected value for psattr->atime.set_it = %d",
+                  psattr->atime.set_it);
         }
-      pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
     }
 
   if(psattr->mtime.set_it != DONT_CHANGE)
     {
-      LogFullDebug(COMPONENT_NFSPROTO,
-                   "nfs3_Sattr_To_FSALattr: set=%d mtime = %d",
-                   psattr->atime.set_it, psattr->mtime.set_mtime_u.mtime.seconds ) ;
       if(psattr->mtime.set_it == SET_TO_CLIENT_TIME)
         {
+          LogFullDebug(COMPONENT_NFSPROTO,
+                       "nfs3_Sattr_To_FSALattr: SET_TO_CLIENT_TIME mtime = %d,%d",
+                       psattr->mtime.set_mtime_u.mtime.seconds,
+                       psattr->mtime.set_mtime_u.mtime.nseconds);
           pFSAL_attr->mtime.seconds = psattr->mtime.set_mtime_u.mtime.seconds;
           pFSAL_attr->mtime.nseconds = psattr->mtime.set_mtime_u.mtime.nseconds;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
+        }
+      else if(psattr->mtime.set_it == SET_TO_SERVER_TIME)
+        {
+          /* Use the server's current time */
+          LogFullDebug(COMPONENT_NFSPROTO,
+                       "nfs3_Sattr_To_FSALattr: SET_TO_SERVER_TIME mtime");
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME_SERVER;
         }
       else
         {
-          /* Use the server's current time */
-          gettimeofday(&t, NULL);
-          pFSAL_attr->mtime.seconds = t.tv_sec;
-          pFSAL_attr->mtime.nseconds = t.tv_usec * 1000;
+          LogCrit(COMPONENT_NFSPROTO,
+                  "Unexpected value for psattr->mtime.set_it = %d",
+                  psattr->mtime.set_it);
         }
-      pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
     }
 
   return 1;
@@ -2880,7 +2890,7 @@ int nfs4_Fattr_Supported(fattr4 * Fattr)
 
 /**
  *
- * nfs4_Fattr_Supported: Checks if an attribute is supported.
+ * nfs4_Fattr_Supported_Bitmap: Checks if an attribute is supported.
  *
  * Checks if an attribute is supported.
  *
@@ -3368,22 +3378,15 @@ static int nfstime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
   return LastOffset; 
 }
 
-static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
+static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval, time_how4 * how)
 {
-  time_how4 how;
   int LastOffset = 0;
-  struct timeval t;
 
-  memcpy(&how, attrval + LastOffset , sizeof(how));
-  LastOffset += sizeof(how);
+  memcpy(how, attrval + LastOffset , sizeof(*how));
+  LastOffset += sizeof(*how);
+  *how = ntohl(*how);
 
-  if(ntohl(how) == SET_TO_SERVER_TIME4)
-    {
-      gettimeofday(&t, NULL);
-      ts->seconds = t.tv_sec;   /* Use current server's time */
-      ts->nseconds = t.tv_usec * 1000;
-    }
-  else
+  if(*how == SET_TO_CLIENT_TIME4)
     {
         LastOffset += nfstime4_to_fsal_time(ts, attrval + LastOffset);
     }
@@ -3425,6 +3428,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
   char buffer[MAXNAMLEN];
   utf8string utf8buffer;
 
+  time_how4   how;
   fattr4_type attr_type;
   fattr4_fsid attr_fsid;
   fattr4_fileid attr_fileid;
@@ -3699,14 +3703,22 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
         case FATTR4_TIME_ACCESS_SET:
           LastOffset += settime4_to_fsal_time(&pFSAL_attr->atime,
-                                              Fattr->attr_vals.attrlist4_val + LastOffset);
-          pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
+                                              Fattr->attr_vals.attrlist4_val + LastOffset,
+                                              &how);
+          if(how == SET_TO_SERVER_TIME4)
+            pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME_SERVER;
+          else
+            pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
           break;
 
         case FATTR4_TIME_MODIFY_SET:
           LastOffset += settime4_to_fsal_time(&pFSAL_attr->mtime,
-                                              Fattr->attr_vals.attrlist4_val + LastOffset);
-          pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
+                                              Fattr->attr_vals.attrlist4_val + LastOffset,
+                                              &how);
+          if(how == SET_TO_SERVER_TIME4)
+            pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME_SERVER;
+          else
+            pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
 
           break;
 

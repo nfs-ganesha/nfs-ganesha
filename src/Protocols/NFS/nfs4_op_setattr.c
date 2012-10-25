@@ -83,7 +83,6 @@
 int nfs4_op_setattr(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  struct timeval         t;
   fsal_attrib_list_t     sattr;
   fsal_attrib_list_t     parent_attr;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
@@ -210,6 +209,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_OWNER) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_GROUP) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_SIZE)  ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME_SERVER) ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME_SERVER) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) ||
 #ifdef _USE_NFS4_ACL
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) ||
@@ -239,16 +240,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 #define S_NSECS 1000000000UL  /* nsecs in 1s */
       /* Set the atime and mtime (ctime is not setable) */
 
-      /* get the current time */
-       gettimeofday(&t, NULL);
-
-      /** @todo : check correctness of this block... looks suspicious */
-      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) == SET_TO_SERVER_TIME4)
-        {
-          sattr.atime.seconds = t.tv_sec;
-          sattr.atime.nseconds = t.tv_usec;
-        }
-      else
+      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME))
         {
           /* a carry into seconds considered invalid */
           if (sattr.atime.nseconds >= S_NSECS)
@@ -258,14 +250,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           }
         }
 
-      /* Should we use the time from the client handside or from the server handside ? */
-      /** @todo : check correctness of this block... looks suspicious */
-      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
-        {
-          sattr.mtime.seconds = t.tv_sec;
-          sattr.mtime.nseconds = t.tv_usec;
-        }
-      else
+      if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME))
         {
           /* a carry into seconds considered invalid */
           if (sattr.mtime.nseconds >= S_NSECS)
