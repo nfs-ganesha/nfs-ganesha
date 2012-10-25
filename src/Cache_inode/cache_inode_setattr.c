@@ -122,32 +122,6 @@ cache_inode_setattr(cache_entry_t *entry,
      if (attr->asked_attributes & FSAL_ATTR_SIZE) {
           PTHREAD_RWLOCK_WRLOCK(&entry->content_lock);
           got_content_lock = TRUE;
-          /* Handle truncate as separate call */
-          fsal_file_t *fd;
-          fsal_attrib_list_t *get_attrs;
-          if (entry->object.file.open_fd.openflags == FSAL_O_CLOSED)
-            fd = NULL;
-          else
-            fd = &(entry->object.file.open_fd.fd);
-          if(attr->asked_attributes & ~FSAL_ATTR_SIZE)
-            get_attrs = NULL;
-          else
-            get_attrs = attr;
-          fsal_status = FSAL_truncate(&entry->handle,
-                                      context, attr->filesize,
-                                      fd, get_attrs);
-          if (FSAL_IS_ERROR(fsal_status)) {
-               *status = cache_inode_error_convert(fsal_status);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    LogEvent(COMPONENT_CACHE_INODE,
-                       "FSAL returned STALE from truncate");
-                    cache_inode_kill_entry(entry);
-               }
-               goto unlock;
-          }
-        /* If we only asked to set size, skip FSAL_setattrs */
-        if(attr->asked_attributes == FSAL_ATTR_SIZE)
-             goto success;
      }
 
 #ifdef _USE_NFS4_ACL
@@ -174,8 +148,6 @@ cache_inode_setattr(cache_entry_t *entry,
          }
 #endif /* _USE_NFS4_ACL */
      }
-
-success:
 
      cache_inode_fixup_md(entry);
      /* Copy the complete set of new attributes out. */
