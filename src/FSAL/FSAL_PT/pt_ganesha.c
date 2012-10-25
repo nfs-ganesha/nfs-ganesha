@@ -82,7 +82,12 @@ fsi_get_whole_path(const char * parentPath,
   if(!strcmp(parentPath, "/") || !strcmp(parentPath, "")) {
     snprintf(path, PATH_MAX, "%s", name);
   } else {
-    snprintf(path, PATH_MAX, "%s/%s", parentPath, name);
+    size_t export_len = strnlen(parentPath, PATH_MAX);
+    if (parentPath[export_len - 1] == '/') {
+      snprintf(path, PATH_MAX, "%s%s", parentPath, name);
+    } else {
+      snprintf(path, PATH_MAX, "%s/%s", parentPath, name);
+    }
   }
   FSI_TRACE(FSI_DEBUG, "Full Path: %s", path);
 }
@@ -92,30 +97,31 @@ fsi_cache_name_and_handle(fsal_op_context_t * p_context,
                           char              * handle,
                           char              * name)
 {
-  int rc;
   struct fsi_handle_cache_entry_t handle_entry;
+  uint64_t * handlePtr = (uint64_t *) handle;  
 
-  rc = fsi_get_name_from_handle(p_context, handle, name);
+  pthread_mutex_lock(&g_fsi_name_handle_mutex);
+  g_fsi_name_handle_cache.m_count = (g_fsi_name_handle_cache.m_count + 1) 
+    % FSI_MAX_HANDLE_CACHE_ENTRY;
 
-  if (rc < 0) {
-    pthread_mutex_lock(&g_fsi_name_handle_mutex);
-    g_fsi_name_handle_cache.m_count = (g_fsi_name_handle_cache.m_count + 1) 
-      % FSI_MAX_HANDLE_CACHE_ENTRY;
-
-    memcpy(
-      &g_fsi_name_handle_cache
-      .m_entry[g_fsi_name_handle_cache.m_count].m_handle,
-      &handle[0],sizeof(handle_entry.m_handle));
-    strncpy(
-      g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
-      name, sizeof(handle_entry.m_name));
-    g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count]
+  memcpy(
+    &g_fsi_name_handle_cache
+    .m_entry[g_fsi_name_handle_cache.m_count].m_handle,
+    &handle[0],sizeof(handle_entry.m_handle));
+  strncpy(
+    g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
+    name, sizeof(handle_entry.m_name));
+  g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count]
     .m_name[sizeof(handle_entry.m_name)-1] = '\0';
-    FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
-              name,g_fsi_name_handle_cache.m_count);
-    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
-  }
+  FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
+            name,g_fsi_name_handle_cache.m_count);
+  pthread_mutex_unlock(&g_fsi_name_handle_mutex);
 
+  if (strnlen(name, 1) == 0) {
+    FSI_TRACE(FSI_NOTICE, "The name is empty string for handle : "
+              "%p->0x%lx %lx %lx %lx", handle,
+              handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
+  }
   return 0;
 }
 // -----------------------------------------------------------------------------
@@ -134,8 +140,10 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   ptfsal_threadcontext_t *p_cur_context;
 
   FSI_TRACE(FSI_DEBUG, "Get name from handle: \n");
+  handlePtr = (uint64_t *) handle;
   ptfsal_print_handle(handle);
 
+  // Get name from cache by index cached.
   if (g_ptfsal_context_flag) {
     p_cur_context = ptfsal_get_thread_context();
     if (p_cur_context != NULL) {
@@ -155,6 +163,12 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
                   "FSI - name = %s cache index %d DIRECT HIT\n",
                   name, index);
         pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+        // Check whether the name from cache is empty
+        if (strnlen(name, 1) == 0) {
+          FSI_TRACE(FSI_NOTICE, "The name is empty string from cache by index:"
+                    "%p->0x%lx %lx %lx %lx", handle,
+                    handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
+        }
         return 0;
       }
       pthread_mutex_unlock(&g_fsi_name_handle_mutex);
@@ -165,6 +179,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
   
   ptfsal_set_fsi_handle_data(p_context, &ccl_context);
 
+  // Get name from cache by iterate all cache entries.
   pthread_mutex_lock(&g_fsi_name_handle_mutex);
   for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
     if (memcmp(&handle[0], &g_fsi_name_handle_cache.m_entry[index].m_handle, 
@@ -185,21 +200,21 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
  
       // Check whether the name from cache is empty 
       if (strnlen(name, 1) == 0) {
-        FSI_TRACE(FSI_INFO, "The name is empty string for handle: "
-                  "%p", handle);
+        FSI_TRACE(FSI_NOTICE, "The name is empty string fom cache by loop: "
+                  "%p->0x%lx %lx %lx %lx", handle, 
+                  handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
       }
       return 0;
     }
   }
   pthread_mutex_unlock(&g_fsi_name_handle_mutex);
 
-  /* Not in cache */
+  // Not in cache, so send request to PT. 
   memset(&pt_handler.handle, 0, FSI_PERSISTENT_HANDLE_N_BYTES);
   memcpy(&pt_handler.handle, handle, FSI_PERSISTENT_HANDLE_N_BYTES);
   FSI_TRACE(FSI_DEBUG, "Handle: \n");
   ptfsal_print_handle(handle);
   rc = ccl_handle_to_name(&ccl_context, &pt_handler, name); 
-  handlePtr = (uint64_t *) handle;
   FSI_TRACE(FSI_DEBUG, "The rc %d, handle 0x%lx %lx %lx %lx, name %s", rc, 
             handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3], name);
   
@@ -225,10 +240,16 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
         g_fsi_name_handle_cache.m_count;
     }
     pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+    if (strnlen(name, 1) == 0) {
+      FSI_TRACE(FSI_NOTICE, "The name is empty string from PT: "
+                "%pp->0x%lx %lx %lx %lx", handle,
+                handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
+    }
+  } else {
+    FSI_TRACE(FSI_ERR, "The ccl_handle_to_name got error!");
   }  
 
   return rc;
-
 }
 // -----------------------------------------------------------------------------
 int
@@ -239,7 +260,11 @@ fsi_update_cache_name(char * oldname,
   struct fsi_handle_cache_entry_t handle_entry;
 
   FSI_TRACE(FSI_DEBUG, "oldname[%s]->newname[%s]",oldname,newname);
-  
+  if (strnlen(newname, 1) == 0) {
+    FSI_TRACE(FSI_ERR, "The file name is empty string.");
+    return -1;
+  }
+
   pthread_mutex_lock(&g_fsi_name_handle_mutex);
   for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
     FSI_TRACE(FSI_DEBUG, "cache entry[%d]: %s",index,
@@ -350,7 +375,7 @@ ptfsal_rename(fsal_op_context_t * p_context,
                                 fsi_old_parent_dir_name);
   if( rc < 0 )
   {
-    FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
+    FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
     return rc;
   }
   rc = fsi_get_name_from_handle(p_context, 
@@ -358,7 +383,7 @@ ptfsal_rename(fsal_op_context_t * p_context,
                                 fsi_new_parent_dir_name);
   if( rc < 0 )
   {
-    FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
+    FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
     return rc;
   }
   fsi_get_whole_path(fsi_old_parent_dir_name, p_old_name, fsi_old_fullpath);
@@ -366,6 +391,10 @@ ptfsal_rename(fsal_op_context_t * p_context,
   FSI_TRACE(FSI_DEBUG, "Full path is %s", fsi_old_fullpath);
   FSI_TRACE(FSI_DEBUG, "Full path is %s", fsi_new_fullpath);
 
+  if (strnlen(fsi_new_fullpath, PATH_MAX) == 0) {
+    FSI_TRACE(FSI_ERR, "The file name is empty string.");
+    return -1;
+  }
   rc = ccl_rename(&ccl_context, fsi_old_fullpath, fsi_new_fullpath);
   if(rc == 0) {
     fsi_update_cache_name(fsi_old_fullpath, fsi_new_fullpath);
@@ -397,7 +426,7 @@ ptfsal_stat_by_parent_name(fsal_op_context_t * p_context,
                                      fsi_parent_dir_name);
   if( stat_rc < 0 )
   {
-    FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
+    FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
     return stat_rc;
   }
   fsi_get_whole_path(fsi_parent_dir_name, p_filename, fsi_fullpath);
@@ -455,7 +484,7 @@ ptfsal_stat_by_handle(fsal_handle_t     * p_filehandle,
                                       fsi_name);
   FSI_TRACE(FSI_DEBUG, "FSI - rc = %d\n", stat_rc);
   if (stat_rc) {
-    FSI_TRACE(FSI_DEBUG, "Return rc %d from get name from handle %s", 
+    FSI_TRACE(FSI_ERR, "Return rc %d from get name from handle %s", 
               stat_rc, p_fsi_handle->data.handle.f_handle);
     return stat_rc;
   }
@@ -625,6 +654,7 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
   ptfsal_op_context_t     * fsi_op_context     = 
     (ptfsal_op_context_t *)p_context;
   ccl_context_t ccl_context;
+  uint64_t * handlePtr = (uint64_t *) p_fsi_handle->data.handle.f_handle;
 
   FSI_TRACE(FSI_DEBUG, "Open by Handle:");
   ptfsal_print_handle(p_fsi_handle->data.handle.f_handle);
@@ -634,7 +664,7 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
   strcpy(fsi_filename,"");
   rc = fsi_get_name_from_handle(p_context, 
                                 (char *)&p_fsi_handle->data.handle.f_handle,
-                                (char *)&fsi_filename);
+                                fsi_filename);
   if(rc < 0)
   {
     FSI_TRACE(FSI_ERR, "Handle to name failed rc=%d", rc);
@@ -643,9 +673,11 @@ ptfsal_open_by_handle(fsal_op_context_t * p_context,
   FSI_TRACE(FSI_DEBUG, "handle to name %s for handle:", fsi_filename);
   // The file name should not be empty "". In case it is empty, we
   // return error.
-  if(strnlen(fsi_filename, PATH_MAX) == 0)
+  if(strnlen(fsi_filename, 1) == 0)
   {
-    FSI_TRACE(FSI_ERR, "The file name is empty string.");
+    FSI_TRACE(FSI_ERR, "The file name is empty string for handle: "
+              "0x%lx %lx %lx %lx",
+              handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
     return -1;
   }
 
@@ -729,7 +761,8 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
                                 fsi_parent_dir_name);
   if(rc < 0)
   {
-    FSI_TRACE(FSI_DEBUG, "Handle to name failed rc=%d", rc);
+    FSI_TRACE(FSI_ERR, "Handle to name failed rc=%d, "
+              "failed to get parent directory name.", rc);
     return rc;
   }
   FSI_TRACE(FSI_DEBUG, "FSI - Parent dir name = %s\n", fsi_parent_dir_name);
@@ -738,16 +771,16 @@ ptfsal_open(fsal_handle_t     * p_parent_directory_handle,
   memset(&fsi_name, 0, sizeof(fsi_name));
   fsi_get_whole_path(fsi_parent_dir_name, p_filename->name, fsi_name);
 
-  handleOpened = ccl_open(&ccl_context, fsi_name, O_CREAT, mode);
-
   // The file name should not be empty "". In case it is empty, we
   // return error.
-  if(strnlen(fsi_name, PATH_MAX) == 0)
+  if(strnlen(fsi_name, 1) == 0)
   {
     FSI_TRACE(FSI_ERR, "The file name is empty string.");
     return -1;
   }
-  rc = ccl_open(&ccl_context, fsi_name, O_CREAT, mode);
+
+  // Will create a new file in backend.
+  handleOpened = ccl_open(&ccl_context, fsi_name, O_CREAT, mode);
 
   if (handleOpened >=0) {
     fsal_path_t fsal_path;
@@ -831,7 +864,7 @@ ptfsal_unlink(fsal_op_context_t * p_context,
                                 fsi_parent_dir_name);
   if( rc < 0 )
   {
-    FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
+    FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
     return rc;
   }
   fsi_get_whole_path(fsi_parent_dir_name, p_filename, fsi_fullpath);
@@ -911,7 +944,7 @@ ptfsal_mkdir(fsal_handle_t     * p_parent_directory_handle,
                                 fsi_parent_dir_name);
   if(rc < 0)
   {
-    FSI_TRACE(FSI_DEBUG, "Handle to name failed for hanlde %s", 
+    FSI_TRACE(FSI_ERR, "Handle to name failed for hanlde %s", 
               p_fsi_parent_handle->data.handle.f_handle);
     return rc;
   }
@@ -919,6 +952,14 @@ ptfsal_mkdir(fsal_handle_t     * p_parent_directory_handle,
 
   memset(fsi_name, 0, sizeof(fsi_name));
   fsi_get_whole_path(fsi_parent_dir_name, p_dirname->name, fsi_name);
+
+  // The dir name should not be empty "". In case it is empty, we
+  // return error.
+  if(strnlen(fsi_name, 1) == 0)
+  {
+    FSI_TRACE(FSI_ERR, "The directory name is empty string.");
+    return -1;
+  }
 
   rc = ccl_mkdir(&ccl_context, fsi_name, mode);
 
@@ -952,10 +993,11 @@ ptfsal_rmdir(fsal_op_context_t * p_context,
     (ptfsal_handle_t *)p_parent_directory_handle;
 
   rc = fsi_get_name_from_handle(p_context, 
-    p_parent_dir_handle->data.handle.f_handle, fsi_parent_dir_name);
+                                p_parent_dir_handle->data.handle.f_handle, 
+                                fsi_parent_dir_name);
   if( rc < 0 )
   {
-    FSI_TRACE(FSI_DEBUG, "Failed to get name from handle.");
+    FSI_TRACE(FSI_ERR, "Failed to get name from handle.");
     return rc;
   }
   fsi_get_whole_path(fsi_parent_dir_name, p_object_name, fsi_fullpath);

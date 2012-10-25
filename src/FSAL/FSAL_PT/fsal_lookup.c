@@ -278,12 +278,7 @@ PTFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
     ReturnStatus(status, INDEX_FSAL_lookupPath);
 
   p_fsi_handle = (ptfsal_handle_t *)object_handle;
-
-  // add to handle/name cache
-  fsi_cache_name_and_handle (p_context, 
-                             (char *)&p_fsi_handle->data.handle.f_handle, 
-                             p_path->path);
-
+  ptfsal_print_handle(p_fsi_handle->data.handle.f_handle);
 
   /* get object attributes */
   if(p_object_attributes)

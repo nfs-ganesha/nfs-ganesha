@@ -578,10 +578,10 @@ int ccl_init(int                        multi_threaded,
 int add_acl_handle(uint64_t fs_acl_handle);
 int add_dir_handle(uint64_t fs_dir_handle);
 int add_fsi_handle(struct file_handle_t * p_new_handle);
-void convert_fsi_name(ccl_context_t * handle,
-                      const char    * filename,
-                      char          * sv_filename,
-                      const size_t    sv_filename_size);
+int convert_fsi_name(ccl_context_t   * handle,
+                     const char      * filename,
+                     char            * sv_filename,
+                     const size_t      sv_filename_size);
 int delete_acl_handle(uint64_t aclHandle);
 int delete_dir_handle(int dir_handle_index);
 int delete_fsi_handle(int handle_index);
@@ -835,8 +835,8 @@ int ccl_symlink(ccl_context_t * pvfs_handle,
                 const char    * link_content);
 void ccl_update_handle_last_io_timestamp(int handle_index);
 int ccl_update_handle_nfs_state(int              handle_index,
- 				enum e_nfs_state state,
- 				int              expected_state);
+                                enum e_nfs_state state,
+                                int              expected_state);
 int ccl_fsal_try_stat_by_index(ccl_context_t           * handle,
                                int                       handle_index,
                                char                    * fsal_name,
