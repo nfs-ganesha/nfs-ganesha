@@ -565,7 +565,7 @@ struct ipc_client_stats_t {
 // that we are trying to reopen, but we are already closing that handle. 
 // Open processing will poll until that handle is completely closed before
 // opening it again. 
-#define CCL_MAX_CLOSING_TO_CLOSE_POLLING_COUNT 30
+#define CCL_MAX_CLOSING_TO_CLOSE_POLLING_COUNT 480
 
 // ---------------------------------------------------------------------------
 // Function Prototypes
