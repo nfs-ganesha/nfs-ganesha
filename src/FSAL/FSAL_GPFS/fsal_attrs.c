@@ -223,14 +223,18 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
         }
     }
 
-  /* get current attributes */
-  current_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
-  status = GPFSFSAL_getattrs(p_filehandle, p_context, &current_attrs);
-  if(FSAL_IS_ERROR(status))
+  if(isDebug(COMPONENT_FSAL))
     {
-      FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-      FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-      ReturnStatus(status, INDEX_FSAL_setattrs);
+      /* get current attributes for debug */
+      current_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+      status = GPFSFSAL_getattrs(p_filehandle, p_context, &current_attrs);
+      if(FSAL_IS_ERROR(status))
+        {
+          /* Make sure attributes have valid values but don't pass up error */
+          LogDebug(COMPONENT_FSAL,
+                   "GPFSFSAL_getattrs failed to get current attr");
+          memset(&current_attrs, 0, sizeof(current_attrs));
+        }
     }
 
   /**************
