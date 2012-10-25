@@ -4,7 +4,7 @@ OPWD=`pwd`
 
 TIRPC_REPO='git://github.com/linuxbox2/ntirpc.git'
 TIRPC_BRANCH_NAME='duplex-9'
-TIRPC_COMMIT='61a97afbd2a66973b99a244de6d36e274dffbd77'
+TIRPC_COMMIT='a0e88824b1afdc4cfc9a0994c26b70db793d30c5'
 
 # remove libtirpc if present;  try to avoid making
 # a mess
@@ -16,7 +16,7 @@ fi
 
 git clone ${TIRPC_REPO} libtirpc
 cd libtirpc
-git checkout -b $TIRPC_BRANCH_NAME ${TIRPC_COMMIT}
+git checkout ${TIRPC_COMMIT}
 cd ${OPWD}
 
 ./autogen.sh
