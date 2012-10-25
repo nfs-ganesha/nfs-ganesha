@@ -128,7 +128,6 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
   fsal_status_t status;
   struct gpfs_fsal_obj_handle *myself;
   gpfsfsal_xstat_t buffxstat;
-  struct attrlist current_attrs;
 
   /* Indicate if stat or acl or both should be changed. */
   int attr_valid = 0;
@@ -168,12 +167,6 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
       p_object_attributes->mode &= ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
     }
 
-  /* get current attributes */
-  current_attrs.mask = dir_hdl->export->ops->fs_supported_attrs(dir_hdl->export);
-  status = GPFSFSAL_getattrs(dir_hdl->export, p_context, myself->handle,
-                             &current_attrs);
-  if(FSAL_IS_ERROR(status))
-      return(status);
   /**************
    *  TRUNCATE  *
    **************/
@@ -184,7 +177,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
       buffxstat.buffstat.st_size = p_object_attributes->filesize;
       LogDebug(COMPONENT_FSAL,
               "current size = %llu, new size = %llu",
-              (unsigned long long) current_attrs.filesize,
+              (unsigned long long) dir_hdl->attributes.filesize,
               (unsigned long long) buffxstat.buffstat.st_size);
   }
 
@@ -197,7 +190,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
       /* The POSIX chmod call don't affect the symlink object, but
        * the entry it points to. So we must ignore it.
        */
-      if(current_attrs.type != SYMBOLIC_LINK)
+      if(dir_hdl->type != SYMBOLIC_LINK)
         {
             attr_changed |= XATTR_MODE;
     
@@ -205,7 +198,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
             buffxstat.buffstat.st_mode = fsal2unix_mode(p_object_attributes->mode);
             LogDebug(COMPONENT_FSAL,
                      "current mode = %o, new mode = %o",
-                     fsal2unix_mode(current_attrs.mode), buffxstat.buffstat.st_mode);
+                     fsal2unix_mode(dir_hdl->attributes.mode), buffxstat.buffstat.st_mode);
 
         }
 
@@ -232,7 +225,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
           buffxstat.buffstat.st_uid = (int)p_object_attributes->owner;
           LogDebug(COMPONENT_FSAL,
                    "current uid = %ld, new uid = %d",
-                   current_attrs.owner, buffxstat.buffstat.st_uid);
+                   dir_hdl->attributes.owner, buffxstat.buffstat.st_uid);
         }
 
       /* Fill wanted group. */
@@ -241,7 +234,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
           buffxstat.buffstat.st_gid = (int)p_object_attributes->group;
           LogDebug(COMPONENT_FSAL,
                    "current gid = %ld, new gid = %d",
-                   current_attrs.group, buffxstat.buffstat.st_gid);
+                   dir_hdl->attributes.group, buffxstat.buffstat.st_gid);
         }
 
     }
@@ -258,7 +251,8 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
       buffxstat.buffstat.st_atim.tv_nsec = p_object_attributes->atime.tv_nsec;
       LogDebug(COMPONENT_FSAL,
               "current atime = %lu, new atime = %lu",
-              (unsigned long)current_attrs.atime.tv_sec, (unsigned long)buffxstat.buffstat.st_atime);
+              (unsigned long)dir_hdl->attributes.atime.tv_sec,
+              (unsigned long)buffxstat.buffstat.st_atime);
   }
 
   /* Fill wanted mtime. */
@@ -269,7 +263,8 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
       buffxstat.buffstat.st_mtim.tv_nsec = p_object_attributes->mtime.tv_nsec;
       LogDebug(COMPONENT_FSAL,
               "current mtime = %lu, new mtime = %lu",
-              (unsigned long)current_attrs.mtime.tv_sec, (unsigned long)buffxstat.buffstat.st_mtime);
+              (unsigned long)dir_hdl->attributes.mtime.tv_sec,
+              (unsigned long)buffxstat.buffstat.st_mtime);
   }
   /* Asking to set atime to NOW */
   if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_ATIME_SERVER))
@@ -277,7 +272,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
       attr_changed |= XATTR_ATIME_NOW;
       LogDebug(COMPONENT_FSAL,
               "current atime = %lu, new atime = NOW",
-              (unsigned long)current_attrs.atime.tv_sec);
+              (unsigned long)dir_hdl->attributes.atime.tv_sec);
   }
   /* Asking to set atime to NOW */
   if(FSAL_TEST_MASK(p_object_attributes->mask, ATTR_MTIME_SERVER))
@@ -285,7 +280,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,         /* IN*/
       attr_changed |= XATTR_MTIME_NOW;
       LogDebug(COMPONENT_FSAL,
               "current mtime = %lu, new mtime = NOW",
-              (unsigned long)current_attrs.atime.tv_sec);
+              (unsigned long)dir_hdl->attributes.atime.tv_sec);
   }
 
   /* If any stat changed, indicate that */
