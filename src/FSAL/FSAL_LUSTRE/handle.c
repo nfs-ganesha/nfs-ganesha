@@ -772,8 +772,6 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 				  bool (*cb)(
 					  const struct req_op_context *opctx,
 					  const char *name,
-					  unsigned int dtype,
-					  struct fsal_obj_handle *dir_hdl,
 					  void *dir_state,
 					  struct fsal_cookie *cookie),
                                   bool *eof)
@@ -781,11 +779,9 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 	struct lustre_fsal_obj_handle *myself;
 	int dirfd ;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t status;
 	int retval = 0;
 	off_t seekloc = 0;
 	int bpos, cnt, nread;
-	unsigned char d_type;
 	struct linux_dirent *dentry;
 	struct fsal_cookie *entry_cookie;
 	char buf[BUF_SIZE];
@@ -827,7 +823,6 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 			if(strcmp(dentry->d_name, ".") == 0 ||
 			   strcmp(dentry->d_name, "..") == 0)
 				goto skip; /* must skip '.' and '..' */
-			d_type = *(buf + bpos + dentry->d_reclen - 1);
 			entry_cookie->size = sizeof(off_t);
 			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
 

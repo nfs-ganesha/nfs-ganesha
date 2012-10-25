@@ -448,6 +448,8 @@ fs_supports(struct fsal_export *export_pub,
 
         case fso_pnfs_ds_supported:
                 return false;
+	case fso_delegations:
+                return false;
         }
 
         return false;
