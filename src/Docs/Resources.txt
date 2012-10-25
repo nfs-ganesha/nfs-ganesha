@@ -49,3 +49,7 @@ Here is a list of things that may be useful with Ganesha.
    Implements the RPC port mapping service, required for running an
    NFSv3.  Available from
    http://rpcbind.sourceforge.net/
+
+ * SGI NFS Test Tools
+   An NFS test suite available from SGI at
+   http://oss.sgi.com/projects/nfs/testtools/
