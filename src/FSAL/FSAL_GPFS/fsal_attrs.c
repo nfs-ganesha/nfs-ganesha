@@ -202,18 +202,12 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   if(!p_filehandle || !p_context || !p_attrib_set)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
-  /* It does not make sense to setattr on a symlink */
-  /* if(p_filehandle->type == DT_LNK)
-     return fsal_internal_setattrs_symlink(p_filehandle, p_context, p_attrib_set,
-     p_object_attributes);
-   */
   /* First, check that FSAL attributes changes are allowed. */
 
   /* Is it allowed to change times ? */
 
   if(!global_fs_info.cansettime)
     {
-
       if(p_attrib_set->asked_attributes
          & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME |
             FSAL_ATTR_ATIME_SERVER | FSAL_ATTR_MTIME_SERVER))
@@ -259,7 +253,6 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_MODE))
     {
-      attr_valid |= XATTR_STAT;
       attr_changed |= XATTR_MODE;
     
       /* Fill wanted mode, apply umask, if mode attribute is to be changed */
@@ -276,7 +269,6 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_OWNER))
     {
-        attr_valid |= XATTR_STAT;
         attr_changed |= XATTR_UID;
 
         buffxstat.buffstat.st_uid = (int)p_attrib_set->owner;
@@ -287,7 +279,6 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_GROUP))
     {
-      attr_valid |= XATTR_STAT;
       attr_changed |= XATTR_GID;
 
       buffxstat.buffstat.st_gid = (int)p_attrib_set->group;
@@ -303,7 +294,6 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   /* Fill wanted atime. */
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_ATIME))
     {
-      attr_valid |= XATTR_STAT;
       attr_changed |= XATTR_ATIME;
       buffxstat.buffstat.st_atime        = p_attrib_set->atime.seconds;
       buffxstat.buffstat.st_atim.tv_nsec = p_attrib_set->atime.nseconds;
@@ -316,7 +306,6 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   /* Fill wanted mtime. */
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_MTIME))
     {
-      attr_valid |= XATTR_STAT;
       attr_changed |= XATTR_MTIME;
       buffxstat.buffstat.st_mtime        = p_attrib_set->mtime.seconds;
       buffxstat.buffstat.st_mtim.tv_nsec = p_attrib_set->mtime.nseconds;
@@ -329,7 +318,6 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   /* Asking to set atime to NOW */
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_ATIME_SERVER))
     {
-      attr_valid |= XATTR_STAT;
       attr_changed |= XATTR_ATIME_NOW;
       LogDebug(COMPONENT_FSAL,
                "current atime = %lu, new atime = NOW",
@@ -339,12 +327,15 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   /* Asking to set mtime to NOW */
   if(FSAL_TEST_MASK(p_attrib_set->asked_attributes, FSAL_ATTR_MTIME_SERVER))
     {
-      attr_valid |= XATTR_STAT;
       attr_changed |= XATTR_MTIME_NOW;
       LogDebug(COMPONENT_FSAL,
                "current mtime = %lu, new mtime = NOW",
                (unsigned long)current_attrs.mtime.seconds);
     }
+
+  /* If any stat changed, indicate that */
+  if(attr_changed !=0)
+    attr_valid |= XATTR_STAT;
 
 #ifdef _USE_NFS4_ACL
    /***********
@@ -373,7 +364,7 @@ fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
 #endif                          /* _USE_NFS4_ACL */
 
   /* If there is any change in stat or acl or both, send it down to file system. */
-  if((attr_valid == XATTR_STAT && attr_changed !=0) || attr_valid == XATTR_ACL)
+  if(attr_valid != 0)
     {
       status = fsal_set_xstat_by_handle(p_context,
                                         p_filehandle,
