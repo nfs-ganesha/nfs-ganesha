@@ -112,6 +112,9 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
   PseudoFs->root.sons = NULL;
   PseudoFs->root.parent = &(PseudoFs->root);    /* root is its own parent */
 
+  /* To not forget to init "/" entry */
+  PseudoFs->reverse_tab[0] = &(PseudoFs->root);
+
   /* Allocation of the parsing table */
   for(i = 0; i < NB_TOK_PATH; i++)
     if((PathTok[i] = gsh_malloc(MAXNAMLEN)) == NULL)
@@ -120,10 +123,6 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
   glist_for_each(glist, pexportlist)
     {
       entry = glist_entry(glist, exportlist_t, exp_list);
-
-      /* To not forget to init "/" entry */
-      PseudoFsCurrent = &(PseudoFs->root);
-      PseudoFs->reverse_tab[0] = &(PseudoFs->root);
 
       /* skip exports that aren't for NFS v4 */
       if((entry->export_perms.options & EXPORT_OPTION_NFSV4) == 0)
@@ -159,6 +158,9 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
                       entry->pseudopath);
               continue;
             }
+
+          /* Start at the pseudo root. */
+          PseudoFsCurrent = &(PseudoFs->root);
 
           /* Loop on each token. Because first character in pseudo path is '/'
            * we can avoid looking at PathTok[0] which is necessary '\0'. That's 
