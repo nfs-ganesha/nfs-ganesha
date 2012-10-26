@@ -308,7 +308,7 @@ PTFSAL_readdir(fsal_dir_t       * dir_desc,      /* IN */
                                  &p_pdirent[*p_nb_entries].attributes);
       fsi_cache_name_and_handle(fsi_op_context, 
                                 p_fsi_handle->data.handle.f_handle, 
-                                fsi_dname); 
+                                fsi_name); 
       p_pdirent[*p_nb_entries].attributes.mounted_on_fileid = 
         PTFSAL_FILESYSTEM_NUMBER;
 
