@@ -3124,9 +3124,53 @@ static int nfs4_decode_acl_special_user(utf8string *utf8str, int *who)
   return -1;
 }
 
+static inline bool_t verify_attr_len(fattr4 * Fattr,
+                                     int    * LastOffset,
+                                     size_t   size)
+{
+  if((size != 0) && (Fattr->attr_vals.attrlist4_val == NULL))
+    return FALSE;
+
+  if((Fattr->attr_vals.attrlist4_len - *LastOffset) < size)
+    return FALSE;
+
+  /* Do not forget that xdr_opaque are aligned on 32bit long words */
+  if((size % 4) != 0)
+    *LastOffset += (size + 3) & ~3;
+  else
+    *LastOffset += size;
+
+  return TRUE;
+}
+
+static inline bool_t copy_attr_val(void   * dest,
+                                   fattr4 * Fattr,
+                                   int    * LastOffset,
+                                   size_t   size)
+{
+  if((size != 0) && (Fattr->attr_vals.attrlist4_val == NULL))
+    return FALSE;
+
+  if((Fattr->attr_vals.attrlist4_len - *LastOffset) < size)
+    return FALSE;
+
+  if(size == 0)
+    return TRUE;
+
+  memcpy(dest, Fattr->attr_vals.attrlist4_val + *LastOffset, size);
+
+  /* Do not forget that xdr_opaque are aligned on 32bit long words */
+  if((size % 4) != 0)
+    *LastOffset += (size + 3) & ~3;
+  else
+    *LastOffset += size;
+
+  return TRUE;
+}
+
 static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
                            fattr4             * Fattr,
-                           u_int              * LastOffset,
+                           int                * LastOffset,
                            uid_t                anon_uid,
                            gid_t                anon_gid)
 {
@@ -3140,12 +3184,13 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
   int who;
 
   /* Decode number of ACEs. */
-  memcpy(&(acldata.naces), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(u_int));
+  if(!copy_attr_val(&acldata.naces, Fattr, LastOffset, sizeof(u_int)))
+    return NFS4ERR_BADXDR;
+
   acldata.naces = ntohl(acldata.naces);
   LogFullDebug(COMPONENT_NFS_V4,
                "SATTR: Number of ACEs = %u",
                acldata.naces);
-  *LastOffset += sizeof(u_int);
 
   /* Allocate memory for ACEs. */
   acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
@@ -3161,42 +3206,45 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
   /* Decode ACEs. */
   for(pace = acldata.aces; pace < acldata.aces + acldata.naces; pace++)
     {
-      memcpy(&(pace->type), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_acetype_t));
+      if(!copy_attr_val(&pace->type, Fattr, LastOffset, sizeof(fsal_acetype_t)))
+        return NFS4ERR_BADXDR;
+
       pace->type = ntohl(pace->type);
       LogFullDebug(COMPONENT_NFS_V4,
                    "SATTR: ACE type = 0x%x",
                    pace->type);
-      *LastOffset += sizeof(fsal_acetype_t);
 
-      memcpy(&(pace->flag), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceflag_t));
+      if(!copy_attr_val(&pace->flag, Fattr, LastOffset, sizeof(fsal_aceflag_t)))
+        return NFS4ERR_BADXDR;
+
       pace->flag = ntohl(pace->flag);
       LogFullDebug(COMPONENT_NFS_V4,
                    "SATTR: ACE flag = 0x%x",
                    pace->flag);
-      *LastOffset += sizeof(fsal_aceflag_t);
 
-      memcpy(&(pace->perm), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceperm_t));
+      if(!copy_attr_val(&pace->perm, Fattr, LastOffset, sizeof(fsal_aceperm_t)))
+        return NFS4ERR_BADXDR;
+
       pace->perm = ntohl(pace->perm);
       LogFullDebug(COMPONENT_NFS_V4,
                    "SATTR: ACE perm = 0x%x",
                    pace->perm);
-      *LastOffset += sizeof(fsal_aceperm_t);
 
       /* Find out who type */
 
       /* Convert name to uid or gid */
-      memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(u_int));
+      if(!copy_attr_val(&len, Fattr, LastOffset, sizeof(u_int)))
+        return NFS4ERR_BADXDR;
+
       len = ntohl(len);        /* xdr marshalling on fattr4 */
-      *LastOffset += sizeof(u_int);
 
-      memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + *LastOffset), len);
+      if(len >= sizeof(buffer))
+        return NFS4ERR_BADXDR;
+
+      if(!copy_attr_val(buffer, Fattr, LastOffset, len))
+        return NFS4ERR_BADXDR;
+
       buffer[len] = '\0';
-
-      /* Do not forget that xdr_opaque are aligned on 32bit long words */
-      while((len % 4) != 0)
-        len += 1;
-
-      *LastOffset += len;
 
       /* Decode users. */
       LogFullDebug(COMPONENT_NFS_V4,
@@ -3360,38 +3408,34 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
   return NFS4_OK;
 }                               /* nfs4_Fattr_To_FSAL_attr */
 
-static int nfstime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
+static int nfstime4_to_fsal_time(fsal_time_t *ts, fattr4 * Fattr, int * LastOffset)
 {
-  int LastOffset = 0;
   uint64_t seconds;
   uint32_t nseconds;
 
-  memcpy(&seconds, attrval + LastOffset, sizeof(seconds));
-  LastOffset += sizeof(seconds) ;
+  if(!copy_attr_val(&seconds, Fattr, LastOffset, sizeof(seconds)))
+    return FALSE;
 
-  memcpy(&nseconds, attrval + LastOffset, sizeof(nseconds));
-  LastOffset += sizeof( nseconds ) ;
+  if(!copy_attr_val(&nseconds, Fattr, LastOffset, sizeof(nseconds)))
+    return FALSE;
 
   ts->seconds = (uint32_t) nfs_ntohl64(seconds);
   ts->nseconds = (uint32_t) ntohl(nseconds);
 
-  return LastOffset; 
+  return TRUE; 
 }
 
-static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval, time_how4 * how)
+static int settime4_to_fsal_time(fsal_time_t *ts, fattr4 * Fattr, int * LastOffset, time_how4 * how)
 {
-  int LastOffset = 0;
+  if(!copy_attr_val(how, Fattr, LastOffset, sizeof(*how)))
+    return FALSE;
 
-  memcpy(how, attrval + LastOffset , sizeof(*how));
-  LastOffset += sizeof(*how);
   *how = ntohl(*how);
 
   if(*how == SET_TO_CLIENT_TIME4)
-    {
-        LastOffset += nfstime4_to_fsal_time(ts, attrval + LastOffset);
-    }
+    return nfstime4_to_fsal_time(ts, Fattr, LastOffset);
 
-  return LastOffset;
+  return TRUE;
 }
 
 /**
@@ -3419,7 +3463,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
                         uid_t anon_uid,
                         gid_t anon_gid)
 {
-  u_int LastOffset = 0;
+  int LastOffset = 0;
   unsigned int i = 0;
   uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   uint32_t attrmasklen = 0;
@@ -3444,11 +3488,6 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
   if(pFSAL_attr == NULL || Fattr == NULL)
     return NFS4ERR_BADXDR;
-
-  /* Check attributes data */
-  if((Fattr->attr_vals.attrlist4_val == NULL) ||
-     (Fattr->attr_vals.attrlist4_len == 0))
-    return NFS4_OK;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
@@ -3484,9 +3523,8 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
       switch (attribute_to_set)
         {
         case FATTR4_TYPE:
-          memcpy((char *)&attr_type,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_type));
+          if(!copy_attr_val(&attr_type, Fattr, &LastOffset, sizeof(fattr4_type)))
+            return NFS4ERR_BADXDR;
 
           switch (ntohl(attr_type))
             {
@@ -3524,87 +3562,77 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
             }                   /* switch( pattr->type ) */
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_TYPE;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           break;
 
         case FATTR4_FILEID:
           /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem"
            * I use hpss_GetObjId to extract this information from the Name Server's handle */
-          memcpy((char *)&attr_fileid,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_fileid));
+          if(!copy_attr_val(&attr_fileid, Fattr, &LastOffset, sizeof(fattr4_fileid)))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->fileid = nfs_ntohl64(attr_fileid);
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_FILEID;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
 
         case FATTR4_FSID:
-          memcpy((char *)&attr_fsid,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_fsid));
+          if(!copy_attr_val(&attr_fsid, Fattr, &LastOffset, sizeof(fattr4_fsid)))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->fsid.major = nfs_ntohl64(attr_fsid.major);
           pFSAL_attr->fsid.minor = nfs_ntohl64(attr_fsid.minor);
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_FSID;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
           break;
 
         case FATTR4_NUMLINKS:
-          memcpy((char *)&attr_numlinks,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_numlinks));
+          if(!copy_attr_val(&attr_numlinks, Fattr, &LastOffset, sizeof(fattr4_numlinks)))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->numlinks = ntohl(attr_numlinks);
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_NUMLINKS;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_SIZE:
-          memcpy((char *)&attr_size,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_size));
+          if(!copy_attr_val(&attr_size, Fattr, &LastOffset, sizeof(fattr4_size)))
+            return NFS4ERR_BADXDR;
 
           /* Do not forget the XDR marshalling for the fattr4 stuff */
           pFSAL_attr->filesize = nfs_ntohl64(attr_size);
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_SIZE;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: size seen %zu", (size_t)pFSAL_attr->filesize);
+                       "SATTR: size seen %zu", (size_t)pFSAL_attr->filesize);
           break;
 
         case FATTR4_MODE:
-          memcpy((char *)&(pFSAL_attr->mode),
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_mode));
+          if(!copy_attr_val(&pFSAL_attr->mode, Fattr, &LastOffset, sizeof(fattr4_mode)))
+            return NFS4ERR_BADXDR;
 
           /* Do not forget the XDR marshalling for the fattr4 stuff */
           pFSAL_attr->mode = ntohl(pFSAL_attr->mode);
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the mode 0%o", pFSAL_attr->mode);
+                       "SATTR: We see the mode 0%o", pFSAL_attr->mode);
           break;
 
         case FATTR4_OWNER:
-          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(u_int));
+          if(!copy_attr_val(&len, Fattr, &LastOffset, sizeof(u_int)))
+            return NFS4ERR_BADXDR;
+
           len = ntohl(len);     /* xdr marshalling on fattr4 */
-          LastOffset += sizeof(u_int);
+          if(len >= sizeof(buffer))
+          if(LastOffset < 0)
+            return NFS4ERR_BADXDR;
 
-          memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset), len);
+          if(!copy_attr_val(buffer, Fattr, &LastOffset, len))
+            return NFS4ERR_BADXDR;
+
           buffer[len] = '\0';
-
-          /* Do not forget that xdr_opaque are aligned on 32bit long words */
-          while((len % 4) != 0)
-            len += 1;
-
-          LastOffset += len;
 
           utf8buffer.utf8string_val = buffer;
           utf8buffer.utf8string_len = strlen(buffer);
@@ -3613,25 +3641,24 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
 
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner %s len = %d", buffer, len);
+                       "SATTR: We see the owner %s len = %d", buffer, len);
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner %d", pFSAL_attr->owner);
+                       "SATTR: We see the owner %d", pFSAL_attr->owner);
           break;
 
         case FATTR4_OWNER_GROUP:
-          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(u_int));
-          len = ntohl(len);
-          LastOffset += sizeof(u_int);
+          if(!copy_attr_val(&len, Fattr, &LastOffset, sizeof(u_int)))
+            return NFS4ERR_BADXDR;
 
-          memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset), len);
+          len = ntohl(len);     /* xdr marshalling on fattr4 */
+          if(len >= sizeof(buffer))
+          if(LastOffset < 0)
+            return NFS4ERR_BADXDR;
+
+          if(!copy_attr_val(buffer, Fattr, &LastOffset, len))
+            return NFS4ERR_BADXDR;
+
           buffer[len] = '\0';
-
-          /* Do not forget that xdr_opaque are aligned on 32bit long words */
-          while((len % 4) != 0)
-            len += 1;
-
-          LastOffset += len;
 
           utf8buffer.utf8string_val = buffer;
           utf8buffer.utf8string_len = strlen(buffer);
@@ -3640,15 +3667,15 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
 
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner_group %s len = %d", buffer, len);
+                       "SATTR: We see the owner_group %s len = %d", buffer, len);
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: We see the owner_group %d", pFSAL_attr->group);
+                       "SATTR: We see the owner_group %d", pFSAL_attr->group);
           break;
 
         case FATTR4_CHANGE:
-          memcpy((char *)&attr_change,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_change));
+          if(!copy_attr_val(&attr_change, Fattr, &LastOffset, sizeof(fattr4_change)))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->chgtime.seconds = (uint32_t) nfs_ntohl64(attr_change);
           pFSAL_attr->chgtime.nseconds = 0;
 
@@ -3656,55 +3683,52 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_CHGTIME;
           pFSAL_attr->asked_attributes |= FSAL_ATTR_CHANGE;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_RAWDEV:
-          memcpy((char *)&attr_rawdev,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_rawdev));
+          if(!copy_attr_val(&attr_rawdev, Fattr, &LastOffset, sizeof(fattr4_rawdev)))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->rawdev.major = (uint32_t) nfs_ntohl64(attr_rawdev.specdata1);
           pFSAL_attr->rawdev.minor = (uint32_t) nfs_ntohl64(attr_rawdev.specdata2);
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_RAWDEV;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_SPACE_USED:
-          memcpy((char *)&attr_space_used,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_space_used));
+          if(!copy_attr_val(&attr_space_used, Fattr, &LastOffset, sizeof(fattr4_space_used)))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->spaceused = (uint32_t) nfs_ntohl64(attr_space_used);
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_SPACEUSED;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_TIME_ACCESS:       /* Used only by FSAL_PROXY to reverse convert */
-          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->atime, 
-                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
+          if(!nfstime4_to_fsal_time(&pFSAL_attr->atime, Fattr, &LastOffset))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
           break;
 
         case FATTR4_TIME_METADATA:     /* Used only by FSAL_PROXY to reverse convert */
-          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->ctime, 
-                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
+          if(!nfstime4_to_fsal_time(&pFSAL_attr->ctime, Fattr, &LastOffset))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->asked_attributes |= FSAL_ATTR_CTIME;
           break;
 
         case FATTR4_TIME_MODIFY:       /* Used only by FSAL_PROXY to reverse convert */
-          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->mtime, 
-                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
+          if(!nfstime4_to_fsal_time(&pFSAL_attr->mtime, Fattr, &LastOffset))
+            return NFS4ERR_BADXDR;
+
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
           break;
 
         case FATTR4_TIME_ACCESS_SET:
-          LastOffset += settime4_to_fsal_time(&pFSAL_attr->atime,
-                                              Fattr->attr_vals.attrlist4_val + LastOffset,
-                                              &how);
+          if(!settime4_to_fsal_time(&pFSAL_attr->atime, Fattr, &LastOffset, &how))
+            return NFS4ERR_BADXDR;
+
           if(how == SET_TO_SERVER_TIME4)
             pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME_SERVER;
           else
@@ -3712,9 +3736,9 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-          LastOffset += settime4_to_fsal_time(&pFSAL_attr->mtime,
-                                              Fattr->attr_vals.attrlist4_val + LastOffset,
-                                              &how);
+          if(!settime4_to_fsal_time(&pFSAL_attr->mtime, Fattr, &LastOffset, &how))
+            return NFS4ERR_BADXDR;
+
           if(how == SET_TO_SERVER_TIME4)
             pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME_SERVER;
           else
@@ -3723,27 +3747,28 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           break;
 
         case FATTR4_FILEHANDLE:
-          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(u_int));
+          if(!copy_attr_val(&len, Fattr, &LastOffset, sizeof(u_int)))
+            return NFS4ERR_BADXDR;
+
           len = ntohl(len);
-          LastOffset += sizeof(u_int);
+
           if(hdl4)
             {
                hdl4->nfs_fh4_len = len;
                hdl4->nfs_fh4_val = Fattr->attr_vals.attrlist4_val + LastOffset;
             }
-          LastOffset += len;
+
+          if(!verify_attr_len(Fattr, &LastOffset, len))
+            return NFS4ERR_BADXDR;
+
           LogFullDebug(COMPONENT_NFS_V4,
-                       "     SATTR: On a demande le filehandle len =%u", len);
+                       "SATTR: filehandle len =%u", len);
           break;
 
         case FATTR4_RDATTR_ERROR:
-          memcpy((char *)&rdattr_error,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_rdattr_error));
+          if(!copy_attr_val(&rdattr_error, Fattr, &LastOffset, sizeof(fattr4_rdattr_error)))
+            return NFS4ERR_BADXDR;
           rdattr_error = ntohl(rdattr_error);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
 #ifdef _USE_NFS4_ACL
@@ -3760,14 +3785,26 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 #endif                          /* _USE_NFS4_ACL */
 
         default:
-          LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: Attribut no supporte %d name=%s",
-                       attribute_to_set, fattr4tab[attribute_to_set].name);
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          LogCrit(COMPONENT_NFS_V4,
+                  "SATTR: Attribute not supported %d name=%s",
+                  attribute_to_set, fattr4tab[attribute_to_set].name);
+
+          if(!verify_attr_len(Fattr, &LastOffset, fattr4tab[attribute_to_set].size_fattr4))
+            return NFS4ERR_BADXDR;
+
           /* return NFS4ERR_ATTRNOTSUPP ; *//* Should not stop processing */
           break;
         }                       /* switch */
     }                           /* for */
+
+  if(LastOffset != Fattr->attr_vals.attrlist4_len)
+    {
+      LogInfo(COMPONENT_NFS_V4,
+              "SATTR: Utilized length %d < %u (attrlist4_len)",
+              LastOffset, Fattr->attr_vals.attrlist4_len);
+
+      return NFS4ERR_BADXDR;
+    }
 
   return NFS4_OK;
 }                               /* Fattr4_To_FSAL_attr */
