@@ -503,6 +503,7 @@ struct nfs_worker_data__
 
   pthread_mutex_t request_pool_mutex;
   nfs_tcb_t wcb; /* Worker control block */
+  export_perms_t export_perms; /* current rpc functions export perms */
 
   nfs_worker_stat_t stats;
   unsigned int passcounter;

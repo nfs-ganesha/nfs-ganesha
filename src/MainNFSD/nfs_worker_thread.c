@@ -800,7 +800,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
   int                          port;
   int                          rc;
   int                          do_dupreq_cache;
-  export_perms_t               export_perms;
+  export_perms_t             * pexport_perms = &pworker_data->export_perms;
   int                          protocol_options = 0;
   struct user_cred             user_credentials;
   fsal_op_context_t          * pfsal_op_ctx = NULL;
@@ -818,9 +818,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
   bool                         locked = FALSE;
 
   /* Initialize permissions to allow nothing */
-  export_perms.options       = 0;
-  export_perms.anonymous_uid = (uid_t) ANON_UID;
-  export_perms.anonymous_gid = (gid_t) ANON_GID;
+  pexport_perms->options       = 0;
+  pexport_perms->anonymous_uid = (uid_t) ANON_UID;
+  pexport_perms->anonymous_gid = (gid_t) ANON_GID;
 
   /* Initialized user_credentials */
   init_credentials(&user_credentials);
@@ -1191,9 +1191,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
       nfs_export_check_access(&pworker_data->hostaddr,
                               pexport,
-                              &export_perms);
+                              pexport_perms);
 
-      if(export_perms.options == 0)
+      if(pexport_perms->options == 0)
         {
           LogInfo(COMPONENT_DISPATCH,
                   "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
@@ -1215,7 +1215,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
           goto auth_failure;
         }
 
-      if((protocol_options & export_perms.options) == 0)
+      if((protocol_options & pexport_perms->options) == 0)
         {
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d not allowed on Export_Id %d %s for client %s",
@@ -1229,9 +1229,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
       /* Check transport type */
       if(((xprt_type == XPRT_UDP) &&
-          ((export_perms.options & EXPORT_OPTION_UDP) == 0)) ||
+          ((pexport_perms->options & EXPORT_OPTION_UDP) == 0)) ||
          ((xprt_type == XPRT_TCP) &&
-          ((export_perms.options & EXPORT_OPTION_TCP) == 0)))
+          ((pexport_perms->options & EXPORT_OPTION_TCP) == 0)))
         {
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d over %s not allowed on Export_Id %d %s for client %s",
@@ -1245,7 +1245,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
       /* Test if export allows the authentication provided */
       if(((pworker_data->funcdesc->dispatch_behaviour & SUPPORTS_GSS) != 0) &&
-         (nfs_export_check_security(req, &export_perms, pexport) == FALSE))
+         (nfs_export_check_security(req, pexport_perms, pexport) == FALSE))
         {
           LogInfo(COMPONENT_DISPATCH,
                   "%s Version %d auth not allowed on Export_Id %d %s for client %s",
@@ -1259,7 +1259,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
       /* Check if client is using a privileged port, but only for NFS protocol */
       if((req->rq_prog == nfs_param.core_param.program[P_NFS]) &&
-         ((export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) != 0) &&
+         ((pexport_perms->options & EXPORT_OPTION_PRIVILEGED_PORT) != 0) &&
          (port >= IPPORT_RESERVED))
         {
           LogInfo(COMPONENT_DISPATCH,
@@ -1325,7 +1325,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
    * the request
    */
   if((pworker_data->funcdesc->dispatch_behaviour & MAKES_IO) != 0 &&
-     (export_perms.options & EXPORT_OPTION_RW_ACCESS) == 0)
+     (pexport_perms->options & EXPORT_OPTION_RW_ACCESS) == 0)
     {
       /* Request of type MDONLY_RO were rejected at the nfs_rpc_dispatcher level
        * This is done by replying EDQUOT (this error is known for not disturbing
@@ -1362,8 +1362,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
         }
     }
   else if((pworker_data->funcdesc->dispatch_behaviour & MAKES_WRITE) != 0 &&
-          (export_perms.options & (EXPORT_OPTION_WRITE_ACCESS |
-                                   EXPORT_OPTION_MD_WRITE_ACCESS)) == 0)
+          (pexport_perms->options & (EXPORT_OPTION_WRITE_ACCESS |
+                                     EXPORT_OPTION_MD_WRITE_ACCESS)) == 0)
     {
       if(req->rq_prog == nfs_param.core_param.program[P_NFS])
         switch(req->rq_vers)
@@ -1396,8 +1396,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
         }
     }
   else if((pworker_data->funcdesc->dispatch_behaviour & NEEDS_EXPORT) != 0 &&
-          (export_perms.options & (EXPORT_OPTION_READ_ACCESS |
-                                   EXPORT_OPTION_MD_READ_ACCESS)) == 0)
+          (pexport_perms->options & (EXPORT_OPTION_READ_ACCESS |
+                                     EXPORT_OPTION_MD_READ_ACCESS)) == 0)
     {
       LogInfo(COMPONENT_DISPATCH,
               "Client %s is not allowed to access Export_Id %d %s, vers=%d, proc=%d",
@@ -1420,7 +1420,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
           (NEEDS_CRED | NEEDS_EXPORT)) == (NEEDS_CRED | NEEDS_EXPORT))
         {
           /* Swap the anonymous uid/gid if the user should be anonymous */
-          nfs_check_anon(&export_perms, pexport, &user_credentials);
+          nfs_check_anon(pexport_perms, pexport, &user_credentials);
 
           if(nfs_build_fsal_context(req,
                                     pexport,
