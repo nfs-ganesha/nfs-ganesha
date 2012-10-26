@@ -395,6 +395,31 @@ int nfs4_Compound(nfs_arg_t *parg,
 
       if(perm_flags != 0)
          {
+           if(nfs4_Is_Fh_Empty(&data.currentFH))
+             {
+               status = NFS4ERR_NOFILEHANDLE;
+
+               LogDebug(COMPONENT_NFS_V4,
+                        "Status of %s due to empty CurrentFH in position %d = %s%s",
+                        optabvers[COMPOUND4_MINOR][opindex].name,
+                        i,
+                        nfsstat4_to_str(status),
+                        tagstr);
+
+               /* All the operation, like NFS4_OP_ACESS, have a first replied
+                * field called .status
+                */
+               pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.
+                   status = status;
+               pres->res_compound4.resarray.resarray_val[i].resop =
+                   COMPOUND4_ARRAY.argarray_val[i].argop;
+
+               /* Do not manage the other requests in the COMPOUND. */
+               pres->res_compound4.resarray.resarray_len = i + 1;
+
+               break;
+             }
+
            /* Operation uses a CurrentFH, so we can check export perms.
             * Perms should even be set reasonably for pseudo file system.
             */

@@ -102,6 +102,8 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->savedFH)))
     {
+      LogDebug(COMPONENT_NFS_V4,
+               "No saved file handle");
       res_LINK4.status = NFS4ERR_NOFILEHANDLE;
       return res_LINK4.status;
     }
