@@ -338,6 +338,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 				  &data->credential,
 				  data->minorversion);
 
+	init_glist(&unconf->cid_cb.cb_u.v41.cb_session_list);
 	if (unconf == NULL) {
 		/* Error already logged, return */
 		res_EXCHANGE_ID4.eir_status = NFS4ERR_RESOURCE;
