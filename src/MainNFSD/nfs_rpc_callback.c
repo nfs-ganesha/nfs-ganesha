@@ -129,8 +129,8 @@ void nfs_rpc_cb_pkginit(void)
 	return;
 }
 
-/*
- * Shutdown subsystem
+/**
+ * @brief Shutdown callback subsystem
  */
 void nfs_rpc_cb_pkgshutdown(void)
 {
@@ -186,6 +186,17 @@ nc_type nfs_netid_to_nc(const char *netid)
 
 	return _NC_ERR;
 }
+
+/**
+ * @brief Convert string format address to sockaddr
+ *
+ * This function takes the host.port format used in the NFSv4.0
+ * clientaddr4 and converts it to a POSIX sockaddr structure stored in
+ * the callback information of the clientid.
+ *
+ * @param[in,out] clientid The clientid in which to store the sockaddr
+ * @param[in]     uaddr    na_r_addr from the clientaddr4
+ */
 
 static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
@@ -266,6 +277,13 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 	};
 }
 
+/**
+ * @brief Set the callback location for an NFSv4.0 clientid
+ *
+ * @param[in,out] clientid The clientid in which to set the location
+ * @param[in]     addr4    The client's supplied callback address
+ */
+
 void nfs_set_client_location(nfs_client_id_t *clientid,
 			     const clientaddr4 *addr4)
 {
@@ -277,8 +295,18 @@ void nfs_set_client_location(nfs_client_id_t *clientid,
 			   clientid->cid_cb.v40.cb_client_r_addr);
 }
 
-static inline int32_t
-nfs_clid_connected_socket(nfs_client_id_t *clientid, int *fd, int *proto)
+/**
+ * @brief Get the fd of an NFSv4.0 callback connection
+ *
+ * @param[in]  clientid The clientid to query
+ * @param[out] fd       The file descriptor
+ * @param[out] proto    The protocol used on this connection
+ *
+ * @return 0 or values of errno.
+ */
+
+static inline int32_t nfs_clid_connected_socket(nfs_client_id_t *clientid,
+						int *fd, int *proto)
 {
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
@@ -354,6 +382,15 @@ out:
 
 /* end refactorable RPC code */
 
+/**
+ * @brief Check if an authentication flavor is supported
+ *
+ * @param[in] flavor RPC authentication flavor
+ *
+ * @retval true if supported.
+ * @retval false if not.
+ */
+
 static inline bool supported_auth_flavor(int flavor)
 {
 	bool code = false;
@@ -371,8 +408,23 @@ static inline bool supported_auth_flavor(int flavor)
 	return code;
 }
 
-/* from kerberos source, gssapi_krb5.c (Umich) */
+/**
+ * @brief Kerberos OID
+ *
+ * This value comes from kerberos source, gssapi_krb5.c (Umich).
+ */
+
 gss_OID_desc krb5oid = {9, "\052\206\110\206\367\022\001\002\002"};
+
+/**
+ * @brief Format a principal name for an RPC call channel
+ *
+ * @param[in]  chan Call channel
+ * @param[out] buf  Buffer to hold formatted name
+ * @param[in]  len  Size of buffer
+ *
+ * @return The principle or NULL.
+ */
 
 static inline char *format_host_principal(rpc_call_channel_t *chan,
 					  char *buf,
@@ -422,6 +474,13 @@ static inline char *format_host_principal(rpc_call_channel_t *chan,
 out:
 	return princ;
 }
+
+/**
+ * @brief Set up GSS on a callback channel
+ *
+ * @param[in,out] chan Channel on which to set up GSS
+ * @param[in]     cred GSS Credential
+ */
 
 static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 					      nfs_client_cred_t *cred)
@@ -475,9 +534,6 @@ out:
 
 /**
  * @brief Create a channel for an NFSv4.0 client
- *
- * This function creates a new channel for clientid (v4.0), optionally
- * connecting it.
  *
  * @param[in] clientid Client record
  * @param[in] flags     Currently unused
@@ -565,9 +621,16 @@ out:
 /**
  * @brief Create a channel for an NFSv4.1 session
  *
- * @param[in,out] session   The session on which to create the back
- *                          channel
- * @param[in]     sec_parms Allowable security parameters
+ * This function creates a channel on an NFSv4.1 session, using the
+ * given security parameters.  If a channel already exists, it is
+ * removed and replaced.
+ *
+ * @param[in,out] session       The session on which to create the
+ *                              back channel
+ * @parma[in]     num_sec_parms Length of sec_parms list
+ * @param[in]     sec_parms     Allowable security parameters
+ *
+ * @return 0 or POSIX error code.
  */
 
 int nfs_rpc_create_chan_v41(nfs41_session_t *session,
@@ -659,6 +722,19 @@ out:
 	return code;
 }
 
+/**
+ * @brief Get a backchannel for a clientid
+ *
+ * This function works for both NFSv4.0 and NFSv4.1.  For NFSv4.0, if
+ * the channel isn't up, it tries to create it.
+ *
+ * @param[in,out] clientid The clientid to use
+ * @param[out]    flags    Unused
+ *
+ * @return The back channel or NULL if none existed or could be
+ *         established.
+ */
+
 rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 				     uint32_t flags)
 {
@@ -695,6 +771,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
  *
  * @param[in] chan The channel to dispose of
  */
+
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 {
 	assert(chan);
@@ -773,17 +850,35 @@ unlock:
 	return stat;
 }
 
+/**
+ * @brief Free callback arguments
+ *
+ * @param[in] op The argop to free
+ */
+
 static inline void free_argop(nfs_cb_argop4 *op)
 {
 	gsh_free(op);
 }
+
+/**
+ * @brief Free callback result
+ *
+ * @param[in] op The resop to free
+ */
 
 static inline void free_resop(nfs_cb_resop4 *op)
 {
 	gsh_free(op);
 }
 
-rpc_call_t *alloc_rpc_call()
+/**
+ * @brief Allocate an RPC call
+ *
+ * @return The newly allocated call or NULL.
+ */
+
+rpc_call_t *alloc_rpc_call(void)
 {
 	rpc_call_t *call;
 
@@ -792,12 +887,30 @@ rpc_call_t *alloc_rpc_call()
 	return call;
 }
 
+/**
+ * @brief Fre an RPC call
+ *
+ * @param[in] call The call to free
+ */
+
 void free_rpc_call(rpc_call_t *call)
 {
 	free_argop(call->cbt.v_u.v4.args.argarray.argarray_val);
 	free_resop(call->cbt.v_u.v4.res.resarray.resarray_val);
 	pool_free(rpc_call_pool, call);
 }
+
+/**
+ * @brief Completion hook
+ *
+ * If a call has been supplied to handle the result, call the supplied
+ * hook. Otherwise, a no-op.
+ *
+ * @param[in] call  The RPC call
+ * @param[in] hook  The call hook
+ * @param[in] arg   Supplied arguments
+ * @param[in] flags Any flags
+ */
 
 static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 				 void* arg, uint32_t flags)
@@ -806,6 +919,15 @@ static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 	    call->call_hook(call, hook, arg, flags);
 	}
 }
+
+/**
+ * @brief Fire off an RPC call
+ *
+ * @param[in] call  The constructed call
+ * @param[in] flags Control flags for call
+ *
+ * @return 0 or POSIX error codes.
+ */
 
 int32_t nfs_rpc_submit_call(rpc_call_t *call,
 			    uint32_t flags)
@@ -830,6 +952,15 @@ int32_t nfs_rpc_submit_call(rpc_call_t *call,
 
 	return code;
 }
+
+/**
+ * @brief Dispatch a call
+ *
+ * @param[in,out] call  The call to dispatch
+ * @param[in]     flags Flags governing call
+ *
+ * @return 0 or POSIX errors.
+ */
 
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 {
@@ -896,6 +1027,16 @@ unlock:
 
 	return code;
 }
+
+/**
+ * @brief Abort a call
+ *
+ * @param[in] call The call to abort
+ *
+ * @todo function doesn't seem to do anything.
+ *
+ * @return But it does it successfully.
+ */
 
 int32_t nfs_rpc_abort_call(rpc_call_t *call)
 {
