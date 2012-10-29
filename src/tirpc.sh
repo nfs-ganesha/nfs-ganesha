@@ -4,7 +4,7 @@ OPWD=`pwd`
 
 TIRPC_REPO='git://github.com/linuxbox2/ntirpc.git'
 TIRPC_BRANCH_NAME='duplex-9'
-TIRPC_COMMIT='a0e88824b1afdc4cfc9a0994c26b70db793d30c5'
+TIRPC_COMMIT='8882985de8937bc21d2713c925c8a341b91054fd'
 
 # remove libtirpc if present;  try to avoid making
 # a mess
