@@ -606,6 +606,40 @@ void nfs_check_anon(export_perms_t * pexport_perms,
     }
 }
 
+void squash_setattr(export_perms_t     * pexport_perms,
+                    struct user_cred   * user_credentials,
+                    fsal_attrib_list_t * attr)
+{
+  if(attr->asked_attributes & FSAL_ATTR_OWNER)
+    {
+      if(pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
+        attr->owner = pexport_perms->anonymous_uid;
+      else if(!(pexport_perms->options & EXPORT_OPTION_ROOT) &&
+              (attr->owner == 0) &&
+              (user_credentials->caller_uid == pexport_perms->anonymous_uid))
+        attr->owner = pexport_perms->anonymous_uid;
+    }
+
+  if(attr->asked_attributes & FSAL_ATTR_GROUP)
+    {
+      /* If all squashed, then always squash the owner_group.
+       *
+       * If root squashed, then squash owner_group if
+       * caller_gid has been squashed or one of the caller's
+       * alternate groups has been squashed.
+       */
+      if(pexport_perms->options & EXPORT_OPTION_ALL_ANONYMOUS)
+        attr->group = pexport_perms->anonymous_gid;
+      else if(!(pexport_perms->options & EXPORT_OPTION_ROOT) &&
+              (attr->group == 0) &&
+              ((user_credentials->caller_gid == pexport_perms->anonymous_gid) ||
+               (((user_credentials->caller_flags & USER_CRED_SAVED) &&
+               (user_credentials->caller_gpos_root <
+                user_credentials->caller_glen_saved)))))
+        attr->group = pexport_perms->anonymous_gid;
+    }
+}
+
 void init_credentials(struct user_cred *user_credentials)
 {
   memset(user_credentials, 0, sizeof(*user_credentials));

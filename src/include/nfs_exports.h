@@ -461,4 +461,8 @@ void set_mounted_on_fileid(cache_entry_t      * entry,
                            fsal_attrib_list_t * attr,
                            exportlist_t       * exp);
 
+void squash_setattr(export_perms_t     * pexport_perms,
+                    struct user_cred   * user_credentials,
+                    fsal_attrib_list_t * attr);
+
 #endif                          /* _NFS_EXPORTS_H */
