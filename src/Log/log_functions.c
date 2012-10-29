@@ -260,7 +260,6 @@ char *get_debug_info(int *size) {
   debug_str = malloc(sizeof(char) * strlen(final_bt_str)
                      + sizeof(char) * 512);
   if (debug_str == NULL) {
-    free(bt_str);
     return NULL;
   }
 
@@ -278,6 +277,7 @@ char *get_debug_info(int *size) {
   if (size != NULL)
     *size = ret;
 
+  free(final_bt_str);
   return debug_str;
 }
 
@@ -310,19 +310,20 @@ void print_debug_info_syslog(int level)
   char *debug_str = get_debug_info(&size);
   char *end_c=debug_str, *first_c=debug_str;
 
-  while(*end_c != '\0' && (end_c - debug_str) <= size)
-    {
-      if (*end_c == '\n' || *end_c == '\0')
-        {
-          *end_c = '\0';
-          if ((end_c - debug_str) != 0)
+  if (debug_str != NULL) {
+    while(*end_c != '\0' && (end_c - debug_str) <= size)
+      {
+        if (*end_c == '\n' || *end_c == '\0')
+          {
+            *end_c = '\0';
+            if ((end_c - debug_str) != 0)
               syslog(tabLogLevel[level].syslog_level, "%s", first_c);
-          first_c = end_c+1;
-        }
-      end_c++;
-    }
-
-  free(debug_str);
+            first_c = end_c+1;
+          }
+        end_c++;
+      }
+    free(debug_str);
+  }
 }
 
 #ifdef _DONT_HAVE_LOCALTIME_R
