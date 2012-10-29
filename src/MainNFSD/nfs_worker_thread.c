@@ -802,7 +802,6 @@ static void nfs_rpc_execute(request_data_t    * preq,
   int                          do_dupreq_cache;
   export_perms_t             * pexport_perms = &pworker_data->export_perms;
   int                          protocol_options = 0;
-  struct user_cred             user_credentials;
   fsal_op_context_t          * pfsal_op_ctx = NULL;
   msectimer_t                  timer_start;
   msectimer_t                  timer_end;
@@ -823,7 +822,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
   pexport_perms->anonymous_gid = (gid_t) ANON_GID;
 
   /* Initialized user_credentials */
-  init_credentials(&user_credentials);
+  init_credentials(&pworker_data->user_credentials);
 
   /* Get the value from the worker data */
   lru_dupreq = pworker_data->duplicate_request;
@@ -1275,7 +1274,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
   /* Get user credentials */
   if (pworker_data->funcdesc->dispatch_behaviour & NEEDS_CRED)
     {
-      if (get_req_uid_gid(req, &user_credentials) == FALSE)
+      if (get_req_uid_gid(req, &pworker_data->user_credentials) == FALSE)
         {
           LogInfo(COMPONENT_DISPATCH,
                   "could not get uid and gid, rejecting client %s",
@@ -1420,12 +1419,12 @@ static void nfs_rpc_execute(request_data_t    * preq,
           (NEEDS_CRED | NEEDS_EXPORT)) == (NEEDS_CRED | NEEDS_EXPORT))
         {
           /* Swap the anonymous uid/gid if the user should be anonymous */
-          nfs_check_anon(pexport_perms, pexport, &user_credentials);
+          nfs_check_anon(pexport_perms, pexport, &pworker_data->user_credentials);
 
           if(nfs_build_fsal_context(req,
                                     pexport,
                                     &pworker_data->thread_fsal_context,
-                                    &user_credentials) == FALSE)
+                                    &pworker_data->user_credentials) == FALSE)
             {
               LogInfo(COMPONENT_DISPATCH,
                       "authentication failed, rejecting client %s",
@@ -1649,7 +1648,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
 
 exe_exit:
 
-  clean_credentials(&user_credentials);
+  clean_credentials(&pworker_data->user_credentials);
 
   /* By now the dupreq cache entry should have been completed w/ a request
    * that is reusable or the dupreq cache entry should have been removed. */
@@ -1661,7 +1660,7 @@ auth_failure:
   svcerr_auth2(xprt, req, auth_rc);
   DISP_UNLOCK(xprt, &pworker_data->sigmask);
 
-  clean_credentials(&user_credentials);
+  clean_credentials(&pworker_data->user_credentials);
 
   pworker_data->current_xid = 0;    /* No more xid managed */
 

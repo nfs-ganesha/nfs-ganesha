@@ -4354,7 +4354,7 @@ int nfs4_MakeCred(compound_data_t * data)
   int         port = get_port(&data->pworker->hostaddr);
 
   if (get_req_uid_gid(data->reqp,
-                      &data->user_credentials) == FALSE)
+                      &data->pworker->user_credentials) == FALSE)
     return NFS4ERR_ACCESS;
 
   LogFullDebug(COMPONENT_NFS_V4,
@@ -4417,12 +4417,12 @@ int nfs4_MakeCred(compound_data_t * data)
 
   nfs_check_anon(&data->export_perms,
                  data->pexport,
-                 &data->user_credentials);
+                 &data->pworker->user_credentials);
 
   if(nfs_build_fsal_context(data->reqp,
                             data->pexport,
                             data->pcontext,
-                            &data->user_credentials) == FALSE)
+                            &data->pworker->user_credentials) == FALSE)
     return NFS4ERR_ACCESS;
 
   return NFS4_OK;

@@ -384,7 +384,6 @@ typedef struct compoud_data
   fsal_op_context_t *pcontext; /*< Credentials related to this
                                    fileset (to handle different uid
                                    mapping) */
-  struct user_cred user_credentials; /*< Extracted credentials for this request */
   exportlist_t *pexport; /*< Export entry related to the currentFH */
   exportlist_t *saved_pexport; /*< Export entry related to the savedFH */
   export_perms_t export_perms; /*< Permissions for export for currentFH */
