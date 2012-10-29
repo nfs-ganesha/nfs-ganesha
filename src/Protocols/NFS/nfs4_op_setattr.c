@@ -260,6 +260,13 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           }
         }
 
+      /* If owner or owner_group are set, and the credential was
+       * squashed, then we must squash the set owner and owner_group.
+       */
+      squash_setattr(&data->export_perms,
+                     &data->pworker->user_credentials,
+                     &sattr);
+
       if(cache_inode_setattr(data->current_entry,
                              &sattr,
                              data->pcontext,
