@@ -418,7 +418,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
       LogDebug(COMPONENT_STATE,
                "Check %s stateid could not find state %s", tag, str);
       if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)      /* Dirty work-around for HPC environment */
-        return NFS4ERR_EXPIRED;
+        return NFS4ERR_BAD_STATEID;                             /* temp change before clientid included in stateid */
       else
         return NFS4_OK;
     }
