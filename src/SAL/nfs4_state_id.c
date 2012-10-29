@@ -494,7 +494,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid,
        * Dirty work-around for HPC environment, return OK here.
        */
       if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)
-        return NFS4ERR_EXPIRED;
+        return NFS4ERR_BAD_STATEID;
       else
         return NFS4_OK;
     }
