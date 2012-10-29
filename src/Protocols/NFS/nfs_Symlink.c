@@ -279,6 +279,13 @@ int nfs_Symlink(nfs_arg_t *parg,
               if(attributes_symlink.asked_attributes & FSAL_ATTR_SPACEUSED)
                 attributes_symlink.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
 
+              /* If owner or owner_group are set, and the credential was
+               * squashed, then we must squash the set owner and owner_group.
+               */
+              squash_setattr(&pworker->export_perms,
+                             &pworker->user_credentials,
+                             &attributes_symlink);
+
               /* Are there attributes to be set (additional to the mode) ? */
               if(attributes_symlink.asked_attributes != 0ULL &&
                  attributes_symlink.asked_attributes != FSAL_ATTR_MODE)

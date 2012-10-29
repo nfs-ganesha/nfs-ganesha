@@ -442,11 +442,13 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   if(arg_CREATE4.createattrs.attrmask.bitmap4_len != 0)
     {
-      if (data->pcontext->credential.user != 0)
-        {
-          /* Setting uid/gid only works for root. */
-          sattr.asked_attributes &= ~(FSAL_ATTR_OWNER | FSAL_ATTR_GROUP);
-        }
+      /* If owner or owner_group are set, and the credential was
+       * squashed, then we must squash the set owner and owner_group.
+       */
+      squash_setattr(&data->export_perms,
+                     &data->pworker->user_credentials,
+                     &sattr);
+
       if((cache_status = cache_inode_setattr(pentry_new,
                                              &sattr,
                                              data->pcontext,

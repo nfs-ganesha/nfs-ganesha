@@ -338,11 +338,13 @@ int nfs_Create(nfs_arg_t *parg,
 
                   if(attributes_create.asked_attributes & FSAL_ATTR_SPACEUSED)
                     attributes_create.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-                  /* Some clients like Solaris and AIX tries to set uid/gid
- *                 * for non root users or when root squashed.
- *                 */
-                   if (pcontext->credential.user != 0)
-                     attributes_create.asked_attributes &= ~(FSAL_ATTR_OWNER |FSAL_ATTR_GROUP);
+
+                  /* If owner or owner_group are set, and the credential was
+                   * squashed, then we must squash the set owner and owner_group.
+                   */
+                  squash_setattr(&pworker->export_perms,
+                                 &pworker->user_credentials,
+                                 &attributes_create);
 
                   /* Are there attributes to be set (additional to the mode) ? */
                   if(attributes_create.asked_attributes != 0ULL &&
