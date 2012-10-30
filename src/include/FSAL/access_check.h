@@ -15,4 +15,9 @@ fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
 				fsal_accessflags_t access_type,  /* IN */
 				struct stat *p_buffstat, /* IN */
 				fsal_attrib_list_t * p_object_attributes /* IN */ );
-#endif 
+
+void fsal_set_credentials(fsal_op_context_t * context);
+void fsal_save_ganesha_credentials();
+void fsal_restore_ganesha_credentials();
+
+#endif

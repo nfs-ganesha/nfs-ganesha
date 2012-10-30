@@ -9,8 +9,11 @@
 #include  "fsal.h"
 #include <sys/stat.h>
 #include "FSAL/access_check.h"
-
-
+#include <unistd.h>
+#include <sys/fsuid.h>
+#include <sys/syscall.h>
+#include <grp.h>
+#include <sys/types.h>
 
 #ifdef _USE_NFS4_ACL
 #define ACL_DEBUG_BUF_SIZE 256
@@ -579,4 +582,71 @@ fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
            access_type);
 
   ReturnCode(ERR_FSAL_ACCESS, 0);
+}
+
+uid_t   ganesha_uid;
+gid_t   ganesha_gid;
+int     ganehsa_ngroups;
+gid_t * ganesha_groups = NULL;
+
+void fsal_set_credentials(fsal_op_context_t * context)
+{
+  setfsuid(context->credential.user);
+  setfsgid(context->credential.group);
+  if(syscall(__NR_setgroups,
+             context->credential.nbgroups,
+             context->credential.alt_groups) != 0)
+    LogFatal(COMPONENT_FSAL, "Could not set Context credentials");
+}
+
+void fsal_save_ganesha_credentials()
+{
+  int  i;
+  char buffer[1024], *p = buffer;
+  ganesha_uid = setfsuid(0);
+  setfsuid(ganesha_uid);
+  ganesha_gid = setfsgid(0);
+  setfsgid(ganesha_gid);
+  ganehsa_ngroups = getgroups(0, NULL);
+  if(ganehsa_ngroups != 0)
+    {
+      ganesha_groups = gsh_malloc(ganehsa_ngroups * sizeof(gid_t));
+      if(ganesha_groups == NULL)
+        {
+          LogFatal(COMPONENT_FSAL,
+                   "Could not allocate memory for Ganesha group list");
+        }
+      if(getgroups(ganehsa_ngroups, ganesha_groups) != ganehsa_ngroups)
+        {
+          LogFatal(COMPONENT_FSAL,
+                   "Could not get list of ganesha groups");
+        }
+    }
+
+  p += sprintf(p, "Ganesha uid=%d gid=%d ngroups=%d",
+               (int) ganesha_uid, (int) ganesha_gid, ganehsa_ngroups);
+  if(ganehsa_ngroups != 0)
+    p += sprintf(p, " (");
+  for(i = 0; i < ganehsa_ngroups; i++)
+    {
+      if((p - buffer) < (sizeof(buffer) - 10))
+        {
+          if(i == 0)
+            p += sprintf(p, "%d", (int) ganesha_groups[i]);
+          else
+            p += sprintf(p, " %d", (int) ganesha_groups[i]);
+        }
+    }
+  if(ganehsa_ngroups != 0)
+    p += sprintf(p, ")");
+  LogInfo(COMPONENT_FSAL,
+          "%s", buffer);
+}
+
+void fsal_restore_ganesha_credentials()
+{
+  setfsuid(ganesha_uid);
+  setfsgid(ganesha_gid);
+  if(syscall(__NR_setgroups, ganehsa_ngroups, ganesha_groups) != 0)
+    LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
 }
