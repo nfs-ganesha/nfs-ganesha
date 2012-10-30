@@ -20,7 +20,7 @@
 #include "fsal_convert.h"
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/fsuid.h>
+#include "FSAL/access_check.h"
 
 /**
  * FSAL_create:
@@ -58,8 +58,6 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
 {
-
-  int fsuid, fsgid;
   fsal_status_t status;
 
   mode_t unix_mode;
@@ -102,15 +100,13 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
 
   /* call to filesystem */
 
-  fsuid = setfsuid(p_context->credential.user);
-  fsgid = setfsgid(p_context->credential.group);
+  fsal_set_credentials(p_context);
   TakeTokenFSCall();
   status = fsal_internal_create(p_context, p_parent_directory_handle,
                                 p_filename, unix_mode | S_IFREG, 0,
                                 p_object_handle, NULL);
   ReleaseTokenFSCall();
-  setfsuid(fsuid);
-  setfsgid(fsgid);
+  fsal_restore_ganesha_credentials();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
@@ -175,7 +171,6 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
   fsal_status_t status;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
-  int fsuid, fsgid;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -216,16 +211,14 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
 
   /* creates the directory and get its handle */
 
-  fsuid = setfsuid(p_context->credential.user);
-  fsgid = setfsgid(p_context->credential.group);
+  fsal_set_credentials(p_context);
 
   TakeTokenFSCall();
   status = fsal_internal_create(p_context, p_parent_directory_handle,
                                 p_dirname, unix_mode | S_IFDIR, 0,
                                 p_object_handle, NULL);
   ReleaseTokenFSCall();
-  setfsuid(fsuid);
-  setfsgid(fsgid);
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mkdir);
@@ -372,8 +365,6 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 {
   fsal_status_t status;
 /*   int flags=(O_RDONLY|O_NOFOLLOW); */
-  int fsuid, fsgid;
-
   mode_t unix_mode = 0;
   dev_t unix_dev = 0;
   fsal_accessflags_t access_mask = 0;
@@ -441,8 +432,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
 
-  fsuid = setfsuid(p_context->credential.user);
-  fsgid = setfsgid(p_context->credential.group);
+  fsal_set_credentials(p_context);
 
   TakeTokenFSCall();
   status = fsal_internal_create(p_context, parentdir_handle,
@@ -450,8 +440,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                                 p_object_handle, NULL);
   ReleaseTokenFSCall();
 
-  setfsuid(fsuid);
-  setfsgid(fsgid);
+  fsal_restore_ganesha_credentials();
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
