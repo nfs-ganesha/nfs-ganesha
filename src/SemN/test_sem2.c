@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "SemN.h"
-#include "log_macros.h"
+#include "log.h"
 
 semaphore_t x;
 

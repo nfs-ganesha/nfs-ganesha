@@ -49,7 +49,7 @@ void init_vars(hash_table_t **ht_ip_stats, pool_t **ip_stats_pool)
     }
 
   *ip_stats_pool
-       = pool_init("IP Stats Cache Pool", nfs_ip_stats_t,
+	  = pool_init("IP Stats Cache Pool", sizeof(nfs_ip_stats_t),
                    pool_basic_substrate, NULL, NULL, NULL);
 
   if(!(*ip_stats_pool))

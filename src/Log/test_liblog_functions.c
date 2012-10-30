@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "log.h"
+#include <stdbool.h>
 
 #define ERR_DUMMY 3
 static family_error_t tab_test_err[] = {

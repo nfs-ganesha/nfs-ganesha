@@ -92,7 +92,7 @@ int test_mnt_Null()
 
   int rc;
 
-  rc = mnt_Null(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  rc = mnt_Null(NULL, NULL, NULL, NULL, NULL, NULL);
   LogTest("MNTPROC_NULL()=%d", rc);
 
   /* Must return MNT3_OK */
@@ -123,7 +123,7 @@ int test_mnt_Export()
 
   /* TEST 1 : using a NULL export_list */
 
-  rc = mnt_Export(NULL, NULL, NULL, NULL, NULL, NULL, &result);
+  rc = mnt_Export(NULL, NULL, NULL, NULL, NULL, &result);
   /* rc must be OK and result.res_mntexport must be NULL */
   LogTest("MNTPROC_EXPORT(NULL)=(%d,%p)", rc, result.res_mntexport);
 
@@ -240,7 +240,7 @@ int test_mnt_Export()
 
     }
 
-  rc = mnt_Export(NULL, export_entries, NULL, NULL, NULL, NULL, &result);
+  rc = mnt_Export(NULL, export_entries, NULL, NULL, NULL, &result);
   /* rc must be OK and result.res_mntexport must be NULL */
   LogTest("MNTPROC_EXPORT(entries)=(%d,%p)", rc, result.res_mntexport);
 
