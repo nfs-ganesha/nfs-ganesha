@@ -13,11 +13,11 @@
 
 #ifdef _HAVE_GSSAPI
 #include <rpc/auth_gss.h>
-#include <rpc/svc_auth.h>
 #endif
-
+#include <rpc/svc_auth.h>
 #include <rpc/svc_rqst.h>
-#include  <rpc/svc_dplx.h>
+#include <rpc/rpc_dplx.h>
+#include <rpc/gss_internal.h> /* XXX */
 
 #include "nfs_req_queue.h"
 #include "HashTable.h"
@@ -73,31 +73,6 @@ extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
 
 #ifdef _HAVE_GSSAPI
 
-#ifdef _MSPAC_SUPPORT
-struct wbc_Blob {
-        uint8_t *data;
-        size_t length;
-};
-#endif
-
-struct svc_rpc_gss_data
-{
-  bool_t established;           /* context established */
-  gss_ctx_id_t ctx;             /* context id */
-  struct rpc_gss_sec sec;       /* security triple */
-  gss_buffer_desc cname;        /* GSS client name */
-  u_int seq;                    /* sequence number */
-  u_int win;                    /* sequence window */
-  u_int seqlast;                /* last sequence number */
-  uint32_t seqmask;             /* bitmask of seqnums */
-  gss_name_t client_name;       /* unparsed name string */
-  gss_buffer_desc checksum;     /* so we can free it */
-#ifdef _MSPAC_SUPPORT
-  struct wbc_Blob pac_blob;
-#endif
-
-};
-
 typedef struct nfs_krb5_param__
 {
   char keytab[MAXPATHLEN];
@@ -113,24 +88,7 @@ typedef struct nfs_krb5_param__
   hash_parameter_t hash_param;
 } nfs_krb5_parameter_t;
 
-#define SVCAUTH_PRIVATE(auth) \
-  ((struct svc_rpc_gss_data *)(auth)->svc_ah_private)
-
-bool_t Svcauth_gss_import_name(char *service);
-bool_t Svcauth_gss_acquire_cred(void);
-bool_t Svcauth_gss_set_svc_name(gss_name_t name);
-int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param);
-enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst,
-                                       struct rpc_msg *msg,
-                                       bool_t * no_dispatch);
-
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
-uint32_t gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
-uint64_t gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
-                               hash_buffer_t * buffclef);
-int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
-int display_gss_ctx(hash_buffer_t * pbuff, char *str);
-int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
 const char *str_gc_proc(rpc_gss_proc_t gc_proc);
 
 #endif                          /* _HAVE_GSSAPI */
@@ -185,7 +143,7 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
     uint32_t refcnt, req_cnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_lock(&xprt->sp);
+        pthread_mutex_lock(&xprt->xp_lock);
 
     refcnt = ++(xu->refcnt);
     if (flags & XPRT_PRIVATE_FLAG_INCREQ)
@@ -194,7 +152,7 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
         req_cnt = xu->req_cnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_unlock(&xprt->sp);
+        pthread_mutex_unlock(&xprt->xp_lock);
 
     LogFullDebug(COMPONENT_DISPATCH,
                  "xprt %p refcnt=%u req_cnt=%u",
@@ -208,7 +166,7 @@ gsh_xprt_decoder_guard_ref(SVCXPRT *xprt, uint32_t flags)
     bool rslt = FALSE;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_lock(&xprt->sp);
+        pthread_mutex_lock(&xprt->xp_lock);
 
     if (xu->flags & XPRT_PRIVATE_FLAG_DECODING) {
         LogDebug(COMPONENT_DISPATCH,
@@ -228,7 +186,7 @@ gsh_xprt_decoder_guard_ref(SVCXPRT *xprt, uint32_t flags)
 
 unlock:
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_unlock(&xprt->sp);
+        pthread_mutex_unlock(&xprt->xp_lock);
 
     return (rslt);
 }
@@ -240,7 +198,7 @@ gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
     uint32_t refcnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_lock(&xprt->sp);
+        pthread_mutex_lock(&xprt->xp_lock);
 
     refcnt = --(xu->refcnt);
 
@@ -251,14 +209,14 @@ gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
     /* finalize */
     if (refcnt == 0) {
         if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
-            pthread_spin_unlock(&xprt->sp);
+            pthread_mutex_unlock(&xprt->xp_lock);
             SVC_DESTROY(xprt);
             goto out;
         }
     }
 
     /* unconditional */
-    pthread_spin_unlock(&xprt->sp);
+    pthread_mutex_unlock(&xprt->xp_lock);
 
 out:
     return;
@@ -269,7 +227,7 @@ gsh_xprt_destroy(SVCXPRT *xprt)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
 
-    pthread_spin_lock(&xprt->sp);
+    pthread_mutex_lock(&xprt->xp_lock);
     xu->flags |= XPRT_PRIVATE_FLAG_DESTROYED;
 
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED);

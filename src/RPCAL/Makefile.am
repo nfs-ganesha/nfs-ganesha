@@ -16,12 +16,4 @@ librpcal_la_SOURCES = nfs_dupreq.c \
                       rpc_tools.c \
                       ../include/nfs_dupreq.h
 
-if HAVE_GSSAPI
-librpcal_la_SOURCES += AuthGss_HashTable.c \
-                       Svc_auth.c       \
-                       Svc_auth_gss.c   \
-                       Svc_auth_none.c  \
-                       Svc_auth_unix.c
-endif
-
 librpcal_la_DEPENDENCIES = $(librpcal_la_SOURCES)  $(librpcal_la_LIBADD)
