@@ -25,12 +25,8 @@
  */
 
 /**
- * @file    nfs4_op_sequence.c
- * @brief   Routines used for managing the NFS4_OP_SEQUENCE operation.
- *
- * Routines used for managing the NFS4_OP_SEQUENCE operation.
- *
- *
+ * @file nfs4_op_sequence.c
+ * @brief Routines used for managing the NFS4_OP_SEQUENCE operation
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -45,9 +41,6 @@
 /**
  *
  * @brief the NFS4_OP_SEQUENCE operation
- *
- * This functions handles the NFS4_OP_SEQUENCE operation in
- * NFSv4. This function can be called only from nfs4_Compound.
  *
  * @param[in]     op   nfs4_op arguments
  * @param[in,out] data Compound request's data
@@ -90,13 +83,13 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
   /** @todo FSF: there is a tiny window here... should have a ref count on session */
 
   /* Check if lease is expired and reserve it */
-  P(session->pclientid_record->cid_mutex);
+  P(session->clientid_record->cid_mutex);
 
-  if(!reserve_lease(session->pclientid_record))
+  if(!reserve_lease(session->clientid_record))
     {
-      V(session->pclientid_record->cid_mutex);
+      V(session->clientid_record->cid_mutex);
 
-      dec_client_id_ref(session->pclientid_record);
+      dec_client_id_ref(session->clientid_record);
 
       if(isDebug(COMPONENT_SESSIONS))
         LogDebug(COMPONENT_SESSIONS,
@@ -109,9 +102,9 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
       return res_SEQUENCE4.sr_status;
     }
 
-  data->preserved_clientid = session->pclientid_record;
+  data->preserved_clientid = session->clientid_record;
 
-  V(session->pclientid_record->cid_mutex);
+  V(session->clientid_record->cid_mutex);
 
   /* Check is slot is compliant with ca_maxrequests */
   if(arg_SEQUENCE4.sa_slotid >= session->fore_channel_attrs.ca_maxrequests)

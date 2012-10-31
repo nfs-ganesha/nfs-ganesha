@@ -242,7 +242,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
                                     (state->state_powner
                                      ->so_owner.so_nfs4_owner
                                      .so_pclientid ==
-                                     data->psession->pclientid_record) &&
+                                     data->psession->clientid_record) &&
                                     state->state_data.layout
                                     .state_return_on_close) {
                                         nfs4_return_one_state(

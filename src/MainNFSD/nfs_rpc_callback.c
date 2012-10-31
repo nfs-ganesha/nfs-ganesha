@@ -710,7 +710,7 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session,
 		goto out;
 	}
 
-	session->cb_chan_up = true;
+	session->flags |= session_bc_up;
 	code = 0;
 
 out:
@@ -757,7 +757,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 				glist_entry(glist,
 					    nfs41_session_t,
 					    session_link);
-			if (session->cb_chan_up) {
+			if (session->flags & session_bc_up) {
 				chan = &session->cb_chan;
 			}
 		}

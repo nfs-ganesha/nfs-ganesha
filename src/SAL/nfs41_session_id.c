@@ -279,12 +279,12 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 		/* free the key that was stored in hash table */
 		gsh_free(old_key.addr);
 		/* Decrement our reference to the clientid record */
-		dec_client_id_ref(session->pclientid_record);
+		dec_client_id_ref(session->clientid_record);
 		/* Unlink the session from the client's list of
 		   sessions */
 		glist_del(&session->session_link);
 		/* Destroy the session's back channel (if any) */
-		if (session->cb_chan_up) {
+		if (session->flags & session_bc_up) {
 			nfs_rpc_destroy_chan(&session->cb_chan);
 		}
 		/* Free the memory for the session */

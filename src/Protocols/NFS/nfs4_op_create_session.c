@@ -323,14 +323,16 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	}
 
 	nfs41_session->clientid = clientid;
-	nfs41_session->pclientid_record = found;
+	nfs41_session->clientid_record = found;
 	nfs41_session->fore_channel_attrs
 		= arg_CREATE_SESSION4->csa_fore_chan_attrs;
 	nfs41_session->back_channel_attrs
 		= arg_CREATE_SESSION4->csa_back_chan_attrs;
 	nfs41_session->xprt = data->reqp->rq_xprt;
-	nfs41_session->cb_chan_up = false;
+	nfs41_session->flags = false;
 	nfs41_session->cb_program = 0;
+	pthread_mutex_init(&nfs41_session->cb_mutex, NULL);
+	pthread_cond_init(&nfs41_session->cb_cond, NULL);
 
 	/* Take reference to clientid record */
 	inc_client_id_ref(found);
@@ -342,6 +344,9 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 	/* Set ca_maxrequests */
 	nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+	nfs41_session->back_channel_attrs.ca_maxrequests =
+		MAX(nfs41_session->back_channel_attrs.ca_maxrequests,
+		    NFS41_NB_SLOTS);
 	nfs41_Build_sessionid(&clientid, nfs41_session->session_id);
 
 	res_CREATE_SESSION4ok->csr_sequence

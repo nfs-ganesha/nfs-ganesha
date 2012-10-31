@@ -83,32 +83,65 @@ typedef struct state_layout_segment state_layout_segment_t;
 #define NFS41_NB_SLOTS 3
 #define NFS41_DRC_SIZE 32768
 
+/**
+ * @brief Members in the slot table
+ */
+
 typedef struct nfs41_session_slot__ {
-	sequenceid4 sequence;
-	pthread_mutex_t lock;
-	COMPOUND4res_extended cached_result;
-	unsigned int cache_used;
+	sequenceid4 sequence; /*< Sequence number of this operation */
+	pthread_mutex_t lock; /*< Lock on the slot */
+	COMPOUND4res_extended cached_result; /*< The cached result */
+	unsigned int cache_used; /*< If we cached the result */
 } nfs41_session_slot_t;
+
+/**
+ * @brief Bookkeeping for callback slots on the client
+ */
+
+typedef struct nfs41_cb_session_slot {
+	sequenceid4 sequence; /*< */
+	bool in_use;
+} nfs41_cb_session_slot_t;
+
+/**
+ * Flag indicating that the backchannel is up
+ */
+static const uint32_t session_bc_up = 0x01;
+/**
+ * Flag indicating that there is an irrecoverable fault with the
+ * backchannel
+ */
+static const uint32_t session_bc_fault = 0x02;
 
 /**
  * @brief Structure representing an NFSv4.1 session
  */
 
 struct nfs41_session__ {
+	char session_id[NFS4_SESSIONID_SIZE]; /*< Session ID */
 	clientid4 clientid; /*< Clientid owning this session */
-	nfs_client_id_t *pclientid_record; /*< Client record
-					       correspinding to ID */
+	nfs_client_id_t *clientid_record; /*< Client record
+					      correspinding to ID */
 	struct glist_head session_link; /*< Link in the list of
 					    sessions for this
 					    clientid */
-	char session_id[NFS4_SESSIONID_SIZE]; /*< Session ID */
-	channel_attrs4 fore_channel_attrs; /*< Fore-channel attributes */
-	channel_attrs4 back_channel_attrs; /*< Back-channel attributes */
-	nfs41_session_slot_t slots[NFS41_NB_SLOTS]; /*< Slot table */
+	uint32_t flags; /*< Flags pertaining to this session */
 	SVCXPRT *xprt; /*< Referenced pointer to transport */
+
+	channel_attrs4 fore_channel_attrs; /*< Fore-channel attributes */
+	nfs41_session_slot_t slots[NFS41_NB_SLOTS]; /*< Slot table */
+
+	channel_attrs4 back_channel_attrs; /*< Back-channel attributes */
+	nfs41_cb_session_slot_t cb_slots[NFS41_NB_SLOTS]; /*< Callback
+							      Slot table */
 	uint32_t cb_program; /*< Callback program ID */
 	struct rpc_call_channel cb_chan; /*< Back channel */
-	bool cb_chan_up;
+	pthread_mutex_t cb_mutex; /*< Protects the cb slot table,
+				      when searching for a free slot */
+	pthread_cond_t cb_cond; /*< Condition variable on which we
+				    wait if the slot table is full
+				    and on which we signal when we
+				    free an entry. */
 };
 
 /******************************************************************************
