@@ -28,6 +28,7 @@
  * @file nfs4_op_sequence.c
  * @brief Routines used for managing the NFS4_OP_SEQUENCE operation
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -37,6 +38,7 @@
 #endif
 
 #include "sal_functions.h"
+#include "nfs_rpc_callback.h"
 
 /**
  *
@@ -161,8 +163,15 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
        = NFS41_NB_SLOTS - 1;
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid
        = arg_SEQUENCE4.sa_slotid; /* Maybe not the best choice */
+
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags
-       = 0;   /* What is to be set here ? */
+       = 0;
+
+  if (nfs_rpc_get_chan(session->clientid_record, 0) == NULL)
+    {
+      res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags
+	|= SEQ4_STATUS_CB_PATH_DOWN;
+    }
 
   if(arg_SEQUENCE4.sa_cachethis)
     {
