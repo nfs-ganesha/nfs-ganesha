@@ -2180,7 +2180,7 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
           // TODO FSF: what do we do now?
           LogMajor(COMPONENT_STATE,
                    "Error %s while trying to do FSAL Unlock",
-                   state_err_str(status));
+                   state_err_str(t_status));
           status = t_status;
         }
 
