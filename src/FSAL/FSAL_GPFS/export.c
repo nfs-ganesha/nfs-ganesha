@@ -415,7 +415,6 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 
 	hdl = (struct gpfs_file_handle *)fh_desc->addr;
 	fh_size = gpfs_sizeof_handle(hdl);
-//???	fh_size = hdl->handle_key_size;
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
@@ -430,7 +429,6 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 	fh_desc->len = fh_size;  /* pass back the actual size */
-//???	fh_desc->len = hdl->handle_key_size;  /* pass back the key size */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -526,6 +524,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	gpfs_export_ops_init(myself->export.ops);
 	gpfs_handle_ops_init(myself->export.obj_ops);
         myself->export.up_ops = up_ops;
+        /* We implemented upcalls. */
+        myself->export.validation_flags = FSAL_VALIDATE_NONE;
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.

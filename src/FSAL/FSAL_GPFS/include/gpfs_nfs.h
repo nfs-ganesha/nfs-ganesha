@@ -95,6 +95,8 @@ struct flock
 #define OPENHANDLE_READLINK_BY_FH 132
 #define OPENHANDLE_UNLINK_BY_NAME 133
 #define OPENHANDLE_CREATE_BY_NAME 134
+#define OPENHANDLE_READ_BY_FD     135
+#define OPENHANDLE_WRITE_BY_FD    136
 
 int gpfs_ganesha(int op, void *oarg);
 
@@ -427,6 +429,30 @@ struct dswrite_arg
 {
   int mountdirfd;
   struct gpfs_file_handle *handle;
+  char *bufP;
+  uint64_t offset;
+  uint64_t length;
+  uint32_t stability_wanted;
+  uint32_t *stability_got;
+  uint32_t *verifier4;
+};
+
+struct read_arg
+{
+  int mountdirfd;
+  int fd;
+  char *bufP;
+  uint64_t offset;
+  uint64_t length;
+  uint32_t stability_wanted;
+  uint32_t *stability_got;
+  uint32_t *verifier4;
+};
+
+struct write_arg
+{
+  int mountdirfd;
+  int fd;
   char *bufP;
   uint64_t offset;
   uint64_t length;

@@ -120,6 +120,9 @@ void ds_ops_init(struct fsal_ds_ops *ops);
 void export_ops_pnfs(struct export_ops *ops);
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
 
+fsal_status_t fsal_internal_close(int fd, void *owner, int cflags);
+
+
 fsal_status_t fsal_internal_access(int mntfd,
                                    const struct req_op_context *p_context,
                                    struct gpfs_file_handle * p_handle,
@@ -308,12 +311,11 @@ fsal_status_t GPFSFSAL_read(int fd,                /* IN */
                            size_t * p_read_amount, /* OUT */
                            bool * p_end_of_file);  /* OUT */
 
-fsal_status_t GPFSFSAL_write(int * p_file_descriptor,        /* IN */
-                            int dirfd,                       /* IN */
-                            uint64_t * p_seek_descriptor,    /* IN */
-                            size_t buffer_size,              /* IN */
-                            caddr_t buffer,                  /* IN */
-                            size_t * p_write_amount);       /* OUT */
+fsal_status_t GPFSFSAL_write(int fd,                   /* IN */
+                             uint64_t offset,          /* IN */
+                             size_t buffer_size,       /* IN */
+                             caddr_t buffer,           /* IN */
+                             size_t * p_write_amount); /* OUT */
 
 fsal_status_t GPFSFSAL_close(int * p_file_descriptor); /* IN */
 

@@ -354,6 +354,9 @@ open4_validate_claim(compound_data_t   * data,
                 }
                 break;
 
+        case CLAIM_DELEGATE_CUR:
+                break;
+
         case CLAIM_DELEGATE_PREV:
         case CLAIM_DELEG_CUR_FH:
         case CLAIM_DELEG_PREV_FH:
@@ -869,7 +872,6 @@ int nfs4_op_open(struct nfs_argop4 *op,
         cache_entry_t       * pentry_lookup = NULL;
         struct glist_head   * glist;
         state_lock_entry_t  * found_entry = NULL;
-        state_t             * pfile_state = NULL;
 
         LogDebug(COMPONENT_STATE,
                  "Entering NFS v4 OPEN handler -----------------------------");
@@ -1048,88 +1050,87 @@ int nfs4_op_open(struct nfs_argop4 *op,
                       "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
                   return res_OPEN4->status;
                 }
+                /* Check for name length */
+               if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len > MAXNAMLEN)
+               {
+                 res_OPEN4->status = NFS4ERR_NAMETOOLONG;
+                 LogDebug(COMPONENT_STATE,
+                          "NFS4 OPEN returning NFS4ERR_NAMETOOLONG for CLAIM_DELEGATE");
+                 return res_OPEN4->status;
+               }
+               /* get the filename from the argument, it should not be empty */
+               if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len == 0)
+               {
+                 res_OPEN4->status = NFS4ERR_INVAL;
+                 LogDebug(COMPONENT_STATE,
+                        "NFS4 OPEN returning NFS4ERR_INVAL for CLAIM_DELEGATE");
+                 return res_OPEN4->status;
+               }
 
-      /* Check for name length */
-      if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len > MAXNAMLEN)
-        {
-          res_OPEN4->status = NFS4ERR_NAMETOOLONG;
-          LogDebug(COMPONENT_STATE,
-                   "NFS4 OPEN returning NFS4ERR_NAMETOOLONG for CLAIM_DELEGATE");
-          return res_OPEN4->status;
-        }
+               /* get the filename from the argument, it should not be empty */
+              if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len == 0)
+              {
+                res_OPEN4->status = NFS4ERR_INVAL;
+                goto out;
+              }
+              LogDebug(COMPONENT_NFS_CB,"name len %d %s\n",
+                       arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len,
+                       arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_val);
 
-      /* get the filename from the argument, it should not be empty */
-      if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len == 0)
-        {
-          res_OPEN4->status = NFS4ERR_INVAL;
-          LogDebug(COMPONENT_STATE,
-                   "NFS4 OPEN returning NFS4ERR_INVAL for CLAIM_DELEGATE");
-          return res_OPEN4->status;
-        }
-
-      /* get the filename from the argument, it should not be empty */
-      if(arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len == 0)
-        {
-          res_OPEN4->status = NFS4ERR_INVAL;
-          goto out;
-        }
-      LogDebug(COMPONENT_NFS_CB,"name len %d %s\n",
-           arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_len,
-           arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file.utf8string_val);
-
-      /* Check if filename is correct */
-      res_OPEN4->status = nfs4_utf8string2dynamic(&arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file,
+              /* Check if filename is correct */
+              res_OPEN4->status = nfs4_utf8string2dynamic(&arg_OPEN4->claim.open_claim4_u.delegate_cur_info.file,
 					   UTF8_SCAN_ALL,
 					   &filename);
-        if (res_OPEN4->status != NFS4_OK) {
-                goto out;
-        }
+                if (res_OPEN4->status != NFS4_OK) {
+                  goto out;
+              }
 
-      /* Does a file with this name already exist ? */
-      pentry_lookup = cache_inode_lookup(pentry_parent,
-                                         filename,
-                                         data->req_ctx,
-                                         &cache_status);
-      if(cache_status != CACHE_INODE_NOT_FOUND)
-        {
-          pthread_rwlock_wrlock(&pentry_lookup->state_lock);
+              pentry_parent = data->current_entry;
 
-          glist_for_each(glist, &pentry_lookup->object.file.lock_list)
-          {
-              found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-              if (found_entry != NULL)
+              /* Does a file with this name already exist ? */
+              pentry_lookup = cache_inode_lookup(pentry_parent,
+                                                 filename,
+                                                 data->req_ctx,
+                                                 &cache_status);
+              if(cache_status != CACHE_INODE_NOT_FOUND)
               {
-                 LogDebug(COMPONENT_NFS_CB,"found_entry %p", found_entry);
+                 pthread_rwlock_wrlock(&pentry_lookup->state_lock);
+
+                 glist_for_each(glist, &pentry_lookup->object.file.lock_list)
+                 {
+                   found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+
+                   if (found_entry != NULL)
+                   {
+                     LogDebug(COMPONENT_NFS_CB,"found_entry %p", found_entry);
+                   }
+                   else
+                   {
+                     LogDebug(COMPONENT_NFS_CB,"list is empty %p", found_entry);
+                     pthread_rwlock_unlock(&pentry_lookup->state_lock);
+                     res_OPEN4->status = NFS4ERR_BAD_STATEID;
+                     return res_OPEN4->status;
+                   }
+                   break;
+                }
+                pthread_rwlock_unlock(&pentry_lookup->state_lock);
+
+                file_state = found_entry->sle_state;
+
+                res_OPEN4->OPEN4res_u.resok4.stateid.seqid = file_state->state_seqid;
+                memcpy(res_OPEN4->OPEN4res_u.resok4.stateid.other,
+                       file_state->stateid_other, OTHERSIZE);
+
+                res_OPEN4->status = open4_create_fh(data, pentry_lookup);
+                if(res_OPEN4->status != NFS4_OK)
+                  goto out;
+
+                goto out;
               }
               else
-              {
-                  LogDebug(COMPONENT_NFS_CB,"list is empty %p", found_entry);
-                  pthread_rwlock_unlock(&pentry_lookup->state_lock);
-                  res_OPEN4->status = NFS4ERR_BAD_STATEID;
-                  return res_OPEN4->status;
-              }
+                LogDebug(COMPONENT_NFS_CB,"did not find entry %p", pentry_lookup);
+
               break;
-          }
-          pthread_rwlock_unlock(&pentry_lookup->state_lock);
-
-          pfile_state = found_entry->sle_state;
-
-          res_OPEN4->OPEN4res_u.resok4.stateid.seqid = pfile_state->state_seqid;
-          memcpy(res_OPEN4->OPEN4res_u.resok4.stateid.other,
-                 pfile_state->stateid_other, OTHERSIZE);
-
-          res_OPEN4->status = open4_create_fh(data, pentry_lookup);
-          if(res_OPEN4->status != NFS4_OK)
-              goto out;
-
-          goto out;
-        }
-        else
-          LogDebug(COMPONENT_NFS_CB,"did not find entry %p", pentry_lookup);
-
-        break;
-
 
         default:
                 LogFatal(COMPONENT_STATE,
@@ -1219,11 +1220,15 @@ int nfs4_op_open(struct nfs_argop4 *op,
            owner->so_owner.so_nfs4_owner.so_confirmed == TRUE &&
            claim != CLAIM_DELEGATE_CUR)
 
-            get_delegation(data, pfile_state, owner,
+            get_delegation(data, file_state, owner,
                            &res_OPEN4->OPEN4res_u.resok4);
 
 out:
 
+        if (res_OPEN4->status != NFS4_OK) {
+           LogDebug(COMPONENT_STATE,
+                    "failed with status %d", res_OPEN4->status);
+        }
         /* Save the response in the lock or open owner */
         if (data->minorversion == 0) {
                 Copy_nfs4_state_req(owner, arg_OPEN4->seqid, op, data,

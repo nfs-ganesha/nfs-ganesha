@@ -230,9 +230,11 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
   if(fsal_flags & FSAL_O_READ)
     *p_posix_flags |= O_RDONLY;
   if(fsal_flags & FSAL_O_WRITE)
-    *p_posix_flags |= O_WRONLY;
+    *p_posix_flags |= O_RDWR;
+#if 0 //??? this will rurn on O_RDWR even if only FSAL_O_READ is on
   if(fsal_flags & FSAL_O_RDWR)
     *p_posix_flags |= O_RDWR;
+#endif
   if(fsal_flags & FSAL_O_SYNC)
     *p_posix_flags |= O_SYNC;
 

@@ -1082,15 +1082,10 @@ delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
   {
       found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
-      if (found_entry != NULL)
+      if (found_entry != NULL && found_entry->sle_state != NULL)
       {
           LogDebug(COMPONENT_NFS_CB,"found_entry %p", found_entry);
           delegrecall_one(found_entry, pentry);
-      }
-      else
-      {
-          LogDebug(COMPONENT_NFS_CB,"list is empty %p", found_entry);
-          break;
       }
   }
   pthread_rwlock_unlock(&pentry->state_lock);

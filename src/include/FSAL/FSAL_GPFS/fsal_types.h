@@ -123,7 +123,7 @@ struct gpfs_file_handle
 
 static inline size_t gpfs_sizeof_handle(struct gpfs_file_handle *hdl)
 {
-  return offsetof(struct gpfs_file_handle, f_handle) + hdl->handle_size;
+  return sizeof(struct gpfs_file_handle);
 }
 /** end of open by handle structures */
 

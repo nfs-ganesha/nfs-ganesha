@@ -477,7 +477,6 @@ struct linux_dirent {
  * read the directory and call through the callback function for
  * each entry.
  * @param dir_hdl [IN] the directory to read
- * @param entry_cnt [IN] limit of entries. 0 implies no limit
  * @param whence [IN] where to start (next)
  * @param dir_state [IN] pass thru of state to callback
  * @param cb [IN] callback function
@@ -486,7 +485,6 @@ struct linux_dirent {
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
                                   const struct req_op_context *opctx,
-				  uint32_t entry_cnt,
 				  struct fsal_cookie *whence,
 				  void *dir_state,
 				  fsal_readdir_cb cb,
@@ -499,7 +497,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status;
 	off_t seekloc = 0;
 	int bpos, cnt, nread;
-	unsigned char d_type;
 	struct linux_dirent *dentry;
 	struct fsal_cookie *entry_cookie;
 	char buf[BUF_SIZE];
@@ -541,25 +538,19 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			if(strcmp(dentry->d_name, ".") == 0 ||
 			   strcmp(dentry->d_name, "..") == 0)
 				goto skip; /* must skip '.' and '..' */
-			d_type = *(buf + bpos + dentry->d_reclen - 1);
 			entry_cookie->size = sizeof(off_t);
 			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
 
 			/* callback to cache inode */
-			status = cb(opctx, dentry->d_name,
-				    d_type,
-				    dir_hdl,
-				    dir_state, entry_cookie);
-			if(FSAL_IS_ERROR(status)) {
-				fsal_error = status.major;
-				retval = status.minor;
+			if (!cb(opctx,
+			        dentry->d_name,
+			        dir_state,
+			        entry_cookie)) {
 				goto done;
 			}
 skip:
 			bpos += dentry->d_reclen;
 			cnt++;
-			if(entry_cnt > 0 && cnt >= entry_cnt)
-				goto done;
 		}
 	} while(nread > 0);
 
@@ -756,7 +747,6 @@ static fsal_status_t handle_digest(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 	fh_desc->len = fh_size;
-//???	fh_desc->len = fh->handle_key_size;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 errout:
@@ -781,8 +771,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	fh_desc->addr = myself->handle;
-	fh_desc->len = gpfs_sizeof_handle(myself->handle);
-//???	fh_desc->len = myself->handle->handle_key_size;
+	fh_desc->len = myself->handle->handle_key_size;
 }
 
 /*

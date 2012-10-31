@@ -124,7 +124,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                    gpfs_fsal_up_ctx->gf_fd);
 
       phandle->handle_size = OPENHANDLE_HANDLE_LEN;
-      phandle->handle_key_size = 0;
+      phandle->handle_key_size = OPENHANDLE_KEY_LEN;
+      phandle->handle_version = OPENHANDLE_VERSION;
 
       callback.mountdirfd = gpfs_fsal_up_ctx->gf_fd;
       callback.handle     = phandle;
@@ -194,8 +195,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
       pevent->file.export->ops->get(pevent->file.export);
       pevent->functions = event_func;
       pevent->file.key.addr = phandle;
-//???      pevent->file.key.len = phandle->handle_key_size;
-      pevent->file.key.len = sizeof(*phandle) + (phandle->handle_key_size - OPENHANDLE_HANDLE_LEN);
+      phandle->handle_key_size = sizeof(struct gpfs_file_handle)
+                                 - OPENHANDLE_HANDLE_LEN
+                                 + phandle->handle_key_size;
+      pevent->file.key.len = phandle->handle_key_size;
 
       switch(reason)
       {
@@ -270,7 +273,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
             LogWarn(COMPONENT_FSAL,
                     "GPFS file system %d is no longer available",
                     gpfs_fsal_up_ctx->gf_fd);
-            gsh_free(phandle);
+            fsal_up_free_event(pevent);
             return NULL;
 
           case INODE_INVALIDATE:
@@ -283,7 +286,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
           default:
             LogWarn(COMPONENT_FSAL_UP,
                         "Unknown event: %d", reason);
-            gsh_free(phandle);
             fsal_up_free_event(pevent);
             continue;
       }

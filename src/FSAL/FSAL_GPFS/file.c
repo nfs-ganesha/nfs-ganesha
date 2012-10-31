@@ -127,28 +127,16 @@ fsal_status_t gpfs_write(struct fsal_obj_handle *obj_hdl,
 			size_t *write_amount)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	ssize_t nb_written;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+        fsal_status_t status;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
 	assert(myself->u.file.fd >= 0 &&
 	       myself->u.file.openflags != FSAL_O_CLOSED);
 
-        nb_written = pwrite(myself->u.file.fd,
-                            buffer,
-                            buffer_size,
-                            offset);
-
-	if(offset == -1 || nb_written == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		goto out;
-	}
-	*write_amount = nb_written;
-out:
-	return fsalstat(fsal_error, retval);	
+        status =  GPFSFSAL_write(myself->u.file.fd, offset, buffer_size, buffer,
+                                 write_amount);
+        return(status);
 }
 
 /* gpfs_commit
@@ -232,22 +220,17 @@ out:
 fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	fsal_status_t status;
 
 	assert(obj_hdl->type == REGULAR_FILE);
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	if(myself->u.file.fd >= 0 &&
 	   myself->u.file.openflags != FSAL_O_CLOSED){
-		retval = close(myself->u.file.fd);
-		if(retval < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-		}
+                status = fsal_internal_close(myself->u.file.fd, NULL, 0);
 		myself->u.file.fd = -1;
 		myself->u.file.openflags = FSAL_O_CLOSED;
 	}
-	return fsalstat(fsal_error, retval);	
+	return status;	
 }
 
 /* gpfs_lru_cleanup
@@ -260,18 +243,13 @@ fsal_status_t gpfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			      lru_actions_t requests)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int retval = 0;
+	fsal_status_t status;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	if(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0) {
-		retval = close(myself->u.file.fd);
+                status = fsal_internal_close(myself->u.file.fd, NULL, 0);
 		myself->u.file.fd = -1;
 		myself->u.file.openflags = FSAL_O_CLOSED;
 	}
-	if(retval == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-	}
-	return fsalstat(fsal_error, retval);	
+	return status;	
 }

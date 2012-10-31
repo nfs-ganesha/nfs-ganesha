@@ -198,9 +198,6 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,        /* IN */
  *
  * \param file_descriptor (input):
  *        The file descriptor returned by FSAL_open.
- * \param seek_descriptor (optional input):
- *        Specifies the position where data is to be read.
- *        If not specified, data will be read at the current position.
  * \param buffer_size (input):
  *        Amount (in bytes) of data to be read.
  * \param buffer (output):
@@ -216,79 +213,33 @@ fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,        /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_read(int fd,        /* IN */
-                        uint64_t offset,        /* [IN] */
-                        size_t buffer_size,        /* IN */
-                        caddr_t buffer, /* OUT */
-                        size_t * p_read_amount,    /* OUT */
-                        bool * p_end_of_file  /* OUT */
-    )
+fsal_status_t GPFSFSAL_read(int fd,               /* IN */
+                        uint64_t offset,          /* IN */
+                        size_t buffer_size,       /* IN */
+                        caddr_t buffer,           /* OUT */
+                        size_t * p_read_amount,   /* OUT */
+                        bool * p_end_of_file)     /* OUT */
 {
-
-  size_t i_size;
+  struct read_arg rarg;
   ssize_t nb_read;
   int errsv = 0;
-  int pcall = true;
 
   /* sanity checks. */
 
   if(!buffer || !p_read_amount || !p_end_of_file)
     return fsalstat(ERR_FSAL_FAULT, 0);
 
-  /** @todo: manage fsal_size_t to size_t convertion */
-  i_size = (size_t) buffer_size;
 
-#if 0 //???
-  /* positioning */
+  rarg.mountdirfd = fd;
+  rarg.fd = fd;
+  rarg.bufP = buffer;
+  rarg.offset = offset;
+  rarg.length = buffer_size;
 
-  if(p_seek_descriptor)
-    {
-
-      switch (p_seek_descriptor->whence)
-        {
-        case FSAL_SEEK_CUR:
-          /* set position plus offset */
-          pcall = false;
-          rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_CUR);
-          errsv = errno;
-          break;
-
-        case FSAL_SEEK_SET:
-          /* use pread/pwrite call */
-          pcall = true;
-          rc = 0;
-          break;
-
-        case FSAL_SEEK_END:
-          /* set end of file plus offset */
-          pcall = false;
-          rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
-          errsv = errno;
-
-          break;
-        }
-
-      if(rc)
-        {
-          LogFullDebug(COMPONENT_FSAL,
-                       "Error in posix fseek operation (whence=%s, offset=%lld)",
-		       format_seek_whence(p_seek_descriptor->whence),
-                       (long long) p_seek_descriptor->offset);
-
-          return fsalstat(posix2fsal_error(errsv), errsv);
-        }
-
-    }
-#endif
   /* read operation */
 
-  if(pcall)
-    nb_read = pread(fd, buffer, i_size, offset);
-  else
-    nb_read = read(fd, buffer, i_size);
+  nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
   errsv = errno;
-
-  /** @todo: manage ssize_t to fsal_size_t convertion */
 
   if(nb_read == -1)
     return fsalstat(posix2fsal_error(errsv), errsv);
@@ -296,6 +247,59 @@ fsal_status_t GPFSFSAL_read(int fd,        /* IN */
     *p_end_of_file = 1;
 
   *p_read_amount = nb_read;
+
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+}
+/**
+ * FSAL_write:
+ * Perform a write operation on an opened file.
+ *
+ * \param file_descriptor (input):
+ *        The file descriptor returned by FSAL_open.
+ * \param buffer_size (input):
+ *        Amount (in bytes) of data to be written.
+ * \param buffer (output):
+ *        Address where the data is in memory.
+ * \param write_amount (output):
+ *        Pointer to the amount of data (in bytes) that have been written
+ *        during this call.
+ *
+ * \return Major error codes:
+ *      - ERR_FSAL_NO_ERROR: no error.
+ *      - Another error code if an error occured during this call.
+ */
+fsal_status_t GPFSFSAL_write(int fd,             /* IN */
+                        uint64_t offset,         /* IN */
+                        size_t buffer_size,      /* IN */
+                        caddr_t buffer,          /* IN */
+                        size_t *p_write_amount)  /* OUT */
+{
+  struct write_arg warg;
+  ssize_t nb_write;
+  int errsv = 0;
+
+  /* sanity checks. */
+
+  if(!buffer || !p_write_amount)
+    return fsalstat(ERR_FSAL_FAULT, 0);
+
+
+  warg.mountdirfd = fd;
+  warg.fd = fd;
+  warg.bufP = buffer;
+  warg.offset = offset;
+  warg.length = buffer_size;
+
+  /* read operation */
+
+  nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);
+  errsv = errno;
+
+  if(nb_write == -1)
+    return fsalstat(posix2fsal_error(errsv), errsv);
+
+  *p_write_amount = nb_write;
 
   return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

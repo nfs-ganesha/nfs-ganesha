@@ -258,6 +258,7 @@ AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 GA_AM_COND_ON_UNLESS([fsal-proxy],[do not build PROXY FSAL shared library],[USE_FSAL_PROXY])
 GA_AM_COND_ON_UNLESS([fsal-vfs],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
 GA_AM_COND_ON_UNLESS([fsal-posix],[do not build POSIX FSAL shared library],[USE_FSAL_POSIX])
+GA_AM_COND_ON_UNLESS([fsal-gpfs],[do not build GPFS FSAL shared library],[USE_FSAL_GPFS])
 
 # We only want to turn Ceph on if we have the right library
 
@@ -350,7 +351,6 @@ AM_CONDITIONAL([USE_FSAL_SHOOK], test "[$enable_fsal_shook]"  == "yes")
 GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
 GA_ENABLE_AM_CONDITION([fsal-fuse],[build FUSE FSAL],[USE_FSAL_FUSE])
 GA_ENABLE_AM_CONDITION([fsal-xfs],[build XFS FSAL],[USE_FSAL_XFS])
-GA_ENABLE_AM_CONDITION([fsal-gpfs],[build GPFS FSAL],[USE_FSAL_GPFS])
 GA_ENABLE_AM_CONDITION([fsal-zfs],[build ZFS FSAL],[USE_FSAL_ZFS])
 # SHOOK is a variant of Lustre FSAL
 GA_ENABLE_AM_CONDITION([fsal-shook],[build SHOOKFSAL],[USE_FSAL_SHOOK])

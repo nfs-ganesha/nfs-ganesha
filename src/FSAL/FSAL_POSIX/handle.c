@@ -546,7 +546,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 {
     struct file_data *parent = NULL;
     fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-    fsal_status_t status;
+    fsal_status_t status = {0, 0};
     int retval = 0;
     char *p = NULL;
     DIR *dir = NULL;
