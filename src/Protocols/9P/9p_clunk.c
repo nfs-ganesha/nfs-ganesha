@@ -101,8 +101,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
    }
 
   /* Tell the cache the fid that used this entry is not used by this set of messages */
-  if( pfid->pentry->lru.refcount > 1 ) 
-    cache_inode_put( pfid->pentry ) ; 
+  cache_inode_put( pfid->pentry ) ;
 
   /* Clean the fid */
   memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;

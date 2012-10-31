@@ -47,6 +47,7 @@
 #include "nfs_core.h"
 #include "log.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "fsal.h"
 #include "9p.h"
 
@@ -119,6 +120,14 @@ int _9p_walk( _9p_request_data_t * preq9p,
   
       /* Set the new fid id */
       pnewfid->fid = *newfid ;
+
+      /* Increments refcount so it won't fall below 0 when we clunk later */
+      if ( cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_INITIAL)
+             != CACHE_INODE_SUCCESS )
+       {
+          LogDebug( COMPONENT_9P, "cache_inode_lru_ref failed on fid=%u newfid=%u entry=%p", *fid, *newfid, pnewfid->pentry );
+          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+       }
    }
   else 
    {
@@ -208,8 +217,8 @@ int _9p_walk( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p",
-            (u32)*msgtag, *fid, *newfid, *nwqid,  (unsigned long long)pnewfid->qid.path, pnewfid->pentry ) ;
+  LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p refcount=%li",
+            (u32)*msgtag, *fid, *newfid, *nwqid,  (unsigned long long)pnewfid->qid.path, pnewfid->pentry, pnewfid->pentry->lru.refcount ) ;
 
   _9p_stat_update( *pmsgtype, true, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
