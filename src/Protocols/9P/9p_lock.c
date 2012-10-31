@@ -54,6 +54,23 @@
 
 extern int h_errno;
 
+/*
+ * Reminder:
+ * LOCK_TYPE_RDLCK = 0
+ * LOCK_TYPE_WRLCK = 1
+ * LOCK_TYPE_UNLCK = 2
+ */
+char * strtype[] = { "RDLOCK", "WRLOCK", "UNLOCK" };
+
+/*
+ * Remonder:
+ * LOCK_SUCCESS = 0
+ * LOCK_BLOCKED = 1
+ * LOCK_ERROR   = 2
+ * LOCK_GRACE   = 3
+ */
+char * strstatus[] = { "SUCCESS", "BLOCKED", "ERROR", "GRACE" };
+
 int _9p_lock( _9p_request_data_t * preq9p, 
               void  * pworker_data,
               u32 * plenout, 
@@ -103,8 +120,8 @@ int _9p_lock( _9p_request_data_t * preq9p,
   _9p_getptr( cursor, proc_id, u32 ) ;
   _9p_getstr( cursor, client_id_len, client_id_str ) ;
 
-  LogDebug( COMPONENT_9P, "TLOCK: tag=%u fid=%u type=%u flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s",
-            (u32)*msgtag, *fid, *type, *flags, (unsigned long long)*start, (unsigned long long)*length, 
+  LogDebug( COMPONENT_9P, "TLOCK: tag=%u fid=%u type=%u|%s flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s",
+            (u32)*msgtag, *fid, *type, strtype[*type], *flags, (unsigned long long)*start, (unsigned long long)*length, 
             *proc_id, *client_id_len, client_id_str ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
@@ -196,9 +213,9 @@ int _9p_lock( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RLOCK: tag=%u fid=%u type=%u flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s status=%u",
-            (u32)*msgtag, *fid, *type, *flags, (unsigned long long)*start, (unsigned long long)*length, 
-            *proc_id, *client_id_len, client_id_str, status ) ;
+  LogDebug( COMPONENT_9P, "RLOCK: tag=%u fid=%u type=%u|%s flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s status=%u|%s",
+            (u32)*msgtag, *fid, *type, strtype[*type], *flags, (unsigned long long)*start, (unsigned long long)*length, 
+            *proc_id, *client_id_len, client_id_str, status, strstatus[status] ) ;
 
   _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req ) ;
   return 1 ;
