@@ -75,7 +75,6 @@
 #define fsal_lockdesc_t gpfsfsal_lockdesc_t
 #define fsal_cookie_t gpfsfsal_cookie_t
 #define fs_specific_initinfo_t gpfsfs_specific_initinfo_t
-#define fsal_cred_t gpfsfsal_cred_t
 
 /*
  * labels in the config file

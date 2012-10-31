@@ -1990,7 +1990,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_export_context_t:%lu\n", sizeof(lustrefsal_export_context_t));
   printf("---> fsal_cookie_t:%lu\n", sizeof(lustrefsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%lu\n", sizeof(lustrefs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%lu\n", sizeof(lustrefsal_cred_t));
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */

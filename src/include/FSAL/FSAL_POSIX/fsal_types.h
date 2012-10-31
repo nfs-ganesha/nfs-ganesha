@@ -72,7 +72,6 @@
 #define fsal_lockdesc_t posixfsal_lockdesc_t
 #define fsal_cookie_t posixfsal_cookie_t
 #define fs_specific_initinfo_t posixfs_specific_initinfo_t
-#define fsal_cred_t posixfsal_cred_t
 
 /* other includes */
 #include <sys/types.h>

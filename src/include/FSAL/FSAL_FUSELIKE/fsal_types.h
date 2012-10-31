@@ -54,7 +54,6 @@
 #define fsal_lockdesc_t fusefsal_lockdesc_t
 #define fsal_cookie_t fusefsal_cookie_t
 #define fs_specific_initinfo_t fusefs_specific_initinfo_t
-#define fsal_cred_t fusefsal_cred_t
 
   /* In this section, you must define your own FSAL internal types.
    * Here are some template types :

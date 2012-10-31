@@ -68,7 +68,6 @@
 #define fsal_lockdesc_t zfsfsal_lockdesc_t
 #define fsal_cookie_t zfsfsal_cookie_t
 #define fs_specific_initinfo_t zfsfs_specific_initinfo_t
-#define fsal_cred_t zfsfsal_cred_t
 
 typedef union
 {

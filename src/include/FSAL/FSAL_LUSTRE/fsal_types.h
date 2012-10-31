@@ -77,7 +77,6 @@
 #define fsal_lockdesc_t lustrefsal_lockdesc_t
 #define fsal_cookie_t lustrefsal_cookie_t
 #define fs_specific_initinfo_t lustrefs_specific_initinfo_t
-#define fsal_cred_t lustrefsal_cred_t
 
 /*
  * labels in the config file
@@ -99,16 +98,6 @@ typedef union {
   } data ;
   char pad[FSAL_HANDLE_T_SIZE];
 } lustrefsal_handle_t;  /**< FS object handle */
-
-/** Authentification context.    */
-
-typedef struct lustrefsal_cred__
-{
-  uid_t user;
-  gid_t group;
-  fsal_count_t nbgroups;
-  gid_t alt_groups[FSAL_NGROUPS_MAX];
-} lustrefsal_cred_t;
 
 #define MAX_LUSTRE_FSNAME 128
 typedef struct lustrefsal_export_context_t

@@ -84,7 +84,6 @@
 #define fsal_lockdesc_t proxyfsal_lockdesc_t
 #define fsal_cookie_t proxyfsal_cookie_t
 #define fs_specific_initinfo_t proxyfs_specific_initinfo_t
-#define fsal_cred_t proxyfsal_cred_t
 
 /* some void types for this template... */
 typedef union {

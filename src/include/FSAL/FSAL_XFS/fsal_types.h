@@ -91,7 +91,6 @@
 #define fsal_lockdesc_t xfsfsal_lockdesc_t
 #define fsal_cookie_t xfsfsal_cookie_t
 #define fs_specific_initinfo_t xfsfs_specific_initinfo_t
-#define fsal_cred_t xfsfsal_cred_t
 
 typedef union {
  struct

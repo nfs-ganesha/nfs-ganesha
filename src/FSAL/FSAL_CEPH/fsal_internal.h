@@ -108,14 +108,6 @@ fsal_status_t CEPHFSAL_CleanUpExportContext(
 fsal_status_t CEPHFSAL_InitClientContext(
      fsal_op_context_t* extcontext);
 
-fsal_status_t CEPHFSAL_GetClientContext(
-     fsal_op_context_t * extcontext,
-     fsal_export_context_t * extexport_context,
-     fsal_uid_t uid,
-     fsal_gid_t gid,
-     fsal_gid_t * alt_groups,
-     fsal_count_t nb_alt_groups);
-
 fsal_status_t CEPHFSAL_create(fsal_handle_t * extparent,
                               fsal_name_t * filename,
                               fsal_op_context_t * extcontext,

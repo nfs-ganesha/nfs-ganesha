@@ -74,7 +74,6 @@
 #define fsal_export_context_t hpssfsal_export_context_t
 #define fsal_cookie_t hpssfsal_cookie_t
 #define fs_specific_initinfo_t hpssfs_specific_initinfo_t
-#define fsal_cred_t hpssfsal_cred_t
 
 /* Filesystem handle */
 

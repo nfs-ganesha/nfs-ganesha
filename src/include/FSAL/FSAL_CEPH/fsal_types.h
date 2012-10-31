@@ -57,7 +57,6 @@
 #define fsal_lockdesc_t cephfsal_lockdesc_t
 #define fsal_cookie_t cephfsal_cookie_t
 #define fs_specific_initinfo_t cephfs_specific_initinfo_t
-#define fsal_cred_t cephfsal_cred_t
 
 typedef union {
   struct
