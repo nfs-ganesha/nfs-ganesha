@@ -156,7 +156,7 @@ int nlm4_Lock(nfs_arg_t            * parg,
 
       /* If we didn't block, release the block data */
       if(state_status != STATE_LOCK_BLOCKED && pblock_data != NULL)
-        gsh_free(pblock_data);
+        free_block_data(pblock_data);
     }
   else
     {

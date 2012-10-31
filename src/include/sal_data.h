@@ -514,9 +514,6 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
 
 #ifdef _USE_BLOCKING_LOCKS
 
-typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
-                                               fsal_op_context_t  * fsal_context);
-
 typedef struct state_nlm_block_data_t
 {
   sockaddr_t                 sbd_nlm_hostaddr;
@@ -548,7 +545,6 @@ struct state_block_data_t
   granted_callback_t             sbd_granted_callback;
   state_cookie_entry_t         * sbd_blocked_cookie;
   state_lock_entry_t           * sbd_lock_entry;
-  block_data_to_fsal_context_t   sbd_block_data_to_fsal_context;
   struct user_credentials        sbd_credential;
   union
     {

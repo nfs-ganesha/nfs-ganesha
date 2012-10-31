@@ -521,6 +521,19 @@ void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
     V(lock_entry->sle_mutex);
 }
 
+#ifdef _USE_BLOCKING_LOCKS
+void free_block_data(state_block_data_t * block_data)
+{
+  if(block_data == NULL)
+    return;
+
+  if(block_data->sbd_credential.alt_groups != NULL)
+    gsh_free(block_data->sbd_credential.alt_groups);
+
+  gsh_free(block_data);
+}
+#endif
+
 void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 {
   bool_t to_free = FALSE;
@@ -553,8 +566,7 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
           /* need to remove from the state_blocked_locks list */
           if (lock_entry->sle_block_data != NULL)
             glist_del(&lock_entry->sle_block_data->sbd_list);
-          memset(lock_entry->sle_block_data, 0, sizeof(*(lock_entry->sle_block_data)));
-          gsh_free(lock_entry->sle_block_data);
+          free_block_data(lock_entry->sle_block_data);
         }
 #endif
 #ifdef _DEBUG_MEMLEAKS
@@ -1382,8 +1394,7 @@ void grant_blocked_lock_immediate(cache_entry_t         * pentry,
       else
         {
           /* We have block data but no cookie, so we can just free the block data */
-          memset(lock_entry->sle_block_data, 0, sizeof(*lock_entry->sle_block_data));
-          gsh_free(lock_entry->sle_block_data);
+          free_block_data(lock_entry->sle_block_data);
           lock_entry->sle_block_data = NULL;
         }
     }

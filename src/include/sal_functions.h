@@ -420,6 +420,7 @@ bool_t Check_nfs4_seqid(state_owner_t   * powner,
  ******************************************************************************/
 
 #ifdef _USE_BLOCKING_LOCKS
+void free_block_data(state_block_data_t * block_data);
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);

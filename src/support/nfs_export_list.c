@@ -675,6 +675,10 @@ void clean_credentials(struct user_cred *user_credentials)
  * 
  * @return TRUE if successful, FALSE otherwise 
  *
+ * NOTE: The caller_garray is made a part of the user_credentials, if
+ *       the context needs to be retained for longer than the duration
+ *       of the NFS request, these credentials must be copied.
+ *
  */
 int nfs_build_fsal_context(struct svc_req *req,
                            exportlist_t * pexport,

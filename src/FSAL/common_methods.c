@@ -64,12 +64,11 @@ fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/
                                     fsal_gid_t * alt_groups,    /* IN */
                                     fsal_count_t nb_alt_groups /* IN */ )
 {
-  fsal_count_t ng = nb_alt_groups;
   unsigned int i;
 
   /* sanity check */
   if(!p_thr_context || !p_export_context ||
-     ((ng > 0) && (alt_groups == NULL)))
+     ((nb_alt_groups > 0) && (alt_groups == NULL)))
 	  Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* set the export specific context */
@@ -78,13 +77,8 @@ fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/
   p_thr_context->count = 0;
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
-
-  if(ng > FSAL_NGROUPS_MAX) /* this artificially truncates the group list ! */
-	  ng = FSAL_NGROUPS_MAX;
-  p_thr_context->credential.nbgroups = ng;
-
-  for(i = 0; i < ng; i++)
-	  p_thr_context->credential.alt_groups[i] = alt_groups[i];
+  p_thr_context->credential.nbgroups = nb_alt_groups;
+  p_thr_context->credential.alt_groups = alt_groups;
 
   if(isFullDebug(COMPONENT_FSAL)) {
 	  /* traces: prints p_credential structure */

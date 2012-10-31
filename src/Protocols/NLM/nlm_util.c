@@ -359,13 +359,12 @@ int nlm_process_parameters(struct svc_req        * preq,
 
   if(ppblock_data != NULL)
     {
-         *ppblock_data = gsh_malloc(sizeof(**ppblock_data));
+      *ppblock_data = gsh_calloc(1, sizeof(**ppblock_data));
       /* Fill in the block data, if we don't get one, we will just proceed
        * without (which will mean the lock doesn't block.
        */
       if(*ppblock_data != NULL)
         {
-          memset(*ppblock_data, 0, sizeof(**ppblock_data));
           if(copy_xprt_addr(&(*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_hostaddr, ptr_svc) == 0)
             {
               LogFullDebug(COMPONENT_NLM,
@@ -377,7 +376,6 @@ int nlm_process_parameters(struct svc_req        * preq,
               goto out_put;
             }
           (*ppblock_data)->sbd_granted_callback = nlm_granted_callback;
-          (*ppblock_data)->sbd_block_data_to_fsal_context = nlm_block_data_to_fsal_context;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_bytes =
             (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh_buf;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_len = alock->fh.n_len;
@@ -392,6 +390,23 @@ int nlm_process_parameters(struct svc_req        * preq,
           (*ppblock_data)->sbd_credential.group =  pcontext->credential.hpss_usercred.Gid ;
 #else
           (*ppblock_data)->sbd_credential = pcontext->credential;
+
+          /* Copy the alt groups list */
+          if(pcontext->credential.nbgroups != 0)
+            {
+              (*ppblock_data)->sbd_credential.alt_groups =
+                      gsh_malloc(sizeof(gid_t) * pcontext->credential.nbgroups);
+              if((*ppblock_data)->sbd_credential.alt_groups == NULL)
+                {
+                  gsh_free(*ppblock_data);
+                  *ppblock_data = NULL;
+                  rc = NLM4_FAILED;
+                  goto out_put;
+                }
+              memcpy((*ppblock_data)->sbd_credential.alt_groups,
+                     pcontext->credential.alt_groups,
+                     pcontext->credential.nbgroups);
+            }
 #endif
         }
     }
