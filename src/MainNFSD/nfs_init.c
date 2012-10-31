@@ -1922,7 +1922,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 void nfs_start(nfs_start_info_t * p_start_info)
 {
   struct rlimit ulimit_data;
-  int in_grace;
 
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
@@ -2113,7 +2112,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
       LogEvent(COMPONENT_INIT,
                "-------------------------------------------------");
 
-      in_grace = nfs_in_grace();
+      if (nfs_in_grace());
     }
 
   /* Wait for dispatcher to exit */

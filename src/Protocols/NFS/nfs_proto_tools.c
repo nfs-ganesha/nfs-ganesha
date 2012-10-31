@@ -457,6 +457,7 @@ static int nfs_RetryableError(cache_inode_status_t cache_status,
     case CACHE_INODE_TOOSMALL:
     case CACHE_INODE_MLINK:
     case CACHE_INODE_SERVERFAULT:
+    case CACHE_INODE_XDEV:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
@@ -3865,6 +3866,10 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_MLINK;
       break;
 
+    case CACHE_INODE_XDEV:
+      nfserror = NFS4ERR_XDEV;
+      break;
+
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_CACHE_CONTENT_ERROR:
@@ -4016,6 +4021,10 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFS3ERR_MLINK;
       break;
 
+    case CACHE_INODE_XDEV:
+      nfserror = NFS3ERR_XDEV;
+      break;
+
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_STATE_CONFLICT:
@@ -4136,6 +4145,10 @@ nfsstat2 nfs2_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFSERR_NAMETOOLONG;
       break;
 
+    case CACHE_INODE_XDEV:
+    case CACHE_INODE_MLINK:
+    case CACHE_INODE_SERVERFAULT:
+    case CACHE_INODE_TOOSMALL:
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_STATE_CONFLICT:

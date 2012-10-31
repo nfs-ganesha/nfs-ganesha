@@ -106,6 +106,7 @@ const char *state_err_str(state_status_t err)
       case STATE_MLINK:                 return "STATE_MLINK";
       case STATE_SERVERFAULT:           return "STATE_SERVERFAULT";
       case STATE_TOOSMALL:              return "STATE_TOOSMALL";
+      case STATE_XDEV:                 return "STATE_XDEV";
     }
   return "unknown";
 }
@@ -158,6 +159,7 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_MLINK:                 return STATE_MLINK;
       case CACHE_INODE_SERVERFAULT:           return STATE_SERVERFAULT;
       case CACHE_INODE_TOOSMALL:              return STATE_TOOSMALL;
+      case CACHE_INODE_XDEV:                  return STATE_XDEV;
     }
   return STATE_CACHE_INODE_ERR;
 }
@@ -432,6 +434,10 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       nfserror = NFS4ERR_TOOSMALL;
       break;
 
+    case STATE_XDEV:
+      nfserror = NFS4ERR_XDEV;
+      break;
+
     case STATE_INVALID_ARGUMENT:
     case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
@@ -584,6 +590,10 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
       nfserror = NFS3ERR_TOOSMALL;
       break;
 
+    case STATE_XDEV:
+      nfserror = NFS3ERR_XDEV;
+      break;
+
     case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
     case STATE_HASH_TABLE_ERROR:
@@ -707,6 +717,7 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
       nfserror = NFSERR_NAMETOOLONG;
       break;
 
+    case STATE_XDEV:
     case STATE_SERVERFAULT:
     case STATE_TOOSMALL:
     case STATE_MLINK:

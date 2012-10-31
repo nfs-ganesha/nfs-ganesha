@@ -478,7 +478,8 @@ typedef enum state_status_t
   STATE_FILE_OPEN             = 46,
   STATE_MLINK                 = 47,
   STATE_SERVERFAULT           = 48,
-  STATE_TOOSMALL              = 49
+  STATE_TOOSMALL              = 49,
+  STATE_XDEV                  = 50,
 } state_status_t;
 
 /******************************************************************************
