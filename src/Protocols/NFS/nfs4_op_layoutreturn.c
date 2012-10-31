@@ -530,7 +530,7 @@ nfs4_return_one_state(cache_entry_t *entry,
                         xdr_setpos(&lrf_body, beginning);
                 }
                 if (glist_empty(&layout_state->state_data.layout.state_segments)) {
-                        state_del(layout_state, &state_status);
+			state_status = state_del(layout_state);
                         *deleted = true;
                 } else {
                         *deleted = false;

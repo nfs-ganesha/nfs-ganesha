@@ -485,8 +485,7 @@ typedef enum state_blocking_t {
  * NB: this is always defined to avoid conditional function prototype
  */
 typedef state_status_t (*granted_callback_t)(cache_entry_t *pentry,
-					     state_lock_entry_t *lock_entry,
-					     state_status_t *pstatus);
+					     state_lock_entry_t *lock_entry);
 
 typedef bool (*block_data_to_fsal_context_t)(state_block_data_t *block_data,
 					     exportlist_t  **ppexport);

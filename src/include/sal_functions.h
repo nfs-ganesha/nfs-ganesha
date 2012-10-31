@@ -25,16 +25,12 @@
  */
 
 /**
- * \file    sal_functions.h
- * \brief   Management of the state abstraction layer.
- *
- * Management of the state abstraction layer
- *
- *
+ * @file  sal_functions.h
+ * @brief Management of the state abstraction layer.
  */
 
-#ifndef _SAL_FUNCTIONS_H
-#define _SAL_FUNCTIONS_H
+#ifndef SAL_FUNCTIONS_H
+#define SAL_FUNCTIONS_H
 
 #include <stdint.h>
 #include "sal_data.h"
@@ -66,13 +62,13 @@ int Hash_dec_state_owner_ref(struct gsh_buffdesc *buffval);
 void inc_state_owner_ref_locked(state_owner_t *powner);
 void inc_state_owner_ref(state_owner_t *powner);
 
-void dec_state_owner_ref_locked(state_owner_t        * powner);
+void dec_state_owner_ref_locked(state_owner_t * powner);
 
-void dec_state_owner_ref(state_owner_t        * powner);
+void dec_state_owner_ref(state_owner_t * powner);
 
 int DisplayOpaqueValue(char * value, int len, char * str);
 
-void state_wipe_file(cache_entry_t        * pentry);
+void state_wipe_file(cache_entry_t * pentry);
 
 /******************************************************************************
  *
@@ -89,8 +85,8 @@ int display_9p_owner(state_owner_t * pkey, char * str);
 int display_9p_owner_key(struct gsh_buffdesc * pbuff, char *str) ;
 int display_9p_owner_val(struct gsh_buffdesc * pbuff, char *str) ;
 
-void remove_9p_owner( state_owner_t        * powner,
-                      const char           * str);
+void remove_9p_owner(state_owner_t * powner,
+                     const char    * str);
 
 uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
                                    struct gsh_buffdesc * buffclef) ;
@@ -98,8 +94,8 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                  struct gsh_buffdesc * buffclef) ;
 void _9p_owner_PrintAll(void) ;
 
-state_owner_t * get_9p_owner( struct sockaddr_storage * pclient_addr,
-                              uint32_t    proc_id) ;
+state_owner_t * get_9p_owner(struct sockaddr_storage * pclient_addr,
+                             uint32_t proc_id) ;
 
 int Init_9p_hash(void) ;
 #endif
@@ -123,11 +119,11 @@ int compare_nsm_client(state_nsm_client_t * pclient1,
 
 int compare_nsm_client_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
-uint32_t nsm_client_value_hash_func(hash_parameter_t * p_hparam,
-                                    struct gsh_buffdesc    * buffclef);
+uint32_t nsm_client_value_hash_func(hash_parameter_t    * p_hparam,
+                                    struct gsh_buffdesc * buffclef);
 
-uint64_t nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  struct gsh_buffdesc    * buffclef);
+uint64_t nsm_client_rbt_hash_func(hash_parameter_t    * p_hparam,
+                                  struct gsh_buffdesc * buffclef);
 
 state_nsm_client_t *get_nsm_client(care_t    care,
                                    SVCXPRT * xprt,
@@ -143,19 +139,19 @@ int compare_nlm_client(state_nlm_client_t * pclient1,
 
 int compare_nlm_client_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
-uint32_t nlm_client_value_hash_func(hash_parameter_t * p_hparam,
-                                    struct gsh_buffdesc    * buffclef);
+uint32_t nlm_client_value_hash_func(hash_parameter_t    * p_hparam,
+                                    struct gsh_buffdesc * buffclef);
 
-uint64_t nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  struct gsh_buffdesc    * buffclef);
+uint64_t nlm_client_rbt_hash_func(hash_parameter_t    * p_hparam,
+                                  struct gsh_buffdesc * buffclef);
 
 state_nlm_client_t *get_nlm_client(care_t               care,
                                    SVCXPRT            * xprt,
                                    state_nsm_client_t * pnsm_client,
                                    char               * caller_name);
 
-void remove_nlm_owner(state_owner_t        * powner,
-                      const char           * str);
+void remove_nlm_owner(state_owner_t * powner,
+                      const char    * str);
 
 int display_nlm_owner(state_owner_t * pkey, char * str);
 int display_nlm_owner_val(struct gsh_buffdesc * pbuff, char * str);
@@ -166,11 +162,11 @@ int compare_nlm_owner(state_owner_t * powner1,
 
 int compare_nlm_owner_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
-uint32_t nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                   struct gsh_buffdesc    * buffclef);
+uint32_t nlm_owner_value_hash_func(hash_parameter_t    * p_hparam,
+                                   struct gsh_buffdesc * buffclef);
 
-uint64_t nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                 struct gsh_buffdesc    * buffclef);
+uint64_t nlm_owner_rbt_hash_func(hash_parameter_t    * p_hparam,
+                                 struct gsh_buffdesc * buffclef);
 
 state_owner_t *get_nlm_owner(care_t               care,
                              state_nlm_client_t * pclient,
@@ -197,11 +193,11 @@ int nfs_client_id_get_unconfirmed(clientid4          clientid,
 int nfs_client_id_get_confirmed(clientid4          clientid,
                                 nfs_client_id_t ** p_pclientid);
 
-nfs_client_id_t * create_client_id(clientid4              clientid,
-                                   nfs_client_record_t  * pclient_record,
-                                   sockaddr_t           * pclient_addr,
-                                   nfs_client_cred_t    * pcredential,
-                                   uint32_t               minorversion);
+nfs_client_id_t * create_client_id(clientid4             clientid,
+                                   nfs_client_record_t * pclient_record,
+                                   sockaddr_t          * pclient_addr,
+                                   nfs_client_cred_t   * pcredential,
+                                   uint32_t              minorversion);
 
 int nfs_client_id_insert(nfs_client_id_t * pclientid);
 
@@ -220,11 +216,11 @@ int display_client_id_val(struct gsh_buffdesc * pbuff, char *str);
 
 int compare_client_id(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
-uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                 struct gsh_buffdesc    * buffclef);
+uint64_t client_id_rbt_hash_func(hash_parameter_t    * p_hparam,
+                                 struct gsh_buffdesc * buffclef);
 
-uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
-                                   struct gsh_buffdesc    * buffclef);
+uint32_t client_id_value_hash_func(hash_parameter_t    * p_hparam,
+                                   struct gsh_buffdesc * buffclef);
 
 int display_client_id_rec(nfs_client_id_t * pclientid, char *str);
 int display_clientid_name(nfs_client_id_t * pclientid, char * str);
@@ -244,11 +240,11 @@ int display_client_record_val(struct gsh_buffdesc * pbuff, char *str);
 
 int compare_client_record(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
-uint64_t client_record_rbt_hash_func(hash_parameter_t * p_hparam,
-                                     struct gsh_buffdesc    * buffclef);
+uint64_t client_record_rbt_hash_func(hash_parameter_t    * p_hparam,
+                                     struct gsh_buffdesc * buffclef);
 
-uint32_t client_record_value_hash_func(hash_parameter_t * p_hparam,
-                                       struct gsh_buffdesc    * buffclef);
+uint32_t client_record_value_hash_func(hash_parameter_t    * p_hparam,
+                                       struct gsh_buffdesc * buffclef);
 
 nfs_client_record_t *get_client_record(char * value, int len);
 
@@ -262,11 +258,11 @@ int display_session_id_key(struct gsh_buffdesc * pbuff, char *str);
 int display_session_id_val(struct gsh_buffdesc * pbuff, char *str);
 int compare_session_id(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
-uint32_t session_id_value_hash_func(hash_parameter_t * p_hparam,
-                                    struct gsh_buffdesc    * buffclef);
+uint32_t session_id_value_hash_func(hash_parameter_t    * p_hparam,
+                                    struct gsh_buffdesc * buffclef);
 
-uint64_t session_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  struct gsh_buffdesc    * buffclef);
+uint64_t session_id_rbt_hash_func(hash_parameter_t    * p_hparam,
+                                  struct gsh_buffdesc * buffclef);
 
 int nfs41_Init_session_id(nfs_session_id_parameter_t param);
 
@@ -322,11 +318,11 @@ void nfs_State_PrintAll(void);
 int display_state_id_val(struct gsh_buffdesc * pbuff, char *str);
 int display_state_id_key(struct gsh_buffdesc * pbuff, char *str);
 
-uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
-                                  struct gsh_buffdesc    * buffclef);
+uint32_t state_id_value_hash_func(hash_parameter_t    * p_hparam,
+                                  struct gsh_buffdesc * buffclef);
 
-uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                struct gsh_buffdesc    * buffclef);
+uint64_t state_id_rbt_hash_func(hash_parameter_t    * p_hparam,
+                                struct gsh_buffdesc * buffclef);
 
 /******************************************************************************
  *
@@ -344,8 +340,8 @@ int  valid_lease(nfs_client_id_t * pclientid);
  *
  ******************************************************************************/
 
-void remove_nfs4_owner(state_owner_t        * powner,
-                       const char           * str);
+void remove_nfs4_owner(state_owner_t * powner,
+                       const char    * str);
 
 int display_nfs4_owner(state_owner_t *powner, char *str);
 int display_nfs4_owner_val(struct gsh_buffdesc * pbuff, char *str);
@@ -356,11 +352,11 @@ int compare_nfs4_owner(state_owner_t * powner1,
 
 int compare_nfs4_owner_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
-uint32_t nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                    struct gsh_buffdesc    * buffclef);
+uint32_t nfs4_owner_value_hash_func(hash_parameter_t    * p_hparam,
+                                    struct gsh_buffdesc * buffclef);
 
-uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  struct gsh_buffdesc    * buffclef);
+uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t    * p_hparam,
+                                  struct gsh_buffdesc * buffclef);
 
 void convert_nfs4_open_owner(open_owner4             * pnfsowner,
                              state_nfs4_owner_name_t * pname_owner,
@@ -372,8 +368,8 @@ void convert_nfs4_lock_owner(lock_owner4             * pnfsowoner,
 
 void nfs4_owner_PrintAll(void);
 
-int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
-                           state_owner_t           ** powner);
+int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t * pname,
+                           state_owner_t          ** powner);
 
 state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * name,
                                  nfs_client_id_t         * clientid,
@@ -383,9 +379,9 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * name,
 
 int Init_nfs4_owner(nfs4_owner_parameter_t param);
 
-void Process_nfs4_conflict(LOCK4denied          * denied,    /* NFS v4 LOck4denied structure to fill in */
-                           state_owner_t        * holder,    /* owner that holds conflicting lock */
-                           fsal_lock_param_t    * conflict); /* description of conflicting lock */
+void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied structure to fill in */
+                           state_owner_t     * holder,    /* owner that holds conflicting lock */
+                           fsal_lock_param_t * conflict); /* description of conflicting lock */
 
 void Release_nfs4_denied(LOCK4denied * denied);
 void Copy_nfs4_denied(LOCK4denied * denied_dst, LOCK4denied * denied_src);
@@ -418,16 +414,15 @@ uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
                                      struct gsh_buffdesc    * buffclef);
 
 uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
-                                   struct gsh_buffdesc    * buffclef);
-state_status_t state_lock_init(state_status_t   * pstatus,
-                               hash_parameter_t   cookie_param);
+                                   struct gsh_buffdesc * buffclef);
+state_status_t state_lock_init(hash_parameter_t   cookie_param);
 
-void LogLock(log_components_t     component,
-             log_levels_t         debug,
-             const char         * reason,
-             cache_entry_t      * pentry,
-             state_owner_t      * powner,
-             fsal_lock_param_t  * plock);
+void LogLock(log_components_t    component,
+             log_levels_t        debug,
+             const char        * reason,
+             cache_entry_t     * pentry,
+             state_owner_t     * powner,
+             fsal_lock_param_t * plock);
 
 void dump_all_locks(const char * label);
 
@@ -450,13 +445,11 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                                       void                  * pcookie,
                                       int                     cookie_size,
                                       state_lock_entry_t    * lock_entry,
-                                      state_cookie_entry_t ** ppcookie_entry,
-                                      state_status_t        * pstatus);
+                                      state_cookie_entry_t ** ppcookie_entry);
 
 state_status_t state_find_grant(void                  * pcookie,
                                 int                     cookie_size,
-                                state_cookie_entry_t ** ppcookie_entry,
-                                state_status_t        * pstatus);
+                                state_cookie_entry_t ** ppcookie_entry);
 
 void state_complete_grant(state_cookie_entry_t * cookie_entry);
 
@@ -466,23 +459,20 @@ void state_complete_grant(state_cookie_entry_t * cookie_entry);
  *
  * This function is to be called from the granted_callback_t function.
  */
-state_status_t state_cancel_grant(state_cookie_entry_t * cookie_entry,
-                                  state_status_t       * pstatus);
+state_status_t state_cancel_grant(state_cookie_entry_t * cookie_entry);
 
-state_status_t state_release_grant(state_cookie_entry_t * cookie_entry,
-                                   state_status_t       * pstatus);
+state_status_t state_release_grant(state_cookie_entry_t * cookie_entry);
 state_status_t state_test(cache_entry_t        * pentry,
                           exportlist_t         * pexport,
-                          struct req_op_context *req_ctx,
+                          struct req_op_context* req_ctx,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
-                          fsal_lock_param_t    * conflict, /* description of conflicting lock */
-                          state_status_t       * pstatus);
+                          fsal_lock_param_t    * conflict);/* description of conflicting lock */
 
 state_status_t state_lock(cache_entry_t         * pentry,
                           exportlist_t          * pexport,
-                          struct req_op_context *req_ctx,
+                          struct req_op_context * req_ctx,
                           state_owner_t         * powner,
                           state_t               * pstate,
                           state_blocking_t        blocking,
@@ -490,31 +480,26 @@ state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_lock_param_t     * plock,
                           state_owner_t        ** holder,   /* owner that holds conflicting lock */
                           fsal_lock_param_t     * conflict, /* description of conflicting lock */
-                          state_status_t        * pstatus,
                           lock_type_t             sle_type);
 
-state_status_t state_unlock(cache_entry_t        * pentry,
-                            exportlist_t         * pexport,
-                            state_owner_t        * powner,
-                            state_t              * pstate,
-                            fsal_lock_param_t    * plock,
-                            state_status_t       * pstatus,
-                            lock_type_t            sle_type);
+state_status_t state_unlock(cache_entry_t     * pentry,
+                            exportlist_t      * pexport,
+                            state_owner_t     * powner,
+                            state_t           * pstate,
+                            fsal_lock_param_t * plock,
+                            lock_type_t         sle_type);
 
-state_status_t state_cancel(cache_entry_t        * pentry,
-                            exportlist_t         * pexport,
-                            state_owner_t        * powner,
-                            fsal_lock_param_t    * plock,
-                            state_status_t       * pstatus);
+state_status_t state_cancel(cache_entry_t     * pentry,
+                            exportlist_t      * pexport,
+                            state_owner_t     * powner,
+                            fsal_lock_param_t * plock);
 
-state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
-                                struct user_cred     * creds,
-                                state_t              * pstate,
-                                state_status_t       * pstatus);
+state_status_t state_nlm_notify(state_nsm_client_t * pnsmclient,
+                                struct user_cred   * creds,
+                                state_t            * pstate);
 
-state_status_t state_owner_unlock_all(state_owner_t        * powner,
-                                      state_t              * pstate,
-                                      state_status_t       * pstatus);
+state_status_t state_owner_unlock_all(state_owner_t * powner,
+                                      state_t       * pstate);
 
 void state_lock_wipe(cache_entry_t * pentry);
 
@@ -533,25 +518,21 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                               state_data_t          * pstate_data,
                               state_owner_t         * powner_input,
                               state_t              ** ppstate,
-			      struct state_refer    * refer,
-                              state_status_t        * pstatus);
+			      struct state_refer    * refer);
 
 state_status_t state_add(cache_entry_t         * pentry,
                          state_type_t            state_type,
                          state_data_t          * pstate_data,
                          state_owner_t         * powner_input,
                          state_t              ** ppstate,
-			 struct state_refer    * refer,
-                         state_status_t        * pstatus);
+			 struct state_refer    * refer);
 
-state_status_t state_set(state_t              * pstate,
-                         state_status_t       * pstatus);
+state_status_t state_set(state_t * pstate);
 
-state_status_t state_del_locked(state_t              * pstate,
-                                cache_entry_t        * pentry);
+state_status_t state_del_locked(state_t       * pstate,
+                                cache_entry_t * pentry);
 
-state_status_t state_del(state_t              * pstate,
-                         state_status_t       * pstatus);
+state_status_t state_del(state_t * pstate);
 
 int display_lock_cookie_key(struct gsh_buffdesc * pbuff, char *str);
 int display_lock_cookie_val(struct gsh_buffdesc * pbuff, char *str);
@@ -566,12 +547,12 @@ state_status_t state_add_segment(state_t             * pstate,
                                  void                * fsal_data,
                                  bool                  return_on_close);
 
-state_status_t state_delete_segment(state_layout_segment_t *segment);
+state_status_t state_delete_segment(state_layout_segment_t * segment);
 state_status_t state_lookup_layout_state(cache_entry_t * pentry,
                                          state_owner_t * powner,
                                          layouttype4     type,
                                          state_t      ** pstate);
-void state_nfs4_state_wipe(cache_entry_t        * pentry);
+void state_nfs4_state_wipe(cache_entry_t * pentry);
 
 void release_lockstate(state_owner_t * plock_owner);
 void release_openstate(state_owner_t * popen_owner);
@@ -584,59 +565,51 @@ void release_openstate(state_owner_t * popen_owner);
 
 #define OPEN4_SHARE_ACCESS_NONE 0
 
-state_status_t state_share_add(cache_entry_t         * pentry,
-                               state_owner_t         * powner,
-                               state_t               * pstate,  /* state that holds share bits to be added */
-                               state_status_t        * pstatus);
+state_status_t state_share_add(cache_entry_t * pentry,
+                               state_owner_t * powner,
+                               state_t       * pstate); /* state that holds share bits to be added */
 
-state_status_t state_share_remove(cache_entry_t         * pentry,
-                                  state_owner_t         * powner,
-                                  state_t               * pstate,  /* state that holds share bits to be removed */
-                                  state_status_t        * pstatus);
+state_status_t state_share_remove(cache_entry_t * pentry,
+                                  state_owner_t * powner,
+                                  state_t       * pstate); /* state that holds share bits to be removed */
 
-state_status_t state_share_upgrade(cache_entry_t         * pentry,
-                                   state_data_t          * pstate_data, /* new share bits */
-                                   state_owner_t         * powner,
-                                   state_t               * pstate,      /* state that holds current share bits */
-                                   state_status_t        * pstatus);
+state_status_t state_share_upgrade(cache_entry_t * pentry,
+                                   state_data_t  * pstate_data, /* new share bits */
+                                   state_owner_t * powner,
+                                   state_t       * pstate);     /* state that holds current share bits */
 
-state_status_t state_share_downgrade(cache_entry_t         * pentry,
-                                     state_data_t          * pstate_data, /* new share bits */
-                                     state_owner_t         * powner,
-                                     state_t               * pstate,      /* state that holds current share bits */
-                                     state_status_t        * pstatus);
+state_status_t state_share_downgrade(cache_entry_t * pentry,
+                                     state_data_t  * pstate_data, /* new share bits */
+                                     state_owner_t * powner,
+                                     state_t       * pstate);     /* state that holds current share bits */
 
 state_status_t state_share_set_prev(state_t      * pstate,
                                     state_data_t * pstate_data);
 
-state_status_t state_share_check_prev(state_t      * pstate,
+state_status_t state_share_check_prev(state_t    * pstate,
                                     state_data_t * pstate_data);
 
-state_status_t state_share_check_conflict(cache_entry_t  * pentry,
-                                          int              share_acccess,
-                                          int              share_deny,
-                                          state_status_t * pstatus);
+state_status_t state_share_check_conflict(cache_entry_t * pentry,
+                                          int             share_acccess,
+                                          int             share_deny);
 
-state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
-                                              int              share_access,
-                                              state_status_t * pstatus);
+state_status_t state_share_anonymous_io_start(cache_entry_t * pentry,
+                                              int             share_access);
 
-void state_share_anonymous_io_done(cache_entry_t  * pentry,
-                                   int              share_access);
+void state_share_anonymous_io_done(cache_entry_t * pentry,
+                                   int             share_access);
 
-state_status_t state_nlm_share(cache_entry_t        * pentry,
-                               struct req_op_context *req_ctx,
-                               exportlist_t         * pexport,
-                               int                    share_access,
-                               int                    share_deny,
-                               state_owner_t        * powner,
-                               state_status_t       * pstatus);
+state_status_t state_nlm_share(cache_entry_t         * pentry,
+                               struct req_op_context * req_ctx,
+                               exportlist_t          * pexport,
+                               int                     share_access,
+                               int                     share_deny,
+                               state_owner_t         * powner);
 
-state_status_t state_nlm_unshare(cache_entry_t        * pentry,
-                                 int                    share_access,
-                                 int                    share_deny,
-                                 state_owner_t        * powner,
-                                 state_status_t       * pstatus);
+state_status_t state_nlm_unshare(cache_entry_t * pentry,
+                                 int             share_access,
+                                 int             share_deny,
+                                 state_owner_t * powner);
 
 void state_share_wipe(cache_entry_t * pentry);
 
@@ -650,20 +623,20 @@ void state_share_wipe(cache_entry_t * pentry);
 state_status_t state_async_schedule(state_async_queue_t *arg);
 
 /* Signal Async Work */
-void signal_async_work();
+void signal_async_work(void);
 
-state_status_t state_async_init();
-void state_async_thread_start();
+state_status_t state_async_init(void);
+void state_async_thread_start(void);
 
-void grant_blocked_lock_upcall(cache_entry_t        * pentry,
-                               void                 * powner,
-                               fsal_lock_param_t    * plock);
+void grant_blocked_lock_upcall(cache_entry_t     * pentry,
+                               void              * powner,
+                               fsal_lock_param_t * plock);
 
-void available_blocked_lock_upcall(cache_entry_t        * pentry,
-                                   void                 * powner,
-                                   fsal_lock_param_t    * plock);
+void available_blocked_lock_upcall(cache_entry_t     * pentry,
+                                   void              * powner,
+                                   fsal_lock_param_t * plock);
 
-void process_blocked_lock_upcall(state_block_data_t   * block_data);
+void process_blocked_lock_upcall(state_block_data_t * block_data);
 
 /******************************************************************************
  *
@@ -683,4 +656,4 @@ void nfs4_load_recov_clids(ushort nodeid);
 void nfs4_clean_old_recov_dir();
 void nfs4_create_recov_dir();
 
-#endif                          /*  _SAL_FUNCTIONS_H */
+#endif /* SAL_FUNCTIONS_H */

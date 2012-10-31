@@ -21,24 +21,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * ---------------------------------------
- *
- * \File    state_misc.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/05 15:14:51 $
- * \version $Revision: 1.63 $
- * \brief   Some routines for management of the state abstraction layer, shared by other calls.
- *
- * state_misc.c : Some routines for management of the state abstraction layer, shared by other calls.
- *
- *
  */
+
+/**
+ * @file state_misc.c
+ * @brief Misc exported routines for the state abstraction layer
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include <unistd.h>
 #include <sys/types.h>

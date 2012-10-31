@@ -144,11 +144,11 @@ open4_do_open(struct nfs_argop4  * op,
         candidate_data.share.share_access_prev = 0;
         candidate_data.share.share_deny_prev   = 0;
 
+        state_status = state_share_check_conflict(data->current_entry,
+						  candidate_data.share.share_access,
+						  candidate_data.share.share_deny);
         /* Quick exit if there is any share conflict */
-        if (state_share_check_conflict(data->current_entry,
-                                       candidate_data.share.share_access,
-                                       candidate_data.share.share_deny,
-                                       &state_status) != STATE_SUCCESS) {
+        if (state_status != STATE_SUCCESS) {
                 return nfs4_Errno_state(state_status);
         }
 
@@ -178,13 +178,15 @@ open4_do_open(struct nfs_argop4  * op,
         }
 
         if (*new_state) {
-                if (state_add_impl(data->current_entry, candidate_type,
-                                   &candidate_data, owner,
-                                   &file_state,
-				   (data->minorversion > 0 ?
-				    &refer :
-				    NULL),
-                                   &state_status) != STATE_SUCCESS) {
+                state_status= state_add_impl(
+			data->current_entry, candidate_type,
+			&candidate_data, owner,
+			&file_state,
+			(data->minorversion > 0 ?
+			 &refer :
+			 NULL));
+
+                if (state_status != STATE_SUCCESS) {
                         return nfs4_Errno_state(state_status);
                 }
 
@@ -234,9 +236,9 @@ open4_do_open(struct nfs_argop4  * op,
            file share state. */
 
         if (*new_state) {
-                if (state_share_add(data->current_entry,
-                                    owner, file_state, &state_status)
-                    != STATE_SUCCESS) {
+                state_status = state_share_add(data->current_entry,
+					       owner, file_state);
+                if (state_status != STATE_SUCCESS) {
                         if (cache_inode_close(data->current_entry,
                                               0, &cache_status)
                             != CACHE_INODE_SUCCESS) {
@@ -253,11 +255,11 @@ open4_do_open(struct nfs_argop4  * op,
                     (file_state->state_type == STATE_TYPE_SHARE)) {
                         LogFullDebug(COMPONENT_STATE,
                                      "Update existing share state");
-                        if (state_share_upgrade(data->current_entry,
-                                                &candidate_data,
-                                                owner, file_state,
-                                                &state_status)
-                            != STATE_SUCCESS) {
+                        state_status = state_share_upgrade(
+				data->current_entry,
+				&candidate_data,
+				owner, file_state);
+                        if (state_status != STATE_SUCCESS) {
                                 if (cache_inode_close(data->current_entry,
                                                       0, &cache_status)
                                     != CACHE_INODE_SUCCESS) {
@@ -801,18 +803,18 @@ static void get_delegation(compound_data_t *data, state_t *file_state,
   lock_desc.lock_length = 0;
   lock_desc.lock_sle_type = FSAL_LEASE_LOCK;
 
-  if(state_lock(data->current_entry,
-                data->pexport,
-                data->req_ctx,
-                powner,
-                file_state,
-                STATE_NON_BLOCKING,
-                NULL,     /* No block data */
-                &lock_desc,
-                NULL,
-                NULL,
-                &state_status,
-                LEASE_LOCK) != STATE_SUCCESS)
+  state_status = state_lock(data->current_entry,
+			    data->pexport,
+			    data->req_ctx,
+			    powner,
+			    file_state,
+			    STATE_NON_BLOCKING,
+			    NULL,     /* No block data */
+			    &lock_desc,
+			    NULL,
+			    NULL,
+			    LEASE_LOCK);
+  if(state_status != STATE_SUCCESS)
     {
 
       LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -1267,8 +1269,8 @@ out3:
             new_state &&
             (res_OPEN4->status != NFS4_OK)) {
                 /* Need to destroy open owner and state */
-                if (state_del(file_state,
-                              &state_status) != STATE_SUCCESS)
+                state_status = state_del(file_state);
+                if (state_status != STATE_SUCCESS)
                         LogDebug(COMPONENT_NFS_V4_LOCK,
                                  "state_del failed with status %s",
                                  state_err_str(state_status));

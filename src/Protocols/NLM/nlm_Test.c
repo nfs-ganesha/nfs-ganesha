@@ -123,14 +123,14 @@ int nlm4_Test(nfs_arg_t *parg,
       return NFS_REQ_OK;
     }
 
-  if(state_test(pentry,
-                pexport,
-		req_ctx,
-                nlm_owner,
-                &lock,
-                &holder,
-                &conflict,
-                &state_status) != STATE_SUCCESS)
+  state_status = state_test(pentry,
+			    pexport,
+			    req_ctx,
+			    nlm_owner,
+			    &lock,
+			    &holder,
+			    &conflict);
+  if(state_status != STATE_SUCCESS)
     {
       pres->res_nlm4test.test_stat.stat = nlm_convert_state_error(state_status);
 

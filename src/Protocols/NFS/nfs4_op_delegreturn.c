@@ -198,13 +198,13 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
   /* Now we have a lock owner and a stateid.
    * Go ahead and push unlock into SAL (and FSAL).
    */
-  if(state_unlock(data->current_entry,
-                  data->pexport,
-                  plock_owner,
-                  pstate_found,
-                  &lock_desc,
-                  &state_status,
-                  LEASE_LOCK) != STATE_SUCCESS)
+  state_status = state_unlock(data->current_entry,
+			      data->pexport,
+			      plock_owner,
+			      pstate_found,
+			      &lock_desc,
+			      LEASE_LOCK);
+  if(state_status != STATE_SUCCESS)
     {
       res_DELEGRETURN4.status = nfs4_Errno_state(state_status);
 

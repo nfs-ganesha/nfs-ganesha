@@ -221,10 +221,10 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
            "GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
            retval);
 
-  if(state_find_grant(nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_bytes,
-                      nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_len,
-                      &cookie_entry,
-                      &state_status) != STATE_SUCCESS)
+  state_status = state_find_grant(nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_bytes,
+				  nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_len,
+				  &cookie_entry);
+  if(state_status != STATE_SUCCESS)
     {
       /* This must be an old NLM_GRANTED_RES */
       LogFullDebug(COMPONENT_NLM,
@@ -249,8 +249,8 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
   pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
 
-  if(state_release_grant(cookie_entry,
-                         &state_status) != STATE_SUCCESS)
+  state_status = state_release_grant(cookie_entry);
+  if(state_status != STATE_SUCCESS)
     {
       /* Huh? */
       LogFullDebug(COMPONENT_NLM,
@@ -601,9 +601,8 @@ bool nlm_block_data_to_export(state_block_data_t * block_data,
   return true;
 }
 
-state_status_t nlm_granted_callback(cache_entry_t        * pentry,
-                                    state_lock_entry_t   * lock_entry,
-                                    state_status_t       * pstatus)
+state_status_t nlm_granted_callback(cache_entry_t *pentry,
+                                    state_lock_entry_t *lock_entry)
 {
   state_block_data_t     * block_data     = lock_entry->sle_block_data;
   exportlist_t           * pexport;
@@ -614,12 +613,13 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   state_nlm_owner_t      * nlm_grant_owner  = &lock_entry->sle_owner->so_owner.so_nlm_owner;
   state_nlm_client_t     * nlm_grant_client = nlm_grant_owner->so_client;
   granted_cookie_t         nlm_grant_cookie;
-  state_status_t           dummy_status;
+  state_status_t           state_status;
+  state_status_t           state_status_int;
 
   if(nlm_block_data_to_export(block_data, &pexport) != true)
     {
-      *pstatus = STATE_INCONSISTENT_ENTRY;
-      return *pstatus;
+      state_status = STATE_INCONSISTENT_ENTRY;
+      return state_status;
     }
 
   arg = gsh_malloc(sizeof(*arg));
@@ -629,8 +629,8 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
       * so that client can try again and get the lock. May be
       * by then we are able to allocate objects
       */
-      *pstatus = STATE_MALLOC_ERROR;
-      return *pstatus;
+      state_status = STATE_MALLOC_ERROR;
+      return state_status;
    }
 
   memset(arg, 0, sizeof(*arg));
@@ -642,15 +642,15 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
    * It will also request lock from FSAL.
    * Could return STATE_LOCK_BLOCKED because FSAL would have had to block.
    */
-  if(state_add_grant_cookie(pentry,
-                            &nlm_grant_cookie,
-                            sizeof(nlm_grant_cookie),
-                            lock_entry,
-                            &cookie_entry,
-                            pstatus) != STATE_SUCCESS)
+  state_status = state_add_grant_cookie(pentry,
+					&nlm_grant_cookie,
+					sizeof(nlm_grant_cookie),
+					lock_entry,
+					&cookie_entry);
+  if(state_status != STATE_SUCCESS)
     {
       free_grant_arg(arg);
-      return *pstatus;
+      return state_status;
     }
 
   /* Fill in the arguments for the NLMPROC4_GRANTED_MSG call */
@@ -695,15 +695,15 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
     }
 
   /* Now try to schedule NLMPROC4_GRANTED_MSG call */
-  *pstatus = state_async_schedule(arg);
+  state_status = state_async_schedule(arg);
 
-  if(*pstatus != STATE_SUCCESS)
+  if(state_status != STATE_SUCCESS)
     goto grant_fail;
 
-  return *pstatus;
+  return state_status;
 
- grant_fail_malloc:
-  *pstatus = STATE_MALLOC_ERROR;
+grant_fail_malloc:
+  state_status = STATE_MALLOC_ERROR;
 
  grant_fail:
 
@@ -715,13 +715,14 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   free_grant_arg(arg);
 
   /* Cancel the pending grant to release the cookie */
-  if(state_cancel_grant(cookie_entry,
-                        &dummy_status) != STATE_SUCCESS)
+
+  state_status_int = state_cancel_grant(cookie_entry);
+  if(state_status_int != STATE_SUCCESS)
     {
       /* Not much we can do other than log that something bad happened. */
       LogCrit(COMPONENT_NLM,
               "Unable to clean up GRANTED lock after error");
     }
 
-  return *pstatus;
+  return state_status;
 }

@@ -182,11 +182,10 @@ int nfs4_op_close(struct nfs_argop4 *op,
 
         /* File is closed, release the share state */
         if (state_found->state_type == STATE_TYPE_SHARE) {
-                if (state_share_remove(state_found->state_pentry,
-                                       open_owner,
-                                       state_found,
-                                       &state_status)
-                    != STATE_SUCCESS) {
+                state_status = state_share_remove(state_found->state_pentry,
+						  open_owner,
+						  state_found);
+                if (state_status != STATE_SUCCESS) {
                         LogDebug(COMPONENT_STATE,
                                  "CLOSE failed to release share state "
                                  "error: %s",

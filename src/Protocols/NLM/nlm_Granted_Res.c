@@ -68,10 +68,10 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
            "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
            buffer);
 
-  if(state_find_grant(arg->cookie.n_bytes,
-                      arg->cookie.n_len,
-                      &cookie_entry,
-                      &state_status) != STATE_SUCCESS)
+  state_status = state_find_grant(arg->cookie.n_bytes,
+				  arg->cookie.n_len,
+				  &cookie_entry);
+  if(state_status != STATE_SUCCESS)
     {
       /* This must be an old NLM_GRANTED_RES */
       LogFullDebug(COMPONENT_NLM,
@@ -101,8 +101,8 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
     {
       LogMajor(COMPONENT_NLM,
                "Granted call failed due to client error, releasing lock");
-      if(state_release_grant(cookie_entry,
-                             &state_status) != STATE_SUCCESS)
+      state_status = state_release_grant(cookie_entry);
+      if(state_status != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_NLM,
                    "cache_inode_release_grant failed");

@@ -248,9 +248,11 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
       return NFS4ERR_INVAL;
     }
 
-  if(state_share_downgrade(entry_file, &candidate_data,
-                           owner, *state, &state_status)
-     != STATE_SUCCESS)
+  state_status = state_share_downgrade(entry_file,
+				       &candidate_data,
+				       owner,
+				       *state);
+  if(state_status != STATE_SUCCESS)
     {
       *cause = " (state_share_downgrade failed)";
       pthread_rwlock_unlock(&data->current_entry->state_lock);

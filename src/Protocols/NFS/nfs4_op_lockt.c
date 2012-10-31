@@ -206,14 +206,14 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
         /* Now we have a lock owner and a stateid.  Go ahead and test
            the lock in SAL (and FSAL). */
 
-        if (state_test(data->current_entry,
-                       data->pexport,
-                       data->req_ctx,
-                       lock_owner,
-                       &lock_desc,
-                       &conflict_owner,
-                       &conflict_desc,
-                       &state_status) == STATE_LOCK_CONFLICT) {
+        state_status = state_test(data->current_entry,
+				  data->pexport,
+				  data->req_ctx,
+				  lock_owner,
+				  &lock_desc,
+				  &conflict_owner,
+				  &conflict_desc);
+        if (state_status == STATE_LOCK_CONFLICT) {
                 /* A conflicting lock from a different lock_owner,
                    returns NFS4ERR_DENIED */
                 Process_nfs4_conflict(&res_LOCKT4->LOCKT4res_u.denied,

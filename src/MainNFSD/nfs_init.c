@@ -1254,9 +1254,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* Initialize thread control block */
   tcb_head_init();
 
-  if(state_lock_init(&state_status,
-                     cache_inode_params.cookie_param)
-     != STATE_SUCCESS)
+  state_status = state_lock_init(cache_inode_params.cookie_param);
+  if(state_status != STATE_SUCCESS)
     {
       LogFatal(COMPONENT_INIT,
                "Cache Inode Layer could not be initialized, status=%s",

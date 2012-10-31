@@ -597,7 +597,6 @@ int nfs_client_id_expire(nfs_client_id_t *clientid)
 {
 	struct glist_head *glist, *glistn;
 	struct glist_head *glist2, *glistn2;
-	state_status_t pstatus;
 	int rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc old_key;
@@ -678,8 +677,7 @@ int nfs_client_id_expire(nfs_client_id_t *clientid)
 							   state_owner_list);
 
 			state_owner_unlock_all(plock_owner,
-					       plock_state,
-					       &pstatus);
+					       plock_state);
 		}
 	}
 
@@ -801,7 +799,7 @@ int nfs_client_id_get(hash_table_t * ht,
  * @param[in] clientid     the client id
  * @param[out] p_clientid the found client id
  *
- * @return the result previously set if *pstatus == CLIENT_ID_SUCCESS
+ * @return Same as nfs_client_id_get
  */
 
 int nfs_client_id_get_unconfirmed(clientid4 clientid,

@@ -134,18 +134,18 @@ int nlm4_Lock(nfs_arg_t            * parg,
    * locks from a client that has rebooted from the SM_NOTIFY
    * that will release old locks
    */
-  if(state_lock(pentry,
-                pexport,
-		req_ctx,
-                nlm_owner,
-                (void *) (ptrdiff_t) arg->state,
-                arg->block ? STATE_NLM_BLOCKING : STATE_NON_BLOCKING,
-                pblock_data,
-                &lock,
-                &holder,
-                &conflict,
-                &state_status,
-                POSIX_LOCK) != STATE_SUCCESS)
+  state_status = state_lock(pentry,
+			    pexport,
+			    req_ctx,
+			    nlm_owner,
+			    (void *) (ptrdiff_t) arg->state,
+			    arg->block ? STATE_NLM_BLOCKING : STATE_NON_BLOCKING,
+			    pblock_data,
+			    &lock,
+			    &holder,
+			    &conflict,
+			    POSIX_LOCK);
+  if(state_status != STATE_SUCCESS)
     {
       pres->res_nlm4test.test_stat.stat = nlm_convert_state_error(state_status);
 

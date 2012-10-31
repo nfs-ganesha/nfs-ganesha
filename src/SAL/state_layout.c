@@ -23,13 +23,10 @@
  */
 
 /**
- * \file    state_layout.c
- * \brief   This file contains functions used in layout management.
- *
- * state_layout.c : This file contains functions used in lock management.
- *
- *
+ * @file  state_layout.c
+ * @brief This file contains functions used in layout management.
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

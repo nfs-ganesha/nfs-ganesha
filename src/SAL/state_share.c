@@ -24,16 +24,10 @@
  */
 
 /**
- * \file    state_share.c
- * \author  $Author: deniel $
- * \date    $Date$
- * \version $Revision$
- * \brief   This file contains functions used in share reservation management.
- *
- * state_share.c : This file contains functions used in share reservation management.
- *
- *
+ * @file state_share.c
+ * @brief Functions used in share reservation management
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -103,28 +97,26 @@ static state_status_t do_share_op(cache_entry_t        * pentry,
    be held. */
 state_status_t state_share_add(cache_entry_t         * pentry,
                                state_owner_t         * powner,
-                               state_t               * pstate,  /* state that holds share bits to be added */
-                               state_status_t        * pstatus)
+                               state_t               * pstate)  /* state that holds share bits to be added */
 {
   state_status_t status = STATE_SUCCESS;
-  unsigned int            old_pentry_share_access = 0;
-  unsigned int            old_pentry_share_deny = 0;
-  unsigned int            new_pentry_share_access = 0;
-  unsigned int            new_pentry_share_deny = 0;
-  unsigned int            new_share_access = 0;
-  unsigned int            new_share_deny = 0;
-  fsal_share_param_t      share_param;
+  unsigned int old_pentry_share_access = 0;
+  unsigned int old_pentry_share_deny = 0;
+  unsigned int new_pentry_share_access = 0;
+  unsigned int new_pentry_share_deny = 0;
+  unsigned int new_share_access = 0;
+  unsigned int new_share_deny = 0;
+  fsal_share_param_t share_param;
 
   /* Check if new share state has conflicts. */
   status = state_share_check_conflict(pentry,
                                       pstate->state_data.share.share_access,
-                                      pstate->state_data.share.share_deny,
-                                      pstatus);
+                                      pstate->state_data.share.share_deny);
   if(status != STATE_SUCCESS)
     {
       LogEvent(COMPONENT_STATE, "Share conflicts detected during add");
-      *pstatus = STATE_STATE_CONFLICT;
-      return *pstatus;
+      status = STATE_STATE_CONFLICT;
+      return status;
     }
 
   /* Get the current union of share states of this file. */
@@ -168,8 +160,7 @@ state_status_t state_share_add(cache_entry_t         * pentry,
                                      OPEN4_SHARE_DENY_NONE,
                                      true);
           LogDebug(COMPONENT_STATE, "do_share_op failed");
-          *pstatus = status;
-          return *pstatus;
+          return status;
         }
     }
 
@@ -185,19 +176,18 @@ state_status_t state_share_add(cache_entry_t         * pentry,
 
 /* This is called when a share state is removed.  The state lock MUST
    be held. */
-state_status_t state_share_remove(cache_entry_t         * pentry,
-                                  state_owner_t         * powner,
-                                  state_t               * pstate,  /* state that holds share bits to be removed */
-                                  state_status_t        * pstatus)
+state_status_t state_share_remove(cache_entry_t * pentry,
+                                  state_owner_t * powner,
+                                  state_t       * pstate)  /* state that holds share bits to be removed */
 {
   state_status_t status = STATE_SUCCESS;
-  unsigned int            old_pentry_share_access = 0;
-  unsigned int            old_pentry_share_deny = 0;
-  unsigned int            new_pentry_share_access = 0;
-  unsigned int            new_pentry_share_deny = 0;
-  unsigned int            removed_share_access = 0;
-  unsigned int            removed_share_deny = 0;
-  fsal_share_param_t      share_param;
+  unsigned int old_pentry_share_access = 0;
+  unsigned int old_pentry_share_deny = 0;
+  unsigned int new_pentry_share_access = 0;
+  unsigned int new_pentry_share_deny = 0;
+  unsigned int removed_share_access = 0;
+  unsigned int removed_share_deny = 0;
+  fsal_share_param_t share_param;
 
   /* Get the current union of share states of this file. */
   old_pentry_share_access = state_share_get_share_access(pentry);
@@ -240,8 +230,7 @@ state_status_t state_share_remove(cache_entry_t         * pentry,
                                      removed_share_deny,
                                      true);
           LogDebug(COMPONENT_STATE, "do_share_op failed");
-          *pstatus = status;
-          return *pstatus;
+          return status;
         }
     }
 
@@ -256,33 +245,31 @@ state_status_t state_share_remove(cache_entry_t         * pentry,
 
 /* This is called when share state is upgraded during open.  The
    state ock MUST be held. */
-state_status_t state_share_upgrade(cache_entry_t         * pentry,
-                                   state_data_t          * pstate_data, /* new share bits */
-                                   state_owner_t         * powner,
-                                   state_t               * pstate,      /* state that holds current share bits */
-                                   state_status_t        * pstatus)
+state_status_t state_share_upgrade(cache_entry_t * pentry,
+                                   state_data_t  * pstate_data, /* new share bits */
+                                   state_owner_t * powner,
+                                   state_t       * pstate)      /* state that holds current share bits */
 {
   state_status_t status = STATE_SUCCESS;
-  unsigned int            old_pentry_share_access = 0;
-  unsigned int            old_pentry_share_deny = 0;
-  unsigned int            new_pentry_share_access = 0;
-  unsigned int            new_pentry_share_deny = 0;
-  unsigned int            old_share_access = 0;
-  unsigned int            old_share_deny = 0;
-  unsigned int            new_share_access = 0;
-  unsigned int            new_share_deny = 0;
+  unsigned int old_pentry_share_access = 0;
+  unsigned int old_pentry_share_deny = 0;
+  unsigned int new_pentry_share_access = 0;
+  unsigned int new_pentry_share_deny = 0;
+  unsigned int old_share_access = 0;
+  unsigned int old_share_deny = 0;
+  unsigned int new_share_access = 0;
+  unsigned int new_share_deny = 0;
   fsal_share_param_t share_param;
 
   /* Check if new share state has conflicts. */
   status = state_share_check_conflict(pentry,
                                       pstate_data->share.share_access,
-                                      pstate_data->share.share_deny,
-                                      pstatus);
+                                      pstate_data->share.share_deny);
   if(status != STATE_SUCCESS)
     {
       LogEvent(COMPONENT_STATE, "Share conflicts detected during upgrade");
-      *pstatus = STATE_STATE_CONFLICT;
-      return *pstatus;
+      status = STATE_STATE_CONFLICT;
+      return status;
     }
 
   /* Get the current union of share states of this file. */
@@ -330,8 +317,7 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
                                      old_share_deny,
                                      true);
           LogDebug(COMPONENT_STATE, "do_share_op failed");
-          *pstatus = status;
-          return *pstatus;
+          return status;
         }
     }
 
@@ -351,22 +337,21 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
 
 /* This is called when share is downgraded via open_downgrade op.
    The state lock MUST be held. */
-state_status_t state_share_downgrade(cache_entry_t         * pentry,
-                                     state_data_t          * pstate_data, /* new share bits */
-                                     state_owner_t         * powner,
-                                     state_t               * pstate,      /* state that holds current share bits */
-                                     state_status_t        * pstatus)
+state_status_t state_share_downgrade(cache_entry_t * pentry,
+                                     state_data_t  * pstate_data, /* new share bits */
+                                     state_owner_t * powner,
+                                     state_t       * pstate)      /* state that holds current share bits */
 {
   state_status_t status = STATE_SUCCESS;
-  unsigned int            old_pentry_share_access = 0;
-  unsigned int            old_pentry_share_deny = 0;
-  unsigned int            new_pentry_share_access = 0;
-  unsigned int            new_pentry_share_deny = 0;
-  unsigned int            old_share_access = 0;
-  unsigned int            old_share_deny = 0;
-  unsigned int            new_share_access = 0;
-  unsigned int            new_share_deny = 0;
-  fsal_share_param_t      share_param;
+  unsigned int old_pentry_share_access = 0;
+  unsigned int old_pentry_share_deny = 0;
+  unsigned int new_pentry_share_access = 0;
+  unsigned int new_pentry_share_deny = 0;
+  unsigned int old_share_access = 0;
+  unsigned int old_share_deny = 0;
+  unsigned int new_share_access = 0;
+  unsigned int new_share_deny = 0;
+  fsal_share_param_t share_param;
 
   /* Get the current union of share states of this file. */
   old_pentry_share_access = state_share_get_share_access(pentry);
@@ -413,8 +398,7 @@ state_status_t state_share_downgrade(cache_entry_t         * pentry,
                                      old_share_deny,
                                      true);
           LogDebug(COMPONENT_STATE, "do_share_op failed");
-          *pstatus = status;
-          return *pstatus;
+          return status;
         }
     }
 
@@ -470,8 +454,7 @@ state_status_t state_share_check_prev(state_t      * pstate,
    state lock MUST be held. */
 state_status_t state_share_check_conflict(cache_entry_t  * pentry,
                                           int              share_acccess,
-                                          int              share_deny,
-                                          state_status_t * pstatus)
+                                          int              share_deny)
 {
   char * cause = "";
 
@@ -503,14 +486,12 @@ state_status_t state_share_check_conflict(cache_entry_t  * pentry,
       goto out_conflict;
     }
 
-  *pstatus = STATE_SUCCESS;
-  return *pstatus;
+  return STATE_SUCCESS;
 
 out_conflict:
 
   LogDebug(COMPONENT_STATE, "Share conflict detected: %s", cause);
-  *pstatus = STATE_STATE_CONFLICT;
-  return *pstatus;
+  return STATE_STATE_CONFLICT;
 }
 
 /* Update the ref counter of share state. This function should be called with
@@ -580,16 +561,16 @@ static unsigned int state_share_get_share_deny(cache_entry_t * pentry)
   return share_deny;
 }
 
-state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
-                                              int              share_access,
-                                              state_status_t * pstatus)
+state_status_t state_share_anonymous_io_start(cache_entry_t * pentry,
+                                              int             share_access)
 {
+  state_status_t status = 0;
   pthread_rwlock_wrlock(&pentry->state_lock);
 
-  if(state_share_check_conflict(pentry,
-                                share_access,
-                                0,
-                                pstatus) == STATE_SUCCESS)
+  status = state_share_check_conflict(pentry,
+				      share_access,
+				      0);
+  if(status == STATE_SUCCESS)
     {
       /* Temporarily bump the access counters, v4 mode doesn't matter
        * since there is no deny mode associated with anonymous I/O.
@@ -604,7 +585,7 @@ state_status_t state_share_anonymous_io_start(cache_entry_t  * pentry,
 
   pthread_rwlock_unlock(&pentry->state_lock);
 
-  return *pstatus;
+  return status;
 }
 
 void state_share_anonymous_io_done(cache_entry_t  * pentry,
@@ -630,8 +611,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
                                exportlist_t         * pexport,
                                int                    share_access,
                                int                    share_deny,
-                               state_owner_t        * powner,
-                               state_status_t       * pstatus)
+                               state_owner_t        * powner)
 {
   unsigned int           old_pentry_share_access;
   unsigned int           old_pentry_share_deny;
@@ -640,15 +620,16 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
   fsal_share_param_t     share_param;
   state_nlm_share_t    * nlm_share;
   cache_inode_status_t   cache_status;
+  state_status_t status = 0;
 
   cache_status = cache_inode_inc_pin_ref(pentry);
 
   if(cache_status != CACHE_INODE_SUCCESS)
     {
-      *pstatus = cache_inode_status_to_state_status(cache_status);
       LogDebug(COMPONENT_STATE,
                "Could not pin file");
-      return *pstatus;
+      status = cache_inode_status_to_state_status(cache_status);
+      return status;
     }
 
   if(cache_inode_open(pentry,
@@ -659,21 +640,20 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
     {
       cache_inode_dec_pin_ref(pentry);
 
-      *pstatus = cache_inode_status_to_state_status(cache_status);
-
       LogFullDebug(COMPONENT_STATE,
                    "Could not open file");
 
-      return *pstatus;
+      status = cache_inode_status_to_state_status(cache_status);
+      return status;
     }
 
   pthread_rwlock_wrlock(&pentry->state_lock);
 
   /* Check if new share state has conflicts. */
-  if(state_share_check_conflict(pentry,
-                                share_access,
-                                share_deny,
-                                pstatus) != STATE_SUCCESS)
+  status = state_share_check_conflict(pentry,
+				      share_access,
+				      share_deny);
+  if(status != STATE_SUCCESS)
     {
       pthread_rwlock_unlock(&pentry->state_lock);
 
@@ -681,7 +661,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
       LogEvent(COMPONENT_STATE, "Share conflicts detected during add");
 
-      return *pstatus;
+      return status;
     }
 
   /* Create a new NLM Share object */
@@ -695,9 +675,9 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
       LogEvent(COMPONENT_STATE, "Can not allocate memory for share");
 
-      *pstatus = STATE_MALLOC_ERROR;
+      status = STATE_MALLOC_ERROR;
 
-      return *pstatus;
+      return status;
     }
 
   nlm_share->sns_powner  = powner;
@@ -758,9 +738,9 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
       share_param.share_access = new_pentry_share_access;
       share_param.share_deny   = new_pentry_share_deny;
 
-      *pstatus = do_share_op(pentry, powner, &share_param);
+      status = do_share_op(pentry, powner, &share_param);
 
-      if(*pstatus != STATE_SUCCESS)
+      if(status != STATE_SUCCESS)
         {
           /* Revert the ref counted share state of this file. */
           state_share_update_counter(pentry,
@@ -804,7 +784,7 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
           LogDebug(COMPONENT_STATE, "do_share_op failed");
 
-          return *pstatus;
+          return status;
         }
     }
 
@@ -816,34 +796,34 @@ state_status_t state_nlm_share(cache_entry_t        * pentry,
 
   cache_inode_dec_pin_ref(pentry);
 
-  return *pstatus;
+  return status;
 }
 
-state_status_t state_nlm_unshare(cache_entry_t        * pentry,
-                                 int                    share_access,
-                                 int                    share_deny,
-                                 state_owner_t        * powner,
-                                 state_status_t       * pstatus)
+state_status_t state_nlm_unshare(cache_entry_t * pentry,
+                                 int             share_access,
+                                 int             share_deny,
+                                 state_owner_t * powner)
 {
-  struct glist_head      *glist, *glistn;
-  unsigned int           old_pentry_share_access;
-  unsigned int           old_pentry_share_deny;
-  unsigned int           new_pentry_share_access;
-  unsigned int           new_pentry_share_deny;
-  unsigned int           removed_share_access;
-  unsigned int           removed_share_deny;
-  fsal_share_param_t     share_param;
-  state_nlm_share_t    * nlm_share;
-  cache_inode_status_t   cache_status;
+  struct glist_head *glist, *glistn;
+  unsigned int old_pentry_share_access;
+  unsigned int old_pentry_share_deny;
+  unsigned int new_pentry_share_access;
+  unsigned int new_pentry_share_deny;
+  unsigned int removed_share_access;
+  unsigned int removed_share_deny;
+  fsal_share_param_t share_param;
+  state_nlm_share_t *nlm_share;
+  cache_inode_status_t cache_status;
+  state_status_t status;
 
   cache_status = cache_inode_inc_pin_ref(pentry);
 
   if(cache_status != CACHE_INODE_SUCCESS)
     {
-      *pstatus = cache_inode_status_to_state_status(cache_status);
+      status = cache_inode_status_to_state_status(cache_status);
       LogDebug(COMPONENT_STATE,
                "Could not pin file");
-      return *pstatus;
+      return status;
     }
 
   pthread_rwlock_wrlock(&pentry->state_lock);
@@ -893,9 +873,9 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
           share_param.share_access = new_pentry_share_access;
           share_param.share_deny   = new_pentry_share_deny;
 
-          *pstatus = do_share_op(pentry, powner, &share_param);
+          status = do_share_op(pentry, powner, &share_param);
 
-          if(*pstatus != STATE_SUCCESS)
+          if(status != STATE_SUCCESS)
             {
               /* Revert the ref counted share state of this file. */
               state_share_update_counter(pentry,
@@ -911,7 +891,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
 
               LogDebug(COMPONENT_STATE, "do_share_op failed");
 
-              return *pstatus;
+              return status;
             }
         }
 
@@ -953,7 +933,7 @@ state_status_t state_nlm_unshare(cache_entry_t        * pentry,
 
   cache_inode_dec_pin_ref(pentry);
 
-  return *pstatus;
+  return status;
 }
 
 void state_share_wipe(cache_entry_t * pentry)

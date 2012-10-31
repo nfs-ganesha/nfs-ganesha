@@ -117,13 +117,14 @@ int nlm4_Share(nfs_arg_t            * parg,
       return NFS_REQ_OK;
     }
 
-  if(state_nlm_share(pentry,
-                     req_ctx,
-                     pexport,
-                     arg->share.access,
-                     arg->share.mode,
-                     nlm_owner,
-                     &state_status) != STATE_SUCCESS)
+  state_status = state_nlm_share(pentry,
+				 req_ctx,
+				 pexport,
+				 arg->share.access,
+				 arg->share.mode,
+				 nlm_owner);
+				 
+  if(state_status != STATE_SUCCESS)
     {
       pres->res_nlm4share.stat = nlm_convert_state_error(state_status);
     }

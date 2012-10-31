@@ -459,16 +459,15 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 memset(&candidate_data, 0, sizeof(candidate_data));
                 candidate_data.lock.popenstate = state_open;
                 /* Add the lock state to the lock table */
-                if (state_add(data->current_entry,
-                              candidate_type,
-                              &candidate_data,
-                              lock_owner,
-                              &lock_state,
-			      (data->minorversion > 0 ?
-			       &refer :
-			       NULL),
-			      &state_status)
-                    != STATE_SUCCESS) {
+                state_status = state_add(data->current_entry,
+					 candidate_type,
+					 &candidate_data,
+					 lock_owner,
+					 &lock_state,
+					 (data->minorversion > 0 ?
+					  &refer :
+					  NULL));
+                if (state_status != STATE_SUCCESS) {
                         res_LOCK4->status = NFS4ERR_RESOURCE;
 
                         LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
@@ -503,18 +502,18 @@ int nfs4_op_lock(struct nfs_argop4 *op,
 
         /* Now we have a lock owner and a stateid.  Go ahead and push
            lock into SAL (and FSAL). */
-        if (state_lock(data->current_entry,
-                       data->pexport,
-                       data->req_ctx,
-                       lock_owner,
-                       lock_state,
-                       blocking,
-                       NULL,     /* No block data for now */
-                       &lock_desc,
-                       &conflict_owner,
-                       &conflict_desc,
-                       &state_status,
-                       POSIX_LOCK) != STATE_SUCCESS) {
+        state_status = state_lock(data->current_entry,
+				  data->pexport,
+				  data->req_ctx,
+				  lock_owner,
+				  lock_state,
+				  blocking,
+				  NULL,     /* No block data for now */
+				  &lock_desc,
+				  &conflict_owner,
+				  &conflict_desc,
+				  POSIX_LOCK);
+        if (state_status != STATE_SUCCESS) {
                 if (state_status == STATE_LOCK_CONFLICT) {
                         /* A conflicting lock from a different
                            lock_owner, returns NFS4ERR_DENIED */
@@ -539,8 +538,8 @@ int nfs4_op_lock(struct nfs_argop4 *op,
 
                 if (arg_LOCK4->locker.new_lock_owner) {
                         /* Need to destroy lock owner and state */
-                        if(state_del(lock_state,
-                                     &state_status) != STATE_SUCCESS)
+                        state_status = state_del(lock_state);
+                        if(state_status != STATE_SUCCESS)
                                 LogDebug(COMPONENT_NFS_V4_LOCK,
                                          "state_del failed with status %s",
                                          state_err_str(state_status));

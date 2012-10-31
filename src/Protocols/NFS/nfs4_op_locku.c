@@ -178,13 +178,13 @@ int nfs4_op_locku(struct nfs_argop4 *op,
 
         /* Now we have a lock owner and a stateid.  Go ahead and push
            unlock into SAL (and FSAL). */
-        if (state_unlock(data->current_entry,
-                         data->pexport,
-                         lock_owner,
-                         state_found,
-                         &lock_desc,
-                         &state_status,
-                         POSIX_LOCK) != STATE_SUCCESS) {
+        state_status = state_unlock(data->current_entry,
+				    data->pexport,
+				    lock_owner,
+				    state_found,
+				    &lock_desc,
+				    POSIX_LOCK);
+        if (state_status != STATE_SUCCESS) {
                 res_LOCKU4->status = nfs4_Errno_state(state_status);
                 goto out;
         }

@@ -182,13 +182,13 @@ acquire_layout_state(compound_data_t *data,
                 layout_data.layout.state_layout_type = layout_type;
                 layout_data.layout.state_return_on_close = false;
 
-                if (state_add(data->current_entry,
-                              STATE_TYPE_LAYOUT,
-                              &layout_data,
-                              clientid_owner,
-                              layout_state,
-			      &refer,
-                              &state_status) != STATE_SUCCESS) {
+                state_status = state_add(data->current_entry,
+					 STATE_TYPE_LAYOUT,
+					 &layout_data,
+					 clientid_owner,
+					 layout_state,
+					 &refer);
+                if (state_status != STATE_SUCCESS) {
                         nfs_status = nfs4_Errno_state(state_status);
                         goto out;
                 }
@@ -345,8 +345,6 @@ int nfs4_op_layoutget(struct nfs_argop4 *op,
         LAYOUTGET4args *const arg_LAYOUTGET4 = &op->nfs_argop4_u.oplayoutget;
         /* Convenience alias for response */
         LAYOUTGET4res *const res_LAYOUTGET4 = &resp->nfs_resop4_u.oplayoutget;
-        /* Return code from state functions */
-        state_status_t state_status = 0;
         /* NFSv4.1 status code */
         nfsstat4 nfs_status = 0;
         /* Pointer to state governing layouts */
@@ -496,8 +494,7 @@ out:
                 }
 
                 if ((layout_state) && (layout_state->state_seqid == 0)) {
-                        state_del(layout_state,
-                                  &state_status);
+                        state_del(layout_state);
                         layout_state = NULL;
                 }
         }

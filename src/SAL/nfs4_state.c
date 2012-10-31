@@ -112,9 +112,8 @@ int state_conflict(state_t      * pstate,
  * @param pstate_data   [IN]    data related to this state
  * @param powner_input  [IN]    related open_owner
  * @param ppstate       [OUT]   pointer to a pointer to the new state
- * @param pstatus       [OUT]   returned status
  *
- * @return the same as *pstatus
+ * @return Operation status
  *
  */
 state_status_t state_add_impl(cache_entry_t         * pentry,
@@ -122,15 +121,15 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                               state_data_t          * pstate_data,
                               state_owner_t         * powner_input,
                               state_t              ** ppstate,
-			      struct state_refer    * refer,
-                              state_status_t        * pstatus)
+			      struct state_refer    * refer)
 {
   state_t              * pnew_state  = NULL;
   state_t              * piter_state = NULL;
   char                   debug_str[OTHERSIZE * 2 + 1];
   struct glist_head    * glist;
   cache_inode_status_t   cache_status;
-  bool                 got_pinned = false;
+  bool                   got_pinned = false;
+  state_status_t         status = 0;
 
   if(glist_empty(&pentry->state_list))
     {
@@ -138,10 +137,10 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
 
       if(cache_status != CACHE_INODE_SUCCESS)
         {
-          *pstatus = cache_inode_status_to_state_status(cache_status);
+          status = cache_inode_status_to_state_status(cache_status);
           LogDebug(COMPONENT_STATE,
                    "Could not pin file");
-          return *pstatus;
+          return status;
         }
 
       got_pinned = true;
@@ -155,12 +154,12 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                "Can't allocate a new file state from cache pool");
 
       /* stat */
-      *pstatus = STATE_MALLOC_ERROR;
+      status = STATE_MALLOC_ERROR;
 
       if(got_pinned)
         cache_inode_dec_pin_ref(pentry);
 
-      return *pstatus;
+      return status;
     }
 
   /* Browse the state's list */
@@ -177,12 +176,12 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
           /* stat */
           pool_free(state_v4_pool, pnew_state);
 
-          *pstatus = STATE_STATE_CONFLICT;
+          status = STATE_STATE_CONFLICT;
 
           if(got_pinned)
             cache_inode_dec_pin_ref(pentry);
 
-          return *pstatus;
+          return status;
         }
     }
 
@@ -218,12 +217,12 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
       /* Return STATE_MALLOC_ERROR since most likely the nfs4_State_Set failed
        * to allocate memory.
        */
-      *pstatus = STATE_MALLOC_ERROR;
+      status = STATE_MALLOC_ERROR;
 
       if(got_pinned)
         cache_inode_dec_pin_ref(pentry);
 
-      return *pstatus;
+      return status;
     }
 
   /* Add state to list for cache entry */
@@ -242,8 +241,8 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                "Add State: %s", debug_str);
 
   /* Regular exit */
-  *pstatus = STATE_SUCCESS;
-  return *pstatus;
+  status = STATE_SUCCESS;
+  return status;
 }                               /* state_add */
 
 
@@ -259,9 +258,8 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
  * @param powner_input  [IN]    related open_owner
  * @param pcontext      [IN]    FSAL credentials
  * @param ppstate       [OUT]   pointer to a pointer to the new state
- * @param pstatus       [OUT]   returned status
  *
- * @return the same as *pstatus
+ * @return Operation status
  *
  */
 state_status_t state_add(cache_entry_t         * pentry,
@@ -269,9 +267,10 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_data_t          * pstate_data,
                          state_owner_t         * powner_input,
                          state_t              ** ppstate,
-			 struct state_refer    * refer,
-                         state_status_t        * pstatus)
+			 struct state_refer    * refer)
 {
+  state_status_t status = 0;
+
   /* Ensure that states are are associated only with the appropriate
      owners */
 
@@ -283,21 +282,21 @@ state_status_t state_add(cache_entry_t         * pentry,
         (state_type == STATE_TYPE_LAYOUT)) &&
        (powner_input->so_type != STATE_CLIENTID_OWNER_NFSV4)))
     {
-      return (*pstatus = STATE_BAD_TYPE);
+      return STATE_BAD_TYPE;
     }
 
   pthread_rwlock_wrlock(&pentry->state_lock);
-  state_add_impl(pentry, state_type, pstate_data, powner_input,
-                 ppstate, refer, pstatus);
+  status = state_add_impl(pentry, state_type, pstate_data, powner_input,
+			  ppstate, refer);
   pthread_rwlock_unlock(&pentry->state_lock);
 
-  return *pstatus;
+  return status;
 }                               /* state_add */
 
 state_status_t state_del_locked(state_t              * pstate,
                                 cache_entry_t        * pentry)
 {
-  char            debug_str[OTHERSIZE * 2 + 1];
+  char debug_str[OTHERSIZE * 2 + 1];
 
   if (isDebug(COMPONENT_STATE))
     sprint_mem(debug_str, (char *)pstate->stateid_other, OTHERSIZE);
@@ -352,23 +351,22 @@ state_status_t state_del_locked(state_t              * pstate,
  * Deletes a state from the hash's state
  *
  * @param pstate   [OUT]   pointer to the new state
- * @param pstatus  [OUT]   returned status
  *
- * @return the same as *pstatus
+ * @return Status of operation
  *
  */
-state_status_t state_del(state_t              * pstate,
-                         state_status_t       * pstatus)
+state_status_t state_del(state_t * pstate)
 {
   cache_entry_t *entry = pstate->state_pentry;
+  state_status_t status = 0;
 
   pthread_rwlock_wrlock(&entry->state_lock);
 
-  *pstatus = state_del_locked(pstate, pstate->state_pentry);
+  status = state_del_locked(pstate, pstate->state_pentry);
 
   pthread_rwlock_unlock(&entry->state_lock);
 
-  return *pstatus;
+  return status;
 }                               /* state_del */
 
 void state_nfs4_state_wipe(cache_entry_t        * pentry)
@@ -415,13 +413,13 @@ void release_lockstate(state_owner_t * plock_owner)
         LogCrit(COMPONENT_CLIENTID,
                 "Ugliness - cache_inode_lru_ref has returned non-success");
 
-      if(state_del(pstate_found,
-                   &state_status) != STATE_SUCCESS)
-      {
-        LogDebug(COMPONENT_CLIENTID,
-               "release_lockstate failed to release stateid error %s",
-                state_err_str(state_status));
-      }
+      state_status = state_del(pstate_found);
+      if (state_status != STATE_SUCCESS)
+	{
+	  LogDebug(COMPONENT_CLIENTID,
+		   "release_lockstate failed to release stateid error %s",
+		   state_err_str(state_status));
+	}
 
       /* Release the lru ref to the cache inode we held while calling state_del */
       cache_inode_lru_unref(entry, 0);
@@ -463,10 +461,10 @@ void release_openstate(state_owner_t * popen_owner)
 
       if(pstate_found->state_type == STATE_TYPE_SHARE)
         {
-          if(state_share_remove(pstate_found->state_pentry,
-                                popen_owner,
-                                pstate_found,
-                                &state_status) != STATE_SUCCESS)
+          state_status = state_share_remove(pstate_found->state_pentry,
+					    popen_owner,
+					    pstate_found);
+          if(state_status != STATE_SUCCESS)
             {
               LogEvent(COMPONENT_CLIENTID,
                        "EXPIRY failed to release share stateid error %s",
