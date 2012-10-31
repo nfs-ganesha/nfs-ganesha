@@ -144,6 +144,17 @@ struct nfs41_session__ {
 				    free an entry. */
 };
 
+/**
+ * @brief Track the call that creates a state, for NFSv4.1.
+ */
+
+struct state_refer {
+	sessionid4 session; /*< The session of the creating call. */
+	sequenceid4 sequence; /*< The sequence ID of the creating
+				  call. */
+	slotid4 slot; /*< The slot ID of the creating call. */
+};
+
 /******************************************************************************
  *
  * NFSv4 State data
@@ -214,6 +225,9 @@ struct state_t {
 	u_int32_t state_seqid; /*< The NFSv4 Sequence id */
 	char stateid_other[OTHERSIZE];  /*< "Other" part of state id,
 					    used as hash key */
+	struct state_refer state_refer; /*< For NFSv4.1, track the
+					    call that created a
+					    state. */
 };
 
 /*****************************************************************************

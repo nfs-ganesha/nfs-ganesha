@@ -101,6 +101,8 @@ int nfs4_op_lock(struct nfs_argop4 *op,
         fsal_lock_param_t         conflict_desc;
         /* Whether to block */
         state_blocking_t          blocking = STATE_NON_BLOCKING;
+	/* Tracking data for the lock state */
+	struct state_refer        refer;
 
         LogDebug(COMPONENT_NFS_V4_LOCK,
                  "Entering NFS v4 LOCK handler ----------------------");
@@ -108,6 +110,15 @@ int nfs4_op_lock(struct nfs_argop4 *op,
         /* Initialize to sane starting values */
         resp->resop = NFS4_OP_LOCK;
         res_LOCK4->status = NFS4_OK;
+
+	/* Record the sequence info */
+	if (data->minorversion > 0) {
+		memcpy(refer.session,
+		       data->psession->session_id,
+		       sizeof(sessionid4));
+		refer.sequence = data->sequence;
+		refer.slot = data->slot;
+	}
 
         res_LOCK4->status = nfs4_sanity_check_FH(data, REGULAR_FILE,
                                                  false);
@@ -452,7 +463,11 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                               candidate_type,
                               &candidate_data,
                               lock_owner,
-                              &lock_state, &state_status)
+                              &lock_state,
+			      (data->minorversion > 0 ?
+			       &refer :
+			       NULL),
+			      &state_status)
                     != STATE_SUCCESS) {
                         res_LOCK4->status = NFS4ERR_RESOURCE;
 

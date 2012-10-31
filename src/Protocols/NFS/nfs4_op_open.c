@@ -104,9 +104,20 @@ open4_do_open(struct nfs_argop4  * op,
         state_t              * state_iterate = NULL;
         /* The open state for the file */
         state_t              * file_state = NULL;
+	/* Tracking data for the open state */
+	struct state_refer     refer;
 
         *state = NULL;
         *new_state = true;
+
+	/* Record the sequence info */
+	if (data->minorversion > 0) {
+		memcpy(refer.session,
+		       data->psession->session_id,
+		       sizeof(sessionid4));
+		refer.sequence = data->sequence;
+		refer.slot = data->slot;
+	}
 
         if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) ||
             (args->share_access & OPEN4_SHARE_ACCESS_WRITE)) {
@@ -170,6 +181,9 @@ open4_do_open(struct nfs_argop4  * op,
                 if (state_add_impl(data->current_entry, candidate_type,
                                    &candidate_data, owner,
                                    &file_state,
+				   (data->minorversion > 0 ?
+				    &refer :
+				    NULL),
                                    &state_status) != STATE_SUCCESS) {
                         return nfs4_Errno_state(state_status);
                 }

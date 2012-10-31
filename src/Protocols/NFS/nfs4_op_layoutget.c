@@ -94,6 +94,14 @@ acquire_layout_state(compound_data_t *data,
         state_status_t state_status = 0;
         /* Layout state, forgotten about by caller */
         state_t *condemned_state = NULL;
+	/* Tracking data for the layout state */
+	struct state_refer refer;
+
+	memcpy(refer.session,
+	       data->psession->session_id,
+	       sizeof(sessionid4));
+	refer.sequence = data->sequence;
+	refer.slot = data->slot;
 
         if ((state_status = get_clientid_owner(data->psession->clientid,
                                             &clientid_owner))
@@ -179,6 +187,7 @@ acquire_layout_state(compound_data_t *data,
                               &layout_data,
                               clientid_owner,
                               layout_state,
+			      &refer,
                               &state_status) != STATE_SUCCESS) {
                         nfs_status = nfs4_Errno_state(state_status);
                         goto out;

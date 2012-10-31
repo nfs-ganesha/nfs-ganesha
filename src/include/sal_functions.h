@@ -533,6 +533,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                               state_data_t          * pstate_data,
                               state_owner_t         * powner_input,
                               state_t              ** ppstate,
+			      struct state_refer    * refer,
                               state_status_t        * pstatus);
 
 state_status_t state_add(cache_entry_t         * pentry,
@@ -540,6 +541,7 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_data_t          * pstate_data,
                          state_owner_t         * powner_input,
                          state_t              ** ppstate,
+			 struct state_refer    * refer,
                          state_status_t        * pstatus);
 
 state_status_t state_set(state_t              * pstate,

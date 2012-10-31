@@ -368,6 +368,10 @@ typedef struct compoud_data {
 			    processed  */
 	nfs41_session_t *psession; /*< Related session (found by
 				       OP_SEQUENCE) */
+	sequenceid4 sequence; /*< Sequence ID of the current compound
+				  (if applicable) */
+	slotid4 slot; /*< Slot ID of the current compound (if
+			  applicable) */
 } compound_data_t;
 
 /* Export list related functions */

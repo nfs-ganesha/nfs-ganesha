@@ -41,7 +41,6 @@
 #include "nfs_rpc_callback.h"
 
 /**
- *
  * @brief the NFS4_OP_SEQUENCE operation
  *
  * @param[in]     op   nfs4_op arguments
@@ -150,6 +149,10 @@ int nfs4_op_sequence(struct nfs_argop4 *op,
 
   /* Keep memory of the session in the COMPOUND's data */
   data->psession = session;
+
+  /* Record the sequenceid and slotid in the COMPOUND's data*/
+  data->sequence = arg_SEQUENCE4.sa_sequenceid;
+  data->slot = arg_SEQUENCE4.sa_slotid;
 
   /* Update the sequence id within the slot */
   session->slots[arg_SEQUENCE4.sa_slotid].sequence += 1;

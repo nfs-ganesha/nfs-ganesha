@@ -24,11 +24,8 @@
  */
 
 /**
- * \file    nfs4_state.c
- * \brief   This file contains functions used in state management.
- *
- * This file contains functions used in state management.
- *
+ * @file    nfs4_state.c
+ * @brief   This file contains functions used in state management.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -37,7 +34,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -125,6 +122,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                               state_data_t          * pstate_data,
                               state_owner_t         * powner_input,
                               state_t              ** ppstate,
+			      struct state_refer    * refer,
                               state_status_t        * pstatus)
 {
   state_t              * pnew_state  = NULL;
@@ -165,8 +163,6 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
       return *pstatus;
     }
 
-  memset(pnew_state, 0, sizeof(*pnew_state));
-
   /* Browse the state's list */
   glist_for_each(glist, &pentry->state_list)
     {
@@ -199,6 +195,10 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
   pnew_state->state_seqid  = 0; /* will be incremented to 1 later */
   pnew_state->state_pentry = pentry;
   pnew_state->state_powner = powner_input;
+  if (refer)
+    {
+      pnew_state->state_refer = *refer;
+    }
 
   if (isDebug(COMPONENT_STATE))
     sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
@@ -269,6 +269,7 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_data_t          * pstate_data,
                          state_owner_t         * powner_input,
                          state_t              ** ppstate,
+			 struct state_refer    * refer,
                          state_status_t        * pstatus)
 {
   /* Ensure that states are are associated only with the appropriate
@@ -287,7 +288,7 @@ state_status_t state_add(cache_entry_t         * pentry,
 
   pthread_rwlock_wrlock(&pentry->state_lock);
   state_add_impl(pentry, state_type, pstate_data, powner_input,
-                 ppstate, pstatus);
+                 ppstate, refer, pstatus);
   pthread_rwlock_unlock(&pentry->state_lock);
 
   return *pstatus;
