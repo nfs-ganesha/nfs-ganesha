@@ -70,7 +70,7 @@ int _9p_getlock( _9p_request_data_t * preq9p,
   u16  * client_id_len = NULL ;
   char * client_id_str = NULL ;
 
-  // _9p_fid_t * pfid = NULL ;
+  _9p_fid_t * pfid = NULL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -92,7 +92,7 @@ int _9p_getlock( _9p_request_data_t * preq9p,
   if( *fid >= _9P_FID_PER_CONN )
    return  _9p_rerror( preq9p, pworker_data,  msgtag, ERANGE, plenout, preply ) ;
 
-   // pfid = &preq9p->pconn->fids[*fid] ;
+   pfid = &preq9p->pconn->fids[*fid] ;
 
    /** @todo This function does nothing for the moment. Make it compliant with fcntl( F_GETLCK, ... */
 
