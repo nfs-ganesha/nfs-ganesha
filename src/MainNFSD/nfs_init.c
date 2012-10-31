@@ -319,6 +319,18 @@ nfs_parameter_t nfs_param =
   .nlm_owner_hash_param.val_to_str = display_nlm_owner_val,
   .nlm_owner_hash_param.flags = HT_FLAG_NONE,
 
+#ifdef _USE_9P
+  /* 9P Owner hash */
+  ._9p_owner_hash_param.index_size = PRIME_STATE_ID,
+  ._9p_owner_hash_param.alphabet_length = 10,        /* ipaddr is a numerical decimal value */
+  ._9p_owner_hash_param.hash_func_key = _9p_owner_value_hash_func,
+  ._9p_owner_hash_param.hash_func_rbt = _9p_owner_rbt_hash_func,
+  ._9p_owner_hash_param.compare_key = compare_9p_owner_key,
+  ._9p_owner_hash_param.key_to_str = display_9p_owner_key,
+  ._9p_owner_hash_param.val_to_str = display_9p_owner_val,
+  ._9p_owner_hash_param.flags = HT_FLAG_NONE,
+#endif
+
   /* Cache inode parameters : hash table */
   .cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE,
   .cache_layers_param.cache_param.hparam.alphabet_length = 10,      /* Buffer seen as a decimal polynom */
