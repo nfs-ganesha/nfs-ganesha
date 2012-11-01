@@ -352,13 +352,22 @@ struct ClientOpLogReqMtext {
 // CommonMsgHdr+Client*Msg combined Client*Mtext structure that
 // defines the actual message mtext contents
 
+typedef enum {
+  PROTOCOL_INVALID = -1,
+  PROTOCOL_CIFS    =  0,
+  PROTOCOL_NFS_V_3 =  1,
+
+  PROTOCOL_MAX
+} protocol_t ;
+
 // ClientOpOpen Client Request Message
 struct ClientOpOpenReqMsg {
-  char     fileName[PATH_MAX]; // filename
-  uint64_t fileFlags;          // flags
-  uint64_t fileMode;           // mode
-  uint64_t uid;                // user ID
-  uint64_t gid;                // groupd ID
+  char       fileName[PATH_MAX]; // filename
+  uint64_t   fileFlags;          // flags
+  uint64_t   fileMode;           // mode
+  uint64_t   uid;                // user ID
+  uint64_t   gid;                // groupd ID
+  protocol_t protocol;           // protocol used
 };
 
 struct ClientOpOpenReqMtext {
