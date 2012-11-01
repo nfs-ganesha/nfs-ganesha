@@ -48,6 +48,10 @@
 #include "fsal_handle_syscalls.h"
 #include "vfs_methods.h"
 
+#ifdef _USE_PANFS_PNFS
+#include "pnfs_panfs/mds.h"
+#endif /*_USE_PANFS_PNFS*/
+
 /*
  * VFS internal export
  */
@@ -520,6 +524,11 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
         myself->export.up_ops = up_ops;
         /* Until we implement upcalls. */
         myself->export.validation_flags = FSAL_VALIDATE_ALL;
+
+#ifdef _USE_PANFS_PNFS
+	export_ops_pnfs(myself->export.ops);
+	handle_ops_pnfs(myself->export.obj_ops);
+#endif
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
