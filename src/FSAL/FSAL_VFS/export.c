@@ -48,9 +48,7 @@
 #include "fsal_handle_syscalls.h"
 #include "vfs_methods.h"
 
-#ifdef _USE_PANFS_PNFS
 #include "pnfs_panfs/mds.h"
-#endif /*_USE_PANFS_PNFS*/
 
 /*
  * VFS internal export
@@ -562,7 +560,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
         /* Until we implement upcalls. */
         myself->export.validation_flags = FSAL_VALIDATE_ALL;
 
-#ifdef _USE_PANFS_PNFS
 	myself->pnfs_panfs_enabled = fs_specific_has(fs_specific, "pnfs_panfs",
 						     NULL, 0);
 	if (myself->pnfs_panfs_enabled) {
@@ -572,7 +569,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		export_ops_pnfs(myself->export.ops);
 		handle_ops_pnfs(myself->export.obj_ops);
 	}
-#endif /* def _USE_PANFS_PNFS */
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
