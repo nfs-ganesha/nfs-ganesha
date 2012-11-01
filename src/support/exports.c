@@ -2529,7 +2529,7 @@ int nfs_export_check_security(struct svc_req *req, exportlist_t * pexport)
           {
             struct svc_rpc_gss_data *gd;
             rpc_gss_svc_t svc;
-            gd = SVCAUTH_PRIVATE(req->rq_xprt->xp_auth);
+            gd = SVCAUTH_PRIVATE(req->rq_auth);
             svc = gd->sec.svc;
             LogFullDebug(COMPONENT_DISPATCH,
                          "Testing svc %d", (int) svc);

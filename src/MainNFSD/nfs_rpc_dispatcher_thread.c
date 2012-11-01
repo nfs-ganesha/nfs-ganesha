@@ -1855,8 +1855,8 @@ nfs_rpc_get_args(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
                "Before svc_getargs on socket %d, xprt=%p",
                xprt->xp_fd, xprt);
 
-  if (svc_getargs2(xprt, req, preqnfs->funcdesc->xdr_decode_func,
-                   (caddr_t) arg_nfs, &preqnfs->lookahead) == false)
+  if (svc_getargs(xprt, req, preqnfs->funcdesc->xdr_decode_func,
+		  (caddr_t) arg_nfs, &preqnfs->lookahead) == false)
     {
       LogMajor(COMPONENT_DISPATCH,
                "svc_getargs failed for Program %d, Version %d, "

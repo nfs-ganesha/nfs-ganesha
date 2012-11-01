@@ -981,7 +981,8 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 };
 
 static void
-delegrecall_one(state_lock_entry_t * found_entry, cache_entry_t *pentry)
+delegrecall_one(state_lock_entry_t *found_entry,
+		cache_entry_t *pentry)
 {
   char *maxfh;
   compound_data_t data;
@@ -1020,7 +1021,7 @@ delegrecall_one(state_lock_entry_t * found_entry, cache_entry_t *pentry)
   call->chan = chan;
 
   /* setup a compound */
-  cb_compound_init_v4(&call->cbt, 6, clid->cid_cb.cb_u.v40.cb_callback_ident,
+  cb_compound_init_v4(&call->cbt, 6, clid->cid_cb.v40.cb_callback_ident,
                       "brrring!!!", 10);
 
   memset(argop, 0, sizeof(nfs_cb_argop4));
@@ -1053,9 +1054,8 @@ delegrecall_one(state_lock_entry_t * found_entry, cache_entry_t *pentry)
   return;
 };
 
-static void
-delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
-                                struct fsal_up_file *file)
+static void delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
+			      struct fsal_up_file *file)
 {
   cache_entry_t *pentry = NULL;
   struct glist_head  *glist;
@@ -1096,9 +1096,8 @@ delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
 
 };
 
-static void
-delegrecall_imm(struct fsal_up_event_delegrecall *deleg,
-                                   struct fsal_up_file *file)
+static void delegrecall_imm(struct fsal_up_event_delegrecall *deleg,
+			    struct fsal_up_file *file)
 {
     printf("xxx delegrecall_imm ???\n");
 };

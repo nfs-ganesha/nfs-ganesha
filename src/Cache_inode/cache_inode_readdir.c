@@ -598,10 +598,19 @@ cache_inode_readdir(cache_entry_t *directory,
           dirent = cache_inode_avl_lookup_k(directory, cookie,
                                             CACHE_INODE_FLAG_NEXT_ACTIVE);
           if (!dirent) {
+	    /* Linux (3.4, etc) has been observed to send readder at the
+	     * offset of the last entry's cookie, and returns no dirents
+	     * to userland if that readdir notfound or badcookie. */
+	    if (cache_inode_avl_lookup_k(directory, cookie,
+					 CACHE_INODE_FLAG_NONE)) {
+		  /* yup, it was the last entry */
+		  *eod_met = true;
+		  goto unlock_dir;
+		}
                LogFullDebug(COMPONENT_NFS_READDIR,
                             "%s: seek to cookie=%"PRIu64" fail",
                             __func__, cookie);
-               *status = CACHE_INODE_NOT_FOUND;
+               *status = CACHE_INODE_BAD_COOKIE;
                goto unlock_dir;
           }
 

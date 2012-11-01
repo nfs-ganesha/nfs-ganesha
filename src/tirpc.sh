@@ -3,21 +3,17 @@
 OPWD=`pwd`
 
 TIRPC_REPO='git://github.com/linuxbox2/ntirpc.git'
-TIRPC_BRANCH_NAME='duplex-9'
-TIRPC_COMMIT='61a97afbd2a66973b99a244de6d36e274dffbd77'
+TIRPC_COMMIT='8668393b7cef104371cd9e85114c784c531d5450'
 
-# remove libtirpc if present;  try to avoid making
-# a mess
-if [ -d ../src -a -d ../contrib ]; then
-    if [ -e libtirpc ]; then
-	rm -rf libtirpc
-    fi
+if [ -d libtirpc/.git ]; then
+    cd libtirpc
+    git remote update --prune
+else
+    git clone ${TIRPC_REPO} libtirpc
+    cd libtirpc
 fi
 
-git clone ${TIRPC_REPO} libtirpc
-cd libtirpc
-git checkout -b $TIRPC_BRANCH_NAME ${TIRPC_COMMIT}
+git checkout --quiet ${TIRPC_COMMIT}
 cd ${OPWD}
 
 ./autogen.sh
-

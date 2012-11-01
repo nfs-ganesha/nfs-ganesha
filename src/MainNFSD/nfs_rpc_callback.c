@@ -29,6 +29,7 @@
  * @file nfs_rpc_callback.c
  * @author Matt Benjamin <matt@linuxbox.com>
  * @author Lee Dobryden <lee@linuxbox.com>
+ * @author Adam C. Emerson <aemerson@linuxbox.com>
  * @brief RPC callback dispatch package
  *
  * This module implements APIs for submission, and dispatch of NFSv4.0
@@ -128,8 +129,8 @@ void nfs_rpc_cb_pkginit(void)
 	return;
 }
 
-/*
- * Shutdown subsystem
+/**
+ * @brief Shutdown callback subsystem
  */
 void nfs_rpc_cb_pkgshutdown(void)
 {
@@ -186,17 +187,30 @@ nc_type nfs_netid_to_nc(const char *netid)
 	return _NC_ERR;
 }
 
-static inline void setup_client_saddr(nfs_client_id_t *pclientid,
+/**
+ * @brief Convert string format address to sockaddr
+ *
+ * This function takes the host.port format used in the NFSv4.0
+ * clientaddr4 and converts it to a POSIX sockaddr structure stored in
+ * the callback information of the clientid.
+ *
+ * @param[in,out] clientid The clientid in which to store the sockaddr
+ * @param[in]     uaddr    na_r_addr from the clientaddr4
+ */
+
+static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
 {
 	char addr_buf[SOCK_NAME_MAX];
 	uint32_t bytes[11];
 	int code;
 
-	memset(&pclientid->cid_cb.cb_addr.ss, 0,
+	assert(clientid->cid_minorversion == 0);
+
+	memset(&clientid->cid_cb.v40.cb_addr.ss, 0,
 	       sizeof(struct sockaddr_storage));
 
-	switch (pclientid->cid_cb.cb_addr.nc) {
+	switch (clientid->cid_cb.v40.cb_addr.nc) {
 	case _NC_TCP:
 	case _NC_RDMA:
 	case _NC_SCTP:
@@ -207,7 +221,7 @@ static inline void setup_client_saddr(nfs_client_id_t *pclientid,
 			   &bytes[5], &bytes[6]) == 6) {
 			struct sockaddr_in *sin =
 				((struct sockaddr_in *)
-				 &pclientid->cid_cb.cb_addr.ss);
+				 &clientid->cid_cb.v40.cb_addr.ss);
 			snprintf(addr_buf, SOCK_NAME_MAX, "%u.%u.%u.%u",
 				 bytes[1], bytes[2],
 				 bytes[3], bytes[4]);
@@ -237,7 +251,7 @@ static inline void setup_client_saddr(nfs_client_id_t *pclientid,
 			   &bytes[10]) == 10) {
 			struct sockaddr_in6 *sin6 =
 				((struct sockaddr_in6 *)
-				 &pclientid->cid_cb.cb_addr.ss);
+				 &clientid->cid_cb.v40.cb_addr.ss);
 			snprintf(addr_buf, SOCK_NAME_MAX,
 				 "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x",
 				 bytes[1], bytes[2], bytes[3],
@@ -263,29 +277,50 @@ static inline void setup_client_saddr(nfs_client_id_t *pclientid,
 	};
 }
 
-void nfs_set_client_location(nfs_client_id_t *pclientid,
+/**
+ * @brief Set the callback location for an NFSv4.0 clientid
+ *
+ * @param[in,out] clientid The clientid in which to set the location
+ * @param[in]     addr4    The client's supplied callback address
+ */
+
+void nfs_set_client_location(nfs_client_id_t *clientid,
 			     const clientaddr4 *addr4)
 {
-	pclientid->cid_cb.cb_addr.nc = nfs_netid_to_nc(addr4->r_netid);
-	strlcpy(pclientid->cid_cb.cb_client_r_addr, addr4->r_addr,
+	assert(clientid->cid_minorversion == 0);
+	clientid->cid_cb.v40.cb_addr.nc = nfs_netid_to_nc(addr4->r_netid);
+	strlcpy(clientid->cid_cb.v40.cb_client_r_addr, addr4->r_addr,
 		SOCK_NAME_MAX);
-	setup_client_saddr(pclientid, pclientid->cid_cb.cb_client_r_addr);
+	setup_client_saddr(clientid,
+			   clientid->cid_cb.v40.cb_client_r_addr);
 }
 
-static inline int32_t
-nfs_clid_connected_socket(nfs_client_id_t *pclientid, int *fd, int *proto)
+/**
+ * @brief Get the fd of an NFSv4.0 callback connection
+ *
+ * @param[in]  clientid The clientid to query
+ * @param[out] fd       The file descriptor
+ * @param[out] proto    The protocol used on this connection
+ *
+ * @return 0 or values of errno.
+ */
+
+static inline int32_t nfs_clid_connected_socket(nfs_client_id_t *clientid,
+						int *fd, int *proto)
 {
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
 	int nfd, code = 0;
 
+	assert(clientid->cid_minorversion == 0);
+
 	*fd = 0;
 	*proto = -1;
 
-	switch (pclientid->cid_cb.cb_addr.ss.ss_family) {
+	switch (clientid->cid_cb.v40.cb_addr.ss.ss_family) {
 	case AF_INET:
-		sin = (struct sockaddr_in *) &pclientid->cid_cb.cb_addr.ss;
-		switch (pclientid->cid_cb.cb_addr.nc) {
+		sin = (struct sockaddr_in *) &clientid->cid_cb.v40.cb_addr.ss;
+		switch (clientid->cid_cb.v40.cb_addr.nc) {
 		case _NC_TCP:
 			nfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 			*proto = IPPROTO_TCP;
@@ -311,8 +346,9 @@ nfs_clid_connected_socket(nfs_client_id_t *pclientid, int *fd, int *proto)
 		*fd = nfd;
 		break;
 	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *) &pclientid->cid_cb.cb_addr.ss;
-		switch (pclientid->cid_cb.cb_addr.nc) {
+		sin6 = (struct sockaddr_in6 *) &clientid->cid_cb
+			.v40.cb_addr.ss;
+		switch (clientid->cid_cb.v40.cb_addr.nc) {
 		case _NC_TCP6:
 			nfd = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
 			*proto = IPPROTO_TCP;
@@ -346,6 +382,15 @@ out:
 
 /* end refactorable RPC code */
 
+/**
+ * @brief Check if an authentication flavor is supported
+ *
+ * @param[in] flavor RPC authentication flavor
+ *
+ * @retval true if supported.
+ * @retval false if not.
+ */
+
 static inline bool supported_auth_flavor(int flavor)
 {
 	bool code = false;
@@ -363,8 +408,23 @@ static inline bool supported_auth_flavor(int flavor)
 	return code;
 }
 
-/* from kerberos source, gssapi_krb5.c (Umich) */
+/**
+ * @brief Kerberos OID
+ *
+ * This value comes from kerberos source, gssapi_krb5.c (Umich).
+ */
+
 gss_OID_desc krb5oid = {9, "\052\206\110\206\367\022\001\002\002"};
+
+/**
+ * @brief Format a principal name for an RPC call channel
+ *
+ * @param[in]  chan Call channel
+ * @param[out] buf  Buffer to hold formatted name
+ * @param[in]  len  Size of buffer
+ *
+ * @return The principle or NULL.
+ */
 
 static inline char *format_host_principal(rpc_call_channel_t *chan,
 					  char *buf,
@@ -377,12 +437,12 @@ static inline char *format_host_principal(rpc_call_channel_t *chan,
 	switch (chan->type) {
 	case RPC_CHAN_V40:
 	{
-		nfs_client_id_t *pclientid = chan->clientid;
-		switch (pclientid->cid_cb.cb_addr.ss.ss_family) {
+		nfs_client_id_t *clientid = chan->source.clientid;
+		switch (clientid->cid_cb.v40.cb_addr.ss.ss_family) {
 		case AF_INET:
 		{
 			struct sockaddr_in *sin = (struct sockaddr_in *)
-				&pclientid->cid_cb.cb_addr.ss;
+				&clientid->cid_cb.v40.cb_addr.ss;
 			host = inet_ntop(AF_INET, &sin->sin_addr, addr_buf,
 					 INET_ADDRSTRLEN);
 			break;
@@ -390,7 +450,7 @@ static inline char *format_host_principal(rpc_call_channel_t *chan,
 		case AF_INET6:
 		{
 			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)
-				&pclientid->cid_cb.cb_addr.ss;
+				&clientid->cid_cb.v40.cb_addr.ss;
 			host = inet_ntop(AF_INET6, &sin6->sin6_addr, addr_buf,
 					 INET6_ADDRSTRLEN);
 			break;
@@ -414,6 +474,13 @@ static inline char *format_host_principal(rpc_call_channel_t *chan,
 out:
 	return princ;
 }
+
+/**
+ * @brief Set up GSS on a callback channel
+ *
+ * @param[in,out] chan Channel on which to set up GSS
+ * @param[in]     cred GSS Credential
+ */
 
 static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 					      nfs_client_cred_t *cred)
@@ -465,89 +532,49 @@ out:
 	return;
 }
 
-static inline bool nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
-{
-	nfs_client_cred_t *credential = NULL;
-	bool code = true;
-	AUTH *auth = NULL;
-
-	switch (chan->type) {
-	case RPC_CHAN_V40:
-		assert(&chan->clientid);
-		credential = &chan->clientid->cid_credential;
-		break;
-	case RPC_CHAN_V41:
-		/* XXX implement */
-		goto out;
-		break;
-	}
-
-	switch (credential->flavor) {
-	case RPCSEC_GSS:
-		nfs_rpc_callback_setup_gss(chan, credential);
-		break;
-	case AUTH_SYS:
-		auth = authunix_create_default();
-		/* XXX see above */
-		if (auth)
-			chan->auth = auth;
-		break;
-	case AUTH_NONE:
-		break;
-	default:
-		/* XXX prevented by forward check */
-		break;
-	}
-
-out:
-	return code;
-}
-
 /**
  * @brief Create a channel for an NFSv4.0 client
  *
- * This function creates a new channel for clientid (v4.0), optionally
- * connecting it.
- *
- * @param[in] pclientid Client record
+ * @param[in] clientid Client record
  * @param[in] flags     Currently unused
  *
  * @return Status code.
  */
 
-int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
+int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid,
 			    uint32_t flags)
 {
 	struct netbuf raddr;
 	int fd, proto, code = 0;
-	rpc_call_channel_t *chan = &pclientid->cid_cb.cb_chan;
+	rpc_call_channel_t *chan = &clientid->cid_cb.v40.cb_chan;
 
 	assert(!chan->clnt);
+	assert(clientid->cid_minorversion == 0);
 
 	/* XXX we MUST error RFC 3530bis, sec. 3.3.3 */
-	if (!supported_auth_flavor(pclientid->cid_credential.flavor)) {
+	if (!supported_auth_flavor(clientid->cid_credential.flavor)) {
 		code = EINVAL;
 		goto out;
 	}
 
 	chan->type = RPC_CHAN_V40;
-	chan->clientid = pclientid;
+	chan->source.clientid = clientid;
 
-	code = nfs_clid_connected_socket(pclientid, &fd, &proto);
+	code = nfs_clid_connected_socket(clientid, &fd, &proto);
 	if (code) {
 		LogDebug(COMPONENT_NFS_CB,
 			 "Failed creating socket");
 		goto out;
 	}
 
-	raddr.buf = &pclientid->cid_cb.cb_addr.ss;
+	raddr.buf = &clientid->cid_cb.v40.cb_addr.ss;
 
 	switch (proto) {
 	case IPPROTO_TCP:
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in);
 		chan->clnt = clnt_vc_create(fd,
 					    &raddr,
-					    pclientid->cid_cb.cb_program,
+					    clientid->cid_cb.v40.cb_program,
 					    1 /* Errata ID: 2291 */,
 					    0, 0);
 		break;
@@ -555,7 +582,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in6);
 		chan->clnt = clnt_dg_create(fd,
 					    &raddr,
-					    pclientid->cid_cb.cb_program,
+					    clientid->cid_cb.v40.cb_program,
 					    1 /* Errata ID: 2291 */,
 					    0, 0);
 		break;
@@ -569,9 +596,22 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid,
 	}
 
 	/* channel protection */
-	if (!nfs_rpc_callback_seccreate(chan)) {
-		/* XXX */
+	switch (clientid->cid_credential.flavor) {
+	case RPCSEC_GSS:
+		nfs_rpc_callback_setup_gss(chan,
+					   &clientid->cid_credential);
+		break;
+	case AUTH_SYS:
+		if (!(chan->auth = authunix_create_default())) {
+			code = EINVAL;
+		}
+		code = 0;
+		break;
+	case AUTH_NONE:
+		break;
+	default:
 		code = EINVAL;
+		break;
 	}
 
 out:
@@ -581,33 +621,42 @@ out:
 /**
  * @brief Create a channel for an NFSv4.1 session
  *
- * Create a channel for a new NFSv4.1 session.  This currently uses
- * the first session associated with a clientid.
+ * This function creates a channel on an NFSv4.1 session, using the
+ * given security parameters.  If a channel already exists, it is
+ * removed and replaced.
+ *
+ * @param[in,out] session       The session on which to create the
+ *                              back channel
+ * @parma[in]     num_sec_parms Length of sec_parms list
+ * @param[in]     sec_parms     Allowable security parameters
+ *
+ * @return 0 or POSIX error code.
  */
-int nfs_rpc_create_chan_v41(nfs_client_id_t *pclientid,
-			    uint32_t flags)
+
+int nfs_rpc_create_chan_v41(nfs41_session_t *session,
+			    int num_sec_parms,
+			    callback_sec_parms4 *sec_parms)
+
 {
 	int code = 0;
-	rpc_call_channel_t *chan = &pclientid->cid_cb.cb_chan;
-	nfs41_session_t *session;
+	rpc_call_channel_t *chan = &session->cb_chan;
+	int i = 0;
+	bool authed = false;
+	struct timeval cb_timeout = {15, 0};
 
-	assert(!chan->clnt);
-
-	session = glist_first_entry(
-		&pclientid->cid_cb.cb_u.v41.cb_session_list,
-		nfs41_session_t, session_list);
-	if (!session) {
-		code = EINVAL;
-		goto out;
+	if (chan->clnt) {
+		/* Something better later. */
+		return EEXIST;
 	}
 
 	chan->type = RPC_CHAN_V41;
-	chan->clientid = pclientid;
+	chan->source.session = session;
 
 	assert(session->xprt);
 
 	/* connect an RPC client */
-	chan->clnt = clnt_vc_create_svc(session->xprt, 100003,
+	chan->clnt = clnt_vc_create_svc(session->xprt,
+					session->cb_program,
 					4, SVC_VC_CREATE_BOTHWAYS);
 
 	if (!chan->clnt) {
@@ -615,28 +664,102 @@ int nfs_rpc_create_chan_v41(nfs_client_id_t *pclientid,
 		goto out;
 	}
 
-	/**
-	 * @todo Channel protection?
-	 */
+
+	for (i = 0; i < num_sec_parms; ++i) {
+		if (sec_parms[i].cb_secflavor == AUTH_NONE) {
+			authed = true;
+			break;
+		} else if (sec_parms[i].cb_secflavor == AUTH_SYS) {
+			struct authunix_parms *sys_parms =
+				&sec_parms[i].callback_sec_parms4_u
+				.cbsp_sys_cred;
+			if (!(chan->auth
+			      = authunix_create(sys_parms->aup_machname,
+						sys_parms->aup_uid,
+						sys_parms->aup_gid,
+						sys_parms->aup_len,
+						sys_parms->aup_gids))) {
+				continue;
+			}
+			authed = true;
+			break;
+		} else if (sec_parms[i].cb_secflavor == RPCSEC_GSS) {
+
+			/**
+			 * @todo ACE: Come back later and implement
+			 * GSS.
+			 */
+			continue;
+		} else  {
+			LogMajor(COMPONENT_NFS_CB,
+				 "Client sent unknown auth type.");
+			continue;
+		}
+	}
+
+	if (!authed) {
+		code = EPERM;
+		LogMajor(COMPONENT_NFS_CB,
+			 "No working auth in sec_params.");
+		goto out;
+	}
+
+	if (rpc_cb_null(chan,
+			cb_timeout) != RPC_SUCCESS) {
+		code = EBADFD;
+		goto out;
+	}
+
+	session->cb_chan_up = true;
+	code = 0;
 
 out:
+	if ((code != 0) &&
+	    chan->clnt) {
+		nfs_rpc_destroy_chan(chan);
+	}
+
 	return code;
 }
 
-rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
+/**
+ * @brief Get a backchannel for a clientid
+ *
+ * This function works for both NFSv4.0 and NFSv4.1.  For NFSv4.0, if
+ * the channel isn't up, it tries to create it.
+ *
+ * @param[in,out] clientid The clientid to use
+ * @param[out]    flags    Unused
+ *
+ * @return The back channel or NULL if none existed or could be
+ *         established.
+ */
+
+rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 				     uint32_t flags)
 {
-	rpc_call_channel_t *chan = &pclientid->cid_cb.cb_chan;
+	rpc_call_channel_t *chan = NULL;
 
-	if (!chan->clnt) {
-		switch(pclientid->cid_minorversion) {
-		case 0:
-			nfs_rpc_create_chan_v40(pclientid, flags);
-			break;
-		default:
-			/* XXX 1 or 2 */
-			nfs_rpc_create_chan_v41(pclientid, flags);
-			break;
+	if (clientid->cid_minorversion == 0) {
+		if (!chan->clnt) {
+			chan = &clientid->cid_cb.v40.cb_chan;
+			if (nfs_rpc_create_chan_v40(clientid,
+						    flags) == 0) {
+			}
+		}
+		} else { /* 1 and higher */
+		struct glist_head *glist = NULL;
+
+		/* Get the first working back channel we have */
+		glist_for_each(glist,
+			       &clientid->cid_cb.v41.cb_session_list) {
+			nfs41_session_t *session =
+				glist_entry(glist,
+					    nfs41_session_t,
+					    session_link);
+			if (session->cb_chan_up) {
+				chan = &session->cb_chan;
+			}
 		}
 	}
 
@@ -648,6 +771,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
  *
  * @param[in] chan The channel to dispose of
  */
+
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 {
 	assert(chan);
@@ -665,11 +789,15 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 			}
 			/* destroy it */
 			clnt_destroy(chan->clnt);
-			chan->clnt = NULL;
 		}
 		break;
 	case RPC_CHAN_V41:
-		/* XXX channel is shared */
+		if (chan->auth) {
+			AUTH_DESTROY(chan->auth);
+			chan->auth = NULL;
+		}
+		chan->clnt->cl_ops->cl_release(chan->clnt);
+
 		break;
 	}
 
@@ -722,17 +850,35 @@ unlock:
 	return stat;
 }
 
+/**
+ * @brief Free callback arguments
+ *
+ * @param[in] op The argop to free
+ */
+
 static inline void free_argop(nfs_cb_argop4 *op)
 {
 	gsh_free(op);
 }
+
+/**
+ * @brief Free callback result
+ *
+ * @param[in] op The resop to free
+ */
 
 static inline void free_resop(nfs_cb_resop4 *op)
 {
 	gsh_free(op);
 }
 
-rpc_call_t *alloc_rpc_call()
+/**
+ * @brief Allocate an RPC call
+ *
+ * @return The newly allocated call or NULL.
+ */
+
+rpc_call_t *alloc_rpc_call(void)
 {
 	rpc_call_t *call;
 
@@ -741,12 +887,30 @@ rpc_call_t *alloc_rpc_call()
 	return call;
 }
 
+/**
+ * @brief Fre an RPC call
+ *
+ * @param[in] call The call to free
+ */
+
 void free_rpc_call(rpc_call_t *call)
 {
 	free_argop(call->cbt.v_u.v4.args.argarray.argarray_val);
 	free_resop(call->cbt.v_u.v4.res.resarray.resarray_val);
 	pool_free(rpc_call_pool, call);
 }
+
+/**
+ * @brief Completion hook
+ *
+ * If a call has been supplied to handle the result, call the supplied
+ * hook. Otherwise, a no-op.
+ *
+ * @param[in] call  The RPC call
+ * @param[in] hook  The call hook
+ * @param[in] arg   Supplied arguments
+ * @param[in] flags Any flags
+ */
 
 static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 				 void* arg, uint32_t flags)
@@ -755,6 +919,15 @@ static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 	    call->call_hook(call, hook, arg, flags);
 	}
 }
+
+/**
+ * @brief Fire off an RPC call
+ *
+ * @param[in] call  The constructed call
+ * @param[in] flags Control flags for call
+ *
+ * @return 0 or POSIX error codes.
+ */
 
 int32_t nfs_rpc_submit_call(rpc_call_t *call,
 			    uint32_t flags)
@@ -779,6 +952,15 @@ int32_t nfs_rpc_submit_call(rpc_call_t *call,
 
 	return code;
 }
+
+/**
+ * @brief Dispatch a call
+ *
+ * @param[in,out] call  The call to dispatch
+ * @param[in]     flags Flags governing call
+ *
+ * @return 0 or POSIX errors.
+ */
 
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 {
@@ -846,8 +1028,17 @@ unlock:
 	return code;
 }
 
+/**
+ * @brief Abort a call
+ *
+ * @param[in] call The call to abort
+ *
+ * @todo function doesn't seem to do anything.
+ *
+ * @return But it does it successfully.
+ */
+
 int32_t nfs_rpc_abort_call(rpc_call_t *call)
 {
 	return 0;
 }
-

@@ -363,7 +363,10 @@ typedef struct rpc_call_channel {
 	enum rpc_chan_type type;
 	pthread_mutex_t mtx;
 	uint32_t states;
-	nfs_client_id_t *clientid;
+	union {
+		nfs_client_id_t *clientid;
+		nfs41_session_t *session;
+	} source;
 	time_t last_called;
 	CLIENT *clnt;
 	AUTH *auth;

@@ -224,7 +224,6 @@ int cache_inode_avl_qp_insert(
     v->hk.k &= ~(1L<<63);  /* just kill the sign bit, making cookies 63 bits... */
 #endif
 
-
     /* XXX would we really wait for UINT64_MAX?  if not, how many
      * probes should we attempt? */
 
