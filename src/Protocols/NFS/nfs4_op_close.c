@@ -113,7 +113,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
                 return res_CLOSE4->status;
         }
 
-        open_owner = state_found->state_powner;
+        open_owner = state_found->state_owner;
 
         pthread_mutex_lock(&open_owner->so_mutex);
 
@@ -182,7 +182,7 @@ int nfs4_op_close(struct nfs_argop4 *op,
 
         /* File is closed, release the share state */
         if (state_found->state_type == STATE_TYPE_SHARE) {
-                state_status = state_share_remove(state_found->state_pentry,
+                state_status = state_share_remove(state_found->state_entry,
 						  open_owner,
 						  state_found);
                 if (state_status != STATE_SUCCESS) {
@@ -214,9 +214,9 @@ int nfs4_op_close(struct nfs_argop4 *op,
                                                      state_list);
 
                         if ((state->state_type == STATE_TYPE_SHARE) &&
-                            (state->state_powner->so_type
+                            (state->state_owner->so_type
                              == STATE_OPEN_OWNER_NFSV4) &&
-                            (state->state_powner->so_owner.so_nfs4_owner
+                            (state->state_owner->so_owner.so_nfs4_owner
                              .so_clientid ==
                              data->psession->clientid)) {
                                 last_close = false;
@@ -238,9 +238,9 @@ int nfs4_op_close(struct nfs_argop4 *op,
                                 };
 
                                 if ((state->state_type == STATE_TYPE_LAYOUT) &&
-                                    (state->state_powner
+                                    (state->state_owner
                                      ->so_owner.so_nfs4_owner
-                                     .so_pclientid ==
+                                     .so_clientrec ==
                                      data->psession->clientid_record) &&
                                     state->state_data.layout
                                     .state_return_on_close) {

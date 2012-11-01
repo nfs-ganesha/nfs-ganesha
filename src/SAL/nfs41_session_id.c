@@ -25,6 +25,12 @@
  */
 
 /**
+ * @defgroup SAL State abstraction layer
+ * @{
+ */
+
+/**
+ * @file nfs41_session_id.c
  * @brief The management of the session id cache.
  */
 
@@ -38,13 +44,41 @@
 
 #include "sal_functions.h"
 
+/**
+ * @brief Pool for allocating session data
+ */
 pool_t *nfs41_session_pool = NULL;
 
 size_t strnlen(const char *s, size_t maxlen);
 
+/**
+ * @param Session ID hash
+ */
+
 hash_table_t *ht_session_id;
+
+/**
+ * @param counter for creating session IDs.
+ */
+
 uint64_t global_sequence = 0;
+
+/**
+ * @brief Mutex protecting sequence.
+ *
+ * @note ACE: Could we ditch remove this and use atomics?
+ */
+
 pthread_mutex_t mutex_sequence = PTHREAD_MUTEX_INITIALIZER;
+
+/**
+ * @brief Display a session ID
+ *
+ * @param[in]  session_id The session ID
+ * @param[out] str        Output buffer
+ *
+ * @return Length of output string.
+ */
 
 int display_session_id(char *session_id, char *str)
 {
@@ -52,6 +86,15 @@ int display_session_id(char *session_id, char *str)
 				  NFS4_SESSIONID_SIZE,
 				  str);
 }
+
+/**
+ * @brief Display a key in the session ID table
+ *
+ * @param[in]  buff The key to display
+ * @param[out] str  Displayed key
+ *
+ * @return Length of output string.
+ */
 
 int display_session_id_key(struct gsh_buffdesc *buff, char *str)
 {
@@ -61,6 +104,15 @@ int display_session_id_key(struct gsh_buffdesc *buff, char *str)
 	strtmp += display_session_id(buff->addr, strtmp);
 	return strtmp - str;
 }
+
+/**
+ * @brief Display a session object
+ *
+ * @param[in]  session The session to display
+ * @param[out] str     Output buffer
+ *
+ * @return Length of displayed string.
+ */
 
 int display_session(nfs41_session_t *session, char *str)
 {
@@ -72,16 +124,41 @@ int display_session(nfs41_session_t *session, char *str)
 	return strtmp - str;
 }
 
+/**
+ * @brief Display a value in the session ID table
+ *
+ * @param[in]  buff The value to display
+ * @param[out] str  Displayed value
+ *
+ * @return Length of output string.
+ */
+
 int display_session_id_val(struct gsh_buffdesc *buff, char *str)
 {
 	return display_session(buff->addr, str);
 }
+
+/**
+ * @brief Compare two session IDs in the hash table
+ *
+ * @retval 0 if they are equal.
+ * @retval 1 if they are not.
+ */
 
 int compare_session_id(struct gsh_buffdesc *buff1,
 		       struct gsh_buffdesc *buff2)
 {
 	return memcmp(buff1->addr, buff2->addr, NFS4_SESSIONID_SIZE);
 }
+
+/**
+ * @brief Hash index of a sessionid
+ *
+ * @param[in] hparam Hash table parameters
+ * @param[in] key    The session key
+ *
+ * @return The hash index of the key.
+ */
 
 uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
 				    struct gsh_buffdesc *key)
@@ -104,6 +181,15 @@ uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
 
 	return (sum % hparam->index_size);
 }
+
+/**
+ * @brief RBT hash of a sessionid
+ *
+ * @param[in] hparam Hash table parameters
+ * @param[in] key    The session key
+ *
+ * @return The RBT hash of the key.
+ */
 
 uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
 				  struct gsh_buffdesc *key)
@@ -131,7 +217,8 @@ uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
  *
  * @param[in] param Parameter used to init the session id cache
  *
- * @return 0 if successful, -1 otherwise
+ * @retval 0 if successful.
+ * @retval -1 otherwise
  *
  */
 
@@ -172,9 +259,11 @@ void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
  * @param[in] session      Sessionid to add
  * @param[in] session_data Session data to add
  *
- * @return 1 if ok, 0 otherwise.
+ * @retval 1 if successful.
+ * @retval 0 otherwise.
  *
  */
+
 int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
 		      nfs41_session_t *session_data)
 {
@@ -213,8 +302,8 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
  * @param[in]  sessionid    The sessionid to look up
  * @param[out] session_data The associated session data
  *
- * @return 1 if ok, 0 otherwise.
- *
+ * @retval 1 if successful.
+ * @retval 0 otherwise.
  */
 
 int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
@@ -255,7 +344,8 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
  *
  * @param[in] sessionid The sessionid to remove
  *
- * @return 1 if ok, 0 otherwise.
+ * @return 1 if successful.
+ * @retval 0 otherwise.
  */
 
 int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
@@ -304,3 +394,5 @@ void nfs41_Session_PrintAll(void)
 	HashTable_Log(COMPONENT_SESSIONS,
 		      ht_session_id);
 }
+
+/** @} */

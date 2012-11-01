@@ -141,14 +141,14 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 
 		display_client_record(client_record, str);
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_pconfirmed_id=%p "
-			     "cr_punconfirmed_id=%p",
+			     "Client Record %s cr_confirmed_rec=%p "
+			     "cr_unconfirmed_rec=%p",
 			     str,
-			     client_record->cr_pconfirmed_id,
-			     client_record->cr_punconfirmed_id);
+			     client_record->cr_confirmed_rec,
+			     client_record->cr_unconfirmed_rec);
 	}
 
-	conf = client_record->cr_pconfirmed_id;
+	conf = client_record->cr_confirmed_rec;
 
 	if (conf != NULL) {
 		/* Need a reference to the confirmed record for below */
@@ -306,7 +306,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 	 * remove any pre-existing unconfirmed record.
 	 */
 
-	unconf = client_record->cr_punconfirmed_id;
+	unconf = client_record->cr_unconfirmed_rec;
 
 	if (unconf != NULL) {
 		/* CASE 4, replacement of unconfirmed record */

@@ -149,7 +149,7 @@ nfs4_op_read(struct nfs_argop4 *op,
                         break;
 
                 case STATE_TYPE_LOCK:
-                        state_open = state_found->state_data.lock.popenstate;
+                        state_open = state_found->state_data.lock.openstate;
                         /**
                          * @todo FSF: should check that write is in
                          * range of an byte range lock...
@@ -208,7 +208,7 @@ nfs4_op_read(struct nfs_argop4 *op,
                 switch (state_found->state_type) {
                 case STATE_TYPE_SHARE:
                         if ((data->minorversion == 0) &&
-                            (!(state_found->state_powner->so_owner
+                            (!(state_found->state_owner->so_owner
                                .so_nfs4_owner.so_confirmed))) {
                                 res_READ4.status = NFS4ERR_BAD_STATEID;
                                 return res_READ4.status;
@@ -307,7 +307,7 @@ nfs4_op_read(struct nfs_argop4 *op,
         if (!anonymous &&
             data->minorversion == 0) {
                 data->req_ctx->clientid
-                        = &state_found->state_powner->so_owner
+                        = &state_found->state_owner->so_owner
                         .so_nfs4_owner.so_clientid;
         }
 

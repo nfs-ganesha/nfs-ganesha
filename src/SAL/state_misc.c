@@ -7,20 +7,26 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
+ */
+
+/**
+ * @defgroup SAL State abstraction layer
+ * @{
  */
 
 /**
@@ -55,6 +61,14 @@ pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
 pool_t *state_nfs4_owner_name_pool; /*< Pool for NFSv4 files's open_owner */
 pool_t *state_v4_pool; /*< Pool for NFSv4 files's states */
 
+/* Error conversion routines */
+/**
+ * @brief Get a string from an error code
+ *
+ * @param[in] err Error code
+ *
+ * @return Error string.
+ */
 const char *state_err_str(state_status_t err)
 {
   switch(err)
@@ -107,6 +121,13 @@ const char *state_err_str(state_status_t err)
   return "unknown";
 }
 
+/**
+ * @brief Convert Cache inode error to SAL error
+ *
+ * @param[in] status Cache inode error
+ *
+ * @return SAL error.
+ */
 state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 {
   switch(status)
@@ -154,15 +175,11 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
 }
 
 /**
+ * @brief converts an FSAL error to the corresponding state error.
  *
- * state_error_convert: converts an FSAL error to the corresponding state error.
+ * @param[in] fsal_status Fsal error to be converted
  *
- * Converts an FSAL error to the corresponding state error.
- *
- * @param fsal_status [IN] fsal error to be converted.
- *
- * @return the result of the conversion.
- *
+ * @return State status.
  */
 state_status_t state_error_convert(fsal_status_t fsal_status)
 {
@@ -266,14 +283,12 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
           "Default conversion to STATE_FSAL_ERROR for error %d, line %u should never be reached",
            fsal_status.major, __LINE__);
   return STATE_FSAL_ERROR;
-}                               /* state_error_convert */
+}
 
-/* Error conversion routines */
 /**
+ * @brief Converts a state status to a nfsv4 status
  *
- * nfs4_Errno: Converts a state status to a nfsv4 status.
- *
- * @param error  [IN] Input state error.
+ * @param[in] error Input state error
  *
  * @return the converted NFSv4 status.
  *
@@ -421,16 +436,14 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
     }
 
   return nfserror;
-}                               /* nfs4_Errno_state */
+}
 
 /**
+ * @brief Converts a state status to an NFSv3 status
  *
- * nfs3_Errno_state: Converts a state status to a nfsv3 status.
+ * @param[in] error State error
  *
- * @param error  [IN] Input state error.
- *
- * @return the converted NFSv3 status.
- *
+ * @return Converted NFSv3 status.
  */
 nfsstat3 nfs3_Errno_state(state_status_t error)
 {
@@ -565,12 +578,19 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
     }
 
   return nfserror;
-}                               /* nfs3_Errno_state */
+}
 
+/** String for undefined state owner types */
+const char *invalid_state_owner_type = "INVALID STATE OWNER TYPE";
 
-const char * invalid_state_owner_type = "INVALID STATE OWNER TYPE";
-
-const char * state_owner_type_to_str(state_owner_type_t type)
+/**
+ * @brief Return a string describing a state owner type
+ *
+ * @param[in] type The state owner type
+ *
+ * @return The string representation of the type.
+ */
+const char *state_owner_type_to_str(state_owner_type_t type)
 {
   switch(type)
     {
@@ -586,151 +606,199 @@ const char * state_owner_type_to_str(state_owner_type_t type)
   return invalid_state_owner_type;
 }
 
-int different_owners(state_owner_t *powner1, state_owner_t *powner2)
+/**
+ * @brief See if two owners differ
+ *
+ * @param[in] owner1 An owner
+ * @param[in] owner2 Another owner
+ *
+ * @retval true if owners differ.
+ * @retval false if owners are the same.
+ */
+bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
 {
-  if(powner1 == NULL || powner2 == NULL)
-    return 1;
+  if(owner1 == NULL || owner2 == NULL)
+    return true;
 
   /* Shortcut in case we actually are pointing to the same owner structure */
-  if(powner1 == powner2)
-    return 0;
+  if(owner1 == owner2)
+    return false;
 
-  if(powner1->so_type != powner2->so_type)
-    return 1;
+  if(owner1->so_type != owner2->so_type)
+    return true;
 
-  switch(powner1->so_type)
+  switch(owner1->so_type)
     {
       case STATE_LOCK_OWNER_NLM:
-        if(powner2->so_type != STATE_LOCK_OWNER_NLM)
-           return 1;
-        return compare_nlm_owner(powner1, powner2);
+        if(owner2->so_type != STATE_LOCK_OWNER_NLM)
+           return true;
+        return compare_nlm_owner(owner1, owner2);
 #ifdef _USE_9P
       case STATE_LOCK_OWNER_9P:
-        if(powner2->so_type != STATE_LOCK_OWNER_9P)
-           return 1;
-        return compare_9p_owner(powner1, powner2);
+        if(owner2->so_type != STATE_LOCK_OWNER_9P)
+           return true;
+        return compare_9p_owner(owner1, owner2);
 #endif
       case STATE_OPEN_OWNER_NFSV4:
       case STATE_LOCK_OWNER_NFSV4:
       case STATE_CLIENTID_OWNER_NFSV4:
-        if(powner1->so_type != powner2->so_type)
-          return 1;
-        return compare_nfs4_owner(powner1, powner2);
+        if(owner1->so_type != owner2->so_type)
+          return true;
+        return compare_nfs4_owner(owner1, owner2);
 
       case STATE_LOCK_OWNER_UNKNOWN:
         break;
     }
 
-  return 1;
+  return true;
 }
 
-int DisplayOwner(state_owner_t *powner, char *buf)
+/**
+ * @brief Display a state owner
+ *
+ * @param[in]  owner Owner to display
+ * @param[out] buf   Buffer for output string
+ *
+ * @return Length of output string.
+ */
+int DisplayOwner(state_owner_t *owner, char *buf)
 {
-  if(powner != NULL)
-    switch(powner->so_type)
+  if(owner != NULL)
+    switch(owner->so_type)
       {
         case STATE_LOCK_OWNER_NLM:
-          return display_nlm_owner(powner, buf);
+          return display_nlm_owner(owner, buf);
 #ifdef _USE_9P
         case STATE_LOCK_OWNER_9P:
-          return display_9p_owner(powner, buf);
+          return display_9p_owner(owner, buf);
 #endif
 
         case STATE_OPEN_OWNER_NFSV4:
         case STATE_LOCK_OWNER_NFSV4:
         case STATE_CLIENTID_OWNER_NFSV4:
-          return display_nfs4_owner(powner, buf);
+          return display_nfs4_owner(owner, buf);
 
         case STATE_LOCK_OWNER_UNKNOWN:
           return sprintf(buf,
-                         "%s powner=%p: refcount=%d",
-                         state_owner_type_to_str(powner->so_type), powner, powner->so_refcount);
+                         "%s owner=%p: refcount=%d",
+                         state_owner_type_to_str(owner->so_type), owner, owner->so_refcount);
     }
 
   return sprintf(buf, "%s", invalid_state_owner_type);
 }
 
+/**
+ * @brief Relinquish a reference on an owner in a hash table
+ *
+ * @param[in] buffval Buffer descriptor pointing to owner
+ *
+ * @return Reference count after decrement.
+ */
 int Hash_dec_state_owner_ref(struct gsh_buffdesc *buffval)
 {
   int rc;
-  state_owner_t *powner = (state_owner_t *)(buffval->addr);
+  state_owner_t *owner = buffval->addr;
 
-  P(powner->so_mutex);
+  P(owner->so_mutex);
 
-  powner->so_refcount--;
+  owner->so_refcount--;
 
   if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      DisplayOwner(powner, str);
+      DisplayOwner(owner, str);
       LogFullDebug(COMPONENT_STATE,
                    "Decrement refcount for {%s}",
                    str);
     }
 
-  rc = powner->so_refcount;
+  rc = owner->so_refcount;
 
-  V(powner->so_mutex);
+  V(owner->so_mutex);
 
   return rc;
 }
 
+/**
+ * @brief Take a reference on an owner in a hash table
+ *
+ * @param[in] buffval Buffer descriptor pointing to owner
+ */
 void Hash_inc_state_owner_ref(struct gsh_buffdesc *buffval)
 {
-  state_owner_t *powner = (state_owner_t *)(buffval->addr);
+  state_owner_t *owner = buffval->addr;
 
-  P(powner->so_mutex);
-  powner->so_refcount++;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      DisplayOwner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount for {%s}",
-                   str);
-    }
-
-  V(powner->so_mutex);
-}
-
-void inc_state_owner_ref_locked(state_owner_t *powner)
-{
-  powner->so_refcount++;
+  P(owner->so_mutex);
+  owner->so_refcount++;
 
   if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      DisplayOwner(powner, str);
+      DisplayOwner(owner, str);
       LogFullDebug(COMPONENT_STATE,
                    "Increment refcount for {%s}",
                    str);
     }
 
-  V(powner->so_mutex);
+  V(owner->so_mutex);
 }
 
-void inc_state_owner_ref(state_owner_t *powner)
+/**
+ * @brief Take a reference on a state owner
+ *
+ * The state owner must be locked when this function is called.
+ *
+ * @param[in] owner Owner to reference
+ */
+void inc_state_owner_ref_locked(state_owner_t *owner)
 {
-  P(powner->so_mutex);
+  owner->so_refcount++;
 
-  inc_state_owner_ref_locked(powner);
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      DisplayOwner(owner, str);
+      LogFullDebug(COMPONENT_STATE,
+                   "Increment refcount for {%s}",
+                   str);
+    }
+
+  V(owner->so_mutex);
 }
 
-void dec_state_owner_ref_locked(state_owner_t        * powner)
+/**
+ * @brief Take a reference on a state owner
+ *
+ * @param[in] owner Owner to reference
+ */
+void inc_state_owner_ref(state_owner_t *owner)
+{
+  P(owner->so_mutex);
+
+  inc_state_owner_ref_locked(owner);
+}
+
+/**
+ * @brief Relinquish a reference on a state owner
+ *
+ * The state owner must be locked when this function is called.
+ *
+ * @param[in] owner Owner to release
+ */
+void dec_state_owner_ref_locked(state_owner_t *owner)
 {
   bool remove = false;
   char   str[HASHTABLE_DISPLAY_STRLEN];
 
   if(isDebug(COMPONENT_STATE))
-    DisplayOwner(powner, str);
+    DisplayOwner(owner, str);
 
-  if(powner->so_refcount > 1)
+  if(owner->so_refcount > 1)
     {
-      powner->so_refcount--;
+      owner->so_refcount--;
 
       LogFullDebug(COMPONENT_STATE,
                    "Decrement refcount for {%s}",
@@ -744,42 +812,52 @@ void dec_state_owner_ref_locked(state_owner_t        * powner)
       remove = true;
     }
 
-  V(powner->so_mutex);
+  V(owner->so_mutex);
 
   if(remove)
     {
-      switch(powner->so_type)
+      switch(owner->so_type)
         {
           case STATE_LOCK_OWNER_NLM:
-            remove_nlm_owner(powner, str);
+            remove_nlm_owner(owner, str);
             break;
 #ifdef _USE_9P
           case STATE_LOCK_OWNER_9P:
-            remove_9p_owner( powner, str);
+            remove_9p_owner( owner, str);
 #endif
           case STATE_OPEN_OWNER_NFSV4:
           case STATE_LOCK_OWNER_NFSV4:
           case STATE_CLIENTID_OWNER_NFSV4:
-            remove_nfs4_owner(powner, str);
+            remove_nfs4_owner(owner, str);
             break;
 
           case STATE_LOCK_OWNER_UNKNOWN:
             LogDebug(COMPONENT_STATE,
-                     "Unexpected removal of powner=%p: %s",
-                     powner, str);
+                     "Unexpected removal of owner=%p: %s",
+                     owner, str);
             break;
         }
     }
 }
 
-void dec_state_owner_ref(state_owner_t        * powner)
+/**
+ * @brief Relinquish a reference on a state owner
+ *
+ * @param[in] owner Owner to release
+ */
+void dec_state_owner_ref(state_owner_t *owner)
 {
-  P(powner->so_mutex);
+  P(owner->so_mutex);
 
-  dec_state_owner_ref_locked(powner);
+  dec_state_owner_ref_locked(owner);
 }
 
-void state_wipe_file(cache_entry_t        * pentry)
+/**
+ * @brief Release all state on a file
+ *
+ * @param[in,out] entry File to be wiped
+ */
+void state_wipe_file(cache_entry_t *entry)
 {
   bool had_lock = false;
 
@@ -789,32 +867,44 @@ void state_wipe_file(cache_entry_t        * pentry)
    * delegations, which is state.  At that point, we may need to modify
    * this routine to clear state on directories.
    */
-  if (pentry->type != REGULAR_FILE)
+  if (entry->type != REGULAR_FILE)
     return;
 
   /* The state lock may have been acquired by the caller. */
-  if (pthread_rwlock_trywrlock(&pentry->state_lock))
+  if (pthread_rwlock_trywrlock(&entry->state_lock))
     {
       /* This thread already has some kind of lock, but we don't know
          if it's a write lock. */
       had_lock = true;
-      pthread_rwlock_unlock(&pentry->state_lock);
+      pthread_rwlock_unlock(&entry->state_lock);
     }
-  pthread_rwlock_wrlock(&pentry->state_lock);
+  pthread_rwlock_wrlock(&entry->state_lock);
 
-  state_lock_wipe(pentry);
+  state_lock_wipe(entry);
 
-  state_share_wipe(pentry);
+  state_share_wipe(entry);
 
-  state_nfs4_state_wipe(pentry);
+  state_nfs4_state_wipe(entry);
 
   if (!had_lock)
     {
-      pthread_rwlock_unlock(&pentry->state_lock);
+      pthread_rwlock_unlock(&entry->state_lock);
     }
 }
 
-int DisplayOpaqueValue(char * value, int len, char * str)
+/**
+ * @brief Display a run of bytes
+ *
+ * This produces a string as a decimal count and a series of decimal
+ * digits.
+ *
+ * @param[in]  value Bytes to display
+ * @param[in]  len   Count of bytes to display
+ * @parma[out] str   Output buffer
+ *
+ * @return Length of output string.
+ */
+int DisplayOpaqueValue(char *value, int len, char *str)
 {
   unsigned int   i = 0;
   char         * strtmp = str;
@@ -850,3 +940,4 @@ int DisplayOpaqueValue(char * value, int len, char * str)
 
   return strtmp - str;
 }
+/** @} */

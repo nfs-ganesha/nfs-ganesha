@@ -5,9 +5,9 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software F oundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software F oundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,7 +20,15 @@
  * 02110-1301 USA
  *
  * ---------------------------------------
- *
+ */
+
+/**
+ * @defgroup SAL State abstraction layer
+ * @{
+ */
+
+/**
+ * @file nfs4_clientid.c
  * @brief The management of the client id cache.
  *
  */
@@ -48,16 +56,53 @@
 #include "cache_inode_lru.h"
 #include "abstract_atomic.h"
 
-/* Hashtables used to cache NFSv4 clientids */
+/**
+ * @brief Hashtable used to cache NFSv4 clientids
+ */
 hash_table_t *ht_client_record;
+
+/**
+ * @brief Hash table to store confirmed client IDs
+ */
 hash_table_t *ht_confirmed_client_id;
+
+/**
+ * @brief Hash table to store unconfirmed client IDs
+ */
 hash_table_t *ht_unconfirmed_client_id;
+
+/**
+ * @brief Mutex to protect the counter
+ */
 pthread_mutex_t clientid_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/**
+ * @brief Counter to create clientids
+ */
 uint32_t clientid_counter;
+
+/**
+ * @brief Verifier to construct clientids
+ */
 uint64_t clientid_verifier;
+
+/**
+ * @brief Pool for client data structures
+ */
 pool_t *client_id_pool;
+
+/**
+ * @brief Pool for client owner records
+ */
 pool_t *client_record_pool;
 
+/**
+ * @brief Return a string corresponding to the confirm state
+ *
+ * @param[in] confirmed Confirm state
+ *
+ * @return Corresponding string.
+ */
 const char *clientid_confirm_state_to_str(
 	nfs_clientid_confirm_state_t confirmed)
 {
@@ -72,6 +117,14 @@ const char *clientid_confirm_state_to_str(
 	return "UNKNOWN STATE";
 }
 
+/**
+ * @brief Display a client record
+ *
+ * @param[in]  clientid Client record
+ * @param[out] str      Output buffer
+ *
+ * @return Length of display string.
+ */
 int display_client_id_rec(nfs_client_id_t *clientid, char *str)
 {
 	int delta;
@@ -113,7 +166,15 @@ int display_client_id_rec(nfs_client_id_t *clientid, char *str)
 	return tmpstr - str;
 }
 
-int display_clientid_name(nfs_client_id_t * clientid, char *str)
+/**
+ * @brief Display a client owner
+ *
+ * @param[in]  clientid The client record
+ * @param[out] str      Output buffer
+ *
+ * @return Length of display string.
+ */
+int display_clientid_name(nfs_client_id_t *clientid, char *str)
 {
 	if (clientid->cid_client_record != NULL)
 		return DisplayOpaqueValue(clientid->cid_client_record
@@ -125,6 +186,11 @@ int display_clientid_name(nfs_client_id_t * clientid, char *str)
 		return sprintf(str, "<NULL>");
 }
 
+/**
+ * @brief Increment the clientid refcount in the hash table
+ *
+ * @param[in] val Buffer pointing to client record
+ */
 static void Hash_inc_client_id_ref(struct gsh_buffdesc *val)
 {
 	nfs_client_id_t *clientid = val->addr;
@@ -132,6 +198,11 @@ static void Hash_inc_client_id_ref(struct gsh_buffdesc *val)
 	inc_client_id_ref(clientid);
 }
 
+/**
+ * @brief Increment the clientid refcount
+ *
+ * @param[in] clientid Client record
+ */
 void inc_client_id_ref(nfs_client_id_t *clientid)
 {
 	int32_t cid_refcount = atomic_inc_int32_t(&clientid->cid_refcount);
@@ -146,6 +217,11 @@ void inc_client_id_ref(nfs_client_id_t *clientid)
 	}
 }
 
+/**
+ * @brief Deconstruct and free a client record
+ *
+ * @param[in] clientid The client record to free
+ */
 void free_client_id(nfs_client_id_t *clientid)
 {
 	assert(atomic_fetch_int32_t(&clientid->cid_refcount) == 0);
@@ -176,6 +252,11 @@ void free_client_id(nfs_client_id_t *clientid)
 	pool_free(client_id_pool, clientid);
 }
 
+/**
+ * @brief Decrement the clientid refcount
+ *
+ * @param[in] clientid Client record
+ */
 void dec_client_id_ref(nfs_client_id_t *clientid)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
@@ -215,71 +296,72 @@ void dec_client_id_ref(nfs_client_id_t *clientid)
 }
 
 /**
- * @brief computes the hash value for the entry in Client Id cache.
+ * @brief Computes the hash value for the entry in Client Id cache.
  *
- * Computes the hash value for the entry in Client Id cache. In fact,
- * it just use addresse as value (identity function) modulo the size
- * of the hash.  This function is called internal in the HasTable_*
- * function
+ * This function computes the hash value for the entry in Client Id
+ * cache. In fact, it just uses the clientid as the value (identity
+ * function) modulo the size of the hash.  This function is called
+ * internal in the HasTable_* function
  *
- * @param[in] hparam hash table parameter
- * @param[in] buffcleff pointer to the hash key buffer
+ * @param[in] hparam Hash table parameter
+ * @param[in] key    Pointer to the hash key buffer
  *
- * @return the computed hash value.
+ * @return The computed hash value.
  *
  * @see HashTable_Init
  *
  */
 uint32_t client_id_value_hash_func(hash_parameter_t *hparam,
-				   struct gsh_buffdesc *buffclef)
+				   struct gsh_buffdesc *key)
 {
 	clientid4 clientid;
 
-	memcpy(&clientid, buffclef->addr, sizeof(clientid));
+	memcpy(&clientid, key->addr, sizeof(clientid));
 
 	return (uint32_t) clientid % hparam->index_size;
 }
 
 /**
- * @brief computes the rbt value for the entry in Client Id cache.
+ * @brief Computes the RBT hash for the entry in Client Id cache
  *
  * Computes the rbt value for the entry in Client Id cache. In fact,
  * it just use the address value itself (which is an unsigned integer)
  * as the rbt value.  This function is called internal in the
  * HasTable_* function
  *
- * @param[in] hparam    hash table parameter.
- * @param[in] buffcleff pointer to the hash key buffer
+ * @param[in] hparam Hash table parameter.
+ * @param[in] key    Hash key buffer
  *
- * @return the computed rbt value.
+ * @return The computed RBT value.
  *
  * @see HashTable_Init
  *
  */
 uint64_t client_id_rbt_hash_func(hash_parameter_t *hparam,
-				 struct gsh_buffdesc *buffclef)
+				 struct gsh_buffdesc *key)
 {
 	clientid4 clientid;
 
-	memcpy(&clientid, buffclef->addr, sizeof(clientid));
+	memcpy(&clientid, key->addr, sizeof(clientid));
 
 	return clientid;
 }
 
 /**
- * Compares the clientid stored in the key buffers.
+ * @brief Compares clientids stored in the key buffers.
  *
- * Compare the clientid stored in the key buffers. This function is to
- * be used as 'compare_key' field in the hashtable storing the client
- * ids.
+ * This function compares the clientid stored in the key buffers. This
+ * function is to be used as 'compare_key' field in the hashtable
+ * storing the client ids.
  *
  * @param[in] buff1 first key
  * @param[in] buff2 second key
  *
- * @return 0 if keys are identifical, 1 if they are different.
+ * @retval 0 if keys are identifical.
+ * @retval 1 if the keys are different.
  *
  */
-int compare_client_id(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
+int compare_client_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
 	clientid4 cl1 = *((clientid4 *) (buff1->addr));
 	clientid4 cl2 = *((clientid4 *) (buff2->addr));
@@ -287,31 +369,48 @@ int compare_client_id(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 }
 
 /**
- * Displays the client_id stored in the buffer.
- *
- * displays the client_id stored in the buffer. This function is to be used as 'key_to_str' field in
- * the hashtable storing the client ids.
+ * @brief Displays the client_id stored from the hash table
  *
  * @param[in] buff1 buffer to display
  * @param[in] buff2 output string
  *
- * @return number of character written.
+ * @return Number of character written.
  *
  */
-int display_client_id_key(struct gsh_buffdesc *pbuff, char *str)
+int display_client_id_key(struct gsh_buffdesc *buff, char *str)
 {
 	clientid4 clientid;
 
-	clientid = *((clientid4 *) (pbuff->addr));
+	clientid = *((clientid4 *) (buff->addr));
 
 	return sprintf(str, "%"PRIx64, clientid);
 }
 
-int display_client_id_val(struct gsh_buffdesc * pbuff, char *str)
+/**
+ * @brief Displays the client record from a hash table
+ *
+ * @param[in] buff1 buffer to display
+ * @param[in] buff2 output string
+ *
+ * @return Number of character written.
+ *
+ */
+int display_client_id_val(struct gsh_buffdesc *buff, char *str)
 {
-	return display_client_id_rec(pbuff->addr, str);
+	return display_client_id_rec(buff->addr, str);
 }
 
+/**
+ * @brief Create a new client record
+ *
+ * @param[in] clientid      The associated clientid
+ * @param[in] client_record The client owner record
+ * @param[in] client_addr   Client socket address
+ * @param[in] credential    Client credential
+ * @param[in] minorversion  Minor version client uses
+ *
+ * @return New client record or NULL.
+ */
 nfs_client_id_t *create_client_id(clientid4 clientid,
 				  nfs_client_record_t *client_record,
 				  sockaddr_t *client_addr,
@@ -379,7 +478,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	/* set up the content of the clientid_owner */
 	owner->so_type = STATE_CLIENTID_OWNER_NFSV4;
 	owner->so_owner.so_nfs4_owner.so_clientid  = clientid;
-	owner->so_owner.so_nfs4_owner.so_pclientid = client_rec;
+	owner->so_owner.so_nfs4_owner.so_clientrec = client_rec;
 	owner->so_owner.so_nfs4_owner.so_resp.resop = NFS4_OP_ILLEGAL;
 	owner->so_owner.so_nfs4_owner.so_args.argop = NFS4_OP_ILLEGAL;
 	owner->so_refcount = 1;
@@ -406,7 +505,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
  *         query (via gethostbyaddr).
  */
 
-int nfs_client_id_insert(nfs_client_id_t * clientid)
+clientid_status_t nfs_client_id_insert(nfs_client_id_t *clientid)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffdata;
@@ -448,7 +547,7 @@ int nfs_client_id_insert(nfs_client_id_t * clientid)
 	}
 
 	/* Attach new clientid to client record's cr_punconfirmed_id. */
-	clientid->cid_client_record->cr_punconfirmed_id = clientid;
+	clientid->cid_client_record->cr_unconfirmed_rec = clientid;
 
 	return CLIENT_ID_SUCCESS;
 }
@@ -460,7 +559,6 @@ int nfs_client_id_insert(nfs_client_id_t * clientid)
  *
  * @return hash table error code
  */
-
 int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 {
 	int rc;
@@ -485,7 +583,7 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 		return rc;
 	}
 
-	clientid->cid_client_record->cr_punconfirmed_id = NULL;
+	clientid->cid_client_record->cr_unconfirmed_rec = NULL;
 
 	/* Set this up so this client id record will be freed. */
 	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
@@ -509,9 +607,8 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
  * @retval CLIENT_ID_NETDB_ERROR if an error occured during the netdb
  *         query (via gethostbyaddr).
  */
-
-int nfs_client_id_confirm(nfs_client_id_t *clientid,
-			  log_components_t  component)
+clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
+					log_components_t component)
 {
 	int rc;
 	struct gsh_buffdesc buffkey;
@@ -523,7 +620,7 @@ int nfs_client_id_confirm(nfs_client_id_t *clientid,
 
 	/* Remove the clientid as the unconfirmed entry for the client
 	   record */
-	clientid->cid_client_record->cr_punconfirmed_id = NULL;
+	clientid->cid_client_record->cr_unconfirmed_rec = NULL;
 
 	rc = HashTable_Del(ht_unconfirmed_client_id,
 			   &buffkey,
@@ -577,7 +674,7 @@ int nfs_client_id_confirm(nfs_client_id_t *clientid,
 
 	/* Add the clientid as the confirmed entry for the client
 	   record */
-	clientid->cid_client_record->cr_pconfirmed_id = clientid;
+	clientid->cid_client_record->cr_confirmed_rec = clientid;
 
 	return CLIENT_ID_SUCCESS;
 }
@@ -585,15 +682,14 @@ int nfs_client_id_confirm(nfs_client_id_t *clientid,
 /**
  * @brief Client expires, need to take care of owners
  *
- * This function assumes caller holds precord->cr_mutex and holds a
- * reference to precord also.
+ * This function assumes caller holds record->cr_mutex and holds a
+ * reference to record also.
  *
  * @param[in] clientid The client id to expire
  *
  * @return true if the clientid is successfully expired.
  */
-
-int nfs_client_id_expire(nfs_client_id_t *clientid)
+bool nfs_client_id_expire(nfs_client_id_t *clientid)
 {
 	struct glist_head *glist, *glistn;
 	struct glist_head *glist2, *glistn2;
@@ -602,7 +698,7 @@ int nfs_client_id_expire(nfs_client_id_t *clientid)
 	struct gsh_buffdesc old_key;
 	struct gsh_buffdesc old_value;
 	hash_table_t *ht_expire;
-	nfs_client_record_t *precord;
+	nfs_client_record_t *record;
 
 	P(clientid->cid_mutex);
 	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
@@ -632,16 +728,16 @@ int nfs_client_id_expire(nfs_client_id_t *clientid)
 	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
 
 	/* Need to clean up the client record. */
-	precord = clientid->cid_client_record;
+	record = clientid->cid_client_record;
 
 	V(clientid->cid_mutex);
 
 	/* Detach the clientid record from the client record */
-	if (precord->cr_pconfirmed_id == clientid)
-		precord->cr_pconfirmed_id = NULL;
+	if (record->cr_confirmed_rec == clientid)
+		record->cr_confirmed_rec = NULL;
 
-	if (precord->cr_punconfirmed_id == clientid)
-		precord->cr_punconfirmed_id = NULL;
+	if (record->cr_unconfirmed_rec == clientid)
+		record->cr_unconfirmed_rec = NULL;
 
 	buffkey.addr = &clientid->cid_clientid;
 	buffkey.len = sizeof(clientid->cid_clientid);
@@ -744,15 +840,24 @@ int nfs_client_id_expire(nfs_client_id_t *clientid)
 	return true;
 }
 
-int nfs_client_id_get(hash_table_t * ht,
-		      clientid4 clientid,
-		      nfs_client_id_t **p_clientid)
+/**
+ * @brief Get a clientid from a hash table
+ *
+ * @param[in]  ht         Table from which to fetch
+ * @param[in]  clientid   Clientid to fetch
+ * @param[out] client_rec Fetched client record
+ *
+ * @return Clientid status.
+ */
+clientid_status_t nfs_client_id_get(hash_table_t *ht,
+				    clientid4 clientid,
+				    nfs_client_id_t **client_rec)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
-	int status;
+	clientid_status_t status;
 
-	if (p_clientid == NULL)
+	if (client_rec == NULL)
 		return CLIENT_ID_INVALID_ARGUMENT;
 
 	buffkey.addr = &clientid;
@@ -780,13 +885,13 @@ int nfs_client_id_get(hash_table_t * ht,
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "%s FOUND", ht->parameter.ht_name);
-		*p_clientid = buffval.addr;
+		*client_rec = buffval.addr;
 		status = CLIENT_ID_SUCCESS;
 	} else {
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "%s NOTFOUND", ht->parameter.ht_name);
-		*p_clientid = NULL;
+		*client_rec = NULL;
 		status = CLIENT_ID_NOT_FOUND;
 	}
 
@@ -801,12 +906,11 @@ int nfs_client_id_get(hash_table_t * ht,
  *
  * @return Same as nfs_client_id_get
  */
-
-int nfs_client_id_get_unconfirmed(clientid4 clientid,
-				  nfs_client_id_t **p_clientid)
+clientid_status_t nfs_client_id_get_unconfirmed(clientid4 clientid,
+						nfs_client_id_t **client_rec)
 {
 	return nfs_client_id_get(ht_unconfirmed_client_id, clientid,
-				 p_clientid);
+				 client_rec);
 }
 
 /**
@@ -818,8 +922,8 @@ int nfs_client_id_get_unconfirmed(clientid4 clientid,
  * @return the result previously set if the return code CLIENT_ID_SUCCESS
  *
  */
-int nfs_client_id_get_confirmed(clientid4 clientid,
-				nfs_client_id_t **client_rec)
+clientid_status_t nfs_client_id_get_confirmed(clientid4 clientid,
+					      nfs_client_id_t **client_rec)
 {
 	return nfs_client_id_get(ht_confirmed_client_id, clientid,
 				 client_rec);
@@ -833,7 +937,6 @@ int nfs_client_id_get_confirmed(clientid4 clientid,
  * @param[in] param Parameter used to init the duplicate request cache
  *
  * @return 0 if successful, -1 otherwise
- *
  */
 int nfs_Init_client_id(nfs_client_id_parameter_t *param)
 {
@@ -888,8 +991,13 @@ int nfs_Init_client_id(nfs_client_id_parameter_t *param)
 }
 
 /**
- * @brief Builds a new clientid4 value using counter and ServerEpoch.
+ * @brief Builds a new clientid4 value
  *
+ * We use the clientid counter and the server epoch, the latter
+ * ensures that clientids from old instances of Ganesha are marked as
+ * invalid.
+ *
+ * @return The new clientid.
  */
 
 clientid4 new_clientid(void)
@@ -907,14 +1015,13 @@ clientid4 new_clientid(void)
 /**
  * @brief Builds a new verifier4 value.
  *
- * @param[out] pverf The verifier
+ * @param[out] verf The verifier
  */
-
-void new_clientifd_verifier(char *pverf)
+void new_clientifd_verifier(char *verf)
 {
 	P(clientid_mutex);
 	++clientid_verifier;
-	memcpy(pverf, &clientid_verifier, NFS4_VERIFIER_SIZE);
+	memcpy(verf, &clientid_verifier, NFS4_VERIFIER_SIZE);
 	V(clientid_mutex);
 }
 
@@ -925,46 +1032,70 @@ void new_clientifd_verifier(char *pverf)
  *
  *****************************************************************************/
 
-int display_client_record(nfs_client_record_t *precord, char *str)
+/**
+ * @brief Display a client owner record
+ *
+ * @param[in]  record The record to display
+ * @param[out] str    Output buffer
+ *
+ * @return Length of output string.
+ */
+
+int display_client_record(nfs_client_record_t *record, char *str)
 {
 	char *strtmp = str;
 
-	strtmp += sprintf(strtmp, "%p name=", precord);
+	strtmp += sprintf(strtmp, "%p name=", record);
 
-	strtmp += DisplayOpaqueValue(precord->cr_client_val,
-				     precord->cr_client_val_len,
+	strtmp += DisplayOpaqueValue(record->cr_client_val,
+				     record->cr_client_val_len,
 				     strtmp);
 
 	strtmp += sprintf(strtmp, " refcount=%"PRId32,
-			  atomic_fetch_int32_t(&precord->cr_refcount));
+			  atomic_fetch_int32_t(&record->cr_refcount));
 
 	return strtmp - str;
 }
 
-void inc_client_record_ref(nfs_client_record_t *precord)
+/**
+ * @brief Increment the refcount on a client owner record
+ *
+ * @param[in] record Record on which to take a reference
+ */
+void inc_client_record_ref(nfs_client_record_t *record)
 {
-	atomic_inc_int32_t(&precord->cr_refcount);
+	atomic_inc_int32_t(&record->cr_refcount);
 
 	if(isFullDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
 
-		display_client_record(precord, str);
+		display_client_record(record, str);
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Increment refcount {%s}",
 			     str);
 	}
 }
 
-void free_client_record(nfs_client_record_t *precord)
+/**
+ * @brief Deconstruct and free a client owner record
+ *
+ * @param[in] record The record to free
+ */
+void free_client_record(nfs_client_record_t *record)
 {
-	if (pthread_mutex_destroy(&precord->cr_mutex) != 0)
+	if (pthread_mutex_destroy(&record->cr_mutex) != 0)
 		LogDebug(COMPONENT_CLIENTID,
 			 "pthread_mutex_destroy returned errno %d(%s)",
 			 errno, strerror(errno));
-	pool_free(client_record_pool, precord);
+	pool_free(client_record_pool, record);
 }
 
-void dec_client_record_ref(nfs_client_record_t *precord)
+/**
+ * @brief Decrement the refcount on a client owner record
+ *
+ * @param[in] record Record on which to release a reference
+ */
+void dec_client_record_ref(nfs_client_record_t *record)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
 	struct hash_latch latch;
@@ -975,9 +1106,9 @@ void dec_client_record_ref(nfs_client_record_t *precord)
 	int32_t refcount;
 
 	if (isDebug(COMPONENT_CLIENTID))
-		display_client_record(precord, str);
+		display_client_record(record, str);
 
-	refcount = atomic_dec_int32_t(&precord->cr_refcount);
+	refcount = atomic_dec_int32_t(&record->cr_refcount);
 
 	if (refcount > 0) {
 		LogFullDebug(COMPONENT_CLIENTID,
@@ -991,8 +1122,8 @@ void dec_client_record_ref(nfs_client_record_t *precord)
 		     "Try to remove {%s}",
 		     str);
 
-	buffkey.addr = precord;
-	buffkey.len = sizeof(*precord);
+	buffkey.addr = record;
+	buffkey.len = sizeof(*record);
 
 	/* Get the hash table entry and hold latch */
 	rc = HashTable_GetLatch(ht_client_record,
@@ -1010,7 +1141,7 @@ void dec_client_record_ref(nfs_client_record_t *precord)
 			 hash_table_err_to_str(rc), str);
 	}
 
-	refcount = atomic_fetch_int32_t(&precord->cr_refcount);
+	refcount = atomic_fetch_int32_t(&record->cr_refcount);
 
 	if (refcount > 0) {
 		LogDebug(COMPONENT_CLIENTID,
@@ -1044,41 +1175,47 @@ void dec_client_record_ref(nfs_client_record_t *precord)
 	free_client_record(old_value.addr);
 }
 
-uint64_t client_record_value_hash(nfs_client_record_t *pkey)
+/**
+ * @brief Hash a client owner record key
+ *
+ * @todo ACE: Destroy this function and use a real hash.
+ *
+ * @param[in] key The client owner record
+ *
+ * @return The hash.
+ */
+uint64_t client_record_value_hash(nfs_client_record_t *key)
 {
 	unsigned int i;
 	uint64_t res = 0;
 	unsigned char *sum = (unsigned char *) &res;
 
 	/* Compute the sum of all the characters across the uint64_t */
-	for (i = 0; i < pkey->cr_client_val_len; i++)
-		sum[i % sizeof(res)] += (unsigned char)pkey->cr_client_val[i];
+	for (i = 0; i < key->cr_client_val_len; i++)
+		sum[i % sizeof(res)] += (unsigned char)key->cr_client_val[i];
 
 	return res;
 }
 
 /**
  *
- * @brief computes the hash value for the entry in Client Record cache.
+ * @brief Computes the hash value for the entry in Client Record cache.
  *
- * Computes the hash value for the entry in Client Record cache
- * This function is called internal in the HasTable_* function
- *
- * @param[in] hparam    Hash table parameter.
- * @param[in] buffcleff pointer to the hash key buffer
+ * @param[in] hparam Hash table parameter.
+ * @param[in] key    The hash key buffer
  *
  * @return the computed hash value.
  *
  * @see HashTable_Init
  *
  */
-uint32_t client_record_value_hash_func(hash_parameter_t *p_hparam,
-				       struct gsh_buffdesc *buffclef)
+uint32_t client_record_value_hash_func(hash_parameter_t *hparam,
+				       struct gsh_buffdesc *key)
 {
 	uint64_t res;
 
-	res = client_record_value_hash(buffclef->addr) %
-		p_hparam->index_size;
+	res = client_record_value_hash(key->addr) %
+		hparam->index_size;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_CLIENTID,
@@ -1088,25 +1225,22 @@ uint32_t client_record_value_hash_func(hash_parameter_t *p_hparam,
 }
 
 /**
- *  @brief computes the rbt value for the entry in Client Id cache.
+ * @brief Computes the RBT hash for the entry in Client Id cache.
  *
- * Computes the rbt value for the entry in Client Record cache.
- * This function is called internal in the HasTable_* function
+ * @param[in] hparam Hash table parameter
+ * @param[in] key    The hash key buffer
  *
- * @param hparam [IN] hash table parameter.
- * @param buffcleff[in] pointer to the hash key buffer
- *
- * @return the computed rbt value.
+ * @return The computed rbt value.
  *
  * @see HashTable_Init
  *
  */
-unsigned long client_record_rbt_hash_func(hash_parameter_t *p_hparam,
-					  struct gsh_buffdesc *buffclef)
+unsigned long client_record_rbt_hash_func(hash_parameter_t *hparam,
+					  struct gsh_buffdesc *key)
 {
 	uint64_t res;
 
-	res = client_record_value_hash(buffclef->addr);
+	res = client_record_value_hash(key->addr);
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_CLIENTID,
@@ -1117,10 +1251,6 @@ unsigned long client_record_rbt_hash_func(hash_parameter_t *p_hparam,
 
 /**
  * @brief Compares the cr_client_val the key buffers.
- *
- * Compare the cr_client_val stored in the key buffers. This function
- * is to be used as 'compare_key' field in the hashtable storing the
- * client records.
  *
  * @param[in] buff1 first key
  * @param[in] buff2 second key
@@ -1145,49 +1275,60 @@ int compare_client_record(struct gsh_buffdesc *buff1,
 /**
  * @brief Displays the client_record stored in the buffer.
  *
- * displays the client_record stored in the buffer. This function is
- * to be used as 'key_to_str' field in the hashtable storing the
- * client ids.
+ * @param[in] buff Buffer to display
+ * @param[out str  output string
  *
- * @param[in] buff  Buffer to display
- * @param[out str   output string
- *
- * @return number of character written.
+ * @return The number of character written.
  */
-
-int display_client_record_key(struct gsh_buffdesc *pbuff, char *str)
+int display_client_record_key(struct gsh_buffdesc *buff, char *str)
 {
-	return display_client_record(pbuff->addr, str);
+	return display_client_record(buff->addr, str);
 }
 
-int display_client_record_val(struct gsh_buffdesc *pbuff, char *str)
+/**
+ * @brief Displays the client_record stored in the buffer.
+ *
+ * @param[in] buff Buffer to display
+ * @param[out str  output string
+ *
+ * @return The number of character written.
+ */
+int display_client_record_val(struct gsh_buffdesc *buff, char *str)
 {
-	return display_client_record(pbuff->addr, str);
+	return display_client_record(buff->addr, str);
 }
 
+/**
+ * @brief Get a client record from the table
+ *
+ * @param[in] value Client owner name
+ * @param[in] len   Length of owner name
+ *
+ * @return The client record or NULL.
+ */
 nfs_client_record_t *get_client_record(char *value, int len)
 {
-	nfs_client_record_t *precord;
+	nfs_client_record_t *record;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	struct hash_latch latch;
 	hash_error_t rc;
 
-	precord = pool_alloc(client_record_pool, NULL);
+	record = pool_alloc(client_record_pool, NULL);
 
-	if (precord == NULL)
+	if (record == NULL)
 		return NULL;
 
-	precord->cr_refcount       = 1;
-	precord->cr_client_val_len = len;
-	memcpy(precord->cr_client_val, value, len);
-	buffkey.addr = precord;
-	buffkey.len   = sizeof(*precord);
+	record->cr_refcount       = 1;
+	record->cr_client_val_len = len;
+	memcpy(record->cr_client_val, value, len);
+	buffkey.addr = record;
+	buffkey.len = sizeof(*record);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
 
-		display_client_record(precord, str);
+		display_client_record(record, str);
 
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Find Client Record KEY {%s}", str);
@@ -1205,20 +1346,20 @@ nfs_client_record_t *get_client_record(char *value, int len)
 		 * Client Record.  Directly free since we didn't
 		 * complete initialization.
 		 */
-		pool_free(client_record_pool, precord);
-		precord = buffval.addr;
-		inc_client_record_ref(precord);
+		pool_free(client_record_pool, record);
+		record = buffval.addr;
+		inc_client_record_ref(record);
 		HashTable_ReleaseLatched(ht_client_record, &latch);
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
-			display_client_record(precord, str);
+			display_client_record(record, str);
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "Found {%s}",
 				     str);
 		}
 
-		return precord;
+		return record;
 	}
 
 	/* Any other result other than no such key is an error */
@@ -1230,36 +1371,36 @@ nfs_client_record_t *get_client_record(char *value, int len)
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
-			display_client_record(precord, str);
+			display_client_record(record, str);
 
 			LogDebug(COMPONENT_CLIENTID,
 				 "Error %s, failed to find {%s}",
 				 hash_table_err_to_str(rc), str);
 		}
 
-		pool_free(client_record_pool, precord);
+		pool_free(client_record_pool, record);
 
 		return NULL;
 	}
 
-	if (pthread_mutex_init(&precord->cr_mutex, NULL) == -1) {
+	if (pthread_mutex_init(&record->cr_mutex, NULL) == -1) {
 		/* Mutex initialization failed, directly free the
 		 * record since we failed to initialize it. Also
 		 * release hash latch since we failed to add record.
 		 */
 		HashTable_ReleaseLatched(ht_client_record, &latch);
-		pool_free(client_record_pool, precord);
+		pool_free(client_record_pool, record);
 		return NULL;
 	}
 
 	/* Use same record for record and key */
-	buffval.addr = precord;
-	buffval.len   = sizeof(*precord);
+	buffval.addr = record;
+	buffval.len = sizeof(*record);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
 
-		display_client_record(precord, str);
+		display_client_record(record, str);
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "New {%s}", str);
 	}
@@ -1276,26 +1417,28 @@ nfs_client_record_t *get_client_record(char *value, int len)
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[HASHTABLE_DISPLAY_STRLEN];
 
-			display_client_record(precord, str);
+			display_client_record(record, str);
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "Set Client Record {%s}",
 				     str);
 		}
 
-		return precord;
+		return record;
 	}
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
 
-		display_client_record(precord, str);
+		display_client_record(record, str);
 
 		LogDebug(COMPONENT_CLIENTID,
 			 "Error %s Failed to add {%s}",
 			 hash_table_err_to_str(rc), str);
 	}
 
-	free_client_record(precord);
+	free_client_record(record);
 
 	return NULL;
 }
+
+/** @} */

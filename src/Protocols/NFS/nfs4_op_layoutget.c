@@ -196,7 +196,7 @@ acquire_layout_state(compound_data_t *data,
                 init_glist(&(*layout_state)->state_data.layout.state_segments);
 
                 /* Attach this open to an export */
-                (*layout_state)->state_pexport = data->pexport;
+                (*layout_state)->state_export = data->pexport;
                 pthread_mutex_lock(&data->pexport->exp_state_mutex);
                 glist_add_tail(&data->pexport->exp_state_list,
                                &(*layout_state)->state_export_list);

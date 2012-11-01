@@ -170,7 +170,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
             break;
 
           case STATE_TYPE_LOCK:
-            state_open = state_found->state_data.lock.popenstate;
+            state_open = state_found->state_data.lock.openstate;
             /**
              * @todo FSF: should check that write is in range of an
              * exclusive lock... */
@@ -323,7 +323,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
   if (!anonymous &&
       data->minorversion == 0) {
           data->req_ctx->clientid
-                  = &state_found->state_powner->so_owner.
+                  = &state_found->state_owner->so_owner.
                   so_nfs4_owner.so_clientid;
   }
 

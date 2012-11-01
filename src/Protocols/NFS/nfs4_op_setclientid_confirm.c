@@ -153,10 +153,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		display_client_record(client_record, str);
 
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_pconfirmed_id=%p "
-			     "cr_punconfirmed_id=%p", str,
-			     client_record->cr_pconfirmed_id,
-			     client_record->cr_punconfirmed_id);
+			     "Client Record %s cr_confirmed_rec=%p "
+			     "cr_unconfirmed_rec=%p", str,
+			     client_record->cr_confirmed_rec,
+			     client_record->cr_unconfirmed_rec);
 	}
 
 	/* At this point one and only one of pconf and punconf is non-NULL */
@@ -310,7 +310,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	/* Make sure we have a reference to the confirmed clientid
 	   record if any */
 	if (conf == NULL) {
-		conf = client_record->cr_pconfirmed_id;
+		conf = client_record->cr_confirmed_rec;
 
 		if (isDebug(COMPONENT_CLIENTID) && conf != NULL)
 			display_clientid_name(conf, str_client);
@@ -442,10 +442,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		display_client_record(client_record, str);
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_pconfirmed_id=%p "
-			     "cr_punconfirmed_id=%p", str,
-			     client_record->cr_pconfirmed_id,
-			     client_record->cr_punconfirmed_id);
+			     "Client Record %s cr_confirmed_rec=%p "
+			     "cr_unconfirmed_rec=%p", str,
+			     client_record->cr_confirmed_rec,
+			     client_record->cr_unconfirmed_rec);
 	}
 
 	/* Successful exit */

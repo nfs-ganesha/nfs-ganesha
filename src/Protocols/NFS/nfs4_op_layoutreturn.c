@@ -236,7 +236,7 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
                                 fsal_fsid_t this_fsid;
                                 cache_status
                                         = cache_inode_fsid(layout_state
-                                                           ->state_pentry,
+                                                           ->state_entry,
                                                            data->req_ctx,
                                                            &this_fsid);
                                 if (cache_status != CACHE_INODE_SUCCESS) {
@@ -252,7 +252,7 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
 
                         res_LAYOUTRETURN4->lorr_status =
                                 nfs4_return_one_state(
-                                        layout_state->state_pentry,
+                                        layout_state->state_entry,
                                         data->req_ctx,
                                         true,
                                         arg_LAYOUTRETURN4->lora_reclaim,
@@ -311,7 +311,7 @@ handle_recalls(struct fsal_layoutreturn_arg *arg,
 
 	glist_for_each_safe(recall_iter,
 			    recall_next,
-			    &state->state_pentry->layoutrecall_list) {
+			    &state->state_entry->layoutrecall_list) {
 		/* The current recall state */
 		struct state_layout_recall_file *r
 			= glist_entry(recall_iter,

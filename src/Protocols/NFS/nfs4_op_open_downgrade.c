@@ -111,7 +111,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
       return res_OPEN_DOWNGRADE4.status;
     }
 
-  open_owner = state_found->state_powner;
+  open_owner = state_found->state_owner;
 
   P(open_owner->so_mutex);
 
@@ -156,8 +156,8 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
     {
       nfsstat4     status4;
       char       * cause = "";
-      status4 = nfs4_do_open_downgrade(op, data, state_found->state_pentry,
-                                       state_found->state_powner, &state_found,
+      status4 = nfs4_do_open_downgrade(op, data, state_found->state_entry,
+                                       state_found->state_owner, &state_found,
                                        &cause);
       if(status4 != NFS4_OK)
         {
@@ -177,7 +177,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                  tag);
 
   /* Save the response in the open owner */
-  Copy_nfs4_state_req(state_found->state_powner,
+  Copy_nfs4_state_req(state_found->state_owner,
                       arg_OPEN_DOWNGRADE4.seqid,
                       op, data, resp, tag);
 

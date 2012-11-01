@@ -168,7 +168,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                         return res_LOCK4->status;
                 }
 
-                open_owner = state_open->state_powner;
+                open_owner = state_open->state_owner;
                 lock_state = NULL;
                 lock_owner = NULL;
                 resp_owner = open_owner;
@@ -195,12 +195,12 @@ int nfs4_op_lock(struct nfs_argop4 *op,
 
                 if (isDebug(COMPONENT_CLIENTID) &&
                     (clientid !=
-                     open_owner->so_owner.so_nfs4_owner.so_pclientid)) {
+                     open_owner->so_owner.so_nfs4_owner.so_clientrec)) {
                         char str_open[HASHTABLE_DISPLAY_STRLEN];
                         char str_lock[HASHTABLE_DISPLAY_STRLEN];
 
                         display_client_id_rec(open_owner->so_owner
-                                              .so_nfs4_owner.so_pclientid,
+                                              .so_nfs4_owner.so_clientrec,
                                               str_open);
                         display_client_id_rec(clientid, str_lock);
 
@@ -256,13 +256,13 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 }
 
                 /* Check if lock state belongs to same export */
-                if(lock_state->state_pexport != data->pexport) {
+                if(lock_state->state_export != data->pexport) {
                         LogEvent(COMPONENT_STATE,
                                  "Lock Owner Export Conflict, Lock held "
                                  "for export %d (%s), request for "
                                  "export %d (%s)",
-                                 lock_state->state_pexport->id,
-                                 lock_state->state_pexport->fullpath,
+                                 lock_state->state_export->id,
+                                 lock_state->state_export->fullpath,
                                  data->pexport->id,
                                  data->pexport->fullpath);
                         res_LOCK4->status = STATE_INVALID_ARGUMENT;
@@ -281,10 +281,10 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 /* Get the old lockowner. We can do the following
                    'cast', in NFSv4 lock_owner4 and open_owner4 are
                    different types but with the same definition */
-                lock_owner = lock_state->state_powner;
+                lock_owner = lock_state->state_owner;
                 open_owner = (lock_owner->so_owner.so_nfs4_owner
                               .so_related_owner);
-                state_open = lock_state->state_data.lock.popenstate;
+                state_open = lock_state->state_data.lock.openstate;
                 resp_owner = lock_owner;
                 seqid = arg_LOCK4->locker.locker4_u.lock_owner.lock_seqid;
 
@@ -295,7 +295,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                         &lock_desc);
 
                 /* Get the client for this open owner */
-                clientid = open_owner->so_owner.so_nfs4_owner.so_pclientid;
+                clientid = open_owner->so_owner.so_nfs4_owner.so_clientrec;
                 inc_client_id_ref(clientid);
         }
 
@@ -457,7 +457,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
 
                 /* Prepare state management structure */
                 memset(&candidate_data, 0, sizeof(candidate_data));
-                candidate_data.lock.popenstate = state_open;
+                candidate_data.lock.openstate = state_open;
                 /* Add the lock state to the lock table */
                 state_status = state_add(data->current_entry,
 					 candidate_type,
@@ -483,7 +483,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                 init_glist(&lock_state->state_data.lock.state_locklist);
 
                 /* Attach this lock to an export */
-                lock_state->state_pexport = data->pexport;
+                lock_state->state_export = data->pexport;
                 pthread_mutex_lock(&data->pexport->exp_state_mutex);
                 glist_add_tail(&data->pexport->exp_state_list,
                                &lock_state->state_export_list);

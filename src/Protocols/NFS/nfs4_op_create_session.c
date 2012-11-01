@@ -154,11 +154,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		display_client_record(client_record, str);
 
 		LogFullDebug(component,
-			     "Client Record %s cr_pconfirmed_id=%p "
-			     "cr_punconfirmed_id=%p",
+			     "Client Record %s cr_confirmed_rec=%p "
+			     "cr_unconfirmed_rec=%p",
 			     str,
-			     client_record->cr_pconfirmed_id,
-			     client_record->cr_punconfirmed_id);
+			     client_record->cr_confirmed_rec,
+			     client_record->cr_unconfirmed_rec);
 	}
 
 	/* At this point one and only one of conf and unconf is
@@ -391,7 +391,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 	/* Make sure we have a reference to the confirmed clientid
 	   record if any */
 	if (conf == NULL) {
-		conf = client_record->cr_pconfirmed_id;
+		conf = client_record->cr_confirmed_rec;
 
 		if (isDebug(component) && conf != NULL)
 			display_clientid_name(conf, str_client);
@@ -499,11 +499,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 		display_client_record(client_record, str);
 		LogFullDebug(component,
-			     "Client Record %s cr_pconfirmed_id=%p "
-			     "cr_punconfirmed_id=%p",
+			     "Client Record %s cr_confirmed_rec=%p "
+			     "cr_unconfirmed_rec=%p",
 			     str,
-			     client_record->cr_pconfirmed_id,
-			     client_record->cr_punconfirmed_id);
+			     client_record->cr_confirmed_rec,
+			     client_record->cr_unconfirmed_rec);
 	}
 
 	/* Handle the creation of the back channel, if the client

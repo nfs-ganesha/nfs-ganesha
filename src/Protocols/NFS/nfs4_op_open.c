@@ -167,7 +167,7 @@ open4_do_open(struct nfs_argop4  * op,
                 /* Check if open_owner is the same.  Since owners are
                    created/looked up we should be able to just
                    compare pointers.  */
-                if (state_iterate->state_powner == owner) {
+                if (state_iterate->state_owner == owner) {
                         /* We'll be re-using the found state */
                         file_state = state_iterate;
                         *new_state = false;
@@ -193,19 +193,19 @@ open4_do_open(struct nfs_argop4  * op,
                 init_glist(&(file_state->state_data.share.share_lockstates));
 
                 /* Attach this open to an export */
-                file_state->state_pexport = data->pexport;
+                file_state->state_export = data->pexport;
                 pthread_mutex_lock(&data->pexport->exp_state_mutex);
                 glist_add_tail(&data->pexport->exp_state_list,
                                &file_state->state_export_list);
                 pthread_mutex_unlock(&data->pexport->exp_state_mutex);
         } else {
                 /* Check if open from another export */
-                if (file_state->state_pexport != data->pexport) {
+                if (file_state->state_export != data->pexport) {
                         LogEvent(COMPONENT_STATE,
                                  "Lock Owner Export Conflict, Lock held for "
                                  "export %d (%s), request for export %d (%s)",
-                                 file_state->state_pexport->id,
-                                 file_state->state_pexport->fullpath,
+                                 file_state->state_export->id,
+                                 file_state->state_export->fullpath,
                                  data->pexport->id,
                                  data->pexport->fullpath);
                         return STATE_INVALID_ARGUMENT;

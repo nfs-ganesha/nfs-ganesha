@@ -23,8 +23,13 @@
  */
 
 /**
+ * @defgroup SAL State abstraction layer
+ * @{
+ */
+
+/**
  * @file  state_layout.c
- * @brief This file contains functions used in layout management.
+ * @brief Layout state management.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -33,7 +38,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -55,18 +60,14 @@
  * each segment returned by FSAL_layoutget to an existing state of
  * type STATE_TYPE_LAYOUT.
  *
- * @param[in] state     Pointer to the layout state.
- * @param[in] segment   The layout segment itself (as a layout4,
- *                      specified by RFC5661) granted by the FSAL.
- * @param[in] fsal_data Pointer to FSAL-specific data for this segment.
- * @param[in] segid     The FSAL-specific, opaque segment ID provided
- *                      by the FSAL.
+ * @param[in] state           The layout state.
+ * @param[in] segment         Layout segment itself granted by the FSAL
+ * @param[in] fsal_data       Pointer to FSAL-specific data for this segment.
+ * @param[in] return_on_close True for automatic return on last close
  *
  * @return STATE_SUCCESS on completion, other values of state_status_t
  *         on failure.
  */
-
-
 state_status_t
 state_add_segment(state_t *state,
                   struct pnfs_segment *segment,
@@ -120,9 +121,17 @@ state_add_segment(state_t *state,
      return STATE_SUCCESS;
 }
 
-/* This function must be called with the mutex lock held */
-
-state_status_t state_delete_segment(state_layout_segment_t *segment) {
+/**
+ * @brief Delete a layout segment
+ *
+ * This function must be called with the mutex lock held.
+ *
+ * @param[in] segment Segment to delete
+ *
+ * @return State status.
+ */
+state_status_t state_delete_segment(state_layout_segment_t *segment)
+{
      glist_del(&segment->sls_state_segments);
      pthread_mutex_unlock(&segment->sls_mutex);
      gsh_free(segment);
@@ -131,50 +140,50 @@ state_status_t state_delete_segment(state_layout_segment_t *segment) {
 
 
 /**
- * \brief Find pre-existing layouts
+ * @brief Find pre-existing layouts
  *
  * This function finds a state corresponding to a given file,
  * clientid, and layout type if one exists.
  *
- * @param entry [IN]  Cache_inode entry for the file.
- * @param owner [IN]  Pointer to the state owner.  This must be
- *                    a clientid owner.
- * @param type  [IN]  The layout type specified by the client.
- * @param state [OUT] The found state, NULL if not found.
+ * @param[in]  entry Cache_inode entry for the file
+ * @param[in]  owner The state owner.  This must be a clientid owner.
+ * @param[in]  type  Layout type specified by the client.
+ * @param[out] state The found state, NULL if not found.
  *
  * @return STATE_SUCCESS if the layout is found, STATE_NOT_FOUND if it
  *         isn't, and an appropriate code if other bad things happen.
  */
 
 state_status_t
-state_lookup_layout_state(cache_entry_t * pentry,
-                          state_owner_t * powner,
-                          layouttype4     type,
-                          state_t      ** pstate)
+state_lookup_layout_state(cache_entry_t *entry,
+                          state_owner_t *owner,
+                          layouttype4 type,
+                          state_t **state)
 {
      /* Pointer for iterating over the list of states on the file */
      struct glist_head * glist_iter = NULL;
      /* The state under inspection in the loop */
-     state_t           * pstate_iter = NULL;
+     state_t *state_iter = NULL;
      /* The state found, if one exists */
-     state_t           * pstate_found = NULL;
+     state_t *state_found = NULL;
 
-     glist_for_each(glist_iter, &pentry->state_list) {
-          pstate_iter = glist_entry(glist_iter, state_t, state_list);
-          if ((pstate_iter->state_type == STATE_TYPE_LAYOUT) &&
-              (pstate_iter->state_powner == powner) &&
-              (pstate_iter->state_data.layout.state_layout_type == type)) {
-               pstate_found = pstate_iter;
+     glist_for_each(glist_iter, &entry->state_list) {
+          state_iter = glist_entry(glist_iter, state_t, state_list);
+          if ((state_iter->state_type == STATE_TYPE_LAYOUT) &&
+              (state_iter->state_owner == owner) &&
+              (state_iter->state_data.layout.state_layout_type == type)) {
+               state_found = state_iter;
                break;
           }
      }
 
-     if (!pstate_found) {
+     if (!state_found) {
           return STATE_NOT_FOUND;
-     } else if (pstate_found->state_pentry != pentry) {
+     } else if (state_found->state_entry != entry) {
           return STATE_INCONSISTENT_ENTRY;
      } else {
-          *pstate = pstate_found;
+          *state = state_found;
           return STATE_SUCCESS;
      }
 }
+/** @} */

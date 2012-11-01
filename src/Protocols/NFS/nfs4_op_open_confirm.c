@@ -116,7 +116,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
       return res_OPEN_CONFIRM4.status;
     }
 
-  open_owner = state_found->state_powner;
+  open_owner = state_found->state_owner;
 
   P(open_owner->so_mutex);
 

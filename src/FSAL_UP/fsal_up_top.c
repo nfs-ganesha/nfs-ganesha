@@ -962,7 +962,7 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
                                       struct recall_work_queue,
                                       link);
                 struct state_t *s = g->state;
-                cache_entry_t  *entry = s->state_pentry;
+                cache_entry_t  *entry = s->state_entry;
                 pthread_rwlock_wrlock(&entry->state_lock);
                 /* Do something or other to recall the layout.  We
                    might want some specialty code in the lease timer
@@ -1035,7 +1035,7 @@ delegrecall_one(state_lock_entry_t *found_entry,
   argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 0;
   argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = maxfh;
 
-  data.pexport = found_entry->sle_pexport;
+  data.pexport = found_entry->sle_export;
 
   /* Building a new fh */
   if (!nfs4_FSALToFhandle(&argop->nfs_cb_argop4_u.opcbrecall.fh,

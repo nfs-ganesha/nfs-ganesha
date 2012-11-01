@@ -150,8 +150,8 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                                 break;
 
                         case STATE_TYPE_LOCK:
-                                state_open = state_found->state_data.lock
-                                        .popenstate;
+                                state_open = state_found->state_data
+					.lock.openstate;
                                 break;
 
                         case STATE_TYPE_DELEG:

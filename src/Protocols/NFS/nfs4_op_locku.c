@@ -134,7 +134,7 @@ int nfs4_op_locku(struct nfs_argop4 *op,
                 return res_LOCKU4->status;
         }
 
-        lock_owner = state_found->state_powner;
+        lock_owner = state_found->state_owner;
 
         /* Check seqid (lock_seqid or open_seqid) */
         if (data->minorversion == 0) {

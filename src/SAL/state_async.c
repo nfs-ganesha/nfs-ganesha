@@ -25,9 +25,13 @@
  */
 
 /**
+ * @defgroup SAL State abstraction layer
+ * @{
+ */
+
+/**
  * @file  state_async.c
- * @brief Some routines for management of state manager asynchronous
- *        processing.
+ * @brief Management of SAL asynchronous processing
  */
 
 #ifdef HAVE_CONFIG_H
@@ -51,11 +55,28 @@
 #include "sal_functions.h"
 #include "nfs_tcb.h"
 
-static pthread_t               state_async_thread_id;
-static struct glist_head       state_async_queue;
-nfs_tcb_t                      state_async_tcb;
+/**
+ * @brief Thread ID of SAL async handler
+ */
+static pthread_t state_async_thread_id;
 
-/* Execute a func from the async queue */
+/**
+ * @brief SAL asynchronous operation queue
+ */
+static struct glist_head state_async_queue;
+
+/**
+ * @brief Thread control block for SAL asynchronous handler thread
+ */
+nfs_tcb_t state_async_tcb;
+
+/**
+ * @brief Execute functions from the async queue
+ *
+ * @param[in] UnusedArg Unused
+ *
+ * @return NULL.
+ */
 void *state_async_thread(void *UnusedArg)
 {
   state_async_queue_t * entry;
@@ -168,7 +189,13 @@ void *state_async_thread(void *UnusedArg)
   tcb_remove(&state_async_tcb);
 }
 
-/* Schedule Async Work */
+/**
+ * @brief Schedule an asynchronous action
+ *
+ * @param[in] arg Request to schedule
+ *
+ * @return State status.
+ */
 state_status_t state_async_schedule(state_async_queue_t *arg)
 {
   int rc;
@@ -193,8 +220,10 @@ state_status_t state_async_schedule(state_async_queue_t *arg)
   return rc != -1 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
-/* Signal Async Work */
-void signal_async_work()
+/**
+ * @brief Signal thread that work is available
+ */
+void signal_async_work(void)
 {
   int rc;
 
@@ -209,15 +238,24 @@ void signal_async_work()
   V(state_async_tcb.tcb_mutex);
 }
 
-state_status_t state_async_init()
+/**
+ * @brief Initialize asynchronous request system
+ *
+ * @return State status.
+ */
+state_status_t state_async_init(void)
 {
   init_glist(&state_async_queue);
   tcb_new(&state_async_tcb, "State Async Thread");
   return STATE_SUCCESS;
 }
 
-void state_async_thread_start()
+/**
+ * @Start the asynchronous request thread
+ */
+void state_async_thread_start(void)
 {
   if(pthread_create(&state_async_thread_id, NULL, state_async_thread, NULL) != 0)
     LogFatal(COMPONENT_STATE, "Could not start State Async Thread");
 }
+/** @} */

@@ -18,10 +18,14 @@
  * ---------------------------------------
  */
 
-/*
- *
- * nfs4_recovery.c : Some functions to manage NFSv4 recovery
- *
+/**
+ * @defgroup SAL State abstraction layer
+ * @{
+ */
+
+/**
+ * @file nfs4_recovery.c
+ * @brief NFSv4 recovery
  */
 
 #ifdef HAVE_CONFIG_H
@@ -46,44 +50,57 @@
 char v4_recov_dir[PATH_MAX];
 char v4_old_dir[PATH_MAX];
 
-/*
- * construct to enable grace period, this could be expanded to implement
- * grace instances, where a new grace period is started for every
- * failover.  for now keep it simple, just a global used by all clients.
+/**
+ * @brief Grace period control structure
+ *
+ * This could be expanded to implement grace instances, where a new
+ * grace period is started for every failover.  for now keep it
+ * simple, just a global used by all clients.
  */
 typedef struct grace
 {
-        pthread_mutex_t g_mutex;
-        time_t g_start;
-        time_t g_duration;
-        struct glist_head g_clid_list;
+        pthread_mutex_t g_mutex; /*< Mutex */
+        time_t g_start; /*< Start of grace period */
+        time_t g_duration; /*< Duration of grace period */
+        struct glist_head g_clid_list; /*< Clients*/
 } grace_t;
 
+/**
+ * @brief Grace period control data
+ */
 static grace_t grace;
 
+/**
+ * @brief A client entry
+ */
 typedef struct clid_entry
 {
-        struct glist_head cl_list;
-        char cl_name[256];
+        struct glist_head cl_list; /*< Link in the list */
+        char cl_name[256]; /*< Client name */
 } clid_entry_t;
 
 static void nfs4_load_recov_clids_nolock(ushort);
 
+/**
+ * @brief Initialize grace/recovery
+ */
 void
 nfs4_init_grace()
 {
         init_glist(&grace.g_clid_list);
-        (void)pthread_mutex_init(&grace.g_mutex, NULL);
+        pthread_mutex_init(&grace.g_mutex, NULL);
 }
 
-/*
- * Routine to start grace period.  Can be called due to server start/restart
- * or from failover code.  If this node is taking over for a node, that nodeid
+/**
+ * @brief Start grace period
+ *
+ * This routine can be called due to server start/restart or from
+ * failover code.  If this node is taking over for a node, that nodeid
  * will be passed to this routine inside of the grace start structure.
+ *
+ * @param[in] gsp Grace period start information
  */
-
-void
-nfs4_start_grace(nfs_grace_start_t *gsp)
+void nfs4_start_grace(nfs_grace_start_t *gsp)
 {
         int duration;
 
@@ -111,8 +128,13 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
 
 int last_grace = -1;
 
-int
-nfs_in_grace()
+/**
+ * @brief Check if we are in the grace period
+ *
+ * @retval true if so.
+ * @retval false if not.
+ */
+int nfs_in_grace(void)
 {
         int in_grace;
 
@@ -138,58 +160,68 @@ nfs_in_grace()
         return in_grace;
 }
 
-/*
- * generate a name that identifies this client.  this name will be used to
- * know that a client was talking to the server before a restart so that it
- * will be allowed to do reclaims during grace period.
+/**
+ * @brief generate a name that identifies this client
+ *
+ * This name will be used to know that a client was talking to the
+ * server before a restart so that it will be allowed to do reclaims
+ * during grace period.
+ *
+ * @param[in] cl_rec   Client name record
+ * @param[in] clientid Client record
+ * @param[in] svc      RPC transport
  */
 void
-nfs4_create_clid_name(nfs_client_record_t *cl_recp, nfs_client_id_t *pclientid,
-    struct svc_req *svcp)
+nfs4_create_clid_name(nfs_client_record_t *cl_rec, nfs_client_id_t *clientid,
+		      struct svc_req *svc)
 {
         int i;
         sockaddr_t sa;
         char buf[SOCK_NAME_MAX];
         longlong_t cl_val = 0;
 
-        pclientid->cid_recov_dir = gsh_malloc(256);
-        if (pclientid->cid_recov_dir == NULL) {
+        clientid->cid_recov_dir = gsh_malloc(256);
+        if (clientid->cid_recov_dir == NULL) {
                 LogEvent(COMPONENT_CLIENTID, "Mem_Alloc FAILED");
                 return;
         }
         /* get the caller's IP addr */
-        if (copy_xprt_addr(&sa, svcp->rq_xprt))
+        if (copy_xprt_addr(&sa, svc->rq_xprt))
                 sprint_sockip(&sa, buf, SOCK_NAME_MAX);
         else
                 strncpy(buf, "Unknown", SOCK_NAME_MAX);
 
-        for (i = 0; i < cl_recp->cr_client_val_len; i++)
-                cl_val += cl_recp->cr_client_val[i];
+        for (i = 0; i < cl_rec->cr_client_val_len; i++)
+                cl_val += cl_rec->cr_client_val[i];
 
-        (void) snprintf(pclientid->cid_recov_dir, 256, "%s-%llx", buf, cl_val);
+        snprintf(clientid->cid_recov_dir, 256, "%s-%llx", buf, cl_val);
 
         LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
-            pclientid->cid_recov_dir);
+		 clientid->cid_recov_dir);
 }
 
-/*
- * create an entry in the recovery directory for this client so that it
- * will be able to reclaim state after a server reboot/restart.
+/**
+ * @brief Create an entry in the recovery directory
+ *
+ * This entry alows the client to reclaim state after a server
+ * reboot/restart.
+ *
+ * @param[in] clientid Client record
  */
 void
-nfs4_add_clid(nfs_client_id_t *pclientid)
+nfs4_add_clid(nfs_client_id_t *clientid)
 {
         int err;
         char path[PATH_MAX];
 
-        if (pclientid->cid_recov_dir == NULL) {
+        if (clientid->cid_recov_dir == NULL) {
                 LogDebug(COMPONENT_CLIENTID,
                     "Failed to create client in recovery dir, no name");
                 return;
         }
 
         snprintf(path, PATH_MAX, "%s/%s", v4_recov_dir,
-            pclientid->cid_recov_dir);
+            clientid->cid_recov_dir);
 
         err = mkdir(path, 0700);
         if (err == -1 && errno != EEXIST) {
@@ -201,9 +233,12 @@ nfs4_add_clid(nfs_client_id_t *pclientid)
         }
 }
 
-/*
- * remove a client entry from the recovery directory.  this would be called
- * when a client expires.
+/**
+ * @brief Remove a client entry from the recovery directory
+ *
+ * This function would be called when a client expires.
+ *
+ * @param[in] recov_dir Recovery directory
  */
 void
 nfs4_rm_clid(char *recov_dir)
@@ -224,12 +259,15 @@ nfs4_rm_clid(char *recov_dir)
         }
 }
 
-/*
- * determine whether or not this client is allowed to do reclaim operations.
- * if the server is not in grace period, then no reclaim can happen.
+/**
+ * @brief Determine whether or not this client may reclaim state
+ *
+ * If the server is not in grace period, then no reclaim can happen.
+ *
+ * @param[in] clientid Client record
  */
 void
-nfs4_chk_clid(nfs_client_id_t *pclientid)
+nfs4_chk_clid(nfs_client_id_t *clientid)
 {
         struct glist_head *node;
         clid_entry_t *clid_ent;
@@ -254,19 +292,19 @@ nfs4_chk_clid(nfs_client_id_t *pclientid)
         glist_for_each(node, &grace.g_clid_list) {
                 clid_ent = glist_entry(node, clid_entry_t, cl_list);
                 LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
-                    clid_ent->cl_name, pclientid->cid_recov_dir);
-                if (!strncmp(clid_ent->cl_name, pclientid->cid_recov_dir,
+                    clid_ent->cl_name, clientid->cid_recov_dir);
+                if (!strncmp(clid_ent->cl_name, clientid->cid_recov_dir,
                     256)) {
                         if (isDebug(COMPONENT_CLIENTID)) {
                             char str[HASHTABLE_DISPLAY_STRLEN];
 
-                            display_client_id_rec(pclientid, str);
+                            display_client_id_rec(clientid, str);
 
                             LogFullDebug(COMPONENT_CLIENTID,
                                          "Allowed to reclaim ClientId %s",
                                          str);
                         }
-                        pclientid->cid_allow_reclaim = 1;
+                        clientid->cid_allow_reclaim = 1;
                         V(grace.g_mutex);
                         return;
                 }
@@ -274,18 +312,25 @@ nfs4_chk_clid(nfs_client_id_t *pclientid)
         V(grace.g_mutex);
 }
 
-/*
- * create the client reclaim list.
- * when not doing a take over, first open the old state dir and read in
- * those entries.  the reason for the two directories is in case of a 
- * reboot/restart during grace period.  next, read in entries from the
- * recovery directory and then move them into the old state directory.
- * if called due to a take over, nodeid will be nonzero.  in this case,
- * add that node's clientids to the existing list.  then move those
- * entries into the old state directory.
+/**
+ * @brief Create the client reclaim list
+ *
+ * When not doing a take over, first open the old state dir and read
+ * in those entries.  The reason for the two directories is in case of
+ * a reboot/restart during grace period.  Next, read in entries from
+ * the recovery directory and then move them into the old state
+ * directory.  if called due to a take over, nodeid will be nonzero.
+ * in this case, add that node's clientids to the existing list.  Then
+ * move those entries into the old state directory.
+ *
+ * @param[in] dp       Recovery directory
+ * @param[in] srcdir   Path to the source directory on failover
+ * @param[in] takeover Whether this is a takeover.
+ *
+ * @return POSIX error codes.
  */
 static int
-nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
+nfs4_read_recov_clids(DIR *dp, char *srcdir, bool takeover)
 {
         struct dirent *dentp;
         clid_entry_t *new_ent;
@@ -328,6 +373,11 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
         return 0;
 }
 
+/**
+ * @brief Load clients for recovery, with no lock
+ *
+ * @param[in] nodeid Node, on takeover
+ */
 static void
 nfs4_load_recov_clids_nolock(ushort nodeid)
 {
@@ -417,6 +467,11 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
 
 }
 
+/**
+ * @brief Load clients for recovery
+ *
+ * @param[in] nodeid Node, on takeover
+ */
 void
 nfs4_load_recov_clids(ushort nodeid)
 {
@@ -427,8 +482,11 @@ nfs4_load_recov_clids(ushort nodeid)
         V(grace.g_mutex);
 }
 
+/**
+ * @brief Clean up recovery directory
+ */
 void
-nfs4_clean_old_recov_dir()
+nfs4_clean_old_recov_dir(void)
 {
         DIR *dp;
         struct dirent *dentp;
@@ -460,13 +518,15 @@ nfs4_clean_old_recov_dir()
         }
 }
 
-/*
- * the recovery directory may not exist yet, so create it.  this should
- * only need to be done once (if at all).  also, the location of the
- * directory could be configurable.
+/**
+ * @brief Create the recovery directory
+ *
+ * The recovery directory may not exist yet, so create it.  This
+ * should only need to be done once (if at all).  Also, the location
+ * of the directory could be configurable.
  */
 void
-nfs4_create_recov_dir()
+nfs4_create_recov_dir(void)
 {
         int err;
 
@@ -516,3 +576,4 @@ nfs4_create_recov_dir()
                 }
         }
 }
+/** @} */

@@ -1,34 +1,37 @@
-/**
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
+/*
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
- *
- * 9p_owner.c : The management of the 9P owner cache.
- *
- * $Header$
- *
- * $Log$
- *
  */
+
+/**
+ * @defgroup SAL State abstraction layer
+ * @{
+ */
+
+/**
+ * @file 9p_owner.c
+ * @brief Management of the 9P owner cache.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -45,94 +48,155 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 
-//TODO FSF: check if can optimize by using same reference as key and value
+/**
+ * @todo FSF: check if can optimize by using same reference as key and
+ * value */
 
+/**
+ * @brief Hash table for 9p owners
+ */
 hash_table_t *ht_9p_owner;
 
-int display_9p_owner(state_owner_t *pkey, char *str)
+/**
+ * @brief Display a 9p owner
+ *
+ * @param[in]  key The 9P owner
+ * @param[out] str Output buffer
+ *
+ * @return Length of display string.
+ */
+
+int display_9p_owner(state_owner_t *key, char *str)
 {
   char *strtmp = str;
 
-  if(pkey == NULL)
+  if(key == NULL)
     return sprintf(str, "<NULL>");
 
-  strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", pkey);
-  strtmp += sprint_sockaddr( (sockaddr_t *)&(pkey->so_owner.so_9p_owner.client_addr),
+  strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", key);
+  strtmp += sprint_sockaddr( (sockaddr_t *)&(key->so_owner.so_9p_owner.client_addr),
                              strtmp, 
-                             sizeof( pkey->so_owner.so_9p_owner.client_addr ) ) ;
+                             sizeof( key->so_owner.so_9p_owner.client_addr ) ) ;
 
-  strtmp += sprintf(strtmp, " proc_id=%u", pkey->so_owner.so_9p_owner.proc_id);
+  strtmp += sprintf(strtmp, " proc_id=%u", key->so_owner.so_9p_owner.proc_id);
  
-  strtmp += sprintf(strtmp, " refcount=%d", pkey->so_refcount);
+  strtmp += sprintf(strtmp, " refcount=%d", key->so_refcount);
 
   return strtmp - str;
 }
 
-int display_9p_owner_key(struct gsh_buffdesc * pbuff, char *str)
+/**
+ * @brief Display owner from hash key
+ *
+ * @param[in]  buff Buffer pointing to owner
+ * @param[out] str  Output buffer
+ *
+ * @return Length of display string.
+ */
+
+int display_9p_owner_key(struct gsh_buffdesc *buff, char *str)
 {
-  return display_9p_owner((state_owner_t *)pbuff->addr, str);
+  return display_9p_owner(buff->addr, str);
 }
 
-int display_9p_owner_val(struct gsh_buffdesc * pbuff, char *str)
+/**
+ * @brief Display owner from hash value
+ *
+ * @param[in]  buff Buffer pointing to owner
+ * @param[out] str  Output buffer
+ *
+ * @return Length of display string.
+ */
+
+int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
 {
-  return display_9p_owner((state_owner_t *)pbuff->addr, str);
+  return display_9p_owner(buff->addr, str);
 }
 
-int compare_9p_owner(state_owner_t *powner1,
-                     state_owner_t *powner2)
+/**
+ * @brief Compare two 9p owners
+ *
+ * @param[in] owner1 One owner
+ * @param[in] owner2 Another owner
+ *
+ * @retval 1 if they differ.
+ * @retval 0 if they're identical.
+ */
+
+int compare_9p_owner(state_owner_t *owner1,
+                     state_owner_t *owner2)
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
       char str1[HASHTABLE_DISPLAY_STRLEN];
       char str2[HASHTABLE_DISPLAY_STRLEN];
 
-      display_9p_owner(powner1, str1);
-      display_9p_owner(powner2, str2);
+      display_9p_owner(owner1, str1);
+      display_9p_owner(owner2, str2);
       LogFullDebug(COMPONENT_STATE,
                    "{%s} vs {%s}", str1, str2);
     }
 
-  if(powner1 == NULL || powner2 == NULL)
+  if(owner1 == NULL || owner2 == NULL)
     return 1;
 
-  if(powner1 == powner2)
+  if(owner1 == owner2)
     return 0;
 
-  if(powner1->so_owner.so_9p_owner.proc_id !=
-     powner2->so_owner.so_9p_owner.proc_id)
+  if(owner1->so_owner.so_9p_owner.proc_id !=
+     owner2->so_owner.so_9p_owner.proc_id)
     return 1;
 #if 0
-  if( memcmp( (char *)&powner1->so_owner.so_9p_owner.client_addr, 
-              (char *)&powner2->so_owner.so_9p_owner.client_addr,
+  if( memcmp(&owner1->so_owner.so_9p_owner.client_addr, 
+             &owner2->so_owner.so_9p_owner.client_addr,
               sizeof( struct sockaddr_storage ) ) )
     return 1;
 #endif 
 
-  if(powner1->so_owner_len !=
-     powner2->so_owner_len)
+  if(owner1->so_owner_len !=
+     owner2->so_owner_len)
     return 1;
 
-  return memcmp(powner1->so_owner_val,
-                powner2->so_owner_val,
-                powner1->so_owner_len);
+  return memcmp(owner1->so_owner_val,
+                owner2->so_owner_val,
+                owner1->so_owner_len);
 }
 
-int compare_9p_owner_key(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
+/**
+ * @brief Compare two keys in the 9p owner hash table
+ *
+ * @param[in] buff1 One key
+ * @param[in] buff2 Another key
+ *
+ * @retval 1 if they differ.
+ * @retval 0 if they're the same.
+ */
+
+int compare_9p_owner_key(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
-  return compare_9p_owner((state_owner_t *)buff1->addr,
-                          (state_owner_t *)buff2->addr);
+  return compare_9p_owner(buff1->addr,
+                          buff2->addr);
 
-}                               /* compare_9p_owner */
+}
 
-uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                   struct gsh_buffdesc * buffclef)
+/**
+ * @brief Get the hash index from a 9p owner
+ *
+ * @param[in] hparam Hash parameters
+ * @param[in] key The key to hash
+ *
+ * @return The hash index.
+ */
+
+uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
+                                   struct gsh_buffdesc *key)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_owner_t *pkey = (state_owner_t *)buffclef->addr;
+  state_owner_t *pkey = key->addr;
 
-  struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr ;
+  struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
 
   /* Compute the sum of all the characters */
   for(i = 0; i < pkey->so_owner_len; i++)
@@ -151,13 +215,22 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
 
 }                               
 
-uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                 struct gsh_buffdesc * buffclef)
+/**
+ * @brief Get the RBT hash from a 9p owner
+ *
+ * @param[in] hparam Hash parameters
+ * @param[in] key The key to hash
+ *
+ * @return The RBT hash.
+ */
+
+uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
+                                 struct gsh_buffdesc *key)
 {
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_owner_t *pkey = (state_owner_t *)buffclef->addr;
+  state_owner_t *pkey = buffclef->addr;
 
   struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr ;
 
@@ -174,19 +247,16 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t * p_hparam,
     LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
 
   return res;
-}                               /* state_id_rbt_hash_func */
+}
 
 /**
- *
- * Init_9p_hash: Init the hashtable for 9P Owner cache.
- *
- * Perform all the required initialization for hashtable State Id cache
+ * @brief Init the hashtable for 9P Owner cache
  * 
- * @param param [IN] parameter used to init the duplicate request cache
- *
- * @return 0 if successful, -1 otherwise
+ * @reval 0 if successful.
+ * @retval -1 otherwise.
  *
  */
+
 int Init_9p_hash(void)
 {
   if((ht_9p_owner = HashTable_Init(&nfs_param._9p_owner_hash_param)) == NULL)
@@ -197,19 +267,20 @@ int Init_9p_hash(void)
     }
 
   return 0;
-}                               /* Init_9p_hash */
+}
 
 /**
- * _9p_owner_Set
- * 
+ * @brief Set a 9P owner into the related hashtable
  *
- * This routine sets a 9P owner into the related hashtable
+ * @param[in] key   9P owner key
+ * @param[in] owner 9P owner
  *
- * @return 1 if ok, 0 otherwise.
+ * @retval 1 if ok.
+ * @retval 0 otherwise.
  *
  */
-int _9p_owner_Set(state_owner_t * pkey,
-                  state_owner_t * powner)
+int _9p_owner_Set(state_owner_t *key,
+                  state_owner_t *owner)
 {
   struct gsh_buffdesc buffkey;
   struct gsh_buffdesc buffval;
@@ -218,19 +289,19 @@ int _9p_owner_Set(state_owner_t * pkey,
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      buffkey.addr = (caddr_t) pkey;
-      buffkey.len = sizeof(*pkey);
+      buffkey.addr = key;
+      buffkey.len = sizeof(*key);
 
       display_9p_owner_key(&buffkey, str);
       LogFullDebug(COMPONENT_STATE,
                    "KEY {%s}", str);
     }
 
-  buffkey.addr = (caddr_t) pkey;
-  buffkey.len = sizeof(*pkey);
+  buffkey.addr = key;
+  buffkey.len = sizeof(*key);
 
-  buffval.addr = (caddr_t) powner;
-  buffval.len = sizeof(*powner);
+  buffval.addr = owner;
+  buffval.len = sizeof(*owner);
 
   if(HashTable_Test_And_Set
      (ht_9p_owner, &buffkey, &buffval,
@@ -238,15 +309,22 @@ int _9p_owner_Set(state_owner_t * pkey,
     return 0;
 
   return 1;
-}                               /* _9p_owner_Set */
+}
 
-void remove_9p_owner( state_owner_t        * powner,
-                      const char           * str)
+/**
+ * @brief Remove an owner from the 9p owner hash
+ *
+ * @param[in] owner Owner to remove
+ * @param[in] str   String inserted into logs, for debugging
+ */
+
+void remove_9p_owner(state_owner_t *owner,
+                     const char *str)
 {
   struct gsh_buffdesc buffkey, old_key, old_value;
 
-  buffkey.addr = (caddr_t) powner;
-  buffkey.len = sizeof(*powner);
+  buffkey.addr = owner;
+  buffkey.len = sizeof(*owner);
 
   switch(HashTable_DelRef(ht_9p_owner, &buffkey, &old_key, &old_value, Hash_dec_state_owner_ref))
     {
@@ -280,26 +358,23 @@ void remove_9p_owner( state_owner_t        * powner,
 }
 
 /**
+ * @brief Get a pointer to a 9P owner from the 9p_owner hashtable
  *
- * _9p_owner_Get_Pointer
+ * @param[in]  key   Owner key
+ * @param[out] owner Found owner
  *
- * This routine gets a pointer to an 9P owner from the 9p_owner's hashtable.
- *
- * @param pstate       [IN] pointer to the stateid to be checked.
- * @param ppstate_data [OUT] pointer's state found 
- *
- * @return 1 if ok, 0 otherwise.
- *
+ * @retval 1 if ok.
+ * @retval 0 otherwise.
  */
-static int _9p_owner_Get_Pointer(state_owner_t  * pkey,
-                                 state_owner_t ** powner)
+static int _9p_owner_Get_Pointer(state_owner_t  *key,
+                                 state_owner_t **owner)
 {
   struct gsh_buffdesc buffkey;
   struct gsh_buffdesc buffval;
 
   *powner = NULL; // in case we dont find it, return NULL
-  buffkey.addr = (caddr_t) pkey;
-  buffkey.len = sizeof(*pkey);
+  buffkey.addr = key;
+  buffkey.len = sizeof(*key);
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
@@ -320,7 +395,7 @@ static int _9p_owner_Get_Pointer(state_owner_t  * pkey,
       return 0;
     }
 
-  *powner = (state_owner_t *) buffval.addr;
+  *owner = buffval.addr;
 
   LogFullDebug(COMPONENT_STATE,
                "FOUND");
@@ -329,25 +404,29 @@ static int _9p_owner_Get_Pointer(state_owner_t  * pkey,
 }                               /* _9p_owner_Get_Pointer */
 
 /**
- * 
- *  _9p_owner_PrintAll
- *  
- * This routine displays the content of the hashtable used to store the 9P owners. 
- * 
- * @return nothing (void function)
+ * @brief Display the hashtable used to store 9P owners
  */
 
 void _9p_owner_PrintAll(void)
 {
   HashTable_Log(COMPONENT_STATE, ht_9p_owner);
-}                               /* _9p_owner_PrintAll */
+}
 
-state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
-                             uint32_t    proc_id)
+/**
+ * @brief Look up a 9p owner
+ *
+ * @param[in] client_addr 9p client address
+ * @param[in] proc_id     Process ID of owning process
+ *
+ * @return The found owner or NULL.
+ */
+
+state_owner_t *get_9p_owner(struct sockaddr_storage *client_addr,
+                            uint32_t proc_id)
 {
   state_owner_t * pkey, *powner;
 
-  pkey = (state_owner_t *)gsh_malloc(sizeof(*pkey));
+  pkey = gsh_malloc(sizeof(*pkey));
   if(pkey == NULL)
     return NULL;
 
@@ -355,7 +434,8 @@ state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
   pkey->so_type                             = STATE_LOCK_OWNER_9P;
   pkey->so_refcount                         = 1;
   pkey->so_owner.so_9p_owner.proc_id        = proc_id;
-  memcpy( (char *)&pkey->so_owner.so_9p_owner.client_addr, (char *)pclient_addr, sizeof( struct sockaddr_storage ) ) ; 
+  memcpy(&pkey->so_owner.so_9p_owner.client_addr, client_addr,
+	 sizeof( struct sockaddr_storage ) ) ; 
   pkey->so_owner_len                        = 0 ;
   memset( pkey->so_owner_val, 0, NFS4_OPAQUE_LIMIT) ;
   if(isFullDebug(COMPONENT_STATE))
@@ -435,3 +515,4 @@ state_owner_t *get_9p_owner( struct sockaddr_storage * pclient_addr,
   gsh_free(powner);
   return NULL;
 }
+/** @} */
