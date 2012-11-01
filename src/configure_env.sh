@@ -4,7 +4,6 @@
 
 CONFIG_ON="
 	--enable-strict-compile --enable-dbus --enable-debug-symbols
-	--enable-panfs-pnfs
 "
 
 ./configure $CONFIG_ON
