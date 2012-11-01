@@ -257,6 +257,19 @@ AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 # during the build
 GA_AM_COND_ON_UNLESS([fsal-proxy],[do not build PROXY FSAL shared library],[USE_FSAL_PROXY])
 GA_AM_COND_ON_UNLESS([fsal-vfs],[do not build VFS FSAL shared library],[USE_FSAL_VFS])
+
+# Choose a pnfs layout extension for VFS
+GA_ENABLE_AM_CONDITION([panfs-pnfs],[enable use of PanFS layout extension for VFS],[USE_PANFS_PNFS])
+
+if test "$enable_fsal_vfs" == "yes"; then
+	if test "$enable_panfs_pnfs" == "yes"; then
+		AC_DEFINE(_USE_PANFS_PNFS,1,[enable use of PanFS layout extension])
+	else
+		AC_MSG_WARN([PanFS layouts only work with VFS fsal])
+	fi
+fi
+AM_CONDITIONAL(USE_PANFS_PNFS, test "$enable_panfs_pnfs" = "yes")
+
 GA_AM_COND_ON_UNLESS([fsal-posix],[do not build POSIX FSAL shared library],[USE_FSAL_POSIX])
 GA_AM_COND_ON_UNLESS([fsal-gpfs],[do not build GPFS FSAL shared library],[USE_FSAL_GPFS])
 
@@ -775,6 +788,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile
                  FSAL/FSAL_VFS/Makefile
+		 FSAL/FSAL_VFS/pnfs_panfs/Makefile
                  RPCAL/Makefile
                  RPCAL/gssd/Makefile
                  MainNFSD/Makefile

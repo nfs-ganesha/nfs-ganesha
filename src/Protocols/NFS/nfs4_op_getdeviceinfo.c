@@ -134,11 +134,6 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
                 goto out;
         }
 
-        if (!nfs4_pnfs_supported(export)) {
-                nfs_status = NFS4ERR_NOENT;
-                goto out;
-        }
-
         mincount = sizeof(uint32_t) +/* Count for the empty bitmap */
                 sizeof(layouttype4) +/* Type in the device_addr4 */
                 sizeof(uint32_t);    /* Number of bytes in da_addr_body */
@@ -150,7 +145,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
         if (da_addr_size == 0) {
                 LogCrit(COMPONENT_PNFS,
                         "The FSAL must specify a non-zero da_addr size.");
-                nfs_status = NFS4ERR_SERVERFAULT;
+                nfs_status = NFS4ERR_NOENT;
                 goto out;
         }
 

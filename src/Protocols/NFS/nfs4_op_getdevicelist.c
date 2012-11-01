@@ -131,21 +131,6 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op,
                 goto out;
         }
 
-        /* Filesystems that don't support pNFS have no deviceids. */
-
-        if (!nfs4_pnfs_supported(data->pexport)) {
-                nfs_status = NFS4_OK;
-                res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
-                        = 0;
-                res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4
-                        .gdlr_deviceid_list.gdlr_deviceid_list_val = NULL;
-                res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4
-                        .gdlr_deviceid_list.gdlr_deviceid_list_len = 0;
-                res_GETDEVICELIST4->GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
-                        = 1;
-                goto out;
-        }
-
         memset(&res, 0, sizeof(struct fsal_getdevicelist_res));
 
         res.cookie = arg_GETDEVICELIST4->gdla_cookie;

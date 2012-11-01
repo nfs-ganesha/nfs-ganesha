@@ -191,10 +191,6 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
                         res_LAYOUTRETURN4->lorr_status = nfs_status;
                         return res_LAYOUTRETURN4->lorr_status;
                 }
-                if (!nfs4_pnfs_supported(data->pexport)) {
-                        res_LAYOUTRETURN4->lorr_status = NFS4_OK;
-                        return res_LAYOUTRETURN4->lorr_status;
-                }
                 cache_status
                         = cache_inode_fsid(data->current_entry,
                                            data->req_ctx,
@@ -574,26 +570,4 @@ out:
         }
 
         return nfs_status;
-}
-
-/**
- *
- * @brief Check whether a given export supports pNFS
- *
- * This function returns true if the export supports pNFS metadata
- * operations.
- *
- * @param[in] export The export to check.
- *
- * @return true or false.
- */
-bool nfs4_pnfs_supported(const exportlist_t *export)
-{
-        if (!export) {
-                return false;
-        } else {
-                return (export->export_hdl->ops
-                        ->fs_supports(export->export_hdl,
-                                      fso_pnfs_mds_supported));
-        }
 }

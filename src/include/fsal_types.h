@@ -570,7 +570,6 @@ typedef enum enum_fsal_fsinfo_options {
         fso_accesscheck_support,
         fso_share_support,
         fso_share_support_owner,
-        fso_pnfs_mds_supported,
         fso_pnfs_ds_supported
 } fsal_fsinfo_options_t;
 
