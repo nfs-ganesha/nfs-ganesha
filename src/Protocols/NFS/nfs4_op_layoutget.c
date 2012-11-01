@@ -368,7 +368,14 @@ int nfs4_op_layoutget(struct nfs_argop4 *op,
                 goto out;
         }
 
-        if (!nfs4_pnfs_supported(data->pexport)) {
+        /* max_segment_count is also an indication of if fsal supports pnfs */
+        max_segment_count = (data->pexport->export_hdl->ops
+                             ->fs_maximum_segments(data->pexport->export_hdl));
+
+        if (max_segment_count == 0) {
+                LogWarn(COMPONENT_PNFS,
+                        "The FSAL must specify a non-zero "
+                        "fs_maximum_segments.");
                 nfs_status = NFS4ERR_LAYOUTUNAVAILABLE;
                 goto out;
         }
@@ -393,18 +400,6 @@ int nfs4_op_layoutget(struct nfs_argop4 *op,
         /*
          * Initialize segment array and fill out input-only arguments
          */
-
-        max_segment_count = (data->pexport->export_hdl->ops
-                             ->fs_maximum_segments(data->pexport->export_hdl));
-
-        if (max_segment_count == 0) {
-                LogCrit(COMPONENT_PNFS,
-                        "The FSAL must specify a non-zero "
-                        "fs_maximum_segments.");
-                        nfs_status = NFS4ERR_SERVERFAULT;
-                goto out;
-        }
-
         if ((layouts = gsh_calloc(max_segment_count, sizeof(layout4)))
             == NULL) {
                 nfs_status = NFS4ERR_SERVERFAULT;
