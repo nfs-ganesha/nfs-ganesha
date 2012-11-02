@@ -2879,6 +2879,8 @@ void FreeClientList(exportlist_client_t * clients)
 
 void RemoveExportEntry(exportlist_t * p_entry)
 {
+  FSAL_CleanUpExportContext(&p_entry->FS_export_context);
+
   FreeClientList(&p_entry->clients);
 
   if(p_entry->proot_handle != NULL)

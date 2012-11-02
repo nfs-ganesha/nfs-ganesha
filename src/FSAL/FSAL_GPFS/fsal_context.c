@@ -258,16 +258,25 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t GPFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) 
+fsal_status_t GPFSFSAL_CleanUpExportContext(fsal_export_context_t * export_context) 
 {
-  if(p_export_context == NULL) 
+  gpfsfsal_export_context_t *p_export_context = (gpfsfsal_export_context_t *)export_context;
+
+  if(export_context == NULL) 
   {
     LogCrit(COMPONENT_FSAL,
             "NULL mandatory argument passed to %s()", __FUNCTION__);
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_CleanUpExportContext);
   }
-  
-  close(((gpfsfsal_export_context_t *)p_export_context)->mount_root_fd);
+
+  if(p_export_context->mount_root_fd != 0)
+    close(p_export_context->mount_root_fd);
+
+  if(p_export_context->fe_fsal_up_ctx != NULL)
+    {
+      /* Start to clean up FSAL_UP stuff. There is actually more to do here...*/
+      glist_del(&p_export_context->fe_list);
+    }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }

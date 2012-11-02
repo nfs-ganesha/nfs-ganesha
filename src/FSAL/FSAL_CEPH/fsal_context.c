@@ -112,6 +112,12 @@ fsal_status_t CEPHFSAL_CleanUpExportContext(
   cephfsal_export_context_t* ceph_export_context =
     (cephfsal_export_context_t*) export_context;
 
+  /** @todo: this is called on export entries that are removed for any
+   *         reason, it should be capable of being called even if
+   *         CEPHFSAL_BuildExportContext was never called for this
+   *         export context and the entire structure is NULL or
+   *         even if there was a failure to build the context.
+   */
   /* clean up and dispose Ceph mount */
   ceph_shutdown(ceph_export_context->cmount);
 
