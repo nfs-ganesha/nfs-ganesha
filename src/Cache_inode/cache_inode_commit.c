@@ -129,8 +129,8 @@ cache_inode_commit(cache_entry_t *entry,
                                     count);
           if (FSAL_IS_ERROR(fsal_status)) {
                LogMajor(COMPONENT_CACHE_INODE,
-                        "cache_inode_rdwr: fsal_commit() failed: "
-                        "fsal_status.major = %d", fsal_status.major);
+                        "fsal_commit() failed: fsal_status.major = %d",
+                        fsal_status.major);
 
                *status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
