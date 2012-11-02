@@ -1,5 +1,11 @@
-/*
- * file/object access checking
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
+ * @file access_check.c
+ * @brief File/object access checking
  */
 
 #ifdef HAVE_CONFIG_H
@@ -11,13 +17,13 @@
 #include "FSAL/access_check.h"
 #include <stdbool.h>
 
-static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
-                                 fsal_aceperm_t v4mask,  /* IN */
-                                 struct attrlist * p_object_attributes   /* IN */ );
+static int fsal_check_access_acl(struct user_cred *creds,
+                                 fsal_aceperm_t v4mask,
+                                 struct attrlist * p_object_attributes);
 
-static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
-				    fsal_accessflags_t access_type,  /* IN */
-				    struct attrlist * p_object_attributes /* IN */ );
+static int fsal_check_access_no_acl(struct user_cred *creds,
+				    fsal_accessflags_t access_type,
+				    struct attrlist * p_object_attributes);
 
 
 static bool fsal_check_ace_owner(uint64_t uid, struct user_cred *creds)
@@ -431,3 +437,4 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 	else
 		return fsalstat(ERR_FSAL_ACCESS, 0);
 }
+/** @} */

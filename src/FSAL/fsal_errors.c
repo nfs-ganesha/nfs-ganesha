@@ -1,14 +1,11 @@
-/*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
  */
 
 /**
- *
- * \file    fsal_errors.c
- * \date    $Date: 2005/07/27 13:30:26 $
- * \version $Revision: 1.3 $
- * \brief   Routines for handling errors.
- *
+ * @file fsal_errors.c
+ * @brief Routines for handling errors.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -133,3 +130,4 @@ const char * label_fsal_err(fsal_errors_t fsal_err)
 
   return tab_errstatus_FSAL[i].label;
 }
+/** @} */

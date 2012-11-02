@@ -23,12 +23,17 @@
  */
 
 /**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
  * @file    err_fsal.h
  * @brief   FSAL error codes.
  */
 
-#ifndef _ERR_FSAL_H
-#define _ERR_FSAL_H
+#ifndef ERR_FSAL_H
+#define ERR_FSAL_H
 
 #include "log.h"
 
@@ -84,4 +89,5 @@ extern family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[];
 const char * msg_fsal_err(fsal_errors_t fsal_err);
 const char * label_fsal_err(fsal_errors_t fsal_err);
 
-#endif /*_ERR_FSAL_H*/
+#endif /* !ERR_FSAL_H */
+/** @} */

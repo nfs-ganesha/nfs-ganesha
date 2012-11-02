@@ -22,16 +22,65 @@
  */
 
 /**
- * @file    fsal_pnfs.h
- * @brief   Management of the pNFS features at the FSAL level
- *
- * FSAL based pNFS interfaces
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
  */
 
-#ifndef FSAL_PNFS_H_
-#define FSAL_PNFS_H_
+/**
+ * @file  fsal_pnfs.h
+ * @brief pNFS functions and structures used at the FSAL level
+ */
+
+#ifndef FSAL_PNFS_H
+#define FSAL_PNFS_H
 
 #include "nfs4.h"
+
+/**
+ * @page FSAL_PNFS How to pNFS enable your FSAL
+ *
+ * Meta-data server
+ * ================
+ *
+ * Your FSAL must indicate to callers that it supports pNFS.  Ensure
+ * that the @c fs_supports method returns @c true when queried with
+ * @c fso_pnfs_mds_supported.
+ *
+ * You must implement @c getdeviceinfo on the export and may impelment
+ * @c getdevicelist, if you wish.  To let clients know what layouts
+ * they may request, be sure to implement @c fs_layouttypes.  You
+ * should implement @c fs_maximum_segments to inform the protocol
+ * layer the maximum number of segments you will ever provide for a
+ * single layoutget call.  (The current Linux kernel only supports one
+ * segment per LAYOUTGET, unfortunately, so that's a good maximum for
+ * now.)  Other hints for the protocol layer are @c fs_loc_body_size
+ * (to determine how much space it will allocate for your loc_body XDR
+ * stream) and @c fs_da_addr_size (the same thing for da_addr).
+ *
+ * On @c fsal_obj_handle, you should implement @c layoutget, @c
+ * layoutreturn, and @c layoutcommit.  If you want to be able to
+ * recall layouts, you will need to send a request of the type
+ * @c FSAL_UP_EVENT_LAYOUTRECALL with @c fsal_up_submit.  For details,
+ * see the documentation for the FSAL Upcall System.
+ *
+ * Data server
+ * ===========
+ *
+ * This is only relevant if you are using the LAYOUT4_NFSV4_1_FILES
+ * layouts.  If you are using OSD or Object layouts, or plan to use an
+ * spNFS-like configuration employing naíve data servers, you do not
+ * need to worry about this.
+ *
+ * Your FSAL must indicate to callers that it supports pNFS DS
+ * operations.  Ensure that the @c fs_supports method returns @c true
+ * when queried with @c fso_pnfs_ds_supported.
+ *
+ * You must implement the @c create_ds_handle method on the export.
+ * This must create an object of type @c fsal_ds_handle from the NFS
+ * handle supplied as part of your layout.  See the @c fsal_ds_handle
+ * documentation for details.  You must implement the @c release, @c
+ * read, @c write, and @c commit methods.
+ */
 
 /******************************************************
  *		 Basic in-memory types
@@ -242,4 +291,5 @@ struct fsal_getdevicelist_res {
 	bool eof;
 };
 
-#endif /* !FSAL_PNFS_H_ */
+#endif /* !FSAL_PNFS_H */
+/** @} */

@@ -25,12 +25,17 @@
  */
 
 /**
- * @file    fsal.h
- * @brief   File System Abstraction Layer interface.
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
  */
 
-#ifndef _FSAL_H
-#define _FSAL_H
+/**
+ * @file  fsal.h
+ * @brief Miscelaneous FSAL definitions
+ */
+
+#ifndef FSAL_H
+#define FSAL_H
 
 #include <stddef.h>
 
@@ -196,4 +201,5 @@ uint32_t unix2fsal_mode(mode_t unix_mode);
 
 void display_fsinfo(struct fsal_staticfsinfo_t *info);
 
-#endif                          /* _FSAL_H */
+#endif /* !FSAL_H */
+/** @} */

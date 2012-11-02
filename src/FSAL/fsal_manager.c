@@ -25,8 +25,15 @@
  * -------------
  */
 
-/*
- * FSAL module manager
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
+ * @file fsal_manager.c
+ * @author Jim Lieb <jlieb@panasas.com>
+ * @brief FSAL module manager
  */
 
 #ifdef HAVE_CONFIG_H

@@ -26,14 +26,21 @@
  * -------------
  */
 
-#ifndef FSAL_API__
-#define FSAL_API__
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
+ * @file fsal_api.h
+ * @author Jim Lieb <jlieb@panasas.com>
+ * @brief The object-oriented FSAL API
+ */
+
+#ifndef FSAL_API
+#define FSAL_API
 
 #include "fsal_pnfs.h"
-
-/* FSAL API
- * object oriented fsal api.
- */
 
 /**
  * @page newapi New FSAL API
@@ -145,6 +152,120 @@
  * Note that exp_hdl is used to dereference the method and it is also
  * *always* the first argument to the method/function.  Think of it as
  * the 'this' argument.
+ */
+
+/**
+ * @page handles File-Handles and You
+ *
+ * Overview
+ * ========
+ *
+ * In the FSAL, file handles can take three forms.  There is the full,
+ * internal handle structure, compose of the @c fsal_obj_handle and
+ * the FSAL-private structure that contains it.
+ *
+ * There is the wire-handle, the FSAL-generated portion of the
+ * file handles exchanged between Ganesha and its clients through the
+ * FS protocol.  The wire-handle should contain everything necessary
+ * to find and use the file even if the file has been completely
+ * purged from cache or Ganesha has restarted from nothing.  There may
+ * be multiple wire-handles per @c fsal_obj_handle.  The wire-handle
+ * is produced by the @c handle_digest method on @c fsal_obj_handle.
+ * The @c create_handle on @c fsal_export produces a new
+ * @c fsal_obj_handle from a wire-handle.
+ *
+ * There is the handle-key, the portion of the handle that contains
+ * all and only information that uniquely identifies the handle within
+ * the entire FSAL (it is insufficient if it only identifies it within
+ * the export or within a filesystem.)  There are two functions that
+ * generate a handle-key, one is the @c extract_handle method on @c
+ * fsal_export.  It is used to get the key from a wire-handle so that
+ * it can be looked up in the cache.  The other is @c handle_to_key on
+ * @c fsal_obj_handle.  This is used after lookup or some other
+ * operation that produces a @c fsal_obj_handle so that it can be
+ * stored or looked up in the cache.
+ *
+ * The invariant to be maintained is that given an @c fsal_obj_handle,
+ * fh, extract_handle(digest_handle(fh)) = handle_to_key(fh).
+ *
+ * History and Details
+ * ===================
+ *
+ * The terminology is confusing here.  The old function names were
+ * kept (up to a point), but the semantics differ in ways both subtle
+ * and catastrophic. Making matters worse, that the first FSAL written
+ * was VFS, where the internal @c file_handle for the syscalls is the
+ * whole of the key, opaque, and syscall arg.  This does not imply any
+ * equivalence.
+ *
+ * In the old regime, the only place available to store _anything_ was
+ * the handle array in @c cache_entry_t.  People overloaded it with
+ * all kinds of rubbish as a result, and the wire-handle, the
+ * handle-key, and other stuff get mushed together.  To sort things
+ * out,
+ *
+ * 1. The wire-handle opaque _must_ be enough to re-acquire the cache
+ *    entry and its associated @c fsal_obj_handle.  Other than that,
+ *    it doesn't matter a whit. The client treats the whole protocol
+ *    handle (including what is in the opaque) as an opaque token.
+ *
+ * 2. The purpose of the @c export_id in the protocol "handle" is to
+ *    locate the FSAL that knows what is inside the opaque.  The @c
+ *    extract_handle is an export method for that purpose.  It should
+ *    be able to take the protocol handle opaque and translate it into
+ *    a handle-key that @c cache_inode_get can use to find an entry.
+ *
+ * 3. cache_inode_get takes an fh_desc argument which is not a
+ *    handle but a _key_.  It is used to generate the hash and to do
+ *    the secondary key compares.  That is all it is used for.  The
+ *    end result _must_ be a cache entry and its associated
+ *    @c fsal_obj_handle. See how @c cache_inode_get transitions to
+ *    cache_inode_new to see how this works.
+ *
+ * 4. The @c handle_to_key method, a @c fsal_obj_handle method,
+ *    generates a key for the cache inode hash table from the contents
+ *    of the @c fsal_obj_handle.  It is an analogue of extract_handle.
+ *    Note where it is called to see why it is there.
+ *
+ * 5. The digest method is similar in scope but it is the inverse of
+ *    @c extract_handle.  It's job is to fill in the opaque part of a
+ *    protocol handle.  Note that it gets passed a @c gsh_buffdesc
+ *    that describes the full opaque storage in whatever protocol
+ *    specific structure is used.  It's job is to put whatever it
+ *    takes into the opaque so the second and third items in this list
+ *    work.
+ *
+ * 6. Unlike the old API, a @c fsal_obj_handle is part of a FSAL
+ *    private structure for the object.  Note that there is no handle
+ *    member of this public structure.  The bits necessary to both
+ *    create a wire handle and use a filesystem handle go into this
+ *    private structure. You can put whatever you is required into the
+ *    private part.  Since both @c fsal_export and @c fsal_obj_handle
+ *    have private object storage, you could even do things like have
+ *    a container anchored in the export object that maps the
+ *    FSAL-external handle to the filesystem data needed to talk to
+ *    the filesystem.  If you need more info to deal with handles
+ *    differing due to hard-links, this is where you would put
+ *    it.  You would also have some other context in this private data
+ *    to do the right thing.  Just make sure there is a way to
+ *    disambiguate the multiple cases.  We do have to observe UNIX
+ *    semantics here.
+ *
+ * The upper layers don't care about the private handle data.  All
+ * they want is to be able to get something out from the object
+ * (result of a lookup) so it can find the object again later.  The
+ * obvious case is what you describe in @c nfs[34]_FhandleToCache.  These
+ * various methods make that happen.
+ *
+ * The linkage between a @c cache_entry_t and a @c fsal_obj_handle is
+ * 1-to-1 so we should really think of them as one, single object.  In
+ * fact, there should never be a cache_entry without its associated @c
+ * fsal_obj_handle.  The @c cache_entry_t is the cache inode part
+ * where things like locks and object type stuff (the AVL tree for
+ * dirs) are kept.  The @c fsal_obj_handle part that it points to
+ * holds the FSAL specific part where the FD (or its backend's equiv),
+ * open state, and anything needed for talking to the system or
+ * libraries.
  */
 
 /**
@@ -2117,4 +2238,5 @@ struct fsal_ds_ops {
                 const count4 count,
                 verifier4 *const writeverf);
 };
-#endif /* !FSAL_API__ */
+#endif /* !FSAL_API */
+/** @} */

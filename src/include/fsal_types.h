@@ -25,6 +25,11 @@
  */
 
 /**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
  * @file    fsal_types.h
  * @version $Revision: 1.19 $
  */
@@ -730,3 +735,4 @@ typedef struct fsal_share_param_t
 } fsal_share_param_t;
 
 #endif                          /* _FSAL_TYPES_H */
+/** @} */

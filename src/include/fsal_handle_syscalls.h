@@ -17,6 +17,19 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
+ * @file fsal_handle_syscalls.h
+ * @brief System calls for the Linux handle calls
+ *
+ * @todo This file should be in FSAL_VFS, not in the top-level include
+ * directory.
+ */
+
 #ifndef HANDLE_H
 #define HANDLE_H
 
@@ -180,3 +193,4 @@ static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh, uid_t 
 }
 
 #endif
+/** @} */

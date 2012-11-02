@@ -1,15 +1,11 @@
-/*
- * vim:expandtab:shiftwidth=4:tabstop=4:
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
  */
 
 /**
- *
- * \file    fsal_convert.c
- * \date    $Date: 2006/01/17 15:53:39 $
- * \version $Revision: 1.31 $
- * \brief   HPSS-FSAL type translation functions.
- *
- *
+ * @file  fsal_convert.c
+ * @brief FSAL type translation functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -159,3 +155,4 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid)
 
   return dev;
 }
+/** @} */

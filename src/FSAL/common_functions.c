@@ -1,5 +1,11 @@
-/*
- * Common FSAL functions
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
+ * @file common_functions.c
+ * @brief Internal and misc functions used by all/most FSALs
  */
 
 #ifdef HAVE_CONFIG_H
@@ -20,9 +26,14 @@
 #include "fsal.h"
 #include "fsal_types.h"
 
-/* Internal and misc functions used by all/most FSALs
- */
 
+/**
+ * @brief Dump and fsal_staticfsinfo_t to a log
+ *
+ * This is used for debugging
+ *
+ * @param[in] info The info to dump
+ */
 void display_fsinfo(struct fsal_staticfsinfo_t *info) {
 	LogDebug(COMPONENT_FSAL, "FileSystem info: {");
 	LogDebug(COMPONENT_FSAL, "  maxfilesize  = %zX    ",
@@ -82,4 +93,5 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info) {
 		 info->share_support_owner);
 	LogDebug(COMPONENT_FSAL, "}");
 }
+/** @} */
 

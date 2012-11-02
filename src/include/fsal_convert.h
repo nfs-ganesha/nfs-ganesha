@@ -1,37 +1,39 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- *
- * \file    fsal_convert.h
- * \version $Revision: 1.13 $
- * \brief   XFS to FSAL type converting function.
- *
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
  */
-#ifndef _FSAL_CONVERTION_H
-#define _FSAL_CONVERTION_H
+
+/**
+ * @file fsal_convert.h
+ * @brief FSAL conversion function.
+ */
+
+#ifndef FSAL_CONVERT_H
+#define FSAL_CONVERT_H
 
 #include "fsal.h"
 
@@ -84,4 +86,5 @@ gsh_time_t posix2fsal_time(time_t tsec, time_t nsec);
 #define my_high32m( a ) ( (unsigned int)( a >> 32 ) )
 #define my_low32m( a ) ( (unsigned int)a )
 
-#endif
+#endif /* !FSAL_CONVERT_H */
+/** @} */

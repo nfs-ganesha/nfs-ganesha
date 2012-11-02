@@ -22,6 +22,11 @@
  * ---------------------------------------
  */
 
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -450,6 +455,11 @@ posix2nfs4_error(const int posix_errorcode)
  *
  * This function exists so there can be something in common_pnfs.c to
  * be called from Ganesha core.
+ *
+ * @todo The existence of this function is a hack to work around a
+ * bug.  Remove it when the linkage issue is fixed.
+ *
+ * @return A garbage value of no use whatsoever.
  */
 
 uint64_t pnfs_common_dummy(void)
@@ -463,3 +473,4 @@ uint64_t pnfs_common_dummy(void)
 
         return accumulator;
 }
+/** @} */

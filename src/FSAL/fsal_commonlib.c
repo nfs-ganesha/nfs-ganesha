@@ -1,6 +1,4 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
  *
@@ -13,22 +11,31 @@
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
- * ------------- 
+ * -------------
  */
 
-/* fsal_commonlib.c
- * Common functions for and private to fsal modules.
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
+ * @file fsal_commonlib.c
+ * @author Jim Lieb <jlieb@panasas.com>
+ * @brief Common functions for and private to FSAL modules.
+ *
  * The prime requirement for functions to be here is that they operate only
- * on the public part of the fsal api and are therefore sharable by all fsal
+ * on the public part of the FSAL api and are therefore sharable by all fsal
  * implementations.
  */
 #ifdef HAVE_CONFIG_H
@@ -274,3 +281,4 @@ int fsal_ds_handle_uninit(struct fsal_ds_handle *ds)
 
         return 0;
 }
+/** @} */

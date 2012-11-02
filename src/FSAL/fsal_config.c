@@ -26,7 +26,15 @@
  * -------------
  */
 
-/* Initialize configuration parameters
+/**
+ * @defgroup FSAL File-System Abstraction Layer
+ * @{
+ */
+
+/**
+ * @file fsal_config.c
+ * @author Jim Lieb <jlieb@panasas.com>
+ * @brief Initialize configuration parameters
  */
 
 #ifdef HAVE_CONFIG_H
@@ -642,5 +650,4 @@ void init_fsal_parameters(fsal_init_info_t *init_info)
 {
         return;
 }
-
-
+/** @} */
