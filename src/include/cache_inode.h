@@ -1054,19 +1054,29 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
                              fsal_op_context_t *context)
 {
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+     time_t current_time = 0;
 
 
      PTHREAD_RWLOCK_RDLOCK(&entry->attr_lock);
+     current_time = time(NULL);
      /* Do we need to refresh? */
      if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
+         ((current_time - entry->attr_time) >
+          cache_inode_params.grace_period_attr) ||
+         ((cache_inode_params.getattr_dir_invalidation)&&
+           (entry->type == DIRECTORY)) ||
          FSAL_TEST_MASK(entry->attributes.asked_attributes,
                         FSAL_ATTR_RDATTR_ERR)) {
-          PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
-          PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
+         PTHREAD_RWLOCK_UNLOCK(&entry->attr_lock);
+         PTHREAD_RWLOCK_WRLOCK(&entry->attr_lock);
           /* Has someone else done it for us? */
-          if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
-              FSAL_TEST_MASK(entry->attributes.asked_attributes,
-                             FSAL_ATTR_RDATTR_ERR)) {
+         if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
+             ((current_time - entry->attr_time) >
+              cache_inode_params.grace_period_attr) ||
+             ((cache_inode_params.getattr_dir_invalidation)&&
+               (entry->type == DIRECTORY)) ||
+             FSAL_TEST_MASK(entry->attributes.asked_attributes,
+                            FSAL_ATTR_RDATTR_ERR)) {
                /* Release the lock on error */
                if ((cache_status =
                     cache_inode_refresh_attrs(entry,
