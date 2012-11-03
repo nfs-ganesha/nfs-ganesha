@@ -143,32 +143,14 @@ int nfs_Write(nfs_arg_t *arg,
                 goto out;
         }
 
-        if (cache_inode_access(entry,
-                               FSAL_WRITE_ACCESS,
-                               req_ctx,
-                               &cache_status) != CACHE_INODE_SUCCESS) {
-                /* NFSv3 exception : if user wants to write to a file
-                 * that is readonly but belongs to him, then allow it
-                 * to do it, push the permission check to the client
-                 * side */
-                cache_inode_lock_trust_attrs(entry,
-                                             req_ctx);
-                if ((cache_status == CACHE_INODE_FSAL_EACCESS) &&
-                    (entry->obj_handle->attributes.owner
-                     == req_ctx->creds->caller_uid)) {
-                        LogDebug(COMPONENT_NFSPROTO,
-                                 "Exception management: allowed user "
-                                 "%"PRIu64" to write to read-only file "
-                                 "belonging to him",
-                                 entry->obj_handle->attributes.owner);
-                } else {
-                        pthread_rwlock_unlock(&entry->attr_lock);
-                        res->res_write3.status = nfs3_Errno(cache_status);
-
-                        rc = NFS_REQ_OK;
-                        goto out;
-                }
-                pthread_rwlock_unlock(&entry->attr_lock);
+	cache_status = cache_inode_access(entry,
+					  FSAL_WRITE_ACCESS,
+					  req_ctx,
+					  &cache_status);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		res->res_write3.status = nfs3_Errno(cache_status);
+		rc = NFS_REQ_OK;
+		goto out;
         }
 
         /* Sanity check: write only a regular file */

@@ -13,25 +13,17 @@
 #endif
 
 #include  "fsal.h"
+#include "nfs_core.h"
 #include <sys/stat.h>
 #include "FSAL/access_check.h"
 #include <stdbool.h>
 
-static int fsal_check_access_acl(struct user_cred *creds,
-                                 fsal_aceperm_t v4mask,
-                                 struct attrlist * p_object_attributes);
-
-static int fsal_check_access_no_acl(struct user_cred *creds,
-				    fsal_accessflags_t access_type,
-				    struct attrlist * p_object_attributes);
-
-
-static bool fsal_check_ace_owner(uint64_t uid, struct user_cred *creds)
+static bool fsal_check_ace_owner(uid_t uid, struct user_cred *creds)
 {
   return (creds->caller_uid == uid);
 }
 
-static bool fsal_check_ace_group(uint64_t gid, struct user_cred *creds)
+static bool fsal_check_ace_group(gid_t gid, struct user_cred *creds)
 {
   int i;
 
@@ -200,15 +192,15 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
                                      struct user_cred *creds)
 {
   char ace_data[ACL_DEBUG_BUF_SIZE];
-  char access_data[2 * ACL_DEBUG_BUF_SIZE];
-  uint64_t user = creds->caller_uid;
+  uid_t user = creds->caller_uid;
   bool is_last_ace = (naces == ace_number);
 
   if(!is_last_ace)
     fsal_print_ace(ace_number, pace, ace_data);
 
   /* Print the access result and the request. */
-  sprintf(access_data, "%s: %s uid %"PRIu64" %s",
+  LogDebug(COMPONENT_FSAL,
+	   "%s: %s uid %u %s",
           (access_result == ERR_FSAL_NO_ERROR)                      ? "permit": "reject",
           IS_FSAL_ACE_BIT(perm, FSAL_ACE_PERM_READ_DATA) 	    ?"READ":
           IS_FSAL_ACE_BIT(perm, FSAL_ACE_PERM_WRITE_DATA) && is_dir ?"ADD_FILE":
@@ -225,10 +217,10 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
           IS_FSAL_ACE_BIT(perm, FSAL_ACE_PERM_READ_ACL) 	    ?"READ_ACL":
           IS_FSAL_ACE_BIT(perm, FSAL_ACE_PERM_WRITE_ACL)	    ?"WRITE_ACL":
           IS_FSAL_ACE_BIT(perm, FSAL_ACE_PERM_WRITE_OWNER)	    ?"WRITE_OWNER":
-          IS_FSAL_ACE_BIT(perm, FSAL_ACE_PERM_SYNCHRONIZE)	    ?"SYNCHRONIZE": "UNKNOWN",
+          IS_FSAL_ACE_BIT(perm, FSAL_ACE_PERM_SYNCHRONIZE)	    ?"SYNCHRONIZE":
+	   "UNKNOWN",
           user, (!is_last_ace) ? ace_data: "");
 
-  LogDebug(COMPONENT_FSAL, "fsal_check_access_by_acl_debug: %s", access_data);
 }
 
 static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
@@ -236,8 +228,8 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
 				 struct attrlist * p_object_attributes   /* IN */ )
 {
   fsal_aceperm_t missing_access;
-  uint64_t uid;
-  uint64_t gid;
+  uid_t uid;
+  gid_t gid;
   fsal_acl_t *pacl = NULL;
   fsal_ace_t *pace = NULL;
   int ace_number = 0;
@@ -249,7 +241,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   missing_access = v4mask;
   if(!missing_access)
     {
-      LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: Nothing was requested");
+      LogDebug(COMPONENT_FSAL, "Nothing was requested");
       return true;
     }
 
@@ -260,14 +252,11 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   is_dir = (p_object_attributes->type == DIRECTORY);
 
   LogDebug(COMPONENT_FSAL,
-           "fsal_check_access_acl: file acl=%p, file uid=%"PRIu64
-           ", file gid= %"PRIu64,
-           pacl,uid, gid);
-  LogDebug(COMPONENT_FSAL,
-           "fsal_check_access_acl: user uid=%"PRIu64
-           ", user gid= %"PRIu64", v4mask=0x%X",
-           (uint64_t) creds->caller_uid,
-           (uint64_t) creds->caller_gid,
+           "file acl=%p, file uid=%u, file gid= %u, "
+           "user uid=%u, user gid= %u, v4mask=0x%X",
+           pacl, uid, gid,
+           creds->caller_uid,
+           creds->caller_gid,
            v4mask);
 
   is_owner = fsal_check_ace_owner(uid, creds);
@@ -292,14 +281,13 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   for(pace = pacl->aces; pace < pacl->aces + pacl->naces; pace++)
     {
       LogDebug(COMPONENT_FSAL,
-               "fsal_check_access_acl: ace type 0x%X perm 0x%X "
-               "flag 0x%X who %u",
+               "ace type 0x%X perm 0x%X flag 0x%X who %u",
                pace->type, pace->perm, pace->flag, GET_FSAL_ACE_WHO(*pace));
 
       /* Process Allow and Deny entries. */
       if(IS_FSAL_ACE_ALLOW(*pace) || IS_FSAL_ACE_DENY(*pace))
         {
-          LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: allow or deny");
+          LogDebug(COMPONENT_FSAL, "allow or deny");
 
           /* Check if this ACE is applicable. */
           if(fsal_check_ace_applicable(pace, creds, is_dir, is_owner, is_group))
@@ -307,21 +295,21 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
               if(IS_FSAL_ACE_ALLOW(*pace))
                 {
                   LogDebug(COMPONENT_FSAL,
-                           "fsal_check_access_acl: allow perm 0x%X remainingPerms 0x%X",
+                           "allow perm 0x%X remainingPerms 0x%X",
                            pace->perm, missing_access);
 
                   missing_access &= ~(pace->perm & missing_access);
                   if(!missing_access)
                     {
-                      LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: access granted");
+                      LogDebug(COMPONENT_FSAL, "access granted");
                       fsal_print_access_by_acl(pacl->naces, ace_number, pace,
-                                                     v4mask, ERR_FSAL_NO_ERROR, is_dir, creds);
+					       v4mask, ERR_FSAL_NO_ERROR, is_dir, creds);
                       return true;
                     }
                 }
              else if(pace->perm & missing_access)
                {
-                 LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: access denied");
+                 LogDebug(COMPONENT_FSAL, "access denied");
                  fsal_print_access_by_acl(pacl->naces, ace_number, pace, v4mask,
                                                 ERR_FSAL_ACCESS, is_dir, creds);
                  return false;
@@ -334,26 +322,27 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
 
   if(missing_access)
     {
-      LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: access denied");
+      LogDebug(COMPONENT_FSAL, "access denied");
       return false;
     }
   else
     {
-      LogDebug(COMPONENT_FSAL, "fsal_check_access_acl: access granted");
+      LogDebug(COMPONENT_FSAL, "access granted");
       return true;
     }
 }
 
 static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
+				    struct req_op_context *req_ctx,
 				    fsal_accessflags_t access_type,  /* IN */
 				    struct attrlist * p_object_attributes /* IN */ )
 {
-	uint64_t uid;
-	uint64_t gid;
+	uid_t uid;
+	gid_t gid;
 	mode_t mode, mask;
 
 	if( !access_type) {
-		LogDebug(COMPONENT_FSAL, "fsal_check_access_no_acl: Nothing was requested");
+		LogDebug(COMPONENT_FSAL, "Nothing was requested");
 		return true;
 	}
 
@@ -365,9 +354,8 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 		| ((access_type & FSAL_X_OK) ? S_IXOTH : 0);
 
 	LogDebug(COMPONENT_FSAL,
-		 "fsal_check_access_no_acl: file Mode=%#o, file uid=%"PRIu64
-		 ", file gid= %"PRIu64
-		 ", user uid=%d, user gid= %d, access_type=0X%x",
+		 "file Mode=%#o, file uid=%u, file gid= %u, "
+		 "user uid=%u, user gid= %u, access_type=0X%x",
 		 mode,uid, gid,
 		 creds->caller_uid,
 		 creds->caller_gid,
@@ -376,12 +364,6 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 	/* If the uid of the file matches the uid of the user,
 	 * then the uid mode bits take precedence. */
 	if(creds->caller_uid == uid) {
-		if(access_type & FSAL_OWNER_OK) {
-			LogDebug(COMPONENT_FSAL,
-				 "fsal_check_access_no_acl: File owner ok user %"PRIu64,
-				 uid);
-			return true;
-		}
 		mode >>= 6;
 	} else { /* followed by group(s) */
 		if(creds->caller_gid == gid) {
@@ -399,10 +381,25 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 		}
 	}
 	/* others fall out the bottom... */
-	if((mask & ~mode & S_IRWXO) == 0)
+	if((mask & ~mode & S_IRWXO) == 0) {
 		return true;
-	else
-		return false;
+	} else {
+                /* NFSv3 exception : if user wants to write to a file
+                 * that is readonly but belongs to him, then allow it
+                 * to do it, push the permission check to the client
+                 * side */
+		if(req_ctx->nfs_vers == NFS_V3 &&
+		   creds->caller_uid == uid &&
+		   access_type == FSAL_W_OK &&
+		   (mode & S_IROTH)) {
+			LogDebug(COMPONENT_FSAL,
+				 "fsal_check_access_no_acl: File owner ok user %u",
+				 uid);
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
 
 /* test_access
@@ -429,6 +426,7 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 					       attribs);
 	} else { /* fall back to use mode to check access. */
 		retval = fsal_check_access_no_acl(req_ctx->creds,
+						  req_ctx,
 						  FSAL_MODE_MASK(access_type),
 						  attribs);
 	}

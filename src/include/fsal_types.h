@@ -135,7 +135,7 @@ struct user_cred {
  *
  *       1. New elements are appended at the end, never inserted in the middle.
  *
- *       2. This structure _only_ contains pointers.
+ *       2. This structure _only_ contains pointers and simple scalar values.
  *
  *       3. Changing an already defined struct pointer is strictly not allowed.
  *
@@ -152,6 +152,7 @@ struct req_op_context {
         sockaddr_t *caller_addr; /*< IP connection info */
         const uint64_t*clientid; /*< Client ID of caller, NULL if
                                      unknown/not applicable. */
+	uint32_t nfs_vers;       /*< protocol version of request */
         /* add new context members here */
 };
 
