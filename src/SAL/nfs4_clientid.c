@@ -1235,7 +1235,7 @@ uint32_t client_record_value_hash_func(hash_parameter_t *hparam,
  * @see HashTable_Init
  *
  */
-unsigned long client_record_rbt_hash_func(hash_parameter_t *hparam,
+uint64_t client_record_rbt_hash_func(hash_parameter_t *hparam,
 					  struct gsh_buffdesc *key)
 {
 	uint64_t res;
