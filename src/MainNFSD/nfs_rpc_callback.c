@@ -706,7 +706,11 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session,
 
 	if (rpc_cb_null(chan,
 			cb_timeout) != RPC_SUCCESS) {
+#ifdef EBADFD
 		code = EBADFD;
+#else
+		code = EBADF;
+#endif
 		goto out;
 	}
 
