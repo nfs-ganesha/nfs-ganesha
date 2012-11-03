@@ -448,7 +448,7 @@ typedef struct log_component_info
 
 #define ReturnLevelComponent(component) LogComponents[component].comp_log_level
 
-log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
+extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogAlways(component, format, args...) \
   do { \
