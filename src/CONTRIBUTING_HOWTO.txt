@@ -1,4 +1,6 @@
 
+Contributing and Using Git  -   Paul Sheer <paulsheer@gmail.com>   -   18 October 2012
+
 
 
 If you would like to contribute to nfs-ganesha development:
@@ -25,6 +27,8 @@ First you need to fetch the code you wish to work on:
 Now check what you have:
 
     git status
+
+Now visit README.building for instructions on building and running.
 
 Now fetch the latest updates:
 
