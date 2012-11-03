@@ -1802,6 +1802,7 @@ static inline fattr_xdr_result decode_timeset(XDR *xdr,
 	if( !xdr_u_int32_t(xdr, &how))
 		return FATTR_XDR_FAILED;
 	if(how == SET_TO_SERVER_TIME4) {
+#ifdef CLOCK_REALTIME
 		struct timespec sys_ts;
 
 		if(clock_gettime(CLOCK_REALTIME, &sys_ts) != 0) {
@@ -1810,6 +1811,13 @@ static inline fattr_xdr_result decode_timeset(XDR *xdr,
 		}
 		ts->seconds = sys_ts.tv_sec;
 		ts->nseconds = sys_ts.tv_nsec;
+#else
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+
+		ts->seconds = tv.tv_sec;
+		ts->nseconds = tv.tv_usec * 1000UL;
+#endif
 	} else {
 		return decode_time(xdr, args, ts);
 	}
