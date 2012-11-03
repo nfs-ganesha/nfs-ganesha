@@ -56,7 +56,7 @@ static const char *CONF_LABEL_FS_COMMON __attribute__((unused)) = "FileSystem";
 #include "ganesha_types.h"
 
 /* Forward declarations */
-struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
+struct fsal_staticfsinfo_t;
 
 /* Cookie to be used in FSAL_ListXAttrs() to bypass RO xattr */
 static const uint32_t FSAL_XATTR_RW_COOKIE = ~0;
