@@ -181,8 +181,6 @@ MODULE_INIT void posix_init (void)
     marshal_create_process ();
 #endif
 
-    usleep (200000);
-
     printf ("Connecting to nodedb\n");
     connpool = connection_pool_new ();
 

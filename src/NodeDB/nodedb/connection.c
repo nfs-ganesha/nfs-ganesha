@@ -134,6 +134,8 @@ static int connect_socket (const char *address)
 {
     struct sockaddr_in a;
     int s, yes = 1;
+    long delay;
+
     if ((s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
         return -1;
 
@@ -144,11 +146,18 @@ static int connect_socket (const char *address)
     a.sin_port = htons (MARSHALLER_PORT);
     a.sin_family = AF_INET;
 
-    if (connect (s, (struct sockaddr *) &a, sizeof (a)) < 0) {
-        close (s);
-        return -1;
+/* retry for 2 seconds to connect. this is in case the daemon process is
+taking it's time to come alive: */
+    for (delay = 1000; delay < 1000000; delay = delay * 5 / 3) {
+        int c;
+        c = connect (s, (struct sockaddr *) &a, sizeof (a));
+        if (!c)
+            return s;
+        if (errno != ECONNREFUSED)
+            break;
+        usleep(delay);
     }
-    return s;
+    return -1;
 }
 
 static struct connection *_connection_new (struct marshal *marshal, int sock)
@@ -347,13 +356,8 @@ void marshal_create_process (void)
     close (1);
     close (2);
     new_fd = dup (fd);
-#if 1
     new_fd = dup (log_fd);
     new_fd = dup (log_fd);
-#else
-    new_fd = dup (fd);
-    new_fd = dup (fd);
-#endif
     (void) new_fd;
     close (fd);
     close (log_fd);
