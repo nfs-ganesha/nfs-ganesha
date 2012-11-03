@@ -178,11 +178,9 @@ unsigned long hash_sockaddr(sockaddr_t *addr, ignore_port_t ignore_port)
       case AF_INET6:
         {
           struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)addr;
-
-          addr_hash = paddr->sin6_addr.s6_addr32[0] ^
-                      paddr->sin6_addr.s6_addr32[1] ^
-                      paddr->sin6_addr.s6_addr32[2] ^
-                      paddr->sin6_addr.s6_addr32[3];
+          uint32_t *va;
+          va = (uint32_t *) &paddr->sin6_addr;
+          addr_hash = va[0] ^ va[1] ^ va[2] ^ va[3];
           if(ignore_port == CHECK_PORT)
             {
               port = paddr->sin6_port;
