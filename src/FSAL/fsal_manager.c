@@ -459,7 +459,9 @@ int register_fsal(struct fsal_module *fsal_hdl,
 	memcpy(fsal_hdl->ops, &def_fsal_ops, sizeof(struct fsal_ops));
 
 	pthread_mutexattr_init(&attrs);
+#if defined(__linux__)
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
+#endif
 	pthread_mutex_init(&fsal_hdl->lock, &attrs);
 	init_glist(&fsal_hdl->fsals);
 	init_glist(&fsal_hdl->exports);
