@@ -34,7 +34,9 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef SUPPORT_LINUX_QUOTAS
 #include <mntent.h>
+#endif
 #include <sys/statvfs.h>
 #include <sys/quota.h>
 #include "nlm_list.h"
