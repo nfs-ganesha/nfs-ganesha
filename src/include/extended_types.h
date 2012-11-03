@@ -47,6 +47,7 @@ typedef unsigned long long u_longlong_t;
 typedef unsigned int uint_t;
 typedef unsigned int uint32_t;
 
+#ifndef _UINT64_T
 # ifndef __int8_t_defined
 
 #if SIZEOF_LONG == 8
@@ -55,6 +56,7 @@ typedef long int int64_t;
 #else
 typedef unsigned long long int uint64_t;
 typedef long long int int64_t;
+#endif
 #endif
 #endif
 
