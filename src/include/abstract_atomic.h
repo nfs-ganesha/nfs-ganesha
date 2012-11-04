@@ -45,6 +45,10 @@
 
 #if ((ATOMIC_GCC_VERSION) >= 40700)
 #define GCC_ATOMIC_FUNCTIONS 1
+#elif defined(__APPLE__) && defined(__x86_64__)
+#include "atomic_x86_64.h"
+#undef GCC_SYNC_FUNCTIONS
+#undef GCC_ATOMIC_FUNCTIONS
 #elif ((ATOMIC_GCC_VERSION) >= 40100)
 #define GCC_SYNC_FUNCTIONS 1
 #else
