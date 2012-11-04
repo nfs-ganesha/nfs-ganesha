@@ -54,6 +54,8 @@
 #include "gssd.h"
 #include "err_util.h"
 
+extern struct clnt_list_head topdirs_list;
+extern struct clnt_list_head clnt_list;
 extern struct pollfd *pollarray;
 extern int pollsize;
 

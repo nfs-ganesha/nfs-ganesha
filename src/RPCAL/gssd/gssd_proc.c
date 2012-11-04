@@ -102,6 +102,10 @@
  *      and rescan the whole {rpc_pipefs} when this happens.
  */
 
+struct clnt_list_head topdirs_list;
+
+struct clnt_list_head clnt_list;
+
 struct pollfd * pollarray;
 
 int pollsize;  /* the size of pollaray (in pollfd's) */

@@ -67,7 +67,9 @@ extern int			root_uses_machine_creds;
 extern unsigned int 		context_timeout;
 extern char			*preferred_realm;
 
-TAILQ_HEAD(clnt_list_head, clnt_info) clnt_list;
+TAILQ_HEAD(clnt_list_head, clnt_info);
+
+extern struct clnt_list_head clnt_list;
 
 struct clnt_info {
 	TAILQ_ENTRY(clnt_info)	list;
@@ -87,7 +89,9 @@ struct clnt_info {
 	struct sockaddr_storage addr;
 };
 
-TAILQ_HEAD(topdirs_list_head, topdirs_info) topdirs_list;
+TAILQ_HEAD(topdirs_list_head, topdirs_info);
+
+extern struct topdirs_list_head topdirs_list;
 
 struct topdirs_info {
 	TAILQ_ENTRY(topdirs_info)   list;
