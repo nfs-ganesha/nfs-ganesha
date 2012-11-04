@@ -384,7 +384,7 @@ struct fsal_up_vector
                                    struct fsal_up_file *);
 };
 
-struct fsal_up_vector fsal_up_top;
+extern struct fsal_up_vector fsal_up_top;
 
 /**
  * @brief A single up-call event.
