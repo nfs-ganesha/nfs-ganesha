@@ -2278,7 +2278,10 @@ state_status_t do_lock_op(cache_entry_t *entry,
     }
   else
     {
-      status = do_unlock_no_owner(entry, export, lock, sle_type);
+#ifdef _USE_9P
+      if( powner->so_type != STATE_LOCK_OWNER_9P )
+#endif /* _USE_9P */
+        status = do_unlock_no_owner(entry, export, lock, sle_type);
     }
 
   if(status == STATE_LOCK_CONFLICT)
