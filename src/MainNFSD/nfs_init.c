@@ -1243,8 +1243,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
 
   /* Cache Inode Initialisation */
-  if((fh_to_cache_entry_ht =
-      cache_inode_init(cache_inode_params, &cache_status)) == NULL)
+  cache_status = cache_inode_init(cache_inode_params,
+				  &fh_to_cache_entry_ht);
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       LogFatal(COMPONENT_INIT,
                "Cache Inode Layer could not be initialized, status=%s",

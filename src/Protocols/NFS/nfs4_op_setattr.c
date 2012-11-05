@@ -191,12 +191,10 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                         }
                 }
 
-                if((cache_status
-                    = cache_inode_truncate(data->current_entry,
-                                           sattr.filesize,
-                                           data->req_ctx,
-                                           &cache_status))
-                   != CACHE_INODE_SUCCESS) {
+                cache_status = cache_inode_truncate(data->current_entry,
+						    sattr.filesize,
+						    data->req_ctx);
+                if (cache_status != CACHE_INODE_SUCCESS) {
                         res_SETATTR4.status = nfs4_Errno(cache_status);
                         return res_SETATTR4.status;
                 }
@@ -247,10 +245,10 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                 return res_SETATTR4.status;
         }
 
-        if (cache_inode_setattr(data->current_entry,
-                                &sattr,
-                                data->req_ctx,
-                                &cache_status) != CACHE_INODE_SUCCESS) {
+        cache_status = cache_inode_setattr(data->current_entry,
+					   &sattr,
+					   data->req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
                 res_SETATTR4.status = nfs4_Errno(cache_status);
                 return res_SETATTR4.status;
         }

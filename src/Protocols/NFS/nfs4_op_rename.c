@@ -165,10 +165,11 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    */
 
   /* Lookup oldfile to see if it exists (refcount +1) */
-  if ((tst_entry_src = cache_inode_lookup(src_entry,
-                                          oldname,
-                                          data->req_ctx,
-                                          &cache_status)) == NULL)
+  cache_status = cache_inode_lookup(src_entry,
+				    oldname,
+				    data->req_ctx,
+				    &tst_entry_src);
+  if (tst_entry_src == NULL)
     {
       res_RENAME4.status = nfs4_Errno(cache_status);
       goto release;
@@ -176,10 +177,10 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* Lookup file with new name to see if it already exists (refcount +1),
    * I expect to get NO_ERROR or ENOENT, anything else means an error */
-  tst_entry_dst = cache_inode_lookup(dst_entry,
-                                     newname,
-                                     data->req_ctx,
-                                     &cache_status);
+  cache_status = cache_inode_lookup(dst_entry,
+				    newname,
+				    data->req_ctx,
+				    &tst_entry_dst);
   if((cache_status != CACHE_INODE_SUCCESS) &&
      (cache_status != CACHE_INODE_NOT_FOUND))
     {
@@ -273,12 +274,12 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
               ( tst_entry_src->type == DIRECTORY &&
               tst_entry_dst->type == DIRECTORY ))
             {
-              if(cache_inode_rename(src_entry,
-                                    oldname,
-                                    dst_entry,
-                                    newname,
-                                    data->req_ctx,
-                                    &cache_status) != CACHE_INODE_SUCCESS)
+              cache_status = cache_inode_rename(src_entry,
+						oldname,
+						dst_entry,
+						newname,
+						data->req_ctx);
+	      if(cache_status != CACHE_INODE_SUCCESS)
                {
 
                  res_RENAME4.status = nfs4_Errno(cache_status);
@@ -295,12 +296,12 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   else
     {
       /* New entry does not already exist, call cache_entry_rename */
-      if(cache_inode_rename(src_entry,
-                            oldname,
-                            dst_entry,
-                            newname,
-                            data->req_ctx,
-                            &cache_status) != CACHE_INODE_SUCCESS)
+      cache_status = cache_inode_rename(src_entry,
+					oldname,
+					dst_entry,
+					newname,
+					data->req_ctx);
+      if(cache_status != CACHE_INODE_SUCCESS)
         {
           res_RENAME4.status = nfs4_Errno(cache_status);
           goto release;

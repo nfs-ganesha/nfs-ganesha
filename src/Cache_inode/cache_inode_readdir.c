@@ -69,22 +69,19 @@
  * lock must be held when this function is called.
  *
  * @param[in,out] entry  The directory to be managed
- * @param[out]    status Returned status.
  *
- * @return the same as *status
+ * @return CACHE_INODE_SUCCESS or errors.
  *
  */
 cache_inode_status_t
-cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry,
-                                         cache_inode_status_t *status)
+cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry)
 {
-     /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* Only DIRECTORY entries are concerned */
      if (entry->type != DIRECTORY) {
-          *status = CACHE_INODE_BAD_TYPE;
-          return *status;
+          status = CACHE_INODE_BAD_TYPE;
+          return status;
      }
 
      /* Get ride of entries cached in the DIRECTORY */
@@ -93,10 +90,10 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry,
      /* Mark directory as not populated */
      atomic_clear_uint32_t_bits(&entry->flags, (CACHE_INODE_DIR_POPULATED |
                                                 CACHE_INODE_TRUST_CONTENT));
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
-     return *status;
-} /* cache_inode_invalidate_all_cached_dirent */
+     return status;
+}
 
 /**
  * @brief Perform an operation on it on a cached entry
@@ -236,37 +233,33 @@ out:
  * @param[in]     name      The name to add to the entry
  * @param[in]     entry     The cache entry associated with name
  * @param[out]    dir_entry The directory entry newly added (optional)
- * @param[out]    status    Same as return value
  *
  * @return CACHE_INODE_SUCCESS or errors on failure.
- *
  */
 
 cache_inode_status_t
 cache_inode_add_cached_dirent(cache_entry_t *parent,
                               const char *name,
                               cache_entry_t *entry,
-                              cache_inode_dir_entry_t **dir_entry,
-                              cache_inode_status_t *status)
+                              cache_inode_dir_entry_t **dir_entry)
 {
      cache_inode_dir_entry_t *new_dir_entry = NULL;
      size_t namesize = strlen(name) + 1;
      int code = 0;
-
-     *status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* Sanity check */
      if(parent->type != DIRECTORY) {
-          *status = CACHE_INODE_BAD_TYPE;
-          return *status;
+          status = CACHE_INODE_BAD_TYPE;
+          return status;
      }
 
      /* in cache inode avl, we always insert on pentry_parent */
      new_dir_entry = gsh_malloc(sizeof(cache_inode_dir_entry_t) +
                                 namesize);
      if (new_dir_entry == NULL) {
-          *status = CACHE_INODE_MALLOC_ERROR;
-          return *status;
+          status = CACHE_INODE_MALLOC_ERROR;
+          return status;
      }
 
      new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
@@ -280,8 +273,8 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
           /* collision, tree not updated--release both pool objects and return
           * err */
          gsh_free(new_dir_entry);
-         *status = CACHE_INODE_ENTRY_EXISTS;
-         return *status;
+         status = CACHE_INODE_ENTRY_EXISTS;
+         return status;
      }
 
      if (dir_entry) {
@@ -291,11 +284,10 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
      /* we're going to succeed */
      parent->object.dir.nbactive++;
 
-     return *status;
-} /* cache_inode_add_cached_dirent */
+     return status;
+}
 
 /**
- *
  * @brief Removes an entry from a cached directory.
  *
  * This function removes the named entry from a cached directory.  The
@@ -303,7 +295,6 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
  *
  * @param[in,out] directory The cache entry representing the directory
  * @param[in]     name      The name indicating the entry to remove
- * @param[out]    status    Returned status
  *
  * @retval CACHE_INODE_SUCCESS on success.
  * @retval CACHE_INODE_BAD_TYPE if directory is not a directory.
@@ -312,29 +303,27 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
  */
 cache_inode_status_t
 cache_inode_remove_cached_dirent(cache_entry_t *directory,
-                                 const char *name,
-                                 cache_inode_status_t *status)
+                                 const char *name)
 {
-  /* Set the return default to CACHE_INODE_SUCCESS */
-  *status = CACHE_INODE_SUCCESS;
+  cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
   if(directory->type != DIRECTORY)
     {
-      *status = CACHE_INODE_BAD_TYPE;
-      return *status;
+      status = CACHE_INODE_BAD_TYPE;
+      return status;
     }
 
-  *status
-       = cache_inode_operate_cached_dirent(directory,
-                                           name,
-                                           NULL,
-                                           CACHE_INODE_DIRENT_OP_REMOVE);
-  return (*status);
+  status = cache_inode_operate_cached_dirent(directory,
+					     name,
+					     NULL,
+					     CACHE_INODE_DIRENT_OP_REMOVE);
+  return status;
 
-} /* cache_inode_remove_cached_dirent */
+}
 
-/* state to be passed to callbacks
+/**
+ * @brief State to be passed to FSAL readdir callbacks
  */
 
 struct cache_inode_populate_cb_state {
@@ -368,7 +357,7 @@ populate(const struct req_op_context *opctx,
                 = (struct cache_inode_populate_cb_state *)dir_state;
         struct fsal_obj_handle *entry_hdl;
         cache_inode_dir_entry_t *new_dir_entry = NULL;
-        cache_entry_t *pentry = NULL;
+        cache_entry_t *cache_entry = NULL;
         fsal_status_t fsal_status = {0, 0};
         struct fsal_obj_handle *dir_hdl = state->directory->obj_handle;
 
@@ -377,10 +366,10 @@ populate(const struct req_op_context *opctx,
                 *state->status = cache_inode_error_convert(fsal_status);
                 goto error;
         }
-        pentry = cache_inode_new_entry(entry_hdl,
-                                       CACHE_INODE_FLAG_NONE,
-                                       state->status);
-        if(pentry == NULL) {
+        *state->status = cache_inode_new_entry(entry_hdl,
+					       CACHE_INODE_FLAG_NONE,
+					       &cache_entry);
+        if(cache_entry == NULL) {
                 *state->status = CACHE_INODE_NOT_FOUND;
                 /* we do not free entry_hdl because it is consumed by
                    cache_inode_new_entry */
@@ -388,9 +377,8 @@ populate(const struct req_op_context *opctx,
         }
         *state->status = cache_inode_add_cached_dirent(state->directory,
                                                        name,
-                                                       pentry,
-                                                       &new_dir_entry,
-                                                       state->status);
+                                                       cache_entry,
+                                                       &new_dir_entry);
         if (*state->status != CACHE_INODE_SUCCESS &&
             *state->status != CACHE_INODE_ENTRY_EXISTS) {
                 goto error;
@@ -422,49 +410,47 @@ error:
  * both the names and filess.  The content lock must be held on the
  * directory being read.
  *
- * @param[in]     directory  Entry for the parent directory to be read
- * @param[in]     req_ctx    Request context (user creds, client address etc)
- * @param[out]    status     Returned status
+ * @param[in] directory  Entry for the parent directory to be read
+ * @param[in] req_ctx    Request context (user creds, client address etc)
  *
+ * @return CACHE_INODE_SUCCESS or errors.
  */
 
 static cache_inode_status_t
 cache_inode_readdir_populate(const struct req_op_context *req_ctx,
-                             cache_entry_t *directory,
-                             cache_inode_status_t *status)
+                             cache_entry_t *directory)
 {
   fsal_status_t fsal_status;
   bool eod = false;
+  cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
   struct cache_inode_populate_cb_state state;
-
-  /* Set the return default to CACHE_INODE_SUCCESS */
-  *status = CACHE_INODE_SUCCESS;
 
   /* Only DIRECTORY entries are concerned */
   if(directory->type != DIRECTORY)
     {
-      *status = CACHE_INODE_BAD_TYPE;
-      return *status;
+      status = CACHE_INODE_BAD_TYPE;
+      return status;
     }
 
   if((directory->flags & CACHE_INODE_DIR_POPULATED) &&
      (directory->flags & CACHE_INODE_TRUST_CONTENT))
     {
-      *status = CACHE_INODE_SUCCESS;
-      return *status;
+      status = CACHE_INODE_SUCCESS;
+      return status;
     }
 
   /* Invalidate all the dirents */
-  if(cache_inode_invalidate_all_cached_dirent(directory,
-                                              status) != CACHE_INODE_SUCCESS)
-    return *status;
+  status = cache_inode_invalidate_all_cached_dirent(directory);
+
+  if (status != CACHE_INODE_SUCCESS)
+    return status;
 
   state.directory = directory;
-  state.status = status;
+  state.status = &status;
   state.offset_cookie = 0;
 
-  *status = CACHE_INODE_SUCCESS;
+  status = CACHE_INODE_SUCCESS;
   fsal_status = directory->obj_handle->ops->readdir(directory->obj_handle,
                                                     req_ctx,
                                                     NULL, /* starting at the beginning */
@@ -473,14 +459,14 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
                                                     &eod);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      *status = cache_inode_error_convert(fsal_status);
+      status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
            cache_inode_kill_entry(directory);
       }
-      return *status;
+      return status;
     }
-  if (*status != CACHE_INODE_SUCCESS) {
-    return *status;
+  if (status != CACHE_INODE_SUCCESS) {
+    return status;
   }
 
   assert(eod);  /* we were supposed to read to the end.... */
@@ -488,12 +474,11 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
   atomic_set_uint32_t_bits(&directory->flags,
                            (CACHE_INODE_DIR_POPULATED |
                             CACHE_INODE_TRUST_CONTENT));
-  *status = CACHE_INODE_SUCCESS;
-  return *status;
+  status = CACHE_INODE_SUCCESS;
+  return status;
 }                               /* cache_inode_readdir_populate */
 
 /**
- *
  * @brief Reads a directory
  *
  * This function iterates over the cached directory entries (possibly
@@ -507,10 +492,9 @@ cache_inode_readdir_populate(const struct req_op_context *req_ctx,
  * @param[in]  cookie    Starting cookie for the readdir operation
  * @param[out] nbfound   Number of entries returned.
  * @param[out] eod_met   Whether the end of directory was met
- * @param[in]  context   FSAL credentials
+ * @param[in]  req_ctx   Request context
  * @param[in]  cb        The callback function to receive entries
  * @param[in]  cb_opaque A pointer passed as the first argument to cb
- * @param[out] status    Returned status
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  * @retval CACHE_INODE_BAD_TYPE if entry is not related to a directory
@@ -523,8 +507,7 @@ cache_inode_readdir(cache_entry_t *directory,
                     bool *eod_met,
                     struct req_op_context *req_ctx,
                     cache_inode_readdir_cb_t cb,
-                    void *cb_opaque,
-                    cache_inode_status_t *status)
+                    void *cb_opaque)
 {
      /* The entry being examined */
      cache_inode_dir_entry_t *dirent = NULL;
@@ -538,30 +521,27 @@ cache_inode_readdir(cache_entry_t *directory,
      /* True if the most recently traversed directory entry has been
         added to the caller's result. */
      bool in_result = true;
-
-     /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* readdir can be done only with a directory */
      if (directory->type != DIRECTORY) {
-          *status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_BAD_TYPE;
           /* no lock acquired so far, just return status */
-          return *status;
+          return status;
      }
 
      /* cache_inode_lock_trust_attrs can return an error, and no lock will be
         acquired */
-     *status = cache_inode_lock_trust_attrs(directory, req_ctx);
-     if (*status != CACHE_INODE_SUCCESS)
-       return *status;
+     status = cache_inode_lock_trust_attrs(directory, req_ctx);
+     if (status != CACHE_INODE_SUCCESS)
+       return status;
 
      /* Check if user (as specified by the credentials) is authorized to read
       * the directory or not */
-     if (cache_inode_access_no_mutex(directory,
-                                     access_mask,
-                                     req_ctx,
-                                     status)
-         != CACHE_INODE_SUCCESS) {
+     status = cache_inode_access_no_mutex(directory,
+					  access_mask,
+					  req_ctx);
+     if (status != CACHE_INODE_SUCCESS) {
           goto unlock_attrs;
      }
 
@@ -569,9 +549,8 @@ cache_inode_readdir(cache_entry_t *directory,
            (directory->flags & CACHE_INODE_DIR_POPULATED))) {
           pthread_rwlock_wrlock(&directory->content_lock);
           pthread_rwlock_unlock(&directory->attr_lock);
-          if (cache_inode_readdir_populate(req_ctx, directory,
-                                           status)
-              != CACHE_INODE_SUCCESS) {
+          status = cache_inode_readdir_populate(req_ctx, directory);
+          if (status != CACHE_INODE_SUCCESS) {
                goto unlock_dir;
           }
      } else {
@@ -590,7 +569,7 @@ cache_inode_readdir(cache_entry_t *directory,
      if (cookie > 0) {
           /* N.B., cache_inode_avl_qp_insert_s ensures k > 2 */
           if (cookie < 3) {
-               *status = CACHE_INODE_BAD_COOKIE;
+               status = CACHE_INODE_BAD_COOKIE;
                goto unlock_dir;
           }
 
@@ -610,7 +589,7 @@ cache_inode_readdir(cache_entry_t *directory,
                LogFullDebug(COMPONENT_NFS_READDIR,
                             "%s: seek to cookie=%"PRIu64" fail",
                             __func__, cookie);
-               *status = CACHE_INODE_BAD_COOKIE;
+               status = CACHE_INODE_BAD_COOKIE;
                goto unlock_dir;
           }
 
@@ -648,12 +627,11 @@ cache_inode_readdir(cache_entry_t *directory,
                                          LRU_REQ_SCAN))
               == NULL) {
                /* Entry fell out of the cache, load it back in. */
-               if ((entry
-                    = cache_inode_lookup_impl(directory,
-                                              dirent->name,
-                                              req_ctx,
-                                              &lookup_status))
-                   == NULL) {
+	    lookup_status = cache_inode_lookup_impl(directory,
+						    dirent->name,
+						    req_ctx,
+						    &entry);
+               if (entry == NULL) {
                     if (lookup_status == CACHE_INODE_NOT_FOUND) {
                          /* Directory changed out from under us.
                             Invalidate it, skip the name, and keep
@@ -664,7 +642,7 @@ cache_inode_readdir(cache_entry_t *directory,
                     } else {
                          /* Something is more seriously wrong,
                             probably an inconsistency. */
-                         *status = lookup_status;
+                         status = lookup_status;
                          goto unlock_dir;
                     }
                }
@@ -676,8 +654,8 @@ cache_inode_readdir(cache_entry_t *directory,
                        dirent, dirent->name,
                        dirent->hk.k, dirent->hk.p);
 
-          *status = cache_inode_lock_trust_attrs(entry, req_ctx);
-          if (*status != CACHE_INODE_SUCCESS)
+          status = cache_inode_lock_trust_attrs(entry, req_ctx);
+          if (status != CACHE_INODE_SUCCESS)
             {
               cache_inode_lru_unref(entry, 0);
               goto unlock_dir;
@@ -708,11 +686,11 @@ cache_inode_readdir(cache_entry_t *directory,
 unlock_dir:
 
      pthread_rwlock_unlock(&directory->content_lock);
-     return *status;
+     return status;
 
 unlock_attrs:
 
      pthread_rwlock_unlock(&directory->attr_lock);
-     return *status;
+     return status;
 } /* cache_inode_readdir */
 /** @} */

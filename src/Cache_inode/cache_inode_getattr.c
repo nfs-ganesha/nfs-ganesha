@@ -64,7 +64,6 @@
  * @param[in]     req_ctx Request context(user creds, client address etc)
  * @param[in,out] opaque  Opaque pointer passed to callback
  * @param[in]     cb      User supplied callback
- * @param[out]    status  Returned status
  *
  * @return Errors from cache_inode_lock_trust_attributes or the user
  *         supplied callback.
@@ -72,13 +71,14 @@
  */
 cache_inode_status_t
 cache_inode_getattr(cache_entry_t *entry,
-                    const struct req_op_context *req_ctx,
-                    void *opaque,
-                    cache_inode_getattr_cb_t cb,
-                    cache_inode_status_t *status)
+		    const struct req_op_context *req_ctx,
+		    void *opaque,
+		    cache_inode_getattr_cb_t cb)
 {
-        if (entry == NULL) {
-                *status = CACHE_INODE_INVALID_ARGUMENT;
+	cache_inode_status_t status = CACHE_INODE_SUCCESS;
+
+	if (entry == NULL) {
+		status = CACHE_INODE_INVALID_ARGUMENT;
                 LogDebug(COMPONENT_CACHE_INODE,
                          "cache_inode_getattr: returning "
                          "CACHE_INODE_INVALID_ARGUMENT because of bad arg");
@@ -86,24 +86,24 @@ cache_inode_getattr(cache_entry_t *entry,
         }
 
         /* Set the return default to CACHE_INODE_SUCCESS */
-        *status = CACHE_INODE_SUCCESS;
+	status = CACHE_INODE_SUCCESS;
 
         /* Lock (and refresh if necessary) the attributes, copy them
            out, and unlock. */
 
-        if ((*status
+        if ((status
              = cache_inode_lock_trust_attrs(entry, req_ctx))
             != CACHE_INODE_SUCCESS) {
                 goto out;
         }
 
-        *status = cb(opaque, &entry->obj_handle->attributes);
+        status = cb(opaque, &entry->obj_handle->attributes);
 
         pthread_rwlock_unlock(&entry->attr_lock);
 
 out:
 
-        return *status;
+        return status;
 }
 
 /**

@@ -246,10 +246,10 @@ nfs4_op_read(struct nfs_argop4 *op,
         }
 
         if (state_open == NULL) {
-                if (cache_inode_access(entry,
-                                       FSAL_READ_ACCESS,
-                                       data->req_ctx,
-                                       &cache_status) != CACHE_INODE_SUCCESS) {
+		cache_status = cache_inode_access(entry,
+						  FSAL_READ_ACCESS,
+						  data->req_ctx);
+                if (cache_status != CACHE_INODE_SUCCESS) {
                         res_READ4.status = nfs4_Errno(cache_status);
                         goto done;
                 }
@@ -311,16 +311,16 @@ nfs4_op_read(struct nfs_argop4 *op,
                         .so_nfs4_owner.so_clientid;
         }
 
-        if (cache_inode_rdwr(entry,
-                             CACHE_INODE_READ,
-                             offset,
-                             size,
-                             &read_size,
-                             bufferdata,
-                             &eof_met,
-                             data->req_ctx,
-                             CACHE_INODE_SAFE_WRITE_TO_FS,
-                             &cache_status) != CACHE_INODE_SUCCESS) {
+        cache_status = cache_inode_rdwr(entry,
+					CACHE_INODE_READ,
+					offset,
+					size,
+					&read_size,
+					bufferdata,
+					&eof_met,
+					data->req_ctx,
+					CACHE_INODE_SAFE_WRITE_TO_FS);
+	if (cache_status != CACHE_INODE_SUCCESS) {
                 res_READ4.status = nfs4_Errno(cache_status);
                 goto done;
         }

@@ -74,7 +74,6 @@
  *                             be NULL for writes.
  * @param[in]     context      FSAL credentials
  * @param[in]     stable       The stability of the write to perform
- * @param[out]    status       Status of operation
  *
  * @return CACHE_INODE_SUCCESS or various errors
  */
@@ -88,8 +87,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                  void *buffer,
                  bool *eof,
                  struct req_op_context *req_ctx,
-                 cache_inode_stability_t stable,
-                 cache_inode_status_t *status)
+                 cache_inode_stability_t stable)
 {
      /* Error return from FSAL calls */
      fsal_status_t fsal_status = {0, 0};
@@ -101,6 +99,7 @@ cache_inode_rdwr(cache_entry_t *entry,
      bool content_locked = false;
      /* True if we have taken the attribute lock on 'entry' */
      bool attributes_locked = false;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* Set flags for a read or write, as appropriate */
      if (io_direction == CACHE_INODE_READ) {
@@ -113,7 +112,7 @@ cache_inode_rdwr(cache_entry_t *entry,
 
      /* IO is done only on REGULAR_FILEs */
      if (entry->type != REGULAR_FILE) {
-          *status = entry->type == DIRECTORY
+          status = entry->type == DIRECTORY
 		  ? CACHE_INODE_IS_A_DIRECTORY : CACHE_INODE_BAD_TYPE;
           goto out;
      }
@@ -128,7 +127,7 @@ cache_inode_rdwr(cache_entry_t *entry,
               (io_size <= CACHE_INODE_UNSTABLE_BUFFERSIZE)) {
                if ((entry->object.file.unstable_data.buffer =
                     gsh_malloc(CACHE_INODE_UNSTABLE_BUFFERSIZE)) == NULL) {
-                    *status = CACHE_INODE_MALLOC_ERROR;
+                    status = CACHE_INODE_MALLOC_ERROR;
                     goto out;
                }
 
@@ -184,12 +183,12 @@ cache_inode_rdwr(cache_entry_t *entry,
                if (( !is_open(entry)) ||
                    (loflags && loflags != FSAL_O_RDWR &&
                     loflags != openflags)) {
-                    if (cache_inode_open(entry,
-                                         openflags,
-                                         req_ctx,
-                                         (CACHE_INODE_FLAG_CONTENT_HAVE |
-					  CACHE_INODE_FLAG_CONTENT_HOLD),
-                                         status) != CACHE_INODE_SUCCESS) {
+                    status = cache_inode_open(entry,
+					      openflags,
+					      req_ctx,
+					      (CACHE_INODE_FLAG_CONTENT_HAVE |
+					       CACHE_INODE_FLAG_CONTENT_HOLD));
+                    if (status != CACHE_INODE_SUCCESS) {
                          goto out;
                     }
                }
@@ -239,7 +238,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                }
 
                *bytes_moved = 0;
-               *status = cache_inode_error_convert(fsal_status);
+               status = cache_inode_error_convert(fsal_status);
 
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);
@@ -256,11 +255,10 @@ cache_inode_rdwr(cache_entry_t *entry,
                     pthread_rwlock_unlock(&entry->content_lock);
                     pthread_rwlock_wrlock(&entry->content_lock);
 
-                    cache_inode_close(entry,
-                                      (CACHE_INODE_FLAG_REALLYCLOSE |
-                                       CACHE_INODE_FLAG_CONTENT_HAVE |
-                                       CACHE_INODE_FLAG_CONTENT_HOLD),
-                                       &cstatus);
+                    cstatus = cache_inode_close(entry,
+						(CACHE_INODE_FLAG_REALLYCLOSE |
+						 CACHE_INODE_FLAG_CONTENT_HAVE |
+						 CACHE_INODE_FLAG_CONTENT_HOLD));
 
                     if (cstatus != CACHE_INODE_SUCCESS) {
                         LogCrit(COMPONENT_CACHE_INODE_LRU,
@@ -278,13 +276,13 @@ cache_inode_rdwr(cache_entry_t *entry,
                        io_size, *bytes_moved, offset);
 
           if (is_open(entry)) {
-               if (cache_inode_close(entry,
-                                     CACHE_INODE_FLAG_CONTENT_HAVE |
-                                     CACHE_INODE_FLAG_CONTENT_HOLD,
-                                     status) != CACHE_INODE_SUCCESS) {
+               status = cache_inode_close(entry,
+					  CACHE_INODE_FLAG_CONTENT_HAVE |
+					  CACHE_INODE_FLAG_CONTENT_HOLD);
+               if (status != CACHE_INODE_SUCCESS) {
                     LogEvent(COMPONENT_CACHE_INODE,
                              "cache_inode_rdwr: cache_inode_close = %d",
-                             *status);
+                             status);
                     goto out;
                }
           }
@@ -298,7 +296,7 @@ cache_inode_rdwr(cache_entry_t *entry,
      pthread_rwlock_wrlock(&entry->attr_lock);
      attributes_locked = true;
      if (io_direction == CACHE_INODE_WRITE) {
-	  if ((*status = cache_inode_refresh_attrs(entry, req_ctx))
+	  if ((status = cache_inode_refresh_attrs(entry, req_ctx))
               != CACHE_INODE_SUCCESS) {
                goto out;
           }
@@ -308,7 +306,7 @@ cache_inode_rdwr(cache_entry_t *entry,
      pthread_rwlock_unlock(&entry->attr_lock);
      attributes_locked = false;
 
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
 out:
 
@@ -322,6 +320,6 @@ out:
           attributes_locked = false;
      }
 
-     return *status;
-} /* cache_inode_rdwr */
+     return status;
+}
 /** @} */

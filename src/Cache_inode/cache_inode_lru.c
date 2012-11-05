@@ -444,10 +444,9 @@ cache_inode_lru_clean(cache_entry_t *entry)
             (entry->lru.refcount == (LRU_SENTINEL_REFCOUNT - 1)));
 
      if (is_open(entry)) {
-          cache_inode_close(entry, 
-                            CACHE_INODE_FLAG_REALLYCLOSE |
-                            CACHE_INODE_FLAG_NOT_PINNED,
-                            &cache_status);
+          cache_status = cache_inode_close(entry,
+					   CACHE_INODE_FLAG_REALLYCLOSE |
+					   CACHE_INODE_FLAG_NOT_PINNED);
           if (cache_status != CACHE_INODE_SUCCESS) {
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "Error closing file in cleanup: %d.",
@@ -815,13 +814,12 @@ lru_thread(void *arg __attribute__((unused)))
                               }
 
                               if (is_open(entry)) {
-                                   cache_inode_close(
-                                        entry,
-                                        CACHE_INODE_FLAG_REALLYCLOSE |
-                                        CACHE_INODE_FLAG_NOT_PINNED |
-                                        CACHE_INODE_FLAG_CONTENT_HAVE |
-                                        CACHE_INODE_FLAG_CONTENT_HOLD,
-                                        &cache_status);
+                                   cache_status = cache_inode_close(
+					   entry,
+					   CACHE_INODE_FLAG_REALLYCLOSE |
+					   CACHE_INODE_FLAG_NOT_PINNED |
+					   CACHE_INODE_FLAG_CONTENT_HAVE |
+					   CACHE_INODE_FLAG_CONTENT_HOLD);
                                    if (cache_status != CACHE_INODE_SUCCESS) {
                                         LogCrit(COMPONENT_CACHE_INODE_LRU,
                                                 "Error closing file in "
@@ -1067,14 +1065,14 @@ cache_inode_lru_pkgshutdown(void)
  * On success, this function always returns an entry with two
  * references (one for the sentinel, one to allow the caller's use.)
  *
- * @param[in] status  Returned status
- * @param[in] flags   Flags governing call
+ * @param[out] entry Returned status
+ * @param[in]  flags Flags governing call
  *
  * @return CACHE_INODE_SUCCESS or error.
  */
 
-cache_entry_t *
-cache_inode_lru_get(cache_inode_status_t *status,
+cache_inode_status_t
+cache_inode_lru_get(cache_entry_t **entry,
                     uint32_t flags)
 {
      /* The lane from which we harvest (or into which we store) the
@@ -1083,7 +1081,7 @@ cache_inode_lru_get(cache_inode_status_t *status,
      /* The LRU entry */
      cache_inode_lru_t *lru = NULL;
      /* The Cache entry being created */
-     cache_entry_t *entry = NULL;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* If we are in reclaim state, try to find an entry to recycle. */
      pthread_mutex_lock(&lru_mtx);
@@ -1110,53 +1108,53 @@ cache_inode_lru_get(cache_inode_status_t *status,
           /* If we found an entry, we hold a lock on it and it is
              ready to be recycled. */
           if (lru) {
-               entry = container_of(lru, cache_entry_t, lru);
-               if (entry) {
+               *entry = container_of(lru, cache_entry_t, lru);
+               if (*entry) {
                     LogFullDebug(COMPONENT_CACHE_INODE_LRU,
                                  "Recycling entry at %p.",
-                                 entry);
+                                 *entry);
                }
-               cache_inode_lru_clean(entry);
+               cache_inode_lru_clean(*entry);
           }
      } else {
           pthread_mutex_unlock(&lru_mtx);
      }
 
      if (!lru) {
-          entry = pool_alloc(cache_inode_entry_pool, NULL);
-          if(entry == NULL) {
+          *entry = pool_alloc(cache_inode_entry_pool, NULL);
+          if(*entry == NULL) {
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "can't allocate a new entry from cache pool");
-               *status = CACHE_INODE_MALLOC_ERROR;
+               status = CACHE_INODE_MALLOC_ERROR;
                goto out;
           }
-          if (pthread_mutex_init(&entry->lru.mtx, NULL) != 0) {
-               pool_free(cache_inode_entry_pool, entry);
+          if (pthread_mutex_init(&(*entry)->lru.mtx, NULL) != 0) {
+               pool_free(cache_inode_entry_pool, *entry);
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "pthread_mutex_init of lru.mtx returned %d (%s)",
                        errno,
                        strerror(errno));
-               entry = NULL;
-               *status = CACHE_INODE_INIT_ENTRY_FAILED;
+               *entry = NULL;
+               status = CACHE_INODE_INIT_ENTRY_FAILED;
                goto out;
           }
      }
 
-     assert(entry);
+     assert(*entry);
      /* Set the sentinel refcount.  Since the entry isn't in a queue,
         nobody can bump the refcount yet. */
-     entry->lru.refcount = 2;
-     entry->lru.pin_refcnt = 0;
-     entry->lru.flags = 0;
-     pthread_mutex_lock(&entry->lru.mtx);
-     lru_insert_entry(&entry->lru, 0,
-                      lru_lane_of_entry(entry));
-     pthread_mutex_unlock(&entry->lru.mtx);
+     (*entry)->lru.refcount = 2;
+     (*entry)->lru.pin_refcnt = 0;
+     (*entry)->lru.flags = 0;
+     pthread_mutex_lock(&(*entry)->lru.mtx);
+     lru_insert_entry(&(*entry)->lru, 0,
+                      lru_lane_of_entry(*entry));
+     pthread_mutex_unlock(&(*entry)->lru.mtx);
 
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
 out:
-     return (entry);
+     return status;
 }
 
 /**

@@ -108,11 +108,11 @@ nfs4_op_secinfo(struct nfs_argop4 *op,
                 goto out;
         }
 
-        if ((entry_src
-             = cache_inode_lookup(data->current_entry,
-                                  secinfo_fh_name,
-                                  data->req_ctx,
-                                  &cache_status)) == NULL) {
+	cache_status = cache_inode_lookup(data->current_entry,
+					  secinfo_fh_name,
+					  data->req_ctx,
+					  &entry_src);
+        if (entry_src == NULL) {
                 res_SECINFO4.status = nfs4_Errno(cache_status);
                 goto out;
         }

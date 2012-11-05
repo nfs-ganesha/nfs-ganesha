@@ -160,11 +160,11 @@ nfs_Remove(nfs_arg_t *arg,
         }
 
         /* Lookup the child entry to verify that it is not a directory */
-        if ((child_entry = cache_inode_lookup(parent_entry,
-                                              name,
-                                              req_ctx,
-                                              &cache_status))
-            != NULL) {
+        cache_status = cache_inode_lookup(parent_entry,
+					  name,
+					  req_ctx,
+					  &child_entry);
+        if (child_entry != NULL) {
                 /* Sanity check: make sure we are not removing a
                    directory */
                 if (child_entry->type == DIRECTORY) {
@@ -180,11 +180,10 @@ nfs_Remove(nfs_arg_t *arg,
                      name);
 
         /* Remove the entry. */
-        if (cache_inode_remove(parent_entry,
-                               name,
-                               req_ctx,
-                               &cache_status)
-            != CACHE_INODE_SUCCESS)
+        cache_status = cache_inode_remove(parent_entry,
+					  name,
+					  req_ctx);
+        if (cache_status != CACHE_INODE_SUCCESS)
         {
                 goto out_fail;
         }

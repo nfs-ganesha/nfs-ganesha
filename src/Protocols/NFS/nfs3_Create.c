@@ -182,10 +182,10 @@ nfs_Create(nfs_arg_t *arg,
         }
         /* Lookup file to see if it exists.  If so, use it.  Otherwise
            create a new one. */
-        file_entry = cache_inode_lookup(parent_entry,
-                                        file_name,
-                                        req_ctx,
-                                        &cache_status_lookup);
+        cache_status_lookup = cache_inode_lookup(parent_entry,
+						 file_name,
+						 req_ctx,
+						 &file_entry);
 
         if ((cache_status_lookup != CACHE_INODE_SUCCESS) &&
             (cache_status_lookup != CACHE_INODE_NOT_FOUND)) {
@@ -199,13 +199,13 @@ nfs_Create(nfs_arg_t *arg,
                 cache_status = CACHE_INODE_ENTRY_EXISTS;
                 goto out_fail;
         } else if (!file_entry) {
-                file_entry = cache_inode_create(parent_entry,
-                                                file_name,
-                                                REGULAR_FILE,
-                                                mode,
-                                                NULL,
-                                                req_ctx,
-                                                &cache_status);
+                cache_status = cache_inode_create(parent_entry,
+						  file_name,
+						  REGULAR_FILE,
+						  mode,
+						  NULL,
+						  req_ctx,
+						  &file_entry);
 
                 if (!file_entry) {
                 }
@@ -234,11 +234,10 @@ nfs_Create(nfs_arg_t *arg,
                 /* Are there attributes to be set (additional to the mode) ? */
                 if (FSAL_TEST_MASK(sattr.mask, ~ATTR_MODE)) {
                         /* A call to cache_inode_setattr is required */
-                        if (cache_inode_setattr(file_entry,
-                                                &sattr,
-                                                req_ctx,
-                                                &cache_status)
-                            != CACHE_INODE_SUCCESS) {
+                        cache_status = cache_inode_setattr(file_entry,
+							   &sattr,
+							   req_ctx);
+                        if (cache_status != CACHE_INODE_SUCCESS) {
                                 goto out_fail;
                         }
                 }

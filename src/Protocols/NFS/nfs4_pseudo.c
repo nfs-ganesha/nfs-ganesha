@@ -536,13 +536,12 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   bool found = false;
   bool pseudo_is_slash = false;
   int error = 0;
-  cache_inode_status_t cache_status = 0;
   fsal_status_t fsal_status;
 /*   cache_inode_fsal_data_t fsdata; */
   char pathfsal[MAXPATHLEN] ;
   struct fsal_export *exp_hdl;
   struct fsal_obj_handle *fsal_handle;
-  cache_entry_t *pentry = NULL;
+  cache_entry_t *entry = NULL;
 
   resp->resop = NFS4_OP_LOOKUP;
 
@@ -685,8 +684,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
  */
 /*       fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc); */
 
-      if((pentry = cache_inode_make_root(fsal_handle,
-                                         &cache_status)) == NULL)
+      cache_inode_make_root(fsal_handle,
+					   &entry);
+      if (entry == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
@@ -695,12 +695,12 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           return res_LOOKUP4.status;
         }
 
-      /* Keep the pentry within the compound data */
+      /* Keep the entry within the compound data */
       if (data->current_entry) {
           cache_inode_put(data->current_entry);
       }
-      data->current_entry = pentry;
-      data->current_filetype = pentry->type;
+      data->current_entry = entry;
+      data->current_filetype = entry->type;
 
     }                           /* else */
 
@@ -817,8 +817,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   fsal_status_t fsal_status;
   int error = 0;
   size_t namelen = 0;
-  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  cache_entry_t *pentry = NULL;
+  cache_entry_t *entry = NULL;
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;
@@ -934,8 +933,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
       fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
 
-      if((pentry = cache_inode_make_root(fsal_handle,
-                                         &cache_status)) == NULL)
+      cache_inode_make_root(fsal_handle,
+			    &entry);
+      if (entry == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
@@ -944,12 +944,12 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           return res_READDIR4.status;
         }
 
-      /* Keep the pentry within the compound data */
+      /* Keep the entry within the compound data */
       if (data->current_entry) {
           cache_inode_put(data->current_entry);
       }
-      data->current_entry = pentry;
-      data->current_filetype = pentry->type;
+      data->current_entry = entry;
+      data->current_filetype = entry->type;
 
       /* redo the call on the other side of the junction */
       return nfs4_op_readdir(op, data, resp);
@@ -1100,8 +1100,10 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
             }
           /* Add the entry to the cache as a root. There has to be a better way. */
           fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
-          if((pentry = cache_inode_make_root(fsal_handle,
-                                             &cache_status)) == NULL)
+          cache_inode_make_root(fsal_handle,
+				&entry);
+	  
+          if (entry == NULL)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
@@ -1109,7 +1111,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
             }
-          if(cache_entry_To_Fattr(pentry,
+          if(cache_entry_To_Fattr(entry,
                                   &(entry_nfs_array[i].attrs),
                                   data, &entryFH, &(arg_READDIR4.attr_request)) != 0)
             {

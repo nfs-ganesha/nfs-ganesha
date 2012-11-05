@@ -62,8 +62,7 @@
  *
  * @param[in]  entry       The object to be checked
  * @param[in]  access_type The kind of access to be checked
- * @param[in]  context     FSAL context
- * @param[out] status      Returned status
+ * @param[in]  req_ctx     Request context
  * @param[in]  use_mutex   Whether to acquire a read lock
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
@@ -73,19 +72,19 @@ cache_inode_status_t
 cache_inode_access_sw(cache_entry_t *entry,
                       fsal_accessflags_t access_type,
                       struct req_op_context *req_ctx,
-                      cache_inode_status_t *status,
                       bool use_mutex)
 {
      fsal_status_t fsal_status;
      fsal_accessflags_t used_access_type;
      struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      LogFullDebug(COMPONENT_CACHE_INODE,
                   "cache_inode_access_sw: access_type=0X%x",
                   access_type);
 
      /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
      /*
       * We do no explicit access test in FSAL for FSAL_F_OK: it is
@@ -101,7 +100,7 @@ cache_inode_access_sw(cache_entry_t *entry,
 	     the attribute cache, so get it if the caller didn't
 	     acquire it.  */
 	  if(use_mutex) {
-	      if ((*status
+	      if ((status
 		   = cache_inode_lock_trust_attrs(entry, req_ctx))
 		  != CACHE_INODE_SUCCESS) {
 		      goto out;
@@ -115,17 +114,17 @@ cache_inode_access_sw(cache_entry_t *entry,
 		  pthread_rwlock_unlock(&entry->attr_lock);
 	  }
           if(FSAL_IS_ERROR(fsal_status)) {
-               *status = cache_inode_error_convert(fsal_status);
+               status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);
                }
           } else {
-               *status = CACHE_INODE_SUCCESS;
+               status = CACHE_INODE_SUCCESS;
           }
      }
 
 out:
-     return *status;
+     return status;
 }
 
 /**
@@ -136,10 +135,9 @@ out:
  * available on the object.  This function may only be called if an
  * attribute lock is held.
  *
- * @param[in]  entry       entry pointer for the fs object to be checked.
- * @param[in]  access_type The kind of access to be checked
- * @param[in]  context     FSAL credentials
- * @param[out] status      Returned status
+ * @param[in] entry       entry pointer for the fs object to be checked.
+ * @param[in] access_type The kind of access to be checked
+ * @param[in] req_ctx     Request context
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
  *
@@ -147,11 +145,10 @@ out:
 cache_inode_status_t
 cache_inode_access_no_mutex(cache_entry_t *entry,
                             fsal_accessflags_t access_type,
-			    struct req_op_context *req_ctx,
-                            cache_inode_status_t * status)
+			    struct req_op_context *req_ctx)
 {
     return cache_inode_access_sw(entry, access_type,
-                                 req_ctx, status, false);
+                                 req_ctx, false);
 }
 
 /**
@@ -164,18 +161,16 @@ cache_inode_access_no_mutex(cache_entry_t *entry,
  *
  * @param[in] entry       The object to be checked
  * @param[in] access_type The kind of access to be checked
- * @param[in] context     FSAL credentials
- * @param[in] status      Returned status
+ * @param[in] req_ctx     Request context
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
  */
 cache_inode_status_t
 cache_inode_access(cache_entry_t *entry,
                    fsal_accessflags_t access_type,
-		   struct req_op_context *req_ctx,
-                   cache_inode_status_t * status)
+		   struct req_op_context *req_ctx)
 {
     return cache_inode_access_sw(entry, access_type,
-                                 req_ctx, status, true);
+                                 req_ctx, true);
 }
 /** @} */

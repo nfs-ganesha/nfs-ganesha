@@ -167,10 +167,10 @@ nfs_Read(nfs_arg_t *arg,
            goto out;
          }
 
-        if (cache_inode_access(entry,
-                               FSAL_READ_ACCESS,
-                               req_ctx,
-                               &cache_status) != CACHE_INODE_SUCCESS) 
+        cache_status = cache_inode_access(entry,
+					  FSAL_READ_ACCESS,
+					  req_ctx);
+        if (cache_status != CACHE_INODE_SUCCESS)
           {
             res->res_read3.status = nfs3_Errno(cache_status);
              rc = NFS_REQ_OK;
@@ -261,17 +261,16 @@ nfs_Read(nfs_arg_t *arg,
                         goto out;
                 }
 
-                if ((cache_inode_rdwr(entry,
-                                      CACHE_INODE_READ,
-                                      offset,
-                                      size,
-                                      &read_size,
-                                      data,
-                                      &eof_met,
-                                      req_ctx,
-                                      CACHE_INODE_SAFE_WRITE_TO_FS,
-                                      &cache_status)
-                     == CACHE_INODE_SUCCESS)) {
+                cache_status = cache_inode_rdwr(entry,
+						CACHE_INODE_READ,
+						offset,
+						size,
+						&read_size,
+						data,
+						&eof_met,
+						req_ctx,
+						CACHE_INODE_SAFE_WRITE_TO_FS);
+                if (cache_status == CACHE_INODE_SUCCESS) {
                         nfs_read_ok(export, req, req_ctx, res, data,
                                     read_size, entry,
                                     eof_met);

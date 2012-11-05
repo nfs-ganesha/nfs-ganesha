@@ -156,10 +156,11 @@ int nfs4_op_access(struct nfs_argop4 *op,
                           FSAL_ACE4_MASK(access_mask));
 
         /* Perform the 'access' call */
-        if (cache_inode_access(data->current_entry,
-                               access_mask,
-                               data->req_ctx, &cache_status)
-            == CACHE_INODE_SUCCESS) {
+	cache_status = cache_inode_access(data->current_entry,
+					  access_mask,
+					  data->req_ctx);
+
+	if (cache_status == CACHE_INODE_SUCCESS) {
                 res_ACCESS4->ACCESS4res_u.resok4.access
                         = res_ACCESS4->ACCESS4res_u.resok4.supported;
                 nfs4_access_debug("granted access", arg_ACCESS4->access, 0);
@@ -172,52 +173,52 @@ int nfs4_op_access(struct nfs_argop4 *op,
 
                 access_mask = nfs_get_access_mask(ACCESS4_READ,
                                                   data->current_entry->type);
-                if (cache_inode_access(data->current_entry,
-                                       access_mask,
-                                       data->req_ctx,
-                                       &cache_status) == CACHE_INODE_SUCCESS)
+                cache_status = cache_inode_access(data->current_entry,
+						  access_mask,
+						  data->req_ctx);
+		
+                if (cache_status == CACHE_INODE_SUCCESS)
                         res_ACCESS4->ACCESS4res_u.resok4.access |= ACCESS4_READ;
 
                 if (data->current_entry->type == DIRECTORY) {
                         access_mask =
                                 nfs_get_access_mask(ACCESS4_LOOKUP,
                                                     data->current_entry->type);
-                        if (cache_inode_access(data->current_entry,
-                                               access_mask,
-                                               data->req_ctx,
-                                               &cache_status)
-                            == CACHE_INODE_SUCCESS)
+                        cache_status = cache_inode_access(data->current_entry,
+							  access_mask,
+							  data->req_ctx);
+                        if (cache_status == CACHE_INODE_SUCCESS)
                                 res_ACCESS4->ACCESS4res_u.resok4.access
                                         |= ACCESS4_LOOKUP;
                 }
 
                 access_mask = nfs_get_access_mask(ACCESS4_MODIFY,
                                                   data->current_entry->type);
-                if (cache_inode_access(data->current_entry,
-                                       access_mask,
-                                       data->req_ctx,
-                                       &cache_status) == CACHE_INODE_SUCCESS)
+                cache_status = cache_inode_access(data->current_entry,
+						  access_mask,
+						  data->req_ctx);
+
+                if (cache_status == CACHE_INODE_SUCCESS)
                         res_ACCESS4->ACCESS4res_u.resok4.access
                                 |= ACCESS4_MODIFY;
 
                 access_mask = nfs_get_access_mask(ACCESS4_EXTEND,
                                                   data->current_entry->type);
-                if (cache_inode_access(data->current_entry,
-                                       access_mask,
-                                       data->req_ctx,
-                                       &cache_status) == CACHE_INODE_SUCCESS)
-        res_ACCESS4->ACCESS4res_u.resok4.access
-                |= ACCESS4_EXTEND;
+                cache_status = cache_inode_access(data->current_entry,
+						  access_mask,
+						  data->req_ctx);
+                if (cache_status == CACHE_INODE_SUCCESS)
+			res_ACCESS4->ACCESS4res_u.resok4.access
+				|= ACCESS4_EXTEND;
 
                 if (data->current_entry->type == DIRECTORY) {
                         access_mask =
                                 nfs_get_access_mask(ACCESS4_DELETE,
                                                     data->current_entry->type);
-                        if (cache_inode_access(data->current_entry,
-                                               access_mask,
-                                               data->req_ctx,
-                                               &cache_status)
-                            == CACHE_INODE_SUCCESS)
+                        cache_status = cache_inode_access(data->current_entry,
+							  access_mask,
+							  data->req_ctx);
+                        if (cache_status == CACHE_INODE_SUCCESS)
                                 res_ACCESS4->ACCESS4res_u.resok4.access
                                         |= ACCESS4_DELETE;
                 }
@@ -226,11 +227,10 @@ int nfs4_op_access(struct nfs_argop4 *op,
                         access_mask =
                                 nfs_get_access_mask(ACCESS4_EXECUTE,
                                                     data->current_entry->type);
-                        if (cache_inode_access(data->current_entry,
-                                               access_mask,
-                                               data->req_ctx,
-                                               &cache_status)
-                            == CACHE_INODE_SUCCESS)
+                        cache_status = cache_inode_access(data->current_entry,
+							  access_mask,
+							  data->req_ctx);
+                        if (cache_status == CACHE_INODE_SUCCESS)
                                 res_ACCESS4->ACCESS4res_u.resok4.access
                                         |= ACCESS4_EXECUTE;
                 }

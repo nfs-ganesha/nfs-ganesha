@@ -109,12 +109,11 @@ int nfs4_op_commit(struct nfs_argop4 *op,
   // FIX ME!! At the moment we just assume the user is _not_ using
   // the ganesha unsafe buffer. In the future, a check based on
   // export config params (similar to nfs3_Commit.c) should be made.
-  if(cache_inode_commit(data->current_entry,
-                        arg_COMMIT4.offset,
-                        arg_COMMIT4.count,
-                        CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
-                        data->req_ctx,
-                        &cache_status) != CACHE_INODE_SUCCESS)
+  cache_status = cache_inode_commit(data->current_entry,
+				    arg_COMMIT4.offset,
+				    arg_COMMIT4.count,
+				    data->req_ctx);
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_COMMIT4.status = NFS4ERR_INVAL;
       return res_COMMIT4.status;

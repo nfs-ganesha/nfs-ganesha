@@ -165,14 +165,14 @@ nfs_Mkdir(nfs_arg_t *arg,
       if (dir_name == NULL ||
          *dir_name == '\0' )
           res->res_mkdir3.status = NFS3ERR_INVAL;
-      else 
+      else
        {
                 /* Lookup file to see if it exists.  If so, use it.
                    Otherwise create a new one. */
-                dir_entry = cache_inode_lookup(parent_entry,
-                                               dir_name,
-                                               req_ctx,
-                                               &cache_status_lookup);
+                cache_status_lookup = cache_inode_lookup(parent_entry,
+							 dir_name,
+							 req_ctx,
+							 &dir_entry);
 
                 if (cache_status_lookup == CACHE_INODE_NOT_FOUND)
                  {
@@ -183,13 +183,14 @@ nfs_Mkdir(nfs_arg_t *arg,
                    create_arg.newly_created_dir = true;
 
                    /* Create the directory */
-                   if ((dir_entry = cache_inode_create(parent_entry,
-                                                       dir_name,
-                                                       DIRECTORY,
-                                                       mode,
-                                                       &create_arg,
-                                                       req_ctx,
-                                                       &cache_status)) != NULL) 
+                   cache_status = cache_inode_create(parent_entry,
+						     dir_name,
+						     DIRECTORY,
+						     mode,
+						     &create_arg,
+						     req_ctx,
+						     &dir_entry);
+		   if (dir_entry != NULL)
                     {
                         MKDIR3resok *d3ok = &res->res_mkdir3.MKDIR3res_u.resok;
 

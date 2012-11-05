@@ -341,14 +341,14 @@ nfs4_op_readdir(struct nfs_argop4 *op,
      cb_data.data = data;
 
      /* Perform the readdir operation */
-     if (cache_inode_readdir(dir_entry,
-                             cookie,
-                             &num_entries,
-                             &eod_met,
-                             data->req_ctx,
-                             nfs4_readdir_callback,
-                             &cb_data,
-                             &cache_status) != CACHE_INODE_SUCCESS) {
+     cache_status = cache_inode_readdir(dir_entry,
+					cookie,
+					&num_entries,
+					&eod_met,
+					data->req_ctx,
+					nfs4_readdir_callback,
+					&cb_data);
+     if (cache_status != CACHE_INODE_SUCCESS) {
           res_READDIR4.status = nfs4_Errno(cache_status);
           goto out;
      }

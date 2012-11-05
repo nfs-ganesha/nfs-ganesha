@@ -263,10 +263,11 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
      /* Fill in ".." */
      if (begin_cookie <= 1) {
-          cache_entry_t *parent_dir_entry
-               = cache_inode_lookupp(dir_entry,
-                                     req_ctx,
-                                     &cache_status_gethandle);
+	 cache_entry_t *parent_dir_entry = NULL;
+	 cache_status_gethandle
+	     = cache_inode_lookupp(dir_entry,
+				   req_ctx,
+				   &parent_dir_entry);
           if (parent_dir_entry == NULL) {
                res->res_readdirplus3.status
                     = nfs3_Errno(cache_status_gethandle);
@@ -287,14 +288,14 @@ nfs3_Readdirplus(nfs_arg_t *arg,
      }
 
      /* Call readdir */
-     if (cache_inode_readdir(dir_entry,
-                             cache_inode_cookie,
-                             &num_entries,
-                             &eod_met,
-                             req_ctx,
-                             nfs3_readdirplus_callback,
-                             &cb_opaque,
-                             &cache_status) != CACHE_INODE_SUCCESS) {
+     cache_status = cache_inode_readdir(dir_entry,
+					cache_inode_cookie,
+					&num_entries,
+					&eod_met,
+					req_ctx,
+					nfs3_readdirplus_callback,
+					&cb_opaque);
+     if (cache_status != CACHE_INODE_SUCCESS) {
           /* Is this a retryable error */
           if (nfs_RetryableError(cache_status)) {
                rc = NFS_REQ_DROP;

@@ -141,7 +141,6 @@ is_open_for_read(cache_entry_t *entry)
  * @param[in]  openflags The type of access for which to open
  * @param[in]  context   FSAL operation context
  * @param[in]  flags     Flags indicating lock status
- * @param[out] status    Operation status
  *
  * @return CACHE_INODE_SUCCESS if successful, errors otherwise
  */
@@ -150,29 +149,29 @@ cache_inode_status_t
 cache_inode_open(cache_entry_t *entry,
                  fsal_openflags_t openflags,
                  struct req_op_context *req_ctx,
-                 uint32_t flags,
-                 cache_inode_status_t *status)
+                 uint32_t flags)
 {
      /* Error return from FSAL */
      fsal_status_t fsal_status = {0, 0};
      fsal_accessflags_t access_type = FSAL_O_CLOSED;
      fsal_openflags_t current_flags;
      struct fsal_obj_handle *obj_hdl;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-     if ((entry == NULL) || (req_ctx == NULL) || (status == NULL)) {
-          *status = CACHE_INODE_INVALID_ARGUMENT;
+     if ((entry == NULL) || (req_ctx == NULL)) {
+          status = CACHE_INODE_INVALID_ARGUMENT;
           goto out;
      }
 
      if (entry->type != REGULAR_FILE) {
-          *status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
      if (!cache_inode_lru_fds_available()) {
           /* This seems the best idea, let the client try again later
              after the reap. */
-          *status = CACHE_INODE_DELAY;
+          status = CACHE_INODE_DELAY;
           goto out;
      }
 
@@ -194,11 +193,11 @@ cache_inode_open(cache_entry_t *entry,
      fsal_status = obj_hdl->ops->test_access(obj_hdl,
 					     req_ctx, access_type);
      if(FSAL_IS_ERROR(fsal_status)) {
-	 *status = cache_inode_error_convert(fsal_status);
+	 status = cache_inode_error_convert(fsal_status);
 
 	 LogDebug(COMPONENT_CACHE_INODE,
 		  "returning %d(%s) from access check",
-		  *status, cache_inode_err_str(*status));
+		  status, cache_inode_err_str(status));
 	 goto unlock;
      }
      current_flags = obj_hdl->ops->status(obj_hdl);
@@ -209,14 +208,14 @@ cache_inode_open(cache_entry_t *entry,
           fsal_status = obj_hdl->ops->close(obj_hdl);
           if (FSAL_IS_ERROR(fsal_status) &&
               (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
-               *status = cache_inode_error_convert(fsal_status);
+               status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);
                }
 
                LogDebug(COMPONENT_CACHE_INODE,
                         "cache_inode_open: returning %d(%s) from FSAL_close",
-                        *status, cache_inode_err_str(*status));
+                        status, cache_inode_err_str(status));
 
                goto unlock;
           }
@@ -231,10 +230,10 @@ cache_inode_open(cache_entry_t *entry,
      if ((current_flags == FSAL_O_CLOSED)) {
 	  fsal_status = obj_hdl->ops->open(obj_hdl, req_ctx, openflags);
           if (FSAL_IS_ERROR(fsal_status)) {
-               *status = cache_inode_error_convert(fsal_status);
+               status = cache_inode_error_convert(fsal_status);
                LogDebug(COMPONENT_CACHE_INODE,
                         "cache_inode_open: returning %d(%s) from FSAL_open",
-                        *status, cache_inode_err_str(*status));
+                        status, cache_inode_err_str(status));
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);
                }
@@ -252,7 +251,7 @@ cache_inode_open(cache_entry_t *entry,
                    open_fd_count);
      }
 
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
 unlock:
 
@@ -262,9 +261,9 @@ unlock:
 
 out:
 
-     return *status;
+     return status;
 
-} /* cache_inode_open */
+}
 
 /**
  * @brief Close a file
@@ -273,28 +272,27 @@ out:
  *
  * @param[in]  entry  Cache entry to close
  * @param[in]  flags  Flags for lock management
- * @param[out] status Operation status
  *
  * @return CACHE_INODE_SUCCESS or errors on failure
  */
 
 cache_inode_status_t
 cache_inode_close(cache_entry_t *entry,
-                  uint32_t flags,
-                  cache_inode_status_t *status)
+                  uint32_t flags)
 {
      /* Error return from the FSAL */
      fsal_status_t fsal_status;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-     if ((entry == NULL) || (status == NULL)) {
-          *status = CACHE_INODE_INVALID_ARGUMENT;
+     if ((entry == NULL)) {
+          status = CACHE_INODE_INVALID_ARGUMENT;
           goto out;
      }
 
      if (entry->type != REGULAR_FILE) {
           LogFullDebug(COMPONENT_CACHE_INODE,
                        "Entry %p File not a REGULAR_FILE", entry);
-          *status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
@@ -309,8 +307,8 @@ cache_inode_close(cache_entry_t *entry,
           }
           LogFullDebug(COMPONENT_CACHE_INODE,
                        "Entry %p File not open", entry);
-          *status = CACHE_INODE_SUCCESS;
-          return *status;
+          status = CACHE_INODE_SUCCESS;
+          return status;
      }
 
      /* If file is pinned, do not close it.  This should
@@ -320,7 +318,7 @@ cache_inode_close(cache_entry_t *entry,
          cache_inode_is_pinned(entry)) {
           LogFullDebug(COMPONENT_CACHE_INODE,
                        "Entry %p is pinned", entry);
-          *status = CACHE_INODE_SUCCESS;
+          status = CACHE_INODE_SUCCESS;
           goto unlock;
      }
 
@@ -331,20 +329,20 @@ cache_inode_close(cache_entry_t *entry,
 	  fsal_status = entry->obj_handle->ops->close(entry->obj_handle);
           if (FSAL_IS_ERROR(fsal_status) &&
               (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
-               *status = cache_inode_error_convert(fsal_status);
+               status = cache_inode_error_convert(fsal_status);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);
                }
                LogCrit(COMPONENT_CACHE_INODE,
                        "FSAL_close failed, returning %d(%s) for entry %p",
-                       *status, cache_inode_err_str(*status), entry);
+                       status, cache_inode_err_str(status), entry);
                goto unlock;
           }
           if (!FSAL_IS_ERROR(fsal_status))
               atomic_dec_size_t(&open_fd_count);
      }
 
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
 unlock:
 
@@ -354,6 +352,6 @@ unlock:
 
 out:
 
-     return *status;
+     return status;
 }
 /** @} */

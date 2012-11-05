@@ -273,9 +273,9 @@ int nfs4_op_close(struct nfs_argop4 *op,
         }
 
         /* Close the file in FSAL through the cache inode */
-        if (cache_inode_close(data->current_entry,
-                              0, &cache_status)
-            != CACHE_INODE_SUCCESS) {
+	cache_status = cache_inode_close(data->current_entry,
+					 0);
+	if (cache_status != CACHE_INODE_SUCCESS) {
                 res_CLOSE4->status = nfs4_Errno(cache_status);
                 pthread_rwlock_unlock(&data->current_entry->state_lock);
                 goto out;

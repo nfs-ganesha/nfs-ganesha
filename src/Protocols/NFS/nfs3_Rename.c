@@ -180,13 +180,12 @@ nfs_Rename(nfs_arg_t *arg,
          * cache_inode_rename.  There is no need to replicate them.
          */
 
-        if (cache_inode_rename(parent_entry,
-                               entry_name,
-                               new_parent_entry,
-                               new_entry_name,
-                               req_ctx,
-                               &cache_status)
-            != CACHE_INODE_SUCCESS) {
+        cache_status = cache_inode_rename(parent_entry,
+					  entry_name,
+					  new_parent_entry,
+					  new_entry_name,
+					  req_ctx);
+        if (cache_status != CACHE_INODE_SUCCESS) {
                 goto out_fail;
         }
 

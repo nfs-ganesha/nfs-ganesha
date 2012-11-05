@@ -218,20 +218,20 @@ nfs3_Mknod(nfs_arg_t *arg,
 
         /* Lookup node to see if it exists.  If so, use it.  Otherwise
            create a new one. */
-        node_entry = cache_inode_lookup(parent_entry,
+        cache_status_lookup = cache_inode_lookup(parent_entry,
                                         file_name,
                                         req_ctx,
-                                        &cache_status_lookup);
+                                        &node_entry);
 
         if (cache_status_lookup == CACHE_INODE_NOT_FOUND) {
-                if((node_entry = cache_inode_create(parent_entry,
-                                                    file_name,
-                                                    nodetype,
-                                                    mode,
-                                                    &create_arg,
-                                                    req_ctx,
-                                                    &cache_status))
-                   != NULL) {
+                cache_status = cache_inode_create(parent_entry,
+						  file_name,
+						  nodetype,
+						  mode,
+						  &create_arg,
+						  req_ctx,
+						  &node_entry);
+                if (node_entry != NULL) {
                         MKNOD3resok *const rok
                                 = &res->res_mknod3.MKNOD3res_u.resok;
                         /* Build file handle */

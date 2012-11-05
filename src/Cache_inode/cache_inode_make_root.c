@@ -59,41 +59,35 @@
  * This ensures that the directory specified by fsdata is in the cache
  * and marks it as an export root.
  *
- * @param[in]  root_hdl  Handle for the root
- * @param[in]  context FSAL credentials. Unused here
- * @param[out] status  Returned status
+ * @param[in]  root_hdl   Handle for the root
+ * @param[out] root_entry The newly-created root
  *
- * @return the newly created cache entry.
+ * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
-                                     cache_inode_status_t *status)
+cache_inode_status_t cache_inode_make_root(struct fsal_obj_handle *root_hdl,
+					   cache_entry_t **root_entry)
 {
-  cache_entry_t *entry = NULL;
-  /* sanity check */
-  if(status == NULL)
-    return NULL;
-
-  /* Set the return default to CACHE_INODE_SUCCESS */
-  *status = CACHE_INODE_SUCCESS;
+  cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
 /** this used to be get but we get passed a handle so now new_entry */
-  if((entry = cache_inode_new_entry(root_hdl,
-                                    CACHE_INODE_FLAG_NONE,
-                                    status)) != NULL)
+  status = cache_inode_new_entry(root_hdl,
+				 CACHE_INODE_FLAG_NONE,
+				 root_entry);
+  if(*root_entry != NULL)
     {
       /* The root directory is its own parent.  (Even though this is a
          weakref, it shouldn't be broken in practice.) */
-      pthread_rwlock_wrlock(&entry->content_lock);
-      entry->object.dir.parent = entry->weakref;
-      entry->object.dir.root = true;
-      pthread_rwlock_unlock(&entry->content_lock);
+      pthread_rwlock_wrlock(&(*root_entry)->content_lock);
+      (*root_entry)->object.dir.parent = (*root_entry)->weakref;
+      (*root_entry)->object.dir.root = true;
+      pthread_rwlock_unlock(&(*root_entry)->content_lock);
     } else {
       LogCrit(COMPONENT_CACHE_INODE,
               "Unable to add root entry to cache, status = %s",
-              cache_inode_err_str(*status));
+              cache_inode_err_str(status));
     }
 
-  return entry;
+  return status;
 }                               /* cache_inode_make_root */
 /** @} */

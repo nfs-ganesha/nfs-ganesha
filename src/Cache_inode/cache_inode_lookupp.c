@@ -68,30 +68,28 @@
  * If result was not cached, the function will drop the read lock and
  * acquire a write lock so it can add the result to the cache.
  *
+ * @note this can behave differently than a local Linux user of the
+ * filesystem if the path to get here is a symlink.  In the local
+ * case, the path is consistent because the kernel's CWD gets the
+ * expected "..".  We don't have that so the ".." is the directory in
+ * which the name resides even though the symlink allowed us to skip
+ * around the real (non symlink resolved) path.
+ *
  * @param[in]  entry   Entry whose parent is to be obtained
  * @param[in]  context FSAL operation context
- * @param[out] status  Returned status
- * NOTE: this can behave differently than a local Linux user of the
- * filesystem if the path to get here is a symlink.  In the local case,
- * the path is consistent because the kernel's CWD gets the expected
- * "..".  We don't have that so the ".." is the directory in which
- * the name resides even though the symlink allowed us to skip around
- * the real (non symlink resolved) path.
+ * @param[out] parent  Parent directory
  *
- * @return the found entry or NULL on error.
+ * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_entry_t *
+cache_inode_status_t
 cache_inode_lookupp_impl(cache_entry_t *entry,
                          struct req_op_context *req_ctx,
-                         cache_inode_status_t *status)
+                         cache_entry_t **parent)
 {
-     cache_entry_t *parent = NULL;
      fsal_status_t fsal_status;
      cache_inode_fsal_data_t fsdata;
-
-     /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* Never even think of calling FSAL_lookup on root/.. */
 
@@ -107,20 +105,21 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
                         "Unable to increment reference count on an entry that "
                         "on which we should have a referenced.");
           }
-          return entry;
+          *parent = entry;
+	  return CACHE_INODE_SUCCESS;
      }
 
      /* Try the weakref to the parent first.  This increments the
         refcount. */
-     parent = cache_inode_weakref_get(&entry->object.dir.parent,
-                                      LRU_REQ_INITIAL);
+     *parent = cache_inode_weakref_get(&entry->object.dir.parent,
+				       LRU_REQ_INITIAL);
      if (!parent) {
           /* If we didn't find it, drop the read lock, get a write
              lock, and make sure nobody filled it in while we waited. */
           pthread_rwlock_unlock(&entry->content_lock);
           pthread_rwlock_wrlock(&entry->content_lock);
-          parent = cache_inode_weakref_get(&entry->object.dir.parent,
-                                           LRU_REQ_INITIAL);
+          *parent = cache_inode_weakref_get(&entry->object.dir.parent,
+					    LRU_REQ_INITIAL);
      }
 
      if (!parent) {
@@ -133,8 +132,9 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry);
                }
-               *status = cache_inode_error_convert(fsal_status);
-               return NULL;
+               status = cache_inode_error_convert(fsal_status);
+	       *parent = NULL;
+               return status;
           }
 
           /* Call cache_inode_get to populate the cache with the
@@ -142,24 +142,25 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           parent_handle->ops->handle_to_key(parent_handle, &fsdata.fh_desc);
           fsdata.export = parent_handle->export;
 
-          if((parent = cache_inode_get(&fsdata,
-                                       entry,
-                                       req_ctx,
-                                       status)) == NULL) {
-               return NULL;
+          status = cache_inode_get(&fsdata,
+				   entry,
+				   req_ctx,
+				   parent);
+
+          if (*parent == NULL) {
+	       return status;
           }
 /** @TODO  Danger Will Robinson!  cache_inode_get should consume the parent_handle
  *  but this may be a leak!
  */
           /* Link in a weak reference */
-          entry->object.dir.parent = parent->weakref;
+          entry->object.dir.parent = (*parent)->weakref;
      }
 
-     return parent;
-} /* cache_inode_lookupp_impl */
+     return status;
+}
 
 /**
- *
  * @brief Public function to look up a directory's parent
  *
  * This function looks up (and potentially caches) the parent of a
@@ -169,20 +170,20 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
  *
  * @param[in]  entry   Entry whose parent is to be obtained.
  * @param[in]  context FSAL credentials
- * @param[out] status  Returned status
+ * @param[out] parent  Parent directory
  *
- * @return the found entry or NULL on error.
+ * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_entry_t *
+cache_inode_status_t
 cache_inode_lookupp(cache_entry_t *entry,
                     struct req_op_context *req_ctx,
-                    cache_inode_status_t *status)
+                    cache_entry_t **parent)
 {
-     cache_entry_t *parent = NULL;
+     cache_inode_status_t status;
      pthread_rwlock_rdlock(&entry->content_lock);
-     parent = cache_inode_lookupp_impl(entry, req_ctx, status);
+     status = cache_inode_lookupp_impl(entry, req_ctx, parent);
      pthread_rwlock_unlock(&entry->content_lock);
-     return parent;
-} /* cache_inode_lookupp */
+     return status;
+}
 /** @} */

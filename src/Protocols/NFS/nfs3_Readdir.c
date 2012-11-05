@@ -255,9 +255,9 @@ nfs_Readdir(nfs_arg_t *arg,
      /* Fills ".." */
      if ((cookie <= 1) && (estimated_num_entries > 1)) {
           /* Get parent pentry */
-          parent_dir_entry = cache_inode_lookupp(dir_entry,
-                                                 req_ctx,
-                                                 &cache_status_gethandle);
+          cache_status_gethandle = cache_inode_lookupp(dir_entry,
+						       req_ctx,
+						       &parent_dir_entry);
           if (parent_dir_entry == NULL) {
                res->res_readdir3.status = nfs3_Errno(cache_status_gethandle);
                rc = NFS_REQ_OK;
@@ -279,14 +279,14 @@ nfs_Readdir(nfs_arg_t *arg,
 #define RES_READDIR3_FAIL res->res_readdir3.READDIR3res_u.resfail
 
      /* Call readdir */
-     if (cache_inode_readdir(dir_entry,
-                             cache_inode_cookie,
-                             &num_entries,
-                             &eod_met,
-                             req_ctx,
-                             cbfunc,
-                             cbdata,
-                             &cache_status) != CACHE_INODE_SUCCESS) {
+     cache_status = cache_inode_readdir(dir_entry,
+					cache_inode_cookie,
+					&num_entries,
+					&eod_met,
+					req_ctx,
+					cbfunc,
+					cbdata);
+     if (cache_status != CACHE_INODE_SUCCESS) {
           if (nfs_RetryableError(cache_status)) {
                rc = NFS_REQ_DROP;
                goto out;

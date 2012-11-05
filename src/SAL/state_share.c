@@ -747,11 +747,9 @@ state_status_t state_nlm_share(cache_entry_t *entry,
       return status;
     }
 
-  if(cache_inode_open(entry,
-                      FSAL_O_RDWR,
-                      req_ctx,
-                      0,
-                      &cache_status) != CACHE_INODE_SUCCESS)
+  cache_status = cache_inode_open(entry, FSAL_O_RDWR,
+				  req_ctx, 0);
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       cache_inode_dec_pin_ref(entry);
 

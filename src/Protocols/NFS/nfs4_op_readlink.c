@@ -90,10 +90,10 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
     return res_READLINK4.status;
 
   /* Using cache_inode_readlink */
-  if(cache_inode_readlink(data->current_entry,
-                          &link_buffer,
-                          data->req_ctx,
-                          &cache_status) == CACHE_INODE_SUCCESS)
+  cache_status = cache_inode_readlink(data->current_entry,
+				      &link_buffer,
+				      data->req_ctx);
+  if(cache_status == CACHE_INODE_SUCCESS)
     {
       /* Alloc read link */
 

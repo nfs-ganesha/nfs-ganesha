@@ -88,7 +88,6 @@ nfs3_Commit(nfs_arg_t *arg,
         cache_inode_status_t cache_status;
         cache_entry_t *entry = NULL;
         pre_op_attr pre_attr;
-        uint64_t typeofcommit;
         int rc = NFS_REQ_OK;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
@@ -118,25 +117,11 @@ nfs3_Commit(nfs_arg_t *arg,
                          req_ctx,
                          &pre_attr);
 
-        if ((export->use_commit) &&
-            (!export->use_ganesha_write_buffer)) {
-                typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
-        } else if((export->use_commit) &&
-                  (export->use_ganesha_write_buffer)) {
-                typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;
-        } else {
-                /* We only do stable writes with this export so no
-                   need to execute a commit */
-                rc = NFS_REQ_OK;
-                goto out;
-        }
-
-        if (cache_inode_commit(entry,
-                               arg->arg_commit3.offset,
-                               arg->arg_commit3.count,
-                               typeofcommit,
-                               req_ctx,
-                               &cache_status) != CACHE_INODE_SUCCESS) {
+        cache_status = cache_inode_commit(entry,
+					  arg->arg_commit3.offset,
+					  arg->arg_commit3.count,
+					  req_ctx);
+        if (cache_status != CACHE_INODE_SUCCESS) {
                 res->res_commit3.status = NFS3ERR_IO;;
 
                 nfs_SetWccData(&pre_attr,

@@ -146,7 +146,6 @@ cache_entry_t *nfs4_FhandleToCache(nfs_fh4 * fh4,
 	struct fsal_export *export;
 	cache_entry_t *entry = NULL;
 	cache_inode_fsal_data_t fsal_data;
-	cache_inode_status_t cache_status;
 
 	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v4) != NFS4_FHSIZE);
 
@@ -184,10 +183,8 @@ cache_entry_t *nfs4_FhandleToCache(nfs_fh4 * fh4,
 		*status = NFS4ERR_BADHANDLE;
 		goto badhdl;
 	}
-	entry = cache_inode_get(&fsal_data,
-				NULL,
-				req_ctx,
-				&cache_status);
+	cache_inode_get(&fsal_data, NULL,
+			req_ctx, &entry);
 	if(entry == NULL){
 		/* is there a more appropriate error based on cache_status? */
 		*status = NFS4ERR_STALE;
@@ -224,7 +221,6 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 	struct fsal_export *export;
 	cache_entry_t *entry = NULL;
 	cache_inode_fsal_data_t fsal_data;
-	cache_inode_status_t cache_status;
 
 	BUILD_BUG_ON(sizeof(struct alloc_file_handle_v3) != NFS3_FHSIZE);
 
@@ -263,10 +259,10 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 		*status = NFS3ERR_BADHANDLE;
 		goto badhdl;
 	}
-	entry = cache_inode_get(&fsal_data,
-				NULL,
-				req_ctx,
-				&cache_status);
+	cache_inode_get(&fsal_data,
+			NULL,
+			req_ctx,
+			&entry);
 	if(entry == NULL){
 		/* is there a more appropriate error based on cache_status? */
 		*status = NFS3ERR_STALE;

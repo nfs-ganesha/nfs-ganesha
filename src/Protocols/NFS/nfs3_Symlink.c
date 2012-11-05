@@ -170,15 +170,14 @@ nfs_Symlink(nfs_arg_t *arg,
         }
 
         /* Make the symlink */
-        if ((symlink_entry
-             = cache_inode_create(parent_entry,
-                                  symlink_name,
-                                  SYMBOLIC_LINK,
-                                  mode,
-                                  &create_arg,
-                                  req_ctx,
-                                  &cache_status))
-            == NULL) {
+	cache_status = cache_inode_create(parent_entry,
+					  symlink_name,
+					  SYMBOLIC_LINK,
+					  mode,
+					  &create_arg,
+					  req_ctx,
+					  &symlink_entry);
+	if (symlink_entry == NULL) {
                 goto out_fail;
         }
 
@@ -200,14 +199,13 @@ nfs_Symlink(nfs_arg_t *arg,
         /* Are there any attributes left to set? */
         if (sattr.mask) {
                 /* A call to cache_inode_setattr is required */
-                if (cache_inode_setattr(symlink_entry,
-                                        &sattr,
-                                        req_ctx,
-                                        &cache_status)
-                    != CACHE_INODE_SUCCESS) {
-                        goto out_fail;
-                }
-        }
+                cache_status = cache_inode_setattr(symlink_entry,
+						   &sattr,
+						   req_ctx);
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			goto out_fail;
+		}
+	}
 
         if ((res->res_symlink3.status =
              (nfs3_AllocateFH(&res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle))) != NFS3_OK) {

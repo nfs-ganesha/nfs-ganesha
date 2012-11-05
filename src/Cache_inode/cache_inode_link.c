@@ -63,8 +63,7 @@
  *                      not be a directory.
  * @param[in]  dest_dir The directory in which to create the new name
  * @param[in]  name     The new name to add to the file
- * @param[in]  context  FSAL credentials
- * @param[out] status   returned status.
+ * @param[in]  req_ctx  FSAL credentials
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  * @retval CACHE_INODE_BAD_TYPE either source or destination have
@@ -73,10 +72,9 @@
  *                                  in destination.
  */
 cache_inode_status_t cache_inode_link(cache_entry_t *entry,
-                                      cache_entry_t *dest_dir,
-                                      const char *name,
-                                      struct req_op_context *req_ctx,
-                                      cache_inode_status_t *status)
+				      cache_entry_t *dest_dir,
+				      const char *name,
+				      struct req_op_context *req_ctx)
 {
      fsal_status_t fsal_status = {0, 0};
      bool srcattrlock = false;
@@ -85,14 +83,12 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      fsal_accessflags_t access_mask = 0;
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-
-     /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
 
      /* The file to be hardlinked can't be a DIRECTORY */
      if (entry->type == DIRECTORY) {
-          *status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
@@ -100,7 +96,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      /* Is the destination a directory? */
      if ((dest_dir->type != DIRECTORY) &&
          (dest_dir->type != FS_JUNCTION)) {
-          *status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
@@ -112,12 +108,12 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
 
-     if ((*status = cache_inode_access_sw(dest_dir,
-                                          access_mask,
-                                          req_ctx,
-                                          status,
-                                          false))
-         != CACHE_INODE_SUCCESS) {
+     status = cache_inode_access_sw(dest_dir,
+				    access_mask,
+				    req_ctx,
+				    false);
+
+     if (status != CACHE_INODE_SUCCESS) {
           goto out;
      }
 
@@ -140,7 +136,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
                      entry->obj_handle->ops->getattrs(entry->obj_handle,
                                                       req_ctx);
      if (FSAL_IS_ERROR(fsal_status)) {
-          *status = cache_inode_error_convert(fsal_status);
+          status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
                fsal_status
                        = entry->obj_handle->ops->getattrs(entry->obj_handle,
@@ -177,11 +173,12 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      destattrlock = false;
 
      /* Add the new entry in the destination directory */
-     if (cache_inode_add_cached_dirent(dest_dir,
-                                       name,
-                                       entry,
-                                       NULL,
-                                       status) != CACHE_INODE_SUCCESS) {
+     status = cache_inode_add_cached_dirent(dest_dir,
+					    name,
+					    entry,
+					    NULL);
+
+     if (status  != CACHE_INODE_SUCCESS) {
           goto out;
      }
 
@@ -202,6 +199,6 @@ out:
           pthread_rwlock_unlock(&dest_dir->content_lock);
      }
 
-     return *status;
+     return status;
 }
 /** @} */

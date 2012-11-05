@@ -263,20 +263,18 @@ int cache_inode_set_time_current(gsh_time_t *time)
  * This funcion adds a new entry to the cache.  It will allocate
  * entries of any kind.
  *
- * @param new_obj [IN] object handle to be added to the cache
- * @param flags [IN] Vary the function's operation (newly created
- *                   object, extra ref, etc.)
- * @param status [OUT] Returned status.
+ * @param[in]  new_obj Object handle to be added to the cache
+ * @param[in]  flags   Vary the function's operation
+ * @param[out] entry   Newly instantiated cache entry
  *
- * @return the new entry or NULL on error.
- *
+ * @return CACHE_INODE_SUCCESS or errors.
  */
-cache_entry_t *
+cache_inode_status_t
 cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                       uint32_t flags,
-                      cache_inode_status_t *status)
+                      cache_entry_t **entry)
 {
-     cache_entry_t *entry = NULL;
+     cache_inode_status_t status;
      cache_entry_t *new_entry = NULL;
      struct gsh_buffdesc key, value;
      int rc = 0;
@@ -299,20 +297,20 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
                               true, &latch);
      if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
-          *status = CACHE_INODE_HASH_TABLE_ERROR;
+          status = CACHE_INODE_HASH_TABLE_ERROR;
           LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
                   " - this should not have happened", hrc);
           goto out;
      }
      if (hrc == HASHTABLE_SUCCESS) {
           /* Entry is already in the cache, do not add it */
-          entry = value.addr;
-          *status = CACHE_INODE_ENTRY_EXISTS;
+          *entry = value.addr;
+          status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
                    "entry. Found entry %p type: %d, New type: %d",
-                   entry, entry->type, new_obj->type);
-          if (cache_inode_lru_ref(entry, LRU_FLAG_NONE) ==
+                   *entry, (*entry)->type, new_obj->type);
+          if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
                /* Release the subtree hash table mutex acquired in
                   HashTable_GetEx */
@@ -320,8 +318,8 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                goto out;
           } else {
                /* Entry is being deconstructed, so just replace it. */
-               entry = NULL;
-               *status = CACHE_INODE_SUCCESS;
+               (*entry) = NULL;
+               status = CACHE_INODE_SUCCESS;
           }
      }
      /* We did not find the object; we need to get a new one.
@@ -330,11 +328,11 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
      /* Pull an entry off the LRU */
-     new_entry = cache_inode_lru_get(status, 0);
+     status = cache_inode_lru_get(&new_entry, 0);
      if (new_entry == NULL) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: cache_inode_lru_get failed");
-          *status = CACHE_INODE_MALLOC_ERROR;
+          status = CACHE_INODE_MALLOC_ERROR;
           goto out;
      }
      assert(new_entry->lru.refcount > 1);
@@ -342,7 +340,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
                               true, &latch);
      if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
-          *status = CACHE_INODE_HASH_TABLE_ERROR;
+          status = CACHE_INODE_HASH_TABLE_ERROR;
           LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
                   " - this should not have happened", hrc);
           /* Release our reference and the sentinel on the entry we
@@ -353,13 +351,13 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      }
      if (hrc == HASHTABLE_SUCCESS) {
           /* Entry is already in the cache, do not add it */
-          entry = value.addr;
-          *status = CACHE_INODE_ENTRY_EXISTS;
+          *entry = value.addr;
+          status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
                    "entry. Found entry %p type: %d, New type: %d",
-                   entry, entry->obj_handle->type, new_obj->type);
-          if (cache_inode_lru_ref(entry, LRU_FLAG_NONE) ==
+                   *entry, (*entry)->obj_handle->type, new_obj->type);
+          if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
                /* Release the subtree hash table mutex acquired in
                   HashTable_GetEx */
@@ -370,7 +368,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                goto out;
           }
      }
-     entry = new_entry;
+     *entry = new_entry;
      latched = true;
      /* This should be the sentinel, plus one to use the entry we
         just returned. */
@@ -378,51 +376,51 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
      /* Enroll the object in the weakref table */
 
-     entry->weakref =
-          cache_inode_weakref_insert(entry);
-     assert(entry->weakref.ptr != 0); /* A NULL pointer here would
-                                         indicate a programming
-                                         error, such as an old entry
-                                         not being unenrolled from
-                                         the table. */
+     (*entry)->weakref =
+          cache_inode_weakref_insert(*entry);
+     assert((*entry)->weakref.ptr != 0); /* A NULL pointer here would
+					    indicate a programming
+					    error, such as an old entry
+					    not being unenrolled from
+					    the table. */
      weakrefed = true;
 
      /* Initialize the entry locks */
-     if (((rc = pthread_rwlock_init(&entry->attr_lock, NULL)) != 0) ||
-         ((rc = pthread_rwlock_init(&entry->content_lock, NULL)) != 0) ||
-         ((rc = pthread_rwlock_init(&entry->state_lock, NULL)) != 0)) {
+     if (((rc = pthread_rwlock_init(&(*entry)->attr_lock, NULL)) != 0) ||
+         ((rc = pthread_rwlock_init(&(*entry)->content_lock, NULL)) != 0) ||
+         ((rc = pthread_rwlock_init(&(*entry)->state_lock, NULL)) != 0)) {
           /* Recycle */
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: pthread_rwlock_init "
                   "returned %d (%s)", rc, strerror(rc));
-          *status = CACHE_INODE_INIT_ENTRY_FAILED;
+          status = CACHE_INODE_INIT_ENTRY_FAILED;
           goto out;
      }
      locksinited = true;
 
      /* Initialize common fields */
 
-     entry->type = new_obj->type;
-     entry->flags = 0;
-     init_glist(&entry->state_list);
-     init_glist(&entry->layoutrecall_list);
+     (*entry)->type = new_obj->type;
+     (*entry)->flags = 0;
+     init_glist(&(*entry)->state_list);
+     init_glist(&(*entry)->layoutrecall_list);
 
-     switch (entry->type) {
+     switch ((*entry)->type) {
      case REGULAR_FILE:
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Adding a REGULAR_FILE, entry=%p",
                    entry);
 
           /* No locks, yet. */
-          init_glist(&entry->object.file.lock_list);
-          init_glist(&entry->object.file.nlm_share_list);   /* No associated NLM shares yet */
+          init_glist(&(*entry)->object.file.lock_list);
+          init_glist(&(*entry)->object.file.nlm_share_list);   /* No associated NLM shares yet */
 
-          memset(&(entry->object.file.unstable_data), 0,
+          memset(&((*entry)->object.file.unstable_data), 0,
                  sizeof(cache_inode_unstable_data_t));
-          memset(&(entry->object.file.share_state), 0,
-                 sizeof(cache_inode_share_t));
-          break;
-
+          memset(&(*entry)->object.file.share_state, 0,
+		 sizeof(cache_inode_share_t));
+     break;
+     
      case DIRECTORY:
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Adding a DIRECTORY, entry=%p",
@@ -431,24 +429,25 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           /* If the directory is newly created, it is empty.  Because
              we know its content, we consider it read. */
           if (flags & CACHE_INODE_FLAG_CREATE) {
-               atomic_set_uint32_t_bits(&entry->flags,
+               atomic_set_uint32_t_bits(&(*entry)->flags,
 				       CACHE_INODE_TRUST_CONTENT |
 				       CACHE_INODE_DIR_POPULATED);
           } else {
-               atomic_clear_uint32_t_bits(&entry->flags,
+               atomic_clear_uint32_t_bits(&(*entry)->flags,
                                           CACHE_INODE_TRUST_CONTENT |
                                           CACHE_INODE_DIR_POPULATED);
           }
-
-          entry->object.dir.avl.collisions = 0;
-          entry->object.dir.nbactive = 0;
-          entry->object.dir.referral = NULL;
-          entry->object.dir.parent.ptr = NULL;
-          entry->object.dir.parent.gen = 0;
-          entry->object.dir.root = false;
+	  
+          (*entry)->object.dir.avl.collisions = 0;
+          (*entry)->object.dir.nbactive = 0;
+          (*entry)->object.dir.referral = NULL;
+          (*entry)->object.dir.parent.ptr = NULL;
+          (*entry)->object.dir.parent.gen = 0;
+          (*entry)->object.dir.root = false;
           /* init avl tree */
-          cache_inode_avl_init(entry);
+          cache_inode_avl_init(*entry);
           break;
+
      case SYMBOLIC_LINK:
      case SOCKET_FILE:
      case FIFO_FILE:
@@ -456,7 +455,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
      case CHARACTER_FILE:
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Adding a special file of type %d "
-                   "entry=%p", entry->type, entry);
+                   "entry=%p", (*entry)->type, *entry);
           break;
 
      case FS_JUNCTION:
@@ -466,20 +465,20 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
 
      default:
           /* Should never happen */
-          *status = CACHE_INODE_INCONSISTENT_ENTRY;
+          status = CACHE_INODE_INCONSISTENT_ENTRY;
           LogMajor(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: unknown type %u provided",
-                   entry->type);
+                   (*entry)->type);
           goto out;
      }
 
-     entry->obj_handle = new_obj;
+     (*entry)->obj_handle = new_obj;
      new_obj = NULL; /* mark it as having a home */
-     cache_inode_fixup_md(entry);
+     cache_inode_fixup_md(*entry);
 
      /* Adding the entry in the hash table using the key we started with */
 
-     value.addr = entry;
+     value.addr = *entry;
      value.len = sizeof(cache_entry_t);
 
      rc = HashTable_SetLatched(fh_to_cache_entry_ht, &key, &value,
@@ -491,51 +490,51 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: entry could not be added to hash, "
                   "rc=%d", rc);
-          new_obj = entry->obj_handle;
-          entry->obj_handle = NULL;  /* give it back and poison the entry */
-          *status = CACHE_INODE_HASH_SET_ERROR;
+          new_obj = (*entry)->obj_handle;
+          (*entry)->obj_handle = NULL;  /* give it back and poison the entry */
+          status = CACHE_INODE_HASH_SET_ERROR;
           goto out;
      }
 
      LogDebug(COMPONENT_CACHE_INODE,
               "cache_inode_new_entry: New entry %p added", entry);
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
 out:
-     if (*status != CACHE_INODE_SUCCESS) {
+     if (status != CACHE_INODE_SUCCESS) {
           /* Deconstruct the object */
           if (locksinited) {
-               pthread_rwlock_destroy(&entry->attr_lock);
-               pthread_rwlock_destroy(&entry->content_lock);
-               pthread_rwlock_destroy(&entry->state_lock);
+               pthread_rwlock_destroy(&(*entry)->attr_lock);
+               pthread_rwlock_destroy(&(*entry)->content_lock);
+               pthread_rwlock_destroy(&(*entry)->state_lock);
           }
           if (weakrefed) {
-               cache_inode_weakref_delete(&entry->weakref);
+               cache_inode_weakref_delete(&(*entry)->weakref);
           }
           if (latched) {
                HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
           }
-          if (lrurefed && *status != CACHE_INODE_ENTRY_EXISTS) {
-               cache_inode_lru_unref(entry, LRU_FLAG_NONE);
+          if (lrurefed && status != CACHE_INODE_ENTRY_EXISTS) {
+               cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
           }
-          if (*status != CACHE_INODE_ENTRY_EXISTS) {
-               entry = NULL;
+          if (status != CACHE_INODE_ENTRY_EXISTS) {
+               *entry = NULL;
           }
      }
 
 /* must free new_obj if no new entry was created to reference it. */
      if(new_obj != NULL) {
 	  fsal_status = new_obj->ops->release(new_obj);
-	  if( FSAL_IS_ERROR( fsal_status ) )
+	  if (FSAL_IS_ERROR(fsal_status))
 	    {
-	      *status = cache_inode_error_convert(fsal_status);
+	      status = cache_inode_error_convert(fsal_status);
 	      LogDebug(COMPONENT_CACHE_INODE,
 		       "failed to release unused new_obj %p", new_obj);
 	      /* further recovery ?? */
 	    }
      }
 
-     return entry;
+     return status;
 }                               /* cache_inode_new_entry */
 
 /**
@@ -891,8 +890,8 @@ cache_inode_check_trust(cache_entry_t *entry,
           atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_TRUST_CONTENT |
                                      CACHE_INODE_DIR_POPULATED);
 
-          if (cache_inode_invalidate_all_cached_dirent(entry, &status)
-              != CACHE_INODE_SUCCESS) {
+          status = cache_inode_invalidate_all_cached_dirent(entry);
+          if (status != CACHE_INODE_SUCCESS) {
                LogCrit(COMPONENT_CACHE_INODE,
                        "cache_inode_invalidate_all_cached_dirent "
                        "returned %d (%s)", status,

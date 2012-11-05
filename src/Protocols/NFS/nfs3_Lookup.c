@@ -128,12 +128,12 @@ nfs_Lookup(nfs_arg_t *arg,
                 goto out;
          }
 
-        if ((entry_file
-             = cache_inode_lookup(entry_dir,
-                                  name,
-                                  req_ctx,
-                                  &cache_status)) &&
-            (cache_status == CACHE_INODE_SUCCESS)) 
+	cache_status = cache_inode_lookup(entry_dir,
+					  name,
+					  req_ctx,
+					  &entry_file);
+        if (entry_file &&
+            (cache_status == CACHE_INODE_SUCCESS))
          {
              /* Build FH */
             res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val = gsh_malloc(sizeof(struct alloc_file_handle_v3));

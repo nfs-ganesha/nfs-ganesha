@@ -141,11 +141,11 @@ int nfs4_op_link(struct nfs_argop4 *op,
         file_entry = data->saved_entry;
 
         /* make the link */
-        if (cache_inode_link(file_entry,
-                             dir_entry,
-                             newname,
-                             data->req_ctx, &cache_status)
-            != CACHE_INODE_SUCCESS) {
+        cache_status = cache_inode_link(file_entry,
+					dir_entry,
+					newname,
+					data->req_ctx);
+        if (cache_status != CACHE_INODE_SUCCESS) {
                 res_LINK4.status = nfs4_Errno(cache_status);
                 goto out;
         }

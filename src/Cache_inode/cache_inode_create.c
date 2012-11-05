@@ -67,21 +67,21 @@
  * @param[in]  mode       Mode to be used at file creation
  * @param[in]  create_arg Additional argument for object creation
  * @param[in]  req_ctx    Request context
- * @param[out] status     Returned status
+ * @param[out] entry      Cache entry for the created file
  *
- * @return Cache entry for the file created or found.
+ * @return CACHE_INODE_SUCCESS or errors.
  */
 
-cache_entry_t *
+cache_inode_status_t
 cache_inode_create(cache_entry_t *parent,
                    const char *name,
                    object_file_type_t type,
                    uint32_t mode,
                    cache_inode_create_arg_t *create_arg,
                    struct req_op_context *req_ctx,
-                   cache_inode_status_t *status)
+                   cache_entry_t **entry)
 {
-     cache_entry_t *entry = NULL;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
      fsal_status_t fsal_status = {0, 0};
      struct fsal_obj_handle *object_handle;
      struct attrlist object_attributes;
@@ -96,16 +96,13 @@ cache_inode_create(cache_entry_t *parent,
           create_arg = &zero_create_arg;
      }
 
-     /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
-
      if ((type != REGULAR_FILE) && (type != DIRECTORY) &&
          (type != SYMBOLIC_LINK) && (type != SOCKET_FILE) &&
          (type != FIFO_FILE) && (type != CHARACTER_FILE) &&
          (type != BLOCK_FILE)) {
-          *status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_BAD_TYPE;
 
-          entry = NULL;
+          *entry = NULL;
           goto out;
         }
 
@@ -115,26 +112,26 @@ cache_inode_create(cache_entry_t *parent,
     access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
                   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
                                      FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-    *status = cache_inode_access(parent,
+    status = cache_inode_access(parent,
                                 access_mask,
-                                req_ctx, status);
-    if (*status != CACHE_INODE_SUCCESS)
+                                req_ctx);
+    if (status != CACHE_INODE_SUCCESS)
         {
-          entry = NULL;
+          *entry = NULL;
           goto out;
         }
 
      /* Check if an entry of the same name exists */
-     entry = cache_inode_lookup(parent,
-                                name,
-                                req_ctx,
-                                status);
-     if (entry != NULL) {
-          *status = CACHE_INODE_ENTRY_EXISTS;
-          if (entry->type != type) {
+     status = cache_inode_lookup(parent,
+				 name,
+				 req_ctx,
+				 entry);
+     if (*entry != NULL) {
+          status = CACHE_INODE_ENTRY_EXISTS;
+          if ((*entry)->type != type) {
                /* Incompatible types, returns NULL */
-               cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-               entry = NULL;
+               cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
+               *entry = NULL;
                goto out;
           } else {
                goto out;
@@ -195,8 +192,8 @@ cache_inode_create(cache_entry_t *parent,
 
     default:
             /* we should never go there */
-            *status = CACHE_INODE_INCONSISTENT_ENTRY;
-            entry = NULL;
+            status = CACHE_INODE_INCONSISTENT_ENTRY;
+            *entry = NULL;
             goto out;
             break;
     }
@@ -206,27 +203,27 @@ cache_inode_create(cache_entry_t *parent,
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(parent);
           }
-          *status = cache_inode_error_convert(fsal_status);
-          entry = NULL;
+          status = cache_inode_error_convert(fsal_status);
+          *entry = NULL;
           goto out;
      }
-     entry = cache_inode_new_entry(object_handle,
-                                   CACHE_INODE_FLAG_CREATE,
-                                   status);
-     if (entry == NULL) {
+     status = cache_inode_new_entry(object_handle,
+				    CACHE_INODE_FLAG_CREATE,
+				    entry);
+     if (*entry == NULL) {
           goto out;
      }
 
      pthread_rwlock_wrlock(&parent->content_lock);
      /* Add this entry to the directory (also takes an internal ref) */
-     cache_inode_add_cached_dirent(parent,
-                                   name, entry,
-                                   NULL,
-                                   status);
+     status = cache_inode_add_cached_dirent(parent,
+					    name,
+					    *entry,
+					    NULL);
      pthread_rwlock_unlock(&parent->content_lock);
-     if (*status != CACHE_INODE_SUCCESS) {
-          cache_inode_lru_unref(entry, LRU_FLAG_NONE);
-          entry = NULL;
+     if (status != CACHE_INODE_SUCCESS) {
+          cache_inode_lru_unref(*entry, LRU_FLAG_NONE);
+          *entry = NULL;
           goto out;
      }
 
@@ -242,10 +239,10 @@ cache_inode_create(cache_entry_t *parent,
      }
      pthread_rwlock_unlock(&parent->attr_lock);
 
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
 out:
 
-     return entry;
+     return status;
 }
 /** @} */

@@ -2881,7 +2881,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
       exportlist_t *pcurrent = NULL;
       cache_inode_status_t cache_status;
       fsal_status_t fsal_status;
-      cache_entry_t *pentry = NULL;
+      cache_entry_t *entry = NULL;
 
       /* loop the export list */
 
@@ -2931,8 +2931,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
              export entries, then the function to remove an export
              entry MUST put the extra reference. */
 
-          if((pentry = cache_inode_make_root(pcurrent->proot_handle,
-                                             &cache_status)) == NULL)
+          cache_status = cache_inode_make_root(pcurrent->proot_handle,
+					       &entry);
+          if (entry == NULL)
             {
               LogCrit(COMPONENT_INIT,
                       "Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
@@ -2944,13 +2945,13 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
                     "Added root entry for path %s on export_id=%d",
                     pcurrent->fullpath, pcurrent->id);
 
-          /* Set the pentry as a referral if needed */
+          /* Set the entry as a referral if needed */
           if(strcmp(pcurrent->referral, ""))
             {
               /* Set the cache_entry object as a referral by setting the 'referral' field */
-              pentry->object.dir.referral = pcurrent->referral;
+              entry->object.dir.referral = pcurrent->referral;
               LogInfo(COMPONENT_INIT, "A referral is set : %s",
-                      pentry->object.dir.referral);
+                      entry->object.dir.referral);
             }
         }
 

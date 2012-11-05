@@ -60,8 +60,7 @@
  *
  * @param[in]  entry   The file to be truncated
  * @param[in]  length  New length for the file
- * @param[in]  context FSAL credentials
- * @param[out] status  Returned status
+ * @param[in]  req_ctx Request context
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
  */
@@ -69,28 +68,25 @@
 cache_inode_status_t
 cache_inode_truncate_impl(cache_entry_t *entry,
                           uint64_t length,
-                          struct req_op_context *req_ctx,
-                          cache_inode_status_t *status)
+                          struct req_op_context *req_ctx)
 {
   fsal_status_t fsal_status;
   struct fsal_obj_handle *obj_hdl = entry->obj_handle;
-
-  /* Set the return default to CACHE_INODE_SUCCESS */
-  *status = CACHE_INODE_SUCCESS;
+  cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
   /* Only regular files can be truncated */
   if(entry->type != REGULAR_FILE)
     {
-      *status = CACHE_INODE_BAD_TYPE;
-      return *status;
+      status = CACHE_INODE_BAD_TYPE;
+      return status;
     }
 
   /* You have to be able to write the file to truncate it
    */
   fsal_status = obj_hdl->ops->test_access(obj_hdl, req_ctx, FSAL_W_OK);
   if(FSAL_IS_ERROR(fsal_status)) {
-    *status = cache_inode_error_convert(fsal_status);
-    return *status;
+    status = cache_inode_error_convert(fsal_status);
+    return status;
   }
 
   /* Call FSAL to actually truncate */
@@ -101,18 +97,17 @@ cache_inode_truncate_impl(cache_entry_t *entry,
 
   if(FSAL_IS_ERROR(fsal_status))
     {
-      *status = cache_inode_error_convert(fsal_status);
+      status = cache_inode_error_convert(fsal_status);
       if (fsal_status.major == ERR_FSAL_STALE) {
         cache_inode_kill_entry(entry);
       }
-      return *status;
+      return status;
     }
 
-  return *status;
-}                               /* cache_inode_truncate_sw */
+  return status;
+}
 
 /**
- *
  * @brief Truncates a regular file specified by its cache entry.
  *
  * Truncates a regular file specified by its cache entry.
@@ -120,24 +115,21 @@ cache_inode_truncate_impl(cache_entry_t *entry,
  * @param[in]  entry   The file to be truncated
  * @param[in]  length  New length for the file
  * @param[in]  req_ctx Request context
- * @param[out] status  Returned status
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
- *
  */
 cache_inode_status_t
 cache_inode_truncate(cache_entry_t *entry,
                      uint64_t length,
-                     struct req_op_context *req_ctx,
-                     cache_inode_status_t *status)
+                     struct req_op_context *req_ctx)
 {
-  cache_inode_status_t ret;
+  cache_inode_status_t status;
 
   pthread_rwlock_wrlock(&entry->attr_lock);
   pthread_rwlock_wrlock(&entry->content_lock);
-  ret = cache_inode_truncate_impl(entry, length, req_ctx, status);
+  status = cache_inode_truncate_impl(entry, length, req_ctx);
   pthread_rwlock_unlock(&entry->attr_lock);
   pthread_rwlock_unlock(&entry->content_lock);
-  return ret;
-} /* cache_inode_truncate */
+  return status;
+}
 /** @} */

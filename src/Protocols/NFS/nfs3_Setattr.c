@@ -181,10 +181,9 @@ nfs_Setattr(nfs_arg_t *arg,
                 if (entry->type == DIRECTORY) {
                         cache_status = CACHE_INODE_IS_A_DIRECTORY;
                 } else {
-                        cache_inode_truncate(entry,
-                                             setattr.filesize,
-                                             req_ctx,
-                                             &cache_status);
+                        cache_status = cache_inode_truncate(entry,
+							    setattr.filesize,
+							    req_ctx);
                         FSAL_UNSET_MASK(setattr.mask, ATTR_SPACEUSED);
                         FSAL_UNSET_MASK(setattr.mask, ATTR_SIZE);
                 }
@@ -199,8 +198,7 @@ nfs_Setattr(nfs_arg_t *arg,
         if (setattr.mask != 0) {
                 cache_status = cache_inode_setattr(entry,
                                                    &setattr,
-                                                   req_ctx,
-                                                   &cache_status);
+                                                   req_ctx);
         } else {
                 cache_status = CACHE_INODE_SUCCESS;
         }

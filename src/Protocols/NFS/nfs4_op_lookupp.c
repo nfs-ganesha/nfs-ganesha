@@ -121,11 +121,10 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   file_entry = NULL;
   dir_entry = data->current_entry;
 
-  /* BUGAZOMEU: Faire la gestion des cross junction traverse */
-  if((file_entry
-      = cache_inode_lookupp(dir_entry,
-                            data->req_ctx,
-                            &cache_status)) != NULL)
+  cache_status = cache_inode_lookupp(dir_entry,
+				     data->req_ctx,
+				     &file_entry);
+  if (file_entry != NULL)
     {
       /* Convert it to a file handle */
       if(!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle))

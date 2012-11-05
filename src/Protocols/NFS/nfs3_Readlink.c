@@ -126,9 +126,10 @@ nfs_Readlink(nfs_arg_t *arg,
                 goto out;
         }
 
-        if (cache_inode_readlink(entry,
-                                 &link_buffer,
-                                 req_ctx, &cache_status)  != CACHE_INODE_SUCCESS) 
+        cache_status = cache_inode_readlink(entry,
+					    &link_buffer,
+					    req_ctx);
+        if (cache_status != CACHE_INODE_SUCCESS)
          {
                 res->res_readlink3.status =
                                 nfs3_Errno(cache_status);

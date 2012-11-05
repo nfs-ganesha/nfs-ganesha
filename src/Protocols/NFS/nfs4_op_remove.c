@@ -121,10 +121,10 @@ int nfs4_op_remove(struct nfs_argop4 *op,
        cache_inode_get_changeid4(parent_entry);
 
 
-  if((cache_status = cache_inode_remove(parent_entry,
-                                        name,
-                                        data->req_ctx,
-                                        &cache_status)) != CACHE_INODE_SUCCESS)
+  cache_status = cache_inode_remove(parent_entry,
+				    name,
+				    data->req_ctx);
+  if (cache_status != CACHE_INODE_SUCCESS)
     {
       res_REMOVE4.status = nfs4_Errno(cache_status);
       goto out;

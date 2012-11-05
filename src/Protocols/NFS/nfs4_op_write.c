@@ -229,10 +229,10 @@ int nfs4_op_write(struct nfs_argop4 *op,
 
   if (state_open == NULL)
     {
-      if(cache_inode_access(entry,
-                            FSAL_WRITE_ACCESS,
-                            data->req_ctx,
-                            &cache_status) != CACHE_INODE_SUCCESS)
+      cache_status = cache_inode_access(entry,
+					FSAL_WRITE_ACCESS,
+					data->req_ctx);
+      if (cache_status != CACHE_INODE_SUCCESS)
         {
           res_WRITE4.status = nfs4_Errno(cache_status);;
           pthread_rwlock_unlock(&entry->state_lock);
@@ -327,16 +327,16 @@ int nfs4_op_write(struct nfs_argop4 *op,
                   so_nfs4_owner.so_clientid;
   }
 
-  if(cache_inode_rdwr(entry,
-                      CACHE_INODE_WRITE,
-                      offset,
-                      size,
-                      &written_size,
-                      bufferdata,
-                      &eof_met,
-                      data->req_ctx,
-                      stability,
-                      &cache_status) != CACHE_INODE_SUCCESS)
+  cache_status = cache_inode_rdwr(entry,
+				  CACHE_INODE_WRITE,
+				  offset,
+				  size,
+				  &written_size,
+				  bufferdata,
+				  &eof_met,
+				  data->req_ctx,
+				  stability);
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       LogDebug(COMPONENT_NFS_V4,
                "cache_inode_rdwr returned %s",

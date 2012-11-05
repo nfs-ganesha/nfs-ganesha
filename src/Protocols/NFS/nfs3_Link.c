@@ -163,13 +163,13 @@ nfs_Link(nfs_arg_t *arg,
                 /* Both objects have to be in the same filesystem */
                 if (to_exportid != from_exportid)
                     res->res_link3.status = NFS3ERR_XDEV;
-                else 
+		else
                   {
-                     if (cache_inode_link(target_entry,
-                                          parent_entry,
-                                          link_name,
-                                          req_ctx,
-                                          &cache_status) == CACHE_INODE_SUCCESS)
+		    cache_status = cache_inode_link(target_entry,
+						    parent_entry,
+						    link_name,
+						    req_ctx);
+		    if (cache_status == CACHE_INODE_SUCCESS)
                        {
                             nfs_SetPostOpAttr( target_entry,
                                                req_ctx,

@@ -565,32 +565,31 @@ typedef cache_inode_status_t(*cache_inode_getattr_cb_t)(
 const char *cache_inode_err_str(cache_inode_status_t err);
 
 void cache_inode_clean_entry(cache_entry_t *entry);
-int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
+int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
+				 struct gsh_buffdesc *buff2);
 void cache_inode_release_symlink(cache_entry_t *entry);
 
-hash_table_t *cache_inode_init(cache_inode_parameter_t param,
-			       cache_inode_status_t * status);
+cache_inode_status_t cache_inode_init(cache_inode_parameter_t param,
+				      hash_table_t **ht);
 
-cache_entry_t *cache_inode_get(cache_inode_fsal_data_t *fsdata,
-			       cache_entry_t *associated,
-			       const struct req_op_context *opctx,
-			       cache_inode_status_t *status);
+cache_inode_status_t cache_inode_get(cache_inode_fsal_data_t *fsdata,
+				     cache_entry_t *associated,
+				     const struct req_op_context *opctx,
+				     cache_entry_t **entry);
 void cache_inode_put(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t *entry,
 					   fsal_accessflags_t access_type,
 					   struct req_op_context *req_ctx,
-					   cache_inode_status_t *status,
 					   bool use_mutex);
 cache_inode_status_t cache_inode_access_no_mutex(
 	cache_entry_t *entry,
 	fsal_accessflags_t access_type,
-	struct req_op_context *req_ctx,
-	cache_inode_status_t *status);
+	struct req_op_context *req_ctx);
 cache_inode_status_t cache_inode_access(cache_entry_t *entry,
 					fsal_accessflags_t access_type,
-					struct req_op_context *req_ctx,
-					cache_inode_status_t *status);
+					struct req_op_context
+					   *req_ctx);
 
 bool is_open(cache_entry_t *entry);
 bool is_open_for_read(cache_entry_t *entry);
@@ -599,25 +598,22 @@ bool is_open_for_write(cache_entry_t *entry);
 cache_inode_status_t cache_inode_open(cache_entry_t *entry,
 				      fsal_openflags_t openflags,
 				      struct req_op_context *req_ctx,
-				      uint32_t flags,
-				      cache_inode_status_t *status);
+				      uint32_t flags);
 cache_inode_status_t cache_inode_close(cache_entry_t *entry,
-				       uint32_t flags,
-				       cache_inode_status_t *status);
+				       uint32_t flags);
 
-cache_entry_t *cache_inode_create(cache_entry_t *entry_parent,
-				  const char *name,
-				  object_file_type_t type,
-				  uint32_t mode,
-				  cache_inode_create_arg_t *create_arg,
-				  struct req_op_context *req_ctx,
-				  cache_inode_status_t *status);
+cache_inode_status_t cache_inode_create(cache_entry_t *entry_parent,
+					const char *name,
+					object_file_type_t type,
+					uint32_t mode,
+					cache_inode_create_arg_t *create_arg,
+					struct req_op_context *req_ctx,
+					cache_entry_t **created);
 
 cache_inode_status_t cache_inode_getattr(cache_entry_t *entry,
 					 const struct req_op_context *req_ctx,
 					 void *opaque,
-					 cache_inode_getattr_cb_t cb,
-					 cache_inode_status_t *status);
+					 cache_inode_getattr_cb_t cb);
 
 cache_inode_status_t cache_inode_fileid(cache_entry_t *entry,
 					const struct req_op_context *req_ctx,
@@ -636,42 +632,37 @@ bool cache_inode_create_verify(cache_entry_t *entry,
 			       uint32_t verf_hi,
 			       uint32_t verf_lo);
 
-cache_entry_t *cache_inode_lookup_impl(cache_entry_t *entry_parent,
-				       const char *name,
-				       struct req_op_context *req_ctx,
-				       cache_inode_status_t *status);
-cache_entry_t *cache_inode_lookup(cache_entry_t *entry_parent,
-				  const char *name,
-				  struct req_op_context *req_ctx,
-				  cache_inode_status_t *status);
-
-cache_entry_t *cache_inode_lookupp_impl(cache_entry_t *entry,
+cache_inode_status_t cache_inode_lookup_impl(cache_entry_t *entry_parent,
+					     const char *name,
+					     struct req_op_context *req_ctx,
+					     cache_entry_t **entry);
+cache_inode_status_t cache_inode_lookup(cache_entry_t *entry_parent,
+					const char *name,
 					struct req_op_context *req_ctx,
-					cache_inode_status_t *status);
-cache_entry_t *cache_inode_lookupp(cache_entry_t *entry,
-				   struct req_op_context *req_ctx,
-				   cache_inode_status_t *status);
+					cache_entry_t **entry);
 
+cache_inode_status_t cache_inode_lookupp_impl(cache_entry_t *entry,
+					      struct req_op_context *req_ctx,
+					      cache_entry_t **parent);
+cache_inode_status_t cache_inode_lookupp(cache_entry_t *entry,
+					 struct req_op_context *req_ctx,
+					 cache_entry_t **parent);
 
 cache_inode_status_t cache_inode_readlink(cache_entry_t *entry,
 					  struct gsh_buffdesc *link_content,
-					  struct req_op_context *req_ctx,
-					  cache_inode_status_t *status);
+					  struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_link(cache_entry_t *entry_src,
 				      cache_entry_t *entry_dir_dest,
 				      const char *link_name,
-				      struct req_op_context *req_ctx,
-				      cache_inode_status_t *status);
+				      struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_remove(cache_entry_t *entry,
 					const char *node_name,
-					struct req_op_context *req_ctx,
-					cache_inode_status_t *status);
+					struct req_op_context *req_ctx);
 cache_inode_status_t cache_inode_remove_impl(cache_entry_t *entry,
 					     const char *name,
 					     struct req_op_context *req_ctx,
-					     cache_inode_status_t *status,
 					     uint32_t flags);
 
 cache_inode_status_t cache_inode_clean_internal(
@@ -685,43 +676,37 @@ cache_inode_status_t cache_inode_operate_cached_dirent(
 
 cache_inode_status_t cache_inode_remove_cached_dirent(
 	cache_entry_t *entry_parent,
-	const char *name,
-	cache_inode_status_t *status);
+	const char *name);
 
 cache_inode_status_t cache_inode_rename_cached_dirent(
 	cache_entry_t *entry_parent,
 	const char *oldname,
-	const char *newname,
-	cache_inode_status_t *status);
+	const char *newname);
 
 cache_inode_status_t cache_inode_rename(cache_entry_t *entry,
 					const char *oldname,
 					cache_entry_t *entry_dirdest,
 					const char *newname,
-					struct req_op_context *req_ctx,
-					cache_inode_status_t *status);
+					struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
 					 struct attrlist *attr,
-					 struct req_op_context *req_ctx,
-					 cache_inode_status_t *status);
+					 struct req_op_context *req_ctx);
 
 cache_inode_status_t
 cache_inode_truncate_impl(cache_entry_t *entry,
 			  uint64_t length,
-			  struct req_op_context *req_ctx,
-			  cache_inode_status_t *status);
+			  struct req_op_context *req_ctx);
 cache_inode_status_t cache_inode_truncate(
 	cache_entry_t *entry,
 	uint64_t length,
-	struct req_op_context *req_ctx,
-	cache_inode_status_t *status);
+	struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
 
-cache_entry_t *cache_inode_new_entry(struct fsal_obj_handle *new_obj,
-				     uint32_t flags,
-				     cache_inode_status_t *status);
+cache_inode_status_t cache_inode_new_entry(struct fsal_obj_handle *new_obj,
+					    uint32_t flags,
+					    cache_entry_t **entry);
 
 cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      cache_inode_io_direction_t io_direction,
@@ -731,8 +716,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      void *buffer,
 				      bool *eof,
 				      struct req_op_context *req_ctx,
-				      cache_inode_stability_t stable,
-				      cache_inode_status_t *status);
+				      cache_inode_stability_t stable);
 
 static inline cache_inode_status_t cache_inode_read(
 	cache_entry_t *entry,
@@ -742,12 +726,11 @@ static inline cache_inode_status_t cache_inode_read(
 	void *buffer,
 	bool *eof,
 	struct req_op_context *req_ctx,
-	cache_inode_stability_t stable,
-	cache_inode_status_t *status)
+	cache_inode_stability_t stable)
 {
 	return cache_inode_rdwr(entry, CACHE_INODE_READ, offset, io_size,
 				bytes_moved, buffer, eof, req_ctx,
-				stable, status);
+				stable);
 }
 
 static inline cache_inode_status_t cache_inode_write(
@@ -758,20 +741,17 @@ static inline cache_inode_status_t cache_inode_write(
 	void *buffer,
 	bool *eof,
 	struct req_op_context *req_ctx,
-	cache_inode_stability_t stable,
-	cache_inode_status_t *status)
+	cache_inode_stability_t stable)
 {
 	return cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, io_size,
 				bytes_moved, buffer, eof, req_ctx,
-				stable, status);
+				stable);
 }
 
 cache_inode_status_t cache_inode_commit(cache_entry_t *entry,
 					uint64_t offset,
 					size_t count,
-					cache_inode_stability_t stability,
-					struct req_op_context *req_ctx,
-					cache_inode_status_t *status);
+					struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_readdir(cache_entry_t *directory,
 					 uint64_t cookie,
@@ -779,17 +759,15 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t *directory,
 					 bool *eod_met,
 					 struct req_op_context *req_ctx,
 					 cache_inode_readdir_cb_t cb,
-					 void *cb_opaque,
-					 cache_inode_status_t *status);
+					 void *cb_opaque);
 
 cache_inode_status_t cache_inode_add_cached_dirent(
 	cache_entry_t *parent,
 	const char *name,
 	cache_entry_t *entry,
-	cache_inode_dir_entry_t **dir_entry,
-	cache_inode_status_t *status);
-cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
-				     cache_inode_status_t *status);
+	cache_inode_dir_entry_t **dir_entry);
+cache_inode_status_t cache_inode_make_root(struct fsal_obj_handle *root_hdl,
+					   cache_entry_t **root_entry);
 
 cache_inode_status_t cache_inode_check_trust(cache_entry_t *entry,
 					     const struct req_op_context *);
@@ -807,8 +785,7 @@ cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t *entry);
 cache_inode_status_t cache_inode_is_dir_empty_WithLock(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_invalidate_all_cached_dirent(
-	cache_entry_t *entry,
-	cache_inode_status_t *status);
+	cache_entry_t *entry);
 
 void cache_inode_release_dirents(cache_entry_t *entry,
 				 cache_inode_avl_which_t which);
@@ -822,13 +799,13 @@ cache_inode_status_t cache_inode_invalidate(
 /* Parsing functions */
 cache_inode_status_t cache_inode_read_conf_hash_parameter(
 	config_file_t in_config,
-	cache_inode_parameter_t *pparam);
+	cache_inode_parameter_t *param);
 cache_inode_status_t cache_inode_read_conf_parameter(
 	config_file_t in_config,
-	cache_inode_parameter_t *pparam);
+	cache_inode_parameter_t *param);
 cache_inode_status_t cache_inode_read_conf_gc_policy(
 	config_file_t in_config,
-	cache_inode_gc_policy_t *ppolicy);
+	cache_inode_gc_policy_t *policy);
 void cache_inode_print_conf_hash_parameter(FILE *output,
 					   cache_inode_parameter_t *param);
 void cache_inode_print_conf_parameter(

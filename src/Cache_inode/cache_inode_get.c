@@ -72,30 +72,26 @@
  * cache entry, a reference count is incremented but the structure
  * pointed to by attr is NOT filled in.
  *
- * @param[in]     fsdata     File system data
- * @param[in]     associated Entry that may be equal to the got entry
- * @param[in]     req_ctx    Request context (user creds, client address etc)
- * @param[out]    status     Returned status
+ * @param[in]  fsdata     File system data
+ * @param[in]  associated Entry that may be equal to the got entry
+ * @param[in]  req_ctx    Request context (user creds, client address etc)
+ * @param[out] entry      The entry
  *
- * @return If successful, the pointer to the entry; NULL otherwise
- *
+ * @return CACHE_INODE_SUCCESS or errors.
  */
-cache_entry_t *
+cache_inode_status_t
 cache_inode_get(cache_inode_fsal_data_t *fsdata,
-                cache_entry_t *associated,
-                const struct req_op_context *req_ctx,
-                cache_inode_status_t *status)
+		cache_entry_t *associated,
+		const struct req_op_context *req_ctx,
+		cache_entry_t **entry)
 {
      struct gsh_buffdesc key, value;
-     cache_entry_t *entry = NULL;
      fsal_status_t fsal_status = {0, 0};
      hash_error_t hrc = 0;
      struct fsal_export *exp_hdl = NULL;
      struct fsal_obj_handle *new_hdl;
      struct hash_latch latch;
-
-     /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      /* Turn the input to a hash key on our own.
       */
@@ -108,56 +104,58 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      if ((hrc != HASHTABLE_SUCCESS) &&
          (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
           /* This should not happened */
-          *status = CACHE_INODE_HASH_TABLE_ERROR;
+          status = CACHE_INODE_HASH_TABLE_ERROR;
           LogCrit(COMPONENT_CACHE_INODE,
                   "Hash access failed with code %d"
                   " - this should not have happened",
                   hrc);
-          return NULL;
+	  *entry = NULL;
+          return status;
      }
 
      if (hrc == HASHTABLE_SUCCESS) {
           /* Entry exists in the cache and was found */
-          entry = value.addr;
+          *entry = value.addr;
           /* take an extra reference within the critical section */
-          if (cache_inode_lru_ref(entry, LRU_REQ_INITIAL) !=
+          if (cache_inode_lru_ref(*entry, LRU_REQ_INITIAL) !=
               CACHE_INODE_SUCCESS) {
                /* Dead entry.  Treat like a lookup failure. */
-               entry = NULL;
+               *entry = NULL;
           } else {
-               if (entry == associated) {
+               if (*entry == associated) {
                     /* Take a quick exit so we don't invert lock
                        ordering. */
                     HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-                    return entry;
+                    return CACHE_INODE_SUCCESS;
                }
           }
      }
      HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
-     if (!entry) {
+     if (*entry == NULL) {
           /* Cache miss, allocate a new entry */
           exp_hdl = fsdata->export;
           fsal_status = exp_hdl->ops->create_handle(exp_hdl, req_ctx,
                                                     &fsdata->fh_desc,
                                                     &new_hdl);
           if (FSAL_IS_ERROR( fsal_status )) {
-               *status = cache_inode_error_convert(fsal_status);
+               status = cache_inode_error_convert(fsal_status);
                LogDebug(COMPONENT_CACHE_INODE,
                         "could not get create_handle object");
-               return NULL;
+	       *entry = NULL;
+               return status;
           }
 
-          if ((entry
-               = cache_inode_new_entry(new_hdl,
-                                       CACHE_INODE_FLAG_NONE,
-                                       status)) == NULL) {
-               return NULL;
+          status = cache_inode_new_entry(new_hdl,
+					 CACHE_INODE_FLAG_NONE,
+					 entry);
+          if (*entry == NULL) {
+               return status;
           }
 
      }
 
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
      /* This is the replacement for cache_inode_renew_entry.  Rather
         than calling that function at the start of every cache_inode
@@ -179,17 +177,17 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
         checked with use (when the attributes are locked for reading,
         for example.) */
 
-     if ((*status = cache_inode_check_trust(entry, req_ctx))
+     if ((status = cache_inode_check_trust(*entry, req_ctx))
          != CACHE_INODE_SUCCESS) {
        goto out_put;
      }
 
-     return entry;
+     return status;
 
  out_put:
-     cache_inode_put(entry);
-     entry = NULL;
-     return entry;
+     cache_inode_put(*entry);
+     *entry = NULL;
+     return status;
 } /* cache_inode_get */
 
 /**

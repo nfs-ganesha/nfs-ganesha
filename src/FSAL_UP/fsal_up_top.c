@@ -470,16 +470,15 @@ link_queue(struct fsal_up_event_link *link,
         if (up_get(&file->key, &parent) == 0) {
                 /* The entry to look up */
                 cache_entry_t *entry = NULL;
-                /* Cache inode status */
-                cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
                 if (!link->target.key.addr) {
                         /* If the FSAL didn't specify a target, just
                            do a lookup and let it cache. */
-                        if ((entry = cache_inode_lookup(parent,
-                                                        link->name,
-                                                        &synthetic_context,
-                                                        &status)) == NULL) {
+                        cache_inode_lookup(parent,
+					   link->name,
+					   &synthetic_context,
+					   &entry);
+                        if (entry == NULL) {
                                 cache_inode_invalidate(
                                         parent,
                                         CACHE_INODE_INVALIDATE_CONTENT);
@@ -488,11 +487,11 @@ link_queue(struct fsal_up_event_link *link,
                         }
                 } else {
                         if (up_get(&link->target.key, &entry) == 0) {
-                                cache_inode_add_cached_dirent(parent,
-                                                              link->name,
-                                                              entry,
-                                                              NULL,
-                                                              &status);
+				cache_inode_add_cached_dirent(
+					parent,
+					link->name,
+					entry,
+					NULL);
                                 pthread_rwlock_wrlock(&entry->attr_lock);
                                 if (entry->flags &
                                     CACHE_INODE_TRUST_ATTRS) {
@@ -531,8 +530,6 @@ unlink_queue(struct fsal_up_event_unlink *unlink,
         cache_entry_t *parent = NULL;
 
         if (up_get(&file->key, &parent) == 0) {
-                /* Cache inode status */
-                cache_inode_status_t status = CACHE_INODE_SUCCESS;
                 /* The looked up directory entry */
                 cache_inode_dir_entry_t *dirent;
 
@@ -562,8 +559,7 @@ unlink_queue(struct fsal_up_event_unlink *unlink,
                                 cache_inode_put(entry);
                         }
                         cache_inode_remove_cached_dirent(parent,
-                                                         unlink->name,
-                                                         &status);
+                                                         unlink->name);
                 }
                 pthread_rwlock_unlock(&parent->content_lock);
                 cache_inode_put(parent);
@@ -590,13 +586,9 @@ move_from_queue(struct fsal_up_event_move_from *move_from,
         cache_entry_t *parent = NULL;
 
         if (up_get(&file->key, &parent) == 0) {
-                /* Cache inode status */
-                cache_inode_status_t status = CACHE_INODE_SUCCESS;
-
                 pthread_rwlock_wrlock(&parent->content_lock);
                 cache_inode_remove_cached_dirent(parent,
-                                                 move_from->name,
-                                                 &status);
+                                                 move_from->name);
                 pthread_rwlock_unlock(&parent->content_lock);
                 cache_inode_put(parent);
         }
@@ -638,16 +630,15 @@ move_to_queue(struct fsal_up_event_move_to *move_to,
         if (up_get(&file->key, &parent) == 0) {
                 /* The entry to look up */
                 cache_entry_t *entry = NULL;
-                /* Cache inode status */
-                cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
                 if (!move_to->target.key.addr) {
                         /* If the FSAL didn't specify a target, just
                            do a lookup and let it cache. */
-                        if ((entry = cache_inode_lookup(parent,
-                                                        move_to->name,
-                                                        &synthetic_context,
-                                                        &status)) == NULL) {
+                        cache_inode_lookup(parent,
+					   move_to->name,
+					   &synthetic_context,
+					   &entry);
+                        if (entry == NULL) {
                                 cache_inode_invalidate(
                                         parent,
                                         CACHE_INODE_INVALIDATE_CONTENT);
@@ -659,8 +650,7 @@ move_to_queue(struct fsal_up_event_move_to *move_to,
                                 cache_inode_add_cached_dirent(parent,
                                                               move_to->name,
                                                               entry,
-                                                              NULL,
-                                                              &status);
+                                                              NULL);
                                 cache_inode_put(entry);
                         } else {
                                 cache_inode_invalidate(
@@ -697,11 +687,11 @@ rename_queue(struct fsal_up_event_rename *rename,
                 cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
                 pthread_rwlock_wrlock(&parent->content_lock);
-                if (cache_inode_rename_cached_dirent(parent,
-                                                     rename->old,
-                                                     rename->new,
-                                                     &status)
-                    != CACHE_INODE_SUCCESS) {
+                status = cache_inode_rename_cached_dirent(
+			parent,
+			rename->old,
+			rename->new);
+                if (status != CACHE_INODE_SUCCESS) {
                         cache_inode_invalidate(parent,
                                                CACHE_INODE_INVALIDATE_CONTENT);
                 }

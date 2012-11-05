@@ -146,10 +146,11 @@ nfs_Rmdir(nfs_arg_t *arg,
         }
         /* Lookup to the entry to be removed to check that it is a
            directory */
-        if ((child_entry = cache_inode_lookup(parent_entry,
-                                              name,
-                                              req_ctx,
-                                              &cache_status)) != NULL) {
+        cache_status = cache_inode_lookup(parent_entry,
+					  name,
+					  req_ctx,
+					  &child_entry);
+	if (child_entry != NULL) {
                 /* Sanity check: make sure we are about to remove a
                    directory */
                 if (child_entry->type != DIRECTORY) {
@@ -160,12 +161,12 @@ nfs_Rmdir(nfs_arg_t *arg,
                 }
         }
 
-        if (cache_inode_remove(parent_entry,
-                               name,
-                               req_ctx,
-                               &cache_status)
-            != CACHE_INODE_SUCCESS) {
-        }
+	cache_status = cache_inode_remove(parent_entry,
+					  name,
+					  req_ctx);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		goto out_fail;
+	}
 
         nfs_SetWccData(&pre_parent,
                        parent_entry,

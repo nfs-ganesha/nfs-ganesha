@@ -455,8 +455,7 @@ void release_openstate(state_owner_t *open_owner)
                                            state_t,
                                            state_owner_list);
 
-      cache_entry_t        * entry = state_found->state_entry;
-      cache_inode_status_t   cache_status;
+      cache_entry_t *entry = state_found->state_entry;
 
       /* Make sure we hold an lru ref to the cache inode while calling state_del */
       if(cache_inode_lru_ref(entry,
@@ -489,9 +488,7 @@ void release_openstate(state_owner_t *open_owner)
         }
 
       /* Close the file in FSAL through the cache inode */
-      cache_inode_close(entry,
-                        0,
-                        &cache_status);
+      cache_inode_close(entry, 0);
 
       pthread_rwlock_unlock(&entry->state_lock);
 

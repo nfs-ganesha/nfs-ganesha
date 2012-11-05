@@ -72,27 +72,24 @@
  *
  * @param[in]  parent  The directory to search
  * @param[in]  name    The name to be looked up
- * @param[in]  context FSAL credentials
- * @param[out] status  Returned status
+ * @param[in]  req_ctx Request context
+ * @param[out] entry   Found entry
  *
- * @return The cache entry corresponding to name or NULL on error.
- *
+ * @return CACHE_INDOE_SUCCESS or error.
  */
-
-cache_entry_t *
+cache_inode_status_t
 cache_inode_lookup_impl(cache_entry_t *parent,
-                        const char *name,
-                        struct req_op_context *req_ctx,
-                        cache_inode_status_t *status)
+			const char *name,
+			struct req_op_context *req_ctx,
+			cache_entry_t **entry)
 {
      cache_inode_dir_entry_t dirent_key;
      cache_inode_dir_entry_t *dirent = NULL;
-     cache_entry_t *entry = NULL;
      fsal_status_t fsal_status = {0, 0};
      struct fsal_obj_handle *object_handle;
      struct fsal_obj_handle *dir_handle;
      struct attrlist object_attributes;
-     cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
      cache_inode_fsal_data_t new_entry_fsdata;
      cache_inode_dir_entry_t *broken_dirent = NULL;
 
@@ -101,21 +98,18 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      memset(&object_handle, 0, sizeof(object_handle));
      memset(&object_attributes, 0, sizeof(object_attributes));
 
-     /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
-
      if(parent->type != DIRECTORY) {
-          *status = CACHE_INODE_NOT_A_DIRECTORY;
-          /* stats */
-          return NULL;
+	  status = CACHE_INODE_NOT_A_DIRECTORY;
+	  *entry = NULL;
+          return status;
      }
 
      /* if name is ".", use the input value */
      if (strcmp(name, ".") == 0) {
-          entry = parent;
+          *entry = parent;
           /* Increment the refcount so the caller's decrementing it
              doesn't take us below the sentinel count. */
-          if (cache_inode_lru_ref(entry, 0) !=
+          if (cache_inode_lru_ref(*entry, 0) !=
               CACHE_INODE_SUCCESS) {
                /* This cannot actually happen */
                LogFatal(COMPONENT_CACHE_INODE,
@@ -131,7 +125,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
            * of this, the parent list is always limited to one element for
            * a dir.  Clients SHOULD never 'lookup( .. )' in something that
            * is no dir. */
-          entry = cache_inode_lookupp_impl(parent, req_ctx, status);
+          status = cache_inode_lookupp_impl(parent, req_ctx, entry);
           goto out;
      } else {
           int write_locked = 0;
@@ -144,15 +138,15 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                                                          name, 1);
                     if (dirent) {
                          /* Getting a weakref itself increases the refcount. */
-                         entry = cache_inode_weakref_get(&dirent->entry,
+                         *entry = cache_inode_weakref_get(&dirent->entry,
                                                          LRU_REQ_SCAN);
-                         if (entry == NULL) {
+                         if (*entry == NULL) {
                               broken_dirent = dirent;
                               break;
                          } else {
                               /* We have our entry and a valid reference.
                                  Declare victory. */
-                              *status = CACHE_INODE_SUCCESS;
+                              status = CACHE_INODE_SUCCESS;
                               goto out;
                          }
                     }
@@ -160,8 +154,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                        valid, it can serve negative lookups. */
                     if (!dirent &&
                         (parent->flags & CACHE_INODE_DIR_POPULATED)) {
-                         entry = NULL;
-                         *status = CACHE_INODE_NOT_FOUND;
+                         *entry = NULL;
+                         status = CACHE_INODE_NOT_FOUND;
                          goto out;
                     }
                } else if (write_locked) {
@@ -179,7 +173,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                     pthread_rwlock_wrlock(&parent->content_lock);
                }
           }
-          assert(entry == NULL);
+          assert(*entry == NULL);
           LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
      }
 
@@ -191,43 +185,43 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(parent);
           }
-          *status = cache_inode_error_convert(fsal_status);
-          return NULL;
+          status = cache_inode_error_convert(fsal_status);
+	  *entry = NULL;
+          return status;
      }
 
      /* Allocation of a new entry in the cache */
-     if((entry = cache_inode_new_entry(object_handle,
-				       CACHE_INODE_FLAG_NONE,
-				       status)) == NULL) {
-          return NULL;
+     status = cache_inode_new_entry(object_handle,
+				    CACHE_INODE_FLAG_NONE,
+				    entry);
+     if (*entry == NULL) {
+          return status;
      }
 
      if (broken_dirent) {
           /* Directory entry existed, but the weak reference
              was broken.  Just update with the new one. */
-          broken_dirent->entry = entry->weakref;
-          cache_status = CACHE_INODE_SUCCESS;
+          broken_dirent->entry = (*entry)->weakref;
+          status = CACHE_INODE_SUCCESS;
      } else {
           /* Entry was found in the FSAL, add this entry to the
              parent directory */
-          cache_status = cache_inode_add_cached_dirent(parent,
-                                                       name,
-                                                       entry,
-                                                       NULL,
-                                                       status);
-          if(cache_status != CACHE_INODE_SUCCESS &&
-             cache_status != CACHE_INODE_ENTRY_EXISTS) {
-               return NULL;
+          status = cache_inode_add_cached_dirent(parent,
+						 name,
+						 *entry,
+						 NULL);
+          if(status != CACHE_INODE_SUCCESS &&
+             status != CACHE_INODE_ENTRY_EXISTS) {
+               return status;
           }
      }
 
 out:
 
-     return entry;
-} /* cache_inode_lookup_impl */
+     return status;
+}
 
 /**
- *
  * @brief Public function for looking up a name in a directory
  *
  * Looks up for a name in a directory indicated by a cached entry. The
@@ -238,37 +232,38 @@ out:
  * @param[in]  parent  Entry for the parent directory to be managed.
  * @param[in]  name    Name of the entry that we are looking up.
  * @param[in]  req_ctx Request context
- * @param[out] pstatus Returned status
+ * @param[out] entry   Found entry
  *
- * @return The found entry or NUL.
+ * @return CACHE_INODE_SUCCESS or error.
  */
 
-cache_entry_t *
+cache_inode_status_t
 cache_inode_lookup(cache_entry_t *parent,
                    const char *name,
                    struct req_op_context *req_ctx,
-                   cache_inode_status_t *status)
+                   cache_entry_t **entry)
 {
-     cache_entry_t *entry = NULL;
      fsal_accessflags_t access_mask
           = (FSAL_MODE_MASK_SET(FSAL_X_OK) |
              FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-     if (cache_inode_access(parent,
-                            access_mask,
-                            req_ctx,
-                            status) !=
-         CACHE_INODE_SUCCESS) {
-          return NULL;
+     status = cache_inode_access(parent,
+				 access_mask,
+				 req_ctx);
+
+     if (status != CACHE_INODE_SUCCESS) {
+	  *entry = NULL;
+          return status;
      }
 
      pthread_rwlock_rdlock(&parent->content_lock);
-     entry = cache_inode_lookup_impl(parent,
+     status = cache_inode_lookup_impl(parent,
                                      name,
                                      req_ctx,
-                                     status);
+                                     entry);
      pthread_rwlock_unlock(&parent->content_lock);
 
-     return entry;
-} /* cache_inode_lookup */
+     return status;
+}
 /** @} */

@@ -3055,16 +3055,16 @@ cache_entry_To_Fattr(cache_entry_t *entry,
                 .Bitmap = Bitmap
         };
 
-        if (cache_inode_getattr(entry,
-                                data->req_ctx,
-                                &f,
-                                Fattr_filler,
-                                &cache_status)
-                != CACHE_INODE_SUCCESS) {
-                return -1;
-        }
+	cache_status = cache_inode_getattr(entry,
+					   data->req_ctx,
+					   &f,
+					   Fattr_filler);
 
-        return 0;
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		return -1;
+	}
+
+	return 0;
 }
 
 

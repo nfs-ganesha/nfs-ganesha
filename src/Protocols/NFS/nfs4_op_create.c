@@ -202,13 +202,14 @@ int nfs4_op_create(struct nfs_argop4 *op,
       create_arg.link_content = link_content;
 
       /* do the symlink operation */
-      if((entry_new = cache_inode_create(entry_parent,
-                                         name,
-                                         SYMBOLIC_LINK,
-                                         mode,
-                                         &create_arg,
-                                         data->req_ctx,
-                                         &cache_status)) == NULL)
+      cache_status = cache_inode_create(entry_parent,
+					name,
+					SYMBOLIC_LINK,
+					mode,
+					&create_arg,
+					data->req_ctx,
+					&entry_new);
+      if(entry_new == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           goto out;
@@ -230,13 +231,15 @@ int nfs4_op_create(struct nfs_argop4 *op,
        * to be passed to cache_inode_new_entry from cache_inode_create */
       create_arg.newly_created_dir = true;
 
-      if((entry_new = cache_inode_create(entry_parent,
-                                         name,
-                                         DIRECTORY,
-                                         mode,
-                                         &create_arg,
-                                         data->req_ctx,
-                                         &cache_status)) == NULL)
+      cache_status = cache_inode_create(entry_parent,
+					name,
+					DIRECTORY,
+					mode,
+					&create_arg,
+					data->req_ctx,
+					&entry_new);
+
+      if(entry_new == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           goto out;
@@ -254,13 +257,14 @@ int nfs4_op_create(struct nfs_argop4 *op,
     case NF4SOCK:
 
       /* Create a new socket file */
-      if((entry_new = cache_inode_create(entry_parent,
-                                         name,
-                                         SOCKET_FILE,
-                                         mode,
-                                         NULL,
-                                         data->req_ctx,
-                                         &cache_status)) == NULL)
+      cache_status = cache_inode_create(entry_parent,
+					name,
+					SOCKET_FILE,
+					mode,
+					NULL,
+					data->req_ctx,
+					&entry_new);
+      if (entry_new == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           goto out;
@@ -278,13 +282,14 @@ int nfs4_op_create(struct nfs_argop4 *op,
     case NF4FIFO:
 
       /* Create a new socket file */
-      if((entry_new = cache_inode_create(entry_parent,
-                                         name,
-                                         FIFO_FILE,
-                                         mode,
-                                         NULL,
-                                         data->req_ctx,
-                                         &cache_status)) == NULL)
+      cache_status = cache_inode_create(entry_parent,
+					name,
+					FIFO_FILE,
+					mode,
+					NULL,
+					data->req_ctx,
+					&entry_new);
+      if (entry_new == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           goto out;
@@ -307,14 +312,14 @@ int nfs4_op_create(struct nfs_argop4 *op,
         = arg_CREATE4.objtype.createtype4_u.devdata.specdata2;
 
       /* Create a new socket file */
-      if((entry_new = cache_inode_create(entry_parent,
-                                         name,
-                                         CHARACTER_FILE,
-                                         mode,
-                                         &create_arg,
-                                         data->req_ctx,
-                                         &cache_status))
-         == NULL)
+      cache_status = cache_inode_create(entry_parent,
+					name,
+					CHARACTER_FILE,
+					mode,
+					&create_arg,
+					data->req_ctx,
+					&entry_new);
+      if (entry_new == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           goto out;
@@ -335,13 +340,14 @@ int nfs4_op_create(struct nfs_argop4 *op,
       create_arg.dev_spec.minor = arg_CREATE4.objtype.createtype4_u.devdata.specdata2;
 
       /* Create a new socket file */
-      if((entry_new = cache_inode_create(entry_parent,
-                                         name,
-                                         BLOCK_FILE,
-                                         mode,
-                                         &create_arg,
-                                         data->req_ctx,
-                                         &cache_status)) == NULL)
+      cache_status = cache_inode_create(entry_parent,
+					name,
+					BLOCK_FILE,
+					mode,
+					&create_arg,
+					data->req_ctx,
+					&entry_new);
+      if (entry_new == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           goto out;
@@ -394,11 +400,11 @@ int nfs4_op_create(struct nfs_argop4 *op,
 
   if(arg_CREATE4.createattrs.attrmask.bitmap4_len != 0)
     {
-      if((cache_status = cache_inode_setattr(entry_new,
-                                             &sattr,
-                                             data->req_ctx,
-                                             &cache_status)) != CACHE_INODE_SUCCESS)
+      cache_status = cache_inode_setattr(entry_new,
+					 &sattr,
+					 data->req_ctx);
 
+      if (cache_status != CACHE_INODE_SUCCESS)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           cache_inode_put(entry_new);

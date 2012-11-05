@@ -179,21 +179,19 @@ cache_inode_clean_internal(cache_entry_t *entry)
  * Removes a name from the supplied directory.  The caller should hold
  * no locks on the directory.
  *
- * @param[in]  entry   Entry for the parent directory to be managed
- * @param[in]  name    Name to be removed
- * @param[in]  context FSAL credentials
- * @param[out] status  Returned status
+ * @param[in] entry   Entry for the parent directory to be managed
+ * @param[in] name    Name to be removed
+ * @param[in] req_ctx Request context
  *
  * @retval CACHE_INODE_SUCCESS if operation is a success
  */
 
 cache_inode_status_t
 cache_inode_remove(cache_entry_t *entry,
-                   const char *name,
-                   struct req_op_context *req_ctx,
-                   cache_inode_status_t *status)
+		   const char *name,
+		   struct req_op_context *req_ctx)
 {
-     cache_inode_status_t cache_status;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
      fsal_accessflags_t access_mask = 0;
 
      /* Get the attribute lock and check access */
@@ -201,39 +199,29 @@ cache_inode_remove(cache_entry_t *entry,
 
      /* Check if caller is allowed to perform the operation */
      access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
-                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD));
+		    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD));
 
-     if((*status
-         = cache_inode_access_sw(entry,
-                                 access_mask,
-                                 req_ctx,
-                                 &cache_status,
-                                 false))
-        != CACHE_INODE_SUCCESS) {
-          goto unlock_attr;
+     status = cache_inode_access_sw(entry,
+				    access_mask,
+				    req_ctx,
+				    false);
+     if (status != CACHE_INODE_SUCCESS) {
+	  pthread_rwlock_unlock(&entry->attr_lock);
+	  return status;
      }
 
      /* Acquire the directory lock and remove the entry */
 
      pthread_rwlock_wrlock(&entry->content_lock);
 
-     cache_inode_remove_impl(entry,
-                             name,
-                             req_ctx,
-                             status,
-                             /* Keep the attribute lock so we can copy
-                                attributes back to the caller.  I plan
-                                to get rid of this later. --ACE */
-                             CACHE_INODE_FLAG_ATTR_HAVE |
-                             CACHE_INODE_FLAG_ATTR_HOLD |
-                             CACHE_INODE_FLAG_CONTENT_HAVE);
+     status = cache_inode_remove_impl(entry,
+				      name,
+				      req_ctx,
+				      CACHE_INODE_FLAG_ATTR_HAVE |
+				      CACHE_INODE_FLAG_CONTENT_HAVE);
 
-unlock_attr:
-
-     pthread_rwlock_unlock(&entry->attr_lock);
-
-     return *status;
-}                               /* cache_inode_remove */
+     return status;
+}
 
 /**
  * @brief Implement actual work of removing file
@@ -244,28 +232,26 @@ unlock_attr:
  *
  * @param[in] entry   Entry for the parent directory to be managed.
  * @param[in] name    Name of the entry that we are looking for in the cache.
- * @param[in] context FSAL credentials
- * @param[in] status  Returned status
+ * @param[in] req_ctx Request context
  * @param[in] flags   Flags to control lock retention
  *
  * @return CACHE_INODE_SUCCESS if operation is a success
- *
  */
 
 cache_inode_status_t
 cache_inode_remove_impl(cache_entry_t *entry,
-                        const char *name,
-                        struct req_op_context *req_ctx,
-                        cache_inode_status_t *status,
-                        uint32_t flags)
+			const char *name,
+			struct req_op_context *req_ctx,
+			uint32_t flags)
 {
      cache_entry_t *to_remove_entry = NULL;
      fsal_status_t fsal_status = {0, 0};
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      if(entry->type != DIRECTORY) {
-          *status = CACHE_INODE_BAD_TYPE;
+          status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
@@ -279,18 +265,19 @@ cache_inode_remove_impl(cache_entry_t *entry,
         be bringing it in just to dispose of it. */
 
      /* Looks up for the entry to remove */
-     if ((to_remove_entry
-          = cache_inode_lookup_impl(entry,
-                                    name,
-                                    req_ctx,
-                                    status)) == NULL) {
+     status = cache_inode_lookup_impl(entry,
+				      name,
+				      req_ctx,
+				      &to_remove_entry);
+
+     if (to_remove_entry == NULL) {
           goto out;
      }
 
-     if( !sticky_dir_allows(entry->obj_handle,
-                            to_remove_entry->obj_handle,
-                            req_ctx->creds)) {
-         *status = CACHE_INODE_FSAL_EPERM;
+     if(!sticky_dir_allows(entry->obj_handle,
+			   to_remove_entry->obj_handle,
+			   req_ctx->creds)) {
+         status = CACHE_INODE_FSAL_EPERM;
          goto out;
      }
      /* Lock the attributes (so we can decrement the link count) */
@@ -310,7 +297,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
              fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,                                                              req_ctx);
      }
      if (FSAL_IS_ERROR(fsal_status)) {
-          *status = cache_inode_error_convert(fsal_status);
+          status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(entry);
           }
@@ -332,10 +319,10 @@ cache_inode_remove_impl(cache_entry_t *entry,
      }
 
      /* Remove the entry from parent dir_entries avl */
-     cache_inode_remove_cached_dirent(entry, name, status);
+     cache_inode_remove_cached_dirent(entry, name);
 
      LogFullDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_remove_cached_dirent: status=%d", *status);
+                  "cache_inode_remove_cached_dirent: status=%d", status);
 
      /* Update the attributes for the removed entry */
      fsal_status
@@ -377,6 +364,6 @@ out:
          cache_inode_put(to_remove_entry);
      }
 
-     return *status;
+     return status;
 }
 /** @} */

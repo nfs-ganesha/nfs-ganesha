@@ -66,7 +66,6 @@
  * @param[out] link_content The location into which to write the
  *                          target
  * @param[in]  context      FSAL operation context
- * @param[out] status       Status of the operation
  *
  * @return CACHE_INODE_SUCCESS on success, other things on failure.
  */
@@ -74,17 +73,14 @@
 cache_inode_status_t
 cache_inode_readlink(cache_entry_t *entry,
                      struct gsh_buffdesc *link_content,
-                     struct req_op_context *req_ctx,
-                     cache_inode_status_t *status)
+		     struct req_op_context *req_ctx)
 {
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
      fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
 
-     /* Set the return default to CACHE_INODE_SUCCESS */
-     *status = CACHE_INODE_SUCCESS;
-
      if (entry->type != SYMBOLIC_LINK) {
-          *status = CACHE_INODE_BAD_TYPE;
-          return *status;
+          status = CACHE_INODE_BAD_TYPE;
+          return status;
      }
 
      pthread_rwlock_rdlock(&entry->content_lock);
@@ -118,13 +114,13 @@ cache_inode_readlink(cache_entry_t *entry,
      pthread_rwlock_unlock(&entry->content_lock);
 
      if (FSAL_IS_ERROR(fsal_status)) {
-          *status = cache_inode_error_convert(fsal_status);
+          status = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(entry);
           }
-          return *status;
+          return status;
      }
 
-     return *status;
-} /* cache_inode_readlink */
+     return status;
+}
 /** @} */

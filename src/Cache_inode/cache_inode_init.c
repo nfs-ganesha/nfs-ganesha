@@ -63,15 +63,16 @@
  * table used for cache management.
  *
  * @param[in]  param  The parameters for this cache
- * @param[out] status Operation status
+ * @param[out] ht     The cache inode hash table
  *
- * @return NULL if operation failed, other value is a pointer to the hash table used for the cache.
+ * @return CACHE_INODE_SUCCESS or errors.
  *
  */
-hash_table_t *cache_inode_init(cache_inode_parameter_t param,
-                               cache_inode_status_t *status)
+cache_inode_status_t cache_inode_init(cache_inode_parameter_t param,
+				      hash_table_t **ht)
 {
-  hash_table_t *ht = NULL;
+  cache_inode_status_t status = CACHE_INODE_SUCCESS;
+  *ht = NULL;
 
   cache_inode_entry_pool = pool_init("Entry Pool",
                                      sizeof(cache_entry_t),
@@ -81,20 +82,19 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init Entry Pool");
-      *status = CACHE_INODE_INVALID_ARGUMENT;
-      return NULL;
+      status = CACHE_INODE_INVALID_ARGUMENT;
     }
 
-  ht = HashTable_Init(&param.hparam);
+  *ht = HashTable_Init(&param.hparam);
 
-  if(ht != NULL)
-    *status = CACHE_INODE_SUCCESS;
+  if(*ht != NULL)
+    status = CACHE_INODE_SUCCESS;
   else
-    *status = CACHE_INODE_INVALID_ARGUMENT;
+    status = CACHE_INODE_INVALID_ARGUMENT;
   LogInfo(COMPONENT_CACHE_INODE, "Hash Table initiated");
 
   cache_inode_weakref_init();
 
-  return ht;
+  return status;
 }                               /* cache_inode_init */
 /** @} */

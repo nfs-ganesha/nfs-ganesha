@@ -121,20 +121,21 @@ open4_do_open(struct nfs_argop4  * op,
 
         if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) ||
             (args->share_access & OPEN4_SHARE_ACCESS_WRITE)) {
-                if (cache_inode_access(data->current_entry, FSAL_WRITE_ACCESS,
-                                       data->req_ctx, &cache_status)
-                    != CACHE_INODE_SUCCESS) {
+                cache_status = cache_inode_access(data->current_entry,
+						  FSAL_WRITE_ACCESS,
+						  data->req_ctx);
+                if (cache_status != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
         }
 
         if (args->share_access & OPEN4_SHARE_ACCESS_READ) {
-                if (cache_inode_access(data->current_entry,
-                                       FSAL_READ_ACCESS,
-                                       data->req_ctx,
-                                       &cache_status) != CACHE_INODE_SUCCESS) {
-                        return NFS4ERR_ACCESS;
-                }
+                cache_status = cache_inode_access(data->current_entry,
+						  FSAL_READ_ACCESS,
+						  data->req_ctx);
+		if (cache_status != CACHE_INODE_SUCCESS) {
+			return NFS4ERR_ACCESS;
+		}
         }
 
         candidate_data.share.share_access
@@ -218,10 +219,10 @@ open4_do_open(struct nfs_argop4  * op,
                         &owner->so_owner.so_nfs4_owner.so_clientid;
         }
 
-        if (cache_inode_open(data->current_entry, openflags,
-                             data->req_ctx,
-                             0, &cache_status)
-            != CACHE_INODE_SUCCESS) {
+        cache_status = cache_inode_open(data->current_entry, openflags,
+					data->req_ctx,
+					0);
+	if (cache_status != CACHE_INODE_SUCCESS) {
                 return nfs4_Errno(cache_status);
         }
 
@@ -239,9 +240,9 @@ open4_do_open(struct nfs_argop4  * op,
                 state_status = state_share_add(data->current_entry,
 					       owner, file_state);
                 if (state_status != STATE_SUCCESS) {
-                        if (cache_inode_close(data->current_entry,
-                                              0, &cache_status)
-                            != CACHE_INODE_SUCCESS) {
+                        cache_status = cache_inode_close(data->current_entry,
+							 0);
+			if (cache_status != CACHE_INODE_SUCCESS) {
                                 /* Log bad close and continue. */
                                 LogEvent(COMPONENT_STATE,
                                          "Failed to close cache inode: "
@@ -260,9 +261,9 @@ open4_do_open(struct nfs_argop4  * op,
 				&candidate_data,
 				owner, file_state);
                         if (state_status != STATE_SUCCESS) {
-                                if (cache_inode_close(data->current_entry,
-                                                      0, &cache_status)
-                                    != CACHE_INODE_SUCCESS) {
+				cache_status = cache_inode_close(
+					data->current_entry, 0);
+                                if (cache_status != CACHE_INODE_SUCCESS) {
                                         /* Log bad close and continue. */
                                         LogEvent(COMPONENT_STATE,
                                                  "Failed to close cache "
@@ -639,17 +640,17 @@ open4_create(OPEN4args           * arg,
                 FSAL_SET_MASK(sattr.mask, ATTR_MTIME);
         }
 
-        entry_newfile = cache_inode_create(parent,
-                                           filename,
-                                           REGULAR_FILE,
-                                           /* Any mode supplied by
-                                              the client will be set
-                                              by setattr after the
-                                              create step. */
-                                           0600,
-                                           NULL,
-                                           data->req_ctx,
-                                           &cache_status);
+        cache_status = cache_inode_create(parent,
+					  filename,
+					  REGULAR_FILE,
+					  /* Any mode supplied by
+					     the client will be set
+					     by setattr after the
+					     create step. */
+					  0600,
+					  NULL,
+					  data->req_ctx,
+					  &entry_newfile);
 
         /* Complete failure */
         if ((cache_status != CACHE_INODE_SUCCESS) &&
@@ -689,10 +690,9 @@ open4_create(OPEN4args           * arg,
         }
 
         if (sattr_provided) {
-                cache_inode_setattr(entry_newfile,
-                                    &sattr,
-                                    data->req_ctx,
-                                    &cache_status);
+                cache_status = cache_inode_setattr(entry_newfile,
+						   &sattr,
+						   data->req_ctx);
                 if (cache_status != CACHE_INODE_SUCCESS) {
                         return nfs4_Errno(cache_status);
                 }
@@ -769,10 +769,10 @@ open4_claim_null(OPEN4args        * arg,
                 break;
 
         case OPEN4_NOCREATE:
-                *entry = cache_inode_lookup(parent,
-                                            filename,
-                                            data->req_ctx,
-                                            &cache_status);
+                cache_status = cache_inode_lookup(parent,
+						  filename,
+						  data->req_ctx,
+						  entry);
 
                 if (cache_status != CACHE_INODE_SUCCESS) {
                         nfs_status = nfs4_Errno(cache_status);
@@ -855,9 +855,9 @@ int nfs4_op_open(struct nfs_argop4 *op,
                  struct nfs_resop4 *resp)
 {
         /* Shorter alias for OPEN4 arguments */
-        OPEN4args         * const arg_OPEN4 = &(op->nfs_argop4_u.opopen);
+        OPEN4args *const arg_OPEN4 = &(op->nfs_argop4_u.opopen);
         /* Shorter alias for OPEN4 response */
-        OPEN4res          * const res_OPEN4 = &(resp->nfs_resop4_u.opopen);
+        OPEN4res *const res_OPEN4 = &(resp->nfs_resop4_u.opopen);
         /* The cache entry from which the change_info4 is to be
            generated.  Every mention of change_info4 in RFC5661
            speaks of the parent directory of the file being opened.
@@ -867,27 +867,27 @@ int nfs4_op_open(struct nfs_argop4 *op,
            correct behavior is.  In our implementation, we take the
            change_info4 of whatever filehandle is current when the
            OPEN operation is invoked. */
-        cache_entry_t           * entry_change = NULL;
+        cache_entry_t *entry_change = NULL;
         /* Open flags to be passed to the FSAL */
-        fsal_openflags_t          openflags = 0;
+        fsal_openflags_t openflags = 0;
         /* Return code from state oeprations */
-        state_status_t            state_status = STATE_SUCCESS;
+        state_status_t state_status = STATE_SUCCESS;
         /* The found client record */
-        nfs_client_id_t         * clientid;
+        nfs_client_id_t *clientid;
         /* The found or created state owner for this open */
-        state_owner_t           * owner = NULL;
+        state_owner_t *owner = NULL;
         /* The supplied calim type */
-        open_claim_type4          claim = arg_OPEN4->claim.claim;
+        open_claim_type4 claim = arg_OPEN4->claim.claim;
         /* The open state for the file */
-        state_t           * file_state = NULL;
+        state_t *file_state = NULL;
         /* True if the state was newly created */
-        bool                new_state = false;
+        bool new_state = false;
         cache_inode_status_t cache_status;
-        char                * filename;
-        cache_entry_t       * pentry_parent = NULL;
-        cache_entry_t       * pentry_lookup = NULL;
-        struct glist_head   * glist;
-        state_lock_entry_t  * found_entry = NULL;
+        char  *filename;
+        cache_entry_t *entry_parent = NULL;
+        cache_entry_t *entry_lookup = NULL;
+        struct glist_head *glist;
+        state_lock_entry_t *found_entry = NULL;
 
         LogDebug(COMPONENT_STATE,
                  "Entering NFS v4 OPEN handler -----------------------------");
@@ -1101,18 +1101,18 @@ int nfs4_op_open(struct nfs_argop4 *op,
                   goto out;
               }
 
-              pentry_parent = data->current_entry;
+              entry_parent = data->current_entry;
 
               /* Does a file with this name already exist ? */
-              pentry_lookup = cache_inode_lookup(pentry_parent,
-                                                 filename,
-                                                 data->req_ctx,
-                                                 &cache_status);
+              cache_status = cache_inode_lookup(entry_parent,
+						filename,
+						data->req_ctx,
+						&entry_lookup);
               if(cache_status != CACHE_INODE_NOT_FOUND)
               {
-                 pthread_rwlock_wrlock(&pentry_lookup->state_lock);
+                 pthread_rwlock_wrlock(&entry_lookup->state_lock);
 
-                 glist_for_each(glist, &pentry_lookup->object.file.lock_list)
+                 glist_for_each(glist, &entry_lookup->object.file.lock_list)
                  {
                    found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
@@ -1123,13 +1123,13 @@ int nfs4_op_open(struct nfs_argop4 *op,
                    else
                    {
                      LogDebug(COMPONENT_NFS_CB,"list is empty %p", found_entry);
-                     pthread_rwlock_unlock(&pentry_lookup->state_lock);
+                     pthread_rwlock_unlock(&entry_lookup->state_lock);
                      res_OPEN4->status = NFS4ERR_BAD_STATEID;
                      return res_OPEN4->status;
                    }
                    break;
                 }
-                pthread_rwlock_unlock(&pentry_lookup->state_lock);
+                pthread_rwlock_unlock(&entry_lookup->state_lock);
 
                 file_state = found_entry->sle_state;
 
@@ -1137,14 +1137,14 @@ int nfs4_op_open(struct nfs_argop4 *op,
                 memcpy(res_OPEN4->OPEN4res_u.resok4.stateid.other,
                        file_state->stateid_other, OTHERSIZE);
 
-                res_OPEN4->status = open4_create_fh(data, pentry_lookup);
+                res_OPEN4->status = open4_create_fh(data, entry_lookup);
                 if(res_OPEN4->status != NFS4_OK)
                   goto out;
 
                 goto out;
               }
               else
-                LogDebug(COMPONENT_NFS_CB,"did not find entry %p", pentry_lookup);
+                LogDebug(COMPONENT_NFS_CB,"did not find entry %p", entry_lookup);
 
               break;
 

@@ -60,12 +60,10 @@
  *
  * This function commits writes from unstable to stable storage.
  *
- * @param[in]  entry        File whose data should be committed
- * @param[in]  offset       Start of region to commit
- * @param[in]  count        Number of bytes to commit
- * @param[in]  typeofcommit What type of commit operation this is
- * @param[in]  context      FSAL credentials
- * @param[out] status       Operation status
+ * @param[in] entry        File whose data should be committed
+ * @param[in] offset       Start of region to commit
+ * @param[in] count        Number of bytes to commit
+ * @param[in] req_ctx      Request context
  *
  * @return CACHE_INODE_SUCCESS or various errors
  */
@@ -74,20 +72,15 @@ cache_inode_status_t
 cache_inode_commit(cache_entry_t *entry,
                    uint64_t offset,
                    size_t count,
-                   cache_inode_stability_t stability,
-                   struct req_op_context *req_ctx,
-                   cache_inode_status_t *status)
+                   struct req_op_context *req_ctx)
 {
-     /* Number of bytes actually written */
-     size_t bytes_moved = 0;
-     /* Descriptor for unstable data */
-     cache_inode_unstable_data_t *udata = NULL;
      /* Error return from FSAL operations*/
      fsal_status_t fsal_status = {0, 0};
      /* True if the content_lock is held */
      bool content_locked = false;
      /* True if we opened our own file descriptor */
      bool opened = false;
+     cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      if ((uint64_t)count > ~(uint64_t)offset)
          return NFS4ERR_INVAL;
@@ -97,111 +90,57 @@ cache_inode_commit(cache_entry_t *entry,
 
      /* Just in case the variable holds something funny when we're
         called. */
-     *status = CACHE_INODE_SUCCESS;
+     status = CACHE_INODE_SUCCESS;
 
-     /* If we aren't using the Ganesha write buffer, then we're using
-        the filesystem write buffer so execute a normal fsal_commit()
-        call. */
-     if (stability == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
-          if (!is_open_for_write(entry)) {
-               pthread_rwlock_unlock(&entry->content_lock);
-               pthread_rwlock_wrlock(&entry->content_lock);
-               if (!is_open_for_write(entry)) {
-                    if (cache_inode_open(entry,
-                                         FSAL_O_WRITE,
-                                         req_ctx,
-                                         CACHE_INODE_FLAG_CONTENT_HAVE |
-                                         CACHE_INODE_FLAG_CONTENT_HOLD,
-                                         status) != CACHE_INODE_SUCCESS) {
-                         goto out;
-                    }
-                    opened = true;
-               }
-          }
+     if (!is_open_for_write(entry)) {
+	     pthread_rwlock_unlock(&entry->content_lock);
+	     pthread_rwlock_wrlock(&entry->content_lock);
+	     if (!is_open_for_write(entry)) {
+		     status = cache_inode_open(entry,
+					       FSAL_O_WRITE,
+					       req_ctx,
+					       CACHE_INODE_FLAG_CONTENT_HAVE |
+					       CACHE_INODE_FLAG_CONTENT_HOLD);
+		     if (status != CACHE_INODE_SUCCESS) {
+			     goto out;
+		     }
+		     opened = true;
+	     }
+     }
+     
+     fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,
+						  offset,
+						  count);
+     if (FSAL_IS_ERROR(fsal_status)) {
+	     LogMajor(COMPONENT_CACHE_INODE,
+		      "cache_inode_rdwr: fsal_commit() failed: "
+		      "fsal_status.major = %d", fsal_status.major);
 
-          fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,
-                                                       offset,
-                                                       count);
-          if (FSAL_IS_ERROR(fsal_status)) {
-               LogMajor(COMPONENT_CACHE_INODE,
-                        "cache_inode_rdwr: fsal_commit() failed: "
-                        "fsal_status.major = %d", fsal_status.major);
-
-               *status = cache_inode_error_convert(fsal_status);
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry);
+	     status = cache_inode_error_convert(fsal_status);
+	     if (fsal_status.major == ERR_FSAL_STALE) {
+		     cache_inode_kill_entry(entry);
                     goto out;
-               }
-               /* Close the FD if we opened it. No need to catch an
-                  additional error form a close? */
-               if (opened) {
-                    cache_inode_close(entry,
-                                      CACHE_INODE_FLAG_CONTENT_HAVE |
-                                      CACHE_INODE_FLAG_CONTENT_HOLD,
-                                      status);
-                    opened = false;
-               }
-               goto out;
-          }
-          /* Close the FD if we opened it. */
-          if (opened) {
-               if (cache_inode_close(entry,
-                                     CACHE_INODE_FLAG_CONTENT_HAVE |
-                                     CACHE_INODE_FLAG_CONTENT_HOLD,
-                                     status) !=
-                   CACHE_INODE_SUCCESS) {
-                  LogEvent(COMPONENT_CACHE_INODE,
-                          "cache_inode_commit: cache_inode_close = %d",
-                          *status);
-               }
-          }
-     } else {
-          /* Ok, it looks like we're using the Ganesha write
-           * buffer. This means we will either be writing to the
-           * buffer, or writing a stable write to the file system if
-           * the buffer is already full. */
-          udata = &entry->object.file.unstable_data;
-          if (udata->buffer == NULL) {
-               *status = CACHE_INODE_SUCCESS;
-               goto out;
-          }
-          if (count == 0 || count == 0xFFFFFFFFL) {
-               /* Count = 0 means "flush all data to permanent storage */
-               pthread_rwlock_unlock(&entry->content_lock);
-               content_locked = false;
-               *status = cache_inode_rdwr(entry,
-                                         CACHE_INODE_WRITE,
-                                         offset,
-                                         udata->length,
-                                         &bytes_moved,
-                                         udata->buffer,
-                                         NULL,
-                                         req_ctx,
-                                         CACHE_INODE_SAFE_WRITE_TO_FS,
-                                         status);
-               if (status != CACHE_INODE_SUCCESS) {
-                    goto out;
-               }
-               gsh_free(udata->buffer);
-               udata->buffer = NULL;
-          } else {
-               if (offset < udata->offset) {
-                    *status = CACHE_INODE_INVALID_ARGUMENT;
-                    goto out;
-               }
-
-               cache_inode_rdwr(entry,
-                                CACHE_INODE_WRITE,
-                                offset,
-                                count,
-                                &bytes_moved,
-                                (udata->buffer +
-                                 offset - udata->offset),
-                                NULL,
-                                req_ctx,
-                                CACHE_INODE_SAFE_WRITE_TO_FS,
-                                status);
-          }
+	     }
+	     /* Close the FD if we opened it. No need to catch an
+		additional error form a close? */
+	     if (opened) {
+		     status = cache_inode_close(entry,
+						CACHE_INODE_FLAG_CONTENT_HAVE |
+						CACHE_INODE_FLAG_CONTENT_HOLD);
+		     opened = false;
+	     }
+	     goto out;
+     }
+     /* Close the FD if we opened it. */
+     if (opened) {
+	     status = cache_inode_close(entry,
+					CACHE_INODE_FLAG_CONTENT_HAVE |
+					CACHE_INODE_FLAG_CONTENT_HOLD);
+	     if (status != CACHE_INODE_SUCCESS) {
+		     LogEvent(COMPONENT_CACHE_INODE,
+			      "cache_inode_commit: cache_inode_close = %d",
+			      status);
+	     }
      }
 
 out:
@@ -210,6 +149,6 @@ out:
           pthread_rwlock_unlock(&entry->content_lock);
      }
 
-     return *status;
+     return status;
 }
 /** @} */
