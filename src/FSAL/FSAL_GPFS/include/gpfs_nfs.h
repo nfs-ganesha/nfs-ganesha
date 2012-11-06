@@ -64,6 +64,7 @@ struct flock
 
 /* GANESHA common information */
 
+#define OPENHANDLE_GET_VERSION    100
 #define OPENHANDLE_NAME_TO_HANDLE 101
 #define OPENHANDLE_OPEN_BY_HANDLE 102
 #define OPENHANDLE_LAYOUT_TYPE    106
@@ -516,6 +517,7 @@ struct stat_name_arg
 
 struct callback_arg
 {
+    int interface_version;
     int mountdirfd;
     int *reason;
     struct gpfs_file_handle *handle;
@@ -523,6 +525,8 @@ struct callback_arg
     int *flags;
     struct stat *buf;
 };
+#define GPFS_INTERFACE_VERSION 10000
+#define GPFS_INTERFACE_SUB_VER     1
 
 /* Defines for the flags in callback_arg, keep up to date with CXIUP_xxx */
 #define UP_NLINK        0x00000001   /* update nlink */

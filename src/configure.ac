@@ -616,47 +616,6 @@ AC_SUBST(SHOOK_LIB)
 
 if test "$enable_fsal_gpfs" == "yes"; then
 	AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
-	AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h gpfs_lweTypes.h],
-			 [],
-			 [AC_MSG_ERROR(Missing RPMS. You may run ./install_files_gpfs.sh as root from src/FSAL/FSAL_GPFS)],
-			 [])
-	AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
-                #include <fcntl.h>
-		#include <stdint.h>
-                ])
-
-	AC_CHECK_MEMBER([struct file_handle.f_handle], [
-			AC_DEFINE([_GPFS_DECLARES_HANDLE], 1, [GPFS declares the handle structure])
-			      ],
-			      [],
-			      [
-                                        #include <fcntl.h>
-					#include <stdint.h>
-                                        #include <gpfs_nfs.h>
-			      ])
-
-	AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [
-                  #include <fcntl.h>
-  		  #include <stdint.h>
-                  #include <gpfs_nfs.h>
-	])
-
-	AC_CHECK_DECLS([OPENHANDLE_GET_LOCK,
-			OPENHANDLE_SET_LOCK,
-			XATTR_STAT,
-			XATTR_MODE,
-			XATTR_UID,
-			XATTR_GID,
-			XATTR_ATIME_SET,
-			XATTR_MTIME_SET,
-			XATTR_ACL],
-		       [],
-		       [AC_MSG_ERROR(GPFS < 3.5.0 found, you must upgrade GPFS to use this feature)],
-		       [
-			 #include <fcntl.h>
-			 #include <stdint.h>
-			 #include <gpfs_nfs.h>
-		       ])
 
 	AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
 	FSAL_CFLAGS=

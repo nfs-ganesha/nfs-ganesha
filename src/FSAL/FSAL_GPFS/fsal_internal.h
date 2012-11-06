@@ -122,6 +122,7 @@ void handle_ops_pnfs(struct fsal_obj_ops *ops);
 
 fsal_status_t fsal_internal_close(int fd, void *owner, int cflags);
 
+int fsal_internal_version();
 
 fsal_status_t fsal_internal_access(int mntfd,
                                    const struct req_op_context *p_context,

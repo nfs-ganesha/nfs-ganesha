@@ -2959,7 +2959,7 @@ gpfs_get_fset_masks(gpfs_fssnap_handle_t* fset_snapHandle,
 /*
    API functions for Light Weight Event
 */
-#include <gpfs_lweTypes.h>
+#include <include/gpfs_lweTypes.h>
 
 /* NAME:       gpfs_lweCreateSession()
  *

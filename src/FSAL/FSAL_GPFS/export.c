@@ -428,7 +428,7 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	fh_desc->len = fh_size;  /* pass back the actual size */
+	fh_desc->len = hdl->handle_key_size;  /* pass back the key size */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -513,6 +513,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	}
 	memset(myself, 0, sizeof(struct gpfs_fsal_export));
 	myself->root_fd = -1;
+
+        retval = fsal_internal_version();
+        LogInfo(COMPONENT_FSAL, "GPFS get version is %d", retval);
 
         retval = fsal_export_init(&myself->export,
 				  exp_entry);

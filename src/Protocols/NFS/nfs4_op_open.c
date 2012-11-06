@@ -1180,14 +1180,6 @@ int nfs4_op_open(struct nfs_argop4 *op,
         if (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE) {
                 openflags = FSAL_O_RDWR;
         }
-        if (arg_OPEN4->share_access != 0) {
-                /**
-                 * @todo: FSF - I don't think we can just ignore this
-                 * : Something better later
-                 */
-                openflags = FSAL_O_RDWR;
-        }
-
         pthread_rwlock_wrlock(&data->current_entry->state_lock);
         res_OPEN4->status = open4_do_open(op, data, owner, &file_state,
                                           &new_state, openflags);

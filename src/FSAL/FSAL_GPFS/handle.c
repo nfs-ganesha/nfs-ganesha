@@ -787,9 +787,7 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	int retval = 0;
 
 	if(obj_hdl->type == REGULAR_FILE) {
-		fsal_status_t st = gpfs_close(obj_hdl);
-		if(FSAL_IS_ERROR(st))
-			return st;
+		gpfs_close(obj_hdl);
 	}
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	pthread_mutex_lock(&obj_hdl->lock);
