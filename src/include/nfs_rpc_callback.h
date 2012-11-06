@@ -62,7 +62,8 @@ typedef struct nfs4_cb_tag {
 /* CB compound tags */
 #define NFS4_CB_TAG_DEFAULT 0
 
-void cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops, uint32_t ident,
+void cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops,
+			 uint32_t minorversion, uint32_t ident,
 			 char *tag, uint32_t tag_len);
 
 void cb_compound_add_op(nfs4_compound_t *cbt, nfs_cb_argop4 *src);
@@ -108,7 +109,8 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
 				     uint32_t flags);
 
 enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
-			   struct timeval timeout);
+			   struct timeval timeout,
+			   bool locked);
 
 static inline void nfs_rpc_init_call(void *ptr, void *parameters)
 {

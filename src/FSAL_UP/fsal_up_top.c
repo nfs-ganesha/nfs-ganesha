@@ -1021,8 +1021,9 @@ delegrecall_one(state_lock_entry_t *found_entry,
   call->chan = chan;
 
   /* setup a compound */
-  cb_compound_init_v4(&call->cbt, 6, clid->cid_cb.v40.cb_callback_ident,
-                      "brrring!!!", 10);
+  cb_compound_init_v4(&call->cbt, 6, 0,
+		      clid->cid_cb.v40.cb_callback_ident,
+		      "brrring!!!", 10);
 
   memset(argop, 0, sizeof(nfs_cb_argop4));
   argop->argop = NFS4_OP_CB_RECALL;

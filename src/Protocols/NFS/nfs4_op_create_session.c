@@ -521,7 +521,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 			res_CREATE_SESSION4ok->csr_flags
 				|= CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
 		}
-
 	}
 
 	LogDebug(component,

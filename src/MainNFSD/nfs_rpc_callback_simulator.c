@@ -239,7 +239,7 @@ static int32_t cbsim_test_bchan(clientid4 clientid)
 		}
 
 		/* try the CB_NULL proc -- inline here, should be ok-ish */
-		stat = rpc_cb_null(chan, CB_TIMEOUT);
+		stat = rpc_cb_null(chan, CB_TIMEOUT, false);
 		LogDebug(COMPONENT_NFS_CB,
 			 "rpc_cb_null on client %"PRIx64" returns %d",
 			 clientid, stat);

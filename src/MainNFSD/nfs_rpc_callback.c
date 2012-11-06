@@ -64,6 +64,7 @@
 #include "gss_util.h"
 #include "krb5_util.h"
 #include "sal_data.h"
+#include <misc/timespec.h>
 
 /**
  * @brief Pool for allocating callbacks.
@@ -644,9 +645,12 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session,
 	bool authed = false;
 	struct timeval cb_timeout = {15, 0};
 
+	pthread_mutex_lock(&chan->mtx);
+
 	if (chan->clnt) {
 		/* Something better later. */
-		return EEXIST;
+		code = EEXIST;
+		goto out;
 	}
 
 	chan->type = RPC_CHAN_V41;
@@ -705,12 +709,13 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session,
 	}
 
 	if (rpc_cb_null(chan,
-			cb_timeout) != RPC_SUCCESS) {
+			cb_timeout,
+			true) != RPC_SUCCESS) {
 #ifdef EBADFD
 		code = EBADFD;
-#else
+#else /* !EBADFD */
 		code = EBADF;
-#endif
+#endif /* !EBADFD */
 		goto out;
 	}
 
@@ -722,6 +727,8 @@ out:
 	    chan->clnt) {
 		nfs_rpc_destroy_chan(chan);
 	}
+
+	pthread_mutex_unlock(&chan->mtx);
 
 	return code;
 }
@@ -738,7 +745,6 @@ out:
  * @return The back channel or NULL if none existed or could be
  *         established.
  */
-
 rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 				     uint32_t flags)
 {
@@ -771,42 +777,66 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid,
 }
 
 /**
- * @brief Dispose of a channel
+ * @brief Dispose of a v4.0 channel
+ *
+ * The caller should hold the channel mutex.
  *
  * @param[in] chan The channel to dispose of
  */
-
-void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
+void nfs_rpc_destroy_v40_chan(rpc_call_channel_t *chan)
 {
-	assert(chan);
-
-	/* XXX lock, wait for outstanding calls, etc */
-
-	switch (chan->type) {
-	case RPC_CHAN_V40:
-		/* channel has a dedicated RPC client */
-		if (chan->clnt) {
-			/* clean up auth, if any */
-			if (chan->auth) {
-				AUTH_DESTROY(chan->auth);
-				chan->auth = NULL;
-			}
-			/* destroy it */
-			clnt_destroy(chan->clnt);
-		}
-		break;
-	case RPC_CHAN_V41:
+	/* channel has a dedicated RPC client */
+	if (chan->clnt) {
+		/* clean up auth, if any */
 		if (chan->auth) {
 			AUTH_DESTROY(chan->auth);
 			chan->auth = NULL;
 		}
-		chan->clnt->cl_ops->cl_release(chan->clnt);
+		/* destroy it */
+		clnt_destroy(chan->clnt);
+	}
+}
 
+/**
+ * @brief Dispose of a v41 channel
+ *
+ * The caller should hold the channel mutex.
+ *
+ * @param[in] chan The channel to dispose of
+ */
+void nfs_rpc_destroy_v41_chan(rpc_call_channel_t *chan)
+{
+	if (chan->auth) {
+		AUTH_DESTROY(chan->auth);
+		chan->auth = NULL;
+	}
+	chan->clnt->cl_ops->cl_release(chan->clnt);
+}
+
+/**
+ * @brief Dispose of a channel
+ *
+ * @param[in] chan The channel to dispose of
+ */
+void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
+{
+	assert(chan);
+
+	pthread_mutex_lock(&chan->mtx);
+
+	switch (chan->type) {
+	case RPC_CHAN_V40:
+		nfs_rpc_destroy_v40_chan(chan);
+		break;
+	case RPC_CHAN_V41:
+		nfs_rpc_destroy_v41_chan(chan);
 		break;
 	}
 
 	chan->clnt = NULL;
 	chan->last_called = 0;
+
+	pthread_mutex_unlock(&chan->mtx);
 }
 
 /**
@@ -814,17 +844,21 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
  *
  * @param[in] chan    Channel on which to call
  * @param[in] timeout Timeout for client call
+ * @param[in] locked  True if the channel is already locked
  *
  * @return Client status.
  */
 
 enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
-			   struct timeval timeout)
+			   struct timeval timeout,
+			   bool locked)
 {
 	enum clnt_stat stat = RPC_SUCCESS;
 
 	/* XXX TI-RPC does the signal masking */
-	pthread_mutex_lock(&chan->mtx);
+	if (!locked) {
+		pthread_mutex_lock(&chan->mtx);
+	}
 
 	if (!chan->clnt) {
 		stat = RPC_INTR;
@@ -849,7 +883,9 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan,
 	}
 
 unlock:
-	pthread_mutex_unlock(&chan->mtx);
+	if (!locked) {
+		pthread_mutex_unlock(&chan->mtx);
+	}
 
 	return stat;
 }
@@ -896,7 +932,6 @@ rpc_call_t *alloc_rpc_call(void)
  *
  * @param[in] call The call to free
  */
-
 void free_rpc_call(rpc_call_t *call)
 {
 	free_argop(call->cbt.v_u.v4.args.argarray.argarray_val);
@@ -915,7 +950,6 @@ void free_rpc_call(rpc_call_t *call)
  * @param[in] arg   Supplied arguments
  * @param[in] flags Any flags
  */
-
 static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 				 void* arg, uint32_t flags)
 {
@@ -932,7 +966,6 @@ static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
  *
  * @return 0 or POSIX error codes.
  */
-
 int32_t nfs_rpc_submit_call(rpc_call_t *call,
 			    uint32_t flags)
 {
@@ -1045,4 +1078,297 @@ unlock:
 int32_t nfs_rpc_abort_call(rpc_call_t *call)
 {
 	return 0;
+}
+
+/**
+ * @brief Construct a CB_COMPOUND for v41
+ *
+ * This function constructs a compound with a CB_SEQUENCE and one
+ * other operation.
+ *
+ * @param[in] session Session on whose back channel we make the call
+ * @param[in] op      The operation to add
+ * @param[in] refer   Referral data, NULL if none
+ * @param[in] slot    Slot number to use
+ *
+ * @return The constructed call or NULL.
+ */
+static rpc_call_t *construct_single_call(nfs41_session_t *session,
+					 nfs_cb_argop4 *op,
+					 struct state_refer *refer,
+					 slotid4 slot,
+					 slotid4 highest_slot)
+{
+	rpc_call_t *call = alloc_rpc_call();
+	nfs_cb_argop4 sequenceop;
+	CB_SEQUENCE4args *sequence
+		= &sequenceop.nfs_cb_argop4_u.opcbsequence;
+
+	if (!call) {
+		return NULL;
+	}
+
+	call->chan = &session->cb_chan;
+	cb_compound_init_v4(&call->cbt, 2,
+			    session->clientid_record->cid_minorversion,
+			    0, NULL, 0);
+	memset(&sequence, 0, sizeof(nfs_cb_argop4));
+	sequenceop.argop = NFS4_OP_CB_SEQUENCE;
+
+	memcpy(sequence->csa_sessionid,
+	       session->session_id,
+	       NFS4_SESSIONID_SIZE);
+	sequence->csa_sequenceid
+		= session->cb_slots[slot].sequence;
+	sequence->csa_slotid = slot;
+	sequence->csa_highest_slotid = highest_slot;
+	sequence->csa_cachethis = false;
+	if (refer) {
+		referring_call_list4 *list
+			= gsh_malloc(sizeof(referring_call_list4));
+		referring_call4 *ref_call = NULL;
+		if (!list) {
+			free_rpc_call(call);
+			return NULL;
+		}
+		ref_call = gsh_malloc(sizeof(referring_call4));
+		if (!ref_call) {
+			gsh_free(list);
+			free_rpc_call(call);
+			return NULL;
+		}
+		sequence->csa_referring_call_lists.
+			csa_referring_call_lists_len = 1;
+		sequence->csa_referring_call_lists.
+			csa_referring_call_lists_val = list;
+		memcpy(list->rcl_sessionid,
+		       refer->session,
+		       sizeof(NFS4_SESSIONID_SIZE));
+		list->rcl_referring_calls.rcl_referring_calls_len = 1;
+		list->rcl_referring_calls.rcl_referring_calls_val
+			= ref_call;
+		ref_call->rc_sequenceid = refer->sequence;
+		ref_call->rc_slotid = refer->slot;
+	} else {
+		sequence->csa_referring_call_lists
+			.csa_referring_call_lists_len = 0;
+		sequence->csa_referring_call_lists
+			.csa_referring_call_lists_val = NULL;
+	}
+	cb_compound_add_op(&call->cbt, &sequenceop);
+	cb_compound_add_op(&call->cbt, op);
+
+	return call;
+}
+
+/**
+ * @brief Free a CB call and sequence
+ *
+ * @param[in] call The call to free
+ *
+ * @return The constructed call or NULL.
+ */
+static void free_single_call(rpc_call_t *call)
+{
+	CB_SEQUENCE4args *sequence = (&call->cbt.v_u.v4.args.argarray
+				      .argarray_val[0].nfs_cb_argop4_u
+				      .opcbsequence);
+	if (sequence->csa_referring_call_lists
+	    .csa_referring_call_lists_val->rcl_referring_calls
+	    .rcl_referring_calls_val) {
+		gsh_free(sequence->csa_referring_call_lists
+			 .csa_referring_call_lists_val->rcl_referring_calls
+			 .rcl_referring_calls_val);
+	}
+	if (sequence->csa_referring_call_lists.csa_referring_call_lists_val) {
+		gsh_free(sequence->csa_referring_call_lists
+			 .csa_referring_call_lists_val);
+	}
+	free_rpc_call(call);
+}
+
+/**
+ * @brief Find a callback slot
+ *
+ * Find and reserve a slot, if we can.  If @c wait is set to true, we
+ * wait on the condition variable for a limited time.
+ *
+ * @param[in,out] session      Sesson on which to operate
+ * @param[in]     wait         Whether to wait on the condition variable if
+ *                             no slot can be found
+ * @param[out]    slot         Slot to use
+ * @param[out]    highest_slot Highest slot in use
+ *
+ * @retval false if a slot was not found.
+ * @retval true if a slot was found.
+ */
+static bool find_cb_slot(nfs41_session_t *session,
+			 bool wait,
+			 slotid4 *slot,
+			 slotid4 *highest_slot)
+{
+	slotid4 cur = 0;
+	bool found = false;
+
+	pthread_mutex_lock(&session->cb_mutex);
+retry:
+	for (cur = 0;
+	     cur < session->back_channel_attrs.ca_maxrequests;
+	     ++cur) {
+		if (!(session->cb_slots[cur].in_use) &&
+		    (!found)) {
+			found = true;
+			*slot = cur;
+			*highest_slot = cur;
+		}
+		if (session->cb_slots[cur].in_use) {
+			*highest_slot = cur;
+		}
+	}
+
+	if (!found && wait) {
+		struct timespec ts;
+		bool woke = false;
+
+		clock_gettime(CLOCK_REALTIME, &ts);
+		timespec_addms(&ts, 100);
+
+		woke = (pthread_cond_timedwait(&session->cb_cond,
+					       &session->cb_mutex,
+					       &ts) != ETIMEDOUT);
+		if (woke) {
+			wait = false;
+			goto retry;
+		}
+	}
+
+	if (found) {
+		session->cb_slots[*slot].in_use = true;
+		++session->cb_slots[*slot].sequence;
+	}
+	pthread_mutex_unlock(&session->cb_mutex);
+
+	return found;
+}
+
+/**
+ * @brief Release a reserved callback slot and wake waiters
+ *
+ * @param[in,out] session Session holding slot to release
+ * @param[in]     slot    Slot to release
+ * @param[in]     bool    Whether the operation was ever sent
+ */
+
+static void release_cb_slot(nfs41_session_t *session,
+			    slotid4 slot,
+			    bool sent)
+{
+	pthread_mutex_lock(&session->cb_mutex);
+	session->cb_slots[slot].in_use = false;
+	if (!sent) {
+		--session->cb_slots[slot].sequence;
+	}
+	pthread_cond_broadcast(&session->cb_cond);
+	pthread_mutex_unlock(&session->cb_mutex);
+}
+
+/**
+ * @brief Send v4.1 CB_COMPOUND with a single operation
+ *
+ * This actually sends two opearations, a CB_SEQUENCE and the supplied
+ * operation.  It works as a convenience function to handle the
+ * details of CB_SEQUENCE management, finding a connection with a
+ * working back channel, and so forth.
+ *
+ * @note This should work for most practical purposes, but is not
+ * ideal.  What we ought to have is a per-clientid queue that
+ * operations can be submitted to that will be sent when a
+ * back-channel is re-established, with a per-session queue for
+ * operations that were sent but had the back-channel fail before the
+ * response was received.
+ *
+ * @param[in] clientid   Client record
+ * @param[in] op         The operation to perform
+ * @param[in] refer      Referral tracking info (or NULL)
+ * @param[in] completion Completion function for this operation
+ * @param[in] free_op    Function to free elements of the op (may be NULL)
+ *
+ * @return POSIX error codes.
+ */
+int nfs_rpc_v41_single(nfs_client_id_t *clientid,
+		       nfs_cb_argop4 *op,
+		       struct state_refer *refer,
+		       int32_t (*completion)(rpc_call_t *,
+					     rpc_call_hook,
+					     void *arg,
+					     uint32_t flags),
+		       void (*free_op)(nfs_cb_argop4 *op))
+{
+	int scan = 0;
+	bool sent = false;
+	struct glist_head *glist = NULL;
+
+	if (clientid->cid_minorversion < 1) {
+		return EINVAL;
+	}
+
+	for (scan = 0; scan < 2; ++scan) {
+		glist_for_each(glist,
+			       &clientid->cid_cb.v41.cb_session_list) {
+			nfs41_session_t *session =
+				glist_entry(glist,
+					    nfs41_session_t,
+					    session_link);
+			if (!(session->flags & session_bc_up)) {
+				continue;
+			}
+			rpc_call_channel_t *chan = &session->cb_chan;
+			slotid4 slot = 0;
+			slotid4 highest_slot = 0;
+			rpc_call_t *call = NULL;
+			int code = 0;
+			if (!(find_cb_slot(session,
+					   scan == 1,
+					   &slot,
+					   &highest_slot))) {
+				continue;
+			}
+			call = construct_single_call(session,
+						     op,
+						     refer,
+						     slot,
+						     highest_slot);
+			if (!call) {
+				release_cb_slot(session,
+						slot,
+						false);
+				return ENOMEM;
+			}
+			call->call_hook = completion;
+			code = nfs_rpc_submit_call(call,
+						   NFS_RPC_FLAG_NONE);
+			if (code != 0) {
+				/* Clean up... */
+				free_op(op);
+				free_single_call(call);
+				release_cb_slot(session,
+						slot,
+						false);
+				pthread_mutex_lock(&chan->mtx);
+				nfs_rpc_destroy_v41_chan(chan);
+				session->flags &= ~session_bc_up;
+				pthread_mutex_unlock(&chan->mtx);
+			} else {
+				sent = true;
+				goto out;
+			}
+		}
+	}
+
+out:
+	if (sent) {
+		return 0;
+	} else {
+		return ENOTCONN;
+	}
 }

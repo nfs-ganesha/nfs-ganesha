@@ -62,14 +62,14 @@ static const nfs4_cb_tag_t cbtagtab4[] = {
 
 /* Some CITI-inspired compound helper ideas */
 
-void
-cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops, uint32_t ident,
-                    char *tag, uint32_t tag_len)
+void cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops,
+			 uint32_t minorversion, uint32_t ident,
+			 char *tag, uint32_t tag_len)
 {
     /* args */
     memset(cbt, 0, sizeof(nfs4_compound_t)); /* XDRS */
 
-    cbt->v_u.v4.args.minorversion = 0;
+    cbt->v_u.v4.args.minorversion = minorversion;
     cbt->v_u.v4.args.callback_ident = ident;
     cbt->v_u.v4.args.argarray.argarray_val = alloc_cb_argop(n_ops);
     cbt->v_u.v4.args.argarray.argarray_len = 0; /* not n_ops, see below */
@@ -88,7 +88,7 @@ cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops, uint32_t ident,
     cbt->v_u.v4.res.resarray.resarray_val = alloc_cb_resop(n_ops);
     cbt->v_u.v4.res.resarray.resarray_len = 0;
 
-} /* cb_compound_init */
+}
 
 void
 cb_compound_add_op(nfs4_compound_t *cbt, nfs_cb_argop4 *src)
@@ -105,12 +105,6 @@ cb_compound_add_op(nfs4_compound_t *cbt, nfs_cb_argop4 *src)
 void
 cb_compound_free(nfs4_compound_t *cbt)
 {
-    switch (cbt->v_u.v4.args.minorversion) {
-    case 0:
-        free_cb_argop(cbt->v_u.v4.args.argarray.argarray_val);
-        free_cb_resop(cbt->v_u.v4.res.resarray.resarray_val);
-        break;
-    default:
-        break;
-    }
+	free_cb_argop(cbt->v_u.v4.args.argarray.argarray_val);
+	free_cb_resop(cbt->v_u.v4.res.resarray.resarray_val);
 }
