@@ -200,7 +200,7 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
  
       // Check whether the name from cache is empty 
       if (strnlen(name, 1) == 0) {
-        FSI_TRACE(FSI_NOTICE, "The name is empty string fom cache by loop: "
+        FSI_TRACE(FSI_NOTICE, "The name is empty string from cache by loop: "
                   "%p->0x%lx %lx %lx %lx", handle, 
                   handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
       }
