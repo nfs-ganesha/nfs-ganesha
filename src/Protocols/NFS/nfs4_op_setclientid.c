@@ -199,7 +199,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
            clientid = pconf->cid_clientid;
 
-           new_clientifd_verifier(verifier);
+           new_clientid_verifier(verifier);
         }
       else
         {
@@ -220,7 +220,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
           clientid = new_clientid();
 
-          new_clientifd_verifier(verifier);
+          new_clientid_verifier(verifier);
         }
 
       /* Release our reference to the confirmed clientid. */
@@ -241,7 +241,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
       clientid = new_clientid();
 
-      new_clientifd_verifier(verifier);
+      new_clientid_verifier(verifier);
     }
 
   /* At this point, no matter what the case was above, we should remove any

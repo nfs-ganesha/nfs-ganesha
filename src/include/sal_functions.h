@@ -215,7 +215,7 @@ int nfs_client_id_confirm(nfs_client_id_t * pclientid,
 int nfs_client_id_expire(nfs_client_id_t * pclientid);
 
 clientid4 new_clientid(void);
-void new_clientifd_verifier(char * pverf);
+void new_clientid_verifier(char * pverf);
 
 int display_client_id_key(hash_buffer_t * pbuff, char *str);
 int display_client_id_val(hash_buffer_t * pbuff, char *str);
