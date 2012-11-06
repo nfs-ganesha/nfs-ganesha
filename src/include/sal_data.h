@@ -409,6 +409,7 @@ struct nfs_client_id_t
   state_owner_t                  cid_owner;
   int32_t                        cid_refcount;
   int                            cid_lease_reservations;
+  uint32_t                       cid_stateid_counter;
 };
 
 struct nfs_client_record_t
