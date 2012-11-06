@@ -220,7 +220,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 			  struct req_op_context *req_ctx);
 
 clientid4 new_clientid(void);
-void new_clientifd_verifier(char *verf);
+void new_clientid_verifier(char *verf);
 
 int display_client_id_key(struct gsh_buffdesc *buff, char *str);
 int display_client_id_val(struct gsh_buffdesc *buff, char *str);
