@@ -63,6 +63,40 @@ uint64_t          clientid_verifier;
 pool_t          * client_id_pool;
 pool_t          * client_record_pool;
 
+nfsstat4 clientid_error_to_nfsstat(nfs_clientid_error_t err)
+{
+  switch(err)
+    {
+      case CLIENT_ID_SUCCESS:             return NFS4_OK;
+      case CLIENT_ID_INSERT_MALLOC_ERROR: return NFS4ERR_RESOURCE;
+      case CLIENT_ID_INVALID_ARGUMENT:    return NFS4ERR_SERVERFAULT;
+      case CLIENT_ID_EXPIRED:             return NFS4ERR_EXPIRED;
+      case CLIENT_ID_STALE:               return NFS4ERR_STALE_CLIENTID;
+    }
+
+  LogCrit(COMPONENT_CLIENTID,
+          "Unexpected clientid error %d", err);
+
+  return NFS4ERR_SERVERFAULT;
+}
+
+const char * clientid_error_to_str(nfs_clientid_error_t err)
+{
+  switch(err)
+    {
+      case CLIENT_ID_SUCCESS:             return "CLIENT_ID_SUCCESS";
+      case CLIENT_ID_INSERT_MALLOC_ERROR: return "CLIENT_ID_INSERT_MALLOC_ERROR";
+      case CLIENT_ID_INVALID_ARGUMENT:    return "CLIENT_ID_INVALID_ARGUMENT";
+      case CLIENT_ID_EXPIRED:             return "CLIENT_ID_EXPIRED";
+      case CLIENT_ID_STALE:               return "CLIENT_ID_STALE";
+    }
+
+  LogCrit(COMPONENT_CLIENTID,
+          "Unexpected clientid error %d", err);
+
+  return "UNEXPECTED ERROR";
+}
+
 const char * clientid_confirm_state_to_str(nfs_clientid_confirm_state_t confirmed)
 {
   switch(confirmed)
@@ -769,9 +803,21 @@ int nfs_client_id_get(hash_table_t     * ht,
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   int           status;
+  uint64_t      epoch_low = ServerEpoch & 0xFFFFFFFF;
+  uint64_t      cid_epoch = (uint64_t) (clientid >>  (clientid4) 32);
 
   if(p_pclientid == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
+
+  /* Don't even bother to look up clientid if epochs don't match */
+  if(cid_epoch != epoch_low)
+    {
+      if(isDebug(COMPONENT_HASHTABLE))
+        LogFullDebug(COMPONENT_CLIENTID,
+                     "%s NOTFOUND (epoch doesn't match, assumed STALE)",
+                     ht->parameter.ht_name);
+      return CLIENT_ID_STALE;
+    }
 
   buffkey.pdata = (caddr_t) &clientid;
   buffkey.len = sizeof(clientid4);
@@ -806,9 +852,9 @@ int nfs_client_id_get(hash_table_t     * ht,
     {
       if(isDebug(COMPONENT_HASHTABLE))
         LogFullDebug(COMPONENT_CLIENTID,
-                     "%s NOTFOUND", ht->parameter.ht_name);
+                     "%s NOTFOUND (assumed EXPIRED)", ht->parameter.ht_name);
       *p_pclientid = NULL;
-      status = CLIENT_ID_NOT_FOUND;
+      status = CLIENT_ID_EXPIRED;
     }
 
   return status;

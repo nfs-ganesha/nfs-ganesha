@@ -84,6 +84,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 * op,
   nfs_client_id_t         * pnfs_client_id;
   state_owner_t           * plock_owner;
   state_nfs4_owner_name_t   owner_name;
+  int                       rc;
 
   LogDebug(COMPONENT_NFS_V4_LOCK,
            "Entering NFS v4 RELEASE_LOCKOWNER handler -----------------------------------------------------");
@@ -92,14 +93,15 @@ int nfs4_op_release_lockowner(struct nfs_argop4 * op,
   res_RELEASE_LOCKOWNER4.status = NFS4_OK;
 
   /* Check clientid */
-  if(nfs_client_id_get_confirmed(arg_RELEASE_LOCKOWNER4.lock_owner.clientid,
-                                 &pnfs_client_id) != CLIENT_ID_SUCCESS)
+  rc = nfs_client_id_get_confirmed(arg_RELEASE_LOCKOWNER4.lock_owner.clientid,
+                                   &pnfs_client_id);
+
+  if(rc != CLIENT_ID_SUCCESS)
     {
-      res_RELEASE_LOCKOWNER4.status = NFS4ERR_STALE_CLIENTID;
+      res_RELEASE_LOCKOWNER4.status = clientid_error_to_nfsstat(rc);
       goto out2;
     }
 
-  /* The protocol doesn't allow for EXPIRED, so return STALE_CLIENTID */
   P(pnfs_client_id->cid_mutex);
 
   if(!reserve_lease(pnfs_client_id))
@@ -108,7 +110,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 * op,
 
       dec_client_id_ref(pnfs_client_id);
 
-      res_RELEASE_LOCKOWNER4.status = NFS4ERR_STALE_CLIENTID;
+      res_RELEASE_LOCKOWNER4.status = NFS4ERR_EXPIRED;
       goto out2;
     }
 

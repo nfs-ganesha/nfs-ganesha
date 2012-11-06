@@ -364,11 +364,14 @@ typedef enum nfs_clientid_confirm_state__
 } nfs_clientid_confirm_state_t;
 
 /* client ID errors */
-#define CLIENT_ID_SUCCESS             0
-#define CLIENT_ID_INSERT_MALLOC_ERROR 1
-#define CLIENT_ID_NOT_FOUND           2
-#define CLIENT_ID_INVALID_ARGUMENT    3
-#define CLIENT_ID_STATE_ERROR         4
+typedef enum nfs_clientid_error_t
+{
+  CLIENT_ID_SUCCESS,
+  CLIENT_ID_INSERT_MALLOC_ERROR,
+  CLIENT_ID_INVALID_ARGUMENT,
+  CLIENT_ID_EXPIRED,
+  CLIENT_ID_STALE,
+} nfs_clientid_error_t;
 
 struct nfs_client_id_t
 {

@@ -78,6 +78,7 @@
 int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   nfs_client_id_t *pclientid;
+  int              rc;
 
   /* Lock are not supported */
   memset(resp, 0, sizeof(struct nfs_resop4));
@@ -87,11 +88,12 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   LogFullDebug(COMPONENT_CLIENTID, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);
 
   /* Is this an existing client id ? */
-  if(nfs_client_id_get_confirmed(arg_RENEW4.clientid, &pclientid) !=
-      CLIENT_ID_SUCCESS)
+  rc = nfs_client_id_get_confirmed(arg_RENEW4.clientid, &pclientid);
+
+  if(rc != CLIENT_ID_SUCCESS)
     {
       /* Unknown client id */
-      res_RENEW4.status = NFS4ERR_STALE_CLIENTID;
+      res_RENEW4.status = clientid_error_to_nfsstat(rc);
       return res_RENEW4.status;
     }
 

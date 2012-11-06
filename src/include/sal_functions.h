@@ -185,6 +185,10 @@ int Init_nlm_hash(void);
  *
  ******************************************************************************/
 
+nfsstat4 clientid_error_to_nfsstat(nfs_clientid_error_t err);
+
+const char * clientid_error_to_str(nfs_clientid_error_t err);
+
 state_status_t get_clientid_owner(clientid4        clientid,
                                   state_owner_t ** clientid_owner);
 
