@@ -552,23 +552,32 @@ static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
  * @retval TRUE if the thread wakes by signal.
  */
 
+/* Not needed w/ntirpc duplex-9 */
+#define timespec_addms(vvp, ms)                                         \
+    do {                                                                \
+        (vvp)->tv_sec += (ms) / 1000;                                   \
+        (vvp)->tv_nsec += (((ms) % 1000) * 1000000);                    \
+        if ((vvp)->tv_nsec >= 1000000000) {                             \
+            (vvp)->tv_sec++;                                            \
+            (vvp)->tv_nsec -= 1000000000;                               \
+        }                                                               \
+    } while (0)
+
 static bool_t
 lru_thread_delay_ms(unsigned long ms)
 {
-     time_t now = time(NULL);
-     uint64_t nsecs = (S_NSECS * now) + (MS_NSECS * ms);
-     struct timespec then = {
-          .tv_sec = nsecs / S_NSECS,
-          .tv_nsec = nsecs % S_NSECS
-     };
-     bool_t woke = FALSE;
+     struct timespec ts;
+     bool woke;
+
+     clock_gettime(CLOCK_REALTIME, &ts);
+     timespec_addms(&ts, ms);
 
      pthread_mutex_lock(&lru_mtx);
      lru_thread_state.flags |= LRU_SLEEPING;
-     woke = (pthread_cond_timedwait(&lru_cv, &lru_mtx, &then) != ETIMEDOUT);
+     woke = (pthread_cond_timedwait(&lru_cv, &lru_mtx, &ts) != ETIMEDOUT);
      lru_thread_state.flags &= ~LRU_SLEEPING;
      pthread_mutex_unlock(&lru_mtx);
-     return woke;
+     return (woke);
 }
 
 /**

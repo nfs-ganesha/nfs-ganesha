@@ -77,31 +77,15 @@ init_wait_q_entry(wait_q_entry_t *wqe)
     init_wait_entry(&wqe->rwe);
 }
 
-static inline bool_t
+static inline void
 thread_delay_ms(unsigned long ms)
 {
-
-    static const uint32_t S_NSECS = 1000000000UL; /* nsecs in 1s */
-    static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
-
-    wait_entry_t we = {
-        .mtx = PTHREAD_MUTEX_INITIALIZER,
-        .cv = PTHREAD_COND_INITIALIZER
-    };
-    
-    time_t now = time(NULL);
-    uint64_t nsecs = (S_NSECS * now) + (MS_NSECS * ms);
-    struct timespec then = {
-        .tv_sec = nsecs / S_NSECS,
-        .tv_nsec = nsecs % S_NSECS
-    };
-    bool_t woke = FALSE;
-
-    pthread_mutex_lock(&we.mtx);
-    woke = (pthread_cond_timedwait(&we.cv, &we.mtx, &then) != ETIMEDOUT);
-    pthread_mutex_unlock(&we.mtx);
-
-    return (woke);
+     struct timespec then = {
+	 .tv_sec = ms / 1000,
+	 .tv_nsec = (ms % 1000) * 1000000UL
+     };
+     nanosleep(&then, NULL);
 }
+
 
 #endif /* WAIT_QUEUE_H */
