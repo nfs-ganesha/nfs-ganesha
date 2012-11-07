@@ -190,7 +190,7 @@ extern bool_t cache_inode_is_pinned(cache_entry_t *entry);
 static inline bool_t
 cache_inode_lru_fds_available(void)
 {
-     if (open_fd_count >= lru_state.fds_hard_limit) {
+     if ((open_fd_count >= lru_state.fds_hard_limit) && lru_state.caching_fds) {
           LogCrit(COMPONENT_CACHE_INODE_LRU,
                   "FD Hard Limit Exceeded.  Disabling FD Cache and waking"
                   " LRU thread.");
