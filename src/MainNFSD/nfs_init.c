@@ -333,6 +333,10 @@ void nfs_set_param_default()
 
   nfs_param.core_param.clustered = FALSE;
 
+  /* Dispatch quotas */
+  nfs_param.core_param.dispatch_max_reqs =  5000;
+  nfs_param.core_param.dispatch_max_reqs_xprt =  512;
+
   /* Worker parameters : LRU dupreq */
   nfs_param.worker_param.lru_dupreq.nb_call_gc_invalid = 100;
   nfs_param.worker_param.lru_dupreq.clean_entry = clean_entry_dupreq;
@@ -1150,10 +1154,6 @@ int nfs_check_param_consistency()
               NB_MAX_WORKER_THREAD);
       return 1;
     }
-
-  /* Dispatch quotas */
-  nfs_param.core_param.dispatch_max_reqs =  5000;
-  nfs_param.core_param.dispatch_max_reqs_xprt =  512;  
 
 #if 0
 /* XXXX this seems somewhat the obvious of what I would have reasoned.
