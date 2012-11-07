@@ -49,6 +49,7 @@
 #include <assert.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <misc/timespec.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -558,20 +559,18 @@ static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
 static bool
 lru_thread_delay_ms(unsigned long ms)
 {
-     time_t now = time(NULL);
-     uint64_t nsecs = (S_NSECS * now) + (MS_NSECS * ms);
-     struct timespec then = {
-          .tv_sec = nsecs / S_NSECS,
-          .tv_nsec = nsecs % S_NSECS
-     };
-     bool woke = false;
+     struct timespec ts;
+     bool woke;
+
+     clock_gettime(CLOCK_MONOTONIC, &ts);
+     timespec_addms(&ts, ms);
 
      pthread_mutex_lock(&lru_mtx);
      lru_thread_state.flags |= LRU_SLEEPING;
-     woke = (pthread_cond_timedwait(&lru_cv, &lru_mtx, &then) != ETIMEDOUT);
+     woke = (pthread_cond_timedwait(&lru_cv, &lru_mtx, &ts) != ETIMEDOUT);
      lru_thread_state.flags &= ~LRU_SLEEPING;
      pthread_mutex_unlock(&lru_mtx);
-     return woke;
+     return (woke);
 }
 
 /**

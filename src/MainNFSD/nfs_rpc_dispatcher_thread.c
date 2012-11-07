@@ -819,7 +819,7 @@ thr_stallq(void *arg)
     SVCXPRT *xprt;
 
     while (1) {
-        thread_delay_ms(1000);
+        usleep(1000);
         pthread_mutex_lock(&nfs_req_st.stallq.mtx);
     restart:
         if (nfs_req_st.stallq.stalled == 0) {
