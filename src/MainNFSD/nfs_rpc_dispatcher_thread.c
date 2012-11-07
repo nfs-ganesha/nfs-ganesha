@@ -816,6 +816,15 @@ nfs_rpc_outstanding_reqs_est(void)
     return (atomic_fetch_uint32_t(&nreqs));
 }
 
+
+static inline bool
+stallq_should_unstall(gsh_xprt_private_t *xu)
+{
+	return ((xu->req_cnt <
+		 nfs_param.core_param.dispatch_max_reqs_xprt/2) ||
+		(xu->flags & XPRT_PRIVATE_FLAG_DESTROYED));
+}
+
 void *
 thr_stallq(void *arg)
 {
@@ -838,7 +847,7 @@ thr_stallq(void *arg)
         glist_for_each(l, &nfs_req_st.stallq.q) {
             xu = glist_entry(l, gsh_xprt_private_t, stallq);
             /* handle stalled xprts that idle out */
-            if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
+            if (stallq_should_unstall(xu)) {
                 xprt = xu->xprt;
                 /* lock ordering (cf. nfs_rpc_cond_stall_xprt) */
                 pthread_spin_unlock(&nfs_req_st.stallq.sp);
