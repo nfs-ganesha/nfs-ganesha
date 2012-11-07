@@ -82,7 +82,7 @@ thread_delay_ms(unsigned long ms)
 {
      struct timespec then = {
 	 .tv_sec = ms / 1000,
-	 .tv_nsec = ms % 1000000UL
+	 .tv_nsec = (ms % 1000) * 1000000UL
      };
      nanosleep(&then, NULL);
 }

@@ -556,7 +556,7 @@ static const uint32_t MS_NSECS = 1000000UL; /* nsecs in 1ms */
 #define timespec_addms(vvp, ms)                                         \
     do {                                                                \
         (vvp)->tv_sec += (ms) / 1000;                                   \
-        (vvp)->tv_nsec += ((ms) - ((ms) % 1000) * 1000000);             \
+        (vvp)->tv_nsec += (((ms) % 1000) * 1000000);                    \
         if ((vvp)->tv_nsec >= 1000000000) {                             \
             (vvp)->tv_sec++;                                            \
             (vvp)->tv_nsec -= 1000000000;                               \
@@ -569,7 +569,7 @@ lru_thread_delay_ms(unsigned long ms)
      struct timespec ts;
      bool woke;
 
-     clock_gettime(CLOCK_MONOTONIC, &ts);
+     clock_gettime(CLOCK_REALTIME, &ts);
      timespec_addms(&ts, ms);
 
      pthread_mutex_lock(&lru_mtx);
