@@ -542,6 +542,7 @@ fsal_internal_get_handle(fsal_op_context_t * p_context,  /* IN */
          &buffstat.st_persistentHandle.handle, FSI_PERSISTENT_HANDLE_N_BYTES);
   p_fsi_handle->data.handle.handle_size = FSI_PERSISTENT_HANDLE_N_BYTES;
   p_fsi_handle->data.handle.handle_version = OPENHANDLE_VERSION;
+  p_fsi_handle->data.handle.handle_key_size = OPENHANDLE_KEY_LEN;
   p_fsi_handle->data.handle.handle_type = posix2fsal_type(buffstat.st_mode);
 
   handlePtr = (uint64_t *) p_fsi_handle->data.handle.f_handle; 

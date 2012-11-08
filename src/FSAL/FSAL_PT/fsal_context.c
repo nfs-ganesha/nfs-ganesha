@@ -86,6 +86,8 @@ PTFSAL_BuildExportContext(fsal_export_context_t * export_context,     /* OUT */
   p_export_context->fsid[0] = 0;
   p_export_context->fsid[1] = p_exportlist->id;
   op_context.export_context = export_context;
+  op_context.credential.user = 0;
+  op_context.credential.group = 0;
   p_export_context->ganesha_export_id = p_exportlist->id;
 
   errno = 0;
@@ -181,12 +183,26 @@ PTFSAL_GetExportEntry(char          * p_fs_info,   /* IN */
 fsal_status_t
 PTFSAL_GetMountRootFD(fsal_op_context_t * p_context)
 {
+  fsal_path_t root_path;
+
   ptfsal_op_context_t     * fsi_op_context = (ptfsal_op_context_t *)p_context;
   ptfsal_export_context_t * fsi_export_context = 
     fsi_op_context->export_context;
   
   /* PT basically doesn't need mount root FD, so we could set it to zero */
   fsi_export_context->mount_root_fd = 0;
+
+  /* Get the file handle */
+  root_path.len = 0;
+  strcpy(root_path.path, "");
+  fsal_status_t status = fsal_internal_get_handle( p_context, &root_path,
+                            &(p_context->export_context->mount_root_handle) );
+  if (FSAL_IS_ERROR(status)) {
+    FSI_TRACE(FSI_ERR, "fsal_internal_get_handle returned error %d",
+               status.minor);
+    ReturnCode(ERR_FSAL_INVAL, 0);
+  }
+
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 
