@@ -709,7 +709,14 @@ if test "$enable_fsal_zfs" == "yes"; then
 	  AC_MSG_ERROR(Impossible to find the libzfswrap library)
 	])
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_ZFS/libfsalzfs.la"
+        ZFS_CFLAGS="$ZFSWRAP_CFLAGS"
+        ZFS_LDFLAGS="$ZFSWRAP_LIBS"
+        ZFS_LIB="-lzfswrap"
 fi
+
+AC_SUBST(ZFS_CFLAGS)
+AC_SUBST(ZFS_LDFLAGS)
+AC_SUBST(ZFS_LIB)
 
 if test "$enable_fsal_posix" == "yes"; then
 	AC_DEFINE([_USE_POSIX], 1, [GANESHA is compiled with POSIX FSAL])
