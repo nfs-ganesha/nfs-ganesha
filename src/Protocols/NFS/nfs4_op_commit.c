@@ -130,7 +130,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                         data->pcontext,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
-      res_COMMIT4.status = NFS4ERR_INVAL;
+      res_COMMIT4.status = nfs4_Errno(cache_status);
       return res_COMMIT4.status;
     }
 
