@@ -9,12 +9,15 @@
  */
 
 #include  "fsal.h"
-#include "FSAL/common_functions.h"
-
 #include <libzfswrap.h>
 
 /* libzfswrap handler, used only when the FSAL is created and destroyed */
 extern libzfswrap_handle_t *p_zhd;
+
+void ZFSFSAL_VFS_RDLock() ;
+void ZFSFSAL_VFS_RDLock() ;
+void ZFSFSAL_VFS_Unlock() ;
+
 
 typedef struct
 {
@@ -24,13 +27,13 @@ typedef struct
 } snapshot_t;
 
 /* defined the set of attributes supported with POSIX */
-#define POSIX_SUPPORTED_ATTRIBUTES (                                       \
-          FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \
-          FSAL_ATTR_FSID     |  FSAL_ATTR_FILEID  | \
-          FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
-          FSAL_ATTR_GROUP    | FSAL_ATTR_ATIME    | FSAL_ATTR_RAWDEV    | \
-          FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
-          FSAL_ATTR_CHGTIME  )
+#define ZFS_SUPPORTED_ATTRIBUTES (                         \
+          ATTR_SUPPATTR | ATTR_TYPE     | ATTR_SIZE      | \
+          ATTR_FSID     | ATTR_FILEID   |                  \
+          ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     | \
+          ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
+          ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
+          ATTR_CHGTIME  )
 
 
 /* the following variables must not be defined in fsal_internal.c */
@@ -39,27 +42,16 @@ typedef struct
 /* static filesystem info.
  * read access only.
  */
-extern fsal_staticfsinfo_t global_fs_info;
+extern struct fsal_staticfsinfo_t global_fs_info;
 
 #endif
-
-/**
- *  This function initializes shared variables of the FSAL.
- */
-fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-                                        fs_common_initinfo_t * fs_common_info,
-                                        fs_specific_initinfo_t * fs_specific_info);
 
 /**
  *  Increments the number of calls for a function.
  */
 void fsal_increment_nbcall(int function_index, fsal_status_t status);
 
-/**
- * Retrieves current thread statistics.
- */
-void fsal_internal_getstats(fsal_statistics_t * output_stats);
-
+#if 0
 /**
  *  Used to limit the number of simultaneous calls to Filesystem.
  */
@@ -191,7 +183,7 @@ fsal_status_t ZFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,      /* 
                                      fsal_attrib_list_t *
                                      p_fsroot_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t ZFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
+fsal_status_t ZFSFSAL_rcp(fsal_handle_t * filehand:le,        /* IN */
                           fsal_op_context_t * p_context,     /* IN */
                           fsal_path_t * p_local_path,   /* IN */
                           fsal_rcpflag_t transfer_opt /* IN */ );
@@ -325,4 +317,4 @@ fsal_status_t ZFSFSAL_commit( fsal_file_t * p_file_descriptor,
                             fsal_off_t    offset,
                             fsal_size_t   size ) ;
 
-
+#endif

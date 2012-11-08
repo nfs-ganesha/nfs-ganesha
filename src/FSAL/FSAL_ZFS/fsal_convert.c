@@ -71,54 +71,35 @@ fsal_time_t fs2fsal_time( <your fs time structure> );
  */
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
 {
-  int cpt;
-
   if(!p_posix_flags)
     return ERR_FSAL_FAULT;
 
   /* check that all used flags exist */
 
   if(fsal_flags &
-     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC))
+     ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
     return ERR_FSAL_INVAL;
 
   /* Check for flags compatibility */
 
   /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
 
-  cpt = 0;
-  if(fsal_flags & FSAL_O_RDONLY)
-    cpt++;
-  if(fsal_flags & FSAL_O_RDWR)
-    cpt++;
-  if(fsal_flags & FSAL_O_WRONLY)
-    cpt++;
-
-  if(cpt > 1)
-    return ERR_FSAL_INVAL;
-
-  /* FSAL_O_APPEND et FSAL_O_TRUNC cannot be used together */
-
-  if((fsal_flags & FSAL_O_APPEND) && (fsal_flags & FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
-
-  /* FSAL_O_TRUNC without FSAL_O_WRONLY or FSAL_O_RDWR */
-
-  if((fsal_flags & FSAL_O_TRUNC) && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR)))
-    return ERR_FSAL_INVAL;
-
   /* conversion */
   *p_posix_flags = 0;
 
-  if(fsal_flags & FSAL_O_RDONLY)
+  if(fsal_flags & FSAL_O_READ)
     *p_posix_flags |= O_RDONLY;
-  if(fsal_flags & FSAL_O_WRONLY)
-    *p_posix_flags |= O_WRONLY;
+
   if(fsal_flags & FSAL_O_RDWR)
     *p_posix_flags |= O_RDWR;
 
-  return ERR_FSAL_NO_ERROR;
+  if(fsal_flags & FSAL_O_WRITE)
+    *p_posix_flags |= O_WRONLY;
 
+  if(fsal_flags & FSAL_O_SYNC)
+    *p_posix_flags |= O_SYNC;
+
+  return ERR_FSAL_NO_ERROR;
 }
 
 int posix2fsal_error(int posix_errorcode)
@@ -250,113 +231,63 @@ int posix2fsal_error(int posix_errorcode)
 
 }
 
-fsal_status_t posix2fsal_attributes(struct stat *p_buffstat,
-                                    fsal_attrib_list_t * p_fsalattr_out)
+fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
+                                    struct attrlist *fsalattr)
 {
-
-  fsal_attrib_mask_t supp_attr, unsupp_attr;
-
+  FSAL_CLEAR_MASK(fsalattr->mask);
   /* sanity checks */
-  if(!p_buffstat || !p_fsalattr_out)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+  if(!buffstat || !fsalattr)
+    return fsalstat(ERR_FSAL_FAULT, 0);
 
-  /* check that asked attributes are supported */
-  supp_attr = global_fs_info.supported_attrs;
-
-  unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
-  if(unsupp_attr)
-    {
-      LogFullDebug(COMPONENT_FSAL, "Unsupported attributes: %#llX",
-                        unsupp_attr);
-      ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
-    }
-
-  /* Initialize ACL regardless of whether ACL was asked or not.
-   * This is needed to make sure ACL attribute is initialized. */
-  p_fsalattr_out->acl = NULL;
+  FSAL_CLEAR_MASK(fsalattr->mask);
 
   /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
-    {
-      p_fsalattr_out->supported_attributes = supp_attr;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
-    {
-      p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
-    {
-      p_fsalattr_out->filesize = p_buffstat->st_size;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
-    {
-      p_fsalattr_out->fsid = posix2fsal_fsid(p_buffstat->st_dev);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
-    {
-      p_fsalattr_out->acl = NULL;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
-    {
-      p_fsalattr_out->fileid = (fsal_u64_t) (p_buffstat->st_ino);
-    }
+  fsalattr->type = posix2fsal_type(buffstat->st_mode);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_TYPE);
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
-    {
-      p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
-    {
-      p_fsalattr_out->numlinks = p_buffstat->st_nlink;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
-    {
-      p_fsalattr_out->owner = p_buffstat->st_uid;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
-    {
-      p_fsalattr_out->group = p_buffstat->st_gid;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
-    {
-      p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, 0);
+  fsalattr->filesize = buffstat->st_size;
+  FSAL_SET_MASK(fsalattr->mask, ATTR_SIZE);
 
-    }
+  fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_FSID);
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
-    {
-      p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, 0);
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
-    {
-      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, 0);
-    }
+  fsalattr->fileid = buffstat->st_ino;
+  FSAL_SET_MASK(fsalattr->mask, ATTR_FILEID);
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
-    {
-      p_fsalattr_out->chgtime
-          = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
-      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
-    }
+  fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_MODE);
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
-    {
-      p_fsalattr_out->spaceused = p_buffstat->st_blocks * S_BLKSIZE;
-    }
+  fsalattr->numlinks = buffstat->st_nlink;
+  FSAL_SET_MASK(fsalattr->mask, ATTR_NUMLINKS);
 
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
-    {
-      p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
-    }
-  /* mounted_on_fileid :
-     if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
-     FSAL_ATTR_MOUNTFILEID )){
-     p_fsalattr_out->mounted_on_fileid = 
-     hpss2fsal_64( p_hpss_attr_in->FilesetRootId );
-     }
-   */
+  fsalattr->owner = buffstat->st_uid;
+  FSAL_SET_MASK(fsalattr->mask, ATTR_OWNER);
 
-  /* everything has been copied ! */
+  fsalattr->group = buffstat->st_gid;
+  FSAL_SET_MASK(fsalattr->mask, ATTR_GROUP);
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+  fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_ATIME);
+
+  fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_CTIME);
+
+  fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_MTIME);
+
+  fsalattr->chgtime
+    = posix2fsal_time(MAX_2(buffstat->st_mtime,
+                            buffstat->st_ctime), 0);
+  fsalattr->change = fsalattr->chgtime.seconds;
+  FSAL_SET_MASK(fsalattr->mask, ATTR_CHGTIME);
+
+  fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
+  FSAL_SET_MASK(fsalattr->mask, ATTR_SPACEUSED);
+
+  fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
+  FSAL_SET_MASK(fsalattr->mask, ATTR_RAWDEV);
+
+  return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
+
+

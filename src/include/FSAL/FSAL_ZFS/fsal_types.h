@@ -52,69 +52,36 @@
 
 #include <libzfswrap.h>
 
+#define ZFS_SNAP_DIR ".zfs"
 
+#define ZFS_SNAP_DIR_INODE 2
 
-  /* In this section, you must define your own FSAL internal types.
-   * Here are some template types :
-   */
-
-#include "fsal_glue_const.h"
-
-#define fsal_handle_t zfsfsal_handle_t
-#define fsal_op_context_t zfsfsal_op_context_t
-#define fsal_file_t zfsfsal_file_t
-#define fsal_dir_t zfsfsal_dir_t
-#define fsal_export_context_t zfsfsal_export_context_t
-#define fsal_lockdesc_t zfsfsal_lockdesc_t
-#define fsal_cookie_t zfsfsal_cookie_t
-#define fs_specific_initinfo_t zfsfs_specific_initinfo_t
-#define fsal_cred_t zfsfsal_cred_t
-
-typedef union
+typedef struct zfs_file_handle
 {
-  struct
-  {
     inogen_t zfs_handle;
-    fsal_nodetype_t type;
+    object_file_type_t type;
     char i_snap;
-  } data;
-  char pad[FSAL_HANDLE_T_SIZE];
-} zfsfsal_handle_t;
+} zfs_file_handle_t;
 
 typedef struct
 {
-  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
-
-  zfsfsal_handle_t root_handle;
-  libzfswrap_vfs_t *p_vfs;
-
-} zfsfsal_export_context_t;
-
-#define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
-
-typedef struct
-{
-  zfsfsal_export_context_t *export_context; /* Must be the first member of this structure */
-  struct user_credentials credential;
+  struct user_cred credential;
   int thread_connect_array[32];
 
 } zfsfsal_op_context_t;
-
-#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
-#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
 typedef struct
 {
   creden_t cred;
   libzfswrap_vnode_t *p_vnode;
-  zfsfsal_handle_t handle;
+  struct zfs_file_handle handle;
 
 } zfsfsal_dir_t;
 
 typedef struct
 {
   creden_t cred;
-  zfsfsal_handle_t handle;
+  struct zfs_file_handle handle;
   off_t current_offset;
   int flags;
   libzfswrap_vnode_t *p_vnode;
@@ -122,40 +89,27 @@ typedef struct
 
 } zfsfsal_file_t;
 
-typedef union
+static inline size_t zfs_sizeof_handle(struct zfs_file_handle *hdl)
 {
-  struct
-  {
-    off_t cookie;
-  } data;
-  char pad[FSAL_COOKIE_T_SIZE];
-} zfsfsal_cookie_t;
-
-#define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \
-do                                                                       \
-{                                                                        \
-   ((zfsfsal_cookie_t *)__pfsal_cookie)->data.cookie = (off_t)__cookie ; \
-} while( 0 )
-
-#define FSAL_SET_OFFSET_BY_PCOOKIE( __pfsal_cookie, __cookie )           \
-do                                                                       \
-{                                                                        \
-   __cookie =  ((zfsfsal_cookie_t *)__pfsal_cookie)->data.cookie ;       \
-} while( 0 )
-
-//#define FSAL_READDIR_FROM_BEGINNING 0
+  return (size_t)sizeof( struct zfs_file_handle ) ;
+}
 
 typedef struct
 {
-  char psz_zpool[FSAL_MAX_NAME_LEN];
+    off_t cookie;
+} zfsfsal_cookie_t;
+
+typedef struct
+{
+  char psz_zpool[MAXNAMLEN];
 
   int auto_snapshots;
 
-  char psz_snap_hourly_prefix[FSAL_MAX_NAME_LEN];
+  char psz_snap_hourly_prefix[MAXNAMLEN];
   int snap_hourly_time;
   int snap_hourly_number;
 
-  char psz_snap_daily_prefix[FSAL_MAX_NAME_LEN];
+  char psz_snap_daily_prefix[MAXNAMLEN];
   int snap_daily_time;
   int snap_daily_number;
 
