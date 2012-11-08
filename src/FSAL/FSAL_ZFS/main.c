@@ -167,6 +167,9 @@ static struct zfs_fsal_module ZFS;
 void zfs_export_ops_init(struct export_ops *ops);
 void zfs_handle_ops_init(struct fsal_obj_ops *ops);
 
+size_t i_snapshots;
+snapshot_t *p_snapshots;
+
 MODULE_INIT void zfs_init(void) {
 	int retval;
 	struct fsal_module *myself = &ZFS.fsal;

@@ -31,8 +31,6 @@ struct fsal_staticfsinfo_t global_fs_info;
 
 libzfswrap_handle_t *p_zhd;
 
-size_t i_snapshots;
-snapshot_t *p_snapshots;
 pthread_rwlock_t vfs_lock;
 
 
