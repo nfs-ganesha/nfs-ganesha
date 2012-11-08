@@ -147,7 +147,7 @@ int nfs3_Commit(nfs_arg_t *parg,
                         pcontext,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
-      pres->res_commit3.status = NFS3ERR_IO;;
+      pres->res_commit3.status = nfs3_Errno(cache_status);
 
       nfs_SetWccData(pexport,
                      ppre_attr,
