@@ -216,7 +216,6 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
     sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
 
   init_glist(&pnew_state->state_list);
-  init_glist(&pnew_state->state_owner_list);
 
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
@@ -433,6 +432,7 @@ void release_lockstate(state_owner_t * plock_owner)
 {
   state_status_t         state_status;
   struct glist_head    * glist, * glistn;
+  cache_entry_t        * pentry;
 
   glist_for_each_safe(glist, glistn, &plock_owner->so_owner.so_nfs4_owner.so_state_list)
     {
@@ -440,9 +440,10 @@ void release_lockstate(state_owner_t * plock_owner)
                                            state_t,
                                            state_owner_list);
 
+      pentry = pstate_found->state_pentry;
+
       /* Make sure we hold an lru ref to the cache inode while calling state_del */
-      if(cache_inode_lru_ref(pstate_found->state_pentry,
-                             0) != CACHE_INODE_SUCCESS)
+      if(cache_inode_lru_ref(pentry, 0) != CACHE_INODE_SUCCESS)
         LogCrit(COMPONENT_CLIENTID,
                 "Ugliness - cache_inode_lru_ref has returned non-success");
 
@@ -455,8 +456,7 @@ void release_lockstate(state_owner_t * plock_owner)
       }
 
       /* Release the lru ref to the cache inode we held while calling state_del */
-      cache_inode_lru_unref(pstate_found->state_pentry,
-                            0);
+      cache_inode_lru_unref(pentry, 0);
     }
 }
 
