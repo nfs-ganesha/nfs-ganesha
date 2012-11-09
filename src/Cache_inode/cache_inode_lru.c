@@ -562,7 +562,7 @@ lru_thread_delay_ms(unsigned long ms)
      struct timespec ts;
      bool woke;
 
-     clock_gettime(CLOCK_MONOTONIC, &ts);
+     clock_gettime(CLOCK_REALTIME, &ts);
      timespec_addms(&ts, ms);
 
      pthread_mutex_lock(&lru_mtx);
