@@ -155,7 +155,7 @@ cache_inode_open(cache_entry_t *entry,
 {
      /* Error return from FSAL */
      fsal_status_t fsal_status = {0, 0};
-     fsal_accessflags_t access_type;
+     fsal_accessflags_t access_type = FSAL_O_CLOSED;
      fsal_openflags_t current_flags;
      struct fsal_obj_handle *obj_hdl;
 
@@ -176,7 +176,10 @@ cache_inode_open(cache_entry_t *entry,
           goto out;
      }
 
-     access_type = (openflags == FSAL_O_RDWR) ? FSAL_R_OK : FSAL_W_OK;
+     if (openflags & FSAL_O_READ)
+	     access_type |= FSAL_R_OK;
+     if (openflags & FSAL_O_WRITE)
+	     access_type |= FSAL_W_OK;
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
           pthread_rwlock_wrlock(&entry->content_lock);
