@@ -546,6 +546,10 @@ void Copy_nfs4_denied(LOCK4denied *denied_dst,
       LogFullDebug(COMPONENT_STATE,
                    "denied_dst->owner.owner.owner_val = %p",
                    denied_dst->owner.owner.owner_val);
+      if(denied_dst->owner.owner.owner_val)
+        memcpy(denied_dst->owner.owner.owner_val,
+               denied_src->owner.owner.owner_val,
+               denied_src->owner.owner.owner_len);
     }
 
   if(denied_dst->owner.owner.owner_val == NULL)
