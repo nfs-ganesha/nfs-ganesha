@@ -208,6 +208,9 @@ GA_PROG_NETSNMP_CONFIG
 # Release
 AC_ARG_WITH([release], AS_HELP_STRING([--with-release=release], [specify the release]), RELEASE="$withval", RELEASE="1")
 
+# Determine if build for valgrind memcheck
+GA_ENABLE_FLAG([valgrind-memcheck], [enable special code for valgrind memcheck], [-D_VALGRIND_MEMCHECK])
+
 # Cofigure the allocator
 AC_ARG_WITH([allocator], AS_HELP_STRING([--with-allocator=jemalloc|tcmalloc|libc],
                                         [specify the memory allocator to use]),
@@ -439,7 +442,6 @@ GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganes
 GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		          [-D_WITH_PLPGSQL])
 GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                  [-D_ENABLE_CACHE_PATH])
 GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	          [-D_HANDLE_MAPPING])
-
 
 # for using it in makefiles
 AM_CONDITIONAL(ENABLE_HANDLE_MAPPING,    test "$enable_handle_mapping" = "yes" )
