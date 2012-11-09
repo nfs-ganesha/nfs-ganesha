@@ -42,6 +42,7 @@
 #include "solaris_port.h"
 #endif
 
+#include "ganesha_rpc.h"
 #include "rpcal.h"
 
 /*
@@ -98,7 +99,7 @@ static int svcauthnum = sizeof(svcauthsw) / sizeof(struct svcauthsw_type);
  * the raw form of credentials and verifiers.  authenticate returns AUTH_OK
  * if the msg is successfully authenticated.  If AUTH_OK then the routine also
  * does the following things:
- * set rqst->rq_xprt->verf to the appropriate response verifier;
+ * set rqst->rq_verf to the appropriate response verifier;
  * sets rqst->rq_client_cred to the "cooked" form of the credentials.
  *
  * NB: rqst->rq_cxprt->verf must be pre-alloctaed;
@@ -115,8 +116,8 @@ Rpcsecgss__authenticate(register struct svc_req *rqst,
   register int cred_flavor, i;
 
   rqst->rq_cred = msg->rm_call.cb_cred;
-  rqst->rq_xprt->xp_verf.oa_flavor = 0;
-  rqst->rq_xprt->xp_verf.oa_length = 0;
+  rqst->rq_verf.oa_flavor = 0;
+  rqst->rq_verf.oa_length = 0;
   cred_flavor = rqst->rq_cred.oa_flavor;
   *no_dispatch = FALSE;
   for(i = 0; i < svcauthnum; i++)

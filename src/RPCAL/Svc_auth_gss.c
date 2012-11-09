@@ -380,9 +380,9 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
           goto errout;
         }
 
-      rqst->rq_xprt->xp_verf.oa_flavor = RPCSEC_GSS;
-      rqst->rq_xprt->xp_verf.oa_base = gd->checksum.value;
-      rqst->rq_xprt->xp_verf.oa_length = gd->checksum.length;
+      rqst->rq_verf.oa_flavor = RPCSEC_GSS;
+      rqst->rq_verf.oa_base = gd->checksum.value;
+      rqst->rq_verf.oa_length = gd->checksum.length;
     }
   return (TRUE);
  errout:
@@ -532,9 +532,9 @@ static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
       LogCrit(COMPONENT_RPCSEC_GSS, "Error in gss_get_mic: %s", GssError);
       return (FALSE);
     }
-  rqst->rq_xprt->xp_verf.oa_flavor = RPCSEC_GSS;
-  rqst->rq_xprt->xp_verf.oa_base = (caddr_t) gd->checksum.value;
-  rqst->rq_xprt->xp_verf.oa_length = (u_int) gd->checksum.length;
+  rqst->rq_verf.oa_flavor = RPCSEC_GSS;
+  rqst->rq_verf.oa_base = (caddr_t) gd->checksum.value;
+  rqst->rq_verf.oa_length = (u_int) gd->checksum.length;
 
   return (TRUE);
 }
