@@ -161,6 +161,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
       callback.buf        = &buf;
       callback.fl         = &fl;
 
+#ifdef _VALGRIND_MEMCHECK
+      memset(callback.handle->f_handle, 0, callback.handle->handle_size);
+#endif
+
       rc = gpfs_ganesha(OPENHANDLE_INODE_UPDATE, &callback);
 
       if(rc != 0)
