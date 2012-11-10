@@ -20,7 +20,7 @@ LibC. It allows NFS export for anything accessible via the POSIX
 interface. POSIX API addresses files and directories by their names
 (which are volatile identifiers, they may change if object is renamed).
 FSAL API uses persistent, opaque, unique identifier called handles.
-Because a this, FSAL/POSIX use the service of a PostGresQL database to
+Because a this, FSAL/POSIX use the service of an internal persistent database to
 perform "reverse lookup" from handle to filename.</li>
 	<li>FSAL/SNMP:
 information available via SNMP are organized as trees, they constitute

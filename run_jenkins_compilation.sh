@@ -31,7 +31,7 @@ if [[ $FSAL == "PROXY" ]] ; then
 fi
   
 
-REGULAR_OPT="--with-db=PGSQL --with-nfs4-minorversion=1 --enable-nlm --enable-snmp-adm"
+REGULAR_OPT="--with-nfs4-minorversion=1 --enable-nlm --enable-snmp-adm"
 
 ./configure --with-fsal=$FSAL --with-mfsl=$MFSL  $REGULAR_OPT $MORE_OPT $DYNOPT|| exit 1 
 

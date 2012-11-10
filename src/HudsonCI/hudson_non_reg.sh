@@ -12,7 +12,7 @@ make clean && ( make -j 6 || make -j 3 || make )  && \
 ./configure --with-fsal=ZFS  --enable-buildsharedfsal  && \
 make clean && ( make -j 6 || make -j 3 || make )  && \
 
-./configure --with-fsal=POSIX --with-db=PGSQL --enable-buildsharedfsal && \
+./configure --with-fsal=POSIX --enable-buildsharedfsal && \
 make clean && ( make -j 6 || make -j 3 || make )  && \
 
 ./configure --with-fsal=XFS  && \

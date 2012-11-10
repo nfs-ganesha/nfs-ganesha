@@ -46,7 +46,6 @@ CONFIG_ON="
 # --disable-xattr-director
 # --enable-debug-memleakse
 # --enable-debug-nfsshell
-# --enable-pl-pgsql
 # --enable-cache-path
 # --enable-handle-mapping
 # --enable-debug-symbols

@@ -17,15 +17,6 @@ BuildRequires: nfs-utils-lib-devel
 Requires: openssl
 BuildRequires: openssl-devel
 %endif
-%if %{?_with_posix:1}%{!?_with_posix:0}
-%if %{?_with_postgresql:1}%{!?_with_postgresql:0}
-BuildRequires:  postgresql-devel >= 7.1
-BuildRequires:  postgresql-libs >= 7.1
-%else
-BuildRequires:  mysql-devel >= 5.0
-BuildRequires:  mysql-libs >= 5.0
-%endif
-%endif
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
 # we have to be really specific on kernel version
 # because we are packaging a module
@@ -148,12 +139,6 @@ This feature requires a kernel higher than 2.6.39
 %package posix
 Summary: The NFS-GANESHA server compiled for using the POSIX interface
 Group: Applications/System
-%if %{?_with_postgresql:1}%{!?_with_postgresql:0}
-BuildRequires: libattr-devel
-Requires: postgresql >= 7.1  postgresql-server >= 7.1
-%else
-Requires: mysql >= 5.0  mysql-server >= 5.0
-%endif
 Requires: %{name}-common = %{version}-%{release} libattr
 
 %description posix
@@ -324,11 +309,6 @@ install -m 755 nfs-ganesha.@FS_NAME@.init                      $RPM_BUILD_ROOT%{
 install -m 755 nfs-ganesha.@FS_NAME@.sysconfig                 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
 %endif
 
-%if %{?_with_posix:1}%{!?_with_posix:0}
-install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-%endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
 %if %{?_with_fuse:0}%{!?_with_fuse:1}
@@ -542,9 +522,6 @@ rm -rf $RPM_BUILD_ROOT
 #%{_bindir}/posix.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-posix
 %{_sysconfdir}/sysconfig/ganesha
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_mysql5.sql
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql
 %config(noreplace) %{_sysconfdir}/ganesha/posix.ganesha*
 %endif
 
