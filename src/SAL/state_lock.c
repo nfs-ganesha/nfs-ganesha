@@ -60,6 +60,7 @@
 /* Forward declaration */
 state_status_t do_lock_op(cache_entry_t *entry,
                           exportlist_t *export,
+                          struct req_op_context *req_ctx,
                           fsal_lock_op_t lock_op,
                           state_owner_t *owner,
                           fsal_lock_param_t *lock,
@@ -1181,7 +1182,8 @@ static state_status_t subtract_list_from_list(cache_entry_t *entry,
  *
  ******************************************************************************/
 
-static void grant_blocked_locks(cache_entry_t *entry);
+static void grant_blocked_locks(cache_entry_t *entry,
+				struct req_op_context *req_ctx);
 
 /**
  * @brief Display lock cookie in hash table
@@ -1384,6 +1386,7 @@ void free_cookie(state_cookie_entry_t *cookie_entry,
  * @brief Add a grant cookie to a blocked lock
  *
  * @param[in]  entry        File to operate on
+ * @param[in]  req_ctx  Request context
  * @param[in]  cookie       Cookie to add
  * @param[in]  cookie_size  Cookie length
  * @param[in]  lock_entry   Lock entry
@@ -1392,6 +1395,7 @@ void free_cookie(state_cookie_entry_t *cookie_entry,
  * @return State status.
  */
 state_status_t state_add_grant_cookie(cache_entry_t *entry,
+				      struct req_op_context *req_ctx,
                                       void *cookie,
                                       int cookie_size,
                                       state_lock_entry_t *lock_entry,
@@ -1483,6 +1487,7 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
         /* If we get STATE_LOCK_BLOCKED we need to return... */
         status = do_lock_op(entry,
 			    lock_entry->sle_export,
+			    req_ctx,
 			    FSAL_OP_LOCKB,
 			    lock_entry->sle_owner,
 			    &lock_entry->sle_lock,
@@ -1497,6 +1502,7 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
         /* If we get STATE_LOCK_BLOCKED we need to return... */
         status = do_lock_op(entry,
 			    lock_entry->sle_export,
+			    req_ctx,
 			    FSAL_OP_LOCK,
 			    lock_entry->sle_owner,
 			    &lock_entry->sle_lock,
@@ -1546,15 +1552,18 @@ state_status_t state_add_grant_cookie(cache_entry_t *entry,
  * @brief Cancel a lock grant from the FSAL
  *
  * @param[in] cookie_entry Entry for the lock grant
+ * @param[in] req_ctx  Request context
  *
  * @return State status.
  */
-state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry)
+state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry,
+				  struct req_op_context *req_ctx)
 {
   state_status_t status = 0;
   /* We had acquired an FSAL lock, need to release it. */
   status = do_lock_op(cookie_entry->sce_entry,
 		      cookie_entry->sce_lock_entry->sle_export,
+		      req_ctx,
 		      FSAL_OP_UNLOCK,
 		      cookie_entry->sce_lock_entry->sle_owner,
 		      &cookie_entry->sce_lock_entry->sle_lock,
@@ -1630,9 +1639,11 @@ state_status_t state_find_grant(void *cookie,
  * @brief Grant a blocked lock
  *
  * @param[in] entry      File on which to grant it
+ * @param[in] req_ctx  Request context
  * @param[in] lock_entry Lock entry
  */
 void grant_blocked_lock_immediate(cache_entry_t *entry,
+				  struct req_op_context *req_ctx,
                                   state_lock_entry_t *lock_entry)
 {
   state_cookie_entry_t *cookie = NULL;
@@ -1679,7 +1690,7 @@ void grant_blocked_lock_immediate(cache_entry_t *entry,
   LogEntry("Immediate Granted entry", lock_entry);
 
   /* A lock downgrade could unblock blocked locks */
-  grant_blocked_locks(entry);
+  grant_blocked_locks(entry, req_ctx);
 }
 
 /**
@@ -1688,8 +1699,11 @@ void grant_blocked_lock_immediate(cache_entry_t *entry,
  * Do bookkeeping and merge the lock into the lock list.
  *
  * @param[in] cookie_entry Entry describing the grant
+ * @param[in] req_ctx  Request context
  */
-void state_complete_grant(state_cookie_entry_t  *cookie_entry)
+
+void state_complete_grant(state_cookie_entry_t  *cookie_entry,
+			  struct req_op_context *req_ctx)
 {
   state_lock_entry_t   * lock_entry;
   cache_entry_t        * entry;
@@ -1717,7 +1731,7 @@ void state_complete_grant(state_cookie_entry_t  *cookie_entry)
       LogEntry("Granted entry", lock_entry);
 
       /* A lock downgrade could unblock blocked locks */
-      grant_blocked_locks(entry);
+      grant_blocked_locks(entry, req_ctx);
     }
 
   /* Free cookie and unblock lock.
@@ -1737,9 +1751,11 @@ void state_complete_grant(state_cookie_entry_t  *cookie_entry)
  * @brief Attempt to grant a blocked lock
  *
  * @param[in] lock_entry Lock entry to grant
+ * @param[in] req_ctx  Request context
  */
 
-void try_to_grant_lock(state_lock_entry_t *lock_entry)
+void try_to_grant_lock(state_lock_entry_t *lock_entry,
+		       struct req_op_context *req_ctx)
 {
   granted_callback_t     call_back;
   state_blocking_t       blocked;
@@ -1761,6 +1777,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
         lock_entry->sle_block_data->sbd_grant_type = STATE_GRANT_INTERNAL;
 
       status = call_back(lock_entry->sle_entry,
+			 req_ctx,
 			 lock_entry);
       if(status == STATE_LOCK_BLOCKED)
         {
@@ -1784,9 +1801,11 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
  * @brief Routine to be called from the FSAL upcall handler
  *
  * @param[in] block_data Data describing blocked lock
+ * @param[in] req_ctx  Request context
  */
 
-void process_blocked_lock_upcall(state_block_data_t *block_data)
+void process_blocked_lock_upcall(state_block_data_t *block_data,
+				 struct req_op_context *req_ctx)
 {
   state_lock_entry_t * lock_entry = block_data->sbd_lock_entry;
   cache_entry_t      * entry = lock_entry->sle_entry;
@@ -1798,7 +1817,7 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 
   pthread_rwlock_wrlock(&entry->state_lock);
 
-  try_to_grant_lock(lock_entry);
+  try_to_grant_lock(lock_entry, req_ctx);
 
   /* In case all locks have wound up free, we must release the pin reference. */
   if(glist_empty(&entry->object.file.lock_list))
@@ -1811,9 +1830,11 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
  * @brief Attempt to grant all blocked locks on a file
  *
  * @param[in] entry Cache entry for the file
+ * @param[in] req_ctx  Request context
  */
 
-static void grant_blocked_locks(cache_entry_t *entry)
+static void grant_blocked_locks(cache_entry_t *entry,
+				struct req_op_context *req_ctx)
 {
   state_lock_entry_t   * found_entry;
   struct glist_head    * glist, * glistn;
@@ -1838,7 +1859,7 @@ static void grant_blocked_locks(cache_entry_t *entry)
         continue;
 
       /* Found an entry that might work, try to grant it. */
-      try_to_grant_lock(found_entry);
+      try_to_grant_lock(found_entry, req_ctx);
     }
 }
 
@@ -1846,11 +1867,13 @@ static void grant_blocked_locks(cache_entry_t *entry)
  * @brief Cancel a blocked lock
  *
  * @param[in] entry      File on which to cancel the lock
+ * @param[in] req_ctx  Request context
  * @param[in] lock_entry Lock to cancel
  *
  * @return State status.
  */
 state_status_t cancel_blocked_lock(cache_entry_t *entry,
+				   struct req_op_context *req_ctx,
                                    state_lock_entry_t *lock_entry)
 {
   state_cookie_entry_t *cookie = NULL;
@@ -1898,6 +1921,7 @@ state_status_t cancel_blocked_lock(cache_entry_t *entry,
        */
       state_status = do_lock_op(entry,
                                 lock_entry->sle_export,
+				req_ctx,
                                 FSAL_OP_CANCEL,
                                 lock_entry->sle_owner,
                                 &lock_entry->sle_lock,
@@ -1942,11 +1966,13 @@ state_status_t cancel_blocked_lock(cache_entry_t *entry,
  * retry the remainder lock that should have still been blocking.
  *
  * @param[in,out] entry File on which to operate
+ * @param[in]     req_ctx  Request context
  * @param[in]     owner The state owner for the lock
  * @param[in]     state Associated state
  * @param[in]     lock  Lock description
  */
 void cancel_blocked_locks_range(cache_entry_t *entry,
+				struct req_op_context *req_ctx,
                                 state_owner_t *owner,
                                 state_t *state,
                                 fsal_lock_param_t *lock)
@@ -1984,7 +2010,7 @@ void cancel_blocked_locks_range(cache_entry_t *entry,
          (found_entry->sle_lock.lock_start <= range_end))
         {
           /* lock overlaps, cancel it. */
-          (void) cancel_blocked_lock(entry, found_entry);
+		(void) cancel_blocked_lock(entry, req_ctx, found_entry);
         }
     }
 }
@@ -1993,10 +2019,12 @@ void cancel_blocked_locks_range(cache_entry_t *entry,
  * @brief Release a lock grant
  *
  * @param[in] cookie_entry Grant entry
+ * @param[in] req_ctx  Request context
  *
  * @return State status.
  */
-state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
+state_status_t state_release_grant(state_cookie_entry_t *cookie_entry,
+				   struct req_op_context *req_ctx)
 {
   state_lock_entry_t * lock_entry;
   cache_entry_t * entry;
@@ -2030,6 +2058,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
       /* We had acquired an FSAL lock, need to release it. */
       status = do_lock_op(entry,
 			  lock_entry->sle_export,
+			  req_ctx,
 			  FSAL_OP_UNLOCK,
 			  lock_entry->sle_owner,
 			  &lock_entry->sle_lock,
@@ -2051,7 +2080,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
   free_cookie(cookie_entry, true);
 
   /* Check to see if we can grant any blocked locks. */
-  grant_blocked_locks(entry);
+  grant_blocked_locks(entry, req_ctx);
 
   /* In case all locks have wound up free, we must release the pin reference. */
   if(glist_empty(&entry->object.file.lock_list))
@@ -2109,11 +2138,13 @@ inline const char *fsal_lock_op_str(fsal_lock_op_t op)
  *
  * @param[in] entry    File on which to operate
  * @param[in] export   Export through which the file is accessed
+ * @param[in] req_ctx  Request context
  * @param[in] lock     Lock descriptor
  * @param[in] sle_type Lock type
  */
 state_status_t do_unlock_no_owner(cache_entry_t *entry,
                                   exportlist_t *export,
+				  struct req_op_context *req_ctx,
                                   fsal_lock_param_t *lock,
                                   lock_type_t sle_type)
 {
@@ -2164,6 +2195,7 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
       LogEntry("FSAL Unlock", found_entry);
 
       fsal_status = entry->obj_handle->ops->lock_op(entry->obj_handle,
+						    req_ctx,
 						    NULL,
 						    FSAL_OP_UNLOCK,
 						    punlock,
@@ -2198,6 +2230,7 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
  *
  * @param[in]  entry    File on which to operate
  * @param[in]  export   Export holding file
+ * @param[in]  req_ctx  Request context
  * @param[in]  lock_op  Operation to perform
  * @param[in]  owner    Lock operation
  * @param[in]  lock     Lock description
@@ -2210,6 +2243,7 @@ state_status_t do_unlock_no_owner(cache_entry_t *entry,
  */
 state_status_t do_lock_op(cache_entry_t *entry,
                           exportlist_t *export,
+                          struct req_op_context *req_ctx,
                           fsal_lock_op_t lock_op,
                           state_owner_t *owner,
                           fsal_lock_param_t *lock,
@@ -2254,6 +2288,7 @@ state_status_t do_lock_op(cache_entry_t *entry,
         lock_op = FSAL_OP_LOCK;
 
       fsal_status = entry->obj_handle->ops->lock_op(entry->obj_handle,
+						    req_ctx,
 						    fsal_export->ops
 						    ->fs_supports(fsal_export,
 								  fso_lock_support_owner) ?
@@ -2281,7 +2316,7 @@ state_status_t do_lock_op(cache_entry_t *entry,
 #ifdef _USE_9P
       if( owner->so_type != STATE_LOCK_OWNER_9P )
 #endif /* _USE_9P */
-        status = do_unlock_no_owner(entry, export, lock, sle_type);
+	  status = do_unlock_no_owner(entry, export, req_ctx, lock, sle_type);
     }
 
   if(status == STATE_LOCK_CONFLICT)
@@ -2401,6 +2436,7 @@ state_status_t state_test(cache_entry_t *entry,
       /* Prepare to make call to FSAL for this lock */
       status = do_lock_op(entry,
 			  export,
+			  req_ctx,
 			  FSAL_OP_LOCKT,
 			  owner,
 			  lock,
@@ -2629,6 +2665,7 @@ state_status_t state_lock(cache_entry_t *entry,
                    * that will be just fine.
                    */
                   grant_blocked_lock_immediate(entry,
+					       req_ctx,
                                                found_entry);
                 }
 
@@ -2750,6 +2787,7 @@ state_status_t state_lock(cache_entry_t *entry,
       /* Prepare to make call to FSAL for this lock */
       status = do_lock_op(entry,
 			  export,
+			  req_ctx,
 			  lock_op,
 			  owner,
 			  lock,
@@ -2780,7 +2818,7 @@ state_status_t state_lock(cache_entry_t *entry,
       glist_add_tail(&entry->object.file.lock_list, &found_entry->sle_list);
 
       /* A lock downgrade could unblock blocked locks */
-      grant_blocked_locks(entry);
+      grant_blocked_locks(entry, req_ctx);
       /* Don't need to unpin, we know there is state on file. */
     }
   else if(status == STATE_LOCK_CONFLICT)
@@ -2842,6 +2880,7 @@ state_status_t state_lock(cache_entry_t *entry,
  *
  * @param[in] entry    File to unlock
  * @param[in] export   Export through which file is accessed
+ * @param[in] req_ctx  Request context
  * @param[in] owner    Owner of lock
  * @param[in] state    Associated state
  * @param[in] lock     Lock description
@@ -2849,6 +2888,7 @@ state_status_t state_lock(cache_entry_t *entry,
  */
 state_status_t state_unlock(cache_entry_t *entry,
                             exportlist_t *export,
+			    struct req_op_context *req_ctx,
                             state_owner_t *owner,
                             state_t *state,
                             fsal_lock_param_t *lock,
@@ -2907,6 +2947,7 @@ state_status_t state_unlock(cache_entry_t *entry,
 
   /* First cancel any blocking locks that might overlap the unlocked range. */
   cancel_blocked_locks_range(entry,
+			     req_ctx,
                              owner,
                              state,
                              lock);
@@ -2946,6 +2987,7 @@ state_status_t state_unlock(cache_entry_t *entry,
    */
   status = do_lock_op(entry,
 		      export,
+		      req_ctx,
 		      FSAL_OP_UNLOCK,
 		      owner,
 		      lock,
@@ -2971,7 +3013,7 @@ state_status_t state_unlock(cache_entry_t *entry,
      lock->lock_start == 0 && lock->lock_length == 0)
     empty = LogList("Lock List", entry, &entry->object.file.lock_list);
 
-  grant_blocked_locks(entry);
+  grant_blocked_locks(entry, req_ctx);
 
   pthread_rwlock_unlock(&entry->state_lock);
 
@@ -2991,6 +3033,7 @@ state_status_t state_unlock(cache_entry_t *entry,
  *
  * @param[in] entry  File on which to cancel the lock
  * @param[in] export Export through which we access the file
+ * @param[in] req_ctx  Request context
  * @param[in] owner  Lock owner
  * @param[in] lock   Lock description
  *
@@ -2998,6 +3041,7 @@ state_status_t state_unlock(cache_entry_t *entry,
  */
 state_status_t state_cancel(cache_entry_t *entry,
                             exportlist_t *export,
+			    struct req_op_context *req_ctx,
                             state_owner_t *owner,
                             fsal_lock_param_t *lock)
 {
@@ -3057,10 +3101,10 @@ state_status_t state_cancel(cache_entry_t *entry,
         continue;
 
       /* Cancel the blocked lock */
-      status = cancel_blocked_lock(entry, found_entry);
+      status = cancel_blocked_lock(entry, req_ctx, found_entry);
 
       /* Check to see if we can grant any blocked locks. */
-      grant_blocked_locks(entry);
+      grant_blocked_locks(entry, req_ctx);
 
       break;
     }
@@ -3082,13 +3126,13 @@ state_status_t state_cancel(cache_entry_t *entry,
  * Also used to handle NLM_FREE_ALL
  *
  * @param[in] nsmclien NSM client data
- * @param[in] creds    Credentials
+ * @param[in] req_ctx  Request context
  * @param[in] state    Associated state
  *
  * @return State status.
  */
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
-                                struct user_cred *creds,
+				struct req_op_context *req_ctx,
                                 state_t *state)
 {
   state_owner_t *owner;
@@ -3175,6 +3219,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
       /* Remove all locks held by this NLM Client on the file */
       status = state_unlock(entry,
 			    export,
+			    req_ctx,
 			    owner,
 			    state,
 			    &lock,
@@ -3263,11 +3308,13 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
  * @brief Release all locks held by a lock owner
  *
  * @param[in] owner Lock owner
+ * @param[in] req_ctx  Request context
  * @param[in] state Associated state
  *
  * @return State status.
  */
 state_status_t state_owner_unlock_all(state_owner_t *owner,
+				      struct req_op_context *req_ctx,
                                       state_t *state)
 {
   state_lock_entry_t *found_entry;
@@ -3325,6 +3372,7 @@ state_status_t state_owner_unlock_all(state_owner_t *owner,
       /* Remove all locks held by this owner on the file */
       status = state_unlock(entry,
 			    export,
+			    req_ctx,
 			    owner,
 			    state,
 			    &lock,

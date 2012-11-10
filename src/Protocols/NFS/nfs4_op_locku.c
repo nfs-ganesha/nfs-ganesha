@@ -180,6 +180,7 @@ int nfs4_op_locku(struct nfs_argop4 *op,
            unlock into SAL (and FSAL). */
         state_status = state_unlock(data->current_entry,
 				    data->pexport,
+				    data->req_ctx,
 				    lock_owner,
 				    state_found,
 				    &lock_desc,

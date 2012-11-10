@@ -214,7 +214,8 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid);
 clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 					log_components_t component);
 
-bool nfs_client_id_expire(nfs_client_id_t *clientid);
+bool nfs_client_id_expire(nfs_client_id_t *clientid,
+			  struct req_op_context *req_ctx);
 
 clientid4 new_clientid(void);
 void new_clientifd_verifier(char *verf);
@@ -438,6 +439,7 @@ void LogLock(log_components_t component,
 void dump_all_locks(const char *label);
 
 state_status_t state_add_grant_cookie(cache_entry_t *entry,
+				      struct req_op_context *req_ctx,
                                       void *cookie,
                                       int cookie_size,
                                       state_lock_entry_t *lock_entry,
@@ -447,11 +449,14 @@ state_status_t state_find_grant(void *cookie,
                                 int cookie_size,
                                 state_cookie_entry_t **cookie_entry);
 
-void state_complete_grant(state_cookie_entry_t *cookie_entry);
+void state_complete_grant(state_cookie_entry_t *cookie_entry,
+			  struct req_op_context *req_ctx);
 
-state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry);
+state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry,
+				  struct req_op_context *req_ctx);
 
-state_status_t state_release_grant(state_cookie_entry_t *cookie_entry);
+state_status_t state_release_grant(state_cookie_entry_t *cookie_entry,
+				   struct req_op_context *req_ctx);
 state_status_t state_test(cache_entry_t *entry,
                           exportlist_t  *export,
                           struct req_op_context *req_ctx,
@@ -474,6 +479,7 @@ state_status_t state_lock(cache_entry_t *entry,
 
 state_status_t state_unlock(cache_entry_t *entry,
                             exportlist_t *export,
+			    struct req_op_context *req_ctx,
                             state_owner_t *owner,
                             state_t *state,
                             fsal_lock_param_t *lock,
@@ -481,14 +487,16 @@ state_status_t state_unlock(cache_entry_t *entry,
 
 state_status_t state_cancel(cache_entry_t *entry,
                             exportlist_t *export,
+			    struct req_op_context *req_ctx,
                             state_owner_t *owner,
                             fsal_lock_param_t *lock);
 
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
-                                struct user_cred *creds,
+				struct req_op_context *req_ctx,
                                 state_t *state);
 
 state_status_t state_owner_unlock_all(state_owner_t *owner,
+				      struct req_op_context *req_ctx,
                                       state_t *state);
 
 void state_lock_wipe(cache_entry_t *entry);
@@ -626,7 +634,8 @@ void available_blocked_lock_upcall(cache_entry_t *entry,
                                    void *owner,
                                    fsal_lock_param_t *lock);
 
-void process_blocked_lock_upcall(state_block_data_t *block_data);
+void process_blocked_lock_upcall(state_block_data_t *block_data,
+				 struct req_op_context *req_ctx);
 
 /******************************************************************************
  *

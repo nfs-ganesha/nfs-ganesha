@@ -83,6 +83,7 @@ void *state_async_thread(void *UnusedArg)
   struct timeval        now;
   struct timespec       timeout;
   state_block_data_t  * pblock;
+  struct req_op_context req_ctx;
 
   SetNameFunction("state_async_thread");
 
@@ -157,7 +158,11 @@ void *state_async_thread(void *UnusedArg)
           /* Block is off list, no need to hold mutex any more */
           V(blocked_locks_mutex);
 
-          process_blocked_lock_upcall(pblock);
+/** @TODO@ this is obviously wrong.  we need to fill in the context
+ *  from somewhere!
+ */
+	  memset(&req_ctx, 0, sizeof(req_ctx));
+          process_blocked_lock_upcall(pblock, &req_ctx);
 
           continue;
         }
@@ -179,7 +184,7 @@ void *state_async_thread(void *UnusedArg)
           V(state_async_tcb.tcb_mutex);
 
           /* Process async queue entry */
-          entry->state_async_func(entry);
+          entry->state_async_func(entry, &req_ctx);
 
           continue;
         }

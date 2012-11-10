@@ -117,6 +117,7 @@ int nlm4_Cancel(nfs_arg_t *parg,
 
   state_status = state_cancel(pentry,
 			      pexport,
+			      req_ctx,
 			      nlm_owner,
 			      &lock);
   if (state_status != STATE_SUCCESS)
@@ -143,7 +144,8 @@ int nlm4_Cancel(nfs_arg_t *parg,
   return NFS_REQ_OK;
 }                               /* nlm4_Cancel */
 
-static void nlm4_cancel_message_resp(state_async_queue_t *arg)
+static void nlm4_cancel_message_resp(state_async_queue_t *arg,
+				     struct req_op_context *req_ctx)
 {
   state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
 

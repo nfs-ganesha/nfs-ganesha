@@ -179,7 +179,8 @@ void free_grant_arg(state_async_queue_t *arg)
  *
  * This runs in the nlm_asyn_thread context.
  */
-static void nlm4_send_grant_msg(state_async_queue_t *arg)
+static void nlm4_send_grant_msg(state_async_queue_t *arg,
+				struct req_op_context *req_ctx)
 {
   int                      retval;
   char                     buffer[1024];
@@ -249,7 +250,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
   pthread_rwlock_unlock(&cookie_entry->sce_entry->state_lock);
 
-  state_status = state_release_grant(cookie_entry);
+  state_status = state_release_grant(cookie_entry, req_ctx);
   if(state_status != STATE_SUCCESS)
     {
       /* Huh? */
@@ -602,6 +603,7 @@ bool nlm_block_data_to_export(state_block_data_t * block_data,
 }
 
 state_status_t nlm_granted_callback(cache_entry_t *pentry,
+				    struct req_op_context *req_ctx,
                                     state_lock_entry_t *lock_entry)
 {
   state_block_data_t     * block_data     = lock_entry->sle_block_data;
@@ -643,6 +645,7 @@ state_status_t nlm_granted_callback(cache_entry_t *pentry,
    * Could return STATE_LOCK_BLOCKED because FSAL would have had to block.
    */
   state_status = state_add_grant_cookie(pentry,
+					req_ctx,
 					&nlm_grant_cookie,
 					sizeof(nlm_grant_cookie),
 					lock_entry,
@@ -716,7 +719,7 @@ grant_fail_malloc:
 
   /* Cancel the pending grant to release the cookie */
 
-  state_status_int = state_cancel_grant(cookie_entry);
+  state_status_int = state_cancel_grant(cookie_entry, req_ctx);
   if(state_status_int != STATE_SUCCESS)
     {
       /* Not much we can do other than log that something bad happened. */

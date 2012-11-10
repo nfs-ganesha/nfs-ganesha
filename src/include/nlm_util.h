@@ -84,6 +84,7 @@ void nlm_process_conflict(nlm4_holder          * nlm_holder,
 nlm4_stats nlm_convert_state_error(state_status_t status);
 
 state_status_t nlm_granted_callback(cache_entry_t      * pentry,
+				    struct req_op_context *req_ctx,
                                     state_lock_entry_t * lock_entry);
 
 #endif                          /* _NLM_UTIL_H */

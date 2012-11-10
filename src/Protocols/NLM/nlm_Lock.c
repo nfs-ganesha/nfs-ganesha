@@ -176,7 +176,8 @@ int nlm4_Lock(nfs_arg_t            * parg,
   return NFS_REQ_OK;
 }
 
-static void nlm4_lock_message_resp(state_async_queue_t *arg)
+static void nlm4_lock_message_resp(state_async_queue_t *arg,
+				   struct req_op_context *req_ctx)
 {
   state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
 

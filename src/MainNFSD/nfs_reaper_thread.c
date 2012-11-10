@@ -53,6 +53,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
   nfs_client_id_t     * pclientid;
   nfs_client_record_t * precord;
   int                   count = 0;
+  struct req_op_context req_ctx;
 
   /* For each bucket of the requested hashtable */
   for(i = 0; i < ht_reap->parameter.index_size; i++)
@@ -104,8 +105,11 @@ static int reap_hash_table(hash_table_t * ht_reap)
 
               /* Take cr_mutex and expire clientid */
               P(precord->cr_mutex);
-
-              rc = nfs_client_id_expire(pclientid);
+/* @TODO@ This is incomplete! the context has to be filled in 
+ * from somewhere
+ */
+	      memset(&req_ctx, 0, sizeof(req_ctx));
+              rc = nfs_client_id_expire(pclientid, &req_ctx);
 
               V(precord->cr_mutex);
 

@@ -652,6 +652,7 @@ typedef enum state_blocking_t {
  * the lock entry if needed.
  */
 typedef state_status_t (*granted_callback_t)(cache_entry_t *entry,
+					     struct req_op_context *req_ctx,
 					     state_lock_entry_t *lock_entry);
 
 /**
@@ -824,7 +825,8 @@ struct state_cookie_entry_t {
 /**
  * @brief Asynchronous state function
  */
-typedef void (state_async_func_t) (state_async_queue_t *arg);
+typedef void (state_async_func_t) (state_async_queue_t *arg,
+				   struct req_op_context *req_ctx);
 
 /**
  * @brief Data for asynchronous NLM calls

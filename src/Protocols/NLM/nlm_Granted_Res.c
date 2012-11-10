@@ -101,7 +101,7 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
     {
       LogMajor(COMPONENT_NLM,
                "Granted call failed due to client error, releasing lock");
-      state_status = state_release_grant(cookie_entry);
+      state_status = state_release_grant(cookie_entry, req_ctx);
       if(state_status != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_NLM,
@@ -110,7 +110,7 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
     }
   else
     {
-      state_complete_grant(cookie_entry);
+      state_complete_grant(cookie_entry, req_ctx);
       nlm_signal_async_resp(cookie_entry);
     }
 

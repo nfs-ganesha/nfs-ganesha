@@ -76,7 +76,7 @@ int nlm4_Free_All(nfs_arg_t *parg,
        * by this NLM_FREE_ALL.
        */
       state_status = state_nlm_notify(nsm_client,
-				      req_ctx->creds,
+				      req_ctx,
 				      (void *) (ptrdiff_t) arg->state);
       if(state_status != STATE_SUCCESS)
         {

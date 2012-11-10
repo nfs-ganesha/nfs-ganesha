@@ -200,6 +200,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
    */
   state_status = state_unlock(data->current_entry,
 			      data->pexport,
+			      data->req_ctx,
 			      plock_owner,
 			      pstate_found,
 			      &lock_desc,

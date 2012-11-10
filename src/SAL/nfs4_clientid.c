@@ -686,10 +686,12 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
  * reference to record also.
  *
  * @param[in] clientid The client id to expire
+ * @param[in] req_ctx  Request context
  *
  * @return true if the clientid is successfully expired.
  */
-bool nfs_client_id_expire(nfs_client_id_t *clientid)
+bool nfs_client_id_expire(nfs_client_id_t *clientid,
+			  struct req_op_context *req_ctx)
 {
 	struct glist_head *glist, *glistn;
 	struct glist_head *glist2, *glistn2;
@@ -773,6 +775,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid)
 							   state_owner_list);
 
 			state_owner_unlock_all(plock_owner,
+					       req_ctx,
 					       plock_state);
 		}
 	}

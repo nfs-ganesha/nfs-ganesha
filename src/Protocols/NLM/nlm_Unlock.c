@@ -116,6 +116,7 @@ int nlm4_Unlock(nfs_arg_t *parg,
 
   state_status = state_unlock(pentry,
 			      pexport,
+			      req_ctx,
 			      nlm_owner,
 			      NULL,
 			      &lock,
@@ -144,7 +145,8 @@ int nlm4_Unlock(nfs_arg_t *parg,
   return NFS_REQ_OK;
 }
 
-static void nlm4_unlock_message_resp(state_async_queue_t *arg)
+static void nlm4_unlock_message_resp(state_async_queue_t *arg,
+				     struct req_op_context *req_ctx)
 {
   state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
 
