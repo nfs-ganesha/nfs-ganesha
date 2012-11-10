@@ -16,14 +16,15 @@ This is an explanation of how to build; and what you need before you
 build.  I put this together from trial and error.  If the core
 developers could update this file please.
 
-
-1. You seem to need the package krb5-1.10.2.  Compile and install as per
+1. You need the package libgssglue-0.1.  Compile and install as per
 its own instructions.  I use --prefix=/opt/nfs-ganesha to install
 everything under /opt/ and allow for a clean removal.
 
+1.1 You seem to need the package krb5-1.10.2.  Compile and install as
+per step 1 with --prefix=/opt/nfs-ganesha
+
 2. You seem to need the package libnfsidmap-0.25.  Compile and install
-as per its own instructions.  I use --prefix=/opt/nfs-ganesha to install
-everything under /opt/ and allow for a clean removal.
+as per step 1 with --prefix=/opt/nfs-ganesha
 
 3. Are there other dependencies?
 
