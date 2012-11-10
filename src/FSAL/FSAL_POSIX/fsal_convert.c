@@ -248,9 +248,9 @@ int fsal2posix_openflags (fsal_openflags_t fsal_flags, int *p_posix_flags)
 
     if ((fsal_flags & FSAL_O_RDWR) == FSAL_O_RDWR)
         *p_posix_flags |= O_RDWR;
-    else ((fsal_flags & FSAL_O_RDWR) == FSAL_O_READ)
+    else if ((fsal_flags & FSAL_O_RDWR) == FSAL_O_READ)
         *p_posix_flags |= O_RDONLY;
-    else ((fsal_flags & FSAL_O_RDWR) == FSAL_O_WRITE)
+    else if ((fsal_flags & FSAL_O_RDWR) == FSAL_O_WRITE)
         *p_posix_flags |= O_WRONLY;
 
     if (fsal_flags & FSAL_O_SYNC)

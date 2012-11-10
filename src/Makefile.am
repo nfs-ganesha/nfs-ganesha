@@ -76,7 +76,6 @@ if USE_FSAL_ZFS
 endif
 endif
 endif
-endif
 
 deb: prepare-deb-control
 	cd pkg-deb/nfs-ganesha-@PACKAGE_VERSION@ ; \
