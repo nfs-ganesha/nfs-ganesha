@@ -58,7 +58,10 @@
 #define DUPREQ_BAD_ADDR1 0x01 /* safe for marked pointers, etc */
 #define DUPREQ_NOCACHE   0x02
 
-pool_t *dupreq_pool;
+/* pool_t *dupreq_pool;   Commented out:  There is already a dupreq_pool defined in nfs_worker_thread.c
+                                          Are these the same? Or is this a symbol clash? In either
+                                          case I can't link unless we remove one, else I get a
+                                          'duplicate symbol' error. */
 pool_t *nfs_res_pool;
 pool_t *tcp_drc_pool; /* pool of per-connection DRC objects */
 
