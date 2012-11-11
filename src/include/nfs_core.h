@@ -307,6 +307,7 @@ typedef struct nfs_version4_parameter__ {
 	unsigned int return_bad_stateid;
 	char domainname[NFS4_MAX_DOMAIN_LEN];
 	char idmapconf[MAXPATHLEN];
+	bool use_getpwnam;
 } nfs_version4_parameter_t;
 
 typedef struct nfs_param__ {

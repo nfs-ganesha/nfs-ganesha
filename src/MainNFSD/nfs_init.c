@@ -142,6 +142,11 @@ nfs_parameter_t nfs_param =
   .nfsv4_param.return_bad_stateid = true,
   .nfsv4_param.domainname = DEFAULT_DOMAIN,
   .nfsv4_param.idmapconf = DEFAULT_IDMAPCONF,
+#ifdef _USE_NFSIDMAP
+  .nfsv4_param.use_getpwnam = false,
+#else
+  .nfsv4_param.use_getpwnam = true,
+#endif
 
   /*  Worker parameters : IP/name hash table */
   .ip_name_param.hash_param.index_size = PRIME_IP_NAME,

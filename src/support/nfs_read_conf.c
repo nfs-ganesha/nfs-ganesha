@@ -1207,6 +1207,18 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
         {
           strncpy(pparam->idmapconf, key_value, MAXPATHLEN);
         }
+      else if(!strcasecmp(key_name, "UseGetpwnam"))
+        {
+          pparam->use_getpwnam = StrToBoolean(key_value);
+#ifndef _USE_NFSIDMAP
+          if (!pparam->use_getpwnam)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFSv4 :: UseGetpwnam must be TRUE if you compiled without libnfsidmap");
+              return -1;
+            }
+#endif
+        }
       else if(!strcasecmp(key_name, "FH_Expire"))
         {
           pparam->fh_expire = StrToBoolean(key_value);
