@@ -674,7 +674,7 @@ lru_thread(void *arg __attribute__((unused)))
           }
 
           LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                       "%zu entries in cache.",
+                       "there are %"PRIu64" entries in cache.",
                        t_count);
 
           if (tmpflags & LRU_STATE_RECLAIMING) {
@@ -873,8 +873,8 @@ lru_thread(void *arg __attribute__((unused)))
           }
 
           LogDebug(COMPONENT_CACHE_INODE_LRU,
-                  "open_fd_count: %zd  t_count:%"PRIu64"\n",
-                  open_fd_count, t_count);
+                  "open_fd_count: %"PRIu64"  t_count:%"PRIu64"\n",
+                  (uint64_t) open_fd_count, t_count);
 
           woke = lru_thread_delay_ms(lru_state.threadwait);
      }
@@ -932,9 +932,9 @@ cache_inode_lru_pkginit(void)
                   if setrlimit fails. */
                rlim_t old_soft = rlim.rlim_cur;
                LogInfo(COMPONENT_CACHE_INODE_LRU,
-                       "Attempting to increase soft limit from %jd "
-                       "to hard limit of %jd",
-                       rlim.rlim_cur, rlim.rlim_max);
+                       "Attempting to increase soft limit from %"PRIu64" "
+                       "to hard limit of %"PRIu64"",
+                       (uint64_t) rlim.rlim_cur, (uint64_t) rlim.rlim_max);
                rlim.rlim_cur = rlim.rlim_max;
                if (setrlimit(RLIMIT_NOFILE, &rlim) < 0) {
                     code = errno;

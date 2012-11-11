@@ -36,8 +36,8 @@
  */
 void display_fsinfo(struct fsal_staticfsinfo_t *info) {
 	LogDebug(COMPONENT_FSAL, "FileSystem info: {");
-	LogDebug(COMPONENT_FSAL, "  maxfilesize  = %zX    ",
-		 info->maxfilesize);
+	LogDebug(COMPONENT_FSAL, "  maxfilesize  = %"PRIX64"    ",
+		 (uint64_t) info->maxfilesize);
         LogDebug(COMPONENT_FSAL, "  maxlink  = %"PRIu32,
 		 info->maxlink);
 	LogDebug(COMPONENT_FSAL, "  maxnamelen  = %"PRIu32,
