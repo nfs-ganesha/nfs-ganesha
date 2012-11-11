@@ -36,10 +36,10 @@ Debian-base distros.
 5. Because the "configure" and "autoconf" tools are broken and
 unworkable, you need this before you continue:
 
-    export PATH=/opt/nfs-ganesha/bin/:$PATH
+    export CC='gcc -m64'
+    export PATH=.:/opt/nfs-ganesha/bin/:$PATH
     export PKG_CONFIG_PATH=/opt/nfs-ganesha/lib/pkgconfig/
     export LDFLAGS=-L/opt/nfs-ganesha/lib/
-
 
 6. From here on src/ is assumed to be your working directory, such
 that the directory MainNFSD/ is visible.

@@ -52,11 +52,8 @@
 #include <pwd.h>
 #include <grp.h>
 
-#ifdef _APPLE
-#define strnlen( s, l ) strlen( s )
-#else
-size_t strnlen(const char *s, size_t maxlen);
-#endif
+#include "common_utils.h"
+
 
 /* Hashtable used to cache the hostname, accessed by their IP addess */
 hash_table_t *ht_pwnam;

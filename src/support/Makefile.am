@@ -30,6 +30,8 @@ libsupport_la_SOURCES = nfs4_acls.c                         \
                          generic_weakref.c                  \
                          bsd-base64.c                       \
                          strlcat.c                          \
+                         strnlen.c                          \
+                         misc.c                             \
                          strlcpy.c
 
 libsupport_la_LIBADD = ../cidr/libcidr.la

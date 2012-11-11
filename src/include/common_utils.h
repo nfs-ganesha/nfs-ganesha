@@ -13,6 +13,12 @@
 
 #include <sys/types.h>          /* for caddr_t */
 
+/* Most machines scandir callback requires a const. But not all */
+#define SCANDIR_CONST           const
+
+/* Most machines have mntent.h. */
+#define HAVE_MNTENT_H           1
+
 /**
  * This function converts a string to an integer.
  *
@@ -100,6 +106,20 @@ extern size_t strlcat(char *dst, const char *src, size_t siz);
 
 #ifndef HAVE_STRLCPY
 extern size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif
+
+#ifndef HAVE_STRNLEN
+#define strnlen(a,b)            gsh_strnlen(a,b)
+extern size_t gsh_strnlen(const char *s, size_t max);   /* prefix with gsh_ to prevent library conflict -- will fix properly with new build system */
+#endif
+
+#if defined(__APPLE__)
+#  define clock_gettime(a,ts)     portable_clock_gettime(ts)
+extern int portable_clock_gettime(struct timespec *ts);
+#  define pthread_yield()         pthread_yield_np()
+#  undef SCANDIR_CONST
+#  define SCANDIR_CONST           
+#  undef HAVE_MNTENT_H
 #endif
 
 /* My habit with mutex */
