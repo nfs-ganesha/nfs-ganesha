@@ -5,6 +5,10 @@
 
 #include <rpc/auth_gss.h>
 
+#ifndef EKEYEXPIRED
+#define EKEYEXPIRED             ETIMEDOUT
+#endif
+
 /*
  * List of principals from our keytab that we
  * will try to use to obtain credentials
