@@ -126,8 +126,13 @@
 #define CONF_LABEL_IP_NAME_HOSTS "Hosts"
 #define CONF_LABEL_NFSV4_REFERRALS  "NFSv4_Referrals"
 
-/* Worker and sidpatcher stack size */
-#define THREAD_STACK_SIZE  2116488
+/*
+ * Worker and sidpatcher stack size. This needs to be a multiple of
+ * the page size on some systems. This was previously set to a value
+ * of 2116488. No idea where this number came from, so I'm setting
+ * this to a slightly larger *round* number of 2129920 = 65 * 32768.
+ */
+#define THREAD_STACK_SIZE  (65 * 32768)
 
 /* NFS/RPC specific values */
 #define NFS_PORT 2049
