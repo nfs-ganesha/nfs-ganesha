@@ -132,31 +132,39 @@ static int listen_bind_socket (const char *address)
 
 static int connect_socket (const char *address)
 {
-    struct sockaddr_in a;
-    int s, yes = 1;
     long delay;
-
-    if ((s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
-        return -1;
-
-    setsockopt (s, SOL_TCP, TCP_NODELAY, &yes, sizeof (int));
-
-    memset (&a, '\0', sizeof (s));
-    a.sin_addr.s_addr = inet_addr (address);
-    a.sin_port = htons (MARSHALLER_PORT);
-    a.sin_family = AF_INET;
 
 /* retry for 2 seconds to connect. this is in case the daemon process is
 taking it's time to come alive: */
+
     for (delay = 1000; delay < 1000000; delay = delay * 5 / 3) {
-        int c;
+        int c, s;
+        struct sockaddr_in a;
+
+        if ((s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+            return -1;
+
+        memset (&a, '\0', sizeof (s));
+        a.sin_addr.s_addr = inet_addr (address);
+        a.sin_port = htons (MARSHALLER_PORT);
+        a.sin_family = AF_INET;
+
         c = connect (s, (struct sockaddr *) &a, sizeof (a));
-        if (!c)
+        if (!c) {
+            int yes = 1;
+            setsockopt (s, SOL_TCP, TCP_NODELAY, &yes, sizeof (int));
             return s;
+        }
+
+        close (s);      /* we close the socket -- MacOS does not support reconnecting */
+        s = -1;
+
         if (errno != ECONNREFUSED)
             break;
-        usleep(delay);
+
+        usleep (delay);
     }
+
     return -1;
 }
 
