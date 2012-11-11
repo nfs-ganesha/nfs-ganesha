@@ -85,7 +85,7 @@ bool __xdrrec_getrec(XDR *, enum xprt_stat *, bool);
 void __Xprt_unregister_unlocked(SVCXPRT *);
 
 SVCXPRT **__svc_xports;
-int __svc_maxrec;
+extern int __svc_maxrec;
 
 __END_DECLS
 #endif                          /* _TIRPC_RPCCOM_H */
