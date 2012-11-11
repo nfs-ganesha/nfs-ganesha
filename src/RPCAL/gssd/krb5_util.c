@@ -126,6 +126,7 @@
 #include "err_util.h"
 #include "gss_util.h"
 #include "krb5_util.h"
+#include "common_utils.h"
 
 pthread_mutex_t ple_mtx = PTHREAD_MUTEX_INITIALIZER;
 
@@ -136,7 +137,7 @@ struct gssd_k5_kt_princ *gssd_k5_kt_princ_list = NULL;
 /*===  Internal routines ===*/
 /*==========================*/
 
-static int select_krb5_ccache(const struct dirent *d);
+static int select_krb5_ccache(SCANDIR_CONST struct dirent *d);
 static int gssd_find_existing_krb5_ccache(uid_t uid, char *dirname,
 		struct dirent **d);
 static int gssd_get_single_krb5_cred(krb5_context context,
@@ -153,7 +154,7 @@ static int query_krb5_ccache(const char* cred_cache, char **ret_princname,
  *	1 => select this one
  */
 static int
-select_krb5_ccache(const struct dirent *d)
+select_krb5_ccache(SCANDIR_CONST struct dirent *d)
 {
 	/*
 	 * Note: We used to check d->d_type for DT_REG here,
@@ -512,8 +513,9 @@ new_ple(krb5_context context, krb5_principal princ)
 	memset(ple, 0, sizeof(*ple));
 
 #ifdef HAVE_KRB5
-	ple->realm = strndup(princ->realm.data,
-			     princ->realm.length);
+	ple->realm = (char *) malloc(princ->realm.length + 1);
+	strncpy(ple->realm, princ->realm.data, princ->realm.length);
+	ple->realm[princ->realm.length] = '\0';
 #else
 	ple->realm = strdup(princ->realm);
 #endif
