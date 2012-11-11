@@ -135,7 +135,7 @@ static fsal_status_t lookup (struct fsal_obj_handle *dir_hdl,
     char *p = NULL, *path = NULL;
     int retval = 0;
     struct stat stat, st_;
-    unsigned long long fsid;
+    unsigned long long fsid = 0LL;        /* initialize to 0 to prevent valgrind warning */
 
     *handle = NULL;
 
@@ -241,7 +241,7 @@ static fsal_status_t make_thang (const char *thang, struct fsal_obj_handle *dir_
     uid_t user;
     gid_t group;
     struct handle_data d;
-    unsigned long long fsid;
+    unsigned long long fsid = 0LL;        /* initialize to 0 to prevent valgrind warning */
 
     *handle = NULL;             /* poison it */
 
@@ -1033,7 +1033,7 @@ fsal_status_t posix_lookup_path (struct fsal_export *exp_hdl,
     s = nodedb_strsplit (path, '/', 1024000);
 
     for (i = 0; s[i]; i++) {
-        unsigned long long fsid;
+        unsigned long long fsid = 0LL;    /* initialize to 0 to prevent valgrind warning */
         char *t;
         if (!s[i][0])
             continue;
@@ -1118,7 +1118,7 @@ fsal_status_t posix_create_handle (struct fsal_export * exp_hdl,
     char *link_content = NULL, *p = NULL;
     ssize_t retlink;
     char link_buff[PATH_MAX];
-    unsigned long long fsid;
+    unsigned long long fsid = 0LL;        /* initialize to 0 to prevent valgrind warning */
 
     *handle = NULL;             /* poison it first */
     if (hdl_desc->len != sizeof (struct handle_data))
