@@ -199,7 +199,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
            clientid = pconf->cid_clientid;
 
-           new_clientifd_verifier(verifier);
+           new_clientid_verifier(verifier);
         }
       else
         {
@@ -220,7 +220,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
           clientid = new_clientid();
 
-          new_clientifd_verifier(verifier);
+          new_clientid_verifier(verifier);
         }
 
       /* Release our reference to the confirmed clientid. */
@@ -241,7 +241,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
       clientid = new_clientid();
 
-      new_clientifd_verifier(verifier);
+      new_clientid_verifier(verifier);
     }
 
   /* At this point, no matter what the case was above, we should remove any
@@ -312,10 +312,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
   if(rc != CLIENT_ID_SUCCESS)
     {
       /* Record is already freed, return. */
-      if(rc == CLIENT_ID_INSERT_MALLOC_ERROR)
-        res_SETCLIENTID4.status = NFS4ERR_RESOURCE;
-      else
-        res_SETCLIENTID4.status = NFS4ERR_SERVERFAULT;
+      res_SETCLIENTID4.status = clientid_error_to_nfsstat(rc);
 
       goto out;
     }

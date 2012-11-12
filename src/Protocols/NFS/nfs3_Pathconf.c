@@ -136,6 +136,7 @@ int nfs3_Pathconf(nfs_arg_t *parg,
   pres->res_pathconf3.PATHCONF3res_u.resok.case_insensitive = pstaticinfo->case_insensitive;
   pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving = pstaticinfo->case_preserving;
 
+ pres->res_pathconf3.status = NFS3_OK;
  out:
 
   if (pentry)

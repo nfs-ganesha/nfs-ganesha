@@ -220,10 +220,11 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
            "OPEN Client id = %llx",
            (unsigned long long)arg_OPEN4.owner.clientid);
 
-  if(nfs_client_id_get_confirmed(arg_OPEN4.owner.clientid, &pclientid) !=
-      CLIENT_ID_SUCCESS)
+  retval = nfs_client_id_get_confirmed(arg_OPEN4.owner.clientid, &pclientid);
+
+  if(retval != CLIENT_ID_SUCCESS)
     {
-      res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
+      res_OPEN4.status = clientid_error_to_nfsstat(retval);
       cause2 = " (failed to find confirmed clientid)";
       goto out3;
     }

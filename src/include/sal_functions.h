@@ -185,6 +185,10 @@ int Init_nlm_hash(void);
  *
  ******************************************************************************/
 
+nfsstat4 clientid_error_to_nfsstat(nfs_clientid_error_t err);
+
+const char * clientid_error_to_str(nfs_clientid_error_t err);
+
 state_status_t get_clientid_owner(clientid4        clientid,
                                   state_owner_t ** clientid_owner);
 
@@ -211,7 +215,7 @@ int nfs_client_id_confirm(nfs_client_id_t * pclientid,
 int nfs_client_id_expire(nfs_client_id_t * pclientid);
 
 clientid4 new_clientid(void);
-void new_clientifd_verifier(char * pverf);
+void new_clientid_verifier(char * pverf);
 
 int display_client_id_key(hash_buffer_t * pbuff, char *str);
 int display_client_id_val(hash_buffer_t * pbuff, char *str);
@@ -288,7 +292,7 @@ int display_session_id(char * session_id, char * str);
  *
  ******************************************************************************/
 
-void nfs4_BuildStateId_Other(char * other);
+void nfs4_BuildStateId_Other(nfs_client_id_t * clientid, char * other);
 
 #define STATEID_NO_SPECIAL 0
 #define STATEID_SPECIAL_ALL_0      2

@@ -83,6 +83,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_owner_t           * plock_owner;
   state_owner_t           * conflict_owner = NULL;
   fsal_lock_param_t         lock_desc, conflict_desc;
+  int                       rc;
 
   LogDebug(COMPONENT_NFS_V4_LOCK,
            "Entering NFS v4 LOCKT handler -----------------------------------------------------");
@@ -144,14 +145,14 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check clientid */
-  if(nfs_client_id_get_confirmed(arg_LOCKT4.owner.clientid,
-                                 &pclientid) != CLIENT_ID_SUCCESS)
+  rc = nfs_client_id_get_confirmed(arg_LOCKT4.owner.clientid, &pclientid);
+
+  if(rc != CLIENT_ID_SUCCESS)
     {
-      res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
+      res_LOCKT4.status = clientid_error_to_nfsstat(rc);
       return res_LOCKT4.status;
     }
 
-  /* The protocol doesn't allow for EXPIRED, so return STALE_CLIENTID */
   P(pclientid->cid_mutex);
 
   if(!reserve_lease(pclientid))
@@ -160,7 +161,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       dec_client_id_ref(pclientid);
 
-      res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
+      res_LOCKT4.status = NFS4ERR_EXPIRED;
       return res_LOCKT4.status;
     }
 

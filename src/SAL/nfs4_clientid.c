@@ -57,11 +57,44 @@
 hash_table_t    * ht_client_record;
 hash_table_t    * ht_confirmed_client_id;
 hash_table_t    * ht_unconfirmed_client_id;
-pthread_mutex_t   clientid_mutex = PTHREAD_MUTEX_INITIALIZER;
 uint32_t          clientid_counter;
 uint64_t          clientid_verifier;
 pool_t          * client_id_pool;
 pool_t          * client_record_pool;
+
+nfsstat4 clientid_error_to_nfsstat(nfs_clientid_error_t err)
+{
+  switch(err)
+    {
+      case CLIENT_ID_SUCCESS:             return NFS4_OK;
+      case CLIENT_ID_INSERT_MALLOC_ERROR: return NFS4ERR_RESOURCE;
+      case CLIENT_ID_INVALID_ARGUMENT:    return NFS4ERR_SERVERFAULT;
+      case CLIENT_ID_EXPIRED:             return NFS4ERR_EXPIRED;
+      case CLIENT_ID_STALE:               return NFS4ERR_STALE_CLIENTID;
+    }
+
+  LogCrit(COMPONENT_CLIENTID,
+          "Unexpected clientid error %d", err);
+
+  return NFS4ERR_SERVERFAULT;
+}
+
+const char * clientid_error_to_str(nfs_clientid_error_t err)
+{
+  switch(err)
+    {
+      case CLIENT_ID_SUCCESS:             return "CLIENT_ID_SUCCESS";
+      case CLIENT_ID_INSERT_MALLOC_ERROR: return "CLIENT_ID_INSERT_MALLOC_ERROR";
+      case CLIENT_ID_INVALID_ARGUMENT:    return "CLIENT_ID_INVALID_ARGUMENT";
+      case CLIENT_ID_EXPIRED:             return "CLIENT_ID_EXPIRED";
+      case CLIENT_ID_STALE:               return "CLIENT_ID_STALE";
+    }
+
+  LogCrit(COMPONENT_CLIENTID,
+          "Unexpected clientid error %d", err);
+
+  return "UNEXPECTED ERROR";
+}
 
 const char * clientid_confirm_state_to_str(nfs_clientid_confirm_state_t confirmed)
 {
@@ -769,9 +802,21 @@ int nfs_client_id_get(hash_table_t     * ht,
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   int           status;
+  uint64_t      epoch_low = ServerEpoch & 0xFFFFFFFF;
+  uint64_t      cid_epoch = (uint64_t) (clientid >>  (clientid4) 32);
 
   if(p_pclientid == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
+
+  /* Don't even bother to look up clientid if epochs don't match */
+  if(cid_epoch != epoch_low)
+    {
+      if(isDebug(COMPONENT_HASHTABLE))
+        LogFullDebug(COMPONENT_CLIENTID,
+                     "%s NOTFOUND (epoch doesn't match, assumed STALE)",
+                     ht->parameter.ht_name);
+      return CLIENT_ID_STALE;
+    }
 
   buffkey.pdata = (caddr_t) &clientid;
   buffkey.len = sizeof(clientid4);
@@ -806,9 +851,9 @@ int nfs_client_id_get(hash_table_t     * ht,
     {
       if(isDebug(COMPONENT_HASHTABLE))
         LogFullDebug(COMPONENT_CLIENTID,
-                     "%s NOTFOUND", ht->parameter.ht_name);
+                     "%s NOTFOUND (assumed EXPIRED)", ht->parameter.ht_name);
       *p_pclientid = NULL;
-      status = CLIENT_ID_NOT_FOUND;
+      status = CLIENT_ID_EXPIRED;
     }
 
   return status;
@@ -919,16 +964,10 @@ int nfs_Init_client_id(nfs_client_id_parameter_t * param)
  */
 clientid4 new_clientid(void)
 {
-  clientid4 newid;
+  clientid4 newid     = atomic_inc_uint32_t(&clientid_counter);
   uint64_t  epoch_low = ServerEpoch & 0xFFFFFFFF;
 
-  P(clientid_mutex);
-
-  newid = ++clientid_counter + (epoch_low << (clientid4) 32);
-
-  V(clientid_mutex);
-
-  return newid;
+  return newid + (epoch_low << (clientid4) 32);
 }
 
 /**
@@ -938,15 +977,11 @@ clientid4 new_clientid(void)
  * Builds a new verifier4 value.
  *
  */
-void new_clientifd_verifier(char * pverf)
+void new_clientid_verifier(char * pverf)
 {
-  P(clientid_mutex);
+  uint64_t my_verifier = atomic_inc_uint64_t(&clientid_verifier);
 
-  ++clientid_verifier;
-
-  memcpy(pverf, &clientid_verifier, NFS4_VERIFIER_SIZE);
-
-  V(clientid_mutex);
+  memcpy(pverf, &my_verifier, NFS4_VERIFIER_SIZE);
 }
 
 /*******************************************************************************

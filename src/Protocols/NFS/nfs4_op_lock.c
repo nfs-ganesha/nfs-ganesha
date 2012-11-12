@@ -190,10 +190,11 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
               &lock_desc);
 
       /* Check is the clientid is known or not */
-      if(nfs_client_id_get_confirmed(arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid,
-                                     &pclientid) == CLIENT_ID_NOT_FOUND)
+      rc = nfs_client_id_get_confirmed(arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid,
+                                       &pclientid);
+      if(rc != CLIENT_ID_SUCCESS)
         {
-          res_LOCK4.status = NFS4ERR_STALE_CLIENTID;
+          res_LOCK4.status = clientid_error_to_nfsstat(rc);
           LogDebug(COMPONENT_NFS_V4_LOCK,
                    "LOCK failed nfs_client_id_get");
           goto out2;

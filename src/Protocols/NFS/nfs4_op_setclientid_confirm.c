@@ -120,9 +120,9 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
         {
           /* No record whatsoever of this clientid */
           LogDebug(COMPONENT_CLIENTID,
-                   "Stale clientid = %"PRIx64,
-                   clientid);
-          res_SETCLIENTID_CONFIRM4.status = NFS4ERR_STALE_CLIENTID;
+                   "%s clientid = %"PRIx64,
+                   clientid_error_to_str(rc), clientid);
+          res_SETCLIENTID_CONFIRM4.status = clientid_error_to_nfsstat(rc);
 
           return res_SETCLIENTID_CONFIRM4.status;
         }
@@ -407,14 +407,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
       if(rc != CLIENT_ID_SUCCESS)
         {
-          if(rc == CLIENT_ID_INVALID_ARGUMENT)
-            res_SETCLIENTID_CONFIRM4.status = NFS4ERR_SERVERFAULT;
-          else
-            res_SETCLIENTID_CONFIRM4.status = NFS4ERR_RESOURCE;
+          res_SETCLIENTID_CONFIRM4.status = clientid_error_to_nfsstat(rc);
 
           LogEvent(COMPONENT_CLIENTID,
                    "FAILED to confirm client");
-
 
           /* Release our reference to the unconfirmed record */
           dec_client_id_ref(punconf);
