@@ -171,8 +171,6 @@ MODULE_INIT void zfs_load(void) {
 	int retval;
 	struct fsal_module *myself = &ZFS.fsal;
 
-        printf( "================> A\n" ) ;
-
 	retval = register_fsal(myself, myname,
 			       FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION);
@@ -180,7 +178,6 @@ MODULE_INIT void zfs_load(void) {
 		fprintf(stderr, "ZFS module failed to register");
 		return;
 	}
-        printf( "================> B\n" ) ;
 
 	myself->ops->create_export = zfs_create_export;
 	myself->ops->init_config = init_config;

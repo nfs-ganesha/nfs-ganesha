@@ -360,7 +360,8 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
           /* init libzfs library */
           if( ( p_zhd = libzfswrap_init() ) == NULL )
            {
-             fprintf( stderr, "Could not init libzfswrap library");
+             LogMajor( COMPONENT_FSAL,
+                       "Could not init libzfswrap library");
 	     return fsalstat(ERR_FSAL_INVAL, 0);
            }
 
@@ -369,9 +370,9 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
         if( p_snapshots == NULL )
         {
           /* Mount the libs */
-          if( ( p_zfs = libzfswrap_mount(fs_options, "/tank", "") ) == NULL )
+          if( ( p_zfs = libzfswrap_mount(fs_options, "/", "") ) == NULL )
             {
-              fprintf( stderr, "Could not mount libzfswrapp");
+              LogMajor( COMPONENT_FSAL, "Could not mount libzfswrap");
 	      return fsalstat(ERR_FSAL_INVAL, 0);
             }
 

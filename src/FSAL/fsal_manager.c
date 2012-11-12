@@ -453,9 +453,8 @@ int register_fsal(struct fsal_module *fsal_hdl,
 			so_error = ENOMEM;
 			goto errout;
 		}
-        printf( "================> A\n" ) ;
-
 	}
+
 /* allocate and init ops vector to system wide defaults
  * from FSAL/default_methods.c
  */
