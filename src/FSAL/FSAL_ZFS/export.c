@@ -44,7 +44,10 @@
 #include "zfs_methods.h"
 #include "FSAL/FSAL_ZFS/fsal_types.h"
 
-extern snapshot_t *p_snapshots;
+libzfswrap_handle_t *p_zhd = NULL ;
+size_t i_snapshots = 0 ;
+snapshot_t *p_snapshots = NULL ;
+
 
 /*
  * VFS internal export
@@ -328,6 +331,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	struct zfs_fsal_export *myself;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+        libzfswrap_vfs_t *p_zfs = NULL ;
 
 	*export = NULL; /* poison it first */
 	if(export_path == NULL
@@ -350,6 +354,33 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 	memset(myself, 0, sizeof(struct zfs_fsal_export));
+
+        if( p_zhd == NULL )
+        {
+          /* init libzfs library */
+          if( ( p_zhd = libzfswrap_init() ) == NULL )
+           {
+             fprintf( stderr, "Could not init libzfswrap library");
+	     return fsalstat(ERR_FSAL_INVAL, 0);
+           }
+
+        }
+
+        if( p_snapshots == NULL )
+        {
+          /* Mount the libs */
+          if( ( p_zfs = libzfswrap_mount(fs_options, "/tank", "") ) == NULL )
+            {
+              fprintf( stderr, "Could not mount libzfswrapp");
+	      return fsalstat(ERR_FSAL_INVAL, 0);
+            }
+
+          /** @todo: Place snapshot management here */
+          p_snapshots = calloc(1, sizeof(*p_snapshots));
+          p_snapshots[0].p_vfs = p_zfs ;
+          i_snapshots = 0 ; 
+        }
+
         myself->p_vfs = p_snapshots[0].p_vfs;
         
         retval = fsal_export_init(&myself->export, exp_entry);

@@ -167,12 +167,11 @@ static struct zfs_fsal_module ZFS;
 void zfs_export_ops_init(struct export_ops *ops);
 void zfs_handle_ops_init(struct fsal_obj_ops *ops);
 
-size_t i_snapshots;
-snapshot_t *p_snapshots;
-
-MODULE_INIT void zfs_init(void) {
+MODULE_INIT void zfs_load(void) {
 	int retval;
 	struct fsal_module *myself = &ZFS.fsal;
+
+        printf( "================> A\n" ) ;
 
 	retval = register_fsal(myself, myname,
 			       FSAL_MAJOR_VERSION,
@@ -181,6 +180,8 @@ MODULE_INIT void zfs_init(void) {
 		fprintf(stderr, "ZFS module failed to register");
 		return;
 	}
+        printf( "================> B\n" ) ;
+
 	myself->ops->create_export = zfs_create_export;
 	myself->ops->init_config = init_config;
         init_fsal_parameters(&ZFS.fsal_info);

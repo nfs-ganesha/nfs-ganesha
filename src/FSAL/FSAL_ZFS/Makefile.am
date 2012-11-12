@@ -14,9 +14,14 @@ libfsalzfs_la_SOURCES = fsal_convert.c   \
                         zfs_methods.h    \
                         ../../include/FSAL/FSAL_ZFS/fsal_types.h 
 
-libfsalzfs_la_CFLAGS                = $(FSAL_CFLAGS) $(SEC_CFLAGS) @ZFS_CFLAGS@
-libfsalzfs_la_LDFLAGS               = @ZFS_LDFLAGS@
-libfsalzfs_la_LIBADD                = @ZFS_LIB@
+#libfsalzfs_la_CFLAGS                = $(FSAL_CFLAGS) $(SEC_CFLAGS) @ZFS_CFLAGS@
+#libfsalzfs_la_LDFLAGS               = @ZFS_LDFLAGS@
+#libfsalzfs_la_LIBADD                = @ZFS_LIB@
+
+libfsalzfs_la_CFLAGS                = $(FSAL_CFLAGS) $(SEC_CFLAGS) 
+libfsalzfs_la_LDFLAGS               = -L/usr/lib64
+libfsalzfs_la_LIBADD                = "-lzfswrap -lcrypto -lz -laio"
+libfsalzfs_la_DEPENDENCIES          = 
 
 new: clean all
 
