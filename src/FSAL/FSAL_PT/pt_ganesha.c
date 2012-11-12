@@ -162,14 +162,20 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
         FSI_TRACE(FSI_DEBUG,
                   "FSI - name = %s cache index %d DIRECT HIT\n",
                   name, index);
-        pthread_mutex_unlock(&g_fsi_name_handle_mutex);
         // Check whether the name from cache is empty
         if (strnlen(name, 1) == 0) {
           FSI_TRACE(FSI_NOTICE, "The name is empty string from cache by index:"
                     "%p->0x%lx %lx %lx %lx", handle,
                     handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
-        }
-        return 0;
+          // Need get name from PT side, so will not return and clear cache.
+          memset(g_fsi_name_handle_cache.m_entry[index].m_handle,
+                 0, FSI_PERSISTENT_HANDLE_N_BYTES);
+          g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
+        } else {
+          // Return.
+          pthread_mutex_unlock(&g_fsi_name_handle_mutex); 
+          return 0;
+        } 
       }
       pthread_mutex_unlock(&g_fsi_name_handle_mutex);
     } else {
@@ -196,15 +202,22 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
       }
 
       FSI_TRACE(FSI_DEBUG, "FSI - name = %s \n", name);
-      pthread_mutex_unlock(&g_fsi_name_handle_mutex);
  
       // Check whether the name from cache is empty 
       if (strnlen(name, 1) == 0) {
         FSI_TRACE(FSI_NOTICE, "The name is empty string from cache by loop: "
                   "%p->0x%lx %lx %lx %lx", handle, 
                   handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
+        // Need get name from PT side, so will not return, 
+        memset(g_fsi_name_handle_cache.m_entry[index].m_handle, 
+               0, FSI_PERSISTENT_HANDLE_N_BYTES);
+        g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
+        break;
+      } else {
+        // Return, find the non-empty name.
+        pthread_mutex_unlock(&g_fsi_name_handle_mutex);
+        return 0;
       }
-      return 0;
     }
   }
   pthread_mutex_unlock(&g_fsi_name_handle_mutex);
@@ -219,31 +232,32 @@ fsi_get_name_from_handle(fsal_op_context_t * p_context,
             handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3], name);
   
   if (rc == 0) {
-    pthread_mutex_lock(&g_fsi_name_handle_mutex);
-    g_fsi_name_handle_cache.m_count = (g_fsi_name_handle_cache.m_count + 1)
-      % FSI_MAX_HANDLE_CACHE_ENTRY;
-
-    memcpy(
-      &g_fsi_name_handle_cache
-      .m_entry[g_fsi_name_handle_cache.m_count].m_handle,
-      &handle[0],FSI_PERSISTENT_HANDLE_N_BYTES);
-    strncpy(
-      g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
-      name, sizeof(handle_entry.m_name));
-    g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count]
-    .m_name[sizeof(handle_entry.m_name)-1] = '\0';
-    FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
-              name,g_fsi_name_handle_cache.m_count);
-    if (g_ptfsal_context_flag) {
-      // store current index in context cache
-      p_cur_context->cur_namecache_handle_index =
-        g_fsi_name_handle_cache.m_count;
-    }
-    pthread_mutex_unlock(&g_fsi_name_handle_mutex);
     if (strnlen(name, 1) == 0) {
       FSI_TRACE(FSI_NOTICE, "The name is empty string from PT: "
-                "%pp->0x%lx %lx %lx %lx", handle,
+                "%p->0x%lx %lx %lx %lx", handle,
                 handlePtr[0], handlePtr[1], handlePtr[2], handlePtr[3]);
+    } else {
+      pthread_mutex_lock(&g_fsi_name_handle_mutex);
+      g_fsi_name_handle_cache.m_count = (g_fsi_name_handle_cache.m_count + 1)
+        % FSI_MAX_HANDLE_CACHE_ENTRY;
+
+      memcpy(
+        &g_fsi_name_handle_cache
+        .m_entry[g_fsi_name_handle_cache.m_count].m_handle,
+        &handle[0], FSI_PERSISTENT_HANDLE_N_BYTES);
+      strncpy(
+        g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count].m_name,
+        name, sizeof(handle_entry.m_name));
+      g_fsi_name_handle_cache.m_entry[g_fsi_name_handle_cache.m_count]
+        .m_name[sizeof(handle_entry.m_name)-1] = '\0';
+      FSI_TRACE(FSI_DEBUG, "FSI - added %s to name cache entry %d\n",
+                name,g_fsi_name_handle_cache.m_count);
+      if (g_ptfsal_context_flag) {
+        // store current index in context cache
+        p_cur_context->cur_namecache_handle_index =
+          g_fsi_name_handle_cache.m_count;
+      }
+      pthread_mutex_unlock(&g_fsi_name_handle_mutex);
     }
   } else {
     FSI_TRACE(FSI_ERR, "The ccl_handle_to_name got error!");
@@ -299,7 +313,8 @@ fsi_remove_cache_by_handle(char * handle)
       FSI_TRACE(FSI_DEBUG, "Handle will be removed from cache:")
       ptfsal_print_handle(handle);
       /* Mark the both handle and name to 0 */
-      g_fsi_name_handle_cache.m_entry[index].m_handle[0] = '\0';
+      memset(g_fsi_name_handle_cache.m_entry[index].m_handle,
+             0, FSI_PERSISTENT_HANDLE_N_BYTES); 
       g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
       break;
     }
@@ -326,7 +341,8 @@ fsi_remove_cache_by_fullpath(char * path)
       FSI_TRACE(FSI_DEBUG, "Handle will be removed from cache by path %s:", 
                 path);
       /* Mark the both handle and name to 0 */
-      g_fsi_name_handle_cache.m_entry[index].m_handle[0] = '\0';
+      memset(g_fsi_name_handle_cache.m_entry[index].m_handle,
+             0, FSI_PERSISTENT_HANDLE_N_BYTES);
       g_fsi_name_handle_cache.m_entry[index].m_name[0] = '\0';
       break;
     }

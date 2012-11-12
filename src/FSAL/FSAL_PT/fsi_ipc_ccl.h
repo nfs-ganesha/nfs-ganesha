@@ -46,8 +46,10 @@ extern "C" {
 #define FSI_BLOCK_ALIGN(x, blocksize) \
 (((x) % (blocksize)) ? (((x) / (blocksize)) * (blocksize)) : (x))
 
-#define FSI_COMMAND_TIMEOUT_SEC  300     // When polling for results, number
+#define FSI_COMMAND_TIMEOUT_SEC      900 // When polling for results, number
                                          // of seconds to try before timingout
+#define FSI_COMMAND_LOG_THRESHOLD_SEC 20 // In seconds, if timed responses
+                                         // exceed then make log entry
 #define USLEEP_INTERVAL        10000     // Parameter to usleep
 
 #define CCL_POLLING_THREAD_HANDLE_TIMEOUT_SEC 300   // Timeout for opened handle
