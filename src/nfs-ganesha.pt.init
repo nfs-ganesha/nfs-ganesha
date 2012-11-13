@@ -42,12 +42,36 @@ CONFFILE=/etc/ganesha/pt.ganesha.nfsd.conf
 # Remote quota server
 [ -z "$RQUOTAD" ] && RQUOTAD=`type -path rpc.rquotad`
 
-#DEBUGLEVEL=NIV_NULL
-#DEBUGLEVEL=NIV_MAJOR
-#DEBUGLEVEL=NIV_CRIT
-#DEBUGLEVEL=NIV_EVENT
-#DEBUGLEVEL=NIV_DEBUG
-#DEBUGLEVEL=NIV_FULL_DEBUG
+###########################################################
+# DEBUG LEVELS FOR SPECIFIC COMPONENTS
+# (uncomment #export to enable)
+
+# Possible debug levels (severity high to low):
+## NIV_NULL
+## NIV_MAJOR
+## NIV_CRIT
+## NIV_EVENT
+## NIV_INFO
+## NIV_DEBUG
+## NIV_MID_DEBUG
+## NIV_FULL_DEBUG
+
+#Some common useful log components:
+#export COMPONENT_INIT=NIV_INFO
+#export COMPONENT_CACHE_INODE=NIV_FULL_DEBUG
+#export COMPONENT_DISPATCH=NIV_FULL_DEBUG
+#export COMPONENT_DISPATCH=NIV_DEBUG
+#export COMPONENT_FSAL_UP=NIV_FULL_DEBUG
+#export COMPONENT_FSAL=NIV_FULL_DEBUG
+#export COMPONENT_NFSPROTO=NIV_FULL_DEBUG
+#export COMPONENT_NFS_READDIR=NIV_FULL_DEBUG
+#export COMPONENT_MEMLEAKS=NIV_FULL_DEBUG
+
+#For Lock/State debugging:
+#export COMPONENT_NLM=NIV_FULL_DEBUG
+#export COMPONENT_NFS_V4_LOCK=NIV_FULL_DEBUG
+#export COMPONENT_STATE=NIV_FULL_DEBUG
+###########################################################
 
 OPTIONS="-d -f $CONFFILE -L $LOGFILE"
 RETVAL=0
