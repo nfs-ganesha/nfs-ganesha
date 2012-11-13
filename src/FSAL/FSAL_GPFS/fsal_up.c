@@ -48,6 +48,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
   char                       thr_name[80];
   struct gpfs_fsal_up_ctx   * gpfs_fsal_up_ctx = (struct gpfs_fsal_up_ctx *) Arg;
   int                         rc = 0;
+  struct nfsd4_pnfs_deviceid  dev_id;
   struct stat                 buf;
   struct glock                fl;
   struct callback_arg         callback;
@@ -136,6 +137,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
       callback.flags      = &flags;
       callback.buf        = &buf;
       callback.fl         = &fl;
+      callback.dev_id     = &dev_id;
 
       rc = gpfs_ganesha(OPENHANDLE_INODE_UPDATE, &callback);
 
@@ -151,7 +153,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
           rc = -(rc);
           if(rc > GPFS_INTERFACE_VERSION)
           {
-            LogFatal(COMPONENT_FSAL,
+            LogFatal(COMPONENT_FSAL_UP,
                     "Ganesha version %d mismatch GPFS version %d.",
                      callback.interface_version, rc);
             return NULL;
@@ -163,7 +165,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
             }
 
           if(errno == EUNATCH)
-            LogFatal(COMPONENT_FSAL,
+            LogFatal(COMPONENT_FSAL_UP,
                      "GPFS file system %d has gone away.",
                      gpfs_fsal_up_ctx->gf_fd);
 
@@ -235,11 +237,52 @@ void *GPFSFSAL_UP_Thread(void *Arg)
             break;
 
           case BREAK_DELEGATION: /* Delegation Event */
-            LogDebug(COMPONENT_FSAL,
+            LogDebug(COMPONENT_FSAL_UP,
                      "delegation recall: flags:%x ino %ld",
                      flags, callback.buf->st_ino);
             pevent->data.delegrecall.flags = 0;
             pevent->type = FSAL_UP_EVENT_DELEGATION_RECALL;
+            break;
+
+          case LAYOUT_FILE_RECALL: /* Layout file recall Event */
+            LogDebug(COMPONENT_FSAL_UP,
+                     "layout file recall: flags:%x ino %ld",
+                     flags, callback.buf->st_ino);
+
+            pevent->type = FSAL_UP_EVENT_LAYOUTRECALL;
+            pevent->data.layoutrecall.layout_type = LAYOUT4_NFSV4_1_FILES;
+            pevent->data.layoutrecall.recall_type = LAYOUTRECALL4_FILE;
+            pevent->data.layoutrecall.changed = false;
+            pevent->data.layoutrecall.segment.offset = 0;
+            pevent->data.layoutrecall.segment.length = UINT64_MAX;
+            pevent->data.layoutrecall.segment.io_mode = LAYOUTIOMODE4_ANY;
+            pevent->data.layoutrecall.cookie = NULL;
+            break;
+
+          case LAYOUT_RECALL_ANY: /* Recall all layouts Event */
+            LogDebug(COMPONENT_FSAL_UP,
+                     "layout recall any: flags:%x ino %ld",
+                     flags, callback.buf->st_ino);
+
+            pevent->type = FSAL_UP_EVENT_RECALL_ANY;
+            pevent->data.recallany.objects_to_keep = 0;
+            pevent->data.recallany.type_mask.bitmap4_len = 1;
+            pevent->data.recallany.type_mask.map[0] = RCA4_TYPE_MASK_FILE_LAYOUT;
+            pevent->data.layoutrecall.cookie = NULL;
+            break;
+
+          case LAYOUT_NOTIFY_DEVICEID: /* Device update Event */
+            dev_id.sbid = gpfs_fsal_up_ctx->gf_exp_id;/* override with export id */
+            LogDebug(COMPONENT_FSAL_UP,
+                     "layout device update: flags:%x ino %ld devid %ld-%016lx",
+                     flags, callback.buf->st_ino, dev_id.sbid, dev_id.devid);
+
+            pevent->type = FSAL_UP_EVENT_NOTIFY_DEVICE;
+            pevent->data.notifydevice.notify_type = NOTIFY_DEVICEID4_DELETE;
+            pevent->data.notifydevice.layout_type = LAYOUT4_NFSV4_1_FILES;
+            memcpy(&pevent->data.notifydevice.device_id, &dev_id, sizeof(deviceid4));
+            pevent->data.notifydevice.immediate = true;
+            pevent->data.notifydevice.cookie = NULL;
             break;
 
           case INODE_UPDATE: /* Update Event */
@@ -278,7 +321,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
             break;
 
           case THREAD_STOP: /* GPFS export no longer available */
-            LogWarn(COMPONENT_FSAL,
+            LogWarn(COMPONENT_FSAL_UP,
                     "GPFS file system %d is no longer available",
                     gpfs_fsal_up_ctx->gf_fd);
             fsal_up_free_event(pevent);

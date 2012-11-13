@@ -75,6 +75,8 @@ typedef enum {
         FSAL_UP_EVENT_MOVE_TO,
         FSAL_UP_EVENT_RENAME,
         FSAL_UP_EVENT_LAYOUTRECALL,
+        FSAL_UP_EVENT_RECALL_ANY,
+        FSAL_UP_EVENT_NOTIFY_DEVICE,
         FSAL_UP_EVENT_DELEGATION_RECALL
 } fsal_up_event_type_t;
 
@@ -281,6 +283,32 @@ struct fsal_up_event_layoutrecall
 };
 
 /**
+ * A structure for recalling any layout
+ */
+
+struct fsal_up_event_recallany
+{
+        uint32_t objects_to_keep;
+        struct bitmap4 type_mask;
+        void *cookie; /*< A cookie returned with the return that
+                          completely satisfies a recall. */
+};
+
+/**
+ * A structure for notify device
+ */
+
+struct fsal_up_event_notifydevice
+{
+        notify_deviceid_type4 notify_type;
+        layouttype4 layout_type;
+        deviceid4 device_id;
+        bool immediate;
+        void *cookie; /*< A cookie returned with the return that
+                          completely satisfies a recall. */
+};
+
+/**
  * A structure for delegation recall
  */
 
@@ -378,6 +406,14 @@ struct fsal_up_vector
         void (*layoutrecall_queue)(struct fsal_up_event_layoutrecall *,
                                    struct fsal_up_file *,
                                    void *);
+        int (*recallany_imm)(struct fsal_up_event_recallany *,
+                                void **);
+        void (*recallany_queue)(struct fsal_up_event_recallany *,
+                                void *);
+        int (*notifydevice_imm)(struct fsal_up_event_notifydevice *,
+                                void **);
+        void (*notifydevice_queue)(struct fsal_up_event_notifydevice *,
+                                   void *);
         void (*delegrecall_queue)(struct fsal_up_event_delegrecall *,
                                    struct fsal_up_file *);
         void (*delegrecall_imm)(struct fsal_up_event_delegrecall *,
@@ -411,6 +447,8 @@ struct fsal_up_event
 		struct fsal_up_event_move_to move_to;
 		struct fsal_up_event_rename rename;
 		struct fsal_up_event_layoutrecall layoutrecall;
+		struct fsal_up_event_recallany recallany;
+		struct fsal_up_event_notifydevice notifydevice;
 		struct fsal_up_event_delegrecall delegrecall;
 	} data; /*< Type specific event data */
 	struct fsal_up_file file; /*< File upon which the event takes

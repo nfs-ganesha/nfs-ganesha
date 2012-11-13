@@ -107,6 +107,7 @@
 #define CONF_EXPORT_FSAL               "FSAL"
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_UQUOTA             "User_Quota"
+#define CONF_EXPORT_DELEG              "Use_Delegation"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
 #define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
 #define CONF_EXPORT_USE_COOKIE_VERIFIER "UseCookieVerifier"
@@ -147,6 +148,7 @@
 #define FLAG_EXPORT_ANON_USER       0x040000000
 #define FLAG_EXPORT_CACHE_POLICY    0x080000000
 #define FLAG_EXPORT_USE_UQUOTA      0x100000000
+#define FLAG_EXPORT_USE_DELEG       0x200000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -1738,6 +1740,34 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
           set_options |= EXPORT_OPTION_USE_PNFS;
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_DELEG))
+        {
+          /* check if it has not already been set */
+          if((set_options & FLAG_EXPORT_USE_DELEG) == FLAG_EXPORT_USE_DELEG)
+            {
+              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_DELEG");
+              continue;
+            }
+
+          switch (StrToBoolean(var_value))
+            {
+            case 1:
+              p_entry->options |= EXPORT_OPTION_USE_DELEG;
+              break;
+
+            case 0:
+              /*default (false) */
+              break;
+
+            default:           /* error */
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): true or false expected.",
+                      var_name, var_value);
+              err_flag = true;
+              continue;
+            }
+          set_options |= EXPORT_OPTION_USE_DELEG;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_UQUOTA ) )
         {

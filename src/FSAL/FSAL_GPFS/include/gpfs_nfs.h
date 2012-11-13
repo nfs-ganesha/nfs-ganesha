@@ -323,6 +323,7 @@ struct nfsd4_pnfs_layoutget_arg {
 	uint64_t		lg_minlength;
 	uint64_t		lg_sbid;
 	struct gpfs_file_handle	*lg_fh;
+	uint32_t		lg_iomode;
 };
 
 struct nfsd4_pnfs_layoutget_res {
@@ -403,7 +404,7 @@ struct deviceinfo_arg
 
 struct layoutget_arg
 {
-  int mountdirfd;
+  int fd;
   struct gpfs_file_handle *handle;
   struct nfsd4_pnfs_layoutget_arg args;
   struct pnfs_filelayout_layout *file_layout;
@@ -430,7 +431,7 @@ struct dswrite_arg
 {
   int mountdirfd;
   struct gpfs_file_handle *handle;
-  char *bufP;
+  const char *bufP;
   uint64_t offset;
   uint64_t length;
   uint32_t stability_wanted;
@@ -524,6 +525,7 @@ struct callback_arg
     struct glock *fl;
     int *flags;
     struct stat *buf;
+    struct nfsd4_pnfs_deviceid *dev_id;
 };
 #define GPFS_INTERFACE_VERSION 10000
 #define GPFS_INTERFACE_SUB_VER     1

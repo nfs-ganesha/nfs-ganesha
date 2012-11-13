@@ -537,6 +537,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->dirs_have_sticky_bit;
 	case fso_delegations:
 		return !!info->delegations;
+        case fso_pnfs_ds_supported:
+		return !!info->pnfs_file;
 	case fso_accesscheck_support:
 		return !!info->accesscheck_support;
 	case fso_share_support:

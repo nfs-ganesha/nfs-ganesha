@@ -86,7 +86,8 @@ static struct fsal_staticfsinfo_t default_posix_info = {
         .share_support = true,
         .share_support_owner = false,
 	.dirs_have_sticky_bit = true,
-	.delegations = true
+	.delegations = true,
+	.pnfs_file = true,
 };
 
 /* private helper for export object
@@ -94,10 +95,7 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 
 struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl)
 {
-	struct gpfs_fsal_module *myself;
-
-	myself = container_of(hdl, struct gpfs_fsal_module, fsal);
-	return &myself->fs_info;
+	return &default_posix_info;
 }
 
 /* Module methods

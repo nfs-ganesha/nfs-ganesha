@@ -51,6 +51,17 @@ struct gpfs_fsal_up_ctx
   int                gf_fd;      /* GPFS File System Directory fd */
   unsigned int        gf_fsid[2];
   pthread_t          gf_thread;
+  int                gf_exp_id;
+};
+/**
+ * The full, 'private' DS (data server) handle
+ */
+
+struct gpfs_ds
+{
+        struct gpfs_file_handle wire; /*< Wire data */
+        struct fsal_ds_handle ds; /*< Public DS handle */
+        bool connected; /*< True if the handle has been connected */
 };
 
 #undef Return

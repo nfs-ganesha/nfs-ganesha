@@ -871,6 +871,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->compare = compare;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
+        handle_ops_pnfs(ops);
 }
 
 /* export methods that create object handles

@@ -61,6 +61,7 @@ struct gpfs_fsal_export {
 	int root_fd;
 	dev_t root_dev;
 	struct gpfs_file_handle *root_handle;
+	bool pnfs_enabled;
 };
 
 /* helpers to/from other GPFS objects
@@ -432,6 +433,56 @@ static fsal_status_t gpfs_extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+/**
+ * @brief Create a FSAL data server handle from a wire handle
+ *
+ * This function creates a FSAL data server handle from a client
+ * supplied "wire" handle.  This is also where validation gets done,
+ * since PUTFH is the only operation that can return
+ * NFS4ERR_BADHANDLE.
+ *
+ * @param[in]  export_pub The export in which to create the handle
+ * @param[in]  desc       Buffer from which to create the file
+ * @param[out] ds_pub     FSAL data server handle
+ *
+ * @return NFSv4.1 error codes.
+ */
+nfsstat4
+gpfs_create_ds_handle(struct fsal_export *const export_pub,
+                      const struct gsh_buffdesc *const desc,
+                      struct fsal_ds_handle **const ds_pub)
+{
+        /* Handle to be created */
+        struct gpfs_ds *ds = NULL;
+
+        *ds_pub = NULL;
+
+        if (desc->len != sizeof( struct gpfs_file_handle)) {
+                return NFS4ERR_BADHANDLE;
+        }
+        ds = gsh_calloc(1, sizeof(struct gpfs_ds));
+
+        if (ds == NULL) {
+                return NFS4ERR_SERVERFAULT;
+        }
+        /* Connect lazily when a FILE_SYNC4 write forces us to, not
+           here. */
+
+        ds->connected = false;
+
+        memcpy(&ds->wire, desc->addr, desc->len);
+
+        if (fsal_ds_handle_init(&ds->ds,
+                                export_pub->ds_ops,
+                                export_pub)) {
+                gsh_free(ds);
+                return NFS4ERR_SERVERFAULT;
+        }
+        *ds_pub = &ds->ds;
+
+        return NFS4_OK;
+}
+
 /* gpfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -442,6 +493,7 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->lookup_path = gpfs_lookup_path;
 	ops->extract_handle = gpfs_extract_handle;
 	ops->create_handle = gpfs_create_handle;
+        ops->create_ds_handle = gpfs_create_ds_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;
 	ops->fs_maxfilesize = fs_maxfilesize;
@@ -515,7 +567,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	myself->root_fd = -1;
 
         retval = fsal_internal_version();
-        LogInfo(COMPONENT_FSAL, "GPFS get version is %d", retval);
+        LogInfo(COMPONENT_FSAL, "GPFS get version is %d options 0x%X",
+                               retval, exp_entry->options);
 
         retval = fsal_export_init(&myself->export,
 				  exp_entry);
@@ -665,6 +718,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
            gpfs_fsal_up_ctx->gf_fd = myself->root_fd;
            gpfs_fsal_up_ctx->gf_fsid[0] = myself->root_handle->handle_fsid[0];
            gpfs_fsal_up_ctx->gf_fsid[1] = myself->root_handle->handle_fsid[1];
+           gpfs_fsal_up_ctx->gf_exp_id = exp_entry->id;
 
            /* Add it to the list of contexts */
            glist_add_tail(&gpfs_fsal_up_ctx_list, &gpfs_fsal_up_ctx->gf_list);
@@ -707,6 +761,17 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
            }
 
 	pthread_mutex_unlock(&myself->export.lock);
+
+	myself->pnfs_enabled = myself->export.ops->fs_supports(&myself->export,
+	                                                fso_pnfs_ds_supported);
+	if (myself->pnfs_enabled) {
+		LogInfo(COMPONENT_FSAL,
+			"gpfs_fsal_create: pnfs was enabled for [%s]",
+			export_path);
+		export_ops_pnfs(myself->export.ops);
+		handle_ops_pnfs(myself->export.obj_ops);
+                ds_ops_init(myself->export.ds_ops);
+	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 errout:

@@ -173,6 +173,22 @@ fsal_up_submit(struct fsal_up_event *event)
                                 &event->private);
                 }
                 break;
+
+        case FSAL_UP_EVENT_RECALL_ANY:
+                if (event->functions->recallany_imm) {
+                        rc = event->functions->recallany_imm(
+                                &event->data.recallany,
+                                event->private);
+                        }
+                        break;
+
+        case FSAL_UP_EVENT_NOTIFY_DEVICE:
+                if (event->functions->notifydevice_imm) {
+                        rc = event->functions->notifydevice_imm(
+                                &event->data.notifydevice,
+                                event->private);
+                        }
+                        break;
         case FSAL_UP_EVENT_DELEGATION_RECALL:
                 rc = 0;
                 break;
@@ -317,6 +333,22 @@ next_event:
                                 event->functions->layoutrecall_queue(
                                         &event->data.layoutrecall,
                                         &event->file,
+                                        event->private);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_RECALL_ANY:
+                        if (event->functions->recallany_queue) {
+                                event->functions->recallany_queue(
+                                        &event->data.recallany,
+                                        event->private);
+                        }
+                        break;
+
+                case FSAL_UP_EVENT_NOTIFY_DEVICE:
+                        if (event->functions->notifydevice_queue) {
+                                event->functions->notifydevice_queue(
+                                        &event->data.notifydevice,
                                         event->private);
                         }
                         break;

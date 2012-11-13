@@ -258,9 +258,9 @@ typedef struct exportlist__ {
                                                    set */
 #define EXPORT_OPTION_MAXCACHESIZE 0x10000000 /*< Maximum Offset for read is
                                                   set */
-#define EXPORT_OPTION_USE_PNFS 0x20000000 /*< Using pNFS or not using pNFS? */
-#define EXPORT_OPTION_USE_UQUOTA 0x40000000 /*< Using user quota for this
-                                                export */
+#define EXPORT_OPTION_USE_PNFS   0x20000000 /*< Using pNFS or not using pNFS? */
+#define EXPORT_OPTION_USE_UQUOTA 0x40000000 /*< Using user quota for this export */
+#define EXPORT_OPTION_USE_DELEG  0x80000000 /*< Using delegations for this export */
 
 /* nfs_export_check_access() return values */
 #define EXPORT_PERMISSION_GRANTED 0x00000001

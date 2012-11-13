@@ -623,6 +623,7 @@ struct fsal_staticfsinfo_t
                                        with open owners ? */
         bool dirs_have_sticky_bit; /*< fsal does bsd/posix "sticky bit" */
         bool delegations; /*< fsal supports delegations */
+        bool pnfs_file;   /*< fsal supports file pnfs */
 };
 
 /**

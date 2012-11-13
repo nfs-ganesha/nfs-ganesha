@@ -2,11 +2,14 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 lib_LTLIBRARIES          = libfsalgpfs.la
 
+
 libfsalgpfs_la_SOURCES = main.c				\
 			 export.c			\
 			 handle.c			\
 			 file.c				\
 			 fsal_up.c			\
+			 fsal_ds.c			\
+			 fsal_mds.c			\
 			 fsal_unlink.c			\
 			 fsal_truncate.c		\
 			 fsal_symlinks.c		\
