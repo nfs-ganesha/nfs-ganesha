@@ -452,9 +452,8 @@ nfs3_readdirplus_callback(void* opaque,
           return false;
      }
 
-     if (nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
-                            obj_hdl,
-                            tracker->export) == 0) {
+     if (!nfs3_FSALToFhandle(&ep3->name_handle.post_op_fh3_u.handle,
+			     obj_hdl)) {
           tracker->error = NFS3ERR_BADHANDLE;
           gsh_free(ep3->name);
           gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.data_val);

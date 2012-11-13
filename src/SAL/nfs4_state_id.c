@@ -587,6 +587,7 @@ void nfs_State_PrintAll(void)
  * @param[in,out] state State to update
  * @param[out]    resp  Stateid in response
  * @param[in,out] data  Compound data to upddate with current stateid
+ *                      (may be NULL)
  * @param[in]     tag   Arbitrary text for debug/log
  */
 void update_stateid(state_t *state,
@@ -600,9 +601,11 @@ void update_stateid(state_t *state,
     state->state_seqid = 1;
 
   /* Copy stateid into current for later use */
-  data->current_stateid.seqid = state->state_seqid;
-  memcpy(data->current_stateid.other, state->stateid_other, OTHERSIZE);
-  data->current_stateid_valid = true;
+  if (data) {
+	  data->current_stateid.seqid = state->state_seqid;
+	  memcpy(data->current_stateid.other, state->stateid_other, OTHERSIZE);
+	  data->current_stateid_valid = true;
+  }
 
   /* Copy stateid into response */
   resp->seqid = state->state_seqid;

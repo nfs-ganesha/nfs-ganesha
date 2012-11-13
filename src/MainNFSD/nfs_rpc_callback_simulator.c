@@ -367,7 +367,8 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
 	/* call it (here, in current thread context) */
 	code = nfs_rpc_submit_call(
 		call,
-		NFS_RPC_FLAG_NONE /* NFS_RPC_CALL_INLINE */);
+		NULL,
+		NFS_RPC_FLAG_NONE);
 
 out:
 	return code;

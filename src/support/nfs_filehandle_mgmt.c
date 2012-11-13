@@ -274,48 +274,41 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 * fh3,
 
 badhdl:
 	return entry;
-}                               /* nfs3_FhandleToCache */
+}
 
 /**
+ * @brief Converts an FSAL object to an NFSv4 file handle
  *
- *  nfs4_FSALToFhandle: converts a FSAL file handle to a nfs4 file handle.
+ * @param[out] fh4        The extracted file handle
+ * @param[in]  fsalhandle The FSAL handle to be converted
  *
- * Converts a nfs4 file handle to a FSAL file handle.
- *
- * @param pfh4 [OUT] pointer to the extracted file handle
- * @param pfsalhandle [IN] pointer to the FSAL handle to be converted
- * @param data [IN] pointer to NFSv4 compound data structure.
- *
- * @return 1 if successful, 0 otherwise
- *
+ * @return true if successful, false otherwise
  */
-
-int nfs4_FSALToFhandle(nfs_fh4 * pfh4,
-                       struct fsal_obj_handle *pfsalhandle,
-                       compound_data_t * data)
+bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
+			struct fsal_obj_handle *fsalhandle)
 {
   fsal_status_t fsal_status;
   file_handle_v4_t *file_handle;
   struct gsh_buffdesc fh_desc;
 
   /* reset the buffer to be used as handle */
-  pfh4->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
-  memset(pfh4->nfs_fh4_val, 0, pfh4->nfs_fh4_len);
-  file_handle = (file_handle_v4_t *)pfh4->nfs_fh4_val;
+  fh4->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+  memset(fh4->nfs_fh4_val, 0, fh4->nfs_fh4_len);
+  file_handle = (file_handle_v4_t *)fh4->nfs_fh4_val;
 
   /* Fill in the fs opaque part */
   fh_desc.addr = &file_handle->fsopaque;
-  fh_desc.len = pfh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
-  fsal_status = pfsalhandle->ops->handle_digest(pfsalhandle,
-                                                FSAL_DIGEST_NFSV4,
-                                                &fh_desc);
+  fh_desc.len = fh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
+  fsal_status = fsalhandle->ops->handle_digest(fsalhandle,
+					       FSAL_DIGEST_NFSV4,
+					       &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
-    return 0;
+    return false;
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   file_handle->fs_len = fh_desc.len;   /* set the actual size */
   /* keep track of the export id */
-  file_handle->exportid = data->pexport->id;
+  file_handle->exportid = fsalhandle->export->exp_entry->id;
 
   /* if FH expires, set it there */
   if(nfs_param.nfsv4_param.fh_expire)
@@ -325,116 +318,109 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4,
     }
 
   /* Set the len */
-  pfh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle); /* re-adjust to as built */
+  fh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle);
 
-  return 1;
-}                               /* nfs4_FSALToFhandle */
+  return true;
+}
 
 /**
+ * @brief Converts an FSAL object to an NFSv3 file handle
  *
- *  nfs3_FSALToFhandle: converts a FSAL file handle to a nfs3 file handle.
+ * @param[out] fh3        The extracted file handle
+ * @param[in]  fsalhandle The FSAL handle to be converted
  *
- * Converts a nfs3 file handle to a FSAL file handle.
+ * @return true if successful, false otherwise
  *
- * @param pfh3 [OUT] pointer to the extracted file handle 
- * @param pfsalhandle [IN] pointer to the FSAL handle to be converted
- * @param pexport [IN] pointer to the export list entry the FH belongs to
- *
- * @return 1 if successful, 0 otherwise
- *
- * FIXME: do we have to worry about buffer alignment and memcpy to 
+ * @todo Do we have to worry about buffer alignment and memcpy to
  * compensate??
  */
-int nfs3_FSALToFhandle(nfs_fh3 * pfh3,
-                       struct fsal_obj_handle *pfsalhandle,
-                       exportlist_t * pexport)
+bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
+			struct fsal_obj_handle *fsalhandle)
 {
   fsal_status_t fsal_status;
   file_handle_v3_t *file_handle;
   struct gsh_buffdesc fh_desc;
 
   /* reset the buffer to be used as handle */
-  pfh3->data.data_len = sizeof(struct alloc_file_handle_v3);
-  memset(pfh3->data.data_val, 0, pfh3->data.data_len);
-  file_handle = (file_handle_v3_t *)pfh3->data.data_val;
+  fh3->data.data_len = sizeof(struct alloc_file_handle_v3);
+  memset(fh3->data.data_val, 0, fh3->data.data_len);
+  file_handle = (file_handle_v3_t *)fh3->data.data_val;
 
   /* Fill in the fs opaque part */
   fh_desc.addr = &file_handle->fsopaque;
-  fh_desc.len = pfh3->data.data_len - offsetof(file_handle_v3_t, fsopaque);
-  fsal_status = pfsalhandle->ops->handle_digest(pfsalhandle,
-                                                FSAL_DIGEST_NFSV3,
-                                                &fh_desc);
+  fh_desc.len = fh3->data.data_len - offsetof(file_handle_v3_t, fsopaque);
+  fsal_status = fsalhandle->ops->handle_digest(fsalhandle,
+					       FSAL_DIGEST_NFSV3,
+					       &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
-    return 0;
+    return false;
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   file_handle->fs_len = fh_desc.len;   /* set the actual size */
   /* keep track of the export id */
-  file_handle->exportid = pexport->id;
+  file_handle->exportid = fsalhandle->export->exp_entry->id;
 
   /* Set the len */
-  pfh3->data.data_len = nfs3_sizeof_handle(file_handle); /* re-adjust to as built */
+  /* re-adjust to as built */
+  fh3->data.data_len = nfs3_sizeof_handle(file_handle);
 
-  print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
+  print_fhandle3(COMPONENT_FILEHANDLE, fh3);
 
-  return 1;
-}                               /* nfs3_FSALToFhandle */
+  return true;
+}
 
 /**
+ * @brief Convert an FSAL object to an NFSv2 file handle
  *
- *  nfs2_FSALToFhandle: converts a FSAL file handle to a nfs2 file handle.
- *
- * Converts a nfs2 file handle to a FSAL file handle.
- *
- * @param pfh2 [OUT] pointer to the extracted file handle 
- * @param pfsalhandle [IN] pointer to the FSAL handle to be converted
+ * @param[out] fh2        The extracted file handle
+ * @param[in]  fsalhandle The FSAL handle to be converted
  * @param pfsalhandle [IN] pointer to the FSAL handle to be converted
  *
- * @return 1 if successful, 0 otherwise
- *
+ * @return true if successful, false otherwise
  */
-int nfs2_FSALToFhandle(fhandle2 * pfh2,
-                       struct fsal_obj_handle *pfsalhandle,
-                       exportlist_t * pexport)
+bool nfs2_FSALToFhandle(fhandle2 *fh2,
+			struct fsal_obj_handle *fsalhandle)
 {
   fsal_status_t fsal_status;
   file_handle_v2_t *file_handle;
   struct gsh_buffdesc fh_desc;
 
   /* zero-ification of the buffer to be used as handle */
-  memset(pfh2, 0, sizeof(struct alloc_file_handle_v2));
-  file_handle = (file_handle_v2_t *)pfh2;
+  memset(fh2, 0, sizeof(struct alloc_file_handle_v2));
+  file_handle = (file_handle_v2_t *)fh2;
 
   /* Fill in the fs opaque part */
   fh_desc.addr = &file_handle->fsopaque;
   fh_desc.len = sizeof(file_handle->fsopaque);
-  fsal_status = pfsalhandle->ops->handle_digest(pfsalhandle,
-                                                FSAL_DIGEST_NFSV2,
-                                                &fh_desc);
-  if(FSAL_IS_ERROR(fsal_status))
-   {
-     if( fsal_status.major == ERR_FSAL_TOOSMALL )
-      LogCrit( COMPONENT_FILEHANDLE, "NFSv2 file handle is too small to manage this fsal" ) ;
-     else
-      LogCrit( COMPONENT_FILEHANDLE, "FSAL_DigestHandle return (%u,%u) when called from %s", 
-               fsal_status.major, fsal_status.minor, __func__ ) ;
-    return 0;
-   }
+  fsal_status = fsalhandle->ops->handle_digest(fsalhandle,
+					       FSAL_DIGEST_NFSV2,
+					       &fh_desc);
+  if (FSAL_IS_ERROR(fsal_status))
+    {
+      if (fsal_status.major == ERR_FSAL_TOOSMALL)
+	LogCrit(COMPONENT_FILEHANDLE,
+		"NFSv2 File handle is too small to manage this FSAL");
+      else
+	LogCrit(COMPONENT_FILEHANDLE,
+		"FSAL_DigestHandle return (%u,%u) when called from %s",
+		fsal_status.major, fsal_status.minor, __func__ );
+      return false;
+    }
 
   file_handle->fhversion = GANESHA_FH_VERSION;
   /* keep track of the export id */
-  file_handle->exportid = pexport->id;
+  file_handle->exportid = fsalhandle->export->exp_entry->id;
 
   /* Set the last byte */
   file_handle->xattr_pos = 0;
 
-/*   /\* Set the data *\/ */
-/*   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t)); */
+  /*   /\* Set the data *\/ */
+  /*   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t)); */
 
-  print_fhandle2(COMPONENT_FILEHANDLE, pfh2);
+  print_fhandle2(COMPONENT_FILEHANDLE, fh2);
 
-  return 1;
-}                               /* nfs2_FSALToFhandle */
+  return true;
+}
 
 /**
  *
@@ -443,7 +429,7 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2,
  * This routine extracts the export id from the file handle NFSv4
  *
  * @param pfh4 [IN] file handle to manage.
- * 
+ *
  * @return the export id.
  *
  */

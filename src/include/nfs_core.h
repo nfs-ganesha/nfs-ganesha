@@ -405,6 +405,7 @@ struct _rpc_call {
 	uint32_t states;
 	uint32_t flags;
 	void *u_data[2];
+	void *completion_arg;
 };
 
 typedef enum request_type {

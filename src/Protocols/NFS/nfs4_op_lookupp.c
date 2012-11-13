@@ -128,7 +128,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
                             &cache_status)) != NULL)
     {
       /* Convert it to a file handle */
-      if(!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, file_entry->obj_handle))
         {
           res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
           cache_inode_put(file_entry);

@@ -961,12 +961,14 @@ static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
 /**
  * @brief Fire off an RPC call
  *
- * @param[in] call  The constructed call
- * @param[in] flags Control flags for call
+ * @param[in] call           The constructed call
+ * @param[in] completion_arg Argument to completion function
+ * @param[in] flags          Control flags for call
  *
  * @return 0 or POSIX error codes.
  */
 int32_t nfs_rpc_submit_call(rpc_call_t *call,
+			    void *completion_arg,
 			    uint32_t flags)
 {
 	int32_t code = 0;
@@ -975,6 +977,7 @@ int32_t nfs_rpc_submit_call(rpc_call_t *call,
 
 	assert(chan);
 
+	call->completion_arg = completion_arg;
 	if (flags & NFS_RPC_CALL_INLINE) {
 		code = nfs_rpc_dispatch_call(call, NFS_RPC_CALL_NONE);
 	} else {
@@ -1060,7 +1063,8 @@ unlock:
 	pthread_mutex_unlock(&call->we.mtx);
 
 	/* call completion hook */
-	RPC_CALL_HOOK(call, RPC_CALL_COMPLETE, NULL, NFS_RPC_CALL_NONE);
+	RPC_CALL_HOOK(call, RPC_CALL_COMPLETE, call->completion_arg,
+		      NFS_RPC_CALL_NONE);
 
 	return code;
 }
@@ -1287,11 +1291,15 @@ static void release_cb_slot(nfs41_session_t *session,
  * operations that were sent but had the back-channel fail before the
  * response was received.
  *
- * @param[in] clientid   Client record
- * @param[in] op         The operation to perform
- * @param[in] refer      Referral tracking info (or NULL)
- * @param[in] completion Completion function for this operation
- * @param[in] free_op    Function to free elements of the op (may be NULL)
+ * @param[in] clientid       Client record
+ * @param[in] op             The operation to perform
+ * @param[in] refer          Referral tracking info (or NULL)
+ * @param[in] completion     Completion function for this operation
+ * @param[in] completion_arg Argument provided to completion hook
+ * @param[in] free_op        Function to free elements of the op (may be
+ *                           NULL.) Only called on error, so it should
+ *                           also be called explicitly from the completion
+ *                           function.
  *
  * @return POSIX error codes.
  */
@@ -1302,6 +1310,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid,
 					     rpc_call_hook,
 					     void *arg,
 					     uint32_t flags),
+		       void *completion_arg,
 		       void (*free_op)(nfs_cb_argop4 *op))
 {
 	int scan = 0;
@@ -1346,6 +1355,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid,
 			}
 			call->call_hook = completion;
 			code = nfs_rpc_submit_call(call,
+						   completion_arg,
 						   NFS_RPC_FLAG_NONE);
 			if (code != 0) {
 				/* Clean up... */
@@ -1371,4 +1381,18 @@ out:
 	} else {
 		return ENOTCONN;
 	}
+}
+
+/**
+ * @brief Free information associated with any 'single' call
+ */
+
+void nfs41_complete_single(rpc_call_t* call, rpc_call_hook hook,
+			   void* arg, uint32_t flags)
+{
+	release_cb_slot(call->chan->source.session,
+			call->cbt.v_u.v4.args.argarray.argarray_val[0]
+			.nfs_cb_argop4_u.opcbsequence.csa_slotid,
+			true);
+	free_single_call(call);
 }

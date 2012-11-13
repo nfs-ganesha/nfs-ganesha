@@ -52,6 +52,9 @@
  * and NFSv4.1 format callbacks.
  */
 
+/* Definition in sal_data.h */
+struct state_refer;
+
 /* XXX move? */
 typedef struct nfs4_cb_tag {
 	int32_t ix;
@@ -138,9 +141,23 @@ int nfs_rpc_call_init(rpc_call_t call, uint32_t flags);
 #define NFS_RPC_CALL_BROADCAST 0x0002
 
 /* Submit rpc to be called on chan, optionally waiting for completion. */
-int32_t nfs_rpc_submit_call(rpc_call_t *call, uint32_t flags);
+int32_t nfs_rpc_submit_call(rpc_call_t *call,
+			    void *completion_arg,
+			    uint32_t flags);
 
 /* Dispatch method to process a (queued) call */
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
+
+int nfs_rpc_v41_single(nfs_client_id_t *clientid,
+		       nfs_cb_argop4 *op,
+		       struct state_refer *refer,
+		       int32_t (*completion)(rpc_call_t *,
+					     rpc_call_hook,
+					     void *arg,
+					     uint32_t flags),
+		       void *completion_arg,
+		       void (*free_op)(nfs_cb_argop4 *op));
+void nfs41_complete_single(rpc_call_t* call, rpc_call_hook hook,
+			   void* arg, uint32_t flags);
 
 #endif /* !NFS_RPC_CALLBACK_H */

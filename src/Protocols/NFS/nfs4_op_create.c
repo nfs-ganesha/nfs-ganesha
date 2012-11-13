@@ -372,7 +372,7 @@ int nfs4_op_create(struct nfs_argop4 *op,
     }
 
   /* Building the new file handle */
-  if(!nfs4_FSALToFhandle(&newfh4, entry_new->obj_handle, data))
+  if(!nfs4_FSALToFhandle(&newfh4, entry_new->obj_handle))
     {
       res_CREATE4.status = NFS4ERR_SERVERFAULT;
       cache_inode_put(entry_new);

@@ -139,11 +139,11 @@ nfs_Lookup(nfs_arg_t *arg,
             res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val = gsh_malloc(sizeof(struct alloc_file_handle_v3));
             if (res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val == NULL) 
               res->res_lookup3.status = NFS3ERR_INVAL;
-            else 
+            else
               {
-                 if (nfs3_FSALToFhandle( &(res->res_lookup3.LOOKUP3res_u.resok.object),
-                                         entry_file->obj_handle,
-                                         export))
+                 if (nfs3_FSALToFhandle(
+			     &(res->res_lookup3.LOOKUP3res_u.resok.object),
+			     entry_file->obj_handle))
                     {
                       /* Build entry attributes */
                       nfs_SetPostOpAttr( entry_file,

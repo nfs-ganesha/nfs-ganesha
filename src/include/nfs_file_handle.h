@@ -149,13 +149,10 @@ cache_entry_t * nfs3_FhandleToCache(nfs_fh3 * pfh3,
 				   nfsstat3 * status,
 				   int *rc);
 
-int nfs4_FSALToFhandle(nfs_fh4 *fh4,
-                       struct fsal_obj_handle *fsalhandle,
-                       compound_data_t *data);
-int nfs3_FSALToFhandle(nfs_fh3 *fh3, struct fsal_obj_handle *fsalhandle,
-                       exportlist_t *export);
-int nfs2_FSALToFhandle(fhandle2 *fh2, struct fsal_obj_handle *fsalhandle,
-                       exportlist_t *export);
+bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
+			struct fsal_obj_handle *fsalhandle);
+bool nfs3_FSALToFhandle(nfs_fh3 *fh3, struct fsal_obj_handle *fsalhandle);
+bool nfs2_FSALToFhandle(fhandle2 *fh2, struct fsal_obj_handle *fsalhandle);
 
 /* Extraction of export id from a file handle */
 short nfs2_FhandleToExportId(fhandle2 * pfh2);

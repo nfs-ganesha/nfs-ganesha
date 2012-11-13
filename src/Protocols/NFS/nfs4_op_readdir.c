@@ -138,7 +138,7 @@ nfs4_readdir_callback(void* opaque,
             name);
 
      if(attribute_is_set(&tracker->req_attr, FATTR4_FILEHANDLE)) {
-          if ( !nfs4_FSALToFhandle(&entryFH, handle, tracker->data)) {
+          if (!nfs4_FSALToFhandle(&entryFH, handle)) {
                tracker->error = NFS4ERR_SERVERFAULT;
                gsh_free(tracker->entries[tracker->count].name.utf8string_val);
                return false;

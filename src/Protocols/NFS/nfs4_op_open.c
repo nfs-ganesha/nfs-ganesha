@@ -304,7 +304,7 @@ open4_create_fh(compound_data_t *data, cache_entry_t *entry)
         newfh4.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
 
         /* Building a new fh */
-        if (!nfs4_FSALToFhandle(&newfh4, entry->obj_handle, data)) {
+        if (!nfs4_FSALToFhandle(&newfh4, entry->obj_handle)) {
                 return NFS4ERR_SERVERFAULT;
         }
 

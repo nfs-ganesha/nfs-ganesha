@@ -202,9 +202,9 @@ nfs_Mkdir(nfs_arg_t *arg,
                             goto out;
                          }
 
-                        if (nfs3_FSALToFhandle( &d3ok->obj.post_op_fh3_u.handle,
-                                                dir_entry->obj_handle,
-                                                export) == 0)
+                        if (!nfs3_FSALToFhandle(
+				    &d3ok->obj.post_op_fh3_u.handle,
+				    dir_entry->obj_handle))
                           {
                              gsh_free( d3ok->obj.post_op_fh3_u.handle.data.data_val);
                              res->res_mkdir3.status = NFS3ERR_INVAL;

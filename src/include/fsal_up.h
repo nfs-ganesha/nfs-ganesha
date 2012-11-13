@@ -254,9 +254,9 @@ struct fsal_up_event_move_to
 
 struct fsal_up_event_rename
 {
-        char *old; /*< The original name.  This is allocated by the
+	char *old; /*< The original name.  This is allocated by the
                        FSAL and freed by the upcall thread. */
-        char *new; /*< The new name.  This is allocated by the FSAL
+	char *new; /*< The new name.  This is allocated by the FSAL
                        and freed by the upcall thread. */
 };
 
@@ -266,17 +266,17 @@ struct fsal_up_event_rename
 
 struct fsal_up_event_layoutrecall
 {
-        layouttype4 layout_type; /*< The type of layout to recall */
-        layoutrecall_type4 recall_type; /*< Type of recall.
+	layouttype4 layout_type; /*< The type of layout to recall */
+	layoutrecall_type4 recall_type; /*< Type of recall.
                                             LAYOUTRECALL4_ALL is
                                             disallowed, if you wish to
                                             recall all layouts, use
                                             LAYOUTRECALL4_FSID from
                                             each export. */
-        bool changed; /*< Whether the layout has changed and the
+	bool changed; /*< Whether the layout has changed and the
                           client ought to finish writes through MDS. */
-        struct pnfs_segment segment; /*< Segment to recall */
-        void *cookie; /*< A cookie returned with the return that
+	struct pnfs_segment segment; /*< Segment to recall */
+	void *cookie; /*< A cookie returned with the return that
                           completely satisfies a recall. */
 };
 
@@ -392,32 +392,32 @@ extern struct fsal_up_vector fsal_up_top;
 
 struct fsal_up_event
 {
-        struct glist_head event_link; /*< Link in the event queue */
-        const struct fsal_up_vector *functions; /*< Vector of upcall
+	struct glist_head event_link; /*< Link in the event queue */
+	const struct fsal_up_vector *functions; /*< Vector of upcall
                                                     functions.  Should
                                                     be filled in by
                                                     the FSAL with the
                                                     vector
                                                     supplied. */
-        fsal_up_event_type_t type; /*< The type of event reported */
-        union {
-                struct fsal_up_event_lock_grant lock_grant;
-                struct fsal_up_event_lock_avail lock_avail;
-                struct fsal_up_event_invalidate invalidate;
-                struct fsal_up_event_update update;
-                struct fsal_up_event_link link;
-                struct fsal_up_event_unlink unlink;
-                struct fsal_up_event_move_from move_from;
-                struct fsal_up_event_move_to move_to;
-                struct fsal_up_event_rename rename;
-                struct fsal_up_event_layoutrecall layoutrecall;
-                struct fsal_up_event_delegrecall delegrecall;
-        } data; /*< Type specific event data */
-        struct fsal_up_file file; /*< File upon which the event takes
+	fsal_up_event_type_t type; /*< The type of event reported */
+	union {
+		struct fsal_up_event_lock_grant lock_grant;
+		struct fsal_up_event_lock_avail lock_avail;
+		struct fsal_up_event_invalidate invalidate;
+		struct fsal_up_event_update update;
+		struct fsal_up_event_link link;
+		struct fsal_up_event_unlink unlink;
+		struct fsal_up_event_move_from move_from;
+		struct fsal_up_event_move_to move_to;
+		struct fsal_up_event_rename rename;
+		struct fsal_up_event_layoutrecall layoutrecall;
+		struct fsal_up_event_delegrecall delegrecall;
+	} data; /*< Type specific event data */
+	struct fsal_up_file file; /*< File upon which the event takes
                                       place.  Interpetation varies by
                                       type and might not be used at
                                       all. */
-        void *private; /*< This is private event data shared between
+	void *private; /*< This is private event data shared between
                            the immediate and queued function.  If you
                            override one function, you should override
                            the other, too, so this is neither left
@@ -448,7 +448,7 @@ int shutdown_FSAL_up(void);
 int fsal_up_submit(struct fsal_up_event *event);
 
 int up_get(const struct gsh_buffdesc *key,
-           cache_entry_t **entry);
+	   cache_entry_t **entry);
 
 
 struct fsal_up_event *fsal_up_alloc_event(void);

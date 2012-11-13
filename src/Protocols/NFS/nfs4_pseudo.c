@@ -663,7 +663,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build the nfs4 handle */
-      if(!nfs4_FSALToFhandle(&data->currentFH, fsal_handle, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, fsal_handle))
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
@@ -918,7 +918,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build the nfs4 handle */
-      if(!nfs4_FSALToFhandle(&data->currentFH, fsal_handle, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, fsal_handle))
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
@@ -1091,7 +1091,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               return res_READDIR4.status;
             }
           /* Build the nfs4 handle. Again, we do this unconditionally. */
-          if(!nfs4_FSALToFhandle(&entryFH, fsal_handle, data))
+          if(!nfs4_FSALToFhandle(&entryFH, fsal_handle))
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");

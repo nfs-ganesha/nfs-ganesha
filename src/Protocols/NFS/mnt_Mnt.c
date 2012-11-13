@@ -233,7 +233,7 @@ int mnt_Mnt(nfs_arg_t *parg,
     {
     case MOUNT_V1:
       if(!nfs2_FSALToFhandle(&(pres->res_mnt1.fhstatus2_u.directory),
-                             pfsal_handle, p_current_item))
+                             pfsal_handle))
         {
           pres->res_mnt1.status = NFSERR_IO;
         }
@@ -252,8 +252,8 @@ int mnt_Mnt(nfs_arg_t *parg,
       if(pres->res_mnt3.fhs_status ==  MNT3_OK)
         {
           if(!nfs3_FSALToFhandle
-             ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), pfsal_handle,
-              p_current_item))
+             ((nfs_fh3 *) &(pres->res_mnt3.mountres3_u.mountinfo.fhandle),
+	      pfsal_handle))
             {
               pres->res_mnt3.fhs_status = MNT3ERR_INVAL;
             }

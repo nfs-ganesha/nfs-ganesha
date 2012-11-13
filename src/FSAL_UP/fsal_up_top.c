@@ -47,6 +47,7 @@
 #include "sal_functions.h"
 #include "pnfs_utils.h"
 #include "nfs_rpc_callback.h"
+#include "nfs_proto_tools.h"
 
 static int32_t cb_completion_func(rpc_call_t* call, rpc_call_hook hook,
                                  void* arg, uint32_t flags)
@@ -937,55 +938,208 @@ layoutrecall_imm(struct fsal_up_event_layoutrecall *layoutrecall,
         return rc;
 }
 
+/**
+ * @brief Free a CB_LAYOUTRECALL
+ *
+ * @param[in] op Operation to free
+ */
+static void free_layoutrec(nfs_cb_argop4 *op)
+{
+	gsh_free(op->nfs_cb_argop4_u.opcblayoutrecall.clora_recall
+		 .layoutrecall4_u.lor_layout.lor_fh.nfs_fh4_val);
+}
+
+
+struct layoutrecall_completion {
+	char stateid_other[OTHERSIZE];  /*< "Other" part of state id */
+	struct pnfs_segment segment; /*< Segment to recall */
+};
+
+static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
+				    void* arg, uint32_t flags)
+{
+	struct layoutrecall_completion *completion = arg;
+	if (hook != RPC_CALL_COMPLETE ||
+	    call->cbt.v_u.v4.res.status != NFS4_OK) {
+		struct user_cred synthetic_creds = {
+			.caller_uid = 0,
+			.caller_gid = 0,
+			.caller_glen = 0,
+			.caller_garray = NULL
+		};
+		struct req_op_context synthetic_context = {
+			.creds = &synthetic_creds,
+			.caller_addr = NULL,
+			.clientid = NULL
+		};
+		bool deleted = false;
+		state_t *state = NULL;
+		/**
+		 * @todo Better error handling later.  At least this
+		 * doesn't leak.
+		 */
+		/* If we don't find the state, there's nothing to
+		   return. */
+		if (nfs4_State_Get_Pointer(completion->stateid_other,
+					   &state)) {
+			nfs4_return_one_state(state->state_entry,
+					      &synthetic_context,
+					      true,
+					      false,
+					      LAYOUTRETURN4_FILE,
+					      state,
+					      completion->segment,
+					      0,
+					      NULL,
+					      &deleted);
+		}
+	}
+
+	gsh_free(arg);
+	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
+	nfs41_complete_single(call, hook, arg, flags);
+	return 0;
+}
+
+/**
+ * @brief Delayed action for layoutrecall
+ *
+ * @note This function lacks robustness.  However, improving this
+ * matter would require a general improvement to both callback
+ * handling and queued function support.  Rather than putting a hack
+ * together now, I'm going to make something that works when it works
+ * and come back and handle the error cases more generally later.
+ *
+ * @param[in] layoutrecall Arguments for the recall operation
+ * @param[in] file         File to recall
+ * @param[in] private      Work queue of states to recall on
+ */
+
 static void
 layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
-                   struct fsal_up_file *file,
-                   void *private)
+		   struct fsal_up_file *file,
+		   void *private)
 {
-        struct glist_head *queue
-                = (struct glist_head *)private;
-        /* Entry in the queue we're disposing */
-        struct glist_head *queue_iter = NULL;
+	struct user_cred synthetic_creds = {
+		.caller_uid = 0,
+		.caller_gid = 0,
+		.caller_glen = 0,
+		.caller_garray = NULL
+	};
+	struct req_op_context synthetic_context = {
+		.creds = &synthetic_creds,
+		.caller_addr = NULL,
+		.clientid = NULL
+	};
+	struct glist_head *queue
+		= (struct glist_head *)private;
+	/* Entry in the queue we're disposing */
+	struct glist_head *queue_iter = NULL;
+	int code = 0;
 
-        if (glist_empty(queue)) {
-                /* One or more LAYOUTRETURNs raced us and emptied out
+	if (glist_empty(queue)) {
+		/* One or more LAYOUTRETURNs raced us and emptied out
                    the queue */
-                gsh_free(queue);
-                return;
-        }
+		gsh_free(queue);
+		return;
+	}
 
-        glist_for_each(queue_iter,
-                       queue) {
-                /* The current entry in the queue */
-                struct recall_work_queue *g
-                        = glist_entry(queue_iter,
-                                      struct recall_work_queue,
-                                      link);
-                struct state_t *s = g->state;
-                cache_entry_t  *entry = s->state_entry;
-                pthread_rwlock_wrlock(&entry->state_lock);
-                /* Do something or other to recall the layout.  We
-                   might want some specialty code in the lease timer
-                   to treat a clientid with layouts that has had the
-                   back channel down for more than the lease timer as
-                   having gone dead, so that if the back channel goes
-                   out to lunch we'll synthesize returns and free up
-                   both the layout and the recall state. */
-                /**
-                 * @todo ACE: Hook into backchannel.  Don't forget to
-                 * bump the seqid.
-                 */
-                g->recalled = true;
-                pthread_rwlock_unlock(&entry->state_lock);
-        }
-};
+	glist_for_each(queue_iter,
+		       queue) {
+		/* The current entry in the queue */
+		struct recall_work_queue *g
+			= glist_entry(queue_iter,
+				      struct recall_work_queue,
+				      link);
+		struct state_t *s = g->state;
+		struct layoutrecall_completion *completion;
+		cache_entry_t *entry = s->state_entry;
+		nfs_cb_argop4 arg;
+		CB_LAYOUTRECALL4args *cb_layoutrec
+			= &arg.nfs_cb_argop4_u.opcblayoutrecall;
+		arg.argop = NFS4_OP_CB_LAYOUTRECALL;
+		pthread_rwlock_wrlock(&entry->state_lock);
+		cb_layoutrec->clora_type = layoutrecall->layout_type;
+		cb_layoutrec->clora_iomode
+			= layoutrecall->segment.io_mode;
+		cb_layoutrec->clora_changed
+			= layoutrecall->changed;
+		/* Fine for now, if anyone tries a bulk recall, they
+		   get an error. */
+		cb_layoutrec->clora_recall.lor_recalltype
+			= LAYOUTRECALL4_FILE;
+		cb_layoutrec->clora_recall.layoutrecall4_u
+			.lor_layout.lor_offset = layoutrecall->segment.offset;
+		cb_layoutrec->clora_recall.layoutrecall4_u
+			.lor_layout.lor_length = layoutrecall->segment.length;
+		cb_layoutrec->clora_recall.layoutrecall4_u
+			.lor_layout.lor_fh.nfs_fh4_len
+			= sizeof(struct alloc_file_handle_v4);
+		cb_layoutrec->clora_recall.layoutrecall4_u
+			.lor_layout.lor_fh.nfs_fh4_val
+			= gsh_malloc(sizeof(struct alloc_file_handle_v4));
+		nfs4_FSALToFhandle(&cb_layoutrec->clora_recall.
+				   layoutrecall4_u.lor_layout.lor_fh,
+				   entry->obj_handle);
+		update_stateid(s,
+			       &cb_layoutrec->clora_recall.layoutrecall4_u
+			       .lor_layout.lor_stateid,
+			       NULL,
+			       "LAYOUTRECALL");
+		g->recalled = true;
+		completion = gsh_malloc(
+			sizeof(struct layoutrecall_completion));
+		memcpy(completion->stateid_other,
+		       s->stateid_other,
+		       OTHERSIZE);
+		completion->segment = layoutrecall->segment;
+		code = nfs_rpc_v41_single(s->state_owner->so_owner
+					  .so_nfs4_owner.so_clientrec,
+					  &arg,
+					  &s->state_refer,
+					  layoutrec_completion,
+					  &completion,
+					  free_layoutrec);
+		if (code != 0) {
+			/**
+			 * @todo On failure to submit a callback, we
+			 * ought to give the client at least one lease
+			 * period to establish a back channel before
+			 * we start revoking state.  We don't have the
+			 * infrasturcture to properly handle layout
+			 * revocation, however.  Once we get the
+			 * capability to revoke layouts we should
+			 * queue requests on the clientid, obey the
+			 * retransmission rule, and provide a callback
+			 * to dispose of a call and revoke state after
+			 * some number of lease periods.
+			 *
+			 * At present we just assume the client has
+			 * gone completely out to lunch and fake a
+			 * return.
+			 */
+			bool deleted = false;
+
+			nfs4_return_one_state(entry,
+					      &synthetic_context,
+					      true,
+					      false,
+					      LAYOUTRETURN4_FILE,
+					      s,
+					      layoutrecall->segment,
+					      0,
+					      NULL,
+					      &deleted);
+		}
+		pthread_rwlock_unlock(&entry->state_lock);
+	}
+}
 
 static void
 delegrecall_one(state_lock_entry_t *found_entry,
 		cache_entry_t *pentry)
 {
   char *maxfh;
-  compound_data_t data;
   int32_t code = 0;
   rpc_call_channel_t *chan;
   rpc_call_t *call;
@@ -1029,18 +1183,16 @@ delegrecall_one(state_lock_entry_t *found_entry,
   argop->argop = NFS4_OP_CB_RECALL;
   argop->nfs_cb_argop4_u.opcbrecall.stateid.seqid = found_entry->sle_state->state_seqid;
   memcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other,
-         found_entry->sle_state->stateid_other, OTHERSIZE);
+	 found_entry->sle_state->stateid_other, OTHERSIZE);
   argop->nfs_cb_argop4_u.opcbrecall.truncate = TRUE;
 
   /* Convert it to a file handle */
   argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 0;
   argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val = maxfh;
 
-  data.pexport = found_entry->sle_export;
-
   /* Building a new fh */
   if (!nfs4_FSALToFhandle(&argop->nfs_cb_argop4_u.opcbrecall.fh,
-                          pentry->obj_handle, &data))
+			  pentry->obj_handle))
      return;
 
   /* add ops, till finished (dont exceed count) */
@@ -1050,7 +1202,7 @@ delegrecall_one(state_lock_entry_t *found_entry,
   call->call_hook = cb_completion_func;
 
   /* call it (here, in current thread context) */
-  code = nfs_rpc_submit_call(call, NFS_RPC_FLAG_NONE /* NFS_RPC_CALL_INLINE */);
+  code = nfs_rpc_submit_call(call, NULL, NFS_RPC_FLAG_NONE);
 
   return;
 };

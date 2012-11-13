@@ -444,7 +444,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
     }
 
   if(nfs3_FSALToFhandle((nfs_fh3 *) & (pres->res_lookup3.LOOKUP3res_u.resok.object.data),
-                        obj_hdl, pexport))
+                        obj_hdl))
     {
       pres->res_lookup3.status =
           nfs3_fh_to_xattrfh((nfs_fh3 *) &
@@ -919,7 +919,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
     }
 
   /* Set Post Op Fh3 structure */
-  if(nfs3_FSALToFhandle(&resok->obj.post_op_fh3_u.handle, obj_hdl, pexport) == 0)
+  if(nfs3_FSALToFhandle(&resok->obj.post_op_fh3_u.handle, obj_hdl) == 0)
     {
       gsh_free(resok->obj.post_op_fh3_u.handle.data.data_val);
       pres->res_create3.status = NFS3ERR_BADHANDLE;
