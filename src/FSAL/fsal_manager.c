@@ -424,8 +424,6 @@ int register_fsal(struct fsal_module *fsal_hdl,
 	pthread_mutexattr_t attrs;
 	extern struct fsal_ops def_fsal_ops;
 
-        printf( "===> Registering %s\n", name ) ;
-
 	if((major_version != FSAL_MAJOR_VERSION) ||
 	   (minor_version > FSAL_MINOR_VERSION)) {
 		so_error = EINVAL;
