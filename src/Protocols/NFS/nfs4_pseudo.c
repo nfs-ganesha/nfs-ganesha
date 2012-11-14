@@ -884,7 +884,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
               LastOffset += file_owner.utf8string_len;
 
               /* Free what was allocated by uid2utf8 */
-              gsh_free(file_owner.utf8string_val);
+              free_utf8(&file_owner);
 
               /* Pad with zero to keep xdr alignement */
               if(deltalen != 0)
@@ -925,7 +925,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
               LastOffset += file_owner_group.utf8string_len;
 
               /* Free what was used for utf8 conversion */
-              gsh_free(file_owner_group.utf8string_val);
+              free_utf8(&file_owner_group);
 
               /* Pad with zero to keep xdr alignement */
               if(deltalen != 0)

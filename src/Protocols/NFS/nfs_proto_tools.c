@@ -736,7 +736,7 @@ nfs_tools_xdr_utf8(utf8str_mixed *utf8, char *attrvalsBuffer)
   LastOffset += utf8->utf8string_len;
 
   /* Free what was allocated by uid2utf8 */
-  gsh_free(utf8->utf8string_val);
+  free_utf8(utf8);
 
   /* Pad with zero to keep xdr alignement */
   if(deltalen)
