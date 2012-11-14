@@ -701,15 +701,6 @@ int parseAccessParam(char                * var_name,
 bool_t fsal_specific_checks(exportlist_t *p_entry)
 {
   #ifdef _USE_GPFS
-  p_entry->use_fsal_up = TRUE;
-
-  if (strncmp(p_entry->fsal_up_type, "DUMB", 4) != 0)
-    {
-      LogWarn(COMPONENT_CONFIG,
-              "NFS READ EXPORT: %s must be \"DUMB\" when using GPFS."
-              " Setting it to \"DUMB\"", CONF_EXPORT_FSAL_UP_TYPE);
-      strncpy(p_entry->fsal_up_type,"DUMB", 4);
-    }
   if (p_entry->use_ganesha_write_buffer != FALSE)
     {
       LogWarn(COMPONENT_CONFIG,
