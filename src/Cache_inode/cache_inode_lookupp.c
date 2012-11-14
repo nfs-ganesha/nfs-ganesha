@@ -113,7 +113,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
         refcount. */
      *parent = cache_inode_weakref_get(&entry->object.dir.parent,
 				       LRU_REQ_INITIAL);
-     if (!parent) {
+     if (!(*parent)) {
           /* If we didn't find it, drop the read lock, get a write
              lock, and make sure nobody filled it in while we waited. */
           pthread_rwlock_unlock(&entry->content_lock);
@@ -122,7 +122,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 					    LRU_REQ_INITIAL);
      }
 
-     if (!parent) {
+     if (!(*parent)) {
 	  struct fsal_obj_handle *parent_handle;
 
 	  fsal_status = entry->obj_handle->ops->lookup(entry->obj_handle,
@@ -142,19 +142,19 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           parent_handle->ops->handle_to_key(parent_handle, &fsdata.fh_desc);
           fsdata.export = parent_handle->export;
 
-          status = cache_inode_get(&fsdata,
+	  status = cache_inode_get(&fsdata,
 				   entry,
 				   req_ctx,
 				   parent);
 
-          if (*parent == NULL) {
-	       return status;
-          }
-/** @TODO  Danger Will Robinson!  cache_inode_get should consume the parent_handle
- *  but this may be a leak!
+	  if (*parent == NULL) {
+		  return status;
+	  }
+/** @TODO Danger Will Robinson!  cache_inode_get should consume the
+ *  parent_handle but this may be a leak!
  */
-          /* Link in a weak reference */
-          entry->object.dir.parent = (*parent)->weakref;
+	  /* Link in a weak reference */
+	  entry->object.dir.parent = (*parent)->weakref;
      }
 
      return status;
@@ -177,8 +177,8 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
 
 cache_inode_status_t
 cache_inode_lookupp(cache_entry_t *entry,
-                    struct req_op_context *req_ctx,
-                    cache_entry_t **parent)
+		    struct req_op_context *req_ctx,
+		    cache_entry_t **parent)
 {
      cache_inode_status_t status;
      pthread_rwlock_rdlock(&entry->content_lock);
