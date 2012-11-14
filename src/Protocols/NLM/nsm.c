@@ -51,15 +51,13 @@ bool nsm_connect()
       return FALSE;
     }
 
-  nodename = gsh_malloc(strlen(utsname.nodename)+1);
+  nodename = gsh_strdup(utsname.nodename);
   if(nodename == NULL)
     {
       LogCrit(COMPONENT_NLM,
               "failed to allocate memory for nodename");
       return FALSE;
     }
-
-  strcpy(nodename, utsname.nodename);
 
   nsm_clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
 

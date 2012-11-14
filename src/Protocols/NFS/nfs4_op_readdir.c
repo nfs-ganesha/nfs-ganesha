@@ -329,10 +329,10 @@ nfs4_readdir_callback(void* opaque,
      }
      tracker->mem_left -= (namelen + 1);
      tracker->entries[tracker->count].name.utf8string_len = namelen;
-     tracker->entries[tracker->count].name.utf8string_val
-          = gsh_malloc(namelen + 1);
-     strcpy(tracker->entries[tracker->count].name.utf8string_val,
-            name);
+     tracker->entries[tracker->count].name.utf8string_val = gsh_strdup(name);
+     if(tracker->entries[tracker->count].name.utf8string_val == NULL) {
+          return FALSE;
+     }
 
      if ((tracker->req_attr.bitmap4_val != NULL) &&
          (tracker->req_attr.bitmap4_val[0] & FATTR4_FILEHANDLE)) {

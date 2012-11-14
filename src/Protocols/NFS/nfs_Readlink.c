@@ -154,7 +154,7 @@ int nfs_Readlink(nfs_arg_t *parg,
                           pcontext, &cache_status)
      == CACHE_INODE_SUCCESS)
     {
-      if((ptr = gsh_malloc(symlink_data.len+1)) == NULL)
+      if((ptr = gsh_strdup(symlink_data.path)) == NULL)
         {
           switch (preq->rq_vers)
             {
@@ -168,8 +168,6 @@ int nfs_Readlink(nfs_arg_t *parg,
           rc = NFS_REQ_OK;
           goto out;
         }
-
-      strcpy(ptr, symlink_data.path);
 
       /* Reply to the client (think about free data after use ) */
       switch (preq->rq_vers)

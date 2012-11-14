@@ -540,12 +540,12 @@ nfs2_readdir_callback(void* opaque,
                        FSAL_DIGEST_FILEID2,
                        handle,
                        &id_descriptor);
-     e2->name = gsh_malloc(namelen + 1);
+     e2->name = gsh_strdup(name);
      if (e2->name == NULL) {
           tracker->error = NFSERR_IO;
           return FALSE;
      }
-     strcpy(e2->name, name);
+
      memcpy(e2->cookie, &truncookie, NFS2_COOKIESIZE);
      if (tracker->count != 0) {
           tracker->entries[tracker->count - 1].nextentry = e2;
@@ -603,12 +603,12 @@ nfs3_readdir_callback(void* opaque,
                        handle,
                        &id_descriptor);
 
-     e3->name = gsh_malloc(namelen + 1);
+     e3->name = gsh_strdup(name);
      if (e3->name == NULL) {
           tracker->error = NFS3ERR_IO;
           return FALSE;
      }
-     strcpy(e3->name, name);
+
      e3->cookie = cookie;
 
      if (tracker->count > 0) {

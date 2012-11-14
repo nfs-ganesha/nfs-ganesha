@@ -444,12 +444,12 @@ nfs3_readdirplus_callback(void* opaque,
                        handle,
                        &id_descriptor);
 
-     ep3->name = gsh_malloc(namelen + 1);
+     ep3->name = gsh_strdup(name);
      if (ep3->name == NULL) {
           tracker->error = NFS3ERR_IO;
           return FALSE;
      }
-     strcpy(ep3->name, name);
+
      ep3->cookie = cookie;
 
      /* Account for file name + length + cookie */
