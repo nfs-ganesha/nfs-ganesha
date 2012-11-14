@@ -115,13 +115,14 @@ int _9p_symlink( _9p_request_data_t * preq9p,
  
    /* Let's do the job */
    /* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
-   if( ( pentry_symlink = cache_inode_create( pfid->pentry,
-                                              symlink_name,
-                                              SYMBOLIC_LINK,
-                                              mode,
-                                              &create_arg,
-                                              &pfid->op_context,
-                                              &cache_status)) == NULL)
+   cache_status = cache_inode_create(pfid->pentry,
+				     symlink_name,
+				     SYMBOLIC_LINK,
+				     mode,
+				     &create_arg,
+				     &pfid->op_context,
+				     &pentry_symlink);
+   if (pentry_symlink == NULL)
     {
       if( create_arg.link_content != NULL ) gsh_free( create_arg.link_content ) ;
       return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

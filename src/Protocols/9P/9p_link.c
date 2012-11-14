@@ -110,11 +110,12 @@ int _9p_link( _9p_request_data_t * preq9p,
    /* Let's do the job */
    snprintf( link_name, MAXNAMLEN, "%.*s", *name_len, name_str ) ;
 
-   if( cache_inode_link( ptargetfid->pentry,
-                         pdfid->pentry,
-                         link_name,
-                         &pdfid->op_context,
-                         &cache_status) != CACHE_INODE_SUCCESS )
+   cache_status = cache_inode_link(ptargetfid->pentry,
+				   pdfid->pentry,
+				   link_name,
+				   &pdfid->op_context);
+
+   if(cache_status != CACHE_INODE_SUCCESS )
      return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
  

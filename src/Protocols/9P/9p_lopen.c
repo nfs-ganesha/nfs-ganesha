@@ -96,11 +96,11 @@ int _9p_lopen( _9p_request_data_t * preq9p,
 
   if( pfid->pentry->type == REGULAR_FILE ) /** @todo: Maybe other types (FIFO, SOCKET,...) may require to be opened too */
    {
-      if(cache_inode_open( pfid->pentry, 
-                           openflags, 
-                           &pfid->op_context,
-                           0, 
-                           &cache_status) != CACHE_INODE_SUCCESS) 
+      cache_status = cache_inode_open(pfid->pentry,
+				      openflags,
+				      &pfid->op_context,
+				      0);
+      if(cache_status != CACHE_INODE_SUCCESS)
          return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
    }
 

@@ -152,10 +152,10 @@ int _9p_auth( _9p_request_data_t * preq9p,
 
   pexport->proot_handle->ops->handle_to_key( pexport->proot_handle, &fsdata.fh_desc ) ;
 
-  pfid->pentry = cache_inode_get( &fsdata,
-                                  NULL,
-                                  &pfid->op_context,
-                                  &cache_status ) ;
+  cache_status = cache_inode_get( &fsdata,
+				  NULL,
+				  &pfid->op_context,
+				  &pfid->pentry ) ;
 
   if( pfid->pentry == NULL )
     return  _9p_rerror( preq9p, pworker_data,  msgtag,  _9p_tools_errno( cache_status ),  plenout, preply ) ;

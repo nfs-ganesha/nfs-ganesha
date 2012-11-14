@@ -106,17 +106,17 @@ int _9p_read( _9p_request_data_t * preq9p,
     }
   else
     {
-       if(cache_inode_rdwr( pfid->pentry,
-                            CACHE_INODE_READ,
-                            *offset,
-                            *count,
-                            &read_size,
-                            databuffer,
-                            &eof_met,
-                            &pfid->op_context,
-                            stable_flag,
-                            &cache_status ) != CACHE_INODE_SUCCESS )
-         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+       cache_status = cache_inode_rdwr( pfid->pentry,
+					CACHE_INODE_READ,
+					*offset,
+					*count,
+					&read_size,
+					databuffer,
+					&eof_met,
+					&pfid->op_context,
+					stable_flag);
+       if(cache_status != CACHE_INODE_SUCCESS)
+       return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
        outcount = (u32)read_size ;
    }

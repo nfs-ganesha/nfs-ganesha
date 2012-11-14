@@ -186,18 +186,18 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   if( *valid & _9P_SETATTR_SIZE )
     {
       FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
-      if((cache_status = cache_inode_truncate( pfid->pentry,
-                                               *size,
-                                               &pfid->op_context,
-                                               &cache_status)) != CACHE_INODE_SUCCESS)
+      cache_status = cache_inode_truncate(pfid->pentry,
+					  *size,
+					  &pfid->op_context);
+      if(cache_status != CACHE_INODE_SUCCESS)
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
     }
 
   /* Now set the attr */ 
-  if( cache_inode_setattr( pfid->pentry,
-                           &fsalattr,
-                           &pfid->op_context,
-                           &cache_status ) != CACHE_INODE_SUCCESS )
+  cache_status = cache_inode_setattr(pfid->pentry,
+				     &fsalattr,
+				     &pfid->op_context);
+  if (cache_status != CACHE_INODE_SUCCESS )
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    /* Build the reply */

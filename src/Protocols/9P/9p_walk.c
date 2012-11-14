@@ -138,11 +138,11 @@ int _9p_walk( _9p_request_data_t * preq9p,
            LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
             (u32)*msgtag, *fid, *newfid, i+1, *nwname, name ) ;
 
-           /* refcount +1 */
-           pnewfid->pentry = cache_inode_lookup( pentry,
-						 name,
-						 &pfid->op_context,
-						 &cache_status );
+	   /* refcount +1 */
+	   cache_status = cache_inode_lookup(pentry,
+						name,
+						&pfid->op_context,
+						&pnewfid->pentry);
 	   cache_inode_put(pentry);
 	   if(pnewfid->pentry == NULL )
               return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;

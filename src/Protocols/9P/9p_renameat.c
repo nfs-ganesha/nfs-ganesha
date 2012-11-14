@@ -116,12 +116,12 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   snprintf( oldname, MAXNAMLEN, "%.*s", *oldname_len, oldname_str ) ;
   snprintf( newname, MAXNAMLEN, "%.*s", *newname_len, newname_str ) ;
 
-  if( cache_inode_rename( poldfid->pentry,
-                          oldname,
-                          pnewfid->pentry,
-                          newname,
-                          &poldfid->op_context, 
-                          &cache_status) != CACHE_INODE_SUCCESS )
+  cache_status = cache_inode_rename(poldfid->pentry,
+				    oldname,
+				    pnewfid->pentry,
+				    newname,
+				    &poldfid->op_context);
+  if (cache_status != CACHE_INODE_SUCCESS)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
   /* Build the reply */

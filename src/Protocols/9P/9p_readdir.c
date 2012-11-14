@@ -224,9 +224,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   if( *offset == 0LL )
    {
       /* compute the parent entry */
-      if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
-                                                  &pfid->op_context,
-                                                  &cache_status ) ) == NULL )
+     cache_status = cache_inode_lookupp(pfid->pentry,
+					&pfid->op_context,
+					&pentry_dot_dot);
+      if(pentry_dot_dot == NULL )
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
       /* Deal with "." and ".." */  
@@ -251,9 +252,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   else if( *offset == 1LL )
    {
       /* compute the parent entry */
-      if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
-                                                  &pfid->op_context,
-                                                  &cache_status ) ) == NULL )
+      cache_status = cache_inode_lookupp(pfid->pentry,
+					 &pfid->op_context,
+					 &pentry_dot_dot);
+      if (pentry_dot_dot == NULL)
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
       cb_data.entries[0].qid_path =  pentry_dot_dot->obj_handle->attributes.fileid ;
@@ -281,14 +283,14 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   cb_data.count = delta ;
   cb_data.max = estimated_num_entries ;
 
-  if(cache_inode_readdir( pfid->pentry,
-                          cookie,
-                          &num_entries,
-                          &eod_met,
-                          &pfid->op_context, 
-                          _9p_readdir_callback,
-                          &cb_data,
-                          &cache_status) != CACHE_INODE_SUCCESS)
+  cache_status = cache_inode_readdir(pfid->pentry,
+				     cookie,
+				     &num_entries,
+				     &eod_met,
+				     &pfid->op_context,
+				     _9p_readdir_callback,
+				     &cb_data);
+  if(cache_status != CACHE_INODE_SUCCESS)
    {
      /* The avl lookup will try to get the next entry after 'cookie'. If none is found CACHE_INODE_NOT_FOUND is returned */
      /* In the 9P logic, this situation just mean "end of directory reached */

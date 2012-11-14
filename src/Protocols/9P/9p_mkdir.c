@@ -105,13 +105,14 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
    /* Create the directory */
 
    /* BUGAZOMEU: @todo : the gid parameter is not used yet */
-   if( ( pentry_newdir = cache_inode_create( pfid->pentry,
-                                             dir_name,
-                                             DIRECTORY,
-                                             *mode,
-                                             NULL,
-                                             &pfid->op_context,
-                                             &cache_status)) == NULL)
+   cache_status = cache_inode_create(pfid->pentry,
+				     dir_name,
+				     DIRECTORY,
+				     *mode,
+				     NULL,
+				     &pfid->op_context,
+				     &pentry_newdir);
+   if (pentry_newdir == NULL)
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
    cache_status = cache_inode_fileid(pentry_newdir, &pfid->op_context, &fileid);

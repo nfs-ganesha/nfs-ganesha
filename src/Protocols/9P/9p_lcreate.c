@@ -108,13 +108,14 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
    /* Create the file */
 
    /* BUGAZOMEU: @todo : the gid parameter is not used yet, flags is not yet used */
-   if( ( pentry_newfile = cache_inode_create( pfid->pentry,
-                                              file_name,
-                                              REGULAR_FILE,
-                                              *mode,
-                                              NULL,
-                                              &pfid->op_context, 
-     			 		      &cache_status)) == NULL)
+   cache_status = cache_inode_create(pfid->pentry,
+				     file_name,
+				     REGULAR_FILE,
+				     *mode,
+				     NULL,
+				     &pfid->op_context,
+				     &pentry_newfile);
+   if (pentry_newfile == NULL)
      return   _9p_rerror( preq9p, pworker_data,  msgtag,  _9p_tools_errno( cache_status ) , plenout, preply ) ;
       
    cache_status = cache_inode_fileid(pentry_newfile, &pfid->op_context, &fileid);
@@ -123,11 +124,11 @@ int _9p_lcreate( _9p_request_data_t * preq9p,
 
    _9p_openflags2FSAL( flags, &openflags ) ; 
 
-   if(cache_inode_open( pentry_newfile, 
-                        openflags, 
-                        &pfid->op_context,
-                        0, 
-                        &cache_status) != CACHE_INODE_SUCCESS)
+   cache_status = cache_inode_open(pentry_newfile,
+				   openflags,
+				   &pfid->op_context,
+				   0);
+   if(cache_status != CACHE_INODE_SUCCESS)
 	   goto err;
 
    /* refcount */

@@ -209,11 +209,11 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
 
   if(isDebug(COMPONENT_HASHTABLE))
     LogFullDebug(COMPONENT_STATE,
-                 "value = %lu", res % p_hparam->index_size);
+		 "value = %lu", res % hparam->index_size);
 
-  return (unsigned long)(res % p_hparam->index_size);
+  return (unsigned long)(res % hparam->index_size);
 
-}                               
+}
 
 /**
  * @brief Get the RBT hash from a 9p owner
@@ -230,7 +230,7 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_owner_t *pkey = buffclef->addr;
+  state_owner_t *pkey = key->addr;
 
   struct sockaddr_in * paddr = (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr ;
 
@@ -372,7 +372,7 @@ static int _9p_owner_Get_Pointer(state_owner_t  *key,
   struct gsh_buffdesc buffkey;
   struct gsh_buffdesc buffval;
 
-  *powner = NULL; // in case we dont find it, return NULL
+  *owner = NULL; // in case we dont find it, return NULL
   buffkey.addr = key;
   buffkey.len = sizeof(*key);
 

@@ -82,12 +82,11 @@ int _9p_fsync( _9p_request_data_t * preq9p,
     return  _9p_rerror( preq9p, pworker_data,  msgtag, EIO, plenout, preply ) ;
   }
 
-  if(cache_inode_commit( pfid->pentry,
-                         0LL, // start at beginning of file
-                         0LL, // Mimic sync_file_range's behavior : count=0 means "whole file"
-                         CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
-                         &pfid->op_context,
-                         &cache_status) != CACHE_INODE_SUCCESS )
+  cache_status = cache_inode_commit(pfid->pentry,
+				    0LL, // start at beginning of file
+				    0LL, // Mimic sync_file_range's behavior : count=0 means "whole file"
+				    &pfid->op_context);
+  if (cache_status != CACHE_INODE_SUCCESS )
     return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 
   /* Build the reply */
