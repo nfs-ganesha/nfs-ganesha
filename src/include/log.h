@@ -59,10 +59,6 @@
  *
  */
 
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 1024
-#endif
-
 #define STR_LEN 256
 
 /*
@@ -371,7 +367,6 @@ void SetNamePgm(const char *nom);
 void SetNameHost(const char *nom);
 void SetDefaultLogging(const char *name);
 void SetNameFunction(const char *nom); /* thread safe */
-void GetNameFunction(char *name, int len);
 
 /* AddFamilyError : not thread safe */
 int AddFamilyError(int num_family, char *nom_family, family_error_t * tab_err);
@@ -388,7 +383,6 @@ char *ReturnLevelInt(int level);
 int MakeLogError(char *buffer, int num_family, int num_error, int status,
                   int ma_ligne);
 
-int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
 int log_snprintf(char *out, size_t n, char *format, ...);
 int log_fprintf(FILE * file, char *format, ...);
 
