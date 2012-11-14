@@ -17,6 +17,9 @@
 #include "fsal.h"
 #include <string.h>
 
+const fsal_name_t FSAL_DOT = { ".", 1 };
+const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
+
 /**
  * @defgroup FSALNameFunctions Name handling functions.
  *
@@ -33,6 +36,10 @@
  *        Address of the string  to be converted.
  * \param in_str_maxlen (in, fsal_mdsize_t)
  *        Maximum size for the string to be converted.
+ *        If 0, just use strlen
+ *        This function can take a string from a len/buffer
+ *        where the buffer is not null terminated as long
+ *        as len is passed as in_str_maxlen.
  * \param name (out, fsal_name_t *)
  *        The structure to be filled with the name.
  *
@@ -46,37 +53,33 @@ fsal_status_t FSAL_str2name(const char *string, /* IN */
                             fsal_name_t * name  /* OUT */
     )
 {
-
   unsigned int i;
-  char *output;
 
   /* sanity checks */
   if(!name || !string)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  output = (*name).name;
-
   /* computes input strlen */
-  for(i = 0; (i < in_str_maxlen) && (string[i] != '\0'); i++) ;
+  if(in_str_maxlen == 0)
+    i = strlen(string);
+  else
+    i = strnlen(string, in_str_maxlen);
 
   /* the value of i doesn't include terminating '\0',
    * thus, FSAL_MAX_NAME_LEN is excluded.
    */
-  if(i >= FSAL_MAX_NAME_LEN)
+  if(i >= sizeof(name->name))
     ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
 
   (*name).len = i;
 
   /* copies the string */
-  for(i = 0; i < (*name).len; i++)
-    {
-      output[i] = string[i];
-    }
+  memcpy(name->name , string, name->len);
+
   /* sets the terminating \0 */
-  output[i] = '\0';
+  name->name[i] = '\0';
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 /**
@@ -87,6 +90,10 @@ fsal_status_t FSAL_str2name(const char *string, /* IN */
  *        Address of the string  to be converted.
  * \param in_str_maxlen (in, fsal_mdsize_t)
  *        Maximum size for the string to be converted.
+ *        If 0, just use strlen
+ *        This function can take a string from a len/buffer
+ *        where the buffer is not null terminated as long
+ *        as len is passed as in_str_maxlen.
  * \param p_path (out, fsal_path_t *)
  *        The structure to be filled with the name.
  *
@@ -100,37 +107,33 @@ fsal_status_t FSAL_str2path(char *string,       /* IN */
                             fsal_path_t * p_path        /* OUT */
     )
 {
-
   unsigned int i;
-  char *output;
 
   /* sanity checks */
   if(!p_path || !string)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  output = p_path->path;
-
   /* computes input strlen */
-  for(i = 0; (i < in_str_maxlen) && (string[i] != '\0'); i++) ;
+  if(in_str_maxlen == 0)
+    i = strlen(string);
+  else
+    i = strnlen(string, in_str_maxlen);
 
   /* the value of i doesn't include terminating '\0',
    * thus, FSAL_MAX_PATH_LEN is excluded.
    */
-  if(i >= FSAL_MAX_PATH_LEN)
+  if(i >= sizeof(p_path->path))
     ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
 
   p_path->len = i;
 
   /* copies the string */
-  for(i = 0; i < p_path->len; i++)
-    {
-      output[i] = string[i];
-    }
+  memcpy(p_path->path, string, p_path->len);
+
   /* sets the terminating \0 */
-  output[i] = '\0';
+  p_path->path[i] = '\0';
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 /**
@@ -154,26 +157,18 @@ fsal_status_t FSAL_name2str(fsal_name_t * p_name,       /* IN */
                             fsal_mdsize_t out_str_maxlen        /* IN */
     )
 {
-
-  unsigned int i;
-  char *input;
-
   /* sanity checks */
   if(!string || !p_name)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  input = p_name->name;
-
-  i = p_name->len;
-
   /* the value of i doesn't include terminating '\0',
    * thus, last value is excluded.
    */
-  if(i >= out_str_maxlen)
+  if(p_name->len >= out_str_maxlen)
     ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
-  /* copies the value */
-  strncpy(string, input, out_str_maxlen);
+  /* copies the value, including terminating null */
+  memcpy(string, p_name->name, p_name->len + 1);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -199,26 +194,18 @@ fsal_status_t FSAL_path2str(fsal_path_t * p_path,       /* IN */
                             fsal_mdsize_t out_str_maxlen        /* IN */
     )
 {
-
-  unsigned int i;
-  char *input;
-
   /* sanity checks */
   if(!string || !p_path)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  input = p_path->path;
-
-  i = p_path->len;
-
   /* the value of i doesn't include terminating '\0',
    * thus, last value is excluded.
    */
-  if(i >= out_str_maxlen)
+  if(p_path->len >= out_str_maxlen)
     ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
-  /* copies the value */
-  strncpy(string, input, out_str_maxlen);
+  /* copies the value, including terminating null */
+  memcpy(string, p_path->path, p_path->len + 1);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -260,17 +247,12 @@ int FSAL_pathcmp(fsal_path_t * p_path1, fsal_path_t * p_path2)
  */
 fsal_status_t FSAL_namecpy(fsal_name_t * p_tgt_name, fsal_name_t * p_src_name)
 {
-
-  char *output;
-
   /* sanity check */
   if(!p_tgt_name || !p_src_name)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  output = p_tgt_name->name;
-
   /* copy */
-  strncpy(output, p_src_name->name, FSAL_MAX_NAME_LEN);
+  memcpy(p_tgt_name->name, p_src_name->name, p_src_name->len + 1);
 
   p_tgt_name->len = p_src_name->len;
 
@@ -288,17 +270,12 @@ fsal_status_t FSAL_namecpy(fsal_name_t * p_tgt_name, fsal_name_t * p_src_name)
  */
 fsal_status_t FSAL_pathcpy(fsal_path_t * p_tgt_path, fsal_path_t * p_src_path)
 {
-
-  char *output;
-
   /* sanity check */
   if(!p_tgt_path || !p_src_path)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  output = p_tgt_path->path;
-
   /* copy */
-  strncpy(output, p_src_path->path, FSAL_MAX_PATH_LEN);
+  memcpy(p_tgt_path->path, p_src_path->path, p_src_path->len + 1);
 
   p_tgt_path->len = p_src_path->len;
 

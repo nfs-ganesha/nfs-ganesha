@@ -270,6 +270,9 @@ fsal_status_t FSAL_str2name(const char *string, /* IN */
                             fsal_name_t * name  /* OUT */
     );
 
+/* Resulting string will not use more than out_str_maxlen bytes and will
+ * be NULL terminated.
+ */
 fsal_status_t FSAL_name2str(fsal_name_t * p_name,       /* IN */
                             char *string,       /* OUT */
                             fsal_mdsize_t out_str_maxlen        /* IN */
@@ -285,6 +288,9 @@ fsal_status_t FSAL_str2path(char *string,       /* IN */
                             fsal_path_t * p_path        /* OUT */
     );
 
+/* Resulting string will not use more than out_str_maxlen bytes and will
+ * be NULL terminated.
+ */
 fsal_status_t FSAL_path2str(fsal_path_t * p_path,       /* IN */
                             char *string,       /* OUT */
                             fsal_mdsize_t out_str_maxlen        /* IN */
