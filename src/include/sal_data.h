@@ -149,7 +149,7 @@ typedef enum state_type_t
 
 typedef struct state_share__
 {
-  char              share_oexcl_verifier[8]; /**< Verifier to use when opening a file as EXCLUSIVE4       */
+  char              share_oexcl_verifier[NFS4_VERIFIER_SIZE]; /**< Verifier to use when opening a file as EXCLUSIVE4       */
   unsigned int      share_access;            /**< The NFSv4 Share Access state                            */
   unsigned int      share_deny;              /**< The NFSv4 Share Deny state                              */
   struct glist_head share_lockstates;        /**< The list of lock states associated with this open state */
