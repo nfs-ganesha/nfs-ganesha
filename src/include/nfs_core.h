@@ -346,7 +346,7 @@ typedef struct nfs_request_data
   struct nfs_request_lookahead lookahead;
   const nfs_function_desc_t *funcdesc;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
-  nfs_res_t res_nfs;
+  nfs_res_t *res_nfs;
   nfs_arg_t arg_nfs;
   struct timeval time_queued; /* The time at which a request was added
                                * to the worker thread queue. */
@@ -493,6 +493,23 @@ extern pool_t *request_pool;
 extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool;
 extern pool_t *ip_stats_pool;
+extern pool_t *nfs_res_pool;
+
+/* XXX in 2.0 these are in nfs_dupreq.h */
+static inline nfs_res_t *
+alloc_nfs_res(void)
+{
+    nfs_res_t *res =
+        pool_alloc(nfs_res_pool, NULL); /* XXX can pool/ctor zero mem? */
+    memset(res, 0, sizeof(nfs_res_t));
+    return (res);
+}
+
+static inline void
+free_nfs_res(nfs_res_t *res)
+{
+    pool_free(nfs_res_pool, res);
+}
 
 struct nfs_worker_data__
 {
@@ -590,8 +607,6 @@ extern pool_t *nfs_clientid_pool;
 /*
  *functions prototypes
  */
-enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
-                                   bool_t *dispatch);
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();
@@ -771,9 +786,6 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
-int is_rpc_call_valid(SVCXPRT *, struct svc_req *);
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *);
-int nfs_rpc_get_args(nfs_request_data_t *);
 
 #ifdef _USE_FSAL_UP
 void *fsal_up_process_thread( void * UnUsedArg );

@@ -14,6 +14,7 @@ SUBDIRS = gssd
 
 librpcal_la_SOURCES = nfs_dupreq.c \
                       rpc_tools.c \
+                      gss_extra.c \
                       ../include/nfs_dupreq.h
 
 librpcal_la_DEPENDENCIES = $(librpcal_la_SOURCES)  $(librpcal_la_LIBADD)

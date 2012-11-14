@@ -85,7 +85,6 @@ typedef struct nfs_krb5_param__
       gss_name_t gss_name;
   } svc;
   bool_t active_krb5;
-  hash_parameter_t hash_param;
 } nfs_krb5_parameter_t;
 
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
