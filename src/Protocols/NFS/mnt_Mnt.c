@@ -221,7 +221,7 @@ int mnt_Mnt(nfs_arg_t *parg,
       /* If mounting a subdirectory, fetch the handle for the exported directory */
 
       /* First convert MountPath into an FSAL path */
-      fsal_status = FSAL_str2path(MountPath, MAXPATHLEN, &fsal_path);
+      fsal_status = FSAL_str2path(MountPath, 0, &fsal_path);
 
       if(FSAL_IS_ERROR(fsal_status))
         {

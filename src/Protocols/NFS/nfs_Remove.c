@@ -198,7 +198,7 @@ int nfs_Remove(nfs_arg_t *parg,
     {
 
       if((cache_status = cache_inode_error_convert(FSAL_str2name(file_name,
-                                                                 FSAL_MAX_NAME_LEN,
+                                                                 0,
                                                                  &name))) ==
          CACHE_INODE_SUCCESS)
         {

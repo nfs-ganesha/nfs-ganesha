@@ -278,7 +278,7 @@ PTFSAL_readdir(fsal_dir_t       * dir_desc,      /* IN */
         continue;
 
       /* build the full path of the file into "fsalpath */
-      if(FSAL_IS_ERROR (st = FSAL_str2name(fsi_dname, FSAL_MAX_NAME_LEN,
+      if(FSAL_IS_ERROR (st = FSAL_str2name(fsi_dname, 0,
                         &(p_pdirent[*p_nb_entries].name))))
          ReturnStatus(st, INDEX_FSAL_readdir);
 

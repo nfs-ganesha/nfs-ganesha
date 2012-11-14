@@ -241,7 +241,7 @@ int nfs3_Mknod(nfs_arg_t *parg,
   /* convert node name */
 
   if((cache_status = cache_inode_error_convert(FSAL_str2name(str_file_name,
-                                                             FSAL_MAX_NAME_LEN,
+                                                             0,
                                                              &file_name))) ==
      CACHE_INODE_SUCCESS)
     {

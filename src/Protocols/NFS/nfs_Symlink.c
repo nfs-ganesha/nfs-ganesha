@@ -230,9 +230,8 @@ int nfs_Symlink(nfs_arg_t *parg,
      *str_symlink_name == '\0'||
      str_target_path == NULL  ||
      *str_target_path == '\0' ||
-     FSAL_IS_ERROR(FSAL_str2name(str_symlink_name, FSAL_MAX_NAME_LEN, &symlink_name)) ||
-     FSAL_IS_ERROR(FSAL_str2path
-                   (str_target_path, FSAL_MAX_PATH_LEN, &create_arg.link_content)))
+     FSAL_IS_ERROR(FSAL_str2name(str_symlink_name, 0, &symlink_name)) ||
+     FSAL_IS_ERROR(FSAL_str2path(str_target_path, 0, &create_arg.link_content)))
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;
     }
