@@ -260,22 +260,30 @@ struct user_credentials {
   sockaddr_t caller_addr;
 };
 
+/* name will always be NULL terminated */
 typedef struct fsal_name__
 {
+  /* FSAL_MAX_NAME_LEN is the max number of characters in name,
+   * so need extra byte for null.
+   */
   char name[FSAL_MAX_NAME_LEN+1];
   unsigned int len;
 } fsal_name_t;
 
 /** object path.  */
 
+/* path will always be NULL terminated */
 typedef struct fsal_path__
 {
+  /* FSAL_MAX_PATH_LEN is the maximum size of the buffer for
+   * path and assumes null included, so no + 1.
+   */
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
 
-static const fsal_name_t FSAL_DOT = { ".", 1 };
-static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
+const fsal_name_t FSAL_DOT;
+const fsal_name_t FSAL_DOT_DOT;
 
 #define FSAL_NAME_INITIALIZER {"",0}
 #define FSAL_PATH_INITIALIZER {"",0}
