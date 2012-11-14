@@ -107,8 +107,7 @@ int nfs_XattrD_Name(char *strname, char *objectname)
 
   if(!strncmp(strname, XATTRD_NAME, XATTRD_NAME_LEN))
     {
-      memcpy(objectname, (char *)(strname + XATTRD_NAME_LEN),
-             strlen(strname) - XATTRD_NAME_LEN + 1);
+      strcpy(objectname, strname + XATTRD_NAME_LEN);
       return 1;
     }
 
