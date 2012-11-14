@@ -49,6 +49,8 @@
 
 #include "log.h"
 #include "rpc/rpc.h"
+#include "common_utils.h"
+#include "abstract_mem.h"
 
 /* La longueur d'une chaine */
 #define STR_LEN_TXT      2048
@@ -175,7 +177,7 @@ static int syslog_opened = 0 ;
 typedef struct ThreadLogContext_t
 {
 
-  char nom_fonction[STR_LEN];
+  char * nom_fonction;
 
 } ThreadLogContext_t;
 
@@ -397,7 +399,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
   if(p_current_thread_vars == NULL)
     {
       /* allocates thread structure */
-      p_current_thread_vars = (ThreadLogContext_t *) malloc(sizeof(ThreadLogContext_t));
+      p_current_thread_vars = gsh_malloc(sizeof(ThreadLogContext_t));
 
       if(p_current_thread_vars == NULL)
         {
@@ -409,7 +411,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
         }
 
       /* inits thread structures */
-      p_current_thread_vars->nom_fonction[0] = '\0';
+      p_current_thread_vars->nom_fonction = NULL;
 
       /* set the specific value */
       pthread_setspecific(thread_key, (void *)p_current_thread_vars);
@@ -427,20 +429,10 @@ static inline const char *Log_GetThreadFunction(int ok_errors)
 {
   ThreadLogContext_t *context = Log_GetThreadContext(ok_errors);
 
-  if (context == NULL)
+  if (context == NULL || context->nom_fonction == NULL)
     return emergency;
   else
     return context->nom_fonction;
-}
-
-void GetNameFunction(char *name, int len)
-{
-  const char *s = Log_GetThreadFunction(0);
-
-  if (s != emergency && s != NULL)
-    strncpy(name, s, len);
-  else
-    snprintf(name, len, "Thread %p", (caddr_t)pthread_self());
 }
 
 /*
@@ -498,7 +490,9 @@ void SetNamePgm(char *nom)
 
   /* This function isn't thread-safe because the name of the program
    * is common among all the threads. */
-  strcpy(program_name, nom);
+  if(strmaxcpy(program_name, nom, sizeof(program_name)) == -1)
+    LogFatal(COMPONENT_LOG,
+             "Program name %s too long", nom);
 }                               /* SetNamePgm */
 
 /*
@@ -506,16 +500,20 @@ void SetNamePgm(char *nom)
  */
 void SetNameHost(char *name)
 {
-  strcpy(hostname, name);
+  if(strmaxcpy(hostname, name, sizeof(hostname)) == -1)
+    LogFatal(COMPONENT_LOG,
+             "Host name %s too long", name);
 }                               /* SetNameHost */
 
 /* Set the function name in progress. */
 void SetNameFunction(char *nom)
 {
   ThreadLogContext_t *context = Log_GetThreadContext(0);
-
-  if (context != NULL)
-    strcpy(context->nom_fonction, nom);
+  if(context == NULL)
+    return;
+  if(context->nom_fonction != NULL)
+    gsh_free(context->nom_fonction);
+  context->nom_fonction = gsh_strdup(nom);
 }                               /* SetNameFunction */
 
 /* Installs a signal handler */
@@ -630,7 +628,11 @@ void InitLogging()
   /* Initialisation of tables of families */
   tab_family[0].num_family = 0;
   tab_family[0].tab_err = (family_error_t *) tab_system_err;
-  strcpy(tab_family[0].name_family, "Errors Systeme UNIX");
+  if(strmaxcpy(tab_family[0].name_family,
+               "Errors Systeme UNIX",
+               sizeof(tab_family[0].name_family)) == 01)
+    LogFatal(COMPONENT_LOG,
+             "System Family name too long");
 
   for(i = 1; i < MAX_NUM_FAMILY; i++)
     tab_family[i].num_family = UNUSED_SLOT;
@@ -683,7 +685,7 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   Localtime_r(&tm, &the_date);
 
   /* Writing to the chosen file. */
-  log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
+  vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
   if(LogComponents[component].comp_log_level
      < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
@@ -715,7 +717,7 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function,
    }
 
   /* Writing to the chosen file. */
-  log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
+  vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
   if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
     syslog(tabLogLevel[level].syslog_level, "[%s] :%s", threadname, texte);
@@ -748,7 +750,7 @@ static int DisplayTest_valist(log_components_t component, char *format,
 {
   char text[STR_LEN_TXT];
 
-  log_vsnprintf(text, STR_LEN_TXT, format, arguments);
+  vsnprintf(text, STR_LEN_TXT, format, arguments);
 
   fprintf(stdout, "%s\n", text);
   return fflush(stdout);
@@ -757,7 +759,7 @@ static int DisplayTest_valist(log_components_t component, char *format,
 static int DisplayBuffer_valist(char *buffer, log_components_t component,
                                 char *format, va_list arguments)
 {
-  return log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
+  return vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
 static int DisplayLogPath_valist(char *path, char * function,
@@ -867,7 +869,11 @@ int AddFamilyError(int num_family, char *name_family, family_error_t * tab_err)
 
   tab_family[i].num_family = (num_family != -1) ? num_family : i;
   tab_family[i].tab_err = tab_err;
-  strcpy(tab_family[i].name_family, name_family);
+  if(strmaxcpy(tab_family[i].name_family,
+               name_family,
+               sizeof(tab_family[i].name_family)) == -1)
+    LogFatal(COMPONENT_LOG,
+             "family name %s too long", name_family);
 
   return tab_family[i].num_family;
 }                               /* AddFamilyError */
@@ -987,20 +993,13 @@ int MakeLogError(char *buffer, int num_family, int num_error, int status,
 
 #define MAX_STR_TOK LOG_MAX_STRLEN
 
-int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
-{
-  /* TODO: eventually remove this entirely, but this makes the code
-   * work for now */
-  return vsnprintf(out, taille, format, arguments);
-}
-
 int log_snprintf(char *out, size_t n, char *format, ...)
 {
   va_list arguments;
   int rc;
 
   va_start(arguments, format);
-  rc = log_vsnprintf(out, n, format, arguments);
+  rc = vsnprintf(out, n, format, arguments);
   va_end(arguments);
 
   return rc;
@@ -1009,14 +1008,11 @@ int log_snprintf(char *out, size_t n, char *format, ...)
 int log_fprintf(FILE * file, char *format, ...)
 {
   va_list arguments;
-  char tmpstr[LOG_MAX_STRLEN];
   int rc;
 
   va_start(arguments, format);
-  memset(tmpstr, 0, LOG_MAX_STRLEN);
-  rc = log_vsnprintf(tmpstr, LOG_MAX_STRLEN, format, arguments);
+  rc = vfprintf(file, format, arguments);
   va_end(arguments);
-  fputs(tmpstr, file);
   return rc;
 }
 
@@ -1337,7 +1333,8 @@ static int isValidLogPath(char *pathname)
   char *directory_name;
   int rc;
 
-  strncpy(tempname, pathname, MAXPATHLEN);
+  if(strmaxcpy(tempname, pathname, sizeof(tempname)) == -1)
+      return 0;
 
   directory_name = dirname(tempname);
   if (directory_name == NULL)
@@ -1437,6 +1434,15 @@ int SetComponentLogFile(log_components_t component, char *name)
         }
       }
 
+  if(strmaxcpy(LogComponents[component].comp_log_file,
+               name,
+               sizeof(LogComponents[component].comp_log_file)) == -1)
+    {
+      LogMajor(COMPONENT_LOG, "Could not set default logging to %s (path too long)", name);
+      errno = EINVAL;
+      return -1;
+    }
+
   changed = (newtype != LogComponents[component].comp_log_type) ||
             (newtype == FILELOG &&
              strcasecmp(name, LogComponents[component].comp_log_file) != 0);
@@ -1448,7 +1454,6 @@ int SetComponentLogFile(log_components_t component, char *name)
                name);
 
   LogComponents[component].comp_log_type = newtype;
-  strncpy(LogComponents[component].comp_log_file, name, MAXPATHLEN);
 
   if (component == COMPONENT_LOG && changed)
     LogChanges("Changing log destination for %s from %s to %s",
@@ -1547,7 +1552,10 @@ int getComponentLogLevel(snmp_adm_type_union * param, void *opt)
 {
   long component = (long)opt;
 
-  strcpy(param->string, ReturnLevelInt(LogComponents[component].comp_log_level));
+  strncpy(param->string,
+          ReturnLevelInt(LogComponents[component].comp_log_level),
+          sizeof(param->string));
+  param->string[sizeof(param->string) - 1] = '\0';
   return 0;
 }
 
