@@ -93,7 +93,7 @@ fsal_status_t GPFSFSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
     ReturnStatus(status, INDEX_FSAL_readlink);
 
   /* convert char * to fsal_path_t */
-  status = FSAL_str2path(link_content_out, FSAL_MAX_PATH_LEN, p_link_content);
+  status = FSAL_str2path(link_content_out, 0, p_link_content);
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_readlink);

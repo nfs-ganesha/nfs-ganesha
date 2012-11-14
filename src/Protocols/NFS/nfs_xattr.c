@@ -462,7 +462,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
   pfsal_handle = &pentry_dir->handle;
 
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strpath,
-                                                             MAXNAMLEN,
+                                                             0,
                                                              &name))) !=
      CACHE_INODE_SUCCESS)
     {
@@ -921,7 +921,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
   pfsal_handle = &parent_pentry->handle;
 
   /* convert attr name to FSAL name */
-  FSAL_str2name(parg->arg_create3.where.name, FSAL_MAX_NAME_LEN, &attr_name);
+  FSAL_str2name(parg->arg_create3.where.name, 0, &attr_name);
 
   /* set empty attr */
   fsal_status = FSAL_SetXAttrValue(pfsal_handle,
@@ -1784,7 +1784,7 @@ int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
   pfsal_handle = &pentry->handle;
 
   /* convert attr name to FSAL name */
-  FSAL_str2name(parg->arg_remove3.object.name, MAXNAMLEN, &name);
+  FSAL_str2name(parg->arg_remove3.object.name, 0, &name);
 
   fsal_status = FSAL_RemoveXAttrByName(pfsal_handle, pcontext, &name);
   if(FSAL_IS_ERROR(fsal_status))

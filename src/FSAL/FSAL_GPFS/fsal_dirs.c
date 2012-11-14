@@ -252,7 +252,7 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
           /* build the full path of the file into "fsalpath */
           if(FSAL_IS_ERROR
              (st =
-              FSAL_str2name(dp->d_name, FSAL_MAX_NAME_LEN,
+              FSAL_str2name(dp->d_name, 0,
                             &(p_pdirent[*p_nb_entries].name))))
             ReturnStatus(st, INDEX_FSAL_readdir);
 

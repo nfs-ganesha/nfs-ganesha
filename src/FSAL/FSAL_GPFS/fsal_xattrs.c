@@ -367,7 +367,7 @@ fsal_status_t GPFSFSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
         {
           /* fills an xattr entry */
           xattrs_tab[out_index].xattr_id = index;
-          FSAL_str2name(xattr_list[index].xattr_name, FSAL_MAX_NAME_LEN,
+          FSAL_str2name(xattr_list[index].xattr_name, 0,
                         &xattrs_tab[out_index].xattr_name);
           xattrs_tab[out_index].xattr_cookie = index + 1;
 

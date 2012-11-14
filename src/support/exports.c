@@ -3742,7 +3742,6 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
       cache_inode_fsal_data_t fsdata;
       fsal_handle_t fsal_handle;
       fsal_path_t exportpath_fsal;
-      fsal_mdsize_t strsize = MNTPATHLEN + 1;
       cache_entry_t *pentry = NULL;
 
       fsal_op_context_t context;
@@ -3765,7 +3764,8 @@ int nfs_export_create_root_entry(struct glist_head * pexportlist)
 
           /* Build the FSAL path */
           if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(pcurrent->fullpath,
-                                                        strsize, &exportpath_fsal))))
+                                                        0,
+                                                        &exportpath_fsal))))
             {
               LogCrit(COMPONENT_INIT,
                       "Couldn't build FSAL path for %s, removing export id %u",

@@ -227,8 +227,8 @@ int nfs_Rename(nfs_arg_t *parg,
      *str_entry_name == '\0' ||
      str_new_entry_name == NULL ||
      *str_new_entry_name == '\0' ||
-     FSAL_IS_ERROR(FSAL_str2name(str_entry_name, FSAL_MAX_NAME_LEN, &entry_name)) ||
-     FSAL_IS_ERROR(FSAL_str2name(str_new_entry_name, FSAL_MAX_NAME_LEN, &new_entry_name)))
+     FSAL_IS_ERROR(FSAL_str2name(str_entry_name, 0, &entry_name)) ||
+     FSAL_IS_ERROR(FSAL_str2name(str_new_entry_name, 0, &new_entry_name)))
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;
     }
