@@ -164,7 +164,8 @@ const nfs_function_desc_t nfs4_func_desc[] = {
    (xdrproc_t) xdr_void, "nfs_Null",
    NOTHING_SPECIAL},
   {nfs4_Compound, nfs4_Compound_Free, (xdrproc_t) xdr_COMPOUND4args,
-   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED}
+   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound",
+   CAN_BE_DUP | NEEDS_CRED}
 };
 
 const nfs_function_desc_t mnt1_func_desc[] = {
@@ -438,7 +439,7 @@ nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
 
   if(req->rq_prog == nfs_param.core_param.program[P_MNT])
     {
-        preqnfs->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
+      preqnfs->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
       if(req->rq_vers == MOUNT_V1)
         return &mnt1_func_desc[req->rq_proc];
       else

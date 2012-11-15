@@ -1016,6 +1016,25 @@ drc_should_retire(drc_t *drc)
     return (false);
 }
 
+static inline bool
+nfs_dupreq_v4_cacheable(nfs_request_data_t *nfs_req)
+{
+    COMPOUND4args *arg_c4 = (COMPOUND4args *) &nfs_req->arg_nfs;
+    if (arg_c4->minorversion > 0)
+        return (false);
+    if ((nfs_req->lookahead.flags & (NFS_LOOKAHEAD_READ |
+				     NFS_LOOKAHEAD_OPEN |
+				     NFS_LOOKAHEAD_CLOSE |
+				     NFS_LOOKAHEAD_LOCK |
+				     NFS_LOOKAHEAD_LOOKUP |
+				     NFS_LOOKAHEAD_READDIR |
+				     NFS_LOOKAHEAD_SETCLIENTID |
+				     NFS_LOOKAHEAD_SETCLIENTID_CONFIRM |
+				     NFS_LOOKAHEAD_SETATTR)));
+	    return (false);
+    return (true);
+}
+
 /**
  *
  * nfs_dupreq_start: start a duplicate request transaction
@@ -1060,12 +1079,10 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
 
     switch (drc->type) {
     case DRC_TCP_V4:
-    /* NFSv4.1 or higher */
         if (nfs_req->funcdesc->service_function == nfs4_Compound) {
-            COMPOUND4args *arg_c4 = (COMPOUND4args *) &nfs_req->arg_nfs;
-            if (arg_c4->minorversion > 0) {
-                /* for v41+ requests, we merely thread the request through
-                 * for later cleanup--all caching is handled by the v41
+		if (! nfs_dupreq_v4_cacheable(nfs_req)) {
+                /* for such requests, we merely thread the request through
+                 * for later cleanup--all v41 caching is handled by the v41
                  * slot reply cache */
                 req->rq_u1 = (void*) DUPREQ_NOCACHE;
                 res = alloc_nfs_res();

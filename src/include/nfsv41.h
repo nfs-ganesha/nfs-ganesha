@@ -7340,12 +7340,15 @@ static inline bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
     case NFS4_OP_LOCKU:
       if(!xdr_LOCKU4args(xdrs, &objp->nfs_argop4_u.oplocku))
         return false;
+      lkhd->flags |= NFS_LOOKAHEAD_LOCK;
       break;
     case NFS4_OP_LOOKUP:
       if(!xdr_LOOKUP4args(xdrs, &objp->nfs_argop4_u.oplookup))
         return false;
+      lkhd->flags |= NFS_LOOKAHEAD_LOOKUP;
       break;
     case NFS4_OP_LOOKUPP:
+      lkhd->flags |= NFS_LOOKAHEAD_LOOKUP;
       break;
     case NFS4_OP_NVERIFY:
       if(!xdr_NVERIFY4args(xdrs, &objp->nfs_argop4_u.opnverify))
@@ -7414,14 +7417,17 @@ static inline bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
     case NFS4_OP_SETATTR:
       if(!xdr_SETATTR4args(xdrs, &objp->nfs_argop4_u.opsetattr))
         return false;
+      lkhd->flags |= NFS_LOOKAHEAD_SETATTR;
       break;
     case NFS4_OP_SETCLIENTID:
       if(!xdr_SETCLIENTID4args(xdrs, &objp->nfs_argop4_u.opsetclientid))
         return false;
+      lkhd->flags |= NFS_LOOKAHEAD_SETCLIENTID;
       break;
     case NFS4_OP_SETCLIENTID_CONFIRM:
       if(!xdr_SETCLIENTID_CONFIRM4args(xdrs, &objp->nfs_argop4_u.opsetclientid_confirm))
         return false;
+      lkhd->flags |= NFS_LOOKAHEAD_SETCLIENTID_CONFIRM;
       break;
     case NFS4_OP_VERIFY:
       if(!xdr_VERIFY4args(xdrs, &objp->nfs_argop4_u.opverify))
