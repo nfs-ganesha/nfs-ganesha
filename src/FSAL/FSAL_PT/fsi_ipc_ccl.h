@@ -323,6 +323,8 @@ struct file_handle_t {
   int                    m_ftrunc_rsp_rcvd;
   uint64_t               m_eio_counter;       // number of EIOs encountered
   int                    m_sticky_rc;         // 'sticky' rc
+  uint64_t               m_outstanding_io_count; // number of unfinished IOs
+                                                 // on this handle
 };
 
 // ----------------------------------------------------------------------------
@@ -486,7 +488,7 @@ struct ipc_client_stats_t {
     timersub(&curr_time, &g_begin_io_idle_time, &diff_time);                  \
     uint64_t delay = diff_time.tv_sec * 1000000 + diff_time.tv_usec;          \
     if (update_stats(&g_client_io_idle_time, delay)) {                        \
-      FSI_TRACE(FSI_ERR, "IO Idle time stats sum square overflow");           \
+      FSI_TRACE(FSI_WARNING, "IO Idle time stats sum square overflow");       \
     }                                                                         \
   }                                                                           \
   memset(&g_begin_io_idle_time, 0, sizeof(g_begin_io_idle_time));             \
@@ -844,8 +846,8 @@ int ccl_fsal_try_stat_by_index(ccl_context_t           * handle,
 int ccl_fsal_try_fastopen_by_index(ccl_context_t       * handle,   
                                    int                   handle_index,
                                    char                * fsal_name);
-
-
+int ccl_find_oldest_handle();
+bool ccl_can_close_handle(int handle_index);
 
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL
