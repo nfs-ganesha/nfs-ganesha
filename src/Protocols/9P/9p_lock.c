@@ -174,7 +174,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
                         &lock,
                         &holder,
                         &conflict,
-                        &state_status) != STATE_SUCCESS)
+                        POSIX_LOCK ) != STATE_SUCCESS)
            {
               if( state_status == STATE_LOCK_BLOCKED ) 
                 status = _9P_LOCK_BLOCKED ;
@@ -192,7 +192,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
                           powner,
                           NULL,
                           &lock,
-                          &state_status) != STATE_SUCCESS)
+                          POSIX_LOCK ) != STATE_SUCCESS)
              status = _9P_LOCK_ERROR ;
          else
              status = _9P_LOCK_SUCCESS ;

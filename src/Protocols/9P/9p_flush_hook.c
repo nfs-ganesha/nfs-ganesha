@@ -50,7 +50,6 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
-#include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
 #include "abstract_mem.h"

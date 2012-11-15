@@ -348,12 +348,12 @@ fi
 AM_CONDITIONAL([USE_FSAL_SHOOK], test "[$enable_fsal_shook]"  == "yes")
 GA_AM_COND_ON_UNLESS([fsal-ceph],[do not build VFS FSAL shared library],[USE_FSAL_CEPH])
 GA_AM_COND_ON_UNLESS([fsal-lustre],[do not build LUSTRE FSAL shared library],[USE_FSAL_LUSTRE])
+GA_AM_COND_ON_UNLESS([fsal-zfs],[do not build ZFS FSAL shared library],[USE_FSAL_ZFS])
 
 # FSALs whicha re disabled by default
 GA_ENABLE_AM_CONDITION([fsal-hpss],[build HPSS FSAL],[USE_FSAL_HPSS])
 GA_ENABLE_AM_CONDITION([fsal-fuse],[build FUSE FSAL],[USE_FSAL_FUSE])
 GA_ENABLE_AM_CONDITION([fsal-xfs],[build XFS FSAL],[USE_FSAL_XFS])
-GA_ENABLE_AM_CONDITION([fsal-zfs],[build ZFS FSAL],[USE_FSAL_ZFS])
 # SHOOK is a variant of Lustre FSAL
 GA_ENABLE_AM_CONDITION([fsal-shook],[build SHOOKFSAL],[USE_FSAL_SHOOK])
 
@@ -700,15 +700,15 @@ if test "$enable_fsal_vfs" == "yes"; then
 fi
 
 if test "$enable_fsal_zfs" == "yes"; then
-	AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
-	PKG_CHECK_MODULES(ZFSWRAP, libzfswrap,
-	[
-	  FSAL_CFLAGS="$ZFSWRAP_CFLAGS"
-	  FSAL_LDFLAGS="$ZFSWRAP_LIBS"
-	],[
-	  AC_MSG_ERROR(Impossible to find the libzfswrap library)
-	])
-	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_ZFS/libfsalzfs.la"
+	AC_CHECK_LIB([zfswrap], [libzfswrap_init],
+		      [AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS tank])],
+		      [enable_fsal_zfs='no'
+		       AC_MSG_WARN([Unsable to find libzfswrap libraries, disabling.])])
+	AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS tank])
+fi
+
+if test "$enable_fsal_zfs" == "yes"; then
+        AC_MSG_WARN([ZFS FSAL is enabled])
         ZFS_CFLAGS=
         ZFS_LDFLAGS="-L/usr/lib64"
         ZFS_LIB="-lzfswrap -lcrypto -lz -laio"
@@ -717,6 +717,8 @@ else
         ZFS_LDFLAGS=
         ZFS_LIB=
 fi
+
+AM_CONDITIONAL([USE_FSAL_ZFS], test "[$enable_fsal_zfs]"  == "yes")
 
 AC_SUBST(ZFS_CFLAGS)
 AC_SUBST(ZFS_LDFLAGS)
