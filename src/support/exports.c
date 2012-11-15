@@ -337,11 +337,9 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   /* BE CAREFUL !! The following lines are specific to IPv4. The libcidr support IPv6 as well */
   memset( netAddr, 0, sizeof( unsigned long ) ) ;
   memcpy( netAddr, &pcidr->addr[12], 4 ) ;
-  *netAddr = ntohl( *netAddr ) ;
 
   memset( netMask, 0, sizeof( unsigned long ) ) ;
   memcpy( netMask, &pcidr->mask[12], 4 ) ;
-  *netMask = ntohl( *netMask ) ;
 
   return 0 ; 
 } /* nfs_LookupNetworkAddr */
@@ -371,6 +369,9 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
   /* It's now time to set the information related to the new clients */
   for(i = j; i < j + new_clients_number; i++)
     {
+      char addrbuf[sizeof("255.255.255.255")];
+      char maskbuf[sizeof("255.255.255.255")];
+
       /* cleans the export entry */
       memset(&p_clients[i], 0, sizeof(exportlist_client_entry_t));
 
@@ -408,14 +409,13 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
           p_clients[i].type = NETWORK_CLIENT;
 
           LogDebug(COMPONENT_CONFIG,
-                   "----------------- %s to network %s = %d.%d.%d.%d netmask=%x",
+                   "----------------- %s to network %s = %s netmask=%s",
                    (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                    client_hostname,
-                   (unsigned int)(p_clients[i].client.network.netaddr >> 24),
-                   (unsigned int)((p_clients[i].client.network.netaddr >> 16) & 0xFF),
-                   (unsigned int)((p_clients[i].client.network.netaddr >> 8) & 0xFF),
-                   (unsigned int)(p_clients[i].client.network.netaddr & 0xFF),
-                   (unsigned int)(p_clients[i].client.network.netmask));
+                   inet_ntop(AF_INET, &p_clients[i].client.network.netaddr,
+                             addrbuf, sizeof(addrbuf)),
+                   inet_ntop(AF_INET, &p_clients[i].client.network.netmask,
+                             maskbuf, sizeof(maskbuf)));
         }
       else if( getaddrinfo(client_hostname, NULL, NULL, &info) == 0)
         {
@@ -427,13 +427,11 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                      sizeof(struct in_addr));
               p_clients[i].type = HOSTIF_CLIENT;
               LogDebug(COMPONENT_CONFIG,
-                       "----------------- %s to client %s = %d.%d.%d.%d",
+                       "----------------- %s to client %s = %s",
                        (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                        client_hostname, 
-                       (unsigned int)(p_clients[i].client.hostif.clientaddr >> 24),
-                       (unsigned int)((p_clients[i].client.hostif.clientaddr >> 16) & 0xFF),
-                       (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
-                       (unsigned int)(p_clients[i].client.hostif.clientaddr & 0xFF));
+                       inet_ntop(AF_INET, &p_clients[i].client.hostif.clientaddr,
+                                 addrbuf, sizeof(addrbuf)));
             }
        else /* AF_INET6 */
             {
@@ -2281,6 +2279,29 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
     return nb_entries;
 }
 
+static const char *
+cidr_net(unsigned int addr, unsigned int netmask, char *buf, socklen_t len)
+{
+        unsigned int rb = ntohl(netmask);
+        int bitcnt = 33;
+
+        if (inet_ntop(AF_INET, &addr, buf, len) == NULL)
+                return "???";
+
+        /* Get the rightmost non-zero bit */
+        rb &= - rb;
+        if(!rb) {
+                bitcnt = 0;
+        } else while (rb) {
+                rb >>= 1;
+                bitcnt--;
+        }
+
+        rb = strlen(buf);
+        snprintf(buf+rb, len - rb, "/%d", bitcnt);
+        return buf;
+}
+
 /**
  * function for matching a specific option in the client export list.
  */
@@ -2310,16 +2331,26 @@ int export_client_match(sockaddr_t *hostaddr,
 
   for(i = 0; i < clients->num_clients; i++)
     {
+      char addrbuf[sizeof("255.255.255.255")]; 
+      char patbuf[sizeof("255.255.255.255/32")]; 
+      exportlist_client_entry_t * p_client = clients->clientarray + i;
+
       /* Make sure the client entry has the permission flags we're looking for
        * Also make sure we aren't looking at a root client entry when we're not root. */
-      if(((clients->clientarray[i].options & export_option) == 0) ||
-         ((clients->clientarray[i].options & EXPORT_OPTION_ROOT) != (export_option & EXPORT_OPTION_ROOT)))
+      if(((p_client->options & export_option) == 0) ||
+         ((p_client->options & EXPORT_OPTION_ROOT) != (export_option & EXPORT_OPTION_ROOT)))
         continue;
 
-      switch (clients->clientarray[i].type)
+      switch (p_client->type)
         {
         case HOSTIF_CLIENT:
-          if(clients->clientarray[i].client.hostif.clientaddr == addr)
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Test HOSTIF_CLIENT: Test entry %d: %s vs %s",
+                       i,
+                       inet_ntop(AF_INET, &p_client->client.hostif.clientaddr,
+                                 patbuf, sizeof(patbuf)),
+                       inet_ntop(AF_INET, &addr, addrbuf, sizeof(addrbuf)));
+          if(p_client->client.hostif.clientaddr == addr)
             {
               LogFullDebug(COMPONENT_DISPATCH, "This matches host address");
               *pclient_found = clients->clientarray[i];
@@ -2328,25 +2359,20 @@ int export_client_match(sockaddr_t *hostaddr,
           break;
 
         case NETWORK_CLIENT:
-          LogDebug( COMPONENT_DISPATCH, "test NETWORK_CLIENT: addr=%#.08X, netmask=%#.08X, match with %#.08X",
-                    clients->clientarray[i].client.network.netaddr,
-                    clients->clientarray[i].client.network.netmask, ntohl(addr));
           LogFullDebug(COMPONENT_DISPATCH,
-                       "Test net %d.%d.%d.%d in %d.%d.%d.%d ??",
-                       (unsigned int)(clients->clientarray[i].client.network.netaddr >> 24),
-                       (unsigned int)((clients->clientarray[i].client.network.netaddr >> 16) & 0xFF),
-                       (unsigned int)((clients->clientarray[i].client.network.netaddr >> 8) & 0xFF),
-                       (unsigned int)(clients->clientarray[i].client.network.netaddr & 0xFF),
-                       (unsigned int)(addr >> 24),
-                       (unsigned int)(addr >> 16) & 0xFF,
-                       (unsigned int)(addr >> 8) & 0xFF,
-                       (unsigned int)(addr & 0xFF));
+                       "Test NETWORK_CLIENT: Test net %s vs %s",
+                       cidr_net(p_client->client.network.netaddr,
+                                p_client->client.network.netmask,
+                                patbuf, sizeof(patbuf)),
+                       inet_ntop(AF_INET, &addr, addrbuf, sizeof(addrbuf)));
 
-          if((clients->clientarray[i].client.network.netmask & ntohl(addr)) ==
-             clients->clientarray[i].client.network.netaddr)
+          if((p_client->client.network.netmask & addr) ==
+             p_client->client.network.netaddr)
             {
-              LogFullDebug(COMPONENT_DISPATCH, "This matches network address");
-              *pclient_found = clients->clientarray[i];
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "This matches network address for entry %u",
+                           i);
+              *pclient_found = *p_client;
               return true;
             }
           break;
@@ -2367,9 +2393,8 @@ int export_client_match(sockaddr_t *hostaddr,
             }
 
           /* At this point 'hostname' should contain the name that was found */
-          if(innetgr
-             (clients->clientarray[i].client.netgroup.netgroupname, hostname,
-              NULL, NULL) == 1)
+          if(innetgr(p_client->client.netgroup.netgroupname, hostname,
+		     NULL, NULL) == 1)
             {
               *pclient_found = clients->clientarray[i];
               return true;
@@ -2382,7 +2407,7 @@ int export_client_match(sockaddr_t *hostaddr,
             ipvalid = sprint_sockip(hostaddr, ipstring, sizeof(ipstring));
             
           if(ipvalid && 
-             (fnmatch(clients->clientarray[i].client.wildcard.wildcard,
+             (fnmatch(p_client->client.wildcard.wildcard,
                       ipstring, FNM_PATHNAME) == 0))
             {
               *pclient_found = clients->clientarray[i];
@@ -2402,29 +2427,28 @@ int export_client_match(sockaddr_t *hostaddr,
                     {
                       /* Major failure, name could not be resolved */
                       LogFullDebug(COMPONENT_DISPATCH,
-                                   "Could not resolve hostame for addr %u.%u.%u.%u ... not checking if a hostname wildcard matches",
-                                   (unsigned int)(addr & 0xFF),
-                                   (unsigned int)(addr >> 8) & 0xFF,
-                                   (unsigned int)(addr >> 16) & 0xFF,
-                                   (unsigned int)(addr >> 24));
+				   "Could not resolve hostame for addr %s... "
+			           "not checking if a hostname wildcard matches",
+				   inet_ntop(AF_INET, &addr,
+				             addrbuf, sizeof(addrbuf)));
                       break;
                     }
                 }
             }
           LogFullDebug(COMPONENT_DISPATCH,
                        "Wildcarded hostname: testing if '%s' matches '%s'",
-                       hostname, clients->clientarray[i].client.wildcard.wildcard);
+                       hostname, p_client->client.wildcard.wildcard);
 
           /* At this point 'hostname' should contain the name that was found */
-          if(fnmatch
-             (clients->clientarray[i].client.wildcard.wildcard, hostname,
-              FNM_PATHNAME) == 0)
+          if(fnmatch(p_client->client.wildcard.wildcard, hostname,
+		     FNM_PATHNAME) == 0)
             {
               *pclient_found = clients->clientarray[i];
               return true;
             }
           LogFullDebug(COMPONENT_DISPATCH, "'%s' not matching '%s'",
-                       hostname, clients->clientarray[i].client.wildcard.wildcard);
+                       hostname, p_client->client.wildcard.wildcard);
+
           break;
 
         case GSSPRINCIPAL_CLIENT:
@@ -2441,7 +2465,7 @@ int export_client_match(sockaddr_t *hostaddr,
 
         default:
            LogCrit(COMPONENT_DISPATCH,
-                   "Unsupported client in position %u in export list with type %u", i, clients->clientarray[i].type);
+                   "Unsupported client in position %u in export list with type %u", i, p_client->type);
 	   continue ;
         }                       /* switch */
     }                           /* for */
