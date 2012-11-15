@@ -139,7 +139,13 @@ int mnt_Export(nfs_arg_t *parg,
                   if(inet_ntop(AF_INET, &excl->client.hostif.clientaddr,
                                grnam, INET_ADDRSTRLEN) == NULL)
                     {
-                      strncpy(grnam, "???", INET_ADDRSTRLEN);
+                      if(strmaxcpy(grnam,
+                                   "Invalid Host address",
+                                   INET_ADDRSTRLEN + 1) == -1)
+                        {
+                          LogCrit(COMPONENT_NFSPROTO,
+                                  "Could not copy response");
+                        }
                     }
 
                   break;
@@ -159,7 +165,13 @@ int mnt_Export(nfs_arg_t *parg,
                   if(inet_ntop(AF_INET, &excl->client.network.netmask,
                                grnam + strlen(grnam), INET_ADDRSTRLEN) == NULL)
                     {
-                      strcat(grnam, "???");
+                      if(strmaxcpy(grnam,
+                                   "Invalid Network address",
+                                   INET_ADDRSTRLEN + 1) == -1)
+                        {
+                          LogCrit(COMPONENT_NFSPROTO,
+                                  "Could not copy response");
+                        }
                     }
 
                   break;
