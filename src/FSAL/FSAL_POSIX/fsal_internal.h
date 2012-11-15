@@ -24,13 +24,9 @@
  */
 
 /**
- *
- * \file    fsal_internal.h
- * \date    $Date: 2006/01/24 13:45:37 $
- * \version $Revision: 1.12 $
- * \brief   Extern definitions for variables that are
- *          defined in fsal_internal.c.
- * 
+ * @file  FSAL_POSIX/fsal_internal.h
+ * @brief Extern definitions for variables that are
+ *        defined in fsal_internal.c.
  */
 
 #include "fsal.h"

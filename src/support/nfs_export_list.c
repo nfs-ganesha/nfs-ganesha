@@ -7,76 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    nfs_export_list.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/20 13:44:57 $
- * \version $Revision: 1.13 $
- * \brief   routines for managing the export list.
- *
- * nfs_export_list.c : routines for managing the export list.
- *
- * $Header: /cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs_export_list.c,v 1.13 2006/01/20 13:44:57 deniel Exp $
- *
- * $Log: nfs_export_list.c,v $
- * Revision 1.13  2006/01/20 13:44:57  deniel
- * alt_groups are now handled
- *
- * Revision 1.12  2006/01/19 07:40:26  leibovic
- * Better exportlist management (test whether iterator is null).
- *
- * Revision 1.11  2005/12/20 10:52:18  deniel
- * exportlist is no longer dynamic but static
- *
- * Revision 1.9  2005/11/21 15:04:34  leibovic
- * Displaying acquired Credential.
- *
- * Revision 1.8  2005/11/21 11:32:07  deniel
- * Got ride of nfs_SetPostOpFh3 because of memory leaks
- *
- * Revision 1.7  2005/11/21 09:54:55  leibovic
- * Once for all thread's credential initialization.
- *
- * Revision 1.6  2005/11/07 09:03:39  deniel
- * Implementing access security
- *
- * Revision 1.5  2005/11/04 15:12:58  deniel
- * Added basic authentication support
- *
- * Revision 1.4  2005/10/12 08:28:00  deniel
- * Format of the errror message.
- *
- * Revision 1.3  2005/08/11 12:37:28  deniel
- * Added statistics management
- *
- * Revision 1.2  2005/08/03 13:13:59  deniel
- * memset to zero before building the filehandles
- *
- * Revision 1.1  2005/08/03 06:57:54  deniel
- * Added a libsupport for miscellaneous service functions
- *
- * Revision 1.2  2005/08/02 13:49:43  deniel
- * Ok NFSv3
- *
- *
+ * @file  nfs_export_list.c
+ * @brief Routines for managing the export list.
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -87,16 +39,16 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>              /* for having isalnum */
-#include <stdlib.h>             /* for having atoi */
-#include <dirent.h>             /* for having MAXNAMLEN */
+#include <ctype.h> /* for having isalnum */
+#include <stdlib.h> /* for having atoi */
+#include <dirent.h> /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #include "log.h"
@@ -115,22 +67,19 @@ const char *Rpc_gss_svc_name[] =
 };
 
 /**
+ * @brief Gets an export entry from its export id.
  *
- * nfs_Get_export_by_id: Gets an export entry from its export id. 
+ * @todo Exports should really be managed as an object...  exportroot
+ * should be a static in this module and the only thing that leaks out
+ * to the rest of the code is entries that are created here and
+ * searched for here.  this means that the exportroot arg here will
+ * disappear at some point, probably when exportlist_t is overhauled
+ * to use nlm_list etc.
  *
- * Gets an export entry from its export id. 
+ * @paran[in] exportroot The root for the export list
+ * @param[in] exportid   The id for the entry to be found.
  *
- * @paran exportroot [IN] the root for the export list
- * @param exportid   [IN] the id for the entry to be found.
- *
- * @return the pointer to the pointer to the export list or NULL if failed.
- *
- */
-/* FIXME: Exports should really be managed as an object...  exportroot should
- * be a static in this module and the only thing that leaks out to the rest of
- * the code is entries that are created here and searched for here.
- * this means that the exportroot arg here will disappear at some point,
- * probably when exportlist_t is overhauled to use nlm_list etc.
+ * @return the pointer to the export list or NULL if failed.
  */
 
 exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid)
@@ -145,36 +94,31 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
           found = 1;
           break;
         }
-    }                           /* for */
+    }
 
   if(found == 0)
     return NULL;
   else
     return piter;
-}                               /* nfs_Get_export_by_id */
+}
 
-
-/* XXXX this MUST be refactored to not use TI-RPC private structures.
- * Instead, export appropriate functions from lib(n)tirpc.
- */
 
 /**
+ * @brief Get numeric credentials from request
  *
- * get_req_uid_gid: 
- *
+ * @todo This MUST be refactored to not use TI-RPC private structures.
+ * Instead, export appropriate functions from lib(n)tirpc.
  * 
- *
- * @param req [IN]  incoming request.
- * @param pexport_client [IN] related export client
- * @param pexport [IN]  related export entry
- * @param user_credentials [OUT] Filled in structure with uid and gids
+ * @param[in]  req              Incoming request.
+ * @param[in]  pexport          Related export entry
+ * @param[out] user_credentials Filled in structure with UID and GIDs
  * 
  * @return true if successful, false otherwise 
  *
  */
-int get_req_uid_gid(struct svc_req *req,
-                    exportlist_t * pexport,
-                    struct user_cred *user_credentials)
+bool get_req_uid_gid(struct svc_req *req,
+		     exportlist_t * pexport,
+		     struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
 #ifdef _HAVE_GSSAPI
@@ -318,7 +262,7 @@ int get_req_uid_gid(struct svc_req *req,
       return false;
 
       break;
-    }                           /* switch( req->rq_cred.oa_flavor ) */
+    }
   return true;
 }
 
@@ -348,17 +292,15 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
 
 
 /**
+ * @brief Compares two RPC creds
  *
- * nfs_compare_rpc_cred: Compares two RPC creds
- *
- * @param pcred1 [IN] first RPC cred
- * @param pcred2 [IN] second RPC cred
+ * @param[in] pcred1 First RPC cred
+ * @param[in] pcred2 Second RPC cred
  * 
  * @return true if same, false otherwise
- *
  */
-int nfs_compare_clientcred(nfs_client_cred_t * pcred1,
-                           nfs_client_cred_t *pcred2)
+bool nfs_compare_clientcred(nfs_client_cred_t * pcred1,
+			    nfs_client_cred_t *pcred2)
 {
   if(pcred1 == NULL)
     return false;
@@ -393,7 +335,7 @@ int nfs_compare_clientcred(nfs_client_cred_t * pcred1,
 
   /* If this point is reach, structures are the same */
   return true;
-}                               /* nfs_compare_clientcred */
+}
 
 int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 {
@@ -469,7 +411,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
     }
 
   return 1;
-}                               /* nfs_rpc_req2client_cred */
+}
 
 int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen,
                         char *path, int pathlen)
@@ -487,7 +429,7 @@ int nfs_export_tag2path(exportlist_t * exportroot, char *tag, int taglen,
           return 0;
           break;
         }
-    }                           /* for */
+    }
 
   return -1;
-}                               /* nfs_export_tag2path */
+}

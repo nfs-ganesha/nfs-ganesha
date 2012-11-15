@@ -24,10 +24,8 @@
  */
 
 /**
- * @file  nfs_Remove.c
- * @brief Routines used for managing the NFS4 COMPOUND functions.
- *
- * Routines used for managing the NFS4 COMPOUND functions.
+ * @file  nfs3_Remove.c
+ * @brief Everything you need for NFSv3 REMOVE
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

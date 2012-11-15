@@ -24,11 +24,8 @@
  */
 
 /**
- * @file    nfs_Read.c
- * @brief   Routines used for managing the NFS READ request.
- *
- * Everything you need to read.
- *
+ * @file  nfs3_Read.c
+ * @brief Everything you need to read.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

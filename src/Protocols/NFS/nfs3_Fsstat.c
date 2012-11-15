@@ -25,12 +25,8 @@
  */
 
 /**
- * @file  nfs_Fsstat.c
+ * @file  nfs3_Fsstat.c
  * @brief Routines used for managing the NFS4 COMPOUND functions.
- *
- * Routines used for managing the NFS4 COMPOUND functions.
- *
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

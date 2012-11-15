@@ -24,50 +24,10 @@
  */
 
 /**
- * \file    nfs_read_conf.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/12/07 14:28:00 $
- * \version $Revision: 1.10 $
- * \brief   This file that contain the routine required for parsing the NFS specific configuraion file.
- *
- * nfs_read_conf.c : This file that contain the routine required for parsing the NFS specific configuraion file.
- *
- * $Header: /cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs_read_conf.c,v 1.10 2005/12/07 14:28:00 deniel Exp $
- *
- * $Log: nfs_read_conf.c,v $
- * Revision 1.10  2005/12/07 14:28:00  deniel
- * Support of stats via stats_thread was added
- *
- * Revision 1.9  2005/11/30 15:41:15  deniel
- * Added IP/stats conf
- *
- * Revision 1.8  2005/11/29 13:38:18  deniel
- * bottlenecked ip_stats
- *
- * Revision 1.6  2005/11/08 15:22:24  deniel
- * WildCard and Netgroup entry for exportlist are now supported
- *
- * Revision 1.5  2005/10/10 14:27:54  deniel
- * mnt_Mnt does not create root entries in Cache inode any more. This is done before the first request
- * once the export list is read the first time .
- *
- * Revision 1.4  2005/10/07 07:34:00  deniel
- * Added default parameters support to be able to manage 'simplified' config file
- *
- * Revision 1.3  2005/08/11 12:37:28  deniel
- * Added statistics management
- *
- * Revision 1.2  2005/08/03 13:14:00  deniel
- * memset to zero before building the filehandles
- *
- * Revision 1.1  2005/08/03 06:57:54  deniel
- * Added a libsupport for miscellaneous service functions
- *
- * Revision 1.1  2005/07/18 14:12:45  deniel
- * Fusion of the dirrent layers in progreess via the implementation of mount protocol
- *
- *
+ * @file  nfs_read_conf.c
+ * @brief This file that contain the routine required for parsing the NFS specific configuraion file.
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -80,7 +40,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -102,18 +62,15 @@
 #include "config_parsing.h"
 
 /**
+ * @brief Read the configuration ite; for the worker threads.
  *
- * nfs_read_worker_conf: read the configuration ite; for the worker theads.
- *
- * Reads the configuration ite; for the worker theads.
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok, -1 if failed,1 is stanza is not there
- *
  */
-int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * pparam)
+int nfs_read_worker_conf(config_file_t in_config,
+			 nfs_worker_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -175,22 +132,18 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
     }
 
   return 0;
-}                               /* nfs_read_worker_conf */
+}
 
 /**
+ * @brief Read the core configuration
  *
- * nfs_read_core_conf: read the configuration ite; for the worker theads.
- *
- * Reads the configuration ite; for the worker theads.
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok, -1 if failed, 1 is stanza is not there.
- *
  */
 int nfs_read_core_conf(config_file_t in_config,
-                       nfs_core_parameter_t * pparam)
+		       nfs_core_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -515,21 +468,18 @@ int nfs_read_core_conf(config_file_t in_config,
     }
 
   return 0;
-}                               /* nfs_read_core_conf */
+}
 
 /**
+ * @brief Reads the configuration for the IP/name.
  *
- * nfs_read_ip_name_conf: reads the configuration for the IP/name.
- *
- * Reads the configuration for the IP/name.
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok,  -1 if not, 1 is stanza is not there.
- *
  */
-int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * pparam)
+int nfs_read_ip_name_conf(config_file_t in_config,
+			  nfs_ip_name_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -600,21 +550,18 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
     }
 
   return 0;
-}                               /* nfs_read_ip_name_conf */
+}
 
 /**
+ * @brief Reads the configuration for the Client/ID Cache
  *
- * nfs_read_ip_name_conf: reads the configuration for the Client/ID Cache
- *
- * Reads the configuration for the Client/ID Cache
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok,  -1 if not, 1 is stanza is not there.
- *
  */
-int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t * pparam)
+int nfs_read_client_id_conf(config_file_t in_config,
+			    nfs_client_id_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -674,21 +621,19 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
     }
 
   return 0;
-}                               /* nfs_client_id_conf */
+}
 
 /**
+ * @brief Reads the configuration for the stateid cache
  *
- * nfs_read_ip_name_conf: reads the configuration for the Client/ID Cache
- *
- * Reads the configuration for the Client/ID Cache
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok,  -1 if not, 1 is stanza is not there.
  *
  */
-int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * pparam)
+int nfs_read_state_id_conf(config_file_t in_config,
+			   nfs_state_id_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -744,9 +689,10 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
     }
 
   return 0;
-}                               /* nfs_state_id_conf */
+}
 
-int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t * pparam)
+int nfs_read_session_id_conf(config_file_t in_config,
+			     nfs_session_id_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -802,21 +748,18 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
     }
 
   return 0;
-}                               /* nfs_session_id_conf */
+}
 
 /**
+ * @brief Read the configuration for the UID_MAPPER Cache
  *
- * nfs_read_uidmap_conf: reads the configuration for the UID_MAPPER Cache
- *
- * Reads the configuration for the UID_MAPPER Cache
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok,  -1 if not, 1 is stanza is not there.
- *
  */
-int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * pparam)
+int nfs_read_uidmap_conf(config_file_t in_config,
+			 nfs_idmap_cache_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -885,21 +828,18 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
     }
 
   return 0;
-}                               /* nfs_read_uidmap_conf */
+}
 
 /**
+ * @brief Reads the configuration for the GID_MAPPER Cache
  *
- * nfs_read_gidmap_conf: reads the configuration for the GID_MAPPER Cache
- *
- * Reads the configuration for the GID_MAPPER Cache
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok,  -1 if not, 1 is stanza is not there.
- *
  */
-int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * pparam)
+int nfs_read_gidmap_conf(config_file_t in_config,
+			 nfs_idmap_cache_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -973,17 +913,15 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
 #ifdef _HAVE_GSSAPI
 /**
  *
- * nfs_read_krb5_conf: read the configuration for krb5 stuff
+ * @brief Read the configuration for krb5 stuff
  *
- * Read the configuration for krb5 stuff.
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok, -1 if failed,1 is stanza is not there
- *
  */
-int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
+int nfs_read_krb5_conf(config_file_t in_config,
+		       nfs_krb5_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -1057,18 +995,15 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 #endif
 
 /**
+ * @brief Read the configuration for NFSv4 stuff
  *
- * nfs_read_version4_conf: read the configuration for NFSv4 stuff
- *
- * Read the configuration for NFSv4 stuff.
- *
- * @param in_config [IN] configuration file handle
- * @param pparam [OUT] read parameters
+ * @param[in]  in_config Configuration file handle
+ * @param[out] pparam    Read parameters
  *
  * @return 0 if ok, -1 if failed,1 is stanza is not there
- *
  */
-int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * pparam)
+int nfs_read_version4_conf(config_file_t in_config,
+			   nfs_version4_parameter_t *pparam)
 {
   int var_max;
   int var_index;
@@ -1164,33 +1099,19 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
 }                               /* nfs_read_version4_conf */
 
 /**
+ * @brief Prints the NFS worker parameter structure into the logfile
  *
- * Print_param_in_log : prints the nfs worker parameter structure into the logfile
- *
- * prints the nfs worker parameter structure into the logfile
- *
- * @param pparam Pointer to the nfs worker parameter
- *
- * @return none (void function)
- *
+ * @param[in] pparam NFS worker parameter
  */
 void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
 {
   LogInfo(COMPONENT_INIT,
           "NFS PARAM : worker_param.nb_before_gc = %d",
           pparam->nb_before_gc);
-}                               /* Print_param_worker_in_log */
+}
 
 /**
- *
- * Print_param_in_log : prints the nfs parameter structure into the logfile
- *
- * prints the nfs parameter structure into the logfile
- *
- * @param pparam Pointer to the nfs parameter
- *
- * @return none (void function)
- *
+ * @brief Prints the NFS parameter structure into the logfile
  */
 void Print_param_in_log()
 {
@@ -1198,7 +1119,7 @@ void Print_param_in_log()
           "NFS PARAM : core_param.nb_worker = %d",
           nfs_param.core_param.nb_worker);
   Print_param_worker_in_log(&nfs_param.worker_param);
-}                               /* Print_param_in_log */
+}
 
 int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned int *plen)
 {
@@ -1279,4 +1200,4 @@ int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned in
 
   *plen = index ;
   return 0;
-}                               /* nfs_get_fsalpathlib_conf */
+}

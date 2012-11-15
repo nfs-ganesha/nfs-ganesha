@@ -7,31 +7,26 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
 /**
- * \file    idmapper.c
- * \author  $Author: deniel $
- * \date    $Date: 2006/01/24 11:43:05 $
- * \version $Revision: 1.2 $
- * \brief   Id mapping functions
- *
- * idmapper.c : Id mapping functions.
- *
+ * @file    idmapper.c
+ * @brief   Id mapping functions
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -44,8 +39,8 @@
 #include "ganesha_rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
-#include <unistd.h>             /* for using gethostname */
-#include <stdlib.h>             /* for using exit */
+#include <unistd.h> /* for using gethostname */
+#include <stdlib.h> /* for using exit */
 #include <strings.h>
 #include <string.h>
 #include <sys/types.h>
@@ -94,16 +89,14 @@ int nfsidmap_set_conf()
 #endif                          /* _USE_NFSIDMAP */
 
 /**
- *
- * uid2name: convert a uid to a name. 
+ * @brief Convert a UID to a name
  *
  * convert a uid to a name. 
  *
- * @param name [OUT]  the name of the user
- * @param uid  [IN]   the input uid
+ * @param[out] name  The name of the user
+ * @param[in]  puid  The input uid
  *
- * return 1 if successful, 0 otherwise
- *
+ * @return 1 if successful, 0 otherwise
  */
 int uid2name(char *name, uid_t * puid)
 {
@@ -212,21 +205,18 @@ int uid2name(char *name, uid_t * puid)
     
       return 1;
     }
-}                               /* uid2name */
+}
 
 /**
+ * @brief Convert a name to a uid
  *
- * name2uid: convert a name to a uid
+ * @param[in]  name The name of the user
+ * @param[out] puid The resulting uid
  *
- * convert a name to a uid
- *
- * @param name [IN]  the name of the user
- * @param puid [OUT] the resulting uid
- *
- * return 1 if successful, 0 otherwise
+ * @return 1 if successful, 0 otherwise
  *
  */
-int name2uid(char *name, uid_t * puid)
+int name2uid(char *name, uid_t *puid)
 {
   struct passwd passwd;
   struct passwd *res;
@@ -380,24 +370,29 @@ int name2uid(char *name, uid_t * puid)
     }
 
   return 1;
-}                               /* name2uid */
+}
 
-/**
- *
- * principal2uid: convert a principal (as returned by gss_display_name()) to a uid/gid
- *
- * convert a principal (as returned by gss_display_name()) to a uid/gid
- *
- * @param name [IN]  the principal of the user as returned by gss_display_name()
- * @param puid [OUT] the resulting uid
- *
- * return 1 if successful, 0 otherwise
- *
- */
 #ifdef _HAVE_GSSAPI
 #ifdef _MSPAC_SUPPORT
-int principal2uid(char *principal, uid_t * puid, struct svc_rpc_gss_data *gd)
+/**
+ * @brief Convert a principal (as returned by @c gss_display_name) to a UID
+ *
+ * @param[in]     name The principal of the user
+ * @param[out]    puid The resulting UID
+ * @param[in,out] gd   GSS data
+ *
+ * @return 1 if successful, 0 otherwise
+ */
+int principal2uid(char *principal, uid_t *puid, struct svc_rpc_gss_data *gd)
 #else
+/**
+ * @brief Convert a principal (as returned by @c gss_display_name) to a UID
+ *
+ * @param[in]     name The principal of the user
+ * @param[out]    puid The resulting UID
+ *
+ * @return 1 if successful, 0 otherwise
+ */
 int principal2uid(char *principal, uid_t * puid)
 #endif
 {
@@ -543,20 +538,16 @@ principal_found:
   assert(!"prohibited by configuration");
   return 1;
 #endif
-}                               /* principal2uid */
-#endif                          /* _HAVE_GSSAPI */
+}
+#endif
 
 /**
+ * @brief Convert a GID to a name
  *
- * gid2name: convert a gid to a name. 
+ * @param[out] name The name of the user
+ * @param[in]  pgid The input gid
  *
- * convert a uid to a name. 
- *
- * @param name [OUT]  the name of the user
- * @param gid  [IN]   the input gid
- *
- * return 1 if successful, 0 otherwise
- *
+ * @return 1 if successful, 0 otherwise
  */
 int gid2name(char *name, gid_t * pgid)
 {
@@ -658,21 +649,17 @@ int gid2name(char *name, gid_t * pgid)
       return 1;
 
     }
-}                               /* gid2name */
+}
 
 /**
+ * @brief Convert a name to a GID
  *
- * name2gid: convert a name to a gid
+ * @param[in]  name The name of the user
+ * @param[out] pgid The resulting GID
  *
- * convert a name to a gid
- *
- * @param name [IN]  the name of the user
- * @param pgid [OUT] the resulting gid
- *
- * return 1 if successful, 0 otherwise
- *
+ * @return 1 if successful, 0 otherwise
  */
-int name2gid(char *name, gid_t * pgid)
+int name2gid(char *name, gid_t *pgid)
 {
   gid_t gid;
 
@@ -771,19 +758,18 @@ int name2gid(char *name, gid_t * pgid)
         }
     }
   return 1;
-}                               /* name2gid */
+}
 
 /**
+ * @brief Convert a UID to a string.
  *
- * uid2ustr: convert a uid to a string.
+ * @note This function is evil and does not check its buffer before
+ * copying things into it.
  *
- * Convert a gidonvert a uid to a string. to a string.
+ * @param[in]  uid The input UID
+ * @param[out] str Computed string
  *
- * @param uid [IN]  the input gid
- * @param str [OUT] computed string
- *
- * @return the length of the utf8 buffer if succesfull, -1 if failed
- *
+ * @return The length of the utf8 buffer if succesfull, -1 if failed
  */
 int uid2str(uid_t uid, char *str)
 {
@@ -808,19 +794,18 @@ int uid2str(uid_t uid, char *str)
            uid, str);
 
   return rc;
-}                               /* uid2utf8 */
+}
 
 /**
+ * @brief Convert a GID to a string
  *
- * gid2ustr: convert a gid to a string.
+ * @note This function is evil and does not check its buffer before
+ * copying things into it.
  *
- * Convert a gidonvert a gid to a string. to a string.
- *
- * @param gid [IN]  the input gid
- * @param str [OUT] computed string
+ * @param[in]  gid The input gid
+ * @param[out] str Computed string
  *
  * @return the length of the utf8 buffer if succesfull, -1 if failed
- *
  */
 int gid2str(gid_t gid, char *str)
 {
@@ -845,21 +830,17 @@ int gid2str(gid_t gid, char *str)
            gid, str);
 
   return rc;
-}                               /* gid2str */
+}
 
 /**
+ * @brief Converts a UID to a UTF-8 string descriptor
  *
- * uid2utf8: converts a uid to a utf8 string descriptor.
+ * @param[in]  uid     The input UID
+ * @param[out] utf8str Computed UTF-8 string descriptor
  *
- * Converts a uid to a utf8 string descriptor.
- *
- * @param uid     [IN]  the input uid
- * @param utf8str [OUT] computed UTF8 string descriptor
- *
- * @return the length of the utf8 buffer if succesfull, -1 if failed
- *
+ * @return the length of the UTF-8 buffer if succesfull, -1 if failed
  */
-int uid2utf8(uid_t uid, utf8string * utf8str)
+int uid2utf8(uid_t uid, utf8string *utf8str)
 {
   char buff[NFS4_MAX_DOMAIN_LEN];
   unsigned int len = 0;
@@ -877,21 +858,17 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
 
   return str2utf8(buff, utf8str);
 
-}                               /* uid2utf8 */
+}
 
 /**
+ * @brief Converts a GID to a UTF-8 string descriptor
  *
- * gid2utf8: converts a gid to a utf8 string descriptor.
+ * @param[in]  gid     The input GID
+ * @param[out] utf8str Computed UTF-8 string descriptor
  *
- * Converts a gid to a utf8 string descriptor.
- *
- * @param gid     [IN]  the input gid
- * @param utf8str [OUT] computed UTF8 string descriptor
- *
- * @return the length of the utf8 buffer if succesfull, -1 if failed
- *
+ * @return the length of the UTF-8 buffer if succesfull, -1 if failed
  */
-int gid2utf8(gid_t gid, utf8string * utf8str)
+int gid2utf8(gid_t gid, utf8string *utf8str)
 {
   char buff[NFS4_MAX_DOMAIN_LEN];
   unsigned int len = 0;
@@ -909,20 +886,17 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
     utf8str->utf8string_len = len;
 
   return str2utf8(buff, utf8str);
-}                               /* gid2utf8 */
+}
 
 /**
+ * @brief Converts a UTF-8 string descriptor to a UID
  *
- *  utf82uid: converts a utf8 string descriptor to a uid .
- *
- * Converts a utf8 string descriptor to a uid.
- *
- * @param utf8str [IN]  group's name as UTF8 string.
- * @param Uid     [OUT] pointer to the computed uid.
+ * @param[in]  utf8str User's name as UTF8 string.
+ * @param[out] Uid     The computed UID
  *
  * @return 0 if successful, -1 otherwise.
  */
-int utf82uid(utf8string * utf8str, uid_t *Uid)
+int utf82uid(utf8string *utf8str, uid_t *Uid)
 {
   char buff[2 * NFS4_MAX_DOMAIN_LEN];
   char uidname[NFS4_MAX_DOMAIN_LEN];
@@ -964,16 +938,13 @@ int utf82uid(utf8string * utf8str, uid_t *Uid)
            buff, *Uid);
 
   return 0;
-}                               /* utf82uid */
+}
 
 /**
+ * @brief Converts a UTF-8 string descriptorto a gid
  *
- *  utf82gid: converts a utf8 string descriptorto a gid .
- *
- * Converts a utf8 string descriptor to a gid .
- *
- * @param utf8str [IN]  group's name as UTF8 string.
- * @param Gid     [OUT] pointer to the computed gid.
+ * @param[in]  utf8str Group's name as UTF-8 string.
+ * @param[out] Gid     The computed GID
  *
  * @return 0 in all cases
  */
@@ -1019,5 +990,4 @@ int utf82gid(utf8string * utf8str, gid_t *Gid)
            buff, *Gid);
 
   return 0;
-}                               /* utf82gid */
-
+}

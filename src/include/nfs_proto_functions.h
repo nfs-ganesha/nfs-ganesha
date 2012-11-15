@@ -192,11 +192,6 @@ typedef struct nfs_function_desc__
   unsigned int dispatch_behaviour;
 } nfs_function_desc_t;
 
-/**
- * @defgroup MNTprocs    Mount protocol functions.
- *
- * @{
- */
 int mnt_Null(nfs_arg_t *parg,
              exportlist_t *pexport,
              struct req_op_context *req_ctx,
@@ -241,12 +236,6 @@ int mnt_Export(nfs_arg_t *parg,
 
 /* @}
  * -- End of MNT protocol functions. --
- */
-
-/**
- * @defgroup NLMprocs    NLM protocol functions.
- *
- * @{
  */
 
 int nlm_Null(nfs_arg_t *parg,
@@ -352,12 +341,6 @@ int nlm4_Free_All(nfs_arg_t *parg,
  * -- End of NLM protocol functions. --
  */
 
-/**
- * @defgroup RQUOTA ocs    RQUOTA protocol functions.
- *
- * @{
- */
-
 int rquota_Null(nfs_arg_t *parg,
                 exportlist_t *pexport,
                 struct req_op_context *req_ctx,
@@ -396,12 +379,6 @@ int rquota_setactivequota(nfs_arg_t *parg,
 /* @}
  *  * -- End of RQUOTA protocol functions. --
  *   */
-
-/**
- * @defgroup NFSprocs    NFS protocols functions.
- *
- * @{
- */
 
 int nfs_Null(nfs_arg_t *arg,
              exportlist_t *export,
@@ -1218,8 +1195,6 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *);
 #define nfs3_Errno(e) nfs3_Errno_verbose(e, __func__)
 int nfs3_AllocateFH(nfs_fh3 * fh);
 int nfs4_AllocateFH(nfs_fh4 * fh);
-
-int idmap_compute_hash_value(char *name, uint32_t * phashval);
 
 int nfs4_Is_Fh_Referral(nfs_fh4 * pfh);
 int nfs4_Set_Fh_Referral(nfs_fh4 * pfh);

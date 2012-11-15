@@ -25,11 +25,8 @@
  */
 
 /**
- * @file  nfs_Setattr.c
- * @brief NFSv2/v3 setattr
- *
- * This file contains everything you need for SETATTR in NFSv2 and
- * NFSv3.
+ * @file  nfs3_Setattr.c
+ * @brief Everything you need for NFSv3 SETATTR
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

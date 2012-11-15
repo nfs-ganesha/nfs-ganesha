@@ -24,13 +24,8 @@
  */
 
 /**
- * \file    fsal_types.h
- * \date    $Date: 2006/02/08 12:45:27 $
- * \version $Revision: 1.19 $
- * \brief   File System Abstraction Layer types and constants.
- *
- *
- *
+ * @file    FSAL_GPFS/fsal_types.h
+ * @brief   File System Abstraction Layer types and constants.
  */
 
 #ifndef _FSAL_TYPES_SPECIFIC_H

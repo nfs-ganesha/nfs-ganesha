@@ -26,9 +26,9 @@
  */
 
 /**
- * \file   handle_mapping.h
+ * @file   handle_mapping.h
  *
- * \brief  This module is used for managing a persistent
+ * @brief  This module is used for managing a persistent
  *         map between PROXY FSAL handles (including NFSv4 handles from server)
  *         and nfsv2 and v3 handles digests (sent to client).
  */
@@ -83,41 +83,15 @@ typedef struct nfs23_map_handle__
 #define HANDLEMAP_HASHTABLE_ERROR 7
 #define HANDLEMAP_EXISTS         8
 
-/**
- * Init handle mapping module.
- * Reloads the content of the mapping files it they exist,
- * else it creates them.
- * \return 0 if OK, an error code else.
- */
 int HandleMap_Init(const handle_map_param_t * p_param);
 
-/**
- * Retrieves a full fsal_handle from a NFS2/3 digest.
- *
- * \param  p_nfs23_digest   [in] the NFS2/3 handle digest
- * \param  p_out_fsal_handle [out] the fsal handle to be retrieved
- *
- * \return HANDLEMAP_SUCCESS if the handle is available,
- *         HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
- */
-int HandleMap_GetFH(const nfs23_map_handle_t * p_in_nfs23_digest,
-		    struct gsh_buffdesc * p_out_fsal_handle);
+int HandleMap_GetFH(const nfs23_map_handle_t *,
+		    struct gsh_buffdesc *);
 
-/**
- * Save the handle association if it was unknown.
- */
 int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, const void *p_in_handle, uint32_t len);
 
-/**
- * Remove a handle from the map
- * when it was removed from the filesystem
- * or when it is stale.
- */
 int HandleMap_DelFH(nfs23_map_handle_t * p_in_nfs23_digest);
 
-/**
- * Flush pending database operations (before stopping the server).
- */
 int HandleMap_Flush();
 
 #endif

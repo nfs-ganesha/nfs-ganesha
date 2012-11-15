@@ -25,12 +25,8 @@
  */
 
 /**
- * @file  nfs_Mkdir.c
- * @brief evrythinhg you need to handle NFS PROC2-3 MKDIR.
- *
- * Evrythinhg you need to handle NFS PROC2-3 MKDIR.  MKDIR is used to
- * create new directories
- *
+ * @file  nfs3_Mkdir.c
+ * @brief Evrythinhg you need to handle NFSv3 MKDIR
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

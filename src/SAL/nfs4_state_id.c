@@ -30,7 +30,7 @@
  */
 
 /**
- * @file nfs_state_id.c
+ * @file nfs4_state_id.c
  * @brief NFSv4 state ids
  */
 

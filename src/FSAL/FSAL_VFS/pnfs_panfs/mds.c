@@ -25,7 +25,7 @@
 #include "../vfs_methods.h"
 
 /**
- * @file   mds.c
+ * @file   FSAL_VFS/pnfs_panfs/mds.c
  * @author Boaz Harrosh <bharrosh@panasas.com>
  *
  * @brief pNFS Metadata Server Operations for the PanFS FSAL

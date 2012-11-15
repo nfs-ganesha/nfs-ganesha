@@ -303,18 +303,18 @@ int HandleMap_Init(const handle_map_param_t * p_param)
 }
 
 /**
- * Retrieves a full fsal_handle from a NFS2/3 digest.
+ * @brief Retrieves a full fsal_handle from a NFS2/3 digest.
  *
- * \param  p_nfs23_digest   [in] the NFS2/3 handle digest
- * \param  p_out_fsal_handle [out] the fsal handle to be retrieved
+ * @param[in]  nfs23_digest The NFS2/3 handle digest
+ * @param[out] fsal_handle  The fsal handle to be retrieved
  *
- * Note that caller must provide storage for nfs_fh4_val.
+ * @note The caller must provide storage for nfs_fh4_val.
  *
- * \return HANDLEMAP_SUCCESS if the handle is available,
- *         HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
+ * @retval HANDLEMAP_SUCCESS if the handle is available
+ * @retval HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
  */
-int HandleMap_GetFH(const nfs23_map_handle_t * p_in_nfs23_digest,
-                    struct gsh_buffdesc * p_out_fsal_handle)
+int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
+		    struct gsh_buffdesc *fsal_handle)
 {
 
   int rc;

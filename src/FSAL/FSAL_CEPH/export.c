@@ -21,9 +21,9 @@
  */
 
 /**
- * @file   export.c
+ * @file FSAL_CEPH/export.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date   Thu Jul  5 16:37:47 2012
+ * @date Thu Jul  5 16:37:47 2012
  *
  * @brief Implementation of FSAL export functions for Ceph
  *

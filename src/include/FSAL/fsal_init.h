@@ -1,5 +1,5 @@
 /**
- * @file fsal_init.c
+ * @file fsal_init.h
  * @author Jim Lieb <jlieb@panasas.com>
  * @brief Module initialization
  */

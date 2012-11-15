@@ -1,15 +1,14 @@
 /**
  *
- * \file    $RCSfile: SemN.h,v $
- * \author  $Author: deniel $ 
- * \date    $Date: 2005/08/03 07:05:46 $
- * \brief   Portable system tools.
+ * @file    SemN.h
+ * @brief   Portable system tools.
  *
  * Defines system utilities (like semaphores)
  * so that they are POSIX and work on
  * most plateforms.
  *
- *
+ * @deprecated This file is going away once we have all FSAL's ported
+ * to the new API.
  */
 
 #ifndef TOOLS_H

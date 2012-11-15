@@ -21,7 +21,7 @@
  */
 
 /**
- * @file   main.c
+ * @file   FSAL_CEPH/main.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
  * @date   Thu Jul  5 14:48:33 2012
  *

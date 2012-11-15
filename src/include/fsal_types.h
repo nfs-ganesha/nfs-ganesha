@@ -30,8 +30,7 @@
  */
 
 /**
- * @file    fsal_types.h
- * @version $Revision: 1.19 $
+ * @file    include/fsal_types.h
  */
 
 #ifndef _FSAL_TYPES_H
@@ -736,5 +735,5 @@ typedef struct fsal_share_param_t
         uint32_t share_deny;
 } fsal_share_param_t;
 
-#endif                          /* _FSAL_TYPES_H */
+#endif /* _FSAL_TYPES_H */
 /** @} */

@@ -25,10 +25,8 @@
  */
 
 /**
- * @file    nfs_cb_Null.c
- * @brief   CB_PROC_PNULL
- *
- * NFSPROC_NULL in V2, V3 and V4.
+ * @file  nfs3_Null.c
+ * @brief NFSv3 NULL procedure.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

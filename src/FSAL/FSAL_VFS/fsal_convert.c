@@ -3,13 +3,8 @@
  */
 
 /**
- *
- * \file    fsal_convert.c
- * \date    $Date: 2006/01/17 15:53:39 $
- * \version $Revision: 1.31 $
- * \brief   VFS-FSAL type translation functions.
- *
- *
+ * @file  FSAL_VFS/fsal_convert.c
+ * @brief VFS-FSAL type translation functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -25,11 +25,8 @@
  */
 
 /**
- * @file  nfs_Rename.c
- * @brief Routines for NFSv2/v3 rename
- *
- * This file contains everything you need to rename files under NFSv2
- * and NFSv3.
+ * @file  nfs3_Rename.c
+ * @brief Everything you need for NFSv3 RENAME
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

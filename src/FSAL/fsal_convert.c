@@ -4,7 +4,7 @@
  */
 
 /**
- * @file  fsal_convert.c
+ * @file  FSAL/fsal_convert.c
  * @brief FSAL type translation functions.
  */
 #ifdef HAVE_CONFIG_H

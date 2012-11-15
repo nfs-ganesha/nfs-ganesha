@@ -21,7 +21,7 @@
  */
 
 /**
- * @file   handle.c
+ * @file   FSAL_CEPH/handle.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
  * @date   Mon Jul  9 15:18:47 2012
  *

@@ -24,10 +24,8 @@
  */
 
 /**
- * @file  nfs_Create.c
+ * @file  nfs3_Create.c
  * @brief Routines used for managing the NFS4 COMPOUND functions.
- *
- * Routines used for managing the NFS4 COMPOUND functions.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

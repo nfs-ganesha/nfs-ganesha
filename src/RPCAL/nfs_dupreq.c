@@ -26,13 +26,19 @@
  * -------------
  */
 
+/**
+ * @file nfs_dupreq.c
+ * @author Matt Benjamin <matt@linuxbox.com>
+ * @brief NFS Duplicate Request Cache
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -95,7 +101,11 @@ static struct drc_st *drc_st;
 /**
  * @brief Comparison function for duplicate request entries.
  *
- * @return Nothing.
+ * @param[in] lhs An integer
+ * @param[in] rhs Another integer
+ *
+ * @return -1 if the left-hand is smaller than the right, 0 if they
+ * are equal, and 1 if the left-hand is larger.
  */
 static inline int
 uint32_cmpf(uint32_t lhs, uint32_t rhs)
@@ -211,10 +221,8 @@ drc_recycle_cmpf(const struct opr_rbtree_node *lhs,
  * @brief Fill hash buffer from a received NFS request
  *
  * @param[in] nfs_req  The request
- * @param[in] hbuf  A buffer to fill
- * @param[in] size  Number of bytes to fill
- *
- * @return nothing
+ * @param[in] hbuf     A buffer to fill
+ * @param[in] size     Number of bytes to fill
  */
 static inline void
 drc_fill_hbuf(nfs_request_data_t *nfs_req, char *hbuf, size_t *size)
@@ -306,14 +314,6 @@ drc_tcp_hash(drc_t *drc, nfs_request_data_t *nfs_req, dupreq_entry_t *v)
 
 /**
  * @brief Initialize a shared duplicate request cache
- *
- * @param[in] drc  The cache
- * @param[in] npart Number of concurrent partitions (a number > 1 is suitable
- * for a shared DRC)
- * @param[in] cachesz Number of entries in the closed table (not really a
- * cache)
- *
- * @return Nothing.
  */
 static inline void
 init_shared_drc()
@@ -359,8 +359,6 @@ init_shared_drc()
 
 /**
  * @brief Initialize the DRC package.
- *
- * @return Nothing.
  */
 void dupreq2_pkginit(void)
 {
@@ -450,7 +448,7 @@ get_ipproto_by_xprt(SVCXPRT *xprt) /* XXX correct, but inelegant */
 /**
  * @brief Determine the dupreq2 DRC type to handle the supplied svc_req
  *
- * @param[in] req  The svc_req being processed
+ * @param[in] req The svc_req being processed
  *
  * @return a value of type enum_drc_type.
  */
@@ -469,10 +467,10 @@ get_drc_type(struct svc_req *req)
 /**
  * @brief Allocate a duplicate request cache
  *
- * @param[in] dtype  Style DRC to allocate (e.g., TCP, by enum drc_type)
- * @param[in] maxsz  Upper bound on requests to cache
- * @param[in] cachesz  Number of entries in the closed hash partition
- * @param[in] flags  DRC flags
+ * @param[in] dtype   Style DRC to allocate (e.g., TCP, by enum drc_type)
+ * @param[in] maxsz   Upper bound on requests to cache
+ * @param[in] cachesz Number of entries in the closed hash partition
+ * @param[in] flags   DRC flags
  *
  * @return the drc, if successfully allocated, else NULL.
  */
@@ -533,11 +531,10 @@ out:
  * @param[in] drc  The DRC to dispose
  *
  * Assumes that the DRC has been allocated from the tcp_drc_pool.
- *
- * @return Nothing.
  */
 static inline void
-free_tcp_drc(drc_t *drc) {
+free_tcp_drc(drc_t *drc)
+{
     if (drc->xt.tree[0].cache)
         gsh_free(drc->xt.tree[0].cache);
     pthread_mutex_destroy(&drc->mtx);
@@ -579,8 +576,6 @@ nfs_dupreq_unref_drc(drc_t *drc)
 
 /**
  * @brief Check for expired TCP DRCs.
- * *
- * @return Nothing.
  */
 static inline void
 drc_free_expired(void)
@@ -746,8 +741,6 @@ out:
  *
  * @param[in] xprt  The SVCXPRT associated with DRC, if applicable
  * @param[in] drc  The DRC.
- *
- * @return Nothing.
  */
 void
 nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
@@ -830,7 +823,7 @@ out:
  *
  * @return The function vector if successful, else NULL.
  */
-static inline nfs_function_desc_t*
+static inline nfs_function_desc_t *
 nfs_dupreq_func(dupreq_entry_t *dv)
 {
     nfs_function_desc_t *func = NULL;
@@ -900,7 +893,7 @@ nfs_dupreq_func(dupreq_entry_t *dv)
  * presently contains an expanded nfs_arg_t, zeroing of at least corresponding
  * value pointers is required for XDR allocation.
  *
- * @return Nothing.
+ * @return The newly allocated dupreq entry or NULL.
  */
 static inline dupreq_entry_t *
 alloc_dupreq(void)
@@ -925,8 +918,6 @@ out:
  * If the entry has processed request data, the corresponding free
  * function is called on the result.  The cache entry is then returned
  * to the dupreq_pool.
- *
- * @return Nothing.
  */
 static inline void
 nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
@@ -942,8 +933,8 @@ nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
     pool_free(dupreq_pool, dv);
 }
 
-/*
- * DRC request retire heuristic.
+/**
+ * @page DRC_RETIRE DRC request retire heuristic.
  *
  * We add a new, per-drc semphore like counter, retwnd.  The value of
  * retwnd begins at 0, and is always >= 0.  The value of retwnd is increased
@@ -961,9 +952,7 @@ nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
  * If (drc)->retwnd is 0, advance its value to RETWND_START_BIAS, else
  * increase its value by 1.
  *
- * @param drc [IN] The duplicate request cache
- *
- * @return Nothing.
+ * @param[in] drc The duplicate request cache
  */
 #define drc_inc_retwnd(drc) \
     do { \
@@ -978,9 +967,7 @@ nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
  *
  * If (drc)->retwnd > 0, decrease its value by 1.
  *
- * @param drc [IN] The duplicate request cache
- *
- * @return Nothing.
+ * @param[in] drc The duplicate request cache
  */
 #define drc_dec_retwnd(drc) \
     do { \
@@ -994,7 +981,7 @@ nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
  * Calculate whether a request may be retired from the provided duplicate
  * request cache.
  *
- * @param drc [IN] The duplicate request cache
+ * @param[in] drc The duplicate request cache
  *
  * @return true if a request may be retired, else false.
  */
@@ -1036,20 +1023,17 @@ nfs_dupreq_v4_cacheable(nfs_request_data_t *nfs_req)
 }
 
 /**
- *
- * nfs_dupreq_start: start a duplicate request transaction
+ * @brief Start a duplicate request transaction
  *
  * Finds any matching request entry in the cache, if one exists, else
  * creates one in the START state.  On any non-error return, the refcnt
  * of the corresponding entry is incremented.
  *
- * @param req [IN] the request to be cached
- * @param arg [IN] pointer to the called-with arguments
- * @param res_nfs [IN] pointer to the result to cache
+ * @param[in] nfs_req The NFS request data
+ * @param[in] req     The request to be cached
  *
- * @return DUPREQ_SUCCESS if successful.
- * @return DUPREQ_INSERT_MALLOC_ERROR if an error occured during insertion.
- *
+ * @retval DUPREQ_SUCCESS if successful.
+ * @retval DUPREQ_INSERT_MALLOC_ERROR if an error occured during insertion.
  */
 dupreq_status_t
 nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
@@ -1242,7 +1226,6 @@ out:
 }
 
 /**
- *
  * @brief Completes a request in the cache
  *
  * Completes a cache insertion operation begun in nfs_dupreq_start.
@@ -1262,12 +1245,11 @@ out:
  * req->rq_u1 has either a magic value, or points to a duplicate request
  * cache entry allocated in nfs_dupreq_start.
  *
- * @param xid [IN] the transfer id to be used as key
- * @param pnfsreq [IN] the request pointer to cache
+ * @param[in] req     The request
+ * @param[in] res_nfs The response
  *
  * @return DUPREQ_SUCCESS if successful.
  * @return DUPREQ_INSERT_MALLOC_ERROR if an error occured.
- *
  */
 dupreq_status_t
 nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
@@ -1355,7 +1337,7 @@ out:
  * We assert req->rq_u1 now points to the corresonding duplicate request
  * cache entry.
  *
- * @param req [IN] The svc_req structure.
+ * @param[in] req The svc_req structure.
  *
  * @return DUPREQ_SUCCESS if successful.
  *
@@ -1413,7 +1395,6 @@ out:
 }
 
 /**
- *
  * @brief Decrement the call path refcnt on a cache entry.
  *
  * We assert req->rq_u1 now points to the corresonding duplicate request
@@ -1423,10 +1404,7 @@ out:
  * also dv->state == DUPREQ_DELETED, the request entry has been discarded
  * and should be destroyed here.
  *
- * @param req [IN] The svc_req structure.
- *
- * @return (nothing)
- *
+ * @param[in] req The svc_req structure.
  */
 void nfs_dupreq_rele(struct svc_req *req)
 {
@@ -1469,8 +1447,6 @@ out:
 
 /**
  * @brief Shutdown the dupreq2 package.
- *
- * @return Nothing.
  */
 void dupreq2_pkgshutdown(void)
 {

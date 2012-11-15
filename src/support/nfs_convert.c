@@ -7,36 +7,28 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
- * \file    nfs_convert.c
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:03:02 $
- * \version $Revision: 1.3 $
- * \brief   nfs conversion tools.
- *
- * $Log: nfs_convert.c,v $
- *
- * Revision 1.2  2005/10/12 08:28:00  deniel
- * Format of the errror message.
- *
- * Revision 1.1  2005/08/05 08:46:35  leibovic
- * Convertion tools.
- *
- *
  */
+
+/**
+ * @file  nfs_convert.c
+ * @brief NFS conversion tools.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -227,13 +219,11 @@ char *nfstype3_to_str(ftype3 code)
 }
 
 /**
+ * @brief Same as htonl, but on 64 bits.
  *
- * nfs_htonl64: Same as htonl, but on 64 bits.
+ * @param[in] arg64 Value in host byte order
  *
- * @param arg64 [IN] input value
- *
- * @return converted value.
- *
+ * @return Value in network byte order
  */
 uint64_t nfs_htonl64(uint64_t arg64)
 {
@@ -252,16 +242,14 @@ uint64_t nfs_htonl64(uint64_t arg64)
 #endif
 
   return res64;
-}                               /* nfs_htonl64 */
+}
 
 /**
+ * @brief Same as ntohl, but on 64 bits.
  *
- * nfs_ntohl64: Same as ntohl, but on 64 bits.
+ * @param[in] arg64 Value in network byte order
  *
- * @param arg64 [IN] input value
- *
- * @return converted value.
- *
+ * @return value in host byte order.
  */
 uint64_t nfs_ntohl64(uint64_t arg64)
 {
@@ -280,19 +268,14 @@ uint64_t nfs_ntohl64(uint64_t arg64)
 #endif
 
   return res64;
-}                               /* nfs_ntonl64 */
+}
 
 /**
+ * @brief Converts an auth_stat enum to a string
  *
- * auth_stat2str: converts a auth_stat enum to a string
- *
- * @param why       [IN]  the stat to convert
- * @param out       [IN]  output string
- *
- * @return nothing (void function).
- *
+ * @param[in]  why The stat to convert
+ * @param[out] str Output string
  */
-
 void auth_stat2str(enum auth_stat why, char *str)
 {
   switch (why)
@@ -342,5 +325,5 @@ void auth_stat2str(enum auth_stat why, char *str)
     default:
       strncpy(str, "UNKNOWN AUTH", AUTH_STR_LEN);
       break;
-    }                           /* switch */
-}                               /* auth_stat2str */
+    }
+}

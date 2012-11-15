@@ -25,16 +25,8 @@
  */
 
 /**
- * \file    nfs_worker_thread.c
- * \author  $Author$
- * \date    $Date$
- * \version $Revision$
- * \brief   The file that contain the 'worker_thread' routine for the nfsd.
- *
- * nfs_worker_thread.c : The file that contain the 'worker_thread' routine for
- * nfsd (and all the related stuff).
- *
- *
+ * @file    nfs_worker_thread.c
+ * @brief   The file that contain the 'worker_thread' routine for the nfsd.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -50,7 +42,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <sys/signal.h>
 #include <poll.h>
 #include "HashTable.h"
@@ -401,15 +393,21 @@ struct timeval time_diff(struct timeval time_from, struct timeval time_to)
   return result;
 }
 
-int
+bool
 is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
                   struct svc_req *req);
 
-/*
- * Extract nfs function descriptor from nfs request.
+/**
+ * @brief Extract nfs function descriptor from nfs request.
  *
- * XXX This function calls is_rpc_call_valid, which one might not expect to
- * be sending RPC replies.  Fix this, and remove thr_ctx argument.
+ * @todo This function calls is_rpc_call_valid, which one might not
+ * expect to be sending RPC replies.  Fix this, and remove thr_ctx
+ * argument.
+ *
+ * @param[in]     thr_ctx Thread context
+ * @param[in,out] preqnfs Raw request data
+ *
+ * @return Function vector for program.
  */
 const nfs_function_desc_t *
 nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
@@ -470,16 +468,6 @@ nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
   return INVALID_FUNCDESC;
 }
 
-/**
- * nfs_rpc_execute: main rpc dispatcher routine
- *
- * This is the regular RPC dispatcher that every RPC server should include.
- *
- * @param[in,out] preq NFS request
- * @param[in,out] worker_data worker thread context
- *
- */
-
 struct nfs_req_timer
 {
     struct timeval *timer_start;
@@ -536,6 +524,13 @@ nfs_req_timer_qdiff(struct nfs_req_timer *t, nfs_worker_data_t *worker_data,
                     &t->latency_stat);
 }
 
+/**
+ * @brief Main RPC dispatcher routine
+ *
+ * @param[in,out] preq        NFS request
+ * @param[in,out] worker_data Worker thread context
+ *
+ */
 static void nfs_rpc_execute(request_data_t *preq,
                             nfs_worker_data_t *worker_data)
 {
@@ -1257,18 +1252,15 @@ freeargs:
       nfs_dupreq_rele(req);
 
   return;
-}                               /* nfs_rpc_execute */
+}
 
 /**
- * nfs_Init_worker_data: Init the data associated with a worker instance.
+ * @brief Init the data associated with a worker instance.
  *
  * This function is used to init the nfs_worker_data for a worker thread.
  * These data are used by the worker for RPC processing.
  *
- * @param param A structure of type nfs_worker_parameter_t with all the
- *        necessary information related to a worker
- *
- * @param pdata Pointer to the data to be initialized.
+ * @param[out] data Data to be initialized.
  *
  * @return 0 if successfull, -1 otherwise.
  *
@@ -1295,15 +1287,10 @@ nfs_Init_worker_data(nfs_worker_data_t *data)
 
 #ifdef _USE_9P
 /**
- * _9p_execute: execute a 9p request.
+ * @brief Execute a 9p request
  *
- * Executes 9P request
- *
- * @param req9p       [INOUT] pointer to 9p request
- * @param worker_data [INOUT] pointer to worker's specific data
- *
- * @return nothing (void function)
- *
+ * @param[in,out] req9p       9p request
+ * @param[in,out] worker_data Worker's specific data
  */
 static void _9p_execute( _9p_request_data_t *req9p, 
                           nfs_worker_data_t *worker_data)
@@ -1320,15 +1307,11 @@ static void _9p_execute( _9p_request_data_t *req9p,
 
 
 /**
- * _9p_free_reqdata: free resources allocated for a 9p request,
- *                   but NOT the request itself
+ * @brief Free resources allocated for a 9p request
  *
- * Free resources allocated for a 9p request
+ * This does not free the request itself.
  *
- * @param nfsreq      [INOUT] pointer to 9p request
- *
- * @return nothing (void function)
- *
+ * @param[in] nfsreq 9p request
  */
 static void _9p_free_reqdata(_9p_request_data_t * preq9p)
 {
@@ -1338,27 +1321,24 @@ static void _9p_free_reqdata(_9p_request_data_t * preq9p)
   /* decrease connection refcount */
   atomic_dec_uint32_t(&preq9p->pconn->refcount);
 }
-
 #endif
 
 /* XXX include dependency issue prevented declaring in nfs_req_queue.h */
 request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker);
 
 /**
- * worker_thread: The main function for a worker thread
+ * @brief The main function for a worker thread
  *
- * This is the body of the worker thread. Its starting arguments are located in
- * global array worker_data. The argument is no pointer but the worker's index.
- * It then uses this index to address its own worker data in the array.
+ * This is the body of the worker thread. Its starting arguments are
+ * located in global array worker_data. The argument is no pointer but
+ * the worker's index.  It then uses this index to address its own
+ * worker data in the array.
  *
- * @param IndexArg the index for the worker thread, in fact an integer cast as
- * a void *
+ * @param[in] IndexArg Index into the thread table, cast to void *
  *
- * @return Pointer to the result (but this function will mostly loop forever).
- *
+ * @return NULL.
  */
-void *
-worker_thread(void *IndexArg)
+void *worker_thread(void *IndexArg)
 {
   request_data_t *nfsreq;
   int rc = 0;
@@ -1402,8 +1382,10 @@ worker_thread(void *IndexArg)
          (int)nfs_param.core_param.stats_update_delay / 2)
         {
 
-/** @TODO disable stats for now.  with new api etc. these are different.
- * btw, why not take this at core level and save duplication in every fsal??
+/**
+ * @todo disable stats for now.  with new api etc. these are
+ * different.  btw, why not take this at core level and save
+ * duplication in every fsal??
  */
 /*           FSAL_get_stats(&worker_data->stats.fsal_stats, false); */
 
@@ -1537,4 +1519,4 @@ worker_thread(void *IndexArg)
 
   tcb_remove(&worker_data->wcb);
   return NULL;
-}                               /* worker_thread */
+}

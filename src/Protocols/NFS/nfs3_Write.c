@@ -25,10 +25,8 @@
  */
 
 /**
- * @file  nfs_Write.c
- * @brief Routines used for managing the Write requests.
- *
- * Routines used for managing the NFS4 COMPOUND functions.
+ * @file  nfs3_Write.c
+ * @brief Everything you need for NFSv3 WRITE.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

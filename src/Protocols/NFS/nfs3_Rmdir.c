@@ -25,12 +25,8 @@
  */
 
 /**
- * @file    nfs_Rmdir.c
- * @brief   Remove directories in NFSv2/3
- *
- * This file contains everything you need to remove a directory in
- * NFSv2 and NFSv3.
- *
+ * @file  nfs3_Rmdir.c
+ * @brief Everything you need for NFSv3 RMDIR
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

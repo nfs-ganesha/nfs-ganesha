@@ -1,37 +1,30 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
 
 /**
- * \file    idmapper_cache.c
- * \author  $Author: deniel $
- * \date    $Date$
- * \version $Revision$
- * \brief   Id mapping functions
- *
- * idmapper_cache.c : Id mapping functions, passwd and groups cache management.
- *
+ * @file    idmapper_cache.c
+ * @brief   Id mapping cache functions
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -76,145 +69,110 @@ union idmap_val {
 };
 
 /**
+ * @brief Computes the hash value for the entry in id mapper stuff
  *
- * idmapper_rbt_hash_func: computes the hash value for the entry in id mapper stuff
- *
- * Computes the hash value for the entry in id mapper stuff. In fact, it just use addresse as value (identity function) modulo the size of the hash.
- * This function is called internal in the HasTable_* function
- *
- * @param hparam [IN] hash table parameter.
- * @param buffcleff[in] pointer to the hash key buffer
+ * @param[in] hparam Hash table parameter
+ * @param[in] key    Hash key buffer
  *
  * @return the computed hash value.
- *
- * @see HashTable_Init
- *
  */
-uint32_t idmapper_value_hash_func(hash_parameter_t * p_hparam,
-                                  struct gsh_buffdesc * buffclef)
+uint32_t idmapper_value_hash_func(hash_parameter_t *hparam,
+				  struct gsh_buffdesc *key)
 {
   unsigned int sum = 0;
   unsigned int i = 0;
   unsigned char c;
 
   /* Compute the sum of all the characters */
-  for(i = 0, c = ((char *)buffclef->addr)[0]; ((char *)buffclef->addr)[i] != '\0';
-      c = ((char *)buffclef->addr)[++i], sum += c) ;
+  for(i = 0, c = ((char *)key->addr)[0]; ((char *)key->addr)[i] != '\0';
+      c = ((char *)key->addr)[++i], sum += c) ;
 
-  return (unsigned long)(sum % p_hparam->index_size);
-}                               /*  ip_name_value_hash_func */
+  return (unsigned long)(sum % hparam->index_size);
+}
 
 
 uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
-                                         struct gsh_buffdesc * buffclef)
+				    struct gsh_buffdesc * buffclef)
 {
   return ((unsigned long)(buffclef->addr) % p_hparam->index_size);
 }
 
 /**
+ * @brief Computes the RBT value for the entry in the id mapper stuff
  *
- * idmapper_rbt_hash_func: computes the rbt value for the entry in the id mapper stuff.
- *
- * Computes the rbt value for the entry in the id mapper stuff.
- *
- * @param hparam [IN] hash table parameter.
- * @param buffcleff[in] pointer to the hash key buffer
+ * @param[in] hparam Hash table parameter
+ * @param[in] key    Hash key buffer
  *
  * @return the computed rbt value.
- *
- * @see HashTable_Init
- *
  */
-uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                struct gsh_buffdesc * buffclef)
+uint64_t idmapper_rbt_hash_func(hash_parameter_t *hparam,
+				struct gsh_buffdesc *key)
 {
-  unsigned int result;
+  return idmap_compute_hash_value(key->addr);
+}
 
-  if(idmap_compute_hash_value((char *)buffclef->addr,
-                              (uint32_t *) & result) != ID_MAPPER_SUCCESS)
-    return 0;
-
-  return (unsigned long)result;
-}                               /* ip_name_rbt_hash_func */
-
-uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  struct gsh_buffdesc * buffclef)
+uint64_t namemapper_rbt_hash_func(hash_parameter_t *hparam,
+				  struct gsh_buffdesc *key)
 {
-  return (unsigned long)(buffclef->addr);
+  return (uint64_t) key->addr;
 }
 
 /**
+ * @brief Compares the values stored in the key buffers
  *
- * compare_idmapper: compares the values stored in the key buffers.
- *
- * Compares the values stored in the key buffers. This function is to be used as 'compare_key' field in
- * the hashtable storing the nfs duplicated requests.
- *
- * @param buff1 [IN] first key
- * @param buff2 [IN] second key
+ * @param[in] buff1 First key
+ * @param[in] buff2 Second key
  *
  * @return 0 if keys are identifical, 1 if they are different.
- *
  */
 int compare_idmapper(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
 {
-  return strncmp((char *)(buff1->addr), (char *)(buff2->addr), PWENT_MAX_LEN);
-}                               /* compare_xid */
+  return strncmp(buff1->addr, buff2->addr, PWENT_MAX_LEN);
+}
 
-int compare_namemapper(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2)
+int compare_namemapper(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
   unsigned long xid1 = (unsigned long)(buff1->addr);
   unsigned long xid2 = (unsigned long)(buff2->addr);
 
   return (xid1 == xid2) ? 0 : 1;
-}                               /* compare_xid */
+}
 
 /**
+ * @brief Displays the entry key stored in the buffer
  *
- * display_idmapper_key: displays the entry key stored in the buffer.
- *
- * Displays the entry key stored in the buffer. This function is to be used as 'key_to_str' field in
- * the hashtable storing the id mapper stuff
- *
- * @param buff1 [IN]  buffer to display
- * @param buff2 [OUT] output string
+ * @param[in]  pbuff Buffer to display
+ * @param[out] str   Output string
  *
  * @return number of character written.
  *
  */
-int display_idmapper_key(struct gsh_buffdesc * pbuff, char *str)
+int display_idmapper_key(struct gsh_buffdesc *pbuff, char *str)
 {
   if (pbuff->len == 0)
     return sprintf(str, "%"PRIxPTR, (uintptr_t)(pbuff->addr));
   else
     return sprintf(str, "%s", (char *)(pbuff->addr));
-}                               /* display_idmapper */
+}
 
 /**
+ * @brief Displays the entry key stored in the buffer.
  *
- * display_idmapper_val: displays the entry key stored in the buffer.
- *
- * Displays the entry key stored in the buffer. This function is to be used as 'val_to_str' field in
- * the hashtable storing the id mapper stuff
- *
- * @param buff1 [IN]  buffer to display
- * @param buff2 [OUT] output string
+ * @param[in]  pbuff Buffer to display
+ * @param[out] str   Output string
  *
  * @return number of character written.
  *
  */
-int display_idmapper_val(struct gsh_buffdesc * pbuff, char *str)
+int display_idmapper_val(struct gsh_buffdesc *pbuff, char *str)
 {
   return sprintf(str, "%lu", (unsigned long)(pbuff->addr));
-}                               /* display_idmapper_val */
+}
 
 /**
+ * @brief Inits the hashtable for UID mapping.
  *
- * idmap_uid_init: Inits the hashtable for UID mapping.
- *
- * Inits the hashtable for UID mapping.
- *
- * @param param [IN] parameter used to init the uid map cache
+ * @param[in] param Parameter used to init the uid map cache
  *
  * @return 0 if successful, -1 otherwise
  *
@@ -229,7 +187,7 @@ int idmap_uid_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
+}
 
 int uidgidmap_init(nfs_idmap_cache_parameter_t param)
 {
@@ -241,7 +199,7 @@ int uidgidmap_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
+}
 
 int idmap_uname_init(nfs_idmap_cache_parameter_t param)
 {
@@ -253,15 +211,12 @@ int idmap_uname_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
+}
 
 /**
+ * @brief Inits the hashtable for GID mapping
  *
- * idmap_gid_init: Inits the hashtable for GID mapping.
- *
- * Inits the hashtable for GID mapping.
- *
- * @param param [IN] parameter used to init the gid map cache
+ * @param[in] param Parameter used to init the GID map cache
  *
  * @return 0 if successful, -1 otherwise
  *
@@ -276,7 +231,7 @@ int idmap_gid_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
+}
 
 int idmap_gname_init(nfs_idmap_cache_parameter_t param)
 {
@@ -288,132 +243,32 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
+}
 
 /**
+ * @brief Computes the hash value, based on the string.
  *
- * idmap_compute_hash_value: computes the hash value, based on the string.
+ * @param[in] name String to hash
  *
- * Computes the computes the hash value, based on the string.
- *
+ * @return The hash value
  */
-
-int idmap_compute_hash_value(char *name, uint32_t * phashval)
+uint32_t idmap_compute_hash_value(char *name)
 {
    uint32_t res ;
 
-   res = Lookup3_hash_buff( name, strlen( name ) ) ;
+   res = Lookup3_hash_buff(name, strlen(name));
 
-    return (int)res ;
+   return res;
 }
 
-int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
-{
-  char padded_name[PWENT_MAX_LEN];
-  uint64_t computed_value = 0;
-  unsigned int i = 0;
-  unsigned int offset = 0;
-  uint64_t extract = 0;
-  uint64_t sum = 0;
-  uint64_t i1;
-  uint64_t i2;
-  uint64_t i3;
-  uint64_t i4;
-  uint64_t i5;
-  uint64_t i6;
-  uint64_t i7;
-  uint64_t i8;
-  uint64_t i9;
-  uint64_t l;
-
-  if(name == NULL || phashval == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
-
-  memset(padded_name, 0, PWENT_MAX_LEN);
-
-  /* Copy the string to the padded one */
-  for(i = 0; i < strnlen(name, PWENT_MAX_LEN); padded_name[i] = name[i], i++) ;
-
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-  printf("#%s# :", padded_name);
-#endif
-
-  /* For each 9 character pack:
-   *   - keep the 7 first bit (the 8th is often 0: ascii string)
-   *   - pack 7x9 bit to 63 bits using xor
-   *   - xor the last 8th bit to a single 0 , or-ed with the rest
-   * Proceeding with the next 9 bytes pack will produce a new value that is xored with the
-   * one of the previous iteration */
-
-  for(offset = 0; offset < PWENT_MAX_LEN; offset += 9)
-    {
-      /* input name is ascii string, remove 8th bit on each byte, not significant */
-      i1 = padded_name[offset + 0] & 0x7F;
-      i2 = (uint64_t) (padded_name[offset + 1] & 0x7F) << 7;
-      i3 = (uint64_t) (padded_name[offset + 2] & 0x7F) << 14;
-      i4 = (uint64_t) (padded_name[offset + 3] & 0x7F) << 21;
-      i5 = (uint64_t) (padded_name[offset + 4] & 0x7F) << 28;
-      i6 = (uint64_t) (padded_name[offset + 5] & 0x7F) << 35;
-      i7 = (uint64_t) (padded_name[offset + 6] & 0x7F) << 42;
-      i8 = (uint64_t) (padded_name[offset + 7] & 0x7F) << 49;
-      i9 = (uint64_t) (padded_name[offset + 8] & 0x7F) << 56;
-
-      sum = (uint64_t) padded_name[offset + 0] +
-          (uint64_t) padded_name[offset + 1] +
-          (uint64_t) padded_name[offset + 2] +
-          (uint64_t) padded_name[offset + 3] +
-          (uint64_t) padded_name[offset + 4] +
-          (uint64_t) padded_name[offset + 5] +
-          (uint64_t) padded_name[offset + 6] +
-          (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
-
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-      printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
-             i1, i2, i3, i4, i5, i6, i7, i8, i9);
-#endif
-
-      /* Get xor combibation of all the 8h bit */
-      l = (padded_name[offset + 0] & 0x80) ^
-          (padded_name[offset + 1] & 0x80) ^
-          (padded_name[offset + 2] & 0x80) ^
-          (padded_name[offset + 3] & 0x80) ^
-          (padded_name[offset + 4] & 0x80) ^
-          (padded_name[offset + 5] & 0x80) ^
-          (padded_name[offset + 6] & 0x80) ^
-          (padded_name[offset + 7] & 0x80) ^ (padded_name[offset + 8] & 0x80);
-
-      extract = (i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9) | l;
-
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-      printf("%llx ", extract);
-#endif
-
-      computed_value ^= extract;
-      computed_value ^= sum;
-    }
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-  printf("\n");
-#endif
-
-  computed_value = (computed_value >> 32) + (computed_value & 0x00000000FFFFFFFFLL);
-
-  *phashval = (uint32_t) computed_value;
-
-  return ID_MAPPER_SUCCESS;
-}                               /* idmap_compute_hash_value */
-
 /**
+ * @brief Adds a value by key
  *
- * idmap_add: Adds a value by key
- *
- * Adss a value by key.
- *
- * @param ht       [INOUT] the hash table to be used
- * @param key      [IN]  the ip address requested
- * @param val      [OUT] the value
+ * @param[in,out] ht  The hash table to be used
+ * @param[in]     key The ip address requested
+ * @param[out]    val The value
  *
  * @return ID_MAPPER_SUCCESS, ID_MAPPER_INSERT_MALLOC_ERROR, ID_MAPPER_INVALID_ARGUMENT
- *
  */
 int idmap_add(hash_table_t * ht, char *key, uint32_t val)
 {
@@ -445,7 +300,7 @@ int idmap_add(hash_table_t * ht, char *key, uint32_t val)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   return ID_MAPPER_SUCCESS;
-}                               /* idmap_add */
+}
 
 int namemap_add(hash_table_t * ht, uint32_t key, char *val)
 {
@@ -478,7 +333,7 @@ int namemap_add(hash_table_t * ht, uint32_t key, char *val)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   return ID_MAPPER_SUCCESS;
-}                               /* idmap_add */
+}
 
 int uidgidmap_add(uid_t key, gid_t value)
 {
@@ -505,7 +360,7 @@ int uidgidmap_add(uid_t key, gid_t value)
 
   return ID_MAPPER_SUCCESS;
 
-}                               /* uidgidmap_add */
+}
 
 static int uidgidmap_free(struct gsh_buffdesc key, struct gsh_buffdesc val)
 {
@@ -583,7 +438,7 @@ int uidmap_add(char *key, uid_t val)
     return rc2;
 
   return ID_MAPPER_SUCCESS;
-}                               /* uidmap_add */
+}
 
 int unamemap_add(uid_t key, char *val)
 {
@@ -599,7 +454,7 @@ int unamemap_add(uid_t key, char *val)
     return rc2;
 
   return ID_MAPPER_SUCCESS;
-}                               /* unamemap_add */
+}
 
 int gidmap_add(char *key, gid_t val)
 {
@@ -615,7 +470,7 @@ int gidmap_add(char *key, gid_t val)
     return rc2;
 
   return ID_MAPPER_SUCCESS;
-}                               /* gidmap_add */
+}
 
 int gnamemap_add(gid_t key, char *val)
 {
@@ -631,20 +486,16 @@ int gnamemap_add(gid_t key, char *val)
     return rc2;
 
   return ID_MAPPER_SUCCESS;
-}                               /* gnamemap_add */
+}
 
 /**
+ * @brief Gets a value by key
  *
- * idmap_get: gets a value by key
- *
- * Gets a value by key.
- *
- * @param ht       [INOUT] the hash table to be used
- * @param key      [IN]  the ip address requested
- * @param pval     [OUT] the uid/gid.  Always uint32_t
+ * @param[in]  ht   The hash table to be used
+ * @param[in]  key  The IP address requested
+ * @param[out] pval The uid/gid.  Always uint32_t
  *
  * @return ID_MAPPER_SUCCESS or ID_MAPPER_NOT_FOUND
- *
  */
 int idmap_get(hash_table_t * ht, char *key, uint32_t *pval)
 {
@@ -672,7 +523,7 @@ int idmap_get(hash_table_t * ht, char *key, uint32_t *pval)
     }
 
   return status;
-}                               /* idmap_get */
+}
 
 int namemap_get(hash_table_t * ht, uint32_t key, char *pval)
 {
@@ -700,7 +551,7 @@ int namemap_get(hash_table_t * ht, uint32_t key, char *pval)
     }
 
   return status;
-}                               /* idmap_get */
+}
 
 int uidgidmap_get(uid_t key, gid_t *pval)
 {
@@ -738,7 +589,7 @@ int uidgidmap_get(uid_t key, gid_t *pval)
 
   return status;
 
-}                               /* uidgidmap_get */
+}
 
 int uidmap_get(char *key, uid_t *pval)
 {
@@ -761,18 +612,14 @@ int gnamemap_get(gid_t key, char *val)
 }
 
 /**
+ * @brief Tries to remove an entry for ID_MAPPER
  *
- * idmap_remove: Tries to remove an entry for ID_MAPPER
- *
- * Tries to remove an entry for ID_MAPPER
- *
- * @param ht            [INOUT] the hash table to be used
- * @param key           [IN]    the key uncached.
+ * @param[in,out] ht  The hash table to be used
+ * @param[out]    key The key uncached
  *
  * @return the delete status
- *
  */
-int idmap_remove(hash_table_t * ht, char *key)
+int idmap_remove(hash_table_t *ht, char *key)
 {
   struct gsh_buffdesc buffkey, old_key;
   int status;
@@ -794,7 +641,7 @@ int idmap_remove(hash_table_t * ht, char *key)
     }
 
   return status;
-}                               /* idmap_remove */
+}
 
 int namemap_remove(hash_table_t * ht, uint32_t key)
 {
@@ -820,7 +667,7 @@ int namemap_remove(hash_table_t * ht, uint32_t key)
     }
 
   return status;
-}                               /* idmap_remove */
+}
 
 int uidgidmap_remove(uid_t key)
 {
@@ -842,7 +689,7 @@ int uidgidmap_remove(uid_t key)
     }
 
   return status;
-}                               /* uidgidmap_remove */
+}
 
 int uidmap_remove(char *key)
 {
@@ -865,12 +712,12 @@ int gnamemap_remove(gid_t key)
 }
 
 /**
+ * @brief Use the configuration file to populate the ID_MAPPER.
  *
- * idmap_populate_by_conf: Use the configuration file to populate the ID_MAPPER.
+ * @param[in] path    Path for configuration file
+ * @param[in] maptype Map to populate
  *
  * Use the configuration file to populate the ID_MAPPER.
- *
- *
  */
 int idmap_populate(char *path, idmap_type_t maptype)
 {
@@ -965,22 +812,16 @@ int idmap_populate(char *path, idmap_type_t maptype)
   /* HashTable_Log( ht_reverse ) ; */
 
   return ID_MAPPER_SUCCESS;
-}                               /* idmap_populate_by_conf */
+}
 
 /**
+ * @brief Gets the hash table statistics for the idmap and reverse id map
  *
- * idmap_get_stats: gets the hash table statistics for the idmap et the reverse id map
- *
- * Gets the hash table statistics for the idmap et the reverse idmap.
- *
- * @param maptype [IN] type of the mapping to be queried (should be UIDMAP_TYPE or GIDMAP_TYPE)
- * @param phstat [OUT] pointer to the resulting stats for direct map.
- * @param phstat [OUT] pointer to the resulting stats for reverse map.
+ * @param[in]  maptype        Type of the mapping to be queried (should be UIDMAP_TYPE or GIDMAP_TYPE)
+ * @param[out] phstat         Resulting stats for direct map.
+ * @param[out] phstat_reverse Resulting stats for reverse map
  *
  * @return nothing (void function)
- *
- * @see HashTable_GetStats
- *
  */
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
                      hash_stat_t * phstat_reverse)
@@ -1009,4 +850,4 @@ void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
   HashTable_GetStats(ht, phstat);
   HashTable_GetStats(ht_reverse, phstat_reverse);
 
-}                               /* idmap_get_stats */
+}

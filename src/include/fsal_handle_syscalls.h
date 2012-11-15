@@ -23,7 +23,7 @@
  */
 
 /**
- * @file fsal_handle_syscalls.h
+ * @file include/fsal_handle_syscalls.h
  * @brief System calls for the Linux handle calls
  *
  * @todo This file should be in FSAL_VFS, not in the top-level include

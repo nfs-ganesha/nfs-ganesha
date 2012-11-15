@@ -241,8 +241,9 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
   return rc;
 }
 
-/** @TODO this has to be re-thought. it is too embedded with the notion of a single fsal
- *  not much use in a new api world.
+/**
+ * @todo This has to be re-thought. it is too embedded with the notion
+ * of a single fsal not much use in a new api world.
  */
 
 int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter)

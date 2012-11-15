@@ -56,7 +56,7 @@ struct fsal_up_state fsal_up_state = {
  * and file must be filled out as appropriate, and the upcall function
  * vector must be set to upcall vector supplied to create_export.
  *
- * @parm[in] event The event to submit
+ * @param[in] event The event to submit
  *
  * @retval 0 Operation submitted successfully.
  * @retval EINVAL Operation malformed.

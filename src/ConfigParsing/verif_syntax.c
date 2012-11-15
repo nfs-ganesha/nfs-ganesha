@@ -1,28 +1,6 @@
 /**
- *
- * \file    verif_syntaxe.c
- * \date    $Date: 2008/07/04 08:15:29 $
- * \version	$Revision: 1.2 $ 
- * \brief   Construction de l'arbre syntaxique.
- *
- * Teste la syntaxe d'un fichier de configuration.
- *
- * Historique CVS :
- *
- * $Log: verif_syntax.c,v $
- * Revision 1.2  2008/07/04 08:15:29  leibovic
- * Added missing "include <config.h>"
- *
- * Revision 1.1  2008/07/03 11:32:31  leibovic
- * New config parsing with sub blocks.
- *
- * Revision 1.2  2004/08/18 09:53:38  leibovic
- * Ajout de fonctionnalites de parsing en perl.
- *
- * Revision 1.1  2004/08/18 06:55:08  leibovic
- * programme de verification de syntaxe.
- *
- *
+ * @file  verif_syntax.c
+ * @brief Test the syntax of the configuration file.
  */
 
 #include "config_parsing.h"

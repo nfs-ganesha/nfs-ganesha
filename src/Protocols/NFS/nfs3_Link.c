@@ -24,11 +24,8 @@
  */
 
 /**
- * @file  nfs_Link.c
- * @brief everything that is needed to handle NFS PROC2-3 LINK.
- *
- * Everything that is needed to handle NFS PROC2-3 LINK * LINK
- * Performs hardlink through NFS.
+ * @file  nfs3_Link.c
+ * @brief everything that is needed to handle NFS PROC3 LINK.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

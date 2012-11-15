@@ -25,11 +25,8 @@
  */
 
 /**
- * @file  nfs_Symlink.c
- * @brief Routines used NFSv2/3 SYMLINK procedure.
- *
- * This file contains everything you need for making symlinks under
- * NFSv2 and NFSv3.
+ * @file  nfs3_Symlink.c
+ * @brief Everything you need for NFSv3 SYMLINK
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

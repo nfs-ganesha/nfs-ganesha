@@ -24,12 +24,8 @@
  */
 
 /**
- * \file    9p_interpretor.c
- * \brief   9P interpretor
- *
- * 9p_interpretor.c : _9P_interpretor.
- *
- *
+ * @file  9p_interpreter.c
+ * @brief 9P interpretor
  */
 
 #ifdef HAVE_CONFIG_H

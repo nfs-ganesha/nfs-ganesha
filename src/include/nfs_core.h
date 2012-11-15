@@ -621,8 +621,6 @@ int nfs_Init_worker_data(nfs_worker_data_t *pdata);
 int nfs_Init_request_data(nfs_request_data_t *pdata);
 int nfs_Init_gc_counter(void);
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
-void constructor_nfs_request_data_t(void *ptr, void *parameters);
-void constructor_request_data_t(void *ptr, void *parameters);
 
 /* Config parsing routines */
 extern config_file_t config_struct;
@@ -650,7 +648,7 @@ int nfs_read_state_id_conf(config_file_t in_config,
 int nfs_read_session_id_conf(config_file_t in_config,
 			     nfs_session_id_parameter_t *pparam);
 
-int nfs_export_create_root_entry(exportlist_t *pexportlist);
+bool nfs_export_create_root_entry(exportlist_t *pexportlist);
 
 /* Add a list of clients to the client array of either an exports
  * entry or another service that has a client array (like snmp or
@@ -664,14 +662,14 @@ int parseAccessParam(char *var_name, char *var_value,
 		     exportlist_t *p_entry, int access_option);
 
 /* Checks an access list for a specific client */
-int export_client_match(sockaddr_t *hostaddr,
-			exportlist_client_t *clients,
-			exportlist_client_entry_t * pclient_found,
-			unsigned int export_option);
-int export_client_matchv6(struct in6_addr *paddrv6,
-			  exportlist_client_t *clients,
-			  exportlist_client_entry_t *pclient_found,
-			  unsigned int export_option);
+bool export_client_match(sockaddr_t *hostaddr,
+			 exportlist_client_t *clients,
+			 exportlist_client_entry_t * pclient_found,
+			 unsigned int export_option);
+bool export_client_matchv6(struct in6_addr *paddrv6,
+			   exportlist_client_t *clients,
+			   exportlist_client_entry_t *pclient_found,
+			   unsigned int export_option);
 
 /* Config reparsing routines */
 void admin_replace_exports(void);
@@ -713,7 +711,7 @@ int compare_idmapper(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 int compare_namemapper(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
 
-int idmap_compute_hash_value(char *name, uint32_t *phashval);
+uint32_t idmap_compute_hash_value(char *name);
 int idmap_add(hash_table_t *ht, char *key, uint32_t val);
 int uidmap_add(char *key, uid_t val);
 int gidmap_add(char *key, gid_t val);

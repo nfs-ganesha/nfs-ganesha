@@ -25,10 +25,8 @@
  */
 
 /**
- * @file    nfs_init.c
- * @brief   The file that contain most of the init routines
- *
- * The file that contain most of the init routines.
+ * @file  nfs_init.c
+ * @brief Most of the init routines
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -415,14 +413,13 @@ char config_path[MAXPATHLEN];
 char pidfile_path[MAXPATHLEN] ;
 
 /**
+ * @brief This thread is in charge of signal management 
  *
- * This thread is in charge of signal management 
+ * @param[in] UnusedArg Unused
  *
- * @param (unused)
- * @return (never returns : never ending loop)
- *
+ * @return NULL.
  */
-void *sigmgr_thread( void * UnusedArg )
+void *sigmgr_thread(void *UnusedArg)
 {
   SetNameFunction("sigmgr");
   int signal_caught = 0;
@@ -462,17 +459,21 @@ void *sigmgr_thread( void * UnusedArg )
 
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
 
-  /* Remove pid file. I do not check for status (best effort, 
+  /* Remove pid file. I do not check for status (best effort,
    * the daemon is stopping anyway */
   unlink( pidfile_path ) ;
 
   /* Might as well exit - no need for this thread any more */
   return NULL;
-}                    /* sigmgr_thread */
+}
 
 /**
- * nfs_prereq_init:
- * Initialize NFSd prerequisites: memory management, logging, ...
+ * @brief Initialize NFSd prerequisites
+ *
+ * @param[in] program_name Name of the program
+ * @param[in] program_name Server host name
+ * @param[in] debug_level  Debug level
+ * @param[in] log_path     Log path
  */
 void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path)
 {
@@ -492,12 +493,11 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char 
   AddFamilyError(ERR_HASHTABLE, "HashTable related Errors", tab_errctx_hash);
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "Cache Inode related Errors",
-                 tab_errstatus_cache_inode);
+		 tab_errstatus_cache_inode);
 }
 
 /**
- * nfs_print_param_config
- * print a nfs_parameter_structure under the format of the configuration file 
+ * @brief Print the nfs_parameter_structure
  */
 void nfs_print_param_config()
 {
@@ -564,14 +564,18 @@ void nfs_print_param_config()
 
   printf("NFS_Worker_Param\n{\n");
   printf("}\n\n");
-}                               /* nfs_print_param_config */
+}
 
 /**
- * nfs_set_param_from_conf:
- * Load parameters from config file.
+ * @brief Load parameters from config file
+ *
+ * @param[in]  config_file_t  Parsed config file
+ * @param[out] p_start_info_t Startup parameters
+ *
+ * @return -1 on failure.
  */
 int nfs_set_param_from_conf(config_file_t config_struct,
-                            nfs_start_info_t * p_start_info)
+			    nfs_start_info_t * p_start_info)
 {
   int rc;
   cache_inode_status_t cache_inode_status;
@@ -889,9 +893,13 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 }
 
 /**
- * is_prime : check whether a given value is prime or not
+ * @brief Check whether a given value is prime or not
+ *
+ * @param[in] v A given integer
+ *
+ * @return Whether it's prime or not.
  */
-static int is_prime (int  v)
+static bool is_prime (int v)
 {
     int    i, m;
 
@@ -915,8 +923,9 @@ static int is_prime (int  v)
 }
 
 /**
- * nfs_check_param_consistency:
- * Checks parameters concistency (limits, ...)
+ * @brief Checks parameters concistency (limits, ...)
+ *
+ * @return 1 on failure, 0 on success.
  */
 int nfs_check_param_consistency()
 {
@@ -1052,7 +1061,7 @@ void nfs_reset_stats(void)
       workers_data[i].stats.last_stat_update = 0;
     }                           /* for( i = 0 ; i < nfs_param.core_param.nb_worker ; i++ ) */
 
-}                               /* void nfs_reset_stats( void ) */
+}
 
 static void nfs_Start_threads(void)
 {
@@ -1208,17 +1217,15 @@ static void nfs_Start_threads(void)
     }
   LogEvent(COMPONENT_THREAD,
            "reaper thread was started successfully");
-}                               /* nfs_Start_threads */
+}
 
 /**
  * @brief Init the nfs daemon
  *
- * Init the nfs daemon by making all the init operation at all levels of the daemon. 
- *
  * @param[in] p_start_info Unused
  */
 
-static void nfs_Init(const nfs_start_info_t * p_start_info)
+static void nfs_Init(const nfs_start_info_t *p_start_info)
 {
   cache_inode_status_t cache_status;
   state_status_t state_status;
@@ -1617,8 +1624,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 }                               /* nfs_Init */
 
 /**
- * nfs_start:
- * start NFS service
+ * @brief Start NFS service
+ *
+ * @param[in] p_start_info Startup parameters
  */
 void nfs_start(nfs_start_info_t * p_start_info)
 {
@@ -1748,4 +1756,4 @@ void nfs_start(nfs_start_info_t * p_start_info)
   Cleanup();
 
   /* let main return 0 to exit */
-}                               /* nfs_start */
+}

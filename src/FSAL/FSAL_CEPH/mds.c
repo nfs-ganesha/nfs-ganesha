@@ -31,7 +31,7 @@
 #include "FSAL/fsal_commonlib.h"
 
 /**
- * @file   mds.c
+ * @file   FSAL_CEPH/mds.c
  * @author Adam C. Emerson <aemerson@linuxbox.com>
  * @date   Wed Aug 22 14:13:16 2012
  *

@@ -1,6 +1,4 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
- *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
@@ -25,11 +23,8 @@
  */
 
 /**
- * \file    exports.c
- * \brief   What is needed to parse the exports file.
- *
- * What is needed to parse the exports file.
- *
+ * @file  exports.c
+ * @brief Export parsing and management
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -156,23 +151,21 @@
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
 /**
- * nfs_ParseConfLine: parse a line with a settable separator and  end of line
+ * @brief Parse a line with a settable separator and  end of line
  *
- * parse a line with a settable separator and  end of line .
+ * @param[out] Argv               Result array
+ * @param[in]  nbArgv             Allocated number of entries in the Argv
+ * @param[in]  line               Input line
+ * @param[in]  separator_function function used to identify a separator
+ * @param[in]  endLine_func       function used to identify an end of line
  *
- * @param Argv               [OUT] result array
- * @param nbArgv             [IN]  allocated number of entries in the Argv
- * @param line               [IN]  input line
- * @param separator_function [IN]  function used to identify a separator
- * @param endLine_func       [IN]  function used to identify an end of line
- *
- * @return the number of object found
- *
+ * @return the number of fields found
  */
 int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
                       char *line,
-                      int (*separator_function) (char), int (*endLine_func) (char))
+                      int (*separator_function) (char),
+		      int (*endLine_func) (char))
 {
   int output_value = 0;
   int endLine = false;
@@ -211,7 +204,7 @@ int nfs_ParseConfLine(char *Argv[],
       else
         return output_value;
 
-    }                           /* for( ; ; ) */
+    }
 
   /* out of bounds */
   if(output_value >= nbArgv)
@@ -219,97 +212,7 @@ int nfs_ParseConfLine(char *Argv[],
 
   return -2;
 
-}                               /* nfs_ParseConfLine */
-
-/**
- *
- * nfs_LookupHostAddr: determine host address from string.
- *
- * This routine is converting a valid host name is both literal or dotted
- *  format into a valid netdb structure. If it could not successfull, NULL is
- *  returned by the function.
- *
- * Assumptions:
- *  Dotted host address are 4 hex, decimal, or octal numbers in
- *  base 256 each separated by a period
- *
- * @param host [IN] hostname or dotted address, within a string literal.
- *
- * @return the netdb structure related to this client.
- *
- * @see inet_addr
- * @see gethostbyname
- * @see gethostbyaddr
- *
- */
-#if 0
-static struct hostent *nfs_LookupHostAddr(char *host)
-{
-  struct hostent *output;
-  unsigned long hostaddr;
-  int length = sizeof(hostaddr);
-
-#ifdef _USE_TIRPC_IPV6
-  struct sockaddr_storage addrv6;
-  struct sockaddr_in6 *paddrv6 = (struct sockaddr_in6 *)&addrv6;
-#endif
-
-  hostaddr = inet_addr(host);
-  /* is it a dotted IP? */
-  if (hostaddr == INADDR_NONE)
-  {
-     /* Nope. Try to resolve name */
-     output = gethostbyname(host);
-  }
-  else
-  {
-      /* yes, this is an IP, try to get hostent */
-      output = gethostbyaddr((char *)&hostaddr, length, AF_INET);
-  }
-
-#ifdef _USE_TIRPC_IPV6
-  /* if output == NULL it may be an IPv6 address */
-  if(output == NULL)
-    {
-      if((output = gethostbyname2(host, AF_INET6)) == NULL)
-        {
-          /* Maybe an address in the ASCII format */
-          if(inet_pton(AF_INET6, host, paddrv6->sin6_addr.s6_addr))
-            {
-              output = gethostbyaddr(paddrv6->sin6_addr.s6_addr,
-                                     sizeof(paddrv6->sin6_addr.s6_addr), AF_INET6);
-            }
-        }
-    }
-#endif
-
-  return output;
-}                               /* nfs_LookupHostAddr */
-#endif
-
-/**
- *
- * nfs_LookupNetworkAddr: determine network address from string.
- *
- * This routine is converting a valid host name is both literal or dotted
- *  format into a valid netdb structure. If it could not successfull, NULL is
- *  returned by the function.
- *
- * Assumptions:
- *  Dotted host address are 4 hex, decimal, or octal numbers in
- *  base 256 each separated by a period
- *
- * @param host [IN] hostname or dotted address, within a string literal.
- * @param netAddr [OUT] return address
- * @param netMask [OUT] return address mask
- *
- * @return 0 if successfull, other values show an error
- *
- * @see inet_addr
- * @see gethostbyname
- * @see gethostbyaddr
- *
- */
+}
 
 inline static int string_contains_slash( char* host )
 {
@@ -322,11 +225,31 @@ inline static int string_contains_slash( char* host )
   return 0 ;
 }
 
-int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
-                          unsigned long *netAddr,       /* [OUT] return address       */
-                          unsigned long *netMask)       /* [OUT] return address mask  */
+/**
+ * @brief determine network address from string.
+ *
+ * This routine is converting a valid host name is both literal or
+ * dotted format into a valid netdb structure. If it could not
+ * successfull, NULL is returned by the function.
+ *
+ * @note Dotted host address are 4 hex, decimal, or octal numbers in
+ *       base 256 each separated by a period
+ *
+ * @param[in]  host    hostname or dotted address, within a string literal.
+ * @param[out] netAddr Return address
+ * @param[out] netMask Return address mask
+ *
+ * @return 0 if successfull, other values show an error
+ *
+ * @see inet_addr
+ * @see gethostbyname
+ * @see gethostbyaddr
+ */
+int nfs_LookupNetworkAddr(char *host,
+                          unsigned long *netAddr,
+                          unsigned long *netMask)
 {
-  CIDR * pcidr = NULL ;
+  CIDR *pcidr = NULL ;
 
   if( ( pcidr = cidr_from_str( host ) ) == NULL )
     return 1 ;
@@ -342,7 +265,7 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   memcpy( netMask, &pcidr->mask[12], 4 ) ;
 
   return 0 ; 
-} /* nfs_LookupNetworkAddr */
+}
 
 int nfs_AddClientsToClientArray(exportlist_client_t *clients,
 				int new_clients_number,
@@ -476,7 +399,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                       "Unsupported type for client %s", client_hostname);
             }
         }
-    }                           /* for i */
+    }
 
   /* Before we finish, do not forget to set the new number of clients
    * and the new pointer to client array.
@@ -484,38 +407,44 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
   (*clients).num_clients += new_clients_number;
 
   return 0;                     /* success !! */
-}                               /* nfs_AddClientsToClientArray */
+}
 
 
 /**
- *
- * nfs_AddClientsToExportList : Adds a client to an export list
+ * @brief Adds clients to an export list
  *
  * Adds a client to an export list (temporary function ?).
  *
  * @todo BUGAZOMEU : handling wildcards.
  *
+ * @param[in,out] ExportEntry        Entry to update
+ * @param[in]     new_clients_number Number of clients to add
+ * @param[in]     new_clients_name   Names of clients to add
+ * @param[in]     option             Options to be added to export
  */
-static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
-                                      int new_clients_number,
-                                      char **new_clients_name, int option)
+static void nfs_AddClientsToExportList(exportlist_t *ExportEntry,
+				       int new_clients_number,
+				       char **new_clients_name,
+				       int option)
 {
   /*
    * Notifying the export list structure that another option is to be
    * handled
    */
   ExportEntry->options |= option;
-  nfs_AddClientsToClientArray( &ExportEntry->clients, new_clients_number,
-			       new_clients_name, option);
-  return 0;
-}                               /* nfs_AddClientsToExportList */
+  nfs_AddClientsToClientArray(&ExportEntry->clients, new_clients_number,
+			      new_clients_name, option);
+}
 
 #define DEFINED_TWICE_WARNING( _str_ ) \
   LogWarn(COMPONENT_CONFIG,            \
           "NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)", _str_ )
 
-int parseAccessParam(char *var_name, char *var_value,
-			    exportlist_t *p_entry, int access_option) {
+int parseAccessParam(char *var_name,
+		     char *var_value,
+		     exportlist_t *p_entry,
+		     int access_option)
+{
   int rc;
   char *expended_node_list;
 
@@ -572,8 +501,7 @@ int parseAccessParam(char *var_name, char *var_value,
       return rc;
     }
 
-  rc = nfs_AddClientsToExportList(p_entry,
-                                  rc, (char **)client_list, access_option);
+  nfs_AddClientsToExportList(p_entry, rc, (char **)client_list, access_option);
 
   if(rc != 0)
     {
@@ -597,33 +525,16 @@ int parseAccessParam(char *var_name, char *var_value,
   return rc;
 }
 
-bool fsal_specific_checks(exportlist_t *p_entry)
-{
-#if 0 //??? need up call
-  p_entry->use_fsal_up = true;
-
-  if (strncmp(p_entry->fsal_up_type, "DUMB", 4) != 0)
-    {
-      LogWarn(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: %s must be \"DUMB\" when using GPFS."
-              " Setting it to \"DUMB\"", CONF_EXPORT_FSAL_UP_TYPE);
-      strncpy(p_entry->fsal_up_type,"DUMB", 4);
-    }
-  if (p_entry->use_ganesha_write_buffer != false)
-    {
-      LogWarn(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: %s must be false when using GPFS. "
-              "Setting it to false.", CONF_EXPORT_USE_GANESHA_WRITE_BUFFER);
-      p_entry->use_ganesha_write_buffer = false;
-    }
-#endif
-  return true;
-}
-
 /**
- * BuildExportEntry : builds an export entry from configutation file.
+ * @brief Builds an export entry from configutation file
+ *
  * Don't stop immediately on error,
  * continue parsing the file, for listing other errors.
+ *
+ * @param[in]  block     Export configuration block
+ * @param[out] pp_export Export entry being built
+ *
+ * @return 0 on success.
  */
 static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 {
@@ -2006,7 +1917,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                   var_name);
         }
 
-    } /* End of for */
+    }
 /** @TODO at some point, have a global config def for the default FSAL when
  * an export doesn't supply it.  Right now, it is VFS for lack of a better
  * idea.
@@ -2092,14 +2003,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
       return -1;
     }
 
-  /* Here we can make sure certain options are turned on for specific FSALs */
-  if (!fsal_specific_checks(p_entry))
-    {
-      LogCrit(COMPONENT_CONFIG,
-               "NFS READ_EXPORT: ERROR: Found conflicts in export entry.");
-      return -1;
-    }
-
   *pp_export = p_entry;
 
   LogEvent(COMPONENT_CONFIG,
@@ -2110,17 +2013,17 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
 }
 
-/**
- * BuildDefaultExport : builds an export entry for '/'
- * with default parameters.
- */
-
 static char *client_root_access[] = { "*" };
+
+/**
+ * @brief builds an export entry for '/' with default parameters
+ *
+ * @return Root export.
+ */
 
 exportlist_t *BuildDefaultExport()
 {
   exportlist_t *p_entry;
-  int rc;
 
   /* allocates new export entry */
   p_entry = gsh_malloc(sizeof(exportlist_t));
@@ -2175,15 +2078,7 @@ exportlist_t *BuildDefaultExport()
   /**
    * Grant root access to all clients
    */
-  rc = nfs_AddClientsToExportList(p_entry, 1, client_root_access, EXPORT_OPTION_ROOT);
-
-  if(rc != 0)
-    {
-      LogCrit(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: Invalid client \"%s\"",
-              (char *)client_root_access);
-      return NULL;
-    }
+  nfs_AddClientsToExportList(p_entry, 1, client_root_access, EXPORT_OPTION_ROOT);
 
   LogEvent(COMPONENT_CONFIG,
            "NFS READ_EXPORT: Export %d (%s) successfully parsed",
@@ -2191,12 +2086,15 @@ exportlist_t *BuildDefaultExport()
 
   return p_entry;
 
-}                               /* BuildDefaultExport */
+}
 
 /**
- * ReadExports:
- * Read the export entries from the parsed configuration file.
- * \return A negative value on error,
+ * @brief Read the export entries from the parsed configuration file.
+ *
+ * @param[in]  in_config    The file that contains the export list
+ * @param[out] ppexportlist The export list
+ *
+ * @return A negative value on error,
  *         the number of export entries else.
  */
 int ReadExports(config_file_t in_config,        /* The file that contains the export list */
@@ -2303,12 +2201,19 @@ cidr_net(unsigned int addr, unsigned int netmask, char *buf, socklen_t len)
 }
 
 /**
- * function for matching a specific option in the client export list.
+ * @brief Match a specific option in the client export list
+ *
+ * @param[in]  hostaddr      Host to search for
+ * @param[in]  clients       Client list to search
+ * @param[out] pclient_found Matching entry
+ * @param[in]  export_option Option to search for
+ *
+ * @return true if found, false otherwise.
  */
-int export_client_match(sockaddr_t *hostaddr,
-			exportlist_client_t *clients,
-			exportlist_client_entry_t * pclient_found,
-			unsigned int export_option)
+bool export_client_match(sockaddr_t *hostaddr,
+			 exportlist_client_t *clients,
+			 exportlist_client_entry_t *pclient_found,
+			 unsigned int export_option)
 {
   unsigned int i;
   int rc;
@@ -2452,7 +2357,7 @@ int export_client_match(sockaddr_t *hostaddr,
           break;
 
         case GSSPRINCIPAL_CLIENT:
-          /** @toto BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
+          /** @todo BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
           LogFullDebug(COMPONENT_DISPATCH,
                        "----------> Unsupported type GSS_PRINCIPAL_CLIENT");
           return false;
@@ -2467,18 +2372,28 @@ int export_client_match(sockaddr_t *hostaddr,
            LogCrit(COMPONENT_DISPATCH,
                    "Unsupported client in position %u in export list with type %u", i, p_client->type);
 	   continue ;
-        }                       /* switch */
-    }                           /* for */
+        }
+    }
 
   /* no export found for this option */
   return false;
 
-}                               /* export_client_match */
+}
 
-int export_client_matchv6(struct in6_addr *paddrv6,
-			  exportlist_client_t *clients,
-			  exportlist_client_entry_t * pclient_found,
-			  unsigned int export_option)
+/**
+ * @brief Match a specific option in the client export list
+ *
+ * @param[in]  paddrv6       Host to search for
+ * @param[in]  clients       Client list to search
+ * @param[out] pclient_found Matching entry
+ * @param[in]  export_option Option to search for
+ *
+ * @return true if found, false otherwise.
+ */
+bool export_client_matchv6(struct in6_addr *paddrv6,
+			   exportlist_client_t *clients,
+			   exportlist_client_entry_t * pclient_found,
+			   unsigned int export_option)
 {
   unsigned int i;
 
@@ -2524,26 +2439,23 @@ int export_client_matchv6(struct in6_addr *paddrv6,
         default:
           return false;         /* Should never occurs */
           break;
-        }                       /* switch */
-    }                           /* for */
+        }
+    }
 
   /* no export found for this option */
   return false;
-}                               /* export_client_matchv6 */
+}
 
 /**
- * nfs_export_check_security: checks if request security flavor is suffcient for the requested export
+ * @brief Checks if request security flavor is suffcient for the requested export
  *
- * Checks if request security flavor is suffcient for the requested export
- *
- * @param ptr_req       [IN]    pointer to the related RPC request.
- * @param pexpprt       [IN]    related export entry (if found, NULL otherwise).
+ * @param[in] req     Related RPC request.
+ * @param[in] pexoprt Related export entry
  *
  * @return true if the request flavor exists in the matching export
  * false otherwise
- *
  */
-int nfs_export_check_security(struct svc_req *req, exportlist_t * pexport)
+bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
 {
   switch (req->rq_cred.oa_flavor)
     {
@@ -2646,31 +2558,29 @@ int nfs_export_check_security(struct svc_req *req, exportlist_t * pexport)
 }
 
 /**
- * nfs_export_check_access: checks if a machine is authorized to access an export entry.
+ * @brief Checks if a machine is authorized to access an export entry
  *
- * Checks if a machine is authorized to access an export entry.
+ * @param[in]     hostaddr         The complete remote address (as a sockaddr_storage to be IPv6 compliant)
+ * @param[in]     ptr_req          The related RPC request.
+ * @param[in]     pexport          Related export entry (if found, NULL otherwise).
+ * @param[in]     nfs_prog         Number for the NFS program.
+ * @param[in]     mnt_prog         Number for the MOUNT program.
+ * @param[in,out] ht_ip_stats      IP/stats hash table
+ * @param[in,out] ip_stats_pool    IP/stats pool
+ * @param[in]     user_credentials 
+ * @param[out]    pclient_found Client entry found in export list, NULL if nothing was found.
  *
- * @param ssaddr        [IN]    the complete remote address (as a sockaddr_storage to be IPv6 compliant)
- * @param ptr_req       [IN]    pointer to the related RPC request.
- * @param pexpprt       [IN]    related export entry (if found, NULL otherwise).
- * @param nfs_prog      [IN]    number for the NFS program.
- * @param mnt_program   [IN]    number for the MOUNT program.
- * @param ht_ip_stats   [INOUT] IP/stats hash table
- * @param ip_stats_pool [INOUT] IP/stats pool
- * @param pclient_found [OUT]   pointer to client entry found in export list, NULL if nothing was found.
- *
- * @return EXPORT_PERMISSION_GRANTED on success and
- * EXPORT_PERMISSION_DENIED, EXPORT_WRITE_ATTEMPT_WHEN_RO, or
- * EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO on failure.
- *
+ * @retval EXPORT_PERMISSION_GRANTED on success
+ * @retval EXPORT_PERMISSION_DENIED
+ * @retval EXPORT_WRITE_ATTEMPT_WHEN_RO
+ * @retval EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO
  */
-
 int nfs_export_check_access(sockaddr_t *hostaddr,
                             struct svc_req *ptr_req,
                             exportlist_t * pexport,
                             unsigned int nfs_prog,
                             unsigned int mnt_prog,
-                            hash_table_t * ht_ip_stats,
+                            hash_table_t *ht_ip_stats,
                             pool_t *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found,
                             const struct user_cred *user_credentials,
@@ -2917,20 +2827,17 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                "export permission denied - no matching entry");
   return EXPORT_PERMISSION_DENIED;
 
-}                               /* nfs_export_check_access */
+}
 
 /**
+ * @brief Create the root entries for the cached entries.
  *
- * nfs_export_create_root_entry: create the root entries for the cached entries.
- *
- * Create the root entries for the cached entries.
- *
- * @param pexportlist [IN]    the export list to be parsed
+ * @param[in] pexportlist Export list to be parsed
  *
  * @return true is successfull, false if something wrong occured.
  *
  */
-int nfs_export_create_root_entry(exportlist_t * pexportlist)
+bool nfs_export_create_root_entry(exportlist_t *pexportlist)
 {
       exportlist_t *pcurrent = NULL;
       cache_inode_status_t cache_status;
@@ -3016,7 +2923,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
 
   return true;
 
-} /* nfs_export_create_root_entry */
+}
 
 /* Frees current export entry and returns next export entry. */
 exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)

@@ -380,13 +380,13 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot,
 int nfs_check_anon(exportlist_client_entry_t * pexport_client,
 		   exportlist_t * pexport,
 		   struct user_cred *user_credentials);
-int get_req_uid_gid(struct svc_req *ptr_req,
-		    exportlist_t * pexport,
-		    struct user_cred *user_credentials);
+bool get_req_uid_gid(struct svc_req *ptr_req,
+		     exportlist_t * pexport,
+		     struct user_cred *user_credentials);
 
 
-int nfs_compare_clientcred(nfs_client_cred_t * pcred1,
-			   nfs_client_cred_t *pcred2);
+bool nfs_compare_clientcred(nfs_client_cred_t * pcred1,
+			    nfs_client_cred_t *pcred2);
 int nfs_rpc_req2client_cred(struct svc_req *reqp,
 			    nfs_client_cred_t *pcred);
 
@@ -401,7 +401,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
 			    const struct user_cred *user_credentials,
 			    bool proc_makes_write);
 
-int nfs_export_check_security(struct svc_req *ptr_req, exportlist_t *pexport);
+bool nfs_export_check_security(struct svc_req *ptr_req, exportlist_t *pexport);
 
 int nfs_export_tag2path(exportlist_t *exportroot, char *tag,
 			int taglen, char *path, int pathlen);

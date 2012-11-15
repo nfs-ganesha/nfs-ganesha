@@ -24,13 +24,8 @@
  */
 
 /**
- * @file  nfs_Getattr.c
- * @brief Implements NFS PROC2 GETATTR and NFS PROC3 GETATTR.
- *
- * Implements the GETATTR function in V2 and V3. This function is used
- * by the client to get attributes about a filehandle.
- *
- *
+ * @file  nfs3_Getattr.c
+ * @brief Implements the NFSv3 GETATTR proc
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -181,7 +181,8 @@ cache_offsetof(gweakref_table_t *wt, void *ptr)
  * the specified number of partitions.  This table must be freed with
  * gweakref_destroy rather than simply deallocated.
  *
- * @param npart [in] The number of partitions for the table
+ * @param[in]  npart    The number of partitions for the table
+ * @param[out] cache_sz Size of front-end cache
  *
  * @return The address of the newly created table, NULL on failure.
  */

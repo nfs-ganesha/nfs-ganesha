@@ -24,41 +24,14 @@
  */
 
 /**
- * \file    $RCSfile: SemN.c,v $
- * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:56 $
- * \brief   Portable system tools.
+ * @file  SemN.c
+ * @brief Portable system tools.
  *
  * Implements system utilities (like semaphores)
  * so that they are POSIX and work on
  * most plateforms.
  *
- * CVS history :
- *
- * $Log: SemN.c,v $
- *
- * Revision 1.2  2005/03/15 14:23:47  leibovic
- * Changing init param.
- *
- * Revision 1.1  2004/08/16 09:41:21  deniel
- * Ajout des semaphores a N entrees de Thomas (fait au depart pour hpss_find)
- *
- * Revision 1.3  2004/06/28 09:26:53  leibovic
- * gestion des signaux
- *
- * Revision 1.2  2004/06/24 09:41:18  leibovic
- * ajout des fonctionnalite user et group.
- *
- * Revision 1.1  2004/06/11 12:18:05  leibovic
- * rename tools en systools
- *
- * Revision 1.2  2004/06/07 14:17:10  leibovic
- * Developpement du module de gestion des options de la ligne de commande.
- *
- * Revision 1.1  2004/06/03 14:54:22  leibovic
- * Developpement de semaphores "portables"
- *
- *
+ * @deprecated This file is going away.  Soon.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

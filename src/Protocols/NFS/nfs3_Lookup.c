@@ -25,12 +25,8 @@
  */
 
 /**
- * @file  nfs_lookup.c
- * @brief everything that is needed to handle NFS PROC2-3 LINK.
- *
- * everything that is needed to handle NFS PROC2-3 LOOKUP NFS V2-3
- * generic file browsing function
- *
+ * @file  nfs3_Lookup.c
+ * @brief everything that is needed to handle NFS PROC3 LINK.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

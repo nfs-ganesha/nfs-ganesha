@@ -7,12 +7,12 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
@@ -25,14 +25,8 @@
  */
 
 /**
- * \file    nfs_rpc_dispatcher.c
- * \date    $Date: 2006/02/23 12:33:05 $
- * \version $Revision: 1.96 $
- * \brief   The file that contains the 'rpc_dispatcher_thread' routine for nfsd.
- *
- * nfs_rpc_dispatcher.c : The file that contains the 'rpc_dispatcher_thread'
- * routine for the nfsd (and all the related stuff).
- *
+ * @file  nfs_rpc_dispatcher_thread.c
+ * @brief Contains the @c rpc_dispatcher_thread routine and support code
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -46,7 +40,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <sys/select.h>
 #include <poll.h>
 #include <assert.h>
@@ -79,25 +73,27 @@
   #define P_FAMILY AF_INET6
 #endif
 
-/* TI-RPC event channels.  Each channel is a thread servicing an event
- * demultiplexer. */
+/**
+ * TI-RPC event channels.  Each channel is a thread servicing an event
+ * demultiplexer.
+ */
 
 struct rpc_evchan {
-    uint32_t chan_id;
-    pthread_t thread_id;
+    uint32_t chan_id; /*< Channel ID */
+    pthread_t thread_id; /*< POSIX thread ID */
 };
 
-#define N_TCP_EVENT_CHAN  3 /* we don't really want to have too many, relative to the
-                             * number of available cores. */
-#define UDP_EVENT_CHAN    0 /* put udp on a dedicated channel */
-#define TCP_RDVS_CHAN     1 /* accepts new tcp connections */
+#define N_TCP_EVENT_CHAN  3 /*< We don't really want to have too many,
+			        relative to the number of available cores. */
+#define UDP_EVENT_CHAN    0 /*< Put UDP on a dedicated channel */
+#define TCP_RDVS_CHAN     1 /*< Accepts new tcp connections */
 #define TCP_EVCHAN_0      2
 #define N_EVENT_CHAN N_TCP_EVENT_CHAN + 2
 
 static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
 
-thr_fridge_t req_fridge[1]; /* decoder thread pool */
-struct nfs_req_st nfs_req_st; /* shared request queues */
+thr_fridge_t req_fridge[1]; /*< Decoder thread pool */
+struct nfs_req_st nfs_req_st; /*< Shared request queues */
 
 const char *req_q_s[N_REQ_QUEUES] =
 {
@@ -108,7 +104,7 @@ const char *req_q_s[N_REQ_QUEUES] =
 };
 
 static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
-                          void *u_data);
+			  void *u_data);
 static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
 static void nfs_rpc_free_xprt(SVCXPRT *xprt);
 
@@ -120,15 +116,10 @@ const char *xprt_stat_s[3] =
 };
 
 /**
+ * @brief Function never called, but the symbol is needed for svc_register.
  *
- * nfs_rpc_dispatch_dummy: Function never called, but the symbol is needed
- * for svc_register.
- *
- * @param ptr_req the RPC request to be managed
- * @param ptr_svc SVCXPRT pointer to be used for managing this request
- *
- * @return nothing (void function) and is never called indeed.
- *
+ * @param[in] ptr_req Unused
+ * @param[in] ptr_svc Unused
  */
 void nfs_rpc_dispatch_dummy(struct svc_req *ptr_req, SVCXPRT * ptr_svc)
 {
@@ -136,7 +127,7 @@ void nfs_rpc_dispatch_dummy(struct svc_req *ptr_req, SVCXPRT * ptr_svc)
            "NFS DISPATCH DUMMY: Possible error, function "
            "nfs_rpc_dispatch_dummy should never be called");
   return;
-}                               /* nfs_rpc_dispatch_dummy */
+}
 
 const char *tags[] = {
   "NFS",
@@ -176,11 +167,14 @@ SVCXPRT *udp_xprt[P_COUNT];
 SVCXPRT *tcp_xprt[P_COUNT];
 
 /**
- * unregister: Unregister an RPC program.
+ * @brief Unregister an RPC program.
  *
+ * @param[in] prog  Program to unregister
+ * @param[in] vers1 Lowest version
+ * @param[in] vers2 Highest version
  */
 static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
-const rpcvers_t vers2)
+		       const rpcvers_t vers2)
 {
   rpcvers_t vers;
   for(vers = vers1; vers <= vers2; vers++)
@@ -214,13 +208,15 @@ static void unregister_rpc(void)
   (nfs_param.core_param.core_options &  CORE_OPTION_NFSV3) != 0)
 
 /**
- * close_rpc_fd - close file descriptors used for RPC services so that restarting
- * the NFS server wont encounter issues of "Addres Already In Use" - this has
- * occured even though we set the SO_REUSEADDR option when restarting the server
- * with a single export (i.e.: a small config) & no logging at all, making the
- * restart very fast.
- * when closing a listening socket it will be closed immediately if no connection
- * is pending on it, hence drastically reducing the probability for trouble.
+ * @brief Close file descriptors used for RPC services.
+ *
+ * So that restarting the NFS server wont encounter issues of "Addres
+ * Already In Use" - this has occured even though we set the
+ * SO_REUSEADDR option when restarting the server with a single export
+ * (i.e.: a small config) & no logging at all, making the restart very
+ * fast.  when closing a listening socket it will be closed
+ * immediately if no connection is pending on it, hence drastically
+ * reducing the probability for trouble.
  */
 static void close_rpc_fd()
 {
@@ -235,7 +231,6 @@ static void close_rpc_fd()
 	}
     }
 }
-
 
 void Create_udp(protos prot)
 {
@@ -311,8 +306,7 @@ void Create_tcp(protos prot)
 }
 
 /**
- * Create_SVCXPRTs: Create the SVCXPRT for each protocol in use.
- *
+ * @brief Create the SVCXPRT for each protocol in use
  */
 void Create_SVCXPRTs(void)
 {
@@ -328,8 +322,7 @@ void Create_SVCXPRTs(void)
 }
 
 /**
- * Bind_sockets: bind the udp and tcp sockets.
- *
+ * @brief Bind the udp and tcp sockets.
  */
 void Bind_sockets(void)
 {
@@ -410,7 +403,10 @@ void Bind_sockets(void)
 
 void Clean_RPC(void)
 {
-  //TODO: consider the need to call Svc_dg_destroy for UDP & ?? for TCP based services
+  /**
+   * @todo Consider the need to call Svc_dg_destroy for UDP & ?? for
+   * TCP based services
+   */
   unregister_rpc();
   close_rpc_fd();
 }
@@ -473,13 +469,10 @@ void Register_program(protos prot, int flag, int vers)
 }
 
 /**
- * nfs_Init_svc: Init the svc descriptors for the nfs daemon.
+ * @brief Init the svc descriptors for the nfs daemon
  *
  * Perform all the required initialization for the RPC subsystem and event
  * channels.
- *
- * @param attr_thr  pointer to a set of pre-initialized pthread attributes that
- * should be used for new threads
  */
 void nfs_Init_svc()
 {
@@ -700,10 +693,12 @@ void nfs_Init_svc()
     }
 #endif                          /* _NO_PORTMAPPER */
 
-}                               /* nfs_Init_svc */
+}
 
-/*
- * Start service threads.
+/**
+ * @brief Start service threads
+ *
+ * @param[in] attr_thr Attributes for started threads
  */
 void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr)
 {
@@ -725,16 +720,24 @@ void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr)
              N_EVENT_CHAN); 
 }
 
-/*
- * Rendezvous callout.  This routine will be called by TI-RPC after newxprt
- * has been accepted.
+/**
+ * @brief Rendezvous callout.  This routine will be called by TI-RPC
+ *        after newxprt has been accepted.
  *
- * Register newxprt on a TCP event channel.  Balancing events/channels could
- * become involved.  To start with, just cycle through them as new connections
- * are accepted.
+ * Register newxprt on a TCP event channel.  Balancing events/channels
+ * could become involved.  To start with, just cycle through them as
+ * new connections are accepted.
+ *
+ * @param[in] xprt    Transport
+ * @param[in] newxprt Newly created transport
+ * @param[in] flags   Unused
+ * @param[in] u_data  Whatever
+ *
+ * @return Always returns 0.
  */
 static u_int
-nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags, void *u_data)
+nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt,
+	     const u_int flags, void *u_data)
 {
     static uint32_t next_chan = TCP_EVCHAN_0;
     pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -762,7 +765,9 @@ nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags, void *u_data)
 }
 
 /**
- * nfs_rpc_free_xprt:  xprt destructor callout
+ * @brief xprt destructor callout
+ *
+ * @param[in] xprt Transport to destroy
  */
 static void
 nfs_rpc_free_xprt(SVCXPRT *xprt)
@@ -774,7 +779,11 @@ nfs_rpc_free_xprt(SVCXPRT *xprt)
 }
 
 /**
- * nfs_rpc_get_nfsreq: get a request frame (call or svc request)
+ * @brief Get a request frame (call or svc request)
+ *
+ * @param[in] flags Unused.
+ *
+ * @return Request frame.
  */
 request_data_t *
 nfs_rpc_get_nfsreq(uint32_t __attribute__((unused)) flags)
@@ -1185,8 +1194,11 @@ retry_deq:
 }
 
 /**
- * nfs_worker_process_rpc_requests: read and process a sequence of RPC
- * requests.
+ * @brief Allocate a new request
+ *
+ * @param[in] xprt Transport to use
+ *
+ * @return New request data
  */
 static inline request_data_t *
 alloc_nfs_request(SVCXPRT *xprt)
@@ -1621,11 +1633,9 @@ out:
 }
 
 /**
- * rpc_dispatcher_thread
+ * @brief Thread used to service an (epoll, etc) event channel.
  *
- * Thread used to service an (epoll, etc) event channel.
- *
- * @param arg, points to the id of the associated event channel
+ * @param[in] arg Poitner to ID of the associated event channel
  *
  * @return Pointer to the result (but this function will mostly loop forever).
  *
@@ -1649,13 +1659,18 @@ void *rpc_dispatcher_thread(void *arg)
 }                               /* rpc_dispatcher_thread */
 
 /**
- * is_rpc_call_valid: helper function to validate rpc calls.
+ * @brief Helper function to validate rpc calls.
  *
- * XXX it seems very questionable that this function should be sending
- * RPC replies (Matt).  All these error returns seem wrong.
+ * @todo It seems very questionable that this function should be
+ * sending RPC replies (Matt).  All these error returns seem wrong.
  *
+ * @param[in] thr_ctx Thread context
+ * @param[in] xprt    Transport
+ * @param[in] req     Request to validate
+ *
+ * @return True if the request is valid, fals otherwise.
  */
-int
+bool
 is_rpc_call_valid(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt,
                   struct svc_req *req)
 {
@@ -1880,37 +1895,4 @@ nfs_rpc_get_args(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
     }
 
   return true;
-}
-
-/**
- * constructor_nfs_request_data_t: Constructor for a nfs_request_data_t structure
- *
- * This function is used to init the nfs_request_data for a worker. These
- * data are used by the worker for RPC processing.
- *
- * @param ptr void pointer to the structure to be managed
- *
- * @return nothing (void function) will exit the program if failed.
- *
- */
-
-void constructor_nfs_request_data_t(void *ptr, void *parameters)
-{
-    /* do nothing */
-}
-
-/**
- * constructor_request_data_t: Constructor for a request_data_t structure
- *
- * This function is used to init the request_data for a worker. These data
- * are used by the worker for RPC processing.
- *
- * @param ptr void pointer to the structure to be managed
- *
- * @return nothing (void function) will exit the program if failed.
- *
- */
-void constructor_request_data_t(void *ptr, void *parameters)
-{
-    /* do nothing */
 }
