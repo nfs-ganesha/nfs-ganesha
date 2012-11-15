@@ -348,10 +348,17 @@ void nfs_set_param_default()
 #endif                          /* _USE_PROXY */
 
   nfs_param.core_param.use_nfs_commit = FALSE;
-  strncpy(nfs_param.core_param.stats_file_path, "/tmp/ganesha.stat", MAXPATHLEN);
+  if(strmaxcpy(nfs_param.core_param.stats_file_path,
+               "/tmp/ganesha.stat",
+               sizeof(nfs_param.core_param.stats_file_path)) == -1)
+    LogFatal(COMPONENT_INIT,
+             "default stats file path is too long");
   nfs_param.core_param.dump_stats_per_client = 0;
-  strncpy(nfs_param.core_param.stats_per_client_directory, "/tmp", MAXPATHLEN);
-
+  if(strmaxcpy(nfs_param.core_param.stats_per_client_directory,
+               "/tmp",
+               sizeof(nfs_param.core_param.stats_per_client_directory)) == -1)
+    LogFatal(COMPONENT_INIT,
+             "default stats per client path is too long");
   nfs_param.core_param.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE;
   nfs_param.core_param.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE;
 
@@ -367,12 +374,21 @@ void nfs_set_param_default()
 
 #ifdef _HAVE_GSSAPI
   /* krb5 parameter */
-  strlcpy(nfs_param.krb5_param.svc.principal, DEFAULT_NFS_PRINCIPAL,
-          sizeof(nfs_param.krb5_param.svc.principal));
-  strlcpy(nfs_param.krb5_param.keytab, DEFAULT_NFS_KEYTAB,
-          sizeof(nfs_param.krb5_param.keytab));
-  strlcpy(nfs_param.krb5_param.ccache_dir, DEFAULT_NFS_CCACHE_DIR,
-          sizeof(nfs_param.krb5_param.ccache_dir));
+  if(strmaxcpy(nfs_param.krb5_param.svc.principal,
+               DEFAULT_NFS_PRINCIPAL,
+               sizeof(nfs_param.krb5_param.svc.principal)) == -1)
+    LogFatal(COMPONENT_INIT,
+             "default kerberos principal too long");
+  if(strmaxcpy(nfs_param.krb5_param.keytab,
+               DEFAULT_NFS_KEYTAB,
+               sizeof(nfs_param.krb5_param.keytab)) == -1)
+    LogFatal(COMPONENT_INIT,
+             "default kerberos keytab too long");
+  if(strmaxcpy(nfs_param.krb5_param.ccache_dir,
+               DEFAULT_NFS_CCACHE_DIR,
+               sizeof(nfs_param.krb5_param.ccache_dir)) == -1)
+    LogFatal(COMPONENT_INIT,
+             "default kerberos ccache_dir too long");
   nfs_param.krb5_param.active_krb5 = TRUE;
 #endif
 
@@ -381,8 +397,16 @@ void nfs_set_param_default()
   nfs_param.nfsv4_param.fh_expire = FALSE;
   nfs_param.nfsv4_param.returns_err_fh_expired = TRUE;
   nfs_param.nfsv4_param.return_bad_stateid = TRUE;
-  strncpy(nfs_param.nfsv4_param.domainname, DEFAULT_DOMAIN, MAXNAMLEN);
-  strncpy(nfs_param.nfsv4_param.idmapconf, DEFAULT_IDMAPCONF, MAXPATHLEN);
+  if(strmaxcpy(nfs_param.nfsv4_param.domainname,
+               DEFAULT_DOMAIN,
+               sizeof(nfs_param.nfsv4_param.domainname)) == -1)
+    LogFatal(COMPONENT_INIT,
+             "DEFAULT_DOMAIN is too long");
+  if(strmaxcpy(nfs_param.nfsv4_param.idmapconf,
+               DEFAULT_IDMAPCONF,
+               sizeof(nfs_param.nfsv4_param.idmapconf)) == -1)
+    LogFatal(COMPONENT_INIT,
+             "DEFAULT_IDMAPCONF is too long");
 
   /*  Worker parameters : IP/name hash table */
   nfs_param.ip_name_param.hash_param.index_size = PRIME_IP_NAME;

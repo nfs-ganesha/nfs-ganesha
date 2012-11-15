@@ -171,8 +171,13 @@ int mnt_Export(nfs_arg_t *parg,
                      (AF_INET, &(p_client_entry->client.hostif.clientaddr),
                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
                     {
-                      strncpy(new_expnode->ex_groups[i].gr_name, "Invalid Host address",
-                              INET_ADDRSTRLEN);
+                      if(strmaxcpy(new_expnode->ex_groups[i].gr_name,
+                                   "Invalid Host address",
+                                   INET_ADDRSTRLEN + 1) == -1)
+                        {
+                          LogCrit(COMPONENT_NFSPROTO,
+                                  "Could not copy response");
+                        }
                     }
 
                   LogFullDebug(COMPONENT_NFSPROTO,
@@ -198,8 +203,13 @@ int mnt_Export(nfs_arg_t *parg,
                      (AF_INET, &(p_client_entry->client.network.netaddr),
                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
                     {
-                      strncpy(new_expnode->ex_groups[i].gr_name,
-                              "Invalid Network address", MAXHOSTNAMELEN);
+                      if(strmaxcpy(new_expnode->ex_groups[i].gr_name,
+                                   "Invalid Network address",
+                                   INET_ADDRSTRLEN + 1) == -1)
+                        {
+                          LogCrit(COMPONENT_NFSPROTO,
+                                  "Could not copy response");
+                        }
                     }
                   break;
 

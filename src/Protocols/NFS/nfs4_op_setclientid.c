@@ -292,9 +292,17 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
       goto out;
     }
 
-  strncpy(punconf->cid_cb.cid_client_r_addr,
-          arg_SETCLIENTID4.callback.cb_location.r_addr,
-          SOCK_NAME_MAX);
+  if(strmaxcpy(punconf->cid_cb.cid_client_r_addr,
+               arg_SETCLIENTID4.callback.cb_location.r_addr,
+               sizeof(punconf->cid_cb.cid_client_r_addr)) == -1)
+    {
+      LogCrit(COMPONENT_CLIENTID,
+              "Callback r_addr %s too long",
+              arg_SETCLIENTID4.callback.cb_location.r_addr);
+      res_SETCLIENTID4.status = NFS4ERR_INVAL;
+
+      goto out;
+    }
 
   nfs_set_client_location(punconf,
                           &arg_SETCLIENTID4.callback.cb_location);

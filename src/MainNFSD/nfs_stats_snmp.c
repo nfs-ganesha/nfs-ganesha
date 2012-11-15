@@ -88,7 +88,12 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
 
       if(!STRCMP(key_name, "Snmp_Agentx_Socket"))
         {
-          strncpy(out_parameter->snmp_adm.snmp_agentx_socket, key_value, MAXPATHLEN);
+          if(strmaxcpy(out_parameter->snmp_adm.snmp_agentx_socket,
+                       key_value,
+                       sizeof(out_parameter->snmp_adm.snmp_agentx_socket)) == -1)
+            LogCrit(COMPONENT_CONFIG,
+                    "SNMP_ADM: ERROR: value \"%s\" for %s is too long",
+                    key_name, key_value);
         }
       else if(!STRCMP(key_name, "Product_Id"))
         {
@@ -96,7 +101,12 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
         }
       else if(!STRCMP(key_name, "Snmp_adm_log"))
         {
-          strncpy(out_parameter->snmp_adm.snmp_log_file, key_value, MAXPATHLEN);
+          if(strmaxcpy(out_parameter->snmp_adm.snmp_log_file,
+                       key_value,
+                       sizeof(out_parameter->snmp_adm.snmp_log_file)) == -1)
+            LogCrit(COMPONENT_CONFIG,
+                    "SNMP_ADM: ERROR: value \"%s\" for %s is too long",
+                    key_name, key_value);
         }
       else if(!STRCMP(key_name, "Export_cache_stats"))
         {
