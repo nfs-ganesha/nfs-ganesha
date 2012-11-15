@@ -51,7 +51,7 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle) ;
  * called with appropriate locks taken at the cache inode level
  */
 
-fsal_status_t zfs_open( struct fsal_obj_handle *obj_hdl,
+fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
 		        fsal_openflags_t openflags)
 {
 	struct zfs_fsal_obj_handle *myself;
@@ -98,7 +98,7 @@ fsal_status_t zfs_open( struct fsal_obj_handle *obj_hdl,
  * Let the caller peek into the file's open/close state.
  */
 
-fsal_openflags_t zfs_status(struct fsal_obj_handle *obj_hdl)
+fsal_openflags_t tank_status(struct fsal_obj_handle *obj_hdl)
 {
 	struct zfs_fsal_obj_handle *myself;
 
@@ -110,7 +110,7 @@ fsal_openflags_t zfs_status(struct fsal_obj_handle *obj_hdl)
  * concurrency (locks) is managed in cache_inode_*
  */
 
-fsal_status_t zfs_read(struct fsal_obj_handle *obj_hdl,
+fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
                        const struct req_op_context *opctx,
 		       uint64_t offset,
                        size_t buffer_size,
@@ -154,7 +154,7 @@ fsal_status_t zfs_read(struct fsal_obj_handle *obj_hdl,
  * concurrency (locks) is managed in cache_inode_*
  */
 
-fsal_status_t zfs_write(struct fsal_obj_handle *obj_hdl,
+fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
                         const struct req_op_context *opctx,
 			uint64_t offset,
 			size_t buffer_size,
@@ -196,7 +196,7 @@ out:
  * for right now, fsync will have to do.
  */
 
-fsal_status_t zfs_commit( struct fsal_obj_handle *obj_hdl, /* sync */
+fsal_status_t tank_commit( struct fsal_obj_handle *obj_hdl, /* sync */
 			  off_t offset,
 			  size_t len)
 {
@@ -210,7 +210,7 @@ fsal_status_t zfs_commit( struct fsal_obj_handle *obj_hdl, /* sync */
  * releases all locks but that is state and cache inode's problem.
  */
 
-fsal_status_t zfs_close(struct fsal_obj_handle *obj_hdl)
+fsal_status_t tank_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct zfs_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -229,7 +229,7 @@ fsal_status_t zfs_close(struct fsal_obj_handle *obj_hdl)
  * trimming.
  */
 
-fsal_status_t zfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
+fsal_status_t tank_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			      lru_actions_t requests)
 {
 	struct zfs_fsal_obj_handle *myself;

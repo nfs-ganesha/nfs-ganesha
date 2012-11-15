@@ -63,7 +63,7 @@ struct zfs_fsal_export {
 
 struct fsal_staticfsinfo_t *zfs_staticinfo(struct fsal_module *hdl);
 
-libzfswrap_vfs_t * zfs_get_root_pvfs(struct fsal_export *exp_hdl) {
+libzfswrap_vfs_t * tank_get_root_pvfs(struct fsal_export *exp_hdl) {
 	struct zfs_fsal_export *myself;
 
 	myself = container_of(exp_hdl, struct zfs_fsal_export, export);
@@ -294,9 +294,9 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops);
 void zfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
-	ops->lookup_path = zfs_lookup_path; 
+	ops->lookup_path = tank_lookup_path; 
 	ops->extract_handle = extract_handle;
-	ops->create_handle = zfs_create_handle;
+	ops->create_handle = tank_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;
 	ops->fs_maxfilesize = fs_maxfilesize;
@@ -370,7 +370,7 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
         if( p_snapshots == NULL )
         {
           /* Mount the libs */
-          if( ( p_zfs = libzfswrap_mount(fs_options, "/", "") ) == NULL )
+          if( ( p_zfs = libzfswrap_mount(fs_options, "/tank", "") ) == NULL )
             {
               LogMajor( COMPONENT_FSAL, "Could not mount libzfswrap");
 	      return fsalstat(ERR_FSAL_INVAL, 0);
