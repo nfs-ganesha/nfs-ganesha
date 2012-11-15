@@ -614,24 +614,6 @@ int nfs_set_param_from_conf(config_file_t config_struct,
                  "workers configuration read from config file");
     }
 
-  /* Worker parameters : dupreq hash table */
-  if((rc = nfs_read_dupreq_hash_conf(config_struct, &nfs_param.dupreq_param)) < 0)
-    {
-      LogCrit(COMPONENT_INIT,
-	      "Error while parsing duplicate request hash table configuration");
-      return -1;
-    }
-  else
-    {
-      /* No such stanza in configuration file */
-      if(rc == 1)
-        LogDebug(COMPONENT_INIT,
-		 "No duplicate request hash table configuration found in config file, using default");
-      else
-        LogDebug(COMPONENT_INIT,
-                 "duplicate request hash table configuration read from config file");
-    }
-
   /* Worker paramters: ip/name hash table and expiration for each entry */
   if((rc = nfs_read_ip_name_conf(config_struct, &nfs_param.ip_name_param)) < 0)
     {
@@ -976,8 +958,7 @@ int nfs_check_param_consistency()
 #endif
 
   // check for parameters which need to be primes
-  if (!is_prime(nfs_param.dupreq_param.hash_param.index_size) ||
-      !is_prime(nfs_param.ip_name_param.hash_param.index_size) ||
+  if (!is_prime(nfs_param.ip_name_param.hash_param.index_size) ||
       !is_prime(nfs_param.uidmap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.unamemap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.gidmap_cache_param.hash_param.index_size) ||

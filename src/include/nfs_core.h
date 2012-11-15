@@ -196,10 +196,6 @@ typedef struct nfs_worker_param__ {
 	unsigned int nb_before_gc;
 } nfs_worker_parameter_t;
 
-typedef struct nfs_rpc_dupreq_param__ {
-	hash_parameter_t hash_param;
-} nfs_rpc_dupreq_parameter_t;
-
 /**
  * @TODO troublesome decl.  Max cleaned up some of this...
  */
@@ -313,7 +309,6 @@ typedef struct nfs_version4_parameter__ {
 typedef struct nfs_param__ {
 	nfs_core_parameter_t core_param;
 	nfs_worker_parameter_t worker_param;
-	nfs_rpc_dupreq_parameter_t dupreq_param;
 	nfs_ip_name_parameter_t ip_name_param;
 	nfs_idmap_cache_parameter_t uidmap_cache_param;
 	nfs_idmap_cache_parameter_t gidmap_cache_param;
@@ -637,8 +632,6 @@ int get_stat_exporter_conf(config_file_t in_config,
 int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t *pparam);
 int nfs_read_worker_conf(config_file_t in_config,
 			 nfs_worker_parameter_t *pparam);
-int nfs_read_dupreq_hash_conf(config_file_t in_config,
-			      nfs_rpc_dupreq_parameter_t *pparam);
 int nfs_read_ip_name_conf(config_file_t in_config,
 			  nfs_ip_name_parameter_t *pparam);
 int nfs_read_version4_conf(config_file_t in_config,
@@ -765,7 +758,6 @@ unsigned int nfs_core_select_worker_queue(unsigned int avoid_index) ;
 
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
-int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
 void stats_collect (ganesha_stats_t *ganesha_stats);
