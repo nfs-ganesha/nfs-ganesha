@@ -1149,6 +1149,20 @@ struct export_ops {
  * @return Max size of the buffer needed for a da_addr_body
  */
         size_t (*fs_da_addr_size)(struct fsal_export *exp_hdl);
+
+/**
+ * @brief Get write verifier
+ *
+ * This function is called by write and commit to match the commit verifier
+ * with the one returned on  write.
+ *
+ * @param[in/out] verf_desc Address and length of verifier
+ *
+ * @return No errors
+ */
+        void (*get_write_verifier)(
+                 struct gsh_buffdesc *verf_desc);
+
 /*@}*/
 };
 

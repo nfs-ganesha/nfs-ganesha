@@ -367,7 +367,7 @@ layoutget(struct fsal_obj_handle *obj_hdl,
         res->segment.io_mode = LAYOUTIOMODE4_RW;
 
         stripe_width = file_layout.lg_stripe_unit;
-        util |= stripe_width;
+        util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS;
 
         deviceid.export_id = arg->export_id;
         deviceid.devid = file_layout.device_id.devid;

@@ -566,6 +566,22 @@ fs_da_addr_size(struct fsal_export *exp_hdl)
         return 0;
 }
 
+/**
+ * @brief Get write verifier
+ *
+ * This function is called by write and commit to match the commit verifier
+ * with the one returned on  write.
+ *
+ * @param[in/out] verf_desc Address and length of verifier
+ *
+ * @return No errors
+ */
+static void
+global_verifier(struct gsh_buffdesc *verf_desc)
+{
+        memcpy(verf_desc->addr, &NFS4_write_verifier, verf_desc->len);
+}
+
 /* Default fsal export method vector.
  * copied to allocated vector at register time
  */
@@ -603,7 +619,8 @@ struct export_ops def_export_ops = {
         .fs_layout_blocksize = fs_layout_blocksize,
         .fs_maximum_segments = fs_maximum_segments,
         .fs_loc_body_size = fs_loc_body_size,
-        .fs_da_addr_size = fs_da_addr_size
+        .fs_da_addr_size = fs_da_addr_size,
+        .get_write_verifier = global_verifier
 };
 
 

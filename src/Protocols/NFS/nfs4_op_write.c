@@ -89,6 +89,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
      not need to be held during a non-anonymous read, since the open
      state itself prevents a conflict. */
   bool                     anonymous = false;
+  struct gsh_buffdesc       verf_desc;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_WRITE;
@@ -300,8 +301,9 @@ int nfs4_op_write(struct nfs_argop4 *op,
       res_WRITE4.WRITE4res_u.resok4.count = 0;
       res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
 
-      memcpy(res_WRITE4.WRITE4res_u.resok4.writeverf, NFS4_write_verifier,
-             sizeof(verifier4));
+      verf_desc.addr = res_WRITE4.WRITE4res_u.resok4.writeverf;
+      verf_desc.len = sizeof(verifier4);
+      data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
 
       res_WRITE4.status = NFS4_OK;
       if (anonymous)

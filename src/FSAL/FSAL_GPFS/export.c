@@ -483,6 +483,14 @@ gpfs_create_ds_handle(struct fsal_export *const export_pub,
         return NFS4_OK;
 }
 
+verifier4 GPFS_write_verifier;  /* NFS V4 write verifier */
+
+static void
+gpfs_verifier(struct gsh_buffdesc *verf_desc)
+{
+        memcpy(verf_desc->addr, &GPFS_write_verifier, verf_desc->len);
+}
+
 /* gpfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -510,6 +518,7 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
+        ops->get_write_verifier = gpfs_verifier;
 }
 
 void gpfs_handle_ops_init(struct fsal_obj_ops *ops);
@@ -761,6 +770,8 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
            }
 
 	pthread_mutex_unlock(&myself->export.lock);
+
+        gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &GPFS_write_verifier);
 
 	myself->pnfs_enabled = myself->export.ops->fs_supports(&myself->export,
 	                                                fso_pnfs_ds_supported);

@@ -48,6 +48,8 @@
           typeof (b) _b = (b);                  \
           _a < _b ? _a : _b; })
 
+extern verifier4 GPFS_write_verifier;  /* NFS V4 write verifier */
+
 /**
  * @brief Release an object
  *
@@ -209,6 +211,8 @@ ds_write(struct fsal_ds_handle *const ds_pub,
   LogDebug(COMPONENT_PNFS,
           "write verifier %d-%d\n", warg.verifier4[0], warg.verifier4[1]);
 
+  memcpy(&GPFS_write_verifier, warg.verifier4, sizeof(verifier4));
+
   *written_length = amount_written;
 
   return NFS4_OK;
@@ -239,6 +243,7 @@ ds_commit(struct fsal_ds_handle *const ds_pub,
 {
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
+        LogCrit(COMPONENT_PNFS, "Commits should go to MDS\n");
 	/* GPFS asked for COMMIT to go to the MDS */
 	return NFS4ERR_INVAL;
 }

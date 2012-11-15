@@ -84,6 +84,7 @@ int nfs4_op_commit(struct nfs_argop4 *op,
                    struct nfs_resop4 *resp)
 {
   cache_inode_status_t cache_status;
+  struct gsh_buffdesc verf_desc;
 
   resp->resop = NFS4_OP_COMMIT;
   res_COMMIT4.status = NFS4_OK;
@@ -119,8 +120,13 @@ int nfs4_op_commit(struct nfs_argop4 *op,
       return res_COMMIT4.status;
     }
 
-  memcpy(res_COMMIT4.COMMIT4res_u.resok4.writeverf, (char *)&NFS4_write_verifier,
-         NFS4_VERIFIER_SIZE);
+  verf_desc.addr = &res_COMMIT4.COMMIT4res_u.resok4.writeverf;
+  verf_desc.len = sizeof(verifier4);
+  data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
+
+  LogFullDebug(COMPONENT_NFS_V4,
+               "      COMMIT4: Commit verifier %d-%d",
+                ((int *)verf_desc.addr)[0], ((int *)verf_desc.addr)[1]);
 
   /* If you reach this point, then an error occured */
   res_COMMIT4.status = NFS4_OK;
