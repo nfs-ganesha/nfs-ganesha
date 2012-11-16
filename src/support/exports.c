@@ -600,7 +600,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
   strcpy(p_entry->fullpath, "/");
-  strcpy(p_entry->dirname, "/");
   strcpy(p_entry->fsname, "");
   strcpy(p_entry->pseudopath, "/");
 
@@ -687,7 +686,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           strncpy(p_entry->fullpath, var_value, MAXPATHLEN);
 
       /** @todo : change to MAXPATHLEN in exports.h */
-          strncpy(p_entry->dirname, var_value, MAXNAMLEN);
           strncpy(p_entry->fsname, "", MAXNAMLEN);
 
           set_options |= FLAG_EXPORT_PATH;
@@ -1943,7 +1941,6 @@ exportlist_t *BuildDefaultExport()
   p_entry->id = 1;
 
   strcpy(p_entry->fullpath, "/");
-  strcpy(p_entry->dirname, "/");
   strcpy(p_entry->fsname, "");
   strcpy(p_entry->pseudopath, "/");
 
@@ -2338,7 +2335,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
           {
             LogInfo(COMPONENT_DISPATCH,
                     "Export %s does not support AUTH_NONE",
-                    pexport->dirname);
+                    pexport->fullpath);
             return false;
           }
         break;
@@ -2348,7 +2345,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
           {
             LogInfo(COMPONENT_DISPATCH,
                     "Export %s does not support AUTH_UNIX",
-                    pexport->dirname);
+                    pexport->fullpath);
             return false;
           }
         break;
@@ -2362,7 +2359,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
           {
             LogInfo(COMPONENT_DISPATCH,
                     "Export %s does not support RPCSEC_GSS",
-                    pexport->dirname);
+                    pexport->fullpath);
             return false;
           }
         else
@@ -2382,7 +2379,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
                       LogInfo(COMPONENT_DISPATCH,
                               "Export %s does not support "
                               "RPCSEC_GSS_SVC_NONE",
-                              pexport->dirname);
+                              pexport->fullpath);
                       return false;
                     }
                   break;
@@ -2394,7 +2391,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
                       LogInfo(COMPONENT_DISPATCH,
                               "Export %s does not support "
                               "RPCSEC_GSS_SVC_INTEGRITY",
-                              pexport->dirname);
+                              pexport->fullpath);
                       return false;
                     }
                   break;
@@ -2406,7 +2403,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
                       LogInfo(COMPONENT_DISPATCH,
                               "Export %s does not support "
                               "RPCSEC_GSS_SVC_PRIVACY",
-                              pexport->dirname);
+                              pexport->fullpath);
                       return false;
                     }
                   break;
@@ -2415,7 +2412,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
                     LogInfo(COMPONENT_DISPATCH,
                             "Export %s does not support unknown "
                             "RPCSEC_GSS_SVC %d",
-                            pexport->dirname, (int) svc);
+                            pexport->fullpath, (int) svc);
                     return false;
               }
           }
@@ -2424,7 +2421,7 @@ bool nfs_export_check_security(struct svc_req *req, exportlist_t *pexport)
       default:
         LogInfo(COMPONENT_DISPATCH,
                 "Export %s does not support unknown oa_flavor %d",
-                pexport->dirname, (int) req->rq_cred.oa_flavor);
+                pexport->fullpath, (int) req->rq_cred.oa_flavor);
         return false;
     }
 
@@ -2789,7 +2786,7 @@ exportlist_t *GetExportEntry(char *exportPath)
   pexport = nfs_param.pexportlist;
 
   /*
-   * Find the export for the dirname (using as well Path or Tag )
+   * Find the export for the path (using as well Path or Tag )
    */
   for(p_current_item = pexport; p_current_item != NULL;
       p_current_item = p_current_item->next)

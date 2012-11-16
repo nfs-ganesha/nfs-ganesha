@@ -590,7 +590,7 @@ bool nlm_block_data_to_export(state_block_data_t * block_data,
   *ppexport = pexport;
   LogFullDebug(COMPONENT_NLM,
                "Found export entry for dirname=%s as exportid=%d",
-               pexport->dirname, pexport->id);
+               pexport->fullpath, pexport->id);
   return true;
 }
 

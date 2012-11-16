@@ -670,7 +670,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
-                           pexport->dirname, pexport->id);
+                           pexport->fullpath, pexport->id);
             }
           else
             pexport = nfs_param.pexportlist;
@@ -722,7 +722,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
-                           pexport->dirname, pexport->id);
+                           pexport->fullpath, pexport->id);
             }
           else
             pexport = nfs_param.pexportlist;
@@ -828,7 +828,7 @@ static void nfs_rpc_execute(request_data_t *preq,
 
           LogFullDebug(COMPONENT_DISPATCH,
                        "Found export entry for dirname=%s as exportid=%d",
-                       pexport->dirname, pexport->id);
+                       pexport->fullpath, pexport->id);
         }
       else
         pexport = nfs_param.pexportlist;

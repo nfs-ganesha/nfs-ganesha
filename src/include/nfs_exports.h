@@ -136,7 +136,6 @@ typedef struct exportlist_client__ {
 typedef struct exportlist {
 	unsigned short id; /*< Entry identifier */
 	exportlist_status_t status; /*< Entry's status */
-	char dirname[MAXNAMLEN + 1]; /*< Path relative to fs root */
 	char fullpath[MAXPATHLEN + 1]; /*< The path from the root */
 	char fsname[MAXNAMLEN + 1]; /*< File system name, MAXNAMLEN is used for
 				        wanting of a better constant */
