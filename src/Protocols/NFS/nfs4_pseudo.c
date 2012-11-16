@@ -104,7 +104,7 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
   PseudoFs = &gPseudoFs;
 
   /* Init Root of the Pseudo FS tree */
-  strncpy(PseudoFs->root.name, "/", MAXNAMLEN);
+  strcpy(PseudoFs->root.name, "/");
   PseudoFs->root.pseudo_id = 0;
   PseudoFs->root.junction_export = NULL;
   PseudoFs->root.next = NULL;
@@ -114,12 +114,6 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
 
   /* To not forget to init "/" entry */
   PseudoFs->reverse_tab[0] = &(PseudoFs->root);
-
-  /* Allocation of the parsing table */
-  #define PSEUDO_PATH_BUFFSIZE (MAXNAMLEN + 1)
-  for(i = 0; i < NB_TOK_PATH; i++)
-    if((PathTok[i] = gsh_malloc(PSEUDO_PATH_BUFFSIZE)) == NULL)
-      return ENOMEM;
 
   glist_for_each(glist, pexportlist)
     {
@@ -135,22 +129,7 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
         {
           LogDebug(COMPONENT_NFS_V4_PSEUDO,
                    "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s",
-                       entry->id, entry->fullpath, entry->pseudopath);
-
-          /* Parsing the path */
-          strcpy(tmp_pseudopath, entry->pseudopath);
-          if((NbTokPath =
-              nfs_ParseConfLine(PathTok, NB_TOK_PATH,
-                                PSEUDO_PATH_BUFFSIZE,
-                                tmp_pseudopath, find_slash,
-                                find_endLine)) < 0)
-            {
-              /* Path is badly formed */
-              LogCrit(COMPONENT_NFS_V4_PSEUDO,
-                      "BUILDING PSEUDOFS: Invalid 'pseudo' option: %s",
-                      entry->pseudopath);
-              continue;
-            }
+                   entry->id, entry->fullpath, entry->pseudopath);
 
           /* there must be a leading '/' in the pseudo path */
           if(entry->pseudopath[0] != '/')
@@ -162,16 +141,36 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
               continue;
             }
 
+          /* Parsing the path */
+          memset(PathTok, 0, sizeof(PathTok));
+
+          /* Make a copy of the pseudopath since it will be modified,
+           * also, skip the leading '/'.
+           */
+          strcpy(tmp_pseudopath, entry->pseudopath + 1);
+
+          NbTokPath = nfs_ParseConfLine(PathTok,
+                                        NB_TOK_PATH,
+                                        sizeof(PseudoFs->root.name),
+                                        tmp_pseudopath,
+                                        '/');
+          if(NbTokPath < 0)
+            {
+              /* Path is badly formed */
+              LogCrit(COMPONENT_NFS_V4_PSEUDO,
+                      "Bad Pseudo=\"%s\", path too long or a component is too long",
+                      entry->pseudopath);
+              continue;
+            }
+
           /* Start at the pseudo root. */
           PseudoFsCurrent = &(PseudoFs->root);
 
-          /* Loop on each token. Because first character in pseudo path is '/'
-           * we can avoid looking at PathTok[0] which is necessary '\0'. That's 
-           * the reason why we start looping at pos = 1 */
-          for(j = 1; j < NbTokPath; j++)
+          /* Loop on each token. */
+          for(j = 0; j < NbTokPath; j++)
             LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "tokens are %s", PathTok[j]);
 
-          for(j = 1; j < NbTokPath; j++)
+          for(j = 0; j < NbTokPath; j++)
             {
               found = 0;
               for(iterPseudoFs = PseudoFsCurrent->sons; iterPseudoFs != NULL;
@@ -212,7 +211,10 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
                   LogMidDebug(COMPONENT_NFS_V4_PSEUDO,
                               "Creating pseudo fs entry for %s, pseudo_id %d",
                               PathTok[j], PseudoFs->last_pseudo_id + 1);
-                  strncpy(newPseudoFsEntry->name, PathTok[j], MAXNAMLEN);
+                  /* Copy component name, no need to check buffer because size
+                   * was checked by nfs_ParseConfLine.
+                   */ 
+                  strcpy(newPseudoFsEntry->name, PathTok[j]);
                   newPseudoFsEntry->pseudo_id = PseudoFs->last_pseudo_id + 1;
                   PseudoFs->last_pseudo_id = newPseudoFsEntry->pseudo_id;
                   PseudoFs->reverse_tab[PseudoFs->last_pseudo_id] = newPseudoFsEntry;
@@ -262,9 +264,6 @@ int nfs4_ExportToPseudoFS(struct glist_head * pexportlist)
                         i, PseudoFs->reverse_tab[i]->name);
         }
     }
-  /* desalocation of the parsing table */
-  for(i = 0; i < NB_TOK_PATH; i++)
-    gsh_free(PathTok[i]);
 
   return (0);
 }
