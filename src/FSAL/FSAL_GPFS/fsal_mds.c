@@ -304,7 +304,7 @@ layoutget(struct fsal_obj_handle *obj_hdl,
         /* Utility parameter */
         nfl_util4 util = 0;
         /* The last byte that can be accessed through pNFS */
-        uint64_t last_possible_byte = 0;
+/*         uint64_t last_possible_byte = 0; strict. set but unused */
         /* The deviceid for this layout */
         struct pnfs_deviceid deviceid = {0, 0};
         /* NFS Status */
@@ -371,7 +371,7 @@ layoutget(struct fsal_obj_handle *obj_hdl,
 
         deviceid.export_id = arg->export_id;
         deviceid.devid = file_layout.device_id.devid;
-        last_possible_byte = NFS4_UINT64_MAX;
+        /* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
 
         LogDebug(COMPONENT_PNFS,
            "devid expid-nodeAddr %ld-%016lx\n", deviceid.export_id, deviceid.devid);
