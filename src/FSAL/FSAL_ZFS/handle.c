@@ -232,7 +232,7 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
                 hdl->handle->zfs_handle = object;
                 hdl->handle->type = type ;
-                hdl->handle->i_snap = 0;
+                hdl->handle->i_snap = i_snap;
 	} else {
 		fsal_error = ERR_FSAL_NOMEM;
 		*handle = NULL; /* poison it */

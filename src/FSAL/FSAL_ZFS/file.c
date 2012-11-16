@@ -52,6 +52,7 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle) ;
  */
 
 fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
+			 const struct req_op_context *opctx,
 		        fsal_openflags_t openflags)
 {
 	struct zfs_fsal_obj_handle *myself;
