@@ -81,8 +81,6 @@ int s_read_octal(char *str);
  */
 int s_read_int64(char *str, unsigned long long *out64);
 
-int s_read_size(char *str, size_t * p_size);
-
 /**
  * string to boolean convertion.
  * \return 1 for TRUE, 0 for FALSE, -1 on error
@@ -125,12 +123,6 @@ int snprintmem(char *target, int tgt_size, void *source, int mem_size);
 int sscanmem(void *target, int tgt_size, const char *str_source);
 
 /* String parsing functions */
-
-int find_space(char c);
-int find_comma(char c);
-int find_colon(char c);
-int find_endLine(char c);
-int find_slash(char c);
 
 #ifndef HAVE_STRLCAT
 extern size_t strlcat(char *dst, const char *src, size_t siz);
