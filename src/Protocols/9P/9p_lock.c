@@ -189,6 +189,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
       case _9P_LOCK_TYPE_UNLCK:
          if(state_unlock( pfid->pentry,
                           pfid->pexport,
+			  &pfid->op_context,
                           powner,
                           NULL,
                           &lock,

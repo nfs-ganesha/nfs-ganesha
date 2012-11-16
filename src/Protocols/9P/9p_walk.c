@@ -122,8 +122,8 @@ int _9p_walk( _9p_request_data_t * preq9p,
       pnewfid->fid = *newfid ;
 
       /* Increments refcount so it won't fall below 0 when we clunk later */
-      if ( cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_INITIAL)
-             != CACHE_INODE_SUCCESS )
+      cache_status = cache_inode_lru_ref(pnewfid->pentry, LRU_REQ_INITIAL);
+      if (cache_status != CACHE_INODE_SUCCESS )
        {
           LogDebug( COMPONENT_9P, "cache_inode_lru_ref failed on fid=%u newfid=%u entry=%p", *fid, *newfid, pnewfid->pentry );
           return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
