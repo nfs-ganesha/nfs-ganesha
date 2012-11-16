@@ -55,17 +55,18 @@
 static pseudofs_t gPseudoFs;
 
 /**
- * nfs4_PseudoToId: TConverts a file handle (to a pseudo object) to the id of this pseudo object in the pseudofs
- * 
- *  This routine merely extracts a field from the file handle which is not seen as opaque in this case. Because
- *  file handle are opaque structure, it is prefered to have a dedicated function for this and so hiding the
- *  file handle internal structure.
- * 
- *  @param fh4p       [IN]  pointer to the file handle to process. 
- * 
- *  @return the pseudo id found
- *  @see   nfs_GetPseudoFs
- * 
+ * @brief Convert a file handle to the id of an object in the pseudofs
+ *
+ * This routine merely extracts a field from the file handle which is
+ * not seen as opaque in this case. Because file handle are opaque
+ * structure, it is prefered to have a dedicated function for this and
+ * so hiding the file handle internal structure.
+ *
+ * @param[in] fh4p file handle to process
+ *
+ * @return The pseudo ID.
+ *
+ * @see nfs_GetPseudoFs
  */
 
 uint64_t nfs4_PseudoToId(nfs_fh4 * fh4p)
@@ -77,36 +78,37 @@ uint64_t nfs4_PseudoToId(nfs_fh4 * fh4p)
 
   out = (uint64_t) (pfhandle4->pseudofs_id);
   return out;
-}                               /* nfs4_PseudoToId */
+}
 
 /**
- * nfs4_GetPseudoFs: Gets the root of the pseudo file system.
- * 
- * Gets the root of the pseudo file system. This is only a wrapper to static variable gPseudoFs. 
+ * @brief Get the root of the pseudo file system
  *
- * @return the pseudo fs root 
- * 
+ * Gets the root of the pseudo file system. This is only a wrapper to
+ * static variable gPseudoFs.
+ *
+ * @return The pseudo fs root
  */
 
 pseudofs_t *nfs4_GetPseudoFs(void)
 {
   return &gPseudoFs;
-}                               /*  nfs4_GetExportList */
+}
 
 /**
- * nfs4_ExportToPseudoFS: Build a pseudo fs from an exportlist
- * 
- * Build a pseudo fs from an exportlist. This export list itself is obtained by reading the configuration file. 
+ * @brief Build a pseudo fs from an exportlist
  *
- * @return the pseudo fs root 
- * 
+ * This export list itself is obtained by reading the configuration
+ * file.
+ *
+ * @parma[in] pexportlist The export list
+ *
+ * @return the pseudo fs root.
  */
 
-int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
+int nfs4_ExportToPseudoFS(exportlist_t *pexportlist)
 {
   exportlist_t *entry;
-  exportlist_t *next;           /* exportlist entry   */
-  int i = 0;
+  exportlist_t *next;
   int j = 0;
   int found = 0;
   char tmp_pseudopath[MAXPATHLEN + 1];
@@ -123,20 +125,14 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
   PseudoFs = &gPseudoFs;
 
   /* Init Root of the Pseudo FS tree */
-  strncpy(PseudoFs->root.name, "/", MAXNAMLEN);
-  strncpy(PseudoFs->root.fullname, "(nfsv4root)", MAXPATHLEN);
+  strcpy(PseudoFs->root.name, "/");
+  strcpy(PseudoFs->root.fullname, "(nfsv4root)");
   PseudoFs->root.pseudo_id = 0;
   PseudoFs->root.junction_export = NULL;
   PseudoFs->root.next = NULL;
   PseudoFs->root.last = PseudoFsRoot;
   PseudoFs->root.sons = NULL;
   PseudoFs->root.parent = &(PseudoFs->root);    /* root is its own parent */
-
-  /* Allocation of the parsing table */
-  #define PSEUDO_PATH_BUFFSIZE (MAXNAMLEN + 1)
-  for(i = 0; i < NB_TOK_PATH; i++)
-    if((PathTok[i] = gsh_malloc(PSEUDO_PATH_BUFFSIZE)) == NULL)
-      return ENOMEM;
 
   while(entry)
     {
@@ -175,24 +171,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
                        "BUILDING PSEUDOFS: Now managing %s seen as %s",
                        entry->fullpath, entry->pseudopath);
 
-          /* Parsing the path */
-          strncpy(tmp_pseudopath, entry->pseudopath, MAXPATHLEN);
-          if((NbTokPath =
-              nfs_ParseConfLine(PathTok, NB_TOK_PATH,
-                                PSEUDO_PATH_BUFFSIZE,
-                                tmp_pseudopath, find_slash,
-                                find_endLine)) < 0)
-            {
-              /* Path is badly formed */
-              LogCrit(COMPONENT_NFS_V4_PSEUDO,
-                      "BUILDING PSEUDOFS: Invalid 'pseudo' option: %s",
-                      entry->pseudopath);
-              next = entry->next;
-              entry = next;
-              continue;
-            }
-
-          /* there must be a leading '/' in the pseudo path */
+	 /* there must be a leading '/' in the pseudo path */
           if(entry->pseudopath[0] != '/')
             {
               /* Path is badly formed */
@@ -204,13 +183,32 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
               continue;
             }
 
-          /* Loop on each token. Because first character in pseudo path is '/'
-           * we can avoid looking at PathTok[0] which is necessary '\0'. That's 
-           * the reason why we start looping at pos = 1 */
-          for(j = 1; j < NbTokPath; j++)
-            LogFullDebug(COMPONENT_NFS_V4, "     tokens are #%s#", PathTok[j]);
+          /* Parsing the path */
+          memset(PathTok, 0, sizeof(PathTok));
 
-          for(j = 1; j < NbTokPath; j++)
+          /* Make a copy of the pseudopath since it will be modified,
+           * also, skip the leading '/'.
+           */
+          strcpy(tmp_pseudopath, entry->pseudopath + 1);
+
+          NbTokPath = nfs_ParseConfLine(PathTok,
+                                        NB_TOK_PATH,
+                                        sizeof(PseudoFs->root.name),
+                                        tmp_pseudopath,
+                                        '/');
+          if(NbTokPath < 0)
+            {
+              /* Path is badly formed */
+              LogCrit(COMPONENT_NFS_V4_PSEUDO,
+                      "Pseudo Path '%s' is badly formed",
+                      entry->pseudopath);
+              next = entry->next;
+              entry = next;
+              continue;
+            }
+
+          /* Loop on each token */
+          for(j = 0; j < NbTokPath; j++)
             {
               found = 0;
               for(iterPseudoFs = PseudoFsCurrent->sons; iterPseudoFs != NULL;
@@ -236,8 +234,10 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
                       gsh_malloc(sizeof(pseudofs_entry_t))) == NULL)
                     return ENOMEM;
 
-                  /* Creating the new entry, allocate an id for it and add it to reverse tab */
-                  strncpy(newPseudoFsEntry->name, PathTok[j], MAXNAMLEN);
+                  /* Copy component name, no need to check buffer because size
+		   * was checked by nfs_ParseConfLine.
+		   */ 
+                  strcpy(newPseudoFsEntry->name, PathTok[j]);
                   newPseudoFsEntry->pseudo_id = PseudoFs->last_pseudo_id + 1;
                   PseudoFs->last_pseudo_id = newPseudoFsEntry->pseudo_id;
                   PseudoFs->reverse_tab[PseudoFs->last_pseudo_id] = newPseudoFsEntry;
@@ -271,10 +271,6 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
 
       entry = next;
     }                           /* while( entry ) */
-
-  /* desalocation of the parsing table */
-  for(i = 0; i < NB_TOK_PATH; i++)
-    gsh_free(PathTok[i]);
 
   return (0);
 }

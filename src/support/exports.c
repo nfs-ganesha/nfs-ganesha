@@ -141,13 +141,19 @@ extern struct fsal_up_vector fsal_up_top;
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
 /**
- * @brief Parse a line with a settable separator and  end of line
+ * @brief Parse a line with a settable separator and end of line
  *
- * @param[out] Argv               Result array
- * @param[in]  nbArgv             Allocated number of entries in the Argv
- * @param[in]  line               Input line
- * @param[in]  separator_function function used to identify a separator
- * @param[in]  endLine_func       function used to identify an end of line
+ * @note Line is modified, returned tokens are returned as pointers to
+ * the null terminated string within the original copy of line.
+ *
+ * @note Size includes the null terminator, if size is 0, caller
+ * doesn't care about size (can't be larger than input string anyway).
+ *
+ * @param[out] Argv     Result array
+ * @param[in] nbArgv    Allocated number of entries in the Argv
+ * @param[in] size      Maximum buffer size of tokens
+ * @param[in] line      Input line
+ * @param[in] separator Character used to identify a separator
  *
  * @return the number of fields found
  */
@@ -155,8 +161,7 @@ int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
                       size_t size,
                       char *line,
-                      int (*separator_function) (char),
-		      int (*endLine_func) (char))
+		      char separator)
 {
   int output_value = 0;
   int endLine = false;
@@ -175,31 +180,24 @@ int nfs_ParseConfLine(char *Argv[],
 
       /* p1 pointe sur un debut de token, je cherche la fin */
       /* La fin est un blanc, une fin de chaine ou un CR    */
-      for(p2 = p1; !separator_function(*p2) && !endLine_func(*p2); p2++) ;
+      for(p2 = p1; (*p2 != separator) && (*p2 != '\0'); p2++) ;
 
       /* Test for end of line */
-      if(endLine_func(*p2))
+      if(*p2 == '\0')
         endLine = true;
 
       /* terminate the token */
       *p2 = '\0';
 
       /* if the token is too large for buffer, return failure */
-      if((p2 - p1) >= size)
+      if((size != 0) && ((p2 - p1) >= size))
         return -3;
 
-      if(Argv[output_value] == NULL)
-        {
-          /* Allocate and copy string */
-          Argv[output_value] = gsh_strdup(p1);
-          if(Argv[output_value] == NULL)
-            return -1;
-        }
-      else
-        {
-          /* Copy string into provided buffer */
-          memcpy(Argv[output_value], p1, p2 - p1 +1);
-        }
+      /* Put token pointer into list.
+       * NOTE: we do NOT copy the string, the token points to the bytes in then
+       *       input string that have just been null terminated.
+       */
+      Argv[output_value] = p1;
 
       output_value++;
 
@@ -318,8 +316,15 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
         {
 
           /* Entry is a netgroup definition */
-          strncpy(p_clients[i].client.netgroup.netgroupname,
-                  (char *)(client_hostname + 1), MAXHOSTNAMELEN);
+          if(strmaxcpy(p_clients[i].client.netgroup.netgroupname,
+                      client_hostname + 1,
+                      sizeof(p_clients[i].client.netgroup.netgroupname)) == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "netgroup %s too long, ignoring",
+                      client_hostname);
+              continue;
+            }
 
           p_clients[i].options |= EXPORT_OPTION_NETGRP;
           p_clients[i].type = NETGROUP_CLIENT;
@@ -392,8 +397,15 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
           if(is_wildcarded_host)
             {
               p_clients[i].type = WILDCARDHOST_CLIENT;
-              strncpy(p_clients[i].client.wildcard.wildcard, client_hostname,
-                      MAXHOSTNAMELEN);
+              if(strmaxcpy(p_clients[i].client.wildcard.wildcard,
+                           client_hostname,
+                           sizeof(p_clients[i].client.wildcard.wildcard)) == -1)
+                {
+                  LogCrit(COMPONENT_CONFIG,
+                          "host wildcard %s too long, ignoring",
+                          client_hostname);
+                  continue;
+                }
 
               LogFullDebug(COMPONENT_CONFIG,
                            "----------------- %s to wildcard %s",
@@ -455,16 +467,15 @@ int parseAccessParam(char *var_name,
 		     int access_option)
 {
   int rc;
-  char *expended_node_list;
+  char *expanded_node_list;
 
   /* temp array of clients */
   char *client_list[EXPORT_MAX_CLIENTS];
-  int idx;
   int count;
 
   /* expends host[n-m] notations */
   count =
-    nodelist_common_condensed2extended_nodelist(var_value, &expended_node_list);
+    nodelist_common_condensed2extended_nodelist(var_value, &expanded_node_list);
 
   if(count <= 0)
     {
@@ -488,30 +499,24 @@ int parseAccessParam(char *var_name,
   /*
    * Search for coma-separated list of hosts, networks and netgroups
    */
-  rc = nfs_ParseConfLine(client_list, count, MNTNAMLEN+1,
-			 expended_node_list, find_comma, find_endLine);
-
-  /* free the buffer the nodelist module has allocated */
-  free(expended_node_list);
+  rc = nfs_ParseConfLine(client_list,
+                         count,
+                         0,
+			 expanded_node_list,
+			 ',');
 
   if(rc < 0)
     {
       LogCrit(COMPONENT_CONFIG,
               "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
 
-      /* free client strings */
-      for(idx = 0; idx < count; idx++)
-        gsh_free(client_list[idx]);
-
       return rc;
     }
 
   nfs_AddClientsToExportList(p_entry, rc, (char **)client_list, access_option);
 
-  /* free client strings */
-  for(idx = 0; idx < count; idx++)
-    if(client_list[idx] != NULL)
-      gsh_free(client_list[idx]);
+  /* free the buffer the nodelist module has allocated */
+  free(expanded_node_list);
 
   return rc;
 }
@@ -833,7 +838,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         {
 
 #     define MAX_NFSPROTO      10       /* large enough !!! */
-#     define MAX_NFSPROTO_LEN  256      /* so is it !!! */
 
           char *nfsvers_list[MAX_NFSPROTO];
           int idx, count;
@@ -855,9 +859,11 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /*
            * Search for coma-separated list of nfsprotos
            */
-          count = nfs_ParseConfLine(nfsvers_list, MAX_NFSPROTO,
-                                    MAX_NFSPROTO_LEN + 1,
-                                    var_value, find_comma, find_endLine);
+          count = nfs_ParseConfLine(nfsvers_list,
+                                    MAX_NFSPROTO,
+                                    0,
+                                    var_value,
+                                    ',');
 
           if(count < 0)
             {
@@ -865,10 +871,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ_EXPORT: ERROR: NFS protocols list too long (>%d)",
                       MAX_NFSPROTO);
-
-              /* free sec strings */
-              for(idx = 0; idx < MAX_NFSPROTO; idx++)
-                gsh_free(nfsvers_list[idx]);
 
               continue;
             }
@@ -906,13 +908,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                 }
             }
 
-          /* free sec strings */
-          for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            gsh_free(nfsvers_list[idx]);
-
           /* check that at least one nfs protocol has been specified */
-          if((p_entry->options & (EXPORT_OPTION_NFSV2
-                                  | EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
+          if((p_entry->options & (EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)) == 0)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ_EXPORT: WARNING: /!\\ Empty NFS_protocols list");
@@ -926,7 +923,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         {
 
 #     define MAX_TRANSPROTO      10     /* large enough !!! */
-#     define MAX_TRANSPROTO_LEN  256    /* so is it !!! */
 
           char *transproto_list[MAX_TRANSPROTO];
           int idx, count;
@@ -947,9 +943,11 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /*
            * Search for coma-separated list of TRANSprotos
            */
-          count = nfs_ParseConfLine(transproto_list, MAX_TRANSPROTO,
-                                    MAX_TRANSPROTO_LEN,
-                                    var_value, find_comma, find_endLine);
+          count = nfs_ParseConfLine(transproto_list,
+                                    MAX_TRANSPROTO,
+                                    0,
+                                    var_value,
+                                    ',');
 
           if(count < 0)
             {
@@ -957,10 +955,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ_EXPORT: ERROR: Protocol list too long (>%d)",
                       MAX_TRANSPROTO);
-
-              /* free sec strings */
-              for(idx = 0; idx < MAX_TRANSPROTO; idx++)
-                gsh_free(transproto_list[idx]);
 
               continue;
             }
@@ -985,10 +979,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                   err_flag = true;
                 }
             }
-
-          /* free sec strings */
-          for(idx = 0; idx < MAX_TRANSPROTO; idx++)
-            gsh_free(transproto_list[idx]);
 
           /* check that at least one TRANS protocol has been specified */
           if((p_entry->options & (EXPORT_OPTION_UDP | EXPORT_OPTION_TCP)) == 0)
@@ -1126,7 +1116,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
       else if(!STRCMP(var_name, CONF_EXPORT_SECTYPE))
         {
 #     define MAX_SECTYPE      10        /* large enough !!! */
-#     define MAX_SECTYPE_LEN  256       /* so is it !!! */
 
           char *sec_list[MAX_SECTYPE];
           int idx, count;
@@ -1151,9 +1140,11 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /*
            * Search for coma-separated list of sectypes
            */
-          count = nfs_ParseConfLine(sec_list, MAX_SECTYPE,
-                                    MAX_SECTYPE_LEN,
-                                    var_value, find_comma, find_endLine);
+          count = nfs_ParseConfLine(sec_list,
+                                    MAX_SECTYPE,
+                                    0,
+                                    var_value,
+                                    ',');
 
           if(count < 0)
             {
@@ -1161,10 +1152,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               LogCrit(COMPONENT_CONFIG,
                       "NFS READ_EXPORT: ERROR: SecType list too long (>%d)",
                       MAX_SECTYPE);
-
-              /* free sec strings */
-              for(idx = 0; idx < MAX_SECTYPE; idx++)
-                gsh_free(sec_list[idx]);
 
               continue;
             }
@@ -1201,10 +1188,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                   err_flag = true;
                 }
             }
-
-          /* free sec strings */
-          for(idx = 0; idx < MAX_SECTYPE; idx++)
-            gsh_free(sec_list[idx]);
 
           /* check that at least one sectype has been specified */
           if((p_entry->options & (EXPORT_OPTION_AUTH_NONE

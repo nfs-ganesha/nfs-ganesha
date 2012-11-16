@@ -271,8 +271,8 @@ int nfs_read_core_conf(config_file_t in_config,
         }
       else if(!strcasecmp(key_name, "NFS_Protocols"))
         {
+
 #     define MAX_NFSPROTO      10       /* large enough !!! */
-#     define MAX_NFSPROTO_LEN  256      /* so is it !!! */
 
           char *nfsvers_list[MAX_NFSPROTO];
           int idx, count;
@@ -286,20 +286,17 @@ int nfs_read_core_conf(config_file_t in_config,
           /*
            * Search for coma-separated list of nfsprotos
            */
-          count = nfs_ParseConfLine(nfsvers_list, MAX_NFSPROTO,
-                                    MAX_NFSPROTO_LEN + 1,
-                                    key_value, find_comma, find_endLine);
+          count = nfs_ParseConfLine(nfsvers_list,
+                                    MAX_NFSPROTO,
+                                    0,
+                                    key_value,
+                                    ',');
 
           if(count < 0)
             {
               LogCrit(COMPONENT_CONFIG,
                       "NFS_Protocols list too long (>%d)",
                       MAX_NFSPROTO);
-
-              /* free sec strings */
-              for(idx = 0; idx < MAX_NFSPROTO; idx++)
-                if(nfsvers_list[idx] != NULL)
-                  gsh_free(nfsvers_list[idx]);
 
               return -1;
             }
@@ -319,16 +316,11 @@ int nfs_read_core_conf(config_file_t in_config,
               else
                 {
                   LogCrit(COMPONENT_CONFIG,
-                          "Invalid NFS Protocol \"%s\". Values can be: 2, 3, 4.",
+                          "Invalid NFS Protocol \"%s\". Values can be: 3, 4.",
                           nfsvers_list[idx]);
                   return -1;
                 }
             }
-
-          /* free sec strings */
-          for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            if(nfsvers_list[idx] != NULL)
-              gsh_free(nfsvers_list[idx]);
 
           /* check that at least one nfs protocol has been specified */
           if((pparam->core_options & (CORE_OPTION_ALL_VERS)) == 0)
