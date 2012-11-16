@@ -1375,18 +1375,14 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   char name[MAXNAMLEN+1];
   pseudofs_entry_t *psfsentry;
   pseudofs_entry_t *iter = NULL;
-  int found = FALSE;
-  int pseudo_is_slash = FALSE ;
   int error = 0;
   cache_inode_status_t cache_status = 0;
   fsal_status_t fsal_status;
   cache_inode_fsal_data_t fsdata;
   fsal_path_t exportpath_fsal;
-  char pathfsal[MAXPATHLEN] ;
   fsal_attrib_list_t attr;
   fsal_handle_t fsal_handle;
   cache_entry_t *pentry = NULL;
-  fsal_mdsize_t strsize = MNTPATHLEN + 1;
 
   resp->resop = NFS4_OP_LOOKUP;
 
@@ -1400,29 +1396,12 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       return res_LOOKUP4.status;
     }
 
- 
-  /* If "/" is set as pseudopath, then gPseudoFS.root.junction_export is not NULL but 
-   * gPseudoFS.root has no son */
-  if( ( gPseudoFs.root.junction_export != NULL ) && ( gPseudoFs.root.sons == NULL )  )
-   {
-	iter = &gPseudoFs.root ;
-        pseudo_is_slash = TRUE ;
-        found = TRUE ;
-   }
-  else
-   {
-     found = FALSE;
-     for(iter = psfsentry->sons; iter != NULL; iter = iter->next)
-       {
-         if(!strcmp(iter->name, name))
-           {
-             found = TRUE;
-             break;
-           } 
-       } /* for */
-    } /* else */
+  /* Search for name in pseudo fs directory */
+  for(iter = psfsentry->sons; iter != NULL; iter = iter->next)
+      if(!strcmp(iter->name, name))
+          break;
 
-  if(!found)
+  if(iter == NULL)
     {
       res_LOOKUP4.status = NFS4ERR_NOENT;
       return res_LOOKUP4.status;
@@ -1459,17 +1438,11 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build fsal data for creation of the first entry */
-      strncpy( pathfsal, data->pexport->fullpath, MAXPATHLEN ) ;
+      fsal_status = FSAL_str2path(data->pexport->fullpath,
+                                  0,
+                                  &exportpath_fsal);
 
-      if( pseudo_is_slash == TRUE )
-       {
-         strncat( pathfsal, "/", MAXPATHLEN ) ;
-         strncat( pathfsal, name, MAXPATHLEN - strlen(pathfsal) - 1) ;  // - 1 for the '/0'
-       }
-
-      if(FSAL_IS_ERROR
-         ((fsal_status =
-           FSAL_str2path( pathfsal, strsize, &exportpath_fsal))))
+      if(FSAL_IS_ERROR(fsal_status))
         {
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
