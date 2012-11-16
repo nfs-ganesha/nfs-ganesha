@@ -640,8 +640,8 @@ bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
     }
 
   LogFullDebug(COMPONENT_NLM,
-               "Found export entry for dirname=%s as exportid=%d",
-               pexport->dirname, pexport->id);
+               "Found export entry for path=%s as exportid=%d",
+               pexport->fullpath, pexport->id);
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(fsal_context,
                                       &pexport->FS_export_context,

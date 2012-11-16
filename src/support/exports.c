@@ -832,7 +832,6 @@ static int BuildExportEntry(config_item_t        block,
       strcpy(p_entry->FS_specific, "");
       strcpy(p_entry->FS_tag, "");
       strcpy(p_entry->fullpath, "/");
-      strcpy(p_entry->dirname, "/");
       strcpy(p_entry->pseudopath, "/");
       strcpy(p_entry->referral, "");
     }
@@ -1061,7 +1060,6 @@ static int BuildExportEntry(config_item_t        block,
                */
               p_found_entry = p_fe;
               strcpy(p_entry->fullpath, ppath);
-              strcpy(p_entry->dirname, ppath);
             }
           else if(p_entry == NULL)
             {
@@ -2810,7 +2808,6 @@ exportlist_t *BuildDefaultExport()
   p_entry->id = 1;
 
   strcpy(p_entry->fullpath, "/");
-  strcpy(p_entry->dirname, "/");
   strcpy(p_entry->pseudopath, "/");
   strcpy(p_entry->referral, "");
 
@@ -3916,7 +3913,7 @@ exportlist_t *GetExportEntry(char *exportPath)
   int found = 0;
 
   /*
-   * Find the export for the dirname (using as well Path or Tag )
+   * Find the export for the path (using as well Path or Tag )
    */
   glist_for_each(glist, nfs_param.pexportlist)
     {

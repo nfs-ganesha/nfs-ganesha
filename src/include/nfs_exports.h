@@ -156,7 +156,6 @@ struct exportlist__
 {
   struct glist_head exp_list;
   unsigned short id;            /* entry identifier   */
-  char dirname[MAXPATHLEN+2];   /* path relative to fs root */
   char fullpath[MAXPATHLEN+2];  /* the path from the root */
   char pseudopath[MAXPATHLEN+2];/* nfsv4 pseudo-filesystem 'virtual' path */
   char referral[MAXPATHLEN+2];  /* String describing NFSv4 referral */
