@@ -223,16 +223,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   if( *offset == 0LL )
    {
       /* compute the parent entry */
-<<<<<<< HEAD
      cache_status = cache_inode_lookupp(pfid->pentry,
 					&pfid->op_context,
 					&pentry_dot_dot);
       if(pentry_dot_dot == NULL )
-=======
-      if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
-                                                  &pfid->op_context,
-                                                  &cache_status ) ) == NULL )
->>>>>>> 9P: manual rebase to new_api, round 2. Next step is to finalize 9P TCP and RDMA dispatcher's magic
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
       /* Deal with "." and ".." */
@@ -256,16 +250,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   else if( *offset == 1LL )
    {
       /* compute the parent entry */
-<<<<<<< HEAD
       cache_status = cache_inode_lookupp(pfid->pentry,
 					 &pfid->op_context,
 					 &pentry_dot_dot);
       if (pentry_dot_dot == NULL)
-=======
-      if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
-                                                  &pfid->op_context,
-                                                  &cache_status ) ) == NULL )
->>>>>>> 9P: manual rebase to new_api, round 2. Next step is to finalize 9P TCP and RDMA dispatcher's magic
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
 
       cb_data.entries[0].qid_path =  pentry_dot_dot->obj_handle->attributes.fileid ;
