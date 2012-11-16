@@ -2319,7 +2319,7 @@ pxy_extract_handle(struct fsal_export *exp_hdl,
         }
 #ifdef _HANDLE_MAPPING
         if((in_type == FSAL_DIGEST_NFSV2) || (in_type == FSAL_DIGEST_NFSV3)) {
-                nfs23_map_handle_t *h23 = (nfs23_map_handle_t*)fh_desc->buf;
+                nfs23_map_handle_t *h23 = (nfs23_map_handle_t*)fh_desc->addr;
 
                 if(h23->type != PXY_HANDLE_MAPPED) 
                         return fsalstat(ERR_FSAL_STALE, ESTALE);
