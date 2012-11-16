@@ -378,7 +378,8 @@ void LogClientListEntry(log_components_t            component,
                         exportlist_client_entry_t * entry)
 {
   char perms[1024];
-  char addr[INET_ADDRSTRLEN];
+  char addr[INET6_ADDRSTRLEN];
+  char *paddr = addr;
 
   StrExportOptions(&entry->client_perms, perms);
 
@@ -387,27 +388,25 @@ void LogClientListEntry(log_components_t            component,
       case HOSTIF_CLIENT:
         if(inet_ntop
            (AF_INET, &(entry->client.hostif.clientaddr),
-            addr, INET_ADDRSTRLEN) == NULL)
+            addr, sizeof(addr)) == NULL)
           {
-            strncpy(addr, "Invalid Host address",
-                    INET_ADDRSTRLEN);
+            paddr = "Invalid Host address";
           }
         LogFullDebug(component,
                      "  %p HOSTIF_CLIENT: %s(%s)",
-                     entry, addr, perms);
+                     entry, paddr, perms);
         return;
 
       case NETWORK_CLIENT:
         if(inet_ntop
            (AF_INET, &(entry->client.network.netaddr),
-            addr, INET_ADDRSTRLEN) == NULL)
+            addr, sizeof(addr)) == NULL)
           {
-            strncpy(addr,
-                    "Invalid Network address", INET_ADDRSTRLEN);
+            paddr = "Invalid Network address";
           }
         LogFullDebug(component,
                      "  %p NETWORK_CLIENT: %s(%s)",
-                     entry, addr, perms);
+                     entry, paddr, perms);
         return;
 
       case NETGROUP_CLIENT:
@@ -431,14 +430,13 @@ void LogClientListEntry(log_components_t            component,
       case HOSTIF_CLIENT_V6:
         if(inet_ntop
            (AF_INET6, &(entry->client.hostif.clientaddr6),
-            addr, INET_ADDRSTRLEN) == NULL)
+            addr, sizeof(addr)) == NULL)
           {
-            strncpy(addr, "Invalid Host address",
-                    INET_ADDRSTRLEN);
+            paddr = "Invalid Host address";
           }
         LogFullDebug(component,
                      "  %p HOSTIF_CLIENT_V6: %s(%s)",
-                     entry, addr, perms);
+                     entry, paddr, perms);
         return;
 
       case MATCH_ANY_CLIENT:
@@ -786,7 +784,7 @@ static int BuildExportEntry(config_item_t        block,
       p_entry->fsal_up_filter_list = NULL;
       p_entry->fsal_up_timeout.seconds = 30;
       p_entry->fsal_up_timeout.nseconds = 0;
-      strncpy(p_entry->fsal_up_type,"DUMB", 4);
+      strcpy(p_entry->fsal_up_type,"DUMB");
       /* We don't create the thread until all exports are parsed. */
       memset(&p_entry->fsal_up_thr, 0, sizeof(pthread_t));
 #endif /* _USE_FSAL_UP */
@@ -1006,18 +1004,28 @@ static int BuildExportEntry(config_item_t        block,
 
           pathlen = strlen(var_value);
 
-          if(pathlen > MAXPATHLEN)
+          if(pathlen >= MAXPATHLEN)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ %s: path \"%s\" too long",
-                      label, var_value);
+                      "NFS READ %s: %s \"%s\" too long",
+                      label, var_name, var_value);
               err_flag = TRUE;
               continue;
             }
 
+          /* Make sure fullpath ends with '/' */
           if(var_value[pathlen-1] != '/')
             {
-              strcpy(temp_path, var_value);
+              if(strmaxcpy(temp_path,
+                           var_value,
+                           sizeof(temp_path) - 1) == -1)
+                {
+                  LogCrit(COMPONENT_CONFIG,
+                          "NFS READ %s: %s \"%s\" too long",
+                          label, var_name, var_value);
+                  err_flag = TRUE;
+                  continue;
+                }
               temp_path[pathlen]   = '/';
               temp_path[pathlen+1] = '\0';
               ppath = temp_path;
@@ -1055,11 +1063,21 @@ static int BuildExportEntry(config_item_t        block,
                   continue;
                 }
 
+              if(strmaxcpy(p_entry->fullpath,
+                           ppath,
+                           sizeof(p_entry->fullpath)) == -1)
+                {
+                  LogCrit(COMPONENT_CONFIG,
+                          "NFS READ %s: %s \"%s\" too long",
+                          label, var_name, var_value);
+                  err_flag = TRUE;
+                  continue;
+                }
+
               /* Remember the entry we found so we can verify Tag and/or Pseudo
                * is set by the time the EXPORT stanza is complete.
                */
               p_found_entry = p_fe;
-              strcpy(p_entry->fullpath, ppath);
             }
           else if(p_entry == NULL)
             {
@@ -1071,6 +1089,7 @@ static int BuildExportEntry(config_item_t        block,
                   err_flag = TRUE;
                   continue;
                 }
+
               p_entry = p_fe;
             }
 
@@ -1265,7 +1284,16 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          strncpy(p_entry->pseudopath, var_value, MAXPATHLEN);
+          if(strmaxcpy(p_entry->pseudopath,
+                       var_value,
+                       sizeof(p_entry->pseudopath)) == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s: \"%s\" too long",
+                      label, var_name, var_value);
+              err_flag = TRUE;
+              continue;
+            }
 
           p_perms->options |= EXPORT_OPTION_PSEUDO;
         }
@@ -1280,7 +1308,16 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          strncpy(p_entry->referral, var_value, MAXPATHLEN);
+          if(strmaxcpy(p_entry->referral,
+                       var_value,
+                       sizeof(p_entry->referral)) == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s: \"%s\" too long",
+                      label, var_name, var_value);
+              err_flag = TRUE;
+              continue;
+            }
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
         {
@@ -2264,7 +2301,16 @@ static int BuildExportEntry(config_item_t        block,
 
           set_options |= FLAG_EXPORT_FS_SPECIFIC;
 
-          strncpy(p_entry->FS_specific, var_value, MAXPATHLEN);
+          if(strmaxcpy(p_entry->FS_specific,
+                       var_value,
+                       sizeof(p_entry->FS_specific)) == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s: \"%s\" too long",
+                      label, var_name, var_value);
+              err_flag = TRUE;
+              continue;
+            }
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_TAG))
         {
@@ -2299,7 +2345,16 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          strncpy(p_entry->FS_tag, var_value, MAXPATHLEN);
+          if(strmaxcpy(p_entry->FS_tag,
+                       var_value,
+                       sizeof(p_entry->FS_tag)) == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s: \"%s\" too long",
+                      label, var_name, var_value);
+              err_flag = TRUE;
+              continue;
+            }
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
@@ -2449,7 +2504,16 @@ static int BuildExportEntry(config_item_t        block,
               continue;
             }
 
-          strncpy(p_entry->fsal_up_type,var_value,sizeof(var_value));
+          if(strmaxcpy(p_entry->fsal_up_type,
+                       var_value,
+                       sizeof(p_entry->fsal_up_type)) == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ %s: %s: \"%s\" too long",
+                      label, var_name, var_value);
+              err_flag = TRUE;
+              continue;
+            }
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TIMEOUT))
         {
@@ -3904,13 +3968,13 @@ int CleanUpExportContext(fsal_export_context_t * p_export_context)
 }
 
 /* Frees current export entry and returns next export entry. */
-exportlist_t *GetExportEntry(char *exportPath)
+exportlist_t *GetExportEntry(char *path)
 {
   exportlist_t *p_current_item = NULL;
   struct glist_head * glist;
-  char tmplist_path[MAXPATHLEN];
-  char tmpexport_path[MAXPATHLEN];
   int found = 0;
+  int len_path = strlen(path);
+  int len_export;
 
   /*
    * Find the export for the path (using as well Path or Tag )
@@ -3919,23 +3983,38 @@ exportlist_t *GetExportEntry(char *exportPath)
     {
     p_current_item = glist_entry(glist, exportlist_t, exp_list);
 
-    LogDebug(COMPONENT_CONFIG, "full path %s, export path %s",
-             p_current_item->fullpath, exportPath);
+    len_export = strlen(p_current_item->fullpath);
 
-    /* Make sure the path in export entry ends with a '/', if not adds one */
-    if(p_current_item->fullpath[strlen(p_current_item->fullpath) - 1] == '/')
-      strncpy(tmplist_path, p_current_item->fullpath, MAXPATHLEN);
-    else
-      snprintf(tmplist_path, MAXPATHLEN, "%s/", p_current_item->fullpath);
+    LogDebug(COMPONENT_CONFIG,
+             "export path %s, path %s",
+             p_current_item->fullpath, path);
 
-    /* Make sure that the argument from MNT ends with a '/', if not adds one */
-    if(exportPath[strlen(exportPath) - 1] == '/')
-      strncpy(tmpexport_path, exportPath, MAXPATHLEN);
-    else
-      snprintf(tmpexport_path, MAXPATHLEN, "%s/", exportPath);
+    /* If path doesn't end with '/' */
+    if(path[len_path - 1] != '/' &&
+       len_path == (len_export - 1))
+      {
+        /* Path would be same length as export if it had trailing '/'.
+         * Since we know the path is otherwise the same length as
+         * the export path, we don't need to try to compare the
+         * trailing '/'. As long as the two strings are equal not
+         * considering the trailing '/' in the export path, then path
+         * is a proper sub-directory of the export path (mainly being
+         * the exported directory...)
+         */
+        len_export = len_path;
+      }
 
-    /* Is tmplist_path a subdirectory of tmpexport_path ? */
-    if(!strncmp(tmplist_path, tmpexport_path, strlen(tmplist_path)))
+    /* If path is shorter than export path we are looking for,
+     * then path we are looking for can't be this export path
+     * or a sub-directory of it...
+     */
+    if(len_path < len_export)
+      continue;
+
+    /* Is export path a subdirectory of path? */
+    if(!strncmp(p_current_item->fullpath,
+                path,
+                len_export))
     {
       found = 1;
       break;
