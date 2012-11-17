@@ -561,7 +561,7 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
   u_int stringlen = 0;
   u_int deltalen = 0;
 
-  rc = gid2name(name, &gid);
+  rc = gid2name(name, &gid, sizeof(name));
   LogFullDebug(COMPONENT_NFS_V4,
                "encode gid2name = %s, strlen = %llu",
                name, (long long unsigned int)strlen(name));
@@ -611,7 +611,7 @@ static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
     }
 
   /* Encode normal user or previous user we failed to encode as special user. */
-  rc = uid2name(name, &uid);
+  rc = uid2name(name, &uid, sizeof(name));
   LogFullDebug(COMPONENT_NFS_V4,
                "econde uid2name = %s, strlen = %llu",
                name, (long long unsigned int)strlen(name));

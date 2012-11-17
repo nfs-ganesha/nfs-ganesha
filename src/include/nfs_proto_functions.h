@@ -1244,7 +1244,6 @@ static inline int check_for_wrongsec_ok_attr(bitmap4 * attr_request)
 #define NFS4_PSEUDOFS_MAX_READ_SIZE  1048576
 #define NFS4_PSEUDOFS_MAX_WRITE_SIZE 1048576
 #define NFS4_ROOT_UID 0
-#define NFS_MAXPATHLEN MAXPATHLEN
 #define DEFAULT_DOMAIN "localdomain"
 #define DEFAULT_IDMAPCONF "/etc/idmapd.conf"
 #endif                          /* _NFS_PROTO_FUNCTIONS_H */
@@ -1424,7 +1423,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
  *  nfs4_list_to_bitmap4  - convert a list of attributes to an attributes's bitmap
  */
 
-int uid2name(char *name, uid_t * puid);
+int uid2name(char *name, uid_t * puid, size_t namesize);
 int name2uid(char *name, uid_t * puid);
 #ifdef _HAVE_GSSAPI
 #ifdef _MSPAC_SUPPORT
@@ -1434,7 +1433,7 @@ int principal2uid(char *principal, uid_t * puid);
 #endif
 #endif
 
-int gid2name(char *name, gid_t * pgid);
+int gid2name(char *name, gid_t * pgid, size_t namesize);
 int name2gid(char *name, gid_t * pgid);
 
 void free_utf8(utf8string * utf8str);
@@ -1444,10 +1443,6 @@ int str2utf8(char *str, utf8string * utf8str);
 
 int uid2utf8(uid_t uid, utf8string * utf8str);
 void utf82uid(utf8string * utf8str, uid_t * Uid, uid_t anon_uid);
-
-int uid2str(uid_t uid, char *str);
-
-int gid2str(gid_t gid, char *str);
 
 int gid2utf8(gid_t gid, utf8string * utf8str);
 void utf82gid(utf8string * utf8str, gid_t * Gid, gid_t anon_gid);

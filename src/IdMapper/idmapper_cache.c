@@ -161,7 +161,7 @@ uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
  */
 int compare_idmapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return strncmp((char *)(buff1->pdata), (char *)(buff2->pdata), PWENT_MAX_LEN);
+  return strcmp((char *)(buff1->pdata), (char *)(buff2->pdata));
 }                               /* compare_xid */
 
 int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -307,101 +307,6 @@ int idmap_compute_hash_value(char *name, uint32_t * phashval)
     return (int)res ;
 }
 
-int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
-{
-  char padded_name[PWENT_MAX_LEN];
-  uint64_t computed_value = 0;
-  unsigned int i = 0;
-  unsigned int offset = 0;
-  uint64_t extract = 0;
-  uint64_t sum = 0;
-  uint64_t i1;
-  uint64_t i2;
-  uint64_t i3;
-  uint64_t i4;
-  uint64_t i5;
-  uint64_t i6;
-  uint64_t i7;
-  uint64_t i8;
-  uint64_t i9;
-  uint64_t l;
-
-  if(name == NULL || phashval == NULL)
-    return ID_MAPPER_INVALID_ARGUMENT;
-
-  memset(padded_name, 0, PWENT_MAX_LEN);
-
-  /* Copy the string to the padded one */
-  for(i = 0; i < strnlen(name, PWENT_MAX_LEN); padded_name[i] = name[i], i++) ;
-
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-  printf("#%s# :", padded_name);
-#endif
-
-  /* For each 9 character pack:
-   *   - keep the 7 first bit (the 8th is often 0: ascii string)
-   *   - pack 7x9 bit to 63 bits using xor
-   *   - xor the last 8th bit to a single 0 , or-ed with the rest
-   * Proceeding with the next 9 bytes pack will produce a new value that is xored with the
-   * one of the previous iteration */
-
-  for(offset = 0; offset < PWENT_MAX_LEN; offset += 9)
-    {
-      /* input name is ascii string, remove 8th bit on each byte, not significant */
-      i1 = padded_name[offset + 0] & 0x7F;
-      i2 = (uint64_t) (padded_name[offset + 1] & 0x7F) << 7;
-      i3 = (uint64_t) (padded_name[offset + 2] & 0x7F) << 14;
-      i4 = (uint64_t) (padded_name[offset + 3] & 0x7F) << 21;
-      i5 = (uint64_t) (padded_name[offset + 4] & 0x7F) << 28;
-      i6 = (uint64_t) (padded_name[offset + 5] & 0x7F) << 35;
-      i7 = (uint64_t) (padded_name[offset + 6] & 0x7F) << 42;
-      i8 = (uint64_t) (padded_name[offset + 7] & 0x7F) << 49;
-      i9 = (uint64_t) (padded_name[offset + 8] & 0x7F) << 56;
-
-      sum = (uint64_t) padded_name[offset + 0] +
-          (uint64_t) padded_name[offset + 1] +
-          (uint64_t) padded_name[offset + 2] +
-          (uint64_t) padded_name[offset + 3] +
-          (uint64_t) padded_name[offset + 4] +
-          (uint64_t) padded_name[offset + 5] +
-          (uint64_t) padded_name[offset + 6] +
-          (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
-
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-      printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
-             i1, i2, i3, i4, i5, i6, i7, i8, i9);
-#endif
-
-      /* Get xor combibation of all the 8h bit */
-      l = (padded_name[offset + 0] & 0x80) ^
-          (padded_name[offset + 1] & 0x80) ^
-          (padded_name[offset + 2] & 0x80) ^
-          (padded_name[offset + 3] & 0x80) ^
-          (padded_name[offset + 4] & 0x80) ^
-          (padded_name[offset + 5] & 0x80) ^
-          (padded_name[offset + 6] & 0x80) ^
-          (padded_name[offset + 7] & 0x80) ^ (padded_name[offset + 8] & 0x80);
-
-      extract = (i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9) | l;
-
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-      printf("%llx ", extract);
-#endif
-
-      computed_value ^= extract;
-      computed_value ^= sum;
-    }
-#ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
-  printf("\n");
-#endif
-
-  computed_value = (computed_value >> 32) + (computed_value & 0x00000000FFFFFFFFLL);
-
-  *phashval = (uint32_t) computed_value;
-
-  return ID_MAPPER_SUCCESS;
-}                               /* idmap_compute_hash_value */
-
 /**
  *
  * idmap_add: Adds a value by key
@@ -425,12 +330,11 @@ int idmap_add(hash_table_t * ht, char *key, uint32_t val)
   if(ht == NULL || key == NULL)
     return ID_MAPPER_INVALID_ARGUMENT;
 
-  if((buffkey.pdata = gsh_malloc(PWENT_MAX_LEN)) == NULL)
+  if((buffkey.pdata = gsh_strdup(key)) == NULL)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   /* Build the key */
-  strncpy((buffkey.pdata), key, PWENT_MAX_LEN);
-  buffkey.len = PWENT_MAX_LEN;
+  buffkey.len = strlen(key);
 
   /* Build the value */
   local_val.real_id = val;
@@ -457,12 +361,11 @@ int namemap_add(hash_table_t * ht, uint32_t key, char *val)
   if(ht == NULL || val == NULL)
     return ID_MAPPER_INVALID_ARGUMENT;
 
-  if((buffdata.pdata = gsh_malloc(PWENT_MAX_LEN)) == NULL)
+  if((buffdata.pdata = gsh_strdup(val)) == NULL)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   /* Build the data */
-  strncpy((buffdata.pdata), val, PWENT_MAX_LEN);
-  buffdata.len = PWENT_MAX_LEN;
+  buffdata.len = strlen(val);
 
   /* Build the key */
   local_key.real_id = key;
@@ -658,7 +561,7 @@ int idmap_get(hash_table_t * ht, char *key, uint32_t *pval)
     return ID_MAPPER_INVALID_ARGUMENT;
 
   buffkey.pdata = (caddr_t) key;
-  buffkey.len = PWENT_MAX_LEN;
+  buffkey.len = strlen(key);
 
   if(HashTable_Get(ht, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
@@ -676,7 +579,7 @@ int idmap_get(hash_table_t * ht, char *key, uint32_t *pval)
   return status;
 }                               /* idmap_get */
 
-int namemap_get(hash_table_t * ht, uint32_t key, char *pval)
+int namemap_get(hash_table_t * ht, uint32_t key, char *pval, size_t size)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -692,7 +595,7 @@ int namemap_get(hash_table_t * ht, uint32_t key, char *pval)
 
   if(HashTable_Get(ht, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      strncpy(pval, (char *)buffval.pdata, PWENT_MAX_LEN);
+      strmaxcpy(pval, (char *)buffval.pdata, size);
 
       status = ID_MAPPER_SUCCESS;
     }
@@ -747,9 +650,9 @@ int uidmap_get(char *key, uid_t *pval)
   return idmap_get(ht_pwnam, key, pval);
 }
 
-int unamemap_get(uid_t key, char *val)
+int unamemap_get(uid_t key, char *val, size_t size)
 {
-  return namemap_get(ht_pwuid, key, val);
+  return namemap_get(ht_pwuid, key, val, size);
 }
 
 int gidmap_get(char *key, gid_t *pval)
@@ -757,9 +660,9 @@ int gidmap_get(char *key, gid_t *pval)
   return idmap_get(ht_grnam, key, pval);
 }
 
-int gnamemap_get(gid_t key, char *val)
+int gnamemap_get(gid_t key, char *val, size_t size)
 {
-  return namemap_get(ht_grgid, key, val);
+  return namemap_get(ht_grgid, key, val, size);
 }
 
 /**
@@ -783,7 +686,7 @@ int idmap_remove(hash_table_t * ht, char *key)
     return ID_MAPPER_INVALID_ARGUMENT;
 
   buffkey.pdata = key;
-  buffkey.len = PWENT_MAX_LEN;
+  buffkey.len = strlen(key);
 
   if(HashTable_Del(ht, &buffkey, &old_key, NULL) == HASHTABLE_SUCCESS)
     {
@@ -883,7 +786,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
   int err;
   char *key_name;
   char *key_value;
-  char label[MAXNAMLEN+1];
+  const char *label;
   hash_table_t *ht = NULL;
   hash_table_t *ht_reverse = NULL;
   int rc = 0;
@@ -901,13 +804,13 @@ int idmap_populate(char *path, idmap_type_t maptype)
   switch (maptype)
     {
     case UIDMAP_TYPE:
-      strncpy(label, CONF_LABEL_UID_MAPPER_TABLE, MAXNAMLEN);
+      label = CONF_LABEL_UID_MAPPER_TABLE;
       ht = ht_pwnam;
       ht_reverse = ht_pwuid;
       break;
 
     case GIDMAP_TYPE:
-      strncpy(label, CONF_LABEL_GID_MAPPER_TABLE, MAXNAMLEN);
+      label = CONF_LABEL_GID_MAPPER_TABLE;
       ht = ht_grnam;
       ht_reverse = ht_grgid;
       break;

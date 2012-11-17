@@ -145,9 +145,7 @@
 #define GANESHA_RAW_DEV_MINOR 168
 
 /* Other #define */
-#define TMP_STR_LEN 256
 #define AUTH_STR_LEN 30
-#define PWENT_MAX_LEN 81       /* MUST be a multiple of 9 */
 
 /* Id Mapper cache error */
 #define ID_MAPPER_SUCCESS             0
@@ -781,9 +779,9 @@ int idmap_get(hash_table_t * ht, char *key, uint32_t *pval);
 int uidmap_get(char *key, uid_t *pval);
 int gidmap_get(char *key, gid_t *pval);
 
-int namemap_get(hash_table_t * ht, uint32_t key, char *pval);
-int unamemap_get(uid_t key, char *val);
-int gnamemap_get(gid_t key, char *val);
+int namemap_get(hash_table_t * ht, uint32_t key, char *pval, size_t size);
+int unamemap_get(uid_t key, char *val, size_t size);
+int gnamemap_get(gid_t key, char *val, size_t size);
 int uidgidmap_get(uid_t key, gid_t *pval);
 
 int idmap_remove(hash_table_t * ht, char *key);
