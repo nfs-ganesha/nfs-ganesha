@@ -37,6 +37,7 @@ option(USE_FSAL_POSIX "build POSIX FSAL shared library" ON)
 option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
+option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
 
 # FSALs which are disabled by default
 option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
@@ -44,7 +45,6 @@ option(USE_FSAL_FUSE "build FUSE FSAL" OFF)
 option(USE_FSAL_XFS "build XFS FSAL" OFF)
 
 # SHOOK is a variant of Lustre FSAL
-option(USE_FSAL_LUSTRE "build LUSTRE FSAL" OFF)
 option(USE_FSAL_SHOOK "build SHOOK FSAL" OFF)
 
 
