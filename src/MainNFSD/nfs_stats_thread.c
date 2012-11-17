@@ -379,7 +379,7 @@ void *stats_thread(void *UnusedArg)
       /* Get the current epoch time */
       current_time = time(NULL);
       current_time_struct = localtime(&current_time);
-      snprintf(strdate, 1024, "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
+      snprintf(strdate, sizeof(strdate), "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
                (unsigned int)current_time,
                current_time_struct->tm_mday,
                current_time_struct->tm_mon + 1,
@@ -390,7 +390,7 @@ void *stats_thread(void *UnusedArg)
 
       /* Printing the general Stats */
       boot_time_struct = localtime(&ServerBootTime);
-      snprintf(strbootdate, 1024, "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
+      snprintf(strbootdate, sizeof(strbootdate), "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
                (unsigned int)ServerBootTime,
                boot_time_struct->tm_mday,
                boot_time_struct->tm_mon + 1,

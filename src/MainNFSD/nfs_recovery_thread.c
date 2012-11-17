@@ -334,7 +334,7 @@ struct dirent **state_namelist = NULL;
                 break;
         }
         new_entry = time(NULL);
-        snprintf(workpath, PATH_MAX, "%s/%lu_%s_%lu_%lu",
+        snprintf(workpath, sizeof(workpath), "%s/%lu_%s_%lu_%lu",
                 NFS_V4_RECOV_LOCAL, (ulong) new_entry,status,rpc_in, rpc_out);
 
         ientry = creat(workpath, 0755);

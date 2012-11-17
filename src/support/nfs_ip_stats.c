@@ -457,7 +457,7 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
   /* Compute the current time */
   current_time = time(NULL);
   memcpy(&current_time_struct, localtime(&current_time), sizeof(current_time_struct));
-  snprintf(strdate, 1024, "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
+  snprintf(strdate, sizeof(strdate), "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
            (unsigned int)current_time,
            current_time_struct.tm_mday,
            current_time_struct.tm_mon + 1,
@@ -478,7 +478,7 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
 
         sprint_sockaddr(ipaddr, ipaddrbuf, sizeof(ipaddrbuf));
 
-        snprintf(ifpathdump, MAXPATHLEN, "%s/stats_nfs-%s", path_stat, ipaddrbuf);
+        snprintf(ifpathdump, sizeof(ifpathdump), "%s/stats_nfs-%s", path_stat, ipaddrbuf);
 
         if((flushipstat = fopen(ifpathdump, "a")) == NULL)
           return;

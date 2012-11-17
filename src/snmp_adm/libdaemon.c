@@ -451,7 +451,7 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
         {
           offset += write;
           len -= write;
-          write = snprintf(buf + offset, len, ".%lu", (unsigned long) root_oid[i]);
+          write = snprintf(buf + offset, sizeof(buf) - offset, ".%lu", (unsigned long) root_oid[i]);
         }
       snmp_adm_log("ROOT_OID=%s", buf);
     }
@@ -801,7 +801,7 @@ void snmp_adm_log(char *format, ...)
 
   if(issyslog)
     {
-      vsnprintf(msg_buf, 256, format, pa);
+      vsnprintf(msg_buf, sizeof(msg_buf), format, pa);
       snmp_log(LOG_NOTICE, "%s", msg_buf);
     }
   else
@@ -818,18 +818,18 @@ void snmp_adm_log(char *format, ...)
         {
           int name_len;
           /* first call, let's configure */
-          gethostname(constant_buf, 256);
+          gethostname(constant_buf, sizeof(constant_buf));
           pid = getpid();
           name_len = strlen(constant_buf);
-          snprintf(constant_buf + name_len, 256 - name_len, ": snmp_adm-%d: ", pid);
+          snprintf(constant_buf + name_len, sizeof(constant_buf) - name_len, ": snmp_adm-%d: ", pid);
         }
 
       localtime_r(&clock, &the_date);
-      snprintf(now, 128, "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld: ",
+      snprintf(now, sizeof(now), "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld: ",
                the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
                the_date.tm_hour, the_date.tm_min, the_date.tm_sec, clock);
 
-      vsnprintf(msg_buf, 256, format, pa);
+      vsnprintf(msg_buf, sizeof(msg_buf), format, pa);
 
       snmp_log(LOG_NOTICE, "%s => %s : %s\n", now, constant_buf, msg_buf);
     }
