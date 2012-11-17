@@ -803,8 +803,6 @@ int uid2str(uid_t uid, char *str)
       rc = sprintf(str, "%s", buffer);
     }
 
-printf("uid2str %d -> %s\n", (int) uid, str);
-
   LogDebug(COMPONENT_IDMAPPER,
            "uid2str %d returning %s",
            uid, str);
@@ -841,8 +839,6 @@ int gid2str(gid_t gid, char *str)
     {
       rc = sprintf(str, "%s", buffer);
     }
-
-printf("gid2str %d -> %s\n", (int) gid, str);
 
   LogDebug(COMPONENT_IDMAPPER,
            "gid2str %d returning %s",
