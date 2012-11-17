@@ -216,7 +216,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 			struct sockaddr_in *sin =
 				((struct sockaddr_in *)
 				 &clientid->cid_cb.v40.cb_addr.ss);
-			snprintf(addr_buf, SOCK_NAME_MAX, "%u.%u.%u.%u",
+			snprintf(addr_buf, sizeof(addr_buf), "%u.%u.%u.%u",
 				 bytes[1], bytes[2],
 				 bytes[3], bytes[4]);
 			sin->sin_family = AF_INET;
@@ -246,7 +246,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 			struct sockaddr_in6 *sin6 =
 				((struct sockaddr_in6 *)
 				 &clientid->cid_cb.v40.cb_addr.ss);
-			snprintf(addr_buf, SOCK_NAME_MAX,
+			snprintf(addr_buf, sizeof(addr_buf),
 				 "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x",
 				 bytes[1], bytes[2], bytes[3],
 				 bytes[4], bytes[5], bytes[6],
