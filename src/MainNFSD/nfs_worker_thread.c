@@ -452,60 +452,6 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 #endif                          /* _USE_RQUOTA */
 
 extern const char *pause_state_str[];
-void drc_check(nfs_worker_data_t *pmydata)
-{
-  int rc;
-
-  if(pmydata->passcounter > nfs_param.worker_param.nb_before_gc)
-    {
-      /* Garbage collection on dup req cache */
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "before dupreq invalidation nb_entry=%d nb_invalid=%d",
-                   pmydata->duplicate_request->nb_entry,
-                   pmydata->duplicate_request->nb_invalid);
-      if((rc =
-          LRU_invalidate_by_function(pmydata->duplicate_request,
-                                     nfs_dupreq_gc_function,
-                                     NULL)) != LRU_LIST_SUCCESS)
-        {
-          LogCrit(COMPONENT_DISPATCH,
-                  "FAILURE: Impossible to invalidate entries for duplicate "
-                  "request cache (error %d)",
-                  rc);
-        }
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "after dupreq invalidation nb_entry=%d nb_invalid=%d",
-                   pmydata->duplicate_request->nb_entry,
-                   pmydata->duplicate_request->nb_invalid);
-      if((rc =
-          LRU_gc_invalid(pmydata->duplicate_request, NULL)
-          != LRU_LIST_SUCCESS))
-        LogCrit(COMPONENT_DISPATCH,
-                "FAILURE: Impossible to gc entries for duplicate request "
-                "cache (error %d)",
-                rc);
-      else
-        LogFullDebug(COMPONENT_DISPATCH,
-                     "gc entries for duplicate request cache OK");
-
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "after dupreq gc nb_entry=%d nb_invalid=%d",
-                   pmydata->duplicate_request->nb_entry,
-                   pmydata->duplicate_request->nb_invalid);
-
-      /* Performing garbabbge collection */
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Garbage collecting on pending request list");
-      pmydata->passcounter = 0;
-    }
-  else
-    LogFullDebug(COMPONENT_DISPATCH,
-                 "garbage collection isn't necessary count=%d, max=%d",
-                 pmydata->passcounter,
-                 nfs_param.worker_param.nb_before_gc);
-  pmydata->passcounter += 1;
-}
-
 int is_rpc_call_valid(fridge_thr_contex_t *, SVCXPRT *,
 		      struct svc_req *);
 
@@ -586,33 +532,28 @@ nfs_rpc_get_funcdesc(fridge_thr_contex_t *thr_ctx, nfs_request_data_t *preqnfs)
  * @param[in,out] preq NFS request
  *
  */
-static void nfs_rpc_execute(request_data_t    * preq,
-                            nfs_worker_data_t * pworker_data)
+static void
+nfs_rpc_execute(request_data_t    * preq,
+		nfs_worker_data_t * pworker_data)
 {
   exportlist_t               * pexport = NULL;
   nfs_request_data_t         * preqnfs = preq->r_u.nfs;
   nfs_arg_t                  * parg_nfs = &preqnfs->arg_nfs;
   nfs_res_t                  * res_nfs = NULL;
   short                        exportid;
-  LRU_list_t                 * lru_dupreq = NULL;
   struct svc_req             * req = &preqnfs->req;
   SVCXPRT                    * xprt = preqnfs->xprt;
   nfs_stat_type_t              stat_type;
   int                          port;
   int                          rc;
-  int                          do_dupreq_cache;
+  bool                         do_dupreq_cache;
   export_perms_t               export_perms;
   int                          protocol_options = 0;
   struct user_cred             user_credentials;
   fsal_op_context_t          * pfsal_op_ctx = NULL;
-  msectimer_t                  timer_start;
-  msectimer_t                  timer_end;
-  msectimer_t                  timer_diff;
-#ifdef _USE_QUEUE_TIMER
-  msectimer_t                  queue_timer_diff;
-#endif
-  msectimer_t                  fsal_latency = 0;
+  struct nfs_req_timer         req_timer;
   unsigned int                 fsal_count   = 0;
+  dupreq_status_t              dpq_status;
   enum auth_stat               auth_rc;
   const char                 * progname = "unknown";
   xprt_type_t                  xprt_type = svc_get_xprt_type(xprt);
@@ -626,15 +567,15 @@ static void nfs_rpc_execute(request_data_t    * preq,
   /* Initialized user_credentials */
   init_credentials(&user_credentials);
 
-  /* Get the value from the worker data */
-  lru_dupreq = pworker_data->duplicate_request;
+  /* Req timer */
+  init_nfs_req_timer(&req_timer);
 
   /* Get the function descriptor.  Bail if it cant be executed. */
   pworker_data->funcdesc = preqnfs->funcdesc;
   if(pworker_data->funcdesc == INVALID_FUNCDESC)
     return;
 
-  /* XXX must hold slock when calling TI-RPC send channel function,
+  /* Must hold slock when calling TI-RPC send channel function,
    * including svc_sendreply and the svcerr_* calls */
 
   if(copy_xprt_addr(&pworker_data->hostaddr, xprt) == 0)
@@ -662,32 +603,27 @@ static void nfs_rpc_execute(request_data_t    * preq,
            (int)req->rq_prog, (int)req->rq_vers, (int)req->rq_proc,
            req->rq_xid);
 
-  preqnfs->res_nfs = alloc_nfs_res();
+  /* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
+   * nothing but allocate a result object and mark the request (ie, the
+   * path is short, lockless, and does no hash/search). */
+  dpq_status = nfs_dupreq_start(preqnfs, req);
   res_nfs = preqnfs->res_nfs;
 
-  do_dupreq_cache = pworker_data->funcdesc->dispatch_behaviour & CAN_BE_DUP;
-  LogFullDebug(COMPONENT_DISPATCH, "do_dupreq_cache = %d", do_dupreq_cache);
-  if(do_dupreq_cache) 
+  switch(dpq_status)
     {
-      dupreq_status_t dpq_status = nfs_dupreq_add_not_finished(req, res_nfs);
-      switch(dpq_status)
-        {
-          /* a new request, continue processing it */
-        case DUPREQ_SUCCESS:
-          LogFullDebug(COMPONENT_DISPATCH, "Current request is not duplicate.");
+    case DUPREQ_SUCCESS:
+	  /* a new request, continue processing it */
+          LogFullDebug(COMPONENT_DISPATCH, "Current request is not duplicate or "
+		       "not cacheable");
           break;
           /* Found the request in the dupreq cache. It's an old request so resend
            * old reply. */
-        case DUPREQ_ALREADY_EXISTS:
+        case DUPREQ_EXISTS:
           /* Request was known, use the previous reply */
           LogFullDebug(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: DupReq Cache Hit: using previous "
                        "reply, rpcxid=%u",
                        req->rq_xid);
-
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Before svc_sendreply on socket %d (dup req)",
-                       xprt->xp_fd);
 
           DISP_SLOCK(xprt);
           if(svc_sendreply
@@ -713,52 +649,39 @@ static void nfs_rpc_execute(request_data_t    * preq,
 #ifdef SONAS
           rpc_out++;
 #endif
-	  free_nfs_res(res_nfs);
-          return;
+	  goto dupreq_finish;
+          break;
 
           /* Another thread owns the request */
         case DUPREQ_BEING_PROCESSED:
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Dupreq xid=%u was asked for process since another thread "
-                       "manage it, reject for avoiding threads starvation...",
-                       req->rq_xid);
-          /* Free the arguments */
-          DISP_SLOCK(xprt);
-          if((preqnfs->req.rq_vers == 2) ||
-             (preqnfs->req.rq_vers == 3) ||
-             (preqnfs->req.rq_vers == 4)) 
-            if(!SVC_FREEARGS(xprt, pworker_data->funcdesc->xdr_decode_func,
-                             (caddr_t) parg_nfs))
-              {
-                LogCrit(COMPONENT_DISPATCH,
-                        "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
-                        pworker_data->funcdesc->funcname);
-              }
-          DISP_SUNLOCK(xprt);
+	  LogFullDebug(COMPONENT_DISPATCH,
+		       "DUP: Request xid=%u is already being processed; the "
+		       "active thread will reply",
+		       req->rq_xid);
           /* Ignore the request, send no error */
-	  free_nfs_res(res_nfs);
-          return;
+	  goto freeargs;
+          break;
 
           /* something is very wrong with the duplicate request cache */
-        case DUPREQ_NOT_FOUND:
+        case DUPREQ_ERROR:
           LogCrit(COMPONENT_DISPATCH,
-                  "Error: Duplicate request rejected because it was found "
-                  "in the cache but is not allowed to be cached.");
+		  "DUP: Did not find the request in the duplicate request cache "
+		  "and couldn't add the request.");
           DISP_SLOCK(xprt);
           svcerr_systemerr(xprt, req);
           DISP_SUNLOCK(xprt);
-	  free_nfs_res(res_nfs);
-          return;
+	  goto freeargs;
+          break;
 
           /* oom */
         case DUPREQ_INSERT_MALLOC_ERROR:
           LogCrit(COMPONENT_DISPATCH,
-                  "Cannot process request, not enough memory available!");
+                  "DUP: Cannot process request, not enough memory available!");
           DISP_SLOCK(xprt);
           svcerr_systemerr(xprt, req);
           DISP_SUNLOCK(xprt);
-	  free_nfs_res(res_nfs);
-          return;
+	  goto freeargs;
+          break;
 
         default:
           LogCrit(COMPONENT_DISPATCH,
@@ -767,10 +690,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
           DISP_SLOCK(xprt);
           svcerr_systemerr(xprt, req);
           DISP_SUNLOCK(xprt);
-	  free_nfs_res(res_nfs);
+	  goto freeargs;
           return;
         }
-    }
 
   /* Get the export entry */
   if(req->rq_prog == nfs_param.core_param.program[P_NFS])
@@ -780,9 +702,6 @@ static void nfs_rpc_execute(request_data_t    * preq,
        * fhandle with the arguments and so determine the export entry to be
        * used.  In NFSv4, junction traversal is managed by the protocol itself
        * so the whole export list is provided to NFSv4 request. */
-
-      char dumpfh[1024];
-      char *reason = NULL;
 
       progname = "NFS";
 
@@ -803,6 +722,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
                    * file handle) */
                   if(isInfo(COMPONENT_DISPATCH))
                     {
+		      char dumpfh[1024];
+		      char *reason = NULL;
+
                       if(exportid < 0)
                         reason = "has badly formed handle";
                       else
@@ -844,6 +766,9 @@ static void nfs_rpc_execute(request_data_t    * preq,
                 {
                   if(isInfo(COMPONENT_DISPATCH))
                     {
+		      char dumpfh[1024];
+		      char *reason = NULL;
+
                       if(exportid < 0)
                         reason = "has badly formed handle";
                       else
@@ -1113,16 +1038,13 @@ static void nfs_rpc_execute(request_data_t    * preq,
   /* Start operation timer, atomically store in worker thread for long running
    * thread detection.
    */
-  timer_start = timer_get();
-#ifdef _USE_STAT_EXPORTER
-  atomic_store_msectimer_t(&pworker_data->timer_start, timer_start);
-#endif
+  nfs_req_timer_start(&req_timer);
 
   LogDebug(COMPONENT_DISPATCH,
            "NFS DISPATCHER: Calling service function %s start_time %lu.%03lu",
            pworker_data->funcdesc->funcname,
-           timer_start / MSEC_PER_SEC,
-           timer_start % MSEC_PER_SEC);
+           req_timer.timer_start / MSEC_PER_SEC,
+           req_timer.timer_start % MSEC_PER_SEC);
 
   /*
    * It is now time for checking if export list allows the machine to perform
@@ -1257,7 +1179,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
         }
 #endif
 
-      pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
+      pfsal_op_ctx =  &pworker_data->thread_fsal_context;
 
       rc = pworker_data->funcdesc->service_function(parg_nfs,
 						    pexport,
@@ -1265,8 +1187,8 @@ static void nfs_rpc_execute(request_data_t    * preq,
 						    pworker_data,
 						    req,
 						    res_nfs);
-      fsal_latency = pfsal_op_ctx->latency;
-      fsal_count   = pfsal_op_ctx->count;
+      req_timer.fsal_latency = pfsal_op_ctx->latency;
+      fsal_count = pfsal_op_ctx->count;
     }
 
 #ifdef _USE_STAT_EXPORTER
@@ -1275,33 +1197,23 @@ static void nfs_rpc_execute(request_data_t    * preq,
 #endif
 
   /* Perform statistics here */
-  timer_end = timer_get();
+  nfs_req_timer_stop(&req_timer, &preqnfs->time_queued);
 
   /* process time */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
 #ifdef SONAS
   rpc_out++;
 #endif
-  timer_diff = timer_end - timer_start;
-
-#ifdef _USE_QUEUE_TIMER
-  /* process time + queue time */
-  queue_timer_diff = timer_end - preqnfs->time_queued;
-#endif
 
   /* Update the stats for the worker */
   nfs_stat_update(stat_type,
                   &(pworker_data->stats.stat_req),
                   req,
-#ifdef _USE_QUEUE_TIMER
-                  queue_timer_diff,
-#endif
-                  timer_diff,
-                  fsal_latency,
+		  &req_timer,
                   fsal_count);
 
   /* Update total counters */
-  pworker_data->stats.nb_total_req += 1;
+  (pworker_data->stats.nb_total_req)++;
 
 #ifdef _USE_STAT_EXPORTER
   /* Update the stats for the export */
@@ -1310,11 +1222,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
       nfs_stat_update(stat_type,
 		      &(pexport->worker_stats[pworker_data->worker_index].stat_req),
 		      req,
-#ifdef _USE_QUEUE_TIMER
-                      queue_timer_diff,
-#endif
-		      timer_diff,
-		      fsal_latency,
+		      &req_timer,
 		      fsal_count);
 
       /* Update per-share total counters */
@@ -1322,25 +1230,25 @@ static void nfs_rpc_execute(request_data_t    * preq,
     }
 #endif
 
-  if(timer_diff >= nfs_param.core_param.long_processing_threshold_msec)
+  if(req_timer.timer_diff >= nfs_param.core_param.long_processing_threshold_msec)
     LogEvent(COMPONENT_DISPATCH,
              "Function %s xid=%u exited with status %d taking %lu.%03lu seconds to process",
              pworker_data->funcdesc->funcname, req->rq_xid, rc,
-             timer_diff / MSEC_PER_SEC,
-             timer_diff % MSEC_PER_SEC);
+             req_timer.timer_diff / MSEC_PER_SEC,
+             req_timer.timer_diff % MSEC_PER_SEC);
   else
     LogDebug(COMPONENT_DISPATCH,
              "Function %s xid=%u exited with status %d taking %lu.%03lu seconds to process",
              pworker_data->funcdesc->funcname, req->rq_xid, rc,
-             timer_diff / MSEC_PER_SEC,
-             timer_diff % MSEC_PER_SEC);
+             req_timer.timer_diff / MSEC_PER_SEC,
+             req_timer.timer_diff % MSEC_PER_SEC);
 
 #ifdef _USE_QUEUE_TIMER
   LogFullDebug(COMPONENT_DISPATCH,
                "Function %s xid=%u: await %llu.%.6llu",
                pworker_data->funcdesc->funcname, req->rq_xid,
-               queue_timer_diff / MSEC_PER_SEC,
-               queue_timer_diff % MSEC_PER_SEC);
+               req_timer.queue_timer_diff / MSEC_PER_SEC,
+               req_timer.queue_timer_diff % MSEC_PER_SEC);
 #endif
 
   /* Perform NFSv4 operations statistics if required */
@@ -1350,7 +1258,7 @@ static void nfs_rpc_execute(request_data_t    * preq,
                               &(pworker_data->stats.stat_req));
 
   /* XXX */
-  pworker_data->current_xid = 0;        /* No more xid managed */
+  pworker_data->current_xid = 0;
 
   /* If request is dropped, no return to the client */
   if(rc == NFS_REQ_DROP)
@@ -1361,31 +1269,16 @@ static void nfs_rpc_execute(request_data_t    * preq,
                req->rq_xid, (int)req->rq_prog,
                (int)req->rq_vers, (int)req->rq_proc);
 
-      /* If the request is not normally cached, then the entry will be removed
-       * later. We only remove a reply that is normally cached that has been
-       * dropped. */
-      if(do_dupreq_cache)
-        if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
-          {
-            LogCrit(COMPONENT_DISPATCH,
-                    "Attempt to delete duplicate request failed on line %d",
-                    __LINE__);
-          }
+      if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
+        {
+	  LogCrit(COMPONENT_DISPATCH,
+		  "Attempt to delete duplicate request failed on line %d",
+		  __LINE__);
+	}
     }
   else
     {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Before svc_sendreply on socket %d (want lock)",
-                   xprt->xp_fd);
-
       DISP_SLOCK(xprt);
-
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Before svc_sendreply on socket %d (have lock)",
-                   xprt->xp_fd);
-
-
-      /* encoding the result on xdr output */
       if(svc_sendreply(xprt, req, pworker_data->funcdesc->xdr_encode_func,
 		       (caddr_t) res_nfs) == FALSE)
         {
@@ -1400,31 +1293,23 @@ static void nfs_rpc_execute(request_data_t    * preq,
                   (int)req->rq_vers, (int)req->rq_proc, req->rq_xid);
           svcerr_systemerr(xprt, req);
 
-          if (do_dupreq_cache && nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
+          if (nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
             {
               LogCrit(COMPONENT_DISPATCH,
                       "Attempt to delete duplicate request failed on line %d",
                       __LINE__);
             }
           DISP_SUNLOCK(xprt);
-          goto exe_exit;
-        }
-
-      /* XXX we must hold xprt lock across SVC_FREEARGS */
-
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "After svc_sendreply on socket %d",
-                   xprt->xp_fd);
-
-      /* Mark request as finished */
-      LogFullDebug(COMPONENT_DUPREQ, "YES?: %d", do_dupreq_cache);
-      if(do_dupreq_cache)
-        {
-          nfs_dupreq_finish(req, res_nfs, lru_dupreq);
+          goto freeargs;
         }
     } /* rc == NFS_REQ_DROP */
 
-  /* Free the allocated resources once the work is done */
+dupreq_finish:
+  /* Mark request as finished */
+  if (dpq_status == DUPREQ_SUCCESS)
+      dpq_status = nfs_dupreq_finish(req, res_nfs);
+
+freeargs:
   /* Free the arguments */  
   if(!SVC_FREEARGS(xprt,
                    pworker_data->funcdesc->xdr_decode_func,
@@ -1435,29 +1320,12 @@ static void nfs_rpc_execute(request_data_t    * preq,
               pworker_data->funcdesc->funcname);
     }
 
-  /* XXX we must hold xprt lock across SVC_FREEARGS */
-  DISP_SUNLOCK(xprt);
-    
-  /* Free the reply.
-   * This should not be done if the request is dupreq cached because this will
-   * mark the dupreq cached info eligible for being reuse by other requests */
-  if(!do_dupreq_cache)
-    {
-      /* Free only the non dropped requests */
-      if(rc == NFS_REQ_OK) {
-          pworker_data->funcdesc->free_function(res_nfs);
-      }
-    }
-
-  drc_check(pworker_data);
-
-exe_exit:
+  /* Finalize the request (frees reply if required) */
+  if (res_nfs)
+    nfs_dupreq_rele(req);
 
   clean_credentials(&user_credentials);
 
-  /* By now the dupreq cache entry should have been completed w/ a request
-   * that is reusable or the dupreq cache entry should have been removed. */
-  free_nfs_res(res_nfs);
   return;
 
 auth_failure:
@@ -1468,13 +1336,16 @@ auth_failure:
 
   clean_credentials(&user_credentials);
 
-  pworker_data->current_xid = 0;    /* No more xid managed */
+  /* XXX */
+  pworker_data->current_xid = 0;
 
-  if(do_dupreq_cache && nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
+  if(nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
     LogCrit(COMPONENT_DISPATCH,
             "Attempt to delete duplicate request after auth failure");
 
-  free_nfs_res(res_nfs);
+  /* Finalize the request (frees reply if required) */
+  if (res_nfs)
+    nfs_dupreq_rele(req);
   
 /* XXX */
 #ifdef SONAS
@@ -1499,7 +1370,6 @@ auth_failure:
 
 int nfs_Init_worker_data(nfs_worker_data_t *data)
 {
-  LRU_status_t status = LRU_LIST_SUCCESS;
   char name[256];
 
   if(pthread_mutex_init(&(data->request_pool_mutex), NULL) != 0)
@@ -1511,20 +1381,7 @@ int nfs_Init_worker_data(nfs_worker_data_t *data)
 
   /* init thr waitq */
   init_wait_q_entry(&data->wqe);
-
-  sprintf(name, "Worker Thread #%u Duplicate Request", data->worker_index);
-  nfs_param.worker_param.lru_dupreq.lp_name = name;
-
-  if((data->duplicate_request =
-      LRU_Init(nfs_param.worker_param.lru_dupreq, &status)) == NULL)
-    {
-      LogError(COMPONENT_DISPATCH, ERR_LRU, ERR_LRU_LIST_INIT, status);
-      return -1;
-    }
-
-  data->passcounter = 0;
   data->wcb.tcb_ready = FALSE;
-  data->gc_in_progress = FALSE;
   data->funcdesc = INVALID_FUNCDESC;
 
   return 0;

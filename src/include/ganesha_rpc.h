@@ -36,6 +36,10 @@
 #define NFS_LOOKAHEAD_LOCK      0x0200 /* !_U types */
 #define NFS_LOOKAHEAD_READDIR       0x0400
 #define NFS_LOOKAHEAD_LAYOUTCOMMIT  0x0040
+#define NFS_LOOKAHEAD_SETATTR  0x0080
+#define NFS_LOOKAHEAD_SETCLIENTID  0x0100
+#define NFS_LOOKAHEAD_SETCLIENTID_CONFIRM  0x0200
+#define NFS_LOOKAHEAD_LOOKUP  0x0400
 /* ... */
 
 struct nfs_request_lookahead {
@@ -103,12 +107,14 @@ const char *str_gc_proc(rpc_gss_proc_t gc_proc);
 #define XPRT_PRIVATE_FLAG_DECODING   0x0010
 #define XPRT_PRIVATE_FLAG_STALLED    0x0020 /* ie, -on stallq- */
 
+struct drc;
 typedef struct gsh_xprt_private
 {
     SVCXPRT *xprt;
     uint32_t flags;
     uint32_t refcnt;
     uint32_t req_cnt; /* outstanding requests counter */
+    struct drc *drc; /* TCP DRC */
     struct glist_head stallq;
 } gsh_xprt_private_t;
 
@@ -120,6 +126,7 @@ alloc_gsh_xprt_private(SVCXPRT *xprt, uint32_t flags)
     xu->xprt = xprt;
     xu->flags = XPRT_PRIVATE_FLAG_NONE;
     xu->req_cnt = 0;
+    xu->drc = NULL;
 
     if (flags & XPRT_PRIVATE_FLAG_REF)
         xu->refcnt = 1;
@@ -129,9 +136,14 @@ alloc_gsh_xprt_private(SVCXPRT *xprt, uint32_t flags)
     return (xu);
 }
 
+void nfs_dupreq_put_drc(SVCXPRT *xprt, struct drc *drc, uint32_t flags);
+
 static inline void
-free_gsh_xprt_private(gsh_xprt_private_t *xu)
+free_gsh_xprt_private(SVCXPRT *xprt)
 {
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    if (xu->drc)
+        nfs_dupreq_put_drc(xprt, xu->drc, 0 /* DRC_FLAG_NONE */);
     gsh_free(xu);
 }
 

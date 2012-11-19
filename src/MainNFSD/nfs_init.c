@@ -243,7 +243,22 @@ void nfs_print_param_config()
   printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tNb_Worker = %u ; \n", nfs_param.core_param.nb_worker);
   printf("\tb_Call_Before_Queue_Avg = %u ; \n", nfs_param.core_param.nb_call_before_queue_avg);
-  printf("\tDupReq_Expiration = %lu ; \n", nfs_param.core_param.expiration_dupreq);
+ printf("\tDRC_TCP_Npart = %u ; \n", nfs_param.core_param.drc.tcp.npart);
+ printf("\tDRC_TCP_Size = %u ; \n", nfs_param.core_param.drc.tcp.size);
+ printf("\tDRC_TCP_Cachesz = %u ; \n", nfs_param.core_param.drc.tcp.cachesz);
+ printf("\tDRC_TCP_Hiwat = %u ; \n", nfs_param.core_param.drc.tcp.hiwat);
+ printf("\tDRC_TCP_Recycle_Npart = %u ; \n",
+        nfs_param.core_param.drc.tcp.recycle_npart);
+ printf("\tDRC_TCP_Recycle_Expire_S = %u ; \n",
+        nfs_param.core_param.drc.tcp.recycle_expire_s);
+ printf("\tDRC_TCP_Checksum = %u ; \n",
+        nfs_param.core_param.drc.tcp.checksum);
+ printf("\tDRC_UDP_Npart = %u ; \n", nfs_param.core_param.drc.udp.npart);
+ printf("\tDRC_UDP_Size = %u ; \n", nfs_param.core_param.drc.udp.size);
+ printf("\tDRC_UDP_Cachesz = %u ; \n", nfs_param.core_param.drc.udp.cachesz);
+ printf("\tDRC_UDP_Hiwat = %u ; \n", nfs_param.core_param.drc.udp.hiwat);
+ printf("\tDRC_UDP_Checksum = %u ; \n",
+        nfs_param.core_param.drc.udp.checksum);
   printf("\tCore_Dump_Size = %ld ; \n", nfs_param.core_param.core_dump_size);
   printf("\tNb_Max_Fd = %d ; \n", nfs_param.core_param.nb_max_fd);
   printf("\tStats_File_Path = %s ; \n", nfs_param.core_param.stats_file_path);
@@ -288,7 +303,6 @@ void nfs_set_param_default()
   /* Core parameters */
   nfs_param.core_param.nb_worker = NB_WORKER_THREAD_DEFAULT;
   nfs_param.core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG;
-  nfs_param.core_param.expiration_dupreq = DUPREQ_EXPIRATION;
   nfs_param.core_param.port[P_NFS] = NFS_PORT;
   nfs_param.core_param.port[P_MNT] = 0;
   nfs_param.core_param.bind_addr.sin_family = AF_INET;       /* IPv4 only right now */
@@ -341,14 +355,6 @@ void nfs_set_param_default()
   nfs_param.core_param.dispatch_max_reqs =  5000;
   nfs_param.core_param.dispatch_max_reqs_xprt =  512;
 
-  /* Worker parameters : LRU dupreq */
-  nfs_param.worker_param.lru_dupreq.nb_call_gc_invalid = 100;
-  nfs_param.worker_param.lru_dupreq.clean_entry = clean_entry_dupreq;
-  nfs_param.worker_param.lru_dupreq.entry_to_str = print_entry_dupreq;
-  nfs_param.worker_param.lru_dupreq.lp_name = "Worker DupReq LRU";
-
-  /* Worker parameters : GC */
-  nfs_param.worker_param.nb_before_gc = NB_REQUEST_BEFORE_GC;
 #ifdef _HAVE_GSSAPI
   /* krb5 parameter */
   strlcpy(nfs_param.krb5_param.svc.principal, DEFAULT_NFS_PRINCIPAL,
@@ -367,18 +373,6 @@ void nfs_set_param_default()
   nfs_param.nfsv4_param.return_bad_stateid = TRUE;
   strncpy(nfs_param.nfsv4_param.domainname, DEFAULT_DOMAIN, MAXNAMLEN);
   strncpy(nfs_param.nfsv4_param.idmapconf, DEFAULT_IDMAPCONF, MAXPATHLEN);
-
-  /* Worker parameters : dupreq hash table */
-  nfs_param.dupreq_param.hash_param.index_size = PRIME_DUPREQ;
-  nfs_param.dupreq_param.hash_param.alphabet_length = 10;    /* Xid is a numerical decimal value */
-  nfs_param.dupreq_param.hash_param.hash_func_key = dupreq_value_hash_func;
-  nfs_param.dupreq_param.hash_param.hash_func_rbt = dupreq_rbt_hash_func;
-  nfs_param.dupreq_param.hash_param.compare_key = compare_req;
-  nfs_param.dupreq_param.hash_param.key_to_str = display_req_key;
-  nfs_param.dupreq_param.hash_param.val_to_str = display_req_val;
-  nfs_param.dupreq_param.hash_param.ht_name = "Duplicate Request Cache";
-  nfs_param.dupreq_param.hash_param.flags = HT_FLAG_NONE; /* ! */
-  nfs_param.dupreq_param.hash_param.ht_log_component = COMPONENT_DUPREQ;
 
   /*  Worker parameters : IP/name hash table */
   nfs_param.ip_name_param.hash_param.index_size = PRIME_IP_NAME;
@@ -1707,15 +1701,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   nfs_reset_stats();
 
   /* Init duplicate request cache */
-  LogDebug(COMPONENT_INIT, "Now building duplicate request hash table cache");
-  if((rc = nfs_Init_dupreq(nfs_param.dupreq_param)) != DUPREQ_SUCCESS)
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error %d while initializing duplicate request hash table cache",
-               rc);
-    }
+  dupreq2_pkginit();
   LogInfo(COMPONENT_INIT,
-          "duplicate request hash table cache successfully initialized");
+          "duplicate request cache successfully initialized");
 
   /* Init the IP/name cache */
   LogDebug(COMPONENT_INIT, "Now building IP/name cache");

@@ -45,7 +45,6 @@
 #include <sys/time.h>
 
 #include "ganesha_rpc.h"
-#include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "nfs_stat.h"
@@ -57,7 +56,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tcb.h"
 #include "wait_queue.h"
-#include "nfs_dupreq.h"
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
 
@@ -85,22 +83,29 @@
 #define NB_WORKER_THREAD_DEFAULT  16
 #define NB_FLUSHER_THREAD_DEFAULT 16
 #define NB_REQUEST_BEFORE_QUEUE_AVG  1000
-#define NB_MAX_CONCURRENT_GC 3
 #define NB_MAX_PENDING_REQUEST 30
-#define NB_REQUEST_BEFORE_GC 50
-#define PRIME_DUPREQ 17         /* has to be a prime number */
 #define PRIME_ID_MAPPER 17      /* has to be a prime number */
-#define DUPREQ_EXPIRATION 180
+
+#define DRC_TCP_NPART 1
+#define DRC_TCP_SIZE 1024
+#define DRC_TCP_CACHESZ 127 /* make prime */
+#define DRC_TCP_HIWAT 64 /* 1/2(size) */
+#define DRC_TCP_RECYCLE_NPART 7
+#define DRC_TCP_RECYCLE_EXPIRE_S 600 /* 10m */
+#define DRC_TCP_CHECKSUM true
+
+#define DRC_UDP_NPART 7
+#define DRC_UDP_SIZE 32768
+#define DRC_UDP_CACHESZ  599 /* make prime */
+#define DRC_UDP_HIWAT 16384 /* 1/2(size) */
+#define DRC_UDP_CHECKSUM true
 
 #define PRIME_CACHE_INODE 37    /* has to be a prime number */
 
 #define PRIME_IP_NAME            17
 #define IP_NAME_EXPIRATION       36000
-
 #define PRIME_IP_STATS            17
-
 #define PRIME_CLIENT_ID            17
-
 #define PRIME_STATE_ID            17
 
 #define DEFAULT_NFS_PRINCIPAL     "nfs" /* GSSAPI will expand this to nfs/host@DOMAIN */
@@ -224,6 +229,25 @@ typedef struct nfs_core_param__
   unsigned int dispatch_max_reqs;
   unsigned int dispatch_max_reqs_xprt;
   unsigned int stats_update_delay;
+  struct {
+    bool disabled;
+    struct {
+      uint32_t npart;
+      uint32_t size;
+      uint32_t cachesz;
+      uint32_t hiwat;
+      uint32_t recycle_npart;
+      uint32_t recycle_expire_s;
+      bool checksum;
+    } tcp;
+    struct {
+      uint32_t npart;
+      uint32_t size;
+      uint32_t cachesz;
+      uint32_t hiwat;
+      bool checksum;
+    } udp;
+  } drc;
   unsigned int long_processing_threshold;
   unsigned int long_processing_threshold_msec;
   unsigned int dump_stats_per_client;
