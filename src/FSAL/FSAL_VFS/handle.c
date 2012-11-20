@@ -1427,6 +1427,18 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->compare = compare;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
+        
+        /* xattr related functions */
+        ops->list_ext_attrs = vfs_list_ext_attrs;
+        ops->getextattr_id_by_name = vfs_getextattr_id_by_name;
+        ops->getextattr_value_by_name = vfs_getextattr_value_by_name;
+        ops->getextattr_value_by_id = vfs_getextattr_value_by_id;
+        ops->setextattr_value = vfs_setextattr_value;
+        ops->setextattr_value_by_id = vfs_setextattr_value_by_id;
+        ops->getextattr_attrs = vfs_getextattr_attrs;
+        ops->remove_extattr_by_id = vfs_remove_extattr_by_id;
+        ops->remove_extattr_by_name = vfs_remove_extattr_by_name;
+
 }
 
 /* export methods that create object handles
