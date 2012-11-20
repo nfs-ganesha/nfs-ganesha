@@ -251,6 +251,10 @@ cache_inode_remove_impl(cache_entry_t *entry,
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
      if(entry->type != DIRECTORY) {
+	  if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
+	      !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
+		  pthread_rwlock_unlock(&entry->attr_lock);
+	  }
           status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
@@ -271,13 +275,21 @@ cache_inode_remove_impl(cache_entry_t *entry,
 				      &to_remove_entry);
 
      if (to_remove_entry == NULL) {
-          goto out;
+	 if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
+	     !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
+		 pthread_rwlock_unlock(&entry->attr_lock);
+	 }
+	 goto out;
      }
 
      if(!sticky_dir_allows(entry->obj_handle,
 			   to_remove_entry->obj_handle,
 			   req_ctx->creds)) {
          status = CACHE_INODE_FSAL_EPERM;
+	 if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
+	     !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
+		 pthread_rwlock_unlock(&entry->attr_lock);
+	 }
          goto out;
      }
      /* Lock the attributes (so we can decrement the link count) */
@@ -301,6 +313,10 @@ cache_inode_remove_impl(cache_entry_t *entry,
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(entry);
           }
+	  if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
+	      !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
+		  pthread_rwlock_unlock(&entry->attr_lock);
+	  }
           goto unlock;
      } else {
           /* Decrement refcount on saved ACL */
