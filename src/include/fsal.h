@@ -182,7 +182,7 @@ typedef struct fsal_xattrent__
   uint64_t xattr_id; /*< xattr index */
   uint64_t xattr_cookie; /*< cookie for getting xattrs list from the next entry */
   struct attrlist attributes;/*< entry attributes (if supported) */
-  char xattr_name[]; /*< attribute name  */
+  char xattr_name[MAXNAMLEN]; /*< attribute name  */
 } fsal_xattrent_t;
 
 /**
