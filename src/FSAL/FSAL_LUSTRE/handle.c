@@ -1322,6 +1322,19 @@ void lustre_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->compare = compare;
 	ops->handle_digest = lustre_handle_digest;
 	ops->handle_to_key = lustre_handle_to_key;
+
+        /* xattr related functions */
+        ops->list_ext_attrs = lustre_list_ext_attrs;
+        ops->getextattr_id_by_name = lustre_getextattr_id_by_name;
+        ops->getextattr_value_by_name = lustre_getextattr_value_by_name;
+        ops->getextattr_value_by_id = lustre_getextattr_value_by_id;
+        ops->setextattr_value = lustre_setextattr_value;
+        ops->setextattr_value_by_id = lustre_setextattr_value_by_id;
+        ops->getextattr_attrs = lustre_getextattr_attrs;
+        ops->remove_extattr_by_id = lustre_remove_extattr_by_id;
+        ops->remove_extattr_by_name = lustre_remove_extattr_by_name;
+
+
 }
 
 /* export methods that create object handles
