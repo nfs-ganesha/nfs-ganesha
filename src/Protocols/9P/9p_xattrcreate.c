@@ -61,6 +61,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   u8   * pmsgtype =  preq9p->_9pmsg + _9P_HDR_SIZE ;
   nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  int create = FALSE ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
@@ -120,11 +121,16 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
      if( ( pfid->specdata.xattr.xattr_content = gsh_malloc( XATTR_BUFFERSIZE ) ) == NULL ) 
        return  _9p_rerror( preq9p, pworker_data,  msgtag, ENOMEM, plenout, preply ) ;
 
+     if( ( *flag == 0 ) ||  (*flag & XATTR_CREATE ) ) 
+        create = TRUE ;
+     else
+        create = FALSE ;
+
      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,
                                                                     name,
                                                                     pfid->specdata.xattr.xattr_content, 
                                                                     *size,
-                                                                    (*flag == XATTR_REPLACE))  ;
+                                                                    create )  ;
 
      if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
