@@ -126,6 +126,7 @@ name-spaces. This package provides support for NFS-GANESHA used on top of GPFS.
 Summary: The NFS-GANESHA server compiled for use with GPFS
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release} libattr
+BuildRequires: libattr-devel
 
 %description vfs
 NFS-GANESHA is a NFS Server running in user space with a large cache.
