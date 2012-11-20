@@ -462,9 +462,6 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
   /* Deal with special cookie */
   if( cookie == XATTR_RW_COOKIE ) cookie = XATTR_COUNT ;
 
-  if(FSAL_IS_ERROR(st))
-    return st ;
-
   for(index = cookie, out_index = 0;
       index < XATTR_COUNT && out_index < xattrs_tabsize; index++)
     {
@@ -531,7 +528,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
           /* fills an xattr entry */
           xattrs_tab[out_index].xattr_id = index;
-          strncpy( ptr,  xattrs_tab[out_index].xattr_name, len+1 ) ;
+          strncpy( xattrs_tab[out_index].xattr_name, ptr, len+1 ) ;
           xattrs_tab[out_index].xattr_cookie = index + 1;
 
           /* set asked attributes (all supported) */
