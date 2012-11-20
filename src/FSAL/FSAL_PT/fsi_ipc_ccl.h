@@ -50,6 +50,13 @@ extern "C" {
                                          // of seconds to try before timingout
 #define USLEEP_INTERVAL        10000     // Parameter to usleep
 
+#define CCL_POLLING_THREAD_HANDLE_TIMEOUT_SEC 300   // Timeout for opened handle
+                                                    // to be considered old in
+                                                    // polling thread path
+#define CCL_ON_DEMAND_HANDLE_TIMEOUT_SEC       15   // Timeout for on-demand
+                                                    // thread looking for
+                                                    // handles to close
+
 // FSI IPC getlock constants
 #define FSI_IPC_GETLOCK_PTYPE                  2
 #define FSI_IPC_GETLOCK_PPID                   0
@@ -847,7 +854,8 @@ int ccl_fsal_try_fastopen_by_index(ccl_context_t       * handle,
                                    int                   handle_index,
                                    char                * fsal_name);
 int ccl_find_oldest_handle();
-bool ccl_can_close_handle(int handle_index);
+bool ccl_can_close_handle(int handle_index,
+			  int timeout);
 
 // ---------------------------------------------------------------------------
 // CCL Up Call ptorotypes - both the Samba VFS layer and the Ganesha PTFSAL

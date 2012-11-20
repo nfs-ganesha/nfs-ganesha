@@ -124,7 +124,8 @@ void ptfsal_close_timedout_handle_bkg(void)
                 current_time, g_fsi_handles.m_handle[index].m_nfs_state,
                 g_fsi_handles.m_handle[index].m_hndl_in_use);
       ccl_up_mutex_lock(&g_close_handle_mutex);
-      if (ccl_can_close_handle(index)) {
+      if (ccl_can_close_handle(index,
+			       CCL_POLLING_THREAD_HANDLE_TIMEOUT_SEC)) {
         /* We've found timed out handle and we are sending an explicit
          * close to close it out.
          *
