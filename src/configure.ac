@@ -693,9 +693,9 @@ dnl	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
 dnl fi
 
 if test "$enable_fsal_vfs" == "yes"; then
-	AC_CHECK_HEADERS([attr/xattr.h], [], [enable_fsal_vfs='no'
-                                              AC_MSG_ERROR([Missing xattr files. Please install libattr-devel])])
-        AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem ])
+	AC_CHECK_HEADERS([attr/xattr.h], [], [enable_fsal_lustre='no'
+                                              AC_MSG_ERROR([Missing xattr files. Install libattr-devel])])
+		AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem ])
 	FSAL_CFLAGS=
 	FSAL_LDFLAGS=""
 	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
