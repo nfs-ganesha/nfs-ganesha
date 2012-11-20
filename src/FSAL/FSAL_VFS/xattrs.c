@@ -904,7 +904,6 @@ fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					 const char *xattr_name)
 {
-  char name[MAXNAMLEN];
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
   int mntfd = -1 ;
