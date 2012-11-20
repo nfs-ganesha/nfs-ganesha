@@ -185,6 +185,17 @@ typedef struct fsal_xattrent__
   char xattr_name[MAXNAMLEN]; /*< attribute name  */
 } fsal_xattrent_t;
 
+/* generic definitions for extended attributes */
+
+#define XATTR_FOR_FILE     0x00000001
+#define XATTR_FOR_DIR      0x00000002
+#define XATTR_FOR_SYMLINK  0x00000004
+#define XATTR_FOR_ALL      0x0000000F
+#define XATTR_RO           0x00000100
+#define XATTR_RW           0x00000200
+/* function for getting an attribute value */
+#define XATTR_RW_COOKIE ~0 
+
 /**
  * fsal2unix_mode:
  * Convert FSAL mode to posix mode.

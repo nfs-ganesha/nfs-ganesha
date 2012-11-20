@@ -57,17 +57,6 @@
 #include <lustre/lustre_user.h>
 #include <linux/quota.h>
 
-/* generic definitions for extended attributes */
-
-#define XATTR_FOR_FILE     0x00000001
-#define XATTR_FOR_DIR      0x00000002
-#define XATTR_FOR_SYMLINK  0x00000004
-#define XATTR_FOR_ALL      0x0000000F
-#define XATTR_RO           0x00000100
-#define XATTR_RW           0x00000200
-/* function for getting an attribute value */
-#define XATTR_RW_COOKIE ~0 
-
 typedef int (*xattr_getfunc_t) (struct fsal_obj_handle *,   /* object handle */
                                 caddr_t,                    /* output buff */
                                 size_t,                     /* output buff size */
