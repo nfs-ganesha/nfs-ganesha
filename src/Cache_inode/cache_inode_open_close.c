@@ -76,9 +76,7 @@
 bool
 is_open(cache_entry_t *entry)
 {
-     assert(entry->obj_handle != NULL);
-
-     if (entry == NULL
+     if (entry == NULL || entry->obj_handle == NULL
          || entry->type != REGULAR_FILE) {
           return false ;
      }
