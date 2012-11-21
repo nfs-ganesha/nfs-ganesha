@@ -169,8 +169,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                                              CACHE_INODE_TRUST_CONTENT);
                } else {
                     /* Get a write ock and do it again. */
-                    pthread_rwlock_unlock(&parent->content_lock);
-                    pthread_rwlock_wrlock(&parent->content_lock);
+                    PTHREAD_RWLOCK_unlock(&parent->content_lock);
+                    PTHREAD_RWLOCK_wrlock(&parent->content_lock);
                }
           }
           assert(*entry == NULL);
@@ -257,12 +257,12 @@ cache_inode_lookup(cache_entry_t *parent,
           return status;
      }
 
-     pthread_rwlock_rdlock(&parent->content_lock);
+     PTHREAD_RWLOCK_rdlock(&parent->content_lock);
      status = cache_inode_lookup_impl(parent,
                                      name,
                                      req_ctx,
                                      entry);
-     pthread_rwlock_unlock(&parent->content_lock);
+     PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
      return status;
 }

@@ -121,7 +121,7 @@ cache_inode_rdwr(cache_entry_t *entry,
 
      if (stable == CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER) {
           /* Write to memory */
-          pthread_rwlock_wrlock(&entry->content_lock);
+          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
           content_locked = true;
 
           /* Is the unstable_data buffer allocated? */
@@ -139,7 +139,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                memcpy(entry->object.file.unstable_data.buffer,
                       buffer, io_size);
 
-               pthread_rwlock_wrlock(&entry->attr_lock);
+               PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
                attributes_locked = true;
                cache_inode_set_time_current(&obj_hdl->attributes.mtime);
                *bytes_moved = io_size;
@@ -151,7 +151,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                     memcpy(entry->object.file.unstable_data.buffer +
                            offset, buffer, io_size);
 
-                    pthread_rwlock_wrlock(&entry->attr_lock);
+                    PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
                     attributes_locked = true;
                     cache_inode_set_time_current(&obj_hdl->attributes.mtime);
                     *bytes_moved = io_size;
@@ -161,11 +161,11 @@ cache_inode_rdwr(cache_entry_t *entry,
                }
           }
           if (content_locked) {
-               pthread_rwlock_unlock(&entry->content_lock);
+               PTHREAD_RWLOCK_unlock(&entry->content_lock);
                content_locked = false;
           }
           if (attributes_locked) {
-               pthread_rwlock_unlock(&entry->attr_lock);
+               PTHREAD_RWLOCK_unlock(&entry->attr_lock);
                attributes_locked = false;
           }
      }
@@ -174,13 +174,13 @@ cache_inode_rdwr(cache_entry_t *entry,
          stable == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
           /* Write through the FSAL.  We need a write lock only
              if we need to open or close a file descriptor. */
-          pthread_rwlock_rdlock(&entry->content_lock);
+          PTHREAD_RWLOCK_rdlock(&entry->content_lock);
           content_locked = true;
           loflags = obj_hdl->ops->status(obj_hdl);
           if (( !is_open(entry)) ||
               (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
-               pthread_rwlock_unlock(&entry->content_lock);
-               pthread_rwlock_wrlock(&entry->content_lock);
+               PTHREAD_RWLOCK_unlock(&entry->content_lock);
+               PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 	       loflags = obj_hdl->ops->status(obj_hdl);
                if (( !is_open(entry)) ||
                    (loflags && loflags != FSAL_O_RDWR &&
@@ -254,8 +254,8 @@ cache_inode_rdwr(cache_entry_t *entry,
                     LogFullDebug(COMPONENT_CACHE_INODE,
                                  "cache_inode_rdwr: CLOSING entry %p",
                                  entry);
-                    pthread_rwlock_unlock(&entry->content_lock);
-                    pthread_rwlock_wrlock(&entry->content_lock);
+                    PTHREAD_RWLOCK_unlock(&entry->content_lock);
+                    PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
                     cstatus = cache_inode_close(entry,
 						(CACHE_INODE_FLAG_REALLYCLOSE |
@@ -290,12 +290,12 @@ cache_inode_rdwr(cache_entry_t *entry,
           }
 
           if (content_locked) {
-               pthread_rwlock_unlock(&entry->content_lock);
+               PTHREAD_RWLOCK_unlock(&entry->content_lock);
                content_locked = false;
           }
      }
 
-     pthread_rwlock_wrlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
      attributes_locked = true;
      if (io_direction == CACHE_INODE_WRITE) {
 	  if ((status = cache_inode_refresh_attrs(entry, req_ctx))
@@ -305,7 +305,7 @@ cache_inode_rdwr(cache_entry_t *entry,
      } else {
           cache_inode_set_time_current(&obj_hdl->attributes.atime);
      }
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
      attributes_locked = false;
 
      status = CACHE_INODE_SUCCESS;
@@ -313,12 +313,12 @@ cache_inode_rdwr(cache_entry_t *entry,
 out:
 
      if (content_locked) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_unlock(&entry->content_lock);
           content_locked = false;
      }
 
      if (attributes_locked) {
-          pthread_rwlock_unlock(&entry->attr_lock);
+          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
           attributes_locked = false;
      }
 

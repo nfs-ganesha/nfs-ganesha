@@ -101,7 +101,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      }
 
      /* Acquire the attribute lock */
-     pthread_rwlock_wrlock(&dest_dir->attr_lock);
+     PTHREAD_RWLOCK_wrlock(&dest_dir->attr_lock);
      destattrlock = true;
 
      /* Check if caller is allowed to perform the operation */
@@ -120,11 +120,11 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      /* Rather than performing a lookup first, just try to make the
         link and return the FSAL's error if it fails. */
 
-     pthread_rwlock_wrlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
      srcattrlock = true;
 
      /* Acquire the directory entry lock */
-     pthread_rwlock_wrlock(&dest_dir->content_lock);
+     PTHREAD_RWLOCK_wrlock(&dest_dir->content_lock);
      destdirlock = true;
 
      /* Do the link at FSAL level */
@@ -163,13 +163,13 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
      }
 
      cache_inode_fixup_md(entry);
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
      srcattrlock = false;
 
      /* Reload the destination directory's attributes so the caller
         will have an updated changeid. */
      cache_inode_refresh_attrs(dest_dir, req_ctx);
-     pthread_rwlock_unlock(&dest_dir->attr_lock);
+     PTHREAD_RWLOCK_unlock(&dest_dir->attr_lock);
      destattrlock = false;
 
      /* Add the new entry in the destination directory */
@@ -182,21 +182,21 @@ cache_inode_status_t cache_inode_link(cache_entry_t *entry,
           goto out;
      }
 
-     pthread_rwlock_unlock(&dest_dir->content_lock);
+     PTHREAD_RWLOCK_unlock(&dest_dir->content_lock);
      destdirlock = false;
 
 out:
 
      if (srcattrlock) {
-          pthread_rwlock_unlock(&entry->attr_lock);
+          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
      }
 
      if (destattrlock) {
-          pthread_rwlock_unlock(&dest_dir->attr_lock);
+          PTHREAD_RWLOCK_unlock(&dest_dir->attr_lock);
      }
 
      if (destdirlock) {
-          pthread_rwlock_unlock(&dest_dir->content_lock);
+          PTHREAD_RWLOCK_unlock(&dest_dir->content_lock);
      }
 
      return status;

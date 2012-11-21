@@ -91,7 +91,7 @@ cache_inode_setattr(cache_entry_t *entry,
              goto out;
      }
 
-     pthread_rwlock_wrlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
      /* Only superuser and the owner get a free pass.
       * Everybody else gets a full body scan
@@ -218,7 +218,7 @@ cache_inode_setattr(cache_entry_t *entry,
      status = CACHE_INODE_SUCCESS;
 
 unlock:
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
 

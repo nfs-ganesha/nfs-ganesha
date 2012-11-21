@@ -99,7 +99,7 @@ cache_inode_getattr(cache_entry_t *entry,
 
         status = cb(opaque, &entry->obj_handle->attributes);
 
-        pthread_rwlock_unlock(&entry->attr_lock);
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
 
@@ -145,7 +145,7 @@ cache_inode_fileid(cache_entry_t *entry,
 
         *fileid = entry->obj_handle->attributes.fileid;
 
-        pthread_rwlock_unlock(&entry->attr_lock);
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
 
@@ -191,7 +191,7 @@ cache_inode_fsid(cache_entry_t *entry,
 
         *fsid = entry->obj_handle->attributes.fsid;
 
-        pthread_rwlock_unlock(&entry->attr_lock);
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
 
@@ -237,7 +237,7 @@ cache_inode_size(cache_entry_t *entry,
 
         *size = entry->obj_handle->attributes.filesize;
 
-        pthread_rwlock_unlock(&entry->attr_lock);
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
 
@@ -281,7 +281,7 @@ cache_inode_create_verify(cache_entry_t *entry,
                 }
         }
 
-        pthread_rwlock_unlock(&entry->attr_lock);
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
         return verified;
 }

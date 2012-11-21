@@ -50,6 +50,7 @@
 #include <pthread.h>
 #include "HashTable.h"
 #include "log.h"
+#include "fsal.h"
 #include <assert.h>
 
 /**
@@ -485,9 +486,9 @@ hash_error_t HashTable_GetLatch(struct hash_table *ht,
 
 	/* Acquire mutex */
 	if (may_write) {
-		pthread_rwlock_wrlock(&(ht->partitions[index].lock));
+		PTHREAD_RWLOCK_wrlock(&(ht->partitions[index].lock));
 	} else {
-		pthread_rwlock_rdlock(&(ht->partitions[index].lock));
+		PTHREAD_RWLOCK_rdlock(&(ht->partitions[index].lock));
 	}
 
 	rc = Key_Locate(ht, key, index, rbt_hash, &locator);
@@ -524,7 +525,7 @@ hash_error_t HashTable_GetLatch(struct hash_table *ht,
 		latch->rbt_hash = rbt_hash;
 		latch->locator = locator;
 	} else {
-		pthread_rwlock_unlock(&ht->partitions[index].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[index].lock);
 	}
 
 	if (rc != HASHTABLE_SUCCESS &&
@@ -556,7 +557,7 @@ void HashTable_ReleaseLatched(struct hash_table *ht,
 			      struct hash_latch *latch)
 {
 	if (latch) {
-		pthread_rwlock_unlock(&ht->partitions[latch->index].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[latch->index].lock);
 		memset(latch, 0, sizeof(struct hash_latch));
 	}
 }
@@ -853,7 +854,7 @@ hash_error_t HashTable_Delall(struct hash_table *ht,
 		/* Pointer to node in tree for removal */
 		struct rbt_node *cursor = NULL;
 
-		pthread_rwlock_wrlock(&ht->partitions[index].lock);
+		PTHREAD_RWLOCK_wrlock(&ht->partitions[index].lock);
 
 		/* Continue until there are no more entries in the red-black
 		   tree */
@@ -884,12 +885,12 @@ hash_error_t HashTable_Delall(struct hash_table *ht,
 			rc = free_func(key, val);
 
 			if (rc == 0) {
-				pthread_rwlock_unlock(
+				PTHREAD_RWLOCK_unlock(
 					&ht->partitions[index].lock);
 				return HASHTABLE_ERROR_DELALL_FAIL;
 			}
 		}
-		pthread_rwlock_unlock(&ht->partitions[index].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[index].lock);
 	}
 
 	return HASHTABLE_SUCCESS;

@@ -945,13 +945,13 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
 
-	pthread_rwlock_rdlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 	/* Do we need to refresh? */
 	if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
 	    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
 			   ATTR_RDATTR_ERR)) {
-		pthread_rwlock_unlock(&entry->attr_lock);
-		pthread_rwlock_wrlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 		/* Has someone else done it for us? */
 		if (!(entry->flags & CACHE_INODE_TRUST_ATTRS) ||
 		    FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
@@ -959,7 +959,7 @@ static inline cache_inode_status_t cache_inode_lock_trust_attrs(
 			/* Release the lock on error */
 			cache_status = cache_inode_refresh_attrs(entry, opctx);
 			if (cache_status != CACHE_INODE_SUCCESS) {
-				pthread_rwlock_unlock(&entry->attr_lock);
+				PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 			}
 		}
 	}

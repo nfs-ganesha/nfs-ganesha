@@ -85,7 +85,7 @@ cache_inode_invalidate(cache_entry_t *entry,
                 goto out;
         }
 
-        pthread_rwlock_wrlock(&entry->attr_lock);
+        PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
         /* We can invalidate entries with state just fine.  We force
            Cache_inode to contact the FSAL for any use of content or
@@ -113,7 +113,7 @@ cache_inode_invalidate(cache_entry_t *entry,
             status = cache_inode_close(entry, CACHE_INODE_FLAG_REALLYCLOSE);
         }
 
-        pthread_rwlock_unlock(&entry->attr_lock);
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
 

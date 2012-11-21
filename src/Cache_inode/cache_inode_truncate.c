@@ -125,11 +125,11 @@ cache_inode_truncate(cache_entry_t *entry,
 {
   cache_inode_status_t status;
 
-  pthread_rwlock_wrlock(&entry->attr_lock);
-  pthread_rwlock_wrlock(&entry->content_lock);
+  PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+  PTHREAD_RWLOCK_wrlock(&entry->content_lock);
   status = cache_inode_truncate_impl(entry, length, req_ctx);
-  pthread_rwlock_unlock(&entry->attr_lock);
-  pthread_rwlock_unlock(&entry->content_lock);
+  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+  PTHREAD_RWLOCK_unlock(&entry->content_lock);
   return status;
 }
 /** @} */

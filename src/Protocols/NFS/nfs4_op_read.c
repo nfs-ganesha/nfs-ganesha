@@ -232,7 +232,7 @@ nfs4_op_read(struct nfs_argop4 *op,
                 /* Special stateid, no open state, check to see if any
                    share conflicts */
                 state_open = NULL;
-                pthread_rwlock_rdlock(&entry->state_lock);
+                PTHREAD_RWLOCK_rdlock(&entry->state_lock);
                 anonymous = true;
 
       /* Special stateid, no open state, check to see if any share
@@ -240,7 +240,7 @@ nfs4_op_read(struct nfs_argop4 *op,
                 res_READ4.status = nfs4_check_special_stateid(entry,"READ",
                                                     FATTR4_ATTR_READ);
                 if(res_READ4.status != NFS4_OK) {
-                        pthread_rwlock_unlock(&entry->state_lock);
+                        PTHREAD_RWLOCK_unlock(&entry->state_lock);
                         return res_READ4.status;
                 }
         }
@@ -354,7 +354,7 @@ nfs4_op_read(struct nfs_argop4 *op,
 
 done:
         if (anonymous) {
-                pthread_rwlock_unlock(&entry->state_lock);
+                PTHREAD_RWLOCK_unlock(&entry->state_lock);
         }
 
         return res_READ4.status;

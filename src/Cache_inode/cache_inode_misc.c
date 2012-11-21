@@ -846,7 +846,7 @@ cache_inode_check_trust(cache_entry_t *entry,
           goto out;
         }
 
-     pthread_rwlock_rdlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
      current_time = time(NULL);
 
      oldmtime = entry->obj_handle->attributes.mtime.seconds;
@@ -861,10 +861,10 @@ cache_inode_check_trust(cache_entry_t *entry,
           goto unlock;
      }
 
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
      /* Update the atributes */
-     pthread_rwlock_wrlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
      current_time = time(NULL);
 
      /* Make sure no one else has first */
@@ -884,8 +884,8 @@ cache_inode_check_trust(cache_entry_t *entry,
 
      if ((entry->type == DIRECTORY) &&
                 (oldmtime < entry->obj_handle->attributes.mtime.seconds)) {
-          pthread_rwlock_wrlock(&entry->content_lock);
-          pthread_rwlock_unlock(&entry->attr_lock);
+          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
           atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_TRUST_CONTENT |
                                      CACHE_INODE_DIR_POPULATED);
@@ -898,13 +898,13 @@ cache_inode_check_trust(cache_entry_t *entry,
                        cache_inode_err_str(status));
           }
 
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_unlock(&entry->content_lock);
           goto out;
      }
 
 unlock:
 
-     pthread_rwlock_unlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 out:
      return status;

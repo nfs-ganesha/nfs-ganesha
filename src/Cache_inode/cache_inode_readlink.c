@@ -83,13 +83,13 @@ cache_inode_readlink(cache_entry_t *entry,
           return status;
      }
 
-     pthread_rwlock_rdlock(&entry->content_lock);
+     PTHREAD_RWLOCK_rdlock(&entry->content_lock);
      if (!(entry->flags & CACHE_INODE_TRUST_CONTENT)) {
           /* Our data are stale.  Drop the lock, get a
              write-lock, load in new data, and copy it out to
              the caller. */
-          pthread_rwlock_unlock(&entry->content_lock);
-          pthread_rwlock_wrlock(&entry->content_lock);
+          PTHREAD_RWLOCK_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
           /* Make sure nobody updated the content while we were
              waiting. */
           if (!(entry->flags & CACHE_INODE_TRUST_CONTENT)) {
@@ -111,7 +111,7 @@ cache_inode_readlink(cache_entry_t *entry,
                                                          &link_content->len,
                                                          false);
      }
-     pthread_rwlock_unlock(&entry->content_lock);
+     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
      if (FSAL_IS_ERROR(fsal_status)) {
           status = cache_inode_error_convert(fsal_status);

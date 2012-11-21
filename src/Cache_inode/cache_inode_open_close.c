@@ -183,7 +183,7 @@ cache_inode_open(cache_entry_t *entry,
 	     access_type |= FSAL_W_OK;
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          pthread_rwlock_wrlock(&entry->content_lock);
+          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
      }
 
      /* access check but based on fsal_open_flags_t, not fsal_access_flags_t
@@ -258,7 +258,7 @@ cache_inode_open(cache_entry_t *entry,
 unlock:
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_unlock(&entry->content_lock);
      }
 
 out:
@@ -299,13 +299,13 @@ cache_inode_close(cache_entry_t *entry,
      }
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          pthread_rwlock_wrlock(&entry->content_lock);
+          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
      }
 
      /* If nothing is opened, do nothing */
      if ( !is_open(entry)) {
           if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-               pthread_rwlock_unlock(&entry->content_lock);
+               PTHREAD_RWLOCK_unlock(&entry->content_lock);
           }
           LogFullDebug(COMPONENT_CACHE_INODE,
                        "Entry %p File not open", entry);
@@ -349,7 +349,7 @@ cache_inode_close(cache_entry_t *entry,
 unlock:
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_unlock(&entry->content_lock);
      }
 
 out:

@@ -106,18 +106,18 @@ static inline void src_dest_lock(cache_entry_t *src,
 {
 
   if(src == dest)
-    pthread_rwlock_wrlock(&src->content_lock);
+    PTHREAD_RWLOCK_wrlock(&src->content_lock);
   else
     {
       if(src < dest)
         {
-          pthread_rwlock_wrlock(&src->content_lock);
-          pthread_rwlock_wrlock(&dest->content_lock);
+          PTHREAD_RWLOCK_wrlock(&src->content_lock);
+          PTHREAD_RWLOCK_wrlock(&dest->content_lock);
         }
       else
         {
-          pthread_rwlock_wrlock(&dest->content_lock);
-          pthread_rwlock_wrlock(&src->content_lock);
+          PTHREAD_RWLOCK_wrlock(&dest->content_lock);
+          PTHREAD_RWLOCK_wrlock(&src->content_lock);
         }
     }
 }
@@ -138,19 +138,19 @@ static inline void src_dest_unlock(cache_entry_t *src,
 {
   if(src == dest)
     {
-      pthread_rwlock_unlock(&src->content_lock);
+      PTHREAD_RWLOCK_unlock(&src->content_lock);
     }
   else
     {
       if(src < dest)
         {
-          pthread_rwlock_unlock(&dest->content_lock);
-          pthread_rwlock_unlock(&src->content_lock);
+          PTHREAD_RWLOCK_unlock(&dest->content_lock);
+          PTHREAD_RWLOCK_unlock(&src->content_lock);
         }
       else
         {
-          pthread_rwlock_unlock(&src->content_lock);
-          pthread_rwlock_unlock(&dest->content_lock);
+          PTHREAD_RWLOCK_unlock(&src->content_lock);
+          PTHREAD_RWLOCK_unlock(&dest->content_lock);
         }
     }
 }

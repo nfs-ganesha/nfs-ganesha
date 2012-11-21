@@ -111,7 +111,7 @@ cache_inode_access_sw(cache_entry_t *entry,
 						       used_access_type);
 
 	  if (use_mutex) {
-		  pthread_rwlock_unlock(&entry->attr_lock);
+		  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	  }
           if(FSAL_IS_ERROR(fsal_status)) {
                status = cache_inode_error_convert(fsal_status);

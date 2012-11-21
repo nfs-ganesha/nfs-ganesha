@@ -62,7 +62,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
 
  restart:
       /* acquire mutex */
-      pthread_rwlock_wrlock(&ht_reap->partitions[i].lock);
+      PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].lock);
 
       /* go through all entries in the red-black-tree*/
       RBT_LOOP(head_rbt, pn)
@@ -90,7 +90,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
 
               V(pclientid->cid_mutex);
 
-              pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
+              PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
 
               if(isDebug(COMPONENT_CLIENTID))
                 {
@@ -126,7 +126,7 @@ static int reap_hash_table(hash_table_t * ht_reap)
           RBT_INCREMENT(pn);
         }
 
-      pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
+      PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
     }
 
   return count;

@@ -876,9 +876,9 @@ void state_wipe_file(cache_entry_t *entry)
       /* This thread already has some kind of lock, but we don't know
          if it's a write lock. */
       had_lock = true;
-      pthread_rwlock_unlock(&entry->state_lock);
+      PTHREAD_RWLOCK_unlock(&entry->state_lock);
     }
-  pthread_rwlock_wrlock(&entry->state_lock);
+  PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 
   state_lock_wipe(entry);
 
@@ -888,7 +888,7 @@ void state_wipe_file(cache_entry_t *entry)
 
   if (!had_lock)
     {
-      pthread_rwlock_unlock(&entry->state_lock);
+      PTHREAD_RWLOCK_unlock(&entry->state_lock);
     }
 }
 

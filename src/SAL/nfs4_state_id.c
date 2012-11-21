@@ -647,7 +647,7 @@ nfsstat4 nfs4_check_special_stateid(cache_entry_t *entry,
     }
 
   /* Acquire lock to enter critical section on this entry */
-  pthread_rwlock_rdlock(&entry->state_lock);
+  PTHREAD_RWLOCK_rdlock(&entry->state_lock);
 
   /* Iterate through file's state to look for conflicts */
   glist_for_each(glist, &entry->state_list)
@@ -718,7 +718,7 @@ nfsstat4 nfs4_check_special_stateid(cache_entry_t *entry,
   // TODO FSF: need to check against existing locks
 
  ssid_out:  // Use this exit point if the lock was already acquired.
-  pthread_rwlock_unlock(&entry->state_lock);
+  PTHREAD_RWLOCK_unlock(&entry->state_lock);
   return rc;
 }
 /** @} */

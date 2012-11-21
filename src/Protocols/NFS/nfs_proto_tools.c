@@ -202,7 +202,7 @@ nfs_SetPreOpAttr(cache_entry_t *entry,
                 attr->pre_op_attr_u.attributes.ctime.nseconds
                         = entry->obj_handle->attributes.ctime.nseconds;
                 attr->attributes_follow = TRUE;
-                pthread_rwlock_unlock(&entry->attr_lock);
+                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
         }
 } /* nfs_SetPreOpAttr */
 
@@ -3672,7 +3672,7 @@ cache_entry_to_nfs3_Fattr(cache_entry_t *entry,
                         entry->obj_handle->export->exp_entry,
                         &entry->obj_handle->attributes,
                         Fattr);
-                pthread_rwlock_unlock(&entry->attr_lock);
+                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
         }
 
         return rc;

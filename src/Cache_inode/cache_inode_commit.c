@@ -85,7 +85,7 @@ cache_inode_commit(cache_entry_t *entry,
      if ((uint64_t)count > ~(uint64_t)offset)
          return NFS4ERR_INVAL;
 
-     pthread_rwlock_rdlock(&entry->content_lock);
+     PTHREAD_RWLOCK_rdlock(&entry->content_lock);
      content_locked = true;
 
      /* Just in case the variable holds something funny when we're
@@ -93,8 +93,8 @@ cache_inode_commit(cache_entry_t *entry,
      status = CACHE_INODE_SUCCESS;
 
      if (!is_open_for_write(entry)) {
-	     pthread_rwlock_unlock(&entry->content_lock);
-	     pthread_rwlock_wrlock(&entry->content_lock);
+	     PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 	     if (!is_open_for_write(entry)) {
 		     status = cache_inode_open(entry,
 					       FSAL_O_WRITE,
@@ -146,7 +146,7 @@ cache_inode_commit(cache_entry_t *entry,
 out:
 
      if (content_locked) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_unlock(&entry->content_lock);
      }
 
      return status;

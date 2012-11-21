@@ -274,9 +274,9 @@ one_segment(cache_entry_t *entry,
 
         start_position = xdr_getpos(&loc_body);
 
-	pthread_rwlock_wrlock(&entry->state_lock);
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	++layout_state->state_data.layout.granting;
-	pthread_rwlock_unlock(&entry->state_lock);
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
         nfs_status = entry->obj_handle
 		->ops->layoutget(entry->obj_handle,
@@ -285,7 +285,7 @@ one_segment(cache_entry_t *entry,
 				 arg,
 				 res);
 
-	pthread_rwlock_wrlock(&entry->state_lock);
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	--layout_state->state_data.layout.granting;
 
         current->lo_content.loc_body.loc_body_len
@@ -293,7 +293,7 @@ one_segment(cache_entry_t *entry,
         xdr_destroy(&loc_body);
 
         if (nfs_status != NFS4_OK) {
-		pthread_rwlock_unlock(&entry->state_lock);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
                 goto out;
         }
 
@@ -307,7 +307,7 @@ one_segment(cache_entry_t *entry,
 				 res->fsal_seg_data,
 					 res->return_on_close);
 
-	pthread_rwlock_unlock(&entry->state_lock);
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
 
         if (state_status != STATE_SUCCESS) {
                 nfs_status = nfs4_Errno_state(state_status);

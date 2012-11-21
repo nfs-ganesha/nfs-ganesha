@@ -107,9 +107,9 @@ cache_inode_is_dir_empty_WithLock(cache_entry_t *entry)
 {
      cache_inode_status_t status;
 
-     pthread_rwlock_rdlock(&entry->content_lock);
+     PTHREAD_RWLOCK_rdlock(&entry->content_lock);
      status = cache_inode_is_dir_empty(entry);
-     pthread_rwlock_unlock(&entry->content_lock);
+     PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
      return status;
 }                               /* cache_inode_is_dir_empty_WithLock */
@@ -195,7 +195,7 @@ cache_inode_remove(cache_entry_t *entry,
      fsal_accessflags_t access_mask = 0;
 
      /* Get the attribute lock and check access */
-     pthread_rwlock_wrlock(&entry->attr_lock);
+     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
      /* Check if caller is allowed to perform the operation */
      access_mask = (FSAL_MODE_MASK_SET(FSAL_W_OK) |
@@ -206,13 +206,13 @@ cache_inode_remove(cache_entry_t *entry,
 				    req_ctx,
 				    false);
      if (status != CACHE_INODE_SUCCESS) {
-	  pthread_rwlock_unlock(&entry->attr_lock);
+	  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	  return status;
      }
 
      /* Acquire the directory lock and remove the entry */
 
-     pthread_rwlock_wrlock(&entry->content_lock);
+     PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
      status = cache_inode_remove_impl(entry,
 				      name,
@@ -253,14 +253,14 @@ cache_inode_remove_impl(cache_entry_t *entry,
      if(entry->type != DIRECTORY) {
 	  if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
 	      !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-		  pthread_rwlock_unlock(&entry->attr_lock);
+		  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	  }
           status = CACHE_INODE_BAD_TYPE;
           goto out;
      }
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          pthread_rwlock_rdlock(&entry->content_lock);
+          PTHREAD_RWLOCK_rdlock(&entry->content_lock);
           flags |= CACHE_INODE_FLAG_CONTENT_HAVE;
      }
 
@@ -277,7 +277,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
      if (to_remove_entry == NULL) {
 	 if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
 	     !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-		 pthread_rwlock_unlock(&entry->attr_lock);
+		 PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	 }
 	 goto out;
      }
@@ -288,12 +288,12 @@ cache_inode_remove_impl(cache_entry_t *entry,
          status = CACHE_INODE_FSAL_EPERM;
 	 if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
 	     !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-		 pthread_rwlock_unlock(&entry->attr_lock);
+		 PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	 }
          goto out;
      }
      /* Lock the attributes (so we can decrement the link count) */
-     pthread_rwlock_wrlock(&to_remove_entry->attr_lock);
+     PTHREAD_RWLOCK_wrlock(&to_remove_entry->attr_lock);
 
      LogDebug(COMPONENT_CACHE_INODE,
               "---> Cache_inode_remove : %s", name);
@@ -315,7 +315,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
           }
 	  if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
 	      !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-		  pthread_rwlock_unlock(&entry->attr_lock);
+		  PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	  }
           goto unlock;
      } else {
@@ -331,7 +331,7 @@ cache_inode_remove_impl(cache_entry_t *entry,
 
      if ((flags & CACHE_INODE_FLAG_ATTR_HAVE) &&
          !(flags & CACHE_INODE_FLAG_ATTR_HOLD)) {
-          pthread_rwlock_unlock(&entry->attr_lock);
+          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
      }
 
      /* Remove the entry from parent dir_entries avl */
@@ -359,20 +359,20 @@ cache_inode_remove_impl(cache_entry_t *entry,
      if (to_remove_entry->obj_handle->attributes.numlinks == 0) {
           /* Destroy the entry when everyone's references to it have
              been relinquished.  Most likely now. */
-          pthread_rwlock_unlock(&to_remove_entry->attr_lock);
+          PTHREAD_RWLOCK_unlock(&to_remove_entry->attr_lock);
           /* Kill off the sentinel reference (and mark the entry so
              it doesn't get recycled while a reference exists.) */
           cache_inode_lru_kill(to_remove_entry);
      } else {
      unlock:
 
-          pthread_rwlock_unlock(&to_remove_entry->attr_lock);
+          PTHREAD_RWLOCK_unlock(&to_remove_entry->attr_lock);
      }
 
 out:
      if ((flags & CACHE_INODE_FLAG_CONTENT_HAVE) &&
          !(flags & CACHE_INODE_FLAG_CONTENT_HOLD)) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          PTHREAD_RWLOCK_unlock(&entry->content_lock);
      }
 
      /* This is for the reference taken by lookup */

@@ -152,7 +152,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
 
   pentry = data->current_entry;
 
-  pthread_rwlock_wrlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_wrlock(&pentry->state_lock);
 
   glist_for_each(glist, &pentry->object.file.lock_list)
   {
@@ -165,13 +165,13 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op,
       else
       {
           LogDebug(COMPONENT_NFS_V4_LOCK,"list is empty %p", found_entry);
-          pthread_rwlock_unlock(&pentry->state_lock);
+          PTHREAD_RWLOCK_unlock(&pentry->state_lock);
           res_DELEGRETURN4.status = NFS4ERR_BAD_STATEID;
           return res_DELEGRETURN4.status;
       }
       break;
   }
-  pthread_rwlock_unlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_unlock(&pentry->state_lock);
 
   plock_owner = found_entry->sle_owner;
 

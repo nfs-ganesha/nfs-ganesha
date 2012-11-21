@@ -36,17 +36,17 @@ pthread_rwlock_t vfs_lock;
 
 void ZFSFSAL_VFS_RDLock()
 {
-  pthread_rwlock_rdlock(&vfs_lock);
+  PTHREAD_RWLOCK_rdlock(&vfs_lock);
 }
 
 void ZFSFSAL_VFS_WRLock()
 {
-  pthread_rwlock_wrlock(&vfs_lock);
+  PTHREAD_RWLOCK_wrlock(&vfs_lock);
 }
 
 void ZFSFSAL_VFS_Unlock()
 {
-  pthread_rwlock_unlock(&vfs_lock);
+  PTHREAD_RWLOCK_unlock(&vfs_lock);
 }
 
 

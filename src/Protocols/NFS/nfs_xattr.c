@@ -159,7 +159,7 @@ int nfs3_FSALattr_To_XattrDir(cache_entry_t *entry,
                          ~(entry->obj_handle->attributes.fileid)) - 1;
         /* set current time, to force the client refreshing its xattr dir */
         nfs_set_times_current(Fattr);
-        pthread_rwlock_unlock(&entry->attr_lock);
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
         return 1;
 } /* nfs3_FSALattr_To_XattrDir */

@@ -200,7 +200,7 @@ update_queue(struct fsal_up_event_update *update,
         bool mutatis_mutandis = false;
 
         if (up_get(&file->key, &entry) == 0) {
-                pthread_rwlock_wrlock(&entry->attr_lock);
+                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
                 if (FSAL_TEST_MASK(update->attr.mask,
                                    ATTR_SIZE) &&
@@ -339,7 +339,7 @@ update_queue(struct fsal_up_event_update *update,
                         cache_inode_fixup_md(entry);
                 }
 
-                pthread_rwlock_unlock(&entry->attr_lock);
+                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
                 cache_inode_put(entry);
         }
 }
@@ -492,13 +492,13 @@ link_queue(struct fsal_up_event_link *link,
 					link->name,
 					entry,
 					NULL);
-                                pthread_rwlock_wrlock(&entry->attr_lock);
+                                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
                                 if (entry->flags &
                                     CACHE_INODE_TRUST_ATTRS) {
                                         ++entry->obj_handle
                                                 ->attributes.numlinks;
                                 }
-                                pthread_rwlock_unlock(&entry->attr_lock);
+                                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
                                 cache_inode_put(entry);
                         } else {
                                 cache_inode_invalidate(
@@ -533,7 +533,7 @@ unlink_queue(struct fsal_up_event_unlink *unlink,
                 /* The looked up directory entry */
                 cache_inode_dir_entry_t *dirent;
 
-                pthread_rwlock_wrlock(&parent->content_lock);
+                PTHREAD_RWLOCK_wrlock(&parent->content_lock);
                 dirent = cache_inode_avl_qp_lookup_s(parent, unlink->name, 1);
                 if (dirent &&
                     ~(dirent->flags & DIR_ENTRY_FLAG_DELETED)) {
@@ -541,18 +541,18 @@ unlink_queue(struct fsal_up_event_unlink *unlink,
                         cache_entry_t *entry = NULL;
                         if ((entry = cache_inode_weakref_get(&dirent->entry,
                                                              0))) {
-                                pthread_rwlock_wrlock(&entry->attr_lock);
+                                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
                                 if (entry->flags &
                                     CACHE_INODE_TRUST_ATTRS) {
                                         if (--entry->obj_handle
                                             ->attributes.numlinks
                                             == 0) {
-                                                pthread_rwlock_unlock(
+                                                PTHREAD_RWLOCK_unlock(
                                                         &entry->attr_lock);
                                                 cache_inode_lru_kill(
                                                         entry);
                                         } else {
-                                                pthread_rwlock_unlock(
+                                                PTHREAD_RWLOCK_unlock(
                                                         &entry->attr_lock);
                                         }
                                 }
@@ -561,7 +561,7 @@ unlink_queue(struct fsal_up_event_unlink *unlink,
                         cache_inode_remove_cached_dirent(parent,
                                                          unlink->name);
                 }
-                pthread_rwlock_unlock(&parent->content_lock);
+                PTHREAD_RWLOCK_unlock(&parent->content_lock);
                 cache_inode_put(parent);
         }
         gsh_free(unlink->name);
@@ -586,10 +586,10 @@ move_from_queue(struct fsal_up_event_move_from *move_from,
         cache_entry_t *parent = NULL;
 
         if (up_get(&file->key, &parent) == 0) {
-                pthread_rwlock_wrlock(&parent->content_lock);
+                PTHREAD_RWLOCK_wrlock(&parent->content_lock);
                 cache_inode_remove_cached_dirent(parent,
                                                  move_from->name);
-                pthread_rwlock_unlock(&parent->content_lock);
+                PTHREAD_RWLOCK_unlock(&parent->content_lock);
                 cache_inode_put(parent);
         }
         gsh_free(move_from->name);
@@ -686,7 +686,7 @@ rename_queue(struct fsal_up_event_rename *rename,
                 /* Cache inode status */
                 cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
-                pthread_rwlock_wrlock(&parent->content_lock);
+                PTHREAD_RWLOCK_wrlock(&parent->content_lock);
                 status = cache_inode_rename_cached_dirent(
 			parent,
 			rename->old,
@@ -695,7 +695,7 @@ rename_queue(struct fsal_up_event_rename *rename,
                         cache_inode_invalidate(parent,
                                                CACHE_INODE_INVALIDATE_CONTENT);
                 }
-                pthread_rwlock_unlock(&parent->content_lock);
+                PTHREAD_RWLOCK_unlock(&parent->content_lock);
                 cache_inode_put(parent);
         }
         gsh_free(rename->old);
@@ -902,7 +902,7 @@ layoutrecall_imm(struct fsal_up_event_layoutrecall *layoutrecall,
                 if (rc != 0) {
                         return rc;
                 }
-                pthread_rwlock_wrlock(&entry->state_lock);
+                PTHREAD_RWLOCK_wrlock(&entry->state_lock);
                 /* We create the file recall state here and link it
                    to the cache entry, but actually send out the
                    messages from the queued function.  We do the
@@ -913,7 +913,7 @@ layoutrecall_imm(struct fsal_up_event_layoutrecall *layoutrecall,
                                         &layoutrecall->segment,
                                         layoutrecall->cookie,
                                         private);
-                pthread_rwlock_unlock(&entry->state_lock);
+                PTHREAD_RWLOCK_unlock(&entry->state_lock);
                 cache_inode_put(entry);
                 break;
 
@@ -1049,7 +1049,7 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 		CB_LAYOUTRECALL4args *cb_layoutrec
 			= &arg.nfs_cb_argop4_u.opcblayoutrecall;
 		arg.argop = NFS4_OP_CB_LAYOUTRECALL;
-		pthread_rwlock_wrlock(&entry->state_lock);
+		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 		cb_layoutrec->clora_type = layoutrecall->layout_type;
 		cb_layoutrec->clora_iomode
 			= layoutrecall->segment.io_mode;
@@ -1123,7 +1123,7 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 					      &deleted,
 					      false);
 		}
-		pthread_rwlock_unlock(&entry->state_lock);
+		PTHREAD_RWLOCK_unlock(&entry->state_lock);
 	}
 }
 
@@ -1257,7 +1257,7 @@ static void delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
           "FSAL_UP_DELEG: Invalidate cache found entry %p type %u",
           pentry, pentry->type);
 
-  pthread_rwlock_wrlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_wrlock(&pentry->state_lock);
 
   glist_for_each(glist, &pentry->object.file.lock_list)
   {
@@ -1269,7 +1269,7 @@ static void delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
           delegrecall_one(found_entry, pentry);
       }
   }
-  pthread_rwlock_unlock(&pentry->state_lock);
+  PTHREAD_RWLOCK_unlock(&pentry->state_lock);
 
   cache_inode_put(pentry);
 
