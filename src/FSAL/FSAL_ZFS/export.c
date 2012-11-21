@@ -255,7 +255,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  * is the option to also adjust the start pointer.
  */
 
-static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
+static fsal_status_t tank_extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
@@ -271,14 +271,14 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
-				 "V2 size too small for handle.  should be %lu, got %lu",
-				 fh_size, fh_desc->len);
+				 "V2 size too small for handle.  should be %lu, got %u",
+				 (unsigned long int)fh_size, (unsigned int)fh_desc->len);
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
 	} else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
-			 "Size mismatch for handle.  should be %lu, got %lu",
-			 fh_size, fh_desc->len);
+			 "Size mismatch for handle.  should be %lu, got %u",
+			 (unsigned long int)fh_size, (unsigned int)fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 	fh_desc->len = fh_size;  /* pass back the actual size */
@@ -295,7 +295,7 @@ void zfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
 	ops->lookup_path = tank_lookup_path; 
-	ops->extract_handle = extract_handle;
+	ops->extract_handle = tank_extract_handle;
 	ops->create_handle = tank_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;
@@ -355,6 +355,24 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
 	}
 	memset(myself, 0, sizeof(struct zfs_fsal_export));
 
+                
+        retval = fsal_export_init(&myself->export, exp_entry);
+	if(retval != 0)
+		goto errout;
+
+	zfs_export_ops_init(myself->export.ops);
+	zfs_handle_ops_init(myself->export.obj_ops);
+        myself->export.up_ops = up_ops;
+	/* lock myself before attaching to the fsal.
+	 * keep myself locked until done with creating myself.
+	 */
+
+	pthread_mutex_lock(&myself->export.lock);
+	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
+	if(retval != 0)
+		goto errout; /* seriously bad */
+	myself->export.fsal = fsal_hdl;
+
         if( p_zhd == NULL )
         {
           /* init libzfs library */
@@ -383,25 +401,9 @@ fsal_status_t zfs_create_export(struct fsal_module *fsal_hdl,
         }
 
         myself->p_vfs = p_snapshots[0].p_vfs;
-        
-        retval = fsal_export_init(&myself->export, exp_entry);
-	if(retval != 0)
-		goto errout;
+      	*export = &myself->export;
+        pthread_mutex_unlock(&myself->export.lock);
 
-	zfs_export_ops_init(myself->export.ops);
-	zfs_handle_ops_init(myself->export.obj_ops);
-        myself->export.up_ops = up_ops;
-	/* lock myself before attaching to the fsal.
-	 * keep myself locked until done with creating myself.
-	 */
-
-	pthread_mutex_lock(&myself->export.lock);
-	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
-	if(retval != 0)
-		goto errout; /* seriously bad */
-	myself->export.fsal = fsal_hdl;
-
-	*export = &myself->export;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 errout:

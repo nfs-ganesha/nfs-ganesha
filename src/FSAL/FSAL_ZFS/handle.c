@@ -265,7 +265,41 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
                               const char *path,
 			      struct fsal_obj_handle **handle)
 {
+
+  
+   if( strcmp( path, "/" ) )
 	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
+   else
+    {
+        inogen_t object;
+        int rc = 0 ;
+	struct zfs_fsal_obj_handle *hdl;
+        struct zfs_file_handle *dir_hdl = NULL;
+	struct zfs_file_handle *fh = NULL ;
+		
+
+        if( (rc = libzfswrap_getroot( tank_get_root_pvfs( exp_hdl) , &object ) ) )
+          return fsalstat( posix2fsal_error(rc ) , rc ) ;
+
+        fh =  alloca(sizeof(struct zfs_file_handle));
+	hdl = alloc_handle( fh,
+			    dir_hdl,
+                            DIRECTORY,
+			    exp_hdl);
+	if(hdl != NULL) {
+		*handle = &hdl->obj_handle ;
+
+                hdl->handle->zfs_handle = object;
+                hdl->handle->type = S_IFDIR ;
+                hdl->handle->i_snap = 0;
+	} else {
+		*handle = NULL; /* poison it */
+                return fsalstat( ERR_FSAL_NOMEM , 0 ) ;
+	}
+
+    }
+        
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* create
