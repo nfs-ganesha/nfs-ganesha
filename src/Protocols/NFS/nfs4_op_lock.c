@@ -538,7 +538,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
 
                 if (arg_LOCK4->locker.new_lock_owner) {
                         /* Need to destroy lock owner and state */
-                        state_status = state_del(lock_state);
+                        state_status = state_del(lock_state, false);
                         if(state_status != STATE_SUCCESS)
                                 LogDebug(COMPONENT_NFS_V4_LOCK,
                                          "state_del failed with status %s",

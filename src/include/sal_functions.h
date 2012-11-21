@@ -530,7 +530,7 @@ state_status_t state_set(state_t *state);
 state_status_t state_del_locked(state_t *state,
                                 cache_entry_t *entry);
 
-state_status_t state_del(state_t *state);
+state_status_t state_del(state_t *state, bool hold_lock);
 
 int display_lock_cookie_key(struct gsh_buffdesc *buff, char *str);
 int display_lock_cookie_val(struct gsh_buffdesc *buff, char *str);

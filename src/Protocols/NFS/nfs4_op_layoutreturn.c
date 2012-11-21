@@ -161,7 +161,8 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
                                 arg_LAYOUTRETURN4->lora_layoutreturn
                                 .layoutreturn4_u.lr_layout.lrf_body
                                 .lrf_body_val,
-                                &deleted);
+                                &deleted,
+                                false);
                 if (res_LAYOUTRETURN4->lorr_status == NFS4_OK) {
                         if (deleted) {
                                 memset(data->current_stateid.other, 0,
@@ -262,7 +263,8 @@ nfs4_op_layoutreturn(struct nfs_argop4 *op,
                                         spec,
                                         0,
                                         NULL,
-                                        &deleted);
+                                        &deleted,
+                                        false);
                         if (res_LAYOUTRETURN4->lorr_status != NFS4_OK) {
                                 break;
                         }
@@ -415,7 +417,8 @@ nfs4_return_one_state(cache_entry_t *entry,
                       struct pnfs_segment spec_segment,
                       size_t body_len,
                       const void *body_val,
-                      bool *deleted)
+                      bool *deleted,
+                      bool hold_lock)
 {
         /* Return from SAL calls */
         state_status_t state_status = 0;
@@ -530,7 +533,7 @@ nfs4_return_one_state(cache_entry_t *entry,
                         xdr_setpos(&lrf_body, beginning);
                 }
                 if (glist_empty(&layout_state->state_data.layout.state_segments)) {
-			state_status = state_del(layout_state);
+			state_status = state_del(layout_state, hold_lock);
                         *deleted = true;
                 } else {
                         *deleted = false;

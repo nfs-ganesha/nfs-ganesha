@@ -254,7 +254,8 @@ int nfs4_op_close(struct nfs_argop4 *op,
                                                 entire,
                                                 0,
                                                 NULL,
-                                                &deleted);
+                                                &deleted,
+                                                true);
                                         if (!deleted) {
                                                 LogCrit(COMPONENT_PNFS,
                                                         "Layout state not "

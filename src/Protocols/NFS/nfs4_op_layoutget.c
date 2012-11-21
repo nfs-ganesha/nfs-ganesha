@@ -166,7 +166,8 @@ acquire_layout_state(compound_data_t *data,
                                                      entire,
                                                      0,
                                                      NULL,
-                                                     &deleted)) != NFS4_OK) {
+                                                     &deleted,
+                                                     false)) != NFS4_OK) {
                                 goto out;
                         }
                         if (!deleted) {
@@ -495,7 +496,7 @@ out:
                 }
 
                 if ((layout_state) && (layout_state->state_seqid == 0)) {
-                        state_del(layout_state);
+                        state_del(layout_state, false);
                         layout_state = NULL;
                 }
         }

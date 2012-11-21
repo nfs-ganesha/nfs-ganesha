@@ -28,13 +28,5 @@ libfsalgpfs_la_SOURCES = main.c				\
                          ../../include/fsal_types.h	\
 	                 ../../include/err_fsal.h
 
-
-# ??? for now unused files
-#
-#libfsalgpfs_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c
-#	fsal_dirs.c fsal_fsinfo.c fsal_rcp.c fsal_init.c
-#	fsal_stats.c fsal_tools.c fsal_local_op.c
-#	fsal_xattrs.c
-
 new: clean all
 

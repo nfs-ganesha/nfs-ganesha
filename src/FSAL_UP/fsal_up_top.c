@@ -981,7 +981,8 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 					      completion->segment,
 					      0,
 					      NULL,
-					      &deleted);
+					      &deleted,
+					      false);
 		}
 	}
 
@@ -1119,7 +1120,8 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 					      layoutrecall->segment,
 					      0,
 					      NULL,
-					      &deleted);
+					      &deleted,
+					      false);
 		}
 		pthread_rwlock_unlock(&entry->state_lock);
 	}

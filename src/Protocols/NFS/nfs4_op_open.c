@@ -1119,6 +1119,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
                    if (found_entry != NULL)
                    {
                      LogDebug(COMPONENT_NFS_CB,"found_entry %p", found_entry);
+                     file_state = found_entry->sle_state;
                    }
                    else
                    {
@@ -1130,8 +1131,6 @@ int nfs4_op_open(struct nfs_argop4 *op,
                    break;
                 }
                 pthread_rwlock_unlock(&entry_lookup->state_lock);
-
-                file_state = found_entry->sle_state;
 
                 res_OPEN4->OPEN4res_u.resok4.stateid.seqid = file_state->state_seqid;
                 memcpy(res_OPEN4->OPEN4res_u.resok4.stateid.other,
@@ -1262,7 +1261,7 @@ out3:
             new_state &&
             (res_OPEN4->status != NFS4_OK)) {
                 /* Need to destroy open owner and state */
-                state_status = state_del(file_state);
+                state_status = state_del(file_state, false);
                 if (state_status != STATE_SUCCESS)
                         LogDebug(COMPONENT_NFS_V4_LOCK,
                                  "state_del failed with status %s",
@@ -1277,7 +1276,6 @@ out3:
                 /* Need to release the open owner for this call */
                 dec_state_owner_ref(owner);
         }
-
         return res_OPEN4->status;
 } /* nfs4_op_open */
 

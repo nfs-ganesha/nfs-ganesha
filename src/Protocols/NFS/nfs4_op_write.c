@@ -235,8 +235,9 @@ int nfs4_op_write(struct nfs_argop4 *op,
 					data->req_ctx);
       if (cache_status != CACHE_INODE_SUCCESS)
         {
-          res_WRITE4.status = nfs4_Errno(cache_status);;
-          pthread_rwlock_unlock(&entry->state_lock);
+          res_WRITE4.status = nfs4_Errno(cache_status);
+          if (anonymous)
+            pthread_rwlock_unlock(&entry->state_lock);
           return res_WRITE4.status;
         }
     }

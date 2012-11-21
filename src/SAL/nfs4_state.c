@@ -360,16 +360,18 @@ state_status_t state_del_locked(state_t *state,
  * @return Status of operation
  *
  */
-state_status_t state_del(state_t *state)
+state_status_t state_del(state_t *state, bool hold_lock)
 {
   cache_entry_t *entry = state->state_entry;
   state_status_t status = 0;
 
-  pthread_rwlock_wrlock(&entry->state_lock);
+  if (!hold_lock)
+    pthread_rwlock_wrlock(&entry->state_lock);
 
   status = state_del_locked(state, state->state_entry);
 
-  pthread_rwlock_unlock(&entry->state_lock);
+  if (!hold_lock)
+    pthread_rwlock_unlock(&entry->state_lock);
 
   return status;
 }
@@ -423,7 +425,7 @@ void release_lockstate(state_owner_t *lock_owner)
         LogCrit(COMPONENT_CLIENTID,
                 "Ugliness - cache_inode_lru_ref has returned non-success");
 
-      state_status = state_del(state_found);
+      state_status = state_del(state_found, false);
       if (state_status != STATE_SUCCESS)
 	{
 	  LogDebug(COMPONENT_CLIENTID,

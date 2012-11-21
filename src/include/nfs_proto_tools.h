@@ -204,7 +204,8 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                                struct pnfs_segment spec_segment,
                                size_t body_len,
                                const void* body_val,
-                               bool *deleted);
+                               bool *deleted,
+                               bool hold_lcok);
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
                               object_file_type_t required_type,
                               bool ds_allowed);

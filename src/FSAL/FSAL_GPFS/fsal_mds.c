@@ -31,52 +31,6 @@
 #include "FSAL/fsal_commonlib.h"
 
 /**
- * @file   mds.c
- * @author Adam C. Emerson <aemerson@linuxbox.com>
- * @date   Wed Aug 22 14:13:16 2012
- *
- * @brief pNFS Metadata Server Operations for the GPFS FSAL
- *
- * This file implements the layoutget, layoutreturn, layoutcommit,
- * getdeviceinfo, and getdevicelist operations and export query
- * support for the GPFS FSAL.
- */
-
-#if 0 //???
-static void
-initiate_recall(vinodeno_t vi, bool write, void *opaque)
-{
-        /* The private 'full' object handle */
-        struct handle *handle = (struct handle *)opaque;
-        /* The private 'full' export */
-        struct export *export
-                = container_of(handle->handle.export, struct export, export);
-        /* Event to trigger */
-        struct fsal_up_event *event = fsal_up_alloc_event();
-
-        event->functions = export->export.up_ops;
-        event->type = FSAL_UP_EVENT_LAYOUTRECALL;
-        event->data.layoutrecall.layout_type = LAYOUT4_NFSV4_1_FILES;
-        event->data.layoutrecall.recall_type = LAYOUTRECALL4_FILE;
-        event->data.layoutrecall.changed = false;
-        event->data.layoutrecall.segment.offset = 0;
-        event->data.layoutrecall.segment.length = UINT64_MAX;
-        event->data.layoutrecall.segment.io_mode
-                = (write ?
-                   LAYOUTIOMODE4_READ :
-                   LAYOUTIOMODE4_RW);
-        event->data.layoutrecall.cookie = NULL;
-        event->file.key.addr = gsh_malloc(sizeof(struct wire_handle));
-        event->file.key.len = sizeof(struct wire_handle);
-        memcpy(event->file.key.addr, &handle->wire,
-               sizeof(struct wire_handle));
-        event->file.export = &export->export;
-
-        fsal_up_submit(event);
-}
-#endif
-
-/**
  * @brief Get layout types supported by export
  *
  * We just return a pointer to the single type and set the count to 1.
@@ -295,6 +249,7 @@ layoutget(struct fsal_obj_handle *obj_hdl,
 	struct gpfs_fsal_obj_handle *myself;
         struct gpfs_file_handle *gpfs_handle;
         struct layoutget_arg larg;
+	struct layoutreturn_arg lrarg;
         unsigned int rc, *fh;
         /* Structure containing the storage parameters of the file within
             the GPFS cluster. */
@@ -364,7 +319,7 @@ layoutget(struct fsal_obj_handle *obj_hdl,
         res->last_segment = true;
         res->segment.offset = 0;
         res->segment.length = NFS4_UINT64_MAX;
-        res->segment.io_mode = LAYOUTIOMODE4_RW;
+        res->segment.io_mode = arg->iomode;
 
         stripe_width = file_layout.lg_stripe_unit;
         util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS;
@@ -400,7 +355,18 @@ relinquish:
         /* If we failed in encoding the lo_content, relinquish what we
            reserved for it. */
 
-//???? if error retrun the layout
+        lrarg.mountdirfd = myself->u.file.fd;
+        lrarg.handle = gpfs_handle;
+        lrarg.args.lr_return_type = arg->type;
+	lrarg.args.lr_reclaim = false;
+        lrarg.args.lr_seg.clientid = 0;
+        lrarg.args.lr_seg.layout_type = arg->type;
+        lrarg.args.lr_seg.iomode = arg->iomode;
+        lrarg.args.lr_seg.offset = 0;
+        lrarg.args.lr_seg.length = NFS4_UINT64_MAX;
+
+        rc = gpfs_ganesha(OPENHANDLE_LAYOUT_RETURN, &lrarg);
+           LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutreturn rc %d", rc);
 
         return nfs_status;
 }
