@@ -77,6 +77,7 @@ int _9p_tools_get_req_context_by_uid( u32 uid, _9p_fid_t * pfid )
 
   pfid->op_context.creds = &pfid->ucred;
   pfid->op_context.caller_addr = NULL ; /* Useless for 9P, we'll see if daemon crashes... */
+  pfid->op_context.req_type = _9P_REQUEST;
 
   return 0 ;
 } /* _9p_tools_get_fsal_cred */

@@ -1072,6 +1072,7 @@ static void nfs_rpc_execute(request_data_t *preq,
       req_ctx.caller_addr = &hostaddr;
       req_ctx.clientid = NULL;
       req_ctx.nfs_vers = req->rq_vers;
+      req_ctx.req_type = preq->rtype;
 
       /* processing */
       P(worker_data->request_pool_mutex); /* timer_start is thread var */

@@ -151,7 +151,8 @@ struct req_op_context {
         sockaddr_t *caller_addr; /*< IP connection info */
         const uint64_t*clientid; /*< Client ID of caller, NULL if
                                      unknown/not applicable. */
-	uint32_t nfs_vers;       /*< protocol version of request */
+	uint32_t nfs_vers;       /*< NFS protocol version of request */
+	uint32_t req_type;       /*< request_type */
         /* add new context members here */
 };
 
