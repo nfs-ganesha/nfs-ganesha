@@ -579,25 +579,7 @@ out:
 	return fsalstat(fsal_error, retval);	
 }
 
-/* not defined in linux headers so we do it here
- */
-
-struct linux_dirent {
-	unsigned long  d_ino;     /* Inode number */
-	unsigned long  d_off;     /* Offset to next linux_dirent */
-	unsigned short d_reclen;  /* Length of this linux_dirent */
-	char           d_name[];  /* Filename (null-terminated) */
-	/* length is actually (d_reclen - 2 -
-	 * offsetof(struct linux_dirent, d_name)
-	 */
-	/*
-	  char           pad;       // Zero padding byte
-	  char           d_type;    // File type (only since Linux 2.6.4;
-	  // offset is (d_reclen - 1))
-	  */
-};
-
-#define BUF_SIZE 1024
+#define MAX_ENTRIES 256
 /**
  * read_dirents
  * read the directory and call through the callback function for
@@ -609,32 +591,23 @@ struct linux_dirent {
  * @param cb [IN] callback function
  * @param eof [OUT] eof marker true == end of dir
  */
-#if plustard
-static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
-				  const struct req_op_context *opctx,
-				  uint32_t entry_cnt,
+static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
+			      	  const struct req_op_context *opctx,
 				  struct fsal_cookie *whence,
 				  void *dir_state,
-				  fsal_status_t (*cb)(
-					  const struct req_op_context *opctx,
-					  const char *name,
-					  unsigned int dtype,
-					  struct fsal_obj_handle *dir_hdl,
-					  void *dir_state,
-					  struct fsal_cookie *cookie),
+                                  fsal_readdir_cb cb,
                                   bool *eof)
 {
 	struct zfs_fsal_obj_handle *myself;
-	int dirfd ;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t status;
 	int retval = 0;
 	off_t seekloc = 0;
-	int bpos, cnt, nread;
-	unsigned char d_type;
-	struct linux_dirent *dentry;
+        creden_t cred ;
+        int index = 0;
 	struct fsal_cookie *entry_cookie;
-	char buf[BUF_SIZE];
+        libzfswrap_vfs_t   * p_vfs   = NULL ;
+        libzfswrap_vnode_t * pvnode  = NULL ;
+        libzfswrap_entry_t * dirents = NULL ;
 
 	if(whence != NULL) {
 		if(whence->size != sizeof(off_t)) {
@@ -644,66 +617,77 @@ static fsal_status_t lustre_read_dirents(struct fsal_obj_handle *dir_hdl,
 		}
 		memcpy(&seekloc, whence->cookie, sizeof(off_t));
 	}
+
 	entry_cookie = alloca(sizeof(struct fsal_cookie) + sizeof(off_t));
 	myself = container_of(dir_hdl, struct zfs_fsal_obj_handle, obj_handle);
-	dirfd = lustre_open_by_handle( lustre_get_root_path( dir_hdl->export),myself->handle, (O_RDONLY|O_DIRECTORY));
-	if(dirfd < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		goto out;
-	}
-	seekloc = lseek(dirfd, seekloc, SEEK_SET);
-	if(seekloc < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-		goto done;
-	}
-	cnt = 0;
-	do {
-		nread = syscall(SYS_getdents, dirfd, buf, BUF_SIZE);
-		if(nread < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-			goto done;
-		}
-		if(nread == 0)
-			break;
-		for(bpos = 0; bpos < nread;) {
-			dentry = (struct linux_dirent *)(buf + bpos);
-			if(strcmp(dentry->d_name, ".") == 0 ||
-			   strcmp(dentry->d_name, "..") == 0)
-				goto skip; /* must skip '.' and '..' */
-			d_type = *(buf + bpos + dentry->d_reclen - 1);
-			entry_cookie->size = sizeof(off_t);
-			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
 
-			/* callback to cache inode */
-			status = cb(opctx,
-				    dentry->d_name,
-				    d_type,
-				    dir_hdl,
-				    dir_state, entry_cookie);
-			if(FSAL_IS_ERROR(status)) {
-				fsal_error = status.major;
-				retval = status.minor;
-				goto done;
-			}
-		skip:
-			bpos += dentry->d_reclen;
-			cnt++;
-			if(entry_cnt > 0 && cnt >= entry_cnt)
-				goto done;
-		}
-	} while(nread > 0);
+        cred.uid = opctx->creds->caller_uid;
+        cred.gid = opctx->creds->caller_gid;
 
-        *eof = (nread == 0);
-done:
-	close(dirfd);
-	
+        ZFSFSAL_VFS_RDLock();
+
+        p_vfs = ZFSFSAL_GetVFS( myself->handle );
+        if(!p_vfs)
+         {
+             fsal_error = ERR_FSAL_NOENT ;
+             retval = 0 ;
+             goto out;
+         }
+
+
+        /* Open the directory */
+        if( ( retval = libzfswrap_opendir( p_vfs,  
+                                           &cred,
+                                           myself->handle->zfs_handle,
+                                           &pvnode ) ) )
+
+         {
+             fsal_error = posix2fsal_error( retval ) ;
+             goto out;
+         }
+        ZFSFSAL_VFS_Unlock() ; /* Release the lock for interlacing the request */
+
+      
+        if( ( dirents = gsh_malloc( MAX_ENTRIES * sizeof(libzfswrap_entry_t) ) ) == NULL )
+        {
+             fsal_error = ERR_FSAL_NOMEM;
+             retval = 0 ;
+             goto out;
+	}
+
+
+        if( ( retval = libzfswrap_readdir( p_vfs,
+                                           &cred,
+                                           pvnode,
+                                           dirents,  
+                                           MAX_ENTRIES,
+                                           &seekloc ) ) )
+         {
+             fsal_error = posix2fsal_error( retval ) ;
+             goto out;
+         }
+
+        ZFSFSAL_VFS_Unlock() ;
+
+        /* Close the directory */
+        ZFSFSAL_VFS_RDLock();
+        if( ( retval = libzfswrap_closedir( p_vfs,
+                                            &cred,
+                                            pvnode ) ) )
+         {
+             fsal_error = posix2fsal_error( retval ) ;
+             goto out;
+         }
+
+
+        /* read the directory */
+        ZFSFSAL_VFS_RDLock();
+
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);
 out:
-	return fsalstat(fsal_error, retval);
+        ZFSFSAL_VFS_Unlock();
+        return fsalstat(fsal_error, 0);
 }
-#endif
 
 static fsal_status_t tank_renamefile( struct fsal_obj_handle *olddir_hdl,
                                      const struct req_op_context *opctx,
@@ -1094,7 +1078,7 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
 	ops->lookup = tank_lookup;
-	//////////////////////////////////////ops->readdir = tank_read_dirents;
+	ops->readdir = tank_readdir;
 	ops->create = tank_create;
 	ops->mkdir = tank_mkdir;
 	ops->mknode = tank_makenode;
@@ -1107,7 +1091,7 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->rename = tank_renamefile;
 	ops->unlink = tank_file_unlink;
 	ops->truncate = tank_file_truncate;
-	ops->open = tank_open;
+	//////ops->open = tank_open;
 	ops->status = tank_status;
 	ops->read = tank_read;
 	ops->write = tank_write;
