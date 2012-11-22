@@ -702,6 +702,7 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
         libzfswrap_vfs_t   * p_vfs   = NULL ;
         libzfswrap_vnode_t * pvnode  = NULL ;
         libzfswrap_entry_t * dirents = NULL ;
+        unsigned int index  = 0 ;
 
 	if(whence != NULL) {
 		if(whence->size != sizeof(off_t)) {
@@ -735,19 +736,13 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
                                            myself->handle->zfs_handle,
                                            &pvnode ) ) )
 
-         {
-             fsal_error = posix2fsal_error( retval ) ;
              goto out;
-         }
+
         ZFSFSAL_VFS_Unlock() ; /* Release the lock for interlacing the request */
 
       
         if( ( dirents = gsh_malloc( MAX_ENTRIES * sizeof(libzfswrap_entry_t) ) ) == NULL )
-        {
-             fsal_error = ERR_FSAL_NOMEM;
-             retval = 0 ;
-             goto out;
-	}
+          return fsalstat( ERR_FSAL_NOMEM, 0 ) ;
 
 
         if( ( retval = libzfswrap_readdir( p_vfs,
@@ -756,22 +751,41 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
                                            dirents,  
                                            MAX_ENTRIES,
                                            &seekloc ) ) )
-         {
-             fsal_error = posix2fsal_error( retval ) ;
              goto out;
-         }
 
         ZFSFSAL_VFS_Unlock() ;
+
+        *eof = FALSE ;
+        for( index = 0 ; index < MAX_ENTRIES ; index ++ )
+        {
+             /* If psz_filename is NULL, that's the end of the list */
+             if(dirents[index].psz_filename[0] == '\0')
+              {
+                *eof = TRUE ;
+                break;
+              }
+
+             /* Skip '.' and '..' */
+             if(!strcmp(dirents[index].psz_filename, ".") || !strcmp(dirents[index].psz_filename, ".."))
+                continue;
+   
+             entry_cookie->size = sizeof(off_t);
+	     memcpy(&entry_cookie->cookie, &index, sizeof(off_t));
+
+             /* callback to cache inode */
+             if(!cb( opctx,
+                     dirents[index].psz_filename,
+                     dir_state,
+                     entry_cookie ) ) 
+                break ;
+        }
 
         /* Close the directory */
         ZFSFSAL_VFS_RDLock();
         if( ( retval = libzfswrap_closedir( p_vfs,
                                             &cred,
                                             pvnode ) ) )
-         {
-             fsal_error = posix2fsal_error( retval ) ;
              goto out;
-         }
 
 
         /* read the directory */
@@ -780,7 +794,7 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 out:
         ZFSFSAL_VFS_Unlock();
-        return fsalstat(fsal_error, 0);
+        return fsalstat(posix2fsal_error( retval ), retval);
 }
 
 static fsal_status_t tank_renamefile( struct fsal_obj_handle *olddir_hdl,
