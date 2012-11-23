@@ -88,7 +88,6 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle)
 static struct zfs_fsal_obj_handle *alloc_handle(struct zfs_file_handle *fh,
                                                 struct stat *stat,
                                                 const char *link_content,
-                                                struct zfs_file_handle *dir_fh,
                                                 struct fsal_export *exp_hdl)
 {
 	struct zfs_fsal_obj_handle *hdl;
@@ -277,7 +276,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 	hdl = alloc_handle(fh,
                            &stat,
                            NULL,
-			   NULL,
 			   parent->export);
 	if(hdl != NULL) {
 		*handle = &hdl->obj_handle ;
@@ -313,7 +311,6 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
         inogen_t object;
         int rc = 0 ;
 	struct zfs_fsal_obj_handle *hdl;
-        struct zfs_file_handle *dir_hdl = NULL;
 	struct zfs_file_handle *fh = NULL ;
         struct stat stat ;		
         int type ;
@@ -345,7 +342,6 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
 	hdl = alloc_handle( fh,
                             &stat,
                             NULL,
-			    dir_hdl,
 			    exp_hdl);
 	if(hdl != NULL) {
 		*handle = &hdl->obj_handle ;
@@ -419,7 +415,7 @@ static fsal_status_t tank_create( struct fsal_obj_handle *dir_hdl,
 
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, NULL, dir_hdl->export);
+	hdl = alloc_handle(fh, &stat, NULL, dir_hdl->export);
 	if(hdl != NULL)
         {
            /* >> set output handle << */
@@ -493,7 +489,7 @@ static fsal_status_t tank_mkdir( struct fsal_obj_handle *dir_hdl,
 
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, NULL, dir_hdl->export);
+	hdl = alloc_handle(fh, &stat, NULL, dir_hdl->export);
 	if(hdl != NULL)
         {
            /* >> set output handle << */
@@ -580,7 +576,7 @@ static fsal_status_t tank_makesymlink(struct fsal_obj_handle *dir_hdl,
                 goto err;
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, link_path, NULL , dir_hdl->export);
+	hdl = alloc_handle(fh, &stat, link_path, dir_hdl->export);
 	if(hdl == NULL) {
 		retval = ENOMEM;
 		goto err;
@@ -1272,7 +1268,7 @@ fsal_status_t tank_create_handle( struct fsal_export *exp_hdl,
 	   
          }
 
-        hdl = alloc_handle(fh, &stat, link_content, NULL, exp_hdl);
+        hdl = alloc_handle(fh, &stat, link_content, exp_hdl);
 	if(hdl == NULL) {
 		fsal_error = ERR_FSAL_NOMEM;
 	        return fsalstat(fsal_error, 0 );	
