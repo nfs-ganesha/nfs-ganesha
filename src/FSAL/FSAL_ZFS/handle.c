@@ -1042,7 +1042,7 @@ static fsal_status_t tank_file_unlink( struct fsal_obj_handle *dir_hdl,
 
 	myself = container_of(dir_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
-        if( myself->handle->type == DIRECTORY )
+        if( myself->obj_handle.attributes.type == DIRECTORY )
           retval = libzfswrap_rmdir( tank_get_root_pvfs( dir_hdl->export ),
                                      &cred,
                                      myself->handle->zfs_handle,
