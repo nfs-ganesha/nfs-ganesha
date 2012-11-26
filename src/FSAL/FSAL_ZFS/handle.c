@@ -1212,11 +1212,11 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->rename = tank_rename;
 	ops->unlink = tank_unlink;
 	ops->truncate = tank_file_truncate;
-	//////ops->open = tank_open;
+	ops->open = tank_open;
 	ops->status = tank_status;
 	ops->read = tank_read;
 	ops->write = tank_write;
-	///////////////////////ops->commit = tank_commit;
+	ops->commit = tank_commit;
 	//////////////////////ops->lock_op = tank_lock_op;
 	ops->close = tank_close;
 	ops->lru_cleanup = tank_lru_cleanup;

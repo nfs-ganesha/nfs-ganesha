@@ -52,32 +52,26 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle) ;
  */
 
 fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx,
-		        fsal_openflags_t openflags)
+		         fsal_openflags_t openflags)
 {
 	struct zfs_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int rc = 0;
         libzfswrap_vnode_t *p_vnode;
         creden_t cred;
-        int posix_flags;
  
         /* At this point, test_access has been run and access is checked
          * as a workaround let's use root credentials */
         cred.uid = 0 ;
         cred.gid = 0 ;
  
-        rc = fsal2posix_openflags(openflags, &posix_flags);
-        if( rc ) 
-          return fsalstat( ERR_FSAL_INVAL, rc ) ;
-
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
         
         rc = libzfswrap_open( ZFSFSAL_GetVFS( myself->handle ), 
-                             &cred,
-                             myself->handle->zfs_handle,  
-                             posix_flags, 
-                             &p_vnode);
+                              &cred,
+                              myself->handle->zfs_handle,  
+                              openflags, 
+                              &p_vnode);
 
         if( rc )
          { 
@@ -86,13 +80,13 @@ fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
          }
  
         /* >> fill output struct << */
-        myself->u.file.openflags = posix_flags;
+        myself->u.file.openflags = openflags;
         myself->u.file.current_offset = 0;
         myself->u.file.p_vnode = p_vnode;
         myself->u.file.cred = cred;
         myself->u.file.is_closed = 0;
 
-	return fsalstat(fsal_error, rc );	
+	return fsalstat(ERR_FSAL_NO_ERROR, 0 );	
 }
 
 /* lustre_status
@@ -142,7 +136,6 @@ fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
 
         if(!rc) 
            * end_of_file = true ;
-        
 
         fsal_error = posix2fsal_error( rc );
 

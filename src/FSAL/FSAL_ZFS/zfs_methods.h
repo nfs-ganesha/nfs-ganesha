@@ -63,6 +63,9 @@ vfs_unopenable_type(object_file_type_t type)
 fsal_status_t tank_open(struct fsal_obj_handle *obj_hdl,
 			const struct req_op_context *opctx,
 		       fsal_openflags_t openflags);
+fsal_status_t tank_commit( struct fsal_obj_handle *obj_hdl, /* sync */
+                          off_t offset,
+                          size_t len) ;
 fsal_openflags_t tank_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
                        const struct req_op_context *opctx,
