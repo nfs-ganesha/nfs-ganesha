@@ -563,58 +563,7 @@ struct fsal_export {
         struct fsal_obj_ops *obj_ops;   /*< Shared handle methods vector */
         struct fsal_ds_ops *ds_ops;   /*< Shared handle methods vector */
         const struct fsal_up_vector *up_ops; /*< Upcall operations */
-        uint32_t validation_flags; /*< When should Cache Inode use
-                                       the validation call? */
 };
-
-/**
- * Never call for validation, assume things are valid until we get an
- * upcall.
- */
-
-static const uint32_t FSAL_VALIDATE_NONE = 0x00000000;
-
-/**
- * Always call for validation.
- */
-
-static const uint32_t FSAL_VALIDATE_ALL = 0xffffffff;
-
-/**
- * Validate directory content
- */
-
-static const uint32_t FSAL_VALIDATE_DIRECTORY = 0x00000001;
-
-/**
- * Validate authentication attributes
- */
-
-static const uint32_t FSAL_VALIDATE_AUTH = 0x00000002;
-
-/**
- * Validate link count
- */
-
-static const uint32_t FSAL_VALIDATE_NLINKS = 0x00000004;
-
-/**
- * Validate times
- */
-
-static const uint32_t FSAL_VALIDATE_TIMES = 0x00000008;
-
-/**
- * Validate link content
- */
-
-static const uint32_t FSAL_VALIDATE_SYMLINKS = 0x00000010;
-
-/**
- * Validate attributes generally
- */
-
-static const uint32_t FSAL_VALIDATE_ATTRS = 0x00000020;
 
 /**
  * @brief Export operations
@@ -1968,32 +1917,6 @@ struct fsal_obj_ops {
         void (*handle_to_key)(struct fsal_obj_handle *obj_hdl,
                               struct gsh_buffdesc *fh_desc);
 /*@}*/
-
-
-/*@{*/
-
-/**
- * Cache control
- */
-
-/**
- * @brief Are cached data valid?
- *
- * Indicate whether the cached data are valid.
- *
- * @param[in] obj_hdl Handle of object to validate
- * @param[in] last    Time that cache was freshened (when multiple
- *                    flags are set, time should be the time of the
- *                    oldest cached datum.)
- * @param[in] check   Flags indicating what data to validate.
- *                    FSAL_VALIDATE_* form the vocabulary.
- *
- * @retval true if cached data are valid.
- * @retval false if cached data are invalid.
- */
-        bool (*validate)(struct fsal_obj_handle *obj_hdl,
-                         gsh_time_t last,
-                         uint32_t check);
 
 /*@{*/
 

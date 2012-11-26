@@ -557,8 +557,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	vfs_export_ops_init(myself->export.ops);
 	vfs_handle_ops_init(myself->export.obj_ops);
         myself->export.up_ops = up_ops;
-        /* Until we implement upcalls. */
-        myself->export.validation_flags = FSAL_VALIDATE_ALL;
 
 	myself->pnfs_panfs_enabled = fs_specific_has(fs_specific, "pnfs_panfs",
 						     NULL, 0);

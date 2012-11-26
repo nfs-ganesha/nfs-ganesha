@@ -1075,27 +1075,6 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Nothing is valid
- *
- * Indicate that nothing cached is valid.
- *
- * @param[in] obj_hdl ignored
- * @param[in] last    ignored
- * @param[in] check   ignored
- *
- * @return false
- */
-
-static bool
-validate(struct fsal_obj_handle *obj_hdl,
-         gsh_time_t last,
-         uint32_t check)
-{
-        return false;
-}
-
-
-/**
  * @brief Fail to grant a layout segment.
  *
  * @param[in]     obj_hdl  The handle of the file on which the layout is
@@ -1210,7 +1189,6 @@ struct fsal_obj_ops def_handle_ops = {
         .compare = compare,
         .handle_digest = handle_digest,
         .handle_to_key = handle_to_key,
-        .validate = validate,
         .layoutget = layoutget,
         .layoutreturn = layoutreturn,
         .layoutcommit = layoutcommit

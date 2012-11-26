@@ -589,8 +589,6 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl,
 	gpfs_export_ops_init(myself->export.ops);
 	gpfs_handle_ops_init(myself->export.obj_ops);
         myself->export.up_ops = up_ops;
-        /* We implemented upcalls. */
-        myself->export.validation_flags = FSAL_VALIDATE_NONE;
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.

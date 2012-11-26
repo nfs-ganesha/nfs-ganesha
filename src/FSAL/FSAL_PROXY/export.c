@@ -216,8 +216,6 @@ pxy_create_export(struct fsal_module *fsal_hdl,
         pxy_export_ops_init(exp->exp.ops);
         pxy_handle_ops_init(exp->exp.obj_ops);
         exp->exp.up_ops = up_ops;
-        /* Until we implement upcalls. */
-        exp->exp.validation_flags = FSAL_VALIDATE_ALL;
         exp->info = &pxy->special;
         exp->exp.fsal = fsal_hdl;
         *export = &exp->exp;
