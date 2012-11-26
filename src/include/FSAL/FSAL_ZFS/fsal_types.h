@@ -54,7 +54,6 @@
 typedef struct zfs_file_handle
 {
     inogen_t zfs_handle;
-    object_file_type_t type;
     char i_snap;
 } zfs_file_handle_t;
 

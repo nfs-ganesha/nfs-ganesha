@@ -281,8 +281,7 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 		*handle = &hdl->obj_handle ;
 
                 hdl->handle->zfs_handle = object;
-                hdl->handle->type = type ;
-                hdl->handle->i_snap = i_snap;
+                hdl->handle->i_snap = 0;
 	} else {
 		fsal_error = ERR_FSAL_NOMEM;
 		*handle = NULL; /* poison it */
@@ -347,7 +346,6 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
         else
          {
             fh->zfs_handle = object;
-            fh->type = S_IFDIR ;
             fh->i_snap = 0;
          }
 
@@ -428,7 +426,6 @@ static fsal_status_t tank_create( struct fsal_obj_handle *dir_hdl,
         {
            /* >> set output handle << */
            hdl->handle->zfs_handle = object ;
-           hdl->handle->type = REGULAR_FILE ;
            hdl->handle->i_snap= 0  ;
            *handle = &hdl->obj_handle;
 	} 
@@ -502,7 +499,6 @@ static fsal_status_t tank_mkdir( struct fsal_obj_handle *dir_hdl,
         {
            /* >> set output handle << */
            hdl->handle->zfs_handle = object ;
-           hdl->handle->type = DIRECTORY ;
            hdl->handle->i_snap= 0  ;
            *handle = &hdl->obj_handle;
 	} 
@@ -591,7 +587,6 @@ static fsal_status_t tank_makesymlink(struct fsal_obj_handle *dir_hdl,
 	}
 	*handle = &hdl->obj_handle;
         hdl->handle->zfs_handle = object ;
-        hdl->handle->type = SYMBOLIC_LINK ;
         hdl->handle->i_snap= 0  ;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -986,7 +981,6 @@ static bool compare(struct fsal_obj_handle *obj_hdl,
 	other = container_of(other_hdl, struct zfs_fsal_obj_handle, obj_handle);
 	if( (obj_hdl->type                         != other_hdl->type)          ||
 	    (myself->handle->i_snap                != other->handle->i_snap) ||
-	    (myself->handle->type                  != other->handle->type) ||
 	    (myself->handle->zfs_handle.inode      != other->handle->zfs_handle.inode) ||
 	    (myself->handle->zfs_handle.generation != other->handle->zfs_handle.generation) )
 		return false;
@@ -1040,24 +1034,35 @@ static fsal_status_t tank_file_unlink( struct fsal_obj_handle *dir_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
         creden_t cred;
+        inogen_t object ;
+        int type = 0 ;
 
         cred.uid = opctx->creds->caller_uid;
         cred.gid = opctx->creds->caller_gid;
 
 	myself = container_of(dir_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
-        if( myself->obj_handle.attributes.type == DIRECTORY )
-          retval = libzfswrap_rmdir( tank_get_root_pvfs( dir_hdl->export ),
-                                     &cred,
-                                     myself->handle->zfs_handle,
-                                     name);
+        /* check for presence of file and get its type */
+        if( (retval = libzfswrap_lookup( tank_get_root_pvfs( dir_hdl->export ),
+                                         &cred,
+                                         myself->handle->zfs_handle,
+                                         name,
+                                         &object,
+                                         &type ) ) == 0 )
+         {
+           if( type == S_IFDIR )
+             retval = libzfswrap_rmdir( tank_get_root_pvfs( dir_hdl->export ),
+                                        &cred,
+                                        myself->handle->zfs_handle,
+                                        name);
 
-        else
-          retval = libzfswrap_unlink( tank_get_root_pvfs( dir_hdl->export ),
-                                      &cred,
-                                      myself->handle->zfs_handle,
-                                      name);
-  
+           else
+             retval = libzfswrap_unlink( tank_get_root_pvfs( dir_hdl->export ),
+                                         &cred,
+                                         myself->handle->zfs_handle,
+                                         name);
+        }
+
        if(retval ) 
           fsal_error = posix2fsal_error(retval);
 	
