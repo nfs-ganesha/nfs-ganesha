@@ -344,9 +344,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 
 	/* Set ca_maxrequests */
 	nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
-	nfs41_session->back_channel_attrs.ca_maxrequests =
-		MAX(nfs41_session->back_channel_attrs.ca_maxrequests,
-		    NFS41_NB_SLOTS);
 	nfs41_Build_sessionid(&clientid, nfs41_session->session_id);
 
 	res_CREATE_SESSION4ok->csr_sequence
