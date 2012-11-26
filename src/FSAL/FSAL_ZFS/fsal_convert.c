@@ -107,6 +107,8 @@ int posix2fsal_error(int posix_errorcode)
 
   switch (posix_errorcode)
     {
+    case 0:
+        return ERR_FSAL_NO_ERROR;
 
     case EPERM:
       return ERR_FSAL_PERM;

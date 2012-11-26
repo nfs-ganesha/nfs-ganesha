@@ -899,8 +899,8 @@ out:
  */
 
 static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
-				   const struct req_op_context *opctx,
-			           struct attrlist *attrs)
+				    const struct req_op_context *opctx,
+			            struct attrlist *attrs)
 {
   struct zfs_fsal_obj_handle *myself;
   struct stat stats = { 0 } ;
@@ -961,6 +961,10 @@ static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
                                flags, 
                                &new_stat);
 
+  if( retval == 0 )
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+   /* Exit with an error */
   fsal_error = posix2fsal_error(retval);
   return fsalstat(fsal_error, retval);
 }
