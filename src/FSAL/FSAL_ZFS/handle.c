@@ -796,11 +796,11 @@ out:
         return fsalstat(posix2fsal_error( retval ), retval);
 }
 
-static fsal_status_t tank_renamefile( struct fsal_obj_handle *olddir_hdl,
-                                     const struct req_op_context *opctx,
-			             const char *old_name,
-				     struct fsal_obj_handle *newdir_hdl,
-				     const char *new_name)
+static fsal_status_t tank_rename( struct fsal_obj_handle *olddir_hdl,
+                                  const struct req_op_context *opctx,
+			          const char *old_name,
+				  struct fsal_obj_handle *newdir_hdl,
+				  const char *new_name)
 {
 	struct zfs_fsal_obj_handle *olddir, *newdir;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -1209,7 +1209,7 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->getattrs = tank_getattrs;
 	ops->setattrs = tank_setattrs;
 	ops->link = tank_linkfile;
-	ops->rename = tank_renamefile;
+	ops->rename = tank_rename;
 	ops->unlink = tank_unlink;
 	ops->truncate = tank_file_truncate;
 	//////ops->open = tank_open;
