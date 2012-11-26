@@ -339,16 +339,24 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
 
 
         fh =  alloca(sizeof(struct zfs_file_handle));
+        if( fh == NULL )
+         {
+		*handle = NULL; /* poison it */
+                return fsalstat( ERR_FSAL_NOMEM , 0 ) ;
+         } 
+        else
+         {
+            fh->zfs_handle = object;
+            fh->type = S_IFDIR ;
+            fh->i_snap = 0;
+         }
+
 	hdl = alloc_handle( fh,
                             &stat,
                             NULL,
 			    exp_hdl);
 	if(hdl != NULL) {
 		*handle = &hdl->obj_handle ;
-
-                hdl->handle->zfs_handle = object;
-                hdl->handle->type = S_IFDIR ;
-                hdl->handle->i_snap = 0;
 	} else {
 		*handle = NULL; /* poison it */
                 return fsalstat( ERR_FSAL_NOMEM , 0 ) ;

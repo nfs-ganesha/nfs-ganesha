@@ -43,10 +43,6 @@ struct zfs_fsal_obj_handle {
 			unsigned char *link_content;
 			int link_size;
 		} symlink;
-		struct {
-			struct file_handle *dir;
-			char *name;
-		} unopenable;
 	} u;
 };
 
