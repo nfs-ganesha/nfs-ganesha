@@ -779,7 +779,7 @@ create_file_recall(cache_entry_t *entry,
                         continue;
                 }
                 glist_for_each(seg_iter,
-                               &entry->state_list) {
+                               &s->state_data.layout.state_segments) {
                         state_layout_segment_t *g
                                 = glist_entry(seg_iter,
                                               state_layout_segment_t,

@@ -233,7 +233,7 @@ typedef struct state_layout__ {
 	bool state_return_on_close; /*< Whether this layout should be
 				        returned on last close. */
 	uint32_t granting; /*< Number of LAYOUTGETs in progress */
-	struct glist_head state_segments;
+	struct glist_head state_segments; /*< List of segments */
 } state_layout_t;
 
 /**
