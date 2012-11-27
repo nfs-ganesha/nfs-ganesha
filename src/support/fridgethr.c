@@ -167,7 +167,7 @@ bool
 fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
 {
     fridge_entry_t *pfe = container_of(thr_ctx, fridge_entry_t, ctx);
-    int rc;
+    int rc = 0;
 
     pthread_mutex_lock(&fr->mtx);
     glist_add_tail(&fr->idle_q, &pfe->q);
