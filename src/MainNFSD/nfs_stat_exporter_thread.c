@@ -61,7 +61,6 @@
 #include "nfs_stat.h"
 #include "nfs_tools.h"
 #include "nfs_exports.h"
-#include "nodelist.h"
 #include "fsal.h"
 #include "ganesha_rpc.h"
 #include "abstract_mem.h"

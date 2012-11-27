@@ -76,7 +76,6 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../IdMapper/libidmap.la                            \
                   ../support/libsupport.la                           \
 		  ../RPCAL/librpcal.la				     \
-                  ../NodeList/libNodeList.la                         \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \
                   ../avl/libavltree.la                               \
@@ -92,6 +91,11 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../Protocols/XDR/libnfs_mnt_xdr.la                 \
                   $(TIRPC_LIB)                                       \
 		  ../Common/libcommon_utils.la
+
+
+if USE_NODELIST
+shell_libs += ../NodeList/libNodeList.la
+endif
 
 __FS_NAME__ganeshell_LDADD = $(shell_libs)                           \
                     $(FSAL_LDFLAGS) $(NFSIDMAP_LIB_FLAGS)            \

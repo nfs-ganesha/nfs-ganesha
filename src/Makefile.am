@@ -13,7 +13,6 @@ SUBDIRS = include             \
           test                \
           avl                 \
           HashTable           \
-	  NodeList	      \
           Cache_inode         \
           SAL                 \
           $(TIRPCDIR)         \
@@ -25,8 +24,6 @@ SUBDIRS = include             \
           FSAL                \
           IdMapper            \
           snmp_adm            \
-          MainNFSD            \
-          cmdline_tools       \
           Docs                \
           tools               \
           config_samples      \
@@ -39,6 +36,14 @@ SUBDIRS = include             \
 if USE_FSAL_FUSE
 SUBDIRS += example-fuse
 endif
+
+if USE_NODELIST
+SUBDIRS += NodeList
+endif
+
+# Append these directories last because they depend on NodeList if NodeList is enabled
+SUBDIRS += MainNFSD \
+           cmdline_tools
 
 DOCDIRS = Cache_inode ConfigParsing HashTable IdMapper Log MainNFSD Protocols/NFS SemN StuffAlloc support \
           FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS

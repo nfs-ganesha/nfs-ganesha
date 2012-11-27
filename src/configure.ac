@@ -463,6 +463,14 @@ if test "$enable_nfs4_acl" == "yes"; then
 fi
 AM_CONDITIONAL(USE_NFS4_ACL, test "$enable_nfs4_acl" == "yes" )
 
+# Nodelist
+GA_ENABLE_AM_CONDITION([nodelist],[enable Nodelist support],[USE_NODELIST])
+
+if test "$enable_nodelist" == "yes"; then
+	AC_DEFINE(_USE_NODELIST,1,[enable Nodelist support])
+fi
+AM_CONDITIONAL(USE_NODELIST, test "$enable_nodelist" = "yes")
+
 # MSPAC support
 GA_ENABLE_FLAG([mspac],[enable mspac support],[-D_MSPAC_SUPPORT -lwbclient])
 

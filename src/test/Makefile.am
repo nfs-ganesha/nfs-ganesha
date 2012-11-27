@@ -19,7 +19,6 @@ COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
                ../IdMapper/libidmap.la                           \
                ../support/libsupport.la                          \
 	       ../RPCAL/librpcal.la				 \
-                 ../NodeList/libNodeList.la                      \
                ../Cache_inode/libcache_inode.la                  \
                ../HashTable/libhashtable.la                      \
                ../LRU/liblru.la                                  \
@@ -33,6 +32,10 @@ COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
                ../RW_Lock/librwlock.la                           \
                ../Common/libcommon_utils.la                      \
                ../MainNFSD/libMainServices.la
+
+if USE_NODELIST
+COMMON_LDADD += ../NodeList/libNodeList.la
+endif
 
 test_access_list_types_LDADD = $(COMMON_LDADD)
 test_access_list_types_SOURCES = test_access_list_types.c

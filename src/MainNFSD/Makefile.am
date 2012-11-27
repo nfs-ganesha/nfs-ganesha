@@ -162,7 +162,6 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       $(STAT_SNMP_LIB_FLAGS)                            \
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
-                                      ../NodeList/libNodeList.la                        \
                                       ../avl/libavltree.la                              \
                                       ../Cache_inode/libcache_inode.la                  \
                                       ../SAL/libsal.la                                  \
@@ -185,6 +184,10 @@ libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainService
 
 if USE_PNFS
 libMainServices_la_LIBADD += ../FSAL/libfsalpnfscommon.la
+endif
+
+if USE_NODELIST
+libMainServices_la_LIBADD += ../NodeList/libNodeList.la
 endif
 
 if USE_FSAL_FUSE
