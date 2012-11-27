@@ -258,7 +258,7 @@ ExternalProject_Add(
   SOURCE_DIR "${PROJECT_BINARY_DIR}/libtirpc"
   GIT_REPOSITORY ${tirpc_repo}
   GIT_TAG ${tirpc_commit}
-  UPDATE_COMMAND "autogen.sh"
+  UPDATE_COMMAND sh "${PROJECT_BINARY_DIR}/libtirpc/autogen.sh"
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/libtirpc/configure
     --enable-gss
     --prefix=${PROJECT_BINARY_DIR}/libtirpc
