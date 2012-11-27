@@ -755,6 +755,7 @@ create_file_recall(cache_entry_t *entry,
                 goto out;
         }
 
+	init_glist(queue);
         if ((segment->length == 0) ||
             ((segment->length != UINT64_MAX) &&
              (segment->offset <= UINT64_MAX - segment->length))) {
