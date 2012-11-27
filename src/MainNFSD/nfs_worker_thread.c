@@ -1259,9 +1259,6 @@ nfs_rpc_execute(request_data_t    * preq,
           nfs4_op_stat_update(parg_nfs, res_nfs,
                               &(pworker_data->stats.stat_req));
 
-  /* XXX */
-  pworker_data->current_xid = 0;
-
   /* If request is dropped, no return to the client */
   if(rc == NFS_REQ_DROP)
     {
@@ -1338,9 +1335,6 @@ auth_failure:
   DISP_SUNLOCK(xprt);
 
   clean_credentials(&user_credentials);
-
-  /* XXX */
-  pworker_data->current_xid = 0;
 
   if(nfs_dupreq_delete(req) != DUPREQ_SUCCESS)
     LogCrit(COMPONENT_DISPATCH,

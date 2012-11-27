@@ -551,8 +551,6 @@ struct nfs_worker_data__
   sockaddr_t hostaddr;
   char       hostaddr_str[SOCK_NAME_MAX];
   sigset_t sigmask; /* masked signals */
-  unsigned int gc_in_progress;
-  unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *funcdesc;

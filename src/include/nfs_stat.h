@@ -185,7 +185,7 @@ nfs_req_timer_stop(struct nfs_req_timer *t, struct timeval *time_queued)
     t->timer_diff = t->timer_end - t->timer_start;
 #ifdef _USE_QUEUE_TIMER
     /* process time + queue time */
-    queue_timer_diff = timer_end - 
+    t->queue_timer_diff = t->timer_end - 
 	    (time_queued->tv_sec * MSEC_PER_SEC) -
 	    (time_queued->tv_usec * MSEC_PER_USEC);
 #endif
