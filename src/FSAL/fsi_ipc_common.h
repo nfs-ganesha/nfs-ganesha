@@ -461,6 +461,11 @@ struct FsiIpcOpShmemRspMtext {
 struct FsiIpcOpShmemRelMsg {
   // buffer handle to release
   uint64_t shmBufferHandles[MAX_FSI_IPC_SHMEM_BUF_PER_STREAM];
+  uint64_t responseNotNeeded;   // Specify if we PT server
+                                // needs to send the response
+                                // 1 = NOT needed, 0 = Needed
+                                // A value of 1 is used in close
+                                // on terminate in Ganesha
 };
 
 struct FsiIpcOpShmemRelMtext {

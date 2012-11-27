@@ -143,6 +143,8 @@ compile_time_check_func(const char * fmt, ...)
 }
 #define CCL_CLOSE_STYLE_NORMAL             0
 #define CCL_CLOSE_STYLE_FIRE_AND_FORGET    1
+#define CCL_CLOSE_STYLE_NO_INDEX           2
+
 #define FSAL_MAX_PATH_LEN PATH_MAX
 
 extern int       g_shm_id;              // SHM ID
@@ -724,6 +726,10 @@ int ccl_open(ccl_context_t   * handle,
               char                  * path,
               int                   flags,
               mode_t                mode);
+int ccl_close_internal(ccl_context_t * handle,
+                       int             handle_index,
+                       int             close_style,
+                       struct file_handle_t *file_handle);
 int ccl_close(ccl_context_t * handle,
               int             handle_index,
               int             close_style);
