@@ -1116,7 +1116,7 @@ static rpc_call_t *construct_single_call(nfs41_session_t *session,
 	cb_compound_init_v4(&call->cbt, 2,
 			    session->clientid_record->cid_minorversion,
 			    0, NULL, 0);
-	memset(&sequence, 0, sizeof(nfs_cb_argop4));
+	memset(sequence, 0, sizeof(nfs_cb_argop4));
 	sequenceop.argop = NFS4_OP_CB_SEQUENCE;
 
 	memcpy(sequence->csa_sessionid,
