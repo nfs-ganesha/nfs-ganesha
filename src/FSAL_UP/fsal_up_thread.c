@@ -180,19 +180,25 @@ fsal_up_submit(struct fsal_up_event *event)
                                 &event->data.recallany,
                                 event->private);
                         }
-                        break;
+		break;
 
         case FSAL_UP_EVENT_NOTIFY_DEVICE:
                 if (event->functions->notifydevice_imm) {
                         rc = event->functions->notifydevice_imm(
                                 &event->data.notifydevice,
                                 event->private);
-                        }
-                        break;
+		}
+		break;
+
         case FSAL_UP_EVENT_DELEGATION_RECALL:
-                rc = 0;
+                if (event->functions->delegrecall_imm) {
+                        rc = event->functions->delegrecall_imm(
+                                &event->data.delegrecall,
+				&event->file,
+				&event->private);
+		}
                 break;
-                }
+	}
 
         if (rc != 0) {
                 pthread_mutex_unlock(&fsal_up_state.lock);
@@ -357,7 +363,8 @@ next_event:
                         if (event->functions->delegrecall_queue) {
                                 event->functions->delegrecall_queue(
                                         &event->data.delegrecall,
-                                        &event->file);
+					&event->file,
+					event->private);
                         }
                         break;
                 }

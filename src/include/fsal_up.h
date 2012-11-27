@@ -359,6 +359,7 @@ struct fsal_up_vector
         void (*invalidate_queue)(struct fsal_up_event_invalidate *,
                                  struct fsal_up_file *,
                                  void *);
+
         int (*update_imm)(struct fsal_up_event_update *,
                           struct fsal_up_file *,
                           void **);
@@ -400,24 +401,30 @@ struct fsal_up_vector
         void (*rename_queue)(struct fsal_up_event_rename *,
                              struct fsal_up_file *,
                              void *);
+
         int (*layoutrecall_imm)(struct fsal_up_event_layoutrecall *,
                                 struct fsal_up_file *,
                                 void **);
         void (*layoutrecall_queue)(struct fsal_up_event_layoutrecall *,
                                    struct fsal_up_file *,
                                    void *);
+
         int (*recallany_imm)(struct fsal_up_event_recallany *,
-                                void **);
+			     void **);
         void (*recallany_queue)(struct fsal_up_event_recallany *,
                                 void *);
+
         int (*notifydevice_imm)(struct fsal_up_event_notifydevice *,
                                 void **);
         void (*notifydevice_queue)(struct fsal_up_event_notifydevice *,
                                    void *);
-        void (*delegrecall_queue)(struct fsal_up_event_delegrecall *,
-                                   struct fsal_up_file *);
-        void (*delegrecall_imm)(struct fsal_up_event_delegrecall *,
-                                   struct fsal_up_file *);
+
+	int (*delegrecall_imm)(struct fsal_up_event_delegrecall *,
+			       struct fsal_up_file *,
+			       void **);
+	void (*delegrecall_queue)(struct fsal_up_event_delegrecall *,
+				  struct fsal_up_file *,
+				  void *);
 };
 
 extern struct fsal_up_vector fsal_up_top;

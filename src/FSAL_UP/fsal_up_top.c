@@ -1236,7 +1236,8 @@ delegrecall_one(state_lock_entry_t *found_entry,
 };
 
 static void delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
-			      struct fsal_up_file *file)
+			      struct fsal_up_file *file,
+			      void* private)
 {
   cache_entry_t *pentry = NULL;
   struct glist_head  *glist;
@@ -1277,12 +1278,6 @@ static void delegrecall_queue(struct fsal_up_event_delegrecall *deleg,
 
 };
 
-static void delegrecall_imm(struct fsal_up_event_delegrecall *deleg,
-			    struct fsal_up_file *file)
-{
-    printf("xxx delegrecall_imm ???\n");
-};
-
 struct fsal_up_vector fsal_up_top = {
         .lock_grant_imm = lock_grant_imm,
         .lock_grant_queue = NULL,
@@ -1320,6 +1315,6 @@ struct fsal_up_vector fsal_up_top = {
         .notifydevice_imm = notifydevice_imm,
         .notifydevice_queue = notifydevice_queue,
 
-        .delegrecall_imm = delegrecall_imm,
+        .delegrecall_imm = NULL,
         .delegrecall_queue = delegrecall_queue
 };
