@@ -1,3 +1,7 @@
+include_directories(
+  ${LIBTIRPC_INCLUDE_DIR}
+)
+
 ########### next target ###############
 
 SET(fsalup_STAT_SRCS

@@ -1,3 +1,7 @@
+include_directories(
+  ${LIBTIRPC_INCLUDE_DIR}
+)
+
 # All we need to do here is control the
 # build of chosen fsals
 
