@@ -196,7 +196,7 @@ fsal_up_submit(struct fsal_up_event *event)
 
         if (rc != 0) {
                 pthread_mutex_unlock(&fsal_up_state.lock);
-                return EPIPE;
+                return rc;
         }
 
         glist_add_tail(&fsal_up_state.queue,
