@@ -43,7 +43,9 @@
 #include "nfs_dupreq.h"
 #include "config_parsing.h"
 #include "common_utils.h"
+#ifdef USE_NODELIST
 #include "nodelist.h"
+#endif /* USE_NODELIST */
 #include <stdlib.h>
 #include <fnmatch.h>
 #include <sys/socket.h>
@@ -473,6 +475,11 @@ int parseAccessParam(char *var_name,
   char *client_list[EXPORT_MAX_CLIENTS];
   int count;
 
+  LogFullDebug(COMPONENT_CONFIG,
+               "Parsing %s=\"%s\"",
+               var_name, var_value);
+
+#ifdef USE_NODELIST
   /* expends host[n-m] notations */
   count =
     nodelist_common_condensed2extended_nodelist(var_value, &expanded_node_list);
@@ -492,6 +499,10 @@ int parseAccessParam(char *var_name,
 	      count, EXPORT_MAX_CLIENTS);
       return -1;
     }
+#else
+  expanded_node_list = var_value;
+  count = EXPORT_MAX_CLIENTS;
+#endif /* USE_NODELIST */
 
   /* fill client list with NULL pointers */
   memset(client_list, 0, sizeof(client_list));
@@ -515,8 +526,10 @@ int parseAccessParam(char *var_name,
 
   nfs_AddClientsToExportList(p_entry, rc, (char **)client_list, access_option);
 
+#ifdef USE_NODELIST
   /* free the buffer the nodelist module has allocated */
   free(expanded_node_list);
+#endif /* USE_NODELIST */
 
   return rc;
 }
