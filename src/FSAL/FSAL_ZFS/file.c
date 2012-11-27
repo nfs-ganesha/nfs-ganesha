@@ -113,7 +113,6 @@ fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
 		       bool *end_of_file)
 {
 	struct zfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int rc = 0;
         creden_t cred;
         int behind = 0;
@@ -134,13 +133,13 @@ fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
                               offset );
 
         if(!rc) 
-           * end_of_file = true ;
-
-        fsal_error = posix2fsal_error( rc );
+           *end_of_file = true ;
+         else
+           *end_of_file = false ;
 
         *read_amount = buffer_size;
 
-	return fsalstat(fsal_error, rc);	
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);	
 }
 
 /* lustre_write
@@ -155,7 +154,6 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
 			size_t *write_amount)
 {
 	struct zfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
         creden_t cred;
 	int retval = 0;
         int behind = 0 ;
@@ -176,12 +174,11 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
                                    offset);
 
 	if(offset == -1 ) {
-		fsal_error = posix2fsal_error(retval);
-		goto out;
+		return fsalstat( posix2fsal_error(retval), retval ) ;
 	}
 	*write_amount = buffer_size;
-out:
-	return fsalstat(fsal_error, retval);	
+	
+        return fsalstat(ERR_FSAL_NO_ERROR, 0);	
 }
 
 /* lustre_commit
@@ -206,14 +203,22 @@ fsal_status_t tank_commit( struct fsal_obj_handle *obj_hdl, /* sync */
 fsal_status_t tank_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct zfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
+
+        retval = libzfswrap_close( ZFSFSAL_GetVFS( myself->handle ),  
+                                   &myself->u.file.cred,
+                                   myself->u.file.p_vnode,
+                                   myself->u.file.openflags ) ;
+        if( retval )
+	  return fsalstat( posix2fsal_error( retval ), retval);	
+        
 	myself->u.file.openflags = FSAL_O_CLOSED;
 	myself->u.file.is_closed = true ;
-	return fsalstat(fsal_error, retval);	
+
+        return fsalstat(ERR_FSAL_NO_ERROR, 0 );	
 }
 
 /* lustre_lru_cleanup
