@@ -65,10 +65,10 @@ initiate_recall(vinodeno_t vi, bool write, void *opaque)
                    LAYOUTIOMODE4_READ :
                    LAYOUTIOMODE4_RW);
         event->data.layoutrecall.cookie = NULL;
-        event->file.key.addr = gsh_malloc(sizeof(struct wire_handle));
-        event->file.key.len = sizeof(struct wire_handle);
-        memcpy(event->file.key.addr, &handle->wire,
-               sizeof(struct wire_handle));
+        event->file.key.addr = gsh_malloc(sizeof(handle->wire.vi));
+        event->file.key.len = sizeof(handle->wire.vi);
+        memcpy(event->file.key.addr, &handle->wire.vi,
+               sizeof(handle->wire.vi));
         event->file.export = &export->export;
 
         fsal_up_submit(event);
