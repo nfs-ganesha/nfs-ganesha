@@ -52,6 +52,7 @@ libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle) ;
  */
 
 fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
+                         const struct req_op_context *opctx,
 		         fsal_openflags_t openflags)
 {
 	struct zfs_fsal_obj_handle *myself;
@@ -60,10 +61,8 @@ fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
         libzfswrap_vnode_t *p_vnode;
         creden_t cred;
  
-        /* At this point, test_access has been run and access is checked
-         * as a workaround let's use root credentials */
-        cred.uid = 0 ;
-        cred.gid = 0 ;
+        cred.uid = opctx->creds->caller_uid ;
+        cred.gid = opctx->creds->caller_gid ;
  
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
         
