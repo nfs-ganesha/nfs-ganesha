@@ -110,7 +110,6 @@ nfs_flush_thread_data_t flush_info[NB_MAX_FLUSHER_THREAD];
 pthread_t stat_thrid;
 pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
-pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
 pthread_t reaper_thrid;
 #ifdef SONAS
