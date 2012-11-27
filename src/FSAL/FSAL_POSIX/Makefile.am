@@ -10,6 +10,8 @@ libfsalposix_la_SOURCES = fsal_convert.c   \
 			xattrs.c         \
 	                ../../include/FSAL/FSAL_POSIX/fsal_handle_syscalls.h
 
+libfsalposix_la_LIBADD = ../../NodeDB/libnodedb.la
+
 libfsalposix_la_CFLAGS   = $(FSAL_CFLAGS) $(SEC_CFLAGS) @POSIX_CFLAGS@ -I../../NodeDB
 libfsalposix_la_LDFLAGS  = @POSIX_LDFLAGS@
 libfsalposix_la_LIBADD   = @POSIX_LIB@

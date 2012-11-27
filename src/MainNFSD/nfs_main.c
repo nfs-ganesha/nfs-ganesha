@@ -48,7 +48,6 @@
 #include <signal.h>             /* for sigaction */
 #include <errno.h>
 #include "fsal_pnfs.h"
-#include "../NodeDB/marshal.h"
 
 /* parameters for NFSd startup and default values */
 
@@ -111,8 +110,6 @@ int main(int argc, char *argv[])
   pid_t son_pid;
 #endif
   sigset_t signals_to_block;
-
-  nodedb_library_pre_init();
 
   /* Set the server's boot time and epoch */
   ServerBootTime = time(NULL);

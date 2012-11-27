@@ -156,7 +156,6 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../NodeList/libNodeList.la                        \
                                       ../avl/libavltree.la                              \
                                       ../Cache_inode/libcache_inode.la                  \
-                                      ../NodeDB/libnodedb.la                            \
                                       ../SAL/libsal.la                                  \
                                       ../HashTable/libhashtable.la                      \
                                       ../FSAL/libfsalcommon.la                          \
