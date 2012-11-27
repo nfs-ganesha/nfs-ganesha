@@ -131,13 +131,18 @@ fsal_status_t tank_read(struct fsal_obj_handle *obj_hdl,
                               buffer_size, 
                               behind, 
                               offset );
-
+        /* With FSAL_ZFS, "end of file" is always returned via a last call,
+         * once every data is read. The result is a last, empty call which set end_of_file to true */
         if(!rc) 
+         {
            *end_of_file = true ;
+           *read_amount = 0 ;
+         }
          else
+         {
            *end_of_file = false ;
-
-        *read_amount = buffer_size;
+           *read_amount = buffer_size;
+         }
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);	
 }
