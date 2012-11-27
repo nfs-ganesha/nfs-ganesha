@@ -62,8 +62,8 @@ initiate_recall(vinodeno_t vi, bool write, void *opaque)
         event->data.layoutrecall.segment.length = UINT64_MAX;
         event->data.layoutrecall.segment.io_mode
                 = (write ?
-                   LAYOUTIOMODE4_READ :
-                   LAYOUTIOMODE4_RW);
+                   LAYOUTIOMODE4_RW :
+                   LAYOUTIOMODE4_READ);
         event->data.layoutrecall.cookie = NULL;
         event->file.key.addr = gsh_malloc(sizeof(handle->wire.vi));
         event->file.key.len = sizeof(handle->wire.vi);
