@@ -176,9 +176,6 @@ static inline void
 nfs_req_timer_start(struct nfs_req_timer *t)
 {
     t->timer_start = timer_get();
-#ifdef _USE_STAT_EXPORTER
-    atomic_store_msectimer_t(&worker_data->timer_start, t->timer_start);
-#endif
 }
 
 static inline void

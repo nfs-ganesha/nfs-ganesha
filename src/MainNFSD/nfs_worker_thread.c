@@ -546,7 +546,6 @@ nfs_rpc_execute(request_data_t    * preq,
   nfs_stat_type_t              stat_type;
   int                          port;
   int                          rc;
-  bool                         do_dupreq_cache;
   export_perms_t               export_perms;
   int                          protocol_options = 0;
   struct user_cred             user_credentials;
@@ -1039,6 +1038,9 @@ nfs_rpc_execute(request_data_t    * preq,
    * thread detection.
    */
   nfs_req_timer_start(&req_timer);
+#ifdef _USE_STAT_EXPORTER
+    atomic_store_msectimer_t(&worker_data->timer_start, req_timer.timer_start);
+#endif
 
   LogDebug(COMPONENT_DISPATCH,
            "NFS DISPATCHER: Calling service function %s start_time %lu.%03lu",
@@ -1302,6 +1304,7 @@ nfs_rpc_execute(request_data_t    * preq,
           DISP_SUNLOCK(xprt);
           goto freeargs;
         }
+      DISP_SUNLOCK(xprt);
     } /* rc == NFS_REQ_DROP */
 
 dupreq_finish:
