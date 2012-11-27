@@ -17,9 +17,7 @@ HFILES = interface.h ops.h $(HDEPS)
 	
 	gcc -ansi -pedantic marshal.c -o marshal -Wall
 	
-	./marshal > interface.c
-	
-	grep '@PROTOTYPE@' interface.c > interface.h
+	./marshal -i nodedb.c -oc interface.c -oi interface.h -oo ops.h
 	
 	for i in $(CFILES) $(HFILES) ; do cp $$i ../ ; done
 	
