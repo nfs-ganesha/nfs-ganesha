@@ -303,6 +303,17 @@ void nfs_set_param_default()
   /* Core parameters */
   nfs_param.core_param.nb_worker = NB_WORKER_THREAD_DEFAULT;
   nfs_param.core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG;
+  nfs_param.core_param.drc.tcp.npart = DRC_TCP_NPART;
+  nfs_param.core_param.drc.tcp.size = DRC_TCP_SIZE;
+  nfs_param.core_param.drc.tcp.cachesz = DRC_TCP_CACHESZ;
+  nfs_param.core_param.drc.tcp.hiwat = DRC_TCP_HIWAT;
+  nfs_param.core_param.drc.tcp.recycle_npart = DRC_TCP_RECYCLE_NPART;
+  nfs_param.core_param.drc.tcp.checksum = DRC_TCP_CHECKSUM;
+  nfs_param.core_param.drc.udp.npart = DRC_UDP_NPART;
+  nfs_param.core_param.drc.udp.size = DRC_UDP_SIZE;
+  nfs_param.core_param.drc.udp.cachesz = DRC_UDP_CACHESZ;
+  nfs_param.core_param.drc.udp.hiwat = DRC_UDP_HIWAT;
+  nfs_param.core_param.drc.udp.checksum = DRC_UDP_CHECKSUM;
   nfs_param.core_param.port[P_NFS] = NFS_PORT;
   nfs_param.core_param.port[P_MNT] = 0;
   nfs_param.core_param.bind_addr.sin_family = AF_INET;       /* IPv4 only right now */
@@ -1166,9 +1177,8 @@ int nfs_check_param_consistency()
     }
 #endif
 
-  // check for parameters which need to be primes
-  if (!is_prime(nfs_param.dupreq_param.hash_param.index_size) ||
-      !is_prime(nfs_param.ip_name_param.hash_param.index_size) ||
+  /* check for parameters which need to be primes */
+  if (!is_prime(nfs_param.ip_name_param.hash_param.index_size) ||
       !is_prime(nfs_param.uidmap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.unamemap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.gidmap_cache_param.hash_param.index_size) ||
