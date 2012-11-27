@@ -333,12 +333,12 @@ add_subdirectory(RPCAL)
 add_subdirectory(Protocols)
 add_subdirectory(FSAL_UP)
 add_subdirectory(support)
-add_subdirectory(FSAL)
 
 if(USE_FSAL_POSIX)
   add_subdirectory(NodeDB)
 endif(USE_FSAL_POSIX)
 
+add_subdirectory(FSAL)
 add_subdirectory(IdMapper)
 
 if(ENABLE_SNMP_ADM)
