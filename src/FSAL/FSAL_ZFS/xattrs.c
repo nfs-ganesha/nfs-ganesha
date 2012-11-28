@@ -440,6 +440,7 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
 
 
 fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
+                                  const struct req_op_context *opctx,
 				  unsigned int argcookie,
 				  fsal_xattrent_t * xattrs_tab,
 				  unsigned int xattrs_tabsize,
@@ -463,9 +464,8 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
   obj_handle = container_of( obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
-  /* Workaround : no opctx is provided, using root for wanting of a better solution */
-  cred.uid = 0 ;
-  cred.gid = 0 ;
+  cred.uid = opctx->creds->caller_uid ;
+  cred.gid = opctx->creds->caller_gid ;
 
   /* Deal with special cookie */
   if( cookie == XATTR_RW_COOKIE ) cookie = XATTR_COUNT ;
@@ -568,8 +568,9 @@ fsal_status_t tank_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t tank_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-					const char *xattr_name,
-					unsigned int *pxattr_id)
+                                         const struct req_op_context *opctx,
+					 const char *xattr_name,
+					 unsigned int *pxattr_id)
 {
   unsigned int index;
   int rc;
@@ -583,9 +584,8 @@ fsal_status_t tank_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 
   obj_handle = container_of( obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
-  /* Workaround : no opctx is provided, using root for wanting of a better solution */
-  cred.uid = 0 ;
-  cred.gid = 0 ;
+  cred.uid = opctx->creds->caller_uid ;
+  cred.gid = opctx->creds->caller_gid ;
 
   for(index = 0; index < XATTR_COUNT; index++)
     {
@@ -622,10 +622,11 @@ fsal_status_t tank_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t tank_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					 unsigned int xattr_id,
-					 caddr_t buffer_addr,
-					 size_t buffer_size,
-					 size_t *p_output_size)
+                                          const struct req_op_context *opctx,
+					  unsigned int xattr_id,
+					  caddr_t buffer_addr,
+					  size_t buffer_size,
+					  size_t *p_output_size)
 {
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
   int retval = -1 ;
@@ -637,9 +638,8 @@ fsal_status_t tank_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
   if(!obj_hdl || !p_output_size || !buffer_addr)
     return fsalstat(ERR_FSAL_FAULT, 0);
 
-  /* Workaround : no opctx is provided, using root for wanting of a better solution */
-  cred.uid = 0 ;
-  cred.gid = 0 ;
+  cred.uid = opctx->creds->caller_uid ;
+  cred.gid = opctx->creds->caller_gid ;
 
   /* check that this index match the type of entry */
   if((xattr_id < XATTR_COUNT)
@@ -695,10 +695,11 @@ fsal_status_t tank_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 
 fsal_status_t tank_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					   const char *xattr_name,
-					   caddr_t buffer_addr,
-					   size_t buffer_size,
-					   size_t * p_output_size)
+                                            const struct req_op_context *opctx,
+					    const char *xattr_name,
+					    caddr_t buffer_addr,
+					    size_t buffer_size,
+					    size_t * p_output_size)
 {
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
   unsigned int index;
@@ -711,9 +712,8 @@ fsal_status_t tank_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
   if(!obj_hdl || !p_output_size || !buffer_addr || !xattr_name)
     return fsalstat(ERR_FSAL_FAULT, 0 ) ;
 
-  /* Workaround : no opctx is provided, using root for wanting of a better solution */
-  cred.uid = 0 ;
-  cred.gid = 0 ;
+  cred.uid = opctx->creds->caller_uid ;
+  cred.gid = opctx->creds->caller_gid ;
 
   /* look for this name */
   for(index = 0; index < XATTR_COUNT; index++)
@@ -721,7 +721,7 @@ fsal_status_t tank_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
       if(do_match_type(xattr_list[index].flags, obj_hdl->attributes.type)
          && !strcmp(xattr_list[index].xattr_name, xattr_name))
         {
-          return tank_getextattr_value_by_id( obj_hdl, index, buffer_addr, buffer_size, p_output_size ) ;
+          return tank_getextattr_value_by_id( obj_hdl, opctx, index, buffer_addr, buffer_size, p_output_size ) ;
         }
     }
 
@@ -745,10 +745,11 @@ fsal_status_t tank_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t tank_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				   const char *xattr_name,
-				   caddr_t buffer_addr,
-				   size_t buffer_size,
-				   int create)
+                                    const struct req_op_context *opctx,
+				    const char *xattr_name,
+				    caddr_t buffer_addr,
+				    size_t buffer_size,
+				    int create)
 {
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
   int rc = 0 ;
@@ -763,9 +764,8 @@ fsal_status_t tank_setextattr_value(struct fsal_obj_handle *obj_hdl,
 
   len = strnlen((char *)buffer_addr, buffer_size);
 
-  /* Workaround : no opctx is provided, using root for wanting of a better solution */
-  cred.uid = 0 ;
-  cred.gid = 0 ;
+  cred.uid = opctx->creds->caller_uid ;
+  cred.gid = opctx->creds->caller_gid ;
 
   rc = libzfswrap_setxattr( ZFSFSAL_GetVFS( obj_handle->handle ),
                              &cred, 
@@ -781,9 +781,10 @@ fsal_status_t tank_setextattr_value(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t tank_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					 unsigned int xattr_id,
-					 caddr_t buffer_addr,
-					 size_t buffer_size)
+                                          const struct req_op_context *opctx,
+					  unsigned int xattr_id,
+					  caddr_t buffer_addr,
+					  size_t buffer_size)
 {
   char name[MAXNAMLEN];
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
@@ -797,9 +798,8 @@ fsal_status_t tank_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
   else if(xattr_id < XATTR_COUNT)
     return fsalstat(ERR_FSAL_PERM, 0 ) ;
 
-  /* Workaround : no opctx is provided, using root for wanting of a better solution */
-  cred.uid = 0 ;
-  cred.gid = 0 ;
+  cred.uid = opctx->creds->caller_uid ;
+  cred.gid = opctx->creds->caller_gid ;
 
   retval = xattr_id_to_name( ZFSFSAL_GetVFS( obj_handle->handle ),
                              &cred,
@@ -809,12 +809,13 @@ fsal_status_t tank_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
   if(retval)
     return fsalstat(retval, 0 ) ;
 
-  return tank_setextattr_value( obj_hdl, name, buffer_addr, buffer_size, FALSE);
+  return tank_setextattr_value( obj_hdl, opctx, name, buffer_addr, buffer_size, FALSE);
 }
 
 fsal_status_t tank_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				   unsigned int xattr_id,
-                                   struct attrlist *p_attrs)
+                                    const struct req_op_context *opctx,
+				    unsigned int xattr_id,
+                                    struct attrlist *p_attrs)
 {
   int rc;
 
@@ -845,7 +846,8 @@ fsal_status_t tank_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t tank_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-				       unsigned int xattr_id)
+                                        const struct req_op_context *opctx,
+				        unsigned int xattr_id)
 {
   char name[MAXNAMLEN];
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
@@ -854,9 +856,8 @@ fsal_status_t tank_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 
   obj_handle = container_of( obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
-  /* Workaround : no opctx is provided, using root for wanting of a better solution */
-  cred.uid = 0 ;
-  cred.gid = 0 ;
+  cred.uid = opctx->creds->caller_uid ;
+  cred.gid = opctx->creds->caller_gid ;
 
   retval = xattr_id_to_name( ZFSFSAL_GetVFS( obj_handle->handle ),
                              &cred, 
@@ -879,7 +880,8 @@ fsal_status_t tank_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t tank_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-					 const char *xattr_name)
+                                          const struct req_op_context *opctx,
+					  const char *xattr_name)
 {
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
   int retval = 0 ;   
@@ -887,9 +889,8 @@ fsal_status_t tank_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 
   obj_handle = container_of( obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
-  /* Workaround : no opctx is provided, using root for wanting of a better solution */
-  cred.uid = 0 ;
-  cred.gid = 0 ;
+  cred.uid = opctx->creds->caller_uid ;
+  cred.gid = opctx->creds->caller_gid ;
 
   retval = libzfswrap_removexattr(  ZFSFSAL_GetVFS( obj_handle->handle ),
                                     &cred,

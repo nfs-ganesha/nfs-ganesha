@@ -1701,6 +1701,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*list_ext_attrs)(struct fsal_obj_handle *obj_hdl,
+                                        const struct req_op_context *opctx,
                                         unsigned int cookie,
                                         fsal_xattrent_t * xattrs_tab,
                                         unsigned int xattrs_tabsize,
@@ -1721,6 +1722,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*getextattr_id_by_name)(struct fsal_obj_handle *obj_hdl,
+                                               const struct req_op_context *opctx,
                                                const char *xattr_name,
                                                unsigned int *xattr_id);
 /**
@@ -1738,6 +1740,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*getextattr_value_by_name)(struct fsal_obj_handle *obj_hdl,
+                                                  const struct req_op_context *opctx,
                                                   const char *xattr_name,
                                                   caddr_t buffer_addr,
                                                   size_t buffer_size,
@@ -1758,6 +1761,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*getextattr_value_by_id)(struct fsal_obj_handle *obj_hdl,
+                                                const struct req_op_context *opctx,
                                                 unsigned int xattr_id,
                                                 caddr_t buffer_addr,
                                                 size_t buffer_size,
@@ -1777,6 +1781,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*setextattr_value)(struct fsal_obj_handle *obj_hdl,
+                                          const struct req_op_context *opctx,
                                           const char *xattr_name,
                                           caddr_t buffer_addr,
                                           size_t buffer_size,
@@ -1796,6 +1801,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*setextattr_value_by_id)(struct fsal_obj_handle *obj_hdl,
+                                                const struct req_op_context *opctx,
                                                 unsigned int xattr_id,
                                                 caddr_t buffer_addr,
                                                 size_t buffer_size);
@@ -1812,6 +1818,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*getextattr_attrs)(struct fsal_obj_handle *obj_hdl,
+                                          const struct req_op_context *opctx,
                                           unsigned int xattr_id,
                                           struct attrlist *attrs);
 
@@ -1826,6 +1833,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*remove_extattr_by_id)(struct fsal_obj_handle *obj_hdl,
+                                              const struct req_op_context *opctx,
                                               unsigned int xattr_id);
 
 /**
@@ -1839,6 +1847,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
         fsal_status_t (*remove_extattr_by_name)(struct fsal_obj_handle *obj_hdl,
+                                                const struct req_op_context *opctx,
                                                 const char *xattr_name);
 /*@}*/
 

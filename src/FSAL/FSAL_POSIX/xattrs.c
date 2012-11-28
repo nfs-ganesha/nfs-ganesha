@@ -45,6 +45,7 @@
 #include "posix_methods.h"
 
 fsal_status_t posix_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
+                                 const struct req_op_context *opctx,
 				 unsigned int cookie,
 				 fsal_xattrent_t * xattrs_tab,
 				 unsigned int xattrs_tabsize,
@@ -55,6 +56,7 @@ fsal_status_t posix_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t posix_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
+                                        const struct req_op_context *opctx,
 					const char *xattr_name,
 					unsigned int *pxattr_id)
 {
@@ -62,6 +64,7 @@ fsal_status_t posix_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t posix_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
+                                           const struct req_op_context *opctx,
 					   const char *xattr_name,
 					   caddr_t buffer_addr,
 					   size_t buffer_size,
@@ -71,6 +74,7 @@ fsal_status_t posix_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t posix_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
+                                         const struct req_op_context *opctx,
 					 unsigned int xattr_id,
 					 caddr_t buffer_addr,
 					 size_t buffer_size,
@@ -80,6 +84,7 @@ fsal_status_t posix_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t posix_setextattr_value(struct fsal_obj_handle *obj_hdl,
+                                   const struct req_op_context *opctx,
 				   const char *xattr_name,
 				   caddr_t buffer_addr,
 				   size_t buffer_size,
@@ -89,6 +94,7 @@ fsal_status_t posix_setextattr_value(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t posix_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
+                                         const struct req_op_context *opctx,
 					 unsigned int xattr_id,
 					 caddr_t buffer_addr,
 					 size_t buffer_size)
@@ -97,6 +103,7 @@ fsal_status_t posix_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t posix_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
+                                   const struct req_op_context *opctx,
 				   unsigned int xattr_id,
                                    struct attrlist *p_attrs)
 {
@@ -104,12 +111,14 @@ fsal_status_t posix_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t posix_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
+                                       const struct req_op_context *opctx,
 				       unsigned int xattr_id)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
 
 fsal_status_t posix_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
+                                         const struct req_op_context *opctx,
 					 const char *xattr_name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
