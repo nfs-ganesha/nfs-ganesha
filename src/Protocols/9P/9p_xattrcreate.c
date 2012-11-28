@@ -108,7 +108,9 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
       LogDebug( COMPONENT_9P, "TXATTRCREATE: tag=%u fid=%u : will remove xattr %s",
                  (u32)*msgtag, *fid,  name ) ;
     
-    fsal_status = pfid->pentry->obj_handle->ops->remove_extattr_by_name( pfid->pentry->obj_handle, name ) ;
+    fsal_status = pfid->pentry->obj_handle->ops->remove_extattr_by_name( pfid->pentry->obj_handle, 
+                                                                         &pfid->op_context,
+                                                                         name ) ;
 
      if(FSAL_IS_ERROR(fsal_status))
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
@@ -127,6 +129,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
         create = FALSE ;
 
      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value( pfid->pentry->obj_handle,
+                                                                    &pfid->op_context,
                                                                     name,
                                                                     pfid->specdata.xattr.xattr_content, 
                                                                     *size,
@@ -136,6 +139,7 @@ int _9p_xattrcreate( _9p_request_data_t * preq9p,
        return   _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_inode_error_convert(fsal_status) ),  plenout, preply ) ;
 
      fsal_status = pfid->pentry->obj_handle->ops->getextattr_id_by_name( pfid->pentry->obj_handle,
+                                                                         &pfid->op_context,
                                                                          name, 
                                                                          &pfid->specdata.xattr.xattr_id);
 

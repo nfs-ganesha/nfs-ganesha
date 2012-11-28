@@ -111,6 +111,7 @@ int _9p_write( _9p_request_data_t * preq9p,
      snprintf( xattrval, XATTR_BUFFERSIZE, "%.*s", *count, databuffer ) ;
 
      fsal_status = pfid->pentry->obj_handle->ops->setextattr_value_by_id( pfid->pentry->obj_handle,
+                                                                          &pfid->op_context,
                                                                           pfid->specdata.xattr.xattr_id,
                                                                           xattrval,
                                                                           size+1 ) ;
