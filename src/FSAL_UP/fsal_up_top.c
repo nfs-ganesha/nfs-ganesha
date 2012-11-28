@@ -987,7 +987,6 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 		}
 	}
 
-	gsh_free(arg);
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 	nfs41_complete_single(call, hook, arg, flags);
 	return 0;
