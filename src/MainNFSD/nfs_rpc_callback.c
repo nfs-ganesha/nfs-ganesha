@@ -793,7 +793,9 @@ void nfs_rpc_destroy_v40_chan(rpc_call_channel_t *chan)
 			chan->auth = NULL;
 		}
 		/* destroy it */
-		clnt_destroy(chan->clnt);
+		if (chan->clnt) {
+			clnt_destroy(chan->clnt);
+		}
 	}
 }
 
@@ -810,7 +812,9 @@ void nfs_rpc_destroy_v41_chan(rpc_call_channel_t *chan)
 		AUTH_DESTROY(chan->auth);
 		chan->auth = NULL;
 	}
-	chan->clnt->cl_ops->cl_release(chan->clnt);
+	if (chan->clnt) {
+		chan->clnt->cl_ops->cl_release(chan->clnt);
+	}
 }
 
 /**
