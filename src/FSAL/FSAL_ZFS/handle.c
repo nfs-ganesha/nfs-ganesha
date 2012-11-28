@@ -732,19 +732,19 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
           return fsalstat( ERR_FSAL_NOMEM, 0 ) ;
 
 
-        if( ( retval = libzfswrap_readdir( p_vfs,
-                                           &cred,
-                                           pvnode,
-                                           dirents,  
-                                           MAX_ENTRIES,
-                                           &seekloc ) ) )
-             goto out;
-
-        ZFSFSAL_VFS_Unlock() ;
-
         *eof = FALSE ;
         do
           {
+             if( ( retval = libzfswrap_readdir( p_vfs,
+                                                &cred,
+                                                pvnode,
+                                                dirents,  
+                                                MAX_ENTRIES,
+                                                &seekloc ) ) )
+                  goto out;
+
+             ZFSFSAL_VFS_Unlock() ;
+
              for( index = 0 ; index < MAX_ENTRIES ; index ++ )
              {
                   /* If psz_filename is NULL, that's the end of the list */
@@ -766,10 +766,14 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
                           dirents[index].psz_filename,
                           dir_state,
                           entry_cookie ) ) 
-                     break ;
+                    goto done;  
              }
+           
+             seekloc += MAX_ENTRIES ;
+
            } while( *eof == FALSE ) ;
 
+done:
         /* Close the directory */
         ZFSFSAL_VFS_RDLock();
         if( ( retval = libzfswrap_closedir( p_vfs,
