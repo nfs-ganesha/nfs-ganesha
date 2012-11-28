@@ -245,7 +245,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   utf82str(name, sizeof(name), &arg_LOOKUP4.objname);
 
   /* Try to get a FSAL_XAttr of that name */
-  fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name, &xattr_id);
+  fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, data->req_ctx, name, &xattr_id);
   if(FSAL_IS_ERROR(fsal_status))
     {
       return NFS4ERR_NOENT;
@@ -430,7 +430,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   obj_hdl = data->current_entry->obj_handle;
 
   /* Used FSAL extended attributes functions */
-  fsal_status = obj_hdl->ops->list_ext_attrs(obj_hdl, cookie, xattrs_tab,
+  fsal_status = obj_hdl->ops->list_ext_attrs(obj_hdl, data->req_ctx, cookie, xattrs_tab,
 					     estimated_num_entries, &nb_xattrs_read, (int *)&eod_met);
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -565,6 +565,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
       /* To be done later */
       /* set empty attr */
       fsal_status = obj_hdl->ops->setextattr_value(obj_hdl,
+                                                   data->req_ctx,
                                                    name,
                                                    empty_buff,
                                                    sizeof(empty_buff),
@@ -577,7 +578,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
         }
 
       /* Now, getr the id */
-      fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name, &xattr_id);
+      fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, data->req_ctx, name, &xattr_id);
       if(FSAL_IS_ERROR(fsal_status))
         {
           res_OPEN4.status = NFS4ERR_NOENT;
@@ -601,7 +602,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
     case OPEN4_NOCREATE:
 
       /* Try to get a FSAL_XAttr of that name */
-      fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name, &xattr_id);
+      fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, data->req_ctx, name, &xattr_id);
       if(FSAL_IS_ERROR(fsal_status))
         {
           res_OPEN4.status = NFS4ERR_NOENT;
@@ -670,7 +671,7 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
       return res_READ4.status;
     }
 
-  fsal_status = obj_hdl->ops->getextattr_value_by_id(obj_hdl, xattr_id,
+  fsal_status = obj_hdl->ops->getextattr_value_by_id(obj_hdl, data->req_ctx, xattr_id,
 						     buffer, XATTR_BUFFERSIZE, &size_returned);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -722,7 +723,9 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   xattr_id = pfile_handle->xattr_pos - 2;
 
-  fsal_status = obj_hdl->ops->setextattr_value_by_id(obj_hdl, xattr_id,
+  fsal_status = obj_hdl->ops->setextattr_value_by_id(obj_hdl,
+                                                     data->req_ctx,
+                                                     xattr_id,
 						     arg_WRITE4.data.data_val,
 						     arg_WRITE4.data.data_len);
 
@@ -776,7 +779,7 @@ int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data,
       return res_REMOVE4.status;
     }
 
-  fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl, name);
+  fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl, data->req_ctx, name);
   if(FSAL_IS_ERROR(fsal_status))
     {
       res_REMOVE4.status = NFS4ERR_SERVERFAULT;

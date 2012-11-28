@@ -318,6 +318,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
         access_mode |= FSAL_X_OK;
 
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
+                                                   req_ctx,
                                                    xattr_id, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -425,7 +426,9 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
   obj_hdl = pentry_dir->obj_handle;
 
   /* Try to get a FSAL_XAttr of that name */
-  fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, name,
+  fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl, 
+                                                    req_ctx,
+                                                    name,
                                                     &xattr_id);
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -454,7 +457,9 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
 
       /* Retrieve xattr attributes */
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
-                                                   xattr_id, &xattr_attrs);
+                                                   req_ctx,
+                                                   xattr_id, 
+                                                   &xattr_attrs);
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -635,6 +640,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
 
   /* Used FSAL extended attributes functions */
   fsal_status = obj_hdl->ops->list_ext_attrs(obj_hdl,
+                         req_ctx,
 					     xattr_cookie,
 					     xattrs_tab,
 					     asked_num_entries,
@@ -877,6 +883,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
 
   /* set empty attr */
   fsal_status = obj_hdl->ops->setextattr_value(obj_hdl,
+                                               req_ctx,
                                                attr_name,
                                                empty_buff,
                                                sizeof(empty_buff),
@@ -891,6 +898,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
 
   /* get attr id */
   fsal_status = obj_hdl->ops->getextattr_id_by_name(obj_hdl,
+                                                    req_ctx,
                                                     attr_name, &attr_id);
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -900,6 +908,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
     }
 
   fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
+                                               req_ctx,
                                                attr_id, &attr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -1020,6 +1029,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
     }
 
   fsal_status = obj_hdl->ops->setextattr_value_by_id(obj_hdl,
+                                                     req_ctx,
                                                      xattr_id,
                                                      parg->arg_write3.data.data_val,
                                                      parg->arg_write3.data.data_len);
@@ -1027,6 +1037,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
   /* @TODO deal with error cases */
 
   fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
+                                               req_ctx,
                                                xattr_id, &attr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -1138,6 +1149,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
     }
   size_returned = size;
   fsal_status = obj_hdl->ops->getextattr_value_by_id(obj_hdl,
+                                                     req_ctx,
                                                      xattr_id,
                                                      data, XATTR_BUFFERSIZE,
                                                      &size_returned);
@@ -1154,6 +1166,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
 
   /* Retrieve xattr attributes */
   fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
+                                               req_ctx,
                                                xattr_id, &xattr_attrs);
 
   if(FSAL_IS_ERROR(fsal_status))
@@ -1333,6 +1346,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 
   /* Used FSAL extended attributes functions */
   fsal_status = obj_hdl->ops->list_ext_attrs(obj_hdl,
+                         req_ctx,
 					     xattr_cookie,
 					     xattrs_tab, asked_num_entries,
 					     &nb_xattrs_read, &eod_met);
@@ -1517,6 +1531,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
               /* Build the FSAL name */
               fsal_status = obj_hdl->ops->getextattr_id_by_name(
                       obj_hdl,
+                      req_ctx,
                       xattrs_tab[i - delta].xattr_name,
                       &xattr_id);
               if(FSAL_IS_ERROR(fsal_status))
@@ -1666,6 +1681,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
       struct attrlist xattrs;
 
       fsal_status = obj_hdl->ops->getextattr_attrs(obj_hdl,
+                                                   req_ctx,
                                                    xattr_id, &xattrs);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -1719,7 +1735,7 @@ int nfs3_Remove_Xattr(nfs_arg_t *parg,
 
   name = parg->arg_remove3.object.name;
 
-  fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl, name);
+  fsal_status = obj_hdl->ops->remove_extattr_by_name(obj_hdl,req_ctx, name);
   if(FSAL_IS_ERROR(fsal_status))
     {
       pres->res_remove3.status = NFS3ERR_SERVERFAULT;
