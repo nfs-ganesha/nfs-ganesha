@@ -513,6 +513,7 @@ void nfs_Init_svc()
     svc_params.max_connections = nfs_param.core_param.nb_max_fd;
     svc_params.max_events = 1024; /* length of epoll event queue */
     svc_params.warnx = NULL;
+    svc_params.gss_ctx_hash_partitions = PRIME_ID_MAPPER;
 
     svc_init(&svc_params);
 

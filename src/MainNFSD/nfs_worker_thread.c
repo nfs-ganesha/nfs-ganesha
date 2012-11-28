@@ -1039,7 +1039,7 @@ nfs_rpc_execute(request_data_t    * preq,
    */
   nfs_req_timer_start(&req_timer);
 #ifdef _USE_STAT_EXPORTER
-    atomic_store_msectimer_t(&worker_data->timer_start, req_timer.timer_start);
+    atomic_store_msectimer_t(&pworker_data->timer_start, req_timer.timer_start);
 #endif
 
   LogDebug(COMPONENT_DISPATCH,
