@@ -498,6 +498,7 @@ void nfs_Init_svc()
     svc_params.gss_max_idle_gen = 0;
     svc_params.gss_max_gc = 0;
     svc_params.warnx = NULL;
+    svc_params.gss_ctx_hash_partitions = PRIME_ID_MAPPER;
 
     svc_init(&svc_params);
 
