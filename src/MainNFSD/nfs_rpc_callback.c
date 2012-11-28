@@ -1129,7 +1129,7 @@ static rpc_call_t *construct_single_call(nfs41_session_t *session,
 	sequence->csa_cachethis = false;
 	if (refer) {
 		referring_call_list4 *list
-			= gsh_malloc(sizeof(referring_call_list4));
+			= gsh_calloc(1,sizeof(referring_call_list4));
 		referring_call4 *ref_call = NULL;
 		if (!list) {
 			free_rpc_call(call);
