@@ -103,6 +103,7 @@ int nfs4_op_lock(struct nfs_argop4 *op,
         state_blocking_t          blocking = STATE_NON_BLOCKING;
 	/* Tracking data for the lock state */
 	struct state_refer        refer;
+	int rc;
 
         LogDebug(COMPONENT_NFS_V4_LOCK,
                  "Entering NFS v4 LOCK handler ----------------------");
@@ -181,13 +182,13 @@ int nfs4_op_lock(struct nfs_argop4 *op,
                         &lock_desc);
 
                 /* Check is the clientid is known or not */
-                if (nfs_client_id_get_confirmed(
-                            (data->minorversion == 0 ?
-                             arg_LOCK4->locker.locker4_u.open_owner
-                             .lock_owner.clientid :
-                             data->psession->clientid),
-                            &clientid) == CLIENT_ID_NOT_FOUND) {
-                        res_LOCK4->status = NFS4ERR_STALE_CLIENTID;
+                rc = nfs_client_id_get_confirmed((data->minorversion == 0 ?
+						  arg_LOCK4->locker.locker4_u.open_owner
+						  .lock_owner.clientid :
+						  data->psession->clientid),
+						 &clientid);
+		if(rc != CLIENT_ID_SUCCESS) {
+			res_LOCK4->status = clientid_error_to_nfsstat(rc);
                         LogDebug(COMPONENT_NFS_V4_LOCK,
                                  "LOCK failed nfs_client_id_get");
                         return res_LOCK4->status;

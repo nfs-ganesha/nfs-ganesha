@@ -317,10 +317,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
 	rc = nfs_client_id_insert(unconf);
 	if (rc != CLIENT_ID_SUCCESS) {
 		/* Record is already freed, return. */
-		if (rc == CLIENT_ID_INSERT_MALLOC_ERROR)
-			res_SETCLIENTID4.status = NFS4ERR_RESOURCE;
-		else
-			res_SETCLIENTID4.status = NFS4ERR_SERVERFAULT;
+		res_SETCLIENTID4.status = clientid_error_to_nfsstat(rc);
 		goto out;
 	}
 

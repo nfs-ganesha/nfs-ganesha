@@ -941,10 +941,8 @@ state_status_t get_clientid_owner(clientid4 clientid,
   /* Pointer to client record, retrieved by ID and in which the
      client state owner is stored */
   nfs_client_id_t *pclientid = NULL;
-  /* Return code for error checking */
-  int rc = 0;
 
-  if ((rc = nfs_client_id_get_confirmed(clientid, &pclientid))
+  if ((nfs_client_id_get_confirmed(clientid, &pclientid))
       != CLIENT_ID_SUCCESS)
     {
       return STATE_NOT_FOUND;

@@ -888,6 +888,7 @@ int nfs4_op_open(struct nfs_argop4 *op,
         cache_entry_t *entry_lookup = NULL;
         struct glist_head *glist;
         state_lock_entry_t *found_entry = NULL;
+	int retval;
 
         LogDebug(COMPONENT_STATE,
                  "Entering NFS v4 OPEN handler -----------------------------");
@@ -946,11 +947,12 @@ int nfs4_op_open(struct nfs_argop4 *op,
                  "OPEN Client id = %"PRIx64,
                  arg_OPEN4->owner.clientid);
 
-        if (nfs_client_id_get_confirmed((data->minorversion == 0 ?
-                                         arg_OPEN4->owner.clientid :
-                                         data->psession->clientid),
-                                        &clientid) != CLIENT_ID_SUCCESS) {
-                res_OPEN4->status = NFS4ERR_STALE_CLIENTID;
+        retval = nfs_client_id_get_confirmed((data->minorversion == 0 ?
+					      arg_OPEN4->owner.clientid :
+					      data->psession->clientid),
+					     &clientid);
+	if(retval != CLIENT_ID_SUCCESS) {
+                res_OPEN4->status = clientid_error_to_nfsstat(retval);
                 goto out3;
         }
 

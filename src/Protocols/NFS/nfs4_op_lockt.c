@@ -88,6 +88,8 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
         fsal_lock_param_t         lock_desc = {FSAL_NO_LOCK, 0, 0};
         /* Description of conflicting lock */
         fsal_lock_param_t         conflict_desc;
+	/* return code from id confirm calls */
+	int rc;
 
         LogDebug(COMPONENT_NFS_V4_LOCK,
                  "Entering NFS v4 LOCKT handler ----------------------------");
@@ -143,21 +145,21 @@ int nfs4_op_lockt(struct nfs_argop4 *op,
         }
 
         /* Check clientid */
-        if (nfs_client_id_get_confirmed(
+        rc = nfs_client_id_get_confirmed(
                     (data->minorversion == 0 ?
                      arg_LOCKT4->owner.clientid :
                      data->psession->clientid),
-                    &clientid) != CLIENT_ID_SUCCESS) {
-                res_LOCKT4->status = NFS4ERR_STALE_CLIENTID;
+                    &clientid);
+	if(rc != CLIENT_ID_SUCCESS) {
+                res_LOCKT4->status = clientid_error_to_nfsstat(rc);
                 return res_LOCKT4->status;
         }
 
-        /* The protocol doesn't allow for EXPIRED, so return STALE_CLIENTID */
         pthread_mutex_lock(&clientid->cid_mutex);
         if (!reserve_lease(clientid)) {
                 pthread_mutex_unlock(&clientid->cid_mutex);
                 dec_client_id_ref(clientid);
-                res_LOCKT4->status = NFS4ERR_STALE_CLIENTID;
+                res_LOCKT4->status = NFS4ERR_EXPIRED;
                 return res_LOCKT4->status;
         }
 

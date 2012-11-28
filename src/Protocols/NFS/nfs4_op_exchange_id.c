@@ -366,10 +366,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op,
 
 	if (rc != CLIENT_ID_SUCCESS) {
 		/* Record is already freed, return. */
-		if (rc == CLIENT_ID_INSERT_MALLOC_ERROR)
-			res_EXCHANGE_ID4.eir_status = NFS4ERR_RESOURCE;
-		else
-			res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
+		res_EXCHANGE_ID4.eir_status = clientid_error_to_nfsstat(rc);
 
 		goto out;
 	}

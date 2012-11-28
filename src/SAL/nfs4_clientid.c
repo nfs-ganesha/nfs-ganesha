@@ -97,6 +97,63 @@ pool_t *client_id_pool;
 pool_t *client_record_pool;
 
 /**
+ * @brief Return the nfs4 status for the client id error code
+ *
+ * @param[in] client id error code
+ *
+ * @return the corresponding nfs4 error code
+ */
+nfsstat4 clientid_error_to_nfsstat(clientid_status_t err)
+{
+	switch(err) {
+	case CLIENT_ID_SUCCESS:
+		return NFS4_OK;
+	case CLIENT_ID_INSERT_MALLOC_ERROR:
+		return NFS4ERR_RESOURCE;
+	case CLIENT_ID_INVALID_ARGUMENT:
+		return NFS4ERR_SERVERFAULT;
+	case CLIENT_ID_EXPIRED:
+		return NFS4ERR_EXPIRED;
+	case CLIENT_ID_STALE:
+		return NFS4ERR_STALE_CLIENTID;
+	}
+
+	LogCrit(COMPONENT_CLIENTID,
+		"Unexpected clientid error %d", err);
+
+	return NFS4ERR_SERVERFAULT;
+}
+
+/**
+ * @brief Return the nfs4 status string for the client id error code
+ *
+ * @param[in] client id error code
+ *
+ * @return the error string corresponding nfs4 error code
+ */
+const char * clientid_error_to_str(clientid_status_t err)
+{
+	switch(err) {
+	case CLIENT_ID_SUCCESS:
+		return "CLIENT_ID_SUCCESS";
+	case CLIENT_ID_INSERT_MALLOC_ERROR:
+		return "CLIENT_ID_INSERT_MALLOC_ERROR";
+	case CLIENT_ID_INVALID_ARGUMENT:
+		return "CLIENT_ID_INVALID_ARGUMENT";
+	case CLIENT_ID_EXPIRED:
+		return "CLIENT_ID_EXPIRED";
+	case CLIENT_ID_STALE:
+		return "CLIENT_ID_STALE";
+	}
+
+	LogCrit(COMPONENT_CLIENTID,
+		"Unexpected clientid error %d", err);
+
+	return "UNEXPECTED ERROR";
+}
+
+
+/**
  * @brief Return a string corresponding to the confirm state
  *
  * @param[in] confirmed Confirm state
@@ -859,9 +916,20 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht,
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	clientid_status_t status;
+	uint64_t      epoch_low = ServerEpoch & 0xFFFFFFFF;
+	uint64_t      cid_epoch = (uint64_t) (clientid >>  (clientid4) 32);
 
 	if (client_rec == NULL)
 		return CLIENT_ID_INVALID_ARGUMENT;
+
+	/* Don't even bother to look up clientid if epochs don't match */
+	if(cid_epoch != epoch_low) {
+		if(isDebug(COMPONENT_HASHTABLE))
+			LogFullDebug(COMPONENT_CLIENTID,
+				     "%s NOTFOUND (epoch doesn't match, assumed STALE)",
+				     ht->parameter.ht_name);
+		return CLIENT_ID_STALE;
+	}
 
 	buffkey.addr = &clientid;
 	buffkey.len = sizeof(clientid4);
@@ -893,9 +961,10 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht,
 	} else {
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID,
-				     "%s NOTFOUND", ht->parameter.ht_name);
+				     "%s NOTFOUND (assumed EXPIRED)",
+				     ht->parameter.ht_name);
 		*client_rec = NULL;
-		status = CLIENT_ID_NOT_FOUND;
+		status = CLIENT_ID_EXPIRED;
 	}
 
 	return status;

@@ -133,10 +133,9 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		if (rc != CLIENT_ID_SUCCESS) {
 			/* No record whatsoever of this clientid */
 			LogDebug(component,
-				 "Stale clientid = %"PRIx64,
-				 clientid);
-			res_CREATE_SESSION4->csr_status
-				= NFS4ERR_STALE_CLIENTID;
+				 "%s clientid = %"PRIx64,
+				 clientid_error_to_str(rc), clientid);
+			res_CREATE_SESSION4->csr_status = clientid_error_to_nfsstat(rc);
 
 			return res_CREATE_SESSION4->csr_status;
 		}
@@ -457,12 +456,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op,
 		rc = nfs_client_id_confirm(unconf, component);
 
 		if (rc != CLIENT_ID_SUCCESS) {
-			if (rc == CLIENT_ID_INVALID_ARGUMENT)
-				res_CREATE_SESSION4->csr_status
-					= NFS4ERR_SERVERFAULT;
-			else
-				res_CREATE_SESSION4->csr_status
-					= NFS4ERR_RESOURCE;
+			res_CREATE_SESSION4->csr_status = clientid_error_to_nfsstat(rc);
 
 			/* Need to destroy the session */
 			if (!nfs41_Session_Del(nfs41_session->session_id))
