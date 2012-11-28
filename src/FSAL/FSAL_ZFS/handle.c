@@ -743,29 +743,32 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
         ZFSFSAL_VFS_Unlock() ;
 
         *eof = FALSE ;
-        for( index = 0 ; index < MAX_ENTRIES ; index ++ )
-        {
-             /* If psz_filename is NULL, that's the end of the list */
-             if(dirents[index].psz_filename[0] == '\0')
-              {
-                *eof = TRUE ;
-                break;
-              }
+        do
+          {
+             for( index = 0 ; index < MAX_ENTRIES ; index ++ )
+             {
+                  /* If psz_filename is NULL, that's the end of the list */
+                  if(dirents[index].psz_filename[0] == '\0')
+                   {
+                     *eof = TRUE ;
+                     break;
+                   }
 
-             /* Skip '.' and '..' */
-             if(!strcmp(dirents[index].psz_filename, ".") || !strcmp(dirents[index].psz_filename, ".."))
-                continue;
+                  /* Skip '.' and '..' */
+                  if(!strcmp(dirents[index].psz_filename, ".") || !strcmp(dirents[index].psz_filename, ".."))
+                     continue;
    
-             entry_cookie->size = sizeof(off_t);
-	     memcpy(&entry_cookie->cookie, &index, sizeof(off_t));
+                  entry_cookie->size = sizeof(off_t);
+	          memcpy(&entry_cookie->cookie, &index, sizeof(off_t));
 
-             /* callback to cache inode */
-             if(!cb( opctx,
-                     dirents[index].psz_filename,
-                     dir_state,
-                     entry_cookie ) ) 
-                break ;
-        }
+                  /* callback to cache inode */
+                  if(!cb( opctx,
+                          dirents[index].psz_filename,
+                          dir_state,
+                          entry_cookie ) ) 
+                     break ;
+             }
+           } while( *eof == FALSE ) ;
 
         /* Close the directory */
         ZFSFSAL_VFS_RDLock();
