@@ -420,7 +420,7 @@ void nfs_set_param_default()
   nfs_param.ip_name_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.ip_name_param.hash_param.ht_log_component = COMPONENT_DISPATCH;
   nfs_param.ip_name_param.expiration_time = IP_NAME_EXPIRATION;
-  strncpy(nfs_param.ip_name_param.mapfile, "", MAXPATHLEN);
+  nfs_param.ip_name_param.mapfile[0] = '\0';
 
   /*  Worker parameters : UID_MAPPER hash table */
   nfs_param.uidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
@@ -433,7 +433,7 @@ void nfs_set_param_default()
   nfs_param.uidmap_cache_param.hash_param.ht_name = "UID Map Cache";
   nfs_param.uidmap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.uidmap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
-  strncpy(nfs_param.uidmap_cache_param.mapfile, "", MAXPATHLEN);
+  nfs_param.uidmap_cache_param.mapfile[0] = '\0';
 
   /*  Worker parameters : UNAME_MAPPER hash table */
   nfs_param.unamemap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
@@ -446,7 +446,7 @@ void nfs_set_param_default()
   nfs_param.unamemap_cache_param.hash_param.ht_name = "UNAME Map Cache";
   nfs_param.unamemap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.unamemap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
-  strncpy(nfs_param.unamemap_cache_param.mapfile, "", MAXPATHLEN);
+  nfs_param.unamemap_cache_param.mapfile[0] = '\0';
 
   /*  Worker parameters : GID_MAPPER hash table */
   nfs_param.gidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
@@ -459,7 +459,7 @@ void nfs_set_param_default()
   nfs_param.gidmap_cache_param.hash_param.ht_name = "GID Map Cache";
   nfs_param.gidmap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.gidmap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
-  strncpy(nfs_param.gidmap_cache_param.mapfile, "", MAXPATHLEN);
+  nfs_param.gidmap_cache_param.mapfile[0] = '\0';
 
   /*  Worker parameters : UID->GID  hash table (for RPCSEC_GSS) */
   nfs_param.uidgidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
@@ -485,7 +485,7 @@ void nfs_set_param_default()
   nfs_param.gnamemap_cache_param.hash_param.ht_name = "GNAME Map Cache";
   nfs_param.gnamemap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.gnamemap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
-  strncpy(nfs_param.gnamemap_cache_param.mapfile, "", MAXPATHLEN);
+  nfs_param.gnamemap_cache_param.mapfile[0] = '\0';
 
   /*  Worker parameters : IP/stats hash table */
   nfs_param.ip_stats_param.hash_param.index_size = PRIME_IP_STATS;
@@ -698,9 +698,9 @@ void nfs_set_param_default()
 
   /* SNMP ADM parameters */
 #ifdef _SNMP_ADM_ACTIVE
-  strcpy(nfs_param.extern_param.snmp_adm.snmp_agentx_socket, "");
+  nfs_param.extern_param.snmp_adm.snmp_agentx_socket[0] = '\0';
   nfs_param.extern_param.snmp_adm.product_id = 1;
-  strcpy(nfs_param.extern_param.snmp_adm.snmp_log_file, "");
+  nfs_param.extern_param.snmp_adm.snmp_log_file[0] = '\0';
 
   nfs_param.extern_param.snmp_adm.export_cache_stats = TRUE;
   nfs_param.extern_param.snmp_adm.export_requests_stats = TRUE;
