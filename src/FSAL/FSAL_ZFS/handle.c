@@ -63,9 +63,6 @@ extern pthread_rwlock_t vfs_lock;
 
 libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle)
 {
-  /* This function must be called with the reader lock locked */
-  assert(pthread_rwlock_trywrlock(&vfs_lock) != 0);
-
   /* Check for the zpool (index == 0) */
   if(handle->i_snap == 0)
     return p_snapshots[0].p_vfs;
@@ -865,11 +862,26 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl,
                                          &stat, 
                                          &type);
 
+            /* An explanation is required here. This is an exception management.
+             * when a file is opened, then deleted without being closed, FSAL_VFS can 
+             * still getattr on it, because it uses fstat on a cached FD. This is not possible
+             * to do this with ZFS, because you can't fstat on a vnode. To handle this, stat are 
+             * cached as the file is opened and used here, to emulate a successful fstat */ 
+            if( ( retval == ENOENT ) &&
+                 ( myself->u.file.openflags != FSAL_O_CLOSED ) &&
+                 ( S_ISREG( myself->u.file.saved_stat.st_mode) ) )
+                {
+                    memcpy( &stat, &myself->u.file.saved_stat, sizeof( struct stat ) ) ;
+                    retval = 0 ; /* remove the error */
+                    goto ok_file_opened_and_deleted ;
+                }
+
 	    if(retval )
 		goto errout;
           }
 
 	/* convert attributes */
+ok_file_opened_and_deleted:
 	st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
 	if(FSAL_IS_ERROR(st)) {
 		FSAL_CLEAR_MASK(obj_hdl->attributes.mask);

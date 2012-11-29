@@ -72,17 +72,6 @@ typedef struct
 
 } zfsfsal_dir_t;
 
-typedef struct
-{
-  creden_t cred;
-  struct zfs_file_handle handle;
-  off_t current_offset;
-  int flags;
-  libzfswrap_vnode_t *p_vnode;
-  int is_closed;
-
-} zfsfsal_file_t;
-
 static inline size_t zfs_sizeof_handle(struct zfs_file_handle *hdl)
 {
   return (size_t)sizeof( struct zfs_file_handle ) ;

@@ -33,11 +33,11 @@ struct zfs_fsal_obj_handle {
 	struct zfs_file_handle *handle;
 	union {
 		struct {
-                         creden_t cred;
                          off_t current_offset;
                          libzfswrap_vnode_t *p_vnode;
-                         int is_closed;
 			 fsal_openflags_t openflags;
+ 			 struct stat saved_stat ;
+			 creden_t cred ;
 		} file;
 		struct {
 			unsigned char *link_content;
