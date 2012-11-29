@@ -3,6 +3,8 @@ add_definitions(
   -D_GNU_SOURCE
 )
 
+add_subdirectory(pnfs_panfs)
+
 ########### next target ###############
 
 SET(fsalvfs_LIB_SRCS
@@ -17,7 +19,9 @@ SET(fsalvfs_LIB_SRCS
 
 add_library(fsalvfs SHARED ${fsalvfs_LIB_SRCS})
 
-target_link_libraries(fsalvfs)
+target_link_libraries(fsalvfs
+  pnfs_panfs
+)
 
 set_target_properties(fsalvfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalvfs DESTINATION lib)
