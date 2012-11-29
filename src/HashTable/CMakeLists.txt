@@ -1,3 +1,7 @@
+# this shouldn't need to be here...
+include_directories(
+  ${LIBTIRPC_INCLUDE_DIR}
+)
 
 ########### next target ###############
 
