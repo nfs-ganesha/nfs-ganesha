@@ -32,6 +32,7 @@
 #cmakedefine HAVE_STRINGS_H 1
 #cmakedefine LITTLEEND 1
 #cmakedefine BIGEND 1
+#cmakedefine HAVE_XATTR_H 1
 
 #define NFS_GANESHA 1
 

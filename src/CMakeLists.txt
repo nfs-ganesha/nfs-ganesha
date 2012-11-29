@@ -80,9 +80,6 @@ option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 # enable code profiling [-g -pg]
 option(PROFILING "turn on code profiling (-g and -pg)" OFF)
 
-# enable code profiling [-Wall -Werror -Wimplicit -Wformat -Wmissing-braces -Wreturn-type -Wunused-variable -Wuninitialized -Wno-pointer-sign]
-option(STRICT_COMPILE "turn on strict compiler flags" ON)
-
 # MSPAC support -lwbclient link flag
 option(_MSPAC_SUPPORT "enable mspac Winbind support" ON)
 
@@ -124,6 +121,15 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(string.h HAVE_STRING_H)
+
+# X_ATTRD requires the kernel to have xattrs...
+if(NOT _NO_XATTRD)
+  check_include_files("unistd.h;attr/xattr.h" HAVE_XATTR_H)
+  if(NOT HAVE_XATTR_H)
+    message(WARNING "Cannot find xattr.h. Disabling XATTRD support: ${HAVE_XATTR_H}")
+    set(_NO_XATTRD ON)
+  endif(NOT HAVE_XATTR_H)
+endif(NOT _NO_XATTRD)
 
 TEST_BIG_ENDIAN(BIGENDIAN)
 if(${BIGENDIAN})
@@ -386,7 +392,6 @@ message(STATUS "_DEBUG_NFS_SHELL = ${_DEBUG_NFS_SHELL}")
 message(STATUS "_HANDLE_MAPPING = ${_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "PROFILING = ${PROFILING}")
-message(STATUS "STRICT_COMPILE = ${STRICT_COMPILE}")
 message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
