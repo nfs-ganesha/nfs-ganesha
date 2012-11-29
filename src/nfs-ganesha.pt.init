@@ -73,7 +73,7 @@ CONFFILE=/etc/ganesha/pt.ganesha.nfsd.conf
 #export COMPONENT_STATE=NIV_FULL_DEBUG
 ###########################################################
 
-OPTIONS="-d -f $CONFFILE -L $LOGFILE"
+OPTIONS="-d -f $CONFFILE -L $LOGFILE -N NIV_INFO"
 RETVAL=0
 prog="pt.ganesha.nfsd"
 

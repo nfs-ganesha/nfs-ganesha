@@ -92,6 +92,7 @@ posix2fsal_error(int posix_errorcode)
       /* no such device */
     case ENODEV:
     case ENXIO:
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NXIO", posix_errorcode);
       return ERR_FSAL_NXIO;
 
       /* invalid file descriptor : */
@@ -109,6 +110,7 @@ posix2fsal_error(int posix_errorcode)
 
     case ENOMEM:
     case ENOLCK:
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NOMEM", posix_errorcode);
       return ERR_FSAL_NOMEM;
 
     case EACCES:
@@ -159,6 +161,8 @@ posix2fsal_error(int posix_errorcode)
     case ENOTEMPTY:
     case -ENOTEMPTY:
 #endif
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_NOTEMPTY",
+              posix_errorcode);
       return ERR_FSAL_NOTEMPTY;
 
     case ESTALE:
@@ -167,7 +171,7 @@ posix2fsal_error(int posix_errorcode)
       /* Error code that needs a retry */
     case EAGAIN:
     case EBUSY:
-
+      LogInfo(COMPONENT_FSAL, "Mapping %d to ERR_FSAL_DELAY", posix_errorcode);
       return ERR_FSAL_DELAY;
 
     case ENOTSUP:
@@ -183,7 +187,8 @@ posix2fsal_error(int posix_errorcode)
       return ERR_FSAL_INTERRUPT;
 
     default:
-
+      LogCrit(COMPONENT_FSAL, "Mapping %d(default) to ERR_FSAL_SERVERFAULT",
+                        posix_errorcode);
       /* other unexpected errors */
       return ERR_FSAL_SERVERFAULT;
 
