@@ -132,6 +132,8 @@ fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,         /* IN */
 
     }
 
+  // error injection to test DRC
+  //sleep(61);
   /* OK */
   return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
