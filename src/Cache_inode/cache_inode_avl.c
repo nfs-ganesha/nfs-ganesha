@@ -187,11 +187,10 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         break;
     default:
         /* already inserted, or, keep trying at current j, j2 */
-        LogCrit(COMPONENT_CACHE_INODE,
+        LogDebug(COMPONENT_CACHE_INODE,
                 "Already existant when inserting new dirent on entry=%p "
                 "cookie=%"PRIu64" this should never happen.",
                 entry, v->hk.k);
-        abort();
         break;
     }
     return (code);
