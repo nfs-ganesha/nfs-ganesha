@@ -7330,6 +7330,7 @@ static inline bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
     case NFS4_OP_LOCKU:
       if(!xdr_LOCKU4args(xdrs, &objp->nfs_argop4_u.oplocku))
         return FALSE;
+      lkhd->flags |= NFS_LOOKAHEAD_LOCK;
       break;
     case NFS4_OP_LOOKUP:
       if(!xdr_LOOKUP4args(xdrs, &objp->nfs_argop4_u.oplookup))
@@ -7345,6 +7346,8 @@ static inline bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
       if(!xdr_OPEN4args(xdrs, &objp->nfs_argop4_u.opopen))
         return FALSE;
       lkhd->flags |= NFS_LOOKAHEAD_OPEN;
+      if (objp->nfs_argop4_u.opopen.openhow.opentype == OPEN4_CREATE)
+        lkhd->flags |= NFS_LOOKAHEAD_CREATE;
       break;
     case NFS4_OP_OPENATTR:
       if(!xdr_OPENATTR4args(xdrs, &objp->nfs_argop4_u.opopenattr))
@@ -7353,10 +7356,12 @@ static inline bool xdr_nfs_argop4(XDR * xdrs, nfs_argop4 * objp)
     case NFS4_OP_OPEN_CONFIRM:
       if(!xdr_OPEN_CONFIRM4args(xdrs, &objp->nfs_argop4_u.opopen_confirm))
         return FALSE;
+      lkhd->flags |= NFS_LOOKAHEAD_OPEN;
       break;
     case NFS4_OP_OPEN_DOWNGRADE:
       if(!xdr_OPEN_DOWNGRADE4args(xdrs, &objp->nfs_argop4_u.opopen_downgrade))
         return FALSE;
+      lkhd->flags |= NFS_LOOKAHEAD_OPEN;
       break;
     case NFS4_OP_PUTFH:
       if(!xdr_PUTFH4args(xdrs, &objp->nfs_argop4_u.opputfh))
