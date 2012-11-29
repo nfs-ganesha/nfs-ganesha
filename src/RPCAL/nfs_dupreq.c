@@ -1054,7 +1054,6 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     req->rq_u1 = (void*) DUPREQ_BAD_ADDR1;
     req->rq_u2 = (void*) DUPREQ_BAD_ADDR1;
 
-#if 1
     drc = nfs_dupreq_get_drc(req);
     if (! drc) {
         status = DUPREQ_INSERT_MALLOC_ERROR;
@@ -1084,35 +1083,6 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
         }
         break;
     }
-#endif
-#if 0
-    /* NFSv4.1 or higher */
-    if (nfs_req->funcdesc->service_function == nfs4_Compound) {
-        COMPOUND4args *arg_c4 = (COMPOUND4args *) &nfs_req->arg_nfs;
-        if (arg_c4->minorversion > 0) {
-            /* for v41+ requests, we merely thread the request through
-             * for later cleanup--all caching is handled by the v41
-             * slot reply cache */
-            req->rq_u1 = (void*) DUPREQ_NOCACHE;
-            res = alloc_nfs_res();
-            goto out;
-        }
-    }
- 
-    /* likewise for other protocol requests we may not or choose not
-     * to cache */
-    if (! (nfs_req->funcdesc->dispatch_behaviour & CAN_BE_DUP)) {
-        req->rq_u1 = (void*) DUPREQ_NOCACHE;
-        res = alloc_nfs_res();
-        goto out;
-    }
-
-    drc = nfs_dupreq_get_drc(req);
-    if (! drc) {
-        status = DUPREQ_INSERT_MALLOC_ERROR;
-        goto out;
-    }
-#endif
 
     dk = alloc_dupreq();
     dk->hin.drc = drc; /* trans. call path ref to dv */
