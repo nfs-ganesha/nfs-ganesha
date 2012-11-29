@@ -1030,9 +1030,9 @@ nfs_dupreq_v4_cacheable(nfs_request_data_t *nfs_req)
 				     NFS_LOOKAHEAD_READDIR |
 				     NFS_LOOKAHEAD_SETCLIENTID |
 				     NFS_LOOKAHEAD_SETCLIENTID_CONFIRM |
-				     NFS_LOOKAHEAD_SETATTR)));
-	    return (false);
-    return (true);
+				     NFS_LOOKAHEAD_SETATTR)))
+	    return (true);
+    return (false);
 }
 
 /**
@@ -1070,7 +1070,7 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
     req->rq_u1 = (void*) DUPREQ_BAD_ADDR1;
     req->rq_u2 = (void*) DUPREQ_BAD_ADDR1;
 
-#if 0
+#if 1
     drc = nfs_dupreq_get_drc(req);
     if (! drc) {
         status = DUPREQ_INSERT_MALLOC_ERROR;
@@ -1100,7 +1100,8 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
         }
         break;
     }
-#else
+#endif
+#if 0
     /* NFSv4.1 or higher */
     if (nfs_req->funcdesc->service_function == nfs4_Compound) {
         COMPOUND4args *arg_c4 = (COMPOUND4args *) &nfs_req->arg_nfs;

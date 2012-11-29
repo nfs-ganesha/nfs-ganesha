@@ -128,6 +128,8 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
 
     }
 
+  // error injection to test DRC
+  //sleep(61);
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_create);
 
