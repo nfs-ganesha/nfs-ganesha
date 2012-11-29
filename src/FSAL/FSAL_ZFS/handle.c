@@ -59,7 +59,6 @@
  */
 extern size_t i_snapshots;
 extern snapshot_t *p_snapshots;
-extern pthread_rwlock_t vfs_lock;
 
 libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle)
 {
@@ -181,9 +180,7 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
       int type;
       char i_snap = parent_hdl->handle->i_snap ;
 
-      ZFSFSAL_VFS_RDLock();
       p_vfs = ZFSFSAL_GetVFS( parent_hdl->handle );
-      ZFSFSAL_VFS_Unlock();
 
       /* Hook to add the hability to go inside a .zfs directory inside the root dir */
       if(parent_hdl->handle->zfs_handle.inode == 3 &&
@@ -203,7 +200,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
       {
         LogDebug(COMPONENT_FSAL, "Lookup inside the .zfs/ pseudo-directory");
 
-        ZFSFSAL_VFS_RDLock();
         int i;
         for(i = 1; i < i_snapshots + 1; i++)
           if(!strcmp(p_snapshots[i].psz_name, path))
@@ -214,10 +210,8 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 	  return fsalstat(ERR_FSAL_NOTDIR, 0);
         }
 
-        ZFSFSAL_VFS_RDLock();
         libzfswrap_getroot(p_snapshots[i].p_vfs, &object);
         p_vfs = p_snapshots[i].p_vfs ;
-        ZFSFSAL_VFS_Unlock();
 
         type = S_IFDIR;
         i_snap = i + 1;
@@ -226,7 +220,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
       else
       {
         /* Get the right VFS */
-        ZFSFSAL_VFS_RDLock();
         if(!p_vfs) {
           retval = ENOENT;
         } else {
@@ -246,7 +239,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 
 	}
               
-        ZFSFSAL_VFS_Unlock();
 
         //FIXME!!! Hook to remove the i_snap bit when going up from the .zfs directory
         if(object.inode == 3)
@@ -255,14 +247,12 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
       cred.uid = opctx->creds->caller_uid;
       cred.gid = opctx->creds->caller_gid;
 
-      ZFSFSAL_VFS_RDLock();
       retval = libzfswrap_getattr( p_vfs,
                                    &cred,
                                    object,
                                    &stat, 
                                    &type );
 
-        ZFSFSAL_VFS_Unlock();
 	if(retval ) {
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
@@ -286,7 +276,6 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
       	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	
 errout:
-        ZFSFSAL_VFS_Unlock();
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -703,7 +692,6 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
         cred.uid = opctx->creds->caller_uid;
         cred.gid = opctx->creds->caller_gid;
 
-        ZFSFSAL_VFS_RDLock();
 
         p_vfs = ZFSFSAL_GetVFS( myself->handle );
         if(!p_vfs)
@@ -722,8 +710,6 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 
              goto out;
 
-        ZFSFSAL_VFS_Unlock() ; /* Release the lock for interlacing the request */
-
       
         if( ( dirents = gsh_malloc( MAX_ENTRIES * sizeof(libzfswrap_entry_t) ) ) == NULL )
           return fsalstat( ERR_FSAL_NOMEM, 0 ) ;
@@ -739,8 +725,6 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
                                                 MAX_ENTRIES,
                                                 &seekloc ) ) )
                   goto out;
-
-             ZFSFSAL_VFS_Unlock() ;
 
              for( index = 0 ; index < MAX_ENTRIES ; index ++ )
              {
@@ -772,7 +756,6 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 
 done:
         /* Close the directory */
-        ZFSFSAL_VFS_RDLock();
         if( ( retval = libzfswrap_closedir( p_vfs,
                                             &cred,
                                             pvnode ) ) )
@@ -780,11 +763,9 @@ done:
 
 
         /* read the directory */
-        ZFSFSAL_VFS_RDLock();
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 out:
-        ZFSFSAL_VFS_Unlock();
         return fsalstat(posix2fsal_error( retval ), retval);
 }
 
