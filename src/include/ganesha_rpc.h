@@ -138,12 +138,16 @@ alloc_gsh_xprt_private(SVCXPRT *xprt, uint32_t flags)
 
 void nfs_dupreq_put_drc(SVCXPRT *xprt, struct drc *drc, uint32_t flags);
 
+#ifndef DRC_FLAG_RELEASE
+#define DRC_FLAG_RELEASE       0x0030
+#endif
+
 static inline void
 free_gsh_xprt_private(SVCXPRT *xprt)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
     if (xu->drc)
-        nfs_dupreq_put_drc(xprt, xu->drc, 0 /* DRC_FLAG_NONE */);
+        nfs_dupreq_put_drc(xprt, xu->drc, DRC_FLAG_RELEASE);
     gsh_free(xu);
 }
 
