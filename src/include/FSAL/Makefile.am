@@ -4,4 +4,4 @@ noinst_HEADERS = access_check.h \
                  common_methods.h \
                  fsal_config.h 
 
-SUBDIRS = FSAL_FUSELIKE FSAL_GPFS FSAL_HPSS FSAL_LUSTRE FSAL_POSIX FSAL_XFS FSAL_ZFS
+SUBDIRS = FSAL_FUSELIKE FSAL_GPFS FSAL_HPSS FSAL_LUSTRE FSAL_XFS FSAL_ZFS

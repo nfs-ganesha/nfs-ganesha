@@ -768,7 +768,6 @@ AC_SUBST(ac_configure_args)
 AC_CONFIG_FILES([include/Makefile
                  include/FSAL/Makefile
                  include/FSAL/FSAL_HPSS/Makefile
-                 include/FSAL/FSAL_POSIX/Makefile
                  include/FSAL/FSAL_FUSELIKE/Makefile
                  include/FSAL/FSAL_LUSTRE/Makefile
                  include/FSAL/FSAL_XFS/Makefile
@@ -798,7 +797,6 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile
-		 FSAL/FSAL_POSIX/Makefile
 		 FSAL/FSAL_PROXY/Makefile
 		 FSAL/FSAL_CEPH/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
