@@ -121,7 +121,11 @@ void nfs_rpc_cb_pkginit(void)
         LogCrit(COMPONENT_INIT, "Failed to get local host name");
     }
     else
-        strlcpy(host_name, localmachine, MAXHOSTNAMELEN);
+        if(strmaxcpy(host_name, localmachine, sizeof(host_name)) == -1) {
+            LogCrit(COMPONENT_INIT,
+                    "local host name %s too long",
+                    localmachine);
+        }
 
     /* ccache */
     nfs_rpc_cb_init_ccache(nfs_param.krb5_param.ccache_dir);
@@ -253,8 +257,13 @@ setup_client_saddr(nfs_client_id_t *pclientid, const char *uaddr)
 void nfs_set_client_location(nfs_client_id_t *pclientid, const clientaddr4 *addr4)
 {
     pclientid->cid_cb.cid_addr.nc = nfs_netid_to_nc(addr4->r_netid);
-    strlcpy(pclientid->cid_cb.cid_client_r_addr, addr4->r_addr,
-            SOCK_NAME_MAX);
+    if(strmaxcpy(pclientid->cid_cb.cid_client_r_addr,
+                 addr4->r_addr,
+                 sizeof(pclientid->cid_cb.cid_client_r_addr)) == -1) {
+        LogCrit(COMPONENT_NFS_CB,
+                "cid_client_r_addr %s too long",
+                pclientid->cid_cb.cid_client_r_addr);
+    }
     setup_client_saddr(pclientid, pclientid->cid_cb.cid_client_r_addr);
 }
 
