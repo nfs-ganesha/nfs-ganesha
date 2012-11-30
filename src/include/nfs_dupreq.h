@@ -66,6 +66,8 @@ enum drc_type
 #define DRC_FLAG_ADDR          0x0004
 #define DRC_FLAG_PORT          0x0008
 #define DRC_FLAG_LOCKED        0x0010
+#define DRC_FLAG_RECYCLE       0x0020
+#define DRC_FLAG_RELEASE       0x0030
 
 typedef struct drc
 {
@@ -80,7 +82,6 @@ typedef struct drc
     uint32_t hiwat;
     uint32_t flags;
     uint32_t refcnt; /* call path refs */
-    uint32_t usecnt; /* xprt refs */
     uint32_t retwnd;
     union {
         struct {
