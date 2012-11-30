@@ -1205,7 +1205,7 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->read = tank_read;
 	ops->write = tank_write;
 	ops->commit = tank_commit;
-	//////////////////////ops->lock_op = tank_lock_op;
+	ops->lock_op = tank_lock_op;
 	ops->close = tank_close;
 	ops->lru_cleanup = tank_lru_cleanup;
 	ops->compare = compare;

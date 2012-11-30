@@ -258,3 +258,14 @@ fsal_status_t tank_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	
 	return fsalstat(fsal_error, retval);	
 }
+
+fsal_status_t tank_lock_op(struct fsal_obj_handle *obj_hdl,
+                           const struct req_op_context *opctx,
+                           void * p_owner,
+                           fsal_lock_op_t lock_op,
+                           fsal_lock_param_t *request_lock,
+                           fsal_lock_param_t *conflicting_lock)
+{
+        return fsalstat(ERR_FSAL_NO_ERROR, 0 );	
+}
+
