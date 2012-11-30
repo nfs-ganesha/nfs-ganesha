@@ -94,7 +94,6 @@ int nfs_Lookup(nfs_arg_t *parg,
   fsal_attrib_list_t attr;
   fsal_attrib_list_t attrdir;
   char *strpath = NULL;
-  char strname[MAXNAMLEN+1];
   unsigned int xattr_found = FALSE;
   fsal_name_t name;
   fsal_handle_t *pfsal_handle;
@@ -158,12 +157,8 @@ int nfs_Lookup(nfs_arg_t *parg,
   /* Do the lookup */
 
 #ifndef _NO_XATTRD
-  /* Is this a .xattr.d.<object> name ? */
-  if(nfs_XattrD_Name(strpath, strname))
-    {
-      strpath = strname;
-      xattr_found = TRUE;
-    }
+  /* Is this a .xattr.d.<object> name get the orginal object name */
+  xattr_found = nfs_XattrD_Name(strpath, &strpath);
 #endif
 
   if((preq->rq_vers == NFS_V3) &&

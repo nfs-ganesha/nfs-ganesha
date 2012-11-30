@@ -912,8 +912,6 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
 int nfs4_op_remove_xattr(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp);
 
-int nfs_XattrD_Name(char *strname, char *objectname);
-
 int nfs4_XattrToFattr(fattr4 * Fattr,
                       compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
 

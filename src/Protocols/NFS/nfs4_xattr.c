@@ -1117,7 +1117,11 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   pfsal_handle = &data->current_entry->handle;
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname);
+  if(utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname) == -1)
+    {
+      res_LOOKUP4.status = NFS4ERR_NAMETOOLONG;
+      return res_LOOKUP4.status;
+    }
 
   /* Build the FSAL name */
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,

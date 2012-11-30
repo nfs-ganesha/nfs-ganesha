@@ -81,10 +81,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup";
 
-  char strname[MAXNAMLEN+1];
-#ifndef _NO_XATTRD
-  char objname[MAXNAMLEN+1];
-#endif
+  char                   objname[MAXNAMLEN+1];
+  char                 * strname = objname;
   fsal_name_t            name;
   unsigned int           xattr_found = FALSE;
   cache_entry_t        * dir_pentry = NULL;
@@ -102,19 +100,14 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     return res_LOOKUP4.status;
 
   /* Check for empty name */
-  if(op->nfs_argop4_u.oplookup.objname.utf8string_len == 0 ||
-     op->nfs_argop4_u.oplookup.objname.utf8string_val == NULL)
+  if(arg_LOOKUP4.objname.utf8string_len == 0 ||
+     arg_LOOKUP4.objname.utf8string_val == NULL)
     {
       res_LOOKUP4.status = NFS4ERR_INVAL;
       return res_LOOKUP4.status;
     }
 
-  /* Check for name too long */
-  if(op->nfs_argop4_u.oplookup.objname.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_LOOKUP4.status = NFS4ERR_NAMETOOLONG;
-      return res_LOOKUP4.status;
-    }
+  /* Check for name too long will be done later */
 
   /* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
@@ -127,15 +120,15 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 #endif
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname);
+  if(utf82str(objname, sizeof(objname), &arg_LOOKUP4.objname) == -1)
+    {
+      res_LOOKUP4.status = NFS4ERR_NAMETOOLONG;
+      return res_LOOKUP4.status;
+    }
 
 #ifndef _NO_XATTRD
-  /* Is this a .xattr.d.<object> name ? */
-  if(nfs_XattrD_Name(strname, objname))
-    {
-      strcpy(strname, objname);
-      xattr_found = TRUE;
-    }
+  /* Is this a .xattr.d.<object> name get the orginal object name */
+  xattr_found = nfs_XattrD_Name(strname, &strname);
 #endif
 
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,

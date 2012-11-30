@@ -89,32 +89,6 @@ static void fsal_set_times_current(fsal_attrib_list_t * attrs)
 }
 
 /**
- *
- * nfs_Is_XattrD_Name: returns true is the string given as input is the name of an xattr object.
- *
- * Returns true is the string given as input is the name of an xattr object and returns the name of the object
- *
- * @param strname    [IN]  the name that is to be tested
- * @param objectname [OUT] if strname is related to a xattr, contains the name of the related object
- *
- * @return TRUE if strname is a xattr, FALSE otherwise
- *
- */
-int nfs_XattrD_Name(char *strname, char *objectname)
-{
-  if(strname == NULL)
-    return 0;
-
-  if(!strncmp(strname, XATTRD_NAME, XATTRD_NAME_LEN))
-    {
-      strcpy(objectname, strname + XATTRD_NAME_LEN);
-      return 1;
-    }
-
-  return 0;
-}                               /* nfs_Is_XattrD_Name */
-
-/**
  * nfs3_fh_to_xattrfh: builds the fh to the xattrs ghost directory
  *
  * @param pfhin  [IN]  input file handle (the object whose xattr fh is queryied)

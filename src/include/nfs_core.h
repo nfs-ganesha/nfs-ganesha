@@ -814,4 +814,32 @@ void nfs_Init_FSAL_UP();
 void stats_collect (ganesha_stats_t *ganesha_stats);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
+
+/**
+ *
+ * nfs_Is_XattrD_Name: returns true is the string given as input is the name of an xattr object.
+ *
+ * Returns true is the string given as input is the name of an xattr object and returns the name of the object
+ *
+ * @param strname    [IN]  the name that is to be tested
+ * @param objectname [OUT] if strname is related to a xattr, points to the portion of strname
+                           that is the related object name.
+ *
+ * @return TRUE if strname is a xattr, FALSE otherwise
+ *
+ */
+static inline bool_t nfs_XattrD_Name(char *strname, char **objectname)
+{
+  if(strname == NULL)
+    return FALSE;
+
+  if(!strncmp(strname, XATTRD_NAME, XATTRD_NAME_LEN))
+    {
+      *objectname = strname + XATTRD_NAME_LEN;
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
 #endif                          /* _NFS_CORE_H */
