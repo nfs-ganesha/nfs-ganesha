@@ -214,7 +214,10 @@ char workpath[PATH_MAX];
                 if ((!take && !rel) || (id == 0 && rel))
                         continue;
 
-                strcpy(workpath, namelist[ientry]->d_name);
+                if(strmaxcpy(workpath,
+                             namelist[ientry]->d_name,
+                             sizeof(workpath)) == -1)
+                        break;
                 cp = workpath;
                 i = 1; /* time is the second entry */
                 while(i--) {
@@ -294,7 +297,7 @@ void do_state()
 int ientry, ientry2, n;
 time_t new_entry;
 char workpath[PATH_MAX];
-char status[12];
+const char * status;
 struct dirent **state_namelist = NULL;
 
 #define RECORD_HISTORY 13 /* We keep 12 state records including the one we are
@@ -323,14 +326,14 @@ struct dirent **state_namelist = NULL;
          * No new state record in 2 minutes then CTDB restarts us
          */
                 if ( (rpc_in > rpc_in_old ) &&  (rpc_out > rpc_out_old) ) {
-                        strcpy(status,"green");
+                        status = "green";
                         break;
                 }
                 if ( (rpc_in > rpc_in_old ) &&  (rpc_out <= rpc_out_old) ) {
-                        strcpy(status,"red");
+                        status = "red";
                         break;
                 }
-                strcpy(status,"yellow");
+                status = "yellow";
                 break;
         }
         new_entry = time(NULL);
@@ -398,7 +401,10 @@ time_t t_time, r_time, t_done;
                         ientry--;
                         continue;
                 }
-                strcpy(workpath, namelist[ientry]->d_name);
+                if(strmaxcpy(workpath,
+                             namelist[ientry]->d_name,
+                             sizeof(workpath)) == -1)
+                        break;
                 cp = workpath;
                 i = 2; /* id is the third entry */
                 while(i--) {
@@ -430,7 +436,9 @@ time_t t_time, r_time, t_done;
                 while(*cp2 != DELIMIT)
                         cp2++;
                 *cp2 = '\0';
-                strcpy(workaddr, cp);
+                if((cp2 - cp) >= sizeof(workaddr))
+                        break;
+                strcpy(workaddr, cp); /* can't overflow */
                 /* Don't match it again */
                 ientry--;
                 if ( !ientry_rstart )
@@ -449,7 +457,10 @@ time_t t_time, r_time, t_done;
                         }
                         if ( !ientry_rstart )
                                 ientry_rstart = ientry_r;
-                        strcpy(workpath, namelist[ientry_r]->d_name);
+                        if(strmaxcpy(workpath,
+                                     namelist[ientry_r]->d_name,
+                                     sizeof(workpath)) == -1)
+                                break;
                         cp = workpath;
                         i = 3; /* address is entry  four and five */
                         while(i--) {
@@ -487,7 +498,10 @@ time_t t_time, r_time, t_done;
                 cp++;
                 working->nodeid = (ushort) atoi(cp);
                 working->event = TAKEIP;
-                strcpy(working->ipaddr,workaddr);
+                if(strmaxcpy(working->ipaddr,
+                             workaddr,
+                             sizeof(working->ipaddr)) == -1)
+                        break;
                 ifound++;
                 LogDebug(COMPONENT_THREAD, "found %d address %s at release entry %d from node %d", ifound, working->ipaddr, ientry_r, working->nodeid );
                 if ( ifound < iend )
