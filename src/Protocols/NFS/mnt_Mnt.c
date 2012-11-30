@@ -91,7 +91,9 @@ int mnt_Mnt(nfs_arg_t *parg,
   int                    auth_flavor[NB_AUTH_FLAVOR];
   int                    index_auth = 0;
   int                    i = 0;
-  char                   MountPath[MAXPATHLEN+2];
+  int                    pathlen;
+  char                 * MountPath;
+  char                   TempPath[MAXPATHLEN+2];
   char                 * hostname;
   fsal_path_t            fsal_path;
   bool_t                 bytag = FALSE;
@@ -115,10 +117,17 @@ int mnt_Mnt(nfs_arg_t *parg,
     }
 
   /* Make sure that the argument from MNT ends with a '/', if not adds one */
-  if(parg->arg_mnt[strlen(parg->arg_mnt) - 1] == '/')
-    strncpy(MountPath, parg->arg_mnt, MAXPATHLEN + 1);
+  pathlen = strlen(parg->arg_mnt);
+  if(parg->arg_mnt[pathlen - 1] == '/')
+    MountPath = parg->arg_mnt;
   else
-    snprintf(MountPath, MAXPATHLEN+2, "%s/", parg->arg_mnt);
+    {
+      if(strmaxcpy(TempPath, parg->arg_mnt, sizeof(TempPath) - 1) == -1)
+        goto not_found;
+      TempPath[pathlen] = '/';
+      TempPath[pathlen+1] = '\0';
+      MountPath = TempPath;
+    }
 
   /*
    * Find the export for the dirname (using as well Path or Tag ) 
@@ -159,6 +168,8 @@ int mnt_Mnt(nfs_arg_t *parg,
             }
         }
     }
+
+not_found:
 
   if(!found)
     {
