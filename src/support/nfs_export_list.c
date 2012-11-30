@@ -788,10 +788,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 
   /* Stuff needed for managing RPCSEC_GSS */
 #ifdef _HAVE_GSSAPI
-  OM_uint32 maj_stat = 0;
-  OM_uint32 min_stat = 0;
   struct svc_rpc_gss_data *gd = NULL;
-  gss_buffer_desc oidbuff;
 #endif
 
   if(reqp == NULL || pcred == NULL)
@@ -823,28 +820,6 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
       pcred->auth_union.auth_gss.svc = (unsigned int)(gd->sec.svc);
       pcred->auth_union.auth_gss.qop = (unsigned int)(gd->sec.qop);
       pcred->auth_union.auth_gss.gss_context_id = gd->ctx;
-
-      /* XXX */
-      strncpy(pcred->auth_union.auth_gss.cname, gd->cname.value,
-              NFS_CLIENT_NAME_LEN);
-
-      if((maj_stat = gss_oid_to_str(
-              &min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
-        {
-          char errbuff[1024];
-          log_sperror_gss(errbuff, maj_stat, min_stat);
-          LogCrit(COMPONENT_DISPATCH,
-                  "GSSAPI ERROR: %u|%u = %s",
-                  maj_stat, min_stat, errbuff);
-          return -1;
-        }
-
-      /* XXX */
-      strncpy(pcred->auth_union.auth_gss.stroid, oidbuff.value,
-              NFS_CLIENT_NAME_LEN);
-
-      /* Je fais le menage derriere moi */
-      (void)gss_release_buffer(&min_stat, &oidbuff);
       break;
 #endif
 

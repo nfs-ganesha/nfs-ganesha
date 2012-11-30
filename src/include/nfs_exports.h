@@ -325,13 +325,10 @@ typedef struct pseudofs
   pseudofs_entry_t *reverse_tab[MAX_PSEUDO_ENTRY];
 } pseudofs_t;
 
-#define NFS_CLIENT_NAME_LEN 256
 typedef struct nfs_client_cred_gss__
 {
   unsigned int svc;
   unsigned int qop;
-  unsigned char cname[NFS_CLIENT_NAME_LEN];
-  unsigned char stroid[NFS_CLIENT_NAME_LEN];
 #ifdef _HAVE_GSSAPI
   gss_ctx_id_t gss_context_id;
 #endif
