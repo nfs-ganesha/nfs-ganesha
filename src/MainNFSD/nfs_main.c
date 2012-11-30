@@ -118,26 +118,60 @@ int main(int argc, char *argv[])
   ServerEpoch    = ServerBootTime;
 
   /* retrieve executable file's name */
-  strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
+  if(strmaxcpy(ganesha_exec_path, argv[0], sizeof(ganesha_exec_path)) == -1)
+    {
+      fprintf(stderr, "exec path %s too long, exiting...\n", argv[0]);
+      exit(1);
+    }
 
   if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
-    strcpy((char *)exec_name, tempo_exec_name + 1);
+    if(strmaxcpy(exec_name, tempo_exec_name + 1, sizeof(exec_name)) == -1)
+      {
+        fprintf(stderr,
+                "exec name %s too long, exiting...\n",
+                tempo_exec_name + 1);
+        exit(1);
+      }
 
   if(*exec_name == '\0')
-    strcpy((char *)exec_name, argv[0]);
+    if(strmaxcpy(exec_name, argv[0], sizeof(exec_name)) == -1)
+      {
+        fprintf(stderr,
+                "exec name %s too long, exiting...\n",
+                tempo_exec_name + 1);
+        exit(1);
+      }
 
   /* get host name */
   if(gethostname(localmachine, sizeof(localmachine)) != 0)
     {
-      fprintf(stderr, "Could not get local host name, exiting...");
+      fprintf(stderr, "Could not get local host name, exiting...\n");
       exit(1);
     }
   else
-    strncpy(host_name, localmachine, MAXHOSTNAMELEN);
+    if(strmaxcpy(host_name, localmachine, sizeof(host_name)) == -1)
+      {
+        fprintf(stderr,
+                "host name %s too long, exiting...\n",
+                localmachine);
+        exit(1);
+      }
 
-  strcpy(config_path, my_config_path);
+  if(strmaxcpy(config_path, my_config_path, sizeof(config_path)) == -1)
+    {
+      fprintf(stderr,
+              "default config path %s too long, exiting...\n",
+              my_config_path);
+      exit(1);
+    }
 
-  strcpy( pidfile_path, my_pidfile ) ;
+  if(strmaxcpy(pidfile_path, my_pidfile, sizeof(pidfile_path)) == -1)
+    {
+      fprintf(stderr,
+              "default pidfile path %s too long, exiting...\n",
+              my_pidfile);
+      exit(1);
+    }
 
   /* now parsing options with getopt */
   while((c = getopt(argc, argv, options)) != EOF)
@@ -156,7 +190,13 @@ int main(int argc, char *argv[])
 
         case 'L':
           /* Default Log */
-          strncpy(log_path, optarg, MAXPATHLEN);
+          if(strmaxcpy(log_path, optarg, sizeof(log_path)) == -1)
+            {
+              fprintf(stderr,
+                      "Path %s too long for option 'L'.\n",
+                      optarg);
+              exit(1);
+            }
           break;
 
         case 'N':
@@ -172,12 +212,24 @@ int main(int argc, char *argv[])
 
         case 'f':
           /* config file */
-          strncpy(config_path, optarg, MAXPATHLEN);
+          if(strmaxcpy(config_path, optarg, sizeof(config_path)) == -1)
+            {
+              fprintf(stderr,
+                      "Path %s too long for option 'f'.\n",
+                      optarg);
+              exit(1);
+            }
           break;
 
         case 'p':
           /* PID file */
-          strncpy( pidfile_path, optarg, MAXPATHLEN ) ;
+          if(strmaxcpy(pidfile_path, optarg, sizeof(pidfile_path)) == -1)
+            {
+              fprintf(stderr,
+                      "Path %s too long for option 'f'.\n",
+                      optarg);
+              exit(1);
+            }
           break ;
 
         case 'd':
