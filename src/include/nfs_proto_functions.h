@@ -1445,8 +1445,6 @@ void utf82uid(utf8string * utf8str, uid_t * Uid, uid_t anon_uid);
 int gid2utf8(gid_t gid, utf8string * utf8str);
 void utf82gid(utf8string * utf8str, gid_t * Gid, gid_t anon_gid);
 
-void nfs4_stringid_split(char *buff, char *uidname, char *domainname);
-
 seqid4 nfs4_NextSeqId(seqid4 seqid);
 
 /* Attributes conversion */

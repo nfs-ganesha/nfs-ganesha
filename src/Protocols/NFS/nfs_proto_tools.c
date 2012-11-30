@@ -2075,37 +2075,6 @@ int nfs4_FhandleToExId(nfs_fh4 * fh4p, unsigned short *ExIdp)
 
 /**
  *
- * nfs4_stringid_split: Splits a domain stamped name in two different parts.
- *
- * Splits a domain stamped name in two different parts.
- *
- * @param buff [IN] the input string
- * @param uidname [OUT] the extracted uid name
- * @param domainname [OUT] the extracted fomain name
- *
- * @return nothing (void function) 
- *
- */
-void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
-{
-  char *c = NULL;
-  unsigned int i = 0;
-
-  for(c = buff, i = 0; *c != '\0'; c++, i++)
-    if(*c == '@')
-      break;
-
-  memcpy(uidname, buff, i);
-  uidname[i] = '\0';
-  strcpy(domainname, c);
-
-  LogFullDebug(COMPONENT_NFS_V4,
-               "buff = #%s#    uid = #%s#   domain = #%s#",
-               buff, uidname, domainname);
-}                               /* nfs4_stringid_split */
-
-/**
- *
  * free_utf8: Free's a utf8str that was created by utf8dup
  *
  * @param utf8str [IN]  UTF8 string to be freed
