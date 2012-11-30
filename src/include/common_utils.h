@@ -87,14 +87,6 @@ int sscanmem(caddr_t target, int tgt_size, const char *str_source);
 
 /* String parsing functions */
 
-#ifndef HAVE_STRLCAT
-extern size_t strlcat(char *dst, const char *src, size_t siz);
-#endif
-
-#ifndef HAVE_STRLCPY
-extern size_t strlcpy(char *dst, const char *src, size_t siz);
-#endif
-
 /* My habit with mutex */
 #define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
 #define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
