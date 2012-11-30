@@ -283,7 +283,7 @@ typedef struct nfs_fsal_up_param__
   pool_t *event_pool;
 } nfs_fsal_up_parameter_t;
 
-typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
+typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN+1];
 
 typedef struct nfs_version4_parameter__
 {

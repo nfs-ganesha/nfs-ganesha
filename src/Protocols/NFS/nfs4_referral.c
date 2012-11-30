@@ -76,9 +76,9 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int *p
 {
   char str[MAXPATHLEN];
   char local_part[MAXPATHLEN];
-  char *local_comp[MAXNAMLEN];
+  char *local_comp[MAXNAMLEN+1];
   char remote_part[MAXPATHLEN];
-  char *remote_comp[MAXNAMLEN];
+  char *remote_comp[MAXNAMLEN+1];
   char server_part[MAXPATHLEN];
 
   u_int nb_comp_local = 1;

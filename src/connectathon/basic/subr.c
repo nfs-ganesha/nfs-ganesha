@@ -527,7 +527,7 @@ int statfs(char *path, struct statfs *buf)
 /***************************************************************
 DIRENT emulation for Win32
 ***************************************************************/
-char pattern[MAXNAMLEN];
+char pattern[MAXNAMLEN+1];
 struct _finddata_t findtst;
 long findhandle;
 int maxentry;
@@ -719,7 +719,7 @@ struct statfs *buf;
 /***************************************************************
 DIRENT emulation for DOS
 ***************************************************************/
-char pattern[MAXNAMLEN];
+char pattern[MAXNAMLEN+1];
 struct find_t findtst;
 int maxentry;
 int currententry;

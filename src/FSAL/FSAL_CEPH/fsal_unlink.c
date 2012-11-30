@@ -77,7 +77,7 @@ fsal_status_t CEPHFSAL_unlink(fsal_handle_t * extparent,
   int rc;
   struct stat st;
   fsal_status_t status;
-  char strname[FSAL_MAX_NAME_LEN];
+  char strname[FSAL_MAX_NAME_LEN+1];
   cephfsal_handle_t* parent = (cephfsal_handle_t*) extparent;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
   struct ceph_mount_info *cmount = context->export_context->cmount;

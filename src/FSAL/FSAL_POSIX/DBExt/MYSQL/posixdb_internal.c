@@ -319,7 +319,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
   unsigned long long id;
   unsigned int ts;
 
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
   int root_reached = FALSE;
   MYSQL_STMT *stmt;
   int rc;

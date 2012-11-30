@@ -44,8 +44,8 @@ typedef struct fsal_proxy_internal_fattr__
   fattr4_time_metadata time_metadata;
   fattr4_time_modify time_modify;
   fattr4_rawdev rawdev;
-  char padowner[MAXNAMLEN];
-  char padgroup[MAXNAMLEN];
+  char padowner[MAXNAMLEN+1];
+  char padgroup[MAXNAMLEN+1];
   char padfh[NFS4_FHSIZE];
 } fsal_proxy_internal_fattr_t;
 
@@ -66,8 +66,8 @@ typedef struct fsal_proxy_internal_fattr_readdir__
   fattr4_time_metadata time_metadata;
   fattr4_time_modify time_modify;
   fattr4_rawdev rawdev;
-  char padowner[MAXNAMLEN];
-  char padgroup[MAXNAMLEN];
+  char padowner[MAXNAMLEN+1];
+  char padgroup[MAXNAMLEN+1];
   char padfh[NFS4_FHSIZE];
 } fsal_proxy_internal_fattr_readdir_t;
 

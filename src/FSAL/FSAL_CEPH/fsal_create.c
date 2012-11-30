@@ -87,7 +87,7 @@ fsal_status_t CEPHFSAL_create(fsal_handle_t * extparent,
   mode_t mode;
   struct Fh *fd;
   struct stat st;
-  char strname[FSAL_MAX_NAME_LEN];
+  char strname[FSAL_MAX_NAME_LEN+1];
   cephfsal_handle_t* parent = (cephfsal_handle_t*) extparent;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
   struct ceph_mount_info *cmount = context->export_context->cmount;
@@ -188,7 +188,7 @@ fsal_status_t CEPHFSAL_mkdir(fsal_handle_t * extparent,
   int rc;
   mode_t mode;
   struct stat st;
-  char strname[FSAL_MAX_NAME_LEN];
+  char strname[FSAL_MAX_NAME_LEN+1];
   cephfsal_handle_t* parent = (cephfsal_handle_t*) extparent;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
   struct ceph_mount_info *cmount = context->export_context->cmount;
@@ -286,7 +286,7 @@ fsal_status_t CEPHFSAL_link(fsal_handle_t * exttarget,
 {
   int rc;
   struct stat st;
-  char strname[FSAL_MAX_NAME_LEN];
+  char strname[FSAL_MAX_NAME_LEN+1];
   cephfsal_handle_t* target = (cephfsal_handle_t*) exttarget;
   cephfsal_handle_t* dir = (cephfsal_handle_t*) extdir;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) context;

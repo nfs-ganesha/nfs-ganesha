@@ -160,7 +160,7 @@ int main(int argc, char **argv)
   /* create hardlinks and lookup */
   for(i = 0; i < 3; i++)
     {
-      char name[FSAL_MAX_NAME_LEN];
+      char name[FSAL_MAX_NAME_LEN+1];
 
       sprintf(name, "entry.hl%d", i);
 
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
   /* delete hardlinks and lookup */
   for(i = 0; i < 3; i++)
     {
-      char name[FSAL_MAX_NAME_LEN];
+      char name[FSAL_MAX_NAME_LEN+1];
 
       sprintf(name, "entry.hl%d", i);
 

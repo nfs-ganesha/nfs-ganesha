@@ -80,7 +80,7 @@ fsal_status_t PROXYFSAL_unlink(fsal_handle_t * parentdir_handle,   /* IN */
   bitmap4 bitmap;
   uint32_t bitmap_val[2];
   component4 name;
-  char nameval[MAXNAMLEN];
+  char nameval[MAXNAMLEN+1];
   proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_UNLINK_NB_OP_ALLOC 3

@@ -53,7 +53,7 @@ typedef int (*xattr_printfunc_t) (caddr_t,      /* Input buffer */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[FSAL_MAX_NAME_LEN];
+  char xattr_name[FSAL_MAX_NAME_LEN+1];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   xattr_printfunc_t print_func;
@@ -513,7 +513,7 @@ fsal_status_t HPSSFSAL_GetXAttrAttrs(hpssfsal_handle_t * p_objecthandle,        
     )
 {
   int rc;
-  char buff[MAXNAMLEN];
+  char buff[MAXNAMLEN+1];
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
 
@@ -710,7 +710,7 @@ fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
         unsigned int i;
         for(i = 0; (i < attr_list.len) && (out_index < xattrs_tabsize); i++)
           {
-            char attr_name[FSAL_MAX_NAME_LEN];
+            char attr_name[FSAL_MAX_NAME_LEN+1];
 
             /* the id is XATTR_COUNT + index of HPSS UDA */
             index = XATTR_COUNT + i;
@@ -793,7 +793,7 @@ fsal_status_t HPSSFSAL_GetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
     )
 {
   int rc;
-  char buff[MAXNAMLEN];
+  char buff[MAXNAMLEN+1];
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr)
@@ -907,7 +907,7 @@ fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     
       hpss_userattr_list_t attr_list;
       unsigned int i;
       int rc;
-      char attrpath[FSAL_MAX_NAME_LEN];
+      char attrpath[FSAL_MAX_NAME_LEN+1];
 
       /* convert FSAL xattr name to HPSS attr path.
        * returns error if it is not a UDA name.
@@ -1083,7 +1083,7 @@ fsal_status_t HPSSFSAL_SetXAttrValue(hpssfsal_handle_t * p_objecthandle,        
 {
 #if HPSS_LEVEL >= 730
   int rc;
-  char attrpath[FSAL_MAX_NAME_LEN];
+  char attrpath[FSAL_MAX_NAME_LEN+1];
   hpss_userattr_list_t inAttr;
 
   /* check that UDA name is valid */

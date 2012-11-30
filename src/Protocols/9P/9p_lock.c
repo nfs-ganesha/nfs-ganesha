@@ -79,7 +79,7 @@ int _9p_lock( _9p_request_data_t * preq9p,
   fsal_lock_param_t    lock ;
   fsal_lock_param_t    conflict;
 
-  char name[MAXNAMLEN] ;
+  char name[MAXNAMLEN+1] ;
 
   struct hostent *hp ;
   struct sockaddr_storage client_addr ; 

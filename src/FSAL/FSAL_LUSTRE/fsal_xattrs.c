@@ -49,7 +49,7 @@ typedef int (*xattr_setfunc_t) (fsal_handle_t *,  /* object handle */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[FSAL_MAX_NAME_LEN];
+  char xattr_name[FSAL_MAX_NAME_LEN+1];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   int flags;
@@ -1146,7 +1146,7 @@ fsal_status_t LUSTREFSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,      
   fsal_status_t st;
   fsal_path_t lustre_path;
   fsal_name_t attr_name;
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
 
   if(attr_is_read_only(xattr_id))
     Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
@@ -1183,7 +1183,7 @@ fsal_status_t LUSTREFSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,  /* IN 
   int rc;
   fsal_status_t st;
   fsal_path_t lustre_path;
-  char name[FSAL_MAX_NAME_LEN];
+  char name[FSAL_MAX_NAME_LEN+1];
 
   st = fsal_internal_Handle2FidPath(p_context, p_objecthandle, &lustre_path);
   if(FSAL_IS_ERROR(st))

@@ -49,7 +49,7 @@ typedef int (*xattr_setfunc_t) (vfsfsal_handle_t *,     /* object handle */
 
 typedef struct fsal_xattr_def__
 {
-  char xattr_name[FSAL_MAX_NAME_LEN];
+  char xattr_name[FSAL_MAX_NAME_LEN+1];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;
   int flags;
@@ -895,6 +895,7 @@ fsal_status_t VFSFSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,  /* IN */
   else
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
+mkcs
 
 fsal_status_t VFSFSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,      /* IN */
                                         unsigned int xattr_id,  /* IN */

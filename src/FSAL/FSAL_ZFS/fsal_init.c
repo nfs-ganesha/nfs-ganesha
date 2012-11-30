@@ -194,7 +194,7 @@ fsal_status_t ZFSFSAL_terminate()
 /* Take a snapshot */
 __attribute(( unused )) static libzfswrap_vfs_t *TakeSnapshotAndMount(const char *psz_zpool, const char *psz_prefix, char **ppsz_name)
 {
-    char psz_buffer[FSAL_MAX_NAME_LEN];
+    char psz_buffer[FSAL_MAX_NAME_LEN+1];
     const char *psz_error;
     time_t time_now = time(NULL);
     struct tm *now = gmtime(&time_now);

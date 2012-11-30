@@ -561,7 +561,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        fsal_op_context_t * pcontext,
                        struct svc_req *preq, nfs_res_t * pres)
 {
-  typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
+  typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN+1];
   typedef char fh3_buffer_item_t[NFS3_FHSIZE];
 
   unsigned int delta = 0;
@@ -1270,7 +1270,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            fsal_op_context_t * pcontext,
                            struct svc_req *preq, nfs_res_t * pres)
 {
-  typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
+  typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN+1];
   typedef char fh3_buffer_item_t[NFS3_FHSIZE];
 
   unsigned int delta = 0;

@@ -71,9 +71,9 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
 
   nfs_client_id4 nfsclientid;
   cb_client4 cbproxy;
-  char clientid_name[MAXNAMLEN];
-  char cbaddr[MAXNAMLEN];
-  char cbnetid[MAXNAMLEN];
+  char clientid_name[MAXNAMLEN+1];
+  char cbaddr[MAXNAMLEN+1];
+  char cbnetid[MAXNAMLEN+1];
   struct timeval timeout = TIMEOUTRPC;
   int fd;
   struct sockaddr_in sin;

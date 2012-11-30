@@ -155,7 +155,7 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
   mfsl_object_specific_data_t *symlink_pasyncdata = NULL;
   mfsl_object_t *psymlink_handle = NULL;
   fsal_name_t tmp_fsal_name;
-  char tmp_name[MAXNAMLEN];
+  char tmp_name[MAXNAMLEN+1];
   static unsigned int counter = 0;
 
   snprintf(tmp_name, MAXNAMLEN, "%s.%u", p_linkname->name, counter);

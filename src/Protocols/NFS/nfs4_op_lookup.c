@@ -81,9 +81,9 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup";
 
-  char strname[MAXNAMLEN];
+  char strname[MAXNAMLEN+1];
 #ifndef _NO_XATTRD
-  char objname[MAXNAMLEN];
+  char objname[MAXNAMLEN+1];
 #endif
   fsal_name_t            name;
   unsigned int           xattr_found = FALSE;
