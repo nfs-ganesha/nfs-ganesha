@@ -74,12 +74,11 @@ int nfs4_Set_Fh_Referral(nfs_fh4 * pfh)
 
 int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int *plen)
 {
-  char str[MAXPATHLEN];
-  char local_part[MAXPATHLEN];
-  char *local_comp[MAXNAMLEN+1];
-  char remote_part[MAXPATHLEN];
-  char *remote_comp[MAXNAMLEN+1];
-  char server_part[MAXPATHLEN];
+  char   str[MAXPATHLEN];
+  char * remote_part;
+  char * server_part;
+  char * local_part = str;
+  char * ptr = NULL;
 
   u_int nb_comp_local = 1;
   u_int nb_comp_remote = 1;
@@ -87,107 +86,88 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int *p
   u_int tmp_int = 0;
   u_int i = 0;
   u_int delta_xdr = 0;
-
-  char *ptr = NULL;
+  u_int len;
 
   if(!plen || !buff || !input_str)
     return 0;
 
-  strncpy(str, input_str, MAXPATHLEN);
+  if(strmaxcpy(str, input_str, sizeof(str)) == -1)
+    return 0;
 
   /* Find the ":" in the string */
-  for(ptr = str; *ptr != ':'; ptr++) ;
-  *ptr = '\0';
-  ptr += 1;
-
-  memset( local_part, 0, MAXPATHLEN ) ;
-  strncpy(local_part, str, MAXPATHLEN);
-
-  memset( remote_part, 0, MAXPATHLEN ) ;
-  strncpy(remote_part, ptr, MAXPATHLEN);
+  for(remote_part = str; *remote_part != ':'; remote_part++) ;
+  *remote_part = '\0';
+  remote_part += 1;
 
   /* Each part should not start with a leading slash */
   if(local_part[0] == '/')
-    strncpy(local_part, str + 1, MAXPATHLEN);
-
+    local_part++;
+  
   if(remote_part[0] == '/')
-    strncpy(remote_part, ptr + 1, MAXPATHLEN);
+    remote_part++;
 
   /* Find the "@" in the remote_part */
-  for(ptr = remote_part; *ptr != '@'; ptr++) ;
-  *ptr = '\0';
-  ptr += 1;
+  for(server_part = remote_part; *server_part != '@'; server_part++) ;
+  *server_part = '\0';
+  server_part += 1;
 
-  memset( server_part, 0 , MAXPATHLEN ) ;
-  strncpy(server_part, ptr, MAXPATHLEN);
-
-  local_comp[0] = local_part;
+  /* Find each component of the local part */
   for(ptr = local_part; *ptr != '\0'; ptr++)
     if(*ptr == '/')
       {
-        local_comp[nb_comp_local] = ptr + 1;
+        /* null terminate the previous component */
+        *ptr = '\0';
         nb_comp_local += 1;
       }
-  for(tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
-    {
-      ptr = local_comp[tmp_int] - 1;
-      *ptr = '\0';
-    }
 
-  remote_comp[0] = remote_part;
+  /* Find each component of the remote part */
   for(ptr = remote_part; *ptr != '\0'; ptr++)
     if(*ptr == '/')
       {
-        remote_comp[nb_comp_remote] = ptr + 1;
+        /* null terminate the previous component */
+        *ptr = '\0';
         nb_comp_remote += 1;
       }
-  for(tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
-    {
-      ptr = remote_comp[tmp_int] - 1;
-      *ptr = '\0';
-    }
 
   /* This attributes is equivalent to a "mount" command line,
    * To understand what's follow, imagine that you do kind of "mount refer@server nfs_ref" */
 
   LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "--> %s", input_str);
 
-  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   %u comp local", nb_comp_local);
-  for(tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
-    LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "     #%s#", local_comp[tmp_int]);
-
-  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   %u comp remote", nb_comp_remote);
-  for(tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
-    LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "     #%s#", remote_comp[tmp_int]);
-
-  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   server = #%s#", server_part);
-
   /* 1- Number of component in local path */
+  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   %u comp local", nb_comp_local);
   tmp_int = htonl(nb_comp_local);
   memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
   lastoff += sizeof(u_int);
 
   /* 2- each component in local path */
+  ptr = local_part;
+
   for(i = 0; i < nb_comp_local; i++)
     {
+      LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "     \"%s\"", ptr);
+
       /* The length for the string */
-      tmp_int = htonl(strlen(local_comp[i]));
+      len = strlen(ptr);
+      tmp_int = htonl(len);
       memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
       lastoff += sizeof(u_int);
 
       /* the string itself */
-      memcpy((char *)(buff + lastoff), local_comp[i], strlen(local_comp[i]));
-      lastoff += strlen(local_comp[i]);
+      memcpy((char *)(buff + lastoff), ptr, len);
+      lastoff += len;
 
       /* The XDR padding  : strings must be aligned to 32bits fields */
-      if((strlen(local_comp[i]) % 4) == 0)
+      if((len % 4) == 0)
         delta_xdr = 0;
       else
         {
-          delta_xdr = 4 - (strlen(local_comp[i]) % 4);
+          delta_xdr = 4 - (len % 4);
           memset((char *)(buff + lastoff), 0, delta_xdr);
           lastoff += delta_xdr;
         }
+
+      ptr += len + 1;
     }
 
   /* 3- there is only one fs_location in the fs_locations array */
@@ -201,6 +181,8 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int *p
   lastoff += sizeof(u_int);
 
   /* 5- the len for the server's adress */
+  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   server = \"%s\"", server_part);
+
   tmp_int = htonl(strlen(server_part));
   memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
   lastoff += sizeof(u_int);
@@ -220,31 +202,38 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int *p
     }
 
   /* 8- Number of component in remote path */
+  LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "   %u comp remote", nb_comp_remote);
+
   tmp_int = htonl(nb_comp_remote);
   memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
   lastoff += sizeof(u_int);
 
-  /* 9- each component in local path */
+  /* 9- each component in remote path */
   for(i = 0; i < nb_comp_remote; i++)
     {
+      LogFullDebug(COMPONENT_NFS_V4_REFERRAL, "     \"%s\"", ptr);
+
       /* The length for the string */
-      tmp_int = htonl(strlen(remote_comp[i]));
+      len = strlen(ptr);
+      tmp_int = htonl(len);
       memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
       lastoff += sizeof(u_int);
 
       /* the string itself */
-      memcpy((char *)(buff + lastoff), remote_comp[i], strlen(remote_comp[i]));
-      lastoff += strlen(remote_comp[i]);
+      memcpy((char *)(buff + lastoff), ptr, len);
+      lastoff += len;
 
       /* The XDR padding  : strings must be aligned to 32bits fields */
-      if((strlen(remote_comp[i]) % 4) == 0)
+      if((len % 4) == 0)
         delta_xdr = 0;
       else
         {
-          delta_xdr = 4 - (strlen(remote_comp[i]) % 4);
+          delta_xdr = 4 - (len % 4);
           memset((char *)(buff + lastoff), 0, delta_xdr);
           lastoff += delta_xdr;
         }
+
+      ptr += len + 1;
     }
 
   /* Set the len then return */
