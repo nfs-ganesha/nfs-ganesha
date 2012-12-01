@@ -73,6 +73,12 @@ log_level_t tabLogLevel[] =
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
+/* Non-English speakers to please note that 'impossible' means that the
+program could never have been written; has a pejorative emotional
+connotation; and implies something dysfunctional about the broader
+reality of the subject. Instead we say 'failure', 'failed', or 'error',
+which is the convention in all of computer science. */
+
 /* les code d'error */
 errctx_t __attribute__ ((__unused__)) tab_systeme_err[] =
 {
@@ -83,7 +89,7 @@ errctx_t __attribute__ ((__unused__)) tab_systeme_err[] =
   {ERR_MALLOC, "ERR_MALLOC", "malloc impossible"},
   {ERR_SIGACTION, "ERR_SIGACTION", "sigaction impossible"},
   {ERR_PTHREAD_ONCE, "ERR_PTHREAD_ONCE", "pthread_once impossible"},
-  {ERR_FICHIER_LOG, "ERR_FICHIER_LOG", "impossible d'acceder au fichier de log"},
+  {ERR_FICHIER_LOG, "ERR_FICHIER_LOG", "error opening log file"},
   {ERR_GETHOSTBYNAME, "ERR_GETHOSTBYNAME", "gethostbyname impossible"},
   {ERR_MMAP, "ERR_MMAP", "mmap impossible"},
   {ERR_SOCKET, "ERR_SOCKET", "socket impossible"},
@@ -183,7 +189,8 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
 #define LogChanges(format, args...) \
   do { \
-    if (LogComponents[COMPONENT_LOG].comp_log_type != TESTLOG || \
+    /* we don't want to see log file changes for NIV_CRIT - it's annoying */ \
+    if (LogComponents[COMPONENT_LOG].comp_log_type == TESTLOG || \
         LogComponents[COMPONENT_LOG].comp_log_level == NIV_FULL_DEBUG) \
       DisplayLogComponentLevel(COMPONENT_LOG, (char *)__FUNCTION__, \
                                NIV_NULL, "LOG: " format, ## args ); \
@@ -614,74 +621,82 @@ static int DisplayBuffer_valist(char *buffer, log_components_t component,
   return log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
+
+struct log_fd
+{
+  struct log_fd *next;
+  char name[80];
+  int fd;
+  int the_errno;
+};
+
+/* open a log file in append mode and keep it open, associating it's fd to @name */
+static int DisplayLogPath_get_fd(const char *name, int *the_errno)
+{
+  static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  static struct log_fd *log_fd_list = NULL;
+  struct log_fd *i;
+  int r;
+  pthread_mutex_lock(&mutex);
+  for(i = log_fd_list; i; i = i->next)
+    if(!strncmp(i->name, name, sizeof(name) - 1))
+      goto out;
+  i = malloc(sizeof(*i));
+  memset(i, '\0', sizeof(*i));
+  strncpy(i->name, name, sizeof(i->name) - 1);
+  if(!strcmp(i->name, "-"))     /* support the command line option  -L -  to log to stdout */
+    {
+      i->fd = 1;
+    }
+  else
+    {
+      i->fd = open(i->name, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log);
+      i->the_errno = errno;
+    }
+  i->next = log_fd_list;
+  log_fd_list = i;
+
+out:
+  r = i->fd;
+  *the_errno = i->the_errno;
+  pthread_mutex_unlock(&mutex);
+  return r;
+}
+
+
 static int DisplayLogPath_valist(char *path, char * function,
                                  log_components_t component, char *format,
                                  va_list arguments)
 {
   char tampon[STR_LEN_TXT];
-  int fd, my_status;
+  int my_status;
 
   DisplayLogString_valist(tampon, function, component, format, arguments);
 
   if(path[0] != '\0')
     {
-#ifdef _LOCK_LOG
-      if((fd = open(path, O_WRONLY | O_SYNC | O_APPEND | O_CREAT, masque_log)) != -1)
+      int fd, c;
+      char t[128] = "";
+      if((fd = DisplayLogPath_get_fd(path, &my_status)) != -1)
         {
-          /* un verrou sur fichier */
-          struct flock lock_file;
-
-          /* mise en place de la structure de verrou sur fichier */
-          lock_file.l_type = F_WRLCK;
-          lock_file.l_whence = SEEK_SET;
-          lock_file.l_start = 0;
-          lock_file.l_len = 0;
-
-          if(fcntl(fd, F_SETLKW, (char *)&lock_file) != -1)
-            {
-              /* Si la prise du verrou est OK */
-              write(fd, tampon, strlen(tampon));
-
-              /* Relache du verrou sur fichier */
-              lock_file.l_type = F_UNLCK;
-
-              fcntl(fd, F_SETLKW, (char *)&lock_file);
-
-              /* fermeture du fichier */
-              close(fd);
-              return SUCCES;
-            }                   /* if fcntl */
-          else
-            {
-              /* Si la prise du verrou a fait un probleme */
-              my_status = errno;
-              close(fd);
-            }
-        }
-
-#else
-      if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
-        {
-          if(write(fd, tampon, strlen(tampon)) < strlen(tampon))
+/* write() operations are *atomic* on Unix, so no need to lock with
+fcntl(F_SETLKW). On the other hand, if you would have explained that the
+write lock was required for your particular OS, instead of just
+explaining to me *that* you were locking a file (which was an obvious
+and redundant comment) then I may have left the write lock in: */
+          if((c = write(fd, tampon, strlen(tampon))) < strlen(tampon))
           {
-            fprintf(stderr, "Error: couldn't complete write to the log file, ensure disk has not filled up");
-            close(fd);
+            if (c < 0)
+              (void) strerror_r(errno, t, sizeof(t)); /* strerror_r returns an *integer* on some systems */
+            fprintf(stderr, "Error: short write to log file [%s]\n", t);
             return ERR_FICHIER_LOG;
           }
-
-          /* fermeture du fichier */
-          close(fd);
           return SUCCES;
         }
-#endif
-      else
-        {
-          /* Si l'ouverture du fichier s'est mal passee */
-          my_status = errno;
-        }
-      fprintf(stderr, "Error %s : %s : status %d on file %s message was:\n%s\n",
+      (void) strerror_r(my_status, t, sizeof(t)); /* strerror_r returns an *integer* on some systems */
+      fprintf(stderr, "Error %s : %s : status %d=\"%s\" on file %s message was:\n%s\n",
               tab_systeme_err[ERR_FICHIER_LOG].label,
-              tab_systeme_err[ERR_FICHIER_LOG].msg, my_status, path, tampon);
+              tab_systeme_err[ERR_FICHIER_LOG].msg, my_status, t, path, tampon);
 
       return ERR_FICHIER_LOG;
     }
@@ -797,12 +812,11 @@ int MakeLogError(char *buffer, int num_family, int num_error, int status,
     }
   else
     {
-      char tempstr[1024];
-      char *errstr;
-      errstr = strerror_r(status, tempstr, 1024);
+      char tempstr[1024] = "";
+      (void) strerror_r(status, tempstr, 1024); /* strerror_r returns an *integer* on some systems */
 
       return sprintf(buffer, "Error %s : %s : status %d : %s : Line %d",
-                     the_error.label, the_error.msg, status, errstr, ma_ligne);
+                     the_error.label, the_error.msg, status, tempstr, ma_ligne);
     }
 }                               /* MakeLogError */
 
