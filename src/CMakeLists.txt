@@ -252,7 +252,8 @@ add_definitions(-DHAVE_CONFIG_H)
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
   "${PROJECT_SOURCE_DIR}/include"
-  "${PROJECT_SOURCE_DIR}/libtirpc/tirpc/"
+# In the new cmake world there is no directory "${PROJECT_SOURCE_DIR}/libtirpc/tirpc/"  ===>
+  "${PROJECT_BINARY_DIR}/libtirpc/tirpc/"
 )
 
 # Pull in TIRPC and build it
