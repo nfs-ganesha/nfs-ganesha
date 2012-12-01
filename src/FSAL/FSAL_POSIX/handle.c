@@ -898,26 +898,28 @@ static fsal_status_t handle_digest (struct fsal_obj_handle *obj_hdl,
         memcpy (fh_desc->addr, fh, fh_size);
         break;
     case FSAL_DIGEST_FILEID2:
-        fh_size = FSAL_DIGEST_SIZE_FILEID2;
-        if (fh_desc->len < fh_size)
-            goto errout;
-        memcpy (fh_desc->addr, fh, fh_size);
-        break;
+        return fsalstat (ERR_FSAL_SERVERFAULT, 0);      /* NFSv2 no longer supported */
     case FSAL_DIGEST_FILEID3:
         fh_size = FSAL_DIGEST_SIZE_FILEID3;
         if (fh_desc->len < fh_size)
             goto errout;
-        memcpy (&ino32, fh, sizeof (ino32));
-        ino64 = ino32;
-        memcpy (fh_desc->addr, &ino64, fh_size);
+        ino64 = fh->inode;
+        ino32 = fh->inode;
+        if (fh_size == sizeof(ino64))
+            memcpy (fh_desc->addr, &ino64, sizeof(ino64));
+        else
+            memcpy (fh_desc->addr, &ino32, sizeof(ino32));
         break;
     case FSAL_DIGEST_FILEID4:
         fh_size = FSAL_DIGEST_SIZE_FILEID4;
         if (fh_desc->len < fh_size)
             goto errout;
-        memcpy (&ino32, fh, sizeof (ino32));
-        ino64 = ino32;
-        memcpy (fh_desc->addr, &ino64, fh_size);
+        ino64 = fh->inode;
+        ino32 = fh->inode;
+        if (fh_size == sizeof(ino64))
+            memcpy (fh_desc->addr, &ino64, sizeof(ino64));
+        else
+            memcpy (fh_desc->addr, &ino32, sizeof(ino32));
         break;
     default:
         return fsalstat (ERR_FSAL_SERVERFAULT, 0);
