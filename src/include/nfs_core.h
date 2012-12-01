@@ -615,6 +615,8 @@ void nfs_operate_on_sigusr1(void);
 void nfs_operate_on_sigterm(void);
 void nfs_operate_on_sighup(void);
 
+int nfs_init_get_n_event_chan(void);;
+
 void nfs_Init_svc(void);
 void nfs_Init_admin_data(void);
 int nfs_Init_worker_data(nfs_worker_data_t *pdata);

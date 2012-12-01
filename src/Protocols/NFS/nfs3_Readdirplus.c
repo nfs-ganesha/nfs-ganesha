@@ -433,6 +433,10 @@ nfs3_readdirplus_callback(void* opaque,
                                  FSAL_DIGEST_FILEID3,
                                  &id_descriptor);
 
+     if (!ep3->fileid) {
+          LogCrit(COMPONENT_NFS_READDIR, "nfs3_readdirplus_callback: handle_digest filled in fileid of zero");
+     }
+
      ep3->name = gsh_malloc(namelen + 1);
      if (ep3->name == NULL) {
           tracker->error = NFS3ERR_IO;

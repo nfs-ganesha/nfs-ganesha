@@ -38,6 +38,7 @@
 #include <libgen.h>             /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
+#warning Jim, this is sys/xattr.h for Ubuntu 11.10
 #include <sys/types.h>
 #include <attr/xattr.h>
 #include <mntent.h>

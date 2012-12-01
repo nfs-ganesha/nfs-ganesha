@@ -79,4 +79,8 @@ unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam,
 int display_cache(struct gsh_buffdesc * pbuff, char *str);
 int compare_cache(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
 
+int nfs_cpu_cores(void);
+void nfs_cpu_cores_read_os_cpu_core_count(void);
+long nfs_rlimit_read_os_fd_rlimit(void);
+
 #endif                          /* _NFS_TOOLS_H */
