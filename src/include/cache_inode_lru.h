@@ -166,6 +166,8 @@ static const uint32_t LRU_SHUTDOWN = 0x00000002;
 
 static const uint32_t LRU_NO_LANE = ~0;
 
+extern void cache_inode_adjust_fd_limit_defaults(void);
+extern void cache_inode_set_lru_limit(long n);
 extern void cache_inode_lru_pkginit(void);
 extern void cache_inode_lru_pkgshutdown(void);
 

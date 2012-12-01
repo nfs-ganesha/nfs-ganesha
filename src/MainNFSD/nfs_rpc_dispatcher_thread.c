@@ -63,6 +63,7 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
+#include "nfs_tools.h"
 #include "SemN.h"
 #include "nfs_tcb.h"
 #include "fridgethr.h"
@@ -83,14 +84,12 @@ struct rpc_evchan {
     pthread_t thread_id; /*< POSIX thread ID */
 };
 
-#define N_TCP_EVENT_CHAN  3 /*< We don't really want to have too many,
-			        relative to the number of available cores. */
 #define UDP_EVENT_CHAN    0 /*< Put UDP on a dedicated channel */
 #define TCP_RDVS_CHAN     1 /*< Accepts new tcp connections */
 #define TCP_EVCHAN_0      2
-#define N_EVENT_CHAN N_TCP_EVENT_CHAN + 2
+#define N_EVENT_CHAN      (nfs_init_get_n_event_chan())
 
-static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
+static struct rpc_evchan *rpc_evchan = NULL;
 
 thr_fridge_t req_fridge[1]; /*< Decoder thread pool */
 struct nfs_req_st nfs_req_st; /*< Shared request queues */
@@ -165,6 +164,14 @@ int udp_socket[P_COUNT];
 int tcp_socket[P_COUNT];
 SVCXPRT *udp_xprt[P_COUNT];
 SVCXPRT *tcp_xprt[P_COUNT];
+
+
+int nfs_init_get_n_event_chan(void)
+{
+  if(nfs_cpu_cores() == 1)
+    return 3 + 2;               /* preserve old behavior */
+  return nfs_cpu_cores() * 2 + 2;       /* twice the number of CPUs is the generally respected ballpark */
+}
 
 /**
  * @brief Unregister an RPC program.
@@ -480,6 +487,9 @@ void nfs_Init_svc()
     svc_init_params svc_params;
     int ix, code __attribute__((unused)) = 0;
     int one = 1;
+
+    rpc_evchan = (struct rpc_evchan *) malloc(N_EVENT_CHAN * sizeof(rpc_evchan[0]));
+    memset(rpc_evchan, '\0', N_EVENT_CHAN * sizeof(rpc_evchan[0]));
 
     LogInfo(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
             nfs_param.core_param.core_options);

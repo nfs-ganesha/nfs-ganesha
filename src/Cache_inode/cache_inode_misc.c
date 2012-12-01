@@ -67,9 +67,12 @@ cache_inode_gc_policy_t cache_inode_gc_policy = {
         .entries_lwmark = 50000,
         .use_fd_cache = true,
         .lru_run_interval = 600,
-        .fd_limit_percent = 99,
-        .fd_hwmark_percent = 90,
-        .fd_lwmark_percent = 50,
+        /* The next three values have to be set to cater for the
+         * worse case of a machine with a 4096 FD limit and still
+         * have spare FDs for sockets: */
+        .fd_limit_percent = 90,
+        .fd_hwmark_percent = 81,
+        .fd_lwmark_percent = 45,
         .reaper_work = 1000,
         .biggest_window = 40,
         .required_progress = 5,

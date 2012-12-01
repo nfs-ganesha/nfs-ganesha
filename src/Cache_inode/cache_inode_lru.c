@@ -48,7 +48,6 @@
 #include <pthread.h>
 #include <assert.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <misc/timespec.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -210,7 +209,6 @@ size_t open_fd_count = 0;
 static pthread_mutex_t lru_mtx;
 static pthread_cond_t lru_cv;
 
-static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 
 /**
  * A package for the ID and state of the LRU thread.
@@ -885,6 +883,81 @@ lru_thread(void *arg __attribute__((unused)))
      return NULL;
 }
 
+
+
+/*
+ *
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ *
+ *                     V E R Y   I M P O R T A N T                   
+ *
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * 
+ * The system imposed limit of open file descriptors is the limit of
+ * the *total* count of file descriptors we can open. This total is
+ * inclusive of miscellaneous file descriptors pertaining to things
+ * like stdout, logging, debugging, RPC, dynamic libraries and so on.
+ *
+ * This caching component only accounts for file descriptors opened
+ * to read exported files. From this number we need to subtract
+ * possible miscellaneous file descriptors and the number of
+ * concurrent client threads, each of which consumes three sockets.
+ * Then we need to subtract the number of possible clients.
+ *
+ * Previously the default value of fd_limit_percent is 99%. If
+ * cache_inode_adjust_fd_limit_defaults() is not called then a
+ * typical installation will try rise to slightly over the system
+ * limit and then Ganesha will lock up without any obvious way for
+ * the sys-admin to resolve the problem. What is worse is that
+ * Ganesha will *appear* to be working at first. This represents the
+ * *worst* kind of behavior of a software package.
+ *
+ * The call cache_inode_adjust_fd_limit_defaults() checks for these
+ * scenarios and resets the limits if they exceed reasonable values.
+ *
+ */
+void
+cache_inode_adjust_fd_limit_defaults(void)
+{
+     long fd_margin, adjust_settings;
+
+#define NUMBER_OF_MISC_FDS              100      /* seems to be under 50, double it for safety */
+#define POSSIBLE_CLIENTS                200
+
+     fd_margin = NUMBER_OF_MISC_FDS + 
+                 3 * nfs_init_get_n_event_chan() +
+                 POSSIBLE_CLIENTS;
+
+     if(fd_margin > lru_state.fds_system_imposed) {
+          LogFatal(COMPONENT_CACHE_INODE_LRU, "Soft FD limit is too low. "
+                   "Needs to be at least %ld", fd_margin);
+          exit(1);
+     }
+
+     adjust_settings = 100L * 100L * ((long) lru_state.fds_system_imposed - fd_margin) /
+                       ((long) cache_inode_gc_policy.fd_limit_percent * lru_state.fds_system_imposed);
+     if(adjust_settings < 100) {
+          cache_inode_gc_policy.fd_limit_percent =
+                adjust_settings * cache_inode_gc_policy.fd_limit_percent  / 100;
+          cache_inode_gc_policy.fd_hwmark_percent =
+                adjust_settings * cache_inode_gc_policy.fd_hwmark_percent / 100;
+          cache_inode_gc_policy.fd_lwmark_percent =
+                adjust_settings * cache_inode_gc_policy.fd_lwmark_percent / 100;
+
+          LogCrit(COMPONENT_CACHE_INODE_LRU, "FD_Limit_Percent too low, adjusting to "
+                  "(Limit, High, Low) -> (%d, %d, %d)", cache_inode_gc_policy.fd_limit_percent,
+                  cache_inode_gc_policy.fd_hwmark_percent, cache_inode_gc_policy.fd_lwmark_percent);
+     }
+}
+
+
+void
+cache_inode_set_lru_limit(long n)
+{
+     lru_state.fds_system_imposed = n;
+}
+
+
 /* Public functions */
 
 /**
@@ -900,11 +973,6 @@ cache_inode_lru_pkginit(void)
      size_t ix = 0;
      /* Return code from system calls */
      int code = 0;
-     /* Rlimit for open file descriptors */
-     struct rlimit rlim = {
-          .rlim_cur = RLIM_INFINITY,
-          .rlim_max = RLIM_INFINITY
-     };
 
      open_fd_count = 0;
 
@@ -918,64 +986,20 @@ cache_inode_lru_pkginit(void)
      lru_state.entries_lowat
           = cache_inode_gc_policy.entries_lwmark;
 
+/*
+ * getrlimit() code moved to support/nfs_rlimit.c
+ * We now get these limits in main() *before* we read the
+ * config in order to get useful defaults for fd_limit_percent
+ *
+ * {{{ removed ---
+ */
      /* Find out the system-imposed file descriptor limit */
-     if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
-          code = errno;
-          LogCrit(COMPONENT_CACHE_INODE_LRU,
-                  "Call to getrlimit failed with error %d.  "
-                  "This should not happen.  Assigning default of %d.",
-                  code, FD_FALLBACK_LIMIT);
-          lru_state.fds_system_imposed = FD_FALLBACK_LIMIT;
-     } else {
-          if (rlim.rlim_cur < rlim.rlim_max) {
-               /* Save the old soft value so we can fall back to it
-                  if setrlimit fails. */
-               rlim_t old_soft = rlim.rlim_cur;
-               LogInfo(COMPONENT_CACHE_INODE_LRU,
-                       "Attempting to increase soft limit from %"PRIu64" "
-                       "to hard limit of %"PRIu64"",
-                       (uint64_t) rlim.rlim_cur, (uint64_t) rlim.rlim_max);
-               rlim.rlim_cur = rlim.rlim_max;
-               if (setrlimit(RLIMIT_NOFILE, &rlim) < 0) {
-                    code = errno;
-                    LogWarn(COMPONENT_CACHE_INODE_LRU,
-                            "Attempt to raise soft FD limit to hard FD limit "
-                            "failed with error %d.  Sticking to soft limit.",
-                            code);
-                    rlim.rlim_cur = old_soft;
-               }
-          }
-          if (rlim.rlim_cur == RLIM_INFINITY) {
-               FILE *const nr_open = fopen("/proc/sys/fs/nr_open",
-                                           "r");
-               if (!(nr_open &&
-                     (fscanf(nr_open,
-                             "%"SCNu32"\n",
-                             &lru_state.fds_system_imposed) == 1) &&
-                     (fclose(nr_open) == 0))) {
-                    code = errno;
-                    LogMajor(COMPONENT_CACHE_INODE_LRU,
-                             "The rlimit on open file descriptors is infinite "
-                             "and the attempt to find the system maximum "
-                             "failed with error %d.  "
-                             "Assigning the default fallback of %d which is "
-                             "almost certainly too small.  If you are on a "
-                             "Linux system, this should never happen.  If "
-                             "you are running some other system, please set "
-                             "an rlimit on file descriptors (for example, "
-                             "with ulimit) for this process and consider "
-                             "editing " __FILE__ "to add support for finding "
-                             "your system's maximum.", code,
-                             FD_FALLBACK_LIMIT);
-                    lru_state.fds_system_imposed = FD_FALLBACK_LIMIT;
-               }
-          } else {
-               lru_state.fds_system_imposed = rlim.rlim_cur;
-          }
-          LogInfo(COMPONENT_CACHE_INODE_LRU,
-                  "Setting the system-imposed limit on FDs to %d.",
-                  lru_state.fds_system_imposed);
-     }
+/*
+ *
+ *    if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) ...
+ *
+ * --- removed }}} 
+ */
 
 
      lru_state.fds_hard_limit = (cache_inode_gc_policy.fd_limit_percent *
