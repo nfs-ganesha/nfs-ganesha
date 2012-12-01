@@ -503,21 +503,6 @@ int parseAccessParam(char *var_name,
 
   nfs_AddClientsToExportList(p_entry, rc, (char **)client_list, access_option);
 
-  if(rc != 0)
-    {
-      LogCrit(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
-              var_value);
-
-      /* free client strings */
-      for(idx = 0; idx < count; idx++)
-        gsh_free(client_list[idx]);
-
-      return rc;
-    }
-
-  /* everything is OK */
-
   /* free client strings */
   for(idx = 0; idx < count; idx++)
     gsh_free(client_list[idx]);
