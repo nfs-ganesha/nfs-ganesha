@@ -9,7 +9,7 @@
 #include "log.h"
 
 
-static int cpu_core_count = -1;         /* -1 means unknown */
+static int cpu_core_count = 1;
 
 int
 nfs_cpu_cores()
