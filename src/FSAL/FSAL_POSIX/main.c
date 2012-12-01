@@ -181,12 +181,11 @@ MODULE_INIT void posix_init (void)
     marshal_create_process ();
 #endif
 
-    printf ("Connecting to nodedb\n");
+    LogInfo (COMPONENT_FSAL, "Connecting to nodedb...");
     connpool = connection_pool_new ();
 
     mount_count = MARSHAL_nodedb_read_mounts (connpool);
-    printf ("Scanned %d mounts.Initializing connection pool -\n", mount_count);
-    printf ("done.\n");
+    LogInfo (COMPONENT_FSAL, "Scanned %d mounts.\n", mount_count);
 }
 
 MODULE_FINI void posix_unload (void)
