@@ -136,8 +136,6 @@ struct fsal_layoutget_arg {
 	/** The maximum number of bytes the client is willing to accept
 	    in the response, including XDR overhead. */
 	uint32_t maxcount;
-	/** Layout mode: read,write,any  */
-        layoutiomode4 iomode;
 };
 
 /**

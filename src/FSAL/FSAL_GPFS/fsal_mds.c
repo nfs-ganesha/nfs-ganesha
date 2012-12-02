@@ -319,7 +319,6 @@ layoutget(struct fsal_obj_handle *obj_hdl,
         res->last_segment = true;
         res->segment.offset = 0;
         res->segment.length = NFS4_UINT64_MAX;
-        res->segment.io_mode = arg->iomode;
 
         stripe_width = file_layout.lg_stripe_unit;
         util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS;
