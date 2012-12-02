@@ -1364,7 +1364,6 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid,
 						   NFS_RPC_FLAG_NONE);
 			if (code != 0) {
 				/* Clean up... */
-				free_op(op);
 				free_single_call(call);
 				release_cb_slot(session,
 						slot,

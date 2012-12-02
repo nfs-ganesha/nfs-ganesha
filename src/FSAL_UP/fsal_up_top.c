@@ -789,8 +789,8 @@ create_file_recall(cache_entry_t *entry,
                         if (pnfs_segments_overlap(segment,
                                                   &g->sls_segment)) {
                                 match = true;
-                                pthread_mutex_unlock(&g->sls_mutex);
                         }
+                        pthread_mutex_unlock(&g->sls_mutex);
                 }
                 if (match) {
                         work_entry = gsh_malloc(
@@ -1089,7 +1089,7 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 					  &arg,
 					  &s->state_refer,
 					  layoutrec_completion,
-					  &completion,
+					  completion,
 					  free_layoutrec);
 		if (code != 0) {
 			/**
