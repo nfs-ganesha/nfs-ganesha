@@ -179,10 +179,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* First switch is based upon claim type */
   switch (arg_OPEN4.claim.claim)
     {
-    case CLAIM_DELEGATE_CUR:
     case CLAIM_DELEGATE_PREV:
       /* Check for name length */
-      if(arg_OPEN4.claim.open_claim4_u.file.utf8string_len > FSAL_MAX_NAME_LEN)
+      if(arg_OPEN4.claim.open_claim4_u.file_delegate_prev.utf8string_len > FSAL_MAX_NAME_LEN)
         {
           res_OPEN4.status = NFS4ERR_NAMETOOLONG;
           LogDebug(COMPONENT_STATE,
@@ -191,7 +190,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* get the filename from the argument, it should not be empty */
-      if(arg_OPEN4.claim.open_claim4_u.file.utf8string_len == 0)
+      if(arg_OPEN4.claim.open_claim4_u.file_delegate_prev.utf8string_len == 0)
         {
           res_OPEN4.status = NFS4ERR_INVAL;
           LogDebug(COMPONENT_STATE,
@@ -199,6 +198,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           goto out;
         }
 
+      /* Fall through */
+
+    case CLAIM_DELEGATE_CUR:
       res_OPEN4.status = NFS4ERR_NOTSUPP;
       LogDebug(COMPONENT_STATE,
                "NFS41 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
