@@ -313,7 +313,7 @@ int cmp_sockaddr(sockaddr_t *addr_1,
 
 /**
  *
- * cmp_sockaddr: compare 2 sockaddrs, including ports
+ * sockaddr_cmpf: canonically compare 2 sockaddrs, including ports
  *
  * @param addr_1 [IN] first address
  * @param addr_2 [IN] second address
