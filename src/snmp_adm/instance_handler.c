@@ -82,13 +82,13 @@ int instance_string_handler(netsnmp_mib_handler * handler,
           return SNMP_ERR_READONLY;
         }
 
-      len = strlen((char *)requests->requestvb->val.string);
-      if(len > SNMP_ADM_MAX_STR)
+      len = strnlen(requests->requestvb->val.string,
+                    sizeof(requests->requestvb->val.string));
+      if(len >= sizeof(requests->requestvb->val.string))
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
       else
         {
-          strncpy(handler->myvoid, (char *)(requests->requestvb->val.string), len);
-          ((char *)(handler->myvoid))[len] = '\0';      /* just to be sure */
+          memcpy(handler->myvoid, requests->requestvb->val.string, len + 1);
         }
       break;
       /* XXX
@@ -391,7 +391,7 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
           break;
         case SNMP_ADM_STRING:
           strncpy(var.string, (char *)(requests->requestvb->val.string),
-                  SNMP_ADM_MAX_STR);
+                  sizeof(var.string));
           break;
         case SNMP_ADM_REAL:
           err = str2real(&(var.real), (char *)(requests->requestvb->val.string));
