@@ -85,7 +85,7 @@ fsal_status_t GPFSFSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   TakeTokenFSCall();
   status =
       fsal_readlink_by_handle(p_context, p_linkhandle, link_content_out,
-                              FSAL_MAX_PATH_LEN);
+                              sizeof(link_content_out));
 /*   errsv = errno; */
   ReleaseTokenFSCall();
 

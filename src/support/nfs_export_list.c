@@ -410,9 +410,9 @@ int get_req_uid_gid(struct svc_req *req,
         }
 
 #ifdef _SOLARIS
-      if(getpwuid_r(user_credentials->caller_uid, &pwd, buff, MAXPATHLEN) != 0)
+      if(getpwuid_r(user_credentials->caller_uid, &pwd, buff, sizeof(buff)) != 0)
 #else
-      if((getpwuid_r(user_credentials->caller_uid, &pwd, buff, MAXPATHLEN, &pp) != 0) ||
+      if((getpwuid_r(user_credentials->caller_uid, &pwd, buff, sizeof(buff), &pp) != 0) ||
                (pp == NULL))
 #endif                          /* _SOLARIS */
         { 

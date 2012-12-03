@@ -657,7 +657,7 @@ state_nsm_client_t *get_nsm_client(care_t    care,
 
       if(sprint_sockip(&key.ssc_client_addr,
                        key.ssc_nlm_caller_name,
-                       SOCK_NAME_MAX) == 0)
+                       sizeof(sock_name)) == 0)
         {
           LogCrit(COMPONENT_STATE,
                   "Error converting caller_name %s to an ipaddress",
