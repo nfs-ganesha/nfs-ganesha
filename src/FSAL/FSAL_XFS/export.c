@@ -26,7 +26,7 @@
  */
 
 /* export.c
- * VFS FSAL export object
+ * XFS FSAL export object
  */
 
 #ifdef HAVE_CONFIG_H
@@ -41,55 +41,37 @@
 #include <mntent.h>
 #include <sys/statvfs.h>
 #include <sys/quota.h>
+#include <xfs/xfs.h>
+#include <xfs/handle.h>
 #include "nlm_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "fsal_handle_syscalls.h"
 #include "xfs_fsal.h"
+#include "nfs_exports.h"
 
-/*
- * VFS internal export
+
+/* helpers to/from other XFS objects
  */
 
-struct vfs_fsal_export {
-	struct fsal_export export;
-	char *mntdir;
-	char *fs_spec;
-	char *fstype;
-	int root_fd;
-	dev_t root_dev;
-	struct file_handle *root_handle;
-	bool pnfs_panfs_enabled;
-};
-
-/* helpers to/from other VFS objects
- */
-
-struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl);
-
-int vfs_get_root_fd(struct fsal_export *exp_hdl) {
-	struct vfs_fsal_export *myself;
-
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
-	return myself->root_fd;
-}
+struct fsal_staticfsinfo_t *xfs_staticinfo(struct fsal_module *hdl);
 
 /* export object methods
  */
 
 static fsal_status_t release(struct fsal_export *exp_hdl)
 {
-	struct vfs_fsal_export *myself;
+	struct xfs_fsal_export *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
+	myself = container_of(exp_hdl, struct xfs_fsal_export, export);
 
 	pthread_mutex_lock(&exp_hdl->lock);
 	if(exp_hdl->refs > 0 || !glist_empty(&exp_hdl->handles)) {
 		LogMajor(COMPONENT_FSAL,
-			 "VFS release: export (0x%p)busy",
+			 "XFS release: export (0x%p)busy",
 			 exp_hdl);
 		fsal_error = posix2fsal_error(EBUSY);
 		retval = EBUSY;
@@ -97,12 +79,8 @@ static fsal_status_t release(struct fsal_export *exp_hdl)
 	}
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
-	if(myself->root_fd >= 0)
-		close(myself->root_fd);
 	if(myself->root_handle != NULL)
 		gsh_free(myself->root_handle);
-	if(myself->fstype != NULL)
-		gsh_free(myself->fstype);
 	if(myself->mntdir != NULL)
 		gsh_free(myself->mntdir);
 	if(myself->fs_spec != NULL)
@@ -122,7 +100,7 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
                                       const struct req_op_context *opctx,
 			              fsal_dynamicfsinfo_t *infop)
 {
-	struct vfs_fsal_export *myself;
+	struct xfs_fsal_export *myself;
 	struct statvfs buffstatvfs;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -131,8 +109,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
-	retval = fstatvfs(myself->root_fd, &buffstatvfs);
+	myself = container_of(exp_hdl, struct xfs_fsal_export, export);
+	retval = statvfs(exp_hdl->exp_entry->fullpath, &buffstatvfs);
 	if(retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -156,7 +134,7 @@ static bool fs_supports(struct fsal_export *exp_hdl,
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_supports(info, option);
 }
 
@@ -164,7 +142,7 @@ static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_maxfilesize(info);
 }
 
@@ -172,7 +150,7 @@ static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_maxread(info);
 }
 
@@ -180,7 +158,7 @@ static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_maxwrite(info);
 }
 
@@ -188,7 +166,7 @@ static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_maxlink(info);
 }
 
@@ -196,7 +174,7 @@ static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_maxnamelen(info);
 }
 
@@ -204,7 +182,7 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_maxpathlen(info);
 }
 
@@ -212,7 +190,7 @@ static fsal_fhexptype_t fs_fh_expire_type(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_fh_expire_type(info);
 }
 
@@ -220,7 +198,7 @@ static gsh_time_t fs_lease_time(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_lease_time(info);
 }
 
@@ -228,7 +206,7 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_acl_support(info);
 }
 
@@ -236,7 +214,7 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_supported_attrs(info);
 }
 
@@ -244,7 +222,7 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_umask(info);
 }
 
@@ -252,7 +230,7 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
 
-	info = vfs_staticinfo(exp_hdl->fsal);
+	info = xfs_staticinfo(exp_hdl->fsal);
 	return fsal_xattr_access_rights(info);
 }
 
@@ -271,26 +249,26 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       struct req_op_context *req_ctx,
 			       fsal_quota_t *pquota)
 {
-	struct vfs_fsal_export *myself;
+	struct xfs_fsal_export *myself;
 	struct dqblk fs_quota;
 	struct stat path_stat;
 	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
+	myself = container_of(exp_hdl, struct xfs_fsal_export, export);
 	retval = stat(filepath, &path_stat);
 	if(retval < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "VFS get_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno, strerror(errno));
-		fsal_error = posix2fsal_error(errno);
 		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+		LogMajor(COMPONENT_FSAL,
+			 "XFS get_quota, fstat: root_path: %s, errno=(%d) %s",
+			 myself->mntdir, retval, strerror(retval));
 		goto out;
 	}
 	if(path_stat.st_dev != myself->root_dev) {
 		LogMajor(COMPONENT_FSAL,
-			 "VFS get_quota: crossed mount boundary! root_path: %s, quota path: %s",
+			 "XFS get_quota: crossed mount boundary! root_path: %s, quota path: %s",
 			 myself->mntdir, filepath);
 		fsal_error = ERR_FSAL_FAULT; /* maybe a better error? */
 		retval = 0;
@@ -331,26 +309,26 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       fsal_quota_t * pquota,
 			       fsal_quota_t * presquota)
 {
-	struct vfs_fsal_export *myself;
+	struct xfs_fsal_export *myself;
 	struct dqblk fs_quota;
 	struct stat path_stat;
 	uid_t id;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 
-	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
+	myself = container_of(exp_hdl, struct xfs_fsal_export, export);
 	retval = stat(filepath, &path_stat);
 	if(retval < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "VFS set_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
-			 myself->mntdir, myself->root_fd, errno, strerror(errno));
-		fsal_error = posix2fsal_error(errno);
 		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+		LogMajor(COMPONENT_FSAL,
+			 "XFS set_quota, fstat: root_path: %s, errno=(%d) %s",
+			 myself->mntdir, retval, strerror(retval));
 		goto err;
 	}
 	if(path_stat.st_dev != myself->root_dev) {
 		LogMajor(COMPONENT_FSAL,
-			 "VFS set_quota: crossed mount boundary! root_path: %s, quota path: %s",
+			 "XFS set_quota: crossed mount boundary! root_path: %s, quota path: %s",
 			 myself->mntdir, filepath);
 		fsal_error = ERR_FSAL_FAULT; /* maybe a better error? */
 		retval = 0;
@@ -406,15 +384,15 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
-	struct file_handle *hdl;
+	struct xfs_fsal_ext_handle *hdl;
 	size_t fh_size;
 
 	/* sanity checks */
 	if( !fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	hdl = (struct file_handle *)fh_desc->addr;
-	fh_size = vfs_sizeof_handle(hdl);
+	hdl = (struct xfs_fsal_ext_handle *)fh_desc->addr;
+	fh_size = xfs_sizeof_handle(hdl);
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {
 			LogMajor(COMPONENT_FSAL,
@@ -432,16 +410,16 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* vfs_export_ops_init
+/* xfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */
 
-void vfs_export_ops_init(struct export_ops *ops)
+void xfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
-	ops->lookup_path = vfs_lookup_path;
+	ops->lookup_path = xfs_lookup_path;
 	ops->extract_handle = extract_handle;
-	ops->create_handle = vfs_create_handle;
+	ops->create_handle = xfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;
 	ops->fs_maxfilesize = fs_maxfilesize;
@@ -460,7 +438,7 @@ void vfs_export_ops_init(struct export_ops *ops)
 	ops->set_quota = set_quota;
 }
 
-void vfs_handle_ops_init(struct fsal_obj_ops *ops);
+void xfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 /* fs_specific_has() parses the fs_specific string for a particular key, 
    returns true if found, and optionally returns a val if the string is
@@ -505,7 +483,7 @@ out:
  * returns the export with one reference taken.
  */
 
-fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
+fsal_status_t xfs_create_export(struct fsal_module *fsal_hdl,
 				const char *export_path,
 				const char *fs_specific,
 				struct exportlist__ *exp_entry,
@@ -513,7 +491,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
                                 const struct fsal_up_vector *up_ops,
 				struct fsal_export **export)
 {
-	struct vfs_fsal_export *myself;
+	struct xfs_fsal_export *myself;
 	FILE *fp;
 	struct mntent *p_mnt;
 	size_t pathlen, outlen = 0;
@@ -522,13 +500,15 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	char type[MAXNAMLEN];
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	struct stat root_stat;
+	struct gsh_buffdesc fh;
 
 	*export = NULL; /* poison it first */
 	if(export_path == NULL
 	   || strlen(export_path) == 0
 	   || strlen(export_path) > MAXPATHLEN) {
 		LogMajor(COMPONENT_FSAL,
-			 "vfs_create_export: export path empty or too big");
+			 "xfs_create_export: export path empty or too big");
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 	if(next_fsal != NULL) {
@@ -537,32 +517,22 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	myself = gsh_calloc(1, sizeof(struct vfs_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct xfs_fsal_export));
 	if(myself == NULL) {
 		LogMajor(COMPONENT_FSAL,
-			 "vfs_fsal_create: out of memory for object");
+			 "xfs_fsal_create: out of memory for object");
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
-	myself->root_fd = -1;
-
         retval = fsal_export_init(&myself->export,
 				  exp_entry);
         if(retval != 0) {
 		LogMajor(COMPONENT_FSAL,
-			 "vfs_fsal_create: out of memory for object");
+			 "xfs_fsal_create: out of memory for object");
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
-	vfs_export_ops_init(myself->export.ops);
-	vfs_handle_ops_init(myself->export.obj_ops);
+	xfs_export_ops_init(myself->export.ops);
+	xfs_handle_ops_init(myself->export.obj_ops);
         myself->export.up_ops = up_ops;
-
-	myself->pnfs_panfs_enabled = fs_specific_has(fs_specific, "pnfs_panfs",
-						     NULL, 0);
-	if (myself->pnfs_panfs_enabled) {
-		LogInfo(COMPONENT_FSAL,
-			"vfs_fsal_create: pnfs_panfs was enabled for [%s]",
-			export_path);
-	}
 
 	/* lock myself before attaching to the fsal.
 	 * keep myself locked until done with creating myself.
@@ -584,6 +554,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
+
 	while((p_mnt = getmntent(fp)) != NULL) {
 		if(p_mnt->mnt_dir != NULL) {
 			pathlen = strlen(p_mnt->mnt_dir);
@@ -601,12 +572,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 						  pathlen) == 0) &&
 					  ((export_path[pathlen] == '/') ||
 					   (export_path[pathlen] == '\0'))) {
-					if(strcasecmp(p_mnt->mnt_type, "xfs") == 0) {
-						LogDebug(COMPONENT_FSAL,
-							 "Mount (%s) is XFS, skipping",
-							 p_mnt->mnt_dir);
-						continue;
-					}
 					outlen = pathlen;
 					strncpy(mntdir,
 						p_mnt->mnt_dir, MAXPATHLEN);
@@ -618,6 +583,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			}
 		}
 	}
+
 	endmntent(fp);
 	if(outlen <= 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -625,58 +591,62 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			export_path, MOUNTED);
 		fsal_error = ERR_FSAL_NOENT;
 		goto errout;
-        }
-	myself->root_fd = open(mntdir,  O_RDONLY|O_DIRECTORY);
-	if(myself->root_fd < 0) {
-		LogMajor(COMPONENT_FSAL,
-			 "Could not open VFS mount point %s: rc = %d",
-			 mntdir, errno);
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto errout;
-	} else {
-		struct stat root_stat;
-		int mnt_id = 0;
-		struct file_handle *fh = alloca(sizeof(struct file_handle)
-					       + MAX_HANDLE_SZ);
-
-		memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
-		fh->handle_bytes = MAX_HANDLE_SZ;
-		retval = fstat(myself->root_fd, &root_stat);
-		if(retval < 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "fstat: root_path: %s, fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno, strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			goto errout;
-		}
-		myself->root_dev = root_stat.st_dev;
-		retval = name_to_handle_at(myself->root_fd, "", fh,
-					   &mnt_id, AT_EMPTY_PATH);
-		if(retval != 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "name_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
-				 mntdir, myself->root_fd, errno, strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			goto errout;
-		}
-		myself->root_handle = gsh_malloc(sizeof(struct file_handle)
-						 + fh->handle_bytes);
-		if(myself->root_handle == NULL) {
-			LogMajor(COMPONENT_FSAL,
-				 "memory for root handle, errno=(%d) %s",
-				 errno, strerror(errno));
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			goto errout;
-		}
-		memcpy(myself->root_handle,
-		       fh,
-		       sizeof(struct file_handle) + fh->handle_bytes);
 	}
-	myself->fstype = strdup(type);
+
+	retval = lstat(export_path, &root_stat);
+	if(retval < 0) {
+		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+		LogMajor(COMPONENT_FSAL,
+			 "lstat: root_path: %s, errno=(%d) %s",
+			 export_path,  retval, strerror(retval));
+		goto errout;
+	}
+
+	if(!S_ISDIR(root_stat.st_mode)) {
+		retval = ENOTDIR;
+		fsal_error = posix2fsal_error(retval);
+		LogMajor(COMPONENT_FSAL, "%s is not a directory", export_path);
+		goto errout;
+	}
+
+	myself->root_dev = root_stat.st_dev;
+	/* This is a secret handshake which libhandle requires to
+	 * make sure open_by_handle will work */
+	retval = path_to_fshandle(mntdir, &fh.addr, &fh.len);
+	if(retval != 0) {
+		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+		LogMajor(COMPONENT_FSAL,
+			 "path_to_fshahndle: root_path: %s, errno=(%d) %s",
+			 mntdir, retval, strerror(retval));
+		goto errout;
+	}
+	free_handle(fh.addr, fh.len);
+
+	retval = path_to_handle((char *)export_path, &fh.addr, &fh.len);
+	if(retval != 0) {
+		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+		LogMajor(COMPONENT_FSAL, "Cannot get handle for %s - %s(%d)",
+			 export_path, strerror(retval), retval);
+		goto errout;
+	}
+	myself->root_handle = gsh_malloc(sizeof(*myself->root_handle)
+					 + fh.len);
+	if(myself->root_handle == NULL) {
+		retval = errno;
+		fsal_error = posix2fsal_error(retval);
+		LogMajor(COMPONENT_FSAL,
+			 "memory for root handle for %s, errno=(%d) %s",
+			 export_path, retval, strerror(retval));
+		goto errout;
+	}
+	myself->root_handle->type = DIRECTORY;
+	myself->root_handle->len = fh.len;
+	myself->root_handle->inode = root_stat.st_ino;
+	memcpy(myself->root_handle->data, fh.addr, fh.len);
+
 	myself->fs_spec = strdup(fs_spec);
 	myself->mntdir = strdup(mntdir);
 	*export = &myself->export;
@@ -684,12 +654,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 errout:
-	if(myself->root_fd >= 0)
-		close(myself->root_fd);
 	if(myself->root_handle != NULL)
 		gsh_free(myself->root_handle);
-	if(myself->fstype != NULL)
-		gsh_free(myself->fstype);
 	if(myself->mntdir != NULL)
 		gsh_free(myself->mntdir);
 	if(myself->fs_spec != NULL)

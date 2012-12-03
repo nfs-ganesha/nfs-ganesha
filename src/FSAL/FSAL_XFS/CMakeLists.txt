@@ -5,17 +5,16 @@ add_definitions(
 
 ########### next target ###############
 
-SET(fsalvfs_LIB_SRCS
+SET(fsalxfs_LIB_SRCS
    fsal_convert.c
    main.c
    export.c
    handle.c
    file.c
-   xattrs.c
    xfs_fsal.h
 )
 
-add_library(fsalvfs SHARED ${fsalxfs_LIB_SRCS})
+add_library(fsalxfs SHARED ${fsalxfs_LIB_SRCS})
 
 target_link_libraries(fsalxfs)
 
