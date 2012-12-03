@@ -147,7 +147,6 @@ add_executable(ganesha.nfsd
 
 target_link_libraries(ganesha.nfsd
   MainServices
-  nodedb
   ${PROTOCOLS}
   ${SYSTEM_LIBRARIES}
 )
