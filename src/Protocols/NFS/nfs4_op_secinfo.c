@@ -95,13 +95,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_SECINFO;
   res_SECINFO4.status = NFS4_OK;
 
-  /* Read name from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
-  if(arg_SECINFO4.name.utf8string_len == 0)
-    {
-      res_SECINFO4.status = NFS4ERR_INVAL;
-      return res_SECINFO4.status;
-    }
-
   /*
    * Do basic checks on a filehandle
    * SecInfo is done only on a directory
@@ -116,13 +109,12 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
       return res_SECINFO4.status;
     }
 
-  /* get the names from the RPC input */
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_SECINFO4.name,
-                                 &secinfo_fh_name))) != CACHE_INODE_SUCCESS)
+  /* get the name from the RPC input */
+  cache_status = utf8_to_name(&arg_SECINFO4.name, &secinfo_fh_name);
+
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
-      res_SECINFO4.status = NFS4ERR_INVAL;
+      res_SECINFO4.status = nfs4_Errno(cache_status);
       return res_SECINFO4.status;
     }
 

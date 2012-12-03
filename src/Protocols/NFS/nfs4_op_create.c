@@ -135,13 +135,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CREATE4.status;
     }
 
-  /* Check for name to long */
-  if(arg_CREATE4.objname.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_CREATE4.status = NFS4ERR_NAMETOOLONG;
-      return res_CREATE4.status;
-    }
-
   /* 
    * This operation is used to create a non-regular file, 
    * this means: - a symbolic link
@@ -154,19 +147,14 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    * You can't use this operation to create a regular file, you have to use NFS4_OP_OPEN for this
    */
 
-  /* Convert the UFT8 objname to a regular string */
-  if(arg_CREATE4.objname.utf8string_len == 0)
-    {
-      res_CREATE4.status = NFS4ERR_INVAL;
-      return res_CREATE4.status;
-    }
+  /* Convert the UFT8 objname to a FSAL string */
+  cache_status = utf8_to_name(&arg_CREATE4.objname, &name);
 
-  if(utf82str(name.name, sizeof(name.name), &arg_CREATE4.objname) == -1)
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
-      res_CREATE4.status = NFS4ERR_INVAL;
+      res_CREATE4.status = nfs4_Errno(cache_status);
       return res_CREATE4.status;
     }
-  name.len = strlen(name.name);
 
   /* Sanuty check: never create a directory named '.' or '..' */
   if(arg_CREATE4.objtype.type == NF4DIR)
@@ -240,14 +228,14 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         }
       else
         {
-          if(utf82str
-             (create_arg.link_content.path, sizeof(create_arg.link_content.path),
-              &arg_CREATE4.objtype.createtype4_u.linkdata) == -1)
+          cache_status = utf8_to_path(&arg_CREATE4.objtype.createtype4_u.linkdata,
+                                      &create_arg.link_content);
+
+          if(cache_status != CACHE_INODE_SUCCESS)
             {
-              res_CREATE4.status = NFS4ERR_INVAL;
+              res_CREATE4.status = nfs4_Errno(cache_status);
               return res_CREATE4.status;
             }
-          create_arg.link_content.len = strlen(create_arg.link_content.path);
         }
 
       /* do the symlink operation */

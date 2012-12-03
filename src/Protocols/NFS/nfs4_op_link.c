@@ -142,25 +142,10 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_LINK4.status;
     }
 
-  /* If name is empty, return EINVAL */
-  if(arg_LINK4.newname.utf8string_len == 0)
-    {
-      res_LINK4.status = NFS4ERR_INVAL;
-      return res_LINK4.status;
-    }
-
-  /* Check for name to long */
-  if(arg_LINK4.newname.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_LINK4.status = NFS4ERR_NAMETOOLONG;
-      return res_LINK4.status;
-    }
-
   /* Convert the UFT8 objname to a regular string */
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_LINK4.newname,
-                                 &newname))) != CACHE_INODE_SUCCESS)
+  cache_status = utf8_to_name(&arg_LINK4.newname, &newname);
+
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;

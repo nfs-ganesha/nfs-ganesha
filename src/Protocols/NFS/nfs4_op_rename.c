@@ -98,14 +98,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->resop = NFS4_OP_RENAME;
   res_RENAME4.status = NFS4_OK;
 
-  /* Read oldname and newname from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
-  if((arg_RENAME4.oldname.utf8string_len == 0)
-     || (arg_RENAME4.newname.utf8string_len == 0))
-    {
-      res_RENAME4.status = NFS4ERR_INVAL;
-      return NFS4ERR_INVAL;
-    }
-
   /* Do basic checks on a filehandle */
   res_RENAME4.status = nfs4_sanity_check_FH(data, 0LL);
   if(res_RENAME4.status != NFS4_OK)
@@ -147,30 +139,20 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_RENAME4.status;
     }
 
-  /* Read oldname and newname from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
-  if((arg_RENAME4.oldname.utf8string_len > FSAL_MAX_NAME_LEN)
-     || (arg_RENAME4.newname.utf8string_len > FSAL_MAX_NAME_LEN))
-    {
-      res_RENAME4.status = NFS4ERR_NAMETOOLONG;
-      return NFS4ERR_INVAL;
-    }
-
   /* get the names from the RPC input */
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_RENAME4.oldname,
-                                 &oldname))) != CACHE_INODE_SUCCESS)
+  cache_status = utf8_to_name(&arg_RENAME4.oldname, &oldname);
+
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
-      res_RENAME4.status = NFS4ERR_INVAL;
+      res_RENAME4.status = nfs4_Errno(cache_status);
       return res_RENAME4.status;
     }
 
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_RENAME4.newname,
-                                 &newname))) != CACHE_INODE_SUCCESS)
+  cache_status = utf8_to_name(&arg_RENAME4.newname, &newname);
+
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
-      res_RENAME4.status = NFS4ERR_INVAL;
+      res_RENAME4.status = nfs4_Errno(cache_status);
       return res_RENAME4.status;
     }
 

@@ -336,21 +336,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   switch (claim)
     {
     case CLAIM_NULL:
-      /* Check for name length */
-      if(arg_OPEN4.claim.open_claim4_u.file.utf8string_len > FSAL_MAX_NAME_LEN)
-        {
-          res_OPEN4.status = NFS4ERR_NAMETOOLONG;
-          goto out;
-        }
-
-      /* get the filename from the argument, it should not be empty */
-      if(arg_OPEN4.claim.open_claim4_u.file.utf8string_len == 0)
-        {
-          res_OPEN4.status = NFS4ERR_INVAL;
-          cause2 = " (empty filename)";
-          goto out;
-        }
-
       /* Check if asked attributes are correct */
       if(arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 ||
          arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4)
@@ -374,10 +359,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
         }
 
       /* Check if filename is correct */
-      if((cache_status =
-          cache_inode_error_convert(FSAL_buffdesc2name
-                                    ((fsal_buffdesc_t *) & arg_OPEN4.claim.open_claim4_u.
-                                     file, &filename))) != CACHE_INODE_SUCCESS)
+      cache_status = utf8_to_name(&arg_OPEN4.claim.open_claim4_u.file,
+                                  &filename);
+
+      if(cache_status != CACHE_INODE_SUCCESS)
         {
           res_OPEN4.status = nfs4_Errno(cache_status);
           cause2 = " FSAL_buffdesc2name";
@@ -909,6 +894,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           dec_client_id_ref(pclientid);
           return res_OPEN4.status;
         }
+
       /* Fall through */
 
     case CLAIM_DELEGATE_CUR:

@@ -115,26 +115,11 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   res_REMOVE4.REMOVE4res_u.resok4.cinfo.before =
        cache_inode_get_changeid4(parent_entry);
 
-  /* Check for name length */
-  if(arg_REMOVE4.target.utf8string_len > FSAL_MAX_NAME_LEN)
-    {
-      res_REMOVE4.status = NFS4ERR_NAMETOOLONG;
-      return res_REMOVE4.status;
-    }
-
-  /* get the filename from the argument, it should not be empty */
-  if(arg_REMOVE4.target.utf8string_len == 0)
-    {
-      res_REMOVE4.status = NFS4ERR_INVAL;
-      return res_REMOVE4.status;
-    }
-
   /* NFS4_OP_REMOVE can delete files as well as directory, it replaces NFS3_RMDIR and NFS3_REMOVE
    * because of this, we have to know if object is a directory or not */
-  if((cache_status =
-      cache_inode_error_convert(FSAL_buffdesc2name
-                                ((fsal_buffdesc_t *) & arg_REMOVE4.target,
-                                 &name))) != CACHE_INODE_SUCCESS)
+  cache_status = utf8_to_name(&arg_REMOVE4.target, &name);
+
+  if(cache_status != CACHE_INODE_SUCCESS)
     {
       res_REMOVE4.status = nfs4_Errno(cache_status);
       return res_REMOVE4.status;
