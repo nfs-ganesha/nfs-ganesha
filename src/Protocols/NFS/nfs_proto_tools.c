@@ -4305,6 +4305,10 @@ nfsstat4 nfs4_Errno_verbose(cache_inode_status_t error, const char *where)
       nfserror = NFS4ERR_BAD_COOKIE;
       break;
 
+    case CACHE_INODE_FSAL_XDEV:
+      nfserror = NFS4ERR_XDEV ;
+      break ;
+
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_ASYNC_POST_ERROR:
@@ -4445,6 +4449,12 @@ nfsstat3 nfs3_Errno_verbose(cache_inode_status_t error, const char *where)
     case CACHE_INODE_BAD_COOKIE:
       nfserror = NFS3ERR_BAD_COOKIE;
       break;
+
+    case CACHE_INODE_FSAL_XDEV:
+      nfserror = NFS3ERR_XDEV ;
+      break ;
+
+
 
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
