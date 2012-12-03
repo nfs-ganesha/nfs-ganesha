@@ -3357,8 +3357,13 @@ extern "C"
 
   enum notify_deviceid_type4
   {
+#ifdef TEST_LINUX_CLIENT
+    NOTIFY_DEVICEID4_CHANGE = 2,
+    NOTIFY_DEVICEID4_DELETE = 4,
+#else
     NOTIFY_DEVICEID4_CHANGE = 1,
     NOTIFY_DEVICEID4_DELETE = 2,
+#endif
   };
   typedef enum notify_deviceid_type4 notify_deviceid_type4;
 
@@ -8000,6 +8005,26 @@ static inline bool xdr_notify_verifier4(XDR * xdrs, notify_verifier4 * objp)
   return true;
 }
 
+static inline bool xdr_notify_deviceid_delete4(XDR * xdrs, notify_deviceid_delete4 * objp)
+{
+  if(!xdr_layouttype4(xdrs, &objp->ndd_layouttype))
+    return false;
+  if(!xdr_deviceid4(xdrs, objp->ndd_deviceid))
+    return false;
+  return true;
+}
+
+static inline bool xdr_notify_deviceid_change4(XDR * xdrs, notify_deviceid_change4 * objp)
+{
+  if(!xdr_layouttype4(xdrs, &objp->ndc_layouttype))
+    return false;
+  if(!xdr_deviceid4(xdrs, objp->ndc_deviceid))
+    return false;
+  if(!inline_xdr_bool(xdrs, &objp->ndc_immediate))
+    return false;
+  return true;
+}
+
 static inline bool xdr_notifylist4(XDR * xdrs, notifylist4 * objp)
 {
   if(!inline_xdr_bytes
@@ -8008,11 +8033,39 @@ static inline bool xdr_notifylist4(XDR * xdrs, notifylist4 * objp)
   return true;
 }
 
+static inline bool xdr_notifylist_dev(XDR * xdrs, notifylist4 * objp, int type)
+{
+  if(!xdr_count4(xdrs, &objp->notifylist4_len))
+    return false;
+  if (type == NOTIFY_DEVICEID4_DELETE)
+  {
+    if(!xdr_notify_deviceid_delete4(xdrs,
+                           (notify_deviceid_delete4 *)objp->notifylist4_val))
+    return false;
+  }
+  else
+  {
+    if(!xdr_notify_deviceid_change4(xdrs,
+                           (notify_deviceid_change4 *)objp->notifylist4_val))
+    return false;
+  }
+  return true;
+}
+
 static inline bool xdr_notify4(XDR * xdrs, notify4 * objp)
 {
   if(!xdr_bitmap4(xdrs, &objp->notify_mask))
     return false;
   if(!xdr_notifylist4(xdrs, &objp->notify_vals))
+    return false;
+  return true;
+}
+
+static inline bool xdr_notify_dev(XDR * xdrs, notify4 * objp)
+{
+  if(!xdr_bitmap4(xdrs, &objp->notify_mask))
+    return false;
+  if(!xdr_notifylist_dev(xdrs, &objp->notify_vals, objp->notify_mask.map[0]))
     return false;
   return true;
 }
@@ -8209,32 +8262,12 @@ static inline bool xdr_notify_deviceid_type4(XDR * xdrs, notify_deviceid_type4 *
   return true;
 }
 
-static inline bool xdr_notify_deviceid_delete4(XDR * xdrs, notify_deviceid_delete4 * objp)
-{
-  if(!xdr_layouttype4(xdrs, &objp->ndd_layouttype))
-    return false;
-  if(!xdr_deviceid4(xdrs, objp->ndd_deviceid))
-    return false;
-  return true;
-}
-
-static inline bool xdr_notify_deviceid_change4(XDR * xdrs, notify_deviceid_change4 * objp)
-{
-  if(!xdr_layouttype4(xdrs, &objp->ndc_layouttype))
-    return false;
-  if(!xdr_deviceid4(xdrs, objp->ndc_deviceid))
-    return false;
-  if(!inline_xdr_bool(xdrs, &objp->ndc_immediate))
-    return false;
-  return true;
-}
-
 static inline bool xdr_CB_NOTIFY_DEVICEID4args(XDR * xdrs, CB_NOTIFY_DEVICEID4args * objp)
 {
   if(!xdr_array
      (xdrs, (char **)&objp->cnda_changes.cnda_changes_val,
       (u_int *) & objp->cnda_changes.cnda_changes_len, ~0, sizeof(notify4),
-      (xdrproc_t) xdr_notify4))
+      (xdrproc_t) xdr_notify_dev))
     return false;
   return true;
 }

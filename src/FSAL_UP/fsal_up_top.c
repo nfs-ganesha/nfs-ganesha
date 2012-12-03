@@ -1175,6 +1175,47 @@ recallany_one(state_t *s, struct fsal_up_event_recallany *recallany)
 }
 
 static void
+notifydev_one(state_t *s, struct fsal_up_event_notifydevice *devicenotify)
+{
+	int code = 0;
+	cache_entry_t *entry = s->state_entry;
+	struct notify4 notify;
+	struct notify_deviceid_delete4 notify_del;
+	nfs_cb_argop4 arg;
+	CB_NOTIFY_DEVICEID4args *cb_notify_dev
+                                     = &arg.nfs_cb_argop4_u.opcbnotify_deviceid;
+
+	arg.argop = NFS4_OP_CB_NOTIFY_DEVICEID;
+
+	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
+	
+        cb_notify_dev->cnda_changes.cnda_changes_len = 1;
+        cb_notify_dev->cnda_changes.cnda_changes_val = &notify;
+        notify.notify_mask.bitmap4_len = 1;
+        notify.notify_mask.map[0] = devicenotify->notify_type;
+        notify.notify_vals.notifylist4_len = sizeof(struct notify_deviceid_delete4);
+        notify.notify_vals.notifylist4_val = (char *)&notify_del;
+        notify_del.ndd_layouttype = devicenotify->layout_type;
+        memcpy(&notify_del.ndd_deviceid,
+               &devicenotify->device_id,
+               NFS4_DEVICEID4_SIZE);
+
+	code = nfs_rpc_v41_single(s->state_owner->so_owner
+				  .so_nfs4_owner.so_clientrec,
+				  &arg,
+				  &s->state_refer,
+				  layoutrecany_completion,
+				  NULL,
+				  NULL);
+	if (code != 0) {
+             /* TODO: ? */
+	}
+	PTHREAD_RWLOCK_unlock(&entry->state_lock);
+
+  return;
+}
+
+static void
 recallany_queue(struct fsal_up_event_recallany *recallany,
                 struct fsal_up_file *file,
                 void *private)
@@ -1208,9 +1249,7 @@ notifydevice_imm(struct fsal_up_event_notifydevice *devicenotify,
                  struct fsal_up_file *file,
                  void **private)
 {
-  LogCrit(COMPONENT_FSAL_UP,
-          "DEVICE NOTIFY is not supported");;
-  return ENOTSUP;
+  return 0;
 }
 
 static void
@@ -1218,8 +1257,27 @@ notifydevice_queue(struct fsal_up_event_notifydevice *devicenotify,
                    struct fsal_up_file *file,
                    void *private)
 {
-  LogCrit(COMPONENT_FSAL_UP,
-          "DEVICE NOTIFY is not supported");;
+  struct exportlist__ *exp;
+  struct glist_head   *glist;
+  state_t            *state;
+
+  exp = file->export->exp_entry;
+
+  pthread_mutex_lock(&exp->exp_state_mutex);
+
+  /* TODO: loop over list and mark clients that are called so we call them only once */
+  glist_for_each(glist, &exp->exp_state_list)
+  {
+    state = glist_entry(glist, struct state_t, state_export_list);
+
+    if (state != NULL && state->state_type == STATE_TYPE_LAYOUT)
+    {
+      LogDebug(COMPONENT_NFS_CB,"state %p type %d", state, state->state_type);
+      notifydev_one(state, devicenotify);
+    }
+  }
+  pthread_mutex_unlock(&exp->exp_state_mutex);
+
   return;
 }
 
