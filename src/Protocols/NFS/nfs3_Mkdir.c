@@ -225,9 +225,9 @@ nfs_Mkdir(nfs_arg_t *arg,
                                         &d3ok->dir_wcc);
 
                         res->res_mkdir3.status = NFS3_OK;
+                        rc = NFS_REQ_OK;
+                        goto out;
                      }
-                   rc = NFS_REQ_OK;
-                   goto out;
                 }
                else
                 {
