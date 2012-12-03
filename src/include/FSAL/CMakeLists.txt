@@ -4,7 +4,6 @@ add_subdirectory(FSAL_HPSS)
 add_subdirectory(FSAL_LUSTRE)
 add_subdirectory(FSAL_POSIX)
 add_subdirectory(FSAL_TEMPLATE)
-add_subdirectory(FSAL_XFS)
 add_subdirectory(FSAL_ZFS)
 
 

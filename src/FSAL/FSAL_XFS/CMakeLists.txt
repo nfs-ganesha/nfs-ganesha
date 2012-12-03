@@ -1,82 +1,26 @@
+add_definitions(
+  -D__USE_GNU
+  -D_GNU_SOURCE
+)
 
 ########### next target ###############
 
-SET(fsalxfs_STAT_SRCS
-   fsal_access.c
-   fsal_context.c
+SET(fsalvfs_LIB_SRCS
    fsal_convert.c
-   fsal_compat.c
-   fsal_dirs.c
-   fsal_fsinfo.c
-   fsal_lock.c
-   fsal_rcp.c
-   fsal_truncate.c
-   fsal_attrs.c
-   fsal_init.c
-   fsal_lookup.c
-   fsal_rename.c
-   fsal_symlinks.c
-   fsal_unlink.c
-   fsal_create.c
-   fsal_fileop.c
-   fsal_internal.c
-   fsal_stats.c
-   fsal_tools.c
-   fsal_local_op.c
-   fsal_internal.h
-   fsal_xattrs.c
-   fsal_quota.c
-   ../../include/fsal_convert.h
-   ../../include/fsal.h
-   ../../include/fsal_types.h
-   ../../include/err_fsal.h
-   ../../include/FSAL/FSAL_XFS/fsal_types.h
+   main.c
+   export.c
+   handle.c
+   file.c
+   xattrs.c
+   xfs_fsal.h
 )
 
-add_library(fsalxfs STATIC ${fsalxfs_STAT_SRCS})
+add_library(fsalvfs SHARED ${fsalxfs_LIB_SRCS})
+
+target_link_libraries(fsalxfs)
+
+set_target_properties(fsalxfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
+install(TARGETS fsalxfs DESTINATION lib)
 
 
 ########### install files ###############
-
-
-
-
-#original Makefile.am contents follow:
-
-#AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
-#
-#noinst_LTLIBRARIES          = libfsalxfs.la
-#
-#libfsalxfs_la_SOURCES = fsal_access.c      \
-#                        fsal_context.c     \
-#                        fsal_convert.c     \
-#                        fsal_compat.c      \
-#                        fsal_dirs.c        \
-#                        fsal_fsinfo.c      \
-#                        fsal_lock.c        \
-#                        fsal_rcp.c         \
-#                        fsal_truncate.c    \
-#			fsal_attrs.c       \
-#                        fsal_init.c        \
-#                        fsal_lookup.c      \
-#                        fsal_rename.c      \
-#                        fsal_symlinks.c    \
-#                        fsal_unlink.c      \
-#			fsal_create.c      \
-#                        fsal_fileop.c      \
-#                        fsal_internal.c    \
-#                        fsal_stats.c       \
-#                        fsal_tools.c       \
-#                        fsal_local_op.c    \
-#			fsal_internal.h    \
-#                        fsal_xattrs.c      \
-#                        fsal_quota.c       \
-#                        ../../include/fsal_convert.h \
-#                        ../../include/fsal.h         \
-#                        ../../include/fsal_types.h   \
-#                        ../../include/err_fsal.h     \
-#                        ../../include/FSAL/FSAL_XFS/fsal_types.h
-#
-#
-#new: clean all
-#
