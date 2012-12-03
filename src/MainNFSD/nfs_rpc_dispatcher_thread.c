@@ -514,6 +514,7 @@ void nfs_Init_svc()
     svc_params.max_events = 1024; /* length of epoll event queue */
     svc_params.warnx = NULL;
     svc_params.gss_ctx_hash_partitions = PRIME_ID_MAPPER;
+    svc_params.gss_max_idle_gen = 1024; /* GSS ctx cache expiration */
 
     svc_init(&svc_params);
 
