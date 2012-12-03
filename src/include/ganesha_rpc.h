@@ -276,6 +276,9 @@ typedef enum _ignore_port
 extern int cmp_sockaddr(sockaddr_t *addr_1,
                         sockaddr_t *addr_2,
                         ignore_port_t ignore_port);
+extern int sockaddr_cmpf(sockaddr_t *addr1,
+			 sockaddr_t *addr2,
+			 ignore_port_t ignore_port);
 extern unsigned long hash_sockaddr(sockaddr_t *addr,
                                    ignore_port_t ignore_port);
 

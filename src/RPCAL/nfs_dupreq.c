@@ -136,7 +136,7 @@ dupreq_shared_cmpf(const struct opr_rbtree_node *lhs,
     lk = opr_containerof(lhs, dupreq_entry_t, rbt_k);
     rk = opr_containerof(rhs, dupreq_entry_t, rbt_k);
 
-    switch (cmp_sockaddr(&lk->hin.addr, &rk->hin.addr, CHECK_PORT)) {
+    switch (sockaddr_cmpf(&lk->hin.addr, &rk->hin.addr, CHECK_PORT)) {
     case -1:
         return -1;
         break;
@@ -213,8 +213,8 @@ drc_recycle_cmpf(const struct opr_rbtree_node *lhs,
     lk = opr_containerof(lhs, drc_t, d_u.tcp.recycle_k);
     rk = opr_containerof(rhs, drc_t, d_u.tcp.recycle_k);
 
-    return (cmp_sockaddr(&lk->d_u.tcp.addr, &rk->d_u.tcp.addr,
-                         CHECK_PORT));
+    return (sockaddr_cmpf(&lk->d_u.tcp.addr, &rk->d_u.tcp.addr,
+			  CHECK_PORT));
 }
 
 /**
@@ -678,6 +678,15 @@ nfs_dupreq_get_drc(struct svc_req *req)
             (void) copy_xprt_addr(&drc_k.d_u.tcp.addr, req->rq_xprt);
             MurmurHash3_x64_128(&drc_k.d_u.tcp.addr, sizeof(sockaddr_t),
                                 911, &drc_k.d_u.tcp.hk);
+
+
+	    {
+		char str[512];
+		sprint_sockaddr(&drc_k.d_u.tcp.addr, str, 512);
+		LogFullDebug(COMPONENT_DUPREQ, "get drc for addr: %s",
+			     str);
+	    }
+
             t = rbtx_partition_of_scalar(&drc_st->tcp_drc_recycle_t,
                                          drc_k.d_u.tcp.hk[0]);
             DRC_ST_LOCK();
@@ -1139,7 +1148,6 @@ nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req)
                 drc_inc_retwnd(drc);
                 pthread_mutex_unlock(&drc->mtx);
                 status = DUPREQ_EXISTS;
-		abort();
             }
             req->rq_u1 = dv;
             (dv->refcnt)++;

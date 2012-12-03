@@ -311,6 +311,69 @@ int cmp_sockaddr(sockaddr_t *addr_1,
     }
 }
 
+/**
+ *
+ * cmp_sockaddr: compare 2 sockaddrs, including ports
+ *
+ * @param addr_1 [IN] first address
+ * @param addr_2 [IN] second address
+ * @param ignore_port [IN] 1 if you want to ignore port
+ *       comparison, 0 if you need port comparisons
+ *
+ * @return -1 if addr1<addr2, 0 if addr1==addr2, 1 if addr1>addr2
+ *
+ */
+int sockaddr_cmpf(sockaddr_t *addr1,
+		  sockaddr_t *addr2,
+		  ignore_port_t ignore_port)
+{
+ switch (addr1->ss_family) {
+ case AF_INET:
+        {
+          struct sockaddr_in *in1 = (struct sockaddr_in *)addr1;
+          struct sockaddr_in *in2 = (struct sockaddr_in *)addr2;
+
+	  if (in1->sin_addr.s_addr < in2->sin_addr.s_addr)
+		  return (-1);
+
+	  if (in1->sin_addr.s_addr == in2->sin_addr.s_addr) {
+		  if (ignore_port == IGNORE_PORT)
+			  return (0);
+		  /* else */
+		  if (in1->sin_port < in2->sin_port)
+			  return (-1);
+		  if (in1->sin_port == in2->sin_port)
+			  return (0);
+		  return (1);
+	  }
+	  return (1);
+        }
+      case AF_INET6:
+        {
+          struct sockaddr_in6 *in1 = (struct sockaddr_in6 *)addr1;
+          struct sockaddr_in6 *in2 = (struct sockaddr_in6 *)addr2;
+	  int acmp = memcmp(in1->sin6_addr.s6_addr, in2->sin6_addr.s6_addr,
+			    sizeof(struct sockaddr_in6));
+	  if (acmp < 1)
+		  return (-1);
+	  if (acmp == 0) {
+		  if (ignore_port == IGNORE_PORT)
+			  return (0);
+		  /* else */
+		  if (in1->sin6_port < in2->sin6_port)
+			  return (-1);
+		  if (in1->sin6_port == in2->sin6_port)
+			  return (0);
+		  return (1);
+	  }
+	  return (1);
+	}
+      default:
+          /* unhandled AF */
+	  return -2;
+    }
+ }
+
 in_addr_t get_in_addr(sockaddr_t *addr)
 {
   if(addr->ss_family == AF_INET)
