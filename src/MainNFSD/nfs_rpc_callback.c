@@ -480,7 +480,7 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 					      nfs_client_cred_t *cred)
 {
 	AUTH *auth;
-	char hprinc[MAXPATHLEN];
+	char hprinc[MAXPATHLEN + 1];
 	int32_t code = 0;
 
 	assert(cred->flavor == RPCSEC_GSS);
@@ -500,7 +500,7 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 		goto out;
 	}
 
-	if (!format_host_principal(chan, hprinc, MAXPATHLEN)) {
+	if (!format_host_principal(chan, hprinc, sizeof(hprinc))) {
 		LogCrit(COMPONENT_NFS_CB, "format_host_principal failed");
 		goto out;
 	}
