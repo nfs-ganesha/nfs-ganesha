@@ -1244,7 +1244,6 @@ static inline int check_for_wrongsec_ok_attr(bitmap4 * attr_request)
 #define NFS4_ROOT_UID 0
 #define DEFAULT_DOMAIN "localdomain"
 #define DEFAULT_IDMAPCONF "/etc/idmapd.conf"
-#endif                          /* _NFS_PROTO_FUNCTIONS_H */
 
 #define NFS_REQ_OK   0
 #define NFS_REQ_DROP 1
@@ -1445,6 +1444,18 @@ void utf82uid(utf8string * utf8str, uid_t * Uid, uid_t anon_uid);
 int gid2utf8(gid_t gid, utf8string * utf8str);
 void utf82gid(utf8string * utf8str, gid_t * Gid, gid_t anon_gid);
 
+static inline cache_inode_status_t utf8_to_name(utf8string * buff, fsal_name_t * name)
+{
+  return cache_inode_error_convert(
+           FSAL_buffdesc2name((fsal_buffdesc_t *) buff, name));
+}
+
+static inline cache_inode_status_t utf8_to_path(utf8string * buff, fsal_path_t * path)
+{
+  return cache_inode_error_convert(
+           FSAL_buffdesc2path((fsal_buffdesc_t *) buff, path));
+}
+
 seqid4 nfs4_NextSeqId(seqid4 seqid);
 
 /* Attributes conversion */
@@ -1563,4 +1574,7 @@ int idmap_compute_hash_value(char *name, uint32_t * phashval);
 
 int nfs4_Is_Fh_Referral(nfs_fh4 * pfh);
 int nfs4_Set_Fh_Referral(nfs_fh4 * pfh);
+
 #endif
+
+#endif                          /* _NFS_PROTO_FUNCTIONS_H */
