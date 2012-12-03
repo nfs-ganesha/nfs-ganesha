@@ -174,6 +174,9 @@ fsal_status_t VFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* 
 
     }
 
+   /* rongzeng's  error injection to test DRC */
+  sleep(61);
+
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_create);
 
