@@ -647,6 +647,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
     enum drc_type dtype = get_drc_type(req);
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) req->rq_xprt->xp_u1;
     drc_t *drc = NULL;
+    bool drc_check_expired = false;
 
     switch (dtype) {
     case DRC_UDP_V234:
@@ -728,14 +729,14 @@ nfs_dupreq_get_drc(struct svc_req *req)
             /* xprt drc */
             (void) nfs_dupreq_ref_drc(drc); /* xu ref */
 
+	    /* try to expire unused DRCs somewhat in proportion to
+	     * new connection arrivals */
+	    drc_check_expired = true;
+
             LogFullDebug(COMPONENT_DUPREQ, "after ref drc %p refcnt==%u ",
                          drc, drc->refcnt);
 
             xu->drc = drc;
-
-            /* we want to expire unused DRCs somewhat in proportion to
-             * new connection arrivals */
-            drc_free_expired();
         }
         pthread_mutex_unlock(&req->rq_xprt->xp_lock);
         break;
@@ -747,6 +748,9 @@ nfs_dupreq_get_drc(struct svc_req *req)
     /* call path ref */
     (void) nfs_dupreq_ref_drc(drc);
     pthread_mutex_unlock(&drc->mtx);
+
+    if (drc_check_expired)
+	    drc_free_expired();
 
 out:
     return (drc);
