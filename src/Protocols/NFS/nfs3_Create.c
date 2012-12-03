@@ -205,8 +205,9 @@ nfs_Create(nfs_arg_t *arg,
 						  req_ctx,
 						  &file_entry);
 
-                if (!file_entry) {
-                }
+                if (!file_entry) 
+			goto out_fail;
+
                 /* Look at sattr to see if some attributes are to be
                    set at creation time */
                 FSAL_CLEAR_MASK(sattr.mask);
@@ -294,31 +295,17 @@ out:
         return rc;
 
 out_fail:
-
-        /* Build file handle */
-        res->res_create3.status = nfs3_Errno(cache_status);
-
-        nfs_SetWccData( &pre_parent,
-                        parent_entry,
-                       req_ctx,
-                       &res->res_create3.CREATE3res_u.resfail.dir_wcc);
-
-        /* If we are here, there was an error */
         if (nfs_RetryableError(cache_status)) {
                 rc = NFS_REQ_DROP;
-                goto out;
-        }
+        } else {
+		res->res_create3.status = nfs3_Errno(cache_status);
 
-        /* return references */
-        if (file_entry) {
-                cache_inode_put(file_entry);
-        }
-
-        if (parent_entry) {
-                cache_inode_put(parent_entry);
-        }
-
-        return rc;
+		nfs_SetWccData(&pre_parent,
+				parent_entry,
+				req_ctx,
+				&res->res_create3.CREATE3res_u.resfail.dir_wcc);
+	}
+	goto out;
 } /* nfs_Create */
 
 /**
