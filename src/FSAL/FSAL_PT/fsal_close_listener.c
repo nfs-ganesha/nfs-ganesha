@@ -110,7 +110,7 @@ void ptfsal_close_timedout_handle_bkg(void)
   for (index = FSI_CIFS_RESERVED_STREAMS;
        index < g_fsi_handles.m_count;
        index++) {
-    FSI_TRACE(FSI_INFO, "Flushing any pending IO for handle %d", index);
+    FSI_TRACE(FSI_DEBUG, "Flushing any pending IO for handle %d", index);
     struct msg_t msg;
     int          rc;
     get_any_io_responses(index, &rc, &msg);
@@ -164,7 +164,7 @@ void *ptfsal_polling_closeHandler_thread(void *args)
   g_poll_for_timeouts = false;
 
   while (1) {
-    FSI_TRACE(FSI_INFO, "Periodic check for opened handle to close");
+    FSI_TRACE(FSI_DEBUG, "Periodic check for opened handle to close");
     ptfsal_close_timedout_handle_bkg();
     sleep (PTFSAL_POLLING_THREAD_FREQUENCY_SEC);
 
