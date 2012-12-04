@@ -1350,13 +1350,11 @@ nfs_dupreq_delete(struct svc_req *req)
     pthread_mutex_lock(&t->mtx);
     rbtree_x_cached_remove(&drc->xt, t, &dv->rbt_k, dv->hk[0]);
 
-    /* t->mtx also protects drc's fifo q, on which we assert dv is
-     * enqueued */
-    if (TAILQ_IS_ENQUEUED(dv, fifo_q))
-        TAILQ_REMOVE(&drc->dupreq_q, dv, fifo_q);
-
     pthread_mutex_unlock(&t->mtx);
     pthread_mutex_lock(&drc->mtx);
+
+    if (TAILQ_IS_ENQUEUED(dv, fifo_q))
+        TAILQ_REMOVE(&drc->dupreq_q, dv, fifo_q);
     --(drc->size);
 
     /* release dv's ref and unlock */
