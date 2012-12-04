@@ -180,6 +180,10 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   if(!p_dir_descriptor || !p_pdirent || !p_end_position || !p_nb_entries || !p_end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
+#ifdef _VALGRIND_MEMCHECK
+  memset(p_pdirent, 0, buffersize);
+#endif
+
   max_dir_entries = (buffersize / sizeof(fsal_dirent_t));
 
   /***************************/
