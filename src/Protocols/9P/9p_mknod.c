@@ -115,10 +115,10 @@ int _9p_mknod( _9p_request_data_t * preq9p,
    return  _9p_rerror( preq9p, pworker_data,  msgtag, EINVAL, plenout, preply ) ;
 
   /* Set the nodetype */
-  if( *mode &  S_IFCHR  ) nodetype = CHARACTER_FILE ;
-  if( *mode &  S_IFBLK  ) nodetype = BLOCK_FILE ;
-  if( *mode &  S_IFIFO  ) nodetype = FIFO_FILE ;
-  if( *mode &  S_IFSOCK ) nodetype = SOCKET_FILE ;
+  if( S_ISDIR(*mode) ) nodetype = CHARACTER_FILE ;
+  if( S_ISBLK(*mode) ) nodetype = BLOCK_FILE ;
+  if( S_ISFIFO(*mode) ) nodetype = FIFO_FILE ;
+  if( S_ISSOCK(*mode) ) nodetype = SOCKET_FILE ;
 
   create_arg.dev_spec.major = *major ;
   create_arg.dev_spec.minor = *minor ;
