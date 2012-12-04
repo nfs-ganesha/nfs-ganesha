@@ -695,6 +695,12 @@ cache_entry_t *cache_inode_lookup(cache_entry_t *entry_parent,
                                   fsal_op_context_t *context,
                                   cache_inode_status_t *status);
 
+
+cache_entry_t * cache_inode_lookup_weakref(cache_entry_t *parent,
+                                           fsal_name_t *name,
+                                           fsal_op_context_t *context,
+                                           cache_inode_status_t *status);
+
 cache_entry_t *cache_inode_lookupp_impl(cache_entry_t *entry,
                                         fsal_op_context_t *context,
                                         cache_inode_status_t *status);

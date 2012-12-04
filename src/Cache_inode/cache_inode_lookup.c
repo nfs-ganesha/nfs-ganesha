@@ -330,3 +330,131 @@ cache_inode_lookup(cache_entry_t *parent,
      }
      return entry;
 } /* cache_inode_lookup */
+
+/**
+ *
+ * @brief Do the work of looking up a name in a directory.
+ *
+ * This function looks up a filename in the given directory.  It
+ * implements the functionality of cache_inode_lookup and expects the
+ * directory to be read-locked when it is called.  If a lookup from
+ * cache fails, it will drop the read lock and acquire a write lock
+ * before proceeding.  The caller is responsible for freeing the lock
+ * on the directory in any case.
+ *
+ * If a cache entry is returned, its refcount is incremented by 1.
+ *
+ * @param[in]  parent  The directory to search
+ * @param[in]  name    The name to be looked up
+ * @param[in]  context FSAL credentials
+ * @param[out] status  Returned status
+ *
+ * @return The cache entry corresponding to name or NULL on error.
+ *
+ */
+
+/* Assumes calling after failing cache_inode_weakref_get */
+cache_entry_t * cache_inode_lookup_weakref(cache_entry_t *parent,
+                                           fsal_name_t *name,
+                                           fsal_op_context_t *context,
+                                           cache_inode_status_t *status)
+{
+     cache_entry_t *entry = NULL;
+     fsal_status_t fsal_status = {0, 0};
+     fsal_handle_t object_handle;
+     fsal_attrib_list_t object_attributes;
+     cache_inode_create_arg_t create_arg = {
+          .newly_created_dir = FALSE
+     };
+     cache_inode_file_type_t type = UNASSIGNED;
+     cache_inode_fsal_data_t new_entry_fsdata;
+
+     /* Set the return default to CACHE_INODE_SUCCESS */
+     *status = CACHE_INODE_SUCCESS;
+
+     /* if name is ".", use the input value */
+     if (!FSAL_namecmp(name, &FSAL_DOT)) {
+          entry = parent;
+          /* Increment the refcount so the caller's decrementing it
+             doesn't take us below the sentinel count. */
+          if (cache_inode_lru_ref(entry, 0) !=
+              CACHE_INODE_SUCCESS) {
+               /* This cannot actually happen */
+               LogFatal(COMPONENT_CACHE_INODE,
+                        "There has been a grave failure in consistency: "
+                        "Unable to increment reference count on an entry that "
+                        "we should have referenced.");
+          }
+          return entry;
+     } else if (!FSAL_namecmp(name, &FSAL_DOT_DOT)) {
+          /* Directory do only have exactly one parent. This a limitation
+           * in all FS, which implies that hard link are forbidden on
+           * directories (so that they exists only in one dir).  Because
+           * of this, the parent list is always limited to one element for
+           * a dir.  Clients SHOULD never 'lookup( .. )' in something that
+           * is no dir. */
+          entry = cache_inode_lookupp_impl(parent, context, status);
+          return entry;
+     }
+
+     /* Entry doesn't exist, so use FSAL to lookup. */
+
+     LogFullDebug(COMPONENT_CACHE_INODE,
+                  "FSAL_lookup for %s len %u",
+                  name->name, name->len);
+
+     memset(&object_handle, 0, sizeof(object_handle));
+     memset(&object_attributes, 0, sizeof(object_attributes));
+
+     object_attributes.asked_attributes = cache_inode_params.attrmask;
+
+     fsal_status = FSAL_lookup(&parent->handle,
+                               name,
+                               context,
+                               &object_handle,
+                               &object_attributes);
+     if (FSAL_IS_ERROR(fsal_status)) {
+          if (fsal_status.major == ERR_FSAL_STALE) {
+               LogEvent(COMPONENT_CACHE_INODE,
+                  "FSAL returned STALE from a lookup.");
+               cache_inode_kill_entry(parent);
+          }
+          *status = cache_inode_error_convert(fsal_status);
+          return NULL;
+     }
+
+     type = cache_inode_fsal_type_convert(object_attributes.type);
+
+     /* If entry is a symlink, cache its target */
+     if(type == SYMBOLIC_LINK) {
+          fsal_status = FSAL_readlink(&object_handle,
+                                      context,
+                                      &create_arg.link_content,
+                                      &object_attributes);
+
+          if(FSAL_IS_ERROR(fsal_status)) {
+               *status = cache_inode_error_convert(fsal_status);
+               return NULL;
+          }
+     }
+
+     /* Allocation of a new entry in the cache */
+     memset(&new_entry_fsdata, 0, sizeof(new_entry_fsdata));
+     new_entry_fsdata.fh_desc.start = (caddr_t) &object_handle;
+     new_entry_fsdata.fh_desc.len = 0;
+
+     FSAL_ExpandHandle(context->export_context,
+                       FSAL_DIGEST_SIZEOF,
+                       &new_entry_fsdata.fh_desc);
+
+     if((entry = cache_inode_new_entry(&new_entry_fsdata,
+                                       &object_attributes,
+                                       type,
+                                       &create_arg,
+                                       status)) == NULL) {
+          return NULL;
+     }
+
+     return entry;
+
+} /* cache_inode_lookup_weakref */
