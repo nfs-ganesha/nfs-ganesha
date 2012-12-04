@@ -144,6 +144,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           int write_locked = 0;
           /* We first try avltree_lookup by name.  If that fails, we
            * dispatch to the FSAL. */
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "Cache AVL lookup for %s len %u",
+                       name->name, name->len);
           FSAL_namecpy(&dirent_key.name, name);
           for (write_locked = 0; write_locked < 2; ++write_locked) {
                /* If the dirent cache is untrustworthy, don't even ask it */
@@ -154,6 +157,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                          /* Getting a weakref itself increases the refcount. */
                          entry = cache_inode_weakref_get(&dirent->entry,
                                                          LRU_REQ_SCAN);
+
                          if (entry == NULL) {
                               broken_dirent = dirent;
                               break;
@@ -190,7 +194,9 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                }
           }
           assert(entry == NULL);
-          LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "Cache Miss detected for %s len %u",
+                   name->name, name->len);
      }
 
      memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));

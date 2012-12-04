@@ -284,6 +284,9 @@ cache_inode_remove_impl(cache_entry_t *entry,
 
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "FSAL_unlink returned %s",
+                   cache_inode_err_str(*status));
           if (fsal_status.major == ERR_FSAL_STALE) {
      	       LogEvent(COMPONENT_CACHE_INODE,
                   "FSAL returned STALE from unlink");
@@ -312,7 +315,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
      cache_inode_remove_cached_dirent(entry, name, status);
 
      LogFullDebug(COMPONENT_CACHE_INODE,
-                  "cache_inode_remove_cached_dirent: status=%d", *status);
+                  "cache_inode_remove_cached_dirent: status=%s",
+                  cache_inode_err_str(*status));
 
      /* Update the attributes for the removed entry */
 
