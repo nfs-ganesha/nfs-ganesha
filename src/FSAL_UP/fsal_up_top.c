@@ -1089,7 +1089,7 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 					  &arg,
 					  &s->state_refer,
 					  layoutrec_completion,
-					  &completion,
+					  completion,
 					  free_layoutrec);
 		if (code != 0) {
 			/**
