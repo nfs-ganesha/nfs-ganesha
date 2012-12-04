@@ -87,6 +87,7 @@ cache_inode_commit(cache_entry_t *entry,
      cache_inode_unstable_data_t *udata = NULL;
      /* Error return from FSAL operations*/
      fsal_status_t fsal_status = {0, 0};
+     cache_inode_status_t cstatus;
      /* True if the content_lock is held */
      bool_t content_locked = FALSE;
      /* True if we opened our own file descriptor */
@@ -143,7 +144,7 @@ cache_inode_commit(cache_entry_t *entry,
                     cache_inode_close(entry,
                                       CACHE_INODE_FLAG_CONTENT_HAVE |
                                       CACHE_INODE_FLAG_CONTENT_HOLD,
-                                      status);
+                                      &cstatus);
                     opened = FALSE;
                }
                goto out;
