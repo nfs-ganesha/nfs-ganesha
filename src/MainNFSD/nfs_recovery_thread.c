@@ -295,7 +295,7 @@ int ientry, ientry2, n;
 time_t new_entry;
 char workpath[PATH_MAX];
 char status[12];
-struct dirent **state_namelist;
+struct dirent **state_namelist = NULL;
 
 #define RECORD_HISTORY 13 /* We keep 12 state records including the one we are
                            * about to write.
@@ -346,7 +346,8 @@ struct dirent **state_namelist;
                 close(ientry);
         rpc_in_old = rpc_in;
         rpc_out_old = rpc_out;
-        free_dirent(n, state_namelist);
+        if(state_namelist)
+          free_dirent(n, state_namelist);
         return;
 }
 void rec_gc( int inum, struct dirent **namelist)
@@ -510,7 +511,7 @@ time_t t_time, r_time, t_done;
 void *recovery_thread(void *UnusedArg)
 {
 #ifdef SONAS
-struct dirent **namelist;
+struct dirent **namelist = NULL;
 int n, ipcount;
 uint32_t uerr=0;
 uint32_t ucnt=0;
