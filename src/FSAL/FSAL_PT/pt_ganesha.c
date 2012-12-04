@@ -282,7 +282,7 @@ fsi_update_cache_name(char * oldname,
               g_fsi_name_handle_cache.m_entry[index].m_name);
     if (strncmp((const char *)oldname, 
                 (const char *)
-                &g_fsi_name_handle_cache.m_entry[index].m_name, PATH_MAX) 
+                g_fsi_name_handle_cache.m_entry[index].m_name, PATH_MAX) 
                 == 0) {
       FSI_TRACE(FSI_DEBUG, 
                 "FSI - Updating cache old name[%s]-> new name[%s] \n",
