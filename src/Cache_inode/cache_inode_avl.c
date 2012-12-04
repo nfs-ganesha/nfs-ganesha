@@ -191,7 +191,7 @@ int cache_inode_avl_qp_insert(
     int j, j2, code = -1;
 
     /* don't permit illegal cookies */
-    MurmurHash3_x64_128(v->name.name,  FSAL_MAX_NAME_LEN, 67, hk);
+    MurmurHash3_x64_128(v->name.name,  v->name.len, 67, hk);
     memcpy(&v->hk.k, hk, 8);
 
     /* XXX would we really wait for UINT64_MAX?  if not, how many
@@ -282,7 +282,7 @@ cache_inode_avl_qp_lookup_s(
     uint32_t hk[4];
     int j;
 
-    MurmurHash3_x64_128(v->name.name,  FSAL_MAX_NAME_LEN, 67, hk);
+    MurmurHash3_x64_128(v->name.name,  v->name.len, 67, hk);
     memcpy(&v->hk.k, hk, 8);
 
     for (j = 0; j < maxj; j++) {
