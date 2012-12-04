@@ -1277,15 +1277,24 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
         /* again: */
         ov = TAILQ_FIRST(&drc->dupreq_q);
         if (likely(ov)) {
+	    /* finished request count against retwnd */
+	    drc_dec_retwnd(drc);
             /* check refcnt */
-            if (ov->refcnt > 0)
-                goto adjust_retwnd;
+	    if (ov->refcnt > 0) {
+		/* ov still in use, apparently */
+                goto unlock;
+	    }
             /* remove q entry */
             TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
+            --(drc->size); 
+
             /* remove dict entry */
             t = rbtx_partition_of_scalar(&drc->xt, ov->hk[0]);
+	    /* interlock */
+	    pthread_mutex_unlock(&drc->mtx);
+	    pthread_mutex_lock(&t->mtx); /* partition lock */
             rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk[0]);
-            --(drc->size);
+	    pthread_mutex_unlock(&t->mtx);
 
             LogFullDebug(COMPONENT_DUPREQ,
                          "retiring dv=%p xid=%u on DRC=%p state=%s, "
@@ -1297,13 +1306,9 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
 
             /* deep free ov */
             nfs_dupreq_free_dupreq(ov);
-            drc_dec_retwnd(drc); 
             goto unlock;
         }
     }
-
-adjust_retwnd:
-    drc_dec_retwnd(drc);
 
 unlock:
     pthread_mutex_unlock(&drc->mtx);
