@@ -149,7 +149,8 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
      dirent = cache_inode_avl_qp_lookup_s(directory, name, 1);
      if ((!dirent) || (dirent->flags & DIR_ENTRY_FLAG_DELETED)) {
        if (!((directory->flags & CACHE_INODE_TRUST_CONTENT) &&
-             (directory->flags & CACHE_INODE_DIR_POPULATED))) {
+             (directory->flags & CACHE_INODE_DIR_POPULATED)) ||
+            (dirent_op == CACHE_INODE_DIRENT_OP_REMOVE)) {
          /* We cannot serve negative lookups. */
          /* status == CACHE_INODE_SUCCESS; */
        } else {
@@ -600,7 +601,10 @@ cache_inode_readdir(cache_entry_t *directory,
      *nbfound = 0;
      *eod_met = false;
 
-     while (cb_parms.in_result && dirent_node) {
+     for( ; 
+         cb_opaque->in_result && dirent_node;
+         dirent_node = avltree_next(dirent_node)) {
+
           cache_entry_t *entry = NULL;
           cache_inode_status_t lookup_status = 0;
 
@@ -611,6 +615,9 @@ cache_inode_readdir(cache_entry_t *directory,
           entry = cache_inode_get_keyed(&dirent->ckey, req_ctx,
                                         CIG_KEYED_FLAG_NONE);
           if (! entry) {
+              LogFullDebug(COMPONENT_NFS_READDIR,
+                           "Lookup returned %s",
+                           cache_inode_err_str(lookup_status));
               if (lookup_status == CACHE_INODE_NOT_FOUND) {
                   /* Directory changed out from under us.
                      Invalidate it, skip the name, and keep
@@ -650,7 +657,6 @@ cache_inode_readdir(cache_entry_t *directory,
           if (!cb_parms.in_result) {
                break;
           }
-          dirent_node = avltree_next(dirent_node);
      }
 
      /* We have reached the last node and every node traversed was
