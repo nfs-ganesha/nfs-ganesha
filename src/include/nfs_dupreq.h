@@ -147,6 +147,6 @@ dupreq_status_t nfs_dupreq_start(nfs_request_data_t *nfs_req,
 				 struct svc_req *req);
 dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs);
 dupreq_status_t nfs_dupreq_delete(struct svc_req *req);
-void nfs_dupreq_rele(struct svc_req *req);
+void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func);
 
 #endif                          /* _NFS_DUPREQ_H */

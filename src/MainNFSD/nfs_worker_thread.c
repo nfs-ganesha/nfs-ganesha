@@ -1322,7 +1322,7 @@ freeargs:
 
   /* Finalize the request (frees reply if required) */
   if (res_nfs)
-    nfs_dupreq_rele(req);
+      nfs_dupreq_rele(req, pworker_data->funcdesc);
 
   clean_credentials(&user_credentials);
 
@@ -1342,7 +1342,7 @@ auth_failure:
 
   /* Finalize the request (frees reply if required) */
   if (res_nfs)
-    nfs_dupreq_rele(req);
+      nfs_dupreq_rele(req, pworker_data->funcdesc);
   
 /* XXX */
 #ifdef SONAS
