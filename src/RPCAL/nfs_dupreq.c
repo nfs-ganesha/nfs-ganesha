@@ -1410,10 +1410,10 @@ void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
     }
     pthread_mutex_unlock(&dv->mtx);
 
+out:
     /* dispose RPC header */
     (void) free_rpc_msg(req->rq_msg);
 
-out:
     return;
 }
 
