@@ -1377,7 +1377,7 @@ out:
  *
  * @param[in] req The svc_req structure.
  */
-void nfs_dupreq_rele(struct svc_req *req)
+void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
 {
     dupreq_entry_t *dv = (dupreq_entry_t *) req->rq_u1;
 
@@ -1385,6 +1385,7 @@ void nfs_dupreq_rele(struct svc_req *req)
     if (dv == (void*) DUPREQ_NOCACHE) {
         LogFullDebug(COMPONENT_DUPREQ,
                      "releasing no-cache res %p", req->rq_u2);
+	func->free_function(req->rq_u2);
         free_nfs_res(req->rq_u2);
         goto out;
     }
