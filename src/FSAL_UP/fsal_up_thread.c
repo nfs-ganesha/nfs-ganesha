@@ -81,6 +81,8 @@ fsal_up_submit(struct fsal_up_event *event)
                 return EPIPE;
         }
 
+	event->file.export->ops->get(event->file.export);
+
         switch (event->type) {
         case FSAL_UP_EVENT_LOCK_GRANT:
                 if (event->functions->lock_grant_imm) {
@@ -202,6 +204,7 @@ fsal_up_submit(struct fsal_up_event *event)
 
         if (rc != 0) {
                 pthread_mutex_unlock(&fsal_up_state.lock);
+		fsal_up_free_event(event);
                 return rc;
         }
 
