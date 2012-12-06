@@ -52,6 +52,14 @@ option(USE_FSAL_SHOOK "build SHOOK FSAL" OFF)
 
 option(USE_DBUS "enable DBUS protocol support" OFF)
 
+# Various DBUS enabled features
+option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
+
+if(NOT USE_DBUS)
+  message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
+  set(USE_DBUS ON)
+endif(NOT USE_DBUS)
+
 # TI-RPC former option now on?  Do we really need this anymore?
 # from Matt, NO.  deprecate
 set(_USE_TIRPC ON)
@@ -330,6 +338,10 @@ if(USE_DBUS)
   set(PROTOCOLS ${PROTOCOLS} gshdbus)
 endif(USE_DBUS)
 
+if(USE_CB_SIMULATOR)
+  set(_USE_CB_SIMULATOR ON)
+endif(USE_CB_SIMULATOR)
+
 if(USE_TIRPC_IPV6)
   set(_USE_TIRPC_IPV6 ON)
 endif(USE_TIRPC_IPV6)
@@ -400,6 +412,7 @@ message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
 message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
 message(STATUS "USE_FSAL_SHOOK = ${USE_FSAL_SHOOK}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
+message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_TIRPC_IPV6 = ${USE_TIRPC_IPV6}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_SNMP_ADM = ${ENABLE_SNMP_ADM}")
@@ -480,6 +493,11 @@ set(USE_FSAL_SHOOK ${USE_FSAL_SHOOK}
 set(USE_DBUS ${USE_DBUS}
   CACHE BOOL
    "enable DBUS protocol support"
+   FORCE)
+
+set(USE_CB_SIMULATOR ${USE_CB_SIMULATOR}
+  CACHE BOOL
+   "enable callback simulator thread"
    FORCE)
 
 set(USE_TIRPC_IPV6 ${USE_TIRPC_IPV6}
