@@ -1288,7 +1288,7 @@ nfs_dupreq_finish(struct svc_req *req,  nfs_res_t *res_nfs)
 
             /* deep free ov */
             nfs_dupreq_free_dupreq(ov);
-            goto unlock;
+            goto out;
         }
     }
 
