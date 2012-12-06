@@ -56,65 +56,6 @@
 #include <assert.h>
 
 /**
- *
- * @brief Checks if a directory is empty without a lock.
- *
- * This function checks if the supplied directory is empty.  The
- * caller must hold the content lock.
- *
- * @param[in] entry Entry to be checked (should be of type DIRECTORY)
- *
- * @retval CACHE_INODE_SUCCESS is directory is empty
- * @retval CACHE_INODE_BAD_TYPE is pentry is not of type DIRECTORY
- * @retval CACHE_INODE_DIR_NOT_EMPTY if pentry is not empty
- *
- */
-cache_inode_status_t
-cache_inode_is_dir_empty(cache_entry_t *entry)
-{
-     cache_inode_status_t status;
-
-     /* Sanity check */
-     if(entry->type != DIRECTORY) {
-          return CACHE_INODE_BAD_TYPE;
-     }
-
-     status = (entry->object.dir.nbactive == 0) ?
-          CACHE_INODE_SUCCESS :
-          CACHE_INODE_DIR_NOT_EMPTY;
-
-     return status;
-} /* cache_inode_is_dir_empty */
-
-/**
- *
- * @brief Checks if a directory is empty, acquiring lock
- *
- * This function checks if the supplied cache entry represents an
- * empty directory.  This function acquires the content lock, which
- * must not be held by the caller.
- *
- * @param[in] entry Entry to be checked (should be of type DIRECTORY)
- *
- * @retval CACHE_INODE_SUCCESS is directory is empty
- * @retval CACHE_INODE_BAD_TYPE is pentry is not of type DIRECTORY
- * @retval CACHE_INODE_DIR_NOT_EMPTY if pentry is not empty
- *
- */
-
-cache_inode_status_t
-cache_inode_is_dir_empty_WithLock(cache_entry_t *entry)
-{
-     cache_inode_status_t status;
-
-     PTHREAD_RWLOCK_rdlock(&entry->content_lock);
-     status = cache_inode_is_dir_empty(entry);
-     PTHREAD_RWLOCK_unlock(&entry->content_lock);
-
-     return status;
-}                               /* cache_inode_is_dir_empty_WithLock */
-
-/**
  * @brief Clean resources associated with entry
  *
  * This function frees the various resources associated wiith a cache

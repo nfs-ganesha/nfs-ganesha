@@ -679,46 +679,7 @@ cache_inode_error_convert(fsal_status_t fsal_status)
           "CACHE_INODE_FSAL_ERROR for error %d, line %u should never be reached",
           fsal_status.major, __LINE__);
   return CACHE_INODE_FSAL_ERROR;
-}                               /* cache_inode_error_convert */
-
-/**
- * @brief Test if an entry can be overwritten during a rename
- *
- * This function checks if an existing entry can be overwritten by a
- * rename operation.
- *
- * @param[in] src  The source file
- * @param[in] dest The destination file
- *
- * @return true if the rename is allowed, false if not.
- */
-bool
-cache_inode_types_are_rename_compatible(cache_entry_t *src,
-                                        cache_entry_t *dest)
-{
-  /* True is both entries are non directories or if both are
-     directories and the second is empty */
-  if(src->type == DIRECTORY)
-    {
-      if(dest->type == DIRECTORY)
-        {
-          if(cache_inode_is_dir_empty(dest) == CACHE_INODE_SUCCESS)
-            return true;
-          else
-            return false;
-        }
-      else
-        return false;
-    }
-  else
-    {
-      /* pentry_src is not a directory */
-      if(dest->type == DIRECTORY)
-        return false;
-      else
-        return false;
-    }
-} /* cache_inode_types_are_rename_compatible */
+}
 
 /**
  *

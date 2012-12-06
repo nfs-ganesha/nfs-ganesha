@@ -40,7 +40,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -152,15 +152,6 @@ nfs_Rename(nfs_arg_t *arg,
                          req_ctx,
                          &pre_new_parent);
 
-        /* Sanity checks: both parents must be directories */
-        if ((parent_entry->type != DIRECTORY) ||
-            (new_parent_entry->type != DIRECTORY)) {
-                res->res_rename3.status = NFS3ERR_NOTDIR;
-
-                rc = NFS_REQ_OK;
-                goto out;
-        }
-
         entry_name = arg->arg_rename3.from.name;
         new_entry_name = arg->arg_rename3.to.name;
 
@@ -171,11 +162,6 @@ nfs_Rename(nfs_arg_t *arg,
                 cache_status = CACHE_INODE_INVALID_ARGUMENT;
                 goto out_fail;
         }
-
-        /**
-         * @note ACE: Removed several checks which were also done in
-         * cache_inode_rename.  There is no need to replicate them.
-         */
 
         cache_status = cache_inode_rename(parent_entry,
 					  entry_name,
@@ -229,7 +215,7 @@ out_fail:
         
 
         return rc;
-} /* nfs_Rename */
+}
 
 /**
  * @brief Free the result structure allocated for nfs_Rename.
@@ -243,4 +229,4 @@ void
 nfs_Rename_Free(nfs_res_t *res)
 {
         return;
-} /* nfs_Rename_Free */
+}
