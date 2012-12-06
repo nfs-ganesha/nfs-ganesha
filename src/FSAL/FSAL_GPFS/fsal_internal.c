@@ -51,8 +51,7 @@
 #include <string.h>
 #include <sys/fsuid.h>
 
-//#include "gpfs_nfs.h"
-#include "gpfs.h"
+#include "include/gpfs.h"
 
 #ifdef _USE_NFS4_ACL
 #define ACL_DEBUG_BUF_SIZE 256
@@ -556,9 +555,6 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
-  harg.handle->handle_fsid[0] = p_context->export_context->fsid[0];
-  harg.handle->handle_fsid[1] = p_context->export_context->fsid[1];
-
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -607,9 +603,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
-
-  harg.handle->handle_fsid[0] = p_context->export_context->fsid[0];
-  harg.handle->handle_fsid[1] = p_context->export_context->fsid[1];
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -665,9 +658,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
-
-  harg.out_fh->handle_fsid[0] = p_context->export_context->fsid[0];
-  harg.out_fh->handle_fsid[1] = p_context->export_context->fsid[1];
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -906,9 +896,6 @@ fsal_status_t fsal_internal_create(fsal_op_context_t * p_context,
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
-
-  crarg.new_fh->handle_fsid[0] = p_context->export_context->fsid[0];
-  crarg.new_fh->handle_fsid[1] = p_context->export_context->fsid[1];
 
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -1865,3 +1852,21 @@ fsal_boolean_t fsal_error_is_info(fsal_status_t status)
       return FALSE;
     }
 }
+/** 
+*  fsal_internal_version; 
+* 
+* \return GPFS version 
+*/ 
+int fsal_internal_version() 
+{ 
+  int rc; 
+ 
+  rc = gpfs_ganesha(OPENHANDLE_GET_VERSION, &rc); 
+ 
+  if(rc < 0) 
+      LogDebug(COMPONENT_FSAL, "GPFS get version failed with rc %d", rc); 
+  else 
+      LogDebug(COMPONENT_FSAL, "GPFS get version %d", rc); 
+ 
+  return rc; 
+} 

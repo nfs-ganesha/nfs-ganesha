@@ -100,10 +100,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
       gsh_free(Arg);
       return NULL;
     }
-
+  rc = fsal_internal_version();
   LogFullDebug(COMPONENT_FSAL_UP,
-               "Initializing FSAL Callback context for %s.",
-               gpfs_fsal_up_ctx->gf_fs);
+               "Initializing FSAL Callback context for %s. GPFS get version is %d",
+               gpfs_fsal_up_ctx->gf_fs, rc);
 
   /* Start querying for events and processing. */
   while(1)
@@ -151,8 +151,11 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                    "Requesting event from FSAL Callback interface for %s.",
                    gpfs_fsal_up_ctx->gf_fs);
 
-      phandle->data.handle.handle_size     = OPENHANDLE_HANDLE_LEN;
-      phandle->data.handle.handle_key_size = 0;
+      phandle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
+      phandle->data.handle.handle_key_size = OPENHANDLE_KEY_LEN;
+      phandle->data.handle.handle_version = OPENHANDLE_VERSION;
+    
+      callback.interface_version = GPFS_INTERFACE_VERSION + GPFS_INTERFACE_SUB_VER; 
 
       callback.mountdirfd = export_ctx->mount_root_fd;
       callback.handle     = (struct gpfs_file_handle *) &phandle->data.handle;
@@ -191,10 +194,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
         }
 
       retry = 0;
-
-      /* Fill in fsid portion of handle */
-      callback.handle->handle_fsid[0] = gpfs_fsal_up_ctx->gf_fsid[0];
-      callback.handle->handle_fsid[1] = gpfs_fsal_up_ctx->gf_fsid[1];
 
       LogDebug(COMPONENT_FSAL_UP,
                "inode update: rc %d reason %d update ino %ld",

@@ -64,6 +64,7 @@ struct flock
 
 /* GANESHA common information */
 
+#define OPENHANDLE_GET_VERSION    100 
 #define OPENHANDLE_NAME_TO_HANDLE 101
 #define OPENHANDLE_OPEN_BY_HANDLE 102
 #define OPENHANDLE_LAYOUT_TYPE    106
@@ -100,6 +101,7 @@ int gpfs_ganesha(int op, void *oarg);
 
 #define OPENHANDLE_HANDLE_LEN 40
 #define OPENHANDLE_KEY_LEN 28
+#define OPENHANDLE_VERSION 1
 
 struct xstat_cred_t
 {
@@ -122,7 +124,6 @@ struct gpfs_file_handle
   u_int16_t handle_type;
   u_int16_t handle_version;
   u_int16_t handle_key_size;
-/* export context stores fsids as ints. Not spec compliant but we follow here */
   u_int32_t handle_fsid[2];
   /* file identifier */
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
@@ -490,6 +491,7 @@ struct stat_name_arg
 
 struct callback_arg
 {
+    int interface_version; 
     int mountdirfd;
     int *reason;
     struct gpfs_file_handle *handle;
@@ -497,6 +499,8 @@ struct callback_arg
     int *flags;
     struct stat *buf;
 };
+#define GPFS_INTERFACE_VERSION 10000 
+#define GPFS_INTERFACE_SUB_VER     1 
 
 /* Defines for the flags in callback_arg, keep up to date with CXIUP_xxx */
 #define UP_NLINK        0x00000001   /* update nlink */

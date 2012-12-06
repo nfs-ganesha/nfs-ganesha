@@ -61,7 +61,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <gpfs_nfs.h>
+#include <../FSAL/FSAL_GPFS/include/gpfs_nfs.h>
 #include <stddef.h> /* For offsetof */
 
 #include "fsal_glue_const.h"

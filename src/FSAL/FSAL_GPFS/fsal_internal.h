@@ -217,6 +217,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
                                        fsal_attrib_list_t *
                                        p_object_attributes /* IN, optional */ );
 
+int fsal_internal_version(); 
+
 fsal_status_t fsal_internal_access(fsal_op_context_t * p_context,   /* IN */
                                    fsal_handle_t * p_handle,   /* IN */
                                    fsal_accessflags_t access_type,  /* IN */
