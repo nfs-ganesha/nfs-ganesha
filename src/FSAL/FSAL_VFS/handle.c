@@ -921,31 +921,23 @@ out:
 	return fsalstat(fsal_error, retval);	
 }
 
-/* FIXME: attributes are now merged into fsal_obj_handle.  This
- * spreads everywhere these methods are used.  eventually deprecate
- * everywhere except where we explicitly want to to refresh them.
- * NOTE: this is done under protection of the attributes rwlock in the
- * cache entry.
- */
-
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-                              const struct req_op_context *opctx)
+static int
+vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
+		       struct stat *stat,
+		       fsal_errors_t *fsal_error)
 {
-	struct vfs_fsal_obj_handle *myself;
-	int fd = -1, mntfd;
+        struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
+	int mntfd = vfs_get_root_fd(obj_hdl->export);
 	int open_flags = O_RDONLY;
-	struct stat stat;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	fsal_status_t st;
+	int fd = -1;
 	int retval = 0;
 
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	mntfd = vfs_get_root_fd(obj_hdl->export);
 	if(obj_hdl->type == REGULAR_FILE) {
 		if(myself->u.file.fd < 0) {
 			goto open_file;  /* no file open at the moment */
 		}
-		fstat(myself->u.file.fd, &stat);
+		fd = myself->u.file.fd;
+		retval = fstat(fd, stat);
         } else if(vfs_unopenable_type(obj_hdl->type)) {
 		fd = open_by_handle_at(mntfd,
 				       myself->u.unopenable.dir,
@@ -955,11 +947,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		}
 		retval = fstatat(fd,
 				 myself->u.unopenable.name,
-				 &stat,
+				 stat,
 				 AT_SYMLINK_NOFOLLOW);
-		if(retval < 0) {
-			goto errout;
-		}
 	} else {
 		if(obj_hdl->type == SYMBOLIC_LINK)
 			open_flags |= O_PATH;
@@ -972,32 +961,62 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		}
 		retval = fstatat(fd,
 				 "",
-				 &stat,
+				 stat,
 				 (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
-		if(retval < 0) {
-			goto errout;
-		}
 	}
 
-	st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
-	if(FSAL_IS_ERROR(st)) {
-                FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
-		FSAL_SET_MASK(obj_hdl->attributes.mask,
-                              ATTR_RDATTR_ERR);
-		fsal_error = st.major;  retval = st.minor;
-		goto out;
+	if(retval < 0) {
+		retval = errno;
+                *fsal_error = posix2fsal_error(retval);
+		if(obj_hdl->type != REGULAR_FILE || myself->u.file.fd < 0)
+			close(fd);
+		return -retval;
 	}
-	goto out;
+
+	return fd;
 
 errout:
         retval = errno;
         if(retval == ENOENT)
-                fsal_error = ERR_FSAL_STALE;
+                *fsal_error = ERR_FSAL_STALE;
         else
-                fsal_error = posix2fsal_error(retval);
-out:
-	if(fd >= 0)
-		close(fd);
+                *fsal_error = posix2fsal_error(retval);
+	return -retval;
+}
+
+/* FIXME: attributes are now merged into fsal_obj_handle.  This
+ * spreads everywhere these methods are used.  eventually deprecate
+ * everywhere except where we explicitly want to to refresh them.
+ * NOTE: this is done under protection of the attributes rwlock in the
+ * cache entry.
+ */
+
+static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
+                              const struct req_op_context *opctx)
+{
+	struct vfs_fsal_obj_handle *myself;
+	int fd = -1, mntfd;
+	struct stat stat;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t st;
+	int retval = 0;
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	fd = vfs_fsal_open_and_stat(myself, &stat, &fsal_error);
+	if(fd >= 0) {
+	   	if(obj_hdl->type != REGULAR_FILE || myself->u.file.fd < 0)
+			close(fd);
+		st = posix2fsal_attributes(&stat, &obj_hdl->attributes);
+		if(FSAL_IS_ERROR(st)) {
+			FSAL_CLEAR_MASK(obj_hdl->attributes.mask);
+			FSAL_SET_MASK(obj_hdl->attributes.mask,
+				      ATTR_RDATTR_ERR);
+			fsal_error = st.major;  retval = st.minor;
+		}
+	} else {
+		retval = -fd;
+	}
+
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -1010,8 +1029,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			      struct attrlist *attrs)
 {
 	struct vfs_fsal_obj_handle *myself;
-	int fd = -1, mntfd;
-	int open_flags = O_RDONLY;
+	int fd = -1;
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -1022,7 +1040,6 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			&= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
 	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	mntfd = vfs_get_root_fd(obj_hdl->export);
 
 	/* This is yet another "you can't get there from here".  If this object
 	 * is a socket (AF_UNIX), an fd on the socket s useless _period_.
@@ -1035,45 +1052,9 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	 * or the listener forgot to unlink it, it is lame duck.
 	 */
 
-	if(obj_hdl->type == REGULAR_FILE) {
-		if(myself->u.file.fd < 0) {
-			goto open_file;  /* no file open at the moment */
-		}
-		fd = myself->u.file.fd;
-		fstat(fd, &stat);
-	} else if(vfs_unopenable_type(obj_hdl->type)) {
-		fd = open_by_handle_at(mntfd,
-				       myself->u.unopenable.dir,
-				       (O_PATH|O_NOACCESS));
-		if(fd < 0) {
-			retval = errno;
-			if(retval == ENOENT)
-				fsal_error = ERR_FSAL_STALE;
-			else
-				fsal_error = posix2fsal_error(retval);
-			goto out;
-		}
-		retval = fstatat(fd,
-				 myself->u.unopenable.name,
-				 &stat,
-				 AT_SYMLINK_NOFOLLOW);
-	} else {
-		if(obj_hdl->type == SYMBOLIC_LINK) {
-			open_flags |= O_PATH;
-		} else if(obj_hdl->type == FIFO_FILE) {
-			open_flags |= O_NONBLOCK;
-                }
-	open_file:
-		fd = open_by_handle_at(mntfd, myself->handle, open_flags);
-		if(fd < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-			goto out;
-		}
-		retval = fstatat(fd, "", &stat, (AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH));
-	}
-	if(retval < 0) {
-		goto fileerr;
+	fd = vfs_fsal_open_and_stat(myself, &stat, &fsal_error);
+	if(fd < 0) {
+		return fsalstat(fsal_error, -fd);
 	}
 	/** CHMOD **/
 	if(FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
