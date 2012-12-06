@@ -9,7 +9,7 @@
 
 #include "rquota.h"
 
-bool_t xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
+bool xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
 {
   register int32_t *buf;
 
@@ -103,7 +103,7 @@ bool_t xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
   return TRUE;
 }
 
-bool_t xdr_getquota_args(XDR * xdrs, getquota_args * objp)
+bool xdr_getquota_args(XDR * xdrs, getquota_args * objp)
 {
   register __attribute__ ((__unused__)) int32_t *buf;
 
@@ -114,7 +114,7 @@ bool_t xdr_getquota_args(XDR * xdrs, getquota_args * objp)
   return TRUE;
 }
 
-bool_t xdr_setquota_args(XDR * xdrs, setquota_args * objp)
+bool xdr_setquota_args(XDR * xdrs, setquota_args * objp)
 {
   register __attribute__ ((__unused__)) int32_t *buf;
 
@@ -129,7 +129,7 @@ bool_t xdr_setquota_args(XDR * xdrs, setquota_args * objp)
   return TRUE;
 }
 
-bool_t xdr_ext_getquota_args(XDR * xdrs, ext_getquota_args * objp)
+bool xdr_ext_getquota_args(XDR * xdrs, ext_getquota_args * objp)
 {
   register __attribute__ ((__unused__)) int32_t *buf;
 
@@ -142,7 +142,7 @@ bool_t xdr_ext_getquota_args(XDR * xdrs, ext_getquota_args * objp)
   return TRUE;
 }
 
-bool_t xdr_ext_setquota_args(XDR * xdrs, ext_setquota_args * objp)
+bool xdr_ext_setquota_args(XDR * xdrs, ext_setquota_args * objp)
 {
   register __attribute__ ((__unused__)) int32_t *buf;
 
@@ -159,7 +159,7 @@ bool_t xdr_ext_setquota_args(XDR * xdrs, ext_setquota_args * objp)
   return TRUE;
 }
 
-bool_t xdr_rquota(XDR * xdrs, rquota * objp)
+bool xdr_rquota(XDR * xdrs, rquota * objp)
 {
   register int32_t *buf;
 
@@ -269,7 +269,7 @@ bool_t xdr_rquota(XDR * xdrs, rquota * objp)
   return TRUE;
 }
 
-bool_t xdr_qr_status(XDR * xdrs, qr_status * objp)
+bool xdr_qr_status(XDR * xdrs, qr_status * objp)
 {
   register __attribute__ ((__unused__)) int32_t *buf;
 
@@ -278,7 +278,7 @@ bool_t xdr_qr_status(XDR * xdrs, qr_status * objp)
   return TRUE;
 }
 
-bool_t xdr_getquota_rslt(XDR * xdrs, getquota_rslt * objp)
+bool xdr_getquota_rslt(XDR * xdrs, getquota_rslt * objp)
 {
   register __attribute__ ((__unused__)) int32_t *buf;
 
@@ -300,7 +300,7 @@ bool_t xdr_getquota_rslt(XDR * xdrs, getquota_rslt * objp)
   return TRUE;
 }
 
-bool_t xdr_setquota_rslt(XDR * xdrs, setquota_rslt * objp)
+bool xdr_setquota_rslt(XDR * xdrs, setquota_rslt * objp)
 {
   register __attribute__ ((__unused__)) int32_t *buf;
 

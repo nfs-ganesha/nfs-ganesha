@@ -64,27 +64,27 @@ extern "C"
     char priv[16];
   };
   typedef struct mon mon;
-  extern bool_t nsm_monitor(state_nsm_client_t *host);
-  extern bool_t nsm_unmonitor(state_nsm_client_t *host);
+  extern bool nsm_monitor(state_nsm_client_t *host);
+  extern bool nsm_unmonitor(state_nsm_client_t *host);
   extern void nsm_unmonitor_all(void);
 
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
-  extern bool_t xdr_res(XDR *, res *);
-  extern bool_t xdr_sm_stat_res(XDR *, sm_stat_res *);
-  extern bool_t xdr_sm_stat(XDR *, sm_stat *);
-  extern bool_t xdr_my_id(XDR *, my_id *);
-  extern bool_t xdr_mon_id(XDR *, mon_id *);
-  extern bool_t xdr_mon(XDR *, mon *);
+  extern bool xdr_res(XDR *, res *);
+  extern bool xdr_sm_stat_res(XDR *, sm_stat_res *);
+  extern bool xdr_sm_stat(XDR *, sm_stat *);
+  extern bool xdr_my_id(XDR *, my_id *);
+  extern bool xdr_mon_id(XDR *, mon_id *);
+  extern bool xdr_mon(XDR *, mon *);
 
 #else                           /* K&R C */
-  extern bool_t xdr_res();
-  extern bool_t xdr_sm_stat_res();
-  extern bool_t xdr_sm_stat();
-  extern bool_t xdr_my_id();
-  extern bool_t xdr_mon_id();
-  extern bool_t xdr_mon();
+  extern bool xdr_res();
+  extern bool xdr_sm_stat_res();
+  extern bool xdr_sm_stat();
+  extern bool xdr_my_id();
+  extern bool xdr_mon_id();
+  extern bool xdr_mon();
 
 #endif                          /* K&R C */
 

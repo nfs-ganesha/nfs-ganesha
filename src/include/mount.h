@@ -123,18 +123,18 @@ typedef struct mountres3 mountres3;
 #ifndef _USE_SWIG
 
 /* the xdr functions */
-extern bool_t xdr_mountstat3(XDR *, mountstat3 *);
-extern bool_t xdr_fhandle3(XDR *, fhandle3 *);
-extern bool_t xdr_dirpath(XDR *, dirpath *);
-extern bool_t xdr_name(XDR *, name *);
-extern bool_t xdr_groups(XDR *, groups *);
-extern bool_t xdr_groupnode(XDR *, groupnode *);
-extern bool_t xdr_exports(XDR *, exports *);
-extern bool_t xdr_exportnode(XDR *, exportnode *);
-extern bool_t xdr_mountlist(XDR *, mountlist *);
-extern bool_t xdr_mountbody(XDR *, mountbody *);
-extern bool_t xdr_mountres3_ok(XDR *, mountres3_ok *);
-extern bool_t xdr_mountres3(XDR *, mountres3 *);
+extern bool xdr_mountstat3(XDR *, mountstat3 *);
+extern bool xdr_fhandle3(XDR *, fhandle3 *);
+extern bool xdr_dirpath(XDR *, dirpath *);
+extern bool xdr_name(XDR *, name *);
+extern bool xdr_groups(XDR *, groups *);
+extern bool xdr_groupnode(XDR *, groupnode *);
+extern bool xdr_exports(XDR *, exports *);
+extern bool xdr_exportnode(XDR *, exportnode *);
+extern bool xdr_mountlist(XDR *, mountlist *);
+extern bool xdr_mountbody(XDR *, mountbody *);
+extern bool xdr_mountres3_ok(XDR *, mountres3_ok *);
+extern bool xdr_mountres3(XDR *, mountres3 *);
 
 #endif                          /* ifndef _USE_SWIG */
 

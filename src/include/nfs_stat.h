@@ -42,11 +42,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <time.h>
-#include <pthread.h>
 #include "ganesha_rpc.h"
-#include "LRU_List.h"
-#include "HashData.h"
-#include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "timers.h"
@@ -160,15 +156,46 @@ typedef struct nfs_worker_stat__
   fsal_statistics_t fsal_stats;
 } nfs_worker_stat_t;
 
-void nfs_stat_update(nfs_stat_type_t      type,
-                     nfs_request_stat_t * pstat_req,
-                     struct svc_req     * preq,
+/* Req timer */
+struct nfs_req_timer
+{
+    msectimer_t timer_start;
+    msectimer_t timer_end;
+    msectimer_t queue_timer_diff; /* await time */
+    msectimer_t timer_diff; /* latency */
+    msectimer_t fsal_latency;
+};
+
+static inline void
+init_nfs_req_timer(struct nfs_req_timer *t)
+{
+    memset(t, 0, sizeof(struct nfs_req_timer));
+}
+
+static inline void
+nfs_req_timer_start(struct nfs_req_timer *t)
+{
+    t->timer_start = timer_get();
+}
+
+static inline void
+nfs_req_timer_stop(struct nfs_req_timer *t, struct timeval *time_queued)
+{
+    t->timer_end = timer_get();
+    t->timer_diff = t->timer_end - t->timer_start;
 #ifdef _USE_QUEUE_TIMER
-                     msectimer_t          await_time,
+    /* process time + queue time */
+    t->queue_timer_diff = t->timer_end - 
+	    (time_queued->tv_sec * MSEC_PER_SEC) -
+	    (time_queued->tv_usec * MSEC_PER_USEC);
 #endif
-                     msectimer_t          latency,
-                     msectimer_t          fsal_latency,
-                     unsigned int         fsal_count
+}
+
+void nfs_stat_update(nfs_stat_type_t        type,
+                     nfs_request_stat_t   * pstat_req,
+                     struct svc_req       * preq,
+		     struct nfs_req_timer * req_timer,
+                     unsigned int           fsal_count
                      );
 
 static inline void set_min_latency(msectimer_t *cur_val, msectimer_t val)

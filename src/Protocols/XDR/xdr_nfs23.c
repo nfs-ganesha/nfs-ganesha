@@ -19,7 +19,7 @@ static struct nfs_request_lookahead dummy_lookahead = {
   .write = 0
   };
 
-bool_t xdr_nfspath2(xdrs, objp)
+bool xdr_nfspath2(xdrs, objp)
 register XDR *xdrs;
 nfspath2 *objp;
 {
@@ -35,7 +35,7 @@ nfspath2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_filename2(xdrs, objp)
+bool xdr_filename2(xdrs, objp)
 register XDR *xdrs;
 filename2 *objp;
 {
@@ -51,7 +51,7 @@ filename2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_fhandle2(xdrs, objp)
+bool xdr_fhandle2(xdrs, objp)
 register XDR *xdrs;
 fhandle2 objp;
 {
@@ -67,7 +67,7 @@ fhandle2 objp;
   return (TRUE);
 }
 
-bool_t xdr_nfsdata2(xdrs, objp)
+bool xdr_nfsdata2(xdrs, objp)
 register XDR *xdrs;
 nfsdata2 *objp;
 {
@@ -84,7 +84,7 @@ nfsdata2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfscookie2(xdrs, objp)
+bool xdr_nfscookie2(xdrs, objp)
 register XDR *xdrs;
 nfscookie2 objp;
 {
@@ -100,7 +100,7 @@ nfscookie2 objp;
   return (TRUE);
 }
 
-bool_t xdr_nfsstat2(xdrs, objp)
+bool xdr_nfsstat2(xdrs, objp)
 register XDR *xdrs;
 nfsstat2 *objp;
 {
@@ -116,7 +116,7 @@ nfsstat2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_ftype2(xdrs, objp)
+bool xdr_ftype2(xdrs, objp)
 register XDR *xdrs;
 ftype2 *objp;
 {
@@ -132,7 +132,7 @@ ftype2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfstime2(xdrs, objp)
+bool xdr_nfstime2(xdrs, objp)
 register XDR *xdrs;
 nfstime2 *objp;
 {
@@ -150,7 +150,7 @@ nfstime2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_fattr2(xdrs, objp)
+bool xdr_fattr2(xdrs, objp)
 XDR *xdrs;
 fattr2 *objp;
 {
@@ -328,7 +328,7 @@ fattr2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_fhstatus2(xdrs, objp)
+bool xdr_fhstatus2(xdrs, objp)
 register XDR *xdrs;
 fhstatus2 *objp;
 {
@@ -351,7 +351,7 @@ fhstatus2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_diropargs2(xdrs, objp)
+bool xdr_diropargs2(xdrs, objp)
 register XDR *xdrs;
 diropargs2 *objp;
 {
@@ -369,7 +369,7 @@ diropargs2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_DIROP2resok(xdrs, objp)
+bool xdr_DIROP2resok(xdrs, objp)
 register XDR *xdrs;
 DIROP2resok *objp;
 {
@@ -387,7 +387,7 @@ DIROP2resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_DIROP2res(xdrs, objp)
+bool xdr_DIROP2res(xdrs, objp)
 register XDR *xdrs;
 DIROP2res *objp;
 {
@@ -413,7 +413,7 @@ DIROP2res *objp;
   return (TRUE);
 }
 
-bool_t xdr_ATTR2res(xdrs, objp)
+bool xdr_ATTR2res(xdrs, objp)
 register XDR *xdrs;
 ATTR2res *objp;
 {
@@ -439,7 +439,7 @@ ATTR2res *objp;
   return (TRUE);
 }
 
-bool_t xdr_sattr2(xdrs, objp)
+bool xdr_sattr2(xdrs, objp)
 register XDR *xdrs;
 sattr2 *objp;
 {
@@ -465,7 +465,7 @@ sattr2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_statinfo2(xdrs, objp)
+bool xdr_statinfo2(xdrs, objp)
 register XDR *xdrs;
 statinfo2 *objp;
 {
@@ -566,7 +566,7 @@ statinfo2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_STATFS2res(xdrs, objp)
+bool xdr_STATFS2res(xdrs, objp)
 register XDR *xdrs;
 STATFS2res *objp;
 {
@@ -592,7 +592,7 @@ STATFS2res *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIR2args(xdrs, objp)
+bool xdr_READDIR2args(xdrs, objp)
 register XDR *xdrs;
 READDIR2args *objp;
 {
@@ -615,7 +615,7 @@ READDIR2args *objp;
   return (TRUE);
 }
 
-bool_t xdr_entry2(xdrs, objp)
+bool xdr_entry2(xdrs, objp)
 register XDR *xdrs;
 entry2 *objp;
 {
@@ -638,7 +638,7 @@ entry2 *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIR2resok(xdrs, objp)
+bool xdr_READDIR2resok(xdrs, objp)
 register XDR *xdrs;
 READDIR2resok *objp;
 {
@@ -656,7 +656,7 @@ READDIR2resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIR2res(xdrs, objp)
+bool xdr_READDIR2res(xdrs, objp)
 register XDR *xdrs;
 READDIR2res *objp;
 {
@@ -682,7 +682,7 @@ READDIR2res *objp;
   return (TRUE);
 }
 
-bool_t xdr_SYMLINK2args(xdrs, objp)
+bool xdr_SYMLINK2args(xdrs, objp)
 register XDR *xdrs;
 SYMLINK2args *objp;
 {
@@ -702,7 +702,7 @@ SYMLINK2args *objp;
   return (TRUE);
 }
 
-bool_t xdr_LINK2args(xdrs, objp)
+bool xdr_LINK2args(xdrs, objp)
 register XDR *xdrs;
 LINK2args *objp;
 {
@@ -720,7 +720,7 @@ LINK2args *objp;
   return (TRUE);
 }
 
-bool_t xdr_RENAME2args(xdrs, objp)
+bool xdr_RENAME2args(xdrs, objp)
 register XDR *xdrs;
 RENAME2args *objp;
 {
@@ -741,7 +741,7 @@ RENAME2args *objp;
   return (TRUE);
 }
 
-bool_t xdr_CREATE2args(xdrs, objp)
+bool xdr_CREATE2args(xdrs, objp)
 register XDR *xdrs;
 CREATE2args *objp;
 {
@@ -762,7 +762,7 @@ CREATE2args *objp;
   return (TRUE);
 }
 
-bool_t xdr_WRITE2args(xdrs, objp)
+bool xdr_WRITE2args(xdrs, objp)
 register XDR *xdrs;
 WRITE2args *objp;
 {
@@ -789,7 +789,7 @@ WRITE2args *objp;
   return (TRUE);
 }
 
-bool_t xdr_READ2resok(xdrs, objp)
+bool xdr_READ2resok(xdrs, objp)
 register XDR *xdrs;
 READ2resok *objp;
 {
@@ -807,7 +807,7 @@ READ2resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_READ2res(xdrs, objp)
+bool xdr_READ2res(xdrs, objp)
 register XDR *xdrs;
 READ2res *objp;
 {
@@ -833,7 +833,7 @@ READ2res *objp;
   return (TRUE);
 }
 
-bool_t xdr_READ2args(xdrs, objp)
+bool xdr_READ2args(xdrs, objp)
 register XDR *xdrs;
 READ2args *objp;
 {
@@ -859,7 +859,7 @@ READ2args *objp;
   return (TRUE);
 }
 
-bool_t xdr_READLINK2res(xdrs, objp)
+bool xdr_READLINK2res(xdrs, objp)
 register XDR *xdrs;
 READLINK2res *objp;
 {
@@ -885,7 +885,7 @@ READLINK2res *objp;
   return (TRUE);
 }
 
-bool_t xdr_SETATTR2args(xdrs, objp)
+bool xdr_SETATTR2args(xdrs, objp)
 register XDR *xdrs;
 SETATTR2args *objp;
 {
@@ -903,7 +903,7 @@ SETATTR2args *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfs3_uint64(xdrs, objp)
+bool xdr_nfs3_uint64(xdrs, objp)
 register XDR *xdrs;
 nfs3_uint64 *objp;
 {
@@ -919,7 +919,7 @@ nfs3_uint64 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfs3_int64(xdrs, objp)
+bool xdr_nfs3_int64(xdrs, objp)
 register XDR *xdrs;
 nfs3_int64 *objp;
 {
@@ -935,7 +935,7 @@ nfs3_int64 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfs3_uint32(xdrs, objp)
+bool xdr_nfs3_uint32(xdrs, objp)
 register XDR *xdrs;
 nfs3_uint32 *objp;
 {
@@ -951,7 +951,7 @@ nfs3_uint32 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfs3_int32(xdrs, objp)
+bool xdr_nfs3_int32(xdrs, objp)
 register XDR *xdrs;
 nfs3_int32 *objp;
 {
@@ -967,7 +967,7 @@ nfs3_int32 *objp;
   return (TRUE);
 }
 
-bool_t xdr_filename3(xdrs, objp)
+bool xdr_filename3(xdrs, objp)
 register XDR *xdrs;
 filename3 *objp;
 {
@@ -983,7 +983,7 @@ filename3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfspath3(xdrs, objp)
+bool xdr_nfspath3(xdrs, objp)
 register XDR *xdrs;
 nfspath3 *objp;
 {
@@ -999,7 +999,7 @@ nfspath3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_fileid3(xdrs, objp)
+bool xdr_fileid3(xdrs, objp)
 register XDR *xdrs;
 fileid3 *objp;
 {
@@ -1015,7 +1015,7 @@ fileid3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_cookie3(xdrs, objp)
+bool xdr_cookie3(xdrs, objp)
 register XDR *xdrs;
 cookie3 *objp;
 {
@@ -1031,7 +1031,7 @@ cookie3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_cookieverf3(xdrs, objp)
+bool xdr_cookieverf3(xdrs, objp)
 register XDR *xdrs;
 cookieverf3 objp;
 {
@@ -1047,7 +1047,7 @@ cookieverf3 objp;
   return (TRUE);
 }
 
-bool_t xdr_createverf3(xdrs, objp)
+bool xdr_createverf3(xdrs, objp)
 register XDR *xdrs;
 createverf3 objp;
 {
@@ -1063,7 +1063,7 @@ createverf3 objp;
   return (TRUE);
 }
 
-bool_t xdr_writeverf3(xdrs, objp)
+bool xdr_writeverf3(xdrs, objp)
 register XDR *xdrs;
 writeverf3 objp;
 {
@@ -1079,7 +1079,7 @@ writeverf3 objp;
   return (TRUE);
 }
 
-bool_t xdr_uid3(xdrs, objp)
+bool xdr_uid3(xdrs, objp)
 register XDR *xdrs;
 uid3 *objp;
 {
@@ -1095,7 +1095,7 @@ uid3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_gid3(xdrs, objp)
+bool xdr_gid3(xdrs, objp)
 register XDR *xdrs;
 gid3 *objp;
 {
@@ -1111,7 +1111,7 @@ gid3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_size3(xdrs, objp)
+bool xdr_size3(xdrs, objp)
 register XDR *xdrs;
 size3 *objp;
 {
@@ -1127,7 +1127,7 @@ size3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_offset3(xdrs, objp)
+bool xdr_offset3(xdrs, objp)
 register XDR *xdrs;
 offset3 *objp;
 {
@@ -1143,7 +1143,7 @@ offset3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_mode3(xdrs, objp)
+bool xdr_mode3(xdrs, objp)
 register XDR *xdrs;
 mode3 *objp;
 {
@@ -1159,7 +1159,7 @@ mode3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_count3(xdrs, objp)
+bool xdr_count3(xdrs, objp)
 register XDR *xdrs;
 count3 *objp;
 {
@@ -1175,7 +1175,7 @@ count3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfsstat3(xdrs, objp)
+bool xdr_nfsstat3(xdrs, objp)
 register XDR *xdrs;
 nfsstat3 *objp;
 {
@@ -1191,7 +1191,7 @@ nfsstat3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_ftype3(xdrs, objp)
+bool xdr_ftype3(xdrs, objp)
 register XDR *xdrs;
 ftype3 *objp;
 {
@@ -1207,7 +1207,7 @@ ftype3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_specdata3(xdrs, objp)
+bool xdr_specdata3(xdrs, objp)
 register XDR *xdrs;
 specdata3 *objp;
 {
@@ -1225,7 +1225,7 @@ specdata3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfs_fh3(xdrs, objp)
+bool xdr_nfs_fh3(xdrs, objp)
 register XDR *xdrs;
 nfs_fh3 *objp;
 {
@@ -1241,7 +1241,7 @@ nfs_fh3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_nfstime3(xdrs, objp)
+bool xdr_nfstime3(xdrs, objp)
 register XDR *xdrs;
 nfstime3 *objp;
 {
@@ -1259,7 +1259,7 @@ nfstime3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_fattr3(xdrs, objp)
+bool xdr_fattr3(xdrs, objp)
 register XDR *xdrs;
 fattr3 *objp;
 {
@@ -1299,7 +1299,7 @@ fattr3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_post_op_attr(xdrs, objp)
+bool xdr_post_op_attr(xdrs, objp)
 register XDR *xdrs;
 post_op_attr *objp;
 {
@@ -1326,7 +1326,7 @@ post_op_attr *objp;
   return (TRUE);
 }
 
-bool_t xdr_wcc_attr(xdrs, objp)
+bool xdr_wcc_attr(xdrs, objp)
 register XDR *xdrs;
 wcc_attr *objp;
 {
@@ -1346,7 +1346,7 @@ wcc_attr *objp;
   return (TRUE);
 }
 
-bool_t xdr_pre_op_attr(xdrs, objp)
+bool xdr_pre_op_attr(xdrs, objp)
 register XDR *xdrs;
 pre_op_attr *objp;
 {
@@ -1373,7 +1373,7 @@ pre_op_attr *objp;
   return (TRUE);
 }
 
-bool_t xdr_wcc_data(xdrs, objp)
+bool xdr_wcc_data(xdrs, objp)
 register XDR *xdrs;
 wcc_data *objp;
 {
@@ -1391,7 +1391,7 @@ wcc_data *objp;
   return (TRUE);
 }
 
-bool_t xdr_post_op_fh3(xdrs, objp)
+bool xdr_post_op_fh3(xdrs, objp)
 register XDR *xdrs;
 post_op_fh3 *objp;
 {
@@ -1418,7 +1418,7 @@ post_op_fh3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_time_how(xdrs, objp)
+bool xdr_time_how(xdrs, objp)
 register XDR *xdrs;
 time_how *objp;
 {
@@ -1434,7 +1434,7 @@ time_how *objp;
   return (TRUE);
 }
 
-bool_t xdr_set_mode3(xdrs, objp)
+bool xdr_set_mode3(xdrs, objp)
 register XDR *xdrs;
 set_mode3 *objp;
 {
@@ -1457,7 +1457,7 @@ set_mode3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_set_uid3(xdrs, objp)
+bool xdr_set_uid3(xdrs, objp)
 register XDR *xdrs;
 set_uid3 *objp;
 {
@@ -1480,7 +1480,7 @@ set_uid3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_set_gid3(xdrs, objp)
+bool xdr_set_gid3(xdrs, objp)
 register XDR *xdrs;
 set_gid3 *objp;
 {
@@ -1503,7 +1503,7 @@ set_gid3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_set_size3(xdrs, objp)
+bool xdr_set_size3(xdrs, objp)
 register XDR *xdrs;
 set_size3 *objp;
 {
@@ -1526,7 +1526,7 @@ set_size3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_set_atime(xdrs, objp)
+bool xdr_set_atime(xdrs, objp)
 register XDR *xdrs;
 set_atime *objp;
 {
@@ -1552,7 +1552,7 @@ set_atime *objp;
   return (TRUE);
 }
 
-bool_t xdr_set_mtime(xdrs, objp)
+bool xdr_set_mtime(xdrs, objp)
 register XDR *xdrs;
 set_mtime *objp;
 {
@@ -1578,7 +1578,7 @@ set_mtime *objp;
   return (TRUE);
 }
 
-bool_t xdr_sattr3(xdrs, objp)
+bool xdr_sattr3(xdrs, objp)
 register XDR *xdrs;
 sattr3 *objp;
 {
@@ -1604,7 +1604,7 @@ sattr3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_diropargs3(xdrs, objp)
+bool xdr_diropargs3(xdrs, objp)
 register XDR *xdrs;
 diropargs3 *objp;
 {
@@ -1622,7 +1622,7 @@ diropargs3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_GETATTR3args(xdrs, objp)
+bool xdr_GETATTR3args(xdrs, objp)
 register XDR *xdrs;
 GETATTR3args *objp;
 {
@@ -1638,7 +1638,7 @@ GETATTR3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_GETATTR3resok(xdrs, objp)
+bool xdr_GETATTR3resok(xdrs, objp)
 register XDR *xdrs;
 GETATTR3resok *objp;
 {
@@ -1654,7 +1654,7 @@ GETATTR3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_GETATTR3res(xdrs, objp)
+bool xdr_GETATTR3res(xdrs, objp)
 register XDR *xdrs;
 GETATTR3res *objp;
 {
@@ -1680,7 +1680,7 @@ GETATTR3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_sattrguard3(xdrs, objp)
+bool xdr_sattrguard3(xdrs, objp)
 register XDR *xdrs;
 sattrguard3 *objp;
 {
@@ -1707,7 +1707,7 @@ sattrguard3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_SETATTR3args(xdrs, objp)
+bool xdr_SETATTR3args(xdrs, objp)
 register XDR *xdrs;
 SETATTR3args *objp;
 {
@@ -1727,7 +1727,7 @@ SETATTR3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_SETATTR3resok(xdrs, objp)
+bool xdr_SETATTR3resok(xdrs, objp)
 register XDR *xdrs;
 SETATTR3resok *objp;
 {
@@ -1743,7 +1743,7 @@ SETATTR3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_SETATTR3resfail(xdrs, objp)
+bool xdr_SETATTR3resfail(xdrs, objp)
 register XDR *xdrs;
 SETATTR3resfail *objp;
 {
@@ -1759,7 +1759,7 @@ SETATTR3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_SETATTR3res(xdrs, objp)
+bool xdr_SETATTR3res(xdrs, objp)
 register XDR *xdrs;
 SETATTR3res *objp;
 {
@@ -1786,7 +1786,7 @@ SETATTR3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_LOOKUP3args(xdrs, objp)
+bool xdr_LOOKUP3args(xdrs, objp)
 register XDR *xdrs;
 LOOKUP3args *objp;
 {
@@ -1802,7 +1802,7 @@ LOOKUP3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_LOOKUP3resok(xdrs, objp)
+bool xdr_LOOKUP3resok(xdrs, objp)
 register XDR *xdrs;
 LOOKUP3resok *objp;
 {
@@ -1822,7 +1822,7 @@ LOOKUP3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_LOOKUP3resfail(xdrs, objp)
+bool xdr_LOOKUP3resfail(xdrs, objp)
 register XDR *xdrs;
 LOOKUP3resfail *objp;
 {
@@ -1838,7 +1838,7 @@ LOOKUP3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_LOOKUP3res(xdrs, objp)
+bool xdr_LOOKUP3res(xdrs, objp)
 register XDR *xdrs;
 LOOKUP3res *objp;
 {
@@ -1865,7 +1865,7 @@ LOOKUP3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_ACCESS3args(xdrs, objp)
+bool xdr_ACCESS3args(xdrs, objp)
 register XDR *xdrs;
 ACCESS3args *objp;
 {
@@ -1883,7 +1883,7 @@ ACCESS3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_ACCESS3resok(xdrs, objp)
+bool xdr_ACCESS3resok(xdrs, objp)
 register XDR *xdrs;
 ACCESS3resok *objp;
 {
@@ -1901,7 +1901,7 @@ ACCESS3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_ACCESS3resfail(xdrs, objp)
+bool xdr_ACCESS3resfail(xdrs, objp)
 register XDR *xdrs;
 ACCESS3resfail *objp;
 {
@@ -1917,7 +1917,7 @@ ACCESS3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_ACCESS3res(xdrs, objp)
+bool xdr_ACCESS3res(xdrs, objp)
 register XDR *xdrs;
 ACCESS3res *objp;
 {
@@ -1944,7 +1944,7 @@ ACCESS3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_READLINK3args(xdrs, objp)
+bool xdr_READLINK3args(xdrs, objp)
 register XDR *xdrs;
 READLINK3args *objp;
 {
@@ -1960,7 +1960,7 @@ READLINK3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_READLINK3resok(xdrs, objp)
+bool xdr_READLINK3resok(xdrs, objp)
 register XDR *xdrs;
 READLINK3resok *objp;
 {
@@ -1978,7 +1978,7 @@ READLINK3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_READLINK3resfail(xdrs, objp)
+bool xdr_READLINK3resfail(xdrs, objp)
 register XDR *xdrs;
 READLINK3resfail *objp;
 {
@@ -1994,7 +1994,7 @@ READLINK3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_READLINK3res(xdrs, objp)
+bool xdr_READLINK3res(xdrs, objp)
 register XDR *xdrs;
 READLINK3res *objp;
 {
@@ -2021,7 +2021,7 @@ READLINK3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_READ3args(xdrs, objp)
+bool xdr_READ3args(xdrs, objp)
 register XDR *xdrs;
 READ3args *objp;
 {
@@ -2045,7 +2045,7 @@ READ3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_READ3resok(xdrs, objp)
+bool xdr_READ3resok(xdrs, objp)
 register XDR *xdrs;
 READ3resok *objp;
 {
@@ -2067,7 +2067,7 @@ READ3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_READ3resfail(xdrs, objp)
+bool xdr_READ3resfail(xdrs, objp)
 register XDR *xdrs;
 READ3resfail *objp;
 {
@@ -2083,7 +2083,7 @@ READ3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_READ3res(xdrs, objp)
+bool xdr_READ3res(xdrs, objp)
 register XDR *xdrs;
 READ3res *objp;
 {
@@ -2110,7 +2110,7 @@ READ3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_stable_how(xdrs, objp)
+bool xdr_stable_how(xdrs, objp)
 register XDR *xdrs;
 stable_how *objp;
 {
@@ -2126,7 +2126,7 @@ stable_how *objp;
   return (TRUE);
 }
 
-bool_t xdr_WRITE3args(xdrs, objp)
+bool xdr_WRITE3args(xdrs, objp)
 register XDR *xdrs;
 WRITE3args *objp;
 {
@@ -2154,7 +2154,7 @@ WRITE3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_WRITE3resok(xdrs, objp)
+bool xdr_WRITE3resok(xdrs, objp)
 register XDR *xdrs;
 WRITE3resok *objp;
 {
@@ -2176,7 +2176,7 @@ WRITE3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_WRITE3resfail(xdrs, objp)
+bool xdr_WRITE3resfail(xdrs, objp)
 register XDR *xdrs;
 WRITE3resfail *objp;
 {
@@ -2192,7 +2192,7 @@ WRITE3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_WRITE3res(xdrs, objp)
+bool xdr_WRITE3res(xdrs, objp)
 register XDR *xdrs;
 WRITE3res *objp;
 {
@@ -2219,7 +2219,7 @@ WRITE3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_createmode3(xdrs, objp)
+bool xdr_createmode3(xdrs, objp)
 register XDR *xdrs;
 createmode3 *objp;
 {
@@ -2235,7 +2235,7 @@ createmode3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_createhow3(xdrs, objp)
+bool xdr_createhow3(xdrs, objp)
 register XDR *xdrs;
 createhow3 *objp;
 {
@@ -2265,7 +2265,7 @@ createhow3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_CREATE3args(xdrs, objp)
+bool xdr_CREATE3args(xdrs, objp)
 register XDR *xdrs;
 CREATE3args *objp;
 {
@@ -2286,7 +2286,7 @@ CREATE3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_CREATE3resok(xdrs, objp)
+bool xdr_CREATE3resok(xdrs, objp)
 register XDR *xdrs;
 CREATE3resok *objp;
 {
@@ -2306,7 +2306,7 @@ CREATE3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_CREATE3resfail(xdrs, objp)
+bool xdr_CREATE3resfail(xdrs, objp)
 register XDR *xdrs;
 CREATE3resfail *objp;
 {
@@ -2322,7 +2322,7 @@ CREATE3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_CREATE3res(xdrs, objp)
+bool xdr_CREATE3res(xdrs, objp)
 register XDR *xdrs;
 CREATE3res *objp;
 {
@@ -2349,7 +2349,7 @@ CREATE3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_MKDIR3args(xdrs, objp)
+bool xdr_MKDIR3args(xdrs, objp)
 register XDR *xdrs;
 MKDIR3args *objp;
 {
@@ -2367,7 +2367,7 @@ MKDIR3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_MKDIR3resok(xdrs, objp)
+bool xdr_MKDIR3resok(xdrs, objp)
 register XDR *xdrs;
 MKDIR3resok *objp;
 {
@@ -2387,7 +2387,7 @@ MKDIR3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_MKDIR3resfail(xdrs, objp)
+bool xdr_MKDIR3resfail(xdrs, objp)
 register XDR *xdrs;
 MKDIR3resfail *objp;
 {
@@ -2403,7 +2403,7 @@ MKDIR3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_MKDIR3res(xdrs, objp)
+bool xdr_MKDIR3res(xdrs, objp)
 register XDR *xdrs;
 MKDIR3res *objp;
 {
@@ -2430,7 +2430,7 @@ MKDIR3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_symlinkdata3(xdrs, objp)
+bool xdr_symlinkdata3(xdrs, objp)
 register XDR *xdrs;
 symlinkdata3 *objp;
 {
@@ -2448,7 +2448,7 @@ symlinkdata3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_SYMLINK3args(xdrs, objp)
+bool xdr_SYMLINK3args(xdrs, objp)
 register XDR *xdrs;
 SYMLINK3args *objp;
 {
@@ -2466,7 +2466,7 @@ SYMLINK3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_SYMLINK3resok(xdrs, objp)
+bool xdr_SYMLINK3resok(xdrs, objp)
 register XDR *xdrs;
 SYMLINK3resok *objp;
 {
@@ -2486,7 +2486,7 @@ SYMLINK3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_SYMLINK3resfail(xdrs, objp)
+bool xdr_SYMLINK3resfail(xdrs, objp)
 register XDR *xdrs;
 SYMLINK3resfail *objp;
 {
@@ -2502,7 +2502,7 @@ SYMLINK3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_SYMLINK3res(xdrs, objp)
+bool xdr_SYMLINK3res(xdrs, objp)
 register XDR *xdrs;
 SYMLINK3res *objp;
 {
@@ -2529,7 +2529,7 @@ SYMLINK3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_devicedata3(xdrs, objp)
+bool xdr_devicedata3(xdrs, objp)
 register XDR *xdrs;
 devicedata3 *objp;
 {
@@ -2547,7 +2547,7 @@ devicedata3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_mknoddata3(xdrs, objp)
+bool xdr_mknoddata3(xdrs, objp)
 register XDR *xdrs;
 mknoddata3 *objp;
 {
@@ -2579,7 +2579,7 @@ mknoddata3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_MKNOD3args(xdrs, objp)
+bool xdr_MKNOD3args(xdrs, objp)
 register XDR *xdrs;
 MKNOD3args *objp;
 {
@@ -2597,7 +2597,7 @@ MKNOD3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_MKNOD3resok(xdrs, objp)
+bool xdr_MKNOD3resok(xdrs, objp)
 register XDR *xdrs;
 MKNOD3resok *objp;
 {
@@ -2617,7 +2617,7 @@ MKNOD3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_MKNOD3resfail(xdrs, objp)
+bool xdr_MKNOD3resfail(xdrs, objp)
 register XDR *xdrs;
 MKNOD3resfail *objp;
 {
@@ -2633,7 +2633,7 @@ MKNOD3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_MKNOD3res(xdrs, objp)
+bool xdr_MKNOD3res(xdrs, objp)
 register XDR *xdrs;
 MKNOD3res *objp;
 {
@@ -2660,7 +2660,7 @@ MKNOD3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_REMOVE3args(xdrs, objp)
+bool xdr_REMOVE3args(xdrs, objp)
 register XDR *xdrs;
 REMOVE3args *objp;
 {
@@ -2679,7 +2679,7 @@ REMOVE3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_REMOVE3resok(xdrs, objp)
+bool xdr_REMOVE3resok(xdrs, objp)
 register XDR *xdrs;
 REMOVE3resok *objp;
 {
@@ -2695,7 +2695,7 @@ REMOVE3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_REMOVE3resfail(xdrs, objp)
+bool xdr_REMOVE3resfail(xdrs, objp)
 register XDR *xdrs;
 REMOVE3resfail *objp;
 {
@@ -2711,7 +2711,7 @@ REMOVE3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_REMOVE3res(xdrs, objp)
+bool xdr_REMOVE3res(xdrs, objp)
 register XDR *xdrs;
 REMOVE3res *objp;
 {
@@ -2738,7 +2738,7 @@ REMOVE3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_RMDIR3args(xdrs, objp)
+bool xdr_RMDIR3args(xdrs, objp)
 register XDR *xdrs;
 RMDIR3args *objp;
 {
@@ -2754,7 +2754,7 @@ RMDIR3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_RMDIR3resok(xdrs, objp)
+bool xdr_RMDIR3resok(xdrs, objp)
 register XDR *xdrs;
 RMDIR3resok *objp;
 {
@@ -2770,7 +2770,7 @@ RMDIR3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_RMDIR3resfail(xdrs, objp)
+bool xdr_RMDIR3resfail(xdrs, objp)
 register XDR *xdrs;
 RMDIR3resfail *objp;
 {
@@ -2786,7 +2786,7 @@ RMDIR3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_RMDIR3res(xdrs, objp)
+bool xdr_RMDIR3res(xdrs, objp)
 register XDR *xdrs;
 RMDIR3res *objp;
 {
@@ -2813,7 +2813,7 @@ RMDIR3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_RENAME3args(xdrs, objp)
+bool xdr_RENAME3args(xdrs, objp)
 register XDR *xdrs;
 RENAME3args *objp;
 {
@@ -2834,7 +2834,7 @@ RENAME3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_RENAME3resok(xdrs, objp)
+bool xdr_RENAME3resok(xdrs, objp)
 register XDR *xdrs;
 RENAME3resok *objp;
 {
@@ -2852,7 +2852,7 @@ RENAME3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_RENAME3resfail(xdrs, objp)
+bool xdr_RENAME3resfail(xdrs, objp)
 register XDR *xdrs;
 RENAME3resfail *objp;
 {
@@ -2870,7 +2870,7 @@ RENAME3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_RENAME3res(xdrs, objp)
+bool xdr_RENAME3res(xdrs, objp)
 register XDR *xdrs;
 RENAME3res *objp;
 {
@@ -2897,7 +2897,7 @@ RENAME3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_LINK3args(xdrs, objp)
+bool xdr_LINK3args(xdrs, objp)
 register XDR *xdrs;
 LINK3args *objp;
 {
@@ -2915,7 +2915,7 @@ LINK3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_LINK3resok(xdrs, objp)
+bool xdr_LINK3resok(xdrs, objp)
 register XDR *xdrs;
 LINK3resok *objp;
 {
@@ -2933,7 +2933,7 @@ LINK3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_LINK3resfail(xdrs, objp)
+bool xdr_LINK3resfail(xdrs, objp)
 register XDR *xdrs;
 LINK3resfail *objp;
 {
@@ -2951,7 +2951,7 @@ LINK3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_LINK3res(xdrs, objp)
+bool xdr_LINK3res(xdrs, objp)
 register XDR *xdrs;
 LINK3res *objp;
 {
@@ -2978,7 +2978,7 @@ LINK3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIR3args(xdrs, objp)
+bool xdr_READDIR3args(xdrs, objp)
 register XDR *xdrs;
 READDIR3args *objp;
 {
@@ -3003,7 +3003,7 @@ READDIR3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_entry3(xdrs, objp)
+bool xdr_entry3(xdrs, objp)
 register XDR *xdrs;
 entry3 *objp;
 {
@@ -3026,7 +3026,7 @@ entry3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_dirlist3(xdrs, objp)
+bool xdr_dirlist3(xdrs, objp)
 register XDR *xdrs;
 dirlist3 *objp;
 {
@@ -3044,7 +3044,7 @@ dirlist3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIR3resok(xdrs, objp)
+bool xdr_READDIR3resok(xdrs, objp)
 register XDR *xdrs;
 READDIR3resok *objp;
 {
@@ -3064,7 +3064,7 @@ READDIR3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIR3resfail(xdrs, objp)
+bool xdr_READDIR3resfail(xdrs, objp)
 register XDR *xdrs;
 READDIR3resfail *objp;
 {
@@ -3080,7 +3080,7 @@ READDIR3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIR3res(xdrs, objp)
+bool xdr_READDIR3res(xdrs, objp)
 register XDR *xdrs;
 READDIR3res *objp;
 {
@@ -3107,7 +3107,7 @@ READDIR3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIRPLUS3args(xdrs, objp)
+bool xdr_READDIRPLUS3args(xdrs, objp)
 register XDR *xdrs;
 READDIRPLUS3args *objp;
 {
@@ -3134,7 +3134,7 @@ READDIRPLUS3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_entryplus3(xdrs, objp)
+bool xdr_entryplus3(xdrs, objp)
 register XDR *xdrs;
 entryplus3 *objp;
 {
@@ -3161,7 +3161,7 @@ entryplus3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_dirlistplus3(xdrs, objp)
+bool xdr_dirlistplus3(xdrs, objp)
 register XDR *xdrs;
 dirlistplus3 *objp;
 {
@@ -3180,7 +3180,7 @@ dirlistplus3 *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIRPLUS3resok(xdrs, objp)
+bool xdr_READDIRPLUS3resok(xdrs, objp)
 register XDR *xdrs;
 READDIRPLUS3resok *objp;
 {
@@ -3200,7 +3200,7 @@ READDIRPLUS3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIRPLUS3resfail(xdrs, objp)
+bool xdr_READDIRPLUS3resfail(xdrs, objp)
 register XDR *xdrs;
 READDIRPLUS3resfail *objp;
 {
@@ -3216,7 +3216,7 @@ READDIRPLUS3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_READDIRPLUS3res(xdrs, objp)
+bool xdr_READDIRPLUS3res(xdrs, objp)
 register XDR *xdrs;
 READDIRPLUS3res *objp;
 {
@@ -3243,7 +3243,7 @@ READDIRPLUS3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_FSSTAT3args(xdrs, objp)
+bool xdr_FSSTAT3args(xdrs, objp)
 register XDR *xdrs;
 FSSTAT3args *objp;
 {
@@ -3259,7 +3259,7 @@ FSSTAT3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_FSSTAT3resok(xdrs, objp)
+bool xdr_FSSTAT3resok(xdrs, objp)
 register XDR *xdrs;
 FSSTAT3resok *objp;
 {
@@ -3289,7 +3289,7 @@ FSSTAT3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_FSSTAT3resfail(xdrs, objp)
+bool xdr_FSSTAT3resfail(xdrs, objp)
 register XDR *xdrs;
 FSSTAT3resfail *objp;
 {
@@ -3305,7 +3305,7 @@ FSSTAT3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_FSSTAT3res(xdrs, objp)
+bool xdr_FSSTAT3res(xdrs, objp)
 register XDR *xdrs;
 FSSTAT3res *objp;
 {
@@ -3332,7 +3332,7 @@ FSSTAT3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_FSINFO3args(xdrs, objp)
+bool xdr_FSINFO3args(xdrs, objp)
 register XDR *xdrs;
 FSINFO3args *objp;
 {
@@ -3348,7 +3348,7 @@ FSINFO3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_FSINFO3resok(xdrs, objp)
+bool xdr_FSINFO3resok(xdrs, objp)
 register XDR *xdrs;
 FSINFO3resok *objp;
 {
@@ -3384,7 +3384,7 @@ FSINFO3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_FSINFO3resfail(xdrs, objp)
+bool xdr_FSINFO3resfail(xdrs, objp)
 register XDR *xdrs;
 FSINFO3resfail *objp;
 {
@@ -3400,7 +3400,7 @@ FSINFO3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_FSINFO3res(xdrs, objp)
+bool xdr_FSINFO3res(xdrs, objp)
 register XDR *xdrs;
 FSINFO3res *objp;
 {
@@ -3427,7 +3427,7 @@ FSINFO3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_PATHCONF3args(xdrs, objp)
+bool xdr_PATHCONF3args(xdrs, objp)
 register XDR *xdrs;
 PATHCONF3args *objp;
 {
@@ -3443,7 +3443,7 @@ PATHCONF3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_PATHCONF3resok(xdrs, objp)
+bool xdr_PATHCONF3resok(xdrs, objp)
 register XDR *xdrs;
 PATHCONF3resok *objp;
 {
@@ -3471,7 +3471,7 @@ PATHCONF3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_PATHCONF3resfail(xdrs, objp)
+bool xdr_PATHCONF3resfail(xdrs, objp)
 register XDR *xdrs;
 PATHCONF3resfail *objp;
 {
@@ -3487,7 +3487,7 @@ PATHCONF3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_PATHCONF3res(xdrs, objp)
+bool xdr_PATHCONF3res(xdrs, objp)
 register XDR *xdrs;
 PATHCONF3res *objp;
 {
@@ -3514,7 +3514,7 @@ PATHCONF3res *objp;
   return (TRUE);
 }
 
-bool_t xdr_COMMIT3args(xdrs, objp)
+bool xdr_COMMIT3args(xdrs, objp)
 register XDR *xdrs;
 COMMIT3args *objp;
 {
@@ -3537,7 +3537,7 @@ COMMIT3args *objp;
   return (TRUE);
 }
 
-bool_t xdr_COMMIT3resok(xdrs, objp)
+bool xdr_COMMIT3resok(xdrs, objp)
 register XDR *xdrs;
 COMMIT3resok *objp;
 {
@@ -3555,7 +3555,7 @@ COMMIT3resok *objp;
   return (TRUE);
 }
 
-bool_t xdr_COMMIT3resfail(xdrs, objp)
+bool xdr_COMMIT3resfail(xdrs, objp)
 register XDR *xdrs;
 COMMIT3resfail *objp;
 {
@@ -3571,7 +3571,7 @@ COMMIT3resfail *objp;
   return (TRUE);
 }
 
-bool_t xdr_COMMIT3res(xdrs, objp)
+bool xdr_COMMIT3res(xdrs, objp)
 register XDR *xdrs;
 COMMIT3res *objp;
 {

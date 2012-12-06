@@ -334,7 +334,7 @@ int get_req_uid_gid(struct svc_req *req,
                    "Request xid=%u has authentication RPCSEC_GSS",
                    req->rq_xid);
       /* Get the gss data to process them */
-      gd = SVCAUTH_PRIVATE(req->rq_xprt->xp_auth);
+      gd = SVCAUTH_PRIVATE(req->rq_auth);
 
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
@@ -818,7 +818,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 #ifdef _HAVE_GSSAPI
     case RPCSEC_GSS:
       /* Extract the information from the RPCSEC_GSS opaque structure */
-      gd = SVCAUTH_PRIVATE(reqp->rq_xprt->xp_auth);
+      gd = SVCAUTH_PRIVATE(reqp->rq_auth);
 
       pcred->auth_union.auth_gss.svc = (unsigned int)(gd->sec.svc);
       pcred->auth_union.auth_gss.qop = (unsigned int)(gd->sec.qop);

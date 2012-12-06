@@ -120,7 +120,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_reaper_thread.c                  \
                              nfs_recovery_thread.c                \
                              nfs_init.h                           \
-                             ../include/LRU_List.h                \
                              ../include/nfs_tcb.h                 \
                              ../include/HashTable.h               \
                              ../include/HashData.h                \
@@ -130,7 +129,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/log.h           \
                              ../include/nfs_core.h                \
                              ../include/err_rpc.h                 \
-                             ../include/err_LRU_List.h            \
                              ../include/err_HashTable.h           \
                              ../include/nfs_dupreq.h              \
                              ../include/nfs_tools.h               \
@@ -169,7 +167,6 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Cache_inode/libcache_inode.la                  \
                                       ../SAL/libsal.la                                  \
                                       ../HashTable/libhashtable.la                      \
-                                      ../LRU/liblru.la                                  \
                                       ../FSAL/libfsalcommon.la                          \
                                       $(FSAL_LIB)                                       \
                                       ../Log/liblog.la                                  \

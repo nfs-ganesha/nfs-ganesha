@@ -45,7 +45,6 @@
 #include <sys/time.h>
 
 #include "ganesha_rpc.h"
-#include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "nfs_stat.h"
@@ -57,7 +56,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tcb.h"
 #include "wait_queue.h"
-#include "nfs_dupreq.h"
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
 
@@ -85,22 +83,29 @@
 #define NB_WORKER_THREAD_DEFAULT  16
 #define NB_FLUSHER_THREAD_DEFAULT 16
 #define NB_REQUEST_BEFORE_QUEUE_AVG  1000
-#define NB_MAX_CONCURRENT_GC 3
 #define NB_MAX_PENDING_REQUEST 30
-#define NB_REQUEST_BEFORE_GC 50
-#define PRIME_DUPREQ 17         /* has to be a prime number */
 #define PRIME_ID_MAPPER 17      /* has to be a prime number */
-#define DUPREQ_EXPIRATION 180
+
+#define DRC_TCP_NPART 1
+#define DRC_TCP_SIZE 1024
+#define DRC_TCP_CACHESZ 127 /* make prime */
+#define DRC_TCP_HIWAT 64 /* 1/2(size) */
+#define DRC_TCP_RECYCLE_NPART 7
+#define DRC_TCP_RECYCLE_EXPIRE_S 600 /* 10m */
+#define DRC_TCP_CHECKSUM true
+
+#define DRC_UDP_NPART 7
+#define DRC_UDP_SIZE 32768
+#define DRC_UDP_CACHESZ  599 /* make prime */
+#define DRC_UDP_HIWAT 16384 /* 1/2(size) */
+#define DRC_UDP_CHECKSUM true
 
 #define PRIME_CACHE_INODE 37    /* has to be a prime number */
 
 #define PRIME_IP_NAME            17
 #define IP_NAME_EXPIRATION       36000
-
 #define PRIME_IP_STATS            17
-
 #define PRIME_CLIENT_ID            17
-
 #define PRIME_STATE_ID            17
 
 #define DEFAULT_NFS_PRINCIPAL     "nfs" /* GSSAPI will expand this to nfs/host@DOMAIN */
@@ -224,6 +229,25 @@ typedef struct nfs_core_param__
   unsigned int dispatch_max_reqs;
   unsigned int dispatch_max_reqs_xprt;
   unsigned int stats_update_delay;
+  struct {
+    bool disabled;
+    struct {
+      uint32_t npart;
+      uint32_t size;
+      uint32_t cachesz;
+      uint32_t hiwat;
+      uint32_t recycle_npart;
+      uint32_t recycle_expire_s;
+      bool checksum;
+    } tcp;
+    struct {
+      uint32_t npart;
+      uint32_t size;
+      uint32_t cachesz;
+      uint32_t hiwat;
+      bool checksum;
+    } udp;
+  } drc;
   unsigned int long_processing_threshold;
   unsigned int long_processing_threshold_msec;
   unsigned int dump_stats_per_client;
@@ -346,7 +370,7 @@ typedef struct nfs_request_data
   struct nfs_request_lookahead lookahead;
   const nfs_function_desc_t *funcdesc;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
-  nfs_res_t res_nfs;
+  nfs_res_t *res_nfs;
   nfs_arg_t arg_nfs;
   struct timeval time_queued; /* The time at which a request was added
                                * to the worker thread queue. */
@@ -369,6 +393,7 @@ typedef struct rpc_call_channel
     } nvu;
     time_t last_called;
     CLIENT *clnt;
+    AUTH *auth;
     struct rpc_gss_sec gss_sec;
 } rpc_call_channel_t;
 
@@ -492,6 +517,23 @@ extern pool_t *request_pool;
 extern pool_t *request_data_pool;
 extern pool_t *dupreq_pool;
 extern pool_t *ip_stats_pool;
+extern pool_t *nfs_res_pool;
+
+/* XXX in 2.0 these are in nfs_dupreq.h */
+static inline nfs_res_t *
+alloc_nfs_res(void)
+{
+    nfs_res_t *res =
+        pool_alloc(nfs_res_pool, NULL); /* XXX can pool/ctor zero mem? */
+    memset(res, 0, sizeof(nfs_res_t));
+    return (res);
+}
+
+static inline void
+free_nfs_res(nfs_res_t *res)
+{
+    pool_free(nfs_res_pool, res);
+}
 
 struct nfs_worker_data__
 {
@@ -511,8 +553,6 @@ struct nfs_worker_data__
   sockaddr_t hostaddr;
   char       hostaddr_str[SOCK_NAME_MAX];
   sigset_t sigmask; /* masked signals */
-  unsigned int gc_in_progress;
-  unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *funcdesc;
@@ -591,8 +631,6 @@ extern pool_t *nfs_clientid_pool;
 /*
  *functions prototypes
  */
-enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
-                                   bool_t *dispatch);
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();
@@ -772,9 +810,6 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
-int is_rpc_call_valid(SVCXPRT *, struct svc_req *);
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *);
-int nfs_rpc_get_args(nfs_request_data_t *);
 
 #ifdef _USE_FSAL_UP
 void *fsal_up_process_thread( void * UnUsedArg );

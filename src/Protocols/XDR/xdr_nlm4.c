@@ -14,21 +14,21 @@
 #include "ganesha_rpc.h"
 #include "nlm4.h"
 
-bool_t xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)
+bool xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)
 {
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
   return TRUE;
 }
 
-bool_t xdr_nlm4_stat(XDR * xdrs, nlm4_stat * objp)
+bool xdr_nlm4_stat(XDR * xdrs, nlm4_stat * objp)
 {
   if(!xdr_nlm4_stats(xdrs, &objp->stat))
     return FALSE;
   return TRUE;
 }
 
-bool_t xdr_nlm4_res(XDR * xdrs, nlm4_res * objp)
+bool xdr_nlm4_res(XDR * xdrs, nlm4_res * objp)
 {
   if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
@@ -37,7 +37,7 @@ bool_t xdr_nlm4_res(XDR * xdrs, nlm4_res * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_holder(XDR * xdrs, nlm4_holder * objp)
+bool xdr_nlm4_holder(XDR * xdrs, nlm4_holder * objp)
 {
   if(!xdr_bool(xdrs, &objp->exclusive))
     return FALSE;
@@ -52,7 +52,7 @@ bool_t xdr_nlm4_holder(XDR * xdrs, nlm4_holder * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_testrply(XDR * xdrs, nlm4_testrply * objp)
+bool xdr_nlm4_testrply(XDR * xdrs, nlm4_testrply * objp)
 {
   if(!xdr_nlm4_stats(xdrs, &objp->stat))
     return FALSE;
@@ -68,7 +68,7 @@ bool_t xdr_nlm4_testrply(XDR * xdrs, nlm4_testrply * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_testres(XDR * xdrs, nlm4_testres * objp)
+bool xdr_nlm4_testres(XDR * xdrs, nlm4_testres * objp)
 {
   if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
@@ -77,7 +77,7 @@ bool_t xdr_nlm4_testres(XDR * xdrs, nlm4_testres * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_lock(XDR * xdrs, nlm4_lock * objp)
+bool xdr_nlm4_lock(XDR * xdrs, nlm4_lock * objp)
 {
   if(!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
     return FALSE;
@@ -94,7 +94,7 @@ bool_t xdr_nlm4_lock(XDR * xdrs, nlm4_lock * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_lockargs(XDR * xdrs, nlm4_lockargs * objp)
+bool xdr_nlm4_lockargs(XDR * xdrs, nlm4_lockargs * objp)
 {
   if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
@@ -111,7 +111,7 @@ bool_t xdr_nlm4_lockargs(XDR * xdrs, nlm4_lockargs * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_cancargs(XDR * xdrs, nlm4_cancargs * objp)
+bool xdr_nlm4_cancargs(XDR * xdrs, nlm4_cancargs * objp)
 {
   if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
@@ -124,7 +124,7 @@ bool_t xdr_nlm4_cancargs(XDR * xdrs, nlm4_cancargs * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_testargs(XDR * xdrs, nlm4_testargs * objp)
+bool xdr_nlm4_testargs(XDR * xdrs, nlm4_testargs * objp)
 {
   if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
@@ -135,7 +135,7 @@ bool_t xdr_nlm4_testargs(XDR * xdrs, nlm4_testargs * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_unlockargs(XDR * xdrs, nlm4_unlockargs * objp)
+bool xdr_nlm4_unlockargs(XDR * xdrs, nlm4_unlockargs * objp)
 {
   if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
@@ -144,21 +144,21 @@ bool_t xdr_nlm4_unlockargs(XDR * xdrs, nlm4_unlockargs * objp)
   return TRUE;
 }
 
-bool_t xdr_fsh4_mode(XDR * xdrs, fsh4_mode * objp)
+bool xdr_fsh4_mode(XDR * xdrs, fsh4_mode * objp)
 {
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
   return TRUE;
 }
 
-bool_t xdr_fsh4_access(XDR * xdrs, fsh4_access * objp)
+bool xdr_fsh4_access(XDR * xdrs, fsh4_access * objp)
 {
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
   return TRUE;
 }
 
-bool_t xdr_nlm4_share(XDR * xdrs, nlm4_share * objp)
+bool xdr_nlm4_share(XDR * xdrs, nlm4_share * objp)
 {
   if(!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
     return FALSE;
@@ -173,7 +173,7 @@ bool_t xdr_nlm4_share(XDR * xdrs, nlm4_share * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_shareargs(XDR * xdrs, nlm4_shareargs * objp)
+bool xdr_nlm4_shareargs(XDR * xdrs, nlm4_shareargs * objp)
 {
   if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
@@ -184,7 +184,7 @@ bool_t xdr_nlm4_shareargs(XDR * xdrs, nlm4_shareargs * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_shareres(XDR * xdrs, nlm4_shareres * objp)
+bool xdr_nlm4_shareres(XDR * xdrs, nlm4_shareres * objp)
 {
   if(!xdr_netobj(xdrs, &objp->cookie))
     return FALSE;
@@ -195,7 +195,7 @@ bool_t xdr_nlm4_shareres(XDR * xdrs, nlm4_shareres * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_free_allargs(XDR * xdrs, nlm4_free_allargs * objp)
+bool xdr_nlm4_free_allargs(XDR * xdrs, nlm4_free_allargs * objp)
 {
   if(!xdr_string(xdrs, &objp->name, LM_MAXNAMELEN))
     return FALSE;
@@ -204,7 +204,7 @@ bool_t xdr_nlm4_free_allargs(XDR * xdrs, nlm4_free_allargs * objp)
   return TRUE;
 }
 
-bool_t xdr_nlm4_sm_notifyargs(XDR * xdrs, nlm4_sm_notifyargs * objp)
+bool xdr_nlm4_sm_notifyargs(XDR * xdrs, nlm4_sm_notifyargs * objp)
 {
   if(!xdr_string(xdrs, &objp->name, SM_MAXSTRLEN))
     return FALSE;
