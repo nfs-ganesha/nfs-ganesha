@@ -1885,21 +1885,6 @@ struct fsal_obj_ops {
                                      lru_actions_t requests);
 
 /**
- * @brief Compare two file handles
- *
- * This function compares two file handles to see if they represent
- * the same file.
- *
- * @param[in] obj1_hdl A handle
- * @param[in] obj2_hdl Another handle
- *
- * @retval true if they are the same file.
- * @retval false if they aren't.
- */
-        bool (*compare)(struct fsal_obj_handle *obj1_hdl,
-                        struct fsal_obj_handle *obj2_hdl);
-
-/**
  * @brief Write wire handle
  *
  * This function writes a "wire" handle or file ID to the given

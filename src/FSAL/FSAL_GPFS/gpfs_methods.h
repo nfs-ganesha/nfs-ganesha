@@ -153,3 +153,6 @@ fsal_status_t gpfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t gpfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
                                          const struct req_op_context *opctx,
 					 const char *xattr_name);
+
+bool gpfs_compare(struct fsal_obj_handle *obj_hdl,
+		  struct fsal_obj_handle *other_hdl);

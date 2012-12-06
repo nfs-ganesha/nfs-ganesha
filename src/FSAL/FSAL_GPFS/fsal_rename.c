@@ -94,7 +94,7 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,    /* IN */
     return(status);
 
   /* optimisation : don't do the job twice if source dir = dest dir  */
-    if(old_hdl->ops->compare(old_hdl, new_hdl))
+    if(gpfs_compare(old_hdl, new_hdl))
     {
       src_equal_tgt = true;
       tgt_dir_attrs = src_dir_attrs;

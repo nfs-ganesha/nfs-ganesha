@@ -1118,28 +1118,6 @@ out:
 	return fsalstat(fsal_error, retval);
 }
 
-/* compare
- * compare two handles.
- * return true for equal, false for anything else
- */
-static bool compare(struct fsal_obj_handle *obj_hdl,
-                      struct fsal_obj_handle *other_hdl)
-{
-	struct vfs_fsal_obj_handle *myself, *other;
-
-	if( !other_hdl)
-		return false;
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	other = container_of(other_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if((obj_hdl->type != other_hdl->type) ||
-	   (myself->handle->handle_type != other->handle->handle_type) ||
-	   (myself->handle->handle_bytes != other->handle->handle_bytes))
-		return false;
-	return memcmp(myself->handle->f_handle,
-		      other->handle->f_handle,
-		      myself->handle->handle_bytes) ? false : true;
-}
-
 /* file_truncate
  * truncate a file to the size specified.
  * size should really be off_t...
@@ -1380,7 +1358,6 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lock_op = vfs_lock_op;
 	ops->close = vfs_close;
 	ops->lru_cleanup = vfs_lru_cleanup;
-	ops->compare = compare;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
         
