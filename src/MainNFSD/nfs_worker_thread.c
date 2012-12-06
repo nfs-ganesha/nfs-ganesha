@@ -546,7 +546,6 @@ nfs_rpc_execute(request_data_t    * preq,
   nfs_stat_type_t              stat_type;
   int                          port;
   int                          rc;
-  int                          do_dupreq_cache;
   export_perms_t             * pexport_perms = &pworker_data->export_perms;
   int                          protocol_options = 0;
   fsal_op_context_t          * pfsal_op_ctx = NULL;
