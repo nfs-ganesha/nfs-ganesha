@@ -145,7 +145,7 @@ PTFSAL_Init(fsal_parameter_t * init_info    /* IN */)
   ipc_ccl_to_component_trc_level_map[FSI_WARNING]  = NIV_WARN;
   ipc_ccl_to_component_trc_level_map[FSI_NOTICE]   = NIV_WARN;
   ipc_ccl_to_component_trc_level_map[FSI_STAT]     = NIV_EVENT;
-  ipc_ccl_to_component_trc_level_map[FSI_INFO]     = NIV_INFO;
+  ipc_ccl_to_component_trc_level_map[FSI_INFO]     = NIV_DEBUG;
   ipc_ccl_to_component_trc_level_map[FSI_DEBUG]    = NIV_DEBUG;
 
   /* FSI CCL Layer INIT */
