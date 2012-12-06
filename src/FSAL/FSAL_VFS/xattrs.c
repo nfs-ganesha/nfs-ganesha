@@ -433,8 +433,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
   unsigned int cookie = argcookie ;
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
-  int mntfd = -1 ;
-  int retval = -1 ;
+  fsal_errors_t fe;
 
   char names[MAXPATHLEN], *ptr;
   size_t namesize;
@@ -445,7 +444,6 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
     return fsalstat( ERR_FSAL_FAULT, 0 ) ;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-  mntfd = vfs_get_root_fd(obj_hdl->export);
 
   /* Deal with special cookie */
   if( cookie == XATTR_RW_COOKIE ) cookie = XATTR_COUNT ;
@@ -486,11 +484,10 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
     }
 
   /* get the path of the file in Lustre */
-  fd = open_by_handle_at(mntfd, obj_handle->handle, O_RDWR);
+  fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
   if( fd < 0 ) 
    {
-     retval = errno ;
-     return fsalstat( posix2fsal_error( retval ), retval ) ;
+     return fsalstat( fe, -fd);
    }
 
   /* get xattrs */
@@ -555,18 +552,14 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
   unsigned int index;
   int rc;
   int found = FALSE;
-  int retval = 0 ;
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
-  int mntfd = -1 ;
 
   /* sanity checks */
   if(!obj_hdl || !xattr_name)
     return fsalstat(ERR_FSAL_FAULT, 0);
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-  mntfd = vfs_get_root_fd(obj_hdl->export);
-
   for(index = 0; index < XATTR_COUNT; index++)
     {
       if(!strcmp(xattr_list[index].xattr_name, xattr_name))
@@ -579,11 +572,11 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
   /* search in xattrs */
   if(!found)
     {
-      fd = open_by_handle_at(mntfd, obj_handle->handle, O_RDWR);
+      fsal_errors_t fe;
+      fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
       if( fd < 0 ) 
       {
-        retval = errno ;
-        return fsalstat( posix2fsal_error( retval ), retval ) ;
+        return fsalstat( fe, -fd);
       }
 
       errno = 0;
@@ -620,12 +613,9 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 {
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
-  int mntfd = -1 ;
-  int retval = -1 ;
   int rc = 0 ;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-  mntfd = vfs_get_root_fd(obj_hdl->export);
 
   /* sanity checks */
   if(!obj_hdl || !p_output_size || !buffer_addr)
@@ -640,12 +630,12 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
   else if(xattr_id >= XATTR_COUNT)
     {
       char attr_name[MAXPATHLEN];
+      fsal_errors_t fe;
  
-      fd = open_by_handle_at(mntfd, obj_handle->handle, O_RDWR);
+      fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
       if( fd < 0 ) 
       {
-        retval = errno ;
-        return fsalstat( posix2fsal_error( retval ), retval ) ;
+        return fsalstat( fe, -fd);
       }
 
       /* get the name for this attr */
@@ -695,13 +685,11 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 {
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
-  int mntfd = -1 ;
-  int retval = -1 ;
   int rc = 0 ;
   unsigned int index;
+  fsal_errors_t fe;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-  mntfd = vfs_get_root_fd(obj_hdl->export);
 
   /* sanity checks */
   if(!obj_hdl || !p_output_size || !buffer_addr || !xattr_name)
@@ -717,11 +705,10 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
         }
     }
 
-  fd = open_by_handle_at(mntfd, obj_handle->handle, O_RDWR);
+  fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
   if( fd < 0 ) 
     {
-      retval = errno ;
-      return fsalstat( posix2fsal_error( retval ), retval ) ;
+      return fsalstat( fe, -fd);
     }
 
   /* is it an xattr? */
@@ -750,22 +737,19 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 {
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
-  int mntfd = -1 ;
-  int retval = -1 ;
+  fsal_errors_t fe;
   int rc = 0 ;
   size_t len;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-  mntfd = vfs_get_root_fd(obj_hdl->export);
 
   /* remove final '\n', if any */
   chomp_attr_value((char *)buffer_addr, buffer_size);
 
-  fd = open_by_handle_at(mntfd, obj_handle->handle, O_RDWR);
+  fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
   if( fd < 0 ) 
     {
-      retval = errno ;
-      return fsalstat( posix2fsal_error( retval ), retval ) ;
+      return fsalstat( fe, -fd);
     }
 
   len = strnlen((char *)buffer_addr, buffer_size);
@@ -795,12 +779,10 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
   char name[MAXNAMLEN];
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
-  int mntfd = -1 ;
-  int retval = -1 ;
+  fsal_errors_t fe;
   int rc = 0 ;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-  mntfd = vfs_get_root_fd(obj_hdl->export);
 
   if(attr_is_read_only(xattr_id))
     return fsalstat(ERR_FSAL_PERM, 0 ) ;
@@ -808,11 +790,10 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
     return fsalstat(ERR_FSAL_PERM, 0 ) ;
 
   /* build fid path in lustre */
-  fd = open_by_handle_at(mntfd, obj_handle->handle, O_RDWR);
+  fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
   if( fd < 0 ) 
     {
-      retval = errno ;
-      return fsalstat( posix2fsal_error( retval ), retval ) ;
+      return fsalstat( fe, -fd);
     }
 
   rc = xattr_id_to_name(fd, xattr_id, name);
@@ -864,17 +845,13 @@ fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
   char name[MAXNAMLEN];
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
-  int mntfd = -1 ;
-  int retval = 0 ;
+  fsal_errors_t fe;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-  mntfd = vfs_get_root_fd(obj_hdl->export);
-
-  fd = open_by_handle_at(mntfd, obj_handle->handle, O_RDWR);
+  fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
   if( fd < 0 ) 
     {
-      retval = errno ;
-      return fsalstat( posix2fsal_error( retval ), retval ) ;
+      return fsalstat( fe, -fd ) ;
     }
 
   rc = xattr_id_to_name(fd, xattr_id, name);
@@ -899,18 +876,15 @@ fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 {
   struct vfs_fsal_obj_handle * obj_handle = NULL ;
   int fd = -1 ;
-  int mntfd = -1 ;
   int rc = 0 ;
-  int retval = 0 ;   
+  fsal_errors_t fe;
 
   obj_handle = container_of( obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-  mntfd = vfs_get_root_fd(obj_hdl->export);
 
-  fd = open_by_handle_at(mntfd, obj_handle->handle, O_RDWR);
+  fd = vfs_fsal_open(obj_handle, O_RDWR, &fe);
   if( fd < 0 ) 
     {
-      retval = errno ;
-      return fsalstat( posix2fsal_error( retval ), retval ) ;
+      return fsalstat( fe, -fd) ;
     }
 
   rc = fremovexattr(fd, xattr_name);

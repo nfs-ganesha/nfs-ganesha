@@ -52,6 +52,8 @@ struct vfs_fsal_obj_handle {
 	} u;
 };
 
+int vfs_fsal_open(struct vfs_fsal_obj_handle *, int, fsal_errors_t *);
+
 static inline bool
 vfs_unopenable_type(object_file_type_t type)
 {
