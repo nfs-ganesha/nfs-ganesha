@@ -182,7 +182,7 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
       /* >> Be carefull you don't traverse junction nor follow symlinks << */
       inogen_t object;
       int type;
-      char i_snap = parent_hdl->handle->i_snap ;
+      char i_snap __attribute__((unused)) = parent_hdl->handle->i_snap ;
 
       ZFSFSAL_VFS_RDLock();
       p_vfs = ZFSFSAL_GetVFS( parent_hdl->handle );
@@ -681,7 +681,6 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
                                   bool *eof)
 {
 	struct zfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	off_t seekloc = 0;
         creden_t cred ;
@@ -693,7 +692,6 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 
 	if(whence != NULL) {
 		if(whence->size != sizeof(off_t)) {
-			fsal_error = posix2fsal_error(EINVAL);
 			retval = errno;
 			goto out;
 		}
@@ -711,7 +709,6 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
         p_vfs = ZFSFSAL_GetVFS( myself->handle );
         if(!p_vfs)
          {
-             fsal_error = ERR_FSAL_NOENT ;
              retval = 0 ;
              goto out;
          }

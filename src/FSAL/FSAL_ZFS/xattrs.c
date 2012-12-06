@@ -753,7 +753,6 @@ fsal_status_t tank_setextattr_value(struct fsal_obj_handle *obj_hdl,
 {
   struct zfs_fsal_obj_handle * obj_handle = NULL ;
   int rc = 0 ;
-  size_t len;
   creden_t cred ;
 
   obj_handle = container_of( obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
@@ -761,8 +760,6 @@ fsal_status_t tank_setextattr_value(struct fsal_obj_handle *obj_hdl,
   /* remove final '\n', if any */
   chomp_attr_value((char *)buffer_addr, buffer_size);
 
-
-  len = strnlen((char *)buffer_addr, buffer_size);
 
   cred.uid = opctx->creds->caller_uid ;
   cred.gid = opctx->creds->caller_gid ;
