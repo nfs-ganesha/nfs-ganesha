@@ -160,37 +160,6 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
     LogTest("SUCCESS: %s didn't produce anything", string);
 }
 
-#define TestFormat(format, args...)                     \
-  do {                                                  \
-    char compare[2048], buff[2048];                     \
-    sprintf(compare, format, ## args);                  \
-    log_snprintf(buff, 2048, format, ## args);          \
-    if (strcmp(compare, buff) != 0)                     \
-      {                                                 \
-        LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",  \
-                format, buff, compare);                 \
-        exit(1);                                        \
-      }                                                 \
-    else                                                \
-      LogTest("SUCCESS: %s produced \"%s\"", format, buff); \
-  } while (0)
-
-#define TestGaneshaFormat(expect, compare, format, args...) \
-  do {                                                  \
-    char buff[2048];                                    \
-    log_snprintf(buff, 2048, format, ## args);          \
-    if (strcmp(compare, buff) != 0 && expect)           \
-      {                                                 \
-        LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",  \
-                format, buff, compare);                 \
-        exit(1);                                        \
-      }                                                 \
-    else if (expect)                                    \
-      LogTest("SUCCESS: %s produced \"%s\"", format, buff); \
-    else                                                \
-      LogTest("FAILURE (EXPECTED):  %s produced \"%s\"", format, buff); \
-  } while (0)
-
 /**
  *  Tests about Log streams and special printf functions.
  */
@@ -225,8 +194,6 @@ void Test1(char *str, char *file)
 
   LogTest("------------------------------------------------------");
 
-  log_snprintf(tempstr, sizeof(tempstr), "Test log_snprintf");
-  LogTest("%s", tempstr);
   LogTest("\nTesting possible environment variable");
   LogTest("COMPONENT_MEMCORRUPT debug level is %s",
           ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
@@ -340,111 +307,6 @@ void Test1(char *str, char *file)
   TestFullDebug (TRUE,  tempstr, COMPONENT_MAIN, "LogFullDebug (should print)");
 }
 
-void Test2()
-{
-  char tempstr[2048];
-  int  n1, n2;
-
-  /*
-   * Set up for tests that will verify what was actually produced by log messages.
-   * This is used to test log levels and to test the log_vnsprintf function.
-   */
-  SetComponentLogBuffer(COMPONENT_MAIN, tempstr);
-  SetComponentLogBuffer(COMPONENT_INIT, tempstr);
-  SetComponentLogLevel(COMPONENT_MAIN, NIV_EVENT);
-
-  LogTest("------------------------------------------------------");
-  LogTest("Test string/char formats");
-  TestFormat("none");
-  TestFormat("String: %s", "str");
-  TestFormat("String: %12s", "str");
-  TestFormat("String: %-12s", "str");
-  TestFormat("String: %12s", "too long string");
-  TestFormat("String: %-12s", "too long string");
-  TestFormat("%c", (char) 65);
-  // Not tested lc, ls, C, S
-
-  LogTest("------------------------------------------------------");
-  LogTest("Test integer formats");
-  TestFormat("Integer: %d %d %i %i %u %s", 1, -1, 2, -2, 3, "extra");
-  TestFormat("Octal and Hex: 0%o 0x%x 0x%X %s", 0123, 0xabcdef, 0xABCDEF, "extra");
-  TestFormat("Field Length: %3d %s", 1, "extra");
-  TestFormat("Variable Field Length: %*d %s", 5, 123, "extra");
-  TestFormat("Alignment flags: %+d %+d %-5d %-5d %05d %05d % d % d %s", 2, -2, 333, -333, 444, -444, 5, -5, "extra");
-  // TestFormat("Two Flags: %-05d %-05d %0-5d %0-5d %s", 333, -333, 444, -444, "extra");
-  // TestFormat("Two Flags: %+ d %+ d % +d % +d %s", 333, -333, 444, -444, "extra");
-  TestFormat("Two Flags: %-+5d %-+5d %+-5d %+-5d %s", 333, -333, 444, -444, "extra");
-  TestFormat("Two Flags: %- 5d %- 5d % -5d % -5d %s", 333, -333, 444, -444, "extra");
-  TestFormat("Two Flags: %+05d %+05d %0+5d %0+5d %s", 333, -333, 444, -444, "extra");
-  TestFormat("Two Flags: % 05d % 05d %0 5d %0 5d %s", 333, -333, 444, -444, "extra");
-  TestFormat("Use of # Flag: %#x %#3x %#05x %#-5x %-#5x %0#5x", 1, 2, 3, 4, 5, 6);
-  // TestFormat("Many Flags: %#-0 +#-0 +#-0 +5d", 4);
-  TestFormat("Special Flags (may not be supported) %'d %Id %s", 12345, 67, "extra");
-
-  LogTest("------------------------------------------------------");
-  LogTest("Test floating point formats");
-  TestFormat("%e %E %e %E %s", 1.1, 1.1, 1.1E10, 1.1E10, "extra");
-  TestFormat("%f %F %f %F %s", 1.1, 1.1, 1.1E10, 1.1E10, "extra");
-  TestFormat("%g %G %g %G %s", 1.1, 1.1, 1.1E10, 1.1E10, "extra");
-  TestFormat("%a %A %a %A %s", 1.1, 1.1, 1.1E10, 1.1E10, "extra");
-  TestFormat("%Le %LE %Le %LE %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%Lf %LF %Lf %LF %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%Lg %LG %Lg %LG %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%La %LA %La %LA %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%lle %llE %lle %llE %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%llf %llF %llf %llf %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%llg %llG %llg %llG %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("%lla %llA %lla %llA %s", (long double) 1.1, (long double) 1.1, (long double) 1.1E10, (long double) 1.1E10, "extra");
-  TestFormat("Field Length: %8f %8.2f %8f %8.2f %s", 1.1, 1.1, 1.1E10, 1.1E3, "extra");
-  TestFormat("Field Length: %08f %08.2f %08f %08.2f %s", 1.1, 1.1, 1.1E10, 1.1E3, "extra");
-  TestFormat("Field Length: %-8f %-8.2f %-8f %-8.2f %s", 1.1, 1.1, 1.1E10, 1.1E3, "extra");
-  TestFormat("Variable Field Length: %*.*f %*.2f %6.*f %s", 6, 2, 1.1, 6, 2.2, 2, 3.3, "extra");
-  TestFormat("Negative:      %e %E %e %E %s    ", -1.1, -1.1, -1.1E10, -1.1E10, "extra");
-  TestFormat("With '+' flag: %+e %+E %+e %+E %s", 1.1, 1.1, 1.1E10, 1.1E10, "extra");
-  TestFormat("With ' ' flag: % e % E % e % E %s", 1.1, 1.1, 1.1E10, 1.1E10, "extra");
-  TestFormat("With '#' flag: %#8.0e %8.0e %s", 1.0, 1.0, "extra");
-  TestFormat("With '#' flag: %#g %g %#5g %#5g %5g %s", 1.0, 1.0, 2.0, 10.0, 2.0, "extra");
-
-  LogTest("------------------------------------------------------");
-  LogTest("Test some special formats");
-  TestFormat("pointer: %p %s", &n1, "extra");
-#if 0
-// we can't support %n due to security considerations
-  TestFormat("count: 12345678%n %s", &n1, "extra");
-  snprintf(tempstr, 2048, "count: 12345678%n %s", &n1, "extra");
-  log_snprintf(tempstr, 2048, "count: 12345678%n %s", &n2, "extra");
-  if (n1 != n2)
-    {
-      LogTest("FAILURE: 12345678%%n produced %d expected %d", n2, n1);
-      exit(1);
-    }
-  LogTest("SUCCESS: 12345678%%n produced %d", n2);
-#endif
-  errno = EIO;
-  TestFormat("strerror: %m %64m %s", "extra");
-  TestFormat("percent char: %% %s", "extra");
-
-  LogTest("------------------------------------------------------");
-  LogTest("Test integer size qualifier tags");
-  TestFormat("%hhd %s", (char) 1, "extra");
-  TestFormat("%hd %s", (short) 500, "extra");
-  TestFormat("%lld %s", (long long) 12345678, "extra");
-  TestFormat("%Ld %s", (long long) 12345678, "extra");
-  TestFormat("%ld %s", (long) 12345, "extra");
-  TestFormat("%qd %s", (long long) 12345678, "extra");
-  TestFormat("%jd %s", (long long) 1, "extra");
-  TestFormat("%td %s", (char *) &n1 - (char *) &n2, "extra");
-  TestFormat("%zd %s", sizeof(int), "extra");
-
-  /*
-   * Ganesha can't properly support the $ parameter index tag, so don't bother testing, even if it does work
-   * when the indices are in ascending order.
-  TestFormat("%1$08x", 6);
-  TestFormat("%3$llx %2$d %1d", 1, 2, (long long)0x12345678);
-   */
-
-}
-
 void run_Tests(int all, char *arg, char *str, char *file)
 {
   SetNameFunction(arg);
@@ -453,7 +315,6 @@ void run_Tests(int all, char *arg, char *str, char *file)
     {
     Test1(str, file);
     }
-  Test2();
 }
 
 void *run_MT_Tests(void *arg)

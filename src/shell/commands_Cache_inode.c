@@ -394,8 +394,8 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
                                        &context->context,
                                        &context->cache_status)) == NULL)
         {
-          log_fprintf(output, "Error executing cache_inode_get( \"%s\" ) : %J%r\n",
-                      str_path, ERR_CACHE_INODE, context->cache_status);
+          fprintf(output, "Error executing cache_inode_get( \"%s\" ) : %J%r\n",
+                  str_path, ERR_CACHE_INODE, context->cache_status);
 
           return context->cache_status;
         }
@@ -462,9 +462,9 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
                                           &context->context,
                                           &context->cache_status)) == NULL)
         {
-          log_fprintf(output,
-                      "Error executing cache_inode_lookup( \"%s\", \"%s\" ) : %J%r\n",
-                      tmp_path, name.name, ERR_CACHE_INODE, context->cache_status);
+          fprintf(output,
+                  "Error executing cache_inode_lookup( \"%s\", \"%s\" ) : %J%r\n",
+                  tmp_path, name.name, ERR_CACHE_INODE, context->cache_status);
 
           return context->cache_status;
         }
@@ -554,8 +554,8 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   rc = cache_inode_read_conf_hash_parameter(config_file, &cache_param);
   if(rc != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_read_conf_hash_parameter : %J%r\n",
-                  ERR_CACHE_INODE, rc);
+      fprintf(output, "Error executing cache_inode_read_conf_hash_parameter : %J%r\n",
+              ERR_CACHE_INODE, rc);
 
       return 1;
     }
@@ -586,8 +586,8 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   rc = cache_inode_read_conf_gc_policy(config_file, &gcpol);
   if(rc != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_read_conf_gc_policy : %J%r\n",
-                  ERR_CACHE_INODE, rc);
+      fprintf(output, "Error executing cache_inode_read_conf_gc_policy : %J%r\n",
+              ERR_CACHE_INODE, rc);
       return 1;
     }
 
@@ -688,9 +688,9 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/xfs", FSAL_MAX_PATH_LEN, &pathroot)))
   rc = cache_inode_read_conf_client_parameter(config_file, &cache_client_param);
   if(rc != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output,
-                  "Error executing cache_inode_read_conf_client_parameter : %J%r\n",
-                  ERR_CACHE_INODE, rc);
+      fprintf(output,
+              "Error executing cache_inode_read_conf_client_parameter : %J%r\n",
+              ERR_CACHE_INODE, rc);
       return 1;
     }
 
@@ -698,9 +698,9 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/xfs", FSAL_MAX_PATH_LEN, &pathroot)))
   rc = cache_content_read_conf_client_parameter(config_file, &datacache_client_param);
   if(rc != CACHE_CONTENT_SUCCESS)
     {
-      log_fprintf(output,
-                  "Error executing cache_content_read_conf_client_parameter : %J%r\n",
-                  ERR_CACHE_INODE, rc);
+      fprintf(output,
+              "Error executing cache_content_read_conf_client_parameter : %J%r\n",
+              ERR_CACHE_INODE, rc);
       return 1;
     }
 #ifdef OLD_LOGGING
@@ -721,9 +721,9 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/xfs", FSAL_MAX_PATH_LEN, &pathroot)))
   /* Reading the datacache core parameter */
   if(rc != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output,
-                  "Error executing cache_content_read_conf_core_parameter : %J%r\n",
-                  ERR_CACHE_INODE, rc);
+      fprintf(output,
+              "Error executing cache_content_read_conf_core_parameter : %J%r\n",
+              ERR_CACHE_INODE, rc);
       return 1;
     }
 
@@ -951,8 +951,8 @@ int fn_Cache_inode_cd(int argc, /* IN : number of args in argv */
                                                  &context->cache_status)) !=
      CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_access : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_access : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
@@ -1054,8 +1054,8 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
                          &context->context,
                          &context->cache_status) != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_getattr( \"%s\" ) : %J%r\n",
-                  file, ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_getattr( \"%s\" ) : %J%r\n",
+              file, ERR_CACHE_INODE, context->cache_status);
 
       return context->cache_status;
     }
@@ -1336,8 +1336,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                                   &context->cache_status) != CACHE_INODE_SUCCESS)
             {
               if(!flag_z)
-                log_fprintf(output, "Error executing cache_inode_readlink : %J%r\n",
-                            ERR_CACHE_INODE, context->cache_status);
+                fprintf(output, "Error executing cache_inode_readlink : %J%r\n",
+                        ERR_CACHE_INODE, context->cache_status);
 
               return context->cache_status;
             }
@@ -1350,8 +1350,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                              &context->cache_status) != CACHE_INODE_SUCCESS)
         {
           if(!flag_z)
-            log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
-                        ERR_CACHE_INODE, context->cache_status);
+            fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
+                    ERR_CACHE_INODE, context->cache_status);
 
           return context->cache_status;
         }
@@ -1462,8 +1462,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                                       &context->context,
                                       &context->cache_status) != CACHE_INODE_SUCCESS)
                 {
-                  log_fprintf(output, "Error executing cache_inode_readlink : %J%r\n",
-                              ERR_CACHE_INODE, context->cache_status);
+                  fprintf(output, "Error executing cache_inode_readlink : %J%r\n",
+                          ERR_CACHE_INODE, context->cache_status);
                   /* after successful cache_inode_readdir, pentry_tmp may be
                    * read locked */
                   return context->cache_status;
@@ -1478,8 +1478,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                                      &context->context,
                                      &context->cache_status) != CACHE_INODE_SUCCESS)
                 {
-                  log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
-                              ERR_CACHE_INODE, context->cache_status);
+                  fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
+                          ERR_CACHE_INODE, context->cache_status);
                   /* after successful cache_inode_readdir, pentry_tmp may be
                    * read locked */
                   return context->cache_status;
@@ -1496,8 +1496,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                                      &context->context,
                                      &context->cache_status) != CACHE_INODE_SUCCESS)
                 {
-                  log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
-                              ERR_CACHE_INODE, context->cache_status);
+                  fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
+                          ERR_CACHE_INODE, context->cache_status);
                   /* after successful cache_inode_readdir, pentry_tmp may be
                    * read locked */
                   return context->cache_status;
@@ -1785,8 +1785,8 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
 
   if((subdir_hdl == NULL) || (context->cache_status != 0))
     {
-      log_fprintf(output, "Error executing cache_inode_create(DIRECTORY) : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_create(DIRECTORY) : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
 
       return context->cache_status;
     }
@@ -1932,8 +1932,8 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
                       &context->client,
                       &context->context, &context->cache_status) != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_link : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_link : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
@@ -2086,8 +2086,8 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
                                       &context->client,
                                       &context->context, &context->cache_status)) == NULL)
     {
-      log_fprintf(output, "Error executing cache_inode_create(SYMBOLIC_LINK) : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_create(SYMBOLIC_LINK) : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
 
       return context->cache_status;
     }
@@ -2274,8 +2274,8 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
                                       &context->client,
                                       &context->context, &context->cache_status)) == NULL)
     {
-      log_fprintf(output, "Error executing cache_inode_create(DIRECTORY) : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_create(DIRECTORY) : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
 
       return context->cache_status;
     }
@@ -2439,8 +2439,8 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
                         &context->client,
                         &context->context, &context->cache_status) != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_rename : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_rename : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
 
       return context->cache_status;
     }
@@ -2575,8 +2575,8 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
                      &context->client, &context->context, &context->cache_status);
   if(context->cache_status != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_remove : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_remove : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
@@ -2768,8 +2768,8 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
                                          &context->cache_status)) != CACHE_INODE_SUCCESS)
 
     {
-      log_fprintf(output, "Error executing cache_inode_setattr : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_setattr : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
@@ -2942,8 +2942,8 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
                                                  &context->cache_status)) !=
      CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_access : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_access : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
   else
@@ -3056,8 +3056,8 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
   if(FSAL_IS_ERROR(FSAL_str2name(file, MAXPATHLEN, &name)))
     {
       context->cache_status = CACHE_INODE_FSAL_ERROR;
-      log_fprintf(output, "Error opening file during cache_inode_add_cache : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error opening file during cache_inode_add_cache : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
 
     }
@@ -3070,8 +3070,8 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
                               &context->context,
                               &context->cache_status) != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error opening file during cache_inode_add_cache : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error opening file during cache_inode_add_cache : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 #endif
@@ -3082,8 +3082,8 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
   if(cache_inode_add_data_cache(obj_hdl, &context->client, &context->context,
                                 &context->cache_status) != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_add_cache : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_add_cache : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
@@ -3195,8 +3195,8 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
      (obj_hdl, &context->client, &context->context,
       &context->cache_status) != CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_release_cache : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_release_cache : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 
@@ -3895,8 +3895,8 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
                           &context->context,
                           TRUE, &context->cache_status) != CACHE_INODE_SUCCESS)
         {
-          log_fprintf(output, "Error executing cache_inode_read : %J%r\n",
-                      ERR_CACHE_INODE, context->cache_status);
+          fprintf(output, "Error executing cache_inode_read : %J%r\n",
+                  ERR_CACHE_INODE, context->cache_status);
 
           return context->cache_status;
         }
@@ -4354,8 +4354,8 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
                           &context->context,
                           TRUE, &context->cache_status) != CACHE_INODE_SUCCESS)
         {
-          log_fprintf(output, "Error executing cache_inode_write : %J%r\n",
-                      ERR_CACHE_INODE, context->cache_status);
+          fprintf(output, "Error executing cache_inode_write : %J%r\n",
+                  ERR_CACHE_INODE, context->cache_status);
 
           return context->cache_status;
         }
@@ -4571,8 +4571,8 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
                                                        &context->cache_status)) !=
      CACHE_INODE_SUCCESS)
     {
-      log_fprintf(output, "Error executing cache_inode_open_by_name : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
+      fprintf(output, "Error executing cache_inode_open_by_name : %J%r\n",
+              ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
 

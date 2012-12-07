@@ -668,17 +668,7 @@ void print_fsal_status(FILE * output, fsal_status_t status)
 
   char _str_[256];
 
-#ifdef _USE_GHOSTFS
-
-  log_snprintf(_str_, 256, "%J%r,%J%r",
-               ERR_FSAL, status.major, ERR_GHOSTFS, status.minor);
-
-#else
-
-  log_snprintf(_str_, 256, "%J%r, filesystem status: %d",
-               ERR_FSAL, status.major, status.minor);
-
-#endif
+  MakeLogError(_str_, sizeof(_str_), ERR_FSAL, status.major, status.minor);
 
   fprintf(output, "%s", _str_);
 }
@@ -694,18 +684,7 @@ void print_fsal_status(FILE * output, fsal_status_t status)
  */
 void fsal_status_to_string(char * output, fsal_status_t status)
 {
-
-#ifdef _USE_GHOSTFS
-
-  log_snprintf(output, sizeof(output), "%J%r,%J%r",
-               ERR_FSAL, status.major, ERR_GHOSTFS, status.minor);
-
-#else
-
-  log_snprintf(output, sizeof(output), "%J%r, filesystem status: %d",
-               ERR_FSAL, status.major, status.minor);
-
-#endif
+  MakeLogError(_str_, 256, ERR_FSAL, status.major, status.minor);
 }
 
 
