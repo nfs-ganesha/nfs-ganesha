@@ -38,7 +38,7 @@ option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_LUSTRE "build LUSTRE FSAL" ON)
-option(USE_FSAL_XFS "build XFS FSAL" ON)
+option(USE_FSAL_XFS "build XFS FSAL" OFF)
 
 # FSALs which are disabled by default
 option(USE_FSAL_HPSS "build HPSS FSAL" OFF)
@@ -302,8 +302,10 @@ set(PROTOCOLS
 
 if(USE_9P)
   set(PROTOCOLS ${PROTOCOLS} 9p)
-  set(_USE_9P ON)
 endif(USE_9P)
+
+set(_USE_9P ${USE_9P})
+set(_USE_9P_RDMA ${USE_9P_RDMA})
 
 if(USE_DBUS)
   set(PROTOCOLS ${PROTOCOLS} gshdbus)
