@@ -39,7 +39,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include <sys/syscall.h>
 #include <ctype.h>
 #include <mntent.h>

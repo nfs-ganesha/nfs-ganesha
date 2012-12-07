@@ -174,10 +174,9 @@ if(USE_FSAL_LUSTRE)
 endif(USE_FSAL_LUSTRE)
 
 if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
-  find_file(XATTR_H attr/xattr.h)
   find_library(SHOOK_LIB shooksvr)
-  if(XATTR_H_NOTFOUND OR SHOOK_LIB_NOTFOUND)
-    message(WARNING "Cannot find SHOOK xattrs or library. Disabling SHOOK build")
+  if(SHOOK_LIB_NOTFOUND)
+    message(WARNING "Cannot find SHOOK library. Disabling SHOOK build")
     set(USE_FSAL_SHOOK OFF)
   endif(SHOOK_LIB_NOTFOUND)
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
@@ -252,7 +251,6 @@ add_definitions(-DHAVE_CONFIG_H)
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
   "${PROJECT_SOURCE_DIR}/include"
-  "${PROJECT_SOURCE_DIR}/libtirpc/tirpc/"
 )
 
 # Pull in TIRPC and build it
