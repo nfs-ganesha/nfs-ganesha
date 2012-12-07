@@ -1446,3 +1446,26 @@ fsal_boolean_t fsal_error_is_info(fsal_status_t status)
     }
 }
 
+/**
+ *  fsal_error_is_event:
+ *  Indicates if an FSAL error should be posted as an event
+ *  \param status(input): The fsal status whom event is to be tested.
+ *  \return - TRUE if the error event is to be posted.
+ *          - FALSE if the error event is NOT to be posted.
+ *            
+ */
+fsal_boolean_t fsal_error_is_event(fsal_status_t status)
+{
+
+  switch (status.major)
+    {
+
+    case ERR_FSAL_IO:
+    case ERR_FSAL_STALE:
+      return TRUE;
+
+    default:
+      return FALSE;
+    }
+}
+
