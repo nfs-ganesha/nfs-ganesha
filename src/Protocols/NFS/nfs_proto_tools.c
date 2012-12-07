@@ -331,6 +331,8 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_BAD_COOKIE:
     case CACHE_INODE_FILE_BIG:
     case CACHE_INODE_FILE_OPEN:
+    case CACHE_INODE_FSAL_XDEV:
+    case CACHE_INODE_FSAL_MLINK:
       /* Non retryable error, return error to client */
       return false;
       break;

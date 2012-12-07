@@ -170,8 +170,9 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_FILE_BIG:              return STATE_FILE_BIG;
       case CACHE_INODE_KILLED:                return STATE_KILLED;
       case CACHE_INODE_FILE_OPEN:             return STATE_FILE_OPEN;
+    default:
+	    return STATE_CACHE_INODE_ERR;
     }
-  return STATE_CACHE_INODE_ERR;
 }
 
 /**
