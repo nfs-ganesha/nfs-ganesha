@@ -288,9 +288,7 @@ const fsal_name_t FSAL_DOT_DOT;
 #define FSAL_NAME_INITIALIZER {"",0}
 #define FSAL_PATH_INITIALIZER {"",0}
 
-#ifdef _USE_GHOSTFS
-#include "FSAL/FSAL_GHOST_FS/fsal_types.h"
-#elif defined(_USE_HPSS)
+#if defined(_USE_HPSS)
 #include "FSAL/FSAL_HPSS/fsal_types.h"
 #elif defined ( _USE_PROXY )
 #include "FSAL/FSAL_PROXY/fsal_types.h"
