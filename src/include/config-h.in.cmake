@@ -27,6 +27,7 @@
 #cmakedefine KRB5_VERSION @KRB5_VERSION@
 #cmakedefine LINUX 1
 #cmakedefine FREEBSD 1
+#cmakedefine APPLE 1
 #cmakedefine _HAVE_GSSAPI 1
 #cmakedefine HAVE_STRING_H 1
 #cmakedefine HAVE_STRINGS_H 1

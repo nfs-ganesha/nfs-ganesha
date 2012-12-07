@@ -81,6 +81,13 @@ if(ERROR_INJECTION)
     )
 endif(ERROR_INJECTION)
 
+if(APPLE)
+  set(support_STAT_SRCS
+    ${support_STAT_SRCS}
+    misc.c
+    )
+endif(APPLE)
+
 add_library(support STATIC ${support_STAT_SRCS})
 
  
