@@ -393,9 +393,6 @@ char *ReturnLevelInt(int level);
 int MakeLogError(char *buffer, int num_family, int num_error, int status,
                   int ma_ligne);
 
-int log_snprintf(char *out, size_t n, char *format, ...);
-int log_fprintf(FILE * file, char *format, ...);
-
 /* previously at log_macros.h */
 void RegisterCleanup(cleanup_list_element *clean);
 void Cleanup(void);

@@ -996,29 +996,6 @@ int MakeLogError(char *buffer, int num_family, int num_error, int status,
 
 #define MAX_STR_TOK LOG_MAX_STRLEN
 
-int log_snprintf(char *out, size_t n, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-  rc = vsnprintf(out, n, format, arguments);
-  va_end(arguments);
-
-  return rc;
-}
-
-int log_fprintf(FILE * file, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-  rc = vfprintf(file, format, arguments);
-  va_end(arguments);
-  return rc;
-}
-
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 {
   { COMPONENT_ALL,               "COMPONENT_ALL", "",
