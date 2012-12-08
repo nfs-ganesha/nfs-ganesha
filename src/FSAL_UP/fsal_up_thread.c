@@ -180,6 +180,7 @@ fsal_up_submit(struct fsal_up_event *event)
                 if (event->functions->recallany_imm) {
                         rc = event->functions->recallany_imm(
                                 &event->data.recallany,
+                                &event->file,
                                 event->private);
                         }
 		break;
@@ -188,6 +189,7 @@ fsal_up_submit(struct fsal_up_event *event)
                 if (event->functions->notifydevice_imm) {
                         rc = event->functions->notifydevice_imm(
                                 &event->data.notifydevice,
+				&event->file,
                                 event->private);
 		}
 		break;
@@ -350,6 +352,7 @@ next_event:
                         if (event->functions->recallany_queue) {
                                 event->functions->recallany_queue(
                                         &event->data.recallany,
+                                        &event->file,
                                         event->private);
                         }
                         break;
@@ -358,6 +361,7 @@ next_event:
                         if (event->functions->notifydevice_queue) {
                                 event->functions->notifydevice_queue(
                                         &event->data.notifydevice,
+                                        &event->file,
                                         event->private);
                         }
                         break;

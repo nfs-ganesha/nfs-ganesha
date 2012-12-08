@@ -410,13 +410,17 @@ struct fsal_up_vector
                                    void *);
 
         int (*recallany_imm)(struct fsal_up_event_recallany *,
+                             struct fsal_up_file *,
 			     void **);
         void (*recallany_queue)(struct fsal_up_event_recallany *,
+                                struct fsal_up_file *,
                                 void *);
 
         int (*notifydevice_imm)(struct fsal_up_event_notifydevice *,
+                                struct fsal_up_file *,
                                 void **);
         void (*notifydevice_queue)(struct fsal_up_event_notifydevice *,
+                                   struct fsal_up_file *,
                                    void *);
 
 	int (*delegrecall_imm)(struct fsal_up_event_delegrecall *,

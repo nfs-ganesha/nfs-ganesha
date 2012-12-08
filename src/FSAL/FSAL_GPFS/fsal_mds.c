@@ -247,7 +247,7 @@ layoutget(struct fsal_obj_handle *obj_hdl,
           struct fsal_layoutget_res *res)
 {
 	struct gpfs_fsal_obj_handle *myself;
-        struct gpfs_file_handle *gpfs_handle;
+        struct gpfs_file_handle gpfs_ds_handle;
         struct layoutget_arg larg;
 	struct layoutreturn_arg lrarg;
         unsigned int rc, *fh;
@@ -283,23 +283,22 @@ layoutget(struct fsal_obj_handle *obj_hdl,
 
         memset(&file_layout, 0, sizeof(struct pnfs_filelayout_layout));
 
-        gpfs_handle = myself->handle;
+        memcpy(&gpfs_ds_handle, myself->handle, sizeof(struct gpfs_file_handle));
 
         larg.fd = myself->u.file.fd;
         larg.args.lg_minlength = arg->minlength;
         larg.args.lg_sbid = arg->export_id;
-        larg.args.lg_fh = gpfs_handle;
-        larg.args.lg_iomode = arg->iomode;
-        larg.handle = gpfs_handle;
+        larg.args.lg_fh = &gpfs_ds_handle;
+        larg.args.lg_iomode = res->segment.io_mode;
+        larg.handle = &gpfs_ds_handle;
         larg.file_layout = &file_layout;
         larg.xdr = NULL;
 
-        fh = (int *)&(gpfs_handle->f_handle);
-
+        fh = (int *)&(gpfs_ds_handle.f_handle);
         LogDebug(COMPONENT_PNFS,
                 "fh in len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-                 gpfs_handle->handle_size, gpfs_handle->handle_type,
-                 gpfs_handle->handle_key_size,
+                 gpfs_ds_handle.handle_size, gpfs_ds_handle.handle_type,
+                 gpfs_ds_handle.handle_key_size,
                  fh[0],fh[1],fh[2],fh[3],fh[4],fh[5],fh[6],fh[7],fh[8],fh[9]);
 
         rc = gpfs_ganesha(OPENHANDLE_LAYOUT_GET, &larg);
@@ -308,10 +307,11 @@ layoutget(struct fsal_obj_handle *obj_hdl,
           LogDebug(COMPONENT_PNFS, "GPFSFSAL_layoutget rc %d \n", rc);
           return NFS4ERR_UNKNOWN_LAYOUTTYPE;
         }
+        fh = (int *)&(gpfs_ds_handle.f_handle);
         LogDebug(COMPONENT_PNFS,
                 "fh out len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-                 gpfs_handle->handle_size, gpfs_handle->handle_type,
-                 gpfs_handle->handle_key_size,
+                 gpfs_ds_handle.handle_size, gpfs_ds_handle.handle_type,
+                 gpfs_ds_handle.handle_key_size,
                  fh[0],fh[1],fh[2],fh[3],fh[4],fh[5],fh[6],fh[7],fh[8],fh[9]);
 
         /* We grant only one segment, and we want it back when the file is closed. */
@@ -319,7 +319,6 @@ layoutget(struct fsal_obj_handle *obj_hdl,
         res->last_segment = true;
         res->segment.offset = 0;
         res->segment.length = NFS4_UINT64_MAX;
-        res->segment.io_mode = arg->iomode;
 
         stripe_width = file_layout.lg_stripe_unit;
         util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS;
@@ -331,7 +330,7 @@ layoutget(struct fsal_obj_handle *obj_hdl,
         LogDebug(COMPONENT_PNFS,
            "devid expid-nodeAddr %ld-%016lx\n", deviceid.export_id, deviceid.devid);
 
-        ds_desc.addr = gpfs_handle;
+        ds_desc.addr = &gpfs_ds_handle;
         ds_desc.len = sizeof(struct gpfs_file_handle);
 
         if ((nfs_status
@@ -356,12 +355,12 @@ relinquish:
            reserved for it. */
 
         lrarg.mountdirfd = myself->u.file.fd;
-        lrarg.handle = gpfs_handle;
+        lrarg.handle = &gpfs_ds_handle;
         lrarg.args.lr_return_type = arg->type;
-	lrarg.args.lr_reclaim = false;
+        lrarg.args.lr_reclaim = false;
         lrarg.args.lr_seg.clientid = 0;
         lrarg.args.lr_seg.layout_type = arg->type;
-        lrarg.args.lr_seg.iomode = arg->iomode;
+        lrarg.args.lr_seg.iomode = res->segment.io_mode;
         lrarg.args.lr_seg.offset = 0;
         lrarg.args.lr_seg.length = NFS4_UINT64_MAX;
 
