@@ -25,7 +25,7 @@ git_describe(_GIT_DESCRIBE)
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit 9d95322cfa99c02e566b9ebeebffe79e840fdb0e)
+set(tirpc_commit 2f728d6369dcfb28c6d09e0a74de1100114ee32e)
 
 # FSAL selection
 # FSALs which are enabled by default but could be disabled
