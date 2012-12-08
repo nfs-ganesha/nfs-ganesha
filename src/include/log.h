@@ -19,6 +19,8 @@
 #include "snmp_adm.h"
 #endif
 
+#include "display.h"
+
 /* these macros gain a few percent of speed on gcc, especially with so many log entries */
 #if (__GNUC__ >= 3)
 /* the strange !! is to ensure that __builtin_expect() takes either 0 or 1 as its first argument */
@@ -65,6 +67,8 @@
  *
  */
 
+/* The maximum size of a log buffer */
+#define LOG_BUFF_LEN 2048
 #define STR_LEN 256
 
 /*
@@ -359,7 +363,6 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 #define ERR_LRU           10
 #define ERR_HASHTABLE     11
 #define ERR_FSAL          13
-#define ERR_GHOSTFS       15
 #define ERR_CACHE_INODE   16
 #define ERR_CACHE_CONTENT 17
 
@@ -396,11 +399,22 @@ void SetLevelDebug(int level_to_set);
 int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);
 
-int MakeLogError(char *buffer, int num_family, int num_error, int status,
-                  int ma_ligne);
+int display_LogError(struct display_buffer * dspbuf,
+                     int                     num_family,
+                     int                     num_error,
+                     int                     status,
+                     int                     line);
 
-int log_snprintf(char *out, size_t n, char *format, ...);
-int log_fprintf(FILE * file, char *format, ...);
+static inline void MakeLogError(char   * buffer,
+                                size_t   size,
+                                int      num_family,
+                                int      num_error,
+                                int      status,
+                                int      line)
+{
+  struct display_buffer dspbuf = {size, buffer, buffer};
+  (void) display_LogError(&dspbuf, num_family, num_error, status, line);
+}
 
 #ifdef _SNMP_ADM_ACTIVE
 int getComponentLogLevel(snmp_adm_type_union * param, void *opt);
@@ -412,24 +426,25 @@ void RegisterCleanup(cleanup_list_element *clean);
 void Cleanup(void);
 void Fatal(void);
 int SetComponentLogFile(log_components_t component, char *name);
-void SetComponentLogBuffer(log_components_t component, char *buffer);
+void SetComponentLogBuffer(log_components_t component, struct display_buffer *buffer);
 
 /* This function is primarily for setting log level from config, it will
  * not override log level set from environment.
  */
 void SetComponentLogLevel(log_components_t component, int level_to_set);
 
-int DisplayLogComponentLevel(log_components_t component,
-                             char * function,
-                             log_levels_t level,
-                             char *format, ...)
+void DisplayLogComponentLevel(log_components_t   component,
+                              char             * function,
+                              log_levels_t       level,
+                              char             * format, ...)
 __attribute__((format(printf, 4, 5))); /* 4=format 5=params */ ;
-int DisplayErrorComponentLogLine(log_components_t component,
-                                 char * function,
-                                 int num_family,
-                                 int num_error,
-                                 int status,
-                                 int ma_ligne);
+
+void DisplayErrorComponentLogLine(log_components_t   component,
+                                  char             * function,
+                                  int                num_family,
+                                  int                num_error,
+                                  int                status,
+                                  int                line);
 
 int read_log_config(config_file_t in_config);
 
@@ -445,15 +460,14 @@ enum log_type
 
 typedef struct log_component_info
 {
-  int   comp_value;
-  char *comp_name;
-  char *comp_str;
-  int   comp_log_level;
-
-  int   comp_log_type;
-  char  comp_log_file[MAXPATHLEN];
-  char *comp_buffer;
-  int   comp_env_set;
+  int                     comp_value;
+  char                  * comp_name;
+  char                  * comp_str;
+  int                     comp_log_level;
+  int                     comp_log_type;
+  char                    comp_log_file[MAXPATHLEN];
+  struct display_buffer * comp_buffer;
+  int                     comp_env_set;
 } log_component_info;
 
 #define ReturnLevelComponent(component) LogComponents[component].comp_log_level
