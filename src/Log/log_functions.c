@@ -54,9 +54,6 @@
 #endif
 
 /* La longueur d'une chaine */
-#define STR_LEN_TXT      2048
-#define PATH_LEN         1024
-#define MAX_STR_LEN      1024
 #define MAX_NUM_FAMILY  50
 #define UNUSED_SLOT -1
 
@@ -177,10 +174,20 @@ static int syslog_opened = 0 ;
 
 typedef struct ThreadLogContext_t
 {
-
-  char * nom_fonction;
+  char                  * thread_name;
+  struct display_buffer   dspbuf;
+  char                    buffer[LOG_BUFF_LEN+1];
 
 } ThreadLogContext_t;
+
+ThreadLogContext_t emergency_context = {
+  "* log emergency *",
+  {sizeof(emergency_context.buffer),
+   emergency_context.buffer,
+   emergency_context.buffer}
+};
+
+pthread_mutex_t emergency_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* threads keys */
 static pthread_key_t thread_key;
@@ -223,76 +230,89 @@ void Fatal(void)
  * printed that matches or exceeds the severity level of
  * component LOG_MESSAGE_DEBUGINFO. */
 extern uint32_t open_fd_count;
-char *get_debug_info(int *size) {
-  int rc, i, bt_str_size, offset, BT_MAX = 256;
-  long bt_data[BT_MAX];
-  char **bt_str, *debug_str, *final_bt_str;
-  int ret;
+
+#define BT_MAX 256
+
+char *get_debug_info(int *size)
+{
+  int                      bt_count, i, b_left;
+  long                     bt_data[BT_MAX];
+  char                  ** bt_str;
+  struct display_buffer    dspbuf;
 
   struct rlimit rlim = {
     .rlim_cur = RLIM_INFINITY,
     .rlim_max = RLIM_INFINITY
   };
 
-  rc = backtrace((void **)&bt_data, BT_MAX);
-  if (rc > 0)
-    bt_str = backtrace_symbols((void **)&bt_data, rc);
+  bt_count = backtrace((void **)&bt_data, BT_MAX);
+
+  if (bt_count > 0)
+    bt_str = backtrace_symbols((void **)&bt_data, bt_count);
   else
     return NULL;
+
   if (bt_str == NULL || *bt_str == NULL)
     return NULL;
 
   // Form a single printable string from array of backtrace symbols
-  bt_str_size = 0;
-  for(i=0; i < rc; i++)
-    bt_str_size += strlen(bt_str[i]);
-  final_bt_str = malloc(sizeof(char)*(bt_str_size+rc+20));
-  offset = 0;
-  for(i=0; i < rc; i++)
+  dspbuf.b_size = 256; /* Account for rest of string. */
+
+  for(i=0; i < bt_count; i++)
+    dspbuf.b_size += strlen(bt_str[i]) + 1; /* account for \n */
+
+  dspbuf.b_start   = gsh_malloc(dspbuf.b_size);
+  dspbuf.b_current = dspbuf.b_start;
+
+  if(dspbuf.b_start == NULL)
     {
-      // note: strlen excludes '\0', strcpy includes '\0'
-      strncpy(final_bt_str+offset, bt_str[i], strlen(bt_str[i]));
-      offset += strlen(bt_str[i]);
-      final_bt_str[offset++] = '\n';
+      free(bt_str);
+      return NULL;
     }
-  final_bt_str[offset-1] = '\0';
-  free(bt_str);
+
+  b_left = display_cat(&dspbuf,
+                       "\nDEBUG INFO -->\n"
+                       "backtrace:\n");
+
+  for(i=0; i < bt_count && b_left > 0; i++)
+    {
+      b_left = display_cat(&dspbuf, bt_str[i]);
+
+      if(b_left > 0)
+        b_left = display_cat(&dspbuf, "\n");
+    }
 
   getrlimit(RLIMIT_NOFILE, &rlim);
 
-  debug_str = malloc(sizeof(char) * strlen(final_bt_str)
-                     + sizeof(char) * 512);
-  if (debug_str == NULL) {
-    return NULL;
-  }
+  if(b_left > 0)
+    b_left = display_printf(&dspbuf,
+                            "\n"
+                            "open_fd_count        = %-6d\n"
+                            "rlimit_cur           = %-6ld\n"
+                            "rlimit_max           = %-6ld\n"
+                            "<--DEBUG INFO\n\n",
+                            open_fd_count,
+                            rlim.rlim_cur,
+                            rlim.rlim_max);
 
-  ret = sprintf(debug_str,
-                "\nDEBUG INFO -->\n"
-                "backtrace:\n%s\n\n"
-                "open_fd_count        = %-6d\n"
-                "rlimit_cur           = %-6ld\n"
-                "rlimit_max           = %-6ld\n"
-                "<--DEBUG INFO\n\n",
-                final_bt_str,
-                open_fd_count,
-                rlim.rlim_cur,
-                rlim.rlim_max);
   if (size != NULL)
-    *size = ret;
+    *size = display_buffer_len(&dspbuf);
 
-  free(final_bt_str);
-  return debug_str;
+  free(bt_str);
+  
+  return dspbuf.b_start;
 }
 
 void print_debug_info_fd(int fd)
 {
-  char *str = get_debug_info(NULL);
+  int    size;
+  char * str = get_debug_info(&size);
   int __attribute__((unused)) rc;
 
   if (str != NULL)
     {
-      rc = write(fd, str, strlen(str));
-      free(str);
+      rc = write(fd, str, size);
+      gsh_free(str);
     }
 }
 
@@ -302,8 +322,8 @@ void print_debug_info_file(FILE *flux)
 
   if (str != NULL)
     {
-      fprintf(flux, "%s", str);
-      free(str);
+      fputs(str, flux);
+      gsh_free(str);
     }
 }
 
@@ -325,7 +345,7 @@ void print_debug_info_syslog(int level)
           }
         end_c++;
       }
-    free(debug_str);
+    gsh_free(debug_str);
   }
 }
 
@@ -374,7 +394,6 @@ static void init_keys(void)
 }                               /* init_keys */
 
 
-const char *emergency = "* log emergency *";
 
 /**
  * GetThreadContext :
@@ -382,7 +401,7 @@ const char *emergency = "* log emergency *";
  */
 static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
 {
-  ThreadLogContext_t *p_current_thread_vars;
+  ThreadLogContext_t *context;
 
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
@@ -391,38 +410,41 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
         LogCrit(COMPONENT_LOG_EMERG,
                 "Log_GetThreadContext - pthread_once returned %d (%s)",
                 errno, strerror(errno));
-      return NULL;
+      return &emergency_context;
     }
 
-  p_current_thread_vars = (ThreadLogContext_t *) pthread_getspecific(thread_key);
+  context = (ThreadLogContext_t *) pthread_getspecific(thread_key);
 
   /* we allocate the thread key if this is the first time */
-  if(p_current_thread_vars == NULL)
+  if(context == NULL)
     {
       /* allocates thread structure */
-      p_current_thread_vars = gsh_malloc(sizeof(ThreadLogContext_t));
+      context = gsh_malloc(sizeof(ThreadLogContext_t));
 
-      if(p_current_thread_vars == NULL)
+      if(context == NULL)
         {
           if (ok_errors)
             LogCrit(COMPONENT_LOG_EMERG,
                     "Log_GetThreadContext - malloc returned %d (%s)",
                     errno, strerror(errno));
-          return NULL;
+          return &emergency_context;
         }
 
       /* inits thread structures */
-      p_current_thread_vars->nom_fonction = NULL;
-
+      context->thread_name      = emergency_context.thread_name;
+      context->dspbuf.b_size    = sizeof(context->buffer);
+      context->dspbuf.b_start   = context->buffer;
+      context->dspbuf.b_current = context->buffer;
+      
       /* set the specific value */
-      pthread_setspecific(thread_key, (void *)p_current_thread_vars);
+      pthread_setspecific(thread_key, context);
 
       if (ok_errors)
         LogFullDebug(COMPONENT_LOG_EMERG, "malloc => %p",
-                     p_current_thread_vars);
+                     context);
     }
 
-  return p_current_thread_vars;
+  return context;
 
 }                               /* Log_GetThreadContext */
 
@@ -430,10 +452,7 @@ static inline const char *Log_GetThreadFunction(int ok_errors)
 {
   ThreadLogContext_t *context = Log_GetThreadContext(ok_errors);
 
-  if (context == NULL || context->nom_fonction == NULL)
-    return emergency;
-  else
-    return context->nom_fonction;
+  return context->thread_name;
 }
 
 /*
@@ -512,9 +531,9 @@ void SetNameFunction(const char *nom)
   ThreadLogContext_t *context = Log_GetThreadContext(0);
   if(context == NULL)
     return;
-  if(context->nom_fonction != NULL)
-    gsh_free(context->nom_fonction);
-  context->nom_fonction = gsh_strdup(nom);
+  if(context->thread_name != emergency_context.thread_name)
+    gsh_free(context->thread_name);
+  context->thread_name = gsh_strdup(nom);
 }                               /* SetNameFunction */
 
 /* Installs a signal handler */
@@ -627,11 +646,11 @@ void InitLogging()
   int i;
 
   /* Initialisation of tables of families */
-  tab_family[0].num_family = 0;
-  tab_family[0].tab_err = (family_error_t *) tab_system_err;
-  if(strmaxcpy(tab_family[0].name_family,
+  tab_family[ERR_SYS].num_family = 0;
+  tab_family[ERR_SYS].tab_err = (family_error_t *) tab_system_err;
+  if(strmaxcpy(tab_family[ERR_SYS].name_family,
                "Errors Systeme UNIX",
-               sizeof(tab_family[0].name_family)) == 01)
+               sizeof(tab_family[ERR_SYS].name_family)) == 01)
     LogFatal(COMPONENT_LOG,
              "System Family name too long");
 
@@ -675,39 +694,55 @@ void ReadLogEnvironment()
  * A generic display function
  */
 
-static void DisplayLogString_valist(char *buff_dest, char * function, log_components_t component, char *format, va_list arguments)
+static void DisplayLogString_valist(ThreadLogContext_t * context,
+                                    const char         * function,
+                                    log_components_t     component,
+                                    const char         * format,
+                                    va_list              arguments)
 {
-  char texte[STR_LEN_TXT];
   struct tm the_date;
-  time_t tm;
-  const char *threadname = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
+  time_t    tm;
+  int       b_left;
 
   tm = time(NULL);
   Localtime_r(&tm, &the_date);
 
-  /* Writing to the chosen file. */
-  vsnprintf(texte, STR_LEN_TXT, format, arguments);
+  display_reset_buffer(&context->dspbuf);
+
+  b_left = display_printf(&context->dspbuf,
+                          "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :",
+                          the_date.tm_mday,
+                          the_date.tm_mon + 1,
+                          1900 + the_date.tm_year,
+                          the_date.tm_hour,
+                          the_date.tm_min,
+                          the_date.tm_sec,
+                          tm,
+                          hostname,
+                          program_name,
+                          getpid(),
+                          context->thread_name);
 
   if(LogComponents[component].comp_log_level
-     < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
-    snprintf(buff_dest, STR_LEN_TXT,
-             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d ep=%ld %s :%s\n",
-             the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, threadname,
-             texte);
-  else
-    snprintf(buff_dest, STR_LEN_TXT,
-             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d ep=%ld %s %s :%s\n",
-             the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, threadname,
-             function, texte);
+     >= LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level &&
+     b_left > 0)
+    b_left = display_printf(&context->dspbuf, "%s :", function);
+
+  if(b_left <= 0)
+    return;
+
+  (void) display_vprintf(&context->dspbuf, format, arguments);
+
 }                               /* DisplayLogString_valist */
 
-static int DisplayLogSyslog_valist(log_components_t component, char * function,
-                                   int level, char * format, va_list arguments)
+static void DisplayLogSyslog_valist(ThreadLogContext_t * context,
+                                    log_components_t     component,
+                                    char               * function,
+                                    int                  level,
+                                    char               * format,
+                                    va_list              arguments)
 {
-  char texte[STR_LEN_TXT];
-  const char *threadname = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
+  int b_left;
 
   if( !syslog_opened )
    {
@@ -716,59 +751,84 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function,
    }
 
   /* Writing to the chosen file. */
-  vsnprintf(texte, STR_LEN_TXT, format, arguments);
+  display_reset_buffer(&context->dspbuf);
 
-  if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
-    syslog(tabLogLevel[level].syslog_level, "[%s] :%s", threadname, texte);
-  else
-    syslog(tabLogLevel[level].syslog_level, "[%s] :%s :%s", threadname, function, texte);
+  b_left = display_printf(&context->dspbuf, "[%s] :", context->thread_name);
+
+  if(LogComponents[component].comp_log_level
+     >= LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level &&
+     b_left > 0)
+    b_left = display_printf(&context->dspbuf, "%s :", function);
+
+  if(b_left > 0)
+    b_left = display_vprintf(&context->dspbuf, format, arguments);
+
+  syslog(tabLogLevel[level].syslog_level, "%s", context->buffer);
 
   if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
       && level != NIV_NULL)
       print_debug_info_syslog(level);
-
-  return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogFlux_valist(FILE * flux, char * function, log_components_t component,
-                                 int level, char *format, va_list arguments)
+static void DisplayLogFlux_valist(ThreadLogContext_t * context,
+                                  FILE               * flux,
+                                  char               * function,
+                                  log_components_t     component,
+                                  int                  level,
+                                  char               * format,
+                                  va_list              arguments)
 {
-  char buffer[STR_LEN_TXT];
+  int len;
 
-  DisplayLogString_valist(buffer, function, component, format, arguments);
+  DisplayLogString_valist(context, function, component, format, arguments);
 
-  fprintf(flux, "%s", buffer);
+  len = display_buffer_len(&context->dspbuf);
+  context->buffer[len++] = '\n';
+  context->buffer[len] = '\0';
+
+  fputs(context->buffer, flux);
   if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
       && level != NIV_NULL)
     print_debug_info_file(flux);
-  return fflush(flux);
+  fflush(flux);
 }                               /* DisplayLogFlux_valist */
 
-static int DisplayTest_valist(log_components_t component, char *format,
-                              va_list arguments)
+static void DisplayTest_valist(ThreadLogContext_t * context,
+                               log_components_t     component,
+                               char               * format,
+                               va_list              arguments)
 {
-  char text[STR_LEN_TXT];
+  display_reset_buffer(&context->dspbuf);
+  (void) display_vprintf(&context->dspbuf, format, arguments);
 
-  vsnprintf(text, STR_LEN_TXT, format, arguments);
-
-  fprintf(stdout, "%s\n", text);
-  return fflush(stdout);
+  puts(context->buffer);
+  fflush(stdout);
 }
 
-static int DisplayBuffer_valist(char *buffer, log_components_t component,
-                                char *format, va_list arguments)
+static void DisplayBuffer_valist(struct display_buffer * dspbuf,
+                                 log_components_t        component,
+                                 char                  * format,
+                                 va_list                 arguments)
 {
-  return vsnprintf(buffer, STR_LEN_TXT, format, arguments);
+  display_reset_buffer(dspbuf);
+  (void) display_vprintf(dspbuf, format, arguments);
 }
 
-static int DisplayLogPath_valist(char *path, char * function,
-                                 log_components_t component, int level,
-                                 char *format, va_list arguments)
+static void DisplayLogPath_valist(ThreadLogContext_t * context,
+                                  char               * path,
+                                  char               * function,
+                                  log_components_t     component,
+                                  int                  level,
+                                  char               * format,
+                                  va_list              arguments)
 {
-  char buffer[STR_LEN_TXT];
-  int fd, my_status;
+  int fd, my_status, len;
 
-  DisplayLogString_valist(buffer, function, component, format, arguments);
+  DisplayLogString_valist(context, function, component, format, arguments);
+
+  len = display_buffer_len(&context->dspbuf);
+  context->buffer[len++] = '\n';
+  context->buffer[len] = '\0';
 
   if(path[0] != '\0')
     {
@@ -786,7 +846,7 @@ static int DisplayLogPath_valist(char *path, char * function,
 
           if(fcntl(fd, F_SETLKW, (char *)&lock_file) != -1)
             {
-              rc = write(fd, buffer, strlen(buffer));
+              rc = write(fd, context->buffer, len);
               if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
                   && level != NIV_NULL)
                 print_debug_info_fd(fd);
@@ -798,7 +858,7 @@ static int DisplayLogPath_valist(char *path, char * function,
 
               close(fd);
 
-              return SUCCES;
+              return;
             }                   /* if fcntl */
           else
             {
@@ -810,13 +870,13 @@ static int DisplayLogPath_valist(char *path, char * function,
 #else
       if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, log_mask)) != -1)
         {
-          if(write(fd, buffer, strlen(buffer)) < strlen(buffer))
+          if(write(fd, context->buffer, len) < len)
           {
             fprintf(stderr, "Error: couldn't complete write to the log file, "
                     "ensure disk has not filled up");
             close(fd);
 
-            return ERR_FILE_LOG;
+            return;
           }
           if (level <= LogComponents[LOG_MESSAGE_DEBUGINFO].comp_log_level
               && level != NIV_NULL)
@@ -824,7 +884,7 @@ static int DisplayLogPath_valist(char *path, char * function,
 
           close(fd);
 
-          return SUCCES;
+          return;
         }
 #endif
       else
@@ -833,12 +893,11 @@ static int DisplayLogPath_valist(char *path, char * function,
         }
       fprintf(stderr, "Error %s : %s : status %d on file %s message was:\n%s\n",
               tab_system_err[ERR_FILE_LOG].label,
-              tab_system_err[ERR_FILE_LOG].msg, my_status, path, buffer);
+              tab_system_err[ERR_FILE_LOG].msg, my_status, path, context->buffer);
 
-      return ERR_FILE_LOG;
+      return;
     }
   /* if path */
-  return SUCCES;
 }                               /* DisplayLogPath_valist */
 
 /*
@@ -925,99 +984,46 @@ static family_error_t FindErr(family_error_t * tab_err, int num)
   return returned_err;
 }                               /* FindErr */
 
-int MakeLogError(char *buffer, int num_family, int num_error, int status,
-                  int ma_ligne)
+int display_LogError(struct display_buffer * dspbuf,
+                     int                     num_family,
+                     int                     num_error,
+                     int                     status,
+                     int                     line)
 {
   family_error_t *tab_err = NULL;
   family_error_t the_error;
 
   /* Find the family */
   if((tab_err = FindTabErr(num_family)) == NULL)
-    return -1;
+    return display_printf(dspbuf, "Could not find famiily %d", num_family);
 
   /* find the error */
   the_error = FindErr(tab_err, num_error);
 
   if(status == 0)
     {
-      return sprintf(buffer, "Error %s : %s : status %d : Line %d",
-                     the_error.label, the_error.msg, status, ma_ligne);
+      return display_printf(dspbuf,
+                            "Error %s : %s : status %d : Line %d",
+                            the_error.label,
+                            the_error.msg,
+                            status,
+                            line);
     }
   else
     {
       char tempstr[1024];
-      int result;
-      result = strerror_r(status, tempstr, 1024);
+      char *errstr;
+      errstr = strerror_r(status, tempstr, sizeof(tempstr));
 
-      if (result != 0) {
-              strcpy(tempstr, "Unknown error");
-      }
-
-      return sprintf(buffer, "Error %s : %s : status %d : %s : Line %d",
-                     the_error.label, the_error.msg, status, tempstr, ma_ligne);
+      return display_printf(dspbuf,
+                            "Error %s : %s : status %d : %s : Line %d",
+                            the_error.label,
+                            the_error.msg,
+                            status,
+                            errstr,
+                            line);
     }
-}                               /* MakeLogError */
-
-/* A sprintf personnal is é */
-/* This macro is used each time the parsing advances */
-#define ONE_STEP  do { iterformat +=1 ; len += 1; } while(0)
-
-#define NO_TYPE       0
-#define INT_TYPE      1
-#define LONG_TYPE     2
-#define CHAR_TYPE     3
-#define STRING_TYPE   4
-#define FLOAT_TYPE    5
-#define DOUBLE_TYPE   6
-#define POINTEUR_TYPE 7
-
-/* Type specifiques a la log */
-#define EXTENDED_TYPE 8
-
-#define STATUS_SHORT       1
-#define STATUS_LONG        2
-#define CONTEXTE_SHORT     3
-#define CONTEXTE_LONG      4
-#define ERREUR_SHORT       5
-#define ERREUR_LONG        6
-#define ERRNUM_SHORT       7
-#define ERRNUM_LONG        8
-#define ERRCTX_SHORT       9
-#define ERRCTX_LONG        10
-#define CHANGE_ERR_FAMILY  11
-#define CHANGE_CTX_FAMILY  12
-#define ERRNO_SHORT        13
-#define ERRNO_LONG         14
-
-#define NO_LONG 0
-#define SHORT_LG 1
-#define LONG_LG 2
-#define LONG_LONG_LG 3
-
-#define MAX_STR_TOK LOG_MAX_STRLEN
-
-int log_snprintf(char *out, size_t n, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-  rc = vsnprintf(out, n, format, arguments);
-  va_end(arguments);
-
-  return rc;
-}
-
-int log_fprintf(FILE * file, char *format, ...)
-{
-  va_list arguments;
-  int rc;
-
-  va_start(arguments, format);
-  rc = vfprintf(file, format, arguments);
-  va_end(arguments);
-  return rc;
-}
+}                               /* display_LogError */
 
 log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 {
@@ -1267,60 +1273,95 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
   },
 };
 
-int DisplayLogComponentLevel(log_components_t component,
-                             char * function,
-                             log_levels_t level,
-                             char *format, ...)
+void DisplayLogComponentLevel(log_components_t   component,
+                              char             * function,
+                              log_levels_t       level,
+                              char             * format, ...)
 {
-  va_list arguments;
-  int rc;
+  va_list              arguments;
+  ThreadLogContext_t * context;
+
+  context = Log_GetThreadContext(component != COMPONENT_LOG_EMERG);
+
+  if(context == &emergency_context)
+    pthread_mutex_lock(&emergency_mutex);
+
   va_start(arguments, format);
 
   switch(LogComponents[component].comp_log_type)
     {
     case SYSLOG:
-      rc = DisplayLogSyslog_valist(component, function, level, format, arguments);
+      DisplayLogSyslog_valist(context,
+                              component,
+                              function,
+                              level,
+                              format,
+                              arguments);
       break;
     case FILELOG:
-      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, function, component, level, format, arguments);
+      DisplayLogPath_valist(context,
+                            LogComponents[component].comp_log_file,
+                            function,
+                            component,
+                            level,
+                            format,
+                            arguments);
       break;
     case STDERRLOG:
-      rc = DisplayLogFlux_valist(stderr, function, component, level, format, arguments);
+      DisplayLogFlux_valist(context,
+                            stderr,
+                            function,
+                            component,
+                            level,
+                            format,
+                            arguments);
       break;
     case STDOUTLOG:
-      rc = DisplayLogFlux_valist(stdout, function, component, level, format, arguments);
+      DisplayLogFlux_valist(context,
+                            stdout,
+                            function,
+                            component,
+                            level,
+                            format,
+                            arguments);
       break;
     case TESTLOG:
-      rc = DisplayTest_valist(component, format, arguments);
+      DisplayTest_valist(context,
+                         component,
+                         format,
+                         arguments);
       break;
     case BUFFLOG:
-      rc = DisplayBuffer_valist(LogComponents[component].comp_buffer, component, format, arguments);
+      DisplayBuffer_valist(LogComponents[component].comp_buffer,
+                           component,
+                           format,
+                           arguments);
       break;
-    default:
-      rc = ERR_FAILURE;
     }
 
   va_end(arguments);
 
+  if(context == &emergency_context)
+    pthread_mutex_unlock(&emergency_mutex);
+
   if(level == NIV_FATAL)
     Fatal();
-
-  return rc;
 }
 
-int DisplayErrorComponentLogLine(log_components_t component,
-                                 char * function,
-                                 int num_family,
-                                 int num_error,
-                                 int status,
-                                 int ma_ligne)
+void DisplayErrorComponentLogLine(log_components_t   component,
+                                  char             * function,
+                                  int                num_family,
+                                  int                num_error,
+                                  int                status,
+                                  int                line)
 {
-  char buffer[STR_LEN_TXT];
+  char                  buffer[LOG_BUFF_LEN];
+  struct display_buffer dspbuf = {sizeof(buffer), buffer, buffer};
 
-  if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
-    return -1;
-  return DisplayLogComponentLevel(component, function, NIV_CRIT, "%s: %s",
-                                  LogComponents[component].comp_str, buffer);
+  (void) display_LogError(&dspbuf, num_family, num_error, status, line);
+
+  DisplayLogComponentLevel(component, function, NIV_CRIT, "%s: %s",
+                           LogComponents[component].comp_str, buffer);
 }                               /* DisplayErrorLogLine */
 
 static int isValidLogPath(const char *pathname)
@@ -1461,7 +1502,7 @@ int SetComponentLogFile(log_components_t component, const char *name)
   return 0;
 }                               /* SetComponentLogFile */
 
-void SetComponentLogBuffer(log_components_t component, char *buffer)
+void SetComponentLogBuffer(log_components_t component, struct display_buffer *buffer)
 {
   LogComponents[component].comp_log_type = BUFFLOG;
   LogComponents[component].comp_buffer   = buffer;
@@ -1473,32 +1514,36 @@ void SetComponentLogBuffer(log_components_t component, char *buffer)
 void
 rpc_warnx(/* const */ char *fmt, ...)
 {
-    va_list ap;
-    log_components_t comp = COMPONENT_RPC;
-    int level;
+    va_list              ap;
+    log_components_t     comp = COMPONENT_RPC;
+    ThreadLogContext_t * context;
 
-    level = LogComponents[comp].comp_log_level;
-    if (level < NIV_DEBUG)
-        goto out;
+    if (LogComponents[comp].comp_log_level < NIV_DEBUG)
+        return;
+
+    context = Log_GetThreadContext(1);
+
+    if(context == &emergency_context)
+      pthread_mutex_lock(&emergency_mutex);
 
     va_start(ap, fmt);
 
     switch(LogComponents[comp].comp_log_type) {
     case SYSLOG:
-      DisplayLogSyslog_valist(comp, "rpc", level, fmt, ap);
+      DisplayLogSyslog_valist(context, comp, "rpc", NIV_DEBUG, fmt, ap);
       break;
     case FILELOG:
-      DisplayLogPath_valist(LogComponents[comp].comp_log_file, "rpc",
-                            comp, level, fmt, ap);
+      DisplayLogPath_valist(context, LogComponents[comp].comp_log_file, "rpc",
+                            comp, NIV_DEBUG, fmt, ap);
       break;
     case STDERRLOG:
-      DisplayLogFlux_valist(stderr, "rpc", comp, level, fmt, ap);
+      DisplayLogFlux_valist(context, stderr, "rpc", comp, NIV_DEBUG, fmt, ap);
       break;
     case STDOUTLOG:
-      DisplayLogFlux_valist(stdout, "rpc", comp, level, fmt, ap);
+      DisplayLogFlux_valist(context, stdout, "rpc", comp, NIV_DEBUG, fmt, ap);
       break;
     case TESTLOG:
-      DisplayTest_valist(comp, fmt, ap);
+      DisplayTest_valist(context, comp, fmt, ap);
       break;
     case BUFFLOG:
       DisplayBuffer_valist(LogComponents[comp].comp_buffer, comp, fmt, ap);
@@ -1506,7 +1551,9 @@ rpc_warnx(/* const */ char *fmt, ...)
 
     va_end(ap);
 
-out:
+    if(context == &emergency_context)
+      pthread_mutex_unlock(&emergency_mutex);
+
     return;
 
 } /* rpc_warnx */

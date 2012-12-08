@@ -189,6 +189,7 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
 void Test1(char *str, char *file)
 {
   char tempstr[2048];
+  struct display_buffer buffer = {sizeof(tempstr), tmpstr, tmpstr};
   int  i;
 
   SetComponentLogFile(COMPONENT_INIT, "STDOUT");
@@ -242,8 +243,8 @@ void Test1(char *str, char *file)
    * Set up for tests that will verify what was actually produced by log messages.
    * This is used to test log levels and to test the log_vnsprintf function.
    */
-  SetComponentLogBuffer(COMPONENT_MAIN, tempstr);
-  SetComponentLogBuffer(COMPONENT_INIT, tempstr);
+  SetComponentLogBuffer(COMPONENT_MAIN, &buffer);
+  SetComponentLogBuffer(COMPONENT_INIT, &buffer);
 
   LogTest("------------------------------------------------------");
   LogTest("Test all levels of log filtering");
