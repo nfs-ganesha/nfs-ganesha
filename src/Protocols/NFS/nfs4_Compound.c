@@ -897,6 +897,9 @@ void nfs4_Compound_CopyRes(nfs_res_t *res_dst,
  * This function updates the NFSv4 operation specific statistics for a
  * COMPOUND4 request (either v4.0 or v4.1).
  *
+ * @todo ACE: This function is deprecated and needs to be destroyed,
+ * pending new work on performance and stat counting.
+ *
  * @param[in]      arg      Argument for the COMPOUND4 request
  * @param[out]     res      Result for the COMPOUND4 request
  * @param[in,out]  stat_req Worker's structure for the NFSv4 stats
@@ -919,6 +922,12 @@ int nfs4_op_stat_update(nfs_arg_t *arg,
       for(i = 0; i < res->res_compound4.resarray.resarray_len; i++)
         {
           stat_req->nb_nfs40_op += 1;
+
+	  if (res->res_compound4.resarray.resarray_val[i].resop
+	      >= NFS_V40_NB_OPERATION) {
+	    continue;
+	  }
+
           stat_req->stat_op_nfs40[res->res_compound4.resarray
                                   .resarray_val[i].resop].total += 1;
 
@@ -938,6 +947,10 @@ int nfs4_op_stat_update(nfs_arg_t *arg,
       for(i = 0; i < res->res_compound4.resarray.resarray_len; i++)
         {
           stat_req->nb_nfs41_op += 1;
+	  if (res->res_compound4.resarray.resarray_val[i].resop
+	      >= NFS_V40_NB_OPERATION) {
+	    continue;
+	  }
           stat_req->stat_op_nfs41[res->res_compound4.resarray
                                   .resarray_val[i].resop].total += 1;
 

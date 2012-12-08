@@ -1228,6 +1228,9 @@ dupreq_finish:
       dpq_status = nfs_dupreq_finish(req, res_nfs);
 
 freeargs:
+  /* XXX no need for xprt slock across SVC_FREEARGS */
+  DISP_SUNLOCK(xprt);
+
   /* XXX inherit no lock around update current_xid */
   worker_data->current_xid = 0; /* No more xid managed */
 
@@ -1245,12 +1248,9 @@ freeargs:
       }   
   }
 
-  /* XXX we must hold xprt lock across SVC_FREEARGS */
-  DISP_SUNLOCK(xprt);
-
   /* Finalize the request. */
   if (res_nfs)
-      nfs_dupreq_rele(req);
+	  nfs_dupreq_rele(req, preqnfs->funcdesc);
 
   return;
 }

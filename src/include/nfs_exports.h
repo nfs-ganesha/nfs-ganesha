@@ -385,8 +385,8 @@ bool get_req_uid_gid(struct svc_req *ptr_req,
 		     struct user_cred *user_credentials);
 
 
-bool nfs_compare_clientcred(nfs_client_cred_t * pcred1,
-			    nfs_client_cred_t *pcred2);
+bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
+			    nfs_client_cred_t *cred2);
 int nfs_rpc_req2client_cred(struct svc_req *reqp,
 			    nfs_client_cred_t *pcred);
 

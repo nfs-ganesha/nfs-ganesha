@@ -66,6 +66,8 @@ enum drc_type
 #define DRC_FLAG_ADDR          0x0004
 #define DRC_FLAG_PORT          0x0008
 #define DRC_FLAG_LOCKED        0x0010
+#define DRC_FLAG_RECYCLE       0x0020
+#define DRC_FLAG_RELEASE       0x0030
 
 typedef struct drc
 {
@@ -80,7 +82,6 @@ typedef struct drc
     uint32_t hiwat;
     uint32_t flags;
     uint32_t refcnt; /* call path refs */
-    uint32_t usecnt; /* xprt refs */
     uint32_t retwnd;
     union {
         struct {
@@ -161,6 +162,6 @@ dupreq_status_t
 nfs_dupreq_start(nfs_request_data_t *nfs_req, struct svc_req *req);
 dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs);
 dupreq_status_t nfs_dupreq_delete(struct svc_req *req);
-void nfs_dupreq_rele(struct svc_req *req);
+void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func);
 
 #endif                          /* _NFS_DUPREQ_H */

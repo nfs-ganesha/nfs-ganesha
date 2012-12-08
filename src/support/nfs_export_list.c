@@ -294,46 +294,53 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
 /**
  * @brief Compares two RPC creds
  *
- * @param[in] pcred1 First RPC cred
- * @param[in] pcred2 Second RPC cred
- * 
+ * @param[in] cred1 First RPC cred
+ * @param[in] cred2 Second RPC cred
+ *
  * @return true if same, false otherwise
  */
-bool nfs_compare_clientcred(nfs_client_cred_t * pcred1,
-			    nfs_client_cred_t *pcred2)
+bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
+			    nfs_client_cred_t *cred2)
 {
-  if(pcred1 == NULL)
+  if(cred1 == NULL)
     return false;
-  if(pcred2 == NULL)
-    return false;
-
-  if(pcred1->flavor != pcred2->flavor)
+  if(cred2 == NULL)
     return false;
 
-  if(pcred1->length != pcred2->length)
+  if(cred1->flavor != cred2->flavor)
     return false;
 
-  switch (pcred1->flavor)
+  if(cred1->length != cred2->length)
+    return false;
+
+  switch (cred1->flavor)
     {
     case AUTH_UNIX:
-      if(pcred1->auth_union.auth_unix.aup_uid !=
-         pcred2->auth_union.auth_unix.aup_uid)
+      if(cred1->auth_union.auth_unix.aup_uid !=
+         cred2->auth_union.auth_unix.aup_uid)
         return false;
-      if(pcred1->auth_union.auth_unix.aup_gid !=
-         pcred2->auth_union.auth_unix.aup_gid)
+      if(cred1->auth_union.auth_unix.aup_gid !=
+         cred2->auth_union.auth_unix.aup_gid)
         return false;
-      if(pcred1->auth_union.auth_unix.aup_time !=
-         pcred2->auth_union.auth_unix.aup_time)
-        return false;
+
+      /**
+       * @todo ACE: I have removed the comparison of the aup_time
+       * values.  The RFC is unclear as to their function, and this
+       * fixes a situation where the Linux client was sending
+       * SETCLIENTID once on connection and later on state-bearing
+       * operations that differed only in timestamp.  Someone familiar
+       * with ONC RPC and AUTH_UNIX in particular should review this
+       * change.
+       */
       break;
 
     default:
-      if(memcmp(&pcred1->auth_union, &pcred2->auth_union, pcred1->length))
+      if(memcmp(&cred1->auth_union, &cred2->auth_union, cred1->length))
         return false;
       break;
     }
 
-  /* If this point is reach, structures are the same */
+  /* If this point is reached, structures are the same */
   return true;
 }
 

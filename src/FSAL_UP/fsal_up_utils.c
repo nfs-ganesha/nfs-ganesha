@@ -85,5 +85,6 @@ up_get(const struct gsh_buffdesc *key,
                         hrc);
                 return EFAULT;
         }
+	HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
         return CACHE_INODE_SUCCESS;
 }
