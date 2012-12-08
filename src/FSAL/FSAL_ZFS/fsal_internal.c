@@ -32,22 +32,6 @@ struct fsal_staticfsinfo_t global_fs_info;
 
 libzfswrap_handle_t *p_zhd;
 
-pthread_rwlock_t vfs_lock;
 
-
-void ZFSFSAL_VFS_RDLock()
-{
-  PTHREAD_RWLOCK_rdlock(&vfs_lock);
-}
-
-void ZFSFSAL_VFS_WRLock()
-{
-  PTHREAD_RWLOCK_wrlock(&vfs_lock);
-}
-
-void ZFSFSAL_VFS_Unlock()
-{
-  PTHREAD_RWLOCK_unlock(&vfs_lock);
-}
 
 

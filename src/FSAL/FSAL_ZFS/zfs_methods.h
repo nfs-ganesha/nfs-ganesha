@@ -33,11 +33,11 @@ struct zfs_fsal_obj_handle {
 	struct zfs_file_handle *handle;
 	union {
 		struct {
-                         creden_t cred;
                          off_t current_offset;
                          libzfswrap_vnode_t *p_vnode;
-                         int is_closed;
 			 fsal_openflags_t openflags;
+ 			 struct stat saved_stat ;
+			 creden_t cred ;
 		} file;
 		struct {
 			unsigned char *link_content;
@@ -132,3 +132,9 @@ fsal_status_t tank_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t tank_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
                                           const struct req_op_context *opctx,
 					  const char *xattr_name);
+fsal_status_t tank_lock_op(struct fsal_obj_handle *obj_hdl,
+                           const struct req_op_context *opctx,
+                           void * p_owner,
+                           fsal_lock_op_t lock_op,
+                           fsal_lock_param_t *request_lock,
+                           fsal_lock_param_t *conflicting_lock) ;

@@ -57,7 +57,8 @@ fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
 {
 	struct zfs_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int rc = 0;
+	int rc = 0 ;
+        int type = 0 ;
         libzfswrap_vnode_t *p_vnode;
         creden_t cred;
  
@@ -65,11 +66,13 @@ fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
         cred.gid = opctx->creds->caller_gid ;
  
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
-        
+
+	assert( myself->u.file.openflags == FSAL_O_CLOSED);
+
         rc = libzfswrap_open( ZFSFSAL_GetVFS( myself->handle ), 
                               &cred,
                               myself->handle->zfs_handle,  
-                              openflags, 
+                              O_RDWR,
                               &p_vnode);
 
         if( rc )
@@ -82,9 +85,20 @@ fsal_status_t tank_open( struct fsal_obj_handle *obj_hdl,
         myself->u.file.openflags = openflags;
         myself->u.file.current_offset = 0;
         myself->u.file.p_vnode = p_vnode;
-        myself->u.file.cred = cred;
-        myself->u.file.is_closed = 0;
 
+        /* save the stat */
+        rc = libzfswrap_getattr( ZFSFSAL_GetVFS( myself->handle ), 
+                                 &cred,
+                                 myself->handle->zfs_handle,  
+                                 &myself->u.file.saved_stat,
+                                 &type ) ;
+
+        if( rc )
+         { 
+           fsal_error = posix2fsal_error( rc );
+	   return fsalstat( fsal_error, rc );	
+         }
+ 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0 );	
 }
 
@@ -195,6 +209,7 @@ fsal_status_t tank_commit( struct fsal_obj_handle *obj_hdl, /* sync */
 			  off_t offset,
 			  size_t len)
 {
+        /* ZFS is a COW based FS, commit are not needed */
 	return fsalstat( ERR_FSAL_NO_ERROR, 0);	
 }
 
@@ -221,7 +236,6 @@ fsal_status_t tank_close(struct fsal_obj_handle *obj_hdl)
 	  return fsalstat( posix2fsal_error( retval ), retval);	
         
 	myself->u.file.openflags = FSAL_O_CLOSED;
-	myself->u.file.is_closed = true ;
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0 );	
 }
@@ -240,8 +254,18 @@ fsal_status_t tank_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
-	myself->u.file.is_closed = true ;
         myself->u.file.openflags = FSAL_O_CLOSED;
 	
 	return fsalstat(fsal_error, retval);	
 }
+
+fsal_status_t tank_lock_op(struct fsal_obj_handle *obj_hdl,
+                           const struct req_op_context *opctx,
+                           void * p_owner,
+                           fsal_lock_op_t lock_op,
+                           fsal_lock_param_t *request_lock,
+                           fsal_lock_param_t *conflicting_lock)
+{
+        return fsalstat(ERR_FSAL_NO_ERROR, 0 );	
+}
+
