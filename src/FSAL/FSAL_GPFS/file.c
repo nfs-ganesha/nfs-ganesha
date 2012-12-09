@@ -148,6 +148,8 @@ fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 			 off_t offset,
 			 size_t len)
 {
+	struct fsync_arg arg;
+	verifier4 writeverf;
 	struct gpfs_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -157,11 +159,20 @@ fsal_status_t gpfs_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 	assert(myself->u.file.fd >= 0 &&
 	       myself->u.file.openflags != FSAL_O_CLOSED);
 
+	arg.mountdirfd = myself->u.file.fd;
+	arg.handle = myself->handle;
+	arg.offset = offset;
+	arg.length = len;
+	arg.verifier4 = (int32_t *)&writeverf;
+
+        retval = gpfs_ganesha(OPENHANDLE_FSYNC, &arg);
 	retval = fsync(myself->u.file.fd);
 	if(retval == -1) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
 	}
+	set_gpfs_verifier(&writeverf);
+	
 	return fsalstat(fsal_error, retval);	
 }
 

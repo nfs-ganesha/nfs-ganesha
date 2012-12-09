@@ -48,8 +48,6 @@
           typeof (b) _b = (b);                  \
           _a < _b ? _a : _b; })
 
-extern verifier4 GPFS_write_verifier;  /* NFS V4 write verifier */
-
 /**
  * @brief Release an object
  *
@@ -211,7 +209,7 @@ ds_write(struct fsal_ds_handle *const ds_pub,
   LogDebug(COMPONENT_PNFS,
           "write verifier %d-%d\n", warg.verifier4[0], warg.verifier4[1]);
 
-  memcpy(&GPFS_write_verifier, warg.verifier4, sizeof(verifier4));
+  set_gpfs_verifier(writeverf);
 
   *written_length = amount_written;
 

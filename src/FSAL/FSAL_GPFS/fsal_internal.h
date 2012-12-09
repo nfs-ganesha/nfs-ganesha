@@ -42,6 +42,8 @@
 
 bool fsal_error_is_event(fsal_status_t status);
 
+void set_gpfs_verifier(verifier4 *verifier);
+
 struct gpfs_fsal_up_ctx
 {
   /* There is one GPFS FSAL UP Context per GPFS file system */
