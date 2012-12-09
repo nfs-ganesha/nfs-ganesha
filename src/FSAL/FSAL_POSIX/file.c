@@ -134,9 +134,11 @@ fsal_status_t posix_read (struct fsal_obj_handle * obj_hdl,
  * concurrency (locks) is managed in cache_inode_*
  */
 
+
 fsal_status_t posix_write (struct fsal_obj_handle * obj_hdl,
 			   const struct req_op_context *opctx,
-                           uint64_t offset, size_t buffer_size, void *buffer, size_t * write_amount)
+                           uint64_t offset, size_t buffer_size, void *buffer,
+                           size_t * write_amount, bool *fsal_stable)
 {
     struct posix_fsal_obj_handle *myself;
     ssize_t nb_written;
@@ -155,6 +157,8 @@ fsal_status_t posix_write (struct fsal_obj_handle * obj_hdl,
         goto out;
     }
     *write_amount = nb_written;
+    *fsal_stable = false;
+
   out:
     return fsalstat (fsal_error, retval);
 }

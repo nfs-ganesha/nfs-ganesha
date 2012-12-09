@@ -1606,7 +1606,9 @@ struct fsal_obj_ops {
  * @param[in]  opctx        Request context, includes credentials
  * @param[in]  offset       Position at which to write
  * @param[in]  buffer       Data to be written
- * @param[out] wrote_amount Number of bytes written
+ * @param[in/out] fsal_stable In, if on, the fsal is requested to write data
+ *                            to stable store. Out, the fsal reports what
+ *                            it did.
  *
  * @return FSAL status.
  */
@@ -1615,7 +1617,8 @@ struct fsal_obj_ops {
                                uint64_t offset,
                                size_t buffer_size,
                                void *buffer,
-                               size_t *wrote_amount);
+                               size_t *wrote_amount,
+                               bool *fsal_stable);
 /**
  * @brief Commit written data
  *

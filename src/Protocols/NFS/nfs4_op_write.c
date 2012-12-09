@@ -338,7 +338,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
 				  bufferdata,
 				  &eof_met,
 				  data->req_ctx,
-				  stability);
+				  &stability);
   if(cache_status != CACHE_INODE_SUCCESS)
     {
       LogDebug(COMPONENT_NFS_V4,

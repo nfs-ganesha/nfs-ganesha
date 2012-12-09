@@ -286,7 +286,7 @@ int nfs_Write(nfs_arg_t *arg,
 			data,
 			&eof_met,
 			req_ctx,
-			stability);
+			&stability);
                 if (cache_status == CACHE_INODE_SUCCESS) {
                                 /* Build Weak Cache Coherency data */
                                 nfs_SetWccData(&pre_attr,

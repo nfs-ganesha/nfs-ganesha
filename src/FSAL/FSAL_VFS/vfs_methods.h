@@ -84,7 +84,8 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
                         uint64_t offset,
 			size_t buffer_size,
 			void *buffer,
-			size_t * write_amount);
+			size_t * write_amount,
+			bool *fsal_stable);
 fsal_status_t vfs_commit(struct fsal_obj_handle *obj_hdl, /* sync */
 			 off_t offset,
 			 size_t len);

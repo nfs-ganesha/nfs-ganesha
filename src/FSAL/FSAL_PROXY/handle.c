@@ -2001,7 +2001,8 @@ pxy_write(struct fsal_obj_handle *obj_hdl,
 	  uint64_t offset,
 	  size_t size,
 	  void *buffer,
-	  size_t *write_amount)
+	  size_t *write_amount,
+	  bool *fsal_stable)
 {
         int rc;
         int opcnt = 0;
@@ -2039,6 +2040,8 @@ pxy_write(struct fsal_obj_handle *obj_hdl,
                 return nfsstat4_to_fsal(rc);
 
         *write_amount = wok->count;
+        *fsal_stable = false;
+
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

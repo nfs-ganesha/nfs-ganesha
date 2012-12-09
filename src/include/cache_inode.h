@@ -718,7 +718,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      void *buffer,
 				      bool *eof,
 				      struct req_op_context *req_ctx,
-				      cache_inode_stability_t stable);
+				      cache_inode_stability_t *stable);
 
 static inline cache_inode_status_t cache_inode_read(
 	cache_entry_t *entry,
@@ -728,7 +728,7 @@ static inline cache_inode_status_t cache_inode_read(
 	void *buffer,
 	bool *eof,
 	struct req_op_context *req_ctx,
-	cache_inode_stability_t stable)
+	cache_inode_stability_t *stable)
 {
 	return cache_inode_rdwr(entry, CACHE_INODE_READ, offset, io_size,
 				bytes_moved, buffer, eof, req_ctx,
@@ -743,7 +743,7 @@ static inline cache_inode_status_t cache_inode_write(
 	void *buffer,
 	bool *eof,
 	struct req_op_context *req_ctx,
-	cache_inode_stability_t stable)
+	cache_inode_stability_t *stable)
 {
 	return cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, io_size,
 				bytes_moved, buffer, eof, req_ctx,

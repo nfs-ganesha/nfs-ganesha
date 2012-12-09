@@ -887,7 +887,8 @@ fsal_write(struct fsal_obj_handle *handle_pub,
            uint64_t offset,
            size_t buffer_size,
            void *buffer,
-           size_t *write_amount)
+           size_t *write_amount,
+           bool *fsal_stable)
 {
         /* The private 'full' export */
         struct export *export
@@ -907,6 +908,7 @@ fsal_write(struct fsal_obj_handle *handle_pub,
         }
 
         *write_amount = nb_written;
+        *fsal_stable = false;
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

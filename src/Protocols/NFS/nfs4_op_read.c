@@ -88,6 +88,7 @@ nfs4_op_read(struct nfs_argop4 *op,
         state_t              * state_open = NULL;
         uint64_t               file_size = 0;
         cache_entry_t        * entry = NULL;
+        cache_inode_stability_t stability = CACHE_INODE_SAFE_WRITE_TO_FS;
         /* This flag is set to true in the case of an anonymous read
            so that we know to release the state lock afterward.  The
            state lock does not need to be held during a non-anonymous
@@ -319,7 +320,7 @@ nfs4_op_read(struct nfs_argop4 *op,
 					bufferdata,
 					&eof_met,
 					data->req_ctx,
-					CACHE_INODE_SAFE_WRITE_TO_FS);
+					&stability);
 	if (cache_status != CACHE_INODE_SUCCESS) {
                 res_READ4.status = nfs4_Errno(cache_status);
                 goto done;

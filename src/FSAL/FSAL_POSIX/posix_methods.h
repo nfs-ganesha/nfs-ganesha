@@ -83,7 +83,8 @@ fsal_status_t posix_write (struct fsal_obj_handle *obj_hdl,
                            uint64_t offset,
 			   size_t buffer_size,
 			   void *buffer,
-			   size_t * write_amount);
+			   size_t * write_amount,
+			   bool *fsal_stable);
 fsal_status_t posix_commit (struct fsal_obj_handle *obj_hdl,    /* sync */
                             off_t offset, size_t len);
 fsal_status_t posix_lock_op (struct fsal_obj_handle *obj_hdl,

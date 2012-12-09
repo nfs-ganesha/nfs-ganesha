@@ -874,7 +874,8 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
                                 uint64_t seek_descriptor,
                                 size_t buffer_size,
                                 void *buffer,
-                                size_t *write_amount)
+                                size_t *write_amount,
+                                bool *fsal_stable)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }

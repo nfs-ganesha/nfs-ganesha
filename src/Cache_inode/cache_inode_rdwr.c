@@ -87,7 +87,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                  void *buffer,
                  bool *eof,
                  struct req_op_context *req_ctx,
-                 cache_inode_stability_t stable)
+                 cache_inode_stability_t *stable)
 {
      /* Error return from FSAL calls */
      fsal_status_t fsal_status = {0, 0};
@@ -100,13 +100,14 @@ cache_inode_rdwr(cache_entry_t *entry,
      /* True if we have taken the attribute lock on 'entry' */
      bool attributes_locked = false;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
+     bool fsal_stable = false;
 
      /* Set flags for a read or write, as appropriate */
      if (io_direction == CACHE_INODE_READ) {
           openflags = FSAL_O_READ;
      } else {
           openflags = FSAL_O_WRITE;
-          if (stable == CACHE_INODE_SAFE_WRITE_TO_FS)
+          if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS)
              openflags |= FSAL_O_SYNC;
      }
 
@@ -119,7 +120,7 @@ cache_inode_rdwr(cache_entry_t *entry,
           goto out;
      }
 
-     if (stable == CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER) {
+     if (*stable == CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER) {
           /* Write to memory */
           PTHREAD_RWLOCK_wrlock(&entry->content_lock);
           content_locked = true;
@@ -157,7 +158,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                     *bytes_moved = io_size;
                } else {
                     /* Go back to stable writes */
-                    stable = CACHE_INODE_SAFE_WRITE_TO_FS;
+                    *stable = CACHE_INODE_SAFE_WRITE_TO_FS;
                }
           }
           if (content_locked) {
@@ -170,8 +171,8 @@ cache_inode_rdwr(cache_entry_t *entry,
           }
      }
 
-     if (stable == CACHE_INODE_SAFE_WRITE_TO_FS ||
-         stable == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
+     if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS ||
+         *stable == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
           /* Write through the FSAL.  We need a write lock only
              if we need to open or close a file descriptor. */
           PTHREAD_RWLOCK_rdlock(&entry->content_lock);
@@ -205,22 +206,28 @@ cache_inode_rdwr(cache_entry_t *entry,
                                                 bytes_moved,
                                                 eof);
           } else {
+               if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS)
+                 fsal_stable = true;
                fsal_status = obj_hdl->ops->write(obj_hdl, req_ctx,
                                                  offset,
                                                  io_size,
                                                  buffer,
-                                                 bytes_moved);
+                                                 bytes_moved,
+                                                 &fsal_stable);
 
                /* Alright, the unstable write is complete. Now if it was
                   supposed to be a stable write we can sync to the hard
                   drive. */
 
-               if (stable == CACHE_INODE_SAFE_WRITE_TO_FS &&
-		   !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC)) {
+               if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS &&
+		   !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC) &&
+		   !fsal_stable) {
                     fsal_status = obj_hdl->ops->commit(obj_hdl,
 						       offset,
 						       io_size);
                }
+               if (fsal_stable)
+                 *stable = CACHE_INODE_SAFE_WRITE_TO_FS;
           }
 
           LogFullDebug(COMPONENT_FSAL,

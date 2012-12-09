@@ -273,7 +273,8 @@ fsal_status_t GPFSFSAL_write(int fd,             /* IN */
                         uint64_t offset,         /* IN */
                         size_t buffer_size,      /* IN */
                         caddr_t buffer,          /* IN */
-                        size_t *p_write_amount)  /* OUT */
+                        size_t *p_write_amount,  /* OUT */
+                        bool *fsal_stable)       /* IN/OUT */
 {
   struct write_arg warg;
   ssize_t nb_write;
@@ -284,13 +285,13 @@ fsal_status_t GPFSFSAL_write(int fd,             /* IN */
   if(!buffer || !p_write_amount)
     return fsalstat(ERR_FSAL_FAULT, 0);
 
-
   warg.mountdirfd = fd;
   warg.fd = fd;
   warg.bufP = buffer;
   warg.offset = offset;
   warg.length = buffer_size;
-
+  warg.stability_wanted = *fsal_stable;
+  warg.stability_got = (uint32_t *)fsal_stable;
   /* read operation */
 
   nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);
