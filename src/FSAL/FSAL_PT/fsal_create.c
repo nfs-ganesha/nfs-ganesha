@@ -142,7 +142,7 @@ PTFSAL_create(fsal_handle_t      * p_parent_directory_handle, /* IN */
   }
 
   FSI_TRACE(FSI_DEBUG, "New Handle = %s", 
-            (char *)&p_fsi_handle->data.handle.f_handle);
+            (char *)p_fsi_handle->data.handle.f_handle);
 
   /* retrieve file attributes */
   if(p_object_attributes) {
