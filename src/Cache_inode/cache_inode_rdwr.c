@@ -205,6 +205,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                }
                PTHREAD_RWLOCK_UNLOCK(&entry->content_lock);
                PTHREAD_RWLOCK_RDLOCK(&entry->content_lock);
+               loflags = entry->object.file.open_fd.openflags;
           }
 
           /* Call FSAL_read or FSAL_write */
