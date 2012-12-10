@@ -70,11 +70,9 @@ typedef int (*both_function_t)(struct hash_param *,
                                uint64_t *);
 typedef int (*hash_buff_comparator_t)(struct hash_buff *,
                                        struct hash_buff *);
-typedef int (*key_display_function_t)(struct hash_buff *,
-                                       char *);
-typedef int (*val_display_function_t)(struct hash_buff*,
-                                       char *);
 
+typedef int (*hash_display_function_t)(struct display_buffer *,
+                                       struct hash_buff *);
 
 /**
  * This structure defines parameters determining the behaviour of a
@@ -113,9 +111,9 @@ struct hash_param
      hash_buff_comparator_t compare_key; /*< Function to compare two
                                              keys.  This function
                                              returns 0 on equality. */
-     key_display_function_t key_to_str; /*< Function to convert a key
+     hash_display_function_t key_to_str; /*< Function to convert a key
                                             to a string. */
-     val_display_function_t val_to_str; /*< Function to convert a
+     hash_display_function_t val_to_str; /*< Function to convert a
                                             value to a string. */
      char *ht_name; /*< Name of this hash table. */
      log_components_t ht_log_component; /*< Log component to use for this

@@ -492,12 +492,13 @@ HashTable_GetLatch(struct hash_table *ht,
 
      if(isDebug(COMPONENT_HASHTABLE) &&
         isFullDebug(ht->parameter.ht_log_component)) {
-          char dispkey[HASHTABLE_DISPLAY_STRLEN];
+          char dispkey[LOG_BUFF_LEN];
+          struct display_buffer keybuff = {sizeof(dispkey), dispkey, dispkey};
 
           if(ht->parameter.key_to_str != NULL)
-               ht->parameter.key_to_str(key, dispkey);
+               (void) ht->parameter.key_to_str(&keybuff, key);
           else
-               dispkey[0] = '\0';
+               (void) display_cat(&keybuff, "<no key display>");
 
           LogFullDebug(ht->parameter.ht_log_component,
                        "Get %s Key=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" latch=%p",
@@ -525,12 +526,13 @@ HashTable_GetLatch(struct hash_table *ht,
 
           if(isDebug(COMPONENT_HASHTABLE) &&
              isFullDebug(ht->parameter.ht_log_component)) {
-               char dispval[HASHTABLE_DISPLAY_STRLEN];
+               char dispval[LOG_BUFF_LEN];
+               struct display_buffer valbuff = {sizeof(dispval), dispval, dispval};
 
                if(ht->parameter.val_to_str != NULL)
-                    ht->parameter.val_to_str(&data->buffval, dispval);
+                    (void) ht->parameter.val_to_str(&valbuff, &data->buffval);
                else
-                    dispval[0] = '\0';
+                    (void) display_cat(&valbuff, "<no value display>");
 
                LogFullDebug(ht->parameter.ht_log_component,
                             "Get %s returning Value=%p {%s}",
@@ -632,18 +634,20 @@ HashTable_SetLatched(struct hash_table *ht,
 
      if(isDebug(COMPONENT_HASHTABLE) &&
         isFullDebug(ht->parameter.ht_log_component)) {
-          char dispkey[HASHTABLE_DISPLAY_STRLEN];
-          char dispval[HASHTABLE_DISPLAY_STRLEN];
+          char dispkey[LOG_BUFF_LEN / 2];
+          char dispval[LOG_BUFF_LEN / 2];
+          struct display_buffer keybuff = {sizeof(dispkey), dispkey, dispkey};
+          struct display_buffer valbuff = {sizeof(dispval), dispval, dispval};
 
           if(ht->parameter.key_to_str != NULL)
-               ht->parameter.key_to_str(key, dispkey);
+               (void) ht->parameter.key_to_str(&keybuff, key);
           else
-               dispkey[0] = '\0';
+               (void) display_cat(&keybuff, "<no key display>");
 
           if(ht->parameter.val_to_str != NULL)
-               ht->parameter.val_to_str(val, dispval);
+               (void) ht->parameter.val_to_str(&valbuff, val);
           else
-               dispval[0] = '\0';
+               (void) display_cat(&valbuff, "<no value display>");
 
           LogFullDebug(ht->parameter.ht_log_component,
                        "Set %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64,
@@ -664,18 +668,20 @@ HashTable_SetLatched(struct hash_table *ht,
 
           if(isDebug(COMPONENT_HASHTABLE) &&
              isFullDebug(ht->parameter.ht_log_component)) {
-               char dispkey[HASHTABLE_DISPLAY_STRLEN];
-               char dispval[HASHTABLE_DISPLAY_STRLEN];
+               char dispkey[LOG_BUFF_LEN / 2];
+               char dispval[LOG_BUFF_LEN / 2];
+               struct display_buffer keybuff = {sizeof(dispkey), dispkey, dispkey};
+               struct display_buffer valbuff = {sizeof(dispval), dispval, dispval};
 
                if(ht->parameter.key_to_str != NULL)
-                    ht->parameter.key_to_str(&descriptors->buffkey, dispkey);
+                    (void) ht->parameter.key_to_str(&keybuff, &descriptors->buffkey);
                else
-                    dispkey[0] = '\0';
+                    (void) display_cat(&keybuff, "<no key display>");
 
                if(ht->parameter.val_to_str != NULL)
-                    ht->parameter.val_to_str(&descriptors->buffval, dispval);
+                    (void) ht->parameter.val_to_str(&valbuff, &descriptors->buffval);
                else
-                    dispval[0] = '\0';
+                    (void) display_cat(&valbuff, "<no value display>");
 
                LogFullDebug(ht->parameter.ht_log_component,
                             "Set %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" was replaced",
@@ -786,18 +792,20 @@ HashTable_DeleteLatched(struct hash_table *ht,
 
      if(isDebug(COMPONENT_HASHTABLE) &&
         isFullDebug(ht->parameter.ht_log_component)) {
-          char dispkey[HASHTABLE_DISPLAY_STRLEN];
-          char dispval[HASHTABLE_DISPLAY_STRLEN];
+          char dispkey[LOG_BUFF_LEN / 2];
+          char dispval[LOG_BUFF_LEN / 2];
+          struct display_buffer keybuff = {sizeof(dispkey), dispkey, dispkey};
+          struct display_buffer valbuff = {sizeof(dispval), dispval, dispval};
 
           if(ht->parameter.key_to_str != NULL)
-               ht->parameter.key_to_str(&data->buffkey, dispkey);
+               (void) ht->parameter.key_to_str(&keybuff, &data->buffkey);
           else
-               dispkey[0] = '\0';
+               (void) display_cat(&keybuff, "<no key display>");
 
           if(ht->parameter.val_to_str != NULL)
-               ht->parameter.val_to_str(&data->buffval, dispval);
+               (void) ht->parameter.val_to_str(&valbuff, &data->buffval);
           else
-               dispval[0] = '\0';
+               (void) display_cat(&valbuff, "<no value display>");
 
           LogFullDebug(ht->parameter.ht_log_component,
                        "Delete %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" was removed",
@@ -1003,9 +1011,11 @@ HashTable_Log(log_components_t component,
      /* Buffer descriptors for the key and value */
      hash_data_t *data = NULL;
      /* String representation of the key */
-     char dispkey[HASHTABLE_DISPLAY_STRLEN];
+     char dispkey[LOG_BUFF_LEN / 2];
      /* String representation of the stored value */
-     char dispval[HASHTABLE_DISPLAY_STRLEN];
+     char dispval[LOG_BUFF_LEN / 2];
+     struct display_buffer keybuff = {sizeof(dispkey), dispkey, dispkey};
+     struct display_buffer valbuff = {sizeof(dispval), dispval, dispval};
      /* Index for traversing the partitions */
      uint32_t i = 0;
      /* Running count of entries  */
@@ -1014,6 +1024,10 @@ HashTable_Log(log_components_t component,
      uint32_t index = 0;
      /* Recomputed hash for Red-Black tree*/
      uint64_t rbt_hash = 0;
+
+     /* Nothing to do. */
+     if(!isFullDebug(component))
+       return;
 
      LogFullDebug(component,
                   "The hash is partitioned into %d trees",
@@ -1035,8 +1049,15 @@ HashTable_Log(log_components_t component,
           RBT_LOOP(root, it) {
                data = it->rbt_opaq;
 
-               ht->parameter.key_to_str(&(data->buffkey), dispkey);
-               ht->parameter.val_to_str(&(data->buffval), dispval);
+               if(ht->parameter.key_to_str != NULL)
+                    (void) ht->parameter.key_to_str(&keybuff, &data->buffkey);
+               else
+                    (void) display_cat(&keybuff, "<no key display>");
+
+               if(ht->parameter.val_to_str != NULL)
+                    (void) ht->parameter.val_to_str(&valbuff, &data->buffval);
+               else
+                    (void) display_cat(&valbuff, "<no value display>");
 
                if (compute(ht, &data->buffkey, &index, &rbt_hash)
                    != HASHTABLE_SUCCESS) {
