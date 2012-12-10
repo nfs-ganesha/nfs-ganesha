@@ -39,7 +39,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include "log.h"
 #include "abstract_atomic.h"
@@ -101,7 +101,7 @@ cache_inode_lookup_impl(cache_entry_t *parent,
      if(parent->type != DIRECTORY) {
 	  status = CACHE_INODE_NOT_A_DIRECTORY;
 	  *entry = NULL;
-          return status;
+	  return status;
      }
 
      /* if name is ".", use the input value */
@@ -149,7 +149,12 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                               status = CACHE_INODE_SUCCESS;
                               goto out;
                          }
-                    }
+                    } else if (!write_locked) {
+			    /* Get a write ock and do it again. */
+			    PTHREAD_RWLOCK_unlock(&parent->content_lock);
+			    PTHREAD_RWLOCK_wrlock(&parent->content_lock);
+			    continue;
+		    }
                     /* If the dirent cache is both fully populated and
                        valid, it can serve negative lookups. */
                     if (!dirent &&
