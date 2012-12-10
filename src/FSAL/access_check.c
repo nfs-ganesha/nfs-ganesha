@@ -91,7 +91,8 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
                                         struct user_cred *creds,
                                         bool is_dir,
                                         bool is_owner,
-                                        bool is_group)
+                                        bool is_group,
+                                        bool is_root)
 {
   bool is_applicable = false;
   bool is_file = !is_dir;
@@ -124,7 +125,8 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
     }
 
   /* The user should match who value. */
-  is_applicable = fsal_check_ace_matches(pace, creds, is_owner, is_group);
+  is_applicable = is_root ||
+                  fsal_check_ace_matches(pace, creds, is_owner, is_group);
   if(is_applicable)
     LogDebug(COMPONENT_FSAL, "fsal_check_ace_applicable: Applicable, flag=0X%x",
              pace->flag);
@@ -239,6 +241,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   bool is_dir = false;
   bool is_owner = false;
   bool is_group = false;
+  bool is_root = false;
 
   /* unsatisfied flags */
   missing_access = v4mask;
@@ -253,6 +256,26 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   gid = p_object_attributes->group;
   pacl = p_object_attributes->acl;
   is_dir = (p_object_attributes->type == DIRECTORY);
+  is_root = creds->caller_uid == 0;
+
+  if(is_root)
+    {
+      if(is_dir)
+        {
+          /* On a directory, allow root anything. */
+          LogDebug(COMPONENT_FSAL, "Met root privileges on directory");
+          return true;
+        }
+
+      /* Otherwise, allow root anything but execute. */
+      missing_access &= FSAL_ACE_PERM_EXECUTE;
+
+      if(!missing_access)
+        {
+          LogDebug(COMPONENT_FSAL, "Met root privileges");
+          return true;
+        }
+    }
 
   LogDebug(COMPONENT_FSAL,
            "file acl=%p, file uid=%u, file gid= %u, "
@@ -293,7 +316,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
           LogDebug(COMPONENT_FSAL, "allow or deny");
 
           /* Check if this ACE is applicable. */
-          if(fsal_check_ace_applicable(pace, creds, is_dir, is_owner, is_group))
+          if(fsal_check_ace_applicable(pace, creds, is_dir, is_owner, is_group, is_root))
             {
               if(IS_FSAL_ACE_ALLOW(*pace))
                 {
@@ -310,7 +333,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
                       return true;
                     }
                 }
-             else if(pace->perm & missing_access)
+             else if((pace->perm & missing_access) && !is_root)
                {
                  LogDebug(COMPONENT_FSAL, "access denied");
                  fsal_print_access_by_acl(pacl->naces, ace_number, pace, v4mask,
@@ -364,6 +387,20 @@ static int fsal_check_access_no_acl(struct user_cred *creds,   /* IN */
 		 creds->caller_gid,
 		 access_type);
 
+	if(creds->caller_uid == 0) {
+		bool rc;
+		rc = ((access_type & FSAL_X_OK) == 0) ||
+		     ((mode & (S_IXOTH | S_IXUSR | S_IXGRP)) != 0);
+		if(!rc) {
+			LogDebug(COMPONENT_FSAL,
+			         "Root is not allowed execute access unless at least one user is allowed execute access.");
+		} else {
+			LogDebug(COMPONENT_FSAL,
+			         "Root is granted access.");
+		}
+		return rc;
+	}
+
 	/* If the uid of the file matches the uid of the user,
 	 * then the uid mode bits take precedence. */
 	if(creds->caller_uid == uid) {
@@ -402,9 +439,6 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 	struct attrlist *attribs = &obj_hdl->attributes;
 	int retval;
 
-	/* The root user always wins */
-	if(req_ctx->creds->caller_uid == 0)
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	if(attribs->acl && IS_FSAL_ACE4_MASK_VALID(access_type)) {
 		retval = fsal_check_access_acl(req_ctx->creds,
 					       FSAL_ACE4_MASK(access_type),
