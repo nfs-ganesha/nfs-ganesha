@@ -168,61 +168,78 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(cache_inode_access(data->current_entry,
                         access_mask,
                         data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-        {
+    {
       res_ACCESS4.ACCESS4res_u.resok4.access = res_ACCESS4.ACCESS4res_u.resok4.supported;
       nfs4_access_debug("granted access", arg_ACCESS4.access, 0);
     }
-
-  if(cache_status == CACHE_INODE_FSAL_EACCESS)
-        {
+  else if(cache_status == CACHE_INODE_FSAL_EACCESS)
+    {
       /*
        * We have to determine which access bits are good one by one
        */
       res_ACCESS4.ACCESS4res_u.resok4.access = 0;
 
-      access_mask = nfs_get_access_mask(ACCESS4_READ, &attr);
-      if(cache_inode_access(data->current_entry,
-                            access_mask,
-                            data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-        res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_READ;
-
-      if(attr.type == FSAL_TYPE_DIR)
+      if(arg_ACCESS4.access & ACCESS4_READ)
         {
-          access_mask = nfs_get_access_mask(ACCESS4_LOOKUP, &attr);
+          access_mask = nfs_get_access_mask(ACCESS4_READ, &attr);
           if(cache_inode_access(data->current_entry,
                                 access_mask,
                                 data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-            res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_LOOKUP;
-    }
-
-      access_mask = nfs_get_access_mask(ACCESS4_MODIFY, &attr);
-      if(cache_inode_access(data->current_entry,
-                            access_mask,
-                            data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-        res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_MODIFY;
-
-      access_mask = nfs_get_access_mask(ACCESS4_EXTEND, &attr);
-      if(cache_inode_access(data->current_entry,
-                            access_mask,
-                            data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-        res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXTEND;
-
-      if(attr.type == FSAL_TYPE_DIR)
-        {
-          access_mask = nfs_get_access_mask(ACCESS4_DELETE, &attr);
-          if(cache_inode_access(data->current_entry,
-                                access_mask,
-                                data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-            res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_DELETE;
+            res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_READ;
         }
 
-      if(attr.type != FSAL_TYPE_DIR)
+      if(arg_ACCESS4.access & ACCESS4_LOOKUP)
         {
-          access_mask = nfs_get_access_mask(ACCESS4_EXECUTE, &attr);
+          if(attr.type == FSAL_TYPE_DIR)
+            {
+              access_mask = nfs_get_access_mask(ACCESS4_LOOKUP, &attr);
+              if(cache_inode_access(data->current_entry,
+                                    access_mask,
+                                    data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_LOOKUP;
+            }
+        }
+
+      if(arg_ACCESS4.access & ACCESS4_MODIFY)
+        {
+          access_mask = nfs_get_access_mask(ACCESS4_MODIFY, &attr);
           if(cache_inode_access(data->current_entry,
                                 access_mask,
                                 data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-            res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXECUTE;
+            res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_MODIFY;
+        }
+
+      if(arg_ACCESS4.access & ACCESS4_EXTEND)
+        {
+          access_mask = nfs_get_access_mask(ACCESS4_EXTEND, &attr);
+          if(cache_inode_access(data->current_entry,
+                                access_mask,
+                                data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+            res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXTEND;
+        }
+
+      if(arg_ACCESS4.access & ACCESS4_DELETE)
+        {
+          if(attr.type == FSAL_TYPE_DIR)
+            {
+              access_mask = nfs_get_access_mask(ACCESS4_DELETE, &attr);
+              if(cache_inode_access(data->current_entry,
+                                    access_mask,
+                                    data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_DELETE;
+            }
+        }
+
+      if(arg_ACCESS4.access & ACCESS4_EXECUTE)
+        {
+          if(attr.type != FSAL_TYPE_DIR)
+            {
+              access_mask = nfs_get_access_mask(ACCESS4_EXECUTE, &attr);
+              if(cache_inode_access(data->current_entry,
+                                    access_mask,
+                                    data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXECUTE;
+            }
         }
 
       nfs4_access_debug("reduced access", res_ACCESS4.ACCESS4res_u.resok4.access, 0);

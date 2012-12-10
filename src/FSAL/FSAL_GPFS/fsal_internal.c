@@ -1001,10 +1001,6 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   if((!p_object_attributes && !p_buffstat) || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  /* The root user ignores the mode/uid/gid of the file */
-  if(p_context->credential.user == 0)
-    ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
 #ifdef _USE_NFS4_ACL
   /* If ACL exists and given access type is ace4 mask, use ACL to check access. */
   LogDebug(COMPONENT_FSAL, "pattr=%p, pacl=%p, is_ace4_mask=%d, access_type=%x",
@@ -1468,6 +1464,7 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
   fsal_boolean_t is_dir = FALSE;
   fsal_boolean_t is_owner = FALSE;
   fsal_boolean_t is_group = FALSE;
+  fsal_boolean_t is_root = FALSE;
 
   /* unsatisfied flags */
   missing_access = v4mask;
@@ -1482,6 +1479,26 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
   gid = p_object_attributes->group;
   pacl = p_object_attributes->acl;
   is_dir = (p_object_attributes->type == FSAL_TYPE_DIR);
+  is_root = (p_context->credential.user == 0);
+
+  if(is_root)
+    {
+      if(is_dir)
+        {
+          /* On a directory, allow root anything. */
+          LogDebug(COMPONENT_FSAL, "Met root privileges on directory");
+          ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        }
+
+      /* Otherwise, allow root anything but execute. */
+      missing_access &= FSAL_ACE_PERM_EXECUTE;
+
+      if(!missing_access)
+        {
+          LogDebug(COMPONENT_FSAL, "Met root privileges");
+          ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        }
+    }
 
   LogDebug(COMPONENT_FSAL,
            "file acl=%p, file uid=%d, file gid= %d",
@@ -1683,6 +1700,12 @@ static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_conte
                p_context->credential.user,
                p_context->credential.group,
                access_type);
+
+  if(p_context->credential.user == 0)
+    {
+      /* Always grant read/write access to root */
+      missing_access &= ~(FSAL_R_OK | FSAL_W_OK);
+    }
 
   /* If the uid of the file matches the uid of the user,
    * then the uid mode bits take precedence. */
