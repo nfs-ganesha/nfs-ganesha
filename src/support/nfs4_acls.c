@@ -25,8 +25,10 @@ static int fsal_acl_hash_both(hash_parameter_t * p_hparam,
                               uint32_t * phashval,
                               uint64_t * prbtval);
 static int compare_fsal_acl(hash_buffer_t * p_key1, hash_buffer_t * p_key2);
+#if 0
 static int display_fsal_acl_key(hash_buffer_t * p_val, char *outbuff);
 static int display_fsal_acl_val(hash_buffer_t * p_val, char *outbuff);
+#endif
 
 /* DEFAULT PARAMETERS for hash table */
 
@@ -37,8 +39,8 @@ static hash_parameter_t fsal_acl_hash_config = {
   .hash_func_rbt = NULL,
   .hash_func_both = fsal_acl_hash_both,
   .compare_key = compare_fsal_acl,
-  .key_to_str = display_fsal_acl_key,
-  .val_to_str = display_fsal_acl_val,
+  .key_to_str = NULL, // display_fsal_acl_key,
+  .val_to_str = NULL, // display_fsal_acl_val,
   .ht_name = "ACL Table",
   .flags = HT_FLAG_CACHE,
   .ht_log_component = COMPONENT_NFS_V4_ACL
@@ -81,6 +83,7 @@ static int compare_fsal_acl(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
   return memcmp((char *)p_key1->pdata, (char *)p_key2->pdata, MD5_DIGEST_LENGTH);
 }
 
+#if 0
 static int display_fsal_acl_key(hash_buffer_t * p_val, char *outbuff)
 {
   char printbuf[2 * MD5_DIGEST_LENGTH];
@@ -95,6 +98,7 @@ static int display_fsal_acl_val(hash_buffer_t * p_val, char *outbuff)
 {
   return sprintf(outbuff, "not implemented");
 }
+#endif
 
 fsal_ace_t *nfs4_ace_alloc(int nace)
 {
