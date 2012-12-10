@@ -18,7 +18,7 @@
 #include "fsal_convert.h"
 #include "fsal_internal.h"
 #include "nfs4_acls.h"
-#include "include/gpfs.h"
+#include "gpfs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

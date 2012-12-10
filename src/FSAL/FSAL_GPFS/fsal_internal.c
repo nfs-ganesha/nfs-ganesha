@@ -51,7 +51,7 @@
 #include <string.h>
 #include <sys/fsuid.h>
 
-#include "include/gpfs.h"
+#include "gpfs.h"
 
 #ifdef _USE_NFS4_ACL
 #define ACL_DEBUG_BUF_SIZE 256
