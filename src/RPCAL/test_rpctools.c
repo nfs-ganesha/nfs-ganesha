@@ -106,30 +106,36 @@ void ipv6check() {
 
 void ipv4print() {
     char buf[SOCK_NAME_MAX];
-    sprint_sockip(&ipv4a, buf, sizeof(buf));
+    struct display_buffer dspbuf = {sizeof(buf), buf, buf};
+    (void) display_sockaddr(&dspbuf, &ipv4a, FALSE);
     // printf("Value = %s\n", buf);
     CMP("10.10.5.1", buf, strlen("10.10.5.1"), "ipv4a has the wrong ip value");
 
-    sprint_sockip(&ipv4b, buf, sizeof(buf));
+    display_reset_buffer(&dspbuf);
+    (void) display_sockaddr(&dspbuf, &ipv4b, FALSE);
     // printf("Value = %s\n", buf);
     CMP("10.10.5.1", buf, strlen("10.10.5.1"), "ipv4b has the wrong ip value");
 
-    sprint_sockip(&ipv4c, buf, sizeof(buf));
+    display_reset_buffer(&dspbuf);
+    (void) display_sockaddr(&dspbuf, &ipv4c, FALSE);
     // printf("Value = %s\n", buf);
     CMP("10.10.5.2", buf, strlen("10.10.5.2"), "ipv4c has the wrong ip value");
 }
 
 void ipv6print() {
     char buf[SOCK_NAME_MAX];
-    sprint_sockip(&ipv6a, buf, sizeof(buf));
+    struct display_buffer dspbuf = {sizeof(buf), buf, buf};
+    (void) display_sockaddr(&dspbuf, &ipv6a, FALSE);
     // printf("Value = %s\n", buf);
     CMP("2001::1", buf, strlen("2001::1"), "ipv6a has the wrong ip value");
 
-    sprint_sockip(&ipv6b, buf, sizeof(buf));
+    display_reset_buffer(&dspbuf);
+    (void) display_sockaddr(&dspbuf, &ipv6b, FALSE);
     // printf("Value = %s\n", buf);
     CMP("2001::1", buf, strlen("2001::1"), "ipv6b has the wrong ip value");
 
-    sprint_sockip(&ipv6c, buf, sizeof(buf));
+    display_reset_buffer(&dspbuf);
+    (void) display_sockaddr(&dspbuf, &ipv6c, FALSE);
     // printf("Value = %s\n", buf);
     CMP("2001::f:1", buf, strlen("2001::f:1"), "ipv6c has the wrong ip value");
 }

@@ -214,6 +214,67 @@ unsigned long hash_sockaddr(sockaddr_t *addr, ignore_port_t ignore_port)
   return addr_hash;
 }
 
+extern int display_sockaddr(struct display_buffer * dspbuf,
+                            sockaddr_t            * addr,
+                            bool_t                  showport)
+{
+  const char * name = NULL;
+  int          port;
+  int          b_left = display_start(dspbuf);
+
+  if(b_left <= 0)
+    return b_left;
+
+#ifdef _USE_TIRPC
+  switch(addr->ss_family)
+    {
+      case AF_INET:
+        if(b_left < INET_ADDRSTRLEN)
+          return display_force_overflow(dspbuf);
+        name = inet_ntop(addr->ss_family,
+                         &(((struct sockaddr_in *)addr)->sin_addr),
+                         dspbuf->b_current,
+                         b_left);
+        port = ntohs(((struct sockaddr_in *)addr)->sin_port);
+        break;
+      case AF_INET6:
+        if(b_left < INET6_ADDRSTRLEN)
+          return display_force_overflow(dspbuf);
+        name = inet_ntop(addr->ss_family,
+                         &(((struct sockaddr_in6 *)addr)->sin6_addr),
+                         dspbuf->b_current,
+                         b_left);
+        port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
+        break;
+      case AF_LOCAL:
+        name = dspbuf->b_current;
+        b_left = display_cat(dspbuf, ((struct sockaddr_un *)addr)->sun_path);
+        port = -1;
+        break;
+      default:
+        port = -1;
+    }
+#else
+  if(b_left < INET_ADDRSTRLEN)
+    return display_force_overflow(dspbuf);
+  name = inet_ntop(addr->sin_family,
+                   &addr->sin_addr,
+                   dspbuf->b_current,
+                   b_left);
+  port = ntohs(addr->sin_port);
+#endif
+
+  if(name == NULL)
+    {
+      return display_cat(dspbuf, "<unknown>");
+    }
+
+  if(showport && port >= 0 && b_left > 0)
+    b_left = display_printf(dspbuf, ":%d", port);
+
+  return b_left;
+}
+
 int sprint_sockaddr(sockaddr_t *addr, char *buf, int len)
 {
   const char *name = NULL;
@@ -465,9 +526,10 @@ void socket_setoptions(int socketFd)
 
 int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 {
-  struct addrinfo *info, hints, *p;
-  int rc;
-  char ipname[SOCK_NAME_MAX];
+  struct                addrinfo *info, hints, *p;
+  int                   rc;
+  char                  ipname[SOCK_NAME_MAX];
+  struct display_buffer dspbuf = {sizeof(ipname), ipname, ipname};
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICHOST;
@@ -486,7 +548,7 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
         {
           while (p != NULL)
             {
-              sprint_sockaddr((sockaddr_t *)p->ai_addr, ipname, sizeof(ipname));
+              (void) display_sockaddr(&dspbuf, (sockaddr_t *)p->ai_addr, TRUE);
               LogFullDebug(COMPONENT_RPC,
                            "getaddrinfo %s returned %s family=%s socktype=%s protocol=%s",
                            str, ipname,

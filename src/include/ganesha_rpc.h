@@ -279,6 +279,11 @@ gsh_xprt_clear_flag(SVCXPRT * xprt, uint32_t flags)
     } while (0);
 
 extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
+
+extern int display_sockaddr(struct display_buffer * dspbuf,
+                            sockaddr_t            * addr,
+                            bool_t                  showport);
+
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 extern SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
