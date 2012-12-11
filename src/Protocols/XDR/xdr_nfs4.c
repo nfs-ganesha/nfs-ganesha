@@ -2514,8 +2514,14 @@ bool_t xdr_nfs_argop4(xdrs, objp)
 register XDR *xdrs;
 nfs_argop4 *objp;
 {
-
-
+  static struct nfs_request_lookahead slhd = {
+    .flags = 0,
+    .read = 0,
+    .write = 0
+  };
+  struct nfs_request_lookahead *lkhd =
+    xdrs->x_public ? (struct nfs_request_lookahead *) xdrs->x_public :
+    &slhd;
 
   if(!xdr_nfs_opnum4(xdrs, &objp->argop))
     return (FALSE);
@@ -2529,14 +2535,17 @@ nfs_argop4 *objp;
     case NFS4_OP_CLOSE:
       if(!xdr_CLOSE4args(xdrs, &objp->nfs_argop4_u.opclose))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_CLOSE;
       break;
     case NFS4_OP_COMMIT:
       if(!xdr_COMMIT4args(xdrs, &objp->nfs_argop4_u.opcommit))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_COMMIT;
       break;
     case NFS4_OP_CREATE:
       if(!xdr_CREATE4args(xdrs, &objp->nfs_argop4_u.opcreate))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_CREATE;
       break;
     case NFS4_OP_DELEGPURGE:
       if(!xdr_DELEGPURGE4args(xdrs, &objp->nfs_argop4_u.opdelegpurge))
@@ -2559,6 +2568,7 @@ nfs_argop4 *objp;
     case NFS4_OP_LOCK:
       if(!xdr_LOCK4args(xdrs, &objp->nfs_argop4_u.oplock))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_LOCK;
       break;
     case NFS4_OP_LOCKT:
       if(!xdr_LOCKT4args(xdrs, &objp->nfs_argop4_u.oplockt))
@@ -2567,6 +2577,7 @@ nfs_argop4 *objp;
     case NFS4_OP_LOCKU:
       if(!xdr_LOCKU4args(xdrs, &objp->nfs_argop4_u.oplocku))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_LOCK;
       break;
     case NFS4_OP_LOOKUP:
       if(!xdr_LOOKUP4args(xdrs, &objp->nfs_argop4_u.oplookup))
@@ -2581,6 +2592,9 @@ nfs_argop4 *objp;
     case NFS4_OP_OPEN:
       if(!xdr_OPEN4args(xdrs, &objp->nfs_argop4_u.opopen))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_OPEN;
+      if (objp->nfs_argop4_u.opopen.openhow.opentype == OPEN4_CREATE)
+        lkhd->flags |= NFS_LOOKAHEAD_CREATE;
       break;
     case NFS4_OP_OPENATTR:
       if(!xdr_OPENATTR4args(xdrs, &objp->nfs_argop4_u.opopenattr))
@@ -2589,10 +2603,12 @@ nfs_argop4 *objp;
     case NFS4_OP_OPEN_CONFIRM:
       if(!xdr_OPEN_CONFIRM4args(xdrs, &objp->nfs_argop4_u.opopen_confirm))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_OPEN;
       break;
     case NFS4_OP_OPEN_DOWNGRADE:
       if(!xdr_OPEN_DOWNGRADE4args(xdrs, &objp->nfs_argop4_u.opopen_downgrade))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_OPEN;
       break;
     case NFS4_OP_PUTFH:
       if(!xdr_PUTFH4args(xdrs, &objp->nfs_argop4_u.opputfh))
@@ -2605,20 +2621,25 @@ nfs_argop4 *objp;
     case NFS4_OP_READ:
       if(!xdr_READ4args(xdrs, &objp->nfs_argop4_u.opread))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_READ;
+      (lkhd->read)++;
       break;
     case NFS4_OP_READDIR:
       if(!xdr_READDIR4args(xdrs, &objp->nfs_argop4_u.opreaddir))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_READDIR;
       break;
     case NFS4_OP_READLINK:
       break;
     case NFS4_OP_REMOVE:
       if(!xdr_REMOVE4args(xdrs, &objp->nfs_argop4_u.opremove))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_REMOVE;
       break;
     case NFS4_OP_RENAME:
       if(!xdr_RENAME4args(xdrs, &objp->nfs_argop4_u.oprename))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_RENAME;
       break;
     case NFS4_OP_RENEW:
       if(!xdr_RENEW4args(xdrs, &objp->nfs_argop4_u.oprenew))
@@ -2651,6 +2672,8 @@ nfs_argop4 *objp;
     case NFS4_OP_WRITE:
       if(!xdr_WRITE4args(xdrs, &objp->nfs_argop4_u.opwrite))
         return (FALSE);
+      lkhd->flags |= NFS_LOOKAHEAD_WRITE;
+      (lkhd->write)++;
       break;
     case NFS4_OP_RELEASE_LOCKOWNER:
       if(!xdr_RELEASE_LOCKOWNER4args(xdrs, &objp->nfs_argop4_u.oprelease_lockowner))
