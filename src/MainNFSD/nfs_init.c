@@ -492,8 +492,8 @@ void nfs_set_param_default()
   nfs_param.ip_stats_param.hash_param.hash_func_key = ip_stats_value_hash_func;
   nfs_param.ip_stats_param.hash_param.hash_func_rbt = ip_stats_rbt_hash_func;
   nfs_param.ip_stats_param.hash_param.compare_key = compare_ip_stats;
-  nfs_param.ip_stats_param.hash_param.key_to_str = NULL; // display_ip_stats_key;
-  nfs_param.ip_stats_param.hash_param.val_to_str = NULL; // display_ip_stats_val;
+  nfs_param.ip_stats_param.hash_param.key_to_str = display_ip_stats_key;
+  nfs_param.ip_stats_param.hash_param.val_to_str = display_ip_stats_val;
   nfs_param.ip_stats_param.hash_param.ht_name = "IP Stats";
   nfs_param.ip_stats_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.ip_stats_param.hash_param.ht_log_component = COMPONENT_DISPATCH;

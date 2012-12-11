@@ -76,8 +76,8 @@ uint64_t ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
 uint32_t ip_name_value_hash_func(hash_parameter_t * p_hparam,
                                  hash_buffer_t * buffclef);
 
-int display_ip_stats_key(hash_buffer_t * pbuff, char *str);
-int display_ip_stats_val(hash_buffer_t * pbuff, char *str);
+int display_ip_stats_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff);
+int display_ip_stats_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff);
 int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2);
 uint64_t ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef);

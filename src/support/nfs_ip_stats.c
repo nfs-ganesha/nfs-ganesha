@@ -137,12 +137,9 @@ int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_ip_stats_key(hash_buffer_t * pbuff, char *str)
+int display_ip_stats_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  sockaddr_t *addr = (sockaddr_t *)(pbuff->pdata);
-
-  sprint_sockaddr(addr, str, HASHTABLE_DISPLAY_STRLEN);
-  return strlen(str);
+  return display_sockaddr(dspbuf, pbuff->pdata, TRUE);
 }
 
 /**
@@ -157,18 +154,18 @@ int display_ip_stats_key(hash_buffer_t * pbuff, char *str)
  * @return number of character written.
  *
  */
-int display_ip_stats_val(hash_buffer_t * pbuff, char *str)
+int display_ip_stats_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  nfs_ip_stats_t *ip_stats = (nfs_ip_stats_t *)(pbuff->pdata);
+  nfs_ip_stats_t *ip_stats = pbuff->pdata;
 
-  return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
-                  "calls %u nfs2 %u nfs3 %u nfs4 %u mnt1 %u mnt3 %u",
-                  ip_stats->nb_call,
-                  ip_stats->nb_req_nfs2,
-                  ip_stats->nb_req_nfs3,
-                  ip_stats->nb_req_nfs4,
-                  ip_stats->nb_req_mnt1,
-                  ip_stats->nb_req_mnt3);
+  return display_printf(dspbuf,
+                        "calls %u nfs2 %u nfs3 %u nfs4 %u mnt1 %u mnt3 %u",
+                        ip_stats->nb_call,
+                        ip_stats->nb_req_nfs2,
+                        ip_stats->nb_req_nfs3,
+                        ip_stats->nb_req_nfs4,
+                        ip_stats->nb_req_mnt1,
+                        ip_stats->nb_req_mnt3);
 }
 
 /**
@@ -442,8 +439,6 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
   nfs_ip_stats_t *g[NB_MAX_WORKER_THREAD];
   nfs_ip_stats_t ip_stats_aggreg;
   // enough to hold an IPv4 or IPv6 address as a string
-  char ipaddrbuf[40];
-  char ifpathdump[MAXPATHLEN];
   sockaddr_t * ipaddr;
   time_t current_time;
   struct tm current_time_struct;
@@ -472,13 +467,19 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
       tete_rbt = &ht_ip_stats[0]->partitions[i].rbt;
       RBT_LOOP(tete_rbt, it)
       {
+        char                  ifpathdump[MAXPATHLEN];
+        struct display_buffer dspbuf = {sizeof(ifpathdump), ifpathdump, ifpathdump};
+
         pdata = (hash_data_t *) it->rbt_opaq;
 
         ipaddr = (sockaddr_t *) pdata->buffkey.pdata;
 
-        sprint_sockaddr(ipaddr, ipaddrbuf, sizeof(ipaddrbuf));
-
-        snprintf(ifpathdump, sizeof(ifpathdump), "%s/stats_nfs-%s", path_stat, ipaddrbuf);
+        if(display_cat(&dspbuf, path_stat) <= 0)
+          return;
+        if(display_cat(&dspbuf, "/stats_nfs-") <= 0)
+          return;
+        if(display_sockaddr(&dspbuf, ipaddr, TRUE) <= 0)
+          return;
 
         if((flushipstat = fopen(ifpathdump, "a")) == NULL)
           return;
