@@ -512,8 +512,41 @@ configure_file(
   "${PROJECT_BINARY_DIR}/include/config.h"
 )
 
+# The fuse library needs a .pc file
+if(USE_FSAL_FUSE)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(LIB_SUFFIX
+      "64"
+      CACHE STRING "Architecture specific library"
+      )
+  else(LINUX AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+    set(LIB_SUFFIX
+      ""
+      CACHE STRING "Architecture specific library"
+      )
+  endif(LINUX AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+
+  set(LIB_DESTINATION
+    "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/"
+    CACHE
+    STRING "Library directory"
+    )
+
+  set(INCLUDE_INSTALL_DIR
+    "${CMAKE_INSTALL_PREFIX}/include"
+    CACHE PATH "The subdirectory to the header prefix"
+    )
+
+  configure_file(
+    "${PROJECT_SOURCE_DIR}/libganeshaNFS.pc.cmake"
+    "${PROJECT_BINARY_DIR}/libganeshaNFS.pc"
+    @ONLY
+    )
+endif(USE_FSAL_FUSE)
+
+
 ########### install files ###############
-
-install(FILES  libganeshaNFS.pc DESTINATION bin)
-
+if(USE_FSAL_FUSE)
+  install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" DESTINATION ${LIB_DESTINATION})
+endif(USE_FSAL_FUSE)
 
