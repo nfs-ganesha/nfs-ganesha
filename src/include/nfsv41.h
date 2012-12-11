@@ -3357,15 +3357,13 @@ extern "C"
 
   enum notify_deviceid_type4
   {
-#ifdef TEST_LINUX_CLIENT
-    NOTIFY_DEVICEID4_CHANGE = 2,
-    NOTIFY_DEVICEID4_DELETE = 4,
-#else
     NOTIFY_DEVICEID4_CHANGE = 1,
     NOTIFY_DEVICEID4_DELETE = 2,
-#endif
   };
   typedef enum notify_deviceid_type4 notify_deviceid_type4;
+
+#define NOTIFY_DEVICEID4_CHANGE_MASK (1 << NOTIFY_DEVICEID4_CHANGE)
+#define NOTIFY_DEVICEID4_DELETE_MASK (1 << NOTIFY_DEVICEID4_DELETE)
 
   struct notify_deviceid_delete4
   {
@@ -8041,7 +8039,7 @@ static inline bool xdr_notifylist_dev(XDR * xdrs, notifylist4 * objp, int type)
 {
   if(!xdr_count4(xdrs, &objp->notifylist4_len))
     return false;
-  if (type == NOTIFY_DEVICEID4_DELETE)
+  if (type == NOTIFY_DEVICEID4_DELETE_MASK)
   {
     if(!xdr_notify_deviceid_delete4(xdrs,
                            (notify_deviceid_delete4 *)objp->notifylist4_val))
