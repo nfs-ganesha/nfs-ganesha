@@ -129,12 +129,9 @@ int compare_ip_name(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_ip_name_key(hash_buffer_t * pbuff, char *str)
+int display_ip_name_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  sockaddr_t *addr = (sockaddr_t *)(pbuff->pdata);
-
-  sprint_sockaddr(addr, str, HASHTABLE_DISPLAY_STRLEN);
-  return strlen(str);
+  return display_sockaddr(dspbuf, pbuff->pdata, TRUE);
 }
 
 /**
@@ -149,11 +146,11 @@ int display_ip_name_key(hash_buffer_t * pbuff, char *str)
  * @return number of character written.
  *
  */
-int display_ip_name_val(hash_buffer_t * pbuff, char *str)
+int display_ip_name_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  nfs_ip_name_t *nfs_ip_name = (pbuff->pdata);
+  nfs_ip_name_t *nfs_ip_name = pbuff->pdata;
 
-  return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "%s", nfs_ip_name->hostname);
+  return display_cat(dspbuf, nfs_ip_name->hostname);
 }
 
 /**
@@ -180,6 +177,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
   struct timeval tv0, tv1, dur;
   int rc;
   char ipstring[SOCK_NAME_MAX];
+  struct display_buffer dspbuf = {sizeof(ipstring), ipstring, ipstring};
 
   nfs_ip_name = gsh_malloc(sizeof(nfs_ip_name_t));
 
@@ -207,8 +205,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
   gettimeofday(&tv1, NULL) ;
   timersub(&tv1, &tv0, &dur) ;
 
-
-  sprint_sockaddr(pipaddr, ipstring, sizeof(ipstring));
+  (void) display_sockaddr(&dspbuf, pipaddr, TRUE);
 
   /* display warning if DNS resolution took more that 1.0s */
   if (dur.tv_sec >= 1)
@@ -268,8 +265,9 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
   hash_buffer_t buffval;
   nfs_ip_name_t *nfs_ip_name;
   char ipstring[SOCK_NAME_MAX];
+  struct display_buffer dspbuf = {sizeof(ipstring), ipstring, ipstring};
 
-  sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
+  (void) display_sockaddr(&dspbuf, ipaddr, TRUE);
 
   buffkey.pdata = (caddr_t) ipaddr;
   buffkey.len = sizeof(sockaddr_t);
@@ -309,8 +307,9 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
   hash_buffer_t buffkey, old_value;
   nfs_ip_name_t *nfs_ip_name = NULL;
   char ipstring[SOCK_NAME_MAX];
+  struct display_buffer dspbuf = {sizeof(ipstring), ipstring, ipstring};
 
-  sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
+  (void) display_sockaddr(&dspbuf, ipaddr, TRUE);
 
   buffkey.pdata = (caddr_t) ipaddr;
   buffkey.len = sizeof(sockaddr_t);
