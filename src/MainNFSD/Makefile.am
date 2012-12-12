@@ -116,7 +116,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              $(DISPATCH_9P_FILES)                 \
                              nfs_rpc_tcp_socket_manager_thread.c  \
                              nfs_init.c                           \
-                             nfs_tools.c                          \
                              nfs_reaper_thread.c                  \
                              nfs_recovery_thread.c                \
                              nfs_init.h                           \
