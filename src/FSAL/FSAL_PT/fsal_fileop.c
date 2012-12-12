@@ -449,12 +449,15 @@ fsal_status_t PTFSAL_write(fsal_file_t * file_desc,           /* IN */
   nb_written = ptfsal_write(file_desc, buffer, buffer_size, offset, 
                             handle_index);
 
-  FSI_TRACE(FSI_INFO, "Number of bytes written %d and errno %d", nb_written, errno);
-  errsv = errno;
+  FSI_TRACE(FSI_INFO, "Number of bytes written %d", nb_written);
+  FSI_TRACE(FSI_DEBUG, "The errno %d", errno);
 
-  if(nb_written <= 0) {
+  if(nb_written > 0) {
+    errno = 0;
+  } else {
     FSI_TRACE(FSI_ERR, "Failed to write data, nb_written %d errno %d", nb_written, errsv);
-    if (p_seek_descriptor)
+    errsv = errno;
+    if (p_seek_descriptor) {
       LogDebug(COMPONENT_FSAL,
                "Write operation of size %llu at offset %lld failed. fd=%d, "  
                "errno=%d.",
@@ -462,12 +465,13 @@ fsal_status_t PTFSAL_write(fsal_file_t * file_desc,           /* IN */
                (long long) p_seek_descriptor->offset,
                p_file_descriptor->fd,
                errsv);
-    else
+    } else {
       LogDebug(COMPONENT_FSAL,
                "Write operation of size %llu at offset 0. fd=%d, errno=%d.",
                (unsigned long long) i_size,
                p_file_descriptor->fd,
                errsv);
+    }
 
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
   }
