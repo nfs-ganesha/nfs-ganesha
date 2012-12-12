@@ -268,7 +268,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
       /* Force a refresh of the link count in the case of renaming
 	 one hardlink to another */
       PTHREAD_RWLOCK_wrlock(&lookup_src->attr_lock);
-      handle_lookup->ops->getattrs(handle_lookup, req_ctx);
+      fsal_status = handle_lookup->ops->getattrs(handle_lookup, req_ctx);
       PTHREAD_RWLOCK_unlock(&lookup_src->attr_lock);
     }
   
