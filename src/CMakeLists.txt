@@ -108,6 +108,7 @@ set(ALLOCATOR "jemalloc" CACHE STRING
 
 # Find packages and libs we need for building
 include(CheckIncludeFiles)
+include(CheckLibraryExists)
 include(TestBigEndian)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -158,11 +159,16 @@ set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 # Validate fsal dependencies
 if(USE_FSAL_CEPH)
-  find_library(CEPH_FS cephfs PATHS ${CEPH_PREFIX})
-  if(CEPH_FS_NOTFOUND)
+  check_library_exists(
+    cephfs
+    ceph_ll_connectable_x
+    ${CEPH_PREFIX}
+    CEPH_FS
+    )
+  if(NOT CEPH_FS)
     message(WARNING "Cannot find CEPH runtime.  Disabling CEPH fsal build")
-    set(USE_CEPH OFF)
-  endif(CEPH_FS_NOTFOUND)
+    set(USE_FSAL_CEPH OFF)
+  endif(NOT CEPH_FS)
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_LUSTRE)
@@ -181,21 +187,30 @@ if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
   endif(SHOOK_LIB_NOTFOUND)
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
 
-if(USE_GPFS)
+if(USE_FSAL_GPFS)
   find_library(GPFS_LIB gpfs)
   if(GPFS_LIB_NOTFOUND)
     message(WARNING "Cannot find GPFS runtime.  Disabling GPFS build")
-    set(USE_GPFS OFF)
+    set(USE_FSAL_GPFS OFF)
   endif(GPFS_LIB_NOTFOUND)
-endif(USE_GPFS)
+endif(USE_FSAL_GPFS)
 
-if(USE_ZFS)
+if(USE_FSAL_XFS)
+  find_library(XFS_LIB handle)
+  check_include_files("xfs/xfs.h" HAVE_XFS_H)
+  if(XFS_LIB_NOTFOUND OR (NOT HAVE_XFS_H))
+    message(WARNING "Cannot find XFS runtime. Disabling XFS build")
+    set(USE_FSAL_XFS OFF)
+  endif(XFS_LIB_NOTFOUND OR (NOT HAVE_XFS_H))
+endif(USE_FSAL_XFS)
+
+if(USE_FSAL_ZFS)
   find_library(ZFS_LIB zfswrap)
   if(ZFS_LIB_NOTFOUND)
     message(WARNING "Cannot find ZFS runtime. Disabling ZFS build")
-    set(USE_ZFS OFF)
+    set(USE_FSAL_ZFS OFF)
   endif(ZFS_LIB_NOTFOUND)
-endif(USE_ZFS)
+endif(USE_FSAL_ZFS)
 
 # sort out which allocator to use
 if(${ALLOCATOR} STREQUAL "jemalloc")
@@ -242,8 +257,14 @@ if(USE_CUNIT)
 endif(USE_CUNIT)
 
 if(_MSPAC_SUPPORT)
-  find_package(WBclient REQUIRED)
-  set(SYSTEM_LIBRARIES ${WBclient_LIBRARIES} ${SYSTEM_LIBRARIES})
+  find_library(WBCLIENT_LIB wbclient )
+  check_include_files("stdint.h;stdbool.h;wbclient.h" HAVE_WBCLIENT_H)
+  if(WBCLIENT_LIB AND HAVE_WBCLIENT_H)
+    set(SYSTEM_LIBRARIES ${WBCLIENT_LIB} ${SYSTEM_LIBRARIES})
+  else(WBCLIENTT_LIB AND HAVE_WBCLIENT_H)
+    message(WARNING "Could not find wbclient library. Disable MSPAC_SUPPORT")
+    set(_MSPAC_SUPPORT OFF)
+  endif(WBCLIENT_LIB AND HAVE_WBCLIENT_H)
 endif(_MSPAC_SUPPORT)
 
 add_definitions(-DHAVE_CONFIG_H)
