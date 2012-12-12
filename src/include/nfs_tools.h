@@ -71,13 +71,4 @@ char *nfstype3_to_str(ftype3 code);
 
 void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr) ;
 
-/* Hash and LRU functions */
-unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
-                                       struct gsh_buffdesc * buffclef);
-unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam,
-                                    struct gsh_buffdesc * buffclef);
-
-int display_cache(struct gsh_buffdesc * pbuff, char *str);
-int compare_cache(struct gsh_buffdesc * buff1, struct gsh_buffdesc * buff2);
-
 #endif                          /* _NFS_TOOLS_H */
