@@ -74,6 +74,9 @@
 // in windows.  QC defect# 14410 has more detail
 #define FSI_MAX_STREAMS                  300
 
+// The minimum amount of seconds between two out-of-streams error reports
+#define MAX_STREAMS_ALERT_FREQUENCY_SEC  SEC_IN_HOUR
+
 // size of NFS handle
 #define FSI_PERSISTENT_HANDLE_N_BYTES    32
 
