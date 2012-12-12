@@ -78,17 +78,19 @@ static uint32_t all_eia_flags =
 int nfs41_op_exchange_id(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
-  char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-  nfs_client_record_t * pclient_record;
-  nfs_client_id_t     * pconf;
-  nfs_client_id_t     * punconf;
-  int                   rc;
-  int                   len;
-  char                * temp;
-  bool_t                update;
-  const char          * update_str;
-  log_components_t      component = COMPONENT_CLIENTID;
+  char                    str_verf[NFS4_VERIFIER_SIZE * 2 + 3];
+  char                    str_clnt[256];
+  struct display_buffer   dsp_verf = {sizeof(str_verf), str_verf, str_verf};
+  struct display_buffer   dsp_clnt = {sizeof(str_clnt), str_clnt, str_clnt};
+  nfs_client_record_t   * pclient_record;
+  nfs_client_id_t       * pconf;
+  nfs_client_id_t       * punconf;
+  int                     rc;
+  int                     len;
+  char                  * temp;
+  bool_t                  update;
+  const char            * update_str;
+  log_components_t        component = COMPONENT_CLIENTID;
 
 #if 0 /** @todo: plante le client sous windows. Ai-je réellement besoin de cela ???? */
   /* Check flags value (test EID4) */
@@ -112,13 +114,13 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   if(isDebug(component))
     {
-      DisplayOpaqueValue(arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
-                         arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len,
-                         str_client);
+      (void) display_opaque_value(&dsp_clnt,
+                                  arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
+                                  arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
 
-      sprint_mem(str_verifier,
-                 arg_EXCHANGE_ID4.eia_clientowner.co_verifier,
-                 NFS4_VERIFIER_SIZE);
+      (void) display_opaque_bytes(&dsp_verf,
+                                  arg_EXCHANGE_ID4.eia_clientowner.co_verifier,
+                                  NFS4_VERIFIER_SIZE);
 
       update_str = update ? "UPDATE" : "NO UPDATE";
     }
@@ -126,7 +128,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   LogDebug(component,
            "EXCHANGE_ID Client addr=%s id=%s verf=%s %s --------------------",
            data->pworker->hostaddr_str,
-           str_client, str_verifier, update_str);
+           str_clnt, str_verf, update_str);
 
   /* Do we already have one or more records for client id (x)? */
   pclient_record = get_client_record(arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
@@ -150,9 +152,10 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_record(pclient_record, str);
+      (void) display_client_record(&dspbuf, pclient_record);
 
       LogFullDebug(COMPONENT_CLIENTID,
                    "Client Record %s cr_pconfirmed_id=%p cr_punconfirmed_id=%p",
@@ -188,9 +191,11 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
               /* CASE 3, client collisions, old clientid is expired */
               if(isDebug(COMPONENT_CLIENTID))
                 {
-                  char str[HASHTABLE_DISPLAY_STRLEN];
+                  char                  str[LOG_BUFF_LEN];
+                  struct display_buffer dspbuf = {sizeof(str), str, str};
 
-                  display_client_id_rec(pconf, str);
+                  (void) display_client_id_rec(&dspbuf, pconf);
+
                   LogDebug(COMPONENT_CLIENTID,
                            "Expiring %s",
                            str);
@@ -215,7 +220,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
                   LogDebug(component,
                            "Confirmed ClientId %"PRIx64"->'%s': Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
-                           pconf->cid_clientid, str_client, confirmed_addr);
+                           pconf->cid_clientid, str_clnt, confirmed_addr);
                 }
 
               res_EXCHANGE_ID4.eir_status = NFS4ERR_CLID_INUSE;
@@ -234,7 +239,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
           /* Return what was last returned without changing any refcounts */
           LogDebug(COMPONENT_CLIENTID,
                    "Non-update of confirmed ClientId %"PRIx64"->%s",
-                   pconf->cid_clientid, str_client);
+                   pconf->cid_clientid, str_clnt);
 
           punconf = pconf;
 
@@ -246,7 +251,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
           /** @todo FSF: expire old clientid? */
           LogDebug(component,
                    "Restarted ClientId %"PRIx64"->%s",
-                   pconf->cid_clientid, str_client);
+                   pconf->cid_clientid, str_clnt);
           
         }
     }
@@ -272,7 +277,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
                   LogDebug(component,
                            "Confirmed ClientId %"PRIx64"->'%s': Principals do not match... confirmed addr=%s Return NFS4ERR_PERM",
-                           pconf->cid_clientid, str_client, confirmed_addr);
+                           pconf->cid_clientid, str_clnt, confirmed_addr);
                 }
 
               res_EXCHANGE_ID4.eir_status = NFS4ERR_PERM;
@@ -291,15 +296,16 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
           /* CASE 8, Update but wrong verifier */
           if(isDebug(component))
             {
-              char str_old_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
+              char                  old_verf[NFS4_VERIFIER_SIZE * 2 + 3];
+              struct display_buffer dsp_overf = {sizeof(old_verf), old_verf, old_verf};
 
-              sprint_mem(str_old_verifier,
-                         pconf->cid_incoming_verifier,
-                         NFS4_VERIFIER_SIZE);
+              (void) display_opaque_bytes(&dsp_overf,
+                                          pconf->cid_incoming_verifier,
+                                          NFS4_VERIFIER_SIZE);
 
               LogDebug(component,
                        "Confirmed clientid %"PRIx64"->'%s': Verifiers do not match... confirmed verifier=%s",
-                       pconf->cid_clientid, str_client, str_old_verifier);
+                       pconf->cid_clientid, str_clnt, old_verf);
             }
 
           res_EXCHANGE_ID4.eir_status = NFS4ERR_NOT_SAME;
@@ -314,7 +320,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
     {
       LogDebug(component,
                "No confirmed clientid to update for %s",
-               str_client);
+               str_clnt);
 
       res_EXCHANGE_ID4.eir_status = NFS4ERR_NOENT;
 
@@ -334,9 +340,10 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       /* Delete the unconfirmed clientid record */
       if(isDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(punconf, str);
+          (void) display_client_id_rec(&dspbuf, punconf);
 
           LogDebug(COMPONENT_CLIENTID,
                    "Replacing %s",
@@ -456,17 +463,23 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
   if(isDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+      int                   b_left;
 
-      sprint_mem(str_verifier,
-                 arg_EXCHANGE_ID4.eia_clientowner.co_verifier,
-                 NFS4_VERIFIER_SIZE);
+      b_left = display_opaque_bytes(&dspbuf,
+                                    arg_EXCHANGE_ID4.eia_clientowner.co_verifier,
+                                    NFS4_VERIFIER_SIZE);
 
-      display_client_id_rec(punconf, str);
+      if(b_left > 0)
+        b_left = display_cat(&dspbuf, " ");
+
+      if(b_left > 0)
+        b_left = display_client_id_rec(&dspbuf, punconf);
 
       LogDebug(COMPONENT_CLIENTID,
-               "EXCHANGE_ID reply Verifier=%s %s",
-               str_verifier, str);
+               "EXCHANGE_ID reply Verifier=%s",
+               str);
     }
 
   res_EXCHANGE_ID4.eir_status = NFS4_OK;

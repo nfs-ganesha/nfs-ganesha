@@ -96,7 +96,7 @@ const char * clientid_error_to_str(nfs_clientid_error_t err)
   return "UNEXPECTED ERROR";
 }
 
-const char * clientid_confirm_state_to_str(nfs_clientid_confirm_state_t confirmed)
+const char * cid_confirm_state_to_str(nfs_clientid_confirm_state_t confirmed)
 {
   switch(confirmed)
     {
@@ -107,45 +107,53 @@ const char * clientid_confirm_state_to_str(nfs_clientid_confirm_state_t confirme
   return "UNKNOWN STATE";
 }
 
-int display_client_id_rec(nfs_client_id_t * pclientid, char * str)
+int display_client_id_rec(struct display_buffer * dspbuf,
+                          nfs_client_id_t       * pclientid)
 {
-  int    delta;
-  char * tmpstr = str;
+  int b_left;
+  int delta;
 
-  tmpstr += sprintf(tmpstr, "%p ClientID=%"PRIx64" %s Client={",
-                    pclientid,
-                    pclientid->cid_clientid,
-                    clientid_confirm_state_to_str(pclientid->cid_confirmed));
+  b_left = display_printf(dspbuf,
+                          "%p ClientID=%"PRIx64" %s Client={",
+                          pclientid,
+                          pclientid->cid_clientid,
+                          cid_confirm_state_to_str(pclientid->cid_confirmed));
+
+  if(b_left <= 0)
+    return b_left;
 
   if(pclientid->cid_client_record != NULL)
-    tmpstr += display_client_record(pclientid->cid_client_record, tmpstr);
+    b_left = display_client_record(dspbuf, pclientid->cid_client_record);
   else
-    tmpstr += sprintf(tmpstr, "<NULL>");
+    b_left = display_cat(dspbuf, "<NULL>");
+
+  if(b_left <= 0)
+    return b_left;
 
   if(pclientid->cid_lease_reservations > 0)
     delta = 0;
   else
     delta = time(NULL) - pclientid->cid_last_renew;
 
-  tmpstr += sprintf(tmpstr, "} cb_prog=%u r_addr=%s r_netid=%s t_delta=%d reservations=%d refcount=%"PRId32,
-                    pclientid->cid_cb.cid_program,
-                    pclientid->cid_cb.cid_client_r_addr,
-                    netid_nc_table[pclientid->cid_cb.cid_addr.nc].netid,
-                    delta,
-                    pclientid->cid_lease_reservations,
-                    atomic_fetch_int32_t(&pclientid->cid_refcount));
-
-  return tmpstr - str;
+  return display_printf(dspbuf,
+                        "} cb_prog=%u r_addr=%s r_netid=%s t_delta=%d reservations=%d refcount=%"PRId32,
+                        pclientid->cid_cb.cid_program,
+                        pclientid->cid_cb.cid_client_r_addr,
+                        netid_nc_table[pclientid->cid_cb.cid_addr.nc].netid,
+                        delta,
+                        pclientid->cid_lease_reservations,
+                        atomic_fetch_int32_t(&pclientid->cid_refcount));
 }
 
-int display_clientid_name(nfs_client_id_t * pclientid, char * str)
+int display_clientid_name(struct display_buffer * dspbuf,
+                          nfs_client_id_t       * pclientid)
 {
   if(pclientid->cid_client_record != NULL)
-    return DisplayOpaqueValue(pclientid->cid_client_record->cr_client_val,
-                              pclientid->cid_client_record->cr_client_val_len,
-                              str);
+    return display_opaque_value(dspbuf,
+                                pclientid->cid_client_record->cr_client_val,
+                                pclientid->cid_client_record->cr_client_val_len);
   else
-    return sprintf(str, "<NULL>");
+    return display_cat(dspbuf, "<NULL>");
 }
 
 static void Hash_inc_client_id_ref(hash_buffer_t *buffval)
@@ -161,9 +169,11 @@ void inc_client_id_ref(nfs_client_id_t *pclientid)
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_id_rec(pclientid, str);
+      (void) display_client_id_rec(&dspbuf, pclientid);
+
       LogFullDebug(COMPONENT_CLIENTID,
                    "Increment refcount Clientid {%s} to %"PRId32,
                    str, cid_refcount);
@@ -187,11 +197,15 @@ void free_client_id(nfs_client_id_t *pclientid)
 
 void dec_client_id_ref(nfs_client_id_t *pclientid)
 {
-  char           str[HASHTABLE_DISPLAY_STRLEN];
-  int32_t        cid_refcount;
+  char                  str[LOG_BUFF_LEN];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
+  int32_t               cid_refcount;
 
   if(isFullDebug(COMPONENT_CLIENTID))
-    display_client_id_rec(pclientid, str);
+    {
+      display_reset_buffer(&dspbuf);
+      (void) display_client_id_rec(&dspbuf, pclientid);
+    }
 
   cid_refcount = atomic_dec_int32_t(&pclientid->cid_refcount);
 
@@ -217,7 +231,8 @@ void dec_client_id_ref(nfs_client_id_t *pclientid)
   else
     {
       /* Clientid records should not be freed unless marked expired. */
-      display_client_id_rec(pclientid, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_client_id_rec(&dspbuf, pclientid);
 
       LogCrit(COMPONENT_CLIENTID,
               "Should not be here, try to remove last ref {%s}",
@@ -313,18 +328,18 @@ int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_client_id_key(hash_buffer_t * pbuff, char *str)
+int display_client_id_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
   clientid4 clientid;
 
   clientid = *((clientid4 *) (pbuff->pdata));
 
-  return sprintf(str, "%"PRIx64, clientid);
+  return display_printf(dspbuf, "%"PRIx64, clientid);
 }
 
-int display_client_id_val(hash_buffer_t * pbuff, char *str)
+int display_client_id_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  return display_client_id_rec(pbuff->pdata, str);
+  return display_client_id_rec(dspbuf, pbuff->pdata);
 }
 
 nfs_client_id_t * create_client_id(clientid4              clientid,
@@ -345,13 +360,14 @@ nfs_client_id_t * create_client_id(clientid4              clientid,
 
   if(pthread_mutex_init(&pclientid->cid_mutex, NULL) == -1)
     {
-      char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
+      char                  str_clnt[256];
+      struct display_buffer dspbuf = {sizeof(str_clnt), str_clnt, str_clnt};
 
-      display_clientid_name(pclientid, str_client);
+      (void) display_clientid_name(&dspbuf, pclientid);
 
       LogCrit(COMPONENT_CLIENTID,
                "Could not init mutex for clientid %"PRIx64"->%s",
-               clientid, str_client);
+               clientid, str_clnt);
 
       /* Directly free the clientid record since we failed to initialize it */
       pool_free(client_id_pool, pclientid);
@@ -548,9 +564,10 @@ int nfs_client_id_confirm(nfs_client_id_t * pclientid,
     {
       if(isDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(pclientid, str);
+          (void) display_client_id_rec(&dspbuf, pclientid);
 
           LogCrit(COMPONENT_CLIENTID,
                   "Unexpected problem %s, could not remove {%s}",
@@ -571,9 +588,10 @@ int nfs_client_id_confirm(nfs_client_id_t * pclientid,
     {
       if(isDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(pclientid, str);
+          (void) display_client_id_rec(&dspbuf, pclientid);
 
           LogCrit(COMPONENT_CLIENTID,
                   "Unexpected problem %s, could not insert {%s}",
@@ -615,14 +633,16 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
   hash_buffer_t          old_value;
   hash_table_t         * ht_expire;
   nfs_client_record_t  * precord;
-  char                   str[HASHTABLE_DISPLAY_STRLEN];
+  char                   str[LOG_BUFF_LEN];
+  struct display_buffer  dspbuf = {sizeof(str), str, str};
 
   P(pclientid->cid_mutex);
   if (pclientid->cid_confirmed == EXPIRED_CLIENT_ID)
     {
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          display_client_id_rec(pclientid, str);
+          (void) display_client_id_rec(&dspbuf, pclientid);
+
           LogFullDebug(COMPONENT_CLIENTID,
                        "Expired (skipped) {%s}", str);
         }
@@ -633,7 +653,9 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
 
   if(isDebug(COMPONENT_CLIENTID))
     {
-      display_client_id_rec(pclientid, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_client_id_rec(&dspbuf, pclientid);
+
       LogDebug(COMPONENT_CLIENTID,
                "Expiring {%s}", str);
     }
@@ -783,14 +805,18 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      display_client_id_rec(pclientid, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_client_id_rec(&dspbuf, pclientid);
+
       LogFullDebug(COMPONENT_CLIENTID,
                    "Expired (done) {%s}", str);
     }
 
   if(isDebug(COMPONENT_CLIENTID))
     {
-      display_client_id_rec(pclientid, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_client_id_rec(&dspbuf, pclientid);
+
       LogDebug(COMPONENT_CLIENTID,
                "About to release last reference to {%s}", str);
     }
@@ -997,20 +1023,25 @@ void new_clientid_verifier(char * pverf)
  *
  ******************************************************************************/
 
-int display_client_record(nfs_client_record_t * precord, char *str)
+int display_client_record(struct display_buffer * dspbuf,
+                          nfs_client_record_t   * precord)
 {
-  char * strtmp = str;
+  int b_left;
 
-  strtmp += sprintf(strtmp, "%p name=", precord);
+  b_left = display_printf(dspbuf, "%p name=", precord);
 
-  strtmp += DisplayOpaqueValue(precord->cr_client_val,
-                               precord->cr_client_val_len,
-                               strtmp);
+  if(b_left <= 0)
+    return b_left;
 
-  strtmp += sprintf(strtmp, " refcount=%"PRId32,
-                    atomic_fetch_int32_t(&precord->cr_refcount));
+  b_left = display_opaque_value(dspbuf,
+                                precord->cr_client_val,
+                                precord->cr_client_val_len);
 
-  return strtmp - str;
+  if(b_left <= 0)
+    return b_left;
+
+  return display_printf(dspbuf, " refcount=%"PRId32,
+                        atomic_fetch_int32_t(&precord->cr_refcount));
 }
 
 void inc_client_record_ref(nfs_client_record_t *precord)
@@ -1019,9 +1050,11 @@ void inc_client_record_ref(nfs_client_record_t *precord)
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_record(precord, str);
+      (void) display_client_record(&dspbuf, precord);
+
       LogFullDebug(COMPONENT_CLIENTID,
                    "Increment refcount {%s}",
                    str);
@@ -1040,16 +1073,20 @@ void free_client_record(nfs_client_record_t * precord)
 
 void dec_client_record_ref(nfs_client_record_t *precord)
 {
-  char              str[HASHTABLE_DISPLAY_STRLEN];
-  struct hash_latch latch;
-  hash_error_t      rc;
-  hash_buffer_t     buffkey;
-  hash_buffer_t     old_value;
-  hash_buffer_t     old_key;
-  int32_t           refcount;
+  char                  str[LOG_BUFF_LEN];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
+  struct hash_latch     latch;
+  hash_error_t          rc;
+  hash_buffer_t         buffkey;
+  hash_buffer_t         old_value;
+  hash_buffer_t         old_key;
+  int32_t               refcount;
 
   if(isDebug(COMPONENT_CLIENTID))
-    display_client_record(precord, str);
+    {
+      display_reset_buffer(&dspbuf);
+      (void) display_client_record(&dspbuf, precord);
+    }
 
   refcount = atomic_dec_int32_t(&precord->cr_refcount);
 
@@ -1081,7 +1118,8 @@ void dec_client_record_ref(nfs_client_record_t *precord)
       if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
         HashTable_ReleaseLatched(ht_client_record, &latch);
 
-      display_client_record(precord, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_client_record(&dspbuf, precord);
 
       LogCrit(COMPONENT_CLIENTID,
               "Error %s, could not find {%s}",
@@ -1115,7 +1153,8 @@ void dec_client_record_ref(nfs_client_record_t *precord)
       if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
         HashTable_ReleaseLatched(ht_client_record, &latch);
 
-      display_client_record(precord, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_client_record(&dspbuf, precord);
 
       LogCrit(COMPONENT_CLIENTID,
               "Error %s, could not remove {%s}",
@@ -1242,14 +1281,24 @@ int compare_client_record(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_client_record_key(hash_buffer_t * pbuff, char *str)
+int display_client_record_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  return display_client_record(pbuff->pdata, str);
+  int                   b_left;
+  nfs_client_record_t * precord = pbuff->pdata;
+
+  b_left = display_printf(dspbuf, "%p name=", precord);
+
+  if(b_left <= 0)
+    return b_left;
+
+  return display_opaque_value(dspbuf,
+                              precord->cr_client_val,
+                              precord->cr_client_val_len);
 }
 
-int display_client_record_val(hash_buffer_t * pbuff, char *str)
+int display_client_record_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  return display_client_record(pbuff->pdata, str);
+  return display_client_record(dspbuf, pbuff->pdata);
 }
 
 nfs_client_record_t *get_client_record(char * value, int len)
@@ -1259,7 +1308,8 @@ nfs_client_record_t *get_client_record(char * value, int len)
   hash_buffer_t         buffval;
   struct hash_latch     latch;
   hash_error_t          rc;
-  char                  str[HASHTABLE_DISPLAY_STRLEN];
+  char                  str[LOG_BUFF_LEN];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
 
   precord = pool_alloc(client_record_pool, NULL);
 
@@ -1274,7 +1324,8 @@ nfs_client_record_t *get_client_record(char * value, int len)
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      display_client_record(precord, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_client_record(&dspbuf, precord);
 
       LogFullDebug(COMPONENT_CLIENTID,
                    "Find Client Record KEY {%s}", str);
@@ -1302,7 +1353,9 @@ nfs_client_record_t *get_client_record(char * value, int len)
 
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          display_client_record(precord, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_client_record(&dspbuf, precord);
+
           LogFullDebug(COMPONENT_CLIENTID,
                        "Found {%s}",
                        str);
@@ -1320,7 +1373,8 @@ nfs_client_record_t *get_client_record(char * value, int len)
 
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          display_client_record(precord, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_client_record(&dspbuf, precord);
 
           LogCrit(COMPONENT_CLIENTID,
                   "Error %s, failed to find {%s}",
@@ -1349,7 +1403,8 @@ nfs_client_record_t *get_client_record(char * value, int len)
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      display_client_record(precord, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_client_record(&dspbuf, precord);
 
       LogFullDebug(COMPONENT_CLIENTID,
                    "New {%s}", str);
@@ -1367,7 +1422,9 @@ nfs_client_record_t *get_client_record(char * value, int len)
     {
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          display_client_record(precord, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_client_record(&dspbuf, precord);
+
           LogFullDebug(COMPONENT_CLIENTID,
                        "Set Client Record {%s}",
                        str);
@@ -1376,7 +1433,8 @@ nfs_client_record_t *get_client_record(char * value, int len)
       return precord;
     }
 
-  display_client_record(precord, str);
+  display_reset_buffer(&dspbuf);
+  (void) display_client_record(&dspbuf, precord);
 
   LogCrit(COMPONENT_CLIENTID,
           "Error %s Failed to add {%s}",

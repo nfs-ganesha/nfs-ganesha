@@ -203,15 +203,19 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       if(isDebug(COMPONENT_CLIENTID) &&
          pclientid != popen_owner->so_owner.so_nfs4_owner.so_pclientid)
         {
-          char str_open[HASHTABLE_DISPLAY_STRLEN];
-          char str_lock[HASHTABLE_DISPLAY_STRLEN];
+          char                  stropen[LOG_BUFF_LEN / 2];
+          char                  strlock[LOG_BUFF_LEN / 2];
+          struct display_buffer dspopen = {sizeof(stropen), stropen, stropen};
+          struct display_buffer dsplock = {sizeof(strlock), strlock, strlock};
 
-          display_client_id_rec(popen_owner->so_owner.so_nfs4_owner.so_pclientid, str_open);
-          display_client_id_rec(pclientid, str_lock);
+          (void) display_client_id_rec(&dspopen,
+                                       popen_owner->so_owner.so_nfs4_owner.so_pclientid);
+
+          (void) display_client_id_rec(&dsplock, pclientid);
 
           LogDebug(COMPONENT_CLIENTID,
                    "Unexpected, new lock owner clientid {%s} doesn't match open owner clientid {%s}",
-                   str_lock, str_open);
+                   strlock, stropen);
         }
 
       /* The related stateid is already stored in pstate_open */

@@ -217,8 +217,11 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid);
 clientid4 new_clientid(void);
 void new_clientid_verifier(char * pverf);
 
-int display_client_id_key(hash_buffer_t * pbuff, char *str);
-int display_client_id_val(hash_buffer_t * pbuff, char *str);
+int display_client_id_key(struct display_buffer * dspbuf,
+                          hash_buffer_t         * pbuff);
+
+int display_client_id_val(struct display_buffer * dspbuf,
+                          hash_buffer_t         * pbuff);
 
 int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
@@ -228,21 +231,28 @@ uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
 uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t    * buffclef);
 
-int display_client_id_rec(nfs_client_id_t * pclientid, char *str);
-int display_clientid_name(nfs_client_id_t * pclientid, char * str);
+int display_client_id_rec(struct display_buffer * dspbuf,
+                          nfs_client_id_t       * pclientid);
+
+int display_clientid_name(struct display_buffer * dspbuf,
+                          nfs_client_id_t       * pclientid);
 
 void free_client_id(nfs_client_id_t *pclientid);
 
 void inc_client_id_ref(nfs_client_id_t * pclientid);
 void dec_client_id_ref(nfs_client_id_t * pclientid);
 
-int display_client_record(nfs_client_record_t * precord, char *str);
+int display_client_record(struct display_buffer * dspbuf,
+                          nfs_client_record_t   * precord);
 
 void inc_client_record_ref(nfs_client_record_t *precord);
 void dec_client_record_ref(nfs_client_record_t *precord);
 
-int display_client_record_key(hash_buffer_t * pbuff, char *str);
-int display_client_record_val(hash_buffer_t * pbuff, char *str);
+int display_client_record_key(struct display_buffer * dspbuf,
+                              hash_buffer_t         * pbuff);
+
+int display_client_record_val(struct display_buffer * dspbuf,
+                              hash_buffer_t         * pbuff);
 
 int compare_client_record(hash_buffer_t * buff1, hash_buffer_t * buff2);
 

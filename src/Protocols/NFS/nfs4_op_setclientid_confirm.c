@@ -67,13 +67,15 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
                                 compound_data_t   * data,
                                 struct nfs_resop4 * resp)
 {
-  nfs_client_id_t     * pconf   = NULL;
-  nfs_client_id_t     * punconf = NULL;
-  nfs_client_record_t * pclient_record;
-  clientid4             clientid = 0;
-  char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
-  char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-  int                   rc;
+  nfs_client_id_t       * pconf   = NULL;
+  nfs_client_id_t       * punconf = NULL;
+  nfs_client_record_t   * pclient_record;
+  clientid4               clientid = 0;
+  char                    str_verf[NFS4_VERIFIER_SIZE * 2 + 3];
+  char                    str_clnt[256];
+  struct display_buffer   dsp_verf = {sizeof(str_verf), str_verf, str_verf};
+  struct display_buffer   dsp_clnt = {sizeof(str_clnt), str_clnt, str_clnt};
+  int                     rc;
 
 #define arg_SETCLIENTID_CONFIRM4 op->nfs_argop4_u.opsetclientid_confirm
 #define res_SETCLIENTID_CONFIRM4 resp->nfs_resop4_u.opsetclientid_confirm
@@ -84,16 +86,16 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
   if(isDebug(COMPONENT_CLIENTID))
     {
-      sprint_mem(str_verifier,
-                 arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
-                 NFS4_VERIFIER_SIZE);
+      (void) display_opaque_bytes(&dsp_verf,
+                                  arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
+                                  NFS4_VERIFIER_SIZE);
     }
 
   LogDebug(COMPONENT_CLIENTID,
            "SETCLIENTID_CONFIRM client addr=%s clientid=%"PRIx64" setclientid_confirm=%s",
            data->pworker->hostaddr_str,
            clientid,
-           str_verifier);
+           str_verf);
 
   /* First try to look up unconfirmed record */
   rc = nfs_client_id_get_unconfirmed(clientid, &punconf);
@@ -104,9 +106,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(punconf, str);
+          (void) display_client_id_rec(&dspbuf, punconf);
+
           LogFullDebug(COMPONENT_CLIENTID,
                        "Found %s",
                        str);
@@ -131,9 +135,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(pconf, str);
+          (void) display_client_id_rec(&dspbuf, pconf);
+
           LogFullDebug(COMPONENT_CLIENTID,
                        "Found %s",
                        str);
@@ -146,9 +152,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_record(pclient_record, str);
+      (void) display_client_record(&dspbuf, pclient_record);
 
       LogFullDebug(COMPONENT_CLIENTID,
                    "Client Record %s cr_pconfirmed_id=%p cr_punconfirmed_id=%p",
@@ -192,9 +199,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
           /* We must have raced with another SETCLIENTID_CONFIRM */
           if(isDebug(COMPONENT_CLIENTID))
             {
-              char str[HASHTABLE_DISPLAY_STRLEN];
+              char                  str[LOG_BUFF_LEN];
+              struct display_buffer dspbuf = {sizeof(str), str, str};
 
-              display_client_id_rec(punconf, str);
+              (void) display_client_id_rec(&dspbuf, punconf);
+
               LogDebug(COMPONENT_CLIENTID,
                        "Race against confirm for %s",
                        str);
@@ -213,9 +222,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
            */
           if(isDebug(COMPONENT_CLIENTID))
             {
-              char str[HASHTABLE_DISPLAY_STRLEN];
+              char                  str[LOG_BUFF_LEN];
+              struct display_buffer dspbuf = {sizeof(str), str, str};
 
-              display_client_id_rec(punconf, str);
+              (void) display_client_id_rec(&dspbuf, punconf);
 
               LogDebug(COMPONENT_CLIENTID,
                        "Race against expire for %s",
@@ -233,7 +243,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
   if(pconf != NULL)
     {
       if(isDebug(COMPONENT_CLIENTID) && pconf != NULL)
-        display_clientid_name(pconf, str_client);
+        {
+          display_reset_buffer(&dsp_clnt);
+          (void) display_clientid_name(&dsp_clnt, pconf);
+        }
 
       /* First must match principal */
       if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
@@ -249,7 +262,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
               LogDebug(COMPONENT_CLIENTID,
                        "Confirmed ClientId %"PRIx64"->%s addr=%s: Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
-                       clientid, str_client,
+                       clientid, str_clnt,
                        data->pworker->hostaddr_str, confirmed_addr);
             }
 
@@ -262,9 +275,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
           /* In this case, the record was confirmed and we have received a retry */
           if(isDebug(COMPONENT_CLIENTID))
             {
-              char str[HASHTABLE_DISPLAY_STRLEN];
+              char                  str[LOG_BUFF_LEN];
+              struct display_buffer dspbuf = {sizeof(str), str, str};
 
-              display_client_id_rec(pconf, str);
+              (void) display_client_id_rec(&dspbuf, pconf);
+
               LogDebug(COMPONENT_CLIENTID,
                        "Retry confirm for %s",
                        str);
@@ -277,18 +292,25 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
           /* This is a case not covered... Return NFS4ERR_CLID_INUSE */
           if(isDebug(COMPONENT_CLIENTID))
             {
-              char str[HASHTABLE_DISPLAY_STRLEN];
-              char str_conf_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
+              char                  str[LOG_BUFF_LEN];
+              struct display_buffer dspbuf = {sizeof(str), str, str};
+              int                   b_left;
 
-              sprint_mem(str_conf_verifier,
-                         pconf->cid_verifier,
-                         NFS4_VERIFIER_SIZE);
+              b_left = display_opaque_bytes(&dspbuf,
+                                            pconf->cid_verifier,
+                                            NFS4_VERIFIER_SIZE);
 
-              display_client_id_rec(pconf, str);
+              if(b_left > 0)
+                b_left = display_printf(&dspbuf,
+                                        " doesn't match verifier=%s for ",
+                                        str_verf);
+
+              if(b_left > 0)
+                b_left = display_client_id_rec(&dspbuf, pconf);
 
               LogDebug(COMPONENT_CLIENTID,
-                       "Confirm verifier=%s doesn't match verifier=%s for %s",
-                       str_conf_verifier, str_verifier, str);
+                       "Confirm verifier=%s",
+                       str);
             }
 
           res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
@@ -312,7 +334,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
       pconf = pclient_record->cr_pconfirmed_id;
 
       if(isDebug(COMPONENT_CLIENTID) && pconf != NULL)
-        display_clientid_name(pconf, str_client);
+        {
+          display_reset_buffer(&dsp_clnt);
+          (void) display_clientid_name(&dsp_clnt, pconf);
+        }
 
       /* Need a reference to the confirmed record for below */
       if(pconf != NULL)
@@ -324,9 +349,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
       /* Old confirmed record - need to expire it */
       if(isDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(pconf, str);
+          (void) display_client_id_rec(&dspbuf, pconf);
+
           LogDebug(COMPONENT_CLIENTID,
                    "Expiring %s",
                    str);
@@ -347,9 +374,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
        */
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(punconf, str);
+          (void) display_client_id_rec(&dspbuf, punconf);
+
           LogFullDebug(COMPONENT_CLIENTID,
                        "Updating from %s",
                        str);
@@ -378,9 +407,11 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
       if(isDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(pconf, str);
+          (void) display_client_id_rec(&dspbuf, pconf);
+
           LogDebug(COMPONENT_CLIENTID,
                    "Updated %s",
                    str);
@@ -394,9 +425,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
       /* This is a new clientid */
       if(isFullDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(punconf, str);
+          (void) display_client_id_rec(&dspbuf, punconf);
 
           LogFullDebug(COMPONENT_CLIENTID,
                        "Confirming new %s",
@@ -430,9 +462,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
       if(isDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(punconf, str);
+          (void) display_client_id_rec(&dspbuf, punconf);
 
           LogDebug(COMPONENT_CLIENTID,
                    "Confirmed %s",
@@ -445,9 +478,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 * op,
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_record(pclient_record, str);
+      (void) display_client_record(&dspbuf, pclient_record);
 
       LogFullDebug(COMPONENT_CLIENTID,
                    "Client Record %s cr_pconfirmed_id=%p cr_punconfirmed_id=%p",

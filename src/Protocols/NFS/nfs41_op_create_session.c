@@ -68,15 +68,16 @@
 int nfs41_op_create_session(struct nfs_argop4 *op,
                             compound_data_t * data, struct nfs_resop4 *resp)
 {
-  nfs_client_id_t     * pconf   = NULL;
-  nfs_client_id_t     * punconf = NULL;
-  nfs_client_id_t     * pfound  = NULL;
-  nfs_client_record_t * pclient_record;
-  nfs41_session_t     * nfs41_session = NULL;
-  clientid4             clientid = 0;
-  char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-  int                   rc;
-  log_components_t      component = COMPONENT_CLIENTID;
+  nfs_client_id_t       * pconf   = NULL;
+  nfs_client_id_t       * punconf = NULL;
+  nfs_client_id_t       * pfound  = NULL;
+  nfs_client_record_t   * pclient_record;
+  nfs41_session_t       * nfs41_session = NULL;
+  clientid4               clientid = 0;
+  char                    str_client[256];
+  struct display_buffer   dsp_clnt = {sizeof(str_client), str_client, str_client};
+  int                     rc;
+  log_components_t        component = COMPONENT_CLIENTID;
 
   if(isDebug(COMPONENT_SESSIONS))
     component = COMPONENT_SESSIONS;
@@ -125,9 +126,10 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   if(isFullDebug(component))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_record(pclient_record, str);
+      (void) display_client_record(&dspbuf, pclient_record);
 
       LogFullDebug(component,
                    "Client Record %s cr_pconfirmed_id=%p cr_punconfirmed_id=%p",
@@ -151,9 +153,11 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   if(isFullDebug(component))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_id_rec(pfound, str);
+      (void) display_client_id_rec(&dspbuf, pfound);
+
       LogFullDebug(component,
                    "Found %s",
                    str);
@@ -221,7 +225,10 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   if(pconf != NULL)
     {
       if(isDebug(component) && pconf != NULL)
-        display_clientid_name(pconf, str_client);
+        {
+          display_reset_buffer(&dsp_clnt);
+          (void) display_clientid_name(&dsp_clnt, pconf);
+        }
 
       /* First must match principal */
       if(!nfs_compare_clientcred(&pconf->cid_credential, &data->credential) ||
@@ -350,7 +357,10 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       pconf = pclient_record->cr_pconfirmed_id;
 
       if(isDebug(component) && pconf != NULL)
-        display_clientid_name(pconf, str_client);
+        {
+          display_reset_buffer(&dsp_clnt);
+          (void) display_clientid_name(&dsp_clnt, pconf);
+        }
 
       /* Need a reference to the confirmed record for below */
       if(pconf != NULL)
@@ -362,9 +372,11 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       /* Old confirmed record - need to expire it */
       if(isDebug(component))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(pconf, str);
+          (void) display_client_id_rec(&dspbuf, pconf);
+
           LogDebug(component,
                    "Expiring %s",
                    str);
@@ -403,9 +415,11 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
       if(isDebug(component))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(pconf, str);
+          (void) display_client_id_rec(&dspbuf, pconf);
+
           LogDebug(component,
                    "Updated %s",
                    str);
@@ -419,9 +433,10 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       /* This is a new clientid */
       if(isFullDebug(component))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(punconf, str);
+          (void) display_client_id_rec(&dspbuf, punconf);
 
           LogFullDebug(component,
                        "Confirming new %s",
@@ -452,9 +467,10 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
       if(isDebug(component))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(pconf, str);
+          (void) display_client_id_rec(&dspbuf, pconf);
 
           LogDebug(component,
                    "Confirmed %s",
@@ -469,9 +485,10 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   if(isFullDebug(component))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_record(pclient_record, str);
+      (void) display_client_record(&dspbuf, pclient_record);
 
       LogFullDebug(component,
                    "Client Record %s cr_pconfirmed_id=%p cr_punconfirmed_id=%p",

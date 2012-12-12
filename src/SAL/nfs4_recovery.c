@@ -292,9 +292,10 @@ nfs4_chk_clid(nfs_client_id_t *pclientid)
                 if (!strncmp(clid_ent->cl_name, pclientid->cid_recov_dir,
                     256)) {
                         if (isDebug(COMPONENT_CLIENTID)) {
-                            char str[HASHTABLE_DISPLAY_STRLEN];
+                            char                  str[LOG_BUFF_LEN];
+                            struct display_buffer dspbuf = {sizeof(str), str, str};
 
-                            display_client_id_rec(pclientid, str);
+                            (void) display_client_id_rec(&dspbuf, pclientid);
 
                             LogFullDebug(COMPONENT_CLIENTID,
                                          "Allowed to reclaim ClientId %s",

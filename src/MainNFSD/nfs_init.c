@@ -504,8 +504,8 @@ void nfs_set_param_default()
   nfs_param.client_id_param.cid_unconfirmed_hash_param.hash_func_rbt = client_id_rbt_hash_func;
   nfs_param.client_id_param.cid_unconfirmed_hash_param.hash_func_both = NULL ;
   nfs_param.client_id_param.cid_unconfirmed_hash_param.compare_key = compare_client_id;
-  nfs_param.client_id_param.cid_unconfirmed_hash_param.key_to_str = NULL; // display_client_id_key;
-  nfs_param.client_id_param.cid_unconfirmed_hash_param.val_to_str = NULL; // display_client_id_val;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.key_to_str = display_client_id_key;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.val_to_str = display_client_id_val;
   nfs_param.client_id_param.cid_unconfirmed_hash_param.ht_name = "Unconfirmed Client ID";
   nfs_param.client_id_param.cid_unconfirmed_hash_param.flags = HT_FLAG_CACHE;
   nfs_param.client_id_param.cid_unconfirmed_hash_param.ht_log_component = COMPONENT_CLIENTID;
@@ -517,8 +517,8 @@ void nfs_set_param_default()
   nfs_param.client_id_param.cid_confirmed_hash_param.hash_func_rbt = client_id_rbt_hash_func;
   nfs_param.client_id_param.cid_confirmed_hash_param.hash_func_both = NULL ;
   nfs_param.client_id_param.cid_confirmed_hash_param.compare_key = compare_client_id;
-  nfs_param.client_id_param.cid_confirmed_hash_param.key_to_str = NULL; // display_client_id_key;
-  nfs_param.client_id_param.cid_confirmed_hash_param.val_to_str = NULL; // display_client_id_val;
+  nfs_param.client_id_param.cid_confirmed_hash_param.key_to_str = display_client_id_key;
+  nfs_param.client_id_param.cid_confirmed_hash_param.val_to_str = display_client_id_val;
   nfs_param.client_id_param.cid_confirmed_hash_param.ht_name = "Confirmed Client ID";
   nfs_param.client_id_param.cid_confirmed_hash_param.flags = HT_FLAG_CACHE;
   nfs_param.client_id_param.cid_confirmed_hash_param.ht_log_component = COMPONENT_CLIENTID;
@@ -530,8 +530,8 @@ void nfs_set_param_default()
   nfs_param.client_id_param.cr_hash_param.hash_func_rbt = client_record_rbt_hash_func;
   nfs_param.client_id_param.cr_hash_param.hash_func_both = NULL ;
   nfs_param.client_id_param.cr_hash_param.compare_key = compare_client_record;
-  nfs_param.client_id_param.cr_hash_param.key_to_str = NULL; // display_client_record_key;
-  nfs_param.client_id_param.cr_hash_param.val_to_str = NULL; // display_client_record_val;
+  nfs_param.client_id_param.cr_hash_param.key_to_str = display_client_record_key;
+  nfs_param.client_id_param.cr_hash_param.val_to_str = display_client_record_val;
   nfs_param.client_id_param.cr_hash_param.ht_name = "Client Record";
   nfs_param.client_id_param.cr_hash_param.flags = HT_FLAG_CACHE;
   nfs_param.client_id_param.cr_hash_param.ht_log_component = COMPONENT_CLIENTID;

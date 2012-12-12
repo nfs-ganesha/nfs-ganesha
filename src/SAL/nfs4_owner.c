@@ -54,7 +54,7 @@ int display_nfs4_owner(state_owner_t *powner, char *str)
                     powner);
 
   strtmp += sprintf(strtmp, " clientid={");
-  strtmp += display_client_id_rec(powner->so_owner.so_nfs4_owner.so_pclientid, strtmp);
+  //strtmp += display_client_id_rec(powner->so_owner.so_nfs4_owner.so_pclientid, strtmp);
   strtmp += sprintf(strtmp, "} owner=");
 
   strtmp += DisplayOpaqueValue(powner->so_owner_val,
@@ -93,6 +93,7 @@ int compare_nfs4_owner(state_owner_t * powner1,
 
       display_nfs4_owner(powner1, str1);
       display_nfs4_owner(powner2, str2);
+
       LogFullDebug(COMPONENT_STATE,
                    "{%s} vs {%s}", str1, str2);
     }

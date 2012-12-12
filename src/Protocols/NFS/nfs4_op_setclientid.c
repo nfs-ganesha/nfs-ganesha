@@ -67,14 +67,16 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
                         compound_data_t   * data,
                         struct nfs_resop4 * resp)
 {
-  char                  str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
-  char                  str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
-  nfs_client_record_t * pclient_record;
-  nfs_client_id_t     * pconf;
-  nfs_client_id_t     * punconf;
-  clientid4             clientid;
-  verifier4             verifier;
-  int                   rc;
+  char                    str_verf[NFS4_VERIFIER_SIZE * 2 + 3];
+  char                    str_clnt[256];
+  struct display_buffer   dsp_verf = {sizeof(str_verf), str_verf, str_verf};
+  struct display_buffer   dsp_clnt = {sizeof(str_clnt), str_clnt, str_clnt};
+  nfs_client_record_t   * pclient_record;
+  nfs_client_id_t       * pconf;
+  nfs_client_id_t       * punconf;
+  clientid4               clientid;
+  verifier4               verifier;
+  int                     rc;
 
 #define arg_SETCLIENTID4       op->nfs_argop4_u.opsetclientid
 #define res_SETCLIENTID4       resp->nfs_resop4_u.opsetclientid
@@ -84,18 +86,18 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
   if(isDebug(COMPONENT_CLIENTID))
     {
-      DisplayOpaqueValue(arg_SETCLIENTID4.client.id.id_val,
-                         arg_SETCLIENTID4.client.id.id_len,
-                         str_client);
+      (void) display_opaque_value(&dsp_clnt,
+                                  arg_SETCLIENTID4.client.id.id_val,
+                                  arg_SETCLIENTID4.client.id.id_len);
 
-      sprint_mem(str_verifier,
-                 arg_SETCLIENTID4.client.verifier,
-                 NFS4_VERIFIER_SIZE);
+      (void) display_opaque_bytes(&dsp_verf,
+                                  arg_SETCLIENTID4.client.verifier,
+                                  NFS4_VERIFIER_SIZE);
     }
 
   LogDebug(COMPONENT_CLIENTID,
            "SETCLIENTID Client addr=%s id=%s verf=%s callback={program=%u r_addr=%s r_netid=%s} ident=%u",
-           data->pworker->hostaddr_str, str_client, str_verifier,
+           data->pworker->hostaddr_str, str_clnt, str_verf,
            arg_SETCLIENTID4.callback.cb_program,
            arg_SETCLIENTID4.callback.cb_location.r_addr,
            arg_SETCLIENTID4.callback.cb_location.r_netid,
@@ -126,9 +128,10 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
   if(isFullDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_client_record(pclient_record, str);
+      (void) display_client_record(&dspbuf, pclient_record);
 
       LogFullDebug(COMPONENT_CLIENTID,
                    "Client Record %s cr_pconfirmed_id=%p cr_punconfirmed_id=%p",
@@ -161,7 +164,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
               LogDebug(COMPONENT_CLIENTID,
                        "Confirmed ClientId %"PRIx64"->'%s': Principals do not match... confirmed addr=%s Return NFS4ERR_CLID_INUSE",
-                       pconf->cid_clientid, str_client, confirmed_addr);
+                       pconf->cid_clientid, str_clnt, confirmed_addr);
             }
 
           res_SETCLIENTID4.status = NFS4ERR_CLID_INUSE;
@@ -195,7 +198,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
            */
            LogFullDebug(COMPONENT_CLIENTID,
                         "Update ClientId %"PRIx64"->%s",
-                        pconf->cid_clientid, str_client);
+                        pconf->cid_clientid, str_clnt);
 
            clientid = pconf->cid_clientid;
 
@@ -216,7 +219,7 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
            */
           LogFullDebug(COMPONENT_CLIENTID,
                        "Replace ClientId %"PRIx64"->%s",
-                       pconf->cid_clientid, str_client);
+                       pconf->cid_clientid, str_clnt);
 
           clientid = new_clientid();
 
@@ -260,9 +263,10 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
        */
       if(isDebug(COMPONENT_CLIENTID))
         {
-          char str[HASHTABLE_DISPLAY_STRLEN];
+          char                  str[LOG_BUFF_LEN];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
 
-          display_client_id_rec(punconf, str);
+          (void) display_client_id_rec(&dspbuf, punconf);
 
           LogDebug(COMPONENT_CLIENTID,
                    "Replacing %s",
@@ -327,17 +331,23 @@ int nfs4_op_setclientid(struct nfs_argop4 * op,
 
   if(isDebug(COMPONENT_CLIENTID))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+      int                   b_left;
 
-      sprint_mem(str_verifier,
-                 verifier,
-                 NFS4_VERIFIER_SIZE);
+      b_left = display_opaque_bytes(&dspbuf,
+                                    verifier,
+                                    NFS4_VERIFIER_SIZE);
 
-      display_client_id_rec(punconf, str);
+      if(b_left > 0)
+        b_left = display_cat(&dspbuf, " ");
+
+      if(b_left > 0)
+        b_left = display_client_id_rec(&dspbuf, punconf);
 
       LogDebug(COMPONENT_CLIENTID,
-               "SETCLIENTID reply Verifier=%s %s",
-               str_verifier, str);
+               "SETCLIENTID reply Verifier=%s",
+               str);
     }
 
   res_SETCLIENTID4.status = NFS4_OK;
