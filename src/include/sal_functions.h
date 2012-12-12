@@ -335,8 +335,8 @@ int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data);
 int nfs4_State_Del(char other[OTHERSIZE]);
 void nfs_State_PrintAll(void);
 
-int display_state_id_val(hash_buffer_t * pbuff, char *str);
-int display_state_id_key(hash_buffer_t * pbuff, char *str);
+int display_state_id_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff);
+int display_state_id_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff);
 
 uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
                                   hash_buffer_t    * buffclef);

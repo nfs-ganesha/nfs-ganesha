@@ -72,39 +72,43 @@ char all_zero[OTHERSIZE];
 char all_one[OTHERSIZE];
 #define seqid_all_one 0xFFFFFFFF
 
-int display_stateid_other(char * other, char * str)
+int display_stateid_other(struct display_buffer * dspbuf, char * other)
 {
-  uint32_t epoch = *((uint32_t *)other);
-  uint64_t count = *((uint64_t *)(other + sizeof(uint32_t)));
-  return sprintf(str, "epoch=0x%08x counter=0x%016llx",
-                 (unsigned int) epoch, (unsigned long long) count);
+  uint64_t clientid = *((uint64_t *)other);
+  uint32_t count    = *((uint32_t *)(other + sizeof(uint64_t)));
+  return display_printf(dspbuf,
+                        "clientid=0x%016llx counter=0x%08x",
+                        (unsigned long long) clientid, count);
 }
 
-int display_state_id_key(hash_buffer_t * pbuff, char *str)
+int display_state_id_key(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  return display_stateid_other(pbuff->pdata, str);
-}                               /* display_state_id_val */
+  return display_stateid_other(dspbuf, pbuff->pdata);
+}
 
-int display_state_id_val(hash_buffer_t * pbuff, char *str)
+int display_state_id_val(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
   state_t *pstate = (state_t *) (pbuff->pdata);
 
-  return sprintf(str,
-                 "state %p is associated with pentry=%p type=%u seqid=%u",
-                 pstate,
-                 pstate->state_pentry,
-                 pstate->state_type,
-                 pstate->state_seqid);
-}                               /* display_state_id_val */
+  return display_printf(dspbuf,
+                        "state %p is associated with pentry=%p type=%u seqid=%u",
+                        pstate,
+                        pstate->state_pentry,
+                        pstate->state_type,
+                        pstate->state_seqid);
+}
 
 int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   if(isFullDebug(COMPONENT_STATE))
     {
-      char str1[OTHERSIZE * 2 + 32], str2[OTHERSIZE * 2 + 32];
+      char                  str1[OTHERSIZE * 2 + 32];
+      char                  str2[OTHERSIZE * 2 + 32];
+      struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+      struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-      display_stateid_other(buff1->pdata, str1);
-      display_stateid_other(buff2->pdata, str2);
+      (void) display_stateid_other(&dspbuf1, buff1->pdata);
+      (void) display_stateid_other(&dspbuf2, buff2->pdata);
 
       if(isDebug(COMPONENT_HASHTABLE))
         LogFullDebug(COMPONENT_STATE,
@@ -324,7 +328,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
   uint32_t          epoch = 0;
   uint64_t          epoch_low = ServerEpoch & 0xFFFFFFFF;
   state_t         * pstate2;
-  char              str[OTHERSIZE * 2 + 1 + 6];
+  char              str[OTHERSIZE * 2 + 32 + 6];
   int32_t           diff;
   clientid4         clientid;
   nfs_client_id_t * pclientid;
@@ -344,8 +348,12 @@ int nfs4_Check_Stateid(stateid4        * pstate,
 
   if(isDebug(COMPONENT_STATE))
     {
-      sprint_mem(str, (char *)pstate->other, OTHERSIZE);
-      sprintf(str + OTHERSIZE * 2, ":%u", (unsigned int) pstate->seqid);
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+      int                   b_left;
+
+      b_left = display_stateid_other(&dspbuf, pstate->other);
+      if(b_left > 0)
+        b_left = display_printf(&dspbuf, ":%u", (unsigned int) pstate->seqid);
     }
 
   /* Test for OTHER is all zeros */
@@ -585,9 +593,14 @@ void update_stateid(state_t         * pstate,
 
   if(isFullDebug(COMPONENT_STATE))
     {
-      char str[OTHERSIZE * 2 + 1 + 6];
-      sprint_mem(str, (char *)pstate->stateid_other, OTHERSIZE);
-      sprintf(str + OTHERSIZE * 2, ":%u", (unsigned int) pstate->state_seqid);
+      char                  str[OTHERSIZE * 2 + 32 + 6];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+      int                   b_left;
+
+      b_left = display_stateid_other(&dspbuf, pstate->stateid_other);
+      if(b_left > 0)
+        b_left = display_printf(&dspbuf, ":%u", (unsigned int) pstate->state_seqid);
+
       LogDebug(COMPONENT_STATE,
                "Update %s stateid to %s for response",
                tag, str);

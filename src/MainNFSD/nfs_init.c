@@ -544,8 +544,8 @@ void nfs_set_param_default()
   nfs_param.state_id_param.hash_param.hash_func_rbt = state_id_rbt_hash_func;
   nfs_param.state_id_param.hash_param.hash_func_both = NULL;
   nfs_param.state_id_param.hash_param.compare_key = compare_state_id;
-  nfs_param.state_id_param.hash_param.key_to_str = NULL; // display_state_id_key;
-  nfs_param.state_id_param.hash_param.val_to_str = NULL; // display_state_id_val;
+  nfs_param.state_id_param.hash_param.key_to_str = display_state_id_key;
+  nfs_param.state_id_param.hash_param.val_to_str = display_state_id_val;
   nfs_param.state_id_param.hash_param.ht_name = "State ID";
   nfs_param.state_id_param.hash_param.flags = HT_FLAG_CACHE;
   nfs_param.state_id_param.hash_param.ht_log_component = COMPONENT_STATE;
