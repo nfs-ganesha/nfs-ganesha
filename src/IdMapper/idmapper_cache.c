@@ -80,7 +80,7 @@ union idmap_val {
 
 /**
  *
- * idmapper_rbt_hash_func: computes the hash value for the entry in id mapper stuff
+ * name_value_hash_func: computes the hash value for the entry in id mapper stuff
  *
  * Computes the hash value for the entry in id mapper stuff. In fact, it just use addresse as value (identity function) modulo the size of the hash.
  * This function is called internal in the HasTable_* function
@@ -93,8 +93,8 @@ union idmap_val {
  * @see HashTable_Init
  *
  */
-uint32_t idmapper_value_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef)
+uint32_t name_value_hash_func(hash_parameter_t * p_hparam,
+                              hash_buffer_t    * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i = 0;
@@ -108,15 +108,15 @@ uint32_t idmapper_value_hash_func(hash_parameter_t * p_hparam,
 }                               /*  ip_name_value_hash_func */
 
 
-uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef)
+uint32_t id_value_hash_func(hash_parameter_t * p_hparam,
+                            hash_buffer_t    * buffclef)
 {
   return ((unsigned long)(buffclef->pdata) % p_hparam->index_size);
 }
 
 /**
  *
- * idmapper_rbt_hash_func: computes the rbt value for the entry in the id mapper stuff.
+ * name_rbt_hash_func: computes the rbt value for the entry in the id mapper stuff.
  *
  * Computes the rbt value for the entry in the id mapper stuff.
  *
@@ -128,27 +128,29 @@ uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
  * @see HashTable_Init
  *
  */
-uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                hash_buffer_t * buffclef)
+uint64_t name_rbt_hash_func(hash_parameter_t * p_hparam,
+                            hash_buffer_t    * buffclef)
 {
-  unsigned int result;
+  uint64_t sum = 0;
+  unsigned int i = 0;
+  unsigned char c;
 
-  if(idmap_compute_hash_value((char *)buffclef->pdata,
-                              (uint32_t *) & result) != ID_MAPPER_SUCCESS)
-    return 0;
+  /* Compute the sum of all the characters */
+  for(i = 0, c = ((char *)buffclef->pdata)[0]; ((char *)buffclef->pdata)[i] != '\0';
+      c = ((char *)buffclef->pdata)[++i], sum += c) ;
 
-  return (unsigned long)result;
+  return sum;
 }                               /* ip_name_rbt_hash_func */
 
-uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef)
+uint64_t id_rbt_hash_func(hash_parameter_t * p_hparam,
+                          hash_buffer_t    * buffclef)
 {
   return (unsigned long)(buffclef->pdata);
 }
 
 /**
  *
- * compare_idmapper: compares the values stored in the key buffers.
+ * compare_name: compares the values stored in the key buffers.
  *
  * Compares the values stored in the key buffers. This function is to be used as 'compare_key' field in
  * the hashtable storing the nfs duplicated requests.
@@ -159,12 +161,12 @@ uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
  * @return 0 if keys are identifical, 1 if they are different.
  *
  */
-int compare_idmapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_name(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   return strcmp((char *)(buff1->pdata), (char *)(buff2->pdata));
 }                               /* compare_xid */
 
-int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   unsigned long xid1 = (unsigned long)(buff1->pdata);
   unsigned long xid2 = (unsigned long)(buff2->pdata);
@@ -174,10 +176,9 @@ int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
 /**
  *
- * display_idmapper_key: displays the entry key stored in the buffer.
+ * display_idmapper_name: displays the name stored in the buffer.
  *
- * Displays the entry key stored in the buffer. This function is to be used as 'key_to_str' field in
- * the hashtable storing the id mapper stuff
+ * Displays the name stored in the buffer.
  *
  * @param buff1 [IN]  buffer to display
  * @param buff2 [OUT] output string
@@ -185,17 +186,16 @@ int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_idmapper_key(hash_buffer_t * pbuff, char *str)
+int display_idmapper_name(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  return sprintf(str, "%s", (char *)(pbuff->pdata));
+  return display_cat(dspbuf, pbuff->pdata);
 }                               /* display_idmapper */
 
 /**
  *
- * display_idmapper_val: displays the entry key stored in the buffer.
+ * display_idmapper_id: displays the id stored in the buffer.
  *
- * Displays the entry key stored in the buffer. This function is to be used as 'val_to_str' field in
- * the hashtable storing the id mapper stuff
+ * Displays the id stored in the buffer.
  *
  * @param buff1 [IN]  buffer to display
  * @param buff2 [OUT] output string
@@ -203,108 +203,37 @@ int display_idmapper_key(hash_buffer_t * pbuff, char *str)
  * @return number of character written.
  *
  */
-int display_idmapper_val(hash_buffer_t * pbuff, char *str)
+int display_idmapper_id(struct display_buffer * dspbuf, hash_buffer_t * pbuff)
 {
-  return sprintf(str, "%lu", (unsigned long)(pbuff->pdata));
+  return display_printf(dspbuf, "%lu", (unsigned long)(pbuff->pdata));
 }                               /* display_idmapper_val */
 
-/**
- *
- * idmap_uid_init: Inits the hashtable for UID mapping.
- *
- * Inits the hashtable for UID mapping.
- *
- * @param param [IN] parameter used to init the uid map cache
- *
- * @return 0 if successful, -1 otherwise
- *
- */
-int idmap_uid_init(nfs_idmap_cache_parameter_t param)
+void idmapper_init()
 {
-  if((ht_pwnam = HashTable_Init(&param.hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_IDMAPPER,
-              "NFS ID MAPPER: Cannot init IDMAP_UID cache");
-      return -1;
-    }
+  LogDebug(COMPONENT_INIT, "Now building ID_MAPPER cache");
 
-  return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
+  if((ht_pwnam = HashTable_Init(&nfs_param.uidmap_cache_param.hash_param)) == NULL)
+      LogFatal(COMPONENT_IDMAPPER,
+               "NFS ID MAPPER: Cannot init IDMAP_UID cache");
 
-int uidgidmap_init(nfs_idmap_cache_parameter_t param)
-{
-  if((ht_uidgid = HashTable_Init(&param.hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_IDMAPPER,
-              "NFS UID/GID MAPPER: Cannot init UIDGID_MAP cache");
-      return -1;
-    }
+  if((ht_pwuid = HashTable_Init(&nfs_param.unamemap_cache_param.hash_param)) == NULL)
+      LogFatal(COMPONENT_IDMAPPER,
+               "NFS ID MAPPER: Cannot init IDMAP_UNAME cache");
 
-  return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
+  if((ht_uidgid = HashTable_Init(&nfs_param.uidgidmap_cache_param.hash_param)) == NULL)
+      LogFatal(COMPONENT_IDMAPPER,
+               "NFS UID/GID MAPPER: Cannot init UIDGID_MAP cache");
 
-int idmap_uname_init(nfs_idmap_cache_parameter_t param)
-{
-  if((ht_pwuid = HashTable_Init(&param.hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_IDMAPPER,
-              "NFS ID MAPPER: Cannot init IDMAP_UNAME cache");
-      return -1;
-    }
+  if((ht_grnam = HashTable_Init(&nfs_param.gidmap_cache_param.hash_param)) == NULL)
+      LogFatal(COMPONENT_IDMAPPER,
+               "NFS ID MAPPER: Cannot init IDMAP_GID cache");
 
-  return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
+  if((ht_grgid = HashTable_Init(&nfs_param.gnamemap_cache_param.hash_param)) == NULL)
+      LogFatal(COMPONENT_IDMAPPER,
+               "NFS ID MAPPER: Cannot init IDMAP_GNAME cache");
 
-/**
- *
- * idmap_gid_init: Inits the hashtable for GID mapping.
- *
- * Inits the hashtable for GID mapping.
- *
- * @param param [IN] parameter used to init the gid map cache
- *
- * @return 0 if successful, -1 otherwise
- *
- */
-int idmap_gid_init(nfs_idmap_cache_parameter_t param)
-{
-  if((ht_grnam = HashTable_Init(&param.hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_IDMAPPER,
-              "NFS ID MAPPER: Cannot init IDMAP_GID cache");
-      return -1;
-    }
-
-  return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
-
-int idmap_gname_init(nfs_idmap_cache_parameter_t param)
-{
-  if((ht_grgid = HashTable_Init(&param.hash_param)) == NULL)
-    {
-      LogCrit(COMPONENT_IDMAPPER,
-              "NFS ID MAPPER: Cannot init IDMAP_GNAME cache");
-      return -1;
-    }
-
-  return ID_MAPPER_SUCCESS;
-}                               /* idmap_uid_init */
-
-/**
- *
- * idmap_compute_hash_value: computes the hash value, based on the string.
- *
- * Computes the computes the hash value, based on the string.
- *
- */
-
-int idmap_compute_hash_value(char *name, uint32_t * phashval)
-{
-   uint32_t res ;
-
-   res = Lookup3_hash_buff( name, strlen( name ) ) ;
-
-    return (int)res ;
+  LogInfo(COMPONENT_INIT,
+          "ID_MAPPER cache successfully initialized");
 }
 
 /**

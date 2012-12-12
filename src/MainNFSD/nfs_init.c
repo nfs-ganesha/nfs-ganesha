@@ -424,11 +424,11 @@ void nfs_set_param_default()
   /*  Worker parameters : UID_MAPPER hash table */
   nfs_param.uidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.uidmap_cache_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
-  nfs_param.uidmap_cache_param.hash_param.hash_func_key = idmapper_value_hash_func;
-  nfs_param.uidmap_cache_param.hash_param.hash_func_rbt = idmapper_rbt_hash_func;
-  nfs_param.uidmap_cache_param.hash_param.compare_key = compare_idmapper;
-  nfs_param.uidmap_cache_param.hash_param.key_to_str = NULL; // display_idmapper_key;
-  nfs_param.uidmap_cache_param.hash_param.val_to_str = NULL; // display_idmapper_val;
+  nfs_param.uidmap_cache_param.hash_param.hash_func_key = name_value_hash_func;
+  nfs_param.uidmap_cache_param.hash_param.hash_func_rbt = name_rbt_hash_func;
+  nfs_param.uidmap_cache_param.hash_param.compare_key = compare_name;
+  nfs_param.uidmap_cache_param.hash_param.key_to_str = display_idmapper_name;
+  nfs_param.uidmap_cache_param.hash_param.val_to_str = display_idmapper_id;
   nfs_param.uidmap_cache_param.hash_param.ht_name = "UID Map Cache";
   nfs_param.uidmap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.uidmap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
@@ -437,11 +437,11 @@ void nfs_set_param_default()
   /*  Worker parameters : UNAME_MAPPER hash table */
   nfs_param.unamemap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.unamemap_cache_param.hash_param.alphabet_length = 10;    /* Not used for UID_MAPPER */
-  nfs_param.unamemap_cache_param.hash_param.hash_func_key = namemapper_value_hash_func;
-  nfs_param.unamemap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func;
-  nfs_param.unamemap_cache_param.hash_param.compare_key = compare_namemapper;
-  nfs_param.unamemap_cache_param.hash_param.key_to_str = NULL; // display_idmapper_val;
-  nfs_param.unamemap_cache_param.hash_param.val_to_str = NULL; // display_idmapper_key;
+  nfs_param.unamemap_cache_param.hash_param.hash_func_key = id_value_hash_func;
+  nfs_param.unamemap_cache_param.hash_param.hash_func_rbt = id_rbt_hash_func;
+  nfs_param.unamemap_cache_param.hash_param.compare_key = compare_id;
+  nfs_param.unamemap_cache_param.hash_param.key_to_str = display_idmapper_id;
+  nfs_param.unamemap_cache_param.hash_param.val_to_str = display_idmapper_name;
   nfs_param.unamemap_cache_param.hash_param.ht_name = "UNAME Map Cache";
   nfs_param.unamemap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.unamemap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
@@ -450,11 +450,11 @@ void nfs_set_param_default()
   /*  Worker parameters : GID_MAPPER hash table */
   nfs_param.gidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.gidmap_cache_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
-  nfs_param.gidmap_cache_param.hash_param.hash_func_key = idmapper_value_hash_func;
-  nfs_param.gidmap_cache_param.hash_param.hash_func_rbt = idmapper_rbt_hash_func;
-  nfs_param.gidmap_cache_param.hash_param.compare_key = compare_idmapper;
-  nfs_param.gidmap_cache_param.hash_param.key_to_str = NULL; // display_idmapper_key;
-  nfs_param.gidmap_cache_param.hash_param.val_to_str = NULL; // display_idmapper_val;
+  nfs_param.gidmap_cache_param.hash_param.hash_func_key = name_value_hash_func;
+  nfs_param.gidmap_cache_param.hash_param.hash_func_rbt = name_rbt_hash_func;
+  nfs_param.gidmap_cache_param.hash_param.compare_key = compare_name;
+  nfs_param.gidmap_cache_param.hash_param.key_to_str = display_idmapper_name;
+  nfs_param.gidmap_cache_param.hash_param.val_to_str = display_idmapper_id;
   nfs_param.gidmap_cache_param.hash_param.ht_name = "GID Map Cache";
   nfs_param.gidmap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.gidmap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
@@ -463,12 +463,11 @@ void nfs_set_param_default()
   /*  Worker parameters : UID->GID  hash table (for RPCSEC_GSS) */
   nfs_param.uidgidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.uidgidmap_cache_param.hash_param.alphabet_length = 10;   /* Not used for UID_MAPPER */
-  nfs_param.uidgidmap_cache_param.hash_param.hash_func_key =
-      namemapper_value_hash_func;
-  nfs_param.uidgidmap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func;
-  nfs_param.uidgidmap_cache_param.hash_param.compare_key = compare_namemapper;
-  nfs_param.uidgidmap_cache_param.hash_param.key_to_str = NULL; // display_idmapper_key;
-  nfs_param.uidgidmap_cache_param.hash_param.val_to_str = NULL; // display_idmapper_key;
+  nfs_param.uidgidmap_cache_param.hash_param.hash_func_key = id_value_hash_func;
+  nfs_param.uidgidmap_cache_param.hash_param.hash_func_rbt = id_rbt_hash_func;
+  nfs_param.uidgidmap_cache_param.hash_param.compare_key = compare_id;
+  nfs_param.uidgidmap_cache_param.hash_param.key_to_str = display_idmapper_id;
+  nfs_param.uidgidmap_cache_param.hash_param.val_to_str = display_idmapper_id;
   nfs_param.uidgidmap_cache_param.hash_param.ht_name = "UID->GID Map Cache";
   nfs_param.uidgidmap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.uidgidmap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
@@ -476,11 +475,11 @@ void nfs_set_param_default()
   /*  Worker parameters : GNAME_MAPPER hash table */
   nfs_param.gnamemap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.gnamemap_cache_param.hash_param.alphabet_length = 10;    /* Not used for UID_MAPPER */
-  nfs_param.gnamemap_cache_param.hash_param.hash_func_key = namemapper_value_hash_func;
-  nfs_param.gnamemap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func;
-  nfs_param.gnamemap_cache_param.hash_param.compare_key = compare_namemapper;
-  nfs_param.gnamemap_cache_param.hash_param.key_to_str = NULL; // display_idmapper_val;
-  nfs_param.gnamemap_cache_param.hash_param.val_to_str = NULL; // display_idmapper_key;
+  nfs_param.gnamemap_cache_param.hash_param.hash_func_key = id_value_hash_func;
+  nfs_param.gnamemap_cache_param.hash_param.hash_func_rbt = id_rbt_hash_func;
+  nfs_param.gnamemap_cache_param.hash_param.compare_key = compare_id;
+  nfs_param.gnamemap_cache_param.hash_param.key_to_str = display_idmapper_id;
+  nfs_param.gnamemap_cache_param.hash_param.val_to_str = display_idmapper_name;
   nfs_param.gnamemap_cache_param.hash_param.ht_name = "GNAME Map Cache";
   nfs_param.gnamemap_cache_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.gnamemap_cache_param.hash_param.ht_log_component = COMPONENT_IDMAPPER;
@@ -1747,38 +1746,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogInfo(COMPONENT_INIT,
           "IP/name cache successfully initialized");
 
-  /* Init the UID_MAPPER cache */
-  LogDebug(COMPONENT_INIT, "Now building UID_MAPPER cache");
-  if((idmap_uid_init(nfs_param.uidmap_cache_param) != ID_MAPPER_SUCCESS) ||
-     (idmap_uname_init(nfs_param.unamemap_cache_param) != ID_MAPPER_SUCCESS))
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error while initializing UID_MAPPER cache");
-    }
-  LogInfo(COMPONENT_INIT,
-          "UID_MAPPER cache successfully initialized");
-
-  /* Init the UIDGID MAPPER Cache */
-  LogDebug(COMPONENT_INIT,
-           "Now building UIDGID MAPPER Cache (for RPCSEC_GSS)");
-  if(uidgidmap_init(nfs_param.uidgidmap_cache_param) != ID_MAPPER_SUCCESS)
-    {
-      LogFatal(COMPONENT_INIT,
-              "Error while initializing UIDGID_MAPPER cache");
-    }
-  LogInfo(COMPONENT_INIT,
-          "UIDGID_MAPPER cache successfully initialized");
-
-  /* Init the GID_MAPPER cache */
-  LogDebug(COMPONENT_INIT, "Now building GID_MAPPER cache");
-  if((idmap_gid_init(nfs_param.gidmap_cache_param) != ID_MAPPER_SUCCESS) ||
-     (idmap_gname_init(nfs_param.gnamemap_cache_param) != ID_MAPPER_SUCCESS))
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error while initializing GID_MAPPER cache");
-    }
-  LogInfo(COMPONENT_INIT,
-          "GID_MAPPER cache successfully initialized");
+  idmapper_init();
 
   /* Init the NFSv4 Clientid cache */
   LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
