@@ -44,38 +44,35 @@ hash_table_t *ht_session_id;
 uint64_t global_sequence = 0;
 pthread_mutex_t mutex_sequence = PTHREAD_MUTEX_INITIALIZER;
 
-int display_session_id(char *session_id, char * str)
+int display_session_id(struct display_buffer * dspbuf, char *session_id)
 {
-  return DisplayOpaqueValue(session_id,
-                            NFS4_SESSIONID_SIZE,
-                            str);
+  int b_left;
+
+  b_left = display_cat(dspbuf, "sessionid=");
+
+  if(b_left <= 0)
+    return b_left;
+
+  return display_opaque_bytes(dspbuf, session_id, NFS4_SESSIONID_SIZE);
 }
 
-int display_session_id_key(hash_buffer_t * pbuff, char *str)
+#define DISPLAY_SESSION_ID_SIZE (NFS4_SESSIONID_SIZE * 2 + 32)
+
+int display_session_id_key(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  char * strtmp = str;
-
-  strtmp += sprintf(strtmp, "sessionid=");
-
-  strtmp += display_session_id(pbuff->pdata, strtmp);
-
-  return strtmp - str;
+  return display_session_id(dspbuf, pbuff->pdata);
 }
 
-int display_session(nfs41_session_t * psession, char * str)
+int display_session(struct display_buffer * dspbuf, nfs41_session_t * psession)
 {
-  char            * strtmp = str;
-
-  strtmp += sprintf(strtmp, "sessionid=");
-
-  strtmp += display_session_id(psession->session_id, strtmp);
-
-  return strtmp - str;
+  return display_session_id(dspbuf, psession->session_id);
 }
 
-int display_session_id_val(hash_buffer_t * pbuff, char *str)
+int display_session_id_val(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  return display_session((nfs41_session_t *)pbuff->pdata, str);
+  return display_session(dspbuf, pbuff->pdata);
 }
 
 int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -93,9 +90,11 @@ uint32_t session_id_value_hash_func(hash_parameter_t * p_hparam,
 
   if(isFullDebug(COMPONENT_SESSIONS) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[DISPLAY_SESSION_ID_SIZE];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_session_id_key(buffclef, str);
+      (void) display_session_id_key(&dspbuf, buffclef);
+
       LogFullDebug(COMPONENT_SESSIONS,
                    "value hash: %s=%"PRIu32,
                    str,
@@ -115,9 +114,11 @@ uint64_t session_id_rbt_hash_func(hash_parameter_t * p_hparam,
 
   if(isFullDebug(COMPONENT_SESSIONS) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[DISPLAY_SESSION_ID_SIZE];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_session_id_key(buffclef, str);
+      (void) display_session_id_key(&dspbuf, buffclef);
+
       LogFullDebug(COMPONENT_SESSIONS,
                    "rbt hash: %s=%"PRIu64,
                    str,
@@ -190,15 +191,16 @@ void nfs41_Build_sessionid(clientid4 * pclientid, char * sessionid)
 int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
                       nfs41_session_t * psession_data)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-  char          str[HASHTABLE_DISPLAY_STRLEN];
+  hash_buffer_t         buffkey;
+  hash_buffer_t         buffval;
+  char                  str[DISPLAY_SESSION_ID_SIZE];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
 
   if(isFullDebug(COMPONENT_SESSIONS))
     {
-      display_session_id(sessionid, str);
+      (void) display_session_id(&dspbuf, sessionid);
       LogFullDebug(COMPONENT_SESSIONS,
-                   "Set SSession %s", str);
+                   "Set %s", str);
     }
 
   if((buffkey.pdata = gsh_malloc(NFS4_SESSIONID_SIZE)) == NULL)
@@ -232,15 +234,16 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
 int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
                               nfs41_session_t * *psession_data)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-  char          str[HASHTABLE_DISPLAY_STRLEN];
+  hash_buffer_t         buffkey;
+  hash_buffer_t         buffval;
+  char                  str[DISPLAY_SESSION_ID_SIZE];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
 
   if(isFullDebug(COMPONENT_SESSIONS))
     {
-      display_session_id(sessionid, str);
+      (void) display_session_id(&dspbuf, sessionid);
       LogFullDebug(COMPONENT_SESSIONS,
-                   "Get Session %s", str);
+                   "Get %s", str);
     }
 
   buffkey.pdata = (caddr_t) sessionid;
@@ -249,14 +252,14 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
   if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
       LogFullDebug(COMPONENT_SESSIONS,
-                   "Session %s Not Found", str);
+                   "%s Not Found", str);
       return 0;
     }
 
   *psession_data = (nfs41_session_t *) buffval.pdata;
 
   LogFullDebug(COMPONENT_SESSIONS,
-               "Session %s Found", str);
+               "%s Found", str);
 
   return 1;
 }                               /* nfs41_Session_Get_Pointer */
@@ -274,14 +277,17 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
  */
 int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 {
-  hash_buffer_t buffkey, old_key, old_value;
-  char          str[HASHTABLE_DISPLAY_STRLEN];
+  hash_buffer_t         buffkey;
+  hash_buffer_t         old_key;
+  hash_buffer_t         old_value;
+  char                  str[DISPLAY_SESSION_ID_SIZE];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
 
   if(isFullDebug(COMPONENT_SESSIONS))
     {
-      display_session_id(sessionid, str);
+      (void) display_session_id(&dspbuf, sessionid);
       LogFullDebug(COMPONENT_SESSIONS,
-                   "Delete Session %s", str);
+                   "Delete %s", str);
     }
 
   buffkey.pdata = (caddr_t) sessionid;
