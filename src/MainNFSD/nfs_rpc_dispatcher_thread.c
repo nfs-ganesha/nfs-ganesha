@@ -864,6 +864,9 @@ thr_stallq(void *arg)
                 /* drop stallq ref */
                 --(xu->refcnt);
                 pthread_mutex_unlock(&xprt->xp_lock);
+                LogDebug(COMPONENT_DISPATCH, "unstalling stalled xprt %p",
+                         xprt);
+                (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
                 goto restart;
             }
         }
@@ -888,7 +891,7 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     /* check per-xprt quota */
     if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
         pthread_mutex_unlock(&xprt->xp_lock);
-        goto out;
+        return (FALSE);
     }
 
     /* XXX can't happen */
@@ -896,7 +899,7 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
         pthread_mutex_unlock(&xprt->xp_lock);
         LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
                  xprt);
-        goto out;
+        return (TRUE);
     }
 
     LogDebug(COMPONENT_DISPATCH, "xprt %p has %u reqs, marking stalled",
@@ -922,8 +925,8 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
         (void) fridgethr_get(req_fridge, thr_stallq, NULL /* no arg */);
     }
 
-out:
-    return (FALSE);
+    /* stalled */
+    return (TRUE);
 }
 
 void
