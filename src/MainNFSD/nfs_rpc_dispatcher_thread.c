@@ -851,14 +851,14 @@ thr_stallq(void *arg)
                 xprt = xu->xprt;
                 /* lock ordering (cf. nfs_rpc_cond_stall_xprt) */
                 pthread_spin_unlock(&nfs_req_st.stallq.sp);
-                pthread_spin_lock(&xprt->sp);
+                pthread_mutex_lock(&xprt->xp_lock);
                 pthread_spin_lock(&nfs_req_st.stallq.sp);
                 glist_del(&xu->stallq);
                 --(nfs_req_st.stallq.stalled);
                 xu->flags &= ~XPRT_PRIVATE_FLAG_STALLED;
                 /* drop stallq ref */
                 --(xu->refcnt);
-                pthread_spin_unlock(&xprt->sp);
+                pthread_mutex_unlock(&xprt->xp_lock);
                 goto restart;
             }
         }
@@ -877,18 +877,18 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     bool activate = FALSE;
     uint32_t nreqs;
 
-    pthread_spin_lock(&xprt->sp);
+    pthread_mutex_lock(&xprt->xp_lock);
     nreqs = xu->req_cnt;
 
     /* check per-xprt quota */
     if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
-        pthread_spin_unlock(&xprt->sp);
+        pthread_mutex_unlock(&xprt->xp_lock);
         goto out;
     }
 
     /* XXX can't happen */
     if (unlikely(xu->flags & XPRT_PRIVATE_FLAG_STALLED)) {
-        pthread_spin_unlock(&xprt->sp);
+        pthread_mutex_unlock(&xprt->xp_lock);
         LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
                  xprt);
         goto out;
@@ -903,7 +903,7 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     glist_add_tail(&nfs_req_st.stallq.q, &xu->stallq);
     ++(nfs_req_st.stallq.stalled);
     xu->flags |= XPRT_PRIVATE_FLAG_STALLED;
-    pthread_spin_unlock(&xprt->sp);
+    pthread_mutex_unlock(&xprt->xp_lock);
 
     /* if no thread is servicing the stallq, start one */
     if (! nfs_req_st.stallq.active) {

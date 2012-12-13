@@ -185,7 +185,7 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
     uint32_t refcnt, req_cnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_lock(&xprt->sp);
+        pthread_mutex_lock(&xprt->xp_lock);
 
     refcnt = ++(xu->refcnt);
     if (flags & XPRT_PRIVATE_FLAG_INCREQ)
@@ -194,7 +194,7 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
         req_cnt = xu->req_cnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_unlock(&xprt->sp);
+        pthread_mutex_unlock(&xprt->xp_lock);
 
     LogFullDebug(COMPONENT_DISPATCH,
                  "xprt %p refcnt=%u req_cnt=%u",
@@ -208,7 +208,7 @@ gsh_xprt_decoder_guard_ref(SVCXPRT *xprt, uint32_t flags)
     bool rslt = FALSE;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_lock(&xprt->sp);
+        pthread_mutex_lock(&xprt->xp_lock);
 
     if (xu->flags & XPRT_PRIVATE_FLAG_DECODING) {
         LogDebug(COMPONENT_DISPATCH,
@@ -228,7 +228,7 @@ gsh_xprt_decoder_guard_ref(SVCXPRT *xprt, uint32_t flags)
 
 unlock:
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_unlock(&xprt->sp);
+        pthread_mutex_unlock(&xprt->xp_lock);
 
     return (rslt);
 }
@@ -240,7 +240,7 @@ gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
     uint32_t refcnt;
 
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_spin_lock(&xprt->sp);
+        pthread_mutex_lock(&xprt->xp_lock);
 
     refcnt = --(xu->refcnt);
 
@@ -251,14 +251,14 @@ gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
     /* finalize */
     if (refcnt == 0) {
         if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
-            pthread_spin_unlock(&xprt->sp);
+            pthread_mutex_unlock(&xprt->xp_lock);
             SVC_DESTROY(xprt);
             goto out;
         }
     }
 
     /* unconditional */
-    pthread_spin_unlock(&xprt->sp);
+    pthread_mutex_unlock(&xprt->xp_lock);
 
 out:
     return;
@@ -269,7 +269,7 @@ gsh_xprt_destroy(SVCXPRT *xprt)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
 
-    pthread_spin_lock(&xprt->sp);
+    pthread_mutex_lock(&xprt->xp_lock);
     xu->flags |= XPRT_PRIVATE_FLAG_DESTROYED;
 
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED);
