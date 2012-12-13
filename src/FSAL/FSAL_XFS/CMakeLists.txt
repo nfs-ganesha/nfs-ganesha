@@ -16,7 +16,7 @@ SET(fsalxfs_LIB_SRCS
 
 add_library(fsalxfs SHARED ${fsalxfs_LIB_SRCS})
 
-target_link_libraries(fsalxfs)
+target_link_libraries(fsalxfs handle)
 
 set_target_properties(fsalxfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalxfs DESTINATION lib)
