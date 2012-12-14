@@ -225,8 +225,11 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 
 	LogDebug(COMPONENT_INIT,
 		 "Loading FSAL %s with %s", name, path);
-	//dl = dlopen(path, RTLD_LAZY|RTLD_LOCAL);
+#ifdef LINUX
 	dl = dlopen(path, RTLD_NOW|RTLD_LOCAL|RTLD_DEEPBIND);
+#elif FREEBSD
+	dl = dlopen(path, RTLD_LAZY|RTLD_LOCAL);
+#endif
 
 	pthread_mutex_lock(&fsal_lock);
 	if(dl == NULL) {
