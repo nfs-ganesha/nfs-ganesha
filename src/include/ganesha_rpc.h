@@ -238,6 +238,24 @@ out:
 }
 
 static inline void
+gsh_xprt_clear_flag(SVCXPRT * xprt, uint32_t flags)
+{
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+
+    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
+        pthread_mutex_lock(&xprt->xp_lock);
+
+    if (flags & XPRT_PRIVATE_FLAG_DECODING)
+        if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
+            xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
+
+    /* unconditional */
+    pthread_mutex_unlock(&xprt->xp_lock);
+
+    return;
+}
+
+static inline void
 gsh_xprt_destroy(SVCXPRT *xprt)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;

@@ -1661,7 +1661,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         /* Xprt stalled--bail.  Stall queue owns xprt ref and state. */
         LogDebug(COMPONENT_DISPATCH, "stalled, bail");
         /* update accounting, clear decoding flag */
-        gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
+        gsh_xprt_clear_flag(xprt, XPRT_PRIVATE_FLAG_DECODING);
         goto out;
     }
 
