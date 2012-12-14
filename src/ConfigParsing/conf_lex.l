@@ -75,13 +75,13 @@ int include_stack_index = 0;
 #ifdef _DEBUG_PARSING
 #define DEBUG_LEX   printf
 #else
-#define DEBUG_LEX
+#define DEBUG_LEX(...) (void)0
 #endif
-
 
 
 %}
 
+%option nounput
 
 SPACE        [ \t\r\f]
 NL           [\n]
