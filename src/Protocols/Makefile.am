@@ -1,9 +1,0 @@
-SUBDIRS = NFS XDR NLM RQUOTA
-
-if USE_9P
-SUBDIRS += 9P
-endif
-
-if USE_DBUS
-SUBDIRS += DBUS
-endif
