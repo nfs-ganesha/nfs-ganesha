@@ -101,24 +101,22 @@ int nfs_Lookup(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR];
+      char                  str[LEN_FH_STR];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
       switch (preq->rq_vers)
         {
         case NFS_V2:
           strpath = parg->arg_lookup2.name;
+          (void) display_fhandle2(&dspbuf, (fhandle2 *) parg);
           break;
 
         case NFS_V3:
           strpath = parg->arg_lookup3.what.name;
+          (void) display_fhandle3(&dspbuf, (nfs_fh3 *) parg);
           break;
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_lookup2.dir),
-                       &(parg->arg_lookup3.what.dir),
-                       NULL,
-                       str);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
                str, strpath);

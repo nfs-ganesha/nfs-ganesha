@@ -712,27 +712,22 @@ nfs_rpc_execute(request_data_t    * preq,
             {
               exportid = nfs2_FhandleToExportId((fhandle2 *) parg_nfs);
 
-              if(exportid < 0 ||
-                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                                 exportid)) == NULL)
+              pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid);
+
+              if(pexport == NULL)
                 {
                   /* Reject the request for authentication reason (incompatible
                    * file handle) */
                   if(isInfo(COMPONENT_DISPATCH))
                     {
-		      char dumpfh[1024];
-		      char *reason = NULL;
+                      char                  dumpfh[LEN_FH_STR];
+                      struct display_buffer dspbuf = {sizeof(dumpfh), dumpfh, dumpfh};
 
-                      if(exportid < 0)
-                        reason = "has badly formed handle";
-                      else
-                        reason = "has invalid export";
-
-                      sprint_fhandle2(dumpfh, (fhandle2 *) parg_nfs);
+                      (void) display_fhandle2(&dspbuf, (fhandle2 *) parg_nfs);
 
                       LogInfo(COMPONENT_DISPATCH,
-                              "NFS2 Request from client %s %s, proc=%d, FH=%s",
-                              pworker_data->hostaddr_str, reason,
+                              "NFS2 Request from client %s has invalid export %d, proc=%d, FH=%s",
+                              pworker_data->hostaddr_str, exportid,
                               (int)req->rq_proc, dumpfh);
                     }
 
@@ -866,9 +861,9 @@ nfs_rpc_execute(request_data_t    * preq,
         {
           exportid = nlm4_FhandleToExportId(pfh3);
 
-          if(exportid < 0 ||
-             (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
-                                             exportid)) == NULL)
+          pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid);
+
+          if(pexport == NULL)
             {
               /* Reject the request for authentication reason (incompatible 
                * file handle) */

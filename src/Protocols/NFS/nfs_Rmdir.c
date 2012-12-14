@@ -102,23 +102,21 @@ int nfs_Rmdir(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR];
+      char                  str[LEN_FH_STR];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
       switch (preq->rq_vers)
         {
         case NFS_V2:
           dir_name = parg->arg_rmdir2.name;
+          (void) display_fhandle2(&dspbuf, (fhandle2 *) parg);
           break;
         case NFS_V3:
           dir_name = parg->arg_rmdir3.object.name;
+          (void) display_fhandle3(&dspbuf, (nfs_fh3 *) parg);
           break;
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_rmdir2.dir),
-                       &(parg->arg_rmdir3.object.dir),
-                       NULL,
-                       str);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Rmdir handle: %s name: %s",
                str, dir_name);

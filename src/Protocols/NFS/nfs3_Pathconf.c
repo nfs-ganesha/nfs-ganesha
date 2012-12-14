@@ -94,8 +94,11 @@ int nfs3_Pathconf(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR];
-      sprint_fhandle3(str, &(parg->arg_pathconf3.object));
+      char                  str[LEN_FH_STR];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+
+      (void) display_fhandle3(&dspbuf, (nfs_fh3 *) parg);
+
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs3_Pathconf handle: %s", str);
     }

@@ -170,13 +170,15 @@ nfs_Readdir(nfs_arg_t *arg,
      cache_entry_t *parent_dir_entry = NULL;
 
      if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
-          char str[LEN_FH_STR];
-          log_components_t component;
-          nfs_FhandleToStr(req->rq_vers,
-                           &(arg->arg_readdir2.dir),
-                           &(arg->arg_readdir3.dir),
-                           NULL,
-                           str);
+          log_components_t      component;
+          char                  str[LEN_FH_STR];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
+
+          if(req->rq_vers == NFS_V2)
+            (void) display_fhandle2(&dspbuf, (fhandle2 *) arg);
+          else
+            (void) display_fhandle3(&dspbuf, (nfs_fh3 *) arg);
+
           if(isDebug(COMPONENT_NFSPROTO)) {
                component = COMPONENT_NFSPROTO;
           } else {

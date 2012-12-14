@@ -109,8 +109,11 @@ int nfs3_Mknod(nfs_arg_t *parg,
   memset(&create_arg, 0, sizeof(create_arg));
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR];
-      sprint_fhandle3(str, &(parg->arg_mknod3.where.dir));
+      char                  str[LEN_FH_STR];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+
+      (void) display_fhandle3(&dspbuf, (nfs_fh3 *) parg);
+
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs3_Mknod handle: %s name: %s",
                str, parg->arg_mknod3.where.name);

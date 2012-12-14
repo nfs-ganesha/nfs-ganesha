@@ -111,23 +111,21 @@ int nfs_Mkdir(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR];
+      char                  str[LEN_FH_STR];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
       switch (preq->rq_vers)
         {
         case NFS_V2:
           str_dir_name = parg->arg_mkdir2.where.name;
+          (void) display_fhandle2(&dspbuf, (fhandle2 *) parg);
           break;
         case NFS_V3:
           str_dir_name = parg->arg_mkdir3.where.name;
+          (void) display_fhandle3(&dspbuf, (nfs_fh3 *) parg);
           break;
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_mkdir2.where.dir),
-                       &(parg->arg_mkdir3.where.dir),
-                       NULL,
-                       str);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Mkdir handle: %s name: %s",
                str, str_dir_name);

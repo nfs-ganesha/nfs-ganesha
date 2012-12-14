@@ -100,7 +100,8 @@ int mnt_Mnt(nfs_arg_t *parg,
   bool_t                 found = FALSE;
   fsal_op_context_t      context;
   char                 * ListPath;
-  char                   dumpfh[1024];
+  char                   dumpfh[LEN_FH_STR];
+  struct display_buffer  dspbuf = {sizeof(dumpfh), dumpfh, dumpfh};
   export_perms_t         export_perms;
 
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Mnt path=%s",
@@ -317,8 +318,8 @@ not_found:
       else
         {
           if(isDebug(COMPONENT_NFSPROTO))
-            sprint_fhandle2(dumpfh,
-                            (fhandle2 *) &pres->res_mnt1.fhstatus2_u.directory);
+            (void) display_fhandle2(&dspbuf, &pres->res_mnt1.fhstatus2_u.directory);
+
           pres->res_mnt1.status = NFS_OK;
         }
       break;
@@ -337,8 +338,9 @@ not_found:
           else
             {
               if(isDebug(COMPONENT_NFSPROTO))
-                sprint_fhandle3(dumpfh,
-                                (nfs_fh3 *) &pres->res_mnt3.mountres3_u.mountinfo.fhandle);
+                (void) display_fhandle3(&dspbuf, (nfs_fh3 *)
+                                        &pres->res_mnt3.mountres3_u.mountinfo.fhandle);
+
               pres->res_mnt3.fhs_status = MNT3_OK;
             }
         }

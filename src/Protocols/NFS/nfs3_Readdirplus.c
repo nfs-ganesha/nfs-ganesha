@@ -141,9 +141,12 @@ nfs3_Readdirplus(nfs_arg_t *arg,
 
      if (isDebug(COMPONENT_NFSPROTO) ||
          isDebug(COMPONENT_NFS_READDIR)) {
-          char str[LEN_FH_STR];
-          log_components_t component;
-          sprint_fhandle3(str, &(arg->arg_readdirplus3.dir));
+          log_components_t      component;
+          char                  str[LEN_FH_STR];
+          struct display_buffer dspbuf = {sizeof(str), str, str};
+
+          (void) display_fhandle3(&dspbuf, (nfs_fh3 *) arg);
+
           if (isDebug(COMPONENT_NFSPROTO)) {
                component = COMPONENT_NFSPROTO;
           } else {

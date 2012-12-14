@@ -114,25 +114,23 @@ int nfs_Symlink(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR];
+      char                  str[LEN_FH_STR];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
       switch (preq->rq_vers)
         {
         case NFS_V2:
           str_symlink_name = parg->arg_symlink2.from.name;
           str_target_path = parg->arg_symlink2.to;
+          (void) display_fhandle2(&dspbuf, (fhandle2 *) parg);
           break;
         case NFS_V3:
           str_symlink_name = parg->arg_symlink3.where.name;
           str_target_path = parg->arg_symlink3.symlink.symlink_data;
+          (void) display_fhandle3(&dspbuf, (nfs_fh3 *) parg);
           break;
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_symlink2.from.dir),
-                       &(parg->arg_symlink3.where.dir),
-                       NULL,
-                       str);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Symlink handle: %s name: %s target: %s",
                str, str_symlink_name, str_target_path);

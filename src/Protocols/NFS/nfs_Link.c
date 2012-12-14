@@ -106,30 +106,26 @@ int nfs_Link(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
+      char                  strto[LEN_FH_STR];
+      char                  strfrom[LEN_FH_STR];
+      struct display_buffer dspbuf_to = {sizeof(strto), strto, strto};
+      struct display_buffer dspbuf_from = {sizeof(strfrom), strfrom, strfrom};
 
       switch (preq->rq_vers)
         {
         case NFS_V2:
             str_link_name = parg->arg_link2.to.name;
+            (void) display_fhandle2(&dspbuf_from, &(parg->arg_link2.from));
+            (void) display_fhandle2(&dspbuf_to, &(parg->arg_link2.to.dir));
             break;
 
         case NFS_V3:
             str_link_name = parg->arg_link3.link.name;
+            (void) display_fhandle3(&dspbuf_from, &(parg->arg_link3.file));
+            (void) display_fhandle3(&dspbuf_to, &(parg->arg_link3.link.dir));
             break;
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_link2.from),
-                       &(parg->arg_link3.file),
-                       NULL,
-                       strfrom);
-
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_link2.to.dir),
-                       &(parg->arg_link3.link.dir),
-                       NULL,
-                       strto);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Link handle: %s to handle: %s name: %s",
                strfrom, strto, str_link_name);

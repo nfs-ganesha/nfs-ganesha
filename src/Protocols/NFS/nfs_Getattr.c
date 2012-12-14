@@ -96,12 +96,14 @@ int nfs_Getattr(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR];
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_getattr2),
-                       &(parg->arg_getattr3.object),
-                       NULL,
-                       str);
+      char                  str[LEN_FH_STR];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+
+      if(preq->rq_vers == NFS_V2)
+        (void) display_fhandle2(&dspbuf, (fhandle2 *) parg);
+      else
+        (void) display_fhandle3(&dspbuf, (nfs_fh3 *) parg);
+
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Getattr handle: %s", str);
     }

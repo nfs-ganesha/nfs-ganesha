@@ -140,24 +140,22 @@ int nfs_Read(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR];
+      char                  str[LEN_FH_STR];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
       switch (preq->rq_vers)
         {
         case NFS_V2:
           offset = parg->arg_read2.offset;
           size = parg->arg_read2.count;
+          (void) display_fhandle2(&dspbuf, (fhandle2 *) parg);
           break;
         case NFS_V3:
           offset = parg->arg_read3.offset;
           size = parg->arg_read3.count;
+          (void) display_fhandle3(&dspbuf, (nfs_fh3 *) parg);
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_read2.file),
-                       &(parg->arg_read3.file),
-                       NULL,
-                       str);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %llx len: %llx",
                str, (unsigned long long) offset, (unsigned long long) size);

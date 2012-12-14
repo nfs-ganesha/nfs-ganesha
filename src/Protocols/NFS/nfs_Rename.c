@@ -112,32 +112,28 @@ int nfs_Rename(nfs_arg_t *parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-     char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
+      char                  strto[LEN_FH_STR];
+      char                  strfrom[LEN_FH_STR];
+      struct display_buffer dspbuf_to = {sizeof(strto), strto, strto};
+      struct display_buffer dspbuf_from = {sizeof(strfrom), strfrom, strfrom};
 
       switch (preq->rq_vers)
         {
         case NFS_V2:
             str_entry_name = parg->arg_rename2.from.name;
             str_new_entry_name = parg->arg_rename2.to.name;
+            (void) display_fhandle2(&dspbuf_from, &(parg->arg_rename2.from.dir));
+            (void) display_fhandle2(&dspbuf_to, &(parg->arg_rename2.to.dir));
             break;
 
         case NFS_V3:
             str_entry_name = parg->arg_rename3.from.name;
             str_new_entry_name = parg->arg_rename3.to.name;
+            (void) display_fhandle3(&dspbuf_from, &(parg->arg_rename3.from.dir));
+            (void) display_fhandle3(&dspbuf_to, &(parg->arg_rename3.to.dir));
             break;
         }
 
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_rename2.from.dir),
-                       &(parg->arg_rename3.from.dir),
-                       NULL,
-                       strfrom);
-
-      nfs_FhandleToStr(preq->rq_vers,
-                       &(parg->arg_rename2.to.dir),
-                       &(parg->arg_rename3.to.dir),
-                       NULL,
-                       strto);
       LogDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling nfs_Rename from handle: %s name %s to handle: %s name: %s",
                strfrom, str_entry_name, strto, str_new_entry_name);
