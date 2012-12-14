@@ -170,7 +170,8 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
 			uint64_t offset,
 			size_t buffer_size,
 			void *buffer,
-			size_t *write_amount)
+			size_t *write_amount,
+			bool *fsal_stable)
 {
 	struct zfs_fsal_obj_handle *myself;
         creden_t cred;
@@ -196,6 +197,7 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
 		return fsalstat( posix2fsal_error(retval), retval ) ;
 	}
 	*write_amount = buffer_size;
+        *fsal_stable = false;
 	
         return fsalstat(ERR_FSAL_NO_ERROR, 0);	
 }

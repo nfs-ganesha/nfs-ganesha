@@ -278,7 +278,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
                      flags, callback.buf->st_ino, dev_id.sbid, dev_id.devid);
 
             pevent->type = FSAL_UP_EVENT_NOTIFY_DEVICE;
-            pevent->data.notifydevice.notify_type = NOTIFY_DEVICEID4_DELETE;
+            pevent->data.notifydevice.notify_type = NOTIFY_DEVICEID4_DELETE_MASK;
             pevent->data.notifydevice.layout_type = LAYOUT4_NFSV4_1_FILES;
             memcpy(&pevent->data.notifydevice.device_id, &dev_id, sizeof(deviceid4));
             pevent->data.notifydevice.immediate = true;

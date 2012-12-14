@@ -78,7 +78,12 @@ static const char* introspection_xml =
 "  </interface>\n"
 "  <interface name=\"org.ganesha.nfsd.cbsim\">\n"
 "    <method name=\"get_client_ids\">\n"
+"      <arg name=\"time\" direction=\"out\" type=\"(tt)\"/>\n"
 "      <arg name=\"clientids\" direction=\"out\" type=\"at\"/>\n"
+"    </method>\n"
+"    <method name=\"get_session_ids\">\n"
+"      <arg name=\"time\" direction=\"out\" type=\"tt\"/>\n"
+"      <arg name=\"sessionids\" direction=\"out\" type=\"at\"/>\n"
 "    </method>\n"
 "    <method name=\"fake_recall\">\n"
 "      <arg name=\"clientid\" direction=\"in\" type=\"t\"/>\n"
@@ -109,11 +114,28 @@ static DBusHandlerResult nfs_rpc_cbsim_get_v40_client_ids(DBusConnection *conn,
 	struct rbt_node *pn;
 	nfs_client_id_t *pclientid;
 	uint64_t clientid;
-	DBusMessageIter iter, sub_iter;
+	DBusMessageIter iter, sub_iter, ts_iter;
+	struct timespec timestamp;
 
+	if(clock_gettime(CLOCK_REALTIME, &timestamp) != 0) {
+		LogCrit(COMPONENT_DBUS, "Failed to get timestamp");
+		timestamp.tv_sec = 0;
+		timestamp.tv_nsec = 0;
+	}
 	/* create a reply from the message */
 	reply = dbus_message_new_method_return(msg);
 	dbus_message_iter_init_append(reply, &iter);
+
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT,
+					 NULL,
+					 &ts_iter);
+	dbus_message_iter_append_basic(&ts_iter,
+				       DBUS_TYPE_UINT64,
+				       &timestamp.tv_sec);
+	dbus_message_iter_append_basic(&ts_iter,
+				       DBUS_TYPE_UINT64,
+				       &timestamp.tv_nsec);
+	dbus_message_iter_close_container(&iter, &ts_iter);
 
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 DBUS_TYPE_UINT64_AS_STRING,
@@ -161,12 +183,32 @@ nfs_rpc_cbsim_get_session_ids(DBusConnection *conn,
 	struct rbt_node *pn;
 	char session_id[2*NFS4_SESSIONID_SIZE]; /* guaranteed to fit */
 	nfs41_session_t *session_data;
-	DBusMessageIter iter, sub_iter;
+	DBusMessageIter iter, sub_iter, ts_iter;
+	struct timespec timestamp;
 
+	if(clock_gettime(CLOCK_REALTIME, &timestamp) != 0) {
+		LogCrit(COMPONENT_DBUS, "Failed to get timestamp");
+		timestamp.tv_sec = 0;
+		timestamp.tv_nsec = 0;
+	}
 	/* create a reply from the message */
 	reply = dbus_message_new_method_return(msg);
 	dbus_message_iter_init_append(reply, &iter);
 
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT,
+					 "(tt)",
+					 &ts_iter);
+	dbus_message_iter_append_basic(&ts_iter,
+				       DBUS_TYPE_UINT64,
+				       &timestamp.tv_sec);
+	dbus_message_iter_append_basic(&ts_iter,
+				       DBUS_TYPE_UINT64,
+				       &timestamp.tv_nsec);
+	dbus_message_iter_close_container(&iter, &ts_iter);
+
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+					 DBUS_TYPE_UINT64_AS_STRING,
+					 &sub_iter);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 DBUS_TYPE_UINT64_AS_STRING,
 					 &sub_iter);
@@ -342,8 +384,8 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
 	call->chan = chan;
 
 	/* setup a compound */
-	cb_compound_init_v4(&call->cbt, 6,
-			    pclientid->cid_cb.cb_u.v40.cb_callback_ident,
+	cb_compound_init_v4(&call->cbt, 6, 0,
+			    pclientid->cid_cb.v40.cb_callback_ident,
 			    "brrring!!!", 10);
 
 	/* TODO: api-ify */

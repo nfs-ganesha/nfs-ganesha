@@ -10,7 +10,7 @@ glib.init_threads()
 
 # Create a session bus.
 import dbus
-bus = dbus.SystemBus()
+bus = dbus.SessionBus()
 
 # Create an object that will proxy for a particular remote object.
 cbsim = bus.get_object("org.ganesha.nfsd",

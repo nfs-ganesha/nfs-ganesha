@@ -115,7 +115,7 @@ void gsh_dbus_pkginit(void)
     avltree_init(&thread_state.callouts, dbus_callout_cmpf, 0 /* must be 0 */);
 
     dbus_error_init(&thread_state.dbus_err); /* sigh */
-    thread_state.dbus_conn = dbus_bus_get(DBUS_BUS_SESSION,
+    thread_state.dbus_conn = dbus_bus_get(DBUS_BUS_SYSTEM,
                                           &thread_state.dbus_err);
     if (dbus_error_is_set(&thread_state.dbus_err)) {
         LogCrit(COMPONENT_DBUS,

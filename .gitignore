@@ -10,6 +10,7 @@ src/rpm/
 src/pkg-deb/
 .deps/
 .libs/
+CMakeFiles/
 
 # files
 *.kdevelop*
@@ -40,3 +41,4 @@ patch-for-HPSS-nfs-ganesha-*
 *.diff
 *.patch
 core.*
+*cmake_install.cmake

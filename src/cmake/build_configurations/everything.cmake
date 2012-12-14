@@ -4,5 +4,6 @@
 set(_HANDLE_MAPPING ON)
 set(_NO_XATTRD OFF)
 set(USE_DBUS ON)
+set(USE_CB_SIMULATOR ON)
 
 message(STATUS "Building everything")

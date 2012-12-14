@@ -1068,30 +1068,6 @@ out:
 	return fsalstat(fsal_error, retval);
 }
 
-/* compare
- * compare two handles.
- * return true for equal, false for anything else
- */
-static bool compare(struct fsal_obj_handle *obj_hdl,
-                    struct fsal_obj_handle *other_hdl)
-{
-	struct lustre_fsal_obj_handle *myself, *other;
-
-	if( !other_hdl)
-		return false;
-
-	myself = container_of(obj_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	other = container_of(other_hdl, struct lustre_fsal_obj_handle, obj_handle);
-	if( (obj_hdl->type             != other_hdl->type)          ||
-	    (myself->handle->fid.f_seq != other->handle->fid.f_seq) ||
-	    (myself->handle->fid.f_oid != other->handle->fid.f_oid) ||
-	    (myself->handle->fid.f_ver != other->handle->fid.f_ver) ||
-	    (myself->handle->inode     != other->handle->inode) )
-		return false;
-
-        return true;
-}
-
 /* file_truncate
  * truncate a file to the size specified.
  * size should really be off_t...
@@ -1319,7 +1295,6 @@ void lustre_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lock_op = lustre_lock_op;
 	ops->close = lustre_close;
 	ops->lru_cleanup = lustre_lru_cleanup;
-	ops->compare = compare;
 	ops->handle_digest = lustre_handle_digest;
 	ops->handle_to_key = lustre_handle_to_key;
 

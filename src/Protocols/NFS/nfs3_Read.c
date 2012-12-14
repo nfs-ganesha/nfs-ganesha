@@ -119,6 +119,7 @@ nfs_Read(nfs_arg_t *arg,
         void *data = NULL;
         bool  eof_met = false;
         int rc = NFS_REQ_OK;
+        cache_inode_stability_t stability = CACHE_INODE_SAFE_WRITE_TO_FS;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
                 char str[LEN_FH_STR];
@@ -266,7 +267,7 @@ nfs_Read(nfs_arg_t *arg,
 						data,
 						&eof_met,
 						req_ctx,
-						CACHE_INODE_SAFE_WRITE_TO_FS);
+						&stability);
                 if (cache_status == CACHE_INODE_SUCCESS) {
                         nfs_read_ok(export, req, req_ctx, res, data,
                                     read_size, entry,

@@ -73,7 +73,7 @@ int _9p_write( _9p_request_data_t * preq9p,
   bool eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   //uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
-  uint64_t stable_flag = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
+  cache_inode_stability_t stable_flag = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
 
   caddr_t databuffer = NULL ;
 
@@ -134,7 +134,7 @@ int _9p_write( _9p_request_data_t * preq9p,
 				      databuffer,
 				      &eof_met,
 				      &pfid->op_context,
-				      stable_flag);
+				      &stable_flag);
      if(cache_status != CACHE_INODE_SUCCESS )
         return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status), plenout, preply ) ;
 

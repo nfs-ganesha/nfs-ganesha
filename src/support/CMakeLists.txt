@@ -72,6 +72,8 @@ SET(support_STAT_SRCS
    nfs_ip_stats.c
    exports.c
    fridgethr.c
+   misc.c
+   bsd-base64.c
 )
 
 if(ERROR_INJECTION)

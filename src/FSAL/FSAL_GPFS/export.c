@@ -491,6 +491,12 @@ gpfs_verifier(struct gsh_buffdesc *verf_desc)
         memcpy(verf_desc->addr, &GPFS_write_verifier, verf_desc->len);
 }
 
+void
+set_gpfs_verifier(verifier4 *verifier)
+{
+	memcpy(&GPFS_write_verifier, verifier, sizeof(verifier4));
+}
+
 /* gpfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */

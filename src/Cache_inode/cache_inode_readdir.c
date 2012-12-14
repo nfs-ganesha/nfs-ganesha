@@ -44,7 +44,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif                          /* _SOLARIS */
+#endif /* _SOLARIS */
 
 #include "abstract_atomic.h"
 #include "log.h"
@@ -80,8 +80,8 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry)
 
      /* Only DIRECTORY entries are concerned */
      if (entry->type != DIRECTORY) {
-          status = CACHE_INODE_BAD_TYPE;
-          return status;
+	     status = CACHE_INODE_BAD_TYPE;
+	     return status;
      }
 
      /* Get ride of entries cached in the DIRECTORY */
@@ -89,7 +89,7 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry)
 
      /* Mark directory as not populated */
      atomic_clear_uint32_t_bits(&entry->flags, (CACHE_INODE_DIR_POPULATED |
-                                                CACHE_INODE_TRUST_CONTENT));
+						CACHE_INODE_TRUST_CONTENT));
      status = CACHE_INODE_SUCCESS;
 
      return status;
@@ -180,8 +180,17 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
              /* rename would cause a collision */
              if (directory->flags &
                  CACHE_INODE_TRUST_CONTENT) {
-                 /* We are not up to date. */
-                 /* status == CACHE_INODE_SUCCESS; */
+                 /* overwrite, replace entry and expire the old */
+		 cache_entry_t *oldentry = cache_inode_weakref_get(&dirent2->entry, 0);
+
+		 avl_dirent_set_deleted(directory, dirent);
+		 dirent2->entry = dirent->entry;
+		 if(oldentry) { /* if it is still around, mark it gone/stale */
+		     status = cache_inode_invalidate(oldentry,
+						     (CACHE_INODE_INVALIDATE_ATTRS
+						      |CACHE_INODE_INVALIDATE_CONTENT));
+		     cache_inode_lru_unref(oldentry, 0);
+		 }
              } else {
                  status = CACHE_INODE_ENTRY_EXISTS;
              }

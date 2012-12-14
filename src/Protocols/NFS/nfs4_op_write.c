@@ -338,7 +338,7 @@ int nfs4_op_write(struct nfs_argop4 *op,
 				  bufferdata,
 				  &eof_met,
 				  data->req_ctx,
-				  stability);
+				  &stability);
   if(cache_status != CACHE_INODE_SUCCESS)
     {
       LogDebug(COMPONENT_NFS_V4,
@@ -364,9 +364,10 @@ int nfs4_op_write(struct nfs_argop4 *op,
     res_WRITE4.WRITE4res_u.resok4.committed = UNSTABLE4;
 
   res_WRITE4.WRITE4res_u.resok4.count = written_size;
-  memcpy(res_WRITE4.WRITE4res_u.resok4.writeverf,
-         NFS4_write_verifier,
-         sizeof(verifier4));
+
+  verf_desc.addr = res_WRITE4.WRITE4res_u.resok4.writeverf;
+  verf_desc.len = sizeof(verifier4);
+  data->pexport->export_hdl->ops->get_write_verifier(&verf_desc);
 
   res_WRITE4.status = NFS4_OK;
 

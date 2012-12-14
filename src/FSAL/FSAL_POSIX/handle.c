@@ -808,20 +808,6 @@ static fsal_status_t setattrs (struct fsal_obj_handle *obj_hdl,
 }
 
 
-static bool compare (struct fsal_obj_handle *obj_hdl, struct fsal_obj_handle *other_hdl)
-{
-    struct posix_fsal_obj_handle *myself, *other;
-
-    if (!other_hdl)
-        return false;
-    myself = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);
-    other = container_of (other_hdl, struct posix_fsal_obj_handle, obj_handle);
-    if ((obj_hdl->type != other_hdl->type))
-        return false;
-    return memcmp (myself->handle, other->handle, sizeof (struct handle_data)) ? false : true;
-}
-
-
 static fsal_status_t file_truncate (struct fsal_obj_handle *obj_hdl,
 				    const struct req_op_context *opctx,
 				    uint64_t length)
@@ -1001,7 +987,6 @@ void posix_handle_ops_init (struct fsal_obj_ops *ops)
     ops->lock_op = posix_lock_op;
     ops->close = posix_close;
     ops->lru_cleanup = posix_lru_cleanup;
-    ops->compare = compare;
     ops->handle_digest = handle_digest;
     ops->handle_to_key = handle_to_key;
 }

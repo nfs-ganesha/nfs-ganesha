@@ -718,7 +718,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t *entry,
 				      void *buffer,
 				      bool *eof,
 				      struct req_op_context *req_ctx,
-				      cache_inode_stability_t stable);
+				      cache_inode_stability_t *stable);
 
 static inline cache_inode_status_t cache_inode_read(
 	cache_entry_t *entry,
@@ -728,7 +728,7 @@ static inline cache_inode_status_t cache_inode_read(
 	void *buffer,
 	bool *eof,
 	struct req_op_context *req_ctx,
-	cache_inode_stability_t stable)
+	cache_inode_stability_t *stable)
 {
 	return cache_inode_rdwr(entry, CACHE_INODE_READ, offset, io_size,
 				bytes_moved, buffer, eof, req_ctx,
@@ -743,7 +743,7 @@ static inline cache_inode_status_t cache_inode_write(
 	void *buffer,
 	bool *eof,
 	struct req_op_context *req_ctx,
-	cache_inode_stability_t stable)
+	cache_inode_stability_t *stable)
 {
 	return cache_inode_rdwr(entry, CACHE_INODE_WRITE, offset, io_size,
 				bytes_moved, buffer, eof, req_ctx,
@@ -774,17 +774,11 @@ cache_inode_status_t cache_inode_make_root(struct fsal_obj_handle *root_hdl,
 cache_inode_status_t cache_inode_check_trust(cache_entry_t *entry,
 					     const struct req_op_context *);
 
-bool cache_inode_types_are_rename_compatible(cache_entry_t *src,
-					     cache_entry_t *dest);
-
 void cache_inode_print_dir(cache_entry_t *cache_entry_root);
 
 cache_inode_status_t cache_inode_statfs(cache_entry_t *entry,
 					fsal_dynamicfsinfo_t *dynamicinfo,
 					const struct req_op_context *);
-
-cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t *entry);
-cache_inode_status_t cache_inode_is_dir_empty_WithLock(cache_entry_t *entry);
 
 cache_inode_status_t cache_inode_invalidate_all_cached_dirent(
 	cache_entry_t *entry);

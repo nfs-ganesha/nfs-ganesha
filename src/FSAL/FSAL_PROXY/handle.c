@@ -1766,25 +1766,6 @@ pxy_handle_is(struct fsal_obj_handle *obj_hdl,
         return obj_hdl->type == type;
 }
 
-static bool
-pxy_compare_hdl(struct fsal_obj_handle *a,
-                struct fsal_obj_handle *b)
-{
-        struct pxy_obj_handle *pa, *pb;
-
-        if(!b)
-                return false;
-
-        pa = container_of(a, struct pxy_obj_handle, obj);
-        pb = container_of(b, struct pxy_obj_handle, obj);
-
-        if(pa->fh4.nfs_fh4_len != pb->fh4.nfs_fh4_len)
-                return false;
-
-	return memcmp(pa->fh4.nfs_fh4_val, pb->fh4.nfs_fh4_val,
-                      pa->fh4.nfs_fh4_len);
-}
-
 static fsal_status_t
 pxy_truncate(struct fsal_obj_handle *obj_hdl,
              const struct req_op_context *opctx,
@@ -2001,7 +1982,8 @@ pxy_write(struct fsal_obj_handle *obj_hdl,
 	  uint64_t offset,
 	  size_t size,
 	  void *buffer,
-	  size_t *write_amount)
+	  size_t *write_amount,
+	  bool *fsal_stable)
 {
         int rc;
         int opcnt = 0;
@@ -2039,6 +2021,8 @@ pxy_write(struct fsal_obj_handle *obj_hdl,
                 return nfsstat4_to_fsal(rc);
 
         *write_amount = wok->count;
+        *fsal_stable = false;
+
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -2088,7 +2072,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = pxy_commit;
 	ops->close = pxy_close;
 	ops->handle_is = pxy_handle_is;
-	ops->compare = pxy_compare_hdl;
 	ops->handle_digest = pxy_handle_digest;
 	ops->handle_to_key = pxy_handle_to_key;
 }

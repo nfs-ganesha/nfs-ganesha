@@ -944,11 +944,24 @@ static void free_layoutrec(nfs_cb_argop4 *op)
 struct layoutrecall_completion {
 	char stateid_other[OTHERSIZE];  /*< "Other" part of state id */
 	struct pnfs_segment segment; /*< Segment to recall */
+        nfs_cb_argop4 arg;
 };
 
-static int32_t layoutrecany_completion(rpc_call_t* call, rpc_call_hook hook,
+static int32_t recallany_completion(rpc_call_t* call, rpc_call_hook hook,
 			  	      void* arg, uint32_t flags)
 {
+	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
+			call->cbt.v_u.v4.res.status, arg);
+	gsh_free(arg);
+	return 0;
+}
+
+static int32_t notifydev_completion(rpc_call_t* call, rpc_call_hook hook,
+			  	      void* arg, uint32_t flags)
+{
+	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
+			call->cbt.v_u.v4.res.status, arg);
+	gsh_free(arg);
 	return 0;
 }
 
@@ -956,8 +969,13 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 				    void* arg, uint32_t flags)
 {
 	struct layoutrecall_completion *completion = arg;
+
+	LogFullDebug(COMPONENT_NFS_CB,"status %d arg %p",
+			call->cbt.v_u.v4.res.status, arg);
+
 	if (hook != RPC_CALL_COMPLETE ||
-	    call->cbt.v_u.v4.res.status != NFS4_OK) {
+	    (call->cbt.v_u.v4.res.status != NFS4_OK &&
+	     call->cbt.v_u.v4.res.status != NFS4ERR_DELAY)) {
 		struct user_cred synthetic_creds = {
 			.caller_uid = 0,
 			.caller_gid = 0,
@@ -995,6 +1013,7 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
 
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 	nfs41_complete_single(call, hook, arg, flags);
+	gsh_free(completion);
 	return 0;
 }
 
@@ -1051,10 +1070,14 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 		struct state_t *s = g->state;
 		struct layoutrecall_completion *completion;
 		cache_entry_t *entry = s->state_entry;
-		nfs_cb_argop4 arg;
-		CB_LAYOUTRECALL4args *cb_layoutrec
-			= &arg.nfs_cb_argop4_u.opcblayoutrecall;
-		arg.argop = NFS4_OP_CB_LAYOUTRECALL;
+		nfs_cb_argop4 *arg;
+		CB_LAYOUTRECALL4args *cb_layoutrec;
+		completion = gsh_malloc(
+			sizeof(struct layoutrecall_completion));
+
+                arg = &completion->arg;
+		arg->argop = NFS4_OP_CB_LAYOUTRECALL;
+		cb_layoutrec = &arg->nfs_cb_argop4_u.opcblayoutrecall;
 		PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 		cb_layoutrec->clora_type = layoutrecall->layout_type;
 		cb_layoutrec->clora_iomode
@@ -1084,15 +1107,13 @@ layoutrecall_queue(struct fsal_up_event_layoutrecall *layoutrecall,
 			       NULL,
 			       "LAYOUTRECALL");
 		g->recalled = true;
-		completion = gsh_malloc(
-			sizeof(struct layoutrecall_completion));
 		memcpy(completion->stateid_other,
 		       s->stateid_other,
 		       OTHERSIZE);
 		completion->segment = layoutrecall->segment;
 		code = nfs_rpc_v41_single(s->state_owner->so_owner
 					  .so_nfs4_owner.so_clientrec,
-					  &arg,
+					  arg,
 					  &s->state_refer,
 					  layoutrec_completion,
 					  completion,
@@ -1146,10 +1167,16 @@ recallany_one(state_t *s, struct fsal_up_event_recallany *recallany)
 {
 	int i, code = 0;
 	cache_entry_t *entry = s->state_entry;
-	nfs_cb_argop4 arg;
-	CB_RECALL_ANY4args *cb_layoutrecany
-			= &arg.nfs_cb_argop4_u.opcbrecall_any;
-	arg.argop = NFS4_OP_CB_RECALL_ANY;
+	CB_RECALL_ANY4args *cb_layoutrecany;
+	nfs_cb_argop4 *arg;
+
+        arg = gsh_malloc(sizeof(struct nfs_cb_argop4)); // free in recallany_completion
+        if (arg == NULL)
+          return;
+
+	cb_layoutrecany = &arg->nfs_cb_argop4_u.opcbrecall_any;
+
+	arg->argop = NFS4_OP_CB_RECALL_ANY;
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	cb_layoutrecany->craa_objects_to_keep = recallany->objects_to_keep;
@@ -1161,10 +1188,10 @@ recallany_one(state_t *s, struct fsal_up_event_recallany *recallany)
         }
 	code = nfs_rpc_v41_single(s->state_owner->so_owner
 				  .so_nfs4_owner.so_clientrec,
-				  &arg,
+				  arg,
 				  &s->state_refer,
-				  layoutrecany_completion,
-				  NULL,
+				  recallany_completion,
+				  arg,
 				  NULL);
 	if (code != 0) {
              /* TODO: ? */
@@ -1174,38 +1201,48 @@ recallany_one(state_t *s, struct fsal_up_event_recallany *recallany)
   return;
 }
 
+struct cb_notify {
+	nfs_cb_argop4 arg;
+	struct notify4 notify;
+	struct notify_deviceid_delete4 notify_del;
+};
+	
 static void
 notifydev_one(state_t *s, struct fsal_up_event_notifydevice *devicenotify)
 {
 	int code = 0;
 	cache_entry_t *entry = s->state_entry;
-	struct notify4 notify;
-	struct notify_deviceid_delete4 notify_del;
-	nfs_cb_argop4 arg;
-	CB_NOTIFY_DEVICEID4args *cb_notify_dev
-                                     = &arg.nfs_cb_argop4_u.opcbnotify_deviceid;
+	CB_NOTIFY_DEVICEID4args *cb_notify_dev;
+        struct cb_notify *arg;
 
-	arg.argop = NFS4_OP_CB_NOTIFY_DEVICEID;
+        arg = gsh_malloc(sizeof(struct cb_notify)); // free in notifydev_completion
+        if (arg == NULL)
+          return;
+
+	cb_notify_dev = &arg->arg.nfs_cb_argop4_u.opcbnotify_deviceid;
+
+	arg->arg.argop = NFS4_OP_CB_NOTIFY_DEVICEID;
 
 	PTHREAD_RWLOCK_wrlock(&entry->state_lock);
 	
         cb_notify_dev->cnda_changes.cnda_changes_len = 1;
-        cb_notify_dev->cnda_changes.cnda_changes_val = &notify;
-        notify.notify_mask.bitmap4_len = 1;
-        notify.notify_mask.map[0] = devicenotify->notify_type;
-        notify.notify_vals.notifylist4_len = sizeof(struct notify_deviceid_delete4);
-        notify.notify_vals.notifylist4_val = (char *)&notify_del;
-        notify_del.ndd_layouttype = devicenotify->layout_type;
-        memcpy(&notify_del.ndd_deviceid,
+        cb_notify_dev->cnda_changes.cnda_changes_val = &arg->notify;
+        arg->notify.notify_mask.bitmap4_len = 1;
+        arg->notify.notify_mask.map[0] = devicenotify->notify_type;
+        arg->notify.notify_vals.notifylist4_len = sizeof(struct notify_deviceid_delete4);
+
+        arg->notify.notify_vals.notifylist4_val = (char *)&arg->notify_del;
+        arg->notify_del.ndd_layouttype = devicenotify->layout_type;
+        memcpy(&arg->notify_del.ndd_deviceid,
                &devicenotify->device_id,
                NFS4_DEVICEID4_SIZE);
 
 	code = nfs_rpc_v41_single(s->state_owner->so_owner
 				  .so_nfs4_owner.so_clientrec,
-				  &arg,
+				  &arg->arg,
 				  &s->state_refer,
-				  layoutrecany_completion,
-				  NULL,
+				  notifydev_completion,
+				  &arg->arg,
 				  NULL);
 	if (code != 0) {
              /* TODO: ? */

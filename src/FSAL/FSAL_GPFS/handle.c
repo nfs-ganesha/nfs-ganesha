@@ -621,12 +621,12 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	return(status);
 }
 
-/* compare
+/* gpfs_compare
  * compare two handles.
  * return true for equal, false for anything else
  */
-static bool compare(struct fsal_obj_handle *obj_hdl,
-                      struct fsal_obj_handle *other_hdl)
+bool gpfs_compare(struct fsal_obj_handle *obj_hdl,
+		  struct fsal_obj_handle *other_hdl)
 {
 	struct gpfs_fsal_obj_handle *myself, *other;
 
@@ -868,7 +868,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->share_op = share_op;
 	ops->close = gpfs_close;
 	ops->lru_cleanup = gpfs_lru_cleanup;
-	ops->compare = compare;
 	ops->handle_digest = handle_digest;
 	ops->handle_to_key = handle_to_key;
         handle_ops_pnfs(ops);

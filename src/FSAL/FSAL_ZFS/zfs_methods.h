@@ -79,7 +79,8 @@ fsal_status_t tank_write(struct fsal_obj_handle *obj_hdl,
                         uint64_t offset,
 			size_t buffer_size,
 			void *buffer,
-			size_t * write_amount);
+			 size_t * write_amount,
+			 bool *fsal_stable);
 fsal_status_t tank_share_op(struct fsal_obj_handle *obj_hdl,
 			   void *p_owner,         /* IN (opaque to FSAL) */
 			   fsal_share_param_t  request_share);

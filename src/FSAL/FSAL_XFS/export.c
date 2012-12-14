@@ -100,7 +100,6 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
                                       const struct req_op_context *opctx,
 			              fsal_dynamicfsinfo_t *infop)
 {
-	struct xfs_fsal_export *myself;
 	struct statvfs buffstatvfs;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
@@ -109,7 +108,6 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
-	myself = container_of(exp_hdl, struct xfs_fsal_export, export);
 	retval = statvfs(exp_hdl->exp_entry->fullpath, &buffstatvfs);
 	if(retval < 0) {
 		fsal_error = posix2fsal_error(errno);
@@ -439,42 +437,6 @@ void xfs_export_ops_init(struct export_ops *ops)
 }
 
 void xfs_handle_ops_init(struct fsal_obj_ops *ops);
-
-/* fs_specific_has() parses the fs_specific string for a particular key, 
-   returns true if found, and optionally returns a val if the string is
-   of the form key=val.
- *
- * The fs_specific string is a comma (,) separated options where each option
- * can be of the form key=value or just key. Example:
- *	FS_specific = "foo=baz,enable_A";
- */
-static bool fs_specific_has(const char *fs_specific, const char* key,
-			   char *val, int max_val_bytes)
-{
-	char *fso_copy = strdup(fs_specific); /* enable multiple searches */
-	char *next_comma, *option;
-	bool ret;
-
-	for (option = strtok_r(fso_copy, ",", &next_comma);
-	     option; 
-	     option=strtok_r(NULL, ",", &next_comma)) {
-		char *k = option;
-		char *v = k;
-
-		strsep(&v, "=");
-		if (0 == strcmp(k, key)) {
-			if(val)
-				strncpy(val, v, max_val_bytes);
-			ret = true;
-			goto out;
-		}
-	}
-
-	ret = false;
-out:
-	free(fso_copy);
-	return ret;
-}
 
 /* create_export
  * Create an export point and return a handle to it to be kept

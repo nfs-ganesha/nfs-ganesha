@@ -874,7 +874,8 @@ static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
                                 uint64_t seek_descriptor,
                                 size_t buffer_size,
                                 void *buffer,
-                                size_t *write_amount)
+                                size_t *write_amount,
+                                bool *fsal_stable)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -1050,16 +1051,6 @@ fsal_status_t lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* lru_cleanup
- * default case never equal
- */
-
-static bool compare(struct fsal_obj_handle *obj_hdl,
-                    struct fsal_obj_handle *other_hdl)
-{
-        return false;
-}
-
 /* handle_digest
  * default case server fault
  */
@@ -1195,7 +1186,6 @@ struct fsal_obj_ops def_handle_ops = {
         .remove_extattr_by_name = remove_extattr_by_name,
         .handle_is = handle_is,
         .lru_cleanup = lru_cleanup,
-        .compare = compare,
         .handle_digest = handle_digest,
         .handle_to_key = handle_to_key,
         .layoutget = layoutget,
