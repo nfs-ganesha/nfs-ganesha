@@ -246,4 +246,23 @@ void sprint_mem(char *str, const char *buff, int len);
       }                                                     \
   } while (0)
 
+static inline int display_fhandle2(struct display_buffer * dspbuf,
+                                   fhandle2              * fh)
+{
+  return display_opaque_value(dspbuf, fh, sizeof(*fh));
+}
+
+static inline int display_fhandle3(struct display_buffer * dspbuf,
+                                   nfs_fh3               * fh)
+{
+  return display_opaque_value(dspbuf, fh->data.data_val, fh->data.data_len);
+}
+
+
+static inline int display_fhandle_nlm(struct display_buffer * dspbuf,
+                                      netobj                * fh)
+{
+  return display_opaque_value(dspbuf, fh->n_bytes, fh->n_len);
+}
+
 #endif                          /* _NFS_FILE_HANDLE_H */
