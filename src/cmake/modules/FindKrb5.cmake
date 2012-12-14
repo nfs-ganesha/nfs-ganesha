@@ -15,7 +15,14 @@
 #  FIND_PACKAGE(KRB5 REQUIRED gssapi)
 
 # First find the config script from which to obtain other values.
+FIND_PROGRAM(KRB5_C_CONFIG NAMES krb5-config
+	PATHS
+	/opt/ganesha/bin
+	NO_DEFAULT_PATH
+)
 FIND_PROGRAM(KRB5_C_CONFIG NAMES krb5-config)
+
+MESSAGE(STATUS "found krb5-config here ${KRB5_C_CONFIG}")
 
 # Check whether we found anything.
 IF(KRB5_C_CONFIG)
