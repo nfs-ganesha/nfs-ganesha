@@ -781,7 +781,7 @@ nfs_rpc_free_xprt(SVCXPRT *xprt)
 {
     if (xprt->xp_u1) {
         free_gsh_xprt_private(xprt->xp_u1);
-        xprt->xp_p1 = NULL;
+        xprt->xp_u1 = NULL;
     }
 }
 
@@ -881,12 +881,19 @@ thr_stallq(void *arg)
 static bool
 nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 {
-    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    gsh_xprt_private_t *xu;
     bool activate = FALSE;
     uint32_t nreqs;
 
     pthread_mutex_lock(&xprt->xp_lock);
+
+    xu = (gsh_xprt_private_t *) xprt->xp_u1;
     nreqs = xu->req_cnt;
+
+    LogDebug(COMPONENT_DISPATCH,
+            "xprt %p refcnt %d has %d %d reqs active (max %d)",
+            xprt, xu->refcnt, nreqs, xu->req_cnt,
+            nfs_param.core_param.dispatch_max_reqs_xprt);
 
     /* check per-xprt quota */
     if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
@@ -1478,6 +1485,23 @@ done:
     return (stat);
 }
 
+static inline bool
+thr_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
+{
+    gsh_xprt_private_t *xu;
+    uint32_t nreqs;
+
+    pthread_mutex_lock(&xprt->xp_lock);
+    xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    nreqs = xu->req_cnt;
+    pthread_mutex_unlock(&xprt->xp_lock);
+
+    if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
+        return (FALSE);
+
+    return (stat == XPRT_MOREREQS);
+}
+
 void *
 thr_decode_rpc_requests(void *arg)
 {
@@ -1489,7 +1513,7 @@ thr_decode_rpc_requests(void *arg)
      * will result in stalls (TCP) */
     do {
         stat = thr_decode_rpc_request(thr_ctx, xprt);
-    } while (stat == XPRT_MOREREQS);
+    } while (thr_continue_decoding(xprt, stat));
 
     LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
 
