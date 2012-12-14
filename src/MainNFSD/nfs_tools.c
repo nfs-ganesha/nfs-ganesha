@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#ifndef _FREEBSD
+#ifndef FREEBSD
 #include <netinet/tcp.h>
 #endif                          /* _FREEBSD */
 #include <sys/types.h>
