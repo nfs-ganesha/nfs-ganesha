@@ -79,9 +79,10 @@ unsigned long mfsl_async_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
 
   if (isFullDebug(COMPONENT_HASHTABLE))
     {
-      char printbuf[128];
-      snprintHandle(printbuf, 128, &mobject->handle);
-      LogFullDebug(COMPONENT_HASHTABLE, "hash_func key: buff =(Handle=%s), hash value=%lu\n", printbuf, h);
+      char                  printbuf[FSAL_HANDLE_STR_LEN];
+      struct display_buffer dspbuf = {sizeof(printbuf), printbuf, printbuf};
+      (void) display_FSAL_handle(&dspbuf, &mobject->handle);
+      LogFullDebug(COMPONENT_HASHTABLE, "hash_func key: buff =(Handle=%s), hash value=%lu", printbuf, h);
     }
 
   return h;
@@ -111,30 +112,20 @@ unsigned long mfsl_async_rbt_func(hash_parameter_t * p_hparam, hash_buffer_t * b
 
   if (isFullDebug(COMPONENT_HASHTABLE))
     {
-      char printbuf[128];
-      snprintHandle(printbuf, 128, &mobject->handle);
-      LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff =(Handle=%s), value=%lu\n", printbuf, h);
+      char                  printbuf[FSAL_HANDLE_STR_LEN];
+      struct display_buffer dspbuf = {sizeof(printbuf), printbuf, printbuf};
+      (void) display_FSAL_handle(&dspbuf, &mobject->handle);
+      LogFullDebug(COMPONENT_HASHTABLE, "hash_func rbt: buff =(Handle=%s), value=%lu", printbuf, h);
     }
 
   return h;
 }                               /* mfsl_async_rbt_func */
 
-int mfsl_async_display_key(hash_buffer_t * pbuff, char *str)
+int mfsl_async_display_key(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  mfsl_object_t *pfsdata;
-  char buffer[128];
-
-  pfsdata = (mfsl_object_t *) pbuff->pdata;
-
-  snprintHandle(buffer, 128, &(pfsdata->handle));
-
-  return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "(Handle=%s)", buffer);
+  return display_FSAL_handle(dspbuf, pbuff->pdata);
 }                               /* mfsl_async_display_key */
-
-int mfsl_async_display_not_implemented(hash_buffer_t * pbuff, char *str)
-{
-  return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "Print Not Implemented");
-}
 
 /**
  *
@@ -185,8 +176,8 @@ int mfsl_async_hash_init(void)
   mfsl_hparam.hash_func_key = mfsl_async_hash_func;
   mfsl_hparam.hash_func_rbt = mfsl_async_rbt_func;
   mfsl_hparam.compare_key = mfsl_async_compare_key;
-  mfsl_hparam.key_to_str = NULL; // mfsl_async_display_key;
-  mfsl_hparam.val_to_str = NULL; //mfsl_async_display_not_implemented;
+  mfsl_hparam.key_to_str = mfsl_async_display_key;
+  mfsl_hparam.val_to_str = NULL;
   mfsl_hparam.ht_name = "MFSL Async Cache";
   mfsl_hparam.flags = HT_FLAG_CACHE;
   mfsl_hparam.ht_log_component = COMPONENT_MFSL;
