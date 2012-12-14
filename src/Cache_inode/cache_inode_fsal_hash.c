@@ -70,7 +70,6 @@ static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
                                              uint32_t * phashval,
                                              uint64_t * prbtval)
 {
-    char printbuf[512];
     unsigned int rc = 0 ;
     /* ACE: This is a temporary hack so we don't have to change every FSAL
        right now. */
@@ -92,7 +91,11 @@ static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
     *prbtval = FSALrbt;
     if( rc == 0 )
       {
-          snprintHandle(printbuf, 512, pfsal_handle);
+          char                  printbuf[FSAL_HANDLE_STR_LEN];
+          struct display_buffer dspbuf = {sizeof(printbuf), printbuf, printbuf};
+
+          (void) display_FSAL_handle(&dspbuf, pfsal_handle);
+
           LogMajor(COMPONENT_CACHE_INODE,
                    "Unable to hash (Handle=%s)",
                    printbuf);
@@ -101,7 +104,11 @@ static int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
 
     if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_CACHE_INODE))
       {
-          snprintHandle(printbuf, 512, buffclef->pdata);
+          char                  printbuf[FSAL_HANDLE_STR_LEN];
+          struct display_buffer dspbuf = {sizeof(printbuf), printbuf, printbuf};
+
+          (void) display_FSAL_handle(&dspbuf, pfsal_handle);
+
           LogFullDebug(COMPONENT_CACHE_INODE,
                        "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
                        printbuf, 0UL, FSALindex, FSALrbt);
@@ -116,7 +123,6 @@ static int cache_inode_fsal_rbt_both_locally(hash_parameter_t * p_hparam,
                                              uint32_t * phashval,
                                              uint64_t * prbtval)
 {
-    char printbuf[512];
     uint32_t h1 = 0 ;
     uint32_t h2 = 0 ;
     fsal_handle_t *pfsal_handle = (fsal_handle_t *) (buffclef->pdata);
@@ -131,7 +137,11 @@ static int cache_inode_fsal_rbt_both_locally(hash_parameter_t * p_hparam,
 
     if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_CACHE_INODE))
         {
-            snprintHandle(printbuf, 512, pfsal_handle);
+            char                  printbuf[FSAL_HANDLE_STR_LEN];
+            struct display_buffer dspbuf = {sizeof(printbuf), printbuf, printbuf};
+
+            (void) display_FSAL_handle(&dspbuf, pfsal_handle);
+
             LogFullDebug(COMPONENT_CACHE_INODE,
                          "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
                          printbuf, 0UL, h1, h2 );
