@@ -27,7 +27,7 @@
 #ifdef _DEBUG_PARSING
 #define DEBUG_YACK   config_print_list
 #else
-#define DEBUG_YACK
+#define DEBUG_YACK(...) (void)0
 #endif
 
 
