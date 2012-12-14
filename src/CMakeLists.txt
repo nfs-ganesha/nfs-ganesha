@@ -23,9 +23,32 @@ include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
 git_describe(_GIT_DESCRIBE)
 
+# find out which platform we are building on
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(LINUX ON)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  set(FREEBSD ON)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
 set(tirpc_commit 2f728d6369dcfb28c6d09e0a74de1100114ee32e)
+
+if (FREEBSD)
+#default gcc doesn't like using -Wuninitialized without -O on FreeBSD
+    set(PLATFORM "FREEBSD")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O")
+    set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
+    find_library(LIBDL c)  # libc suffices on freebsd 
+endif(FREEBSD)
+
+if (LINUX)
+    set(PLATFORM "LINUX")
+    set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/linux")
+    find_library(LIBDL dl)  # module loader
+endif(LINUX)
 
 # FSAL selection
 # FSALs which are enabled by default but could be disabled
@@ -110,14 +133,6 @@ set(ALLOCATOR "jemalloc" CACHE STRING
 include(CheckIncludeFiles)
 include(TestBigEndian)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(LINUX ON)
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  set(FREEBSD ON)
-endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-
 check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(string.h HAVE_STRING_H)
@@ -139,8 +154,6 @@ else()
 endif(${BIGENDIAN})
 
 find_package(Threads REQUIRED)
-
-
 find_package(Krb5 REQUIRED gssapi)
 
 if(KRB5_FOUND)
@@ -251,6 +264,7 @@ add_definitions(-DHAVE_CONFIG_H)
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
   "${PROJECT_SOURCE_DIR}/include"
+  "${OS_INCLUDE_DIR}"
 )
 
 # Pull in TIRPC and build it
@@ -288,7 +302,6 @@ set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libtirpc/lib/libntirpc.a")
 # Find misc system libs
 
 find_library(LIBRT rt)  # extended Pthreads functions
-find_library(LIBDL dl)  # module loader
 
 # Roll up required libraries
 set(PROTOCOLS
@@ -340,6 +353,7 @@ add_subdirectory(RPCAL)
 add_subdirectory(Protocols)
 add_subdirectory(FSAL_UP)
 add_subdirectory(support)
+add_subdirectory(os)
 
 if(USE_FSAL_POSIX)
   add_subdirectory(NodeDB)
@@ -366,6 +380,8 @@ endif(USE_FSAL_FUSE)
 # display configuration vars
 
 message(STATUS)
+message(STATUS "-------------------------------------------------------")
+message(STATUS "PLATFORM = ${PLATFORM}")
 message(STATUS "-------------------------------------------------------")
 message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
