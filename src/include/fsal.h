@@ -324,6 +324,14 @@ fsal_status_t FSAL_name2buffdesc(fsal_name_t * in_name, fsal_buffdesc_t * out_bu
         snprintmem(target,tgt_size,(caddr_t)p_handle,fd.len);    \
   } while(0)
 
+/* Define size of string buffer to hold a FSAL handle large enough
+ * to hold a display_opaque_value of an NFS v4 handle (plus a bit).
+ */
+#define FSAL_HANDLE_STR_LEN (NFS4_FHSIZE * 2 + 10)
+
+int display_FSAL_handle(struct display_buffer * dspbuf,
+                        fsal_handle_t         * handle);
+
 #define snprintCookie(target, tgt_size, p_cookie) \
   snprintmem(target,tgt_size,(caddr_t)p_cookie,sizeof(fsal_cookie_t))
 

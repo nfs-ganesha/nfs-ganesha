@@ -20,6 +20,20 @@
 const fsal_name_t FSAL_DOT = { ".", 1 };
 const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
+int display_FSAL_handle(struct display_buffer * dspbuf,
+                        fsal_handle_t         * handle)
+{
+  struct fsal_handle_desc fd = {.start = (char *)handle};
+  fsal_status_t           rc;
+
+  rc = FSAL_ExpandHandle(NULL, FSAL_DIGEST_SIZEOF, &fd);
+
+  if(FSAL_IS_ERROR(rc))
+    return display_cat(dspbuf, tab_errstatus_FSAL[rc.major].label);
+  else
+    return display_opaque_value(dspbuf, (char *) handle, fd.len);
+}
+
 /**
  * @defgroup FSALNameFunctions Name handling functions.
  *
