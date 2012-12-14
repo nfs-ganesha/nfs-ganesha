@@ -60,7 +60,7 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
-#include "nlm4.h"
+#include "nlm4.h"_
 #include "rquota.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -1805,7 +1805,7 @@ void *worker_thread(void *IndexArg)
   nfs_worker_data_t *pmydata = &(workers_data[worker_index]);
   char thr_name[32];
   gsh_xprt_private_t *xu = NULL;
-  uint32_t refcnt;
+  uint32_t refcnt, reqcnt;
 
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
@@ -1911,14 +1911,17 @@ void *worker_thread(void *IndexArg)
                goto finalize_req;
            }
            refcnt = xu->refcnt;
+           reqcnt = xu->req_cnt;
            pthread_mutex_unlock(&nfsreq->r_u.nfs->xprt->xp_lock);
            /* execute */
            LogDebug(COMPONENT_DISPATCH,
-                    "NFS protocol request, nfsreq=%p xid=%u xprt=%p refcnt=%u",
+                    "NFS protocol request, nfsreq=%p xid=%u xprt=%p refcnt=%u "
+                    "req_cnt=%d",
                     nfsreq,
                     nfsreq->r_u.nfs->msg.rm_xid,
                     nfsreq->r_u.nfs->xprt,
-                    refcnt);
+                    refcnt,
+                    reqcnt);
            nfs_rpc_execute(nfsreq, pmydata);
            break;
 

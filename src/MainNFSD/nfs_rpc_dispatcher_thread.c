@@ -959,6 +959,10 @@ nfs_rpc_queue_init(void)
     init_glist(&nfs_req_st.stallq.q);
     nfs_req_st.stallq.active = FALSE;
     nfs_req_st.stallq.stalled = 0;
+
+    /* diag counters */
+    nfs_req_st.stats.enqueues = 0;
+    nfs_req_st.stats.dequeues = 0;
 }
 
 void
@@ -1007,6 +1011,8 @@ nfs_rpc_enqueue_req(request_data_t *req)
     glist_add_tail(&q->q, &req->req_q);
     ++(q->size);
     pthread_mutex_unlock(&q->we.mtx);
+
+    atomic_add_uint64_t(&nfs_req_st.stats.enqueues, 1);
 
     LogFullDebug(COMPONENT_DISPATCH, "enqueued req, q %p (%s %p:%p) size is %d",
                  q, qpair->s, &qpair->producer, &qpair->consumer, q->size);
@@ -1190,6 +1196,15 @@ retry_deq:
         pthread_mutex_unlock(&wqe->lwe.mtx);
         LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", wqe);
         goto retry_deq;
+    }
+
+    {
+        uint64_t e = nfs_req_st.stats.enqueues;
+        uint64_t d = atomic_add_uint64_t(&nfs_req_st.stats.dequeues, 1);
+        if ((d % 100) == 0) {
+            LogDebug(COMPONENT_DISPATCH,
+                    "nfs-req enqueues=%"PRIu64" dequeues=%"PRIu64, e, d);
+        }
     }
 
     return (nfsreq);

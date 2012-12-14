@@ -95,6 +95,13 @@ struct nfs_req_st
         uint32_t stalled;
         bool active;
     } stallq;
+    /* diagnostic counters */
+    struct {
+        CACHE_PAD(2);
+        uint64_t enqueues;
+        CACHE_PAD(3);
+        uint64_t dequeues;
+    } stats;
 };
 
 extern struct nfs_req_st nfs_req_st;
