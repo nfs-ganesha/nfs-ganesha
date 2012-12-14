@@ -148,8 +148,9 @@ add_executable(ganesha.nfsd
 target_link_libraries(ganesha.nfsd
   MainServices
   ${PROTOCOLS}
-  ${SYSTEM_LIBRARIES}
+  ${SYSTEM_LIBRARIES} crypto ssl
 )
+
 
 install(TARGETS ganesha.nfsd DESTINATION bin)
 
