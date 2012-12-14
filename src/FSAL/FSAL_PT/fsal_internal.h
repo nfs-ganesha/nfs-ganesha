@@ -278,6 +278,7 @@ fsal_status_t PTFSAL_opendir(fsal_handle_t      * p_dir_handle,     /* IN */
                              p_dir_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t PTFSAL_readdir(fsal_dir_t        * p_dir_descriptor,/* IN */
+                             fsal_op_context_t * p_context,       /* IN */
                              fsal_cookie_t       start_position,  /* IN */
                              fsal_attrib_mask_t  get_attr_mask,   /* IN */
                              fsal_mdsize_t       buffersize,      /* IN */
@@ -286,7 +287,8 @@ fsal_status_t PTFSAL_readdir(fsal_dir_t        * p_dir_descriptor,/* IN */
                              fsal_count_t      * p_nb_entries,    /* OUT */
                              fsal_boolean_t    * p_end_of_dir     /* OUT */ );
 
-fsal_status_t PTFSAL_closedir(fsal_dir_t * p_dir_descriptor /* IN */ );
+fsal_status_t PTFSAL_closedir(fsal_dir_t * p_dir_descriptor, /* IN */ 
+                              fsal_op_context_t * p_context  /* IN */);
 
 fsal_status_t 
 PTFSAL_open_by_name(fsal_handle_t      * dirhandle,      /* IN */
@@ -306,6 +308,7 @@ PTFSAL_open(fsal_handle_t      * p_filehandle,       /* IN */
 
 fsal_status_t 
 PTFSAL_read(fsal_file_t    * p_file_descriptor,  /* IN */
+            fsal_op_context_t * p_context,    /* IN */
             fsal_seek_t    * p_seek_descriptor,  /* [IN] */
             fsal_size_t      buffer_size,        /* IN */
             caddr_t          buffer,             /* OUT */
@@ -319,7 +322,9 @@ fsal_status_t PTFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
                            caddr_t       buffer,          /* IN */
                            fsal_size_t * p_write_amount   /* OUT */ );
 
-fsal_status_t PTFSAL_close(fsal_file_t * p_file_descriptor /* IN */ );
+fsal_status_t PTFSAL_close(fsal_file_t * p_file_descriptor, /* IN */ 
+                           fsal_op_context_t * p_context    /* IN */ );
+
 
 fsal_status_t 
 PTFSAL_dynamic_fsinfo(fsal_handle_t        * p_filehandle, /* IN */
@@ -504,6 +509,7 @@ PTFSAL_RemoveXAttrByName(fsal_handle_t     * p_objecthandle, /*IN*/
 unsigned int PTFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t PTFSAL_commit( fsal_file_t * p_file_descriptor,
+                             fsal_op_context_t * p_context,
                              fsal_off_t    offset,
                              fsal_size_t   size ) ;
 

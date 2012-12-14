@@ -154,6 +154,7 @@ typedef struct
 {
   /* Must be the first entry in this structure */
   fsal_staticfsinfo_t * fe_static_fs_info;  
+  exportlist_t        * fe_export;
 
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
@@ -173,6 +174,8 @@ typedef struct
   /* Must be the first entry in this structure */
   ptfsal_export_context_t *export_context;     
   struct user_credentials credential;
+  msectimer_t latency;
+  unsigned int count;
 } ptfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
