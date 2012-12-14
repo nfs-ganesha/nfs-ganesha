@@ -76,8 +76,6 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   resp->resop = NFS4_OP_GETFH;
   res_GETFH.status = NFS4_OK;
 
-  LogHandleNFS4("NFS4 GETFH BEFORE: %s", &data->currentFH);
-
   /* Do basic checks on a filehandle */
   res_GETFH.status = nfs4_sanity_check_FH(data, 0LL);
   if(res_GETFH.status != NFS4_OK)
@@ -100,8 +98,6 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_len = data->currentFH.nfs_fh4_len;
   memcpy(res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_val,
          data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
-
-  LogHandleNFS4("NFS4 GETFH AFTER: %s", &res_GETFH.GETFH4res_u.resok4.object);
 
   return NFS4_OK;
 }                               /* nfs4_op_getfh */

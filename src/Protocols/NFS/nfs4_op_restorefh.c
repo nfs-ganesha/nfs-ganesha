@@ -99,7 +99,13 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_RESTOREFH;
   res_RESTOREFH.status = NFS4_OK;
 
-  /* If there is no savedFH, teh return an error */
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "Saved FH %s",
+                     LEN_FH_STR,
+                     data->savedFH.nfs_fh4_val,
+                     data->savedFH.nfs_fh4_len);
+
+  /* If there is no savedFH, then return an error */
   if(nfs4_Is_Fh_Empty(&(data->savedFH)) != NFS4_OK)
     {
       /* There is no current FH, return NFS4ERR_RESTOREFH (cg RFC3530,
@@ -158,15 +164,6 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   }
 
  out:
-
-  if(isFullDebug(COMPONENT_NFS_V4))
-    {
-      char str[LEN_FH_STR];
-      sprint_fhandle4(str, &data->currentFH);
-      LogFullDebug(COMPONENT_NFS_V4,
-                   "RESTORE FH: Current FH %s", str);
-    }
-
 
   return NFS4_OK;
 }                               /* nfs4_op_restorefh */

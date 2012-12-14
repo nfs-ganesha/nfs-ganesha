@@ -151,12 +151,11 @@ int nfs4_op_savefh(struct nfs_argop4 *op,
 
  out:
 
-  if(isFullDebug(COMPONENT_NFS_V4))
-    {
-      char str[LEN_FH_STR];
-      sprint_fhandle4(str, &data->savedFH);
-      LogFullDebug(COMPONENT_NFS_V4, "SAVE FH: Saved FH %s", str);
-    }
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "Saved FH %s",
+                     LEN_FH_STR,
+                     data->savedFH.nfs_fh4_val,
+                     data->savedFH.nfs_fh4_len);
 
   return NFS4_OK;
 }                               /* nfs4_op_savefh */

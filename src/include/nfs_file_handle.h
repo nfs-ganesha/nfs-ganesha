@@ -137,7 +137,10 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 	return offsetof(struct file_handle_v4, fsopaque) + hdl->fs_len;
 }
 
-#define LEN_FH_STR 1024
+/* Define size of string buffer to hold an NFS handle large enough
+ * to hold a display_opaque_value of an NFS v4 handle (plus a bit).
+ */
+#define LEN_FH_STR (NFS4_FHSIZE * 2 + 10)
 
 
 /* File handle translation utility */
@@ -224,10 +227,6 @@ void print_fhandle2(log_components_t component, fhandle2 *fh);
 void print_fhandle3(log_components_t component, nfs_fh3 *fh);
 void print_fhandle4(log_components_t component, nfs_fh4 *fh);
 void print_fhandle_nlm(log_components_t component, netobj *fh);
-void print_fhandle_fsal(log_components_t component,
-                        const char *str,
-                        const char *start,
-                        int len);
 void LogCompoundFH(compound_data_t * data);
 
 void sprint_fhandle2(char *str, fhandle2 *fh);

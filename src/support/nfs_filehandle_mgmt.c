@@ -169,9 +169,10 @@ int nfs4_FhandleToFSAL(nfs_fh4 *pfh4,
       return 0;                   /* Corrupted (or stale) FH */
     }
 
-  print_fhandle_fsal(COMPONENT_FILEHANDLE,
-                     "nfs4_FhandleToFSAL",
-                     (char *)fh_desc->start,
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "FSAL Handle %s",
+                     FSAL_HANDLE_STR_LEN,
+                     fh_desc->start,
                      fh_desc->len);
 
   return 1;
@@ -228,9 +229,10 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
       return 0;                   /* Corrupted (or stale) FH */
     }
 
-  print_fhandle_fsal(COMPONENT_FILEHANDLE,
-                     "nfs3_FhandleToFSAL",
-                     (char *)fh_desc->start,
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "FSAL Handle %s",
+                     FSAL_HANDLE_STR_LEN,
+                     fh_desc->start,
                      fh_desc->len);
 
   return 1;
@@ -277,9 +279,10 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2,
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */
 
-  print_fhandle_fsal(COMPONENT_FILEHANDLE,
-                     "nfs2_FhandleToFSAL",
-                     (char *)fh_desc->start,
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "FSAL Handle %s",
+                     FSAL_HANDLE_STR_LEN,
+                     fh_desc->start,
                      fh_desc->len);
 
   return 1;
@@ -306,10 +309,17 @@ int nfs4_FSALToFhandle(nfs_fh4 *pfh4,
   file_handle_v4_t *file_handle;
   struct fsal_handle_desc fh_desc;
 
-  print_fhandle_fsal(COMPONENT_FILEHANDLE,
-                     "nfs4_FSALToFhandle",
-                     (char *)pfsalhandle,
-                     sizeof(fsal_handle_t));
+  if(isFullDebug(COMPONENT_FILEHANDLE))
+    {
+      char                  printbuf[FSAL_HANDLE_STR_LEN];
+      struct display_buffer dspbuf = {sizeof(printbuf), printbuf, printbuf};
+
+      (void) display_FSAL_handle(&dspbuf, pfsalhandle);
+
+      LogFullDebug(COMPONENT_FILEHANDLE,
+                   "FSAL Handle=%s",
+                   printbuf);
+    }
 
   /* reset the buffer to be used as handle */
   pfh4->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
@@ -376,10 +386,17 @@ int nfs3_FSALToFhandle(nfs_fh3 *pfh3,
   struct fsal_handle_desc fh_desc;
   int padding = 0;
 
-  print_fhandle_fsal(COMPONENT_FILEHANDLE,
-                     "nfs3_FSALToFhandle",
-                     (char *)pfsalhandle,
-                     sizeof(fsal_handle_t));
+  if(isFullDebug(COMPONENT_FILEHANDLE))
+    {
+      char                  printbuf[FSAL_HANDLE_STR_LEN];
+      struct display_buffer dspbuf = {sizeof(printbuf), printbuf, printbuf};
+
+      (void) display_FSAL_handle(&dspbuf, pfsalhandle);
+
+      LogFullDebug(COMPONENT_FILEHANDLE,
+                   "FSAL Handle=%s",
+                   printbuf);
+    }
 
   /* reset the buffer to be used as handle */
   pfh3->data.data_len = sizeof(struct alloc_file_handle_v3);
@@ -439,10 +456,17 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
   file_handle_v2_t *file_handle;
   struct fsal_handle_desc fh_desc;
 
-  print_fhandle_fsal(COMPONENT_FILEHANDLE,
-                     "nfs2_FSALToFhandle",
-                     (char *)pfsalhandle,
-                     sizeof(fsal_handle_t));
+  if(isFullDebug(COMPONENT_FILEHANDLE))
+    {
+      char                  printbuf[FSAL_HANDLE_STR_LEN];
+      struct display_buffer dspbuf = {sizeof(printbuf), printbuf, printbuf};
+
+      (void) display_FSAL_handle(&dspbuf, pfsalhandle);
+
+      LogFullDebug(COMPONENT_FILEHANDLE,
+                   "FSAL Handle=%s",
+                   printbuf);
+    }
 
   /* zero-ification of the buffer to be used as handle */
   memset(pfh2, 0, sizeof(struct alloc_file_handle_v2));
@@ -1005,22 +1029,6 @@ void sprint_fhandle_nlm(char *str, netobj *fh)
 
   sprint_mem(tmp, fh->n_bytes, fh->n_len);
 }                               /* sprint_fhandle_nlm */
-
-void print_fhandle_fsal(log_components_t component,
-                        const char *str,
-                        const char *start,
-                        int len)
-{
-  if(isFullDebug(COMPONENT_FILEHANDLE))
-    {
-      char buff[1024];
-
-      sprint_mem(buff, start, len);
-
-      LogFullDebug(component, "%s Len=%d Buff=%p Val: %s", 
-                   str, len, start, buff);
-    }
-}
 
 void sprint_mem(char *str, const char *buff, int len)
 {

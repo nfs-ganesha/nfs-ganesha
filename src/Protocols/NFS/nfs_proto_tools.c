@@ -257,8 +257,9 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
     }
 
-  print_fhandle_fsal(COMPONENT_FILEHANDLE,
-                     "nfs_FhandleToCache",
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "FSAL Handle %s",
+                     FSAL_HANDLE_STR_LEN,
                      fsal_data.fh_desc.start,
                      fsal_data.fh_desc.len);
 

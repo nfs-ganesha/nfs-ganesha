@@ -185,19 +185,27 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
       if(isFullDebug(COMPONENT_NFS_V4))
         {
+          char                  fhstr[FSAL_HANDLE_STR_LEN];
+          char                  dhstr[FSAL_HANDLE_STR_LEN];
+          struct display_buffer dspbuf_file = {sizeof(fhstr), fhstr, fhstr};
+          struct display_buffer dspbuf_dir  = {sizeof(dhstr), dhstr, dhstr};
+
+          (void) display_FSAL_handle(&dspbuf_file, &file_pentry->handle);
+          (void) display_FSAL_handle(&dspbuf_dir,  &dir_pentry->handle);
+
           LogFullDebug(COMPONENT_NFS_V4,
-                       "----> nfs4_op_lookup: name=%s  dir_pentry=%p  looked up pentry=%p",
+                       "Lookup name=%s  dir_pentry=%p  looked up pentry=%p",
                        strname, dir_pentry, file_pentry);
-          print_fhandle_fsal(COMPONENT_NFS_V4,
-                             "----> FSAL handle parent",
-                             (char *)&dir_pentry->handle,
-                             sizeof(fsal_handle_t));
-          print_fhandle_fsal(COMPONENT_NFS_V4,
-                             "----> FSAL handle looked up",
-                             (char *)&file_pentry->handle,
-                             sizeof(fsal_handle_t));
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "FSAL handle parent %s and child %s in nfs4_op_lookup",
+                       dhstr, fhstr);
+
+          LogFullDebugOpaque(COMPONENT_NFS_V4,
+                             "LOOKUP Current FH %s",
+                             LEN_FH_STR,
+                             data->currentFH.nfs_fh4_val,
+                             data->currentFH.nfs_fh4_len);
         }
-      LogHandleNFS4("NFS4 LOOKUP CURRENT FH: ", &data->currentFH);
 
       /* Release dir_pentry, as it is not reachable from anywhere in
          compound after this function returns.  Count on later

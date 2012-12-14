@@ -95,8 +95,6 @@ static int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
   if(!nfs4_PseudoToFhandle(&(data->publicFH), &psfsentry))
     return NFS4ERR_BADHANDLE;
 
-  LogHandleNFS4("CREATE PUB FH: ", &data->publicFH);
-
   return NFS4_OK;
 }                               /* CreatePUBFH4 */
 
@@ -156,8 +154,11 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   if(res_PUTPUBFH4.status != NFS4_OK)
     return res_PUTPUBFH4.status;
 
-  LogHandleNFS4("NFS4 PUTPUBFH PUBLIC  FH: ", &data->publicFH);
-  LogHandleNFS4("NFS4 PUTPUBFH CURRENT FH: ", &data->currentFH);
+  LogFullDebugOpaque(COMPONENT_NFS_V4,
+                     "PUTPUBFH Current FH %s",
+                     LEN_FH_STR,
+                     data->currentFH.nfs_fh4_val,
+                     data->currentFH.nfs_fh4_len);
 
   LogFullDebug(COMPONENT_NFS_V4,
                     "NFS4 PUTPUBFH: Ending on status %d",

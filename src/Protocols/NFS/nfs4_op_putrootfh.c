@@ -94,8 +94,6 @@ static int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
   if(!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
     return NFS4ERR_BADHANDLE;
 
-  LogHandleNFS4("CREATE ROOT FH: ", &data->rootFH);
-
   return NFS4_OK;
 }                               /* CreateROOTFH4 */
 
@@ -155,8 +153,11 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   if(res_PUTROOTFH4.status != NFS4_OK)
     return res_PUTROOTFH4.status;
 
-  LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
-  LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
+  LogFullDebugOpaque(COMPONENT_NFS_V4,
+                     "PUTROOTFH Current FH %s",
+                     LEN_FH_STR,
+                     data->currentFH.nfs_fh4_val,
+                     data->currentFH.nfs_fh4_len);
 
   LogFullDebug(COMPONENT_NFS_V4,
                     "NFS4 PUTROOTFH: Ending on status %d",

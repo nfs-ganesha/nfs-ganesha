@@ -103,6 +103,12 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(res_RENAME4.status != NFS4_OK)
     return res_RENAME4.status;
 
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "Saved FH %s",
+                     LEN_FH_STR,
+                     data->savedFH.nfs_fh4_val,
+                     data->savedFH.nfs_fh4_len);
+
   /* Do basic checks on saved filehandle */
   res_RENAME4.status = nfs4_sanity_check_SavedFH(data, 0LL);
   if(res_RENAME4.status != NFS4_OK)

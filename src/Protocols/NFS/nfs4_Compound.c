@@ -422,10 +422,17 @@ int nfs4_Compound(nfs_arg_t *parg,
            /* Operation uses a CurrentFH, so we can check export perms.
             * Perms should even be set reasonably for pseudo file system.
             */
+           LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                              "Current FH %s",
+                              LEN_FH_STR,
+                              data.currentFH.nfs_fh4_val,
+                              data.currentFH.nfs_fh4_len);
+
            LogFullDebug(COMPONENT_NFS_V4,
                         "Check export perms export = %08x req = %08x",
                         data.export_perms.options & EXPORT_OPTION_ACCESS_TYPE,
                         perm_flags);
+
            if((data.export_perms.options & perm_flags) != perm_flags)
              {
                /* Export doesn't allow requested access for this client. */
@@ -461,8 +468,6 @@ int nfs4_Compound(nfs_arg_t *parg,
                                                             &res);
 
       memcpy(&(pres->res_compound4.resarray.resarray_val[i]), &res, sizeof(res));
-
-      LogCompoundFH(&data);
 
       /* All the operation, like NFS4_OP_ACESS, have a first replied field called .status */
       pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.status = status;
