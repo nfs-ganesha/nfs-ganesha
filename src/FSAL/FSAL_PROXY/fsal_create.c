@@ -153,14 +153,11 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
   if(fsal_internal_proxy_extract_fh(&nfs4fh, parent_directory_handle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      char outstr[1024];
-
-      sprint_fhandle4(outstr, &nfs4fh);
-      LogFullDebug(COMPONENT_FSAL, "FSAL_CREATE: extracted server (as client) parent handle=%s\n",
-                   outstr);
-    }
+  LogFullDebugOpaque(COMPONENT_FSAL,
+                     "extracted server (as client) parent handle=%s",
+                     FSAL_HANDLE_STR_LEN,
+                     nfs4fh.nfs_fh4_val,
+                     nfs4fh.nfs_fh4_len);
 
   bitmap.bitmap4_val = bitmap_create;
   bitmap.bitmap4_len = 2;
@@ -246,14 +243,11 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
       memcpy(object_attributes, &attributes, sizeof(attributes));
     }
 
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      char outstr[1024];
-
-      sprint_fhandle4(outstr, &nfs4fh);
-      LogFullDebug(COMPONENT_FSAL, "FSAL_CREATE: extracted server (as client) created file handle=%s\n",
-           outstr);
-    }
+  LogFullDebugOpaque(COMPONENT_FSAL,
+                     "extracted server (as client) created handle=%s",
+                     FSAL_HANDLE_STR_LEN,
+                     nfs4fh.nfs_fh4_val,
+                     nfs4fh.nfs_fh4_len);
 
   if(fsal_internal_proxy_create_fh
      (&

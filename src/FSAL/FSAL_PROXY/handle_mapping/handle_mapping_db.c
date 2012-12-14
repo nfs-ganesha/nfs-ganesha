@@ -359,8 +359,9 @@ static int db_insert_operation(db_thread_info_t * p_info,
                                nfs23_map_handle_t * p_nfs23_digest,
                                fsal_handle_t * p_handle)
 {
-  int rc;
-  char handle_str[2 * sizeof(fsal_handle_t) + 1];
+  int                   rc;
+  char                  handle_str[FSAL_HANDLE_STR_LEN];
+  struct display_buffer dspbuf = {sizeof(handle_str), handle_str, handle_str};
 
   rc = sqlite3_bind_int64(p_info->prep_stmt[INSERT_STATEMENT], 1,
                           p_nfs23_digest->object_id);
@@ -370,7 +371,7 @@ static int db_insert_operation(db_thread_info_t * p_info,
                         p_nfs23_digest->handle_hash);
   CheckBind(p_info->db_conn, rc, p_info->prep_stmt[INSERT_STATEMENT]);
 
-  snprintHandle(handle_str, 2 * sizeof(fsal_handle_t) + 1, p_handle);
+  (void) display_FSAL_handle(&dspbuf, p_handle);
 
   rc = sqlite3_bind_text(p_info->prep_stmt[INSERT_STATEMENT], 3, handle_str, -1,
                          SQLITE_STATIC);

@@ -32,14 +32,15 @@
 
 #define TIMEOUTRPC {2, 0} 
 
-#define PRINT_HANDLE( tag, handle )                                                     \
-  do {                                                                                  \
-    if(isFullDebug(COMPONENT_FSAL))                                                     \
-      {                                                                                 \
-        char outstr[1024] ;                                                             \
-        snprintHandle(outstr, 1024, handle) ;                                           \
-        LogFullDebug(COMPONENT_FSAL, "============> %s : handle=%s\n", tag, outstr ) ;  \
-      }                                                                                 \
+#define PRINT_HANDLE( tag, handle )                                                  \
+  do {                                                                               \
+    if(isFullDebug(COMPONENT_FSAL))                                                  \
+      {                                                                              \
+        char                  outstr[FSAL_HANDLE_STR_LEN];                           \
+        struct display_buffer dspbuf = {sizeof(outstr), outstr, outstr};             \
+        (void) display_FSAL_handle(&dspbuf, handle);                                 \
+        LogFullDebug(COMPONENT_FSAL, "============> %s : handle=%s", tag, outstr );  \
+      }                                                                              \
   } while( 0 )
 
 /* Free a compound */
