@@ -148,20 +148,21 @@ fsal_status_t
 PTFSAL_GetExportEntry(char          * p_fs_info,   /* IN */
 		      exportlist_t ** exportlist /* OUT */)
 {
-  exportlist_t * p_exportlist;
+  exportlist_t * p_exportlist = NULL;
+  struct glist_head *glist;
   if (p_fs_info == NULL) {
     FSI_TRACE(FSI_DEBUG, "NULL mandatory FS information\n");
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext); 
   }
   FSI_TRACE(FSI_DEBUG, "FS info: %s", p_fs_info);
 
-  p_exportlist = nfs_param.pexportlist;
-  while (p_exportlist != NULL) {
+  glist_for_each(glist, nfs_param.pexportlist) {
+
+    p_exportlist = glist_entry(glist, exportlist_t, exp_list);
     FSI_TRACE(FSI_DEBUG, "FS info in Export list: %s", 
               p_exportlist->FS_specific);
     if(strncmp(p_fs_info, p_exportlist->FS_specific, 
        sizeof(p_exportlist->FS_specific))) {
-      p_exportlist = p_exportlist->exp_list.next;
       continue;
     } else {
       FSI_TRACE(FSI_DEBUG, "Equal\n");
