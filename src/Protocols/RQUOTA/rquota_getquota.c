@@ -34,7 +34,6 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
-#include <sys/quota.h>          /* For USRQUOTA */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
@@ -46,6 +45,7 @@
 #include "nfs_creds.h"
 #include "nfs_tools.h"
 #include "mount.h"
+#include <os/quota.h>          /* For USRQUOTA */
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 

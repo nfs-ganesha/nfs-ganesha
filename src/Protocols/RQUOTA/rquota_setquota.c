@@ -34,7 +34,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
-#include <sys/quota.h>          /* For USRQUOTA */
+#include <os/quota.h>           /* For USRQUOTA */
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
