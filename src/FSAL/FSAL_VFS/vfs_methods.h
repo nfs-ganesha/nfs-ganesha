@@ -1,6 +1,8 @@
 /* VFS methods for handles
  */
 
+#include "fsal_handle_syscalls.h"
+
 /* private helpers from export
  */
 
@@ -35,7 +37,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 
 struct vfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
-	struct file_handle *handle;
+	vfs_file_handle_t *handle;
 	union {
 		struct {
 			int fd;
@@ -46,7 +48,7 @@ struct vfs_fsal_obj_handle {
 			int link_size;
 		} symlink;
 		struct {
-			struct file_handle *dir;
+			vfs_file_handle_t *dir;
 			char *name;
 		} unopenable;
 	} u;
