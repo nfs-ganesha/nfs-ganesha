@@ -38,9 +38,9 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include <mntent.h>
 #include <sys/statvfs.h>
-#include <sys/quota.h>
+#include <os/mntent.h>
+#include <os/quota.h>
 #include "nlm_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -300,7 +300,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	}
 	id = (quota_type == USRQUOTA) ? req_ctx->creds->caller_uid : req_ctx->creds->caller_gid;
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
-	retval = quotactl(QCMD(Q_GETQUOTA, quota_type),
+	retval = QUOTACTL(QCMD(Q_GETQUOTA, quota_type),
 			  myself->fs_spec,
 			  id,
 			  (caddr_t) &fs_quota);
@@ -362,25 +362,37 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 	if(pquota->bhardlimit != 0) {
 		fs_quota.dqb_bhardlimit = pquota->bhardlimit;
-		fs_quota.dqb_valid |= QIF_BLIMITS;
 	}
 	if(pquota->bsoftlimit != 0) {
 		fs_quota.dqb_bsoftlimit = pquota->bsoftlimit;
-		fs_quota.dqb_valid |= QIF_BLIMITS;
 	}
 	if(pquota->fhardlimit != 0) {
 		fs_quota.dqb_ihardlimit = pquota->fhardlimit;
-		fs_quota.dqb_valid |= QIF_ILIMITS;
 	}
 	if(pquota->btimeleft != 0) {
 		fs_quota.dqb_btime = pquota->btimeleft;
-		fs_quota.dqb_valid |= QIF_BTIME;
 	}
 	if(pquota->ftimeleft != 0) {
 		fs_quota.dqb_itime = pquota->ftimeleft;
+	}
+#ifdef LINUX
+	if(pquota->bhardlimit != 0) {
+		fs_quota.dqb_valid |= QIF_BLIMITS;
+	}
+	if(pquota->bsoftlimit != 0) {
+		fs_quota.dqb_valid |= QIF_BLIMITS;
+	}
+	if(pquota->fhardlimit != 0) {
+		fs_quota.dqb_valid |= QIF_ILIMITS;
+	}
+	if(pquota->btimeleft != 0) {
+		fs_quota.dqb_valid |= QIF_BTIME;
+	}
+	if(pquota->ftimeleft != 0) {
 		fs_quota.dqb_valid |= QIF_ITIME;
 	}
-	retval = quotactl(QCMD(Q_SETQUOTA, quota_type),
+#endif
+	retval = QUOTACTL(QCMD(Q_SETQUOTA, quota_type),
 			  myself->fs_spec,
 			  id,
 			  (caddr_t) &fs_quota);
@@ -408,14 +420,14 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 				    fsal_digesttype_t in_type,
 				    struct gsh_buffdesc *fh_desc)
 {
-	struct file_handle *hdl;
+	vfs_file_handle_t *hdl;
 	size_t fh_size;
 
 	/* sanity checks */
 	if( !fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	hdl = (struct file_handle *)fh_desc->addr;
+	hdl = (vfs_file_handle_t *)fh_desc->addr;
 	fh_size = vfs_sizeof_handle(hdl);
 	if(in_type == FSAL_DIGEST_NFSV2) {
 		if(fh_desc->len < fh_size) {
@@ -641,11 +653,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	} else {
 		struct stat root_stat;
 		int mnt_id = 0;
-		struct file_handle *fh = alloca(sizeof(struct file_handle)
-					       + MAX_HANDLE_SZ);
-
-		memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
-		fh->handle_bytes = MAX_HANDLE_SZ;
+                vfs_file_handle_t *fh = NULL;
+                vfs_alloc_handle(fh);
 		retval = fstat(myself->root_fd, &root_stat);
 		if(retval < 0) {
 			LogMajor(COMPONENT_FSAL,
@@ -656,18 +665,16 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 			goto errout;
 		}
 		myself->root_dev = root_stat.st_dev;
-		retval = name_to_handle_at(myself->root_fd, "", fh,
-					   &mnt_id, AT_EMPTY_PATH);
+		retval = vfs_fd_to_handle(myself->root_fd, fh, &mnt_id);
 		if(retval != 0) {
 			LogMajor(COMPONENT_FSAL,
-				 "name_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
+				 "vfs_fd_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
 				 mntdir, myself->root_fd, errno, strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;
 			goto errout;
 		}
-		myself->root_handle = gsh_malloc(sizeof(struct file_handle)
-						 + fh->handle_bytes);
+		myself->root_handle = gsh_malloc(vfs_sizeof_handle(fh));
 		if(myself->root_handle == NULL) {
 			LogMajor(COMPONENT_FSAL,
 				 "memory for root handle, errno=(%d) %s",
@@ -678,7 +685,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		}
 		memcpy(myself->root_handle,
 		       fh,
-		       sizeof(struct file_handle) + fh->handle_bytes);
+                       vfs_sizeof_handle(fh));
 	}
 	myself->fstype = strdup(type);
 	myself->fs_spec = strdup(fs_spec);

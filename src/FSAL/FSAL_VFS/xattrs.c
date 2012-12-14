@@ -39,8 +39,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/xattr.h>
-#include <mntent.h>
+#include <os/xattr.h>
 #include <ctype.h>
 #include "nlm_list.h"
 #include "fsal_convert.h"

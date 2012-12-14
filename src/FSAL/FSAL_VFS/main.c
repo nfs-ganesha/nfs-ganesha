@@ -37,6 +37,7 @@
 #include <libgen.h>             /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
+#include <limits.h>
 #include <sys/types.h>
 #include "nlm_list.h"
 #include "FSAL/fsal_init.h"
