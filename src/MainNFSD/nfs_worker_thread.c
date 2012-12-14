@@ -36,6 +36,10 @@
 #include "solaris_port.h"
 #endif
 
+#ifdef FREEBSD
+#include <signal.h>
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdbool.h>
