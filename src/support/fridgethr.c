@@ -42,7 +42,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#ifdef LINUX
 #include <sys/signal.h>
+#elif FREEBSD
+#include <signal.h>
+#endif
 
 #include "fridgethr.h"
 
@@ -134,9 +138,12 @@ fridgethr_get(thr_fridge_t *fr, void *(*func)(void*),
 		assert(errno == 0);
 	}
 
+#ifdef LINUX
+        /* pthread_t is a 'pointer to struct' on FreeBSD vs 'unsigned long' on Linux */
         LogFullDebug(COMPONENT_THREAD,
                 "fr %p created thread %u (nthreads %u nidle %u)",
                      fr, (unsigned int) pfe->ctx.id, fr->nthreads, fr->nidle);
+#endif
 
         goto out;
     }
@@ -198,15 +205,21 @@ fridgethr_freeze(thr_fridge_t *fr, struct fridge_thr_context *thr_ctx)
     /* prints unreliable, nb */
 
     if (rc == 0) {
+#ifdef LINUX
+        /* pthread_t is a 'pointer to struct' on FreeBSD vs 'unsigned long' on Linux */
         LogFullDebug(COMPONENT_THREAD,
                 "fr %p re-use idle thread %u (nthreads %u nidle %u)",
                      fr, (unsigned int) pfe->ctx.id, fr->nthreads, fr->nidle);
+#endif
         return (TRUE);
     }
     assert(rc == ETIMEDOUT); /* any other error is very bad */
+#ifdef LINUX
+    /* pthread_t is a 'pointer to struct' on FreeBSD vs 'unsigned long' on Linux */
     LogFullDebug(COMPONENT_THREAD,
             "fr %p thread %u idle out (nthreads %u nidle %u)",
                  fr, (unsigned int) pfe->ctx.id, fr->nthreads, fr->nidle);
+#endif
 
     return (FALSE);
 } /* fridgethr_freeze */
