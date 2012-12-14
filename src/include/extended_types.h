@@ -40,6 +40,12 @@
 
 #include <sys/types.h>
 
+#ifdef LINUX
+#include <os/linux/extended_types.h>
+#elif FREEBSD
+#include <os/freebsd/extended_types.h>
+#endif
+
 /* Added extended types, often missing */
 typedef long long longlong_t;
 typedef unsigned long long u_longlong_t;
@@ -47,17 +53,5 @@ typedef unsigned long long u_longlong_t;
 typedef unsigned int uint_t;
 typedef unsigned int uint32_t;
 
-#ifndef _UINT64_T
-# ifndef __int8_t_defined
-
-#if SIZEOF_LONG == 8
-typedef unsigned long int uint64_t;
-typedef long int int64_t;
-#else
-typedef unsigned long long int uint64_t;
-typedef long long int int64_t;
-#endif
-#endif
-#endif
 
 #endif                          /* _EXTENDED_TYPES_H */
