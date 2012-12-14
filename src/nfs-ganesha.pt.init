@@ -1,0 +1,245 @@
+#!/bin/bash
+# init file for ganesha
+#
+# chkconfig: - 50 50
+# description: GANESHA NFS Daemon
+#
+# processname: /usr/bin/pt.ganesha.nfsd
+# config: /etc/ganesha/pt.ganesha.nfsd.conf
+# pidfile: /var/run/pt.ganesha.nfsd.pid
+#
+### BEGIN INIT INFO
+# Provides: nfs-ganesha.pt
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs $network
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop nfs-ganesha/ProtecTIER daemon
+# Description: NFS-GANESHA
+### END INIT INFO
+
+
+# source function library
+. /etc/init.d/functions
+
+# Source networking configuration.
+[ -f /etc/sysconfig/network ] &&  . /etc/sysconfig/network
+
+# Check for and source configuration file otherwise set defaults
+[ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
+
+PATHPROG=/usr/bin/pt.ganesha.nfsd
+PROG=pt.ganesha.nfsd
+LOGFILE=/pt_work/log/ganesha/nfs-ganesha.log
+#LOGFILE=SYSLOG
+#LOGFILE=STDERR
+#LOGFILE=STDOUT
+
+CONFFILE=/etc/ganesha/pt.ganesha.nfsd.conf
+
+# Remote quota server
+[ -z "$RQUOTAD" ] && RQUOTAD=`type -path rpc.rquotad`
+
+###########################################################
+# DEBUG LEVELS FOR SPECIFIC COMPONENTS
+# (uncomment #export to enable)
+
+# Possible debug levels (severity high to low):
+## NIV_NULL
+## NIV_MAJOR
+## NIV_CRIT
+## NIV_EVENT
+## NIV_INFO
+## NIV_DEBUG
+## NIV_MID_DEBUG
+## NIV_FULL_DEBUG
+
+#Some common useful log components:
+#export COMPONENT_INIT=NIV_INFO
+#export COMPONENT_CACHE_INODE=NIV_FULL_DEBUG
+#export COMPONENT_DISPATCH=NIV_FULL_DEBUG
+#export COMPONENT_DISPATCH=NIV_DEBUG
+#export COMPONENT_FSAL_UP=NIV_FULL_DEBUG
+#export COMPONENT_FSAL=NIV_FULL_DEBUG
+#export COMPONENT_NFSPROTO=NIV_FULL_DEBUG
+#export COMPONENT_NFS_READDIR=NIV_FULL_DEBUG
+#export COMPONENT_MEMLEAKS=NIV_FULL_DEBUG
+
+#For Lock/State debugging:
+#export COMPONENT_NLM=NIV_FULL_DEBUG
+#export COMPONENT_NFS_V4_LOCK=NIV_FULL_DEBUG
+#export COMPONENT_STATE=NIV_FULL_DEBUG
+###########################################################
+
+OPTIONS="-d -f $CONFFILE -L $LOGFILE -N NIV_INFO"
+RETVAL=0
+prog="pt.ganesha.nfsd"
+
+which sm-notify &> /dev/null
+HAVE_SMNOTIFY=`echo $?`
+
+start() {
+	# Check if the user is root
+        if [ $UID -ne 0 ]; then
+	        echo "ProtecTIER Ganesha must be started by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+	# Check if a Ganesha configuration file is available
+	if [ ! -f "$CONFFILE" ]; then
+	        echo "The following configuration file is required but does not exist: $CONFFILE"
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL
+	fi
+
+	# Check if Ganesha is already running
+	result=`pidof "$PATHPROG"`
+	if [ $result ]; then
+	        echo "ProtecTIER Ganesha is already running."
+		RETVAL=1
+		failure
+	        echo
+	        return $RETVAL
+	fi
+
+	# Start daemons.
+	# Start the Ganesha daemon
+        echo  -n $"Starting $prog: "
+	daemon $PATHPROG $OPTIONS
+	RETVAL=$?
+	if [ $HAVE_SMNOTIFY -eq 0 ]; then
+		sm-notify -f
+	fi
+
+        # Sleeping here gives Ganesha an adequate amount of time to
+        # initialize the server and fail if anything goes wrong.
+        # Without this sleep and the server will be in the midst of
+        # initializing. It may fail immediately after this script runs.
+	sleep 2
+
+	# Check if Ganesha is still running
+	result=`pidof "$PATHPROG"`
+	if [ ! $result ]; then
+	    failure
+	    echo
+	    return $RETVAL
+	fi
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/pt.ganesha.nfsd
+
+        echo
+        return $RETVAL
+}
+
+stop() {
+	# Check if user is root
+        if [ $UID -ne 0 ]; then
+	        echo "ProtecTIER Ganesha must be stopped by the root user."
+                RETVAL=1
+                failure
+		echo
+		return $RETVAL
+	fi
+
+	# Kill the Ganesha process
+	echo -n $"Stopping $prog: "
+	MAX_WAIT_TIME_IN_SEC=600
+	pid=`pidof "$PATHPROG"`
+	kill -TERM $pid >/dev/null 2>&1
+	RETVAL=$?
+	waitTimeInSec=0
+	result=`ps ax |awk {'print $1'} |grep '^ *'$pid'$'`
+	echo "PID is $pid"
+	while true; do
+		if [ $result ]; then
+			sleep 1
+			result=`ps ax |awk {'print $1'} |grep '^ *'$pid'$'`
+			waitTimeInSec=$(( waitTimeInSec + 1 ))
+		else
+			success
+			break
+		fi
+
+		if [ $waitTimeInSec -gt $MAX_WAIT_TIME_IN_SEC ]; then 
+			echo "FSAL shutdown taking too long.  Killing it"
+			kill -KILL $pid >/dev/null 2>&1
+			RETVAL=$?
+			usleep 100000
+			if [ $RETVAL -ne 0 ]; then
+				failure
+			else
+				success
+			fi
+			break
+		fi
+	done
+
+	if [ $RETVAL -eq 0 ]; then
+		rm -f /var/lock/subsys/pt.ganesha.nfsd  
+	fi
+
+        return $RETVAL
+}
+
+restart(){
+	stop
+	start
+        return $RETVAL
+}
+
+condrestart(){
+    [ -e /var/lock/subsys/pt.ganesha.nfsd ] && restart
+    return 0
+}
+
+reload() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "Reloading Ganesha Exports"
+	    kill -HUP $result;
+    fi
+}
+
+ganesha_status() {
+    result=`pidof "$PATHPROG"`
+    if [ $result ]; then
+	    echo "ProtecTIER Ganesha is running."
+	    RETVAL=0
+    else
+	    echo "ProtecTIER Ganesha is not running."
+	    RETVAL=1
+    fi
+    return $RETVAL
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  reload)
+	reload
+        ;;
+  condrestart)
+	condrestart
+	;;
+  status)
+        ganesha_status
+        ;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+	RETVAL=1
+esac
+
+exit $RETVAL
