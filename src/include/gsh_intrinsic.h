@@ -42,8 +42,10 @@
 #define unlikely(x)  _  _builtin_expect (!!(x), 0)
 #endif
 #else
+#ifndef likely
 #define likely(x)       (x)
 #define unlikely(x)     (x)
+#endif
 #endif
 
 #endif /* _GSH_INTRINSIC_H */
