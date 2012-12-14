@@ -937,7 +937,7 @@ state_status_t state_nlm_unshare(cache_entry_t *entry,
   fsal_share_param_t share_param;
   state_nlm_share_t *nlm_share;
   cache_inode_status_t cache_status;
-  state_status_t status;
+  state_status_t status = 0;
 
   cache_status = cache_inode_inc_pin_ref(entry);
 
