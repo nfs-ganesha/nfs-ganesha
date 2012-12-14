@@ -798,11 +798,15 @@ int MakeLogError(char *buffer, int num_family, int num_error, int status,
   else
     {
       char tempstr[1024];
-      char *errstr;
-      errstr = strerror_r(status, tempstr, 1024);
+      int result;
+      result = strerror_r(status, tempstr, 1024);
+
+      if (result != 0) {
+              strcpy(tempstr, "Unknown error");
+      }
 
       return sprintf(buffer, "Error %s : %s : status %d : %s : Line %d",
-                     the_error.label, the_error.msg, status, errstr, ma_ligne);
+                     the_error.label, the_error.msg, status, tempstr, ma_ligne);
     }
 }                               /* MakeLogError */
 
