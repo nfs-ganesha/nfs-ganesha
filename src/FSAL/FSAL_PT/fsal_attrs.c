@@ -214,6 +214,7 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
   mode_t             st_mode_in_cache = 0;
   char               fsi_name[PATH_MAX];
   int                rc;
+  int fd;
 
   FSI_TRACE(FSI_DEBUG, "Begin-----------------------------------------\n");
 
@@ -252,6 +253,31 @@ PTFSAL_setattrs(fsal_handle_t      * p_filehandle,       /* IN */
                   FSAL_ATTR_RDATTR_ERR);
     ReturnStatus(status, INDEX_FSAL_setattrs);
   }
+
+  /**************
+   *  TRUNCATE  *
+   **************/
+
+  if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_SIZE)) {
+
+      status = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
+
+      if (FSAL_IS_ERROR(status)) {
+        ReturnStatus(status, INDEX_FSAL_setattrs);
+      }
+
+      status = PTFSAL_truncate( p_filehandle,
+                                p_context,   
+                                0,                
+                                &fd,     
+                                p_object_attributes);
+
+      if (FSAL_IS_ERROR(status)) {
+        ReturnStatus(status, INDEX_FSAL_setattrs);
+      }
+    
+   }
+ 
 
   /***********
    *  CHMOD  *
