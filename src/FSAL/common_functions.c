@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
-#include <sys/quota.h>
+#include <os/quota.h>
 #include "log.h"
 #include "fsal.h"
 #include "fsal_types.h"

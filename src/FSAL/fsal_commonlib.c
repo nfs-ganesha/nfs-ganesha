@@ -51,7 +51,7 @@
 #include <mntent.h>
 #endif
 #include <sys/statvfs.h>
-#include <sys/quota.h>
+#include <os/quota.h>
 #include "nlm_list.h"
 #include "FSAL/fsal_commonlib.h"
 

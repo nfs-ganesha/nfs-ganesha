@@ -38,7 +38,6 @@
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
-#include <sys/quota.h>
 #include "log.h"
 #include "fsal.h"
 #include "fsal_pnfs.h"
@@ -266,6 +265,7 @@ FSAL_encode_file_layout(XDR *xdrs,
         size_t i = 0;
         /* NFS status code */
         nfsstat4 nfs_status = 0;
+        offset4 *p_ofst = (offset4 *)&ptrn_ofst; /* supress compile warnings */
 
         if (!xdr_fsal_deviceid(xdrs, (struct pnfs_deviceid *)deviceid)) {
                 LogMajor(COMPONENT_PNFS, "Failed encoding deviceid.");
@@ -282,7 +282,7 @@ FSAL_encode_file_layout(XDR *xdrs,
                 return NFS4ERR_SERVERFAULT;
         }
 
-        if (!xdr_offset4(xdrs, (offset4 *) &ptrn_ofst)) {
+        if (!xdr_offset4(xdrs, p_ofst)) {
                 LogMajor(COMPONENT_PNFS, "Failed encoding pattern_offset.");
                 return NFS4ERR_SERVERFAULT;
         }
