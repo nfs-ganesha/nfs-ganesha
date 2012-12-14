@@ -146,7 +146,9 @@ struct lru_q_base
 
 /* Cache-line padding macro from MCAS */
 
+#ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE 64 /* XXX arch-specific define */
+#endif
 #define CACHE_PAD(_n) char __pad ## _n [CACHE_LINE_SIZE]
 #define ALIGNED_ALLOC(_s)					\
      ((void *)(((unsigned long)malloc((_s)+CACHE_LINE_SIZE*2) + \
