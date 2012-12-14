@@ -88,13 +88,10 @@ static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 	return offsetof(struct file_handle, f_handle) + hdl->handle_bytes;
 }
 
-static inline void vfs_alloc_handle(vfs_file_handle_t *fh)
-{
-    size_t handle_sz = sizeof(struct file_handle) + MAX_HANDLE_SZ;
-    fh = alloca(handle_sz);
-    memset(fh, 0, handle_sz);
-    fh->handle_bytes = MAX_HANDLE_SZ;
-}
+#define vfs_alloc_handle(fh) \
+	(fh) = alloca(sizeof(struct file_handle) + MAX_HANDLE_SZ); \
+	memset((fh), 0, (sizeof(struct file_handle) + MAX_HANDLE_SZ)); \
+	(fh)->handle_bytes = MAX_HANDLE_SZ;
 
 static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t *fh, int *mnt_id)
 {

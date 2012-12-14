@@ -69,13 +69,10 @@ static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 	return offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE;
 }
 
-static inline void vfs_alloc_handle(vfs_file_handle_t *fh)
-{
-	size_t handle_sz = offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE;
-	fh = alloca(handle_sz);
-	memset(fh, 0, handle_sz);
-	fh->handle_bytes = handle_sz;
-}
+#define vfs_alloc_handle(fh) \
+	(fh) = alloca(offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE); \
+	memset((fh), 0, (offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE)); \
+	(fh)->handle_bytes = offsetof(struct fhandle, fh_fid) + PANFS_HANDLE_SIZE;
 
 static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
 {
