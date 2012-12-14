@@ -14,6 +14,7 @@
 #endif
 
 #include "config_parsing.h"
+#include "display.h"
 
 /* these macros gain a few percent of speed on gcc, especially with so many log entries */
 #if (__GNUC__ >= 3)
@@ -533,6 +534,33 @@ extern log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_C
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
                                "%s F_DBG: " format, \
                                LogComponents[component].comp_str, ## args ); \
+  } while (0)
+
+#define LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
+  do { \
+    if (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG)) \
+      {                                                                      \
+        char                  buf[buf_size];                                 \
+        struct display_buffer dspbuf = {buf_size, buf, buf};                 \
+        (void) display_opaque_value(&dspbuf, value, length);                 \
+          DisplayLogComponentLevel(component, (char *)__FUNCTION__,          \
+                                   NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, \
+                                   LogComponents[component].comp_str,        \
+                                   buf, ## args );                           \
+      }                                                                      \
+  } while (0)
+
+#define LogFullDebugBytes(component, format, buf_size, value, length, args)  \
+  do { \
+    if (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG)) \
+      {                                                                      \
+        char                  buf[buf_size];                                 \
+        struct display_buffer dspbuf = {buf_size, buf, buf};                 \
+        (void) display_opaque_bytes(&dspbuf, value, length);                 \
+          DisplayLogComponentLevel(component, (char *)__FUNCTION__,          \
+                                   NIV_FULL_DEBUG, "%s: FULLDEBUG: " format, \
+                                   LogComponents[component].comp_str,        \
+                                   buf, ## args );                           \
   } while (0)
 
 #define LogAtLevel(component, level, format, args...) \
