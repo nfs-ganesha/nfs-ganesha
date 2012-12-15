@@ -222,28 +222,7 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3);
 /* This one is used to detect Xattr related FH */
 int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh);
 
-/* File handle print function (mostly use for debugging) */
-void print_fhandle2(log_components_t component, fhandle2 *fh);
-void print_fhandle3(log_components_t component, nfs_fh3 *fh);
-void print_fhandle4(log_components_t component, nfs_fh4 *fh);
-void print_fhandle_nlm(log_components_t component, netobj *fh);
-void LogCompoundFH(compound_data_t * data);
-
-void sprint_fhandle2(char *str, fhandle2 *fh);
-void sprint_fhandle3(char *str, nfs_fh3 *fh);
-void sprint_fhandle4(char *str, nfs_fh4 *fh);
-void sprint_fhandle_nlm(char *str, netobj *fh);
-void sprint_mem(char *str, const char *buff, int len);
-
-#define LogHandleNFS4( label, fh4p )                        \
-  do {                                                      \
-    if(isFullDebug(COMPONENT_NFS_V4))                       \
-      {                                                     \
-        char str[LEN_FH_STR];                               \
-        sprint_fhandle4(str, fh4p);                         \
-        LogFullDebug(COMPONENT_NFS_V4, "%s%s", label, str); \
-      }                                                     \
-  } while (0)
+/* File handle display functions */
 
 static inline int display_fhandle2(struct display_buffer * dspbuf,
                                    fhandle2              * fh)

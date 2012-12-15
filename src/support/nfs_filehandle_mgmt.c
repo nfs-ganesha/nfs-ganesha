@@ -235,6 +235,12 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
                      fh_desc->start,
                      fh_desc->len);
 
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "FSAL Handle %s",
+                     FSAL_HANDLE_STR_LEN,
+                     fh_desc->start,
+                     fh_desc->len);
+
   return 1;
 }                               /* nfs3_FhandleToFSAL */
 
@@ -260,7 +266,12 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2,
   BUILD_BUG_ON(sizeof(struct alloc_file_handle_v2) != NFS2_FHSIZE);
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v2_t *) pfh2;
-  print_fhandle2(COMPONENT_FILEHANDLE, pfh2);
+
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "NFS3 Handle %s",
+                     LEN_FH_STR,
+                     pfh2,
+                     sizeof(*pfh2));
 
   /* validate the filehandle  */
   if(pfile_handle->fhversion != GANESHA_FH_VERSION)
@@ -359,6 +370,12 @@ int nfs4_FSALToFhandle(nfs_fh4 *pfh4,
   /* Set the len */
   pfh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle); /* re-adjust to as built */
 
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "NFS4 Handle %s",
+                     LEN_FH_STR,
+                     pfh4->nfs_fh4_val,
+                     pfh4->nfs_fh4_len);
+
   return 1;
 }                               /* nfs4_FSALToFhandle */
 
@@ -431,7 +448,11 @@ int nfs3_FSALToFhandle(nfs_fh3 *pfh3,
   if ((pfh3->data.data_len + padding) <= sizeof(struct alloc_file_handle_v3))
     pfh3->data.data_len += padding;
 
-  print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "NFS3 Handle %s",
+                     LEN_FH_STR,
+                     pfh3->data.data_val,
+                     pfh3->data.data_len);
 
   return 1;
 }                               /* nfs3_FSALToFhandle */
@@ -498,7 +519,11 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 /*   /\* Set the data *\/ */
 /*   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t)); */
 
-  print_fhandle2(COMPONENT_FILEHANDLE, pfh2);
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "NFS3 Handle %s",
+                     LEN_FH_STR,
+                     pfh2,
+                     sizeof(*pfh2));
 
   return 1;
 }                               /* nfs2_FSALToFhandle */
@@ -733,7 +758,11 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh)
       return NFS4ERR_BADHANDLE;
     }
 
-  print_fhandle4(COMPONENT_FILEHANDLE, pfh);
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "NFS4 Handle %s",
+                     LEN_FH_STR,
+                     pfh->nfs_fh4_val,
+                     pfh->nfs_fh4_len);
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v4_t *) (pfh->nfs_fh4_val);
@@ -826,7 +855,11 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3)
       return NFS3ERR_BADHANDLE;
     }
 
-  print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
+  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                     "NFS3 Handle %s",
+                     LEN_FH_STR,
+                     pfh3->data.data_val,
+                     pfh3->data.data_len);
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
@@ -913,160 +946,3 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
 
   return FALSE;
 }                               /* nfs4_Is_Fh_Referral */
-
-/**
- *
- * print_fhandle2
- *
- * This routine prints a NFSv2 file handle (for debugging purpose)
- *
- * @param fh [IN] file handle to print.
- * 
- * @return nothing (void function).
- *
- */
-void print_fhandle2(log_components_t component, fhandle2 *fh)
-{
-  if(isFullDebug(component))
-    {
-      char str[LEN_FH_STR];
-
-      sprint_fhandle2(str, fh);
-      LogFullDebug(component, "%s", str);
-    }
-}                               /* print_fhandle2 */
-
-void sprint_fhandle2(char *str, fhandle2 *fh)
-{
-  char *tmp = str +  sprintf(str, "File Handle V2: ");
-
-  sprint_mem(tmp, (char *) fh, 32);
-}                               /* sprint_fhandle2 */
-
-/**
- *
- * print_fhandle3
- *
- * This routine prints a NFSv3 file handle (for debugging purpose)
- *
- * @param fh [IN] file handle to print.
- * 
- * @return nothing (void function).
- *
- */
-void print_fhandle3(log_components_t component, nfs_fh3 *fh)
-{
-  if(isFullDebug(component))
-    {
-      char str[LEN_FH_STR];
-
-      sprint_fhandle3(str, fh);
-      LogFullDebug(component, "%s", str);
-    }
-}                               /* print_fhandle3 */
-
-void sprint_fhandle3(char *str, nfs_fh3 *fh)
-{
-  char *tmp = str + sprintf(str, "File Handle V3: Len=%u ", fh->data.data_len);
-
-  sprint_mem(tmp, fh->data.data_val, fh->data.data_len);
-}                               /* sprint_fhandle3 */
-
-/**
- *
- * print_fhandle4
- *
- * This routine prints a NFSv4 file handle (for debugging purpose)
- *
- * @param fh [IN] file handle to print.
- * 
- * @return nothing (void function).
- *
- */
-void print_fhandle4(log_components_t component, nfs_fh4 *fh)
-{
-  if(isFullDebug(component))
-    {
-      char str[LEN_FH_STR];
-
-      sprint_fhandle4(str, fh);
-      LogFullDebug(component, "%s", str);
-    }
-}                               /* print_fhandle4 */
-
-void sprint_fhandle4(char *str, nfs_fh4 *fh)
-{
-  char *tmp = str + sprintf(str, "File Handle V4: Len=%u ", fh->nfs_fh4_len);
-
-  sprint_mem(tmp, fh->nfs_fh4_val, fh->nfs_fh4_len);
-}                               /* sprint_fhandle4 */
-
-/**
- *
- * print_fhandle_nlm
- *
- * This routine prints a NFSv3 file handle (for debugging purpose)
- *
- * @param fh [IN] file handle to print.
- * 
- * @return nothing (void function).
- *
- */
-void print_fhandle_nlm(log_components_t component, netobj *fh)
-{
-  if(isFullDebug(component))
-    {
-      char str[LEN_FH_STR];
-
-      sprint_fhandle_nlm(str, fh);
-      LogFullDebug(component, "%s", str);
-    }
-}                               /* print_fhandle_nlm */
-
-void sprint_fhandle_nlm(char *str, netobj *fh)
-{
-  char *tmp = str + sprintf(str, "File Handle V3: Len=%u ", fh->n_len);
-
-  sprint_mem(tmp, fh->n_bytes, fh->n_len);
-}                               /* sprint_fhandle_nlm */
-
-void sprint_mem(char *str, const char *buff, int len)
-{
-  int i;
-
-  if(buff == NULL)
-    sprintf(str, "<null>");
-  else for(i = 0; i < len; i++)
-    sprintf(str + i * 2, "%02x", (unsigned char)buff[i]);
-}
-
-/**
- *
- * print_compound_fh
- *
- * This routine prints all the file handle within a compoud request's data structure.
- * 
- * @param data [IN] compound's data to manage.
- *
- * @return nothing (void function).
- *
- */
-void LogCompoundFH(compound_data_t * data)
-{
-  if(isFullDebug(COMPONENT_FILEHANDLE))
-    {
-      char str[LEN_FH_STR];
-      
-      sprint_fhandle4(str, &data->currentFH);
-      LogFullDebug(COMPONENT_FILEHANDLE, "Current FH  %s", str);
-      
-      sprint_fhandle4(str, &data->savedFH);
-      LogFullDebug(COMPONENT_FILEHANDLE, "Saved FH    %s", str);
-      
-      sprint_fhandle4(str, &data->publicFH);
-      LogFullDebug(COMPONENT_FILEHANDLE, "Public FH   %s", str);
-      
-      sprint_fhandle4(str, &data->rootFH);
-      LogFullDebug(COMPONENT_FILEHANDLE, "Root FH     %s", str);
-    }
-}                               /* print_compoud_fh */

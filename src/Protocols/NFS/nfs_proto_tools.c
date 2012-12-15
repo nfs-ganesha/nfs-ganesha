@@ -134,42 +134,6 @@ char *rquota_functions_names[] = {
 
 /**
  *
- * nfs_FhandleToStr: Converts a file handle to a string representation.
- *
- * Converts a file handle to a string representation.
- *
- * @param rq_vers  [IN]    version of the NFS protocol to be used
- * @param pfh2     [IN]    NFSv2 file handle or NULL
- * @param pfh3     [IN]    NFSv3 file handle or NULL
- * @param pfh4     [IN]    NFSv4 file handle or NULL
- * @param str      [OUT]   string version of handle
- *
- */
-void nfs_FhandleToStr(u_long     rq_vers,
-                      fhandle2  *pfh2,
-                      nfs_fh3   *pfh3,
-                      nfs_fh4   *pfh4,
-                      char      *str)
-{
-
-  switch (rq_vers)
-    {
-    case NFS_V4:
-      sprint_fhandle4(str, pfh4);
-      break;
-
-    case NFS_V3:
-      sprint_fhandle3(str, pfh3);
-      break;
-
-    case NFS_V2:
-      sprint_fhandle2(str, pfh2);
-      break;
-    }
-}                               /* nfs_FhandleToStr */
-
-/**
- *
  * nfs_FhandleToCache: Gets a cache entry using a file handle (v2/3/4) as input.
  * 
  * Gets a cache entry using a file handle (v2/3/4) as input.
@@ -256,12 +220,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       exportid = nfs2_FhandleToExportId(pfh2);
       break;
     }
-
-  LogFullDebugOpaque(COMPONENT_FILEHANDLE,
-                     "FSAL Handle %s",
-                     FSAL_HANDLE_STR_LEN,
-                     fsal_data.fh_desc.start,
-                     fsal_data.fh_desc.len);
 
   if((pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
     {
