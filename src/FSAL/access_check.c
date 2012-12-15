@@ -646,8 +646,11 @@ void fsal_set_credentials(fsal_op_context_t * context)
 
 void fsal_save_ganesha_credentials()
 {
-  int  i;
-  char buffer[1024], *p = buffer;
+  int                   i;
+  int                   b_left;
+  char                  buffer[1024];
+  struct display_buffer dspbuf = {sizeof(buffer), buffer, buffer};
+
   ganesha_uid = setfsuid(0);
   setfsuid(ganesha_uid);
   ganesha_gid = setfsgid(0);
@@ -668,22 +671,26 @@ void fsal_save_ganesha_credentials()
         }
     }
 
-  p += sprintf(p, "Ganesha uid=%d gid=%d ngroups=%d",
-               (int) ganesha_uid, (int) ganesha_gid, ganehsa_ngroups);
-  if(ganehsa_ngroups != 0)
-    p += sprintf(p, " (");
-  for(i = 0; i < ganehsa_ngroups; i++)
+  b_left = display_printf(&dspbuf,
+                          "Ganesha uid=%d gid=%d ngroups=%d",
+                          (int) ganesha_uid,
+                          (int) ganesha_gid,
+                          ganehsa_ngroups);
+
+  if(ganehsa_ngroups != 0 && b_left > 0)
+    b_left = display_cat(&dspbuf, " (");
+
+  for(i = 0; i < ganehsa_ngroups && b_left > 0; i++)
     {
-      if((p - buffer) < (sizeof(buffer) - 10))
-        {
-          if(i == 0)
-            p += sprintf(p, "%d", (int) ganesha_groups[i]);
-          else
-            p += sprintf(p, " %d", (int) ganesha_groups[i]);
-        }
+      if(i == 0)
+        b_left = display_printf(&dspbuf, "%d", (int) ganesha_groups[i]);
+      else
+        b_left = display_printf(&dspbuf, " %d", (int) ganesha_groups[i]);
     }
-  if(ganehsa_ngroups != 0)
-    p += sprintf(p, ")");
+
+  if(ganehsa_ngroups != 0 && b_left > 0)
+    b_left = display_cat(&dspbuf, ")");
+
   LogInfo(COMPONENT_FSAL,
           "%s", buffer);
 }
