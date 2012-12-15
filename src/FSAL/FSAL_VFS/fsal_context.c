@@ -166,19 +166,6 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
 	 Return(posix2fsal_error(errno), errno, INDEX_FSAL_BuildExportContext) ;
   }
 
-#ifdef TODO
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      char str[1024] ;
-
-      sprint_mem( str, p_export_context->root_handle.handle ,p_export_context->root_handle.handle_bytes ) ;
-      LogFullDebug(COMPONENT_FSAL,
-                   "=====> root Handle: type=%u bytes=%u|%s\n",
-                   p_export_context->root_handle.handle_type,  p_export_context->root_handle.handle_bytes, str ) ;
-
-    }
-#endif
-
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 

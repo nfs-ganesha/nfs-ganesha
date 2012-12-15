@@ -366,16 +366,6 @@ fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
   if(!p_handle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-#if 0
-  {
-  char str[1024] ;
-  sprint_mem( str, phandle->data.vfs_handle.handle, phandle->data.vfs_handle.handle_bytes ) ;
-  printf( "=====> fsal_internal_handle2fd: type=%u bytes=%u|%s\n",
-          phandle->data.vfs_handle.handle_type, phandle->data.vfs_handle.handle_bytes, str ) ;
-  }
-#endif
-
-
   rc =  vfs_open_by_handle( ((vfsfsal_op_context_t *)p_context)->export_context->mount_root_fd,
 			    &((vfsfsal_handle_t *)p_handle)->data.vfs_handle,
                             oflags ) ;
@@ -409,15 +399,6 @@ fsal_status_t fsal_internal_fd2handle( fsal_op_context_t *p_context,
       errsv = errno;
       ReturnCode(posix2fsal_error(errsv), errsv);
     }
-
-#if 0
-  {
-    char str[1024] ;
-    sprint_mem( str, p_handle->data.vfs_handle.handle, p_handle->data.vfs_handle.handle_bytes ) ;
-    printf( "=====> fsal_internal_fd2handle: type=%u bytes=%u|%s\n",  
-            p_handle->data.vfs_handle.handle_type, p_handle->data.vfs_handle.handle_bytes, str ) ;
-  }
-#endif
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_fd2handle */
