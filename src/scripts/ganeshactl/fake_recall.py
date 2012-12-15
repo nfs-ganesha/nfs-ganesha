@@ -22,7 +22,7 @@ def main():
         clientid = args[0]
         print clientid
 
-        bus = dbus.SessionBus()
+        bus = dbus.SystemBus()
         cbsim = bus.get_object("org.ganesha.nfsd",
                                "/org/ganesha/nfsd/CBSIM")
         print cbsim.Introspect()
