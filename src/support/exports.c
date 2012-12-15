@@ -300,90 +300,169 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   return 0 ; 
 } /* nfs_LookupNetworkAddr */
 
-void StrExportOptions(export_perms_t * p_perms,
-                      char           * buffer)
+int display_export_perms(struct display_buffer * dspbuf,
+                         export_perms_t        * p_perms)
 {
-  char * buf = buffer;
+  int b_left = display_start(dspbuf);
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_ROOT) == EXPORT_OPTION_ROOT)
-    buf += sprintf(buf, "ROOT ");
+    b_left = display_cat(dspbuf, "ROOT ");
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_ALL_ANONYMOUS) == EXPORT_OPTION_ALL_ANONYMOUS)
-    buf += sprintf(buf, "ALL SQUASH ");
+    b_left = display_cat(dspbuf, "ALL SQUASH ");
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_ACCESS_LIST) == EXPORT_OPTION_ACCESS_LIST)
-    buf += sprintf(buf, "ACCESS LIST ");
+    b_left = display_cat(dspbuf, "ACCESS LIST ");
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_RW_ACCESS) == EXPORT_OPTION_RW_ACCESS)
-    buf += sprintf(buf, "RW");
+    b_left = display_cat(dspbuf, "RW");
   else if((p_perms->options & EXPORT_OPTION_READ_ACCESS) == EXPORT_OPTION_READ_ACCESS)
-    buf += sprintf(buf, "RO");
+    b_left = display_cat(dspbuf, "RO");
   else if((p_perms->options & EXPORT_OPTION_WRITE_ACCESS) == EXPORT_OPTION_WRITE_ACCESS)
-    buf += sprintf(buf, "WO");
+    b_left = display_cat(dspbuf, "WO");
   else if((p_perms->options & EXPORT_OPTION_MD_ACCESS) == EXPORT_OPTION_MD_ACCESS)
-    buf += sprintf(buf, "MD RW");
+    b_left = display_cat(dspbuf, "MD RW");
   else if((p_perms->options & EXPORT_OPTION_MD_READ_ACCESS) == EXPORT_OPTION_MD_READ_ACCESS)
-    buf += sprintf(buf, "MD RO");
+    b_left = display_cat(dspbuf, "MD RO");
   else if((p_perms->options & EXPORT_OPTION_MD_WRITE_ACCESS) == EXPORT_OPTION_MD_WRITE_ACCESS)
-    buf += sprintf(buf, "MD WO");
+    b_left = display_cat(dspbuf, "MD WO");
   else if((p_perms->options & EXPORT_OPTION_ACCESS_TYPE) != 0)
-    buf += sprintf(buf, "%08x", p_perms->options & EXPORT_OPTION_ACCESS_TYPE);
+    b_left = display_printf(dspbuf, "%08x", p_perms->options & EXPORT_OPTION_ACCESS_TYPE);
   else
-    buf += sprintf(buf, "NONE");
+    b_left = display_cat(dspbuf, "NONE");
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID)
-    buf += sprintf(buf, ", NOSUID");
+    b_left = display_cat(dspbuf, ", NOSUID");
+
+  if(b_left <= 0)
+    return b_left;
+
   if((p_perms->options & EXPORT_OPTION_NOSGID) == EXPORT_OPTION_NOSGID)
-    buf += sprintf(buf, ", NOSUID");
+    b_left = display_cat(dspbuf, ", NOSUID");
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_AUTH_NONE) == EXPORT_OPTION_AUTH_NONE)
-    buf += sprintf(buf, ", AUTH_NONE");
-  if((p_perms->options & EXPORT_OPTION_AUTH_UNIX) == EXPORT_OPTION_AUTH_UNIX)
-    buf += sprintf(buf, ", AUTH_SYS");
-  if((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_NONE) == EXPORT_OPTION_RPCSEC_GSS_NONE)
-    buf += sprintf(buf, ", RPCSEC_GSS_NONE");
-  if((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_INTG) == EXPORT_OPTION_RPCSEC_GSS_INTG)
-    buf += sprintf(buf, ", RPCSEC_GSS_INTG");
-  if((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) == EXPORT_OPTION_RPCSEC_GSS_PRIV)
-    buf += sprintf(buf, ", RPCSEC_GSS_PRIV");
+    b_left = display_cat(dspbuf, ", AUTH_NONE");
 
-  buf += sprintf(buf, ", ");
+  if(b_left <= 0)
+    return b_left;
+
+  if((p_perms->options & EXPORT_OPTION_AUTH_UNIX) == EXPORT_OPTION_AUTH_UNIX)
+    b_left = display_cat(dspbuf, ", AUTH_SYS");
+
+  if(b_left <= 0)
+    return b_left;
+
+  if((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_NONE) == EXPORT_OPTION_RPCSEC_GSS_NONE)
+    b_left = display_cat(dspbuf, ", RPCSEC_GSS_NONE");
+
+  if(b_left <= 0)
+    return b_left;
+
+  if((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_INTG) == EXPORT_OPTION_RPCSEC_GSS_INTG)
+    b_left = display_cat(dspbuf, ", RPCSEC_GSS_INTG");
+
+  if(b_left <= 0)
+    return b_left;
+
+  if((p_perms->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) == EXPORT_OPTION_RPCSEC_GSS_PRIV)
+    b_left = display_cat(dspbuf, ", RPCSEC_GSS_PRIV");
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_cat(dspbuf, ", ");
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_NFSV2) == EXPORT_OPTION_NFSV2)
-    buf += sprintf(buf, "2");
+    b_left = display_cat(dspbuf, "2");
+
+  if(b_left <= 0)
+    return b_left;
+
   if((p_perms->options & EXPORT_OPTION_NFSV3) == EXPORT_OPTION_NFSV3)
-    buf += sprintf(buf, "3");
+    b_left = display_cat(dspbuf, "3");
+
+  if(b_left <= 0)
+    return b_left;
+
   if((p_perms->options & EXPORT_OPTION_NFSV4) == EXPORT_OPTION_NFSV4)
-    buf += sprintf(buf, "4");
+    b_left = display_cat(dspbuf, "4");
+
+  if(b_left <= 0)
+    return b_left;
+
   if((p_perms->options & (EXPORT_OPTION_NFSV2 |
                 EXPORT_OPTION_NFSV3 |
                 EXPORT_OPTION_NFSV4)) == 0)
-    buf += sprintf(buf, "NONE");
+    b_left = display_cat(dspbuf, "NONE");
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_UDP) == EXPORT_OPTION_UDP)
-    buf += sprintf(buf, ", UDP");
+    b_left = display_cat(dspbuf, ", UDP");
+
+  if(b_left <= 0)
+    return b_left;
+
   if((p_perms->options & EXPORT_OPTION_TCP) == EXPORT_OPTION_TCP)
-    buf += sprintf(buf, ", TCP");
+    b_left = display_cat(dspbuf, ", TCP");
+
+  if(b_left <= 0)
+    return b_left;
 
   if((p_perms->options & EXPORT_OPTION_USE_PNFS) == EXPORT_OPTION_USE_PNFS)
-    buf += sprintf(buf, ", PNFS");
-  if((p_perms->options & EXPORT_OPTION_USE_UQUOTA) == EXPORT_OPTION_USE_UQUOTA)
-    buf += sprintf(buf, ", UQUOTA");
+    b_left = display_cat(dspbuf, ", PNFS");
 
-  buf += sprintf(buf, ", anon_uid=%d",
-                 (int)p_perms->anonymous_uid);
-  buf += sprintf(buf, ", anon_gid=%d",
-                 (int)p_perms->anonymous_gid);
+  if(b_left <= 0)
+    return b_left;
+
+  if((p_perms->options & EXPORT_OPTION_USE_UQUOTA) == EXPORT_OPTION_USE_UQUOTA)
+    b_left = display_cat(dspbuf, ", UQUOTA");
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_printf(dspbuf, ", anon_uid=%d",
+                          (int)p_perms->anonymous_uid);
+
+  if(b_left <= 0)
+    return b_left;
+
+  return display_printf(dspbuf, ", anon_gid=%d",
+                        (int)p_perms->anonymous_gid);
 }
 
 void LogClientListEntry(log_components_t            component,
                         exportlist_client_entry_t * entry)
 {
-  char perms[1024];
-  char addr[INET6_ADDRSTRLEN];
-  char *paddr = addr;
+  char                    perms[1024];
+  struct display_buffer   dspbuf = {sizeof(perms), perms, perms};
+  char                    addr[INET6_ADDRSTRLEN];
+  char                  * paddr = addr;
 
-  StrExportOptions(&entry->client_perms, perms);
+  if(isFullDebug(component))
+    (void) display_export_perms(&dspbuf, &entry->client_perms);
 
   switch(entry->type)
     {
@@ -755,7 +834,6 @@ static int BuildExportEntry(config_item_t        block,
 {
   exportlist_t        * p_entry = NULL;
   exportlist_t        * p_found_entry = NULL;
-  char                  perms[1024];
   int                   i, rc;
   char                * var_name;
   char                * var_value;
@@ -2797,9 +2875,16 @@ static int BuildExportEntry(config_item_t        block,
            "NFS READ %s: Export %d (%s) successfully parsed",
            label, p_entry->id, p_entry->fullpath);
 
-  StrExportOptions(p_perms, perms);
-  LogFullDebug(COMPONENT_CONFIG,
-               "  Export Perms: %s", perms);
+  if(isFullDebug(COMPONENT_CONFIG))
+    {
+      char                    perms[1024];
+      struct display_buffer   dspbuf = {sizeof(perms), perms, perms};
+
+      (void) display_export_perms(&dspbuf, p_perms);
+
+      LogFullDebug(COMPONENT_CONFIG,
+                   "  Export Perms: %s", perms);
+    }
 
   glist_for_each(glist, &p_access_list->client_list)
     {
