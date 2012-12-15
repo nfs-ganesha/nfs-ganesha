@@ -187,10 +187,11 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
   return 0;
 }
 
-int merge_stats(nfs_request_stat_item_t *global_stat_items,
-                nfs_request_stat_item_t **workers_stat_items, int function_index, int detail_flag)
+void merge_stats(nfs_request_stat_item_t  * global_stat_items,
+                 nfs_request_stat_item_t ** workers_stat_items,
+                 int                        function_index,
+                 int                        detail_flag)
 {
-  int rc = ERR_STAT_NO_ERROR;
   unsigned int i = 0;
 
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
@@ -243,23 +244,22 @@ int merge_stats(nfs_request_stat_item_t *global_stat_items,
 #endif
         }
     }
-
-  return rc;
 }
 
-int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request_stat_item_t *global_stat_items, int detail_flag)
+void write_stats(struct display_buffer   * dspbuf,
+                 int                       num_cmds,
+                 char                   ** function_names,
+                 nfs_request_stat_item_t * global_stat_items,
+                 int                       detail_flag)
 {
-  int rc = ERR_STAT_NO_ERROR;
+  unsigned int   i = 0;
+  char         * name = NULL;
+  char         * ver __attribute__((unused)) = NULL;
+  char         * call = NULL;
+  char         * saveptr = NULL;
+  int            b_left = display_start(dspbuf);
 
-  char *offset = NULL;
-  unsigned int i = 0;
-  char *name = NULL;
-  char *ver __attribute__((unused)) = NULL;
-  char *call = NULL;
-  char *saveptr = NULL;
-
-  offset = stat_buf;
-  for(i = 0; i < num_cmds; i++)
+  for(i = 0; i < num_cmds && b_left > 0; i++)
     {
       /* Extract call name from function name. */
       name = gsh_strdup(function_names[i]);
@@ -268,36 +268,32 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
 
 #ifdef _USE_QUEUE_TIMER
       if(detail_flag)
-        offset += sprintf(offset, "_%s_ %u %"PRIu64" %"PRIu64,
-                          call,
-                          global_stat_items[i].total,
-                          global_stat_items[i].tot_latency,
-                          global_stat_items[i].tot_await_time);
+        b_left = display_printf(dspbuf,
+                                "_%s_ %u %"PRIu64" %"PRIu64,
+                                call,
+                                global_stat_items[i].total,
+                                global_stat_items[i].tot_latency,
+                                global_stat_items[i].tot_await_time);
       else
 #endif
-        offset += sprintf(offset, "_%s_ %u %"PRIu64,
-                          call,
-                          global_stat_items[i].total,
-                          global_stat_items[i].tot_latency);
+        b_left = display_printf(dspbuf,
+                                "_%s_ %u %"PRIu64,
+                                call,
+                                global_stat_items[i].total,
+                                global_stat_items[i].tot_latency);
 
-      if(i != num_cmds - 1)
-        {
-          sprintf(offset, "%s", " ");
-          offset += 1;
-        }
+      if(i != num_cmds - 1 && b_left > 0)
+        b_left = display_cat(dspbuf, " ");
 
       gsh_free(name);
     }
-
-  return rc;
 }
 
-int merge_nfs_stats_by_share(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
-                             nfs_worker_stat_t *global_data,
-                             nfs_worker_stat_t *workers_stat)
+void merge_nfs_stats_by_share(struct display_buffer * dspbuf,
+                              nfs_stat_client_req_t * stat_client_req,
+                              nfs_worker_stat_t     * global_data,
+                              nfs_worker_stat_t     * workers_stat)
 {
-  int rc = ERR_STAT_NO_ERROR;
-
   unsigned int i = 0;
   unsigned int num_cmds = 0;
   nfs_request_stat_item_t *global_stat_items = NULL;
@@ -347,19 +343,17 @@ int merge_nfs_stats_by_share(char *stat_buf, nfs_stat_client_req_t *stat_client_
       case PER_SERVER:
       case PER_SHARE:
         for(i = 0; i < num_cmds; i++)
-          {
-            rc = merge_stats(global_stat_items, workers_stat_items, i, 0);
-          }
-        rc = write_stats(stat_buf, num_cmds, function_names, global_stat_items, 0);
+          merge_stats(global_stat_items, workers_stat_items, i, 0);
+
+        write_stats(dspbuf, num_cmds, function_names, global_stat_items, 0);
       break;
 
       case PER_SERVER_DETAIL:
       case PER_SHARE_DETAIL:
         for(i = 0; i < num_cmds; i++)
-          {
-            rc = merge_stats(global_stat_items, workers_stat_items, i, 1);
-          }
-        rc = write_stats(stat_buf, num_cmds, function_names, global_stat_items, 1);
+          merge_stats(global_stat_items, workers_stat_items, i, 1);
+
+        write_stats(dspbuf, num_cmds, function_names, global_stat_items, 1);
       break;
 
       case PER_CLIENT:
@@ -373,16 +367,14 @@ int merge_nfs_stats_by_share(char *stat_buf, nfs_stat_client_req_t *stat_client_
         LogCrit(COMPONENT_MAIN, "Error: Invalid stat type.");
       break;
         }
-
-  return rc;
 }
 
 
-int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
-                    nfs_worker_stat_t *global_data, nfs_worker_data_t *workers_data)
+void merge_nfs_stats(struct display_buffer * dspbuf,
+                     nfs_stat_client_req_t * stat_client_req,
+                     nfs_worker_stat_t     * global_data,
+                     nfs_worker_data_t     * workers_data)
 {
-  int rc = ERR_STAT_NO_ERROR;
-
   unsigned int i = 0;
   unsigned int num_cmds = 0;
   nfs_request_stat_item_t *global_stat_items = NULL;
@@ -432,19 +424,17 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
       case PER_SERVER:
       case PER_SHARE:
         for(i = 0; i < num_cmds; i++)
-          {
-            rc = merge_stats(global_stat_items, workers_stat_items, i, 0);
-          }
-        rc = write_stats(stat_buf, num_cmds, function_names, global_stat_items, 0);
+          merge_stats(global_stat_items, workers_stat_items, i, 0);
+
+        write_stats(dspbuf, num_cmds, function_names, global_stat_items, 0);
       break;
 
       case PER_SERVER_DETAIL:
       case PER_SHARE_DETAIL:
         for(i = 0; i < num_cmds; i++)
-          {
-            rc = merge_stats(global_stat_items, workers_stat_items, i, 1);
-          }
-        rc = write_stats(stat_buf, num_cmds, function_names, global_stat_items, 1);
+          merge_stats(global_stat_items, workers_stat_items, i, 1);
+
+        write_stats(dspbuf, num_cmds, function_names, global_stat_items, 1);
       break;
 
       case PER_CLIENT:
@@ -458,32 +448,32 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
         LogCrit(COMPONENT_MAIN, "Error: Invalid stat type.");
       break;
         }
-
-  return rc;
 }
 
 int process_stat_request(int new_fd)
 {
-  int rc = ERR_STAT_NO_ERROR;
-
-  char cmd_buf[4096];
-
-  char stat_buf[4096];
-  char *token = NULL;
-  char *key = NULL;
-  char *value = NULL;
-  char *saveptr1 = NULL;
-  char *saveptr2 = NULL;
+  int                     rc = ERR_STAT_NO_ERROR;
+  char                    cmd_buf[4096];
+  char                    stat_buf[4096];
+  struct display_buffer   dspbuf = {sizeof(stat_buf), stat_buf, stat_buf};
+  char                  * token = NULL;
+  char                  * key = NULL;
+  char                  * value = NULL;
+  char                  * saveptr1 = NULL;
+  char                  * saveptr2 = NULL;
 
   exportlist_t *pexport = NULL;
 
   nfs_worker_stat_t global_worker_stat;
   nfs_stat_client_req_t stat_client_req;
   memset(&stat_client_req, 0, sizeof(nfs_stat_client_req_t));
-  memset(cmd_buf, 0, 4096);
+  memset(cmd_buf, 0, sizeof(cmd_buf));
 
   if((rc = recv(new_fd, cmd_buf, 4096, 0)) == -1)
-    LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
+    {
+      LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
+      return rc;
+    }
 
   /* Parse command options. */
   token = strtok_r(cmd_buf, ",", &saveptr1);
@@ -533,7 +523,7 @@ int process_stat_request(int new_fd)
     token = strtok_r(NULL, ",", &saveptr1);
   }
 
-  memset(stat_buf, 0, 4096);
+  memset(stat_buf, 0, sizeof(stat_buf));
 
   if(stat_client_req.stat_type == PER_SHARE ||
      stat_client_req.stat_type == PER_SHARE_DETAIL)
@@ -551,16 +541,17 @@ int process_stat_request(int new_fd)
       else
         LogDebug(COMPONENT_MAIN, "Got export entry, pexport %p", pexport);
 
-      merge_nfs_stats_by_share(stat_buf, &stat_client_req, &global_worker_stat,
+      merge_nfs_stats_by_share(&dspbuf, &stat_client_req, &global_worker_stat,
                                pexport->worker_stats);
     }
   else
     {
-      merge_nfs_stats(stat_buf, &stat_client_req, &global_worker_stat,
+      merge_nfs_stats(&dspbuf, &stat_client_req, &global_worker_stat,
                       workers_data);
     }
 
-  if((rc = send(new_fd, stat_buf, 4096, 0)) == -1)
+  /** @todo FSF: could that be display_buffer_len(&dspbuf) instead of sizeof(stat_buf)? */
+  if((rc = send(new_fd, stat_buf, sizeof(stat_buf), 0)) == -1)
     LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
 
 exit:
