@@ -1,6 +1,6 @@
 
 include_directories(
-  "${PROJECT_SOURCE_DIR}/NodeDB/nodedb")
+  "${PROJECT_SOURCE_DIR}/NodeDB")
 
 ########### next target ###############
 
