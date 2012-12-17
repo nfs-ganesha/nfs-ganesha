@@ -1235,12 +1235,19 @@ static fsal_status_t fsal_check_access_by_handle(fsal_op_context_t * p_context, 
   accessarg.access = v4mask;
   accessarg.supported = &supported;
 
-  LogDebug(COMPONENT_FSAL,
-           "v4mask=0x%X, mode=0x%X, uid=%d, gid=%d",
-           v4mask, gpfs_mode, gpfscred.principal, gpfscred.group);
-
   if(isFullDebug(COMPONENT_FSAL))
-    fsal_print_v4mask(v4mask);
+    {
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+
+      (void) display_fsal_v4mask(&dspbuf,
+                                 v4mask,
+                                 p_object_attributes->type == FSAL_TYPE_DIR);
+
+      LogFullDebug(COMPONENT_FSAL,
+                   "v4mask=%s, mode=%03o, uid=%d, gid=%d",
+                   str, gpfs_mode, gpfscred.principal, gpfscred.group);
+    }
 
   rc = gpfs_ganesha(OPENHANDLE_CHECK_ACCESS, &accessarg);
   LogDebug(COMPONENT_FSAL, "gpfs_ganesha: CHECK_ACCESS returned, rc = %d", rc);
