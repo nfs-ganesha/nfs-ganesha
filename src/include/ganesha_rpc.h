@@ -88,8 +88,8 @@ const char *str_gc_proc(rpc_gss_proc_t gc_proc);
 #define XPRT_PRIVATE_FLAG_NONE       0x0000
 #define XPRT_PRIVATE_FLAG_DESTROYED  0x0001 /* forward destroy */
 #define XPRT_PRIVATE_FLAG_LOCKED     0x0002
-#define XPRT_PRIVATE_FLAG_REF        0x0004
-#define XPRT_PRIVATE_FLAG_INCREQ     0x0008
+#define XPRT_PRIVATE_FLAG_INCREQ     0x0004
+#define XPRT_PRIVATE_FLAG_DECREQ     0x0008
 #define XPRT_PRIVATE_FLAG_DECODING   0x0010
 #define XPRT_PRIVATE_FLAG_STALLED    0x0020 /* ie, -on stallq- */
 
@@ -98,7 +98,6 @@ typedef struct gsh_xprt_private
 {
     SVCXPRT *xprt;
     uint32_t flags;
-    uint32_t refcnt;
     uint32_t req_cnt; /* outstanding requests counter */
     struct drc *drc; /* TCP DRC */
     struct glist_head stallq;
@@ -113,11 +112,6 @@ alloc_gsh_xprt_private(SVCXPRT *xprt, uint32_t flags)
     xu->flags = XPRT_PRIVATE_FLAG_NONE;
     xu->req_cnt = 0;
     xu->drc = NULL;
-
-    if (flags & XPRT_PRIVATE_FLAG_REF)
-        xu->refcnt = 1;
-    else
-        xu->refcnt = 0;
 
     return (xu);
 }
@@ -137,8 +131,31 @@ free_gsh_xprt_private(SVCXPRT *xprt)
     gsh_free(xu);
 }
 
-static inline void
+static inline bool
 gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
+{
+    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    uint32_t req_cnt;
+    bool refd;
+
+    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
+        pthread_mutex_lock(&xprt->xp_lock);
+
+    if (flags & XPRT_PRIVATE_FLAG_INCREQ)
+        req_cnt = ++(xu->req_cnt);
+
+    refd = SVC_REF(xprt,  SVC_REF_FLAG_LOCKED);
+    /* !LOCKED */
+
+    LogFullDebug(COMPONENT_DISPATCH,
+                 "xprt %p req_cnt=%u",
+                 xprt, req_cnt);
+
+    return (refd);
+}
+
+static inline void
+gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
     uint32_t refcnt, req_cnt;
@@ -146,22 +163,25 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
     if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
         pthread_mutex_lock(&xprt->xp_lock);
 
-    refcnt = ++(xu->refcnt);
-    if (flags & XPRT_PRIVATE_FLAG_INCREQ)
-        req_cnt = ++(xu->req_cnt);
-    else
-        req_cnt = xu->req_cnt;
+    if (flags & XPRT_PRIVATE_FLAG_DECREQ)
+        req_cnt = --(xu->req_cnt);
 
-    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_mutex_unlock(&xprt->xp_lock);
+    /* idempotent:  note expected value after release */
+    refcnt = xprt->xp_refcnt - 1;
+
+    /* release xprt refcnt */
+    SVC_RELEASE(xprt, SVC_RELEASE_FLAG_LOCKED);
+    /* !LOCKED */
 
     LogFullDebug(COMPONENT_DISPATCH,
-                 "xprt %p refcnt=%u req_cnt=%u",
+                 "xprt %p req_cnt=%u refcnt=%u",
                  xprt, refcnt, req_cnt);
+
+    return;
 }
 
 static inline bool
-gsh_xprt_decoder_guard_ref(SVCXPRT *xprt, uint32_t flags)
+gsh_xprt_decoder_guard(SVCXPRT *xprt, uint32_t flags)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
     bool rslt = FALSE;
@@ -182,7 +202,6 @@ gsh_xprt_decoder_guard_ref(SVCXPRT *xprt, uint32_t flags)
     }
     
     xu->flags |= XPRT_PRIVATE_FLAG_DECODING;
-    ++(xu->refcnt);
     rslt = TRUE;
 
 unlock:
@@ -190,37 +209,6 @@ unlock:
         pthread_mutex_unlock(&xprt->xp_lock);
 
     return (rslt);
-}
-
-static inline void
-gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
-{
-    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
-    uint32_t refcnt;
-
-    if (! (flags & XPRT_PRIVATE_FLAG_LOCKED))
-        pthread_mutex_lock(&xprt->xp_lock);
-
-    refcnt = --(xu->refcnt);
-
-    if (flags & XPRT_PRIVATE_FLAG_DECODING)
-        if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
-            xu->flags &= ~XPRT_PRIVATE_FLAG_DECODING;
-
-    /* finalize */
-    if (refcnt == 0) {
-        if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
-            pthread_mutex_unlock(&xprt->xp_lock);
-            SVC_DESTROY(xprt);
-            goto out;
-        }
-    }
-
-    /* unconditional */
-    pthread_mutex_unlock(&xprt->xp_lock);
-
-out:
-    return;
 }
 
 static inline void

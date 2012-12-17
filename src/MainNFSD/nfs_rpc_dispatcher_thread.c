@@ -107,11 +107,12 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
 static bool nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
 static void nfs_rpc_free_xprt(SVCXPRT *xprt);
 
-const char *xprt_stat_s[3] =
+const char *xprt_stat_s[4] =
 {
     "XPRT_DIED",
     "XPRT_MOREREQS",
-    "XPRT_IDLE"
+    "XPRT_IDLE",
+    "XPRT_DESTROYED"
 };
 
 /**
@@ -248,7 +249,7 @@ void Create_udp(protos prot)
 
     /* Setup private data */
     (udp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(udp_xprt[prot],
-                                                     XPRT_PRIVATE_FLAG_REF);
+                                                     XPRT_PRIVATE_FLAG_NONE);
 
     /* bind xprt to channel--unregister it from the global event
      * channel (if applicable) */
@@ -289,7 +290,7 @@ void Create_tcp(protos prot)
 
     /* Setup private data */
     (tcp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(tcp_xprt[prot],
-                                                     XPRT_PRIVATE_FLAG_REF);
+                                                     XPRT_PRIVATE_FLAG_NONE);
 
 /* XXXX the following code cannot compile (socket, binadaddr_udp6 are gone)
  * (Matt) */
@@ -493,9 +494,7 @@ void nfs_Init_svc()
     svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
     svc_params.max_connections = nfs_param.core_param.nb_max_fd;
     svc_params.max_events = 1024; /* length of epoll event queue */
-    svc_params.gss_ctx_hash_partitions = 0;
-    svc_params.gss_max_idle_gen = 0;
-    svc_params.gss_max_gc = 0;
+    svc_params.idle_timeout = 30;
     svc_params.warnx = NULL;
     svc_params.gss_ctx_hash_partitions = PRIME_ID_MAPPER;
     svc_params.gss_max_idle_gen = 1024; /* GSS ctx cache expiration */
@@ -753,7 +752,7 @@ nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt,
         next_chan = TCP_EVCHAN_0;
 
     /* setup private data (freed when xprt is destroyed) */
-    newxprt->xp_u1 = alloc_gsh_xprt_private(newxprt, XPRT_PRIVATE_FLAG_REF);
+    newxprt->xp_u1 = alloc_gsh_xprt_private(newxprt, XPRT_PRIVATE_FLAG_NONE);
 
     /* NB: xu->drc is allocated on first request--we need shared
      * TCP DRC for v3, but per-connection for v4 */
@@ -855,17 +854,18 @@ thr_stallq(void *arg)
                 xprt = xu->xprt;
                 /* lock ordering (cf. nfs_rpc_cond_stall_xprt) */
                 pthread_mutex_unlock(&nfs_req_st.stallq.mtx);
+                /* !LOCKED */
+                LogDebug(COMPONENT_DISPATCH, "unstalling stalled xprt %p",
+                         xprt);
                 pthread_mutex_lock(&xprt->xp_lock);
                 pthread_mutex_lock(&nfs_req_st.stallq.mtx);
                 glist_del(&xu->stallq);
                 --(nfs_req_st.stallq.stalled);
                 xu->flags &= ~XPRT_PRIVATE_FLAG_STALLED;
-                /* drop stallq ref */
-                --(xu->refcnt);
-                pthread_mutex_unlock(&xprt->xp_lock);
-                LogDebug(COMPONENT_DISPATCH, "unstalling stalled xprt %p",
-                         xprt);
                 (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+                /* drop stallq ref */
+                gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED);
+                /* !LOCKED */
                 goto restart;
             }
         }
@@ -891,7 +891,7 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 
     LogDebug(COMPONENT_DISPATCH,
             "xprt %p refcnt %d has %d %d reqs active (max %d)",
-            xprt, xu->refcnt, nreqs, xu->req_cnt,
+            xprt, xprt->xp_refcnt, nreqs, xu->req_cnt,
             nfs_param.core_param.dispatch_max_reqs_xprt);
 
     /* check per-xprt quota */
@@ -1454,7 +1454,10 @@ thr_decode_rpc_request(fridge_thr_contex_t *thr_ctx, SVCXPRT *xprt)
             goto finish;
 
         /* update accounting */
-        gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ);
+        if (! gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_INCREQ)) {
+            stat = XPRT_DIED;
+            goto finish;
+        }
 
         /* XXX as above, the call has already passed is_rpc_call_valid,
          * the former check here is removed. */
@@ -1506,8 +1509,6 @@ thr_decode_rpc_requests(void *arg)
     fridge_thr_contex_t *thr_ctx = (fridge_thr_contex_t *) arg;
     SVCXPRT *xprt = (SVCXPRT *) thr_ctx->arg;
 
-    /* continue receiving if data is already buffered--failure to do so
-     * will result in stalls (TCP) */
     do {
         stat = thr_decode_rpc_request(thr_ctx, xprt);
     } while (thr_continue_decoding(xprt, stat));
@@ -1521,9 +1522,8 @@ thr_decode_rpc_requests(void *arg)
     /* update accounting, clear decoding flag */
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
 
-    /* XXX EPOLLONESHOT semantics -should- make this safe */
     if (stat == XPRT_DIED)
-        gsh_xprt_destroy(xprt);
+        SVC_DESTROY(xprt);
 
   return (NULL);
 }
@@ -1632,10 +1632,10 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         goto out;
     }
 
-    LogFullDebug(COMPONENT_DISPATCH, "before guard_ref");
+    LogFullDebug(COMPONENT_DISPATCH, "before decoder guard");
 
     /* clock duplicate, queued+stalled wakeups, queued wakeups */
-    if (! gsh_xprt_decoder_guard_ref(xprt, XPRT_PRIVATE_FLAG_NONE)) {
+    if (! gsh_xprt_decoder_guard(xprt, XPRT_PRIVATE_FLAG_NONE)) {
         thread_delay_ms(5);
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
         goto out;
