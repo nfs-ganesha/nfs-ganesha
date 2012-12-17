@@ -130,7 +130,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/nfs_req_queue.h           \
                              ../include/nfs_proto_functions.h     \
                              ../include/nfs_file_handle.h         \
-                             ../include/SemN.h                    \
                              ../include/fsal.h                    \
                              ../include/nfs23.h                   \
                              ../include/nfs4.h                    \
@@ -138,7 +137,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/cache_inode.h             \
                              ../include/config_parsing.h          \
                              ../include/fsal_up.h                 \
-                             ../include/SemN.h                    \
                              ../include/external_tools.h          \
                              ../include/err_inject.h              \
                              $(STAT_SNMP_FILES)
@@ -166,7 +164,6 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       $(_9P_LIB)                                        \
                                       ../Protocols/XDR/libnfs_mnt_xdr.la                \
                                       $(TIRPC_STATIC_LIB)                               \
-                                      ../SemN/libSemN.la                                \
                                       $(FSAL_UP_LIB_FLAGS)                              \
                                       ../Common/libcommon_utils.la
 

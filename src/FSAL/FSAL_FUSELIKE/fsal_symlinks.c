@@ -77,11 +77,9 @@ fsal_status_t FUSEFSAL_readlink(fsal_handle_t * link_hdl, /* IN */
 
   if(p_fs_ops->readlink)
     {
-      TakeTokenFSCall();
 
       rc = p_fs_ops->readlink(object_path, link_content_out, FSAL_MAX_PATH_LEN);
 
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_readlink);
@@ -197,11 +195,9 @@ fsal_status_t FUSEFSAL_symlink(fsal_handle_t * parent,     /* IN */
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  TakeTokenFSCall();
 
   rc = p_fs_ops->symlink(p_linkcontent->path, child_path);
 
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_symlink);
@@ -210,10 +206,8 @@ fsal_status_t FUSEFSAL_symlink(fsal_handle_t * parent,     /* IN */
 
   if(p_fs_ops->chown)
     {
-      TakeTokenFSCall();
       rc = p_fs_ops->chown(child_path, p_context->credential.user,
                            p_context->credential.group);
-      ReleaseTokenFSCall();
 
       LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
 
@@ -223,9 +217,7 @@ fsal_status_t FUSEFSAL_symlink(fsal_handle_t * parent,     /* IN */
 
   /* get info about this symlink */
 
-  TakeTokenFSCall();
   rc = p_fs_ops->getattr(child_path, &buffstat);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_symlink);

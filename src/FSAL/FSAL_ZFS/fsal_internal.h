@@ -52,11 +52,6 @@ extern struct fsal_staticfsinfo_t global_fs_info;
 void fsal_increment_nbcall(int function_index, fsal_status_t status);
 
 #if 0
-/**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall();
-void ReleaseTokenFSCall();
 
 /* All the call to FSAL to be wrapped */
 fsal_status_t ZFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */

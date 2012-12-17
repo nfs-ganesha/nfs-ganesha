@@ -51,12 +51,6 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status);
 void fsal_internal_getstats(fsal_statistics_t * output_stats);
 
 /**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall();
-void ReleaseTokenFSCall();
-
-/**
  * fsal_do_log:
  * Indicates if an FSAL error has to be traced
  * into its log file in the NIV_EVENT level.

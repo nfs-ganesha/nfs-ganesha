@@ -16,7 +16,6 @@ noinst_HEADERS = abstract_atomic.h               \
                  murmur3.h                       \
                  cidr.h                          \
                  MesureTemps.h                   \
-                 SemN.h                          \
                  nodelist.h                      \
                  fsal.h                          \
                  fsal_api.h                      \
@@ -61,7 +60,6 @@ noinst_HEADERS = abstract_atomic.h               \
                  Rpc_com_tirpc.h                 \
                  solaris_port.h                  \
 		 rpc/svc_auth.h                  \
-                 SemN.h                          \
                  lookup3.h                       \
                  config.h                        \
                  sal_data.h                      \

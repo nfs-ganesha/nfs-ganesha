@@ -80,7 +80,6 @@ install(TARGETS $(FS_NAME).ganeshell DESTINATION bin)
 #                  $(FSAL_LIB)                                        \
 #		  ../FSAL/common_functions.lo			     \
 #		  ../FSAL/access_check.lo			     \
-#                  ../SemN/libSemN.la                                 \
 #                  ../RW_Lock/librwlock.la                            \
 #                  ../Log/liblog.la                                   \
 #                  ../ConfigParsing/libConfigParsing.la               \

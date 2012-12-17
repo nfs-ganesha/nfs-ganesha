@@ -88,9 +88,7 @@ fsal_status_t FUSEFSAL_unlink(fsal_handle_t * parent,     /* IN */
    */
   FSAL_internal_append_path(child_path, parent_path, p_object_name->name);
 
-  TakeTokenFSCall();
   rc = p_fs_ops->getattr(child_path, &stbuff);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, false), rc, INDEX_FSAL_unlink);
@@ -105,9 +103,7 @@ fsal_status_t FUSEFSAL_unlink(fsal_handle_t * parent,     /* IN */
       if(!p_fs_ops->rmdir)
         Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlink);
 
-      TakeTokenFSCall();
       rc = p_fs_ops->rmdir(child_path);
-      ReleaseTokenFSCall();
 
     }
   else
@@ -118,9 +114,7 @@ fsal_status_t FUSEFSAL_unlink(fsal_handle_t * parent,     /* IN */
       if(!p_fs_ops->unlink)
         Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlink);
 
-      TakeTokenFSCall();
       rc = p_fs_ops->unlink(child_path);
-      ReleaseTokenFSCall();
 
     }
 

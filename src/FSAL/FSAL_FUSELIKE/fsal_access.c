@@ -86,12 +86,7 @@ fsal_status_t FUSEFSAL_access(fsal_handle_t * obj_handle,        /* IN */
 
   if(p_fs_ops->access)
     {
-
-      TakeTokenFSCall();
-
       rc = p_fs_ops->access(object_path, mask);
-
-      ReleaseTokenFSCall();
 
       /* TODO : remove entry from namespace if entry is stale */
       if(rc)

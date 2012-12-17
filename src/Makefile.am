@@ -8,7 +8,6 @@ SUBDIRS = include             \
           Common              \
           ConfigParsing       \
           cidr                \
-          SemN                \
           test                \
           avl                 \
           HashTable           \
@@ -42,7 +41,7 @@ if USE_FSAL_FUSE
 SUBDIRS += example-fuse
 endif
 
-DOCDIRS = Cache_inode ConfigParsing HashTable IdMapper Log MainNFSD Protocols/NFS SemN StuffAlloc support \
+DOCDIRS = Cache_inode ConfigParsing HashTable IdMapper Log MainNFSD Protocols/NFS support \
           FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS
 
 TESTRUNNER_DIRS = HashTable Log RW_Lock

@@ -77,7 +77,6 @@ fsal_status_t HPSSFSAL_truncate(hpssfsal_handle_t * filehandle, /* IN */
 
   /* Executes the HPSS truncate operation */
 
-  TakeTokenFSCall();
 
   rc = hpss_TruncateHandle(&(filehandle->data.ns_handle),    /* IN - handle of file or parent */
                            NULL,        /* IN (handle addressing) */
@@ -85,7 +84,6 @@ fsal_status_t HPSSFSAL_truncate(hpssfsal_handle_t * filehandle, /* IN */
                            &(p_context->credential.hpss_usercred)       /* IN - pointer to user's credentials */
       );
 
-  ReleaseTokenFSCall();
 
   /* The HPSS_ENOENT error actually means that handle is STALE */
   if(rc == HPSS_ENOENT)

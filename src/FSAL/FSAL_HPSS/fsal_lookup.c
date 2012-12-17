@@ -142,12 +142,10 @@ fsal_status_t HPSSFSAL_lookup(hpssfsal_handle_t * parent_directory_handle,      
       /* call to HPSS client api */
       /* We use hpss_GetRawAttrHandle for not chasing junctions nor symlinks. */
 
-      TakeTokenFSCall();
 
       rc = HPSSFSAL_GetRawAttrHandle(&(parent_directory_handle->data.ns_handle), p_filename->name, &p_context->credential.hpss_usercred, false,      /* don't traverse junctions */
                                      &obj_hdl, NULL, &obj_attr);
 
-      ReleaseTokenFSCall();
 
     /**
      * /!\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR.
@@ -239,12 +237,10 @@ fsal_status_t HPSSFSAL_lookupJunction(hpssfsal_handle_t * p_junction_handle,    
   /* call to HPSS client api */
   /* We use hpss_GetRawAttrHandle for chasing junctions. */
 
-  TakeTokenFSCall();
 
   rc = HPSSFSAL_GetRawAttrHandle(&(p_junction_handle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, true,     /* do traverse junctions !!! */
                                  NULL, NULL, &root_attr);
 
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);

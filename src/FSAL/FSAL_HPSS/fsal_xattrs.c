@@ -82,12 +82,10 @@ int get_file_cos(hpssfsal_handle_t * p_objecthandle,    /* IN */
    * nor solving symlinks. What's more, we want hpss_Attrs_t.
    */
 
-  TakeTokenFSCall();
 
   rc = HPSSFSAL_GetRawAttrHandle(&(p_objecthandle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, false,       /* don't solve junctions */
                                  &hpss_hdl, NULL, &hpss_attr);
 
-  ReleaseTokenFSCall();
 
   /* The HPSS_ENOENT error actually means that handle is STALE */
   if(rc == HPSS_ENOENT)
@@ -136,7 +134,6 @@ int get_file_slevel(hpssfsal_handle_t * p_objecthandle, /* IN */
 
   /* get storage info */
 
-  TakeTokenFSCall();
 
 #if HPSS_LEVEL < 622
   rc = HPSSFSAL_FileGetXAttributesHandle(&(p_objecthandle->data.ns_handle),
@@ -153,7 +150,6 @@ int get_file_slevel(hpssfsal_handle_t * p_objecthandle, /* IN */
                                      API_GET_STATS_FOR_ALL_LEVELS, 0, &hpss_xattr);
 #endif
 
-  ReleaseTokenFSCall();
 
   /* The HPSS_ENOENT error actually means that handle is STALE */
   if(rc == HPSS_ENOENT)
@@ -697,12 +693,10 @@ fsal_status_t HPSSFSAL_ListXAttrs(hpssfsal_handle_t * p_objecthandle,   /* IN */
 
     memset(&attr_list, 0, sizeof(hpss_userattr_list_t));
 
-    TakeTokenFSCall();
     rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->data.ns_handle),
                                      NULL,
                                      &(p_context->credential.hpss_usercred),
                                      &attr_list, XML_ATTR);
-    ReleaseTokenFSCall();
 
     if(rc == 0)
       {
@@ -817,12 +811,10 @@ fsal_status_t HPSSFSAL_GetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
 
       /* get list of UDAs for this entry, and return the good value */
 
-      TakeTokenFSCall();
       rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->data.ns_handle),
                                        NULL,
                                        &(p_context->credential.hpss_usercred),
                                        &attr_list, XML_ATTR);
-      ReleaseTokenFSCall();
 
       if(rc != 0)
         Return(hpss2fsal_error(rc), rc, INDEX_FSAL_GetXAttrValue);
@@ -921,12 +913,10 @@ fsal_status_t HPSSFSAL_GetXAttrIdByName(hpssfsal_handle_t * p_objecthandle,     
 
           /* get list of UDAs for this entry, and return the good index */
 
-          TakeTokenFSCall();
           rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->data.ns_handle),
                                            NULL,
                                            &(p_context->credential.hpss_usercred),
                                            &attr_list, XML_ATTR);
-          ReleaseTokenFSCall();
 
           if(rc == 0)
             {
@@ -1100,11 +1090,9 @@ fsal_status_t HPSSFSAL_SetXAttrValue(hpssfsal_handle_t * p_objecthandle,        
   inAttr.Pair[0].Key = attrpath;
   inAttr.Pair[0].Value = (char *)buffer_addr;
 
-  TakeTokenFSCall();
   rc = hpss_UserAttrSetAttrHandle(&(p_objecthandle->data.ns_handle),
                                   NULL,
                                   &(p_context->credential.hpss_usercred), &inAttr, NULL);
-  ReleaseTokenFSCall();
 
   free(inAttr.Pair);
 
@@ -1142,12 +1130,10 @@ fsal_status_t HPSSFSAL_SetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
   LogFullDebug(COMPONENT_FSAL, "Getting name of UDA #%u",
                     xattr_id - XATTR_COUNT);
 
-  TakeTokenFSCall();
   rc = hpss_UserAttrListAttrHandle(&(p_objecthandle->data.ns_handle),
                                    NULL,
                                    &(p_context->credential.hpss_usercred),
                                    &attr_list, XML_ATTR);
-  ReleaseTokenFSCall();
 
   if(rc != 0)
     Return(hpss2fsal_error(rc), rc, INDEX_FSAL_SetXAttrValue);
@@ -1163,11 +1149,9 @@ fsal_status_t HPSSFSAL_SetXAttrValueById(hpssfsal_handle_t * p_objecthandle,    
   inAttr.Pair[0].Key = attr_list.Pair[xattr_id - XATTR_COUNT].Key;
   inAttr.Pair[0].Value = (char *)buffer_addr;
 
-  TakeTokenFSCall();
   rc = hpss_UserAttrSetAttrHandle(&(p_objecthandle->data.ns_handle),
                                   NULL,
                                   &(p_context->credential.hpss_usercred), &inAttr, NULL);
-  ReleaseTokenFSCall();
 
   free(inAttr.Pair);
 

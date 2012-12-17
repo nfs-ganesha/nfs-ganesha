@@ -63,7 +63,6 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
-#include "SemN.h"
 #include "nfs_tcb.h"
 #include "fridgethr.h"
 

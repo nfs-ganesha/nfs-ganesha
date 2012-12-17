@@ -107,12 +107,10 @@ int HPSSFSAL_IsStaleHandle(ns_ObjHandle_t * p_hdl, TYPE_CRED_HPSS * p_cred)
 {
   int rc;
 
-  TakeTokenFSCall();
 
   rc = HPSSFSAL_GetRawAttrHandle(p_hdl, NULL, p_cred, false,    /* don't solve junctions */
                                  NULL, NULL, NULL);
 
-  ReleaseTokenFSCall();
 
   if((rc == HPSS_ENOENT) || (rc == HPSS_ENOTDIR))
     return true;

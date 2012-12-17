@@ -73,9 +73,7 @@ fsal_status_t FUSEFSAL_dynamic_fsinfo(fsal_handle_t *handle,   /* IN */
 
   if(p_fs_ops->statfs)
     {
-      TakeTokenFSCall();
       rc = p_fs_ops->statfs(object_path, &stbuff);
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_dynamic_fsinfo);

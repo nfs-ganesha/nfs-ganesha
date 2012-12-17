@@ -64,12 +64,10 @@ fsal_status_t HPSSFSAL_getattrs(hpssfsal_handle_t * filehandle, /* IN */
    * nor solving symlinks. What's more, we want hpss_Attrs_t.
    */
 
-  TakeTokenFSCall();
 
   rc = HPSSFSAL_GetRawAttrHandle(&(filehandle->data.ns_handle), NULL, &p_context->credential.hpss_usercred, false,   /* don't solve junctions */
                                  &hpss_hdl, NULL, &hpss_attr);
 
-  ReleaseTokenFSCall();
 
   /* The HPSS_ENOENT error actually means that handle is STALE */
   if(rc == HPSS_ENOENT)
@@ -185,7 +183,6 @@ fsal_status_t HPSSFSAL_setattrs(hpssfsal_handle_t * filehandle, /* IN */
 
   /* Call HPSS client API function. */
 
-  TakeTokenFSCall();
 
   rc = HPSSFSAL_FileSetAttrHandle(&(filehandle->data.ns_handle),     /* IN  - object handle */
                                   NULL, /* IN  - path to the object */
@@ -195,7 +192,6 @@ fsal_status_t HPSSFSAL_setattrs(hpssfsal_handle_t * filehandle, /* IN */
                                   &hpss_fattr_out       /* OUT - attributes after change */
       );
 
-  ReleaseTokenFSCall();
 
   /* The HPSS_ENOENT error actually means that handle is STALE */
   if(rc == HPSS_ENOENT)

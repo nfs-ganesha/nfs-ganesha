@@ -64,7 +64,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
-#include "SemN.h"
 #include "9p.h"
 #include <stdbool.h>
 

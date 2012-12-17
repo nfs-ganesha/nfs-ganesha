@@ -20,7 +20,6 @@
 
 #include "fsal_internal.h"
 #include "abstract_mem.h"
-#include "SemN.h"
 
 #include <pthread.h>
 

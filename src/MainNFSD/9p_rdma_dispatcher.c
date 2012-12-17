@@ -65,7 +65,6 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
-#include "SemN.h"
 #include "9p.h"
 
 #include <mooshika.h>

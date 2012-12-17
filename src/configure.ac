@@ -778,7 +778,6 @@ AC_CONFIG_FILES([include/Makefile
                  NodeList/Makefile
                  ConfigParsing/Makefile
                  IdMapper/Makefile
-                 SemN/Makefile
                  cidr/Makefile
                  avl/Makefile
                  HashTable/Makefile
