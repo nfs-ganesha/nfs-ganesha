@@ -82,6 +82,8 @@ static inline int open_by_handle_at(int mdirfd, struct file_handle * handle,
 #define O_NOACCESS O_ACCMODE
 #endif
 
+#define AT_EMPTY_PATH		0x1000
+
 static inline size_t vfs_sizeof_handle(vfs_file_handle_t *fh)
 {
 	struct file_handle *hdl = (struct file_handle *)fh;
