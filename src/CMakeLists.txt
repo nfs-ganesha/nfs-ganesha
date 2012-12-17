@@ -78,11 +78,6 @@ option(USE_DBUS "enable DBUS protocol support" OFF)
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 
-if(NOT USE_DBUS)
-  message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
-  set(USE_DBUS ON)
-endif(NOT USE_DBUS)
-
 # TI-RPC former option now on?  Do we really need this anymore?
 # from Matt, NO.  deprecate
 set(_USE_TIRPC ON)
@@ -132,6 +127,11 @@ IF(BUILD_CONFIG)
 ENDIF()
 
 # Build source locations and parameters
+
+if(USE_CB_SIMULATOR AND NOT USE_DBUS)
+  message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
+  set(USE_DBUS ON)
+endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 
 set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
 set(ALLOCATOR "jemalloc" CACHE STRING
