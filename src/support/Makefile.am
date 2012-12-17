@@ -4,10 +4,10 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name
 
 test_nfs_ip_stats_SOURCES = test_nfs_ip_stats.c
-test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la ../Log/liblog.la ../RW_Lock/librwlock.la
+test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la ../Log/liblog.la
 
 test_nfs_ip_name_SOURCES = test_nfs_ip_name.c
-test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
+test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la ../Log/liblog.la ../ConfigParsing/libConfigParsing.la
 
 
 TESTS = test_nfs_ip_stats test_nfs_ip_name $(check_SCRIPTS)
