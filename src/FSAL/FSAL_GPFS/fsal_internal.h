@@ -211,12 +211,6 @@ fsal_status_t fsal_internal_rename_fh(fsal_op_context_t * p_context,
  *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
  *
  */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
-                                       fsal_accessflags_t access_type,  /* IN */
-                                       struct stat *p_buffstat, /* IN, optional */
-                                       fsal_attrib_list_t *
-                                       p_object_attributes /* IN, optional */ );
-
 int fsal_internal_version(); 
 
 fsal_status_t fsal_internal_access(fsal_op_context_t * p_context,   /* IN */

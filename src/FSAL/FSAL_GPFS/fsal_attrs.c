@@ -36,6 +36,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "FSAL/access_check.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
@@ -110,7 +111,7 @@ fsal_status_t GPFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
                                        FSAL_ACE_PERM_READ_ACL);
     
     if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-      st = fsal_internal_testAccess(p_context, access_mask, NULL, p_object_attributes);
+      st = fsal_check_access(p_context, access_mask, NULL, p_object_attributes);
     else
       st = fsal_internal_access(p_context, p_filehandle, access_mask,
                                 p_object_attributes);

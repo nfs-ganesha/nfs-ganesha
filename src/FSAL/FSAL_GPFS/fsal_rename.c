@@ -39,6 +39,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "FSAL/access_check.h"
 
 /**
  * FSAL_rename:
@@ -130,7 +131,7 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
 
   if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-  status = fsal_internal_testAccess(p_context, access_mask, NULL, &src_dir_attrs);
+  status = fsal_check_access(p_context, access_mask, NULL, &src_dir_attrs);
   else
     status = fsal_internal_access(p_context, p_old_parentdir_handle, access_mask,
                                   &src_dir_attrs);
@@ -145,7 +146,7 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
                                    FSAL_ACE_PERM_ADD_SUBDIRECTORY);
 
 	  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
-            status = fsal_internal_testAccess(p_context, access_mask, NULL, &tgt_dir_attrs);
+            status = fsal_check_access(p_context, access_mask, NULL, &tgt_dir_attrs);
 	  else
 	    status = fsal_internal_access(p_context, p_new_parentdir_handle, access_mask,
 	                                  &tgt_dir_attrs);
