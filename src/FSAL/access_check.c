@@ -154,93 +154,151 @@ static bool fsal_check_ace_applicable(fsal_ace_t *pace,
 
 #define ACL_DEBUG_BUF_SIZE 256
 
-static void fsal_print_inherit_flags(fsal_ace_t *pace, char *p_buf)
+int display_fsal_inherit_flags(struct display_buffer * dspbuf, fsal_ace_t *pace)
 {
-  if(!pace || !p_buf)
-    return;
+  if(!pace)
+    return display_cat(dspbuf, "NULL");
 
-  memset(p_buf, 0, ACL_DEBUG_BUF_SIZE);
-
-  sprintf(p_buf, "Inherit:%s,%s,%s,%s",
-          IS_FSAL_ACE_FILE_INHERIT(*pace)? "file":"",
-          IS_FSAL_ACE_DIR_INHERIT(*pace) ? "dir":"",
-          IS_FSAL_ACE_INHERIT_ONLY(*pace)? "inherit_only":"",
-          IS_FSAL_ACE_NO_PROPAGATE(*pace)? "no_propagate":"");
+  return display_printf(dspbuf, "Inherit:%s%s%s%s",
+                        IS_FSAL_ACE_FILE_INHERIT(*pace)? " file":"",
+                        IS_FSAL_ACE_DIR_INHERIT(*pace) ? " dir":"",
+                        IS_FSAL_ACE_INHERIT_ONLY(*pace)? " inherit_only":"",
+                        IS_FSAL_ACE_NO_PROPAGATE(*pace)? " no_propagate":"");
 }
 
-static void fsal_print_ace(int ace_number, fsal_ace_t *pace)
+int display_fsal_ace(struct display_buffer * dspbuf,
+                     int                     ace_number,
+                     fsal_ace_t            * pace,
+                     bool                    is_dir)
 {
-  char inherit_flags[ACL_DEBUG_BUF_SIZE];
-  char ace_buf[ACL_DEBUG_BUF_SIZE];
+  int b_left;
 
   if(!pace)
-    return;
-
-  memset(inherit_flags, 0, ACL_DEBUG_BUF_SIZE);
-  memset(ace_buf, 0, ACL_DEBUG_BUF_SIZE);
-
-  /* Get inherit flags if any. */
-  fsal_print_inherit_flags(pace, inherit_flags);
+    return display_cat(dspbuf, "ACE: <NULL>");
 
   /* Print the entire ACE. */
-  sprintf(ace_buf, "ACE %d %s %s %s %d %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s %s",
-          ace_number,
-          /* ACE type. */
-          IS_FSAL_ACE_ALLOW(*pace)? "allow":
-          IS_FSAL_ACE_DENY(*pace) ? "deny":
-          IS_FSAL_ACE_AUDIT(*pace)? "audit": "?",
-          /* ACE who and its type. */
-          (IS_FSAL_ACE_SPECIAL_ID(*pace) && IS_FSAL_ACE_SPECIAL_OWNER(*pace))    ? "owner@":
-          (IS_FSAL_ACE_SPECIAL_ID(*pace) && IS_FSAL_ACE_SPECIAL_GROUP(*pace))    ? "group@":
-          (IS_FSAL_ACE_SPECIAL_ID(*pace) && IS_FSAL_ACE_SPECIAL_EVERYONE(*pace)) ? "everyone@":"",
-          IS_FSAL_ACE_SPECIAL_ID(*pace)						 ? "specialid":
-          IS_FSAL_ACE_GROUP_ID(*pace) 						 ? "gid": "uid",
-          GET_FSAL_ACE_WHO(*pace),
-          /* ACE mask. */
-          IS_FSAL_ACE_READ_DATA(*pace)           ? "read":"",
-          IS_FSAL_ACE_WRITE_DATA(*pace)          ? "write":"",
-          IS_FSAL_ACE_EXECUTE(*pace)             ? "execute":"",
-          IS_FSAL_ACE_ADD_SUBDIRECTORY(*pace)    ? "append":"",
-          IS_FSAL_ACE_READ_NAMED_ATTR(*pace)     ? "read_named_attr":"",
-          IS_FSAL_ACE_WRITE_NAMED_ATTR(*pace)    ? "write_named_attr":"",
-          IS_FSAL_ACE_DELETE_CHILD(*pace)        ? "delete_child":"",
-          IS_FSAL_ACE_READ_ATTR(*pace)           ? "read_attr":"",
-          IS_FSAL_ACE_WRITE_ATTR(*pace)          ? "write_attr":"",
-          IS_FSAL_ACE_DELETE(*pace)              ? "delete":"",
-          IS_FSAL_ACE_READ_ACL(*pace)            ? "read_acl":"",
-          IS_FSAL_ACE_WRITE_ACL(*pace)           ? "write_acl":"",
-          IS_FSAL_ACE_WRITE_OWNER(*pace)         ? "write_owner":"",
-          IS_FSAL_ACE_SYNCHRONIZE(*pace)         ? "synchronize":"",
-          /* ACE Inherit flags. */
-          IS_FSAL_ACE_INHERIT(*pace)? inherit_flags: "");
-  LogDebug(COMPONENT_FSAL, "%s", ace_buf);
+  b_left = display_printf(dspbuf, "ACE %d:", ace_number);
+
+  /* ACE type. */
+  if(b_left > 0)
+    b_left = display_cat(dspbuf,
+                         IS_FSAL_ACE_ALLOW(*pace)? " allow":
+                         IS_FSAL_ACE_DENY(*pace) ? " deny":
+                         IS_FSAL_ACE_AUDIT(*pace)? " audit": " ?");
+
+  /* ACE who and its type. */
+  if(b_left > 0 && IS_FSAL_ACE_SPECIAL_ID(*pace))
+    b_left = display_cat(dspbuf,
+                         IS_FSAL_ACE_SPECIAL_OWNER(*pace)    ? " owner@":
+                         IS_FSAL_ACE_SPECIAL_GROUP(*pace)    ? " group@":
+                         IS_FSAL_ACE_SPECIAL_EVERYONE(*pace) ? " everyone@":"");
+
+  if(b_left > 0 && !IS_FSAL_ACE_SPECIAL_ID(*pace))
+    {
+      if(IS_FSAL_ACE_SPECIAL_ID(*pace))
+        b_left = display_printf(dspbuf, " gid %d", pace->who.gid);
+      else
+        b_left = display_printf(dspbuf, " uid %d", pace->who.uid);
+    }
+
+  /* ACE mask. */
+  if(b_left > 0)
+    b_left = display_fsal_v4mask(dspbuf, pace->perm, is_dir);
+
+  /* ACE Inherit flags. */
+  if(b_left > 0 && IS_FSAL_ACE_INHERIT(*pace))
+    b_left = display_fsal_inherit_flags(dspbuf, pace);
+
+  return b_left;
 }
 
-static void fsal_print_v4mask(fsal_aceperm_t v4mask)
+int display_fsal_v4mask(struct display_buffer * dspbuf,
+                        fsal_aceperm_t          v4mask,
+                        bool                    is_dir)
 {
-  fsal_ace_t ace;
-  fsal_ace_t *pace = &ace;
-  char v4mask_buf[ACL_DEBUG_BUF_SIZE];
+  int b_left = display_printf(dspbuf, "0x%06x", v4mask);
 
-  pace->perm = v4mask;
-  memset(v4mask_buf, 0, ACL_DEBUG_BUF_SIZE);
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_READ_DATA))
+    b_left = display_cat(dspbuf, " READ");
 
-  sprintf(v4mask_buf, "v4mask %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-	  IS_FSAL_ACE_READ_DATA(*pace)           ? "read":"",
-	  IS_FSAL_ACE_WRITE_DATA(*pace)          ? "write":"",
-	  IS_FSAL_ACE_EXECUTE(*pace)             ? "execute":"",
-	  IS_FSAL_ACE_ADD_SUBDIRECTORY(*pace)    ? "append":"",
-	  IS_FSAL_ACE_READ_NAMED_ATTR(*pace)     ? "read_named_attr":"",
-	  IS_FSAL_ACE_WRITE_NAMED_ATTR(*pace)    ? "write_named_attr":"",
-	  IS_FSAL_ACE_DELETE_CHILD(*pace)        ? "delete_child":"",
-	  IS_FSAL_ACE_READ_ATTR(*pace)           ? "read_attr":"",
-	  IS_FSAL_ACE_WRITE_ATTR(*pace)          ? "write_attr":"",
-	  IS_FSAL_ACE_DELETE(*pace)              ? "delete":"",
-	  IS_FSAL_ACE_READ_ACL(*pace)            ? "read_acl":"",
-	  IS_FSAL_ACE_WRITE_ACL(*pace)           ? "write_acl":"",
-	  IS_FSAL_ACE_WRITE_OWNER(*pace)         ? "write_owner":"",
-	  IS_FSAL_ACE_SYNCHRONIZE(*pace)         ? "synchronize":"");
-  LogDebug(COMPONENT_FSAL, "%s", v4mask_buf);
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_WRITE_DATA) && is_dir)
+    b_left = display_cat(dspbuf, " ADD_FILE");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_WRITE_DATA) && !is_dir)
+    b_left = display_cat(dspbuf, " WRITE");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_APPEND_DATA) && is_dir)
+    b_left = display_cat(dspbuf, " ADD_SUBDIR");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_APPEND_DATA) && !is_dir)
+    b_left = display_cat(dspbuf, " APPEND");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_READ_NAMED_ATTR))
+    b_left = display_cat(dspbuf, " READ_NAMED");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_WRITE_NAMED_ATTR))
+    b_left = display_cat(dspbuf, " WRITE_NAMED");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_EXECUTE))
+    b_left = display_cat(dspbuf, " EXECUTE");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_DELETE_CHILD))
+    b_left = display_cat(dspbuf, " DELETE_CHILD");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_READ_ATTR))
+    b_left = display_cat(dspbuf, " READ_ATTR");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_WRITE_ATTR))
+    b_left = display_cat(dspbuf, " WRITE_ATTR");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_DELETE))
+    b_left = display_cat(dspbuf, " DELETE");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_READ_ACL))
+    b_left = display_cat(dspbuf, " READ_ACL");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_WRITE_ACL))
+    b_left = display_cat(dspbuf, " WRITE_ACL");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_WRITE_OWNER))
+    b_left = display_cat(dspbuf, " WRITE_OWNER");
+
+  if(b_left > 0 && IS_FSAL_ACE_BIT(v4mask, FSAL_ACE_PERM_SYNCHRONIZE))
+    b_left = display_cat(dspbuf, " SYNCHRONIZE");
+
+  return b_left;
+}
+
+static void fsal_print_access_by_acl(int naces, int ace_number,
+	                             fsal_ace_t *pace, fsal_aceperm_t perm,
+                                     unsigned int access_result,
+                                     bool is_dir,
+                                     struct user_cred *creds)
+{
+  char                  str[LOG_BUFF_LEN];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
+  int                   b_left;
+
+  if(!isFullDebug(COMPONENT_FSAL))
+    return;
+
+  if((access_result == ERR_FSAL_NO_ERROR))
+    b_left = display_cat(&dspbuf, "access granted");
+  else
+    b_left = display_cat(&dspbuf, "access denied");
+
+  if(b_left > 0)
+    b_left = display_printf(&dspbuf, " uid %u gid %u Access req:",
+                            creds->caller_uid,
+                            creds->caller_gid);
+
+  if(b_left > 0)
+    b_left = display_fsal_v4mask(&dspbuf, perm, is_dir);
+
+  if(b_left > 0 && (naces != ace_number))
+    b_left = display_fsal_ace(&dspbuf, ace_number, pace, is_dir);
+
+  LogFullDebug(COMPONENT_FSAL, "%s", str);
 }
 
 static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
@@ -262,7 +320,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   missing_access = v4mask;
   if(!missing_access)
     {
-      LogDebug(COMPONENT_FSAL, "Nothing was requested");
+      LogFullDebug(COMPONENT_FSAL, "Nothing was requested");
       return true;
     }
 
@@ -292,17 +350,25 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
         }
     }
 
-  LogDebug(COMPONENT_FSAL,
-           "file acl=%p, file uid=%u, file gid=%u, ",
-           pacl, uid, gid);
-  LogDebug(COMPONENT_FSAL,
-           "user uid=%u, user gid= %u, v4mask=0x%X",
-           creds->caller_uid,
-           creds->caller_gid,
-           v4mask);
+  LogFullDebug(COMPONENT_FSAL,
+               "file acl=%p, file uid=%u, file gid=%u, ",
+               pacl, uid, gid);
 
   if(isFullDebug(COMPONENT_FSAL))
-    fsal_print_v4mask(v4mask);
+    {
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+
+      (void) display_fsal_v4mask(&dspbuf,
+                                 v4mask,
+                                 p_object_attributes->type == DIRECTORY);
+
+      LogFullDebug(COMPONENT_FSAL,
+                   "user uid=%u, user gid= %u, v4mask=%s",
+                   creds->caller_uid,
+                   creds->caller_gid,
+                   str);
+    }
 
   is_owner = fsal_check_ace_owner(uid, creds);
   is_group = fsal_check_ace_group(gid, creds);
@@ -315,7 +381,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
       if(!missing_access)
         {
-          LogDebug(COMPONENT_FSAL, "Met owner privileges");
+          LogFullDebug(COMPONENT_FSAL, "Met owner privileges");
           return true;
         }
     }
@@ -326,44 +392,48 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
     {
       ace_number += 1;
 
-      LogDebug(COMPONENT_FSAL,
-               "ace numnber: %d ace type 0x%X perm 0x%X flag 0x%X who %u",
-               ace_number, pace->type, pace->perm, pace->flag, GET_FSAL_ACE_WHO(*pace));
+      LogFullDebug(COMPONENT_FSAL,
+                   "ace numnber: %d ace type 0x%X perm 0x%X flag 0x%X who %u",
+                   ace_number, pace->type, pace->perm, pace->flag, GET_FSAL_ACE_WHO(*pace));
 
       /* Process Allow and Deny entries. */
       if(IS_FSAL_ACE_ALLOW(*pace) || IS_FSAL_ACE_DENY(*pace))
         {
-          LogDebug(COMPONENT_FSAL, "allow or deny");
+          LogFullDebug(COMPONENT_FSAL, "allow or deny");
 
           /* Check if this ACE is applicable. */
           if(fsal_check_ace_applicable(pace, creds, is_dir, is_owner, is_group, is_root))
             {
               if(IS_FSAL_ACE_ALLOW(*pace))
                 {
-                  LogDebug(COMPONENT_FSAL,
-                           "allow perm 0x%X remainingPerms 0x%X",
-                           pace->perm, missing_access);
+                  LogFullDebug(COMPONENT_FSAL,
+                               "allow perm 0x%X remainingPerms 0x%X",
+                               pace->perm,
+                               missing_access);
 
                   missing_access &= ~(pace->perm & missing_access);
+
                   if(!missing_access)
                     {
-                      LogDebug(COMPONENT_FSAL, "access granted");
-                      if(isFullDebug(COMPONENT_FSAL))
-                        {
-                          if(pacl->naces != ace_number)
-                            fsal_print_ace(ace_number, pace);
-                        }
+                      fsal_print_access_by_acl(pacl->naces,
+                                               ace_number,
+                                               pace,
+                                               v4mask,
+                                               ERR_FSAL_NO_ERROR,
+                                               is_dir,
+                                               creds);
                       return true;
                     }
                 }
              else if((pace->perm & missing_access) && !is_root)
                {
-                 LogDebug(COMPONENT_FSAL, "access denied");
-                 if(isFullDebug(COMPONENT_FSAL))
-                   {
-                     if(pacl->naces != ace_number)
-                       fsal_print_ace(ace_number, pace);
-                   }
+                 fsal_print_access_by_acl(pacl->naces,
+                                          ace_number,
+                                          pace,
+                                          v4mask,
+                                          ERR_FSAL_ACCESS,
+                                          is_dir,
+                                          creds);
                  return false;
                }
             }
@@ -372,12 +442,12 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
 
   if(missing_access)
     {
-      LogDebug(COMPONENT_FSAL, "access denied");
+      LogFullDebug(COMPONENT_FSAL, "access denied");
       return false;
     }
   else
     {
-      LogDebug(COMPONENT_FSAL, "access granted");
+      LogFullDebug(COMPONENT_FSAL, "access granted");
       return true;
     }
 }
