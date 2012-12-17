@@ -44,7 +44,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
-#include <FSAL/FSAL_POSIX/fsal_handle_syscalls.h>
+#include "fsal_handle_syscalls.h"
 #include "posix_methods.h"
 #include <stdbool.h>
 

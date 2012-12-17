@@ -30,8 +30,8 @@
 #endif
 
 #include "fsal.h"
-#include <FSAL/FSAL_POSIX/fsal_handle_syscalls.h>
-#include <libgen.h>             /* used for 'dirname' */
+#include "fsal_handle_syscalls.h"
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>

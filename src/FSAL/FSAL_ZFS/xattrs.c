@@ -47,7 +47,6 @@
 #include "FSAL/fsal_config.h"
 #include "FSAL/fsal_commonlib.h"
 #include "zfs_methods.h"
-#include "FSAL/FSAL_ZFS/fsal_types.h"
 #include <stdbool.h>
 
 /* One useful declaration */
