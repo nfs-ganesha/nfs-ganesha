@@ -296,6 +296,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->drc.udp.checksum = StrToBoolean(key_value);
         }
+      else if(!strcasecmp(key_name, "DupReq_Expiration"))
+        {
+          pparam->expiration_dupreq = atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "Dispatch_Max_Reqs"))
         {
           pparam->dispatch_max_reqs = atoi(key_value);
