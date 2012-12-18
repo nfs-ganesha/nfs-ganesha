@@ -727,8 +727,8 @@ lru_thread(void *arg __attribute__((unused)))
              the L2 functionality rather than something we expect to
              be permanent.  (It will have to adapt heavily to the new
              FSAL API, for example.) */
-          if (atomic_fetch_size_t(&open_fd_count)
-              < lru_state.fds_lowat) {
+          if ((atomic_fetch_size_t(&open_fd_count) < lru_state.fds_lowat) &&
+              cache_inode_gc_policy.use_fd_cache) {
                LogDebug(COMPONENT_CACHE_INODE_LRU,
                         "FD count is %zd and low water mark is "
                         "%d: not reaping.",
