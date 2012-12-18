@@ -230,37 +230,3 @@ fsal_status_t posix2fsal_attributes(const struct stat *buffstat,
 
   return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-
-
-int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
-{
-  if(!p_posix_flags)
-    return ERR_FSAL_FAULT;
-
-  /* check that all used flags exist */
-
-  if(fsal_flags &
-     ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
-    return ERR_FSAL_INVAL;
-
-  /* Check for flags compatibility */
-
-  /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
-
-  /* conversion */
-  *p_posix_flags = 0;
-
-  if(fsal_flags & FSAL_O_READ)
-    *p_posix_flags |= O_RDONLY;
-
-  if(fsal_flags & FSAL_O_RDWR)
-    *p_posix_flags |= O_RDWR;
-
-  if(fsal_flags & FSAL_O_WRITE)
-    *p_posix_flags |= O_WRONLY;
-
-  if(fsal_flags & FSAL_O_SYNC)
-    *p_posix_flags |= O_SYNC;
-
-  return ERR_FSAL_NO_ERROR;
-}

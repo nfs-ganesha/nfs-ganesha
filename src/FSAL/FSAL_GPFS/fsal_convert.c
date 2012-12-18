@@ -199,50 +199,6 @@ int posix2fsal_error(int posix_errorcode)
 }
 
 
-/**
- * fsal2posix_openflags:
- * Convert FSAL open flags to Posix open flags.
- *
- * \param fsal_flags (input):
- *        The FSAL open flags to be translated.
- * \param p_hpss_flags (output):
- *        Pointer to the POSIX open flags.
- *
- * \return - ERR_FSAL_NO_ERROR (no error).
- *         - ERR_FSAL_FAULT    (p_hpss_flags is a NULL pointer).
- *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
- */
-int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
-{
-
-  if(!p_posix_flags)
-    return ERR_FSAL_FAULT;
-
-  /* check that all used flags exist */
-
-  if(fsal_flags &
-     ~(FSAL_O_READ | FSAL_O_RDWR | FSAL_O_WRITE | FSAL_O_SYNC))
-    return ERR_FSAL_INVAL;
-
-  /* conversion */
-  *p_posix_flags = 0;
-
-  if((fsal_flags & FSAL_O_RDWR) == FSAL_O_RDWR)
-    *p_posix_flags |= O_RDWR;
-  else
-  {
-    if(fsal_flags & FSAL_O_READ)
-      *p_posix_flags |= O_RDONLY;
-    if(fsal_flags & FSAL_O_WRITE)
-      *p_posix_flags |= O_WRONLY;
-  }
-  if(fsal_flags & FSAL_O_SYNC)
-    *p_posix_flags |= O_SYNC;
-
-  return ERR_FSAL_NO_ERROR;
-
-}
-
 fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
                                     struct attrlist * p_fsalattr_out)
 {
