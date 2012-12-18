@@ -193,44 +193,73 @@ if(USE_FSAL_CEPH)
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_LUSTRE)
-  find_library(LUSTRE_FS lustreapi)
-  if(LUSTRE_FS_NOTFOUND)
+  check_library_exists(
+    lustreapi
+    llapi_is_lustre_mnt
+    ""
+    HAVE_LUSTREAPI
+    )
+  check_include_files("unistd.h;lustre/lustre_user.h" HAVE_LUSTRE_USER_H)
+  if((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
     message(WARNING "Cannot find LUSTRE runtime. Disabling LUSTRE fsal build")
     set(USE_FSAL_LUSTRE OFF)
-  endif(LUSTRE_FS_NOTFOUND)
+  endif((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
 endif(USE_FSAL_LUSTRE)
 
 if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
-  find_library(SHOOK_LIB shooksvr)
-  if(SHOOK_LIB_NOTFOUND)
-    message(WARNING "Cannot find SHOOK library. Disabling SHOOK build")
+  check_library_exists(
+    shooksvr
+    shook_restore
+    ""
+    HAVE_SHOOK
+    )
+  check_include_files("unistd.h;attr/xattr.h" HAVE_SHOOK_XATTRS)
+  if((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
+    message(WARNING "Cannot find SHOOK runtime. Disabling SHOOK build")
     set(USE_FSAL_SHOOK OFF)
-  endif(SHOOK_LIB_NOTFOUND)
+  endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
 
 if(USE_FSAL_GPFS)
-  find_library(GPFS_LIB gpfs)
-  if(GPFS_LIB_NOTFOUND)
+  check_library_exists(
+    gpfs
+    gpfs_ganesha
+    "${PROJECT_SOURCE_DIR}/FSAL/FSAL_GPFS/lib"
+    HAVE_GPFS
+    )
+  check_include_files("gpfs.h" HAVE_GPFS_H)
+  if((NOT HAVE_GPFS) OR (NOT HAVE_GPFS_H))
     message(WARNING "Cannot find GPFS runtime.  Disabling GPFS build")
     set(USE_FSAL_GPFS OFF)
-  endif(GPFS_LIB_NOTFOUND)
+  endif((NOT HAVE_GPFS) OR (NOT HAVE_GPFS_H))
 endif(USE_FSAL_GPFS)
 
 if(USE_FSAL_XFS)
-  find_library(XFS_LIB handle)
+  check_library_exists(
+    handle
+    "open_by_handle"
+    ""
+    HAVE_XFS_LIB
+    )
   check_include_files("xfs/xfs.h" HAVE_XFS_H)
-  if(XFS_LIB_NOTFOUND OR (NOT HAVE_XFS_H))
+  if((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
     message(WARNING "Cannot find XFS runtime. Disabling XFS build")
     set(USE_FSAL_XFS OFF)
-  endif(XFS_LIB_NOTFOUND OR (NOT HAVE_XFS_H))
+  endif((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
 endif(USE_FSAL_XFS)
 
 if(USE_FSAL_ZFS)
-  find_library(ZFS_LIB zfswrap)
-  if(ZFS_LIB_NOTFOUND)
+  check_library_exists(
+    zfswrap
+    libzfswrap_init
+    ""
+    HAVE_ZFS_LIB
+    )
+  check_include_files("unistd.h;libzfswrap.h" HAVE_LIBZFSWRAP_H)
+  if((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
     message(WARNING "Cannot find ZFS runtime. Disabling ZFS build")
     set(USE_FSAL_ZFS OFF)
-  endif(ZFS_LIB_NOTFOUND)
+  endif((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
 endif(USE_FSAL_ZFS)
 
 # sort out which allocator to use
