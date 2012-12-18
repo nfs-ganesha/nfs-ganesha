@@ -40,47 +40,84 @@ size_t strnlen(const char *s, size_t maxlen);
 
 hash_table_t *ht_nfs4_owner;
 
-int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str)
+int display_nfs4_owner_key(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  return display_nfs4_owner((state_owner_t *) (pbuff->pdata), str);
+  return display_nfs4_owner(dspbuf, pbuff->pdata);
 }
 
-int display_nfs4_owner(state_owner_t *powner, char *str)
+int display_nfs4_owner(struct display_buffer * dspbuf,
+                       state_owner_t         * powner)
 {
-  char         * strtmp = str;
+  int b_left;
 
-  strtmp += sprintf(strtmp, "%s %p:",
-                    state_owner_type_to_str(powner->so_type),
-                    powner);
+  if(powner == NULL)
+    return display_cat(dspbuf, "STATE_UNKNOWN_OWNER_NFSV4 <NULL>");
 
-  strtmp += sprintf(strtmp, " clientid={");
-  //strtmp += display_client_id_rec(powner->so_owner.so_nfs4_owner.so_pclientid, strtmp);
-  strtmp += sprintf(strtmp, "} owner=");
+  b_left = display_printf(dspbuf, "%s %p:",
+                          state_owner_type_to_str(powner->so_type),
+                          powner);
 
-  strtmp += DisplayOpaqueValue(powner->so_owner_val,
-                               powner->so_owner_len,
-                               strtmp);
+  if(b_left <= 0)
+    return b_left;
 
-  strtmp += sprintf(strtmp, " confirmed=%u seqid=%u",
-                    powner->so_owner.so_nfs4_owner.so_confirmed,
-                    powner->so_owner.so_nfs4_owner.so_seqid);
+  b_left = display_printf(dspbuf, " clientid={");
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_client_id_rec(dspbuf,
+                                 powner->so_owner.so_nfs4_owner.so_pclientid);
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_cat(dspbuf, "} owner=");
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_opaque_value(dspbuf,
+                                powner->so_owner_val,
+                                powner->so_owner_len);
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_printf(dspbuf, " confirmed=%u seqid=%u",
+                          powner->so_owner.so_nfs4_owner.so_confirmed,
+                          powner->so_owner.so_nfs4_owner.so_seqid);
+
+  if(b_left <= 0)
+    return b_left;
 
   if(powner->so_owner.so_nfs4_owner.so_related_owner != NULL)
     {
-      strtmp += sprintf(strtmp, " related_owner={");
-      strtmp += display_nfs4_owner(powner->so_owner.so_nfs4_owner.so_related_owner, strtmp);
-      strtmp += sprintf(strtmp, "}");
+      b_left = display_cat(dspbuf, " related_owner={");
+
+      if(b_left <= 0)
+        return b_left;
+
+      b_left = display_nfs4_owner(dspbuf,
+                                  powner->so_owner.so_nfs4_owner.so_related_owner);
+
+      if(b_left <= 0)
+        return b_left;
+
+      b_left = display_cat(dspbuf, "}");
+
+      if(b_left <= 0)
+        return b_left;
     }
 
-  strtmp += sprintf(strtmp, " refcount=%d",
-                    atomic_fetch_int32_t(&powner->so_refcount));
-
-  return strtmp - str;
+  return display_printf(dspbuf, " refcount=%d",
+                        atomic_fetch_int32_t(&powner->so_refcount));
 }
 
-int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str)
+int display_nfs4_owner_val(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  return display_nfs4_owner((state_owner_t *) (pbuff->pdata), str);
+  return display_nfs4_owner(dspbuf, pbuff->pdata);
 }
 
 int compare_nfs4_owner(state_owner_t * powner1,
@@ -88,11 +125,13 @@ int compare_nfs4_owner(state_owner_t * powner1,
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
+      char                  str1[LOG_BUFF_LEN / 2];
+      char                  str2[LOG_BUFF_LEN / 2];
+      struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+      struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-      display_nfs4_owner(powner1, str1);
-      display_nfs4_owner(powner2, str2);
+      (void) display_nfs4_owner(&dspbuf1, powner1);
+      (void) display_nfs4_owner(&dspbuf2, powner2);
 
       LogFullDebug(COMPONENT_STATE,
                    "{%s} vs {%s}", str1, str2);
@@ -137,11 +176,13 @@ int compare_nfs4_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
+      char                  str1[LOG_BUFF_LEN / 2];
+      char                  str2[LOG_BUFF_LEN / 2];
+      struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+      struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-      DisplayOwner(pkey1, str1);
-      DisplayOwner(pkey2, str2);
+      (void) display_owner(&dspbuf1, pkey1);
+      (void) display_owner(&dspbuf2, pkey2);
       if(isDebug(COMPONENT_HASHTABLE))
         LogFullDebug(COMPONENT_STATE,
                      "{%s} vs {%s}", str1, str2);
@@ -342,11 +383,13 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
         }
       else if(powner->so_owner.so_nfs4_owner.so_related_owner != related_owner)
         {
-          char str1[HASHTABLE_DISPLAY_STRLEN];
-          char str2[HASHTABLE_DISPLAY_STRLEN];
+          char                  str1[LOG_BUFF_LEN / 2];
+          char                  str2[LOG_BUFF_LEN / 2];
+          struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+          struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-          DisplayOwner(related_owner, str1);
-          DisplayOwner(powner, str1);
+          (void) display_owner(&dspbuf1, related_owner);
+          (void) display_owner(&dspbuf2, powner);
 
           LogCrit(COMPONENT_NFS_V4_LOCK,
                   "Related {%s} doesn't match for {%s}",
@@ -363,8 +406,11 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
 
   if(!isnew && powner != NULL && pisnew != NULL)
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-      DisplayOwner(powner, str);
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
+
+      (void) display_owner(&dspbuf, powner);
+
       LogDebug(COMPONENT_STATE,
                "Previously known owner {%s} is being reused",
                str);

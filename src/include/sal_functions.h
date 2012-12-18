@@ -60,7 +60,10 @@ nfsstat2 nfs2_Errno_state(state_status_t error);
 
 const char * state_owner_type_to_str(state_owner_type_t type);
 int different_owners(state_owner_t *powner1, state_owner_t *powner2);
-int DisplayOwner(state_owner_t *powner, char *buf);
+
+int display_owner(struct display_buffer * dspbuf,
+                  state_owner_t         * powner);
+
 void inc_state_owner_ref(state_owner_t * powner);
 void dec_state_owner_ref(state_owner_t * powner);
 
@@ -88,9 +91,14 @@ int compare_9p_owner(state_owner_t * powner1,
                      state_owner_t * powner2);
 int compare_9p_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2) ;
 
-int display_9p_owner(state_owner_t * pkey, char * str);
-int display_9p_owner_key(hash_buffer_t * pbuff, char *str) ;
-int display_9p_owner_val(hash_buffer_t * pbuff, char *str) ;
+int display_9p_owner(struct display_buffer * dspbuf,
+                     state_owner_t         * pkey);
+
+int display_9p_owner_key(struct display_buffer * dspbuf,
+                         hash_buffer_t         * pbuff);
+
+int display_9p_owner_val(struct display_buffer * dspbuf,
+                         hash_buffer_t         * pbuff);
 
 uint32_t _9p_owner_value_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t * buffclef) ;
@@ -114,9 +122,14 @@ int Init_9p_hash(void) ;
 void inc_nsm_client_ref(state_nsm_client_t * pclient);
 void dec_nsm_client_ref(state_nsm_client_t * pclient);
 
-int display_nsm_client(state_nsm_client_t * pkey, char * str);
-int display_nsm_client_val(hash_buffer_t * pbuff, char * str);
-int display_nsm_client_key(hash_buffer_t * pbuff, char * str);
+int display_nsm_client(struct display_buffer * dspbuf,
+                       state_nsm_client_t    * pkey);
+
+int display_nsm_client_val(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff);
+
+int display_nsm_client_key(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff);
 
 int compare_nsm_client(state_nsm_client_t * pclient1,
                        state_nsm_client_t * pclient2);
@@ -134,9 +147,15 @@ state_nsm_client_t *get_nsm_client(care_t    care,
                                    char    * caller_name);
 void inc_nlm_client_ref(state_nlm_client_t * pclient);
 void dec_nlm_client_ref(state_nlm_client_t * pclient);
-int display_nlm_client(state_nlm_client_t * pkey, char * str);
-int display_nlm_client_val(hash_buffer_t * pbuff, char * str);
-int display_nlm_client_key(hash_buffer_t * pbuff, char * str);
+
+int display_nlm_client(struct display_buffer * dspbuf,
+                       state_nlm_client_t    * pkey);
+
+int display_nlm_client_val(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff);
+
+int display_nlm_client_key(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff);
 
 int compare_nlm_client(state_nlm_client_t * pclient1,
                        state_nlm_client_t * pclient2);
@@ -156,9 +175,14 @@ state_nlm_client_t *get_nlm_client(care_t               care,
 
 void free_nlm_owner(state_owner_t * powner);
 
-int display_nlm_owner(state_owner_t * pkey, char * str);
-int display_nlm_owner_val(hash_buffer_t * pbuff, char * str);
-int display_nlm_owner_key(hash_buffer_t * pbuff, char * str);
+int display_nlm_owner(struct display_buffer * dspbuf,
+                      state_owner_t         * pkey);
+
+int display_nlm_owner_val(struct display_buffer * dspbuf,
+                          hash_buffer_t         * pbuff);
+
+int display_nlm_owner_key(struct display_buffer * dspbuf,
+                          hash_buffer_t         * pbuff);
 
 int compare_nlm_owner(state_owner_t * powner1,
                       state_owner_t * powner2);
@@ -365,9 +389,15 @@ int  valid_lease(nfs_client_id_t * pclientid);
  ******************************************************************************/
 
 void free_nfs4_owner(state_owner_t * powner);
-int display_nfs4_owner(state_owner_t *powner, char *str);
-int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str);
-int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str);
+
+int display_nfs4_owner(struct display_buffer * dspbuf,
+                       state_owner_t         * powner);
+
+int display_nfs4_owner_val(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff);
+
+int display_nfs4_owner_key(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff);
 
 int compare_nfs4_owner(state_owner_t * powner1,
                        state_owner_t * powner2);
@@ -435,8 +465,13 @@ bool_t Check_nfs4_seqid(state_owner_t   * powner,
 
 #ifdef _USE_BLOCKING_LOCKS
 void free_block_data(state_block_data_t * block_data);
-int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
-int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
+
+int display_lock_cookie_key(struct display_buffer * dspbuf,
+                            hash_buffer_t         * pbuff);
+
+int display_lock_cookie_val(struct display_buffer * dspbuf,
+                            hash_buffer_t         * pbuff);
+
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
 uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
@@ -596,8 +631,12 @@ state_status_t state_del_locked(state_t              * pstate,
 state_status_t state_del(state_t              * pstate,
                          state_status_t       * pstatus);
 
-int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
-int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
+int display_lock_cookie_key(struct display_buffer * dspbuf,
+                            hash_buffer_t         * pbuff);
+
+int display_lock_cookie_val(struct display_buffer * dspbuf,
+                            hash_buffer_t         * pbuff);
+
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
                                           hash_buffer_t * buffclef);

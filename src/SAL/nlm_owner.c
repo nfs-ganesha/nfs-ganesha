@@ -52,40 +52,51 @@ hash_table_t *ht_nlm_owner;
  *
  ******************************************************************************/
 
-int display_nsm_client(state_nsm_client_t *pkey, char *str)
+int display_nsm_client(struct display_buffer * dspbuf,
+                       state_nsm_client_t    * pkey)
 {
-  char *strtmp = str;
+  int b_left;
 
   if(pkey == NULL)
-    return sprintf(str, "NSM Client <NULL>");
+    return display_cat(dspbuf, "NSM Client <NULL>");
 
-  strtmp += sprintf(strtmp, "NSM Client %p: ", pkey);
+  b_left = display_printf(dspbuf, "NSM Client %p: ", pkey);
+
+  if(b_left <= 0)
+    return b_left;
 
   if(nfs_param.core_param.nsm_use_caller_name)
-    strtmp += sprintf(strtmp, "caller_name=");
+    b_left = display_cat(dspbuf, "caller_name=");
   else
-    strtmp += sprintf(strtmp, "addr=");
+    b_left = display_cat(dspbuf, "addr=");
 
-  memcpy(strtmp, pkey->ssc_nlm_caller_name, pkey->ssc_nlm_caller_name_len);
-  strtmp += pkey->ssc_nlm_caller_name_len;
+  if(b_left <= 0)
+    return b_left;
 
-  strtmp += sprintf(strtmp,
-                    " %s refcount=%d",
-                    atomic_fetch_int32_t(&pkey->ssc_monitored) ?
-                      "monitored" : "unmonitored",
-                    atomic_fetch_int32_t(&pkey->ssc_refcount));
+  b_left = display_len_cat(dspbuf,
+                           pkey->ssc_nlm_caller_name,
+                           pkey->ssc_nlm_caller_name_len);
 
-  return strtmp - str;
+  if(b_left <= 0)
+    return b_left;
+
+  return display_printf(dspbuf,
+                        " %s refcount=%d",
+                        atomic_fetch_int32_t(&pkey->ssc_monitored) ?
+                          "monitored" : "unmonitored",
+                        atomic_fetch_int32_t(&pkey->ssc_refcount));
 }
 
-int display_nsm_client_key(hash_buffer_t * pbuff, char *str)
+int display_nsm_client_key(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  return display_nsm_client((state_nsm_client_t *)pbuff->pdata, str);
+  return display_nsm_client(dspbuf, pbuff->pdata);
 }
 
-int display_nsm_client_val(hash_buffer_t * pbuff, char *str)
+int display_nsm_client_val(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  return display_nsm_client((state_nsm_client_t *)pbuff->pdata, str);
+  return display_nsm_client(dspbuf, pbuff->pdata);
 }
 
 int compare_nsm_client(state_nsm_client_t *pclient1,
@@ -93,11 +104,13 @@ int compare_nsm_client(state_nsm_client_t *pclient1,
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
+      char                  str1[LOG_BUFF_LEN / 2];
+      char                  str2[LOG_BUFF_LEN / 2];
+      struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+      struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-      display_nsm_client(pclient1, str1);
-      display_nsm_client(pclient2, str2);
+      (void) display_nsm_client(&dspbuf1, pclient1);
+      (void) display_nsm_client(&dspbuf2, pclient2);
       LogFullDebug(COMPONENT_STATE,
                    "{%s} vs {%s}", str1, str2);
     }
@@ -195,34 +208,51 @@ uint64_t nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
  *
  ******************************************************************************/
 
-int display_nlm_client(state_nlm_client_t *pkey, char *str)
+int display_nlm_client(struct display_buffer * dspbuf,
+                       state_nlm_client_t    * pkey)
 {
-  char *strtmp = str;
+  int b_left;
 
   if(pkey == NULL)
-    return sprintf(str, "NLM Client <NULL>");
+    return display_cat(dspbuf, "NLM Client <NULL>");
 
-  strtmp += sprintf(strtmp, "NLM Client %p: {", pkey);
-  strtmp += display_nsm_client(pkey->slc_nsm_client, strtmp);
-  strtmp += sprintf(strtmp, "} caller_name=");
-  memcpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
-  strtmp += pkey->slc_nlm_caller_name_len;
-  strtmp += sprintf(strtmp, " type=%s",
-                    xprt_type_to_str(pkey->slc_client_type));
-  strtmp += sprintf(strtmp, " refcount=%d",
-                    atomic_fetch_int32_t(&pkey->slc_refcount));
+  b_left = display_printf(dspbuf, "NLM Client %p: {", pkey);
 
-  return strtmp - str;
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_nsm_client(dspbuf, pkey->slc_nsm_client);
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_cat(dspbuf, "} caller_name=");
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_len_cat(dspbuf,
+                           pkey->slc_nlm_caller_name,
+                           pkey->slc_nlm_caller_name_len);
+
+  if(b_left <= 0)
+    return b_left;
+
+  return display_printf(dspbuf, " type=%s refcount=%d",
+                        xprt_type_to_str(pkey->slc_client_type),
+                        atomic_fetch_int32_t(&pkey->slc_refcount));
 }
 
-int display_nlm_client_key(hash_buffer_t * pbuff, char *str)
+int display_nlm_client_key(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  return display_nlm_client(pbuff->pdata, str);
+  return display_nlm_client(dspbuf, pbuff->pdata);
 }
 
-int display_nlm_client_val(hash_buffer_t * pbuff, char *str)
+int display_nlm_client_val(struct display_buffer * dspbuf,
+                           hash_buffer_t         * pbuff)
 {
-  return display_nlm_client(pbuff->pdata, str);
+  return display_nlm_client(dspbuf, pbuff->pdata);
 }
 
 int compare_nlm_client(state_nlm_client_t *pclient1,
@@ -230,11 +260,13 @@ int compare_nlm_client(state_nlm_client_t *pclient1,
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
+      char                  str1[LOG_BUFF_LEN / 2];
+      char                  str2[LOG_BUFF_LEN / 2];
+      struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+      struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-      display_nlm_client(pclient1, str1);
-      display_nlm_client(pclient2, str2);
+      (void) display_nlm_client(&dspbuf1, pclient1);
+      (void) display_nlm_client(&dspbuf2, pclient2);
       LogFullDebug(COMPONENT_STATE,
                    "{%s} vs {%s}", str1, str2);
     }
@@ -314,37 +346,49 @@ uint64_t nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
  *
  ******************************************************************************/
 
-int display_nlm_owner(state_owner_t *pkey, char *str)
+int display_nlm_owner(struct display_buffer * dspbuf,
+                      state_owner_t         * pkey)
 {
-  char *strtmp = str;
+  int b_left;
 
   if(pkey == NULL)
-    return sprintf(str, "STATE_LOCK_OWNER_NLM <NULL>");
+    return display_cat(dspbuf, "STATE_LOCK_OWNER_NLM <NULL>");
 
-  strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_NLM %p: {", pkey);
+  b_left = display_printf(dspbuf, "STATE_LOCK_OWNER_NLM %p: {", pkey);
 
-  strtmp += display_nlm_client(pkey->so_owner.so_nlm_owner.so_client, strtmp);
+  if(b_left <= 0)
+    return b_left;
 
-  strtmp += sprintf(strtmp, "} oh=");
+  b_left = display_nlm_client(dspbuf, pkey->so_owner.so_nlm_owner.so_client);
 
-  strtmp += DisplayOpaqueValue(pkey->so_owner_val, pkey->so_owner_len, strtmp);
+  if(b_left <= 0)
+    return b_left;
 
-  strtmp += sprintf(strtmp, " svid=%d",
-                    pkey->so_owner.so_nlm_owner.so_nlm_svid);
-  strtmp += sprintf(strtmp, " refcount=%d",
-                    atomic_fetch_int32_t(&pkey->so_refcount));
+  b_left = display_printf(dspbuf, "} oh=");
 
-  return strtmp - str;
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_opaque_value(dspbuf, pkey->so_owner_val, pkey->so_owner_len);
+
+  if(b_left <= 0)
+    return b_left;
+
+  return display_printf(dspbuf, " svid=%d refcount=%d",
+                        pkey->so_owner.so_nlm_owner.so_nlm_svid,
+                        atomic_fetch_int32_t(&pkey->so_refcount));
 }
 
-int display_nlm_owner_key(hash_buffer_t * pbuff, char *str)
+int display_nlm_owner_key(struct display_buffer * dspbuf,
+                          hash_buffer_t         * pbuff)
 {
-  return display_nlm_owner((state_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner(dspbuf, pbuff->pdata);
 }
 
-int display_nlm_owner_val(hash_buffer_t * pbuff, char *str)
+int display_nlm_owner_val(struct display_buffer * dspbuf,
+                          hash_buffer_t         * pbuff)
 {
-  return display_nlm_owner((state_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner(dspbuf, pbuff->pdata);
 }
 
 int compare_nlm_owner(state_owner_t *powner1,
@@ -352,11 +396,13 @@ int compare_nlm_owner(state_owner_t *powner1,
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
+      char                  str1[LOG_BUFF_LEN / 2];
+      char                  str2[LOG_BUFF_LEN / 2];
+      struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+      struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-      display_nlm_owner(powner1, str1);
-      display_nlm_owner(powner2, str2);
+      (void) display_nlm_owner(&dspbuf1, powner1);
+      (void) display_nlm_owner(&dspbuf2, powner2);
       LogFullDebug(COMPONENT_STATE,
                    "{%s} vs {%s}", str1, str2);
     }
@@ -500,16 +546,20 @@ void free_nsm_client(state_nsm_client_t *pclient)
 
 void dec_nsm_client_ref(state_nsm_client_t *pclient)
 {
-  char              str[HASHTABLE_DISPLAY_STRLEN];
-  struct hash_latch latch;
-  hash_error_t      rc;
-  hash_buffer_t     buffkey;
-  hash_buffer_t     old_value;
-  hash_buffer_t     old_key;
-  int32_t           refcount;
+  char                  str[LOG_BUFF_LEN];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
+  struct hash_latch     latch;
+  hash_error_t          rc;
+  hash_buffer_t         buffkey;
+  hash_buffer_t         old_value;
+  hash_buffer_t         old_key;
+  int32_t               refcount;
 
   if(isDebug(COMPONENT_STATE))
-    display_nsm_client(pclient, str);
+    {
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, pclient);
+    }
 
   refcount = atomic_dec_int32_t(&pclient->ssc_refcount);
 
@@ -541,7 +591,8 @@ void dec_nsm_client_ref(state_nsm_client_t *pclient)
       if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
         HashTable_ReleaseLatched(ht_nsm_client, &latch);
 
-      display_nsm_client(pclient, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, pclient);
 
       LogCrit(COMPONENT_STATE,
               "Error %s, could not find {%s}",
@@ -575,7 +626,8 @@ void dec_nsm_client_ref(state_nsm_client_t *pclient)
       if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
         HashTable_ReleaseLatched(ht_nsm_client, &latch);
 
-      display_nsm_client(pclient, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, pclient);
 
       LogCrit(COMPONENT_STATE,
               "Error %s, could not remove {%s}",
@@ -596,14 +648,16 @@ state_nsm_client_t *get_nsm_client(care_t    care,
                                    SVCXPRT * xprt,
                                    char    * caller_name)
 {
-  state_nsm_client_t   key;
-  state_nsm_client_t * pclient;
-  char                 sock_name[SOCK_NAME_MAX];
-  char                 str[HASHTABLE_DISPLAY_STRLEN];
-  struct hash_latch    latch;
-  hash_error_t         rc;
-  hash_buffer_t        buffkey;
-  hash_buffer_t        buffval;
+  state_nsm_client_t      key;
+  state_nsm_client_t    * pclient;
+  char                    sock_name[SOCK_NAME_MAX];
+  char                    str[LOG_BUFF_LEN];
+  struct display_buffer   dspbuf = {sizeof(str), str, str};
+  struct display_buffer   sockbuf = {sizeof(sock_name), sock_name, sock_name};
+  struct hash_latch       latch;
+  hash_error_t            rc;
+  hash_buffer_t           buffkey;
+  hash_buffer_t           buffval;
 
   if(caller_name == NULL)
     return NULL;
@@ -655,9 +709,9 @@ state_nsm_client_t *get_nsm_client(care_t    care,
           return NULL;
         }
 
-      if(sprint_sockip(&key.ssc_client_addr,
-                       key.ssc_nlm_caller_name,
-                       sizeof(sock_name)) == 0)
+      if(display_sockaddr(&sockbuf,
+                          &key.ssc_client_addr,
+                          FALSE) < 0)
         {
           LogCrit(COMPONENT_STATE,
                   "Error converting caller_name %s to an ipaddress",
@@ -672,7 +726,9 @@ state_nsm_client_t *get_nsm_client(care_t    care,
   
   if(isFullDebug(COMPONENT_STATE))
     {
-      display_nsm_client(&key, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, &key);
+
       LogFullDebug(COMPONENT_STATE,
                    "Find {%s}", str);
     }
@@ -694,7 +750,9 @@ state_nsm_client_t *get_nsm_client(care_t    care,
       /* Return the found NSM Client */
       if(isFullDebug(COMPONENT_STATE))
         {
-          display_nsm_client(pclient, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_nsm_client(&dspbuf, pclient);
+
           LogFullDebug(COMPONENT_STATE,
                        "Found {%s}",
                        str);
@@ -720,7 +778,8 @@ state_nsm_client_t *get_nsm_client(care_t    care,
   /* An error occurred, return NULL */
   if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
     {
-      display_nsm_client(&key, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, &key);
 
       LogCrit(COMPONENT_STATE,
               "Error %s, could not find {%s}",
@@ -735,7 +794,9 @@ state_nsm_client_t *get_nsm_client(care_t    care,
       /* Return the found NSM Client */
       if(isFullDebug(COMPONENT_STATE))
         {
-          display_nsm_client(&key, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_nsm_client(&dspbuf, &key);
+
           LogFullDebug(COMPONENT_STATE,
                        "Ignoring {%s}",
                        str);
@@ -750,7 +811,9 @@ state_nsm_client_t *get_nsm_client(care_t    care,
 
   if(pclient == NULL)
     {
-      display_nsm_client(&key, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, &key);
+
       LogCrit(COMPONENT_STATE,
               "No memory for {%s}",
               str);
@@ -764,7 +827,9 @@ state_nsm_client_t *get_nsm_client(care_t    care,
   if(pthread_mutex_init(&pclient->ssc_mutex, NULL) == -1)
     {
       /* Mutex initialization failed, free the created client */
-      display_nsm_client(&key, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, &key);
+
       LogCrit(COMPONENT_STATE,
               "Could not init mutex for {%s}",
               str);
@@ -788,7 +853,9 @@ state_nsm_client_t *get_nsm_client(care_t    care,
 
   if(isFullDebug(COMPONENT_STATE))
     {
-      display_nsm_client(pclient, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, pclient);
+
       LogFullDebug(COMPONENT_STATE,
                    "New {%s}", str);
     }
@@ -809,7 +876,8 @@ state_nsm_client_t *get_nsm_client(care_t    care,
   /* An error occurred, return NULL */
   if(rc != HASHTABLE_SUCCESS)
     {
-      display_nsm_client(pclient, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nsm_client(&dspbuf, pclient);
 
       LogCrit(COMPONENT_STATE,
               "Error %s, inserting {%s}",
@@ -855,16 +923,20 @@ void inc_nlm_client_ref(state_nlm_client_t *pclient)
 
 void dec_nlm_client_ref(state_nlm_client_t *pclient)
 {
-  char              str[HASHTABLE_DISPLAY_STRLEN];
-  struct hash_latch latch;
-  hash_error_t      rc;
-  hash_buffer_t     buffkey;
-  hash_buffer_t     old_value;
-  hash_buffer_t     old_key;
-  int32_t           refcount;
+  char                  str[LOG_BUFF_LEN];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
+  struct hash_latch     latch;
+  hash_error_t          rc;
+  hash_buffer_t         buffkey;
+  hash_buffer_t         old_value;
+  hash_buffer_t         old_key;
+  int32_t               refcount;
 
   if(isDebug(COMPONENT_STATE))
-    display_nlm_client(pclient, str);
+    {
+      display_reset_buffer(&dspbuf);
+      (void) display_nlm_client(&dspbuf, pclient);
+    }
 
   refcount = atomic_dec_int32_t(&pclient->slc_refcount);
 
@@ -896,7 +968,8 @@ void dec_nlm_client_ref(state_nlm_client_t *pclient)
       if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
         HashTable_ReleaseLatched(ht_nlm_client, &latch);
 
-      display_nlm_client(pclient, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nlm_client(&dspbuf, pclient);
 
       LogCrit(COMPONENT_STATE,
               "Error %s, could not find {%s}",
@@ -930,7 +1003,8 @@ void dec_nlm_client_ref(state_nlm_client_t *pclient)
       if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
         HashTable_ReleaseLatched(ht_nlm_client, &latch);
 
-      display_nlm_client(pclient, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nlm_client(&dspbuf, pclient);
 
       LogCrit(COMPONENT_STATE,
               "Error %s, could not remove {%s}",
@@ -951,13 +1025,14 @@ state_nlm_client_t *get_nlm_client(care_t               care,
                                    state_nsm_client_t * pnsm_client,
                                    char               * caller_name)
 {
-  state_nlm_client_t   key;
-  state_nlm_client_t * pclient;
-  char                 str[HASHTABLE_DISPLAY_STRLEN];
-  struct hash_latch    latch;
-  hash_error_t         rc;
-  hash_buffer_t        buffkey;
-  hash_buffer_t        buffval;
+  state_nlm_client_t      key;
+  state_nlm_client_t    * pclient;
+  char                    str[LOG_BUFF_LEN];
+  struct display_buffer   dspbuf = {sizeof(str), str, str};
+  struct hash_latch       latch;
+  hash_error_t            rc;
+  hash_buffer_t           buffkey;
+  hash_buffer_t           buffval;
 
   if(caller_name == NULL)
     return NULL;
@@ -975,7 +1050,9 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   
   if(isFullDebug(COMPONENT_STATE))
     {
-      display_nlm_client(&key, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nlm_client(&dspbuf, &key);
+
       LogFullDebug(COMPONENT_STATE,
                    "Find {%s}", str);
     }
@@ -997,7 +1074,9 @@ state_nlm_client_t *get_nlm_client(care_t               care,
       /* Return the found NLM Client */
       if(isFullDebug(COMPONENT_STATE))
         {
-          display_nlm_client(pclient, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_nlm_client(&dspbuf, pclient);
+
           LogFullDebug(COMPONENT_STATE,
                        "Found {%s}",
                        str);
@@ -1023,7 +1102,8 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   /* An error occurred, return NULL */
   if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
     {
-      display_nlm_client(&key, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nlm_client(&dspbuf, &key);
 
       LogCrit(COMPONENT_STATE,
               "Error %s, could not find {%s}",
@@ -1038,7 +1118,9 @@ state_nlm_client_t *get_nlm_client(care_t               care,
       /* Return the found NLM Client */
       if(isFullDebug(COMPONENT_STATE))
         {
-          display_nlm_client(&key, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_nlm_client(&dspbuf, &key);
+
           LogFullDebug(COMPONENT_STATE,
                        "Ignoring {%s}",
                        str);
@@ -1053,7 +1135,9 @@ state_nlm_client_t *get_nlm_client(care_t               care,
 
   if(pclient == NULL)
     {
-      display_nlm_client(&key, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nlm_client(&dspbuf, &key);
+
       LogCrit(COMPONENT_STATE,
               "No memory for {%s}",
               str);
@@ -1080,7 +1164,9 @@ state_nlm_client_t *get_nlm_client(care_t               care,
 
   if(isFullDebug(COMPONENT_STATE))
     {
-      display_nlm_client(pclient, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nlm_client(&dspbuf, pclient);
+
       LogFullDebug(COMPONENT_STATE,
                    "New {%s}", str);
     }
@@ -1101,7 +1187,8 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   /* An error occurred, return NULL */
   if(rc != HASHTABLE_SUCCESS)
     {
-      display_nlm_client(pclient, str);
+      display_reset_buffer(&dspbuf);
+      (void) display_nlm_client(&dspbuf, pclient);
 
       LogCrit(COMPONENT_STATE,
               "Error %s, inserting {%s}",

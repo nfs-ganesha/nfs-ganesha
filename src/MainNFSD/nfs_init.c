@@ -574,8 +574,8 @@ void nfs_set_param_default()
   nfs_param.nfs4_owner_param.hash_param.hash_func_key = nfs4_owner_value_hash_func;
   nfs_param.nfs4_owner_param.hash_param.hash_func_rbt = nfs4_owner_rbt_hash_func;
   nfs_param.nfs4_owner_param.hash_param.compare_key = compare_nfs4_owner_key;
-  nfs_param.nfs4_owner_param.hash_param.key_to_str = NULL; // display_nfs4_owner_key;
-  nfs_param.nfs4_owner_param.hash_param.val_to_str = NULL; // display_nfs4_owner_val;
+  nfs_param.nfs4_owner_param.hash_param.key_to_str = display_nfs4_owner_key;
+  nfs_param.nfs4_owner_param.hash_param.val_to_str = display_nfs4_owner_val;
   nfs_param.nfs4_owner_param.hash_param.ht_name = "NFS4 Owner";
   nfs_param.nfs4_owner_param.hash_param.flags = HT_FLAG_CACHE;
   nfs_param.nfs4_owner_param.hash_param.ht_log_component = COMPONENT_STATE;
@@ -587,8 +587,8 @@ void nfs_set_param_default()
   nfs_param.nsm_client_hash_param.hash_func_key = nsm_client_value_hash_func;
   nfs_param.nsm_client_hash_param.hash_func_rbt = nsm_client_rbt_hash_func;
   nfs_param.nsm_client_hash_param.compare_key = compare_nsm_client_key;
-  nfs_param.nsm_client_hash_param.key_to_str = NULL; // display_nsm_client_key;
-  nfs_param.nsm_client_hash_param.val_to_str = NULL; // display_nsm_client_val;
+  nfs_param.nsm_client_hash_param.key_to_str = display_nsm_client_key;
+  nfs_param.nsm_client_hash_param.val_to_str = display_nsm_client_val;
   nfs_param.nsm_client_hash_param.ht_name = "NSM Client";
   nfs_param.nsm_client_hash_param.flags = HT_FLAG_NONE;
   nfs_param.nsm_client_hash_param.ht_log_component = COMPONENT_STATE;
@@ -599,8 +599,8 @@ void nfs_set_param_default()
   nfs_param.nlm_client_hash_param.hash_func_key = nlm_client_value_hash_func;
   nfs_param.nlm_client_hash_param.hash_func_rbt = nlm_client_rbt_hash_func;
   nfs_param.nlm_client_hash_param.compare_key = compare_nlm_client_key;
-  nfs_param.nlm_client_hash_param.key_to_str = NULL; // display_nlm_client_key;
-  nfs_param.nlm_client_hash_param.val_to_str = NULL; // display_nlm_client_val;
+  nfs_param.nlm_client_hash_param.key_to_str = display_nlm_client_key;
+  nfs_param.nlm_client_hash_param.val_to_str = display_nlm_client_val;
   nfs_param.nlm_client_hash_param.ht_name = "NLM Client";
   nfs_param.nlm_client_hash_param.flags = HT_FLAG_NONE;
   nfs_param.nlm_client_hash_param.ht_log_component = COMPONENT_STATE;
@@ -611,8 +611,8 @@ void nfs_set_param_default()
   nfs_param.nlm_owner_hash_param.hash_func_key = nlm_owner_value_hash_func;
   nfs_param.nlm_owner_hash_param.hash_func_rbt = nlm_owner_rbt_hash_func;
   nfs_param.nlm_owner_hash_param.compare_key = compare_nlm_owner_key;
-  nfs_param.nlm_owner_hash_param.key_to_str = NULL; // display_nlm_owner_key;
-  nfs_param.nlm_owner_hash_param.val_to_str = NULL; // display_nlm_owner_val;
+  nfs_param.nlm_owner_hash_param.key_to_str = display_nlm_owner_key;
+  nfs_param.nlm_owner_hash_param.val_to_str = display_nlm_owner_val;
   nfs_param.nlm_owner_hash_param.ht_name = "NLM Owner";
   nfs_param.nlm_owner_hash_param.flags = HT_FLAG_NONE;
   nfs_param.nlm_owner_hash_param.ht_log_component = COMPONENT_STATE;
@@ -624,8 +624,8 @@ void nfs_set_param_default()
   nfs_param._9p_owner_hash_param.hash_func_key = _9p_owner_value_hash_func;
   nfs_param._9p_owner_hash_param.hash_func_rbt = _9p_owner_rbt_hash_func;
   nfs_param._9p_owner_hash_param.compare_key = compare_9p_owner_key;
-  nfs_param._9p_owner_hash_param.key_to_str = NULL; // display_9p_owner_key;
-  nfs_param._9p_owner_hash_param.val_to_str = NULL; // display_9p_owner_val;
+  nfs_param._9p_owner_hash_param.key_to_str = display_9p_owner_key;
+  nfs_param._9p_owner_hash_param.val_to_str = display_9p_owner_val;
   nfs_param._9p_owner_hash_param.ht_name = "9P Owner";
 #endif 
 
@@ -649,8 +649,8 @@ void nfs_set_param_default()
   cache_inode_params.cookie_param.hash_func_key = lock_cookie_value_hash_func;
   cache_inode_params.cookie_param.hash_func_rbt = lock_cookie_rbt_hash_func ;
   cache_inode_params.cookie_param.compare_key = compare_lock_cookie_key;
-  cache_inode_params.cookie_param.key_to_str = NULL; // display_lock_cookie_key;
-  cache_inode_params.cookie_param.val_to_str = NULL; // display_lock_cookie_val;
+  cache_inode_params.cookie_param.key_to_str = display_lock_cookie_key;
+  cache_inode_params.cookie_param.val_to_str = display_lock_cookie_val;
   cache_inode_params.cookie_param.ht_name = "Lock Cookie";
   cache_inode_params.cookie_param.flags = HT_FLAG_NONE;
   cache_inode_params.cookie_param.ht_log_component = COMPONENT_STATE;

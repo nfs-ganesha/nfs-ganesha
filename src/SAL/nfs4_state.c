@@ -140,6 +140,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
   state_t              * pnew_state  = NULL;
   state_t              * piter_state = NULL;
   char                   debug_str[OTHERSIZE * 2 + 1];
+  struct display_buffer  dspbuf = {sizeof(debug_str), debug_str, debug_str};
   struct glist_head    * glist;
   cache_inode_status_t   cache_status;
   bool_t                 got_pinned = FALSE;
@@ -212,14 +213,15 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
   pnew_state->state_powner = powner_input;
 
   if (isDebug(COMPONENT_STATE))
-    sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
+    (void) display_opaque_bytes(&dspbuf, pnew_state->stateid_other, OTHERSIZE);
 
   init_glist(&pnew_state->state_list);
 
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
     {
-      sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
+      if(!isDebug(COMPONENT_STATE))
+        (void) display_opaque_bytes(&dspbuf, pnew_state->stateid_other, OTHERSIZE);
 
       LogCrit(COMPONENT_STATE,
               "Can't create a new state id %s for the pentry %p (F)",
@@ -318,17 +320,19 @@ state_status_t state_add(cache_entry_t         * pentry,
 state_status_t state_del_locked(state_t              * pstate,
                                 cache_entry_t        * pentry)
 {
-  char            debug_str[OTHERSIZE * 2 + 1];
+  char                   debug_str[OTHERSIZE * 2 + 1];
+  struct display_buffer  dspbuf = {sizeof(debug_str), debug_str, debug_str};
 
   if (isDebug(COMPONENT_STATE))
-    sprint_mem(debug_str, (char *)pstate->stateid_other, OTHERSIZE);
+    (void) display_opaque_bytes(&dspbuf, pstate->stateid_other, OTHERSIZE);
 
   LogFullDebug(COMPONENT_STATE, "Deleting state %s", debug_str);
 
   /* Remove the entry from the HashTable */
   if(!nfs4_State_Del(pstate->stateid_other))
     {
-      sprint_mem(debug_str, (char *)pstate->stateid_other, OTHERSIZE);
+      if(!isDebug(COMPONENT_STATE))
+        (void) display_opaque_bytes(&dspbuf, pstate->stateid_other, OTHERSIZE);
 
       LogCrit(COMPONENT_STATE, "Could not delete state %s", debug_str);
 
@@ -559,9 +563,10 @@ void dump_all_states(void)
 
       glist_for_each(glist, &state_v4_all)
         {
-          state_t * pstate = glist_entry(glist, state_t, state_list_all);
-          char    * state_type = "unknown";
-          char      str[HASHTABLE_DISPLAY_STRLEN];
+          state_t               * pstate = glist_entry(glist, state_t, state_list_all);
+          char                  * state_type = "unknown";
+          char                    str[LOG_BUFF_LEN];
+          struct display_buffer   dspbuf = {sizeof(str), str, str};
 
           switch(pstate->state_type)
             {
@@ -572,7 +577,9 @@ void dump_all_states(void)
               case STATE_TYPE_LAYOUT: state_type = "LAYOUT";      break;
             }
 
-          DisplayOwner(pstate->state_powner, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_owner(&dspbuf, pstate->state_powner);
+
           LogDebug(COMPONENT_STATE,
                    "State %p type %s owner {%s}",
                    pstate, state_type, str);

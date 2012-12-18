@@ -255,9 +255,10 @@ static void LogEntry(const char         *reason,
 {
   if(isFullDebug(COMPONENT_STATE))
     {
-      char owner[HASHTABLE_DISPLAY_STRLEN];
+      char                  owner[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(owner), owner, owner};
 
-      DisplayOwner(ple->sle_owner, owner);
+      (void) display_owner(&dspbuf, ple->sle_owner);
 
       LogFullDebug(COMPONENT_STATE,
                    "%s Entry: %p pentry=%p, fileid=%"PRIu64", export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, owner={%s}",
@@ -359,12 +360,13 @@ void LogLock(log_components_t     component,
 {
   if(isLevel(component, debug))
     {
-      char owner[HASHTABLE_DISPLAY_STRLEN];
+      char                  owner[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(owner), owner, owner};
 
       if(powner != NULL)
-        DisplayOwner(powner, owner);
+        (void) display_owner(&dspbuf, powner);
       else
-        sprintf(owner, "NONE");
+        (void) display_cat(&dspbuf, "NONE");
 
       LogAtLevel(component, debug,
                  "%s Lock: pentry=%p, fileid=%"PRIu64", type=%s, start=0x%llx, end=0x%llx, owner={%s}",
@@ -1003,54 +1005,75 @@ static state_status_t subtract_list_from_list(cache_entry_t        * pentry,
 static void grant_blocked_locks(cache_entry_t        * pentry,
                                 fsal_op_context_t    * pcontext);
 
-int display_lock_cookie_key(hash_buffer_t * pbuff, char *str)
+int display_lock_cookie_key(struct display_buffer * dspbuf,
+                            hash_buffer_t         * pbuff)
 {
-  return DisplayOpaqueValue((char *)pbuff->pdata, pbuff->len, str);
+  return display_opaque_value(dspbuf, pbuff->pdata, pbuff->len);
 }
 
-int display_lock_cookie_entry(state_cookie_entry_t * he, char * str)
+int display_lock_cookie_entry(struct display_buffer * dspbuf,
+                              state_cookie_entry_t  * he)
 {
-  char *tmp = str;
+  int b_left;
 
-  tmp += sprintf(tmp, "%p: cookie ", he);
-  tmp += DisplayOpaqueValue(he->sce_pcookie, he->sce_cookie_size, tmp);
-  tmp += sprintf(tmp, " entry {%p fileid=%"PRIu64"} lock {",
-                 he->sce_pentry,
-                 (uint64_t)he->sce_pentry->attributes.fileid);
+  b_left = display_printf(dspbuf, "%p: cookie ", he);
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_opaque_value(dspbuf, he->sce_pcookie, he->sce_cookie_size);
+
+  if(b_left <= 0)
+    return b_left;
+
+  b_left = display_printf(dspbuf, " entry {%p fileid=%"PRIu64"} lock {",
+                          he->sce_pentry,
+                          (uint64_t)he->sce_pentry->attributes.fileid);
+
+  if(b_left <= 0)
+    return b_left;
+
   if(he->sce_lock_entry != NULL)
     {
-      tmp += sprintf(tmp, "%p owner {", he->sce_lock_entry);
+      b_left = display_printf(dspbuf, "%p owner {", he->sce_lock_entry);
 
-      tmp += DisplayOwner(he->sce_lock_entry->sle_owner, tmp);
+      if(b_left <= 0)
+        return b_left;
 
-      tmp += sprintf(tmp, "} type=%s start=0x%llx end=0x%llx blocked=%s}",
-                     str_lockt(he->sce_lock_entry->sle_lock.lock_type),
-                     (unsigned long long) he->sce_lock_entry->sle_lock.lock_start,
-                     (unsigned long long) lock_end(&he->sce_lock_entry->sle_lock),
-                     str_blocked(he->sce_lock_entry->sle_blocked));
+      b_left = display_owner(dspbuf, he->sce_lock_entry->sle_owner);
+
+      if(b_left <= 0)
+        return b_left;
+
+      return display_printf(dspbuf, "} type=%s start=0x%llx end=0x%llx blocked=%s}",
+                            str_lockt(he->sce_lock_entry->sle_lock.lock_type),
+                            (unsigned long long) he->sce_lock_entry->sle_lock.lock_start,
+                            (unsigned long long) lock_end(&he->sce_lock_entry->sle_lock),
+                            str_blocked(he->sce_lock_entry->sle_blocked));
     }
   else
     {
-      tmp += sprintf(tmp, "<NULL>}");
+      return display_printf(dspbuf, "<NULL>}");
     }
-
-  return tmp - str;
 }
 
-int display_lock_cookie_val(hash_buffer_t * pbuff, char *str)
+int display_lock_cookie_val(struct display_buffer * dspbuf,
+                            hash_buffer_t         * pbuff)
 {
-  return display_lock_cookie_entry((state_cookie_entry_t *)pbuff->pdata, str);
+  return display_lock_cookie_entry(dspbuf, pbuff->pdata);
 }
 
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
+      char                  str1[LOG_BUFF_LEN / 2];
+      char                  str2[LOG_BUFF_LEN / 2];
+      struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+      struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-      display_lock_cookie_key(buff1, str1);
-      display_lock_cookie_key(buff2, str2);
+      (void) display_lock_cookie_key(&dspbuf1, buff1);
+      (void) display_lock_cookie_key(&dspbuf2, buff2);
       LogFullDebug(COMPONENT_STATE,
                    "{%s} vs {%s}", str1, str2);
     }
@@ -1113,11 +1136,12 @@ uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
 void free_cookie(state_cookie_entry_t * p_cookie_entry,
                  bool_t                 unblock)
 {
-  char   str[HASHTABLE_DISPLAY_STRLEN];
-  void * pcookie = p_cookie_entry->sce_pcookie;
+  char                    str[LOG_BUFF_LEN];
+  struct display_buffer   dspbuf = {sizeof(str), str, str};
+  void                  * pcookie = p_cookie_entry->sce_pcookie;
 
   if(isFullDebug(COMPONENT_STATE))
-    display_lock_cookie_entry(p_cookie_entry, str);
+    (void) display_lock_cookie_entry(&dspbuf, p_cookie_entry);
 
   /* Since the cookie is not in the hash table, we can just free the memory */
   LogFullDebug(COMPONENT_STATE,
@@ -1151,7 +1175,8 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
 {
   hash_buffer_t          buffkey, buffval;
   state_cookie_entry_t * hash_entry;
-  char                   str[HASHTABLE_DISPLAY_STRLEN];
+  char                   str[LOG_BUFF_LEN];
+  struct display_buffer  dspbuf = {sizeof(str), str, str};
 
   *ppcookie_entry = NULL;
 
@@ -1163,7 +1188,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
     }
 
   if(isFullDebug(COMPONENT_STATE))
-    DisplayOpaqueValue(pcookie, cookie_size, str);
+    (void) display_opaque_value(&dspbuf, pcookie, cookie_size);
 
   hash_entry = gsh_malloc(sizeof(*hash_entry));
   if(hash_entry == NULL)
@@ -1199,7 +1224,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
   buffval.len   = sizeof(*hash_entry);
 
   if(isFullDebug(COMPONENT_STATE))
-    display_lock_cookie_entry(hash_entry, str);
+    (void) display_lock_cookie_entry(&dspbuf, hash_entry);
 
 
   if(HashTable_Test_And_Set
@@ -1324,17 +1349,19 @@ state_status_t state_find_grant(void                  * pcookie,
                                 state_cookie_entry_t ** ppcookie_entry,
                                 state_status_t        * pstatus)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-  hash_buffer_t buffused_key;
-  char          str[HASHTABLE_DISPLAY_STRLEN];
+  hash_buffer_t         buffkey;
+  hash_buffer_t         buffval;
+  hash_buffer_t         buffused_key;
+  char                  str[LOG_BUFF_LEN];
+  struct display_buffer dspbuf = {sizeof(str), str, str};
 
   buffkey.pdata = (caddr_t) pcookie;
   buffkey.len   = cookie_size;
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      display_lock_cookie_key(&buffkey, str);
+      (void) display_lock_cookie_key(&dspbuf, &buffkey);
+
       LogFullDebug(COMPONENT_STATE,
                    "KEY {%s}", str);
     }
@@ -1351,9 +1378,9 @@ state_status_t state_find_grant(void                  * pcookie,
 
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      display_reset_buffer(&dspbuf);
+      (void) display_lock_cookie_entry(&dspbuf, *ppcookie_entry);
 
-      display_lock_cookie_entry(*ppcookie_entry, str);
       LogFullDebug(COMPONENT_STATE,
                    "Found Lock Cookie {%s}", str);
     }
@@ -2734,12 +2761,13 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
 
   if(isFullDebug(COMPONENT_STATE))
     {
-      char client[HASHTABLE_DISPLAY_STRLEN];
+      char                  str[LOG_BUFF_LEN];
+      struct display_buffer dspbuf = {sizeof(str), str, str};
 
-      display_nsm_client(pnsmclient, client);
+      (void) display_nsm_client(&dspbuf, pnsmclient);
 
       LogFullDebug(COMPONENT_STATE,
-                   "state_nlm_notify for %s", client);
+                   "state_nlm_notify for %s", str);
     }
 
   init_glist(&newlocks);

@@ -749,7 +749,8 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
         {
           int32_t refcount = atomic_fetch_int32_t(&plock_owner->so_refcount);
 
-          DisplayOwner(plock_owner, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_owner(&dspbuf, plock_owner);
 
           if(refcount > 1)
             LogWarn(COMPONENT_CLIENTID,
@@ -777,7 +778,8 @@ int nfs_client_id_expire(nfs_client_id_t * pclientid)
         {
           int32_t refcount = atomic_fetch_int32_t(&popen_owner->so_refcount);
 
-          DisplayOwner(popen_owner, str);
+          display_reset_buffer(&dspbuf);
+          (void) display_owner(&dspbuf, popen_owner);
 
           if(refcount > 1)
             LogWarn(COMPONENT_CLIENTID,

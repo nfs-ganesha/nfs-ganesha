@@ -48,35 +48,41 @@
 
 hash_table_t *ht_9p_owner;
 
-int display_9p_owner(state_owner_t *pkey, char *str)
+int display_9p_owner(struct display_buffer * dspbuf,
+                     state_owner_t         * pkey)
 {
-  char *strtmp = str;
+  int b_left;
 
   if(pkey == NULL)
-    return sprintf(str, "<NULL>");
+    return display_cat(dspbuf, "<NULL>");
 
-  strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_9P %p", pkey);
-  strtmp += sprint_sockaddr( (sockaddr_t *)&(pkey->so_owner.so_9p_owner.client_addr),
-                             strtmp, 
-                             SOCK_NAME_MAX ) ;
+  b_left = display_printf(dspbuf, "STATE_LOCK_OWNER_9P %p", pkey);
 
-  strtmp += sprintf(strtmp, " proc_id=%u",
-                    pkey->so_owner.so_9p_owner.proc_id);
- 
-  strtmp += sprintf(strtmp, " refcount=%d",
-                    atomic_fetch_int32_t(&pkey->so_refcount));
+  if(b_left <= 0)
+    return b_left;
 
-  return strtmp - str;
+  b_left = display_sockaddr(dspbuf,
+                            (sockaddr_t *)&(pkey->so_owner.so_9p_owner.client_addr),
+                            TRUE);
+
+  if(b_left <= 0)
+    return b_left;
+
+  return display_printf(dspbuf, " proc_id=%u refcount=%d",
+                        pkey->so_owner.so_9p_owner.proc_id,
+                        atomic_fetch_int32_t(&pkey->so_refcount));
 }
 
-int display_9p_owner_key(hash_buffer_t * pbuff, char *str)
+int display_9p_owner_key(struct display_buffer * dspbuf,
+                         hash_buffer_t         * pbuff)
 {
-  return display_9p_owner((state_owner_t *)pbuff->pdata, str);
+  return display_9p_owner(dspbuf, pbuff->pdata);
 }
 
-int display_9p_owner_val(hash_buffer_t * pbuff, char *str)
+int display_9p_owner_val(struct display_buffer * dspbuf,
+                         hash_buffer_t         * pbuff)
 {
-  return display_9p_owner((state_owner_t *)pbuff->pdata, str);
+  return display_9p_owner(dspbuf, pbuff->pdata);
 }
 
 int compare_9p_owner(state_owner_t *powner1,
@@ -84,11 +90,14 @@ int compare_9p_owner(state_owner_t *powner1,
 {
   if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str1[HASHTABLE_DISPLAY_STRLEN];
-      char str2[HASHTABLE_DISPLAY_STRLEN];
+      char                  str1[LOG_BUFF_LEN / 2];
+      char                  str2[LOG_BUFF_LEN / 2];
+      struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
+      struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
 
-      display_9p_owner(powner1, str1);
-      display_9p_owner(powner2, str2);
+      (void) display_9p_owner(&dspbuf1, powner1);
+      (void) display_9p_owner(&dspbuf2, powner2);
+
       LogFullDebug(COMPONENT_STATE,
                    "{%s} vs {%s}", str1, str2);
     }
