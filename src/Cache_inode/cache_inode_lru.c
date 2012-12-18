@@ -652,7 +652,8 @@ lru_thread(void *arg __attribute__((unused)))
           if (lru_thread_state.flags & LRU_SHUTDOWN)
                break;
 
-          extremis = (open_fd_count > lru_state.fds_hiwat);
+          if (cache_inode_gc_policy.use_fd_cache)
+               extremis = (open_fd_count > lru_state.fds_hiwat);
 
           if (!woke) {
                /* If we make it all the way through a timed sleep
