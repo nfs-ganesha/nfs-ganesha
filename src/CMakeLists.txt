@@ -34,7 +34,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit 2f728d6369dcfb28c6d09e0a74de1100114ee32e)
+set(tirpc_commit f8e9f1dd7036e563046fbe33f5926db4f91e792f)
 
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
