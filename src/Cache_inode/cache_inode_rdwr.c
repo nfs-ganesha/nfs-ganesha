@@ -80,255 +80,263 @@
 
 cache_inode_status_t
 cache_inode_rdwr(cache_entry_t *entry,
-                 cache_inode_io_direction_t io_direction,
-                 uint64_t offset,
-                 size_t io_size,
-                 size_t *bytes_moved,
-                 void *buffer,
-                 bool *eof,
-                 struct req_op_context *req_ctx,
-                 cache_inode_stability_t *stable)
+        cache_inode_io_direction_t io_direction,
+        uint64_t offset,
+        size_t io_size,
+        size_t *bytes_moved,
+        void *buffer,
+        bool *eof,
+        struct req_op_context *req_ctx,
+        cache_inode_stability_t *stable)
 {
-     /* Error return from FSAL calls */
-     fsal_status_t fsal_status = {0, 0};
-     struct fsal_obj_handle *obj_hdl = entry->obj_handle;
-     /* Required open mode to successfully read or write */
-     fsal_openflags_t openflags = FSAL_O_CLOSED;
-     fsal_openflags_t loflags;
-     /* True if we have taken the content lock on 'entry' */
-     bool content_locked = false;
-     /* True if we have taken the attribute lock on 'entry' */
-     bool attributes_locked = false;
-     cache_inode_status_t status = CACHE_INODE_SUCCESS;
-     bool fsal_stable = false;
+    /* Error return from FSAL calls */
+    fsal_status_t fsal_status = {0, 0};
+    struct fsal_obj_handle *obj_hdl = entry->obj_handle;
+    /* Required open mode to successfully read or write */
+    fsal_openflags_t openflags = FSAL_O_CLOSED;
+    fsal_openflags_t loflags;
+    /* True if we have taken the content lock on 'entry' */
+    bool content_locked = false;
+    /* True if we have taken the attribute lock on 'entry' */
+    bool attributes_locked = false;
+    /* TRUE if we opened a previously closed FD */
+    bool opened = false;
 
-     /* Set flags for a read or write, as appropriate */
-     if (io_direction == CACHE_INODE_READ) {
-          openflags = FSAL_O_READ;
-     } else {
-          openflags = FSAL_O_WRITE;
-          if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS)
-             openflags |= FSAL_O_SYNC;
-     }
+    cache_inode_status_t status = CACHE_INODE_SUCCESS;
+    bool fsal_stable = false;
 
-     assert(obj_hdl != NULL);
+    /* Set flags for a read or write, as appropriate */
+    if (io_direction == CACHE_INODE_READ) {
+        openflags = FSAL_O_READ;
+    } else {
+        openflags = FSAL_O_WRITE;
+        if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS)
+            openflags |= FSAL_O_SYNC;
+    }
 
-     /* IO is done only on REGULAR_FILEs */
-     if (entry->type != REGULAR_FILE) {
-          status = entry->type == DIRECTORY
-		  ? CACHE_INODE_IS_A_DIRECTORY : CACHE_INODE_BAD_TYPE;
-          goto out;
-     }
+    assert(obj_hdl != NULL);
 
-     if (*stable == CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER) {
-          /* Write to memory */
-          PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-          content_locked = true;
+    /* IO is done only on REGULAR_FILEs */
+    if (entry->type != REGULAR_FILE) {
+        status = entry->type == DIRECTORY
+                ? CACHE_INODE_IS_A_DIRECTORY : CACHE_INODE_BAD_TYPE;
+        goto out;
+    }
 
-          /* Is the unstable_data buffer allocated? */
-          if ((entry->object.file.unstable_data.buffer == NULL) &&
-              (io_size <= CACHE_INODE_UNSTABLE_BUFFERSIZE)) {
-               if ((entry->object.file.unstable_data.buffer =
+    if (*stable == CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER) {
+        /* Write to memory */
+        PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+        content_locked = true;
+
+        /* Is the unstable_data buffer allocated? */
+        if ((entry->object.file.unstable_data.buffer == NULL) &&
+                (io_size <= CACHE_INODE_UNSTABLE_BUFFERSIZE)) {
+            if ((entry->object.file.unstable_data.buffer =
                     gsh_malloc(CACHE_INODE_UNSTABLE_BUFFERSIZE)) == NULL) {
-                    status = CACHE_INODE_MALLOC_ERROR;
-                    goto out;
-               }
+                status = CACHE_INODE_MALLOC_ERROR;
+                goto out;
+            }
 
-               entry->object.file.unstable_data.offset = offset;
-               entry->object.file.unstable_data.length = io_size;
+            entry->object.file.unstable_data.offset = offset;
+            entry->object.file.unstable_data.length = io_size;
 
-               memcpy(entry->object.file.unstable_data.buffer,
-                      buffer, io_size);
+            memcpy(entry->object.file.unstable_data.buffer,
+                    buffer, io_size);
 
-               PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-               attributes_locked = true;
-               cache_inode_set_time_current(&obj_hdl->attributes.mtime);
-               *bytes_moved = io_size;
-          } else {
-               if ((entry->object.file.unstable_data.offset < offset) &&
-                   (io_size + offset < CACHE_INODE_UNSTABLE_BUFFERSIZE)) {
-                    entry->object.file.unstable_data.length =
-                         io_size + offset;
-                    memcpy(entry->object.file.unstable_data.buffer +
-                           offset, buffer, io_size);
+            PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+            attributes_locked = true;
+            cache_inode_set_time_current(&obj_hdl->attributes.mtime);
+            *bytes_moved = io_size;
+        } else {
+            if ((entry->object.file.unstable_data.offset < offset) &&
+                    (io_size + offset < CACHE_INODE_UNSTABLE_BUFFERSIZE)) {
+                entry->object.file.unstable_data.length =
+                        io_size + offset;
+                memcpy(entry->object.file.unstable_data.buffer +
+                        offset, buffer, io_size);
 
-                    PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-                    attributes_locked = true;
-                    cache_inode_set_time_current(&obj_hdl->attributes.mtime);
-                    *bytes_moved = io_size;
-               } else {
-                    /* Go back to stable writes */
-                    *stable = CACHE_INODE_SAFE_WRITE_TO_FS;
-               }
-          }
-          if (content_locked) {
-               PTHREAD_RWLOCK_unlock(&entry->content_lock);
-               content_locked = false;
-          }
-          if (attributes_locked) {
-               PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-               attributes_locked = false;
-          }
-     }
+                PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+                attributes_locked = true;
+                cache_inode_set_time_current(&obj_hdl->attributes.mtime);
+                *bytes_moved = io_size;
+            } else {
+                /* Go back to stable writes */
+                *stable = CACHE_INODE_SAFE_WRITE_TO_FS;
+            }
+        }
+        if (content_locked) {
+            PTHREAD_RWLOCK_unlock(&entry->content_lock);
+            content_locked = false;
+        }
+        if (attributes_locked) {
+            PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+            attributes_locked = false;
+        }
+    }
 
-     if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS ||
-         *stable == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
-          /* Write through the FSAL.  We need a write lock only
+    if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS ||
+            *stable == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
+        /* Write through the FSAL.  We need a write lock only
              if we need to open or close a file descriptor. */
-          PTHREAD_RWLOCK_rdlock(&entry->content_lock);
-          content_locked = true;
-          loflags = obj_hdl->ops->status(obj_hdl);
-          if (( !is_open(entry)) ||
-              (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
-               PTHREAD_RWLOCK_unlock(&entry->content_lock);
-               PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-	       loflags = obj_hdl->ops->status(obj_hdl);
-               if (( !is_open(entry)) ||
-                   (loflags && loflags != FSAL_O_RDWR &&
-                    loflags != openflags)) {
-                    status = cache_inode_open(entry,
-					      openflags,
-					      req_ctx,
-					      (CACHE_INODE_FLAG_CONTENT_HAVE |
-					       CACHE_INODE_FLAG_CONTENT_HOLD));
-                    if (status != CACHE_INODE_SUCCESS) {
-                         goto out;
-                    }
-               }
-          }
+        PTHREAD_RWLOCK_rdlock(&entry->content_lock);
+        content_locked = true;
+        loflags = obj_hdl->ops->status(obj_hdl);
+        while ((!is_open(entry)) ||
+                (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
+            PTHREAD_RWLOCK_unlock(&entry->content_lock);
+            PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+            loflags = obj_hdl->ops->status(obj_hdl);
+            if (( !is_open(entry)) ||
+                    (loflags && loflags != FSAL_O_RDWR &&
+                            loflags != openflags)) {
+                status = cache_inode_open(entry,
+                        openflags,
+                        req_ctx,
+                        (CACHE_INODE_FLAG_CONTENT_HAVE |
+                                CACHE_INODE_FLAG_CONTENT_HOLD));
+                if (status != CACHE_INODE_SUCCESS) {
+                    goto out;
+                }
+                opened = true;
+                PTHREAD_RWLOCK_unlock(&entry->content_lock);
+                PTHREAD_RWLOCK_rdlock(&entry->content_lock);
+            }
+        }
 
-          /* Call FSAL_read or FSAL_write */
-          if (io_direction == CACHE_INODE_READ) {
-               fsal_status = obj_hdl->ops->read(obj_hdl, req_ctx,
-                                                offset,
-                                                io_size,
-                                                buffer,
-                                                bytes_moved,
-                                                eof);
-          } else {
-               if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS)
-                 fsal_stable = true;
-               fsal_status = obj_hdl->ops->write(obj_hdl, req_ctx,
-                                                 offset,
-                                                 io_size,
-                                                 buffer,
-                                                 bytes_moved,
-                                                 &fsal_stable);
+        /* Call FSAL_read or FSAL_write */
+        if (io_direction == CACHE_INODE_READ) {
+            fsal_status = obj_hdl->ops->read(obj_hdl, req_ctx,
+                    offset,
+                    io_size,
+                    buffer,
+                    bytes_moved,
+                    eof);
+        } else {
+            if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS)
+                fsal_stable = true;
+            fsal_status = obj_hdl->ops->write(obj_hdl, req_ctx,
+                    offset,
+                    io_size,
+                    buffer,
+                    bytes_moved,
+                    &fsal_stable);
 
-               /* Alright, the unstable write is complete. Now if it was
+            /* Alright, the unstable write is complete. Now if it was
                   supposed to be a stable write we can sync to the hard
                   drive. */
 
-               if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS &&
-		   !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC) &&
-		   !fsal_stable) {
-                    fsal_status = obj_hdl->ops->commit(obj_hdl,
-						       offset,
-						       io_size);
-               }
-               if (fsal_stable)
-                 *stable = CACHE_INODE_SAFE_WRITE_TO_FS;
-          }
+            if (*stable == CACHE_INODE_SAFE_WRITE_TO_FS &&
+                    !(obj_hdl->ops->status(obj_hdl) & FSAL_O_SYNC) &&
+                    !fsal_stable) {
+                fsal_status = obj_hdl->ops->commit(obj_hdl,
+                        offset,
+                        io_size);
+            }
+            if (fsal_stable)
+                *stable = CACHE_INODE_SAFE_WRITE_TO_FS;
+        }
 
-          LogFullDebug(COMPONENT_FSAL,
-                       "cache_inode_rdwr: FSAL IO operation returned "
-                       "%d, asked_size=%zu, effective_size=%zu",
-                       fsal_status.major, io_size, *bytes_moved);
+        LogFullDebug(COMPONENT_FSAL,
+                "cache_inode_rdwr: FSAL IO operation returned "
+                "%d, asked_size=%zu, effective_size=%zu",
+                fsal_status.major, io_size, *bytes_moved);
 
-          if (FSAL_IS_ERROR(fsal_status)) {
-               if (fsal_status.major == ERR_FSAL_DELAY) {
-                    LogEvent(COMPONENT_CACHE_INODE,
-                             "cache_inode_rdwr: FSAL_write "
-                             " returned EBUSY");
-               } else {
-                    LogDebug(COMPONENT_CACHE_INODE,
-                             "cache_inode_rdwr: fsal_status.major = %d",
-                             fsal_status.major);
-               }
+        if (FSAL_IS_ERROR(fsal_status)) {
+            if (fsal_status.major == ERR_FSAL_DELAY) {
+                LogEvent(COMPONENT_CACHE_INODE,
+                        "cache_inode_rdwr: FSAL_write "
+                        " returned EBUSY");
+            } else {
+                LogDebug(COMPONENT_CACHE_INODE,
+                        "cache_inode_rdwr: fsal_status.major = %d",
+                        fsal_status.major);
+            }
 
-               *bytes_moved = 0;
-               status = cache_inode_error_convert(fsal_status);
+            *bytes_moved = 0;
+            status = cache_inode_error_convert(fsal_status);
 
-               if (fsal_status.major == ERR_FSAL_STALE) {
-                    cache_inode_kill_entry(entry);
-                    goto out;
-               }
+            if (fsal_status.major == ERR_FSAL_STALE) {
+                cache_inode_kill_entry(entry);
+                goto out;
+            }
 
-               if ((fsal_status.major != ERR_FSAL_NOT_OPENED)
-                   && (obj_hdl->ops->status(obj_hdl) != FSAL_O_CLOSED)) {
-                    cache_inode_status_t cstatus;
+            if ((fsal_status.major != ERR_FSAL_NOT_OPENED)
+                    && (obj_hdl->ops->status(obj_hdl) != FSAL_O_CLOSED)) {
+                cache_inode_status_t cstatus;
 
-                    LogFullDebug(COMPONENT_CACHE_INODE,
-                                 "cache_inode_rdwr: CLOSING entry %p",
-                                 entry);
-                    PTHREAD_RWLOCK_unlock(&entry->content_lock);
-                    PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+                LogFullDebug(COMPONENT_CACHE_INODE,
+                        "cache_inode_rdwr: CLOSING entry %p",
+                        entry);
+                PTHREAD_RWLOCK_unlock(&entry->content_lock);
+                PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
-                    cstatus = cache_inode_close(entry,
-						(CACHE_INODE_FLAG_REALLYCLOSE |
-						 CACHE_INODE_FLAG_CONTENT_HAVE |
-						 CACHE_INODE_FLAG_CONTENT_HOLD));
+                cstatus = cache_inode_close(entry,
+                        (CACHE_INODE_FLAG_REALLYCLOSE |
+                                CACHE_INODE_FLAG_CONTENT_HAVE |
+                                CACHE_INODE_FLAG_CONTENT_HOLD));
 
-                    if (cstatus != CACHE_INODE_SUCCESS) {
-                        LogCrit(COMPONENT_CACHE_INODE_LRU,
-                                "Error closing file in cache_inode_rdwr: %d.",
-                                cstatus); 
-                    }
-               }
+                if (cstatus != CACHE_INODE_SUCCESS) {
+                    LogCrit(COMPONENT_CACHE_INODE_LRU,
+                            "Error closing file in cache_inode_rdwr: %d.",
+                            cstatus);
+                }
+            }
 
-               goto out;
-          }
+            goto out;
+        }
 
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: inode/direct: io_size=%zu, "
-                       "bytes_moved=%zu, offset=%"PRIu64,
-                       io_size, *bytes_moved, offset);
+        LogFullDebug(COMPONENT_CACHE_INODE,
+                "cache_inode_rdwr: inode/direct: io_size=%zu, "
+                "bytes_moved=%zu, offset=%"PRIu64,
+                io_size, *bytes_moved, offset);
 
-          if (is_open(entry)) {
-               status = cache_inode_close(entry,
-					  CACHE_INODE_FLAG_CONTENT_HAVE |
-					  CACHE_INODE_FLAG_CONTENT_HOLD);
-               if (status != CACHE_INODE_SUCCESS) {
-                    LogEvent(COMPONENT_CACHE_INODE,
-                             "cache_inode_rdwr: cache_inode_close = %d",
-                             status);
-                    goto out;
-               }
-          }
+        if (opened) {
+            PTHREAD_RWLOCK_unlock(&entry->content_lock);
+            PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+            status = cache_inode_close(entry,
+                    CACHE_INODE_FLAG_CONTENT_HAVE |
+                    CACHE_INODE_FLAG_CONTENT_HOLD);
+            if (status != CACHE_INODE_SUCCESS) {
+                LogEvent(COMPONENT_CACHE_INODE,
+                        "cache_inode_rdwr: cache_inode_close = %d",
+                        status);
+                goto out;
+            }
+        }
 
-          if (content_locked) {
-               PTHREAD_RWLOCK_unlock(&entry->content_lock);
-               content_locked = false;
-          }
-     }
+        if (content_locked) {
+            PTHREAD_RWLOCK_unlock(&entry->content_lock);
+            content_locked = false;
+        }
+    }
 
-     PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-     attributes_locked = true;
-     if (io_direction == CACHE_INODE_WRITE) {
-	  if ((status = cache_inode_refresh_attrs(entry, req_ctx))
-              != CACHE_INODE_SUCCESS) {
-               goto out;
-          }
-     } else {
-          cache_inode_set_time_current(&obj_hdl->attributes.atime);
-     }
-     PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-     attributes_locked = false;
+    PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+    attributes_locked = true;
+    if (io_direction == CACHE_INODE_WRITE) {
+        if ((status = cache_inode_refresh_attrs(entry, req_ctx))
+                != CACHE_INODE_SUCCESS) {
+            goto out;
+        }
+    } else {
+        cache_inode_set_time_current(&obj_hdl->attributes.atime);
+    }
+    PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+    attributes_locked = false;
 
-     status = CACHE_INODE_SUCCESS;
+    status = CACHE_INODE_SUCCESS;
 
-out:
+    out:
 
-     if (content_locked) {
-          PTHREAD_RWLOCK_unlock(&entry->content_lock);
-          content_locked = false;
-     }
+    if (content_locked) {
+        PTHREAD_RWLOCK_unlock(&entry->content_lock);
+        content_locked = false;
+    }
 
-     if (attributes_locked) {
-          PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-          attributes_locked = false;
-     }
+    if (attributes_locked) {
+        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+        attributes_locked = false;
+    }
 
-     return status;
+    return status;
 }
 /** @} */
