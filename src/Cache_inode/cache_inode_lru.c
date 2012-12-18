@@ -121,7 +121,6 @@
 /* Forward Declaration */
 
 static void *lru_thread(void *arg);
-static void *lru_thread_no_fdcache(void *arg);
 struct lru_state lru_state;
 
 /**
@@ -579,79 +578,6 @@ lru_thread_delay_ms(unsigned long ms)
      lru_thread_state.flags &= ~LRU_SLEEPING;
      pthread_mutex_unlock(&lru_mtx);
      return (woke);
-}
-
-static void *
-lru_thread_no_fdcache(void *arg __attribute__((unused)))
-{
-     /* Index */
-     size_t lane = 0;
-     /* Temporary holder for flags */
-     uint32_t tmpflags = lru_state.flags;
-     uint64_t t_count = 0;
-     uint64_t pinned_t_count = 0;     
-     SetNameFunction("lru_thread_no_fdcache");
-
-     while (1) {
-          if (lru_thread_state.flags & LRU_SHUTDOWN)
-               break;
-
-          t_count = 0;
-          pinned_t_count = 0;
-          /* First, sum the queue counts.  This lets us know where we
-             are relative to our watermarks. */
-
-          for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-               pthread_mutex_lock(&LRU_1[lane].lru.mtx);
-               t_count += LRU_1[lane].lru.size;
-               pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
-
-               pthread_mutex_lock(&LRU_1[lane].lru_pinned.mtx);
-               pinned_t_count += LRU_1[lane].lru_pinned.size;
-               pthread_mutex_unlock(&LRU_1[lane].lru_pinned.mtx);
-
-               pthread_mutex_lock(&LRU_2[lane].lru.mtx);
-               t_count += LRU_2[lane].lru.size;
-               pthread_mutex_unlock(&LRU_2[lane].lru.mtx);
-
-               pthread_mutex_lock(&LRU_2[lane].lru_pinned.mtx);
-               pinned_t_count += LRU_2[lane].lru_pinned.size;
-               pthread_mutex_unlock(&LRU_2[lane].lru_pinned.mtx);
-          }
-          LogDebug(COMPONENT_CACHE_INODE_LRU,
-                   "%zu non-pinned entries. %zu pinned entries.",
-                   t_count, pinned_t_count);
-
-          t_count += pinned_t_count;
-
-          LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                       "lru entries: %zu   cache entries: %zu",
-                       t_count, HashTable_GetSize(fh_to_cache_entry_ht));
-
-          if (tmpflags & LRU_STATE_RECLAIMING) {
-              if (t_count < lru_state.entries_lowat) {
-                  tmpflags &= ~LRU_STATE_RECLAIMING;
-                  LogDebug(COMPONENT_CACHE_INODE_LRU,
-                               "Entry count below low water mark. "
-                               "Disabling reclaim mode.");
-               }
-          } else {
-              if (t_count > lru_state.entries_hiwat) {
-                  tmpflags |= LRU_STATE_RECLAIMING;
-                  LogDebug(COMPONENT_CACHE_INODE_LRU,
-                               "Entry count above high water mark. "
-                               "Enabling reclaim mode.");
-               }
-          }
-
-          /* Update global state */
-          pthread_mutex_lock(&lru_mtx);
-          lru_state.flags = tmpflags;
-
-          pthread_mutex_unlock(&lru_mtx);
-          lru_thread_delay_ms(lru_state.threadwait);
-     }
-     return NULL;
 }
 
 /**
@@ -1169,12 +1095,8 @@ cache_inode_lru_pkginit(void)
      }
 
      /* spawn LRU background thread */
-     if (cache_inode_gc_policy.use_fd_cache)
-       code = pthread_create(&lru_thread_state.thread_id, &attr_thr,
-                             lru_thread, NULL);
-     else
-       code = pthread_create(&lru_thread_state.thread_id, &attr_thr,
-                             lru_thread_no_fdcache, NULL);
+     code = pthread_create(&lru_thread_state.thread_id, &attr_thr, lru_thread,
+                          NULL);
      if (code != 0) {
           code = errno;
           LogFatal(COMPONENT_CACHE_INODE_LRU,
