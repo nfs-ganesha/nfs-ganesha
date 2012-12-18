@@ -197,7 +197,7 @@ cache_inode_open(cache_entry_t *entry,
                goto unlock;
           }
 
-          if (cache_inode_gc_policy.use_fd_cache && !FSAL_IS_ERROR(fsal_status))
+          if (!FSAL_IS_ERROR(fsal_status))
               atomic_dec_size_t(&open_fd_count);
 
           /* Force re-openning */
@@ -227,8 +227,7 @@ cache_inode_open(cache_entry_t *entry,
           /* This is temporary code, until Jim Lieb makes FSALs cache
              their own file descriptors.  Under that regime, the LRU
              thread will interrogate FSALs for their FD use. */
-          if (cache_inode_gc_policy.use_fd_cache)
-              atomic_inc_size_t(&open_fd_count);
+          atomic_inc_size_t(&open_fd_count);
 
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_open: pentry %p: openflags = %d, "
@@ -327,7 +326,7 @@ cache_inode_close(cache_entry_t *entry,
                        *status, cache_inode_err_str(*status), entry);
                goto unlock;
           }
-          if (cache_inode_gc_policy.use_fd_cache && !FSAL_IS_ERROR(fsal_status))
+          if (!FSAL_IS_ERROR(fsal_status))
               atomic_dec_size_t(&open_fd_count);
      }
 
