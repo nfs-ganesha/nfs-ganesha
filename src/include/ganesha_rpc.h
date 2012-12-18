@@ -144,7 +144,7 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
     if (flags & XPRT_PRIVATE_FLAG_INCREQ)
         req_cnt = ++(xu->req_cnt);
 
-    refd = SVC_REF(xprt,  SVC_REF_FLAG_LOCKED);
+    refd = SVC_REF(xprt, SVC_REF_FLAG_LOCKED);
     /* !LOCKED */
 
     LogFullDebug(COMPONENT_DISPATCH,
