@@ -92,17 +92,19 @@ cache_inode_readlink(cache_entry_t *entry,
           PTHREAD_RWLOCK_wrlock(&entry->content_lock);
           /* Make sure nobody updated the content while we were
              waiting. */
-          if (!(entry->flags & CACHE_INODE_TRUST_CONTENT)) {
-               fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
-                                                              req_ctx,
-                                                              link_content->addr,
-                                                              &link_content->len,
-                                                              true);
-               if (!(FSAL_IS_ERROR(fsal_status))) {
-                    atomic_set_uint32_t_bits(&entry->flags,
-                                             CACHE_INODE_TRUST_CONTENT);
-               }
+          bool refresh = !(entry->flags & CACHE_INODE_TRUST_CONTENT);
+
+          fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
+                  req_ctx,
+                  link_content->addr,
+                  &link_content->len,
+                  refresh);
+
+          if (refresh && !(FSAL_IS_ERROR(fsal_status))) {
+              atomic_set_uint32_t_bits(&entry->flags,
+                      CACHE_INODE_TRUST_CONTENT);
           }
+
      } else {
              fsal_status = entry->obj_handle->ops->readlink(
                                                          entry->obj_handle,
