@@ -39,11 +39,4 @@ SET(9p_STAT_SRCS
 
 add_library(9p STATIC ${9p_STAT_SRCS})
 
-target_link_libraries(9p
-  ConfigParsing
-  rquota
-  support
-)
-
-
 ########### install files ###############

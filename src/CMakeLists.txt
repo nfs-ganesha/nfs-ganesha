@@ -325,6 +325,19 @@ include_directories(
   "${OS_INCLUDE_DIR}"
 )
 
+# Fixup loose bits of autotools legacy
+set(_USE_9P ${USE_9P})
+set(_USE_9P_RDMA ${USE_9P_RDMA})
+
+if(USE_CB_SIMULATOR)
+  set(_USE_CB_SIMULATOR ON)
+endif(USE_CB_SIMULATOR)
+
+if(USE_TIRPC_IPV6)
+  set(_USE_TIRPC_IPV6 ON)
+endif(USE_TIRPC_IPV6)
+
+
 # Pull in TIRPC and build it
 
 include(ExternalProject)
@@ -362,9 +375,10 @@ set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libtirpc/lib/libntirpc.a")
 find_library(LIBRT rt)  # extended Pthreads functions
 
 # Roll up required libraries
+
+#Protocols we support
 set(PROTOCOLS
   nfsproto
-  nfs_mnt_xdr
   nlm
   rquota
 )
@@ -373,28 +387,46 @@ if(USE_9P)
   set(PROTOCOLS ${PROTOCOLS} 9p)
 endif(USE_9P)
 
-set(_USE_9P ${USE_9P})
-set(_USE_9P_RDMA ${USE_9P_RDMA})
+set(PROTOCOLS
+  ${PROTOCOLS}
+  nfs_mnt_xdr
+  )
+
+# Core subsystems
+set(GANESHA_CORE
+  sal
+  cache_inode
+  idmap
+  avltree
+  weakref
+  hashtable
+  hash
+  rpcal
+  gssd
+  log
+  common_utils
+  support
+  fsalup
+  nfs4callbacks
+  cidr
+  NodeList
+  string_utils
+  )
 
 if(USE_DBUS)
-  set(PROTOCOLS ${PROTOCOLS} gshdbus)
+  set(GANESHA_CORE ${GANESHA_CORE} gshdbus)
 endif(USE_DBUS)
 
-if(USE_CB_SIMULATOR)
-  set(_USE_CB_SIMULATOR ON)
-endif(USE_CB_SIMULATOR)
-
-if(USE_TIRPC_IPV6)
-  set(_USE_TIRPC_IPV6 ON)
-endif(USE_TIRPC_IPV6)
-
+# All the plumbing in the basement
 set(SYSTEM_LIBRARIES
   ConfigParsing
   ${LIBTIRPC_LIBRARIES}
-  ${KRB5_LIBRARIES}
-  gssapi_krb5
   ${SYSTEM_LIBRARIES}
   ${LIBDL}
+  ${KRB5_LIBRARIES}
+  gssapi_krb5
+  crypto
+  ssl
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
 )

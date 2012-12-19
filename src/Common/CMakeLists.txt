@@ -7,8 +7,4 @@ SET(common_utils_STAT_SRCS
 
 add_library(common_utils STATIC ${common_utils_STAT_SRCS})
 
-target_link_libraries(common_utils
-  ${CMAKE_THREAD_LIBS_INIT}
-)
-
 ########### install files ###############

@@ -12,8 +12,4 @@ SET(fsalup_STAT_SRCS
 
 add_library(fsalup STATIC ${fsalup_STAT_SRCS})
 
-target_link_libraries(fsalup
-  nfs4callbacks
-)
-
 ########### install files ###############

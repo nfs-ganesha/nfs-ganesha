@@ -17,8 +17,4 @@ SET(cidr_STAT_SRCS
 
 add_library(cidr STATIC ${cidr_STAT_SRCS})
 
-target_link_libraries(cidr
-  ${CMAKE_THREAD_LIBS_INIT}
-)
-
 ########### install files ###############
