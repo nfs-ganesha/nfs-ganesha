@@ -13,7 +13,7 @@
 int g_closeHandle_req_msgq;
 int g_closeHandle_rsp_msgq;
 extern struct file_handles_struct_t g_fsi_handles; // FSI client handles
-pthread_mutex_t g_close_handle_mutex; // file handle processing mutex
+pthread_mutex_t g_close_handle_mutex[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS]; // file handle processing mutex
 
 bool     g_poll_for_timeouts; // check for timed-out handles
 uint64_t g_poll_iterations;   // number of times poll thread has been called
@@ -55,7 +55,10 @@ void *ptfsal_closeHandle_listener_thread(void *args)
   struct msg_t msg;
   int msg_bytes;
   int close_rc;
+  int i;
   struct CommonMsgHdr *msgHdr;
+  int handleIdxFound;
+
   SetNameFunction("PT FSAL CloseOnOpen Handler");
 
   rc = ptfsal_closeHandle_attach_to_queues();
@@ -63,7 +66,10 @@ void *ptfsal_closeHandle_listener_thread(void *args)
     exit (1);
   }
 
-  pthread_mutex_init(&g_close_handle_mutex, NULL);
+  for (i=0; i<FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS; i++) {
+    pthread_mutex_init(&g_close_handle_mutex[i], NULL);
+  }
+
   while (1) {
     msg_bytes = rcv_msg_wait_block(g_closeHandle_req_msgq,
                                    &msg,
@@ -78,13 +84,14 @@ void *ptfsal_closeHandle_listener_thread(void *args)
               Currently, one close thread model will work since we don't
               shuffle handle around and there is only one place to
               actually close the handle (which is here) in the code */
-      ccl_up_mutex_lock(&g_close_handle_mutex);
-      close_rc = ccl_find_oldest_handle();
-      if (close_rc != -1) {
-        close_rc = ptfsal_implicit_close_for_nfs(close_rc,
+
+      handleIdxFound = ccl_find_oldest_handle();
+      if (handleIdxFound != -1) {
+        ccl_up_mutex_lock(&g_close_handle_mutex[handleIdxFound]);
+        close_rc = ptfsal_implicit_close_for_nfs(handleIdxFound,
                                                  CCL_CLOSE_STYLE_NORMAL);
+        ccl_up_mutex_unlock(&g_close_handle_mutex[handleIdxFound]);
       }
-      ccl_up_mutex_unlock(&g_close_handle_mutex);
       /* Send the response back */
       msgHdr = (struct CommonMsgHdr *) &msg.mtext[0];
       msgHdr->transactionRc = close_rc;
@@ -123,7 +130,7 @@ void ptfsal_close_timedout_handle_bkg(void)
                 g_fsi_handles.m_handle[index].m_last_io_time, index,
                 current_time, g_fsi_handles.m_handle[index].m_nfs_state,
                 g_fsi_handles.m_handle[index].m_hndl_in_use);
-      ccl_up_mutex_lock(&g_close_handle_mutex);
+
       if (ccl_can_close_handle(index,
 			       CCL_POLLING_THREAD_HANDLE_TIMEOUT_SEC)) {
         /* We've found timed out handle and we are sending an explicit
@@ -137,14 +144,13 @@ void ptfsal_close_timedout_handle_bkg(void)
          *       allow other close_on_open logic to come in
          */
         FSI_TRACE(FSI_NOTICE, "Found timed-out handle[%d]",index);
+        ccl_up_mutex_lock(&g_close_handle_mutex[index]);
         close_rc = ptfsal_implicit_close_for_nfs(index, CCL_CLOSE_STYLE_NORMAL);
-        ccl_up_mutex_unlock(&g_close_handle_mutex);
+        ccl_up_mutex_unlock(&g_close_handle_mutex[index]);
         if (close_rc == -1) {
           FSI_TRACE(FSI_ERR, "Failed to implicitly close handle[%d]",index);
         } 
         usleep(1000);
-      } else {
-        ccl_up_mutex_unlock(&g_close_handle_mutex);
       }
     }
   }
