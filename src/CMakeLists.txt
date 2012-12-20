@@ -72,7 +72,6 @@ option(USE_FSAL_SHOOK "build SHOOK FSAL" OFF)
 
 
 # Build configure options
-
 option(USE_DBUS "enable DBUS protocol support" OFF)
 
 # Various DBUS enabled features
