@@ -887,7 +887,7 @@ extern pthread_mutex_t g_parseio_mutex;
 extern pthread_mutex_t g_transid_mutex;
 extern pthread_mutex_t g_non_io_mutex;
 extern pthread_mutex_t g_statistics_mutex;
-extern pthread_mutex_t g_close_mutex;
+extern pthread_mutex_t g_close_mutex[FSI_MAX_STREAMS + FSI_CIFS_RESERVED_STREAMS];
 // Global I/O mutex
 extern pthread_mutex_t g_io_mutex;
 #endif // ifndef __FSI_IPC_CCL_H__
