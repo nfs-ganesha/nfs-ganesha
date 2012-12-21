@@ -131,6 +131,11 @@ if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   set(USE_DBUS ON)
 endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 
+if(USE_9P_RDMA AND NOT USE_9P)
+  message(WARNING "The support of 9P/RDMA needs 9P protocol support. Enabling 9P")
+  set(USE_9P ON)
+endif(USE_9P_RDMA AND NOT USE_9P)
+
 set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
 set(ALLOCATOR "jemalloc" CACHE STRING
   "specify the memory allocator to use: jemalloc|tcmalloc|libc")
