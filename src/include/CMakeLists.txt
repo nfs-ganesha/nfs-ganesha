@@ -21,7 +21,6 @@ install(FILES  ganesha_fuse_wrap.h DESTINATION include)
 #                 HashData.h                      \
 #                 HashTable.h                     \
 #                 MesureTemps.h                   \
-#                 RW_Lock.h                       \
 #                 HashData.h                      \
 #                 HashTable.h                     \
 #                 avltree.h                       \
@@ -32,8 +31,6 @@ install(FILES  ganesha_fuse_wrap.h DESTINATION include)
 #                 murmur3.h                       \
 #                 cidr.h                          \
 #                 MesureTemps.h                   \
-#                 RW_Lock.h                       \
-#                 SemN.h                          \
 #                 nodelist.h                      \
 #                 fsal.h                          \
 #                 fsal_api.h                      \
@@ -78,7 +75,6 @@ install(FILES  ganesha_fuse_wrap.h DESTINATION include)
 #                 Rpc_com_tirpc.h                 \
 #                 solaris_port.h                  \
 #		 rpc/svc_auth.h                  \
-#                 SemN.h                          \
 #                 lookup3.h                       \
 #                 config.h                        \
 #                 sal_data.h                      \

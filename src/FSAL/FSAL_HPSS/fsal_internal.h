@@ -66,12 +66,6 @@ void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in);
 void fsal_internal_SetReturnInconsistentDirent(fsal_uint_t bool_in);
 
 /**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall();
-void ReleaseTokenFSCall();
-
-/**
  * fsal_do_log:
  * Indicates if an FSAL error has to be traced
  * into its log file in the NIV_EVENT level.

@@ -485,11 +485,12 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops);
  *	FS_specific = "foo=baz,enable_A";
  */
 static bool fs_specific_has(const char *fs_specific, const char* key,
-			   char *val, int max_val_bytes)
+			    char *val, int max_val_bytes)
 {
 	char *fso_copy = strdup(fs_specific); /* enable multiple searches */
 	char *next_comma, *option;
 	bool ret;
+	char *fso_dup = fso_copy;
 
 	for (option = strtok_r(fso_copy, ",", &next_comma);
 	     option; 
@@ -508,7 +509,7 @@ static bool fs_specific_has(const char *fs_specific, const char* key,
 
 	ret = false;
 out:
-	free(fso_copy);
+	free(fso_dup);
 	return ret;
 }
 

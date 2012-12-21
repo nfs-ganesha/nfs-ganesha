@@ -77,11 +77,9 @@ fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * filehandle,   /* IN */
       attrBits = cast64m(0);
       attrBits = orbit64m(attrBits, NS_FS_ATTRINDEX_COS);
 
-      TakeTokenFSCall();
       rc = hpss_FilesetGetAttributes(NULL, NULL,
                                      &p_context->export_context->fileset_root_handle,
                                      NULL, attrBits, &fsattrs);
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
@@ -90,9 +88,7 @@ fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * filehandle,   /* IN */
 
     }
 
-  TakeTokenFSCall();
   rc = hpss_Statfs(p_context->export_context->default_cos, &hpss_statfs);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
@@ -112,11 +108,9 @@ fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * filehandle,   /* IN */
       attrBits = cast64m(0);
       attrBits = orbit64m(attrBits, NS_FS_ATTRINDEX_COS);
 
-      TakeTokenFSCall();
       rc = hpss_FilesetGetAttributes(NULL, NULL,
                                      &p_context->export_context->fileset_root_handle,
                                      NULL, attrBits, &fsattrs);
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
@@ -125,9 +119,7 @@ fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * filehandle,   /* IN */
 
     }
 
-  TakeTokenFSCall();
   rc = hpss_Statfs(p_context->export_context->default_cos, &hpss_statfs);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
@@ -150,9 +142,7 @@ fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * filehandle,   /* IN */
 
       /* recupere la racine */
 
-      TakeTokenFSCall();
       rc = HPSSFSAL_GetRoot(&rootattr);
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
@@ -164,9 +154,7 @@ fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * filehandle,   /* IN */
       attrBits = cast64m(0);
       attrBits = orbit64m(attrBits, NS_FS_ATTRINDEX_COS);
 
-      TakeTokenFSCall();
       rc = hpss_FilesetGetAttributes(NULL, NULL, &fshdl, NULL, attrBits, &fsattrs);
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
@@ -181,9 +169,7 @@ fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * filehandle,   /* IN */
 
   /* then retrieve info about this cos */
 
-  TakeTokenFSCall();
   rc = hpss_Statfs(cos_export, &hpss_statfs);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);

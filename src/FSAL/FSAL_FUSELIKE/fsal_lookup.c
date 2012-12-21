@@ -96,9 +96,7 @@ fsal_status_t FUSEFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
         Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* get root handle */
-      TakeTokenFSCall();
       rc = p_fs_ops->getattr("/", &stbuff);
-      ReleaseTokenFSCall();
 
       /* error getting root ?! => EIO */
       if(rc)
@@ -193,9 +191,7 @@ fsal_status_t FUSEFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
           FSAL_internal_append_path(child_path, parent_path, p_filename->name);
         }
 
-      TakeTokenFSCall();
       rc = p_fs_ops->getattr(child_path, &stbuff);
-      ReleaseTokenFSCall();
 
       LogFullDebug(COMPONENT_FSAL, "%s: gettattr status=%d", child_path, rc);
 

@@ -26,6 +26,10 @@
 #ifndef HANDLE_LINUX_H
 #define HANDLE_LINUX_H
 
+#ifndef AT_EMPTY_PATH
+#define AT_EMPTY_PATH           0x1000
+#endif
+
 /*
  * This is the Linux-specific variation for the by-handle or "at" syscalls.
  * The vfs_file_handle_t is a redefinition of struct file_handle so

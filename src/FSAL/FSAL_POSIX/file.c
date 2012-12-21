@@ -38,7 +38,7 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "posix_methods.h"
-#include "FSAL/FSAL_POSIX/fsal_handle_syscalls.h"
+#include "fsal_handle_syscalls.h"
 
 #include "redblack.h"
 #include "sockbuf.h"

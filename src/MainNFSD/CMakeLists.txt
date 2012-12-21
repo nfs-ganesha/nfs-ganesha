@@ -90,13 +90,6 @@ endif(USE_CB_SIMULATOR)
 
 add_library(MainServices STATIC ${MainServices_STAT_SRCS})
 
-target_link_libraries(MainServices
-  ${PROTOCOLS}
-  rpcal
-  log
-  support
-)
-
 # FSAL core sources
 # fsal_manager is the only object referenced by the core server
 # all the rest are for the common support of fsal plugins.
@@ -148,7 +141,8 @@ add_executable(ganesha.nfsd
 target_link_libraries(ganesha.nfsd
   MainServices
   ${PROTOCOLS}
-  ${SYSTEM_LIBRARIES} crypto ssl
+  ${GANESHA_CORE}
+  ${SYSTEM_LIBRARIES}
 )
 
 

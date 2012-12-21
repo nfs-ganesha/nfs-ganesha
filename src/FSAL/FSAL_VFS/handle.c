@@ -919,7 +919,7 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 			               O_PATH|O_NOACCESS,
 				       fsal_error);
 		if(fd < 0) {
-			return -fd;
+			return fd;
 		}
 		retval = fstatat(fd,
 				 myself->u.unopenable.name,
@@ -933,7 +933,7 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 	open_file:
 		fd = vfs_fsal_open(myself, open_flags, fsal_error);
 		if(fd < 0) {
-			return -fd;
+			return fd;
 		}
 		retval = fstatat(fd,
 				 "",

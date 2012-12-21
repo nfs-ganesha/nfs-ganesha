@@ -26,6 +26,8 @@
 #cmakedefine HAVE_STDBOOL_H 1
 #cmakedefine HAVE_KRB5 1
 #cmakedefine KRB5_VERSION @KRB5_VERSION@
+#cmakedefine HAVE_HEIMDAL 1
+#cmakedefine USE_GSS_KRB5_CCACHE_NAME 1
 #cmakedefine LINUX 1
 #cmakedefine FREEBSD 1
 #cmakedefine APPLE 1

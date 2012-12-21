@@ -19,7 +19,6 @@
 
 #include  "fsal.h"
 #include "fsal_internal.h"
-#include "SemN.h"
 
 #include <pthread.h>
 
@@ -82,7 +81,6 @@ void *fs_private_data = NULL;
 
 /* variables for limiting the calls to the filesystem */
 static int limit_calls = false;
-semaphore_t sem_fs_calls;
 
 /* threads keys for stats */
 static pthread_key_t key_stats;
@@ -227,31 +225,6 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
     (*output_stats) = (*bythread_stat);
 
   return;
-
-}
-
-/**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == false)
-    return;
-
-  /* there is a limit */
-  semaphore_P(&sem_fs_calls);
-
-}
-
-void ReleaseTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == false)
-    return;
-
-  /* there is a limit */
-  semaphore_V(&sem_fs_calls);
 
 }
 

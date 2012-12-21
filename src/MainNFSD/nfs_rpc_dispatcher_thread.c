@@ -63,7 +63,6 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
-#include "SemN.h"
 #include "nfs_tcb.h"
 #include "fridgethr.h"
 
@@ -777,7 +776,7 @@ nfs_rpc_free_xprt(SVCXPRT *xprt)
 {
     if (xprt->xp_u1) {
         free_gsh_xprt_private(xprt->xp_u1);
-        xprt->xp_p1 = NULL;
+        xprt->xp_u1 = NULL;
     }
 }
 
@@ -864,6 +863,9 @@ thr_stallq(void *arg)
                 /* drop stallq ref */
                 --(xu->refcnt);
                 pthread_mutex_unlock(&xprt->xp_lock);
+                LogDebug(COMPONENT_DISPATCH, "unstalling stalled xprt %p",
+                         xprt);
+                (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
                 goto restart;
             }
         }
@@ -878,17 +880,24 @@ thr_stallq(void *arg)
 static bool
 nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
 {
-    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    gsh_xprt_private_t *xu;
     bool activate = FALSE;
     uint32_t nreqs;
 
     pthread_mutex_lock(&xprt->xp_lock);
+
+    xu = (gsh_xprt_private_t *) xprt->xp_u1;
     nreqs = xu->req_cnt;
+
+    LogDebug(COMPONENT_DISPATCH,
+            "xprt %p refcnt %d has %d %d reqs active (max %d)",
+            xprt, xu->refcnt, nreqs, xu->req_cnt,
+            nfs_param.core_param.dispatch_max_reqs_xprt);
 
     /* check per-xprt quota */
     if (likely(nreqs < nfs_param.core_param.dispatch_max_reqs_xprt)) {
         pthread_mutex_unlock(&xprt->xp_lock);
-        goto out;
+        return (FALSE);
     }
 
     /* XXX can't happen */
@@ -896,7 +905,7 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
         pthread_mutex_unlock(&xprt->xp_lock);
         LogDebug(COMPONENT_DISPATCH, "xprt %p already stalled (oops)",
                  xprt);
-        goto out;
+        return (TRUE);
     }
 
     LogDebug(COMPONENT_DISPATCH, "xprt %p has %u reqs, marking stalled",
@@ -922,8 +931,8 @@ nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
         (void) fridgethr_get(req_fridge, thr_stallq, NULL /* no arg */);
     }
 
-out:
-    return (FALSE);
+    /* stalled */
+    return (TRUE);
 }
 
 void
@@ -1473,6 +1482,23 @@ done:
     return (stat);
 }
 
+static inline bool
+thr_continue_decoding(SVCXPRT *xprt, enum xprt_stat stat)
+{
+    gsh_xprt_private_t *xu;
+    uint32_t nreqs;
+
+    pthread_mutex_lock(&xprt->xp_lock);
+    xu = (gsh_xprt_private_t *) xprt->xp_u1;
+    nreqs = xu->req_cnt;
+    pthread_mutex_unlock(&xprt->xp_lock);
+
+    if (unlikely(nreqs > nfs_param.core_param.dispatch_max_reqs_xprt))
+        return (FALSE);
+
+    return (stat == XPRT_MOREREQS);
+}
+
 void *
 thr_decode_rpc_requests(void *arg)
 {
@@ -1484,7 +1510,7 @@ thr_decode_rpc_requests(void *arg)
      * will result in stalls (TCP) */
     do {
         stat = thr_decode_rpc_request(thr_ctx, xprt);
-    } while (stat == XPRT_MOREREQS);
+    } while (thr_continue_decoding(xprt, stat));
 
     LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
 
@@ -1621,6 +1647,8 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     if (nfs_rpc_cond_stall_xprt(xprt)) {
         /* Xprt stalled--bail.  Stall queue owns xprt ref and state. */
         LogDebug(COMPONENT_DISPATCH, "stalled, bail");
+        /* update accounting, clear decoding flag */
+        gsh_xprt_clear_flag(xprt, XPRT_PRIVATE_FLAG_DECODING);
         goto out;
     }
 

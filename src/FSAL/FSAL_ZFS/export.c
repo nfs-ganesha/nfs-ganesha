@@ -22,7 +22,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /* export.c
@@ -42,7 +42,6 @@
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
 #include "zfs_methods.h"
-#include "FSAL/FSAL_ZFS/fsal_types.h"
 
 libzfswrap_handle_t *p_zhd = NULL ;
 size_t i_snapshots = 0 ;

@@ -76,9 +76,7 @@ fsal_status_t FUSEFSAL_opendir(fsal_handle_t * dir_hdl,  /* IN */
 
   if(p_fs_ops->opendir)
     {
-      TakeTokenFSCall();
       rc = p_fs_ops->opendir(object_path, &(dir_descriptor->dir_info));
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_opendir);
@@ -351,7 +349,6 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
   memcpy( (char *)&reqbuff.begin_off, (char *)&start_position.data, sizeof( off_t ) ) ;
   reqbuff.curr_off = 0 ;
 
-  TakeTokenFSCall();
 
   if(p_fs_ops->readdir)
     rc = p_fs_ops->readdir(dir_path, (void *)&reqbuff, ganefuse_fill_dir,
@@ -359,7 +356,6 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
   else
     rc = p_fs_ops->getdir(dir_path, (ganefuse_dirh_t) & reqbuff, ganefuse_dirfil_old);
 
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_readdir);
@@ -496,11 +492,9 @@ fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_desc     /* IN */
 
   /* release the resources used for reading directory */
 
-  TakeTokenFSCall();
 
   rc = p_fs_ops->releasedir(dir_path, &dir_descriptor->dir_info);
 
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_closedir);

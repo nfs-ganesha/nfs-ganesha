@@ -57,12 +57,10 @@ fsal_status_t GPFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* get the path of the directory */
-  TakeTokenFSCall();
   status =
       fsal_internal_handle2fd(p_context, p_dir_handle,
 			      &p_dir_descriptor->fd,
                               O_RDONLY | O_DIRECTORY);
-  ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_opendir);
@@ -211,9 +209,7 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
     /***********************/
       /* read the next entry */
     /***********************/
-      TakeTokenFSCall();
       rc = syscall(SYS_getdents, p_dir_descriptor->fd, buff, BUF_SIZE);
-      ReleaseTokenFSCall();
       if(rc < 0)
         {
           rc = errno;

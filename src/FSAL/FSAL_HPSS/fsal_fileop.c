@@ -156,7 +156,6 @@ fsal_status_t HPSSFSAL_open(hpssfsal_handle_t * filehandle,     /* IN */
       Return(rc, 0, INDEX_FSAL_open);
     }
 
-  TakeTokenFSCall();
 
   rc = HPSSFSAL_OpenHandle(&filehandle->data.ns_handle,      /* IN - object handle */
                            NULL, hpss_flags,    /* IN - Type of file access */
@@ -170,7 +169,6 @@ fsal_status_t HPSSFSAL_open(hpssfsal_handle_t * filehandle,     /* IN */
                            &hpss_authz  /* OUT - Client authorization */
       );
 
-  ReleaseTokenFSCall();
 
   /* /!\ rc is the file descriptor number !!! */
 
@@ -267,36 +265,30 @@ fsal_status_t HPSSFSAL_read(hpssfsal_file_t * file_descriptor,  /* IN */
         case FSAL_SEEK_CUR:
           /* set position plus offset */
 
-          TakeTokenFSCall();
 
           seekoffset =
               hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_CUR);
 
-          ReleaseTokenFSCall();
 
           break;
 
         case FSAL_SEEK_SET:
           /* set absolute position to offset */
 
-          TakeTokenFSCall();
 
           seekoffset =
               hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_SET);
 
-          ReleaseTokenFSCall();
 
           break;
 
         case FSAL_SEEK_END:
           /* set end of file plus offset */
 
-          TakeTokenFSCall();
 
           seekoffset =
               hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_END);
 
-          ReleaseTokenFSCall();
 
           break;
         }
@@ -320,13 +312,11 @@ fsal_status_t HPSSFSAL_read(hpssfsal_file_t * file_descriptor,  /* IN */
 
   /* read operation */
 
-  TakeTokenFSCall();
 
   nb_read = hpss_Read(file_descriptor->filedes, /* IN - ID of object to be read  */
                       (void *)buffer,   /* IN - Buffer in which to receive data */
                       i_size);  /* IN - number of bytes to read         */
 
-  ReleaseTokenFSCall();
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
 
@@ -403,36 +393,30 @@ fsal_status_t HPSSFSAL_write(hpssfsal_file_t * file_descriptor, /* IN */
         case FSAL_SEEK_CUR:
           /* set position plus offset */
 
-          TakeTokenFSCall();
 
           seekoffset =
               hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_CUR);
 
-          ReleaseTokenFSCall();
 
           break;
 
         case FSAL_SEEK_SET:
           /* set absolute position to offset */
 
-          TakeTokenFSCall();
 
           seekoffset =
               hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_SET);
 
-          ReleaseTokenFSCall();
 
           break;
 
         case FSAL_SEEK_END:
           /* set end of file plus offset */
 
-          TakeTokenFSCall();
 
           seekoffset =
               hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_END);
 
-          ReleaseTokenFSCall();
 
           break;
         }
@@ -456,13 +440,11 @@ fsal_status_t HPSSFSAL_write(hpssfsal_file_t * file_descriptor, /* IN */
 
   /* write operation */
 
-  TakeTokenFSCall();
 
   nb_written = hpss_Write(file_descriptor->filedes,     /* IN - ID of object to be read  */
                           (void *)buffer,       /* IN - Buffer in which to receive data */
                           i_size);      /* IN - number of bytes to read         */
 
-  ReleaseTokenFSCall();
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
 
@@ -508,10 +490,8 @@ fsal_status_t HPSSFSAL_commit( hpssfsal_file_t * p_file_descriptor,
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_commit);
 
   /* Flush data. */
-  TakeTokenFSCall();
   rc = hpss_Fsync(p_file_descriptor->filedes);
   errsv = errno;
-  ReleaseTokenFSCall();
 
   if(rc)
     {
@@ -548,11 +528,9 @@ fsal_status_t HPSSFSAL_close(hpssfsal_file_t * file_descriptor  /* IN */
 
   /* call to close */
 
-  TakeTokenFSCall();
 
   rc = hpss_Close(file_descriptor->filedes);
 
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_close);

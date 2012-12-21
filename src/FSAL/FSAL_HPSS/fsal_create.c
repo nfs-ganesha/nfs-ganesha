@@ -115,7 +115,6 @@ fsal_status_t HPSSFSAL_create(hpssfsal_handle_t * parent_directory_handle,      
 
   /* call to API */
 
-  TakeTokenFSCall();
 
   rc = HPSSFSAL_CreateHandle(&(parent_directory_handle->data.ns_handle),     /* IN - Parent object handle */
                              p_filename->name,  /* IN - Name of the file to be created */
@@ -128,7 +127,6 @@ fsal_status_t HPSSFSAL_create(hpssfsal_handle_t * parent_directory_handle,      
                              &new_hdl,  /* OUT - File handle */
                              NULL);     /* OUT - Client authorization */
 
-  ReleaseTokenFSCall();
 
   /* /!\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR.
    * If the returned value is HPSS_ENOTDIR, parent handle MAY be stale.
@@ -239,7 +237,6 @@ fsal_status_t HPSSFSAL_mkdir(hpssfsal_handle_t * parent_directory_handle,       
   /* Apply umask */
   unix_mode = unix_mode & ~global_fs_info.umask;
 
-  TakeTokenFSCall();
 
   rc = HPSSFSAL_MkdirHandle(&(parent_directory_handle->data.ns_handle),
                             p_dirname->name,
@@ -247,7 +244,6 @@ fsal_status_t HPSSFSAL_mkdir(hpssfsal_handle_t * parent_directory_handle,       
                             &(p_context->credential.hpss_usercred),
                             &lnk_hdl, (object_attributes ? &lnk_attr : NULL));
 
-  ReleaseTokenFSCall();
 
   /* /!\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR.
    * If the returned value is HPSS_ENOTDIR, parent handle MAY be stale.
@@ -356,14 +352,12 @@ fsal_status_t HPSSFSAL_link(hpssfsal_handle_t * target_handle,  /* IN */
 
   /* Call to HPSS API */
 
-  TakeTokenFSCall();
 
   rc = hpss_LinkHandle(&(target_handle->data.ns_handle),     /* IN - Handle of existing file */
                        &(dir_handle->data.ns_handle),        /* IN - parent directory handle */
                        p_link_name->name,       /* IN - New name of the object */
                        &(p_context->credential.hpss_usercred)); /* IN - pointer to user credentials */
 
-  ReleaseTokenFSCall();
 
   /* /!\ WARNING : When one of the handles is stale, HPSS returns ENOTDIR or ENOENT.
    * Thus, we must check this by calling HPSSFSAL_IsStaleHandle.

@@ -113,9 +113,7 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
 
       LogFullDebug(COMPONENT_FSAL, "Call to create( %s, %#o, %#X )", child_path, mode, dummy.flags);
 
-      TakeTokenFSCall();
       rc = p_fs_ops->create(child_path, mode, &dummy);
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_create);
@@ -124,9 +122,7 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
         {
           /* don't worry about release return code,
            * since the object was created */
-          TakeTokenFSCall();
           p_fs_ops->release(child_path, &dummy);
-          ReleaseTokenFSCall();
         }
 
     }
@@ -135,9 +131,7 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
       /* prepare mode including IFREG mask */
       mode |= S_IFREG;
 
-      TakeTokenFSCall();
       rc = p_fs_ops->mknod(child_path, mode, 0);
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_create);
@@ -153,10 +147,8 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
 
   if(p_fs_ops->chown)
     {
-      TakeTokenFSCall();
       rc = p_fs_ops->chown(child_path, p_context->credential.user,
                            p_context->credential.group);
-      ReleaseTokenFSCall();
 
       LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
 
@@ -166,9 +158,7 @@ fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
 
   /* lookup for the newly created entry */
 
-  TakeTokenFSCall();
   rc = p_fs_ops->getattr(child_path, &buffstat);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_create);
@@ -285,9 +275,7 @@ fsal_status_t FUSEFSAL_mkdir(fsal_handle_t * parent_handle,       /* IN */
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  TakeTokenFSCall();
   rc = p_fs_ops->mkdir(child_path, mode);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_mkdir);
@@ -296,10 +284,8 @@ fsal_status_t FUSEFSAL_mkdir(fsal_handle_t * parent_handle,       /* IN */
 
   if(p_fs_ops->chown)
     {
-      TakeTokenFSCall();
       rc = p_fs_ops->chown(child_path, p_context->credential.user,
                            p_context->credential.group);
-      ReleaseTokenFSCall();
 
       LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
 
@@ -307,9 +293,7 @@ fsal_status_t FUSEFSAL_mkdir(fsal_handle_t * parent_handle,       /* IN */
         Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_mkdir);
     }
 
-  TakeTokenFSCall();
   rc = p_fs_ops->getattr(child_path, &buffstat);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_mkdir);
@@ -429,9 +413,7 @@ fsal_status_t FUSEFSAL_link(fsal_handle_t * target,  /* IN */
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  TakeTokenFSCall();
   rc = p_fs_ops->link(target_path, child_path);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_link);
