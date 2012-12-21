@@ -1509,21 +1509,23 @@ thr_decode_rpc_requests(void *arg)
     fridge_thr_contex_t *thr_ctx = (fridge_thr_contex_t *) arg;
     SVCXPRT *xprt = (SVCXPRT *) thr_ctx->arg;
 
+    LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter,
+                 xprt);
+
     do {
         stat = thr_decode_rpc_request(thr_ctx, xprt);
     } while (thr_continue_decoding(xprt, stat));
 
     LogDebug(COMPONENT_DISPATCH, "exiting, stat=%s", xprt_stat_s[stat]);
 
-    /* done decoding, rearm */
+    /* order MUST be SVC_DESTROY, gsh_xprt_unref (current refcnt balancing) */
     if (stat != XPRT_DIED)
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
+    else
+        SVC_DESTROY(xprt);
 
     /* update accounting, clear decoding flag */
     gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_DECODING);
-
-    if (stat == XPRT_DIED)
-        SVC_DESTROY(xprt);
 
   return (NULL);
 }
@@ -1573,6 +1575,8 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     int code  __attribute__((unused)) = 0;
     int rpc_fd = xprt->xp_fd;
     uint32_t nreqs;
+
+    LogFullDebug(COMPONENT_RPC, "%d enter xprt=%p", __tirpc_dcounter, xprt);
 
     if(udp_socket[P_NFS] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A NFS UDP request fd %d",
@@ -1632,16 +1636,20 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         goto out;
     }
 
-    LogFullDebug(COMPONENT_DISPATCH, "before decoder guard");
+    LogFullDebug(COMPONENT_RPC, "%d before decoder guard %p", __tirpc_dcounter,
+                 xprt);
 
     /* clock duplicate, queued+stalled wakeups, queued wakeups */
     if (! gsh_xprt_decoder_guard(xprt, XPRT_PRIVATE_FLAG_NONE)) {
+        LogFullDebug(COMPONENT_RPC, "%d already decoding %p",
+                     __tirpc_dcounter, xprt);
         thread_delay_ms(5);
         (void) svc_rqst_rearm_events(xprt, SVC_RQST_FLAG_NONE);
         goto out;
     }
 
-    LogFullDebug(COMPONENT_DISPATCH, "before cond stall");
+    LogFullDebug(COMPONENT_RPC, "%d before cond stall %p", __tirpc_dcounter,
+                 xprt);
 
     /* Check per-xprt max outstanding quota */
     if (nfs_rpc_cond_stall_xprt(xprt)) {
