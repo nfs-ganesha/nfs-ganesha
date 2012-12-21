@@ -415,6 +415,10 @@ if(USE_DBUS)
   set(GANESHA_CORE ${GANESHA_CORE} gshdbus)
 endif(USE_DBUS)
 
+if(USE_9P_RDMA)
+  set(GANESHA_CORE ${GANESHA_CORE} mooshika rdmacm ibverbs)
+endif(USE_9P_RDMA)
+
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
   ConfigParsing
