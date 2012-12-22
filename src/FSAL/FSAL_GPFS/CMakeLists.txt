@@ -26,9 +26,13 @@ SET(fsalgpfs_LIB_SRCS
 
 add_library(fsalgpfs SHARED ${fsalgpfs_LIB_SRCS})
 
-target_link_libraries(fsalgpfs
-  "${PROJECT_SOURCE_DIR}/FSAL/FSAL_GPFS/lib/libgpfs.so"
+SET(fsalgpfsext_LIB_SRCS
+  gpfsext.c
 )
+
+add_library(fsalgpfsext SHARED ${fsalgpfsext_LIB_SRCS})
+
+target_link_libraries(fsalgpfs fsalgpfsext)
 
 set_target_properties(fsalgpfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 

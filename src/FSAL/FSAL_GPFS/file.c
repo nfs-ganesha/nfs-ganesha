@@ -42,7 +42,6 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "gpfs_methods.h"
-#include "fsal_handle_syscalls.h"
 
 /** gpfs_open
  * called with appropriate locks taken at the cache inode level

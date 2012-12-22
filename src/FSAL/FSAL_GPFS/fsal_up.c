@@ -143,6 +143,12 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
       if(rc != 0)
         {
+          if(rc == ENOSYS)
+          {
+            LogFatal(COMPONENT_FSAL_UP,
+                    "GPFS was not found, rc ENOSYS");
+            return NULL;
+          }
           LogCrit(COMPONENT_FSAL_UP,
                   "OPENHANDLE_INODE_UPDATE failed for %d."
                   " rc %d, errno %d (%s) reason %d",
