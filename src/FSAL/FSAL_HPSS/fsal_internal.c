@@ -18,7 +18,6 @@
 
 #include  "fsal.h"
 #include "fsal_internal.h"
-#include "SemN.h"
 
 #include <pthread.h>
 #include "abstract_mem.h"
@@ -71,9 +70,6 @@ static fsal_staticfsinfo_t default_hpss_info = {
 /*
  *  Log Descriptor
  */
-/* variables for limiting the calls to the filesystem */
-static int limit_calls = false;
-semaphore_t sem_fs_calls;
 
 /* threads keys for stats */
 static pthread_key_t key_stats;
@@ -248,31 +244,6 @@ void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
 void fsal_internal_SetReturnInconsistentDirent(fsal_uint_t bool_in)
 {
   ReturnInconsistentDirent = bool_in;
-}
-
-/**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == false)
-    return;
-
-  /* there is a limit */
-  semaphore_P(&sem_fs_calls);
-
-}
-
-void ReleaseTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == false)
-    return;
-
-  /* there is a limit */
-  semaphore_V(&sem_fs_calls);
-
 }
 
 #define SET_INTEGER_PARAM( cfg, p_init_info, _field )             \

@@ -41,9 +41,8 @@
 #include  "fsal.h"
 #include "fsal_internal.h"
 #include "gpfs_methods.h"
-#include "SemN.h"
 #include "fsal_convert.h"
-#include <libgen.h>             /* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include "abstract_mem.h"
 
 #include <pthread.h>
@@ -65,9 +64,6 @@ uint32_t CredentialLifetime = 3600;
  */
 struct fsal_staticfsinfo_t global_fs_info;
 
-
-/* variables for limiting the calls to the filesystem */
-semaphore_t sem_fs_calls;
 
 #ifdef _USE_NFS4_ACL
 static fsal_status_t fsal_internal_testAccess_acl(const struct req_op_context * p_context,   /* IN */
@@ -270,31 +266,6 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
 {
   CredentialLifetime = lifetime_in;
-}
-
-/**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == false)
-    return;
-
-  /* there is a limit */
-  semaphore_P(&sem_fs_calls);
-
-}
-
-void ReleaseTokenFSCall()
-{
-  /* no limits */
-  if(limit_calls == false)
-    return;
-
-  /* there is a limit */
-  semaphore_V(&sem_fs_calls);
-
 }
 
 /*

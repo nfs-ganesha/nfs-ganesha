@@ -72,11 +72,7 @@ fsal_status_t FUSEFSAL_getattrs(fsal_handle_t *handle, /* IN */
 
   if(p_fs_ops->getattr)
     {
-      TakeTokenFSCall();
-
       rc = p_fs_ops->getattr(object_path, &obj_stat);
-
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_getattrs);
@@ -230,10 +226,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
 
       if((tmp_attrs.type != FSAL_TYPE_LNK) && (p_fs_ops->chmod != NULL))
         {
-          TakeTokenFSCall();
           rc = p_fs_ops->chmod(object_path, fsal2unix_mode(attrs.mode));
-          ReleaseTokenFSCall();
-
           LogFullDebug(COMPONENT_FSAL, "chmod: status = %d", rc);
 
           if(rc)
@@ -251,9 +244,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
 
       if(p_fs_ops->truncate)
         {
-          TakeTokenFSCall();
           rc = p_fs_ops->truncate(object_path, (off_t) attrs.filesize);
-          ReleaseTokenFSCall();
 
           LogFullDebug(COMPONENT_FSAL, "truncate: status = %d", rc);
 
@@ -295,14 +286,12 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
     {
       if(p_fs_ops->chown)
         {
-          TakeTokenFSCall();
           rc = p_fs_ops->chown(object_path,
                                FSAL_TEST_MASK(attrs.asked_attributes,
                                               FSAL_ATTR_OWNER) ? (uid_t) attrs.owner : -1,
                                FSAL_TEST_MASK(attrs.asked_attributes,
                                               FSAL_ATTR_GROUP) ? (gid_t) attrs.group :
                                -1);
-          ReleaseTokenFSCall();
 
           LogFullDebug(COMPONENT_FSAL, "chown: status = %d", rc);
 
@@ -351,9 +340,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
               (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t)
                attrs.mtime.nseconds : tmp_attrs.mtime.nseconds);
 
-          TakeTokenFSCall();
           rc = p_fs_ops->utimens(object_path, tv);
-          ReleaseTokenFSCall();
 
           LogFullDebug(COMPONENT_FSAL, "utimens: status = %d", rc);
 
@@ -372,9 +359,7 @@ fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
               (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t)
                attrs.mtime.seconds : tmp_attrs.mtime.seconds);
 
-          TakeTokenFSCall();
           rc = p_fs_ops->utime(object_path, &utb);
-          ReleaseTokenFSCall();
 
           LogFullDebug(COMPONENT_FSAL, "utime: status = %d", rc);
 

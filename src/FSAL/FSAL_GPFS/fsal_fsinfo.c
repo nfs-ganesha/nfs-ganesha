@@ -48,11 +48,9 @@ fsal_status_t GPFSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
   if(!p_filehandle || !p_dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
-  TakeTokenFSCall();
   rc = fstatvfs(((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd,
 		&buffstatvfs);
   errsv = errno;
-  ReleaseTokenFSCall();
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_dynamic_fsinfo);
 

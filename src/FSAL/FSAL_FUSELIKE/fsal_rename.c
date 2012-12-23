@@ -109,11 +109,9 @@ fsal_status_t FUSEFSAL_rename(fsal_handle_t * old_parent, /* IN */
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  TakeTokenFSCall();
 
   rc = p_fs_ops->rename(src_obj_path, tgt_obj_path);
 
-  ReleaseTokenFSCall();
 
   /* Regarding false parameter of function fuse2fsal_error:
    * here, if error is ENOENT, we don't know weither the father handle is STALE

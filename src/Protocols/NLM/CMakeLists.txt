@@ -22,11 +22,4 @@ SET(nlm_STAT_SRCS
 
 add_library(nlm STATIC ${nlm_STAT_SRCS})
 
-target_link_libraries(nlm
-  sal
-  nfs_mnt_xdr
-  ntirpc
-)
-
-
 ########### install files ###############

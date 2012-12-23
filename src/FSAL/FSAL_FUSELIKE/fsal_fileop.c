@@ -103,9 +103,7 @@ fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
     {
       LogFullDebug(COMPONENT_FSAL, "Call to open( %s, %#X )", object_path, file_descriptor->file_info.flags);
 
-      TakeTokenFSCall();
       rc = p_fs_ops->open(object_path, &(file_descriptor->file_info));
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_open);
@@ -130,9 +128,7 @@ fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
           LogFullDebug(COMPONENT_FSAL, "call to ftruncate on file since FSAL_O_TRUNC was set");
 
           /* ftruncate the file */
-          TakeTokenFSCall();
           rc = p_fs_ops->ftruncate(object_path, 0, &(file_descriptor->file_info));
-          ReleaseTokenFSCall();
 
           if(rc)
             Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_open);
@@ -142,9 +138,7 @@ fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
           LogFullDebug(COMPONENT_FSAL, "call to truncate on file since FSAL_O_TRUNC was set");
 
           /* truncate the file */
-          TakeTokenFSCall();
           rc = p_fs_ops->truncate(object_path, 0);
-          ReleaseTokenFSCall();
 
           if(rc)
             Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_open);
@@ -386,10 +380,8 @@ fsal_status_t FUSEFSAL_read(fsal_file_t * file_desc,  /* IN */
    * substituted with zeroes. */
   memset(buffer, 0, req_size);
 
-  TakeTokenFSCall();
   rc = p_fs_ops->read(object_path, buffer, req_size, seekoffset,
                       &(file_descriptor->file_info));
-  ReleaseTokenFSCall();
 
   if(rc < 0)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_read);
@@ -517,10 +509,8 @@ fsal_status_t FUSEFSAL_write(fsal_file_t * file_desc, /* IN */
       seekoffset = file_descriptor->current_offset;
     }
 
-  TakeTokenFSCall();
   rc = p_fs_ops->write(object_path, buffer, req_size, seekoffset,
                        &(file_descriptor->file_info));
-  ReleaseTokenFSCall();
 
   if(rc < 0)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_write);
@@ -574,11 +564,9 @@ fsal_status_t FUSEFSAL_close(fsal_file_t * file_desc  /* IN */
 
   LogFullDebug(COMPONENT_FSAL, "FSAL_close: FH=%"PRId64, file_descriptor->file_info.fh);
 
-  TakeTokenFSCall();
 
   rc = p_fs_ops->release(file_path, &file_descriptor->file_info);
 
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_close);

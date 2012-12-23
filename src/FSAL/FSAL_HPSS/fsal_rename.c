@@ -81,14 +81,12 @@ fsal_status_t HPSSFSAL_rename(hpssfsal_handle_t * old_parentdir_handle, /* IN */
      !new_parentdir_handle || !p_old_name || !p_new_name || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
-  TakeTokenFSCall();
 
   rc = hpss_RenameHandle(&(old_parentdir_handle->data.ns_handle),
                          p_old_name->name,
                          &(new_parentdir_handle->data.ns_handle),
                          p_new_name->name, &(p_context->credential.hpss_usercred));
 
-  ReleaseTokenFSCall();
 
   /* convert the HPSS EEXIST error to the expected error ENOTEMPTY */
   if(rc == HPSS_EEXIST)

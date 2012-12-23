@@ -41,12 +41,4 @@ SET(cache_inode_STAT_SRCS
 
 add_library(cache_inode STATIC ${cache_inode_STAT_SRCS})
 
-target_link_libraries(cache_inode
-  hashtable
-  avltree
-  weakref
-  hash
-)
-
-
 ########### install files ###############

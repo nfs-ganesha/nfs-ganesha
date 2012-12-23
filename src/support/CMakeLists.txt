@@ -92,16 +92,4 @@ endif(APPLE)
 
 add_library(support STATIC ${support_STAT_SRCS})
 
- 
-target_link_libraries(support
-  NodeList
-  cidr
-  idmap
-  common_utils
-  fsalup
-  string_utils
-  ${_OPENSSL_LIBRARIES}
-)
- 
-
 ########### install files ###############

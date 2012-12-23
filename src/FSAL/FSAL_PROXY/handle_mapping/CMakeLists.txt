@@ -51,12 +51,12 @@ target_link_libraries(test_handle_mapping handlemapping hashtable log common_uti
 #check_PROGRAMS              = test_handle_mapping_db test_handle_mapping
 #test_handle_mapping_db_SOURCES      = test_handle_mapping_db.c
 #test_handle_mapping_db_LDADD        = libhandlemapping.la $(top_srcdir)/HashTable/libhashtable.la  $(top_srcdir)/Log/liblog.la \
-#					$(top_srcdir)/Common/libcommon_utils.la $(top_srcdir)/RW_Lock/librwlock.la -lsqlite3 
+#					$(top_srcdir)/Common/libcommon_utils.la -lsqlite3 
 #
 #
 #test_handle_mapping_SOURCES      = test_handle_mapping.c
 #test_handle_mapping_LDADD        = libhandlemapping.la $(top_srcdir)/HashTable/libhashtable.la $(top_srcdir)/Log/liblog.la \
-#					$(top_srcdir)/Common/libcommon_utils.la $(top_srcdir)/RW_Lock/librwlock.la -lsqlite3 
+#					$(top_srcdir)/Common/libcommon_utils.la -lsqlite3 
 #
 #new: clean all
 #

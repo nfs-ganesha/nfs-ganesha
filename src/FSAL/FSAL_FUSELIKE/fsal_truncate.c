@@ -76,9 +76,7 @@ fsal_status_t FUSEFSAL_truncate(fsal_handle_t *handle, /* IN */
   /* set context for the next operation, so it can be retrieved by FS thread */
   fsal_set_thread_context(p_context);
 
-  TakeTokenFSCall();
   rc = p_fs_ops->truncate(object_path, (off_t) length);
-  ReleaseTokenFSCall();
 
   if(rc)
     Return(fuse2fsal_error(rc, true), rc, INDEX_FSAL_truncate);

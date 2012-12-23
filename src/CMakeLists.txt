@@ -34,7 +34,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit 2f728d6369dcfb28c6d09e0a74de1100114ee32e)
+set(tirpc_commit f8e9f1dd7036e563046fbe33f5926db4f91e792f)
 
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
@@ -78,11 +78,6 @@ option(USE_DBUS "enable DBUS protocol support" OFF)
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 
-if(NOT USE_DBUS)
-  message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
-  set(USE_DBUS ON)
-endif(NOT USE_DBUS)
-
 # TI-RPC former option now on?  Do we really need this anymore?
 # from Matt, NO.  deprecate
 set(_USE_TIRPC ON)
@@ -102,7 +97,6 @@ option(_NO_TCP_REGISTER "disable registration of tcp services on portmapper" ON)
 option(_NO_PORTMAPPER "disable registration on portmapper" ON)
 option(_NO_XATTRD "disable ghost xattr directory and files support" ON)
 option(_DEBUG_MEMLEAKS "enable allocator features for tracking memory usage" OFF)
-option(_DEBUG_NFS_SHELL "enable extended debug traces for ganeshell utility" OFF)
 option(_HANDLE_MAPPING "enable NFSv2/3 handle mapping for PROXY FSAL" OFF)
 
 # Debug symbols (-g) build flag 
@@ -132,6 +126,11 @@ IF(BUILD_CONFIG)
 ENDIF()
 
 # Build source locations and parameters
+
+if(USE_CB_SIMULATOR AND NOT USE_DBUS)
+  message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
+  set(USE_DBUS ON)
+endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 
 set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
 set(ALLOCATOR "jemalloc" CACHE STRING
@@ -171,7 +170,7 @@ if(KRB5_FOUND)
   set(_HAVE_GSSAPI ON)
 endif(KRB5_FOUND)
 
-# needed by deprecated shell??
+# needed by RPCAL/gssd for some reason
 find_package(Curses)
 find_package(Readline)
 
@@ -193,44 +192,73 @@ if(USE_FSAL_CEPH)
 endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_LUSTRE)
-  find_library(LUSTRE_FS lustreapi)
-  if(LUSTRE_FS_NOTFOUND)
+  check_library_exists(
+    lustreapi
+    llapi_is_lustre_mnt
+    ""
+    HAVE_LUSTREAPI
+    )
+  check_include_files("unistd.h;lustre/lustre_user.h" HAVE_LUSTRE_USER_H)
+  if((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
     message(WARNING "Cannot find LUSTRE runtime. Disabling LUSTRE fsal build")
     set(USE_FSAL_LUSTRE OFF)
-  endif(LUSTRE_FS_NOTFOUND)
+  endif((NOT HAVE_LUSTREAPI) OR (NOT HAVE_LUSTRE_USER_H))
 endif(USE_FSAL_LUSTRE)
 
 if(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
-  find_library(SHOOK_LIB shooksvr)
-  if(SHOOK_LIB_NOTFOUND)
-    message(WARNING "Cannot find SHOOK library. Disabling SHOOK build")
+  check_library_exists(
+    shooksvr
+    shook_restore
+    ""
+    HAVE_SHOOK
+    )
+  check_include_files("unistd.h;attr/xattr.h" HAVE_SHOOK_XATTRS)
+  if((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
+    message(WARNING "Cannot find SHOOK runtime. Disabling SHOOK build")
     set(USE_FSAL_SHOOK OFF)
-  endif(SHOOK_LIB_NOTFOUND)
+  endif((NOT HAVE_SHOOK) OR (NOT HAVE_SHOOK_XATTRS))
 endif(USE_FSAL_LUSTRE AND USE_FSAL_SHOOK)
 
 if(USE_FSAL_GPFS)
-  find_library(GPFS_LIB gpfs)
-  if(GPFS_LIB_NOTFOUND)
+  check_library_exists(
+    gpfs
+    gpfs_ganesha
+    "${PROJECT_SOURCE_DIR}/FSAL/FSAL_GPFS/lib"
+    HAVE_GPFS
+    )
+  check_include_files("gpfs.h" HAVE_GPFS_H)
+  if((NOT HAVE_GPFS) OR (NOT HAVE_GPFS_H))
     message(WARNING "Cannot find GPFS runtime.  Disabling GPFS build")
     set(USE_FSAL_GPFS OFF)
-  endif(GPFS_LIB_NOTFOUND)
+  endif((NOT HAVE_GPFS) OR (NOT HAVE_GPFS_H))
 endif(USE_FSAL_GPFS)
 
 if(USE_FSAL_XFS)
-  find_library(XFS_LIB handle)
+  check_library_exists(
+    handle
+    "open_by_handle"
+    ""
+    HAVE_XFS_LIB
+    )
   check_include_files("xfs/xfs.h" HAVE_XFS_H)
-  if(XFS_LIB_NOTFOUND OR (NOT HAVE_XFS_H))
+  if((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
     message(WARNING "Cannot find XFS runtime. Disabling XFS build")
     set(USE_FSAL_XFS OFF)
-  endif(XFS_LIB_NOTFOUND OR (NOT HAVE_XFS_H))
+  endif((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
 endif(USE_FSAL_XFS)
 
 if(USE_FSAL_ZFS)
-  find_library(ZFS_LIB zfswrap)
-  if(ZFS_LIB_NOTFOUND)
+  check_library_exists(
+    zfswrap
+    libzfswrap_init
+    ""
+    HAVE_ZFS_LIB
+    )
+  check_include_files("unistd.h;libzfswrap.h" HAVE_LIBZFSWRAP_H)
+  if((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
     message(WARNING "Cannot find ZFS runtime. Disabling ZFS build")
     set(USE_FSAL_ZFS OFF)
-  endif(ZFS_LIB_NOTFOUND)
+  endif((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
 endif(USE_FSAL_ZFS)
 
 # sort out which allocator to use
@@ -296,6 +324,19 @@ include_directories(
   "${OS_INCLUDE_DIR}"
 )
 
+# Fixup loose bits of autotools legacy
+set(_USE_9P ${USE_9P})
+set(_USE_9P_RDMA ${USE_9P_RDMA})
+
+if(USE_CB_SIMULATOR)
+  set(_USE_CB_SIMULATOR ON)
+endif(USE_CB_SIMULATOR)
+
+if(USE_TIRPC_IPV6)
+  set(_USE_TIRPC_IPV6 ON)
+endif(USE_TIRPC_IPV6)
+
+
 # Pull in TIRPC and build it
 
 include(ExternalProject)
@@ -333,9 +374,10 @@ set(LIBTIRPC_LIBRARIES "${PROJECT_BINARY_DIR}/libtirpc/lib/libntirpc.a")
 find_library(LIBRT rt)  # extended Pthreads functions
 
 # Roll up required libraries
+
+#Protocols we support
 set(PROTOCOLS
   nfsproto
-  nfs_mnt_xdr
   nlm
   rquota
 )
@@ -344,28 +386,46 @@ if(USE_9P)
   set(PROTOCOLS ${PROTOCOLS} 9p)
 endif(USE_9P)
 
-set(_USE_9P ${USE_9P})
-set(_USE_9P_RDMA ${USE_9P_RDMA})
+set(PROTOCOLS
+  ${PROTOCOLS}
+  nfs_mnt_xdr
+  )
+
+# Core subsystems
+set(GANESHA_CORE
+  sal
+  cache_inode
+  idmap
+  avltree
+  weakref
+  hashtable
+  hash
+  rpcal
+  gssd
+  log
+  common_utils
+  support
+  fsalup
+  nfs4callbacks
+  cidr
+  NodeList
+  string_utils
+  )
 
 if(USE_DBUS)
-  set(PROTOCOLS ${PROTOCOLS} gshdbus)
+  set(GANESHA_CORE ${GANESHA_CORE} gshdbus)
 endif(USE_DBUS)
 
-if(USE_CB_SIMULATOR)
-  set(_USE_CB_SIMULATOR ON)
-endif(USE_CB_SIMULATOR)
-
-if(USE_TIRPC_IPV6)
-  set(_USE_TIRPC_IPV6 ON)
-endif(USE_TIRPC_IPV6)
-
+# All the plumbing in the basement
 set(SYSTEM_LIBRARIES
   ConfigParsing
   ${LIBTIRPC_LIBRARIES}
-  ${KRB5_LIBRARIES}
-  gssapi_krb5
   ${SYSTEM_LIBRARIES}
   ${LIBDL}
+  ${KRB5_LIBRARIES}
+  gssapi_krb5
+  crypto
+  ssl
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
 )
@@ -375,7 +435,6 @@ add_subdirectory(Log)
 add_subdirectory(Common)
 add_subdirectory(ConfigParsing)
 add_subdirectory(cidr)
-add_subdirectory(SemN)
 add_subdirectory(test)
 add_subdirectory(avl)
 add_subdirectory(HashTable)
@@ -440,7 +499,6 @@ message(STATUS "_NO_TCP_REGISTER = ${_NO_TCP_REGISTER}")
 message(STATUS "_NO_PORTMAPPER = ${_NO_PORTMAPPER}")
 message(STATUS "_NO_XATTRD = ${_NO_XATTRD}")
 message(STATUS "_DEBUG_MEMLEAKS = ${_DEBUG_MEMLEAKS}")
-message(STATUS "_DEBUG_NFS_SHELL = ${_DEBUG_NFS_SHELL}")
 message(STATUS "_HANDLE_MAPPING = ${_HANDLE_MAPPING}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "PROFILING = ${PROFILING}")

@@ -39,9 +39,8 @@
 
 #include  "fsal.h"
 #include "fsal_internal.h"
-#include "SemN.h"
 #include "fsal_convert.h"
-#include <libgen.h>             /* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>

@@ -69,7 +69,6 @@ fsal_status_t HPSSFSAL_readlink(hpssfsal_handle_t * linkhandle, /* IN */
 
   /* call to the API */
 
-  TakeTokenFSCall();
 
   rc = hpss_ReadlinkHandle(&(linkhandle->data.ns_handle),    /* IN - Handle of symbolic link */
                            NULL,        /* IN - Path of the link (null=>ignored) */
@@ -77,7 +76,6 @@ fsal_status_t HPSSFSAL_readlink(hpssfsal_handle_t * linkhandle, /* IN */
                            FSAL_MAX_PATH_LEN,   /* IN - Size, in bytes, of contents buffer */
                            &p_context->credential.hpss_usercred);       /* IN - pointer to user credentials */
 
-  ReleaseTokenFSCall();
 
   /* /!\ rc is the length for the symlink content !!! */
 
@@ -178,7 +176,6 @@ fsal_status_t HPSSFSAL_symlink(hpssfsal_handle_t * parent_directory_handle,     
 
   /* call to hpss client API. */
 
-  TakeTokenFSCall();
 
   memset( (char *)link_handle, 0, sizeof( hpssfsal_handle_t ) ) ;
   rc = HPSSFSAL_SymlinkHandle(&(parent_directory_handle->data.ns_handle),    /* IN - Handle of existing file */
@@ -189,7 +186,6 @@ fsal_status_t HPSSFSAL_symlink(hpssfsal_handle_t * parent_directory_handle,     
                               &attrs    /* OUT - symbolic link attributes */
       );
 
-  ReleaseTokenFSCall();
 
   /* /!\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR.
    * If the returned value is HPSS_ENOTDIR, parent handle MAY be stale.

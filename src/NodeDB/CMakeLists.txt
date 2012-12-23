@@ -1,32 +1,32 @@
 set(nodedb_SRCS
-  nodedb/connection.c
-  nodedb/connectionpool.c
-  nodedb/encoding.c
-  nodedb/fastdb.c
+  connection.c
+  connectionpool.c
+  encoding.c
+  fastdb.c
   interface.c
-  nodedb/nodedb.c
-  nodedb/redblack.c
-  nodedb/scanmount.c
-  nodedb/sockbuf.c
+  nodedb.c
+  redblack.c
+  scanmount.c
+  sockbuf.c
 )
 
 include_directories(
-    "${PROJECT_SOURCE_DIR}/NodeDB/nodedb"
+    "${PROJECT_SOURCE_DIR}/NodeDB"
 )
 
 ADD_CUSTOM_COMMAND(
   OUTPUT    interface.c
   COMMAND   ./marshal
-  ARGS      -i ${CMAKE_CURRENT_SOURCE_DIR}/nodedb/nodedb.c -oc interface.c -oi ${PROJECT_BINARY_DIR}/include/interface.h -oo ${PROJECT_BINARY_DIR}/include/ops.h
-  DEPENDS   marshal ${CMAKE_CURRENT_SOURCE_DIR}/nodedb/nodedb.c
+  ARGS      -i ${CMAKE_CURRENT_SOURCE_DIR}/nodedb.c -oc interface.c -oi ${PROJECT_BINARY_DIR}/include/interface.h -oo ${PROJECT_BINARY_DIR}/include/ops.h
+  DEPENDS   marshal ${CMAKE_CURRENT_SOURCE_DIR}/nodedb.c
   COMMENT   "Auto-generating marshaling code"
 )
 
 ADD_CUSTOM_COMMAND(
   OUTPUT    marshal
   COMMAND "${CMAKE_C_COMPILER}"
-  ARGS -o marshal ${CMAKE_CURRENT_SOURCE_DIR}/nodedb/marshal.c
-  DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/nodedb/marshal.c
+  ARGS -o marshal ${CMAKE_CURRENT_SOURCE_DIR}/marshal.c
+  DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/marshal.c
   COMMENT   "Building marshaller compiler"
 )
 

@@ -671,7 +671,11 @@ open4_create(OPEN4args           * arg,
                         cache_inode_put(entry_newfile);
                         entry_newfile = NULL;
                         return nfs4_Errno(cache_status);
-                }
+                } else {
+			/* Clear error code in the case of
+			   UNCHECKED4. */
+			cache_status = CACHE_INODE_SUCCESS;
+		}
         }
 
         /* If the object exists already size is the only attribute we

@@ -69,7 +69,6 @@
 #include "nfs_stat.h"
 #include "nfs_tcb.h"
 #include "fridgethr.h"
-#include "SemN.h"
 
 extern nfs_worker_data_t *workers_data;
 

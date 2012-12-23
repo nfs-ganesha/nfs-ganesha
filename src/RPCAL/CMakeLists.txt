@@ -18,13 +18,6 @@ endif(_HAVE_GSSAPI)
 
 add_library(rpcal STATIC ${rpcal_STAT_SRCS})
 
-target_link_libraries(rpcal
-  ntirpc
-  gssd
-  hash
-)
-
-
 ########### next target ###############
 
 SET(test_rpctools_SRCS

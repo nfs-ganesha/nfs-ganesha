@@ -182,7 +182,6 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
 
       /* call to hpss clapi */
 
-      TakeTokenFSCall();
 
       rc = HPSSFSAL_ReadRawAttrsHandle(&(dir_descriptor->dir_handle.data.ns_handle),
                                        curr_start_position,
@@ -192,7 +191,6 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
                                        ReturnInconsistentDirent,
                                        &bool_eod_out, &last_offset_out, outbuff);
 
-      ReleaseTokenFSCall();
 
       if(rc < 0)
        {

@@ -85,12 +85,10 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
 
       /* remove a directory */
 
-      TakeTokenFSCall();
 
       rc = hpss_RmdirHandle(&(parentdir_handle->data.ns_handle),
                             p_object_name->name, &(p_context->credential.hpss_usercred));
 
-      ReleaseTokenFSCall();
 
       /* The EEXIST error is actually an NOTEMPTY error. */
 
@@ -106,12 +104,10 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
 
       /* remove an object */
 
-      TakeTokenFSCall();
 
       rc = hpss_UnlinkHandle(&(parentdir_handle->data.ns_handle),
                              p_object_name->name, &(p_context->credential.hpss_usercred));
 
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
@@ -121,13 +117,11 @@ fsal_status_t HPSSFSAL_unlink(hpssfsal_handle_t * parentdir_handle,     /* IN */
     case FSAL_TYPE_JUNCTION:
       /* remove a junction */
 
-      TakeTokenFSCall();
 
       rc = hpss_JunctionDeleteHandle(&(parentdir_handle->data.ns_handle),
                                      p_object_name->name,
                                      &(p_context->credential.hpss_usercred));
 
-      ReleaseTokenFSCall();
 
       if(rc)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);

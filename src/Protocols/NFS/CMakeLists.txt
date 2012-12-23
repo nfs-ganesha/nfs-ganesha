@@ -108,7 +108,10 @@ SET(test_mnt_proto_SRCS
 
 add_executable(test_mnt_proto EXCLUDE_FROM_ALL ${test_mnt_proto_SRCS})
 
-target_link_libraries(test_mnt_proto nfsproto log ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(test_mnt_proto
+  nfsproto
+  log
+  ${CMAKE_THREAD_LIBS_INIT})
 
 
 ########### install files ###############

@@ -51,13 +51,12 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
-#include "SemN.h"
 
-/* This array maps a 9P Tmessage type to the 
- * related position in _9pfuncdesc array 
+/* This array maps a 9P Tmessage type to the
+ * related position in _9pfuncdesc array
  * position=32 is "unknown function" */
 const int _9ptabindex[] =
-    {32, 
+    {32,
      32, 32, 32, 32, 32, 32, 32,
       0, 32, 32, 32,  1, 32,  2,
      32,  3, 32,  4, 32,  5, 32,

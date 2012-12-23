@@ -29,12 +29,6 @@ endif(USE_9P)
 
 add_library(sal STATIC ${sal_STAT_SRCS})
 
-target_link_libraries(sal
-  cache_inode
-  nlm
-  log
-)
-  
 
 ########### install files ###############
 

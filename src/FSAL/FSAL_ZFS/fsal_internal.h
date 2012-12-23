@@ -18,6 +18,16 @@ void ZFSFSAL_VFS_RDLock() ;
 void ZFSFSAL_VFS_RDLock() ;
 void ZFSFSAL_VFS_Unlock() ;
 
+typedef struct zfs_file_handle
+{
+    inogen_t zfs_handle;
+    char i_snap;
+} zfs_file_handle_t;
+
+#define ZFS_SNAP_DIR ".zfs"
+
+#define ZFS_SNAP_DIR_INODE 2
+
 
 typedef struct
 {
@@ -34,6 +44,11 @@ typedef struct
           ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    | \
           ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | \
           ATTR_CHGTIME  )
+
+static inline size_t zfs_sizeof_handle(struct zfs_file_handle *hdl)
+{
+  return (size_t)sizeof( struct zfs_file_handle ) ;
+}
 
 
 /* the following variables must not be defined in fsal_internal.c */
@@ -52,11 +67,6 @@ extern struct fsal_staticfsinfo_t global_fs_info;
 void fsal_increment_nbcall(int function_index, fsal_status_t status);
 
 #if 0
-/**
- *  Used to limit the number of simultaneous calls to Filesystem.
- */
-void TakeTokenFSCall();
-void ReleaseTokenFSCall();
 
 /* All the call to FSAL to be wrapped */
 fsal_status_t ZFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */
@@ -316,5 +326,6 @@ fsal_status_t ZFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
 fsal_status_t ZFSFSAL_commit( fsal_file_t * p_file_descriptor,
                             fsal_off_t    offset,
                             fsal_size_t   size ) ;
+
 
 #endif

@@ -61,7 +61,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
-#include "SemN.h"
 
 #if 0
 /* XXX This routine was used only in prior revision of the rendezvous_request

@@ -10,10 +10,4 @@ SET(avltree_STAT_SRCS
 
 add_library(avltree STATIC ${avltree_STAT_SRCS})
 
-target_link_libraries(avltree
-  ${CMAKE_THREAD_LIBS_INIT}
-)
-
-
-
 ########### install files ###############

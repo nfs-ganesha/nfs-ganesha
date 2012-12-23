@@ -77,7 +77,6 @@ fsal_status_t HPSSFSAL_access(hpssfsal_handle_t * object_handle,        /* IN */
 
   /* call to HPSS access */
 
-  TakeTokenFSCall();
 
   rc = hpss_AccessHandle(&(object_handle->data.ns_handle),   /* IN - parent object handle */
                          NULL,  /* IN - path of file to check access rights */
@@ -88,7 +87,6 @@ fsal_status_t HPSSFSAL_access(hpssfsal_handle_t * object_handle,        /* IN */
 #endif
       );
 
-  ReleaseTokenFSCall();
 
   /* convert returned code */
   /* The HPSS_ENOENT error actually means that handle is STALE */

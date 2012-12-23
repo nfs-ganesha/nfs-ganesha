@@ -42,7 +42,6 @@
 #include <fcntl.h>
 #include "FSAL/fsal_commonlib.h"
 #include "zfs_methods.h"
-#include "FSAL/FSAL_ZFS/fsal_types.h"
 #include <stdbool.h>
 
 libzfswrap_vfs_t *ZFSFSAL_GetVFS(zfs_file_handle_t *handle) ;
