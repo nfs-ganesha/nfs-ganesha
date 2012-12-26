@@ -452,7 +452,7 @@ nfs4_return_one_state(cache_entry_t *entry,
         }
 
         arg = alloca(sizeof(struct fsal_layoutreturn_arg) +
-                     sizeof(void *) * recalls);
+                     sizeof(void *) * (recalls - 1));
 
         memset(arg, 0, sizeof(struct fsal_layoutreturn_arg));
 
