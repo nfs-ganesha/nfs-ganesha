@@ -401,7 +401,10 @@ typedef uint64_t attrmask_t;
 #define ATTR_GENERATION 0x0000000000080000
 /* Change attribute */
 #define ATTR_CHANGE 0x0000000000100000
-
+/* Set atime to server time */
+#define ATTR_ATIME_SERVER  0x0000000000200000
+/* Set mtime to server time */
+#define ATTR_MTIME_SERVER  0x0000000000400000
 
 /* "classic" attributes sets : */
 
