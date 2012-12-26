@@ -272,9 +272,9 @@ cache_inode_create_verify(cache_entry_t *entry,
                     entry->obj_handle->attributes.mtime.tv_sec != verf_lo) {
                         verified = true;
                 }
+                PTHREAD_RWLOCK_unlock(&entry->attr_lock);
         }
 
-        PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
         return verified;
 }
