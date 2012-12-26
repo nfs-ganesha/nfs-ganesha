@@ -92,7 +92,7 @@ cache_inode_getattr(cache_entry_t *entry,
            out, and unlock. */
 
         if ((status
-             = cache_inode_lock_trust_attrs(entry, req_ctx))
+             = cache_inode_lock_trust_attrs(entry, req_ctx, false))
             != CACHE_INODE_SUCCESS) {
                 goto out;
         }
@@ -138,7 +138,7 @@ cache_inode_fileid(cache_entry_t *entry,
         /* Lock (and refresh if necessary) the attributes, copy them
            out, and unlock. */
 
-        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx))
+        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
             != CACHE_INODE_SUCCESS) {
                 goto out;
         }
@@ -184,7 +184,7 @@ cache_inode_fsid(cache_entry_t *entry,
         /* Lock (and refresh if necessary) the attributes, copy them
            out, and unlock. */
 
-        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx))
+        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
             != CACHE_INODE_SUCCESS) {
                 goto out;
         }
@@ -230,7 +230,7 @@ cache_inode_size(cache_entry_t *entry,
         /* Lock (and refresh if necessary) the attributes, copy them
            out, and unlock. */
 
-        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx))
+        if ((status = cache_inode_lock_trust_attrs(entry, req_ctx, false))
             != CACHE_INODE_SUCCESS) {
                 goto out;
         }
@@ -269,7 +269,7 @@ cache_inode_create_verify(cache_entry_t *entry,
         /* Lock (and refresh if necessary) the attributes, copy them
            out, and unlock. */
 
-        if (cache_inode_lock_trust_attrs(entry, req_ctx)
+        if (cache_inode_lock_trust_attrs(entry, req_ctx, false)
                 == CACHE_INODE_SUCCESS) {
                 if (FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
                                    ATTR_ATIME) &&
