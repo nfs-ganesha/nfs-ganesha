@@ -129,7 +129,7 @@ int nfs3_FSALattr_To_XattrDir(cache_entry_t *entry,
                 return 0;
         }
 
-        if (cache_inode_lock_trust_attrs(entry, ctx) !=
+        if (cache_inode_lock_trust_attrs(entry, ctx, false) !=
             CACHE_INODE_SUCCESS) {
                 return 0;
         }
