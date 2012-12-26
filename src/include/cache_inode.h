@@ -592,6 +592,10 @@ cache_inode_status_t cache_inode_access(cache_entry_t *entry,
 					fsal_accessflags_t access_type,
 					struct req_op_context
 					   *req_ctx);
+cache_inode_status_t
+cache_inode_check_setattr_perms(cache_entry_t        * entry,
+                                struct attrlist *attr,
+                                struct req_op_context *req_ctx);
 
 bool is_open(cache_entry_t *entry);
 bool is_open_for_read(cache_entry_t *entry);
