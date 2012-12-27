@@ -406,4 +406,8 @@ bool nfs_export_check_security(struct svc_req *ptr_req, exportlist_t *pexport);
 int nfs_export_tag2path(exportlist_t *exportroot, char *tag,
 			int taglen, char *path, int pathlen);
 
+void squash_setattr(exportlist_client_entry_t * pexport_client,
+		    exportlist_t * pexport,
+		    struct user_cred   * user_credentials,
+		    struct attrlist * attr);
 #endif/* !NFS_EXPORTS_H */

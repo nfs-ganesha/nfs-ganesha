@@ -39,6 +39,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <mntent.h>
 #include "nlm_list.h"
 #include "fsal_internal.h"
@@ -909,6 +910,19 @@ static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
   }
 
   /* First, check that FSAL attributes */ 
+  if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE))
+  {
+      if(obj_hdl->type != REGULAR_FILE) {
+        fsal_error = ERR_FSAL_INVAL;
+            return fsalstat(fsal_error, retval);
+      }
+      retval = libzfswrap_truncate( tank_get_root_pvfs( obj_hdl->export ),
+              &cred,
+              myself->handle->zfs_handle,
+              attrs->filesize);
+      if (retval != 0)
+          goto out;
+  }
   if(FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
   {
     flags |= LZFSW_ATTR_MODE;
@@ -929,12 +943,25 @@ static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
     flags |= LZFSW_ATTR_ATIME;
     stats.st_atime = attrs->atime.seconds;
   }
+  if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER))
+  {
+      flags |= LZFSW_ATTR_ATIME;
+      struct timeval timerbuf;
+      gettimeofday(&timerbuf, NULL);
+      TIMEVAL_TO_TIMESPEC(timerbuf, stats.st_atim);
+  }
   if(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME))
   {
     flags |= LZFSW_ATTR_MTIME;
     stats.st_mtime = attrs->mtime.seconds;
   }
-
+  if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER))
+  {
+      flags |= LZFSW_ATTR_MTIME;
+      struct timeval timerbuf;
+      gettimeofday(&timerbuf, NULL);
+      TIMEVAL_TO_TIMESPEC(timerbuf, stats.st_mtim);
+  }
   cred.uid = opctx->creds->caller_uid;
   cred.gid = opctx->creds->caller_gid;
 
@@ -944,7 +971,7 @@ static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
                                &stats, 
                                flags, 
                                &new_stat);
-
+out:
   if( retval == 0 )
     return fsalstat(ERR_FSAL_NO_ERROR, 0);
 

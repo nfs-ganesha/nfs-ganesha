@@ -526,6 +526,16 @@ setattrs(struct fsal_obj_handle *handle_pub,
                 return fsalstat(ERR_FSAL_INVAL, 0);
         }
 
+        if (FSAL_TEST_MASK(attr->mask, ATTR_SIZE)) {
+                rc = ceph_ll_truncate(export->cmount, handle->wire.vi,
+                                      attr->filesize, 0, 0);
+
+                if (rc < 0) {
+                    return ceph2fsal_error(rc);
+                }
+        }
+
+
         if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
                 mask |= CEPH_SETATTR_MODE;
                 st.st_mode = fsal2unix_mode(attrs->mode);
@@ -546,9 +556,24 @@ setattrs(struct fsal_obj_handle *handle_pub,
                 st.st_atime = attrs->atime.seconds;
         }
 
+        if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER))
+        {
+                flags |= CEPH_SETATTR_ATIME;
+                struct timeval timerbuf;
+                gettimeofday(&timerbuf, NULL);
+                TIMEVAL_TO_TIMESPEC(timerbuf, stats.st_atim);
+        }
+
         if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
                 mask |= CEPH_SETATTR_MTIME;
                 st.st_mtime = attrs->mtime.seconds;
+        }
+        if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER))
+        {
+                flags |= CEPH_SETATTR_MTIME;
+                struct timeval timerbuf;
+                gettimeofday(&timerbuf, NULL);
+                TIMEVAL_TO_TIMESPEC(timerbuf, stats.st_mtim);
         }
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_CTIME)) {
