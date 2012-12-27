@@ -251,16 +251,19 @@ hdlerr:
  */
 
 static inline
-int make_file_safe(int dir_fd,
+int make_file_safe(struct vfs_fsal_obj_handle *dir_hdl,
+                   int dir_fd,
 		   const char *name,
 		   mode_t unix_mode,
 		   uid_t user,
 		   gid_t group,
-		   vfs_file_handle_t *fh,
-		   struct stat *stat)
+                   struct vfs_fsal_obj_handle **hdl)
 {
 	int retval;
+        struct stat stat;
+        vfs_file_handle_t *fh;
 
+        vfs_alloc_handle(fh);
 	
 	retval = fchownat(dir_fd, name,
 			  user, group, AT_SYMLINK_NOFOLLOW);
@@ -278,9 +281,16 @@ int make_file_safe(int dir_fd,
 	if(retval < 0) {
 		goto fileerr;
 	}
-	retval = fstatat(dir_fd, name, stat, AT_SYMLINK_NOFOLLOW);
+	retval = fstatat(dir_fd, name, &stat, AT_SYMLINK_NOFOLLOW);
 	if(retval < 0) {
 		goto fileerr;
+	}
+
+	/* allocate an obj_handle and fill it up */
+	*hdl = alloc_handle(fh, &stat, NULL, dir_hdl->handle,
+                            name, dir_hdl->obj_handle.export);
+	if(*hdl == NULL) {
+	        return ENOMEM;
 	}
 	return 0;
 
@@ -306,8 +316,6 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	uid_t user;
 	gid_t group;
-        vfs_file_handle_t *fh = NULL;
-        vfs_alloc_handle(fh);
 
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -342,23 +350,14 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 
-	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval != 0) {
-		goto fileerr;
-	}
-	close(dir_fd); /* done with parent */
+	retval = make_file_safe(myself, dir_fd, name, unix_mode, user, group, &hdl);
+	if(!retval) {
+                close(dir_fd); /* done with parent */
+                close(fd);  /* don't need it anymore. */
+                *handle = &hdl->obj_handle;
+                return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        }
 
-	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, NULL, NULL, dir_hdl->export);
-	if(hdl == NULL) {
-		retval = ENOMEM;
-		goto fileerr;
-	}
-	close(fd);  /* don't need it anymore. */
-	*handle = &hdl->obj_handle;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-fileerr:
 	unlinkat(dir_fd, name, 0);  /* remove the evidence on errors */
 
 direrr:
@@ -381,8 +380,6 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	uid_t user;
 	gid_t group;
-        vfs_file_handle_t *fh = NULL;
-        vfs_alloc_handle(fh);
 
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -414,23 +411,13 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto direrr;
 	}
-	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval != 0) {
-		retval = errno;
-		goto fileerr;
-	}
-	close(dir_fd);
-
-	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, NULL, NULL, dir_hdl->export);
-	if(hdl == NULL) {
-		retval = ENOMEM;
-		goto fileerr;
-	}
-	*handle = &hdl->obj_handle;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	retval = make_file_safe(myself, dir_fd, name, unix_mode, user, group, &hdl);
+	if(!retval) {
+                close(dir_fd);
+                *handle = &hdl->obj_handle;
+                return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        }
 	
-fileerr:
 	unlinkat(dir_fd, name, AT_REMOVEDIR);  /* remove the evidence on errors */
 
 direrr:
@@ -456,10 +443,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	uid_t user;
 	gid_t group;
 	dev_t unix_dev = 0;
-	vfs_file_handle_t *dir_fh = NULL;
-	const char *unopenable_name = NULL;
-        vfs_file_handle_t *fh = NULL;
-        vfs_alloc_handle(fh);
 
 	*handle = NULL; /* poison it */
 	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
@@ -505,10 +488,6 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
                 fsal_error = ERR_FSAL_INVAL;
                 goto errout;
         }
-        if (vfs_unopenable_type(nodetype)) {
-                dir_fh = myself->handle;
-                unopenable_name = name;
-        }
 	dir_fd = vfs_fsal_open(myself, O_PATH|O_NOACCESS, &fsal_error);
 	if(dir_fd < 0) {
 		goto errout;
@@ -527,22 +506,13 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto direrr;
 	}
-	retval = make_file_safe(dir_fd, name, unix_mode, user, group, fh, &stat);
-	if(retval != 0) {
-		goto nodeerr;
-	}
-
-	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, &stat, NULL, dir_fh, unopenable_name, dir_hdl->export);
-	if(hdl == NULL) {
-		retval = ENOMEM;
-		goto nodeerr;
-	}
-	close(dir_fd); /* done with parent */
-	*handle = &hdl->obj_handle;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	retval = make_file_safe(myself, dir_fd, name, unix_mode, user, group, &hdl);
+	if(!retval) {
+                close(dir_fd); /* done with parent */
+                *handle = &hdl->obj_handle;
+                return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        }
 	
-nodeerr:
 	unlinkat(dir_fd, name, 0);
 	
 direrr:
