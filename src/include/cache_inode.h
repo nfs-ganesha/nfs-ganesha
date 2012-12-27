@@ -699,14 +699,6 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t *entry,
 					 struct attrlist *attr,
 					 struct req_op_context *req_ctx);
 
-cache_inode_status_t
-cache_inode_truncate_impl(cache_entry_t *entry,
-			  uint64_t length,
-			  struct req_op_context *req_ctx);
-cache_inode_status_t cache_inode_truncate(
-	cache_entry_t *entry,
-	uint64_t length,
-	struct req_op_context *req_ctx);
 
 cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status);
 
