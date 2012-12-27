@@ -874,15 +874,15 @@ out:
 static int
 vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 		       struct stat *stat,
+		       int open_flags,
 		       fsal_errors_t *fsal_error)
 {
         struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
-	int open_flags = O_RDONLY;
 	int fd = -1;
 	int retval = 0;
 
 	if(obj_hdl->type == REGULAR_FILE) {
-		if(myself->u.file.fd < 0) {
+		if(myself->u.file.fd < 0  || !(myself->u.file.openflags & open_flags)) {
 			goto open_file;  /* no file open at the moment */
 		}
 		fd = myself->u.file.fd;
@@ -948,7 +948,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	fd = vfs_fsal_open_and_stat(myself, &stat, &fsal_error);
+	fd = vfs_fsal_open_and_stat(myself, &stat, O_RDONLY, &fsal_error);
 	if(fd >= 0) {
 	   	if(obj_hdl->type != REGULAR_FILE || myself->u.file.fd < 0)
 			close(fd);
@@ -979,6 +979,7 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	struct stat stat;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
+	int open_flags = O_RDONLY;
 
 	/* apply umask, if mode attribute is to be changed */
 	if(FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
@@ -998,10 +999,25 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	 * or the listener forgot to unlink it, it is lame duck.
 	 */
 
-	fd = vfs_fsal_open_and_stat(myself, &stat, &fsal_error);
+	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE))
+		open_flags = O_RDWR;
+
+	fd = vfs_fsal_open_and_stat(myself, &stat, open_flags, &fsal_error);
 	if(fd < 0) {
 		return fsalstat(fsal_error, -fd);
 	}
+	/** TRUNCATE **/
+	if(FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
+		if(obj_hdl->type != REGULAR_FILE) {
+			fsal_error = ERR_FSAL_INVAL;
+			goto fileerr;
+		}
+		retval = ftruncate(fd, attrs->filesize);
+		if(retval != 0) {
+			goto fileerr;
+		}
+	}
+
 	/** CHMOD **/
 	if(FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
 		/* The POSIX chmod call doesn't affect the symlink object, but
@@ -1047,30 +1063,42 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 	}
 		
 	/**  UTIME  **/
-	if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME)) {
-		struct timeval timebuf[2];
+	if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME | ATTR_MTIME | ATTR_ATIME_SERVER | ATTR_MTIME_SERVER)) {
+		struct timespec timebuf[2];
 
 		/* Atime */
-		timebuf[0].tv_sec =
-			(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME) ?
-                         (time_t) attrs->atime.tv_sec : stat.st_atime);
-		timebuf[0].tv_usec = 0;
+		if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER))
+		{
+			timebuf[0].tv_sec = 0;
+			timebuf[0].tv_nsec = UTIME_NOW;
+		} else if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME))
+		{
+			timebuf[0].tv_sec  = attrs->atime.seconds;
+			timebuf[0].tv_nsec = attrs->atime.nseconds;
+		} else {
+			timebuf[0].tv_sec  = 0;
+			timebuf[0].tv_nsec = UTIME_OMIT;
+		}
 
 		/* Mtime */
-		timebuf[1].tv_sec =
-			(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME) ?
-			 (time_t) attrs->mtime.tv_sec : stat.st_mtime);
-		timebuf[1].tv_usec = 0;
-		if(vfs_unopenable_type(obj_hdl->type)) {
-			retval = futimesat(fd,
-					   myself->u.unopenable.name,
-					   timebuf);
-		} else if(obj_hdl->type != SYMBOLIC_LINK) {
-                        /* futimes does not work on symlinks - just 
-                         * ignore it */
-			retval = futimes(fd, timebuf);
-                }
-		if(retval) {
+		if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER))
+		{
+			timebuf[1].tv_sec = 0;
+			timebuf[1].tv_nsec = UTIME_NOW;
+		} else if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
+			timebuf[1].tv_sec = attrs->mtime.seconds;
+			timebuf[1].tv_nsec = attrs->mtime.nseconds;
+		} else {
+			timebuf[1].tv_sec = 0;
+			timebuf[1].tv_nsec = UTIME_OMIT;
+		}
+		if(vfs_unopenable_type(obj_hdl->type))
+			retval = utimensat(fd,
+					myself->u.unopenable.name,
+					timebuf, AT_SYMLINK_NOFOLLOW);
+		else
+			retval = futimens(fd, timebuf);
+		if(retval != 0) {
 			goto fileerr;
 		}
 	}
