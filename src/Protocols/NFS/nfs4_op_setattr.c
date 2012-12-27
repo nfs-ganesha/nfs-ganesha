@@ -183,17 +183,6 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                                 return res_SETATTR4.status;
                         }
                 }
-
-                cache_status = cache_inode_truncate(data->current_entry,
-						    sattr.filesize,
-						    data->req_ctx);
-                if (cache_status != CACHE_INODE_SUCCESS) {
-                        res_SETATTR4.status = nfs4_Errno(cache_status);
-                        return res_SETATTR4.status;
-                }
-
-                /* we just did the truncate, turn off these attrs */
-                FSAL_UNSET_MASK(sattr.mask, (ATTR_SPACEUSED | ATTR_SIZE));
         }
         /* Now, we set the mode */
         if (FSAL_TEST_MASK(sattr.mask, ATTR_MODE) ||

@@ -180,12 +180,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   /* Set size if needed */
   if( *valid & _9P_SETATTR_SIZE )
     {
-      FSAL_SET_MASK(fsalattr.mask, ATTR_ATIME);
-      cache_status = cache_inode_truncate(pfid->pentry,
-					  *size,
-					  &pfid->op_context);
-      if(cache_status != CACHE_INODE_SUCCESS)
-        return  _9p_rerror( preq9p, pworker_data,  msgtag, _9p_tools_errno( cache_status ), plenout, preply ) ;
+      FSAL_SET_MASK(fsalattr.mask, ATTR_SIZE);
     }
 
   /* Now set the attr */ 

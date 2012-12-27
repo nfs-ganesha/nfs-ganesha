@@ -80,7 +80,6 @@ nfs_Setattr(nfs_arg_t *arg,
                 .attributes_follow = false
         };
         cache_inode_status_t cache_status;
-        bool do_trunc = false;
         int rc = NFS_REQ_OK;
 
         if (isDebug(COMPONENT_NFSPROTO)) {
@@ -158,41 +157,14 @@ nfs_Setattr(nfs_arg_t *arg,
              goto out;
           }
 
-        if (arg->arg_setattr3.new_attributes.size.set_it) 
-           do_trunc = true;
-                
-
-
-        /* trunc may change Xtime so we have to start with trunc and finish
-         by the mtime and atime */
-
-        if (do_trunc) {
-                /* Should not be done on a directory */
-                if (entry->type == DIRECTORY) {
-                        cache_status = CACHE_INODE_IS_A_DIRECTORY;
-                } else {
-                        cache_status = cache_inode_truncate(entry,
-							    setattr.filesize,
-							    req_ctx);
-                        FSAL_UNSET_MASK(setattr.mask, ATTR_SPACEUSED);
-                        FSAL_UNSET_MASK(setattr.mask, ATTR_SIZE);
-                }
-        } else {
-                cache_status = CACHE_INODE_SUCCESS;
-        }
-
-        if (cache_status != CACHE_INODE_SUCCESS) {
-                goto out_fail;
-        }
-
         if (setattr.mask != 0) {
             /* If owner or owner_group are set, and the credential was
              * squashed, then we must squash the set owner and owner_group.
              */
             squash_setattr(&worker->related_client, export, req_ctx->creds, &setattr);
             cache_status = cache_inode_setattr(entry,
-                    &setattr,
-                                                   req_ctx);
+                                               &setattr,
+                                               req_ctx);
         }
 
         if (cache_status != CACHE_INODE_SUCCESS) {
