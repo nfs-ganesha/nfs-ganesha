@@ -364,8 +364,10 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr, struct xdr_attrs_args *
 	for(attr = FATTR4_SUPPORTED_ATTRS;
 	    attr <= FATTR4_FS_CHARSET_CAP;
 	    attr++) {
-		if(fattr4tab[attr].supported)
-			assert(set_attribute_in_bitmap(&bits, attr));
+		if(fattr4tab[attr].supported) {
+			bool res = set_attribute_in_bitmap(&bits, attr);
+			assert(res);
+		}
 	}
 	if( !xdr_u_int32_t(xdr, &bits.bitmap4_len))
 		return FATTR_XDR_FAILED;
@@ -2287,11 +2289,15 @@ static fattr_xdr_result encode_support_exclusive_create(XDR *xdr, struct xdr_att
 	for(attr = FATTR4_SUPPORTED_ATTRS;
 	    attr <= FATTR4_FS_CHARSET_CAP;
 	    attr++) {
-		if(fattr4tab[attr].supported)
-			assert(set_attribute_in_bitmap(&bits, attr));
+		if(fattr4tab[attr].supported) {
+			bool res = set_attribute_in_bitmap(&bits, attr);
+			assert(res);
+		}
 	}
-	assert(clear_attribute_in_bitmap(&bits, FATTR4_TIME_ACCESS_SET));
-	assert(clear_attribute_in_bitmap(&bits, FATTR4_TIME_MODIFY_SET));
+	bool res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_ACCESS_SET);
+	assert(res);
+	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_MODIFY_SET);
+	assert(res);
 	if( !xdr_u_int32_t(xdr, &bits.bitmap4_len))
 		return FATTR_XDR_FAILED;
 	for(offset = 0; offset < bits.bitmap4_len; offset++) {
@@ -3134,8 +3140,9 @@ int nfs4_FSALattr_To_Fattr(const struct attrlist *attrs,
 		}
 		xdr_res = fattr4tab[attribute_to_set].encode(&attr_body, &args);
 		if(xdr_res == FATTR_XDR_SUCCESS) {
-			assert(set_attribute_in_bitmap(&Fattr->attrmask,
-						       attribute_to_set));
+			bool res = set_attribute_in_bitmap(&Fattr->attrmask,
+						       attribute_to_set);
+			assert(res);
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Encoded attribute %d, name = %s",
 				     attribute_to_set,
