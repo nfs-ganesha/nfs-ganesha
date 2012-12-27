@@ -70,7 +70,6 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                 compound_data_t *data,
                 struct nfs_resop4 *resp)
 {
-        struct timeval         t;
         struct attrlist        sattr;
         cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
         const char           * tag = "SETATTR";
@@ -195,6 +194,9 @@ nfs4_op_setattr(struct nfs_argop4 *op,
         if (FSAL_TEST_MASK(sattr.mask, ATTR_MODE) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_OWNER) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_GROUP) ||
+            FSAL_TEST_MASK(sattr.mask, ATTR_SIZE) ||
+            FSAL_TEST_MASK(sattr.mask, ATTR_MTIME_SERVER) ||
+            FSAL_TEST_MASK(sattr.mask, ATTR_MTIME_SERVER) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_MTIME) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_ACL) ||
             FSAL_TEST_MASK(sattr.mask, ATTR_ATIME)) {
@@ -220,9 +222,6 @@ nfs4_op_setattr(struct nfs_argop4 *op,
 
 #define S_NSECS 1000000000UL  /* nsecs in 1s */
         /* Set the atime and mtime (ctime is not setable) */
-
-        /* get the current time */
-        gettimeofday(&t, NULL);
 
         /* A carry into seconds considered invalid */
         if (sattr.atime.nseconds >= S_NSECS) {
