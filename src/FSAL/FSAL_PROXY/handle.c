@@ -1767,22 +1767,6 @@ pxy_handle_is(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t
-pxy_truncate(struct fsal_obj_handle *obj_hdl,
-             const struct req_op_context *opctx,
-             uint64_t length)
-{
-        struct attrlist size;
-
-        if(!obj_hdl || !opctx || (obj_hdl->type != REGULAR_FILE))
-                return fsalstat(ERR_FSAL_INVAL, EINVAL);
-
-        size.mask = ATTR_SIZE;
-        size.filesize = length;
-
-        return pxy_setattrs(obj_hdl, opctx, &size);
-}
-
-static fsal_status_t
 pxy_unlink(struct fsal_obj_handle *dir_hdl,
            const struct req_op_context *opctx,
            const char *name)
@@ -2065,7 +2049,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = pxy_link;
 	ops->rename = pxy_rename;
 	ops->unlink = pxy_unlink;
-	ops->truncate = pxy_truncate;
 	ops->open = pxy_open;
 	ops->read = pxy_read;
 	ops->write = pxy_write;

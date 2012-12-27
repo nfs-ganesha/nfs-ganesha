@@ -1108,45 +1108,11 @@ fileerr:
         retval = errno;
         fsal_error = posix2fsal_error(retval);
 out:
-	if( !(obj_hdl->type == REGULAR_FILE && myself->u.file.fd >= 0))
+	if( !(obj_hdl->type == REGULAR_FILE && myself->u.file.fd == fd))
 		close(fd);
 	return fsalstat(fsal_error, retval);
 }
 
-/* file_truncate
- * truncate a file to the size specified.
- * size should really be off_t...
- */
-
-static fsal_status_t file_truncate(struct fsal_obj_handle *obj_hdl,
-                                   const struct req_op_context *opctx,
-				   uint64_t length)
-{
-	struct vfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int fd;
-	int retval = 0;
-
-	if(obj_hdl->type != REGULAR_FILE) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	fd = vfs_fsal_open(myself, O_RDWR, &fsal_error);
-	if(fd < 0) {
-		retval = -fd;
-		goto errout;
-	}
-	retval = ftruncate(fd, length);
-	if(retval < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-	}
-	close(fd);
-	
-errout:
-	return fsalstat(fsal_error, retval);	
-}
 
 /* file_unlink
  * unlink the named file in the directory
@@ -1344,7 +1310,6 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->truncate = file_truncate;
 	ops->open = vfs_open;
 	ops->status = vfs_status;
 	ops->read = vfs_read;

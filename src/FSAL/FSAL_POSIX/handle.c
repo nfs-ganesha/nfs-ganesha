@@ -845,40 +845,6 @@ static fsal_status_t setattrs (struct fsal_obj_handle *obj_hdl,
 }
 
 
-static fsal_status_t file_truncate (struct fsal_obj_handle *obj_hdl,
-				    const struct req_op_context *opctx,
-				    uint64_t length)
-{
-    char *path = NULL;
-    struct file_data *child = NULL;
-    struct posix_fsal_obj_handle *myself;
-    fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-    int retval = 0;
-
-    if (obj_hdl->type != REGULAR_FILE) {
-        fsal_error = ERR_FSAL_INVAL;
-        goto errout;
-    }
-    myself = container_of (obj_hdl, struct posix_fsal_obj_handle, obj_handle);
-
-    child = MARSHAL_nodedb_clean_stale_paths (connpool, myself->handle, &path, &retval, NULL, NULL);
-    if (!child) {
-        fsal_error = retval ? posix2fsal_error (retval) : ERR_FSAL_STALE;
-        goto errout;
-    }
-    retval = truncate (path, length);
-    if (retval < 0) {
-        retval = errno;
-        fsal_error = posix2fsal_error (retval);
-    }
-
-  errout:
-    xfree (path);
-    xfree (child);
-    return fsalstat (fsal_error, retval);
-}
-
-
 static fsal_status_t file_unlink (struct fsal_obj_handle *dir_hdl,
 				  const struct req_op_context *opctx,
 				  const char *name)
@@ -1015,7 +981,6 @@ void posix_handle_ops_init (struct fsal_obj_ops *ops)
     ops->link = linkfile;
     ops->rename = renamefile;
     ops->unlink = file_unlink;
-    ops->truncate = file_truncate;
     ops->open = posix_open;
     ops->status = posix_status;
     ops->read = posix_read;
