@@ -61,11 +61,14 @@ cache_inode_setattr(cache_entry_t *entry,
 		    struct req_op_context *req_ctx)
 {
      struct fsal_obj_handle *obj_handle = entry->obj_handle;
-     const struct user_cred *creds = req_ctx->creds;
      fsal_status_t fsal_status = {0, 0};
      fsal_acl_t *saved_acl = NULL;
      fsal_acl_status_t acl_status = 0;
      cache_inode_status_t status = CACHE_INODE_SUCCESS;
+
+     /* True if we have taken the content lock on 'entry' */
+     bool content_locked = false;
+
 
      if ((attr->mask & ATTR_SIZE) &&
          (entry->type != REGULAR_FILE)) {
@@ -101,16 +104,8 @@ cache_inode_setattr(cache_entry_t *entry,
 
 
      if (attr->mask & ATTR_SIZE) {
-             fsal_status = obj_handle->ops->truncate(obj_handle, req_ctx,
-                                                     attr->filesize);
-             if (FSAL_IS_ERROR(fsal_status)) {
-                     status = cache_inode_error_convert(fsal_status);
-                     if (fsal_status.major == ERR_FSAL_STALE) {
-                             cache_inode_kill_entry(entry);
-                     }
-                     goto unlock;
-             }
-             attr->mask &= ~ATTR_SIZE;
+         PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+         content_locked = true;
      }
 
      saved_acl = obj_handle->attributes.acl;
@@ -148,7 +143,12 @@ cache_inode_setattr(cache_entry_t *entry,
      status = CACHE_INODE_SUCCESS;
 
 unlock:
+     if (content_locked)
+     {
+         PTHREAD_RWLOCK_unlock(&entry->content_lock);
+     }
      PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
 
 out:
 
