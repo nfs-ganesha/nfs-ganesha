@@ -107,7 +107,7 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                 return res_SETATTR4.status;
         }
 
-        /* Convert the fattr4 in the request to a nfs3_sattr structure */
+        /* Convert the fattr4 in the request to a fsal sattr structure */
         res_SETATTR4.status = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4.obj_attributes));
         if (res_SETATTR4.status != NFS4_OK) {
                 return res_SETATTR4.status;
@@ -244,6 +244,10 @@ nfs4_op_setattr(struct nfs_argop4 *op,
                 res_SETATTR4.status = NFS4ERR_INVAL;
                 return res_SETATTR4.status;
         }
+        /* If owner or owner_group are set, and the credential was
+         * squashed, then we must squash the set owner and owner_group.
+         */
+        squash_setattr(&data->pworker->related_client, data->pexport, data->req_ctx->creds, &sattr);
 
         cache_status = cache_inode_setattr(data->current_entry,
 					   &sattr,

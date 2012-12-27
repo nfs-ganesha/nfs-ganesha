@@ -193,11 +193,13 @@ nfs_Setattr(nfs_arg_t *arg,
         }
 
         if (setattr.mask != 0) {
-                cache_status = cache_inode_setattr(entry,
-                                                   &setattr,
+            /* If owner or owner_group are set, and the credential was
+             * squashed, then we must squash the set owner and owner_group.
+             */
+            squash_setattr(&worker->related_client, export, req_ctx->creds, &setattr);
+            cache_status = cache_inode_setattr(entry,
+                    &setattr,
                                                    req_ctx);
-        } else {
-                cache_status = CACHE_INODE_SUCCESS;
         }
 
         if (cache_status != CACHE_INODE_SUCCESS) {
