@@ -188,10 +188,15 @@ nfs_Symlink(nfs_arg_t *arg,
 
         /* Are there any attributes left to set? */
         if (sattr.mask) {
-                /* A call to cache_inode_setattr is required */
-                cache_status = cache_inode_setattr(symlink_entry,
-						   &sattr,
-						   req_ctx);
+            /* If owner or owner_group are set, and the credential was
+             * squashed, then we must squash the set owner and owner_group.
+             */
+            squash_setattr(&worker->related_client, export, req_ctx->creds, &sattr);
+
+            /* A call to cache_inode_setattr is required */
+            cache_status = cache_inode_setattr(symlink_entry,
+                    &sattr,
+                    req_ctx);
 		if (cache_status != CACHE_INODE_SUCCESS) {
 			goto out_fail;
 		}

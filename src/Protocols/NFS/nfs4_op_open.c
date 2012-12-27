@@ -687,12 +687,17 @@ open4_create(OPEN4args           * arg,
         }
 
         if (sattr_provided) {
-                cache_status = cache_inode_setattr(entry_newfile,
-						   &sattr,
-						   data->req_ctx);
-                if (cache_status != CACHE_INODE_SUCCESS) {
-                        return nfs4_Errno(cache_status);
-                }
+            /* If owner or owner_group are set, and the credential was
+             * squashed, then we must squash the set owner and owner_group.
+             */
+            squash_setattr(&data->pworker->related_client, data->pexport, data->req_ctx->creds, &sattr);
+
+            cache_status = cache_inode_setattr(entry_newfile,
+                    &sattr,
+                    data->req_ctx);
+            if (cache_status != CACHE_INODE_SUCCESS) {
+                return nfs4_Errno(cache_status);
+            }
         }
 
         *entry = entry_newfile;

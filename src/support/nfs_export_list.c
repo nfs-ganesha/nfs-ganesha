@@ -284,6 +284,38 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
 }
 
 
+void squash_setattr(exportlist_client_entry_t * pexport_client,
+                    exportlist_t * pexport,
+                    struct user_cred   * user_credentials,
+                    struct attrlist * attr)
+{
+  if(attr->mask & ATTR_OWNER)
+    {
+      if(pexport->all_anonymous == true) {
+        attr->owner = pexport->anonymous_uid;
+      } else if(!(pexport_client->options & EXPORT_OPTION_ROOT)&&
+              (attr->owner == 0) &&
+              (user_credentials->caller_uid == pexport->anonymous_uid))
+        attr->owner = pexport->anonymous_uid;
+    }
+
+  if(attr->mask & ATTR_GROUP)
+    {
+      /* If all squashed, then always squash the owner_group.
+       *
+       * If root squashed, then squash owner_group if
+       * caller_gid has been squashed or one of the caller's
+       * alternate groups has been squashed.
+       */
+      if(pexport->all_anonymous == true)
+        attr->group = pexport->anonymous_gid;
+      else if(!(pexport_client->options & EXPORT_OPTION_ROOT) &&
+              (attr->group == 0) &&
+              (user_credentials->caller_gid == pexport->anonymous_gid))
+        attr->group = pexport->anonymous_gid;
+    }
+}
+
 /**
  * @brief Compares two RPC creds
  *
