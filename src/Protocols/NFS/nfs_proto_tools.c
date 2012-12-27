@@ -1779,6 +1779,14 @@ static inline fattr_xdr_result decode_time(XDR *xdr,
 	return FATTR_XDR_SUCCESS;
 }
 
+static inline fattr_xdr_result encode_timeset_server(XDR *xdr)
+{
+	uint32_t how = SET_TO_SERVER_TIME4;
+
+	return xdr_u_int32_t(xdr, &how);
+}
+
+
 static inline fattr_xdr_result encode_timeset(XDR *xdr, struct timespec *ts)
 {
 	uint32_t how = SET_TO_CLIENT_TIME4;
@@ -1797,26 +1805,10 @@ static inline fattr_xdr_result decode_timeset(XDR *xdr,
 	if( !xdr_u_int32_t(xdr, &how))
 		return FATTR_XDR_FAILED;
 	if(how == SET_TO_SERVER_TIME4) {
-#ifdef CLOCK_REALTIME
-		struct timespec sys_ts;
-
-		if(clock_gettime(CLOCK_REALTIME, &sys_ts) != 0) {
-			args->nfs_status = NFS4ERR_SERVERFAULT;
-			return FATTR_XDR_FAILED;
-		}
-		ts->tv_sec = sys_ts.tv_sec;
-		ts->tv_nsec = sys_ts.tv_nsec;
-#else
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-
-		ts->tv_sec = tv.tv_sec;
-		ts->tv_nsec = tv.tv_usec * 1000UL;
-#endif
+		return FATTR_XDR_SUCCESS_EXP;
 	} else {
 		return decode_time(xdr, args, ts);
 	}
-	return FATTR_XDR_SUCCESS;
 }
 
 /*
@@ -1840,7 +1832,14 @@ static fattr_xdr_result decode_accesstime(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_accesstimeset(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return encode_timeset(xdr, &args->attrs->atime);
+	if (FSAL_TEST_MASK(args->attrs->mask, ATTR_ATIME_SERVER))
+	{
+		return encode_timeset_server(xdr);
+	}
+	else
+	{
+		return encode_timeset(xdr, &args->attrs->atime);
+	}
 }
 
 static fattr_xdr_result decode_accesstimeset(XDR *xdr, struct xdr_attrs_args *args)
@@ -1944,7 +1943,14 @@ static fattr_xdr_result decode_modifytime(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_modifytimeset(XDR *xdr, struct xdr_attrs_args *args)
 {
-	return encode_timeset(xdr, &args->attrs->mtime);
+	if (FSAL_TEST_MASK(args->attrs->mask, ATTR_MTIME_SERVER))
+	{
+		return encode_timeset_server(xdr);
+	}
+	else
+	{
+		return encode_timeset(xdr, &args->attrs->mtime);
+	}
 }
 
 static fattr_xdr_result decode_modifytimeset(XDR *xdr, struct xdr_attrs_args *args)
@@ -2677,6 +2683,7 @@ const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
 		.encode = encode_accesstimeset,
 		.decode = decode_accesstimeset,
 		.attrmask = ATTR_ATIME,
+		.exp_attrmask = ATTR_ATIME_SERVER,
 		.access = FATTR4_ATTR_WRITE},
 	[FATTR4_TIME_BACKUP] = {
 		.name = "FATTR4_TIME_BACKUP",
@@ -2722,6 +2729,7 @@ const struct fattr4_dent fattr4tab[FATTR4_FS_CHARSET_CAP + 1] = {
 		.encode = encode_modifytimeset,
 		.decode = decode_modifytimeset,
 		.attrmask = ATTR_MTIME,
+		.exp_attrmask = ATTR_MTIME_SERVER,
 		.access = FATTR4_ATTR_WRITE},
 	[FATTR4_MOUNTED_ON_FILEID] = {
 		.name = "FATTR4_MOUNTED_ON_FILEID",
@@ -3181,7 +3189,6 @@ bool
 nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                        sattr3 *sattr)
 {
-        struct timeval t;
 
         if (FSAL_attr == NULL || sattr == NULL) {
                 return false;
@@ -3232,17 +3239,21 @@ nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                              sattr->atime.set_atime_u.atime.tv_sec,
                              sattr->atime.set_atime_u.atime.tv_nsec);
                 if (sattr->atime.set_it == SET_TO_CLIENT_TIME) {
-                        FSAL_attr->atime.tv_sec
-                                = sattr->atime.set_atime_u.atime.tv_sec;
-                        FSAL_attr->atime.tv_nsec = 0;
-                } else {
+                        FSAL_attr->atime.seconds
+                                = sattr->atime.set_atime_u.atime.seconds;
+                        FSAL_attr->atime.nseconds = 0;
+                        FSAL_attr->mask |= ATTR_ATIME;
+                } else if (sattr->atime.set_it == SET_TO_SERVER_TIME) {
                         /* Use the server's current time */
-                        gettimeofday(&t, NULL);
-
-                        FSAL_attr->atime.tv_sec = t.tv_sec;
-                        FSAL_attr->atime.tv_nsec = 0;
+                        LogFullDebug(COMPONENT_NFSPROTO,
+                                "nfs3_Sattr_To_FSALattr: SET_TO_SERVER_TIME atime");
+                        FSAL_attr->mask |= ATTR_ATIME_SERVER;
+                } else {
+                    LogCrit(COMPONENT_NFSPROTO,
+                            "Unexpected value for sattr->atime.set_it = %d",
+                            sattr->atime.set_it);
                 }
-                FSAL_attr->mask |= ATTR_ATIME;
+
         }
 
         if (sattr->mtime.set_it != DONT_CHANGE) {
@@ -3251,18 +3262,21 @@ nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr,
                              sattr->atime.set_it,
                              sattr->mtime.set_mtime_u.mtime.tv_sec);
                 if (sattr->mtime.set_it == SET_TO_CLIENT_TIME) {
-                        FSAL_attr->mtime.tv_sec
-                                = sattr->mtime.set_mtime_u.mtime.tv_sec;
-                        FSAL_attr->mtime.tv_nsec = 0;
+                        FSAL_attr->mtime.seconds
+                                = sattr->mtime.set_mtime_u.mtime.seconds;
+                        FSAL_attr->mtime.nseconds = 0;
+                        FSAL_attr->mask |= ATTR_MTIME;
+                } else if (sattr->mtime.set_it == SET_TO_SERVER_TIME) {
+                    /* Use the server's current time */
+                    LogFullDebug(COMPONENT_NFSPROTO,
+                            "nfs3_Sattr_To_FSALattr: SET_TO_SERVER_TIME Mtime");
+                    FSAL_attr->mask |= ATTR_MTIME_SERVER;
                 } else {
-                        /* Use the server's current time */
-                        gettimeofday(&t, NULL);
-                        FSAL_attr->mtime.tv_sec
-                                = t.tv_sec;
-                        FSAL_attr->mtime.tv_nsec
-                                = 0;
+                    LogCrit(COMPONENT_NFSPROTO,
+                            "Unexpected value for sattr->mtime.set_it = %d",
+                            sattr->mtime.set_it);
                 }
-                FSAL_attr->mask |= ATTR_MTIME;
+
         }
 
         return true;
@@ -4107,7 +4121,14 @@ static int Fattr4_To_FSAL_attr(struct attrlist *attrs,
 				     "Decode attribute %d, name = %s",
 				     attribute_to_set,
 				     f4e->name);
-		} else if(xdr_res == FATTR_XDR_NOOP) {
+		} else if(xdr_res == FATTR_XDR_SUCCESS_EXP) {
+			if(attrs)
+				FSAL_SET_MASK(attrs->mask, f4e->exp_attrmask);
+			LogFullDebug(COMPONENT_NFS_V4,
+				     "Decode (exp) attribute %d, name = %s",
+				     attribute_to_set,
+				     f4e->name);
+        } else if(xdr_res == FATTR_XDR_NOOP) {
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Attribute not supported %d name=%s",
 				     attribute_to_set,

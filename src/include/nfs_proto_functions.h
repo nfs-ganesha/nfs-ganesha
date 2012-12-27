@@ -870,6 +870,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
 typedef enum {
 	FATTR_XDR_NOOP,
 	FATTR_XDR_SUCCESS,
+	FATTR_XDR_SUCCESS_EXP,
 	FATTR_XDR_FAILED
 } fattr_xdr_result;
 
@@ -889,6 +890,7 @@ typedef struct fattr4_dent {
 	unsigned int size_fattr4;     /* The size of the dedicated attr subtype */
 	unsigned int access;          /* The access type for this attributes    */
 	attrmask_t attrmask;          /* attr bit for decoding to attrs */
+	attrmask_t exp_attrmask;      /* attr bit for decoding to attrs in case of exepction */
 	fattr_xdr_result (*encode)(XDR *xdr, struct xdr_attrs_args *args);
 	fattr_xdr_result (*decode)(XDR *xdr, struct xdr_attrs_args *args);
 	fattr_xdr_result (*compare)(XDR *xdr1, XDR *xdr2);
