@@ -1147,46 +1147,6 @@ errout:
 	return fsalstat(fsal_error, retval);
 }
 
-/* file_truncate
- * truncate a file to the size specified.
- * size should really be off_t...
- */
-
-static fsal_status_t 
-xfs_file_truncate(struct fsal_obj_handle *obj_hdl,
-                  const struct req_op_context *opctx,
-		  uint64_t length)
-{
-	struct xfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int fd;
-	int retval = 0;
-
-	if(obj_hdl->type != REGULAR_FILE) {
-		fsal_error = ERR_FSAL_INVAL;
-		goto errout;
-	}
-	myself = container_of(obj_hdl, struct xfs_fsal_obj_handle, obj_handle);
-	fd = open_by_handle(myself->xfs_hdl.data, myself->xfs_hdl.len, O_RDWR);
-	if(fd < 0) {
-		retval = errno;
-		if(retval == ENOENT)
-			fsal_error = ERR_FSAL_STALE;
-		else
-			fsal_error = posix2fsal_error(retval);
-		goto errout;
-	}
-	retval = ftruncate(fd, length);
-	if(retval < 0) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-	}
-	close(fd);
-	
-errout:
-	return fsalstat(fsal_error, retval);	
-}
-
 static fsal_status_t 
 xfs_unlink(struct fsal_obj_handle *dir_hdl,
            const struct req_op_context *opctx,
@@ -1358,7 +1318,6 @@ void xfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = xfs_linkfile;
 	ops->rename = xfs_renamefile;
 	ops->unlink = xfs_unlink;
-	ops->truncate = xfs_file_truncate;
 	ops->open = xfs_open;
 	ops->status = xfs_status;
 	ops->read = xfs_read;

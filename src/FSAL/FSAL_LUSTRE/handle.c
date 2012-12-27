@@ -1324,7 +1324,6 @@ void lustre_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = lustre_linkfile;
 	ops->rename = lustre_renamefile;
 	ops->unlink = lustre_file_unlink;
-	ops->truncate = lustre_file_truncate;
 	ops->open = lustre_open;
 	ops->status = lustre_status;
 	ops->read = lustre_read;

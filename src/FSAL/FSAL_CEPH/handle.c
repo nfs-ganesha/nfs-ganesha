@@ -722,41 +722,6 @@ fsal_unlink(struct fsal_obj_handle *dir_pub,
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/**
- * @brief Truncate a file
- *
- * This function shortens a file to the given length.
- *
- * @param[in] handle_pub File to truncate
- * @param[in] opctx      Request context, includes credentials
- * @param[in] length     New file size
- *
- * @return FSAL status.
- */
-
-static fsal_status_t
-fsal_truncate(struct fsal_obj_handle *handle_pub,
-	      const struct req_op_context *opctx,
-              uint64_t length)
-{
-        /* Generic status return */
-        int rc = 0;
-        /* The private 'full' export */
-        struct export *export
-                = container_of(handle_pub->export, struct export, export);
-        /* The private 'full' object handle */
-        struct handle *handle
-                = container_of(handle_pub, struct handle, handle);
-
-        rc = ceph_ll_truncate(export->cmount, handle->wire.vi,
-                              length, 0, 0);
-
-        if (rc < 0) {
-                return ceph2fsal_error(rc);
-        }
-
-        return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
 
 /**
  * @brief Open a file for read or write
@@ -1115,7 +1080,6 @@ handle_ops_init(struct fsal_obj_ops *ops)
         ops->link = fsal_link;
         ops->rename = fsal_rename;
         ops->unlink = fsal_unlink;
-        ops->truncate = fsal_truncate;
         ops->open = fsal_open;
         ops->status = status;
         ops->read = fsal_read;

@@ -77,7 +77,6 @@ fsal_functions_t fsal_gpfs_functions = {
       COMMON_load_FS_common_parameter_from_conf,
   .fsal_load_fs_specific_parameter_from_conf =
       GPFSFSAL_load_FS_specific_parameter_from_conf,
-  .fsal_truncate = GPFSFSAL_truncate,
   .fsal_unlink = GPFSFSAL_unlink,
   .fsal_getfsname = GPFSFSAL_GetFSName,
   .fsal_getxattrattrs = GPFSFSAL_GetXAttrAttrs,

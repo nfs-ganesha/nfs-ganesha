@@ -8,7 +8,6 @@ SET(fsalfuse_STAT_SRCS
    fsal_fsinfo.c
    fsal_rcp.c
    fsal_compat.c
-   fsal_truncate.c
    fsal_attrs.c
    fsal_convert.c
    fsal_init.c
