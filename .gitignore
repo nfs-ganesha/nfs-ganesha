@@ -42,3 +42,4 @@ patch-for-HPSS-nfs-ganesha-*
 *.patch
 core.*
 *cmake_install.cmake
+Doxyfile
