@@ -886,7 +886,7 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 				 AT_SYMLINK_NOFOLLOW);
 	} else {
 		if(obj_hdl->type == SYMBOLIC_LINK)
-			open_flags |= O_PATH;
+			open_flags = O_PATH | O_RDWR;
 		else if(obj_hdl->type == FIFO_FILE)
 			open_flags |= O_NONBLOCK;
 	open_file:
@@ -1016,7 +1016,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 					  user,
 					  group,
 					  AT_SYMLINK_NOFOLLOW);
-		else
+		else if(obj_hdl->type == SYMBOLIC_LINK)
+                        retval = fchownat(fd, "", user, group,
+                                          AT_SYMLINK_NOFOLLOW|AT_EMPTY_PATH);
+                else
 			retval = fchown(fd, user, group);
 
 		if(retval) {
@@ -1039,13 +1042,16 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME) ?
 			 (time_t) attrs->mtime.seconds : stat.st_mtime);
 		timebuf[1].tv_usec = 0;
-		if(vfs_unopenable_type(obj_hdl->type))
+		if(vfs_unopenable_type(obj_hdl->type)) {
 			retval = futimesat(fd,
 					   myself->u.unopenable.name,
 					   timebuf);
-		else
+		} else if(obj_hdl->type != SYMBOLIC_LINK) {
+                        /* futimes does not work on symlinks - just 
+                         * ignore it */
 			retval = futimes(fd, timebuf);
-		if(retval != 0) {
+                }
+		if(retval) {
 			goto fileerr;
 		}
 	}
