@@ -125,6 +125,10 @@ IF(BUILD_CONFIG)
   ${CMAKE_SOURCE_DIR}/cmake/build_configurations/${BUILD_CONFIG}.cmake)
 ENDIF()
 
+IF(DEBUG_SYMS)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g")
+ENDIF(DEBUG_SYMS)
+
 # Build source locations and parameters
 
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
