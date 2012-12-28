@@ -28,8 +28,7 @@ install-sh
 config.*
 aclocal.m4
 *.o
-*.lo
-*.la
+*.a
 libganeshaNFS.pc
 nfs-ganesha.spec
 cppcheck.*
@@ -42,3 +41,4 @@ patch-for-HPSS-nfs-ganesha-*
 *.patch
 core.*
 *cmake_install.cmake
+libfsal*.so*
