@@ -154,7 +154,7 @@ gsh_xprt_ref(SVCXPRT *xprt, uint32_t flags)
 }
 
 static inline void
-gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
+gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags)
 {
     gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
     uint32_t refcnt, req_cnt;
@@ -176,10 +176,9 @@ gsh_xprt_unref(SVCXPRT * xprt, uint32_t flags)
     SVC_RELEASE(xprt, SVC_RELEASE_FLAG_LOCKED);
     /* !LOCKED */
 
-    LogFullDebug(COMPONENT_DISPATCH,
+    LogFullDebug(COMPONENT_RPC,
                  "xprt %p req_cnt=%u refcnt=%u",
-                 xprt, refcnt, req_cnt);
-
+                 xprt, req_cnt, refcnt);
     return;
 }
 
