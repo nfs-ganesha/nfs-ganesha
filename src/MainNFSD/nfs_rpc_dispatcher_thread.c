@@ -802,21 +802,22 @@ nfs_rpc_outstanding_reqs_est(void)
     static uint32_t ctr = 0;
     static uint32_t nreqs = 0;
     struct req_q_pair *qpair;
+    uint32_t treqs;
     int ix;
 
-    if ((atomic_inc_uint32_t(&ctr) % 10) != 0)
-        return (nreqs);
-
-    atomic_store_uint32_t(&nreqs, 0);
-    for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
-        qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
-        atomic_add_uint32_t(&nreqs,
-                            atomic_fetch_int32_t(&qpair->producer.size));
-        atomic_add_uint32_t(&nreqs,
-                            atomic_fetch_int32_t(&qpair->consumer.size));
+    if ((atomic_inc_uint32_t(&ctr) % 10) != 0) {
+        return (atomic_fetch_uint32_t(&nreqs));
     }
 
-    return (atomic_fetch_uint32_t(&nreqs));
+    treqs = 0;
+    for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
+        qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
+        treqs += atomic_fetch_uint32_t(&qpair->producer.size);
+        treqs += atomic_fetch_uint32_t(&qpair->consumer.size);
+    }
+
+    atomic_store_uint32_t(&nreqs, treqs);
+    return (treqs);
 }
 
 
