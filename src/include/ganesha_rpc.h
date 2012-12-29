@@ -164,6 +164,8 @@ gsh_xprt_unref(SVCXPRT *xprt, uint32_t flags)
 
     if (flags & XPRT_PRIVATE_FLAG_DECREQ)
         req_cnt = --(xu->req_cnt);
+    else
+        req_cnt = xu->req_cnt;
 
     if (flags & XPRT_PRIVATE_FLAG_DECODING)
         if (xu->flags & XPRT_PRIVATE_FLAG_DECODING)
