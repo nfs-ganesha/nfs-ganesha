@@ -511,7 +511,7 @@ void nfs_Init_svc()
   if (!tirpc_control(TIRPC_GET_DEBUG_FLAGS, &tirpc_debug_flags))
       LogCrit(COMPONENT_INIT, "Failed getting TI-RPC debug flags");
 
-  tirpc_debug_flags |= TIRPC_DEBUG_FLAG_LOCK;
+  tirpc_debug_flags |= TIRPC_DEBUG_FLAG_REFCNT;
 
   if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &tirpc_debug_flags))
       LogCrit(COMPONENT_INIT, "Failed setting TI-RPC debug flags");
@@ -825,7 +825,7 @@ stallq_should_unstall(gsh_xprt_private_t *xu)
 {
 	return ((xu->req_cnt <
 		 nfs_param.core_param.dispatch_max_reqs_xprt/2) ||
-		(xu->flags & XPRT_PRIVATE_FLAG_DESTROYED));
+		(xu->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED));
 }
 
 void *

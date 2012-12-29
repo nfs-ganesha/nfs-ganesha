@@ -86,12 +86,11 @@ const char *str_gc_proc(rpc_gss_proc_t gc_proc);
  * connection), ie, xprt->xp_u1.
  */
 #define XPRT_PRIVATE_FLAG_NONE       0x0000
-#define XPRT_PRIVATE_FLAG_DESTROYED  0x0001 /* forward destroy */
-#define XPRT_PRIVATE_FLAG_LOCKED     0x0002
-#define XPRT_PRIVATE_FLAG_INCREQ     0x0004
-#define XPRT_PRIVATE_FLAG_DECREQ     0x0008
-#define XPRT_PRIVATE_FLAG_DECODING   0x0010
-#define XPRT_PRIVATE_FLAG_STALLED    0x0020 /* ie, -on stallq- */
+#define XPRT_PRIVATE_FLAG_LOCKED     0x0001
+#define XPRT_PRIVATE_FLAG_INCREQ     0x0002
+#define XPRT_PRIVATE_FLAG_DECREQ     0x0004
+#define XPRT_PRIVATE_FLAG_DECODING   0x0008
+#define XPRT_PRIVATE_FLAG_STALLED    0x0010 /* ie, -on stallq- */
 
 struct drc;
 typedef struct gsh_xprt_private
@@ -231,17 +230,6 @@ gsh_xprt_clear_flag(SVCXPRT * xprt, uint32_t flags)
     pthread_mutex_unlock(&xprt->xp_lock);
 
     return;
-}
-
-static inline void
-gsh_xprt_destroy(SVCXPRT *xprt)
-{
-    gsh_xprt_private_t *xu = (gsh_xprt_private_t *) xprt->xp_u1;
-
-    pthread_mutex_lock(&xprt->xp_lock);
-    xu->flags |= XPRT_PRIVATE_FLAG_DESTROYED;
-
-    gsh_xprt_unref(xprt, XPRT_PRIVATE_FLAG_LOCKED);
 }
 
 #define DISP_SLOCK(x) do { \

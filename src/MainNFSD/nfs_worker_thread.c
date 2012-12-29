@@ -1451,7 +1451,7 @@ void *worker_thread(void *IndexArg)
            /* check for destroyed xprts */
            xu = (gsh_xprt_private_t *) nfsreq->r_u.nfs->xprt->xp_u1;
            pthread_mutex_lock(&nfsreq->r_u.nfs->xprt->xp_lock);
-           if (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED) {
+           if (nfsreq->r_u.nfs->xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED) {
                pthread_mutex_unlock(&nfsreq->r_u.nfs->xprt->xp_lock);
                goto finalize_req;
            }
