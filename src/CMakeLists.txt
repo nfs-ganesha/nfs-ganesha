@@ -34,7 +34,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 
 # Linkage to TIRPC repo and commit
 set(tirpc_repo git://github.com/linuxbox2/ntirpc.git)
-set(tirpc_commit 9f7e29a65ee85ac9cd3caaf2e06c60fbd4b1fdcf)
+set(tirpc_commit 3549b0962804b226677eccff5bffb5f4946212eb)
 
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
@@ -347,7 +347,7 @@ ExternalProject_Add(
   GIT_REPOSITORY ${tirpc_repo}
   GIT_TAG ${tirpc_commit}
   UPDATE_COMMAND sh "${PROJECT_BINARY_DIR}/libtirpc/autogen.sh"
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/libtirpc/configure
+  CONFIGURE_COMMAND env CFLAGS=${CMAKE_C_FLAGS} ${PROJECT_BINARY_DIR}/libtirpc/configure
     --enable-gss
     --prefix=${PROJECT_BINARY_DIR}/libtirpc
   BUILD_IN_SOURCE 1
