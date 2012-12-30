@@ -38,8 +38,8 @@
 #define XATTR_CREATE  0x1
 #define XATTR_REPLACE 0x2
 
-ssize_t fgetxattr(int fd, const char *name, void *value, size_t size);
-ssize_t fsetxattr(int fd, const char *name, void *value, size_t size, int flags);
+extern ssize_t fgetxattr(int fd, const char *name, void *value, size_t size);
+extern ssize_t fsetxattr(int fd, const char *name, void *value, size_t size, int flags);
 extern ssize_t flistxattr(int fd, const char *list, size_t size);
 extern ssize_t fremovexattr(int fd, const char *name);
 
