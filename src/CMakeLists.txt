@@ -126,13 +126,24 @@ IF(BUILD_CONFIG)
 ENDIF()
 
 # Build source locations and parameters
+IF(USE_FSAL_CEPH)
+  IF(CEPH_PREFIX)
+    set(CEPH_PREFIX ${CEPH_PREFIX} CACHE PATH "Path to Ceph installation")
+    # XXX seems like this could be generalized to a function
+    LIST(APPEND CMAKE_PREFIX_PATH "${CEPH_PREFIX}")
+    LIST(APPEND CMAKE_INCLUDE_PATH "${CEPH_PREFIX}/include")
+    LIST(APPEND CMAKE_LIBRARY_PATH "${CEPH_PREFIX}/lib")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CEPH_PREFIX}/include")
+  ELSE()
+    set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
+  ENDIF()
+ENDIF()
 
 if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
   set(USE_DBUS ON)
 endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 
-set(CEPH_PREFIX "/usr" CACHE PATH "Path to Ceph installation")
 set(ALLOCATOR "jemalloc" CACHE STRING
   "specify the memory allocator to use: jemalloc|tcmalloc|libc")
 
@@ -179,6 +190,7 @@ set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${OPENSSL_LIBRARIES})
 
 # Validate fsal dependencies
 if(USE_FSAL_CEPH)
+  find_library(CEPH_FS cephfs)
   check_library_exists(
     cephfs
     ceph_ll_connectable_x
@@ -506,6 +518,7 @@ message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
+message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "ALLOCATOR = ${ALLOCATOR}")
 
 #force command line options to be stored in cache
