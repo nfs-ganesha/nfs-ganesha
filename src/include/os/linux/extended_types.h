@@ -40,13 +40,6 @@
 
 #include <sys/types.h>
 
-/* Added extended types, often missing */
-typedef long long longlong_t;
-typedef unsigned long long u_longlong_t;
-
-typedef unsigned int uint_t;
-typedef unsigned int uint32_t;
-
 #ifndef _UINT64_T
 # ifndef __int8_t_defined
 
