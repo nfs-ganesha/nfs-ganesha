@@ -4,6 +4,14 @@ add_definitions(
 
 ########### next target ###############
 
+# Build source locations and parameters
+IF(CEPH_PREFIX)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${CEPH_PREFIX}/include")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${CEPH_PREFIX}/lib")
+ELSE()
+  message(WARNING "no ceph prefix")
+ENDIF()
+
 SET(fsalceph_LIB_SRCS
    main.c
    export.c
@@ -16,7 +24,7 @@ SET(fsalceph_LIB_SRCS
 
 add_library(fsalceph SHARED ${fsalceph_LIB_SRCS})
 
-target_link_libraries(fsalceph)
+target_link_libraries(fsalceph cephfs)
 
 set_target_properties(fsalceph PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalceph DESTINATION lib)
