@@ -48,31 +48,28 @@
 /* helpers
  */
 
-static int
-vfs_fsal_open_exp(struct fsal_export *exp,
-		  vfs_file_handle_t *fh,
-		  int openflags,
-		  fsal_errors_t *fsal_error)
-{
-	int mount_fd = vfs_get_root_fd(exp);
-	int fd = vfs_open_by_handle(mount_fd, fh, openflags);
-	if(fd < 0) {
-		fd = -errno;
-		if(fd == -ENOENT)
-			*fsal_error = ERR_FSAL_STALE;
-		else
-			*fsal_error = posix2fsal_error(-fd);
-	}
-	return fd;
-}
-
 int
 vfs_fsal_open(struct vfs_fsal_obj_handle *myself,
 	      int openflags,
 	      fsal_errors_t *fsal_error)
 {
-	return vfs_fsal_open_exp(myself->obj_handle.export,
-				 myself->handle, openflags, fsal_error);
+        struct vfs_fsal_export *ve = container_of(myself->obj_handle.export,
+                                                  struct vfs_fsal_export,
+                                                  export);
+	return ve->vex_ops.vex_open_by_handle(myself->obj_handle.export,
+                                              myself->handle, openflags,
+                                              fsal_error);
+}
+
+static int
+vfs_fsal_name_to_handle(struct fsal_export *exp,
+                        int dirfd,
+                        const char *path,
+                        vfs_file_handle_t *fh)
+{
+        struct vfs_fsal_export *ve = container_of(exp, struct vfs_fsal_export,
+                                                  export);
+        return ve->vex_ops.vex_name_to_handle(dirfd, path, fh);
 }
 
 /* alloc_handle
@@ -119,9 +116,11 @@ static struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
                    special files  require craziness */
                 if(dir_fh == NULL) {
                         int retval;
-                        int mnt_id = 0;
+                        struct vfs_fsal_export *ve =
+                                container_of(exp_hdl, struct vfs_fsal_export,
+                                             export);
                         vfs_alloc_handle(dir_fh);
-                        retval = vfs_fd_to_handle(dirfd, dir_fh, &mnt_id);
+                        retval = ve->vex_ops.vex_fd_to_handle(dirfd, fh);
                         if(retval < 0) {
                                 goto spcerr;
                         }
@@ -199,7 +198,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	if(dirfd < 0) {
 		return fsalstat(fsal_error, -dirfd);
 	}
-	retval = vfs_name_to_handle_at(dirfd, path, fh);
+	retval = vfs_fsal_name_to_handle(parent->export, dirfd, path, fh);
 	if(retval < 0) {
 		retval = errno;
 		goto direrr;
@@ -266,7 +265,8 @@ int make_file_safe(struct vfs_fsal_obj_handle *dir_hdl,
 	if(retval < 0) {
 		goto fileerr;
 	}
-	retval = vfs_name_to_handle_at(dir_fd, name, fh);
+	retval = vfs_fsal_name_to_handle(dir_hdl->obj_handle.export,
+                                         dir_fd, name, fh);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -568,7 +568,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		goto linkerr;
 	}
 
-	retval = vfs_name_to_handle_at(dir_fd, name, fh);
+	retval = vfs_fsal_name_to_handle(dir_hdl->export, dir_fd, name, fh);
 	if(retval < 0) {
 		goto linkerr;
 	}
@@ -605,6 +605,45 @@ errout:
 	return fsalstat(fsal_error, retval);	
 }
 
+int
+vfs_fsal_readlink(struct vfs_fsal_obj_handle *myself,
+                  fsal_errors_t *fsal_error)
+{
+        int retval = 0;
+        int fd;
+        ssize_t retlink;
+        char link_buff[1024];
+
+        if(myself->u.symlink.link_content != NULL) {
+                gsh_free(myself->u.symlink.link_content);
+                myself->u.symlink.link_content = NULL;
+                myself->u.symlink.link_size = 0;
+        }
+        fd = vfs_fsal_open(myself, O_PATH|O_NOACCESS, fsal_error);
+        if(fd < 0)
+                return fd;
+
+        retlink = readlinkat(fd, "", link_buff, 1024);
+        retval = -errno;
+        close(fd);
+        if(retlink < 0) {
+                *fsal_error = posix2fsal_error(-retval);
+                return retval;
+        }
+
+        myself->u.symlink.link_content = gsh_malloc(retlink + 1);
+        if(myself->u.symlink.link_content == NULL) {
+                *fsal_error = ERR_FSAL_NOMEM;
+                retval = -ENOMEM;
+        } else {
+                memcpy(myself->u.symlink.link_content, link_buff, retlink);
+                myself->u.symlink.link_content[retlink] = '\0';
+                myself->u.symlink.link_size = retlink + 1;
+                retval = 0;
+        }
+        return retval;
+}
+
 static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  const struct req_op_context *opctx,
                                  char *link_content,
@@ -612,7 +651,6 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
                                  bool refresh)
 {
 	struct vfs_fsal_obj_handle *myself = NULL;
-	int fd;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
@@ -622,36 +660,14 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	if(refresh) { /* lazy load or LRU'd storage */
-		ssize_t retlink;
-		char link_buff[1024];
-
-		if(myself->u.symlink.link_content != NULL) {
-			gsh_free(myself->u.symlink.link_content);
-			myself->u.symlink.link_content = NULL;
-			myself->u.symlink.link_size = 0;
-		}
-		fd = vfs_fsal_open(myself, O_PATH|O_NOACCESS, &fsal_error);
-		if(fd < 0) {
-			retval = -fd;
-			goto out;
-		}
-		retlink = readlinkat(fd, "", link_buff, 1024);
-		if(retlink < 0) {
-			retval = errno;
-			fsal_error = posix2fsal_error(retval);
-			close(fd);
-			goto out;
-		}
-		close(fd);
-
-		myself->u.symlink.link_content = gsh_malloc(retlink + 1);
-		if(myself->u.symlink.link_content == NULL) {
-			fsal_error = ERR_FSAL_NOMEM;
-			goto out;
-		}
-		memcpy(myself->u.symlink.link_content, link_buff, retlink);
-		myself->u.symlink.link_content[retlink] = '\0';
-		myself->u.symlink.link_size = retlink + 1;
+                struct vfs_fsal_export *ve =
+                        container_of(obj_hdl->export, struct vfs_fsal_export,
+                                     export);
+                retval = ve->vex_ops.vex_readlink(myself, &fsal_error);
+                if(retval < 0) {
+                        retval = -retval;
+                        goto out;
+                }
 	}
 	if(myself->u.symlink.link_content == NULL
 	   || *link_len <= myself->u.symlink.link_size) {
@@ -662,8 +678,8 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	       myself->u.symlink.link_content,
 	       myself->u.symlink.link_size);
 
-out:
 	*link_len = myself->u.symlink.link_size;
+out:
 	return fsalstat(fsal_error, retval);	
 }
 
@@ -873,10 +889,14 @@ vfs_fsal_open_and_stat(struct vfs_fsal_obj_handle *myself,
 		fd = myself->u.file.fd;
 		retval = fstat(fd, stat);
         } else if(vfs_unopenable_type(obj_hdl->type)) {
-		fd = vfs_fsal_open_exp(obj_hdl->export,
-				       myself->u.unopenable.dir,
-			               O_PATH|O_NOACCESS,
-				       fsal_error);
+                struct vfs_fsal_export *ve =
+                        container_of(obj_hdl->export, struct vfs_fsal_export,
+                                     export);
+
+                fd = ve->vex_ops.vex_open_by_handle(obj_hdl->export,
+                                                    myself->u.unopenable.dir,
+                                                    O_PATH|O_NOACCESS,
+                                                    fsal_error);
 		if(fd < 0) {
 			return fd;
 		}
@@ -1375,7 +1395,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 		goto fileerr;
 	}
 	basepart++;
-	retval = vfs_name_to_handle_at(dir_fd, basepart, fh);
+	retval = vfs_fsal_name_to_handle(exp_hdl, dir_fd, basepart, fh);
 	if(retval < 0) {
 		goto fileerr;
 	}
@@ -1429,6 +1449,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	int fd;
+        struct vfs_fsal_export *ve;
 
         vfs_alloc_handle(fh);
 	*handle = NULL; /* poison it first */
@@ -1437,7 +1458,10 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	memcpy(fh, hdl_desc->addr, hdl_desc->len);  /* struct aligned copy */
-	fd = vfs_fsal_open_exp(exp_hdl, fh, O_PATH|O_NOACCESS, &fsal_error);
+        ve = container_of(exp_hdl, struct vfs_fsal_export, export);
+
+        fd = ve->vex_ops.vex_open_by_handle(exp_hdl, fh,
+                                            O_PATH|O_NOACCESS, &fsal_error);
 	if(fd < 0) {
 		retval = -fd;
 		goto errout;
