@@ -312,7 +312,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
-                   "entry. Found entry %p type: %d, New type: %d",
+                   "entry 1. Found entry %p type: %d, New type: %d",
                    *entry, (*entry)->type, new_obj->type);
           if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
@@ -359,7 +359,7 @@ cache_inode_new_entry(struct fsal_obj_handle *new_obj,
           status = CACHE_INODE_ENTRY_EXISTS;
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
-                   "entry. Found entry %p type: %d, New type: %d",
+                   "entry 2. Found entry %p type: %d, New type: %d",
                    *entry, (*entry)->obj_handle->type, new_obj->type);
           if (cache_inode_lru_ref(*entry, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
