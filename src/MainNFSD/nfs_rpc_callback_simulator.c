@@ -65,77 +65,36 @@
  * state are available.
  */
 
-/* XML data to answer org.freedesktop.DBus.Introspectable.Introspect
-   requests */
-static const char* introspection_xml =
-"<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\"\n"
-"\"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">\n"
-"<node>\n"
-"  <interface name=\"org.freedesktop.DBus.Introspectable\">\n"
-"    <method name=\"Introspect\">\n"
-"      <arg name=\"data\" direction=\"out\" type=\"s\"/>\n"
-"    </method>\n"
-"  </interface>\n"
-"  <interface name=\"org.ganesha.nfsd.cbsim\">\n"
-"    <method name=\"get_client_ids\">\n"
-"      <arg name=\"time\" direction=\"out\" type=\"(tt)\"/>\n"
-"      <arg name=\"clientids\" direction=\"out\" type=\"at\"/>\n"
-"    </method>\n"
-"    <method name=\"get_session_ids\">\n"
-"      <arg name=\"time\" direction=\"out\" type=\"tt\"/>\n"
-"      <arg name=\"sessionids\" direction=\"out\" type=\"at\"/>\n"
-"    </method>\n"
-"    <method name=\"fake_recall\">\n"
-"      <arg name=\"clientid\" direction=\"in\" type=\"t\"/>\n"
-"    </method>\n"
-"  </interface>\n"
-"</node>\n"
-;
-
-
 /* Pick these up from the SAL. */
 
 extern hash_table_t *ht_confirmed_client_id;
 extern hash_table_t *ht_session_id;
 
 /**
+ * @brief Return a timestamped list of NFSv4 client ids.
+ *
  * For all NFSv4 clients, a clientid reliably indicates a callback
  * channel
+ *
+ * @param args    (not used)
+ * @param reply   the message reply
  */
-static DBusHandlerResult nfs_rpc_cbsim_get_v40_client_ids(DBusConnection *conn,
-							  DBusMessage *msg,
-							  void *user_data)
+
+static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
+					     DBusMessage *reply)
 {
-	DBusMessage* reply;
-	static uint32_t i, serial = 1;
+	uint32_t i;
 	hash_table_t *ht = ht_confirmed_client_id;
 	struct rbt_head *head_rbt;
 	struct hash_data *pdata = NULL;
 	struct rbt_node *pn;
 	nfs_client_id_t *pclientid;
 	uint64_t clientid;
-	DBusMessageIter iter, sub_iter, ts_iter;
-	struct timespec timestamp;
+	DBusMessageIter iter, sub_iter;
 
-	if(clock_gettime(CLOCK_REALTIME, &timestamp) != 0) {
-		LogCrit(COMPONENT_DBUS, "Failed to get timestamp");
-		timestamp.tv_sec = 0;
-		timestamp.tv_nsec = 0;
-	}
 	/* create a reply from the message */
-	reply = dbus_message_new_method_return(msg);
 	dbus_message_iter_init_append(reply, &iter);
-
-	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT,
-					 NULL,
-					 &ts_iter);
-	dbus_message_iter_append_basic(&ts_iter,
-				       DBUS_TYPE_UINT64,
-				       &timestamp.tv_sec);
-	dbus_message_iter_append_basic(&ts_iter,
-				       DBUS_TYPE_UINT64,
-				       &timestamp.tv_nsec);
-	dbus_message_iter_close_container(&iter, &ts_iter);
+	dbus_append_timestamp(&iter);
 
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 DBUS_TYPE_UINT64_AS_STRING,
@@ -160,55 +119,55 @@ static DBusHandlerResult nfs_rpc_cbsim_get_v40_client_ids(DBusConnection *conn,
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
 	}
 	dbus_message_iter_close_container(&iter, &sub_iter);
-	/* send the reply && flush the connection */
-	if (!dbus_connection_send(conn, reply, &serial)) {
-		LogCrit(COMPONENT_DBUS, "reply failed");
-	}
-	dbus_connection_flush(conn);
-	dbus_message_unref(reply);
-	serial++;
-	return DBUS_HANDLER_RESULT_HANDLED;
+	return true;
 }
 
-static DBusHandlerResult
-nfs_rpc_cbsim_get_session_ids(DBusConnection *conn,
-			      DBusMessage *msg,
-			      void *user_data)
+/* DBUS get_client_ids method descriptor
+ */
+
+static struct gsh_dbus_method cbsim_get_client_ids = {
+	.name = "get_client_ids",
+	.method = nfs_rpc_cbsim_get_v40_client_ids,
+	.args = {
+		{
+			.name = "time",
+			.type = "(tt)",
+			.direction = "out"
+		},
+		{
+			.name = "clientids",
+			.type = "at",
+			.direction = "out"
+		},
+		{NULL, NULL, NULL}
+	}
+};
+
+
+/**
+ * @brief Return a timestamped list of session ids.
+ *
+ * @param args    (not used)
+ * @param reply   the message reply
+ */
+
+static bool
+nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
+			      DBusMessage *reply)
 {
-	DBusMessage* reply;
-	static uint32_t i, serial = 1;
+	uint32_t i;
 	hash_table_t *ht = ht_session_id;
 	struct rbt_head *head_rbt;
 	struct hash_data *pdata = NULL;
 	struct rbt_node *pn;
 	char session_id[2*NFS4_SESSIONID_SIZE]; /* guaranteed to fit */
 	nfs41_session_t *session_data;
-	DBusMessageIter iter, sub_iter, ts_iter;
-	struct timespec timestamp;
+	DBusMessageIter iter, sub_iter;
 
-	if(clock_gettime(CLOCK_REALTIME, &timestamp) != 0) {
-		LogCrit(COMPONENT_DBUS, "Failed to get timestamp");
-		timestamp.tv_sec = 0;
-		timestamp.tv_nsec = 0;
-	}
 	/* create a reply from the message */
-	reply = dbus_message_new_method_return(msg);
 	dbus_message_iter_init_append(reply, &iter);
+	dbus_append_timestamp(&iter);
 
-	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT,
-					 "(tt)",
-					 &ts_iter);
-	dbus_message_iter_append_basic(&ts_iter,
-				       DBUS_TYPE_UINT64,
-				       &timestamp.tv_sec);
-	dbus_message_iter_append_basic(&ts_iter,
-				       DBUS_TYPE_UINT64,
-				       &timestamp.tv_nsec);
-	dbus_message_iter_close_container(&iter, &ts_iter);
-
-	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 DBUS_TYPE_UINT64_AS_STRING,
-					 &sub_iter);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 DBUS_TYPE_UINT64_AS_STRING,
 					 &sub_iter);
@@ -236,15 +195,29 @@ nfs_rpc_cbsim_get_session_ids(DBusConnection *conn,
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
 	}
 	dbus_message_iter_close_container(&iter, &sub_iter);
-	/* send the reply && flush the connection */
-	if (!dbus_connection_send(conn, reply, &serial)) {
-		LogCrit(COMPONENT_DBUS, "reply failed");
-	}
-	dbus_connection_flush(conn);
-	dbus_message_unref(reply);
-	serial++;
-	return DBUS_HANDLER_RESULT_HANDLED;
+	return true;
 }
+
+/* DBUS get_session_ids method descriptor
+ */
+
+static struct gsh_dbus_method cbsim_get_session_ids = {
+	.name = "get_session_ids",
+	.method = nfs_rpc_cbsim_get_session_ids,
+	.args = {
+		{
+			.name = "time",
+			.type = "(tt)",
+			.direction = "out"
+		},
+		{
+			.name = "sessionids",
+			.type = "at",
+			.direction = "out"
+		},
+		{NULL, NULL, NULL}
+	}
+};
 
 static int32_t cbsim_test_bchan(clientid4 clientid)
 {
@@ -416,107 +389,89 @@ out:
 	return code;
 }
 
-static DBusHandlerResult nfs_rpc_cbsim_fake_recall(
-	DBusConnection *conn,
-	DBusMessage *msg,
-	void *user_data)
+
+/**
+ * @brief Fake/force a recall of a client id.
+ *
+ * For all NFSv4 clients, a clientid reliably indicates a callback
+ * channel
+ *
+ * @param args    the client id to be recalled
+ * @param reply   the message reply (empty)
+ */
+
+static bool nfs_rpc_cbsim_fake_recall(
+	DBusMessageIter *args,
+	DBusMessage *reply)
 {
-	DBusMessage *reply;
-	DBusMessageIter args;
-	static uint32_t serial = 1;
 	clientid4 clientid = 9315; /* XXX ew! */
 
 	LogDebug(COMPONENT_NFS_CB, "called!");
 
 	/* read the arguments */
-	if (!dbus_message_iter_init(msg, &args)) {
+	if (args == NULL) {
 		LogDebug(COMPONENT_DBUS, "message has no arguments");
 	} else if (DBUS_TYPE_UINT64 !=
-		   dbus_message_iter_get_arg_type(&args)) {
+		   dbus_message_iter_get_arg_type(args)) {
 		LogDebug(COMPONENT_DBUS, "arg not uint64");
 	} else {
-		dbus_message_iter_get_basic(&args, &clientid);
+		dbus_message_iter_get_basic(args, &clientid);
 		LogDebug(COMPONENT_DBUS, "param: %"PRIx64, clientid);
 	}
 
 	cbsim_test_bchan(clientid);
 	cbsim_fake_cbrecall(clientid);
 
-	reply = dbus_message_new_method_return(msg);
-	if (!dbus_connection_send(conn, reply, &serial)) {
-		LogCrit(COMPONENT_DBUS, "reply failed");
-	}
-
-	dbus_connection_flush(conn);
-	dbus_message_unref(reply);
-	serial++;
-
-	return DBUS_HANDLER_RESULT_HANDLED;
+	return true;
 }
 
-static DBusHandlerResult nfs_rpc_cbsim_introspection(
-	DBusConnection *conn,
-	DBusMessage *msg,
-	void *user_data)
-{
-	static uint32_t serial = 1;
-	DBusMessage* reply;
-	DBusMessageIter iter;
+/* DBUS fake_recall method descriptor
+ */
 
-	/* create a reply from the message */
-	reply = dbus_message_new_method_return(msg);
-	dbus_message_iter_init_append(reply, &iter);
-	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING,
-				       &introspection_xml);
-
-	/* send the reply && flush the connection */
-	if (!dbus_connection_send(conn, reply, &serial)) {
-		LogCrit(COMPONENT_DBUS, "reply failed");
+static struct gsh_dbus_method cbsim_fake_recall = {
+	.name = "fake_recall",
+	.method = nfs_rpc_cbsim_fake_recall,
+	.args = {
+		{
+			.name = "clientid",
+			.type = "t",
+			.direction = "in"
+		},
+		{NULL, NULL, NULL}
 	}
+};
 
-	dbus_connection_flush(conn);
-	dbus_message_unref(reply);
-	serial++;
+/* DBUS org.ganesha.nfsd.cbsim methods list
+ */
 
-	return DBUS_HANDLER_RESULT_HANDLED;
-}
+static struct gsh_dbus_method *cbsim_methods[] = {
+	&cbsim_get_client_ids,
+	&cbsim_get_session_ids,
+	&cbsim_fake_recall,
+	NULL
+};
 
-static DBusHandlerResult nfs_rpc_cbsim_entrypoint(
-	DBusConnection *conn,
-	DBusMessage *msg,
-	void *user_data)
-{
-	const char *interface = dbus_message_get_interface(msg);
-	const char *method = dbus_message_get_member(msg);
+static struct gsh_dbus_interface cbsim_interface = {
+	.name = "org.ganesha.nfsd.cbsim",
+	.props = NULL,
+	.methods = cbsim_methods,
+	.signals = NULL
+};
 
-	if ((interface &&
-	     (!strcmp(interface, DBUS_INTERFACE_INTROSPECTABLE))) ||
-	    (method && (!strcmp(method, "Introspect")))) {
-		return nfs_rpc_cbsim_introspection(conn, msg, user_data);
-	}
+/* DBUS list of interfaces on /org/ganesha/nfsd/CBSIM
+ */
 
-	if (method) {
-		if (!strcmp(method, "get_client_ids"))
-			return nfs_rpc_cbsim_get_v40_client_ids(conn, msg,
-								user_data);
-
-		if (!strcmp(method, "get_session_ids"))
-			return nfs_rpc_cbsim_get_session_ids(conn, msg,
-							     user_data);
-
-		if (!strcmp(method, "fake_recall"))
-			return nfs_rpc_cbsim_fake_recall(conn, msg, user_data);
-	}
-
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
+static struct gsh_dbus_interface *cbsim_interfaces[] = {
+	&cbsim_interface,
+	NULL
+};
+				
 /**
  * @brief Initialize subsystem
  */
 void nfs_rpc_cbsim_pkginit(void)
 {
-    gsh_dbus_register_path("CBSIM", nfs_rpc_cbsim_entrypoint);
+    gsh_dbus_register_path("CBSIM", cbsim_interfaces);
     LogEvent(COMPONENT_NFS_CB, "Callback Simulator Initialized");
 }
 

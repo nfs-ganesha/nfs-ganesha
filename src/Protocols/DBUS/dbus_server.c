@@ -148,6 +148,248 @@ out:
     return;
 }
 
+#define INTROSPECT_HEAD \
+"<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\"\n" \
+"\"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">\n" \
+"<node>\n" \
+"  <interface name=\"org.freedesktop.DBus.Introspectable\">\n" \
+"    <method name=\"Introspect\">\n" \
+"      <arg name=\"data\" direction=\"out\" type=\"s\"/>\n" \
+"    </method>\n" \
+"  </interface>\n"
+
+#define INTROSPECT_TAIL \
+"</node>\n"
+
+#define PROPERTIES_INTERFACE \
+"  <interface name=\"org.freedesktop.DBus.Properties\">\n" \
+"    <method name=\"Get\">\n" \
+"      <arg name=\"interface\" direction=\"in\" type=\"s\"/>\n" \
+"      <arg name=\"propname\" direction=\"in\" type=\"s\"/>\n" \
+"      <arg name=\"value\" direction=\"out\" type=\"v\"/>\n" \
+"    </method>\n" \
+"    <method name=\"Set\">\n" \
+"      <arg name=\"interface\" direction=\"in\" type=\"s\"/>\n" \
+"      <arg name=\"propname\" direction=\"in\" type=\"s\"/>\n" \
+"      <arg name=\"value\" direction=\"in\" type=\"v\"/>\n" \
+"    </method>\n" \
+"    <method name=\"GetAll\">\n" \
+"      <arg name=\"interface\" direction=\"in\" type=\"s\"/>\n" \
+"      <arg name=\"props\" direction=\"out\" type=\"a{sv}\"/>\n" \
+"    </method>\n" \
+"  </interface>\n"
+
+#define INTROSPECT_INTERFACE_HEAD \
+"  <interface name=\"%s\">\n"
+
+#define INTROSPECT_INTERFACE_TAIL \
+"  </interface>\n"
+
+#define INTROSPECT_METHOD_HEAD \
+"    <method name=\"%s\">\n"
+
+#define INTROSPECT_METHOD_TAIL \
+"    </method>\n"
+
+#define INTROSPECT_METHOD_ARG \
+"      <arg name=\"%s\" direction=\"%s\" type=\"%s\"/>\n"
+
+#define INTROSPECT_PROPERTY \
+"      <property name=\"%s\" type=\"%s\" access=\"%s\"/>\n"
+
+#define INTROSPECT_SIGNAL_HEAD \
+"    <signal name=\"%s\">\n"
+
+#define INTROSPECT_SIGNAL_TAIL \
+"    </signal>\n"
+
+#define INTROSPECT_SIGNAL_ARG \
+"      <arg name=\"%s\" type=\"%s\"/>\n"
+
+static bool dbus_reply_introspection(
+	DBusConnection *conn,
+	DBusMessage *reply,
+	struct gsh_dbus_interface **interfaces)
+{
+	DBusMessageIter iter;
+	FILE *fp;
+	char *introspection_xml = NULL;
+	size_t xml_size = 0;
+	struct gsh_dbus_interface **iface;
+	bool have_props = false;
+	bool retval = true;
+
+	fp = open_memstream(&introspection_xml, &xml_size);
+	if(fp == NULL) {
+		LogCrit(COMPONENT_DBUS,
+			"open_memstream for introspection failed");
+		retval = false;
+		goto out;
+	}
+	fputs(INTROSPECT_HEAD, fp);
+	for(iface = interfaces; *iface; iface++) {
+		fprintf(fp, INTROSPECT_INTERFACE_HEAD,
+			(*iface)->name);
+		if((*iface)->props != NULL) {
+			struct gsh_dbus_prop **prop;
+
+			for(prop = (*iface)->props; *prop; prop++) {
+				fprintf(fp, INTROSPECT_PROPERTY,
+					(*prop)->name,
+					(*prop)->type,
+					(*prop)->access);
+			}
+			have_props = true;
+		}
+		if((*iface)->methods != NULL) {
+			struct gsh_dbus_method **method, *mp;
+			struct gsh_dbus_arg *arg;
+
+			for(method = (*iface)->methods; *method; method++) {
+				mp = *method;
+				fprintf(fp, INTROSPECT_METHOD_HEAD,
+					mp->name);
+				for(arg = mp->args; arg->name != NULL; arg++) {
+					fprintf(fp, INTROSPECT_METHOD_ARG,
+						arg->name,
+						arg->direction,
+						arg->type);
+				}
+				fputs(INTROSPECT_METHOD_TAIL, fp);
+				
+			}
+			if((*iface)->signals != NULL) {
+			struct gsh_dbus_signal **signal;
+			struct gsh_dbus_arg *arg;
+
+			for(signal = (*iface)->signals; *signal; signal++) {
+				fprintf(fp, INTROSPECT_SIGNAL_HEAD,
+					(*signal)->name);
+				for(arg = (*signal)->args; arg->name != NULL; arg++) {
+					fprintf(fp, INTROSPECT_SIGNAL_ARG,
+						arg->name,
+						arg->type);
+				}
+				fputs(INTROSPECT_SIGNAL_TAIL, fp);
+				
+			}
+		}
+		}
+		fputs(INTROSPECT_INTERFACE_TAIL, fp);
+	}
+	if(have_props)
+		fputs(PROPERTIES_INTERFACE, fp);
+	fputs(INTROSPECT_TAIL, fp);
+	if(ferror(fp)) {
+		LogCrit(COMPONENT_DBUS,
+			"file error while constructing introspect xml");
+	}
+	fclose(fp);
+	if(introspection_xml == NULL) {
+		LogCrit(COMPONENT_DBUS,
+			"close of memstream for introspection failed");
+		retval = false;
+		goto out;
+	}
+		
+	/* create a reply from the message */
+	dbus_message_iter_init_append(reply, &iter);
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING,
+				       &introspection_xml);
+	free(introspection_xml);
+
+out:
+	return retval;
+}
+
+void dbus_append_timestamp(DBusMessageIter *iterp)
+{
+	DBusMessageIter ts_iter;
+	struct timespec timestamp;
+
+	if(clock_gettime(CLOCK_REALTIME, &timestamp) != 0) {
+		LogCrit(COMPONENT_DBUS, "Failed to get timestamp");
+		timestamp.tv_sec = 0;
+		timestamp.tv_nsec = 0;
+	}
+	dbus_message_iter_open_container(iterp, DBUS_TYPE_STRUCT,
+					 NULL,
+					 &ts_iter);
+	dbus_message_iter_append_basic(&ts_iter,
+				       DBUS_TYPE_UINT64,
+				       &timestamp.tv_sec);
+	dbus_message_iter_append_basic(&ts_iter,
+				       DBUS_TYPE_UINT64,
+				       &timestamp.tv_nsec);
+	dbus_message_iter_close_container(iterp, &ts_iter);
+}
+
+static DBusHandlerResult dbus_message_entrypoint(
+	DBusConnection *conn,
+	DBusMessage *msg,
+	void *user_data)
+{
+	const char *interface = dbus_message_get_interface(msg);
+	const char *method = dbus_message_get_member(msg);
+	struct gsh_dbus_interface **interfaces = user_data;
+	DBusMessage *reply;
+	DBusMessageIter args, *argsp;
+	bool retval;
+	static uint32_t serial = 1;
+
+	if (interface == NULL)
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	if(dbus_message_iter_init(msg, &args))
+		argsp = &args;
+	else
+		argsp = NULL;
+	reply = dbus_message_new_method_return(msg);
+	if((!strcmp(interface, DBUS_INTERFACE_INTROSPECTABLE)) ||
+	   (method && (!strcmp(method, "Introspect")))) {
+		retval = dbus_reply_introspection(conn, reply, interfaces);
+	} else if(!strcmp(interface, DBUS_INTERFACE_PROPERTIES)) {
+		retval = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	} else {
+		struct gsh_dbus_interface **iface;
+
+		for(iface = interfaces; *iface; iface++) {
+			if(strcmp(interface, (*iface)->name) == 0) {
+				struct gsh_dbus_method **m;
+
+				for(m = (*iface)->methods; *m; m++) {
+					if(strcmp(method, (*m)->name) == 0) {
+						retval = (*m)->method(argsp, reply);
+						goto done;
+					}
+				}
+				LogMajor(COMPONENT_DBUS,
+					 "Unknown method (%s) on interface (%s)",
+					 method,
+					 interface);
+				goto done;
+			}
+		}
+		LogMajor(COMPONENT_DBUS,
+			 "Unknown interface (%s)",
+			 interface);
+	}
+done:
+	if( !retval) {
+		LogMajor(COMPONENT_DBUS,
+			 "Method (%s) on interface (%s) failed",
+			 method,
+			 interface);
+	}
+	if (!dbus_connection_send(conn, reply, &serial)) {
+		LogCrit(COMPONENT_DBUS, "reply failed");
+	}
+	dbus_connection_flush(conn);
+	dbus_message_unref(reply);
+	serial++;
+	return (retval ? DBUS_HANDLER_RESULT_HANDLED
+		: DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
+}
+
 static void
 path_unregistered_func (DBusConnection  *connection,
                         void            *user_data)
@@ -156,7 +398,7 @@ path_unregistered_func (DBusConnection  *connection,
 }
 
 int32_t gsh_dbus_register_path(const char *name,
-                               DBusObjectPathMessageFunction method)
+			       struct gsh_dbus_interface **interfaces)
 {
     ganesha_dbus_handler_t *handler;
     struct avltree_node *node;
@@ -170,7 +412,7 @@ int32_t gsh_dbus_register_path(const char *name,
         gsh_malloc(sizeof(ganesha_dbus_handler_t));
     handler->name = gsh_strdup(path);
     handler->vtable.unregister_function = path_unregistered_func;
-    handler->vtable.message_function =  method;
+    handler->vtable.message_function =  dbus_message_entrypoint;
 
     if (!thread_state.dbus_conn) {
         LogCrit(COMPONENT_DBUS, "dbus_connection_register_object_path "
@@ -181,7 +423,7 @@ int32_t gsh_dbus_register_path(const char *name,
     code = dbus_connection_register_object_path (thread_state.dbus_conn,
                                                  handler->name,
                                                  &handler->vtable,
-                                                 (void*) 0xdeadbeef);
+                                                 (void*)interfaces);
     if (! code) {
         LogFatal(COMPONENT_DBUS, "dbus_connection_register_object_path "
                  "failed");
@@ -248,9 +490,9 @@ void gsh_dbus_pkgshutdown(void)
 
 void *gsh_dbus_thread(void *arg)
 {
-    struct avltree_node *node;
-    ganesha_dbus_handler_t hk, *handler;
-    DBusMessage* msg;
+/*     struct avltree_node *node; */
+/*     ganesha_dbus_handler_t hk, *handler; */
+/*     DBusMessage* msg; */
 
     SetNameFunction("gsh_dbus_thread");
 
@@ -267,30 +509,13 @@ void *gsh_dbus_thread(void *arg)
         LogFullDebug(COMPONENT_DBUS, "top of poll loop");
 
         /* do stuff */
-        dbus_connection_read_write_dispatch(thread_state.dbus_conn, 30*1000);
-
-        /* deal with message (ignore timeouts) */
-        msg = dbus_connection_pop_message(thread_state.dbus_conn);
-        if (! msg)
-            continue;
-
-        hk.name = (char *) dbus_message_get_path(msg);
-        if (! hk.name) {
-            LogDebug(COMPONENT_DBUS, "dbus_msg_get_path returned NULL");
-            continue;
-        }
-        LogFullDebug(COMPONENT_DBUS, "recv msg: %s", hk.name);
-        node = avltree_lookup(&hk.node_k, &thread_state.callouts);
-        if (node) {
-            handler = avltree_container_of(node, ganesha_dbus_handler_t,
-                                           node_k);
-            /* we are serialized by the bus */
-            /* XXX libdbus call it in this configuration? */
-            handler->vtable.message_function(thread_state.dbus_conn, msg, 0);
-        } else {
-            LogDebug(COMPONENT_DBUS, "msg for unknown handler %s",
-                     hk.name);
-        }
+        if( !dbus_connection_read_write_dispatch(thread_state.dbus_conn,
+						 30*1000)) {
+		LogCrit(COMPONENT_DBUS,
+			"read_write_dispatch, got disconnected signal");
+		break;
+	}
+	/* here is where we do other stuff between messages */
     } /* 1 */
 
 out:
