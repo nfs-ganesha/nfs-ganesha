@@ -38,3 +38,8 @@
 void export_ops_pnfs(struct export_ops *ops);
 /* Need to call this to initialize obj_ops for pnfs */
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
+
+/* Start the up calls thread for LAYOUT RECALLS*/
+int  pnfs_panfs_init(int root_fd, void **pnfs_data/*OUT*/);
+/* Stop and clean the up calls thread*/
+void pnfs_panfs_fini(void *pnfs_data);
