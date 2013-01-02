@@ -33,9 +33,7 @@
  * @brief   Glue functions between the FSAL and the Cache inode layers.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

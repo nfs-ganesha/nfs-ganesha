@@ -28,9 +28,7 @@
  * @file    nfs4_op_lock.c
  * @brief   Implementation of NFS4_OP_LOCK
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

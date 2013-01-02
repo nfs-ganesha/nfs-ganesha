@@ -32,9 +32,7 @@
 
   Id: svc_auth_gss.c,v 1.28 2002/10/15 21:29:36 kwc Exp
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

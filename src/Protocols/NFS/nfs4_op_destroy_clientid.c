@@ -29,9 +29,7 @@
  * @brief Provides NFS4_OP_DESTROY_CLIENTID implementation
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

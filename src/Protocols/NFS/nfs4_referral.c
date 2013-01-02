@@ -33,9 +33,7 @@
  * nfs4_pseudo.c: Routines used for managing NFSv4 referrals.
  * 
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

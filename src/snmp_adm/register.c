@@ -4,9 +4,7 @@
  * \brief   register.c: registration routine
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "snmp_adm.h"
 

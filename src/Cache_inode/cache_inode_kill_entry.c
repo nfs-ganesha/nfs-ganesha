@@ -34,9 +34,7 @@
  * @File cache_inode_kill_entry.c
  * @brief Destroy stale entries
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

@@ -6,9 +6,7 @@
  * @file  FSAL_VFS/fsal_convert.c
  * @brief VFS-FSAL type translation functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "fsal_convert.h"
 #include <sys/types.h>
 #include <sys/stat.h>

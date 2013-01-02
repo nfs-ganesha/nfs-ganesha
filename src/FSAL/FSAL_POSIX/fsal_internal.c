@@ -9,9 +9,7 @@
  *
  */
 #define FSAL_INTERNAL_C
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 /* empty */
 

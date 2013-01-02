@@ -51,9 +51,7 @@
 #ifndef CACHE_INODE_AVL_H
 #define CACHE_INODE_AVL_H
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

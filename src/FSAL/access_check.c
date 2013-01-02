@@ -8,9 +8,7 @@
  * @brief File/object access checking
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include  "fsal.h"
 #include "nfs_core.h"

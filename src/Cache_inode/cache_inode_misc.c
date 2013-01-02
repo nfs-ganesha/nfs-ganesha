@@ -31,9 +31,7 @@
  * @file  cache_inode_misc.c
  * @brief Miscellaneous functions, especially new_entry
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

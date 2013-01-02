@@ -7,9 +7,7 @@
  * @file  FSAL/fsal_convert.c
  * @brief FSAL type translation functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "fsal_convert.h"
 #include <sys/types.h>
 #include <sys/stat.h>

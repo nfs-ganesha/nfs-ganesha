@@ -26,9 +26,7 @@
  * @file  exports.c
  * @brief Export parsing and management
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

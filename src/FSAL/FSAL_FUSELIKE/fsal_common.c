@@ -6,9 +6,7 @@
  * Common FS tools for internal use in the FSAL.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <string.h>
 #include "fsal_common.h"

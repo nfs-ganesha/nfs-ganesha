@@ -27,9 +27,7 @@
  *  9p_rdma_callbacks.c: This file contains the callbacks used for 9P/RDMA.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

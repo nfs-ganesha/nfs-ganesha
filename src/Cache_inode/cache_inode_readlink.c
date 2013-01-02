@@ -32,9 +32,7 @@
  * @brief   Reads a symlink.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

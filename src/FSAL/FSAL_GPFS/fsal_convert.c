@@ -11,9 +11,7 @@
  *
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "fsal_convert.h"
 #include "fsal_internal.h"
 #include "nfs4_acls.h"

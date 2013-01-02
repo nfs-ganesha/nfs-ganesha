@@ -6,9 +6,7 @@
  * This file is under version control.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "nfsv41.h"
 

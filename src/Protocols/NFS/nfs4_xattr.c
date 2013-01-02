@@ -33,9 +33,7 @@ t*
  * nfs4_xattr.c: Routines used for managing the NFS4 xattrs
  * 
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

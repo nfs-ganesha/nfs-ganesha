@@ -1,9 +1,7 @@
 /*
  * \brief Manage a namespace for path<->inode association
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "namespace.h"
 #include "HashTable.h"

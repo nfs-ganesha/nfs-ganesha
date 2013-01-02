@@ -27,9 +27,7 @@
  * @file  nfs3_Link.c
  * @brief everything that is needed to handle NFS PROC3 LINK.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

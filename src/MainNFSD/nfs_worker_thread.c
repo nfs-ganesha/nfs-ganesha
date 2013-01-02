@@ -28,9 +28,7 @@
  * @file    nfs_worker_thread.c
  * @brief   The file that contain the 'worker_thread' routine for the nfsd.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

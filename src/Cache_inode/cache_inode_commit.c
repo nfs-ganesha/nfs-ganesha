@@ -32,9 +32,7 @@
  * @file    cache_inode_commit.c
  * @brief   Commits operations on regular files
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

@@ -6,9 +6,7 @@
  * @file  FSAL_POSIX/fsal_convert.c
  * @brief POSIX-FSAL type translation functions.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 #include "fsal_convert.h"
 #include "fsal_internal.h"
 #include <sys/types.h>

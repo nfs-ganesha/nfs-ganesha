@@ -30,9 +30,7 @@
  *
  * Routines used for managing the NFS4 pseudo file system.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

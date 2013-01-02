@@ -28,9 +28,7 @@
  * VFS object (file|dir) handle object extended attributes
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <assert.h>
 

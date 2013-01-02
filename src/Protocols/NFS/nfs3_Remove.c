@@ -27,9 +27,7 @@
  * @file  nfs3_Remove.c
  * @brief Everything you need for NFSv3 REMOVE
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

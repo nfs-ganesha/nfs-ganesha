@@ -325,8 +325,6 @@ if(_MSPAC_SUPPORT)
   endif(WBCLIENT_LIB AND HAVE_WBCLIENT_H)
 endif(_MSPAC_SUPPORT)
 
-add_definitions(-DHAVE_CONFIG_H)
-
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
   "${PROJECT_SOURCE_DIR}/include"

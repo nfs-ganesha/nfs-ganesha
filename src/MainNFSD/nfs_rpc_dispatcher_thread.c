@@ -28,9 +28,7 @@
  * @file  nfs_rpc_dispatcher_thread.c
  * @brief Contains the @c rpc_dispatcher_thread routine and support code
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

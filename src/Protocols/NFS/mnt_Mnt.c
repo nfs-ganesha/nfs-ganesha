@@ -32,9 +32,7 @@
  * mnt_Null.c : MOUNTPROC_EXPORT in V1, V3.
  *
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"

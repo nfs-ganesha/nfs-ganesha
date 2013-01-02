@@ -29,9 +29,7 @@
  * @brief   Routines used for managing the NFS4_OP_CREATE_SESSION operation.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
