@@ -8,11 +8,6 @@
 
 #ifndef _NFSV41_H_RPCGEN
 #define _NFSV41_H_RPCGEN
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #ifdef __cplusplus
 extern "C"
 {

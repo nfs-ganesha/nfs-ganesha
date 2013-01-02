@@ -30,11 +30,6 @@
 #define _GANESHA_DBUS_H
 
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include <dbus/dbus.h>
 #include "log.h"
 

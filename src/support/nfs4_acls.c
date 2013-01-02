@@ -1,9 +1,4 @@
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "abstract_mem.h"
 #include "fsal.h"
 #include "HashTable.h"

@@ -6,14 +6,6 @@
 #ifndef _MOUNT_H_RPCGEN
 #define	_MOUNT_H_RPCGEN
 
-#ifndef _USE_SWIG
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
-#endif                          /* ifndef _USE_SWIG */
-
 #define	MNTPATHLEN 1024
 #define	MNTNAMLEN 255
 

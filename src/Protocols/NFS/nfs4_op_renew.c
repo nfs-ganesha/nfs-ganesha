@@ -32,11 +32,6 @@
  *
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "log.h"
 #include "nfs4.h"
 #include "sal_functions.h"

@@ -9,11 +9,6 @@
  */
 
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "fsal.h"
 
 /* Function names for logging and SNMP stats etc. */

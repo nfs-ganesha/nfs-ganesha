@@ -34,11 +34,6 @@
  *
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "HashTable.h"
 #include "log.h"
 #include "nfs4.h"

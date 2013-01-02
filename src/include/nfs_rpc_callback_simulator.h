@@ -30,11 +30,6 @@
 #define _NFS_RPC_CALLBACK_SIMULATOR_H
 
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 #include "log.h"
 #include "cache_inode.h"
 

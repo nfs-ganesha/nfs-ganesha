@@ -22,11 +22,6 @@
  */
 
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #define FSAL_UP_THREAD_C
 
 #include <stdio.h>

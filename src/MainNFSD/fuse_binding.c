@@ -32,11 +32,6 @@
  *
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "log.h"
 #include "ganesha_fuse_wrap.h"
 #include "nfs_init.h"

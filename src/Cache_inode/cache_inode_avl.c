@@ -38,10 +38,6 @@
 
 #include "config.h"
 
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include "log.h"
 #include "fsal.h"
 #include "cache_inode.h"

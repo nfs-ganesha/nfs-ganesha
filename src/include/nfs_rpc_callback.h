@@ -31,11 +31,6 @@
 #define NFS_RPC_CALLBACK_H
 
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include "log.h"
 #include "cache_inode.h"
 #include "wait_queue.h"

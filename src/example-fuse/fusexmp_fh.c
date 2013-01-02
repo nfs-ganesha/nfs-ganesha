@@ -11,11 +11,6 @@
 #define FUSE_USE_VERSION 26
 
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <ganesha_fuse_wrap.h>
 /*#include <ulockmgr.h> */
 #include <stdio.h>

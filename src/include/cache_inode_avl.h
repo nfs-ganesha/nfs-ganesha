@@ -52,11 +52,6 @@
 #define CACHE_INODE_AVL_H
 
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include "log.h"
 #include "cache_inode.h"
 #include "avltree.h"

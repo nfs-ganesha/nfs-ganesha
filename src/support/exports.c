@@ -27,12 +27,6 @@
  * @brief Export parsing and management
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#define USHRT_MAX       6553
-#endif
-
 #include "cidr.h"
 #include "ganesha_rpc.h"
 #include "log.h"

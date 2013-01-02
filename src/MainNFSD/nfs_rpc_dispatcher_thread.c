@@ -29,11 +29,6 @@
  * @brief Contains the @c rpc_dispatcher_thread routine and support code
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

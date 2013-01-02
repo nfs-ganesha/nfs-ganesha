@@ -28,11 +28,6 @@
  * @brief Implements the NFSv3 GETATTR proc
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

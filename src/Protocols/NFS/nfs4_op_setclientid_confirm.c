@@ -31,11 +31,6 @@
  * Routines used for managing the NFS4_OP_SETCLIENTID_CONFIRM operation.
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <pthread.h>
 #include "log.h"
 #include "nfs4.h"

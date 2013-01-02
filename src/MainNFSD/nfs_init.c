@@ -29,11 +29,6 @@
  * @brief Most of the init routines
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include "ganesha_rpc.h"
 #include "nfs_init.h"
 #include "log.h"

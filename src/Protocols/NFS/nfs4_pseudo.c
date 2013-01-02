@@ -31,11 +31,6 @@
  * Routines used for managing the NFS4 pseudo file system.
  */
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

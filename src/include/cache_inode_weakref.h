@@ -48,11 +48,6 @@
 #define CACHE_INODE_WEAKREF_H
 
 #include "config.h"
-
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif /* _SOLARIS */
-
 #include "log.h"
 #include "cache_inode.h"
 #include "generic_weakref.h"
