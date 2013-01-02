@@ -117,7 +117,7 @@ static const nfs4_op_desc_t optabv4[] = {
   {"OP_SET_SSV", NFS4_OP_SET_SSV, nfs4_op_set_ssv},
   {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs4_op_test_stateid},
   {"OP_WANT_DELEGATION", NFS4_OP_WANT_DELEGATION, nfs4_op_illegal}, /* tbd */
-  {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_illegal}, /* tbd */
+  {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_destroy_clientid},
   {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs4_op_reclaim_complete},
   {"OP_ILLEGAL", NFS4_OP_ILLEGAL, nfs4_op_illegal}
 };

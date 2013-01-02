@@ -733,6 +733,10 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments
                           compound_data_t * data,      /* [IN] current data for the compound request */
                           struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
 
+int nfs4_op_destroy_clientid(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
+                          compound_data_t * data,      /* [IN] current data for the compound request */
+                          struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+
 int nfs4_op_destroy_session(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
                             compound_data_t * data,    /* [IN] current data for the compound request */
                             struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */

@@ -252,7 +252,7 @@ static void Hash_inc_client_id_ref(struct gsh_buffdesc *val)
 {
 	nfs_client_id_t *clientid = val->addr;
 
-	inc_client_id_ref(clientid);
+	(void) inc_client_id_ref(clientid);
 }
 
 /**
@@ -260,7 +260,7 @@ static void Hash_inc_client_id_ref(struct gsh_buffdesc *val)
  *
  * @param[in] clientid Client record
  */
-void inc_client_id_ref(nfs_client_id_t *clientid)
+int32_t inc_client_id_ref(nfs_client_id_t *clientid)
 {
 	int32_t cid_refcount = atomic_inc_int32_t(&clientid->cid_refcount);
 
@@ -272,6 +272,24 @@ void inc_client_id_ref(nfs_client_id_t *clientid)
 			     "Increment refcount Clientid {%s} to %"PRId32,
 			     str, cid_refcount);
 	}
+
+        return (cid_refcount);
+}
+
+/**
+ * @brief nfsv41 has-sessions prediccate (returns true if sessions found)
+ *
+ * @param[in] clientid Client record
+ */
+bool client_id_has_nfs41_sessions(nfs_client_id_t *clientid)
+{
+    if (clientid->cid_minorversion > 0) {
+        if (! glist_empty(&clientid->cid_cb.v41.cb_session_list)) {
+            return (true);
+        }
+    }
+
+    return (false);
 }
 
 /**
@@ -284,7 +302,7 @@ void free_client_id(nfs_client_id_t *clientid)
 	assert(atomic_fetch_int32_t(&clientid->cid_refcount) == 0);
 
 	if (clientid->cid_client_record != NULL)
-		dec_client_record_ref(clientid->cid_client_record);
+		(void) dec_client_record_ref(clientid->cid_client_record);
 
 	if (pthread_mutex_destroy(&clientid->cid_mutex) != 0)
 		LogDebug(COMPONENT_CLIENTID,
@@ -314,7 +332,7 @@ void free_client_id(nfs_client_id_t *clientid)
  *
  * @param[in] clientid Client record
  */
-void dec_client_id_ref(nfs_client_id_t *clientid)
+int32_t dec_client_id_ref(nfs_client_id_t *clientid)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
 	int32_t cid_refcount;
@@ -329,7 +347,7 @@ void dec_client_id_ref(nfs_client_id_t *clientid)
 		     str, cid_refcount);
 
 	if (cid_refcount > 0)
-		return;
+		return (cid_refcount);
 
 	/* We don't need a lock to look at cid_confirmed because when
 	 * refcount has gone to 0, no other threads can have a pointer
@@ -350,6 +368,8 @@ void dec_client_id_ref(nfs_client_id_t *clientid)
 
 		assert(clientid->cid_confirmed == EXPIRED_CLIENT_ID);
 	}
+
+	return (cid_refcount);
 }
 
 /**
@@ -545,7 +565,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 	init_glist(&owner->so_owner.so_nfs4_owner.so_state_list);
 
 	/* Get a reference to the client record */
-	inc_client_record_ref(client_rec->cid_client_record);
+	(void) inc_client_record_ref(client_rec->cid_client_record);
 
 	return client_rec;
 }
@@ -594,7 +614,7 @@ clientid_status_t nfs_client_id_insert(nfs_client_id_t *clientid)
 	}
 
 	/* Take a reference to the unconfirmed clientid for the hash table. */
-	inc_client_id_ref(clientid);
+	(void) inc_client_id_ref(clientid);
 
 	if (isFullDebug(COMPONENT_CLIENTID) &&
 	    isFullDebug(COMPONENT_HASHTABLE)) {
@@ -607,6 +627,48 @@ clientid_status_t nfs_client_id_insert(nfs_client_id_t *clientid)
 	clientid->cid_client_record->cr_unconfirmed_rec = clientid;
 
 	return CLIENT_ID_SUCCESS;
+}
+
+/**
+ * @brief Removes a confirmed client id record.
+ *
+ * @param[in] clientid The client id record
+ *
+ * @return hash table error code
+ */
+int remove_confirmed_client_id(nfs_client_id_t *clientid)
+{
+	int rc;
+	struct gsh_buffdesc buffkey;
+	struct gsh_buffdesc old_key;
+	struct gsh_buffdesc old_value;
+
+	buffkey.addr = &clientid->cid_clientid;
+	buffkey.len = sizeof(clientid->cid_clientid);
+
+	rc = HashTable_Del(ht_confirmed_client_id,
+			   &buffkey,
+			   &old_key,
+			   &old_value);
+
+	if (rc != HASHTABLE_SUCCESS) {
+		LogDebug(COMPONENT_CLIENTID,
+			 "Could not remove unconfirmed clientid %"
+			 PRIx64" error=%s",
+			 clientid->cid_clientid,
+			 hash_table_err_to_str(rc));
+		return rc;
+	}
+
+	clientid->cid_client_record->cr_confirmed_rec = NULL;
+
+	/* Set this up so this client id record will be freed. */
+	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
+
+	/* Release hash table reference to the unconfirmed record */
+	(void) dec_client_id_ref(clientid);
+
+	return rc;
 }
 
 /**
@@ -640,13 +702,16 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 		return rc;
 	}
 
+        /* XXX prevents calling remove_confirmed before removed_confirmed,
+         * if we failed to maintain the invariant that the cases are
+         * disjoint */
 	clientid->cid_client_record->cr_unconfirmed_rec = NULL;
 
 	/* Set this up so this client id record will be freed. */
 	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
 
 	/* Release hash table reference to the unconfirmed record */
-	dec_client_id_ref(clientid);
+	(void) dec_client_id_ref(clientid);
 
 	return rc;
 }
@@ -724,7 +789,7 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 
 		/* Release hash table reference to the unconfirmed
 		   record */
-		dec_client_id_ref(clientid);
+		(void) dec_client_id_ref(clientid);
 
 		return CLIENT_ID_INSERT_MALLOC_ERROR;
 	}
@@ -895,7 +960,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	}
 
 	/* Release the hash table reference to the clientid. */
-	dec_client_id_ref(clientid);
+	(void) dec_client_id_ref(clientid);
 
 	return true;
 }
@@ -1134,9 +1199,9 @@ int display_client_record(nfs_client_record_t *record, char *str)
  *
  * @param[in] record Record on which to take a reference
  */
-void inc_client_record_ref(nfs_client_record_t *record)
+int32_t inc_client_record_ref(nfs_client_record_t *record)
 {
-	atomic_inc_int32_t(&record->cr_refcount);
+	int32_t rec_refcnt = atomic_inc_int32_t(&record->cr_refcount);
 
 	if(isFullDebug(COMPONENT_CLIENTID)) {
 		char str[HASHTABLE_DISPLAY_STRLEN];
@@ -1146,6 +1211,8 @@ void inc_client_record_ref(nfs_client_record_t *record)
 			     "Increment refcount {%s}",
 			     str);
 	}
+
+	return (rec_refcnt);
 }
 
 /**
@@ -1167,7 +1234,7 @@ void free_client_record(nfs_client_record_t *record)
  *
  * @param[in] record Record on which to release a reference
  */
-void dec_client_record_ref(nfs_client_record_t *record)
+int32_t dec_client_record_ref(nfs_client_record_t *record)
 {
 	char str[HASHTABLE_DISPLAY_STRLEN];
 	struct hash_latch latch;
@@ -1187,7 +1254,7 @@ void dec_client_record_ref(nfs_client_record_t *record)
 			     "Decrement refcount {%s} refcount now=%"PRId32,
 			     str, refcount);
 
-		return;
+		return (refcount);
 	}
 
 	LogFullDebug(COMPONENT_CLIENTID,
@@ -1221,7 +1288,7 @@ void dec_client_record_ref(nfs_client_record_t *record)
 			 str, refcount);
 
 		HashTable_ReleaseLatched(ht_client_record, &latch);
-		return;
+		return (refcount);
 	}
 
 	/* use the key to delete the entry */
@@ -1245,6 +1312,8 @@ void dec_client_record_ref(nfs_client_record_t *record)
 		     str);
 
 	free_client_record(old_value.addr);
+
+	return (refcount);
 }
 
 /**
