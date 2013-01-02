@@ -46,6 +46,8 @@ nfsstat4 panfs_um_getdeviceinfo(
 nfsstat4 panfs_um_layoutget(
 		int fd,
 		struct pan_ioctl_xdr *loc_body,
+		uint64_t clientid,
+		void    *recall_file_info,
 		const struct fsal_layoutget_arg *arg,
 		struct fsal_layoutget_res *res);
 
@@ -59,3 +61,13 @@ nfsstat4 panfs_um_layoutcommit(
 		struct pan_ioctl_xdr *lou_body,
 		const struct fsal_layoutcommit_arg *arg,
 		struct fsal_layoutcommit_res *res);
+
+int panfs_um_recieve_layoutrecall(
+		int fd,
+		struct pan_cb_layoutrecall_event *events,
+		int max_events,
+		int *num_events);
+
+int panfs_um_cancel_recalls(
+		int fd,
+		int debug_magic);

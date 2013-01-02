@@ -198,11 +198,16 @@ nfsstat4 layoutget(
 	const struct fsal_layoutget_arg *arg,
 	struct fsal_layoutget_res *res)
 {
+	struct vfs_fsal_obj_handle *myself = container_of(obj_hdl,
+							typeof(*myself),
+							obj_handle);
 	struct pan_ioctl_xdr pixdr;
+	uint64_t clientid = req_ctx->clientid ? *req_ctx->clientid : 0;
 	nfsstat4 ret;
 
 	_XDR_2_ioctlxdr_read_begin(loc_body, &pixdr);
-	ret = panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, arg, res);
+	ret = panfs_um_layoutget(_get_obj_fd(obj_hdl), &pixdr, clientid,
+				 myself, arg, res);
 	if (!ret)
 		_XDR_2_ioctlxdr_read_end(loc_body, &pixdr);
 	DBG_PRNT("ret => %d\n", ret);
