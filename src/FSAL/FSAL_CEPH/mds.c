@@ -126,13 +126,14 @@ getdeviceinfo(struct fsal_export *export_pub,
         }
 
         /* Retrieve and calculate storage parameters of layout */
-
         memset(&file_layout, 0, sizeof(struct ceph_file_layout));
-        ceph_ll_file_layout(export->cmount, vinode, &file_layout);
+        if (ceph_ll_file_layout(export->cmount, vinode, &file_layout) != 0) {
+            LogCrit(COMPONENT_PNFS, "Failed to get Ceph layout for inode");
+                return NFS4ERR_SERVERFAULT;
+        }
 
         /* As this is large, we encode as we go rather than building a
            structure and encoding it all at once. */
-
 
         /* The first entry in the nfsv4_1_file_ds_addr4 is the array
            of stripe indices. First we encode the count of stripes.
@@ -424,6 +425,11 @@ layoutget(struct fsal_obj_handle *obj_pub,
                 res->segment.length = stripe_width * BIGGEST_PATTERN;
         }
 
+        LogFullDebug(COMPONENT_PNFS,
+                     "will issue layout offset: %"PRIu64 " length: %" PRIu64,
+                     res->segment.offset,
+                     res->segment.length);
+
         /* We are using sparse layouts with commit-through-DS, so our
            utility word contains only the stripe width, our first
            stripe is always at the beginning of the layout, and there
@@ -478,8 +484,10 @@ layoutget(struct fsal_obj_handle *obj_pub,
                         pthread_mutex_unlock(&handle->handle.lock);
                         return NFS4ERR_BADLAYOUT;
                 }
+#if CLIENTS_WILL_ACCEPT_SEGMENTED_LAYOUTS /* sigh */
                 res->segment.length = (handle->rw_max_len
                                        - res->segment.offset);
+#endif
                 ++handle->rw_issued;
         }
         pthread_mutex_unlock(&handle->handle.lock);
