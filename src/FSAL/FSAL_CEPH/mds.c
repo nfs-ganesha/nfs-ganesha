@@ -20,6 +20,7 @@
  * -------------
  */
 
+#include "ganesha_rpc.h"
 #include <cephfs/libcephfs.h>
 #include "fsal.h"
 #include "fsal_types.h"
@@ -140,7 +141,7 @@ getdeviceinfo(struct fsal_export *export_pub,
            Since our pattern doesn't repeat, we have as many indices
            as we do stripes. */
 
-        if (!xdr_uint32_t(da_addr_body, &stripes)) {
+        if (! inline_xdr_u_int32_t(da_addr_body, &stripes)) {
                 LogCrit(COMPONENT_PNFS, "Failed to encode length of "
                         "stripe_indices array: %" PRIu32 ".", stripes);
                 return NFS4ERR_SERVERFAULT;
@@ -159,7 +160,7 @@ getdeviceinfo(struct fsal_export *export_pub,
                                 stripe, deviceid->devid, -stripe_osd);
                         return NFS4ERR_SERVERFAULT;
                 }
-                if (!xdr_uint32_t(da_addr_body, &stripe_osd)) {
+                if (! inline_xdr_u_int32_t(da_addr_body, &stripe_osd)) {
                         LogCrit(COMPONENT_PNFS,
                                 "Failed to encode OSD for stripe %lu.",
                                 stripe);
@@ -170,7 +171,7 @@ getdeviceinfo(struct fsal_export *export_pub,
         /* The number of OSDs in our cluster is the length of our
            array of multipath_lists */
 
-        if (!xdr_uint32_t(da_addr_body, &num_osds)) {
+        if (! inline_xdr_u_int32_t(da_addr_body, &num_osds)) {
                 LogCrit(COMPONENT_PNFS, "Failed to encode length of "
                         "multipath_ds_list array: %u", num_osds);
                 return NFS4ERR_SERVERFAULT;
