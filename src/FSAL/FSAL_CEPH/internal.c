@@ -210,8 +210,6 @@ ceph2fsal_attributes(const struct stat *buffstat,
 {
         FSAL_CLEAR_MASK(fsalattr->mask);
 
-        FSAL_CLEAR_MASK(fsalattr->mask);
-
         /* Fills the output struct */
         fsalattr->type = posix2fsal_type(buffstat->st_mode);
         FSAL_SET_MASK(fsalattr->mask, ATTR_TYPE);
