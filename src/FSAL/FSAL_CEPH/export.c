@@ -163,33 +163,44 @@ out:
 }
 
 /**
- * @brief Extract handle from buffer
+ * @brief Decode a digested handle
  *
- * This function, in the Ceph FSAL, merely checks that the supplied
- * buffer is the appropriate size, or returns the size of the wire
- * handle if FSAL_DIGEST_SIZEOF is passed as the type.
+ * This function decodes a previously digested handle.
  *
- * @param[in]     export_pub Public export
- * @param[in]     type       The type of digest this buffer represents
- * @param[in,out] fh_desc    The buffer from which to extract/buffer
- *                           containing extracted handle
- *
- * @return FSAL status.
+ * @param[in]  exp_handle  Handle of the relevant fs export
+ * @param[in]  in_type  The type of digest being decoded
+ * @param[out] fh_desc  Address and length of key
  */
-
 static fsal_status_t
-extract_handle(struct fsal_export *export_pub,
-               fsal_digesttype_t type,
+extract_handle(struct fsal_export *exp_hdl,
+               fsal_digesttype_t in_type,
                struct gsh_buffdesc *fh_desc)
 {
-        if (type == FSAL_DIGEST_SIZEOF) {
-                fh_desc->len = sizeof(struct wire_handle);
-                return fsalstat(ERR_FSAL_NO_ERROR, 0);
-        } else if (fh_desc->len != sizeof(struct wire_handle)) {
-                return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-        } else {
-                return fsalstat(ERR_FSAL_NO_ERROR, 0);
-        }
+    struct wire_handle *wire
+        = (struct wire_handle *) fh_desc->addr;
+
+    switch (in_type) {
+        /* Digested Handles */
+    case FSAL_DIGEST_NFSV2:
+    case FSAL_DIGEST_NFSV3:
+    case FSAL_DIGEST_NFSV4:
+        /* wire handles */
+        fh_desc->len = sizeof(wire->vi); /* vinodeno_t */
+        break;
+        /* Integer IDs */
+    case FSAL_DIGEST_FILEID2:
+        /* No supported */
+        return fsalstat(ERR_FSAL_TOOSMALL, 0);
+        break;
+    case FSAL_DIGEST_FILEID3:
+    case FSAL_DIGEST_FILEID4:
+        fh_desc->len = sizeof(uint64_t);
+        break;
+    default:
+        return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+    }
+
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
