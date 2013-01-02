@@ -112,8 +112,6 @@ typedef struct mountres3 mountres3;
 #define	MOUNTPROC3_UMNTALL	4
 #define	MOUNTPROC3_EXPORT	5
 
-#ifndef _USE_SWIG
-
 /* the xdr functions */
 extern bool xdr_mountstat3(XDR *, mountstat3 *);
 extern bool xdr_fhandle3(XDR *, fhandle3 *);
@@ -128,6 +126,4 @@ extern bool xdr_mountbody(XDR *, mountbody *);
 extern bool xdr_mountres3_ok(XDR *, mountres3_ok *);
 extern bool xdr_mountres3(XDR *, mountres3 *);
 
-#endif                          /* ifndef _USE_SWIG */
-
-#endif                          /* !_MOUNT_H_RPCGEN */
+#endif /* !_MOUNT_H_RPCGEN */

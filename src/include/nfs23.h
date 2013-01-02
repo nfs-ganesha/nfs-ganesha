@@ -6,9 +6,7 @@
 #ifndef _NFS23_H_RPCGEN
 #define	_NFS23_H_RPCGEN
 
-#ifndef _USE_SWIG
 #include "ganesha_rpc.h"
-#endif                          /* SWIG */
 #include "extended_types.h"
 
 #include "mount.h"
@@ -1166,8 +1164,6 @@ typedef struct COMMIT3res COMMIT3res;
 #define	NFSPROC3_PATHCONF	20
 #define	NFSPROC3_COMMIT	21
 
-#ifndef _USE_SWIG
-
 /* the xdr functions */
 
 extern bool xdr_nfs3_uint64(XDR *, nfs3_uint64 *);
@@ -1307,7 +1303,4 @@ extern bool xdr_COMMIT3res(XDR *, COMMIT3res *);
 extern bool xdr_fhandle2(XDR *, fhandle2);
 extern bool xdr_fhstatus2(XDR *, fhstatus2 *);
 
-
-#endif                          /* ifndef _USE_SWIG */
-
-#endif                          /* !_NFS23_H_RPCGEN */
+#endif /* !_NFS23_H_RPCGEN */

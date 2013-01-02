@@ -907,7 +907,6 @@ extern const struct fattr4_dent fattr4tab[];
 #define NFS_MAXPATHLEN MAXPATHLEN
 #define DEFAULT_DOMAIN "localdomain"
 #define DEFAULT_IDMAPCONF "/etc/idmapd.conf"
-#endif                          /* _NFS_PROTO_FUNCTIONS_H */
 
 #define NFS_REQ_OK   0
 #define NFS_REQ_DROP 1
@@ -1038,7 +1037,6 @@ void nfs4_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp);
 
 void compound_data_Free(compound_data_t * data);
 
-#ifndef _USE_SWIG
 /* Pseudo FS functions */
 int nfs4_ExportToPseudoFS(exportlist_t * pexportlist);
 pseudofs_t *nfs4_GetPseudoFs(void);
@@ -1202,4 +1200,4 @@ int nfs4_AllocateFH(nfs_fh4 * fh);
 
 int nfs4_Is_Fh_Referral(nfs_fh4 * pfh);
 int nfs4_Set_Fh_Referral(nfs_fh4 * pfh);
-#endif
+#endif /* _NFS_PROTO_FUNCTIONS_H */
