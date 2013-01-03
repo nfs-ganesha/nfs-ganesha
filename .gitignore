@@ -11,6 +11,7 @@ src/pkg-deb/
 .deps/
 .libs/
 CMakeFiles/
+build*/
 
 # files
 *.kdevelop*
