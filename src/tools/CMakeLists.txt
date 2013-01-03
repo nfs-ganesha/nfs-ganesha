@@ -1,7 +1,7 @@
 
 ########### install files ###############
 
-install(FILES  ganestat.pl DESTINATION bin)
+install(FILES  ganestat.pl COMPONENT daemon DESTINATION bin)
 
 
 

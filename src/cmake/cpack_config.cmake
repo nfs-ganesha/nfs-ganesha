@@ -23,7 +23,10 @@ It comes with various back-end modules to support different file systems and
 name-spaces." )
 set( CPACK_RPM_CHANGELOG_FILE ${PROJECT_SOURCE_DIR}/rpm_changelog )
 
+set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_COMPONENTS_IGNORE_GROUPS "IGNORE")
 
 # Tell CPack the kind of packages to be generated
 set(CPACK_GENERATOR "STGZ;TGZ;TZ;DEB;RPM")
+set(CPACK_SOURCE_GENERATOR "TGZ;TBZ2;TZ;DEB;RPM")
 

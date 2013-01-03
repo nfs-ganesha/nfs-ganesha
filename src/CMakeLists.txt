@@ -18,7 +18,13 @@ set(VERSION_COMMENT
   "GANESHA 64 bits compliant. SNMP exported stats. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
 )
 
-# Now that CPack related variables are set, include CPack.cmake
+# Define CPACK component (to deal with sub packages)
+set(CPACK_COMPONENTS_ALL daemon fsal headers )
+set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
+set(CPACK_COMPONENT_FSAL_DISPLAY_NAME "FSAL Libraries")
+set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Headers")
+
+# Include custom config and cpack module
 include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
 
@@ -671,6 +677,6 @@ endif(USE_FSAL_FUSE)
 
 ########### install files ###############
 if(USE_FSAL_FUSE)
-  install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" DESTINATION ${LIB_DESTINATION})
+  install(FILES  "${PROJECT_BINARY_DIR}/libganeshaNFS.pc" COMPONENT daemon DESTINATION ${LIB_DESTINATION})
 endif(USE_FSAL_FUSE)
 
