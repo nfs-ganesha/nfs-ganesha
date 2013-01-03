@@ -10,7 +10,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
 include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 
-
 project(GANESHA C)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 2)
@@ -19,6 +18,16 @@ set(${PROJECT_NAME}_PATCH_LEVEL 0)
 set(VERSION_COMMENT
   "GANESHA 64 bits compliant. SNMP exported stats. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"
 )
+
+# A few CPack related variables
+set(CPACK_PACKAGE_NAME "nfs-ganesha")
+set(CPACK_PACKAGE_VENDOR "NFS-Ganesha Project")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "NFS-Ganesha - A NFS Server runnning in user space")
+set(CPACK_PACKAGE_VERSION_MAJOR ${GANESHA_MAJOR_VERSION})
+set(CPACK_PACKAGE_VERSION_MINOR ${GANESHA_MINOR_VERSION})
+set(CPACK_PACKAGE_VERSION_PATCH ${GANESHA_PATCH_LEVEL})
+include(CPack)
+
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC _GIT_HEAD_COMMIT)
 git_describe(_GIT_DESCRIBE)
