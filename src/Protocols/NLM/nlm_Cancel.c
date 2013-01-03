@@ -62,7 +62,6 @@ int nlm4_Cancel(nfs_arg_t *parg,
   nlm4_cancargs      * arg = &parg->arg_nlm4_cancel;
   cache_entry_t      * pentry;
   state_status_t       state_status = STATE_SUCCESS;
-  char                 buffer[MAXNETOBJ_SZ * 2];
   state_nsm_client_t * nsm_client;
   state_nlm_client_t * nlm_client;
   state_owner_t      * nlm_owner;
@@ -76,13 +75,20 @@ int nlm4_Cancel(nfs_arg_t *parg,
       return NFS_REQ_OK;
     }
 
-  netobj_to_string(&arg->cookie, buffer, 1024);
-  LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm4_Cancel svid=%d off=%llx len=%llx cookie=%s",
-           (int) arg->alock.svid,
-           (unsigned long long) arg->alock.l_offset,
-           (unsigned long long) arg->alock.l_len,
-           buffer);
+  if(isDebug(COMPONENT_NLM))
+    {
+      char                    buffer[NETOBJ_MAX_STRING];
+      struct display_buffer   dspbuf = {sizeof(buffer), buffer, buffer};
+
+      (void) display_netobj(&dspbuf, &arg->cookie);
+
+      LogDebug(COMPONENT_NLM,
+               "REQUEST PROCESSING: Calling nlm4_Cancel svid=%d off=%llx len=%llx cookie=%s",
+               (int) arg->alock.svid,
+               (unsigned long long) arg->alock.l_offset,
+               (unsigned long long) arg->alock.l_len,
+               buffer);
+    }
 
   if(!copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie))
     {
@@ -156,16 +162,21 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg)
 
   if(isFullDebug(COMPONENT_NLM))
     {
-      char buffer[1024];
-      netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, buffer, 1024);
+      char                    buffer[NETOBJ_MAX_STRING];
+      struct display_buffer   dspbuf = {sizeof(buffer), buffer, buffer};
+
+      (void) display_netobj(&dspbuf, &nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
+
       LogFullDebug(COMPONENT_NLM,
                    "Calling nlm_send_async cookie=%s status=%s",
                    buffer, lock_result_str(nlm_arg->nlm_async_args.nlm_async_res.res_nlm4.stat.stat));
     }
+
   nlm_send_async(NLMPROC4_CANCEL_RES,
                  nlm_arg->nlm_async_host,
                  &(nlm_arg->nlm_async_args.nlm_async_res),
                  NULL);
+
   nlm4_Cancel_Free(&nlm_arg->nlm_async_args.nlm_async_res);
   dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
   dec_nlm_client_ref(nlm_arg->nlm_async_host);

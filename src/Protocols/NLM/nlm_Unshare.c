@@ -61,7 +61,6 @@ int nlm4_Unshare(nfs_arg_t            * parg,
   nlm4_shareargs     * arg = &parg->arg_nlm4_share;
   cache_entry_t      * pentry;
   state_status_t       state_status = STATE_SUCCESS;
-  char                 buffer[MAXNETOBJ_SZ * 2];
   state_nsm_client_t * nsm_client;
   state_nlm_client_t * nlm_client;
   state_owner_t      * nlm_owner;
@@ -77,11 +76,18 @@ int nlm4_Unshare(nfs_arg_t            * parg,
 
   pres->res_nlm4share.sequence = 0;
 
-  netobj_to_string(&arg->cookie, buffer, 1024);
-  LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm4_Unshare cookie=%s reclaim=%s",
-           buffer,
-           arg->reclaim ? "yes" : "no");
+  if(isDebug(COMPONENT_NLM))
+    {
+      char                    buffer[NETOBJ_MAX_STRING];
+      struct display_buffer   dspbuf = {sizeof(buffer), buffer, buffer};
+
+      (void) display_netobj(&dspbuf, &arg->cookie);
+
+      LogDebug(COMPONENT_NLM,
+               "REQUEST PROCESSING: Calling nlm4_Unshare cookie=%s reclaim=%s",
+               buffer,
+               arg->reclaim ? "yes" : "no");
+    }
 
   if(!copy_netobj(&pres->res_nlm4share.cookie, &arg->cookie))
     {

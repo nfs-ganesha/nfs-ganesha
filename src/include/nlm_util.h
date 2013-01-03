@@ -35,7 +35,18 @@ bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
 extern void netobj_free(netobj * obj);
-extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
+
+#define NETOBJ_MAX_DISPLAY 256
+#define NETOBJ_MAX_STRING (NETOBJ_MAX_DISPLAY * 2 + 10)
+
+static inline int display_netobj(struct display_buffer * dspbuf, netobj *obj)
+{
+  return display_opaque_value_max(dspbuf,
+                                  obj->n_bytes,
+                                  obj->n_len,
+                                  NETOBJ_MAX_DISPLAY);
+}
+
 /**
  * process_nlm_parameters: Process NLM parameters
  *

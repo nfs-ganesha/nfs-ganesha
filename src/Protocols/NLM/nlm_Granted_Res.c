@@ -64,10 +64,17 @@ int nlm4_Granted_Res(nfs_arg_t *parg,
   state_cookie_entry_t * cookie_entry;
   fsal_op_context_t      context, * pcontext = &context;
 
-  netobj_to_string(&arg->cookie, buffer, 1024);
-  LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
-           buffer);
+  if(isDebug(COMPONENT_NLM))
+    {
+      char                    buffer[NETOBJ_MAX_STRING];
+      struct display_buffer   dspbuf = {sizeof(buffer), buffer, buffer};
+
+      (void) display_netobj(&dspbuf, &arg->cookie);
+
+      LogDebug(COMPONENT_NLM,
+               "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
+               buffer);
+    }
 
   if(state_find_grant(arg->cookie.n_bytes,
                       arg->cookie.n_len,
