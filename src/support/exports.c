@@ -3245,10 +3245,11 @@ static int export_client_match(sockaddr_t *hostaddr,
                       /* Major failure, name could not be resolved */
                       LogInfo(COMPONENT_DISPATCH,
                               "Could not resolve hostame for addr %d.%d.%d.%d ... not checking if a hostname wildcard matches",
-                              (int)(ntohl(addr) & 0xFF),
-                              (int)(ntohl(addr) >> 8) & 0xFF,
+                              (int)(ntohl(addr) >> 24),
                               (int)(ntohl(addr) >> 16) & 0xFF,
-                              (int)(ntohl(addr) >> 24));
+                              (int)(ntohl(addr) >> 8) & 0xFF,
+                              (int)(ntohl(addr) & 0xFF)
+                              );
                       break;
                     }
                 }
