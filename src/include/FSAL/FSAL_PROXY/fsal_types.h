@@ -125,6 +125,7 @@ typedef struct
   clientid4 clientid;
   time_t    clientid_renewed ;
   CLIENT *rpc_client;
+  AUTH *rpc_auth;
   int socket ;
   pthread_mutex_t lock;
   proxyfsal_handle_t openfh_wd_handle;

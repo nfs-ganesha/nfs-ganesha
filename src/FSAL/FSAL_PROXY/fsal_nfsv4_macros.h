@@ -268,7 +268,7 @@ do {                                                                            
   if( __renew_rc == 0 )                                                                   \
       {                                                                                   \
         if( FSAL_proxy_change_user( pcontext ) == NULL ) break  ;                         \
-        if( ( rc = clnt_call( pcontext->rpc_client, NFSPROC4_COMPOUND,                    \
+        if( ( rc = clnt_call( pcontext->rpc_client, pcontext->rpc_auth, NFSPROC4_COMPOUND,                    \
                               (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,        \
                               (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,        \
                               timeout ) ) == RPC_SUCCESS )                                \
@@ -287,7 +287,7 @@ do {                                                                            
 }  while( 0 )
 
 #define COMPOUNDV4_EXECUTE_SIMPLE( pcontext, argcompound, rescompound )   \
-   clnt_call( pcontext->rpc_client, NFSPROC4_COMPOUND,                    \
+   clnt_call( pcontext->rpc_client, pcontext->rpc_auth, NFSPROC4_COMPOUND,                    \
               (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound,        \
               (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,        \
               timeout )

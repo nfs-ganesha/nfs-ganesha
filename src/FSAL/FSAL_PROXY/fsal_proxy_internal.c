@@ -784,7 +784,7 @@ fsal_status_t fsal_internal_set_auth_gss(proxyfsal_op_context_t * p_thr_context)
   rpcsec_gss_data.qop = GSS_C_QOP_DEFAULT;
   rpcsec_gss_data.svc = global_fsal_proxy_specific_info.sec_type;
 
-  if((p_thr_context->rpc_client->cl_auth =
+  if((p_thr_context->rpc_auth =
       authgss_create_default(p_thr_context->rpc_client,
                              global_fsal_proxy_specific_info.remote_principal,
                              &rpcsec_gss_data)) == NULL)
@@ -812,13 +812,15 @@ fsal_proxy_create_rpc_clnt(proxyfsal_op_context_t * ctx)
 
   if(!strcmp(ctx->srv_proto, "udp"))
     {
+      struct timeval tv = { 25, 0};
+
       if((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         ReturnCode(ERR_FSAL_FAULT, errno);
 
       ctx->rpc_client = clntudp_bufcreate(&addr_rpc,
                                           ctx->srv_prognum,
                                           FSAL_PROXY_NFS_V4,
-                                          (struct timeval){ 25, 0},
+                                          tv,
                                           &sock,
                                           ctx->srv_sendsize,
                                           ctx->srv_recvsize);
@@ -895,11 +897,12 @@ fsal_proxy_create_rpc_clnt(proxyfsal_op_context_t * ctx)
     }
   else
 #endif                          /* _USE_GSSRPC */
-  if((ctx->rpc_client->cl_auth = authunix_create_default()) == NULL)
+
+  if((ctx->rpc_auth = authunix_create_default()) == NULL)
     ReturnCode(ERR_FSAL_INVAL, 0);
 
   /* test if the newly created context can 'ping' the server via PROC_NULL */
-  rc = clnt_call(ctx->rpc_client, NFSPROC4_NULL,
+  rc = clnt_call(ctx->rpc_client, ctx->rpc_auth, NFSPROC4_NULL,
                  (xdrproc_t) xdr_void, (caddr_t) NULL,
                  (xdrproc_t) xdr_void, (caddr_t) NULL, timeout);
   if(rc  != RPC_SUCCESS)
@@ -939,8 +942,8 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
   
   if(p_thr_context->rpc_client)
     {
-      auth_destroy(p_thr_context->rpc_client->cl_auth);
-      p_thr_context->rpc_client->cl_auth = NULL;
+      auth_destroy(p_thr_context->rpc_auth);
+      p_thr_context->rpc_auth = NULL;
       clnt_destroy(p_thr_context->rpc_client);
       p_thr_context->rpc_client = NULL;
     }
@@ -1072,7 +1075,7 @@ void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
   static bool_t done = FALSE;
 
   P(p_thr_context->lock);
-  switch (p_thr_context->rpc_client->cl_auth->ah_cred.oa_flavor)
+  switch (p_thr_context->rpc_auth->ah_cred.oa_flavor)
     {
     case AUTH_NONE:
       /* well... to be honest, there is nothing to be done here... */
@@ -1086,10 +1089,9 @@ void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
 
           done = TRUE;
         }
-      auth_destroy(p_thr_context->rpc_client->cl_auth);
+      auth_destroy(p_thr_context->rpc_auth);
 
-      p_thr_context->rpc_client->cl_auth =
-	      authunix_create(hostname,
+      p_thr_context->rpc_auth = authunix_create(hostname,
 			      p_thr_context->credential.user,
 			      p_thr_context->credential.group,
 			      p_thr_context->credential.nbgroups,
@@ -1107,5 +1109,5 @@ void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
   V(p_thr_context->lock);
 
   /* Return authentication */
-  return p_thr_context->rpc_client->cl_auth;
+  return p_thr_context->rpc_auth;
 }                               /* FSAL_proxy_change_user */
