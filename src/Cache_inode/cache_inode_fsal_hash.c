@@ -151,33 +151,3 @@ int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
   else
     return cache_inode_fsal_rbt_both_on_fsal( p_hparam, buffclef, phashval, prbtval ) ;
 }
-
-
-
-int display_key(hash_buffer_t * pbuff, char *str)
-{
-    char buffer[128];
-
-    snprintHandle(buffer, 128, pbuff->pdata);
-
-    return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
-                    "(Handle=%s, Cookie=%"PRIu64")", buffer, 0UL);
-}
-
-int display_not_implemented(hash_buffer_t * pbuff, char *str)
-{
-
-    return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
-                    "Print Not Implemented");
-}
-
-int display_value(hash_buffer_t * pbuff, char *str)
-{
-    cache_entry_t *pentry;
-
-    pentry = (cache_entry_t *) pbuff->pdata;
-
-    return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
-                    "(Type=%d, Address=%p)",
-                    pentry->type, pentry);
-}
