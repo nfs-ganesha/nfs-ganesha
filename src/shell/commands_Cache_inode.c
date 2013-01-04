@@ -560,10 +560,9 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
       return 1;
     }
 
-  cache_param.hparam.hash_func_key = cache_inode_fsal_hash_func;
-
-  cache_param.hparam.hash_func_rbt = cache_inode_fsal_rbt_func;
-  cache_param.hparam.hash_func_both = NULL ; /* BUGAZOMEU */
+  cache_param.hparam.hash_func_key = NULL;
+  cache_param.hparam.hash_func_rbt = NULL;
+  cache_param.hparam.hash_func_both = cache_inode_fsal_rbt_both;
   cache_param.hparam.compare_key = cache_inode_compare_key_fsal;
   cache_param.hparam.key_to_str = NULL;
   cache_param.hparam.val_to_str = NULL;
