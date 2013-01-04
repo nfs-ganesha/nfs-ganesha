@@ -72,7 +72,7 @@ pthread_t g_pthread_polling_closehandler;
 int PTFSAL_log(int level, const char * message)
 {
   DisplayLogComponentLevel(COMPONENT_FSAL_PT, "FSAL_PT", level,
-                           (char *)message);
+                           "%s", (char *)message);
   return 0;
 }
 
