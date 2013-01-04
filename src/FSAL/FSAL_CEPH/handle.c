@@ -539,17 +539,17 @@ setattrs(struct fsal_obj_handle *handle_pub,
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME)) {
                 mask |= CEPH_SETATTR_ATIME;
-                st.st_atime = attrs->atime.tv_sec;
+                st.st_atim = attrs->atime;
         }
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
                 mask |= CEPH_SETATTR_MTIME;
-                st.st_mtime = attrs->mtime.tv_sec;
+                st.st_mtim = attrs->mtime;
         }
 
         if (FSAL_TEST_MASK(attrs->mask, ATTR_CTIME)) {
                 mask |= CEPH_SETATTR_CTIME;
-                st.st_ctime = attrs->ctime.tv_sec;
+                st.st_ctim = attrs->ctime;
         }
 
         rc = ceph_ll_setattr(export->cmount, handle->wire.vi,
