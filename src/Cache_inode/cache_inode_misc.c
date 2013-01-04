@@ -202,6 +202,11 @@ int cache_inode_compare_key_fsal(hash_buffer_t *buff1,
   /* This line should never be reached */
 } /* cache_inode_compare_key_fsal */
 
+int display_cache_inode_key(struct display_buffer * dspbuf,
+                            hash_buffer_t         * buff)
+{
+  return display_opaque_value(dspbuf, buff->pdata, buff->len);
+}
 
 /**
  *

@@ -636,8 +636,8 @@ void nfs_set_param_default()
   cache_inode_params.hparam.hash_func_rbt = NULL;
   cache_inode_params.hparam.hash_func_both = cache_inode_fsal_rbt_both;
   cache_inode_params.hparam.compare_key = cache_inode_compare_key_fsal;
-  cache_inode_params.hparam.key_to_str = NULL; // display_cache;
-  cache_inode_params.hparam.val_to_str = NULL; // display_cache;
+  cache_inode_params.hparam.key_to_str = display_cache_inode_key;
+  cache_inode_params.hparam.val_to_str = NULL; /* value display not implemented */
   cache_inode_params.hparam.ht_name = "Cache Inode";
   cache_inode_params.hparam.flags = HT_FLAG_CACHE;
   cache_inode_params.hparam.ht_log_component = COMPONENT_CACHE_INODE;

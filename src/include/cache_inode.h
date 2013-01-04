@@ -611,6 +611,10 @@ const char *cache_inode_err_str(cache_inode_status_t err);
 
 void cache_inode_clean_entry(cache_entry_t *entry);
 int cache_inode_compare_key_fsal(hash_buffer_t *buff1, hash_buffer_t *buff2);
+
+int display_cache_inode_key(struct display_buffer * dspbuf,
+                            hash_buffer_t         * buff);
+
 void cache_inode_release_symlink(cache_entry_t *entry);
 
 hash_table_t *cache_inode_init(cache_inode_parameter_t param,
@@ -910,10 +914,6 @@ int cache_inode_fsal_rbt_both(hash_parameter_t *p_hparam,
                               hash_buffer_t *buffclef,
                               uint32_t *phashval,
                               uint64_t *prbtval);
-int display_key(hash_buffer_t *pbuff, char *str);
-int display_not_implemented(hash_buffer_t *pbuff,
-                            char *str);
-int display_value(hash_buffer_t *pbuff, char *str);
 
 #define PTHREAD_RWLOCK_RDLOCK(_rwlock_) \
   pthread_rwlock_rdlock(_rwlock_)
