@@ -773,19 +773,6 @@ cache_inode_dec_pin_ref(cache_entry_t *entry, bool closefile) ;
 
 inline int cache_inode_set_time_current(struct timespec *time);
 
-/* Hash functions for hashtables and RBT */
-uint32_t cache_inode_fsal_hash_func(hash_parameter_t *hparam,
-				    struct gsh_buffdesc *buff);
-uint64_t cache_inode_fsal_rbt_func(hash_parameter_t *hparam,
-				   struct gsh_buffdesc *buff);
-int cache_inode_fsal_rbt_both(hash_parameter_t *hparam,
-			      struct gsh_buffdesc *buffclef,
-			      uint32_t *hashval,
-			      uint64_t *rbtval);
-int display_key(struct gsh_buffdesc *buff, char *str);
-int display_not_implemented(struct gsh_buffdesc *buff,
-			    char *str);
-int display_value(struct gsh_buffdesc *buff, char *str);
 void cache_inode_destroyer(void);
 
 /**
