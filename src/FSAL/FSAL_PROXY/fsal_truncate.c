@@ -249,7 +249,7 @@ fsal_status_t PROXYFSAL_truncate(fsal_handle_t * file_hdl,       /* IN */
   if(file_descriptor)
     {
       /* Close the previously opened filedescriptor */
-      fsal_status = FSAL_close_by_fileid(file_descriptor, fileid);
+      fsal_status = FSAL_close_by_fileid(file_descriptor, context, fileid);
       if(FSAL_IS_ERROR(fsal_status))
         {
           Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_truncate);
