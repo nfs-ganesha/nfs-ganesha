@@ -3087,6 +3087,7 @@ static int nfs4_decode_acl_special_user(utf8string *utf8str, int *who)
 
   return -1;
 }
+#endif
 
 static inline bool_t verify_attr_len(fattr4 * Fattr,
                                      int    * LastOffset,
@@ -3132,6 +3133,7 @@ static inline bool_t copy_attr_val(void   * dest,
   return TRUE;
 }
 
+#ifdef _USE_NFS4_ACL
 static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr,
                            fattr4             * Fattr,
                            int                * LastOffset,
