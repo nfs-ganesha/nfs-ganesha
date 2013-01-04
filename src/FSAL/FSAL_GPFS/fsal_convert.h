@@ -56,19 +56,21 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in);
 /** converts posix fsid to fsal FSid. */
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
 
-/**
+ /**
  * posix2fsal_time:
  * Convert POSIX time structure (time_t)
- * to FSAL time type (fsal_time_t).
+ * to FSAL time type (now struct timespec).
+ *
+ * XXX Remove me (the entire file), included in
+ * The routine is in include/FSAL/fsal_convert.h 
+ *
  */
-gsh_time_t posix2fsal_time(time_t tsec, time_t nsec);
-
-/**
- * fsal2posix_time:
- * Converts FSAL time structure (fsal_time_t)
- * to POSIX time type (time_t).
- */
-#define fsal2posix_time(_time_) ((time_t)(_time_).seconds)
+static inline struct timespec
+posix2fsal_time(time_t tsec, time_t nsec)
+{
+    struct timespec ts = {.tv_sec = tsec, .tv_nsec = nsec};
+    return (ts);
+}
 
 #define high32m( a ) ( (unsigned int)( a >> 32 ) )
 #define low32m( a ) ( (unsigned int)a )

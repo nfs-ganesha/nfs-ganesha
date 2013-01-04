@@ -575,7 +575,7 @@ fsal_fhexptype_t fsal_fh_expire_type(struct fsal_staticfsinfo_t *info)
 	return info->fh_expire_type;
 }
 
-gsh_time_t fsal_lease_time(struct fsal_staticfsinfo_t *info)
+struct timespec fsal_lease_time(struct fsal_staticfsinfo_t *info)
 {
 	return info->lease_time;
 }

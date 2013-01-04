@@ -256,41 +256,26 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ATIME))
     {
-      p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, p_buffstat->st_atim.tv_nsec);
+      p_fsalattr_out->atime = p_buffstat->st_atim;
     }
-
   if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CTIME))
     {
-      p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
+      p_fsalattr_out->ctime = p_buffstat->st_ctim;
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MTIME))
     {
-      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
+      p_fsalattr_out->mtime = p_buffstat->st_mtim;
     }
-
   if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME))
     {
-      if(p_buffstat->st_mtime == p_buffstat->st_ctime)
-        {
-          if(p_buffstat->st_mtim.tv_nsec > p_buffstat->st_ctim.tv_nsec)
-            p_fsalattr_out->chgtime
-              = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
-          else
-            p_fsalattr_out->chgtime
-              = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
-        }
-      else if(p_buffstat->st_mtime > p_buffstat->st_ctime)
-        {
-          p_fsalattr_out->chgtime
-            = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
-        }
-      else
-        {
-          p_fsalattr_out->chgtime
-            = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
-        }
-      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds +
-                               (uint64_t) p_fsalattr_out->chgtime.nseconds;
+      p_fsalattr_out->chgtime =
+          (gsh_time_cmp(p_buffstat->st_mtim,
+                        p_buffstat->st_ctim) > 0) ?
+          p_buffstat->st_mtim :
+          p_buffstat->st_ctim;
+      /* XXX */
+      p_fsalattr_out->change = p_fsalattr_out->chgtime.tv_sec +
+          p_fsalattr_out->chgtime.tv_nsec;
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_SPACEUSED))
@@ -396,18 +381,18 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
     if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_ATIME))
         {
           p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, p_buffstat->st_atim.tv_nsec);
-            LogFullDebug(COMPONENT_FSAL, "atime = %lu", p_fsalattr_out->atime.seconds);
+            LogFullDebug(COMPONENT_FSAL, "atime = %lu", p_fsalattr_out->atime.tv_sec);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CTIME))
         {
           p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
-            LogFullDebug(COMPONENT_FSAL, "ctime = %lu", p_fsalattr_out->ctime.seconds);
+            LogFullDebug(COMPONENT_FSAL, "ctime = %lu", p_fsalattr_out->ctime.tv_sec);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_MTIME))
         {
           p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_mtim.tv_nsec);
-            LogFullDebug(COMPONENT_FSAL, "mtime = %lu", p_fsalattr_out->mtime.seconds);
+            LogFullDebug(COMPONENT_FSAL, "mtime = %lu", p_fsalattr_out->mtime.tv_sec);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->mask, ATTR_CHGTIME))
@@ -431,9 +416,9 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
               p_fsalattr_out->chgtime
                 = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_ctim.tv_nsec);
             }
-          p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds +
-                                   (uint64_t) p_fsalattr_out->chgtime.nseconds;
-          LogFullDebug(COMPONENT_FSAL, "chgtime = %lu", p_fsalattr_out->chgtime.seconds);
+          p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.tv_sec +
+                                   (uint64_t) p_fsalattr_out->chgtime.tv_nsec;
+          LogFullDebug(COMPONENT_FSAL, "chgtime = %lu", p_fsalattr_out->chgtime.tv_sec);
 
         }
 

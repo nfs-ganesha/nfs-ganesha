@@ -234,7 +234,7 @@ static int file_attributes_to_xattr_attrs( struct attrlist * file_attrs,
   if(xattr_attrs->mask & ATTR_CHGTIME)
     {
       xattr_attrs->chgtime = file_attrs->chgtime;
-      xattr_attrs->change = (uint64_t) xattr_attrs->chgtime.seconds;
+      xattr_attrs->change = xattr_attrs->chgtime.tv_sec;
     }
 
   if(xattr_attrs->mask & ATTR_SIZE)

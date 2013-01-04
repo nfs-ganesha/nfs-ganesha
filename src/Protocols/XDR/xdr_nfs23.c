@@ -466,9 +466,9 @@ nfstime3 *objp;
   register long __attribute__ ((__unused__)) * buf;
 #endif
 
-  if(!xdr_nfs3_uint32(xdrs, &objp->seconds))
+  if(!xdr_nfs3_uint32(xdrs, &objp->tv_sec))
     return (false);
-  if(!xdr_nfs3_uint32(xdrs, &objp->nseconds))
+  if(!xdr_nfs3_uint32(xdrs, &objp->tv_nsec))
     return (false);
   return (true);
 }

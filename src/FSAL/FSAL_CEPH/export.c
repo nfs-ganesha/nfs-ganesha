@@ -376,8 +376,8 @@ get_fs_dynamic_info(struct fsal_export *export_pub,
         info->total_files = vfs_st.f_files;
         info->free_files = vfs_st.f_ffree;
         info->avail_files = vfs_st.f_favail;
-        info->time_delta.seconds = 1;
-        info->time_delta.nseconds = 0;
+        info->time_delta.tv_sec = 1;
+        info->time_delta.tv_nsec = 0;
 
         return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -593,10 +593,10 @@ fs_fh_expire_type(struct fsal_export *export_pub)
  * @return five minutes.
  */
 
-static gsh_time_t
+static struct timespec
 fs_lease_time(struct fsal_export *export_pub)
 {
-        gsh_time_t lease = {300, 0};
+        struct timespec lease = {300, 0};
 
         return lease;
 }

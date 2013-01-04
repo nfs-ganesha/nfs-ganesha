@@ -229,11 +229,11 @@ nfs4_op_setattr(struct nfs_argop4 *op,
         gettimeofday(&t, NULL);
 
         /* A carry into seconds considered invalid */
-        if (sattr.atime.nseconds >= S_NSECS) {
+        if (sattr.atime.tv_nsec >= S_NSECS) {
                 res_SETATTR4.status = NFS4ERR_INVAL;
                 return res_SETATTR4.status;
         }
-        if (sattr.mtime.nseconds >= S_NSECS) {
+        if (sattr.mtime.tv_nsec >= S_NSECS) {
                 res_SETATTR4.status = NFS4ERR_INVAL;
                 return res_SETATTR4.status;
         }

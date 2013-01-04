@@ -53,14 +53,14 @@ static void nfs_set_times_current(fattr3 * attrs)
 {
   time_t now = time(NULL);
 
-  attrs->atime.seconds = now;
-  attrs->atime.nseconds = 0;
+  attrs->atime.tv_sec = now;
+  attrs->atime.tv_nsec = 0;
 
-  attrs->mtime.seconds = now;
-  attrs->mtime.nseconds = 0;
+  attrs->mtime.tv_sec = now;
+  attrs->mtime.tv_nsec = 0;
 
-  attrs->ctime.seconds = now;
-  attrs->ctime.nseconds = 0;
+  attrs->ctime.tv_sec = now;
+  attrs->ctime.tv_nsec = 0;
 }
 
 static void fsal_set_times_current(struct attrlist *attrs)
@@ -68,14 +68,14 @@ static void fsal_set_times_current(struct attrlist *attrs)
   struct timeval tv;
   gettimeofday(&tv, NULL);
 
-  attrs->atime.seconds = tv.tv_sec;
-  attrs->atime.nseconds = 1000 * tv.tv_usec;
+  attrs->atime.tv_sec = tv.tv_sec;
+  attrs->atime.tv_nsec = 1000 * tv.tv_usec;
 
-  attrs->mtime.seconds = tv.tv_sec;
-  attrs->mtime.nseconds = 1000 * tv.tv_usec;
+  attrs->mtime.tv_sec = tv.tv_sec;
+  attrs->mtime.tv_nsec = 1000 * tv.tv_usec;
 
-  attrs->ctime.seconds = tv.tv_sec;
-  attrs->ctime.nseconds = 1000 * tv.tv_usec;
+  attrs->ctime.tv_sec = tv.tv_sec;
+  attrs->ctime.tv_nsec = 1000 * tv.tv_usec;
 }
 
 /**

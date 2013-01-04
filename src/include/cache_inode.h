@@ -813,7 +813,7 @@ void cache_inode_expire_to_str(cache_inode_expire_type_t type,
 			       time_t value,
 			       char *out);
 
-inline int cache_inode_set_time_current(gsh_time_t *time);
+inline int cache_inode_set_time_current(struct timespec *time);
 
 /* Hash functions for hashtables and RBT */
 uint32_t cache_inode_fsal_hash_func(hash_parameter_t *hparam,
@@ -845,7 +845,7 @@ static inline void cache_inode_fixup_md(cache_entry_t *entry)
 	entry->attr_time = time(NULL);
 	/** @todo ACE: This should really be changed to use sub-second time
 	    resolution when it's available. */
-	entry->change_time = entry->obj_handle->attributes.chgtime.seconds;
+	entry->change_time = entry->obj_handle->attributes.chgtime.tv_sec;
 	/* Almost certainly not necessary */
 	entry->type = entry->obj_handle->attributes.type;
 	/* We have just loaded the attributes from the FSAL. */

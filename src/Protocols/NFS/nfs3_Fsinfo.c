@@ -118,8 +118,8 @@ nfs3_Fsinfo(nfs_arg_t *arg,
         FSINFO_FIELD->dtpref = export->PrefReaddir;
 
         FSINFO_FIELD->maxfilesize = FSINFO_MAX_FILESIZE;
-        FSINFO_FIELD->time_delta.seconds = 1;
-        FSINFO_FIELD->time_delta.nseconds = 0;
+        FSINFO_FIELD->time_delta.tv_sec = 1;
+        FSINFO_FIELD->time_delta.tv_nsec = 0;
 
         LogFullDebug(COMPONENT_NFSPROTO,
                      "rtmax = %d | rtpref = %d | trmult = %d",

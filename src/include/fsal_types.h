@@ -447,12 +447,12 @@ struct attrlist {
         fsal_dev_t rawdev; /*< Major/minor device number (only
                                meaningful for character/block special
                                files.) */
-        gsh_time_t atime; /*< Time of last access */
-        gsh_time_t creation; /*< Creation time */
-        gsh_time_t ctime; /*< Inode modification time (a la stat.
+        struct timespec atime; /*< Time of last access */
+        struct timespec creation; /*< Creation time */
+        struct timespec ctime; /*< Inode modification time (a la stat.
                               NOT creation.) */
-        gsh_time_t mtime; /*< Time of last modification */
-        gsh_time_t chgtime; /*< Time of last 'change' */
+        struct timespec mtime; /*< Time of last modification */
+        struct timespec chgtime; /*< Time of last 'change' */
         uint64_t spaceused; /*< Space used on underlying filesystem */
         uint64_t change; /*< A 'change id' */
         uint64_t mounted_on_fileid; /*< If this is the root directory
@@ -597,7 +597,7 @@ struct fsal_staticfsinfo_t
         bool lock_support_async_block; /*< FS supports blocking locks? */
         bool named_attr; /*< FS supports named attributes. */
         bool unique_handles; /*< Handles are unique and persistent.*/
-        gsh_time_t lease_time; /*< Duration of lease at FS in seconds */
+        struct timespec lease_time; /*< Duration of lease at FS in seconds */
         fsal_aclsupp_t acl_support; /*< what type of ACLs are supported */
         bool cansettime; /*< Is it possible to change file times
                              using SETATTR. */
@@ -648,7 +648,7 @@ typedef struct fsal_dynamicfsinfo__
         uint64_t total_files;
         uint64_t free_files;
         uint64_t avail_files;
-        gsh_time_t time_delta;
+        struct timespec time_delta;
 } fsal_dynamicfsinfo_t;
 
 /**

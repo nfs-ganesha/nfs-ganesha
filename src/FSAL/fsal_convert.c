@@ -121,16 +121,6 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in)
 
 }
 
-gsh_time_t posix2fsal_time(time_t tsec, time_t nsec)
-{
-  gsh_time_t fsaltime;
-
-  fsaltime.seconds = tsec;
-  fsaltime.nseconds = nsec;
-
-  return fsaltime;
-}
-
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)
 {
 

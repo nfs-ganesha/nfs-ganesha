@@ -839,7 +839,7 @@ struct export_ops {
  *
  * @return Lease time.
  */
-        gsh_time_t (*fs_lease_time)(struct fsal_export *exp_hdl);
+        struct timespec (*fs_lease_time)(struct fsal_export *exp_hdl);
 
 /**
  * @brief Get supported ACL types

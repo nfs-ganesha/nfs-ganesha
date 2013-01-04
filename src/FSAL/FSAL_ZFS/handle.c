@@ -925,12 +925,12 @@ static fsal_status_t tank_setattrs( struct fsal_obj_handle *obj_hdl,
   if(FSAL_TEST_MASK(attrs->mask, ATTR_ATIME))
   {
     flags |= LZFSW_ATTR_ATIME;
-    stats.st_atime = attrs->atime.seconds;
+    stats.st_atime = attrs->atime.tv_sec;
   }
   if(FSAL_TEST_MASK(attrs->mask, ATTR_MTIME))
   {
     flags |= LZFSW_ATTR_MTIME;
-    stats.st_mtime = attrs->mtime.seconds;
+    stats.st_mtime = attrs->mtime.tv_sec;
   }
 
   cred.uid = opctx->creds->caller_uid;

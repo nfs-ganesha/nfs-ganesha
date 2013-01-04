@@ -176,8 +176,8 @@ typedef struct nfs_fh3 nfs_fh3;
 
 struct nfstime3
 {
-  nfs3_uint32 seconds;
-  nfs3_uint32 nseconds;
+  nfs3_uint32 tv_sec;
+  nfs3_uint32 tv_nsec;
 };
 typedef struct nfstime3 nfstime3;
 

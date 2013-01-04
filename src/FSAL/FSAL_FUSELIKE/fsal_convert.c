@@ -234,7 +234,6 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
       p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime);
 
     }
-
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
     {
       p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime);

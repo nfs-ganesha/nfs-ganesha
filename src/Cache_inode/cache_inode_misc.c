@@ -237,7 +237,7 @@ int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
  * @return 0 if keys if successfully build, -1 otherwise
  *
  */
-int cache_inode_set_time_current(gsh_time_t *time)
+int cache_inode_set_time_current(struct timespec *time)
 {
   struct timeval t;
 
@@ -247,8 +247,8 @@ int cache_inode_set_time_current(gsh_time_t *time)
   if (gettimeofday(&t, NULL) != 0)
     return -1;
 
-  time->seconds  = t.tv_sec;
-  time->nseconds = 1000*t.tv_usec;
+  time->tv_sec  = t.tv_sec;
+  time->tv_nsec = 1000*t.tv_usec;
 
   return 0;
 } /* cache_inode_set_time_current */
@@ -811,7 +811,7 @@ cache_inode_check_trust(cache_entry_t *entry,
      PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
      current_time = time(NULL);
 
-     oldmtime = entry->obj_handle->attributes.mtime.seconds;
+     oldmtime = entry->obj_handle->attributes.mtime.tv_sec;
 
      /* Do we need a refresh? */
      if (((cache_inode_params.expire_type_attr == CACHE_INODE_EXPIRE_NEVER) ||
@@ -845,7 +845,7 @@ cache_inode_check_trust(cache_entry_t *entry,
      }
 
      if ((entry->type == DIRECTORY) &&
-                (oldmtime < entry->obj_handle->attributes.mtime.seconds)) {
+                (oldmtime < entry->obj_handle->attributes.mtime.tv_sec)) {
           PTHREAD_RWLOCK_wrlock(&entry->content_lock);
           PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 

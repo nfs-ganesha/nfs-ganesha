@@ -268,8 +268,8 @@ cache_inode_create_verify(cache_entry_t *entry,
                                    ATTR_ATIME) &&
                     FSAL_TEST_MASK(entry->obj_handle->attributes.mask,
                                    ATTR_MTIME) &&
-                    entry->obj_handle->attributes.atime.seconds != verf_hi &&
-                    entry->obj_handle->attributes.mtime.seconds != verf_lo) {
+                    entry->obj_handle->attributes.atime.tv_sec != verf_hi &&
+                    entry->obj_handle->attributes.mtime.tv_sec != verf_lo) {
                         verified = true;
                 }
         }

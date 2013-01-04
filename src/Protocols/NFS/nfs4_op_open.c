@@ -625,11 +625,11 @@ open4_create(OPEN4args           * arg,
                         memset(&sattr, 0, sizeof(struct attrlist));
                         sattr_provided = true;
                 }
-                sattr.atime.seconds = verf_hi;
-                sattr.atime.nseconds = 0;
+                sattr.atime.tv_sec = verf_hi;
+                sattr.atime.tv_nsec = 0;
                 FSAL_SET_MASK(sattr.mask, ATTR_ATIME);
-                sattr.mtime.seconds = verf_lo;
-                sattr.mtime.nseconds = 0;
+                sattr.mtime.tv_sec = verf_lo;
+                sattr.mtime.tv_nsec = 0;
                 FSAL_SET_MASK(sattr.mask, ATTR_MTIME);
         }
 
